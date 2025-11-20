@@ -4,12 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rocket Growth Agency</title>
-
-    <!-- You can add GTM/GA4/Meta/CallRail snippets here later -->
   </head>
-  <body class="bg-white">
-    <!-- Hidden Netlify form template so Netlify can detect the form at build time -->
-    <form name="audit" method="POST" data-netlify="true" netlify hidden>
+  <body class="antialiased">
+    <!-- Hidden Netlify form so Netlify registers "audit" at build time -->
+    <form name="audit" netlify netlify-honeypot="bot-field" hidden>
       <input type="text" name="name" />
       <input type="email" name="email" />
       <input type="text" name="url" />
