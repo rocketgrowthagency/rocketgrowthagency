@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -18,8 +19,48 @@ import {
 } from "lucide-react";
 
 export default function App() {
+  const [formStatus, setFormStatus] = useState("idle"); // idle | submitting | success | error
+  const formRef = useRef(null);
+
+  const handleAuditSubmit = async (event) => {
+    event.preventDefault();
+    if (formStatus === "submitting") return;
+
+    const form = formRef.current;
+    if (!form) {
+      setFormStatus("error");
+      return;
+    }
+
+    setFormStatus("submitting");
+
+    const formData = new FormData(form);
+
+    // Ensure Netlify sees the correct form name
+    if (!formData.get("form-name")) {
+      formData.set("form-name", "audit");
+    }
+
+    try {
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData).toString(),
+      });
+
+      setFormStatus("success");
+      form.reset();
+    } catch (error) {
+      console.error(error);
+      setFormStatus("error");
+    } finally {
+      // Reset message after a few seconds
+      setTimeout(() => setFormStatus("idle"), 4000);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
       {/* Utility bar */}
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-blue-800 flex items-center justify-between">
@@ -49,10 +90,7 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur bg-white/90 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a
-            href="#"
-            className="flex items-center gap-2 font-semibold tracking-tight"
-          >
+          <a href="#top" className="flex items-center gap-2 font-semibold tracking-tight">
             <div className="w-8 h-8 rounded-xl bg-blue-700 grid place-items-center text-white">
               <Rocket className="w-4 h-4" />
             </div>
@@ -92,10 +130,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO: split with proof/video + form */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))] pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
+      {/* HERO */}
+      <section id="top" className="relative overflow-hidden bg-white">
+        {/* Background gradient, non-interactive */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]"
+          aria-hidden="true"
+        />
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           {/* Left: copy + proof */}
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
@@ -110,8 +152,8 @@ export default function App() {
             </h1>
             <p className="mt-6 text-lg md:text-xl text-slate-700 max-w-2xl">
               We combine profitable Google/Meta, conversion-focused pages, and
-              automated follow-up. Most clients see measurable lift within
-              14–30 days.
+              automated follow-up. Most clients see measurable lift within 14–30
+              days.
             </p>
 
             {/* KPI chips */}
@@ -120,11 +162,7 @@ export default function App() {
               className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3"
             >
               {[
-                {
-                  kpi: "−28%",
-                  desc: "Cost-per-Lead in 30 days",
-                  Icon: Gauge,
-                },
+                { kpi: "−28%", desc: "Cost-per-Lead in 30 days", Icon: Gauge },
                 { kpi: "2.0×", desc: "ROAS by Month 2", Icon: LineChart },
                 {
                   kpi: "+41%",
@@ -170,8 +208,7 @@ export default function App() {
                 href="#offers"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50 transition"
               >
-                Start a 30-Day Launch Sprint{" "}
-                <ArrowRight className="w-4 h-4" />
+                Start a 30-Day Launch Sprint <ArrowRight className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -191,24 +228,32 @@ export default function App() {
               We’ll send a KPI baseline, 90-day plan, and quick wins you can
               implement immediately.
             </p>
+
             <form
-              name="audit"
-              method="POST"
-              data-netlify="true"
-              netlify-honeypot="bot-field"
+              ref={formRef}
               className="mt-5 grid grid-cols-1 gap-3"
             >
               <input type="hidden" name="form-name" value="audit" />
+
+              {/* Honeypot field (hidden from real users) */}
+              <p className="hidden">
+                <label>
+                  Don’t fill this out: <input name="bot-field" />
+                </label>
+              </p>
+
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
                 name="name"
                 placeholder="Full name"
+                required
               />
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
                 name="email"
                 type="email"
                 placeholder="Work email"
+                required
               />
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
@@ -216,11 +261,27 @@ export default function App() {
                 placeholder="Website or GBP URL"
               />
               <button
-                type="submit"
-                className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700"
+                type="button"
+                onClick={handleAuditSubmit}
+                disabled={formStatus === "submitting"}
+                className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Send My Audit <ChevronRight className="w-4 h-4" />
+                {formStatus === "submitting" ? "Sending..." : "Send My Audit"}
+                <ChevronRight className="w-4 h-4" />
               </button>
+
+              {formStatus === "success" && (
+                <div className="text-[11px] text-green-600">
+                  Thanks — we’ll review your audit and email you shortly.
+                </div>
+              )}
+              {formStatus === "error" && (
+                <div className="text-[11px] text-red-600">
+                  Something went wrong. Please try again or email{" "}
+                  hello@rocketgrowthagency.com.
+                </div>
+              )}
+
               <div className="text-[11px] text-slate-500">
                 By submitting, you agree to be contacted about your audit. No
                 spam, ever.
@@ -302,16 +363,14 @@ export default function App() {
               KPI baseline, 90-day plan, tracking check, quick-win fixes.
             </p>
             <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                "Ads/SEO/LP review",
-                "Budget plan + competitor snapshot",
-                "Prioritized quick wins",
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
+              {["Ads/SEO/LP review", "Budget plan + competitor snapshot", "Prioritized quick wins"].map(
+                (t) => (
+                  <li key={t} className="flex gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    {t}
+                  </li>
+                )
+              )}
             </ul>
             <a
               href="#contact"
@@ -320,6 +379,7 @@ export default function App() {
               Book Free Audit <ArrowRight className="w-4 h-4" />
             </a>
           </div>
+
           {/* Offer 2 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
@@ -363,6 +423,7 @@ export default function App() {
               Start the Sprint <ArrowRight className="w-4 h-4" />
             </a>
           </div>
+
           {/* Offer 3 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
@@ -406,9 +467,9 @@ export default function App() {
               30-Day Launch Sprint — $4,000 one-time
             </div>
             <div className="text-sm text-slate-700 mt-2">
-              Includes Launch Readiness Pack: tracking QA, 1–2 LPs, creative
-              kit, runbook. Target: −20–30% CPL or +25–50 qualified leads by Day
-              30. Ad spend separate.
+              Includes Launch Readiness Pack: tracking QA, 1–2 LPs, creative kit,
+              runbook. Target: −20–30% CPL or +25–50 qualified leads by Day 30.
+              Ad spend separate.
             </div>
           </div>
           <a
@@ -420,8 +481,222 @@ export default function App() {
         </div>
       </section>
 
+      {/* Outcomes */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
+          Recent Outcomes
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              k: "HVAC",
+              h: "−32% CPL in 45 days",
+              t: "Google Search + LP revamp + call routing.",
+            },
+            {
+              k: "Med Spa",
+              h: "+63% Bookings in 60 days",
+              t: "UGC creators + Meta + SMS follow-up.",
+            },
+            {
+              k: "Dental",
+              h: "2.1× ROAS by Month 2",
+              t: "Invisalign promo + 2-step funnel.",
+            },
+          ].map((cs) => (
+            <div
+              key={cs.h}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <div className="text-xs uppercase tracking-widest text-slate-500">
+                {cs.k}
+              </div>
+              <div className="text-xl font-bold text-slate-900 mt-1">
+                {cs.h}
+              </div>
+              <div className="text-sm text-slate-600 mt-2">{cs.t}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
+          What Owners Say
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              n: "James R.",
+              r: "HVAC Owner",
+              t: "They rebuilt our pages and calls doubled in 6 weeks.",
+            },
+            {
+              n: "Dr. Patel",
+              r: "Dental Practice",
+              t: "New-patient bookings up 48% without upping ad spend.",
+            },
+            {
+              n: "Maria G.",
+              r: "Med Spa",
+              t: "Finally have a dashboard that ties ads to appointments.",
+            },
+          ].map((q) => (
+            <div
+              key={q.n}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-2 text-amber-500 mb-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-current" />
+                ))}
+              </div>
+              <div className="text-sm text-slate-700">“{q.t}”</div>
+              <div className="text-xs text-slate-500 mt-3">
+                {q.n} • {q.r}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Process */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
+          How We Work
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
+          {[
+            {
+              n: "01",
+              t: "Diagnose",
+              d: "Audit ads/site/tracking; define KPI targets; fix measurement.",
+            },
+            {
+              n: "02",
+              t: "Design",
+              d: "Offer & funnel map, creative briefs, media plan.",
+            },
+            {
+              n: "03",
+              t: "Deploy",
+              d: "Launch ads + pages; SMS/email follow-up; retargeting.",
+            },
+            {
+              n: "04",
+              t: "Optimize",
+              d: "Weekly tests; monthly executive readout; quarterly roadmap.",
+            },
+          ].map((s) => (
+            <div
+              key={s.t}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <div className="text-blue-700 text-xs uppercase tracking-widest">
+                {s.n}
+              </div>
+              <div className="text-base font-semibold text-slate-900 mt-1">
+                {s.t}
+              </div>
+              <div className="text-slate-700 mt-2">{s.d}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section
+        id="pricing"
+        className="max-w-6xl mx-auto px-4 py-16 md:py-20"
+      >
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
+          Pricing
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              name: "Launch — Local Lift",
+              price: "$1,500–$2,500/mo",
+              note: "+ ad spend (billed direct)",
+              perks: [
+                "1 channel (Google or Meta)",
+                "1 landing page",
+                "Reviews engine",
+                "Basic reporting",
+                "Monthly review",
+              ],
+              cta: "Choose Launch",
+            },
+            {
+              name: "Growth — Engine",
+              price: "$3,500–$6,000/mo",
+              note: "Best value for SMBs ready to scale",
+              perks: [
+                "Google + Meta",
+                "2–3 landing pages",
+                "Weekly tests",
+                "Advanced analytics dashboard",
+                "Bi-weekly strategy",
+                "Content 2–4/mo",
+              ],
+              cta: "Choose Growth",
+              featured: true,
+            },
+            {
+              name: "Scale — Performance Partner",
+              price: "$7,000–$12,000/mo",
+              note: "Multi-channel incl. TikTok/YouTube",
+              perks: [
+                "Creative sprints",
+                "CRO program",
+                "RevOps/CRM integration",
+                "Dedicated strategist",
+              ],
+              cta: "Choose Scale",
+            },
+          ].map((p) => (
+            <div
+              key={p.name}
+              className={`rounded-2xl border ${
+                p.featured ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-white"
+              } p-6 shadow-sm flex flex-col`}
+            >
+              <div className="text-sm uppercase tracking-widest text-slate-700 mb-1">
+                {p.name}
+              </div>
+              <div className="text-3xl font-extrabold text-slate-900">
+                {p.price}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">{p.note}</div>
+              <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                {p.perks.map((x) => (
+                  <li key={x} className="flex gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    {x}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="#contact"
+                className={`mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold ${
+                  p.featured
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "border border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                {p.cta} <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* FAQ */}
-      <section id="faq" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+      <section
+        id="faq"
+        className="max-w-6xl mx-auto px-4 py-16 md:py-20"
+      >
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
           FAQ
         </h2>
@@ -439,10 +714,7 @@ export default function App() {
               q: "Who owns the data and accounts?",
               a: "You do—always. We build inside your ad accounts and analytics.",
             },
-            {
-              q: "Is there a contract?",
-              a: "Month-to-month after a 60-day ramp.",
-            },
+            { q: "Is there a contract?", a: "Month-to-month after a 60-day ramp." },
           ].map((f) => (
             <div
               key={f.q}
