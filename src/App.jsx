@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | success | error
+  const [formStatus, setFormStatus] = useState('idle');
 
   const handleAuditSubmit = async (event) => {
     event.preventDefault();
@@ -27,7 +27,6 @@ export default function App() {
 
     const form = event.currentTarget;
 
-    // Build unique subject for Netlify notification email
     const nameInput = form.elements?.name || form.querySelector('input[name="name"]');
     const emailInput = form.elements?.email || form.querySelector('input[name="email"]');
     const nameValue =
@@ -42,7 +41,6 @@ export default function App() {
       subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${safeEmail}`;
     }
 
-    // Encode data for Netlify Forms
     const fd = new FormData(form);
     if (!fd.get('form-name')) fd.set('form-name', 'audit');
 
@@ -58,7 +56,6 @@ export default function App() {
         body: encoded.toString(),
       });
 
-      // Treat 2xx, opaque, and 3xx as success (Netlify may 303 during processing)
       const looksGood =
         res.ok ||
         res.status === 0 ||
@@ -72,7 +69,6 @@ export default function App() {
       form.reset();
       if (subjectInput) subjectInput.value = '';
     } catch (err) {
-      // Last-resort fallback: submit normally (will show Netlify thank-you page)
       try {
         form.submit();
         return;
@@ -87,7 +83,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
-      {/* Utility bar */}
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-blue-800 flex items-center justify-between">
           <div className="uppercase tracking-widest">
@@ -107,12 +102,11 @@ export default function App() {
         </div>
       </div>
 
-      {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur bg-white/90 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-2 font-semibold tracking-tight">
             <div className="w-8 h-8 rounded-xl bg-blue-700 grid place-items-center text-white">
-              <Rocket className="w-4 h-4" />
+              <Rocket className="w-4 h-4" aria-hidden="true" />
             </div>
             <span>Rocket Growth Agency</span>
           </a>
@@ -144,24 +138,22 @@ export default function App() {
               href="#contact"
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition"
             >
-              Free Growth Audit <ArrowRight className="w-4 h-4" />
+              Free Growth Audit <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
         </div>
       </header>
 
-      {/* HERO */}
       <section id="top" className="relative overflow-hidden bg-white">
-        {/* Decorative gradient (non-interactive, behind content) */}
         <div
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]"
           aria-hidden="true"
         />
         <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
-          {/* Left: copy + proof */}
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
-              <Sparkles className="w-4 h-4" /> Performance Advertising that Books Real Appointments
+              <Sparkles className="w-4 h-4" aria-hidden="true" /> Performance Advertising that Books
+              Real Appointments
             </p>
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-slate-900">
               Build a <span className="text-blue-700">Predictable Lead Engine</span>
@@ -171,7 +163,6 @@ export default function App() {
               Most clients see measurable lift within 14–30 days.
             </p>
 
-            {/* KPI chips */}
             <div id="proof" className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
@@ -184,7 +175,7 @@ export default function App() {
               ].map(({ kpi, desc, Icon }) => (
                 <div key={desc} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center gap-2 text-blue-700 mb-1">
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4" aria-hidden="true" />
                     <span className="text-[11px] uppercase tracking-widest">Result</span>
                   </div>
                   <div className="text-2xl font-extrabold text-slate-900">{kpi}</div>
@@ -193,11 +184,10 @@ export default function App() {
               ))}
             </div>
 
-            {/* Video proof placeholder */}
             <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="aspect-[16/9] rounded-lg grid place-items-center border border-slate-200 bg-slate-50">
                 <div className="flex items-center gap-2 text-slate-600">
-                  <PlayCircle className="w-6 h-6" /> Case study video placeholder
+                  <PlayCircle className="w-6 h-6" aria-hidden="true" /> Case study video placeholder
                 </div>
               </div>
             </div>
@@ -207,21 +197,20 @@ export default function App() {
                 href="#contact"
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700 transition"
               >
-                Book a Free Growth Audit <Calendar className="w-4 h-4" />
+                Book a Free Growth Audit <Calendar className="w-4 h-4" aria-hidden="true" />
               </a>
               <a
                 href="#offers"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50 transition"
               >
-                Start a 30-Day Launch Sprint <ArrowRight className="w-4 h-4" />
+                Start a 30-Day Launch Sprint <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </a>
             </div>
           </div>
 
-          {/* Right: lead card (Netlify Forms-ready) */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <ShieldCheck className="w-4 h-4 text-blue-700" />
+              <ShieldCheck className="w-4 h-4 text-blue-700" aria-hidden="true" />
               <span className="text-xs uppercase tracking-widest">48-Hour Turnaround</span>
             </div>
             <h3 className="text-xl font-bold text-slate-900">Get Your Free Local Growth Audit</h3>
@@ -240,7 +229,6 @@ export default function App() {
               <input type="hidden" name="form-name" value="audit" />
               <input type="hidden" name="subject" value="" />
 
-              {/* Honeypot field (hidden from real users) */}
               <p className="hidden">
                 <label>
                   Don’t fill this out: <input name="bot-field" />
@@ -271,7 +259,7 @@ export default function App() {
                 className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {formStatus === 'submitting' ? 'Sending...' : 'Send My Audit'}
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
               </button>
 
               {formStatus === 'success' && (
@@ -293,14 +281,12 @@ export default function App() {
         </div>
       </section>
 
-      {/* Cred bar */}
       <section className="py-8 border-y border-slate-200 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 text-center text-slate-500 text-xs uppercase tracking-widest">
           Trusted strategies used across leading local brands (logos here)
         </div>
       </section>
 
-      {/* Industries */}
       <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
@@ -333,16 +319,14 @@ export default function App() {
         </div>
       </section>
 
-      {/* Offers */}
       <section id="offers" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Flagship Offers</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Offer 1 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <ClipboardCheck className="w-4 h-4 text-blue-700" />
+              <ClipboardCheck className="w-4 h-4 text-blue-700" aria-hidden="true" />
               <span className="text-xs uppercase tracking-widest">48-Hour Audit</span>
             </div>
             <h3 className="text-xl font-bold">Free Local Growth Audit</h3>
@@ -356,7 +340,7 @@ export default function App() {
                 'Prioritized quick wins',
               ].map((t) => (
                 <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                  <Check className="w-4 h-4 mt-0.5 text-blue-700" aria-hidden="true" />
                   {t}
                 </li>
               ))}
@@ -365,14 +349,13 @@ export default function App() {
               href="#contact"
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
             >
-              Book Free Audit <ArrowRight className="w-4 h-4" />
+              Book Free Audit <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
 
-          {/* Offer 2 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <Rocket className="w-4 h-4 text-blue-700" />
+              <Rocket className="w-4 h-4 text-blue-700" aria-hidden="true" />
               <span className="text-xs uppercase tracking-widest">30-Day Sprint</span>
             </div>
             <h3 className="text-xl font-bold">Lead Lift Launch Sprint</h3>
@@ -387,7 +370,7 @@ export default function App() {
                 '6–9 creative tests, weekly report',
               ].map((t) => (
                 <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                  <Check className="w-4 h-4 mt-0.5 text-blue-700" aria-hidden="true" />
                   {t}
                 </li>
               ))}
@@ -400,14 +383,13 @@ export default function App() {
               href="#contact"
               className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
             >
-              Start the Sprint <ArrowRight className="w-4 h-4" />
+              Start the Sprint <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
 
-          {/* Offer 3 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <BarChart3 className="w-4 h-4 text-blue-700" />
+              <BarChart3 className="w-4 h-4 text-blue-700" aria-hidden="true" />
               <span className="text-xs uppercase tracking-widest">Monthly Program</span>
             </div>
             <h3 className="text-xl font-bold">Predictable Leads OS</h3>
@@ -421,7 +403,7 @@ export default function App() {
                 'Reviews engine + GA4 dashboard',
               ].map((t) => (
                 <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                  <Check className="w-4 h-4 mt-0.5 text-blue-700" aria-hidden="true" />
                   {t}
                 </li>
               ))}
@@ -430,12 +412,11 @@ export default function App() {
               href="#pricing"
               className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
             >
-              See What’s Included <ArrowRight className="w-4 h-4" />
+              See What’s Included <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
         </div>
 
-        {/* One-time Sprint */}
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-widest text-slate-700">Project</div>
@@ -451,12 +432,11 @@ export default function App() {
             href="#contact"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
           >
-            Start Sprint <ArrowRight className="w-4 h-4" />
+            Start Sprint <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </a>
         </div>
       </section>
 
-      {/* Outcomes */}
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -486,7 +466,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">What Owners Say</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -508,7 +487,7 @@ export default function App() {
             },
           ].map((q) => (
             <div key={q.n} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-amber-500 mb-2">
+              <div className="flex items-center gap-2 text-amber-500 mb-2" aria-hidden="true">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-current" />
                 ))}
@@ -522,7 +501,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Process */}
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">How We Work</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
@@ -557,7 +535,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -615,7 +592,7 @@ export default function App() {
               <ul className="mt-4 space-y-2 text-sm text-slate-700">
                 {p.perks.map((x) => (
                   <li key={x} className="flex gap-2">
-                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" aria-hidden="true" />
                     {x}
                   </li>
                 ))}
@@ -628,14 +605,13 @@ export default function App() {
                     : 'border border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                {p.cta} <ArrowRight className="w-4 h-4" />
+                {p.cta} <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </a>
             </div>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
       <section id="faq" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">FAQ</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -662,7 +638,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Contact */}
       <section id="contact" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -681,53 +656,52 @@ export default function App() {
             </div>
             <div className="flex gap-3">
               <a
-                href="#"
+                href="#contact"
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
               >
-                <Calendar className="w-4 h-4" /> Schedule Call
+                <Calendar className="w-4 h-4" aria-hidden="true" /> Schedule Call
               </a>
               <a
                 href="mailto:hello@rocketgrowthagency.com"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
               >
-                <Mail className="w-4 h-4" /> Email Us
+                <Mail className="w-4 h-4" aria-hidden="true" /> Email Us
               </a>
               <a
                 href="tel:+1"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
               >
-                <Phone className="w-4 h-4" /> Call
+                <Phone className="w-4 h-4" aria-hidden="true" /> Call
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Mobile sticky CTA */}
       <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
         <a
           href="#contact"
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-3 font-semibold"
         >
-          Book Audit <ArrowRight className="w-4 h-4" />
+          Book Audit <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </a>
         <a
           href="tel:+1"
+          aria-label="Call Rocket Growth Agency"
           className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-3 font-semibold hover:bg-slate-50"
         >
-          <Phone className="w-4 h-4" />
+          <Phone className="w-4 h-4" aria-hidden="true" />
         </a>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 py-10 text-sm text-slate-600 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>© {new Date().getFullYear()} Rocket Growth Agency. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-slate-900">
+            <a href="#top" className="hover:text-slate-900">
               Privacy
             </a>
-            <a href="#" className="hover:text-slate-900">
+            <a href="#top" className="hover:text-slate-900">
               Terms
             </a>
           </div>
