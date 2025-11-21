@@ -26,6 +26,36 @@ export default function App() {
     setFormStatus("submitting");
 
     const form = event.target;
+
+    // Grab typed name/email so we can build a unique subject
+    const nameInput =
+      form.elements?.name ||
+      form.querySelector('input[name="name"]');
+    const emailInput =
+      form.elements?.email ||
+      form.querySelector('input[name="email"]');
+
+    const nameValue =
+      (nameInput && typeof nameInput.value === "string"
+        ? nameInput.value.trim()
+        : "") || "";
+    const emailValue =
+      (emailInput && typeof emailInput.value === "string"
+        ? emailInput.value.trim()
+        : "") || "";
+
+    // Populate hidden "subject" field so Netlify can use it for the email subject
+    const subjectInput =
+      form.elements?.subject ||
+      form.querySelector('input[name="subject"]');
+    if (subjectInput) {
+      const safeName = nameValue || "New Lead";
+      const safeEmail = emailValue || "";
+      subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${
+        safeEmail ? ` <${safeEmail}>` : ""
+      }`;
+    }
+
     const formData = new FormData(form);
 
     // Ensure Netlify sees the correct form name
@@ -138,7 +168,7 @@ export default function App() {
             </p>
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-slate-900">
               Build a{" "}
-              <span className="text-blue-700">
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-slate-700">
                 Predictable Lead Engine
               </span>
             </h1>
@@ -230,6 +260,7 @@ export default function App() {
               className="mt-5 grid grid-cols-1 gap-3"
             >
               <input type="hidden" name="form-name" value="audit" />
+              <input type="hidden" name="subject" value="" />
 
               {/* Honeypot field (hidden from real users) */}
               <p className="hidden">
@@ -272,8 +303,7 @@ export default function App() {
               )}
               {formStatus === "error" && (
                 <div className="text-[11px] text-red-600">
-                  Something went wrong. Please try again or email{" "}
-                  hello@rocketgrowthagency.com.
+                  Something went wrong. Please try again or email hello@rocketgrowthagency.com.
                 </div>
               )}
 
@@ -725,7 +755,7 @@ export default function App() {
       {/* Contact */}
       <section
         id="contact"
-        className="max-w-6xl mx-auto px-4 py-16 md:py-20"
+        className="max-w-6xl mx_auto px-4 py-16 md:py-20"
       >
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -769,7 +799,7 @@ export default function App() {
       </section>
 
       {/* Mobile sticky CTA */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify_between gap-3">
         <a
           href="#contact"
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-3 font-semibold"
