@@ -167,10 +167,7 @@ export default function App() {
               Real Appointments
             </p>
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-slate-900">
-              Build a{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-slate-700">
-                Predictable Lead Engine
-              </span>
+              Build a <span className="text-blue-700">Predictable Lead Engine</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-slate-700 max-w-2xl">
               We combine profitable Google/Meta, conversion-focused pages, and
