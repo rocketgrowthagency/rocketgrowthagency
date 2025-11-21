@@ -85,9 +85,9 @@ export default function App() {
       </header>
 
       {/* HERO: split with proof/video + form */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]" />
-        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
+      <section className="relative overflow-hidden isolate">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]" />
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           {/* Left: copy + proof */}
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
