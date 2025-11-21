@@ -1,4 +1,4 @@
-import { useState } from 'react';
+// src/App.jsx
 import {
   ArrowRight,
   BarChart3,
@@ -19,58 +19,6 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | success | error
-
-  const handleAuditSubmit = async (event) => {
-    event.preventDefault();
-    setFormStatus('submitting');
-
-    const form = event.target;
-
-    // Grab typed name/email so we can build a unique subject
-    const nameInput = form.elements?.name || form.querySelector('input[name="name"]');
-    const emailInput = form.elements?.email || form.querySelector('input[name="email"]');
-
-    const nameValue =
-      (nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '') || '';
-    const emailValue =
-      (emailInput && typeof emailInput.value === 'string' ? emailInput.value.trim() : '') || '';
-
-    // Populate hidden "subject" field so Netlify can use it for the email subject
-    const subjectInput = form.elements?.subject || form.querySelector('input[name="subject"]');
-    if (subjectInput) {
-      const safeName = nameValue || 'New Lead';
-      const safeEmail = emailValue || '';
-      subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${
-        safeEmail ? ` <${safeEmail}>` : ''
-      }`;
-    }
-
-    const formData = new FormData(form);
-
-    // Ensure Netlify sees the correct form name
-    if (!formData.get('form-name')) {
-      formData.set('form-name', 'audit');
-    }
-
-    try {
-      await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData).toString(),
-      });
-
-      setFormStatus('success');
-      form.reset();
-    } catch (error) {
-      console.error(error);
-      setFormStatus('error');
-    } finally {
-      // Reset message after a few seconds
-      setTimeout(() => setFormStatus('idle'), 4000);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
       {/* Utility bar */}
@@ -96,7 +44,7 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur bg-white/90 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="#top" className="flex items-center gap-2 font-semibold tracking-tight">
+          <a href="#" className="flex items-center gap-2 font-semibold tracking-tight">
             <div className="w-8 h-8 rounded-xl bg-blue-700 grid place-items-center text-white">
               <Rocket className="w-4 h-4" />
             </div>
@@ -136,14 +84,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO */}
-      <section id="top" className="relative overflow-hidden bg-white">
-        {/* Background gradient, non-interactive */}
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]"
-          aria-hidden="true"
-        />
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
+      {/* HERO: split with proof/video + form */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]" />
+        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           {/* Left: copy + proof */}
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
@@ -162,11 +106,7 @@ export default function App() {
               {[
                 { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
                 { kpi: '2.0×', desc: 'ROAS by Month 2', Icon: LineChart },
-                {
-                  kpi: '+41%',
-                  desc: 'Form Conversion after LP revamp',
-                  Icon: ThumbsUp,
-                },
+                { kpi: '+41%', desc: 'Form Conversion after LP revamp', Icon: ThumbsUp },
               ].map(({ kpi, desc, Icon }) => (
                 <div key={desc} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center gap-2 text-blue-700 mb-1">
@@ -204,7 +144,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: lead card (Netlify Forms-ready) */}
+          {/* Right: lead card */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
               <ShieldCheck className="w-4 h-4 text-blue-700" />
@@ -215,18 +155,16 @@ export default function App() {
               We’ll send a KPI baseline, 90-day plan, and quick wins you can implement immediately.
             </p>
 
+            {/* Netlify Form */}
             <form
               name="audit"
               method="POST"
               data-netlify="true"
-              netlify-honeypot="bot-field"
-              onSubmit={handleAuditSubmit}
+              data-netlify-honeypot="bot-field"
               className="mt-5 grid grid-cols-1 gap-3"
             >
               <input type="hidden" name="form-name" value="audit" />
-              <input type="hidden" name="subject" value="" />
-
-              {/* Honeypot field (hidden from real users) */}
+              {/* Honeypot */}
               <p className="hidden">
                 <label>
                   Don’t fill this out: <input name="bot-field" />
@@ -241,36 +179,22 @@ export default function App() {
               />
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="email"
                 type="email"
+                name="email"
                 placeholder="Work email"
                 required
               />
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="url"
+                name="website"
                 placeholder="Website or GBP URL"
               />
               <button
                 type="submit"
-                disabled={formStatus === 'submitting'}
-                className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700"
               >
-                {formStatus === 'submitting' ? 'Sending...' : 'Send My Audit'}
-                <ChevronRight className="w-4 h-4" />
+                Send My Audit <ChevronRight className="w-4 h-4" />
               </button>
-
-              {formStatus === 'success' && (
-                <div className="text-[11px] text-green-600">
-                  Thanks — we’ll review your audit and email you shortly.
-                </div>
-              )}
-              {formStatus === 'error' && (
-                <div className="text-[11px] text-red-600">
-                  Something went wrong. Please try again or email hello@rocketgrowthagency.com.
-                </div>
-              )}
-
               <div className="text-[11px] text-slate-500">
                 By submitting, you agree to be contacted about your audit. No spam, ever.
               </div>
@@ -290,9 +214,6 @@ export default function App() {
       <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
-          <a href="#contact" className="text-sm text-blue-700 hover:text-blue-800">
-            See if you’re a fit →
-          </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
           {[
@@ -354,7 +275,6 @@ export default function App() {
               Book Free Audit <ArrowRight className="w-4 h-4" />
             </a>
           </div>
-
           {/* Offer 2 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
@@ -389,7 +309,6 @@ export default function App() {
               Start the Sprint <ArrowRight className="w-4 h-4" />
             </a>
           </div>
-
           {/* Offer 3 */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
@@ -420,24 +339,26 @@ export default function App() {
             </a>
           </div>
         </div>
+      </section>
 
-        {/* One-time Sprint */}
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-slate-700">Project</div>
-            <div className="text-xl font-bold text-slate-900 mt-1">
-              30-Day Launch Sprint — $4,000 one-time
-            </div>
-            <div className="text-sm text-slate-700 mt-2">
-              Includes Launch Readiness Pack: tracking QA, 1–2 LPs, creative kit, runbook. Target:
-              −20–30% CPL or +25–50 qualified leads by Day 30. Ad spend separate.
+      {/* Guarantee strip */}
+      <section className="bg-blue-50 border-y border-blue-100">
+        <div className="max-w-6xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3 text-slate-900">
+            <ShieldCheck className="w-6 h-6 text-blue-700" />
+            <div>
+              <div className="font-semibold">Risk-Reversal Guarantee</div>
+              <div className="text-sm text-slate-700">
+                If we miss the agreed CPL/lead target by Day 60 and prerequisites are met, the next
+                month is at cost.
+              </div>
             </div>
           </div>
           <a
             href="#contact"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
           >
-            Start Sprint <ArrowRight className="w-4 h-4" />
+            Claim My Audit <ArrowRight className="w-4 h-4" />
           </a>
         </div>
       </section>
@@ -447,21 +368,13 @@ export default function App() {
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            {
-              k: 'HVAC',
-              h: '−32% CPL in 45 days',
-              t: 'Google Search + LP revamp + call routing.',
-            },
+            { k: 'HVAC', h: '−32% CPL in 45 days', t: 'Google Search + LP revamp + call routing.' },
             {
               k: 'Med Spa',
               h: '+63% Bookings in 60 days',
               t: 'UGC creators + Meta + SMS follow-up.',
             },
-            {
-              k: 'Dental',
-              h: '2.1× ROAS by Month 2',
-              t: 'Invisalign promo + 2-step funnel.',
-            },
+            { k: 'Dental', h: '2.1× ROAS by Month 2', t: 'Invisalign promo + 2-step funnel.' },
           ].map((cs) => (
             <div key={cs.h} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="text-xs uppercase tracking-widest text-slate-500">{cs.k}</div>
@@ -518,16 +431,8 @@ export default function App() {
               t: 'Diagnose',
               d: 'Audit ads/site/tracking; define KPI targets; fix measurement.',
             },
-            {
-              n: '02',
-              t: 'Design',
-              d: 'Offer & funnel map, creative briefs, media plan.',
-            },
-            {
-              n: '03',
-              t: 'Deploy',
-              d: 'Launch ads + pages; SMS/email follow-up; retargeting.',
-            },
+            { n: '02', t: 'Design', d: 'Offer & funnel map, creative briefs, media plan.' },
+            { n: '03', t: 'Deploy', d: 'Launch ads + pages; SMS/email follow-up; retargeting.' },
             {
               n: '04',
               t: 'Optimize',
@@ -549,21 +454,20 @@ export default function App() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
-              name: 'Launch — Local Lift',
-              price: '$1,500–$2,500/mo',
-              note: '+ ad spend (billed direct)',
+              name: 'Starter — Local Lift',
+              price: '$1,500/mo',
+              note: 'Ad spend billed separately',
               perks: [
                 '1 channel (Google or Meta)',
                 '1 landing page',
-                'Reviews engine',
                 'Basic reporting',
                 'Monthly review',
               ],
-              cta: 'Choose Launch',
+              cta: 'Choose Starter',
             },
             {
               name: 'Growth — Engine',
-              price: '$3,500–$6,000/mo',
+              price: '$3,000–$6,000/mo',
               note: 'Best value for SMBs ready to scale',
               perks: [
                 'Google + Meta',
@@ -571,14 +475,13 @@ export default function App() {
                 'Weekly tests',
                 'Advanced analytics dashboard',
                 'Bi-weekly strategy',
-                'Content 2–4/mo',
               ],
               cta: 'Choose Growth',
               featured: true,
             },
             {
-              name: 'Scale — Performance Partner',
-              price: '$7,000–$12,000/mo',
+              name: 'Enterprise — Performance Partner',
+              price: 'Let’s Talk',
               note: 'Multi-channel incl. TikTok/YouTube',
               perks: [
                 'Creative sprints',
@@ -586,7 +489,7 @@ export default function App() {
                 'RevOps/CRM integration',
                 'Dedicated strategist',
               ],
-              cta: 'Choose Scale',
+              cta: 'Talk to Sales',
             },
           ].map((p) => (
             <div
@@ -649,7 +552,7 @@ export default function App() {
       </section>
 
       {/* Contact */}
-      <section id="contact" className="max-w-6xl mx_auto px-4 py-16 md:py-20">
+      <section id="contact" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
@@ -690,7 +593,7 @@ export default function App() {
       </section>
 
       {/* Mobile sticky CTA */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify_between gap-3">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
         <a
           href="#contact"
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-3 font-semibold"
