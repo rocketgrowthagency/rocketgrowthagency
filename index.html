@@ -2,18 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Rocket Growth Agency</title>
+    <meta
+      name="description"
+      content="Performance marketing for local service brands—profitable ads, conversion-focused pages, and real analytics."
+    />
+    <link rel="icon" href="/favicon.ico" />
   </head>
-  <body class="antialiased">
-    <!-- Hidden Netlify form so Netlify registers "audit" at build time -->
-    <form name="audit" netlify netlify-honeypot="bot-field" hidden>
-      <input type="text" name="name" />
+  <body>
+    <div id="root"></div>
+
+    <!-- Netlify shadow form for build-time detection -->
+    <form name="audit" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="text" name="fullName" />
       <input type="email" name="email" />
-      <input type="text" name="url" />
+      <input type="url" name="website" />
+      <input type="text" name="bot-field" />
     </form>
 
-    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
