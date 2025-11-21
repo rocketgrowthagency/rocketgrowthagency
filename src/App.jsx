@@ -52,7 +52,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200 selection:text-slate-900">
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
       {/* Utility bar */}
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-blue-800 flex items-center justify-between">
@@ -138,7 +138,7 @@ export default function App() {
             </p>
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-slate-900">
               Build a{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-700 to-slate-700 selection:bg-transparent selection:text-inherit">
+              <span className="text-blue-700">
                 Predictable Lead Engine
               </span>
             </h1>
