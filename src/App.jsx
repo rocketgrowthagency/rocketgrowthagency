@@ -25,19 +25,16 @@ export default function App() {
     event.preventDefault();
     setFormStatus('submitting');
 
-    const form = event.currentTarget?.form || event.currentTarget; // works for button onClick
-    if (!form) return;
+    const form = event.currentTarget;
 
-    // Grab typed name/email so we can build a unique subject
+    // Build unique subject for Netlify notification email
     const nameInput = form.elements?.name || form.querySelector('input[name="name"]');
     const emailInput = form.elements?.email || form.querySelector('input[name="email"]');
-
     const nameValue =
       (nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '') || '';
     const emailValue =
       (emailInput && typeof emailInput.value === 'string' ? emailInput.value.trim() : '') || '';
 
-    // Populate hidden subject for Netlify notification subject line
     const subjectInput = form.elements?.subject || form.querySelector('input[name="subject"]');
     if (subjectInput) {
       const safeName = nameValue || 'New Lead';
@@ -45,23 +42,46 @@ export default function App() {
       subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${safeEmail}`;
     }
 
-    const formData = new FormData(form);
-    if (!formData.get('form-name')) formData.set('form-name', 'audit');
+    // Encode data for Netlify Forms
+    const fd = new FormData(form);
+    if (!fd.get('form-name')) fd.set('form-name', 'audit');
+
+    const encoded = new URLSearchParams();
+    for (const [k, v] of fd.entries()) {
+      encoded.append(k, String(v));
+    }
 
     try {
-      await fetch('/', {
+      const res = await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData).toString(),
+        body: encoded.toString(),
       });
+
+      // Treat 2xx, opaque, and 3xx as success (Netlify may 303 during processing)
+      const looksGood =
+        res.ok ||
+        res.status === 0 ||
+        res.type === 'opaque' ||
+        res.type === 'opaqueredirect' ||
+        (res.status >= 300 && res.status < 400);
+
+      if (!looksGood) throw new Error(`Unexpected status: ${res.status}`);
 
       setFormStatus('success');
       form.reset();
+      if (subjectInput) subjectInput.value = '';
     } catch (err) {
-      console.error(err);
-      setFormStatus('error');
+      // Last-resort fallback: submit normally (will show Netlify thank-you page)
+      try {
+        form.submit();
+        return;
+      } catch (e) {
+        console.error(err || e);
+        setFormStatus('error');
+      }
     } finally {
-      setTimeout(() => setFormStatus('idle'), 4000);
+      setTimeout(() => setFormStatus('idle'), 5000);
     }
   };
 
@@ -131,13 +151,13 @@ export default function App() {
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative isolate overflow-hidden bg-white">
+      <section id="top" className="relative overflow-hidden bg-white">
         {/* Decorative gradient (non-interactive, behind content) */}
         <div
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]"
           aria-hidden="true"
         />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           {/* Left: copy + proof */}
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
@@ -156,7 +176,11 @@ export default function App() {
               {[
                 { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
                 { kpi: '2.0×', desc: 'ROAS by Month 2', Icon: LineChart },
-                { kpi: '+41%', desc: 'Form Conversion after LP revamp', Icon: ThumbsUp },
+                {
+                  kpi: '+41%',
+                  desc: 'Form Conversion after LP revamp',
+                  Icon: ThumbsUp,
+                },
               ].map(({ kpi, desc, Icon }) => (
                 <div key={desc} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center gap-2 text-blue-700 mb-1">
@@ -205,21 +229,18 @@ export default function App() {
               We’ll send a KPI baseline, 90-day plan, and quick wins you can implement immediately.
             </p>
 
-            {/* Important: no default submit. Button triggers JS fetch to avoid Netlify "Thank you" page */}
             <form
               name="audit"
               method="POST"
               data-netlify="true"
               netlify-honeypot="bot-field"
-              action="/#contact"
-              noValidate
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleAuditSubmit}
               className="mt-5 grid grid-cols-1 gap-3"
             >
               <input type="hidden" name="form-name" value="audit" />
               <input type="hidden" name="subject" value="" />
 
-              {/* Honeypot */}
+              {/* Honeypot field (hidden from real users) */}
               <p className="hidden">
                 <label>
                   Don’t fill this out: <input name="bot-field" />
@@ -244,10 +265,8 @@ export default function App() {
                 name="url"
                 placeholder="Website or GBP URL"
               />
-
               <button
-                type="button"
-                onClick={handleAuditSubmit}
+                type="submit"
                 disabled={formStatus === 'submitting'}
                 className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
               >
@@ -285,6 +304,9 @@ export default function App() {
       <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
+          <a href="#contact" className="text-sm text-blue-700 hover:text-blue-800">
+            See if you’re a fit →
+          </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
           {[
@@ -439,13 +461,21 @@ export default function App() {
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { k: 'HVAC', h: '−32% CPL in 45 days', t: 'Google Search + LP revamp + call routing.' },
+            {
+              k: 'HVAC',
+              h: '−32% CPL in 45 days',
+              t: 'Google Search + LP revamp + call routing.',
+            },
             {
               k: 'Med Spa',
               h: '+63% Bookings in 60 days',
               t: 'UGC creators + Meta + SMS follow-up.',
             },
-            { k: 'Dental', h: '2.1× ROAS by Month 2', t: 'Invisalign promo + 2-step funnel.' },
+            {
+              k: 'Dental',
+              h: '2.1× ROAS by Month 2',
+              t: 'Invisalign promo + 2-step funnel.',
+            },
           ].map((cs) => (
             <div key={cs.h} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="text-xs uppercase tracking-widest text-slate-500">{cs.k}</div>
@@ -502,8 +532,16 @@ export default function App() {
               t: 'Diagnose',
               d: 'Audit ads/site/tracking; define KPI targets; fix measurement.',
             },
-            { n: '02', t: 'Design', d: 'Offer & funnel map, creative briefs, media plan.' },
-            { n: '03', t: 'Deploy', d: 'Launch ads + pages; SMS/email follow-up; retargeting.' },
+            {
+              n: '02',
+              t: 'Design',
+              d: 'Offer & funnel map, creative briefs, media plan.',
+            },
+            {
+              n: '03',
+              t: 'Deploy',
+              d: 'Launch ads + pages; SMS/email follow-up; retargeting.',
+            },
             {
               n: '04',
               t: 'Optimize',
@@ -567,7 +605,9 @@ export default function App() {
           ].map((p) => (
             <div
               key={p.name}
-              className={`rounded-2xl border ${p.featured ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'} p-6 shadow-sm flex flex-col`}
+              className={`rounded-2xl border ${
+                p.featured ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'
+              } p-6 shadow-sm flex flex-col`}
             >
               <div className="text-sm uppercase tracking-widest text-slate-700 mb-1">{p.name}</div>
               <div className="text-3xl font-extrabold text-slate-900">{p.price}</div>
