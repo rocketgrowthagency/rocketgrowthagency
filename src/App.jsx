@@ -1,26 +1,162 @@
-// src/App.jsx
+import { useEffect, useState } from 'react';
 import {
   ArrowRight,
   BarChart3,
   Calendar,
   Check,
   ChevronRight,
-  ClipboardCheck,
   Gauge,
   LineChart,
   Mail,
   Phone,
+  PlayCircle,
   Rocket,
   ShieldCheck,
   Sparkles,
   Star,
   ThumbsUp,
-  PlayCircle,
 } from 'lucide-react';
 
 export default function App() {
+  const [showThanks, setShowThanks] = useState(false);
+
+  // Show a success bar after Netlify redirects back with ?thanks=1
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('thanks') === '1') {
+      setShowThanks(true);
+      // Clean the URL (remove the query param but keep the hash)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('thanks');
+      window.history.replaceState({}, '', url.pathname + url.hash);
+    }
+  }, []);
+
+  const kpis = [
+    { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
+    { kpi: '2.0×', desc: 'ROAS by Month 2', Icon: LineChart },
+    { kpi: '+41%', desc: 'Form Conversion after LP revamp', Icon: ThumbsUp },
+  ];
+
+  const industries = [
+    'HVAC',
+    'Plumbing',
+    'Roofing',
+    'Pest Control',
+    'Dental',
+    'Med Spa',
+    'Attorneys',
+    'Auto Repair',
+    'Property Mgmt',
+    'Water Damage',
+    'Chiro/PT',
+    'Landscaping',
+  ];
+
+  const offers = [
+    {
+      badge: '48-Hour Audit',
+      title: 'Free Local Growth Audit',
+      copy: 'KPI baseline, 90-day plan, tracking check, quick-win fixes.',
+      points: ['Ads/SEO/LP review', 'Budget plan + competitor snapshot', 'Prioritized quick wins'],
+      ctaText: 'Book Free Audit',
+      anchor: '#contact',
+    },
+    {
+      badge: '30-Day Sprint',
+      title: 'Lead Lift Launch Sprint',
+      copy: 'Live campaigns + fast CPL reduction on Google or Meta.',
+      points: [
+        'Tracking fix + call tracking',
+        '1–2 landing pages',
+        '6–9 creative tests, weekly report',
+      ],
+      foot: (
+        <div className="mt-4 text-sm text-slate-700">
+          Target: <span className="font-semibold text-slate-900">−20–30% CPL</span> or{' '}
+          <span className="font-semibold text-slate-900">+25–50 qualified leads</span>.
+        </div>
+      ),
+      ctaText: 'Start the Sprint',
+      anchor: '#contact',
+    },
+    {
+      badge: 'Monthly Program',
+      title: 'Predictable Leads OS',
+      copy: 'Stable, scalable lead flow with ongoing optimization.',
+      points: ['Google + Meta management', 'CRO tests + 2–3 LPs', 'Reviews engine + GA4 dashboard'],
+      ctaText: 'See What’s Included',
+      anchor: '#pricing',
+    },
+  ];
+
+  const outcomes = [
+    { k: 'HVAC', h: '−32% CPL in 45 days', t: 'Google Search + LP revamp + call routing.' },
+    { k: 'Med Spa', h: '+63% Bookings in 60 days', t: 'UGC creators + Meta + SMS follow-up.' },
+    { k: 'Dental', h: '2.1× ROAS by Month 2', t: 'Invisalign promo + 2-step funnel.' },
+  ];
+
+  const testimonials = [
+    { n: 'James R.', r: 'HVAC Owner', t: 'They rebuilt our pages and calls doubled in 6 weeks.' },
+    {
+      n: 'Dr. Patel',
+      r: 'Dental Practice',
+      t: 'New-patient bookings up 48% without upping ad spend.',
+    },
+    { n: 'Maria G.', r: 'Med Spa', t: 'Finally have a dashboard that ties ads to appointments.' },
+  ];
+
+  const process = [
+    { n: '01', t: 'Diagnose', d: 'Audit ads/site/tracking; define KPI targets; fix measurement.' },
+    { n: '02', t: 'Design', d: 'Offer & funnel map, creative briefs, media plan.' },
+    { n: '03', t: 'Deploy', d: 'Launch ads + pages; SMS/email follow-up; retargeting.' },
+    { n: '04', t: 'Optimize', d: 'Weekly tests; monthly executive readout; quarterly roadmap.' },
+  ];
+
+  const pricing = [
+    {
+      name: 'Starter — Local Lift',
+      price: '$1,500/mo',
+      note: 'Ad spend billed separately',
+      perks: ['1 channel (Google or Meta)', '1 landing page', 'Basic reporting', 'Monthly review'],
+      featured: false,
+      cta: 'Choose Starter',
+    },
+    {
+      name: 'Growth — Engine',
+      price: '$3,000–$6,000/mo',
+      note: 'Best value for SMBs ready to scale',
+      perks: [
+        'Google + Meta',
+        '2–3 landing pages',
+        'Weekly tests',
+        'Advanced analytics dashboard',
+        'Bi-weekly strategy',
+      ],
+      featured: true,
+      cta: 'Choose Growth',
+    },
+    {
+      name: 'Enterprise — Performance Partner',
+      price: 'Let’s Talk',
+      note: 'Multi-channel incl. TikTok/YouTube',
+      perks: ['Creative sprints', 'CRO program', 'RevOps/CRM integration', 'Dedicated strategist'],
+      featured: false,
+      cta: 'Talk to Sales',
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
+      {/* Success bar after form submit */}
+      {showThanks && (
+        <div className="bg-green-50 border-b border-green-200">
+          <div className="max-w-6xl mx-auto px-4 py-3 text-sm text-green-900">
+            ✅ Thanks! We received your audit request. We’ll email you within one business day.
+          </div>
+        </div>
+      )}
+
       {/* Utility bar */}
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-blue-800 flex items-center justify-between">
@@ -84,8 +220,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO: split with proof/video + form */}
+      {/* HERO */}
       <section className="relative overflow-hidden isolate">
+        {/* push the background under content and ignore clicks */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]" />
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           {/* Left: copy + proof */}
@@ -93,9 +230,11 @@ export default function App() {
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
               <Sparkles className="w-4 h-4" /> Performance Advertising that Books Real Appointments
             </p>
+
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight text-slate-900">
               Build a <span className="text-blue-700">Predictable Lead Engine</span>
             </h1>
+
             <p className="mt-6 text-lg md:text-xl text-slate-700 max-w-2xl">
               We combine profitable Google/Meta, conversion-focused pages, and automated follow-up.
               Most clients see measurable lift within 14–30 days.
@@ -103,11 +242,7 @@ export default function App() {
 
             {/* KPI chips */}
             <div id="proof" className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
-                { kpi: '2.0×', desc: 'ROAS by Month 2', Icon: LineChart },
-                { kpi: '+41%', desc: 'Form Conversion after LP revamp', Icon: ThumbsUp },
-              ].map(({ kpi, desc, Icon }) => (
+              {kpis.map(({ kpi, desc, Icon }) => (
                 <div key={desc} className="rounded-xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center gap-2 text-blue-700 mb-1">
                     <Icon className="w-4 h-4" />
@@ -144,8 +279,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: lead card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          {/* Right: lead card with Netlify form */}
+          <div id="contact" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-3 text-slate-700">
               <ShieldCheck className="w-4 h-4 text-blue-700" />
               <span className="text-xs uppercase tracking-widest">48-Hour Turnaround</span>
@@ -155,16 +290,16 @@ export default function App() {
               We’ll send a KPI baseline, 90-day plan, and quick wins you can implement immediately.
             </p>
 
-            {/* Netlify Form */}
             <form
               name="audit"
               method="POST"
               data-netlify="true"
-              data-netlify-honeypot="bot-field"
+              netlify-honeypot="bot-field"
+              action="/?thanks=1#contact"
               className="mt-5 grid grid-cols-1 gap-3"
             >
+              {/* Netlify required hidden fields */}
               <input type="hidden" name="form-name" value="audit" />
-              {/* Honeypot */}
               <p className="hidden">
                 <label>
                   Don’t fill this out: <input name="bot-field" />
@@ -173,7 +308,7 @@ export default function App() {
 
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="name"
+                name="fullName"
                 placeholder="Full name"
                 required
               />
@@ -186,9 +321,11 @@ export default function App() {
               />
               <input
                 className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                type="url"
                 name="website"
                 placeholder="Website or GBP URL"
               />
+
               <button
                 type="submit"
                 className="rounded-lg bg-blue-600 text-white px-5 py-3 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700"
@@ -214,22 +351,12 @@ export default function App() {
       <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
+          <a href="#contact" className="text-sm text-blue-700 hover:text-blue-800">
+            See if you’re a fit →
+          </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
-          {[
-            'HVAC',
-            'Plumbing',
-            'Roofing',
-            'Pest Control',
-            'Dental',
-            'Med Spa',
-            'Attorneys',
-            'Auto Repair',
-            'Property Mgmt',
-            'Water Damage',
-            'Chiro/PT',
-            'Landscaping',
-          ].map((v) => (
+          {industries.map((v) => (
             <div
               key={v}
               className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
@@ -246,102 +373,38 @@ export default function App() {
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Flagship Offers</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Offer 1 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <ClipboardCheck className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">48-Hour Audit</span>
-            </div>
-            <h3 className="text-xl font-bold">Free Local Growth Audit</h3>
-            <p className="text-slate-600 mb-4">
-              KPI baseline, 90-day plan, tracking check, quick-win fixes.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Ads/SEO/LP review',
-                'Budget plan + competitor snapshot',
-                'Prioritized quick wins',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#contact"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
+          {offers.map((o) => (
+            <div
+              key={o.title}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             >
-              Book Free Audit <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-          {/* Offer 2 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <Rocket className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">30-Day Sprint</span>
+              <div className="flex items-center gap-2 mb-3 text-slate-700">
+                <BarChart3 className="w-4 h-4 text-blue-700" />
+                <span className="text-xs uppercase tracking-widest">{o.badge}</span>
+              </div>
+              <h3 className="text-xl font-bold">{o.title}</h3>
+              <p className="text-slate-600 mb-4">{o.copy}</p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {o.points.map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              {o.foot}
+              <a
+                href={o.anchor}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
+              >
+                {o.ctaText} <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
-            <h3 className="text-xl font-bold">Lead Lift Launch Sprint</h3>
-            <p className="text-slate-600 mb-4">
-              Live campaigns + fast CPL reduction on Google <span className="opacity-70">or</span>{' '}
-              Meta.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Tracking fix + call tracking',
-                '1–2 landing pages',
-                '6–9 creative tests, weekly report',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 text-sm text-slate-700">
-              Target: <span className="font-semibold text-slate-900">−20–30% CPL</span> or{' '}
-              <span className="font-semibold text-slate-900">+25–50 qualified leads</span>.
-            </div>
-            <a
-              href="#contact"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
-            >
-              Start the Sprint <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-          {/* Offer 3 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <BarChart3 className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">Monthly Program</span>
-            </div>
-            <h3 className="text-xl font-bold">Predictable Leads OS</h3>
-            <p className="text-slate-600 mb-4">
-              Stable, scalable lead flow with ongoing optimization.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Google + Meta management',
-                'CRO tests + 2–3 LPs',
-                'Reviews engine + GA4 dashboard',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#pricing"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
-            >
-              See What’s Included <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Guarantee strip */}
+      {/* Guarantee */}
       <section className="bg-blue-50 border-y border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3 text-slate-900">
@@ -367,15 +430,7 @@ export default function App() {
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { k: 'HVAC', h: '−32% CPL in 45 days', t: 'Google Search + LP revamp + call routing.' },
-            {
-              k: 'Med Spa',
-              h: '+63% Bookings in 60 days',
-              t: 'UGC creators + Meta + SMS follow-up.',
-            },
-            { k: 'Dental', h: '2.1× ROAS by Month 2', t: 'Invisalign promo + 2-step funnel.' },
-          ].map((cs) => (
+          {outcomes.map((cs) => (
             <div key={cs.h} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="text-xs uppercase tracking-widest text-slate-500">{cs.k}</div>
               <div className="text-xl font-bold text-slate-900 mt-1">{cs.h}</div>
@@ -389,23 +444,7 @@ export default function App() {
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">What Owners Say</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              n: 'James R.',
-              r: 'HVAC Owner',
-              t: 'They rebuilt our pages and calls doubled in 6 weeks.',
-            },
-            {
-              n: 'Dr. Patel',
-              r: 'Dental Practice',
-              t: 'New-patient bookings up 48% without upping ad spend.',
-            },
-            {
-              n: 'Maria G.',
-              r: 'Med Spa',
-              t: 'Finally have a dashboard that ties ads to appointments.',
-            },
-          ].map((q) => (
+          {testimonials.map((q) => (
             <div key={q.n} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-2 text-amber-500 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -425,20 +464,7 @@ export default function App() {
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">How We Work</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
-          {[
-            {
-              n: '01',
-              t: 'Diagnose',
-              d: 'Audit ads/site/tracking; define KPI targets; fix measurement.',
-            },
-            { n: '02', t: 'Design', d: 'Offer & funnel map, creative briefs, media plan.' },
-            { n: '03', t: 'Deploy', d: 'Launch ads + pages; SMS/email follow-up; retargeting.' },
-            {
-              n: '04',
-              t: 'Optimize',
-              d: 'Weekly tests; monthly executive readout; quarterly roadmap.',
-            },
-          ].map((s) => (
+          {process.map((s) => (
             <div key={s.t} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="text-blue-700 text-xs uppercase tracking-widest">{s.n}</div>
               <div className="text-base font-semibold text-slate-900 mt-1">{s.t}</div>
@@ -452,46 +478,7 @@ export default function App() {
       <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              name: 'Starter — Local Lift',
-              price: '$1,500/mo',
-              note: 'Ad spend billed separately',
-              perks: [
-                '1 channel (Google or Meta)',
-                '1 landing page',
-                'Basic reporting',
-                'Monthly review',
-              ],
-              cta: 'Choose Starter',
-            },
-            {
-              name: 'Growth — Engine',
-              price: '$3,000–$6,000/mo',
-              note: 'Best value for SMBs ready to scale',
-              perks: [
-                'Google + Meta',
-                '2–3 landing pages',
-                'Weekly tests',
-                'Advanced analytics dashboard',
-                'Bi-weekly strategy',
-              ],
-              cta: 'Choose Growth',
-              featured: true,
-            },
-            {
-              name: 'Enterprise — Performance Partner',
-              price: 'Let’s Talk',
-              note: 'Multi-channel incl. TikTok/YouTube',
-              perks: [
-                'Creative sprints',
-                'CRO program',
-                'RevOps/CRM integration',
-                'Dedicated strategist',
-              ],
-              cta: 'Talk to Sales',
-            },
-          ].map((p) => (
+          {pricing.map((p) => (
             <div
               key={p.name}
               className={`rounded-2xl border ${
@@ -551,8 +538,8 @@ export default function App() {
         </div>
       </section>
 
-      {/* Contact */}
-      <section id="contact" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+      {/* Contact CTA footer card */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
@@ -570,7 +557,7 @@ export default function App() {
             </div>
             <div className="flex gap-3">
               <a
-                href="#"
+                href="#contact"
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
               >
                 <Calendar className="w-4 h-4" /> Schedule Call
