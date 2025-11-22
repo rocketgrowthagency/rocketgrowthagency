@@ -42,14 +42,6 @@ export default function App() {
       subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${safeEmail}`;
     }
 
-    // Track lead in GA4 if gtag is available
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', 'generate_lead', {
-        form_name: 'audit',
-        page_path: window.location.pathname || '/',
-      });
-    }
-
     // Encode data for Netlify Forms
     const fd = new FormData(form);
     if (!fd.get('form-name')) fd.set('form-name', 'audit');
@@ -75,6 +67,14 @@ export default function App() {
         (res.status >= 300 && res.status < 400);
 
       if (!looksGood) throw new Error(`Unexpected status: ${res.status}`);
+
+      // 🔹 GA4 event for successful Growth Audit submission
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag('event', 'growth_audit_submit', {
+          form_name: 'audit',
+          page_location: window.location.href,
+        });
+      }
 
       setFormStatus('success');
       form.reset();
@@ -124,7 +124,10 @@ export default function App() {
             </div>
             <span>Rocket Growth Agency</span>
           </a>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-700">
+          <nav
+            className="hidden md:flex items-center gap-6 text-sm text-slate-700"
+            aria-label="Primary"
+          >
             <a href="#proof" className="hover:text-slate-900">
               Results
             </a>
@@ -227,12 +230,15 @@ export default function App() {
           </div>
 
           {/* Right: lead card (Netlify Forms-ready) */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+            aria-label="Free Growth Audit form"
+          >
             <div className="flex items-center gap-2 mb-3 text-slate-700">
               <ShieldCheck className="w-4 h-4 text-blue-700" />
               <span className="text-xs uppercase tracking-widest">48-Hour Turnaround</span>
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Get Your Free Local Growth Audit</h3>
+            <h2 className="text-xl font-bold text-slate-900">Get Your Free Local Growth Audit</h2>
             <p className="text-slate-600 text-sm mt-1">
               We’ll send a KPI baseline, 90-day plan, and quick wins you can implement immediately.
             </p>
@@ -244,6 +250,7 @@ export default function App() {
               netlify-honeypot="bot-field"
               onSubmit={handleAuditSubmit}
               className="mt-5 grid grid-cols-1 gap-3"
+              aria-label="Growth audit request"
             >
               <input type="hidden" name="form-name" value="audit" />
               <input type="hidden" name="subject" value="" />
@@ -255,24 +262,33 @@ export default function App() {
                 </label>
               </p>
 
-              <input
-                className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="name"
-                placeholder="Full name"
-                required
-              />
-              <input
-                className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="email"
-                type="email"
-                placeholder="Work email"
-                required
-              />
-              <input
-                className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
-                name="url"
-                placeholder="Website or GBP URL"
-              />
+              <label className="text-sm text-slate-700">
+                <span className="sr-only">Full name</span>
+                <input
+                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  name="name"
+                  placeholder="Full name"
+                  required
+                />
+              </label>
+              <label className="text-sm text-slate-700">
+                <span className="sr-only">Work email</span>
+                <input
+                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  name="email"
+                  type="email"
+                  placeholder="Work email"
+                  required
+                />
+              </label>
+              <label className="text-sm text-slate-700">
+                <span className="sr-only">Website or Google Business Profile URL</span>
+                <input
+                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  name="url"
+                  placeholder="Website or GBP URL"
+                />
+              </label>
               <button
                 type="submit"
                 disabled={formStatus === 'submitting'}
@@ -302,7 +318,7 @@ export default function App() {
       </section>
 
       {/* Cred bar */}
-      <section className="py-8 border-y border-slate-200 bg-slate-50">
+      <section className="py-8 border-y border-slate-200 bg-slate-50" aria-label="Trusted brands">
         <div className="max-w-6xl mx-auto px-4 text-center text-slate-500 text-xs uppercase tracking-widest">
           Trusted strategies used across leading local brands (logos here)
         </div>
@@ -516,7 +532,7 @@ export default function App() {
             },
           ].map((q) => (
             <div key={q.n} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-amber-500 mb-2">
+              <div className="flex items-center gap-2 text-amber-500 mb-2" aria-hidden="true">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-current" />
                 ))}
@@ -675,7 +691,7 @@ export default function App() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <h3 className="text-2xl font-bold text-slate-900">Book a Free Strategy Call</h3>
+              <h2 className="text-2xl font-bold text-slate-900">Book a Free Strategy Call</h2>
               <p className="text-slate-700 mt-2 max-w-xl">
                 Prefer email?{' '}
                 <a
@@ -687,9 +703,9 @@ export default function App() {
                 . We reply within one business day.
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3" aria-label="Contact options">
               <a
-                href="#contact"
+                href="#"
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
               >
                 <Calendar className="w-4 h-4" /> Schedule Call
