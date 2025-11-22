@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | success | error
+  const [formStatus, setFormStatus] = useState('idle');
 
   const handleAuditSubmit = async (event) => {
     event.preventDefault();
@@ -27,7 +27,6 @@ export default function App() {
 
     const form = event.currentTarget;
 
-    // Build unique subject for Netlify notification email
     const nameInput = form.elements?.name || form.querySelector('input[name="name"]');
     const emailInput = form.elements?.email || form.querySelector('input[name="email"]');
     const nameValue =
@@ -42,7 +41,6 @@ export default function App() {
       subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${safeEmail}`;
     }
 
-    // Encode data for Netlify Forms
     const fd = new FormData(form);
     if (!fd.get('form-name')) fd.set('form-name', 'audit');
 
@@ -58,7 +56,6 @@ export default function App() {
         body: encoded.toString(),
       });
 
-      // Treat 2xx, opaque, and 3xx as success (Netlify may 303 during processing)
       const looksGood =
         res.ok ||
         res.status === 0 ||
@@ -68,11 +65,12 @@ export default function App() {
 
       if (!looksGood) throw new Error(`Unexpected status: ${res.status}`);
 
-      // 🔹 GA4 event for successful Growth Audit submission
       if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-        window.gtag('event', 'growth_audit_submit', {
-          form_name: 'audit',
-          page_location: window.location.href,
+        window.gtag('event', 'generate_lead', {
+          event_category: 'form',
+          event_label: 'growth_audit',
+          form_id: 'audit',
+          value: 1,
         });
       }
 
@@ -80,7 +78,6 @@ export default function App() {
       form.reset();
       if (subjectInput) subjectInput.value = '';
     } catch (err) {
-      // Last-resort fallback: submit normally (will show Netlify thank-you page)
       try {
         form.submit();
         return;
@@ -95,7 +92,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-200">
-      {/* Utility bar */}
+      <a
+        href="#top"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-white"
+      >
+        Skip to main content
+      </a>
+
       <div className="bg-blue-50 border-b border-blue-100">
         <div className="max-w-6xl mx-auto px-4 py-2 text-xs text-blue-800 flex items-center justify-between">
           <div className="uppercase tracking-widest">
@@ -115,8 +118,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur bg-white/90 border-b border-slate-200">
+      <header className="sticky top-0 z-40 backdrop-blur bg-white/90 border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-2 font-semibold tracking-tight">
             <div className="w-8 h-8 rounded-xl bg-blue-700 grid place-items-center text-white">
@@ -124,10 +126,7 @@ export default function App() {
             </div>
             <span>Rocket Growth Agency</span>
           </a>
-          <nav
-            className="hidden md:flex items-center gap-6 text-sm text-slate-700"
-            aria-label="Primary"
-          >
+          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-700">
             <a href="#proof" className="hover:text-slate-900">
               Results
             </a>
@@ -161,15 +160,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO */}
-      <section id="top" className="relative overflow-hidden bg-white">
-        {/* Decorative gradient (non-interactive, behind content) */}
+      <main id="top" className="relative overflow-hidden bg-white isolate">
         <div
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(65%_60%_at_50%_0%,rgba(59,130,246,0.10),rgba(255,255,255,0))]"
           aria-hidden="true"
         />
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
-          {/* Left: copy + proof */}
+        <section className="relative max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-10 items-start">
           <div>
             <p className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-blue-700 mb-4">
               <Sparkles className="w-4 h-4" /> Performance Advertising that Books Real Appointments
@@ -182,7 +178,6 @@ export default function App() {
               Most clients see measurable lift within 14–30 days.
             </p>
 
-            {/* KPI chips */}
             <div id="proof" className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { kpi: '−28%', desc: 'Cost-per-Lead in 30 days', Icon: Gauge },
@@ -204,7 +199,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Video proof placeholder */}
             <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="aspect-[16/9] rounded-lg grid place-items-center border border-slate-200 bg-slate-50">
                 <div className="flex items-center gap-2 text-slate-600">
@@ -229,8 +223,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: lead card (Netlify Forms-ready) */}
-          <div
+          <aside
             className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
             aria-label="Free Growth Audit form"
           >
@@ -250,43 +243,41 @@ export default function App() {
               netlify-honeypot="bot-field"
               onSubmit={handleAuditSubmit}
               className="mt-5 grid grid-cols-1 gap-3"
-              aria-label="Growth audit request"
+              aria-label="Growth Audit form"
             >
               <input type="hidden" name="form-name" value="audit" />
               <input type="hidden" name="subject" value="" />
-
-              {/* Honeypot field (hidden from real users) */}
               <p className="hidden">
                 <label>
                   Don’t fill this out: <input name="bot-field" />
                 </label>
               </p>
 
-              <label className="text-sm text-slate-700">
-                <span className="sr-only">Full name</span>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Full name
                 <input
-                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
                   name="name"
                   placeholder="Full name"
                   required
                 />
               </label>
-              <label className="text-sm text-slate-700">
-                <span className="sr-only">Work email</span>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Work email
                 <input
-                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
                   name="email"
                   type="email"
-                  placeholder="Work email"
+                  placeholder="you@company.com"
                   required
                 />
               </label>
-              <label className="text-sm text-slate-700">
-                <span className="sr-only">Website or Google Business Profile URL</span>
+              <label className="flex flex-col gap-1 text-sm text-slate-700">
+                Website or GBP URL
                 <input
-                  className="mt-1 w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full rounded-lg bg-white border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300"
                   name="url"
-                  placeholder="Website or GBP URL"
+                  placeholder="https://example.com"
                 />
               </label>
               <button
@@ -299,12 +290,12 @@ export default function App() {
               </button>
 
               {formStatus === 'success' && (
-                <div className="text-[11px] text-green-600">
+                <div className="text-[11px] text-green-600" role="status">
                   Thanks — we’ll review your audit and email you shortly.
                 </div>
               )}
               {formStatus === 'error' && (
-                <div className="text-[11px] text-red-600">
+                <div className="text-[11px] text-red-600" role="alert">
                   Something went wrong. Please try again or email hello@rocketgrowthagency.com.
                 </div>
               )}
@@ -313,422 +304,422 @@ export default function App() {
                 By submitting, you agree to be contacted about your audit. No spam, ever.
               </div>
             </form>
+          </aside>
+        </section>
+
+        <section className="py-8 border-y border-slate-200 bg-slate-50" aria-label="Client logos">
+          <div className="max-w-6xl mx-auto px-4 text-center text-slate-500 text-xs uppercase tracking-widest">
+            Trusted strategies used across leading local brands (logos here)
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Cred bar */}
-      <section className="py-8 border-y border-slate-200 bg-slate-50" aria-label="Trusted brands">
-        <div className="max-w-6xl mx-auto px-4 text-center text-slate-500 text-xs uppercase tracking-widest">
-          Trusted strategies used across leading local brands (logos here)
-        </div>
-      </section>
-
-      {/* Industries */}
-      <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <div className="flex items-end justify-between gap-6 mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
-          <a href="#contact" className="text-sm text-blue-700 hover:text-blue-800">
-            See if you’re a fit →
-          </a>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
-          {[
-            'HVAC',
-            'Plumbing',
-            'Roofing',
-            'Pest Control',
-            'Dental',
-            'Med Spa',
-            'Attorneys',
-            'Auto Repair',
-            'Property Mgmt',
-            'Water Damage',
-            'Chiro/PT',
-            'Landscaping',
-          ].map((v) => (
-            <div
-              key={v}
-              className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
-            >
-              {v}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Offers */}
-      <section id="offers" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <div className="flex items-end justify-between gap-6 mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Flagship Offers</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Offer 1 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <ClipboardCheck className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">48-Hour Audit</span>
-            </div>
-            <h3 className="text-xl font-bold">Free Local Growth Audit</h3>
-            <p className="text-slate-600 mb-4">
-              KPI baseline, 90-day plan, tracking check, quick-win fixes.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Ads/SEO/LP review',
-                'Budget plan + competitor snapshot',
-                'Prioritized quick wins',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#contact"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
-            >
-              Book Free Audit <ArrowRight className="w-4 h-4" />
+        <section id="industries" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Industries We Scale</h2>
+            <a href="#contact" className="text-sm text-blue-700 hover:text-blue-800">
+              See if you’re a fit →
             </a>
           </div>
-
-          {/* Offer 2 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <Rocket className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">30-Day Sprint</span>
-            </div>
-            <h3 className="text-xl font-bold">Lead Lift Launch Sprint</h3>
-            <p className="text-slate-600 mb-4">
-              Live campaigns + fast CPL reduction on Google <span className="opacity-70">or</span>{' '}
-              Meta.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Tracking fix + call tracking',
-                '1–2 landing pages',
-                '6–9 creative tests, weekly report',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 text-sm text-slate-700">
-              Target: <span className="font-semibold text-slate-900">−20–30% CPL</span> or{' '}
-              <span className="font-semibold text-slate-900">+25–50 qualified leads</span>.
-            </div>
-            <a
-              href="#contact"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
-            >
-              Start the Sprint <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-
-          {/* Offer 3 */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3 text-slate-700">
-              <BarChart3 className="w-4 h-4 text-blue-700" />
-              <span className="text-xs uppercase tracking-widest">Monthly Program</span>
-            </div>
-            <h3 className="text-xl font-bold">Predictable Leads OS</h3>
-            <p className="text-slate-600 mb-4">
-              Stable, scalable lead flow with ongoing optimization.
-            </p>
-            <ul className="space-y-2 text-sm text-slate-700">
-              {[
-                'Google + Meta management',
-                'CRO tests + 2–3 LPs',
-                'Reviews engine + GA4 dashboard',
-              ].map((t) => (
-                <li key={t} className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#pricing"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
-            >
-              See What’s Included <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-
-        {/* One-time Sprint */}
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-slate-700">Project</div>
-            <div className="text-xl font-bold text-slate-900 mt-1">
-              30-Day Launch Sprint — $4,000 one-time
-            </div>
-            <div className="text-sm text-slate-700 mt-2">
-              Includes Launch Readiness Pack: tracking QA, 1–2 LPs, creative kit, runbook. Target:
-              −20–30% CPL or +25–50 qualified leads by Day 30. Ad spend separate.
-            </div>
-          </div>
-          <a
-            href="#contact"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
-          >
-            Start Sprint <ArrowRight className="w-4 h-4" />
-          </a>
-        </div>
-      </section>
-
-      {/* Outcomes */}
-      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              k: 'HVAC',
-              h: '−32% CPL in 45 days',
-              t: 'Google Search + LP revamp + call routing.',
-            },
-            {
-              k: 'Med Spa',
-              h: '+63% Bookings in 60 days',
-              t: 'UGC creators + Meta + SMS follow-up.',
-            },
-            {
-              k: 'Dental',
-              h: '2.1× ROAS by Month 2',
-              t: 'Invisalign promo + 2-step funnel.',
-            },
-          ].map((cs) => (
-            <div key={cs.h} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-xs uppercase tracking-widest text-slate-500">{cs.k}</div>
-              <div className="text-xl font-bold text-slate-900 mt-1">{cs.h}</div>
-              <div className="text-sm text-slate-600 mt-2">{cs.t}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">What Owners Say</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              n: 'James R.',
-              r: 'HVAC Owner',
-              t: 'They rebuilt our pages and calls doubled in 6 weeks.',
-            },
-            {
-              n: 'Dr. Patel',
-              r: 'Dental Practice',
-              t: 'New-patient bookings up 48% without upping ad spend.',
-            },
-            {
-              n: 'Maria G.',
-              r: 'Med Spa',
-              t: 'Finally have a dashboard that ties ads to appointments.',
-            },
-          ].map((q) => (
-            <div key={q.n} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-amber-500 mb-2" aria-hidden="true">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-current" />
-                ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 text-sm">
+            {[
+              'HVAC',
+              'Plumbing',
+              'Roofing',
+              'Pest Control',
+              'Dental',
+              'Med Spa',
+              'Attorneys',
+              'Auto Repair',
+              'Property Mgmt',
+              'Water Damage',
+              'Chiro/PT',
+              'Landscaping',
+            ].map((v) => (
+              <div
+                key={v}
+                className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
+              >
+                {v}
               </div>
-              <div className="text-sm text-slate-700">“{q.t}”</div>
-              <div className="text-xs text-slate-500 mt-3">
-                {q.n} • {q.r}
+            ))}
+          </div>
+        </section>
+
+        <section id="offers" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Flagship Offers</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 text-slate-700">
+                <ClipboardCheck className="w-4 h-4 text-blue-700" />
+                <span className="text-xs uppercase tracking-widest">48-Hour Audit</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Process */}
-      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">How We Work</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
-          {[
-            {
-              n: '01',
-              t: 'Diagnose',
-              d: 'Audit ads/site/tracking; define KPI targets; fix measurement.',
-            },
-            {
-              n: '02',
-              t: 'Design',
-              d: 'Offer & funnel map, creative briefs, media plan.',
-            },
-            {
-              n: '03',
-              t: 'Deploy',
-              d: 'Launch ads + pages; SMS/email follow-up; retargeting.',
-            },
-            {
-              n: '04',
-              t: 'Optimize',
-              d: 'Weekly tests; monthly executive readout; quarterly roadmap.',
-            },
-          ].map((s) => (
-            <div key={s.t} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-blue-700 text-xs uppercase tracking-widest">{s.n}</div>
-              <div className="text-base font-semibold text-slate-900 mt-1">{s.t}</div>
-              <div className="text-slate-700 mt-2">{s.d}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              name: 'Launch — Local Lift',
-              price: '$1,500–$2,500/mo',
-              note: '+ ad spend (billed direct)',
-              perks: [
-                '1 channel (Google or Meta)',
-                '1 landing page',
-                'Reviews engine',
-                'Basic reporting',
-                'Monthly review',
-              ],
-              cta: 'Choose Launch',
-            },
-            {
-              name: 'Growth — Engine',
-              price: '$3,500–$6,000/mo',
-              note: 'Best value for SMBs ready to scale',
-              perks: [
-                'Google + Meta',
-                '2–3 landing pages',
-                'Weekly tests',
-                'Advanced analytics dashboard',
-                'Bi-weekly strategy',
-                'Content 2–4/mo',
-              ],
-              cta: 'Choose Growth',
-              featured: true,
-            },
-            {
-              name: 'Scale — Performance Partner',
-              price: '$7,000–$12,000/mo',
-              note: 'Multi-channel incl. TikTok/YouTube',
-              perks: [
-                'Creative sprints',
-                'CRO program',
-                'RevOps/CRM integration',
-                'Dedicated strategist',
-              ],
-              cta: 'Choose Scale',
-            },
-          ].map((p) => (
-            <div
-              key={p.name}
-              className={`rounded-2xl border ${
-                p.featured ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'
-              } p-6 shadow-sm flex flex-col`}
-            >
-              <div className="text-sm uppercase tracking-widest text-slate-700 mb-1">{p.name}</div>
-              <div className="text-3xl font-extrabold text-slate-900">{p.price}</div>
-              <div className="text-xs text-slate-500 mt-1">{p.note}</div>
-              <ul className="mt-4 space-y-2 text-sm text-slate-700">
-                {p.perks.map((x) => (
-                  <li key={x} className="flex gap-2">
+              <h3 className="text-xl font-bold">Free Local Growth Audit</h3>
+              <p className="text-slate-600 mb-4">
+                KPI baseline, 90-day plan, tracking check, quick-win fixes.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {[
+                  'Ads/SEO/LP review',
+                  'Budget plan + competitor snapshot',
+                  'Prioritized quick wins',
+                ].map((t) => (
+                  <li key={t} className="flex gap-2">
                     <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                    {x}
+                    {t}
                   </li>
                 ))}
               </ul>
               <a
                 href="#contact"
-                className={`mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold ${
-                  p.featured
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'border border-slate-300 hover:bg-slate-50'
-                }`}
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
               >
-                {p.cta} <ArrowRight className="w-4 h-4" />
+                Book Free Audit <ArrowRight className="w-4 h-4" />
               </a>
-            </div>
-          ))}
-        </div>
-      </section>
+            </article>
 
-      {/* FAQ */}
-      <section id="faq" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">FAQ</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[
-            {
-              q: 'Is ad spend included?',
-              a: 'No—media budgets are separate and paid directly to platforms.',
-            },
-            {
-              q: 'How fast can we see results?',
-              a: 'Most clients see meaningful improvements in 14–30 days with our Launch Sprint.',
-            },
-            {
-              q: 'Who owns the data and accounts?',
-              a: 'You do—always. We build inside your ad accounts and analytics.',
-            },
-            { q: 'Is there a contract?', a: 'Month-to-month after a 60-day ramp.' },
-          ].map((f) => (
-            <div key={f.q} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="font-semibold text-slate-900 mb-1">{f.q}</div>
-              <p className="text-sm text-slate-700">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Contact */}
-      <section id="contact" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">Book a Free Strategy Call</h2>
-              <p className="text-slate-700 mt-2 max-w-xl">
-                Prefer email?{' '}
-                <a
-                  className="underline decoration-blue-400 hover:text-slate-900"
-                  href="mailto:hello@rocketgrowthagency.com"
-                >
-                  hello@rocketgrowthagency.com
-                </a>
-                . We reply within one business day.
+            <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 text-slate-700">
+                <Rocket className="w-4 h-4 text-blue-700" />
+                <span className="text-xs uppercase tracking-widest">30-Day Sprint</span>
+              </div>
+              <h3 className="text-xl font-bold">Lead Lift Launch Sprint</h3>
+              <p className="text-slate-600 mb-4">
+                Live campaigns + fast CPL reduction on Google <span className="opacity-70">or</span>{' '}
+                Meta.
               </p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {[
+                  'Tracking fix + call tracking',
+                  '1–2 landing pages',
+                  '6–9 creative tests, weekly report',
+                ].map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 text-sm text-slate-700">
+                Target: <span className="font-semibold text-slate-900">−20–30% CPL</span> or{' '}
+                <span className="font-semibold text-slate-900">+25–50 qualified leads</span>.
+              </div>
+              <a
+                href="#contact"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
+              >
+                Start the Sprint <ArrowRight className="w-4 h-4" />
+              </a>
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 text-slate-700">
+                <BarChart3 className="w-4 h-4 text-blue-700" />
+                <span className="text-xs uppercase tracking-widest">Monthly Program</span>
+              </div>
+              <h3 className="text-xl font-bold">Predictable Leads OS</h3>
+              <p className="text-slate-600 mb-4">
+                Stable, scalable lead flow with ongoing optimization.
+              </p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                {[
+                  'Google + Meta management',
+                  'CRO tests + 2–3 LPs',
+                  'Reviews engine + GA4 dashboard',
+                ].map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="#pricing"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
+              >
+                See What’s Included <ArrowRight className="w-4 h-4" />
+              </a>
+            </article>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-slate-700">Project</div>
+              <div className="text-xl font-bold text-slate-900 mt-1">
+                30-Day Launch Sprint — $4,000 one-time
+              </div>
+              <div className="text-sm text-slate-700 mt-2">
+                Includes Launch Readiness Pack: tracking QA, 1–2 LPs, creative kit, runbook. Target:
+                −20–30% CPL or +25–50 qualified leads by Day 30. Ad spend separate.
+              </div>
             </div>
-            <div className="flex gap-3" aria-label="Contact options">
-              <a
-                href="#"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
+            <a
+              href="#contact"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
+            >
+              Start Sprint <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Recent Outcomes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                k: 'HVAC',
+                h: '−32% CPL in 45 days',
+                t: 'Google Search + LP revamp + call routing.',
+              },
+              {
+                k: 'Med Spa',
+                h: '+63% Bookings in 60 days',
+                t: 'UGC creators + Meta + SMS follow-up.',
+              },
+              {
+                k: 'Dental',
+                h: '2.1× ROAS by Month 2',
+                t: 'Invisalign promo + 2-step funnel.',
+              },
+            ].map((cs) => (
+              <article
+                key={cs.h}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                <Calendar className="w-4 h-4" /> Schedule Call
-              </a>
-              <a
-                href="mailto:hello@rocketgrowthagency.com"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
+                <div className="text-xs uppercase tracking-widest text-slate-500">{cs.k}</div>
+                <div className="text-xl font-bold text-slate-900 mt-1">{cs.h}</div>
+                <div className="text-sm text-slate-600 mt-2">{cs.t}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">What Owners Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                n: 'James R.',
+                r: 'HVAC Owner',
+                t: 'They rebuilt our pages and calls doubled in 6 weeks.',
+              },
+              {
+                n: 'Dr. Patel',
+                r: 'Dental Practice',
+                t: 'New-patient bookings up 48% without upping ad spend.',
+              },
+              {
+                n: 'Maria G.',
+                r: 'Med Spa',
+                t: 'Finally have a dashboard that ties ads to appointments.',
+              },
+            ].map((q) => (
+              <figure
+                key={q.n}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                <Mail className="w-4 h-4" /> Email Us
-              </a>
-              <a
-                href="tel:+1"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
+                <div className="flex items-center gap-2 text-amber-500 mb-2" aria-hidden="true">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-current" />
+                  ))}
+                </div>
+                <blockquote className="text-sm text-slate-700">“{q.t}”</blockquote>
+                <figcaption className="text-xs text-slate-500 mt-3">
+                  {q.n} • {q.r}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">How We Work</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
+            {[
+              {
+                n: '01',
+                t: 'Diagnose',
+                d: 'Audit ads/site/tracking; define KPI targets; fix measurement.',
+              },
+              {
+                n: '02',
+                t: 'Design',
+                d: 'Offer & funnel map, creative briefs, media plan.',
+              },
+              {
+                n: '03',
+                t: 'Deploy',
+                d: 'Launch ads + pages; SMS/email follow-up; retargeting.',
+              },
+              {
+                n: '04',
+                t: 'Optimize',
+                d: 'Weekly tests; monthly executive readout; quarterly roadmap.',
+              },
+            ].map((s) => (
+              <article
+                key={s.t}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                <Phone className="w-4 h-4" /> Call
-              </a>
+                <div className="text-blue-700 text-xs uppercase tracking-widest">{s.n}</div>
+                <div className="text-base font-semibold text-slate-900 mt-1">{s.t}</div>
+                <div className="text-slate-700 mt-2">{s.d}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Pricing</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Launch — Local Lift',
+                price: '$1,500–$2,500/mo',
+                note: '+ ad spend (billed direct)',
+                perks: [
+                  '1 channel (Google or Meta)',
+                  '1 landing page',
+                  'Reviews engine',
+                  'Basic reporting',
+                  'Monthly review',
+                ],
+                cta: 'Choose Launch',
+              },
+              {
+                name: 'Growth — Engine',
+                price: '$3,500–$6,000/mo',
+                note: 'Best value for SMBs ready to scale',
+                perks: [
+                  'Google + Meta',
+                  '2–3 landing pages',
+                  'Weekly tests',
+                  'Advanced analytics dashboard',
+                  'Bi-weekly strategy',
+                  'Content 2–4/mo',
+                ],
+                cta: 'Choose Growth',
+                featured: true,
+              },
+              {
+                name: 'Scale — Performance Partner',
+                price: '$7,000–$12,000/mo',
+                note: 'Multi-channel incl. TikTok/YouTube',
+                perks: [
+                  'Creative sprints',
+                  'CRO program',
+                  'RevOps/CRM integration',
+                  'Dedicated strategist',
+                ],
+                cta: 'Choose Scale',
+              },
+            ].map((p) => (
+              <article
+                key={p.name}
+                className={`rounded-2xl border ${
+                  p.featured ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'
+                } p-6 shadow-sm flex flex-col`}
+              >
+                <div className="text-sm uppercase tracking-widest text-slate-700 mb-1">
+                  {p.name}
+                </div>
+                <div className="text-3xl font-extrabold text-slate-900">{p.price}</div>
+                <div className="text-xs text-slate-500 mt-1">{p.note}</div>
+                <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                  {p.perks.map((x) => (
+                    <li key={x} className="flex gap-2">
+                      <Check className="w-4 h-4 mt-0.5 text-blue-700" />
+                      {x}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#contact"
+                  className={`mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold ${
+                    p.featured
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'border border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {p.cta} <ArrowRight className="w-4 h-4" />
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="faq" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">FAQ</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              {
+                q: 'Is ad spend included?',
+                a: 'No—media budgets are separate and paid directly to platforms.',
+              },
+              {
+                q: 'How fast can we see results?',
+                a: 'Most clients see meaningful improvements in 14–30 days with our Launch Sprint.',
+              },
+              {
+                q: 'Who owns the data and accounts?',
+                a: 'You do—always. We build inside your ad accounts and analytics.',
+              },
+              { q: 'Is there a contract?', a: 'Month-to-month after a 60-day ramp.' },
+            ].map((f) => (
+              <article
+                key={f.q}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <h3 className="font-semibold text-slate-900 mb-1">{f.q}</h3>
+                <p className="text-sm text-slate-700">{f.a}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="contact" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-10 shadow-sm">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Book a Free Strategy Call</h2>
+                <p className="text-slate-700 mt-2 max-w-xl">
+                  Prefer email?{' '}
+                  <a
+                    className="underline decoration-blue-400 hover:text-slate-900"
+                    href="mailto:hello@rocketgrowthagency.com"
+                  >
+                    hello@rocketgrowthagency.com
+                  </a>
+                  . We reply within one business day.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href="mailto:hello@rocketgrowthagency.com?subject=Strategy%20Call%20Request"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
+                >
+                  <Calendar className="w-4 h-4" /> Schedule Call
+                </a>
+                <a
+                  href="mailto:hello@rocketgrowthagency.com"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
+                >
+                  <Mail className="w-4 h-4" /> Email Us
+                </a>
+                <a
+                  href="tel:+1"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
+                >
+                  <Phone className="w-4 h-4" /> Call
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Mobile sticky CTA */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
         <a
           href="#contact"
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-3 font-semibold"
@@ -738,12 +729,12 @@ export default function App() {
         <a
           href="tel:+1"
           className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-3 font-semibold hover:bg-slate-50"
+          aria-label="Call Rocket Growth Agency"
         >
           <Phone className="w-4 h-4" />
         </a>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="max-w-6xl mx-auto px-4 py-10 text-sm text-slate-600 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>© {new Date().getFullYear()} Rocket Growth Agency. All rights reserved.</div>
