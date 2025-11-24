@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+OWNER_EXPECTED="rocketgrowthagency"
+REPO_EXPECTED="rocketgrowthagency"
+
+remote="$(git config --get remote.origin.url)"
+case "$remote" in
+  "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
+  "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}"|\
+  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}.git") ;;
+  *)
+    echo "❌ RGA guard: remote.origin.url is '$remote' (expected ${OWNER_EXPECTED}/${REPO_EXPECTED})"
+    echo "    Fix with: git remote set-url origin https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
+    exit 1
+    ;;
+esac
+
+if command -v gh >/dev/null 2>&1; then
+  actual="$(gh repo view --json owner,name -q '.owner.login + \"/\" + .name' 2>/dev/null || true)"
+  if [ "$actual" != "${OWNER_EXPECTED}/${REPO_EXPECTED}" ] && [ -n "$actual" ]; then
+    echo "⚠️  RGA guard: gh default repo is '$actual' (expected ${OWNER_EXPECTED}/${REPO_EXPECTED})"
+    echo "    Hint: gh repo set-default ${OWNER_EXPECTED}/${REPO_EXPECTED}"
+  fi
+fi
+
+email="$(git config user.email || true)"
+if [ "$email" != "hello@rocketgrowthagency.com" ]; then
+  echo "⚠️  RGA guard: local git email is '$email' (expected hello@rocketgrowthagency.com)"
+  echo "    Fix with: git config user.email hello@rocketgrowthagency.com"
+fi
+
+echo "✅ RGA guard passed"
+exit 0
