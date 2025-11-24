@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -e
+
+EXPECTED_USER="rocketgrowthagency"
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "RGA GUARD: gh CLI is not installed. Install GitHub CLI before pushing."
+  exit 1
+fi
+
+ACTIVE_USER="$(gh auth status -h github.com 2>/dev/null | awk '
+/Logged in to github.com account/ {user=$7}
+/Active account: true/ {active=user}
+END {print active}
+')"
+
+if [ -z "$ACTIVE_USER" ]; then
+  echo
+  echo "RGA GUARD BLOCKED PUSH:"
+  echo "  Could not determine active GitHub CLI user."
+  echo "  Run: gh auth status -h github.com"
+  echo "  Then ensure you are logged in as: $EXPECTED_USER"
+  echo
+  exit 1
+fi
+
+if [ "$ACTIVE_USER" != "$EXPECTED_USER" ]; then
+  echo
+  echo "RGA GUARD BLOCKED PUSH:"
+  echo "  Expected GitHub CLI user: $EXPECTED_USER"
+  echo "  Detected GitHub CLI user: $ACTIVE_USER"
+  echo
+  echo "Fix: switch accounts, then push again:"
+  echo "  gh auth switch -u $EXPECTED_USER"
+  echo
+  exit 1
+fi
+
+exit 0
