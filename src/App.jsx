@@ -602,7 +602,7 @@ function HomePage() {
                 'Monthly review',
               ],
               cta: 'Choose Launch',
-              path: '/launch',
+              href: '/launch',
             },
             {
               name: 'Growth — Engine',
@@ -617,8 +617,8 @@ function HomePage() {
                 'Content 2–4/mo',
               ],
               cta: 'Choose Growth',
-              path: '/growth',
               featured: true,
+              href: '/growth',
             },
             {
               name: 'Scale — Performance Partner',
@@ -631,7 +631,7 @@ function HomePage() {
                 'Dedicated strategist',
               ],
               cta: 'Choose Scale',
-              path: '/scale',
+              href: '/scale',
             },
           ].map((p) => (
             <div
@@ -652,7 +652,7 @@ function HomePage() {
                 ))}
               </ul>
               <a
-                href={p.path}
+                href={p.href}
                 className={`mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold ${
                   p.featured
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
