@@ -21,6 +21,9 @@ import {
 import LaunchPage from './pages/Launch.jsx';
 import GrowthPage from './pages/Growth.jsx';
 import ScalePage from './pages/Scale.jsx';
+import FreeAuditPage from './pages/FreeAudit.jsx';
+import LeadLiftSprintPage from './pages/LeadLiftSprint.jsx';
+import PredictableLeadsOSPage from './pages/PredictableLeadsOS.jsx';
 
 function getPath() {
   if (typeof window === 'undefined') return '/';
@@ -41,6 +44,9 @@ export default function App() {
   if (path === '/launch') return <LaunchPage />;
   if (path === '/growth') return <GrowthPage />;
   if (path === '/scale') return <ScalePage />;
+  if (path === '/free-audit') return <FreeAuditPage />;
+  if (path === '/lead-lift-sprint') return <LeadLiftSprintPage />;
+  if (path === '/predictable-leads-os') return <PredictableLeadsOSPage />;
 
   return <HomePage />;
 }
@@ -365,7 +371,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Offers */}
+      {/* Flagship Offers Section Beginning */}
       <section id="offers" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="flex items-end justify-between gap-6 mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Flagship Offers</h2>
@@ -393,7 +399,7 @@ function HomePage() {
               ))}
             </ul>
             <a
-              href="#contact"
+              href="/free-audit"
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
             >
               Book Free Audit <ArrowRight className="w-4 h-4" />
@@ -427,7 +433,7 @@ function HomePage() {
               <span className="font-semibold text-slate-900">+25–50 qualified leads</span>.
             </div>
             <a
-              href="/launch"
+              href="/lead-lift-sprint"
               className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
             >
               Start the Sprint <ArrowRight className="w-4 h-4" />
@@ -456,7 +462,7 @@ function HomePage() {
               ))}
             </ul>
             <a
-              href="#pricing"
+              href="/predictable-leads-os"
               className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50"
             >
               See What’s Included <ArrowRight className="w-4 h-4" />
@@ -476,13 +482,14 @@ function HomePage() {
             </div>
           </div>
           <a
-            href="/launch"
+            href="/lead-lift-sprint"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700"
           >
             Start Sprint <ArrowRight className="w-4 h-4" />
           </a>
         </div>
       </section>
+      {/* Flagship Offers Section End */}
 
       {/* Outcomes */}
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
@@ -585,7 +592,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing Section Beginning */}
       <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">Pricing</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -665,6 +672,7 @@ function HomePage() {
           ))}
         </div>
       </section>
+      {/* Pricing Section End */}
 
       {/* FAQ */}
       <section id="faq" className="max-w-6xl mx-auto px-4 py-16 md:py-20">
