@@ -1,339 +1,428 @@
-import { ArrowRight, Calendar, Check, Gauge, LineChart, Rocket } from 'lucide-react';
+import React from 'react';
+import { ArrowRight, Check, Mail, ChevronRight } from 'lucide-react';
 
-export default function LeadLiftSprint() {
-  const inclusions = [
-    {
-      title: 'Campaigns and Channels',
-      items: [
-        'Google Search or Meta Ads sprint focused on your highest-value service',
-        'Account restructure where needed to simplify campaigns and budgets',
-        'Prospecting and retargeting campaigns tuned for your local market',
-        'Targeting refinement to reduce waste and focus on likely buyers',
-      ],
-    },
-    {
-      title: 'Landing Pages and Funnels',
-      items: [
-        'One primary sprint landing page designed for speed and clarity',
-        'Optional variant or second page to test a different angle or audience',
-        'Form and call routing check so every lead is captured correctly',
-        'Thank-you and confirmation flow designed to increase show rates',
-      ],
-    },
-    {
-      title: 'Creative and Testing',
-      items: [
-        '6–9 new ad creatives built around proven angles and objections',
-        'Test plan that defines what will be tested each week of the sprint',
-        'Headlines and copy variants for search and paid social',
-        'Structured notes so winning creatives can be reused after the sprint',
-      ],
-    },
-    {
-      title: 'Tracking and Measurement',
-      items: [
-        'Tracking QA for calls, forms, and key on-site actions',
-        'GA4 events verified for the sprint landing page and funnel',
-        'Connection between ad platforms and CRM or call tracking where possible',
-        'Simple reporting view to track cost-per-lead and booked jobs daily',
-      ],
-    },
-    {
-      title: 'Reporting and Optimization',
-      items: [
-        'Weekly mini-report that shows CPL, lead count, and key learnings',
-        'Changes to budgets, bids, and creatives based on performance',
-        'Suggestions for follow-up and sales process improvements where needed',
-        'End-of-sprint summary with clear recommendations for next steps',
-      ],
-    },
-    {
-      title: 'Handoff and Next 90 Days',
-      items: [
-        'Documented sprint results and what made the biggest impact',
-        'Prioritized testing backlog if you extend into an ongoing program',
-        'Recommendations for rolling out winners to other services or locations',
-        'Clear options: continue, move to a plan, or keep results in-house',
-      ],
-    },
-  ];
-
-  const timeline = [
-    {
-      label: 'Week 0',
-      title: 'Sprint Setup',
-      detail:
-        'We run a quick intake, access your accounts, confirm the offer, and define the CPL and lead targets for the next 30 days.',
-    },
-    {
-      label: 'Week 1',
-      title: 'Build and Launch',
-      detail:
-        'Campaigns, landing page, tracking, and initial creatives are built and launched. We keep a close eye on early lead quality.',
-    },
-    {
-      label: 'Week 2',
-      title: 'Test and Optimize',
-      detail:
-        'We swap in new creatives, refine targeting, and adjust bids and budgets based on what is driving the best leads.',
-    },
-    {
-      label: 'Week 3–4',
-      title: 'Scale and Document',
-      detail:
-        'Winning elements are pushed harder, poor performers are paused, and we document everything in a clear sprint summary.',
-    },
-  ];
-
+export default function LeadLiftSprintPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/#top" className="flex items-center gap-2 font-semibold tracking-tight">
-            <div className="w-8 h-8 rounded-xl bg-blue-700 grid place-items-center text-white">
-              <Rocket className="w-4 h-4" />
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <a href="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10">
+              <span className="text-lg font-semibold text-blue-400">R</span>
             </div>
-            <span>Rocket Growth Agency</span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold tracking-wide text-slate-50">
+                Rocket Growth Agency
+              </span>
+              <span className="text-xs text-slate-400">Predictable Lead Engine</span>
+            </div>
           </a>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-700">
-            <a href="/#results" className="hover:text-slate-900">
-              Results
+          <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
+            <a href="/#services" className="hover:text-slate-50">
+              Services
             </a>
-            <a href="/#offers" className="hover:text-slate-900">
-              Offers
+            <a href="/#industries" className="hover:text-slate-50">
+              Who We Work With
             </a>
-            <a href="/#industries" className="hover:text-slate-900">
-              Industries
+            <a href="/#pricing" className="hover:text-slate-50">
+              Plans
             </a>
-            <a href="/#pricing" className="hover:text-slate-900">
-              Pricing
+            <a href="/#contact" className="hover:text-slate-50">
+              Contact
             </a>
-            <a href="/#faq" className="hover:text-slate-900">
-              FAQ
+            <a
+              href="/#contact"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-slate-50 shadow-lg shadow-blue-500/30 hover:bg-blue-400"
+            >
+              Free Growth Audit
+              <ArrowRight className="h-4 w-4" />
             </a>
           </nav>
-          <div className="flex items-center gap-2">
-            <a
-              href="/#contact"
-              className="hidden md:inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition"
-            >
-              Start Sprint
-            </a>
-            <a
-              href="/#contact"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition"
-            >
-              Free Growth Audit <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-12 md:py-16">
-        <section className="grid md:grid-cols-2 gap-10 items-start mb-16">
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-12">
+        <section className="grid gap-10 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] md:items-start md:gap-12">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-blue-700 mb-3">Offer Detail</p>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-              Lead Lift Launch Sprint
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-blue-300">
+              30-Day Lead Lift Launch Sprint
+            </div>
+            <h1 className="mb-4 text-balance text-3xl font-semibold tracking-tight text-slate-50 md:text-4xl lg:text-5xl">
+              Turn your audit insights into a live&nbsp;
+              <span className="text-blue-400">Predictable Lead Engine in 30 days</span>
             </h1>
-            <p className="mt-4 text-lg text-slate-700">
-              A 30-day sprint that launches or rebuilds campaigns on Google or Meta, fixes tracking,
-              and aggressively tests creative and landing pages to bring your cost per lead down
-              fast.
+            <p className="mb-6 max-w-2xl text-base leading-relaxed text-slate-300">
+              You&apos;ve seen where leads are leaking. The Launch Sprint is where we fix the
+              highest-impact pieces, stand up a working lead engine, and ship your first campaigns
+              without locking you into a long-term contract.
             </p>
-            <div className="mt-6 inline-flex items-baseline gap-3">
-              <span className="text-3xl md:text-4xl font-extrabold text-slate-900">
-                $4,000 one-time
-              </span>
-              <span className="text-sm text-slate-500">
-                plus ad spend, billed direct to platforms
-              </span>
-            </div>
-            <div className="mt-4 text-sm text-slate-600">
-              Target: 20–30% lower CPL or a meaningful lift in qualified lead volume, with a clear
-              playbook you can keep using after the sprint ends.
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <a
                 href="/#contact"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-slate-50 shadow-lg shadow-blue-500/30 hover:bg-blue-400"
               >
-                Start the Sprint <Calendar className="w-4 h-4" />
+                Start Your 30-Day Launch Sprint
+                <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href="/#offers"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold hover:bg-slate-50"
+                href="#roadmap"
+                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-300 hover:text-slate-50"
               >
-                View all offers <ArrowRight className="w-4 h-4" />
+                See the 30-day roadmap
+                <ChevronRight className="h-4 w-4" />
               </a>
+            </div>
+            <div className="flex flex-wrap gap-4 text-xs text-slate-400">
+              <div className="inline-flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                30-day fixed project
+              </div>
+              <div className="inline-flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Focused on your highest-impact bottlenecks
+              </div>
+              <div className="inline-flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Clear baseline on cost per lead and booked call
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-            <div className="flex items-center gap-2 text-blue-700 text-xs uppercase tracking-[0.18em] mb-2">
-              <Gauge className="w-4 h-4" />
-              <span>Sprint Outcomes</span>
-            </div>
-            <ul className="space-y-3 text-sm text-slate-700">
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                Live campaigns with clean tracking and clear daily budgets.
+          <aside className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/60">
+            <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-400">
+              By day 30, you&apos;ll have
+            </h2>
+            <p className="mb-4 text-sm text-slate-300">
+              A working lead engine, not just a report or to-do list.
+            </p>
+            <ul className="mb-6 space-y-3 text-sm text-slate-200">
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                <span>
+                  A cleaned-up, conversion-ready lead funnel from first click or visit to booked
+                  call
+                </span>
               </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                Tested landing page and creative set built around your strongest angles.
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                <span>
+                  At least one high-intent landing page built or overhauled to match your best offer
+                </span>
               </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                Documented learnings about which messages and audiences convert best.
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                <span>
+                  Tracking in place for cost per lead, booked calls, and close rates on Sprint
+                  traffic
+                </span>
               </li>
-              <li className="flex gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                Clear decision: roll into an ongoing program, repeat the sprint, or keep it
-                in-house.
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                <span>
+                  A dialed-in follow-up path for new leads and no-shows with basic email/SMS
+                  reminders
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                <span>
+                  One or two live campaigns running with an initial baseline of what it costs to
+                  acquire a lead
+                </span>
               </li>
             </ul>
-          </div>
-        </section>
-
-        <section className="mb-16">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4">
-            What is included in the sprint
-          </h2>
-          <p className="text-sm text-slate-700 mb-6 max-w-3xl">
-            The sprint is designed to be intense but focused. Instead of adding more channels, we
-            work hard on a small number of things that meaningfully move your cost-per-lead and
-            booked jobs.
-          </p>
-          <div className="grid md:grid-cols-2 gap-6">
-            {inclusions.map((block) => (
-              <div
-                key={block.title}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="text-sm font-semibold text-slate-900 mb-2">{block.title}</div>
-                <ul className="space-y-2 text-sm text-slate-700">
-                  {block.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-xs text-slate-400">
+              At the end of the Sprint, you&apos;ll know what&apos;s working, what isn&apos;t, and
+              exactly what to do next whether you keep it in-house or have us run it for you.
+            </div>
+            <div className="mt-6 flex items-center justify-between border-t border-slate-800 pt-4 text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-slate-500" />
+                <a
+                  href="mailto:hello@rocketgrowthagency.com"
+                  className="font-medium text-slate-200 hover:text-blue-300"
+                >
+                  hello@rocketgrowthagency.com
+                </a>
               </div>
-            ))}
-          </div>
+              <span>Fixed 30-day project</span>
+            </div>
+          </aside>
         </section>
 
-        <section className="mb-16">
-          <div className="flex items-center gap-2 mb-4">
-            <LineChart className="w-5 h-5 text-blue-700" />
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">30-day sprint roadmap</h2>
-          </div>
-          <div className="grid md:grid-cols-4 gap-4 text-sm">
-            {timeline.map((step) => (
-              <div
-                key={step.label}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <div className="text-xs uppercase tracking-[0.18em] text-blue-700">
-                  {step.label}
-                </div>
-                <div className="mt-1 font-semibold text-slate-900">{step.title}</div>
-                <p className="mt-2 text-slate-700">{step.detail}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-16">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-4">
-            When the sprint is a good fit
+        <section className="mt-16 border-t border-slate-900 pt-12">
+          <h2 className="mb-3 text-xl font-semibold text-slate-50">
+            What we actually do in the 30-day Sprint
           </h2>
-          <p className="text-sm text-slate-700 mb-4 max-w-3xl">
-            The Lead Lift Launch Sprint is ideal when you want to move fast but do not want to jump
-            straight into a long-term retainer. It lets you see how we think, how we communicate,
-            and what we can do for your numbers in 30 days.
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-300">
+            We don&apos;t throw random tactics at the wall. We use your audit findings to focus on
+            the two or three parts of your funnel that will move the needle fastest.
           </p>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="font-semibold text-slate-900 mb-2">Best for</div>
-              <ul className="space-y-2 text-slate-700">
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Brands with active campaigns that are underperforming on CPL or lead quality.
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-4 text-sm text-slate-200">
+              <h3 className="text-sm font-semibold text-slate-50">Strategy and offer</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>Clarify the core offer we&apos;re pushing during the Sprint</span>
                 </li>
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Teams that need a fresh set of eyes and a structured test plan, not just tweaks.
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Align on who we&apos;re targeting and what success looks like in 30 days
+                  </span>
                 </li>
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Owners who want a clear before-and-after view within a fixed time frame.
+              </ul>
+              <h3 className="pt-4 text-sm font-semibold text-slate-50">Pages and funnels</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Build or overhaul at least one conversion-ready landing page mapped to your best
+                    offer
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>Tighten above-the-fold messaging, proof, and call-to-action</span>
                 </li>
               </ul>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="font-semibold text-slate-900 mb-2">Not ideal for</div>
-              <ul className="space-y-2 text-slate-700">
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Completely new businesses with no offer, pricing, or intake process defined yet.
+            <div className="space-y-4 text-sm text-slate-200">
+              <h3 className="text-sm font-semibold text-slate-50">Traffic and campaigns</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Set up or restructure one or two campaigns on Google Search, Meta, or both,
+                    depending on fit
+                  </span>
                 </li>
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Situations where approvals or creative assets will take weeks to produce.
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>Implement basic negatives and filters to cut obvious wasted spend</span>
                 </li>
-                <li className="flex gap-2">
-                  <Check className="w-4 h-4 mt-0.5 text-blue-700" />
-                  Teams who cannot act on sprint findings after the initial 30 days.
+              </ul>
+              <h3 className="pt-4 text-sm font-semibold text-slate-50">Follow-up and ops</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>Map how leads are routed through forms, calls, and calendars</span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Add or fix email and SMS follow-up for new leads and no-shows, including basic
+                    reminders
+                  </span>
+                </li>
+              </ul>
+              <h3 className="pt-4 text-sm font-semibold text-slate-50">Tracking and reporting</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Implement baseline tracking with UTMs, events, and form captures tied to your
+                    goals
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-blue-400" />
+                  <span>
+                    Set up a simple weekly report so you see what you&apos;re paying per lead and
+                    per booked call
+                  </span>
                 </li>
               </ul>
             </div>
           </div>
         </section>
 
-        <section className="border-t border-slate-200 pt-10 mb-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <section id="roadmap" className="mt-16 border-t border-slate-900 pt-12">
+          <h2 className="mb-3 text-xl font-semibold text-slate-50">The 30-day roadmap</h2>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-300">
+            Here&apos;s how the Sprint actually runs, week by week.
+          </p>
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Week 1
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">Foundation and setup</h3>
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li>Align on goals, offer, and target market</li>
+                <li>Finalize Sprint plan and priorities</li>
+                <li>Build or overhaul your primary landing page</li>
+                <li>Set up tracking and connect to your CRM or calendar where possible</li>
+              </ul>
+            </div>
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Week 2
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">Campaigns live</h3>
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li>Launch one or two campaigns on the agreed channels</li>
+                <li>Start routing leads into your intake process</li>
+                <li>Fix early friction on forms, numbers, calendars, and routing</li>
+                <li>Begin collecting real-world performance data</li>
+              </ul>
+            </div>
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Weeks 3–4
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">Optimization and handoff</h3>
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li>Review performance and optimize bids, targeting, and creative</li>
+                <li>Tighten follow-up sequences and reminders</li>
+                <li>Address bottlenecks like no-shows and slow response times</li>
+                <li>
+                  Lock in what&apos;s working and present a 60–90 day plan for scale or OS
+                  engagement
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-slate-900 pt-12">
+          <h2 className="mb-3 text-xl font-semibold text-slate-50">Who the Launch Sprint is for</h2>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-300">
+            The Sprint is designed for owners who want a working system and clear numbers, not just
+            more marketing ideas.
+          </p>
+          <div className="grid gap-8 md:grid-cols-2">
             <div>
-              <div className="text-xs uppercase tracking-[0.18em] text-slate-600">
-                Ready for a focused 30 days
-              </div>
-              <div className="text-lg font-semibold text-slate-900 mt-1">
-                See what a structured sprint can do for your lead flow.
-              </div>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-300">
+                A good fit if you
+              </h3>
+              <ul className="space-y-3 text-sm text-slate-200">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                  <span>
+                    Have leads coming in but know you&apos;re leaving money on the table in your
+                    funnel
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                  <span>Want to move fast, test smart, and see clear numbers in 30 days</span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                  <span>Are willing to collaborate weekly and make decisions quickly</span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-emerald-400" />
+                  <span>Care more about a working system than a pretty slide deck</span>
+                </li>
+              </ul>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-pink-300">
+                Not a fit if you
+              </h3>
+              <ul className="space-y-3 text-sm text-slate-200">
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-pink-400" />
+                  <span>Are not prepared to invest ad spend during the Sprint</span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-pink-400" />
+                  <span>
+                    Don&apos;t have the capacity to handle more leads in the next 1–2 months
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-pink-400" />
+                  <span>
+                    Prefer a completely hands-off relationship where you never engage with the
+                    numbers
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-slate-900 pt-12">
+          <h2 className="mb-3 text-xl font-semibold text-slate-50">
+            What happens after the Sprint
+          </h2>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-300">
+            At the end of 30 days, you&apos;ll have a working lead engine and real data. From there,
+            you have options.
+          </p>
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Option 1
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">Keep running it in-house</h3>
+              <p className="mb-4 text-xs text-slate-300">
+                Use our pages, campaigns, and tracking setup as your new baseline. We&apos;ll hand
+                everything off cleanly to you or your team.
+              </p>
+            </div>
+            <div className="flex flex-col rounded-2xl border border-blue-500/50 bg-blue-500/10 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-300">
+                Option 2
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">
+                Continue with another Sprint
+              </h3>
+              <p className="mb-4 text-xs text-slate-200">
+                Want to tackle a new market, offer, or channel? We can scope a second Sprint focused
+                on expanding what&apos;s working.
+              </p>
+            </div>
+            <div className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Option 3
+              </p>
+              <h3 className="mb-2 text-sm font-semibold text-slate-50">Predictable Leads OS</h3>
+              <p className="mb-4 text-xs text-slate-300">
+                If you want us to run and optimize your lead engine month after month, we&apos;ll
+                map what a Predictable Leads OS engagement looks like for your business.
+              </p>
+              <a
+                href="/predictable-leads-os"
+                className="mt-auto inline-flex items-center gap-1 text-xs font-medium text-blue-300 hover:text-blue-200"
+              >
+                See Predictable Leads OS
+                <ChevronRight className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+          <div className="mt-10 flex flex-col gap-3 border-t border-slate-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-50">
+                In 30 days, you&apos;ll know if your lead engine can scale.
+              </p>
+              <p className="text-xs text-slate-400">
+                The Launch Sprint is the bridge between your Free Growth Audit and a full
+                Predictable Leads OS.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <a
                 href="/#contact"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-3 font-semibold hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-slate-50 shadow-lg shadow-blue-500/30 hover:bg-blue-400"
               >
-                Start the Sprint <Calendar className="w-4 h-4" />
+                Start Your 30-Day Launch Sprint
               </a>
               <a
                 href="mailto:hello@rocketgrowthagency.com"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 text-xs font-medium text-slate-300 hover:text-slate-50"
               >
-                Email the team
+                <Mail className="h-4 w-4" />
+                Or email the team directly
               </a>
             </div>
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-4 py-8 text-sm text-slate-600 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>© {new Date().getFullYear()} Rocket Growth Agency. All rights reserved.</div>
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-slate-900">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-slate-900">
-              Terms
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
