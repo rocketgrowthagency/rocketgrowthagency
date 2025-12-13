@@ -1,16 +1,16 @@
-const fs = require("fs");
-const path = require("path");
-const puppeteer = require("puppeteer-extra");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const slugify = require("slugify");
+const fs = require('fs');
+const path = require('path');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const slugify = require('slugify');
 
 const stealth = StealthPlugin();
-stealth.enabledEvasions.delete("user-agent-override");
-stealth.enabledEvasions.delete("sourceurl");
+stealth.enabledEvasions.delete('user-agent-override');
+stealth.enabledEvasions.delete('sourceurl');
 puppeteer.use(stealth);
 
 const SEARCH_QUERY =
-  process.env.SEARCH_QUERY || process.argv.slice(2).join(" ") || "Dentists near Los Angeles CA";
+  process.env.SEARCH_QUERY || process.argv.slice(2).join(' ') || 'Dentists near Los Angeles CA';
 
 const TARGET_UNIQUE_PLACES = Number(process.env.TARGET_UNIQUE_PLACES || 55);
 const SCROLL_MAX_ITERS = Number(process.env.SCROLL_MAX_ITERS || 55);
@@ -20,9 +20,9 @@ const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS || 90000);
 const RESULTS_READY_TIMEOUT_MS = Number(process.env.RESULTS_READY_TIMEOUT_MS || 70000);
 const PLACE_READY_TIMEOUT_MS = Number(process.env.PLACE_READY_TIMEOUT_MS || 65000);
 
-const OUTPUT_DIR = path.join(process.cwd(), "output");
-const STEP1_DIR = path.join(OUTPUT_DIR, "Step 1");
-const DEBUG_DIR = path.join(OUTPUT_DIR, "debug");
+const OUTPUT_DIR = path.join(process.cwd(), 'output');
+const STEP1_DIR = path.join(OUTPUT_DIR, 'Step 1');
+const DEBUG_DIR = path.join(OUTPUT_DIR, 'debug');
 
 fs.mkdirSync(STEP1_DIR, { recursive: true });
 fs.mkdirSync(DEBUG_DIR, { recursive: true });
@@ -34,32 +34,39 @@ function delay(ms) {
 function todayISO() {
   const d = new Date();
   const yyyy = String(d.getFullYear());
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
 function safeSlug(s) {
   return (
-    slugify(String(s || ""), { lower: true, strict: true, trim: true }).slice(0, 80) || "query"
+    slugify(String(s || ''), { lower: true, strict: true, trim: true }).slice(0, 80) || 'query'
   );
 }
 
 function csvEscape(v) {
-  const s = v == null ? "" : String(v);
+  const s = v == null ? '' : String(v);
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
 
 function parseUSAddress(full) {
-  const out = { address: "", city: "", state: "", zip: "" };
-  const s = String(full || "").trim();
+  const out = { address: '', city: '', state: '', zip: '' };
+  const s = String(full || '').trim();
   if (!s) return out;
 
-  const cleaned = s.replace(/^[\s\uE000-\uF8FF]+/g, "").replace(/\s+/g, " ").trim();
+  const cleaned = s
+    .replace(/^[\s\uE000-\uF8FF]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   out.address = cleaned;
 
-  const parts = cleaned.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = cleaned
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+
   if (parts.length >= 3) {
     const city = parts[parts.length - 2];
     const stZip = parts[parts.length - 1];
@@ -78,16 +85,16 @@ function parseUSAddress(full) {
 }
 
 function simplifyPlaceUrl(u) {
-  const s = String(u || "");
-  const i = s.indexOf("/data=");
+  const s = String(u || '');
+  const i = s.indexOf('/data=');
   if (i > -1) return s.slice(0, i);
-  const j = s.indexOf("?authuser=");
+  const j = s.indexOf('?authuser=');
   if (j > -1) return s.slice(0, j);
   return s;
 }
 
 function placeKeysFromUrl(u) {
-  const s = String(u || "");
+  const s = String(u || '');
   const keys = [];
   const m1 = s.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);
   if (m1 && m1[1]) keys.push(m1[1]);
@@ -100,6 +107,13 @@ function placeKeysFromUrl(u) {
   return Array.from(new Set(keys));
 }
 
+function latLngFromAnyUrl(u) {
+  const s = String(u || '');
+  const m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (!m) return { lat: '', lng: '' };
+  return { lat: m[1] || '', lng: m[2] || '' };
+}
+
 async function saveDebug(page, label) {
   const ts = Date.now();
   const png = path.join(DEBUG_DIR, `${label}_${ts}.png`);
@@ -109,7 +123,7 @@ async function saveDebug(page, label) {
   } catch {}
   try {
     const content = await page.content();
-    fs.writeFileSync(html, content, "utf8");
+    fs.writeFileSync(html, content, 'utf8');
   } catch {}
   console.log(`🧩 saved debug: ${png}`);
   console.log(`🧩 saved debug: ${html}`);
@@ -119,7 +133,10 @@ async function waitForAny(page, selectors, timeoutMs) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     for (const sel of selectors) {
-      const ok = await page.$(sel).then((h) => !!h).catch(() => false);
+      const ok = await page
+        .$(sel)
+        .then((h) => !!h)
+        .catch(() => false);
       if (ok) return sel;
     }
     await delay(350);
@@ -130,7 +147,7 @@ async function waitForAny(page, selectors, timeoutMs) {
 async function waitForResultsUI(page) {
   const ok = await waitForAny(
     page,
-    ['div[role="feed"]', "div.Nv2PK", 'a[href*="/maps/place/"]'],
+    ['div[role="feed"]', 'div.Nv2PK', 'a[href*="/maps/place/"]'],
     RESULTS_READY_TIMEOUT_MS
   );
   return ok;
@@ -138,20 +155,20 @@ async function waitForResultsUI(page) {
 
 async function openSearch(page, query) {
   const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
-  console.log("🌍 Opening Google Maps search...");
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
+  console.log('🌍 Opening Google Maps search...');
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
 
   const ok = await waitForResultsUI(page);
   if (!ok) {
-    await saveDebug(page, "fatal_results_results_timeout");
-    throw new Error("Results UI not ready: results_timeout");
+    await saveDebug(page, 'fatal_results_results_timeout');
+    throw new Error('Results UI not ready: results_timeout');
   }
 }
 
 async function getFeedHandle(page) {
   const feed = await page.$('div[role="feed"]').catch(() => null);
   if (feed) return feed;
-  const alt = await page.$(".m6QErb.DxyBCb.kA9KIf.dS8AEf").catch(() => null);
+  const alt = await page.$('.m6QErb.DxyBCb.kA9KIf.dS8AEf').catch(() => null);
   if (alt) return alt;
   return null;
 }
@@ -159,38 +176,54 @@ async function getFeedHandle(page) {
 async function countResults(page) {
   return await page
     .evaluate(() => {
-      const cards = document.querySelectorAll("div.Nv2PK").length;
+      const cards = document.querySelectorAll('div.Nv2PK').length;
       const placeLinks = document.querySelectorAll('a[href*="/maps/place/"]').length;
       return { cards, placeLinks };
     })
     .catch(() => ({ cards: 0, placeLinks: 0 }));
 }
 
-async function collectPlaceUrls(page, max = 800) {
+async function collectPlaceEntries(page, max = 800) {
   return await page
     .evaluate((maxN) => {
-      const set = new Set();
+      const out = [];
+      const seen = new Set();
+
       const anchors = Array.from(document.querySelectorAll('a[href*="/maps/place/"]'));
-      for (const a of anchors) {
-        const href = a.getAttribute("href") || "";
-        if (!href) continue;
+      function abs(href) {
+        if (!href) return '';
         let u = href;
-        if (u.startsWith("/")) u = location.origin + u;
-        if (!u.includes("google.com/maps/place/")) continue;
-        set.add(u);
-        if (set.size >= maxN) break;
+        if (u.startsWith('/')) u = location.origin + u;
+        return u;
       }
-      return Array.from(set);
+
+      for (const a of anchors) {
+        const href = abs(a.getAttribute('href') || '');
+        if (!href || !href.includes('google.com/maps/place/')) continue;
+
+        const key = href;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const card = a.closest('div.Nv2PK');
+        const cardText = card ? card.innerText || card.textContent || '' : '';
+        const isSponsored = /sponsored/i.test(cardText);
+
+        out.push({ placeUrl: href, isSponsored });
+        if (out.length >= maxN) break;
+      }
+
+      return out;
     }, max)
     .catch(() => []);
 }
 
 async function scrollUntilLoaded(page) {
-  console.log("🔄 Scrolling the feed until all results are loaded...");
+  console.log('🔄 Scrolling the feed until all results are loaded...');
   const feed = await getFeedHandle(page);
   if (!feed) {
-    await saveDebug(page, "fatal_no_feed");
-    throw new Error("Could not find results feed container");
+    await saveDebug(page, 'fatal_no_feed');
+    throw new Error('Could not find results feed container');
   }
 
   let stable = 0;
@@ -229,15 +262,30 @@ async function scrollUntilLoaded(page) {
     if (stable >= SCROLL_STABLE_ITERS) break;
   }
 
-  console.log("✅ Scroll complete.");
+  console.log('✅ Scroll complete.');
+}
+
+async function isBlankLike(page) {
+  return await page
+    .evaluate(() => {
+      const txt = (document.body?.innerText || '').trim();
+      const nodes = document.querySelectorAll('*').length;
+      const title = (document.title || '').trim();
+      const looksLikeMaps = /google maps/i.test(title);
+      if (txt.length >= 5) return false;
+      if (nodes >= 30) return false;
+      if (!looksLikeMaps && nodes < 10) return true;
+      return nodes < 20 && txt.length === 0;
+    })
+    .catch(() => false);
 }
 
 async function extractPlaceDetails(page) {
   return await page
     .evaluate(() => {
       function textFrom(el) {
-        if (!el) return "";
-        return (el.innerText || el.textContent || "").trim();
+        if (!el) return '';
+        return (el.innerText || el.textContent || '').trim();
       }
 
       function firstText(selectors) {
@@ -246,10 +294,10 @@ async function extractPlaceDetails(page) {
           const t = textFrom(el);
           if (t) return t;
         }
-        return "";
+        return '';
       }
 
-      function byDataItemId(id) {
+      function byDataItemIdExact(id) {
         const el =
           document.querySelector(`[data-item-id="${id}"]`) ||
           document.querySelector(`button[data-item-id="${id}"]`) ||
@@ -257,9 +305,17 @@ async function extractPlaceDetails(page) {
         return textFrom(el);
       }
 
+      function byDataItemIdPrefix(prefix) {
+        const el =
+          document.querySelector(`[data-item-id^="${prefix}"]`) ||
+          document.querySelector(`button[data-item-id^="${prefix}"]`) ||
+          document.querySelector(`a[data-item-id^="${prefix}"]`);
+        return textFrom(el);
+      }
+
       function hrefByDataItemId(id) {
         const el = document.querySelector(`a[data-item-id="${id}"]`) || null;
-        const href = el ? (el.getAttribute("href") || "").trim() : "";
+        const href = el ? (el.getAttribute('href') || '').trim() : '';
         return href;
       }
 
@@ -269,15 +325,15 @@ async function extractPlaceDetails(page) {
       }
 
       function findReviews() {
-        const btn = Array.from(document.querySelectorAll("button, a")).find((x) =>
-          /reviews/i.test((x.getAttribute("aria-label") || "") + " " + (x.textContent || ""))
+        const btn = Array.from(document.querySelectorAll('button, a')).find((x) =>
+          /reviews/i.test((x.getAttribute('aria-label') || '') + ' ' + (x.textContent || ''))
         );
         const t = textFrom(btn);
         const m = t.match(/([\d,]+)\s*reviews?/i);
-        if (m) return m[1].replace(/,/g, "");
-        const m2 = (btn && (btn.getAttribute("aria-label") || "")).match(/([\d,]+)\s*reviews?/i);
-        if (m2) return m2[1].replace(/,/g, "");
-        return "";
+        if (m) return m[1].replace(/,/g, '');
+        const m2 = (btn && (btn.getAttribute('aria-label') || '')).match(/([\d,]+)\s*reviews?/i);
+        if (m2) return m2[1].replace(/,/g, '');
+        return '';
       }
 
       function findCategory() {
@@ -285,49 +341,80 @@ async function extractPlaceDetails(page) {
           'button[jsaction*="pane.rating.category"]',
           'button[jsaction*="pane.rating.more"]',
           'button[aria-label*="Category"]',
-          'button[aria-label*="category"]'
+          'button[aria-label*="category"]',
         ];
         for (const s of sel) {
           const el = document.querySelector(s);
           const t = textFrom(el);
           if (t && t.length < 80) return t;
         }
-        const bucket = Array.from(document.querySelectorAll("button, div, span")).slice(0, 260);
-        for (const el of bucket) {
-          const t = textFrom(el);
-          if (!t) continue;
-          if (t.length >= 3 && t.length <= 55) {
-            if (/directions|save|nearby|send to|share|add a photo|claim/i.test(t)) continue;
-            return t;
-          }
-        }
-        return "";
+        return '';
       }
 
-      const name = firstText(["h1.DUwDvf", "h1"]);
-      const address = byDataItemId("address");
-      const phone = byDataItemId("phone");
-      const website = hrefByDataItemId("authority");
+      function findHeroImageUrl() {
+        const candidates = [];
+
+        const og = document.querySelector('meta[property="og:image"]');
+        if (og) {
+          const c = (og.getAttribute('content') || '').trim();
+          if (c) candidates.push(c);
+        }
+
+        const heroImgs = Array.from(document.querySelectorAll('img[src]'));
+        for (const img of heroImgs) {
+          const src = (img.getAttribute('src') || '').trim();
+          if (!src) continue;
+          if (
+            /googleusercontent\.com\/p\//i.test(src) ||
+            /lh\d\.googleusercontent\.com/i.test(src)
+          ) {
+            candidates.push(src);
+          }
+        }
+
+        const uniq = Array.from(new Set(candidates));
+        if (!uniq.length) return '';
+        uniq.sort((a, b) => b.length - a.length);
+        return uniq[0];
+      }
+
+      function findBestMapsUrl() {
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        const ogu = ogUrl ? (ogUrl.getAttribute('content') || '').trim() : '';
+        if (ogu) return ogu;
+        return location.href;
+      }
+
+      const name = firstText(['h1.DUwDvf', 'h1']);
+      const address = byDataItemIdExact('address');
+      const phone = byDataItemIdExact('phone') || byDataItemIdPrefix('phone:tel');
+      const website = hrefByDataItemId('authority');
       const rating = findRating();
       const reviews = findReviews();
       const category = findCategory();
+      const imageUrl = findHeroImageUrl();
+      const mapsUrl = findBestMapsUrl();
 
-      return { name, address, phone, website, rating, reviews, category };
+      return { name, address, phone, website, rating, reviews, category, imageUrl, mapsUrl };
     })
     .catch(() => ({
-      name: "",
-      address: "",
-      phone: "",
-      website: "",
-      rating: "",
-      reviews: "",
-      category: ""
+      name: '',
+      address: '',
+      phone: '',
+      website: '',
+      rating: '',
+      reviews: '',
+      category: '',
+      imageUrl: '',
+      mapsUrl: '',
     }));
 }
 
 async function goBackToResults(page, query) {
   const isPlace = await page
-    .evaluate(() => location.href.includes("/maps/place/") || location.pathname.includes("/maps/place/"))
+    .evaluate(
+      () => location.href.includes('/maps/place/') || location.pathname.includes('/maps/place/')
+    )
     .catch(() => false);
 
   if (!isPlace) return true;
@@ -349,7 +436,7 @@ async function goBackToResults(page, query) {
 
   if (!clicked) {
     try {
-      await page.goBack({ waitUntil: "domcontentloaded", timeout: 25000 });
+      await page.goBack({ waitUntil: 'domcontentloaded', timeout: 25000 });
     } catch {
       try {
         await page.evaluate(() => history.back());
@@ -357,7 +444,11 @@ async function goBackToResults(page, query) {
     }
   }
 
-  const ok = await waitForAny(page, ['div[role="feed"]', "div.Nv2PK", 'a[href*="/maps/place/"]'], 25000);
+  const ok = await waitForAny(
+    page,
+    ['div[role="feed"]', 'div.Nv2PK', 'a[href*="/maps/place/"]'],
+    25000
+  );
   if (ok) return true;
 
   try {
@@ -370,7 +461,11 @@ async function goBackToResults(page, query) {
 }
 
 async function ensureOnResults(page, query) {
-  const ok = await waitForAny(page, ['div[role="feed"]', "div.Nv2PK", 'a[href*="/maps/place/"]'], 6000);
+  const ok = await waitForAny(
+    page,
+    ['div[role="feed"]', 'div.Nv2PK', 'a[href*="/maps/place/"]'],
+    6000
+  );
   if (ok) return;
   await openSearch(page, query);
   await delay(1200);
@@ -383,19 +478,21 @@ async function openPlaceByClick(page, placeUrl) {
     .evaluate((keysIn) => {
       const anchors = Array.from(document.querySelectorAll('a[href*="/maps/place/"]'));
       function norm(h) {
-        if (!h) return "";
+        if (!h) return '';
         let u = h;
-        if (u.startsWith("/")) u = location.origin + u;
+        if (u.startsWith('/')) u = location.origin + u;
         return u;
       }
+
       for (const a of anchors) {
-        const href = norm(a.getAttribute("href") || "");
+        const href = norm(a.getAttribute('href') || '');
         if (!href) continue;
+
         for (const k of keysIn) {
           if (!k) continue;
           if (href.includes(k) || href === k) {
             try {
-              a.scrollIntoView({ block: "center" });
+              a.scrollIntoView({ block: 'center' });
             } catch {}
             try {
               a.click();
@@ -412,11 +509,22 @@ async function openPlaceByClick(page, placeUrl) {
 
   const ok = await waitForAny(
     page,
-    ["h1.DUwDvf", "h1", '[data-item-id="address"]', 'a[data-item-id="authority"]', 'button[data-item-id="phone"]'],
+    [
+      'h1.DUwDvf',
+      '[data-item-id="address"]',
+      'a[data-item-id="authority"]',
+      'button[data-item-id="phone"]',
+    ],
     PLACE_READY_TIMEOUT_MS
   );
 
-  return !!ok;
+  const onPlace = await page
+    .evaluate(
+      () => location.href.includes('/maps/place/') || location.pathname.includes('/maps/place/')
+    )
+    .catch(() => false);
+
+  return !!ok && onPlace;
 }
 
 async function gotoPlaceSameTab(page, placeUrl) {
@@ -426,17 +534,37 @@ async function gotoPlaceSameTab(page, placeUrl) {
   for (const u of tryUrls) {
     try {
       const t0 = Date.now();
-      await page.goto(u, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT_MS });
+      await page.goto(u, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
       const dt = ((Date.now() - t0) / 1000).toFixed(1);
       console.log(`✅ place loaded in ${dt}s`);
 
+      const blank1 = await isBlankLike(page);
+      if (blank1) {
+        console.log('⚠️ blank place page detected; reloading once...');
+        await page
+          .reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS })
+          .catch(() => {});
+        await delay(500);
+      }
+
       const ok = await waitForAny(
         page,
-        ["h1.DUwDvf", "h1", '[data-item-id="address"]', 'a[data-item-id="authority"]', 'button[data-item-id="phone"]'],
+        [
+          'h1.DUwDvf',
+          '[data-item-id="address"]',
+          'a[data-item-id="authority"]',
+          'button[data-item-id="phone"]',
+        ],
         PLACE_READY_TIMEOUT_MS
       );
 
-      if (!ok) throw new Error("Place UI not ready");
+      const onPlace = await page
+        .evaluate(
+          () => location.href.includes('/maps/place/') || location.pathname.includes('/maps/place/')
+        )
+        .catch(() => false);
+
+      if (!ok || !onPlace) throw new Error('Place UI not ready');
       return true;
     } catch (e) {
       lastErr = e;
@@ -447,19 +575,58 @@ async function gotoPlaceSameTab(page, placeUrl) {
   return false;
 }
 
+async function openPlaceRobust(page, placeUrl) {
+  try {
+    const ok = await gotoPlaceSameTab(page, placeUrl);
+    if (!ok) return false;
+
+    await delay(350);
+
+    const details = await extractPlaceDetails(page);
+    const name = (details.name || '').trim();
+
+    if (!name || /^results$/i.test(name)) throw new Error(`Bad place name after goto: "${name}"`);
+    return true;
+  } catch {
+    try {
+      await ensureOnResults(page, SEARCH_QUERY);
+      const clicked = await openPlaceByClick(page, placeUrl);
+      if (!clicked) return false;
+
+      await delay(450);
+
+      const blank2 = await isBlankLike(page);
+      if (blank2) {
+        await page
+          .reload({ waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS })
+          .catch(() => {});
+        await delay(500);
+      }
+
+      const details = await extractPlaceDetails(page);
+      const name = (details.name || '').trim();
+      if (!name || /^results$/i.test(name)) return false;
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
 async function main() {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-blink-features=AutomationControlled",
-      "--disable-dev-shm-usage",
-      "--no-first-run",
-      "--no-default-browser-check"
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-dev-shm-usage',
+      '--no-first-run',
+      '--no-default-browser-check',
     ],
-    executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   });
 
   let mainPage = null;
@@ -469,15 +636,15 @@ async function main() {
     const page = pages && pages.length ? pages[0] : await browser.newPage();
     mainPage = page;
 
-    page.on("popup", async (p) => {
+    page.on('popup', async (p) => {
       try {
         await p.close();
       } catch {}
     });
 
-    browser.on("targetcreated", async (target) => {
+    browser.on('targetcreated', async (target) => {
       try {
-        if (target.type() !== "page") return;
+        if (target.type() !== 'page') return;
         const opener = target.opener && (await target.opener().catch(() => null));
         if (!opener) return;
         const p = await target.page().catch(() => null);
@@ -495,116 +662,135 @@ async function main() {
 
     const initialResultsOk = await waitForResultsUI(page);
     if (!initialResultsOk) {
-      await saveDebug(page, "fatal_results_first_render");
-      throw new Error("Results UI not ready after openSearch");
+      await saveDebug(page, 'fatal_results_first_render');
+      throw new Error('Results UI not ready after openSearch');
     }
 
     await scrollUntilLoaded(page);
 
-    const rawUrls = await collectPlaceUrls(page, 800);
-    const placeUrls = Array.from(new Set(rawUrls)).slice(0, 500);
+    const rawEntries = await collectPlaceEntries(page, 800);
+    const entriesUniq = [];
+    const seenEntry = new Set();
 
-    console.log(`📋 Cards with usable place URLs: ${placeUrls.length} (these are what we’ll scrape).`);
+    for (const e of rawEntries) {
+      const u = e && e.placeUrl ? String(e.placeUrl) : '';
+      if (!u) continue;
+      const key = simplifyPlaceUrl(u);
+      if (seenEntry.has(key)) continue;
+      seenEntry.add(key);
+      entriesUniq.push({ placeUrl: u, isSponsored: !!e.isSponsored });
+      if (entriesUniq.length >= 500) break;
+    }
+
+    console.log(
+      `📋 Cards with usable place URLs: ${entriesUniq.length} (these are what we’ll scrape).`
+    );
 
     const date = todayISO();
-    const querySlug = safeSlug(SEARCH_QUERY.replace(/\bnear\b/i, "").trim());
+    const querySlug = safeSlug(SEARCH_QUERY.replace(/\bnear\b/i, '').trim());
     const outFile = path.join(STEP1_DIR, `${date}_${querySlug}-[step-1].csv`);
 
     const header = [
-      "rank",
-      "searchTerm",
-      "source",
-      "name",
-      "address",
-      "city",
-      "state",
-      "zip",
-      "phone",
-      "website",
-      "rating",
-      "reviews",
-      "category",
-      "placeUrl"
+      'Business Name',
+      'Address',
+      'City',
+      'State',
+      'ZIP Code',
+      'Phone',
+      'Website',
+      'Detected Category',
+      'Rating',
+      'Reviews',
+      'Search Term',
+      'Map Rank',
+      'Search Source',
+      'Image URL',
+      'Sponsored?',
+      'Google Maps URL',
+      'Latitude',
+      'Longitude',
     ];
 
-    const ws = fs.createWriteStream(outFile, { flags: "w" });
-    ws.write(header.join(",") + "\n");
+    const ws = fs.createWriteStream(outFile, { flags: 'w' });
+    ws.write(header.join(',') + '\n');
 
-    const seen = new Set();
+    const seenPlaces = new Set();
     let written = 0;
 
-    for (let i = 0; i < placeUrls.length; i++) {
-      const rank = i + 1;
-      const placeUrl = placeUrls[i];
-      const dedupeKey = simplifyPlaceUrl(placeUrl);
+    for (let i = 0; i < entriesUniq.length; i++) {
+      const mapRank = i + 1;
+      const placeUrl = entriesUniq[i].placeUrl;
+      const sponsored = entriesUniq[i].isSponsored ? 'Yes' : 'No';
 
-      if (seen.has(dedupeKey)) continue;
-      seen.add(dedupeKey);
+      const dedupeKey = simplifyPlaceUrl(placeUrl);
+      if (seenPlaces.has(dedupeKey)) continue;
+      seenPlaces.add(dedupeKey);
 
       await goBackToResults(page, SEARCH_QUERY);
       await ensureOnResults(page, SEARCH_QUERY);
 
       console.log(
-        `[${rank}/${placeUrls.length}] scraping: ${
-          placeUrl.split("/maps/place/")[1]
-            ? decodeURIComponent(placeUrl.split("/maps/place/")[1].split("/")[0])
-            : "place"
+        `[${mapRank}/${entriesUniq.length}] scraping: ${
+          placeUrl.split('/maps/place/')[1]
+            ? decodeURIComponent(placeUrl.split('/maps/place/')[1].split('/')[0])
+            : 'place'
         }`
       );
       console.log(`   ↳ opening place: ${placeUrl}`);
 
       try {
-        let opened = await openPlaceByClick(page, placeUrl);
-        if (!opened) opened = await gotoPlaceSameTab(page, placeUrl);
-        if (!opened) throw new Error("Could not open place");
+        const opened = await openPlaceRobust(page, placeUrl);
+        if (!opened) throw new Error('Could not open place robustly');
 
-        await delay(450);
+        await delay(350);
 
         const details = await extractPlaceDetails(page);
-        const name = (details.name || "").trim();
-        const addr = (details.address || "").trim().replace(/^[\s\uE000-\uF8FF]+/g, "").trim();
-        const parsed = parseUSAddress(addr);
 
-        const row = {
-          rank,
-          searchTerm: SEARCH_QUERY,
-          source: "Google Maps",
+        const name = (details.name || '').trim();
+        if (!name || /^results$/i.test(name)) throw new Error(`Bad name extracted: "${name}"`);
+
+        const addrRaw = (details.address || '')
+          .trim()
+          .replace(/^[\s\uE000-\uF8FF]+/g, '')
+          .trim();
+
+        const parsed = parseUSAddress(addrRaw);
+
+        const mapsUrl =
+          simplifyPlaceUrl(details.mapsUrl || page.url() || placeUrl) || simplifyPlaceUrl(placeUrl);
+
+        const llFromMaps = latLngFromAnyUrl(mapsUrl);
+        const llFromPage = latLngFromAnyUrl(page.url());
+        const lat = llFromMaps.lat || llFromPage.lat || '';
+        const lng = llFromMaps.lng || llFromPage.lng || '';
+
+        const rowOut = [
           name,
-          address: parsed.address,
-          city: parsed.city,
-          state: parsed.state,
-          zip: parsed.zip,
-          phone: (details.phone || "").trim(),
-          website: (details.website || "").trim(),
-          rating: (details.rating || "").trim(),
-          reviews: (details.reviews || "").trim(),
-          category: (details.category || "").trim(),
-          placeUrl
-        };
+          parsed.address,
+          parsed.city,
+          parsed.state,
+          parsed.zip,
+          (details.phone || '').trim(),
+          (details.website || '').trim(),
+          (details.category || '').trim(),
+          (details.rating || '').trim(),
+          (details.reviews || '').trim(),
+          SEARCH_QUERY,
+          String(mapRank),
+          'Google Maps',
+          (details.imageUrl || '').trim(),
+          sponsored,
+          mapsUrl,
+          lat,
+          lng,
+        ];
 
-        ws.write(
-          [
-            row.rank,
-            row.searchTerm,
-            row.source,
-            row.name,
-            row.address,
-            row.city,
-            row.state,
-            row.zip,
-            row.phone,
-            row.website,
-            row.rating,
-            row.reviews,
-            row.category,
-            row.placeUrl
-          ]
-            .map(csvEscape)
-            .join(",") + "\n"
-        );
+        ws.write(rowOut.map(csvEscape).join(',') + '\n');
 
         written++;
-        console.log(`[${rank}/${placeUrls.length}] ✅ saved: ${row.name || "(no name)"} (written=${written})`);
+        console.log(
+          `[${mapRank}/${entriesUniq.length}] ✅ saved: ${name || '(no name)'} (written=${written})`
+        );
 
         await goBackToResults(page, SEARCH_QUERY);
 
@@ -614,7 +800,7 @@ async function main() {
       } catch (e) {
         const msg = e && e.message ? e.message : String(e);
         console.log(`   ❌ error loading place ${placeUrl}: ${msg}`);
-        await saveDebug(page, `place_error_${rank}`);
+        await saveDebug(page, `place_error_${mapRank}`);
         try {
           await goBackToResults(page, SEARCH_QUERY);
         } catch {}
@@ -624,7 +810,7 @@ async function main() {
     ws.end();
     console.log(`📁 Done! Saved ${written} listings to ${outFile}`);
   } catch (e) {
-    console.error("❌ Error during scraping:", e);
+    console.error('❌ Error during scraping:', e);
   } finally {
     await browser.close().catch(() => {});
   }
