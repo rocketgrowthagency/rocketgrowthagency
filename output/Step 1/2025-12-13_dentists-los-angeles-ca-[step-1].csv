@@ -1,0 +1,66 @@
+rank,searchTerm,source,name,address,city,state,zip,phone,website,rating,reviews,category,placeUrl
+1,Dentists near Los Angeles CA,Google Maps,"Danishwar Dentistry: Afsana Danishwar, DDS","5814 Obama Blvd, Los Angeles, CA 90016",Los Angeles,CA,90016,,https://www.danishwardentistry.com/,4.8,,"Danishwar Dentistry: Afsana Danishwar, DDS","https://www.google.com/maps/place/Danishwar+Dentistry:+Afsana+Danishwar,+DDS/data=!4m7!3m6!1s0x80c29007be3dbe7d:0x32d20e48bcafcc36!8m2!3d34.0211387!4d-118.3729709!16s%2Fg%2F1tdhf7tc!19sChIJfb49vgeQwoARNsyvvEgO0jI?authuser=0&hl=en&rclk=1"
+2,Dentists near Los Angeles CA,Google Maps,Ladera Dental,"5814 Obama Blvd, Los Angeles, CA 90016",Los Angeles,CA,90016,,https://www.danishwardentistry.com/,3.9,,"Ladera Dental
+3.9
+(33)
+Dentist·",https://www.google.com/maps/place/Ladera+Dental/data=!4m7!3m6!1s0x80c2b996f2f73515:0x32f2c4ebf4c43107!8m2!3d34.0211945!4d-118.3729774!16s%2Fg%2F1trxkjt7!19sChIJFTX38pa5woARBzHE9OvE8jI?authuser=0&hl=en&rclk=1
+3,Dentists near Los Angeles CA,Google Maps,United Dental Care,"3909 Sepulveda Blvd, Culver City, CA 90230",Culver City,CA,90230,,http://culvercitydentist.com/,4.9,,"United Dental Care
+4.9
+(818)
+Dentist·",https://www.google.com/maps/place/United+Dental+Care/data=!4m7!3m6!1s0x80c2ba38a24d54d7:0xa241d4c9dd793f1!8m2!3d34.0107296!4d-118.4157404!16s%2Fg%2F1w6_p2b4!19sChIJ11RNoji6woAR8ZPXnUwdJAo?authuser=0&hl=en&rclk=1
+4,Dentists near Los Angeles CA,Google Maps,Fuller Smiles - Venice,"9808 Venice Blvd. #506, Culver City, CA 90232",Culver City,CA,90232,,https://dentistoflosangeles.com/,4.8,,"Fuller Smiles - Venice
+4.8
+(610)
+Dentist·",https://www.google.com/maps/place/Fuller+Smiles+-+Venice/data=!4m7!3m6!1s0x80c2ba2945b13b0f:0xb6da5663ce6afa20!8m2!3d34.0234154!4d-118.3979021!16s%2Fg%2F11c5gb_42f!19sChIJDzuxRSm6woARIPpqzmNW2rY?authuser=0&hl=en&rclk=1
+5,Dentists near Los Angeles CA,Google Maps,Beverlywood Dental,"8515 Venice Blvd., Los Angeles, CA 90034",Los Angeles,CA,90034,,http://www.beverlywooddental.com/,4.1,,Beverlywood Dental,https://www.google.com/maps/place/Beverlywood+Dental/data=!4m7!3m6!1s0x80c2b97634f8612d:0xbd0d214a862a4edf!8m2!3d34.0354911!4d-118.3783944!16s%2Fg%2F1trtvl6m!19sChIJLWH4NHa5woAR304qhkohDb0?authuser=0&hl=en&rclk=1
+6,Dentists near Los Angeles CA,Google Maps,Smile Design Dental,"8530 W Pico Blvd, Los Angeles, CA 90035",Los Angeles,CA,90035,,https://www.smiledesignlosangeles.com/,4.9,,Smile Design Dental,https://www.google.com/maps/place/Smile+Design+Dental/data=!4m7!3m6!1s0x80c2b969913aea8b:0xcf81380cea05f0c3!8m2!3d34.0532853!4d-118.376982!16s%2Fg%2F1td13js9!19sChIJi-o6kWm5woARw_AF6gw4gc8?authuser=0&hl=en&rclk=1
+7,Dentists near Los Angeles CA,Google Maps,Bright Now! Dental – Los Angeles (Central LA),"4550 W Pico Blvd Suite C309, Los Angeles, CA 90019",Los Angeles,CA,90019,,https://www.brightnow.com/dental-office/los-angeles/10710/?utm_source=generic&utm_medium=profiles&utm_campaign=local_profiles,3.7,,"3.7
+(398)
+Dentist",https://www.google.com/maps/place/Bright+Now!+Dental+%E2%80%93+Los+Angeles+%28Central+LA%29/data=!4m7!3m6!1s0x80c2b8f9d90d3bcf:0x87c8dc1f96a9f65a!8m2!3d34.0484652!4d-118.3358652!16s%2Fg%2F1tf6ly0s!19sChIJzzsN2fm4woARWvaplh_cyIc?authuser=0&hl=en&rclk=1
+8,Dentists near Los Angeles CA,Google Maps,Century Smile Dental,"3831 Hughes Ave # 701, Culver City, CA 90232",Culver City,CA,90232,,https://www.centurysmile.com/,4.8,,"Century Smile Dental
+4.8
+(235)
+Dentist·",https://www.google.com/maps/place/Century+Smile+Dental/data=!4m7!3m6!1s0x80c2ba2eb6cc6bfd:0xe60cf8f1499e4e2c!8m2!3d34.0224004!4d-118.3982649!16s%2Fg%2F1tj91tjm!19sChIJ_WvMti66woARLE6eSfH4DOY?authuser=0&hl=en&rclk=1
+9,Dentists near Los Angeles CA,Google Maps,Smile Recreation Dentistry by Dr. Baseri,"6221 Wilshire Blvd #517, Los Angeles, CA 90048",Los Angeles,CA,90048,,http://www.smilerecreation.com/,4.7,,Smile Recreation Dentistry by Dr. Baseri,https://www.google.com/maps/place/Smile+Recreation+Dentistry+by+Dr.+Baseri/data=!4m7!3m6!1s0x80c2bc81e5183381:0x11e698ae92bff020!8m2!3d34.063501!4d-118.3640248!16s%2Fg%2F1pty987f6!19sChIJgTMY5YG8woARIPC_kq6Y5hE?authuser=0&hl=en&rclk=1
+10,Dentists near Los Angeles CA,Google Maps,La Cienega Dental Group,"1835 S La Cienega Blvd # 200, Los Angeles, CA 90035",Los Angeles,CA,90035,,,4.6,,"La Cienega Dental Group
+4.6
+(43)
+Dentist·",https://www.google.com/maps/place/La+Cienega+Dental+Group/data=!4m7!3m6!1s0x80c2b9703ba73529:0xe25a3c89eaaa3501!8m2!3d34.043485!4d-118.379316!16s%2Fg%2F1tj5ldym!19sChIJKTWnO3C5woARATWq6ok8WuI?authuser=0&hl=en&rclk=1
+11,Dentists near Los Angeles CA,Google Maps,Venice Crossroads Dental,"8985 Venice Blvd. a5, Los Angeles, CA 90034",Los Angeles,CA,90034,,https://www.venicecrossroadsdental.com/,4.8,,"Venice Crossroads Dental
+4.8
+(36)
+Dentist·",https://www.google.com/maps/place/Venice+Crossroads+Dental/data=!4m7!3m6!1s0x80c2ba2a78a18e59:0x9453dc31f2abdc85!8m2!3d34.027983!4d-118.3929863!16s%2Fg%2F11dxbx1lkv!19sChIJWY6heCq6woARhdyr8jHcU5Q?authuser=0&hl=en&rclk=1
+12,Dentists near Los Angeles CA,Google Maps,Dental Emergency Los Angeles Dr. King,"3791 S Centinela Ave, Los Angeles, CA 90066",Los Angeles,CA,90066,,https://emergencydentist.la/,4.4,,Dental Emergency Los Angeles Dr. King,https://www.google.com/maps/place/Dental+Emergency+Los+Angeles+Dr.+King/data=!4m7!3m6!1s0x80c2ba5ea42479ff:0x70ba61b41c75a277!8m2!3d34.0040865!4d-118.4341994!16s%2Fg%2F1pzx8z735!19sChIJ_3kkpF66woARd6J1HLRhunA?authuser=0&hl=en&rclk=1
+13,Dentists near Los Angeles CA,Google Maps,Link Dental Excellence,"10826 Venice Blvd. #101, Culver City, CA 90232",Culver City,CA,90232,,https://linkdentalcenter.com/,4.8,,"Link Dental Excellence
+4.8
+(135)
+Dentist·",https://www.google.com/maps/place/Link+Dental+Excellence/data=!4m7!3m6!1s0x80c2ba30a524bfef:0x28eb940bbda53889!8m2!3d34.0169378!4d-118.4095372!16s%2Fg%2F11b67ff1r6!19sChIJ778kpTC6woARiTilvQuU6yg?authuser=0&hl=en&rclk=1
+14,Dentists near Los Angeles CA,Google Maps,L.A. Smiles Dentistry,"5010 S La Brea Ave, Los Angeles, CA 90056",Los Angeles,CA,90056,,http://www.lasmiledentistry.com/,4.6,,L.A. Smiles Dentistry,https://www.google.com/maps/place/L.A.+Smiles+Dentistry/data=!4m7!3m6!1s0x80c2b762d3d9898d:0xfb8383fcb42ba743!8m2!3d33.996337!4d-118.357888!16s%2Fg%2F1tjdl_r6!19sChIJjYnZ02K3woARQ6crtPyDg_s?authuser=0&hl=en&rclk=1
+15,Dentists near Los Angeles CA,Google Maps,Assure Dental of Culver City,"5795 Washington Blvd, Culver City, CA 90232",Culver City,CA,90232,,https://assuredentalcare.com/,4.4,,Assure Dental of Culver City,https://www.google.com/maps/place/Assure+Dental+of+Culver+City/data=!4m7!3m6!1s0x80c2b99fa2cf11cb:0x3dbe32c8e9ab0ff7!8m2!3d34.034104!4d-118.3711247!16s%2Fg%2F11b75gz_j1!19sChIJyxHPop-5woAR9w-r6cgyvj0?authuser=0&hl=en&rclk=1
+16,Dentists near Los Angeles CA,Google Maps,Happy Smiles Dental,"1655 S Western Ave Suite C, Los Angeles, CA 90006",Los Angeles,CA,90006,,https://happysmilesla.com/en/,4.9,,"Happy Smiles Dental
+4.9
+(1,649)
+Dentist·",https://www.google.com/maps/place/Happy+Smiles+Dental/data=!4m7!3m6!1s0x80c2b93daeb2d383:0x4946d04389d681a8!8m2!3d34.0429157!4d-118.3101701!16s%2Fg%2F11gjp74pk3!19sChIJg9Oyrj25woARqIHWiUPQRkk?authuser=0&hl=en&rclk=1
+17,Dentists near Los Angeles CA,Google Maps,"George D. Lim, DMD Inc. Dentistry & Orthodontics","11725 Washington Blvd, Los Angeles, CA 90066",Los Angeles,CA,90066,,http://www.georgelimdental.com/,4.7,,"4.7
+(169)
+Dentist","https://www.google.com/maps/place/George+D.+Lim,+DMD+Inc.+Dentistry+%26+Orthodontics/data=!4m7!3m6!1s0x80c2ba6b728ef0bd:0x342de1d32826fafb!8m2!3d33.9997468!4d-118.4184849!16s%2Fg%2F1thw6_dm!19sChIJvfCOcmu6woAR-_omKNPhLTQ?authuser=0&hl=en&rclk=1"
+18,Dentists near Los Angeles CA,Google Maps,Vision Dental,"10700 Santa Monica Blvd Ste 100, Los Angeles, CA 90025",Los Angeles,CA,90025,,https://www.visiondental.com/,4.9,,"Vision Dental
+4.9
+(214)
+Orthodontist·",https://www.google.com/maps/place/Vision+Dental/data=!4m7!3m6!1s0x80c2bb9b3334ddc7:0x101734ebd7827d69!8m2!3d34.0513617!4d-118.4324255!16s%2Fg%2F1pp2v03fh!19sChIJx900M5u7woARaX2C1-s0FxA?authuser=0&hl=en&rclk=1
+19,Dentists near Los Angeles CA,Google Maps,Dentistry & Orthodontics,"9201 Venice Blvd., Los Angeles, CA 90034",Los Angeles,CA,90034,,,4.8,,"Dentistry & Orthodontics
+4.8
+(209)
+Dentist·",https://www.google.com/maps/place/Dentistry+%26+Orthodontics/data=!4m7!3m6!1s0x80c2bb7e60f10409:0x16b9c7ab02a9b074!8m2!3d34.026724!4d-118.393855!16s%2Fg%2F11jmysm5xd!19sChIJCQTxYH67woARdLCpAqvHuRY?authuser=0&hl=en&rclk=1
+20,Dentists near Los Angeles CA,Google Maps,Smile Comfort Dental and Implant Center,"9702 Venice Blvd. # A, Culver City, CA 90232",Culver City,CA,90232,,http://www.smilecomfortdental.net/,2.9,,Smile Comfort Dental and Implant Center,https://www.google.com/maps/place/Smile+Comfort+Dental+and+Implant+Center/data=!4m7!3m6!1s0x80c2ba2965b4230f:0x870b66fd8d5c1ba6!8m2!3d34.0240407!4d-118.3968481!16s%2Fg%2F11btsvyzgf!19sChIJDyO0ZSm6woARphtcjf1mC4c?authuser=0&hl=en&rclk=1
+21,Dentists near Los Angeles CA,Google Maps,McComb Orthodontics,"11058 Washington Blvd, Culver City, CA 90232",Culver City,CA,90232,,https://mccomborthodontics.com/culver-city/,5.0,,"McComb Orthodontics
+5.0
+(267)
+Orthodontist·",https://www.google.com/maps/place/McComb+Orthodontics/data=!4m7!3m6!1s0x80c2ba3ebc02ec87:0x8316240625ba0478!8m2!3d34.009715!4d-118.411382!16s%2Fg%2F11bxflqnb1!19sChIJh-wCvD66woAReAS6JQYkFoM?authuser=0&hl=en&rclk=1
+22,Dentists near Los Angeles CA,Google Maps,Culver City Orthodontics - Dr. Fell & Dr. Borenstein,"10811 Washington Blvd #200, Culver City, CA 90232",Culver City,CA,90232,,http://www.culverortho.com/,4.9,,"4.9
+(296)
+Dentist·",https://www.google.com/maps/place/Culver+City+Orthodontics+-+Dr.+Fell+%26+Dr.+Borenstein/data=!4m7!3m6!1s0x80c2ba3a5f3b864d:0x790414c4fcd4e900!8m2!3d34.015301!4d-118.407549!16s%2Fg%2F1tdpry84!19sChIJTYY7Xzq6woARAOnU_MQUBHk?authuser=0&hl=en&rclk=1
+23,Dentists near Los Angeles CA,Google Maps,Pearl Dental Culver City,"11955 Washington Blvd #106, Los Angeles, CA 90066",Los Angeles,CA,90066,,https://www.pearldentalla.com/locations/culver-city/,4.8,,"Pearl Dental Culver City
+4.8
+(389)
+Dentist·",https://www.google.com/maps/place/Pearl+Dental+Culver+City/data=!4m7!3m6!1s0x80c2ba6bf9b52d11:0x553fc8163db73bf8!8m2!3d33.9979366!4d-118.4211532!16s%2Fg%2F11bzyyr7bv!19sChIJES21-Wu6woAR-Du3PRbIP1U?authuser=0&hl=en&rclk=1
