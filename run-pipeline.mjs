@@ -146,6 +146,13 @@ async function main() {
     await runStep(`step-7-merge [${i}]`,   "node", ["step-7-merge-branded-audio.mjs"]);
   }
 
+  // Step 8 — publish leads to Supabase so admin Leads tab sees them
+  if (!flags.has("--skip-publish")) {
+    await runStep("step-8-publish", "node", ["step-8-publish-to-supabase.mjs"]);
+  } else {
+    log("step-8-publish", "SKIP (--skip-publish)");
+  }
+
   log("done", `Pipeline complete. Final videos are in ${OUTPUT_DIR}/`);
 }
 
