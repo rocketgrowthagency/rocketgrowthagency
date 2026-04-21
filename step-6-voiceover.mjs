@@ -1,3 +1,5 @@
+// step-6-voiceover.mjs
+
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
@@ -5,8 +7,8 @@ import csvParser from 'csv-parser';
 import OpenAI from 'openai';
 import slugify from 'slugify';
 
-const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1 (Maps Scraper)');
-const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2 (Email Scraper)');
+const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
+const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
 
@@ -20,7 +22,7 @@ function findLatestStep2Csv() {
 
   const files = fs
     .readdirSync(STEP2_DIR)
-    .filter(f => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
 
   if (!files.length) {
     console.error(`No Step 2 CSV files found in: ${STEP2_DIR}`);
@@ -45,7 +47,7 @@ if (!fs.existsSync(AUDIO_DIR)) {
 }
 
 console.log(`Using Step 2 CSV: ${STEP2_CSV}`);
-console.log(`Videos directory: ${VIDEOS_DIR}`);
+console.log(`Videos directory (unused here, for reference): ${VIDEOS_DIR}`);
 console.log(`Audio will be saved under: ${AUDIO_DIR}`);
 
 if (!process.env.OPENAI_API_KEY) {
@@ -54,11 +56,33 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
+const FIELD_ALIASES = {
+  'Business Name': ['name'],
+  'business name': ['name'],
+  'Map Rank': ['rank'],
+  'map rank': ['rank'],
+  'Search Term': ['searchTerm'],
+  'search term': ['searchTerm'],
+};
+
 function normalizeField(record, key) {
-  return (record[key] || record[key.toLowerCase()] || '').toString().trim();
+  const direct =
+    record[key] !== undefined && record[key] !== null ? record[key] : record[key.toLowerCase()];
+  if (direct !== undefined && direct !== null && direct !== '') {
+    return direct.toString().trim();
+  }
+
+  const aliases = FIELD_ALIASES[key] || FIELD_ALIASES[key.toLowerCase()] || [];
+  for (const alias of aliases) {
+    if (record[alias] !== undefined && record[alias] !== null && record[alias] !== '') {
+      return record[alias].toString().trim();
+    }
+  }
+
+  return '';
 }
 
 function parseNumber(val) {
@@ -81,12 +105,12 @@ async function loadTop3Stats(baseName) {
   await new Promise((resolve, reject) => {
     fs.createReadStream(step1CsvPath)
       .pipe(csvParser())
-      .on('data', row => rows.push(row))
+      .on('data', (row) => rows.push(row))
       .on('end', resolve)
       .on('error', reject);
   });
 
-  const top3Rows = rows.filter(row => {
+  const top3Rows = rows.filter((row) => {
     const rankRaw = row['Map Rank'] || row.rank;
     const rankNum = parseNumber(rankRaw);
     return rankNum && rankNum >= 1 && rankNum <= 3;
@@ -122,7 +146,7 @@ async function loadTop3Stats(baseName) {
     ratingMin,
     ratingMax,
     reviewsMin,
-    reviewsMax
+    reviewsMax,
   };
 
   console.log('Top-3 stats from Step 1:', stats);
@@ -130,14 +154,17 @@ async function loadTop3Stats(baseName) {
 }
 
 function buildScript(record, top3Stats) {
-  const name = normalizeField(record, 'Business Name') || 'your business';
-  const city = normalizeField(record, 'City') || '';
+  const name =
+    normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'your business';
+  const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =
-    normalizeField(record, 'Map Rank') || normalizeField(record, 'rank');
-  const rating = normalizeField(record, 'Rating');
-  const reviews = normalizeField(record, 'Reviews');
+    normalizeField(record, 'Map Rank') || normalizeField(record, 'rank') || 'your current position';
+  const rating = normalizeField(record, 'Rating') || normalizeField(record, 'rating');
+  const reviews = normalizeField(record, 'Reviews') || normalizeField(record, 'reviews');
   const searchTerm =
-    normalizeField(record, 'Search Term') || 'your type of business near you';
+    normalizeField(record, 'Search Term') ||
+    normalizeField(record, 'searchTerm') ||
+    'your type of business near you';
 
   let top3Sentence = '';
   if (top3Stats) {
@@ -151,28 +178,30 @@ function buildScript(record, top3Stats) {
     `Hey, this is Chris from Rocket Growth Agency.`,
     `I recorded this short walkthrough for ${name} to highlight where you may be losing potential leads (and more revenue) because you’re not fully optimized on Google Maps and on your website, and to show you the key improvements we’d make to fix that.`,
     `On screen, you’re seeing exactly what a potential customer sees when they look you up on Google — first your Google Maps listing, then your website.`,
-    `Right now, when we search “${searchTerm}” in the ${city || 'local'} area, you’re showing up around number ${rankRaw ||
-      'your current position'} in the Google Maps results. In most markets, the top three “map pack” positions grab a majority of the attention — often around 40–60% of the clicks and calls from local searches.`,
-    `You’re currently at about ${rating || 'your current'} stars with roughly ${reviews ||
-      'your current'} reviews.${top3Sentence ? ` ${top3Sentence}` : ''}`,
+    `Right now, when we search “${searchTerm}” in the ${
+      city || 'local'
+    } area, you’re showing up around number ${rankRaw} in the Google Maps results. In most markets, the top three “map pack” positions grab a majority of the attention — often around 40–60% of the clicks and calls from local searches.`,
+    `You’re currently at about ${rating || 'your current'} stars with roughly ${
+      reviews || 'your current'
+    } reviews.${top3Sentence ? ` ${top3Sentence}` : ''}`,
     `From there, we also look at your website, because Google uses your website as one of the signals it considers when deciding where to rank your business in Maps.`,
     `For an optimized website, Google looks at things like how quickly the site loads, what a new visitor sees immediately above the fold, how visible and clickable your main call-to-action is, and whether your name, address, phone number, and service area match your Google Business Profile.`,
-    `If you’d like a fuller audit that scores these areas, including an additional channel and lead-mix overview, and shows every key place you can improve — along with what we’d actually do to fix them — you can request our Free Growth Audit Report.`
+    `If you’d like a fuller audit that scores these areas, including an additional channel and lead-mix overview, and shows every key place you can improve — along with what we’d actually do to fix them — you can request our Free Growth Audit Report.`,
   ];
 
   return parts.join(' ');
 }
 
 async function generateVoiceover(record, index, top3Stats) {
-  const name = normalizeField(record, 'Business Name') || 'business';
+  const name =
+    normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'business';
   const email = normalizeField(record, 'email');
 
   if (!email) {
     return null;
   }
 
-  const slug =
-    slugify(name, { lower: true, strict: true }) || `contact-${index + 1}`;
+  const slug = slugify(name, { lower: true, strict: true }) || `contact-${index + 1}`;
   const fileName = `${String(index + 1).padStart(2, '0')}_${slug}.mp3`;
   const outPath = path.join(AUDIO_DIR, fileName);
 
@@ -186,7 +215,7 @@ async function generateVoiceover(record, index, top3Stats) {
     voice: 'echo',
     input: script,
     format: 'mp3',
-    speed: 1.2
+    speed: 1.2,
   });
 
   const buffer = Buffer.from(await response.arrayBuffer());
@@ -209,7 +238,7 @@ async function main() {
   await new Promise((resolve, reject) => {
     fs.createReadStream(STEP2_CSV)
       .pipe(csvParser())
-      .on('data', row => {
+      .on('data', (row) => {
         rows.push(row);
       })
       .on('end', resolve)
@@ -218,7 +247,7 @@ async function main() {
 
   console.log(`Loaded ${rows.length} rows from Step 2 CSV.`);
 
-  const rowsWithEmail = rows.filter(r => normalizeField(r, 'email'));
+  const rowsWithEmail = rows.filter((r) => normalizeField(r, 'email'));
   if (!rowsWithEmail.length) {
     console.log('No rows with email found. Nothing to do.');
     return;
@@ -237,6 +266,6 @@ async function main() {
   console.log('✅ Done generating test voiceover(s).');
 }
 
-main().catch(err => {
-  console.error('Fatal error in step-4-voiceover:', err);
+main().catch((err) => {
+  console.error('Fatal error in step-6-voiceover:', err);
 });

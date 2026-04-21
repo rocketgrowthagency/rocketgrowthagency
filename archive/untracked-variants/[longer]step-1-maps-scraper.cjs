@@ -152,19 +152,6 @@ async function delay(ms) {
         const basic = await card.evaluate((listing) => {
           const cleanup = (str) => (str || '').replace(/\s+/g, ' ').trim();
 
-          const parseReviews = (raw) => {
-            const t = (raw || '').toLowerCase().replace(/\s+/g, ' ').trim();
-            if (!t) return '';
-            if (t.includes('k')) {
-              const num = parseFloat(t.replace(/[^0-9.]/g, ''));
-              if (!Number.isNaN(num)) {
-                return String(Math.round(num * 1000));
-              }
-            }
-            const digits = t.replace(/[^0-9]/g, '');
-            return digits || '';
-          };
-
           const link = listing.querySelector('a[aria-label]');
           let name = cleanup(link ? link.getAttribute('aria-label') : '');
 
@@ -197,6 +184,7 @@ async function delay(ms) {
           let rating = '';
           let reviews = '';
 
+          // Rating from inline rating element
           const ratingNode = listing.querySelector('.MW4etd');
           if (ratingNode) {
             const ratingText = cleanup(ratingNode.textContent);
@@ -204,12 +192,15 @@ async function delay(ms) {
             if (match) rating = match[0];
           }
 
+          // Reviews: use all digits (handles "1,234 reviews" correctly)
           const reviewsNode = listing.querySelector('.UY7F9');
           if (reviewsNode) {
-            const parsed = parseReviews(reviewsNode.textContent);
-            if (parsed) reviews = parsed;
+            const text = cleanup(reviewsNode.textContent);
+            const digits = text.replace(/[^\d]/g, '');
+            if (digits) reviews = digits;
           }
 
+          // Fallback rating via aria-label "X.X stars"
           if (!rating) {
             const spanWithStars = Array.from(listing.querySelectorAll('span[aria-label]')).find(
               (el) => (el.getAttribute('aria-label') || '').toLowerCase().includes('stars')
@@ -221,13 +212,15 @@ async function delay(ms) {
             }
           }
 
+          // Fallback reviews: find any span mentioning "review" and strip all non-digits
           if (!reviews) {
             const spanWithReviews = Array.from(listing.querySelectorAll('span')).find((el) =>
               (el.textContent || '').toLowerCase().includes('review')
             );
             if (spanWithReviews) {
-              const parsed = parseReviews(spanWithReviews.textContent);
-              if (parsed) reviews = parsed;
+              const text = (spanWithReviews.textContent || '').replace(/\s+/g, ' ').trim();
+              const digits = text.replace(/[^\d]/g, '');
+              if (digits) reviews = digits;
             }
           }
 

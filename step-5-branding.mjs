@@ -1,13 +1,15 @@
-import fs from "fs";
-import path from "path";
-import os from "os";
-import http from "http";
-import { execFile } from "child_process";
-import { chromium } from "playwright";
+// step-5-branding.mjs
 
-const STEP2_DIR = path.join(process.cwd(), "output", "Step 2 (Email Scraper)");
-const COMBINED_ROOT = path.join(process.cwd(), "output", "Step 4 (Combine Desktop+Mobile)");
-const BRANDED_ROOT = path.join(process.cwd(), "output", "Step 5 (Branding Overlay)");
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import http from 'http';
+import { execFile } from 'child_process';
+import { chromium } from 'playwright';
+
+const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
+const COMBINED_ROOT = path.join(process.cwd(), 'output', 'Step 4 (Combine Desktop+Mobile)');
+const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
 
 const MAX_BRANDS = 1;
 const INTRO_SEC = 3.2;
@@ -21,7 +23,7 @@ function findLatestStep2Csv() {
 
   const files = fs
     .readdirSync(STEP2_DIR)
-    .filter((f) => f.toLowerCase().endsWith(".csv") && f.includes("[step-2]"));
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
 
   if (!files.length) {
     console.error(`No Step 2 CSV files found in: ${STEP2_DIR}`);
@@ -31,7 +33,7 @@ function findLatestStep2Csv() {
   files.sort();
   const latest = files[files.length - 1];
   const csvPath = path.join(STEP2_DIR, latest);
-  const baseName = latest.replace(/\.csv$/i, "");
+  const baseName = latest.replace(/\.csv$/i, '');
 
   console.log(`Using Step 2 CSV: ${csvPath}`);
   console.log(`Base name: ${baseName}`);
@@ -45,12 +47,12 @@ function ensureDir(dir) {
 
 function runFFmpeg(args) {
   return new Promise((resolve, reject) => {
-    execFile("ffmpeg", args, (error, stdout, stderr) => {
+    execFile('ffmpeg', args, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error((stderr || "").toString() || error.message));
+        reject(new Error((stderr || '').toString() || error.message));
         return;
       }
-      resolve((stderr || "").toString());
+      resolve((stderr || '').toString());
     });
   });
 }
@@ -288,21 +290,21 @@ async function brandOne(combinedMp4Path, outMp4Path) {
       return;
     }
 
-    if (req.url === "/" || req.url.startsWith("/index")) {
+    if (req.url === '/' || req.url.startsWith('/index')) {
       const html = buildBrandingHtml({ introSec: INTRO_SEC, outroSec: OUTRO_SEC });
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
       return;
     }
 
-    if (req.url.startsWith("/video.mp4")) {
+    if (req.url.startsWith('/video.mp4')) {
       try {
         const stat = fs.statSync(combinedMp4Path);
         res.writeHead(200, {
-          "Content-Type": "video/mp4",
-          "Content-Length": stat.size,
-          "Accept-Ranges": "bytes",
-          "Cache-Control": "no-store",
+          'Content-Type': 'video/mp4',
+          'Content-Length': stat.size,
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'no-store',
         });
         fs.createReadStream(combinedMp4Path).pipe(res);
       } catch {
@@ -317,9 +319,9 @@ async function brandOne(combinedMp4Path, outMp4Path) {
   });
 
   const port = await new Promise((resolve) => {
-    server.listen(0, "127.0.0.1", () => {
+    server.listen(0, '127.0.0.1', () => {
       const addr = server.address();
-      resolve(typeof addr === "object" && addr ? addr.port : 0);
+      resolve(typeof addr === 'object' && addr ? addr.port : 0);
     });
   });
 
@@ -332,7 +334,7 @@ async function brandOne(combinedMp4Path, outMp4Path) {
 
     const page = await context.newPage();
     await page.goto(`http://127.0.0.1:${port}/`, {
-      waitUntil: "domcontentloaded",
+      waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
 
@@ -342,8 +344,8 @@ async function brandOne(combinedMp4Path, outMp4Path) {
 
     await context.close();
 
-    const recordedWebm = newestFile(tmpDir, ".webm");
-    if (!recordedWebm) throw new Error("No recorded .webm found from Playwright");
+    const recordedWebm = newestFile(tmpDir, '.webm');
+    if (!recordedWebm) throw new Error('No recorded .webm found from Playwright');
 
     ensureDir(path.dirname(outMp4Path));
     if (fs.existsSync(outMp4Path)) {
@@ -353,22 +355,22 @@ async function brandOne(combinedMp4Path, outMp4Path) {
     }
 
     await runFFmpeg([
-      "-y",
-      "-i",
+      '-y',
+      '-i',
       recordedWebm,
-      "-vf",
-      "fps=30,scale=1280:720:flags=bicubic,setsar=1",
-      "-an",
-      "-c:v",
-      "libx264",
-      "-preset",
-      "veryfast",
-      "-crf",
-      "20",
-      "-pix_fmt",
-      "yuv420p",
-      "-movflags",
-      "+faststart",
+      '-vf',
+      'fps=30,scale=1280:720:flags=bicubic,setsar=1',
+      '-an',
+      '-c:v',
+      'libx264',
+      '-preset',
+      'veryfast',
+      '-crf',
+      '20',
+      '-pix_fmt',
+      'yuv420p',
+      '-movflags',
+      '+faststart',
       outMp4Path,
     ]);
   } finally {
@@ -409,11 +411,11 @@ async function main() {
 
   const combinedFiles = fs
     .readdirSync(COMBINED_DIR)
-    .filter((f) => f.toLowerCase().endsWith("_combined.mp4"))
+    .filter((f) => f.toLowerCase().endsWith('_combined.mp4'))
     .sort();
 
   if (!combinedFiles.length) {
-    console.error("No *_combined.mp4 files found in Combined dir.");
+    console.error('No *_combined.mp4 files found in Combined dir.');
     process.exit(1);
   }
 
@@ -421,7 +423,7 @@ async function main() {
   for (const file of combinedFiles) {
     if (count >= MAX_BRANDS) break;
 
-    const base = file.replace(/_combined\.mp4$/i, "");
+    const base = file.replace(/_combined\.mp4$/i, '');
     const src = path.join(COMBINED_DIR, file);
     const out = path.join(BRANDED_DIR, `${base}_branded.mp4`);
 
@@ -436,6 +438,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Fatal error in step-5-branding:", err.message || err);
+  console.error('Fatal error in step-5-branding:', err.message || err);
   process.exit(1);
 });
