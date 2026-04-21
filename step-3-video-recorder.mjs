@@ -4,11 +4,11 @@ import csvParser from 'csv-parser';
 import { chromium, devices } from 'playwright';
 import slugify from 'slugify';
 
-const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2 (Email Scraper)');
+const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const MAX_VIDEOS = 3;
 
-const DESKTOP_WEBSITE_EXTRA_HOLD_MS = 8000;
+const DESKTOP_WEBSITE_EXTRA_HOLD_MS = 12000;
 const DESKTOP_WEBSITE_SCROLL_STEPS = 7;
 const DESKTOP_WEBSITE_SCROLL_DELTA_PX = 720;
 const DESKTOP_WEBSITE_SCROLL_WAIT_MS = 1200;
@@ -533,7 +533,7 @@ async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
 
     const mode = await goToMapsShowResultsThenOpenBusiness(page, meta);
     if (mode !== 'none') {
-      await page.waitForTimeout(6000);
+      await page.waitForTimeout(12000);
     }
 
     let visited = null;
@@ -625,7 +625,10 @@ async function recordMobileVideo(browser, meta, tmpDir, outputPath) {
     console.log(`   → Website (real mobile view): ${meta.website}`);
 
     try {
-      const safeName = String(meta.name || 'Loading…').replace(/[<>]/g, '').trim() || 'Loading…';
+      const safeName =
+        String(meta.name || 'Loading…')
+          .replace(/[<>]/g, '')
+          .trim() || 'Loading…';
       await page.setContent(
         `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><div style="padding:16px;"><div style="font-size:16px;font-weight:600;">${safeName}</div><div style="margin-top:6px;font-size:13px;opacity:.65;">Loading website…</div></div></body></html>`,
         { waitUntil: 'domcontentloaded' }
@@ -636,7 +639,9 @@ async function recordMobileVideo(browser, meta, tmpDir, outputPath) {
     let visited = await gotoFirstWorking(page, meta.website, 'Mobile Website');
 
     if (!visited) {
-      console.warn('   ⚠️ Mobile website unreachable; skipping mobile scroll and saving short segment.');
+      console.warn(
+        '   ⚠️ Mobile website unreachable; skipping mobile scroll and saving short segment.'
+      );
       await page.goto('about:blank', { waitUntil: 'load' });
       await page.waitForTimeout(2000);
     } else {

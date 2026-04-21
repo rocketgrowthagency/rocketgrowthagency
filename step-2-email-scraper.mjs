@@ -5,8 +5,8 @@ import { createObjectCsvWriter } from 'csv-writer';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1 (Maps Scraper)');
-const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2 (Email Scraper)');
+const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
+const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 
 function findLatestStep1Csv() {
   if (!fs.existsSync(STEP1_DIR)) {
@@ -16,11 +16,7 @@ function findLatestStep1Csv() {
 
   const files = fs
     .readdirSync(STEP1_DIR)
-    .filter(
-      f =>
-        f.toLowerCase().endsWith('.csv') &&
-        f.includes('[step-1]')
-    );
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-1]'));
 
   if (!files.length) {
     console.error(`No Step 1 CSV files found in: ${STEP1_DIR}`);
@@ -72,11 +68,7 @@ function isLikelyEmail(email) {
   const trimmed = email.trim().toLowerCase();
   const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
   if (!basic.test(trimmed)) return '';
-  if (
-    trimmed.endsWith('.png') ||
-    trimmed.endsWith('.jpg') ||
-    trimmed.endsWith('.jpeg')
-  ) {
+  if (trimmed.endsWith('.png') || trimmed.endsWith('.jpg') || trimmed.endsWith('.jpeg')) {
     return '';
   }
   return trimmed;
@@ -130,16 +122,10 @@ function extractObfuscatedEmailFromText(text) {
   if (!text) return '';
   let normalized = text;
 
-  normalized = normalized.replace(
-    /\s*\[\s*at\s*\]|\s*\(\s*at\s*\)\s*/gi,
-    '@'
-  );
+  normalized = normalized.replace(/\s*\[\s*at\s*\]|\s*\(\s*at\s*\)\s*/gi, '@');
   normalized = normalized.replace(/\sat\s/gi, '@');
 
-  normalized = normalized.replace(
-    /\s*\[\s*dot\s*\]|\s*\(\s*dot\s*\)\s*/gi,
-    '.'
-  );
+  normalized = normalized.replace(/\s*\[\s*dot\s*\]|\s*\(\s*dot\s*\)\s*/gi, '.');
   normalized = normalized.replace(/\sdot\s/gi, '.');
 
   const match = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
@@ -186,9 +172,7 @@ function extractFromHtml(html) {
 
   if (!email) {
     const text = $.root().text();
-    const match = text.match(
-      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i
-    );
+    const match = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
     if (match) {
       const valid = isLikelyEmail(match[0]);
       if (valid) {
@@ -249,9 +233,9 @@ async function fetchWebsiteData(url) {
         emailFound = email;
       }
       console.log(
-        `Scanned ${candidate} -> Email: ${email || ''}, Facebook: ${
-          facebook || ''
-        }, Instagram: ${instagram || ''}`
+        `Scanned ${candidate} -> Email: ${email || ''}, Facebook: ${facebook || ''}, Instagram: ${
+          instagram || ''
+        }`
       );
       if (emailFound) {
         break;
@@ -264,7 +248,7 @@ async function fetchWebsiteData(url) {
   return {
     facebook: facebookCombined,
     instagram: instagramCombined,
-    email: emailFound
+    email: emailFound,
   };
 }
 
@@ -282,7 +266,7 @@ async function processCsv() {
 
   fs.createReadStream(INPUT_CSV)
     .pipe(csvParser())
-    .on('data', data => {
+    .on('data', (data) => {
       records.push(data);
     })
     .on('end', async () => {
@@ -290,8 +274,7 @@ async function processCsv() {
 
       for (let i = 0; i < records.length; i++) {
         const record = records[i];
-        const websiteRaw =
-          record.website || record.Website || record['Website'] || '';
+        const websiteRaw = record.website || record.Website || record['Website'] || '';
         const website = cleanUrl(websiteRaw);
         console.log(`Processing (${i + 1}/${records.length}): ${website}`);
 
@@ -308,24 +291,24 @@ async function processCsv() {
         record.instagram = instagram;
       }
 
-      let headers = Object.keys(records[0]).map(key => ({
+      let headers = Object.keys(records[0]).map((key) => ({
         id: key,
-        title: key
+        title: key,
       }));
 
-      if (!headers.find(h => h.id === 'email')) {
+      if (!headers.find((h) => h.id === 'email')) {
         headers.push({ id: 'email', title: 'email' });
       }
-      if (!headers.find(h => h.id === 'facebook')) {
+      if (!headers.find((h) => h.id === 'facebook')) {
         headers.push({ id: 'facebook', title: 'facebook' });
       }
-      if (!headers.find(h => h.id === 'instagram')) {
+      if (!headers.find((h) => h.id === 'instagram')) {
         headers.push({ id: 'instagram', title: 'instagram' });
       }
 
       const csvWriter = createObjectCsvWriter({
         path: OUTPUT_CSV,
-        header: headers
+        header: headers,
       });
 
       await csvWriter.writeRecords(records);

@@ -1,22 +1,22 @@
-import fs from "fs";
-import path from "path";
-import { execFile } from "child_process";
+import fs from 'fs';
+import path from 'path';
+import { execFile } from 'child_process';
 
-const STEP2_DIR = path.join(process.cwd(), "output", "Step 2 (Email Scraper)");
-const BRANDED_ROOT = path.join(process.cwd(), "output", "Step 5 (Branding Overlay)");
-const AUDIO_ROOT = path.join(process.cwd(), "output", "Step 6 (Voiceover MP3)");
-const FINAL_ROOT = path.join(process.cwd(), "output", "Step 7 (Final Merge MP4)");
+const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
+const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
+const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
+const FINAL_ROOT = path.join(process.cwd(), 'output', 'Step 7 (Final Merge MP4)');
 
 const MAX_MERGES = 1;
 
 function runFFmpeg(args) {
   return new Promise((resolve, reject) => {
-    execFile("ffmpeg", args, (error, stdout, stderr) => {
+    execFile('ffmpeg', args, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error((stderr || "").toString() || error.message));
+        reject(new Error((stderr || '').toString() || error.message));
         return;
       }
-      resolve((stderr || "").toString());
+      resolve((stderr || '').toString());
     });
   });
 }
@@ -29,7 +29,7 @@ function findLatestStep2Csv() {
 
   const files = fs
     .readdirSync(STEP2_DIR)
-    .filter((f) => f.toLowerCase().endsWith(".csv") && f.includes("[step-2]"));
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
 
   if (!files.length) {
     console.error(`No Step 2 CSV files found in: ${STEP2_DIR}`);
@@ -39,7 +39,7 @@ function findLatestStep2Csv() {
   files.sort();
   const latest = files[files.length - 1];
   const csvPath = path.join(STEP2_DIR, latest);
-  const baseName = latest.replace(/\.csv$/i, "");
+  const baseName = latest.replace(/\.csv$/i, '');
 
   console.log(`Using Step 2 CSV: ${csvPath}`);
   console.log(`Base name: ${baseName}`);
@@ -75,11 +75,11 @@ async function main() {
 
   const audioFiles = fs
     .readdirSync(AUDIO_DIR)
-    .filter((f) => f.toLowerCase().endsWith(".mp3"))
+    .filter((f) => f.toLowerCase().endsWith('.mp3'))
     .sort();
 
   if (!audioFiles.length) {
-    console.error("No audio files found to merge.");
+    console.error('No audio files found to merge.');
     process.exit(1);
   }
 
@@ -88,8 +88,8 @@ async function main() {
   for (const audioFile of audioFiles) {
     if (mergedCount >= MAX_MERGES) break;
 
-    const base = audioFile.replace(/\.mp3$/i, "");
-    const baseNoRetry = base.replace(/\[\d+\]/g, "");
+    const base = audioFile.replace(/\.mp3$/i, '');
+    const baseNoRetry = base.replace(/\[\d+\]/g, '');
 
     const brandedPath = path.join(BRANDED_DIR, `${baseNoRetry}_branded.mp4`);
     if (!fs.existsSync(brandedPath)) {
@@ -108,18 +108,18 @@ async function main() {
     console.log(`  Output:        ${outMp4}`);
 
     await runFFmpeg([
-      "-y",
-      "-i",
+      '-y',
+      '-i',
       brandedPath,
-      "-i",
+      '-i',
       audioPath,
-      "-c:v",
-      "copy",
-      "-c:a",
-      "aac",
-      "-shortest",
-      "-movflags",
-      "+faststart",
+      '-c:v',
+      'copy',
+      '-c:a',
+      'aac',
+      '-shortest',
+      '-movflags',
+      '+faststart',
       outMp4,
     ]);
 
@@ -129,13 +129,13 @@ async function main() {
 
   if (!mergedCount) {
     console.error(
-      "No final videos merged. Check that *_branded.mp4 files exist in Branded/ and that audio filenames match the pattern (01_*.mp3)."
+      'No final videos merged. Check that *_branded.mp4 files exist in Branded/ and that audio filenames match the pattern (01_*.mp3).'
     );
     process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error("Fatal error in step-7-merge-branded-audio:", err.message || err);
+  console.error('Fatal error in step-7-merge-branded-audio:', err.message || err);
   process.exit(1);
 });
