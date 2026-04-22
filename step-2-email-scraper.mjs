@@ -23,7 +23,14 @@ function findLatestStep1Csv() {
     process.exit(1);
   }
 
-  files.sort();
+  // Sort by file mtime so the TRUE most-recent scrape wins even when
+  // multiple scrapes share the same date prefix (e.g. plumbers + hvac
+  // same day — alpha sort would pick plumbers over hvac).
+  files.sort((a, b) => {
+    const aMtime = fs.statSync(path.join(STEP1_DIR, a)).mtimeMs;
+    const bMtime = fs.statSync(path.join(STEP1_DIR, b)).mtimeMs;
+    return aMtime - bMtime;
+  });
   const latest = files[files.length - 1];
   const inputPath = path.join(STEP1_DIR, latest);
   const step2BaseName = latest.replace('[step-1]', '[step-2]');
