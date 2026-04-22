@@ -48,12 +48,16 @@ function parseCsv(filePath) {
 }
 
 async function latestStep2Csv() {
+  // Match step 2's approach: sort by mtime so same-date runs pick the truly latest.
+  const { statSync } = await import("node:fs");
   const dirs = [path.join(OUTPUT_DIR, "Step 2"), OUTPUT_DIR];
   for (const dir of dirs) {
     if (!existsSync(dir)) continue;
     const entries = await readdir(dir);
-    const matches = entries.filter((n) => /\[step-2\]\.csv$/.test(n)).sort((a, b) => b.localeCompare(a));
-    if (matches[0]) return path.join(dir, matches[0]);
+    const matches = entries.filter((n) => /\[step-2\]\.csv$/.test(n));
+    if (!matches.length) continue;
+    matches.sort((a, b) => statSync(path.join(dir, b)).mtimeMs - statSync(path.join(dir, a)).mtimeMs);
+    return path.join(dir, matches[0]);
   }
   return null;
 }
