@@ -213,6 +213,32 @@ async function dismissResultsInfoPopup(page) {
   } catch {}
 }
 
+// Click through the Google cookie/consent banner if it's blocking the page.
+// Tries multiple languages + selector patterns.
+async function acceptGoogleConsent(page) {
+  const selectors = [
+    'button[aria-label="Accept all"]',
+    'button[aria-label*="Accept"]',
+    'button:has-text("Accept all")',
+    'button:has-text("I agree")',
+    'button:has-text("Accept")',
+    'form[action*="consent"] button[jsname]',
+    '#L2AGLb', // common Google consent accept ID
+    'button[jsname="b3VHJd"]' // another Google consent pattern
+  ];
+  for (const sel of selectors) {
+    try {
+      const btn = await page.waitForSelector(sel, { timeout: 1500, state: 'visible' });
+      if (btn) {
+        await btn.click({ timeout: 2000 });
+        await page.waitForTimeout(1500);
+        return true;
+      }
+    } catch { /* try next */ }
+  }
+  return false;
+}
+
 async function scrollMapsResultsPanel(page, times = 2) {
   for (let i = 0; i < times; i++) {
     const did = await page.evaluate(() => {
@@ -380,9 +406,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta) {
 
   if (!searchTerm && !businessName && !mapsUrl) return 'none';
 
-  // Fast path: if we already have the direct Google Maps URL (we always do from
-  // step-1 scrape), go straight to the business listing. Avoids the fragile
-  // search-box-wait path that Google frequently blocks with consent prompts.
+  // Fast path: if we have the direct Google Maps URL (we always do from step-1),
+  // go straight to the business listing.
   if (mapsUrl) {
     try {
       console.log('   → Opening business via direct Maps URL (fast path).');
@@ -535,11 +560,19 @@ async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
   let hadFatal = false;
 
   try {
-    context = await browser.newContext({
+    const contextOpts = {
       viewport: { width: 1280, height: 720 },
       recordVideo: { dir: tmpDir, size: { width: 1280, height: 720 } },
       ignoreHTTPSErrors: true,
-    });
+    };
+    // If we've primed Google consent via prime-google-consent.mjs, reuse those
+    // cookies so the Maps UI renders immediately instead of being blocked.
+    try {
+      const statePath = path.join(process.cwd(), "output", "google-storage-state.json");
+      const { existsSync } = await import("node:fs");
+      if (existsSync(statePath)) contextOpts.storageState = statePath;
+    } catch {}
+    context = await browser.newContext(contextOpts);
 
     page = await context.newPage();
 

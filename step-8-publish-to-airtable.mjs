@@ -217,6 +217,42 @@ function isHttpUrl(v) {
   try { const u = new URL(s); return /^https?:$/i.test(u.protocol); } catch (_) { return false; }
 }
 
+// Generic / directory / aggregator rows that are not real businesses.
+const GENERIC_NAME_PATTERNS = [
+  /^find\s+/i,
+  /\bnear\s+(me|you)\b/i,
+  /^(the\s+)?(best|top|cheap|cheapest|affordable)\s+\d*\s*/i,
+  /\b(directory|listings?)\b/i,
+  /^\d+\s*(best|top)\s+/i
+];
+
+const AGGREGATOR_HOSTS = [
+  "yelp.com", "angi.com", "angieslist.com", "thumbtack.com", "homeadvisor.com",
+  "bbb.org", "trustpilot.com", "nextdoor.com", "porch.com", "houzz.com",
+  "findlocal.com", "mapquest.com", "superpages.com", "citysearch.com",
+  "yellowpages.com", "manta.com", "local.com"
+];
+
+function isGenericOrDirectoryListing(row) {
+  const name = String(row["Business Name"] || row["business name"] || row.name || "").trim();
+  if (!name) return true;
+  if (GENERIC_NAME_PATTERNS.some((p) => p.test(name))) return true;
+
+  const website = String(row["Website"] || row.website || "").trim();
+  if (website) {
+    try {
+      const host = new URL(website).hostname.replace(/^www\./i, "").toLowerCase();
+      if (AGGREGATOR_HOSTS.some((h) => host === h || host.endsWith("." + h))) return true;
+    } catch {}
+  }
+
+  // Must have at least phone OR website to be a usable lead
+  const phone = String(row["Phone"] || row.phone || "").trim();
+  if (!phone && !website) return true;
+
+  return false;
+}
+
 function cleanStr(v) {
   return String(v ?? "").replace(/\s+/g, " ").trim();
 }
@@ -281,9 +317,18 @@ async function main() {
   const dateMatch = base.match(/^(\d{4}-\d{2}-\d{2})/);
   const scrapedDate = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
 
-  const rows = await parseCsv(csvPath);
+  const rawRows = await parseCsv(csvPath);
+  const skipped = [];
+  const rows = rawRows.filter((r) => {
+    if (isGenericOrDirectoryListing(r)) {
+      skipped.push(pick(r, "business name", "name") || "(unnamed)");
+      return false;
+    }
+    return true;
+  });
   const emailsFound = rows.filter((r) => extractValidEmail(pick(r, "email", "emails"))).length;
-  console.log(`[step-8] ${rows.length} total rows, ${emailsFound} with a valid email — publishing ALL rows`);
+  console.log(`[step-8] ${rawRows.length} raw rows, ${skipped.length} filtered (directory/generic), ${rows.length} real, ${emailsFound} with valid email`);
+  if (skipped.length) console.log(`[step-8] filtered: ${skipped.slice(0, 5).join(", ")}${skipped.length > 5 ? "…" : ""}`);
 
   if (!rows.length) {
     console.log("[step-8] nothing to publish.");
