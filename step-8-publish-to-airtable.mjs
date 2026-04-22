@@ -16,10 +16,11 @@
 // Airtable's create-records API accepts up to 10 records per request; we batch.
 
 import "dotenv/config";
-import { readdir, readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import csvParser from "csv-parser";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "output");
@@ -35,32 +36,15 @@ if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
 
 const API_BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;
 
-function splitCsvLine(line) {
-  const out = []; let cur = ""; let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"' && line[i + 1] === '"') { cur += '"'; i += 1; continue; }
-    if (c === '"') { inQuotes = !inQuotes; continue; }
-    if (c === "," && !inQuotes) { out.push(cur); cur = ""; continue; }
-    cur += c;
-  }
-  out.push(cur);
-  return out.map((s) => s.trim());
-}
-
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/);
-  if (!lines.length) return [];
-  const header = splitCsvLine(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const cols = splitCsvLine(lines[i]);
-    const row = {};
-    header.forEach((h, idx) => { row[h] = cols[idx] ?? ""; });
-    rows.push(row);
-  }
-  return rows;
+function parseCsv(filePath) {
+  return new Promise((resolve, reject) => {
+    const rows = [];
+    createReadStream(filePath)
+      .pipe(csvParser())
+      .on("data", (row) => rows.push(row))
+      .on("end", () => resolve(rows))
+      .on("error", reject);
+  });
 }
 
 async function latestStep2Csv() {
@@ -100,10 +84,14 @@ function isHttpUrl(v) {
   try { const u = new URL(s); return /^https?:$/i.test(u.protocol); } catch (_) { return false; }
 }
 
+function cleanStr(v) {
+  return String(v ?? "").replace(/\s+/g, " ").trim();
+}
+
 function buildRecord(row, scrapedDate) {
   const fields = {};
-  const set = (key, val) => { if (val !== null && val !== undefined && String(val).trim() !== "") fields[key] = val; };
-  const setUrl = (key, val) => { if (isHttpUrl(val)) fields[key] = String(val).trim(); };
+  const set = (key, val) => { const c = cleanStr(val); if (c) fields[key] = c; };
+  const setUrl = (key, val) => { if (isHttpUrl(val)) fields[key] = cleanStr(val); };
   const setNum = (key, val) => { const n = toNumberOrNull(val); if (n !== null) fields[key] = n; };
 
   set("Business Name", pick(row, "business name", "name"));
@@ -160,7 +148,7 @@ async function main() {
   const dateMatch = base.match(/^(\d{4}-\d{2}-\d{2})/);
   const scrapedDate = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
 
-  const rows = parseCsv(await readFile(csvPath, "utf8"));
+  const rows = await parseCsv(csvPath);
   const withEmail = rows.filter((r) => /@/.test(pick(r, "email", "emails")));
   console.log(`[step-8] ${rows.length} total rows, ${withEmail.length} with an email`);
 
