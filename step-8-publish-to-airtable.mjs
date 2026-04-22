@@ -38,13 +38,31 @@ const PLACEHOLDER_EMAIL_PATTERNS = [
   /^info@yourdomain\./i,
   /^email@example\./i,
   /^you@/i,
-  /@localhost$/i
+  /@localhost$/i,
+  // Tracking / monitoring / CDN pseudo-emails (not real contacts)
+  /@sentry\.io$/i,
+  /@sentry-next\.wixpress\.com$/i,
+  /@sentry\.wixpress\.com$/i,
+  /@wixpress\.com$/i,
+  /@wix\.com$/i,
+  /@cdn\./i,
+  /@static\./i,
+  /@google-analytics\./i,
+  /@googletagmanager\./i,
+  /@facebook\.com$/i,
+  /@instagram\.com$/i,
+  /@twitter\.com$/i,
+  /@tiktok\.com$/i
 ];
 
 function isPlaceholderEmail(e) {
   const s = String(e || "").trim();
   if (!s) return true;
-  return PLACEHOLDER_EMAIL_PATTERNS.some((p) => p.test(s));
+  if (PLACEHOLDER_EMAIL_PATTERNS.some((p) => p.test(s))) return true;
+  // Catch long hex-hash-prefixed "emails" (common in tracking URLs)
+  const local = s.split("@")[0] || "";
+  if (/^[0-9a-f]{24,}$/i.test(local)) return true;
+  return false;
 }
 
 function extractValidEmail(raw) {
