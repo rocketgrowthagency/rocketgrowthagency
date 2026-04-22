@@ -32,13 +32,18 @@ const PLACEHOLDER_EMAIL_PATTERNS = [
   /^user@domain\.com$/i,
   /^email@domain\.com$/i,
   /^example@example\./i,
+  /^example@gmail\.com$/i,
+  /^you@/i,
+  /^your@/i,
+  /^yourname@/i,
   /^test@test\./i,
   /^noreply@/i,
   /^no-reply@/i,
+  /^donotreply@/i,
   /^info@yourdomain\./i,
   /^email@example\./i,
-  /^you@/i,
   /@localhost$/i,
+  /\.(gif|jpg|png|jpeg|svg|webp|css|js|woff|ttf)$/i,
   // Tracking / monitoring / CDN pseudo-emails (not real contacts)
   /@sentry\.io$/i,
   /@sentry-next\.wixpress\.com$/i,
@@ -66,8 +71,14 @@ function isPlaceholderEmail(e) {
 }
 
 function extractValidEmail(raw) {
-  const first = String(raw || "").split(/[;,\s]/).find((e) => /@/.test(e)) || "";
-  return isPlaceholderEmail(first) ? "" : first.trim();
+  const candidates = String(raw || "").split(/[;,\s]/).filter((e) => /@/.test(e));
+  for (const c of candidates) {
+    let e = c.trim().toLowerCase().replace(/^mailto:/i, "").split("?")[0].replace(/[.,;:'")>]+$/, "");
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(e)) continue;
+    if (isPlaceholderEmail(e)) continue;
+    return e;
+  }
+  return "";
 }
 
 const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
