@@ -12,6 +12,7 @@
 // Usage:
 //   node step-8-publish-to-airtable.mjs
 //   node step-8-publish-to-airtable.mjs --dry-run
+//   node step-8-publish-to-airtable.mjs --file=/path/to/step-2.csv
 //
 // Airtable's create-records API accepts up to 10 records per request; we batch.
 
@@ -25,6 +26,31 @@ import csvParser from "csv-parser";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "output");
 const DRY = process.argv.includes("--dry-run");
+const FILE_ARG = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || "";
+
+const PLACEHOLDER_EMAIL_PATTERNS = [
+  /^user@domain\.com$/i,
+  /^email@domain\.com$/i,
+  /^example@example\./i,
+  /^test@test\./i,
+  /^noreply@/i,
+  /^no-reply@/i,
+  /^info@yourdomain\./i,
+  /^email@example\./i,
+  /^you@/i,
+  /@localhost$/i
+];
+
+function isPlaceholderEmail(e) {
+  const s = String(e || "").trim();
+  if (!s) return true;
+  return PLACEHOLDER_EMAIL_PATTERNS.some((p) => p.test(s));
+}
+
+function extractValidEmail(raw) {
+  const first = String(raw || "").split(/[;,\s]/).find((e) => /@/.test(e)) || "";
+  return isPlaceholderEmail(first) ? "" : first.trim();
+}
 
 const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
 const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE_NAME || "Leads";
@@ -174,7 +200,7 @@ function buildRecord(row, scrapedDate) {
 
   set("Business Name", pick(row, "business name", "name"));
   set("Phone", pick(row, "phone"));
-  const email = pick(row, "email", "emails").split(/[;,\s]/).find((e) => /@/.test(e)) || "";
+  const email = extractValidEmail(pick(row, "email", "emails"));
   set("Email", email);
   setUrl("Website", pick(row, "website"));
   setUrl("GBP URL", pick(row, "google maps url", "maps url"));
@@ -214,7 +240,7 @@ async function postBatch(records) {
 }
 
 async function main() {
-  const csvPath = await latestStep2Csv();
+  const csvPath = FILE_ARG || await latestStep2Csv();
   if (!csvPath) {
     console.error("[step-8] no step-2 CSV found in output/.");
     process.exit(1);
@@ -227,24 +253,24 @@ async function main() {
   const scrapedDate = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
 
   const rows = await parseCsv(csvPath);
-  const withEmail = rows.filter((r) => /@/.test(pick(r, "email", "emails")));
-  console.log(`[step-8] ${rows.length} total rows, ${withEmail.length} with an email`);
+  const emailsFound = rows.filter((r) => extractValidEmail(pick(r, "email", "emails"))).length;
+  console.log(`[step-8] ${rows.length} total rows, ${emailsFound} with a valid email — publishing ALL rows`);
 
-  if (!withEmail.length) {
+  if (!rows.length) {
     console.log("[step-8] nothing to publish.");
     return;
   }
 
   // Pull the Search Term from the first row (assumes one query per step-1 run)
-  const query = pick(withEmail[0] || rows[0] || {}, "search term") || path.basename(csvPath).replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/-\[step-2\]\.csv$/, "").replace(/-/g, " ");
+  const query = pick(rows[0] || {}, "search term") || path.basename(csvPath).replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/-\[step-2\]\.csv$/, "").replace(/-/g, " ");
 
   let runId = null;
   if (!DRY) {
-    runId = await findOrCreateScrapeRun({ query, scrapedDate, listingsCount: rows.length, emailsCount: withEmail.length });
+    runId = await findOrCreateScrapeRun({ query, scrapedDate, listingsCount: rows.length, emailsCount: emailsFound });
     console.log(`[step-8] scrape run: ${runId} for "${query}"`);
   }
 
-  const records = withEmail.map((r) => {
+  const records = rows.map((r) => {
     const rec = buildRecord(r, scrapedDate);
     if (runId) rec.fields["Source Run"] = [runId];
     return rec;
@@ -268,7 +294,7 @@ async function main() {
     }
   }
 
-  if (runId) await finalizeScrapeRun(runId, posted, posted === withEmail.length ? "complete" : posted > 0 ? "complete" : "failed");
+  if (runId) await finalizeScrapeRun(runId, posted, posted > 0 ? "complete" : "failed");
 
   console.log(`[step-8] done — ${posted} record${posted === 1 ? "" : "s"} created in Airtable. Run row linked.`);
 }
