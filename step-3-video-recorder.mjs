@@ -6,7 +6,7 @@ import slugify from 'slugify';
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
-const MAX_VIDEOS = 3;
+const MAX_VIDEOS = 1;
 
 const DESKTOP_WEBSITE_EXTRA_HOLD_MS = 12000;
 const DESKTOP_WEBSITE_SCROLL_STEPS = 7;
@@ -379,6 +379,21 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta) {
   const mapsUrl = (meta.mapsUrl || '').trim();
 
   if (!searchTerm && !businessName && !mapsUrl) return 'none';
+
+  // Fast path: if we already have the direct Google Maps URL (we always do from
+  // step-1 scrape), go straight to the business listing. Avoids the fragile
+  // search-box-wait path that Google frequently blocks with consent prompts.
+  if (mapsUrl) {
+    try {
+      console.log('   → Opening business via direct Maps URL (fast path).');
+      await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForTimeout(6500);
+      await dismissResultsInfoPopup(page);
+      return 'direct-url';
+    } catch (err) {
+      console.warn(`   ⚠️ Direct Maps URL failed, falling back to search: ${err.message}`);
+    }
+  }
 
   try {
     await page.goto('https://www.google.com/maps', {
