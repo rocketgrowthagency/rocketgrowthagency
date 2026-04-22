@@ -80,12 +80,16 @@ function runStep(label, cmd, args, env = {}) {
 }
 
 async function latestFile(suffixPattern) {
-  if (!existsSync(OUTPUT_DIR)) return null;
-  const entries = await readdir(OUTPUT_DIR);
-  const matches = entries
-    .filter((name) => suffixPattern.test(name))
-    .sort((a, b) => b.localeCompare(a));
-  return matches[0] ? path.join(OUTPUT_DIR, matches[0]) : null;
+  // Check output/Step N subdirectories first, then fall back to output/ itself.
+  const stepDirs = ["Step 1", "Step 2", "Step 3 (Video Recorder - Raw WebM)", "Step 4 (Combine Desktop+Mobile)", "Step 5 (Branding Overlay)", "Step 6 (Voiceover MP3)", "Step 7 (Final Merge MP4)"];
+  const dirs = [OUTPUT_DIR, ...stepDirs.map((d) => path.join(OUTPUT_DIR, d))];
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    const entries = await readdir(dir);
+    const matches = entries.filter((name) => suffixPattern.test(name)).sort((a, b) => b.localeCompare(a));
+    if (matches[0]) return path.join(dir, matches[0]);
+  }
+  return null;
 }
 
 async function countEmailRows(csvPath) {
@@ -146,9 +150,9 @@ async function main() {
     await runStep(`step-7-merge [${i}]`,   "node", ["step-7-merge-branded-audio.mjs"]);
   }
 
-  // Step 8 — publish leads to Supabase so admin Leads tab sees them
+  // Step 8 — publish leads to Airtable (RGA Outreach base)
   if (!flags.has("--skip-publish")) {
-    await runStep("step-8-publish", "node", ["step-8-publish-to-supabase.mjs"]);
+    await runStep("step-8-publish", "node", ["step-8-publish-to-airtable.mjs"]);
   } else {
     log("step-8-publish", "SKIP (--skip-publish)");
   }
