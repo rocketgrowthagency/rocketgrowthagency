@@ -35,6 +35,80 @@ if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
 }
 
 const API_BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;
+const RUNS_TABLE = "Scrape Runs";
+const RUNS_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(RUNS_TABLE)}`;
+
+async function findOrCreateScrapeRun({ query, scrapedDate, listingsCount, emailsCount }) {
+  // Look for an existing run with the same Query + Date Run
+  const filter = encodeURIComponent(`AND({Query} = "${query.replace(/"/g, "\\\"")}", IS_SAME({Date Run}, "${scrapedDate}", "day"))`);
+  const listUrl = `${RUNS_API}?filterByFormula=${filter}&maxRecords=1`;
+  const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+  const listData = await listRes.json();
+  const existing = listData.records?.[0];
+
+  const vertical = inferVertical(query);
+  const market = inferMarket(query);
+
+  const fields = {
+    Query: query,
+    Vertical: vertical,
+    Market: market,
+    "Date Run": scrapedDate,
+    "Listings Scraped": listingsCount,
+    "Emails Found": emailsCount,
+    Status: "running"
+  };
+
+  if (existing) {
+    const upd = await fetch(`${RUNS_API}/${existing.id}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ fields, typecast: true })
+    });
+    const updData = await upd.json();
+    return updData.id;
+  }
+
+  const create = await fetch(RUNS_API, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields, typecast: true })
+  });
+  const createData = await create.json();
+  if (!create.ok) throw new Error(`Scrape Run create failed: ${JSON.stringify(createData)}`);
+  return createData.id;
+}
+
+async function finalizeScrapeRun(runId, publishedCount, status) {
+  await fetch(`${RUNS_API}/${runId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: { "Published to Airtable": publishedCount, Status: status }, typecast: true })
+  });
+}
+
+function inferVertical(query) {
+  const q = query.toLowerCase();
+  const verticals = [
+    ["dentist", "dentists"],
+    ["plumber", "plumbers"],
+    ["hvac", "HVAC"],
+    ["heating", "HVAC"],
+    ["med spa", "med spas"],
+    ["chiropractor", "chiropractors"],
+    ["lawyer", "lawyers"],
+    ["attorney", "lawyers"],
+    ["accountant", "accountants"],
+    ["cpa", "accountants"]
+  ];
+  for (const [needle, label] of verticals) if (q.includes(needle)) return label;
+  return "other";
+}
+
+function inferMarket(query) {
+  const m = query.match(/\bin\s+(.+?)(?:,|\s+CA\b|$)/i);
+  return m ? m[1].trim() : "";
+}
 
 function parseCsv(filePath) {
   return new Promise((resolve, reject) => {
@@ -161,7 +235,20 @@ async function main() {
     return;
   }
 
-  const records = withEmail.map((r) => buildRecord(r, scrapedDate));
+  // Pull the Search Term from the first row (assumes one query per step-1 run)
+  const query = pick(withEmail[0] || rows[0] || {}, "search term") || path.basename(csvPath).replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/-\[step-2\]\.csv$/, "").replace(/-/g, " ");
+
+  let runId = null;
+  if (!DRY) {
+    runId = await findOrCreateScrapeRun({ query, scrapedDate, listingsCount: rows.length, emailsCount: withEmail.length });
+    console.log(`[step-8] scrape run: ${runId} for "${query}"`);
+  }
+
+  const records = withEmail.map((r) => {
+    const rec = buildRecord(r, scrapedDate);
+    if (runId) rec.fields["Source Run"] = [runId];
+    return rec;
+  });
 
   if (DRY) {
     records.slice(0, 3).forEach((rec, i) => console.log(`[DRY] sample ${i + 1}:`, JSON.stringify(rec.fields).slice(0, 220) + "..."));
@@ -181,7 +268,9 @@ async function main() {
     }
   }
 
-  console.log(`[step-8] done — ${posted} record${posted === 1 ? "" : "s"} created in Airtable.`);
+  if (runId) await finalizeScrapeRun(runId, posted, posted === withEmail.length ? "complete" : posted > 0 ? "complete" : "failed");
+
+  console.log(`[step-8] done — ${posted} record${posted === 1 ? "" : "s"} created in Airtable. Run row linked.`);
 }
 
 main().catch((err) => { console.error("[step-8] fatal:", err.message || err); process.exit(2); });
