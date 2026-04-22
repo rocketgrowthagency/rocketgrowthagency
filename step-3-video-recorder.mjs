@@ -560,19 +560,11 @@ async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
   let hadFatal = false;
 
   try {
-    const contextOpts = {
+    context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
       recordVideo: { dir: tmpDir, size: { width: 1280, height: 720 } },
       ignoreHTTPSErrors: true,
-    };
-    // If we've primed Google consent via prime-google-consent.mjs, reuse those
-    // cookies so the Maps UI renders immediately instead of being blocked.
-    try {
-      const statePath = path.join(process.cwd(), "output", "google-storage-state.json");
-      const { existsSync } = await import("node:fs");
-      if (existsSync(statePath)) contextOpts.storageState = statePath;
-    } catch {}
-    context = await browser.newContext(contextOpts);
+    });
 
     page = await context.newPage();
 
