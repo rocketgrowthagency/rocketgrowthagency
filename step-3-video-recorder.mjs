@@ -471,7 +471,7 @@ async function extractWebsiteFromMapsCard(page) {
   }
 }
 
-async function goToMapsShowResultsThenOpenBusiness(page, meta) {
+async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigation) {
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
   const mapsUrl = (meta.mapsUrl || '').trim();
@@ -489,6 +489,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta) {
       waitUntil: 'domcontentloaded',
       timeout: MAPS_NAV_TIMEOUT_MS,
     });
+    if (afterMapsNavigation) await afterMapsNavigation();
 
     if (query) {
       await waitForMapsResults(page);
@@ -710,13 +711,20 @@ async function recordDesktopVideo(browser, meta, outputPath) {
 
   const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
   let hadFatal = false;
+  let recorderStarted = false;
 
   try {
     await page.goto('about:blank', { waitUntil: 'load' });
-    await recorder.start();
-    await sleep(500);
 
-    const mode = await goToMapsShowResultsThenOpenBusiness(page, meta);
+    const startRecorder = async () => {
+      if (recorderStarted) return;
+      await recorder.start();
+      recorderStarted = true;
+      await sleep(300);
+    };
+
+    const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder);
+    if (!recorderStarted) await startRecorder();
     if (mode !== 'none') await sleep(DESKTOP_MAPS_HOLD_MS);
 
     let visited = null;
