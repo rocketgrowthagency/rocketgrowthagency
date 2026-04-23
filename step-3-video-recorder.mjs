@@ -32,12 +32,14 @@ const MOBILE_USER_AGENT =
   '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 8);
+const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 1000);
 const MAPS_NAV_TIMEOUT_MS = Number(process.env.MAPS_NAV_TIMEOUT_MS || 90000);
 const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000);
 const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
 const WEBSITE_NAV_TIMEOUT_MS = Number(process.env.WEBSITE_NAV_TIMEOUT_MS || 60000);
 
 const DESKTOP_MAPS_HOLD_MS = Number(process.env.DESKTOP_MAPS_HOLD_MS || 4500);
+const DESKTOP_WEBSITE_INTRO_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_INTRO_HOLD_MS || 7000);
 const DESKTOP_WEBSITE_EXTRA_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_EXTRA_HOLD_MS || 12000);
 const DESKTOP_WEBSITE_SCROLL_STEPS = Number(process.env.DESKTOP_WEBSITE_SCROLL_STEPS || 7);
 const DESKTOP_WEBSITE_SCROLL_DELTA_PX = Number(process.env.DESKTOP_WEBSITE_SCROLL_DELTA_PX || 720);
@@ -96,6 +98,28 @@ function cleanUrl(url) {
   return String(url).trim().replace(/^"|"$/g, '');
 }
 
+function isBlockedWebsiteUrl(url) {
+  const value = cleanUrl(url);
+  if (!value) return false;
+
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+    return [
+      'facebook.com',
+      'fb.com',
+      'instagram.com',
+      'linkedin.com',
+      'tiktok.com',
+      'twitter.com',
+      'x.com',
+      'youtube.com',
+    ].some((domain) => host === domain || host.endsWith(`.${domain}`));
+  } catch {
+    return false;
+  }
+}
+
 function parseRank(value) {
   if (!value) return null;
   const m = String(value).match(/(\d+)/);
@@ -113,7 +137,7 @@ function normalizeText(value) {
 
 function buildWebsiteCandidates(raw) {
   const u = cleanUrl(raw);
-  if (!u) return [];
+  if (!u || isBlockedWebsiteUrl(u)) return [];
 
   const out = [];
   const seen = new Set();
@@ -170,9 +194,16 @@ async function gotoFirstWorking(page, rawUrl, label) {
 
   let lastErr = null;
   for (const url of candidates) {
+    if (isBlockedWebsiteUrl(url)) continue;
+
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: WEBSITE_NAV_TIMEOUT_MS });
-      return url;
+      const finalUrl = page.url();
+      if (isBlockedWebsiteUrl(finalUrl)) {
+        console.warn(`   ⚠️ ${label} resolved to social URL; skipping: ${finalUrl}`);
+        continue;
+      }
+      return finalUrl;
     } catch (err) {
       lastErr = err;
       continue;
@@ -219,14 +250,16 @@ async function dismissResultsInfoPopup(page) {
 async function dismissCommonCookieBanner(page) {
   try {
     await page.evaluate(() => {
-      const labels = [
-        'accept all',
-        'accept',
-        'agree',
-        'allow all',
-        'got it',
-        'ok',
+      const exactLabels = ['accept', 'agree', 'got it', 'ok', 'okay'];
+      const phrasePatterns = [
+        /\baccept\s+all\b/,
+        /\ballow\s+all\b/,
+        /\baccept\s+cookies\b/,
+        /\bagree\s+and\s+continue\b/,
+        /\bi\s+agree\b/,
       ];
+      const forbiddenPattern =
+        /\b(book|booking|schedule|appointment|quote|call|facebook|instagram|linkedin|youtube|sign in|log in)\b/;
       const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]'));
 
       for (const button of buttons) {
@@ -242,7 +275,8 @@ async function dismissCommonCookieBanner(page) {
           .trim();
 
         if (!text) continue;
-        if (labels.some((label) => text === label || text.includes(label))) {
+        if (forbiddenPattern.test(text)) continue;
+        if (exactLabels.includes(text) || phrasePatterns.some((pattern) => pattern.test(text))) {
           button.click();
           return true;
         }
@@ -556,7 +590,10 @@ function createScreencastRecorder(page, outputPath, viewport) {
   let ffmpeg = null;
   let stopped = false;
   let captureLoop = null;
+  let writeLoop = null;
   let frameCount = 0;
+  let captureCount = 0;
+  let latestFrame = null;
   const stderrChunks = [];
 
   async function start() {
@@ -602,18 +639,31 @@ function createScreencastRecorder(page, outputPath, viewport) {
         const startedAt = Date.now();
 
         try {
-          const frame = await page.screenshot({
+          latestFrame = await page.screenshot({
             type: 'jpeg',
             quality: 78,
             captureBeyondViewport: false,
           });
-          if (!stopped && ffmpeg && !ffmpeg.stdin.destroyed) {
-            ffmpeg.stdin.write(frame);
-            frameCount += 1;
-          }
+          captureCount += 1;
         } catch {
           await sleep(250);
         }
+
+        const elapsed = Date.now() - startedAt;
+        await sleep(Math.max(0, SCREENSHOT_CAPTURE_INTERVAL_MS - elapsed));
+      }
+    })();
+
+    writeLoop = (async () => {
+      while (!stopped) {
+        const startedAt = Date.now();
+
+        try {
+          if (latestFrame && ffmpeg && !ffmpeg.stdin.destroyed && ffmpeg.stdin.writable) {
+            ffmpeg.stdin.write(latestFrame);
+            frameCount += 1;
+          }
+        } catch {}
 
         const elapsed = Date.now() - startedAt;
         await sleep(Math.max(0, frameIntervalMs - elapsed));
@@ -624,10 +674,11 @@ function createScreencastRecorder(page, outputPath, viewport) {
   async function stop() {
     stopped = true;
     if (captureLoop) await captureLoop.catch(() => {});
+    if (writeLoop) await writeLoop.catch(() => {});
 
     return new Promise((resolve) => {
       if (!ffmpeg) {
-        resolve({ ok: false, frameCount, error: 'ffmpeg_not_started' });
+        resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_not_started' });
         return;
       }
 
@@ -636,6 +687,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
         resolve({
           ok: code === 0 && exists && frameCount > 0,
           frameCount,
+          captureCount,
           code,
           error: stderrChunks.join('').trim(),
         });
@@ -644,7 +696,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
       try {
         ffmpeg.stdin.end();
       } catch {
-        resolve({ ok: false, frameCount, error: 'ffmpeg_stdin_close_failed' });
+        resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_stdin_close_failed' });
       }
     });
   }
@@ -685,6 +737,8 @@ async function recordDesktopVideo(browser, meta, outputPath) {
       await sleep(2200);
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
+      await sleep(DESKTOP_WEBSITE_INTRO_HOLD_MS);
       await scrollWebsiteMore(page);
       await scrollWebsiteTail(page, DESKTOP_WEBSITE_EXTRA_HOLD_MS);
     } else {
