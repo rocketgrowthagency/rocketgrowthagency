@@ -21,6 +21,18 @@ function runFFmpeg(args) {
   });
 }
 
+function runFfprobe(args) {
+  return new Promise((resolve, reject) => {
+    execFile('ffprobe', args, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error((stderr || '').toString() || error.message));
+        return;
+      }
+      resolve((stdout || '').toString().trim());
+    });
+  });
+}
+
 function findLatestStep2Csv() {
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
@@ -53,6 +65,25 @@ function findLatestStep2Csv() {
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+async function getDurationSeconds(filePath) {
+  const output = await runFfprobe([
+    '-v',
+    'error',
+    '-show_entries',
+    'format=duration',
+    '-of',
+    'default=noprint_wrappers=1:nokey=1',
+    filePath,
+  ]);
+
+  const duration = Number(output);
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw new Error(`Could not determine duration for ${filePath}`);
+  }
+
+  return duration;
 }
 
 async function main() {
@@ -105,27 +136,56 @@ async function main() {
 
     const audioPath = path.join(AUDIO_DIR, audioFile);
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);
+    const videoDuration = await getDurationSeconds(brandedPath);
+    const audioDuration = await getDurationSeconds(audioPath);
+    const padDuration = Math.max(0, audioDuration - videoDuration + 0.15);
 
     console.log(`\nMerging final video for: ${baseNoRetry}`);
     console.log(`  Branded video: ${brandedPath}`);
     console.log(`  Audio:         ${audioPath}`);
     console.log(`  Output:        ${outMp4}`);
+    console.log(`  Durations:     video=${videoDuration.toFixed(3)}s audio=${audioDuration.toFixed(3)}s`);
 
-    await runFFmpeg([
-      '-y',
-      '-i',
-      brandedPath,
-      '-i',
-      audioPath,
-      '-c:v',
-      'copy',
-      '-c:a',
-      'aac',
-      '-shortest',
-      '-movflags',
-      '+faststart',
-      outMp4,
-    ]);
+    if (padDuration > 0.2) {
+      console.log(`  Padding video tail by ${padDuration.toFixed(3)}s so the CTA is not cut off.`);
+      await runFFmpeg([
+        '-y',
+        '-i',
+        brandedPath,
+        '-i',
+        audioPath,
+        '-vf',
+        `tpad=stop_mode=clone:stop_duration=${padDuration.toFixed(3)}`,
+        '-c:v',
+        'libx264',
+        '-preset',
+        'veryfast',
+        '-crf',
+        '18',
+        '-c:a',
+        'aac',
+        '-shortest',
+        '-movflags',
+        '+faststart',
+        outMp4,
+      ]);
+    } else {
+      await runFFmpeg([
+        '-y',
+        '-i',
+        brandedPath,
+        '-i',
+        audioPath,
+        '-c:v',
+        'copy',
+        '-c:a',
+        'aac',
+        '-shortest',
+        '-movflags',
+        '+faststart',
+        outMp4,
+      ]);
+    }
 
     console.log(`✓ Final merged MP4: ${outMp4}`);
     mergedCount++;
