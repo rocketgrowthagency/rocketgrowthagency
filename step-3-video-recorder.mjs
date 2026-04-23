@@ -15,6 +15,7 @@ const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const CHROME_PROFILE_DIR = path.join(process.cwd(), 'output', 'chrome-profile-step3');
 const DEBUG_DIR = path.join(process.cwd(), 'output', 'debug', 'step3');
+const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 const CHROME_PATH =
   process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -56,6 +57,16 @@ function ensureDir(dir) {
 }
 
 function findLatestStep2Csv() {
+  if (STEP2_CSV_OVERRIDE) {
+    if (!fs.existsSync(STEP2_CSV_OVERRIDE)) {
+      console.error(`Step 2 CSV override not found: ${STEP2_CSV_OVERRIDE}`);
+      process.exit(1);
+    }
+    const baseName = path.basename(STEP2_CSV_OVERRIDE).replace(/\.csv$/i, '');
+    console.log(`Using Step 2 CSV override: ${STEP2_CSV_OVERRIDE}`);
+    return { inputPath: STEP2_CSV_OVERRIDE, baseName };
+  }
+
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
     process.exit(1);
