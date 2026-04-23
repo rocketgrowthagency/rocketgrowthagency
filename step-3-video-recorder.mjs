@@ -1,20 +1,57 @@
 import fs from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
 import csvParser from 'csv-parser';
-import { chromium, devices } from 'playwright';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import slugify from 'slugify';
+
+const stealth = StealthPlugin();
+stealth.enabledEvasions.delete('user-agent-override');
+stealth.enabledEvasions.delete('sourceurl');
+puppeteer.use(stealth);
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
-const MAX_VIDEOS = 1;
+const CHROME_PROFILE_DIR = path.join(process.cwd(), 'output', 'chrome-profile-step3');
+const DEBUG_DIR = path.join(process.cwd(), 'output', 'debug', 'step3');
+const CHROME_PATH =
+  process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
-const DESKTOP_WEBSITE_EXTRA_HOLD_MS = 12000;
-const DESKTOP_WEBSITE_SCROLL_STEPS = 7;
-const DESKTOP_WEBSITE_SCROLL_DELTA_PX = 720;
-const DESKTOP_WEBSITE_SCROLL_WAIT_MS = 1200;
+const MAX_VIDEOS = Number(process.env.MAX_VIDEOS || 1);
+const DESKTOP_VIEWPORT = { width: 1280, height: 720, deviceScaleFactor: 1 };
+const MOBILE_VIEWPORT = {
+  width: 390,
+  height: 720,
+  deviceScaleFactor: 1,
+  isMobile: true,
+  hasTouch: true,
+};
+const MOBILE_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' +
+  '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-const DESKTOP_WEBSITE_TAIL_DELTA_PX = 260;
-const DESKTOP_WEBSITE_TAIL_TICK_MS = 850;
+const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 8);
+const MAPS_NAV_TIMEOUT_MS = Number(process.env.MAPS_NAV_TIMEOUT_MS || 90000);
+const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000);
+const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
+const WEBSITE_NAV_TIMEOUT_MS = Number(process.env.WEBSITE_NAV_TIMEOUT_MS || 60000);
+
+const DESKTOP_MAPS_HOLD_MS = Number(process.env.DESKTOP_MAPS_HOLD_MS || 4500);
+const DESKTOP_WEBSITE_EXTRA_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_EXTRA_HOLD_MS || 12000);
+const DESKTOP_WEBSITE_SCROLL_STEPS = Number(process.env.DESKTOP_WEBSITE_SCROLL_STEPS || 7);
+const DESKTOP_WEBSITE_SCROLL_DELTA_PX = Number(process.env.DESKTOP_WEBSITE_SCROLL_DELTA_PX || 720);
+const DESKTOP_WEBSITE_SCROLL_WAIT_MS = Number(process.env.DESKTOP_WEBSITE_SCROLL_WAIT_MS || 1200);
+const DESKTOP_WEBSITE_TAIL_DELTA_PX = Number(process.env.DESKTOP_WEBSITE_TAIL_DELTA_PX || 260);
+const DESKTOP_WEBSITE_TAIL_TICK_MS = Number(process.env.DESKTOP_WEBSITE_TAIL_TICK_MS || 850);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function ensureDir(dir) {
+  fs.mkdirSync(dir, { recursive: true });
+}
 
 function findLatestStep2Csv() {
   if (!fs.existsSync(STEP2_DIR)) {
@@ -24,20 +61,23 @@ function findLatestStep2Csv() {
 
   const files = fs
     .readdirSync(STEP2_DIR)
-    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'))
+    .map((name) => {
+      const fullPath = path.join(STEP2_DIR, name);
+      return { name, fullPath, mtimeMs: fs.statSync(fullPath).mtimeMs };
+    })
+    .sort((a, b) => a.mtimeMs - b.mtimeMs || a.name.localeCompare(b.name));
 
   if (!files.length) {
     console.error(`No Step 2 CSV files found in: ${STEP2_DIR}`);
     process.exit(1);
   }
 
-  files.sort();
   const latest = files[files.length - 1];
-  const inputPath = path.join(STEP2_DIR, latest);
-  const baseName = latest.replace(/\.csv$/i, '');
+  const baseName = latest.name.replace(/\.csv$/i, '');
 
-  console.log(`Using Step 2 CSV: ${inputPath}`);
-  return { inputPath, baseName };
+  console.log(`Using Step 2 CSV: ${latest.fullPath}`);
+  return { inputPath: latest.fullPath, baseName };
 }
 
 function loadCsv(filePath) {
@@ -63,36 +103,8 @@ function parseRank(value) {
   return parseInt(m[1], 10);
 }
 
-function ensureDir(dir) {
-  fs.mkdirSync(dir, { recursive: true });
-}
-
-function clearWebms(dir) {
-  if (!fs.existsSync(dir)) return;
-  for (const f of fs.readdirSync(dir)) {
-    if (f.endsWith('.webm')) {
-      try {
-        fs.unlinkSync(path.join(dir, f));
-      } catch {}
-    }
-  }
-}
-
-function moveNewestWebm(tmpDir, outputPath) {
-  const files = fs.readdirSync(tmpDir).filter((f) => f.endsWith('.webm'));
-  if (!files.length) return false;
-
-  const newest = files
-    .map((name) => ({ name, time: fs.statSync(path.join(tmpDir, name)).mtimeMs }))
-    .sort((a, b) => a.time - b.time)
-    .pop().name;
-
-  fs.renameSync(path.join(tmpDir, newest), outputPath);
-  return true;
-}
-
-function norm(s) {
-  return String(s || '')
+function normalizeText(value) {
+  return String(value || '')
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .replace(/\s+/g, ' ')
@@ -107,15 +119,13 @@ function buildWebsiteCandidates(raw) {
   const seen = new Set();
 
   const push = (x) => {
-    const v = String(x || '').trim();
-    if (!v) return;
-    if (seen.has(v)) return;
-    seen.add(v);
-    out.push(v);
+    const value = String(x || '').trim();
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    out.push(value);
   };
 
   const hasProto = /^https?:\/\//i.test(u);
-
   if (hasProto) push(u);
 
   let host = '';
@@ -138,21 +148,19 @@ function buildWebsiteCandidates(raw) {
 
   const bare = host.replace(/^www\./i, '');
   const withWww = `www.${bare}`;
-  const paths = pathPart || '';
 
-  push(`https://${host}${paths}`);
-  push(`http://${host}${paths}`);
+  push(`https://${host}${pathPart}`);
+  push(`http://${host}${pathPart}`);
 
   if (!/^www\./i.test(host)) {
-    push(`https://${withWww}${paths}`);
-    push(`http://${withWww}${paths}`);
+    push(`https://${withWww}${pathPart}`);
+    push(`http://${withWww}${pathPart}`);
   } else {
-    push(`https://${bare}${paths}`);
-    push(`http://${bare}${paths}`);
+    push(`https://${bare}${pathPart}`);
+    push(`http://${bare}${pathPart}`);
   }
 
   if (!hasProto) push(u);
-
   return out;
 }
 
@@ -161,28 +169,12 @@ async function gotoFirstWorking(page, rawUrl, label) {
   if (!candidates.length) return null;
 
   let lastErr = null;
-
   for (const url of candidates) {
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: WEBSITE_NAV_TIMEOUT_MS });
       return url;
     } catch (err) {
       lastErr = err;
-      const msg = String(err && err.message ? err.message : err);
-
-      if (
-        msg.includes('ERR_NAME_NOT_RESOLVED') ||
-        msg.includes('ERR_CONNECTION_REFUSED') ||
-        msg.includes('ERR_CONNECTION_TIMED_OUT') ||
-        msg.includes('ERR_CONNECTION_RESET') ||
-        msg.includes('ERR_CERT') ||
-        msg.includes('ERR_SSL') ||
-        msg.includes('net::') ||
-        msg.includes('Navigation timeout')
-      ) {
-        continue;
-      }
-
       continue;
     }
   }
@@ -191,6 +183,17 @@ async function gotoFirstWorking(page, rawUrl, label) {
     console.warn(`   ⚠️ ${label} all variants failed for: ${rawUrl}`);
   }
   return null;
+}
+
+async function saveDebug(page, label) {
+  try {
+    ensureDir(DEBUG_DIR);
+    const safe = slugify(String(label || 'debug'), { lower: true, strict: true }) || 'debug';
+    const base = `${safe}_${Date.now()}`;
+    await page.screenshot({ path: path.join(DEBUG_DIR, `${base}.png`), fullPage: true });
+    fs.writeFileSync(path.join(DEBUG_DIR, `${base}.html`), await page.content(), 'utf8');
+    console.log(`   🧩 Saved debug artifacts: ${path.join(DEBUG_DIR, base)}.{png,html}`);
+  } catch {}
 }
 
 async function dismissResultsInfoPopup(page) {
@@ -213,30 +216,75 @@ async function dismissResultsInfoPopup(page) {
   } catch {}
 }
 
-// Click through the Google cookie/consent banner if it's blocking the page.
-// Tries multiple languages + selector patterns.
-async function acceptGoogleConsent(page) {
-  const selectors = [
-    'button[aria-label="Accept all"]',
-    'button[aria-label*="Accept"]',
-    'button:has-text("Accept all")',
-    'button:has-text("I agree")',
-    'button:has-text("Accept")',
-    'form[action*="consent"] button[jsname]',
-    '#L2AGLb', // common Google consent accept ID
-    'button[jsname="b3VHJd"]' // another Google consent pattern
-  ];
-  for (const sel of selectors) {
-    try {
-      const btn = await page.waitForSelector(sel, { timeout: 1500, state: 'visible' });
-      if (btn) {
-        await btn.click({ timeout: 2000 });
-        await page.waitForTimeout(1500);
-        return true;
+async function dismissCommonCookieBanner(page) {
+  try {
+    await page.evaluate(() => {
+      const labels = [
+        'accept all',
+        'accept',
+        'agree',
+        'allow all',
+        'got it',
+        'ok',
+      ];
+      const buttons = Array.from(document.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]'));
+
+      for (const button of buttons) {
+        const text = (
+          button.innerText ||
+          button.textContent ||
+          button.getAttribute('aria-label') ||
+          button.getAttribute('value') ||
+          ''
+        )
+          .toLowerCase()
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (!text) continue;
+        if (labels.some((label) => text === label || text.includes(label))) {
+          button.click();
+          return true;
+        }
       }
-    } catch { /* try next */ }
+
+      return false;
+    });
+    await sleep(700);
+  } catch {}
+}
+
+async function waitForMapsSearchInput(page) {
+  const selector =
+    'input#searchboxinput, input[aria-label="Search Google Maps"], input[name="q"][role="combobox"]';
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout: MAPS_INPUT_TIMEOUT_MS });
+    return selector;
+  } catch {
+    console.warn(
+      '   ⚠️ Google Maps search input did not appear. If a consent screen is visible, accept it in Chrome now.'
+    );
+    await page.waitForSelector(selector, { visible: true, timeout: MAPS_MANUAL_CONSENT_WAIT_MS });
+    return selector;
   }
-  return false;
+}
+
+async function clearAndType(page, selector, value) {
+  await page.click(selector, { clickCount: 3 });
+  await page.keyboard.press('Backspace');
+  await page.type(selector, value, { delay: 45 });
+}
+
+async function waitForMapsResults(page) {
+  await page.waitForFunction(
+    () => {
+      const feed = document.querySelector('div[role="feed"]');
+      const cards = document.querySelectorAll('div.Nv2PK, a[href*="/maps/place/"]');
+      const detailTitle = document.querySelector('.DUwDvf, h1 span');
+      return Boolean(feed || cards.length || detailTitle);
+    },
+    { timeout: MAPS_NAV_TIMEOUT_MS }
+  );
 }
 
 async function scrollMapsResultsPanel(page, times = 2) {
@@ -249,24 +297,21 @@ async function scrollMapsResultsPanel(page, times = 2) {
         document.querySelector('div[aria-label*="Results"]'),
       ].filter(Boolean);
 
-      const scroller =
-        candidates.find((el) => el && el.scrollHeight > el.clientHeight + 50) || null;
-
+      const scroller = candidates.find((el) => el.scrollHeight > el.clientHeight + 50);
       if (!scroller) return false;
 
       const before = scroller.scrollTop;
       scroller.scrollBy(0, Math.max(600, Math.floor(scroller.clientHeight * 0.8)));
-      const after = scroller.scrollTop;
-      return after !== before;
+      return scroller.scrollTop !== before;
     });
 
-    await page.waitForTimeout(1200);
+    await sleep(1000);
     if (!did) break;
   }
 }
 
 async function clickListingInResultsByName(page, businessName) {
-  const target = norm(businessName);
+  const target = normalizeText(businessName);
   if (!target) return false;
 
   const clicked = await page.evaluate((targetNorm) => {
@@ -283,59 +328,57 @@ async function clickListingInResultsByName(page, businessName) {
     };
 
     const resultCards = Array.from(
-      document.querySelectorAll('div[role="article"], div.Nv2PK, a.hfpxzc')
+      document.querySelectorAll('div[role="article"], div.Nv2PK, a.hfpxzc, a[href*="/maps/place/"]')
     );
 
     const scored = [];
-
     for (const el of resultCards) {
-      const txt = (el.innerText || '').trim();
-      if (!txt) continue;
-
       let cardRoot = el;
       if (el.tagName.toLowerCase() === 'a') {
-        cardRoot = el.closest('div[role="article"]') || el.parentElement || el;
+        cardRoot = el.closest('div[role="article"], div.Nv2PK') || el.parentElement || el;
       }
 
       if (cardRoot && isSponsoredBlock(cardRoot)) continue;
 
-      const firstLine = txt.split('\n')[0] || '';
-      const nFirst = norm(firstLine);
+      const text = (cardRoot?.innerText || el.innerText || '').trim();
+      const firstLine = text.split('\n')[0] || '';
+      const aria = el.getAttribute ? el.getAttribute('aria-label') || '' : '';
+      const title =
+        cardRoot?.querySelector?.('.fontHeadlineSmall, .qBF1Pd, div[role="heading"], h3')?.textContent ||
+        '';
 
-      const aria = el.getAttribute ? el.getAttribute('aria-label') : '';
-      const nAria = norm(aria);
-
-      const pool = [nAria, nFirst].filter(Boolean);
-
+      const pool = [aria, firstLine, title].map(norm).filter(Boolean);
       let best = 0;
-      for (const cand of pool) {
-        if (!cand) continue;
-        if (cand === targetNorm) best = Math.max(best, 100);
-        else if (cand.includes(targetNorm) || targetNorm.includes(cand)) best = Math.max(best, 70);
-        else {
-          const targetParts = targetNorm.split(' ');
-          const hits = targetParts.filter((p) => p.length >= 4 && cand.includes(p)).length;
-          best = Math.max(best, hits * 10);
+
+      for (const candidate of pool) {
+        if (candidate === targetNorm) best = Math.max(best, 100);
+        else if (candidate.includes(targetNorm) || targetNorm.includes(candidate)) {
+          best = Math.max(best, 75);
+        } else {
+          const targetParts = targetNorm.split(' ').filter((p) => p.length >= 4);
+          const hits = targetParts.filter((p) => candidate.includes(p)).length;
+          best = Math.max(best, hits * 12);
         }
       }
 
-      if (best > 0) scored.push({ el, best });
+      if (best > 0) scored.push({ el: cardRoot || el, best });
     }
 
     scored.sort((a, b) => b.best - a.best);
-    const top = scored[0]?.el;
+    const topScore = scored[0];
+    if (!topScore || topScore.best < 45) return false;
+
+    const top = topScore.el;
     if (!top) return false;
 
     try {
-      top.scrollIntoView({ block: 'center' });
+      top.scrollIntoView({ block: 'center', behavior: 'smooth' });
     } catch {}
 
     const anchor =
-      top.tagName.toLowerCase() === 'a'
+      top.tagName?.toLowerCase?.() === 'a'
         ? top
-        : top.querySelector && top.querySelector('a.hfpxzc, a[aria-label]')
-        ? top.querySelector('a.hfpxzc, a[aria-label]')
-        : null;
+        : top.querySelector?.('a.hfpxzc, a[aria-label], a[href*="/maps/place/"]') || null;
 
     try {
       (anchor || top).click();
@@ -345,55 +388,50 @@ async function clickListingInResultsByName(page, businessName) {
     }
   }, target);
 
-  return !!clicked;
+  return Boolean(clicked);
 }
 
 async function extractWebsiteFromMapsCard(page) {
   try {
-    const url = await page.evaluate(() => {
-      const pick = (href) => {
-        if (!href) return '';
-        let h = String(href);
-        if (h.includes('google.com/url?')) {
-          try {
-            const u = new URL(h);
-            const direct = u.searchParams.get('q') || u.searchParams.get('url') || '';
-            if (direct) h = direct;
-          } catch {}
+    return cleanUrl(
+      await page.evaluate(() => {
+        const pick = (href) => {
+          if (!href) return '';
+          let h = String(href);
+          if (h.includes('google.com/url?')) {
+            try {
+              const u = new URL(h);
+              h = u.searchParams.get('q') || u.searchParams.get('url') || h;
+            } catch {}
+          }
+          return h;
+        };
+
+        const selectors = [
+          'a[data-item-id="authority"]',
+          'a[aria-label^="Website"]',
+          'a[aria-label*="Website"]',
+        ];
+
+        for (const selector of selectors) {
+          const a = document.querySelector(selector);
+          const href = pick(a?.href || '');
+          if (/^https?:\/\//i.test(href)) return href;
         }
-        return h;
-      };
 
-      const selectors = [
-        'a[data-item-id="authority"]',
-        'a[aria-label^="Website"]',
-        'a[aria-label*="Website"]',
-      ];
+        const links = Array.from(document.querySelectorAll('a[href^="http"]'))
+          .map((a) => pick(a.href))
+          .filter(Boolean);
 
-      for (const sel of selectors) {
-        const a = document.querySelector(sel);
-        if (a && a.href) {
-          const h = pick(a.href);
-          if (h && /^https?:\/\//i.test(h)) return h;
+        for (const href of links) {
+          const lower = href.toLowerCase();
+          if (lower.includes('google.com') || lower.includes('g.page')) continue;
+          if (/^https?:\/\//i.test(href)) return href;
         }
-      }
 
-      const links = Array.from(document.querySelectorAll('a[href^="http"]'))
-        .map((a) => a.href)
-        .filter(Boolean);
-
-      for (const h0 of links) {
-        const h = pick(h0);
-        if (!h) continue;
-        const low = h.toLowerCase();
-        if (low.includes('google.com') || low.includes('g.page')) continue;
-        if (/^https?:\/\//i.test(h)) return h;
-      }
-
-      return '';
-    });
-
-    return cleanUrl(url);
+        return '';
+      })
+    );
   } catch {
     return '';
   }
@@ -403,133 +441,95 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta) {
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
   const mapsUrl = (meta.mapsUrl || '').trim();
+  const query = searchTerm || businessName;
 
-  if (!searchTerm && !businessName && !mapsUrl) return 'none';
-
-  // Fast path: if we have the direct Google Maps URL (we always do from step-1),
-  // go straight to the business listing.
-  if (mapsUrl) {
-    try {
-      console.log('   → Opening business via direct Maps URL (fast path).');
-      await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForTimeout(6500);
-      await dismissResultsInfoPopup(page);
-      return 'direct-url';
-    } catch (err) {
-      console.warn(`   ⚠️ Direct Maps URL failed, falling back to search: ${err.message}`);
-    }
-  }
+  if (!query && !mapsUrl) return 'none';
 
   try {
-    await page.goto('https://www.google.com/maps', {
+    console.log('   → Google Maps segment');
+    const initialMapsUrl = query
+      ? `https://www.google.com/maps/search/${encodeURIComponent(query)}`
+      : 'https://www.google.com/maps';
+
+    await page.goto(initialMapsUrl, {
       waitUntil: 'domcontentloaded',
-      timeout: 60000,
+      timeout: MAPS_NAV_TIMEOUT_MS,
     });
 
-    await page.waitForTimeout(3000);
-    await dismissResultsInfoPopup(page);
-
-    const inputSelector = 'input[aria-label="Search Google Maps"], input#searchboxinput';
-    await page.waitForSelector(inputSelector, { timeout: 25000 });
-
-    const query = searchTerm || businessName || '';
     if (query) {
+      await waitForMapsResults(page);
+      await sleep(1500);
+
+      const inputSelector = await waitForMapsSearchInput(page);
       console.log(`   → Maps search: ${query}`);
-      await page.click(inputSelector, { clickCount: 3 });
-      await page.fill(inputSelector, '');
-      for (const ch of query) {
-        await page.type(inputSelector, ch, { delay: 40 });
-      }
+      await clearAndType(page, inputSelector, query);
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(6500);
+      await waitForMapsResults(page);
+      await sleep(3500);
       await dismissResultsInfoPopup(page);
-    }
-
-    await scrollMapsResultsPanel(page, 2);
-    await page.waitForTimeout(1800);
-
-    if (mapsUrl) {
-      console.log('   → Opening business via direct Maps URL (to avoid Sponsored drift).');
-      await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForTimeout(6500);
-      await dismissResultsInfoPopup(page);
-      return 'direct-url';
+      await scrollMapsResultsPanel(page, 2);
+      await sleep(1200);
     }
 
     if (businessName) {
       console.log(`   → Opening business card from results: ${businessName}`);
-      const ok = await clickListingInResultsByName(page, businessName);
-      if (ok) {
-        await page.waitForTimeout(7000);
+      const clicked = await clickListingInResultsByName(page, businessName);
+      if (clicked) {
+        await sleep(6500);
         await dismissResultsInfoPopup(page);
         return 'results-click';
       }
+    }
 
-      console.log('   → Fallback: searching business name directly in Maps search box.');
-      await page.click(inputSelector, { clickCount: 3 });
-      await page.fill(inputSelector, '');
-      for (const ch of businessName) {
-        await page.type(inputSelector, ch, { delay: 40 });
-      }
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(7000);
+    if (mapsUrl) {
+      console.log('   → Results click failed; opening direct Google Maps URL.');
+      await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      await sleep(6500);
       await dismissResultsInfoPopup(page);
-      return 'name-search';
+      return 'direct-url';
     }
 
     return 'search-only';
   } catch (err) {
-    console.warn(`   ⚠️ Maps navigation failed: ${err.message}`);
+    console.warn(`   ⚠️ Maps navigation failed: ${err.message || err}`);
+    await saveDebug(page, 'step3-maps-failed');
     return 'none';
   }
 }
 
 async function robustScrollStep(page, deltaPx) {
-  const y0 = await page.evaluate(() => window.scrollY || 0);
+  const y0 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
 
-  try {
-    await page.evaluate((d) => window.scrollBy(0, d), deltaPx);
-  } catch {}
-  await page.waitForTimeout(200);
-  const y1 = await page.evaluate(() => window.scrollY || 0);
+  await page.evaluate((delta) => window.scrollBy(0, delta), deltaPx).catch(() => {});
+  await sleep(220);
+  const y1 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
   if (y1 !== y0) return true;
 
-  try {
-    await page.mouse.wheel(0, deltaPx);
-  } catch {}
-  await page.waitForTimeout(250);
-  const y2 = await page.evaluate(() => window.scrollY || 0);
+  await page.mouse.wheel({ deltaY: deltaPx }).catch(() => {});
+  await sleep(260);
+  const y2 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
   if (y2 !== y0) return true;
 
-  try {
-    await page.keyboard.press('PageDown');
-  } catch {}
-  await page.waitForTimeout(300);
-  const y3 = await page.evaluate(() => window.scrollY || 0);
+  await page.keyboard.press('PageDown').catch(() => {});
+  await sleep(320);
+  const y3 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
   return y3 !== y0;
 }
 
 async function nudgeBounce(page) {
-  const y0 = await page.evaluate(() => window.scrollY || 0);
-
-  try {
-    await page.mouse.wheel(0, -180);
-  } catch {}
-  await page.waitForTimeout(180);
-
-  try {
-    await page.mouse.wheel(0, 360);
-  } catch {}
-  await page.waitForTimeout(220);
-
-  const y1 = await page.evaluate(() => window.scrollY || 0);
+  const y0 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
+  await page.mouse.wheel({ deltaY: -180 }).catch(() => {});
+  await sleep(180);
+  await page.mouse.wheel({ deltaY: 360 }).catch(() => {});
+  await sleep(220);
+  const y1 = await page.evaluate(() => window.scrollY || 0).catch(() => 0);
   return y1 !== y0;
 }
 
 async function scrollWebsiteMore(page) {
   for (let i = 0; i < DESKTOP_WEBSITE_SCROLL_STEPS; i++) {
     await robustScrollStep(page, DESKTOP_WEBSITE_SCROLL_DELTA_PX);
-    await page.waitForTimeout(DESKTOP_WEBSITE_SCROLL_WAIT_MS);
+    await sleep(DESKTOP_WEBSITE_SCROLL_WAIT_MS);
   }
 }
 
@@ -540,7 +540,7 @@ async function scrollWebsiteTail(page, durationMs) {
   while (Date.now() < endAt) {
     const moved = await robustScrollStep(page, DESKTOP_WEBSITE_TAIL_DELTA_PX);
     if (!moved) {
-      noMove++;
+      noMove += 1;
       if (noMove >= 2) {
         await nudgeBounce(page);
         noMove = 0;
@@ -548,36 +548,126 @@ async function scrollWebsiteTail(page, durationMs) {
     } else {
       noMove = 0;
     }
-    await page.waitForTimeout(DESKTOP_WEBSITE_TAIL_TICK_MS);
+    await sleep(DESKTOP_WEBSITE_TAIL_TICK_MS);
   }
 }
 
-async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
-  clearWebms(tmpDir);
+function createScreencastRecorder(page, outputPath, viewport) {
+  let ffmpeg = null;
+  let stopped = false;
+  let captureLoop = null;
+  let frameCount = 0;
+  const stderrChunks = [];
 
-  let context = null;
-  let page = null;
+  async function start() {
+    ensureDir(path.dirname(outputPath));
+    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+
+    ffmpeg = spawn(
+      'ffmpeg',
+      [
+        '-y',
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-f',
+        'image2pipe',
+        '-vcodec',
+        'mjpeg',
+        '-framerate',
+        String(SCREENCAST_FPS),
+        '-i',
+        'pipe:0',
+        '-an',
+        '-c:v',
+        'libvpx',
+        '-deadline',
+        'realtime',
+        '-cpu-used',
+        '8',
+        '-b:v',
+        viewport.width >= 1000 ? '1800k' : '900k',
+        '-pix_fmt',
+        'yuv420p',
+        outputPath,
+      ],
+      { stdio: ['pipe', 'ignore', 'pipe'] }
+    );
+
+    ffmpeg.stderr.on('data', (chunk) => stderrChunks.push(chunk.toString()));
+
+    const frameIntervalMs = Math.max(80, Math.round(1000 / SCREENCAST_FPS));
+    captureLoop = (async () => {
+      while (!stopped) {
+        const startedAt = Date.now();
+
+        try {
+          const frame = await page.screenshot({
+            type: 'jpeg',
+            quality: 78,
+            captureBeyondViewport: false,
+          });
+          if (!stopped && ffmpeg && !ffmpeg.stdin.destroyed) {
+            ffmpeg.stdin.write(frame);
+            frameCount += 1;
+          }
+        } catch {
+          await sleep(250);
+        }
+
+        const elapsed = Date.now() - startedAt;
+        await sleep(Math.max(0, frameIntervalMs - elapsed));
+      }
+    })();
+  }
+
+  async function stop() {
+    stopped = true;
+    if (captureLoop) await captureLoop.catch(() => {});
+
+    return new Promise((resolve) => {
+      if (!ffmpeg) {
+        resolve({ ok: false, frameCount, error: 'ffmpeg_not_started' });
+        return;
+      }
+
+      ffmpeg.once('close', (code) => {
+        const exists = fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0;
+        resolve({
+          ok: code === 0 && exists && frameCount > 0,
+          frameCount,
+          code,
+          error: stderrChunks.join('').trim(),
+        });
+      });
+
+      try {
+        ffmpeg.stdin.end();
+      } catch {
+        resolve({ ok: false, frameCount, error: 'ffmpeg_stdin_close_failed' });
+      }
+    });
+  }
+
+  return { start, stop };
+}
+
+async function recordDesktopVideo(browser, meta, outputPath) {
+  const page = await browser.newPage();
+  await page.setViewport(DESKTOP_VIEWPORT);
+
+  const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
   let hadFatal = false;
 
   try {
-    context = await browser.newContext({
-      viewport: { width: 1280, height: 720 },
-      recordVideo: { dir: tmpDir, size: { width: 1280, height: 720 } },
-      ignoreHTTPSErrors: true,
-    });
-
-    page = await context.newPage();
-
     await page.goto('about:blank', { waitUntil: 'load' });
-    await page.waitForTimeout(400);
+    await recorder.start();
+    await sleep(500);
 
     const mode = await goToMapsShowResultsThenOpenBusiness(page, meta);
-    if (mode !== 'none') {
-      await page.waitForTimeout(12000);
-    }
+    if (mode !== 'none') await sleep(DESKTOP_MAPS_HOLD_MS);
 
     let visited = null;
-
     if (meta.website) {
       console.log(`   → Website (desktop view): ${meta.website}`);
       visited = await gotoFirstWorking(page, meta.website, 'Website');
@@ -592,29 +682,25 @@ async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
     }
 
     if (visited) {
-      await page.waitForTimeout(2200);
-      try {
-        await page.addStyleTag({ content: `html,body{background:#ffffff !important;}` });
-      } catch {}
-
+      await sleep(2200);
+      await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
+      await dismissCommonCookieBanner(page);
       await scrollWebsiteMore(page);
       await scrollWebsiteTail(page, DESKTOP_WEBSITE_EXTRA_HOLD_MS);
     } else {
       console.warn('   ⚠️ Website unreachable; keeping desktop video as Maps-only segment.');
-      await page.waitForTimeout(5000);
+      await sleep(5000);
     }
   } catch (err) {
     hadFatal = true;
     console.error(`   ❌ Error recording desktop for ${meta.name}: ${err.message || err}`);
-  } finally {
-    try {
-      if (context) await context.close();
-    } catch {}
   }
 
-  const ok = moveNewestWebm(tmpDir, outputPath);
-  if (!ok) {
-    console.warn('   ⚠️ No desktop video file produced in tmpDir');
+  const result = await recorder.stop();
+  await page.close().catch(() => {});
+
+  if (!result.ok) {
+    console.warn(`   ⚠️ Desktop recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
     return false;
   }
 
@@ -627,93 +713,57 @@ async function recordDesktopVideo(browser, meta, tmpDir, outputPath) {
   return true;
 }
 
-async function recordMobileVideo(browser, meta, tmpDir, outputPath) {
+async function recordMobileVideo(browser, meta, outputPath) {
   if (!meta.website) return false;
 
-  clearWebms(tmpDir);
+  const page = await browser.newPage();
+  await page.setViewport(MOBILE_VIEWPORT);
+  await page.setUserAgent(MOBILE_USER_AGENT);
 
-  const device =
-    devices['iPhone 13'] ||
-    devices['iPhone 12'] ||
-    devices['iPhone 14'] ||
-    devices['iPhone 11'] ||
-    null;
-
-  const viewport = device && device.viewport ? device.viewport : { width: 390, height: 844 };
-  const userAgent = device && device.userAgent ? device.userAgent : undefined;
-  const deviceScaleFactor = device && device.deviceScaleFactor ? device.deviceScaleFactor : 3;
-  const isMobile = device && typeof device.isMobile === 'boolean' ? device.isMobile : true;
-  const hasTouch = device && typeof device.hasTouch === 'boolean' ? device.hasTouch : true;
-
-  let context = null;
-  let page = null;
+  const recorder = createScreencastRecorder(page, outputPath, MOBILE_VIEWPORT);
   let hadFatal = false;
 
   try {
-    context = await browser.newContext({
-      viewport,
-      userAgent,
-      deviceScaleFactor,
-      isMobile,
-      hasTouch,
-      recordVideo: { dir: tmpDir, size: viewport },
-      ignoreHTTPSErrors: true,
-    });
+    const safeName =
+      String(meta.name || 'Loading...')
+        .replace(/[<>]/g, '')
+        .trim() || 'Loading...';
+    await page.setContent(
+      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><div style="padding:16px;"><div style="font-size:16px;font-weight:600;">${safeName}</div><div style="margin-top:6px;font-size:13px;opacity:.65;">Loading website...</div></div></body></html>`,
+      { waitUntil: 'domcontentloaded' }
+    );
 
-    page = await context.newPage();
+    await recorder.start();
+    await sleep(400);
 
     console.log(`   → Website (real mobile view): ${meta.website}`);
-
-    try {
-      const safeName =
-        String(meta.name || 'Loading…')
-          .replace(/[<>]/g, '')
-          .trim() || 'Loading…';
-      await page.setContent(
-        `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><div style="padding:16px;"><div style="font-size:16px;font-weight:600;">${safeName}</div><div style="margin-top:6px;font-size:13px;opacity:.65;">Loading website…</div></div></body></html>`,
-        { waitUntil: 'domcontentloaded' }
-      );
-      await page.waitForTimeout(250);
-    } catch {}
-
-    let visited = await gotoFirstWorking(page, meta.website, 'Mobile Website');
+    const visited = await gotoFirstWorking(page, meta.website, 'Mobile Website');
 
     if (!visited) {
-      console.warn(
-        '   ⚠️ Mobile website unreachable; skipping mobile scroll and saving short segment.'
-      );
-      await page.goto('about:blank', { waitUntil: 'load' });
-      await page.waitForTimeout(2000);
+      console.warn('   ⚠️ Mobile website unreachable; saving short placeholder segment.');
+      await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
+      await sleep(2000);
     } else {
-      await page.waitForTimeout(900);
+      await sleep(1200);
+      await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
+      await dismissCommonCookieBanner(page);
 
-      try {
-        await page.addStyleTag({ content: `html,body{background:#ffffff !important;}` });
-      } catch {}
-
-      const vp = page.viewportSize();
-      const vh = vp ? vp.height : 844;
-      const positions = [0, Math.round(vh * 0.9), Math.round(vh * 1.8)];
-
-      for (const y of positions) {
-        try {
-          await page.evaluate((top) => window.scrollTo({ top, behavior: 'smooth' }), y);
-        } catch {}
-        await page.waitForTimeout(2100);
+      const positions = [0, 650, 1300, 1950];
+      for (const top of positions) {
+        await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'smooth' }), top).catch(() => {});
+        await sleep(1800);
       }
     }
   } catch (err) {
     hadFatal = true;
     console.error(`   ❌ Error recording mobile for ${meta.name}: ${err.message || err}`);
-  } finally {
-    try {
-      if (context) await context.close();
-    } catch {}
   }
 
-  const ok = moveNewestWebm(tmpDir, outputPath);
-  if (!ok) {
-    console.warn('   ⚠️ No mobile video file produced in tmpDir');
+  const result = await recorder.stop();
+  await page.close().catch(() => {});
+
+  if (!result.ok) {
+    console.warn(`   ⚠️ Mobile recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
     return false;
   }
 
@@ -726,17 +776,26 @@ async function recordMobileVideo(browser, meta, tmpDir, outputPath) {
   return true;
 }
 
-async function recordBusinessVideos(
-  browser,
-  meta,
-  tmpDesktopDir,
-  tmpMobileDir,
-  desktopOut,
-  mobileOut
-) {
-  const desktopOk = await recordDesktopVideo(browser, meta, tmpDesktopDir, desktopOut);
-  const mobileOk = await recordMobileVideo(browser, meta, tmpMobileDir, mobileOut);
+async function recordBusinessVideos(browser, meta, desktopOut, mobileOut) {
+  const desktopOk = await recordDesktopVideo(browser, meta, desktopOut);
+  const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
   return { desktopOk, mobileOk };
+}
+
+async function launchBrowser() {
+  ensureDir(CHROME_PROFILE_DIR);
+  return puppeteer.launch({
+    headless: false,
+    executablePath: CHROME_PATH,
+    userDataDir: CHROME_PROFILE_DIR,
+    defaultViewport: null,
+    args: [
+      '--disable-blink-features=AutomationControlled',
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--autoplay-policy=no-user-gesture-required',
+    ],
+  });
 }
 
 async function main() {
@@ -756,70 +815,62 @@ async function main() {
 
   const withEmail = records.filter((row) => {
     const email = (row.email || row.Email || '').toString().trim();
-    return !!email;
+    return Boolean(email);
   });
 
   console.log(`Contacts with email: ${withEmail.length} (videos will only be created for these).`);
 
   if (!withEmail.length) {
-    console.log('Nothing to do – no rows with email.');
+    console.log('Nothing to do - no rows with email.');
     return;
   }
 
   const toRecord = withEmail.slice(0, MAX_VIDEOS);
-
   const videosDir = path.join(VIDEOS_ROOT, baseName);
   ensureDir(videosDir);
 
-  const tmpDesktopDir = path.join(videosDir, '_tmp_desktop');
-  const tmpMobileDir = path.join(videosDir, '_tmp_mobile');
-  ensureDir(tmpDesktopDir);
-  ensureDir(tmpMobileDir);
-
-  const browser = await chromium.launch({ headless: false });
-
+  const browser = await launchBrowser();
   let processed = 0;
 
-  for (let i = 0; i < toRecord.length; i++) {
-    const row = toRecord[i];
+  try {
+    for (let i = 0; i < toRecord.length; i++) {
+      const row = toRecord[i];
 
-    const name = row['Business Name'] || row.name || `business-${processed + 1}`;
-    const slug = slugify(name, { lower: true, strict: true }) || `business-${processed + 1}`;
+      const name = row['Business Name'] || row.name || `business-${processed + 1}`;
+      const slug = slugify(name, { lower: true, strict: true }) || `business-${processed + 1}`;
+      const website = cleanUrl(row.Website || row.website || '');
+      const mapsUrl = cleanUrl(row['Google Maps URL'] || row.mapsUrl || '');
 
-    const website = cleanUrl(row.Website || row.website || '');
-    const mapsUrl = cleanUrl(row['Google Maps URL'] || row.mapsUrl || '');
+      if (!website && !mapsUrl) {
+        console.log(`Skipping ${name} - no website or Google Maps URL available.`);
+        continue;
+      }
 
-    if (!website && !mapsUrl) {
-      console.log(`Skipping ${name} – no website or Google Maps URL available.`);
-      continue;
+      const searchTerm = row['Search Term'] || row.searchTerm || '';
+      const rank = parseRank(row['Map Rank'] || row.rank);
+      const totalForTerm = searchTerm ? totalsBySearchTerm[searchTerm] : null;
+      const rating = row.Rating || row.rating || '';
+      const reviews = row.Reviews || row.reviews || '';
+      const indexStr = String(processed + 1).padStart(2, '0');
+
+      const desktopOut = path.join(videosDir, `${indexStr}_${slug}_desktop.webm`);
+      const mobileOut = path.join(videosDir, `${indexStr}_${slug}_mobile.webm`);
+
+      console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
+
+      await recordBusinessVideos(
+        browser,
+        { name, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+        desktopOut,
+        mobileOut
+      );
+
+      processed += 1;
     }
-
-    const searchTerm = row['Search Term'] || row.searchTerm || '';
-    const rank = parseRank(row['Map Rank'] || row.rank);
-    const totalForTerm = searchTerm ? totalsBySearchTerm[searchTerm] : null;
-    const rating = row['Rating'] || row.rating || '';
-    const reviews = row['Reviews'] || row.reviews || '';
-
-    const indexStr = String(processed + 1).padStart(2, '0');
-
-    const desktopOut = path.join(videosDir, `${indexStr}_${slug}_desktop.webm`);
-    const mobileOut = path.join(videosDir, `${indexStr}_${slug}_mobile.webm`);
-
-    console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
-
-    await recordBusinessVideos(
-      browser,
-      { name, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
-      tmpDesktopDir,
-      tmpMobileDir,
-      desktopOut,
-      mobileOut
-    );
-
-    processed++;
+  } finally {
+    await browser.close().catch(() => {});
   }
 
-  await browser.close();
   console.log(`\n✅ Done. Videos recorded for ${processed} contacts with email.`);
 }
 
