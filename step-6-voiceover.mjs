@@ -190,7 +190,7 @@ function buildScript(record, top3Stats) {
     } reviews.${top3Sentence ? ` ${top3Sentence}` : ''}`,
     `From there, we also look at your website, because Google uses your website as one of the signals it considers when deciding where to rank your business in Maps.`,
     `For an optimized website, Google looks at things like how quickly the site loads, what a new visitor sees immediately above the fold, how visible and clickable your main call-to-action is, and whether your name, address, phone number, and service area match your Google Business Profile.`,
-    `If you’d like a fuller audit that scores these areas, including an additional channel and lead-mix overview, and shows every key place you can improve — along with what we’d actually do to fix them — you can request our Free Growth Audit Report.`,
+    `If you’d like the full audit, click the link in the email for your free growth audit report, where we break down every issue we found, the exact fixes we’d make, and the next steps to improve your rankings and lead flow.`,
   ];
 
   return parts.join(' ');
