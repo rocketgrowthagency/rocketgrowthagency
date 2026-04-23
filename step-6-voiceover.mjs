@@ -11,10 +11,22 @@ const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
+const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
-const MAX_RECORDINGS = 1;
+const MAX_RECORDINGS = Number(process.env.MAX_RECORDINGS || 1);
 
 function findLatestStep2Csv() {
+  if (STEP2_CSV_OVERRIDE) {
+    if (!fs.existsSync(STEP2_CSV_OVERRIDE)) {
+      console.error(`Step 2 CSV override not found: ${STEP2_CSV_OVERRIDE}`);
+      process.exit(1);
+    }
+    const csvPath = STEP2_CSV_OVERRIDE;
+    const baseName = path.basename(csvPath).replace(/\.csv$/i, '');
+    console.log(`Using Step 2 CSV override: ${csvPath}`);
+    return { csvPath, baseName };
+  }
+
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
     process.exit(1);
@@ -180,7 +192,9 @@ function buildScript(record, top3Stats) {
 
   const parts = [
     `Hey, this is Chris from Rocket Growth Agency.`,
-    `I recorded this short walkthrough for ${name} to highlight where you may be losing potential leads (and more revenue) because you’re not fully optimized on Google Maps and on your website, and to show you the key improvements we’d make to fix that.`,
+    `Your Google Maps listing is ranking number ${rankRaw} for ${searchTerm} in ${
+      city || 'your market'
+    }. That means customers searching today are seeing competitors before they see you.`,
     `On screen, you’re seeing exactly what a potential customer sees when they look you up on Google — first your Google Maps listing, then your website.`,
     `Right now, when we search “${searchTerm}” in the ${
       city || 'local'
@@ -188,9 +202,10 @@ function buildScript(record, top3Stats) {
     `You’re currently at about ${rating || 'your current'} stars with roughly ${
       reviews || 'your current'
     } reviews.${top3Sentence ? ` ${top3Sentence}` : ''}`,
-    `From there, we also look at your website, because Google uses your website as one of the signals it considers when deciding where to rank your business in Maps.`,
-    `For an optimized website, Google looks at things like how quickly the site loads, what a new visitor sees immediately above the fold, how visible and clickable your main call-to-action is, and whether your name, address, phone number, and service area match your Google Business Profile.`,
-    `If you’d like the full audit, click the link in the email for your free growth audit report, where we break down every issue we found, the exact fixes we’d make, and the next steps to improve your rankings and lead flow.`,
+    `From there, we also look at your website, because what happens after someone clicks matters just as much as where you rank.`,
+    `That’s where we look for the gaps that are costing you calls, form fills, and booked jobs after someone lands on the site.`,
+    `To see exactly what’s costing you leads and the first fixes we’d make, click the free growth audit link in the email now.`,
+    `Talk soon, Chris from Rocket Growth Agency.`,
   ];
 
   return parts.join(' ');

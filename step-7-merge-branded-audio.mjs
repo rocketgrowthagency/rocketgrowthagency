@@ -6,8 +6,9 @@ const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
 const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
 const FINAL_ROOT = path.join(process.cwd(), 'output', 'Step 7 (Final Merge MP4)');
+const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
-const MAX_MERGES = 1;
+const MAX_MERGES = Number(process.env.MAX_MERGES || 1);
 
 function runFFmpeg(args) {
   return new Promise((resolve, reject) => {
@@ -34,6 +35,17 @@ function runFfprobe(args) {
 }
 
 function findLatestStep2Csv() {
+  if (STEP2_CSV_OVERRIDE) {
+    if (!fs.existsSync(STEP2_CSV_OVERRIDE)) {
+      console.error(`Step 2 CSV override not found: ${STEP2_CSV_OVERRIDE}`);
+      process.exit(1);
+    }
+    const csvPath = STEP2_CSV_OVERRIDE;
+    const baseName = path.basename(csvPath).replace(/\.csv$/i, '');
+    console.log(`Using Step 2 CSV override: ${csvPath}`);
+    return { csvPath, baseName };
+  }
+
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
     process.exit(1);
