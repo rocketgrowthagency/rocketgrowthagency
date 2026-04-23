@@ -10,12 +10,24 @@ import { chromium } from 'playwright';
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const COMBINED_ROOT = path.join(process.cwd(), 'output', 'Step 4 (Combine Desktop+Mobile)');
 const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
+const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
-const MAX_BRANDS = 1;
+const MAX_BRANDS = Number(process.env.MAX_BRANDS || 1);
 const INTRO_SEC = 3.2;
 const OUTRO_SEC = 3.0;
 
 function findLatestStep2Csv() {
+  if (STEP2_CSV_OVERRIDE) {
+    if (!fs.existsSync(STEP2_CSV_OVERRIDE)) {
+      console.error(`Step 2 CSV override not found: ${STEP2_CSV_OVERRIDE}`);
+      process.exit(1);
+    }
+    const csvPath = STEP2_CSV_OVERRIDE;
+    const baseName = path.basename(csvPath).replace(/\.csv$/i, '');
+    console.log(`Using Step 2 CSV override: ${csvPath}`);
+    return { csvPath, baseName };
+  }
+
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
     process.exit(1);

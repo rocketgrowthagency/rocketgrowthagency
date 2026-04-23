@@ -6,8 +6,9 @@ import { execFile } from 'child_process';
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const COMBINED_ROOT = path.join(process.cwd(), 'output', 'Step 4 (Combine Desktop+Mobile)');
+const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
-const MAX_COMBINES = 1;
+const MAX_COMBINES = Number(process.env.MAX_COMBINES || 1);
 
 function runFFmpeg(args) {
   return new Promise((resolve, reject) => {
@@ -22,6 +23,17 @@ function runFFmpeg(args) {
 }
 
 function findLatestStep2Csv() {
+  if (STEP2_CSV_OVERRIDE) {
+    if (!fs.existsSync(STEP2_CSV_OVERRIDE)) {
+      console.error(`Step 2 CSV override not found: ${STEP2_CSV_OVERRIDE}`);
+      process.exit(1);
+    }
+    const csvPath = STEP2_CSV_OVERRIDE;
+    const baseName = path.basename(csvPath).replace(/\.csv$/i, '');
+    console.log(`Using Step 2 CSV override: ${csvPath}`);
+    return { csvPath, baseName };
+  }
+
   if (!fs.existsSync(STEP2_DIR)) {
     console.error(`Step 2 directory not found: ${STEP2_DIR}`);
     process.exit(1);
