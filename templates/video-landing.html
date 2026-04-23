@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Growth Audit for {{BUSINESS_NAME}} | Rocket Growth Agency</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="A short Google Maps + website walkthrough and growth audit for {{BUSINESS_NAME}} from Rocket Growth Agency.">
+  <link rel="icon" type="image/png" href="/images/assets/rga_favicon-locked.png">
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #2f57eb;
+      --brand-strong: #2044c7;
+      --bg: #f6f8fd;
+      --surface: #fff;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Helvetica Neue", Inter, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef4ff 0%, #f9fbff 100%);
+      line-height: 1.5;
+    }
+    .shell {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    header img { width: 40px; height: 40px; display: block; border-radius: 10px; }
+    header strong { font-size: 1.05rem; letter-spacing: -0.01em; }
+    .hero {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 60px rgb(34 64 146 / 10%);
+      overflow: hidden;
+    }
+    .eyebrow {
+      display: block;
+      padding: 20px 24px 0;
+      color: var(--brand);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 4px 0 16px;
+      padding: 0 24px;
+      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .video-wrap {
+      width: 100%;
+      background: #000;
+      line-height: 0;
+    }
+    video { width: 100%; height: auto; display: block; }
+    .body-copy { padding: 24px; }
+    .body-copy p { margin: 0 0 12px; color: var(--muted); }
+    .cta-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 0 24px 28px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 14px 22px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 14px 32px rgb(47 87 235 / 26%);
+    }
+    .btn:hover { background: var(--brand-strong); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--brand);
+      border: 1px solid var(--brand);
+      box-shadow: none;
+    }
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    footer a { color: var(--brand); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <img src="/images/assets/rga_favicon-locked.png" alt="">
+      <strong>Rocket Growth Agency</strong>
+    </header>
+
+    <article class="hero">
+      <span class="eyebrow">Free Growth Audit Walkthrough</span>
+      <h1>{{BUSINESS_NAME}} — Google Maps + Website Review</h1>
+
+      <div class="video-wrap">
+        <video
+          src="video.mp4"
+          poster="thumb.jpg"
+          controls
+          playsinline
+          preload="metadata">
+          Your browser doesn't support HTML5 video. <a href="video.mp4">Download the video</a>.
+        </video>
+      </div>
+
+      <div class="body-copy">
+        <p>I recorded this short walkthrough to show exactly what your future customers see when they search for you on Google — both your Maps listing and your website — and to highlight the specific improvements we'd make to bring more calls and qualified leads in.</p>
+        <p>If you'd like the full written audit with the exact fixes we'd recommend, grab your free growth audit below.</p>
+      </div>
+
+      <div class="cta-bar">
+        <a class="btn" href="https://www.rocketgrowthagency.com/free-growth-audit/">Get My Free Growth Audit</a>
+        <a class="btn btn-secondary" href="https://www.rocketgrowthagency.com/pricing/">See Pricing</a>
+      </div>
+    </article>
+
+    <footer>
+      Recorded by Chris Kapranos for {{BUSINESS_NAME}}.
+      <br>
+      <a href="https://www.rocketgrowthagency.com/">rocketgrowthagency.com</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:hello@rocketgrowthagency.com">hello@rocketgrowthagency.com</a>
+    </footer>
+  </main>
+</body>
+</html>
