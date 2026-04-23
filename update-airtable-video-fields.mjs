@@ -17,6 +17,37 @@ const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
 const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE_NAME || "Leads";
 const API_BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;
 
+const PLACEHOLDER_EMAIL_PATTERNS = [
+  /^user@domain\.com$/i,
+  /^email@domain\.com$/i,
+  /^example@example\./i,
+  /^example@gmail\.com$/i,
+  /^you@/i,
+  /^your@/i,
+  /^yourname@/i,
+  /^test@test\./i,
+  /^noreply@/i,
+  /^no-reply@/i,
+  /^donotreply@/i,
+  /^info@yourdomain\./i,
+  /^email@example\./i,
+  /@localhost$/i,
+  /\.(gif|jpg|png|jpeg|svg|webp|css|js|woff|ttf)$/i,
+  /@sentry\.io$/i,
+  /@sentry-next\.wixpress\.com$/i,
+  /@sentry\.wixpress\.com$/i,
+  /@wixpress\.com$/i,
+  /@wix\.com$/i,
+  /@cdn\./i,
+  /@static\./i,
+  /@google-analytics\./i,
+  /@googletagmanager\./i,
+  /@facebook\.com$/i,
+  /@instagram\.com$/i,
+  /@twitter\.com$/i,
+  /@tiktok\.com$/i
+];
+
 function latestStep2Csv() {
   const files = fs
     .readdirSync(STEP2_DIR)
@@ -50,7 +81,16 @@ function cleanString(value) {
 }
 
 function getEmail(row) {
-  return cleanString(row.email || row.Email || "");
+  const candidates = String(row.email || row.Email || "").split(/[;,\s]/).filter((value) => value.includes("@"));
+  for (const candidate of candidates) {
+    const email = candidate.trim().toLowerCase().replace(/^mailto:/i, "").split("?")[0].replace(/[.,;:'")>]+$/, "");
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) continue;
+    if (PLACEHOLDER_EMAIL_PATTERNS.some((pattern) => pattern.test(email))) continue;
+    const local = email.split("@")[0] || "";
+    if (/^[0-9a-f]{24,}$/i.test(local)) continue;
+    return email;
+  }
+  return "";
 }
 
 function getBusinessName(row) {
