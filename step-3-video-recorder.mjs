@@ -48,8 +48,52 @@ const DESKTOP_WEBSITE_SCROLL_WAIT_MS = Number(process.env.DESKTOP_WEBSITE_SCROLL
 const DESKTOP_WEBSITE_TAIL_DELTA_PX = Number(process.env.DESKTOP_WEBSITE_TAIL_DELTA_PX || 260);
 const DESKTOP_WEBSITE_TAIL_TICK_MS = Number(process.env.DESKTOP_WEBSITE_TAIL_TICK_MS || 850);
 
+const PLACEHOLDER_EMAIL_PATTERNS = [
+  /^user@domain\.com$/i,
+  /^email@domain\.com$/i,
+  /^example@example\./i,
+  /^example@gmail\.com$/i,
+  /^you@/i,
+  /^your@/i,
+  /^yourname@/i,
+  /^test@test\./i,
+  /^noreply@/i,
+  /^no-reply@/i,
+  /^donotreply@/i,
+  /^info@yourdomain\./i,
+  /^email@example\./i,
+  /@localhost$/i,
+  /\.(gif|jpg|png|jpeg|svg|webp|css|js|woff|ttf)$/i,
+  /@sentry\.io$/i,
+  /@sentry-next\.wixpress\.com$/i,
+  /@sentry\.wixpress\.com$/i,
+  /@wixpress\.com$/i,
+  /@wix\.com$/i,
+  /@cdn\./i,
+  /@static\./i,
+  /@google-analytics\./i,
+  /@googletagmanager\./i,
+  /@facebook\.com$/i,
+  /@instagram\.com$/i,
+  /@twitter\.com$/i,
+  /@tiktok\.com$/i,
+];
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractValidEmail(raw) {
+  const candidates = String(raw || '').split(/[;,\s]/).filter((value) => value.includes('@'));
+  for (const candidate of candidates) {
+    const email = candidate.trim().toLowerCase().replace(/^mailto:/i, '').split('?')[0].replace(/[.,;:'")>]+$/, '');
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) continue;
+    if (PLACEHOLDER_EMAIL_PATTERNS.some((pattern) => pattern.test(email))) continue;
+    const local = email.split('@')[0] || '';
+    if (/^[0-9a-f]{24,}$/i.test(local)) continue;
+    return email;
+  }
+  return '';
 }
 
 function ensureDir(dir) {
@@ -886,10 +930,7 @@ async function main() {
     }
   }
 
-  const withEmail = records.filter((row) => {
-    const email = (row.email || row.Email || '').toString().trim();
-    return Boolean(email);
-  });
+  const withEmail = records.filter((row) => Boolean(extractValidEmail(row.email || row.Email || '')));
 
   console.log(`Contacts with email: ${withEmail.length} (videos will only be created for these).`);
 

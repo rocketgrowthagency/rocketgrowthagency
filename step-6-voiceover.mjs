@@ -84,6 +84,37 @@ const FIELD_ALIASES = {
   'search term': ['searchTerm'],
 };
 
+const PLACEHOLDER_EMAIL_PATTERNS = [
+  /^user@domain\.com$/i,
+  /^email@domain\.com$/i,
+  /^example@example\./i,
+  /^example@gmail\.com$/i,
+  /^you@/i,
+  /^your@/i,
+  /^yourname@/i,
+  /^test@test\./i,
+  /^noreply@/i,
+  /^no-reply@/i,
+  /^donotreply@/i,
+  /^info@yourdomain\./i,
+  /^email@example\./i,
+  /@localhost$/i,
+  /\.(gif|jpg|png|jpeg|svg|webp|css|js|woff|ttf)$/i,
+  /@sentry\.io$/i,
+  /@sentry-next\.wixpress\.com$/i,
+  /@sentry\.wixpress\.com$/i,
+  /@wixpress\.com$/i,
+  /@wix\.com$/i,
+  /@cdn\./i,
+  /@static\./i,
+  /@google-analytics\./i,
+  /@googletagmanager\./i,
+  /@facebook\.com$/i,
+  /@instagram\.com$/i,
+  /@twitter\.com$/i,
+  /@tiktok\.com$/i
+];
+
 function normalizeField(record, key) {
   const direct =
     record[key] !== undefined && record[key] !== null ? record[key] : record[key.toLowerCase()];
@@ -105,6 +136,19 @@ function parseNumber(val) {
   if (!val) return null;
   const num = Number(String(val).replace(/,/g, '').trim());
   return Number.isFinite(num) ? num : null;
+}
+
+function extractValidEmail(raw) {
+  const candidates = String(raw || '').split(/[;,\s]/).filter((value) => value.includes('@'));
+  for (const candidate of candidates) {
+    const email = candidate.trim().toLowerCase().replace(/^mailto:/i, '').split('?')[0].replace(/[.,;:'")>]+$/, '');
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) continue;
+    if (PLACEHOLDER_EMAIL_PATTERNS.some((pattern) => pattern.test(email))) continue;
+    const local = email.split('@')[0] || '';
+    if (/^[0-9a-f]{24,}$/i.test(local)) continue;
+    return email;
+  }
+  return '';
 }
 
 async function loadTop3Stats(baseName) {
@@ -214,7 +258,7 @@ function buildScript(record, top3Stats) {
 async function generateVoiceover(record, index, top3Stats) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'business';
-  const email = normalizeField(record, 'email');
+  const email = extractValidEmail(normalizeField(record, 'email'));
 
   if (!email) {
     return null;
@@ -266,7 +310,7 @@ async function main() {
 
   console.log(`Loaded ${rows.length} rows from Step 2 CSV.`);
 
-  const rowsWithEmail = rows.filter((r) => normalizeField(r, 'email'));
+  const rowsWithEmail = rows.filter((r) => extractValidEmail(normalizeField(r, 'email')));
   if (!rowsWithEmail.length) {
     console.log('No rows with email found. Nothing to do.');
     return;
