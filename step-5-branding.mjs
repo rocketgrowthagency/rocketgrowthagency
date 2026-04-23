@@ -23,17 +23,21 @@ function findLatestStep2Csv() {
 
   const files = fs
     .readdirSync(STEP2_DIR)
-    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'));
+    .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-2]'))
+    .map((name) => {
+      const fullPath = path.join(STEP2_DIR, name);
+      return { name, fullPath, mtimeMs: fs.statSync(fullPath).mtimeMs };
+    })
+    .sort((a, b) => a.mtimeMs - b.mtimeMs || a.name.localeCompare(b.name));
 
   if (!files.length) {
     console.error(`No Step 2 CSV files found in: ${STEP2_DIR}`);
     process.exit(1);
   }
 
-  files.sort();
   const latest = files[files.length - 1];
-  const csvPath = path.join(STEP2_DIR, latest);
-  const baseName = latest.replace(/\.csv$/i, '');
+  const csvPath = latest.fullPath;
+  const baseName = latest.name.replace(/\.csv$/i, '');
 
   console.log(`Using Step 2 CSV: ${csvPath}`);
   console.log(`Base name: ${baseName}`);
