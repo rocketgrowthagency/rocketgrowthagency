@@ -71,19 +71,41 @@ function ensureDir(dir) {
 
 function findDesktopMobilePairs(videosDir) {
   const files = fs.readdirSync(videosDir);
-  const desktops = files.filter((f) => f.toLowerCase().endsWith('_desktop.webm')).sort();
+  // NEW: look for the 3-webm format (maps + website + mobile separately).
+  // Falls back to the legacy single-desktop format if the new files aren't found.
+  const mapsWebms = files.filter((f) => f.toLowerCase().endsWith('_desktop_maps.webm')).sort();
 
   const pairs = [];
 
-  for (const desktopFile of desktops) {
-    const base = desktopFile.replace(/_desktop\.webm$/i, '');
+  for (const mapsFile of mapsWebms) {
+    const base = mapsFile.replace(/_desktop_maps\.webm$/i, '');
+    const websiteFile = `${base}_desktop_website.webm`;
     const mobileFile = `${base}_mobile.webm`;
-    if (files.includes(mobileFile)) {
+    if (files.includes(websiteFile) && files.includes(mobileFile)) {
       pairs.push({
         base,
-        desktopPath: path.join(videosDir, desktopFile),
+        format: 'split',
+        mapsPath: path.join(videosDir, mapsFile),
+        websitePath: path.join(videosDir, websiteFile),
         mobilePath: path.join(videosDir, mobileFile),
       });
+    }
+  }
+
+  // Legacy fallback
+  if (!pairs.length) {
+    const desktops = files.filter((f) => f.toLowerCase().endsWith('_desktop.webm')).sort();
+    for (const desktopFile of desktops) {
+      const base = desktopFile.replace(/_desktop\.webm$/i, '');
+      const mobileFile = `${base}_mobile.webm`;
+      if (files.includes(mobileFile)) {
+        pairs.push({
+          base,
+          format: 'legacy',
+          desktopPath: path.join(videosDir, desktopFile),
+          mobilePath: path.join(videosDir, mobileFile),
+        });
+      }
     }
   }
 
@@ -139,37 +161,36 @@ async function makeMobileTmp(mobileInput, tmpOutput) {
 }
 
 async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDesktop) {
-  // Step 1: slice (if endSec is null, slice to end)
-  const sliceArgs = ['-y', '-ss', String(startSec)];
-  if (endSec != null) sliceArgs.push('-to', String(endSec));
-  sliceArgs.push('-i', inputPath);
+  // Use OUTPUT-side seek for accurate slicing (input-side seek lands on keyframes
+  // which can be sparse in webm and miss the intended cut point by seconds).
+  // -i input -ss X -t (Y-X) means: read the input, then seek X in, then keep
+  // (Y-X) seconds. Slow but accurate.
+  const args = ['-y', '-i', inputPath, '-ss', String(startSec)];
+  if (endSec != null) {
+    const inputDuration = endSec - startSec;
+    args.push('-t', String(inputDuration));
+  }
 
-  // Build the video filter: scale to standard frame, set 30 fps, then trim/pad to targetSec
+  // Filter scales to standard frame + sets 30 fps + pads tail with last frame
+  // so trim-to-target works in both pad and trim cases.
   const filter = isDesktop
     ? `fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`
     : `fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`;
 
-  await runFFmpeg([
-    ...sliceArgs,
-    '-vf',
-    filter,
+  args.push(
+    '-vf', filter,
     '-an',
-    '-t',
-    String(targetSec),
-    '-c:v',
-    'libx264',
-    '-preset',
-    'slow',
-    '-crf',
-    '20',
-    '-pix_fmt',
-    'yuv420p',
-    '-r',
-    '30',
-    '-movflags',
-    '+faststart',
-    outPath,
-  ]);
+    '-t', String(targetSec),    // final trim to target audio duration
+    '-c:v', 'libx264',
+    '-preset', 'slow',
+    '-crf', '20',
+    '-pix_fmt', 'yuv420p',
+    '-r', '30',
+    '-movflags', '+faststart',
+    outPath
+  );
+
+  await runFFmpeg(args);
 }
 
 async function concatThree(mapsPath, websitePath, mobilePath, outPath) {
@@ -253,17 +274,18 @@ async function main() {
 
   let combinedCount = 0;
 
+  // Hard-coded intro logo length. Audio intro plays over the first 8s of logo +
+  // continues over the start of the Maps view. So Maps video target needs to
+  // include the intro audio remainder.
+  const INTRO_LOGO_HARDCODED_SEC = 8;
+
   for (const pair of pairs) {
     if (combinedCount >= MAX_COMBINES) break;
 
-    const { base, desktopPath, mobilePath } = pair;
+    const { base } = pair;
 
     console.log(`\nCombining: ${base}`);
-    console.log(`  Desktop source: ${desktopPath}`);
-    console.log(`  Mobile source:  ${mobilePath}`);
 
-    const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
-    const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
     const outCombined = path.join(COMBINED_DIR, `${base}_combined.mp4`);
 
     // Look up audio segment durations from step-6 manifest (for strict sync)
@@ -285,36 +307,61 @@ async function main() {
       console.log('  No audio manifest found; using legacy concat (no strict sync).');
     }
 
-    // Look up the desktop transition metadata (Maps→Website split timestamp)
-    const desktopMetaPath = desktopPath.replace(/\.webm$/i, '.meta.json');
-    let desktopMeta = null;
-    if (fs.existsSync(desktopMetaPath)) {
-      try {
-        desktopMeta = JSON.parse(fs.readFileSync(desktopMetaPath, 'utf-8'));
-        console.log(`  Desktop meta: transition at ${desktopMeta.mapsToWebsiteTransitionSeconds}s`);
-      } catch {}
-    }
+    if (manifest && pair.format === 'split') {
+      // 3-webm strict-sync mode (Maps + Website + Mobile recorded separately)
+      const mapsAudio = manifest.segments.maps.durationSeconds;
+      const websiteAudio = manifest.segments.website.durationSeconds;
+      const mobileAudio = manifest.segments.mobile.durationSeconds;
+      const introAudio = manifest.segments.intro.durationSeconds;
 
-    if (manifest && desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
-      const transitionSec = desktopMeta.mapsToWebsiteTransitionSeconds;
-      const mapsTargetSec = manifest.segments.maps.durationSeconds;
-      const websiteTargetSec = manifest.segments.website.durationSeconds;
-      const mobileTargetSec = manifest.segments.mobile.durationSeconds;
+      // Maps video must cover: intro_audio_remainder (after 5s logo) + maps_audio
+      const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + mapsAudio;
+      const websiteTargetSec = websiteAudio;
+      const mobileTargetSec = mobileAudio;
+
+      console.log(`  Targets: maps=${mapsTargetSec.toFixed(2)}s website=${websiteTargetSec.toFixed(2)}s mobile=${mobileTargetSec.toFixed(2)}s`);
+      console.log(`  Sources: maps=${pair.mapsPath}`);
+      console.log(`           website=${pair.websitePath}`);
+      console.log(`           mobile=${pair.mobilePath}`);
 
       const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
       const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
       const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
 
-      await sliceAndPad(desktopPath, 0, transitionSec, mapsTargetSec, mapsTmp, true);
-      await sliceAndPad(desktopPath, transitionSec, null, websiteTargetSec, websiteTmp, true);
-      await sliceAndPad(mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
+      await sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true);
+      await sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true);
+      await sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
       await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
-      console.log(`  ✓ Combined (strict-sync) video saved: ${outCombined}`);
-    } else {
-      await makeDesktopTmp(desktopPath, desktopTmp);
-      await makeMobileTmp(mobilePath, mobileTmp);
-      await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
-      console.log(`  ✓ Combined (legacy) video saved: ${outCombined}`);
+      console.log(`  ✓ Combined (strict-sync, 3-webm) video saved: ${outCombined}`);
+    } else if (manifest && pair.format === 'legacy') {
+      // Legacy 1-webm path (kept for older recordings)
+      const desktopMetaPath = pair.desktopPath.replace(/\.webm$/i, '.meta.json');
+      let desktopMeta = null;
+      if (fs.existsSync(desktopMetaPath)) {
+        try {
+          desktopMeta = JSON.parse(fs.readFileSync(desktopMetaPath, 'utf-8'));
+          console.log(`  Desktop meta: transition at ${desktopMeta.mapsToWebsiteTransitionSeconds}s`);
+        } catch {}
+      }
+      const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
+      const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
+      if (desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
+        const introAudio = manifest.segments.intro.durationSeconds;
+        const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + manifest.segments.maps.durationSeconds;
+        const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
+        const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
+        const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
+        await sliceAndPad(pair.desktopPath, 0, desktopMeta.mapsToWebsiteTransitionSeconds, mapsTargetSec, mapsTmp, true);
+        await sliceAndPad(pair.desktopPath, desktopMeta.mapsToWebsiteTransitionSeconds, null, manifest.segments.website.durationSeconds, websiteTmp, true);
+        await sliceAndPad(pair.mobilePath, 0, null, manifest.segments.mobile.durationSeconds, mobileSegTmp, false);
+        await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
+        console.log(`  ✓ Combined (strict-sync, legacy 1-webm) video saved: ${outCombined}`);
+      } else {
+        await makeDesktopTmp(pair.desktopPath, desktopTmp);
+        await makeMobileTmp(pair.mobilePath, mobileTmp);
+        await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
+        console.log(`  ✓ Combined (legacy concat) video saved: ${outCombined}`);
+      }
     }
 
     combinedCount++;

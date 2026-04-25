@@ -402,9 +402,13 @@ async function brandOne(combinedMp4Path, outMp4Path, introSec, outroSec) {
       ff.on('close', () => resolve(Number(s.trim()) || 0));
     });
     const expectedDur = INTRO_SEC + combinedDur + OUTRO_SEC;
-    const trimStart = Math.max(0, recordedDur - expectedDur);
+    // Cap trim at 1.0s — the lag is usually 0.3-1.5s of blank/HTML load,
+    // but recordings can be 3-5s longer than expected due to post-render delays
+    // at the END (after __RGA_DONE). Trimming too much eats into the intro logo.
+    const rawLag = Math.max(0, recordedDur - expectedDur);
+    const trimStart = Math.min(rawLag, 1.0);
     if (trimStart > 0.2) {
-      console.log(`  Trimming ${trimStart.toFixed(2)}s of page-load lag off start of branded video`);
+      console.log(`  Trimming ${trimStart.toFixed(2)}s of page-load lag off start (raw lag was ${rawLag.toFixed(2)}s, capped at 1.0s)`);
     }
 
     const ffArgs = ['-y'];
@@ -480,15 +484,18 @@ async function main() {
     console.log(`  Source:  ${src}`);
 
     const manifest = loadAudioManifest(baseName, base);
-    const introSec = manifest?.segments?.intro?.durationSeconds;
+    // Intro logo is HARD-CODED to 8s regardless of audio length.
+    // Audio intro continues playing over the start of the Maps view.
+    // Outro stays driven by the audio so the CTA logo holds for the full outro audio.
+    const HARDCODED_INTRO_SEC = 8;
     const outroSec = manifest?.segments?.outro?.durationSeconds;
-    if (introSec && outroSec) {
-      console.log(`  Using audio-driven intro=${introSec.toFixed(2)}s outro=${outroSec.toFixed(2)}s`);
+    if (outroSec) {
+      console.log(`  Intro hard-coded to ${HARDCODED_INTRO_SEC}s; outro from audio = ${outroSec.toFixed(2)}s`);
     } else {
-      console.log(`  Using default intro=${DEFAULT_INTRO_SEC}s outro=${DEFAULT_OUTRO_SEC}s (no manifest)`);
+      console.log(`  Intro hard-coded to ${HARDCODED_INTRO_SEC}s; using default outro=${DEFAULT_OUTRO_SEC}s (no manifest)`);
     }
 
-    await brandOne(src, out, introSec, outroSec);
+    await brandOne(src, out, HARDCODED_INTRO_SEC, outroSec);
 
     console.log(`  ✓ Branded video saved: ${out}`);
     count++;

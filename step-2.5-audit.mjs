@@ -93,9 +93,16 @@ async function auditWebsite(browser, websiteUrl, business) {
       const result = {
         schemaTypes: [],
         h1: '',
+        h1Count: 0,
         bodyText: '',
         phoneNumbers: [],
         clickToCallCount: 0,
+        hasMetaDescription: false,
+        renderBlockingHeadResources: 0,
+        imagesWithoutLazy: 0,
+        totalImages: 0,
+        isHttps: location.protocol === 'https:',
+        mixedContentCount: 0,
       };
       const ldScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       for (const s of ldScripts) {
@@ -110,12 +117,38 @@ async function auditWebsite(browser, websiteUrl, business) {
           }
         } catch {}
       }
-      const h1 = document.querySelector('h1');
+      const h1s = document.querySelectorAll('h1');
+      result.h1Count = h1s.length;
+      const h1 = h1s[0];
       result.h1 = (h1?.innerText || h1?.textContent || '').trim().slice(0, 300);
       result.bodyText = (document.body?.innerText || '').slice(0, 8000);
       const tels = Array.from(document.querySelectorAll('a[href^="tel:"]'));
       result.clickToCallCount = tels.length;
       result.phoneNumbers = tels.map((a) => a.getAttribute('href').replace(/^tel:/, ''));
+
+      // Meta description
+      const md = document.querySelector('meta[name="description"]');
+      result.hasMetaDescription = !!(md && (md.getAttribute('content') || '').trim().length > 10);
+
+      // Render-blocking resources in <head>
+      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+      const headSyncScripts = Array.from(document.head.querySelectorAll('script[src]'))
+        .filter((s) => !s.async && !s.defer);
+      result.renderBlockingHeadResources = headLinks.length + headSyncScripts.length;
+
+      // Lazy loading on images
+      const imgs = Array.from(document.querySelectorAll('img'));
+      result.totalImages = imgs.length;
+      result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
+
+      // Mixed content (http resources on https page)
+      if (result.isHttps) {
+        const allRes = Array.from(document.querySelectorAll('img[src], script[src], link[href]'));
+        result.mixedContentCount = allRes.filter((el) => {
+          const url = el.src || el.href || '';
+          return url.startsWith('http://');
+        }).length;
+      }
       return result;
     });
 
@@ -123,6 +156,13 @@ async function auditWebsite(browser, websiteUrl, business) {
       /LocalBusiness|HVACBusiness|Plumber|Electrician|Restaurant|Dentist|MedicalBusiness|Store|ProfessionalService/i.test(t)
     );
     findings.h1Text = data.h1;
+    findings.h1Count = data.h1Count;
+    findings.hasMetaDescription = data.hasMetaDescription;
+    findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
+    findings.imagesWithoutLazy = data.imagesWithoutLazy;
+    findings.totalImages = data.totalImages;
+    findings.isHttps = data.isHttps;
+    findings.mixedContentCount = data.mixedContentCount;
 
     let category = String(business.category || '').toLowerCase().trim();
     if (!category && business.searchTerm) {
@@ -166,6 +206,12 @@ async function auditMobile(browser, websiteUrl, business) {
     primaryCtaTapTargetPx: null,
     requiredFormFieldCount: null,
     pageWeightKb: null,
+    isHttps: null,
+    mixedContentCount: null,
+    h1Count: null,
+    renderBlockingHeadResources: null,
+    imagesWithoutLazy: null,
+    totalImages: null,
     error: null,
   };
 
@@ -199,6 +245,12 @@ async function auditMobile(browser, websiteUrl, business) {
         clickToCallAboveFold: false,
         primaryCtaPx: null,
         requiredFieldCount: null,
+        h1Count: 0,
+        renderBlockingHeadResources: 0,
+        imagesWithoutLazy: 0,
+        totalImages: 0,
+        isHttps: location.protocol === 'https:',
+        mixedContentCount: 0,
       };
 
       const vp = document.querySelector('meta[name="viewport"]');
@@ -251,6 +303,25 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       result.requiredFieldCount = totalRequired;
 
+      result.h1Count = document.querySelectorAll('h1').length;
+
+      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+      const headSyncScripts = Array.from(document.head.querySelectorAll('script[src]'))
+        .filter((s) => !s.async && !s.defer);
+      result.renderBlockingHeadResources = headLinks.length + headSyncScripts.length;
+
+      const imgs = Array.from(document.querySelectorAll('img'));
+      result.totalImages = imgs.length;
+      result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
+
+      if (result.isHttps) {
+        const allRes = Array.from(document.querySelectorAll('img[src], script[src], link[href]'));
+        result.mixedContentCount = allRes.filter((el) => {
+          const url = el.src || el.href || '';
+          return url.startsWith('http://');
+        }).length;
+      }
+
       return result;
     });
 
@@ -259,6 +330,12 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.primaryCtaTapTargetPx = data.primaryCtaPx;
     findings.requiredFormFieldCount = data.requiredFieldCount;
     findings.pageWeightKb = Math.round(totalBytes / 1024);
+    findings.h1Count = data.h1Count;
+    findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
+    findings.imagesWithoutLazy = data.imagesWithoutLazy;
+    findings.totalImages = data.totalImages;
+    findings.isHttps = data.isHttps;
+    findings.mixedContentCount = data.mixedContentCount;
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
