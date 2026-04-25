@@ -1,10 +1,12 @@
 // step-4-combine-desktop-mobile.mjs
 import fs from 'fs';
 import path from 'path';
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
+import slugify from 'slugify';
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
+const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
 const COMBINED_ROOT = path.join(process.cwd(), 'output', 'Step 4 (Combine Desktop+Mobile)');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
@@ -136,6 +138,69 @@ async function makeMobileTmp(mobileInput, tmpOutput) {
   ]);
 }
 
+async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDesktop) {
+  // Step 1: slice (if endSec is null, slice to end)
+  const sliceArgs = ['-y', '-ss', String(startSec)];
+  if (endSec != null) sliceArgs.push('-to', String(endSec));
+  sliceArgs.push('-i', inputPath);
+
+  // Build the video filter: scale to standard frame, set 30 fps, then trim/pad to targetSec
+  const filter = isDesktop
+    ? `fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`
+    : `fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p,tpad=stop_mode=clone:stop_duration=999`;
+
+  await runFFmpeg([
+    ...sliceArgs,
+    '-vf',
+    filter,
+    '-an',
+    '-t',
+    String(targetSec),
+    '-c:v',
+    'libx264',
+    '-preset',
+    'slow',
+    '-crf',
+    '20',
+    '-pix_fmt',
+    'yuv420p',
+    '-r',
+    '30',
+    '-movflags',
+    '+faststart',
+    outPath,
+  ]);
+}
+
+async function concatThree(mapsPath, websitePath, mobilePath, outPath) {
+  await runFFmpeg([
+    '-y',
+    '-i',
+    mapsPath,
+    '-i',
+    websitePath,
+    '-i',
+    mobilePath,
+    '-filter_complex',
+    '[0:v][1:v][2:v]concat=n=3:v=1:a=0[v]',
+    '-map',
+    '[v]',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'slow',
+    '-crf',
+    '20',
+    '-pix_fmt',
+    'yuv420p',
+    '-r',
+    '30',
+    '-movflags',
+    '+faststart',
+    outPath,
+  ]);
+}
+
 async function concatDesktopAndMobile(desktopTmp, mobileTmp, outPath) {
   await runFFmpeg([
     '-y',
@@ -201,11 +266,56 @@ async function main() {
     const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
     const outCombined = path.join(COMBINED_DIR, `${base}_combined.mp4`);
 
-    await makeDesktopTmp(desktopPath, desktopTmp);
-    await makeMobileTmp(mobilePath, mobileTmp);
-    await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
+    // Look up audio segment durations from step-6 manifest (for strict sync)
+    const slug = String(base).replace(/^\d+_/, '');
+    const slugifiedSlug = slugify(slug, { lower: true, strict: true });
+    const segmentManifestCandidates = [
+      path.join(AUDIO_ROOT, baseName, `${base}_segments`, 'manifest.json'),
+      path.join(AUDIO_ROOT, baseName, `01_${slugifiedSlug}_segments`, 'manifest.json'),
+    ];
+    const manifestPath = segmentManifestCandidates.find((p) => fs.existsSync(p));
+    let manifest = null;
+    if (manifestPath) {
+      try {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+        console.log(`  Audio manifest: ${manifestPath}`);
+        console.log(`    intro=${manifest.segments.intro.durationSeconds.toFixed(2)}s maps=${manifest.segments.maps.durationSeconds.toFixed(2)}s website=${manifest.segments.website.durationSeconds.toFixed(2)}s mobile=${manifest.segments.mobile.durationSeconds.toFixed(2)}s outro=${manifest.segments.outro.durationSeconds.toFixed(2)}s`);
+      } catch {}
+    } else {
+      console.log('  No audio manifest found; using legacy concat (no strict sync).');
+    }
 
-    console.log(`  ✓ Combined video saved: ${outCombined}`);
+    // Look up the desktop transition metadata (Maps→Website split timestamp)
+    const desktopMetaPath = desktopPath.replace(/\.webm$/i, '.meta.json');
+    let desktopMeta = null;
+    if (fs.existsSync(desktopMetaPath)) {
+      try {
+        desktopMeta = JSON.parse(fs.readFileSync(desktopMetaPath, 'utf-8'));
+        console.log(`  Desktop meta: transition at ${desktopMeta.mapsToWebsiteTransitionSeconds}s`);
+      } catch {}
+    }
+
+    if (manifest && desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
+      const transitionSec = desktopMeta.mapsToWebsiteTransitionSeconds;
+      const mapsTargetSec = manifest.segments.maps.durationSeconds;
+      const websiteTargetSec = manifest.segments.website.durationSeconds;
+      const mobileTargetSec = manifest.segments.mobile.durationSeconds;
+
+      const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
+      const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
+      const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
+
+      await sliceAndPad(desktopPath, 0, transitionSec, mapsTargetSec, mapsTmp, true);
+      await sliceAndPad(desktopPath, transitionSec, null, websiteTargetSec, websiteTmp, true);
+      await sliceAndPad(mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
+      await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
+      console.log(`  ✓ Combined (strict-sync) video saved: ${outCombined}`);
+    } else {
+      await makeDesktopTmp(desktopPath, desktopTmp);
+      await makeMobileTmp(mobilePath, mobileTmp);
+      await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
+      console.log(`  ✓ Combined (legacy) video saved: ${outCombined}`);
+    }
 
     combinedCount++;
   }

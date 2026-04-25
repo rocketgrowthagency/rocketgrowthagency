@@ -6,11 +6,13 @@ import path from 'path';
 import csvParser from 'csv-parser';
 import OpenAI from 'openai';
 import slugify from 'slugify';
+import { spawn } from 'child_process';
 
 const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
+const AUDIT_ROOT = path.join(process.cwd(), 'output', 'Step 2.5 (Audit)');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
 const MAX_RECORDINGS = Number(process.env.MAX_RECORDINGS || 1);
@@ -213,7 +215,211 @@ async function loadTop3Stats(baseName) {
   return stats;
 }
 
-function buildScript(record, top3Stats) {
+function loadAuditFindings(baseName, slug) {
+  const auditPath = path.join(AUDIT_ROOT, baseName, 'audit-findings.json');
+  if (!fs.existsSync(auditPath)) return null;
+  try {
+    const all = JSON.parse(fs.readFileSync(auditPath, 'utf-8'));
+    return all[slug] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Each scorer returns { score: 0-100, finding: string|null }.
+// Lower score = bigger problem. score=null means "not auditable / skip".
+function scoreWebsiteFindings(audit) {
+  if (!audit?.website) return [];
+  const w = audit.website;
+  const out = [];
+
+  if (w.pageLoadSeconds != null) {
+    const s = w.pageLoadSeconds;
+    let score = 100;
+    if (s > 6) score = 5;
+    else if (s > 4) score = 25;
+    else if (s > 2.5) score = 50;
+    else if (s > 1.5) score = 80;
+    if (score < 100) {
+      out.push({
+        key: 'pageLoad',
+        score,
+        finding: `your homepage loads in ${s.toFixed(1)} seconds — Google flags anything over 2.5`,
+      });
+    }
+  }
+
+  if (w.hasLocalBusinessSchema === false) {
+    out.push({
+      key: 'schema',
+      score: 20,
+      finding: `there's no LocalBusiness schema markup, one of the top 5 Maps ranking signals`,
+    });
+  }
+
+  if (w.websitePhoneMatchesGbp === false) {
+    out.push({
+      key: 'nap',
+      score: 10,
+      finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency`,
+    });
+  }
+
+  if (w.h1Text) {
+    const missing = [];
+    if (!w.h1IncludesCategory) missing.push('your primary service category');
+    if (!w.h1IncludesCity) missing.push('your city');
+    if (missing.length) {
+      out.push({
+        key: 'h1',
+        score: missing.length === 2 ? 30 : 55,
+        finding: `your headline doesn't include ${missing.join(' or ')}, missing a key on-page signal`,
+      });
+    }
+  }
+
+  if (w.locationsListedCount != null && w.locationsListedCount <= 1) {
+    out.push({
+      key: 'locations',
+      score: 50,
+      finding: `you list one location but no dedicated pages for nearby cities you serve, leaving rank on the table for those suburbs`,
+    });
+  }
+
+  return out.sort((a, b) => a.score - b.score);
+}
+
+function scoreMobileFindings(audit) {
+  if (!audit?.mobile) return [];
+  const m = audit.mobile;
+  const out = [];
+
+  if (m.pageLoadSeconds != null) {
+    const s = m.pageLoadSeconds;
+    let score = 100;
+    if (s > 6) score = 5;
+    else if (s > 4) score = 20;
+    else if (s > 2.5) score = 45;
+    else if (s > 1.5) score = 75;
+    if (score < 100) {
+      out.push({
+        key: 'mobileLoad',
+        score,
+        finding: `your site takes ${s.toFixed(1)} seconds to load on mobile — 53% of visitors abandon at 3 seconds`,
+      });
+    }
+  }
+
+  if (m.clickToCallAboveFold === false) {
+    out.push({
+      key: 'c2cFold',
+      score: 15,
+      finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it`,
+    });
+  }
+
+  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
+    out.push({
+      key: 'tapTarget',
+      score: m.primaryCtaTapTargetPx < 36 ? 25 : 45,
+      finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's guideline is 48`,
+    });
+  }
+
+  if (m.requiredFormFieldCount != null && m.requiredFormFieldCount > 4) {
+    out.push({
+      key: 'formFields',
+      score: m.requiredFormFieldCount > 7 ? 20 : 40,
+      finding: `your contact form has ${m.requiredFormFieldCount} required fields — each extra field cuts mobile submissions by about 7 percent`,
+    });
+  }
+
+  if (m.hasViewportMeta === false) {
+    out.push({
+      key: 'viewport',
+      score: 10,
+      finding: `there's no responsive viewport tag, so the site just shrinks the desktop layout instead of adapting for mobile`,
+    });
+  }
+
+  return out.sort((a, b) => a.score - b.score);
+}
+
+function joinFindings(findings, max = 3) {
+  const picked = findings.slice(0, max).map((f) => f.finding);
+  if (!picked.length) return '';
+  if (picked.length === 1) return picked[0];
+  return picked.slice(0, -1).join('; ') + '; and ' + picked[picked.length - 1];
+}
+
+function scoreMapsFindings(audit, top3Stats, record) {
+  const out = [];
+  const rating = parseFloat(normalizeField(record, 'Rating') || '');
+  const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
+
+  // Review count vs top 3 average
+  if (top3Stats && Number.isFinite(reviews)) {
+    const avgReviews = Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
+    if (avgReviews > 0 && reviews < avgReviews * 0.6) {
+      const ratio = reviews / avgReviews;
+      out.push({
+        key: 'reviewCount',
+        score: ratio < 0.3 ? 15 : 35,
+        finding: `you have ${reviews} Google reviews; the top 3 in this search average around ${avgReviews} — Google weighs total review volume heavily for Maps ranking`,
+      });
+    }
+  }
+
+  // Rating vs top 3
+  if (top3Stats && Number.isFinite(rating)) {
+    const avgRating = (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
+    if (rating < avgRating - 0.15) {
+      out.push({
+        key: 'ratingGap',
+        score: 30,
+        finding: `you're at ${rating} stars; the top 3 average around ${avgRating.toFixed(1)} — even a small rating gap costs you Maps ranking position`,
+      });
+    }
+  }
+
+  // NAP mismatch (from website audit)
+  if (audit?.website?.websitePhoneMatchesGbp === false) {
+    out.push({
+      key: 'mapsNap',
+      score: 10,
+      finding: `your phone number on the website doesn't match your Google Business Profile — citation consistency is one of the top Maps ranking signals`,
+    });
+  }
+
+  // GBP audit data (if available)
+  if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30) {
+    out.push({
+      key: 'reviewVelocity',
+      score: audit.gbp.daysSinceLastReview > 90 ? 20 : 40,
+      finding: `your last Google review was about ${audit.gbp.daysSinceLastReview} days ago — review velocity (how recent your reviews are) weighs heavily in Maps ranking`,
+    });
+  }
+
+  if (audit?.gbp?.photoCount != null && audit.gbp.photoCount < 30) {
+    out.push({
+      key: 'photoCount',
+      score: audit.gbp.photoCount < 10 ? 25 : 50,
+      finding: `you have only ${audit.gbp.photoCount} photos on your Google Business Profile — top performers in your category typically have 50 or more`,
+    });
+  }
+
+  if (audit?.gbp?.categoriesCount != null && audit.gbp.categoriesCount < 3) {
+    out.push({
+      key: 'categoriesCount',
+      score: 35,
+      finding: `you have only ${audit.gbp.categoriesCount} category listed on your Google Business Profile — top performers list 3 to 5 to capture more search variations`,
+    });
+  }
+
+  return out.sort((a, b) => a.score - b.score);
+}
+
+function buildScript(record, top3Stats, audit) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'your business';
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
@@ -226,55 +432,112 @@ function buildScript(record, top3Stats) {
     normalizeField(record, 'Search Term') ||
     normalizeField(record, 'searchTerm') ||
     'your type of business near you';
-  const locationSuffix =
-    city && !searchTerm.toLowerCase().includes(city.toLowerCase()) ? ` in ${city}` : '';
-
-  let top3Sentence = '';
-  if (top3Stats) {
-    const { ratingMin, ratingMax, reviewsMin, reviewsMax } = top3Stats;
-    top3Sentence = `In the same search, the top 3 map results are around ${ratingMin.toFixed(
-      1
-    )}–${ratingMax.toFixed(1)} stars with roughly ${reviewsMin}–${reviewsMax} reviews.`;
-  }
+  const inCity = city && !searchTerm.toLowerCase().includes(city.toLowerCase())
+    ? ` in ${city}`
+    : '';
 
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
-  const rankParagraph = isTop3
-    ? rankNum === 1
-      ? `Your Google Maps listing is ranking #1 for ${searchTerm}${locationSuffix} — which is where every local business wants to be. You’ve clearly done the hard work to get here.`
-      : `Your Google Maps listing is ranking #${rankNum} for ${searchTerm}${locationSuffix} — you’re already in the top 3, which most businesses never reach.`
-    : `Your Google Maps listing is ranking number ${rankRaw} for ${searchTerm}${locationSuffix}. That means customers searching today are seeing competitors before they see you.`;
+  const intro = isTop3
+    ? `Hey, this is Chris from Rocket Growth Agency, local SEO experts. Quick walkthrough of ${name}: you're in the top 3 on Google Maps — here's how to defend that position and where you're vulnerable.`
+    : `Hey, this is Chris from Rocket Growth Agency, local SEO experts. Quick walkthrough of ${name}: your current Google Maps rank, and how every position below the top 3 is costing you leads.`;
 
-  const strategyParagraph = isTop3
-    ? `The harder part is staying here. Top 3 positions turn over more than most people realize — review velocity, Google’s algorithm updates, and newer competitors can shift rankings within a single quarter. I recorded this walkthrough to show you two things: what’s helping you hold that position, and where your listing and website have gaps that a challenger could exploit.`
-    : `On screen, you’re seeing exactly what a potential customer sees when they look you up on Google — first your Google Maps listing, then your website.`;
+  function numberedJoin(findings, max = 3) {
+    const picked = findings.slice(0, max).map((f) => f.finding);
+    if (!picked.length) return '';
+    const labels = ['First', 'Second', 'Third'];
+    return picked.map((p, i) => `${labels[i]}: ${p}.`).join(' ');
+  }
 
-  const mapsParagraph = isTop3
-    ? `Even with strong map visibility, there’s still room to protect more calls and conversions once someone lands on your listing and website.${top3Sentence ? ` ${top3Sentence}` : ''}`
-    : `Right now, when we search “${searchTerm}” in the ${
-        city || 'local'
-      } area, you’re showing up around number ${rankRaw} in the Google Maps results. In most markets, the top three “map pack” positions grab a majority of the attention — often around 40–60% of the clicks and calls from local searches.`;
+  let mapsSegment;
+  if (isTop3) {
+    const trustClause = rating && reviews
+      ? ` With ${rating} stars and ${reviews} reviews, your trust signals are solid.`
+      : '';
+    const mapsFindingsT3 = scoreMapsFindings(audit, top3Stats, record);
+    const mapsListT3 = numberedJoin(mapsFindingsT3, 3);
+    if (mapsListT3) {
+      mapsSegment = `You're ranked #${rankNum} for ${searchTerm}${inCity} on Maps — top 3 owns 70 percent of the calls from that search.${trustClause} But top 3 changes more than people realize. Here are the 3 vulnerabilities a competitor could exploit to push you out: ${mapsListT3} Each one is a slip that lets someone displace you.`;
+    } else {
+      mapsSegment = `You're ranked #${rankNum} for ${searchTerm}${inCity} on Maps — top 3 owns 70 percent of the calls from that search.${trustClause} But top 3 changes more than people realize — review velocity, algorithm updates, and newer competitors can shift this within a quarter. Tightening every signal you have is how you stay there.`;
+    }
+  } else {
+    const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
+    const mapsList = numberedJoin(mapsFindings, 3);
+    if (mapsList) {
+      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, where 70 percent of the calls go. Here are the 3 things keeping you out: ${mapsList} Each one directly drags your Maps ranking — fix all three and you've cleared the biggest barriers to climbing into the top 3.`;
+    } else {
+      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, where 70 percent of the calls go. The biggest levers to climb are review volume, exact name-address-phone matching across the web, and tightening your Google Maps listing details — fix these and you've cleared the biggest barriers to the top 3.`;
+    }
+  }
 
-  const proofParagraph = `You’re currently at about ${rating || 'your current'} stars with roughly ${
-    reviews || 'your current'
-  } reviews.${!isTop3 && top3Sentence ? ` ${top3Sentence}` : ''}`;
+  const websiteFindings = scoreWebsiteFindings(audit);
+  const websiteList = numberedJoin(websiteFindings, 3);
+  const websiteSegment = isTop3
+    ? (websiteList
+        ? `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, these gaps are how challengers chip away at your position. Here are the 3 website issues to fix: ${websiteList} Each one is a signal a competitor could outrank you on.`
+        : `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, your site checks out on the basics. Tightening schema and adding location pages still helps you defend the position.`)
+    : (websiteList
+        ? `Now we're on your website — Google uses this page to validate your Maps ranking through page speed, schema, on-page signals, and citation consistency. Here are the 3 website issues hurting your Maps ranking: ${websiteList} Each one directly drags your Maps position — fix them and you've removed major barriers to the top 3.`
+        : `Now we're on your website — Google uses this page to validate your Maps ranking through page speed, schema, on-page signals, and citation consistency. Your site checks out on the basics — small wins like extra location pages or richer schema can still strengthen your push to the top 3.`);
 
-  const parts = [
-    `Hey, this is Chris from Rocket Growth Agency.`,
-    rankParagraph,
-    strategyParagraph,
-    mapsParagraph,
-    proofParagraph,
-    `From there, we also look at your website, because what happens after someone clicks matters just as much as where you rank.`,
-    `That’s where we look for the gaps that are costing you calls, form fills, and booked jobs after someone lands on the site.`,
-    `To see exactly what’s costing you leads and the first fixes we’d make, click the free growth audit link in the email now.`,
-    `Talk soon, Chris from Rocket Growth Agency.`,
-  ];
+  const mobileFindings = scoreMobileFindings(audit);
+  const mobileList = numberedJoin(mobileFindings, 3);
+  const mobileSegment = isTop3
+    ? (mobileList
+        ? `Same site on mobile — where 70 percent of local-search traffic comes from. Here are the 3 mobile issues to tighten: ${mobileList} Mobile-first indexing means each one weakens your defense of the top 3.`
+        : `Same site on mobile — where 70 percent of local-search traffic comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Even small wins here still defend your top 3 position.`)
+    : (mobileList
+        ? `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. Here are the 3 mobile issues hurting your Maps ranking: ${mobileList} Google's mobile-first indexing means each one directly stops you from ranking in the top 3.`
+        : `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Tightening these further still strengthens your push to the top 3 under mobile-first indexing.`);
 
-  return parts.join(' ');
+  const outroText = isTop3
+    ? `You've now seen the top vulnerabilities in your top 3 position. To get the full plan to defend it — and push for #1 — click the Get My Free Growth Audit button below. Talk soon.`
+    : `You've now seen the top issues holding back your Maps ranking. To get the full plan to fix them and rank in the top 3, click the Get My Free Growth Audit button below. Talk soon.`;
+
+  return {
+    intro,
+    maps: mapsSegment,
+    website: websiteSegment,
+    mobile: mobileSegment,
+    outro: outroText,
+    combined: [intro, mapsSegment, websiteSegment, mobileSegment, outroText].join(' '),
+  };
 }
 
-async function generateVoiceover(record, index, top3Stats) {
+function getMp3DurationSeconds(filePath) {
+  return new Promise((resolve) => {
+    const ff = spawn('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', filePath]);
+    let out = '';
+    ff.stdout.on('data', (d) => (out += d.toString()));
+    ff.on('close', () => resolve(Number(out.trim()) || 0));
+  });
+}
+
+function concatMp3Segments(segmentDir, segmentNames, outPath) {
+  return new Promise((resolve, reject) => {
+    const concatList = path.join(segmentDir, 'concat.txt');
+    const lines = segmentNames.map((n) => `file '${path.join(segmentDir, n + '.mp3').replace(/'/g, "\\'")}'`).join('\n');
+    fs.writeFileSync(concatList, lines);
+    const ff = spawn('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', concatList, '-c', 'copy', outPath], { stdio: 'ignore' });
+    ff.on('close', (code) => (code === 0 ? resolve(outPath) : reject(new Error(`ffmpeg concat failed code ${code}`))));
+  });
+}
+
+async function ttsToFile(text, outPath) {
+  const response = await openai.audio.speech.create({
+    model: 'gpt-4o-mini-tts',
+    voice: 'echo',
+    input: text,
+    format: 'mp3',
+    speed: 1.2,
+  });
+  const buffer = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync(outPath, buffer);
+  return outPath;
+}
+
+async function generateVoiceover(record, index, top3Stats, baseName) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'business';
   const email = extractValidEmail(normalizeField(record, 'email'));
@@ -284,27 +547,45 @@ async function generateVoiceover(record, index, top3Stats) {
   }
 
   const slug = slugify(name, { lower: true, strict: true }) || `contact-${index + 1}`;
-  const fileName = `${String(index + 1).padStart(2, '0')}_${slug}.mp3`;
-  const outPath = path.join(AUDIO_DIR, fileName);
+  const indexStr = String(index + 1).padStart(2, '0');
+  const segmentDir = path.join(AUDIO_DIR, `${indexStr}_${slug}_segments`);
+  if (!fs.existsSync(segmentDir)) fs.mkdirSync(segmentDir, { recursive: true });
 
   console.log(`▶ Voiceover ${index + 1}: ${name} (email: ${email})`);
-  console.log(`   → Generating audio: ${outPath}`);
 
-  const script = buildScript(record, top3Stats);
+  const audit = loadAuditFindings(baseName, slug);
+  if (audit) console.log(`   → Audit findings loaded for ${slug}`);
+  const segments = buildScript(record, top3Stats, audit);
 
-  const response = await openai.audio.speech.create({
-    model: 'gpt-4o-mini-tts',
-    voice: 'echo',
-    input: script,
-    format: 'mp3',
-    speed: 1.2,
-  });
+  // Generate one MP3 per segment + combined for backward compat
+  const segmentNames = ['intro', 'maps', 'website', 'mobile', 'outro'];
+  const manifest = { businessName: name, slug, segments: {} };
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  fs.writeFileSync(outPath, buffer);
-  console.log(`   ✓ Saved audio: ${outPath}`);
+  for (const segName of segmentNames) {
+    const segPath = path.join(segmentDir, `${segName}.mp3`);
+    console.log(`   → Generating ${segName}: ${segPath}`);
+    await ttsToFile(segments[segName], segPath);
+    const duration = await getMp3DurationSeconds(segPath);
+    manifest.segments[segName] = {
+      file: path.basename(segPath),
+      durationSeconds: duration,
+      text: segments[segName],
+    };
+    console.log(`     ✓ ${segName} = ${duration.toFixed(2)}s`);
+  }
 
-  return outPath;
+  // Build combined.mp3 by concatenating segment MP3s — ensures total duration = sum of segments
+  const combinedPath = path.join(AUDIO_DIR, `${indexStr}_${slug}.mp3`);
+  console.log(`   → Concatenating segments → ${combinedPath}`);
+  await concatMp3Segments(segmentDir, segmentNames, combinedPath);
+  manifest.combinedFile = path.basename(combinedPath);
+  manifest.combinedDurationSeconds = await getMp3DurationSeconds(combinedPath);
+
+  const manifestPath = path.join(segmentDir, 'manifest.json');
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  console.log(`   ✓ Wrote manifest: ${manifestPath}`);
+
+  return combinedPath;
 }
 
 async function main() {
@@ -339,7 +620,7 @@ async function main() {
 
   for (let i = 0; i < limitedRows.length; i++) {
     try {
-      await generateVoiceover(limitedRows[i], i, top3Stats);
+      await generateVoiceover(limitedRows[i], i, top3Stats, STEP2_BASENAME);
     } catch (err) {
       console.error(`   ❌ Error generating voiceover ${i + 1}:`, err.message);
     }
