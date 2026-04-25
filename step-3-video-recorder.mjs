@@ -760,15 +760,13 @@ function createScreencastRecorder(page, outputPath, viewport) {
   return { start, stop };
 }
 
-async function recordDesktopVideo(browser, meta, outputPath) {
+async function recordDesktopMapsVideo(browser, meta, outputPath) {
   const page = await browser.newPage();
   await page.setViewport(DESKTOP_VIEWPORT);
 
   const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
   let hadFatal = false;
   let recorderStarted = false;
-  let recorderStartMs = null;
-  let mapsToWebsiteTransitionMs = null;
 
   try {
     await page.goto('about:blank', { waitUntil: 'load' });
@@ -777,73 +775,88 @@ async function recordDesktopVideo(browser, meta, outputPath) {
       if (recorderStarted) return;
       await recorder.start();
       recorderStarted = true;
-      recorderStartMs = Date.now();
       await sleep(300);
     };
 
     const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder);
     if (!recorderStarted) await startRecorder();
     if (mode !== 'none') await sleep(DESKTOP_MAPS_HOLD_MS);
-
-    let visited = null;
-    if (meta.website) {
-      console.log(`   → Website (desktop view): ${meta.website}`);
-      mapsToWebsiteTransitionMs = recorderStartMs ? Date.now() - recorderStartMs : null;
-      console.log(`   [transition] Maps→Website at ${mapsToWebsiteTransitionMs}ms from recorder start`);
-      visited = await gotoFirstWorking(page, meta.website, 'Website');
-    }
-
-    if (!visited) {
-      const fromMaps = await extractWebsiteFromMapsCard(page);
-      if (fromMaps) {
-        console.log(`   → Website from Maps card: ${fromMaps}`);
-        visited = await gotoFirstWorking(page, fromMaps, 'Maps Website');
-      }
-    }
-
-    if (visited) {
-      await sleep(2200);
-      await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
-      await dismissCommonCookieBanner(page);
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
-      await sleep(DESKTOP_WEBSITE_INTRO_HOLD_MS);
-      await scrollWebsiteMore(page);
-      await scrollWebsiteTail(page, DESKTOP_WEBSITE_EXTRA_HOLD_MS);
-    } else {
-      console.warn('   ⚠️ Website unreachable; keeping desktop video as Maps-only segment.');
-      await sleep(5000);
-    }
   } catch (err) {
     hadFatal = true;
-    console.error(`   ❌ Error recording desktop for ${meta.name}: ${err.message || err}`);
+    console.error(`   ❌ Error recording desktop Maps for ${meta.name}: ${err.message || err}`);
   }
 
   const result = await recorder.stop();
   await page.close().catch(() => {});
-
   if (!result.ok) {
-    console.warn(`   ⚠️ Desktop recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
+    console.warn(`   ⚠️ Desktop Maps recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
     return false;
   }
-
   if (hadFatal) {
-    console.warn(`   ⚠️ Desktop had an error, but video was still saved: ${outputPath}`);
+    console.warn(`   ⚠️ Desktop Maps had error, but video was still saved: ${outputPath}`);
   } else {
-    console.log(`   ✓ Saved desktop video: ${outputPath}`);
+    console.log(`   ✓ Saved desktop Maps video: ${outputPath}`);
+  }
+  return true;
+}
+
+async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
+  if (!meta.website) return false;
+
+  const page = await browser.newPage();
+  await page.setViewport(DESKTOP_VIEWPORT);
+
+  const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
+  let hadFatal = false;
+
+  try {
+    // NEW: navigate FIRST, wait for render, THEN start recorder.
+    // This avoids the screenshot-stuck-on-old-page bug we hit when capturing
+    // through a navigation. Same fix already applied to mobile.
+    console.log(`   → Website (desktop view): ${meta.website}`);
+    const visited = await gotoFirstWorking(page, meta.website, 'Website');
+
+    if (!visited) {
+      console.warn('   ⚠️ Desktop website unreachable; saving short blank segment.');
+      await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
+      await recorder.start();
+      await sleep(2000);
+    } else {
+      await sleep(2500);
+      await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
+      await dismissCommonCookieBanner(page);
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
+
+      // Verify screenshots actually capture the website BEFORE recording
+      try {
+        const testShot = await page.screenshot({ type: 'jpeg', quality: 50, captureBeyondViewport: false });
+        console.log(`   [diag] desktop website pre-record screenshot OK (${testShot.length} bytes)`);
+      } catch (e) {
+        console.warn(`   ⚠️ desktop website pre-record screenshot FAILED: ${e.message}`);
+      }
+
+      await recorder.start();
+      await sleep(800);
+
+      await scrollWebsiteMore(page);
+      await scrollWebsiteTail(page, DESKTOP_WEBSITE_EXTRA_HOLD_MS);
+    }
+  } catch (err) {
+    hadFatal = true;
+    console.error(`   ❌ Error recording desktop website for ${meta.name}: ${err.message || err}`);
   }
 
-  // Write per-video metadata so step-4 knows where Maps ends and Website begins
-  try {
-    const metaPath = outputPath.replace(/\.webm$/i, '.meta.json');
-    const metaJson = {
-      type: 'desktop',
-      mapsToWebsiteTransitionSeconds:
-        mapsToWebsiteTransitionMs != null ? Number((mapsToWebsiteTransitionMs / 1000).toFixed(3)) : null,
-      totalRecordingSeconds: recorderStartMs ? Number(((Date.now() - recorderStartMs) / 1000).toFixed(3)) : null,
-    };
-    fs.writeFileSync(metaPath, JSON.stringify(metaJson, null, 2));
-  } catch {}
-
+  const result = await recorder.stop();
+  await page.close().catch(() => {});
+  if (!result.ok) {
+    console.warn(`   ⚠️ Desktop website recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
+    return false;
+  }
+  if (hadFatal) {
+    console.warn(`   ⚠️ Desktop website had error, but video was still saved: ${outputPath}`);
+  } else {
+    console.log(`   ✓ Saved desktop website video: ${outputPath}`);
+  }
   return true;
 }
 
@@ -858,29 +871,33 @@ async function recordMobileVideo(browser, meta, outputPath) {
   let hadFatal = false;
 
   try {
-    const safeName =
-      String(meta.name || 'Loading...')
-        .replace(/[<>]/g, '')
-        .trim() || 'Loading...';
-    await page.setContent(
-      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><div style="padding:16px;"><div style="font-size:16px;font-weight:600;">${safeName}</div><div style="margin-top:6px;font-size:13px;opacity:.65;">Loading website...</div></div></body></html>`,
-      { waitUntil: 'domcontentloaded' }
-    );
-
-    await recorder.start();
-    await sleep(400);
-
+    // NEW APPROACH: navigate to the website FIRST, wait for it to render,
+    // THEN start the recorder. This avoids the placeholder DOM ever being
+    // captured (which was the persistent "Loading website..." bug).
     console.log(`   → Website (real mobile view): ${meta.website}`);
     const visited = await gotoFirstWorking(page, meta.website, 'Mobile Website');
 
     if (!visited) {
-      console.warn('   ⚠️ Mobile website unreachable; saving short placeholder segment.');
+      console.warn('   ⚠️ Mobile website unreachable; saving short blank segment.');
       await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
+      await recorder.start();
       await sleep(2000);
     } else {
-      await sleep(1200);
+      // Give the page a real moment to render (Pacific takes 10s, others vary)
+      await sleep(2500);
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
+
+      // Force a screenshot test BEFORE recording — confirms screenshots actually capture the website
+      try {
+        const testShot = await page.screenshot({ type: 'jpeg', quality: 50, captureBeyondViewport: false });
+        console.log(`   [diag] mobile pre-record screenshot OK (${testShot.length} bytes)`);
+      } catch (e) {
+        console.warn(`   ⚠️ mobile pre-record screenshot FAILED: ${e.message}`);
+      }
+
+      await recorder.start();
+      await sleep(800);
 
       const positions = [0, 650, 1300, 1950];
       for (const top of positions) {
@@ -910,10 +927,11 @@ async function recordMobileVideo(browser, meta, outputPath) {
   return true;
 }
 
-async function recordBusinessVideos(browser, meta, desktopOut, mobileOut) {
-  const desktopOk = await recordDesktopVideo(browser, meta, desktopOut);
+async function recordBusinessVideos(browser, meta, mapsOut, websiteOut, mobileOut) {
+  const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
+  const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
   const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
-  return { desktopOk, mobileOk };
+  return { mapsOk, websiteOk, mobileOk };
 }
 
 async function launchBrowser() {
@@ -984,7 +1002,8 @@ async function main() {
       const reviews = row.Reviews || row.reviews || '';
       const indexStr = String(processed + 1).padStart(2, '0');
 
-      const desktopOut = path.join(videosDir, `${indexStr}_${slug}_desktop.webm`);
+      const mapsOut = path.join(videosDir, `${indexStr}_${slug}_desktop_maps.webm`);
+      const websiteOut = path.join(videosDir, `${indexStr}_${slug}_desktop_website.webm`);
       const mobileOut = path.join(videosDir, `${indexStr}_${slug}_mobile.webm`);
 
       console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
@@ -992,7 +1011,8 @@ async function main() {
       await recordBusinessVideos(
         browser,
         { name, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
-        desktopOut,
+        mapsOut,
+        websiteOut,
         mobileOut
       );
 

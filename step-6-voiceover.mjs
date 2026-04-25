@@ -226,120 +226,108 @@ function loadAuditFindings(baseName, slug) {
   }
 }
 
-// Each scorer returns { score: 0-100, finding: string|null }.
-// Lower score = bigger problem. score=null means "not auditable / skip".
+// PRIORITY-BASED SCORING:
+// Each finding has a fixed priority (1-10, lower = more important).
+// Audit picks the top 3 lowest-priority findings that triggered.
+// "score" field == priority for sorting compatibility.
 function scoreWebsiteFindings(audit) {
   if (!audit?.website) return [];
   const w = audit.website;
   const out = [];
 
-  if (w.pageLoadSeconds != null) {
-    const s = w.pageLoadSeconds;
-    let score = 100;
-    if (s > 6) score = 5;
-    else if (s > 4) score = 25;
-    else if (s > 2.5) score = 50;
-    else if (s > 1.5) score = 80;
-    if (score < 100) {
-      out.push({
-        key: 'pageLoad',
-        score,
-        finding: `your homepage loads in ${s.toFixed(1)} seconds — Google flags anything over 2.5`,
-      });
-    }
-  }
-
-  if (w.hasLocalBusinessSchema === false) {
-    out.push({
-      key: 'schema',
-      score: 20,
-      finding: `there's no LocalBusiness schema markup, one of the top 5 Maps ranking signals`,
-    });
-  }
-
+  // PRIORITY 1: NAP mismatch
   if (w.websitePhoneMatchesGbp === false) {
-    out.push({
-      key: 'nap',
-      score: 10,
-      finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency`,
-    });
+    out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
   }
-
-  if (w.h1Text) {
-    const missing = [];
-    if (!w.h1IncludesCategory) missing.push('your primary service category');
-    if (!w.h1IncludesCity) missing.push('your city');
-    if (missing.length) {
-      out.push({
-        key: 'h1',
-        score: missing.length === 2 ? 30 : 55,
-        finding: `your headline doesn't include ${missing.join(' or ')}, missing a key on-page signal`,
-      });
-    }
+  // PRIORITY 2: No LocalBusiness schema
+  if (w.hasLocalBusinessSchema === false) {
+    out.push({ key: 'schema', score: 2, finding: `there's no LocalBusiness schema markup, one of the top 5 Maps ranking signals` });
   }
-
+  // PRIORITY 3: Slow page load
+  if (w.pageLoadSeconds != null && w.pageLoadSeconds > 2.5) {
+    out.push({ key: 'pageLoad', score: 3, finding: `your homepage loads in ${w.pageLoadSeconds.toFixed(1)} seconds — Google flags anything over 2.5` });
+  }
+  // PRIORITY 4: H1 missing category AND city
+  if (w.h1Text && !w.h1IncludesCategory && !w.h1IncludesCity) {
+    out.push({ key: 'h1', score: 4, finding: `your headline doesn't include your primary service category or your city, missing a key on-page signal` });
+  }
+  // PRIORITY 5: No HTTPS / mixed content
+  if (w.isHttps === false) {
+    out.push({ key: 'https', score: 5, finding: `your site isn't on HTTPS — Google penalizes non-secure pages` });
+  } else if (w.mixedContentCount != null && w.mixedContentCount > 0) {
+    out.push({ key: 'mixed', score: 5, finding: `your site has ${w.mixedContentCount} mixed-content resources loading over insecure HTTP` });
+  }
+  // PRIORITY 6: Only 1 location listed
   if (w.locationsListedCount != null && w.locationsListedCount <= 1) {
-    out.push({
-      key: 'locations',
-      score: 50,
-      finding: `you list one location but no dedicated pages for nearby cities you serve, leaving rank on the table for those suburbs`,
-    });
+    out.push({ key: 'locations', score: 6, finding: `you list one location but no dedicated pages for nearby cities you serve, leaving rank on the table for those suburbs` });
+  }
+  // PRIORITY 7: Multiple H1 tags
+  if (w.h1Count != null && w.h1Count > 1) {
+    out.push({ key: 'multiH1', score: 7, finding: `your page has ${w.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
+  }
+  // PRIORITY 8: Missing meta description
+  if (w.hasMetaDescription === false) {
+    out.push({ key: 'metaDesc', score: 8, finding: `your homepage is missing a meta description, weakening how it appears in search snippets` });
+  }
+  // PRIORITY 9: Render-blocking CSS/JS in head
+  if (w.renderBlockingHeadResources != null && w.renderBlockingHeadResources > 3) {
+    out.push({ key: 'renderBlock', score: 9, finding: `you have ${w.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint` });
+  }
+  // PRIORITY 10: Images missing lazy loading
+  if (w.imagesWithoutLazy != null && w.totalImages > 5 && w.imagesWithoutLazy > 5) {
+    out.push({ key: 'lazyImg', score: 10, finding: `${w.imagesWithoutLazy} images don't have lazy loading enabled, slowing your initial load` });
   }
 
   return out.sort((a, b) => a.score - b.score);
 }
 
+// PRIORITY-BASED MOBILE SCORING (1 = most important, 10 = least)
 function scoreMobileFindings(audit) {
   if (!audit?.mobile) return [];
   const m = audit.mobile;
   const out = [];
 
-  if (m.pageLoadSeconds != null) {
-    const s = m.pageLoadSeconds;
-    let score = 100;
-    if (s > 6) score = 5;
-    else if (s > 4) score = 20;
-    else if (s > 2.5) score = 45;
-    else if (s > 1.5) score = 75;
-    if (score < 100) {
-      out.push({
-        key: 'mobileLoad',
-        score,
-        finding: `your site takes ${s.toFixed(1)} seconds to load on mobile — 53% of visitors abandon at 3 seconds`,
-      });
-    }
+  // PRIORITY 1: Mobile load > 3s
+  if (m.pageLoadSeconds != null && m.pageLoadSeconds > 3) {
+    out.push({ key: 'mobileLoad', score: 1, finding: `your site takes ${m.pageLoadSeconds.toFixed(1)} seconds to load on mobile — 53 percent of visitors abandon at 3 seconds` });
   }
-
-  if (m.clickToCallAboveFold === false) {
-    out.push({
-      key: 'c2cFold',
-      score: 15,
-      finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it`,
-    });
+  // PRIORITY 2: No HTTPS / mixed content
+  if (m.isHttps === false) {
+    out.push({ key: 'https', score: 2, finding: `your site isn't on HTTPS — Google penalizes non-secure pages on mobile` });
+  } else if (m.mixedContentCount != null && m.mixedContentCount > 0) {
+    out.push({ key: 'mixed', score: 2, finding: `your mobile page has ${m.mixedContentCount} mixed-content resources loading over insecure HTTP` });
   }
-
-  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
-    out.push({
-      key: 'tapTarget',
-      score: m.primaryCtaTapTargetPx < 36 ? 25 : 45,
-      finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's guideline is 48`,
-    });
-  }
-
-  if (m.requiredFormFieldCount != null && m.requiredFormFieldCount > 4) {
-    out.push({
-      key: 'formFields',
-      score: m.requiredFormFieldCount > 7 ? 20 : 40,
-      finding: `your contact form has ${m.requiredFormFieldCount} required fields — each extra field cuts mobile submissions by about 7 percent`,
-    });
-  }
-
+  // PRIORITY 3: No responsive viewport meta
   if (m.hasViewportMeta === false) {
-    out.push({
-      key: 'viewport',
-      score: 10,
-      finding: `there's no responsive viewport tag, so the site just shrinks the desktop layout instead of adapting for mobile`,
-    });
+    out.push({ key: 'viewport', score: 3, finding: `there's no responsive viewport tag, so the site just shrinks the desktop layout instead of adapting for mobile` });
+  }
+  // PRIORITY 4: Click-to-call NOT above fold
+  if (m.clickToCallAboveFold === false) {
+    out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
+  }
+  // PRIORITY 5: Tap target < 48px
+  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
+    out.push({ key: 'tapTarget', score: 5, finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's guideline is 48` });
+  }
+  // PRIORITY 6: Page weight > 3 MB
+  if (m.pageWeightKb != null && m.pageWeightKb > 3000) {
+    out.push({ key: 'pageWeight', score: 6, finding: `your mobile page weighs ${(m.pageWeightKb / 1024).toFixed(1)} megabytes — Google recommends under 3 megabytes for mobile` });
+  }
+  // PRIORITY 7: Form > 4 required fields
+  if (m.requiredFormFieldCount != null && m.requiredFormFieldCount > 4) {
+    out.push({ key: 'formFields', score: 7, finding: `your contact form has ${m.requiredFormFieldCount} required fields — each extra field cuts mobile submissions by about 7 percent` });
+  }
+  // PRIORITY 8: Multiple H1 tags
+  if (m.h1Count != null && m.h1Count > 1) {
+    out.push({ key: 'multiH1', score: 8, finding: `your mobile page has ${m.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
+  }
+  // PRIORITY 9: Render-blocking CSS/JS in head
+  if (m.renderBlockingHeadResources != null && m.renderBlockingHeadResources > 3) {
+    out.push({ key: 'renderBlock', score: 9, finding: `you have ${m.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint on mobile` });
+  }
+  // PRIORITY 10: Images missing lazy loading
+  if (m.imagesWithoutLazy != null && m.totalImages > 5 && m.imagesWithoutLazy > 5) {
+    out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} images don't have lazy loading enabled, slowing your initial mobile load` });
   }
 
   return out.sort((a, b) => a.score - b.score);
@@ -350,6 +338,21 @@ function joinFindings(findings, max = 3) {
   if (!picked.length) return '';
   if (picked.length === 1) return picked[0];
   return picked.slice(0, -1).join('; ') + '; and ' + picked[picked.length - 1];
+}
+
+const WEBSITE_KEY_TO_PHRASE = {
+  pageLoad: 'site speed',
+  schema: 'structured data',
+  nap: 'citation consistency',
+  h1: 'on-page signals',
+  locations: 'page structure for service-area coverage',
+};
+
+function joinPhrases(phrases) {
+  if (!phrases.length) return '';
+  if (phrases.length === 1) return phrases[0];
+  if (phrases.length === 2) return phrases[0] + ' and ' + phrases[1];
+  return phrases.slice(0, -1).join(', ') + ', and ' + phrases[phrases.length - 1];
 }
 
 function scoreMapsFindings(audit, top3Stats, record) {
@@ -435,8 +438,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris from Rocket Growth Agency. Quick walkthrough of ${name} — top 3 on Maps and what's vulnerable.`
-    : `Hey, this is Chris from Rocket Growth Agency. Quick walkthrough of ${name} — your Maps rank and what's costing you leads.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and you're already in the top 3 — here's how to defend that position.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and found the top issues that are keeping you from ranking in the top position.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -461,9 +464,9 @@ function buildScript(record, top3Stats, audit) {
     const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
     const mapsList = numberedJoin(mapsFindings, 3);
     if (mapsList) {
-      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, which accounts for 70 percent of all local leads. Here are the top issues we found: ${mapsList} These are your top issues stopping you from ranking in the top 3 position on Google Maps.`;
+      mapsSegment = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3 ranking, which accounts for 70 percent of all local leads. Here are the top issues we found on your Maps listing: ${mapsList}`;
     } else {
-      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, which accounts for 70 percent of all local leads. The biggest factors keeping you out are review volume, exact name-address-phone matching across the web, and tightening your Google Maps listing details.`;
+      mapsSegment = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3 ranking, which accounts for 70 percent of all local leads.`;
     }
   }
 
@@ -473,9 +476,20 @@ function buildScript(record, top3Stats, audit) {
     ? (websiteList
         ? `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, these gaps are how challengers chip away at your position. Here are the 3 website issues to fix: ${websiteList} Each one is a signal a competitor could outrank you on.`
         : `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, your site checks out on the basics. Tightening schema and adding location pages still helps you defend the position.`)
-    : (websiteList
-        ? `Now we're on your website. Here are the top issues we found: ${websiteList} Your website is critical to Maps ranking. Site speed is a Core Web Vitals ranking signal, and Google uses on-page elements like schema and headlines to validate your business — these issues directly stop you from ranking in the top 3 position on Google Maps.`
-        : `Now we're on your website. Your site checks out on the basics, but Google's Core Web Vitals — page speed, layout stability, interactivity — and on-page elements like schema and headlines all factor into where you rank in the top 3.`);
+    : (() => {
+        const count = websiteFindings.length;
+        if (count >= 3) {
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the top issues we found: ${websiteList}`;
+        }
+        if (count === 2) {
+          const list = numberedJoin(websiteFindings, 2);
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. We found 2 issues to flag: ${list}`;
+        }
+        if (count === 1) {
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Just 1 issue stood out: ${websiteFindings[0].finding}.`;
+        }
+        return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Your site signals are clean — no major issues stood out.`;
+      })();
 
   const mobileFindings = scoreMobileFindings(audit);
   const mobileList = numberedJoin(mobileFindings, 3);
@@ -483,13 +497,25 @@ function buildScript(record, top3Stats, audit) {
     ? (mobileList
         ? `Same site on mobile — where 70 percent of local-search traffic comes from. Here are the 3 mobile issues to tighten: ${mobileList} Mobile-first indexing means each one weakens your defense of the top 3.`
         : `Same site on mobile — where 70 percent of local-search traffic comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Even small wins here still defend your top 3 position.`)
-    : (mobileList
-        ? `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. Here are the top issues we found: ${mobileList} Mobile-first indexing means Google ranks you on what your mobile site does — these issues directly stop you from ranking in the top 3 position on Google Maps.`
-        : `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Tightening these further still strengthens your push to the top 3 under mobile-first indexing.`);
+    : (() => {
+        const count = mobileFindings.length;
+        if (count >= 3) {
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Here are the top issues we found: ${mobileList}`;
+        }
+        if (count === 2) {
+          const list = numberedJoin(mobileFindings, 2);
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. We found 2 mobile issues to flag: ${list}`;
+        }
+        if (count === 1) {
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Just 1 mobile issue stood out: ${mobileFindings[0].finding}.`;
+        }
+        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile signals are solid — fast load, clean structure, responsive layout.`;
+      })();
 
   const outroText = isTop3
-    ? `You've now seen the top vulnerabilities in your top 3 position. To get the full plan to defend it — and push for #1 — click the Get My Free Growth Audit button below. Talk soon.`
-    : `You've now seen the top issues holding back your Maps ranking. To get the full plan to fix them and rank in the top 3 position on Google Maps, click the Get My Free Growth Audit button below. Talk soon.`;
+    ? `This was a brief look at some of what we saw on your Google Maps, website, and mobile. To get the full audit with every detail on defending your top 3 spot — and the exact plan to capture more leads — tap the button below for your free growth audit. Free, no call required.`
+    : `This was a brief look at some of the issues we found on your Google Maps, website, and mobile. To get the full audit with every issue keeping you from the top 3 — and the exact plan to capture more leads — tap the button below for your free growth audit. Free, no call required.`;
+  // NOTE: rank 4+ outro is the locked Option 3 from 2026-04-25 — DO NOT EDIT.
 
   return {
     intro,
