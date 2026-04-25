@@ -32,8 +32,8 @@ const MOBILE_USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' +
   '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 8);
-const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 1000);
+const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 30);
+const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 33);
 const MAPS_NAV_TIMEOUT_MS = Number(process.env.MAPS_NAV_TIMEOUT_MS || 90000);
 const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000);
 const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
