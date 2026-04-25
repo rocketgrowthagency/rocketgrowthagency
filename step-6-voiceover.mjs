@@ -382,14 +382,9 @@ function scoreMapsFindings(audit, top3Stats, record) {
     }
   }
 
-  // NAP mismatch (from website audit)
-  if (audit?.website?.websitePhoneMatchesGbp === false) {
-    out.push({
-      key: 'mapsNap',
-      score: 10,
-      finding: `your phone number on the website doesn't match your Google Business Profile — citation consistency is one of the top Maps ranking signals`,
-    });
-  }
+  // NOTE: NAP is intentionally NOT in Maps findings.
+  // It's a website-vs-listing comparison, so it belongs in the Website section
+  // (mentioning "phone on website" while video is still showing Maps is confusing).
 
   // GBP audit data (if available)
   if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30) {
@@ -432,15 +427,16 @@ function buildScript(record, top3Stats, audit) {
     normalizeField(record, 'Search Term') ||
     normalizeField(record, 'searchTerm') ||
     'your type of business near you';
-  const inCity = city && !searchTerm.toLowerCase().includes(city.toLowerCase())
-    ? ` in ${city}`
-    : '';
+  // Don't append "in {city}" if the searchTerm already has an "in <somewhere>" clause —
+  // that would produce awkward "in Culver City, CA in Los Angeles".
+  const searchTermHasInClause = /\s+in\s+/i.test(searchTerm);
+  const inCity = !searchTermHasInClause && city ? ` in ${city}` : '';
 
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris from Rocket Growth Agency, local SEO experts. Quick walkthrough of ${name}: you're in the top 3 on Google Maps — here's how to defend that position and where you're vulnerable.`
-    : `Hey, this is Chris from Rocket Growth Agency, local SEO experts. Quick walkthrough of ${name}: your current Google Maps rank, and how every position below the top 3 is costing you leads.`;
+    ? `Hey, this is Chris from Rocket Growth Agency. Quick walkthrough of ${name} — top 3 on Maps and what's vulnerable.`
+    : `Hey, this is Chris from Rocket Growth Agency. Quick walkthrough of ${name} — your Maps rank and what's costing you leads.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -465,9 +461,9 @@ function buildScript(record, top3Stats, audit) {
     const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
     const mapsList = numberedJoin(mapsFindings, 3);
     if (mapsList) {
-      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, where 70 percent of the calls go. Here are the 3 things keeping you out: ${mapsList} Each one directly drags your Maps ranking — fix all three and you've cleared the biggest barriers to climbing into the top 3.`;
+      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, which accounts for 70 percent of all local leads. Here are the top issues we found: ${mapsList} These are your top issues stopping you from ranking in the top 3 position on Google Maps.`;
     } else {
-      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, where 70 percent of the calls go. The biggest levers to climb are review volume, exact name-address-phone matching across the web, and tightening your Google Maps listing details — fix these and you've cleared the biggest barriers to the top 3.`;
+      mapsSegment = `Your current position is #${rankRaw} for ${searchTerm}${inCity} on Maps — outside the top 3, which accounts for 70 percent of all local leads. The biggest factors keeping you out are review volume, exact name-address-phone matching across the web, and tightening your Google Maps listing details.`;
     }
   }
 
@@ -478,8 +474,8 @@ function buildScript(record, top3Stats, audit) {
         ? `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, these gaps are how challengers chip away at your position. Here are the 3 website issues to fix: ${websiteList} Each one is a signal a competitor could outrank you on.`
         : `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, your site checks out on the basics. Tightening schema and adding location pages still helps you defend the position.`)
     : (websiteList
-        ? `Now we're on your website — Google uses this page to validate your Maps ranking through page speed, schema, on-page signals, and citation consistency. Here are the 3 website issues hurting your Maps ranking: ${websiteList} Each one directly drags your Maps position — fix them and you've removed major barriers to the top 3.`
-        : `Now we're on your website — Google uses this page to validate your Maps ranking through page speed, schema, on-page signals, and citation consistency. Your site checks out on the basics — small wins like extra location pages or richer schema can still strengthen your push to the top 3.`);
+        ? `Now we're on your website. Here are the top issues we found: ${websiteList} Your website is critical to Maps ranking. Site speed is a Core Web Vitals ranking signal, and Google uses on-page elements like schema and headlines to validate your business — these issues directly stop you from ranking in the top 3 position on Google Maps.`
+        : `Now we're on your website. Your site checks out on the basics, but Google's Core Web Vitals — page speed, layout stability, interactivity — and on-page elements like schema and headlines all factor into where you rank in the top 3.`);
 
   const mobileFindings = scoreMobileFindings(audit);
   const mobileList = numberedJoin(mobileFindings, 3);
@@ -488,12 +484,12 @@ function buildScript(record, top3Stats, audit) {
         ? `Same site on mobile — where 70 percent of local-search traffic comes from. Here are the 3 mobile issues to tighten: ${mobileList} Mobile-first indexing means each one weakens your defense of the top 3.`
         : `Same site on mobile — where 70 percent of local-search traffic comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Even small wins here still defend your top 3 position.`)
     : (mobileList
-        ? `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. Here are the 3 mobile issues hurting your Maps ranking: ${mobileList} Google's mobile-first indexing means each one directly stops you from ranking in the top 3.`
+        ? `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. Here are the top issues we found: ${mobileList} Mobile-first indexing means Google ranks you on what your mobile site does — these issues directly stop you from ranking in the top 3 position on Google Maps.`
         : `This is the same site on mobile — where 70 percent of local-search traffic actually comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Tightening these further still strengthens your push to the top 3 under mobile-first indexing.`);
 
   const outroText = isTop3
     ? `You've now seen the top vulnerabilities in your top 3 position. To get the full plan to defend it — and push for #1 — click the Get My Free Growth Audit button below. Talk soon.`
-    : `You've now seen the top issues holding back your Maps ranking. To get the full plan to fix them and rank in the top 3, click the Get My Free Growth Audit button below. Talk soon.`;
+    : `You've now seen the top issues holding back your Maps ranking. To get the full plan to fix them and rank in the top 3 position on Google Maps, click the Get My Free Growth Audit button below. Talk soon.`;
 
   return {
     intro,

@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import http from 'http';
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { chromium } from 'playwright';
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
@@ -387,27 +387,41 @@ async function brandOne(combinedMp4Path, outMp4Path, introSec, outroSec) {
       } catch {}
     }
 
-    await runFFmpeg([
-      '-y',
-      '-i',
-      recordedWebm,
-      '-vf',
-      'fps=30,scale=1280:720:flags=lanczos,setsar=1',
+    // Get the combined video duration so we can compute the expected branded duration
+    // and trim the page-load lag off the start.
+    const combinedDur = await new Promise((resolve) => {
+      const ff = spawn('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', combinedMp4Path]);
+      let s = '';
+      ff.stdout.on('data', (d) => (s += d.toString()));
+      ff.on('close', () => resolve(Number(s.trim()) || 0));
+    });
+    const recordedDur = await new Promise((resolve) => {
+      const ff = spawn('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', recordedWebm]);
+      let s = '';
+      ff.stdout.on('data', (d) => (s += d.toString()));
+      ff.on('close', () => resolve(Number(s.trim()) || 0));
+    });
+    const expectedDur = INTRO_SEC + combinedDur + OUTRO_SEC;
+    const trimStart = Math.max(0, recordedDur - expectedDur);
+    if (trimStart > 0.2) {
+      console.log(`  Trimming ${trimStart.toFixed(2)}s of page-load lag off start of branded video`);
+    }
+
+    const ffArgs = ['-y'];
+    if (trimStart > 0.2) ffArgs.push('-ss', trimStart.toFixed(3));
+    ffArgs.push(
+      '-i', recordedWebm,
+      '-vf', 'fps=30,scale=1280:720:flags=lanczos,setsar=1',
       '-an',
-      '-c:v',
-      'libx264',
-      '-preset',
-      'slow',
-      '-crf',
-      '20',
-      '-pix_fmt',
-      'yuv420p',
-      '-r',
-      '30',
-      '-movflags',
-      '+faststart',
-      outMp4Path,
-    ]);
+      '-c:v', 'libx264',
+      '-preset', 'slow',
+      '-crf', '20',
+      '-pix_fmt', 'yuv420p',
+      '-r', '30',
+      '-movflags', '+faststart',
+      outMp4Path
+    );
+    await runFFmpeg(ffArgs);
   } finally {
     try {
       await browser.close();
