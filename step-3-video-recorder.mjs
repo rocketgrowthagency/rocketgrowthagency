@@ -767,6 +767,8 @@ async function recordDesktopVideo(browser, meta, outputPath) {
   const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
   let hadFatal = false;
   let recorderStarted = false;
+  let recorderStartMs = null;
+  let mapsToWebsiteTransitionMs = null;
 
   try {
     await page.goto('about:blank', { waitUntil: 'load' });
@@ -775,6 +777,7 @@ async function recordDesktopVideo(browser, meta, outputPath) {
       if (recorderStarted) return;
       await recorder.start();
       recorderStarted = true;
+      recorderStartMs = Date.now();
       await sleep(300);
     };
 
@@ -785,6 +788,8 @@ async function recordDesktopVideo(browser, meta, outputPath) {
     let visited = null;
     if (meta.website) {
       console.log(`   → Website (desktop view): ${meta.website}`);
+      mapsToWebsiteTransitionMs = recorderStartMs ? Date.now() - recorderStartMs : null;
+      console.log(`   [transition] Maps→Website at ${mapsToWebsiteTransitionMs}ms from recorder start`);
       visited = await gotoFirstWorking(page, meta.website, 'Website');
     }
 
@@ -826,6 +831,18 @@ async function recordDesktopVideo(browser, meta, outputPath) {
   } else {
     console.log(`   ✓ Saved desktop video: ${outputPath}`);
   }
+
+  // Write per-video metadata so step-4 knows where Maps ends and Website begins
+  try {
+    const metaPath = outputPath.replace(/\.webm$/i, '.meta.json');
+    const metaJson = {
+      type: 'desktop',
+      mapsToWebsiteTransitionSeconds:
+        mapsToWebsiteTransitionMs != null ? Number((mapsToWebsiteTransitionMs / 1000).toFixed(3)) : null,
+      totalRecordingSeconds: recorderStartMs ? Number(((Date.now() - recorderStartMs) / 1000).toFixed(3)) : null,
+    };
+    fs.writeFileSync(metaPath, JSON.stringify(metaJson, null, 2));
+  } catch {}
 
   return true;
 }

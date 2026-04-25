@@ -163,7 +163,8 @@ async function main() {
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);
     const videoDuration = await getDurationSeconds(brandedPath);
     const audioDuration = await getDurationSeconds(audioPath);
-    const padDuration = Math.max(0, audioDuration - videoDuration + 0.15);
+    const targetDuration = audioDuration + 0.6;
+    const padDuration = Math.max(0, targetDuration - videoDuration);
     const hasSubtitles = fs.existsSync(subtitlePath);
 
     console.log(`\nMerging final video for: ${baseNoRetry}`);
@@ -171,65 +172,36 @@ async function main() {
     console.log(`  Audio:         ${audioPath}`);
     if (hasSubtitles) console.log(`  Subtitles:     ${subtitlePath}`);
     console.log(`  Output:        ${outMp4}`);
-    console.log(`  Durations:     video=${videoDuration.toFixed(3)}s audio=${audioDuration.toFixed(3)}s`);
+    console.log(`  Durations:     video=${videoDuration.toFixed(3)}s audio=${audioDuration.toFixed(3)}s target=${targetDuration.toFixed(3)}s`);
 
-    if (padDuration > 0.2 || hasSubtitles) {
-      const filters = [];
-      if (padDuration > 0.2) {
-        console.log(`  Padding video tail by ${padDuration.toFixed(3)}s so the CTA is not cut off.`);
-        filters.push(`tpad=stop_mode=clone:stop_duration=${padDuration.toFixed(3)}`);
-      }
-      if (hasSubtitles) {
-        filters.push(
-          `subtitles='${escapeSubtitlesPath(subtitlePath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
-        );
-      }
-      await runFFmpeg([
-        '-y',
-        '-i',
-        brandedPath,
-        '-i',
-        audioPath,
-        '-vf',
-        filters.join(','),
-        '-c:v',
-        'libx264',
-        '-preset',
-        'slow',
-        '-crf',
-        '20',
-        '-pix_fmt',
-        'yuv420p',
-        '-r',
-        '30',
-        '-c:a',
-        'aac',
-        '-b:a',
-        '192k',
-        '-shortest',
-        '-movflags',
-        '+faststart',
-        outMp4,
-      ]);
-    } else {
-      await runFFmpeg([
-        '-y',
-        '-i',
-        brandedPath,
-        '-i',
-        audioPath,
-        '-c:v',
-        'copy',
-        '-c:a',
-        'aac',
-        '-b:a',
-        '192k',
-        '-shortest',
-        '-movflags',
-        '+faststart',
-        outMp4,
-      ]);
+    const filters = [];
+    if (padDuration > 0.05) {
+      console.log(`  Padding video tail by ${padDuration.toFixed(3)}s so the CTA is not cut off.`);
+      filters.push(`tpad=stop_mode=clone:stop_duration=${padDuration.toFixed(3)}`);
+    } else if (videoDuration > targetDuration + 0.05) {
+      console.log(`  Trimming video by ${(videoDuration - targetDuration).toFixed(3)}s to match voiceover.`);
     }
+    if (hasSubtitles) {
+      filters.push(
+        `subtitles='${escapeSubtitlesPath(subtitlePath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
+      );
+    }
+
+    const ffArgs = ['-y', '-i', brandedPath, '-i', audioPath];
+    if (filters.length) ffArgs.push('-vf', filters.join(','));
+    ffArgs.push(
+      '-c:v', 'libx264',
+      '-preset', 'slow',
+      '-crf', '20',
+      '-pix_fmt', 'yuv420p',
+      '-r', '30',
+      '-c:a', 'aac',
+      '-b:a', '192k',
+      '-t', targetDuration.toFixed(3),
+      '-movflags', '+faststart',
+      outMp4
+    );
+    await runFFmpeg(ffArgs);
 
     console.log(`✓ Final merged MP4: ${outMp4}`);
     mergedCount++;

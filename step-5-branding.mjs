@@ -10,11 +10,26 @@ import { chromium } from 'playwright';
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const COMBINED_ROOT = path.join(process.cwd(), 'output', 'Step 4 (Combine Desktop+Mobile)');
 const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
+const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
 const MAX_BRANDS = Number(process.env.MAX_BRANDS || 1);
-const INTRO_SEC = 3.2;
-const OUTRO_SEC = 3.0;
+const DEFAULT_INTRO_SEC = 3.2;
+const DEFAULT_OUTRO_SEC = 3.0;
+
+function loadAudioManifest(baseName, combinedFileBase) {
+  const candidates = [
+    path.join(AUDIO_ROOT, baseName, `${combinedFileBase}_segments`, 'manifest.json'),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      try {
+        return JSON.parse(fs.readFileSync(c, 'utf-8'));
+      } catch {}
+    }
+  }
+  return null;
+}
 
 function findLatestStep2Csv() {
   if (STEP2_CSV_OVERRIDE) {
@@ -292,7 +307,9 @@ function buildBrandingHtml({ introSec, outroSec }) {
 </html>`;
 }
 
-async function brandOne(combinedMp4Path, outMp4Path) {
+async function brandOne(combinedMp4Path, outMp4Path, introSec, outroSec) {
+  const INTRO_SEC = introSec ?? DEFAULT_INTRO_SEC;
+  const OUTRO_SEC = outroSec ?? DEFAULT_OUTRO_SEC;
   const tmpDir = path.join(
     os.tmpdir(),
     `rga_brand_${Date.now()}_${Math.random().toString(16).slice(2)}`
@@ -448,7 +465,16 @@ async function main() {
     console.log(`\nBranding: ${base}`);
     console.log(`  Source:  ${src}`);
 
-    await brandOne(src, out);
+    const manifest = loadAudioManifest(baseName, base);
+    const introSec = manifest?.segments?.intro?.durationSeconds;
+    const outroSec = manifest?.segments?.outro?.durationSeconds;
+    if (introSec && outroSec) {
+      console.log(`  Using audio-driven intro=${introSec.toFixed(2)}s outro=${outroSec.toFixed(2)}s`);
+    } else {
+      console.log(`  Using default intro=${DEFAULT_INTRO_SEC}s outro=${DEFAULT_OUTRO_SEC}s (no manifest)`);
+    }
+
+    await brandOne(src, out, introSec, outroSec);
 
     console.log(`  ✓ Branded video saved: ${out}`);
     count++;
