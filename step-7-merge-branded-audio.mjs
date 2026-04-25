@@ -5,6 +5,7 @@ import { execFile } from 'child_process';
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const BRANDED_ROOT = path.join(process.cwd(), 'output', 'Step 5 (Branding Overlay)');
 const AUDIO_ROOT = path.join(process.cwd(), 'output', 'Step 6 (Voiceover MP3)');
+const SUBTITLE_ROOT = path.join(process.cwd(), 'output', 'Step 6b (Subtitles)');
 const FINAL_ROOT = path.join(process.cwd(), 'output', 'Step 7 (Final Merge MP4)');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 
@@ -79,6 +80,16 @@ function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
+function escapeSubtitlesPath(filePath) {
+  return filePath
+    .replace(/\\/g, '/')
+    .replace(/:/g, '\\:')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/,/g, '\\,')
+    .replace(/'/g, "\\'");
+}
+
 async function getDurationSeconds(filePath) {
   const output = await runFfprobe([
     '-v',
@@ -103,6 +114,7 @@ async function main() {
 
   const BRANDED_DIR = path.join(BRANDED_ROOT, baseName);
   const AUDIO_DIR = path.join(AUDIO_ROOT, baseName);
+  const SUBTITLE_DIR = path.join(SUBTITLE_ROOT, baseName);
   const FINAL_DIR = path.join(FINAL_ROOT, baseName);
 
   if (!fs.existsSync(BRANDED_DIR)) {
@@ -147,19 +159,31 @@ async function main() {
     }
 
     const audioPath = path.join(AUDIO_DIR, audioFile);
+    const subtitlePath = path.join(SUBTITLE_DIR, `${baseNoRetry}.srt`);
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);
     const videoDuration = await getDurationSeconds(brandedPath);
     const audioDuration = await getDurationSeconds(audioPath);
     const padDuration = Math.max(0, audioDuration - videoDuration + 0.15);
+    const hasSubtitles = fs.existsSync(subtitlePath);
 
     console.log(`\nMerging final video for: ${baseNoRetry}`);
     console.log(`  Branded video: ${brandedPath}`);
     console.log(`  Audio:         ${audioPath}`);
+    if (hasSubtitles) console.log(`  Subtitles:     ${subtitlePath}`);
     console.log(`  Output:        ${outMp4}`);
     console.log(`  Durations:     video=${videoDuration.toFixed(3)}s audio=${audioDuration.toFixed(3)}s`);
 
-    if (padDuration > 0.2) {
-      console.log(`  Padding video tail by ${padDuration.toFixed(3)}s so the CTA is not cut off.`);
+    if (padDuration > 0.2 || hasSubtitles) {
+      const filters = [];
+      if (padDuration > 0.2) {
+        console.log(`  Padding video tail by ${padDuration.toFixed(3)}s so the CTA is not cut off.`);
+        filters.push(`tpad=stop_mode=clone:stop_duration=${padDuration.toFixed(3)}`);
+      }
+      if (hasSubtitles) {
+        filters.push(
+          `subtitles='${escapeSubtitlesPath(subtitlePath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
+        );
+      }
       await runFFmpeg([
         '-y',
         '-i',
@@ -167,15 +191,21 @@ async function main() {
         '-i',
         audioPath,
         '-vf',
-        `tpad=stop_mode=clone:stop_duration=${padDuration.toFixed(3)}`,
+        filters.join(','),
         '-c:v',
         'libx264',
         '-preset',
-        'veryfast',
+        'slow',
         '-crf',
-        '18',
+        '20',
+        '-pix_fmt',
+        'yuv420p',
+        '-r',
+        '30',
         '-c:a',
         'aac',
+        '-b:a',
+        '192k',
         '-shortest',
         '-movflags',
         '+faststart',
@@ -192,6 +222,8 @@ async function main() {
         'copy',
         '-c:a',
         'aac',
+        '-b:a',
+        '192k',
         '-shortest',
         '-movflags',
         '+faststart',

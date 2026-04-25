@@ -219,12 +219,15 @@ function buildScript(record, top3Stats) {
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =
     normalizeField(record, 'Map Rank') || normalizeField(record, 'rank') || 'your current position';
+  const rankNum = parseInt(String(rankRaw), 10);
   const rating = normalizeField(record, 'Rating') || normalizeField(record, 'rating');
   const reviews = normalizeField(record, 'Reviews') || normalizeField(record, 'reviews');
   const searchTerm =
     normalizeField(record, 'Search Term') ||
     normalizeField(record, 'searchTerm') ||
     'your type of business near you';
+  const locationSuffix =
+    city && !searchTerm.toLowerCase().includes(city.toLowerCase()) ? ` in ${city}` : '';
 
   let top3Sentence = '';
   if (top3Stats) {
@@ -234,18 +237,34 @@ function buildScript(record, top3Stats) {
     )}–${ratingMax.toFixed(1)} stars with roughly ${reviewsMin}–${reviewsMax} reviews.`;
   }
 
+  const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
+
+  const rankParagraph = isTop3
+    ? rankNum === 1
+      ? `Your Google Maps listing is ranking #1 for ${searchTerm}${locationSuffix} — which is where every local business wants to be. You’ve clearly done the hard work to get here.`
+      : `Your Google Maps listing is ranking #${rankNum} for ${searchTerm}${locationSuffix} — you’re already in the top 3, which most businesses never reach.`
+    : `Your Google Maps listing is ranking number ${rankRaw} for ${searchTerm}${locationSuffix}. That means customers searching today are seeing competitors before they see you.`;
+
+  const strategyParagraph = isTop3
+    ? `The harder part is staying here. Top 3 positions turn over more than most people realize — review velocity, Google’s algorithm updates, and newer competitors can shift rankings within a single quarter. I recorded this walkthrough to show you two things: what’s helping you hold that position, and where your listing and website have gaps that a challenger could exploit.`
+    : `On screen, you’re seeing exactly what a potential customer sees when they look you up on Google — first your Google Maps listing, then your website.`;
+
+  const mapsParagraph = isTop3
+    ? `Even with strong map visibility, there’s still room to protect more calls and conversions once someone lands on your listing and website.${top3Sentence ? ` ${top3Sentence}` : ''}`
+    : `Right now, when we search “${searchTerm}” in the ${
+        city || 'local'
+      } area, you’re showing up around number ${rankRaw} in the Google Maps results. In most markets, the top three “map pack” positions grab a majority of the attention — often around 40–60% of the clicks and calls from local searches.`;
+
+  const proofParagraph = `You’re currently at about ${rating || 'your current'} stars with roughly ${
+    reviews || 'your current'
+  } reviews.${!isTop3 && top3Sentence ? ` ${top3Sentence}` : ''}`;
+
   const parts = [
     `Hey, this is Chris from Rocket Growth Agency.`,
-    `Your Google Maps listing is ranking number ${rankRaw} for ${searchTerm} in ${
-      city || 'your market'
-    }. That means customers searching today are seeing competitors before they see you.`,
-    `On screen, you’re seeing exactly what a potential customer sees when they look you up on Google — first your Google Maps listing, then your website.`,
-    `Right now, when we search “${searchTerm}” in the ${
-      city || 'local'
-    } area, you’re showing up around number ${rankRaw} in the Google Maps results. In most markets, the top three “map pack” positions grab a majority of the attention — often around 40–60% of the clicks and calls from local searches.`,
-    `You’re currently at about ${rating || 'your current'} stars with roughly ${
-      reviews || 'your current'
-    } reviews.${top3Sentence ? ` ${top3Sentence}` : ''}`,
+    rankParagraph,
+    strategyParagraph,
+    mapsParagraph,
+    proofParagraph,
     `From there, we also look at your website, because what happens after someone clicks matters just as much as where you rank.`,
     `That’s where we look for the gaps that are costing you calls, form fills, and booked jobs after someone lands on the site.`,
     `To see exactly what’s costing you leads and the first fixes we’d make, click the free growth audit link in the email now.`,
