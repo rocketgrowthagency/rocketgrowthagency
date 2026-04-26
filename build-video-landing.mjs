@@ -83,10 +83,17 @@ async function findMp4s() {
 }
 
 async function extractThumbnail(mp4Path, outJpg) {
+  // Take a frame at 3s + composite a centered grey play button (templates/play-button.png)
+  // so the thumbnail visually reads as a clickable video player in email.
+  const playOverlay = path.join(__dirname, "templates", "play-button.png");
   await run("ffmpeg", [
     "-y",
     "-ss", "3",
     "-i", mp4Path,
+    "-i", playOverlay,
+    "-filter_complex",
+    "[0:v]scale=1280:-2[bg];[bg][1:v]overlay=(W-w)/2:(H-h)/2[final]",
+    "-map", "[final]",
     "-frames:v", "1",
     "-q:v", "3",
     outJpg
