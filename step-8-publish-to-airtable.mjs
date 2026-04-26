@@ -279,6 +279,12 @@ function buildRecord(row, scrapedDate) {
   setNum("Rating", pick(row, "rating"));
   setNum("Review Count", pick(row, "reviews", "review count"));
   setNum("Map Rank", pick(row, "map rank"));
+  // Auto-set Video Variant based on Google Maps rank: 1-3 → top-3, 4+ → rank-4-plus
+  const rankForVariant = parseInt(pick(row, "map rank"), 10);
+  fields["Video Variant"] =
+    Number.isFinite(rankForVariant) && rankForVariant >= 1 && rankForVariant <= 3
+      ? "top-3"
+      : "rank-4-plus";
   if (pick(row, "sponsored?", "sponsored")) fields["Sponsored"] = toBool(pick(row, "sponsored?", "sponsored"));
   setUrl("Business Photo URL", pick(row, "image url", "photo url"));
   setUrl("Facebook", pick(row, "facebook"));
