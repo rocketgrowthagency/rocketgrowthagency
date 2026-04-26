@@ -278,6 +278,18 @@ function buildBrandingHtml({ introSec, outroSec }) {
     function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
     async function run(){
+      // Black flash marker: when this fires, the page is fully loaded and
+      // the INTRO timer is about to start. ffmpeg blackdetect later finds
+      // this 80ms black frame and trims everything before it — eliminates
+      // the page-load lag and aligns video to the logo's actual start.
+      document.documentElement.style.background = "#000";
+      document.body.style.background = "#000";
+      introEl.style.visibility = "hidden";
+      await sleep(80);
+      document.documentElement.style.background = "";
+      document.body.style.background = "";
+      introEl.style.visibility = "visible";
+
       await sleep(Math.round(INTRO * 1000));
 
       introEl.style.display = "none";
@@ -402,13 +414,27 @@ async function brandOne(combinedMp4Path, outMp4Path, introSec, outroSec) {
       ff.on('close', () => resolve(Number(s.trim()) || 0));
     });
     const expectedDur = INTRO_SEC + combinedDur + OUTRO_SEC;
-    // Cap trim at 1.0s — the lag is usually 0.3-1.5s of blank/HTML load,
-    // but recordings can be 3-5s longer than expected due to post-render delays
-    // at the END (after __RGA_DONE). Trimming too much eats into the intro logo.
     const rawLag = Math.max(0, recordedDur - expectedDur);
-    const trimStart = Math.min(rawLag, 1.0);
-    if (trimStart > 0.2) {
-      console.log(`  Trimming ${trimStart.toFixed(2)}s of page-load lag off start (raw lag was ${rawLag.toFixed(2)}s, capped at 1.0s)`);
+
+    // Detect the black-flash marker (80ms black frame inserted at script start).
+    // Trim everything BEFORE the flash — that's the page-load lag.
+    const blackFlashEnd = await new Promise((resolve) => {
+      const ff = spawn('ffmpeg', ['-i', recordedWebm, '-vf', 'blackdetect=d=0.05:pic_th=0.92:pix_th=0.10', '-an', '-f', 'null', '-'], { stdio: ['ignore', 'ignore', 'pipe'] });
+      let stderr = '';
+      ff.stderr.on('data', (d) => (stderr += d.toString()));
+      ff.on('close', () => {
+        // Parse first "black_end:" from blackdetect output
+        const m = stderr.match(/black_end:\s*([\d.]+)/);
+        resolve(m ? Number(m[1]) : null);
+      });
+    });
+    let trimStart;
+    if (blackFlashEnd != null && blackFlashEnd < INTRO_SEC + 5) {
+      trimStart = blackFlashEnd;
+      console.log(`  Black flash marker detected at ${blackFlashEnd.toFixed(2)}s — trimming to logo start (raw lag was ${rawLag.toFixed(2)}s)`);
+    } else {
+      trimStart = Math.min(rawLag, 1.0);
+      console.log(`  No black flash detected; falling back to capped trim of ${trimStart.toFixed(2)}s (raw lag ${rawLag.toFixed(2)}s)`);
     }
 
     const ffArgs = ['-y'];

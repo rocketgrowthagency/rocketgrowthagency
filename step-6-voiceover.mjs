@@ -438,7 +438,7 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and you're already in the top 3 — here's how to defend that position.`
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and you're already in the top 3 — but here's where you're vulnerable to losing that position.`
     : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and found the top issues that are keeping you from ranking in the top position.`;
 
   function numberedJoin(findings, max = 3) {
@@ -450,15 +450,18 @@ function buildScript(record, top3Stats, audit) {
 
   let mapsSegment;
   if (isTop3) {
-    const trustClause = rating && reviews
-      ? ` With ${rating} stars and ${reviews} reviews, your trust signals are solid.`
-      : '';
     const mapsFindingsT3 = scoreMapsFindings(audit, top3Stats, record);
+    const count = mapsFindingsT3.length;
     const mapsListT3 = numberedJoin(mapsFindingsT3, 3);
-    if (mapsListT3) {
-      mapsSegment = `You're ranked #${rankNum} for ${searchTerm}${inCity} on Maps — top 3 owns 70 percent of the calls from that search.${trustClause} But top 3 changes more than people realize. Here are the 3 vulnerabilities a competitor could exploit to push you out: ${mapsListT3} Each one is a slip that lets someone displace you.`;
+    const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankNum} — already in the top 3, which captures 70 percent of all local leads from this search. That's the most valuable real estate.`;
+    if (count >= 3) {
+      mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${mapsListT3}`;
+    } else if (count === 2) {
+      mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${numberedJoin(mapsFindingsT3, 2)}`;
+    } else if (count === 1) {
+      mapsSegment = `${baseLine} But one vulnerability stood out on your Maps listing: ${mapsFindingsT3[0].finding}.`;
     } else {
-      mapsSegment = `You're ranked #${rankNum} for ${searchTerm}${inCity} on Maps — top 3 owns 70 percent of the calls from that search.${trustClause} But top 3 changes more than people realize — review velocity, algorithm updates, and newer competitors can shift this within a quarter. Tightening every signal you have is how you stay there.`;
+      mapsSegment = `${baseLine} Your Maps signals are clean — no obvious vulnerabilities, but that just means you're at risk from review velocity and newer competitors.`;
     }
   } else {
     const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
@@ -473,9 +476,19 @@ function buildScript(record, top3Stats, audit) {
   const websiteFindings = scoreWebsiteFindings(audit);
   const websiteList = numberedJoin(websiteFindings, 3);
   const websiteSegment = isTop3
-    ? (websiteList
-        ? `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, these gaps are how challengers chip away at your position. Here are the 3 website issues to fix: ${websiteList} Each one is a signal a competitor could outrank you on.`
-        : `Now we're on your website — Google uses this page to validate your Maps ranking. Even at top 3, your site checks out on the basics. Tightening schema and adding location pages still helps you defend the position.`)
+    ? (() => {
+        const count = websiteFindings.length;
+        if (count >= 3) {
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the website signals worth tightening to hold your top 3 spot: ${websiteList}`;
+        }
+        if (count === 2) {
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the website signals worth tightening to hold your top 3 spot: ${numberedJoin(websiteFindings, 2)}`;
+        }
+        if (count === 1) {
+          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. One website signal worth tightening to hold your top 3 spot: ${websiteFindings[0].finding}.`;
+        }
+        return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Your site signals are clean — solid foundation for holding your top 3 spot.`;
+      })()
     : (() => {
         const count = websiteFindings.length;
         if (count >= 3) {
@@ -494,9 +507,19 @@ function buildScript(record, top3Stats, audit) {
   const mobileFindings = scoreMobileFindings(audit);
   const mobileList = numberedJoin(mobileFindings, 3);
   const mobileSegment = isTop3
-    ? (mobileList
-        ? `Same site on mobile — where 70 percent of local-search traffic comes from. Here are the 3 mobile issues to tighten: ${mobileList} Mobile-first indexing means each one weakens your defense of the top 3.`
-        : `Same site on mobile — where 70 percent of local-search traffic comes from. The mobile experience checks out — fast load, visible call button, responsive layout. Even small wins here still defend your top 3 position.`)
+    ? (() => {
+        const count = mobileFindings.length;
+        if (count >= 3) {
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Here are the gaps a competitor could exploit: ${mobileList}`;
+        }
+        if (count === 2) {
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. We found 2 gaps a competitor could exploit: ${numberedJoin(mobileFindings, 2)}`;
+        }
+        if (count === 1) {
+          return `And then on mobile — where 70 percent of local-search traffic actually comes from. One gap a competitor could exploit: ${mobileFindings[0].finding}.`;
+        }
+        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile signals are clean — fast load, clean structure, responsive layout.`;
+      })()
     : (() => {
         const count = mobileFindings.length;
         if (count >= 3) {
@@ -513,9 +536,9 @@ function buildScript(record, top3Stats, audit) {
       })();
 
   const outroText = isTop3
-    ? `This was a brief look at some of what we saw on your Google Maps, website, and mobile. To get the full audit with every detail on defending your top 3 spot — and the exact plan to capture more leads — tap the button below for your free growth audit. Free, no call required.`
+    ? `This was a brief look at some of the vulnerabilities we found on your Google Maps, website, and mobile. To get the full audit with every signal you need to defend your top 3 spot — and the exact plan to push for #1 — tap the button below for your free growth audit. Free, no call required.`
     : `This was a brief look at some of the issues we found on your Google Maps, website, and mobile. To get the full audit with every issue keeping you from the top 3 — and the exact plan to capture more leads — tap the button below for your free growth audit. Free, no call required.`;
-  // NOTE: rank 4+ outro is the locked Option 3 from 2026-04-25 — DO NOT EDIT.
+  // NOTE: both outros locked 2026-04-25 — DO NOT EDIT without explicit user request.
 
   return {
     intro,
@@ -541,7 +564,20 @@ function concatMp3Segments(segmentDir, segmentNames, outPath) {
     const concatList = path.join(segmentDir, 'concat.txt');
     const lines = segmentNames.map((n) => `file '${path.join(segmentDir, n + '.mp3').replace(/'/g, "\\'")}'`).join('\n');
     fs.writeFileSync(concatList, lines);
-    const ff = spawn('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', concatList, '-c', 'copy', outPath], { stdio: 'ignore' });
+    // Re-encode (not -c copy) so segment boundaries don't produce pitch/codec
+    // glitches when MP3 frames don't perfectly align between segments.
+    // Force consistent sample rate (24000 Hz matches OpenAI TTS default) + bitrate.
+    const ff = spawn('ffmpeg', [
+      '-y',
+      '-f', 'concat',
+      '-safe', '0',
+      '-i', concatList,
+      '-c:a', 'libmp3lame',
+      '-b:a', '128k',
+      '-ar', '24000',
+      '-ac', '1',
+      outPath,
+    ], { stdio: 'ignore' });
     ff.on('close', (code) => (code === 0 ? resolve(outPath) : reject(new Error(`ffmpeg concat failed code ${code}`))));
   });
 }
