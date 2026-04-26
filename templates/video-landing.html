@@ -16,6 +16,9 @@
       --bg: #f6f8fd;
       --surface: #fff;
       --border: #e2e8f0;
+      --warn-bg: #fff7ed;
+      --warn-ink: #9a3412;
+      --warn-border: #fed7aa;
     }
     * { box-sizing: border-box; }
     body {
@@ -28,7 +31,7 @@
     .shell {
       max-width: 920px;
       margin: 0 auto;
-      padding: 32px 24px 64px;
+      padding: 32px 24px 120px; /* extra bottom for sticky CTA on mobile */
     }
     header {
       display: flex;
@@ -55,8 +58,8 @@
       text-transform: uppercase;
     }
     h1 {
-      margin: 4px 0 16px;
-      padding: 0 24px;
+      margin: 0;
+      padding: 24px 24px 16px;
       font-size: clamp(1.6rem, 2.4vw, 2.2rem);
       letter-spacing: -0.02em;
       line-height: 1.15;
@@ -71,29 +74,76 @@
     .body-copy p { margin: 0 0 12px; color: var(--muted); }
     .cta-bar {
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
-      padding: 0 24px 28px;
+      padding: 8px 24px 32px;
     }
-    .btn {
+    .btn-primary {
       display: inline-flex;
       align-items: center;
-      padding: 14px 22px;
+      justify-content: center;
+      width: 100%;
+      max-width: 480px;
+      padding: 18px 28px;
       background: var(--brand);
       color: #fff;
       border-radius: 999px;
       text-decoration: none;
-      font-weight: 700;
-      font-size: 1rem;
+      font-weight: 800;
+      font-size: 1.1rem;
       box-shadow: 0 14px 32px rgb(47 87 235 / 26%);
+      transition: background 0.15s ease, transform 0.05s ease;
     }
-    .btn:hover { background: var(--brand-strong); }
-    .btn-secondary {
-      background: transparent;
-      color: var(--brand);
-      border: 1px solid var(--brand);
-      box-shadow: none;
+    .btn-primary:hover { background: var(--brand-strong); }
+    .btn-primary:active { transform: translateY(1px); }
+    .escape-link {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .escape-link a { color: var(--brand); text-decoration: underline; }
+    .urgency {
+      margin: 0 24px 24px;
+      padding: 14px 16px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 10px;
+      color: var(--warn-ink);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    /* Sticky bottom-bar CTA on mobile */
+    .sticky-cta {
+      display: none;
+    }
+    @media (max-width: 720px) {
+      .sticky-cta {
+        display: flex;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 50;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0));
+        background: rgb(255 255 255 / 95%);
+        backdrop-filter: blur(8px);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -10px 30px rgb(15 23 42 / 8%);
+        justify-content: center;
+      }
+      .sticky-cta a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 480px;
+        padding: 14px 20px;
+        background: var(--brand);
+        color: #fff;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 1rem;
+      }
     }
     footer {
       margin-top: 28px;
@@ -107,12 +157,13 @@
 <body>
   <main class="shell">
     <header>
-      <img src="/images/assets/rga_favicon-locked.png" alt="">
-      <strong>Rocket Growth Agency</strong>
+      <a href="https://www.rocketgrowthagency.com/" style="display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+        <img src="/images/assets/rga_favicon-locked.png" alt="Rocket Growth Agency">
+        <strong>Rocket Growth Agency</strong>
+      </a>
     </header>
 
     <article class="hero">
-      <span class="eyebrow">Free Growth Audit Walkthrough</span>
       <h1>{{BUSINESS_NAME}} — Google Maps + Website Review</h1>
 
       <div class="video-wrap">
@@ -121,29 +172,37 @@
           poster="thumb.jpg"
           controls
           playsinline
+          autoplay
+          muted
           preload="metadata">
           Your browser doesn't support HTML5 video. <a href="video.mp4">Download the video</a>.
         </video>
       </div>
 
       <div class="body-copy">
-        <p>I recorded this short walkthrough to show exactly what your future customers see when they search for you on Google — both your Maps listing and your website — and to highlight the specific improvements we'd make to bring more calls and qualified leads in.</p>
-        <p>If you'd like the full written audit with the exact fixes we'd recommend, grab your free growth audit below.</p>
+        <p>{{BODY_INTRO}}</p>
+        <p>To get a full audit of your business — everything we found in this walkthrough plus the deeper issues we couldn't cover, the fixes, and the exact plan to {{BODY_OUTCOME}} — click the button below. It's free and doesn't require a call.</p>
       </div>
 
       <div class="cta-bar">
-        <a class="btn" href="https://www.rocketgrowthagency.com/free-growth-audit/">Get My Free Growth Audit</a>
-        <a class="btn btn-secondary" href="https://www.rocketgrowthagency.com/pricing/">See Pricing</a>
+        <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
+        <p class="escape-link">Already convinced? <a href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&intent=call&business={{SLUG}}">Skip the audit and book a 15-min call →</a></p>
       </div>
     </article>
 
     <footer>
-      Recorded by Chris Kapranos for {{BUSINESS_NAME}}.
+      Recorded by Rocket Growth Agency for {{BUSINESS_NAME}} on {{RECORDED_DATE}}.
+      <br>
+      Findings reflect what was observable on this date — site, listing, and ranking may change.
       <br>
       <a href="https://www.rocketgrowthagency.com/">rocketgrowthagency.com</a>
       &nbsp;·&nbsp;
       <a href="mailto:hello@rocketgrowthagency.com">hello@rocketgrowthagency.com</a>
     </footer>
   </main>
+
+  <div class="sticky-cta">
+    <a href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
+  </div>
 </body>
 </html>
