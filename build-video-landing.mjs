@@ -192,7 +192,43 @@ async function main() {
     } catch (err) {
       console.warn(`[build-landing] thumbnail failed for ${slug}: ${err.message}`);
     }
-    fs.writeFileSync(htmlPath, renderTemplate(template, { BUSINESS_NAME: businessName }));
+    // Variant-aware copy. Prefer Airtable's Video Variant field; fall back
+    // to deriving from Map Rank if the field isn't set yet.
+    const airtableVariant = airtableRecord?.fields?.["Video Variant"];
+    const airtableRank = parseInt(airtableRecord?.fields?.["Map Rank"], 10);
+    const isTop3 = airtableVariant
+      ? airtableVariant === 'top-3'
+      : (Number.isFinite(airtableRank) && airtableRank >= 1 && airtableRank <= 3);
+
+    // Recorded date — prefer Airtable's Date Scraped, fall back to today.
+    const dateScraped = airtableRecord?.fields?.["Date Scraped"];
+    const recordedDate = dateScraped
+      ? new Date(dateScraped).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Build the body intro from the locked Option B template:
+    // "This video was created for {Business} on {Date}, based on the search '{Term}'.
+    //  It covers your business across Google Maps, your website, and mobile — {variant tail}."
+    const searchTerm = airtableRecord?.fields?.["Search Term"] || '';
+    const variantTail = isTop3
+      ? `your top 3 ranking and the gaps a competitor could exploit`
+      : `your current rank and the top issues holding you back from the top 3`;
+    const searchClause = searchTerm
+      ? `, based on the search "${searchTerm}"`
+      : '';
+    const bodyIntro = `This video was created for ${businessName} on ${recordedDate}${searchClause}. It covers your business across Google Maps, your website, and mobile — ${variantTail}.`;
+
+    const bodyOutcome = isTop3
+      ? `defend your top 3 spot and push for #1`
+      : `move you into the top 3 and capture more leads`;
+
+    fs.writeFileSync(htmlPath, renderTemplate(template, {
+      BUSINESS_NAME: businessName,
+      SLUG: slug,
+      BODY_INTRO: bodyIntro,
+      BODY_OUTCOME: bodyOutcome,
+      RECORDED_DATE: recordedDate,
+    }));
     console.log(`[build-landing] ✓ ${slug} → ${landingUrl}`);
     built += 1;
 
