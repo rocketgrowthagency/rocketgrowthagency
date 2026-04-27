@@ -1,0 +1,24 @@
+{
+  "business_name": "OHH RATS!",
+  "website_url": "https://ohhrats.com/",
+  "gbp_url": "https://www.google.com/maps/place/OHH+RATS!",
+  "primary_service": "Pest Control / Extermination (Rats)",
+  "primary_market": "San Francisco, CA",
+  "primary_contact_name": "John Peters",
+  "primary_contact_email": null,
+  "primary_contact_phone": "(415) 798-7849",
+  "account_manager": "Chris",
+  "baseline": {
+    "search_term": "Pest control in San Francisco, CA",
+    "map_rank": 52,
+    "rating": 5.0,
+    "review_count": 0,
+    "source": "scraper_2026-04-26"
+  },
+  "tracked_keywords": [
+    "Pest control in San Francisco, CA",
+    "Rat removal in San Francisco, CA",
+    "Exterminator in San Francisco, CA",
+    "Rodent removal in San Francisco, CA"
+  ]
+}

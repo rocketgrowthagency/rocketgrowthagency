@@ -1,0 +1,51 @@
+search_term,tier,min_city_pop,avg_ticket,notes
+Plumbers,1,15000,800,High-ticket urgent local; weak websites
+HVAC,1,15000,8000,$5k-15k install ticket
+Electricians,1,15000,1500,Same buyer pattern as plumbers
+Roofers,1,20000,15000,Highest-ticket trade; reroofs $15-30k
+Garage door repair,1,15000,800,Urgent intent; high $/job
+Locksmiths,1,15000,250,Lower ticket but very local
+Pest control,1,15000,500,Recurring revenue model
+Tree service,1,20000,1500,Insurance-driven; high $/job
+Pool service,1,20000,400,Recurring monthly contracts
+Movers,1,25000,2500,Local + long-distance options
+Auto repair,1,25000,1200,Volume play; mechanic shops
+Body shop,1,25000,3500,Insurance-driven collision repair
+Personal injury lawyers,1,25000,30000,$1-3k retainer easy fit
+Family lawyers,1,25000,8000,Divorce + custody; high $
+Estate planning lawyers,1,25000,3500,Trusts + wills
+Cosmetic dentists,1,25000,5000,Veneers/Invisalign avg ticket
+Orthodontists,1,25000,6000,Invisalign + braces
+Med spas,1,25000,800,Botox/filler recurring
+Plastic surgeons,1,30000,12000,High ticket; specific markets
+Dermatologists,1,30000,500,Mix cosmetic + medical
+Chiropractors,1,20000,400,Recurring care plans
+Physical therapists,1,20000,300,Insurance-driven volume
+Veterinarians,1,20000,400,Recurring + emergency
+Optometrists,1,25000,600,Annual exams + frames
+Solar installers,1,25000,25000,Highest residential install ticket
+Real estate agents,2,15000,8000,Saturated but high commission per sale
+Mortgage brokers,2,20000,3500,Per-loan commission
+Mental health therapists,2,15000,200,Recurring sessions
+Home cleaning services,2,15000,150,Recurring weekly/biweekly
+Carpet cleaning,2,15000,300,Per-job; 2-4x/year
+Window cleaning,2,15000,300,Recurring quarterly
+Painters,2,15000,3000,Interior + exterior
+Handyman services,2,15000,300,High-volume small jobs
+Flooring contractors,2,20000,5000,Hardwood/tile installs
+Kitchen remodeling,2,20000,25000,Whole-room remodels
+Bathroom remodeling,2,20000,15000,Whole-room remodels
+Landscapers,2,15000,5000,Design + maintenance
+Foundation repair,2,25000,8000,Insurance-driven
+Junk removal,2,15000,400,Per-haul ticket
+Auto detailing,2,15000,200,Recurring service
+DUI lawyers,1,25000,8000,High retainer per case
+Bankruptcy lawyers,1,25000,2500,Steady volume
+CPAs,2,15000,1000,Recurring annual filings
+Insurance agents,2,15000,500,Commission-based; volume play
+Pet grooming,2,15000,75,Recurring monthly visits
+Yoga studios,2,20000,150,Membership recurring
+Hair salons,2,15000,100,High recurring frequency
+Wedding photographers,2,25000,3500,One-shot but high ticket
+Towing services,2,20000,200,Per-job urgent
+Auto glass repair,2,20000,400,Insurance-driven per-job

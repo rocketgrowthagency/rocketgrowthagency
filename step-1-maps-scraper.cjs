@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-extra');
@@ -9,8 +11,58 @@ stealth.enabledEvasions.delete('user-agent-override');
 stealth.enabledEvasions.delete('sourceurl');
 puppeteer.use(stealth);
 
+// CLI args (filtered out of SEARCH_QUERY assembly)
+const CLI_ARGS = process.argv.slice(2);
+const FORCE = CLI_ARGS.includes('--force');
+const SKIP_FRESHNESS = CLI_ARGS.includes('--skip-freshness');
+const QUERY_ARGS = CLI_ARGS.filter((a) => !a.startsWith('--'));
+
 const SEARCH_QUERY =
-  process.env.SEARCH_QUERY || process.argv.slice(2).join(' ') || 'Dentists near Los Angeles CA';
+  process.env.SEARCH_QUERY || QUERY_ARGS.join(' ') || 'Dentists near Los Angeles CA';
+
+// Pre-flight: block re-running the same query within FRESH_DAYS.
+// Override with --force. Bypass entirely (e.g. dev) with --skip-freshness.
+const FRESH_DAYS = Number(process.env.FRESH_DAYS || 180);
+const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID } = process.env;
+const RUNS_TABLE_NAME = process.env.AIRTABLE_RUNS_TABLE || 'Scrape Runs';
+
+async function checkScrapeRunFreshness(query) {
+  if (SKIP_FRESHNESS) return { proceed: true, reason: 'skipped' };
+  if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+    console.warn('[freshness] AIRTABLE_API_KEY/AIRTABLE_BASE_ID not set — skipping pre-flight check');
+    return { proceed: true, reason: 'no-creds' };
+  }
+  // Case-insensitive match on Query field
+  const formula = `LOWER({Query}) = LOWER("${String(query).replace(/"/g, '\\"')}")`;
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(RUNS_TABLE_NAME)}?filterByFormula=${encodeURIComponent(formula)}&sort[0][field]=Date Run&sort[0][direction]=desc&maxRecords=1`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+    if (!res.ok) {
+      console.warn(`[freshness] Airtable lookup failed (${res.status}) — proceeding anyway`);
+      return { proceed: true, reason: 'lookup-failed' };
+    }
+    const data = await res.json();
+    const last = data.records?.[0];
+    if (!last) return { proceed: true, reason: 'never-run' };
+    const dateRun = last.fields?.['Date Run'];
+    if (!dateRun) return { proceed: true, reason: 'no-date' };
+    const daysAgo = Math.floor((Date.now() - new Date(dateRun).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysAgo < FRESH_DAYS) {
+      return {
+        proceed: !!FORCE,
+        reason: 'too-recent',
+        daysAgo,
+        lastDate: dateRun,
+        listings: last.fields?.['Listings Scraped'],
+        emails: last.fields?.['Emails Found'],
+      };
+    }
+    return { proceed: true, reason: 'stale-enough', daysAgo, lastDate: dateRun };
+  } catch (e) {
+    console.warn(`[freshness] Airtable error: ${e.message} — proceeding anyway`);
+    return { proceed: true, reason: 'error' };
+  }
+}
 
 const TARGET_UNIQUE_PLACES = Number(process.env.TARGET_UNIQUE_PLACES || 55);
 const SCROLL_MAX_ITERS = Number(process.env.SCROLL_MAX_ITERS || 55);
@@ -61,6 +113,9 @@ function parseUSAddress(full) {
     .replace(/\s+/g, ' ')
     .trim();
   out.address = cleaned;
+
+  // Service-area listings: skip city/state/zip extraction (the string isn't a real address)
+  if (/^(service area|serves\b|located in)/i.test(cleaned)) return out;
 
   const parts = cleaned
     .split(',')
@@ -385,8 +440,34 @@ async function extractPlaceDetails(page) {
         return location.href;
       }
 
+      // For service-area-only businesses, Google Maps shows no street address.
+      // Look for a "Service area" / "Serves" element and surface that text so the
+      // Address column is never blank — useful context for direct-mail / outreach.
+      function findServiceArea() {
+        // Scan visible buttons for "Service area" / "Serves [city]" / "Located in"
+        const candidates = Array.from(document.querySelectorAll('button, [role="button"], div[aria-label]'));
+        for (const el of candidates) {
+          const aria = (el.getAttribute('aria-label') || '').trim();
+          const text = ((el.textContent || '').trim()).slice(0, 200);
+          // Common GBP labels for service-area listings
+          if (/^(service area|serves\b|located in)/i.test(aria)) return aria;
+          if (/^(service area|serves\b|located in)/i.test(text)) return text;
+        }
+        // Fallback: scan all paragraphs/spans with short text
+        const blocks = Array.from(document.querySelectorAll('div, span, p'));
+        for (const b of blocks) {
+          const t = (b.textContent || '').trim();
+          if (t.length > 0 && t.length < 120 && /^(service area|serves\b)/i.test(t)) return t;
+        }
+        return '';
+      }
+
       const name = firstText(['h1.DUwDvf', 'h1']);
-      const address = byDataItemIdExact('address');
+      let address = byDataItemIdExact('address');
+      if (!address) {
+        const sa = findServiceArea();
+        if (sa) address = sa.startsWith('Service area') || sa.startsWith('Serves') ? sa : `Service area: ${sa}`;
+      }
       const phone = byDataItemIdExact('phone') || byDataItemIdPrefix('phone:tel');
       const website = hrefByDataItemId('authority');
       const rating = findRating();
@@ -615,6 +696,23 @@ async function openPlaceRobust(page, placeUrl) {
 }
 
 async function main() {
+  // Pre-flight: have we scraped this exact query in the last FRESH_DAYS?
+  console.log(`[step-1] checking freshness for "${SEARCH_QUERY}" (FRESH_DAYS=${FRESH_DAYS})`);
+  const fresh = await checkScrapeRunFreshness(SEARCH_QUERY);
+  if (fresh.reason === 'too-recent') {
+    const msg = `[step-1] ⚠️  "${SEARCH_QUERY}" was last scraped ${fresh.daysAgo} day(s) ago on ${fresh.lastDate} (${fresh.listings || '?'} listings, ${fresh.emails || '?'} emails).`;
+    if (!FORCE) {
+      console.error(msg);
+      console.error(`[step-1] Refusing to re-run within ${FRESH_DAYS}-day freshness window. Pass --force to override.`);
+      process.exit(2);
+    }
+    console.warn(msg + '  Re-running anyway because --force was passed.');
+  } else if (fresh.reason === 'stale-enough') {
+    console.log(`[step-1] last run was ${fresh.daysAgo} day(s) ago on ${fresh.lastDate} — past freshness window, proceeding.`);
+  } else if (fresh.reason === 'never-run') {
+    console.log(`[step-1] never scraped this query before — proceeding.`);
+  }
+
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,

@@ -92,6 +92,16 @@ if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
 const API_BASE = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`;
 const RUNS_TABLE = "Scrape Runs";
 const RUNS_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(RUNS_TABLE)}`;
+// Sibling table for leads with no email — segregated so the main Leads table
+// stays focused on actionable (emailable) records. Phone/mail outreach plan TBD.
+const NO_EMAIL_TABLE = process.env.AIRTABLE_NO_EMAIL_TABLE || "Leads No Email";
+const NO_EMAIL_API = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(NO_EMAIL_TABLE)}`;
+const META_API = `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE_ID}`;
+// Per Chris 2026-04-25: Leads No Email must have FULL schema parity with Leads —
+// every field present, Email field included but stays blank. Reason: a no-email
+// lead may be reached via phone/social/mail and we want the same Notes/Status/
+// Date Contacted fields to track outreach across channels. EMPTY set = clone all.
+const EMAIL_PIPELINE_FIELDS = new Set([]);
 
 async function findOrCreateScrapeRun({ query, scrapedDate, listingsCount, emailsCount }) {
   // Look for an existing run with the same Query + Date Run
@@ -257,6 +267,220 @@ function cleanStr(v) {
   return String(v ?? "").replace(/\s+/g, " ").trim();
 }
 
+// Auto-ensure the "Leads No Email" sibling table exists, cloned from Leads
+// schema minus email-pipeline fields. Idempotent. Required PAT scope:
+// schema.bases:write.
+async function ensureNoEmailTable() {
+  try {
+    const metaRes = await fetch(`${META_API}/tables`, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+    if (!metaRes.ok) {
+      console.warn(`[step-8] meta API unavailable (${metaRes.status}) — skipping no-email table check`);
+      return false;
+    }
+    const meta = await metaRes.json();
+    const existing = (meta.tables || []).find((t) => t.name === NO_EMAIL_TABLE);
+    const leads = (meta.tables || []).find((t) => t.name === AIRTABLE_TABLE);
+    if (!leads) {
+      console.warn(`[step-8] source table "${AIRTABLE_TABLE}" not found in meta`);
+      return false;
+    }
+    // If the table exists, sync any missing fields from Leads → keeps schemas in parity
+    // even as Leads grows new fields over time.
+    if (existing) {
+      const have = new Set((existing.fields || []).map((f) => f.name));
+      const missing = (leads.fields || []).filter((f) =>
+        !have.has(f.name) && !EMAIL_PIPELINE_FIELDS.has(f.name) && !["formula", "lookup", "rollup", "count"].includes(f.type)
+      );
+      if (!missing.length) return true;
+      console.log(`[step-8] syncing ${missing.length} missing field(s) from ${AIRTABLE_TABLE} → ${NO_EMAIL_TABLE}`);
+      function cleanOptionsLocal(type, opts) {
+        if (!opts) return undefined;
+        const out = JSON.parse(JSON.stringify(opts));
+        if (Array.isArray(out.choices)) out.choices = out.choices.map(({ id, ...rest }) => rest);
+        if (type === "multipleRecordLinks") return { linkedTableId: out.linkedTableId };
+        return out;
+      }
+      for (const f of missing) {
+        const body = { name: f.name, type: f.type };
+        if (f.description) body.description = f.description;
+        const opts = cleanOptionsLocal(f.type, f.options);
+        if (opts) body.options = opts;
+        try {
+          await fetch(`${META_API}/tables/${existing.id}/fields`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        } catch (e) {
+          console.warn(`[step-8] could not sync field ${f.name}: ${e.message}`);
+        }
+      }
+      return true;
+    }
+    // Clone fields, skip email-pipeline ones + computed/system fields. Linked
+    // fields (Source Run → Scrape Runs) are re-pointed to the same target table.
+    // cleanOptions: Airtable Meta API rejects `id` on existing singleSelect choices,
+    // and for multipleRecordLinks creates only accepts {linkedTableId}.
+    function cleanOptions(type, opts) {
+      if (!opts) return undefined;
+      const out = JSON.parse(JSON.stringify(opts));
+      if (Array.isArray(out.choices)) out.choices = out.choices.map(({ id, ...rest }) => rest);
+      if (type === "multipleRecordLinks") return { linkedTableId: out.linkedTableId };
+      return out;
+    }
+    const fieldsToClone = (leads.fields || [])
+      .filter((f) => !EMAIL_PIPELINE_FIELDS.has(f.name))
+      // formula/lookup/rollup/count are computed; can't be re-created via Meta API
+      .filter((f) => !["formula", "lookup", "rollup", "count"].includes(f.type))
+      .map((f) => {
+        const out = { name: f.name, type: f.type };
+        if (f.description) out.description = f.description;
+        const opts = cleanOptions(f.type, f.options);
+        if (opts) out.options = opts;
+        return out;
+      });
+    // Ensure "Business Name" is first (primary). Move it to position 0 if present.
+    const primaryIdx = fieldsToClone.findIndex((f) => f.name === "Business Name");
+    if (primaryIdx > 0) {
+      const [primary] = fieldsToClone.splice(primaryIdx, 1);
+      fieldsToClone.unshift(primary);
+    }
+    console.log(`[step-8] creating "${NO_EMAIL_TABLE}" with ${fieldsToClone.length} fields...`);
+    const createRes = await fetch(`${META_API}/tables`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: NO_EMAIL_TABLE,
+        description: "Scraped places with no public email. Segregated from Leads so the email pipeline stays focused. Phone/mail outreach plan TBD.",
+        fields: fieldsToClone,
+      }),
+    });
+    if (createRes.ok) {
+      console.log(`[step-8] ✓ created "${NO_EMAIL_TABLE}" table`);
+      return true;
+    }
+    const text = await createRes.text();
+    console.warn(`[step-8] could not create no-email table: ${createRes.status} ${text.slice(0, 300)}`);
+    return false;
+  } catch (err) {
+    console.warn(`[step-8] no-email table setup failed: ${err.message}`);
+    return false;
+  }
+}
+
+// Auto-ensure the Leads table has a `Place ID` field. Idempotent — if it
+// already exists, this is a no-op. Requires the PAT to have `schema.bases:write`
+// scope on this base. If the call 403s/404s we just warn and proceed (dedupe
+// still works by extracting Place ID from GBP URL on the fly).
+async function ensurePlaceIdField() {
+  try {
+    const metaUrl = `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE_ID}/tables`;
+    const metaRes = await fetch(metaUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+    if (!metaRes.ok) {
+      console.warn(`[step-8] meta API unavailable (${metaRes.status}) — skipping Place ID field auto-create. Dedupe still works in-memory.`);
+      return;
+    }
+    const meta = await metaRes.json();
+    const table = (meta.tables || []).find((t) => t.name === AIRTABLE_TABLE);
+    if (!table) {
+      console.warn(`[step-8] table "${AIRTABLE_TABLE}" not found in meta response`);
+      return;
+    }
+    const exists = (table.fields || []).some((f) => f.name === "Place ID");
+    if (exists) return;
+    const createUrl = `https://api.airtable.com/v0/meta/bases/${AIRTABLE_BASE_ID}/tables/${table.id}/fields`;
+    const createRes = await fetch(createUrl, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Place ID",
+        type: "singleLineText",
+        description: "Stable Google Maps CID (0x...:0x...) — used for per-lead dedupe across re-scrapes."
+      })
+    });
+    if (createRes.ok) {
+      console.log(`[step-8] ✓ auto-created "Place ID" field on ${AIRTABLE_TABLE} table`);
+    } else {
+      const text = await createRes.text();
+      console.warn(`[step-8] could not auto-create Place ID field (${createRes.status}): ${text.slice(0, 200)}`);
+    }
+  } catch (err) {
+    console.warn(`[step-8] Place ID field check failed: ${err.message}`);
+  }
+}
+
+// Extract a stable unique key from a Google Maps place URL.
+// Prefers the canonical "0x{hex}:0x{hex}" CID pair; falls back to the
+// pre-/data= URL prefix (still stable across runs).
+function extractPlaceKey(mapsUrl) {
+  const s = String(mapsUrl || '');
+  if (!s) return '';
+  const m = s.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);
+  if (m && m[1]) return m[1].toLowerCase();
+  const i = s.indexOf('/data=');
+  return (i > -1 ? s.slice(0, i) : s).toLowerCase();
+}
+
+// Fetch all existing leads with their Place ID across BOTH tables (Leads +
+// Leads No Email). Returns Map<placeKey, { id, fields, table }>. Used to:
+//  - skip duplicate creates,
+//  - migrate no-email → leads when an email is later found,
+//  - patch existing in-place to refresh rank/date.
+async function loadExistingLeadsByPlaceKey() {
+  const map = new Map();
+  for (const [tableName, api] of [[AIRTABLE_TABLE, API_BASE], [NO_EMAIL_TABLE, NO_EMAIL_API]]) {
+    let offset = null;
+    do {
+      const u = new URL(api);
+      u.searchParams.set('pageSize', '100');
+      u.searchParams.append('fields[]', 'Place ID');
+      u.searchParams.append('fields[]', 'GBP URL');
+      u.searchParams.append('fields[]', 'Map Rank');
+      u.searchParams.append('fields[]', 'Date Scraped');
+      u.searchParams.append('fields[]', 'Business Name');
+      if (offset) u.searchParams.set('offset', offset);
+      const res = await fetch(u, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+      if (!res.ok) {
+        // 404 likely means the no-email table doesn't exist yet; that's fine.
+        if (res.status === 404 && tableName === NO_EMAIL_TABLE) break;
+        console.warn(`[step-8] existing-leads lookup failed for ${tableName} ${res.status}`);
+        break;
+      }
+      const data = await res.json();
+      for (const r of (data.records || [])) {
+        const placeId = r.fields?.['Place ID'] || extractPlaceKey(r.fields?.['GBP URL']);
+        if (placeId) map.set(placeId, { id: r.id, fields: r.fields || {}, table: tableName });
+      }
+      offset = data.offset;
+    } while (offset);
+  }
+  return map;
+}
+
+async function patchBatchTo(api, records) {
+  const res = await fetch(api, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ records, typecast: true })
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Airtable PATCH ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+async function deleteRecords(api, ids) {
+  // Airtable batch delete: up to 10 IDs per request via repeated `records[]` query params
+  for (let i = 0; i < ids.length; i += 10) {
+    const slice = ids.slice(i, i + 10);
+    const u = new URL(api);
+    slice.forEach((id) => u.searchParams.append('records[]', id));
+    const res = await fetch(u, { method: 'DELETE', headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+    if (!res.ok) console.warn(`[step-8] delete batch failed ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+}
+
 function buildRecord(row, scrapedDate) {
   const fields = {};
   const set = (key, val) => { const c = cleanStr(val); if (c) fields[key] = c; };
@@ -268,7 +492,11 @@ function buildRecord(row, scrapedDate) {
   const email = extractValidEmail(pick(row, "email", "emails"));
   set("Email", email);
   setUrl("Website", pick(row, "website"));
-  setUrl("GBP URL", pick(row, "google maps url", "maps url"));
+  const gbpUrl = pick(row, "google maps url", "maps url");
+  setUrl("GBP URL", gbpUrl);
+  // Stable per-place dedupe key — set unconditionally so future re-runs can match
+  const placeKey = extractPlaceKey(gbpUrl);
+  if (placeKey) fields["Place ID"] = placeKey;
   set("Address", pick(row, "address"));
   set("City", pick(row, "city"));
   set("State", pick(row, "state"));
@@ -297,8 +525,8 @@ function buildRecord(row, scrapedDate) {
   return { fields };
 }
 
-async function postBatch(records) {
-  const res = await fetch(API_BASE, {
+async function postBatchTo(api, records) {
+  const res = await fetch(api, {
     method: "POST",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ records, typecast: true })
@@ -356,27 +584,120 @@ async function main() {
     return rec;
   });
 
+  // Per-lead dedupe by Place ID across BOTH tables (Leads + Leads No Email).
+  // Routing rules:
+  //   - new lead, has Email → CREATE in Leads
+  //   - new lead, no Email  → CREATE in Leads No Email
+  //   - existing in Leads (any state) → PATCH in Leads (refresh rank/date)
+  //   - existing in Leads No Email + new has Email → MIGRATE: delete from
+  //       Leads No Email, create in Leads (now actionable for outreach)
+  //   - existing in Leads No Email + new still no Email → PATCH in Leads No Email
+  if (!DRY) {
+    await ensurePlaceIdField();
+    await ensureNoEmailTable();
+  }
+  console.log(`[step-8] loading existing Airtable leads (both tables) for dedupe...`);
+  const existing = DRY ? new Map() : await loadExistingLeadsByPlaceKey();
+  console.log(`[step-8] indexed ${existing.size} existing leads (across Leads + Leads No Email)`);
+
+  const toCreateLeads = [];
+  const toCreateNoEmail = [];
+  const toUpdateLeads = [];
+  const toUpdateNoEmail = [];
+  const toMigrate = []; // { fromId, newRecord }
+  let skippedNoKey = 0;
+  for (const rec of records) {
+    const pk = rec.fields["Place ID"];
+    const hasEmail = !!rec.fields.Email;
+    if (!pk) {
+      skippedNoKey += 1;
+      (hasEmail ? toCreateLeads : toCreateNoEmail).push(rec);
+      continue;
+    }
+    const match = existing.get(pk);
+    if (match) {
+      const refreshFields = {
+        "Map Rank": rec.fields["Map Rank"],
+        "Date Scraped": rec.fields["Date Scraped"],
+      };
+      if (rec.fields["Source Run"]) refreshFields["Source Run"] = rec.fields["Source Run"];
+      if (!match.fields?.["Place ID"]) refreshFields["Place ID"] = pk;
+
+      if (match.table === NO_EMAIL_TABLE && hasEmail) {
+        // Promotion: this place now has an email — move it to the actionable Leads table.
+        toMigrate.push({ fromId: match.id, newRecord: rec });
+      } else if (match.table === NO_EMAIL_TABLE) {
+        toUpdateNoEmail.push({ id: match.id, fields: refreshFields });
+      } else {
+        toUpdateLeads.push({ id: match.id, fields: refreshFields });
+      }
+    } else {
+      (hasEmail ? toCreateLeads : toCreateNoEmail).push(rec);
+    }
+  }
+  console.log(
+    `[step-8] dedupe: +${toCreateLeads.length} Leads, +${toCreateNoEmail.length} NoEmail, ` +
+    `~${toUpdateLeads.length} Leads, ~${toUpdateNoEmail.length} NoEmail, ` +
+    `→${toMigrate.length} migrate, ${skippedNoKey} no-key`
+  );
+
   if (DRY) {
-    records.slice(0, 3).forEach((rec, i) => console.log(`[DRY] sample ${i + 1}:`, JSON.stringify(rec.fields).slice(0, 220) + "..."));
-    console.log(`[DRY] would POST ${records.length} records in batches of 10`);
+    console.log(`[DRY] would POST ${toCreateLeads.length}+${toCreateNoEmail.length} / PATCH ${toUpdateLeads.length}+${toUpdateNoEmail.length} / migrate ${toMigrate.length}`);
     return;
   }
 
   let posted = 0;
-  for (let i = 0; i < records.length; i += 10) {
-    const batch = records.slice(i, i + 10);
-    try {
-      const res = await postBatch(batch);
-      posted += res.records?.length || 0;
-      console.log(`[step-8] batch ${Math.floor(i / 10) + 1}: +${res.records?.length || 0} records (total ${posted})`);
-    } catch (err) {
-      console.error(`[step-8] batch ${Math.floor(i / 10) + 1} failed:`, err.message);
+  let patched = 0;
+  let migrated = 0;
+  // Helper: batch process create/patch into the named table
+  async function doCreate(api, recs, label) {
+    let n = 0;
+    for (let i = 0; i < recs.length; i += 10) {
+      try {
+        const res = await postBatchTo(api, recs.slice(i, i + 10));
+        n += res.records?.length || 0;
+      } catch (err) {
+        console.error(`[step-8] ${label} create batch ${Math.floor(i / 10) + 1} failed:`, err.message);
+      }
+    }
+    if (n) console.log(`[step-8] ✓ created ${n} in ${label}`);
+    return n;
+  }
+  async function doPatch(api, recs, label) {
+    let n = 0;
+    for (let i = 0; i < recs.length; i += 10) {
+      try {
+        const res = await patchBatchTo(api, recs.slice(i, i + 10));
+        n += res.records?.length || 0;
+      } catch (err) {
+        console.error(`[step-8] ${label} patch batch ${Math.floor(i / 10) + 1} failed:`, err.message);
+      }
+    }
+    if (n) console.log(`[step-8] ✓ patched ${n} in ${label}`);
+    return n;
+  }
+
+  posted += await doCreate(API_BASE, toCreateLeads, "Leads");
+  posted += await doCreate(NO_EMAIL_API, toCreateNoEmail, "Leads No Email");
+  patched += await doPatch(API_BASE, toUpdateLeads, "Leads");
+  patched += await doPatch(NO_EMAIL_API, toUpdateNoEmail, "Leads No Email");
+
+  // Migration: create in Leads (with all the fresh fields), then delete from Leads No Email.
+  // We do create-first so a partial failure doesn't lose data.
+  if (toMigrate.length) {
+    const migrateCreates = toMigrate.map((m) => m.newRecord);
+    const created = await doCreate(API_BASE, migrateCreates, "Leads (migrated)");
+    if (created > 0) {
+      const idsToDelete = toMigrate.map((m) => m.fromId);
+      await deleteRecords(NO_EMAIL_API, idsToDelete);
+      migrated = created;
+      console.log(`[step-8] ✓ migrated ${migrated} from Leads No Email → Leads (now actionable)`);
     }
   }
 
-  if (runId) await finalizeScrapeRun(runId, posted, posted > 0 ? "complete" : "failed");
+  if (runId) await finalizeScrapeRun(runId, posted, posted > 0 || patched > 0 || migrated > 0 ? "complete" : "failed");
 
-  console.log(`[step-8] done — ${posted} record${posted === 1 ? "" : "s"} created in Airtable. Run row linked.`);
+  console.log(`[step-8] done — created=${posted} (incl ${migrated} migrated), patched=${patched}.`);
 }
 
 main().catch((err) => { console.error("[step-8] fatal:", err.message || err); process.exit(2); });
