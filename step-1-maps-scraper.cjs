@@ -533,6 +533,35 @@ async function extractPlaceDetails(page) {
         return '';
       }
 
+      function findServices() {
+        // Services listed under a "Services" section heading on the profile
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
+        for (const h of headings) {
+          if (!/^services?$/i.test(textFrom(h))) continue;
+          const container = h.closest('[jsaction], section, [data-section-id]') || h.parentElement;
+          if (!container) continue;
+          const items = [];
+          container.querySelectorAll('[role="listitem"], li, button, span').forEach((el) => {
+            if (el === h) return;
+            const txt = textFrom(el).trim();
+            if (txt && txt.length < 80 && txt.length > 1 && !items.includes(txt)) items.push(txt);
+          });
+          if (items.length) return items.slice(0, 20).join(', ');
+        }
+        return '';
+      }
+
+      function findQACount() {
+        // Q&A count shown as a button/link on the profile
+        const els = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+        for (const el of els) {
+          const txt = (el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '');
+          const m = txt.match(/([\d,]+)\s+(?:questions?|q&a|qa)\b/i);
+          if (m) return m[1].replace(/,/g, '');
+        }
+        return '';
+      }
+
       const name = firstText(['h1.DUwDvf', 'h1']);
       let address = byDataItemIdExact('address');
       if (!address) {
@@ -552,8 +581,10 @@ async function extractPlaceDetails(page) {
       const hours = findHours();
       const hasPosts = findHasPosts();
       const description = findDescription();
+      const services = findServices();
+      const qaCount = findQACount();
 
-      return { name, address, phone, website, rating, reviews, category, imageUrl, mapsUrl, businessStatus, secondaryCategories, photoCount, hours, hasPosts, description };
+      return { name, address, phone, website, rating, reviews, category, imageUrl, mapsUrl, businessStatus, secondaryCategories, photoCount, hours, hasPosts, description, services, qaCount };
     })
     .catch(() => ({
       name: '',
@@ -571,6 +602,8 @@ async function extractPlaceDetails(page) {
       hours: '',
       hasPosts: false,
       description: '',
+      services: '',
+      qaCount: '',
     }));
 }
 
@@ -896,6 +929,8 @@ async function main() {
       'GBP Hours',
       'GBP Has Posts',
       'GBP Description',
+      'GBP Services',
+      'GBP QA Count',
     ];
 
     const ws = fs.createWriteStream(outFile, { flags: 'w' });
@@ -976,6 +1011,8 @@ async function main() {
           (details.hours || '').replace(/\n/g, ' | ').trim(),
           details.hasPosts ? 'Yes' : '',
           (details.description || '').replace(/\n/g, ' ').trim(),
+          (details.services || '').replace(/\n/g, ' ').trim(),
+          details.qaCount || '',
         ];
 
         ws.write(rowOut.map(csvEscape).join(',') + '\n');

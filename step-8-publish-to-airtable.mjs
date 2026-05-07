@@ -381,6 +381,8 @@ async function ensureGbpCrmFields() {
     { name: "GBP Hours", type: "multilineText" },
     { name: "GBP Has Posts", type: "checkbox", options: { icon: "check", color: "greenBright" } },
     { name: "GBP Description", type: "multilineText" },
+    { name: "GBP Services", type: "multilineText" },
+    { name: "GBP QA Count", type: "number", options: { precision: 0 } },
     { name: "Pipeline Stage", type: "singleSelect", options: { choices: [
       { name: "scraped", color: "grayLight2" },
       { name: "video_sent", color: "blueLight2" },
@@ -408,6 +410,23 @@ async function ensureGbpCrmFields() {
     { name: "FGA Audit ID", type: "singleLineText", description: "Set when lead submits the FGA form — links this outreach record to its FGA report" },
     { name: "Last Activity", type: "date", options: { dateFormat: { name: "us" } } },
     { name: "Follow Up Date", type: "date", options: { dateFormat: { name: "us" } } },
+    // Competitor snapshot — top 3 by Map Rank for the same Search Term (injected by step-8)
+    { name: "Competitor 1 Name", type: "singleLineText" },
+    { name: "Competitor 1 Rating", type: "number", options: { precision: 1 } },
+    { name: "Competitor 1 Reviews", type: "number", options: { precision: 0 } },
+    { name: "Competitor 1 Map URL", type: "url" },
+    { name: "Competitor 2 Name", type: "singleLineText" },
+    { name: "Competitor 2 Rating", type: "number", options: { precision: 1 } },
+    { name: "Competitor 2 Reviews", type: "number", options: { precision: 0 } },
+    { name: "Competitor 2 Map URL", type: "url" },
+    { name: "Competitor 3 Name", type: "singleLineText" },
+    { name: "Competitor 3 Rating", type: "number", options: { precision: 1 } },
+    { name: "Competitor 3 Reviews", type: "number", options: { precision: 0 } },
+    { name: "Competitor 3 Map URL", type: "url" },
+    // Pipeline timing — each written by the step that fires the event
+    { name: "Date Video Sent", type: "date", options: { dateFormat: { name: "us" } } },
+    { name: "Date FGA Delivered", type: "date", options: { dateFormat: { name: "us" } } },
+    { name: "Date Client Signed", type: "date", options: { dateFormat: { name: "us" } } },
   ];
 
   try {
@@ -551,6 +570,44 @@ async function deleteRecords(api, ids) {
   }
 }
 
+// After all records are built, inject top-3 competitors from the same search term.
+// Groups rows by Search Term, sorts by Map Rank, writes Competitor 1/2/3 fields
+// into each record in-place. Zero extra scraping — data already in the CSV.
+function injectCompetitorData(records, rows) {
+  // Build searchTerm → sorted competitor list
+  const byTerm = new Map();
+  rows.forEach((row, i) => {
+    const term = (pick(row, "search term") || "").toLowerCase();
+    const rank = toNumberOrNull(pick(row, "map rank")) || 9999;
+    const name = pick(row, "business name", "name");
+    const rating = toNumberOrNull(pick(row, "rating"));
+    const reviews = toNumberOrNull(pick(row, "reviews", "review count"));
+    const mapsUrl = pick(row, "google maps url", "maps url");
+    if (!byTerm.has(term)) byTerm.set(term, []);
+    byTerm.get(term).push({ idx: i, rank, name, rating, reviews, mapsUrl });
+  });
+  for (const arr of byTerm.values()) arr.sort((a, b) => a.rank - b.rank);
+
+  records.forEach((rec, i) => {
+    const row = rows[i];
+    if (!row) return;
+    const term = (pick(row, "search term") || "").toLowerCase();
+    const myRank = toNumberOrNull(pick(row, "map rank")) || 9999;
+    // Competitor framing only applies to rank 4+ leads (the top-3 blocking them).
+    // Rank 1-3 competitor handling is a different FGA framing — deferred.
+    if (myRank >= 1 && myRank <= 3) return;
+    const group = byTerm.get(term) || [];
+    const competitors = group.filter((c) => c.rank !== myRank).slice(0, 3);
+    competitors.forEach((comp, ci) => {
+      const n = ci + 1;
+      if (comp.name) rec.fields[`Competitor ${n} Name`] = comp.name;
+      if (comp.rating !== null) rec.fields[`Competitor ${n} Rating`] = comp.rating;
+      if (comp.reviews !== null) rec.fields[`Competitor ${n} Reviews`] = comp.reviews;
+      if (isHttpUrl(comp.mapsUrl)) rec.fields[`Competitor ${n} Map URL`] = comp.mapsUrl;
+    });
+  });
+}
+
 function buildRecord(row, scrapedDate) {
   const fields = {};
   const set = (key, val) => { const c = cleanStr(val); if (c) fields[key] = c; };
@@ -598,6 +655,8 @@ function buildRecord(row, scrapedDate) {
   const hasPosts = pick(row, "gbp has posts");
   if (hasPosts === "Yes" || hasPosts === "true" || hasPosts === true) fields["GBP Has Posts"] = true;
   set("GBP Description", pick(row, "gbp description"));
+  set("GBP Services", pick(row, "gbp services"));
+  setNum("GBP QA Count", pick(row, "gbp qa count"));
 
   // Pipeline Stage defaults to "scraped" on first write; never overwritten on PATCH
   fields["Pipeline Stage"] = "scraped";
@@ -666,6 +725,9 @@ async function main() {
     if (runId) rec.fields["Source Run"] = [runId];
     return rec;
   });
+
+  // Inject top-3 competitors from the same Search Term / Map Rank group
+  injectCompetitorData(records, rows);
 
   // Per-lead dedupe by Place ID across BOTH tables (Leads + Leads No Email).
   // Routing rules:
