@@ -462,6 +462,77 @@ async function extractPlaceDetails(page) {
         return '';
       }
 
+      // --- New GBP detail extractors (don't affect video pipeline) ---
+
+      function findBusinessStatus() {
+        const body = document.body.innerText || '';
+        if (/permanently closed/i.test(body)) return 'closed_permanently';
+        if (/temporarily closed/i.test(body)) return 'closed_temporarily';
+        return 'operational';
+      }
+
+      function findSecondaryCategories() {
+        const sels = [
+          'button[jsaction*="pane.rating.category"]',
+          'button[jsaction*="pane.rating.more"]',
+          'button[aria-label*="Category"]',
+          'button[aria-label*="category"]',
+        ];
+        const cats = [];
+        for (const s of sels) {
+          document.querySelectorAll(s).forEach(el => {
+            const t = textFrom(el);
+            if (t && t.length < 80 && !cats.includes(t)) cats.push(t);
+          });
+        }
+        // First element is primary; rest are secondary
+        return cats.slice(1).join(', ');
+      }
+
+      function findPhotoCount() {
+        const all = Array.from(document.querySelectorAll('button, a, [role="button"]'));
+        for (const el of all) {
+          const combined = (el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '');
+          const m = combined.match(/([\d,]+)\s+photos?/i);
+          if (m) return m[1].replace(/,/g, '');
+        }
+        return '';
+      }
+
+      function findHours() {
+        // data-item-id="oh" is the operating hours button
+        const ohEl = document.querySelector('[data-item-id="oh"]');
+        if (ohEl) return textFrom(ohEl).slice(0, 300);
+        // Fallback: aria-label containing "hours"
+        const hoursEl = Array.from(document.querySelectorAll('[aria-label]'))
+          .find(el => /\bhours\b/i.test(el.getAttribute('aria-label') || ''));
+        if (hoursEl) return textFrom(hoursEl).slice(0, 300);
+        return '';
+      }
+
+      function findHasPosts() {
+        // Google Posts appear under an "Updates" section heading
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
+        return headings.some(el => /^updates?$/i.test(textFrom(el)));
+      }
+
+      function findDescription() {
+        // "From the business" description block
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"]'));
+        for (const h of headings) {
+          const t = textFrom(h);
+          if (/from the business|about this business/i.test(t)) {
+            let sib = h.nextElementSibling;
+            while (sib) {
+              const txt = textFrom(sib).trim();
+              if (txt.length > 20) return txt.slice(0, 600);
+              sib = sib.nextElementSibling;
+            }
+          }
+        }
+        return '';
+      }
+
       const name = firstText(['h1.DUwDvf', 'h1']);
       let address = byDataItemIdExact('address');
       if (!address) {
@@ -475,8 +546,14 @@ async function extractPlaceDetails(page) {
       const category = findCategory();
       const imageUrl = findHeroImageUrl();
       const mapsUrl = findBestMapsUrl();
+      const businessStatus = findBusinessStatus();
+      const secondaryCategories = findSecondaryCategories();
+      const photoCount = findPhotoCount();
+      const hours = findHours();
+      const hasPosts = findHasPosts();
+      const description = findDescription();
 
-      return { name, address, phone, website, rating, reviews, category, imageUrl, mapsUrl };
+      return { name, address, phone, website, rating, reviews, category, imageUrl, mapsUrl, businessStatus, secondaryCategories, photoCount, hours, hasPosts, description };
     })
     .catch(() => ({
       name: '',
@@ -488,6 +565,12 @@ async function extractPlaceDetails(page) {
       category: '',
       imageUrl: '',
       mapsUrl: '',
+      businessStatus: '',
+      secondaryCategories: '',
+      photoCount: '',
+      hours: '',
+      hasPosts: false,
+      description: '',
     }));
 }
 
@@ -807,6 +890,12 @@ async function main() {
       'Google Maps URL',
       'Latitude',
       'Longitude',
+      'GBP Status',
+      'GBP Secondary Categories',
+      'GBP Photo Count',
+      'GBP Hours',
+      'GBP Has Posts',
+      'GBP Description',
     ];
 
     const ws = fs.createWriteStream(outFile, { flags: 'w' });
@@ -881,6 +970,12 @@ async function main() {
           mapsUrl,
           lat,
           lng,
+          (details.businessStatus || '').trim(),
+          (details.secondaryCategories || '').trim(),
+          (details.photoCount || '').trim(),
+          (details.hours || '').replace(/\n/g, ' | ').trim(),
+          details.hasPosts ? 'Yes' : '',
+          (details.description || '').replace(/\n/g, ' ').trim(),
         ];
 
         ws.write(rowOut.map(csvEscape).join(',') + '\n');

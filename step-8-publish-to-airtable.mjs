@@ -368,6 +368,76 @@ async function ensureNoEmailTable() {
   }
 }
 
+// Auto-create all new GBP detail + CRM fields on the Leads table. Idempotent.
+async function ensureGbpCrmFields() {
+  const newFields = [
+    { name: "GBP Status", type: "singleSelect", options: { choices: [
+      { name: "operational", color: "greenLight2" },
+      { name: "closed_temporarily", color: "yellowLight2" },
+      { name: "closed_permanently", color: "redLight2" },
+    ]}},
+    { name: "GBP Secondary Categories", type: "multilineText" },
+    { name: "GBP Photo Count", type: "number", options: { precision: 0 } },
+    { name: "GBP Hours", type: "multilineText" },
+    { name: "GBP Has Posts", type: "checkbox", options: { icon: "check", color: "greenBright" } },
+    { name: "GBP Description", type: "multilineText" },
+    { name: "Pipeline Stage", type: "singleSelect", options: { choices: [
+      { name: "scraped", color: "grayLight2" },
+      { name: "video_sent", color: "blueLight2" },
+      { name: "opened", color: "cyanLight2" },
+      { name: "clicked", color: "tealLight2" },
+      { name: "audit_submitted", color: "purpleLight2" },
+      { name: "follow_up", color: "orangeLight2" },
+      { name: "proposal", color: "yellowLight2" },
+      { name: "signed", color: "greenLight2" },
+      { name: "dead", color: "redLight2" },
+    ]}},
+    { name: "Tags", type: "multipleSelects", options: { choices: [
+      { name: "top_3", color: "greenLight2" },
+      { name: "rank_4plus", color: "blueLight2" },
+      { name: "high_reviews", color: "tealLight2" },
+      { name: "low_reviews", color: "yellowLight2" },
+      { name: "no_website", color: "redLight2" },
+      { name: "has_website", color: "cyanLight2" },
+      { name: "hot", color: "redBright" },
+      { name: "warm", color: "orangeLight2" },
+      { name: "cold", color: "grayLight2" },
+    ]}},
+    { name: "Lead Score", type: "number", options: { precision: 0 } },
+    { name: "Vid Slug", type: "singleLineText", description: "Landing page slug /v/SLUG — used by FGA enrichment to look up this record via ?vid= param" },
+    { name: "FGA Audit ID", type: "singleLineText", description: "Set when lead submits the FGA form — links this outreach record to its FGA report" },
+    { name: "Last Activity", type: "date", options: { dateFormat: { name: "us" } } },
+    { name: "Follow Up Date", type: "date", options: { dateFormat: { name: "us" } } },
+  ];
+
+  try {
+    const metaRes = await fetch(`${META_API}/tables`, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
+    if (!metaRes.ok) { console.warn(`[step-8] meta API unavailable — skipping GBP/CRM field auto-create`); return; }
+    const meta = await metaRes.json();
+    const table = (meta.tables || []).find((t) => t.name === AIRTABLE_TABLE);
+    if (!table) { console.warn(`[step-8] table "${AIRTABLE_TABLE}" not found`); return; }
+    const existing = new Set((table.fields || []).map((f) => f.name));
+    const missing = newFields.filter((f) => !existing.has(f.name));
+    if (!missing.length) return;
+    const createUrl = `${META_API}/tables/${table.id}/fields`;
+    for (const field of missing) {
+      const res = await fetch(createUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(field),
+      });
+      if (res.ok) {
+        console.log(`[step-8] ✓ auto-created field "${field.name}"`);
+      } else {
+        const text = await res.text();
+        console.warn(`[step-8] could not create field "${field.name}" (${res.status}): ${text.slice(0, 200)}`);
+      }
+    }
+  } catch (err) {
+    console.warn(`[step-8] GBP/CRM field check failed: ${err.message}`);
+  }
+}
+
 // Auto-ensure the Leads table has a `Place ID` field. Idempotent — if it
 // already exists, this is a no-op. Requires the PAT to have `schema.bases:write`
 // scope on this base. If the call 403s/404s we just warn and proceed (dedupe
@@ -519,6 +589,19 @@ function buildRecord(row, scrapedDate) {
   setUrl("Instagram", pick(row, "instagram"));
   set("Search Term", pick(row, "search term"));
   set("Search Source", pick(row, "search source"));
+
+  // GBP detail fields — captured by step-1 while already on the profile page
+  set("GBP Status", pick(row, "gbp status"));
+  set("GBP Secondary Categories", pick(row, "gbp secondary categories"));
+  setNum("GBP Photo Count", pick(row, "gbp photo count"));
+  set("GBP Hours", pick(row, "gbp hours"));
+  const hasPosts = pick(row, "gbp has posts");
+  if (hasPosts === "Yes" || hasPosts === "true" || hasPosts === true) fields["GBP Has Posts"] = true;
+  set("GBP Description", pick(row, "gbp description"));
+
+  // Pipeline Stage defaults to "scraped" on first write; never overwritten on PATCH
+  fields["Pipeline Stage"] = "scraped";
+
   fields["Status"] = "new";
   fields["Date Scraped"] = scrapedDate;
   fields["Raw Data"] = JSON.stringify(row, null, 0).slice(0, 99000);
@@ -593,6 +676,7 @@ async function main() {
   //       Leads No Email, create in Leads (now actionable for outreach)
   //   - existing in Leads No Email + new still no Email → PATCH in Leads No Email
   if (!DRY) {
+    await ensureGbpCrmFields();
     await ensurePlaceIdField();
     await ensureNoEmailTable();
   }
