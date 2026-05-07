@@ -137,10 +137,11 @@ async function fetchLeadBySlug(targetSlug) {
   return null;
 }
 
-async function updateLeadVideoUrl(recordId, videoUrl, videoFile) {
+async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return false;
   const body = { fields: { "Video URL": videoUrl } };
   if (videoFile) body.fields["Video File"] = videoFile;
+  if (slug) body.fields["Vid Slug"] = slug;
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -209,9 +210,11 @@ async function main() {
 
     // Recorded date — prefer Airtable's Date Scraped, fall back to today.
     const dateScraped = airtableRecord?.fields?.["Date Scraped"];
-    const recordedDate = dateScraped
-      ? new Date(dateScraped).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-      : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const recordedDateObj = dateScraped ? new Date(dateScraped) : new Date();
+    const recordedDate = recordedDateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const expiryDateObj = new Date(recordedDateObj);
+    expiryDateObj.setDate(expiryDateObj.getDate() + 30);
+    const expiryDate = expiryDateObj.toISOString().slice(0, 10); // YYYY-MM-DD
 
     // Build the body intro from the locked Option B template:
     // "This video was created for {Business} on {Date}, based on the search '{Term}'.
@@ -235,12 +238,13 @@ async function main() {
       BODY_INTRO: bodyIntro,
       BODY_OUTCOME: bodyOutcome,
       RECORDED_DATE: recordedDate,
+      EXPIRY_DATE: expiryDate,
     }));
     console.log(`[build-landing] ✓ ${slug} → ${landingUrl}`);
     built += 1;
 
     if (!NO_AIRTABLE && airtableRecord?.id) {
-      const ok = await updateLeadVideoUrl(airtableRecord.id, landingUrl, v.file);
+      const ok = await updateLeadVideoUrl(airtableRecord.id, landingUrl, v.file, slug);
       if (ok) airtableWrites += 1;
     }
   }

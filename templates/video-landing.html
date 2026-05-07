@@ -153,6 +153,19 @@
     }
     footer a { color: var(--brand); text-decoration: none; }
   </style>
+  <script>
+    (function() {
+      var exp = "{{EXPIRY_DATE}}";
+      if (!exp) return;
+      if (new Date() <= new Date(exp)) return;
+      document.addEventListener("DOMContentLoaded", function() {
+        var wrap = document.querySelector(".video-wrap");
+        if (wrap) wrap.innerHTML = '<div style="padding:40px 24px;text-align:center;background:#f8fafc;"><p style="font-size:1.1rem;color:#475569;margin:0 0 8px;">This walkthrough has expired.</p><p style="font-size:0.95rem;color:#94a3b8;margin:0;">Contact us for a fresh audit of your current rankings.</p></div>';
+        var bc = document.querySelector(".body-copy");
+        if (bc) bc.style.display = "none";
+      });
+    })();
+  </script>
 </head>
 <body>
   <main class="shell">
@@ -185,7 +198,7 @@
       </div>
 
       <div class="cta-bar">
-        <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
+        <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">Get My Free Growth Audit</a>
         <p class="escape-link">Already convinced? <a href="https://www.rocketgrowthagency.com/contact/?source=video&business={{SLUG}}">Skip the audit and contact us →</a></p>
       </div>
     </article>
