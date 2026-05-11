@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { execFile } from 'child_process';
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
@@ -90,6 +91,15 @@ function escapeSubtitlesPath(filePath) {
     .replace(/'/g, "\\'");
 }
 
+async function subtitlesFilterAvailable() {
+  return new Promise((resolve) => {
+    const cp = execFile('ffmpeg', ['-hide_banner', '-filters'], (err, stdout) => {
+      resolve(!err && stdout.includes(' subtitles '));
+    });
+    cp.on('error', () => resolve(false));
+  });
+}
+
 async function getDurationSeconds(filePath) {
   const output = await runFfprobe([
     '-v',
@@ -110,6 +120,11 @@ async function getDurationSeconds(filePath) {
 }
 
 async function main() {
+  const canBurnSubtitles = await subtitlesFilterAvailable();
+  if (!canBurnSubtitles) {
+    console.warn('⚠️  ffmpeg subtitles filter not available (needs --enable-libass). Subtitles will be saved as .srt only, not burned in.');
+  }
+
   const { baseName } = findLatestStep2Csv();
 
   const BRANDED_DIR = path.join(BRANDED_ROOT, baseName);
@@ -181,9 +196,13 @@ async function main() {
     } else if (videoDuration > targetDuration + 0.05) {
       console.log(`  Trimming video by ${(videoDuration - targetDuration).toFixed(3)}s to match voiceover.`);
     }
-    if (hasSubtitles) {
+    let tempSrtPath = null;
+    if (hasSubtitles && canBurnSubtitles) {
+      // Copy SRT to /tmp — ffmpeg filter graph parser can choke on paths with [ ] in them.
+      tempSrtPath = path.join(os.tmpdir(), `rga_subtitle_${Date.now()}.srt`);
+      fs.copyFileSync(subtitlePath, tempSrtPath);
       filters.push(
-        `subtitles='${escapeSubtitlesPath(subtitlePath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
+        `subtitles='${escapeSubtitlesPath(tempSrtPath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
       );
     }
 
@@ -202,6 +221,7 @@ async function main() {
       outMp4
     );
     await runFFmpeg(ffArgs);
+    if (tempSrtPath && fs.existsSync(tempSrtPath)) fs.unlinkSync(tempSrtPath);
 
     console.log(`✓ Final merged MP4: ${outMp4}`);
     mergedCount++;
