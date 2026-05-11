@@ -626,14 +626,23 @@ async function scrollWebsiteMore(page) {
 async function scrollWebsiteTail(page, durationMs) {
   const endAt = Date.now() + Math.max(0, durationMs);
   let noMove = 0;
+  let reversedOnce = false;
 
   while (Date.now() < endAt) {
     const moved = await robustScrollStep(page, DESKTOP_WEBSITE_TAIL_DELTA_PX);
     if (!moved) {
       noMove += 1;
       if (noMove >= 2) {
-        await nudgeBounce(page);
-        noMove = 0;
+        if (!reversedOnce) {
+          // First time stuck at bottom: scroll back to top for a second pass
+          reversedOnce = true;
+          noMove = 0;
+          await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' })).catch(() => {});
+          await sleep(2200);
+        } else {
+          await nudgeBounce(page);
+          noMove = 0;
+        }
       }
     } else {
       noMove = 0;
@@ -899,8 +908,28 @@ async function recordMobileVideo(browser, meta, outputPath) {
       await recorder.start();
       await sleep(800);
 
-      const positions = [0, 650, 1300, 1950];
-      for (const top of positions) {
+      const mobileScrollHeight = await page.evaluate(() =>
+        Math.max(0, document.body.scrollHeight - window.innerHeight)
+      ).catch(() => 0);
+
+      const MOBILE_SCROLL_STEP_PX = 600;
+      const mobilePositions = [0]; // intro hold at top
+      if (mobileScrollHeight > MOBILE_SCROLL_STEP_PX) {
+        for (let pos = MOBILE_SCROLL_STEP_PX; pos < mobileScrollHeight; pos += MOBILE_SCROLL_STEP_PX) {
+          mobilePositions.push(pos);
+        }
+        mobilePositions.push(mobileScrollHeight); // reach bottom
+        mobilePositions.push(Math.floor(mobileScrollHeight / 2)); // scroll back up partway
+        mobilePositions.push(0); // return to top
+      } else {
+        // Short page: just go to bottom and back
+        if (mobileScrollHeight > 0) mobilePositions.push(mobileScrollHeight);
+        mobilePositions.push(0);
+        mobilePositions.push(mobileScrollHeight > 0 ? mobileScrollHeight : 650);
+      }
+
+      console.log(`   [diag] mobile scrollHeight=${mobileScrollHeight}px positions=${mobilePositions.join(',')}`);
+      for (const top of mobilePositions) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'smooth' }), top).catch(() => {});
         await sleep(1800);
       }
