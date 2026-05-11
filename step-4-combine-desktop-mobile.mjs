@@ -307,7 +307,25 @@ async function main() {
       console.log('  No audio manifest found; using legacy concat (no strict sync).');
     }
 
-    if (manifest && pair.format === 'split') {
+    if (!manifest && pair.format === 'split') {
+      // 3-webm, no audio manifest — convert each at natural duration then concat
+      const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
+      const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
+      const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
+      await runFFmpeg(['-y','-i',pair.mapsPath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mapsTmp]);
+      await runFFmpeg(['-y','-i',pair.websitePath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',websiteTmp]);
+      await runFFmpeg(['-y','-i',pair.mobilePath,'-vf','fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mobileSegTmp]);
+      await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
+      console.log(`  ✓ Combined (no-manifest concat, 3-webm) video saved: ${outCombined}`);
+    } else if (!manifest && pair.format === 'legacy') {
+      // Legacy 1-webm, no audio manifest — simple concat
+      const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
+      const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
+      await makeDesktopTmp(pair.desktopPath, desktopTmp);
+      await makeMobileTmp(pair.mobilePath, mobileTmp);
+      await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
+      console.log(`  ✓ Combined (no-manifest concat, legacy) video saved: ${outCombined}`);
+    } else if (manifest && pair.format === 'split') {
       // 3-webm strict-sync mode (Maps + Website + Mobile recorded separately)
       const mapsAudio = manifest.segments.maps.durationSeconds;
       const websiteAudio = manifest.segments.website.durationSeconds;

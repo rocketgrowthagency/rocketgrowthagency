@@ -62,6 +62,7 @@ const REQUIRED_FIELDS = [
   },
   { name: "Priority", type: "number", options: { precision: 0 }, description: "Higher = run sooner" },
   { name: "Last Attempted", type: "dateTime", options: { dateFormat: { name: "iso" }, timeFormat: { name: "24hour" }, timeZone: "America/Los_Angeles" } },
+  { name: "Date Completed", type: "dateTime", options: { dateFormat: { name: "iso" }, timeFormat: { name: "24hour" }, timeZone: "America/Los_Angeles" }, description: "When the scrape + Airtable publish finished successfully" },
   { name: "Fail Count", type: "number", options: { precision: 0 } },
   { name: "Last Error", type: "multilineText" },
   { name: "Listings Found", type: "number", options: { precision: 0 } },

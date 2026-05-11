@@ -36,11 +36,13 @@ const positional = rawArgs.filter((a) => !a.startsWith("--"));
 const DRY_RUN = flags.has("--dry-run");
 const SKIP_SCRAPE = flags.has("--skip-scrape");
 const SKIP_EMAIL = flags.has("--skip-email");
+const SCRAPE_ONLY = flags.has("--scrape-only");
 const SEARCH_QUERY = (positional[0] || process.env.SEARCH_QUERY || "").trim();
 const MAX_VIDEOS = Number(positional[1] || 10);
 
 if (!SEARCH_QUERY) {
-  console.error("Usage: node run-pipeline.mjs \"Search query\" [count] [--skip-scrape] [--skip-email] [--dry-run]");
+  console.error("Usage: node run-pipeline.mjs \"Search query\" [count] [--skip-scrape] [--skip-email] [--scrape-only] [--dry-run]");
+  console.error("  --scrape-only  Run steps 1+2+8 only (scrape + email enrich + Airtable). Skip video generation.");
   process.exit(1);
 }
 if (!Number.isFinite(MAX_VIDEOS) || MAX_VIDEOS <= 0) {
@@ -112,7 +114,7 @@ async function countEmailRows(csvPath) {
 async function main() {
   log("plan", `query: "${SEARCH_QUERY}"`);
   log("plan", `max videos: ${MAX_VIDEOS}`);
-  log("plan", `skip-scrape: ${SKIP_SCRAPE}, skip-email: ${SKIP_EMAIL}, dry-run: ${DRY_RUN}`);
+  log("plan", `skip-scrape: ${SKIP_SCRAPE}, skip-email: ${SKIP_EMAIL}, scrape-only: ${SCRAPE_ONLY}, dry-run: ${DRY_RUN}`);
 
   // Step 1 — Maps scrape
   if (!SKIP_SCRAPE) {
@@ -135,19 +137,23 @@ async function main() {
   log("plan", `step 2 output: ${step2Csv || "(none yet)"}`);
   log("plan", `emails found: ${emailRows}, running video pipeline for: ${targetCount}`);
 
-  if (targetCount === 0) {
-    log("plan", "No email rows to process. Stopping.");
-    return;
-  }
+  if (SCRAPE_ONLY) {
+    log("plan", "--scrape-only: skipping video steps (3-7), publishing to Airtable now.");
+  } else {
+    if (targetCount === 0) {
+      log("plan", "No email rows to process. Stopping.");
+      return;
+    }
 
-  // Steps 3–7 per business (each step is MAX_* = 1 internally).
-  for (let i = 1; i <= targetCount; i++) {
-    log("video-loop", `--- business ${i} of ${targetCount} ---`);
-    await runStep(`step-3-record [${i}]`,  "node", ["step-3-video-recorder.mjs"]);
-    await runStep(`step-4-combine [${i}]`, "node", ["step-4-combine-desktop-mobile.mjs"]);
-    await runStep(`step-5-brand [${i}]`,   "node", ["step-5-branding.mjs"]);
-    await runStep(`step-6-voice [${i}]`,   "node", ["step-6-voiceover.mjs"]);
-    await runStep(`step-7-merge [${i}]`,   "node", ["step-7-merge-branded-audio.mjs"]);
+    // Steps 3–7 per business (each step is MAX_* = 1 internally).
+    for (let i = 1; i <= targetCount; i++) {
+      log("video-loop", `--- business ${i} of ${targetCount} ---`);
+      await runStep(`step-3-record [${i}]`,  "node", ["step-3-video-recorder.mjs"]);
+      await runStep(`step-4-combine [${i}]`, "node", ["step-4-combine-desktop-mobile.mjs"]);
+      await runStep(`step-5-brand [${i}]`,   "node", ["step-5-branding.mjs"]);
+      await runStep(`step-6-voice [${i}]`,   "node", ["step-6-voiceover.mjs"]);
+      await runStep(`step-7-merge [${i}]`,   "node", ["step-7-merge-branded-audio.mjs"]);
+    }
   }
 
   // Step 8 — publish leads to Airtable (RGA Outreach base)

@@ -145,7 +145,7 @@ async function processOne() {
     await runScrapePipeline(query);
     // Look up the Scrape Run we just created so we can link + record stats
     const run = await findScrapeRun(query, todayIso());
-    const updateFields = { Status: "done" };
+    const updateFields = { Status: "done", "Date Completed": new Date().toISOString() };
     if (run) {
       updateFields["Listings Found"] = run.fields?.["Listings Scraped"] || 0;
       updateFields["Emails Found"] = run.fields?.["Emails Found"] || 0;
