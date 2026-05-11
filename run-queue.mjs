@@ -40,7 +40,7 @@ const MAX_FAILS = Number(process.env.MAX_FAILS || 3);
 
 const ARGS = process.argv.slice(2);
 const DRY = ARGS.includes("--dry-run");
-const MAX_RUNS = Number((ARGS.find((a) => a.startsWith("--max-runs="))?.slice(11)) || 0);
+const MAX_RUNS = Number((ARGS.find((a) => a.startsWith("--max-runs="))?.slice(11)) || 1); // default = 1; use --max-runs=N to run more
 const FILTER_VERT = ARGS.find((a) => a.startsWith("--vertical="))?.slice(11);
 const FILTER_CITY = ARGS.find((a) => a.startsWith("--city="))?.slice(7);
 
