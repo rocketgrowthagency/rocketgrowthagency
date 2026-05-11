@@ -187,8 +187,11 @@ async function auditWebsite(browser, websiteUrl, business) {
 
     if (business.phone) {
       const gbpPhone = normalizePhone(business.phone);
-      const sitePhones = data.phoneNumbers.map(normalizePhone);
-      findings.websitePhoneMatchesGbp = sitePhones.some((p) => p === gbpPhone);
+      const sitePhones = (data.phoneNumbers || []).map(normalizePhone);
+      // Only flag mismatch if we actually found tel: links — empty means unknown, not mismatch.
+      if (sitePhones.length > 0) {
+        findings.websitePhoneMatchesGbp = sitePhones.some((p) => p === gbpPhone);
+      }
     }
   } catch (err) {
     findings.error = err.message || String(err);
