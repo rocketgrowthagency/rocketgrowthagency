@@ -127,7 +127,7 @@ function buildHtml(lead, variant) {
     // Defense framing for rank 1-3: protect the top spot, not "climb"
     body = `
       <p>Hey ${contactFirst},</p>
-      <p>I recorded a short walkthrough for <strong>${name}</strong> — you're currently #${rank} on Google Maps for "${term}"${city ? ` in ${city}` : ""}, and I wanted to show you exactly what your closest competitors are doing to try to take that spot.</p>
+      <p>I recorded a short walkthrough for <strong>${name}</strong> — you're currently the #${rank} organic result on Google Maps for "${term}"${city ? ` in ${city}` : ""} (any listings above are paid ads), and I wanted to show you exactly what your closest competitors are doing to try to take that spot.</p>
       ${thumbnailBlock}
       <p>On the video page there's a button to grab your full Free Growth Audit — the written version with the specific things we'd lock in to keep you at the top. It's free, no call required.</p>
       <p>Talk soon,<br>Chris<br>Rocket Growth Agency<br><a href="mailto:hello@rocketgrowthagency.com">hello@rocketgrowthagency.com</a></p>
