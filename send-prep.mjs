@@ -84,13 +84,20 @@ function pickNextSendable(leads) {
   });
 }
 
-function buildSubject(lead, variant) {
+function isTopThree(rank) {
+  const n = Number(rank);
+  return Number.isFinite(n) && n >= 1 && n <= 3;
+}
+
+function buildSubject(lead) {
   const f = lead.fields || {};
   const name = f["Business Name"] || "your business";
   const rank = f["Map Rank"] != null ? String(f["Map Rank"]) : "";
-  const term = f["Search Term"] || "";
-  if (variant === "V2" && rank && term) {
-    return `${name} is ranking #${rank} for "${term}"`;
+  if (rank && isTopThree(rank)) {
+    return `${name} — your #${rank} Google Maps spot is at risk`;
+  }
+  if (rank) {
+    return `${name} ranks #${rank} on Google Maps`;
   }
   return `Short walkthrough for ${name}`;
 }
@@ -114,12 +121,22 @@ function buildHtml(lead, variant) {
     ? `<a href="${videoUrl}" style="display:inline-block;margin:8px 0;"><img src="${thumbUrl}" alt="Video walkthrough for ${name}" width="560" style="max-width:100%;border:0;border-radius:12px;"></a>`
     : `<p style="color:#b91c1c;"><em>No Video URL in Airtable for this lead — generate landing page first.</em></p>`;
 
+  const topThree = isTopThree(rank);
   let body;
-  if (variant === "V2") {
+  if (topThree) {
+    // Defense framing for rank 1-3: protect the top spot, not "climb"
+    body = `
+      <p>Hey ${contactFirst},</p>
+      <p>I recorded a short walkthrough for <strong>${name}</strong> — you're currently #${rank} on Google Maps for "${term}"${city ? ` in ${city}` : ""}, and I wanted to show you exactly what your closest competitors are doing to try to take that spot.</p>
+      ${thumbnailBlock}
+      <p>On the video page there's a button to grab your full Free Growth Audit — the written version with the specific things we'd lock in to keep you at the top. It's free, no call required.</p>
+      <p>Talk soon,<br>Chris<br>Rocket Growth Agency<br><a href="mailto:hello@rocketgrowthagency.com">hello@rocketgrowthagency.com</a></p>
+    `;
+  } else if (variant === "V2") {
     body = `
       <p>Hey ${contactFirst},</p>
       <p>Quick note: <strong>${name}</strong> is currently ranking #${rank || "?"} on Google Maps for "${term}"${city ? ` in ${city}` : ""}. The top 3 results are pulling most of the calls from that search.</p>
-      <p>I made a short walkthrough showing exactly what's costing you those leads and the specific fixes we'd make in the first 30 days:</p>
+      <p>I made a short walkthrough showing exactly what's holding you out of the top 3 and the specific fixes we'd make in the first 30 days:</p>
       ${thumbnailBlock}
       <p>If you'd like the full written audit, grab it free from the video page — no strings.</p>
       <p>Talk soon,<br>Chris<br>Rocket Growth Agency</p>
@@ -143,7 +160,7 @@ function buildHtml(lead, variant) {
 <div class="meta">
   <strong>RGA Send Preview — ${variant}</strong><br>
   TO: <code>${f.Email || "(no email)"}</code><br>
-  SUBJECT: <code>${buildSubject(lead, variant)}</code><br>
+  SUBJECT: <code>${buildSubject(lead)}</code><br>
   <br>
   Select ALL below (Cmd+A), copy (Cmd+C), paste into Gmail compose.
   <br>The preview area above (this box) won't be copied if you select from below only.
@@ -180,7 +197,7 @@ async function main() {
   }
 
   const f = lead.fields || {};
-  const subject = buildSubject(lead, VARIANT);
+  const subject = buildSubject(lead);
   const html = buildHtml(lead, VARIANT);
   const previewPath = "/tmp/rga-email-preview.html";
   writeFileSync(previewPath, html);
