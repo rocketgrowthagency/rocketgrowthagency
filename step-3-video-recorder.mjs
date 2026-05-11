@@ -530,9 +530,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
   const mapsUrl = (meta.mapsUrl || '').trim();
+  const rank = Number.isFinite(meta.rank) ? meta.rank : null;
   const query = searchTerm || businessName;
 
   if (!query && !mapsUrl) return 'none';
+
+  // Scroll enough panels to expose the business at its actual rank position.
+  // Each scroll reveals ~5 listings; add 2 extra as buffer.
+  const scrollsNeeded = rank !== null ? Math.ceil(rank / 5) + 2 : 4;
 
   try {
     console.log('   → Google Maps segment');
@@ -557,7 +562,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await waitForMapsResults(page);
       await sleep(3500);
       await dismissResultsInfoPopup(page);
-      await scrollMapsResultsPanel(page, 2);
+      console.log(`   → Scrolling results ${scrollsNeeded}x for rank #${rank ?? '?'}`);
+      await scrollMapsResultsPanel(page, scrollsNeeded);
       await sleep(1200);
     }
 
@@ -574,7 +580,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     if (mapsUrl) {
       console.log('   → Results click failed; opening direct Google Maps URL.');
       await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-      await sleep(6500);
+      // Wait longer for the business panel to fully render after a direct URL load
+      await sleep(9000);
       await dismissResultsInfoPopup(page);
       return 'direct-url';
     }

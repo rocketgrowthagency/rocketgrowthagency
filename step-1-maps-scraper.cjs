@@ -434,10 +434,14 @@ async function extractPlaceDetails(page) {
       }
 
       function findBestMapsUrl() {
+        const href = location.href;
+        // Prefer the live URL — it has full CID / coordinate data after the card loads
+        if (href.includes('/data=') || href.includes('@')) return href;
         const ogUrl = document.querySelector('meta[property="og:url"]');
         const ogu = ogUrl ? (ogUrl.getAttribute('content') || '').trim() : '';
-        if (ogu) return ogu;
-        return location.href;
+        if (ogu && (ogu.includes('/data=') || ogu.includes('@'))) return ogu;
+        // Last resort: whichever URL is longer (more data)
+        return (href.length >= (ogu || '').length) ? href : ogu;
       }
 
       // For service-area-only businesses, Google Maps shows no street address.
