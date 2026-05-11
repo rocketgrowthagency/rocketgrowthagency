@@ -208,11 +208,11 @@ async function main() {
   console.log(`Subject:  ${subject}`);
   console.log(`Variant:  ${VARIANT}`);
   console.log(`Video:    ${f["Video URL"] || "(missing)"}`);
-  console.log(`\nPreview opening in your browser now.`);
-  console.log(`In the browser: Cmd+A, Cmd+C → switch to Gmail → paste into compose → send.`);
+  console.log(`\nPreview saved: ${previewPath}`);
+  console.log(`Run: open ${previewPath}  (or just copy-paste subject + body above into Gmail)`);
   console.log(`Apps Script will auto-update Airtable within 5 min.\n`);
 
-  spawn("open", [previewPath], { stdio: "ignore", detached: true }).unref();
+  // Browser auto-open removed — open manually if needed: open /tmp/rga-email-preview.html
 }
 
 main().catch((err) => { console.error("Error:", err.message || err); process.exit(1); });
