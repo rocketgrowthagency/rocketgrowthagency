@@ -216,14 +216,32 @@ async function loadTop3Stats(baseName) {
 }
 
 function loadAuditFindings(baseName, slug) {
+  // Primary: exact baseName directory
   const auditPath = path.join(AUDIT_ROOT, baseName, 'audit-findings.json');
-  if (!fs.existsSync(auditPath)) return null;
-  try {
-    const all = JSON.parse(fs.readFileSync(auditPath, 'utf-8'));
-    return all[slug] || null;
-  } catch {
-    return null;
+  if (fs.existsSync(auditPath)) {
+    try {
+      const all = JSON.parse(fs.readFileSync(auditPath, 'utf-8'));
+      if (all[slug]) return all[slug];
+    } catch {}
   }
+  // Fallback: scan all audit batch dirs (newest first) for a file containing this slug.
+  // Handles single-lead filtered CSVs that don't have their own audit run.
+  if (fs.existsSync(AUDIT_ROOT)) {
+    const dirs = fs.readdirSync(AUDIT_ROOT).sort().reverse();
+    for (const dir of dirs) {
+      if (dir === baseName) continue;
+      const p = path.join(AUDIT_ROOT, dir, 'audit-findings.json');
+      if (!fs.existsSync(p)) continue;
+      try {
+        const all = JSON.parse(fs.readFileSync(p, 'utf-8'));
+        if (all[slug]) {
+          console.log(`   → Audit findings found in fallback batch: ${dir}`);
+          return all[slug];
+        }
+      } catch {}
+    }
+  }
+  return null;
 }
 
 // PRIORITY-BASED SCORING:

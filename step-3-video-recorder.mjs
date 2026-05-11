@@ -913,12 +913,15 @@ async function recordMobileVideo(browser, meta, outputPath) {
       ).catch(() => 0);
 
       const MOBILE_SCROLL_STEP_PX = 600;
+      const MOBILE_MAX_DOWN_STEPS = 8; // cap at 8 down-steps (~14.4s) so long pages don't bloat mobile section
       const mobilePositions = [0]; // intro hold at top
       if (mobileScrollHeight > MOBILE_SCROLL_STEP_PX) {
-        for (let pos = MOBILE_SCROLL_STEP_PX; pos < mobileScrollHeight; pos += MOBILE_SCROLL_STEP_PX) {
+        let stepCount = 0;
+        for (let pos = MOBILE_SCROLL_STEP_PX; pos < mobileScrollHeight && stepCount < MOBILE_MAX_DOWN_STEPS; pos += MOBILE_SCROLL_STEP_PX) {
           mobilePositions.push(pos);
+          stepCount++;
         }
-        mobilePositions.push(mobileScrollHeight); // reach bottom
+        mobilePositions.push(mobileScrollHeight); // reach bottom (or near it)
         mobilePositions.push(Math.floor(mobileScrollHeight / 2)); // scroll back up partway
         mobilePositions.push(0); // return to top
       } else {

@@ -31,6 +31,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STEP7_DIR = path.join(__dirname, "output", "Step 7 (Final Merge MP4)");
 const LANDING_OUT_DIR = path.join(__dirname, "output", "landing-pages", "v");
 const TEMPLATE_PATH = path.join(__dirname, "templates", "video-landing.html");
+const AUDIT_ROOT = path.join(__dirname, "output", "Step 2.5 (Audit)");
 
 const DRY = process.argv.includes("--dry-run");
 const NO_AIRTABLE = process.argv.includes("--no-airtable");
@@ -137,11 +138,45 @@ async function fetchLeadBySlug(targetSlug) {
   return null;
 }
 
+function loadAuditSummary(slug) {
+  if (!fs.existsSync(AUDIT_ROOT)) return null;
+  const dirs = fs.readdirSync(AUDIT_ROOT).sort().reverse(); // newest first
+  for (const dir of dirs) {
+    const p = path.join(AUDIT_ROOT, dir, "audit-findings.json");
+    if (!fs.existsSync(p)) continue;
+    try {
+      const all = JSON.parse(fs.readFileSync(p, "utf-8"));
+      const entry = all[slug];
+      if (!entry) continue;
+      // Flatten all sections into labelled finding strings
+      const lines = [];
+      const LABELS = {
+        hasSSL: "No SSL", mobileResponsive: "Not mobile responsive",
+        hasContactPage: "No contact page", hasPhone: "No phone on site",
+        pageSpeedFast: "Slow page speed", hasSchema: "Missing schema markup",
+        hasCTA: "No CTA", hasReviews: "No reviews shown",
+        websitePhoneMatchesGbp: "Phone mismatch (site vs GBP)",
+        gbpHasPosts: "No GBP posts", gbpPhotoCountAdequate: "Low GBP photo count",
+        gbpHasDescription: "Missing GBP description", gbpHasServices: "No GBP services listed",
+        gbpFullyVerified: "GBP not fully verified",
+      };
+      const flat = { ...(entry.findings?.website || {}), ...(entry.findings?.mobile || {}), ...(entry.findings?.gbp || {}) };
+      for (const [k, v] of Object.entries(flat)) {
+        if (v === false && LABELS[k]) lines.push(LABELS[k]);
+      }
+      return lines.length ? lines.join(" · ") : "No issues flagged";
+    } catch {}
+  }
+  return null;
+}
+
 async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return false;
   const body = { fields: { "Video URL": videoUrl } };
   if (videoFile) body.fields["Video File"] = videoFile;
   if (slug) body.fields["Vid Slug"] = slug;
+  const auditSummary = loadAuditSummary(slug);
+  if (auditSummary) body.fields["Audit Summary"] = auditSummary;
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
