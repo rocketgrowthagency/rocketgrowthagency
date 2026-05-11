@@ -153,21 +153,9 @@ async function finalizeScrapeRun(runId, publishedCount, status) {
 }
 
 function inferVertical(query) {
-  const q = query.toLowerCase();
-  const verticals = [
-    ["dentist", "dentists"],
-    ["plumber", "plumbers"],
-    ["hvac", "HVAC"],
-    ["heating", "HVAC"],
-    ["med spa", "med spas"],
-    ["chiropractor", "chiropractors"],
-    ["lawyer", "lawyers"],
-    ["attorney", "lawyers"],
-    ["accountant", "accountants"],
-    ["cpa", "accountants"]
-  ];
-  for (const [needle, label] of verticals) if (q.includes(needle)) return label;
-  return "other";
+  // Extract the search term — everything before " in <city>" — which matches verticals.csv exactly.
+  const m = query.match(/^(.+?)\s+in\s+/i);
+  return m ? m[1].trim() : query.trim();
 }
 
 function inferMarket(query) {
