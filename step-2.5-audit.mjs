@@ -70,12 +70,15 @@ async function auditWebsite(browser, websiteUrl, business) {
     pageLoadSeconds: null,
     hasLocalBusinessSchema: false,
     h1Text: '',
+    h1Count: 0,
     h1IncludesCategory: false,
     h1IncludesCity: false,
-    locationsListedCount: 0,
-    locationsMatchService: false,
     hasMobileClickToCall: false,
     websitePhoneMatchesGbp: null,
+    hasMetaDescription: false,
+    renderBlockingHeadResources: 0,
+    imagesWithoutLazy: 0,
+    isHttps: false,
     error: null,
   };
 
@@ -94,15 +97,12 @@ async function auditWebsite(browser, websiteUrl, business) {
         schemaTypes: [],
         h1: '',
         h1Count: 0,
-        bodyText: '',
         phoneNumbers: [],
         clickToCallCount: 0,
         hasMetaDescription: false,
         renderBlockingHeadResources: 0,
         imagesWithoutLazy: 0,
-        totalImages: 0,
         isHttps: location.protocol === 'https:',
-        mixedContentCount: 0,
       };
       const ldScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       for (const s of ldScripts) {
@@ -121,7 +121,6 @@ async function auditWebsite(browser, websiteUrl, business) {
       result.h1Count = h1s.length;
       const h1 = h1s[0];
       result.h1 = (h1?.innerText || h1?.textContent || '').trim().slice(0, 300);
-      result.bodyText = (document.body?.innerText || '').slice(0, 8000);
       const tels = Array.from(document.querySelectorAll('a[href^="tel:"]'));
       result.clickToCallCount = tels.length;
       result.phoneNumbers = tels.map((a) => a.getAttribute('href').replace(/^tel:/, ''));
@@ -130,25 +129,20 @@ async function auditWebsite(browser, websiteUrl, business) {
       const md = document.querySelector('meta[name="description"]');
       result.hasMetaDescription = !!(md && (md.getAttribute('content') || '').trim().length > 10);
 
-      // Render-blocking resources in <head>
-      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+      // Render-blocking resources in <head> (exclude print/conditional media + async patterns)
+      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'))
+        .filter((l) => {
+          const media = (l.getAttribute('media') || '').trim().toLowerCase();
+          return (!media || media === 'all' || media === 'screen') && !l.getAttribute('onload');
+        });
       const headSyncScripts = Array.from(document.head.querySelectorAll('script[src]'))
         .filter((s) => !s.async && !s.defer);
       result.renderBlockingHeadResources = headLinks.length + headSyncScripts.length;
 
       // Lazy loading on images
       const imgs = Array.from(document.querySelectorAll('img'));
-      result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
-      // Mixed content (http resources on https page)
-      if (result.isHttps) {
-        const allRes = Array.from(document.querySelectorAll('img[src], script[src], link[href]'));
-        result.mixedContentCount = allRes.filter((el) => {
-          const url = el.src || el.href || '';
-          return url.startsWith('http://');
-        }).length;
-      }
       return result;
     });
 
@@ -160,9 +154,7 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.hasMetaDescription = data.hasMetaDescription;
     findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
-    findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
-    findings.mixedContentCount = data.mixedContentCount;
 
     let category = String(business.category || '').toLowerCase().trim();
     if (!category && business.searchTerm) {
@@ -175,14 +167,6 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.h1IncludesCategory = !!(catFirstWord && h1Lower.includes(catFirstWord));
     findings.h1IncludesCity = !!(city && h1Lower.includes(city));
 
-    const bodyLower = data.bodyText.toLowerCase();
-    const knownNeighbors = (business.knownNeighbors || []).map((c) => c.toLowerCase());
-    let count = 0;
-    for (const c of knownNeighbors) {
-      if (bodyLower.includes(c)) count += 1;
-    }
-    findings.locationsListedCount = count;
-    findings.locationsMatchService = count >= 2;
     findings.hasMobileClickToCall = data.clickToCallCount > 0;
 
     if (business.phone) {
@@ -207,14 +191,11 @@ async function auditMobile(browser, websiteUrl, business) {
     hasViewportMeta: false,
     clickToCallAboveFold: false,
     primaryCtaTapTargetPx: null,
-    requiredFormFieldCount: null,
     pageWeightKb: null,
     isHttps: null,
-    mixedContentCount: null,
     h1Count: null,
     renderBlockingHeadResources: null,
     imagesWithoutLazy: null,
-    totalImages: null,
     error: null,
   };
 
@@ -247,13 +228,10 @@ async function auditMobile(browser, websiteUrl, business) {
         viewportContent: '',
         clickToCallAboveFold: false,
         primaryCtaPx: null,
-        requiredFieldCount: null,
         h1Count: 0,
         renderBlockingHeadResources: 0,
         imagesWithoutLazy: 0,
-        totalImages: 0,
         isHttps: location.protocol === 'https:',
-        mixedContentCount: 0,
       };
 
       const vp = document.querySelector('meta[name="viewport"]');
@@ -277,53 +255,31 @@ async function auditMobile(browser, websiteUrl, business) {
           'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"]'
         )
       );
-      let smallestVisibleH = null;
+      // Track the largest (primary) CTA above fold — largest = most prominent call-to-action
+      let largestVisibleH = null;
       for (const el of ctaCandidates) {
         const r = el.getBoundingClientRect();
         if (r.width > 0 && r.height > 0 && r.top >= 0 && r.top < foldHeight) {
-          if (smallestVisibleH === null || r.height < smallestVisibleH) {
-            smallestVisibleH = r.height;
+          if (largestVisibleH === null || r.height > largestVisibleH) {
+            largestVisibleH = r.height;
           }
         }
       }
-      result.primaryCtaPx = smallestVisibleH != null ? Math.round(smallestVisibleH) : null;
-
-      const forms = Array.from(document.querySelectorAll('form'));
-      let totalRequired = null;
-      for (const f of forms) {
-        const required = f.querySelectorAll('input[required], textarea[required], select[required]');
-        if (required.length) {
-          if (totalRequired === null || required.length < totalRequired) {
-            totalRequired = required.length;
-          }
-        }
-      }
-      if (totalRequired === null) {
-        const anyForm = forms.find((f) => f.querySelectorAll('input, textarea, select').length > 0);
-        if (anyForm) {
-          totalRequired = anyForm.querySelectorAll('input, textarea, select').length;
-        }
-      }
-      result.requiredFieldCount = totalRequired;
+      result.primaryCtaPx = largestVisibleH != null ? Math.round(largestVisibleH) : null;
 
       result.h1Count = document.querySelectorAll('h1').length;
 
-      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+      const headLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'))
+        .filter((l) => {
+          const media = (l.getAttribute('media') || '').trim().toLowerCase();
+          return (!media || media === 'all' || media === 'screen') && !l.getAttribute('onload');
+        });
       const headSyncScripts = Array.from(document.head.querySelectorAll('script[src]'))
         .filter((s) => !s.async && !s.defer);
       result.renderBlockingHeadResources = headLinks.length + headSyncScripts.length;
 
       const imgs = Array.from(document.querySelectorAll('img'));
-      result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
-
-      if (result.isHttps) {
-        const allRes = Array.from(document.querySelectorAll('img[src], script[src], link[href]'));
-        result.mixedContentCount = allRes.filter((el) => {
-          const url = el.src || el.href || '';
-          return url.startsWith('http://');
-        }).length;
-      }
 
       return result;
     });
@@ -331,14 +287,11 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.hasViewportMeta = data.hasViewportMeta;
     findings.clickToCallAboveFold = data.clickToCallAboveFold;
     findings.primaryCtaTapTargetPx = data.primaryCtaPx;
-    findings.requiredFormFieldCount = data.requiredFieldCount;
     findings.pageWeightKb = Math.round(totalBytes / 1024);
     findings.h1Count = data.h1Count;
     findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
-    findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
-    findings.mixedContentCount = data.mixedContentCount;
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
@@ -352,9 +305,14 @@ async function auditGbp(browser, gbpUrl, business) {
     gbpUrl,
     categoriesCount: null,
     primaryCategory: null,
+    primaryCategoryMatchesSearch: null,
     reviewCount: null,
     photoCount: null,
     daysSinceLastReview: null,
+    reviewsLast30Days: null,
+    reviewsLast90Days: null,
+    ownerResponseCount: null,
+    hasBusinessHours: null,
     error: null,
   };
   if (!gbpUrl) return findings;
@@ -390,16 +348,27 @@ async function auditGbp(browser, gbpUrl, business) {
       const photoMatch = txt.match(/([\d,]{1,7})\s+photos?\b/i);
       const photoCount = photoMatch ? Number(photoMatch[1].replace(/,/g, '')) : null;
 
-      // Recent review: scan first 12 occurrences of "X <unit> ago"
-      const recencyMatches = [...txt.matchAll(/(\d+)\s+(day|week|month|year)s?\s+ago/gi)].slice(0, 12);
+      // Review recency + velocity: scan up to 40 age-stamps
+      const recencyMatches = [...txt.matchAll(/(\d+)\s+(day|week|month|year)s?\s+ago/gi)].slice(0, 40);
       let minDays = null;
+      let reviewsLast30 = 0;
+      let reviewsLast90 = 0;
       for (const m of recencyMatches) {
         const n = Number(m[1]);
         const u = m[2].toLowerCase();
         const mult = u === 'day' ? 1 : u === 'week' ? 7 : u === 'month' ? 30 : 365;
         const days = n * mult;
         if (minDays === null || days < minDays) minDays = days;
+        if (days <= 30) reviewsLast30++;
+        if (days <= 90) reviewsLast90++;
       }
+
+      // Owner response count
+      const responseMatches = [...txt.matchAll(/Response from the owner/gi)];
+      const ownerResponseCount = responseMatches.length;
+
+      // Business hours presence
+      const hasBusinessHours = /\b(open now|open \d|closes at|open 24|monday|hours)\b/i.test(txt);
 
       // Category: look for the primary category badge, often near the rating
       // Heuristic: take the first short text-only button/link that matches common cat patterns
@@ -419,14 +388,27 @@ async function auditGbp(browser, gbpUrl, business) {
       }
       const categoriesCount = distinctCats.size > 0 ? distinctCats.size : null;
 
-      return { reviewCount, photoCount, minDays, primaryCategory, categoriesCount };
+      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount };
     });
 
     findings.reviewCount = data.reviewCount;
     findings.photoCount = data.photoCount;
     findings.daysSinceLastReview = data.minDays;
+    findings.reviewsLast30Days = data.reviewsLast30;
+    findings.reviewsLast90Days = data.reviewsLast90;
+    findings.ownerResponseCount = data.ownerResponseCount;
+    findings.hasBusinessHours = data.hasBusinessHours;
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
+
+    // Primary GBP category vs search intent — #1 local ranking factor
+    if (data.primaryCategory && (business.category || business.searchTerm)) {
+      const searchWords = (business.category || business.searchTerm || '').toLowerCase();
+      const catLower = data.primaryCategory.toLowerCase();
+      findings.primaryCategoryMatchesSearch =
+        catLower.split(/\s+/).some((w) => w.length > 3 && searchWords.includes(w)) ||
+        searchWords.split(/\s+/).some((w) => w.length > 3 && catLower.includes(w));
+    }
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
@@ -444,10 +426,6 @@ async function main() {
   const outDir = path.join(AUDIT_ROOT, baseName);
   ensureDir(outDir);
   const outFile = path.join(outDir, 'audit-findings.json');
-
-  const knownNeighbors = Array.from(
-    new Set(rows.map((r) => String(r.City || '').trim()).filter(Boolean))
-  );
 
   const visible = process.env.AUDIT_VISIBLE === '1' || process.env.AUDIT_VISIBLE === 'true';
   const browser = await puppeteer.launch({
@@ -471,18 +449,17 @@ async function main() {
         city: row.City,
         phone: row.Phone,
         searchTerm: row['Search Term'],
-        knownNeighbors,
       };
 
       console.log(`\n[${i + 1}/${rows.length}] Auditing: ${name}`);
       const websiteFindings = await auditWebsite(browser, website, business);
-      console.log(`  website: load=${websiteFindings.pageLoadSeconds}s schema=${websiteFindings.hasLocalBusinessSchema} h1cat=${websiteFindings.h1IncludesCategory} h1city=${websiteFindings.h1IncludesCity} locs=${websiteFindings.locationsListedCount} c2c=${websiteFindings.hasMobileClickToCall} napMatch=${websiteFindings.websitePhoneMatchesGbp}`);
+      console.log(`  website: load=${websiteFindings.pageLoadSeconds}s schema=${websiteFindings.hasLocalBusinessSchema} h1cat=${websiteFindings.h1IncludesCategory} h1city=${websiteFindings.h1IncludesCity} c2c=${websiteFindings.hasMobileClickToCall} napMatch=${websiteFindings.websitePhoneMatchesGbp} blocking=${websiteFindings.renderBlockingHeadResources}`);
 
       const mobileFindings = await auditMobile(browser, website, business);
-      console.log(`  mobile:  load=${mobileFindings.pageLoadSeconds}s viewport=${mobileFindings.hasViewportMeta} c2cAboveFold=${mobileFindings.clickToCallAboveFold} ctaPx=${mobileFindings.primaryCtaTapTargetPx} reqFields=${mobileFindings.requiredFormFieldCount} weightKb=${mobileFindings.pageWeightKb}`);
+      console.log(`  mobile:  load=${mobileFindings.pageLoadSeconds}s viewport=${mobileFindings.hasViewportMeta} c2cAboveFold=${mobileFindings.clickToCallAboveFold} ctaPx=${mobileFindings.primaryCtaTapTargetPx} weightKb=${mobileFindings.pageWeightKb}`);
 
       const gbpFindings = await auditGbp(browser, gbpUrl, business);
-      console.log(`  gbp:     photos=${gbpFindings.photoCount} daysSinceReview=${gbpFindings.daysSinceLastReview}`);
+      console.log(`  gbp:     photos=${gbpFindings.photoCount} reviews=${gbpFindings.reviewCount} last30=${gbpFindings.reviewsLast30Days} daysSinceReview=${gbpFindings.daysSinceLastReview} responses=${gbpFindings.ownerResponseCount} cat=${gbpFindings.primaryCategory}`);
 
       audits[slug] = {
         businessName: name,
