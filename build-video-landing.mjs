@@ -32,6 +32,7 @@ const STEP7_DIR = path.join(__dirname, "output", "Step 7 (Final Merge MP4)");
 const LANDING_OUT_DIR = path.join(__dirname, "output", "landing-pages", "v");
 const TEMPLATE_PATH = path.join(__dirname, "templates", "video-landing.html");
 const AUDIT_ROOT = path.join(__dirname, "output", "Step 2.5 (Audit)");
+const STEP6_ROOT = path.join(__dirname, "output", "Step 6 (Voiceover MP3)");
 
 const DRY = process.argv.includes("--dry-run");
 const NO_AIRTABLE = process.argv.includes("--no-airtable");
@@ -138,6 +139,33 @@ async function fetchLeadBySlug(targetSlug) {
   return null;
 }
 
+// Derive Audit Summary directly from the voiceover manifest so Airtable matches the video exactly.
+function loadAuditSummaryFromManifest(slug) {
+  if (!fs.existsSync(STEP6_ROOT)) return null;
+  const runs = fs.readdirSync(STEP6_ROOT).sort().reverse();
+  for (const run of runs) {
+    const runPath = path.join(STEP6_ROOT, run);
+    if (!fs.statSync(runPath).isDirectory()) continue;
+    const segDirs = fs.readdirSync(runPath).filter((d) => d.endsWith("_segments"));
+    for (const segDir of segDirs) {
+      const manifestPath = path.join(runPath, segDir, "manifest.json");
+      if (!fs.existsSync(manifestPath)) continue;
+      try {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        if (manifest.slug !== slug) continue;
+        const findings = [];
+        for (const section of ["website", "mobile"]) {
+          const text = manifest.segments?.[section]?.text || "";
+          const matches = [...text.matchAll(/(?:First|Second|Third):\s*([^.]+\.)/gi)];
+          for (const m of matches) findings.push(m[1].trim());
+        }
+        return findings.length ? findings.join(" · ") : null;
+      } catch {}
+    }
+  }
+  return null;
+}
+
 function loadAuditSummary(slug) {
   if (!fs.existsSync(AUDIT_ROOT)) return null;
   const dirs = fs.readdirSync(AUDIT_ROOT).sort().reverse(); // newest first
@@ -151,16 +179,19 @@ function loadAuditSummary(slug) {
       // Flatten all sections into labelled finding strings
       const lines = [];
       const LABELS = {
-        hasSSL: "No SSL", mobileResponsive: "Not mobile responsive",
-        hasContactPage: "No contact page", hasPhone: "No phone on site",
-        pageSpeedFast: "Slow page speed", hasSchema: "Missing schema markup",
-        hasCTA: "No CTA", hasReviews: "No reviews shown",
+        isHttps: "No SSL",
+        hasViewportMeta: "Not mobile-friendly",
+        hasLocalBusinessSchema: "Missing schema markup",
+        hasMetaDescription: "No meta description",
+        h1IncludesCity: "H1 missing city name",
+        h1IncludesCategory: "H1 missing service category",
         websitePhoneMatchesGbp: "Phone mismatch (site vs GBP)",
+        clickToCallAboveFold: "No click-to-call above fold",
         gbpHasPosts: "No GBP posts", gbpPhotoCountAdequate: "Low GBP photo count",
         gbpHasDescription: "Missing GBP description", gbpHasServices: "No GBP services listed",
         gbpFullyVerified: "GBP not fully verified",
       };
-      const flat = { ...(entry.findings?.website || {}), ...(entry.findings?.mobile || {}), ...(entry.findings?.gbp || {}) };
+      const flat = { ...(entry.website || {}), ...(entry.mobile || {}), ...(entry.gbp || {}) };
       for (const [k, v] of Object.entries(flat)) {
         if (v === false && LABELS[k]) lines.push(LABELS[k]);
       }
@@ -175,7 +206,7 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   const body = { fields: { "Video URL": videoUrl } };
   if (videoFile) body.fields["Video File"] = videoFile;
   if (slug) body.fields["Vid Slug"] = slug;
-  const auditSummary = loadAuditSummary(slug);
+  const auditSummary = loadAuditSummaryFromManifest(slug) || loadAuditSummary(slug);
   if (auditSummary) body.fields["Audit Summary"] = auditSummary;
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
     method: "PATCH",
@@ -267,6 +298,13 @@ async function main() {
       ? `defend your top 3 spot and push for #1`
       : `move you into the top 3 and capture more leads`;
 
+    const resolvedRank = Number.isFinite(airtableRank) ? airtableRank : (Number.isFinite(rank) ? rank : null);
+    const eyebrowLabel = resolvedRank !== null
+      ? (resolvedRank >= 1 && resolvedRank <= 3)
+        ? `Currently ranking #${resolvedRank} · Top 3 spot`
+        : `Currently ranking #${resolvedRank} · Outside the top 3`
+      : '';
+
     fs.writeFileSync(htmlPath, renderTemplate(template, {
       BUSINESS_NAME: businessName,
       SLUG: slug,
@@ -274,6 +312,7 @@ async function main() {
       BODY_OUTCOME: bodyOutcome,
       RECORDED_DATE: recordedDate,
       EXPIRY_DATE: expiryDate,
+      EYEBROW_LABEL: eyebrowLabel,
     }));
     console.log(`[build-landing] ✓ ${slug} → ${landingUrl}`);
     built += 1;
