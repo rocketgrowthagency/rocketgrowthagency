@@ -131,7 +131,10 @@ async function main() {
   }
 
   // How many step-2 rows actually have an email to target?
-  const step2Csv = await latestFile(/\[step-2\]\.csv$/);
+  // If STEP2_CSV env var is set (targeting a specific run), honour it here too.
+  const step2Csv = process.env.STEP2_CSV
+    ? path.resolve(__dirname, process.env.STEP2_CSV)
+    : await latestFile(/\[step-2\]\.csv$/);
   const emailRows = await countEmailRows(step2Csv);
   const targetCount = Math.min(MAX_VIDEOS, emailRows || MAX_VIDEOS);
   log("plan", `step 2 output: ${step2Csv || "(none yet)"}`);
@@ -146,13 +149,15 @@ async function main() {
     }
 
     // Steps 3–7 per business (each step is MAX_* = 1 internally).
+    // Order: 3 (record webms) → 6 (voiceover + manifest) → 4 (combine, reads manifest) → 5 (branding) → 6b (subtitles) → 7 (final merge)
     for (let i = 1; i <= targetCount; i++) {
       log("video-loop", `--- business ${i} of ${targetCount} ---`);
-      await runStep(`step-3-record [${i}]`,  "node", ["step-3-video-recorder.mjs"]);
-      await runStep(`step-4-combine [${i}]`, "node", ["step-4-combine-desktop-mobile.mjs"]);
-      await runStep(`step-5-brand [${i}]`,   "node", ["step-5-branding.mjs"]);
-      await runStep(`step-6-voice [${i}]`,   "node", ["step-6-voiceover.mjs"]);
-      await runStep(`step-7-merge [${i}]`,   "node", ["step-7-merge-branded-audio.mjs"]);
+      await runStep(`step-3-record [${i}]`,    "node", ["step-3-video-recorder.mjs"]);
+      await runStep(`step-6-voice [${i}]`,     "node", ["step-6-voiceover.mjs"]);
+      await runStep(`step-4-combine [${i}]`,   "node", ["step-4-combine-desktop-mobile.mjs"]);
+      await runStep(`step-5-brand [${i}]`,     "node", ["step-5-branding.mjs"]);
+      await runStep(`step-6b-subtitles [${i}]`,"node", ["step-6b-subtitles.mjs"]);
+      await runStep(`step-7-merge [${i}]`,     "node", ["step-7-merge-branded-audio.mjs"]);
     }
   }
 
