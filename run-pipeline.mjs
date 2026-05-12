@@ -150,11 +150,16 @@ async function main() {
 
     // Step 3 runs ONCE for all leads (MAX_VIDEOS = targetCount).
     // Its built-in skip logic skips leads whose 3 webm files already exist.
+    // Step 2.5 runs ONCE after recording — audits all leads so step-6 has real
+    // findings to voice over (missing this = voiceover has no issues to flag).
     // Steps 6–7 run once per lead so each lead gets its own voiceover + final MP4.
-    // Order: 3 (record all webms) → per-lead: 6 → 4 → 5 → 6b → 7
+    // Order: 3 (record all webms) → 2.5 (audit all) → per-lead: 6 → 4 → 5 → 6b → 7
     log("video-loop", `recording all ${targetCount} leads in one step-3 pass`);
     await runStep("step-3-record", "node", ["step-3-video-recorder.mjs"],
       { MAX_VIDEOS: String(targetCount) });
+    log("video-loop", "running step-2.5 audit for all leads before voiceover");
+    await runStep("step-2.5-audit", "node", ["step-2.5-audit.mjs"],
+      { MAX_AUDITS: String(targetCount) });
     for (let i = 1; i <= targetCount; i++) {
       log("video-loop", `--- business ${i} of ${targetCount} ---`);
       await runStep(`step-6-voice [${i}]`,     "node", ["step-6-voiceover.mjs"]);
