@@ -157,15 +157,30 @@ async function loadTop3Stats(baseName) {
   const step1BaseName = baseName.replace('[step-2]', '[step-1]');
   const step1CsvPath = path.join(STEP1_DIR, `${step1BaseName}.csv`);
 
-  if (!fs.existsSync(step1CsvPath)) {
-    console.warn(`Step 1 CSV not found for top-3 stats: ${step1CsvPath}`);
-    return null;
+  let csvToRead = null;
+  if (fs.existsSync(step1CsvPath)) {
+    csvToRead = step1CsvPath;
+  } else {
+    console.warn(`Step 1 CSV not found: ${step1CsvPath} — scanning for most recent batch step-1 CSV`);
+    if (fs.existsSync(STEP1_DIR)) {
+      const candidates = fs.readdirSync(STEP1_DIR)
+        .filter(f => f.includes('[step-1]') && f.endsWith('.csv'))
+        .sort().reverse();
+      if (candidates.length) {
+        csvToRead = path.join(STEP1_DIR, candidates[0]);
+        console.log(`Using fallback Step 1 CSV for top-3 stats: ${csvToRead}`);
+      }
+    }
+    if (!csvToRead) {
+      console.warn('No Step 1 CSV found anywhere — top-3 stats unavailable.');
+      return null;
+    }
   }
 
   const rows = [];
 
   await new Promise((resolve, reject) => {
-    fs.createReadStream(step1CsvPath)
+    fs.createReadStream(csvToRead)
       .pipe(csvParser())
       .on('data', (row) => rows.push(row))
       .on('end', resolve)
@@ -284,9 +299,13 @@ function scoreWebsiteFindings(audit) {
   if (w.pageLoadSeconds != null && w.pageLoadSeconds > 2.5) {
     out.push({ key: 'pageLoad', score: 3, finding: `your homepage loads in ${w.pageLoadSeconds.toFixed(1)} seconds — Google flags anything over 2.5` });
   }
-  // PRIORITY 4: H1 missing category AND city
+  // PRIORITY 4: H1 missing both category AND city
   if (w.h1Text && !w.h1IncludesCategory && !w.h1IncludesCity) {
     out.push({ key: 'h1', score: 4, finding: `your headline doesn't include your primary service category or your city, missing a key on-page signal` });
+  }
+  // PRIORITY 6: H1 has category but missing city (city alone is a strong local signal)
+  else if (w.h1Text && w.h1IncludesCategory && !w.h1IncludesCity) {
+    out.push({ key: 'h1City', score: 6, finding: `your headline includes your service type but not your city — adding the city name is a key on-page signal for local search ranking` });
   }
   // PRIORITY 5: No HTTPS
   if (w.isHttps === false) {
@@ -436,6 +455,42 @@ function scoreMapsFindings(audit, top3Stats, record) {
       key: 'categoriesCount',
       score: 35,
       finding: `you have only ${audit.gbp.categoriesCount} category listed on your Google Business Profile — top performers list 3 to 5 to capture more search variations`,
+    });
+  }
+
+  // GBP primary category doesn't match the search term
+  if (audit?.gbp?.primaryCategoryMatchesSearch === false) {
+    out.push({
+      key: 'categoryMismatch',
+      score: 18,
+      finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory || 'a generic category'}" — a mismatched primary category directly limits your visibility in this search`,
+    });
+  }
+
+  // No business hours set on GBP
+  if (audit?.gbp?.hasBusinessHours === false) {
+    out.push({
+      key: 'businessHours',
+      score: 22,
+      finding: `your Google Business Profile has no business hours set — Google suppresses incomplete profiles in local pack results`,
+    });
+  }
+
+  // Very low recent review velocity (separate from daysSinceLastReview — catches stale-but-occasional reviewers)
+  if (audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1) {
+    out.push({
+      key: 'reviewVelocityRecent',
+      score: 32,
+      finding: `you've received only ${audit.gbp.reviewsLast30Days === 1 ? '1 new review' : 'no new reviews'} in the last 30 days — Google's algorithm weighs recent review velocity when ranking in the local pack`,
+    });
+  }
+
+  // Zero owner responses (only flag when there are enough reviews to respond to)
+  if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5) {
+    out.push({
+      key: 'ownerResponse',
+      score: 45,
+      finding: `you have ${audit.gbp.reviewCount} reviews but haven't responded to any — Google treats owner response rate as a trust and engagement signal for Maps ranking`,
     });
   }
 
