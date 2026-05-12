@@ -70,8 +70,78 @@
       width: 100%;
       background: #000;
       line-height: 0;
+      position: relative;
     }
     video { width: 100%; height: auto; display: block; }
+
+    /* End-card overlay — appears when video finishes */
+    .end-card {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .end-card.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .end-card-inner {
+      position: absolute;
+      bottom: 72px; /* above controls */
+      left: 0; right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transform: translateY(18px);
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .end-card.visible .end-card-inner {
+      transform: translateY(0);
+    }
+    .end-card-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      box-shadow: 0 0 0 0 rgba(47, 87, 235, 0.5);
+      animation: none;
+      white-space: nowrap;
+    }
+    .end-card.visible .end-card-btn {
+      animation: end-card-pulse 2s ease-in-out 0.6s infinite;
+    }
+    @keyframes end-card-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(47, 87, 235, 0.55); }
+      60%  { box-shadow: 0 0 0 14px rgba(47, 87, 235, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(47, 87, 235, 0); }
+    }
+    .end-card-label {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    @media (max-width: 520px) {
+      .end-card-btn { font-size: 0.92rem; padding: 14px 22px; }
+      .end-card-inner { bottom: 64px; }
+    }
     .body-copy { padding: 24px; }
     .body-copy p { margin: 0 0 12px; color: var(--muted); }
     .cta-bar {
@@ -184,6 +254,7 @@
 
       <div class="video-wrap">
         <video
+          id="rga-video"
           src="video.mp4"
           poster="thumb.jpg"
           controls
@@ -193,6 +264,14 @@
           preload="metadata">
           Your browser doesn't support HTML5 video. <a href="video.mp4">Download the video</a>.
         </video>
+        <div class="end-card" id="rga-end-card" aria-hidden="true">
+          <div class="end-card-inner">
+            <a class="end-card-btn" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">
+              Get My Free Growth Audit &nbsp;→
+            </a>
+            <span class="end-card-label">Free &nbsp;·&nbsp; No Call Required</span>
+          </div>
+        </div>
       </div>
 
       <div class="body-copy">
@@ -220,5 +299,23 @@
   <div class="sticky-cta">
     <a href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
   </div>
+
+  <script>
+    (function () {
+      var vid = document.getElementById('rga-video');
+      var card = document.getElementById('rga-end-card');
+      if (!vid || !card) return;
+      function showEndCard() {
+        card.classList.add('visible');
+        card.removeAttribute('aria-hidden');
+      }
+      vid.addEventListener('ended', showEndCard);
+      // Hide end card when user replays
+      vid.addEventListener('play', function () {
+        card.classList.remove('visible');
+        card.setAttribute('aria-hidden', 'true');
+      });
+    })();
+  </script>
 </body>
 </html>
