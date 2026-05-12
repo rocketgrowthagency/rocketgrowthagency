@@ -123,7 +123,7 @@ async function makeDesktopTmp(desktopInput, tmpOutput) {
     '-c:v',
     'libx264',
     '-preset',
-    'slow',
+    'fast', // intermediate file — quality comes from final concat re-encode
     '-crf',
     '20',
     '-pix_fmt',
@@ -147,7 +147,7 @@ async function makeMobileTmp(mobileInput, tmpOutput) {
     '-c:v',
     'libx264',
     '-preset',
-    'slow',
+    'fast', // intermediate file — quality comes from final concat re-encode
     '-crf',
     '20',
     '-pix_fmt',
@@ -182,7 +182,7 @@ async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDe
     '-an',
     '-t', String(targetSec),    // final trim to target audio duration
     '-c:v', 'libx264',
-    '-preset', 'slow',
+    '-preset', 'fast', // intermediate file — quality comes from final concat re-encode
     '-crf', '20',
     '-pix_fmt', 'yuv420p',
     '-r', '30',
@@ -307,78 +307,90 @@ async function main() {
       console.log('  No audio manifest found; using legacy concat (no strict sync).');
     }
 
-    if (!manifest && pair.format === 'split') {
-      // 3-webm, no audio manifest — convert each at natural duration then concat
-      const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
-      const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
-      const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
-      await runFFmpeg(['-y','-i',pair.mapsPath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mapsTmp]);
-      await runFFmpeg(['-y','-i',pair.websitePath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',websiteTmp]);
-      await runFFmpeg(['-y','-i',pair.mobilePath,'-vf','fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mobileSegTmp]);
-      await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
-      console.log(`  ✓ Combined (no-manifest concat, 3-webm) video saved: ${outCombined}`);
-    } else if (!manifest && pair.format === 'legacy') {
-      // Legacy 1-webm, no audio manifest — simple concat
-      const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
-      const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
-      await makeDesktopTmp(pair.desktopPath, desktopTmp);
-      await makeMobileTmp(pair.mobilePath, mobileTmp);
-      await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
-      console.log(`  ✓ Combined (no-manifest concat, legacy) video saved: ${outCombined}`);
-    } else if (manifest && pair.format === 'split') {
-      // 3-webm strict-sync mode (Maps + Website + Mobile recorded separately)
-      const mapsAudio = manifest.segments.maps.durationSeconds;
-      const websiteAudio = manifest.segments.website.durationSeconds;
-      const mobileAudio = manifest.segments.mobile.durationSeconds;
-      const introAudio = manifest.segments.intro.durationSeconds;
-
-      // Maps video must cover: intro_audio_remainder (after 5s logo) + maps_audio
-      const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + mapsAudio;
-      const websiteTargetSec = websiteAudio;
-      const mobileTargetSec = mobileAudio;
-
-      console.log(`  Targets: maps=${mapsTargetSec.toFixed(2)}s website=${websiteTargetSec.toFixed(2)}s mobile=${mobileTargetSec.toFixed(2)}s`);
-      console.log(`  Sources: maps=${pair.mapsPath}`);
-      console.log(`           website=${pair.websitePath}`);
-      console.log(`           mobile=${pair.mobilePath}`);
-
-      const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
-      const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
-      const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
-
-      await sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true);
-      await sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true);
-      await sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
-      await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
-      console.log(`  ✓ Combined (strict-sync, 3-webm) video saved: ${outCombined}`);
-    } else if (manifest && pair.format === 'legacy') {
-      // Legacy 1-webm path (kept for older recordings)
-      const desktopMetaPath = pair.desktopPath.replace(/\.webm$/i, '.meta.json');
-      let desktopMeta = null;
-      if (fs.existsSync(desktopMetaPath)) {
-        try {
-          desktopMeta = JSON.parse(fs.readFileSync(desktopMetaPath, 'utf-8'));
-          console.log(`  Desktop meta: transition at ${desktopMeta.mapsToWebsiteTransitionSeconds}s`);
-        } catch {}
-      }
-      const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
-      const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
-      if (desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
-        const introAudio = manifest.segments.intro.durationSeconds;
-        const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + manifest.segments.maps.durationSeconds;
+    const tmpFiles = [];
+    try {
+      if (!manifest && pair.format === 'split') {
+        // 3-webm, no audio manifest — convert each at natural duration then concat
         const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
         const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
         const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
-        await sliceAndPad(pair.desktopPath, 0, desktopMeta.mapsToWebsiteTransitionSeconds, mapsTargetSec, mapsTmp, true);
-        await sliceAndPad(pair.desktopPath, desktopMeta.mapsToWebsiteTransitionSeconds, null, manifest.segments.website.durationSeconds, websiteTmp, true);
-        await sliceAndPad(pair.mobilePath, 0, null, manifest.segments.mobile.durationSeconds, mobileSegTmp, false);
+        tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
+        await runFFmpeg(['-y','-i',pair.mapsPath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mapsTmp]);
+        await runFFmpeg(['-y','-i',pair.websitePath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',websiteTmp]);
+        await runFFmpeg(['-y','-i',pair.mobilePath,'-vf','fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mobileSegTmp]);
         await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
-        console.log(`  ✓ Combined (strict-sync, legacy 1-webm) video saved: ${outCombined}`);
-      } else {
+        console.log(`  ✓ Combined (no-manifest concat, 3-webm) video saved: ${outCombined}`);
+      } else if (!manifest && pair.format === 'legacy') {
+        // Legacy 1-webm, no audio manifest — simple concat
+        const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
+        const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
+        tmpFiles.push(desktopTmp, mobileTmp);
         await makeDesktopTmp(pair.desktopPath, desktopTmp);
         await makeMobileTmp(pair.mobilePath, mobileTmp);
         await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
-        console.log(`  ✓ Combined (legacy concat) video saved: ${outCombined}`);
+        console.log(`  ✓ Combined (no-manifest concat, legacy) video saved: ${outCombined}`);
+      } else if (manifest && pair.format === 'split') {
+        // 3-webm strict-sync mode (Maps + Website + Mobile recorded separately)
+        const mapsAudio = manifest.segments.maps.durationSeconds;
+        const websiteAudio = manifest.segments.website.durationSeconds;
+        const mobileAudio = manifest.segments.mobile.durationSeconds;
+        const introAudio = manifest.segments.intro.durationSeconds;
+
+        // Maps video must cover: intro_audio_remainder (after 5s logo) + maps_audio
+        const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + mapsAudio;
+        const websiteTargetSec = websiteAudio;
+        const mobileTargetSec = mobileAudio;
+
+        console.log(`  Targets: maps=${mapsTargetSec.toFixed(2)}s website=${websiteTargetSec.toFixed(2)}s mobile=${mobileTargetSec.toFixed(2)}s`);
+        console.log(`  Sources: maps=${pair.mapsPath}`);
+        console.log(`           website=${pair.websitePath}`);
+        console.log(`           mobile=${pair.mobilePath}`);
+
+        const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
+        const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
+        const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
+        tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
+
+        await sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true);
+        await sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true);
+        await sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
+        await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
+        console.log(`  ✓ Combined (strict-sync, 3-webm) video saved: ${outCombined}`);
+      } else if (manifest && pair.format === 'legacy') {
+        // Legacy 1-webm path (kept for older recordings)
+        const desktopMetaPath = pair.desktopPath.replace(/\.webm$/i, '.meta.json');
+        let desktopMeta = null;
+        if (fs.existsSync(desktopMetaPath)) {
+          try {
+            desktopMeta = JSON.parse(fs.readFileSync(desktopMetaPath, 'utf-8'));
+            console.log(`  Desktop meta: transition at ${desktopMeta.mapsToWebsiteTransitionSeconds}s`);
+          } catch {}
+        }
+        const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
+        const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
+        tmpFiles.push(desktopTmp, mobileTmp);
+        if (desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
+          const introAudio = manifest.segments.intro.durationSeconds;
+          const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + manifest.segments.maps.durationSeconds;
+          const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
+          const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
+          const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
+          tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
+          await sliceAndPad(pair.desktopPath, 0, desktopMeta.mapsToWebsiteTransitionSeconds, mapsTargetSec, mapsTmp, true);
+          await sliceAndPad(pair.desktopPath, desktopMeta.mapsToWebsiteTransitionSeconds, null, manifest.segments.website.durationSeconds, websiteTmp, true);
+          await sliceAndPad(pair.mobilePath, 0, null, manifest.segments.mobile.durationSeconds, mobileSegTmp, false);
+          await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
+          console.log(`  ✓ Combined (strict-sync, legacy 1-webm) video saved: ${outCombined}`);
+        } else {
+          await makeDesktopTmp(pair.desktopPath, desktopTmp);
+          await makeMobileTmp(pair.mobilePath, mobileTmp);
+          await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
+          console.log(`  ✓ Combined (legacy concat) video saved: ${outCombined}`);
+        }
+      }
+    } finally {
+      for (const f of tmpFiles) {
+        try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
       }
     }
 

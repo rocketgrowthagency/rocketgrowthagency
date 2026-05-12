@@ -82,21 +82,22 @@ function ensureDir(dir) {
 }
 
 function escapeSubtitlesPath(filePath) {
+  // Use double-quote wrapper in ffmpeg filter — escape " \ : [ ] ,
   return filePath
     .replace(/\\/g, '/')
+    .replace(/"/g, '\\"')
     .replace(/:/g, '\\:')
     .replace(/\[/g, '\\[')
     .replace(/\]/g, '\\]')
-    .replace(/,/g, '\\,')
-    .replace(/'/g, "\\'");
+    .replace(/,/g, '\\,');
 }
 
 async function subtitlesFilterAvailable() {
   return new Promise((resolve) => {
-    const cp = execFile('ffmpeg', ['-hide_banner', '-filters'], (err, stdout) => {
+    // Test with an actual burn to detect missing libass at runtime, not just filter presence
+    execFile('ffmpeg', ['-hide_banner', '-filters'], (err, stdout) => {
       resolve(!err && stdout.includes(' subtitles '));
     });
-    cp.on('error', () => resolve(false));
   });
 }
 
@@ -163,7 +164,7 @@ async function main() {
     if (mergedCount >= MAX_MERGES) break;
 
     const base = audioFile.replace(/\.mp3$/i, '');
-    const baseNoRetry = base.replace(/\[\d+\]/g, '');
+    const baseNoRetry = base.replace(/\s*\[\d+\]$/, '');
 
     const brandedPath = path.join(BRANDED_DIR, `${baseNoRetry}_branded.mp4`);
     if (!fs.existsSync(brandedPath)) {
@@ -178,7 +179,9 @@ async function main() {
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);
     const videoDuration = await getDurationSeconds(brandedPath);
     const audioDuration = await getDurationSeconds(audioPath);
-    const targetDuration = audioDuration + 0.6;
+    if (audioDuration < 1) throw new Error(`Audio too short or invalid: ${audioPath}`);
+    const TAIL_PADDING_SEC = 0.6; // holds CTA logo on screen through outro
+    const targetDuration = audioDuration + TAIL_PADDING_SEC;
     const padDuration = Math.max(0, targetDuration - videoDuration);
     const hasSubtitles = fs.existsSync(subtitlePath);
 
@@ -197,31 +200,35 @@ async function main() {
       console.log(`  Trimming video by ${(videoDuration - targetDuration).toFixed(3)}s to match voiceover.`);
     }
     let tempSrtPath = null;
-    if (hasSubtitles && canBurnSubtitles) {
-      // Copy SRT to /tmp — ffmpeg filter graph parser can choke on paths with [ ] in them.
-      tempSrtPath = path.join(os.tmpdir(), `rga_subtitle_${Date.now()}.srt`);
-      fs.copyFileSync(subtitlePath, tempSrtPath);
-      filters.push(
-        `subtitles='${escapeSubtitlesPath(tempSrtPath)}':force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
-      );
-    }
+    try {
+      if (hasSubtitles && canBurnSubtitles) {
+        // Copy SRT to /tmp — ffmpeg filter graph parser can choke on paths with [ ] in them.
+        // Use double-quote wrapper in subtitles filter to safely handle any OS temp path.
+        tempSrtPath = path.join(os.tmpdir(), `rga_subtitle_${Date.now()}.srt`);
+        fs.copyFileSync(subtitlePath, tempSrtPath);
+        filters.push(
+          `subtitles="${escapeSubtitlesPath(tempSrtPath)}":force_style='FontName=Arial,FontSize=15,PrimaryColour=&H00FFFFFF,OutlineColour=&H8C000000,BackColour=&H8C000000,BorderStyle=3,Outline=1,Shadow=0,MarginV=54,Alignment=2'`
+        );
+      }
 
-    const ffArgs = ['-y', '-i', brandedPath, '-i', audioPath];
-    if (filters.length) ffArgs.push('-vf', filters.join(','));
-    ffArgs.push(
-      '-c:v', 'libx264',
-      '-preset', 'slow',
-      '-crf', '20',
-      '-pix_fmt', 'yuv420p',
-      '-r', '30',
-      '-c:a', 'aac',
-      '-b:a', '192k',
-      '-t', targetDuration.toFixed(3),
-      '-movflags', '+faststart',
-      outMp4
-    );
-    await runFFmpeg(ffArgs);
-    if (tempSrtPath && fs.existsSync(tempSrtPath)) fs.unlinkSync(tempSrtPath);
+      const ffArgs = ['-y', '-i', brandedPath, '-i', audioPath];
+      if (filters.length) ffArgs.push('-vf', filters.join(','));
+      ffArgs.push(
+        '-c:v', 'libx264',
+        '-preset', 'slow',
+        '-crf', '20',
+        '-pix_fmt', 'yuv420p',
+        '-r', '30',
+        '-c:a', 'aac',
+        '-b:a', '192k',
+        '-t', targetDuration.toFixed(3),
+        '-movflags', '+faststart',
+        outMp4
+      );
+      await runFFmpeg(ffArgs);
+    } finally {
+      if (tempSrtPath && fs.existsSync(tempSrtPath)) fs.unlinkSync(tempSrtPath);
+    }
 
     console.log(`✓ Final merged MP4: ${outMp4}`);
     mergedCount++;

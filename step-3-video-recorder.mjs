@@ -768,7 +768,15 @@ function createScreencastRecorder(page, outputPath, viewport) {
         return;
       }
 
+      // Safety timeout — if ffmpeg hangs and never closes, force kill after 90s
+      const killTimer = setTimeout(() => {
+        console.warn(`[recorder] ffmpeg did not close after 90s — force killing`);
+        try { ffmpeg.kill('SIGKILL'); } catch {}
+        resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_timeout' });
+      }, 90_000);
+
       ffmpeg.once('close', (code) => {
+        clearTimeout(killTimer);
         const exists = fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0;
         resolve({
           ok: code === 0 && exists && frameCount > 0,
@@ -782,6 +790,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
       try {
         ffmpeg.stdin.end();
       } catch {
+        clearTimeout(killTimer);
         resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_stdin_close_failed' });
       }
     });
@@ -847,10 +856,7 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
     const visited = await gotoFirstWorking(page, meta.website, 'Website');
 
     if (!visited) {
-      console.warn('   ⚠️ Desktop website unreachable; saving short blank segment.');
-      await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
-      await recorder.start();
-      await sleep(2000);
+      throw new Error(`Desktop website unreachable for ${meta.name} — lead skipped`);
     } else {
       await sleep(2500);
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
@@ -908,10 +914,7 @@ async function recordMobileVideo(browser, meta, outputPath) {
     const visited = await gotoFirstWorking(page, meta.website, 'Mobile Website');
 
     if (!visited) {
-      console.warn('   ⚠️ Mobile website unreachable; saving short blank segment.');
-      await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
-      await recorder.start();
-      await sleep(2000);
+      throw new Error(`Mobile website unreachable for ${meta.name} — lead skipped`);
     } else {
       // Give the page a real moment to render (Pacific takes 10s, others vary)
       await sleep(2500);
@@ -1071,15 +1074,18 @@ async function main() {
 
       console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
 
-      await recordBusinessVideos(
-        browser,
-        { name, city, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
-        mapsOut,
-        websiteOut,
-        mobileOut
-      );
-
-      processed += 1;
+      try {
+        await recordBusinessVideos(
+          browser,
+          { name, city, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+          mapsOut,
+          websiteOut,
+          mobileOut
+        );
+        processed += 1;
+      } catch (leadErr) {
+        console.warn(`\n⚠️ Skipping ${name}: ${leadErr.message}`);
+      }
     }
   } finally {
     await browser.close().catch(() => {});

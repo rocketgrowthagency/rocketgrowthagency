@@ -535,15 +535,11 @@ async function loadExistingLeadsByPlaceKey() {
 }
 
 async function patchBatchTo(api, records) {
-  const res = await fetch(api, {
+  const res = await fetchWithRetry(api, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ records, typecast: true })
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Airtable PATCH ${res.status}: ${text.slice(0, 300)}`);
-  }
   return res.json();
 }
 
@@ -655,16 +651,27 @@ function buildRecord(row, scrapedDate) {
   return { fields };
 }
 
+async function fetchWithRetry(url, opts, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.ok) return res;
+    const text = await res.text();
+    if ((res.status === 429 || res.status >= 500) && attempt < maxAttempts) {
+      const delayMs = Math.pow(2, attempt) * 1000;
+      console.warn(`[step-8] HTTP ${res.status} on attempt ${attempt}/${maxAttempts}, retrying in ${delayMs}ms`);
+      await new Promise((r) => setTimeout(r, delayMs));
+      continue;
+    }
+    throw new Error(`Airtable ${opts?.method || "GET"} ${res.status}: ${text.slice(0, 300)}`);
+  }
+}
+
 async function postBatchTo(api, records) {
-  const res = await fetch(api, {
+  const res = await fetchWithRetry(api, {
     method: "POST",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ records, typecast: true })
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Airtable POST ${res.status}: ${text.slice(0, 300)}`);
-  }
   return res.json();
 }
 

@@ -9,7 +9,8 @@ const STEP2_DIR = path.join(process.cwd(), "output", "Step 2");
 const AUDIO_ROOT = path.join(process.cwd(), "output", "Step 6 (Voiceover MP3)");
 const SUBTITLE_ROOT = path.join(process.cwd(), "output", "Step 6b (Subtitles)");
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || "";
-const MAX_RECORDINGS = Number(process.env.MAX_RECORDINGS || 1);
+const MAX_RECORDINGS = Number(process.env.MAX_RECORDINGS || Infinity);
+const WHISPER_MAX_BYTES = 25 * 1024 * 1024; // Whisper API hard limit
 
 if (!process.env.OPENAI_API_KEY) {
   console.error("OPENAI_API_KEY not set. Check your .env file.");
@@ -68,7 +69,9 @@ async function transcribeToSrt(audioPath) {
     timestamp_granularities: ["segment"],
   });
 
-  const segments = Array.isArray(transcription.segments) ? transcription.segments : [];
+  const segments = Array.isArray(transcription.segments)
+    ? transcription.segments.filter((s) => (s.end || 0) - (s.start || 0) >= 0.3)
+    : [];
   if (!segments.length) {
     throw new Error(`No subtitle segments returned for ${audioPath}`);
   }
@@ -115,6 +118,19 @@ function wrapSubtitleText(text, maxChars = 36) {
   return `${first}\n${second}`;
 }
 
+async function transcribeWithRetry(audioPath, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await transcribeToSrt(audioPath);
+    } catch (err) {
+      if (attempt === maxAttempts) throw err;
+      const delayMs = attempt * 2000;
+      console.warn(`  Whisper attempt ${attempt}/${maxAttempts} failed: ${err.message} — retrying in ${delayMs / 1000}s`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
 async function main() {
   const { baseName } = findLatestStep2Csv();
   const audioDir = path.join(AUDIO_ROOT, baseName);
@@ -138,15 +154,35 @@ async function main() {
     process.exit(1);
   }
 
+  const errors = [];
+
   for (const audioFile of audioFiles) {
     const audioPath = path.join(audioDir, audioFile);
     const base = audioFile.replace(/\.mp3$/i, "");
     const outPath = path.join(subtitleDir, `${base}.srt`);
 
-    console.log(`Generating subtitles for: ${audioFile}`);
-    const srt = await transcribeToSrt(audioPath);
-    fs.writeFileSync(outPath, srt, "utf8");
-    console.log(`✓ Saved subtitles: ${outPath}`);
+    const fileSizeBytes = fs.statSync(audioPath).size;
+    if (fileSizeBytes > WHISPER_MAX_BYTES) {
+      console.warn(`⚠ Skipping ${audioFile} — file too large (${(fileSizeBytes / 1024 / 1024).toFixed(1)}MB > 25MB Whisper limit)`);
+      errors.push({ file: audioFile, error: "file too large for Whisper API" });
+      continue;
+    }
+
+    console.log(`Generating subtitles for: ${audioFile} (${(fileSizeBytes / 1024 / 1024).toFixed(1)}MB)`);
+    try {
+      const srt = await transcribeWithRetry(audioPath);
+      fs.writeFileSync(outPath, srt, "utf8");
+      console.log(`✓ Saved subtitles: ${outPath}`);
+    } catch (err) {
+      console.error(`✗ Failed subtitles for ${audioFile}: ${err.message}`);
+      errors.push({ file: audioFile, error: err.message });
+    }
+  }
+
+  if (errors.length) {
+    console.error(`\n${errors.length} subtitle(s) failed:`);
+    errors.forEach((e) => console.error(`  ${e.file}: ${e.error}`));
+    process.exit(1);
   }
 }
 

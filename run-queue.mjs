@@ -23,6 +23,7 @@
 
 import "dotenv/config";
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,6 +38,7 @@ if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
 const QUEUE_TABLE = process.env.AIRTABLE_QUEUE_TABLE || "Search Queue";
 const RUNS_TABLE = process.env.AIRTABLE_RUNS_TABLE || "Scrape Runs";
 const MAX_FAILS = Number(process.env.MAX_FAILS || 3);
+const STEP_TIMEOUT_MS = Number(process.env.STEP_TIMEOUT_MS || 15 * 60 * 1000); // 15 min per step
 
 const ARGS = process.argv.slice(2);
 const DRY = ARGS.includes("--dry-run");
@@ -55,7 +57,7 @@ async function fetchJson(url, opts = {}) {
 
 async function getNextPending() {
   const u = new URL(QUEUE_API);
-  u.searchParams.set("pageSize", "10");
+  u.searchParams.set("maxRecords", "1"); // we only need the top-priority row
   u.searchParams.append("sort[0][field]", "Priority");
   u.searchParams.append("sort[0][direction]", "desc");
   u.searchParams.append("sort[1][field]", "Fail Count");
@@ -88,14 +90,23 @@ async function findScrapeRun(query, dateRun) {
 
 function runStep(label, cmd, args, env = {}) {
   return new Promise((resolve, reject) => {
+    const scriptPath = path.join(__dirname, args[0]);
+    if (!existsSync(scriptPath)) {
+      return reject(new Error(`Script not found: ${args[0]}`));
+    }
     console.log(`\n[runner] ▶ ${label}: node ${args.join(" ")}`);
     const proc = spawn(cmd, args, {
       cwd: __dirname,
       stdio: ["ignore", "inherit", "inherit"],
       env: { ...process.env, ...env },
     });
-    proc.on("error", reject);
+    const killTimer = setTimeout(() => {
+      try { proc.kill("SIGKILL"); } catch {}
+      reject(new Error(`${label} timed out after ${Math.round(STEP_TIMEOUT_MS / 60000)}min`));
+    }, STEP_TIMEOUT_MS);
+    proc.on("error", (err) => { clearTimeout(killTimer); reject(err); });
     proc.on("exit", (code) => {
+      clearTimeout(killTimer);
       if (code === 0) {
         console.log(`[runner] ✓ ${label} done`);
         resolve();

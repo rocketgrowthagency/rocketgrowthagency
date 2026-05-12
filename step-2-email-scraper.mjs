@@ -264,63 +264,64 @@ async function processCsv() {
     console.error(`Input CSV file not found: ${INPUT_CSV}`);
     process.exit(1);
   }
+  if (!fs.existsSync(STEP2_DIR)) fs.mkdirSync(STEP2_DIR, { recursive: true });
 
-  if (!fs.existsSync(STEP2_DIR)) {
-    fs.mkdirSync(STEP2_DIR, { recursive: true });
-  }
+  // Load all records first — avoids the async-in-on('end') race condition
+  const records = await new Promise((resolve, reject) => {
+    const rows = [];
+    fs.createReadStream(INPUT_CSV)
+      .pipe(csvParser())
+      .on('data', (d) => rows.push(d))
+      .on('end', () => resolve(rows))
+      .on('error', reject);
+  });
 
-  const records = [];
+  console.log(`Loaded ${records.length} records from CSV.`);
 
-  fs.createReadStream(INPUT_CSV)
-    .pipe(csvParser())
-    .on('data', (data) => {
-      records.push(data);
-    })
-    .on('end', async () => {
-      console.log(`Loaded ${records.length} records from CSV.`);
-
-      for (let i = 0; i < records.length; i++) {
-        const record = records[i];
-        const websiteRaw = record.website || record.Website || record['Website'] || '';
+  // Fetch in parallel batches of 5 — reduces total time ~5x vs sequential
+  const BATCH = 5;
+  for (let i = 0; i < records.length; i += BATCH) {
+    const batch = records.slice(i, i + BATCH);
+    await Promise.all(
+      batch.map(async (record, j) => {
+        const websiteRaw = record.website || record.Website || '';
         const website = cleanUrl(websiteRaw);
-        console.log(`Processing (${i + 1}/${records.length}): ${website}`);
-
+        console.log(`Processing (${i + j + 1}/${records.length}): ${website || '(no website)'}`);
         if (!website) {
           record.email = '';
           record.facebook = '';
           record.instagram = '';
-          continue;
+          return;
         }
+        // Retry once on timeout/network error
+        let result = { facebook: '', instagram: '', email: '' };
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            result = await fetchWebsiteData(website);
+            break;
+          } catch (e) {
+            if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
+            else console.warn(`  ⚠️ ${website}: ${e.message}`);
+          }
+        }
+        record.email = result.email;
+        record.facebook = result.facebook;
+        record.instagram = result.instagram;
+      })
+    );
+  }
 
-        const { facebook, instagram, email } = await fetchWebsiteData(website);
-        record.email = email;
-        record.facebook = facebook;
-        record.instagram = instagram;
-      }
+  let headers = Object.keys(records[0]).map((key) => ({ id: key, title: key }));
+  if (!headers.find((h) => h.id === 'email'))     headers.push({ id: 'email',     title: 'email' });
+  if (!headers.find((h) => h.id === 'facebook'))  headers.push({ id: 'facebook',  title: 'facebook' });
+  if (!headers.find((h) => h.id === 'instagram')) headers.push({ id: 'instagram', title: 'instagram' });
 
-      let headers = Object.keys(records[0]).map((key) => ({
-        id: key,
-        title: key,
-      }));
-
-      if (!headers.find((h) => h.id === 'email')) {
-        headers.push({ id: 'email', title: 'email' });
-      }
-      if (!headers.find((h) => h.id === 'facebook')) {
-        headers.push({ id: 'facebook', title: 'facebook' });
-      }
-      if (!headers.find((h) => h.id === 'instagram')) {
-        headers.push({ id: 'instagram', title: 'instagram' });
-      }
-
-      const csvWriter = createObjectCsvWriter({
-        path: OUTPUT_CSV,
-        header: headers,
-      });
-
-      await csvWriter.writeRecords(records);
-      console.log(`Done! Output saved to ${OUTPUT_CSV}`);
-    });
+  const csvWriter = createObjectCsvWriter({ path: OUTPUT_CSV, header: headers });
+  await csvWriter.writeRecords(records);
+  console.log(`Done! Output saved to ${OUTPUT_CSV}`);
 }
 
-processCsv();
+processCsv().catch((err) => {
+  console.error('Fatal error in step-2-email-scraper:', err.message || err);
+  process.exit(1);
+});
