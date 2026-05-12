@@ -1060,6 +1060,15 @@ async function main() {
       const websiteOut = path.join(videosDir, `${indexStr}_${slug}_desktop_website.webm`);
       const mobileOut = path.join(videosDir, `${indexStr}_${slug}_mobile.webm`);
 
+      const allExist = [mapsOut, websiteOut, mobileOut].every(
+        p => fs.existsSync(p) && fs.statSync(p).size > 10000
+      );
+      if (allExist) {
+        console.log(`\n⏭ Skipping ${name} — all 3 videos already exist.`);
+        processed += 1;
+        continue;
+      }
+
       console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
 
       await recordBusinessVideos(
