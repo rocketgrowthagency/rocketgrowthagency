@@ -78,6 +78,7 @@ async function auditWebsite(browser, websiteUrl, business) {
     hasMetaDescription: false,
     renderBlockingHeadResources: 0,
     imagesWithoutLazy: 0,
+    totalImages: null,
     isHttps: false,
     error: null,
   };
@@ -141,6 +142,7 @@ async function auditWebsite(browser, websiteUrl, business) {
 
       // Lazy loading on images
       const imgs = Array.from(document.querySelectorAll('img'));
+      result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
       return result;
@@ -154,8 +156,10 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.hasMetaDescription = data.hasMetaDescription;
     findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
+    findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
 
+    // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();
     if (!category && business.searchTerm) {
       const m = String(business.searchTerm).toLowerCase().match(/^([a-z\s]+?)(?:\s+in\s+|\s+near\s+|$)/);
@@ -163,8 +167,8 @@ async function auditWebsite(browser, websiteUrl, business) {
     }
     const city = String(business.city || '').toLowerCase();
     const h1Lower = data.h1.toLowerCase();
-    const catFirstWord = category ? category.split(/\s+/)[0] : '';
-    findings.h1IncludesCategory = !!(catFirstWord && h1Lower.includes(catFirstWord));
+    const catPhrase = category ? category.split(/\s+/).slice(0, 2).join(' ') : '';
+    findings.h1IncludesCategory = !!(catPhrase && catPhrase.length >= 4 && h1Lower.includes(catPhrase));
     findings.h1IncludesCity = !!(city && h1Lower.includes(city));
 
     findings.hasMobileClickToCall = data.clickToCallCount > 0;
@@ -196,6 +200,7 @@ async function auditMobile(browser, websiteUrl, business) {
     h1Count: null,
     renderBlockingHeadResources: null,
     imagesWithoutLazy: null,
+    totalImages: null,
     error: null,
   };
 
@@ -279,6 +284,7 @@ async function auditMobile(browser, websiteUrl, business) {
       result.renderBlockingHeadResources = headLinks.length + headSyncScripts.length;
 
       const imgs = Array.from(document.querySelectorAll('img'));
+      result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
       return result;
@@ -291,6 +297,7 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.h1Count = data.h1Count;
     findings.renderBlockingHeadResources = data.renderBlockingHeadResources;
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
+    findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
   } catch (err) {
     findings.error = err.message || String(err);

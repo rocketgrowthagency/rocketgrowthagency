@@ -244,6 +244,25 @@ function loadAuditFindings(baseName, slug) {
   return null;
 }
 
+// Schema contract: every field step-6 reads must exist in current step-2.5 output.
+// Logs a WARNING (not error) if a field is missing — prevents stale data silently producing wrong findings.
+const WEBSITE_CONTRACT = ['hasLocalBusinessSchema','pageLoadSeconds','h1Text','h1IncludesCategory','h1IncludesCity','isHttps','h1Count','hasMetaDescription','renderBlockingHeadResources','imagesWithoutLazy','totalImages','websitePhoneMatchesGbp'];
+const MOBILE_CONTRACT  = ['pageLoadSeconds','hasViewportMeta','clickToCallAboveFold','primaryCtaTapTargetPx','pageWeightKb','isHttps','h1Count','renderBlockingHeadResources','imagesWithoutLazy','totalImages'];
+
+function validateAuditContract(audit, slug) {
+  if (!audit) return;
+  for (const field of WEBSITE_CONTRACT) {
+    if (audit.website && !(field in audit.website)) {
+      console.warn(`[audit-contract] MISSING website.${field} for ${slug} — finding skipped if it reads this field`);
+    }
+  }
+  for (const field of MOBILE_CONTRACT) {
+    if (audit.mobile && !(field in audit.mobile)) {
+      console.warn(`[audit-contract] MISSING mobile.${field} for ${slug} — finding skipped if it reads this field`);
+    }
+  }
+}
+
 // PRIORITY-BASED SCORING:
 // Each finding has a fixed priority (1-10, lower = more important).
 // Audit picks the top 3 lowest-priority findings that triggered.
@@ -253,8 +272,8 @@ function scoreWebsiteFindings(audit) {
   const w = audit.website;
   const out = [];
 
-  // PRIORITY 1: NAP mismatch — only flag if we actually found a number on the site AND it differs
-  if (w.websitePhoneMatchesGbp === false && w.websitePhone) {
+  // PRIORITY 1: NAP mismatch — step-2.5 only sets websitePhoneMatchesGbp=false when tel: links were found AND mismatched
+  if (w.websitePhoneMatchesGbp === false) {
     out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
   }
   // PRIORITY 2: No LocalBusiness schema
@@ -269,15 +288,9 @@ function scoreWebsiteFindings(audit) {
   if (w.h1Text && !w.h1IncludesCategory && !w.h1IncludesCity) {
     out.push({ key: 'h1', score: 4, finding: `your headline doesn't include your primary service category or your city, missing a key on-page signal` });
   }
-  // PRIORITY 5: No HTTPS / mixed content
+  // PRIORITY 5: No HTTPS
   if (w.isHttps === false) {
     out.push({ key: 'https', score: 5, finding: `your site isn't on HTTPS — Google penalizes non-secure pages` });
-  } else if (w.mixedContentCount != null && w.mixedContentCount > 0) {
-    out.push({ key: 'mixed', score: 5, finding: `your site has ${w.mixedContentCount} mixed-content resources loading over insecure HTTP` });
-  }
-  // PRIORITY 6: Only 1 location listed
-  if (w.locationsListedCount != null && w.locationsListedCount <= 1) {
-    out.push({ key: 'locations', score: 6, finding: `you list one location but no dedicated pages for nearby cities you serve, leaving rank on the table for those suburbs` });
   }
   // PRIORITY 7: Multiple H1 tags
   if (w.h1Count != null && w.h1Count > 1) {
@@ -291,9 +304,9 @@ function scoreWebsiteFindings(audit) {
   if (w.renderBlockingHeadResources != null && w.renderBlockingHeadResources > 3) {
     out.push({ key: 'renderBlock', score: 9, finding: `you have ${w.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint` });
   }
-  // PRIORITY 10: Images missing lazy loading
-  if (w.imagesWithoutLazy != null && w.totalImages > 5 && w.imagesWithoutLazy > 5) {
-    out.push({ key: 'lazyImg', score: 10, finding: `${w.imagesWithoutLazy} images don't have lazy loading enabled, slowing your initial load` });
+  // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it (ratio avoids false positives)
+  if (w.imagesWithoutLazy != null && w.totalImages > 5 && (w.imagesWithoutLazy / w.totalImages) > 0.4) {
+    out.push({ key: 'lazyImg', score: 10, finding: `${w.imagesWithoutLazy} of your ${w.totalImages} images don't have lazy loading enabled, slowing your initial page load` });
   }
 
   return out.sort((a, b) => a.score - b.score);
@@ -309,11 +322,9 @@ function scoreMobileFindings(audit) {
   if (m.pageLoadSeconds != null && m.pageLoadSeconds > 3) {
     out.push({ key: 'mobileLoad', score: 1, finding: `your site takes ${m.pageLoadSeconds.toFixed(1)} seconds to load on mobile — 53 percent of visitors abandon at 3 seconds` });
   }
-  // PRIORITY 2: No HTTPS / mixed content
+  // PRIORITY 2: No HTTPS
   if (m.isHttps === false) {
     out.push({ key: 'https', score: 2, finding: `your site isn't on HTTPS — Google penalizes non-secure pages on mobile` });
-  } else if (m.mixedContentCount != null && m.mixedContentCount > 0) {
-    out.push({ key: 'mixed', score: 2, finding: `your mobile page has ${m.mixedContentCount} mixed-content resources loading over insecure HTTP` });
   }
   // PRIORITY 3: No responsive viewport meta
   if (m.hasViewportMeta === false) {
@@ -327,9 +338,9 @@ function scoreMobileFindings(audit) {
   if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
     out.push({ key: 'tapTarget', score: 5, finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's guideline is 48` });
   }
-  // PRIORITY 6: Page weight > 3 MB
-  if (m.pageWeightKb != null && m.pageWeightKb > 3000) {
-    out.push({ key: 'pageWeight', score: 6, finding: `your mobile page weighs ${(m.pageWeightKb / 1024).toFixed(1)} megabytes — Google recommends under 3 megabytes for mobile` });
+  // PRIORITY 6: Page weight > 4 MB (threshold raised from 3 MB to account for unavoidable third-party scripts like analytics/maps)
+  if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
+    out.push({ key: 'pageWeight', score: 6, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes of resources — Google recommends keeping mobile pages under 3 megabytes to avoid slow load times` });
   }
   // PRIORITY 8: Multiple H1 tags
   if (m.h1Count != null && m.h1Count > 1) {
@@ -339,9 +350,9 @@ function scoreMobileFindings(audit) {
   if (m.renderBlockingHeadResources != null && m.renderBlockingHeadResources > 3) {
     out.push({ key: 'renderBlock', score: 9, finding: `you have ${m.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint on mobile` });
   }
-  // PRIORITY 10: Images missing lazy loading
-  if (m.imagesWithoutLazy != null && m.totalImages > 5 && m.imagesWithoutLazy > 5) {
-    out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} images don't have lazy loading enabled, slowing your initial mobile load` });
+  // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it
+  if (m.imagesWithoutLazy != null && m.totalImages > 5 && (m.imagesWithoutLazy / m.totalImages) > 0.4) {
+    out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, slowing your mobile load` });
   }
 
   return out.sort((a, b) => a.score - b.score);
@@ -434,6 +445,7 @@ function scoreMapsFindings(audit, top3Stats, record) {
 function buildScript(record, top3Stats, audit) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'your business';
+  validateAuditContract(audit, slugify(name, { lower: true, strict: true }));
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =
     normalizeField(record, 'Map Rank') || normalizeField(record, 'rank') || 'your current position';
