@@ -386,6 +386,12 @@ async function auditGbp(_, gbpUrl, business) {
 
     await new Promise((r) => setTimeout(r, 2000));
 
+    // Scroll down to load review responses (lazy-loaded by Maps)
+    await page.evaluate(() => window.scrollBy(0, 800)).catch(() => {});
+    await new Promise((r) => setTimeout(r, 1000));
+    await page.evaluate(() => window.scrollBy(0, 800)).catch(() => {});
+    await new Promise((r) => setTimeout(r, 500));
+
     const data = await page.evaluate((cardSel) => {
       const txt = document.body?.innerText || '';
 
@@ -436,11 +442,14 @@ async function auditGbp(_, gbpUrl, business) {
       // Owner response count
       const ownerResponseCount = [...txt.matchAll(/Response from the owner/gi)].length;
 
-      // Business hours: prefer specific hours element
-      const hoursEl = document.querySelector('div[data-item-id="oh"]');
+      // Business hours: check multiple selectors (Google Maps DOM changes frequently)
+      // and fall back to text patterns that cover "Open · Closes 7PM", "Closes at 5PM", etc.
+      const hoursEl = document.querySelector(
+        'div[data-item-id="oh"], [aria-label*="hour" i], [aria-label*="open" i], [data-tooltip*="hour" i]'
+      );
       const hasBusinessHours = hoursEl
         ? true
-        : /\b(open now|open \d|closes at|open 24|monday|hours)\b/i.test(txt);
+        : /\b(open now|open\s*·|closes?\s+\d|closes?\s+at|open\s+\d|open 24|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hours|\d+\s*(am|pm))\b/i.test(txt);
 
       // Category: specific GBP selectors first, then heuristic fallback
       let primaryCategory = null;

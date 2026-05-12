@@ -458,8 +458,8 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  // GBP primary category doesn't match the search term
-  if (audit?.gbp?.primaryCategoryMatchesSearch === false) {
+  // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is
+  if (audit?.gbp?.primaryCategoryMatchesSearch === false && audit?.gbp?.primaryCategory) {
     out.push({
       key: 'categoryMismatch',
       score: 18,
