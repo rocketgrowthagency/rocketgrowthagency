@@ -326,27 +326,65 @@ async function auditGbp(browser, gbpUrl, business) {
         '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     );
     await page.goto(gbpUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
-    await new Promise((r) => setTimeout(r, 6000));
 
-    // Try to dismiss the Google consent dialog if present
+    // Dismiss consent dialog if present
     await page.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button'));
       const accept = buttons.find((b) => /accept all|reject all|i agree/i.test(b.textContent || ''));
       if (accept) accept.click();
     }).catch(() => {});
+
+    // Wait for either a business card or a search-results feed
+    const CARD_SELECTOR = 'div.F7nice, span.MW4etd, button[jsaction*="pane.rating"], div[data-item-id="oh"], h1.DUwDvf';
+    await Promise.race([
+      page.waitForSelector(CARD_SELECTOR, { timeout: 15000 }),
+      page.waitForSelector('div[role="feed"]', { timeout: 15000 }),
+    ]).catch(() => {});
+
+    // If we landed on a search-results page (bare name URL redirect), click the first listing
+    const isSearchResults = await page.evaluate((cardSel) => {
+      return !!document.querySelector('div[role="feed"]') && !document.querySelector(cardSel);
+    }, CARD_SELECTOR);
+
+    if (isSearchResults) {
+      const firstLink = await page.$('a[href*="/maps/place/"]');
+      if (firstLink) {
+        await firstLink.click();
+        await Promise.race([
+          page.waitForSelector(CARD_SELECTOR, { timeout: 15000 }),
+          new Promise((r) => setTimeout(r, 10000)),
+        ]).catch(() => {});
+      }
+    }
+
     await new Promise((r) => setTimeout(r, 1500));
 
-    const data = await page.evaluate(() => {
+    const data = await page.evaluate((cardSel) => {
       const txt = document.body?.innerText || '';
 
-      // Review count: e.g. "(234)" near rating, or "234 reviews"
-      const reviewMatch =
-        txt.match(/\(([\d,]{1,7})\)/) || txt.match(/([\d,]{1,7})\s+(?:Google\s+)?reviews?/i);
-      const reviewCount = reviewMatch ? Number(reviewMatch[1].replace(/,/g, '')) : null;
+      // Review count: prefer aria-label on rating button, fall back to text
+      let reviewCount = null;
+      const ratingBtn = document.querySelector('button[jsaction*="pane.rating.moreReviews"], button[aria-label*="review"]');
+      if (ratingBtn) {
+        const m = (ratingBtn.getAttribute('aria-label') || '').match(/([\d,]+)\s+review/i);
+        if (m) reviewCount = Number(m[1].replace(/,/g, ''));
+      }
+      if (reviewCount === null) {
+        const m = txt.match(/\(([\d,]{1,7})\)/) || txt.match(/([\d,]{1,7})\s+(?:Google\s+)?reviews?/i);
+        if (m) reviewCount = Number(m[1].replace(/,/g, ''));
+      }
 
-      // Photo count: only single photos number e.g. "1,247 photos"
-      const photoMatch = txt.match(/([\d,]{1,7})\s+photos?\b/i);
-      const photoCount = photoMatch ? Number(photoMatch[1].replace(/,/g, '')) : null;
+      // Photo count: prefer aria-label on photo button
+      let photoCount = null;
+      const photoBtn = document.querySelector('button[aria-label*="photo"], a[aria-label*="photo"]');
+      if (photoBtn) {
+        const m = (photoBtn.getAttribute('aria-label') || '').match(/([\d,]+)/);
+        if (m) photoCount = Number(m[1].replace(/,/g, ''));
+      }
+      if (photoCount === null) {
+        const m = txt.match(/([\d,]{1,7})\s+photos?\b/i);
+        if (m) photoCount = Number(m[1].replace(/,/g, ''));
+      }
 
       // Review recency + velocity: scan up to 40 age-stamps
       const recencyMatches = [...txt.matchAll(/(\d+)\s+(day|week|month|year)s?\s+ago/gi)].slice(0, 40);
@@ -364,32 +402,38 @@ async function auditGbp(browser, gbpUrl, business) {
       }
 
       // Owner response count
-      const responseMatches = [...txt.matchAll(/Response from the owner/gi)];
-      const ownerResponseCount = responseMatches.length;
+      const ownerResponseCount = [...txt.matchAll(/Response from the owner/gi)].length;
 
-      // Business hours presence
-      const hasBusinessHours = /\b(open now|open \d|closes at|open 24|monday|hours)\b/i.test(txt);
+      // Business hours: prefer specific hours element
+      const hoursEl = document.querySelector('div[data-item-id="oh"]');
+      const hasBusinessHours = hoursEl
+        ? true
+        : /\b(open now|open \d|closes at|open 24|monday|hours)\b/i.test(txt);
 
-      // Category: look for the primary category badge, often near the rating
-      // Heuristic: take the first short text-only button/link that matches common cat patterns
-      const catCandidates = Array.from(
-        document.querySelectorAll('button, span[jsaction]')
-      )
-        .map((el) => (el.textContent || '').trim())
-        .filter((t) => t && t.length > 3 && t.length < 40 && !/^\d/.test(t));
-      const categoryRegex = /\b(contractor|service|repair|company|business|plumber|plumbing|hvac|electrician|dentist|restaurant|store|shop|salon|attorney|lawyer|agency|cleaner|cleaning|consultant|specialist|installer|installation|roofing|landscaping|moving|pest)\b/i;
-      const primaryCategory = catCandidates.find((t) => categoryRegex.test(t)) || null;
+      // Category: specific GBP selectors first, then heuristic fallback
+      let primaryCategory = null;
+      const catEl = document.querySelector('button.DkEaL, span.YhemCb');
+      if (catEl) {
+        primaryCategory = (catEl.textContent || '').trim() || null;
+      }
+      if (!primaryCategory) {
+        const categoryRegex = /\b(contractor|service|repair|company|plumber|plumbing|hvac|electrician|dentist|restaurant|store|shop|salon|attorney|lawyer|agency|cleaner|cleaning|consultant|specialist|installer|installation|roofing|landscaping|moving|pest|door|garage|locksmith|handyman|carpenter|painter|flooring|remodeling)\b/i;
+        const catCandidates = Array.from(document.querySelectorAll('button, span[jsaction]'))
+          .map((el) => (el.textContent || '').trim())
+          .filter((t) => t && t.length > 3 && t.length < 40 && !/^\d/.test(t));
+        primaryCategory = catCandidates.find((t) => categoryRegex.test(t)) || null;
+      }
 
-      // Categories count: rough — count distinct category-looking strings in first 1500 chars
+      // Categories count
       const catSnippet = txt.slice(0, 2000);
       const distinctCats = new Set();
-      for (const m of catSnippet.matchAll(/\b\w+(?:\s+\w+){0,2}\s+(?:contractor|service|repair|company|plumber|plumbing|hvac|electrician|cleaner|specialist|installer|installation|roofing|landscaping|moving|pest)\b/gi)) {
+      for (const m of catSnippet.matchAll(/\b\w+(?:\s+\w+){0,2}\s+(?:contractor|service|repair|company|plumber|plumbing|hvac|electrician|cleaner|specialist|installer|installation|roofing|landscaping|moving|pest|door|garage|locksmith)\b/gi)) {
         distinctCats.add(m[0].toLowerCase().trim());
       }
       const categoriesCount = distinctCats.size > 0 ? distinctCats.size : null;
 
       return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount };
-    });
+    }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
     findings.photoCount = data.photoCount;
