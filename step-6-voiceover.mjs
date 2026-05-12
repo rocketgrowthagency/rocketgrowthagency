@@ -331,10 +331,6 @@ function scoreMobileFindings(audit) {
   if (m.pageWeightKb != null && m.pageWeightKb > 3000) {
     out.push({ key: 'pageWeight', score: 6, finding: `your mobile page weighs ${(m.pageWeightKb / 1024).toFixed(1)} megabytes — Google recommends under 3 megabytes for mobile` });
   }
-  // PRIORITY 7: Form > 4 required fields
-  if (m.requiredFormFieldCount != null && m.requiredFormFieldCount > 4) {
-    out.push({ key: 'formFields', score: 7, finding: `your contact form has ${m.requiredFormFieldCount} required fields — each extra field cuts mobile submissions by about 7 percent` });
-  }
   // PRIORITY 8: Multiple H1 tags
   if (m.h1Count != null && m.h1Count > 1) {
     out.push({ key: 'multiH1', score: 8, finding: `your mobile page has ${m.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
