@@ -300,7 +300,7 @@ async function auditMobile(browser, websiteUrl, business) {
   return findings;
 }
 
-async function auditGbp(browser, gbpUrl, business) {
+async function auditGbp(_, gbpUrl, business) {
   const findings = {
     gbpUrl,
     categoriesCount: null,
@@ -317,17 +317,31 @@ async function auditGbp(browser, gbpUrl, business) {
   };
   if (!gbpUrl) return findings;
 
+  // Non-headless browser for GBP — Google Maps serves stripped content to headless Chrome
+  const gbpBrowser = await puppeteer.launch({
+    headless: false,
+    executablePath: CHROME_PATH,
+    userDataDir: CHROME_PROFILE_DIR + '-gbp',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--window-size=1280,900'],
+  });
+
   let page;
   try {
-    page = await browser.newPage();
+    page = await gbpBrowser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
     await page.setUserAgent(
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
         '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     );
-    await page.goto(gbpUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    // Bare name URLs (/maps/place/Name+Only with no coordinates) load a stub, not the full card.
+    // Use a search URL instead so the full results panel renders.
+    const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(gbpUrl.replace(/\/$/, ''));
+    const navUrl = isBareNameUrl
+      ? `https://www.google.com/maps/search/${encodeURIComponent((business.name || '') + ' ' + (business.city || ''))}`
+      : gbpUrl;
+    await page.goto(navUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
 
-    // Dismiss consent dialog if present
+    // Dismiss consent / cookie dialog if present
     await page.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button'));
       const accept = buttons.find((b) => /accept all|reject all|i agree/i.test(b.textContent || ''));
@@ -457,6 +471,7 @@ async function auditGbp(browser, gbpUrl, business) {
     findings.error = err.message || String(err);
   } finally {
     if (page) await page.close().catch(() => {});
+    await gbpBrowser.close().catch(() => {});
   }
   return findings;
 }
@@ -475,7 +490,7 @@ async function main() {
   const browser = await puppeteer.launch({
     headless: !visible,
     executablePath: CHROME_PATH,
-    userDataDir: CHROME_PROFILE_DIR + '-audit',
+    userDataDir: CHROME_PROFILE_DIR,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
   });
 
