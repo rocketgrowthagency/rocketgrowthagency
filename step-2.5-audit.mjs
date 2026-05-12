@@ -355,23 +355,29 @@ async function auditGbp(_, gbpUrl, business) {
       page.waitForSelector('div[role="feed"]', { timeout: 15000 }),
     ]).catch(() => {});
 
-    // If we landed on a search-results page (bare name URL redirect), click the first listing
-    const isSearchResults = await page.evaluate((cardSel) => {
-      return !!document.querySelector('div[role="feed"]') && !document.querySelector(cardSel);
-    }, CARD_SELECTOR);
+    // If still on a search URL (including /maps/search/ used for bare-name fallback),
+    // click the first listing to navigate to the full business card page.
+    // The search panel shows a partial card with only visible thumbnails — unreliable for photo count.
+    const currentUrl = page.url();
+    const needsClickThrough = currentUrl.includes('/maps/search/') || (
+      await page.evaluate((cardSel) => {
+        return !!document.querySelector('div[role="feed"]') && !document.querySelector(cardSel);
+      }, CARD_SELECTOR).catch(() => false)
+    );
 
-    if (isSearchResults) {
-      const firstLink = await page.$('a[href*="/maps/place/"]');
-      if (firstLink) {
-        await firstLink.click();
+    if (needsClickThrough) {
+      // Click the business name link (hfpxzc = Maps listing anchor) to open full card
+      const listingLink = await page.$('a.hfpxzc, a[href*="/maps/place/"]');
+      if (listingLink) {
+        await listingLink.click();
         await Promise.race([
-          page.waitForSelector(CARD_SELECTOR, { timeout: 15000 }),
+          page.waitForSelector('h1.DUwDvf', { timeout: 15000 }),
           new Promise((r) => setTimeout(r, 10000)),
         ]).catch(() => {});
       }
     }
 
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
 
     const data = await page.evaluate((cardSel) => {
       const txt = document.body?.innerText || '';
@@ -388,16 +394,21 @@ async function auditGbp(_, gbpUrl, business) {
         if (m) reviewCount = Number(m[1].replace(/,/g, ''));
       }
 
-      // Photo count: prefer aria-label on photo button
+      // Photo count: look for a specific count button (not "Add photos" generic buttons)
       let photoCount = null;
-      const photoBtn = document.querySelector('button[aria-label*="photo"], a[aria-label*="photo"]');
-      if (photoBtn) {
-        const m = (photoBtn.getAttribute('aria-label') || '').match(/([\d,]+)/);
-        if (m) photoCount = Number(m[1].replace(/,/g, ''));
+      const allPhotoBtns = Array.from(document.querySelectorAll('button[aria-label*="photo"], a[aria-label*="photo"]'));
+      for (const btn of allPhotoBtns) {
+        const label = btn.getAttribute('aria-label') || '';
+        const m = label.match(/([\d,]+)\s*photo/i);
+        if (m) { photoCount = Number(m[1].replace(/,/g, '')); break; }
       }
+      // Text fallback — require ≥2 to exclude single-thumbnail false positives
       if (photoCount === null) {
         const m = txt.match(/([\d,]{1,7})\s+photos?\b/i);
-        if (m) photoCount = Number(m[1].replace(/,/g, ''));
+        if (m) {
+          const n = Number(m[1].replace(/,/g, ''));
+          if (n >= 2) photoCount = n;
+        }
       }
 
       // Review recency + velocity: scan up to 40 age-stamps

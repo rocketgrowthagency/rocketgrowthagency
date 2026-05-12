@@ -253,8 +253,8 @@ function scoreWebsiteFindings(audit) {
   const w = audit.website;
   const out = [];
 
-  // PRIORITY 1: NAP mismatch
-  if (w.websitePhoneMatchesGbp === false) {
+  // PRIORITY 1: NAP mismatch — only flag if we actually found a number on the site AND it differs
+  if (w.websitePhoneMatchesGbp === false && w.websitePhone) {
     out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
   }
   // PRIORITY 2: No LocalBusiness schema
@@ -416,7 +416,7 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  if (audit?.gbp?.photoCount != null && audit.gbp.photoCount < 30) {
+  if (audit?.gbp?.photoCount != null && audit.gbp.photoCount >= 2 && audit.gbp.photoCount < 30) {
     out.push({
       key: 'photoCount',
       score: audit.gbp.photoCount < 10 ? 25 : 50,
