@@ -33,6 +33,7 @@ const LANDING_OUT_DIR = path.join(__dirname, "output", "landing-pages", "v");
 const TEMPLATE_PATH = path.join(__dirname, "templates", "video-landing.html");
 const AUDIT_ROOT = path.join(__dirname, "output", "Step 2.5 (Audit)");
 const STEP6_ROOT = path.join(__dirname, "output", "Step 6 (Voiceover MP3)");
+const STEP2_DIR = path.join(__dirname, "output", "Step 2");
 
 const DRY = process.argv.includes("--dry-run");
 const NO_AIRTABLE = process.argv.includes("--no-airtable");
@@ -54,11 +55,39 @@ function run(cmd, args) {
   });
 }
 
-// Parse the business slug out of "01_pacific-plumbing-team.mp4"
+// Parse the business slug out of "01_pacific-plumbing-team.mp4".
+// NOTE: the numeric prefix is the batch sequence order, NOT the Maps rank.
 function parseFilename(name) {
   const stripped = name.replace(/\.mp4$/i, "");
   const m = stripped.match(/^(\d+)_(.+)$/);
-  return m ? { rank: Number(m[1]), slug: m[2] } : { rank: null, slug: stripped };
+  return m ? { slug: m[2] } : { slug: stripped };
+}
+
+// Build a slug→rank map from all Step 2 CSVs so we have the real Map Rank
+// when Airtable is skipped or the lead isn't in Airtable yet.
+// Uses csv-parser to handle quoted fields with embedded newlines.
+import csvParser from "csv-parser";
+async function loadStep2Ranks() {
+  const rankMap = {};
+  if (!fs.existsSync(STEP2_DIR)) return rankMap;
+  const csvFiles = fs.readdirSync(STEP2_DIR).filter(f => f.endsWith('.csv'));
+  for (const file of csvFiles) {
+    await new Promise((resolve) => {
+      fs.createReadStream(path.join(STEP2_DIR, file))
+        .pipe(csvParser())
+        .on('data', (row) => {
+          const name = row['Business Name'] || row['name'] || '';
+          const rank = parseInt(row['Map Rank'] || row['rank'] || '', 10);
+          if (name && Number.isFinite(rank)) {
+            const s = slugify(name, { lower: true, strict: true });
+            if (s) rankMap[s] = rank;
+          }
+        })
+        .on('end', resolve)
+        .on('error', resolve);
+    });
+  }
+  return rankMap;
 }
 
 // Prefer a clean business-name slug; fall back to filename slug.
@@ -236,10 +265,12 @@ async function main() {
 
   ensureDir(LANDING_OUT_DIR);
 
+  const step2Ranks = await loadStep2Ranks();
+
   let built = 0;
   let airtableWrites = 0;
   for (const v of mp4s) {
-    const { slug: fileSlug, rank } = parseFilename(v.file);
+    const { slug: fileSlug } = parseFilename(v.file);
     let businessName = fileSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     let airtableRecord = null;
     if (!NO_AIRTABLE) {
@@ -267,12 +298,14 @@ async function main() {
       console.warn(`[build-landing] thumbnail failed for ${slug}: ${err.message}`);
     }
     // Variant-aware copy. Prefer Airtable's Video Variant field; fall back
-    // to deriving from Map Rank if the field isn't set yet.
+    // to CSV rank, then nothing. Never use the filename prefix as rank (it's batch sequence).
     const airtableVariant = airtableRecord?.fields?.["Video Variant"];
     const airtableRank = parseInt(airtableRecord?.fields?.["Map Rank"], 10);
+    const csvRank = step2Ranks[slug] || step2Ranks[fileSlug] || null;
+    const effectiveRank = Number.isFinite(airtableRank) ? airtableRank : csvRank;
     const isTop3 = airtableVariant
       ? airtableVariant === 'top-3'
-      : (Number.isFinite(airtableRank) && airtableRank >= 1 && airtableRank <= 3);
+      : (Number.isFinite(effectiveRank) && effectiveRank >= 1 && effectiveRank <= 3);
 
     // Recorded date — prefer Airtable's Date Scraped, fall back to today.
     const dateScraped = airtableRecord?.fields?.["Date Scraped"];
@@ -298,7 +331,7 @@ async function main() {
       ? `defend your top 3 spot and push for #1`
       : `move you into the top 3 and capture more leads`;
 
-    const resolvedRank = Number.isFinite(airtableRank) ? airtableRank : (Number.isFinite(rank) ? rank : null);
+    const resolvedRank = Number.isFinite(airtableRank) ? airtableRank : (Number.isFinite(csvRank) ? csvRank : null);
     const eyebrowLabel = resolvedRank !== null
       ? (resolvedRank >= 1 && resolvedRank <= 3)
         ? `Currently ranking #${resolvedRank} · Top 3 spot`
