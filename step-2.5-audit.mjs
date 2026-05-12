@@ -424,12 +424,24 @@ async function auditGbp(_, gbpUrl, business) {
         }
       }
 
-      // Review recency + velocity: scan up to 40 age-stamps
-      const recencyMatches = [...txt.matchAll(/(\d+)\s+(day|week|month|year)s?\s+ago/gi)].slice(0, 40);
+      // Review recency + velocity: scope to review card elements only.
+      // Scanning body.innerText picks up photo uploads, posts, Q&A — all non-review timestamps.
+      // Review cards have data-review-id or known container classes; fall back to body text only
+      // if no review cards are found (avoids false positives from non-review page elements).
+      const reviewCards = Array.from(document.querySelectorAll(
+        '[data-review-id], div.jftiEf, div.GHT2ce, div[class*="review"]'
+      )).filter(el => el.innerText && el.innerText.trim().length > 20);
+      const reviewTexts = reviewCards.length > 0
+        ? reviewCards.map(el => el.innerText)
+        : [txt]; // fallback: whole page (less accurate but better than nothing)
+      const recencyPattern = /(\d+)\s+(day|week|month|year)s?\s+ago/gi;
       let minDays = null;
       let reviewsLast30 = 0;
       let reviewsLast90 = 0;
-      for (const m of recencyMatches) {
+      for (const cardText of reviewTexts.slice(0, 40)) {
+        const m = recencyPattern.exec(cardText);
+        recencyPattern.lastIndex = 0; // reset for next card
+        if (!m) continue;
         const n = Number(m[1]);
         const u = m[2].toLowerCase();
         const mult = u === 'day' ? 1 : u === 'week' ? 7 : u === 'month' ? 30 : 365;

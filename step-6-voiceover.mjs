@@ -476,12 +476,17 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  // Very low recent review velocity (separate from daysSinceLastReview — catches stale-but-occasional reviewers)
-  if (audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1) {
+  // Very low recent review velocity — only fire when daysSinceLastReview has NOT already fired
+  // (avoids saying the same thing twice). Catches active businesses getting very few recent reviews.
+  const velocityAlreadyFired = out.some(f => f.key === 'reviewVelocity');
+  if (!velocityAlreadyFired && audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1) {
+    const recentText = audit.gbp.reviewsLast30Days === 0
+      ? `you haven't received any new Google reviews in the last 30 days`
+      : `you received only 1 new Google review in the last 30 days`;
     out.push({
       key: 'reviewVelocityRecent',
       score: 32,
-      finding: `you've received only ${audit.gbp.reviewsLast30Days === 1 ? '1 new review' : 'no new reviews'} in the last 30 days — Google's algorithm weighs recent review velocity when ranking in the local pack`,
+      finding: `${recentText} — Google's algorithm weighs recent review velocity when ranking in the local pack`,
     });
   }
 
