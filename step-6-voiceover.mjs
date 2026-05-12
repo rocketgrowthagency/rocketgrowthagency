@@ -261,8 +261,8 @@ function loadAuditFindings(baseName, slug) {
 
 // Schema contract: every field step-6 reads must exist in current step-2.5 output.
 // Logs a WARNING (not error) if a field is missing — prevents stale data silently producing wrong findings.
-const WEBSITE_CONTRACT = ['hasLocalBusinessSchema','pageLoadSeconds','h1Text','h1IncludesCategory','h1IncludesCity','isHttps','h1Count','hasMetaDescription','renderBlockingHeadResources','imagesWithoutLazy','totalImages','websitePhoneMatchesGbp'];
-const MOBILE_CONTRACT  = ['pageLoadSeconds','hasViewportMeta','clickToCallAboveFold','primaryCtaTapTargetPx','pageWeightKb','isHttps','h1Count','renderBlockingHeadResources','imagesWithoutLazy','totalImages'];
+const WEBSITE_CONTRACT = ['hasLocalBusinessSchema','pageLoadSeconds','h1Text','h1IncludesCategory','h1IncludesCity','isHttps','h1Count','hasMetaDescription','renderBlockingHeadResources','imagesWithoutLazy','totalImages','websitePhoneMatchesGbp','primaryCtaText','hasReviewsOnPage','hasServiceAreaListed'];
+const MOBILE_CONTRACT  = ['pageLoadSeconds','hasViewportMeta','clickToCallAboveFold','primaryCtaTapTargetPx','pageWeightKb','isHttps','h1Count','renderBlockingHeadResources','imagesWithoutLazy','totalImages','primaryCtaText','phoneVisibleAboveFold','socialProofAboveFold'];
 
 function validateAuditContract(audit, slug) {
   if (!audit) return;
@@ -328,6 +328,23 @@ function scoreWebsiteFindings(audit) {
     out.push({ key: 'lazyImg', score: 10, finding: `${w.imagesWithoutLazy} of your ${w.totalImages} images don't have lazy loading enabled, slowing your initial page load` });
   }
 
+  // TIER 2 — conversion signals (scores 11-16, fill in when Tier 1 doesn't reach 3 findings)
+  // PRIORITY 11: Generic CTA text
+  if (w.primaryCtaText != null) {
+    const isGeneric = /^(contact|learn more|more|click here|submit|send|read more|see more|view more|get started|find out|discover)$/i.test(w.primaryCtaText.trim());
+    if (isGeneric) {
+      out.push({ key: 'ctaText', score: 11, finding: `your main call-to-action says "${w.primaryCtaText.trim()}" — action-specific buttons like "Call Now" or "Get Free Quote" convert 2–3x better` });
+    }
+  }
+  // PRIORITY 12: No reviews or testimonials on the page
+  if (w.hasReviewsOnPage === false) {
+    out.push({ key: 'noReviews', score: 12, finding: `your website doesn't show any customer reviews or testimonials — visitors can't verify your reputation without leaving the page to check Google` });
+  }
+  // PRIORITY 13: No service area listed
+  if (w.hasServiceAreaListed === false) {
+    out.push({ key: 'noServiceArea', score: 13, finding: `your website doesn't list a service area — mentioning specific cities and neighborhoods you serve is a strong local SEO signal` });
+  }
+
   return out.sort((a, b) => a.score - b.score);
 }
 
@@ -372,6 +389,23 @@ function scoreMobileFindings(audit) {
   // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it
   if (m.imagesWithoutLazy != null && m.totalImages > 5 && (m.imagesWithoutLazy / m.totalImages) > 0.4) {
     out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, slowing your mobile load` });
+  }
+
+  // TIER 2 — conversion signals (scores 11-16, fill in when Tier 1 doesn't reach 3 findings)
+  // PRIORITY 11: Generic CTA text on mobile
+  if (m.primaryCtaText != null) {
+    const isGeneric = /^(contact|learn more|more|click here|submit|send|read more|see more|view more|get started|find out|discover)$/i.test(m.primaryCtaText.trim());
+    if (isGeneric) {
+      out.push({ key: 'ctaText', score: 11, finding: `your main button says "${m.primaryCtaText.trim()}" — on mobile, action-specific buttons like "Call Now" or "Get Free Quote" convert significantly better` });
+    }
+  }
+  // PRIORITY 12: Phone number not visible as text above fold (only hidden tel: link)
+  if (m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true) {
+    out.push({ key: 'phoneNotVisible', score: 12, finding: `your phone number isn't visible as text above the fold on mobile — visitors shouldn't have to tap a button just to see your number` });
+  }
+  // PRIORITY 13: No social proof visible above fold
+  if (m.socialProofAboveFold === false) {
+    out.push({ key: 'noSocialProof', score: 13, finding: `there's no star rating or review count visible in your mobile hero — first-time visitors have no trust signal before they scroll` });
   }
 
   return out.sort((a, b) => a.score - b.score);

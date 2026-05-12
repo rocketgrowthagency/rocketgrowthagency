@@ -145,6 +145,39 @@ async function auditWebsite(browser, websiteUrl, business) {
       result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
+      // Tier 2: CTA text quality — is the primary above-fold button generic or action-oriented?
+      const foldH = window.innerHeight;
+      const ctaEls = Array.from(document.querySelectorAll(
+        'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
+      ));
+      let primaryCtaText = null;
+      let primaryCtaH = 0;
+      for (const el of ctaEls) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 20 && r.height > 20 && r.top >= 0 && r.top < foldH) {
+          if (r.height > primaryCtaH) { primaryCtaH = r.height; primaryCtaText = (el.innerText || el.textContent || '').trim().slice(0, 60); }
+        }
+      }
+      result.primaryCtaText = primaryCtaText;
+
+      // Tier 2: reviews/testimonials on page — aggregateRating schema OR visible review section
+      const ldBlocks = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+      const hasRatingSchema = ldBlocks.some(s => { try { const d = JSON.parse(s.textContent||''); return JSON.stringify(d).includes('aggregateRating'); } catch { return false; } });
+      const reviewSection = document.querySelector('[class*="review" i], [class*="testimonial" i], [id*="review" i], [id*="testimonial" i]');
+      const starText = (document.body?.innerText || '').match(/★|☆|⭐|\d+(\.\d+)?\s*(out of|\/)\s*5/i);
+      result.hasReviewsOnPage = hasRatingSchema || !!(reviewSection && (reviewSection.innerText||'').trim().length > 30) || !!starText;
+
+      // Tier 2: service area — does body mention at least 2 distinct city/neighborhood names beyond the H1?
+      const bodyTxt = (document.body?.innerText || '').toLowerCase();
+      const h1Txt = ((document.querySelector('h1')?.innerText||'')).toLowerCase();
+      const serviceAreaPattern = /\b([a-z][a-z\s]{3,20}),?\s*(ca|california|ny|new york|tx|texas|fl|florida|il|illinois|wa|washington)\b/gi;
+      const areaMentions = new Set();
+      for (const m of (bodyTxt.matchAll ? bodyTxt.matchAll(serviceAreaPattern) : [])) {
+        const place = m[1].trim();
+        if (!h1Txt.includes(place)) areaMentions.add(place);
+      }
+      result.hasServiceAreaListed = areaMentions.size >= 1;
+
       return result;
     });
 
@@ -158,6 +191,9 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
     findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
+    findings.primaryCtaText = data.primaryCtaText || null;
+    findings.hasReviewsOnPage = data.hasReviewsOnPage || false;
+    findings.hasServiceAreaListed = data.hasServiceAreaListed || false;
 
     // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();
@@ -287,6 +323,56 @@ async function auditMobile(browser, websiteUrl, business) {
       result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
+      // Tier 2: CTA text quality (mobile)
+      const mobileFold = window.innerHeight;
+      const mobileCtaEls = Array.from(document.querySelectorAll(
+        'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
+      ));
+      let mobileCtaText = null;
+      let mobileCtaH = 0;
+      for (const el of mobileCtaEls) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 20 && r.height > 20 && r.top >= 0 && r.top < mobileFold) {
+          if (r.height > mobileCtaH) { mobileCtaH = r.height; mobileCtaText = (el.innerText || el.textContent || '').trim().slice(0, 60); }
+        }
+      }
+      result.primaryCtaText = mobileCtaText;
+
+      // Tier 2: phone number visible as text above fold (not just hidden tel: link)
+      const phoneRegex = /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/;
+      const allEls = Array.from(document.querySelectorAll('*'));
+      let phoneVisibleAboveFold = false;
+      for (const el of allEls) {
+        if (el.children.length > 0) continue; // leaf nodes only
+        const txt = (el.innerText || '').trim();
+        if (phoneRegex.test(txt)) {
+          const r = el.getBoundingClientRect();
+          if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0) {
+            phoneVisibleAboveFold = true;
+            break;
+          }
+        }
+      }
+      result.phoneVisibleAboveFold = phoneVisibleAboveFold;
+
+      // Tier 2: social proof above fold (star rating or review count visible in hero)
+      let socialProofAboveFold = false;
+      const spEls = Array.from(document.querySelectorAll('[class*="star" i], [class*="rating" i], [class*="review" i], [class*="testimonial" i]'));
+      for (const el of spEls) {
+        const r = el.getBoundingClientRect();
+        if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0 && (el.innerText||'').trim().length > 0) {
+          socialProofAboveFold = true;
+          break;
+        }
+      }
+      // Also check for star/rating text above fold
+      if (!socialProofAboveFold) {
+        const bodyText = document.body?.innerText || '';
+        const firstScreenText = bodyText.slice(0, 500);
+        if (/★|⭐|\d+(\.\d)?\s*stars?|\d+\s*reviews?/i.test(firstScreenText)) socialProofAboveFold = true;
+      }
+      result.socialProofAboveFold = socialProofAboveFold;
+
       return result;
     });
 
@@ -299,6 +385,9 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
     findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
+    findings.primaryCtaText = data.primaryCtaText || null;
+    findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
+    findings.socialProofAboveFold = data.socialProofAboveFold || false;
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
