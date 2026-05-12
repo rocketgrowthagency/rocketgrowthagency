@@ -578,10 +578,24 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     }
 
     if (mapsUrl) {
-      console.log('   → Results click failed; opening direct Google Maps URL.');
-      await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-      // Wait longer for the business panel to fully render after a direct URL load
-      await sleep(9000);
+      // Bare name URLs (/maps/place/Name+Only, no coordinates) render a 152-char stub —
+      // redirect to /maps/search/Name+City so the full business panel loads.
+      const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
+      const fallbackUrl = isBareNameUrl
+        ? `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ' ' + meta.city : ''))}`
+        : mapsUrl;
+      console.log(`   → Results click failed; opening ${isBareNameUrl ? 'search URL (bare name fix)' : 'direct Google Maps URL'}.`);
+      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      if (isBareNameUrl) {
+        await waitForMapsResults(page);
+        await sleep(2000);
+        const clicked = await clickListingInResultsByName(page, businessName);
+        if (clicked) await sleep(6500);
+        else await sleep(4000);
+      } else {
+        // Wait longer for the business panel to fully render after a direct URL load
+        await sleep(9000);
+      }
       await dismissResultsInfoPopup(page);
       return 'direct-url';
     }
@@ -1025,6 +1039,7 @@ async function main() {
       const row = toRecord[i];
 
       const name = row['Business Name'] || row.name || `business-${processed + 1}`;
+      const city = row['City'] || row.city || '';
       const slug = slugify(name, { lower: true, strict: true }) || `business-${processed + 1}`;
       const website = cleanUrl(row.Website || row.website || '');
       const mapsUrl = cleanUrl(row['Google Maps URL'] || row.mapsUrl || '');
@@ -1049,7 +1064,7 @@ async function main() {
 
       await recordBusinessVideos(
         browser,
-        { name, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+        { name, city, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
         mapsOut,
         websiteOut,
         mobileOut
