@@ -585,7 +585,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // redirect to /maps/search/Name+City so the full business panel loads.
       const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
       const fallbackUrl = isBareNameUrl
-        ? `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ' ' + meta.city : ''))}`
+        ? `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.address ? ' ' + meta.address : (meta.city ? ' ' + meta.city : '')))}`
         : mapsUrl;
       console.log(`   → Results click failed; opening ${isBareNameUrl ? 'search URL (bare name fix)' : 'direct Google Maps URL'}.`);
       await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
@@ -1080,7 +1080,7 @@ async function main() {
       try {
         await recordBusinessVideos(
           browser,
-          { name, city, website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+          { name, city, address: row.Address || row.address || '', website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
           mapsOut,
           websiteOut,
           mobileOut
