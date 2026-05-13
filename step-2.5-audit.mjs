@@ -80,6 +80,15 @@ async function auditWebsite(browser, websiteUrl, business) {
     imagesWithoutLazy: 0,
     totalImages: null,
     isHttps: false,
+    // New checks added 2026-05-13:
+    title: '',                       // <title> text
+    titleIncludesCategory: false,    // does title contain service category?
+    titleIncludesCity: false,        // does title contain city?
+    titleLength: null,               // for "too long, truncated in SERP" check
+    napAboveFold: null,              // phone AND address visible above fold (desktop)
+    canonicalUrl: '',                // <link rel="canonical"> value
+    canonicalMatches: null,          // canonical points to current page?
+    serviceAreaPagesCount: null,     // count of internal /location/ or /city/ pages linked
     error: null,
   };
 
@@ -182,6 +191,67 @@ async function auditWebsite(browser, websiteUrl, business) {
       }
       result.hasServiceAreaListed = areaMentions.size >= 1;
 
+      // Title tag — captured for "includes city + category" check (W1)
+      const titleEl = document.querySelector('title');
+      result.title = ((titleEl?.textContent || '').trim()).slice(0, 200);
+
+      // NAP above fold — phone AND address visible as text above the fold (W2).
+      // Strict: both must be present in viewport on first paint.
+      const napFoldH = window.innerHeight;
+      const phoneRegex = /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/;
+      const addrRegex = /\b\d{2,5}\s+[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+(?:St|Ave|Blvd|Rd|Dr|Ln|Way|Pl|Ct|Pkwy|Highway|Hwy)\b/;
+      const cityStateRegex = /\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?,?\s+(?:CA|California|TX|FL|NY|IL|WA|OR|NV|AZ|CO|GA|NC|VA|MA|PA|OH|MI|MN|UT)\b/;
+      let napPhoneFound = false, napAddrFound = false;
+      const napElsAll = Array.from(document.querySelectorAll('*'));
+      for (const el of napElsAll) {
+        if (el.children.length > 0) continue; // leaf nodes only
+        const t = (el.innerText || el.textContent || '').trim();
+        if (!t || t.length > 200) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (r.top < 0 || r.top >= napFoldH) continue;
+        if (!napPhoneFound && phoneRegex.test(t)) napPhoneFound = true;
+        if (!napAddrFound && (addrRegex.test(t) || cityStateRegex.test(t))) napAddrFound = true;
+        if (napPhoneFound && napAddrFound) break;
+      }
+      result.napAboveFold = napPhoneFound && napAddrFound;
+
+      // Canonical tag — points to a different URL? (W6 — silent ranking killer)
+      const canonEl = document.querySelector('link[rel="canonical"]');
+      result.canonicalUrl = canonEl?.getAttribute('href')?.trim() || '';
+      if (result.canonicalUrl) {
+        try {
+          const canonAbs = new URL(result.canonicalUrl, location.href).href.replace(/\/$/, '');
+          const currentAbs = location.href.split('#')[0].split('?')[0].replace(/\/$/, '');
+          result.canonicalMatches = canonAbs === currentAbs;
+        } catch { result.canonicalMatches = null; }
+      } else {
+        // No canonical — that's fine, treat as matching (don't flag)
+        result.canonicalMatches = true;
+      }
+
+      // Service-area pages count (W4) — internal links to /location/, /service-area/,
+      // /cities/, /areas-we-serve/, or any /<city-name>/ path under same hostname.
+      const hostname = location.hostname;
+      const locPath = /\/(?:locations?|service-areas?|cities|areas?-we-serve|service-locations?|where-we-work)(?:\/|$)/i;
+      const cityNamePath = /\/(?:culver-city|los-angeles|santa-monica|beverly-hills|west-hollywood|marina-del-rey|venice|inglewood|el-segundo|playa-vista|hollywood|brentwood|westwood|mar-vista|palms|mid-city|burbank|glendale|pasadena|long-beach|torrance|redondo-beach|manhattan-beach|hermosa-beach|hawthorne|gardena|compton|carson|cerritos|orange-county|san-diego)(?:\/|$)/i;
+      const locationLinks = new Set();
+      const allLinks = Array.from(document.querySelectorAll('a[href]'));
+      for (const a of allLinks) {
+        let href = a.getAttribute('href') || '';
+        if (!href) continue;
+        // Resolve relative URLs against current
+        try {
+          const u = new URL(href, location.href);
+          if (u.hostname && u.hostname !== hostname) continue;
+          const path = u.pathname.replace(/\/$/, '');
+          if (locPath.test(path) || cityNamePath.test(path)) {
+            locationLinks.add(path);
+          }
+        } catch {}
+      }
+      result.serviceAreaPagesCount = locationLinks.size;
+
       return result;
     });
 
@@ -198,6 +268,12 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.hasReviewsOnPage = data.hasReviewsOnPage || false;
     findings.hasServiceAreaListed = data.hasServiceAreaListed || false;
+    findings.title = data.title || '';
+    findings.titleLength = data.title ? data.title.length : null;
+    findings.napAboveFold = data.napAboveFold;
+    findings.canonicalUrl = data.canonicalUrl || '';
+    findings.canonicalMatches = data.canonicalMatches;
+    findings.serviceAreaPagesCount = data.serviceAreaPagesCount;
 
     // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();
@@ -210,6 +286,11 @@ async function auditWebsite(browser, websiteUrl, business) {
     const catPhrase = category ? category.split(/\s+/).slice(0, 2).join(' ') : '';
     findings.h1IncludesCategory = !!(catPhrase && catPhrase.length >= 4 && h1Lower.includes(catPhrase));
     findings.h1IncludesCity = !!(city && h1Lower.includes(city));
+
+    // Same logic for title tag (W1)
+    const titleLower = (data.title || '').toLowerCase();
+    findings.titleIncludesCategory = !!(catPhrase && catPhrase.length >= 4 && titleLower.includes(catPhrase));
+    findings.titleIncludesCity = !!(city && titleLower.includes(city));
 
     findings.hasMobileClickToCall = data.clickToCallCount > 0;
 
@@ -241,6 +322,9 @@ async function auditMobile(browser, websiteUrl, business) {
     renderBlockingHeadResources: null,
     imagesWithoutLazy: null,
     totalImages: null,
+    // New checks added 2026-05-13:
+    hasStickyCta: null,              // fixed/sticky CTA visible after scroll (Mo1)
+    hasClickToText: null,            // <a href="sms:..."> present anywhere (Mo2)
     error: null,
   };
 
@@ -384,6 +468,9 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       result.socialProofAboveFold = socialProofAboveFold;
 
+      // Click-to-text (Mo2) — `<a href="sms:">` anywhere on the page
+      result.hasClickToText = !!document.querySelector('a[href^="sms:"]');
+
       return result;
     });
 
@@ -399,6 +486,43 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
     findings.socialProofAboveFold = data.socialProofAboveFold || false;
+    findings.hasClickToText = data.hasClickToText || false;
+
+    // Sticky CTA on scroll (Mo1) — scroll past initial fold then check whether
+    // any fixed/sticky CTA stays visible. Done as a Node-side scroll then a
+    // separate evaluate so the layout has time to settle.
+    await page.evaluate(() => window.scrollTo({ top: 1000, behavior: 'instant' })).catch(() => {});
+    await new Promise((r) => setTimeout(r, 400));
+    findings.hasStickyCta = await page.evaluate(() => {
+      const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in)$/i;
+      const candidates = Array.from(document.querySelectorAll(
+        'a[href^="tel:"], a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="book"], a[href*="appointment"], a[class*="cta"], a[class*="button" i], a[class*="btn" i], button, div[class*="sticky" i] a, div[class*="fixed" i] a'
+      ));
+      for (const el of candidates) {
+        const style = window.getComputedStyle(el);
+        const pos = style.position;
+        // Walk up to ancestor in case the element itself isn't fixed but a parent wrapper is
+        let isFixed = (pos === 'fixed' || pos === 'sticky');
+        if (!isFixed) {
+          let p = el.parentElement;
+          for (let i = 0; i < 5 && p; i++) {
+            const ps = window.getComputedStyle(p);
+            if (ps.position === 'fixed' || ps.position === 'sticky') { isFixed = true; break; }
+            p = p.parentElement;
+          }
+        }
+        if (!isFixed) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 50 || r.height < 20) continue;
+        if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+        const txt = ((el.innerText || el.textContent || '') + '').trim();
+        if (!txt || NAV_LIKE.test(txt)) continue;
+        return true;
+      }
+      return false;
+    }).catch(() => null);
+    // Scroll back to top to leave the page in a clean state
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
@@ -420,6 +544,11 @@ async function auditGbp(_, gbpUrl, business) {
     reviewsLast90Days: null,
     ownerResponseCount: null,
     hasBusinessHours: null,
+    // New checks added 2026-05-13:
+    description: '',                 // GBP "From the business" text (M1)
+    descriptionLength: null,
+    hasPosts: null,                  // GBP "Updates" / Posts section present (M2)
+    lastPostDaysAgo: null,           // days since most recent post
     error: null,
   };
   if (!gbpUrl) return findings;
@@ -651,7 +780,66 @@ async function auditGbp(_, gbpUrl, business) {
       const categoriesCount = null;
       console.log(`  [gbp-diag] categoriesCount = null (regex was inflating phrase variants)`);
 
-      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount };
+      // GBP description (M1) — "From the business" section. Try several selector
+      // patterns then fall back to scanning for the heading text.
+      let description = '';
+      const descSel = [
+        'div.WeS02d.fontBodyMedium',                 // common GBP description container
+        'div[data-attrid*="description"]',
+        'div.PYvSYb',                                // alternative description container
+      ];
+      for (const s of descSel) {
+        const el = document.querySelector(s);
+        if (el) {
+          const t = (el.textContent || '').trim();
+          if (t.length > 30 && t.length < 2000) { description = t; break; }
+        }
+      }
+      if (!description) {
+        // Fallback: find "From the business" heading and grab next text block
+        const allEls = Array.from(document.querySelectorAll('*'));
+        for (const el of allEls) {
+          if (el.children.length > 4) continue;
+          const t = (el.textContent || '').trim();
+          if (/^from\s+the\s+business$/i.test(t) || /^description$/i.test(t)) {
+            let sib = el.nextElementSibling || el.parentElement?.nextElementSibling;
+            for (let i = 0; sib && i < 3; i++) {
+              const dt = (sib.textContent || '').trim();
+              if (dt.length > 30 && dt.length < 2000) { description = dt; break; }
+              sib = sib.nextElementSibling;
+            }
+            if (description) break;
+          }
+        }
+      }
+      console.log(`  [gbp-diag] description = ${description ? description.length + ' chars' : 'EMPTY'}`);
+
+      // Posts / Updates (M2) — Google Posts appear under an "Updates" or "Posts"
+      // section heading. Detect presence + extract most-recent timestamp.
+      let hasPosts = false;
+      let lastPostDaysAgo = null;
+      const postHeadings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button, span'))
+        .filter(el => /^(?:updates?|posts?|from the owner)$/i.test((el.textContent || '').trim()));
+      if (postHeadings.length > 0) {
+        // Find the section container after the heading
+        const heading = postHeadings[0];
+        const region = heading.closest('div[role="region"]') || heading.parentElement?.parentElement;
+        const scopeText = (region?.innerText || '').slice(0, 3000);
+        const m = scopeText.match(/(\d+)\s+(day|week|month|year)s?\s+ago/i);
+        if (m) {
+          hasPosts = true;
+          const n = Number(m[1]);
+          const u = m[2].toLowerCase();
+          const mult = u === 'day' ? 1 : u === 'week' ? 7 : u === 'month' ? 30 : 365;
+          lastPostDaysAgo = n * mult;
+        } else if (region && region.querySelector('img, [data-src]')) {
+          // Posts section visible with imagery but no timestamp parsed — still posts exist
+          hasPosts = true;
+        }
+      }
+      console.log(`  [gbp-diag] hasPosts=${hasPosts} lastPostDaysAgo=${lastPostDaysAgo}`);
+
+      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
@@ -663,6 +851,10 @@ async function auditGbp(_, gbpUrl, business) {
     findings.hasBusinessHours = data.hasBusinessHours;
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
+    findings.description = data.description || '';
+    findings.descriptionLength = data.description ? data.description.length : null;
+    findings.hasPosts = data.hasPosts;
+    findings.lastPostDaysAgo = data.lastPostDaysAgo;
 
     // Primary GBP category vs search intent — #1 local ranking factor
     if (data.primaryCategory && (business.category || business.searchTerm)) {
@@ -675,7 +867,7 @@ async function auditGbp(_, gbpUrl, business) {
 
     // Final per-field summary — surfaces every value we'll feed into the script,
     // so wrong claims like "9 photos" can never ship unnoticed again.
-    console.log(`  [gbp-summary] ${business.name || 'unknown'}: reviewCount=${findings.reviewCount} | photoCount=${findings.photoCount} | daysSinceLastReview=${findings.daysSinceLastReview} | last30=${findings.reviewsLast30Days} | last90=${findings.reviewsLast90Days} | ownerResponses=${findings.ownerResponseCount} | hasHours=${findings.hasBusinessHours} | primaryCategory=${JSON.stringify(findings.primaryCategory)} | matchesSearch=${findings.primaryCategoryMatchesSearch}`);
+    console.log(`  [gbp-summary] ${business.name || 'unknown'}: reviewCount=${findings.reviewCount} | photoCount=${findings.photoCount} | daysSinceLastReview=${findings.daysSinceLastReview} | last30=${findings.reviewsLast30Days} | last90=${findings.reviewsLast90Days} | ownerResponses=${findings.ownerResponseCount} | hasHours=${findings.hasBusinessHours} | primaryCategory=${JSON.stringify(findings.primaryCategory)} | matchesSearch=${findings.primaryCategoryMatchesSearch} | description=${findings.descriptionLength}chars | hasPosts=${findings.hasPosts} | lastPostDaysAgo=${findings.lastPostDaysAgo}`);
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {

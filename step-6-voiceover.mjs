@@ -291,9 +291,27 @@ function scoreWebsiteFindings(audit) {
   if (w.websitePhoneMatchesGbp === false) {
     out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
   }
+  // PRIORITY 1.5 (NEW): NAP not visible above the fold — phone AND address as visible text in the hero
+  if (w.napAboveFold === false) {
+    out.push({ key: 'napAboveFold', score: 1.5, finding: `your phone number and address aren't both visible above the fold — visitors and Google's local trust signals look for NAP in the hero, not buried in the footer` });
+  }
   // PRIORITY 2: No LocalBusiness schema
   if (w.hasLocalBusinessSchema === false) {
     out.push({ key: 'schema', score: 2, finding: `there's no LocalBusiness schema markup, one of the top 5 Maps ranking signals` });
+  }
+  // PRIORITY 2.5 (NEW): Title tag missing city or category — #1 on-page local signal
+  if (w.title) {
+    if (!w.titleIncludesCity && !w.titleIncludesCategory) {
+      out.push({ key: 'title', score: 2.5, finding: `your page title is "${w.title.slice(0, 80)}" — it doesn't include your service category or your city, which are the strongest on-page signals Google uses for local ranking` });
+    } else if (!w.titleIncludesCity) {
+      out.push({ key: 'titleCity', score: 2.5, finding: `your page title doesn't include your city — adding the city name to the title is one of the easiest on-page wins for ranking in local search` });
+    } else if (!w.titleIncludesCategory) {
+      out.push({ key: 'titleCategory', score: 2.5, finding: `your page title doesn't include your service category — Google reads the title first when matching a query to your page` });
+    }
+  }
+  // PRIORITY 2.7 (NEW): Canonical points to a different URL — silent ranking killer
+  if (w.canonicalMatches === false && w.canonicalUrl) {
+    out.push({ key: 'canonical', score: 2.7, finding: `your canonical tag points to a different URL than this page — Google may be indexing the wrong version, which fragments your ranking signals` });
   }
   // PRIORITY 3: Slow page load
   if (w.pageLoadSeconds != null && w.pageLoadSeconds > 2.5) {
@@ -340,6 +358,13 @@ function scoreWebsiteFindings(audit) {
   if (w.hasReviewsOnPage === false) {
     out.push({ key: 'noReviews', score: 12, finding: `your website doesn't show any customer reviews or testimonials — visitors can't verify your reputation without leaving the page to check Google` });
   }
+  // PRIORITY 12.5 (NEW): Few or no dedicated service-area / location pages
+  if (w.serviceAreaPagesCount != null && w.serviceAreaPagesCount <= 1) {
+    const msg = w.serviceAreaPagesCount === 0
+      ? `you don't have any dedicated city or service-area pages — top performers rank in multiple cities by publishing a focused landing page per location they serve`
+      : `you only have one service-area page — top performers stack rankings across cities by publishing a dedicated landing page per location they serve`;
+    out.push({ key: 'serviceAreaPages', score: 12.5, finding: msg });
+  }
   // PRIORITY 13: No service area listed
   if (w.hasServiceAreaListed === false) {
     out.push({ key: 'noServiceArea', score: 13, finding: `your website doesn't list a service area — mentioning specific cities and neighborhoods you serve is a strong local SEO signal` });
@@ -378,6 +403,10 @@ function scoreMobileFindings(audit) {
   if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
     out.push({ key: 'pageWeight', score: 6, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes of resources — Google recommends keeping mobile pages under 3 megabytes to avoid slow load times` });
   }
+  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor
+  if (m.hasStickyCta === false) {
+    out.push({ key: 'stickyCta', score: 6.5, finding: `there's no sticky call-to-action that stays visible when visitors scroll on mobile — top performers keep a Call or Quote button always reachable, so visitors don't have to scroll back up to convert` });
+  }
   // PRIORITY 8: Multiple H1 tags
   if (m.h1Count != null && m.h1Count > 1) {
     out.push({ key: 'multiH1', score: 8, finding: `your mobile page has ${m.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
@@ -389,6 +418,10 @@ function scoreMobileFindings(audit) {
   // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it
   if (m.imagesWithoutLazy != null && m.totalImages > 5 && (m.imagesWithoutLazy / m.totalImages) > 0.4) {
     out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, slowing your mobile load` });
+  }
+  // PRIORITY 10.5 (NEW): No click-to-text (sms:) support
+  if (m.hasClickToText === false) {
+    out.push({ key: 'clickToText', score: 10.5, finding: `your mobile site has no tap-to-text option — modern local customers default to SMS for quick questions, and adding a single sms link is a free conversion path most competitors are missing` });
   }
 
   // TIER 2 — conversion signals (scores 11-16, fill in when Tier 1 doesn't reach 3 findings)
@@ -530,6 +563,40 @@ function scoreMapsFindings(audit, top3Stats, record) {
       key: 'ownerResponse',
       score: 45,
       finding: `you have ${audit.gbp.reviewCount} reviews but haven't responded to any — Google treats owner response rate as a trust and engagement signal for Maps ranking`,
+    });
+  }
+
+  // PRIORITY 26 (NEW): GBP description missing or thin (M1)
+  // Description is a direct relevance signal Google uses to match queries to the listing.
+  if (audit?.gbp?.descriptionLength != null) {
+    if (audit.gbp.descriptionLength === 0) {
+      out.push({
+        key: 'gbpDescription',
+        score: 26,
+        finding: `your Google Business Profile description is empty — that's a free 750-character field Google reads to match queries to your listing, and skipping it leaves a ranking signal on the table`,
+      });
+    } else if (audit.gbp.descriptionLength < 100) {
+      out.push({
+        key: 'gbpDescription',
+        score: 26,
+        finding: `your Google Business Profile description is only ${audit.gbp.descriptionLength} characters — Google gives you 750 to describe your services and service area, and a short description weakens your relevance signal for local queries`,
+      });
+    }
+  }
+
+  // PRIORITY 30 (NEW): Google Posts inactive or absent (M2)
+  // Posts signal active business engagement — Google rewards listings that publish regularly.
+  if (audit?.gbp?.hasPosts === false) {
+    out.push({
+      key: 'gbpPosts',
+      score: 30,
+      finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
+    });
+  } else if (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
+    out.push({
+      key: 'gbpPosts',
+      score: 30,
+      finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
     });
   }
 
