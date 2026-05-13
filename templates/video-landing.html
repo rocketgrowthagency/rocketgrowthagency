@@ -31,7 +31,7 @@
     .shell {
       max-width: 920px;
       margin: 0 auto;
-      padding: 32px 24px 120px; /* extra bottom for sticky CTA on mobile */
+      padding: 32px 24px 120px;
     }
     header {
       display: flex;
@@ -70,72 +70,8 @@
       width: 100%;
       background: #000;
       line-height: 0;
-      position: relative;
     }
     video { width: 100%; height: auto; display: block; }
-    .end-card {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.15);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-    .end-card.visible { opacity: 1; pointer-events: auto; }
-    .end-card-inner {
-      position: absolute;
-      /* fixed distance from bottom so it always clears the controls bar */
-      bottom: 72px;
-      left: 0; right: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-      padding: 0 16px;
-      transform: translateY(14px);
-      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .end-card.visible .end-card-inner { transform: translateY(0); }
-    .end-card-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px 32px;
-      background: var(--brand);
-      color: #fff;
-      border-radius: 999px;
-      text-decoration: none;
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
-      white-space: nowrap;
-      outline: 3px solid rgba(255,255,255,0.5);
-      outline-offset: 3px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 0 rgba(255,255,255,0.5);
-      animation: none;
-    }
-    .end-card.visible .end-card-btn {
-      animation: ec-pulse 2.2s ease-in-out 0.7s infinite;
-    }
-    @keyframes ec-pulse {
-      0%   { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 0   rgba(255,255,255,0.55); }
-      55%  { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 13px rgba(255,255,255,0); }
-      100% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 0   rgba(255,255,255,0); }
-    }
-    .end-card-label {
-      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: rgba(255,255,255,0.8);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    }
-    @media (max-width: 520px) {
-      .end-card-btn { font-size: 0.88rem; padding: 13px 22px; }
-      .end-card-inner { bottom: 62px; }
-    }
     .body-copy { padding: 24px; }
     .body-copy p { margin: 0 0 12px; color: var(--muted); }
     .cta-bar {
@@ -143,7 +79,7 @@
       flex-direction: column;
       gap: 10px;
       align-items: center;
-      padding: 8px 24px 32px;
+      padding: 24px 24px 24px;
     }
     .btn-primary {
       display: inline-flex;
@@ -179,10 +115,7 @@
       font-size: 0.95rem;
       text-align: center;
     }
-    /* Sticky bottom-bar CTA on mobile */
-    .sticky-cta {
-      display: none;
-    }
+    .sticky-cta { display: none; }
     @media (max-width: 720px) {
       .sticky-cta {
         display: flex;
@@ -248,7 +181,6 @@
 
       <div class="video-wrap">
         <video
-          id="rga-video"
           src="video.mp4"
           poster="thumb.jpg"
           controls
@@ -258,25 +190,16 @@
           preload="metadata">
           Your browser doesn't support HTML5 video. <a href="video.mp4">Download the video</a>.
         </video>
-        <div class="end-card" id="rga-end-card" aria-hidden="true">
-          <div class="end-card-inner">
-            <span class="end-card-label">&#8595; &nbsp;Click Below for Your Free Audit</span>
-            <a class="end-card-btn" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">
-              Get My Free Growth Audit
-            </a>
-            <span class="end-card-label">Free &nbsp;·&nbsp; No Call Required</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="body-copy">
-        <p>{{BODY_INTRO}}</p>
-        <p>To get a full audit of your business — everything we found in this walkthrough plus the deeper issues we couldn't cover, the fixes, and the exact plan to {{BODY_OUTCOME}} — click the button below. It's free and doesn't require a call.</p>
       </div>
 
       <div class="cta-bar">
         <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">Get My Free Growth Audit</a>
         <p class="escape-link">Already convinced? <a href="https://www.rocketgrowthagency.com/contact/?source=video&business={{SLUG}}">Skip the audit and contact us →</a></p>
+      </div>
+
+      <div class="body-copy">
+        <p>{{BODY_INTRO}}</p>
+        <p>To get a full audit of your business — everything we found in this walkthrough plus the deeper issues we couldn't cover, the fixes, and the exact plan to {{BODY_OUTCOME}} — it's free and doesn't require a call.</p>
       </div>
     </article>
 
@@ -294,21 +217,5 @@
   <div class="sticky-cta">
     <a href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
   </div>
-
-  <script>
-    (function () {
-      var vid = document.getElementById('rga-video');
-      var card = document.getElementById('rga-end-card');
-      if (!vid || !card) return;
-      vid.addEventListener('ended', function () {
-        card.classList.add('visible');
-        card.removeAttribute('aria-hidden');
-      });
-      vid.addEventListener('play', function () {
-        card.classList.remove('visible');
-        card.setAttribute('aria-hidden', 'true');
-      });
-    })();
-  </script>
 </body>
 </html>
