@@ -403,7 +403,9 @@ async function clickListingInResultsByName(page, businessName) {
   const target = normalizeText(businessName);
   if (!target) return false;
 
-  const clicked = await page.evaluate((targetNorm) => {
+  // Find best matching card and return screen coords — real mouse click required
+  // because Google Maps ignores programmatic DOM .click() for panel navigation.
+  const coords = await page.evaluate((targetNorm) => {
     const norm = (s) =>
       String(s || '')
         .toLowerCase()
@@ -455,29 +457,30 @@ async function clickListingInResultsByName(page, businessName) {
 
     scored.sort((a, b) => b.best - a.best);
     const topScore = scored[0];
-    if (!topScore || topScore.best < 45) return false;
+    if (!topScore || topScore.best < 45) return null;
 
     const top = topScore.el;
-    if (!top) return false;
-
-    try {
-      top.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    } catch {}
+    if (!top) return null;
 
     const anchor =
       top.tagName?.toLowerCase?.() === 'a'
         ? top
         : top.querySelector?.('a.hfpxzc, a[aria-label], a[href*="/maps/place/"]') || null;
 
-    try {
-      (anchor || top).click();
-      return true;
-    } catch {
-      return false;
-    }
+    const clickTarget = anchor || top;
+    clickTarget.scrollIntoView({ block: 'center' });
+
+    const r = clickTarget.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return null;
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
   }, target);
 
-  return Boolean(clicked);
+  if (!coords) return false;
+
+  // Small pause after scrollIntoView so layout settles
+  await sleep(400);
+  await page.mouse.click(coords.x, coords.y);
+  return true;
 }
 
 async function extractWebsiteFromMapsCard(page) {
