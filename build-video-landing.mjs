@@ -67,9 +67,10 @@ function parseFilename(name) {
 // when Airtable is skipped or the lead isn't in Airtable yet.
 // Uses csv-parser to handle quoted fields with embedded newlines.
 import csvParser from "csv-parser";
-async function loadStep2Ranks() {
+async function loadStep2Data() {
   const rankMap = {};
-  if (!fs.existsSync(STEP2_DIR)) return rankMap;
+  const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)
+  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap };
   const csvFiles = fs.readdirSync(STEP2_DIR).filter(f => f.endsWith('.csv'));
   for (const file of csvFiles) {
     await new Promise((resolve) => {
@@ -78,16 +79,19 @@ async function loadStep2Ranks() {
         .on('data', (row) => {
           const name = row['Business Name'] || row['name'] || '';
           const rank = parseInt(row['Map Rank'] || row['rank'] || '', 10);
-          if (name && Number.isFinite(rank)) {
+          if (name) {
             const s = slugify(name, { lower: true, strict: true });
-            if (s) rankMap[s] = rank;
+            if (s) {
+              nameMap[s] = name; // always store the real name
+              if (Number.isFinite(rank)) rankMap[s] = rank;
+            }
           }
         })
         .on('end', resolve)
         .on('error', resolve);
     });
   }
-  return rankMap;
+  return { rankMap, nameMap };
 }
 
 // Prefer a clean business-name slug; fall back to filename slug.
@@ -265,13 +269,15 @@ async function main() {
 
   ensureDir(LANDING_OUT_DIR);
 
-  const step2Ranks = await loadStep2Ranks();
+  const { rankMap: step2Ranks, nameMap: step2Names } = await loadStep2Data();
 
   let built = 0;
   let airtableWrites = 0;
   for (const v of mp4s) {
     const { slug: fileSlug } = parseFilename(v.file);
-    let businessName = fileSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    // Fallback priority: Airtable → step-2 CSV name (preserves BRGD/KNR casing) → slug-derived title-case
+    let businessName = step2Names[fileSlug]
+      || fileSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     let airtableRecord = null;
     if (!NO_AIRTABLE) {
       airtableRecord = await fetchLeadBySlug(fileSlug);
