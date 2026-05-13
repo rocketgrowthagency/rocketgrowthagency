@@ -527,12 +527,13 @@ async function extractPlaceDetails(page) {
       }
 
       function findPhotoCount() {
-        const all = Array.from(document.querySelectorAll('button, a, [role="button"]'));
-        for (const el of all) {
-          const combined = (el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '');
-          const m = combined.match(/([\d,]+)\s+photos?/i);
-          if (m) return m[1].replace(/,/g, '');
-        }
+        // The Google Maps panel does NOT display a total photo count anywhere
+        // in aria-labels or button text (verified 2026-05-13 by exhaustive DOM
+        // dump). The old generic regex was picking up arbitrary "N photos"
+        // strings — e.g. Express returned "9" from a review snippet when the
+        // actual gallery had ~47. Returning empty is the honest answer until
+        // we have a reliable extractor (would require navigating into the
+        // photos grid + counting thumbnails, which is slow + fragile).
         return '';
       }
 
@@ -1029,7 +1030,7 @@ async function main() {
           parsed.city,
           parsed.state,
           parsed.zip,
-          (details.phone || '').trim(),
+          (details.phone || '').replace(/\s+/g, ' ').trim(),
           (details.website || '').trim(),
           (details.category || '').trim(),
           (details.rating || '').trim(),

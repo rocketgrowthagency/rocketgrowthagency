@@ -145,17 +145,21 @@ async function auditWebsite(browser, websiteUrl, business) {
       result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
-      // Tier 2: CTA text quality — is the primary above-fold button generic or action-oriented?
+      // Tier 2: CTA text quality — primary above-fold button. Exclude generic
+      // nav/menu buttons (mobile hamburger was being detected as primary CTA).
       const foldH = window.innerHeight;
       const ctaEls = Array.from(document.querySelectorAll(
         'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
       ));
+      const NAV_LIKE_DESKTOP = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search)$/i;
       let primaryCtaText = null;
       let primaryCtaH = 0;
       for (const el of ctaEls) {
         const r = el.getBoundingClientRect();
         if (r.width > 20 && r.height > 20 && r.top >= 0 && r.top < foldH) {
-          if (r.height > primaryCtaH) { primaryCtaH = r.height; primaryCtaText = (el.innerText || el.textContent || '').trim().slice(0, 60); }
+          const txt = ((el.innerText || el.textContent || '') + '').trim();
+          if (!txt || NAV_LIKE_DESKTOP.test(txt)) continue;
+          if (r.height > primaryCtaH) { primaryCtaH = r.height; primaryCtaText = txt.slice(0, 60); }
         }
       }
       result.primaryCtaText = primaryCtaText;
@@ -296,11 +300,15 @@ async function auditMobile(browser, websiteUrl, business) {
           'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"]'
         )
       );
-      // Track the largest (primary) CTA above fold — largest = most prominent call-to-action
+      // Track the largest *real* CTA above fold. Exclude generic nav/menu buttons
+      // (hamburger nav was being picked as "primary CTA" on Express mobile).
+      const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search)$/i;
       let largestVisibleH = null;
       for (const el of ctaCandidates) {
         const r = el.getBoundingClientRect();
         if (r.width > 0 && r.height > 0 && r.top >= 0 && r.top < foldHeight) {
+          const txt = ((el.innerText || el.textContent || '') + '').trim();
+          if (!txt || NAV_LIKE.test(txt)) continue;
           if (largestVisibleH === null || r.height > largestVisibleH) {
             largestVisibleH = r.height;
           }
@@ -323,17 +331,20 @@ async function auditMobile(browser, websiteUrl, business) {
       result.totalImages = imgs.length;
       result.imagesWithoutLazy = imgs.filter((img) => img.loading !== 'lazy').length;
 
-      // Tier 2: CTA text quality (mobile)
+      // Tier 2: CTA text quality (mobile) — exclude nav/menu buttons same as desktop
       const mobileFold = window.innerHeight;
       const mobileCtaEls = Array.from(document.querySelectorAll(
         'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
       ));
+      const NAV_LIKE_MOBILE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search)$/i;
       let mobileCtaText = null;
       let mobileCtaH = 0;
       for (const el of mobileCtaEls) {
         const r = el.getBoundingClientRect();
         if (r.width > 20 && r.height > 20 && r.top >= 0 && r.top < mobileFold) {
-          if (r.height > mobileCtaH) { mobileCtaH = r.height; mobileCtaText = (el.innerText || el.textContent || '').trim().slice(0, 60); }
+          const txt = ((el.innerText || el.textContent || '') + '').trim();
+          if (!txt || NAV_LIKE_MOBILE.test(txt)) continue;
+          if (r.height > mobileCtaH) { mobileCtaH = r.height; mobileCtaText = txt.slice(0, 60); }
         }
       }
       result.primaryCtaText = mobileCtaText;
@@ -533,41 +544,39 @@ async function auditGbp(_, gbpUrl, business) {
         if (m) reviewCount = Number(m[1].replace(/,/g, ''));
       }
 
-      // Photo count: look for a specific count button (not "Add photos" generic buttons)
-      let photoCount = null;
-      const allPhotoBtns = Array.from(document.querySelectorAll('button[aria-label*="photo"], a[aria-label*="photo"]'));
-      for (const btn of allPhotoBtns) {
-        const label = btn.getAttribute('aria-label') || '';
-        const m = label.match(/([\d,]+)\s*photo/i);
-        if (m) { photoCount = Number(m[1].replace(/,/g, '')); break; }
-      }
-      // Text fallback — require ≥2 to exclude single-thumbnail false positives
-      if (photoCount === null) {
-        const m = txt.match(/([\d,]{1,7})\s+photos?\b/i);
-        if (m) {
-          const n = Number(m[1].replace(/,/g, ''));
-          if (n >= 2) photoCount = n;
-        }
-      }
+      // Photo count: Google does NOT display a total count anywhere on the business
+      // panel (verified by exhaustive aria-label dump 2026-05-13 — only matches are
+      // "Photo of <Business>", "Next Photo", "Add photos & videos", and per-reviewer
+      // thumbnails). The old text-regex fallback was catching arbitrary "N photos"
+      // strings from review snippets (Express had 47+ photos, scraper returned 9).
+      // For now we explicitly return null — better to skip the photoCount finding
+      // than make a false claim. A reliable extractor would need to navigate into
+      // the photos grid + count thumbnails, which is slow and fragile.
+      const photoCount = null;
+      console.log(`  [gbp-diag] photoCount = null (no reliable selector on panel; see comments)`);
 
-      // Review recency + velocity: scope to review card elements only.
-      // Scanning body.innerText picks up photo uploads, posts, Q&A — all non-review timestamps.
-      // Review cards have data-review-id or known container classes; fall back to body text only
-      // if no review cards are found (avoids false positives from non-review page elements).
-      const reviewCards = Array.from(document.querySelectorAll(
-        '[data-review-id], div.jftiEf, div.GHT2ce, div[class*="review"]'
-      )).filter(el => el.innerText && el.innerText.trim().length > 20);
-      const reviewTexts = reviewCards.length > 0
-        ? reviewCards.map(el => el.innerText)
-        : [txt]; // fallback: whole page (less accurate but better than nothing)
-      const recencyPattern = /(\d+)\s+(day|week|month|year)s?\s+ago/gi;
+      // Review recency + velocity: scope STRICTLY to review cards (must have
+      // data-review-id). Removed the broad body-text fallback because it was
+      // catching owner-response timestamps ("Response from owner 3 months ago")
+      // and Q&A timestamps, producing false minDays values.
+      // Take the FIRST timestamp inside each card (skip owner-response sub-blocks).
+      const reviewCards = Array.from(document.querySelectorAll('div[data-review-id]'))
+        .filter(el => el.innerText && el.innerText.trim().length > 20);
       let minDays = null;
       let reviewsLast30 = 0;
       let reviewsLast90 = 0;
-      for (const cardText of reviewTexts.slice(0, 40)) {
-        const m = recencyPattern.exec(cardText);
-        recencyPattern.lastIndex = 0; // reset for next card
+      let cardsScanned = 0;
+      for (const card of reviewCards.slice(0, 40)) {
+        // Find the first time-ago text inside the card, scoped to the top-level
+        // header (not nested owner-response blocks which also have "X ago" text).
+        // Owner-response blocks are typically wrapped in a child with class
+        // CDe7pd or similar; remove them before scanning.
+        const cardClone = card.cloneNode(true);
+        cardClone.querySelectorAll('.CDe7pd, [class*="ownerResponse"], [class*="OwnerResponse"]').forEach(n => n.remove());
+        const text = (cardClone.innerText || '').trim();
+        const m = text.match(/(\d+)\s+(day|week|month|year)s?\s+ago/i);
         if (!m) continue;
+        cardsScanned++;
         const n = Number(m[1]);
         const u = m[2].toLowerCase();
         const mult = u === 'day' ? 1 : u === 'week' ? 7 : u === 'month' ? 30 : 365;
@@ -576,6 +585,7 @@ async function auditGbp(_, gbpUrl, business) {
         if (days <= 30) reviewsLast30++;
         if (days <= 90) reviewsLast90++;
       }
+      console.log(`  [gbp-diag] review cards found: ${reviewCards.length}, parsed: ${cardsScanned}, minDays: ${minDays}, last30: ${reviewsLast30}, last90: ${reviewsLast90}`);
 
       // Owner response count
       const ownerResponseCount = [...txt.matchAll(/Response from the owner/gi)].length;
@@ -603,13 +613,13 @@ async function auditGbp(_, gbpUrl, business) {
         primaryCategory = catCandidates.find((t) => categoryRegex.test(t)) || null;
       }
 
-      // Categories count
-      const catSnippet = txt.slice(0, 2000);
-      const distinctCats = new Set();
-      for (const m of catSnippet.matchAll(/\b\w+(?:\s+\w+){0,2}\s+(?:contractor|service|repair|company|plumber|plumbing|hvac|electrician|cleaner|specialist|installer|installation|roofing|landscaping|moving|pest|door|garage|locksmith)\b/gi)) {
-        distinctCats.add(m[0].toLowerCase().trim());
-      }
-      const categoriesCount = distinctCats.size > 0 ? distinctCats.size : null;
+      // Categories count: the old regex-on-body-text approach counted phrase variants
+      // (e.g. "garage door repair", "garage door installation", "garage door company"
+      // all matched), inflating Express to 18 when real GBP categories are 1-3. Until
+      // we have a DOM selector that targets the actual category list (Google folds
+      // secondary categories under "More categories" expansion), set null.
+      const categoriesCount = null;
+      console.log(`  [gbp-diag] categoriesCount = null (regex was inflating phrase variants)`);
 
       return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount };
     }, CARD_SELECTOR);
@@ -632,6 +642,10 @@ async function auditGbp(_, gbpUrl, business) {
         catLower.split(/\s+/).some((w) => w.length > 3 && searchWords.includes(w)) ||
         searchWords.split(/\s+/).some((w) => w.length > 3 && catLower.includes(w));
     }
+
+    // Final per-field summary — surfaces every value we'll feed into the script,
+    // so wrong claims like "9 photos" can never ship unnoticed again.
+    console.log(`  [gbp-summary] ${business.name || 'unknown'}: reviewCount=${findings.reviewCount} | photoCount=${findings.photoCount} | daysSinceLastReview=${findings.daysSinceLastReview} | last30=${findings.reviewsLast30Days} | last90=${findings.reviewsLast90Days} | ownerResponses=${findings.ownerResponseCount} | hasHours=${findings.hasBusinessHours} | primaryCategory=${JSON.stringify(findings.primaryCategory)} | matchesSearch=${findings.primaryCategoryMatchesSearch}`);
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
