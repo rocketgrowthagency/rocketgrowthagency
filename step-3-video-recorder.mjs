@@ -437,13 +437,56 @@ async function scrollUntilVisibleAndClick(page, businessName, maxScrolls) {
   return false;
 }
 
+// Geocode a street address using Nominatim (free, no API key).
+// Returns { lat, lng } or null on failure.
+async function geocodeAddress(address) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=us`;
+    const resp = await fetch(url, { headers: { 'User-Agent': 'RGA-scraper/1.0' }, signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
+// Extract a Google Maps URL from Google Search's Knowledge Panel.
+// Google Search reliably returns a full /maps/place/Name/@lat,lng/data=... URL
+// for local businesses — bypasses Maps search viewport bias entirely.
+async function getMapsUrlFromGoogleSearch(page, businessName, address) {
+  try {
+    const q = encodeURIComponent(businessName + (address ? ' ' + address : ''));
+    await page.goto(`https://www.google.com/search?q=${q}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await sleep(1500);
+    const mapsUrl = await page.evaluate(() => {
+      const anchors = Array.from(document.querySelectorAll('a[href]'));
+      for (const a of anchors) {
+        const href = a.href || '';
+        if (href.includes('google.com/maps/place/') && href.includes('@')) return href;
+        if (href.includes('maps.google.com/maps/place/') && href.includes('@')) return href;
+      }
+      // Also check for maps redirect links
+      for (const a of anchors) {
+        const href = a.href || '';
+        if ((href.includes('google.com/maps') || href.includes('maps.google.com')) && href.includes('/place/')) return href;
+      }
+      return null;
+    });
+    return mapsUrl || null;
+  } catch {
+    return null;
+  }
+}
+
 // Score all listing anchors in the current Maps results DOM against a target name.
 // Returns the href of the best match (score >= minScore), or null.
 // Navigation via href is more reliable than mouse clicks because Maps' virtual DOM
 // re-renders between getBoundingClientRect() and page.mouse.click(), causing misses.
 async function getListingHrefByName(page, businessName, minScore = 24) {
   const target = normalizeText(businessName);
-  return await page.evaluate((targetNorm, minScoreVal) => {
+  const result = await page.evaluate((targetNorm, minScoreVal) => {
     const norm = (s) =>
       String(s || '')
         .toLowerCase()
@@ -460,8 +503,8 @@ async function getListingHrefByName(page, businessName, minScore = 24) {
       document.querySelectorAll('a.hfpxzc, a[href*="/maps/place/"]')
     ).filter((a) => a.href && a.href.includes('/maps/place/'));
 
-    if (!anchors.length) return null;
-    if (!targetNorm) return anchors[0].href;
+    if (!anchors.length) return { href: null, debug: [], topScore: 0 };
+    if (!targetNorm) return { href: anchors[0].href, debug: [], topScore: 0 };
 
     const scored = [];
     for (const anchor of anchors) {
@@ -484,14 +527,18 @@ async function getListingHrefByName(page, businessName, minScore = 24) {
           best = Math.max(best, hits * 12);
         }
       }
-      if (best > 0) scored.push({ href: anchor.href, best });
+      const label = aria || title || firstLine || anchor.href.replace(/.*\/maps\/place\//, '').split('/')[0];
+      if (best > 0) scored.push({ href: anchor.href, best, label });
     }
 
     scored.sort((a, b) => b.best - a.best);
     const top = scored[0];
-    if (!top) return anchors[0].href; // last resort: first anchor
-    return top.best >= minScoreVal ? top.href : anchors[0].href;
+    const debug = scored.slice(0, 5).map((s) => `${s.best}:"${s.label.slice(0, 40)}"`);
+    if (!top) return { href: null, debug, topScore: 0 };
+    return { href: top.best >= minScoreVal ? top.href : null, debug, topScore: top.best };
   }, target, minScore);
+  console.log(`   [maps-score] target="${businessName}" min=${minScore} topScore=${result.topScore} → ${result.href ? 'MATCH' : 'no match'} | top5: ${result.debug.join(', ')}`);
+  return result.href;
 }
 
 async function clickListingInResultsByName(page, businessName) {
@@ -597,30 +644,39 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     }
 
     if (mapsUrl) {
-      // Bare name URLs (/maps/place/Name+Only, no coordinates) render a 152-char stub —
-      // redirect to /maps/search/Name+City so the full business panel loads.
+      // Bare name URLs (/maps/place/Name+Only, no coordinates) render a 152-char stub.
+      // Fix: reset the Maps viewport first (clears Culver City bias), then search by
+      // business name + city. A fresh viewport search for "BRGD Garage Door Repair Marina Del Rey CA"
+      // returns the real business card with reviews and stars — not an address pin.
       const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
+      const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
       const fallbackUrl = isBareNameUrl
-        ? `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.address ? ' ' + meta.address : (meta.city ? ' ' + meta.city : '')))}`
+        ? `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`
         : mapsUrl;
-      console.log(`   → Results click failed; opening ${isBareNameUrl ? 'search URL (bare name fix)' : 'direct Google Maps URL'}.`);
-      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      // Typed search in the Maps search box uses intent-matching (not location-biased
+      // URL search). Searching "Business Name, Full Address" types as a human would —
+      // Maps finds the exact place regardless of the profile's location history.
       if (isBareNameUrl) {
-        await waitForMapsResults(page);
-        await sleep(2000);
-        // Navigate directly to the listing URL — avoids all click issues
-        const listingHref = await getListingHrefByName(page, businessName, 24);
-        if (listingHref) {
-          console.log(`   → Fallback: navigating directly to listing panel URL.`);
-          await page.goto(listingHref, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-          await sleep(7000);
-        } else {
-          await sleep(5000);
+        // Business not found in search results and has no coordinate URL.
+        // Stay on the results list — scroll through the competitive landscape so
+        // the video shows the search context without opening a wrong business panel.
+        console.log(`   → Business not found in results; showing competitive search list.`);
+        for (let i = 0; i < 6; i++) {
+          await page.evaluate(() => {
+            const feed = document.querySelector('div[role="feed"]') ||
+              document.querySelector('div.m6QErb.DxyBCb.kA9KIf.dS8AEf.ecceSd') ||
+              document.querySelector('div.m6QErb.DxyBCb.kA9KIf.dS8AEf');
+            if (feed) feed.scrollBy(0, 500);
+          }).catch(() => {});
+          await sleep(900);
         }
+        await dismissResultsInfoPopup(page);
+        return 'search-only';
       } else {
-        // Wait longer for the business panel to fully render after a direct URL load
-        await sleep(9000);
+        console.log(`   → Results click failed; opening direct Maps URL.`);
       }
+      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      await sleep(9000);
       await dismissResultsInfoPopup(page);
       return 'direct-url';
     }
@@ -844,7 +900,7 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
 
     const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder);
     if (!recorderStarted) await startRecorder();
-    if (mode !== 'none') await sleep(DESKTOP_MAPS_HOLD_MS);
+    if (mode !== 'none') await sleep(mode === 'search-only' ? DESKTOP_MAPS_HOLD_MS * 2 : DESKTOP_MAPS_HOLD_MS);
   } catch (err) {
     hadFatal = true;
     console.error(`   ❌ Error recording desktop Maps for ${meta.name}: ${err.message || err}`);
@@ -1102,7 +1158,7 @@ async function main() {
       try {
         await recordBusinessVideos(
           browser,
-          { name, city, address: row.Address || row.address || '', website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+          { name, city, state: row.State || row.state || '', address: row.Address || row.address || '', phone: String(row.Phone || row.phone || '').replace(/\s+/g, ' ').trim(), website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
           mapsOut,
           websiteOut,
           mobileOut

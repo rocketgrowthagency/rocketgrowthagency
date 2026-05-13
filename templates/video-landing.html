@@ -70,8 +70,20 @@
       width: 100%;
       background: #000;
       line-height: 0;
+      position: relative;
     }
     video { width: 100%; height: auto; display: block; }
+    .play-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .play-overlay svg { width: 72px; height: 72px; filter: drop-shadow(0 4px 16px rgba(0,0,0,.5)); }
+    .play-overlay.visible { display: flex; }
     .body-copy { padding: 24px; }
     .body-copy p { margin: 0 0 12px; color: var(--muted); }
     .cta-bar {
@@ -153,6 +165,30 @@
     footer a { color: var(--brand); text-decoration: none; }
   </style>
   <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var v = document.getElementById("rga-video");
+      var overlay = document.getElementById("rga-play-overlay");
+      if (!v) return;
+      // Force muted via JS property (HTML attribute alone can fail in Chrome)
+      v.defaultMuted = true;
+      v.muted = true;
+      v.play().catch(function() {
+        // Autoplay blocked — show custom overlay so user has a clear tap target
+        if (overlay) overlay.classList.add("visible");
+      });
+      if (overlay) {
+        overlay.addEventListener("click", function() {
+          overlay.classList.remove("visible");
+          v.muted = false;
+          v.play().catch(function() { v.muted = true; v.play(); });
+        });
+      }
+      v.addEventListener("play", function() {
+        if (overlay) overlay.classList.remove("visible");
+      });
+    });
+  </script>
+  <script>
     (function() {
       var exp = "{{EXPIRY_DATE}}";
       if (!exp) return;
@@ -181,15 +217,22 @@
 
       <div class="video-wrap">
         <video
+          id="rga-video"
           src="video.mp4"
           poster="thumb.jpg"
           controls
           playsinline
           autoplay
           muted
-          preload="metadata">
+          preload="auto">
           Your browser doesn't support HTML5 video. <a href="video.mp4">Download the video</a>.
         </video>
+        <div class="play-overlay" id="rga-play-overlay" aria-label="Play video">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="40" fill="white" fill-opacity="0.92"/>
+            <polygon points="32,24 60,40 32,56" fill="#2f57eb"/>
+          </svg>
+        </div>
       </div>
 
       <div class="cta-bar">
