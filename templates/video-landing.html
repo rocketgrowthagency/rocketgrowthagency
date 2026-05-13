@@ -156,13 +156,27 @@
   <script>
     (function() {
       var exp = "{{EXPIRY_DATE}}";
-      if (!exp) return;
-      if (new Date() <= new Date(exp)) return;
+      if (exp && new Date() > new Date(exp)) {
+        document.addEventListener("DOMContentLoaded", function() {
+          var wrap = document.querySelector(".video-wrap");
+          if (wrap) wrap.innerHTML = '<div style="padding:40px 24px;text-align:center;background:#f8fafc;"><p style="font-size:1.1rem;color:#475569;margin:0 0 8px;">This walkthrough has expired.</p><p style="font-size:0.95rem;color:#94a3b8;margin:0;">Contact us for a fresh audit of your current rankings.</p></div>';
+          var bc = document.querySelector(".body-copy");
+          if (bc) bc.style.display = "none";
+        });
+        return;
+      }
+      // Autoplay shim: HTML `autoplay muted` is unreliable across browsers and
+      // profile states (a fresh URL load often shows the poster + native play
+      // button until the user clicks). Forcing a programmatic play() right after
+      // DOMContentLoaded fires autoplay reliably. If the browser still rejects
+      // (rare with muted), Chrome's native dark play button stays — that's the
+      // intentional fallback UX. NO custom overlay is added.
       document.addEventListener("DOMContentLoaded", function() {
-        var wrap = document.querySelector(".video-wrap");
-        if (wrap) wrap.innerHTML = '<div style="padding:40px 24px;text-align:center;background:#f8fafc;"><p style="font-size:1.1rem;color:#475569;margin:0 0 8px;">This walkthrough has expired.</p><p style="font-size:0.95rem;color:#94a3b8;margin:0;">Contact us for a fresh audit of your current rankings.</p></div>';
-        var bc = document.querySelector(".body-copy");
-        if (bc) bc.style.display = "none";
+        var v = document.getElementById("rga-video");
+        if (!v) return;
+        try { v.defaultMuted = true; v.muted = true; } catch (e) {}
+        var p = v.play();
+        if (p && typeof p.catch === "function") p.catch(function() { /* native play button shows */ });
       });
     })();
   </script>
