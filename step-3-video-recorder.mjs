@@ -592,9 +592,19 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (isBareNameUrl) {
         await waitForMapsResults(page);
         await sleep(2000);
-        const clicked = await clickListingInResultsByName(page, businessName);
-        if (clicked) await sleep(6500);
-        else await sleep(4000);
+        // Use Puppeteer ElementHandle.click() — sends real CDP mouse events,
+        // unlike page.evaluate DOM .click() which Maps ignores for navigation.
+        const listing = await page.$('a.hfpxzc');
+        if (listing) {
+          await listing.scrollIntoView().catch(() => {});
+          await sleep(400);
+          await listing.click().catch(() => {});
+          console.log(`   → Clicked first listing via ElementHandle.`);
+          await sleep(6500);
+        } else {
+          // Single result may auto-open the panel without needing a click
+          await sleep(5000);
+        }
       } else {
         // Wait longer for the business panel to fully render after a direct URL load
         await sleep(9000);
