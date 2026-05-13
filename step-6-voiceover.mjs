@@ -566,9 +566,13 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  // PRIORITY 26 (NEW): GBP description missing or thin (M1)
-  // Description is a direct relevance signal Google uses to match queries to the listing.
-  if (audit?.gbp?.descriptionLength != null) {
+  // PRIORITY 26 (NEW): GBP description missing or thin (M1) — DISABLED 2026-05-13
+  // Initial extractor produced false negatives — Express returned descriptionLength=0
+  // when the GBP actually had a multi-sentence description. Needs ground-truth
+  // diagnostic to identify the right selectors against current Maps DOM before
+  // any claim ships. Keep code in place but gate it behind audit.gbp.descriptionVerified
+  // (a flag we'll set when the extractor is proven).
+  if (audit?.gbp?.descriptionVerified === true && audit?.gbp?.descriptionLength != null) {
     if (audit.gbp.descriptionLength === 0) {
       out.push({
         key: 'gbpDescription',
@@ -584,29 +588,53 @@ function scoreMapsFindings(audit, top3Stats, record) {
     }
   }
 
-  // PRIORITY 30 (NEW): Google Posts inactive or absent (M2)
-  // Posts signal active business engagement — Google rewards listings that publish regularly.
-  if (audit?.gbp?.hasPosts === false) {
-    out.push({
-      key: 'gbpPosts',
-      score: 30,
-      finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
-    });
-  } else if (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
-    out.push({
-      key: 'gbpPosts',
-      score: 30,
-      finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
-    });
+  // PRIORITY 30 (NEW): Google Posts inactive or absent (M2) — DISABLED 2026-05-13
+  // Same reason: Express returned hasPosts=false when GBP had a post from 1 day ago.
+  // Heading regex `/^(?:updates?|posts?|from the owner)$/i` likely doesn't match
+  // the actual Maps DOM label for the posts section. Needs diagnostic before re-enabling.
+  if (audit?.gbp?.postsVerified === true) {
+    if (audit?.gbp?.hasPosts === false) {
+      out.push({
+        key: 'gbpPosts',
+        score: 30,
+        finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
+      });
+    } else if (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
+      out.push({
+        key: 'gbpPosts',
+        score: 30,
+        finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
+      });
+    }
   }
 
   return out.sort((a, b) => a.score - b.score);
+}
+
+// Filter out any finding whose key is in the auto-disabled list (populated by
+// validate-audit.mjs when a captured value deviates from the verified baseline).
+// This is the SELF-DIAGNOSIS layer: if a scrape goes sideways, we silently drop
+// the affected findings instead of shipping wrong claims.
+function applyValidationFilter(findings, disabledKeys) {
+  if (!Array.isArray(disabledKeys) || disabledKeys.length === 0) return findings;
+  const filtered = findings.filter((f) => !disabledKeys.includes(f.key));
+  const removed = findings.length - filtered.length;
+  if (removed > 0) {
+    console.log(`   [self-diag] Dropped ${removed} finding(s) due to baseline deviations: ${findings.filter(f => disabledKeys.includes(f.key)).map(f => f.key).join(', ')}`);
+  }
+  return filtered;
 }
 
 function buildScript(record, top3Stats, audit) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'your business';
   validateAuditContract(audit, slugify(name, { lower: true, strict: true }));
+  // Self-diagnosis: read the _validation block written by validate-audit.mjs
+  // and pull out any finding keys that should be auto-disabled this run.
+  const disabledKeys = (audit && audit._validation && audit._validation.disabledFindings) || [];
+  if (disabledKeys.length) {
+    console.log(`   [self-diag] Validation deviations detected; auto-disabling findings: ${disabledKeys.join(', ')}`);
+  }
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =
     normalizeField(record, 'Map Rank') || normalizeField(record, 'rank') || 'your current position';
@@ -637,7 +665,7 @@ function buildScript(record, top3Stats, audit) {
 
   let mapsSegment;
   if (isTop3) {
-    const mapsFindingsT3 = scoreMapsFindings(audit, top3Stats, record);
+    const mapsFindingsT3 = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
     const count = mapsFindingsT3.length;
     const mapsListT3 = numberedJoin(mapsFindingsT3, 3);
     const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankNum} — already in the top 3, which captures 70 percent of all local leads from this search. That's the most valuable real estate.`;
@@ -651,7 +679,7 @@ function buildScript(record, top3Stats, audit) {
       mapsSegment = `${baseLine} On the Maps side, your fundamentals look solid — the bigger leverage point is your website and mobile experience, which is what Google validates your top 3 spot against.`;
     }
   } else {
-    const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
+    const mapsFindings = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
     const mapsList = numberedJoin(mapsFindings, 3);
     if (mapsList) {
       mapsSegment = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3 ranking, which accounts for 70 percent of all local leads. Here are the top issues we found on your Maps listing: ${mapsList}`;
@@ -660,7 +688,7 @@ function buildScript(record, top3Stats, audit) {
     }
   }
 
-  const websiteFindings = scoreWebsiteFindings(audit);
+  const websiteFindings = applyValidationFilter(scoreWebsiteFindings(audit), disabledKeys);
   const websiteList = numberedJoin(websiteFindings, 3);
   const websiteSegment = isTop3
     ? (() => {
@@ -691,7 +719,7 @@ function buildScript(record, top3Stats, audit) {
         return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Your site signals are clean — no major issues stood out.`;
       })();
 
-  const mobileFindings = scoreMobileFindings(audit);
+  const mobileFindings = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
   const mobileList = numberedJoin(mobileFindings, 3);
   const mobileSegment = isTop3
     ? (() => {

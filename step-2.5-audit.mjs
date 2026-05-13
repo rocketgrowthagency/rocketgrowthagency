@@ -865,9 +865,131 @@ async function auditGbp(_, gbpUrl, business) {
         searchWords.split(/\s+/).some((w) => w.length > 3 && catLower.includes(w));
     }
 
+    // === Google SEARCH knowledge panel pass (for description + posts) ===
+    // Maps panel doesn't reliably surface description text or Google Posts on
+    // every business. Search knowledge panel (google.com/search?q=...) does.
+    // Use a SEPARATE browser instance — reusing the Maps gbpBrowser/page caused
+    // Google to serve a different layout (kp-wholepage missing on the second
+    // request from the same session). Clean session is required.
+    let kpBrowser = null;
+    let kpPage = null;
+    try {
+      const kpQuery = `${business.name || ''} ${business.city || ''} ${business.state || ''}`.trim();
+      if (kpQuery) {
+        kpBrowser = await puppeteer.launch({
+          headless: false,
+          executablePath: CHROME_PATH,
+          userDataDir: CHROME_PROFILE_DIR + '-search-kp',
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--window-size=1280,900'],
+        });
+        kpPage = await kpBrowser.newPage();
+        await kpPage.setViewport({ width: 1280, height: 900 });
+        await kpPage.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+        kpPage.on('console', (msg) => { const t = msg.text(); if (t.includes('[kp-')) console.log('  ' + t); });
+
+        const kpUrl = `https://www.google.com/search?q=${encodeURIComponent(kpQuery)}`;
+        await kpPage.goto(kpUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // Consent on search.google.com if needed
+        await kpPage.evaluate(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const accept = buttons.find((b) => /accept all|reject all|i agree/i.test(b.textContent || ''));
+          if (accept) accept.click();
+        }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 2500));
+
+        const kpData = await kpPage.evaluate((expectedName) => {
+          const kp = document.querySelector('div.kp-wholepage');
+          if (!kp) return { onPanel: false, reason: 'no kp-wholepage' };
+
+          // Verify the knowledge panel is for the right business (avoid scraping
+          // a competitor's panel if Search served a different result first).
+          const titleEl = document.querySelector('div[data-attrid="title"]');
+          const titleText = (titleEl?.textContent || '').trim();
+          const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const exp = norm(expectedName);
+          const got = norm(titleText);
+          let overlap = 0;
+          for (let i = 0, j = 0; i < got.length && j < exp.length; i++) {
+            if (got[i] === exp[j]) { overlap++; j++; }
+          }
+          const overlapRatio = exp ? overlap / exp.length : 0;
+          if (overlapRatio < 0.5) return { onPanel: false, reason: `title mismatch: "${titleText}" vs "${expectedName}"`, titleText, overlapRatio };
+
+          // Description: longest non-structural text node in kp-wholepage.
+          // Filter out review snippets, structural labels, and tab text.
+          const skipPrefixes = /^(review|see all|see photos|directions|hours|call now|website|menu|address|phone|located in|service options|payment|accessibility|amenities|appointment|crowd|highlights|popular times|questions|sponsor|from the|opens|closes|open\s|closed)/i;
+          const reviewSnippet = /^\d+\s*(google )?reviews?/i;
+          const candidates = Array.from(kp.querySelectorAll('span, div, p'))
+            .filter((el) => el.children.length === 0)
+            .map((el) => (el.textContent || '').trim())
+            .filter((t) => t.length > 80 && t.length < 1500)
+            .filter((t) => !skipPrefixes.test(t.slice(0, 30)))
+            .filter((t) => !reviewSnippet.test(t.slice(0, 30)));
+          // Deduplicate exact matches, then sort longest-first
+          const seen = new Set();
+          const unique = [];
+          for (const t of candidates) {
+            if (seen.has(t)) continue;
+            seen.add(t);
+            unique.push(t);
+          }
+          unique.sort((a, b) => b.length - a.length);
+          const description = unique[0] || '';
+
+          // Post timestamps via class .Ufkx2c (confirmed via diagnostic 2026-05-13)
+          const timestamps = Array.from(document.querySelectorAll('.Ufkx2c'))
+            .map((el) => (el.textContent || '').trim())
+            .filter((t) => /^\d+\s+(minute|hour|day|week|month|year)s?\s+ago$/i.test(t));
+
+          return { onPanel: true, titleText, overlapRatio, description, timestamps };
+        }, business.name || '');
+
+        if (kpData.onPanel) {
+          // Description
+          if (kpData.description) {
+            findings.description = kpData.description;
+            findings.descriptionLength = kpData.description.length;
+          } else {
+            findings.description = '';
+            findings.descriptionLength = 0;
+          }
+          findings.descriptionVerified = true;
+
+          // Posts
+          findings.hasPosts = kpData.timestamps.length > 0;
+          findings.postsVerified = true;
+          if (kpData.timestamps.length > 0) {
+            let minDays = Infinity;
+            for (const t of kpData.timestamps) {
+              const m = t.match(/(\d+)\s+(minute|hour|day|week|month|year)s?/i);
+              if (!m) continue;
+              const n = Number(m[1]);
+              const u = m[2].toLowerCase();
+              const days = u === 'minute' ? n / 1440
+                : u === 'hour' ? n / 24
+                : u === 'day' ? n
+                : u === 'week' ? n * 7
+                : u === 'month' ? n * 30
+                : n * 365;
+              if (days < minDays) minDays = days;
+            }
+            findings.lastPostDaysAgo = Math.round(minDays);
+          }
+          console.log(`  [kp-diag] Search KP confirmed for "${kpData.titleText}" (overlap=${(kpData.overlapRatio * 100).toFixed(0)}%): description=${findings.descriptionLength}chars, posts=${kpData.timestamps.length} (mostRecent=${findings.lastPostDaysAgo}d)`);
+        } else {
+          console.warn(`  [kp-diag] Search knowledge panel skipped: ${kpData.reason || 'unknown'}`);
+        }
+      }
+    } catch (kpErr) {
+      console.warn(`  [kp-diag] Search knowledge panel scrape failed: ${kpErr.message || kpErr}`);
+    } finally {
+      if (kpPage) await kpPage.close().catch(() => {});
+      if (kpBrowser) await kpBrowser.close().catch(() => {});
+    }
+
     // Final per-field summary — surfaces every value we'll feed into the script,
     // so wrong claims like "9 photos" can never ship unnoticed again.
-    console.log(`  [gbp-summary] ${business.name || 'unknown'}: reviewCount=${findings.reviewCount} | photoCount=${findings.photoCount} | daysSinceLastReview=${findings.daysSinceLastReview} | last30=${findings.reviewsLast30Days} | last90=${findings.reviewsLast90Days} | ownerResponses=${findings.ownerResponseCount} | hasHours=${findings.hasBusinessHours} | primaryCategory=${JSON.stringify(findings.primaryCategory)} | matchesSearch=${findings.primaryCategoryMatchesSearch} | description=${findings.descriptionLength}chars | hasPosts=${findings.hasPosts} | lastPostDaysAgo=${findings.lastPostDaysAgo}`);
+    console.log(`  [gbp-summary] ${business.name || 'unknown'}: reviewCount=${findings.reviewCount} | photoCount=${findings.photoCount} | daysSinceLastReview=${findings.daysSinceLastReview} | last30=${findings.reviewsLast30Days} | last90=${findings.reviewsLast90Days} | ownerResponses=${findings.ownerResponseCount} | hasHours=${findings.hasBusinessHours} | primaryCategory=${JSON.stringify(findings.primaryCategory)} | matchesSearch=${findings.primaryCategoryMatchesSearch} | description=${findings.descriptionLength}chars (verified=${!!findings.descriptionVerified}) | hasPosts=${findings.hasPosts} (verified=${!!findings.postsVerified}) | lastPostDaysAgo=${findings.lastPostDaysAgo}`);
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
@@ -941,6 +1063,42 @@ async function main() {
 
   fs.writeFileSync(outFile, JSON.stringify(audits, null, 2));
   console.log(`\n✅ Wrote audit findings: ${outFile}`);
+
+  // === Self-diagnosis pass — validate against per-slug baselines if any exist.
+  // Auto-disables any voiceover finding whose backing field deviates from the
+  // verified baseline. Writes `_validation` into each lead's findings block so
+  // step-6 can read it and skip the affected findings.
+  try {
+    const { validateAudit } = await import('./validate-audit.mjs');
+    const baselineDir = path.join(process.cwd(), 'data');
+    let anyChanged = false;
+    for (const slug of Object.keys(audits)) {
+      const baselinePath = path.join(baselineDir, `audit-baseline-${slug}.json`);
+      if (!fs.existsSync(baselinePath)) continue;
+      const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+      const result = validateAudit(audits[slug], baseline);
+      audits[slug]._validation = result;
+      anyChanged = true;
+      console.log(`\n[self-diag] ${slug}: ${result.passed ? '✅ PASS' : '❌ FAIL'} | ${result.passCount} match, ${result.failCount} deviation(s)`);
+      if (result.failures.length) {
+        for (const f of result.failures.slice(0, 8)) {
+          console.log(`   • ${f.path}: ${f.reason}`);
+        }
+        if (result.failures.length > 8) console.log(`   ... and ${result.failures.length - 8} more`);
+      }
+      if (result.disabledFindings.length) {
+        console.log(`   → Auto-disabling voiceover findings: ${result.disabledFindings.join(', ')}`);
+      }
+    }
+    if (anyChanged) {
+      fs.writeFileSync(outFile, JSON.stringify(audits, null, 2));
+      console.log(`[self-diag] Updated audit-findings.json with _validation blocks`);
+    } else {
+      console.log(`[self-diag] No baseline files found for any audited slug — skipping`);
+    }
+  } catch (vErr) {
+    console.warn(`[self-diag] Validation pass failed (non-fatal): ${vErr.message || vErr}`);
+  }
 }
 
 main().catch((err) => {

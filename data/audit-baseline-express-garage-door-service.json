@@ -1,0 +1,99 @@
+{
+  "_meta": {
+    "purpose": "Regression baseline — known-correct values for Express Garage Door Service. Every audit run is validated against this. Any field that drifts triggers a warning + auto-disables that finding from the voiceover.",
+    "businessName": "Express Garage Door Service",
+    "businessSlug": "express-garage-door-service",
+    "city": "Culver City",
+    "state": "CA",
+    "verifiedBy": "chris + multiple cross-checks 2026-05-13",
+    "groundTruthSources": [
+      "Chris's screenshots showing live GBP knowledge panel",
+      "First successful audit run 2026-05-13 ~14:26 PT",
+      "Live site inspection of expressgaragedoorsca.com/locations/garage-door-culver-city/"
+    ]
+  },
+  "expected": {
+    "website": {
+      "pageLoadSeconds": { "min": 0.4, "max": 5.0, "tolerance": "load times vary by network; flag if outside this band" },
+      "hasLocalBusinessSchema": false,
+      "h1Text": "Best Garage Door Services Culver City",
+      "h1Count": 2,
+      "h1IncludesCategory": true,
+      "h1IncludesCity": true,
+      "hasMobileClickToCall": true,
+      "websitePhoneMatchesGbp": true,
+      "hasMetaDescription": true,
+      "renderBlockingHeadResources": { "min": 18, "max": 25, "tolerance": "third-party scripts can shift slightly" },
+      "isHttps": true,
+      "title": "Garage Door Services Culver City",
+      "titleIncludesCategory": true,
+      "titleIncludesCity": true,
+      "titleLength": 32,
+      "napAboveFold": true,
+      "canonicalUrl": "https://expressgaragedoorsca.com/locations/garage-door-culver-city/",
+      "canonicalMatches": true,
+      "serviceAreaPagesCount": { "min": 2, "max": 10, "tolerance": "may grow over time as Express adds locations" },
+      "primaryCtaText": "Contact Us",
+      "hasReviewsOnPage": false,
+      "hasServiceAreaListed": true
+    },
+    "mobile": {
+      "pageLoadSeconds": { "min": 0.3, "max": 4.0 },
+      "hasViewportMeta": true,
+      "clickToCallAboveFold": true,
+      "primaryCtaTapTargetPx": null,
+      "pageWeightKb": { "min": 1200, "max": 2500 },
+      "isHttps": true,
+      "h1Count": 2,
+      "renderBlockingHeadResources": { "min": 18, "max": 25 },
+      "hasStickyCta": false,
+      "hasClickToText": false,
+      "primaryCtaText": "866-605-5819",
+      "phoneVisibleAboveFold": true,
+      "socialProofAboveFold": false
+    },
+    "gbp": {
+      "reviewCount": 32,
+      "photoCount": null,
+      "categoriesCount": null,
+      "primaryCategory": "Garage door supplier",
+      "primaryCategoryMatchesSearch": true,
+      "daysSinceLastReview": { "min": 60, "max": 120, "tolerance": "value increases ~1/day as time passes; expect to drift up" },
+      "reviewsLast30Days": { "min": 0, "max": 3 },
+      "reviewsLast90Days": { "min": 4, "max": 10 },
+      "ownerResponseCount": { "min": 1, "max": 10 },
+      "hasBusinessHours": true,
+      "description": {
+        "expectedNonEmpty": true,
+        "containsFragment": "garage door supplier",
+        "minLength": 80
+      },
+      "descriptionVerified": true,
+      "hasPosts": true,
+      "postsVerified": true,
+      "lastPostDaysAgo": { "min": 0, "max": 90, "tolerance": "Express posts at least monthly per screenshot" }
+    }
+  },
+  "knownFailureModes": [
+    {
+      "symptom": "All GBP fields null + h1='' + overlap=0%",
+      "cause": "Google CAPTCHA / anti-bot block triggered by too many scrapes in one session",
+      "fix": "Wait 6-24h, delete chrome-profile-step3-gbp, retry"
+    },
+    {
+      "symptom": "kp-diag: 'no kp-wholepage'",
+      "cause": "Search knowledge panel didn't load — either block screen, no business match, or layout change",
+      "fix": "Confirm fresh chrome-profile-search-kp; if persists, Google changed DOM"
+    },
+    {
+      "symptom": "photoCount > 0 returned (any number)",
+      "cause": "OLD bug: extractor was hitting review snippets or wrong elements. photoCount is DISABLED — should always be null.",
+      "fix": "Confirm step-2.5 photoCount code returns null, not from any regex/selector"
+    },
+    {
+      "symptom": "description empty when it shouldn't be (Express has one)",
+      "cause": "Either CAPTCHA blocked Search KP OR selectors changed",
+      "fix": "Run diag-search-knowledge-panel.mjs (fresh profile) to find current selectors"
+    }
+  ]
+}
