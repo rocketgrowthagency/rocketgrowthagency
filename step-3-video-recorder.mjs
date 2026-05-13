@@ -399,6 +399,41 @@ async function scrollMapsResultsPanel(page, times = 2) {
   }
 }
 
+// Scroll the Maps results panel one step at a time, clicking the target business
+// as soon as it enters the DOM. This avoids the virtual-DOM problem where
+// over-scrolling removes rank-N items before the click fires.
+async function scrollUntilVisibleAndClick(page, businessName, maxScrolls) {
+  if (!businessName) return false;
+
+  // Check before any scrolling (business may already be in initial view)
+  let clicked = await clickListingInResultsByName(page, businessName);
+  if (clicked) return true;
+
+  for (let i = 0; i < maxScrolls; i++) {
+    const moved = await page.evaluate(() => {
+      const candidates = [
+        document.querySelector('div[role="feed"]'),
+        document.querySelector('div.m6QErb.DxyBCb.kA9KIf.dS8AEf.ecceSd'),
+        document.querySelector('div.m6QErb.DxyBCb.kA9KIf.dS8AEf'),
+        document.querySelector('div[aria-label*="Results"]'),
+      ].filter(Boolean);
+      const scroller = candidates.find((el) => el.scrollHeight > el.clientHeight + 50);
+      if (!scroller) return false;
+      const before = scroller.scrollTop;
+      scroller.scrollBy(0, Math.max(600, Math.floor(scroller.clientHeight * 0.8)));
+      return scroller.scrollTop !== before;
+    });
+
+    await sleep(1000);
+    if (!moved) break;
+
+    clicked = await clickListingInResultsByName(page, businessName);
+    if (clicked) return true;
+  }
+
+  return false;
+}
+
 async function clickListingInResultsByName(page, businessName) {
   const target = normalizeText(businessName);
   if (!target) return false;
@@ -565,14 +600,11 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await waitForMapsResults(page);
       await sleep(3500);
       await dismissResultsInfoPopup(page);
-      console.log(`   → Scrolling results ${scrollsNeeded}x for rank #${rank ?? '?'}`);
-      await scrollMapsResultsPanel(page, scrollsNeeded);
-      await sleep(1200);
     }
 
     if (businessName) {
-      console.log(`   → Opening business card from results: ${businessName}`);
-      const clicked = await clickListingInResultsByName(page, businessName);
+      console.log(`   → Scrolling to find and click ${businessName} (rank #${rank ?? '?'})...`);
+      const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded + 2);
       if (clicked) {
         await sleep(6500);
         await dismissResultsInfoPopup(page);
@@ -592,18 +624,24 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (isBareNameUrl) {
         await waitForMapsResults(page);
         await sleep(2000);
-        // Use Puppeteer ElementHandle.click() — sends real CDP mouse events,
-        // unlike page.evaluate DOM .click() which Maps ignores for navigation.
-        const listing = await page.$('a.hfpxzc');
-        if (listing) {
-          await listing.scrollIntoView().catch(() => {});
-          await sleep(400);
-          await listing.click().catch(() => {});
-          console.log(`   → Clicked first listing via ElementHandle.`);
+        // Use name-matching — prevents clicking the wrong business when
+        // fallback search results don't put the target first.
+        const fallbackClicked = await clickListingInResultsByName(page, businessName);
+        if (fallbackClicked) {
+          console.log(`   → Fallback: name-match click succeeded.`);
           await sleep(6500);
         } else {
-          // Single result may auto-open the panel without needing a click
-          await sleep(5000);
+          // Last resort: ElementHandle click on first result
+          const listing = await page.$('a.hfpxzc');
+          if (listing) {
+            await listing.scrollIntoView().catch(() => {});
+            await sleep(400);
+            await listing.click().catch(() => {});
+            console.log(`   → Fallback: clicked first listing via ElementHandle.`);
+            await sleep(6500);
+          } else {
+            await sleep(5000);
+          }
         }
       } else {
         // Wait longer for the business panel to fully render after a direct URL load
