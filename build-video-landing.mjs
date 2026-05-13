@@ -246,6 +246,10 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.warn(`[build-landing] Airtable update failed (${res.status}) for record ${recordId}: ${errText.slice(0, 200)}`);
+  }
   return res.ok;
 }
 
@@ -298,6 +302,9 @@ async function main() {
 
     ensureDir(outDir);
     fs.copyFileSync(v.fullPath, videoDest);
+    // Cache version derived from the freshly-copied video's mtime — every re-render
+    // produces a new value, busting browser caches automatically without manual ?v=N.
+    const cacheVersion = String(fs.statSync(videoDest).mtimeMs | 0);
     try {
       await extractThumbnail(v.fullPath, thumbPath);
     } catch (err) {
@@ -352,6 +359,7 @@ async function main() {
       RECORDED_DATE: recordedDate,
       EXPIRY_DATE: expiryDate,
       EYEBROW_LABEL: eyebrowLabel,
+      CACHE_VERSION: cacheVersion,
     }));
     console.log(`[build-landing] ✓ ${slug} → ${landingUrl}`);
     built += 1;

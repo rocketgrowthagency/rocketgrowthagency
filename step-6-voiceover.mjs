@@ -497,7 +497,7 @@ function scoreMapsFindings(audit, top3Stats, record) {
     out.push({
       key: 'categoryMismatch',
       score: 18,
-      finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory || 'a generic category'}" — a mismatched primary category directly limits your visibility in this search`,
+      finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — a mismatched primary category directly limits your visibility in this search`,
     });
   }
 
@@ -581,7 +581,7 @@ function buildScript(record, top3Stats, audit) {
     } else if (count === 1) {
       mapsSegment = `${baseLine} But one vulnerability stood out on your Maps listing: ${mapsFindingsT3[0].finding}.`;
     } else {
-      mapsSegment = `${baseLine} Your Maps signals are clean — no obvious vulnerabilities, but that just means you're at risk from review velocity and newer competitors.`;
+      mapsSegment = `${baseLine} On the Maps side, your fundamentals look solid — the bigger leverage point is your website and mobile experience, which is what Google validates your top 3 spot against.`;
     }
   } else {
     const mapsFindings = scoreMapsFindings(audit, top3Stats, record);
@@ -638,7 +638,7 @@ function buildScript(record, top3Stats, audit) {
         if (count === 1) {
           return `And then on mobile — where 70 percent of local-search traffic actually comes from. One gap a competitor could exploit: ${mobileFindings[0].finding}.`;
         }
-        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile signals are clean — fast load, clean structure, responsive layout.`;
+        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile fundamentals look clean — no major gaps stood out.`;
       })()
     : (() => {
         const count = mobileFindings.length;
@@ -652,7 +652,7 @@ function buildScript(record, top3Stats, audit) {
         if (count === 1) {
           return `And then on mobile — where 70 percent of local-search traffic actually comes from. Just 1 mobile issue stood out: ${mobileFindings[0].finding}.`;
         }
-        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile signals are solid — fast load, clean structure, responsive layout.`;
+        return `And then on mobile — where 70 percent of local-search traffic actually comes from. On the mobile side, no major issues stood out.`;
       })();
 
   const outroText = isTop3

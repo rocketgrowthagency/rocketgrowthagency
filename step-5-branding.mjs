@@ -514,6 +514,10 @@ async function main() {
     // Audio intro continues playing over the start of the Maps view.
     // Outro stays driven by the audio so the CTA logo holds for the full outro audio.
     const HARDCODED_INTRO_SEC = 8;
+    const introAudioSec = manifest?.segments?.intro?.durationSeconds;
+    if (introAudioSec && introAudioSec > HARDCODED_INTRO_SEC + 0.5) {
+      console.warn(`  ⚠️ Intro AUDIO is ${introAudioSec.toFixed(2)}s but logo card is hard-coded to ${HARDCODED_INTRO_SEC}s — last ${(introAudioSec - HARDCODED_INTRO_SEC).toFixed(2)}s of intro audio will play over the Maps view.`);
+    }
     const outroSec = manifest?.segments?.outro?.durationSeconds;
     if (outroSec) {
       console.log(`  Intro hard-coded to ${HARDCODED_INTRO_SEC}s; outro from audio = ${outroSec.toFixed(2)}s`);

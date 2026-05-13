@@ -405,6 +405,13 @@ async function extractPlaceDetails(page) {
       }
 
       function findCategory() {
+        // Primary: GBP-specific selectors used by current Maps DOM.
+        const primary = document.querySelector('button.DkEaL, span.YhemCb');
+        if (primary) {
+          const t = textFrom(primary);
+          if (t && t.length < 80) return t;
+        }
+        // Legacy fallback selectors — kept for older Maps layouts.
         const sel = [
           'button[jsaction*="pane.rating.category"]',
           'button[jsaction*="pane.rating.more"]',
@@ -415,6 +422,19 @@ async function extractPlaceDetails(page) {
           const el = document.querySelector(s);
           const t = textFrom(el);
           if (t && t.length < 80) return t;
+        }
+        // Final fallback: scan small buttons near F7nice for category-shaped text
+        // (1-3 words, no digits, no commas) — matches "Garage Door Repair" patterns.
+        const f7 = document.querySelector('div.F7nice');
+        if (f7) {
+          const container = f7.closest('div.lMbq3e, div.m6QErb, div[role="main"]') || f7.parentElement;
+          if (container) {
+            const candidates = Array.from(container.querySelectorAll('button, span'))
+              .map((el) => (el.textContent || '').trim())
+              .filter((t) => t && t.length > 3 && t.length < 50 && !/[\d,]/.test(t) && /^[A-Z]/.test(t));
+            const cat = candidates.find((t) => /\b(repair|service|company|contractor|store|shop|salon|clinic|garage|door|plumber|hvac|electrician|locksmith|dentist|restaurant|attorney|installer|cleaner|installation|landscaping|moving|painter|roofing)\b/i.test(t));
+            if (cat) return cat;
+          }
         }
         return '';
       }
