@@ -430,10 +430,10 @@ async function auditGbp(_, gbpUrl, business) {
         '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     );
     // Bare name URLs (/maps/place/Name+Only with no coordinates) load a stub, not the full card.
-    // Use a search URL instead so the full results panel renders.
+    // Use name + address in the search query so the target business ranks first in results.
     const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(gbpUrl.replace(/\/$/, ''));
     const navUrl = isBareNameUrl
-      ? `https://www.google.com/maps/search/${encodeURIComponent((business.name || '') + ' ' + (business.city || ''))}`
+      ? `https://www.google.com/maps/search/${encodeURIComponent((business.name || '') + ' ' + (business.address || business.city || ''))}`
       : gbpUrl;
     await page.goto(navUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
 
@@ -462,15 +462,30 @@ async function auditGbp(_, gbpUrl, business) {
     );
 
     if (needsClickThrough) {
-      // Click the business name link (hfpxzc = Maps listing anchor) to open full card
-      const listingLink = await page.$('a.hfpxzc, a[href*="/maps/place/"]');
-      if (listingLink) {
-        await listingLink.click();
-        await Promise.race([
-          page.waitForSelector('h1.DUwDvf', { timeout: 15000 }),
-          new Promise((r) => setTimeout(r, 10000)),
-        ]).catch(() => {});
-      }
+      // Find the listing that best matches our target business name by aria-label.
+      // Falling back to the first result picks the wrong business when ours isn't #1.
+      await page.evaluate((targetName) => {
+        const links = Array.from(document.querySelectorAll('a.hfpxzc'));
+        if (!links.length) return;
+        if (!targetName) { links[0].click(); return; }
+        const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const target = norm(targetName);
+        let best = links[0], bestScore = -1;
+        for (const link of links) {
+          const label = norm(link.getAttribute('aria-label') || '');
+          // Score = number of target characters found consecutively in label
+          let score = 0;
+          for (let i = 0, j = 0; i < label.length && j < target.length; i++) {
+            if (label[i] === target[j]) { score++; j++; }
+          }
+          if (score > bestScore) { bestScore = score; best = link; }
+        }
+        best.click();
+      }, business.name || '').catch(() => {});
+      await Promise.race([
+        page.waitForSelector('h1.DUwDvf', { timeout: 15000 }),
+        new Promise((r) => setTimeout(r, 10000)),
+      ]).catch(() => {});
     }
 
     await new Promise((r) => setTimeout(r, 2000));
@@ -484,15 +499,37 @@ async function auditGbp(_, gbpUrl, business) {
     const data = await page.evaluate((cardSel) => {
       const txt = document.body?.innerText || '';
 
-      // Review count: prefer aria-label on rating button, fall back to text
+      // Review count: read from the F7nice rating widget span — this is the element
+      // Google Maps renders next to the stars (e.g. "(5)"). Its text content is the
+      // exact display value, matching what the video screenshot shows.
       let reviewCount = null;
-      const ratingBtn = document.querySelector('button[jsaction*="pane.rating.moreReviews"], button[aria-label*="review"]');
-      if (ratingBtn) {
-        const m = (ratingBtn.getAttribute('aria-label') || '').match(/([\d,]+)\s+review/i);
+
+      // Strategy 1: div.F7nice span[role="img"][aria-label*="review"] — direct hit
+      const reviewSpan = document.querySelector('div.F7nice span[role="img"][aria-label*="review"]');
+      if (reviewSpan) {
+        const t = (reviewSpan.textContent || '').trim();
+        // textContent is "(N)" — strip parens
+        const m = t.match(/^\(?([\d,]{1,7})\)?$/);
         if (m) reviewCount = Number(m[1].replace(/,/g, ''));
       }
+
+      // Strategy 2: any span inside div.F7nice whose full textContent is exactly "(N)"
       if (reviewCount === null) {
-        const m = txt.match(/\(([\d,]{1,7})\)/) || txt.match(/([\d,]{1,7})\s+(?:Google\s+)?reviews?/i);
+        const f7 = document.querySelector('div.F7nice');
+        if (f7) {
+          for (const el of Array.from(f7.querySelectorAll('span'))) {
+            const t = (el.textContent || '').trim();
+            if (/^\([\d,]{1,7}\)$/.test(t)) {
+              reviewCount = Number(t.slice(1, -1).replace(/,/g, ''));
+              break;
+            }
+          }
+        }
+      }
+
+      // Strategy 3: aria-label on the F7nice span (same element, different read path)
+      if (reviewCount === null && reviewSpan) {
+        const m = (reviewSpan.getAttribute('aria-label') || '').match(/([\d,]+)\s+review/i);
         if (m) reviewCount = Number(m[1].replace(/,/g, ''));
       }
 
@@ -634,6 +671,7 @@ async function main() {
         name,
         category: row['Detected Category'] || row.category,
         city: row.City,
+        address: row.Address || '',
         phone: row.Phone,
         searchTerm: row['Search Term'],
       };
