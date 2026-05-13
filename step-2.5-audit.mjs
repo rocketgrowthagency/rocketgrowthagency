@@ -440,6 +440,12 @@ async function auditGbp(_, gbpUrl, business) {
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
         '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     );
+    // Forward browser console messages with our diag prefixes back to Node
+    // so [gbp-diag] / [gbp-eval] surface in the pipeline log.
+    page.on('console', (msg) => {
+      const t = msg.text();
+      if (t.includes('[gbp-')) console.log('  ' + t);
+    });
     // Bare name URLs (/maps/place/Name+Only with no coordinates) load a stub, not the full card.
     // Use name + address in the search query so the target business ranks first in results.
     const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(gbpUrl.replace(/\/$/, ''));
@@ -500,6 +506,30 @@ async function auditGbp(_, gbpUrl, business) {
     }
 
     await new Promise((r) => setTimeout(r, 2000));
+
+    // Verify we actually landed on the right business — h1 must overlap the
+    // expected name. If not, abort cleanly with error set so the script
+    // never makes claims about the wrong business.
+    const h1Verification = await page.evaluate(() => {
+      const h1 = document.querySelector('h1.DUwDvf');
+      return { h1Text: (h1?.textContent || '').trim(), url: location.href };
+    }).catch(() => ({ h1Text: '', url: '' }));
+    const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const expected = norm(business.name || '');
+    const actual = norm(h1Verification.h1Text);
+    // Require at least 50% of the expected name chars to appear in order in h1.
+    let overlap = 0;
+    for (let i = 0, j = 0; i < actual.length && j < expected.length; i++) {
+      if (actual[i] === expected[j]) { overlap++; j++; }
+    }
+    const overlapRatio = expected ? overlap / expected.length : 0;
+    if (!h1Verification.h1Text || overlapRatio < 0.5) {
+      const errMsg = `wrong business panel — expected "${business.name}", got h1="${h1Verification.h1Text}" (overlap=${(overlapRatio * 100).toFixed(0)}%) — aborting GBP scrape to prevent false data`;
+      console.warn(`  ⚠️ ${errMsg}`);
+      findings.error = errMsg;
+      return findings;
+    }
+    console.log(`  [gbp-nav] confirmed panel: h1="${h1Verification.h1Text}" (overlap=${(overlapRatio * 100).toFixed(0)}%)`);
 
     // Scroll down to load review responses (lazy-loaded by Maps)
     await page.evaluate(() => window.scrollBy(0, 800)).catch(() => {});
