@@ -380,14 +380,27 @@ async function extractPlaceDetails(page) {
       }
 
       function findReviews() {
-        const btn = Array.from(document.querySelectorAll('button, a')).find((x) =>
-          /reviews/i.test((x.getAttribute('aria-label') || '') + ' ' + (x.textContent || ''))
-        );
-        const t = textFrom(btn);
-        const m = t.match(/([\d,]+)\s*reviews?/i);
-        if (m) return m[1].replace(/,/g, '');
-        const m2 = (btn && (btn.getAttribute('aria-label') || '')).match(/([\d,]+)\s*reviews?/i);
-        if (m2) return m2[1].replace(/,/g, '');
+        // Primary: F7nice container holds rating + review count side-by-side on the panel.
+        // Review count span is usually "(32)" formatted with aria-label "32 reviews".
+        const f7 = document.querySelector('div.F7nice');
+        if (f7) {
+          const spans = Array.from(f7.querySelectorAll('span'));
+          for (const sp of spans) {
+            const aria = sp.getAttribute('aria-label') || '';
+            const txt = (sp.textContent || '').trim();
+            const m = aria.match(/([\d,]+)\s*reviews?/i)
+              || txt.match(/^\(([\d,]+)\)$/)
+              || txt.match(/([\d,]+)\s*reviews?/i);
+            if (m) return m[1].replace(/,/g, '');
+          }
+        }
+        // Fallback: a button whose aria-label is exactly the review count (e.g. "32 reviews").
+        const btns = Array.from(document.querySelectorAll('button[aria-label], a[aria-label]'));
+        for (const b of btns) {
+          const aria = (b.getAttribute('aria-label') || '').trim();
+          const m = aria.match(/^([\d,]+)\s*reviews?$/i) || aria.match(/^\(([\d,]+)\)$/);
+          if (m) return m[1].replace(/,/g, '');
+        }
         return '';
       }
 

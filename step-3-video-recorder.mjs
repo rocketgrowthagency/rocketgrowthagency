@@ -637,7 +637,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       console.log(`   → Scrolling to find and click ${businessName} (rank #${rank ?? '?'})...`);
       const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded + 2);
       if (clicked) {
-        await sleep(6500);
+        await sleep(12000);
         await dismissResultsInfoPopup(page);
         return 'results-click';
       }
@@ -954,6 +954,7 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
 
       await recorder.start();
       await sleep(800);
+      await sleep(DESKTOP_WEBSITE_INTRO_HOLD_MS);
 
       await scrollWebsiteMore(page);
       await scrollWebsiteTail(page, DESKTOP_WEBSITE_EXTRA_HOLD_MS);
