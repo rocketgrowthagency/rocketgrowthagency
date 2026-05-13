@@ -81,7 +81,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+      /* very subtle darkening — doesn't fight the branded outro */
+      background: rgba(0,0,0,0.18);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.5s ease;
@@ -92,23 +93,24 @@
     }
     .end-card-inner {
       position: absolute;
-      bottom: 72px; /* above controls */
+      top: 68%;
       left: 0; right: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      transform: translateY(18px);
+      gap: 7px;
+      padding: 0 16px;
+      transform: translateY(16px);
       transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .end-card.visible .end-card-inner {
       transform: translateY(0);
     }
+    /* Frosted pill — matches the page .btn-primary exactly */
     .end-card-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
       padding: 16px 32px;
       background: var(--brand);
       color: #fff;
@@ -118,29 +120,33 @@
       font-weight: 800;
       font-size: 1.05rem;
       letter-spacing: -0.01em;
-      box-shadow: 0 0 0 0 rgba(47, 87, 235, 0.5);
-      animation: none;
       white-space: nowrap;
+      /* white ring so it reads on any video frame */
+      outline: 3px solid rgba(255,255,255,0.55);
+      outline-offset: 3px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 0 rgba(47, 87, 235, 0.5);
+      animation: none;
     }
     .end-card.visible .end-card-btn {
-      animation: end-card-pulse 2s ease-in-out 0.6s infinite;
+      animation: end-card-pulse 2.2s ease-in-out 0.7s infinite;
     }
     @keyframes end-card-pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(47, 87, 235, 0.55); }
-      60%  { box-shadow: 0 0 0 14px rgba(47, 87, 235, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(47, 87, 235, 0); }
+      0%   { box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 0   rgba(255,255,255,0.6); }
+      55%  { box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 12px rgba(255,255,255,0); }
+      100% { box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 0   rgba(255,255,255,0); }
     }
     .end-card-label {
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: rgba(255,255,255,0.7);
-      letter-spacing: 0.05em;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.82);
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
     @media (max-width: 520px) {
-      .end-card-btn { font-size: 0.92rem; padding: 14px 22px; }
-      .end-card-inner { bottom: 64px; }
+      .end-card-btn  { font-size: 0.88rem; padding: 13px 22px; }
+      .end-card-inner { top: 66%; }
     }
     .body-copy { padding: 24px; }
     .body-copy p { margin: 0 0 12px; color: var(--muted); }
@@ -266,8 +272,9 @@
         </video>
         <div class="end-card" id="rga-end-card" aria-hidden="true">
           <div class="end-card-inner">
+            <span class="end-card-label">&#8595; &nbsp;Click Below for Your Free Audit</span>
             <a class="end-card-btn" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">
-              Get My Free Growth Audit &nbsp;→
+              Get My Free Growth Audit
             </a>
             <span class="end-card-label">Free &nbsp;·&nbsp; No Call Required</span>
           </div>
