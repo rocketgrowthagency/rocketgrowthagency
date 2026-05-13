@@ -402,12 +402,15 @@ async function scrollMapsResultsPanel(page, times = 2) {
 // Scroll the Maps results panel one step at a time, clicking the target business
 // as soon as it enters the DOM. This avoids the virtual-DOM problem where
 // over-scrolling removes rank-N items before the click fires.
+// Scroll the Maps results panel one step at a time, navigating directly to the
+// target listing's URL as soon as it enters the DOM. Uses href navigation (not
+// mouse click) to avoid virtual-DOM re-render staleness.
 async function scrollUntilVisibleAndClick(page, businessName, maxScrolls) {
   if (!businessName) return false;
 
-  // Check before any scrolling (business may already be in initial view)
-  let clicked = await clickListingInResultsByName(page, businessName);
-  if (clicked) return true;
+  // Check before any scrolling
+  let navigated = await clickListingInResultsByName(page, businessName);
+  if (navigated) return true;
 
   for (let i = 0; i < maxScrolls; i++) {
     const moved = await page.evaluate(() => {
@@ -427,20 +430,20 @@ async function scrollUntilVisibleAndClick(page, businessName, maxScrolls) {
     await sleep(1000);
     if (!moved) break;
 
-    clicked = await clickListingInResultsByName(page, businessName);
-    if (clicked) return true;
+    navigated = await clickListingInResultsByName(page, businessName);
+    if (navigated) return true;
   }
 
   return false;
 }
 
-async function clickListingInResultsByName(page, businessName) {
+// Score all listing anchors in the current Maps results DOM against a target name.
+// Returns the href of the best match (score >= minScore), or null.
+// Navigation via href is more reliable than mouse clicks because Maps' virtual DOM
+// re-renders between getBoundingClientRect() and page.mouse.click(), causing misses.
+async function getListingHrefByName(page, businessName, minScore = 24) {
   const target = normalizeText(businessName);
-  if (!target) return false;
-
-  // Find best matching card and return screen coords — real mouse click required
-  // because Google Maps ignores programmatic DOM .click() for panel navigation.
-  const coords = await page.evaluate((targetNorm) => {
+  return await page.evaluate((targetNorm, minScoreVal) => {
     const norm = (s) =>
       String(s || '')
         .toLowerCase()
@@ -453,68 +456,49 @@ async function clickListingInResultsByName(page, businessName) {
       return t.includes('\nsponsored') || t.includes('sponsored\n') || t.startsWith('sponsored');
     };
 
-    const resultCards = Array.from(
-      document.querySelectorAll('div[role="article"], div.Nv2PK, a.hfpxzc, a[href*="/maps/place/"]')
-    );
+    const anchors = Array.from(
+      document.querySelectorAll('a.hfpxzc, a[href*="/maps/place/"]')
+    ).filter((a) => a.href && a.href.includes('/maps/place/'));
+
+    if (!anchors.length) return null;
+    if (!targetNorm) return anchors[0].href;
 
     const scored = [];
-    for (const el of resultCards) {
-      let cardRoot = el;
-      if (el.tagName.toLowerCase() === 'a') {
-        cardRoot = el.closest('div[role="article"], div.Nv2PK') || el.parentElement || el;
-      }
-
+    for (const anchor of anchors) {
+      const cardRoot = anchor.closest('div[role="article"], div.Nv2PK') || anchor.parentElement || anchor;
       if (cardRoot && isSponsoredBlock(cardRoot)) continue;
 
-      const text = (cardRoot?.innerText || el.innerText || '').trim();
-      const firstLine = text.split('\n')[0] || '';
-      const aria = el.getAttribute ? el.getAttribute('aria-label') || '' : '';
-      const title =
-        cardRoot?.querySelector?.('.fontHeadlineSmall, .qBF1Pd, div[role="heading"], h3')?.textContent ||
-        '';
+      const aria = norm(anchor.getAttribute('aria-label') || '');
+      const title = norm(
+        cardRoot?.querySelector?.('.fontHeadlineSmall, .qBF1Pd, div[role="heading"], h3')?.textContent || ''
+      );
+      const firstLine = norm((cardRoot?.innerText || anchor.innerText || '').split('\n')[0] || '');
 
-      const pool = [aria, firstLine, title].map(norm).filter(Boolean);
+      const pool = [aria, title, firstLine].filter(Boolean);
       let best = 0;
-
-      for (const candidate of pool) {
-        if (candidate === targetNorm) best = Math.max(best, 100);
-        else if (candidate.includes(targetNorm) || targetNorm.includes(candidate)) {
-          best = Math.max(best, 75);
-        } else {
-          const targetParts = targetNorm.split(' ').filter((p) => p.length >= 4);
-          const hits = targetParts.filter((p) => candidate.includes(p)).length;
+      for (const c of pool) {
+        if (c === targetNorm) best = Math.max(best, 100);
+        else if (c.includes(targetNorm) || targetNorm.includes(c)) best = Math.max(best, 75);
+        else {
+          const hits = targetNorm.split(' ').filter((p) => p.length >= 4 && c.includes(p)).length;
           best = Math.max(best, hits * 12);
         }
       }
-
-      if (best > 0) scored.push({ el: cardRoot || el, best });
+      if (best > 0) scored.push({ href: anchor.href, best });
     }
 
     scored.sort((a, b) => b.best - a.best);
-    const topScore = scored[0];
-    if (!topScore || topScore.best < 45) return null;
+    const top = scored[0];
+    if (!top) return anchors[0].href; // last resort: first anchor
+    return top.best >= minScoreVal ? top.href : anchors[0].href;
+  }, target, minScore);
+}
 
-    const top = topScore.el;
-    if (!top) return null;
-
-    const anchor =
-      top.tagName?.toLowerCase?.() === 'a'
-        ? top
-        : top.querySelector?.('a.hfpxzc, a[aria-label], a[href*="/maps/place/"]') || null;
-
-    const clickTarget = anchor || top;
-    clickTarget.scrollIntoView({ block: 'center' });
-
-    const r = clickTarget.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) return null;
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-  }, target);
-
-  if (!coords) return false;
-
-  // Small pause after scrollIntoView so layout settles
-  await sleep(400);
-  await page.mouse.click(coords.x, coords.y);
+async function clickListingInResultsByName(page, businessName) {
+  const href = await getListingHrefByName(page, businessName, 45);
+  if (!href) return false;
+  // Navigate directly — avoids click-coordinate staleness from Maps virtual DOM re-renders
+  await page.goto(href, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
   return true;
 }
 
@@ -624,24 +608,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (isBareNameUrl) {
         await waitForMapsResults(page);
         await sleep(2000);
-        // Use name-matching — prevents clicking the wrong business when
-        // fallback search results don't put the target first.
-        const fallbackClicked = await clickListingInResultsByName(page, businessName);
-        if (fallbackClicked) {
-          console.log(`   → Fallback: name-match click succeeded.`);
-          await sleep(6500);
+        // Navigate directly to the listing URL — avoids all click issues
+        const listingHref = await getListingHrefByName(page, businessName, 24);
+        if (listingHref) {
+          console.log(`   → Fallback: navigating directly to listing panel URL.`);
+          await page.goto(listingHref, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+          await sleep(7000);
         } else {
-          // Last resort: ElementHandle click on first result
-          const listing = await page.$('a.hfpxzc');
-          if (listing) {
-            await listing.scrollIntoView().catch(() => {});
-            await sleep(400);
-            await listing.click().catch(() => {});
-            console.log(`   → Fallback: clicked first listing via ElementHandle.`);
-            await sleep(6500);
-          } else {
-            await sleep(5000);
-          }
+          await sleep(5000);
         }
       } else {
         // Wait longer for the business panel to fully render after a direct URL load
