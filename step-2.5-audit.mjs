@@ -852,7 +852,7 @@ async function auditGbp(_, gbpUrl, business) {
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
     findings.description = data.description || '';
-    findings.descriptionLength = data.description ? data.description.length : null;
+    findings.descriptionLength = typeof data.description === 'string' ? data.description.length : null;
     findings.hasPosts = data.hasPosts;
     findings.lastPostDaysAgo = data.lastPostDaysAgo;
 
