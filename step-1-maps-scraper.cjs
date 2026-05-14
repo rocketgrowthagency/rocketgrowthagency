@@ -164,9 +164,19 @@ function placeKeysFromUrl(u) {
 
 function latLngFromAnyUrl(u) {
   const s = String(u || '');
-  const m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
-  if (!m) return { lat: '', lng: '' };
-  return { lat: m[1] || '', lng: m[2] || '' };
+  // Pattern 1: panel URL @lat,lng,zoom
+  let m = s.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: m[1], lng: m[2] };
+  // Pattern 2: static map URL center=lat,lng (URL-encoded comma is %2C)
+  m = s.match(/[?&]center=(-?\d+(?:\.\d+)?)(?:,|%2C)(-?\d+(?:\.\d+)?)/i);
+  if (m) return { lat: m[1], lng: m[2] };
+  // Pattern 3: ll=lat,lng (older Maps URL format)
+  m = s.match(/[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i);
+  if (m) return { lat: m[1], lng: m[2] };
+  // Pattern 4: !3d{lat}!4d{lng} (data-block format)
+  m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: m[1], lng: m[2] };
+  return { lat: '', lng: '' };
 }
 
 async function saveDebug(page, label) {
@@ -553,20 +563,46 @@ async function extractPlaceDetails(page) {
       }
 
       function findSecondaryCategories() {
-        const sels = [
-          'button[jsaction*="pane.rating.category"]',
-          'button[jsaction*="pane.rating.more"]',
-          'button[aria-label*="Category"]',
-          'button[aria-label*="category"]',
-        ];
+        // Defensive: scan ALL category-shaped buttons + spans near the rating block,
+        // exclude the primary category (returned by findCategory), return the rest.
+        // Multiple selector strategies because Google updates DOM names regularly.
         const cats = [];
-        for (const s of sels) {
-          document.querySelectorAll(s).forEach(el => {
+        const isCatShape = (t) => {
+          if (!t) return false;
+          const tt = t.trim();
+          if (tt.length < 3 || tt.length > 60) return false;
+          if (/\d/.test(tt)) return false;
+          if (/[\(\)\[\]:;]/.test(tt)) return false;
+          if (/^(Open|Closed|Closes|Opens|Phone|Directions|Website|Reviews?|Save|Share|Photos?|Hours|Menu|Order|Book|More|All|Overview|About|Search|Service area)/i.test(tt)) return false;
+          if (tt.split(/\s+/).length > 6) return false;
+          if (!/^[A-Z]/.test(tt)) return false;
+          return true;
+        };
+        const selectors = [
+          'button.DkEaL', 'span.YhemCb',
+          'button[jsaction*="pane.rating.category"]',
+          'button[jsaction*="category"]',
+          'button[aria-label*="Category" i]',
+          'span[aria-label*="Category" i]',
+        ];
+        for (const sel of selectors) {
+          document.querySelectorAll(sel).forEach(el => {
             const t = textFrom(el);
-            if (t && t.length < 80 && !cats.includes(t)) cats.push(t);
+            if (isCatShape(t) && !cats.includes(t)) cats.push(t);
           });
         }
-        // First element is primary; rest are secondary
+        // Secondary categories also appear in the "More categories" expander
+        // — scan all small buttons near F7nice for category-shaped text
+        const f7 = document.querySelector('div.F7nice');
+        if (f7) {
+          let container = f7;
+          for (let i = 0; i < 4 && container.parentElement; i++) container = container.parentElement;
+          Array.from(container.querySelectorAll('button, span')).forEach(el => {
+            const t = (el.textContent || '').trim();
+            if (isCatShape(t) && !cats.includes(t)) cats.push(t);
+          });
+        }
+        // First is primary, rest are secondary
         return cats.slice(1).join(', ');
       }
 
@@ -593,40 +629,75 @@ async function extractPlaceDetails(page) {
       }
 
       function findHasPosts() {
-        // Google Posts appear under an "Updates" section heading
-        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
-        return headings.some(el => /^updates?$/i.test(textFrom(el)));
+        // Posts section in Maps panel goes by several names: "Updates", "Posts",
+        // "From the owner". Plus modern layout shows posts directly under business
+        // header with class names like Ufkx2c (post timestamp).
+        const text = (document.body && document.body.innerText) || '';
+        if (/\bView all post/i.test(text)) return true;
+        if (/\bUpdates from/i.test(text)) return true;
+        if (/\bPosts from/i.test(text)) return true;
+        // Heading-based detection
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button, span'));
+        for (const el of headings) {
+          const t = textFrom(el).trim();
+          if (/^(updates?|posts?|from the owner|news from the business)$/i.test(t)) return true;
+        }
+        // Class-based detection (modern Maps DOM)
+        if (document.querySelector('.Ufkx2c, [data-tab-index*="post" i], div[aria-label*="post" i]')) return true;
+        return false;
       }
 
       function findDescription() {
-        // "From the business" description block
-        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"]'));
+        // "From the business" / "About" / "Description" block on Maps panel.
+        // Multiple opener phrases + DOM patterns. Returns first match >= 20 chars.
+        // Pattern 1: section with heading
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
         for (const h of headings) {
           const t = textFrom(h);
-          if (/from the business|about this business/i.test(t)) {
+          if (/^(from the business|about this business|about|description)/i.test(t.trim())) {
             let sib = h.nextElementSibling;
             while (sib) {
-              const txt = textFrom(sib).trim();
-              if (txt.length > 20) return txt.slice(0, 600);
+              const txt = (sib.textContent || '').trim();
+              if (txt.length > 20 && txt.length < 2000) return txt.slice(0, 600);
               sib = sib.nextElementSibling;
             }
+            // also check inside the heading's parent for long paragraph siblings
+            const parent = h.parentElement;
+            if (parent) {
+              const paragraphs = Array.from(parent.querySelectorAll('div, span, p'));
+              for (const p of paragraphs) {
+                const txt = (p.textContent || '').trim();
+                if (txt.length > 40 && txt.length < 1500 && p !== h) return txt.slice(0, 600);
+              }
+            }
           }
+        }
+        // Pattern 2: aria-label="Description"
+        const descEl = document.querySelector('[aria-label*="Description" i], [aria-label*="About" i]');
+        if (descEl) {
+          const t = (descEl.textContent || '').trim();
+          if (t.length > 20) return t.slice(0, 600);
         }
         return '';
       }
 
       function findServices() {
-        // Services listed under a "Services" section heading on the profile
-        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
+        // Services list under a "Services" heading or in a services tab.
+        // Defensive: try heading approach + class-based detection.
+        const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button, span'));
         for (const h of headings) {
-          if (!/^services?$/i.test(textFrom(h))) continue;
-          const container = h.closest('[jsaction], section, [data-section-id]') || h.parentElement;
+          const t = textFrom(h).trim();
+          if (!/^(services?|service offerings?)$/i.test(t)) continue;
+          // Look in heading's parent or jsaction container
+          const container = h.closest('[jsaction], section, [data-section-id], div[role="tabpanel"]') || h.parentElement?.parentElement || h.parentElement;
           if (!container) continue;
           const items = [];
-          container.querySelectorAll('[role="listitem"], li, button, span').forEach((el) => {
+          container.querySelectorAll('[role="listitem"], li, .ZSxxwc, span.fontBodyMedium').forEach((el) => {
             if (el === h) return;
-            const txt = textFrom(el).trim();
-            if (txt && txt.length < 80 && txt.length > 1 && !items.includes(txt)) items.push(txt);
+            const txt = (el.textContent || '').trim();
+            if (txt && txt.length > 1 && txt.length < 80 && !items.includes(txt) && !/^(services?|service offerings?)$/i.test(txt)) {
+              items.push(txt);
+            }
           });
           if (items.length) return items.slice(0, 20).join(', ');
         }
@@ -634,13 +705,36 @@ async function extractPlaceDetails(page) {
       }
 
       function findQACount() {
-        // Q&A count shown as a button/link on the profile
-        const els = Array.from(document.querySelectorAll('button, a, [role="button"], span'));
+        // Q&A count — multiple display formats:
+        //   "32 questions" / "Questions and answers (32)" / "Q&A: 32" / "32 answers"
+        const patterns = [
+          /([\d,]+)\s+questions?\b/i,
+          /([\d,]+)\s+answers?\b/i,
+          /questions? and answers?\s*\(?\s*([\d,]+)\s*\)?/i,
+          /q&a\s*[:•(]\s*([\d,]+)/i,
+          /\(([\d,]+)\)\s*(?:questions|answers|Q&A)/i,
+        ];
+        const tryAll = (text) => {
+          for (const p of patterns) {
+            const m = text.match(p);
+            if (m) {
+              const n = parseInt(m[1].replace(/,/g, ''), 10);
+              if (n >= 1 && n < 100000) return String(n);
+            }
+          }
+          return '';
+        };
+        // Source 1: any element with text/aria-label suggesting Q&A
+        const els = Array.from(document.querySelectorAll('button, a, [role="button"], span, h2, h3'));
         for (const el of els) {
-          const txt = (el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '');
-          const m = txt.match(/([\d,]+)\s+(?:questions?|q&a|qa)\b/i);
-          if (m) return m[1].replace(/,/g, '');
+          const text = (el.textContent || '') + ' ' + (el.getAttribute('aria-label') || '');
+          const hit = tryAll(text);
+          if (hit) return hit;
         }
+        // Source 2: body fallback (last resort)
+        const body = (document.body && document.body.innerText) || '';
+        const hit = tryAll(body);
+        if (hit) return hit;
         return '';
       }
 
@@ -1022,7 +1116,7 @@ async function main() {
     // At end, report coverage % per field; hard-fail if any CRITICAL field is at 0%.
     // Prevents the "silent systemic gap" we hit on Reviews + Category pre-2026-05-14.
     const coverageCount = Object.fromEntries(header.map((h) => [h, 0]));
-    const CRITICAL_FIELDS = ['Business Name', 'Rating', 'Reviews', 'Detected Category', 'Google Maps URL', 'Map Rank'];
+    const CRITICAL_FIELDS = ['Business Name', 'Rating', 'Reviews', 'Detected Category', 'Google Maps URL', 'Map Rank', 'Latitude', 'Longitude'];
 
     const seenPlaces = new Set();
     let written = 0;
@@ -1071,8 +1165,14 @@ async function main() {
 
         const llFromMaps = latLngFromAnyUrl(mapsUrl);
         const llFromPage = latLngFromAnyUrl(page.url());
-        const lat = llFromMaps.lat || llFromPage.lat || '';
-        const lng = llFromMaps.lng || llFromPage.lng || '';
+        // Also try imageUrl which is often a static-map URL with center=lat,lng
+        const llFromImg = latLngFromAnyUrl(details.imageUrl || '');
+        // And the original placeUrl from search results
+        const llFromPlace = latLngFromAnyUrl(placeUrl);
+        // Also extract from the full unsimplified mapsUrl (in case /data= block has !3d!4d)
+        const llFromFullMaps = latLngFromAnyUrl(details.mapsUrl || '');
+        const lat = llFromMaps.lat || llFromPage.lat || llFromFullMaps.lat || llFromImg.lat || llFromPlace.lat || '';
+        const lng = llFromMaps.lng || llFromPage.lng || llFromFullMaps.lng || llFromImg.lng || llFromPlace.lng || '';
 
         const rowOut = [
           name,
