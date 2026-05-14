@@ -153,8 +153,94 @@ function extractValidEmail(raw) {
   return '';
 }
 
+// Strategy 0: Airtable Leads grouped by Search Term + Map Rank 1-3 (most recent).
+// This is the PREFERRED source — single source of truth, populated by step-1 + healed
+// by step-2.5 write-back. Falls back to CSV strategies if Airtable creds missing or
+// the search has no top-3 records yet. Aligns with Chris's "Source Run grouping"
+// design — no denormalized Competitor 1/2/3 fields needed.
+async function loadTop3FromAirtable(searchTerm) {
+  const apiKey = process.env.AIRTABLE_API_KEY;
+  const baseId = process.env.AIRTABLE_BASE_ID;
+  if (!apiKey || !baseId || !searchTerm) return null;
+  const tableName = process.env.AIRTABLE_LEADS_TABLE || 'Leads';
+  const escaped = String(searchTerm).replace(/"/g, '\\"');
+  // Pull all rank-1/2/3 records for the search, sort by Date Scraped descending,
+  // take the most-recent 3 (i.e., latest scrape's top-3).
+  const formula = `AND({Search Term} = "${escaped}", OR({Map Rank}=1,{Map Rank}=2,{Map Rank}=3))`;
+  const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&sort[0][field]=Date Scraped&sort[0][direction]=desc&maxRecords=20`;
+  try {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const recs = data.records || [];
+    // Group by Source Run, take the run whose records collectively cover ranks 1-3 most recently.
+    // Walk records (already in Date Scraped DESC) and pick the first 3 ranks we encounter,
+    // preferring records from the SAME source run.
+    const seenRanks = new Set();
+    const picked = [];
+    let preferredRun = null;
+    for (const r of recs) {
+      const f = r.fields || {};
+      const rank = f['Map Rank'];
+      const sr = Array.isArray(f['Source Run']) ? f['Source Run'][0] : f['Source Run'];
+      if (preferredRun && sr !== preferredRun) continue;
+      if (!preferredRun) preferredRun = sr;
+      if (!seenRanks.has(rank) && rank >= 1 && rank <= 3) {
+        seenRanks.add(rank);
+        picked.push({ rank, ratingNum: f.Rating, reviewsNum: f['Review Count'], cat: (f.Category || '').trim() });
+      }
+      if (picked.length === 3) break;
+    }
+    if (!picked.length) return null;
+    const ratings = picked.map(p => p.ratingNum).filter(n => typeof n === 'number');
+    const reviews = picked.map(p => p.reviewsNum).filter(n => typeof n === 'number');
+    const categories = picked.map(p => p.cat).filter(Boolean);
+    if (!ratings.length || !reviews.length) {
+      console.warn(`[top3] Airtable hit but Reviews/Rating missing for top-3 of "${searchTerm}" — falling back to CSV`);
+      return null;
+    }
+    const catCount = {};
+    for (const c of categories) catCount[c] = (catCount[c] || 0) + 1;
+    let majorityCategory = null, majorityCount = 0;
+    for (const [c, n] of Object.entries(catCount)) if (n > majorityCount) { majorityCategory = c; majorityCount = n; }
+    const stats = {
+      ratingMin: Math.min(...ratings),
+      ratingMax: Math.max(...ratings),
+      ratingAvg: ratings.reduce((a, b) => a + b, 0) / ratings.length,
+      reviewsMin: Math.min(...reviews),
+      reviewsMax: Math.max(...reviews),
+      reviewsAvg: Math.round(reviews.reduce((a, b) => a + b, 0) / reviews.length),
+      majorityCategory,
+      categories,
+      _source: `Airtable (Source Run ${preferredRun?.slice(0, 8) || '?'})`
+    };
+    console.log(`[top3] from Airtable: ${stats._source} → reviewsAvg=${stats.reviewsAvg} ratingAvg=${stats.ratingAvg.toFixed(2)} cat="${stats.majorityCategory}"`);
+    return stats;
+  } catch (e) {
+    console.warn(`[top3] Airtable lookup failed: ${e.message || e}`);
+    return null;
+  }
+}
+
 async function loadTop3Stats(baseName, step2CsvPath) {
-  // Strategy 1: exact match step-1 base name (single-business pipeline)
+  // Strategy 0: Airtable by Search Term (preferred, single source of truth).
+  // Read Search Term from step-2 CSV first row.
+  if (step2CsvPath && fs.existsSync(step2CsvPath)) {
+    let searchTerm = null;
+    await new Promise((resolve) => {
+      const rows = [];
+      fs.createReadStream(step2CsvPath).pipe(csvParser())
+        .on('data', (row) => rows.push(row))
+        .on('end', () => { if (rows[0]) searchTerm = rows[0]['Search Term'] || rows[0].searchTerm || null; resolve(); })
+        .on('error', resolve);
+    });
+    if (searchTerm) {
+      const atStats = await loadTop3FromAirtable(searchTerm);
+      if (atStats) return atStats;
+    }
+  }
+
+  // Strategy 1: exact match step-1 base name (single-business pipeline) — CSV fallback
   const step1BaseName = baseName.replace('[step-2]', '[step-1]');
   const step1CsvPath = path.join(STEP1_DIR, `${step1BaseName}.csv`);
   let csvToRead = fs.existsSync(step1CsvPath) ? step1CsvPath : null;
