@@ -789,10 +789,30 @@ async function main() {
     }
     const match = existing.get(pk);
     if (match) {
+      // Refresh scrape-data fields (universal — safe to overwrite on every re-scrape).
+      // Critical: this is what was missing pre-2026-05-14 — even when step-1 captured
+      // Review Count + Category + Lat/Lng correctly, the PATCH only updated Map Rank +
+      // Date Scraped, dropping the new scrape data on the floor.
+      // Workflow fields (Vid Slug, Email Sent Date, Pipeline Stage, Notes, etc.) are
+      // INTENTIONALLY NOT in this list — those are owned by other systems.
+      const SCRAPE_DATA_FIELDS = [
+        'Rating', 'Review Count', 'Category',
+        'Latitude', 'Longitude',
+        'Phone', 'Address', 'City', 'State', 'ZIP', 'Website',
+        'Business Photo URL', 'Sponsored',
+        'GBP Status', 'GBP Hours',
+        'GBP Secondary Categories', 'GBP Services',
+        'GBP Photo Count',
+      ];
       const refreshFields = {
         "Map Rank": rec.fields["Map Rank"],
         "Date Scraped": rec.fields["Date Scraped"],
       };
+      for (const f of SCRAPE_DATA_FIELDS) {
+        if (rec.fields[f] !== undefined && rec.fields[f] !== '' && rec.fields[f] !== null) {
+          refreshFields[f] = rec.fields[f];
+        }
+      }
       if (rec.fields["Source Run"]) refreshFields["Source Run"] = rec.fields["Source Run"];
       if (!match.fields?.["Place ID"]) refreshFields["Place ID"] = pk;
 
