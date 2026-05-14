@@ -380,36 +380,80 @@ async function extractPlaceDetails(page) {
       }
 
       function findReviews() {
-        // Primary: F7nice container holds rating + review count side-by-side on the panel.
-        // Review count span is usually "(32)" formatted with aria-label "32 reviews".
+        // Defensive multi-pattern extractor — Google's exact aria-label / text format
+        // for review count varies and was changed sometime in 2026 to no longer match
+        // the original narrow regex. This version scans MULTIPLE patterns over all
+        // text content in F7nice + falls back to a heuristic on any number in the
+        // panel header that's review-count-shaped.
+        const patterns = [
+          /\(([\d,]+)\)/,                                // "(32)"
+          /([\d,]+)\s*Google\s*reviews?\b/i,             // "32 Google reviews"
+          /([\d,]+)\s*reviews?\b/i,                      // "32 reviews"
+          /based on ([\d,]+) reviews?/i,                 // "based on 32 reviews"
+          /Rated [\d.]+ stars? based on ([\d,]+)/i       // "Rated 5.0 stars based on 32"
+        ];
+        const tryPatterns = (text) => {
+          for (const p of patterns) {
+            const m = text.match(p);
+            if (m) {
+              const n = parseInt(m[1].replace(/,/g, ''), 10);
+              if (n >= 1 && n <= 999999) return String(n);
+            }
+          }
+          return '';
+        };
+        // Source 1: F7nice container — primary location
         const f7 = document.querySelector('div.F7nice');
         if (f7) {
-          const spans = Array.from(f7.querySelectorAll('span'));
+          // Check each span's text + aria-label
+          const spans = Array.from(f7.querySelectorAll('span, button, a'));
           for (const sp of spans) {
-            const aria = sp.getAttribute('aria-label') || '';
-            const txt = (sp.textContent || '').trim();
-            const m = aria.match(/([\d,]+)\s*reviews?/i)
-              || txt.match(/^\(([\d,]+)\)$/)
-              || txt.match(/([\d,]+)\s*reviews?/i);
-            if (m) return m[1].replace(/,/g, '');
+            const text = (sp.getAttribute('aria-label') || '') + ' ' + (sp.textContent || '');
+            const hit = tryPatterns(text);
+            if (hit) return hit;
           }
+          // Whole F7nice combined text as fallback
+          const allText = (f7.textContent || '') + ' ' + (f7.outerHTML || '');
+          const hit = tryPatterns(allText);
+          if (hit) return hit;
         }
-        // Fallback: a button whose aria-label is exactly the review count (e.g. "32 reviews").
+        // Source 2: any button/anchor aria-label matching reviews pattern
         const btns = Array.from(document.querySelectorAll('button[aria-label], a[aria-label]'));
         for (const b of btns) {
           const aria = (b.getAttribute('aria-label') || '').trim();
-          const m = aria.match(/^([\d,]+)\s*reviews?$/i) || aria.match(/^\(([\d,]+)\)$/);
-          if (m) return m[1].replace(/,/g, '');
+          const hit = tryPatterns(aria);
+          if (hit) return hit;
+        }
+        // Source 3: page header text (last-resort heuristic)
+        const header = document.querySelector('h1.DUwDvf');
+        if (header) {
+          const headerArea = header.closest('div.tAiQdd, div.lMbq3e, div[role="main"]') || header.parentElement?.parentElement;
+          if (headerArea) {
+            const hit = tryPatterns(headerArea.textContent || '');
+            if (hit) return hit;
+          }
         }
         return '';
       }
 
       function findCategory() {
+        // Reject obvious non-categories: UI labels, status words, numbers, etc.
+        const isCategoryShaped = (t) => {
+          if (!t) return false;
+          const trimmed = t.trim();
+          if (trimmed.length < 3 || trimmed.length > 60) return false;
+          if (/\d/.test(trimmed)) return false;                              // categories have no digits
+          if (/[\(\)\[\]:;]/.test(trimmed)) return false;                    // no parens / brackets
+          if (/^(Open|Closed|Closes|Opens|Phone|Directions|Website|Reviews?|Save|Share|Photos?|Hours|Menu|Order|Book|More|All|Overview|About)\b/i.test(trimmed)) return false;
+          if (trimmed.split(/\s+/).length > 6) return false;                 // too long to be a category
+          if (!/^[A-Z]/.test(trimmed)) return false;                         // categories are capitalized
+          return true;
+        };
         // Primary: GBP-specific selectors used by current Maps DOM.
         const primary = document.querySelector('button.DkEaL, span.YhemCb');
         if (primary) {
           const t = textFrom(primary);
-          if (t && t.length < 80) return t;
+          if (t && isCategoryShaped(t)) return t;
         }
         // Legacy fallback selectors — kept for older Maps layouts.
         const sel = [

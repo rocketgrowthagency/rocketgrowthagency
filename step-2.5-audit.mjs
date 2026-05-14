@@ -1198,6 +1198,62 @@ async function main() {
   } catch (vErr) {
     console.warn(`[self-diag] Validation pass failed (non-fatal): ${vErr.message || vErr}`);
   }
+
+  // === Airtable write-back — patch each audited lead's Airtable Leads row with the
+  // captured reviewCount + primaryCategory. Heals the systemic step-1 data gap where
+  // these fields don't get captured by the search-results scraper. Self-healing:
+  // every business we audit now permanently fixes its own Airtable row.
+  try {
+    const apiKey = process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    const tableName = process.env.AIRTABLE_LEADS_TABLE || 'Leads';
+    if (!apiKey || !baseId) {
+      console.warn('[airtable-writeback] AIRTABLE_API_KEY or AIRTABLE_BASE_ID not set — skipping');
+    } else {
+      let patched = 0;
+      let skipped = 0;
+      for (const slug of Object.keys(audits)) {
+        const a = audits[slug];
+        if (!a || !a.businessName) { skipped++; continue; }
+        const reviewCount = a.gbp?.reviewCount;
+        const primaryCategory = a.gbp?.primaryCategory;
+        if (reviewCount == null && !primaryCategory) { skipped++; continue; }
+        // Look up the Lead in Airtable by Business Name (canonical match)
+        const escapedName = String(a.businessName).replace(/"/g, '\\"');
+        const filterFormula = `LOWER({Business Name}) = LOWER("${escapedName}")`;
+        const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
+        try {
+          const searchRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${apiKey}` } });
+          if (!searchRes.ok) { skipped++; continue; }
+          const searchData = await searchRes.json();
+          const match = searchData.records?.[0];
+          if (!match) { skipped++; continue; }
+          const fields = {};
+          if (typeof reviewCount === 'number' && reviewCount > 0) fields['Review Count'] = reviewCount;
+          if (primaryCategory && typeof primaryCategory === 'string') fields['Category'] = primaryCategory;
+          if (!Object.keys(fields).length) { skipped++; continue; }
+          const patchRes = await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${match.id}`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields, typecast: true })
+          });
+          if (patchRes.ok) {
+            patched++;
+            console.log(`[airtable-writeback] ✓ ${a.businessName} — patched Review Count=${fields['Review Count'] ?? '-'} Category="${fields['Category'] ?? '-'}"`);
+          } else {
+            skipped++;
+            console.warn(`[airtable-writeback] PATCH failed for ${a.businessName}: ${patchRes.status}`);
+          }
+        } catch (lookupErr) {
+          skipped++;
+          console.warn(`[airtable-writeback] Lookup error for ${a.businessName}: ${lookupErr.message || lookupErr}`);
+        }
+      }
+      console.log(`[airtable-writeback] Patched ${patched} lead(s), skipped ${skipped}.`);
+    }
+  } catch (wbErr) {
+    console.warn(`[airtable-writeback] Pass failed (non-fatal): ${wbErr.message || wbErr}`);
+  }
 }
 
 main().catch((err) => {
