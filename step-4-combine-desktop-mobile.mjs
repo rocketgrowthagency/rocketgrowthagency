@@ -274,10 +274,14 @@ async function main() {
 
   let combinedCount = 0;
 
-  // Hard-coded intro logo length. Audio intro plays over the first 8s of logo +
-  // continues over the start of the Maps view. So Maps video target needs to
-  // include the intro audio remainder.
-  const INTRO_LOGO_HARDCODED_SEC = 8;
+  // Intro logo card duration MUST match what step-5-branding.mjs renders, otherwise
+  // visual desyncs from audio (Maps view holds past when audio moves to website).
+  // Step-5 logic: max(MIN_INTRO_SEC=8, ceil(introAudio * 10) / 10). Mirror that here.
+  const MIN_INTRO_LOGO_SEC = 8;
+  function computeIntroLogoSec(introAudioSec) {
+    if (!introAudioSec) return MIN_INTRO_LOGO_SEC;
+    return Math.max(MIN_INTRO_LOGO_SEC, Math.ceil(introAudioSec * 10) / 10);
+  }
 
   for (const pair of pairs) {
     if (combinedCount >= MAX_COMBINES) break;
@@ -336,8 +340,10 @@ async function main() {
         const mobileAudio = manifest.segments.mobile.durationSeconds;
         const introAudio = manifest.segments.intro.durationSeconds;
 
-        // Maps video must cover: intro_audio_remainder (after 5s logo) + maps_audio
-        const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + mapsAudio;
+        // Maps video target = intro_audio remainder NOT covered by logo card + maps_audio.
+        // When logo card covers full intro audio (new behavior), remainder is ~0, so maps target = maps_audio.
+        const introLogoSec = computeIntroLogoSec(introAudio);
+        const mapsTargetSec = Math.max(0.5, introAudio - introLogoSec) + mapsAudio;
         const websiteTargetSec = websiteAudio;
         const mobileTargetSec = mobileAudio;
 
@@ -371,7 +377,8 @@ async function main() {
         tmpFiles.push(desktopTmp, mobileTmp);
         if (desktopMeta?.mapsToWebsiteTransitionSeconds != null) {
           const introAudio = manifest.segments.intro.durationSeconds;
-          const mapsTargetSec = Math.max(0.5, introAudio - INTRO_LOGO_HARDCODED_SEC) + manifest.segments.maps.durationSeconds;
+          const introLogoSec = computeIntroLogoSec(introAudio);
+          const mapsTargetSec = Math.max(0.5, introAudio - introLogoSec) + manifest.segments.maps.durationSeconds;
           const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
           const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
           const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);

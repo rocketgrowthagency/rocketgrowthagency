@@ -809,8 +809,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This isn't the full Month-1 deep-dive (your citation profile, backlinks, and competitor comparison come if we work together), but it surfaces the highest-leverage gaps we can spot from outside your accounts. You're already in the top 3 — here's where you're vulnerable to losing that position.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This isn't the full Month-1 deep-dive (your citation profile, backlinks, and competitor comparison come if we work together), but it surfaces the highest-leverage issues keeping you from the top position.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This is a short walk-through; your full Free Growth Audit goes much deeper — citation profile, backlinks, competitor comparison, and every other local SEO factor we couldn't cover here. You can claim it free at the link below. You're already in the top 3 — here's where you're vulnerable to losing that position.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This is a short walk-through; your full Free Growth Audit goes much deeper — citation profile, backlinks, competitor comparison, and every other local SEO factor we couldn't cover here. You can claim it free at the link below. Here are the highest-leverage issues keeping you from the top position.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -901,7 +901,7 @@ function buildScript(record, top3Stats, audit) {
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the gaps a competitor could exploit: ${list}`;
       if (realCount >= 1) return `${opener} Here's what stood out on mobile: ${list}${tail}`;
-      if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The growth play from your top 3 spot is what we map in Month 1.`;
+      if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The growth play from your top 3 spot is in your full Free Growth Audit.`;
       return `${opener} Your mobile fundamentals look clean — no major gaps stood out.`;
     }
     if (realCount >= 3) return `${opener} Here are the top mobile issues we found: ${list}`;
@@ -911,8 +911,8 @@ function buildScript(record, top3Stats, audit) {
   })();
 
   const outroText = isTop3
-    ? `That was the surface-level audit. The full breakdown — your complete citation profile, backlink graph, competitor delta, and geo-grid blind spots — is what we map in Month 1 of an engagement, with the exact plan to defend your top 3 spot and push for #1. Tap the button below for your free growth audit. Free, no call required.`
-    : `That was the surface-level audit. The full breakdown — your complete citation profile, backlink graph, competitor delta, and geo-grid blind spots — is what we map in Month 1 of an engagement, with the exact plan to capture more leads and break into the top 3. Tap the button below for your free growth audit. Free, no call required.`;
+    ? `That was the surface-level audit. Your full Free Growth Audit goes much deeper — complete citation profile, backlink graph, competitor delta, geo-grid blind spots, and the exact plan to defend your top 3 spot and push for #1. Tap the button below to claim yours. Free, no call required.`
+    : `That was the surface-level audit. Your full Free Growth Audit goes much deeper — complete citation profile, backlink graph, competitor delta, geo-grid blind spots, and the exact plan to break into the top 3 and capture more leads. Tap the button below to claim yours. Free, no call required.`;
   // Intro + outro reframed 2026-05-14 to honest partial-audit framing — change only with explicit user request.
 
   return {
@@ -957,11 +957,26 @@ function concatMp3Segments(segmentDir, segmentNames, outPath) {
   });
 }
 
+// Conservative state-code regex — only matches ", XX" pattern (comma + space + 2-letter code).
+// Skips common English-word collisions: OR (Oregon), OK (Oklahoma), IN (Indiana), ME (Maine), HI (Hawaii),
+// AL (Alabama), AS (American Samoa) — these can match the pattern only when explicitly after a comma,
+// which in practice is always a city/state context.
+const STATE_AFTER_COMMA = /,\s+(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY|DC)\b/g;
+
+// Sanitize text for OpenAI TTS so 2-letter state codes are pronounced as letters
+// (e.g. "Culver City, CA" → "Culver City, C.A." → TTS reads "C, A").
+// OpenAI tts-1 / gpt-4o-mini-tts don't support SSML, so we use the periods-between-letters
+// pattern which reliably cues initialism pronunciation.
+function sanitizeForTTS(text) {
+  if (!text) return text;
+  return text.replace(STATE_AFTER_COMMA, (_, state) => `, ${state.split('').join('.')}.`);
+}
+
 async function ttsToFile(text, outPath) {
   const response = await openai.audio.speech.create({
     model: 'gpt-4o-mini-tts',
     voice: 'echo',
-    input: text,
+    input: sanitizeForTTS(text),
     format: 'mp3',
     speed: 1.2,
   });
