@@ -345,11 +345,10 @@ async function main() {
       : `move you into the top 3 and capture more leads`;
 
     const resolvedRank = Number.isFinite(airtableRank) ? airtableRank : (Number.isFinite(csvRank) ? csvRank : null);
-    const searchForEyebrow = searchTerm ? ` for "${searchTerm}"` : '';
     const eyebrowLabel = resolvedRank !== null
       ? (resolvedRank >= 1 && resolvedRank <= 3)
-        ? `Currently ranking #${resolvedRank}${searchForEyebrow} · Top 3 spot`
-        : `Currently ranking #${resolvedRank}${searchForEyebrow} · Outside the top 3`
+        ? `Currently ranking #${resolvedRank} · Top 3 spot`
+        : `Currently ranking #${resolvedRank} · Outside the top 3`
       : '';
 
     fs.writeFileSync(htmlPath, renderTemplate(template, {
