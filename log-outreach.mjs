@@ -70,38 +70,31 @@ async function airJson(url, opts = {}) {
 }
 
 async function findLead() {
+  // Per 2026-05-14 unified-Leads migration, only the Leads table is queried.
+  // The legacy Leads No Email table was deprecated and its 139 records merged in.
   if (leadId) {
-    // Try Leads first, then Leads No Email
-    for (const t of [LEADS_TABLE, NO_EMAIL_TABLE]) {
-      try {
-        const r = await airJson(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(t)}/${leadId}`);
-        return { id: r.id, name: r.fields["Business Name"], table: t };
-      } catch {}
-    }
-    throw new Error(`No record found with id=${leadId} in either table`);
+    const r = await airJson(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(LEADS_TABLE)}/${leadId}`);
+    return { id: r.id, name: r.fields["Business Name"], table: LEADS_TABLE };
   }
-  // Fuzzy name search across both tables
   const safe = String(leadName).replace(/"/g, '\\"');
   const formula = `OR(SEARCH(LOWER("${safe}"), LOWER({Business Name})), SEARCH(LOWER({Business Name}), LOWER("${safe}")))`;
-  for (const t of [LEADS_TABLE, NO_EMAIL_TABLE]) {
-    const u = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(t)}`);
-    u.searchParams.set("filterByFormula", formula);
-    u.searchParams.set("maxRecords", "5");
-    u.searchParams.append("fields[]", "Business Name");
-    u.searchParams.append("fields[]", "City");
-    const data = await airJson(u.toString());
-    if ((data.records || []).length === 1) {
-      const r = data.records[0];
-      return { id: r.id, name: r.fields["Business Name"], table: t, city: r.fields.City };
-    }
-    if ((data.records || []).length > 1) {
-      console.error(`Multiple matches for "${leadName}" in ${t}:`);
-      data.records.forEach((r, i) => console.error(`  ${i + 1}. [${r.id}] ${r.fields["Business Name"]} — ${r.fields.City || ""}`));
-      console.error(`Re-run with --lead-id=<one-of-the-IDs-above>`);
-      process.exit(3);
-    }
+  const u = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(LEADS_TABLE)}`);
+  u.searchParams.set("filterByFormula", formula);
+  u.searchParams.set("maxRecords", "5");
+  u.searchParams.append("fields[]", "Business Name");
+  u.searchParams.append("fields[]", "City");
+  const data = await airJson(u.toString());
+  if ((data.records || []).length === 1) {
+    const r = data.records[0];
+    return { id: r.id, name: r.fields["Business Name"], table: LEADS_TABLE, city: r.fields.City };
   }
-  throw new Error(`No lead found matching "${leadName}" in either table`);
+  if ((data.records || []).length > 1) {
+    console.error(`Multiple matches for "${leadName}" in Leads:`);
+    data.records.forEach((r, i) => console.error(`  ${i + 1}. [${r.id}] ${r.fields["Business Name"]} — ${r.fields.City || ""}`));
+    console.error(`Re-run with --lead-id=<one-of-the-IDs-above>`);
+    process.exit(3);
+  }
+  throw new Error(`No lead found matching "${leadName}" in Leads`);
 }
 
 const lead = await findLead();
@@ -119,11 +112,7 @@ if (subject) fields.Subject = subject;
 if (notes) fields.Notes = notes;
 if (variant) fields.Variant = variant;
 if (step) fields["Sequence Step"] = Number(step);
-if (lead.table === NO_EMAIL_TABLE) {
-  fields["Lead (No Email)"] = [lead.id];
-} else {
-  fields.Lead = [lead.id];
-}
+fields.Lead = [lead.id];
 
 const r = await airJson(
   `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(LOG_TABLE)}`,

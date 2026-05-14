@@ -385,8 +385,26 @@ async function extractPlaceDetails(page) {
       }
 
       function findRating() {
+        // Primary selector — works for most businesses.
         const el = document.querySelector('div.F7nice span[aria-hidden="true"]');
-        return textFrom(el);
+        const primary = textFrom(el);
+        if (primary && /^\d\.\d$/.test(primary.trim())) return primary;
+        // Defensive: scan any span in F7nice that looks like a rating (X.X format)
+        const f7 = document.querySelector('div.F7nice');
+        if (f7) {
+          for (const sp of f7.querySelectorAll('span')) {
+            const t = (sp.textContent || '').trim();
+            if (/^[0-5]\.\d$/.test(t)) return t;
+          }
+        }
+        // Final fallback: pull from aria-label "X.X stars" or similar
+        const ariaEls = document.querySelectorAll('div.F7nice [aria-label*="star" i], [aria-label*="rating" i]');
+        for (const el of ariaEls) {
+          const aria = el.getAttribute('aria-label') || '';
+          const m = aria.match(/(\d+\.\d+)\s*(?:stars?|out of|rating)/i);
+          if (m) return m[1];
+        }
+        return primary; // even if empty, keep original behavior
       }
 
       function findReviews() {
@@ -1174,11 +1192,18 @@ async function main() {
         const lat = llFromMaps.lat || llFromPage.lat || llFromFullMaps.lat || llFromImg.lat || llFromPlace.lat || '';
         const lng = llFromMaps.lng || llFromPage.lng || llFromFullMaps.lng || llFromImg.lng || llFromPlace.lng || '';
 
+        // For service-area businesses (no postal address), parseUSAddress returns empty
+        // for all 4 fields. Preserve the raw "Service area: ..." text in Address so
+        // those leads don't end up with completely empty location data.
+        const isServiceArea = /^(Service area|Serves\b|Located in)/i.test(addrRaw);
+        const finalAddress = parsed.address || (isServiceArea ? addrRaw : '');
+        const finalCity = parsed.city || (isServiceArea ? (SEARCH_QUERY.match(/\bin\s+([^,]+),/i)?.[1] || '') : '');
+        const finalState = parsed.state || (isServiceArea ? (SEARCH_QUERY.match(/,\s*([A-Z]{2})\b/)?.[1] || '') : '');
         const rowOut = [
           name,
-          parsed.address,
-          parsed.city,
-          parsed.state,
+          finalAddress,
+          finalCity,
+          finalState,
           parsed.zip,
           (details.phone || '').replace(/\s+/g, ' ').trim(),
           (details.website || '').trim(),

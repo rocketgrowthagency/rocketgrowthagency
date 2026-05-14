@@ -757,48 +757,38 @@ async function main() {
   injectCompetitorData(records, rows);
 
   // Per-lead dedupe by Place ID across BOTH tables (Leads + Leads No Email).
-  // Routing rules:
-  //   - new lead, has Email → CREATE in Leads
-  //   - new lead, no Email  → CREATE in Leads No Email
-  //   - existing in Leads (any state) → PATCH in Leads (refresh rank/date)
-  //   - existing in Leads No Email + new has Email → MIGRATE: delete from
-  //       Leads No Email, create in Leads (now actionable for outreach)
-  //   - existing in Leads No Email + new still no Email → PATCH in Leads No Email
+  // Routing rules (simplified 2026-05-14 — single Leads table per Chris):
+  //   - new lead → CREATE in Leads (Email field empty if no email scraped — filter via {Email}=BLANK())
+  //   - existing in Leads → PATCH in Leads (refresh scrape-data fields)
+  //   - The legacy "Leads No Email" table is deprecated. Records were migrated.
+  //     Email Status field + empty Email filter replace the old table split.
   if (!DRY) {
     await ensureGbpCrmFields();
     await ensurePlaceIdField();
-    await ensureNoEmailTable();
   }
-  console.log(`[step-8] loading existing Airtable leads (both tables) for dedupe...`);
+  console.log(`[step-8] loading existing Airtable leads for dedupe...`);
   const existing = DRY ? new Map() : await loadExistingLeadsByPlaceKey();
-  console.log(`[step-8] indexed ${existing.size} existing leads (across Leads + Leads No Email)`);
+  console.log(`[step-8] indexed ${existing.size} existing leads`);
 
   const toCreateLeads = [];
-  const toCreateNoEmail = [];
   const toUpdateLeads = [];
-  const toUpdateNoEmail = [];
-  const toMigrate = []; // { fromId, newRecord }
   let skippedNoKey = 0;
   for (const rec of records) {
     const pk = rec.fields["Place ID"];
-    const hasEmail = !!rec.fields.Email;
     if (!pk) {
       skippedNoKey += 1;
-      (hasEmail ? toCreateLeads : toCreateNoEmail).push(rec);
+      toCreateLeads.push(rec);
       continue;
     }
     const match = existing.get(pk);
     if (match) {
       // Refresh scrape-data fields (universal — safe to overwrite on every re-scrape).
-      // Critical: this is what was missing pre-2026-05-14 — even when step-1 captured
-      // Review Count + Category + Lat/Lng correctly, the PATCH only updated Map Rank +
-      // Date Scraped, dropping the new scrape data on the floor.
-      // Workflow fields (Vid Slug, Email Sent Date, Pipeline Stage, Notes, etc.) are
-      // INTENTIONALLY NOT in this list — those are owned by other systems.
+      // Workflow fields (Vid Slug, Email Sent Date, Pipeline Stage, Notes, etc.)
+      // are INTENTIONALLY NOT in this list — owned by other systems.
       const SCRAPE_DATA_FIELDS = [
         'Rating', 'Review Count', 'Category',
         'Latitude', 'Longitude',
-        'Phone', 'Address', 'City', 'State', 'ZIP', 'Website',
+        'Phone', 'Email', 'Address', 'City', 'State', 'ZIP', 'Website',
         'Business Photo URL', 'Sponsored',
         'GBP Status', 'GBP Hours',
         'GBP Secondary Categories', 'GBP Services',
@@ -815,19 +805,14 @@ async function main() {
       }
       if (rec.fields["Source Run"]) refreshFields["Source Run"] = rec.fields["Source Run"];
       if (!match.fields?.["Place ID"]) refreshFields["Place ID"] = pk;
-
-      if (match.table === NO_EMAIL_TABLE && hasEmail) {
-        // Promotion: this place now has an email — move it to the actionable Leads table.
-        toMigrate.push({ fromId: match.id, newRecord: rec });
-      } else if (match.table === NO_EMAIL_TABLE) {
-        toUpdateNoEmail.push({ id: match.id, fields: refreshFields });
-      } else {
-        toUpdateLeads.push({ id: match.id, fields: refreshFields });
-      }
+      toUpdateLeads.push({ id: match.id, fields: refreshFields });
     } else {
-      (hasEmail ? toCreateLeads : toCreateNoEmail).push(rec);
+      toCreateLeads.push(rec);
     }
   }
+  const toCreateNoEmail = [];
+  const toUpdateNoEmail = [];
+  const toMigrate = [];
   console.log(
     `[step-8] dedupe: +${toCreateLeads.length} Leads, +${toCreateNoEmail.length} NoEmail, ` +
     `~${toUpdateLeads.length} Leads, ~${toUpdateNoEmail.length} NoEmail, ` +
