@@ -1177,6 +1177,33 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
 
   const audit = loadAuditFindings(baseName, slug);
   if (audit) console.log(`   → Audit findings loaded for ${slug}`);
+
+  // Sync Map Rank from Airtable (canonical source) — prevents the bug where
+  // step-2 CSV had stale rank (e.g. 6) while landing-page eyebrow showed
+  // current rank (e.g. 5) from Airtable. Both must reflect the same value.
+  try {
+    const apiKey = process.env.AIRTABLE_API_KEY;
+    const baseId = process.env.AIRTABLE_BASE_ID;
+    if (apiKey && baseId) {
+      const escapedName = String(name).replace(/"/g, '\\"');
+      const url = `https://api.airtable.com/v0/${baseId}/Leads?` +
+        `filterByFormula=${encodeURIComponent(`LOWER({Business Name}) = LOWER("${escapedName}")`)}` +
+        `&maxRecords=1`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+      if (res.ok) {
+        const data = await res.json();
+        const airtableRank = data.records?.[0]?.fields?.['Map Rank'];
+        if (airtableRank != null) {
+          const csvRank = record['Map Rank'] || record.rank;
+          if (String(airtableRank) !== String(csvRank)) {
+            console.log(`   ⚡ Rank sync: CSV had ${csvRank}, Airtable has ${airtableRank} — using Airtable (canonical)`);
+            record['Map Rank'] = String(airtableRank);
+          }
+        }
+      }
+    }
+  } catch (_e) {}
+
   const segments = buildScript(record, top3Stats, audit);
 
   // Generate one MP3 per segment + combined for backward compat
