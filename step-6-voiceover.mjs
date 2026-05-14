@@ -875,13 +875,14 @@ function scoreMapsConfirmedGood(audit, top3Stats, record) {
   const rating = parseFloat(normalizeField(record, 'Rating') || '');
   const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
   if (top3Stats && Number.isFinite(reviews)) {
-    const avgReviews = Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
+    // Prefer the true average (reviewsAvg). Fall back to midpoint only if avg not computed.
+    const avgReviews = top3Stats.reviewsAvg != null ? top3Stats.reviewsAvg : Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
     if (avgReviews > 0 && reviews >= avgReviews * 0.9) {
       out.push({ key: 'reviewCountGood', score: 100, finding: `your review count holds up against your competition — ${reviews} reviews against a top-3 average of around ${avgReviews}` });
     }
   }
   if (top3Stats && Number.isFinite(rating)) {
-    const avgRating = (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
+    const avgRating = top3Stats.ratingAvg != null ? top3Stats.ratingAvg : (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
     if (rating >= avgRating - 0.05) {
       out.push({ key: 'ratingGood', score: 101, finding: `your rating at ${rating} stars is on par with the top 3 average around ${avgRating.toFixed(1)} — trust signal is solid` });
     }
@@ -1178,9 +1179,11 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   const audit = loadAuditFindings(baseName, slug);
   if (audit) console.log(`   → Audit findings loaded for ${slug}`);
 
-  // Sync Map Rank from Airtable (canonical source) — prevents the bug where
-  // step-2 CSV had stale rank (e.g. 6) while landing-page eyebrow showed
-  // current rank (e.g. 5) from Airtable. Both must reflect the same value.
+  // Sync canonical scrape data from Airtable — step-2 CSV may have stale or
+  // empty values for any lead whose step-2 ran BEFORE the step-1 extractor fix
+  // (pre-2026-05-14). Airtable is the single source of truth. We sync Map Rank,
+  // Reviews, Rating, Category — anything used in the voiceover or comparative
+  // findings.
   try {
     const apiKey = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
@@ -1192,13 +1195,26 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
       const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
       if (res.ok) {
         const data = await res.json();
-        const airtableRank = data.records?.[0]?.fields?.['Map Rank'];
-        if (airtableRank != null) {
-          const csvRank = record['Map Rank'] || record.rank;
-          if (String(airtableRank) !== String(csvRank)) {
-            console.log(`   ⚡ Rank sync: CSV had ${csvRank}, Airtable has ${airtableRank} — using Airtable (canonical)`);
-            record['Map Rank'] = String(airtableRank);
+        const f = data.records?.[0]?.fields || {};
+        const syncs = [
+          { airtable: 'Map Rank', csv: 'Map Rank' },
+          { airtable: 'Review Count', csv: 'Reviews' },
+          { airtable: 'Rating', csv: 'Rating' },
+          { airtable: 'Category', csv: 'Detected Category' },
+        ];
+        const synced = [];
+        for (const { airtable, csv } of syncs) {
+          const v = f[airtable];
+          if (v != null && v !== '') {
+            const before = record[csv] || '';
+            if (String(v) !== String(before)) {
+              record[csv] = String(v);
+              synced.push(`${csv}: "${before}" → ${v}`);
+            }
           }
+        }
+        if (synced.length) {
+          console.log(`   ⚡ Airtable sync (canonical): ${synced.join('; ')}`);
         }
       }
     }
