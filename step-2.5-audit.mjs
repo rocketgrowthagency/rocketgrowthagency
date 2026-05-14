@@ -1217,7 +1217,10 @@ async function main() {
         if (!a || !a.businessName) { skipped++; continue; }
         const reviewCount = a.gbp?.reviewCount;
         const primaryCategory = a.gbp?.primaryCategory;
-        if (reviewCount == null && !primaryCategory) { skipped++; continue; }
+        // Search KP fields (gated behind _verified flags — only write if scrape succeeded)
+        const description = a.gbp?.descriptionVerified === true ? a.gbp?.description : null;
+        const hasPosts = a.gbp?.postsVerified === true ? a.gbp?.hasPosts : null;
+        if (reviewCount == null && !primaryCategory && !description && hasPosts == null) { skipped++; continue; }
         // Look up the Lead in Airtable by Business Name (canonical match)
         const escapedName = String(a.businessName).replace(/"/g, '\\"');
         const filterFormula = `LOWER({Business Name}) = LOWER("${escapedName}")`;
@@ -1231,6 +1234,8 @@ async function main() {
           const fields = {};
           if (typeof reviewCount === 'number' && reviewCount > 0) fields['Review Count'] = reviewCount;
           if (primaryCategory && typeof primaryCategory === 'string') fields['Category'] = primaryCategory;
+          if (typeof description === 'string' && description.trim()) fields['GBP Description'] = description.trim();
+          if (typeof hasPosts === 'boolean') fields['GBP Has Posts'] = hasPosts;
           if (!Object.keys(fields).length) { skipped++; continue; }
           const patchRes = await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${match.id}`, {
             method: 'PATCH',
