@@ -510,22 +510,27 @@ async function main() {
     console.log(`  Source:  ${src}`);
 
     const manifest = loadAudioManifest(baseName, base);
-    // Intro logo is HARD-CODED to 8s regardless of audio length.
-    // Audio intro continues playing over the start of the Maps view.
-    // Outro stays driven by the audio so the CTA logo holds for the full outro audio.
-    const HARDCODED_INTRO_SEC = 8;
+    // Intro logo card duration is now driven by the actual intro audio length
+    // (read from manifest). Falls back to 8s minimum if manifest is missing.
+    // The partial-audit intro (locked 2026-05-14) runs ~14-15s vs the older
+    // ~5s intro — hardcoding 8s caused the last ~7s of intro audio to play
+    // over the Maps view, which is wrong. Now: card always matches audio.
+    const MIN_INTRO_SEC = 8;
     const introAudioSec = manifest?.segments?.intro?.durationSeconds;
-    if (introAudioSec && introAudioSec > HARDCODED_INTRO_SEC + 0.5) {
-      console.warn(`  ⚠️ Intro AUDIO is ${introAudioSec.toFixed(2)}s but logo card is hard-coded to ${HARDCODED_INTRO_SEC}s — last ${(introAudioSec - HARDCODED_INTRO_SEC).toFixed(2)}s of intro audio will play over the Maps view.`);
-    }
+    const introSec = introAudioSec ? Math.max(MIN_INTRO_SEC, Math.ceil(introAudioSec * 10) / 10) : MIN_INTRO_SEC;
     const outroSec = manifest?.segments?.outro?.durationSeconds;
-    if (outroSec) {
-      console.log(`  Intro hard-coded to ${HARDCODED_INTRO_SEC}s; outro from audio = ${outroSec.toFixed(2)}s`);
+    if (introAudioSec) {
+      console.log(`  Intro audio = ${introAudioSec.toFixed(2)}s → logo card = ${introSec.toFixed(2)}s (manifest-driven)`);
     } else {
-      console.log(`  Intro hard-coded to ${HARDCODED_INTRO_SEC}s; using default outro=${DEFAULT_OUTRO_SEC}s (no manifest)`);
+      console.log(`  Intro audio not in manifest — defaulting logo card to ${introSec}s`);
+    }
+    if (outroSec) {
+      console.log(`  Outro from audio = ${outroSec.toFixed(2)}s`);
+    } else {
+      console.log(`  Outro: using default ${DEFAULT_OUTRO_SEC}s (no manifest)`);
     }
 
-    await brandOne(src, out, HARDCODED_INTRO_SEC, outroSec);
+    await brandOne(src, out, introSec, outroSec);
 
     console.log(`  ✓ Branded video saved: ${out}`);
     count++;

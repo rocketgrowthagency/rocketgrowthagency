@@ -287,12 +287,17 @@ function scoreWebsiteFindings(audit) {
   const w = audit.website;
   const out = [];
 
-  // PRIORITY 1: NAP mismatch — now strict (prominent-phone semantics).
-  // Differentiate: 1+ phones AND prominent doesn't match vs. multiple phones present at all.
+  // PRIORITY 1: NAP mismatch — strict (prominent-phone semantics) + toll-free / call-tracker detection.
+  // Differentiate: toll-free prefix (call-tracker), multi-phone mismatch, multi-phone existence, simple mismatch.
   if (w.websitePhoneMatchesGbp === false) {
-    if (w.distinctSitePhoneCount > 1 && w.prominentPhoneMatchesGbp === false && w.prominentSitePhone) {
-      const fmt = (s) => s && s.length === 10 ? `${s.slice(0,3)}-${s.slice(3,6)}-${s.slice(6)}` : s;
-      out.push({ key: 'nap', score: 1, finding: `your website shows ${w.distinctSitePhoneCount} different phone numbers — the main header lists ${fmt(w.prominentSitePhone)}, but your Google Business Profile lists a different number. Visitors and Google's local algorithm both see this NAP inconsistency` });
+    const fmt = (s) => s && s.length === 10 ? `${s.slice(0,3)}-${s.slice(3,6)}-${s.slice(6)}` : s;
+    const TOLL_FREE_PREFIXES = /^(?:800|833|844|855|866|877|888)/;
+    const prominent = (w.prominentSitePhone || '').replace(/\D/g, '');
+    const isTollFree = prominent && TOLL_FREE_PREFIXES.test(prominent);
+    if (isTollFree && w.prominentPhoneMatchesGbp === false) {
+      out.push({ key: 'nap', score: 1, finding: `your website's main phone is ${fmt(prominent)} — a toll-free number that routes through a call-tracking line. Your Google Business Profile lists a different local number, which means Google can't tie those tracked calls back to your listing, weakening the engagement signal that drives local rank` });
+    } else if (w.distinctSitePhoneCount > 1 && w.prominentPhoneMatchesGbp === false && w.prominentSitePhone) {
+      out.push({ key: 'nap', score: 1, finding: `your website shows ${w.distinctSitePhoneCount} different phone numbers — the main header lists ${fmt(prominent)}, but your Google Business Profile lists a different number. Visitors and Google's local algorithm both see this NAP inconsistency` });
     } else if (w.distinctSitePhoneCount > 1) {
       out.push({ key: 'nap', score: 1, finding: `your website shows ${w.distinctSitePhoneCount} different phone numbers — pick one and use it everywhere, so visitors and Google see consistent NAP signals` });
     } else {
@@ -619,6 +624,149 @@ function scoreMapsFindings(audit, top3Stats, record) {
   return out.sort((a, b) => a.score - b.score);
 }
 
+// ============================================================
+// Confirmed-good positive findings (Tier framework — 2026-05-14)
+// ============================================================
+// When a section yields <3 real issues, we fill the gap with checks that PASSED.
+// Order each list by "what typically breaks" — a passing page-speed check is
+// notable because most sites fail it; a passing viewport-meta tag is table-stakes
+// and not worth mentioning. Each positive carries its own wording template.
+// Cross-section dedup runs BEFORE section-fill, so a confirmed-good is only used
+// when the section is genuinely short — not as padding.
+
+function scoreWebsiteConfirmedGood(audit) {
+  if (!audit?.website) return [];
+  const w = audit.website;
+  const out = [];
+  if (w.pageLoadSeconds != null && w.pageLoadSeconds <= 2.5) {
+    out.push({ key: 'pageLoadGood', score: 100, finding: `we also checked your page load — ${w.pageLoadSeconds.toFixed(1)} seconds, well under Google's 2.5-second threshold` });
+  }
+  if (w.hasLocalBusinessSchema === true) {
+    out.push({ key: 'schemaGood', score: 101, finding: `your LocalBusiness schema markup is present and properly formatted — one of the top Maps ranking signals already in place` });
+  }
+  if (w.websitePhoneMatchesGbp === true && w.distinctSitePhoneCount === 1) {
+    out.push({ key: 'napGood', score: 102, finding: `your phone number matches between your website and Google Business Profile — clean NAP consistency` });
+  }
+  if (w.napAboveFold === true) {
+    out.push({ key: 'napFoldGood', score: 103, finding: `your phone and address are visible above the fold — strong local trust signal` });
+  }
+  if (w.titleIncludesCity === true && w.titleIncludesCategory === true) {
+    out.push({ key: 'titleGood', score: 104, finding: `your page title includes both your service category and your city — strong on-page local signals` });
+  }
+  if (w.isHttps === true) {
+    out.push({ key: 'httpsGood', score: 105, finding: `your site is properly served over HTTPS` });
+  }
+  if (w.hasMetaDescription === true) {
+    out.push({ key: 'metaDescGood', score: 106, finding: `your meta description is in place for search snippets` });
+  }
+  if (w.canonicalMatches === true) {
+    out.push({ key: 'canonicalGood', score: 107, finding: `your canonical tag correctly points to this page — Google indexes the right URL` });
+  }
+  if (w.serviceAreaPagesCount != null && w.serviceAreaPagesCount >= 3) {
+    out.push({ key: 'serviceAreaGood', score: 108, finding: `you have ${w.serviceAreaPagesCount} dedicated service-area pages — that's the multi-location structure top performers use` });
+  }
+  return out;
+}
+
+function scoreMobileConfirmedGood(audit) {
+  if (!audit?.mobile) return [];
+  const m = audit.mobile;
+  const out = [];
+  if (m.pageLoadSeconds != null && m.pageLoadSeconds <= 3) {
+    out.push({ key: 'mobileLoadGood', score: 100, finding: `we also checked your mobile load — ${m.pageLoadSeconds.toFixed(1)} seconds, under the 3-second mobile abandonment threshold` });
+  }
+  if (m.clickToCallAboveFold === true) {
+    out.push({ key: 'c2cFoldGood', score: 101, finding: `your tap-to-call button is visible above the fold on mobile — direct conversion path is set` });
+  }
+  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx >= 48) {
+    out.push({ key: 'tapTargetGood', score: 102, finding: `your primary call-to-action tap target is ${m.primaryCtaTapTargetPx} pixels — meets Google's 48-pixel mobile accessibility guideline` });
+  }
+  if (m.hasStickyCta === true) {
+    out.push({ key: 'stickyCtaGood', score: 103, finding: `you have a sticky call-to-action that stays visible during mobile scroll — top performers do this` });
+  }
+  if (m.hasViewportMeta === true) {
+    out.push({ key: 'viewportGood', score: 104, finding: `your responsive viewport meta tag is properly configured` });
+  }
+  if (m.phoneVisibleAboveFold === true) {
+    out.push({ key: 'phoneVisibleGood', score: 105, finding: `your phone number is visible as text above the fold on mobile — no extra tap needed` });
+  }
+  if (m.hasClickToText === true) {
+    out.push({ key: 'clickToTextGood', score: 106, finding: `you have tap-to-text set up on mobile — a conversion path most competitors are missing` });
+  }
+  return out;
+}
+
+function scoreMapsConfirmedGood(audit, top3Stats, record) {
+  const out = [];
+  const rating = parseFloat(normalizeField(record, 'Rating') || '');
+  const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
+  if (top3Stats && Number.isFinite(reviews)) {
+    const avgReviews = Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
+    if (avgReviews > 0 && reviews >= avgReviews * 0.9) {
+      out.push({ key: 'reviewCountGood', score: 100, finding: `your review count holds up against your competition — ${reviews} reviews against a top-3 average of around ${avgReviews}` });
+    }
+  }
+  if (top3Stats && Number.isFinite(rating)) {
+    const avgRating = (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
+    if (rating >= avgRating - 0.05) {
+      out.push({ key: 'ratingGood', score: 101, finding: `your rating at ${rating} stars is on par with the top 3 average around ${avgRating.toFixed(1)} — trust signal is solid` });
+    }
+  }
+  if (audit?.gbp?.primaryCategoryMatchesSearch === true && audit?.gbp?.primaryCategory) {
+    out.push({ key: 'categoryGood', score: 102, finding: `your Google Business Profile primary category — "${audit.gbp.primaryCategory}" — matches the search intent, which is the strongest category signal Google uses` });
+  }
+  if (audit?.gbp?.hasBusinessHours === true) {
+    out.push({ key: 'hoursGood', score: 103, finding: `your business hours are set on your profile — completeness signal Google rewards` });
+  }
+  if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview <= 30) {
+    out.push({ key: 'reviewRecencyGood', score: 104, finding: `your last Google review was ${audit.gbp.daysSinceLastReview} days ago — solid review velocity` });
+  }
+  if (audit?.gbp?.ownerResponseCount != null && (audit?.gbp?.reviewCount || 0) > 5 && audit.gbp.ownerResponseCount > 0) {
+    out.push({ key: 'ownerResponseGood', score: 105, finding: `you respond to reviews on your profile — engagement signal Google reads` });
+  }
+  return out;
+}
+
+// ============================================================
+// Cross-section deduplication (no duplicate audio reads)
+// ============================================================
+// Same finding key (e.g. multiH1, https, lazyImg, renderBlock) can appear in
+// BOTH website and mobile scoring. The voiceover should speak each finding
+// ONCE — pick the section with higher priority (lower score) for that key
+// and drop it from other sections. Walk sections in this order: maps (highest
+// priority surface), website, mobile (so cross-cutting findings prefer website
+// which is where SEO-impact is felt most).
+function dedupAcrossSections(mapsFindings, websiteFindings, mobileFindings) {
+  const seen = new Set();
+  const filterUnseen = (arr) => {
+    const out = [];
+    for (const f of arr) {
+      if (seen.has(f.key)) continue;
+      seen.add(f.key);
+      out.push(f);
+    }
+    return out;
+  };
+  return {
+    maps: filterUnseen(mapsFindings),
+    website: filterUnseen(websiteFindings),
+    mobile: filterUnseen(mobileFindings),
+  };
+}
+
+// ============================================================
+// Section-fill — top up findings with confirmed-good items if <3 issues
+// ============================================================
+// Returns up to `max` items by appending confirmed-good positives to the
+// real-issue findings. If real issues already meet `max`, no positives surface.
+// If real issues are zero, the section becomes all-positives — caller may
+// switch to deflection wording.
+function fillSection(realFindings, confirmedGood, max = 3) {
+  if (realFindings.length >= max) return realFindings.slice(0, max);
+  const needed = max - realFindings.length;
+  return [...realFindings, ...confirmedGood.slice(0, needed)];
+}
+
 // Filter out any finding whose key is in the auto-disabled list (populated by
 // validate-audit.mjs when a captured value deviates from the verified baseline).
 // This is the SELF-DIAGNOSIS layer: if a scrape goes sideways, we silently drop
@@ -661,8 +809,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and you're already in the top 3 — but here's where you're vulnerable to losing that position.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just analyzed ${name}'s current Google Maps, website, and mobile, and found the top issues that are keeping you from ranking in the top position.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This isn't the full Month-1 deep-dive (your citation profile, backlinks, and competitor comparison come if we work together), but it surfaces the highest-leverage gaps we can spot from outside your accounts. You're already in the top 3 — here's where you're vulnerable to losing that position.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts who help businesses rank higher on Google Maps to gain more leads. We just ran a surface-level audit on ${name} — over 30 checks across your Google Business Profile, website, and mobile experience. This isn't the full Month-1 deep-dive (your citation profile, backlinks, and competitor comparison come if we work together), but it surfaces the highest-leverage issues keeping you from the top position.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -671,97 +819,101 @@ function buildScript(record, top3Stats, audit) {
     return picked.map((p, i) => `${labels[i]}: ${p}.`).join(' ');
   }
 
+  // ============================================================
+  // Score + filter + dedup all 3 sections at once (2026-05-14)
+  // ============================================================
+  // Each finding is spoken in EXACTLY ONE section. Cross-section dedup walks
+  // maps → website → mobile so cross-cutting findings (multiH1, https, etc.)
+  // prefer the section where they have highest SEO impact (website > mobile).
+  const rawMaps = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
+  const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit), disabledKeys);
+  const rawMobile = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
+  const { maps: mapsFindings, website: websiteFindings, mobile: mobileFindings } = dedupAcrossSections(rawMaps, rawWebsite, rawMobile);
+  const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
+  const websiteGood = scoreWebsiteConfirmedGood(audit);
+  const mobileGood = scoreMobileConfirmedGood(audit);
+
+  // Helper: append confirmed-good positives when real-issue count < 3.
+  // Returns the section's main list (numbered) + an optional positive-tail string.
+  function renderWithPositives(real, positives, max = 3) {
+    const realPicked = real.slice(0, max);
+    const need = max - realPicked.length;
+    const posPicked = need > 0 ? positives.slice(0, Math.min(need, 2)) : [];
+    const list = realPicked.length ? numberedJoin(realPicked, max) : '';
+    let tail = '';
+    if (posPicked.length === 1) {
+      tail = ` On the positive side, ${posPicked[0].finding}.`;
+    } else if (posPicked.length >= 2) {
+      const phrases = posPicked.slice(0, 2).map(p => p.finding);
+      tail = ` On the positive side, ${phrases[0]}, and ${phrases[1]}.`;
+    }
+    return { list, tail, realCount: realPicked.length, hasPositives: posPicked.length > 0 };
+  }
+
+  // -------- MAPS --------
   let mapsSegment;
   if (isTop3) {
-    const mapsFindingsT3 = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
-    const count = mapsFindingsT3.length;
-    const mapsListT3 = numberedJoin(mapsFindingsT3, 3);
     const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankNum} — already in the top 3, which captures 70 percent of all local leads from this search. That's the most valuable real estate.`;
-    if (count >= 3) {
-      mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${mapsListT3}`;
-    } else if (count === 2) {
-      mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${numberedJoin(mapsFindingsT3, 2)}`;
-    } else if (count === 1) {
-      mapsSegment = `${baseLine} But one vulnerability stood out on your Maps listing: ${mapsFindingsT3[0].finding}.`;
+    const { list, tail, realCount, hasPositives } = renderWithPositives(mapsFindings, mapsGood, 3);
+    if (realCount >= 3) {
+      mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${list}`;
+    } else if (realCount >= 1) {
+      mapsSegment = `${baseLine} Here's what stood out on your Maps listing: ${list}${tail}`;
+    } else if (hasPositives) {
+      mapsSegment = `${baseLine} Your Maps fundamentals look solid —${tail.replace(/^ On the positive side,/, '').trim()} The bigger leverage point for defending your top 3 is your website and mobile experience, which we'll cover next.`;
     } else {
-      mapsSegment = `${baseLine} On the Maps side, your fundamentals look solid — the bigger leverage point is your website and mobile experience, which is what Google validates your top 3 spot against.`;
+      mapsSegment = `${baseLine} Your Maps fundamentals look solid — the bigger leverage point for defending your top 3 is your website and mobile experience, which we'll cover next.`;
     }
   } else {
-    const mapsFindings = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
-    const mapsList = numberedJoin(mapsFindings, 3);
-    if (mapsList) {
-      mapsSegment = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3 ranking, which accounts for 70 percent of all local leads. Here are the top issues we found on your Maps listing: ${mapsList}`;
+    const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3, which accounts for 70 percent of all local leads.`;
+    const { list, tail, realCount, hasPositives } = renderWithPositives(mapsFindings, mapsGood, 3);
+    if (realCount >= 3) {
+      mapsSegment = `${baseLine} Here are the top issues we found on your Maps listing: ${list}`;
+    } else if (realCount >= 1) {
+      mapsSegment = `${baseLine} Here's what we found on your Maps listing: ${list}${tail}`;
+    } else if (hasPositives) {
+      mapsSegment = `${baseLine} Your Maps profile is in decent shape —${tail.replace(/^ On the positive side,/, '').trim()} The leverage to climb is on your website and mobile, which we'll cover next.`;
     } else {
-      mapsSegment = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3 ranking, which accounts for 70 percent of all local leads.`;
+      mapsSegment = `${baseLine} Your Maps profile is in decent shape — the leverage to climb is on your website and mobile, which we'll cover next.`;
     }
   }
 
-  const websiteFindings = applyValidationFilter(scoreWebsiteFindings(audit), disabledKeys);
-  const websiteList = numberedJoin(websiteFindings, 3);
-  const websiteSegment = isTop3
-    ? (() => {
-        const count = websiteFindings.length;
-        if (count >= 3) {
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the website signals worth tightening to hold your top 3 spot: ${websiteList}`;
-        }
-        if (count === 2) {
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the website signals worth tightening to hold your top 3 spot: ${numberedJoin(websiteFindings, 2)}`;
-        }
-        if (count === 1) {
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. One website signal worth tightening to hold your top 3 spot: ${websiteFindings[0].finding}.`;
-        }
-        return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Your site signals are clean — solid foundation for holding your top 3 spot.`;
-      })()
-    : (() => {
-        const count = websiteFindings.length;
-        if (count >= 3) {
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Here are the top issues we found: ${websiteList}`;
-        }
-        if (count === 2) {
-          const list = numberedJoin(websiteFindings, 2);
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. We found 2 issues to flag: ${list}`;
-        }
-        if (count === 1) {
-          return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Just 1 issue stood out: ${websiteFindings[0].finding}.`;
-        }
-        return `After reviewing your website — Google's primary trust signal for validating Maps ranking. Your site signals are clean — no major issues stood out.`;
-      })();
+  // -------- WEBSITE --------
+  const websiteSegment = (() => {
+    const { list, tail, realCount, hasPositives } = renderWithPositives(websiteFindings, websiteGood, 3);
+    const opener = `After reviewing your website — Google's primary trust signal for validating Maps ranking.`;
+    if (isTop3) {
+      if (realCount >= 3) return `${opener} Here are the website signals worth tightening to hold your top 3 spot: ${list}`;
+      if (realCount >= 1) return `${opener} Here's what we found worth tightening to hold your top 3 spot: ${list}${tail}`;
+      if (hasPositives) return `${opener} Your website fundamentals are in great shape —${tail.replace(/^ On the positive side,/, '').trim()} The leverage point for defending top 3 is on the mobile side, which we'll cover next.`;
+      return `${opener} Your website fundamentals are clean — solid foundation for holding your top 3 spot.`;
+    }
+    if (realCount >= 3) return `${opener} Here are the top issues we found: ${list}`;
+    if (realCount >= 1) return `${opener} Here's what we found: ${list}${tail}`;
+    if (hasPositives) return `${opener} Your website fundamentals are in good shape —${tail.replace(/^ On the positive side,/, '').trim()} The bigger leverage is on the mobile side, which we'll cover next.`;
+    return `${opener} Your site signals are clean — no major issues stood out.`;
+  })();
 
-  const mobileFindings = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
-  const mobileList = numberedJoin(mobileFindings, 3);
-  const mobileSegment = isTop3
-    ? (() => {
-        const count = mobileFindings.length;
-        if (count >= 3) {
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Here are the gaps a competitor could exploit: ${mobileList}`;
-        }
-        if (count === 2) {
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. We found 2 gaps a competitor could exploit: ${numberedJoin(mobileFindings, 2)}`;
-        }
-        if (count === 1) {
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. One gap a competitor could exploit: ${mobileFindings[0].finding}.`;
-        }
-        return `And then on mobile — where 70 percent of local-search traffic actually comes from. Your mobile fundamentals look clean — no major gaps stood out.`;
-      })()
-    : (() => {
-        const count = mobileFindings.length;
-        if (count >= 3) {
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Here are the top issues we found: ${mobileList}`;
-        }
-        if (count === 2) {
-          const list = numberedJoin(mobileFindings, 2);
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. We found 2 mobile issues to flag: ${list}`;
-        }
-        if (count === 1) {
-          return `And then on mobile — where 70 percent of local-search traffic actually comes from. Just 1 mobile issue stood out: ${mobileFindings[0].finding}.`;
-        }
-        return `And then on mobile — where 70 percent of local-search traffic actually comes from. On the mobile side, no major issues stood out.`;
-      })();
+  // -------- MOBILE --------
+  const mobileSegment = (() => {
+    const { list, tail, realCount, hasPositives } = renderWithPositives(mobileFindings, mobileGood, 3);
+    const opener = `And then on mobile — where 70 percent of local-search traffic actually comes from.`;
+    if (isTop3) {
+      if (realCount >= 3) return `${opener} Here are the gaps a competitor could exploit: ${list}`;
+      if (realCount >= 1) return `${opener} Here's what stood out on mobile: ${list}${tail}`;
+      if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The growth play from your top 3 spot is what we map in Month 1.`;
+      return `${opener} Your mobile fundamentals look clean — no major gaps stood out.`;
+    }
+    if (realCount >= 3) return `${opener} Here are the top mobile issues we found: ${list}`;
+    if (realCount >= 1) return `${opener} Here's what stood out on mobile: ${list}${tail}`;
+    if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The bigger ranking leverage is in your Maps and website work above.`;
+    return `${opener} On the mobile side, no major issues stood out.`;
+  })();
 
   const outroText = isTop3
-    ? `This was a brief look at some of the vulnerabilities we found on your Google Maps, website, and mobile. To get the full audit with every signal you need to defend your top 3 spot — and the exact plan to push for #1 — tap the button below for your free growth audit. Free, no call required.`
-    : `This was a brief look at some of the issues we found on your Google Maps, website, and mobile. To get the full audit with every issue keeping you from the top 3 — and the exact plan to capture more leads — tap the button below for your free growth audit. Free, no call required.`;
-  // NOTE: both outros locked 2026-04-25 — DO NOT EDIT without explicit user request.
+    ? `That was the surface-level audit. The full breakdown — your complete citation profile, backlink graph, competitor delta, and geo-grid blind spots — is what we map in Month 1 of an engagement, with the exact plan to defend your top 3 spot and push for #1. Tap the button below for your free growth audit. Free, no call required.`
+    : `That was the surface-level audit. The full breakdown — your complete citation profile, backlink graph, competitor delta, and geo-grid blind spots — is what we map in Month 1 of an engagement, with the exact plan to capture more leads and break into the top 3. Tap the button below for your free growth audit. Free, no call required.`;
+  // Intro + outro reframed 2026-05-14 to honest partial-audit framing — change only with explicit user request.
 
   return {
     intro,
