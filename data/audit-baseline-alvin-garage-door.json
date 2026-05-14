@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "purpose": "Regression baseline for Alvin Garage Door — values captured 2026-05-14 with new pipeline.",
+    "businessName": "Alvin Garage Door",
+    "businessSlug": "alvin-garage-door",
+    "city": "Culver City",
+    "state": "CA",
+    "verifiedBy": "captured 2026-05-14 via step-2.5 audit (h1 verified 100% overlap; Search KP CAPTCHA aborted — description/posts intentionally unverified)"
+  },
+  "expected": {
+    "website": {
+      "pageLoadSeconds": { "min": 1.5, "max": 6.0 },
+      "hasLocalBusinessSchema": true,
+      "h1Text": "Alvin Garage Door Culver City, CA",
+      "h1Count": 1,
+      "h1IncludesCategory": true,
+      "h1IncludesCity": true,
+      "hasMobileClickToCall": true,
+      "websitePhoneMatchesGbp": true,
+      "prominentSitePhone": "4243734291",
+      "prominentPhoneMatchesGbp": true,
+      "distinctSitePhoneCount": { "min": 1, "max": 1 },
+      "hasMetaDescription": true,
+      "renderBlockingHeadResources": { "min": 8, "max": 25 },
+      "isHttps": true,
+      "title": "Alvin Garage Door | Culver City CA | Expert Repairs & Installation",
+      "titleIncludesCategory": true,
+      "titleIncludesCity": true,
+      "napAboveFold": true,
+      "canonicalUrl": "https://sswhitegaragedoors.com/",
+      "canonicalMatches": true,
+      "serviceAreaPagesCount": { "min": 0, "max": 5 },
+      "hasReviewsOnPage": true,
+      "hasServiceAreaListed": true,
+      "primaryCtaText": "(424) 373-4291"
+    },
+    "mobile": {
+      "pageLoadSeconds": { "min": 0.5, "max": 3.0 },
+      "hasViewportMeta": true,
+      "clickToCallAboveFold": true,
+      "primaryCtaTapTargetPx": { "min": 40, "max": 80 },
+      "pageWeightKb": { "min": 1500, "max": 5000 },
+      "isHttps": true,
+      "h1Count": 1,
+      "renderBlockingHeadResources": { "min": 8, "max": 25 },
+      "hasStickyCta": true,
+      "hasClickToText": false,
+      "primaryCtaText": "(424) 373-4291",
+      "phoneVisibleAboveFold": true,
+      "socialProofAboveFold": false
+    },
+    "gbp": {
+      "reviewCount": { "min": 20, "max": 35 },
+      "photoCount": null,
+      "categoriesCount": null,
+      "primaryCategory": "Garage door supplier",
+      "primaryCategoryMatchesSearch": true,
+      "daysSinceLastReview": { "min": 60, "max": 240, "tolerance": "increases ~1/day; expect drift up over time" },
+      "reviewsLast30Days": { "min": 0, "max": 3 },
+      "reviewsLast90Days": { "min": 0, "max": 5 },
+      "ownerResponseCount": { "min": 1, "max": 15 },
+      "hasBusinessHours": true,
+      "descriptionVerified": false,
+      "postsVerified": false
+    }
+  },
+  "knownFailureModes": [
+    {
+      "symptom": "All GBP fields null + h1='' + overlap=0%",
+      "cause": "CAPTCHA on Maps surface; happens after 3-5 scrapes/session on same profile",
+      "fix": "Wait 6-24h, delete chrome-profile-step3-gbp, retry"
+    },
+    {
+      "symptom": "Search KP CAPTCHA only — Maps data captured cleanly but description/posts unverified",
+      "cause": "Google rate-limits Search surface independently of Maps; observed 2026-05-14 on Alvin first scrape of day",
+      "fix": "Self-diag gates description/posts findings behind verified flags → no claims ship. Acceptable failure mode."
+    }
+  ]
+}
