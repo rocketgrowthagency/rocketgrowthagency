@@ -109,6 +109,8 @@ async function auditWebsite(browser, websiteUrl, business) {
         h1Count: 0,
         phoneNumbers: [],
         clickToCallCount: 0,
+        prominentPhone: null,           // largest visible phone above fold (the one a visitor SEES)
+        uniqueSitePhones: [],           // every distinct normalized phone on the page
         hasMetaDescription: false,
         renderBlockingHeadResources: 0,
         imagesWithoutLazy: 0,
@@ -134,6 +136,53 @@ async function auditWebsite(browser, websiteUrl, business) {
       const tels = Array.from(document.querySelectorAll('a[href^="tel:"]'));
       result.clickToCallCount = tels.length;
       result.phoneNumbers = tels.map((a) => a.getAttribute('href').replace(/^tel:/, ''));
+
+      // === Prominent phone + unique-phone tracking (NAP strict) ===
+      // The OLD `websitePhoneMatchesGbp` returned true if ANY tel: link matched
+      // GBP. That hides the case where the HEADER shows a different number
+      // (lead aggregator, call tracking, etc.) — a real NAP mismatch the visitor
+      // and Google both see. Capture every distinct phone + identify which one
+      // is most prominent (largest visible above fold).
+      const phoneRegexAll = /(\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4})/g;
+      const digits = (s) => (s || '').replace(/\D/g, '');
+      const normalize10 = (s) => {
+        const d = digits(s);
+        return d.length === 11 && d.startsWith('1') ? d.slice(1) : d;
+      };
+      const foldY = window.innerHeight;
+      const uniqueSet = new Set();
+
+      // Include all tel: hrefs as known phones
+      for (const a of tels) {
+        const n = normalize10(a.getAttribute('href') || '');
+        if (n.length === 10) uniqueSet.add(n);
+      }
+      // Also scan visible text on the page for phone patterns
+      const textNodes = Array.from(document.querySelectorAll('*'))
+        .filter((el) => el.children.length === 0);
+      let prominentBest = null; // {phone, area, aboveFold}
+      for (const el of textNodes) {
+        const txt = (el.innerText || el.textContent || '').trim();
+        if (!txt || txt.length > 200) continue;
+        const matches = txt.match(phoneRegexAll);
+        if (!matches) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const area = r.width * r.height;
+        const aboveFold = r.top >= 0 && r.top < foldY;
+        for (const m of matches) {
+          const n = normalize10(m);
+          if (n.length !== 10) continue;
+          uniqueSet.add(n);
+          // Prefer above-fold + largest area; fall back to first non-fold finding
+          const better = !prominentBest
+            || (aboveFold && !prominentBest.aboveFold)
+            || (aboveFold === prominentBest.aboveFold && area > prominentBest.area);
+          if (better) prominentBest = { phone: n, area, aboveFold };
+        }
+      }
+      result.uniqueSitePhones = Array.from(uniqueSet);
+      result.prominentPhone = prominentBest ? prominentBest.phone : null;
 
       // Meta description
       const md = document.querySelector('meta[name="description"]');
@@ -297,9 +346,24 @@ async function auditWebsite(browser, websiteUrl, business) {
     if (business.phone) {
       const gbpPhone = normalizePhone(business.phone);
       const sitePhones = (data.phoneNumbers || []).map(normalizePhone);
-      // Only flag mismatch if we actually found tel: links — empty means unknown, not mismatch.
-      if (sitePhones.length > 0) {
-        findings.websitePhoneMatchesGbp = sitePhones.some((p) => p === gbpPhone);
+      const anyMatch = sitePhones.some((p) => p === gbpPhone);
+      const prominent = data.prominentPhone || null;
+      const prominentMatches = prominent ? prominent === gbpPhone : null;
+      const distinctCount = (data.uniqueSitePhones || []).length;
+
+      findings.prominentSitePhone = prominent;
+      findings.prominentPhoneMatchesGbp = prominentMatches;
+      findings.distinctSitePhoneCount = distinctCount;
+      findings.uniqueSitePhones = data.uniqueSitePhones || [];
+
+      // STRICT semantics: NAP "matches" only when the visitor-prominent phone
+      // matches GBP AND there's only one distinct number on the site. Any header
+      // CTA showing a different number (call tracker, lead aggregator) is a
+      // real NAP issue Google and visitors both see.
+      if (prominentMatches === false || distinctCount > 1) {
+        findings.websitePhoneMatchesGbp = false;
+      } else if (sitePhones.length > 0) {
+        findings.websitePhoneMatchesGbp = anyMatch;
       }
     }
   } catch (err) {
@@ -887,6 +951,16 @@ async function auditGbp(_, gbpUrl, business) {
         await kpPage.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
         kpPage.on('console', (msg) => { const t = msg.text(); if (t.includes('[kp-')) console.log('  ' + t); });
 
+        // Pre-warm: visit Google homepage first to seed cookies/consent before
+        // the actual query. Reduces CAPTCHA likelihood vs. cold-hitting a search URL.
+        await kpPage.goto('https://www.google.com/', { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+        await kpPage.evaluate(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const accept = buttons.find((b) => /accept all|reject all|i agree/i.test(b.textContent || ''));
+          if (accept) accept.click();
+        }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 1500));
+
         const kpUrl = `https://www.google.com/search?q=${encodeURIComponent(kpQuery)}`;
         await kpPage.goto(kpUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         // Consent on search.google.com if needed
@@ -895,7 +969,32 @@ async function auditGbp(_, gbpUrl, business) {
           const accept = buttons.find((b) => /accept all|reject all|i agree/i.test(b.textContent || ''));
           if (accept) accept.click();
         }).catch(() => {});
-        await new Promise((r) => setTimeout(r, 2500));
+
+        // Wait for kp-wholepage with retry. Some loads render the knowledge panel
+        // late, especially on first visit. Also detect CAPTCHA challenge.
+        let kpFound = false;
+        let captchaDetected = false;
+        for (let attempt = 0; attempt < 3 && !kpFound; attempt++) {
+          await new Promise((r) => setTimeout(r, 2500 + attempt * 1500));
+          const state = await kpPage.evaluate(() => {
+            const kp = !!document.querySelector('div.kp-wholepage');
+            const captchaHints = [
+              document.querySelector('form[action*="sorry"]'),
+              document.querySelector('div#captcha-form'),
+              document.body && /unusual traffic|verify you'?re a human|i'm not a robot/i.test((document.body.innerText || '').slice(0, 500)),
+            ];
+            return { kp, captcha: captchaHints.some(Boolean) };
+          }).catch(() => ({ kp: false, captcha: false }));
+          if (state.captcha) { captchaDetected = true; break; }
+          if (state.kp) { kpFound = true; break; }
+        }
+        if (captchaDetected) {
+          console.warn(`  [kp-diag] Search CAPTCHA detected — Search KP scrape aborted (back off 6-24h before retry)`);
+          throw new Error('search-captcha');
+        }
+        if (!kpFound) {
+          console.warn(`  [kp-diag] kp-wholepage didn't load after 3 attempts — moving on without description/posts`);
+        }
 
         const kpData = await kpPage.evaluate((expectedName) => {
           const kp = document.querySelector('div.kp-wholepage');

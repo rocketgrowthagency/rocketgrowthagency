@@ -287,9 +287,17 @@ function scoreWebsiteFindings(audit) {
   const w = audit.website;
   const out = [];
 
-  // PRIORITY 1: NAP mismatch — step-2.5 only sets websitePhoneMatchesGbp=false when tel: links were found AND mismatched
+  // PRIORITY 1: NAP mismatch — now strict (prominent-phone semantics).
+  // Differentiate: 1+ phones AND prominent doesn't match vs. multiple phones present at all.
   if (w.websitePhoneMatchesGbp === false) {
-    out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
+    if (w.distinctSitePhoneCount > 1 && w.prominentPhoneMatchesGbp === false && w.prominentSitePhone) {
+      const fmt = (s) => s && s.length === 10 ? `${s.slice(0,3)}-${s.slice(3,6)}-${s.slice(6)}` : s;
+      out.push({ key: 'nap', score: 1, finding: `your website shows ${w.distinctSitePhoneCount} different phone numbers — the main header lists ${fmt(w.prominentSitePhone)}, but your Google Business Profile lists a different number. Visitors and Google's local algorithm both see this NAP inconsistency` });
+    } else if (w.distinctSitePhoneCount > 1) {
+      out.push({ key: 'nap', score: 1, finding: `your website shows ${w.distinctSitePhoneCount} different phone numbers — pick one and use it everywhere, so visitors and Google see consistent NAP signals` });
+    } else {
+      out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
+    }
   }
   // PRIORITY 1.5 (NEW): NAP not visible above the fold — phone AND address as visible text in the hero
   if (w.napAboveFold === false) {
