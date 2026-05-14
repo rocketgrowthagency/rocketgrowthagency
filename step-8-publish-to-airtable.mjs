@@ -715,6 +715,38 @@ async function main() {
     console.log(`[step-8] scrape run: ${runId} for "${query}"`);
   }
 
+  // === Pre-publish coverage check — fail loudly if critical fields are missing ===
+  // Same safety net as step-1's post-scrape coverage report. Prevents publishing a
+  // batch where Reviews / Category / etc. were silently empty (the bug class that
+  // hid the systemic gap pre-2026-05-14).
+  {
+    const CRITICAL_CSV_FIELDS = ['business name', 'rating', 'reviews', 'detected category', 'google maps url', 'map rank'];
+    const coverage = Object.fromEntries(CRITICAL_CSV_FIELDS.map((f) => [f, 0]));
+    for (const r of rows) {
+      for (const f of CRITICAL_CSV_FIELDS) {
+        const v = pick(r, f);
+        if (v && String(v).trim()) coverage[f]++;
+      }
+    }
+    console.log(`\n[step-8] Critical-field coverage (${rows.length} rows):`);
+    const atZero = [];
+    for (const f of CRITICAL_CSV_FIELDS) {
+      const n = coverage[f];
+      const pct = (n / rows.length * 100).toFixed(0);
+      const flag = n === 0 ? ' ← 🚨 CRITICAL: 0%' : (n / rows.length < 0.5 ? ' ← partial' : '');
+      console.log(`   ${f.padEnd(28)} ${n}/${rows.length} (${pct}%)${flag}`);
+      if (n === 0) atZero.push(f);
+    }
+    if (atZero.length && !DRY) {
+      console.error(`\n❌ FATAL: refusing to publish — ${atZero.length} critical field(s) at 0% coverage: ${atZero.join(', ')}`);
+      console.error(`   Set FORCE_PUBLISH=1 to publish anyway (will produce useless Airtable rows for these columns).`);
+      if (process.env.FORCE_PUBLISH !== '1') {
+        process.exit(2);
+      }
+      console.warn('[step-8] FORCE_PUBLISH=1 set — proceeding with incomplete data');
+    }
+  }
+
   const records = rows.map((r) => {
     const rec = buildRecord(r, scrapedDate);
     if (runId) rec.fields["Source Run"] = [runId];

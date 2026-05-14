@@ -1018,6 +1018,12 @@ async function main() {
     const ws = fs.createWriteStream(outFile, { flags: 'w' });
     ws.write(header.join(',') + '\n');
 
+    // Per-column coverage counter — populated after every row write.
+    // At end, report coverage % per field; hard-fail if any CRITICAL field is at 0%.
+    // Prevents the "silent systemic gap" we hit on Reviews + Category pre-2026-05-14.
+    const coverageCount = Object.fromEntries(header.map((h) => [h, 0]));
+    const CRITICAL_FIELDS = ['Business Name', 'Rating', 'Reviews', 'Detected Category', 'Google Maps URL', 'Map Rank'];
+
     const seenPlaces = new Set();
     let written = 0;
 
@@ -1099,6 +1105,14 @@ async function main() {
 
         ws.write(rowOut.map(csvEscape).join(',') + '\n');
 
+        // Track per-column coverage as we go
+        for (let h = 0; h < header.length; h++) {
+          const val = rowOut[h];
+          if (val !== '' && val !== null && val !== undefined && String(val).trim()) {
+            coverageCount[header[h]]++;
+          }
+        }
+
         written++;
         console.log(
           `[${mapRank}/${entriesUniq.length}] ✅ saved: ${name || '(no name)'} (written=${written})`
@@ -1121,6 +1135,35 @@ async function main() {
 
     ws.end();
     console.log(`📁 Done! Saved ${written} listings to ${outFile}`);
+
+    // === Post-scrape coverage report — fails loudly on systemic gaps ===
+    if (written > 0) {
+      console.log(`\n📊 Coverage report (${written} leads):`);
+      const criticalAtZero = [];
+      const sortedHeader = [...header].sort((a, b) => {
+        const aPct = coverageCount[a] / written;
+        const bPct = coverageCount[b] / written;
+        return aPct - bPct;
+      });
+      for (const h of sortedHeader) {
+        const n = coverageCount[h];
+        const pct = (n / written * 100).toFixed(0);
+        const isCritical = CRITICAL_FIELDS.includes(h);
+        let flag = '';
+        if (n === 0) flag = isCritical ? ' ← 🚨 CRITICAL: 0% coverage' : ' ← ⚠️  0% coverage';
+        else if (n / written < 0.5) flag = ' ← partial';
+        else if (n === written) flag = ' ✓';
+        console.log(`   ${h.padEnd(28)} ${String(n).padStart(3)}/${written} (${pct.padStart(3)}%)${flag}`);
+        if (n === 0 && isCritical) criticalAtZero.push(h);
+      }
+      if (criticalAtZero.length) {
+        console.error(`\n❌ FATAL: ${criticalAtZero.length} critical field(s) at 0% coverage: ${criticalAtZero.join(', ')}`);
+        console.error(`   This is the same class of silent gap that hid the Reviews + Category bug pre-2026-05-14.`);
+        console.error(`   The CSV at ${outFile} contains useless data for these columns.`);
+        console.error(`   Investigate the extractor for each critical field before running step-2 / step-8.`);
+        process.exitCode = 2;
+      }
+    }
   } catch (e) {
     console.error('❌ Error during scraping:', e);
   } finally {
