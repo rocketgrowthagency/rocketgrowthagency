@@ -153,32 +153,60 @@ function extractValidEmail(raw) {
   return '';
 }
 
-async function loadTop3Stats(baseName) {
+async function loadTop3Stats(baseName, step2CsvPath) {
+  // Strategy 1: exact match step-1 base name (single-business pipeline)
   const step1BaseName = baseName.replace('[step-2]', '[step-1]');
   const step1CsvPath = path.join(STEP1_DIR, `${step1BaseName}.csv`);
+  let csvToRead = fs.existsSync(step1CsvPath) ? step1CsvPath : null;
 
-  let csvToRead = null;
-  if (fs.existsSync(step1CsvPath)) {
-    csvToRead = step1CsvPath;
-  } else {
-    console.warn(`Step 1 CSV not found: ${step1CsvPath} — scanning for most recent batch step-1 CSV`);
-    if (fs.existsSync(STEP1_DIR)) {
-      const candidates = fs.readdirSync(STEP1_DIR)
-        .filter(f => f.includes('[step-1]') && f.endsWith('.csv'))
-        .sort().reverse();
-      if (candidates.length) {
-        csvToRead = path.join(STEP1_DIR, candidates[0]);
-        console.log(`Using fallback Step 1 CSV for top-3 stats: ${csvToRead}`);
+  // Strategy 2: peek at step-2 CSV to get searchTerm, then find batch step-1
+  // whose filename matches the slugified search term. Critical for single-business
+  // step-2 files (e.g. alvin-garage-door-single) that were promoted out of a batch —
+  // the batch step-1 file has the correct top-3 for that lead's search context.
+  if (!csvToRead && step2CsvPath && fs.existsSync(step2CsvPath)) {
+    let searchTerm = null;
+    await new Promise((resolve) => {
+      const rows = [];
+      fs.createReadStream(step2CsvPath)
+        .pipe(csvParser())
+        .on('data', (row) => rows.push(row))
+        .on('end', () => {
+          if (rows[0]) searchTerm = rows[0]['Search Term'] || rows[0].searchTerm || null;
+          resolve();
+        })
+        .on('error', resolve);
+    });
+    if (searchTerm && fs.existsSync(STEP1_DIR)) {
+      const searchSlug = searchTerm.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const matches = fs.readdirSync(STEP1_DIR)
+        .filter(f => f.includes('[step-1]') && f.endsWith('.csv') && f.toLowerCase().includes(searchSlug));
+      if (matches.length) {
+        const newest = matches
+          .map(f => ({ path: path.join(STEP1_DIR, f), mtime: fs.statSync(path.join(STEP1_DIR, f)).mtimeMs }))
+          .sort((a, b) => b.mtime - a.mtime)[0];
+        csvToRead = newest.path;
+        console.log(`Top-3 stats: matched batch step-1 by search-term slug "${searchSlug}" → ${path.basename(csvToRead)}`);
       }
-    }
-    if (!csvToRead) {
-      console.warn('No Step 1 CSV found anywhere — top-3 stats unavailable.');
-      return null;
     }
   }
 
-  const rows = [];
+  // Strategy 3: most-recent fallback (legacy behavior — last resort)
+  if (!csvToRead && fs.existsSync(STEP1_DIR)) {
+    const candidates = fs.readdirSync(STEP1_DIR)
+      .filter(f => f.includes('[step-1]') && f.endsWith('.csv'))
+      .sort().reverse();
+    if (candidates.length) {
+      csvToRead = path.join(STEP1_DIR, candidates[0]);
+      console.warn(`Top-3 stats: no search-term match; using fallback ${path.basename(csvToRead)} — comparisons may be inaccurate`);
+    }
+  }
 
+  if (!csvToRead) {
+    console.warn('No Step 1 CSV found anywhere — top-3 stats unavailable.');
+    return null;
+  }
+
+  const rows = [];
   await new Promise((resolve, reject) => {
     fs.createReadStream(csvToRead)
       .pipe(csvParser())
@@ -200,13 +228,15 @@ async function loadTop3Stats(baseName) {
 
   const ratings = [];
   const reviews = [];
+  const categories = [];
 
   for (const row of top3Rows) {
     const ratingNum = parseNumber(row['Rating'] || row.rating);
     const reviewsNum = parseNumber(row['Reviews'] || row.reviews);
-
+    const cat = (row['Category'] || row.category || '').trim();
     if (ratingNum != null) ratings.push(ratingNum);
     if (reviewsNum != null) reviews.push(reviewsNum);
+    if (cat) categories.push(cat);
   }
 
   if (!ratings.length || !reviews.length) {
@@ -214,19 +244,27 @@ async function loadTop3Stats(baseName) {
     return null;
   }
 
-  const ratingMin = Math.min(...ratings);
-  const ratingMax = Math.max(...ratings);
-  const reviewsMin = Math.min(...reviews);
-  const reviewsMax = Math.max(...reviews);
+  // Compute majority primary category among top-3
+  const catCount = {};
+  for (const c of categories) catCount[c] = (catCount[c] || 0) + 1;
+  let majorityCategory = null;
+  let majorityCount = 0;
+  for (const [c, n] of Object.entries(catCount)) {
+    if (n > majorityCount) { majorityCategory = c; majorityCount = n; }
+  }
 
   const stats = {
-    ratingMin,
-    ratingMax,
-    reviewsMin,
-    reviewsMax,
+    ratingMin: Math.min(...ratings),
+    ratingMax: Math.max(...ratings),
+    ratingAvg: ratings.reduce((a, b) => a + b, 0) / ratings.length,
+    reviewsMin: Math.min(...reviews),
+    reviewsMax: Math.max(...reviews),
+    reviewsAvg: Math.round(reviews.reduce((a, b) => a + b, 0) / reviews.length),
+    majorityCategory,
+    categories,
   };
 
-  console.log('Top-3 stats from Step 1:', stats);
+  console.log('Top-3 stats from Step 1:', { ...stats, categories: categories.join(' | ') });
   return stats;
 }
 
@@ -282,9 +320,9 @@ function validateAuditContract(audit, slug) {
 // Each finding has a fixed priority (1-10, lower = more important).
 // Audit picks the top 3 lowest-priority findings that triggered.
 // "score" field == priority for sorting compatibility.
-function scoreWebsiteFindings(audit) {
+function scoreWebsiteFindings(audit, businessName) {
   if (!audit?.website) return [];
-  const w = audit.website;
+  const w = { ...audit.website, businessNameForCheck: businessName || '' };
   const out = [];
 
   // PRIORITY 1: NAP mismatch — strict (prominent-phone semantics) + toll-free / call-tracker detection.
@@ -307,6 +345,40 @@ function scoreWebsiteFindings(audit) {
   // PRIORITY 1.5 (NEW): NAP not visible above the fold — phone AND address as visible text in the hero
   if (w.napAboveFold === false) {
     out.push({ key: 'napAboveFold', score: 1.5, finding: `your phone number and address aren't both visible above the fold — visitors and Google's local trust signals look for NAP in the hero, not buried in the footer` });
+  }
+  // PRIORITY 1.3 (NEW 2026-05-14): Domain doesn't match business BRAND name.
+  // Filter out industry/service stopwords from the business name so we only check the
+  // unique brand tokens against the domain. Otherwise "Alvin Garage Door" would match
+  // sswhitegaragedoors.com just because the domain contains "garage" + "door".
+  if (w.websiteUrl && w.businessNameForCheck) {
+    try {
+      const host = new URL(w.websiteUrl).hostname.toLowerCase().replace(/^www\./, '');
+      const domainRoot = host.replace(/\.(com|net|org|co|us|biz|info|io|me|shop|store)$/i, '');
+      const INDUSTRY_STOPWORDS = new Set([
+        'the','and','for','llc','inc','ltd','co','corp','of','at','your',
+        'garage','door','doors','repair','repairs','service','services','company','companies',
+        'shop','store','center','centers','solution','solutions','group','team',
+        'professional','professionals','expert','experts','specialist','specialists','pro','pros',
+        'plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning',
+        'roofing','roofer','roofers','locksmith','locksmiths','dentist','dentists','dental',
+        'auto','automotive','car','cars','vehicle','vehicles',
+        'painting','painters','painter','cleaning','cleaners','cleaner',
+        'landscaping','landscape','lawn','tree','trees',
+        'pest','control','exterminator','exterminators',
+        'electric','electrician','electricians','contractor','contractors','construction','remodel','remodeling'
+      ]);
+      const brandTokens = w.businessNameForCheck.toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(t => t.length >= 3 && !INDUSTRY_STOPWORDS.has(t));
+      const hasBrandMatch = brandTokens.length > 0 && brandTokens.some(t => domainRoot.includes(t));
+      if (brandTokens.length && !hasBrandMatch) {
+        out.push({
+          key: 'domainNameMismatch',
+          score: 1.3,
+          finding: `your website domain — ${host} — doesn't match your business name. Google reads brand-to-domain consistency as a citation trust signal, and prospects clicking through from search see an unfamiliar URL, which costs both ranking weight and conversion confidence`
+        });
+      }
+    } catch (_) {}
   }
   // PRIORITY 2: No LocalBusiness schema
   if (w.hasLocalBusinessSchema === false) {
@@ -484,22 +556,22 @@ function scoreMapsFindings(audit, top3Stats, record) {
   const rating = parseFloat(normalizeField(record, 'Rating') || '');
   const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
 
-  // Review count vs top 3 average
+  // Review count vs top 3 average (uses true average now, not midpoint of min/max)
   if (top3Stats && Number.isFinite(reviews)) {
-    const avgReviews = Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
+    const avgReviews = top3Stats.reviewsAvg || Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
     if (avgReviews > 0 && reviews < avgReviews * 0.6) {
       const ratio = reviews / avgReviews;
       out.push({
         key: 'reviewCount',
         score: ratio < 0.3 ? 15 : 35,
-        finding: `you have ${reviews} Google reviews; the top 3 in this search average around ${avgReviews} — Google weighs total review volume heavily for Maps ranking`,
+        finding: `you have ${reviews} Google reviews; the top 3 in this search average around ${avgReviews} — Google weighs total review volume heavily for Maps ranking, and that gap of about ${Math.max(1, avgReviews - reviews)} reviews is one of the most direct levers you have`,
       });
     }
   }
 
-  // Rating vs top 3
+  // Rating vs top 3 (uses true average now)
   if (top3Stats && Number.isFinite(rating)) {
-    const avgRating = (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
+    const avgRating = top3Stats.ratingAvg || (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
     if (rating < avgRating - 0.15) {
       out.push({
         key: 'ratingGap',
@@ -545,6 +617,22 @@ function scoreMapsFindings(audit, top3Stats, record) {
       score: 18,
       finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — a mismatched primary category directly limits your visibility in this search`,
     });
+  }
+
+  // PRIORITY 19 (NEW 2026-05-14): Category vs top-3 majority comparative finding.
+  // Catches the case where business's category technically contains the search keyword but
+  // the top-3 ranked competitors use a different, more service-aligned category.
+  // E.g. Alvin's "Garage door supplier" vs top-3 "Garage door repair service".
+  if (top3Stats?.majorityCategory && audit?.gbp?.primaryCategory) {
+    const yourCat = audit.gbp.primaryCategory.trim().toLowerCase();
+    const majCat = top3Stats.majorityCategory.trim().toLowerCase();
+    if (yourCat !== majCat && !out.some(f => f.key === 'categoryMismatch')) {
+      out.push({
+        key: 'categoryVsTop3',
+        score: 19,
+        finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — but the top 3 ranked businesses in your search use "${top3Stats.majorityCategory}". Switching to match the category Google associates with this search intent is one of the highest-impact moves for local rank`,
+      });
+    }
   }
 
   // No business hours set on GBP
@@ -826,7 +914,7 @@ function buildScript(record, top3Stats, audit) {
   // maps → website → mobile so cross-cutting findings (multiH1, https, etc.)
   // prefer the section where they have highest SEO impact (website > mobile).
   const rawMaps = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
-  const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit), disabledKeys);
+  const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit, name), disabledKeys);
   const rawMobile = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
   const { maps: mapsFindings, website: websiteFindings, mobile: mobileFindings } = dedupAcrossSections(rawMaps, rawWebsite, rawMobile);
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
@@ -1044,7 +1132,7 @@ async function main() {
     process.exit(1);
   }
 
-  const top3Stats = await loadTop3Stats(STEP2_BASENAME);
+  const top3Stats = await loadTop3Stats(STEP2_BASENAME, STEP2_CSV);
 
   await new Promise((resolve, reject) => {
     fs.createReadStream(STEP2_CSV)
