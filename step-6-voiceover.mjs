@@ -1028,8 +1028,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a 2-minute walk-through on ${name} across your Google Business Profile, website, and mobile experience. I'll cover where you're vulnerable to losing your top 3 spot, and where to get the full deeper audit if you want to go further.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a 2-minute walk-through on ${name} across your Google Business Profile, website, and mobile experience. I'll cover the top issues keeping you from the top 3, and where to get the full deeper audit if you want to go further.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover where you're vulnerable to losing your top 3 spot — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of your business and the exact path to defending number 1.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover the top issues keeping you from the top 3 ranking — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of your business and the exact path to the top 3.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
