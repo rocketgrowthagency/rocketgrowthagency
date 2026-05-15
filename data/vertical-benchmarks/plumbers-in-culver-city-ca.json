@@ -26,5 +26,160 @@
   "ratingTop10Median": 4.95,
   "ratingTop3Avg": 4.93,
   "findingsDisabled": [],
-  "notes": null
+  "notes": null,
+  "research": {
+    "vertical": "Plumbing",
+    "lastResearchedAt": "2026-05-15",
+    "confidence": "high",
+    "summary": "Plumber GBP rankings are dominated by Google Business Profile signals (~32% of weight per Whitespark 2026) + review velocity (Google now weighs the most recent 90 days more heavily than lifetime totals). A business with 200 reviews and none in the past 6 months ranks BELOW a business with 80 reviews and steady weekly flow. Category match is straightforward in this vertical — 'Plumber' is the canonical primary; no ambiguity like garage-door has.",
+    "recommendedPrimaryCategory": "Plumber",
+    "recommendedPrimaryCategoryReasoning": "Empirically dominant in Culver City top-5 (8/8 leads use 'Plumber'). Canonical GBP category, no broader/narrower ambiguity to navigate.",
+    "recommendedSecondaryCategories": [
+      "Drainage service",
+      "Water filter supplier",
+      "Water heater repair service",
+      "Bathroom remodeler",
+      "Septic system service"
+    ],
+    "recommendedServiceAttributes": [
+      "Drain cleaning",
+      "Water heater repair",
+      "Water heater installation",
+      "Leak repair",
+      "Sewer line repair",
+      "Sewer line inspection",
+      "Toilet repair",
+      "Faucet installation",
+      "Garbage disposal repair",
+      "Emergency plumbing",
+      "24/7 service",
+      "Repiping"
+    ],
+    "topRankingFactors": [
+      {
+        "factor": "Proximity to searcher",
+        "weight": "very high (55%)",
+        "benchmark": "Single most important. Verified address must be in the city you target.",
+        "source": "Emulent Weighted Local SEO Ranking Factors 2026"
+      },
+      {
+        "factor": "GBP signals (completeness + categories)",
+        "weight": "very high (32%)",
+        "benchmark": "Primary category exact match + all service attributes filled + complete hours/photos/posts.",
+        "source": "Whitespark 2026 Local Search Ranking Factors"
+      },
+      {
+        "factor": "Review velocity (recent 90 days)",
+        "weight": "very high",
+        "benchmark": "Target 20-25 new reviews/month. Recency outweighs lifetime totals in 2026.",
+        "source": "Local Mighty, Nova Advertising 2026"
+      },
+      {
+        "factor": "Citation consistency",
+        "weight": "high",
+        "benchmark": "Submit to 50+ core directories. Identical NAP everywhere.",
+        "source": "Spark Growth GBP Plumber Guide"
+      },
+      {
+        "factor": "Review signals (rating + count)",
+        "weight": "high (16-20%)",
+        "benchmark": "≥4.6 avg rating, ≥50 reviews to compete in top 3.",
+        "source": "Local SEO Statistics 2026"
+      },
+      {
+        "factor": "On-page SEO (title/h1/schema/load)",
+        "weight": "medium (19%)",
+        "benchmark": "Service+city in title and h1, LocalBusiness schema, <2.5s load.",
+        "source": "Whitespark + Emulent 2026"
+      }
+    ],
+    "commonPitfalls": [
+      "Stale GBP posts (>90 days since last post — Google reads as dormant)",
+      "200+ reviews but none in last 6 months (recency penalty)",
+      "Multiple call-tracker numbers on the website breaking NAP",
+      "Generic CTAs ('Contact Us') instead of action-specific ('Call Now for Same-Day Service')",
+      "Missing 'Emergency' or '24/7' attributes when those services are offered",
+      "Service area set too wide (decay penalty for being far from searchers)"
+    ],
+    "titleTagPattern": "[Plumbing Service] in [City] | [Business Name]",
+    "titleTagExample": "Plumber in Culver City, CA | Pacific Plumbing Team",
+    "h1Pattern": "[Service]-led with city + urgency hook",
+    "h1Example": "Plumber in Culver City — 24/7 Emergency Service",
+    "metaDescPattern": "Service + city + differentiator (response time, licensing, warranty)",
+    "metaDescExample": "Licensed plumber in Culver City, CA. 24/7 emergency service, upfront pricing, satisfaction guaranteed. Call (310) 555-0100.",
+    "citationProfileTargets": [
+      "Yelp",
+      "Angi",
+      "BBB",
+      "HomeAdvisor",
+      "Houzz",
+      "Thumbtack",
+      "MapQuest",
+      "Yellow Pages",
+      "Foursquare",
+      "Apple Maps Business Connect",
+      "Bing Places",
+      "Facebook Business Page",
+      "Nextdoor",
+      "Porch"
+    ],
+    "voiceoverHooks": [
+      "Review velocity gap (recent 90 days — heaviest weighted in 2026)",
+      "Days since last review (>90 = dormant signal)",
+      "Stale GBP posts (top performers post weekly)",
+      "Missing 24/7 / Emergency service attributes",
+      "NAP mismatch on website (call-tracker number differing from GBP)",
+      "Missing schema markup",
+      "No service-area pages for multi-city operators"
+    ],
+    "voiceoverAntipatterns": [
+      "DO NOT advise switching to a narrower category — 'Plumber' is canonical.",
+      "DO NOT cite lifetime review counts without context — 2026 algorithm weighs recent 90 days heaviest."
+    ],
+    "clientOnboardingChecklist": [
+      "Verify GBP primary category = 'Plumber'",
+      "Add all recommended secondary categories where services match",
+      "Fill all service attributes (12 listed)",
+      "Set complete hours including 24/7 emergency window if offered",
+      "Write GBP description: 150-750 chars with service + city + differentiator",
+      "Upload 20+ photos (vans, team, completed work, before/after)",
+      "Set up automated SMS review request post-job (Podium/Birdeye/GatherUp)",
+      "Build citation profile across 14 targets, verify NAP exact match",
+      "Add LocalBusiness schema with full NAP + service area + hours",
+      "Establish weekly GBP post cadence (offer/tip/seasonal)",
+      "Set up review response process — target ≥80% response rate",
+      "Build service-area landing pages per city served (min 3)",
+      "Audit website: HTTPS, schema, <2.5s load, NAP above fold, single H1"
+    ],
+    "kpiTargets": {
+      "reviewCount90d": "+20-25 reviews",
+      "reviewVelocityPerMonth": "≥20",
+      "reviewResponseRate": "≥80%",
+      "gbpPostFrequency": "1-2 per week",
+      "citationConsistency": "100% across 14 directories",
+      "websiteLoadSeconds": "≤2.5",
+      "rankingTimeline": "Map Pack 30-60 days; meaningful lead lift 3-5 months"
+    },
+    "industryNotes": [
+      "Proximity is the single biggest factor (~55%) — operators outside the city center lose Map Pack even with strong reviews.",
+      "Google now weighs the last 90 days of reviews heaviest. 'Steady weekly flow' beats 'large historical total'.",
+      "GBP signals account for 32% — completing every field is the cheapest big lever.",
+      "Emergency/24/7 attributes meaningfully lift conversion AND ranking for emergency-intent queries."
+    ],
+    "sources": [
+      "https://www.localmighty.com/blog/local-seo-for-plumbers/",
+      "https://www.novaadvertising.com/local-seo-for-plumbers/",
+      "https://www.housecallpro.com/resources/plumbing-business-seo/",
+      "https://www.sparkgrowthwebsolutions.com/blog/plumbing-company-google-business-profile/",
+      "https://emulent.com/resources/google-updates/local-seo-ranking-factors/",
+      "https://www.datapins.com/local-seo-for-plumbers/",
+      "https://whitespark.ca/local-search-ranking-factors/"
+    ],
+    "consumesIn": [
+      "step-6-voiceover.mjs (cold-outreach video script)",
+      "FUTURE: Brain client-strategy module for plumber clients",
+      "FUTURE: admin onboarding wizard with recommended categories",
+      "FUTURE: portal KPI dashboard with kpiTargets thresholds"
+    ]
+  }
 }

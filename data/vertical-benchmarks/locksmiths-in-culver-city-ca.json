@@ -28,5 +28,157 @@
   "ratingTop10Median": 4.9,
   "ratingTop3Avg": 4.87,
   "findingsDisabled": [],
-  "notes": null
+  "notes": null,
+  "research": {
+    "vertical": "Locksmith",
+    "lastResearchedAt": "2026-05-15",
+    "confidence": "high",
+    "summary": "HIGH SUSPENSION RISK VERTICAL. Google's 2026 spam crackdown targets locksmiths specifically — sector has the highest GBP suspension rates due to historical 'profile farms' (fake/manipulated listings). Top suspension trigger in 2026: keyword stuffing in business name (e.g., 'Culver City Emergency Locksmith 24/7' instead of legal name). Legitimate locksmiths must operate with extra rigor on naming, NAP consistency, and review authenticity — Google's automated detection flags violations at scale and reinstatement can take weeks.",
+    "recommendedPrimaryCategory": "Locksmith",
+    "recommendedPrimaryCategoryReasoning": "Empirically dominant in Culver City top-5 (all use 'Locksmith'). Canonical GBP category. NO keyword variants — keep business name as the legal name, never modify for SEO.",
+    "recommendedSecondaryCategories": [
+      "Auto locksmith",
+      "Safe & vault supplier",
+      "Key duplication service"
+    ],
+    "recommendedServiceAttributes": [
+      "Lockout service",
+      "Residential lockout",
+      "Commercial lockout",
+      "Automotive lockout",
+      "Key duplication",
+      "Rekey service",
+      "Lock installation",
+      "Lock repair",
+      "Safe opening",
+      "Master key systems",
+      "Emergency service",
+      "24/7 service"
+    ],
+    "topRankingFactors": [
+      {
+        "factor": "Clean business name (no keyword stuffing)",
+        "weight": "critical (avoids suspension)",
+        "benchmark": "Business name must match legal/displayed name exactly. NO 'Emergency', 'Best', '24/7' or city stuffing.",
+        "source": "Google's 2026 Local SEO Crackdown reporting"
+      },
+      {
+        "factor": "NAP consistency across all directories",
+        "weight": "very high",
+        "benchmark": "Identical name+address+phone on every listing. Mismatch is a top suspension trigger.",
+        "source": "JCerme GBP Suspension Wave 2026"
+      },
+      {
+        "factor": "Authentic reviews (no incentivized/fake)",
+        "weight": "very high",
+        "benchmark": "Solicit ethically via SMS post-job. Incentivized reviews trigger suspension.",
+        "source": "Sparksbox Local SEO Crackdown 2026"
+      },
+      {
+        "factor": "Single listing per location (no duplicates)",
+        "weight": "very high",
+        "benchmark": "Multiple listings at same address = automatic suspension. Audit + clean before optimization.",
+        "source": "Google Business Profile Community"
+      },
+      {
+        "factor": "Realistic service area",
+        "weight": "high",
+        "benchmark": "Don't claim service in cities you can't reach within 1 hour. Abusive service areas trigger flags.",
+        "source": "Google 2026 enforcement reporting"
+      },
+      {
+        "factor": "Schema + license display",
+        "weight": "medium-high",
+        "benchmark": "LocalBusiness schema + clear license number on website + GBP. Builds legitimacy signal.",
+        "source": "Ad-hoc News, JCerme"
+      }
+    ],
+    "commonPitfalls": [
+      "Keyword-stuffed business name ('Emergency Locksmith 24/7 [City]') — #1 suspension cause in 2026",
+      "Duplicate listings at same address (often unintentional after rebrand)",
+      "Incentivized reviews (gift card for review)",
+      "Abusive service areas (claiming cities you don't actually serve)",
+      "Missing license number on website + GBP",
+      "Generic placeholder photos vs real shop/team photos (flagged as 'fake' signal)"
+    ],
+    "titleTagPattern": "[Locksmith Service] in [City] | [Business Name]",
+    "titleTagExample": "Locksmith in Culver City, CA | Acme Lock & Key",
+    "h1Pattern": "[Service]-led with city + license trust signal",
+    "h1Example": "Licensed Locksmith in Culver City — 24/7 Lockout Service",
+    "metaDescPattern": "Service + city + license + response time",
+    "metaDescExample": "Licensed locksmith in Culver City, CA. 30-min response, residential, commercial, automotive lockouts. License #LSL12345. Call (310) 555-0200.",
+    "citationProfileTargets": [
+      "Yelp",
+      "Angi",
+      "BBB",
+      "HomeAdvisor",
+      "Thumbtack",
+      "MapQuest",
+      "Yellow Pages",
+      "Foursquare",
+      "Apple Maps Business Connect",
+      "Bing Places",
+      "Facebook Business Page",
+      "Nextdoor",
+      "ALOA (Associated Locksmiths of America) directory"
+    ],
+    "voiceoverHooks": [
+      "Business-name compliance check (no keyword stuffing)",
+      "License number visible on website",
+      "NAP consistency audit (top suspension trigger)",
+      "Review velocity gap",
+      "Missing 24/7 / Emergency attributes",
+      "No service-area pages for multi-city operators",
+      "Realistic vs abusive service-area boundaries"
+    ],
+    "voiceoverAntipatterns": [
+      "DO NOT suggest adding 'Emergency' or location keywords to business name — that's the #1 suspension trigger in this vertical.",
+      "DO NOT advise broader service areas — abusive boundaries flag suspension.",
+      "DO NOT cite incentivized review tactics."
+    ],
+    "clientOnboardingChecklist": [
+      "Audit business name for keyword stuffing (must be legal name) — FIX BEFORE ANY OPTIMIZATION",
+      "Verify single GBP listing per physical location (delete duplicates)",
+      "Verify GBP primary category = 'Locksmith'",
+      "Add appropriate secondary categories (Auto locksmith, Safe supplier, Key duplication) only if applicable",
+      "Fill all 12 service attributes that match real services",
+      "Display license number on GBP description + website footer",
+      "Set realistic service area (1-hour drive radius max)",
+      "Upload 20+ AUTHENTIC photos (real shop, team, vans, completed work)",
+      "Set complete hours including 24/7 emergency if offered",
+      "Set up ETHICAL automated SMS review request (no incentives)",
+      "Build citation profile across 13 targets — verify NAP exact match (critical)",
+      "Add LocalBusiness schema with full NAP + service area + license",
+      "Establish review response process — target ≥90% response rate",
+      "Build per-city service area landing pages where they actually serve"
+    ],
+    "kpiTargets": {
+      "reviewCount90d": "+10-15 reviews",
+      "reviewVelocityPerMonth": "≥8 (ethically sourced)",
+      "reviewResponseRate": "≥90%",
+      "gbpPostFrequency": "1 per week",
+      "citationConsistency": "100% across 13 directories (CRITICAL)",
+      "websiteLoadSeconds": "≤2.5",
+      "rankingTimeline": "Map Pack 60-90 days; longer due to extra suspension-prevention audits"
+    },
+    "industryNotes": [
+      "Google's 2026 crackdown disproportionately impacts locksmiths — collateral suspensions of legitimate businesses are real.",
+      "Reinstatement after suspension: days to weeks. Better to prevent.",
+      "Profile farms historically dominated 'near me' locksmith searches in major cities — Google now sweeping aggressively.",
+      "License display is a legitimacy signal Google's manual reviewers look for."
+    ],
+    "sources": [
+      "https://www.ad-hoc-news.de/boerse/news/ueberblick/google-s-2026-local-seo-crackdown-forces-u-s-small-businesses-to-rethink/69221443",
+      "https://www.jcerme.com/news/google-business-profile-mass-suspension-wave-april-2026",
+      "https://www.sparksbox.com/blog/google-local-seo-crackdown-2026/",
+      "https://localsearchforum.com/threads/locksmith-sues-google-for-millions-for-spam-fake-local-listings.49136/",
+      "https://support.google.com/business/thread/295987334"
+    ],
+    "consumesIn": [
+      "step-6-voiceover.mjs (cold-outreach video script)",
+      "FUTURE: Brain client-strategy module — locksmith clients need suspension-prevention audit FIRST",
+      "FUTURE: admin onboarding wizard with name-compliance check",
+      "FUTURE: portal KPI dashboard with kpiTargets thresholds"
+    ]
+  }
 }

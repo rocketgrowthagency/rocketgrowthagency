@@ -26,5 +26,164 @@
   "ratingTop10Median": 4.95,
   "ratingTop3Avg": 4.93,
   "findingsDisabled": [],
-  "notes": null
+  "notes": null,
+  "research": {
+    "vertical": "Roofing",
+    "lastResearchedAt": "2026-05-15",
+    "confidence": "high",
+    "summary": "Roofing is storm-season-driven — rankings BEFORE a storm capture surge demand the moment hail/wind hits. Companies that wait until 'roof repair near me' searches spike are too late. Strategy: rank steadily year-round so when storm season triggers query surges, you're already at the top. Competitive roofing markets typically need 50+ recent reviews to break into the top 3 Map Pack. Review recency matters as much as count.",
+    "recommendedPrimaryCategory": "Roofing contractor",
+    "recommendedPrimaryCategoryReasoning": "Empirically dominant in Culver City top-5 (10/10 use 'Roofing contractor'). Canonical and unambiguous.",
+    "recommendedSecondaryCategories": [
+      "Roof repair service",
+      "Gutter cleaning service",
+      "Siding contractor",
+      "Roofing supply store"
+    ],
+    "recommendedServiceAttributes": [
+      "Roof installation",
+      "Roof repair",
+      "Hail damage repair",
+      "Storm damage repair",
+      "Leak repair",
+      "Gutter installation",
+      "Gutter cleaning",
+      "Siding installation",
+      "Skylight installation",
+      "Commercial roofing",
+      "Residential roofing",
+      "Insurance claim assistance",
+      "Free estimates",
+      "Emergency service"
+    ],
+    "topRankingFactors": [
+      {
+        "factor": "GBP completeness + category match",
+        "weight": "very high (32%)",
+        "benchmark": "All fields filled. Primary = Roofing contractor. Service attributes complete.",
+        "source": "Whitespark 2026 Local Search Ranking Factors"
+      },
+      {
+        "factor": "Review count + recency",
+        "weight": "very high (20%)",
+        "benchmark": "50+ recent reviews needed to break top 3 in competitive markets. Recent stream beats lifetime total.",
+        "source": "Whitespark, Scorpion Roofing SEO Guide"
+      },
+      {
+        "factor": "Before/after photos in GBP gallery",
+        "weight": "high",
+        "benchmark": "Real project photos build conversion. Stale stock images hurt.",
+        "source": "Roof'D AI, Local Mighty"
+      },
+      {
+        "factor": "Seasonal content + posts",
+        "weight": "high",
+        "benchmark": "Hail-prep / storm-prep content 30-60 days before season. Posts weekly.",
+        "source": "StormLead Growth, Action Web Co"
+      },
+      {
+        "factor": "Insurance claim language on site",
+        "weight": "medium-high",
+        "benchmark": "Mention 'we work with all major insurance carriers' + claim assistance.",
+        "source": "Roofing SEO Guy, Loopex Digital"
+      },
+      {
+        "factor": "License + bonding display",
+        "weight": "medium",
+        "benchmark": "State contractor license + bond info visible on GBP + website footer.",
+        "source": "Scorpion Complete Guide to Roofing SEO"
+      }
+    ],
+    "commonPitfalls": [
+      "No before/after photos (top conversion signal missing)",
+      "Generic stock roof imagery instead of real projects",
+      "No mention of insurance claim handling (high-value differentiator)",
+      "Stale GBP posts during storm season (when search demand spikes)",
+      "Missing storm-damage / hail-damage service attributes",
+      "Single-page website with no per-city landing pages",
+      "License number not visible (trust signal weakened)"
+    ],
+    "titleTagPattern": "[Service Type] in [City] | [Business Name]",
+    "titleTagExample": "Roofing Contractor in Culver City, CA | Apex Roofing",
+    "h1Pattern": "[Service]-led with city + trust signal (licensed/insured)",
+    "h1Example": "Licensed Roofing Contractor in Culver City — 25-Year Warranty",
+    "metaDescPattern": "Service + city + differentiator (license, warranty, response time, insurance claims)",
+    "metaDescExample": "Licensed & insured roofing contractor in Culver City, CA. Hail damage repair, insurance claim assistance, free estimates, 25-yr warranty. Call (310) 555-0300.",
+    "citationProfileTargets": [
+      "Yelp",
+      "Angi",
+      "BBB",
+      "HomeAdvisor",
+      "Houzz",
+      "Thumbtack",
+      "MapQuest",
+      "Yellow Pages",
+      "Foursquare",
+      "Apple Maps Business Connect",
+      "Bing Places",
+      "Facebook Business Page",
+      "Nextdoor",
+      "GAF Master Elite directory (if certified)",
+      "Owens Corning Platinum Preferred (if certified)"
+    ],
+    "voiceoverHooks": [
+      "Review count + recency gap vs top 3 (50+ recent threshold)",
+      "Missing before/after photo galleries",
+      "No insurance claim handling language",
+      "Stale GBP posts (especially during storm season)",
+      "Missing storm-damage attributes",
+      "License/bond not visible on GBP description",
+      "No per-city service-area pages"
+    ],
+    "voiceoverAntipatterns": [
+      "DO NOT suggest stock roof imagery — top performers use real project photos.",
+      "DO NOT advise broader categories — 'Roofing contractor' is the empirical winner.",
+      "DO NOT cite review count without recency context."
+    ],
+    "clientOnboardingChecklist": [
+      "Verify GBP primary category = 'Roofing contractor'",
+      "Add 4 recommended secondary categories where services match",
+      "Fill all 14 service attributes including insurance + emergency",
+      "Display license + bond info on GBP description + website footer",
+      "Upload 20+ before/after photos of real projects (not stock)",
+      "Set up SMS post-job review request (24-48h delay, direct GBP link)",
+      "Build citation profile across 15 targets including manufacturer directories",
+      "Add LocalBusiness schema with NAP + service area + license",
+      "Establish weekly GBP post cadence — schedule seasonal content 30-60 days ahead",
+      "Set up review response process — target ≥85% response rate",
+      "Build per-city service area landing pages (min 4 for multi-city operators)",
+      "Audit website: HTTPS, schema, <2.5s load, NAP above fold, insurance language",
+      "Add 'work with all major insurance carriers' messaging prominently"
+    ],
+    "kpiTargets": {
+      "reviewCount90d": "+15-20 reviews",
+      "reviewVelocityPerMonth": "≥10",
+      "reviewResponseRate": "≥85%",
+      "gbpPostFrequency": "1-2 per week + seasonal pre-storm bursts",
+      "citationConsistency": "100% across 15 directories",
+      "websiteLoadSeconds": "≤2.5",
+      "rankingTimeline": "Map Pack 30-60 days; meaningful lead lift 3-5 months",
+      "stormSeasonReadinessDays": "≥30 (content live before peak demand)"
+    },
+    "industryNotes": [
+      "Storm season triggers 5-10x normal search volume — ranking established 30-60 days BEFORE captures the wave.",
+      "Insurance claim handling is the highest-converting differentiator in roofing.",
+      "GAF Master Elite + Owens Corning Platinum Preferred certifications open additional directory citations + trust signals.",
+      "Before/after photos consistently rank as top GBP conversion lever."
+    ],
+    "sources": [
+      "https://www.scorpion.co/roofing/insights/blog/verticals/roofing/the-complete-guide-to-seo-for-roofing-companies/",
+      "https://insidea.com/blog/marketing/roofing-companies/ultimate-local-seo-guide/",
+      "https://stormleadgrowth.com/local-seo-ai-visibility/",
+      "https://www.roofdai.com/roofing-google-business-profile-optimization/",
+      "https://www.localmighty.com/blog/local-seo-checklist-for-roofing-contractors/",
+      "https://whitespark.ca/local-search-ranking-factors/"
+    ],
+    "consumesIn": [
+      "step-6-voiceover.mjs (cold-outreach video script)",
+      "FUTURE: Brain client-strategy module — roofing clients need seasonal content calendar planning",
+      "FUTURE: admin onboarding wizard with manufacturer-certification check",
+      "FUTURE: portal KPI dashboard with kpiTargets + storm-readiness gauge"
+    ]
+  }
 }

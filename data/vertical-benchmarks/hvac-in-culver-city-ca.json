@@ -30,5 +30,167 @@
   "ratingTop10Median": 4.7,
   "ratingTop3Avg": 4.83,
   "findingsDisabled": [],
-  "notes": null
+  "notes": null,
+  "research": {
+    "vertical": "HVAC",
+    "lastResearchedAt": "2026-05-15",
+    "confidence": "high",
+    "summary": "HVAC ranking factors are heavily category-weighted — GBP category choice + services + attributes account for up to 50% of ranking impact in this vertical. Demand is bi-seasonal (cooling Mar-Apr peak, heating Sep-Oct peak); content must be indexed 60-90 days BEFORE peak to capture demand surges. Primary category 'HVAC contractor' is canonical.",
+    "recommendedPrimaryCategory": "HVAC contractor",
+    "recommendedPrimaryCategoryReasoning": "Empirically dominant in Culver City top-5 (9/9 use 'HVAC contractor'). Canonical and unambiguous.",
+    "recommendedSecondaryCategories": [
+      "Air conditioning contractor",
+      "Heating contractor",
+      "Furnace repair service",
+      "Air conditioning repair service",
+      "Heating equipment supplier"
+    ],
+    "recommendedServiceAttributes": [
+      "AC repair",
+      "AC installation",
+      "Heating repair",
+      "Furnace installation",
+      "Furnace repair",
+      "Heat pump installation",
+      "Heat pump repair",
+      "Ductwork installation",
+      "Duct cleaning",
+      "Indoor air quality",
+      "Thermostat installation",
+      "Maintenance plans",
+      "Emergency service",
+      "24/7 service",
+      "Commercial HVAC"
+    ],
+    "topRankingFactors": [
+      {
+        "factor": "Primary category exact match",
+        "weight": "very high (part of ~50% category weight)",
+        "benchmark": "Must be 'HVAC contractor'. Narrower variants limit eligibility.",
+        "source": "Local Mighty HVAC SEO Guide 2026"
+      },
+      {
+        "factor": "Service attributes complete",
+        "weight": "very high",
+        "benchmark": "All 15 attributes filled. Individual service items, not paragraph summaries.",
+        "source": "RS Gonzales HVAC GBP Optimization"
+      },
+      {
+        "factor": "Attributes (Open 24 hours, veteran-owned)",
+        "weight": "high",
+        "benchmark": "Set accurate attributes — Google weights these for filter matching.",
+        "source": "Nopio HVAC Playbook 2026"
+      },
+      {
+        "factor": "Seasonal content cadence",
+        "weight": "high",
+        "benchmark": "Cooling content live Mar-Apr (60-90d before summer); heating content live Sep-Oct.",
+        "source": "Macro Digital HVAC Local SEO"
+      },
+      {
+        "factor": "Review velocity + recency",
+        "weight": "high",
+        "benchmark": "Sustained weekly review flow > large historical totals.",
+        "source": "Whitespark 2026"
+      },
+      {
+        "factor": "Maintenance contract messaging",
+        "weight": "medium-high",
+        "benchmark": "Mention annual maintenance plans on GBP description + website — high-LTV differentiator.",
+        "source": "Agile Solutions, ALM Corp HVAC SEO"
+      }
+    ],
+    "commonPitfalls": [
+      "Using narrower 'Air conditioning contractor' or 'Heating contractor' as PRIMARY — limits eligibility for combined HVAC searches",
+      "Service section using paragraph summaries instead of individual service items",
+      "No seasonal content cadence (waiting for demand to spike before posting)",
+      "Missing 'Open 24 hours' attribute when emergency service is offered",
+      "No maintenance plan offering visible (high-LTV miss)",
+      "Stale GBP photos (no fresh seasonal images)"
+    ],
+    "titleTagPattern": "[Service] in [City] | [Business Name]",
+    "titleTagExample": "HVAC Contractor in Culver City, CA | Lions Heating & Air",
+    "h1Pattern": "Bi-seasonal hook + city",
+    "h1Example": "HVAC Contractor in Culver City — AC, Heating, 24/7 Service",
+    "metaDescPattern": "Both seasons + city + differentiator",
+    "metaDescExample": "Licensed HVAC contractor in Culver City, CA. AC & heating repair, installation, maintenance plans, 24/7 emergency service. Free estimates. Call (310) 555-0400.",
+    "citationProfileTargets": [
+      "Yelp",
+      "Angi",
+      "BBB",
+      "HomeAdvisor",
+      "Houzz",
+      "Thumbtack",
+      "MapQuest",
+      "Yellow Pages",
+      "Foursquare",
+      "Apple Maps Business Connect",
+      "Bing Places",
+      "Facebook Business Page",
+      "Nextdoor",
+      "Carrier Factory Authorized Dealer directory (if applicable)",
+      "Trane Comfort Specialist directory (if applicable)"
+    ],
+    "voiceoverHooks": [
+      "Primary category match (HVAC contractor specifically)",
+      "Service attribute completeness (individual items vs paragraph)",
+      "Missing 'Open 24 hours' / Emergency attributes",
+      "Seasonal content readiness (60-90d before peak demand)",
+      "Maintenance plan messaging missing",
+      "Review velocity gap (recent reviews vs lifetime totals)",
+      "No per-service landing pages (AC vs Heating split)"
+    ],
+    "voiceoverAntipatterns": [
+      "DO NOT advise switching primary to narrower 'Air conditioning contractor' — limits eligibility for full-HVAC searches.",
+      "DO NOT cite seasonal-only review counts without recency context.",
+      "DO NOT advise generic CTA copy."
+    ],
+    "clientOnboardingChecklist": [
+      "Verify GBP primary category = 'HVAC contractor'",
+      "Add 5 recommended secondary categories",
+      "Fill all 15 service attributes as individual items (not paragraphs)",
+      "Set 'Open 24 hours' attribute if emergency service offered",
+      "Set veteran-owned / women-owned attributes if accurate",
+      "Display license + insurance on GBP description + website footer",
+      "Upload 20+ photos (seasonal mix — both summer + winter projects)",
+      "Set up SMS post-job review request",
+      "Build citation profile across 15 targets including manufacturer directories",
+      "Add LocalBusiness schema with NAP + service area + bi-seasonal hours",
+      "Establish weekly GBP post cadence with seasonal calendar (cooling Mar-Apr, heating Sep-Oct)",
+      "Add maintenance plan offering visible on GBP + website",
+      "Set up review response process — target ≥85% response rate",
+      "Build separate AC vs Heating service-area landing pages per city served",
+      "Audit website: HTTPS, schema, <2.5s load, NAP above fold, maintenance CTA"
+    ],
+    "kpiTargets": {
+      "reviewCount90d": "+15-20 reviews",
+      "reviewVelocityPerMonth": "≥10",
+      "reviewResponseRate": "≥85%",
+      "gbpPostFrequency": "1-2 per week with seasonal bursts",
+      "citationConsistency": "100% across 15 directories",
+      "websiteLoadSeconds": "≤2.5",
+      "rankingTimeline": "Map Pack 30-60 days; meaningful lead lift 3-5 months",
+      "seasonalContentLeadDays": "≥60 (content indexed before peak demand)"
+    },
+    "industryNotes": [
+      "Category + services + attributes account for ~50% of HVAC ranking — biggest leverage point.",
+      "Bi-seasonal: cooling demand spikes Jun-Aug, heating spikes Dec-Feb. Content must be indexed 60-90d before.",
+      "Maintenance plans are the highest-LTV product in HVAC — visible on profile = trust + retention signal.",
+      "Manufacturer certifications (Carrier, Trane, Lennox) unlock additional citation directories."
+    ],
+    "sources": [
+      "https://www.localmighty.com/blog/hvac-local-seo-guide/",
+      "https://rsgonzales.com/blog/how-to-optimize-hvac-google-business-profile/",
+      "https://macrodigitalmedia.com/blog/local-seo-strategies-for-hvac-companies/",
+      "https://www.nopio.com/blog/hvac-local-seo-guide/",
+      "https://almcorp.com/blog/seo-for-hvac-companies-advanced-tactics-2026/",
+      "https://whitespark.ca/local-search-ranking-factors/"
+    ],
+    "consumesIn": [
+      "step-6-voiceover.mjs (cold-outreach video script)",
+      "FUTURE: Brain client-strategy module — HVAC clients need seasonal content calendar",
+      "FUTURE: admin onboarding wizard with manufacturer-certification check",
+      "FUTURE: portal KPI dashboard with seasonal content readiness gauge"
+    ]
+  }
 }
