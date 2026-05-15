@@ -1028,8 +1028,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover where you're vulnerable to losing your top 3 spot — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of your business and the exact path to defending number 1.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover the top issues keeping you from the top 3 ranking — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of your business and the exact path to the top 3.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover where you're vulnerable to losing your top 3 spot — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of the issues that could cost you your top 3 spot.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover the top issues keeping you from the top 3 ranking — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of the issues keeping you from the top 3.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -1136,8 +1136,8 @@ function buildScript(record, top3Stats, audit) {
   })();
 
   const outroText = isTop3
-    ? `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who'll defend your top 3 spot, push for #1, then expand into more keywords and locations. Tap the button below to claim yours. Free, no call required.`
-    : `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who fix what's holding you back, get you into the top 3 for this search, then expand into more keywords and locations. Tap the button below to claim yours. Free, no call required.`;
+    ? `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who'll defend your top 3 spot, push for #1, then expand into more keywords and locations — so you can grow your leads and your business. Tap the button below to claim yours. Free, no call required.`
+    : `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who fix what's holding you back, get you into the top 3 for this search, then expand into more keywords and locations — so you can grow your leads and your business. Tap the button below to claim yours. Free, no call required.`;
   // Intro + outro reframed 2026-05-14 to honest partial-audit framing — change only with explicit user request.
 
   return {
