@@ -529,19 +529,8 @@ function scoreWebsiteFindings(audit, businessName) {
   if (w.hasReviewsOnPage === false) {
     out.push({ key: 'noReviews', score: 12, finding: `your website doesn't show any customer reviews or testimonials — visitors can't verify your reputation without leaving the page to check Google` });
   }
-  // NEW (2026-05-14): Few or no connected social profiles.
-  // Uses step-2 Facebook + Instagram detection. TODO: expand step-2 to also detect
-  // LinkedIn, YouTube, Twitter/X, TikTok and use socialProfilesCount field instead.
-  // Google reads connected social profiles as a brand/trust signal — businesses with
-  // multiple connected profiles see modest local-pack rank lift.
-  const fbUrl = String(record['facebook'] || record['Facebook'] || '').trim();
-  const igUrl = String(record['instagram'] || record['Instagram'] || '').trim();
-  const socialCount = (fbUrl ? 1 : 0) + (igUrl ? 1 : 0);
-  if (socialCount === 0) {
-    out.push({ key: 'noSocial', score: 12.7, finding: `we couldn't find any social media profiles linked from your website — connected social signals like Facebook and Instagram are how Google verifies your brand presence beyond just Google, and adding even two to your footer is a quick local-trust win` });
-  } else if (socialCount === 1) {
-    out.push({ key: 'lowSocial', score: 12.7, finding: `your website links to only one social profile — Google reads multiple connected social channels as a stronger brand signal, and adding at least one more (Facebook, Instagram, LinkedIn, or YouTube) tightens your local-trust footprint` });
-  }
+  // Social profile check lives in scoreSocialProfilesFinding (called from buildScript)
+  // — it has access to the record. Don't duplicate it here.
   // PRIORITY 12.5 (NEW): Few or no dedicated service-area / location pages
   if (w.serviceAreaPagesCount != null && w.serviceAreaPagesCount <= 1) {
     const msg = w.serviceAreaPagesCount === 0
