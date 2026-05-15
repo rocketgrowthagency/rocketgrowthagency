@@ -1088,7 +1088,22 @@ function buildScript(record, top3Stats, audit) {
       console.log(`   [vertical-db] disabling findings per benchmark: ${benchmark.findingsDisabled.join(', ')}`);
     }
   } else {
-    console.warn(`   [vertical-db] no benchmark for search "${searchTermRaw}" — run scripts/build-vertical-benchmark.mjs "${searchTermRaw}" to add one. Findings will fire from semantic rules only (less defensible).`);
+    // HARD BLOCK per Chris's locked rule 2026-05-14: NO render without a
+    // benchmark for the search term. The benchmark is the empirical ground
+    // truth that gates bad semantic findings; rendering without one risks
+    // shipping the categoryServiceVsProduct-style bad advice we just removed.
+    // Opt-out for emergencies: set VERTICAL_DB_BYPASS=1 (logs a loud warning
+    // and falls back to semantic rules).
+    if (process.env.VERTICAL_DB_BYPASS === '1') {
+      console.warn(`   [vertical-db] ⚠️  BYPASS ACTIVE: no benchmark for "${searchTermRaw}" — proceeding under VERTICAL_DB_BYPASS=1. Findings will fire from semantic rules only. THIS IS NOT SAFE FOR PROSPECT SENDS.`);
+    } else {
+      throw new Error(
+        `\n\n🛑 [vertical-db] HARD BLOCK: no benchmark for search "${searchTermRaw}".\n` +
+        `   Build one before rendering:\n` +
+        `   node scripts/build-vertical-benchmark.mjs "${searchTermRaw}"\n\n` +
+        `   Then re-run this step. Override only for emergencies with VERTICAL_DB_BYPASS=1.\n`
+      );
+    }
   }
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =

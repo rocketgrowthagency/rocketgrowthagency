@@ -1,0 +1,34 @@
+{
+  "searchTerm": "HVAC in Culver City, CA",
+  "auditedDate": "2026-05-15",
+  "source": "airtable-leads",
+  "leadsAudited": 9,
+  "categoryDistributionTop10": {
+    "HVAC contractor": 5,
+    "Air conditioning repair service": 3,
+    "Air compressor supplier": 1
+  },
+  "categoryDistributionTop5": {
+    "HVAC contractor": 4,
+    "Air conditioning repair service": 1
+  },
+  "categoryDistributionTop3": {
+    "HVAC contractor": 2,
+    "Air conditioning repair service": 1
+  },
+  "majorityCategoryTop10": "HVAC contractor",
+  "majorityCategoryTop5": "HVAC contractor",
+  "majorityCategoryTop3": "HVAC contractor",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 4749,
+    "median": 11,
+    "p25": 6,
+    "p75": 86
+  },
+  "reviewsTop3Avg": 84,
+  "ratingTop10Median": 4.7,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}

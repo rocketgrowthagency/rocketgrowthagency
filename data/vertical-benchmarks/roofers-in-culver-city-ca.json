@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Roofers in Culver City, CA",
+  "auditedDate": "2026-05-15",
+  "source": "airtable-leads",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Roofing contractor": 10
+  },
+  "categoryDistributionTop5": {
+    "Roofing contractor": 5
+  },
+  "categoryDistributionTop3": {
+    "Roofing contractor": 3
+  },
+  "majorityCategoryTop10": "Roofing contractor",
+  "majorityCategoryTop5": "Roofing contractor",
+  "majorityCategoryTop3": "Roofing contractor",
+  "reviewsTop10": {
+    "min": 5,
+    "max": 97,
+    "median": 30,
+    "p25": 14,
+    "p75": 50
+  },
+  "reviewsTop3Avg": 44,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

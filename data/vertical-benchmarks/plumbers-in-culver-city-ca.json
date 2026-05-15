@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Plumbers in Culver City, CA",
+  "auditedDate": "2026-05-15",
+  "source": "airtable-leads",
+  "leadsAudited": 8,
+  "categoryDistributionTop10": {
+    "Plumber": 8
+  },
+  "categoryDistributionTop5": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop3": {
+    "Plumber": 3
+  },
+  "majorityCategoryTop10": "Plumber",
+  "majorityCategoryTop5": "Plumber",
+  "majorityCategoryTop3": "Plumber",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 365,
+    "median": 145.5,
+    "p25": 13,
+    "p75": 295
+  },
+  "reviewsTop3Avg": 219,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

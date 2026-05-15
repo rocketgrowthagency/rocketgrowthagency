@@ -167,6 +167,54 @@ function buildBenchmark(searchTerm, leads) {
   };
 }
 
+async function syncToSupabase(benchmark, slug) {
+  // Mirror to Supabase `vertical_benchmarks` table so Brain + admin + portal
+  // can read from the same source of truth. JSON file remains the
+  // version-controlled audit trail; Supabase is the cross-system access layer.
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn(`   [supabase-sync] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing — skipping mirror`);
+    return;
+  }
+  const row = {
+    search_term: benchmark.searchTerm,
+    search_slug: slug,
+    audited_date: benchmark.auditedDate,
+    source: benchmark.source || 'airtable-leads',
+    leads_audited: benchmark.leadsAudited ?? null,
+    category_distribution_top10: benchmark.categoryDistributionTop10 || null,
+    category_distribution_top5: benchmark.categoryDistributionTop5 || null,
+    category_distribution_top3: benchmark.categoryDistributionTop3 || null,
+    majority_category_top10: benchmark.majorityCategoryTop10 || null,
+    majority_category_top5: benchmark.majorityCategoryTop5 || null,
+    majority_category_top3: benchmark.majorityCategoryTop3 || null,
+    reviews_top10: benchmark.reviewsTop10 || null,
+    reviews_top3_avg: benchmark.reviewsTop3Avg ?? null,
+    rating_top10_median: benchmark.ratingTop10Median ?? null,
+    rating_top3_avg: benchmark.ratingTop3Avg ?? null,
+    findings_disabled: benchmark.findingsDisabled || [],
+    notes: benchmark.notes || null,
+    updated_at: new Date().toISOString(),
+  };
+  // Upsert on search_term (unique constraint)
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/vertical_benchmarks?on_conflict=search_term`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal',
+    },
+    body: JSON.stringify(row),
+  });
+  if (res.ok) {
+    console.log(`   [supabase-sync] ✓ mirrored to vertical_benchmarks (search_term="${benchmark.searchTerm}")`);
+  } else {
+    const txt = await res.text();
+    console.warn(`   [supabase-sync] ⚠️  failed (${res.status}): ${txt.slice(0, 200)}`);
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   if (!args.length) {
@@ -206,6 +254,7 @@ async function main() {
       fs.writeFileSync(outPath, JSON.stringify(benchmark, null, 2));
       console.log(`✓ Wrote ${outPath}`);
       console.log(`   leadsAudited=${benchmark.leadsAudited} majorityTop5="${benchmark.majorityCategoryTop5}" findingsDisabled=${JSON.stringify(benchmark.findingsDisabled)}`);
+      await syncToSupabase(benchmark, slug);
     } catch (e) {
       console.error(`✗ Failed: ${e.message}`);
     }
