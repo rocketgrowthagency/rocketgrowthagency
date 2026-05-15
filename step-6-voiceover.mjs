@@ -546,23 +546,65 @@ function scoreWebsiteFindings(audit, businessName) {
   return out.sort((a, b) => a.score - b.score);
 }
 
-// PRIORITY 11.5: Few/no connected social profiles (NEW 2026-05-14)
-// Helper used by scoreWebsiteFindings caller — checks Facebook+Instagram+LinkedIn+
-// Twitter+YouTube+TikTok URLs captured by step-2. Google reads social presence as
-// a trust signal for local rank. Fires if 0 or 1 profiles linked.
-function scoreSocialProfilesFinding(record) {
-  const SOCIAL_FIELDS = ['facebook','instagram','linkedin','twitter','youtube','tiktok'];
-  const found = [];
+// PRIORITY 11-12: Social profiles — checks BOTH website-linked socials (step-2)
+// AND GBP-linked socials (step-2.5 audit). NEW 2026-05-14 evening: GBP social
+// detection added because the old check was website-only and produced false-
+// alarm claims for businesses with GBP socials but no website socials.
+//
+// Three-tier severity over the COMBINED de-duped set:
+//   0 socials anywhere    → P11  socialProfilesNone   (high — major trust gap)
+//   1 social total        → P12  socialProfilesLow    (medium — needs diversity)
+//   2+                    → no fire (baseline ok)
+//
+// Plus cross-source mismatch bonus (P14, lower) when combined ≥ 2:
+//   website has socials, GBP doesn't  → socialProfilesGbpDisconnected
+//   GBP has socials, website doesn't  → socialProfilesSiteDisconnected
+//
+// GBP source is gated by audit.gbp.gbpSocialProfilesVerified — if extractor
+// couldn't confirm we were on a place panel, GBP socials are treated as
+// "unknown" and we fall back to website-only (preserves the prior behavior).
+function scoreSocialProfilesFinding(record, audit) {
+  const SOCIAL_FIELDS = ['facebook','instagram','linkedin','twitter','youtube','tiktok','pinterest'];
+
+  // Website-linked socials (from step-2)
+  const siteSet = new Set();
   for (const platform of SOCIAL_FIELDS) {
     const val = normalizeField(record, platform);
-    if (val && /^https?:\/\//i.test(val)) found.push(platform);
+    if (val && /^https?:\/\//i.test(val)) siteSet.add(platform);
   }
-  if (found.length === 0) {
-    return { key: 'socialProfilesNone', score: 11.5, finding: `your website doesn't link to any social media profiles — Google reads connected Facebook, Instagram, LinkedIn, and YouTube accounts as trust signals for local ranking, plus they're another verification path for prospects checking if your business is real` };
+
+  // GBP-linked socials (from step-2.5) — only trusted when verified
+  const gbpVerified = !!(audit && audit.gbp && audit.gbp.gbpSocialProfilesVerified);
+  const gbpList = (audit && audit.gbp && Array.isArray(audit.gbp.gbpSocialProfiles)) ? audit.gbp.gbpSocialProfiles : [];
+  const gbpSet = new Set(gbpList.map((s) => (s.platform || '').toLowerCase()).filter(Boolean));
+
+  const combined = new Set([...siteSet, ...(gbpVerified ? gbpSet : [])]);
+  const combinedCount = combined.size;
+  const siteCount = siteSet.size;
+  const gbpCount = gbpSet.size;
+
+  // Tier 1: nothing anywhere → highest severity
+  if (combinedCount === 0) {
+    return { key: 'socialProfilesNone', score: 11, finding: `you have no social media profiles connected anywhere — neither your website nor your Google Business Profile. Google's local trust signal weights connected Facebook, Instagram, LinkedIn, and YouTube as identity verification, and prospects checking if your business is real get a thin picture without them` };
   }
-  if (found.length === 1) {
-    return { key: 'socialProfilesLow', score: 11.5, finding: `your website only links to one social profile (${found[0]}) — competitors with active Facebook, Instagram, and LinkedIn presence get a stronger trust and brand signal from Google` };
+
+  // Tier 2: only one profile total
+  if (combinedCount === 1) {
+    const only = [...combined][0];
+    return { key: 'socialProfilesLow', score: 12, finding: `you only have one social profile connected (${only}) — Google's local trust signal weights diversity across Facebook, Instagram, LinkedIn, and YouTube, and adding even one more tightens your local-trust footprint` };
   }
+
+  // Tier 3 (cross-source bonus) — only fire when GBP socials are verified,
+  // so we never claim a GBP gap we couldn't actually verify.
+  if (gbpVerified) {
+    if (siteCount >= 1 && gbpCount === 0) {
+      return { key: 'socialProfilesGbpDisconnected', score: 14, finding: `your website links to social profiles but they're not connected to your Google Business Profile — Google treats GBP-linked socials as a separate trust signal from website-linked socials, so connecting them on your GBP unlocks both` };
+    }
+    if (gbpCount >= 1 && siteCount === 0) {
+      return { key: 'socialProfilesSiteDisconnected', score: 14, finding: `your Google Business Profile lists social profiles but your website doesn't link to them — Google's local-trust footprint wants both sources, so adding the same social links to your website footer is a quick win` };
+    }
+  }
+
   return null;
 }
 
@@ -1047,7 +1089,7 @@ function buildScript(record, top3Stats, audit) {
   const rawMaps = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
   const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit, name), disabledKeys);
   // Inject social-profiles finding (uses step-2 social URL fields, not audit-findings)
-  const socialFinding = scoreSocialProfilesFinding(record);
+  const socialFinding = scoreSocialProfilesFinding(record, audit);
   if (socialFinding && !disabledKeys.includes(socialFinding.key)) {
     rawWebsite.push(socialFinding);
     rawWebsite.sort((a, b) => a.score - b.score);

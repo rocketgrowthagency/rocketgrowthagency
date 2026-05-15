@@ -903,7 +903,54 @@ async function auditGbp(_, gbpUrl, business) {
       }
       console.log(`  [gbp-diag] hasPosts=${hasPosts} lastPostDaysAgo=${lastPostDaysAgo}`);
 
-      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo };
+      // GBP social profiles (NEW 2026-05-14) — GBP added a "Social profiles"
+      // section in late 2024; icons render as small <a> tags in the panel.
+      // Scope strictly to the panel root (div[role="main"]) so we don't catch
+      // Google's own footer social links. Filter to canonical social hosts only.
+      // gbpSocialProfilesVerified = true when we can confirm we're on a panel
+      // (h1 + category present); otherwise we cannot trust 0-count and skip
+      // the finding entirely per the self-diagnose rule.
+      let gbpSocialProfiles = [];
+      let gbpSocialProfilesVerified = false;
+      try {
+        const panelRoot = document.querySelector('div[role="main"]');
+        const onPanel = !!(panelRoot && panelRoot.querySelector('h1') && (primaryCategory || panelRoot.querySelector('button.DkEaL, span.YhemCb')));
+        if (onPanel) {
+          gbpSocialProfilesVerified = true;
+          const SOCIAL_HOSTS = {
+            'facebook.com': 'facebook',
+            'instagram.com': 'instagram',
+            'linkedin.com': 'linkedin',
+            'twitter.com': 'twitter',
+            'x.com': 'twitter',
+            'youtube.com': 'youtube',
+            'youtu.be': 'youtube',
+            'tiktok.com': 'tiktok',
+            'pinterest.com': 'pinterest',
+          };
+          const seen = new Set();
+          const anchors = Array.from(panelRoot.querySelectorAll('a[href]'));
+          for (const a of anchors) {
+            const href = (a.getAttribute('href') || '').trim();
+            if (!href || !/^https?:/i.test(href)) continue;
+            // Skip Google's own utility links
+            if (/(?:^|\.)google\.[a-z.]+\//i.test(href) || /(?:^|\.)goo\.gl\//i.test(href)) continue;
+            // Skip share/login URLs
+            if (/\/(sharer|share|login|signin|intent\/tweet)/i.test(href)) continue;
+            let matched = null;
+            for (const [host, name] of Object.entries(SOCIAL_HOSTS)) {
+              if (href.toLowerCase().includes(host)) { matched = name; break; }
+            }
+            if (matched && !seen.has(matched)) {
+              seen.add(matched);
+              gbpSocialProfiles.push({ platform: matched, url: href });
+            }
+          }
+        }
+      } catch (_e) {}
+      console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
+
+      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
@@ -919,6 +966,9 @@ async function auditGbp(_, gbpUrl, business) {
     findings.descriptionLength = typeof data.description === 'string' ? data.description.length : null;
     findings.hasPosts = data.hasPosts;
     findings.lastPostDaysAgo = data.lastPostDaysAgo;
+    findings.gbpSocialProfiles = Array.isArray(data.gbpSocialProfiles) ? data.gbpSocialProfiles : [];
+    findings.gbpSocialProfileCount = findings.gbpSocialProfiles.length;
+    findings.gbpSocialProfilesVerified = !!data.gbpSocialProfilesVerified;
 
     // Primary GBP category vs search intent — #1 local ranking factor
     if (data.primaryCategory && (business.category || business.searchTerm)) {
