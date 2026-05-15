@@ -921,6 +921,45 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
+  // GBP business status — NEW 2026-05-15. Whitespark 2026: incorrect status
+  // flag is a top-tier negative ranking factor. A live business reading as
+  // "closed permanently" or "closed temporarily" in Google data hurts
+  // visibility even if hours look open. Gracefully no-ops when status field
+  // not populated by step-2.5 (current state: businessStatus extractor is
+  // optional in step-2.5).
+  if (audit?.gbp?.businessStatus && String(audit.gbp.businessStatus).toUpperCase() !== 'OPERATIONAL') {
+    out.push({
+      key: 'gbpClosedFlag',
+      score: 4,
+      finding: `your Google Business Profile shows a status of "${audit.gbp.businessStatus}" — Whitespark 2026 lists incorrect business status as a top-tier negative ranking factor. If you're operating, Google needs the status corrected immediately`,
+    });
+  }
+
+  // Hours staleness — NEW 2026-05-15. Different from "hasBusinessHours" check
+  // above. Fires only when audit captures hours-last-updated metadata
+  // (currently null in all extractors; activates when step-2.5 adds the
+  // extractor). Whitespark 2026: hours degradation is a top-tier negative;
+  // "rankings begin to degrade in the final hour open" if hours stale.
+  if (audit?.gbp?.hoursLastUpdatedDaysAgo != null && audit.gbp.hoursLastUpdatedDaysAgo > 180) {
+    out.push({
+      key: 'businessHoursStale',
+      score: 11,
+      finding: `your Google Business Profile hours haven't been updated in ${audit.gbp.hoursLastUpdatedDaysAgo} days — Whitespark 2026 says rankings degrade in the final open hour if hours are inaccurate, and Google deprioritizes profiles that look stale`,
+    });
+  }
+
+  // Duplicate listings — NEW 2026-05-15. Whitespark 2026: duplicate / conflicting
+  // listings split authority + confuse algorithm. Scaffold check that fires
+  // only when step-2.5 captures duplicateListingCount via Places API nearby-
+  // search or manual extractor. Gracefully no-ops when null.
+  if (audit?.gbp?.duplicateListingCount != null && audit.gbp.duplicateListingCount > 0) {
+    out.push({
+      key: 'duplicateListing',
+      score: 5,
+      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} at or near your address — Whitespark 2026 flags duplicate listings as a top-tier negative that splits ranking authority and confuses Google's algorithm. Consolidating to a single verified listing is essential`,
+    });
+  }
+
   // Very low recent review velocity — only fire when daysSinceLastReview has NOT already fired
   // (avoids saying the same thing twice). Catches active businesses getting very few recent reviews.
   const velocityAlreadyFired = out.some(f => f.key === 'reviewVelocity');
