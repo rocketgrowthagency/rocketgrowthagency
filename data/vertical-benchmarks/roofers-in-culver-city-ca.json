@@ -184,6 +184,83 @@
       "FUTURE: Brain client-strategy module — roofing clients need seasonal content calendar planning",
       "FUTURE: admin onboarding wizard with manufacturer-certification check",
       "FUTURE: portal KPI dashboard with kpiTargets + storm-readiness gauge"
-    ]
+    ],
+    "industryResearchDeep": {
+      "lastDeepDivedAt": "2026-05-15",
+      "sources": [
+        "Whitespark 2026 Local Search Ranking Factors Report (Darren Shaw, published Nov 6 2025)",
+        "BrightLocal Google Local Algorithm and Ranking Factors (ongoing)",
+        "Sterling Sky Breaking Boundaries of GBP Categories",
+        "Reputation.com Whitespark 2026 Three Insights summary",
+        "Harmo.me Whitespark 2026 deep summary"
+      ],
+      "localPackMapsWeights2026": {
+        "proximity": 0.55,
+        "gbpSignals": 0.32,
+        "reviewSignals": 0.2,
+        "onPageSignals": 0.15,
+        "note": "Sum exceeds 1.0 because weights overlap (proximity is its own meta-factor). 8 of top 10 individual signals come from GBP."
+      },
+      "aiSearchVisibilityWeights2026_NEW": {
+        "onPageSignals": 0.24,
+        "reviewSignals": 0.16,
+        "citationSignals": 0.13,
+        "linkSignals": 0.13,
+        "gbpSignals": 0.12,
+        "behaviouralSignals": 0.1,
+        "personalization": 0.08,
+        "socialSignals": 0.04,
+        "note": "NEW category in Whitespark 2026 — tracks rankings in AI search (Google AI Overviews, Perplexity, ChatGPT search). On-page content is the top lever in AI search, NOT GBP."
+      },
+      "reviewSignalsTrendline": {
+        "2023": 0.16,
+        "2026": 0.2,
+        "change": "+4 pts; recency + sentiment now outweigh raw count",
+        "implication": "A business with 200 reviews + none recent ranks BELOW a business with 80 reviews + steady weekly flow"
+      },
+      "strongestIndividualSignal": "Primary GBP category (strongest single ranking factor in Local Pack)",
+      "topNegativeRankingFactors2026": [
+        {
+          "factor": "Incorrect primary category",
+          "rank": 2,
+          "penaltyScore": 214,
+          "note": "One of the most damaging issues a business can have. Direct corroboration for the DB-gated categoryServiceVsProduct rule — wrong category advice = #2 worst penalty."
+        },
+        {
+          "factor": "Permanently closed flag missing on closed business",
+          "rank": "top-tier negative"
+        },
+        {
+          "factor": "Business hours not up-to-date",
+          "rank": "top-tier negative",
+          "note": "Rankings begin to degrade in the final hour a business is open each day"
+        },
+        {
+          "factor": "Hidden address for non-SAB (when guideline says to)",
+          "rank": "top-tier negative",
+          "note": "Paradox — following Google's own guideline hurts"
+        },
+        {
+          "factor": "Abandoned / inactive profiles",
+          "rank": "top-tier negative"
+        },
+        {
+          "factor": "Duplicate or conflicting listings",
+          "rank": "top-tier negative",
+          "note": "Splits authority + confuses algorithm"
+        }
+      ],
+      "keyShiftsSince2023": [
+        "Review signal weight: 16% → 20% (+4 pts)",
+        "GBP signals remain dominant at 32% — 8 of top 10 individual Local Pack signals come from GBP",
+        "New AI Search Visibility tracking — top lever is on-page content (24%) NOT GBP (12%)",
+        "Recency now outweighs review count for ranking"
+      ],
+      "directBenchmarkValidations": [
+        "Whitespark 2026 confirms our voiceoverAntipattern about category-switching: incorrect primary category is the #2 negative ranking factor (penalty 214).",
+        "Whitespark 2026 confirms review velocity (recency) emphasis — recent stream > lifetime total.",
+        "Whitespark 2026 confirms business hours weight — locked in voiceoverHooks + commonPitfalls."
+      ]
+    }
   }
 }
