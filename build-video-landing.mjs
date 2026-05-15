@@ -173,6 +173,9 @@ async function fetchLeadBySlug(targetSlug) {
 }
 
 // Derive Audit Summary directly from the voiceover manifest so Airtable matches the video exactly.
+// Captures ALL three sections (Maps + Website + Mobile) and formats them with section labels so
+// downstream consumers (FGA form transfer, follow-up emails, sales notes) can see exactly which
+// issues the prospect heard, grouped by surface.
 function loadAuditSummaryFromManifest(slug) {
   if (!fs.existsSync(STEP6_ROOT)) return null;
   const runs = fs.readdirSync(STEP6_ROOT).sort().reverse();
@@ -186,13 +189,22 @@ function loadAuditSummaryFromManifest(slug) {
       try {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
         if (manifest.slug !== slug) continue;
-        const findings = [];
-        for (const section of ["website", "mobile"]) {
-          const text = manifest.segments?.[section]?.text || "";
-          const matches = [...text.matchAll(/(?:First|Second|Third):\s*([^.]+\.)/gi)];
-          for (const m of matches) findings.push(m[1].trim());
+        const sections = [];
+        for (const sectionKey of ["maps", "website", "mobile"]) {
+          const text = manifest.segments?.[sectionKey]?.text || "";
+          if (!text) continue;
+          // Each finding starts with First:/Second:/Third: and extends until the
+          // next label OR end of segment. Lookahead-based capture so periods inside
+          // findings (e.g. "3.4 seconds", "sswhitegaragedoors.com") aren't treated
+          // as terminators.
+          const matches = [...text.matchAll(/(?:First|Second|Third):\s*([\s\S]+?)(?=\b(?:First|Second|Third):|$)/gi)];
+          const findings = matches.map((m) => m[1].trim().replace(/\s+/g, " ").replace(/\.+$/, "")).filter(Boolean);
+          if (findings.length) {
+            const label = sectionKey === "maps" ? "MAPS" : sectionKey === "website" ? "WEBSITE" : "MOBILE";
+            sections.push(`${label}: ${findings.join(" | ")}`);
+          }
         }
-        return findings.length ? findings.join(" · ") : null;
+        return sections.length ? sections.join("\n\n") : null;
       } catch {}
     }
   }
