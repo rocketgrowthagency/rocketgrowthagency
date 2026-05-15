@@ -115,7 +115,17 @@ async function auditWebsite(browser, websiteUrl, business) {
         renderBlockingHeadResources: 0,
         imagesWithoutLazy: 0,
         isHttps: location.protocol === 'https:',
+        // AI Search Visibility readiness signals (NEW 2026-05-15 — Whitespark
+        // 2026 NEW category, on-page weights 24% in AI search top lever).
+        wordCount: 0,
+        hasFaqSchema: false,
+        hasOrganizationSchema: false,
       };
+      // Visible word count
+      try {
+        const visibleText = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
+        result.wordCount = visibleText ? visibleText.split(/\s+/).filter(w => w.length > 2).length : 0;
+      } catch {}
       const ldScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       for (const s of ldScripts) {
         try {
@@ -125,6 +135,13 @@ async function auditWebsite(browser, websiteUrl, business) {
             if (item && item['@type']) {
               const t = Array.isArray(item['@type']) ? item['@type'] : [item['@type']];
               result.schemaTypes.push(...t.map(String));
+              // AI Search Visibility readiness — FAQ + Organization schema
+              // are key entity-recognition signals for AI search engines.
+              for (const type of t) {
+                const typeStr = String(type).toLowerCase();
+                if (typeStr.includes('faqpage')) result.hasFaqSchema = true;
+                if (typeStr === 'organization' || typeStr.endsWith('/organization')) result.hasOrganizationSchema = true;
+              }
             }
           }
         } catch {}
@@ -323,6 +340,12 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.canonicalUrl = data.canonicalUrl || '';
     findings.canonicalMatches = data.canonicalMatches;
     findings.serviceAreaPagesCount = data.serviceAreaPagesCount;
+    // AI Search Visibility readiness fields (Whitespark 2026 NEW category).
+    // On-page content weights 24% in AI search (top lever). Step-6 uses these
+    // to fire the weakOnPageForAi finding.
+    findings.wordCount = data.wordCount || 0;
+    findings.hasFaqSchema = !!data.hasFaqSchema;
+    findings.hasOrganizationSchema = !!data.hasOrganizationSchema;
 
     // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();

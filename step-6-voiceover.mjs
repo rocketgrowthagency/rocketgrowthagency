@@ -588,6 +588,30 @@ function scoreWebsiteFindings(audit, businessName) {
     out.push({ key: 'noServiceArea', score: 13, finding: `your website doesn't list a service area — mentioning specific cities and neighborhoods you serve is a strong local SEO signal` });
   }
 
+  // PRIORITY 13.5 (NEW 2026-05-15): Weak AI Search Visibility readiness.
+  // Whitespark 2026 NEW category — on-page weights 24% in AI search (TOP lever
+  // vs GBP only 12%). Businesses ranking in Maps may be invisible in AI search
+  // (Google AI Overviews, Perplexity, ChatGPT) if they're missing entity
+  // recognition signals: thin word count, no FAQ schema, no Organization
+  // schema, single-page websites.
+  // Fires when ≤1 of 4 AI-readiness signals are present (word count ≥500,
+  // FAQ schema, Organization schema, service pages ≥2).
+  if (w.wordCount != null) {
+    const aiSignals = [];
+    if (w.wordCount >= 500) aiSignals.push('word count');
+    if (w.hasFaqSchema) aiSignals.push('FAQ schema');
+    if (w.hasOrganizationSchema) aiSignals.push('Organization schema');
+    if ((w.serviceAreaPagesCount || 0) >= 2) aiSignals.push('service-area pages');
+    if (aiSignals.length <= 1) {
+      const missing = ['homepage word count', 'FAQ schema', 'Organization schema', 'service-area pages'];
+      out.push({
+        key: 'weakOnPageForAi',
+        score: 13.5,
+        finding: `your website is missing the on-page signals AI search engines like Google AI Overviews, Perplexity, and ChatGPT use to recognize you as an entity. Whitespark 2026 NEW category: AI Search Visibility weighs on-page content 24 percent — that's the top lever for AI search, ahead of GBP at only 12 percent. You're at ${aiSignals.length} out of 4 readiness signals; adding ${missing.slice(0, 2).join(' and ')} is the fastest path to AI-search visibility`,
+      });
+    }
+  }
+
   return out.sort((a, b) => a.score - b.score);
 }
 
