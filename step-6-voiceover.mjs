@@ -212,6 +212,12 @@ async function loadTop3FromAirtable(searchTerm) {
       reviewsAvg: Math.round(reviews.reduce((a, b) => a + b, 0) / reviews.length),
       majorityCategory,
       categories,
+      // NEW 2026-05-15: preserve the per-rank records so consumers can compute
+      // RANK-AWARE comparison subsets. The aggregated *Avg fields above include
+      // the lead itself when the lead is rank 1-3, biasing the comparison.
+      // Consumers should use pickComparisonSubset(picked, leadRank) for honest
+      // comparatives.
+      picked,
       _source: `Airtable (Source Run ${preferredRun?.slice(0, 8) || '?'})`
     };
     console.log(`[top3] from Airtable: ${stats._source} → reviewsAvg=${stats.reviewsAvg} ratingAvg=${stats.ratingAvg.toFixed(2)} cat="${stats.majorityCategory}"`);
@@ -220,6 +226,45 @@ async function loadTop3FromAirtable(searchTerm) {
     console.warn(`[top3] Airtable lookup failed: ${e.message || e}`);
     return null;
   }
+}
+
+// Rank-aware comparison subset: for a lead at rank N, what's the "peer set"
+// they should be compared to?
+//
+//   Rank 1 → average of #2 + #3 ("the chasers" — defense framing)
+//   Rank 2 → just #1 ("the leader" — catch-up)
+//   Rank 3 → average of #1 + #2 ("the leaders ahead" — catch-up)
+//   Rank 4+ → all top 3 (current behavior — climb)
+//
+// Returns an overlay { reviewsAvg, ratingAvg, comparisonLabel, comparisonRanks }
+// or null if picked records aren't available.
+function pickComparisonSubset(picked, leadRank) {
+  if (!Array.isArray(picked) || picked.length === 0 || !Number.isFinite(leadRank)) return null;
+  let subset = [];
+  let label = null;
+  if (leadRank === 1) {
+    subset = picked.filter((p) => p.rank === 2 || p.rank === 3);
+    label = 'your closest competitors';
+  } else if (leadRank === 2) {
+    subset = picked.filter((p) => p.rank === 1);
+    label = 'the #1 in your search';
+  } else if (leadRank === 3) {
+    subset = picked.filter((p) => p.rank === 1 || p.rank === 2);
+    label = 'the two ranked above you';
+  } else {
+    // Rank 4+ uses the full top-3 average — same as before. Return null so
+    // consumers fall back to top3Stats.reviewsAvg / ratingAvg.
+    return null;
+  }
+  if (subset.length === 0) return null;
+  const reviews = subset.map((p) => p.reviewsNum).filter((n) => typeof n === 'number');
+  const ratings = subset.map((p) => p.ratingNum).filter((n) => typeof n === 'number');
+  return {
+    reviewsAvg: reviews.length ? Math.round(reviews.reduce((a, b) => a + b, 0) / reviews.length) : null,
+    ratingAvg: ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null,
+    comparisonLabel: label,
+    comparisonRanks: subset.map((p) => p.rank),
+  };
 }
 
 async function loadTop3Stats(baseName, step2CsvPath) {
@@ -706,27 +751,49 @@ function scoreMapsFindings(audit, top3Stats, record) {
   const rating = parseFloat(normalizeField(record, 'Rating') || '');
   const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
 
-  // Review count vs top 3 average (uses true average now, not midpoint of min/max)
-  if (top3Stats && Number.isFinite(reviews)) {
-    const avgReviews = top3Stats.reviewsAvg || Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
-    if (avgReviews > 0 && reviews < avgReviews * 0.6) {
-      const ratio = reviews / avgReviews;
+  // RANK-AWARE comparison (2026-05-15): for ranks 1-3, the lead is IN the top-3
+  // set so the avg is biased. Use pickComparisonSubset to compute against the
+  // honest peer set (rank 1 → #2+#3, rank 2 → #1, rank 3 → #1+#2). Rank 4+ uses
+  // the full top-3 avg as before.
+  const leadRank = parseInt(normalizeField(record, 'Map Rank') || '', 10);
+  const compare = top3Stats?.picked ? pickComparisonSubset(top3Stats.picked, leadRank) : null;
+  const compareLabel = compare?.comparisonLabel || 'the top 3 in this search';
+  const compareReviewsAvg = compare?.reviewsAvg != null ? compare.reviewsAvg
+    : (top3Stats?.reviewsAvg ?? Math.round((top3Stats?.reviewsMin + top3Stats?.reviewsMax) / 2));
+  const compareRatingAvg = compare?.ratingAvg != null ? compare.ratingAvg
+    : (top3Stats?.ratingAvg ?? (top3Stats?.ratingMin + top3Stats?.ratingMax) / 2);
+
+  // Review count vs peer-set average (rank-aware)
+  if (top3Stats && Number.isFinite(reviews) && compareReviewsAvg > 0) {
+    if (reviews < compareReviewsAvg * 0.6) {
+      const ratio = reviews / compareReviewsAvg;
+      const labelClause = compare ? `${compareLabel} average around ${compareReviewsAvg}`
+        : `the top 3 in this search average around ${compareReviewsAvg}`;
       out.push({
         key: 'reviewCount',
         score: ratio < 0.3 ? 15 : 35,
-        finding: `you have ${reviews} Google reviews; the top 3 in this search average around ${avgReviews} — Google weighs total review volume heavily for Maps ranking, and that gap of about ${Math.max(1, avgReviews - reviews)} reviews is one of the most direct levers you have`,
+        finding: `you have ${reviews} Google reviews; ${labelClause} — Google weighs total review volume heavily for Maps ranking, and that gap of about ${Math.max(1, compareReviewsAvg - reviews)} reviews is one of the most direct levers you have`,
+      });
+    } else if (compare && leadRank === 1 && reviews > compareReviewsAvg * 2) {
+      // NEW: defense framing for rank #1 — show the review-count BUFFER over chasers
+      // so we can frame as "you're ahead, here's the gap to defend".
+      out.push({
+        key: 'reviewBufferLeader',
+        score: 60,
+        finding: `you have ${reviews} Google reviews to your closest competitors' ${compareReviewsAvg} — a buffer of about ${reviews - compareReviewsAvg}. Maintain that lead with steady review velocity or they'll close the gap`,
       });
     }
   }
 
-  // Rating vs top 3 (uses true average now)
-  if (top3Stats && Number.isFinite(rating)) {
-    const avgRating = top3Stats.ratingAvg || (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
-    if (rating < avgRating - 0.15) {
+  // Rating vs peer-set average (rank-aware)
+  if (top3Stats && Number.isFinite(rating) && compareRatingAvg > 0) {
+    if (rating < compareRatingAvg - 0.15) {
+      const labelClause = compare ? `${compareLabel} average around ${compareRatingAvg.toFixed(1)} stars`
+        : `the top 3 average around ${compareRatingAvg.toFixed(1)}`;
       out.push({
         key: 'ratingGap',
         score: 30,
-        finding: `you're at ${rating} stars; the top 3 average around ${avgRating.toFixed(1)} — even a small rating gap costs you Maps ranking position`,
+        finding: `you're at ${rating} stars; ${labelClause} — even a small rating gap costs you Maps ranking position`,
       });
     }
   }
@@ -960,17 +1027,23 @@ function scoreMapsConfirmedGood(audit, top3Stats, record) {
   const out = [];
   const rating = parseFloat(normalizeField(record, 'Rating') || '');
   const reviews = parseInt(normalizeField(record, 'Reviews') || '', 10);
+  // Rank-aware: use peer-subset for ranks 1-3, full top-3 for rank 4+.
+  const leadRank = parseInt(normalizeField(record, 'Map Rank') || '', 10);
+  const compare = top3Stats?.picked ? pickComparisonSubset(top3Stats.picked, leadRank) : null;
+  const compareLabel = compare?.comparisonLabel || 'the top 3';
+  const avgReviews = compare?.reviewsAvg != null ? compare.reviewsAvg
+    : (top3Stats?.reviewsAvg ?? Math.round((top3Stats?.reviewsMin + top3Stats?.reviewsMax) / 2));
+  const avgRating = compare?.ratingAvg != null ? compare.ratingAvg
+    : (top3Stats?.ratingAvg ?? (top3Stats?.ratingMin + top3Stats?.ratingMax) / 2);
+
   if (top3Stats && Number.isFinite(reviews)) {
-    // Prefer the true average (reviewsAvg). Fall back to midpoint only if avg not computed.
-    const avgReviews = top3Stats.reviewsAvg != null ? top3Stats.reviewsAvg : Math.round((top3Stats.reviewsMin + top3Stats.reviewsMax) / 2);
     if (avgReviews > 0 && reviews >= avgReviews * 0.9) {
-      out.push({ key: 'reviewCountGood', score: 100, finding: `your review count holds up against your competition — ${reviews} reviews against a top-3 average of around ${avgReviews}` });
+      out.push({ key: 'reviewCountGood', score: 100, finding: `your review count holds up against your competition — ${reviews} reviews against ${compareLabel} at around ${avgReviews}` });
     }
   }
   if (top3Stats && Number.isFinite(rating)) {
-    const avgRating = top3Stats.ratingAvg != null ? top3Stats.ratingAvg : (top3Stats.ratingMin + top3Stats.ratingMax) / 2;
     if (rating >= avgRating - 0.05) {
-      out.push({ key: 'ratingGood', score: 101, finding: `your rating at ${rating} stars is on par with the top 3 average around ${avgRating.toFixed(1)} — trust signal is solid` });
+      out.push({ key: 'ratingGood', score: 101, finding: `your rating at ${rating} stars is on par with ${compareLabel} around ${avgRating.toFixed(1)} — trust signal is solid` });
     }
   }
   if (audit?.gbp?.primaryCategoryMatchesSearch === true && audit?.gbp?.primaryCategory) {
