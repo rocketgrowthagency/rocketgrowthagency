@@ -76,6 +76,42 @@ async function fetchAirtableLeads(searchTerm) {
   return (data.records || []).map(r => r.fields);
 }
 
+// SerpAPI fallback for searches not yet in Airtable. Lets us scaffold a
+// benchmark for ANY (search-term, city) before running step-1. Maps to the
+// shape Airtable would have returned so buildBenchmark() doesn't care which
+// source was used.
+async function fetchSerpApiLeads(searchTerm) {
+  const key = process.env.SERPAPI_KEY;
+  if (!key) {
+    console.warn(`   [serpapi] SERPAPI_KEY not set in scraper .env — cannot fall back to SerpAPI`);
+    return [];
+  }
+  // Use Google Maps engine for local-pack results
+  const params = new URLSearchParams({
+    engine: 'google_maps',
+    q: searchTerm,
+    type: 'search',
+    api_key: key,
+  });
+  console.log(`   [serpapi] fetching Google Maps results for "${searchTerm}"`);
+  const res = await fetch(`https://serpapi.com/search?${params}`);
+  if (!res.ok) {
+    console.warn(`   [serpapi] HTTP ${res.status} — fallback failed`);
+    return [];
+  }
+  const data = await res.json();
+  const local = data.local_results || [];
+  return local.slice(0, 10).map((r, idx) => ({
+    'Business Name': r.title || '',
+    'Map Rank': idx + 1, // SerpAPI returns in rank order
+    'Category': r.type || (r.types && r.types[0]) || '',
+    'Rating': typeof r.rating === 'number' ? r.rating : null,
+    'Review Count': typeof r.reviews === 'number' ? r.reviews : null,
+    'Date Scraped': new Date().toISOString().slice(0, 10),
+    _serpapi: true,
+  }));
+}
+
 function buildBenchmark(searchTerm, leads) {
   if (!leads.length) {
     return { searchTerm, error: 'No leads found in Airtable for this search', auditedDate: new Date().toISOString().slice(0, 10) };
@@ -245,11 +281,23 @@ async function main() {
     searches = [args[0]];
   }
 
+  // Optional --source serpapi flag forces SerpAPI even when Airtable has data
+  // (useful when re-auditing a vertical we already have to verify against fresh
+  // Google data). Default behavior: Airtable first, SerpAPI fallback if empty.
+  const forceSerp = args.includes('--source=serpapi') || args.includes('--source') && args[args.indexOf('--source')+1] === 'serpapi';
+
   for (const searchTerm of searches) {
     console.log(`\n=== ${searchTerm} ===`);
     try {
-      const leads = await fetchAirtableLeads(searchTerm);
+      let leads = forceSerp ? [] : await fetchAirtableLeads(searchTerm);
+      let sourceUsed = 'airtable-leads';
+      if (!leads.length) {
+        if (!forceSerp) console.warn(`   no Airtable leads for "${searchTerm}" — trying SerpAPI fallback`);
+        leads = await fetchSerpApiLeads(searchTerm);
+        sourceUsed = 'serpapi';
+      }
       const benchmark = buildBenchmark(searchTerm, leads);
+      benchmark.source = sourceUsed;
       const slug = slugifySearch(searchTerm);
       const outPath = path.join(OUT_DIR, `${slug}.json`);
       // Preserve hand-curated `research` block + manual `findingsDisabled`

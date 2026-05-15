@@ -1153,6 +1153,23 @@ function buildScript(record, top3Stats, audit) {
   const searchTermRaw = normalizeField(record, 'Search Term') || normalizeField(record, 'searchTerm') || '';
   const benchmark = loadVerticalBenchmark(searchTermRaw);
   if (benchmark) {
+    // Stale-benchmark check (NEW 2026-05-15): warn if >90 days old, hard-block
+    // if >180 days. Local rankings shift; outdated benchmarks lead to outdated
+    // advice. Emergency override: VERTICAL_DB_BYPASS_STALE=1.
+    if (benchmark.auditedDate) {
+      const auditMs = new Date(benchmark.auditedDate).getTime();
+      const ageDays = Math.floor((Date.now() - auditMs) / (1000 * 60 * 60 * 24));
+      if (ageDays > 180 && process.env.VERTICAL_DB_BYPASS_STALE !== '1') {
+        throw new Error(
+          `\n\n🛑 [vertical-db] HARD BLOCK: benchmark for "${benchmark.searchTerm}" is ${ageDays} days old (>180d).\n` +
+          `   Refresh it before rendering:\n` +
+          `   node scripts/build-vertical-benchmark.mjs "${benchmark.searchTerm}"\n\n` +
+          `   Override for emergencies: VERTICAL_DB_BYPASS_STALE=1\n`
+        );
+      } else if (ageDays > 90) {
+        console.warn(`   [vertical-db] ⚠️  benchmark is ${ageDays} days old (>90d) — consider refreshing: node scripts/build-vertical-benchmark.mjs "${benchmark.searchTerm}"`);
+      }
+    }
     console.log(`   [vertical-db] benchmark loaded for "${benchmark.searchTerm}" (audited ${benchmark.auditedDate}, majorityTop5="${benchmark.majorityCategoryTop5}")`);
     if (Array.isArray(benchmark.findingsDisabled) && benchmark.findingsDisabled.length) {
       for (const k of benchmark.findingsDisabled) {
