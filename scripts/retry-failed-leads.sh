@@ -16,6 +16,7 @@ LEADS=(
   "an_integrity_garage_door_repai-single-[step-2]|an-integrity-garage-door-repair-los-angeles-la|01_an-integrity-garage-door-repair-los-angeles-la"
   "knr_sliding_-_glass_doors_culv-single-[step-2]|knr-sliding-and-glass-doors-culver-city|01_knr-sliding-and-glass-doors-culver-city"
   "sun-garage-door-single-[step-2]|sun-garage-doors-repair|01_sun-garage-doors-repair"
+  "sliding-door-co-single-[step-2]|the-sliding-door-company-los-angeles-appointments-recommended|01_the-sliding-door-company-los-angeles-appointments-recommended"
   "bright-garage-door-single-[step-2]|bright-garage-door-inc|01_bright-garage-door-inc"
 )
 
