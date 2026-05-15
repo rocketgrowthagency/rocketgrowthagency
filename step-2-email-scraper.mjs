@@ -147,20 +147,34 @@ function extractFromHtml(html) {
   const $ = cheerio.load(html);
   let facebook = '';
   let instagram = '';
+  let linkedin = '';
+  let twitter = '';
+  let youtube = '';
+  let tiktok = '';
   let email = '';
 
   $('a[href]').each((_, el) => {
-    if (facebook && instagram && email) return;
     const hrefRaw = $(el).attr('href');
     if (!hrefRaw) return;
     const href = hrefRaw.trim();
 
-    if (!facebook && /facebook\.com/i.test(href)) {
+    if (!facebook && /facebook\.com\/[^/?#]/i.test(href) && !/facebook\.com\/sharer/i.test(href)) {
       facebook = href;
     }
-
-    if (!instagram && /instagram\.com/i.test(href)) {
+    if (!instagram && /instagram\.com\/[^/?#]/i.test(href)) {
       instagram = href;
+    }
+    if (!linkedin && /linkedin\.com\/(company|in|school)\/[^/?#]/i.test(href)) {
+      linkedin = href;
+    }
+    if (!twitter && /(twitter\.com|x\.com)\/[^/?#]/i.test(href) && !/intent\/tweet/i.test(href)) {
+      twitter = href;
+    }
+    if (!youtube && /youtube\.com\/(channel|c|user|@)[^/?#]/i.test(href)) {
+      youtube = href;
+    }
+    if (!tiktok && /tiktok\.com\/@[^/?#]/i.test(href)) {
+      tiktok = href;
     }
 
     if (!email && href.toLowerCase().startsWith('mailto:')) {
@@ -194,7 +208,7 @@ function extractFromHtml(html) {
     }
   }
 
-  return { facebook, instagram, email };
+  return { facebook, instagram, linkedin, twitter, youtube, tiktok, email };
 }
 
 function buildFallbackUrls(baseUrl) {
@@ -216,47 +230,31 @@ function buildFallbackUrls(baseUrl) {
 
 async function fetchWebsiteData(url) {
   const cleanWebsite = cleanUrl(url);
-  if (!cleanWebsite) return { facebook: '', instagram: '', email: '' };
+  const EMPTY = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
+  if (!cleanWebsite) return EMPTY;
 
   const candidates = [cleanWebsite, ...buildFallbackUrls(cleanWebsite)];
   const seen = new Set();
-  let facebookCombined = '';
-  let instagramCombined = '';
-  let emailFound = '';
+  const combined = { ...EMPTY };
 
   for (const candidate of candidates) {
     if (!candidate || seen.has(candidate)) continue;
     seen.add(candidate);
     try {
       const response = await axios.get(candidate, { timeout: 10000 });
-      const { facebook, instagram, email } = extractFromHtml(response.data);
-      if (!facebookCombined && facebook) {
-        facebookCombined = facebook;
+      const found = extractFromHtml(response.data);
+      for (const k of Object.keys(EMPTY)) {
+        if (!combined[k] && found[k]) combined[k] = found[k];
       }
-      if (!instagramCombined && instagram) {
-        instagramCombined = instagram;
-      }
-      if (!emailFound && email) {
-        emailFound = email;
-      }
-      console.log(
-        `Scanned ${candidate} -> Email: ${email || ''}, Facebook: ${facebook || ''}, Instagram: ${
-          instagram || ''
-        }`
-      );
-      if (emailFound) {
-        break;
-      }
+      const socials = ['facebook','instagram','linkedin','twitter','youtube','tiktok'].filter(s => found[s]).join(',');
+      console.log(`Scanned ${candidate} -> Email: ${found.email || ''}, Socials: ${socials || 'none'}`);
+      if (combined.email) break;
     } catch (err) {
       console.log(`Failed to fetch ${candidate}: ${err.message}`);
     }
   }
 
-  return {
-    facebook: facebookCombined,
-    instagram: instagramCombined,
-    email: emailFound,
-  };
+  return combined;
 }
 
 async function processCsv() {
@@ -287,14 +285,12 @@ async function processCsv() {
         const websiteRaw = record.website || record.Website || '';
         const website = cleanUrl(websiteRaw);
         console.log(`Processing (${i + j + 1}/${records.length}): ${website || '(no website)'}`);
+        const SOCIAL_KEYS = ['email','facebook','instagram','linkedin','twitter','youtube','tiktok'];
         if (!website) {
-          record.email = '';
-          record.facebook = '';
-          record.instagram = '';
+          for (const k of SOCIAL_KEYS) record[k] = '';
           return;
         }
-        // Retry once on timeout/network error
-        let result = { facebook: '', instagram: '', email: '' };
+        let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             result = await fetchWebsiteData(website);
@@ -304,17 +300,14 @@ async function processCsv() {
             else console.warn(`  ⚠️ ${website}: ${e.message}`);
           }
         }
-        record.email = result.email;
-        record.facebook = result.facebook;
-        record.instagram = result.instagram;
+        for (const k of SOCIAL_KEYS) record[k] = result[k] || '';
       })
     );
   }
 
   let headers = Object.keys(records[0]).map((key) => ({ id: key, title: key }));
-  if (!headers.find((h) => h.id === 'email'))     headers.push({ id: 'email',     title: 'email' });
-  if (!headers.find((h) => h.id === 'facebook'))  headers.push({ id: 'facebook',  title: 'facebook' });
-  if (!headers.find((h) => h.id === 'instagram')) headers.push({ id: 'instagram', title: 'instagram' });
+  const ensureField = (id) => { if (!headers.find((h) => h.id === id)) headers.push({ id, title: id }); };
+  ['email','facebook','instagram','linkedin','twitter','youtube','tiktok'].forEach(ensureField);
 
   const csvWriter = createObjectCsvWriter({ path: OUTPUT_CSV, header: headers });
   await csvWriter.writeRecords(records);
