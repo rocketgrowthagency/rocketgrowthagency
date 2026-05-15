@@ -827,11 +827,13 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is
+  // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is.
+  // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 ranks incorrect primary category as the
+  // #2 worst NEGATIVE local-pack ranking factor with penalty score 214 — was P18, now P3.
   if (audit?.gbp?.primaryCategoryMatchesSearch === false && audit?.gbp?.primaryCategory) {
     out.push({
       key: 'categoryMismatch',
-      score: 18,
+      score: 3,
       finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — a mismatched primary category directly limits your visibility in this search`,
     });
   }
@@ -849,10 +851,15 @@ function scoreMapsFindings(audit, top3Stats, record) {
     const catHasProduct = PRODUCT_WORDS.some(w => cat.includes(w));
     const searchHasService = SERVICE_WORDS.some(w => searchTerm.includes(w));
     const catHasService = SERVICE_WORDS.some(w => cat.includes(w));
+    // PRIORITY UPGRADE 2026-05-15: same Whitespark 2026 #2-negative basis as
+    // categoryMismatch — was P17, now P3. Gated by vertical_benchmarks DB so
+    // it won't fire when the search-vertical's top performers actually use a
+    // product-word category (e.g., "Garage door supplier" dominates garage
+    // door repair).
     if (catHasProduct && searchHasService && !catHasService) {
       out.push({
         key: 'categoryServiceVsProduct',
-        score: 17,
+        score: 3,
         finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — but the search "${normalizeField(record, 'Search Term')}" is for a service, not a product. Google ranks by category match: if repair and installation are your core business, switching your primary category to a service-focused option, like "Garage door repair service", and moving "${audit.gbp.primaryCategory}" to a secondary slot, is one of the highest-leverage moves you can make for this query`,
       });
     }
@@ -865,21 +872,28 @@ function scoreMapsFindings(audit, top3Stats, record) {
   if (top3Stats?.majorityCategory && audit?.gbp?.primaryCategory) {
     const yourCat = audit.gbp.primaryCategory.trim().toLowerCase();
     const majCat = top3Stats.majorityCategory.trim().toLowerCase();
+    // PRIORITY UPGRADE 2026-05-15: this is the EMPIRICAL category check —
+    // strongest version because it's grounded in what top performers in this
+    // search actually use, not a semantic rule. Was P19, now P2. Whitespark
+    // 2026: wrong primary category = #2 negative ranking factor.
     if (yourCat !== majCat && !out.some(f => f.key === 'categoryMismatch')) {
       out.push({
         key: 'categoryVsTop3',
-        score: 19,
+        score: 2,
         finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — but the top 3 ranked businesses in your search use "${top3Stats.majorityCategory}". Switching to match the category Google associates with this search intent is one of the highest-impact moves for local rank`,
       });
     }
   }
 
-  // No business hours set on GBP
+  // No business hours set on GBP.
+  // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 flags missing/outdated hours
+  // as a top-tier negative — was P22, now P10. "Rankings begin to degrade in
+  // the final hour a business is open each day" per Whitespark.
   if (audit?.gbp?.hasBusinessHours === false) {
     out.push({
       key: 'businessHours',
-      score: 22,
-      finding: `your Google Business Profile has no business hours set — Google suppresses incomplete profiles in local pack results`,
+      score: 10,
+      finding: `your Google Business Profile has no business hours set — Google suppresses incomplete profiles in local pack results, and rankings degrade in the final hour a business is open each day if hours aren't current`,
     });
   }
 
@@ -890,19 +904,23 @@ function scoreMapsFindings(audit, top3Stats, record) {
     const recentText = audit.gbp.reviewsLast30Days === 0
       ? `you haven't received any new Google reviews in the last 30 days`
       : `you received only 1 new Google review in the last 30 days`;
+    // PRIORITY UPGRADE 2026-05-15: review signals grew 16%→20% in Whitespark
+    // 2026; recency now outweighs raw count. Was P32, now P10.
     out.push({
       key: 'reviewVelocityRecent',
-      score: 32,
-      finding: `${recentText} — Google's algorithm weighs recent review velocity when ranking in the local pack`,
+      score: 10,
+      finding: `${recentText} — Whitespark 2026 confirms review recency outweighs raw count: a business with 200 lifetime reviews + none recent ranks BELOW a business with 80 + a steady weekly flow`,
     });
   }
 
-  // Zero owner responses (only flag when there are enough reviews to respond to)
+  // Zero owner responses (only flag when there are enough reviews to respond to).
+  // PRIORITY UPGRADE 2026-05-15: Google's own data says respondents are 1.7x
+  // more trustworthy; reviews are 20% of local-pack weight. Was P45, now P30.
   if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5) {
     out.push({
       key: 'ownerResponse',
-      score: 45,
-      finding: `you have ${audit.gbp.reviewCount} reviews but haven't responded to any — Google treats owner response rate as a trust and engagement signal for Maps ranking`,
+      score: 30,
+      finding: `you have ${audit.gbp.reviewCount} reviews but haven't responded to any — Google's own data says businesses that respond are 1.7x more trustworthy, and Maps ranking weighs owner response rate inside the review-signal block`,
     });
   }
 
@@ -940,12 +958,36 @@ function scoreMapsFindings(audit, top3Stats, record) {
         finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
       });
     } else if (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
+      // PRIORITY UPGRADE 2026-05-15: posts contribute to GBP-32% block;
+      // "abandoned profiles" = top-tier negative per Whitespark 2026. Was P30, now P15.
       out.push({
         key: 'gbpPosts',
-        score: 30,
+        score: 15,
         finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
       });
     }
+  }
+
+  // NEW 2026-05-15: dormantProfile composite finding. Whitespark 2026 lists
+  // "abandoned/inactive profiles" as a top-tier negative ranking factor. This
+  // composite fires when MULTIPLE staleness signals combine — stronger than
+  // any single stale-signal finding alone because it indicates the GBP isn't
+  // being maintained at all (top performers refresh weekly).
+  //
+  // Suppress if individual findings already fire to avoid double-counting:
+  // only fires when conditions cluster but no single finding has already
+  // pushed the prospect on staleness.
+  const staleSignals = [];
+  if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 90) staleSignals.push('reviews');
+  if (audit?.gbp?.hasPosts === false || (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90)) staleSignals.push('posts');
+  if (audit?.gbp?.descriptionVerified === true && audit?.gbp?.descriptionLength === 0) staleSignals.push('description');
+  if (audit?.gbp?.hasBusinessHours === false) staleSignals.push('hours');
+  if (staleSignals.length >= 3 && !out.some(f => f.key === 'reviewVelocity' || f.key === 'gbpPosts')) {
+    out.push({
+      key: 'dormantProfile',
+      score: 8,
+      finding: `your Google Business Profile shows ${staleSignals.length} signs of dormancy — ${staleSignals.join(', ')} are all stale or missing. Whitespark 2026 flags abandoned profiles as a top negative ranking factor; Google deprioritizes listings that look unmaintained`,
+    });
   }
 
   return out.sort((a, b) => a.score - b.score);
