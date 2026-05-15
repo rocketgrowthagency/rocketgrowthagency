@@ -1147,8 +1147,8 @@ function buildScript(record, top3Stats, audit) {
   })();
 
   const outroText = isTop3
-    ? `That was the surface-level audit. Your full Free Growth Audit goes much deeper — complete citation profile, backlink graph, competitor delta, geo-grid blind spots, and the exact plan to defend your top 3 spot and push for #1. Tap the button below to claim yours. Free, no call required.`
-    : `That was the surface-level audit. Your full Free Growth Audit goes much deeper — complete citation profile, backlink graph, competitor delta, geo-grid blind spots, and the exact plan to break into the top 3 and capture more leads. Tap the button below to claim yours. Free, no call required.`;
+    ? `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who'll defend your top 3 spot, push for #1, then expand into more keywords and locations. Tap the button below to claim yours. Free, no call required.`
+    : `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who fix what's holding you back, get you into the top 3 for this search, then expand into more keywords and locations. Tap the button below to claim yours. Free, no call required.`;
   // Intro + outro reframed 2026-05-14 to honest partial-audit framing — change only with explicit user request.
 
   return {
@@ -1172,23 +1172,32 @@ function getMp3DurationSeconds(filePath) {
 
 function concatMp3Segments(segmentDir, segmentNames, outPath) {
   return new Promise((resolve, reject) => {
-    const concatList = path.join(segmentDir, 'concat.txt');
-    const lines = segmentNames.map((n) => `file '${path.join(segmentDir, n + '.mp3').replace(/'/g, "\\'")}'`).join('\n');
-    fs.writeFileSync(concatList, lines);
-    // Re-encode (not -c copy) so segment boundaries don't produce pitch/codec
-    // glitches when MP3 frames don't perfectly align between segments.
-    // Force consistent sample rate (24000 Hz matches OpenAI TTS default) + bitrate.
-    const ff = spawn('ffmpeg', [
-      '-y',
-      '-f', 'concat',
-      '-safe', '0',
-      '-i', concatList,
+    // Use concat AUDIO FILTER (not -f concat demuxer) because TTS segments often have
+    // tiny leading-silence variations. The demuxer respects per-file timing exactly,
+    // which can manifest as a quiet/muddied moment at segment joins (e.g. mobile
+    // segment opener "And then on mobile" getting cut to "...den on mobile"). The
+    // concat filter resamples and re-times each input through one filter graph, so
+    // boundaries always sound clean. Also trims leading/trailing silence > 0.1s per
+    // segment to eliminate TTS warm-up dips.
+    const inputs = segmentNames.map((n) => path.join(segmentDir, n + '.mp3'));
+    const args = ['-y'];
+    inputs.forEach((p) => args.push('-i', p));
+    // Per-input: trim leading silence so each segment starts at first word.
+    // Then concat all through the audio filter.
+    const filters = inputs.map((_, i) =>
+      `[${i}:a]silenceremove=start_periods=1:start_silence=0.1:start_threshold=-50dB,asetpts=N/SR/TB[a${i}]`
+    ).join(';');
+    const concatChain = inputs.map((_, i) => `[a${i}]`).join('') + `concat=n=${inputs.length}:v=0:a=1[outa]`;
+    args.push(
+      '-filter_complex', `${filters};${concatChain}`,
+      '-map', '[outa]',
       '-c:a', 'libmp3lame',
       '-b:a', '128k',
       '-ar', '24000',
       '-ac', '1',
       outPath,
-    ], { stdio: 'ignore' });
+    );
+    const ff = spawn('ffmpeg', args, { stdio: 'ignore' });
     ff.on('close', (code) => (code === 0 ? resolve(outPath) : reject(new Error(`ffmpeg concat failed code ${code}`))));
   });
 }
