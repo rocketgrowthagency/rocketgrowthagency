@@ -1391,17 +1391,46 @@ function sanitizeForTTS(text) {
   return text.replace(STATE_AFTER_COMMA, (_, state) => `, ${state.split('').join('.')}.`);
 }
 
-async function ttsToFile(text, outPath) {
-  const response = await openai.audio.speech.create({
-    model: 'gpt-4o-mini-tts',
-    voice: 'echo',
-    input: sanitizeForTTS(text),
-    format: 'mp3',
-    speed: 1.2,
-  });
-  const buffer = Buffer.from(await response.arrayBuffer());
-  fs.writeFileSync(outPath, buffer);
-  return outPath;
+async function ttsToFile(text, outPath, attempt = 1) {
+  // OpenAI TTS occasionally times out or returns a truncated stream — when
+  // that happens the resulting MP3 is a few KB and ffprobe reports 0.2-2s for
+  // what should be a 20-30s segment. Step-4 then chokes when slicing a 25s
+  // webm down to 0.3s ("Conversion failed!" in libx264). Symptom seen in
+  // AN Integrity's first batch run 2026-05-15. Mitigation: retry up to 3x,
+  // verify the resulting mp3 duration is plausible (≥80% of word-count-based
+  // expectation), and bail loudly if all attempts produce short audio.
+  const MAX_ATTEMPTS = 3;
+  const expectedSecondsMin = Math.max(2, text.split(/\s+/).length / 6); // ~6 wps lower bound
+  try {
+    const response = await openai.audio.speech.create({
+      model: 'gpt-4o-mini-tts',
+      voice: 'echo',
+      input: sanitizeForTTS(text),
+      format: 'mp3',
+      speed: 1.2,
+    });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(outPath, buffer);
+    // Verify the result isn't a truncated/error mp3. ffprobe duration vs
+    // word-count-based minimum.
+    const dur = await getMp3DurationSeconds(outPath);
+    if (dur < expectedSecondsMin) {
+      if (attempt < MAX_ATTEMPTS) {
+        console.warn(`     ⚠️  TTS produced ${dur.toFixed(2)}s for ${text.split(/\s+/).length}-word input (expected ≥${expectedSecondsMin.toFixed(1)}s) — retrying (attempt ${attempt + 1}/${MAX_ATTEMPTS})`);
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
+        return ttsToFile(text, outPath, attempt + 1);
+      }
+      throw new Error(`TTS truncated after ${MAX_ATTEMPTS} attempts (got ${dur.toFixed(2)}s, expected ≥${expectedSecondsMin.toFixed(1)}s)`);
+    }
+    return outPath;
+  } catch (e) {
+    if (attempt < MAX_ATTEMPTS) {
+      console.warn(`     ⚠️  TTS error attempt ${attempt}/${MAX_ATTEMPTS}: ${e.message} — retrying`);
+      await new Promise((r) => setTimeout(r, 1500 * attempt));
+      return ttsToFile(text, outPath, attempt + 1);
+    }
+    throw e;
+  }
 }
 
 async function generateVoiceover(record, index, top3Stats, baseName) {
