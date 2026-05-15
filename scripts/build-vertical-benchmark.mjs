@@ -194,6 +194,7 @@ async function syncToSupabase(benchmark, slug) {
     rating_top3_avg: benchmark.ratingTop3Avg ?? null,
     findings_disabled: benchmark.findingsDisabled || [],
     notes: benchmark.notes || null,
+    research: benchmark.research || null,
     updated_at: new Date().toISOString(),
   };
   // Upsert on search_term (unique constraint)
@@ -251,6 +252,22 @@ async function main() {
       const benchmark = buildBenchmark(searchTerm, leads);
       const slug = slugifySearch(searchTerm);
       const outPath = path.join(OUT_DIR, `${slug}.json`);
+      // Preserve hand-curated `research` block + manual `findingsDisabled`
+      // additions across rebuilds. Auto-generated stats refresh; research
+      // stays.
+      if (fs.existsSync(outPath)) {
+        try {
+          const existing = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
+          if (existing.research) benchmark.research = existing.research;
+          if (Array.isArray(existing.findingsDisabledManual) && existing.findingsDisabledManual.length) {
+            benchmark.findingsDisabledManual = existing.findingsDisabledManual;
+            // Merge manual into the active list
+            for (const k of existing.findingsDisabledManual) {
+              if (!benchmark.findingsDisabled.includes(k)) benchmark.findingsDisabled.push(k);
+            }
+          }
+        } catch (_) {}
+      }
       fs.writeFileSync(outPath, JSON.stringify(benchmark, null, 2));
       console.log(`✓ Wrote ${outPath}`);
       console.log(`   leadsAudited=${benchmark.leadsAudited} majorityTop5="${benchmark.majorityCategoryTop5}" findingsDisabled=${JSON.stringify(benchmark.findingsDisabled)}`);

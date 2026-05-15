@@ -33,5 +33,176 @@
   "findingsDisabled": [
     "categoryServiceVsProduct"
   ],
-  "notes": "\"Garage door supplier\" is the dominant category in the top 5 of this search despite the search being service-intent. The semantic categoryServiceVsProduct finding is disabled to avoid giving prospects bad advice — telling them to switch categories that successful competitors actively use."
+  "notes": "\"Garage door supplier\" is the dominant category in the top 5 of this search despite the search being service-intent. The semantic categoryServiceVsProduct finding is disabled to avoid giving prospects bad advice — telling them to switch categories that successful competitors actively use.",
+  "research": {
+    "vertical": "Garage Door Repair",
+    "lastResearchedAt": "2026-05-15",
+    "confidence": "high",
+    "summary": "In garage-door-repair searches, GBP category match is NOT the dominant ranking lever — review depth, review velocity, and citation consistency dominate. Top performers use 'Garage door supplier' as primary category at 5:4 over 'Repair service' even for service-intent queries, because 'Supplier' is the broader/legacy GBP category and Google's NLP treats it as a 'garage-door entity' tag without penalizing repair intent. Empirical evidence consistently overrides semantic theory in this vertical.",
+    "recommendedPrimaryCategory": "Garage door supplier",
+    "recommendedPrimaryCategoryReasoning": "Dominant choice among top-ranked businesses (5 of top 10 in Culver City; corroborated as standard in industry SEO guides). 'Garage door repair service' is a viable alternative but tends to LIMIT eligibility to repair-only queries. 'Supplier' is broader and works for both repair AND installation/replacement traffic.",
+    "recommendedSecondaryCategories": [
+      "Garage door repair service",
+      "Garage builder",
+      "Door supplier",
+      "Gate repair service"
+    ],
+    "recommendedServiceAttributes": [
+      "Garage door repair",
+      "Garage door installation",
+      "Spring replacement",
+      "Cable replacement",
+      "Garage door opener installation",
+      "Garage door opener repair",
+      "Panel replacement",
+      "Emergency repair",
+      "24/7 service",
+      "Maintenance plans",
+      "Commercial garage door service"
+    ],
+    "topRankingFactors": [
+      {
+        "factor": "Total review count",
+        "weight": "very high",
+        "benchmark": "Top 3 average 112 reviews in this search; #1 (Rock) has 301. Target ≥100 to be competitive in top 5.",
+        "source": "Whitespark 2026 Local Search Ranking Factors + Airtable empirical data"
+      },
+      {
+        "factor": "Review velocity (recent reviews)",
+        "weight": "very high",
+        "benchmark": "≥2 new reviews/month signals 'active and current' to Google. Top performers in this vertical typically generate 3-5/month.",
+        "source": "Whitespark Review Recency study 2025; Sterling Sky case studies"
+      },
+      {
+        "factor": "Owner response rate",
+        "weight": "high",
+        "benchmark": "Top performers respond to >50% of reviews. Google treats response rate as engagement signal.",
+        "source": "Sterling Sky, BrightLocal Consumer Review Survey"
+      },
+      {
+        "factor": "GBP completeness (hours, description, posts, photos)",
+        "weight": "high",
+        "benchmark": "Complete profiles include: 24/7 emergency availability (if offered), 1-2 GBP posts per week, regularly updated photos. Posts expire after 7 days.",
+        "source": "Atomic Social GBP Optimization for Garage Door Repair"
+      },
+      {
+        "factor": "Citation consistency (NAP across directories)",
+        "weight": "high",
+        "benchmark": "Identical NAP on Yelp, Angi, BBB, HomeAdvisor, Houzz, MapQuest, Yellow Pages, Foursquare.",
+        "source": "Local SEO Bot, Whitespark Citation Builder"
+      },
+      {
+        "factor": "Title tag with city + category",
+        "weight": "medium-high",
+        "benchmark": "Title tag should include both 'garage door [repair|service]' AND the city name.",
+        "source": "Whitespark on-page factors"
+      },
+      {
+        "factor": "LocalBusiness schema markup",
+        "weight": "medium",
+        "benchmark": "Schema present with NAP matching GBP and primary service area defined.",
+        "source": "Schema.org LocalBusiness spec; Google Search Central"
+      },
+      {
+        "factor": "Service-area pages (per-city landing pages)",
+        "weight": "medium",
+        "benchmark": "Top performers publish dedicated pages per city they serve. Min 3-5 city pages for multi-city operators.",
+        "source": "Contractor Marketing Pros Garage Door SEO"
+      }
+    ],
+    "commonPitfalls": [
+      "Multiple phone numbers on website (lead-aggregator tracking lines break NAP)",
+      "Generic CTA copy ('Contact Us', 'Learn More') instead of action-specific ('Get Free Quote', 'Call Now')",
+      "Mobile click-to-call missing or below the fold",
+      "Render-blocking CSS/JS in <head> slowing page load > 2.5s",
+      "Owner registered domain that doesn't include the brand name (citation graph weakened)",
+      "No GBP posts since >90 days ago (Google reads as 'dormant listing')",
+      "Photos uploaded once and never refreshed (stale gallery)",
+      "GBP description missing or <100 chars (incomplete profile signal)"
+    ],
+    "titleTagPattern": "[Service] in [City] | [Business Name]",
+    "titleTagExample": "Garage Door Repair in Culver City, CA | Alvin Garage Door",
+    "h1Pattern": "[Service]-led with city qualifier",
+    "h1Example": "Garage Door Repair in Culver City - 24/7 Same Day Service",
+    "metaDescPattern": "Lead with the service + city + a differentiator (response time, free quote, warranty)",
+    "metaDescExample": "24/7 garage door repair in Culver City, CA. Same-day service, licensed technicians, free quotes. Call (310) 555-1234.",
+    "citationProfileTargets": [
+      "Yelp",
+      "Angi (formerly Angie's List)",
+      "BBB",
+      "HomeAdvisor",
+      "Houzz",
+      "MapQuest",
+      "Yellow Pages",
+      "Foursquare",
+      "Apple Maps Business Connect",
+      "Bing Places",
+      "Facebook Business Page",
+      "Nextdoor",
+      "Thumbtack"
+    ],
+    "voiceoverHooks": [
+      "Review count gap vs top 3 (most impactful in this vertical because top performers have 100+ reviews)",
+      "Days since last review (>90 days = dormant signal, >180 = severe)",
+      "GBP posts staleness (top performers post weekly)",
+      "Owner response rate when reviewCount > 5",
+      "NAP mismatch on website (call-tracker number differing from GBP)",
+      "Domain doesn't match business brand name (citation graph signal)",
+      "No dedicated service-area pages (single-page sites lose multi-city ranking)"
+    ],
+    "voiceoverAntipatterns": [
+      "DO NOT advise switching from 'Garage door supplier' to 'Garage door repair service' — empirically the opposite of what top performers do.",
+      "DO NOT cite specific photo count thresholds (Google strips reliable photoCount from the panel; extractor disabled).",
+      "DO NOT cite GBP description length thresholds without postsVerified=true / descriptionVerified=true (extractor gating)."
+    ],
+    "clientOnboardingChecklist": [
+      "Verify GBP primary category = 'Garage door supplier' (or migrate if currently narrower)",
+      "Add all recommended secondary categories (up to 9)",
+      "Fill every service attribute (see recommendedServiceAttributes list)",
+      "Set complete business hours including any 24/7 emergency window",
+      "Write GBP description: 150-750 chars, service + city + differentiator",
+      "Upload minimum 20 photos (cover, logo, interior/exterior, team, completed work)",
+      "Set up automated Google review request SMS (Podium / Birdeye / GatherUp) — 30-45% conversion vs 5-10% for email",
+      "Build citation profile across all targets above; verify NAP exact match",
+      "Add LocalBusiness schema with full NAP + service area + hours",
+      "Establish weekly GBP post cadence (offer/update/event)",
+      "Set up review response process — target ≥50% response rate, ≥80% for negative reviews",
+      "Build service-area landing pages for each city served (min 3)",
+      "Audit website: HTTPS, schema, page load <2.5s, NAP above fold, single H1 with category + city"
+    ],
+    "kpiTargets": {
+      "reviewCount90d": "+15 reviews",
+      "reviewVelocityPerMonth": "≥5",
+      "reviewResponseRate": "≥80%",
+      "gbpPostFrequency": "1-2 per week",
+      "citationConsistency": "100% across 13 directories",
+      "websiteLoadSeconds": "≤2.5",
+      "rankingTimeline": "Map Pack within 30-60 days; meaningful lead lift within 3-5 months"
+    },
+    "industryNotes": [
+      "Emergency-repair queries rank faster than installation queries because they're geographically bounded with immediate intent.",
+      "73% of local searches happen on mobile — mobile-first audit weight is justified.",
+      "Businesses that respond to reviews are 1.7x more trustworthy per Google.",
+      "SMS review requests via automation hit 30-45% conversion vs 5-10% for email — significant for review-velocity ranking factor.",
+      "Map Pack appearances often happen within 30-60 days with aggressive GBP optimization; full ranking lift takes 3-5 months."
+    ],
+    "sources": [
+      "https://www.sterlingsky.ca/case-studies/a1-garage-door-service-a-case-study-on-local-seo-for-garage-door-companies/",
+      "https://www.sterlingsky.ca/breaking-boundaries-of-traditional-google-business-profile-categories-the-power-of-semi-unrelated-categories/",
+      "https://whitespark.ca/local-search-ranking-factors/",
+      "https://whitespark.ca/blog/the-most-underrated-local-ranking-factor-in-2025/",
+      "https://www.localmighty.com/blog/garage-door-seo-guide/",
+      "https://garagedoorelite.com/the-ultimate-guide-to-optimize-google-business-profile-for-garage-door-repair-service/",
+      "https://atomicsocial.com/local-seo-for-garage-door-repair-installation-in-wilkes-barre-pa-gbp-optimization-reviews-hyperlocal-links/",
+      "https://contractormarketingpros.net/blog/seo-for-garage-door-companies/",
+      "https://www.localseobot.com/blog/simple-seo-system-every-garage-door-company-needs/",
+      "https://www.housecallpro.com/resources/garage-door-seo/"
+    ],
+    "consumesIn": [
+      "step-6-voiceover.mjs (cold-outreach video script — gating semantic findings via findingsDisabled)",
+      "FUTURE: Brain client-strategy module (when a client signs up, Brain reads research.clientOnboardingChecklist and research.kpiTargets to scope month-1 work)",
+      "FUTURE: admin onboarding wizard (display recommendedSecondaryCategories + recommendedServiceAttributes when adding a new garage-door-repair client)",
+      "FUTURE: portal KPI dashboard (use research.kpiTargets as success thresholds for client-side reporting)"
+    ]
+  }
 }
