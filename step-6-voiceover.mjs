@@ -529,6 +529,19 @@ function scoreWebsiteFindings(audit, businessName) {
   if (w.hasReviewsOnPage === false) {
     out.push({ key: 'noReviews', score: 12, finding: `your website doesn't show any customer reviews or testimonials — visitors can't verify your reputation without leaving the page to check Google` });
   }
+  // NEW (2026-05-14): Few or no connected social profiles.
+  // Uses step-2 Facebook + Instagram detection. TODO: expand step-2 to also detect
+  // LinkedIn, YouTube, Twitter/X, TikTok and use socialProfilesCount field instead.
+  // Google reads connected social profiles as a brand/trust signal — businesses with
+  // multiple connected profiles see modest local-pack rank lift.
+  const fbUrl = String(record['facebook'] || record['Facebook'] || '').trim();
+  const igUrl = String(record['instagram'] || record['Instagram'] || '').trim();
+  const socialCount = (fbUrl ? 1 : 0) + (igUrl ? 1 : 0);
+  if (socialCount === 0) {
+    out.push({ key: 'noSocial', score: 12.7, finding: `we couldn't find any social media profiles linked from your website — connected social signals like Facebook and Instagram are how Google verifies your brand presence beyond just Google, and adding even two to your footer is a quick local-trust win` });
+  } else if (socialCount === 1) {
+    out.push({ key: 'lowSocial', score: 12.7, finding: `your website links to only one social profile — Google reads multiple connected social channels as a stronger brand signal, and adding at least one more (Facebook, Instagram, LinkedIn, or YouTube) tightens your local-trust footprint` });
+  }
   // PRIORITY 12.5 (NEW): Few or no dedicated service-area / location pages
   if (w.serviceAreaPagesCount != null && w.serviceAreaPagesCount <= 1) {
     const msg = w.serviceAreaPagesCount === 0
@@ -542,6 +555,26 @@ function scoreWebsiteFindings(audit, businessName) {
   }
 
   return out.sort((a, b) => a.score - b.score);
+}
+
+// PRIORITY 11.5: Few/no connected social profiles (NEW 2026-05-14)
+// Helper used by scoreWebsiteFindings caller — checks Facebook+Instagram+LinkedIn+
+// Twitter+YouTube+TikTok URLs captured by step-2. Google reads social presence as
+// a trust signal for local rank. Fires if 0 or 1 profiles linked.
+function scoreSocialProfilesFinding(record) {
+  const SOCIAL_FIELDS = ['facebook','instagram','linkedin','twitter','youtube','tiktok'];
+  const found = [];
+  for (const platform of SOCIAL_FIELDS) {
+    const val = normalizeField(record, platform);
+    if (val && /^https?:\/\//i.test(val)) found.push(platform);
+  }
+  if (found.length === 0) {
+    return { key: 'socialProfilesNone', score: 11.5, finding: `your website doesn't link to any social media profiles — Google reads connected Facebook, Instagram, LinkedIn, and YouTube accounts as trust signals for local ranking, plus they're another verification path for prospects checking if your business is real` };
+  }
+  if (found.length === 1) {
+    return { key: 'socialProfilesLow', score: 11.5, finding: `your website only links to one social profile (${found[0]}) — competitors with active Facebook, Instagram, and LinkedIn presence get a stronger trust and brand signal from Google` };
+  }
+  return null;
 }
 
 // PRIORITY-BASED MOBILE SCORING (1 = most important, 10 = least)
@@ -703,6 +736,28 @@ function scoreMapsFindings(audit, top3Stats, record) {
       score: 18,
       finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — a mismatched primary category directly limits your visibility in this search`,
     });
+  }
+
+  // NEW (2026-05-14): semantic mismatch — category is PRODUCT-intent ("supplier" /
+  // "manufacturer" / "dealer") but search is SERVICE-intent ("repair" / "service" /
+  // "installation"). Token match passes (e.g. "garage door" in both) but Google's
+  // category-match algorithm weights service-vs-product semantics. Common pattern
+  // for businesses that picked "supplier" early but mostly do repair/install.
+  if (audit?.gbp?.primaryCategory) {
+    const cat = audit.gbp.primaryCategory.toLowerCase();
+    const searchTerm = (normalizeField(record, 'Search Term') || '').toLowerCase();
+    const PRODUCT_WORDS = ['supplier', 'distributor', 'manufacturer', 'dealer', 'store', 'showroom', 'wholesaler'];
+    const SERVICE_WORDS = ['repair', 'service', 'installation', 'install', 'replacement', 'maintenance'];
+    const catHasProduct = PRODUCT_WORDS.some(w => cat.includes(w));
+    const searchHasService = SERVICE_WORDS.some(w => searchTerm.includes(w));
+    const catHasService = SERVICE_WORDS.some(w => cat.includes(w));
+    if (catHasProduct && searchHasService && !catHasService) {
+      out.push({
+        key: 'categoryServiceVsProduct',
+        score: 17,
+        finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — but the search "${normalizeField(record, 'Search Term')}" is for a service, not a product. Google ranks by category match: if repair and installation are your core business, switching your primary category to a service-focused option, like "Garage door repair service", and moving "${audit.gbp.primaryCategory}" to a secondary slot, is one of the highest-leverage moves you can make for this query`,
+      });
+    }
   }
 
   // PRIORITY 19 (NEW 2026-05-14): Category vs top-3 majority comparative finding.
@@ -984,8 +1039,8 @@ function buildScript(record, top3Stats, audit) {
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. We just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience. You're already in the top 3 — here's where you're vulnerable to losing that position.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. We just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience. Here are the top issues keeping you from the top position.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a 2-minute walk-through on ${name} across your Google Business Profile, website, and mobile experience. I'll cover where you're vulnerable to losing your top 3 spot, and where to get the full deeper audit if you want to go further.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a 2-minute walk-through on ${name} across your Google Business Profile, website, and mobile experience. I'll cover the top issues keeping you from the top 3, and where to get the full deeper audit if you want to go further.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -1002,6 +1057,12 @@ function buildScript(record, top3Stats, audit) {
   // prefer the section where they have highest SEO impact (website > mobile).
   const rawMaps = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
   const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit, name), disabledKeys);
+  // Inject social-profiles finding (uses step-2 social URL fields, not audit-findings)
+  const socialFinding = scoreSocialProfilesFinding(record);
+  if (socialFinding && !disabledKeys.includes(socialFinding.key)) {
+    rawWebsite.push(socialFinding);
+    rawWebsite.sort((a, b) => a.score - b.score);
+  }
   const rawMobile = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
   const { maps: mapsFindings, website: websiteFindings, mobile: mobileFindings } = dedupAcrossSections(rawMaps, rawWebsite, rawMobile);
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
