@@ -882,8 +882,16 @@ async function auditGbp(_, gbpUrl, business) {
       // section heading. Detect presence + extract most-recent timestamp.
       let hasPosts = false;
       let lastPostDaysAgo = null;
+      // Heading text now includes the business name suffix in many panels:
+      // "Updates from Alvin Garage Door" instead of just "Updates". Match the
+      // prefix so we catch both styles.
       const postHeadings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button, span'))
-        .filter(el => /^(?:updates?|posts?|from the owner)$/i.test((el.textContent || '').trim()));
+        .filter(el => {
+          const t = (el.textContent || '').trim();
+          return /^updates?(?:\s+from\s+\S|$)/i.test(t)
+              || /^posts?(?:\s+from\s+\S|$)/i.test(t)
+              || /^from\s+the\s+owner$/i.test(t);
+        });
       if (postHeadings.length > 0) {
         // Find the section container after the heading
         const heading = postHeadings[0];
@@ -1085,10 +1093,48 @@ async function auditGbp(_, gbpUrl, business) {
           unique.sort((a, b) => b.length - a.length);
           const description = unique[0] || '';
 
-          // Post timestamps via class .Ufkx2c (confirmed via diagnostic 2026-05-13)
-          const timestamps = Array.from(document.querySelectorAll('.Ufkx2c'))
-            .map((el) => (el.textContent || '').trim())
-            .filter((t) => /^\d+\s+(minute|hour|day|week|month|year)s?\s+ago$/i.test(t));
+          // Post timestamps. Old: only .Ufkx2c with relative "N ago" format.
+          // Google now renders ABSOLUTE dates ("Oct 23, 2023") for posts older
+          // than ~6 months. Scan the KP body text for both formats and return
+          // every match as a {text, daysAgo} pair so the caller can pick the
+          // most recent.
+          function relativeToDays(txt) {
+            const m = txt.match(/^(\d+)\s+(minute|hour|day|week|month|year)s?\s+ago$/i);
+            if (!m) return null;
+            const n = Number(m[1]);
+            const u = m[2].toLowerCase();
+            return u === 'minute' ? n / 1440
+              : u === 'hour' ? n / 24
+              : u === 'day' ? n
+              : u === 'week' ? n * 7
+              : u === 'month' ? n * 30
+              : n * 365;
+          }
+          function absoluteToDays(txt) {
+            // "Oct 23, 2023" / "October 23, 2023" / "Oct 23" (current year)
+            const m = txt.match(/^([A-Z][a-z]+)\s+(\d{1,2})(?:,\s+(\d{4}))?$/);
+            if (!m) return null;
+            const monthIdx = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[1].slice(0,3).toLowerCase());
+            if (monthIdx < 0) return null;
+            const day = Number(m[2]);
+            const year = m[3] ? Number(m[3]) : new Date().getFullYear();
+            const postDate = new Date(year, monthIdx, day);
+            const days = (Date.now() - postDate.getTime()) / (1000 * 60 * 60 * 24);
+            return days > 0 ? days : null;
+          }
+          // Scan EVERY text node in the panel + the global modal (Recent updates
+          // modal renders outside the .kp-wholepage scope when opened).
+          const allTextEls = Array.from(document.querySelectorAll('span, div, time, .Ufkx2c'));
+          const timestamps = [];
+          for (const el of allTextEls) {
+            const t = (el.textContent || '').trim();
+            if (!t || t.length > 30) continue;
+            let d = relativeToDays(t);
+            if (d == null) d = absoluteToDays(t);
+            if (d != null && d >= 0 && d <= 3650) {
+              timestamps.push({ text: t, daysAgo: d });
+            }
+          }
 
           return { onPanel: true, titleText, overlapRatio, description, timestamps };
         }, business.name || '');
@@ -1104,24 +1150,12 @@ async function auditGbp(_, gbpUrl, business) {
           }
           findings.descriptionVerified = true;
 
-          // Posts
+          // Posts — timestamps now arrive as [{text, daysAgo}] supporting both
+          // relative ("3 weeks ago") and absolute ("Oct 23, 2023") formats.
           findings.hasPosts = kpData.timestamps.length > 0;
           findings.postsVerified = true;
           if (kpData.timestamps.length > 0) {
-            let minDays = Infinity;
-            for (const t of kpData.timestamps) {
-              const m = t.match(/(\d+)\s+(minute|hour|day|week|month|year)s?/i);
-              if (!m) continue;
-              const n = Number(m[1]);
-              const u = m[2].toLowerCase();
-              const days = u === 'minute' ? n / 1440
-                : u === 'hour' ? n / 24
-                : u === 'day' ? n
-                : u === 'week' ? n * 7
-                : u === 'month' ? n * 30
-                : n * 365;
-              if (days < minDays) minDays = days;
-            }
+            const minDays = Math.min(...kpData.timestamps.map((t) => t.daysAgo));
             findings.lastPostDaysAgo = Math.round(minDays);
           }
           console.log(`  [kp-diag] Search KP confirmed for "${kpData.titleText}" (overlap=${(kpData.overlapRatio * 100).toFixed(0)}%): description=${findings.descriptionLength}chars, posts=${kpData.timestamps.length} (mostRecent=${findings.lastPostDaysAgo}d)`);
