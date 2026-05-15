@@ -1,0 +1,37 @@
+{
+  "searchTerm": "Garage door repair in Culver City, CA",
+  "auditedDate": "2026-05-15",
+  "source": "airtable-leads",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Garage door supplier": 5,
+    "Repair service": 4,
+    "Electric motor repair shop": 1
+  },
+  "categoryDistributionTop5": {
+    "Garage door supplier": 3,
+    "Repair service": 1,
+    "Electric motor repair shop": 1
+  },
+  "categoryDistributionTop3": {
+    "Garage door supplier": 2,
+    "Repair service": 1
+  },
+  "majorityCategoryTop10": "Garage door supplier",
+  "majorityCategoryTop5": "Garage door supplier",
+  "majorityCategoryTop3": "Garage door supplier",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 424,
+    "median": 31.5,
+    "p25": 20,
+    "p75": 213
+  },
+  "reviewsTop3Avg": 112,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [
+    "categoryServiceVsProduct"
+  ],
+  "notes": "\"Garage door supplier\" is the dominant category in the top 5 of this search despite the search being service-intent. The semantic categoryServiceVsProduct finding is disabled to avoid giving prospects bad advice — telling them to switch categories that successful competitors actively use."
+}

@@ -1042,6 +1042,26 @@ function applyValidationFilter(findings, disabledKeys) {
   return filtered;
 }
 
+// Search-vertical benchmark DB loader. Reads `data/vertical-benchmarks/<slug>.json`
+// produced by `scripts/build-vertical-benchmark.mjs`. The benchmark is the
+// empirical ground truth for what top-ranked businesses in this search look
+// like — used to gate voiceover findings so we never give advice that
+// contradicts what successful competitors actually do.
+//
+// Returns the parsed benchmark object or null if missing. step-6 merges
+// `findingsDisabled` from the benchmark into the run's disabledKeys list.
+function loadVerticalBenchmark(searchTerm) {
+  if (!searchTerm) return null;
+  const slug = String(searchTerm).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const benchPath = path.join(process.cwd(), 'data', 'vertical-benchmarks', `${slug}.json`);
+  if (!fs.existsSync(benchPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(benchPath, 'utf-8'));
+  } catch (_) {
+    return null;
+  }
+}
+
 function buildScript(record, top3Stats, audit) {
   const name =
     normalizeField(record, 'Business Name') || normalizeField(record, 'name') || 'your business';
@@ -1051,6 +1071,24 @@ function buildScript(record, top3Stats, audit) {
   const disabledKeys = (audit && audit._validation && audit._validation.disabledFindings) || [];
   if (disabledKeys.length) {
     console.log(`   [self-diag] Validation deviations detected; auto-disabling findings: ${disabledKeys.join(', ')}`);
+  }
+  // Vertical benchmark DB: load empirical ground-truth for this search and
+  // merge its `findingsDisabled` into disabledKeys. Prevents script from
+  // firing semantic findings that contradict what top-ranked businesses
+  // actually do in this market (e.g., "switch from supplier to repair
+  // service" advice when supplier is the dominant category among top 5).
+  const searchTermRaw = normalizeField(record, 'Search Term') || normalizeField(record, 'searchTerm') || '';
+  const benchmark = loadVerticalBenchmark(searchTermRaw);
+  if (benchmark) {
+    console.log(`   [vertical-db] benchmark loaded for "${benchmark.searchTerm}" (audited ${benchmark.auditedDate}, majorityTop5="${benchmark.majorityCategoryTop5}")`);
+    if (Array.isArray(benchmark.findingsDisabled) && benchmark.findingsDisabled.length) {
+      for (const k of benchmark.findingsDisabled) {
+        if (!disabledKeys.includes(k)) disabledKeys.push(k);
+      }
+      console.log(`   [vertical-db] disabling findings per benchmark: ${benchmark.findingsDisabled.join(', ')}`);
+    }
+  } else {
+    console.warn(`   [vertical-db] no benchmark for search "${searchTermRaw}" — run scripts/build-vertical-benchmark.mjs "${searchTermRaw}" to add one. Findings will fire from semantic rules only (less defensible).`);
   }
   const city = normalizeField(record, 'City') || normalizeField(record, 'city') || '';
   const rankRaw =
