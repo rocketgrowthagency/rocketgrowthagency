@@ -134,7 +134,14 @@ for (const search of VERTICALS) {
     if (!fs.existsSync(finalMp4)) { console.log('  ✗ mp4 missing'); totalFail++; continue; }
     const destDir = path.join(WEBSITE_V, slug);
     fs.mkdirSync(destDir, { recursive: true });
-    fs.copyFileSync(finalMp4, path.join(destDir, 'video.mp4'));
+    const destMp4 = path.join(destDir, 'video.mp4');
+    fs.copyFileSync(finalMp4, destMp4);
+
+    // Generate thumb.jpg @ 30s (past intro card, into content — used by cold-outreach email body)
+    const destThumb = path.join(destDir, 'thumb.jpg');
+    const thumbResult = spawnSync('ffmpeg', ['-y', '-ss', '00:00:30', '-i', destMp4, '-vframes', '1', '-q:v', '2', '-loglevel', 'error', destThumb], { stdio: 'ignore' });
+    if (thumbResult.status !== 0 || !fs.existsSync(destThumb)) console.log(`  ⚠ thumb.jpg generation failed (non-fatal)`);
+
     runStep('node', ['build-video-landing.mjs'], csvPath);
     const landingIndex = path.join(ROOT, `output/landing-pages/v/${slug}/index.html`);
     if (fs.existsSync(landingIndex)) fs.copyFileSync(landingIndex, path.join(destDir, 'index.html'));
