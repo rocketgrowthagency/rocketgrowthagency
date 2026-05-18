@@ -457,12 +457,34 @@ async function auditMobile(browser, websiteUrl, business) {
       }
 
       const foldHeight = window.innerHeight;
+      // Path 1: native <a href="tel:..."> link above fold
       const tels = Array.from(document.querySelectorAll('a[href^="tel:"]'));
       for (const a of tels) {
         const r = a.getBoundingClientRect();
         if (r.top >= 0 && r.top < foldHeight && r.width > 0 && r.height > 0) {
           result.clickToCallAboveFold = true;
           break;
+        }
+      }
+      // Path 2 (fallback): button-shaped element above fold containing a visible
+      // US phone number. Catches styled CTAs that wrap tel: dialing in JS or
+      // use image/div buttons (e.g. XP Garage & Gate Experts orange CTA bar
+      // showing "(818) 337-2533" — caught 2026-05-18 review).
+      if (!result.clickToCallAboveFold) {
+        const PHONE_RX = /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+        const clickables = Array.from(document.querySelectorAll(
+          'button, a, [role="button"], [onclick], [class*="btn" i], [class*="button" i], [class*="phone" i], [class*="call" i]'
+        ));
+        for (const el of clickables) {
+          const r = el.getBoundingClientRect();
+          if (r.top >= 0 && r.top < foldHeight && r.width > 0 && r.height > 0) {
+            const text = (el.innerText || el.textContent || '').trim();
+            const ariaLabel = (el.getAttribute('aria-label') || '').trim();
+            if (PHONE_RX.test(text) || PHONE_RX.test(ariaLabel)) {
+              result.clickToCallAboveFold = true;
+              break;
+            }
+          }
         }
       }
 
@@ -521,18 +543,24 @@ async function auditMobile(browser, websiteUrl, business) {
       result.primaryCtaText = mobileCtaText;
 
       // Tier 2: phone number visible as text above fold (not just hidden tel: link)
+      // Search both leaf nodes (most common) AND small wrapper elements
+      // (catches button containers with icon+text children — XP's orange CTA bar
+      // was missed by leaf-only scan, 2026-05-18 review).
       const phoneRegex = /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/;
-      const allEls = Array.from(document.querySelectorAll('*'));
+      const phoneCandidates = Array.from(document.querySelectorAll(
+        'span, p, div, a, button, [role="button"], h1, h2, h3, h4, h5, h6, li, td'
+      ));
       let phoneVisibleAboveFold = false;
-      for (const el of allEls) {
-        if (el.children.length > 0) continue; // leaf nodes only
-        const txt = (el.innerText || '').trim();
-        if (phoneRegex.test(txt)) {
-          const r = el.getBoundingClientRect();
-          if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0) {
-            phoneVisibleAboveFold = true;
-            break;
-          }
+      for (const el of phoneCandidates) {
+        const txt = (el.innerText || el.textContent || '').trim();
+        // Limit length so we don't match phones buried in large page sections
+        // (a body wrapping everything would always match). 280 chars is enough
+        // for a button caption, a heading, a sidebar phone line, etc.
+        if (txt.length > 280 || !phoneRegex.test(txt)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0) {
+          phoneVisibleAboveFold = true;
+          break;
         }
       }
       result.phoneVisibleAboveFold = phoneVisibleAboveFold;

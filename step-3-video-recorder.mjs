@@ -544,6 +544,37 @@ async function getListingHrefByName(page, businessName, minScore = 24) {
 async function clickListingInResultsByName(page, businessName) {
   const href = await getListingHrefByName(page, businessName, 45);
   if (!href) return false;
+
+  // Pre-navigation hold: center the prospect's card in the results panel and
+  // sleep so the recording captures them in the competitive list with their
+  // rank context visible. Critical for deep-rank leads (#11+) where the card
+  // would otherwise never appear in the recorded video.
+  // 2026-05-18 — added after XP Garage & Gate Experts (#35) review.
+  try {
+    const centered = await page.evaluate((targetHref) => {
+      const anchor = Array.from(
+        document.querySelectorAll('a.hfpxzc, a[href*="/maps/place/"]')
+      ).find((a) => a.href === targetHref);
+      if (!anchor) return false;
+      const card = anchor.closest('div[role="article"], div.Nv2PK') || anchor;
+      // Highlight the card so it pops in the recording
+      const prev = card.style.outline;
+      card.style.outline = '3px solid #2f57eb';
+      card.style.outlineOffset = '2px';
+      card.style.transition = 'outline 0.3s ease-in-out';
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Remove the highlight after 4.5s (longer than our hold)
+      setTimeout(() => { card.style.outline = prev; card.style.outlineOffset = ''; }, 4500);
+      return true;
+    }, href);
+    if (centered) {
+      await sleep(4000); // recording captures the card centered + highlighted
+    }
+  } catch (err) {
+    // Non-fatal — proceed to navigation even if the centering hold failed
+    console.warn(`   ⚠️ pre-click center failed (non-fatal): ${err.message || err}`);
+  }
+
   // Navigate directly — avoids click-coordinate staleness from Maps virtual DOM re-renders
   await page.goto(href, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
   return true;
