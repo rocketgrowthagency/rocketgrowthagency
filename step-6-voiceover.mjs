@@ -696,7 +696,12 @@ function scoreMobileFindings(audit) {
     out.push({ key: 'viewport', score: 3, finding: `there's no responsive viewport tag, so the site just shrinks the desktop layout instead of adapting for mobile` });
   }
   // PRIORITY 4: Click-to-call NOT above fold
-  if (m.clickToCallAboveFold === false) {
+  // Skip this finding if the phone number itself is visible above the fold — modern mobile
+  // browsers auto-link phone numbers as tap-to-call, so visible phone === tap-to-call available
+  // even if the DOM extractor missed an image/JS-styled button.
+  // 2026-05-18: locked after XP Garage & Gate Experts case where orange CTA bar with
+  // "(818) 337-2533" was missed by the tap-to-call selector but is clearly tappable.
+  if (m.clickToCallAboveFold === false && m.phoneVisibleAboveFold !== true) {
     out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
   }
   // PRIORITY 5: Tap target < 48px
@@ -1317,9 +1322,11 @@ function buildScript(record, top3Stats, audit) {
 
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
+  // Intro target: 13-15s. Locked 2026-05-18 — re-tightened after regression
+  // to ~25s. Memory: project_outreach_machine.md (intro length decision).
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover where you're vulnerable to losing your top 3 spot — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of the issues that could cost you your top 3 spot.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I just ran a surface-level audit on ${name} across your Google Business Profile, website, and mobile experience, and I'm walking you through it in the next 2 minutes. I'll cover the top issues keeping you from the top 3 ranking — and at the end I'll show you how to get the full Free Growth Audit, the complete report covering a more in-depth analysis of the issues keeping you from the top 3.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${name}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover where you're vulnerable to losing your top 3 spot — plus how to get the full report at the end.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${name}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover the top issues keeping you from the top 3 — plus how to get the full report at the end.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -1429,6 +1436,28 @@ function buildScript(record, top3Stats, audit) {
     ? `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who'll defend your top 3 spot, push for #1, then expand into more keywords and locations — so you can grow your leads and your business. Tap the button below to claim yours. Free, no call required.`
     : `That was the surface-level audit. The full Free Growth Audit goes deeper — citation profile, competitor comparison, geo-grid visibility, and the exact execution plan. We're local SEO experts who fix what's holding you back, get you into the top 3 for this search, then expand into more keywords and locations — so you can grow your leads and your business. Tap the button below to claim yours. Free, no call required.`;
   // Intro + outro reframed 2026-05-14 to honest partial-audit framing — change only with explicit user request.
+
+  // ============================================================
+  // HARD GUARDRAIL: intro length must stay 13-15s. Memory rule:
+  // feedback_intro_voiceover_13_15_seconds.md. Don't relax this without
+  // explicit Chris approval — every regression past 16s costs us prospect
+  // attention before they see Maps content.
+  // ============================================================
+  const INTRO_MAX_WORDS = 55;          // ~16s at TTS pace (3 wps + buffer)
+  const INTRO_TARGET_WORDS = 48;        // ~14s — the locked target
+  const introWordCount = intro.trim().split(/\s+/).length;
+  if (introWordCount > INTRO_MAX_WORDS) {
+    throw new Error(
+      `[step-6 GUARDRAIL] Intro voiceover is ${introWordCount} words (max ${INTRO_MAX_WORDS} ≈ 16s). ` +
+      `Locked target ${INTRO_TARGET_WORDS} words ≈ 14s. Cut the intro before re-running. ` +
+      `See memory: feedback_intro_voiceover_13_15_seconds.md`
+    );
+  }
+  if (introWordCount > INTRO_TARGET_WORDS + 4) {
+    console.warn(
+      `[step-6 WARN] Intro is ${introWordCount} words (locked target ${INTRO_TARGET_WORDS}). Still within max but trending long.`
+    );
+  }
 
   return {
     intro,
@@ -1615,6 +1644,16 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
       text: segments[segName],
     };
     console.log(`     ✓ ${segName} = ${duration.toFixed(2)}s`);
+    // Post-TTS guardrail — second layer of defense against intro regression.
+    // Word-count check at script-build time should already block this, but TTS
+    // pacing varies, so we double-check the actual rendered audio.
+    if (segName === 'intro' && duration > 16) {
+      throw new Error(
+        `[step-6 GUARDRAIL] Intro audio is ${duration.toFixed(2)}s (max 16s). ` +
+        `Cut intro text in step-6-voiceover.mjs:~1325 and re-run. ` +
+        `Locked rule: feedback_intro_voiceover_13_15_seconds.md`
+      );
+    }
   }
 
   // Build combined.mp3 by concatenating segment MP3s — ensures total duration = sum of segments
