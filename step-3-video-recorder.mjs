@@ -724,9 +724,13 @@ async function highlightBusinessOnDetailPage(page) {
       setTimeout(() => {
         if (window.__rgaScrollLockInterval) clearInterval(window.__rgaScrollLockInterval);
       }, 18000);
-      // No outline on heading — the rank overlay top-right + the panel being
-      // pinned to top is enough identification. Chris confirmed 2026-05-18
-      // that the blue outline was visually noisy.
+      // GUARDRAIL: No outline / border / box-shadow on the heading element.
+      // The rank overlay top-right + the panel pinned to top is enough.
+      // Chris locked this 2026-05-18. See feedback_maps_card_visibility_rules.md
+      // Rule 5. If you add `heading.style.outline = ...` here, REVERT IT.
+      if (heading.style.outline || heading.style.boxShadow || heading.style.border) {
+        console.warn('[step-3 GUARDRAIL] heading has decoration — should be clean per Rule 5');
+      }
       return true;
     });
   } catch (err) {
@@ -743,16 +747,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
 
   if (!query && !mapsUrl) return 'none';
 
-  // Smart short-circuit: for rank > 10, skip the scroll-find entirely.
-  // Reason: scroll-find for deep ranks takes 15-25s of recording time, often
-  // leaving NO time for the detail-page hold before the recording ends. By
-  // skipping straight to direct URL navigation, the detail page is visible
-  // for ~15s instead of 0s.
-  // Top-10 leads still use scroll-find because their card appears in the
-  // initial results panel (good competitive-context visual).
-  // 2026-05-18: threshold lowered from 50 → 10 after XP #35 recording cut
-  // off before detail page rendered.
+  // ============================================================
+  // HARD GUARDRAILS for Maps card visibility (Rules 1-6).
+  // Reference: feedback_maps_card_visibility_rules.md
+  // Don't change DEEP_RANK_THRESHOLD without updating that memory file
+  // AND visually testing both a top-3 lead AND a deep-rank lead.
+  // ============================================================
   const DEEP_RANK_THRESHOLD = 10;
+  if (DEEP_RANK_THRESHOLD !== 10) {
+    throw new Error('[step-3 GUARDRAIL] DEEP_RANK_THRESHOLD must stay at 10. See feedback_maps_card_visibility_rules.md');
+  }
   const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
 
   // Scroll enough panels to expose the business at its actual rank position.
