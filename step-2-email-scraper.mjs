@@ -70,11 +70,35 @@ function cleanUrl(url) {
   return '';
 }
 
+// Strip phone-number prefixes that get concatenated into scraped emails when
+// source HTML has no space between a tel and a mailto (e.g. on a contact page
+// "Tel: (XXX) 351-0978info@biz.com"). The greedy email regex would otherwise
+// match "351-0978info@biz.com" as a valid address. Detected pattern: local
+// part starts with 3+ digits + optional dashes + 1-4 digits, BEFORE the actual
+// alphabetic local-part. Phone-fragment stripped only when alpha chars follow.
+//
+// 2026-05-18 — locked after the LA Garage Door Repair Wizards bad-email
+// incident. See feedback_email_phone_concat_sanitizer.md in memory.
+function sanitizeScrapedEmail(raw) {
+  if (!raw) return raw;
+  // Prefix must contain at least one phone separator (- space . ( ) +) so we
+  // don't strip legit digit-only prefixes like "2024marketing@biz.com".
+  const m = raw.match(/^[\d.()+\-\s]*[.()+\-\s][\d.()+\-\s]*([a-zA-Z][a-zA-Z0-9._%+-]*@.+)$/);
+  if (m) return m[1];
+  return raw;
+}
+
 function isLikelyEmail(email) {
   if (!email) return '';
-  const trimmed = email.trim().toLowerCase();
+  const cleaned = sanitizeScrapedEmail(email.trim());
+  const trimmed = cleaned.toLowerCase();
   const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
   if (!basic.test(trimmed)) return '';
+  // Reject local parts that look like a US phone fragment (3-4 digits + dash +
+  // 4 digits + anything else) — defense in case sanitizeScrapedEmail missed a
+  // variant. Keeps legitimate digit-prefixed emails like "2024marketing@biz".
+  const localPart = trimmed.split('@')[0];
+  if (/^\d{3,4}-\d{4}/.test(localPart)) return '';
   if (trimmed.endsWith('.png') || trimmed.endsWith('.jpg') || trimmed.endsWith('.jpeg')) {
     return '';
   }
