@@ -211,6 +211,44 @@
           Your browser doesn't support HTML5 video. <a href="video.mp4?v={{CACHE_VERSION}}">Download the video</a>.
         </video>
       </div>
+      <script>
+        // GA4 video engagement tracking — fires through GTM-MCGMSCCR → GA4.
+        // Events: video_play, video_25_percent, video_50_percent,
+        // video_75_percent, video_complete. Each milestone fires once per page
+        // load. business_slug + business_name surface for cross-event attribution.
+        (function () {
+          var v = document.getElementById('rga-video');
+          if (!v) return;
+          window.dataLayer = window.dataLayer || [];
+          var slug = '{{SLUG}}';
+          var name = '{{BUSINESS_NAME}}';
+          var fired = { play: false, p25: false, p50: false, p75: false, complete: false };
+          function fire(eventName, extra) {
+            window.dataLayer.push(Object.assign({
+              event: eventName,
+              business_slug: slug,
+              business_name: name
+            }, extra || {}));
+          }
+          v.addEventListener('play', function () {
+            if (fired.play) return;
+            fired.play = true;
+            fire('video_play', { current_time_sec: Math.round(v.currentTime) });
+          });
+          v.addEventListener('timeupdate', function () {
+            if (!v.duration || isNaN(v.duration)) return;
+            var pct = (v.currentTime / v.duration) * 100;
+            if (!fired.p25 && pct >= 25) { fired.p25 = true; fire('video_25_percent'); }
+            if (!fired.p50 && pct >= 50) { fired.p50 = true; fire('video_50_percent'); }
+            if (!fired.p75 && pct >= 75) { fired.p75 = true; fire('video_75_percent'); }
+          });
+          v.addEventListener('ended', function () {
+            if (fired.complete) return;
+            fired.complete = true;
+            fire('video_complete', { duration_sec: Math.round(v.duration || 0) });
+          });
+        })();
+      </script>
 
       <div class="cta-bar">
         <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?utm_source=cold-email&utm_medium=video&utm_campaign=outreach&utm_content={{SLUG}}&lead={{SLUG}}">Get My Free Growth Audit</a>
