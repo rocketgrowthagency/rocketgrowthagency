@@ -692,21 +692,46 @@ async function injectRankOverlay(page, businessName, rank, searchTerm) {
 }
 
 // After direct-URL navigation to a business's Maps detail page (used for
-// deep-rank or scroll-find-failure cases), outline the business name in the
-// left panel so the prospect's card stands out in the recording.
+// deep-rank or scroll-find-failure cases), scroll the left panel to TOP so
+// the business name + rating is the dominant visual, and outline the heading.
+// 2026-05-18 rev2 — replaced scrollIntoView with explicit scrollTop=0 on the
+// scrollable container because scrollIntoView was over-scrolling past the name.
 async function highlightBusinessOnDetailPage(page) {
   try {
     await page.evaluate(() => {
-      // Business name heading on Maps detail page lives in h1.DUwDvf (current
-      // selector as of 2025-2026). Fall back to first h1 if class drift.
       const heading = document.querySelector('h1.DUwDvf') || document.querySelector('h1');
       if (!heading) return false;
-      const card = heading.closest('div.lMbq3e, div.iWO5td, div.m6QErb') || heading.parentElement || heading;
-      card.style.outline = '3px solid #2f57eb';
-      card.style.outlineOffset = '4px';
-      card.style.transition = 'outline 0.3s ease-in-out';
-      card.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      setTimeout(() => { card.style.outline = ''; card.style.outlineOffset = ''; }, 8000);
+      // Find the scrollable left-panel container. Maps uses several class
+      // variants — walk up from the heading until we find a scrollable parent.
+      let scroller = heading.parentElement;
+      while (scroller && scroller !== document.body) {
+        const style = window.getComputedStyle(scroller);
+        const overflowY = style.overflowY;
+        if ((overflowY === 'auto' || overflowY === 'scroll') && scroller.scrollHeight > scroller.clientHeight) {
+          break;
+        }
+        scroller = scroller.parentElement;
+      }
+      // Hard-reset scroll to TOP. Re-reset every 500ms for 18s in case Maps
+      // tries to auto-scroll (focus changes, ad insertions). Cleared by page
+      // unload.
+      const resetScroll = () => {
+        if (scroller && scroller !== document.body) scroller.scrollTop = 0;
+      };
+      resetScroll();
+      if (window.__rgaScrollLockInterval) clearInterval(window.__rgaScrollLockInterval);
+      window.__rgaScrollLockInterval = setInterval(resetScroll, 500);
+      setTimeout(() => {
+        if (window.__rgaScrollLockInterval) clearInterval(window.__rgaScrollLockInterval);
+      }, 18000);
+      // Apply outline directly on the heading so it's tight + obvious
+      heading.style.outline = '3px solid #2f57eb';
+      heading.style.outlineOffset = '6px';
+      heading.style.transition = 'outline 0.3s ease-in-out';
+      setTimeout(() => {
+        heading.style.outline = '';
+        heading.style.outlineOffset = '';
+      }, 12000);
       return true;
     });
   } catch (err) {
