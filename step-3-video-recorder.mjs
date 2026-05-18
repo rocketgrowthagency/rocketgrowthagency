@@ -626,6 +626,66 @@ async function extractWebsiteFromMapsCard(page) {
   }
 }
 
+// Inject a fixed-position rank-context overlay so EVERY Maps recording shows
+// the prospect's rank prominently — even when their card never appears on
+// screen (deep-rank, scroll-find failure, direct-URL navigation).
+// 2026-05-18: locked after XP #35 + general deep-rank Maps visibility work.
+async function injectRankOverlay(page, businessName, rank, searchTerm) {
+  if (!rank) return;
+  try {
+    await page.evaluate((name, rankNum, term) => {
+      // Remove any prior overlay (e.g., from a re-injection after page nav)
+      document.getElementById('rga-rank-overlay')?.remove();
+      const box = document.createElement('div');
+      box.id = 'rga-rank-overlay';
+      box.innerHTML = `
+        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:4px;">Currently ranking</div>
+        <div style="font-size:34px;color:#fff;font-weight:800;line-height:1;margin-bottom:6px;">#${rankNum}</div>
+        <div style="font-size:13px;color:#cbd5e1;font-weight:500;line-height:1.3;max-width:280px;">${name}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:6px;font-style:italic;">for "${term}"</div>
+      `;
+      Object.assign(box.style, {
+        position: 'fixed',
+        top: '78px',
+        right: '20px',
+        zIndex: '2147483647',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        padding: '14px 18px',
+        borderRadius: '12px',
+        boxShadow: '0 12px 32px rgba(15,23,42,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        pointerEvents: 'none',
+      });
+      document.body.appendChild(box);
+    }, businessName, String(rank), searchTerm);
+  } catch (err) {
+    console.warn(`   ⚠️ rank overlay inject failed (non-fatal): ${err.message || err}`);
+  }
+}
+
+// After direct-URL navigation to a business's Maps detail page (used for
+// deep-rank or scroll-find-failure cases), outline the business name in the
+// left panel so the prospect's card stands out in the recording.
+async function highlightBusinessOnDetailPage(page) {
+  try {
+    await page.evaluate(() => {
+      // Business name heading on Maps detail page lives in h1.DUwDvf (current
+      // selector as of 2025-2026). Fall back to first h1 if class drift.
+      const heading = document.querySelector('h1.DUwDvf') || document.querySelector('h1');
+      if (!heading) return false;
+      const card = heading.closest('div.lMbq3e, div.iWO5td, div.m6QErb') || heading.parentElement || heading;
+      card.style.outline = '3px solid #2f57eb';
+      card.style.outlineOffset = '4px';
+      card.style.transition = 'outline 0.3s ease-in-out';
+      card.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      setTimeout(() => { card.style.outline = ''; card.style.outlineOffset = ''; }, 8000);
+      return true;
+    });
+  } catch (err) {
+    console.warn(`   ⚠️ detail-page highlight failed (non-fatal): ${err.message || err}`);
+  }
+}
+
 async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigation) {
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
@@ -634,6 +694,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   const query = searchTerm || businessName;
 
   if (!query && !mapsUrl) return 'none';
+
+  // Smart short-circuit: scrolling to find rank #50+ takes 12+ scrolls, often
+  // hits Maps virtual-DOM unloading and rate-limit popups. For those leads,
+  // skip the scroll attempt and go straight to direct URL navigation.
+  // 2026-05-18: locked.
+  const DEEP_RANK_THRESHOLD = 50;
+  const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
 
   // Scroll enough panels to expose the business at its actual rank position.
   // Each scroll reveals ~5 listings; add 2 extra as buffer.
@@ -662,16 +729,26 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await waitForMapsResults(page);
       await sleep(3500);
       await dismissResultsInfoPopup(page);
+
+      // Inject rank-context overlay so the recording ALWAYS shows the prospect's
+      // rank prominently — works for every variant (results-click, direct-url,
+      // search-only). Done after results load so overlay sits on top of Maps UI.
+      await injectRankOverlay(page, businessName, rank, searchTerm);
     }
 
-    if (businessName) {
+    if (businessName && !skipScrollAttempt) {
       console.log(`   → Scrolling to find and click ${businessName} (rank #${rank ?? '?'})...`);
       const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded + 2);
       if (clicked) {
+        // Re-inject overlay after navigation (page.goto wipes the DOM)
+        await injectRankOverlay(page, businessName, rank, searchTerm);
+        await highlightBusinessOnDetailPage(page);
         await sleep(12000);
         await dismissResultsInfoPopup(page);
         return 'results-click';
       }
+    } else if (skipScrollAttempt) {
+      console.log(`   → Rank #${rank} > ${DEEP_RANK_THRESHOLD} — skipping scroll-find, going direct to Maps URL`);
     }
 
     if (mapsUrl) {
@@ -707,7 +784,11 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         console.log(`   → Results click failed; opening direct Maps URL.`);
       }
       await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-      await sleep(9000);
+      await sleep(2500);
+      // Re-inject overlay after navigation + outline business name in detail panel
+      await injectRankOverlay(page, businessName, rank, searchTerm);
+      await highlightBusinessOnDetailPage(page);
+      await sleep(6500);
       await dismissResultsInfoPopup(page);
       return 'direct-url';
     }
