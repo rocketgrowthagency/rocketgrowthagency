@@ -550,25 +550,41 @@ async function clickListingInResultsByName(page, businessName) {
   // rank context visible. Critical for deep-rank leads (#11+) where the card
   // would otherwise never appear in the recorded video.
   // 2026-05-18 — added after XP Garage & Gate Experts (#35) review.
+  // 2026-05-18 (rev2) — switched from href-match to name-match in card text
+  // because Maps DOM re-renders the href subtly between getListingHrefByName
+  // and this call, causing the lookup to silently miss the card.
   try {
-    const centered = await page.evaluate((targetHref) => {
-      const anchor = Array.from(
-        document.querySelectorAll('a.hfpxzc, a[href*="/maps/place/"]')
-      ).find((a) => a.href === targetHref);
-      if (!anchor) return false;
-      const card = anchor.closest('div[role="article"], div.Nv2PK') || anchor;
+    const centered = await page.evaluate((targetName) => {
+      const norm = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+      const target = norm(targetName);
+      // Find candidate cards in the results panel
+      const cards = Array.from(document.querySelectorAll('div[role="article"], div.Nv2PK'));
+      let match = null;
+      for (const card of cards) {
+        const text = norm(card.innerText || '');
+        if (text.includes(target) || target.split(' ').filter((w) => w.length >= 4).every((w) => text.includes(w))) {
+          match = card;
+          break;
+        }
+      }
+      if (!match) return false;
       // Highlight the card so it pops in the recording
-      const prev = card.style.outline;
-      card.style.outline = '3px solid #2f57eb';
-      card.style.outlineOffset = '2px';
-      card.style.transition = 'outline 0.3s ease-in-out';
-      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      // Remove the highlight after 4.5s (longer than our hold)
-      setTimeout(() => { card.style.outline = prev; card.style.outlineOffset = ''; }, 4500);
+      match.style.outline = '4px solid #2f57eb';
+      match.style.outlineOffset = '2px';
+      match.style.transition = 'outline 0.3s ease-in-out';
+      match.style.boxShadow = '0 0 0 6px rgba(47,87,235,0.25)';
+      match.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setTimeout(() => {
+        match.style.outline = '';
+        match.style.outlineOffset = '';
+        match.style.boxShadow = '';
+      }, 4500);
       return true;
-    }, href);
+    }, businessName);
     if (centered) {
       await sleep(4000); // recording captures the card centered + highlighted
+    } else {
+      console.warn(`   ⚠️ pre-click center: no card matched "${businessName}" in DOM (proceeding to nav)`);
     }
   } catch (err) {
     // Non-fatal — proceed to navigation even if the centering hold failed
@@ -634,29 +650,41 @@ async function injectRankOverlay(page, businessName, rank, searchTerm) {
   if (!rank) return;
   try {
     await page.evaluate((name, rankNum, term) => {
-      // Remove any prior overlay (e.g., from a re-injection after page nav)
-      document.getElementById('rga-rank-overlay')?.remove();
-      const box = document.createElement('div');
-      box.id = 'rga-rank-overlay';
-      box.innerHTML = `
-        <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:4px;">Currently ranking</div>
-        <div style="font-size:34px;color:#fff;font-weight:800;line-height:1;margin-bottom:6px;">#${rankNum}</div>
-        <div style="font-size:13px;color:#cbd5e1;font-weight:500;line-height:1.3;max-width:280px;">${name}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:6px;font-style:italic;">for "${term}"</div>
-      `;
-      Object.assign(box.style, {
-        position: 'fixed',
-        top: '78px',
-        right: '20px',
-        zIndex: '2147483647',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        padding: '14px 18px',
-        borderRadius: '12px',
-        boxShadow: '0 12px 32px rgba(15,23,42,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        pointerEvents: 'none',
-      });
-      document.body.appendChild(box);
+      // Install a setInterval that re-injects the overlay every 500ms if missing.
+      // This survives Maps' SPA re-renders + page.goto navigations within the
+      // same execution context (the interval is cleared when the page unloads).
+      // Idempotent: removing & re-adding the same ID has no visual flicker.
+      if (window.__rgaRankOverlayInterval) clearInterval(window.__rgaRankOverlayInterval);
+      const inject = () => {
+        if (!document.body) return;
+        if (document.getElementById('rga-rank-overlay')) return; // already there
+        const box = document.createElement('div');
+        box.id = 'rga-rank-overlay';
+        box.innerHTML = `
+          <div style="font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:4px;">Currently ranking</div>
+          <div style="font-size:34px;color:#fff;font-weight:800;line-height:1;margin-bottom:6px;">#${rankNum}</div>
+          <div style="font-size:13px;color:#cbd5e1;font-weight:500;line-height:1.3;max-width:280px;">${name}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:6px;font-style:italic;">for "${term}"</div>
+        `;
+        Object.assign(box.style, {
+          position: 'fixed',
+          top: '78px',
+          right: '20px',
+          zIndex: '2147483647',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          padding: '14px 18px',
+          borderRadius: '12px',
+          boxShadow: '0 12px 32px rgba(15,23,42,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          pointerEvents: 'none',
+        });
+        document.body.appendChild(box);
+      };
+      inject(); // immediate
+      window.__rgaRankOverlayInterval = setInterval(inject, 500); // resilient
+      // Also re-inject on every navigation (the interval covers this too but
+      // explicit DOMContentLoaded hook is a belt for fast nav cases).
+      window.__rgaRankOverlayParams = { name, rankNum, term };
     }, businessName, String(rank), searchTerm);
   } catch (err) {
     console.warn(`   ⚠️ rank overlay inject failed (non-fatal): ${err.message || err}`);
@@ -695,11 +723,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
 
   if (!query && !mapsUrl) return 'none';
 
-  // Smart short-circuit: scrolling to find rank #50+ takes 12+ scrolls, often
-  // hits Maps virtual-DOM unloading and rate-limit popups. For those leads,
-  // skip the scroll attempt and go straight to direct URL navigation.
-  // 2026-05-18: locked.
-  const DEEP_RANK_THRESHOLD = 50;
+  // Smart short-circuit: for rank > 10, skip the scroll-find entirely.
+  // Reason: scroll-find for deep ranks takes 15-25s of recording time, often
+  // leaving NO time for the detail-page hold before the recording ends. By
+  // skipping straight to direct URL navigation, the detail page is visible
+  // for ~15s instead of 0s.
+  // Top-10 leads still use scroll-find because their card appears in the
+  // initial results panel (good competitive-context visual).
+  // 2026-05-18: threshold lowered from 50 → 10 after XP #35 recording cut
+  // off before detail page rendered.
+  const DEEP_RANK_THRESHOLD = 10;
   const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
 
   // Scroll enough panels to expose the business at its actual rank position.
@@ -718,6 +751,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     });
     if (afterMapsNavigation) await afterMapsNavigation();
 
+    // Inject rank-context overlay IMMEDIATELY after recorder starts so the
+    // prospect's rank is visible from frame 1 of the Maps segment, regardless
+    // of how long the search/scroll/click takes. The interval inside the
+    // overlay self-reinjects every 500ms, so it survives navigations and
+    // Maps' SPA re-renders.
+    await injectRankOverlay(page, businessName, rank, searchTerm);
+
     if (query) {
       await waitForMapsResults(page);
       await sleep(1500);
@@ -729,11 +769,6 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await waitForMapsResults(page);
       await sleep(3500);
       await dismissResultsInfoPopup(page);
-
-      // Inject rank-context overlay so the recording ALWAYS shows the prospect's
-      // rank prominently — works for every variant (results-click, direct-url,
-      // search-only). Done after results load so overlay sits on top of Maps UI.
-      await injectRankOverlay(page, businessName, rank, searchTerm);
     }
 
     if (businessName && !skipScrollAttempt) {
@@ -752,23 +787,23 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     }
 
     if (mapsUrl) {
-      // Bare name URLs (/maps/place/Name+Only, no coordinates) render a 152-char stub.
-      // Fix: reset the Maps viewport first (clears Culver City bias), then search by
-      // business name + city. A fresh viewport search for "BRGD Garage Door Repair Marina Del Rey CA"
-      // returns the real business card with reviews and stars — not an address pin.
+      // Bare name URLs (/maps/place/Name+Only, no coordinates) — fall back to
+      // a typed search by "Business Name, City State" which Maps resolves
+      // intent-based to the exact place (works even if URL has no coords).
       const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
       const fallbackUrl = isBareNameUrl
         ? `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`
         : mapsUrl;
-      // Typed search in the Maps search box uses intent-matching (not location-biased
-      // URL search). Searching "Business Name, Full Address" types as a human would —
-      // Maps finds the exact place regardless of the profile's location history.
-      if (isBareNameUrl) {
-        // Business not found in search results and has no coordinate URL.
-        // Stay on the results list — scroll through the competitive landscape so
-        // the video shows the search context without opening a wrong business panel.
-        console.log(`   → Business not found in results; showing competitive search list.`);
+      // 2026-05-18: for deep-rank short-circuit OR bare-name URLs, always
+      // attempt the fallback navigation. The previous behavior of "stay on
+      // results list" for bare-name URLs meant deep-rank leads NEVER showed
+      // their detail card. Caught reviewing XP #35.
+      if (isBareNameUrl && !skipScrollAttempt) {
+        // Original path: scroll-find failed AND no coordinates → scroll
+        // through competitors (this only triggers for top-10 leads where
+        // scroll-find should have worked; falling through is rare).
+        console.log(`   → Scroll-find failed and Maps URL has no coords; showing competitive list.`);
         for (let i = 0; i < 6; i++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]') ||
@@ -780,15 +815,30 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         }
         await dismissResultsInfoPopup(page);
         return 'search-only';
+      } else if (isBareNameUrl && skipScrollAttempt) {
+        // Deep-rank lead with bare-name URL → use fallback search URL to
+        // pull up the business's detail card.
+        console.log(`   → Bare-name URL for deep-rank — using fallback search "${nameCity}"`);
       } else {
         console.log(`   → Results click failed; opening direct Maps URL.`);
+      }
+      // For deep-rank short-circuit (rank > 10): hold on the search results
+      // panel for ~4s first so the viewer sees the competitive landscape
+      // (top results visible with the rank overlay), THEN navigate to the
+      // prospect's detail page for the remainder of the Maps segment.
+      if (skipScrollAttempt) {
+        console.log(`   → Holding on results panel ~4s for competitive context`);
+        await sleep(4000);
       }
       await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
       await sleep(2500);
       // Re-inject overlay after navigation + outline business name in detail panel
       await injectRankOverlay(page, businessName, rank, searchTerm);
       await highlightBusinessOnDetailPage(page);
-      await sleep(6500);
+      // Long hold on detail page so the prospect's card is the dominant visual
+      // for the Maps audio (~38s). With 4s results-hold + 2.5s nav, we still
+      // have audio length ~30s left to fill with the detail-page view.
+      await sleep(18000);
       await dismissResultsInfoPopup(page);
       return 'direct-url';
     }
