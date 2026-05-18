@@ -212,40 +212,84 @@
         </video>
       </div>
       <script>
-        // GA4 video engagement tracking — fires through GTM-MCGMSCCR → GA4.
-        // Events: video_play, video_25_percent, video_50_percent,
-        // video_75_percent, video_complete. Each milestone fires once per page
-        // load. business_slug + business_name surface for cross-event attribution.
+        // GA4 engagement tracking on video + CTA — fires through GTM-MCGMSCCR → GA4.
+        // Every event carries: lead_id (Airtable recID from ?lead=), business_slug,
+        // business_name, and UTM context (utm_source/medium/campaign/content)
+        // so events can be joined back to a specific lead in GA4 + funnel reports.
         (function () {
-          var v = document.getElementById('rga-video');
-          if (!v) return;
           window.dataLayer = window.dataLayer || [];
           var slug = '{{SLUG}}';
           var name = '{{BUSINESS_NAME}}';
-          var fired = { play: false, p25: false, p50: false, p75: false, complete: false };
+          var qs = new URLSearchParams(window.location.search);
+          // Base context attached to every event from this page
+          var baseCtx = {
+            business_slug: slug,
+            business_name: name,
+            lead_id: qs.get('lead') || '',
+            utm_source: qs.get('utm_source') || '',
+            utm_medium: qs.get('utm_medium') || '',
+            utm_campaign: qs.get('utm_campaign') || '',
+            utm_content: qs.get('utm_content') || ''
+          };
           function fire(eventName, extra) {
-            window.dataLayer.push(Object.assign({
-              event: eventName,
-              business_slug: slug,
-              business_name: name
-            }, extra || {}));
+            var payload = Object.assign({ event: eventName }, baseCtx, extra || {});
+            // 1. GA4 via GTM dataLayer (client-side)
+            window.dataLayer.push(payload);
+            // 2. Airtable Outreach Log + GA4 Measurement Protocol (server-side mirror).
+            //    Fire-and-forget; sendBeacon survives page unload during nav clicks.
+            try {
+              var body = JSON.stringify({
+                event_name: eventName,
+                lead_id: baseCtx.lead_id,
+                business_name: baseCtx.business_name,
+                business_slug: baseCtx.business_slug,
+                href: extra && extra.href ? extra.href : '',
+                duration_sec: extra && extra.duration_sec ? extra.duration_sec : 0,
+                current_time_sec: extra && extra.current_time_sec ? extra.current_time_sec : 0,
+                client_id: baseCtx.lead_id || ('anon-' + slug)
+              });
+              if (navigator.sendBeacon) {
+                var blob = new Blob([body], { type: 'application/json' });
+                navigator.sendBeacon('/.netlify/functions/track-event', blob);
+              } else {
+                fetch('/.netlify/functions/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+              }
+            } catch (e) { /* never break the page */ }
           }
-          v.addEventListener('play', function () {
-            if (fired.play) return;
-            fired.play = true;
-            fire('video_play', { current_time_sec: Math.round(v.currentTime) });
+          // ── Video engagement events ──
+          var v = document.getElementById('rga-video');
+          if (v) {
+            var fired = { play: false, p25: false, p50: false, p75: false, complete: false };
+            v.addEventListener('play', function () {
+              if (fired.play) return;
+              fired.play = true;
+              fire('video_play', { current_time_sec: Math.round(v.currentTime) });
+            });
+            v.addEventListener('timeupdate', function () {
+              if (!v.duration || isNaN(v.duration)) return;
+              var pct = (v.currentTime / v.duration) * 100;
+              if (!fired.p25 && pct >= 25) { fired.p25 = true; fire('video_25_percent'); }
+              if (!fired.p50 && pct >= 50) { fired.p50 = true; fire('video_50_percent'); }
+              if (!fired.p75 && pct >= 75) { fired.p75 = true; fire('video_75_percent'); }
+            });
+            v.addEventListener('ended', function () {
+              if (fired.complete) return;
+              fired.complete = true;
+              fire('video_complete', { duration_sec: Math.round(v.duration || 0) });
+            });
+          }
+          // ── CTA + escape link click tracking ──
+          // Fire 'cta_click' on "Get My Free Growth Audit" + 'escape_link_click'
+          // on "Skip the audit and contact us". Both bridge video → form funnel.
+          document.querySelectorAll('a.btn-primary, a[href*="/free-growth-audit/"]').forEach(function (a) {
+            a.addEventListener('click', function () {
+              fire('cta_click', { destination: 'free-growth-audit', href: a.href });
+            });
           });
-          v.addEventListener('timeupdate', function () {
-            if (!v.duration || isNaN(v.duration)) return;
-            var pct = (v.currentTime / v.duration) * 100;
-            if (!fired.p25 && pct >= 25) { fired.p25 = true; fire('video_25_percent'); }
-            if (!fired.p50 && pct >= 50) { fired.p50 = true; fire('video_50_percent'); }
-            if (!fired.p75 && pct >= 75) { fired.p75 = true; fire('video_75_percent'); }
-          });
-          v.addEventListener('ended', function () {
-            if (fired.complete) return;
-            fired.complete = true;
-            fire('video_complete', { duration_sec: Math.round(v.duration || 0) });
+          document.querySelectorAll('.escape-link a, a[href*="/contact/"]').forEach(function (a) {
+            a.addEventListener('click', function () {
+              fire('escape_link_click', { destination: 'contact', href: a.href });
+            });
           });
         })();
       </script>
