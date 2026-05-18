@@ -260,6 +260,13 @@
           var v = document.getElementById('rga-video');
           if (v) {
             var fired = { play: false, p25: false, p50: false, p75: false, complete: false };
+            // Autoplay race: if video started playing before this script attached
+            // listeners (autoplay muted + script later in the page), fire video_play
+            // immediately so we don't miss it.
+            if (!v.paused && !v.ended && !fired.play) {
+              fired.play = true;
+              fire('video_play', { current_time_sec: Math.round(v.currentTime) });
+            }
             v.addEventListener('play', function () {
               if (fired.play) return;
               fired.play = true;
