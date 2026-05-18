@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Google Tag Manager — GA4 via GTM container -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MCGMSCCR');</script>
+  <!-- Push page-level lead context into dataLayer so GA4 events can attribute -->
+  <script>window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'video_landing_view',business_slug:'{{SLUG}}',business_name:'{{BUSINESS_NAME}}',page_type:'cold_outreach_video'});</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Growth Audit for {{BUSINESS_NAME}} | Rocket Growth Agency</title>
@@ -209,8 +213,8 @@
       </div>
 
       <div class="cta-bar">
-        <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}&vid={{SLUG}}">Get My Free Growth Audit</a>
-        <p class="escape-link">Already convinced? <a href="https://www.rocketgrowthagency.com/contact/?source=video&business={{SLUG}}">Skip the audit and contact us →</a></p>
+        <a class="btn-primary" href="https://www.rocketgrowthagency.com/free-growth-audit/?utm_source=cold-email&utm_medium=video&utm_campaign=outreach&utm_content={{SLUG}}&lead={{SLUG}}">Get My Free Growth Audit</a>
+        <p class="escape-link">Already convinced? <a href="https://www.rocketgrowthagency.com/contact/?utm_source=cold-email&utm_medium=video&utm_campaign=outreach&utm_content={{SLUG}}&lead={{SLUG}}">Skip the audit and contact us →</a></p>
       </div>
 
       <div class="body-copy">
@@ -233,7 +237,7 @@
   </main>
 
   <div class="sticky-cta">
-    <a href="https://www.rocketgrowthagency.com/free-growth-audit/?source=video&business={{SLUG}}">Get My Free Growth Audit</a>
+    <a href="https://www.rocketgrowthagency.com/free-growth-audit/?utm_source=cold-email&utm_medium=video&utm_campaign=outreach&utm_content={{SLUG}}&lead={{SLUG}}">Get My Free Growth Audit</a>
   </div>
 </body>
 </html>
