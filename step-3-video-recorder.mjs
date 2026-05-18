@@ -724,14 +724,9 @@ async function highlightBusinessOnDetailPage(page) {
       setTimeout(() => {
         if (window.__rgaScrollLockInterval) clearInterval(window.__rgaScrollLockInterval);
       }, 18000);
-      // Apply outline directly on the heading so it's tight + obvious
-      heading.style.outline = '3px solid #2f57eb';
-      heading.style.outlineOffset = '6px';
-      heading.style.transition = 'outline 0.3s ease-in-out';
-      setTimeout(() => {
-        heading.style.outline = '';
-        heading.style.outlineOffset = '';
-      }, 12000);
+      // No outline on heading — the rank overlay top-right + the panel being
+      // pinned to top is enough identification. Chris confirmed 2026-05-18
+      // that the blue outline was visually noisy.
       return true;
     });
   } catch (err) {
