@@ -174,6 +174,28 @@ async function main() {
       continue;
     }
 
+    // ============================================================
+    // PIPELINE-ORDER GUARDRAIL — branded.mp4 must be newer than the audio
+    // manifest. If audio was re-generated after step-5 ran, A/V sync drifts
+    // (step-4 cuts visual segments to OLD manifest durations; step-5 hardcodes
+    // intro logo card to OLD intro audio duration). See project_video_pipeline_protocol.md note 15.
+    //
+    // 2026-05-18: locked in code (was only documented in memory).
+    // ============================================================
+    const audioManifestPath = path.join(AUDIO_DIR, `${baseNoRetry}_segments`, 'manifest.json');
+    if (fs.existsSync(audioManifestPath)) {
+      const brandedMtime = fs.statSync(brandedPath).mtimeMs;
+      const manifestMtime = fs.statSync(audioManifestPath).mtimeMs;
+      if (manifestMtime > brandedMtime + 5000) { // 5s tolerance for clock skew
+        throw new Error(
+          `[step-7 GUARDRAIL] Audio manifest is NEWER than branded.mp4 for "${baseNoRetry}" — ` +
+          `audio was regenerated without re-running step-4 + step-5. A/V sync will drift. ` +
+          `Re-run step-4 (combine-desktop-mobile) THEN step-5 (branding) before retrying step-7. ` +
+          `Locked rule: project_video_pipeline_protocol.md note 15.`
+        );
+      }
+    }
+
     const audioPath = path.join(AUDIO_DIR, audioFile);
     const subtitlePath = path.join(SUBTITLE_DIR, `${baseNoRetry}.srt`);
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);

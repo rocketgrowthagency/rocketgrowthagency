@@ -1644,14 +1644,17 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
       text: segments[segName],
     };
     console.log(`     ✓ ${segName} = ${duration.toFixed(2)}s`);
-    // Post-TTS guardrail — second layer of defense against intro regression.
-    // Word-count check at script-build time should already block this, but TTS
-    // pacing varies, so we double-check the actual rendered audio.
-    if (segName === 'intro' && duration > 16) {
+    // ============================================================
+    // POST-TTS DURATION GUARDRAILS (per-segment + total)
+    // Each cap mirrors the locked decision in memory. Pipeline halts on
+    // violation. NEVER relax without explicit Chris approval + memory update.
+    // ============================================================
+    const SEGMENT_MAX = { intro: 16, maps: 50, website: 45, mobile: 40, outro: 30 };
+    if (SEGMENT_MAX[segName] && duration > SEGMENT_MAX[segName]) {
       throw new Error(
-        `[step-6 GUARDRAIL] Intro audio is ${duration.toFixed(2)}s (max 16s). ` +
-        `Cut intro text in step-6-voiceover.mjs:~1325 and re-run. ` +
-        `Locked rule: feedback_intro_voiceover_13_15_seconds.md`
+        `[step-6 GUARDRAIL] ${segName} audio is ${duration.toFixed(2)}s (max ${SEGMENT_MAX[segName]}s). ` +
+        `Cut ${segName} text in step-6-voiceover.mjs and re-run. ` +
+        `Locked rules: feedback_intro_voiceover_13_15_seconds.md, project_video_pipeline_protocol.md`
       );
     }
   }
@@ -1662,6 +1665,26 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   await concatMp3Segments(segmentDir, segmentNames, combinedPath);
   manifest.combinedFile = path.basename(combinedPath);
   manifest.combinedDurationSeconds = await getMp3DurationSeconds(combinedPath);
+
+  // Total combined duration guardrail — sum target is ~120-150s.
+  // Cap at 165s so we don't ship 3+ min videos that lose cold-outreach attention.
+  const TOTAL_MAX = 165;
+  if (manifest.combinedDurationSeconds > TOTAL_MAX) {
+    throw new Error(
+      `[step-6 GUARDRAIL] Combined audio is ${manifest.combinedDurationSeconds.toFixed(2)}s (max ${TOTAL_MAX}s). ` +
+      `Trim findings or shorten segment templates. ` +
+      `Per-segment durations: ${Object.entries(manifest.segments).map(([n, d]) => `${n}=${d.durationSeconds.toFixed(1)}s`).join(', ')}`
+    );
+  }
+
+  // Pipeline-freshness stamp — step-4 + step-5 read this to detect when audio
+  // was regenerated without re-running combine + branding (a known pitfall —
+  // see project_video_pipeline_protocol.md note 15). Wrote alongside manifest.
+  manifest.pipelineStamp = {
+    voiceoverGeneratedAt: new Date().toISOString(),
+    voiceoverEpochMs: Date.now(),
+    note: 'step-4 and step-5 MUST run AFTER this timestamp. step-6-voiceover-only re-runs break A/V sync.',
+  };
 
   const manifestPath = path.join(segmentDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
