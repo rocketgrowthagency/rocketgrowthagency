@@ -810,14 +810,50 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       console.log(`   → Rank #${rank} > ${DEEP_RANK_THRESHOLD} — skipping scroll-find, going direct to Maps URL`);
     }
 
-    if (mapsUrl) {
-      // Bare name URLs (/maps/place/Name+Only, no coordinates) — fall back to
-      // a typed search by "Business Name, City State" which Maps resolves
-      // intent-based to the exact place (works even if URL has no coords).
-      const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
+    // Build the most-deterministic fallback URL for deep-rank leads.
+    // 2026-05-19: previous typed-search fallback worked for SOME deep-rank
+    // leads but FAILED for others (Beverly Hills Roofing Contractors #23,
+    // Golden Team Roofing #41, Power Roofing #45, Roofer Bros Construction
+    // #55 — all stayed on results panel). Root cause: when a business name
+    // matches multiple Maps entries, the typed-search resolves to a results
+    // list instead of jumping to the detail page. Lat/lng disambiguates.
+    // Memory: feedback_maps_card_visibility_rules.md Rule 3.5 + 3.6.
+    function buildDeepRankFallbackUrl() {
+      const lat = Number.isFinite(meta.lat) ? meta.lat : null;
+      const lng = Number.isFinite(meta.lng) ? meta.lng : null;
+      const namePart = encodeURIComponent(businessName).replace(/%20/g, '+');
+      if (lat !== null && lng !== null) {
+        // Coords-based URL — Maps always lands on detail page even if name
+        // matches multiple entries because the @lat,lng anchors the location.
+        return `https://www.google.com/maps/place/${namePart}/@${lat},${lng},17z`;
+      }
+      // Fallback to typed-search if we don't have coords for some reason
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
+      return `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`;
+    }
+
+    if (!mapsUrl && skipScrollAttempt) {
+      const fallbackUrl = buildDeepRankFallbackUrl();
+      console.log(`   → No Maps URL for deep-rank lead — using fallback URL: ${fallbackUrl}`);
+      console.log(`   → Holding on results panel ~4s for competitive context`);
+      await sleep(4000);
+      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      await sleep(2500);
+      await injectRankOverlay(page, businessName, rank, searchTerm);
+      await highlightBusinessOnDetailPage(page);
+      await sleep(18000);
+      await dismissResultsInfoPopup(page);
+      return 'direct-url-no-mapsurl';
+    }
+
+    if (mapsUrl) {
+      // Bare name URLs (/maps/place/Name+Only, no coordinates) — typed search
+      // resolves OK for unique names but stays on a results list for common
+      // names that match multiple entries. Lat/lng anchored URL always lands
+      // on detail. Use coords-based when available; typed-search as backup.
+      const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
       const fallbackUrl = isBareNameUrl
-        ? `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`
+        ? buildDeepRankFallbackUrl()
         : mapsUrl;
       // 2026-05-18: for deep-rank short-circuit OR bare-name URLs, always
       // attempt the fallback navigation. The previous behavior of "stay on
@@ -842,7 +878,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       } else if (isBareNameUrl && skipScrollAttempt) {
         // Deep-rank lead with bare-name URL → use fallback search URL to
         // pull up the business's detail card.
-        console.log(`   → Bare-name URL for deep-rank — using fallback search "${nameCity}"`);
+        console.log(`   → Bare-name URL for deep-rank — using fallback URL: ${fallbackUrl}`);
       } else {
         console.log(`   → Results click failed; opening direct Maps URL.`);
       }
@@ -1345,7 +1381,18 @@ async function main() {
       try {
         await recordBusinessVideos(
           browser,
-          { name, city, state: row.State || row.state || '', address: row.Address || row.address || '', phone: String(row.Phone || row.phone || '').replace(/\s+/g, ' ').trim(), website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews },
+          {
+            name, city,
+            state: row.State || row.state || '',
+            address: row.Address || row.address || '',
+            phone: String(row.Phone || row.phone || '').replace(/\s+/g, ' ').trim(),
+            website, mapsUrl, searchTerm, rank, totalForTerm, rating, reviews,
+            // 2026-05-19: pass lat/lng so deep-rank navigation can build a
+            // coords-based /maps/place/Name/@lat,lng,17z URL when the typed
+            // search would be ambiguous (matches multiple businesses).
+            lat: parseFloat(row.Latitude || row.latitude || '') || null,
+            lng: parseFloat(row.Longitude || row.longitude || '') || null,
+          },
           mapsOut,
           websiteOut,
           mobileOut

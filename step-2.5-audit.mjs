@@ -586,6 +586,60 @@ async function auditMobile(browser, websiteUrl, business) {
       // Click-to-text (Mo2) — `<a href="sms:">` anywhere on the page
       result.hasClickToText = !!document.querySelector('a[href^="sms:"]');
 
+      // Chat-widget / popup detection (2026-05-19). When a site uses a
+      // third-party chat widget OR custom popup that contains the phone/sms
+      // CTAs, our above-the-fold checks miss those CTAs and fire false-
+      // negatives. Two signals captured:
+      //   - hasChatWidget: known widget signature OR generic popup detected
+      //   - chatWidgetHasPhoneCta: a tel:/sms: link OR phone-number text found
+      //     inside the widget DOM. step-6 reframes the c2cFold/clickToText
+      //     findings to "buried in chat widget" when this is true, and
+      //     suppresses them when widget present but CTA presence unclear.
+      // Memory: feedback_audit_chat_widget_detection.md.
+      const CHAT_WIDGET_SELECTORS = [
+        'iframe[name*="intercom" i]', 'iframe[id*="intercom" i]',
+        'iframe[id*="drift" i]', 'iframe[id*="tawk" i]',
+        'iframe[id*="tidio" i]', 'iframe[id*="hubspot-conv" i]',
+        'iframe[id*="crisp" i]', 'iframe[id*="livechat" i]',
+        'iframe[src*="chat" i]', 'iframe[src*="messenger" i]',
+        '[class*="intercom-launcher" i]', '[class*="drift-conductor" i]',
+        '[class*="drift-widget" i]', '[class*="tawk-min" i]',
+        '[class*="tidio-chat" i]', '[class*="olark" i]',
+        '[class*="crisp-client" i]', '[id*="livechat-widget" i]',
+        '[class*="chat-widget" i]', '[id*="chat-widget" i]',
+        '[class*="chatbot" i]', '[class*="chat-button" i]',
+        '[class*="hs-shadow" i]',
+      ];
+      let chatWidgetEl = null;
+      for (const sel of CHAT_WIDGET_SELECTORS) {
+        const el = document.querySelector(sel);
+        if (el) { chatWidgetEl = el; break; }
+      }
+      // Generic popup catch — covers custom widgets like the Santa Monica
+      // Roofing Company "Kevin Price - Owner / Need Help?" panel that doesn't
+      // use a known chat framework. Looks for popup/modal/dialog containers
+      // with a phone number text or tel:/sms: link inside.
+      if (!chatWidgetEl) {
+        const candidates = Array.from(document.querySelectorAll(
+          '[role="dialog"], [class*="popup" i], [class*="modal" i], [class*="widget" i], [class*="floating" i]'
+        ));
+        for (const el of candidates) {
+          const txt = (el.innerText || '').trim();
+          if (!txt) continue;
+          const hasPhoneText = phoneRegex.test(txt);
+          const hasTelLink = !!el.querySelector('a[href^="tel:" i], a[href^="sms:" i]');
+          if (hasPhoneText || hasTelLink) { chatWidgetEl = el; break; }
+        }
+      }
+      result.hasChatWidget = !!chatWidgetEl;
+      result.chatWidgetHasPhoneCta = false;
+      if (chatWidgetEl) {
+        const widgetText = (chatWidgetEl.innerText || '').trim();
+        const hasTelLink = !!chatWidgetEl.querySelector('a[href^="tel:" i], a[href^="sms:" i]');
+        const hasPhoneText = phoneRegex.test(widgetText);
+        result.chatWidgetHasPhoneCta = hasTelLink || hasPhoneText;
+      }
+
       return result;
     });
 
@@ -602,6 +656,8 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
     findings.socialProofAboveFold = data.socialProofAboveFold || false;
     findings.hasClickToText = data.hasClickToText || false;
+    findings.hasChatWidget = !!data.hasChatWidget;
+    findings.chatWidgetHasPhoneCta = !!data.chatWidgetHasPhoneCta;
 
     // Sticky CTA on scroll (Mo1) — scroll past initial fold then check whether
     // any fixed/sticky CTA stays visible. Done as a Node-side scroll then a

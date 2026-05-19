@@ -605,6 +605,11 @@ function buildRecord(row, scrapedDate) {
   setUrl("Website", pick(row, "website"));
   const gbpUrl = pick(row, "google maps url", "maps url");
   setUrl("GBP URL", gbpUrl);
+  // 2026-05-19: Airtable Leads table only has `GBP URL` field, not
+  // `Google Maps URL`. step-3-video-recorder.mjs reads from the CSV column
+  // `Google Maps URL` which is populated by step-1, NOT from Airtable. So
+  // the cleanup belongs in step-1 (scraper) + step-3 (fallback). Memory:
+  // feedback_maps_card_visibility_rules.md Rule 3.5.
   // Stable per-place dedupe key — set unconditionally so future re-runs can match
   const placeKey = extractPlaceKey(gbpUrl);
   if (placeKey) fields["Place ID"] = placeKey;

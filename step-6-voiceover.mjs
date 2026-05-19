@@ -431,7 +431,7 @@ function loadAuditFindings(baseName, slug) {
 // Schema contract: every field step-6 reads must exist in current step-2.5 output.
 // Logs a WARNING (not error) if a field is missing — prevents stale data silently producing wrong findings.
 const WEBSITE_CONTRACT = ['hasLocalBusinessSchema','pageLoadSeconds','h1Text','h1IncludesCategory','h1IncludesCity','isHttps','h1Count','hasMetaDescription','renderBlockingHeadResources','imagesWithoutLazy','totalImages','websitePhoneMatchesGbp','primaryCtaText','hasReviewsOnPage','hasServiceAreaListed'];
-const MOBILE_CONTRACT  = ['pageLoadSeconds','hasViewportMeta','clickToCallAboveFold','primaryCtaTapTargetPx','pageWeightKb','isHttps','h1Count','renderBlockingHeadResources','imagesWithoutLazy','totalImages','primaryCtaText','phoneVisibleAboveFold','socialProofAboveFold'];
+const MOBILE_CONTRACT  = ['pageLoadSeconds','hasViewportMeta','clickToCallAboveFold','primaryCtaTapTargetPx','pageWeightKb','isHttps','h1Count','renderBlockingHeadResources','imagesWithoutLazy','totalImages','primaryCtaText','phoneVisibleAboveFold','socialProofAboveFold','hasChatWidget','chatWidgetHasPhoneCta'];
 
 function validateAuditContract(audit, slug) {
   if (!audit) return;
@@ -702,7 +702,17 @@ function scoreMobileFindings(audit) {
   // 2026-05-18: locked after XP Garage & Gate Experts case where orange CTA bar with
   // "(818) 337-2533" was missed by the tap-to-call selector but is clearly tappable.
   if (m.clickToCallAboveFold === false && m.phoneVisibleAboveFold !== true) {
-    out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
+    // Chat-widget gate (2026-05-19) — if the site uses a chat widget /
+    // popup that contains the phone CTA, the audit's above-the-fold check
+    // misses it. Reframe the finding when widget+CTA detected; SUPPRESS
+    // when widget present but CTA contents unclear (safer than firing a
+    // potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
+    if (m.hasChatWidget === true && m.chatWidgetHasPhoneCta === true) {
+      out.push({ key: 'c2cBuriedInChatWidget', score: 4, finding: `your tap-to-call number is hidden inside a chat widget — visitors have to open the widget before they can call, adding an extra step that costs conversions` });
+    } else if (m.hasChatWidget !== true) {
+      out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
+    }
+    // else: widget present but CTA presence unclear → suppress (don't fire false claim)
   }
   // PRIORITY 5: Tap target < 48px
   if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
@@ -729,7 +739,10 @@ function scoreMobileFindings(audit) {
     out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, slowing your mobile load` });
   }
   // PRIORITY 10.5 (NEW): No click-to-text (sms:) support
-  if (m.hasClickToText === false) {
+  // Chat-widget gate (2026-05-19) — suppress entirely if a chat widget is
+  // detected (we can't be sure the widget doesn't offer SMS; safer than
+  // firing a potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
+  if (m.hasClickToText === false && m.hasChatWidget !== true) {
     out.push({ key: 'clickToText', score: 10.5, finding: `your mobile site has no tap-to-text option — modern local customers default to SMS for quick questions, and adding a single sms link is a free conversion path most competitors are missing` });
   }
 
