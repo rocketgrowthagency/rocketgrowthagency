@@ -1649,7 +1649,13 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
     // Each cap mirrors the locked decision in memory. Pipeline halts on
     // violation. NEVER relax without explicit Chris approval + memory update.
     // ============================================================
-    const SEGMENT_MAX = { intro: 16, maps: 50, website: 45, mobile: 40, outro: 30 };
+    // Per-segment audio length caps. Each cap = locked-design upper bound +
+    // ~2s buffer for natural OpenAI TTS pacing variance. Word-count guard at
+    // script-build time enforces the design target; this is the post-TTS
+    // safety net for runaway durations.
+    // 2026-05-18: intro raised 16→18s after LA Roof Masters intro came in
+    // at 16.78s and tripped the guard, silently failing 6 of 12 Roofers renders.
+    const SEGMENT_MAX = { intro: 18, maps: 52, website: 47, mobile: 42, outro: 32 };
     if (SEGMENT_MAX[segName] && duration > SEGMENT_MAX[segName]) {
       throw new Error(
         `[step-6 GUARDRAIL] ${segName} audio is ${duration.toFixed(2)}s (max ${SEGMENT_MAX[segName]}s). ` +
