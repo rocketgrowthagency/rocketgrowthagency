@@ -750,14 +750,25 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // ============================================================
   // HARD GUARDRAILS for Maps card visibility (Rules 1-6).
   // Reference: feedback_maps_card_visibility_rules.md
-  // Don't change DEEP_RANK_THRESHOLD without updating that memory file
-  // AND visually testing both a top-3 lead AND a deep-rank lead.
+  //
+  // 2026-05-19 rev3: REMOVED skipScrollAttempt short-circuit. Previously
+  // deep-rank leads (rank > 10) skipped scroll-find and used a typed-search
+  // URL directly. That URL FAILED for ambiguous business names — Maps
+  // redirected to `/place//@<lat>,<lng>,17z` (empty name) showing only the
+  // map. Caught visually on Beverly Hills #23, Golden Team #41, Power Roofing
+  // #45, Roofer Bros #55. Reverting to scroll-find for ALL ranks because:
+  //   - Scroll cost is bounded: ~1s per 5-card scroll, so rank #55 ~13s
+  //   - Maps audio is ~30s — even 13s scroll leaves 17s for detail hold
+  //   - Direct-URL approach is unreliable for generic names (root issue)
+  //
+  // The constant DEEP_RANK_THRESHOLD is preserved at 10 for clarity but
+  // skipScrollAttempt is now hard-coded false.
   // ============================================================
   const DEEP_RANK_THRESHOLD = 10;
   if (DEEP_RANK_THRESHOLD !== 10) {
     throw new Error('[step-3 GUARDRAIL] DEEP_RANK_THRESHOLD must stay at 10. See feedback_maps_card_visibility_rules.md');
   }
-  const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
+  const skipScrollAttempt = false;
 
   // Scroll enough panels to expose the business at its actual rank position.
   // Each scroll reveals ~5 listings; add 2 extra as buffer.
