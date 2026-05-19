@@ -947,8 +947,10 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // names that match multiple entries. Lat/lng anchored URL always lands
       // on detail. Use coords-based when available; typed-search as backup.
       const isBareNameUrl = /\/maps\/place\/[^/@?]+$/.test(mapsUrl.replace(/\/$/, ''));
+      // Fallback URL used only in the top-10 + bare-name competitive-scroll
+      // path. Deep-rank path now uses navigateDeepRankChain() instead.
       const fallbackUrl = isBareNameUrl
-        ? buildDeepRankFallbackUrl()
+        ? `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}`
         : mapsUrl;
       // 2026-05-18: for deep-rank short-circuit OR bare-name URLs, always
       // attempt the fallback navigation. The previous behavior of "stay on
