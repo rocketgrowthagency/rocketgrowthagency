@@ -1322,11 +1322,28 @@ function buildScript(record, top3Stats, audit) {
 
   const isTop3 = Number.isFinite(rankNum) && rankNum >= 1 && rankNum <= 3;
 
+  // Strip GBP " - <Category>" suffix from the business name for use inside the
+  // intro voiceover only. Scraped business names sometimes carry an appended
+  // category ("Confirmed Roofing Experts - Roofing Contractor") that bloats
+  // the intro past the 55-word cap. Other uses of `name` (Maps overlay, outro,
+  // logs) keep the full form. Locked 2026-05-18 after Confirmed Roofing
+  // Experts hit the cap at 56 words.
+  const categoryRaw =
+    normalizeField(record, 'Detected Category') ||
+    normalizeField(record, 'Category') ||
+    normalizeField(record, 'category') ||
+    '';
+  let nameForIntro = name;
+  if (categoryRaw) {
+    const escaped = categoryRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    nameForIntro = name.replace(new RegExp(`\\s*[-–—]\\s*${escaped}\\s*$`, 'i'), '');
+  }
+
   // Intro target: 13-15s. Locked 2026-05-18 — re-tightened after regression
   // to ~25s. Memory: project_outreach_machine.md (intro length decision).
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${name}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover where you're vulnerable to losing your top 3 spot — plus how to get the full report at the end.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${name}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover the top issues keeping you from the top 3 — plus how to get the full report at the end.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntro}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover where you're vulnerable to losing your top 3 spot — plus how to get the full report at the end.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntro}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover the top issues keeping you from the top 3 — plus how to get the full report at the end.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
@@ -1729,17 +1746,36 @@ async function main() {
 
   const limitedRows = rowsWithEmail.slice(0, MAX_RECORDINGS);
 
+  const failures = [];
   for (let i = 0; i < limitedRows.length; i++) {
     try {
       await generateVoiceover(limitedRows[i], i, top3Stats, STEP2_BASENAME);
     } catch (err) {
-      console.error(`   ❌ Error generating voiceover ${i + 1}:`, err.message);
+      const leadName =
+        normalizeField(limitedRows[i], 'businessName') ||
+        normalizeField(limitedRows[i], 'slug') ||
+        `row-${i + 1}`;
+      console.error(`   ❌ Error generating voiceover ${i + 1} (${leadName}):`, err.message);
+      failures.push({ lead: leadName, error: err.message });
     }
   }
 
   console.log('✅ Done generating test voiceover(s).');
+
+  if (failures.length > 0) {
+    console.error(`\n[step-6] ${failures.length} of ${limitedRows.length} lead(s) FAILED:`);
+    for (const f of failures) {
+      console.error(`   - ${f.lead}: ${f.error}`);
+    }
+    console.error(
+      `\n[step-6] Exiting non-zero so the batch wrapper sees the failure ` +
+      `(see memory: feedback_step6_must_propagate_failures.md).`,
+    );
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
   console.error('Fatal error in step-6-voiceover:', err);
+  process.exit(1);
 });
