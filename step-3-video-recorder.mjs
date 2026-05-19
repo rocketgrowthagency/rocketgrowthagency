@@ -591,8 +591,34 @@ async function clickListingInResultsByName(page, businessName) {
     console.warn(`   ⚠️ pre-click center failed (non-fatal): ${err.message || err}`);
   }
 
-  // Navigate directly — avoids click-coordinate staleness from Maps virtual DOM re-renders
-  await page.goto(href, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+  // 2026-05-19 rev5: page.goto(href) was being ignored by Maps' SPA when
+  // navigating from a TYPED-NAME search results panel (e.g. Beverly Hills
+  // Roofing Contractors). Recording captured the results-panel view for
+  // the entire 18s detail hold. Fix: use a real DOM click on the <a> element
+  // (Maps' SPA handles this), fallback to page.goto only if anchor not found.
+  // Then wait for the detail-page H1 selector to confirm navigation completed.
+  let clickedViaDom = false;
+  try {
+    clickedViaDom = await page.evaluate((targetHref) => {
+      const anchors = Array.from(document.querySelectorAll('a.hfpxzc'));
+      const exact = anchors.find((a) => a.href === targetHref);
+      const anchor = exact || anchors.find((a) => a.href && a.href.startsWith(targetHref.split('?')[0]));
+      if (anchor) { anchor.click(); return true; }
+      return false;
+    }, href);
+  } catch (_) { /* fall through */ }
+  if (!clickedViaDom) {
+    await page.goto(href, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+  }
+  // Wait for the detail-page heading to appear (up to 8s). Maps' SPA may
+  // animate the transition; without this wait, the 18s detail-hold can
+  // start while we're still visually on the results panel.
+  await page.waitForFunction(
+    () => !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]'),
+    { timeout: 8000 },
+  ).catch(() => {
+    console.warn('   ⚠️ detail-page h1 not detected within 8s — proceeding');
+  });
   return true;
 }
 
