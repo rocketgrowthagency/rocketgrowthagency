@@ -819,17 +819,20 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // list instead of jumping to the detail page. Lat/lng disambiguates.
     // Memory: feedback_maps_card_visibility_rules.md Rule 3.5 + 3.6.
     function buildDeepRankFallbackUrl() {
+      // 2026-05-19 (rev2): /maps/place/<Name>/@<lat>,<lng>,17z FAILS when
+      // Maps can't resolve the name to a unique Place ID at those coords —
+      // Maps strips the name and shows just the map. Switch to typed-search
+      // with a coords anchor. Maps SEARCHES at that location and returns
+      // either the detail page (unique name) OR a results panel which the
+      // post-nav results-click fallback then handles.
       const lat = Number.isFinite(meta.lat) ? meta.lat : null;
       const lng = Number.isFinite(meta.lng) ? meta.lng : null;
-      const namePart = encodeURIComponent(businessName).replace(/%20/g, '+');
-      if (lat !== null && lng !== null) {
-        // Coords-based URL — Maps always lands on detail page even if name
-        // matches multiple entries because the @lat,lng anchors the location.
-        return `https://www.google.com/maps/place/${namePart}/@${lat},${lng},17z`;
-      }
-      // Fallback to typed-search if we don't have coords for some reason
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
-      return `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`;
+      const q = encodeURIComponent(nameCity);
+      if (lat !== null && lng !== null) {
+        return `https://www.google.com/maps/search/${q}/@${lat},${lng},17z`;
+      }
+      return `https://www.google.com/maps/search/${q}`;
     }
 
     if (!mapsUrl && skipScrollAttempt) {
@@ -840,6 +843,15 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
       await sleep(2500);
       await injectRankOverlay(page, businessName, rank, searchTerm);
+      // If typed-search landed on a results list (ambiguous name), click the
+      // prospect's card to navigate to their detail page. No-op if we're
+      // already on a detail page.
+      const navigatedFromResults = await clickListingInResultsByName(page, businessName);
+      if (navigatedFromResults) {
+        console.log(`   → Clicked prospect's listing in results → detail page`);
+        await sleep(1500);
+        await injectRankOverlay(page, businessName, rank, searchTerm);
+      }
       await highlightBusinessOnDetailPage(page);
       await sleep(18000);
       await dismissResultsInfoPopup(page);
@@ -894,6 +906,17 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await sleep(2500);
       // Re-inject overlay after navigation + outline business name in detail panel
       await injectRankOverlay(page, businessName, rank, searchTerm);
+      // If typed-search landed on a results list (ambiguous name), click the
+      // prospect's card to navigate to their detail page. No-op if we're
+      // already on a detail page. Added 2026-05-19 (rev2).
+      if (skipScrollAttempt) {
+        const navigatedFromResults = await clickListingInResultsByName(page, businessName);
+        if (navigatedFromResults) {
+          console.log(`   → Clicked prospect's listing in results → detail page`);
+          await sleep(1500);
+          await injectRankOverlay(page, businessName, rank, searchTerm);
+        }
+      }
       await highlightBusinessOnDetailPage(page);
       // Long hold on detail page so the prospect's card is the dominant visual
       // for the Maps audio (~38s). With 4s results-hold + 2.5s nav, we still
