@@ -137,9 +137,26 @@ for (const search of VERTICALS) {
     const destMp4 = path.join(destDir, 'video.mp4');
     fs.copyFileSync(finalMp4, destMp4);
 
-    // Generate thumb.jpg @ 30s (past intro card, into content — used by cold-outreach email body)
+    // Generate thumb.jpg @ 30s with baked-in centered play button overlay.
+    // The overlay is required because email clients can't render <video>
+    // elements, so the thumb must visually read as a clickable video player.
+    // Locked rule: every thumb generation path MUST use this overlay (see
+    // memory: feedback_thumb_play_button_overlay.md). Regressed once when
+    // this script bypassed build-video-landing.mjs's extractThumbnail.
     const destThumb = path.join(destDir, 'thumb.jpg');
-    const thumbResult = spawnSync('ffmpeg', ['-y', '-ss', '00:00:30', '-i', destMp4, '-vframes', '1', '-q:v', '2', '-loglevel', 'error', destThumb], { stdio: 'ignore' });
+    const playOverlay = path.join(ROOT, 'templates', 'play-button.png');
+    const thumbResult = spawnSync('ffmpeg', [
+      '-y',
+      '-ss', '00:00:30',
+      '-i', destMp4,
+      '-i', playOverlay,
+      '-filter_complex', '[0:v][1:v]overlay=(W-w)/2:(H-h)/2[final]',
+      '-map', '[final]',
+      '-frames:v', '1',
+      '-q:v', '2',
+      '-loglevel', 'error',
+      destThumb,
+    ], { stdio: 'ignore' });
     if (thumbResult.status !== 0 || !fs.existsSync(destThumb)) console.log(`  ⚠ thumb.jpg generation failed (non-fatal)`);
 
     runStep('node', ['build-video-landing.mjs'], csvPath);
