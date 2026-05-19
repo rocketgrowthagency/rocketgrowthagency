@@ -751,24 +751,33 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // HARD GUARDRAILS for Maps card visibility (Rules 1-6).
   // Reference: feedback_maps_card_visibility_rules.md
   //
-  // 2026-05-19 rev3: REMOVED skipScrollAttempt short-circuit. Previously
-  // deep-rank leads (rank > 10) skipped scroll-find and used a typed-search
-  // URL directly. That URL FAILED for ambiguous business names — Maps
-  // redirected to `/place//@<lat>,<lng>,17z` (empty name) showing only the
-  // map. Caught visually on Beverly Hills #23, Golden Team #41, Power Roofing
-  // #45, Roofer Bros #55. Reverting to scroll-find for ALL ranks because:
-  //   - Scroll cost is bounded: ~1s per 5-card scroll, so rank #55 ~13s
-  //   - Maps audio is ~30s — even 13s scroll leaves 17s for detail hold
-  //   - Direct-URL approach is unreliable for generic names (root issue)
+  // 2026-05-19 rev4: revert to skipScrollAttempt = (rank > 10) but FIX the
+  // direct-URL path that handles deep-rank leads. Earlier revs failed
+  // because:
+  //   - rev1 (/maps/place/<Name>/@lat,lng,17z): Maps redirected to
+  //     /place//@coords when name didn't resolve uniquely.
+  //   - rev2 (/maps/search/<Name>/@lat,lng,17z): same — @lat,lng anchor
+  //     triggered the redirect-to-place behavior.
+  //   - rev3 (scroll-find for all ranks): scroll-find searches the
+  //     ORIGINAL search-term results (e.g. "Roofers in Santa Monica, CA").
+  //     Deep-rank leads located outside that geographic area don't appear
+  //     in those results at all. Caught when Beverly Hills Roofing
+  //     Contractors (located in Beverly Hills) didn't appear in any of
+  //     the 15 scrolls of "Roofers in Santa Monica, CA" results.
   //
-  // The constant DEEP_RANK_THRESHOLD is preserved at 10 for clarity but
-  // skipScrollAttempt is now hard-coded false.
+  // rev4 strategy: deep-rank leads navigate to a SECOND search query —
+  // the LEAD'S OWN NAME + city (e.g. /maps/search/Beverly+Hills+Roofing+
+  // Contractors,+Beverly+Hills+CA). NO @lat,lng anchor. Maps either:
+  //   - Lands on detail page (unique name) → 18s hold
+  //   - Shows results panel with prospect at top → click first listing
+  // The original search-term results-panel is still shown for 4s before
+  // this nav, giving competitive context per the daily-cycle rule.
   // ============================================================
   const DEEP_RANK_THRESHOLD = 10;
   if (DEEP_RANK_THRESHOLD !== 10) {
     throw new Error('[step-3 GUARDRAIL] DEEP_RANK_THRESHOLD must stay at 10. See feedback_maps_card_visibility_rules.md');
   }
-  const skipScrollAttempt = false;
+  const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
 
   // Scroll enough panels to expose the business at its actual rank position.
   // Each scroll reveals ~5 listings; add 2 extra as buffer.
@@ -830,20 +839,12 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // list instead of jumping to the detail page. Lat/lng disambiguates.
     // Memory: feedback_maps_card_visibility_rules.md Rule 3.5 + 3.6.
     function buildDeepRankFallbackUrl() {
-      // 2026-05-19 (rev2): /maps/place/<Name>/@<lat>,<lng>,17z FAILS when
-      // Maps can't resolve the name to a unique Place ID at those coords —
-      // Maps strips the name and shows just the map. Switch to typed-search
-      // with a coords anchor. Maps SEARCHES at that location and returns
-      // either the detail page (unique name) OR a results panel which the
-      // post-nav results-click fallback then handles.
-      const lat = Number.isFinite(meta.lat) ? meta.lat : null;
-      const lng = Number.isFinite(meta.lng) ? meta.lng : null;
+      // 2026-05-19 (rev4): typed-search by NAME + CITY, NO @lat,lng anchor.
+      // The @anchor triggered Maps' redirect-to-place behavior for
+      // ambiguous names. Without the anchor, Maps stays on a clean search
+      // results panel that the post-nav results-click can operate on.
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
-      const q = encodeURIComponent(nameCity);
-      if (lat !== null && lng !== null) {
-        return `https://www.google.com/maps/search/${q}/@${lat},${lng},17z`;
-      }
-      return `https://www.google.com/maps/search/${q}`;
+      return `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`;
     }
 
     if (!mapsUrl && skipScrollAttempt) {
