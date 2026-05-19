@@ -864,32 +864,77 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // matches multiple Maps entries, the typed-search resolves to a results
     // list instead of jumping to the detail page. Lat/lng disambiguates.
     // Memory: feedback_maps_card_visibility_rules.md Rule 3.5 + 3.6.
-    function buildDeepRankFallbackUrl() {
-      // 2026-05-19 (rev4): typed-search by NAME + CITY, NO @lat,lng anchor.
-      // The @anchor triggered Maps' redirect-to-place behavior for
-      // ambiguous names. Without the anchor, Maps stays on a clean search
-      // results panel that the post-nav results-click can operate on.
+    function buildDeepRankFallbackUrls() {
+      // 2026-05-19 (rev6): try a CHAIN of URLs, phone-first. Phone numbers
+      // uniquely identify Maps listings, so a phone-search lands directly on
+      // the detail page even for generic business names. If no phone
+      // available OR phone-search fails, fall back to name+city, then name.
+      const urls = [];
+      const phone = (meta.phone || '').trim().replace(/[^\d+]/g, '');
+      if (phone && phone.length >= 7) {
+        urls.push(`https://www.google.com/maps/search/${encodeURIComponent(phone)}`);
+      }
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
-      return `https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`;
+      urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`);
+      if (businessName) {
+        urls.push(`https://www.google.com/maps/search/${encodeURIComponent(businessName)}`);
+      }
+      return urls;
+    }
+    // Try a navigation URL, returning a status: 'detail' | 'results' | 'blank'
+    async function tryNavigateAndDetect(navUrl) {
+      try {
+        await page.goto(navUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+      } catch (e) {
+        return 'blank';
+      }
+      await sleep(2500);
+      // Detect detail page via h1 selector
+      const onDetail = await page.evaluate(() => {
+        return !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      }).catch(() => false);
+      if (onDetail) return 'detail';
+      // Detect results panel via at least one a.hfpxzc
+      const hasResults = await page.evaluate(() => {
+        return document.querySelectorAll('a.hfpxzc').length > 0;
+      }).catch(() => false);
+      if (hasResults) return 'results';
+      return 'blank';
+    }
+
+    // Shared helper: try the URL chain until one lands on detail or results
+    // with a clickable matching listing. Returns once detail page is reached
+    // (or chain is exhausted). Used by both no-mapsUrl + bare-name branches.
+    async function navigateDeepRankChain() {
+      const urls = buildDeepRankFallbackUrls();
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        console.log(`   → Deep-rank nav attempt ${i + 1}/${urls.length}: ${url}`);
+        const status = await tryNavigateAndDetect(url);
+        console.log(`   → Result: ${status}`);
+        if (status === 'detail') return true;
+        if (status === 'results') {
+          await injectRankOverlay(page, businessName, rank, searchTerm);
+          const clicked = await clickListingInResultsByName(page, businessName);
+          if (clicked) {
+            console.log(`   → Clicked prospect's listing in results → detail page`);
+            await sleep(1500);
+            return true;
+          }
+          // results but no matching listing — try next URL
+        }
+        // blank — try next URL
+      }
+      console.warn(`   ⚠️ All ${urls.length} deep-rank URL attempts failed to land on detail page`);
+      return false;
     }
 
     if (!mapsUrl && skipScrollAttempt) {
-      const fallbackUrl = buildDeepRankFallbackUrl();
-      console.log(`   → No Maps URL for deep-rank lead — using fallback URL: ${fallbackUrl}`);
+      console.log(`   → No Maps URL for deep-rank lead — running URL chain`);
       console.log(`   → Holding on results panel ~4s for competitive context`);
       await sleep(4000);
-      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-      await sleep(2500);
+      await navigateDeepRankChain();
       await injectRankOverlay(page, businessName, rank, searchTerm);
-      // If typed-search landed on a results list (ambiguous name), click the
-      // prospect's card to navigate to their detail page. No-op if we're
-      // already on a detail page.
-      const navigatedFromResults = await clickListingInResultsByName(page, businessName);
-      if (navigatedFromResults) {
-        console.log(`   → Clicked prospect's listing in results → detail page`);
-        await sleep(1500);
-        await injectRankOverlay(page, businessName, rank, searchTerm);
-      }
       await highlightBusinessOnDetailPage(page);
       await sleep(18000);
       await dismissResultsInfoPopup(page);
@@ -926,42 +971,27 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await dismissResultsInfoPopup(page);
         return 'search-only';
       } else if (isBareNameUrl && skipScrollAttempt) {
-        // Deep-rank lead with bare-name URL → use fallback search URL to
-        // pull up the business's detail card.
-        console.log(`   → Bare-name URL for deep-rank — using fallback URL: ${fallbackUrl}`);
-      } else {
-        console.log(`   → Results click failed; opening direct Maps URL.`);
-      }
-      // For deep-rank short-circuit (rank > 10): hold on the search results
-      // panel for ~4s first so the viewer sees the competitive landscape
-      // (top results visible with the rank overlay), THEN navigate to the
-      // prospect's detail page for the remainder of the Maps segment.
-      if (skipScrollAttempt) {
+        // Deep-rank lead with bare-name URL → use multi-URL chain
+        // (phone → name+city → name) for reliable detail-page navigation.
+        console.log(`   → Bare-name URL for deep-rank — using URL chain (phone-first)`);
         console.log(`   → Holding on results panel ~4s for competitive context`);
         await sleep(4000);
+        await navigateDeepRankChain();
+        await injectRankOverlay(page, businessName, rank, searchTerm);
+        await highlightBusinessOnDetailPage(page);
+        await sleep(18000);
+        await dismissResultsInfoPopup(page);
+        return 'direct-url';
+      } else {
+        console.log(`   → Results click failed; opening direct Maps URL: ${mapsUrl}`);
+        await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+        await sleep(2500);
+        await injectRankOverlay(page, businessName, rank, searchTerm);
+        await highlightBusinessOnDetailPage(page);
+        await sleep(18000);
+        await dismissResultsInfoPopup(page);
+        return 'direct-url';
       }
-      await page.goto(fallbackUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
-      await sleep(2500);
-      // Re-inject overlay after navigation + outline business name in detail panel
-      await injectRankOverlay(page, businessName, rank, searchTerm);
-      // If typed-search landed on a results list (ambiguous name), click the
-      // prospect's card to navigate to their detail page. No-op if we're
-      // already on a detail page. Added 2026-05-19 (rev2).
-      if (skipScrollAttempt) {
-        const navigatedFromResults = await clickListingInResultsByName(page, businessName);
-        if (navigatedFromResults) {
-          console.log(`   → Clicked prospect's listing in results → detail page`);
-          await sleep(1500);
-          await injectRankOverlay(page, businessName, rank, searchTerm);
-        }
-      }
-      await highlightBusinessOnDetailPage(page);
-      // Long hold on detail page so the prospect's card is the dominant visual
-      // for the Maps audio (~38s). With 4s results-hold + 2.5s nav, we still
-      // have audio length ~30s left to fill with the detail-page view.
-      await sleep(18000);
-      await dismissResultsInfoPopup(page);
-      return 'direct-url';
     }
 
     return 'search-only';
