@@ -928,12 +928,36 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       console.warn(`   ⚠️ All ${urls.length} deep-rank URL attempts failed to land on detail page`);
       return false;
     }
+    // Self-validation guard (2026-05-19, rule 3.11): MUST run after deep-rank
+    // navigation and BEFORE the 18s detail-hold sleep. Verifies page actually
+    // landed on a detail page; throws non-zero so the batch wrapper sees the
+    // failure instead of silently producing a broken video. Memory:
+    // feedback_maps_card_visibility_rules.md Rule 3.11.
+    async function assertOnDetailPage(label) {
+      const currentUrl = page.url();
+      const isOnDetailUrl = /\/maps\/place\/[^/]+\/data=|\/maps\/place\/[^/]+\/@/.test(currentUrl);
+      const hasDetailH1 = await page.evaluate(() =>
+        !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]')
+      ).catch(() => false);
+      if (!isOnDetailUrl && !hasDetailH1) {
+        try {
+          const diagDir = path.join(ROOT, 'output', 'diag');
+          fs.mkdirSync(diagDir, { recursive: true });
+          await page.screenshot({ path: path.join(diagDir, `step-3-no-detail-${label}.png`) });
+        } catch (_) {}
+        throw new Error(
+          `[step-3 GUARDRAIL] Deep-rank ${label} landed on ${currentUrl} — NOT a detail page. ` +
+          `URL chain exhausted without success. See memory: feedback_maps_card_visibility_rules.md Rule 3.11.`
+        );
+      }
+    }
 
     if (!mapsUrl && skipScrollAttempt) {
       console.log(`   → No Maps URL for deep-rank lead — running URL chain`);
       console.log(`   → Holding on results panel ~4s for competitive context`);
       await sleep(4000);
       await navigateDeepRankChain();
+      await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
       await injectRankOverlay(page, businessName, rank, searchTerm);
       await highlightBusinessOnDetailPage(page);
       await sleep(18000);
@@ -979,6 +1003,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         console.log(`   → Holding on results panel ~4s for competitive context`);
         await sleep(4000);
         await navigateDeepRankChain();
+        await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
         await sleep(18000);
