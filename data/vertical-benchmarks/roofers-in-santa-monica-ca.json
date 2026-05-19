@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Roofers in Santa Monica, CA",
+  "auditedDate": "2026-05-19",
+  "source": "airtable-leads",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Roofing contractor": 10
+  },
+  "categoryDistributionTop5": {
+    "Roofing contractor": 5
+  },
+  "categoryDistributionTop3": {
+    "Roofing contractor": 3
+  },
+  "majorityCategoryTop10": "Roofing contractor",
+  "majorityCategoryTop5": "Roofing contractor",
+  "majorityCategoryTop3": "Roofing contractor",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 130,
+    "median": 44,
+    "p25": 15,
+    "p75": 68
+  },
+  "reviewsTop3Avg": 61,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}
