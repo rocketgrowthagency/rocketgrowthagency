@@ -251,8 +251,16 @@ function isGenericOrDirectoryListing(row) {
   return false;
 }
 
+// Strip BMP Private Use Area chars (U+E000-U+F8FF) — icon font glyphs that
+// Google's GBP DOM includes inline with text (e.g. `` before phones,
+// `` for hours icon). Without this guard, Airtable fields look like
+// ' (818) 873-5415' instead of '(818) 873-5415'.
+// Memory: feedback_no_emojis_in_data_fields.md (locked rule — no symbols
+// in data fields, ever). Caught 2026-05-20 across 276 Phone values + 4
+// GBP Hours + 279 Raw Data dumps. Backfilled + locked at write-time guard.
+const _PUA_RE = /[-]/g;
 function cleanStr(v) {
-  return String(v ?? "").replace(/\s+/g, " ").trim();
+  return String(v ?? "").replace(_PUA_RE, "").replace(/\s+/g, " ").trim();
 }
 
 // Auto-ensure the "Leads No Email" sibling table exists, cloned from Leads
