@@ -343,6 +343,102 @@ async function dismissCommonCookieBanner(page) {
   } catch {}
 }
 
+// Chat widgets (Tawk, Intercom, Drift, Zendesk, etc.) routinely pop over the
+// page content with "Hello we're here to help" overlays — blocks the fold,
+// covers CTAs, makes the recording visually noisy. Audit (step-2.5) keeps full
+// rendering so it can still detect + flag them in voiceover findings, but
+// step-3 recordings hide them.
+//
+// Strategy: (1) network-block known chat-widget origins so the script never
+// loads, (2) inject CSS hiding any first-party-proxied chat surface that
+// slips through. Locked 2026-05-20 after California Hi-Tech mobile recording
+// captured the Tidio-style "24/7 Plumbing Services" popup covering the entire
+// CTA fold.
+//
+// Memory: [[feedback-audit-chat-widget-detection]] for the audit-side rule.
+const CHAT_WIDGET_HOST_PATTERNS = [
+  /tawk\.to/i,
+  /intercom\.io/i,
+  /intercomcdn\.com/i,
+  /drift\.com/i,
+  /driftt\.com/i,
+  /zopim\.com/i,
+  /zdassets\.com/i,
+  /zendesk\.com\/embeddable/i,
+  /livechatinc\.com/i,
+  /olark\.com/i,
+  /tidio\.co/i,
+  /tidiochat\.com/i,
+  /freshchat\.com/i,
+  /freshworks\.com\/crm\/chat/i,
+  /crisp\.chat/i,
+  /hs-scripts\.com/i,
+  /hsforms\.net.*chat/i,
+  /hubspot\.com\/livechat/i,
+  /smartsupp\.com/i,
+  /jivosite\.com/i,
+  /chatra\.io/i,
+  /chatra\.com/i,
+  /helpscout\.net\/beacon/i,
+  /pure\.chat/i,
+  /userlike\.com/i,
+  /3cx\.com\/livechat/i,
+  /messenger\.com\/customer_chat/i,
+  /widget-platform\.com/i,
+];
+
+const CHAT_WIDGET_CSS_HIDE = `
+  /* step-3 only — chat widget hide. Covers most embed surfaces by class/id substring */
+  [class*="tawk"], [id*="tawk"],
+  [class*="intercom"], [id*="intercom"],
+  [class*="drift-"], [id*="drift-"],
+  [class*="zopim"], [id*="zopim"],
+  [class*="zEWidget"], [id*="zopim"],
+  [class*="LiveChat"], [id*="livechat"], [class*="livechat"],
+  [class*="olark"], [id*="olark"],
+  [class*="tidio"], [id*="tidio"], [class*="tidioChat"],
+  [class*="freshchat"], [id*="freshchat"], [class*="fc_frame"], [id*="fc_frame"], [class*="fc-frame"],
+  [class*="crisp-client"], [id*="crisp-chatbox"],
+  [class*="hubspot-messages"], [id*="hubspot-messages"],
+  [class*="smartsupp"], [id*="smartsupp"],
+  [class*="jivo"], [id*="jivo"],
+  [class*="chatra"], [id*="chatra"],
+  [class*="BeaconContainer"], [class*="helpscout"],
+  [class*="purechat"], [id*="purechat"],
+  [class*="userlike"], [id*="userlike"],
+  [class*="ChatWidget"], [class*="chat-widget"], [class*="chat_widget"],
+  iframe[src*="tawk.to"], iframe[src*="intercom"], iframe[src*="drift"],
+  iframe[src*="zopim"], iframe[src*="livechat"], iframe[src*="tidio"],
+  iframe[src*="freshchat"], iframe[src*="crisp"], iframe[src*="messenger.com/customer_chat"],
+  iframe[title*="Chat" i], iframe[title*="Messenger" i],
+  div[role="dialog"][class*="chat" i], div[role="region"][aria-label*="chat" i] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+`;
+
+async function setupChatWidgetBlocking(page) {
+  try {
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const url = req.url();
+      if (CHAT_WIDGET_HOST_PATTERNS.some((re) => re.test(url))) {
+        req.abort().catch(() => {});
+      } else {
+        req.continue().catch(() => {});
+      }
+    });
+  } catch {}
+}
+
+async function hideChatWidgetSelectors(page) {
+  try {
+    await page.addStyleTag({ content: CHAT_WIDGET_CSS_HIDE }).catch(() => {});
+  } catch {}
+}
+
 async function waitForMapsSearchInput(page) {
   const selector =
     'input#searchboxinput, input[aria-label="Search Google Maps"], input[name="q"][role="combobox"]';
@@ -1265,6 +1361,8 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
 
   const page = await browser.newPage();
   await page.setViewport(DESKTOP_VIEWPORT);
+  // Block chat widgets BEFORE first navigation so their scripts never load.
+  await setupChatWidgetBlocking(page);
 
   const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
   let hadFatal = false;
@@ -1282,6 +1380,9 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
       await sleep(2500);
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
+      // CSS safety net for first-party-proxied chat surfaces that slip past
+      // the network block.
+      await hideChatWidgetSelectors(page);
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
 
       // Verify screenshots actually capture the website BEFORE recording
@@ -1324,6 +1425,7 @@ async function recordMobileVideo(browser, meta, outputPath) {
   const page = await browser.newPage();
   await page.setViewport(MOBILE_VIEWPORT);
   await page.setUserAgent(MOBILE_USER_AGENT);
+  await setupChatWidgetBlocking(page);
 
   const recorder = createScreencastRecorder(page, outputPath, MOBILE_VIEWPORT);
   let hadFatal = false;
@@ -1342,6 +1444,7 @@ async function recordMobileVideo(browser, meta, outputPath) {
       await sleep(2500);
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
+      await hideChatWidgetSelectors(page);
 
       // Force a screenshot test BEFORE recording — confirms screenshots actually capture the website
       try {
