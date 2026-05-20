@@ -113,7 +113,13 @@ const VALID_TLDS = new Set([
 
 function isLikelyEmail(email) {
   if (!email) return '';
-  const cleaned = sanitizeScrapedEmail(email.trim());
+  // URL-decode + strip surrounding whitespace. Catches "%20office@biz.com" /
+  // "&#32;contact@biz.com" patterns where a leading URL-encoded space slipped
+  // into a mailto: href. Locked 2026-05-20 (Finest Heating & Air case).
+  let pre = email.trim();
+  try { pre = decodeURIComponent(pre); } catch { /* leave as-is on bad URI */ }
+  pre = pre.replace(/^\s+|\s+$/g, '');
+  const cleaned = sanitizeScrapedEmail(pre);
   const trimmed = cleaned.toLowerCase();
   const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
   if (!basic.test(trimmed)) return '';
