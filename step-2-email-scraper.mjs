@@ -208,7 +208,7 @@ function extractObfuscatedEmailFromText(text) {
   return '';
 }
 
-function extractFromHtml(html) {
+function extractFromHtml(html, siteHost = '') {
   const $ = cheerio.load(html);
   let facebook = '';
   let instagram = '';
@@ -257,13 +257,20 @@ function extractFromHtml(html) {
   }
 
   if (!email) {
+    // Pull ALL emails from visible text + rank by domain preference vs siteHost.
+    // Locked 2026-05-20 — Cool Choice HVAC homepage had both 'micah@micahrich.com'
+    // (dev credit) AND 'service@coolchoicehvac.com' (real business email). First-
+    // match-wins picked the dev. Now collect all, rank, prefer domain match.
     const text = $.root().text();
-    const match = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-    if (match) {
-      const valid = isLikelyEmail(match[0]);
-      if (valid) {
-        email = valid;
-      }
+    const allMatches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+    const validList = [];
+    for (const m of allMatches) {
+      const v = isLikelyEmail(m);
+      if (v && !validList.includes(v)) validList.push(v);
+    }
+    if (validList.length > 0) {
+      validList.sort((a, b) => emailRank(a, siteHost) - emailRank(b, siteHost));
+      email = validList[0];
     }
     if (!email) {
       const obfuscated = extractObfuscatedEmailFromText(text);
@@ -659,7 +666,7 @@ async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearch
     seen.add(candidate);
     try {
       const response = await axios.get(candidate, { timeout: 10000 });
-      const found = extractFromHtml(response.data);
+      const found = extractFromHtml(response.data, siteHost);
       // Socials + non-email fields: first-hit-wins is fine.
       for (const k of Object.keys(EMPTY)) {
         if (k === 'email') continue;
