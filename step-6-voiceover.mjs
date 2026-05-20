@@ -456,6 +456,34 @@ function scoreWebsiteFindings(audit, businessName) {
   const w = { ...audit.website, businessNameForCheck: businessName || '' };
   const out = [];
 
+  // P0 — "no own website" finding. Fires when GBP has no website (TJ Plumbing
+  // case), captured website is an aggregator/social/squatter (Benjamin Family
+  // Plumbing → roofmasterroofing.site), or step-2.5 detected a parked/empty
+  // install (Pro Plumber Beverly Hills → WP default). Suppresses all other
+  // website + mobile findings — this is the headline insight.
+  //
+  // Memory: feedback_no_website_is_top_finding.md (locked 2026-05-20).
+  const noUrl = !w.websiteUrl || !String(w.websiteUrl).trim();
+  const isSuspect = w.suspectWebsiteMismatch === true || !!w.websiteSuspectReason;
+  const isParked = w.siteLooksParked === true;
+  if (noUrl || isSuspect || isParked) {
+    const reason = noUrl
+      ? 'no-website'
+      : isParked
+        ? `parked:${w.parkedReason || 'unknown'}`
+        : `suspect:${w.websiteSuspectReason || 'unknown'}`;
+    out.push({
+      key: 'noOwnWebsite',
+      score: 0,
+      reason,
+      finding: 'the single biggest blocker on your local SEO ranking right now is that you don\'t actually have a real first-party website. Your Google Business Profile is either missing a website link or pointing at a placeholder, but Google needs a real homepage to build your category relevance, schema markup, and NAP citations from. Without it you\'re handing twenty-five percent of your Maps ranking weight to competitors who do, and all your organic leads have to flow through Yelp and directory sites that take a cut',
+    });
+    // Hard-suppress every other website + mobile finding when this fires —
+    // they\'d be noise about a non-existent or wrong page. Caller checks for
+    // this key and uses out as-is.
+    return out;
+  }
+
   // PRIORITY 1: NAP mismatch — strict (prominent-phone semantics) + toll-free / call-tracker detection.
   // Differentiate: toll-free prefix (call-tracker), multi-phone mismatch, multi-phone existence, simple mismatch.
   if (w.websitePhoneMatchesGbp === false) {
@@ -1373,13 +1401,22 @@ function buildScript(record, top3Stats, audit) {
   // prefer the section where they have highest SEO impact (website > mobile).
   const rawMaps = applyValidationFilter(scoreMapsFindings(audit, top3Stats, record), disabledKeys);
   const rawWebsite = applyValidationFilter(scoreWebsiteFindings(audit, name), disabledKeys);
+  // "No own website" short-circuits both website + mobile sections — there's
+  // no real page to evaluate so every other finding would be noise.
+  // Memory: feedback_no_website_is_top_finding.md (locked 2026-05-20).
+  const noOwnWebsiteFired = rawWebsite.length === 1 && rawWebsite[0].key === 'noOwnWebsite';
   // Inject social-profiles finding (uses step-2 social URL fields, not audit-findings)
-  const socialFinding = scoreSocialProfilesFinding(record, audit);
-  if (socialFinding && !disabledKeys.includes(socialFinding.key)) {
-    rawWebsite.push(socialFinding);
-    rawWebsite.sort((a, b) => a.score - b.score);
+  // — skip when noOwnWebsite fires; social presence is moot without a homepage.
+  if (!noOwnWebsiteFired) {
+    const socialFinding = scoreSocialProfilesFinding(record, audit);
+    if (socialFinding && !disabledKeys.includes(socialFinding.key)) {
+      rawWebsite.push(socialFinding);
+      rawWebsite.sort((a, b) => a.score - b.score);
+    }
   }
-  const rawMobile = applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
+  const rawMobile = noOwnWebsiteFired
+    ? []
+    : applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
   const { maps: mapsFindings, website: websiteFindings, mobile: mobileFindings } = dedupAcrossSections(rawMaps, rawWebsite, rawMobile);
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
   const websiteGood = scoreWebsiteConfirmedGood(audit);

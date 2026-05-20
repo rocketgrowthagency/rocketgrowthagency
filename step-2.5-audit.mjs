@@ -1399,7 +1399,14 @@ async function main() {
 
       console.log(`\n[${i + 1}/${rows.length}] Auditing: ${name}`);
       const websiteFindings = await auditWebsite(browser, website, business);
-      console.log(`  website: load=${websiteFindings.pageLoadSeconds}s schema=${websiteFindings.hasLocalBusinessSchema} h1cat=${websiteFindings.h1IncludesCategory} h1city=${websiteFindings.h1IncludesCity} c2c=${websiteFindings.hasMobileClickToCall} napMatch=${websiteFindings.websitePhoneMatchesGbp} blocking=${websiteFindings.renderBlockingHeadResources}`);
+      // Propagate step-1 suspect flags into audit findings so step-6 can fire
+      // noOwnWebsite without re-reading the step-1 CSV. Locked 2026-05-20.
+      const suspectReason = (row['Website Suspect Reason'] || '').trim();
+      if (suspectReason) {
+        websiteFindings.suspectWebsiteMismatch = true;
+        websiteFindings.websiteSuspectReason = suspectReason;
+      }
+      console.log(`  website: load=${websiteFindings.pageLoadSeconds}s schema=${websiteFindings.hasLocalBusinessSchema} h1cat=${websiteFindings.h1IncludesCategory} h1city=${websiteFindings.h1IncludesCity} c2c=${websiteFindings.hasMobileClickToCall} napMatch=${websiteFindings.websitePhoneMatchesGbp} blocking=${websiteFindings.renderBlockingHeadResources}${websiteFindings.siteLooksParked ? ' PARKED=' + websiteFindings.parkedReason : ''}${websiteFindings.suspectWebsiteMismatch ? ' SUSPECT=' + websiteFindings.websiteSuspectReason : ''}`);
 
       const mobileFindings = await auditMobile(browser, website, business);
       console.log(`  mobile:  load=${mobileFindings.pageLoadSeconds}s viewport=${mobileFindings.hasViewportMeta} c2cAboveFold=${mobileFindings.clickToCallAboveFold} ctaPx=${mobileFindings.primaryCtaTapTargetPx} weightKb=${mobileFindings.pageWeightKb}`);
