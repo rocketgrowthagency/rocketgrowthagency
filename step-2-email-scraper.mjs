@@ -252,14 +252,55 @@ function buildFallbackUrls(baseUrl) {
   return urls;
 }
 
+// Extract the registrable host from a website URL for email-domain matching.
+// "https://www.californiahitechplumbing.com/" → "californiahitechplumbing.com"
+function siteHostKey(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+// Rank an email candidate against the site's registrable host.
+// Lower score = better. Used to pick the best email when multiple pages
+// surface different candidates (e.g. a stray gmail in the homepage footer
+// vs a real edna@biz.com on /contact). Locked 2026-05-20 after Cal Hi-Tech
+// scrape picked up "califoniahitechplumbing@gmail.com" (typo'd gmail in
+// homepage source) and missed "edna@californiahitechplumbing.com" on /contact.
+function emailRank(email, siteHost) {
+  if (!email) return 999;
+  const at = email.toLowerCase().indexOf('@');
+  if (at < 0) return 998;
+  const localPart = email.slice(0, at).toLowerCase();
+  const emailDomain = email.slice(at + 1).toLowerCase();
+  // Tier 1: exact domain match (edna@californiahitechplumbing.com on californiahitechplumbing.com)
+  if (siteHost && (emailDomain === siteHost || emailDomain.endsWith('.' + siteHost) || siteHost.endsWith('.' + emailDomain))) {
+    // Slightly prefer named local-parts over generic catchalls within domain-matched tier
+    return /^(info|contact|hello|admin|sales|support|service|office|hi)$/.test(localPart) ? 11 : 10;
+  }
+  // Tier 2: looks like a business address (named local-part) on any domain — usually owner's name
+  if (/^(info|contact|hello|admin|sales|support|service|office|hi)$/.test(localPart)) return 20;
+  // Tier 3: generic free-mailbox (gmail/yahoo/hotmail/outlook/icloud) — least trustworthy
+  if (/^(gmail|yahoo|hotmail|outlook|icloud|aol|live|msn|protonmail|me)\.com$/.test(emailDomain)) return 40;
+  // Tier 2.5: any other domain
+  return 30;
+}
+
 async function fetchWebsiteData(url) {
   const cleanWebsite = cleanUrl(url);
   const EMPTY = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
   if (!cleanWebsite) return EMPTY;
 
+  const siteHost = siteHostKey(cleanWebsite);
   const candidates = [cleanWebsite, ...buildFallbackUrls(cleanWebsite)];
   const seen = new Set();
   const combined = { ...EMPTY };
+  // Collect ALL email candidates across pages — pick best at the end.
+  // Locked 2026-05-20: never break early on first email hit; the homepage
+  // commonly ships a stray free-mailbox email in JSON-LD or footer that
+  // gets picked up before /contact's real business address loads.
+  const emailCandidates = []; // [{ email, page }]
 
   for (const candidate of candidates) {
     if (!candidate || seen.has(candidate)) continue;
@@ -267,14 +308,26 @@ async function fetchWebsiteData(url) {
     try {
       const response = await axios.get(candidate, { timeout: 10000 });
       const found = extractFromHtml(response.data);
+      // Socials + non-email fields: first-hit-wins is fine.
       for (const k of Object.keys(EMPTY)) {
+        if (k === 'email') continue;
         if (!combined[k] && found[k]) combined[k] = found[k];
       }
+      if (found.email) emailCandidates.push({ email: found.email, page: candidate });
       const socials = ['facebook','instagram','linkedin','twitter','youtube','tiktok'].filter(s => found[s]).join(',');
       console.log(`Scanned ${candidate} -> Email: ${found.email || ''}, Socials: ${socials || 'none'}`);
-      if (combined.email) break;
     } catch (err) {
       console.log(`Failed to fetch ${candidate}: ${err.message}`);
+    }
+  }
+
+  // Pick best email by rank — lower is better. Stable on ties (homepage first).
+  if (emailCandidates.length) {
+    emailCandidates.sort((a, b) => emailRank(a.email, siteHost) - emailRank(b.email, siteHost));
+    combined.email = emailCandidates[0].email;
+    if (emailCandidates.length > 1) {
+      const losers = emailCandidates.slice(1).map((c) => `${c.email} (${c.page})`).join(', ');
+      console.log(`[email-rank] picked ${combined.email} from ${emailCandidates[0].page} (rank ${emailRank(combined.email, siteHost)}); rejected: ${losers}`);
     }
   }
 
