@@ -64,6 +64,60 @@ function normalizePhone(phone) {
   return d.length === 11 && d.startsWith('1') ? d.slice(1) : d;
 }
 
+// Detect "parked install" sites — domains pointing at a fresh WordPress / Wix
+// / Squarespace / GoDaddy template with no real business content. Locked
+// 2026-05-20 after Pro Plumber Beverly Hills had a domain pointing at an
+// empty WP install (title "123", "Hello world!" / Sample Page).
+// Returns the reason string (e.g. "wp-default-install") or '' if not parked.
+function detectParkedInstall({ title, bodyTextSample, wordCount, businessName }) {
+  const t = String(title || '').trim();
+  const tLower = t.toLowerCase();
+  const body = String(bodyTextSample || '');
+  const bodyLower = body.toLowerCase();
+  // Hard WordPress default-install signature
+  if (bodyLower.includes('hello world!') && bodyLower.includes('welcome to wordpress')) {
+    return 'wp-default-install:hello-world';
+  }
+  if (bodyLower.includes('this is your first post')) {
+    return 'wp-default-install:first-post';
+  }
+  // Title-based default signatures
+  if (tLower === 'sample page' || tLower === 'just another wordpress site' || tLower === 'my blog' || tLower === 'untitled') {
+    return `default-title:${tLower}`;
+  }
+  // Generic numeric / placeholder titles like "123"
+  if (/^\d+$/.test(t) && t.length <= 4) {
+    return `placeholder-title:${t}`;
+  }
+  // Wix placeholder
+  if (bodyLower.includes('this is the home page') && bodyLower.includes('start designing your site')) {
+    return 'wix-default-install';
+  }
+  // Squarespace dev template
+  if (bodyLower.includes('this site is currently in development') ||
+      bodyLower.includes('this site is being built')) {
+    return 'squarespace-dev-template';
+  }
+  // Registrar parking pages — title typically contains "GoDaddy" / "Hostinger" / "Bluehost"
+  // or body contains "domain is registered with"
+  if (/\b(godaddy|hostinger|bluehost|namecheap|hostgator|domain is for sale|parked free|parking page)\b/i.test(t) ||
+      /\b(this domain is parked|domain may be for sale)\b/i.test(bodyLower)) {
+    return 'registrar-parking';
+  }
+  // Body too short + no business name in body + no contact info — likely
+  // empty / unfinished. Threshold tuned to catch the Pro Plumber case
+  // (Hello world + Sample Page menu = ~40 visible words).
+  if (wordCount !== null && wordCount < 50) {
+    const businessTokens = String(businessName || '').toLowerCase().split(/\s+/).filter((t) => t.length >= 4);
+    const anyTokenInBody = businessTokens.some((tok) => bodyLower.includes(tok));
+    const hasContact = /\(\d{3}\)|\d{3}[-.\s]\d{3}[-.\s]\d{4}|@[a-z0-9.-]+\./.test(body);
+    if (!anyTokenInBody && !hasContact) {
+      return `empty-site:wordCount=${wordCount}`;
+    }
+  }
+  return '';
+}
+
 async function auditWebsite(browser, websiteUrl, business) {
   const findings = {
     websiteUrl,
@@ -89,6 +143,9 @@ async function auditWebsite(browser, websiteUrl, business) {
     canonicalUrl: '',                // <link rel="canonical"> value
     canonicalMatches: null,          // canonical points to current page?
     serviceAreaPagesCount: null,     // count of internal /location/ or /city/ pages linked
+    // "No own website" detection — locked 2026-05-20 (Pro Plumber WP parked install)
+    siteLooksParked: false,
+    parkedReason: '',
     error: null,
   };
 
@@ -125,6 +182,10 @@ async function auditWebsite(browser, websiteUrl, business) {
       try {
         const visibleText = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
         result.wordCount = visibleText ? visibleText.split(/\s+/).filter(w => w.length > 2).length : 0;
+        // First 1500 chars of body text for parked-install detection. Locked
+        // 2026-05-20 — feedback_no_website_is_top_finding.md (Pro Plumber
+        // Beverly Hills WP placeholder case).
+        result.bodyTextSample = visibleText.slice(0, 1500);
       } catch {}
       const ldScripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       for (const s of ldScripts) {
@@ -346,6 +407,18 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.wordCount = data.wordCount || 0;
     findings.hasFaqSchema = !!data.hasFaqSchema;
     findings.hasOrganizationSchema = !!data.hasOrganizationSchema;
+
+    // Parked-install detection (locked 2026-05-20 — Pro Plumber Beverly Hills case).
+    findings.parkedReason = detectParkedInstall({
+      title: data.title,
+      bodyTextSample: data.bodyTextSample || '',
+      wordCount: data.wordCount,
+      businessName: business.businessName || business.name || '',
+    });
+    findings.siteLooksParked = !!findings.parkedReason;
+    if (findings.siteLooksParked) {
+      console.log(`    [parked-install] ${findings.parkedReason} on ${websiteUrl} — site has no real content`);
+    }
 
     // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();
