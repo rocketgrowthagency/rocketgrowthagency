@@ -516,13 +516,38 @@ async function discoverEmailViaSearch(siteHost, businessName) {
       try {
         const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
         const res = await axios.get(url, { timeout: 15000 });
-        const text = JSON.stringify(res.data); // search all snippets + AI overview blob
-        const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
-        for (const raw of matches) {
-          const valid = isLikelyEmail(raw);
-          if (!valid) continue;
-          const cr = crossRef(valid, text);
-          if (cr.ok) candidates.push({ email: valid, ...cr, source: `serpapi:${q.slice(0, 50)}` });
+        // Build per-result snippet pool — each snippet is ~150-300 chars naturally,
+        // so proximity check works correctly within a snippet (the att.net case).
+        // Locked 2026-05-20: stringifying the whole JSON response broke proximity
+        // because email + business name lived in DIFFERENT organic_results entries.
+        const snippets = [];
+        for (const o of res.data.organic_results || []) {
+          const blob = [o.title || '', o.snippet || '', o.source || '', o.link || ''].join(' | ');
+          if (blob.includes('@')) snippets.push(blob);
+        }
+        // AI Overview (when present) — separate text block
+        const ao = res.data.ai_overview;
+        if (ao) {
+          let aoText = '';
+          if (Array.isArray(ao.text_blocks)) {
+            aoText = ao.text_blocks.map((b) => b.snippet || JSON.stringify(b)).join(' ');
+          } else if (ao.snippet) {
+            aoText = ao.snippet;
+          }
+          if (aoText && aoText.includes('@')) snippets.push(aoText);
+        }
+        // Answer box too
+        const ab = res.data.answer_box;
+        if (ab && JSON.stringify(ab).includes('@')) snippets.push(JSON.stringify(ab));
+
+        for (const snippet of snippets) {
+          const matches = snippet.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+          for (const raw of matches) {
+            const valid = isLikelyEmail(raw);
+            if (!valid) continue;
+            const cr = crossRef(valid, snippet); // PER-SNIPPET proximity
+            if (cr.ok) candidates.push({ email: valid, ...cr, source: `serpapi:${q.slice(0, 50)}` });
+          }
         }
       } catch (err) {
         console.log(`   [email-search:serpapi] ${err.message || err}`);
