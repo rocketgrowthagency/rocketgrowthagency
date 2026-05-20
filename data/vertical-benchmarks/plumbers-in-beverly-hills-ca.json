@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Plumbers in Beverly Hills CA",
+  "auditedDate": "2026-05-20",
+  "source": "airtable-leads",
+  "leadsAudited": 5,
+  "categoryDistributionTop10": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop5": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop3": {
+    "Plumber": 3
+  },
+  "majorityCategoryTop10": "Plumber",
+  "majorityCategoryTop5": "Plumber",
+  "majorityCategoryTop3": "Plumber",
+  "reviewsTop10": {
+    "min": 5,
+    "max": 51,
+    "median": 27,
+    "p25": 13,
+    "p75": 39
+  },
+  "reviewsTop3Avg": 30,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}
