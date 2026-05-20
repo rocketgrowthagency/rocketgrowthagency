@@ -88,17 +88,51 @@ function sanitizeScrapedEmail(raw) {
   return raw;
 }
 
+// Dev/template placeholder emails — instant reject. Locked 2026-05-20 after
+// Royale Plumbing's site exposed `user@domain.com` in source (template default).
+const PLACEHOLDER_EMAIL_RE = /^(?:user|test|example|name|email|your|info|admin|contact|hello|mail|noreply|donotreply)@(?:domain|example|test|yoursite|yourdomain|website|email|domain1|domain2|sample|temp|placeholder)\.(?:com|net|org|tld|local)$/i;
+
+// Allowlist of plausible TLDs — keeps the list inclusive but rejects obvious
+// phone-concat artifacts like `661-257-9200.our`. Locked 2026-05-20 after
+// Roto-Rooter scrape captured `line@661-257-9200.our` as "email".
+const VALID_TLDS = new Set([
+  'com','net','org','io','co','us','ca','uk','au','de','fr','es','it','nl',
+  'biz','info','me','tv','ai','dev','app','site','online','shop','store',
+  'tech','design','studio','agency','services','digital','marketing','solutions',
+  'pro','xyz','space','live','life','works','works','expert','expert','plus','llc',
+  'company','business','group','team','works','today','world','global','center',
+  'partners','consulting','support','contractors','construction','plumbing',
+  'edu','gov','mil','int','jobs','mobi','name','asia','tel','travel','museum',
+  'church','health','care','fitness','clinic','dental','law','attorney','insurance',
+  'realtor','homes','house','realty','rentals','vacations','holiday','school','academy',
+  'app','blog','cloud','code','company','events','media','news','press','review',
+  'reviews','tv','vip','social','community','club','team','team','zone',
+  // ccTLDs commonly used
+  'us','co.uk','com.au','co.nz',
+]);
+
 function isLikelyEmail(email) {
   if (!email) return '';
   const cleaned = sanitizeScrapedEmail(email.trim());
   const trimmed = cleaned.toLowerCase();
   const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
   if (!basic.test(trimmed)) return '';
+  // Reject dev/template placeholder emails (user@domain.com, test@test.com, etc.)
+  if (PLACEHOLDER_EMAIL_RE.test(trimmed)) return '';
   // Reject local parts that look like a US phone fragment (3-4 digits + dash +
   // 4 digits + anything else) — defense in case sanitizeScrapedEmail missed a
   // variant. Keeps legitimate digit-prefixed emails like "2024marketing@biz".
   const localPart = trimmed.split('@')[0];
   if (/^\d{3,4}-\d{4}/.test(localPart)) return '';
+  // Reject domains whose local part of the hostname (before the TLD) is mostly
+  // digits + dashes — catches phone-concat artifacts like `661-257-9200.our`
+  // where the "domain" is a phone number with a random word suffix.
+  const domain = trimmed.split('@')[1];
+  const tld = domain.split('.').pop();
+  if (!VALID_TLDS.has(tld)) return '';
+  const domainBase = domain.replace(/\.[a-z]+$/i, '');
+  // If the entire registrable base is just digits + dashes/dots, it's a phone-num spoof
+  if (/^[\d.-]+$/.test(domainBase) && /\d{3,}/.test(domainBase)) return '';
   if (trimmed.endsWith('.png') || trimmed.endsWith('.jpg') || trimmed.endsWith('.jpeg')) {
     return '';
   }
@@ -300,6 +334,35 @@ function extractFromHtml(html) {
         if (valid) email = valid;
       }
     });
+  }
+  if (!email) {
+    // 6. RAW HTML "Ctrl+F" scan — last-resort fallback. Catches emails the
+    //    parsed-DOM extractors miss: HTML comments, <noscript> blocks,
+    //    HTML-entity escaped forms, exotic attribute combinations, etc.
+    //    Locked 2026-05-20 (Chris's "command-F on source code" request).
+    //
+    //    Two passes: literal `@` pattern, then HTML-entity-decoded variant.
+    let candidates = [];
+    const literalRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+    let m;
+    while ((m = literalRe.exec(html)) !== null) candidates.push(m[0]);
+    // HTML-entity decode common forms (@ → &#64; / &#x40;, . → &#46; / &#x2e;)
+    const decoded = String(html)
+      .replace(/&#64;/g, '@')
+      .replace(/&#x40;/gi, '@')
+      .replace(/&#46;/g, '.')
+      .replace(/&#x2e;/gi, '.')
+      .replace(/&amp;/g, '&');
+    if (decoded !== html) {
+      while ((m = literalRe.exec(decoded)) !== null) candidates.push(m[0]);
+    }
+    // Pick the FIRST candidate that passes isLikelyEmail. Domain-rank logic
+    // in fetchWebsiteData handles cross-page preference; here we just need
+    // ANY valid email from this page's raw source.
+    for (const c of candidates) {
+      const valid = isLikelyEmail(c);
+      if (valid) { email = valid; break; }
+    }
   }
 
   return { facebook, instagram, linkedin, twitter, youtube, tiktok, email };

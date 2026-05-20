@@ -98,6 +98,16 @@ function detectParkedInstall({ title, bodyTextSample, wordCount, businessName })
       bodyLower.includes('this site is being built')) {
     return 'squarespace-dev-template';
   }
+  // "Under Construction" / "Coming Soon" placeholder pages. Locked 2026-05-20
+  // after Royale Plumbing (royaleplumbing.com) returned "ROYALE PLUMBING /
+  // Website Under Construction / We Are Fixing a Few Leaks" + 2 buttons.
+  // Page renders the logo + status but has no actual business content.
+  if (/\b(website|site)\s+(is\s+)?under\s+construction\b/i.test(body) ||
+      /\bcoming\s+soon\b/i.test(t) ||
+      /\bcoming\s+soon\b/i.test(body.slice(0, 300)) ||
+      /\bunder\s+construction\b/i.test(t)) {
+    return 'under-construction';
+  }
   // Registrar parking pages — title typically contains "GoDaddy" / "Hostinger" / "Bluehost"
   // or body contains "domain is registered with"
   if (/\b(godaddy|hostinger|bluehost|namecheap|hostgator|domain is for sale|parked free|parking page)\b/i.test(t) ||
