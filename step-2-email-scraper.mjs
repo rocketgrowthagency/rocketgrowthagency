@@ -462,15 +462,45 @@ function businessNameTokens(name) {
 //   2. NAME-MATCH: email local-part contains a distinctive business-name token
 //   3. PROXIMITY: email within ~300 chars of business name in response text
 //   4. REJECT: free-mailbox with no context
-async function discoverEmailViaSearch(siteHost, businessName) {
+async function discoverEmailViaSearch(siteHost, businessName, phone = '', searchTerm = '') {
   if (!siteHost && !businessName) return '';
   const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-  // Build query list — try domain-anchored first (most precise), then name-based.
+  // Extract vertical + city from searchTerm (e.g. "HVAC in Beverly Hills CA" → "HVAC Beverly Hills")
+  // Used for the parent-brand DBA query variant (Cool Choice HVAC, Green Future HVAC pattern).
+  // Locked 2026-05-20 after Cool Choice + Green Heating BH cases where the GBP-listed
+  // name is "<Brand> Heating & AC Repair <City>" but the website lives at `<brand>hvac.com`.
+  const verticalCity = String(searchTerm || '')
+    .replace(/\s+in\s+/i, ' ')
+    .replace(/,?\s*CA\b/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // First 2 words of business name — the "brand" portion before vertical descriptors.
+  // For "Cool Choice Heating & AC Repair Beverly Hills" → "Cool Choice"
+  const brandFirst2 = String(businessName || '')
+    .replace(/[^A-Za-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .slice(0, 2)
+    .join(' ');
+
+  // Build query list — try domain-anchored first (most precise), then brand+vertical, then full name.
   const queries = [];
   if (siteHost) queries.push(`"@${siteHost}"`);
+  if (brandFirst2 && brandFirst2.length >= 3 && verticalCity) queries.push(`"${brandFirst2}" ${verticalCity}`);
   if (businessName) queries.push(`"${businessName}" email contact`);
   if (siteHost) queries.push(`"${siteHost}" email`);
+
+  // Normalize the GBP phone for cross-reference matching (digits only, then with formatting variants).
+  const phoneDigits = String(phone || '').replace(/\D/g, '');
+  const phoneVariants = phoneDigits.length === 10 ? [
+    phoneDigits,
+    `(${phoneDigits.slice(0,3)}) ${phoneDigits.slice(3,6)}-${phoneDigits.slice(6)}`,
+    `${phoneDigits.slice(0,3)}-${phoneDigits.slice(3,6)}-${phoneDigits.slice(6)}`,
+    `${phoneDigits.slice(0,3)}.${phoneDigits.slice(3,6)}.${phoneDigits.slice(6)}`,
+  ] : [];
 
   const tokens = businessNameTokens(businessName);
   const bizLower = String(businessName || '').toLowerCase();
@@ -490,6 +520,14 @@ async function discoverEmailViaSearch(siteHost, businessName) {
     // AUTO-TRUST: domain match
     if (siteHost && (emailDomain === siteHost || emailDomain.endsWith('.' + siteHost))) {
       return { ok: true, tier: 'auto-trust', rank: 10 };
+    }
+    // PHONE-MATCH: same snippet contains the GBP phone (strongest non-domain signal).
+    // Locked 2026-05-20 — Chris's manual verification flow proves phone is the
+    // single most reliable disambiguator for parent-brand DBA cases like Green
+    // Heating BH → Green Future HVAC (different brand, same phone confirms identity).
+    if (phoneVariants.length) {
+      const hasPhone = phoneVariants.some((v) => responseText.includes(v));
+      if (hasPhone) return { ok: true, tier: 'phone-match', rank: 15 };
     }
     // NAME-MATCH: local-part contains a distinctive name token
     if (tokens.some((t) => localPart.includes(t))) {
@@ -601,7 +639,7 @@ async function discoverEmailViaSearch(siteHost, businessName) {
   return best.email;
 }
 
-async function fetchWebsiteData(url, businessName = '') {
+async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearchTerm = '') {
   const cleanWebsite = cleanUrl(url);
   const EMPTY = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
   if (!cleanWebsite) return EMPTY;
@@ -651,7 +689,7 @@ async function fetchWebsiteData(url, businessName = '') {
   // that don't appear on the brand site itself (Mr. Speedy Plumbing case).
   if (!combined.email && (siteHost || businessName)) {
     try {
-      const discovered = await discoverEmailViaSearch(siteHost, businessName);
+      const discovered = await discoverEmailViaSearch(siteHost, businessName, ctxPhone, ctxSearchTerm);
       if (discovered) combined.email = discovered;
     } catch (err) {
       console.log(`   [email-search] uncaught: ${err.message || err}`);
@@ -705,9 +743,11 @@ async function processCsv() {
         }
         let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
         const bizName = (record['Business Name'] || record.businessName || '').trim();
+        const bizPhone = (record.Phone || record.phone || '').trim();
+        const bizSearchTerm = (record['Search Term'] || record.searchTerm || '').trim();
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            result = await fetchWebsiteData(website, bizName);
+            result = await fetchWebsiteData(website, bizName, bizPhone, bizSearchTerm);
             break;
           } catch (e) {
             if (attempt === 0) await new Promise(r => setTimeout(r, 1500));

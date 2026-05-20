@@ -167,19 +167,29 @@ function assessWebsiteSuspicion(website, businessName) {
 function pickQualifyingResult(candidates, businessName) {
   const tokens = businessNameTokens(businessName);
   const uniq = Array.from(new Set(candidates)).slice(0, 20);
-  for (const candidate of uniq) {
-    const host = siteHost(candidate);
-    if (!host) continue;
-    let isAgg = false;
-    for (const agg of AGGREGATOR_HOSTS) {
-      if (host === agg || host.endsWith('.' + agg)) { isAgg = true; break; }
+  // Two-pass: first try strict match (ALL tokens in domain), then relax to ANY.
+  // Locked 2026-05-20 after `"Cool Choice" HVAC Beverly Hills` matched cool512.com
+  // (contained "cool" but not "choice") — false positive on parent-brand pattern.
+  for (const requireAll of [true, false]) {
+    if (requireAll && tokens.length < 2) continue; // need 2+ tokens for strict mode
+    for (const candidate of uniq) {
+      const host = siteHost(candidate);
+      if (!host) continue;
+      let isAgg = false;
+      for (const agg of AGGREGATOR_HOSTS) {
+        if (host === agg || host.endsWith('.' + agg)) { isAgg = true; break; }
+      }
+      if (isAgg) continue;
+      if (/^(google|bing|duckduckgo|youtube|googleusercontent|doubleclick|r\.bing|th\.bing)\./i.test(host)) continue;
+      const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
+      const ok = tokens.length === 0
+        ? true
+        : requireAll
+          ? tokens.every((t) => domainStripped.includes(t))
+          : tokens.some((t) => domainStripped.includes(t));
+      if (!ok) continue;
+      try { return `${new URL(candidate).protocol}//${host}/`; } catch { return ''; }
     }
-    if (isAgg) continue;
-    if (/^(google|bing|duckduckgo|youtube|googleusercontent|doubleclick|r\.bing|th\.bing)\./i.test(host)) continue;
-    const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
-    const ok = tokens.length === 0 || tokens.some((t) => domainStripped.includes(t));
-    if (!ok) continue;
-    try { return `${new URL(candidate).protocol}//${host}/`; } catch { return ''; }
   }
   return '';
 }
@@ -197,29 +207,52 @@ function pickQualifyingResult(candidates, businessName) {
 // Locked 2026-05-20 — feedback_gbp_wrong_website_pattern.md.
 // Caught: Richards Rooter and Plumbing (GBP → plumbingemergencylosangeles.com
 // aggregator; real site → richardsrooterandplumbing.com).
-async function discoverWebsiteViaSearch(_browserUnused, businessName, city) {
+async function discoverWebsiteViaSearch(_browserUnused, businessName, city, category = '') {
   if (!businessName) return '';
-  const q = `"${businessName}"${city ? ' ' + city : ''}`;
   const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+  // Brand-only query variant for parent-brand DBA pattern (Cool Choice HVAC, Green
+  // Future HVAC). When GBP name is "<Brand> <vertical descriptor> <city>", the
+  // brand-domain site often won't match the full GBP-name search. Take just the
+  // FIRST 2 WORDS as the brand portion + add category + city.
+  const brandFirst2 = String(businessName)
+    .replace(/[^A-Za-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .slice(0, 2)
+    .join(' ');
+  // Simplify category to first word ("HVAC contractor" → "HVAC", "Plumber" → "Plumber")
+  const simpleCat = String(category || '').split(/[\s,&]+/)[0] || '';
+  const queries = [];
+  if (brandFirst2 && brandFirst2.length >= 3 && (simpleCat || city)) {
+    queries.push(`"${brandFirst2}" ${simpleCat} ${city || ''}`.replace(/\s+/g, ' ').trim());
+  }
+  queries.push(`"${businessName}"${city ? ' ' + city : ''}`);
 
   // --- Path 1: SerpAPI (preferred when available) ---
   const serpKey = process.env.SERPAPI_KEY;
   if (serpKey) {
-    try {
-      const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
-      const res = await axios.get(url, { timeout: 15000 });
-      const organic = res.data?.organic_results || [];
-      const candidates = organic.map((r) => r.link).filter(Boolean);
-      const picked = pickQualifyingResult(candidates, businessName);
-      if (picked) {
-        console.log(`   [search-fallback:serpapi] "${businessName}" → ${picked}`);
-        return picked;
+    for (const q of queries) {
+      try {
+        const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
+        const res = await axios.get(url, { timeout: 15000 });
+        const organic = res.data?.organic_results || [];
+        const candidates = organic.map((r) => r.link).filter(Boolean);
+        const picked = pickQualifyingResult(candidates, businessName);
+        if (picked) {
+          console.log(`   [search-fallback:serpapi] "${businessName}" via ${q.slice(0, 60)} → ${picked}`);
+          return picked;
+        }
+      } catch (err) {
+        console.log(`   [search-fallback:serpapi] ${businessName}: ${err.message || err}`);
       }
-      console.log(`   [search-fallback:serpapi] no qualifying result for "${businessName}" (${candidates.length} scanned)`);
-    } catch (err) {
-      console.log(`   [search-fallback:serpapi] ${businessName}: ${err.message || err}`);
     }
+    console.log(`   [search-fallback:serpapi] no qualifying result for "${businessName}" across ${queries.length} queries`);
   }
+
+  // Use the full-name query for the DDG/Bing fallback paths (less likely to over-restrict).
+  const q = queries[queries.length - 1];
 
   // --- Path 2: DuckDuckGo HTML ---
   try {
@@ -1407,7 +1440,7 @@ async function main() {
         let discoveredWebsite = '';
         if (suspectReason) {
           try {
-            discoveredWebsite = await discoverWebsiteViaSearch(browser, name, finalCity);
+            discoveredWebsite = await discoverWebsiteViaSearch(browser, name, finalCity, (details.category || '').trim());
           } catch (err) {
             console.log(`   [search-fallback] uncaught: ${err.message || err}`);
           }
