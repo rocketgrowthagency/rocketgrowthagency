@@ -382,7 +382,9 @@ function buildFallbackUrls(baseUrl) {
   try {
     const u = new URL(clean);
     const origin = u.origin.replace(/\/+$/, '');
-    const paths = ['contact', 'contact-us', 'about'];
+    // Legal pages frequently expose privacy@/legal@/dpo@ contact emails due
+    // to GDPR/CCPA compliance requirements. Added 2026-05-20.
+    const paths = ['contact', 'contact-us', 'about', 'privacy', 'privacy-policy', 'terms', 'terms-of-service', 'legal'];
     for (const p of paths) {
       urls.push(`${origin}/${p}`);
     }
