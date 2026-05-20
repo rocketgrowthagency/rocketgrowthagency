@@ -103,6 +103,63 @@ function csvEscape(v) {
   return s;
 }
 
+// Aggregator / directory hostnames that aren't a business's "real" website.
+// Locked 2026-05-20 — feedback_no_website_is_top_finding.md.
+const AGGREGATOR_HOSTS = [
+  'yelp.com', 'yellowpages.com', 'manta.com', 'bbb.org', 'mapquest.com',
+  'foursquare.com', 'localbiz.com', 'expertise.com', 'angi.com',
+  'angieslist.com', 'homeadvisor.com', 'thumbtack.com', 'nextdoor.com',
+  'facebook.com', 'instagram.com', 'linkedin.com', 'tiktok.com',
+  'twitter.com', 'x.com', 'youtube.com', 'pinterest.com',
+  'bizapedia.com', 'cybo.com', 'showmelocal.com', 'merchantcircle.com',
+  'whereoware.com', 'company.com', 'cityrating.com', 'mybusinesslistingmanager.com',
+];
+
+function siteHost(url) {
+  try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ''); }
+  catch { return ''; }
+}
+
+// Strip common business-name boilerplate to get distinctive tokens that
+// would plausibly appear in a real business domain.
+function businessNameTokens(name) {
+  const STOP = new Set([
+    'the','and','of','llc','inc','co','corp','corporation','company','services',
+    'service','plumbing','plumber','plumbers','hvac','roofing','roofer','roofers',
+    'garage','door','doors','electrical','electrician','contractor','contractors',
+    'repair','repairs','installation','install','maintenance','maintenances',
+    'beverly','hills','los','angeles','la','santa','monica','culver','city',
+  ]);
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !STOP.has(t));
+}
+
+// Returns the reason string if website looks suspect, or '' if it looks OK.
+// Used in step-1 to flag leads whose GBP-linked "Website" isn't a real
+// first-party business site (aggregator, name-mismatch, etc.). Parked/empty
+// install detection happens later in step-2.5 since it requires fetching.
+function assessWebsiteSuspicion(website, businessName) {
+  if (!website || !website.trim()) return 'empty';
+  const host = siteHost(website);
+  if (!host) return 'unparseable';
+  // Aggregator / directory match
+  for (const agg of AGGREGATOR_HOSTS) {
+    if (host === agg || host.endsWith('.' + agg)) return `aggregator:${agg}`;
+  }
+  // Name-token mismatch: at least one distinctive token from business name
+  // should appear in the domain. Tolerant: matches as substring (e.g.
+  // "California Hi-Tech" → "californiahitechplumbing" matches "california").
+  const tokens = businessNameTokens(businessName);
+  if (tokens.length === 0) return ''; // can't assess (too generic), assume OK
+  const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
+  const anyMatch = tokens.some((t) => domainStripped.includes(t));
+  if (!anyMatch) return `name-mismatch:tokens=${tokens.join(',')}`;
+  return '';
+}
+
 function parseUSAddress(full) {
   const out = { address: '', city: '', state: '', zip: '' };
   const s = String(full || '').trim();
@@ -1149,6 +1206,8 @@ async function main() {
       'GBP Description',
       'GBP Services',
       'GBP QA Count',
+      'Website Suspect',
+      'Website Suspect Reason',
     ];
 
     const ws = fs.createWriteStream(outFile, { flags: 'w' });
@@ -1250,6 +1309,12 @@ async function main() {
           (details.description || '').replace(/\n/g, ' ').trim(),
           (details.services || '').replace(/\n/g, ' ').trim(),
           details.qaCount || '',
+          (function(){
+            const w = (details.website || '').trim();
+            const reason = assessWebsiteSuspicion(w, name);
+            return reason ? 'Yes' : '';
+          })(),
+          assessWebsiteSuspicion((details.website || '').trim(), name),
         ];
 
         ws.write(rowOut.map(csvEscape).join(',') + '\n');
