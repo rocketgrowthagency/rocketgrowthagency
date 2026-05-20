@@ -232,6 +232,76 @@ function extractFromHtml(html) {
     }
   }
 
+  // Deep-scan fallbacks (locked 2026-05-20 after Sunset West Plumbing case —
+  // visible contact form with no email anywhere in body text, but some sites
+  // still leak the address in hidden inputs, data-attributes, inline scripts,
+  // form action URLs, or CSS content rules).
+  if (!email) {
+    // 1. Hidden form inputs — older WordPress / custom forms ship a
+    //    `<input type="hidden" name="recipient_email" value="info@biz.com">`.
+    $('input[type="hidden"], input[name*="email" i], input[name*="recipient" i], input[name*="mail" i]').each((_, el) => {
+      if (email) return;
+      const val = ($(el).attr('value') || '').trim();
+      if (val && val.includes('@')) {
+        const valid = isLikelyEmail(val);
+        if (valid) email = valid;
+      }
+    });
+  }
+  if (!email) {
+    // 2. data-* attributes on any element — `<button data-email="...">` etc.
+    $('[data-email], [data-recipient], [data-contact-email], [data-mail], [data-to]').each((_, el) => {
+      if (email) return;
+      for (const attr of ['data-email', 'data-recipient', 'data-contact-email', 'data-mail', 'data-to']) {
+        const v = ($(el).attr(attr) || '').trim();
+        if (v && v.includes('@')) {
+          const valid = isLikelyEmail(v);
+          if (valid) { email = valid; return; }
+        }
+      }
+    });
+  }
+  if (!email) {
+    // 3. Form action="mailto:..." (rare but trivial)
+    $('form[action^="mailto:" i], form[action*="mailto:" i]').each((_, el) => {
+      if (email) return;
+      const action = ($(el).attr('action') || '').trim();
+      const m = action.match(/mailto:([^?]+)/i);
+      if (m) {
+        const valid = isLikelyEmail(m[1]);
+        if (valid) email = valid;
+      }
+    });
+  }
+  if (!email) {
+    // 4. Inline <script> content — JSON config blobs, JS variables, etc.
+    //    Pull email-shaped strings from quoted contexts only (avoid arbitrary
+    //    matches in minified libraries).
+    $('script:not([src])').each((_, el) => {
+      if (email) return;
+      const code = $(el).html() || '';
+      // Quoted email pattern: "info@biz.com" or 'info@biz.com'
+      const m = code.match(/["']([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})["']/i);
+      if (m) {
+        const valid = isLikelyEmail(m[1]);
+        if (valid) email = valid;
+      }
+    });
+  }
+  if (!email) {
+    // 5. CSS `content:` rules — some sites obfuscate by rendering email
+    //    via `.email::before { content: "info@biz.com" }`.
+    $('style').each((_, el) => {
+      if (email) return;
+      const css = $(el).html() || '';
+      const m = css.match(/content\s*:\s*["']([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})["']/i);
+      if (m) {
+        const valid = isLikelyEmail(m[1]);
+        if (valid) email = valid;
+      }
+    });
+  }
+
   return { facebook, instagram, linkedin, twitter, youtube, tiktok, email };
 }
 
