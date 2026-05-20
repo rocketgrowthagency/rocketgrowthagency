@@ -5,6 +5,8 @@ const path = require('path');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const slugify = require('slugify');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -160,82 +162,117 @@ function assessWebsiteSuspicion(website, businessName) {
   return '';
 }
 
-// Google-Search website-discovery fallback. Called when step-1's GBP-linked
-// website is suspect (empty / aggregator / name-mismatch). Opens a new tab,
-// runs a Google Search for the business + city, parses the first 8 organic
-// results, picks the first non-aggregator result whose domain contains a
-// distinctive business-name token. Returns the discovered URL or ''.
+// Pick first qualifying candidate URL (non-aggregator, non-search-engine,
+// domain matches business-name token). Shared by SerpAPI / DDG / Bing paths.
+function pickQualifyingResult(candidates, businessName) {
+  const tokens = businessNameTokens(businessName);
+  const uniq = Array.from(new Set(candidates)).slice(0, 20);
+  for (const candidate of uniq) {
+    const host = siteHost(candidate);
+    if (!host) continue;
+    let isAgg = false;
+    for (const agg of AGGREGATOR_HOSTS) {
+      if (host === agg || host.endsWith('.' + agg)) { isAgg = true; break; }
+    }
+    if (isAgg) continue;
+    if (/^(google|bing|duckduckgo|youtube|googleusercontent|doubleclick|r\.bing|th\.bing)\./i.test(host)) continue;
+    const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
+    const ok = tokens.length === 0 || tokens.some((t) => domainStripped.includes(t));
+    if (!ok) continue;
+    try { return `${new URL(candidate).protocol}//${host}/`; } catch { return ''; }
+  }
+  return '';
+}
+
+// Website-discovery fallback. Called when step-1's GBP-linked website is
+// suspect (empty / aggregator / name-mismatch). Multi-path:
+//
+//   1. SerpAPI organic_results (if SERPAPI_KEY env set) — most reliable.
+//   2. DuckDuckGo HTML GET — free, often gates IP with 202.
+//   3. Bing HTML GET — free, often serves stripped chrome.
+//
+// Returns the discovered URL or ''. Gracefully no-ops on every failure path
+// so step-1 never crashes on a suspect lead.
 //
 // Locked 2026-05-20 — feedback_gbp_wrong_website_pattern.md.
 // Caught: Richards Rooter and Plumbing (GBP → plumbingemergencylosangeles.com
-// aggregator; real site → richardsrooterandplumbing.com discoverable here).
-async function discoverWebsiteViaSearch(browser, businessName, city) {
+// aggregator; real site → richardsrooterandplumbing.com).
+async function discoverWebsiteViaSearch(_browserUnused, businessName, city) {
   if (!businessName) return '';
-  let page;
-  try {
-    page = await browser.newPage();
-    await page.setUserAgent(
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-    const q = `"${businessName}"${city ? ' ' + city : ''}`;
-    const url = `https://www.google.com/search?q=${encodeURIComponent(q)}&hl=en`;
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await delay(800 + Math.floor(Math.random() * 700));
-    // CAPTCHA detection — silently abort
-    const captcha = await page.evaluate(() => {
-      const body = (document.body && document.body.innerText) || '';
-      return /unusual traffic|verify you'?re a human|i'?m not a robot|systems have detected unusual traffic/i.test(body.slice(0, 400));
-    }).catch(() => false);
-    if (captcha) {
-      console.log(`   [search-fallback] CAPTCHA detected — skipping discovery for "${businessName}"`);
-      return '';
-    }
-    // Parse organic result hrefs. Modern Google search organic results live in
-    // <a> tags inside <h3> under div.g or div[data-hveid]. Aggregator-hosted
-    // results filtered out at scoring time.
-    const candidates = await page.evaluate(() => {
-      const out = [];
-      // Try multiple selectors — Google changes DOM regularly
-      const anchorSels = ['div.g a:has(h3)', 'div[data-hveid] a:has(h3)', 'a:has(h3)', 'div.yuRUbf a', 'div.g a[href^="http"]'];
-      for (const sel of anchorSels) {
-        try {
-          document.querySelectorAll(sel).forEach((a) => {
-            const href = a.getAttribute('href') || '';
-            if (href && /^https?:\/\//i.test(href)) out.push(href);
-          });
-        } catch {}
-        if (out.length > 5) break;
+  const q = `"${businessName}"${city ? ' ' + city : ''}`;
+  const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+  // --- Path 1: SerpAPI (preferred when available) ---
+  const serpKey = process.env.SERPAPI_KEY;
+  if (serpKey) {
+    try {
+      const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
+      const res = await axios.get(url, { timeout: 15000 });
+      const organic = res.data?.organic_results || [];
+      const candidates = organic.map((r) => r.link).filter(Boolean);
+      const picked = pickQualifyingResult(candidates, businessName);
+      if (picked) {
+        console.log(`   [search-fallback:serpapi] "${businessName}" → ${picked}`);
+        return picked;
       }
-      return Array.from(new Set(out)).slice(0, 12);
-    }).catch(() => []);
-    const tokens = businessNameTokens(businessName);
-    for (const candidate of candidates) {
-      const host = siteHost(candidate);
-      if (!host) continue;
-      // Skip aggregators
-      let isAgg = false;
-      for (const agg of AGGREGATOR_HOSTS) {
-        if (host === agg || host.endsWith('.' + agg)) { isAgg = true; break; }
-      }
-      if (isAgg) continue;
-      // Skip the Google domains themselves
-      if (/^(google|youtube|googleusercontent)\./i.test(host)) continue;
-      // Require name-token match in domain (same heuristic as the suspect check)
-      const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
-      const ok = tokens.length === 0 || tokens.some((t) => domainStripped.includes(t));
-      if (!ok) continue;
-      const cleanUrl = `${new URL(candidate).protocol}//${host}/`;
-      console.log(`   [search-fallback] discovered "${businessName}" → ${cleanUrl}`);
-      return cleanUrl;
+      console.log(`   [search-fallback:serpapi] no qualifying result for "${businessName}" (${candidates.length} scanned)`);
+    } catch (err) {
+      console.log(`   [search-fallback:serpapi] ${businessName}: ${err.message || err}`);
     }
-    console.log(`   [search-fallback] no qualifying organic result for "${businessName}" (${candidates.length} scanned)`);
-    return '';
-  } catch (err) {
-    console.log(`   [search-fallback] ${businessName}: ${err.message || err}`);
-    return '';
-  } finally {
-    if (page) await page.close().catch(() => {});
   }
+
+  // --- Path 2: DuckDuckGo HTML ---
+  try {
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
+    const res = await axios.get(url, {
+      timeout: 12000,
+      headers: { 'User-Agent': ua, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+      validateStatus: (s) => s >= 200 && s < 400,
+    });
+    // DDG returns 202 when gating; skip non-200
+    if (res.status === 200) {
+      const $ = cheerio.load(res.data);
+      const candidates = [];
+      $('a.result__a, a.result__url, a[href*="uddg="]').each((_, el) => {
+        let href = $(el).attr('href') || '';
+        const uddg = href.match(/[?&]uddg=([^&]+)/);
+        if (uddg) { try { href = decodeURIComponent(uddg[1]); } catch { return; } }
+        if (/^https?:\/\//i.test(href)) candidates.push(href);
+      });
+      const picked = pickQualifyingResult(candidates, businessName);
+      if (picked) {
+        console.log(`   [search-fallback:ddg] "${businessName}" → ${picked}`);
+        return picked;
+      }
+    }
+  } catch (err) {
+    console.log(`   [search-fallback:ddg] ${businessName}: ${err.message || err}`);
+  }
+
+  // --- Path 3: Bing HTML ---
+  try {
+    const url = `https://www.bing.com/search?q=${encodeURIComponent(q)}`;
+    const res = await axios.get(url, {
+      timeout: 12000,
+      headers: { 'User-Agent': ua, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+    });
+    const $ = cheerio.load(res.data);
+    const candidates = [];
+    $('li.b_algo h2 a, .b_algo h2 a, h2 > a[href^="http"]').each((_, el) => {
+      const href = $(el).attr('href') || '';
+      if (/^https?:\/\//i.test(href)) candidates.push(href);
+    });
+    const picked = pickQualifyingResult(candidates, businessName);
+    if (picked) {
+      console.log(`   [search-fallback:bing] "${businessName}" → ${picked}`);
+      return picked;
+    }
+  } catch (err) {
+    console.log(`   [search-fallback:bing] ${businessName}: ${err.message || err}`);
+  }
+
+  console.log(`   [search-fallback] all paths exhausted for "${businessName}" — no discovered website`);
+  return '';
 }
 
 function parseUSAddress(full) {
