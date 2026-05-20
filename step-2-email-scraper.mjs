@@ -426,7 +426,154 @@ function emailRank(email, siteHost) {
   return 30;
 }
 
-async function fetchWebsiteData(url) {
+// Strip common business-name boilerplate. Duplicated from step-1's same-named
+// function so step-2 can do its own cross-reference checks without imports.
+function businessNameTokens(name) {
+  const STOP = new Set([
+    'the','and','of','llc','inc','co','corp','corporation','company','services',
+    'service','plumbing','plumber','plumbers','hvac','roofing','roofer','roofers',
+    'garage','door','doors','electrical','electrician','contractor','contractors',
+    'repair','repairs','installation','install','maintenance','maintenances',
+    'beverly','hills','los','angeles','la','santa','monica','culver','city',
+    'west','hollywood','marina','del','rey','pasadena','glendale','burbank',
+  ]);
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !STOP.has(t));
+}
+
+// LAST-RESORT email-discovery via open-web search. Called when every same-site
+// scan path (mailto / JSON-LD / body-text / obfuscated / hidden-input / data-attr /
+// form action / inline-script / CSS content / raw-HTML) returns no email.
+//
+// Locked 2026-05-20 — feedback_email_via_external_search.md.
+// Caught: Mr. Speedy Plumbing (no email on site, Google AI Overview surfaced
+// info@mrspeedyplumbing.com + local@mrspeedyplumbing.com + fred@mrspeedyplumbing.com).
+//
+// Cross-reference REQUIRED — Chris locked after LAX Affordable Plumbing case
+// where AI Overview returned avner.gilboa@att.net (owner personal). Without
+// cross-ref we'd send to unrelated people. Tiers:
+//   1. AUTO-TRUST: email domain === site host (info@biz.com on biz.com search)
+//   2. NAME-MATCH: email local-part contains a distinctive business-name token
+//   3. PROXIMITY: email within ~300 chars of business name in response text
+//   4. REJECT: free-mailbox with no context
+async function discoverEmailViaSearch(siteHost, businessName) {
+  if (!siteHost && !businessName) return '';
+  const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+  // Build query list — try domain-anchored first (most precise), then name-based.
+  const queries = [];
+  if (siteHost) queries.push(`"@${siteHost}"`);
+  if (businessName) queries.push(`"${businessName}" email contact`);
+  if (siteHost) queries.push(`"${siteHost}" email`);
+
+  const tokens = businessNameTokens(businessName);
+  const bizLower = String(businessName || '').toLowerCase();
+
+  // Free-mailbox domains — personal addresses where local-part is the only
+  // identifying signal. PROXIMITY tier accepts these (owner often uses gmail).
+  // Other domains require domain-match or name-match (no proximity acceptance)
+  // — locked 2026-05-20 after Royale Plumbing CA search returned the Canada
+  // branch's info@royaleplumbing.ca (different business, would have been false-
+  // positive under bare proximity logic).
+  const FREE_MAILBOX_RE = /^(gmail|yahoo|hotmail|outlook|icloud|aol|live|msn|protonmail|me|att|sbcglobal|verizon|comcast|earthlink|cox|charter|optonline|pacbell|bellsouth|rocketmail|mail|ymail)\.(com|net|us|ca)$/i;
+
+  // Cross-reference scoring against the raw response text
+  function crossRef(email, responseText) {
+    const localPart = email.split('@')[0].toLowerCase();
+    const emailDomain = email.split('@')[1].toLowerCase();
+    // AUTO-TRUST: domain match
+    if (siteHost && (emailDomain === siteHost || emailDomain.endsWith('.' + siteHost))) {
+      return { ok: true, tier: 'auto-trust', rank: 10 };
+    }
+    // NAME-MATCH: local-part contains a distinctive name token
+    if (tokens.some((t) => localPart.includes(t))) {
+      return { ok: true, tier: 'name-match', rank: 20 };
+    }
+    // PROXIMITY: business name within 300 chars of email AND email is a
+    // free-mailbox (owner's personal). Refuses different-brand domains that
+    // happen to be near the name (the Royale Plumbing .ca branch case).
+    if (bizLower && FREE_MAILBOX_RE.test(emailDomain)) {
+      const txtLower = responseText.toLowerCase();
+      const emailIdx = txtLower.indexOf(email.toLowerCase());
+      const nameIdx = txtLower.indexOf(bizLower);
+      if (emailIdx >= 0 && nameIdx >= 0 && Math.abs(emailIdx - nameIdx) < 300) {
+        return { ok: true, tier: 'proximity-free-mailbox', rank: 60 };
+      }
+    }
+    return { ok: false, tier: 'no-cross-ref', rank: 999 };
+  }
+
+  // Try SerpAPI first (preferred — returns structured organic_results + answer_box)
+  const serpKey = process.env.SERPAPI_KEY;
+  const candidates = []; // [{ email, tier, rank, source }]
+
+  if (serpKey) {
+    for (const q of queries) {
+      try {
+        const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
+        const res = await axios.get(url, { timeout: 15000 });
+        const text = JSON.stringify(res.data); // search all snippets + AI overview blob
+        const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+        for (const raw of matches) {
+          const valid = isLikelyEmail(raw);
+          if (!valid) continue;
+          const cr = crossRef(valid, text);
+          if (cr.ok) candidates.push({ email: valid, ...cr, source: `serpapi:${q.slice(0, 50)}` });
+        }
+      } catch (err) {
+        console.log(`   [email-search:serpapi] ${err.message || err}`);
+      }
+      if (candidates.length) break;
+    }
+  }
+
+  // Fallback: DDG HTML + Bing HTML if SerpAPI didn't yield
+  if (!candidates.length) {
+    for (const q of queries) {
+      for (const engine of ['ddg', 'bing']) {
+        try {
+          const url = engine === 'ddg'
+            ? `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`
+            : `https://www.bing.com/search?q=${encodeURIComponent(q)}`;
+          const res = await axios.get(url, {
+            timeout: 12000,
+            headers: { 'User-Agent': ua, 'Accept': 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+            validateStatus: (s) => s >= 200 && s < 400,
+          });
+          if (res.status !== 200) continue;
+          const html = String(res.data);
+          const matches = html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+          for (const raw of matches) {
+            const valid = isLikelyEmail(raw);
+            if (!valid) continue;
+            const cr = crossRef(valid, html);
+            if (cr.ok) candidates.push({ email: valid, ...cr, source: `${engine}:${q.slice(0, 50)}` });
+          }
+          if (candidates.length) break;
+        } catch (err) {
+          console.log(`   [email-search:${engine}] ${err.message || err}`);
+        }
+      }
+      if (candidates.length) break;
+    }
+  }
+
+  if (!candidates.length) {
+    console.log(`   [email-search] no cross-referenced email found for "${businessName}" (${siteHost})`);
+    return '';
+  }
+
+  // Pick lowest rank (best cross-reference tier)
+  candidates.sort((a, b) => a.rank - b.rank);
+  const best = candidates[0];
+  console.log(`   [email-search] discovered ${best.email} for "${businessName}" via ${best.source} — tier=${best.tier} (rank ${best.rank})`);
+  return best.email;
+}
+
+async function fetchWebsiteData(url, businessName = '') {
   const cleanWebsite = cleanUrl(url);
   const EMPTY = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
   if (!cleanWebsite) return EMPTY;
@@ -467,6 +614,19 @@ async function fetchWebsiteData(url) {
     if (emailCandidates.length > 1) {
       const losers = emailCandidates.slice(1).map((c) => `${c.email} (${c.page})`).join(', ');
       console.log(`[email-rank] picked ${combined.email} from ${emailCandidates[0].page} (rank ${emailRank(combined.email, siteHost)}); rejected: ${losers}`);
+    }
+  }
+
+  // LAST-RESORT: external search-engine discovery when site-scrape yielded nothing.
+  // Locked 2026-05-20 — feedback_email_via_external_search.md.
+  // Catches emails surfaced from Facebook / Yelp / press releases / AI Overview
+  // that don't appear on the brand site itself (Mr. Speedy Plumbing case).
+  if (!combined.email && (siteHost || businessName)) {
+    try {
+      const discovered = await discoverEmailViaSearch(siteHost, businessName);
+      if (discovered) combined.email = discovered;
+    } catch (err) {
+      console.log(`   [email-search] uncaught: ${err.message || err}`);
     }
   }
 
@@ -516,9 +676,10 @@ async function processCsv() {
           return;
         }
         let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
+        const bizName = (record['Business Name'] || record.businessName || '').trim();
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            result = await fetchWebsiteData(website);
+            result = await fetchWebsiteData(website, bizName);
             break;
           } catch (e) {
             if (attempt === 0) await new Promise(r => setTimeout(r, 1500));
