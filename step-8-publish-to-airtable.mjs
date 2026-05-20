@@ -666,6 +666,23 @@ function buildRecord(row, scrapedDate) {
   set("GBP Services", pick(row, "gbp services"));
   setNum("GBP QA Count", pick(row, "gbp qa count"));
 
+  // "No own website" signals from step-1 + step-2.5. Locked 2026-05-20.
+  const websiteSuspect = pick(row, "website suspect");
+  if (websiteSuspect === "Yes" || websiteSuspect === "true" || websiteSuspect === true) {
+    fields["Website Suspect"] = true;
+  }
+  set("Website Suspect Reason", pick(row, "website suspect reason"));
+  setUrl("Discovered Website", pick(row, "discovered website"));
+  // Site Looks Parked + Parked Reason come from step-2.5 audit findings (not
+  // step-1 CSV directly). step-2.5's airtable-writeback patches them after
+  // the audit; step-8 sets them here too in case the field arrives via step-2
+  // CSV (forward-compatible if we propagate it later).
+  const parked = pick(row, "site looks parked");
+  if (parked === "Yes" || parked === "true" || parked === true) {
+    fields["Site Looks Parked"] = true;
+  }
+  set("Parked Reason", pick(row, "parked reason"));
+
   // Pipeline Stage defaults to "scraped" on first write; never overwritten on PATCH
   fields["Pipeline Stage"] = "scraped";
 
