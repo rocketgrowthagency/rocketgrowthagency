@@ -160,6 +160,84 @@ function assessWebsiteSuspicion(website, businessName) {
   return '';
 }
 
+// Google-Search website-discovery fallback. Called when step-1's GBP-linked
+// website is suspect (empty / aggregator / name-mismatch). Opens a new tab,
+// runs a Google Search for the business + city, parses the first 8 organic
+// results, picks the first non-aggregator result whose domain contains a
+// distinctive business-name token. Returns the discovered URL or ''.
+//
+// Locked 2026-05-20 — feedback_gbp_wrong_website_pattern.md.
+// Caught: Richards Rooter and Plumbing (GBP → plumbingemergencylosangeles.com
+// aggregator; real site → richardsrooterandplumbing.com discoverable here).
+async function discoverWebsiteViaSearch(browser, businessName, city) {
+  if (!businessName) return '';
+  let page;
+  try {
+    page = await browser.newPage();
+    await page.setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    );
+    const q = `"${businessName}"${city ? ' ' + city : ''}`;
+    const url = `https://www.google.com/search?q=${encodeURIComponent(q)}&hl=en`;
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await delay(800 + Math.floor(Math.random() * 700));
+    // CAPTCHA detection — silently abort
+    const captcha = await page.evaluate(() => {
+      const body = (document.body && document.body.innerText) || '';
+      return /unusual traffic|verify you'?re a human|i'?m not a robot|systems have detected unusual traffic/i.test(body.slice(0, 400));
+    }).catch(() => false);
+    if (captcha) {
+      console.log(`   [search-fallback] CAPTCHA detected — skipping discovery for "${businessName}"`);
+      return '';
+    }
+    // Parse organic result hrefs. Modern Google search organic results live in
+    // <a> tags inside <h3> under div.g or div[data-hveid]. Aggregator-hosted
+    // results filtered out at scoring time.
+    const candidates = await page.evaluate(() => {
+      const out = [];
+      // Try multiple selectors — Google changes DOM regularly
+      const anchorSels = ['div.g a:has(h3)', 'div[data-hveid] a:has(h3)', 'a:has(h3)', 'div.yuRUbf a', 'div.g a[href^="http"]'];
+      for (const sel of anchorSels) {
+        try {
+          document.querySelectorAll(sel).forEach((a) => {
+            const href = a.getAttribute('href') || '';
+            if (href && /^https?:\/\//i.test(href)) out.push(href);
+          });
+        } catch {}
+        if (out.length > 5) break;
+      }
+      return Array.from(new Set(out)).slice(0, 12);
+    }).catch(() => []);
+    const tokens = businessNameTokens(businessName);
+    for (const candidate of candidates) {
+      const host = siteHost(candidate);
+      if (!host) continue;
+      // Skip aggregators
+      let isAgg = false;
+      for (const agg of AGGREGATOR_HOSTS) {
+        if (host === agg || host.endsWith('.' + agg)) { isAgg = true; break; }
+      }
+      if (isAgg) continue;
+      // Skip the Google domains themselves
+      if (/^(google|youtube|googleusercontent)\./i.test(host)) continue;
+      // Require name-token match in domain (same heuristic as the suspect check)
+      const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
+      const ok = tokens.length === 0 || tokens.some((t) => domainStripped.includes(t));
+      if (!ok) continue;
+      const cleanUrl = `${new URL(candidate).protocol}//${host}/`;
+      console.log(`   [search-fallback] discovered "${businessName}" → ${cleanUrl}`);
+      return cleanUrl;
+    }
+    console.log(`   [search-fallback] no qualifying organic result for "${businessName}" (${candidates.length} scanned)`);
+    return '';
+  } catch (err) {
+    console.log(`   [search-fallback] ${businessName}: ${err.message || err}`);
+    return '';
+  } finally {
+    if (page) await page.close().catch(() => {});
+  }
+}
+
 function parseUSAddress(full) {
   const out = { address: '', city: '', state: '', zip: '' };
   const s = String(full || '').trim();
@@ -1208,6 +1286,7 @@ async function main() {
       'GBP QA Count',
       'Website Suspect',
       'Website Suspect Reason',
+      'Discovered Website',
     ];
 
     const ws = fs.createWriteStream(outFile, { flags: 'w' });
@@ -1282,6 +1361,20 @@ async function main() {
         const finalAddress = parsed.address || (isServiceArea ? addrRaw : '');
         const finalCity = parsed.city || (isServiceArea ? (SEARCH_QUERY.match(/\bin\s+([^,]+),/i)?.[1] || '') : '');
         const finalState = parsed.state || (isServiceArea ? (SEARCH_QUERY.match(/,\s*([A-Z]{2})\b/)?.[1] || '') : '');
+        // Assess suspicion once; if suspect, fire a Google Search discovery
+        // fallback to find the real brand site. Result stored as a NEW field
+        // — we don't overwrite the GBP-linked Website so downstream can still
+        // surface the "wrong-website-in-GBP" finding.
+        const websiteRaw = (details.website || '').trim();
+        const suspectReason = assessWebsiteSuspicion(websiteRaw, name);
+        let discoveredWebsite = '';
+        if (suspectReason) {
+          try {
+            discoveredWebsite = await discoverWebsiteViaSearch(browser, name, finalCity);
+          } catch (err) {
+            console.log(`   [search-fallback] uncaught: ${err.message || err}`);
+          }
+        }
         const rowOut = [
           name,
           finalAddress,
@@ -1309,12 +1402,9 @@ async function main() {
           (details.description || '').replace(/\n/g, ' ').trim(),
           (details.services || '').replace(/\n/g, ' ').trim(),
           details.qaCount || '',
-          (function(){
-            const w = (details.website || '').trim();
-            const reason = assessWebsiteSuspicion(w, name);
-            return reason ? 'Yes' : '';
-          })(),
-          assessWebsiteSuspicion((details.website || '').trim(), name),
+          suspectReason ? 'Yes' : '',
+          suspectReason,
+          discoveredWebsite,
         ];
 
         ws.write(rowOut.map(csvEscape).join(',') + '\n');

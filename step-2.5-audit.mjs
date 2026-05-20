@@ -1396,7 +1396,9 @@ async function main() {
       const row = rows[i];
       const name = row['Business Name'] || row.name;
       const slug = slugify(name || `business-${i + 1}`, { lower: true, strict: true });
-      const website = row.Website || row.website || '';
+      // Prefer step-1's discovered website (from search fallback) when present;
+      // otherwise fall back to the GBP-linked website. Locked 2026-05-20.
+      const website = (row['Discovered Website'] || '').trim() || row.Website || row.website || '';
       const gbpUrl = row['Google Maps URL'] || '';
       const business = {
         name,

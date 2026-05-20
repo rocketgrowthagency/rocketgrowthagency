@@ -492,9 +492,18 @@ async function processCsv() {
     const batch = records.slice(i, i + BATCH);
     await Promise.all(
       batch.map(async (record, j) => {
-        const websiteRaw = record.website || record.Website || '';
+        // Prefer the discovered website (from step-1 Google Search fallback)
+        // when present — that's the lead's real brand site, not the GBP-linked
+        // aggregator. Locked 2026-05-20 (Richards Rooter case).
+        const discovered = (record['Discovered Website'] || record.discoveredWebsite || '').trim();
+        const gbpLinked = (record.website || record.Website || '').trim();
+        const websiteRaw = discovered || gbpLinked;
         const website = cleanUrl(websiteRaw);
-        console.log(`Processing (${i + j + 1}/${records.length}): ${website || '(no website)'}`);
+        if (discovered && discovered !== gbpLinked) {
+          console.log(`Processing (${i + j + 1}/${records.length}): ${website} (DISCOVERED — GBP linked ${gbpLinked || '(none)'})`);
+        } else {
+          console.log(`Processing (${i + j + 1}/${records.length}): ${website || '(no website)'}`);
+        }
         const SOCIAL_KEYS = ['email','facebook','instagram','linkedin','twitter','youtube','tiktok'];
         if (!website) {
           for (const k of SOCIAL_KEYS) record[k] = '';
