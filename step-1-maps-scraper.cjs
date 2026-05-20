@@ -636,13 +636,10 @@ async function extractPlaceDetails(page) {
       }
 
       function findHours() {
-        // data-item-id="oh" is the operating hours button
-        const ohEl = document.querySelector('[data-item-id="oh"]');
-        if (ohEl) return textFrom(ohEl).slice(0, 300);
-        // Fallback: aria-label containing "hours"
-        const hoursEl = Array.from(document.querySelectorAll('[aria-label]'))
-          .find(el => /\bhours\b/i.test(el.getAttribute('aria-label') || ''));
-        if (hoursEl) return textFrom(hoursEl).slice(0, 300);
+        // Hours capture DISABLED 2026-05-20 — Chris confirmed not needed.
+        // A single-line "Open · Closes 10 PM" snapshot isn't actionable; a
+        // GBP-vs-website mismatch check would need the full Mon-Sun schedule
+        // (behind a click-to-expand dropdown). Skip rather than store noise.
         return '';
       }
 
@@ -666,13 +663,14 @@ async function extractPlaceDetails(page) {
       }
 
       function findDescription() {
-        // "From the business" / "About" / "Description" block on Maps panel.
+        // "From the owner" / "From the business" / "About" / "Description" block.
         // Multiple opener phrases + DOM patterns. Returns first match >= 20 chars.
-        // Pattern 1: section with heading
+        // Pattern 1: section with heading (now includes "from the owner" — Cal
+        // Hi-Tech 2026-05-20 inspector dump confirmed this is the modern label).
         const headings = Array.from(document.querySelectorAll('h2, h3, [role="heading"], button'));
         for (const h of headings) {
           const t = textFrom(h);
-          if (/^(from the business|about this business|about|description)/i.test(t.trim())) {
+          if (/^(from the owner|from the business|about this business|about|description)/i.test(t.trim())) {
             let sib = h.nextElementSibling;
             while (sib) {
               const txt = (sib.textContent || '').trim();
@@ -696,6 +694,16 @@ async function extractPlaceDetails(page) {
           const t = (descEl.textContent || '').trim();
           if (t.length > 20) return t.slice(0, 600);
         }
+        // Pattern 3: text-based fallback against panel innerText (locked 2026-05-20).
+        // Modern Maps renders the description body directly under a plain "From the
+        // owner" / "From the business" line — no heading element. Capture everything
+        // from that anchor up to the next blank line or known section boundary.
+        const panel = document.querySelector('div[role="main"]') || document.body;
+        const panelText = (panel && panel.innerText) || '';
+        const m = panelText.match(/(?:^|\n)\s*From the (?:owner|business)\s*\n([\s\S]{20,1500}?)(?:\n\s*\n|\n\s*(?:Website|Directions|Add photos|Photos|Services|Updates|Posts|See more|Write a review|Suggest an edit|About this data|Reviews?|Questions and answers|People also search for)\b|$)/i);
+        if (m && m[1]) {
+          return m[1].replace(/\s+/g, ' ').trim().slice(0, 600);
+        }
         return '';
       }
 
@@ -717,6 +725,22 @@ async function extractPlaceDetails(page) {
               items.push(txt);
             }
           });
+          if (items.length) return items.slice(0, 20).join(', ');
+        }
+        // Text-based fallback: scan panel innerText for a "Services" line followed
+        // by short item lines (locked 2026-05-20 — modern Maps inlines services
+        // under a bare "Services" label without a heading element).
+        const panel = document.querySelector('div[role="main"]') || document.body;
+        const panelText = (panel && panel.innerText) || '';
+        const m = panelText.match(/(?:^|\n)\s*Services\s*\n((?:[^\n]+\n){1,30})/);
+        if (m && m[1]) {
+          const items = m[1]
+            .split('\n')
+            .map((s) => s.trim())
+            .filter((s) => s
+              && s.length > 1
+              && s.length < 80
+              && !/^(See more|Add|Update|Edit|Suggest|Photos|Reviews|Directions|Website|Call|Share|Save|Nearby|Send to phone|About this data|Write a review|services?)$/i.test(s));
           if (items.length) return items.slice(0, 20).join(', ');
         }
         return '';
