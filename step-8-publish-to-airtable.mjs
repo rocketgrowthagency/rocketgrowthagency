@@ -259,8 +259,19 @@ function isGenericOrDirectoryListing(row) {
 // in data fields, ever). Caught 2026-05-20 across 276 Phone values + 4
 // GBP Hours + 279 Raw Data dumps. Backfilled + locked at write-time guard.
 const _PUA_RE = /[-]/g;
+// Emoji + pictograph ranges. Locked 2026-05-20 after California Hi-Tech GBP
+// description came through with hammer-and-wrench embedded. Covers Misc Symbols
+// & Pictographs (1F300-1F5FF), Emoticons (1F600-1F64F), Transport & Map
+// (1F680-1F6FF), Misc Symbols (2600-26FF), Dingbats (2700-27BF), Supplemental
+// Symbols & Pictographs (1F900-1F9FF), Symbols & Pictographs Ext-A
+// (1FA70-1FAFF), plus the variation selector U+FE0F + ZWJ U+200D.
+const _EMOJI_RE = /[\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}\u{200D}]/gu;
 function cleanStr(v) {
-  return String(v ?? "").replace(_PUA_RE, "").replace(/\s+/g, " ").trim();
+  return String(v ?? "")
+    .replace(_PUA_RE, "")
+    .replace(_EMOJI_RE, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // Auto-ensure the "Leads No Email" sibling table exists, cloned from Leads
