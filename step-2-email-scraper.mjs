@@ -737,14 +737,27 @@ async function processCsv() {
           console.log(`Processing (${i + j + 1}/${records.length}): ${website || '(no website)'}`);
         }
         const SOCIAL_KEYS = ['email','facebook','instagram','linkedin','twitter','youtube','tiktok'];
-        if (!website) {
-          for (const k of SOCIAL_KEYS) record[k] = '';
-          return;
-        }
-        let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
         const bizName = (record['Business Name'] || record.businessName || '').trim();
         const bizPhone = (record.Phone || record.phone || '').trim();
         const bizSearchTerm = (record['Search Term'] || record.searchTerm || '').trim();
+        if (!website) {
+          for (const k of SOCIAL_KEYS) record[k] = '';
+          // Even with no website, try the open-web search-fallback for email.
+          // Catches Cool Choice / Green Heating style parent-brand DBA cases
+          // where the GBP has no website but the brand-domain DOES exist + has email.
+          // Locked 2026-05-20.
+          if (bizName) {
+            try {
+              const discovered = await discoverEmailViaSearch('', bizName, bizPhone, bizSearchTerm);
+              if (discovered) {
+                record.email = discovered;
+                console.log(`Processing (${i + j + 1}/${records.length}): (no website) → search-fallback found email: ${discovered}`);
+              }
+            } catch {}
+          }
+          return;
+        }
+        let result = { facebook: '', instagram: '', linkedin: '', twitter: '', youtube: '', tiktok: '', email: '' };
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             result = await fetchWebsiteData(website, bizName, bizPhone, bizSearchTerm);
