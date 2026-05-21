@@ -71,7 +71,18 @@ async function loadStep2Data() {
   const rankMap = {};
   const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)
   if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap };
-  const csvFiles = fs.readdirSync(STEP2_DIR).filter(f => f.endsWith('.csv'));
+  // Read CSVs newest-first by mtime, and use FIRST-WRITE-WINS so the freshest
+  // scrape's rank for each business is canonical. Without this, older CSVs with
+  // the same business at a different rank (different city/search term) silently
+  // overwrite today's data and ship to the landing page title.
+  // Caught 2026-05-21: Enviro Plumbing shipped as #21 (April Culver City) when
+  // today's Santa Monica scrape had rank 3 — `enviro-plumbing-single-[step-2].csv`
+  // sorted last alphabetically and won, even though it was older.
+  const csvFiles = fs.readdirSync(STEP2_DIR)
+    .filter(f => f.endsWith('.csv'))
+    .map(f => ({ file: f, mtime: fs.statSync(path.join(STEP2_DIR, f)).mtimeMs }))
+    .sort((a, b) => b.mtime - a.mtime)
+    .map(o => o.file);
   for (const file of csvFiles) {
     await new Promise((resolve) => {
       fs.createReadStream(path.join(STEP2_DIR, file))
@@ -82,8 +93,8 @@ async function loadStep2Data() {
           if (name) {
             const s = slugify(name, { lower: true, strict: true });
             if (s) {
-              nameMap[s] = name; // always store the real name
-              if (Number.isFinite(rank)) rankMap[s] = rank;
+              if (!(s in nameMap)) nameMap[s] = name;
+              if (Number.isFinite(rank) && !(s in rankMap)) rankMap[s] = rank;
             }
           }
         })
@@ -324,10 +335,16 @@ async function main() {
     }
     // Variant-aware copy. Prefer Airtable's Video Variant field; fall back
     // to CSV rank, then nothing. Never use the filename prefix as rank (it's batch sequence).
+    // CSV rank is authoritative for THIS scrape session — Airtable may hold a stale
+    // Map Rank from a prior scrape of the same business (different city/search term),
+    // and step-8-publish runs AFTER build-video-landing in the orchestrator. The
+    // in-video overlay uses CSV rank, so the title must match. (Locked 2026-05-21
+    // after SM Drain Co./Monkey Wrench/Enviro all shipped with title #34/#9/#21
+    // while overlay correctly showed #1/#2/#3.)
     const airtableVariant = airtableRecord?.fields?.["Video Variant"];
     const airtableRank = parseInt(airtableRecord?.fields?.["Map Rank"], 10);
     const csvRank = step2Ranks[slug] || step2Ranks[fileSlug] || null;
-    const effectiveRank = Number.isFinite(airtableRank) ? airtableRank : csvRank;
+    const effectiveRank = Number.isFinite(csvRank) ? csvRank : (Number.isFinite(airtableRank) ? airtableRank : null);
     const isTop3 = airtableVariant
       ? airtableVariant === 'top-3'
       : (Number.isFinite(effectiveRank) && effectiveRank >= 1 && effectiveRank <= 3);
@@ -356,7 +373,8 @@ async function main() {
       ? `defend your top 3 spot and push for #1`
       : `move you into the top 3 and capture more leads`;
 
-    const resolvedRank = Number.isFinite(airtableRank) ? airtableRank : (Number.isFinite(csvRank) ? csvRank : null);
+    // Same priority as effectiveRank above — CSV wins, Airtable is the fallback.
+    const resolvedRank = Number.isFinite(csvRank) ? csvRank : (Number.isFinite(airtableRank) ? airtableRank : null);
     const eyebrowLabel = resolvedRank !== null
       ? (resolvedRank >= 1 && resolvedRank <= 3)
         ? `Currently ranking #${resolvedRank} · Top 3 spot`
