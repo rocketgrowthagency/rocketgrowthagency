@@ -30,8 +30,13 @@ echo "Started: $TIME_START" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
 # === Step 1: scrape ===
-echo ">>> step-1 scrape (5 leads)" | tee -a "$LOGFILE"
-TARGET_UNIQUE_PLACES=5 SEARCH_QUERY="$SEARCH_QUERY" node step-1-maps-scraper.cjs --skip-freshness 2>&1 | tee -a "$LOGFILE"
+# PRODUCTION mode — uses step-1's default TARGET_UNIQUE_PLACES=55 to scrape
+# the full first page of Maps results, not a test-mode 5-cap. Memory:
+# feedback_overnight_autonomous_workflow.md (locked 2026-05-21 after Chris
+# caught us running in test mode and producing only 4 videos overnight).
+# To run smaller batch for testing: TARGET_UNIQUE_PLACES=5 ./overnight-pipeline.sh ...
+echo ">>> step-1 scrape (production — full default ~55 leads)" | tee -a "$LOGFILE"
+SEARCH_QUERY="$SEARCH_QUERY" node step-1-maps-scraper.cjs --skip-freshness 2>&1 | tee -a "$LOGFILE"
 
 # === Determine the latest CSV ===
 LATEST_S1=$(ls -t "output/Step 1/"*"-[step-1].csv" | head -1)
