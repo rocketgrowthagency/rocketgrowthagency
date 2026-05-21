@@ -351,7 +351,13 @@ async function auditWebsite(browser, websiteUrl, business) {
         if (!napAddrFound && (addrRegex.test(t) || cityStateRegex.test(t))) napAddrFound = true;
         if (napPhoneFound && napAddrFound) break;
       }
-      result.napAboveFold = napPhoneFound && napAddrFound;
+      // Relaxed 2026-05-21 (Chris design question): "why does address have to be
+      // above the fold???" — many legit sites have phone in header + address in
+      // footer, which is a valid local-trust pattern. Requiring BOTH was too
+      // strict and produced false claims. Now passes if EITHER phone or address
+      // is above the fold. The finding fires only when NEITHER is visible —
+      // i.e., the prospect can't see any local-trust signal in the hero.
+      result.napAboveFold = napPhoneFound || napAddrFound;
 
       // Canonical tag — points to a different URL? (W6 — silent ranking killer)
       const canonEl = document.querySelector('link[rel="canonical"]');
@@ -981,7 +987,19 @@ async function auditMobile(browser, websiteUrl, business) {
         // drawer pass on Santa Monica Drain Co.'s mobile 2026-05-21).
         if (r.bottom <= 0 || r.top >= vh) continue;
         if (r.right <= 0 || r.left >= vw) continue;
-        const txt = ((el.innerText || el.textContent || '') + '').trim();
+        // Text-or-attribute identity. Some sites render the phone number inside
+        // a child <span> that's animated/hidden, leaving the link's innerText
+        // empty. Fall back to aria-label, title, alt, and href value itself
+        // (tel:+14245337776 → treat as "call"). Locked 2026-05-21 after Enviro
+        // Plumbing's fixed navbar tel: link was missed because innerText="".
+        let txt = ((el.innerText || el.textContent || '') + '').trim();
+        if (!txt) {
+          txt = (el.getAttribute('aria-label') || el.getAttribute('title') || el.getAttribute('alt') || '').trim();
+        }
+        if (!txt && el.tagName === 'A') {
+          const href = (el.getAttribute('href') || '').toLowerCase();
+          if (href.startsWith('tel:') || href.startsWith('sms:')) txt = 'call';
+        }
         if (!txt || NAV_LIKE.test(txt)) continue;
         return true;
       }

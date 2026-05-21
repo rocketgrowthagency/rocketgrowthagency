@@ -507,10 +507,11 @@ function scoreWebsiteFindings(audit, businessName) {
       out.push({ key: 'nap', score: 1, finding: `your phone number on the site doesn't match your Google Business Profile, which weakens citation consistency` });
     }
   }
-  // PRIORITY 1.5 (NEW): NAP not visible above the fold — phone AND address as visible text in the hero
-  // GATED 2026-05-21: requires webVerified — DOM scan absence claims need the audit to have actually run.
+  // PRIORITY 1.5 (NEW): No local-trust signal visible in the hero — neither
+  // phone NOR address visible above the fold. Relaxed 2026-05-21 from
+  // requiring BOTH to requiring EITHER (per Chris design question).
   if (webVerified && w.napAboveFold === false) {
-    out.push({ key: 'napAboveFold', score: 1.5, finding: `your phone number and address aren't both visible above the fold — visitors and Google's local trust signals look for NAP in the hero, not buried in the footer` });
+    out.push({ key: 'napAboveFold', score: 1.5, finding: `neither your phone number nor your address is visible above the fold — visitors and Google's local trust signals look for at least one NAP element in the hero, not buried in the footer` });
   }
   // PRIORITY 1.3 (NEW 2026-05-14): Domain doesn't match business BRAND name.
   // Filter out industry/service stopwords from the business name so we only check the
