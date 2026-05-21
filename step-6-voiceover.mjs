@@ -766,9 +766,17 @@ function scoreMobileFindings(audit) {
   if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
     out.push({ key: 'pageWeight', score: 6, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes of resources — Google recommends keeping mobile pages under 3 megabytes to avoid slow load times` });
   }
-  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor (GATED 2026-05-21)
-  if (mobVerified && m.hasStickyCta === false) {
+  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor
+  // GATED 2026-05-21 (round 2): requires mobVerified AND stickyCtaVerified
+  // (= page actually has fixed/sticky elements we could examine). If the page
+  // has zero fixed elements, our detector likely didn't see widgets that
+  // load late (cross-origin iframes, post-2.5s injected pills). Caught on
+  // Monkey Wrench — site has visible SHOP + "Let's chat" sticky pills but
+  // our detector returned false because they're rendered async/iframe.
+  if (mobVerified && m.stickyCtaVerified === true && m.hasStickyCta === false) {
     out.push({ key: 'stickyCta', score: 6.5, finding: `there's no sticky call-to-action that stays visible when visitors scroll on mobile — top performers keep a Call or Quote button always reachable, so visitors don't have to scroll back up to convert` });
+  } else if (mobVerified && m.stickyCtaVerified !== true && m.hasStickyCta === false) {
+    console.log('[step-6 unverified-skip] stickyCta finding suppressed: page had no fixed/sticky elements detectable — likely async-loaded widgets.');
   }
   // PRIORITY 8: Multiple H1 tags
   if (m.h1Count != null && m.h1Count > 1) {

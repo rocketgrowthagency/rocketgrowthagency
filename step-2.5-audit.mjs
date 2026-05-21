@@ -582,6 +582,11 @@ async function auditMobile(browser, websiteUrl, business) {
     // after domcontentloaded. Locked 2026-05-21 after Monkey Wrench's "Let's
     // chat" widget was missing from the DOM at scrape time.
     await new Promise((r) => setTimeout(r, 2500));
+
+    const data = await page.evaluate(() => {
+      const result = {
+        hasViewportMeta: false,
+        viewportContent: '',
         clickToCallAboveFold: false,
         primaryCtaPx: null,
         h1Count: 0,
@@ -894,6 +899,23 @@ async function auditMobile(browser, websiteUrl, business) {
     // separate evaluate so the layout has time to settle.
     await page.evaluate(() => window.scrollTo({ top: 1000, behavior: 'instant' })).catch(() => {});
     await new Promise((r) => setTimeout(r, 400));
+    // Two-step: check whether ANY fixed/sticky elements exist on the page.
+    // If yes, our CTA-detection logic has something to look at — set
+    // stickyCtaVerified=true. If we find zero fixed/sticky elements anywhere,
+    // the page may be heavily JS-driven with widgets we can't see (cross-
+    // origin iframe, late-loading async, etc.) — set verified=false and
+    // step-6 won't fire the noSticky finding. Better to skip than claim.
+    const stickyVerifyResult = await page.evaluate(() => {
+      const fixedEls = Array.from(document.querySelectorAll('*')).filter((el) => {
+        try {
+          const cs = window.getComputedStyle(el);
+          return (cs.position === 'fixed' || cs.position === 'sticky');
+        } catch { return false; }
+      });
+      return { fixedElementCount: fixedEls.length };
+    }).catch(() => ({ fixedElementCount: 0 }));
+    findings.stickyCtaVerified = stickyVerifyResult.fixedElementCount > 0;
+
     findings.hasStickyCta = await page.evaluate(() => {
       const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in|home|about|services|areas\s*served|resources|gallery|portfolio|blog|news|faq|locations?|reviews)$/i;
       // Recognized CTA verbs — sticky pill/bar must contain one of these to
