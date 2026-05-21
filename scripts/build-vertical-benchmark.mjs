@@ -94,12 +94,17 @@ async function fetchSerpApiLeads(searchTerm) {
     api_key: key,
   });
   console.log(`   [serpapi] fetching Google Maps results for "${searchTerm}"`);
-  const res = await fetch(`https://serpapi.com/search?${params}`);
-  if (!res.ok) {
-    console.warn(`   [serpapi] HTTP ${res.status} — fallback failed`);
+  // Use shared rate-aware wrapper so the 200/hr cap auto-pauses + resumes
+  // instead of silently 429-ing. Locked 2026-05-20 EOD audit.
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.url);
+  const { serpapiGetRateAware } = require('../lib/serpapi-rate-aware.cjs');
+  const res = await serpapiGetRateAware(`https://serpapi.com/search?${params}`);
+  if (!res) {
+    console.warn(`   [serpapi] request failed (network or non-rate-limit error)`);
     return [];
   }
-  const data = await res.json();
+  const data = res.data;
   const local = data.local_results || [];
   return local.slice(0, 10).map((r, idx) => ({
     'Business Name': r.title || '',
