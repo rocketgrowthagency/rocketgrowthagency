@@ -1048,9 +1048,18 @@ async function auditGbp(_, gbpUrl, business) {
       const hoursEl = document.querySelector(
         'div[data-item-id="oh"], [aria-label*="hour" i], [aria-label*="open" i], [data-tooltip*="hour" i]'
       );
+      // hoursVerified: true when we either found the hours element OR detected
+      // a hours-section text marker (one of: "Hours", "Open now", "Open 24",
+      // weekday names, time format). Without one of those markers we can't
+      // claim absence — Maps panel hours section may be lazy-loaded.
+      // Gates the step-6 businessHours finding per
+      // feedback_verification_gates_must_be_strict.md.
+      const HOURS_SECTION_MARKERS = /\b(open now|open\s*·|closed\s*·|hours|monday|tuesday|wednesday|thursday|friday|saturday|sunday|closes?\s+(?:at\s+)?\d|opens?\s+(?:at\s+)?\d|open 24)\b/i;
+      const hoursSectionVisible = !!hoursEl || HOURS_SECTION_MARKERS.test(txt);
       const hasBusinessHours = hoursEl
         ? true
         : /\b(open now|open\s*·|closes?\s+\d|closes?\s+at|open\s+\d|open 24|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hours|\d+\s*(am|pm))\b/i.test(txt);
+      const hoursVerified = hoursSectionVisible;
 
       // Category: specific GBP selectors first, then heuristic fallback
       let primaryCategory = null;
@@ -1211,7 +1220,7 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_e) {}
       console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
 
-      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
+      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
@@ -1221,6 +1230,8 @@ async function auditGbp(_, gbpUrl, business) {
     findings.reviewsLast90Days = data.reviewsLast90;
     findings.ownerResponseCount = data.ownerResponseCount;
     findings.hasBusinessHours = data.hasBusinessHours;
+    findings.hoursVerified = !!data.hoursVerified;
+    findings.reviewsParsedCount = Number.isFinite(data.reviewsParsedCount) ? data.reviewsParsedCount : 0;
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
     findings.description = data.description || '';
@@ -1393,13 +1404,37 @@ async function auditGbp(_, gbpUrl, business) {
         }, business.name || '');
 
         if (kpData.onPanel) {
-          // Description
-          if (kpData.description) {
+          // Description (TIGHTENED 2026-05-21)
+          // The Search KP description scraper can grab Google UI boilerplate
+          // when the actual description selector is missed. Monkey Wrench
+          // returned "Providers are listed in random order. However, if the
+          // business has specified a preferred provider, it will appear first."
+          // as the description — clearly Google's own panel chrome, not the
+          // business's description.
+          //
+          // Filter: any text matching known Google UI boilerplate phrases is
+          // treated as MISSING (descriptionLength=0). Verified=true only when
+          // we either (a) extracted real text or (b) confirmed via length-of-0
+          // that there was no description text at all.
+          const GOOGLE_UI_PHRASES = [
+            /providers are listed in random order/i,
+            /if the business has specified a preferred provider/i,
+            /^claim this business$/i,
+            /this place's information is provided by/i,
+            /add a description for this business/i,
+            /\bdata from third parties\b/i,
+            /^reviews from the web$/i,
+          ];
+          const looksLikeBoilerplate = (txt) => GOOGLE_UI_PHRASES.some(re => re.test(txt));
+          if (kpData.description && !looksLikeBoilerplate(kpData.description)) {
             findings.description = kpData.description;
             findings.descriptionLength = kpData.description.length;
           } else {
             findings.description = '';
             findings.descriptionLength = 0;
+            if (kpData.description) {
+              console.log('[kp-diag] description filtered as Google UI boilerplate:', kpData.description.slice(0, 80));
+            }
           }
           findings.descriptionVerified = true;
 

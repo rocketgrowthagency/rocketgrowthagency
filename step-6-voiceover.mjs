@@ -951,12 +951,19 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 flags missing/outdated hours
   // as a top-tier negative — was P22, now P10. "Rankings begin to degrade in
   // the final hour a business is open each day" per Whitespark.
-  if (audit?.gbp?.hasBusinessHours === false) {
+  //
+  // GATED 2026-05-21: requires hoursVerified === true. The Maps panel hours
+  // section can be lazy-loaded or behind a click; firing on hasBusinessHours=false
+  // alone risks the same class of false claim as the gbpPosts bug.
+  // See feedback_verification_gates_must_be_strict.md.
+  if (audit?.gbp?.hoursVerified === true && audit?.gbp?.hasBusinessHours === false) {
     out.push({
       key: 'businessHours',
       score: 10,
       finding: `your Google Business Profile has no business hours set — Google suppresses incomplete profiles in local pack results, and rankings degrade in the final hour a business is open each day if hours aren't current`,
     });
+  } else if (audit?.gbp?.hasBusinessHours === false && audit?.gbp?.hoursVerified !== true) {
+    console.log('[step-6 unverified-skip] businessHours finding suppressed: hasBusinessHours=false but hoursVerified !== true.');
   }
 
   // GBP business status — NEW 2026-05-15. Whitespark 2026: incorrect status
@@ -1000,8 +1007,14 @@ function scoreMapsFindings(audit, top3Stats, record) {
 
   // Very low recent review velocity — only fire when daysSinceLastReview has NOT already fired
   // (avoids saying the same thing twice). Catches active businesses getting very few recent reviews.
+  //
+  // GATED 2026-05-21: requires reviewsParsedCount > 0 so we know the review-card
+  // scraper actually saw something. reviewsLast30Days=0 with parsedCount=0 means
+  // "we couldn't read the reviews tab," NOT "you have no recent reviews."
   const velocityAlreadyFired = out.some(f => f.key === 'reviewVelocity');
-  if (!velocityAlreadyFired && audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1) {
+  const _reviewsScraped = audit?.gbp?.reviewsParsedCount;
+  const _reviewsScrapeOk = Number.isFinite(_reviewsScraped) && _reviewsScraped > 0;
+  if (!velocityAlreadyFired && audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1 && _reviewsScrapeOk) {
     const recentText = audit.gbp.reviewsLast30Days === 0
       ? `you haven't received any new Google reviews in the last 30 days`
       : `you received only 1 new Google review in the last 30 days`;
@@ -1017,12 +1030,20 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // Zero owner responses (only flag when there are enough reviews to respond to).
   // PRIORITY UPGRADE 2026-05-15: Google's own data says respondents are 1.7x
   // more trustworthy; reviews are 20% of local-pack weight. Was P45, now P30.
-  if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5) {
+  //
+  // GATED 2026-05-21: requires reviewsParsedCount > 0 — proves the review-card
+  // scraper actually saw reviews and could detect responses. Without that,
+  // ownerResponseCount=0 could just mean "we didn't parse any cards" rather
+  // than "they don't respond." Same class of false claim as gbpPosts bug.
+  const reviewsScraped = audit?.gbp?.reviewsParsedCount;
+  if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5 && Number.isFinite(reviewsScraped) && reviewsScraped > 0) {
     out.push({
       key: 'ownerResponse',
       score: 30,
       finding: `you have ${audit.gbp.reviewCount} reviews but haven't responded to any — Google's own data says businesses that respond are 1.7x more trustworthy, and Maps ranking weighs owner response rate inside the review-signal block`,
     });
+  } else if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5 && !(Number.isFinite(reviewsScraped) && reviewsScraped > 0)) {
+    console.log('[step-6 unverified-skip] ownerResponse finding suppressed: ownerResponseCount=0 but reviewsParsedCount missing/zero (cards not actually scraped).');
   }
 
   // PRIORITY 26 (NEW): GBP description missing or thin (M1) — DISABLED 2026-05-13

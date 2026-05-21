@@ -185,6 +185,19 @@ function runStep6GateTests() {
     if (audit?.gbp?.gbpSocialProfilesVerified === true && audit?.gbp?.gbpSocialProfileCount === 0) {
       out.push('noSocialProfiles');
     }
+    // businessHours — hoursVerified gate (locked 2026-05-21)
+    if (audit?.gbp?.hoursVerified === true && audit?.gbp?.hasBusinessHours === false) {
+      out.push('businessHours');
+    }
+    // ownerResponse — reviewsParsedCount gate (locked 2026-05-21)
+    const rp = audit?.gbp?.reviewsParsedCount;
+    if (audit?.gbp?.ownerResponseCount === 0 && (audit?.gbp?.reviewCount || 0) > 5 && Number.isFinite(rp) && rp > 0) {
+      out.push('ownerResponse');
+    }
+    // reviewVelocityRecent — reviewsParsedCount gate
+    if (audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1 && Number.isFinite(rp) && rp > 0) {
+      out.push('reviewVelocityRecent');
+    }
     return out;
   }
   const gateCases = [
@@ -202,6 +215,25 @@ function runStep6GateTests() {
       audit: { gbp: { gbpSocialProfilesVerified: false, gbpSocialProfileCount: 0 } }, expectNoFire: 'noSocialProfiles' },
     { name: 'noSocialProfiles does NOT fire when socials exist',
       audit: { gbp: { gbpSocialProfilesVerified: true, gbpSocialProfileCount: 3 } }, expectNoFire: 'noSocialProfiles' },
+    // businessHours
+    { name: 'businessHours fires when hoursVerified=true AND hasBusinessHours=false',
+      audit: { gbp: { hoursVerified: true, hasBusinessHours: false } }, expectFire: 'businessHours' },
+    { name: 'businessHours does NOT fire when hoursVerified=null',
+      audit: { gbp: { hoursVerified: null, hasBusinessHours: false } }, expectNoFire: 'businessHours' },
+    { name: 'businessHours does NOT fire when hours exist',
+      audit: { gbp: { hoursVerified: true, hasBusinessHours: true } }, expectNoFire: 'businessHours' },
+    // ownerResponse
+    { name: 'ownerResponse fires when reviewsParsedCount > 0 AND ownerResponseCount=0',
+      audit: { gbp: { ownerResponseCount: 0, reviewCount: 100, reviewsParsedCount: 8 } }, expectFire: 'ownerResponse' },
+    { name: 'ownerResponse does NOT fire when reviewsParsedCount=0 (cards not scraped)',
+      audit: { gbp: { ownerResponseCount: 0, reviewCount: 100, reviewsParsedCount: 0 } }, expectNoFire: 'ownerResponse' },
+    { name: 'ownerResponse does NOT fire when responses exist',
+      audit: { gbp: { ownerResponseCount: 5, reviewCount: 100, reviewsParsedCount: 8 } }, expectNoFire: 'ownerResponse' },
+    // reviewVelocityRecent
+    { name: 'reviewVelocityRecent fires when reviewsParsedCount>0 AND reviewsLast30=0',
+      audit: { gbp: { reviewsLast30Days: 0, reviewsParsedCount: 8 } }, expectFire: 'reviewVelocityRecent' },
+    { name: 'reviewVelocityRecent does NOT fire when reviewsParsedCount=0',
+      audit: { gbp: { reviewsLast30Days: 0, reviewsParsedCount: 0 } }, expectNoFire: 'reviewVelocityRecent' },
   ];
   let p = 0, f = 0;
   for (const c of gateCases) {
@@ -240,7 +272,7 @@ for (const c of CASES) {
 await browser.close();
 const totalPassed = passed + step6Results.passed;
 const totalFailed = failed + step6Results.failed;
-const totalCases = CASES.length + 7;
+const totalCases = CASES.length + (step6Results.passed + step6Results.failed);
 console.log(`\n${totalPassed}/${totalCases} passed`);
 if (totalFailed) {
   console.log('FAILURES:');
