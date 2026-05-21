@@ -1141,20 +1141,30 @@ async function auditGbp(_, gbpUrl, business) {
       }
       console.log(`  [gbp-diag] hasPosts=${hasPosts} lastPostDaysAgo=${lastPostDaysAgo}`);
 
-      // GBP social profiles (NEW 2026-05-14) — GBP added a "Social profiles"
-      // section in late 2024; icons render as small <a> tags in the panel.
+      // GBP social profiles (NEW 2026-05-14, TIGHTENED 2026-05-21) — GBP added
+      // a "Social profiles" section; icons render as small <a> tags in the panel.
       // Scope strictly to the panel root (div[role="main"]) so we don't catch
       // Google's own footer social links. Filter to canonical social hosts only.
-      // gbpSocialProfilesVerified = true when we can confirm we're on a panel
-      // (h1 + category present); otherwise we cannot trust 0-count and skip
-      // the finding entirely per the self-diagnose rule.
+      //
+      // gbpSocialProfilesVerified is the trust gate for step-6's noSocialProfiles
+      // finding. Setting it on "h1+category present" is NOT enough — the Maps
+      // panel doesn't always render the Social Profiles section in the initial
+      // view (sometimes lazy-loaded behind a tab or below the fold).
+      //
+      // 2026-05-21: Caught on Monkey Wrench Plumbing — verified=true but count=0,
+      // yet the business clearly has Instagram/Facebook/YouTube linked (visible
+      // in their Search KP). Firing the no-socials finding produced a false claim.
+      //
+      // LOCKED RULE: verified=true ONLY when we either (a) actually found at
+      // least one social link OR (b) detected a "Profiles" / "Social profiles"
+      // heading proving the section was rendered. If neither, the absence claim
+      // can't be trusted — skip the finding rather than fabricate it.
       let gbpSocialProfiles = [];
       let gbpSocialProfilesVerified = false;
       try {
         const panelRoot = document.querySelector('div[role="main"]');
         const onPanel = !!(panelRoot && panelRoot.querySelector('h1') && (primaryCategory || panelRoot.querySelector('button.DkEaL, span.YhemCb')));
         if (onPanel) {
-          gbpSocialProfilesVerified = true;
           const SOCIAL_HOSTS = {
             'facebook.com': 'facebook',
             'instagram.com': 'instagram',
@@ -1182,6 +1192,19 @@ async function auditGbp(_, gbpUrl, business) {
             if (matched && !seen.has(matched)) {
               seen.add(matched);
               gbpSocialProfiles.push({ platform: matched, url: href });
+            }
+          }
+          // Verified=true only if (a) we found at least one social, OR
+          // (b) the panel clearly rendered a "Profiles" / "Social profiles"
+          // section heading. Otherwise count=0 is unreliable (section may be
+          // lazy-loaded or behind a tab we didn't open).
+          if (gbpSocialProfiles.length > 0) {
+            gbpSocialProfilesVerified = true;
+          } else {
+            const panelText = (panelRoot.innerText || '').toLowerCase();
+            const SECTION_RE = /\b(?:social\s*profiles?|profiles\s*on\s*(?:google|the\s*web)|linked\s*(?:social|profiles?))\b/;
+            if (SECTION_RE.test(panelText)) {
+              gbpSocialProfilesVerified = true;
             }
           }
         }

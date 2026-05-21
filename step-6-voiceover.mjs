@@ -1047,15 +1047,29 @@ function scoreMapsFindings(audit, top3Stats, record) {
     }
   }
 
-  // PRIORITY 30 (NEW): Google Posts inactive or absent (M2) — DISABLED 2026-05-13
-  // Same reason: Express returned hasPosts=false when GBP had a post from 1 day ago.
-  // Heading regex `/^(?:updates?|posts?|from the owner)$/i` likely doesn't match
-  // the actual Maps DOM label for the posts section. Needs diagnostic before re-enabling.
-  // gbpPosts: fire when hasPosts=false regardless of Search KP verification.
-  // The Maps panel directly confirms post absence — no Search KP scrape needed.
-  // Locked 2026-05-20 EOD after Cool Choice case where Search KP CAPTCHA blocked
-  // verification → gbpPosts finding suppressed → only 2 errors in Maps section.
-  if (audit?.gbp?.hasPosts === false) {
+  // PRIORITY 30: Google Posts inactive or absent (M2) — VERIFICATION REQUIRED.
+  //
+  // History:
+  //  - 2026-05-13: original detector disabled (Express returned hasPosts=false
+  //    when GBP actually had a post from 1 day ago — Maps DOM label regex miss)
+  //  - 2026-05-20 EOD: re-enabled without verification gate so Cool Choice's
+  //    no-posts case would fire even when Search KP CAPTCHA blocked verification
+  //  - 2026-05-21: REVERSED again after Monkey Wrench Plumbing's audit returned
+  //    hasPosts=false even though their GBP clearly has posts from Mar 18 + Mar 10
+  //    (visible in Search KP). Firing the finding produced a false claim in the
+  //    cold-outreach video — immediate trust-killer if sent to a prospect.
+  //
+  // LOCKED RULE: never fire "no Google Posts" unless we verified via Search KP
+  // scrape (postsVerified === true). The Maps-panel hasPosts detector is unreliable
+  // (intermittent false negatives on legit accounts). Better to skip a true
+  // positive than fabricate one. See feedback_no_hardcoded_stats.md +
+  // feedback_self_diagnose_audit.md.
+  const postsVerifiedFalse = audit?.gbp?.postsVerified === true && audit?.gbp?.hasPosts === false;
+  const postsUnverified = audit?.gbp?.hasPosts === false && audit?.gbp?.postsVerified !== true;
+  if (postsUnverified) {
+    console.log('[step-6 unverified-skip] gbpPosts finding suppressed: hasPosts=false but postsVerified !== true (Search KP scrape failed / CAPTCHA / network). Better to skip than ship a false claim.');
+  }
+  if (postsVerifiedFalse) {
     out.push({
       key: 'gbpPosts',
       score: 30,
@@ -1092,7 +1106,9 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // pushed the prospect on staleness.
   const staleSignals = [];
   if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 90) staleSignals.push('reviews');
-  if (audit?.gbp?.hasPosts === false || (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90)) staleSignals.push('posts');
+  // Verified posts only — never count unverified hasPosts=false toward staleness.
+  if ((audit?.gbp?.postsVerified === true && audit?.gbp?.hasPosts === false) ||
+      (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90)) staleSignals.push('posts');
   if (audit?.gbp?.descriptionVerified === true && audit?.gbp?.descriptionLength === 0) staleSignals.push('description');
   if (audit?.gbp?.hasBusinessHours === false) staleSignals.push('hours');
   if (staleSignals.length >= 3 && !out.some(f => f.key === 'reviewVelocity' || f.key === 'gbpPosts')) {
