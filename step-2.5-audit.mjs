@@ -1428,23 +1428,42 @@ async function auditGbp(_, gbpUrl, business) {
             /providers are listed in random order/i,
             /if the business has specified a preferred provider/i,
             /^claim this business$/i,
-            /this place's information is provided by/i,
+            /this place'?s information is provided by/i,
             /add a description for this business/i,
             /\bdata from third parties\b/i,
             /^reviews from the web$/i,
+            /\bsuggest an edit\b/i,
+            /\bappointments?:\s/i,
+            /^know this place\?/i,
           ];
           const looksLikeBoilerplate = (txt) => GOOGLE_UI_PHRASES.some(re => re.test(txt));
           if (kpData.description && !looksLikeBoilerplate(kpData.description)) {
+            // We extracted a non-boilerplate string — trust it as the real
+            // GBP description. descriptionVerified=true means step-6 can fire
+            // the "empty description" finding only when length is genuinely 0.
             findings.description = kpData.description;
             findings.descriptionLength = kpData.description.length;
-          } else {
+            findings.descriptionVerified = true;
+          } else if (kpData.description && looksLikeBoilerplate(kpData.description)) {
+            // KP returned text but it's Google UI boilerplate, NOT the business
+            // description. We don't actually know what the real description is
+            // (the scraper's heuristic picked the wrong element). Mark
+            // descriptionVerified=false so step-6 won't claim "empty description".
+            // Caught 2026-05-21 on Monkey Wrench Plumbing — KP returned
+            // "Providers are listed in random order..." (120 chars) instead of
+            // the real "Experienced plumbers with a track record..." (~110 chars).
+            // Memory: feedback_verification_gates_must_be_strict.md.
             findings.description = '';
             findings.descriptionLength = 0;
-            if (kpData.description) {
-              console.log('[kp-diag] description filtered as Google UI boilerplate:', kpData.description.slice(0, 80));
-            }
+            findings.descriptionVerified = false;
+            console.log('[kp-diag] description scrape unreliable — got Google UI boilerplate:', kpData.description.slice(0, 100), '— marking descriptionVerified=false to suppress potentially-false absence finding.');
+          } else {
+            // No description text in KP at all — accept this as a verified
+            // empty (real businesses can have empty GBP description).
+            findings.description = '';
+            findings.descriptionLength = 0;
+            findings.descriptionVerified = true;
           }
-          findings.descriptionVerified = true;
 
           // Posts — timestamps now arrive as [{text, daysAgo}] supporting both
           // relative ("3 weeks ago") and absolute ("Oct 23, 2023") formats.

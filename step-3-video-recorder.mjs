@@ -590,9 +590,37 @@ async function getListingHrefByName(page, businessName, minScore = 24) {
         .replace(/\s+/g, ' ')
         .trim();
 
+    // HARD RULE — never click/match a sponsored Maps listing for cold-outreach
+    // video. We're local-SEO experts; including a "Sponsored" panel in our
+    // walkthrough contradicts the entire pitch and immediately kills trust.
+    //
+    // Detection layered (any single hit = sponsored):
+    //   1. Word "Sponsored" anywhere in first ~120 chars of card innerText
+    //      (catches inline render like "Sponsored : Monkey Wrench ..." with
+    //      no surrounding newlines — Maps DOM as of 2026-05-21)
+    //   2. ARIA label match: aria-label containing "Sponsored" or exact "Ad"
+    //   3. Walk up to 3 ancestor levels in case the badge is on a sibling
+    //      wrapper (Google sometimes nests the "Sponsored" pill outside the
+    //      article element)
+    // Caught 2026-05-21: Monkey Wrench Plumbing had BOTH sponsored + organic
+    // (rank #2) entries in Plumbers in Santa Monica CA results. Old detector
+    // missed the sponsored variant because innerText started with the
+    // business name, not "Sponsored\n". Step-3 then matched + clicked the
+    // sponsored one, baking "Sponsored" into our cold-outreach video.
+    // Memory: feedback_never_match_sponsored_maps_listing.md.
     const isSponsoredBlock = (el) => {
-      const t = (el.innerText || '').toLowerCase();
-      return t.includes('\nsponsored') || t.includes('sponsored\n') || t.startsWith('sponsored');
+      let cursor = el;
+      for (let i = 0; i < 4 && cursor; i++) {
+        const t = (cursor.innerText || '').toLowerCase();
+        // Word-boundary "sponsored" anywhere in first 120 chars of the card.
+        if (/\bsponsored\b/.test(t.slice(0, 120))) return true;
+        // ARIA / data-attribute markers Google uses for sponsored listings.
+        if (cursor.querySelector && cursor.querySelector(
+          '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
+        )) return true;
+        cursor = cursor.parentElement;
+      }
+      return false;
     };
 
     const anchors = Array.from(
