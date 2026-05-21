@@ -105,39 +105,9 @@ function csvEscape(v) {
   return s;
 }
 
-// Aggregator / directory hostnames that aren't a business's "real" website.
-// Locked 2026-05-20 — feedback_no_website_is_top_finding.md.
-const AGGREGATOR_HOSTS = [
-  'yelp.com', 'yellowpages.com', 'manta.com', 'bbb.org', 'mapquest.com',
-  'foursquare.com', 'localbiz.com', 'expertise.com', 'angi.com',
-  'angieslist.com', 'homeadvisor.com', 'thumbtack.com', 'nextdoor.com',
-  'facebook.com', 'instagram.com', 'linkedin.com', 'tiktok.com',
-  'twitter.com', 'x.com', 'youtube.com', 'pinterest.com',
-  'bizapedia.com', 'cybo.com', 'showmelocal.com', 'merchantcircle.com',
-  'whereoware.com', 'company.com', 'cityrating.com', 'mybusinesslistingmanager.com',
-];
-
-function siteHost(url) {
-  try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ''); }
-  catch { return ''; }
-}
-
-// Strip common business-name boilerplate to get distinctive tokens that
-// would plausibly appear in a real business domain.
-function businessNameTokens(name) {
-  const STOP = new Set([
-    'the','and','of','llc','inc','co','corp','corporation','company','services',
-    'service','plumbing','plumber','plumbers','hvac','roofing','roofer','roofers',
-    'garage','door','doors','electrical','electrician','contractor','contractors',
-    'repair','repairs','installation','install','maintenance','maintenances',
-    'beverly','hills','los','angeles','la','santa','monica','culver','city',
-  ]);
-  return String(name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 3 && !STOP.has(t));
-}
+// Shared validation + ranking helpers — extracted 2026-05-20 EOD to eliminate
+// DRY drift across step-1/step-2/discovery script. See lib/email-validation.cjs.
+const { AGGREGATOR_HOSTS, siteHost, businessNameTokens } = require('./lib/email-validation.cjs');
 
 // Returns the reason string if website looks suspect, or '' if it looks OK.
 // Used in step-1 to flag leads whose GBP-linked "Website" isn't a real
@@ -162,29 +132,8 @@ function assessWebsiteSuspicion(website, businessName) {
   return '';
 }
 
-// SerpAPI GET with auto-rate-limit handling. On 200/hr cap hit, sleep 1hr
-// + buffer, auto-resume. Locked 2026-05-20 (reference_serpapi_rate_limit.md).
-async function serpapiGetRateAware(url) {
-  while (true) {
-    try {
-      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
-      const errMsg = res.data?.error || '';
-      const isRateLimited = res.status === 429
-        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
-      if (isRateLimited) {
-        const waitMs = 60 * 60 * 1000 + 60 * 1000;
-        const resumeAt = new Date(Date.now() + waitMs);
-        console.log(`\n⏸  [serpapi] rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        continue;
-      }
-      if (res.status >= 400) return null;
-      return res;
-    } catch (err) {
-      return null;
-    }
-  }
-}
+// SerpAPI rate-aware GET — extracted 2026-05-20 EOD to lib/serpapi-rate-aware.cjs
+const { serpapiGetRateAware } = require('./lib/serpapi-rate-aware.cjs');
 
 // Pick first qualifying candidate URL (non-aggregator, non-search-engine,
 // domain matches business-name token). Shared by SerpAPI / DDG / Bing paths.

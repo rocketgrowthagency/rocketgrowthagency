@@ -15,6 +15,16 @@
 
 import 'dotenv/config';
 import axios from 'axios';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const {
+  AGGREGATOR_HOSTS, FREE_MAILBOX_RE,
+  isLikelyEmail, businessNameTokens,
+  siteHost: siteHostKey,
+} = require('../lib/email-validation.cjs');
+const { serpapiGetRateAware, serpapiHealthCheck } = require('../lib/serpapi-rate-aware.cjs');
 
 const { AIRTABLE_API_KEY, AIRTABLE_BASE_ID, SERPAPI_KEY } = process.env;
 if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
@@ -27,45 +37,18 @@ const DRY = process.argv.includes('--dry-run');
 const LIMIT_ARG = process.argv.find((a) => a.startsWith('--limit='))?.slice(8);
 const LIMIT = LIMIT_ARG ? parseInt(LIMIT_ARG, 10) : Infinity;
 
-// ----- Helpers (duplicated from step-2 for portability) -----
-const AGGREGATOR_HOSTS = [
-  'yelp.com','yellowpages.com','manta.com','bbb.org','mapquest.com','foursquare.com',
-  'localbiz.com','expertise.com','angi.com','angieslist.com','homeadvisor.com',
-  'thumbtack.com','nextdoor.com','facebook.com','instagram.com','linkedin.com',
-  'tiktok.com','twitter.com','x.com','youtube.com','pinterest.com','bizapedia.com',
-  'cybo.com','showmelocal.com','merchantcircle.com','company.com',
-];
-const FREE_MAILBOX_RE = /^(gmail|yahoo|hotmail|outlook|icloud|aol|live|msn|protonmail|me|att|sbcglobal|verizon|comcast|earthlink|cox|charter|optonline|pacbell|bellsouth|rocketmail|mail|ymail)\.(com|net|us|ca)$/i;
-const PLACEHOLDER_EMAIL_RE = /^(?:user|test|example|name|email|your|info|admin|contact|hello|mail|noreply|donotreply|jane\.doe|john\.doe|firstname\.lastname|first\.last)@(?:domain|example|test|yoursite|yourdomain|website|email|sample|temp|placeholder|mytechusa)\.(?:com|net|org|tld|local)$/i;
-const PROXY_DOMAIN_RE = /@(?:ccpaprivacy\.org|ccpaprivacy\.com|gdprproxy\.|whoisguard\.com|domainsbyproxy\.com|namecheap\.com|privatemail\.com|registrarsafe\.)/i;
-const VALID_TLDS = new Set(['com','net','org','io','co','us','ca','uk','au','de','fr','es','it','nl','biz','info','me','tv','ai','dev','app','site','online','shop','store','tech','pro','xyz','plus','contractors','construction','plumbing','homes','realty','vip','social','club']);
-
-function businessNameTokens(name) {
-  const STOP = new Set(['the','and','of','llc','inc','co','corp','corporation','company','services','service','plumbing','plumber','plumbers','hvac','roofing','roofer','roofers','garage','door','doors','electrical','electrician','contractor','contractors','repair','repairs','installation','install','maintenance','beverly','hills','los','angeles','la','santa','monica','culver','city','west','hollywood','marina','del','rey','pasadena','glendale','burbank']);
-  return String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((t) => t.length >= 3 && !STOP.has(t));
+// Resume-state file — script writes its last-processed recordId after each
+// lead so a crash + re-run picks up where it left off. Save SerpAPI budget
+// on long batches.
+const STATE_FILE = path.join(process.cwd(), '.discover-state.json');
+const RESUME_FROM_ARG = process.argv.find((a) => a.startsWith('--resume-from='))?.slice(14);
+function loadState() {
+  try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); }
+  catch { return { lastProcessedId: '', completedAt: null }; }
 }
-
-function isLikelyEmail(email) {
-  if (!email) return '';
-  let pre = email.trim();
-  try { pre = decodeURIComponent(pre); } catch {}
-  pre = pre.replace(/^\s+|\s+$/g, '').toLowerCase();
-  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(pre)) return '';
-  if (PLACEHOLDER_EMAIL_RE.test(pre)) return '';
-  if (PROXY_DOMAIN_RE.test(pre)) return '';
-  if (/^\d{3,4}-\d{4}/.test(pre.split('@')[0])) return '';
-  const domain = pre.split('@')[1];
-  const tld = domain.split('.').pop();
-  if (!VALID_TLDS.has(tld)) return '';
-  const base = domain.replace(/\.[a-z]+$/i, '');
-  if (/^[\d.-]+$/.test(base) && /\d{3,}/.test(base)) return '';
-  if (/\.(png|jpg|jpeg)$/.test(pre)) return '';
-  return pre;
-}
-
-function siteHostKey(url) {
-  try { return new URL(url).hostname.toLowerCase().replace(/^www\./, ''); }
-  catch { return ''; }
+function saveState(lastId) {
+  try { fs.writeFileSync(STATE_FILE, JSON.stringify({ lastProcessedId: lastId, updatedAt: new Date().toISOString() }, null, 2)); }
+  catch {}
 }
 
 async function discoverEmail(siteHost, businessName, phone = '', searchTerm = '') {
@@ -109,7 +92,7 @@ async function discoverEmail(siteHost, businessName, phone = '', searchTerm = ''
   const candidates = [];
   for (const q of queries) {
     const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(SERPAPI_KEY)}&num=10&hl=en`;
-    const res = await serpapiGet(url); // handles rate-limit + auto-resume
+    const res = await serpapiGetRateAware(url); // handles rate-limit + auto-resume
     if (!res) continue; // skip on transient errors
     const snippets = [];
     for (const o of res.data.organic_results || []) {
@@ -137,34 +120,6 @@ async function discoverEmail(siteHost, businessName, phone = '', searchTerm = ''
   if (!candidates.length) return null;
   candidates.sort((a, b) => a.rank - b.rank);
   return candidates[0];
-}
-
-// SerpAPI GET with auto-rate-limit handling.
-// On 200/hr cap hit (HTTP 429 OR error string in response), sleep until the
-// hourly window resets + retry. Resumes the discovery batch automatically.
-// Locked 2026-05-20 — Chris's spec after hitting 200/hr mid-batch.
-async function serpapiGet(url) {
-  while (true) {
-    try {
-      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
-      // Rate limit indicators: HTTP 429 OR error message
-      const errMsg = res.data?.error || '';
-      const isRateLimited = res.status === 429
-        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
-      if (isRateLimited) {
-        const waitMs = 60 * 60 * 1000 + 60 * 1000; // 1hr + 1min buffer
-        const resumeAt = new Date(Date.now() + waitMs);
-        console.log(`\n⏸  [serpapi] hourly rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        continue; // retry the same URL
-      }
-      if (res.status >= 400) return null; // other error, skip this call
-      return res;
-    } catch (err) {
-      // Network error — skip this call
-      return null;
-    }
-  }
 }
 
 // ----- Airtable helpers -----
@@ -212,6 +167,17 @@ async function patchEmail(table, recordId, email, tier) {
 async function main() {
   console.log(`[discover] starting${DRY ? ' (DRY-RUN)' : ''}${LIMIT < Infinity ? ' limit=' + LIMIT : ''}`);
 
+  // SerpAPI plan visibility + early-bail if account exhausted
+  await serpapiHealthCheck(SERPAPI_KEY, 'discover-no-email-leads');
+
+  // Resume cursor — skip leads up to and including this ID
+  const state = loadState();
+  const resumeFromId = RESUME_FROM_ARG || state.lastProcessedId || '';
+  let skipUntilFound = !!resumeFromId;
+  if (resumeFromId) {
+    console.log(`[discover] resume cursor: skipping leads up to and including ${resumeFromId}`);
+  }
+
   // Skip leads marked terminal — don't reprocess permanently-excluded ones
   const SKIP_FUNNEL = new Set([
     'closed_deceased_owner', 'closed_bounced', 'closed_replied_no_interest',
@@ -235,6 +201,11 @@ async function main() {
 
     let found = 0, skipped = 0, processed = 0;
     for (const r of eligible) {
+      // Resume cursor — skip records until we pass the saved checkpoint
+      if (skipUntilFound) {
+        if (r.id === resumeFromId) { skipUntilFound = false; }
+        continue;
+      }
       if (processed >= LIMIT) break;
       processed++;
       const f = r.fields;
@@ -253,10 +224,16 @@ async function main() {
         skipped++;
         if (processed % 20 === 0) console.log(`  · [${processed}/${eligible.length}] scanned ${processed}, found ${found}, no email yet`);
       }
+      // Save resume state after every lead
+      if (!DRY) saveState(r.id);
       // Brief delay to be polite to SerpAPI
       await new Promise((res) => setTimeout(res, 300));
     }
     console.log(`[${table}] DONE — processed ${processed}, found ${found} emails, skipped ${skipped}\n`);
+  }
+  // Clear resume state on successful completion
+  if (!DRY) {
+    try { fs.unlinkSync(STATE_FILE); } catch {}
   }
 }
 

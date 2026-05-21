@@ -5,6 +5,22 @@ import csvParser from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+// Shared helpers — extracted 2026-05-20 EOD to lib/ to eliminate DRY drift.
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const {
+  AGGREGATOR_HOSTS,
+  FREE_MAILBOX_RE,
+  PLACEHOLDER_EMAIL_RE,
+  PROXY_DOMAIN_RE,
+  VALID_TLDS,
+  sanitizeScrapedEmail,
+  isLikelyEmail,
+  businessNameTokens,
+  siteHost: siteHostKey,
+  emailRank,
+} = require('./lib/email-validation.cjs');
+const { serpapiGetRateAware, serpapiHealthCheck } = require('./lib/serpapi-rate-aware.cjs');
 
 const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
@@ -71,88 +87,6 @@ function cleanUrl(url) {
   return '';
 }
 
-// Strip phone-number prefixes that get concatenated into scraped emails when
-// source HTML has no space between a tel and a mailto (e.g. on a contact page
-// "Tel: (XXX) 351-0978info@biz.com"). The greedy email regex would otherwise
-// match "351-0978info@biz.com" as a valid address. Detected pattern: local
-// part starts with 3+ digits + optional dashes + 1-4 digits, BEFORE the actual
-// alphabetic local-part. Phone-fragment stripped only when alpha chars follow.
-//
-// 2026-05-18 — locked after the LA Garage Door Repair Wizards bad-email
-// incident. See feedback_email_phone_concat_sanitizer.md in memory.
-function sanitizeScrapedEmail(raw) {
-  if (!raw) return raw;
-  // Prefix must contain at least one phone separator (- space . ( ) +) so we
-  // don't strip legit digit-only prefixes like "2024marketing@biz.com".
-  const m = raw.match(/^[\d.()+\-\s]*[.()+\-\s][\d.()+\-\s]*([a-zA-Z][a-zA-Z0-9._%+-]*@.+)$/);
-  if (m) return m[1];
-  return raw;
-}
-
-// Dev/template placeholder emails — instant reject. Locked 2026-05-20 after
-// Royale Plumbing's site exposed `user@domain.com` in source (template default).
-// Extended 2026-05-20 EOD after batch discovery surfaced jane.doe@... + ccpaprivacy.org
-// patterns (privacy compliance proxies + literal-name placeholders).
-const PLACEHOLDER_EMAIL_RE = /^(?:user|test|example|name|email|your|info|admin|contact|hello|mail|noreply|donotreply|jane\.doe|john\.doe|firstname\.lastname|first\.last)@(?:domain|example|test|yoursite|yourdomain|website|email|domain1|domain2|sample|temp|placeholder|mytechusa)\.(?:com|net|org|tld|local)$/i;
-
-// Privacy compliance + scraping-proxy domains — emails on these domains aren't
-// real business contacts (CCPA/GDPR routing services, anti-scrape relays).
-const PROXY_DOMAIN_RE = /@(?:ccpaprivacy\.org|ccpaprivacy\.com|gdprproxy\.|whoisguard\.com|domainsbyproxy\.com|namecheap\.com|privatemail\.com|registrarsafe\.)/i;
-
-// Allowlist of plausible TLDs — keeps the list inclusive but rejects obvious
-// phone-concat artifacts like `661-257-9200.our`. Locked 2026-05-20 after
-// Roto-Rooter scrape captured `line@661-257-9200.our` as "email".
-const VALID_TLDS = new Set([
-  'com','net','org','io','co','us','ca','uk','au','de','fr','es','it','nl',
-  'biz','info','me','tv','ai','dev','app','site','online','shop','store',
-  'tech','design','studio','agency','services','digital','marketing','solutions',
-  'pro','xyz','space','live','life','works','works','expert','expert','plus','llc',
-  'company','business','group','team','works','today','world','global','center',
-  'partners','consulting','support','contractors','construction','plumbing',
-  'edu','gov','mil','int','jobs','mobi','name','asia','tel','travel','museum',
-  'church','health','care','fitness','clinic','dental','law','attorney','insurance',
-  'realtor','homes','house','realty','rentals','vacations','holiday','school','academy',
-  'app','blog','cloud','code','company','events','media','news','press','review',
-  'reviews','tv','vip','social','community','club','team','team','zone',
-  // ccTLDs commonly used
-  'us','co.uk','com.au','co.nz',
-]);
-
-function isLikelyEmail(email) {
-  if (!email) return '';
-  // URL-decode + strip surrounding whitespace. Catches "%20office@biz.com" /
-  // "&#32;contact@biz.com" patterns where a leading URL-encoded space slipped
-  // into a mailto: href. Locked 2026-05-20 (Finest Heating & Air case).
-  let pre = email.trim();
-  try { pre = decodeURIComponent(pre); } catch { /* leave as-is on bad URI */ }
-  pre = pre.replace(/^\s+|\s+$/g, '');
-  const cleaned = sanitizeScrapedEmail(pre);
-  const trimmed = cleaned.toLowerCase();
-  const basic = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-  if (!basic.test(trimmed)) return '';
-  // Reject dev/template placeholder emails (user@domain.com, test@test.com, etc.)
-  if (PLACEHOLDER_EMAIL_RE.test(trimmed)) return '';
-  // Reject privacy-proxy + scraping-relay domains
-  if (PROXY_DOMAIN_RE.test(trimmed)) return '';
-  // Reject local parts that look like a US phone fragment (3-4 digits + dash +
-  // 4 digits + anything else) — defense in case sanitizeScrapedEmail missed a
-  // variant. Keeps legitimate digit-prefixed emails like "2024marketing@biz".
-  const localPart = trimmed.split('@')[0];
-  if (/^\d{3,4}-\d{4}/.test(localPart)) return '';
-  // Reject domains whose local part of the hostname (before the TLD) is mostly
-  // digits + dashes — catches phone-concat artifacts like `661-257-9200.our`
-  // where the "domain" is a phone number with a random word suffix.
-  const domain = trimmed.split('@')[1];
-  const tld = domain.split('.').pop();
-  if (!VALID_TLDS.has(tld)) return '';
-  const domainBase = domain.replace(/\.[a-z]+$/i, '');
-  // If the entire registrable base is just digits + dashes/dots, it's a phone-num spoof
-  if (/^[\d.-]+$/.test(domainBase) && /\d{3,}/.test(domainBase)) return '';
-  if (trimmed.endsWith('.png') || trimmed.endsWith('.jpg') || trimmed.endsWith('.jpeg')) {
-    return '';
-  }
-  return trimmed;
-}
 
 function extractEmailFromJsonLd($) {
   let email = '';
@@ -407,98 +341,6 @@ function buildFallbackUrls(baseUrl) {
     return [];
   }
   return urls;
-}
-
-// Extract the registrable host from a website URL for email-domain matching.
-// "https://www.californiahitechplumbing.com/" → "californiahitechplumbing.com"
-function siteHostKey(url) {
-  try {
-    return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-  } catch {
-    return '';
-  }
-}
-
-// Rank an email candidate against the site's registrable host.
-// Lower score = better. Used to pick the best email when multiple pages
-// surface different candidates (e.g. a stray gmail in the homepage footer
-// vs a real edna@biz.com on /contact). Locked 2026-05-20 after Cal Hi-Tech
-// scrape picked up "califoniahitechplumbing@gmail.com" (typo'd gmail in
-// homepage source) and missed "edna@californiahitechplumbing.com" on /contact.
-function emailRank(email, siteHost) {
-  if (!email) return 999;
-  const at = email.toLowerCase().indexOf('@');
-  if (at < 0) return 998;
-  const localPart = email.slice(0, at).toLowerCase();
-  const emailDomain = email.slice(at + 1).toLowerCase();
-  // Tier 1: exact domain match (edna@californiahitechplumbing.com on californiahitechplumbing.com)
-  if (siteHost && (emailDomain === siteHost || emailDomain.endsWith('.' + siteHost) || siteHost.endsWith('.' + emailDomain))) {
-    // Slightly prefer named local-parts over generic catchalls within domain-matched tier
-    return /^(info|contact|hello|admin|sales|support|service|office|hi)$/.test(localPart) ? 11 : 10;
-  }
-  // Tier 2: looks like a business address (named local-part) on any domain — usually owner's name
-  if (/^(info|contact|hello|admin|sales|support|service|office|hi)$/.test(localPart)) return 20;
-  // Tier 3: generic free-mailbox (gmail/yahoo/hotmail/outlook/icloud) — least trustworthy
-  if (/^(gmail|yahoo|hotmail|outlook|icloud|aol|live|msn|protonmail|me)\.com$/.test(emailDomain)) return 40;
-  // Tier 2.5: any other domain
-  return 30;
-}
-
-// Strip common business-name boilerplate. Duplicated from step-1's same-named
-// function so step-2 can do its own cross-reference checks without imports.
-function businessNameTokens(name) {
-  const STOP = new Set([
-    'the','and','of','llc','inc','co','corp','corporation','company','services',
-    'service','plumbing','plumber','plumbers','hvac','roofing','roofer','roofers',
-    'garage','door','doors','electrical','electrician','contractor','contractors',
-    'repair','repairs','installation','install','maintenance','maintenances',
-    'beverly','hills','los','angeles','la','santa','monica','culver','city',
-    'west','hollywood','marina','del','rey','pasadena','glendale','burbank',
-  ]);
-  return String(name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 3 && !STOP.has(t));
-}
-
-// LAST-RESORT email-discovery via open-web search. Called when every same-site
-// scan path (mailto / JSON-LD / body-text / obfuscated / hidden-input / data-attr /
-// form action / inline-script / CSS content / raw-HTML) returns no email.
-//
-// Locked 2026-05-20 — feedback_email_via_external_search.md.
-// Caught: Mr. Speedy Plumbing (no email on site, Google AI Overview surfaced
-// info@mrspeedyplumbing.com + local@mrspeedyplumbing.com + fred@mrspeedyplumbing.com).
-//
-// Cross-reference REQUIRED — Chris locked after LAX Affordable Plumbing case
-// where AI Overview returned avner.gilboa@att.net (owner personal). Without
-// cross-ref we'd send to unrelated people. Tiers:
-//   1. AUTO-TRUST: email domain === site host (info@biz.com on biz.com search)
-//   2. NAME-MATCH: email local-part contains a distinctive business-name token
-//   3. PROXIMITY: email within ~300 chars of business name in response text
-//   4. REJECT: free-mailbox with no context
-// SerpAPI GET with auto-rate-limit handling. On 200/hr cap hit, sleep 1hr
-// + buffer, auto-resume. Locked 2026-05-20 (reference_serpapi_rate_limit.md).
-async function serpapiGetRateAware(url) {
-  while (true) {
-    try {
-      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
-      const errMsg = res.data?.error || '';
-      const isRateLimited = res.status === 429
-        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
-      if (isRateLimited) {
-        const waitMs = 60 * 60 * 1000 + 60 * 1000;
-        const resumeAt = new Date(Date.now() + waitMs);
-        console.log(`\n⏸  [serpapi] rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
-        await new Promise((r) => setTimeout(r, waitMs));
-        continue;
-      }
-      if (res.status >= 400) return null;
-      return res;
-    } catch (err) {
-      return null;
-    }
-  }
 }
 
 async function discoverEmailViaSearch(siteHost, businessName, phone = '', searchTerm = '') {
