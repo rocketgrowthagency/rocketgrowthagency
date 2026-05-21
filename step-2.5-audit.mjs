@@ -334,6 +334,16 @@ async function auditWebsite(browser, websiteUrl, business) {
         || !!reviewWidget
         || matchesReviewPattern
         || svgStar;
+      // Last-resort: if the page SOURCE HTML contains review/rating keywords
+      // (anywhere — including hidden elements, attributes, scripts), capture
+      // that signal as `reviewsMentionedInSource`. step-2.5 will use it to
+      // null out hasReviewsOnPage when the visible detectors found nothing —
+      // a page that talks about reviews in source likely HAS a review widget
+      // we couldn't see (shadow DOM, lazy-load, JS-injected after eval).
+      // Locked 2026-05-21 after Enviro Plumbing's "4.6 / 813 reviews" widget
+      // was invisible to ALL our visible-DOM detection methods.
+      const htmlSrc = (document.body?.outerHTML || '').toLowerCase().slice(0, 80000);
+      result.reviewsMentionedInSource = /\b(reviews?|ratings?|testimonials?|rated\s+(?:outstanding|excellent|great)|aggregaterating|trustpilot|yotpo|birdeye)\b/.test(htmlSrc);
 
       // Tier 2: service area — does body mention at least 2 distinct city/neighborhood names beyond the H1?
       const bodyTxt = (document.body?.innerText || '').toLowerCase();
@@ -428,6 +438,7 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.isHttps = data.isHttps;
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.hasReviewsOnPage = data.hasReviewsOnPage || false;
+    findings._reviewsMentionedInSource = !!data.reviewsMentionedInSource;
     findings.iframeCount = await page.evaluate(() => document.querySelectorAll('iframe').length).catch(() => 0);
     findings.hasServiceAreaListed = data.hasServiceAreaListed || false;
     findings.title = data.title || '';
@@ -558,14 +569,23 @@ async function auditWebsite(browser, websiteUrl, business) {
   // noServiceArea, napAboveFold etc.) — if audit failed, all "X is missing" claims
   // are suppressed because we don't actually know.
   findings.websiteAuditVerified = !findings.error && findings.pageLoadSeconds != null;
-  // Iframe-aware review-widget override (locked 2026-05-21 round 2).
-  // Many review widgets render inside cross-origin iframes (Trustpilot,
-  // Yotpo, Birdeye, Google reviews embed). If hasReviewsOnPage came back
-  // false AND the page has iframes, the absence is unknowable — set to null
-  // so step-6 suppresses the noReviews finding. Caught on Enviro Plumbing.
-  if (findings.iframeCount > 0 && findings.hasReviewsOnPage === false) {
-    findings.hasReviewsOnPage = null;
-    console.log('  [audit-diag] hasReviewsOnPage: page has iframes — absence unverifiable, set to null (suppresses noReviews finding).');
+  // Source-aware review-widget override (locked 2026-05-21 round 2/3).
+  // When the visible-DOM detectors found NO reviews but the page SOURCE
+  // mentions reviews/ratings (anywhere — hidden elements, attributes,
+  // scripts, lazy-loaded widget setup code), the absence is unknowable.
+  // Set to null so step-6 suppresses the noReviews finding.
+  //
+  // Caught on Enviro Plumbing: iframeCount=0 but visible "4.6 / 813 reviews"
+  // widget exists — likely shadow DOM or JS-injected post-eval. Source HTML
+  // mentions "reviews" multiple times → confidence the widget exists.
+  if (findings.hasReviewsOnPage === false) {
+    if (findings.iframeCount > 0) {
+      findings.hasReviewsOnPage = null;
+      console.log('  [audit-diag] hasReviewsOnPage: page has iframes — absence unverifiable, set to null (suppresses noReviews finding).');
+    } else if (findings._reviewsMentionedInSource) {
+      findings.hasReviewsOnPage = null;
+      console.log('  [audit-diag] hasReviewsOnPage: source HTML mentions reviews/ratings but visible widget not detected — absence unverifiable, set to null (suppresses noReviews finding).');
+    }
   }
   return findings;
 }
@@ -841,6 +861,10 @@ async function auditMobile(browser, websiteUrl, business) {
         }
       }
       result.socialProofAboveFold = socialProofAboveFold;
+      // Source-aware fallback (same pattern as auditWebsite). If we found no
+      // visible social proof but the page source mentions reviews/ratings,
+      // we can't be sure the widget isn't above-fold — set to null later.
+      result._reviewsMentionedInSource = /\b(reviews?|ratings?|testimonials?|rated\s+(?:outstanding|excellent|great)|aggregaterating)\b/i.test((document.body?.outerHTML || '').slice(0, 80000));
 
       // Click-to-text (Mo2) — `<a href="sms:">` anywhere on the page
       result.hasClickToText = !!document.querySelector('a[href^="sms:"]');
@@ -960,6 +984,7 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
     findings.hasObviousCallCta = data.hasObviousCallCta || false;
     findings.socialProofAboveFold = data.socialProofAboveFold || false;
+    findings._reviewsMentionedInSource = !!data._reviewsMentionedInSource;
     findings.hasClickToText = data.hasClickToText || false;
     findings.hasChatWidget = !!data.hasChatWidget;
     findings.chatWidgetHasPhoneCta = !!data.chatWidgetHasPhoneCta;
@@ -1155,6 +1180,12 @@ async function auditMobile(browser, websiteUrl, business) {
         findings.socialProofAboveFold = null;
         console.log('  [audit-diag] socialProofAboveFold: page has iframes — absence unverifiable, set to null (suppresses noSocialProof finding).');
       }
+    }
+    // Source-aware override for socialProofAboveFold (same pattern as
+    // hasReviewsOnPage). Fires even when iframeCount=0 — Enviro Plumbing case.
+    if (findings.socialProofAboveFold === false && findings._reviewsMentionedInSource) {
+      findings.socialProofAboveFold = null;
+      console.log('  [audit-diag] socialProofAboveFold: source mentions reviews/ratings but visible widget not detected — set to null (suppresses noSocialProof finding).');
     }
   } catch (err) {
     findings.error = err.message || String(err);
