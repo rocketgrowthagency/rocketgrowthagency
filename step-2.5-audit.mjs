@@ -700,15 +700,28 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       // Generic popup catch — covers custom widgets like the Santa Monica
       // Roofing Company "Kevin Price - Owner / Need Help?" panel that doesn't
-      // use a known chat framework. Looks for popup/modal/dialog containers
-      // with a phone number text or tel:/sms: link inside.
+      // use a known chat framework.
+      //
+      // Tightened 2026-05-21: previously matched any element with a class
+      // containing "widget"/"popup"/"modal"/"floating" that had a phone link
+      // inside — that false-positived on most CMS templates (GoDaddy, Wix,
+      // and others use "widget" / "popup" classes for layout components that
+      // are NOT chat widgets). The false positive killed the "no tap-to-text"
+      // finding in step-6, which is gated on hasChatWidget !== true.
+      //
+      // Now requires BOTH a popup-ish container AND explicit chat-indicator
+      // text inside it (chat / help / message / support / "ask us" / "let's
+      // talk"). Without those keywords, a popup with a phone link is more
+      // likely a contact card / banner than a chat widget.
       if (!chatWidgetEl) {
+        const CHAT_TEXT_RE = /\b(chat\b|chat with|live\s*chat|need\s*help|can\s*we\s*help|how\s*can\s*we\s*help|message\s*us|text\s*us|ask\s*us|let'?s\s*talk|talk\s*to\s*us|support|customer\s*service|24\/?7\s*help)/i;
         const candidates = Array.from(document.querySelectorAll(
-          '[role="dialog"], [class*="popup" i], [class*="modal" i], [class*="widget" i], [class*="floating" i]'
+          '[role="dialog"], [class*="popup" i], [class*="floating" i], [class*="chat" i], [class*="bubble" i], [class*="launcher" i]'
         ));
         for (const el of candidates) {
           const txt = (el.innerText || '').trim();
           if (!txt) continue;
+          if (!CHAT_TEXT_RE.test(txt)) continue;
           const hasPhoneText = phoneRegex.test(txt);
           const hasTelLink = !!el.querySelector('a[href^="tel:" i], a[href^="sms:" i]');
           if (hasPhoneText || hasTelLink) { chatWidgetEl = el; break; }
