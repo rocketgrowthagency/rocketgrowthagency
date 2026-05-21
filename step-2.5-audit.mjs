@@ -932,6 +932,26 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.iframeCount = widgetContext.iframeCount;
 
     findings.hasStickyCta = await page.evaluate(() => {
+      // FAST PATH (locked 2026-05-21 round 3): if ANY visible above-fold
+      // tel: link is at y < 120 after scroll (i.e., positioned at the top of
+      // the viewport regardless of page scroll position), treat as sticky.
+      // Catches JS-driven sticky navs where the position:fixed style is on
+      // an ancestor more than 5 levels up OR is set programmatically via
+      // scroll listeners (computed-style returns 'static' but visually the
+      // bar follows the viewport top). Enviro Plumbing's navbar fits this.
+      const fastTels = Array.from(document.querySelectorAll('a[href^="tel:" i]'));
+      for (const el of fastTels) {
+        const r = el.getBoundingClientRect();
+        const cs = window.getComputedStyle(el);
+        if (r.width < 20 || r.height < 15) continue;
+        if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.1) continue;
+        // r.top < 120 means the link is in the top ~120px of the viewport
+        // after our y=1000 scroll. Hard-fixed or JS-stuck — either way
+        // it's visually persistent as a call CTA.
+        if (r.top >= 0 && r.top < 120 && r.right > 0 && r.left < window.innerWidth) {
+          return true;
+        }
+      }
       const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in|home|about|services|areas\s*served|resources|gallery|portfolio|blog|news|faq|locations?|reviews)$/i;
       // Recognized CTA verbs — sticky pill/bar must contain one of these to
       // count as a conversion-path button (not just any fixed element).
