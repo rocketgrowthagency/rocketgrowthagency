@@ -1059,22 +1059,34 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // Same reason: Express returned hasPosts=false when GBP had a post from 1 day ago.
   // Heading regex `/^(?:updates?|posts?|from the owner)$/i` likely doesn't match
   // the actual Maps DOM label for the posts section. Needs diagnostic before re-enabling.
-  if (audit?.gbp?.postsVerified === true) {
-    if (audit?.gbp?.hasPosts === false) {
-      out.push({
-        key: 'gbpPosts',
-        score: 30,
-        finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
-      });
-    } else if (audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
-      // PRIORITY UPGRADE 2026-05-15: posts contribute to GBP-32% block;
-      // "abandoned profiles" = top-tier negative per Whitespark 2026. Was P30, now P15.
-      out.push({
-        key: 'gbpPosts',
-        score: 15,
-        finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
-      });
-    }
+  // gbpPosts: fire when hasPosts=false regardless of Search KP verification.
+  // The Maps panel directly confirms post absence — no Search KP scrape needed.
+  // Locked 2026-05-20 EOD after Cool Choice case where Search KP CAPTCHA blocked
+  // verification → gbpPosts finding suppressed → only 2 errors in Maps section.
+  if (audit?.gbp?.hasPosts === false) {
+    out.push({
+      key: 'gbpPosts',
+      score: 30,
+      finding: `you don't have any active Google Posts on your profile — businesses that publish weekly updates get a measurable ranking boost from the engagement signal`,
+    });
+  } else if (audit?.gbp?.postsVerified === true && audit?.gbp?.lastPostDaysAgo != null && audit.gbp.lastPostDaysAgo > 90) {
+    // PRIORITY UPGRADE 2026-05-15: posts contribute to GBP-32% block;
+    // "abandoned profiles" = top-tier negative per Whitespark 2026. Was P30, now P15.
+    out.push({
+      key: 'gbpPosts',
+      score: 15,
+      finding: `your last Google Post was about ${audit.gbp.lastPostDaysAgo} days ago — posting at least monthly signals active engagement, and Google ranks active listings higher than dormant ones`,
+    });
+  }
+
+  // noSocialProfiles: when GBP shows 0 linked social profiles, fire.
+  // Most legit local businesses have at least one social. Locked 2026-05-20 EOD.
+  if (audit?.gbp?.gbpSocialProfilesVerified === true && audit?.gbp?.gbpSocialProfileCount === 0) {
+    out.push({
+      key: 'noSocialProfiles',
+      score: 35,
+      finding: `your Google Business Profile doesn't link to any social media profiles — Facebook, Instagram, LinkedIn, or YouTube. Each linked social adds a citation signal and a customer-discovery path, and the absence is a missed signal Google uses to assess business legitimacy`,
+    });
   }
 
   // NEW 2026-05-15: dormantProfile composite finding. Whitespark 2026 lists
@@ -1433,21 +1445,26 @@ function buildScript(record, top3Stats, audit) {
   const websiteGood = scoreWebsiteConfirmedGood(audit);
   const mobileGood = scoreMobileConfirmedGood(audit);
 
-  // Helper: append confirmed-good positives when real-issue count < 3.
-  // Returns the section's main list (numbered) + an optional positive-tail string.
+  // STRICT positive-tail rule — locked 2026-05-20 EOD (Chris):
+  // positives ONLY render when the section has ZERO real error findings.
+  // Mixing 2 errors with a positive looks like fishing for things to say.
+  // Memory: feedback_3_errors_no_eager_positives.md.
   function renderWithPositives(real, positives, max = 3) {
     const realPicked = real.slice(0, max);
-    const need = max - realPicked.length;
-    const posPicked = need > 0 ? positives.slice(0, Math.min(need, 2)) : [];
     const list = realPicked.length ? numberedJoin(realPicked, max) : '';
     let tail = '';
-    if (posPicked.length === 1) {
-      tail = ` On the positive side, ${posPicked[0].finding}.`;
-    } else if (posPicked.length >= 2) {
-      const phrases = posPicked.slice(0, 2).map(p => p.finding);
-      tail = ` On the positive side, ${phrases[0]}, and ${phrases[1]}.`;
+    let posPickedCount = 0;
+    if (realPicked.length === 0 && positives.length > 0) {
+      const posPicked = positives.slice(0, Math.min(2, positives.length));
+      posPickedCount = posPicked.length;
+      if (posPicked.length === 1) {
+        tail = ` On the positive side, ${posPicked[0].finding}.`;
+      } else if (posPicked.length >= 2) {
+        const phrases = posPicked.slice(0, 2).map(p => p.finding);
+        tail = ` On the positive side, ${phrases[0]}, and ${phrases[1]}.`;
+      }
     }
-    return { list, tail, realCount: realPicked.length, hasPositives: posPicked.length > 0 };
+    return { list, tail, realCount: realPicked.length, hasPositives: posPickedCount > 0 };
   }
 
   // -------- MAPS --------
