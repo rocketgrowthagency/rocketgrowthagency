@@ -29,6 +29,26 @@ echo "=== Overnight pipeline: $SEARCH_QUERY ===" | tee -a "$LOGFILE"
 echo "Started: $TIME_START" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
+# ============================================================
+# Pre-flight: verification-gate regression + static absence-finding scan.
+# Locked 2026-05-21 alongside the universal verification-gate hardening.
+# If these fail, step-6 has either a broken gate or a new ungated absence
+# finding — DO NOT scrape/render/ship until fixed.
+# Memory: feedback_verification_gates_must_be_strict.md.
+# ============================================================
+echo ">>> pre-flight: regression suite (step-6 gate behavior)" | tee -a "$LOGFILE"
+if ! node scripts/regression-audit-detectors.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: regression suite failed — aborting overnight run to prevent shipping false claims." | tee -a "$LOGFILE"
+  exit 1
+fi
+echo ">>> pre-flight: static absence-gate scanner" | tee -a "$LOGFILE"
+if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+echo "✓ pre-flight gates passed" | tee -a "$LOGFILE"
+echo "" | tee -a "$LOGFILE"
+
 # === Step 1: scrape ===
 # PRODUCTION mode — uses step-1's default TARGET_UNIQUE_PLACES=55 to scrape
 # the full first page of Maps results, not a test-mode 5-cap. Memory:
@@ -158,7 +178,21 @@ EOF
 N=1
 for entry in "${DEPLOYED_URLS[@]}"; do
   IFS='|' read -r name url <<< "$entry"
-  echo "$N. **$name** — $url" >> "$REPORT"
+  # Locate this lead's voiceover manifest to pull verification summary.
+  BIZ_SLUG_FOR_MANIFEST=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+  VERIF=$(python3 -c "
+import glob, json, sys
+files = sorted(glob.glob('output/Step 6 (Voiceover MP3)/${DATE_STAMP}_*${BIZ_SLUG_FOR_MANIFEST:0:25}*/*_segments/manifest.json'))
+if not files: sys.exit(0)
+m = json.load(open(files[-1]))
+vs = m.get('verificationState', {})
+print(vs.get('summary', ''))
+" 2>/dev/null)
+  if [ -n "$VERIF" ]; then
+    echo "$N. **$name** — $url   _($VERIF)_" >> "$REPORT"
+  else
+    echo "$N. **$name** — $url" >> "$REPORT"
+  fi
   N=$((N + 1))
 done
 if [ ${#FAILED_LEADS[@]} -gt 0 ]; then

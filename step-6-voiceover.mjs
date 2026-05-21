@@ -1857,6 +1857,39 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
     note: 'step-4 and step-5 MUST run AFTER this timestamp. step-6-voiceover-only re-runs break A/V sync.',
   };
 
+  // Verification-state snapshot. Per feedback_verification_gates_must_be_strict.md
+  // every absence-claim finding is gated on a verified flag. This snapshot
+  // records what was/wasn't verified for this lead so the morning report
+  // (and downstream consumers) can flag thin audits at a glance.
+  manifest.verificationState = {
+    website: {
+      verified: audit?.website?.websiteAuditVerified === true,
+      error: audit?.website?.error || null,
+    },
+    mobile: {
+      verified: audit?.mobile?.mobileAuditVerified === true,
+      error: audit?.mobile?.error || null,
+    },
+    gbp: {
+      postsVerified: audit?.gbp?.postsVerified === true,
+      descriptionVerified: audit?.gbp?.descriptionVerified === true,
+      hoursVerified: audit?.gbp?.hoursVerified === true,
+      socialProfilesVerified: audit?.gbp?.gbpSocialProfilesVerified === true,
+      reviewsParsedCount: audit?.gbp?.reviewsParsedCount ?? 0,
+    },
+  };
+  const totalSignals = 6;
+  const verifiedCount = [
+    manifest.verificationState.website.verified,
+    manifest.verificationState.mobile.verified,
+    manifest.verificationState.gbp.postsVerified,
+    manifest.verificationState.gbp.descriptionVerified,
+    manifest.verificationState.gbp.hoursVerified,
+    manifest.verificationState.gbp.socialProfilesVerified,
+  ].filter(Boolean).length;
+  manifest.verificationState.summary = `${verifiedCount}/${totalSignals} signals verified`;
+  console.log(`[step-6 verification-state] ${name}: ${verifiedCount}/${totalSignals} verified — ${JSON.stringify(manifest.verificationState)}`);
+
   const manifestPath = path.join(segmentDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   console.log(`   ✓ Wrote manifest: ${manifestPath}`);
