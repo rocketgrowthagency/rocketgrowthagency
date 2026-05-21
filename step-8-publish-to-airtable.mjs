@@ -532,6 +532,7 @@ async function loadExistingLeadsByPlaceKey() {
       u.searchParams.append('fields[]', 'Place ID');
       u.searchParams.append('fields[]', 'GBP URL');
       u.searchParams.append('fields[]', 'Map Rank');
+      u.searchParams.append('fields[]', 'Day 1 Map Rank');
       u.searchParams.append('fields[]', 'Date Scraped');
       u.searchParams.append('fields[]', 'Business Name');
       if (offset) u.searchParams.set('offset', offset);
@@ -642,6 +643,12 @@ function buildRecord(row, scrapedDate) {
   setNum("Rating", pick(row, "rating"));
   setNum("Review Count", pick(row, "reviews", "review count"));
   setNum("Map Rank", pick(row, "map rank"));
+  // Day 1 Map Rank snapshot — captured once per lead at first publish so
+  // Email 5 (Day 45 re-engagement) can show "30 days ago: #N → today: #M"
+  // comparison even after Map Rank refreshes. For NEW records, set unconditionally.
+  // For EXISTING records being updated, the dedupe handler below preserves the
+  // existing value (first-write-wins). Memory: project_outreach_followup_sequence.md.
+  setNum("Day 1 Map Rank", pick(row, "map rank"));
   // Auto-set Video Variant based on Google Maps rank: 1-3 → top-3, 4+ → rank-4-plus
   const rankForVariant = parseInt(pick(row, "map rank"), 10);
   fields["Video Variant"] =
@@ -839,6 +846,13 @@ async function main() {
         "Map Rank": rec.fields["Map Rank"],
         "Date Scraped": rec.fields["Date Scraped"],
       };
+      // Day 1 Map Rank — first-write-wins. Only set if existing record doesn't
+      // already have a value, so the historical snapshot is preserved across
+      // re-scrapes. Used by Email 5 (Day 45) for "30 days ago: #N → today: #M".
+      if (rec.fields["Day 1 Map Rank"] != null
+          && (match.fields?.["Day 1 Map Rank"] == null || match.fields?.["Day 1 Map Rank"] === '')) {
+        refreshFields["Day 1 Map Rank"] = rec.fields["Day 1 Map Rank"];
+      }
       for (const f of SCRAPE_DATA_FIELDS) {
         if (rec.fields[f] !== undefined && rec.fields[f] !== '' && rec.fields[f] !== null) {
           refreshFields[f] = rec.fields[f];
