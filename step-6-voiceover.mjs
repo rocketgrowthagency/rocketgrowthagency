@@ -753,7 +753,10 @@ function scoreMobileFindings(audit) {
     // potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
     if (m.hasChatWidget === true && m.chatWidgetHasPhoneCta === true) {
       out.push({ key: 'c2cBuriedInChatWidget', score: 4, finding: `your tap-to-call number is hidden inside a chat widget — visitors have to open the widget before they can call, adding an extra step that costs conversions` });
-    } else if (m.hasChatWidget !== true) {
+    } else if (m.hasChatWidget === false) {
+      // Explicit `=== false` (not !== true) — null = "unknown" (iframe-heavy
+      // page, headless can't introspect) and we don't fire absence claims
+      // on unknown state.
       out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
     }
     // else: widget present but CTA presence unclear → suppress (don't fire false claim)
@@ -794,7 +797,12 @@ function scoreMobileFindings(audit) {
   // Chat-widget gate (2026-05-19) — suppress entirely if a chat widget is
   // detected (we can't be sure the widget doesn't offer SMS; safer than
   // firing a potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
-  if (mobVerified && m.hasClickToText === false && m.hasChatWidget !== true) {
+  // clickToText — gated on EXPLICIT hasChatWidget === false (not !== true).
+  // hasChatWidget can now be null when page has iframes and our DOM-based
+  // detector couldn't introspect them (locked 2026-05-21 round 2 — chat
+  // widget invisible to headless Playwright on Monkey Wrench). null = "we
+  // don't know" → skip the finding rather than fire potentially-false claim.
+  if (mobVerified && m.hasClickToText === false && m.hasChatWidget === false) {
     out.push({ key: 'clickToText', score: 10.5, finding: `your mobile site has no tap-to-text option — modern local customers default to SMS for quick questions, and adding a single sms link is a free conversion path most competitors are missing` });
   }
 

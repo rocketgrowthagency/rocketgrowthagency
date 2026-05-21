@@ -899,22 +899,31 @@ async function auditMobile(browser, websiteUrl, business) {
     // separate evaluate so the layout has time to settle.
     await page.evaluate(() => window.scrollTo({ top: 1000, behavior: 'instant' })).catch(() => {});
     await new Promise((r) => setTimeout(r, 400));
-    // Two-step: check whether ANY fixed/sticky elements exist on the page.
-    // If yes, our CTA-detection logic has something to look at — set
-    // stickyCtaVerified=true. If we find zero fixed/sticky elements anywhere,
-    // the page may be heavily JS-driven with widgets we can't see (cross-
-    // origin iframe, late-loading async, etc.) — set verified=false and
-    // step-6 won't fire the noSticky finding. Better to skip than claim.
-    const stickyVerifyResult = await page.evaluate(() => {
+    // Verification context for widget detection. Captures:
+    //   - fixedElementCount: how many fixed/sticky DOM nodes exist (proves
+    //     our position-based detector saw something to check)
+    //   - iframeCount: how many iframes are on the page (proxy for third-
+    //     party widgets we can't introspect — chat, social, maps embeds).
+    //     When iframes exist AND our detector finds nothing, the absence is
+    //     UNKNOWABLE from headless DOM, not actually empty.
+    //
+    // Locked 2026-05-21 (round 2): caught when Monkey Wrench's "Let's chat"
+    // + "SHOP" sticky pills are visible in a real browser but invisible to
+    // headless Playwright (likely iframe-rendered or bot-blocked).
+    const widgetContext = await page.evaluate(() => {
       const fixedEls = Array.from(document.querySelectorAll('*')).filter((el) => {
         try {
           const cs = window.getComputedStyle(el);
           return (cs.position === 'fixed' || cs.position === 'sticky');
         } catch { return false; }
       });
-      return { fixedElementCount: fixedEls.length };
-    }).catch(() => ({ fixedElementCount: 0 }));
-    findings.stickyCtaVerified = stickyVerifyResult.fixedElementCount > 0;
+      return {
+        fixedElementCount: fixedEls.length,
+        iframeCount: document.querySelectorAll('iframe').length,
+      };
+    }).catch(() => ({ fixedElementCount: 0, iframeCount: 0 }));
+    findings.stickyCtaVerified = widgetContext.fixedElementCount > 0;
+    findings.iframeCount = widgetContext.iframeCount;
 
     findings.hasStickyCta = await page.evaluate(() => {
       const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in|home|about|services|areas\s*served|resources|gallery|portfolio|blog|news|faq|locations?|reviews)$/i;
@@ -1015,6 +1024,26 @@ async function auditMobile(browser, websiteUrl, business) {
     }).catch(() => null);
     // Scroll back to top to leave the page in a clean state
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
+
+    // Iframe-aware override (locked 2026-05-21 round 2): when the page has
+    // iframes AND our DOM-based detector found nothing, the absence is
+    // UNKNOWABLE from headless DOM — chat widgets and sticky pills commonly
+    // render inside iframes we can't introspect (cross-origin), or sites
+    // bot-detect and skip rendering altogether for headless browsers.
+    // Convert false → null so step-6 absence-claim gates suppress the finding.
+    // Caught on Monkey Wrench: visible "Let's chat" + "SHOP" sticky pills in
+    // a real browser, but invisible to Playwright (only 1 iframe in DOM, no
+    // chat/sticky elements). Better to skip than fabricate.
+    if (findings.iframeCount > 0) {
+      if (findings.hasStickyCta === false) {
+        findings.hasStickyCta = null;
+        console.log('  [audit-diag] hasStickyCta: page has iframes — absence unverifiable, set to null (suppresses noSticky finding).');
+      }
+      if (findings.hasChatWidget === false) {
+        findings.hasChatWidget = null;
+        console.log('  [audit-diag] hasChatWidget: page has iframes — absence unverifiable, set to null (suppresses noSMS finding via chat gate).');
+      }
+    }
   } catch (err) {
     findings.error = err.message || String(err);
   } finally {
