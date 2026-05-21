@@ -164,10 +164,20 @@ async function fetchAllNoEmail(table) {
   return all;
 }
 
-async function patchEmail(table, recordId, email, source) {
+async function patchEmail(table, recordId, email, tier) {
   if (DRY) return true;
+  // Map tier → Email Source enum value (matches the singleSelect options created
+  // 2026-05-20 EOD so the Airtable view can filter riskier proximity matches).
+  const sourceMap = {
+    'auto-trust': 'search-auto-trust',
+    'phone-match': 'search-phone-match',
+    'name-match': 'search-name-match',
+    'proximity-free-mailbox': 'search-proximity',
+  };
+  const fields = { Email: email };
+  if (tier && sourceMap[tier]) fields['Email Source'] = sourceMap[tier];
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}/${recordId}`;
-  await axios.patch(url, { fields: { Email: email }, typecast: true }, {
+  await axios.patch(url, { fields, typecast: true }, {
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
   });
   return true;
