@@ -576,11 +576,12 @@ async function auditMobile(browser, websiteUrl, business) {
     const start = Date.now();
     await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
     findings.pageLoadSeconds = Number(((Date.now() - start) / 1000).toFixed(2));
-
-    const data = await page.evaluate(() => {
-      const result = {
-        hasViewportMeta: false,
-        viewportContent: '',
+    // Give async third-party scripts (chat widgets, sticky-CTA bars, social
+    // proof injectors) time to render before evaluating. Most chat widgets
+    // (Tidio/Drift/Intercom/Tawk and custom builds) inject between 500ms-2.5s
+    // after domcontentloaded. Locked 2026-05-21 after Monkey Wrench's "Let's
+    // chat" widget was missing from the DOM at scrape time.
+    await new Promise((r) => setTimeout(r, 2500));
         clickToCallAboveFold: false,
         primaryCtaPx: null,
         h1Count: 0,
@@ -813,8 +814,23 @@ async function auditMobile(browser, websiteUrl, business) {
       // text inside it (chat / help / message / support / "ask us" / "let's
       // talk"). Without those keywords, a popup with a phone link is more
       // likely a contact card / banner than a chat widget.
+      // Generic catch — tightened 2026-05-21, then re-broadened same day after
+      // Monkey Wrench's "Let's chat" widget was missed.
+      //
+      // Two-pass:
+      //   Pass 1 — class-based candidate scan (existing). Matches widgets with
+      //     class names like "chat-button", "floating-launcher", etc.
+      //   Pass 2 — text-based fallback. Any visible element under 80 chars
+      //     whose innerText matches a chat phrase ("Let's chat", "Chat with
+      //     us", etc.) counts as a chat widget — even without telltale class
+      //     names. Common for hand-built chat triggers and bottom-bar pills.
+      //
+      // CRITICAL: don't require an inner phone/sms link. Pure chat widgets
+      // (chat-only, no phone) are still chat widgets — they're a valid text
+      // conversion path and gate the noSMS finding. The phone-CTA detection
+      // (chatWidgetHasPhoneCta) is a SEPARATE downstream flag.
       if (!chatWidgetEl) {
-        const CHAT_TEXT_RE = /\b(chat\b|chat with|live\s*chat|need\s*help|can\s*we\s*help|how\s*can\s*we\s*help|message\s*us|text\s*us|ask\s*us|let'?s\s*talk|talk\s*to\s*us|support|customer\s*service|24\/?7\s*help)/i;
+        const CHAT_TEXT_RE = /\b(chat\b|chat with|live\s*chat|need\s*help|can\s*we\s*help|how\s*can\s*we\s*help|message\s*us|text\s*us|ask\s*us|let'?s\s*chat|let'?s\s*talk|talk\s*to\s*us|support|customer\s*service|24\/?7\s*help)/i;
         const candidates = Array.from(document.querySelectorAll(
           '[role="dialog"], [class*="popup" i], [class*="floating" i], [class*="chat" i], [class*="bubble" i], [class*="launcher" i]'
         ));
@@ -822,9 +838,26 @@ async function auditMobile(browser, websiteUrl, business) {
           const txt = (el.innerText || '').trim();
           if (!txt) continue;
           if (!CHAT_TEXT_RE.test(txt)) continue;
-          const hasPhoneText = phoneRegex.test(txt);
-          const hasTelLink = !!el.querySelector('a[href^="tel:" i], a[href^="sms:" i]');
-          if (hasPhoneText || hasTelLink) { chatWidgetEl = el; break; }
+          chatWidgetEl = el;
+          break;
+        }
+      }
+      // Text-based fallback: visible button-sized element whose entire short
+      // text matches a chat phrase. Catches hand-built chat pills like the
+      // Monkey Wrench "Let's chat" button (class doesn't include "chat").
+      if (!chatWidgetEl) {
+        const SHORT_CHAT_RE = /^(?:let'?s\s*chat|chat|chat with us|live\s*chat|need\s*help\??|message\s*us|text\s*us|ask\s*us|talk\s*to\s*us|support)$/i;
+        const visibleEls = Array.from(document.querySelectorAll('button, a, div, span')).filter((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.width < 40 || r.height < 20 || r.width > 400) return false;
+          const cs = window.getComputedStyle(el);
+          if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.3) return false;
+          return true;
+        });
+        for (const el of visibleEls) {
+          const txt = (el.innerText || el.textContent || '').trim();
+          if (!txt || txt.length > 30) continue;
+          if (SHORT_CHAT_RE.test(txt)) { chatWidgetEl = el; break; }
         }
       }
       result.hasChatWidget = !!chatWidgetEl;
@@ -863,12 +896,19 @@ async function auditMobile(browser, websiteUrl, business) {
     await new Promise((r) => setTimeout(r, 400));
     findings.hasStickyCta = await page.evaluate(() => {
       const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in|home|about|services|areas\s*served|resources|gallery|portfolio|blog|news|faq|locations?|reviews)$/i;
+      // Recognized CTA verbs — sticky pill/bar must contain one of these to
+      // count as a conversion-path button (not just any fixed element).
+      // Locked 2026-05-21: broadened from call/contact-only to include shop,
+      // book, chat, quote, buy, order, schedule, appointment, message, get,
+      // start. Caught when Monkey Wrench's sticky "SHOP" + "Let's chat"
+      // buttons were both missed by the narrow original list.
+      const CTA_VERB_RE = /\b(call(?:\s*now)?|tap\s*to\s*call|click\s*to\s*call|contact|reach\s*out|chat|let'?s\s*chat|message|text\s*us|quote|book(?:\s*now)?|schedule|appointment|shop|buy|order|get\s*(?:started|quote|estimate)|start|estimate|consult|talk\s*to\s*us)\b/i;
       // Hamburger-drawer detection — if the fixed ancestor IS a closed mobile
       // nav drawer (off-screen-left, holds the site nav), every link in it is
       // a nav item, NOT a sticky CTA. Detect by ancestor class names.
       const DRAWER_RE = /\b(drawer|sidebar|side-?menu|nav-?(menu|drawer|panel)|mobile-?(nav|menu)|off-?canvas|hamburger-?panel|menu-?panel|overlay-?menu)\b/i;
       const candidates = Array.from(document.querySelectorAll(
-        'a[href^="tel:"], a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="book"], a[href*="appointment"], a[class*="cta"], a[class*="button" i], a[class*="btn" i], button, div[class*="sticky" i] a, div[class*="fixed" i] a'
+        'a[href^="tel:"], a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="book"], a[href*="appointment"], a[href*="shop"], a[href*="chat"], a[class*="cta"], a[class*="button" i], a[class*="btn" i], a[class*="chat" i], a[class*="shop" i], button, div[class*="sticky" i] a, div[class*="fixed" i] a, div[class*="sticky" i] button, div[class*="fixed" i] button'
       ));
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -905,13 +945,48 @@ async function auditMobile(browser, websiteUrl, business) {
           if (DRAWER_RE.test(acls)) continue;
         }
         const r = el.getBoundingClientRect();
-        if (r.width < 50 || r.height < 20) continue;
+        if (r.width < 40 || r.height < 20) continue;
         // BOTH-axis viewport check (was Y-only — let an off-screen-left hamburger
         // drawer pass on Santa Monica Drain Co.'s mobile 2026-05-21).
         if (r.bottom <= 0 || r.top >= vh) continue;
         if (r.right <= 0 || r.left >= vw) continue;
         const txt = ((el.innerText || el.textContent || '') + '').trim();
         if (!txt || NAV_LIKE.test(txt)) continue;
+        return true;
+      }
+      // SECOND PASS (locked 2026-05-21): broad sweep — ANY visible fixed/sticky
+      // button-sized element whose text matches a CTA verb (call/shop/chat/
+      // book/quote/etc.). Catches sticky pills that don't match the narrow
+      // anchor/class candidate selector above (e.g., MW's "SHOP" / "Let's chat"
+      // floating pills that are custom JS buttons with no href or recognized
+      // class). Memory: feedback_sticky_cta_off_screen_drawer_false_positive.md.
+      const allEls = Array.from(document.querySelectorAll('a, button, div, span, [role="button"]'));
+      for (const el of allEls) {
+        const style = window.getComputedStyle(el);
+        let isFixed = (style.position === 'fixed' || style.position === 'sticky');
+        let fixedAncestor = null;
+        if (!isFixed) {
+          let p = el.parentElement;
+          for (let i = 0; i < 4 && p; i++) {
+            const ps = window.getComputedStyle(p);
+            if (ps.position === 'fixed' || ps.position === 'sticky') { isFixed = true; fixedAncestor = p; break; }
+            p = p.parentElement;
+          }
+        }
+        if (!isFixed) continue;
+        if (style.visibility === 'hidden' || style.display === 'none' || parseFloat(style.opacity) < 0.1) continue;
+        if (fixedAncestor) {
+          const ar = fixedAncestor.getBoundingClientRect();
+          if (ar.right <= 0 || ar.left >= vw) continue;
+          if (DRAWER_RE.test(fixedAncestor.className?.toString() || '')) continue;
+        }
+        const r = el.getBoundingClientRect();
+        if (r.width < 40 || r.height < 20 || r.width > 400) continue; // pill-sized only
+        if (r.bottom <= 0 || r.top >= vh) continue;
+        if (r.right <= 0 || r.left >= vw) continue;
+        const txt = (el.innerText || el.textContent || '').trim();
+        if (!txt || txt.length > 40 || NAV_LIKE.test(txt)) continue;
+        if (!CTA_VERB_RE.test(txt)) continue; // must say a CTA verb
         return true;
       }
       return false;
