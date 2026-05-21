@@ -1433,6 +1433,17 @@ function buildScript(record, top3Stats, audit) {
     ? []
     : applyValidationFilter(scoreMobileFindings(audit), disabledKeys);
   const { maps: mapsFindings, website: websiteFindings, mobile: mobileFindings } = dedupAcrossSections(rawMaps, rawWebsite, rawMobile);
+
+  // HARD RULE diagnostic — Chris-locked 2026-05-20 EOD. Every section should
+  // surface 3 errors from the 51 active audit checks. Log when under-firing
+  // so we can audit which checks are too tight / dead / suppressed.
+  // Memory: feedback_3_errors_no_eager_positives.md.
+  for (const [secName, secFindings] of [['Maps', mapsFindings], ['Website', websiteFindings], ['Mobile', mobileFindings]]) {
+    const errorCount = secFindings.length;
+    if (errorCount < 3) {
+      console.log(`[step-6 3-errors-rule] ${secName} fired only ${errorCount} error finding(s) (rule says 3). Audit pool may have under-fired — check verification gates + extractor coverage. Section will run ${errorCount > 0 ? 'with these ' + errorCount + ' errors (no positive padding)' : 'with positives fallback or minimal output'}.`);
+    }
+  }
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
   const websiteGood = scoreWebsiteConfirmedGood(audit);
   const mobileGood = scoreMobileConfirmedGood(audit);
