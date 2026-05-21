@@ -1684,11 +1684,18 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   const audit = loadAuditFindings(baseName, slug);
   if (audit) console.log(`   → Audit findings loaded for ${slug}`);
 
-  // Sync canonical scrape data from Airtable — step-2 CSV may have stale or
-  // empty values for any lead whose step-2 ran BEFORE the step-1 extractor fix
-  // (pre-2026-05-14). Airtable is the single source of truth. We sync Map Rank,
-  // Reviews, Rating, Category — anything used in the voiceover or comparative
-  // findings.
+  // Sync from Airtable as a GAP-FILLER only — CSV wins when CSV has a value.
+  // Reversed 2026-05-21 from the prior "Airtable canonical" rule after three
+  // overnight videos shipped with WRONG ranks in the voiceover (Santa Monica
+  // Drain Co. said "#34" instead of #1, Enviro said "#21" instead of #3, Oasis
+  // said "#44" instead of #4). Root cause: Airtable held stale Map Rank from
+  // a prior scrape (different city), and step-8-publish runs AFTER step-6 so
+  // Airtable wasn't updated until after the voiceover was generated.
+  //
+  // CSV represents THIS scrape session — it's the freshest authoritative
+  // source. Airtable is the catch-up source for fields the scraper didn't
+  // capture (e.g. legacy rows from before the step-1 extractor fix on
+  // 2026-05-14). For Map Rank/Reviews/Rating/Category, CSV is canonical.
   try {
     const apiKey = process.env.AIRTABLE_API_KEY;
     const baseId = process.env.AIRTABLE_BASE_ID;
@@ -1707,19 +1714,19 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
           { airtable: 'Rating', csv: 'Rating' },
           { airtable: 'Category', csv: 'Detected Category' },
         ];
-        const synced = [];
+        const filled = [];
         for (const { airtable, csv } of syncs) {
+          const csvVal = record[csv];
+          const hasCsv = csvVal != null && String(csvVal).trim() !== '';
+          if (hasCsv) continue; // CSV wins
           const v = f[airtable];
           if (v != null && v !== '') {
-            const before = record[csv] || '';
-            if (String(v) !== String(before)) {
-              record[csv] = String(v);
-              synced.push(`${csv}: "${before}" → ${v}`);
-            }
+            record[csv] = String(v);
+            filled.push(`${csv}: (empty) → ${v}`);
           }
         }
-        if (synced.length) {
-          console.log(`   ⚡ Airtable sync (canonical): ${synced.join('; ')}`);
+        if (filled.length) {
+          console.log(`   ⚡ Airtable gap-fill (CSV was empty): ${filled.join('; ')}`);
         }
       }
     }
