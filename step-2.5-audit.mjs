@@ -310,12 +310,30 @@ async function auditWebsite(browser, websiteUrl, business) {
       }
       result.primaryCtaText = primaryCtaText;
 
-      // Tier 2: reviews/testimonials on page — aggregateRating schema OR visible review section
+      // Tier 2: reviews/testimonials on page (broadened 2026-05-21 after Enviro
+      // false-claim — "813 reviews / 4.6 Rated OUTSTANDING" widget visible but
+      // detector missed it because the rating widget uses SVG stars and shows
+      // numeric rating + "X reviews" in separate elements):
+      //  1. aggregateRating schema in LD+JSON
+      //  2. Section with class/id containing review/testimonial
+      //  3. Review-widget vendor classes (trustpilot/yotpo/birdeye/etc.)
+      //  4. Body text matches a rating pattern: unicode star, "X.X stars",
+      //     "X reviews/ratings", "X.X / 5", "X.X out of 5", "rated outstanding/
+      //     excellent/great", "X-star".
+      //  5. SVG <svg> elements with class/id matching "star"/"rating".
       const ldBlocks = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       const hasRatingSchema = ldBlocks.some(s => { try { const d = JSON.parse(s.textContent||''); return JSON.stringify(d).includes('aggregateRating'); } catch { return false; } });
       const reviewSection = document.querySelector('[class*="review" i], [class*="testimonial" i], [id*="review" i], [id*="testimonial" i]');
-      const starText = (document.body?.innerText || '').match(/★|☆|⭐|\d+(\.\d+)?\s*(out of|\/)\s*5/i);
-      result.hasReviewsOnPage = hasRatingSchema || !!(reviewSection && (reviewSection.innerText||'').trim().length > 30) || !!starText;
+      const reviewWidget = document.querySelector('[class*="trustpilot" i], [class*="yotpo" i], [class*="trustindex" i], [class*="birdeye" i], [class*="podium" i], [class*="swell" i], [class*="rating-widget" i], [class*="stars-widget" i]');
+      const bodyText = (document.body?.innerText || '');
+      const reviewPattern = /★|☆|⭐|\d+(\.\d+)?\s*(?:out\s*of|\/)\s*5|\d+(\.\d+)?\s*stars?\b|\b\d{2,}\s*(?:reviews?|ratings?)\b|\brated\s*(?:outstanding|excellent|great|good|\d+(\.\d+)?)/i;
+      const matchesReviewPattern = reviewPattern.test(bodyText);
+      const svgStar = !!document.querySelector('svg[class*="star" i], svg[class*="rating" i], i[class*="fa-star" i]');
+      result.hasReviewsOnPage = hasRatingSchema
+        || !!(reviewSection && (reviewSection.innerText||'').trim().length > 30)
+        || !!reviewWidget
+        || matchesReviewPattern
+        || svgStar;
 
       // Tier 2: service area — does body mention at least 2 distinct city/neighborhood names beyond the H1?
       const bodyTxt = (document.body?.innerText || '').toLowerCase();
@@ -760,21 +778,57 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       result.hasObviousCallCta = hasObviousCallCta;
 
-      // Tier 2: social proof above fold (star rating or review count visible in hero)
+      // Tier 2: social proof above fold (star rating or review count visible
+      // in hero). Broadened 2026-05-21 after Enviro Plumbing false-claim —
+      // "4.6 Rated OUTSTANDING / 813 reviews" widget IS in hero but detector
+      // missed it because the rating widget uses SVG stars + numeric values
+      // in separate elements; the OLD class-only scan only matched empty
+      // wrapper divs OR text was longer than 500 chars when joined.
+      const SOCIAL_PROOF_RE = /★|☆|⭐|\d+(\.\d+)?\s*stars?\b|\b\d{2,}\s*(?:reviews?|ratings?)\b|\d+(\.\d+)?\s*(?:out\s*of|\/)\s*5|\brated\s*(?:outstanding|excellent|great|good)/i;
       let socialProofAboveFold = false;
-      const spEls = Array.from(document.querySelectorAll('[class*="star" i], [class*="rating" i], [class*="review" i], [class*="testimonial" i]'));
+      // Class/id match — any visible element above fold with a review/rating
+      // class. Allow empty inner text (the widget may render its number/stars
+      // in shadow DOM or SVG children).
+      const spEls = Array.from(document.querySelectorAll(
+        '[class*="star" i], [class*="rating" i], [class*="review" i], [class*="testimonial" i], [class*="trustpilot" i], [class*="yotpo" i], [class*="trustindex" i], [class*="birdeye" i], [class*="podium" i]'
+      ));
       for (const el of spEls) {
         const r = el.getBoundingClientRect();
-        if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0 && (el.innerText||'').trim().length > 0) {
+        if (r.top >= 0 && r.top < mobileFold && r.width >= 20 && r.height >= 20) {
           socialProofAboveFold = true;
           break;
         }
       }
-      // Also check for star/rating text above fold
+      // Text match — scan all visible elements above the mobile fold for
+      // rating/review patterns. Was failing because the OLD scan only checked
+      // the FIRST 500 chars of body.innerText, missing widgets rendered later
+      // in source order even if they're visually high on the page.
       if (!socialProofAboveFold) {
-        const bodyText = document.body?.innerText || '';
-        const firstScreenText = bodyText.slice(0, 500);
-        if (/★|⭐|\d+(\.\d)?\s*stars?|\d+\s*reviews?/i.test(firstScreenText)) socialProofAboveFold = true;
+        const allEls = Array.from(document.querySelectorAll('*'));
+        for (const el of allEls) {
+          const r = el.getBoundingClientRect();
+          if (r.width < 20 || r.height < 15) continue;
+          if (r.top < 0 || r.top >= mobileFold) continue;
+          const txt = (el.innerText || el.textContent || '').trim();
+          if (txt.length === 0 || txt.length > 600) continue;
+          if (SOCIAL_PROOF_RE.test(txt)) {
+            socialProofAboveFold = true;
+            break;
+          }
+        }
+      }
+      // SVG star detection — many modern review widgets use SVG stars
+      // (yotpo, birdeye, trustindex, custom). Check if any SVG with a
+      // star/rating class/id is visible above fold.
+      if (!socialProofAboveFold) {
+        const svgs = Array.from(document.querySelectorAll('svg[class*="star" i], svg[class*="rating" i], i[class*="fa-star" i]'));
+        for (const el of svgs) {
+          const r = el.getBoundingClientRect();
+          if (r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0) {
+            socialProofAboveFold = true;
+            break;
+          }
+        }
       }
       result.socialProofAboveFold = socialProofAboveFold;
 
