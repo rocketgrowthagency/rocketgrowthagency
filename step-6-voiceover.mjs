@@ -1382,9 +1382,20 @@ function buildScript(record, top3Stats, audit) {
 
   // Intro target: 13-15s. Locked 2026-05-18 — re-tightened after regression
   // to ~25s. Memory: project_outreach_machine.md (intro length decision).
+  //
+  // Truncate verbose GBP names to first 3 words for the intro — keeps verbose
+  // multi-location-style names (Cool Choice Heating & AC Repair Beverly Hills,
+  // Green Heating & AC Repair Beverly Hills) under the 55-word intro cap.
+  // Locked 2026-05-20 EOD after Cool Choice failed the intro guardrail at 58
+  // words. Trim happens only for intro — full name stays elsewhere.
+  let nameForIntroDisplay = nameForIntro;
+  const introNameWords = nameForIntro.replace(/[^A-Za-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
+  if (introNameWords.length > 3) {
+    nameForIntroDisplay = introNameWords.slice(0, 3).join(' ');
+  }
   const intro = isTop3
-    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntro}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover where you're vulnerable to losing your top 3 spot — plus how to get the full report at the end.`
-    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntro}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover the top issues keeping you from the top 3 — plus how to get the full report at the end.`;
+    ? `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntroDisplay}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover where you're vulnerable to losing your top 3 spot — plus how to get the full report at the end.`
+    : `Hey, this is Chris with Rocket Growth Agency — local SEO experts. I ran a quick audit on ${nameForIntroDisplay}'s Google Business Profile, website, and mobile site. Next 2 minutes I'll cover the top issues keeping you from the top 3 — plus how to get the full report at the end.`;
 
   function numberedJoin(findings, max = 3) {
     const picked = findings.slice(0, max).map((f) => f.finding);
