@@ -91,7 +91,13 @@ function sanitizeScrapedEmail(raw) {
 
 // Dev/template placeholder emails — instant reject. Locked 2026-05-20 after
 // Royale Plumbing's site exposed `user@domain.com` in source (template default).
-const PLACEHOLDER_EMAIL_RE = /^(?:user|test|example|name|email|your|info|admin|contact|hello|mail|noreply|donotreply)@(?:domain|example|test|yoursite|yourdomain|website|email|domain1|domain2|sample|temp|placeholder)\.(?:com|net|org|tld|local)$/i;
+// Extended 2026-05-20 EOD after batch discovery surfaced jane.doe@... + ccpaprivacy.org
+// patterns (privacy compliance proxies + literal-name placeholders).
+const PLACEHOLDER_EMAIL_RE = /^(?:user|test|example|name|email|your|info|admin|contact|hello|mail|noreply|donotreply|jane\.doe|john\.doe|firstname\.lastname|first\.last)@(?:domain|example|test|yoursite|yourdomain|website|email|domain1|domain2|sample|temp|placeholder|mytechusa)\.(?:com|net|org|tld|local)$/i;
+
+// Privacy compliance + scraping-proxy domains — emails on these domains aren't
+// real business contacts (CCPA/GDPR routing services, anti-scrape relays).
+const PROXY_DOMAIN_RE = /@(?:ccpaprivacy\.org|ccpaprivacy\.com|gdprproxy\.|whoisguard\.com|domainsbyproxy\.com|namecheap\.com|privatemail\.com|registrarsafe\.)/i;
 
 // Allowlist of plausible TLDs — keeps the list inclusive but rejects obvious
 // phone-concat artifacts like `661-257-9200.our`. Locked 2026-05-20 after
@@ -126,6 +132,8 @@ function isLikelyEmail(email) {
   if (!basic.test(trimmed)) return '';
   // Reject dev/template placeholder emails (user@domain.com, test@test.com, etc.)
   if (PLACEHOLDER_EMAIL_RE.test(trimmed)) return '';
+  // Reject privacy-proxy + scraping-relay domains
+  if (PROXY_DOMAIN_RE.test(trimmed)) return '';
   // Reject local parts that look like a US phone fragment (3-4 digits + dash +
   // 4 digits + anything else) — defense in case sanitizeScrapedEmail missed a
   // variant. Keeps legitimate digit-prefixed emails like "2024marketing@biz".
