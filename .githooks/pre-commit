@@ -5,12 +5,17 @@ OWNER_EXPECTED="rocketgrowthagency"
 REPO_EXPECTED="rocketgrowthagency"
 
 remote="$(git config --get remote.origin.url)"
+# Accept https, plain SSH, and SSH host-alias forms (`git@github.com-anything:owner/repo`).
+# The host-alias pattern is common when juggling multiple GitHub identities via ~/.ssh/config.
 case "$remote" in
   "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
   "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}"|\
-  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}.git") ;;
+  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
+  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}"|\
+  "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
+  "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}") ;;
   *)
-    echo "❌ RGA guard: remote.origin.url is '$remote' (expected ${OWNER_EXPECTED}/${REPO_EXPECTED})"
+    echo "❌ RGA guard: remote.origin.url is '$remote' (expected owner/repo ${OWNER_EXPECTED}/${REPO_EXPECTED})"
     echo "    Fix with: git remote set-url origin https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
     exit 1
     ;;
@@ -31,4 +36,50 @@ if [ "$email" != "hello@rocketgrowthagency.com" ]; then
 fi
 
 echo "✅ RGA guard passed"
+
+# ============================================================
+# Verification-gate auto-audit (locked 2026-05-21)
+# Runs the 3 audit scripts whenever a commit touches audit-pipeline code.
+# Blocks the commit if any check fails, so a broken gate / disconnected
+# wiring / new ungated absence finding can never silently land.
+# Memory: feedback_verification_gates_must_be_strict.md +
+# feedback_auto_audit_on_every_update.md.
+# Emergency bypass: git commit --no-verify (use sparingly).
+# ============================================================
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+if echo "$STAGED" | grep -qE '^(step-(6-voiceover|2\.5-audit)\.mjs|build-video-landing\.mjs|scripts/(overnight-pipeline\.sh|regression-audit-detectors\.mjs|check-absence-finding-gates\.mjs|check-verification-wiring\.sh))$'; then
+  echo
+  echo "=== Verification-gate auto-audit (triggered by audit-pipeline file edit) ==="
+  AUDIT_FAIL=0
+
+  if ! node scripts/check-absence-finding-gates.mjs; then
+    AUDIT_FAIL=1
+  fi
+  echo
+  echo ">>> regression suite"
+  if node scripts/regression-audit-detectors.mjs >/dev/null 2>&1; then
+    echo "  ✓ 32+/N runtime cases pass"
+  else
+    echo "  ✗ runtime regression suite FAILED. Re-run: node scripts/regression-audit-detectors.mjs"
+    AUDIT_FAIL=1
+  fi
+  echo
+  echo ">>> end-to-end wiring audit"
+  if ./scripts/check-verification-wiring.sh >/dev/null 2>&1; then
+    echo "  ✓ all 6 wiring points connected"
+  else
+    echo "  ✗ wiring audit FAILED. Re-run: ./scripts/check-verification-wiring.sh"
+    AUDIT_FAIL=1
+  fi
+
+  if [ "$AUDIT_FAIL" -ne 0 ]; then
+    echo
+    echo "❌ Commit BLOCKED: verification-gate audit failed. Fix or use --no-verify (sparingly)."
+    echo "   Memory: feedback_verification_gates_must_be_strict.md"
+    exit 1
+  fi
+  echo
+  echo "✅ Verification-gate audit passed"
+fi
+
 exit 0
