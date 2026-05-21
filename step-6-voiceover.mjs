@@ -1522,7 +1522,11 @@ function buildScript(record, top3Stats, audit) {
   for (const [secName, secFindings] of [['Maps', mapsFindings], ['Website', websiteFindings], ['Mobile', mobileFindings]]) {
     const errorCount = secFindings.length;
     if (errorCount < 3) {
-      console.log(`[step-6 3-errors-rule] ${secName} fired only ${errorCount} error finding(s) (rule says 3). Audit pool may have under-fired — check verification gates + extractor coverage. Section will run ${errorCount > 0 ? 'with these ' + errorCount + ' errors (no positive padding)' : 'with positives fallback or minimal output'}.`);
+      // Diagnostic only. 3 is a CEILING for verified findings — never a count to
+      // pad up to. Falsehoods are never candidates, so "missing the 3" just
+      // means "fewer real issues exist." Section ships with however many
+      // verified findings we have. See feedback_3_errors_no_eager_positives.md.
+      console.log(`[step-6 ${secName}] ${errorCount} verified finding(s) — shipping ${errorCount > 0 ? errorCount : '0 errors → positives fallback'} (3 is the ceiling, not a quota; falsehoods are never used to fill).`);
     }
   }
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
