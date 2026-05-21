@@ -1522,62 +1522,71 @@ function buildScript(record, top3Stats, audit) {
   for (const [secName, secFindings] of [['Maps', mapsFindings], ['Website', websiteFindings], ['Mobile', mobileFindings]]) {
     const errorCount = secFindings.length;
     if (errorCount < 3) {
-      // Diagnostic only. 3 is a CEILING for verified findings — never a count to
-      // pad up to. Falsehoods are never candidates, so "missing the 3" just
-      // means "fewer real issues exist." Section ships with however many
-      // verified findings we have. See feedback_3_errors_no_eager_positives.md.
-      console.log(`[step-6 ${secName}] ${errorCount} verified finding(s) — shipping ${errorCount > 0 ? errorCount : '0 errors → positives fallback'} (3 is the ceiling, not a quota; falsehoods are never used to fill).`);
+      // Diagnostic only. Fill-to-3 rule (locked 2026-05-21): we always TRY
+      // to ship 3 items per section. Errors come first (up to 3), then
+      // VERIFIED-true positives backfill any remaining slots. Falsehoods are
+      // never used. See feedback_3_errors_no_eager_positives.md.
+      console.log(`[step-6 ${secName}] ${errorCount} verified error finding(s) — will backfill to 3 with verified positives.`);
     }
   }
   const mapsGood = scoreMapsConfirmedGood(audit, top3Stats, record);
   const websiteGood = scoreWebsiteConfirmedGood(audit);
   const mobileGood = scoreMobileConfirmedGood(audit);
 
-  // STRICT positive-tail rule — locked 2026-05-20 EOD (Chris):
-  // positives ONLY render when the section has ZERO real error findings.
-  // Mixing 2 errors with a positive looks like fishing for things to say.
-  // Memory: feedback_3_errors_no_eager_positives.md.
+  // Fill-to-3 positives rule — locked 2026-05-21 (Chris re-clarified):
+  // "WE DO ALL WE CAN to find truthful and real and accurate errors and if
+  //  there is not 3 then we add a positive or 2 to get to the full 3 per
+  //  maps, website, mobile. ... so if we truly find 2 issues and nothing
+  //  else we add 1 filler which is also a truth and not fake or false."
+  //
+  // Each section ships exactly 3 findings (or as many as we have if real+
+  // positives < 3 — never pad with fabrications).
+  //   - real errors:    up to 3 (top scored)
+  //   - positives:      backfill to reach 3 total, drawn from confirmed-good
+  //                     scorers (only fire when the actual measurement
+  //                     supports the positive — e.g., pageLoadGood fires
+  //                     only when pageLoadSeconds < 2.5).
+  //
+  // Positives MUST be true claims about the site. They're not filler — they're
+  // verified strengths. Mixing errors + positives is fine because both are
+  // accurate. Falsehoods are never candidates either way.
+  //
+  // Memory: feedback_3_errors_no_eager_positives.md (sharpened 2026-05-21).
   function renderWithPositives(real, positives, max = 3) {
     const realPicked = real.slice(0, max);
-    const list = realPicked.length ? numberedJoin(realPicked, max) : '';
-    let tail = '';
-    let posPickedCount = 0;
-    if (realPicked.length === 0 && positives.length > 0) {
-      const posPicked = positives.slice(0, Math.min(2, positives.length));
-      posPickedCount = posPicked.length;
-      if (posPicked.length === 1) {
-        tail = ` On the positive side, ${posPicked[0].finding}.`;
-      } else if (posPicked.length >= 2) {
-        const phrases = posPicked.slice(0, 2).map(p => p.finding);
-        tail = ` On the positive side, ${phrases[0]}, and ${phrases[1]}.`;
-      }
-    }
-    return { list, tail, realCount: realPicked.length, hasPositives: posPickedCount > 0 };
+    const need = max - realPicked.length;
+    const posPicked = need > 0 ? positives.slice(0, need) : [];
+    const combined = [...realPicked, ...posPicked];
+    const list = combined.length ? numberedJoin(combined, max) : '';
+    return {
+      list,
+      tail: '',
+      realCount: realPicked.length,
+      hasPositives: posPicked.length > 0,
+      posCount: posPicked.length,
+      totalCount: combined.length,
+    };
   }
 
   // -------- MAPS --------
   let mapsSegment;
   if (isTop3) {
     const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankNum} — already in the top 3, which captures 70 percent of all local leads from this search. That's the most valuable real estate.`;
-    const { list, tail, realCount, hasPositives } = renderWithPositives(mapsFindings, mapsGood, 3);
+    const { list, realCount, totalCount } = renderWithPositives(mapsFindings, mapsGood, 3);
     if (realCount >= 3) {
       mapsSegment = `${baseLine} But here's where you're vulnerable on your Maps listing: ${list}`;
-    } else if (realCount >= 1) {
-      mapsSegment = `${baseLine} Here's what stood out on your Maps listing: ${list}${tail}`;
-    } else if (hasPositives) {
-      mapsSegment = `${baseLine} Your Maps fundamentals look solid —${tail.replace(/^ On the positive side,/, '').trim()} The bigger leverage point for defending your top 3 is your website and mobile experience, which we'll cover next.`;
+    } else if (totalCount >= 1) {
+      mapsSegment = `${baseLine} Here's what stood out on your Maps listing: ${list}`;
     } else {
       mapsSegment = `${baseLine} Your Maps fundamentals look solid — the bigger leverage point for defending your top 3 is your website and mobile experience, which we'll cover next.`;
     }
   } else {
     const baseLine = `When a customer is looking for ${searchTerm}, ${name} ranks #${rankRaw} — which is outside of the top 3, which accounts for 70 percent of all local leads.`;
-    const { list, tail, realCount, hasPositives } = renderWithPositives(mapsFindings, mapsGood, 3);
+    const { list, realCount, totalCount } = renderWithPositives(mapsFindings, mapsGood, 3);
     if (realCount >= 3) {
       mapsSegment = `${baseLine} Here are the top issues we found on your Maps listing: ${list}`;
-    } else if (realCount >= 1) {
-      mapsSegment = `${baseLine} Here's what we found on your Maps listing: ${list}${tail}`;
-    } else if (hasPositives) {
-      mapsSegment = `${baseLine} Your Maps profile is in decent shape —${tail.replace(/^ On the positive side,/, '').trim()} The leverage to climb is on your website and mobile, which we'll cover next.`;
+    } else if (totalCount >= 1) {
+      mapsSegment = `${baseLine} Here's what we found on your Maps listing: ${list}`;
     } else {
       mapsSegment = `${baseLine} Your Maps profile is in decent shape — the leverage to climb is on your website and mobile, which we'll cover next.`;
     }
@@ -1585,33 +1594,29 @@ function buildScript(record, top3Stats, audit) {
 
   // -------- WEBSITE --------
   const websiteSegment = (() => {
-    const { list, tail, realCount, hasPositives } = renderWithPositives(websiteFindings, websiteGood, 3);
+    const { list, realCount, totalCount } = renderWithPositives(websiteFindings, websiteGood, 3);
     const opener = `After reviewing your website — Google's primary trust signal for validating Maps ranking.`;
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the website signals worth tightening to hold your top 3 spot: ${list}`;
-      if (realCount >= 1) return `${opener} Here's what we found worth tightening to hold your top 3 spot: ${list}${tail}`;
-      if (hasPositives) return `${opener} Your website fundamentals are in great shape —${tail.replace(/^ On the positive side,/, '').trim()} The leverage point for defending top 3 is on the mobile side, which we'll cover next.`;
+      if (totalCount >= 1) return `${opener} Here's what stood out on your website: ${list}`;
       return `${opener} Your website fundamentals are clean — solid foundation for holding your top 3 spot.`;
     }
     if (realCount >= 3) return `${opener} Here are the top issues we found: ${list}`;
-    if (realCount >= 1) return `${opener} Here's what we found: ${list}${tail}`;
-    if (hasPositives) return `${opener} Your website fundamentals are in good shape —${tail.replace(/^ On the positive side,/, '').trim()} The bigger leverage is on the mobile side, which we'll cover next.`;
+    if (totalCount >= 1) return `${opener} Here's what stood out on your website: ${list}`;
     return `${opener} Your site signals are clean — no major issues stood out.`;
   })();
 
   // -------- MOBILE --------
   const mobileSegment = (() => {
-    const { list, tail, realCount, hasPositives } = renderWithPositives(mobileFindings, mobileGood, 3);
+    const { list, realCount, totalCount } = renderWithPositives(mobileFindings, mobileGood, 3);
     const opener = `And then on mobile — where 70 percent of local-search traffic actually comes from.`;
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the gaps a competitor could exploit: ${list}`;
-      if (realCount >= 1) return `${opener} Here's what stood out on mobile: ${list}${tail}`;
-      if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The growth play from your top 3 spot is in your full Free Growth Audit.`;
+      if (totalCount >= 1) return `${opener} Here's what stood out on mobile: ${list}`;
       return `${opener} Your mobile fundamentals look clean — no major gaps stood out.`;
     }
     if (realCount >= 3) return `${opener} Here are the top mobile issues we found: ${list}`;
-    if (realCount >= 1) return `${opener} Here's what stood out on mobile: ${list}${tail}`;
-    if (hasPositives) return `${opener} Your mobile experience is solid —${tail.replace(/^ On the positive side,/, '').trim()} The bigger ranking leverage is in your Maps and website work above.`;
+    if (totalCount >= 1) return `${opener} Here's what stood out on mobile: ${list}`;
     return `${opener} On the mobile side, no major issues stood out.`;
   })();
 
