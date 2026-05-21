@@ -881,21 +881,13 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  if (audit?.gbp?.photoCount != null && audit.gbp.photoCount >= 2 && audit.gbp.photoCount < 30) {
-    out.push({
-      key: 'photoCount',
-      score: audit.gbp.photoCount < 10 ? 25 : 50,
-      finding: `you have only ${audit.gbp.photoCount} photos on your Google Business Profile — top performers in your category typically have 50 or more`,
-    });
-  }
-
-  if (audit?.gbp?.categoriesCount != null && audit.gbp.categoriesCount < 3) {
-    out.push({
-      key: 'categoriesCount',
-      score: 35,
-      finding: `you have only ${audit.gbp.categoriesCount} category listed on your Google Business Profile — top performers list 3 to 5 to capture more search variations`,
-    });
-  }
+  // DEAD: photoCount + categoriesCount findings — audit deliberately doesn't
+  // capture these (extractors were unreliable, regex inflated phrase variants).
+  // Memory: project_video_data_accuracy.md. Code preserved as comment for
+  // future re-enable if a reliable extractor ships.
+  //
+  // if (audit?.gbp?.photoCount != null && audit.gbp.photoCount >= 2 && audit.gbp.photoCount < 30) ...
+  // if (audit?.gbp?.categoriesCount != null && audit.gbp.categoriesCount < 3) ...
 
   // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is.
   // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 ranks incorrect primary category as the
