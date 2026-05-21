@@ -47,7 +47,7 @@ echo "✅ RGA guard passed"
 # Emergency bypass: git commit --no-verify (use sparingly).
 # ============================================================
 STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
-if echo "$STAGED" | grep -qE '^(step-(6-voiceover|2\.5-audit)\.mjs|build-video-landing\.mjs|scripts/(overnight-pipeline\.sh|regression-audit-detectors\.mjs|check-absence-finding-gates\.mjs|check-verification-wiring\.sh))$'; then
+if echo "$STAGED" | grep -qE '^(step-(6-voiceover|2\.5-audit)\.mjs|build-video-landing\.mjs|scripts/(overnight-pipeline\.sh|regression-audit-detectors\.mjs|check-absence-finding-gates\.mjs|check-verification-wiring\.sh)|\.githooks/pre-commit)$'; then
   echo
   echo "=== Verification-gate auto-audit (triggered by audit-pipeline file edit) ==="
   AUDIT_FAIL=0
