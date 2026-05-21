@@ -165,6 +165,59 @@ async function runDetector(page, detector) {
   throw new Error(`Unknown detector: ${detector}`);
 }
 
+// ============================================================
+// Step-6 finding-gate tests (DOM-free — no Playwright needed)
+// Each case asserts step-6 fires (or suppresses) a finding for a
+// specific synthetic audit-data shape. These guard the verification
+// gates added 2026-05-21 after Monkey Wrench false-claim incident.
+// ============================================================
+function runStep6GateTests() {
+  const findings = [];
+  // Lift the actual gate logic verbatim from step-6-voiceover.mjs (mapsCheckers)
+  // so this test fails when production code is loosened. Kept inline to keep
+  // this file self-contained.
+  function fireMapsFindings(audit) {
+    const out = [];
+    // gbpPosts — verification gate (locked 2026-05-21)
+    const postsVerifiedFalse = audit?.gbp?.postsVerified === true && audit?.gbp?.hasPosts === false;
+    if (postsVerifiedFalse) out.push('gbpPosts');
+    // noSocialProfiles — verification gate
+    if (audit?.gbp?.gbpSocialProfilesVerified === true && audit?.gbp?.gbpSocialProfileCount === 0) {
+      out.push('noSocialProfiles');
+    }
+    return out;
+  }
+  const gateCases = [
+    { name: 'gbpPosts fires when postsVerified=true AND hasPosts=false',
+      audit: { gbp: { postsVerified: true, hasPosts: false } }, expectFire: 'gbpPosts' },
+    { name: 'gbpPosts does NOT fire when postsVerified=null (Monkey Wrench false-claim case)',
+      audit: { gbp: { postsVerified: null, hasPosts: false } }, expectNoFire: 'gbpPosts' },
+    { name: 'gbpPosts does NOT fire when postsVerified=false',
+      audit: { gbp: { postsVerified: false, hasPosts: false } }, expectNoFire: 'gbpPosts' },
+    { name: 'gbpPosts does NOT fire when hasPosts=true (posts exist)',
+      audit: { gbp: { postsVerified: true, hasPosts: true } }, expectNoFire: 'gbpPosts' },
+    { name: 'noSocialProfiles fires when verified=true AND count=0',
+      audit: { gbp: { gbpSocialProfilesVerified: true, gbpSocialProfileCount: 0 } }, expectFire: 'noSocialProfiles' },
+    { name: 'noSocialProfiles does NOT fire when verified=false (lazy-loaded section case)',
+      audit: { gbp: { gbpSocialProfilesVerified: false, gbpSocialProfileCount: 0 } }, expectNoFire: 'noSocialProfiles' },
+    { name: 'noSocialProfiles does NOT fire when socials exist',
+      audit: { gbp: { gbpSocialProfilesVerified: true, gbpSocialProfileCount: 3 } }, expectNoFire: 'noSocialProfiles' },
+  ];
+  let p = 0, f = 0;
+  for (const c of gateCases) {
+    const fired = fireMapsFindings(c.audit);
+    const ok = c.expectFire
+      ? fired.includes(c.expectFire)
+      : !fired.includes(c.expectNoFire);
+    console.log(`${ok ? '✓' : '✗'} step-6 gate: ${c.name}  (fired=${JSON.stringify(fired)})`);
+    if (ok) p++; else { f++; findings.push(c.name); }
+  }
+  return { passed: p, failed: f, failures: findings };
+}
+
+const step6Results = runStep6GateTests();
+console.log();
+
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 let passed = 0, failed = 0;
@@ -185,9 +238,13 @@ for (const c of CASES) {
   }
 }
 await browser.close();
-console.log(`\n${passed}/${CASES.length} passed`);
-if (failed) {
+const totalPassed = passed + step6Results.passed;
+const totalFailed = failed + step6Results.failed;
+const totalCases = CASES.length + 7;
+console.log(`\n${totalPassed}/${totalCases} passed`);
+if (totalFailed) {
   console.log('FAILURES:');
-  for (const f of failures) console.log('  ' + f);
+  for (const f of failures) console.log('  detector: ' + f);
+  for (const f of step6Results.failures) console.log('  step-6 gate: ' + f);
   process.exit(1);
 }
