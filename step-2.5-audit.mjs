@@ -761,27 +761,54 @@ async function auditMobile(browser, websiteUrl, business) {
     await page.evaluate(() => window.scrollTo({ top: 1000, behavior: 'instant' })).catch(() => {});
     await new Promise((r) => setTimeout(r, 400));
     findings.hasStickyCta = await page.evaluate(() => {
-      const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in)$/i;
+      const NAV_LIKE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|cart|account|sign\s*in|log\s*in|home|about|services|areas\s*served|resources|gallery|portfolio|blog|news|faq|locations?|reviews)$/i;
+      // Hamburger-drawer detection — if the fixed ancestor IS a closed mobile
+      // nav drawer (off-screen-left, holds the site nav), every link in it is
+      // a nav item, NOT a sticky CTA. Detect by ancestor class names.
+      const DRAWER_RE = /\b(drawer|sidebar|side-?menu|nav-?(menu|drawer|panel)|mobile-?(nav|menu)|off-?canvas|hamburger-?panel|menu-?panel|overlay-?menu)\b/i;
       const candidates = Array.from(document.querySelectorAll(
         'a[href^="tel:"], a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="book"], a[href*="appointment"], a[class*="cta"], a[class*="button" i], a[class*="btn" i], button, div[class*="sticky" i] a, div[class*="fixed" i] a'
       ));
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
       for (const el of candidates) {
         const style = window.getComputedStyle(el);
         const pos = style.position;
         // Walk up to ancestor in case the element itself isn't fixed but a parent wrapper is
         let isFixed = (pos === 'fixed' || pos === 'sticky');
+        let fixedAncestor = null;
         if (!isFixed) {
           let p = el.parentElement;
           for (let i = 0; i < 5 && p; i++) {
             const ps = window.getComputedStyle(p);
-            if (ps.position === 'fixed' || ps.position === 'sticky') { isFixed = true; break; }
+            if (ps.position === 'fixed' || ps.position === 'sticky') {
+              isFixed = true;
+              fixedAncestor = p;
+              break;
+            }
             p = p.parentElement;
           }
         }
         if (!isFixed) continue;
+        // Skip if the link or its fixed ancestor itself is hidden / transparent.
+        if (style.visibility === 'hidden' || style.display === 'none' || parseFloat(style.opacity) < 0.1) continue;
+        if (fixedAncestor) {
+          const as = window.getComputedStyle(fixedAncestor);
+          if (as.visibility === 'hidden' || as.display === 'none' || parseFloat(as.opacity) < 0.1) continue;
+          // If the fixed ancestor looks like a hamburger drawer by class name OR
+          // is positioned outside the horizontal viewport (off-screen-left/right
+          // hamburger pattern), the links inside are nav items, not a sticky CTA.
+          const ar = fixedAncestor.getBoundingClientRect();
+          if (ar.right <= 0 || ar.left >= vw) continue;
+          const acls = (fixedAncestor.className?.toString() || '');
+          if (DRAWER_RE.test(acls)) continue;
+        }
         const r = el.getBoundingClientRect();
         if (r.width < 50 || r.height < 20) continue;
-        if (r.bottom <= 0 || r.top >= window.innerHeight) continue;
+        // BOTH-axis viewport check (was Y-only — let an off-screen-left hamburger
+        // drawer pass on Santa Monica Drain Co.'s mobile 2026-05-21).
+        if (r.bottom <= 0 || r.top >= vh) continue;
+        if (r.right <= 0 || r.left >= vw) continue;
         const txt = ((el.innerText || el.textContent || '') + '').trim();
         if (!txt || NAV_LIKE.test(txt)) continue;
         return true;
