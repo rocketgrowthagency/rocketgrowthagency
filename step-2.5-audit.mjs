@@ -704,34 +704,44 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       result.phoneVisibleAboveFold = phoneVisibleAboveFold;
 
-      // Detect an obvious CALL CTA above the fold — phone icon button, "Call",
-      // "Call Now", "Tap to Call" labels on tel: elements. Locked 2026-05-21
-      // after Monkey Wrench's mobile audit fired "phone number isn't visible"
-      // even though the hero has a clear phone-icon CALL button.
+      // Detect an obvious CALL CTA above the fold. ANY of:
+      //   (a) tel: link with "Call" / "Call Now" / "Tap to Call" / etc. label
+      //       on self, ancestors, aria-label, title, alt
+      //   (b) tel: link that's button-sized (≥30×30 px) and visible above fold
+      //       — mobile users universally recognize phone-icon buttons as call
+      //       actions, even without text labels
+      //   (c) tel: link that contains an icon child (svg / i.fa-phone / img)
       //
-      // The intent of phoneNotVisible finding is "visitors shouldn't have to
-      // tap a button just to see your number" — but if the call-button intent
-      // is unmistakable (text says CALL), the conversion path is intact and
-      // we don't need to nag about the number text. Suppression handled in
-      // step-6 by gating phoneNotVisible on hasObviousCallCta !== true.
+      // Locked 2026-05-21 after Monkey Wrench's mobile hero had a phone-icon
+      // CALL button (no "Call" text label, just the icon). step-6's
+      // phoneNotVisible finding fires only when none of the above hit AND no
+      // digits visible — preventing false "number not visible" claims when
+      // the call-action affordance is unmistakable.
       let hasObviousCallCta = false;
-      const callTextRe = /\b(call\s*now|tap\s*to\s*call|call\s*us|call\s*today|click\s*to\s*call|\bcall\b)/i;
+      const callTextRe = /\b(call\s*now|tap\s*to\s*call|call\s*us|call\s*today|click\s*to\s*call|\bcall\b|\bphone\b)/i;
       const telLinks = Array.from(document.querySelectorAll('a[href^="tel:" i]'));
       for (const el of telLinks) {
         const r = el.getBoundingClientRect();
-        if (!(r.top >= 0 && r.top < mobileFold && r.width > 20 && r.height > 20)) continue;
-        // Check element's own text, aria-label, title, and walk up 2 ancestors
-        // for a wrapper with the label (icon-only buttons often have aria on parent).
+        if (!(r.top >= 0 && r.top < mobileFold && r.width > 0 && r.height > 0)) continue;
+        // (a) Label match — text on self or up to 2 ancestors
         const labelSources = [];
         let cursor = el;
         for (let i = 0; i < 3 && cursor; i++) {
-          labelSources.push(cursor.getAttribute('aria-label') || '');
-          labelSources.push(cursor.getAttribute('title') || '');
-          labelSources.push(cursor.getAttribute('alt') || '');
+          labelSources.push(cursor.getAttribute && (cursor.getAttribute('aria-label') || ''));
+          labelSources.push(cursor.getAttribute && (cursor.getAttribute('title') || ''));
+          labelSources.push(cursor.getAttribute && (cursor.getAttribute('alt') || ''));
           labelSources.push((cursor.innerText || cursor.textContent || '').trim());
           cursor = cursor.parentElement;
         }
-        if (labelSources.some(s => callTextRe.test(s))) {
+        if (labelSources.some(s => s && callTextRe.test(s))) {
+          hasObviousCallCta = true;
+          break;
+        }
+        // (b) Button-sized icon-only tel: link
+        const isButtonSized = r.width >= 30 && r.height >= 30;
+        // (c) Contains a phone icon (svg, i.fa-*, img) — strong UI affordance
+        const hasIconChild = !!el.querySelector('svg, i[class*="phone" i], i[class*="fa-phone" i], img');
+        if (isButtonSized && (hasIconChild || el.classList.length > 0 || el.querySelector('button'))) {
           hasObviousCallCta = true;
           break;
         }
