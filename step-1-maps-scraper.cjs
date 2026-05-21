@@ -162,6 +162,30 @@ function assessWebsiteSuspicion(website, businessName) {
   return '';
 }
 
+// SerpAPI GET with auto-rate-limit handling. On 200/hr cap hit, sleep 1hr
+// + buffer, auto-resume. Locked 2026-05-20 (reference_serpapi_rate_limit.md).
+async function serpapiGetRateAware(url) {
+  while (true) {
+    try {
+      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
+      const errMsg = res.data?.error || '';
+      const isRateLimited = res.status === 429
+        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
+      if (isRateLimited) {
+        const waitMs = 60 * 60 * 1000 + 60 * 1000;
+        const resumeAt = new Date(Date.now() + waitMs);
+        console.log(`\n⏸  [serpapi] rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      if (res.status >= 400) return null;
+      return res;
+    } catch (err) {
+      return null;
+    }
+  }
+}
+
 // Pick first qualifying candidate URL (non-aggregator, non-search-engine,
 // domain matches business-name token). Shared by SerpAPI / DDG / Bing paths.
 function pickQualifyingResult(candidates, businessName) {
@@ -234,18 +258,15 @@ async function discoverWebsiteViaSearch(_browserUnused, businessName, city, cate
   const serpKey = process.env.SERPAPI_KEY;
   if (serpKey) {
     for (const q of queries) {
-      try {
-        const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
-        const res = await axios.get(url, { timeout: 15000 });
-        const organic = res.data?.organic_results || [];
-        const candidates = organic.map((r) => r.link).filter(Boolean);
-        const picked = pickQualifyingResult(candidates, businessName);
-        if (picked) {
-          console.log(`   [search-fallback:serpapi] "${businessName}" via ${q.slice(0, 60)} → ${picked}`);
-          return picked;
-        }
-      } catch (err) {
-        console.log(`   [search-fallback:serpapi] ${businessName}: ${err.message || err}`);
+      const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
+      const res = await serpapiGetRateAware(url);
+      if (!res) continue;
+      const organic = res.data?.organic_results || [];
+      const candidates = organic.map((r) => r.link).filter(Boolean);
+      const picked = pickQualifyingResult(candidates, businessName);
+      if (picked) {
+        console.log(`   [search-fallback:serpapi] "${businessName}" via ${q.slice(0, 60)} → ${picked}`);
+        return picked;
       }
     }
     console.log(`   [search-fallback:serpapi] no qualifying result for "${businessName}" across ${queries.length} queries`);

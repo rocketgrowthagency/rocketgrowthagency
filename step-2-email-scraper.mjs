@@ -477,6 +477,30 @@ function businessNameTokens(name) {
 //   2. NAME-MATCH: email local-part contains a distinctive business-name token
 //   3. PROXIMITY: email within ~300 chars of business name in response text
 //   4. REJECT: free-mailbox with no context
+// SerpAPI GET with auto-rate-limit handling. On 200/hr cap hit, sleep 1hr
+// + buffer, auto-resume. Locked 2026-05-20 (reference_serpapi_rate_limit.md).
+async function serpapiGetRateAware(url) {
+  while (true) {
+    try {
+      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
+      const errMsg = res.data?.error || '';
+      const isRateLimited = res.status === 429
+        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
+      if (isRateLimited) {
+        const waitMs = 60 * 60 * 1000 + 60 * 1000;
+        const resumeAt = new Date(Date.now() + waitMs);
+        console.log(`\n⏸  [serpapi] rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      if (res.status >= 400) return null;
+      return res;
+    } catch (err) {
+      return null;
+    }
+  }
+}
+
 async function discoverEmailViaSearch(siteHost, businessName, phone = '', searchTerm = '') {
   if (!siteHost && !businessName) return '';
   const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -570,7 +594,8 @@ async function discoverEmailViaSearch(siteHost, businessName, phone = '', search
     for (const q of queries) {
       try {
         const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(serpKey)}&num=10&hl=en`;
-        const res = await axios.get(url, { timeout: 15000 });
+        const res = await serpapiGetRateAware(url);
+        if (!res) continue;
         // Build per-result snippet pool — each snippet is ~150-300 chars naturally,
         // so proximity check works correctly within a snippet (the att.net case).
         // Locked 2026-05-20: stringifying the whole JSON response broke proximity
