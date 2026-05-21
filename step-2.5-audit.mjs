@@ -428,6 +428,7 @@ async function auditWebsite(browser, websiteUrl, business) {
     findings.isHttps = data.isHttps;
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.hasReviewsOnPage = data.hasReviewsOnPage || false;
+    findings.iframeCount = await page.evaluate(() => document.querySelectorAll('iframe').length).catch(() => 0);
     findings.hasServiceAreaListed = data.hasServiceAreaListed || false;
     findings.title = data.title || '';
     findings.titleLength = data.title ? data.title.length : null;
@@ -557,6 +558,15 @@ async function auditWebsite(browser, websiteUrl, business) {
   // noServiceArea, napAboveFold etc.) — if audit failed, all "X is missing" claims
   // are suppressed because we don't actually know.
   findings.websiteAuditVerified = !findings.error && findings.pageLoadSeconds != null;
+  // Iframe-aware review-widget override (locked 2026-05-21 round 2).
+  // Many review widgets render inside cross-origin iframes (Trustpilot,
+  // Yotpo, Birdeye, Google reviews embed). If hasReviewsOnPage came back
+  // false AND the page has iframes, the absence is unknowable — set to null
+  // so step-6 suppresses the noReviews finding. Caught on Enviro Plumbing.
+  if (findings.iframeCount > 0 && findings.hasReviewsOnPage === false) {
+    findings.hasReviewsOnPage = null;
+    console.log('  [audit-diag] hasReviewsOnPage: page has iframes — absence unverifiable, set to null (suppresses noReviews finding).');
+  }
   return findings;
 }
 
@@ -1134,6 +1144,16 @@ async function auditMobile(browser, websiteUrl, business) {
       if (findings.hasChatWidget === false) {
         findings.hasChatWidget = null;
         console.log('  [audit-diag] hasChatWidget: page has iframes — absence unverifiable, set to null (suppresses noSMS finding via chat gate).');
+      }
+      // Same pattern for social proof — review/rating widgets commonly render
+      // in cross-origin iframes (Trustpilot, Yotpo, Birdeye, Google reviews
+      // embed). If we found no above-fold social proof AND the page has
+      // iframes, we can't be sure. Locked 2026-05-21 after Enviro Plumbing's
+      // "4.6 / 813 reviews" widget was visible to users but invisible to
+      // headless Playwright.
+      if (findings.socialProofAboveFold === false) {
+        findings.socialProofAboveFold = null;
+        console.log('  [audit-diag] socialProofAboveFold: page has iframes — absence unverifiable, set to null (suppresses noSocialProof finding).');
       }
     }
   } catch (err) {
