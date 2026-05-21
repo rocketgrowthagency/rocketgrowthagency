@@ -198,6 +198,21 @@ function runStep6GateTests() {
     if (audit?.gbp?.reviewsLast30Days != null && audit.gbp.reviewsLast30Days <= 1 && Number.isFinite(rp) && rp > 0) {
       out.push('reviewVelocityRecent');
     }
+    // reviewVelocity — reviewsParsedCount gate
+    if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30 && Number.isFinite(rp) && rp > 0) {
+      out.push('reviewVelocity');
+    }
+    // website findings — websiteAuditVerified gate
+    const wv = audit?.website?.websiteAuditVerified === true;
+    if (wv && audit?.website?.hasLocalBusinessSchema === false) out.push('schema');
+    if (wv && audit?.website?.hasReviewsOnPage === false) out.push('noReviews');
+    if (wv && audit?.website?.hasServiceAreaListed === false) out.push('noServiceArea');
+    if (wv && audit?.website?.napAboveFold === false) out.push('napAboveFold');
+    // mobile findings — mobileAuditVerified gate
+    const mv = audit?.mobile?.mobileAuditVerified === true;
+    if (mv && audit?.mobile?.hasStickyCta === false) out.push('stickyCta');
+    if (mv && audit?.mobile?.socialProofAboveFold === false) out.push('noSocialProof');
+    if (mv && audit?.mobile?.phoneVisibleAboveFold === false && audit?.mobile?.clickToCallAboveFold === true) out.push('phoneNotVisible');
     return out;
   }
   const gateCases = [
@@ -234,6 +249,33 @@ function runStep6GateTests() {
       audit: { gbp: { reviewsLast30Days: 0, reviewsParsedCount: 8 } }, expectFire: 'reviewVelocityRecent' },
     { name: 'reviewVelocityRecent does NOT fire when reviewsParsedCount=0',
       audit: { gbp: { reviewsLast30Days: 0, reviewsParsedCount: 0 } }, expectNoFire: 'reviewVelocityRecent' },
+    // reviewVelocity (daysSinceLastReview)
+    { name: 'reviewVelocity fires when reviewsParsedCount>0 AND daysSinceLastReview=60',
+      audit: { gbp: { daysSinceLastReview: 60, reviewsParsedCount: 8 } }, expectFire: 'reviewVelocity' },
+    { name: 'reviewVelocity does NOT fire when reviewsParsedCount=0 (scraper missed)',
+      audit: { gbp: { daysSinceLastReview: 60, reviewsParsedCount: 0 } }, expectNoFire: 'reviewVelocity' },
+    // website verification gate
+    { name: 'website schema finding fires when webVerified=true',
+      audit: { website: { websiteAuditVerified: true, hasLocalBusinessSchema: false } }, expectFire: 'schema' },
+    { name: 'website schema finding does NOT fire when webVerified=false',
+      audit: { website: { websiteAuditVerified: false, hasLocalBusinessSchema: false } }, expectNoFire: 'schema' },
+    { name: 'website noReviews fires when webVerified=true',
+      audit: { website: { websiteAuditVerified: true, hasReviewsOnPage: false } }, expectFire: 'noReviews' },
+    { name: 'website noReviews does NOT fire when webVerified=false',
+      audit: { website: { websiteAuditVerified: false, hasReviewsOnPage: false } }, expectNoFire: 'noReviews' },
+    { name: 'website noServiceArea does NOT fire when webVerified=false',
+      audit: { website: { websiteAuditVerified: false, hasServiceAreaListed: false } }, expectNoFire: 'noServiceArea' },
+    { name: 'website napAboveFold does NOT fire when webVerified=false',
+      audit: { website: { websiteAuditVerified: false, napAboveFold: false } }, expectNoFire: 'napAboveFold' },
+    // mobile verification gate
+    { name: 'mobile stickyCta fires when mobVerified=true AND hasStickyCta=false',
+      audit: { mobile: { mobileAuditVerified: true, hasStickyCta: false } }, expectFire: 'stickyCta' },
+    { name: 'mobile stickyCta does NOT fire when mobVerified=false',
+      audit: { mobile: { mobileAuditVerified: false, hasStickyCta: false } }, expectNoFire: 'stickyCta' },
+    { name: 'mobile noSocialProof does NOT fire when mobVerified=false',
+      audit: { mobile: { mobileAuditVerified: false, socialProofAboveFold: false } }, expectNoFire: 'noSocialProof' },
+    { name: 'mobile phoneNotVisible does NOT fire when mobVerified=false',
+      audit: { mobile: { mobileAuditVerified: false, phoneVisibleAboveFold: false, clickToCallAboveFold: true } }, expectNoFire: 'phoneNotVisible' },
   ];
   let p = 0, f = 0;
   for (const c of gateCases) {

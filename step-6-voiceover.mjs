@@ -455,6 +455,12 @@ function scoreWebsiteFindings(audit, businessName) {
   if (!audit?.website) return [];
   const w = { ...audit.website, businessNameForCheck: businessName || '' };
   const out = [];
+  // Master verification flag — true when the website audit ran end-to-end.
+  // Every absence-claim website finding gates on this. If the audit failed
+  // (network error, timeout, parked-site detection skipped the scan), we
+  // CAN'T claim "you don't have X" because we don't actually know.
+  // See feedback_verification_gates_must_be_strict.md + project_audit_finding_gate_audit_2026-05-21.md.
+  const webVerified = w?.websiteAuditVerified === true;
 
   // P0 — "no own website" finding. Fires when GBP has no website (TJ Plumbing
   // case), captured website is an aggregator/social/squatter (Benjamin Family
@@ -502,7 +508,8 @@ function scoreWebsiteFindings(audit, businessName) {
     }
   }
   // PRIORITY 1.5 (NEW): NAP not visible above the fold — phone AND address as visible text in the hero
-  if (w.napAboveFold === false) {
+  // GATED 2026-05-21: requires webVerified — DOM scan absence claims need the audit to have actually run.
+  if (webVerified && w.napAboveFold === false) {
     out.push({ key: 'napAboveFold', score: 1.5, finding: `your phone number and address aren't both visible above the fold — visitors and Google's local trust signals look for NAP in the hero, not buried in the footer` });
   }
   // PRIORITY 1.3 (NEW 2026-05-14): Domain doesn't match business BRAND name.
@@ -539,8 +546,8 @@ function scoreWebsiteFindings(audit, businessName) {
       }
     } catch (_) {}
   }
-  // PRIORITY 2: No LocalBusiness schema
-  if (w.hasLocalBusinessSchema === false) {
+  // PRIORITY 2: No LocalBusiness schema (GATED 2026-05-21: requires webVerified)
+  if (webVerified && w.hasLocalBusinessSchema === false) {
     out.push({ key: 'schema', score: 2, finding: `there's no LocalBusiness schema markup, one of the top 5 Maps ranking signals` });
   }
   // PRIORITY 2.5 (NEW): Title tag missing city or category — #1 on-page local signal
@@ -577,8 +584,8 @@ function scoreWebsiteFindings(audit, businessName) {
   if (w.h1Count != null && w.h1Count > 1) {
     out.push({ key: 'multiH1', score: 7, finding: `your page has ${w.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
   }
-  // PRIORITY 8: Missing meta description
-  if (w.hasMetaDescription === false) {
+  // PRIORITY 8: Missing meta description (GATED 2026-05-21)
+  if (webVerified && w.hasMetaDescription === false) {
     out.push({ key: 'metaDesc', score: 8, finding: `your homepage is missing a meta description, weakening how it appears in search snippets` });
   }
   // PRIORITY 9: Render-blocking CSS/JS in head
@@ -598,8 +605,8 @@ function scoreWebsiteFindings(audit, businessName) {
       out.push({ key: 'ctaText', score: 11, finding: `your main call-to-action says "${w.primaryCtaText.trim()}" — action-specific buttons like "Call Now" or "Get Free Quote" convert 2–3x better` });
     }
   }
-  // PRIORITY 12: No reviews or testimonials on the page
-  if (w.hasReviewsOnPage === false) {
+  // PRIORITY 12: No reviews or testimonials on the page (GATED 2026-05-21)
+  if (webVerified && w.hasReviewsOnPage === false) {
     out.push({ key: 'noReviews', score: 12, finding: `your website doesn't show any customer reviews or testimonials — visitors can't verify your reputation without leaving the page to check Google` });
   }
   // Social profile check lives in scoreSocialProfilesFinding (called from buildScript)
@@ -611,8 +618,8 @@ function scoreWebsiteFindings(audit, businessName) {
       : `you only have one service-area page — top performers stack rankings across cities by publishing a dedicated landing page per location they serve`;
     out.push({ key: 'serviceAreaPages', score: 12.5, finding: msg });
   }
-  // PRIORITY 13: No service area listed
-  if (w.hasServiceAreaListed === false) {
+  // PRIORITY 13: No service area listed (GATED 2026-05-21)
+  if (webVerified && w.hasServiceAreaListed === false) {
     out.push({ key: 'noServiceArea', score: 13, finding: `your website doesn't list a service area — mentioning specific cities and neighborhoods you serve is a strong local SEO signal` });
   }
 
@@ -624,7 +631,7 @@ function scoreWebsiteFindings(audit, businessName) {
   // schema, single-page websites.
   // Fires when ≤1 of 4 AI-readiness signals are present (word count ≥500,
   // FAQ schema, Organization schema, service pages ≥2).
-  if (w.wordCount != null) {
+  if (webVerified && w.wordCount != null) {
     const aiSignals = [];
     if (w.wordCount >= 500) aiSignals.push('word count');
     if (w.hasFaqSchema) aiSignals.push('FAQ schema');
@@ -681,12 +688,17 @@ function scoreSocialProfilesFinding(record, audit) {
   const gbpCount = gbpSet.size;
 
   // Tier 1: nothing anywhere → highest severity
-  if (combinedCount === 0) {
+  // GATED 2026-05-21: only fire when GBP socials were verified — otherwise a
+  // failed gbpSocialProfiles scrape (gbpSet=empty, gbpVerified=false) combined
+  // with an empty site-side scrape (could be step-2 false negative on
+  // JS-rendered socials) would produce a "no socials anywhere" false claim.
+  // Better to skip than fabricate. See feedback_verification_gates_must_be_strict.md.
+  if (combinedCount === 0 && gbpVerified) {
     return { key: 'socialProfilesNone', score: 11, finding: `you have no social media profiles connected anywhere — neither your website nor your Google Business Profile. Google's local trust signal weights connected Facebook, Instagram, LinkedIn, and YouTube as identity verification, and prospects checking if your business is real get a thin picture without them` };
   }
 
-  // Tier 2: only one profile total
-  if (combinedCount === 1) {
+  // Tier 2: only one profile total (GATED 2026-05-21: requires gbpVerified)
+  if (combinedCount === 1 && gbpVerified) {
     const only = [...combined][0];
     return { key: 'socialProfilesLow', score: 12, finding: `you only have one social profile connected (${only}) — Google's local trust signal weights diversity across Facebook, Instagram, LinkedIn, and YouTube, and adding even one more tightens your local-trust footprint` };
   }
@@ -710,6 +722,10 @@ function scoreMobileFindings(audit) {
   if (!audit?.mobile) return [];
   const m = audit.mobile;
   const out = [];
+  // Master verification flag — true when mobile audit ran end-to-end.
+  // Gates absence claims (phoneNotVisible, noSocialProof, stickyCta) so
+  // a failed audit doesn't produce false "you don't have X" claims.
+  const mobVerified = m?.mobileAuditVerified === true;
 
   // PRIORITY 1: Mobile load > 3s
   if (m.pageLoadSeconds != null && m.pageLoadSeconds > 3) {
@@ -750,8 +766,8 @@ function scoreMobileFindings(audit) {
   if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
     out.push({ key: 'pageWeight', score: 6, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes of resources — Google recommends keeping mobile pages under 3 megabytes to avoid slow load times` });
   }
-  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor
-  if (m.hasStickyCta === false) {
+  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor (GATED 2026-05-21)
+  if (mobVerified && m.hasStickyCta === false) {
     out.push({ key: 'stickyCta', score: 6.5, finding: `there's no sticky call-to-action that stays visible when visitors scroll on mobile — top performers keep a Call or Quote button always reachable, so visitors don't have to scroll back up to convert` });
   }
   // PRIORITY 8: Multiple H1 tags
@@ -770,7 +786,7 @@ function scoreMobileFindings(audit) {
   // Chat-widget gate (2026-05-19) — suppress entirely if a chat widget is
   // detected (we can't be sure the widget doesn't offer SMS; safer than
   // firing a potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
-  if (m.hasClickToText === false && m.hasChatWidget !== true) {
+  if (mobVerified && m.hasClickToText === false && m.hasChatWidget !== true) {
     out.push({ key: 'clickToText', score: 10.5, finding: `your mobile site has no tap-to-text option — modern local customers default to SMS for quick questions, and adding a single sms link is a free conversion path most competitors are missing` });
   }
 
@@ -783,11 +799,12 @@ function scoreMobileFindings(audit) {
     }
   }
   // PRIORITY 12: Phone number not visible as text above fold (only hidden tel: link)
-  if (m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true) {
+  // GATED 2026-05-21: requires mobVerified.
+  if (mobVerified && m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true) {
     out.push({ key: 'phoneNotVisible', score: 12, finding: `your phone number isn't visible as text above the fold on mobile — visitors shouldn't have to tap a button just to see your number` });
   }
-  // PRIORITY 13: No social proof visible above fold
-  if (m.socialProofAboveFold === false) {
+  // PRIORITY 13: No social proof visible above fold (GATED 2026-05-21)
+  if (mobVerified && m.socialProofAboveFold === false) {
     out.push({ key: 'noSocialProof', score: 13, finding: `there's no star rating or review count visible in your mobile hero — first-time visitors have no trust signal before they scroll` });
   }
 
@@ -873,12 +890,18 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // (mentioning "phone on website" while video is still showing Maps is confusing).
 
   // GBP audit data (if available)
-  if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30) {
+  // GATED 2026-05-21: requires reviewsParsedCount > 0 — proves the review-card
+  // scraper actually saw cards. daysSinceLastReview from a missed scrape could
+  // be stale or null. Same class of false-claim risk as the gbpPosts bug.
+  const _rvScraped = audit?.gbp?.reviewsParsedCount;
+  if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30 && Number.isFinite(_rvScraped) && _rvScraped > 0) {
     out.push({
       key: 'reviewVelocity',
       score: audit.gbp.daysSinceLastReview > 90 ? 20 : 40,
       finding: `your last Google review was about ${audit.gbp.daysSinceLastReview} days ago — review velocity (how recent your reviews are) weighs heavily in Maps ranking`,
     });
+  } else if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview > 30 && !(Number.isFinite(_rvScraped) && _rvScraped > 0)) {
+    console.log('[step-6 unverified-skip] reviewVelocity finding suppressed: daysSinceLastReview set but reviewsParsedCount=0 (cards not actually scraped).');
   }
 
   // DEAD: photoCount + categoriesCount findings — audit deliberately doesn't

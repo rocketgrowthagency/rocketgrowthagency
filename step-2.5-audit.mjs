@@ -477,6 +477,11 @@ async function auditWebsite(browser, websiteUrl, business) {
   } finally {
     if (page) await page.close().catch(() => {});
   }
+  // Master verification flag: true when website audit ran successfully end-to-end.
+  // Used by step-6 to gate every absence-claim website finding (schema, noReviews,
+  // noServiceArea, napAboveFold etc.) — if audit failed, all "X is missing" claims
+  // are suppressed because we don't actually know.
+  findings.websiteAuditVerified = !findings.error && findings.pageLoadSeconds != null;
   return findings;
 }
 
@@ -822,6 +827,9 @@ async function auditMobile(browser, websiteUrl, business) {
   } finally {
     if (page) await page.close().catch(() => {});
   }
+  // Master verification flag for mobile audit — same role as websiteAuditVerified.
+  // Gates step-6 mobile absence findings (phoneNotVisible, noSocialProof, etc.).
+  findings.mobileAuditVerified = !findings.error && findings.pageLoadSeconds != null;
   return findings;
 }
 
