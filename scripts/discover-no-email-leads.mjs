@@ -108,38 +108,63 @@ async function discoverEmail(siteHost, businessName, phone = '', searchTerm = ''
   if (!SERPAPI_KEY) return null;
   const candidates = [];
   for (const q of queries) {
-    try {
-      const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(SERPAPI_KEY)}&num=10&hl=en`;
-      const res = await axios.get(url, { timeout: 15000 });
-      const snippets = [];
-      for (const o of res.data.organic_results || []) {
-        const blob = [o.title || '', o.snippet || '', o.source || '', o.link || ''].join(' | ');
-        if (blob.includes('@')) snippets.push(blob);
-      }
-      const ao = res.data.ai_overview;
-      if (ao) {
-        let aoText = '';
-        if (Array.isArray(ao.text_blocks)) aoText = ao.text_blocks.map((b) => b.snippet || JSON.stringify(b)).join(' ');
-        else if (ao.snippet) aoText = ao.snippet;
-        if (aoText && aoText.includes('@')) snippets.push(aoText);
-      }
-      for (const snippet of snippets) {
-        const matches = snippet.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
-        for (const raw of matches) {
-          const valid = isLikelyEmail(raw);
-          if (!valid) continue;
-          const cr = crossRef(valid, snippet);
-          if (cr) candidates.push({ email: valid, ...cr });
-        }
-      }
-      if (candidates.length) break;
-    } catch (err) {
-      // skip — try next query
+    const url = `https://serpapi.com/search?engine=google&q=${encodeURIComponent(q)}&api_key=${encodeURIComponent(SERPAPI_KEY)}&num=10&hl=en`;
+    const res = await serpapiGet(url); // handles rate-limit + auto-resume
+    if (!res) continue; // skip on transient errors
+    const snippets = [];
+    for (const o of res.data.organic_results || []) {
+      const blob = [o.title || '', o.snippet || '', o.source || '', o.link || ''].join(' | ');
+      if (blob.includes('@')) snippets.push(blob);
     }
+    const ao = res.data.ai_overview;
+    if (ao) {
+      let aoText = '';
+      if (Array.isArray(ao.text_blocks)) aoText = ao.text_blocks.map((b) => b.snippet || JSON.stringify(b)).join(' ');
+      else if (ao.snippet) aoText = ao.snippet;
+      if (aoText && aoText.includes('@')) snippets.push(aoText);
+    }
+    for (const snippet of snippets) {
+      const matches = snippet.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
+      for (const raw of matches) {
+        const valid = isLikelyEmail(raw);
+        if (!valid) continue;
+        const cr = crossRef(valid, snippet);
+        if (cr) candidates.push({ email: valid, ...cr });
+      }
+    }
+    if (candidates.length) break;
   }
   if (!candidates.length) return null;
   candidates.sort((a, b) => a.rank - b.rank);
   return candidates[0];
+}
+
+// SerpAPI GET with auto-rate-limit handling.
+// On 200/hr cap hit (HTTP 429 OR error string in response), sleep until the
+// hourly window resets + retry. Resumes the discovery batch automatically.
+// Locked 2026-05-20 — Chris's spec after hitting 200/hr mid-batch.
+async function serpapiGet(url) {
+  while (true) {
+    try {
+      const res = await axios.get(url, { timeout: 15000, validateStatus: () => true });
+      // Rate limit indicators: HTTP 429 OR error message
+      const errMsg = res.data?.error || '';
+      const isRateLimited = res.status === 429
+        || /hourly|throughput limit|rate limit|run out of searches/i.test(errMsg);
+      if (isRateLimited) {
+        const waitMs = 60 * 60 * 1000 + 60 * 1000; // 1hr + 1min buffer
+        const resumeAt = new Date(Date.now() + waitMs);
+        console.log(`\n⏸  [serpapi] hourly rate limit hit. Sleeping ${(waitMs/60000).toFixed(0)} min — resuming at ${resumeAt.toLocaleTimeString()}\n`);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue; // retry the same URL
+      }
+      if (res.status >= 400) return null; // other error, skip this call
+      return res;
+    } catch (err) {
+      // Network error — skip this call
+      return null;
+    }
+  }
 }
 
 // ----- Airtable helpers -----
