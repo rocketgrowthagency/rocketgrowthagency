@@ -439,13 +439,64 @@ async function auditWebsite(browser, websiteUrl, business) {
     const city = String(business.city || '').toLowerCase();
     const h1Lower = data.h1.toLowerCase();
     const catPhrase = category ? category.split(/\s+/).slice(0, 2).join(' ') : '';
-    findings.h1IncludesCategory = !!(catPhrase && catPhrase.length >= 4 && h1Lower.includes(catPhrase));
-    findings.h1IncludesCity = !!(city && h1Lower.includes(city));
+    // Stem-based category match (locked 2026-05-21): "Plumber" should also
+    // match "Plumbing" in a title/h1. The old exact-match check fired false
+    // claims on Monkey Wrench (title "Plumbing, Heating, Air, Electric" but
+    // CSV category "Plumber" → didn't match → finding fired falsely).
+    // Strategy: derive a stem by stripping common verbal suffixes, then check
+    // either the original phrase OR the stem. Plus a small canonical-stem map
+    // for irregular verticals (hvac/electrician/etc.).
+    const SERVICE_STEM_MAP = {
+      plumber: ['plumb'], plumbing: ['plumb'],
+      roofer: ['roof'], roofing: ['roof'],
+      electrician: ['electric'], electric: ['electric'],
+      hvac: ['hvac', 'heating', 'cooling', 'air conditioning', 'heat', 'a/c'],
+      'garage door': ['garage door', 'garage-door'],
+      locksmith: ['lock', 'locksmith'],
+      dentist: ['dent', 'dentist'],
+      landscaper: ['landscap'], landscaping: ['landscap'],
+      mover: ['mov'], moving: ['mov'],
+      cleaner: ['clean'], cleaning: ['clean'],
+      painter: ['paint'], painting: ['paint'],
+      contractor: ['contract'], construction: ['construct'],
+    };
+    function stemMatch(haystack, catLower) {
+      if (!catLower || catLower.length < 3) return false;
+      if (haystack.includes(catLower)) return true;
+      // Per-category synonym/stem list
+      const stems = SERVICE_STEM_MAP[catLower] || [];
+      for (const s of stems) if (haystack.includes(s)) return true;
+      // Generic suffix strip: -er, -ers, -or, -ors, -ing
+      const stripped = catLower.replace(/(ers?|ors?|ing)$/, '');
+      if (stripped.length >= 4 && stripped !== catLower && haystack.includes(stripped)) return true;
+      return false;
+    }
+    // LA-area city tokens — RGA's target market. Title containing ANY of these
+    // is a valid local signal (a business may HQ in Los Angeles but service
+    // Santa Monica or vice-versa). Locked 2026-05-21 after Monkey Wrench title
+    // "Los Angeles" was falsely flagged for missing the CSV "Santa Monica".
+    const CITY_TOKENS = [
+      'los angeles', 'l.a.', 'la county',
+      'beverly hills', 'santa monica', 'culver city', 'west hollywood',
+      'hollywood', 'pasadena', 'burbank', 'glendale', 'long beach',
+      'inglewood', 'manhattan beach', 'redondo beach', 'hermosa beach',
+      'el segundo', 'torrance', 'venice', 'marina del rey', 'westwood',
+      'brentwood', 'pacific palisades', 'malibu', 'studio city',
+      'sherman oaks', 'encino', 'tarzana', 'woodland hills', 'van nuys',
+      'north hollywood', 'silver lake', 'echo park', 'mid-wilshire',
+      'koreatown', 'downtown la', 'dtla', 'mid-city',
+    ];
+    function cityIncluded(haystack, csvCity) {
+      if (csvCity && haystack.includes(csvCity)) return true;
+      return CITY_TOKENS.some(c => haystack.includes(c));
+    }
+    findings.h1IncludesCategory = !!(catPhrase && stemMatch(h1Lower, catPhrase));
+    findings.h1IncludesCity = cityIncluded(h1Lower, city);
 
     // Same logic for title tag (W1)
     const titleLower = (data.title || '').toLowerCase();
-    findings.titleIncludesCategory = !!(catPhrase && catPhrase.length >= 4 && titleLower.includes(catPhrase));
-    findings.titleIncludesCity = !!(city && titleLower.includes(city));
+    findings.titleIncludesCategory = !!(catPhrase && stemMatch(titleLower, catPhrase));
+    findings.titleIncludesCity = cityIncluded(titleLower, city);
 
     findings.hasMobileClickToCall = data.clickToCallCount > 0;
 
@@ -653,6 +704,40 @@ async function auditMobile(browser, websiteUrl, business) {
       }
       result.phoneVisibleAboveFold = phoneVisibleAboveFold;
 
+      // Detect an obvious CALL CTA above the fold — phone icon button, "Call",
+      // "Call Now", "Tap to Call" labels on tel: elements. Locked 2026-05-21
+      // after Monkey Wrench's mobile audit fired "phone number isn't visible"
+      // even though the hero has a clear phone-icon CALL button.
+      //
+      // The intent of phoneNotVisible finding is "visitors shouldn't have to
+      // tap a button just to see your number" — but if the call-button intent
+      // is unmistakable (text says CALL), the conversion path is intact and
+      // we don't need to nag about the number text. Suppression handled in
+      // step-6 by gating phoneNotVisible on hasObviousCallCta !== true.
+      let hasObviousCallCta = false;
+      const callTextRe = /\b(call\s*now|tap\s*to\s*call|call\s*us|call\s*today|click\s*to\s*call|\bcall\b)/i;
+      const telLinks = Array.from(document.querySelectorAll('a[href^="tel:" i]'));
+      for (const el of telLinks) {
+        const r = el.getBoundingClientRect();
+        if (!(r.top >= 0 && r.top < mobileFold && r.width > 20 && r.height > 20)) continue;
+        // Check element's own text, aria-label, title, and walk up 2 ancestors
+        // for a wrapper with the label (icon-only buttons often have aria on parent).
+        const labelSources = [];
+        let cursor = el;
+        for (let i = 0; i < 3 && cursor; i++) {
+          labelSources.push(cursor.getAttribute('aria-label') || '');
+          labelSources.push(cursor.getAttribute('title') || '');
+          labelSources.push(cursor.getAttribute('alt') || '');
+          labelSources.push((cursor.innerText || cursor.textContent || '').trim());
+          cursor = cursor.parentElement;
+        }
+        if (labelSources.some(s => callTextRe.test(s))) {
+          hasObviousCallCta = true;
+          break;
+        }
+      }
+      result.hasObviousCallCta = hasObviousCallCta;
+
       // Tier 2: social proof above fold (star rating or review count visible in hero)
       let socialProofAboveFold = false;
       const spEls = Array.from(document.querySelectorAll('[class*="star" i], [class*="rating" i], [class*="review" i], [class*="testimonial" i]'));
@@ -755,6 +840,7 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.isHttps = data.isHttps;
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
+    findings.hasObviousCallCta = data.hasObviousCallCta || false;
     findings.socialProofAboveFold = data.socialProofAboveFold || false;
     findings.hasClickToText = data.hasClickToText || false;
     findings.hasChatWidget = !!data.hasChatWidget;

@@ -799,8 +799,13 @@ function scoreMobileFindings(audit) {
     }
   }
   // PRIORITY 12: Phone number not visible as text above fold (only hidden tel: link)
-  // GATED 2026-05-21: requires mobVerified.
-  if (mobVerified && m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true) {
+  // GATED 2026-05-21: requires mobVerified AND no obvious CALL CTA visible.
+  // If a "Call" / "Call Now" / "Tap to Call" labeled button exists above fold,
+  // the conversion path is clear and we don't fire — visitors don't need to
+  // see the digits when the call-button intent is unmistakable. Caught on
+  // Monkey Wrench: hero has a phone-icon CALL button + "CALL NOW" text but
+  // no number digits visible. Finding fired falsely. Locked 2026-05-21.
+  if (mobVerified && m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true && m.hasObviousCallCta !== true) {
     out.push({ key: 'phoneNotVisible', score: 12, finding: `your phone number isn't visible as text above the fold on mobile — visitors shouldn't have to tap a button just to see your number` });
   }
   // PRIORITY 13: No social proof visible above fold (GATED 2026-05-21)
