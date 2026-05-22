@@ -176,7 +176,11 @@ Finished: $TIME_END
 
 EOF
 N=1
-for entry in "${DEPLOYED_URLS[@]}"; do
+# A8 fix 2026-05-22: bash-safe empty-array expansion under `set -u`.
+# Without the `${arr[@]+...}` guard, an empty DEPLOYED_URLS array trips
+# "unbound variable" and aborts the whole script before report-write.
+# Caused Pipeline 2 (Electricians Long Beach) crash overnight 2026-05-21.
+for entry in "${DEPLOYED_URLS[@]+"${DEPLOYED_URLS[@]}"}"; do
   IFS='|' read -r name url <<< "$entry"
   # Locate this lead's voiceover manifest to pull verification summary.
   BIZ_SLUG_FOR_MANIFEST=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
@@ -198,7 +202,7 @@ done
 if [ ${#FAILED_LEADS[@]} -gt 0 ]; then
   echo "" >> "$REPORT"
   echo "## Failed leads" >> "$REPORT"
-  for entry in "${FAILED_LEADS[@]}"; do
+  for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
     IFS='|' read -r name reason <<< "$entry"
     echo "- $name — $reason" >> "$REPORT"
   done
