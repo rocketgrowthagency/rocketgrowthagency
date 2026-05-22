@@ -22,6 +22,8 @@
 //         feedback_audit_chat_widget_detection.md.
 
 import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 const CASES = [
   {
@@ -292,6 +294,43 @@ function runStep6GateTests() {
 const step6Results = runStep6GateTests();
 console.log();
 
+// === Email validation regression tests (locked 2026-05-22) ===
+// Prevents placeholder/test emails like someone@example.com or
+// jane.doe@aireserv.com from slipping into Airtable Leads. See
+// feedback_scraper_must_filter_placeholder_emails.md.
+function runEmailValidationTests() {
+  const { isLikelyEmail } = require('../lib/email-validation.cjs'); // require provided via createRequire at top
+  const cases = [
+    // Should be REJECTED
+    { email: 'someone@example.com',          expect: '', name: 'RFC 2606 example.com domain' },
+    { email: 'foo@example.org',              expect: '', name: 'RFC 2606 example.org domain' },
+    { email: 'bar@test.com',                 expect: '', name: 'RFC 2606 test.com domain' },
+    { email: 'jane.doe@aireserv.com',        expect: '', name: 'jane.doe local on any domain' },
+    { email: 'john.doe@anybiz.com',          expect: '', name: 'john.doe local on any domain' },
+    { email: 'firstname.lastname@whatev.com',expect: '', name: 'firstname.lastname placeholder' },
+    { email: 'fake@somewhere.com',           expect: '', name: 'fake local placeholder' },
+    { email: 'placeholder@biz.com',          expect: '', name: 'placeholder local' },
+    { email: 'nobody@bigbiz.com',            expect: '', name: 'nobody local placeholder' },
+    // Should PASS
+    { email: 'info@multiairservice.com',     expect: 'info@multiairservice.com', name: 'real biz info@ address' },
+    { email: 'matt@bryantheatandair.com',    expect: 'matt@bryantheatandair.com', name: 'real first-name address' },
+    { email: 'customercare@mds.email',       expect: 'customercare@mds.email', name: 'legit .email TLD' },
+    { email: 'goncharov.ul@gmail.com',       expect: 'goncharov.ul@gmail.com', name: 'real-name local on Gmail' },
+  ];
+  let p = 0, f = 0;
+  const failures = [];
+  for (const c of cases) {
+    const got = isLikelyEmail(c.email);
+    const ok = got === c.expect;
+    console.log(`${ok ? '✓' : '✗'} email-validation: ${c.name}  (input="${c.email}" got=${JSON.stringify(got)})`);
+    if (ok) p++; else { f++; failures.push(c.name); }
+  }
+  return { passed: p, failed: f, failures };
+}
+
+const emailResults = runEmailValidationTests();
+console.log();
+
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 let passed = 0, failed = 0;
@@ -312,13 +351,14 @@ for (const c of CASES) {
   }
 }
 await browser.close();
-const totalPassed = passed + step6Results.passed;
-const totalFailed = failed + step6Results.failed;
-const totalCases = CASES.length + (step6Results.passed + step6Results.failed);
+const totalPassed = passed + step6Results.passed + emailResults.passed;
+const totalFailed = failed + step6Results.failed + emailResults.failed;
+const totalCases = CASES.length + (step6Results.passed + step6Results.failed) + (emailResults.passed + emailResults.failed);
 console.log(`\n${totalPassed}/${totalCases} passed`);
 if (totalFailed) {
   console.log('FAILURES:');
   for (const f of failures) console.log('  detector: ' + f);
   for (const f of step6Results.failures) console.log('  step-6 gate: ' + f);
+  for (const f of emailResults.failures) console.log('  email-validation: ' + f);
   process.exit(1);
 }

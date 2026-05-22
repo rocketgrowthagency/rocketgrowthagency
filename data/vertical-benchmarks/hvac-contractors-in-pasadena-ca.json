@@ -1,0 +1,30 @@
+{
+  "searchTerm": "HVAC contractors in Pasadena CA",
+  "auditedDate": "2026-05-22",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "HVAC contractor": 10
+  },
+  "categoryDistributionTop5": {
+    "HVAC contractor": 5
+  },
+  "categoryDistributionTop3": {
+    "HVAC contractor": 3
+  },
+  "majorityCategoryTop10": "HVAC contractor",
+  "majorityCategoryTop5": "HVAC contractor",
+  "majorityCategoryTop3": "HVAC contractor",
+  "reviewsTop10": {
+    "min": 14,
+    "max": 895,
+    "median": 144,
+    "p25": 35,
+    "p75": 266
+  },
+  "reviewsTop3Avg": 445,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}
