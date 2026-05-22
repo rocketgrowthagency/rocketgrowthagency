@@ -49,6 +49,17 @@ fi
 echo "✓ pre-flight gates passed" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
+# === Bounce recovery (locked 2026-05-22) ===
+# Process any leads flagged 'queued-recovery' by Apps Script processBouncedLeads.
+# Re-scrapes the website + SerpAPI for a replacement email. On success: clears
+# Email Status, sets Status='new', resets Draft Created — lead re-enters funnel.
+# On failure: marks Email Status='no-replacement-found' (terminal).
+# Safe to run before the scrape since it operates on the existing Airtable
+# Leads table — no dependency on tonight's new leads.
+echo ">>> bounce recovery (queued-recovery → recovered OR no-replacement-found)" | tee -a "$LOGFILE"
+node scripts/recover-bounced-emails.mjs 2>&1 | tee -a "$LOGFILE" | tail -10
+echo "" | tee -a "$LOGFILE"
+
 # === Step 1: scrape ===
 # PRODUCTION mode — uses step-1's default TARGET_UNIQUE_PLACES=55 to scrape
 # the full first page of Maps results, not a test-mode 5-cap. Memory:
