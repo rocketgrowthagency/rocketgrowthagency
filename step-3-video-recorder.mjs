@@ -356,6 +356,31 @@ async function dismissCommonCookieBanner(page) {
 // CTA fold.
 //
 // Memory: [[feedback-audit-chat-widget-detection]] for the audit-side rule.
+// 2026-05-26: Hosts known to serve tech-support-scam pages — landed on one
+// during the Tree-service-Culver-City run when a lead's site JS-redirected
+// puppeteer to milieeto.z1.web.core.windows.net/ax/index.html?phone=…
+// (fake "Apple Firewall" popup with loud audio loop). The audio kept
+// playing for ~4 hours because the renderer detached from main browser.
+//
+// Aborting requests to these hosts at interception time stops both the
+// HTML load AND the audio resources. Combined with --mute-audio at launch,
+// any future scam-redirect attempt is silent and harmless.
+//
+// Memory: [[feedback-step3-scam-defense]]
+const MALICIOUS_HOST_PATTERNS = [
+  // Azure web app hosts commonly abused by tech-support-scam operators
+  /\.web\.core\.windows\.net/i,
+  /\.azurewebsites\.net.*\/ax\//i,
+  /\.azureedge\.net.*\/ax\//i,
+  // Firebase / Google web app hosting abused the same way
+  /\.firebaseapp\.com.*\/ax\//i,
+  /\.web\.app.*\/ax\//i,
+  // Generic scam-page URL signatures (regardless of host)
+  /\/ax\/index\.html\?phone=/i,
+  /computer-error-\w+/i,
+  /apple-?support-?\d{3,}/i,
+];
+
 const CHAT_WIDGET_HOST_PATTERNS = [
   /tawk\.to/i,
   /intercom\.io/i,
@@ -424,11 +449,29 @@ async function setupChatWidgetBlocking(page) {
     await page.setRequestInterception(true);
     page.on('request', (req) => {
       const url = req.url();
+      if (MALICIOUS_HOST_PATTERNS.some((re) => re.test(url))) {
+        console.warn(`   blocked malicious host request: ${url.slice(0, 120)}`);
+        req.abort().catch(() => {});
+        return;
+      }
       if (CHAT_WIDGET_HOST_PATTERNS.some((re) => re.test(url))) {
         req.abort().catch(() => {});
       } else {
         req.continue().catch(() => {});
       }
+    });
+    // JS-redirects can land on a scam host even when the initial request was
+    // to a legitimate URL. Watch every frame nav and force back to about:blank
+    // if it lands on a known scam pattern.
+    page.on('framenavigated', async (frame) => {
+      try {
+        if (frame !== page.mainFrame()) return;
+        const url = frame.url();
+        if (MALICIOUS_HOST_PATTERNS.some((re) => re.test(url))) {
+          console.warn(`   detected malicious mid-nav redirect; forcing about:blank: ${url.slice(0, 120)}`);
+          await page.goto('about:blank', { waitUntil: 'load' }).catch(() => {});
+        }
+      } catch {}
     });
   } catch {}
 }
@@ -1543,8 +1586,23 @@ async function recordBusinessVideos(browser, meta, mapsOut, websiteOut, mobileOu
   return { mapsOk, websiteOk, mobileOk };
 }
 
+// 2026-05-26: Before launching a fresh Puppeteer Chrome, kill any orphan
+// Chrome processes from a prior step-3 run that may have detached after a
+// scam-page hijack (renderer kept running with audio for ~4 hours during
+// the 2026-05-26 incident). We match on our user-data-dir path — that's
+// unique to step-3 puppeteer Chrome, so this won't touch Chris's regular
+// Chrome browsing.
+function killOrphanStep3Chrome() {
+  try {
+    const profilePath = CHROME_PROFILE_DIR;
+    const result = spawn('pkill', ['-f', `Google Chrome.*${profilePath}`], { stdio: 'ignore' });
+    result.on('error', () => {});
+  } catch {}
+}
+
 async function launchBrowser() {
   ensureDir(CHROME_PROFILE_DIR);
+  killOrphanStep3Chrome();
   return puppeteer.launch({
     headless: false,
     executablePath: CHROME_PATH,
@@ -1555,6 +1613,11 @@ async function launchBrowser() {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--autoplay-policy=no-user-gesture-required',
+      // 2026-05-26: hard-mute audio at the Chrome process level. Even if a
+      // hijacked lead site auto-plays a tech-support-scam audio loop, no
+      // sound reaches the speakers. Our recordings don't need audio anyway.
+      // See feedback-step3-scam-defense.md.
+      '--mute-audio',
     ],
   });
 }
