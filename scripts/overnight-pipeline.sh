@@ -108,6 +108,34 @@ echo "" | tee -a "$LOGFILE"
 
 while IFS= read -r BIZ_NAME; do
   [ -z "$BIZ_NAME" ] && continue
+
+  # IDEMPOTENCY GUARD (locked 2026-05-23) — skip if Airtable already has a Video URL
+  # for this Business Name + Search Term. Without this, every restart re-renders
+  # leads that already have working videos, wasting hours of compute. Caught
+  # 2026-05-23 after a pause/resume re-did the first 10 Electricians leads
+  # from scratch. See feedback_pipeline_must_skip_already_deployed.md.
+  ALREADY_DEPLOYED=$(AIRTABLE_API_KEY="$(grep AIRTABLE_API_KEY .env | cut -d= -f2-)" \
+                     AIRTABLE_BASE_ID="$(grep AIRTABLE_BASE_ID .env | cut -d= -f2-)" \
+                     BIZ_NAME_ARG="$BIZ_NAME" \
+                     SEARCH_QUERY_ARG="$SEARCH_QUERY" \
+                     node -e '
+    const k = process.env.AIRTABLE_API_KEY, b = process.env.AIRTABLE_BASE_ID;
+    if (!k || !b) { console.log("NO_CREDS"); process.exit(0); }
+    const escapeQ = (s) => String(s).replace(/"/g, "\\\"");
+    const biz = process.env.BIZ_NAME_ARG, term = process.env.SEARCH_QUERY_ARG;
+    const formula = `AND({Business Name}="${escapeQ(biz)}", {Search Term}="${escapeQ(term)}", {Video URL})`;
+    const url = "https://api.airtable.com/v0/" + b + "/Leads?pageSize=1&filterByFormula=" + encodeURIComponent(formula);
+    fetch(url, { headers: { Authorization: "Bearer " + k } })
+      .then(r => r.json())
+      .then(d => console.log((d.records && d.records.length > 0) ? "YES" : "NO"))
+      .catch(() => console.log("ERR"));
+  ' 2>/dev/null)
+  if [ "$ALREADY_DEPLOYED" = "YES" ]; then
+    echo "" | tee -a "$LOGFILE"
+    echo ">>> SKIP (already in Airtable with Video URL): $BIZ_NAME" | tee -a "$LOGFILE"
+    continue
+  fi
+
   echo "" | tee -a "$LOGFILE"
   echo "============================================" | tee -a "$LOGFILE"
   echo ">>> Processing: $BIZ_NAME" | tee -a "$LOGFILE"
