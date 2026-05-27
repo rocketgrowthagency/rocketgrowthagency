@@ -1312,6 +1312,9 @@ function createScreencastRecorder(page, outputPath, viewport) {
 
     ffmpeg.stderr.on('data', (chunk) => stderrChunks.push(chunk.toString()));
 
+    ffmpeg.on('error', () => {});
+    ffmpeg.stdin.on('error', () => {});
+
     const frameIntervalMs = Math.max(1, Math.round(1000 / SCREENCAST_FPS));
     captureLoop = (async () => {
       while (!stopped) {
