@@ -375,10 +375,17 @@ EOPY
   # sites). Without this guard, the pipeline burns ~5 min running step-4/5/6/
   # 6b/7 on empty input. Check that step-3 produced all 3 expected WebM files
   # before continuing the chain. If not, fail fast.
-  STEP3_DIR_PATTERN="output/Step 3 (Video Recorder - Raw WebM)/${DATE_STAMP}_${BIZ_SLUG}-only-*-[step-2]"
-  STEP3_DIR=$(ls -d $STEP3_DIR_PATTERN 2>/dev/null | head -1)
+  # 2026-05-27 BUGFIX: the original glob suffix `-[step-2]` was being parsed
+  # as a bash character class (any of {s,t,e,p,-,2}) — so it never matched the
+  # literal directory suffix `[step-2]`. STEP3_DIR was always empty, so
+  # WEBM_COUNT was always 0, so this fast-fail incorrectly tripped on every
+  # lead. Switch to `find` which does NOT do shell glob expansion on its -path
+  # argument, and match by the unique `-only-` middle marker instead of the
+  # bracketed suffix. Note the literal `[step-2]` directly in the find -path
+  # is also a glob, so we drop it.
+  STEP3_DIR=$(find "output/Step 3 (Video Recorder - Raw WebM)" -maxdepth 1 -type d -name "${DATE_STAMP}_${BIZ_SLUG}-only-*" 2>/dev/null | head -1)
   if [ -n "$STEP3_DIR" ]; then
-    WEBM_COUNT=$(ls "$STEP3_DIR"/*.webm 2>/dev/null | wc -l | tr -d ' ')
+    WEBM_COUNT=$(find "$STEP3_DIR" -maxdepth 1 -type f -name "*.webm" -size +0c 2>/dev/null | wc -l | tr -d ' ')
   else
     WEBM_COUNT=0
   fi
