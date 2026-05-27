@@ -71,8 +71,11 @@ echo "" | tee -a "$LOGFILE"
 # project_pending_tasks.md P1.
 SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
 CACHE_TTL_MIN=${CACHE_TTL_MIN:-720}  # 720 min = 12 hr
-CACHED_S1=$(find "output/Step 1" -name "*${SLUG}*-[step-1].csv" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
-CACHED_S2=$(find "output/Step 2" -name "*${SLUG}*-[step-2].csv" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
+# 2026-05-27: `find -name` interprets `[step-N]` as a character class — escape
+# the brackets so they match literally. Without this, the cache never matched
+# even when valid CSVs were on disk.
+CACHED_S1=$(find "output/Step 1" -name "*${SLUG}*-\[step-1\].csv" -not -name "*-only-*" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
+CACHED_S2=$(find "output/Step 2" -name "*${SLUG}*-\[step-2\].csv" -not -name "*-only-*" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
 SKIP_SCRAPE=""
 if [ -n "$CACHED_S1" ] && [ -n "$CACHED_S2" ]; then
   echo ">>> CACHE HIT — using cached Step 1 + Step 2 CSVs (<${CACHE_TTL_MIN}min old)" | tee -a "$LOGFILE"
@@ -341,8 +344,9 @@ EOPY
   # CSV basename (e.g., output/Step 2.5 (Audit)/2026-05-26_<biz-slug>-only-
   # <search>-[step-2]/audit-findings.json).
   AUDIT_CACHE_TTL_MIN="${AUDIT_CACHE_TTL_MIN:-1440}"  # 24 hr default
-  AUDIT_DIR_PATTERN="output/Step 2.5 (Audit)/${DATE_STAMP}_${BIZ_SLUG}-only-*-[step-2]/audit-findings.json"
-  CACHED_AUDIT=$(find $(dirname "$AUDIT_DIR_PATTERN" 2>/dev/null) -name "audit-findings.json" -mmin "-${AUDIT_CACHE_TTL_MIN}" 2>/dev/null | head -1)
+  # 2026-05-27: avoid bash glob char-class interpretation of `[step-2]` by
+  # searching from the audit root and filtering by directory name.
+  CACHED_AUDIT=$(find "output/Step 2.5 (Audit)" -maxdepth 2 -name "audit-findings.json" -path "*${DATE_STAMP}_${BIZ_SLUG}-only-*" -mmin "-${AUDIT_CACHE_TTL_MIN}" 2>/dev/null | head -1)
   AUDIT_SKIP=""
   if [ -n "$CACHED_AUDIT" ]; then
     AUDIT_SKIP="1"
