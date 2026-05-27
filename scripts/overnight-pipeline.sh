@@ -267,18 +267,39 @@ EOPY
   # smaller Macs. Each step uses a different user-data-dir so they don't
   # collide. Set SERIAL_STEPS=1 env var to fall back to sequential if
   # parallelism causes issues.
+  # Tier 2 (locked 2026-05-27) — Skip step-2.5 audit if a fresh
+  # audit-findings.json (<24h) already exists for this lead's slug. The audit
+  # pulls GBP data which is stable on the scale of hours; re-auditing burns
+  # ~60-90s/lead. The audit output dir is named after the filtered Step 2
+  # CSV basename (e.g., output/Step 2.5 (Audit)/2026-05-26_<biz-slug>-only-
+  # <search>-[step-2]/audit-findings.json).
+  AUDIT_CACHE_TTL_MIN="${AUDIT_CACHE_TTL_MIN:-1440}"  # 24 hr default
+  AUDIT_DIR_PATTERN="output/Step 2.5 (Audit)/${DATE_STAMP}_${BIZ_SLUG}-only-*-[step-2]/audit-findings.json"
+  CACHED_AUDIT=$(find $(dirname "$AUDIT_DIR_PATTERN" 2>/dev/null) -name "audit-findings.json" -mmin "-${AUDIT_CACHE_TTL_MIN}" 2>/dev/null | head -1)
+  AUDIT_SKIP=""
+  if [ -n "$CACHED_AUDIT" ]; then
+    AUDIT_SKIP="1"
+    echo "  [audit-cache HIT] reusing $CACHED_AUDIT (< ${AUDIT_CACHE_TTL_MIN}min old)" | tee -a "$LOGFILE"
+  fi
+
   if [ "${SERIAL_STEPS:-}" = "1" ]; then
     # Legacy sequential path — kept for emergency fallback
-    STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+    [ -z "$AUDIT_SKIP" ] && STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
     STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
   else
     # Level 0: step-2.5 || step-3 (both read only from $S2_FILTERED, no conflict)
-    echo "  >> level-0 parallel: step-2.5 audit || step-3 video" | tee -a "$LOGFILE"
-    ( STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
-    PID_25=$!
-    ( STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
-    PID_3=$!
-    wait $PID_25 $PID_3
+    if [ -z "$AUDIT_SKIP" ]; then
+      echo "  >> level-0 parallel: step-2.5 audit || step-3 video" | tee -a "$LOGFILE"
+      ( STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
+      PID_25=$!
+      ( STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
+      PID_3=$!
+      wait $PID_25 $PID_3
+    else
+      # Audit cached — only run step-3
+      echo "  >> level-0: step-2.5 skipped (cached), running step-3 video alone" | tee -a "$LOGFILE"
+      STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+    fi
   fi
 
   # Tier 2 #9 fast-fail (locked 2026-05-27) — root cause of "landing not built"
