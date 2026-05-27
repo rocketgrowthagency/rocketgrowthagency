@@ -122,6 +122,46 @@ FAILED_LEADS=()
 PENDING_DEPLOY_SLUGS=()
 PENDING_DEPLOY_NAMES=()
 
+# ============================================================
+# Tier 2 #7 (locked 2026-05-27) — CROSS-LEAD WORKER POOL infrastructure
+# ============================================================
+# Default WORKER_COUNT=1 preserves the legacy sequential behavior exactly.
+# Set WORKER_COUNT=3 (or other N) to enable N parallel workers, each running
+# the per-lead chain on a separate lead concurrently. Cuts wall time roughly
+# in half (was 4hr after within-lead parallelism, target ~2hr with 3 workers).
+#
+# Each worker uses its own Chrome user-data-dir (output/chrome-profile-step3-wN)
+# so step-3 + step-2.5 puppeteer instances don't lock-contend.
+#
+# State aggregation: bash subshells can't modify parent-scope arrays, so each
+# worker writes per-lead results to flock-protected /tmp files. After all
+# workers finish, the main process reads these back into the existing
+# DEPLOYED_URLS / FAILED_LEADS / PENDING_DEPLOY_* arrays for end-of-run
+# report + batched deploy.
+WORKER_COUNT="${WORKER_COUNT:-1}"
+RESULTS_DIR="/tmp/overnight-results-$$"
+mkdir -p "$RESULTS_DIR"
+RESULTS_DEPLOYED="$RESULTS_DIR/deployed.txt"
+RESULTS_FAILED="$RESULTS_DIR/failed.txt"
+RESULTS_PENDING_SLUGS="$RESULTS_DIR/pending-slugs.txt"
+RESULTS_PENDING_NAMES="$RESULTS_DIR/pending-names.txt"
+RESULTS_LOCK="$RESULTS_DIR/.lock"
+: > "$RESULTS_DEPLOYED"
+: > "$RESULTS_FAILED"
+: > "$RESULTS_PENDING_SLUGS"
+: > "$RESULTS_PENDING_NAMES"
+touch "$RESULTS_LOCK"
+# Cleanup state files on exit (success or failure)
+trap 'rm -rf "$RESULTS_DIR" 2>/dev/null' EXIT
+
+# Helper: append a line to a shared results file with flock-based locking
+# so concurrent workers can't corrupt the file with interleaved writes.
+append_result() {
+  local file="$1"; shift
+  local line="$*"
+  ( flock -x 200; printf '%s\n' "$line" >> "$file" ) 200>"$RESULTS_LOCK"
+}
+
 python3 <<EOPY > /tmp/emailable_leads.txt
 import csv
 with open("$LATEST_S2") as f:
@@ -136,8 +176,31 @@ echo ">>> Emailable leads to process:" | tee -a "$LOGFILE"
 cat /tmp/emailable_leads.txt | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
-while IFS= read -r BIZ_NAME; do
-  [ -z "$BIZ_NAME" ] && continue
+# ============================================================
+# Per-lead processing function (Tier 2 #7 — locked 2026-05-27)
+# Called either sequentially (WORKER_COUNT=1) or by N parallel workers.
+#
+# Inputs:
+#   $1 = BIZ_NAME — the business name from emailable_leads.txt
+#   $2 = WORKER_ID (1..N) — used to pick a unique Chrome profile dir
+#
+# Outputs (via flock-protected file appends):
+#   $RESULTS_DEPLOYED, $RESULTS_FAILED, $RESULTS_PENDING_SLUGS/_NAMES
+#
+# Uses 'return 0' (not 'continue') for skip paths since we're in a function.
+# Inherits LATEST_S1/LATEST_S2/DATE_STAMP/LOGFILE etc. from outer scope
+# via bash's dynamic-scope lookup.
+# ============================================================
+process_one_lead() {
+  local BIZ_NAME="$1"
+  local WORKER_ID="${2:-1}"
+  # Per-worker Chrome profile dir — only override when running parallel.
+  # WORKER_COUNT=1 keeps the legacy default (env var unset → step-3 falls
+  # back to the hardcoded output/chrome-profile-step3).
+  if [ "$WORKER_COUNT" != "1" ]; then
+    export CHROME_PROFILE_DIR="$(pwd)/output/chrome-profile-step3-w${WORKER_ID}"
+  fi
+  [ -z "$BIZ_NAME" ] && return 0
 
   # IDEMPOTENCY GUARD (locked 2026-05-23) — skip if Airtable already has a Video URL
   # for this Business Name + Search Term. Without this, every restart re-renders
@@ -177,12 +240,12 @@ while IFS= read -r BIZ_NAME; do
   if [ "$CHECK_RESULT" = "DEPLOYED" ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> SKIP (already in Airtable with Video URL): $BIZ_NAME" | tee -a "$LOGFILE"
-    continue
+    return 0
   fi
   if [ "$CHECK_RESULT" = "PERMA_FAIL" ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> SKIP (Email Status=build-failed — permanently retired after N landing-not-built attempts): $BIZ_NAME" | tee -a "$LOGFILE"
-    continue
+    return 0
   fi
 
   # Log-based fail-count check (Tier 1 #6 fallback) — for leads that have failed
@@ -197,7 +260,7 @@ while IFS= read -r BIZ_NAME; do
   if [ "$PAST_FAILS" -ge "$MAX_BUILD_FAILS" ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> SKIP (log-count ${PAST_FAILS} ≥ MAX_BUILD_FAILS=${MAX_BUILD_FAILS} landing-not-built fails — permanently retired): $BIZ_NAME" | tee -a "$LOGFILE"
-    continue
+    return 0
   fi
 
   echo "" | tee -a "$LOGFILE"
@@ -318,9 +381,9 @@ EOPY
   if [ "$WEBM_COUNT" -lt 3 ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs (website or mobile recording failed — likely bot-blocked site)" | tee -a "$LOGFILE"
-    FAILED_LEADS+=("$BIZ_NAME|step-3 incomplete (${WEBM_COUNT}/3 WebMs)")
+    append_result "$RESULTS_FAILED" "$BIZ_NAME|step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
-    continue
+    return 0
   fi
 
   if [ "${SERIAL_STEPS:-}" = "1" ]; then
@@ -385,8 +448,8 @@ EOPY
     DST="$WEBSITE_DIR/v/$ACTUAL_SLUG"
     mkdir -p "$DST"
     rsync -a --delete "output/landing-pages/v/$ACTUAL_SLUG/" "$DST/"
-    PENDING_DEPLOY_SLUGS+=("$ACTUAL_SLUG")
-    PENDING_DEPLOY_NAMES+=("$BIZ_NAME")
+    append_result "$RESULTS_PENDING_SLUGS" "$ACTUAL_SLUG"
+    append_result "$RESULTS_PENDING_NAMES" "$BIZ_NAME"
 
     # step-8 publish to Airtable — keep per-lead so the lead immediately
     # becomes eligible for tomorrow's 7am cron. Cheap (~3s/lead).
@@ -395,14 +458,80 @@ EOPY
     # URL (this writes to Airtable, not Netlify) — scoped via BUILD_ONLY_SLUG
     BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
 
-    DEPLOYED_URLS+=("$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/")
+    append_result "$RESULTS_DEPLOYED" "$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/"
     echo "  ✓ STAGED: $BIZ_NAME (deploy batched to end-of-run)" | tee -a "$LOGFILE"
     echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"  # keep marker for grep idempotency
   else
-    FAILED_LEADS+=("$BIZ_NAME|landing page not built")
+    append_result "$RESULTS_FAILED" "$BIZ_NAME|landing page not built"
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
   fi
-done < /tmp/emailable_leads.txt
+}  # end process_one_lead
+
+# ============================================================
+# DISPATCHER — sequential (WORKER_COUNT=1) or parallel worker pool (>1)
+# ============================================================
+if [ "$WORKER_COUNT" = "1" ]; then
+  # Legacy sequential mode — preserves exact pre-Tier-2-#7 behavior
+  while IFS= read -r BIZ_NAME; do
+    [ -z "$BIZ_NAME" ] && continue
+    process_one_lead "$BIZ_NAME" 1
+  done < /tmp/emailable_leads.txt
+else
+  echo "" | tee -a "$LOGFILE"
+  echo ">>> PARALLEL MODE — ${WORKER_COUNT} workers (Tier 2 #7)" | tee -a "$LOGFILE"
+  echo "" | tee -a "$LOGFILE"
+  # bash 3.2 has no `wait -n`; use poll-based PID tracking.
+  WORKER_PIDS=()
+  WORKER_IDS_IN_USE=()
+  reap_finished_workers() {
+    local i NEW_PIDS=() NEW_IDS=()
+    for i in $(seq 0 $((${#WORKER_PIDS[@]} - 1))); do
+      if kill -0 "${WORKER_PIDS[$i]}" 2>/dev/null; then
+        NEW_PIDS+=("${WORKER_PIDS[$i]}")
+        NEW_IDS+=("${WORKER_IDS_IN_USE[$i]}")
+      fi
+    done
+    WORKER_PIDS=("${NEW_PIDS[@]+"${NEW_PIDS[@]}"}")
+    WORKER_IDS_IN_USE=("${NEW_IDS[@]+"${NEW_IDS[@]}"}")
+  }
+  find_free_worker_id() {
+    local candidate u
+    for candidate in $(seq 1 "$WORKER_COUNT"); do
+      local USED=0
+      for u in "${WORKER_IDS_IN_USE[@]+"${WORKER_IDS_IN_USE[@]}"}"; do
+        if [ "$u" = "$candidate" ]; then USED=1; break; fi
+      done
+      if [ $USED -eq 0 ]; then echo "$candidate"; return; fi
+    done
+    echo 1  # fallback (shouldn't happen)
+  }
+  while IFS= read -r BIZ_NAME; do
+    [ -z "$BIZ_NAME" ] && continue
+    # Block until a worker slot is free
+    while [ "${#WORKER_PIDS[@]}" -ge "$WORKER_COUNT" ]; do
+      sleep 2
+      reap_finished_workers
+    done
+    NEW_ID=$(find_free_worker_id)
+    echo ">>> [worker-${NEW_ID}] dispatching: $BIZ_NAME" | tee -a "$LOGFILE"
+    process_one_lead "$BIZ_NAME" "$NEW_ID" &
+    WORKER_PIDS+=($!)
+    WORKER_IDS_IN_USE+=("$NEW_ID")
+  done < /tmp/emailable_leads.txt
+  echo "" | tee -a "$LOGFILE"
+  echo ">>> Waiting for ${#WORKER_PIDS[@]} remaining worker(s) to finish..." | tee -a "$LOGFILE"
+  wait "${WORKER_PIDS[@]+"${WORKER_PIDS[@]}"}"
+  echo ">>> All workers complete." | tee -a "$LOGFILE"
+fi
+
+# ============================================================
+# Aggregate per-worker state files back into the legacy arrays so the
+# downstream batched-deploy + report sections (unchanged) continue to work.
+# ============================================================
+while IFS= read -r line; do [ -n "$line" ] && DEPLOYED_URLS+=("$line"); done < "$RESULTS_DEPLOYED"
+while IFS= read -r line; do [ -n "$line" ] && FAILED_LEADS+=("$line"); done < "$RESULTS_FAILED"
+while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_SLUGS+=("$line"); done < "$RESULTS_PENDING_SLUGS"
+while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_NAMES+=("$line"); done < "$RESULTS_PENDING_NAMES"
 
 # === Tier 2 (locked 2026-05-27) — BATCHED end-of-run deploy ===
 # Replace per-lead `git commit` + `netlify deploy --prod` (~30s/lead × N) with
