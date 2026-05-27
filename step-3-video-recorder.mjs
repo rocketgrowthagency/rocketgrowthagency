@@ -1153,10 +1153,28 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // results list" for bare-name URLs meant deep-rank leads NEVER showed
       // their detail card. Caught reviewing XP #35.
       if (isBareNameUrl && !skipScrollAttempt) {
-        // Original path: scroll-find failed AND no coordinates → scroll
-        // through competitors (this only triggers for top-10 leads where
-        // scroll-find should have worked; falling through is rare).
-        console.log(`   → Scroll-find failed and Maps URL has no coords; showing competitive list.`);
+        // 2026-05-27 FIX: when scroll-find failed for a top-3 lead AND the
+        // mapsUrl is bare-name (no coords), the legacy path scrolled the
+        // competitor list without ever opening the prospect's detail card.
+        // That's the root cause of Chris's "no Maps card pull-up" complaint:
+        // Fenn rank #2 → scroll-find returns topScore=0 (Maps panel rendered
+        // no a.hfpxzc anchors) → falls here → competitive list shown for the
+        // full Maps recording window. Switch to the navigateDeepRankChain
+        // pattern (phone-first URL chain) which reliably lands on the detail
+        // page even for bare-name URLs. The phone disambiguates uniquely on
+        // Google Maps so it lands directly on the prospect's listing.
+        console.log(`   → Scroll-find failed for top-3 lead with bare-name URL; trying phone-first URL chain instead of competitor scroll`);
+        const detailReached = await navigateDeepRankChain();
+        if (detailReached) {
+          await injectRankOverlay(page, businessName, rank, searchTerm);
+          await highlightBusinessOnDetailPage(page);
+          await sleep(18000);
+          await dismissResultsInfoPopup(page);
+          return 'top3-bare-name-chain';
+        }
+        // Chain exhausted — fall back to the legacy competitive-list view as
+        // last resort rather than failing the whole recording.
+        console.warn(`   ⚠️ phone-first URL chain failed for top-3 lead; falling back to competitor-list view`);
         for (let i = 0; i < 6; i++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]') ||
