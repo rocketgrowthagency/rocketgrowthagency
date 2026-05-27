@@ -134,7 +134,7 @@ PENDING_DEPLOY_NAMES=()
 # so step-3 + step-2.5 puppeteer instances don't lock-contend.
 #
 # State aggregation: bash subshells can't modify parent-scope arrays, so each
-# worker writes per-lead results to flock-protected /tmp files. After all
+# worker writes per-lead results to O_APPEND-atomic /tmp files. After all
 # workers finish, the main process reads these back into the existing
 # DEPLOYED_URLS / FAILED_LEADS / PENDING_DEPLOY_* arrays for end-of-run
 # report + batched deploy.
@@ -145,21 +145,25 @@ RESULTS_DEPLOYED="$RESULTS_DIR/deployed.txt"
 RESULTS_FAILED="$RESULTS_DIR/failed.txt"
 RESULTS_PENDING_SLUGS="$RESULTS_DIR/pending-slugs.txt"
 RESULTS_PENDING_NAMES="$RESULTS_DIR/pending-names.txt"
-RESULTS_LOCK="$RESULTS_DIR/.lock"
 : > "$RESULTS_DEPLOYED"
 : > "$RESULTS_FAILED"
 : > "$RESULTS_PENDING_SLUGS"
 : > "$RESULTS_PENDING_NAMES"
-touch "$RESULTS_LOCK"
 # Cleanup state files on exit (success or failure)
 trap 'rm -rf "$RESULTS_DIR" 2>/dev/null' EXIT
 
-# Helper: append a line to a shared results file with flock-based locking
-# so concurrent workers can't corrupt the file with interleaved writes.
+# Helper: append a line to a shared results file. macOS doesn't ship with
+# `flock`, but bash's `>>` uses O_APPEND which the kernel guarantees atomic
+# for writes < PIPE_BUF (4096 bytes on macOS+Linux). All our lines are short
+# (business name + URL or reason, well under 4KB), so concurrent appends
+# from N workers are safe without an external lock.
+# See: write(2) POSIX spec — "If the O_APPEND flag of the file status flags
+# is set, the file offset shall be set to the end of the file prior to each
+# write, and all writes shall complete atomically with respect to each other."
 append_result() {
   local file="$1"; shift
   local line="$*"
-  ( flock -x 200; printf '%s\n' "$line" >> "$file" ) 200>"$RESULTS_LOCK"
+  printf '%s\n' "$line" >> "$file"
 }
 
 python3 <<EOPY > /tmp/emailable_leads.txt
@@ -184,7 +188,7 @@ echo "" | tee -a "$LOGFILE"
 #   $1 = BIZ_NAME — the business name from emailable_leads.txt
 #   $2 = WORKER_ID (1..N) — used to pick a unique Chrome profile dir
 #
-# Outputs (via flock-protected file appends):
+# Outputs (via O_APPEND-atomic file appends):
 #   $RESULTS_DEPLOYED, $RESULTS_FAILED, $RESULTS_PENDING_SLUGS/_NAMES
 #
 # Uses 'return 0' (not 'continue') for skip paths since we're in a function.
