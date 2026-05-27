@@ -235,9 +235,47 @@ with open("$S2_FILTERED", 'w', newline='') as f:
 print(f"  wrote {len(keep)} step-2 rows (filtered from master, no re-scrape)")
 EOPY
 
-  # Chain steps
-  STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
-  STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+  # ============================================================
+  # WITHIN-LEAD DAG PARALLELIZATION (Tier 2.5 locked 2026-05-27)
+  # ============================================================
+  # Original sequential chain: step-2.5 → step-3 → step-6 → step-4 → step-5
+  # → step-6b → step-7 = ~320s critical path. Most of those have independent
+  # inputs.
+  #
+  # Actual dependency graph:
+  #   step-2.5 (audit) → step-6 (voiceover, needs audit-findings.json)
+  #   step-3 (record)  → step-4 (combine, needs WebMs)
+  #   step-6 → step-6b (subtitles, needs voiceover MP3)
+  #   step-4 → step-5 (branding, needs combined.mp4 + step-6 manifest)
+  #   step-6 → step-5 (branding, needs intro audio length from manifest)
+  #   step-5 + step-6 + step-6b → step-7 (merge)
+  #
+  # Optimal scheduling:
+  #   level 0: step-2.5 || step-3                                  (parallel)
+  #   level 1: step-6 (after 2.5)   ||  step-4 (after 3)           (parallel)
+  #   level 2: step-5 (after 4 + 6) ||  step-6b (after 6)          (parallel)
+  #   level 3: step-7 (after 5 + 6 + 6b)                           (single)
+  #
+  # New critical path ≈ 120s + 30s + 30s + 15s = ~195s (vs 320s sequential).
+  # Saves ~125s/lead × 30 deployed = ~62 min/run.
+  #
+  # Risk: 2 Chrome instances (step-2.5 + step-3) + ffmpeg overlap may stress
+  # smaller Macs. Each step uses a different user-data-dir so they don't
+  # collide. Set SERIAL_STEPS=1 env var to fall back to sequential if
+  # parallelism causes issues.
+  if [ "${SERIAL_STEPS:-}" = "1" ]; then
+    # Legacy sequential path — kept for emergency fallback
+    STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+    STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+  else
+    # Level 0: step-2.5 || step-3 (both read only from $S2_FILTERED, no conflict)
+    echo "  >> level-0 parallel: step-2.5 audit || step-3 video" | tee -a "$LOGFILE"
+    ( STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
+    PID_25=$!
+    ( STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
+    PID_3=$!
+    wait $PID_25 $PID_3
+  fi
 
   # Tier 2 #9 fast-fail (locked 2026-05-27) — root cause of "landing not built"
   # is step-3 producing INCOMPLETE WebMs (e.g., Maps recording succeeds but
@@ -260,11 +298,32 @@ EOPY
     continue
   fi
 
-  STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
-  STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
-  STEP2_CSV="$S2_FILTERED" MAX_BRANDS=1 node step-5-branding.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
-  STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
-  STEP2_CSV="$S2_FILTERED" MAX_MERGES=1 node step-7-merge-branded-audio.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+  if [ "${SERIAL_STEPS:-}" = "1" ]; then
+    STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
+    STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+    STEP2_CSV="$S2_FILTERED" MAX_BRANDS=1 node step-5-branding.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+    STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+    STEP2_CSV="$S2_FILTERED" MAX_MERGES=1 node step-7-merge-branded-audio.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+  else
+    # Level 1: step-6 (needs step-2.5 output) || step-4 (needs step-3 WebMs)
+    echo "  >> level-1 parallel: step-6 voiceover || step-4 combine" | tee -a "$LOGFILE"
+    ( STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5 ) &
+    PID_6=$!
+    ( STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1 ) &
+    PID_4=$!
+    wait $PID_6 $PID_4
+
+    # Level 2: step-5 (needs step-4 + step-6) || step-6b (needs step-6)
+    echo "  >> level-2 parallel: step-5 branding || step-6b subtitles" | tee -a "$LOGFILE"
+    ( STEP2_CSV="$S2_FILTERED" MAX_BRANDS=1 node step-5-branding.mjs 2>&1 | tee -a "$LOGFILE" | tail -1 ) &
+    PID_5=$!
+    ( STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1 ) &
+    PID_6b=$!
+    wait $PID_5 $PID_6b
+
+    # Level 3: step-7 (final merge — needs everything above)
+    STEP2_CSV="$S2_FILTERED" MAX_MERGES=1 node step-7-merge-branded-audio.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
+  fi
 
   # Tier 1 #1 (locked 2026-05-27): scope build-video-landing to JUST this lead's
   # slug. The slug must match what step-7's MP4 filename contains, which is
