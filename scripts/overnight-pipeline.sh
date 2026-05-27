@@ -140,25 +140,59 @@ while IFS= read -r BIZ_NAME; do
   # leads that already have working videos, wasting hours of compute. Caught
   # 2026-05-23 after a pause/resume re-did the first 10 Electricians leads
   # from scratch. See feedback_pipeline_must_skip_already_deployed.md.
-  ALREADY_DEPLOYED=$(AIRTABLE_API_KEY="$(grep AIRTABLE_API_KEY .env | cut -d= -f2-)" \
-                     AIRTABLE_BASE_ID="$(grep AIRTABLE_BASE_ID .env | cut -d= -f2-)" \
-                     BIZ_NAME_ARG="$BIZ_NAME" \
-                     SEARCH_QUERY_ARG="$SEARCH_QUERY" \
-                     node -e '
+  #
+  # PERMANENT-FAIL EXTENSION (Tier 1 #6 locked 2026-05-27) — also skip if Email
+  # Status='build-failed' to avoid burning ~5 min on each retry of the same
+  # leads. The 2026-05-26 Electricians run had 3 leads (Long Beach Electric,
+  # Johns electric, Croff Electric) fail 3-4 times each at landing build. After
+  # MAX_BUILD_FAILS attempts, scripts/mark-permanent-fail.mjs sets the lead's
+  # Email Status to 'build-failed' and that's what this query catches.
+  CHECK_RESULT=$(AIRTABLE_API_KEY="$(grep AIRTABLE_API_KEY .env | cut -d= -f2-)" \
+                 AIRTABLE_BASE_ID="$(grep AIRTABLE_BASE_ID .env | cut -d= -f2-)" \
+                 BIZ_NAME_ARG="$BIZ_NAME" \
+                 SEARCH_QUERY_ARG="$SEARCH_QUERY" \
+                 node -e '
     const k = process.env.AIRTABLE_API_KEY, b = process.env.AIRTABLE_BASE_ID;
     if (!k || !b) { console.log("NO_CREDS"); process.exit(0); }
     const escapeQ = (s) => String(s).replace(/"/g, "\\\"");
     const biz = process.env.BIZ_NAME_ARG, term = process.env.SEARCH_QUERY_ARG;
-    const formula = `AND({Business Name}="${escapeQ(biz)}", {Search Term}="${escapeQ(term)}", {Video URL})`;
+    // Match the lead; we want both Video-URL-present (deployed) AND build-failed states.
+    const formula = `AND({Business Name}="${escapeQ(biz)}", {Search Term}="${escapeQ(term)}")`;
     const url = "https://api.airtable.com/v0/" + b + "/Leads?pageSize=1&filterByFormula=" + encodeURIComponent(formula);
     fetch(url, { headers: { Authorization: "Bearer " + k } })
       .then(r => r.json())
-      .then(d => console.log((d.records && d.records.length > 0) ? "YES" : "NO"))
+      .then(d => {
+        if (!d.records || !d.records.length) { console.log("NO"); return; }
+        const f = d.records[0].fields || {};
+        if (f["Video URL"]) { console.log("DEPLOYED"); return; }
+        if (f["Email Status"] === "build-failed") { console.log("PERMA_FAIL"); return; }
+        console.log("NO");
+      })
       .catch(() => console.log("ERR"));
   ' 2>/dev/null)
-  if [ "$ALREADY_DEPLOYED" = "YES" ]; then
+  if [ "$CHECK_RESULT" = "DEPLOYED" ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> SKIP (already in Airtable with Video URL): $BIZ_NAME" | tee -a "$LOGFILE"
+    continue
+  fi
+  if [ "$CHECK_RESULT" = "PERMA_FAIL" ]; then
+    echo "" | tee -a "$LOGFILE"
+    echo ">>> SKIP (Email Status=build-failed — permanently retired after N landing-not-built attempts): $BIZ_NAME" | tee -a "$LOGFILE"
+    continue
+  fi
+
+  # Log-based fail-count check (Tier 1 #6 fallback) — for leads that have failed
+  # "landing not built" MAX_BUILD_FAILS+ times across recent pipeline runs, skip
+  # rather than burn ~5 min retrying the same broken path. Counts failures
+  # across all /tmp/overnight-*.log files. Without this, the 3 problem leads
+  # from 2026-05-26 (Long Beach Electric, Johns electric, Croff Electric) would
+  # each burn 5 min per run forever (they have no Airtable row to mark, since
+  # step-8 only writes on success).
+  MAX_BUILD_FAILS="${MAX_BUILD_FAILS:-3}"
+  PAST_FAILS=$(grep -h "✗ FAILED: ${BIZ_NAME} — landing not built" /tmp/overnight-*.log 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$PAST_FAILS" -ge "$MAX_BUILD_FAILS" ]; then
+    echo "" | tee -a "$LOGFILE"
+    echo ">>> SKIP (log-count ${PAST_FAILS} ≥ MAX_BUILD_FAILS=${MAX_BUILD_FAILS} landing-not-built fails — permanently retired): $BIZ_NAME" | tee -a "$LOGFILE"
     continue
   fi
 
@@ -204,6 +238,28 @@ EOPY
   # Chain steps
   STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
   STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+
+  # Tier 2 #9 fast-fail (locked 2026-05-27) — root cause of "landing not built"
+  # is step-3 producing INCOMPLETE WebMs (e.g., Maps recording succeeds but
+  # Website + Mobile recordings silently fail for leads with bot-blocking
+  # sites). Without this guard, the pipeline burns ~5 min running step-4/5/6/
+  # 6b/7 on empty input. Check that step-3 produced all 3 expected WebM files
+  # before continuing the chain. If not, fail fast.
+  STEP3_DIR_PATTERN="output/Step 3 (Video Recorder - Raw WebM)/${DATE_STAMP}_${BIZ_SLUG}-only-*-[step-2]"
+  STEP3_DIR=$(ls -d $STEP3_DIR_PATTERN 2>/dev/null | head -1)
+  if [ -n "$STEP3_DIR" ]; then
+    WEBM_COUNT=$(ls "$STEP3_DIR"/*.webm 2>/dev/null | wc -l | tr -d ' ')
+  else
+    WEBM_COUNT=0
+  fi
+  if [ "$WEBM_COUNT" -lt 3 ]; then
+    echo "" | tee -a "$LOGFILE"
+    echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs (website or mobile recording failed — likely bot-blocked site)" | tee -a "$LOGFILE"
+    FAILED_LEADS+=("$BIZ_NAME|step-3 incomplete (${WEBM_COUNT}/3 WebMs)")
+    echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
+    continue
+  fi
+
   STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
   STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
   STEP2_CSV="$S2_FILTERED" MAX_BRANDS=1 node step-5-branding.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
