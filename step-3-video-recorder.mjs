@@ -1160,33 +1160,39 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // name URL. For unique-ish names (most local businesses), this lands
         // on the detail page. For ambiguous names that resolve to a results
         // list, click the first matching listing.
-        console.log(`   → Scroll-find returned no anchors; navigating to bare-name Maps URL directly: ${mapsUrl}`);
+        // 2026-05-27: use the name+city SEARCH URL (works for deep-rank
+        // leads yesterday) instead of the bare-name place URL (loads an empty
+        // skeleton without business data). Search URL renders the standard
+        // results list which step-3 can click into via clickListingInResultsByName.
+        const searchNavUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}`;
+        console.log(`   → Scroll-find returned no anchors; navigating to name+city search URL: ${searchNavUrl}`);
         try {
-          await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+          await page.goto(searchNavUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
         } catch (e) {
           console.warn(`   ⚠️ direct navigation failed (${e.message || e}); falling back to competitor scroll`);
         }
-        await sleep(2500);
+        await sleep(3000);
         const onDetail = await page.evaluate(() => {
-          return !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+          const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+          return !!(h1 && (h1.textContent || '').trim().length > 0);
         }).catch(() => false);
         if (onDetail) {
-          console.log(`   → Direct navigation landed on detail page ✓`);
+          console.log(`   → Search URL resolved directly to Fenn's detail page ✓`);
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await sleep(18000);
           await dismissResultsInfoPopup(page);
-          return 'direct-bare-name';
+          return 'direct-search-detail';
         }
-        // Landed on results — try to click the prospect's listing
+        // Landed on results list — click the prospect's listing
         const clickedFromResults = await clickListingInResultsByName(page, businessName);
         if (clickedFromResults) {
-          console.log(`   → Direct nav landed on results, clicked prospect's listing → detail ✓`);
+          console.log(`   → Search URL landed on results, clicked prospect's listing → detail ✓`);
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await sleep(18000);
           await dismissResultsInfoPopup(page);
-          return 'direct-bare-name-results-click';
+          return 'direct-search-results-click';
         }
         // Last-resort: competitor scroll
         console.warn(`   ⚠️ direct nav didn't reach detail; falling back to competitor scroll`);
