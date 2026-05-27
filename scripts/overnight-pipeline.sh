@@ -353,15 +353,25 @@ EOPY
     echo "  [audit-cache HIT] reusing $CACHED_AUDIT (< ${AUDIT_CACHE_TTL_MIN}min old)" | tee -a "$LOGFILE"
   fi
 
+  # 2026-05-27 CRITICAL BUGFIX: step-2.5 and step-3 both default to
+  # CHROME_PROFILE_DIR (inherited from the worker-level export at line ~208,
+  # `output/chrome-profile-step3-wN`). When they launch in parallel on the
+  # SAME lead, BOTH Chrome instances try to lock the same user-data-dir.
+  # Puppeteer's losing process silently fails (no findings.json written),
+  # which lets step-6 voiceover run with verified=false on all signals,
+  # so every absence-finding gate skips → the voiceover loses ~50% of its
+  # content → final video is 1:24 instead of ~2:30. Give step-2.5 its own
+  # profile dir so the two browsers don't fight.
+  STEP25_PROFILE_DIR="$(pwd)/output/chrome-profile-step25-w${WORKER_ID:-1}"
   if [ "${SERIAL_STEPS:-}" = "1" ]; then
     # Legacy sequential path — kept for emergency fallback
-    [ -z "$AUDIT_SKIP" ] && STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
+    [ -z "$AUDIT_SKIP" ] && CHROME_PROFILE_DIR="$STEP25_PROFILE_DIR" STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
     STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
   else
     # Level 0: step-2.5 || step-3 (both read only from $S2_FILTERED, no conflict)
     if [ -z "$AUDIT_SKIP" ]; then
       echo "  >> level-0 parallel: step-2.5 audit || step-3 video" | tee -a "$LOGFILE"
-      ( STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
+      ( CHROME_PROFILE_DIR="$STEP25_PROFILE_DIR" STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
       PID_25=$!
       ( STEP2_CSV="$S2_FILTERED" MAX_VIDEOS=1 node step-3-video-recorder.mjs 2>&1 | tee -a "$LOGFILE" | tail -2 ) &
       PID_3=$!
