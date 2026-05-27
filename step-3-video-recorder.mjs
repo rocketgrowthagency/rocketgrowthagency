@@ -1152,28 +1152,10 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // results list" for bare-name URLs meant deep-rank leads NEVER showed
       // their detail card. Caught reviewing XP #35.
       if (isBareNameUrl && !skipScrollAttempt) {
-        // 2026-05-27 FIX: when scroll-find failed for a top-3 lead AND the
-        // mapsUrl is bare-name (no coords), the legacy path scrolled the
-        // competitor list without ever opening the prospect's detail card.
-        // That's the root cause of Chris's "no Maps card pull-up" complaint:
-        // Fenn rank #2 → scroll-find returns topScore=0 (Maps panel rendered
-        // no a.hfpxzc anchors) → falls here → competitive list shown for the
-        // full Maps recording window. Switch to the navigateDeepRankChain
-        // pattern (phone-first URL chain) which reliably lands on the detail
-        // page even for bare-name URLs. The phone disambiguates uniquely on
-        // Google Maps so it lands directly on the prospect's listing.
-        console.log(`   → Scroll-find failed for top-3 lead with bare-name URL; trying phone-first URL chain instead of competitor scroll`);
-        const detailReached = await navigateDeepRankChain();
-        if (detailReached) {
-          await injectRankOverlay(page, businessName, rank, searchTerm);
-          await highlightBusinessOnDetailPage(page);
-          await sleep(18000);
-          await dismissResultsInfoPopup(page);
-          return 'top3-bare-name-chain';
-        }
-        // Chain exhausted — fall back to the legacy competitive-list view as
-        // last resort rather than failing the whole recording.
-        console.warn(`   ⚠️ phone-first URL chain failed for top-3 lead; falling back to competitor-list view`);
+        // Original path: scroll-find failed AND no coordinates → scroll
+        // through competitors (this only triggers for top-10 leads where
+        // scroll-find should have worked; falling through is rare).
+        console.log(`   → Scroll-find failed and Maps URL has no coords; showing competitive list.`);
         for (let i = 0; i < 6; i++) {
           await page.evaluate(() => {
             const feed = document.querySelector('div[role="feed"]') ||
@@ -1621,29 +1603,38 @@ async function recordBusinessVideos(browser, meta, mapsOut, websiteOut, mobileOu
   //     Each recording is short (~10-30s actual capture); ffmpeg encodes the
   //     stream. On 8-core M1+, this is sub-saturation.
   //
-  // Fall back to sequential via env var STEP3_SERIAL=1 if memory/CPU pressure
-  // causes issues. Sequential implementation preserved verbatim below.
-  if (process.env.STEP3_SERIAL === '1') {
-    const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
-    const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
-    const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
+  // 2026-05-27 REVERTED: within-lead Promise.all parallelism (commit 747a729)
+  // caused captureLoop frame starvation across the 3 concurrent puppeteer +
+  // ffmpeg pipelines, producing 200-800KB WebMs (vs expected 3-8MB). The final
+  // step-7 ffmpeg then `tpad=clone`'d the last frame for 90+ seconds, making
+  // the video show the static intro overlay for most of its duration. Back to
+  // SEQUENTIAL recordings within a lead — they produce reliable full-content
+  // WebMs every time. Cross-lead parallelism (WORKER_COUNT>1) is the real
+  // efficiency win and is preserved separately.
+  //
+  // Opt-IN parallel via STEP3_PARALLEL=1 if/when CPU + memory headroom lets it
+  // work; off by default.
+  if (process.env.STEP3_PARALLEL === '1') {
+    const [mapsOk, websiteOk, mobileOk] = await Promise.all([
+      recordDesktopMapsVideo(browser, meta, mapsOut).catch((e) => {
+        console.error(`   ❌ desktop Maps recording threw: ${e.message || e}`);
+        return false;
+      }),
+      recordDesktopWebsiteVideo(browser, meta, websiteOut).catch((e) => {
+        console.error(`   ❌ desktop Website recording threw: ${e.message || e}`);
+        return false;
+      }),
+      recordMobileVideo(browser, meta, mobileOut).catch((e) => {
+        console.error(`   ❌ mobile recording threw: ${e.message || e}`);
+        return false;
+      }),
+    ]);
     return { mapsOk, websiteOk, mobileOk };
   }
 
-  const [mapsOk, websiteOk, mobileOk] = await Promise.all([
-    recordDesktopMapsVideo(browser, meta, mapsOut).catch((e) => {
-      console.error(`   ❌ desktop Maps recording threw: ${e.message || e}`);
-      return false;
-    }),
-    recordDesktopWebsiteVideo(browser, meta, websiteOut).catch((e) => {
-      console.error(`   ❌ desktop Website recording threw: ${e.message || e}`);
-      return false;
-    }),
-    recordMobileVideo(browser, meta, mobileOut).catch((e) => {
-      console.error(`   ❌ mobile recording threw: ${e.message || e}`);
-      return false;
-    }),
-  ]);
+  const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
+  const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
+  const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
   return { mapsOk, websiteOk, mobileOk };
 }
 
