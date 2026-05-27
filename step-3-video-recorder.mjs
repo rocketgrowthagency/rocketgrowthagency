@@ -1037,15 +1037,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // list instead of jumping to the detail page. Lat/lng disambiguates.
     // Memory: feedback_maps_card_visibility_rules.md Rule 3.5 + 3.6.
     function buildDeepRankFallbackUrls() {
-      // 2026-05-19 (rev6): try a CHAIN of URLs, phone-first. Phone numbers
-      // uniquely identify Maps listings, so a phone-search lands directly on
-      // the detail page even for generic business names. If no phone
-      // available OR phone-search fails, fall back to name+city, then name.
+      // 2026-05-27 LOCKED RULE (feedback_maps_card_open_algorithm.md): NEVER
+      // use a phone-number URL in the chain — phone-search puts the phone
+      // number into the visible Maps search bar (`7147369000`) which looks
+      // creepy and unprofessional to the prospect watching the video. Use
+      // ONLY name-based URLs: name+city first (most-likely-unique), then
+      // bare name as last resort. Both keep the search bar showing the
+      // business name, not the phone number.
       const urls = [];
-      const phone = (meta.phone || '').trim().replace(/[^\d+]/g, '');
-      if (phone && phone.length >= 7) {
-        urls.push(`https://www.google.com/maps/search/${encodeURIComponent(phone)}`);
-      }
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
       urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`);
       if (businessName) {
