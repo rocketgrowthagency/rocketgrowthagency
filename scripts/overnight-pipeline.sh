@@ -117,6 +117,10 @@ echo "Step-2 CSV: $LATEST_S2" | tee -a "$LOGFILE"
 # === For each emailable lead, run individual chain ===
 DEPLOYED_URLS=()
 FAILED_LEADS=()
+# Tier 2 batched-deploy queue (locked 2026-05-27) — collect slugs to deploy
+# to Netlify in a single end-of-run action instead of per-lead.
+PENDING_DEPLOY_SLUGS=()
+PENDING_DEPLOY_NAMES=()
 
 python3 <<EOPY > /tmp/emailable_leads.txt
 import csv
@@ -351,26 +355,56 @@ EOPY
   ACTUAL_SLUG=$(ls "output/landing-pages/v/" 2>/dev/null | grep -F "$(echo $SLUG_PATTERN | cut -c1-10)" | head -1)
 
   if [ -n "$ACTUAL_SLUG" ] && [ -d "output/landing-pages/v/$ACTUAL_SLUG" ]; then
-    # rsync + deploy
+    # Per-lead: rsync landing page contents into the website repo. Defer the
+    # netlify deploy + git commit to ONE batched action at end-of-run (Tier 2
+    # locked 2026-05-27). Per-lead deploy was ~30s × N leads = ~15 min wasted
+    # per 48-lead run on duplicate Netlify CDN propagation. Batch deploy =
+    # ~1 min total. Per-lead git commits are still slow (verification-gate
+    # hooks run on each), so we batch those too.
     DST="$WEBSITE_DIR/v/$ACTUAL_SLUG"
     mkdir -p "$DST"
     rsync -a --delete "output/landing-pages/v/$ACTUAL_SLUG/" "$DST/"
-    cd "$WEBSITE_DIR"
-    git add "v/$ACTUAL_SLUG" && git commit -m "Overnight deploy: $BIZ_NAME" 2>&1 | tee -a "$LOGFILE" | tail -2
-    netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Production deploy|rocketgrowth" | head -2
-    cd "$SCRAPER_DIR"
-    # step-8 publish
+    PENDING_DEPLOY_SLUGS+=("$ACTUAL_SLUG")
+    PENDING_DEPLOY_NAMES+=("$BIZ_NAME")
+
+    # step-8 publish to Airtable — keep per-lead so the lead immediately
+    # becomes eligible for tomorrow's 7am cron. Cheap (~3s/lead).
     STEP2_CSV="$S2_FILTERED" node step-8-publish-to-airtable.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
-    # Re-run build-video-landing to patch Video URL — scoped via BUILD_ONLY_SLUG
+    # Re-run build-video-landing to patch the Lead's Video URL with the live
+    # URL (this writes to Airtable, not Netlify) — scoped via BUILD_ONLY_SLUG
     BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
 
     DEPLOYED_URLS+=("$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/")
-    echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"
+    echo "  ✓ STAGED: $BIZ_NAME (deploy batched to end-of-run)" | tee -a "$LOGFILE"
+    echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"  # keep marker for grep idempotency
   else
     FAILED_LEADS+=("$BIZ_NAME|landing page not built")
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
   fi
 done < /tmp/emailable_leads.txt
+
+# === Tier 2 (locked 2026-05-27) — BATCHED end-of-run deploy ===
+# Replace per-lead `git commit` + `netlify deploy --prod` (~30s/lead × N) with
+# one final git commit + one final netlify deploy. Netlify's CDN
+# invalidation/propagation only runs once per deploy, so running it 30x is
+# pure waste. Same end-state for the user.
+if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ]; then
+  echo "" | tee -a "$LOGFILE"
+  echo "============================================" | tee -a "$LOGFILE"
+  echo ">>> Batched deploy: ${#PENDING_DEPLOY_SLUGS[@]} new landing pages" | tee -a "$LOGFILE"
+  echo "============================================" | tee -a "$LOGFILE"
+  cd "$WEBSITE_DIR"
+  for slug in "${PENDING_DEPLOY_SLUGS[@]}"; do
+    git add "v/$slug" 2>&1 | tee -a "$LOGFILE" | tail -2
+  done
+  COMMIT_MSG="Overnight deploy batch: ${#PENDING_DEPLOY_NAMES[@]} new videos ($(date +%Y-%m-%d))"
+  git commit -m "$COMMIT_MSG" 2>&1 | tee -a "$LOGFILE" | tail -3
+  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Production deploy|rocketgrowth|Deployed" | head -3
+  cd "$SCRAPER_DIR"
+else
+  echo "" | tee -a "$LOGFILE"
+  echo ">>> No new landing pages to deploy this run" | tee -a "$LOGFILE"
+fi
 
 # === Write morning report ===
 TIME_END=$(date +%H:%M)
