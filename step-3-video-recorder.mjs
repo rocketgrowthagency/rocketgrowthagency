@@ -1580,9 +1580,45 @@ async function recordMobileVideo(browser, meta, outputPath) {
 }
 
 async function recordBusinessVideos(browser, meta, mapsOut, websiteOut, mobileOut) {
-  const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
-  const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
-  const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
+  // 2026-05-27 Tier 3 #10: parallel within-lead recordings. The 3 recordings
+  // (desktop Maps, desktop Website, mobile) each open their own browser page,
+  // record independently, and close. They share the same Chrome process but
+  // not the same page. Sequential = ~120s/lead. Parallel = ~45s/lead.
+  //
+  // Risks managed:
+  //   - Each `await browser.newPage()` returns a fresh page; setViewport is
+  //     per-page so the desktop+mobile viewports don't collide.
+  //   - Cookies/localStorage are shared across pages in the same browser
+  //     context. None of our recordings mutate cookies in a way that affects
+  //     the others — Maps doesn't need any auth, websites are public, mobile
+  //     hits the same website (cookie continuity is fine).
+  //   - CPU pressure from 3 concurrent screencast encoders is the real cost.
+  //     Each recording is short (~10-30s actual capture); ffmpeg encodes the
+  //     stream. On 8-core M1+, this is sub-saturation.
+  //
+  // Fall back to sequential via env var STEP3_SERIAL=1 if memory/CPU pressure
+  // causes issues. Sequential implementation preserved verbatim below.
+  if (process.env.STEP3_SERIAL === '1') {
+    const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
+    const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
+    const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
+    return { mapsOk, websiteOk, mobileOk };
+  }
+
+  const [mapsOk, websiteOk, mobileOk] = await Promise.all([
+    recordDesktopMapsVideo(browser, meta, mapsOut).catch((e) => {
+      console.error(`   ❌ desktop Maps recording threw: ${e.message || e}`);
+      return false;
+    }),
+    recordDesktopWebsiteVideo(browser, meta, websiteOut).catch((e) => {
+      console.error(`   ❌ desktop Website recording threw: ${e.message || e}`);
+      return false;
+    }),
+    recordMobileVideo(browser, meta, mobileOut).catch((e) => {
+      console.error(`   ❌ mobile recording threw: ${e.message || e}`);
+      return false;
+    }),
+  ]);
   return { mapsOk, websiteOk, mobileOk };
 }
 
