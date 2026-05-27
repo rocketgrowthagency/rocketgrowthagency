@@ -287,11 +287,28 @@ async function main() {
   }
   const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  const mp4s = await findMp4s();
+  let mp4s = await findMp4s();
   if (!mp4s.length) {
     console.log("[build-landing] no MP4s found in", STEP7_DIR);
     return;
   }
+
+  // Tier 1 #1 (2026-05-26): per-lead scoping. When BUILD_ONLY_SLUG is set,
+  // iterate only that one slug's manifest instead of rebuilding all 130+
+  // landing pages every loop iteration. Wired into overnight-pipeline.sh
+  // so each per-lead step-7 call rebuilds just the current lead. Cuts
+  // ~25 min per 48-lead run. Empty/unset = legacy behavior (build all).
+  const ONLY_SLUG = (process.env.BUILD_ONLY_SLUG || "").trim();
+  if (ONLY_SLUG) {
+    const before = mp4s.length;
+    mp4s = mp4s.filter((v) => parseFilename(v.file).slug === ONLY_SLUG);
+    console.log(`[build-landing] BUILD_ONLY_SLUG=${ONLY_SLUG} filtered ${before} → ${mp4s.length} manifests`);
+    if (!mp4s.length) {
+      console.log(`[build-landing] no MP4 matched slug "${ONLY_SLUG}" — exiting clean`);
+      return;
+    }
+  }
+
   console.log(`[build-landing] found ${mp4s.length} videos to process`);
 
   ensureDir(LANDING_OUT_DIR);
