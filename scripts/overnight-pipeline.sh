@@ -60,33 +60,59 @@ echo ">>> bounce recovery (queued-recovery → recovered OR no-replacement-found
 node scripts/recover-bounced-emails.mjs 2>&1 | tee -a "$LOGFILE" | tail -10
 echo "" | tee -a "$LOGFILE"
 
+# === Tier 1 #3 (locked 2026-05-26) — Cache step-1 + step-2 master CSVs for 12hr ===
+# When a restart happens within 12 hours of a fresh scrape, both step-1 (Maps
+# scrape, ~10 min) and master step-2 (email scrape, ~5 min) re-run from scratch
+# under the prior logic. This eats ~15 min per restart for zero new info. The
+# CACHE_TTL_MIN check below skips both if a recent CSV for the same search-
+# query slug exists. Combined with the idempotency guard (line ~117), this
+# makes pause/resume effectively free instead of expensive. Empirical baseline:
+# 8.5hr/48-lead run (2026-05-26 Electricians-in-Long-Beach). See
+# project_pending_tasks.md P1.
+SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+CACHE_TTL_MIN=${CACHE_TTL_MIN:-720}  # 720 min = 12 hr
+CACHED_S1=$(find "output/Step 1" -name "*${SLUG}*-[step-1].csv" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
+CACHED_S2=$(find "output/Step 2" -name "*${SLUG}*-[step-2].csv" -mmin "-${CACHE_TTL_MIN}" 2>/dev/null | head -1)
+SKIP_SCRAPE=""
+if [ -n "$CACHED_S1" ] && [ -n "$CACHED_S2" ]; then
+  echo ">>> CACHE HIT — using cached Step 1 + Step 2 CSVs (<${CACHE_TTL_MIN}min old)" | tee -a "$LOGFILE"
+  echo "    Step-1: $CACHED_S1" | tee -a "$LOGFILE"
+  echo "    Step-2: $CACHED_S2" | tee -a "$LOGFILE"
+  LATEST_S1="$CACHED_S1"
+  LATEST_S2="$CACHED_S2"
+  SKIP_SCRAPE=1
+fi
+
 # === Step 1: scrape ===
 # PRODUCTION mode — uses step-1's default TARGET_UNIQUE_PLACES=55 to scrape
 # the full first page of Maps results, not a test-mode 5-cap. Memory:
 # feedback_overnight_autonomous_workflow.md (locked 2026-05-21 after Chris
 # caught us running in test mode and producing only 4 videos overnight).
 # To run smaller batch for testing: TARGET_UNIQUE_PLACES=5 ./overnight-pipeline.sh ...
-echo ">>> step-1 scrape (production — full default ~55 leads)" | tee -a "$LOGFILE"
-SEARCH_QUERY="$SEARCH_QUERY" node step-1-maps-scraper.cjs --skip-freshness 2>&1 | tee -a "$LOGFILE"
+if [ -z "$SKIP_SCRAPE" ]; then
+  echo ">>> step-1 scrape (production — full default ~55 leads)" | tee -a "$LOGFILE"
+  SEARCH_QUERY="$SEARCH_QUERY" node step-1-maps-scraper.cjs --skip-freshness 2>&1 | tee -a "$LOGFILE"
 
-# === Determine the latest CSV ===
-LATEST_S1=$(ls -t "output/Step 1/"*"-[step-1].csv" | head -1)
+  # === Determine the latest CSV ===
+  LATEST_S1=$(ls -t "output/Step 1/"*"-[step-1].csv" | head -1)
+fi
 echo "Step-1 CSV: $LATEST_S1" | tee -a "$LOGFILE"
 
 # === Build vertical benchmark if missing ===
-SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
 BENCHMARK_FILE="data/vertical-benchmarks/${SLUG}.json"
 if [ ! -f "$BENCHMARK_FILE" ]; then
   echo ">>> Building vertical benchmark" | tee -a "$LOGFILE"
   node scripts/build-vertical-benchmark.mjs "$SEARCH_QUERY" 2>&1 | tee -a "$LOGFILE"
 fi
 
-# === Step 2: email scrape ===
-echo "" | tee -a "$LOGFILE"
-echo ">>> step-2 email scrape" | tee -a "$LOGFILE"
-node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"
-
-LATEST_S2=$(ls -t "output/Step 2/"*"-[step-2].csv" | head -1)
+# === Step 2: email scrape (master) ===
+if [ -z "$SKIP_SCRAPE" ]; then
+  echo "" | tee -a "$LOGFILE"
+  echo ">>> step-2 email scrape" | tee -a "$LOGFILE"
+  node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"
+  LATEST_S2=$(ls -t "output/Step 2/"*"-[step-2].csv" | head -1)
+fi
+echo "Step-2 CSV: $LATEST_S2" | tee -a "$LOGFILE"
 
 # === For each emailable lead, run individual chain ===
 DEPLOYED_URLS=()
@@ -156,11 +182,24 @@ keep = [r for r in rows if r['Business Name'] == "$BIZ_NAME"]
 with open("$S1_FILTERED", 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=fn)
     w.writeheader(); w.writerows(keep)
-print(f"  wrote {len(keep)} rows")
+print(f"  wrote {len(keep)} step-1 rows")
 EOPY
 
-  touch "$S1_FILTERED"
-  node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE" | tail -3
+  # Tier 1 #2 (locked 2026-05-26): the master step-2 (line ~88) already
+  # populated email for every emailable lead in this run. Instead of re-running
+  # step-2-email-scraper for a single row (~10s × N leads = ~5-8min waste per
+  # run), filter the master step-2 CSV in-place. Same output, ~0s.
+  python3 <<EOPY 2>&1 | tee -a "$LOGFILE"
+import csv
+with open("$LATEST_S2") as f:
+    rows = list(csv.DictReader(f))
+    fn = list(rows[0].keys()) if rows else []
+keep = [r for r in rows if r.get('Business Name') == "$BIZ_NAME"]
+with open("$S2_FILTERED", 'w', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=fn)
+    w.writeheader(); w.writerows(keep)
+print(f"  wrote {len(keep)} step-2 rows (filtered from master, no re-scrape)")
+EOPY
 
   # Chain steps
   STEP2_CSV="$S2_FILTERED" node step-2.5-audit.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
