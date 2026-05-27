@@ -314,14 +314,18 @@ async function main() {
     const tmpFiles = [];
     try {
       if (!manifest && pair.format === 'split') {
-        // 3-webm, no audio manifest — convert each at natural duration then concat
+        // 3-webm, no audio manifest — convert each at natural duration then concat.
+        // 2026-05-27 Tier 2.6: parallelize the 3 transcodes (independent files,
+        // independent outputs). Sequential ~15-20s; parallel ~7s.
         const mapsTmp = path.join(COMBINED_DIR, `${base}_maps_tmp.mp4`);
         const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
         const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
         tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
-        await runFFmpeg(['-y','-i',pair.mapsPath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mapsTmp]);
-        await runFFmpeg(['-y','-i',pair.websitePath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',websiteTmp]);
-        await runFFmpeg(['-y','-i',pair.mobilePath,'-vf','fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mobileSegTmp]);
+        await Promise.all([
+          runFFmpeg(['-y','-i',pair.mapsPath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mapsTmp]),
+          runFFmpeg(['-y','-i',pair.websitePath,'-vf','fps=30,scale=1280:720:flags=lanczos,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',websiteTmp]),
+          runFFmpeg(['-y','-i',pair.mobilePath,'-vf','fps=30,scale=390:720:flags=lanczos:force_original_aspect_ratio=decrease,pad=390:720:(ow-iw)/2:(oh-ih)/2:color=white,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,setsar=1,format=yuv420p','-an','-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-r','30','-movflags','+faststart',mobileSegTmp]),
+        ]);
         await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
         console.log(`  ✓ Combined (no-manifest concat, 3-webm) video saved: ${outCombined}`);
       } else if (!manifest && pair.format === 'legacy') {
@@ -357,9 +361,13 @@ async function main() {
         const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
         tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
 
-        await sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true);
-        await sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true);
-        await sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false);
+        // 2026-05-27 Tier 2.6: parallelize the 3 sliceAndPad ops (independent
+        // inputs/outputs; concat below needs all 3 done before running).
+        await Promise.all([
+          sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true),
+          sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true),
+          sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false),
+        ]);
         await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
         console.log(`  ✓ Combined (strict-sync, 3-webm) video saved: ${outCombined}`);
       } else if (manifest && pair.format === 'legacy') {
@@ -383,9 +391,12 @@ async function main() {
           const websiteTmp = path.join(COMBINED_DIR, `${base}_website_tmp.mp4`);
           const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
           tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
-          await sliceAndPad(pair.desktopPath, 0, desktopMeta.mapsToWebsiteTransitionSeconds, mapsTargetSec, mapsTmp, true);
-          await sliceAndPad(pair.desktopPath, desktopMeta.mapsToWebsiteTransitionSeconds, null, manifest.segments.website.durationSeconds, websiteTmp, true);
-          await sliceAndPad(pair.mobilePath, 0, null, manifest.segments.mobile.durationSeconds, mobileSegTmp, false);
+          // 2026-05-27 Tier 2.6: parallelize legacy 1-webm slice+pad ops.
+          await Promise.all([
+            sliceAndPad(pair.desktopPath, 0, desktopMeta.mapsToWebsiteTransitionSeconds, mapsTargetSec, mapsTmp, true),
+            sliceAndPad(pair.desktopPath, desktopMeta.mapsToWebsiteTransitionSeconds, null, manifest.segments.website.durationSeconds, websiteTmp, true),
+            sliceAndPad(pair.mobilePath, 0, null, manifest.segments.mobile.durationSeconds, mobileSegTmp, false),
+          ]);
           await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
           console.log(`  ✓ Combined (strict-sync, legacy 1-webm) video saved: ${outCombined}`);
         } else {
