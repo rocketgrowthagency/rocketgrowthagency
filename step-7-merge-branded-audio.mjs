@@ -199,8 +199,11 @@ async function main() {
     const audioPath = path.join(AUDIO_DIR, audioFile);
     const subtitlePath = path.join(SUBTITLE_DIR, `${baseNoRetry}.srt`);
     const outMp4 = path.join(FINAL_DIR, `${baseNoRetry}.mp4`);
-    const videoDuration = await getDurationSeconds(brandedPath);
-    const audioDuration = await getDurationSeconds(audioPath);
+    // 2026-05-27: parallel ffprobe — two independent duration lookups.
+    const [videoDuration, audioDuration] = await Promise.all([
+      getDurationSeconds(brandedPath),
+      getDurationSeconds(audioPath),
+    ]);
     if (audioDuration < 1) throw new Error(`Audio too short or invalid: ${audioPath}`);
     const TAIL_PADDING_SEC = 0.6; // holds CTA logo on screen through outro
     const targetDuration = audioDuration + TAIL_PADDING_SEC;

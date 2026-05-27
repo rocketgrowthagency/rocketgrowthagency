@@ -333,8 +333,11 @@ async function main() {
         const desktopTmp = path.join(COMBINED_DIR, `${base}_desktop_tmp.mp4`);
         const mobileTmp = path.join(COMBINED_DIR, `${base}_mobile_tmp.mp4`);
         tmpFiles.push(desktopTmp, mobileTmp);
-        await makeDesktopTmp(pair.desktopPath, desktopTmp);
-        await makeMobileTmp(pair.mobilePath, mobileTmp);
+        // 2026-05-27 Tier 2.6: parallelize the 2 transcodes.
+        await Promise.all([
+          makeDesktopTmp(pair.desktopPath, desktopTmp),
+          makeMobileTmp(pair.mobilePath, mobileTmp),
+        ]);
         await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
         console.log(`  ✓ Combined (no-manifest concat, legacy) video saved: ${outCombined}`);
       } else if (manifest && pair.format === 'split') {
@@ -400,8 +403,11 @@ async function main() {
           await concatThree(mapsTmp, websiteTmp, mobileSegTmp, outCombined);
           console.log(`  ✓ Combined (strict-sync, legacy 1-webm) video saved: ${outCombined}`);
         } else {
-          await makeDesktopTmp(pair.desktopPath, desktopTmp);
-          await makeMobileTmp(pair.mobilePath, mobileTmp);
+          // 2026-05-27 Tier 2.6: parallelize.
+          await Promise.all([
+            makeDesktopTmp(pair.desktopPath, desktopTmp),
+            makeMobileTmp(pair.mobilePath, mobileTmp),
+          ]);
           await concatDesktopAndMobile(desktopTmp, mobileTmp, outCombined);
           console.log(`  ✓ Combined (legacy concat) video saved: ${outCombined}`);
         }
