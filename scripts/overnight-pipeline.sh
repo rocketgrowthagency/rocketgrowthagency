@@ -266,11 +266,26 @@ EOPY
   STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
   STEP2_CSV="$S2_FILTERED" MAX_MERGES=1 node step-7-merge-branded-audio.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
 
-  # Build landing
-  node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$BIZ_SLUG" | head -1
+  # Tier 1 #1 (locked 2026-05-27): scope build-video-landing to JUST this lead's
+  # slug. The slug must match what step-7's MP4 filename contains, which is
+  # `slugify(BusinessName, {strict:true})` — bash equivalents drift (e.g., `&`
+  # → `-` in bash but `-and-` in slugify, unicode handling differs). Safest:
+  # READ the actual Step 7 MP4 filename and extract the slug from it. If
+  # step-7 didn't produce an MP4, BUILD_ONLY_SLUG falls back to empty →
+  # legacy behavior preserved.
+  STEP7_MP4=$(ls -t "output/Step 7 (Final Merge MP4)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp4 2>/dev/null | head -1)
+  if [ -n "$STEP7_MP4" ]; then
+    BUILD_SLUG=$(basename "$STEP7_MP4" .mp4 | sed 's/^[0-9]*_//')
+    echo "  Tier 1 #1: scoping landing build to slug=${BUILD_SLUG}" | tee -a "$LOGFILE"
+  else
+    BUILD_SLUG=""
+  fi
+
+  # Build landing (scoped if we discovered a slug, otherwise legacy iterate-all)
+  BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "${BUILD_SLUG:-$BIZ_SLUG}" | head -1
 
   # Find the deployed slug
-  DEPLOY_SLUG=$(node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
+  DEPLOY_SLUG=$(BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
 
   # Find a slug matching this business
   SLUG_PATTERN=$(echo "$BIZ_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
@@ -287,8 +302,8 @@ EOPY
     cd "$SCRAPER_DIR"
     # step-8 publish
     STEP2_CSV="$S2_FILTERED" node step-8-publish-to-airtable.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
-    # Re-run build-video-landing to patch Video URL
-    node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
+    # Re-run build-video-landing to patch Video URL — scoped via BUILD_ONLY_SLUG
+    BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
 
     DEPLOYED_URLS+=("$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/")
     echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"

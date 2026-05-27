@@ -1829,29 +1829,44 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   const segmentNames = ['intro', 'maps', 'website', 'mobile', 'outro'];
   const manifest = { businessName: name, slug, segments: {} };
 
-  for (const segName of segmentNames) {
+  // Tier 2 #8 (locked 2026-05-27) — parallel TTS. The 5 segments are
+  // independent (no shared state, no order dependency until concat). Running
+  // them sequentially burned ~80s/lead × 48 leads = ~64 min/run waste. Parallel
+  // = ~20s/lead total. Same guardrails (per-segment max duration) run after
+  // all 5 complete; first violation throws and the lead fails fast (current
+  // sequential behavior also threw on first violation; ordering of error vs
+  // file-on-disk doesn't matter since concat hasn't happened yet).
+  //
+  // OpenAI rate limit: gpt-4o-mini-tts default = 500 RPM tier 1+; 5 parallel
+  // requests per lead is well below. If you ever process multiple leads
+  // concurrently (future Tier 3), revisit this.
+  console.log(`   → Generating ${segmentNames.length} segments in parallel`);
+  const results = await Promise.all(segmentNames.map(async (segName) => {
     const segPath = path.join(segmentDir, `${segName}.mp3`);
-    console.log(`   → Generating ${segName}: ${segPath}`);
     await ttsToFile(segments[segName], segPath);
     const duration = await getMp3DurationSeconds(segPath);
+    console.log(`     ✓ ${segName} = ${duration.toFixed(2)}s`);
+    return { segName, segPath, duration };
+  }));
+
+  // ============================================================
+  // POST-TTS DURATION GUARDRAILS (per-segment + total)
+  // Each cap mirrors the locked decision in memory. Pipeline halts on
+  // violation. NEVER relax without explicit Chris approval + memory update.
+  // ============================================================
+  // Per-segment audio length caps. Each cap = locked-design upper bound +
+  // ~2s buffer for natural OpenAI TTS pacing variance. Word-count guard at
+  // script-build time enforces the design target; this is the post-TTS
+  // safety net for runaway durations.
+  // 2026-05-18: intro raised 16→18s after LA Roof Masters intro came in
+  // at 16.78s and tripped the guard, silently failing 6 of 12 Roofers renders.
+  const SEGMENT_MAX = { intro: 18, maps: 52, website: 47, mobile: 42, outro: 32 };
+  for (const { segName, segPath, duration } of results) {
     manifest.segments[segName] = {
       file: path.basename(segPath),
       durationSeconds: duration,
       text: segments[segName],
     };
-    console.log(`     ✓ ${segName} = ${duration.toFixed(2)}s`);
-    // ============================================================
-    // POST-TTS DURATION GUARDRAILS (per-segment + total)
-    // Each cap mirrors the locked decision in memory. Pipeline halts on
-    // violation. NEVER relax without explicit Chris approval + memory update.
-    // ============================================================
-    // Per-segment audio length caps. Each cap = locked-design upper bound +
-    // ~2s buffer for natural OpenAI TTS pacing variance. Word-count guard at
-    // script-build time enforces the design target; this is the post-TTS
-    // safety net for runaway durations.
-    // 2026-05-18: intro raised 16→18s after LA Roof Masters intro came in
-    // at 16.78s and tripped the guard, silently failing 6 of 12 Roofers renders.
-    const SEGMENT_MAX = { intro: 18, maps: 52, website: 47, mobile: 42, outro: 32 };
     if (SEGMENT_MAX[segName] && duration > SEGMENT_MAX[segName]) {
       throw new Error(
         `[step-6 GUARDRAIL] ${segName} audio is ${duration.toFixed(2)}s (max ${SEGMENT_MAX[segName]}s). ` +
