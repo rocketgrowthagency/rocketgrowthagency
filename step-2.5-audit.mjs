@@ -21,7 +21,11 @@ const AUDIT_ROOT = path.join(process.cwd(), 'output', 'Step 2.5 (Audit)');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 const CHROME_PATH =
   process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const CHROME_PROFILE_DIR = path.join(process.cwd(), 'output', 'chrome-profile-step3');
+// 2026-05-27 (Tier 2 #7 prep): CHROME_PROFILE_DIR override via env var for
+// cross-lead worker isolation. Defaults to legacy hardcoded path.
+// The -gbp / -search-kp suffixes are appended below for the audit sub-profiles.
+const CHROME_PROFILE_DIR = process.env.CHROME_PROFILE_DIR
+  || path.join(process.cwd(), 'output', 'chrome-profile-step3');
 const NAV_TIMEOUT = 45000;
 
 function ensureDir(dir) {

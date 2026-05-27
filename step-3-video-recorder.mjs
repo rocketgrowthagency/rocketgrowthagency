@@ -13,7 +13,12 @@ puppeteer.use(stealth);
 
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
-const CHROME_PROFILE_DIR = path.join(process.cwd(), 'output', 'chrome-profile-step3');
+// 2026-05-27 (Tier 2 #7 prep): CHROME_PROFILE_DIR override via env var, so the
+// cross-lead worker pool can assign each worker a unique profile dir and
+// avoid Chrome's user-data-dir lock contention. Default unchanged.
+// Set CHROME_PROFILE_DIR=output/chrome-profile-step3-w1 (etc) per worker.
+const CHROME_PROFILE_DIR = process.env.CHROME_PROFILE_DIR
+  || path.join(process.cwd(), 'output', 'chrome-profile-step3');
 const DEBUG_DIR = path.join(process.cwd(), 'output', 'debug', 'step3');
 const STEP2_CSV_OVERRIDE = process.env.STEP2_CSV || '';
 const CHROME_PATH =
