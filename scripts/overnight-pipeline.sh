@@ -418,13 +418,18 @@ EOPY
     STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
     STEP2_CSV="$S2_FILTERED" MAX_MERGES=1 node step-7-merge-branded-audio.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
   else
-    # Level 1: step-6 (needs step-2.5 output) || step-4 (needs step-3 WebMs)
-    echo "  >> level-1 parallel: step-6 voiceover || step-4 combine" | tee -a "$LOGFILE"
-    ( STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5 ) &
-    PID_6=$!
-    ( STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1 ) &
-    PID_4=$!
-    wait $PID_6 $PID_4
+    # 2026-05-27 A/V SYNC FIX: step-4 (combine) MUST run AFTER step-6 (voice-
+    # over). Step-4 reads step-6's audio manifest to determine per-segment
+    # durations (intro/maps/website/mobile/outro) and trims each WebM to match
+    # its corresponding voiceover length. Without strict sync, step-4 falls
+    # into the "no-manifest concat" path which uses the natural WebM duration
+    # — that produces audio bleed across video segment boundaries (maps voice
+    # bleeds into website video, mobile voice bleeds into outro). Chris caught
+    # this on New Systems v5. The ~30s parallelism win is not worth the A/V
+    # desync. Make level-1 sequential.
+    echo "  >> level-1 sequential: step-6 voiceover → step-4 combine (strict A/V sync)" | tee -a "$LOGFILE"
+    STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
+    STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
 
     # Level 2: step-5 (needs step-4 + step-6) || step-6b (needs step-6)
     echo "  >> level-2 parallel: step-5 branding || step-6b subtitles" | tee -a "$LOGFILE"
