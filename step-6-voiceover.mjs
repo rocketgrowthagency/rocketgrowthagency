@@ -1147,7 +1147,7 @@ function scoreMapsFindings(audit, top3Stats, record) {
     Number.isFinite(_rrResponses) && _rrResponses > 0
   ) {
     const responseRate = _rrResponses / _rrParsed;
-    if (responseRate < 0.5) {
+    if (responseRate < 0.7) {
       const pct = Math.round(responseRate * 100);
       out.push({
         key: 'ownerResponseRateGap',

@@ -379,6 +379,31 @@ async function dismissCommonCookieBanner(page) {
       `,
     }).catch(() => {});
 
+    // Text-based fallback for custom-implemented privacy banners that don't
+    // match any known vendor class/id. Walks all reasonably-sized containers
+    // and hides any whose innerText contains the universal "we value your
+    // privacy" / "third-party tools" / "do not sell" signature. Caught on
+    // Dewey Pest 2026-05-28 — their banner was a custom DIV with no
+    // identifying class.
+    await page.evaluate(() => {
+      const SIG = /we value your privacy|do not sell or share my personal information|do not sell my personal information|process(es)? personal data|third[- ]party tools process/i;
+      const containers = Array.from(document.querySelectorAll('div, aside, section, footer, header'));
+      for (const el of containers) {
+        // Skip large containers (would hide the whole page) — banners are
+        // typically small overlays, < ~600px tall and bounded width
+        const r = el.getBoundingClientRect();
+        if (r.height > 600 || r.width > 800 || r.height === 0) continue;
+        const txt = (el.innerText || '').slice(0, 600);
+        if (!txt || txt.length > 1500) continue;
+        if (SIG.test(txt)) {
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+        }
+      }
+    }).catch(() => {});
+
     // 2026-05-28: close auto-opened hamburger menus / nav drawers that
     // overlay content during recording. Many SPA sites auto-open their mobile
     // nav on certain viewports OR puppeteer triggers a focus event that opens
