@@ -1131,6 +1131,32 @@ function scoreMapsFindings(audit, top3Stats, record) {
     console.log('[step-6 unverified-skip] ownerResponse finding suppressed: ownerResponseCount=0 but reviewsParsedCount missing/zero (cards not actually scraped).');
   }
 
+  // 2026-05-28 NEW: ownerResponseRateGap — fires when the owner DOES respond
+  // to some reviews but the response rate is below the top-performer threshold
+  // (Whitespark 2026: top 10% of GBP profiles respond to 80%+ of reviews).
+  // Complements the count=0 finding above — that one fires for "never
+  // responded", this fires for "responds sometimes but not enough".
+  //
+  // GATED on reviewsParsedCount >= 3 so we're computing a meaningful rate (not
+  // 0/1 or 1/2 noise). Same verification family as ownerResponse: requires
+  // actual review cards scraped before claiming anything about response rate.
+  const _rrParsed = audit?.gbp?.reviewsParsedCount;
+  const _rrResponses = audit?.gbp?.ownerResponseCount;
+  if (
+    Number.isFinite(_rrParsed) && _rrParsed >= 3 &&
+    Number.isFinite(_rrResponses) && _rrResponses > 0
+  ) {
+    const responseRate = _rrResponses / _rrParsed;
+    if (responseRate < 0.5) {
+      const pct = Math.round(responseRate * 100);
+      out.push({
+        key: 'ownerResponseRateGap',
+        score: 25,
+        finding: `you've responded to roughly ${pct} percent of your recent reviews — Whitespark 2026 found top performers respond to 80 percent or more, and review-response rate is a measurable signal Google reads inside the review-quality block`,
+      });
+    }
+  }
+
   // PRIORITY 26 (NEW): GBP description missing or thin (M1) — DISABLED 2026-05-13
   // Initial extractor produced false negatives — Express returned descriptionLength=0
   // when the GBP actually had a multi-sentence description. Needs ground-truth

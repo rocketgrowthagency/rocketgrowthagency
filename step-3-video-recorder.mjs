@@ -345,6 +345,78 @@ async function dismissCommonCookieBanner(page) {
       return false;
     });
     await sleep(700);
+
+    // 2026-05-28: CSS-hide remaining cookie / GDPR / CCPA overlays that didn't
+    // dismiss via a button click (e.g., banners with only an "X" close, or
+    // CCPA-style "Do Not Sell" panels that don't have an accept button).
+    // Caught on Dewey Pest & Termite Control — "We value your privacy" panel
+    // stayed visible during the website segment recording.
+    await page.addStyleTag({
+      content: `
+        /* Known cookie banner / consent provider IDs and classes */
+        #onetrust-banner-sdk, #onetrust-consent-sdk,
+        .cky-consent-container, .cky-overlay,
+        #cookie-law-info-bar, #cookie-notice,
+        .cc-window, .cookieinfo-close, .cc-banner,
+        .ot-sdk-row, .ot-sdk-container,
+        #CybotCookiebotDialog, .CybotCookiebotDialog,
+        #cookieConsent, .cookie-consent,
+        #osano-cm-window, .osano-cm-window,
+        [id*="cookie-banner" i], [class*="cookie-banner" i],
+        [id*="cookie-notice" i], [class*="cookie-notice" i],
+        [id*="cookie-popup" i], [class*="cookie-popup" i],
+        [id*="gdpr-banner" i], [class*="gdpr-banner" i],
+        [id*="gdpr-notice" i], [class*="gdpr-notice" i],
+        [id*="ccpa-banner" i], [class*="ccpa-banner" i],
+        [class*="privacy-banner" i], [class*="privacy-popup" i],
+        [aria-label*="cookie" i][role="dialog"],
+        [aria-label*="privacy" i][role="dialog"] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+      `,
+    }).catch(() => {});
+
+    // 2026-05-28: close auto-opened hamburger menus / nav drawers that
+    // overlay content during recording. Many SPA sites auto-open their mobile
+    // nav on certain viewports OR puppeteer triggers a focus event that opens
+    // them. Caught on Dewey Pest — the desktop site's nav menu was open
+    // during the website segment recording.
+    await page.evaluate(() => {
+      // Common "open/expanded" indicator classes — set aria-expanded=false +
+      // remove "open" / "expanded" / "active" classes from nav containers
+      const navOpenSelectors = [
+        '.menu-open', '.nav-open', '.is-menu-open', '.mobile-menu-open',
+        '[class*="menu-open" i]', '[class*="nav-open" i]',
+        '[aria-expanded="true"][aria-controls*="menu" i]',
+        '[aria-expanded="true"][aria-controls*="nav" i]',
+      ];
+      for (const sel of navOpenSelectors) {
+        document.querySelectorAll(sel).forEach((el) => {
+          el.classList.remove('menu-open', 'nav-open', 'is-menu-open', 'mobile-menu-open', 'open', 'expanded', 'active');
+          el.setAttribute('aria-expanded', 'false');
+        });
+      }
+      // Forcibly hide any element matching open-nav drawer selectors that
+      // appear OVER the page content
+      const drawerSelectors = [
+        '.mobile-menu.open', '.nav-drawer.open', '.menu-drawer.open',
+        '[class*="drawer" i][class*="open" i]',
+        '[class*="offcanvas" i][class*="open" i]',
+        '[class*="offcanvas" i][class*="show" i]',
+        '[id*="mobile-menu" i][aria-expanded="true"]',
+      ];
+      for (const sel of drawerSelectors) {
+        document.querySelectorAll(sel).forEach((el) => {
+          el.style.display = 'none';
+        });
+      }
+      // Also remove body-level scroll-lock classes that fixed nav menus often add
+      document.body.classList.remove('menu-open', 'nav-open', 'no-scroll', 'overflow-hidden', 'modal-open');
+    }).catch(() => {});
+    await sleep(300);
   } catch {}
 }
 
