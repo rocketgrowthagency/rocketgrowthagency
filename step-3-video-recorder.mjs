@@ -993,12 +993,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     });
     if (afterMapsNavigation) await afterMapsNavigation();
 
-    // Inject rank-context overlay IMMEDIATELY after recorder starts so the
-    // prospect's rank is visible from frame 1 of the Maps segment, regardless
-    // of how long the search/scroll/click takes. The interval inside the
-    // overlay self-reinjects every 500ms, so it survives navigations and
-    // Maps' SPA re-renders.
-    await injectRankOverlay(page, businessName, rank, searchTerm);
+    // 2026-05-27 REMOVED early injectRankOverlay call. Previously the rank
+    // overlay was injected immediately after recorder start so it was visible
+    // from frame 1 — but this also made it appear during the search-results
+    // list view BEFORE the prospect's detail card opens. Chris flagged this
+    // as visually confusing: the rank overlay should only appear once the
+    // viewer is looking at the prospect's actual Maps detail card.
+    //
+    // Each detail-page-landed code path below already calls injectRankOverlay
+    // immediately upon reaching the detail page. The 500ms self-reinjection
+    // then keeps it visible for the rest of the recording.
 
     if (query) {
       await waitForMapsResults(page);
