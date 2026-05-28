@@ -884,6 +884,7 @@ async function auditMobile(browser, websiteUrl, business) {
       //     suppresses them when widget present but CTA presence unclear.
       // Memory: feedback_audit_chat_widget_detection.md.
       const CHAT_WIDGET_SELECTORS = [
+        // Classic chat widget vendors
         'iframe[name*="intercom" i]', 'iframe[id*="intercom" i]',
         'iframe[id*="drift" i]', 'iframe[id*="tawk" i]',
         'iframe[id*="tidio" i]', 'iframe[id*="hubspot-conv" i]',
@@ -896,6 +897,32 @@ async function auditMobile(browser, websiteUrl, business) {
         '[class*="chat-widget" i]', '[id*="chat-widget" i]',
         '[class*="chatbot" i]', '[class*="chat-button" i]',
         '[class*="hs-shadow" i]',
+        // 2026-05-28 — AI chatbot widgets caught missing from Royal Moving
+        // (chatbase) and similar Gen-AI providers increasingly common on
+        // local-business sites. The clickToText finding was firing on Royal
+        // Moving because we didn't detect their chatbase widget; Chris
+        // caught the false claim.
+        'iframe[src*="chatbase.co" i]', '[id*="chatbase" i]', '[class*="chatbase" i]',
+        'iframe[src*="voiceflow" i]', '[id*="voiceflow" i]',
+        'iframe[src*="botpress" i]', '[id*="botpress" i]',
+        'iframe[src*="landbot" i]', '[id*="landbot" i]',
+        'iframe[src*="botsonic" i]', '[id*="botsonic" i]',
+        'iframe[src*="manychat" i]', '[id*="manychat" i]',
+        'iframe[src*="servicebell" i]', '[id*="servicebell" i]',
+        'iframe[src*="kommunicate" i]', '[id*="kommunicate" i]',
+        'iframe[src*="chaport" i]', '[id*="chaport" i]',
+        'iframe[src*="jivosite" i]', '[id*="jivosite" i]', '[class*="jivosite" i]',
+        'iframe[src*="smartsupp" i]', '[id*="smartsupp" i]',
+        'iframe[src*="userlike" i]', '[id*="userlike" i]',
+        'iframe[src*="freshchat" i]', '[class*="freshchat" i]',
+        'iframe[src*="zendesk" i]', '[id*="zendesk" i]', '[id*="zE-widget" i]',
+        'iframe[src*="gorgias" i]', '[id*="gorgias" i]',
+        'iframe[src*="liveperson" i]', '[class*="lp-widget" i]',
+        'iframe[src*="chatra" i]', '[id*="chatra" i]',
+        // Generic launcher/bubble patterns used by many AI chatbots
+        '[id*="chat-launcher" i]', '[class*="chat-launcher" i]',
+        '[id*="chat-bubble" i]', '[class*="chat-bubble" i]',
+        '[id*="chat-frame" i]', '[class*="chat-frame" i]',
       ];
       let chatWidgetEl = null;
       for (const sel of CHAT_WIDGET_SELECTORS) {

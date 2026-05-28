@@ -1013,7 +1013,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await clearAndType(page, inputSelector, query);
       await page.keyboard.press('Enter');
       await waitForMapsResults(page);
-      await sleep(3500);
+      // 2026-05-28: replace fixed 3500ms sleep with explicit wait for at least
+      // one result anchor to render. The fixed sleep was sometimes too short
+      // (anchors still hydrating) which caused scrollUntilVisibleAndClick to
+      // see 0 anchors and bail to URL-nav fallback — losing the blue-line
+      // highlight and native card-expand animation. waitForSelector with a
+      // soft timeout gives anchors as much or as little time as they need.
+      await page.waitForSelector('a.hfpxzc', { timeout: 10000 }).catch(() => {});
+      await sleep(1500); // small settle after anchors appear (covers SPA layout shift)
       await dismissResultsInfoPopup(page);
     }
 
