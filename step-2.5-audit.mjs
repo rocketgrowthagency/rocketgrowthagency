@@ -929,6 +929,32 @@ async function auditMobile(browser, websiteUrl, business) {
         const el = document.querySelector(sel);
         if (el) { chatWidgetEl = el; break; }
       }
+      // 2026-05-28: many AI chatbot widgets (Chatbase, Voiceflow, Botpress,
+      // Botsonic, etc.) inject their iframe asynchronously after their embed
+      // script loads. Puppeteer may scan the DOM before the iframe is
+      // attached, so the iframe selectors above miss them. Use the presence
+      // of the <script> tag from a known chatbot vendor's CDN as a reliable
+      // proxy — if the script is loaded, the widget IS configured on this
+      // site regardless of whether the iframe has hydrated yet.
+      if (!chatWidgetEl) {
+        const CHATBOT_SCRIPT_HOSTS = [
+          'chatbase.co', 'voiceflow.com', 'botpress.com', 'botpress.cloud',
+          'landbot.io', 'botsonic.com', 'manychat.com', 'servicebell.com',
+          'kommunicate.io', 'chaport.com', 'jivosite.com', 'jivo.chat',
+          'smartsupp.com', 'userlike.com', 'freshchat.com', 'freshworks.com',
+          'zendesk.com', 'zopim.com', 'gorgias.chat', 'liveperson.net',
+          'chatra.io', 'tidio.co', 'drift.com', 'intercom.io', 'tawk.to',
+          'crisp.chat', 'olark.com', 'hubspot.com',
+        ];
+        const scripts = Array.from(document.querySelectorAll('script[src]'));
+        for (const s of scripts) {
+          const src = (s.getAttribute('src') || '').toLowerCase();
+          if (CHATBOT_SCRIPT_HOSTS.some((h) => src.includes(h))) {
+            chatWidgetEl = s;
+            break;
+          }
+        }
+      }
       // Generic popup catch — covers custom widgets like the Santa Monica
       // Roofing Company "Kevin Price - Owner / Need Help?" panel that doesn't
       // use a known chat framework.
