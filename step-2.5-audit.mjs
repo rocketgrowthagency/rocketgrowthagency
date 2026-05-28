@@ -1827,11 +1827,18 @@ async function auditGbp(_, gbpUrl, business) {
             findings.descriptionVerified = false;
             console.log('[kp-diag] description scrape unreliable — got Google UI boilerplate:', kpData.description.slice(0, 100), '— marking descriptionVerified=false to suppress potentially-false absence finding.');
           } else {
-            // No description text in KP at all — accept this as a verified
-            // empty (real businesses can have empty GBP description).
+            // 2026-05-27 FIX: when the KP scrape returns NO description text
+            // at all, we can't tell whether (a) the business genuinely has
+            // empty description OR (b) our extraction heuristic missed it.
+            // Per feedback_verification_gates_must_be_strict.md, treat this
+            // as UN-verified (descriptionVerified=false) so step-6 won't fire
+            // the "GBP description is empty" absence finding. Confirmed
+            // 2026-05-27 on Fenn Termite — Chris caught a false claim of
+            // empty description when Fenn's GBP does have one.
             findings.description = '';
             findings.descriptionLength = 0;
-            findings.descriptionVerified = true;
+            findings.descriptionVerified = false;
+            console.log('[kp-diag] no description text extracted from KP — marking descriptionVerified=false to suppress potentially-false absence finding.');
           }
 
           // Posts — timestamps now arrive as [{text, daysAgo}] supporting both
