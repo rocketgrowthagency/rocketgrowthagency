@@ -1013,20 +1013,25 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await clearAndType(page, inputSelector, query);
       await page.keyboard.press('Enter');
       await waitForMapsResults(page);
-      // 2026-05-28: replace fixed 3500ms sleep with explicit wait for at least
-      // one result anchor to render. The fixed sleep was sometimes too short
-      // (anchors still hydrating) which caused scrollUntilVisibleAndClick to
-      // see 0 anchors and bail to URL-nav fallback — losing the blue-line
-      // highlight and native card-expand animation. waitForSelector with a
-      // soft timeout gives anchors as much or as little time as they need.
-      await page.waitForSelector('a.hfpxzc', { timeout: 10000 }).catch(() => {});
-      await sleep(1500); // small settle after anchors appear (covers SPA layout shift)
-      await dismissResultsInfoPopup(page);
+      // 2026-05-28 (REV 2): waitForSelector with TIGHT timeout (3s, was 10s).
+      // If a.hfpxzc anchors haven't shown in 3 seconds they're not going to
+      // show — Google's serving us a layout variant without that class. Bail
+      // FAST so the URL-nav fallback fires earlier in the Maps recording,
+      // leaving more time for the prospect's detail card to be on screen
+      // before the segment ends. Chris's locked priority: processing time +
+      // detail card visibility > intermittent native-expand UX.
+      await page.waitForSelector('a.hfpxzc', { timeout: 3000 }).catch(() => {});
+      await sleep(500); // brief settle (was 1500)
     }
 
     if (businessName && !skipScrollAttempt) {
       console.log(`   → Scrolling to find and click ${businessName} (rank #${rank ?? '?'})...`);
-      const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded + 2);
+      // 2026-05-28: cap scroll attempts at 2 (was scrollsNeeded+2 which could
+      // be 6-10). When scroll-find is going to fail (intermittent Google DOM
+      // variant), repeating it 6 times wastes ~25s of recording on empty
+      // top5 logs. Bail fast to URL fallback so the prospect's detail card
+      // gets more on-screen time before the segment ends. Per locked priority.
+      const clicked = await scrollUntilVisibleAndClick(page, businessName, 2);
       if (clicked) {
         // Re-inject overlay after navigation (page.goto wipes the DOM)
         await injectRankOverlay(page, businessName, rank, searchTerm);
