@@ -276,7 +276,17 @@ process_one_lead() {
   echo "============================================" | tee -a "$LOGFILE"
 
   # Filter to single-lead CSV
-  BIZ_SLUG=$(echo "$BIZ_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//' | cut -c1-40)
+  # 2026-05-28 SLUG FIX: must match slugify(name, {strict:true}) used by
+  # step-3/6/7/build-video-landing — otherwise the per-lead directory uses one
+  # slug while the MP4 filename + Airtable Video URL use a different one.
+  # Caught 2026-05-28 on "Royal Moving & Storage Marina Del Rey" — bash dir
+  # used "royal-moving-storage..." (& dropped), slugify used "royal-moving-and-
+  # storage..." (& → "and"). Airtable URL pointed to slugify slug, but the
+  # build-video-landing source-lookup failed → silent miss → no v/ subdir
+  # deployed to website → recipient saw RGA homepage fallback.
+  # Fix: substitute '&' with ' and ' BEFORE the sed pass so both paths produce
+  # the same slug. Note: keep cut -c1-40 to bound directory name length.
+  BIZ_SLUG=$(echo "$BIZ_NAME" | sed 's/&/ and /g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//' | cut -c1-40)
   S1_BASENAME=$(basename "$LATEST_S1" "-[step-1].csv")
   S1_FILTERED="output/Step 1/${DATE_STAMP}_${BIZ_SLUG}-only-${S1_BASENAME#${DATE_STAMP}_}-[step-1].csv"
   S2_FILTERED="output/Step 2/${DATE_STAMP}_${BIZ_SLUG}-only-${S1_BASENAME#${DATE_STAMP}_}-[step-2].csv"
