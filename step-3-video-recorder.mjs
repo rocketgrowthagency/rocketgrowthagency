@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import csvParser from 'csv-parser';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -1527,22 +1527,55 @@ function createScreencastRecorder(page, outputPath, viewport) {
         return;
       }
 
-      // Safety timeout — if ffmpeg hangs and never closes, force kill after 90s
+      // Safety timeout — if ffmpeg hangs and never closes, force kill after
+      // 180s. Bumped from 90s on 2026-05-28 after Dewey's website recording
+      // hit the cap → corrupt webm with N/A duration → step-4 strict-sync
+      // misaligned audio over the next segment. Heavier sites (lots of fonts,
+      // big DOM) need more time for libvpx to finalize the container.
+      //
+      // CRITICAL: also delete the partial webm. A force-killed encoder leaves
+      // a file with an un-finalized container (N/A duration). step-4 would
+      // happily consume it and produce a video where the audio segment plays
+      // over a frozen / wrong frame. Better to drop the lead at the deploy
+      // gate (which counts files) than to ship a broken video.
       const killTimer = setTimeout(() => {
-        console.warn(`[recorder] ffmpeg did not close after 90s — force killing`);
+        console.warn(`[recorder] ffmpeg did not close after 180s — force killing + deleting partial webm`);
         try { ffmpeg.kill('SIGKILL'); } catch {}
+        try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
         resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_timeout' });
-      }, 90_000);
+      }, 180_000);
 
       ffmpeg.once('close', (code) => {
         clearTimeout(killTimer);
         const exists = fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0;
+        // Even when ffmpeg exits cleanly, the webm container is only fully
+        // finalized if the matroska/webm seek index was written. The most
+        // reliable cheap check: spawn ffprobe and verify a numeric duration.
+        // If duration is "N/A", delete the file so the deploy gate drops the
+        // lead instead of step-4 consuming a malformed segment.
+        let containerOk = true;
+        if (code === 0 && exists) {
+          try {
+            const probe = spawnSync('ffprobe', [
+              '-v', 'error',
+              '-show_entries', 'format=duration',
+              '-of', 'csv=p=0',
+              outputPath,
+            ], { encoding: 'utf8' });
+            const dur = (probe.stdout || '').trim();
+            if (!dur || dur === 'N/A' || !Number.isFinite(Number(dur))) {
+              containerOk = false;
+              console.warn(`[recorder] webm container finalize check FAILED (duration=${dur || 'empty'}) — deleting ${path.basename(outputPath)}`);
+              try { fs.unlinkSync(outputPath); } catch {}
+            }
+          } catch {}
+        }
         resolve({
-          ok: code === 0 && exists && frameCount > 0,
+          ok: code === 0 && exists && frameCount > 0 && containerOk,
           frameCount,
           captureCount,
           code,
-          error: stderrChunks.join('').trim(),
+          error: containerOk ? stderrChunks.join('').trim() : 'webm_container_unfinalized',
         });
       });
 
