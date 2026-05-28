@@ -474,9 +474,26 @@ EOPY
   # Find the deployed slug
   DEPLOY_SLUG=$(BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
 
-  # Find a slug matching this business
-  SLUG_PATTERN=$(echo "$BIZ_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
-  ACTUAL_SLUG=$(ls "output/landing-pages/v/" 2>/dev/null | grep -F "$(echo $SLUG_PATTERN | cut -c1-10)" | head -1)
+  # 2026-05-28 BUG FIX: this used to derive its own SLUG_PATTERN from BIZ_NAME
+  # (dropping '&' entirely) then fuzzy-grep the first 10 chars to find a
+  # directory in output/landing-pages/v/. For names sharing a prefix with
+  # another deployed lead (e.g. "Royal Moving & Storage Marina Del Rey" vs
+  # "Royal Moving & Storage Culver City"), grep returned BOTH directories
+  # and `head -1` picked the wrong one alphabetically. Result: Marina Del
+  # Rey content rsync'd into Culver City's directory, overwriting Culver
+  # City's index.html. Marina Del Rey's actual dir was never deployed.
+  #
+  # Fix: prefer an EXACT match against the build-video-landing slug
+  # (BUILD_SLUG, parsed from the Step 7 MP4 filename earlier). Fall back to
+  # BIZ_SLUG (now identical to slugify after the f2966dc fix). Both produce
+  # the slugify-equivalent slug with '&' → 'and'.
+  if [ -n "$BUILD_SLUG" ] && [ -d "output/landing-pages/v/$BUILD_SLUG" ]; then
+    ACTUAL_SLUG="$BUILD_SLUG"
+  elif [ -d "output/landing-pages/v/$BIZ_SLUG" ]; then
+    ACTUAL_SLUG="$BIZ_SLUG"
+  else
+    ACTUAL_SLUG=""
+  fi
 
   if [ -n "$ACTUAL_SLUG" ] && [ -d "output/landing-pages/v/$ACTUAL_SLUG" ]; then
     # Per-lead: rsync landing page contents into the website repo. Defer the
