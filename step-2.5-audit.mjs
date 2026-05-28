@@ -1777,7 +1777,15 @@ async function auditGbp(_, gbpUrl, business) {
             }
           }
 
-          return { onPanel: true, titleText, overlapRatio, description, timestamps };
+          // 2026-05-27 Detect whether Google's KP rendered a Posts/Updates
+          // section heading. If present BUT timestamps=0, our extractor likely
+          // missed the date format (don't claim absence). If absent AND no
+          // timestamps, we can verify no-posts.
+          const pageText = (document.body && document.body.innerText || '').toLowerCase();
+          const POSTS_HEADING_RE = /\b(?:recent updates from|updates from|google posts|latest posts|see all posts|by owner)\b/;
+          const postsSectionDetected = POSTS_HEADING_RE.test(pageText);
+
+          return { onPanel: true, titleText, overlapRatio, description, timestamps, postsSectionDetected };
         }, business.name || '');
 
         if (kpData.onPanel) {
@@ -1841,15 +1849,30 @@ async function auditGbp(_, gbpUrl, business) {
             console.log('[kp-diag] no description text extracted from KP — marking descriptionVerified=false to suppress potentially-false absence finding.');
           }
 
-          // Posts — timestamps now arrive as [{text, daysAgo}] supporting both
+          // Posts — timestamps arrive as [{text, daysAgo}] supporting both
           // relative ("3 weeks ago") and absolute ("Oct 23, 2023") formats.
+          // 2026-05-27 TIGHTENED (same class as description fix): only mark
+          // postsVerified=true when EITHER (a) we extracted at least one
+          // timestamp, OR (b) we did NOT detect a posts section heading (i.e.
+          // KP genuinely has no Posts area = verified absence). If a Posts
+          // section IS detected but no timestamps extracted, our extractor
+          // missed the date format — suppress the absence finding.
           findings.hasPosts = kpData.timestamps.length > 0;
-          findings.postsVerified = true;
           if (kpData.timestamps.length > 0) {
+            // We found timestamps → posts exist, verified true.
+            findings.postsVerified = true;
             const minDays = Math.min(...kpData.timestamps.map((t) => t.daysAgo));
             findings.lastPostDaysAgo = Math.round(minDays);
+          } else if (kpData.postsSectionDetected) {
+            // Posts section exists but we couldn't parse any timestamp →
+            // extractor is unreliable for this lead. Suppress the finding.
+            findings.postsVerified = false;
+            console.log('[kp-diag] posts section detected but 0 timestamps extracted — marking postsVerified=false to suppress potentially-false absence finding.');
+          } else {
+            // No timestamps AND no posts section → verified absence.
+            findings.postsVerified = true;
           }
-          console.log(`  [kp-diag] Search KP confirmed for "${kpData.titleText}" (overlap=${(kpData.overlapRatio * 100).toFixed(0)}%): description=${findings.descriptionLength}chars, posts=${kpData.timestamps.length} (mostRecent=${findings.lastPostDaysAgo}d)`);
+          console.log(`  [kp-diag] Search KP confirmed for "${kpData.titleText}" (overlap=${(kpData.overlapRatio * 100).toFixed(0)}%): description=${findings.descriptionLength}chars, posts=${kpData.timestamps.length} (sectionDetected=${kpData.postsSectionDetected}, verified=${!!findings.postsVerified}, mostRecent=${findings.lastPostDaysAgo}d)`);
         } else {
           console.warn(`  [kp-diag] Search knowledge panel skipped: ${kpData.reason || 'unknown'}`);
         }
