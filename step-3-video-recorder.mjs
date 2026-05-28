@@ -1167,20 +1167,30 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         const searchNavUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}`;
         console.log(`   → Scroll-find returned no anchors; navigating to name+city search URL: ${searchNavUrl}`);
         try {
-          await page.goto(searchNavUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+          // 2026-05-27 use networkidle2 + waitForSelector to ensure Maps fully
+          // renders the prospect's detail panel (with business name, rating,
+          // photos) BEFORE the hold-on-detail sleep. Previously 'domcontentloaded'
+          // fired too early — h1 existed but business data hadn't populated, so
+          // the recording captured a mostly-empty Maps skeleton.
+          await page.goto(searchNavUrl, { waitUntil: 'networkidle2', timeout: MAPS_NAV_TIMEOUT_MS });
         } catch (e) {
           console.warn(`   ⚠️ direct navigation failed (${e.message || e}); falling back to competitor scroll`);
         }
-        await sleep(3000);
-        const onDetail = await page.evaluate(() => {
+        // Wait for h1.DUwDvf (business-name heading on detail page) to exist
+        // AND contain non-empty text. Single business names typically resolve
+        // direct-to-detail; ambiguous names land on a results panel.
+        const detailH1Loaded = await page.waitForFunction(() => {
           const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
           return !!(h1 && (h1.textContent || '').trim().length > 0);
-        }).catch(() => false);
-        if (onDetail) {
-          console.log(`   → Search URL resolved directly to Fenn's detail page ✓`);
+        }, { timeout: 8000 }).then(() => true).catch(() => false);
+        // Even after h1 loads, give Google ~2s to render photos/rating chips.
+        await sleep(2000);
+        if (detailH1Loaded) {
+          console.log(`   → Search URL resolved directly to Fenn's detail page ✓ (h1 loaded)`);
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
-          await sleep(18000);
+          // Hold 16s on the detail page so the recording captures it cleanly.
+          await sleep(16000);
           await dismissResultsInfoPopup(page);
           return 'direct-search-detail';
         }
