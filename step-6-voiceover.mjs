@@ -873,6 +873,7 @@ function scoreMapsFindings(audit, top3Stats, record) {
     : (top3Stats?.ratingAvg ?? (top3Stats?.ratingMin + top3Stats?.ratingMax) / 2);
 
   // Review count vs peer-set average (rank-aware)
+  const isTop3 = Number.isFinite(leadRank) && leadRank >= 1 && leadRank <= 3;
   if (top3Stats && Number.isFinite(reviews) && compareReviewsAvg > 0) {
     if (reviews < compareReviewsAvg * 0.6) {
       const ratio = reviews / compareReviewsAvg;
@@ -884,12 +885,23 @@ function scoreMapsFindings(audit, top3Stats, record) {
         finding: `you have ${reviews} Google reviews; ${labelClause} — Google weighs total review volume heavily for Maps ranking, and that gap of about ${Math.max(1, compareReviewsAvg - reviews)} reviews is one of the most direct levers you have`,
       });
     } else if (compare && leadRank === 1 && reviews > compareReviewsAvg * 2) {
-      // NEW: defense framing for rank #1 — show the review-count BUFFER over chasers
-      // so we can frame as "you're ahead, here's the gap to defend".
+      // Defense framing for rank #1 — show the review-count BUFFER over chasers.
       out.push({
         key: 'reviewBufferLeader',
         score: 60,
         finding: `you have ${reviews} Google reviews to your closest competitors' ${compareReviewsAvg} — a buffer of about ${reviews - compareReviewsAvg}. Maintain that lead with steady review velocity or they'll close the gap`,
+      });
+    } else if (isTop3 && compare && (leadRank === 2 || leadRank === 3) && reviews < compareReviewsAvg) {
+      // 2026-05-27 NEW — top-3 defense lever for rank #2/#3 when behind the
+      // leader by ANY margin (not just <60%). The existing reviewCount finding
+      // only fires at <60% of peer avg — too conservative for top-3 leads where
+      // even a small review gap to #1 is a real competitive vulnerability.
+      // For Fenn (rank #2, 106 reviews vs #1 at 112), this fires the right
+      // vulnerability framing instead of leaving Maps empty.
+      out.push({
+        key: 'reviewGapToLeader',
+        score: 45,
+        finding: `you have ${reviews} Google reviews vs ${compareLabel} at ${compareReviewsAvg} — closing that ${compareReviewsAvg - reviews}-review gap is the most direct lever for ${leadRank === 2 ? 'pushing into #1' : 'climbing past #2'}, since review volume is one of the highest-weighted Maps ranking signals`,
       });
     }
   }
@@ -904,8 +916,28 @@ function scoreMapsFindings(audit, top3Stats, record) {
         score: 30,
         finding: `you're at ${rating} stars; ${labelClause} — even a small rating gap costs you Maps ranking position`,
       });
+    } else if (isTop3 && compare && (leadRank === 2 || leadRank === 3) && rating < compareRatingAvg) {
+      // 2026-05-27 NEW — top-3 defense lever for rank #2/#3 when rating is below
+      // the leader by ANY margin (not just 0.15). For Fenn at 4.7 vs #1's 4.8,
+      // even a 0.1 gap is a real toss-up factor at the top-3 boundary.
+      out.push({
+        key: 'ratingGapToLeader',
+        score: 28,
+        finding: `your rating sits at ${rating} stars vs ${compareLabel} at ${compareRatingAvg.toFixed(1)} — Google's review-signals carry roughly 20 percent of local-pack ranking weight, and a 0.${Math.round((compareRatingAvg - rating) * 10)}-star delta can decide the #${leadRank === 2 ? '1 vs #2' : '2 vs #3'} toss-up`,
+      });
     }
   }
+
+  // 2026-05-27 REMOVED — secondaryCategoriesTop3 finding violated the locked
+  // verification-gate rule (feedback_verification_gates_must_be_strict.md).
+  // The wording "Adding 2-3 secondary categories" implies the lead doesn't
+  // already have them — an absence claim we can't verify. categoriesCount is
+  // null in our audit (extractor was disabled per project_video_data_accuracy.md
+  // because it inflated phrase variants), so we have no way to confirm.
+  // Caught 2026-05-27 on Fenn Termite — Chris flagged the finding because a
+  // 70+ year established business almost certainly has 2-3 secondaries set
+  // already. Re-enable only when a reliable categoriesCount extractor ships
+  // AND we gate the finding on `categoriesCount < N`.
 
   // NOTE: NAP is intentionally NOT in Maps findings.
   // It's a website-vs-listing comparison, so it belongs in the Website section
