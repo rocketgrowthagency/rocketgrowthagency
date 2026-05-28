@@ -510,7 +510,15 @@ function scoreWebsiteFindings(audit, businessName) {
   // PRIORITY 1.5 (NEW): No local-trust signal visible in the hero — neither
   // phone NOR address visible above the fold. Relaxed 2026-05-21 from
   // requiring BOTH to requiring EITHER (per Chris design question).
-  if (webVerified && w.napAboveFold === false) {
+  // 2026-05-27 TIGHTENED: only fire when we ALSO couldn't find ANY phone on
+  // the page (distinctSitePhoneCount === 0). The viewport-based above-fold
+  // detection (step-2.5 line 369-392) is unreliable for sites with absolute-
+  // positioned headers, lazy-loaded heroes, or unusual nav structures —
+  // Chris caught a false claim on New Systems Exterminating where the phone
+  // was clearly in the header (visible in browser) but the scraper said
+  // above-fold=false. If we found a phone anywhere on the page, suppress
+  // this finding rather than risk a false absence claim.
+  if (webVerified && w.napAboveFold === false && (w.distinctSitePhoneCount || 0) === 0) {
     out.push({ key: 'napAboveFold', score: 1.5, finding: `neither your phone number nor your address is visible above the fold — visitors and Google's local trust signals look for at least one NAP element in the hero, not buried in the footer` });
   }
   // PRIORITY 1.3 (NEW 2026-05-14): Domain doesn't match business BRAND name.
