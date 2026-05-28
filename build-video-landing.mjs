@@ -366,9 +366,15 @@ async function main() {
       ? airtableVariant === 'top-3'
       : (Number.isFinite(effectiveRank) && effectiveRank >= 1 && effectiveRank <= 3);
 
-    // Recorded date — prefer Airtable's Date Scraped, fall back to today.
-    const dateScraped = airtableRecord?.fields?.["Date Scraped"];
-    const recordedDateObj = dateScraped ? new Date(dateScraped) : new Date();
+    // 2026-05-27 FIX: use today's date (when the video is being rendered)
+    // instead of Airtable's "Date Scraped" field. The Airtable field reflects
+    // the FIRST scrape (when the lead was added) and goes stale on every re-
+    // render. The video's audit data (website, mobile, GBP findings) is
+    // always FRESH from the most recent step-2.5 + step-3 run, so the
+    // displayed date should match that, not the original scrape date.
+    // Chris caught this 2026-05-27 — Fenn + New Systems both said "May 26"
+    // when the re-render happened on May 27.
+    const recordedDateObj = new Date();
     const recordedDate = recordedDateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const expiryDateObj = new Date(recordedDateObj);
     expiryDateObj.setDate(expiryDateObj.getDate() + 30);
