@@ -1171,12 +1171,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         const searchNavUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}`;
         console.log(`   → Scroll-find returned no anchors; navigating to name+city search URL: ${searchNavUrl}`);
         try {
-          // 2026-05-27 use networkidle2 + waitForSelector to ensure Maps fully
-          // renders the prospect's detail panel (with business name, rating,
-          // photos) BEFORE the hold-on-detail sleep. Previously 'domcontentloaded'
-          // fired too early — h1 existed but business data hadn't populated, so
-          // the recording captured a mostly-empty Maps skeleton.
-          await page.goto(searchNavUrl, { waitUntil: 'networkidle2', timeout: MAPS_NAV_TIMEOUT_MS });
+          // 2026-05-27 use domcontentloaded (not networkidle2). Google Maps is
+          // an SPA with persistent background traffic — networkidle2 NEVER
+          // fires, so the page.goto hangs for the full 90s timeout while
+          // captureLoop continues recording the BEFORE-navigation list view.
+          // domcontentloaded fires fast; we then rely on the waitForFunction
+          // below to confirm the detail page actually rendered.
+          await page.goto(searchNavUrl, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
         } catch (e) {
           console.warn(`   ⚠️ direct navigation failed (${e.message || e}); falling back to competitor scroll`);
         }
