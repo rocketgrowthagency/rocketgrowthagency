@@ -636,10 +636,13 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.pageLoadSeconds = Number(((Date.now() - start) / 1000).toFixed(2));
     // Give async third-party scripts (chat widgets, sticky-CTA bars, social
     // proof injectors) time to render before evaluating. Most chat widgets
-    // (Tidio/Drift/Intercom/Tawk and custom builds) inject between 500ms-2.5s
-    // after domcontentloaded. Locked 2026-05-21 after Monkey Wrench's "Let's
-    // chat" widget was missing from the DOM at scrape time.
-    await new Promise((r) => setTimeout(r, 2500));
+    // (Tidio/Drift/Intercom/Tawk and custom builds) inject between 500ms-2.5s.
+    // 2026-05-28 BUMPED 2500 → 5000ms: AI chatbot widgets like Chatbase
+    // inject their DOM elements at ~3-4s after domcontentloaded. Caught on
+    // Royal Moving Marina Del Rey — Chatbase elements (#chatbase-bubble-button,
+    // #chatbase-message-bubbles, #chatbase-bubble-window) were absent at 2.5s
+    // but present at 4s, leading to a false "no tap-to-text" voiceover claim.
+    await new Promise((r) => setTimeout(r, 5000));
 
     const data = await page.evaluate(() => {
       const result = {
