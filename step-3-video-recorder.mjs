@@ -1528,10 +1528,11 @@ function createScreencastRecorder(page, outputPath, viewport) {
       }
 
       // Safety timeout — if ffmpeg hangs and never closes, force kill after
-      // 180s. Bumped from 90s on 2026-05-28 after Dewey's website recording
-      // hit the cap → corrupt webm with N/A duration → step-4 strict-sync
-      // misaligned audio over the next segment. Heavier sites (lots of fonts,
-      // big DOM) need more time for libvpx to finalize the container.
+      // 240s. Iterated 2026-05-28: 90s (original) → 180s (after Dewey single-
+      // lead timeout) → 240s (after Plumbers LB WC=3 batch showed 18 timeouts
+      // / 10 force-kills under concurrent encoder load). When multiple leads
+      // run in parallel, each libvpx encoder competes for CPU and can't drain
+      // its frame queue inside the prior window.
       //
       // CRITICAL: also delete the partial webm. A force-killed encoder leaves
       // a file with an un-finalized container (N/A duration). step-4 would
@@ -1539,11 +1540,11 @@ function createScreencastRecorder(page, outputPath, viewport) {
       // over a frozen / wrong frame. Better to drop the lead at the deploy
       // gate (which counts files) than to ship a broken video.
       const killTimer = setTimeout(() => {
-        console.warn(`[recorder] ffmpeg did not close after 180s — force killing + deleting partial webm`);
+        console.warn(`[recorder] ffmpeg did not close after 240s — force killing + deleting partial webm`);
         try { ffmpeg.kill('SIGKILL'); } catch {}
         try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
         resolve({ ok: false, frameCount, captureCount, error: 'ffmpeg_timeout' });
-      }, 180_000);
+      }, 240_000);
 
       ffmpeg.once('close', (code) => {
         clearTimeout(killTimer);
