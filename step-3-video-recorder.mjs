@@ -37,8 +37,13 @@ const MOBILE_USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' +
   '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 30);
-const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 33);
+// 2026-05-29: dropped default FPS 30 → 20 to relieve encoder CPU pressure
+// under WC=3. At 20 fps the video still looks smooth for prospect-facing
+// content (no fast motion), but the encoder has 33% less work per second.
+// Set STEP3_SCREENCAST_FPS=30 to restore the old default if quality
+// regresses noticeably. Memory: feedback_worker_count_concurrency_limit.md
+const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 20);
+const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 50);
 const MAPS_NAV_TIMEOUT_MS = Number(process.env.MAPS_NAV_TIMEOUT_MS || 90000);
 const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000);
 const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
@@ -1477,6 +1482,13 @@ function createScreencastRecorder(page, outputPath, viewport) {
         'ultrafast',
         '-tune',
         'zerolatency',
+        // 2026-05-29: cap each libx264 instance at 2 threads so 3 parallel
+        // encoders (WC=3) total 6 threads on a 4-core machine — over-
+        // subscribed but bounded, no one encoder monopolizes. Without this
+        // libx264 auto-detects 4 cores and three encoders try to use 12
+        // threads, starving everything else.
+        '-threads',
+        '2',
         '-b:v',
         viewport.width >= 1000 ? '2000k' : '1000k',
         '-pix_fmt',
@@ -1883,6 +1895,19 @@ async function launchBrowser() {
       // sound reaches the speakers. Our recordings don't need audio anyway.
       // See feedback-step3-scam-defense.md.
       '--mute-audio',
+      // 2026-05-29: CPU-relief flags for WC=3 on this OpenCore Haswell box.
+      // The Mac's hardware video accel is broken (videotoolbox -12908) so
+      // there's nothing to lose by disabling GPU paths Chrome would
+      // otherwise try and fall back from anyway. Frees CPU cycles for the
+      // libx264 encoders.
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--disable-features=BackForwardCache,AcceleratedVideoEncoder,AcceleratedVideoDecoder',
+      '--disable-accelerated-2d-canvas',
+      // Reduce background tab work + extension overhead
+      '--disable-background-timer-throttling=false',
+      '--disable-renderer-backgrounding',
+      '--disable-extensions',
     ],
   });
 }

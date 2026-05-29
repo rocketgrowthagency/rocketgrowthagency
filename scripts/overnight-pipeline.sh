@@ -574,6 +574,15 @@ else
     process_one_lead "$BIZ_NAME" "$NEW_ID" &
     WORKER_PIDS+=($!)
     WORKER_IDS_IN_USE+=("$NEW_ID")
+    # 2026-05-29: stagger worker startup by 20s so the heavy step-3
+    # (recording) phases don't all hit the CPU at the same moment under
+    # WC=3. Without this, three browsers all enter step-3 within ~5s of
+    # each other and the libx264 encoders contend hard. A 20s stagger
+    # spreads the encoder peaks across the run.
+    # Memory: feedback_worker_count_concurrency_limit.md
+    if [ "$WORKER_COUNT" -gt 1 ] && [ "${#WORKER_PIDS[@]}" -lt "$WORKER_COUNT" ]; then
+      sleep 20
+    fi
   done < /tmp/emailable_leads.txt
   echo "" | tee -a "$LOGFILE"
   echo ">>> Waiting for ${#WORKER_PIDS[@]} remaining worker(s) to finish..." | tee -a "$LOGFILE"
