@@ -1442,6 +1442,19 @@ function createScreencastRecorder(page, outputPath, viewport) {
     ensureDir(path.dirname(outputPath));
     if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
 
+    // 2026-05-29: swapped libvpx (vp8) → libx264 (h264 software) at Chris's
+    // request. videotoolbox (hardware h264) is unavailable on this Mac
+    // because OpenCore Legacy Patcher + macOS 15 on a 2013 Haswell GPU
+    // breaks the hardware video acceleration path (-12908 error). libx264
+    // is still software but ~3-4× faster than libvpx for finalize, so
+    // ffmpeg drains its queue much quicker under concurrent load.
+    //
+    // Container: we keep the .webm filename for downstream compatibility
+    // but force Matroska format via -f matroska. Matroska supports h264
+    // cleanly. ffmpeg downstream reads by format detection, not extension,
+    // so step-4 + step-6b continue to work unchanged. Memory:
+    // [[feedback-worker-count-concurrency-limit]] documents why we tried
+    // this.
     ffmpeg = spawn(
       'ffmpeg',
       [
@@ -1459,15 +1472,17 @@ function createScreencastRecorder(page, outputPath, viewport) {
         'pipe:0',
         '-an',
         '-c:v',
-        'libvpx',
-        '-deadline',
-        'realtime',
-        '-cpu-used',
-        '8',
+        'libx264',
+        '-preset',
+        'ultrafast',
+        '-tune',
+        'zerolatency',
         '-b:v',
-        viewport.width >= 1000 ? '1800k' : '900k',
+        viewport.width >= 1000 ? '2000k' : '1000k',
         '-pix_fmt',
         'yuv420p',
+        '-f',
+        'matroska',
         outputPath,
       ],
       { stdio: ['pipe', 'ignore', 'pipe'] }
