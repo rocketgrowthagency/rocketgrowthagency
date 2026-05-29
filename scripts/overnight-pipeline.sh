@@ -221,6 +221,13 @@ process_one_lead() {
   # Johns electric, Croff Electric) fail 3-4 times each at landing build. After
   # MAX_BUILD_FAILS attempts, scripts/mark-permanent-fail.mjs sets the lead's
   # Email Status to 'build-failed' and that's what this query catches.
+  # 2026-05-29: FORCE_RERUN=1 bypasses the idempotency skip-check. Use for
+  # comparison tests where we DELIBERATELY want to re-render already-deployed
+  # leads (e.g., WC=2 vs WC=3 quality comparison).
+  if [ "${FORCE_RERUN:-0}" = "1" ]; then
+    echo ">>> FORCE_RERUN=1 — bypassing idempotency check, will re-render every lead" | tee -a "$LOGFILE"
+    CHECK_RESULT="NO"
+  else
   CHECK_RESULT=$(AIRTABLE_API_KEY="$(grep AIRTABLE_API_KEY .env | cut -d= -f2-)" \
                  AIRTABLE_BASE_ID="$(grep AIRTABLE_BASE_ID .env | cut -d= -f2-)" \
                  BIZ_NAME_ARG="$BIZ_NAME" \
@@ -244,6 +251,7 @@ process_one_lead() {
       })
       .catch(() => console.log("ERR"));
   ' 2>/dev/null)
+  fi  # end FORCE_RERUN bypass
   if [ "$CHECK_RESULT" = "DEPLOYED" ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> SKIP (already in Airtable with Video URL): $BIZ_NAME" | tee -a "$LOGFILE"
@@ -671,7 +679,20 @@ echo "- The Apps Script \`createOutreachDrafts\` cron runs every 2hrs and picks 
 echo "" >> "$REPORT"
 echo "Full pipeline log: $LOGFILE" >> "$REPORT"
 
+# 2026-05-29: end-of-session human-audit report. For each deployed lead,
+# dumps the EXACT voiceover text per segment + raw audit signals so Chris
+# can spot-check whether the script's claims are accurate when he reviews
+# the videos in the morning. Output path is logged so he can open it
+# directly. Memory: project_video_master.md § "Recovery playbook".
+AUDIT_REPORT="/tmp/audit-report-${DATE_STAMP}-${SLUG}.md"
+if node scripts/generate-audit-report.mjs "$DATE_STAMP" "$SLUG" "$AUDIT_REPORT" 2>&1 | tee -a "$LOGFILE"; then
+  echo "" >> "$REPORT"
+  echo "## Human-audit report (for morning review)" >> "$REPORT"
+  echo "- Per-lead voiceover + raw audit signals: \`$AUDIT_REPORT\`" >> "$REPORT"
+fi
+
 echo "" | tee -a "$LOGFILE"
 echo "=== DONE ===" | tee -a "$LOGFILE"
 echo "Report: $REPORT" | tee -a "$LOGFILE"
+[ -f "$AUDIT_REPORT" ] && echo "Audit:  $AUDIT_REPORT" | tee -a "$LOGFILE"
 cat "$REPORT" | tee -a "$LOGFILE"
