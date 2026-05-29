@@ -413,6 +413,19 @@ async function main() {
         : `Currently ranking #${resolvedRank} · Outside the top 3`
       : '';
 
+    // 2026-05-29: ranking-source validation line. Without this the page just
+    // says "RANKING #N" with no evidence — prospects have to trust the
+    // number. With the validation line they can re-run the same search
+    // themselves and see for themselves. Format:
+    //   "Ranking measured from Google Maps top-10 results for this search,
+    //    recorded May 28, 2026."
+    // Falls back to a generic line if rank wasn't resolved.
+    const rankValidationLine = resolvedRank !== null && searchTerm
+      ? `Ranking measured from Google Maps top-10 results for this search, recorded ${recordedDate}.`
+      : (searchTerm
+        ? `Ranking based on Google Maps results, recorded ${recordedDate}.`
+        : `Recorded ${recordedDate}.`);
+
     fs.writeFileSync(htmlPath, renderTemplate(template, {
       BUSINESS_NAME: businessName,
       SLUG: slug,
@@ -422,6 +435,7 @@ async function main() {
       EXPIRY_DATE: expiryDate,
       EYEBROW_LABEL: eyebrowLabel,
       SEARCH_TERM: searchTerm,
+      RANK_VALIDATION_LINE: rankValidationLine,
       CACHE_VERSION: cacheVersion,
     }));
     console.log(`[build-landing] ✓ ${slug} → ${landingUrl}`);

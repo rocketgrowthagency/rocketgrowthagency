@@ -26,7 +26,14 @@ import csvParser from "csv-parser";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "output");
 const DRY = process.argv.includes("--dry-run");
-const FILE_ARG = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || "";
+// 2026-05-29: also honor STEP2_CSV env var. Without this, overnight-pipeline.sh
+// per-lead invocations (`STEP2_CSV="$S2_FILTERED" node step-8-...mjs`) were
+// silently ignoring the env var, so step-8 picked the most-recent CSV by
+// mtime — under WC=2/WC=3 parallelism that's whichever sibling lead just
+// finished, NOT the lead step-8 was supposed to publish. Result: Target
+// Plumbers' video deployed but its step-8 ran against A-1's CSV instead,
+// so Target never got an Airtable row.
+const FILE_ARG = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || process.env.STEP2_CSV || "";
 
 const PLACEHOLDER_EMAIL_PATTERNS = [
   /^user@domain\.com$/i,
