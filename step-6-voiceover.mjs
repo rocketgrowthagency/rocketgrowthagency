@@ -472,22 +472,54 @@ function scoreWebsiteFindings(audit, businessName) {
   const noUrl = !w.websiteUrl || !String(w.websiteUrl).trim();
   const isSuspect = w.suspectWebsiteMismatch === true || !!w.websiteSuspectReason;
   const isParked = w.siteLooksParked === true;
-  if (noUrl || isSuspect || isParked) {
-    const reason = noUrl
-      ? 'no-website'
-      : isParked
-        ? `parked:${w.parkedReason || 'unknown'}`
-        : `suspect:${w.websiteSuspectReason || 'unknown'}`;
+  // 2026-05-29: split the three sub-cases. The original lumped all three
+  // under one "you don't have a real first-party website" message, which
+  // was WRONG for the name-mismatch case (A-1 Performance Rooter & Plumbing
+  // has a real plumbing site at fast24hrplumber.com — they DO have a
+  // website, it just doesn't match their business name).
+  if (noUrl || isParked) {
     out.push({
       key: 'noOwnWebsite',
       score: 0,
-      reason,
+      reason: noUrl ? 'no-website' : `parked:${w.parkedReason || 'unknown'}`,
       finding: 'the single biggest blocker on your local SEO ranking right now is that you don\'t actually have a real first-party website. Your Google Business Profile is either missing a website link or pointing at a placeholder, but Google needs a real homepage to build your category relevance, schema markup, and NAP citations from. Without it you\'re handing twenty-five percent of your Maps ranking weight to competitors who do, and all your organic leads have to flow through Yelp and directory sites that take a cut',
     });
     // Hard-suppress every other website + mobile finding when this fires —
-    // they\'d be noise about a non-existent or wrong page. Caller checks for
-    // this key and uses out as-is.
+    // they'd be noise about a non-existent page. Caller checks for this
+    // key and uses out as-is.
     return out;
+  }
+  if (isSuspect) {
+    const reason = w.websiteSuspectReason || '';
+    if (/^name-mismatch:/i.test(reason)) {
+      // A-1 Performance case — real plumbing site, wrong-domain. Don't
+      // claim "no website"; instead say what's actually wrong: your
+      // domain doesn't match your business name. Do NOT return early —
+      // let the rest of the website checks run too, so we surface NAP
+      // mismatch, schema, etc. The domainNameMismatch check at the
+      // brand-token level below will also fire and provide a second
+      // angle on the same issue if the host has no brand tokens.
+      let host = '';
+      try { host = new URL(w.websiteUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+      const hostFrag = host ? ` — ${host} —` : '';
+      out.push({
+        key: 'noOwnWebsiteSuspect',
+        score: 0.2,
+        reason,
+        finding: `your business website${hostFrag} doesn't carry your business name in the domain. Google reads brand-to-domain consistency as a citation trust signal, and prospects clicking through from search see an unfamiliar URL — you're losing ranking weight AND conversion confidence to competitors whose domain matches their brand. Top performers in this space all run a matching-brand domain`,
+      });
+      // Fall through to the regular website checks (no early return).
+    } else {
+      // Aggregator / social / squatter case — keep the original wording,
+      // it's accurate here ("no real first-party website").
+      out.push({
+        key: 'noOwnWebsite',
+        score: 0,
+        reason: `suspect:${reason || 'unknown'}`,
+        finding: 'the single biggest blocker on your local SEO ranking right now is that you don\'t actually have a real first-party website. Your Google Business Profile is either missing a website link or pointing at a placeholder, but Google needs a real homepage to build your category relevance, schema markup, and NAP citations from. Without it you\'re handing twenty-five percent of your Maps ranking weight to competitors who do, and all your organic leads have to flow through Yelp and directory sites that take a cut',
+      });
+      return out;
+    }
   }
 
   // PRIORITY 1: NAP mismatch — strict (prominent-phone semantics) + toll-free / call-tracker detection.

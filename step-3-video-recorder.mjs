@@ -49,9 +49,25 @@ const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000)
 const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
 const WEBSITE_NAV_TIMEOUT_MS = Number(process.env.WEBSITE_NAV_TIMEOUT_MS || 60000);
 
-const DESKTOP_MAPS_HOLD_MS = Number(process.env.DESKTOP_MAPS_HOLD_MS || 4500);
+// 2026-05-29: bumped Maps hold 4.5s → 30s to fix Maps voiceover/visual
+// drift. Maps voiceover is typically 32–43s long (Dewey 42.8s, Target
+// Plumbers 37.5s). Previously total Maps recording = nav (~15s) + hold
+// (4.5s) ≈ 19s. Step-4 was forced to freeze the last frame for ~18s
+// while audio kept describing Maps issues — visual would drift ahead
+// to website content while audio still on Maps, or vice versa. With
+// 30s hold, total Maps recording ≈ 45s, which comfortably exceeds the
+// longest typical Maps voiceover.
+//
+// Cost: +25.5s per lead in Maps stage. At WC=2 over 8 leads that's
+// ~100s extra wall time. Acceptable trade for correct A/V sync.
+// (The ideal fix is to reorder pipeline so step-6 runs before step-3
+// and step-3 reads the manifest, but that's a bigger architectural
+// change. This bump unblocks correctness now.)
+//
+// Memory: [[project-video-master]] § "Known gaps" → Maps duration fix.
+const DESKTOP_MAPS_HOLD_MS = Number(process.env.DESKTOP_MAPS_HOLD_MS || 30000);
 const DESKTOP_WEBSITE_INTRO_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_INTRO_HOLD_MS || 7000);
-const DESKTOP_WEBSITE_EXTRA_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_EXTRA_HOLD_MS || 12000);
+const DESKTOP_WEBSITE_EXTRA_HOLD_MS = Number(process.env.DESKTOP_WEBSITE_EXTRA_HOLD_MS || 18000);
 const DESKTOP_WEBSITE_SCROLL_STEPS = Number(process.env.DESKTOP_WEBSITE_SCROLL_STEPS || 7);
 const DESKTOP_WEBSITE_SCROLL_DELTA_PX = Number(process.env.DESKTOP_WEBSITE_SCROLL_DELTA_PX || 720);
 const DESKTOP_WEBSITE_SCROLL_WAIT_MS = Number(process.env.DESKTOP_WEBSITE_SCROLL_WAIT_MS || 1200);
