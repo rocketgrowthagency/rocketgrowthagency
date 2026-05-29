@@ -70,7 +70,8 @@ import csvParser from "csv-parser";
 async function loadStep2Data() {
   const rankMap = {};
   const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)
-  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap };
+  const searchTermMap = {}; // slug → search term (so landing page can show "Audit performed for the search: X")
+  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap, searchTermMap };
   // Read CSVs newest-first by mtime, and use FIRST-WRITE-WINS so the freshest
   // scrape's rank for each business is canonical. Without this, older CSVs with
   // the same business at a different rank (different city/search term) silently
@@ -90,11 +91,13 @@ async function loadStep2Data() {
         .on('data', (row) => {
           const name = row['Business Name'] || row['name'] || '';
           const rank = parseInt(row['Map Rank'] || row['rank'] || '', 10);
+          const sterm = row['Search Term'] || row['searchTerm'] || '';
           if (name) {
             const s = slugify(name, { lower: true, strict: true });
             if (s) {
               if (!(s in nameMap)) nameMap[s] = name;
               if (Number.isFinite(rank) && !(s in rankMap)) rankMap[s] = rank;
+              if (sterm && !(s in searchTermMap)) searchTermMap[s] = sterm;
             }
           }
         })
@@ -102,7 +105,7 @@ async function loadStep2Data() {
         .on('error', resolve);
     });
   }
-  return { rankMap, nameMap };
+  return { rankMap, nameMap, searchTermMap };
 }
 
 // Prefer a clean business-name slug; fall back to filename slug.
@@ -313,7 +316,7 @@ async function main() {
 
   ensureDir(LANDING_OUT_DIR);
 
-  const { rankMap: step2Ranks, nameMap: step2Names } = await loadStep2Data();
+  const { rankMap: step2Ranks, nameMap: step2Names, searchTermMap: step2SearchTerms } = await loadStep2Data();
 
   let built = 0;
   let airtableWrites = 0;
@@ -383,7 +386,13 @@ async function main() {
     // Build the body intro from the locked Option B template:
     // "This video was created for {Business} on {Date}, based on the search '{Term}'.
     //  It covers your business across Google Maps, your website, and mobile — {variant tail}."
-    const searchTerm = airtableRecord?.fields?.["Search Term"] || '';
+    // Search term: prefer Airtable; fall back to step-2 CSV (so the landing
+    // page footer shows the real search even when Airtable lookup misses).
+    // The footer template renders `Audit performed for the search: "{SEARCH_TERM}"`
+    // — without this fallback it shows empty quotes ("") and there's nothing
+    // on the page validating the ranking claim. Caught 2026-05-28 on Target
+    // Plumbers landing.
+    const searchTerm = airtableRecord?.fields?.["Search Term"] || step2SearchTerms?.[slug] || '';
     const variantTail = isTop3
       ? `your top 3 ranking and the gaps a competitor could exploit`
       : `your current rank and the top issues holding you back from the top 3`;

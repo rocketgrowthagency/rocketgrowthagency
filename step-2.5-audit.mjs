@@ -1675,13 +1675,48 @@ async function auditGbp(_, gbpUrl, business) {
     findings.gbpSocialProfileCount = findings.gbpSocialProfiles.length;
     findings.gbpSocialProfilesVerified = !!data.gbpSocialProfilesVerified;
 
-    // Primary GBP category vs search intent — #1 local ranking factor
+    // Primary GBP category vs search intent — #1 local ranking factor.
+    //
+    // 2026-05-28: previously this used naive word-overlap between the GBP
+    // primary category and the SerpAPI listing's category text. That fired
+    // false positives like "Contractor matches Plumbers" for Target Plumbers
+    // (their SerpAPI category was "Plumbing contractor" → "contractor"
+    // substring overlap → wrong match).
+    //
+    // The correct comparison is against the vertical_benchmarks DB —
+    // categoryDistributionTop3 / majorityCategoryTop3 for that exact search.
+    // That's the empirical ground truth (what top-3 ranking businesses
+    // actually use). If the benchmark row is missing, fall back to the
+    // naive check (better than skipping the finding entirely).
+    //
+    // Memory: [[feedback-use-vertical-benchmarks-db-for-category-check]]
     if (data.primaryCategory && (business.category || business.searchTerm)) {
-      const searchWords = (business.category || business.searchTerm || '').toLowerCase();
-      const catLower = data.primaryCategory.toLowerCase();
-      findings.primaryCategoryMatchesSearch =
-        catLower.split(/\s+/).some((w) => w.length > 3 && searchWords.includes(w)) ||
-        searchWords.split(/\s+/).some((w) => w.length > 3 && catLower.includes(w));
+      const catLower = data.primaryCategory.toLowerCase().trim();
+      const searchTerm = business.searchTerm || '';
+      let matched = null;
+      try {
+        const slug = String(searchTerm).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const benchPath = slug ? path.join(process.cwd(), 'data', 'vertical-benchmarks', `${slug}.json`) : null;
+        if (benchPath && fs.existsSync(benchPath)) {
+          const bench = JSON.parse(fs.readFileSync(benchPath, 'utf-8'));
+          const topCats = Object.keys(bench.categoryDistributionTop3 || bench.categoryDistributionTop5 || {});
+          if (topCats.length) {
+            const topCatsLower = topCats.map((c) => c.toLowerCase().trim());
+            matched = topCatsLower.includes(catLower);
+            findings.primaryCategoryBenchmarkSource = 'verticalBenchmark';
+            findings.primaryCategoryBenchmarkTop = topCats;
+          }
+        }
+      } catch (_) {}
+      if (matched === null) {
+        // Fallback: naive word-overlap against SerpAPI category text
+        const searchWords = (business.category || searchTerm || '').toLowerCase();
+        matched =
+          catLower.split(/\s+/).some((w) => w.length > 3 && searchWords.includes(w)) ||
+          searchWords.split(/\s+/).some((w) => w.length > 3 && catLower.includes(w));
+        findings.primaryCategoryBenchmarkSource = 'naive-fallback';
+      }
+      findings.primaryCategoryMatchesSearch = matched;
     }
 
     // === Google SEARCH knowledge panel pass (for description + posts) ===
