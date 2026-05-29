@@ -294,6 +294,56 @@ function runStep6GateTests() {
 const step6Results = runStep6GateTests();
 console.log();
 
+// === Category-match gate (locked 2026-05-28) ===
+// The GBP primary category vs search-intent check MUST consult the
+// vertical_benchmarks DB (categoryDistributionTop3), NOT naive word-overlap
+// against the SerpAPI listing category. Caught 2026-05-28 on Target Plumbers
+// where GBP "Contractor" was falsely flagged as matching "Plumbers" search
+// because the SerpAPI category said "Plumbing contractor" and "contractor"
+// substring matched. Every top-3 plumber in that search uses "Plumber" —
+// Target's "Contractor" → false (mismatch) → ranking-actionable finding.
+//
+// Memory: feedback_use_vertical_benchmarks_db_for_category_check.md
+function runCategoryBenchmarkTests() {
+  function check(primaryCategory, top3Distribution) {
+    const topCats = Object.keys(top3Distribution || {});
+    if (!topCats.length || !primaryCategory) return null;
+    const lower = primaryCategory.toLowerCase().trim();
+    return topCats.map((c) => c.toLowerCase().trim()).includes(lower);
+  }
+  const cases = [
+    { name: 'Target Plumbers: "Contractor" vs top3 {Plumber} → MISMATCH',
+      primaryCategory: 'Contractor', top3: { 'Plumber': 3 }, expected: false },
+    { name: 'A-1 Performance: "Plumber" vs top3 {Plumber} → MATCH',
+      primaryCategory: 'Plumber', top3: { 'Plumber': 3 }, expected: true },
+    { name: 'Alvin garage: "Garage door repair" vs top3 {supplier,repair} → MISMATCH (the historical bug)',
+      primaryCategory: 'Garage door repair', top3: { 'Garage door supplier': 2, 'Repair service': 1 }, expected: false },
+    { name: 'Garage supplier: "Garage door supplier" vs top3 {supplier,repair} → MATCH',
+      primaryCategory: 'Garage door supplier', top3: { 'Garage door supplier': 2, 'Repair service': 1 }, expected: true },
+    { name: 'Naive-substring false-positive: "Contractor" vs SerpAPI "Plumbing contractor" must NOT use word-overlap',
+      // This case proves the new logic does NOT fall back to substring overlap.
+      // If the benchmark says top3=["Plumber"] and the category is "Contractor",
+      // the check MUST return false regardless of any SerpAPI category overlap.
+      primaryCategory: 'Contractor', top3: { 'Plumber': 3 }, expected: false },
+    { name: 'Case-insensitive: "plumber" lowercase matches "Plumber"',
+      primaryCategory: 'plumber', top3: { 'Plumber': 3 }, expected: true },
+    { name: 'Empty top3 falls through to null (caller handles fallback)',
+      primaryCategory: 'Plumber', top3: {}, expected: null },
+  ];
+  let p = 0, f = 0;
+  const failures = [];
+  for (const c of cases) {
+    const got = check(c.primaryCategory, c.top3);
+    const ok = got === c.expected;
+    console.log(`${ok ? '✓' : '✗'} category-benchmark: ${c.name}  (expected=${c.expected} got=${got})`);
+    if (ok) p++; else { f++; failures.push(c.name); }
+  }
+  return { passed: p, failed: f, failures };
+}
+
+const categoryResults = runCategoryBenchmarkTests();
+console.log();
+
 // === Email validation regression tests (locked 2026-05-22) ===
 // Prevents placeholder/test emails like someone@example.com or
 // jane.doe@aireserv.com from slipping into Airtable Leads. See
@@ -351,14 +401,15 @@ for (const c of CASES) {
   }
 }
 await browser.close();
-const totalPassed = passed + step6Results.passed + emailResults.passed;
-const totalFailed = failed + step6Results.failed + emailResults.failed;
-const totalCases = CASES.length + (step6Results.passed + step6Results.failed) + (emailResults.passed + emailResults.failed);
+const totalPassed = passed + step6Results.passed + emailResults.passed + categoryResults.passed;
+const totalFailed = failed + step6Results.failed + emailResults.failed + categoryResults.failed;
+const totalCases = CASES.length + (step6Results.passed + step6Results.failed) + (emailResults.passed + emailResults.failed) + (categoryResults.passed + categoryResults.failed);
 console.log(`\n${totalPassed}/${totalCases} passed`);
 if (totalFailed) {
   console.log('FAILURES:');
   for (const f of failures) console.log('  detector: ' + f);
   for (const f of step6Results.failures) console.log('  step-6 gate: ' + f);
   for (const f of emailResults.failures) console.log('  email-validation: ' + f);
+  for (const f of categoryResults.failures) console.log('  category-benchmark: ' + f);
   process.exit(1);
 }
