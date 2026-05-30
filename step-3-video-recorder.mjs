@@ -1893,9 +1893,38 @@ function killOrphanStep3Chrome() {
   } catch {}
 }
 
+// 2026-05-29: clear Chrome's "didn't shut down cleanly" state from a prior
+// pkill or crash. Without this, the next launch shows a "Restore pages?"
+// dialog in the toolbar — invisible to the recording (we only capture the
+// page viewport) but bad for unattended overnight runs where Chris might
+// open the screen and see a stuck dialog. Patches Preferences exit_type +
+// removes Singleton lock files so Chrome thinks the prior shutdown was
+// clean.
+function clearChromeRestoreState() {
+  try {
+    const prefsPath = path.join(CHROME_PROFILE_DIR, 'Default', 'Preferences');
+    if (fs.existsSync(prefsPath)) {
+      try {
+        const p = JSON.parse(fs.readFileSync(prefsPath, 'utf-8'));
+        if (p.profile) {
+          p.profile.exit_type = 'Normal';
+          p.profile.exited_cleanly = true;
+        }
+        fs.writeFileSync(prefsPath, JSON.stringify(p));
+      } catch {}
+    }
+    // Remove SingletonLock files at both possible locations
+    for (const lock of ['SingletonLock', 'SingletonCookie', 'SingletonSocket']) {
+      try { fs.unlinkSync(path.join(CHROME_PROFILE_DIR, lock)); } catch {}
+      try { fs.unlinkSync(path.join(CHROME_PROFILE_DIR, 'Default', lock)); } catch {}
+    }
+  } catch {}
+}
+
 async function launchBrowser() {
   ensureDir(CHROME_PROFILE_DIR);
   killOrphanStep3Chrome();
+  clearChromeRestoreState();
   return puppeteer.launch({
     headless: false,
     executablePath: CHROME_PATH,
@@ -1911,6 +1940,15 @@ async function launchBrowser() {
       // sound reaches the speakers. Our recordings don't need audio anyway.
       // See feedback-step3-scam-defense.md.
       '--mute-audio',
+      // 2026-05-29: belt-and-suspenders for the "Restore pages?" dialog —
+      // clearChromeRestoreState() above patches Preferences, these flags
+      // tell Chrome to skip session-restore + first-run flows entirely.
+      // Critical for unattended overnight runs.
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-session-crashed-bubble',
+      '--disable-infobars',
+      '--hide-crash-restore-bubble',
       // 2026-05-29: CPU-relief flags for WC=3 on this OpenCore Haswell box.
       // The Mac's hardware video accel is broken (videotoolbox -12908) so
       // there's nothing to lose by disabling GPU paths Chrome would
