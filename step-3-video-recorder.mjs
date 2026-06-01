@@ -37,13 +37,16 @@ const MOBILE_USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 ' +
   '(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
-// 2026-05-29: dropped default FPS 30 → 20 to relieve encoder CPU pressure
-// under WC=3. At 20 fps the video still looks smooth for prospect-facing
-// content (no fast motion), but the encoder has 33% less work per second.
-// Set STEP3_SCREENCAST_FPS=30 to restore the old default if quality
-// regresses noticeably. Memory: feedback_worker_count_concurrency_limit.md
-const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 20);
-const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 50);
+// 2026-06-01: REVERTED back to 30 fps after Chris caught noticeable lag
+// in production videos. The 20 fps lever was added 2026-05-29 as a WC=3
+// CPU-relief measure, but we're on WC=2 default now (per
+// feedback_worker_count_concurrency_limit.md). 20 fps was clearly visible
+// in Maps panel scrolls + page scrolls — choppy/laggy feel. 30 fps is
+// the locked default for prospect-facing video quality.
+// Override with STEP3_SCREENCAST_FPS=20 if you specifically want CPU
+// relief during a WC=3 batch (not recommended).
+const SCREENCAST_FPS = Number(process.env.STEP3_SCREENCAST_FPS || 30);
+const SCREENSHOT_CAPTURE_INTERVAL_MS = Number(process.env.STEP3_SCREENSHOT_CAPTURE_INTERVAL_MS || 33);
 const MAPS_NAV_TIMEOUT_MS = Number(process.env.MAPS_NAV_TIMEOUT_MS || 90000);
 const MAPS_INPUT_TIMEOUT_MS = Number(process.env.MAPS_INPUT_TIMEOUT_MS || 25000);
 const MAPS_MANUAL_CONSENT_WAIT_MS = Number(process.env.MAPS_MANUAL_CONSENT_WAIT_MS || 90000);
