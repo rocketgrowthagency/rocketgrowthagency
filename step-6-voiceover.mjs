@@ -1651,20 +1651,74 @@ function buildScript(record, top3Stats, audit) {
   // accurate. Falsehoods are never candidates either way.
   //
   // Memory: feedback_3_errors_no_eager_positives.md (sharpened 2026-05-21).
-  function renderWithPositives(real, positives, max = 3) {
+  //
+  // 2026-05-29 — Tier-3 suspect-but-unverified pool added. When fewer than
+  // `max` real errors clear strict verification gates, the script previously
+  // padded straight to verified positives. The problem: real-but-suspect
+  // findings (e.g., suspectWebsiteMismatch, iframe-gated absence claims)
+  // got pushed out by positives, so the video never mentioned them. The
+  // suspect tier slots between real and positive — when present, it's a
+  // truthful "we observed X but couldn't fully verify because of Y" claim,
+  // worded carefully to avoid false certainty. Memory:
+  // project_dormant_pipeline_items_2026-05-28.md §B for the catalog.
+  function renderWithPositives(real, positives, max = 3, suspect = []) {
     const realPicked = real.slice(0, max);
-    const need = max - realPicked.length;
+    let need = max - realPicked.length;
+    const suspectPicked = need > 0 ? suspect.slice(0, need) : [];
+    need -= suspectPicked.length;
     const posPicked = need > 0 ? positives.slice(0, need) : [];
-    const combined = [...realPicked, ...posPicked];
+    const combined = [...realPicked, ...suspectPicked, ...posPicked];
     const list = combined.length ? numberedJoin(combined, max) : '';
     return {
       list,
       tail: '',
       realCount: realPicked.length,
+      suspectCount: suspectPicked.length,
       hasPositives: posPicked.length > 0,
       posCount: posPicked.length,
       totalCount: combined.length,
     };
+  }
+
+  // 2026-05-29 — Suspect-tier scorers. Return findings the audit DETECTED
+  // but couldn't fully verify, worded to be truthful about uncertainty.
+  // Only used as backfill when real-error count < 3 — never replaces a
+  // real error. Memory: project_dormant_pipeline_items_2026-05-28.md §B.
+  function scoreWebsiteSuspectFindings(audit) {
+    const w = audit?.website;
+    if (!w) return [];
+    const out = [];
+    // iframe-gated reviews: hasReviewsOnPage=null + iframeCount>0 + page mentions reviews
+    if (w.hasReviewsOnPage === null && (w.iframeCount || 0) > 0 && w._reviewsMentionedInSource) {
+      out.push({
+        key: 'noReviewsSuspect',
+        score: 50,
+        finding: 'we couldn\'t fully verify whether customer reviews are visible on your homepage — your page mentions reviews but they appear inside an iframe widget we can\'t see through. If they ARE inside that iframe, search engines and prospect previewers won\'t pick them up as on-page trust signals',
+      });
+    }
+    return out;
+  }
+  function scoreMobileSuspectFindings(audit) {
+    const m = audit?.mobile;
+    if (!m) return [];
+    const out = [];
+    // iframe-gated social-proof above the fold
+    if (m.socialProofAboveFold === null && (m.iframeCount || 0) > 0) {
+      out.push({
+        key: 'noSocialProofSuspect',
+        score: 50,
+        finding: 'we couldn\'t fully verify whether review stars or a rating count are visible in your mobile hero — iframes on the page block our view. If they\'re missing, first-time mobile visitors have no trust signal before they scroll, which is a known conversion gap for local-service sites',
+      });
+    }
+    // CTA tap target couldn't be measured
+    if (m.primaryCtaTapTargetPx === null) {
+      out.push({
+        key: 'tapTargetSuspect',
+        score: 51,
+        finding: 'we couldn\'t measure the height of your primary mobile call-to-action button — usually because it\'s rendered by a JavaScript widget that loads after our scan. Worth a manual check that it meets Google\'s 48-pixel mobile accessibility guideline',
+      });
+    }
+    return out;
   }
 
   // -------- MAPS --------
@@ -1693,7 +1747,8 @@ function buildScript(record, top3Stats, audit) {
 
   // -------- WEBSITE --------
   const websiteSegment = (() => {
-    const { list, realCount, totalCount } = renderWithPositives(websiteFindings, websiteGood, 3);
+    const websiteSuspect = noOwnWebsiteFired ? [] : applyValidationFilter(scoreWebsiteSuspectFindings(audit), disabledKeys);
+    const { list, realCount, totalCount } = renderWithPositives(websiteFindings, websiteGood, 3, websiteSuspect);
     const opener = `After reviewing your website — Google's primary trust signal for validating Maps ranking.`;
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the website signals worth tightening to hold your top 3 spot: ${list}`;
@@ -1707,7 +1762,8 @@ function buildScript(record, top3Stats, audit) {
 
   // -------- MOBILE --------
   const mobileSegment = (() => {
-    const { list, realCount, totalCount } = renderWithPositives(mobileFindings, mobileGood, 3);
+    const mobileSuspect = noOwnWebsiteFired ? [] : applyValidationFilter(scoreMobileSuspectFindings(audit), disabledKeys);
+    const { list, realCount, totalCount } = renderWithPositives(mobileFindings, mobileGood, 3, mobileSuspect);
     const opener = `And then on mobile — where 70 percent of local-search traffic actually comes from.`;
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the gaps a competitor could exploit: ${list}`;
