@@ -1688,12 +1688,12 @@ function buildScript(record, top3Stats, audit) {
     const w = audit?.website;
     if (!w) return [];
     const out = [];
-    // iframe-gated reviews: hasReviewsOnPage=null + iframeCount>0 + page mentions reviews
+    // iframe-gated reviews. Worded tight (≤10s spoken) to fit the 47s website-segment budget.
     if (w.hasReviewsOnPage === null && (w.iframeCount || 0) > 0 && w._reviewsMentionedInSource) {
       out.push({
         key: 'noReviewsSuspect',
         score: 50,
-        finding: 'we couldn\'t fully verify whether customer reviews are visible on your homepage — your page mentions reviews but they appear inside an iframe widget we can\'t see through. If they ARE inside that iframe, search engines and prospect previewers won\'t pick them up as on-page trust signals',
+        finding: 'your homepage references reviews but they\'re inside a third-party widget search engines can\'t read — those reviews aren\'t counting as on-page trust signals',
       });
     }
     return out;
@@ -1707,7 +1707,7 @@ function buildScript(record, top3Stats, audit) {
       out.push({
         key: 'noSocialProofSuspect',
         score: 50,
-        finding: 'we couldn\'t fully verify whether review stars or a rating count are visible in your mobile hero — iframes on the page block our view. If they\'re missing, first-time mobile visitors have no trust signal before they scroll, which is a known conversion gap for local-service sites',
+        finding: 'we couldn\'t confirm review stars in your mobile hero — iframes blocked the check. If they\'re missing, first-time visitors have no trust signal before they scroll',
       });
     }
     // CTA tap target couldn't be measured
@@ -1715,7 +1715,7 @@ function buildScript(record, top3Stats, audit) {
       out.push({
         key: 'tapTargetSuspect',
         score: 51,
-        finding: 'we couldn\'t measure the height of your primary mobile call-to-action button — usually because it\'s rendered by a JavaScript widget that loads after our scan. Worth a manual check that it meets Google\'s 48-pixel mobile accessibility guideline',
+        finding: 'your primary mobile call-to-action button is rendered by a JavaScript widget so we couldn\'t measure it — worth confirming it meets Google\'s 48-pixel tap target guideline',
       });
     }
     return out;
