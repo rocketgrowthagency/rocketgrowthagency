@@ -506,7 +506,7 @@ function scoreWebsiteFindings(audit, businessName) {
         key: 'noOwnWebsiteSuspect',
         score: 0.2,
         reason,
-        finding: `your business website${hostFrag} doesn't carry your business name in the domain. Google reads brand-to-domain consistency as a citation trust signal, and prospects clicking through from search see an unfamiliar URL — you're losing ranking weight AND conversion confidence to competitors whose domain matches their brand. Top performers in this space all run a matching-brand domain`,
+        finding: `your business website${hostFrag} doesn't carry your business name in the domain — Google reads brand-to-domain consistency as a citation trust signal, and prospects see an unfamiliar URL on click-through`,
       });
       // Fall through to the regular website checks (no early return).
     } else {
@@ -1132,13 +1132,14 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // conflicting listings split authority + confuse algorithm. Gated on
   // duplicateListingCountVerified=true (SerpAPI lookup succeeded). A-1
   // Performance Rooter & Plumbing case: 2 listings → fires correctly.
+  // 2026-06-01: tightened wording to ≤20 words to fit Maps segment budget.
   if (audit?.gbp?.duplicateListingCountVerified === true
       && Number.isFinite(audit.gbp.duplicateListingCount)
       && audit.gbp.duplicateListingCount > 0) {
     out.push({
       key: 'duplicateListing',
       score: 5,
-      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} matching your business name — Whitespark 2026 flags duplicate listings as a top-tier negative that splits ranking authority and confuses Google's algorithm. Consolidating to a single verified listing is essential`,
+      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} under your business name — Whitespark 2026 flags duplicates as a top-tier negative that splits your ranking authority`,
     });
   }
 
