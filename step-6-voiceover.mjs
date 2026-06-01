@@ -998,13 +998,31 @@ function scoreMapsFindings(audit, top3Stats, record) {
     console.log('[step-6 unverified-skip] reviewVelocity finding suppressed: daysSinceLastReview set but reviewsParsedCount=0 (cards not actually scraped).');
   }
 
-  // DEAD: photoCount + categoriesCount findings — audit deliberately doesn't
-  // capture these (extractors were unreliable, regex inflated phrase variants).
-  // Memory: project_video_data_accuracy.md. Code preserved as comment for
-  // future re-enable if a reliable extractor ships.
-  //
-  // if (audit?.gbp?.photoCount != null && audit.gbp.photoCount >= 2 && audit.gbp.photoCount < 30) ...
-  // if (audit?.gbp?.categoriesCount != null && audit.gbp.categoriesCount < 3) ...
+  // photoCount + categoriesCount findings — re-activated 2026-06-01 with
+  // strict verification gates. Both extractors got new high-confidence
+  // selectors in step-2.5 and now write *Verified flags. Findings fire
+  // ONLY when (a) the value is numeric AND (b) Verified=true. This prevents
+  // the "false claim" failure mode that got these disabled originally.
+  // Memory: feedback_verification_gates_must_be_strict.md
+  if (audit?.gbp?.photoCountVerified === true
+      && Number.isFinite(audit.gbp.photoCount)
+      && audit.gbp.photoCount >= 2
+      && audit.gbp.photoCount < 30) {
+    out.push({
+      key: 'photoGap',
+      score: 7,
+      finding: `your Google Business Profile shows only ${audit.gbp.photoCount} photo${audit.gbp.photoCount === 1 ? '' : 's'} — top performers in this search average 50 or more. Photo count is a measured Maps-ranking signal Google reads on the profile`,
+    });
+  }
+  if (audit?.gbp?.categoriesCountVerified === true
+      && Number.isFinite(audit.gbp.categoriesCount)
+      && audit.gbp.categoriesCount === 1) {
+    out.push({
+      key: 'secondaryCategoriesGap',
+      score: 8,
+      finding: `your Google Business Profile has only a primary category set — adding 2 to 3 relevant secondary categories is one of the highest-leverage Maps ranking adjustments, since Google reads category breadth as a relevance signal`,
+    });
+  }
 
   // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is.
   // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 ranks incorrect primary category as the
@@ -1110,15 +1128,17 @@ function scoreMapsFindings(audit, top3Stats, record) {
     });
   }
 
-  // Duplicate listings — NEW 2026-05-15. Whitespark 2026: duplicate / conflicting
-  // listings split authority + confuse algorithm. Scaffold check that fires
-  // only when step-2.5 captures duplicateListingCount via Places API nearby-
-  // search or manual extractor. Gracefully no-ops when null.
-  if (audit?.gbp?.duplicateListingCount != null && audit.gbp.duplicateListingCount > 0) {
+  // Duplicate listings — activated 2026-06-01. Whitespark 2026: duplicate /
+  // conflicting listings split authority + confuse algorithm. Gated on
+  // duplicateListingCountVerified=true (SerpAPI lookup succeeded). A-1
+  // Performance Rooter & Plumbing case: 2 listings → fires correctly.
+  if (audit?.gbp?.duplicateListingCountVerified === true
+      && Number.isFinite(audit.gbp.duplicateListingCount)
+      && audit.gbp.duplicateListingCount > 0) {
     out.push({
       key: 'duplicateListing',
       score: 5,
-      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} at or near your address — Whitespark 2026 flags duplicate listings as a top-tier negative that splits ranking authority and confuses Google's algorithm. Consolidating to a single verified listing is essential`,
+      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} matching your business name — Whitespark 2026 flags duplicate listings as a top-tier negative that splits ranking authority and confuses Google's algorithm. Consolidating to a single verified listing is essential`,
     });
   }
 

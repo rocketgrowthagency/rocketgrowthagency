@@ -183,6 +183,17 @@ function runStep6GateTests() {
     // gbpPosts — verification gate (locked 2026-05-21)
     const postsVerifiedFalse = audit?.gbp?.postsVerified === true && audit?.gbp?.hasPosts === false;
     if (postsVerifiedFalse) out.push('gbpPosts');
+    // photoGap — verification gate (locked 2026-06-01)
+    if (audit?.gbp?.photoCountVerified === true && Number.isFinite(audit?.gbp?.photoCount)
+        && audit.gbp.photoCount >= 2 && audit.gbp.photoCount < 30) out.push('photoGap');
+    // secondaryCategoriesGap — verification gate (locked 2026-06-01)
+    if (audit?.gbp?.categoriesCountVerified === true && audit?.gbp?.categoriesCount === 1) {
+      out.push('secondaryCategoriesGap');
+    }
+    // duplicateListing — verification gate (locked 2026-06-01, A-1 case)
+    if (audit?.gbp?.duplicateListingCountVerified === true
+        && Number.isFinite(audit?.gbp?.duplicateListingCount)
+        && audit.gbp.duplicateListingCount > 0) out.push('duplicateListing');
     // noSocialProfiles — verification gate
     if (audit?.gbp?.gbpSocialProfilesVerified === true && audit?.gbp?.gbpSocialProfileCount === 0) {
       out.push('noSocialProfiles');
@@ -222,6 +233,27 @@ function runStep6GateTests() {
       audit: { gbp: { postsVerified: true, hasPosts: false } }, expectFire: 'gbpPosts' },
     { name: 'gbpPosts does NOT fire when postsVerified=null (Monkey Wrench false-claim case)',
       audit: { gbp: { postsVerified: null, hasPosts: false } }, expectNoFire: 'gbpPosts' },
+    // 2026-06-01 new findings: photoGap, secondaryCategoriesGap, duplicateListing
+    { name: 'photoGap fires when verified=true AND count in [2,29]',
+      audit: { gbp: { photoCountVerified: true, photoCount: 9 } }, expectFire: 'photoGap' },
+    { name: 'photoGap does NOT fire when verified=false (extractor unsure)',
+      audit: { gbp: { photoCountVerified: false, photoCount: 9 } }, expectNoFire: 'photoGap' },
+    { name: 'photoGap does NOT fire when count is high (30+)',
+      audit: { gbp: { photoCountVerified: true, photoCount: 47 } }, expectNoFire: 'photoGap' },
+    { name: 'photoGap does NOT fire when count is null',
+      audit: { gbp: { photoCountVerified: true, photoCount: null } }, expectNoFire: 'photoGap' },
+    { name: 'secondaryCategoriesGap fires when verified=true AND count=1',
+      audit: { gbp: { categoriesCountVerified: true, categoriesCount: 1 } }, expectFire: 'secondaryCategoriesGap' },
+    { name: 'secondaryCategoriesGap does NOT fire when count>=2',
+      audit: { gbp: { categoriesCountVerified: true, categoriesCount: 3 } }, expectNoFire: 'secondaryCategoriesGap' },
+    { name: 'secondaryCategoriesGap does NOT fire when verified=false',
+      audit: { gbp: { categoriesCountVerified: false, categoriesCount: 1 } }, expectNoFire: 'secondaryCategoriesGap' },
+    { name: 'duplicateListing fires when verified=true AND count>=1 (A-1 case)',
+      audit: { gbp: { duplicateListingCountVerified: true, duplicateListingCount: 1 } }, expectFire: 'duplicateListing' },
+    { name: 'duplicateListing does NOT fire when verified=false',
+      audit: { gbp: { duplicateListingCountVerified: false, duplicateListingCount: 1 } }, expectNoFire: 'duplicateListing' },
+    { name: 'duplicateListing does NOT fire when count=0 (no duplicates)',
+      audit: { gbp: { duplicateListingCountVerified: true, duplicateListingCount: 0 } }, expectNoFire: 'duplicateListing' },
     { name: 'gbpPosts does NOT fire when postsVerified=false',
       audit: { gbp: { postsVerified: false, hasPosts: false } }, expectNoFire: 'gbpPosts' },
     { name: 'gbpPosts does NOT fire when hasPosts=true (posts exist)',

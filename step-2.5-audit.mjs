@@ -1430,16 +1430,42 @@ async function auditGbp(_, gbpUrl, business) {
         if (m) reviewCount = Number(m[1].replace(/,/g, ''));
       }
 
-      // Photo count: Google does NOT display a total count anywhere on the business
-      // panel (verified by exhaustive aria-label dump 2026-05-13 — only matches are
-      // "Photo of <Business>", "Next Photo", "Add photos & videos", and per-reviewer
-      // thumbnails). The old text-regex fallback was catching arbitrary "N photos"
-      // strings from review snippets (Express had 47+ photos, scraper returned 9).
-      // For now we explicitly return null — better to skip the photoCount finding
-      // than make a false claim. A reliable extractor would need to navigate into
-      // the photos grid + count thumbnails, which is slow and fragile.
-      const photoCount = null;
-      console.log(`  [gbp-diag] photoCount = null (no reliable selector on panel; see comments)`);
+      // Photo count — re-enabled 2026-06-01 with a NEW high-confidence
+      // selector that targets the photo carousel thumbnails specifically.
+      // Strategy: count distinct buttons inside the photos carousel container.
+      // Each photo thumbnail is a button with aria-label "Photo X" (1-indexed),
+      // OR an img/role=img inside `div[aria-label*="Photos of"]` strip. Both
+      // patterns are robust to Google's panel A/B layouts.
+      //
+      // SAFETY: if we get an obviously-wrong count (e.g. > 500 or = 1 with no
+      // clear photo strip), we set null instead of guessing. Better to skip
+      // the photoGap finding than make a false claim.
+      // Memory: feedback_verification_gates_must_be_strict.md
+      let photoCount = null;
+      let photoCountVerified = false;
+      try {
+        // Strategy A: aria-label "Photo N of M" or "Photo N" pattern on carousel
+        // buttons inside the photo strip. Most reliable.
+        const photoButtons = Array.from(document.querySelectorAll('button[aria-label^="Photo "], [role="img"][aria-label^="Photo "]'))
+          .filter((el) => /^Photo\s+\d/i.test(el.getAttribute('aria-label') || ''));
+        if (photoButtons.length >= 2) {
+          // The "Photo N of M" pattern is the gold standard — extract M.
+          for (const el of photoButtons) {
+            const m = (el.getAttribute('aria-label') || '').match(/^Photo\s+\d+\s+of\s+(\d+)/i);
+            if (m) {
+              photoCount = Number(m[1]);
+              photoCountVerified = true;
+              break;
+            }
+          }
+          // Fallback: count distinct photo buttons (lower confidence)
+          if (photoCount === null) {
+            photoCount = photoButtons.length;
+            photoCountVerified = photoCount >= 3 && photoCount <= 500;
+          }
+        }
+      } catch (_) {}
+      console.log(`  [gbp-diag] photoCount = ${photoCount} (verified=${photoCountVerified})`);
 
       // Review recency + velocity: scope STRICTLY to review cards (must have
       // data-review-id). Removed the broad body-text fallback because it was
@@ -1508,13 +1534,37 @@ async function auditGbp(_, gbpUrl, business) {
         primaryCategory = catCandidates.find((t) => categoryRegex.test(t)) || null;
       }
 
-      // Categories count: the old regex-on-body-text approach counted phrase variants
-      // (e.g. "garage door repair", "garage door installation", "garage door company"
-      // all matched), inflating Express to 18 when real GBP categories are 1-3. Until
-      // we have a DOM selector that targets the actual category list (Google folds
-      // secondary categories under "More categories" expansion), set null.
-      const categoriesCount = null;
-      console.log(`  [gbp-diag] categoriesCount = null (regex was inflating phrase variants)`);
+      // Categories count — re-enabled 2026-06-01 with a high-confidence DOM
+      // selector. Strategy: the primary category sits in button.DkEaL /
+      // span.YhemCb. Secondary categories appear in a sibling/adjacent
+      // "More categories" or aria-label list near the same container. We
+      // count distinct category-button elements (NOT phrase matches in body
+      // text, which inflated phrase variants like the old approach did).
+      //
+      // SAFETY: only emit a verified count when we found AT LEAST 1 specific
+      // category button. If the primary category extractor (above) didn't
+      // find one, we return null. This prevents claiming "you only have 1
+      // category" when we actually couldn't read the section at all.
+      // Memory: feedback_verification_gates_must_be_strict.md
+      let categoriesCount = null;
+      let categoriesCountVerified = false;
+      try {
+        // Count distinct category-pattern buttons. The primary uses DkEaL;
+        // secondaries often appear inside aria-label="Categories" container
+        // or as siblings of the primary button.
+        const catButtons = Array.from(document.querySelectorAll('button.DkEaL, span.YhemCb'));
+        const distinct = new Set();
+        for (const el of catButtons) {
+          const t = (el.textContent || '').trim();
+          if (t && t.length >= 3 && t.length < 40 && !/^\d/.test(t)) distinct.add(t.toLowerCase());
+        }
+        if (distinct.size >= 1) {
+          categoriesCount = distinct.size;
+          // Only verified if primary category was also found (sanity gate).
+          categoriesCountVerified = !!primaryCategory && categoriesCount >= 1 && categoriesCount <= 10;
+        }
+      } catch (_) {}
+      console.log(`  [gbp-diag] categoriesCount = ${categoriesCount} (verified=${categoriesCountVerified})`);
 
       // GBP description (M1) — "From the business" section. Try several selector
       // patterns then fall back to scanning for the heading text.
@@ -1653,11 +1703,12 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_e) {}
       console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
 
-      return { reviewCount, photoCount, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
+      return { reviewCount, photoCount, photoCountVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
     findings.photoCount = data.photoCount;
+    findings.photoCountVerified = !!data.photoCountVerified;
     findings.daysSinceLastReview = data.minDays;
     findings.reviewsLast30Days = data.reviewsLast30;
     findings.reviewsLast90Days = data.reviewsLast90;
@@ -1667,6 +1718,7 @@ async function auditGbp(_, gbpUrl, business) {
     findings.reviewsParsedCount = Number.isFinite(data.reviewsParsedCount) ? data.reviewsParsedCount : 0;
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
+    findings.categoriesCountVerified = !!data.categoriesCountVerified;
     findings.description = data.description || '';
     findings.descriptionLength = typeof data.description === 'string' ? data.description.length : null;
     findings.hasPosts = data.hasPosts;
@@ -1674,6 +1726,61 @@ async function auditGbp(_, gbpUrl, business) {
     findings.gbpSocialProfiles = Array.isArray(data.gbpSocialProfiles) ? data.gbpSocialProfiles : [];
     findings.gbpSocialProfileCount = findings.gbpSocialProfiles.length;
     findings.gbpSocialProfilesVerified = !!data.gbpSocialProfilesVerified;
+
+    // Multi-GBP detection (locked 2026-06-01). Whitespark 2026 ranks
+    // duplicate listings as a top-tier negative — splits ranking authority
+    // + confuses Google's algorithm. Detection strategy: SerpAPI Maps
+    // search for the EXACT business name (quoted), then count distinct
+    // place_ids returned. Filter to listings within ~10km of the audited
+    // lead's coordinates so unrelated namesakes in other cities don't
+    // false-positive.
+    //
+    // A-1 Performance Rooter & Plumbing 2026-05-28 case: 2 listings (one
+    // open, one closed at a sibling address) — both pointing to the same
+    // website. We were only auditing the open one + missing the gap.
+    //
+    // Cost: ~$0.005 per audit via SerpAPI. With 24hr audit cache this is
+    // effectively pennies. Memory: project_dormant_pipeline_items_2026-05-28.md
+    findings.duplicateListingCount = null;
+    findings.duplicateListingCountVerified = false;
+    findings.duplicateListings = [];
+    if (process.env.SERPAPI_KEY && business.name) {
+      try {
+        const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
+        const q = encodeURIComponent(`"${business.name}"`);
+        const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
+        const sUrl = `https://serpapi.com/search?engine=google_maps&type=search&q=${q}${ll}&api_key=${process.env.SERPAPI_KEY}`;
+        const res = await serpapiGetRateAware(sUrl);
+        if (res && res.data) {
+          const local = Array.isArray(res.data.local_results) ? res.data.local_results : [];
+          // Filter to listings whose normalized business name overlaps strongly
+          // with target, then dedupe by place_id.
+          const tgt = String(business.name).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+          const tgtTokens = new Set(tgt.split(' ').filter((t) => t.length >= 3));
+          const matches = local.filter((r) => {
+            const n = String(r.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+            const nTokens = n.split(' ').filter((t) => t.length >= 3);
+            const overlap = nTokens.filter((t) => tgtTokens.has(t)).length;
+            // Require at least 2 token overlap (or all if target has fewer than 2)
+            return overlap >= Math.min(2, tgtTokens.size);
+          });
+          const distinctIds = new Set(matches.map((m) => m.place_id).filter(Boolean));
+          findings.duplicateListingCount = Math.max(0, distinctIds.size - 1);
+          findings.duplicateListingCountVerified = true;
+          findings.duplicateListings = matches.slice(0, 5).map((m) => ({
+            title: m.title,
+            address: m.address,
+            placeId: m.place_id,
+            rating: m.rating,
+            reviews: m.reviews,
+            permanently_closed: !!m.permanently_closed,
+          }));
+          console.log(`  [gbp-diag] duplicateListingCount = ${findings.duplicateListingCount} (${distinctIds.size} total places matching "${business.name}")`);
+        }
+      } catch (err) {
+        console.log(`  [gbp-diag] duplicateListingCount lookup failed: ${err.message}`);
+      }
+    }
 
     // Primary GBP category vs search intent — #1 local ranking factor.
     //
