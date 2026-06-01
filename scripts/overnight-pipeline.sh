@@ -142,6 +142,26 @@ PENDING_DEPLOY_NAMES=()
 # DEPLOYED_URLS / FAILED_LEADS / PENDING_DEPLOY_* arrays for end-of-run
 # report + batched deploy.
 WORKER_COUNT="${WORKER_COUNT:-1}"
+# Per-lead wall-time watchdog (locked 2026-06-01) — if any lead's full
+# pipeline exceeds PER_LEAD_TIMEOUT_MIN, kill the lead's processes + mark
+# failed + move to the next lead. Saves the elapsed time for human audit.
+# WC=2 average is ~6 min/lead; 8 min = 30% margin. Anything beyond that
+# is a real hang (stuck site, zombie browser, ffmpeg deadlock).
+# Set PER_LEAD_TIMEOUT_MIN=0 to disable watchdog entirely.
+# Memory: feedback_per_lead_wall_time_watchdog.md.
+PER_LEAD_TIMEOUT_MIN="${PER_LEAD_TIMEOUT_MIN:-8}"
+PER_LEAD_TIMEOUT_SEC=$(( PER_LEAD_TIMEOUT_MIN * 60 ))
+# Failure audit file — one row per timed-out or failed lead so Chris can
+# spot-check quickly in the morning instead of re-running blind.
+FAILURE_AUDIT="/tmp/overnight-failures-${DATE_STAMP}.md"
+if [ ! -f "$FAILURE_AUDIT" ]; then
+  echo "# Overnight failures audit — ${DATE_STAMP}" > "$FAILURE_AUDIT"
+  echo "" >> "$FAILURE_AUDIT"
+  echo "One row per failed/timed-out lead. Open the linked log line for the full stack." >> "$FAILURE_AUDIT"
+  echo "" >> "$FAILURE_AUDIT"
+  echo "| Time | Lead | Worker | Reason | Elapsed |" >> "$FAILURE_AUDIT"
+  echo "|---|---|---|---|---|" >> "$FAILURE_AUDIT"
+fi
 RESULTS_DIR="/tmp/overnight-results-$$"
 mkdir -p "$RESULTS_DIR"
 RESULTS_DEPLOYED="$RESULTS_DIR/deployed.txt"
@@ -548,16 +568,41 @@ else
   # bash 3.2 has no `wait -n`; use poll-based PID tracking.
   WORKER_PIDS=()
   WORKER_IDS_IN_USE=()
+  WORKER_START_TIMES=()
+  WORKER_BIZ_NAMES=()
+  # 2026-06-01 — per-worker watchdog. If a worker exceeds PER_LEAD_TIMEOUT_SEC,
+  # kill its process tree + log a failure-audit row + free the slot for the
+  # next lead. Locked memory: feedback_per_lead_wall_time_watchdog.md.
   reap_finished_workers() {
-    local i NEW_PIDS=() NEW_IDS=()
+    local i NEW_PIDS=() NEW_IDS=() NEW_STARTS=() NEW_BIZ=()
+    local now=$(date +%s)
     for i in $(seq 0 $((${#WORKER_PIDS[@]} - 1))); do
-      if kill -0 "${WORKER_PIDS[$i]}" 2>/dev/null; then
-        NEW_PIDS+=("${WORKER_PIDS[$i]}")
-        NEW_IDS+=("${WORKER_IDS_IN_USE[$i]}")
+      local pid="${WORKER_PIDS[$i]}"
+      local wid="${WORKER_IDS_IN_USE[$i]}"
+      local start="${WORKER_START_TIMES[$i]}"
+      local biz="${WORKER_BIZ_NAMES[$i]}"
+      if kill -0 "$pid" 2>/dev/null; then
+        # Still alive. Check watchdog.
+        if [ "$PER_LEAD_TIMEOUT_SEC" -gt 0 ] && [ "$(( now - start ))" -gt "$PER_LEAD_TIMEOUT_SEC" ]; then
+          local elapsed=$(( now - start ))
+          echo ">>> [worker-${wid}] WATCHDOG: $biz exceeded ${PER_LEAD_TIMEOUT_MIN} min (elapsed ${elapsed}s) — killing + skipping" | tee -a "$LOGFILE"
+          # Kill the process tree (the per-lead shell + its children)
+          pkill -9 -P "$pid" 2>/dev/null
+          kill -9 "$pid" 2>/dev/null
+          append_result "$RESULTS_FAILED" "$biz|watchdog-timeout (${elapsed}s > ${PER_LEAD_TIMEOUT_SEC}s)"
+          printf "| %s | %s | %s | watchdog-timeout | %ds |\n" "$(date '+%H:%M:%S')" "$biz" "$wid" "$elapsed" >> "$FAILURE_AUDIT"
+          continue  # don't carry forward, slot is free
+        fi
+        NEW_PIDS+=("$pid")
+        NEW_IDS+=("$wid")
+        NEW_STARTS+=("$start")
+        NEW_BIZ+=("$biz")
       fi
     done
     WORKER_PIDS=("${NEW_PIDS[@]+"${NEW_PIDS[@]}"}")
     WORKER_IDS_IN_USE=("${NEW_IDS[@]+"${NEW_IDS[@]}"}")
+    WORKER_START_TIMES=("${NEW_STARTS[@]+"${NEW_STARTS[@]}"}")
+    WORKER_BIZ_NAMES=("${NEW_BIZ[@]+"${NEW_BIZ[@]}"}")
   }
   find_free_worker_id() {
     local candidate u
@@ -582,6 +627,8 @@ else
     process_one_lead "$BIZ_NAME" "$NEW_ID" &
     WORKER_PIDS+=($!)
     WORKER_IDS_IN_USE+=("$NEW_ID")
+    WORKER_START_TIMES+=("$(date +%s)")
+    WORKER_BIZ_NAMES+=("$BIZ_NAME")
     # 2026-05-29: stagger worker startup by 20s so the heavy step-3
     # (recording) phases don't all hit the CPU at the same moment under
     # WC=3. Without this, three browsers all enter step-3 within ~5s of
