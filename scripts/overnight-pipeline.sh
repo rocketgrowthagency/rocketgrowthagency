@@ -46,6 +46,16 @@ if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-02 — Sponsored-card filter regression. Locked after BHRC test
+# shipped with the blue outline on a Sponsored card. Validates that step-3's
+# isSponsoredBlock + getListingHrefByName + clickListingInResultsByName
+# centering pass all correctly filter sponsored Maps listings for BOTH
+# rank 1-3 + rank 4+ flows. Memory: feedback_never_match_sponsored_maps_listing.md.
+echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
+if ! node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: sponsored-card filter regression failed — step-3 may match/outline a Sponsored Maps listing. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
 # wasted 10 hours retrying against an exhausted monthly quota. Abort
 # cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
