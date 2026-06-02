@@ -605,9 +605,11 @@ function scoreWebsiteFindings(audit, businessName) {
   if (w.canonicalMatches === false && w.canonicalUrl) {
     out.push({ key: 'canonical', score: 2.7, finding: `your canonical tag points to a different URL than this page — Google may be indexing the wrong version, which fragments your ranking signals` });
   }
-  // PRIORITY 3: Slow page load
+  // PRIORITY 25 (DEMOTED 2026-06-02): Slow page load — frame as Maps-click abandonment.
+  // Demoted from P3 to P25 alongside the mobile rescore. Tech-spec findings only fire
+  // when local-SEO levers don't fill the 3-finding slot. See feedback_audit_focus_local_seo_over_tech_specs.md.
   if (w.pageLoadSeconds != null && w.pageLoadSeconds > 2.5) {
-    out.push({ key: 'pageLoad', score: 3, finding: `your homepage loads in ${w.pageLoadSeconds.toFixed(1)} seconds — Google flags anything over 2.5` });
+    out.push({ key: 'pageLoad', score: 25, finding: `your homepage loads in ${w.pageLoadSeconds.toFixed(1)} seconds — slow enough that visitors clicking through from Maps abandon and dial the next listing before your page renders` });
   }
   // PRIORITY 4: H1 missing both category AND city
   if (w.h1Text && !w.h1IncludesCategory && !w.h1IncludesCity) {
@@ -621,21 +623,21 @@ function scoreWebsiteFindings(audit, businessName) {
   if (w.isHttps === false) {
     out.push({ key: 'https', score: 5, finding: `your site isn't on HTTPS — Google penalizes non-secure pages` });
   }
-  // PRIORITY 7: Multiple H1 tags
+  // PRIORITY 28 (DEMOTED 2026-06-02): Multi-H1 — minor on-page hygiene, not a local-SEO lever.
   if (w.h1Count != null && w.h1Count > 1) {
-    out.push({ key: 'multiH1', score: 7, finding: `your page has ${w.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
+    out.push({ key: 'multiH1', score: 28, finding: `your page has ${w.h1Count} H1 tags — Google reads one H1 as your page's primary topic, and stacking them dilutes the local-keyword relevance signal` });
   }
   // PRIORITY 8: Missing meta description (GATED 2026-05-21)
   if (webVerified && w.hasMetaDescription === false) {
     out.push({ key: 'metaDesc', score: 8, finding: `your homepage is missing a meta description, weakening how it appears in search snippets` });
   }
-  // PRIORITY 9: Render-blocking CSS/JS in head
+  // PRIORITY 26 (DEMOTED 2026-06-02): Render-blocking resources — tech-spec.
   if (w.renderBlockingHeadResources != null && w.renderBlockingHeadResources > 3) {
-    out.push({ key: 'renderBlock', score: 9, finding: `you have ${w.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint` });
+    out.push({ key: 'renderBlock', score: 26, finding: `you have ${w.renderBlockingHeadResources} render-blocking resources in your head — the first paint stalls long enough that Maps visitors abandon before your hero loads` });
   }
-  // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it (ratio avoids false positives)
+  // PRIORITY 27 (DEMOTED 2026-06-02): Lazy-loading missing — tech-spec.
   if (w.imagesWithoutLazy != null && w.totalImages > 5 && (w.imagesWithoutLazy / w.totalImages) > 0.4) {
-    out.push({ key: 'lazyImg', score: 10, finding: `${w.imagesWithoutLazy} of your ${w.totalImages} images don't have lazy loading enabled, slowing your initial page load` });
+    out.push({ key: 'lazyImg', score: 27, finding: `${w.imagesWithoutLazy} of your ${w.totalImages} images don't have lazy loading enabled, dragging out the load time Maps visitors are willing to wait through` });
   }
 
   // TIER 2 — conversion signals (scores 11-16, fill in when Tier 1 doesn't reach 3 findings)
@@ -768,24 +770,27 @@ function scoreMobileFindings(audit) {
   // a failed audit doesn't produce false "you don't have X" claims.
   const mobVerified = m?.mobileAuditVerified === true;
 
-  // PRIORITY 1: Mobile load > 3s
-  if (m.pageLoadSeconds != null && m.pageLoadSeconds > 3) {
-    out.push({ key: 'mobileLoad', score: 1, finding: `your site takes ${m.pageLoadSeconds.toFixed(1)} seconds to load on mobile — 53 percent of visitors abandon at 3 seconds` });
+  // PRIORITY ORDER REWORKED 2026-06-02 — local-SEO conversion levers FIRST,
+  // tech-spec findings (load time, page weight, render-blocking) DEMOTED to
+  // tail of the list. Reason: we sell local SEO (Maps clicks → phone calls),
+  // not website-developer services. Every minute of voiceover should be a
+  // conversion lever, not a Core Web Vitals lecture.
+  // Memory: feedback_audit_focus_local_seo_over_tech_specs.md.
+
+  // PRIORITY 1: No sticky call/text CTA on scroll — top mobile conversion lever.
+  // GATED 2026-05-21 (round 2): requires mobVerified AND stickyCtaVerified
+  // (= page actually has fixed/sticky elements we could examine). If the page
+  // has zero fixed elements, our detector likely didn't see widgets that
+  // load late (cross-origin iframes, post-2.5s injected pills).
+  if (mobVerified && m.stickyCtaVerified === true && m.hasStickyCta === false) {
+    out.push({ key: 'stickyCta', score: 1, finding: `there's no sticky call-or-text button on mobile — once a visitor from Maps scrolls past your hero, they lose the conversion path, and most local prospects only spend ten to fifteen seconds on a service site before bouncing back to call the next listing` });
+  } else if (mobVerified && m.stickyCtaVerified !== true && m.hasStickyCta === false) {
+    console.log('[step-6 unverified-skip] stickyCta finding suppressed: page had no fixed/sticky elements detectable — likely async-loaded widgets.');
   }
-  // PRIORITY 2: No HTTPS
-  if (m.isHttps === false) {
-    out.push({ key: 'https', score: 2, finding: `your site isn't on HTTPS — Google penalizes non-secure pages on mobile` });
-  }
-  // PRIORITY 3: No responsive viewport meta
-  if (m.hasViewportMeta === false) {
-    out.push({ key: 'viewport', score: 3, finding: `there's no responsive viewport tag, so the site just shrinks the desktop layout instead of adapting for mobile` });
-  }
-  // PRIORITY 4: Click-to-call NOT above fold
-  // Skip this finding if the phone number itself is visible above the fold — modern mobile
+  // PRIORITY 2: Tap-to-call NOT above fold — every Maps-to-site visitor has to scroll to call.
+  // Skip if the phone number itself is visible above the fold — modern mobile
   // browsers auto-link phone numbers as tap-to-call, so visible phone === tap-to-call available
   // even if the DOM extractor missed an image/JS-styled button.
-  // 2026-05-18: locked after XP Garage & Gate Experts case where orange CTA bar with
-  // "(818) 337-2533" was missed by the tap-to-call selector but is clearly tappable.
   if (m.clickToCallAboveFold === false && m.phoneVisibleAboveFold !== true) {
     // Chat-widget gate (2026-05-19) — if the site uses a chat widget /
     // popup that contains the phone CTA, the audit's above-the-fold check
@@ -793,81 +798,74 @@ function scoreMobileFindings(audit) {
     // when widget present but CTA contents unclear (safer than firing a
     // potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
     if (m.hasChatWidget === true && m.chatWidgetHasPhoneCta === true) {
-      out.push({ key: 'c2cBuriedInChatWidget', score: 4, finding: `your tap-to-call number is hidden inside a chat widget — visitors have to open the widget before they can call, adding an extra step that costs conversions` });
+      out.push({ key: 'c2cBuriedInChatWidget', score: 2, finding: `your tap-to-call number is buried inside a chat widget — a visitor coming from Maps has to open the widget before they can call, and most don't bother — they back out and call the next result instead` });
     } else if (m.hasChatWidget === false) {
-      // Explicit `=== false` (not !== true) — null = "unknown" (iframe-heavy
-      // page, headless can't introspect) and we don't fire absence claims
-      // on unknown state.
-      out.push({ key: 'c2cFold', score: 4, finding: `your tap-to-call button isn't visible above the fold on mobile, so a visitor has to scroll to find it` });
+      out.push({ key: 'c2cFold', score: 2, finding: `your tap-to-call button isn't visible above the fold on mobile — every Maps-to-website visitor has to scroll just to call you, and most local prospects won't` });
     }
-    // else: widget present but CTA presence unclear → suppress (don't fire false claim)
   }
-  // PRIORITY 5: Tap target < 48px
-  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
-    out.push({ key: 'tapTarget', score: 5, finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's guideline is 48` });
-  }
-  // PRIORITY 6: Page weight > 4 MB (threshold raised from 3 MB to account for unavoidable third-party scripts like analytics/maps)
-  if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
-    out.push({ key: 'pageWeight', score: 6, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes of resources — Google recommends keeping mobile pages under 3 megabytes to avoid slow load times` });
-  }
-  // PRIORITY 6.5 (NEW): No sticky CTA on scroll — major mobile conversion factor
-  // GATED 2026-05-21 (round 2): requires mobVerified AND stickyCtaVerified
-  // (= page actually has fixed/sticky elements we could examine). If the page
-  // has zero fixed elements, our detector likely didn't see widgets that
-  // load late (cross-origin iframes, post-2.5s injected pills). Caught on
-  // Monkey Wrench — site has visible SHOP + "Let's chat" sticky pills but
-  // our detector returned false because they're rendered async/iframe.
-  if (mobVerified && m.stickyCtaVerified === true && m.hasStickyCta === false) {
-    out.push({ key: 'stickyCta', score: 6.5, finding: `there's no sticky call-to-action that stays visible when visitors scroll on mobile — top performers keep a Call or Quote button always reachable, so visitors don't have to scroll back up to convert` });
-  } else if (mobVerified && m.stickyCtaVerified !== true && m.hasStickyCta === false) {
-    console.log('[step-6 unverified-skip] stickyCta finding suppressed: page had no fixed/sticky elements detectable — likely async-loaded widgets.');
-  }
-  // PRIORITY 8: Multiple H1 tags
-  if (m.h1Count != null && m.h1Count > 1) {
-    out.push({ key: 'multiH1', score: 8, finding: `your mobile page has ${m.h1Count} H1 tags — Google recommends one H1 per page for clear hierarchy` });
-  }
-  // PRIORITY 9: Render-blocking CSS/JS in head
-  if (m.renderBlockingHeadResources != null && m.renderBlockingHeadResources > 3) {
-    out.push({ key: 'renderBlock', score: 9, finding: `you have ${m.renderBlockingHeadResources} render-blocking resources in your head, delaying first paint on mobile` });
-  }
-  // PRIORITY 10: Images missing lazy loading — only flag if >40% of images are missing it
-  if (m.imagesWithoutLazy != null && m.totalImages > 5 && (m.imagesWithoutLazy / m.totalImages) > 0.4) {
-    out.push({ key: 'lazyImg', score: 10, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, slowing your mobile load` });
-  }
-  // PRIORITY 10.5 (NEW): No click-to-text (sms:) support
-  // Chat-widget gate (2026-05-19) — suppress entirely if a chat widget is
-  // detected (we can't be sure the widget doesn't offer SMS; safer than
-  // firing a potentially-false claim). Memory: feedback_audit_chat_widget_detection.md.
-  // clickToText — gated on EXPLICIT hasChatWidget === false (not !== true).
-  // hasChatWidget can now be null when page has iframes and our DOM-based
-  // detector couldn't introspect them (locked 2026-05-21 round 2 — chat
-  // widget invisible to headless Playwright on Monkey Wrench). null = "we
-  // don't know" → skip the finding rather than fire potentially-false claim.
+  // PRIORITY 3: No tap-to-text option — free conversion path most competitors miss.
+  // Chat-widget gate — suppress if a chat widget is detected (we can't be sure
+  // the widget doesn't offer SMS; safer than firing a potentially-false claim).
   if (mobVerified && m.hasClickToText === false && m.hasChatWidget === false) {
-    out.push({ key: 'clickToText', score: 10.5, finding: `your mobile site has no tap-to-text option — modern local customers default to SMS for quick questions, and adding a single sms link is a free conversion path most competitors are missing` });
+    out.push({ key: 'clickToText', score: 3, finding: `your mobile site has no tap-to-text option — local customers increasingly default to SMS for quick questions like pricing or availability, and adding a single sms link is a free conversion path most of your competitors are missing` });
   }
-
-  // TIER 2 — conversion signals (scores 11-16, fill in when Tier 1 doesn't reach 3 findings)
-  // PRIORITY 11: Generic CTA text on mobile
+  // PRIORITY 4: Phone digits not visible above fold (only hidden tel: link).
+  // GATED 2026-05-21: requires mobVerified AND no obvious CALL CTA visible.
+  // If a "Call" / "Call Now" / "Tap to Call" labeled button exists above fold,
+  // the conversion path is clear and we don't fire.
+  if (mobVerified && m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true && m.hasObviousCallCta !== true) {
+    out.push({ key: 'phoneNotVisible', score: 4, finding: `your phone number isn't visible as text above the fold on mobile — visitors coming from Maps want to see the digits they're about to dial, not tap a button and hope it's the right line` });
+  }
+  // PRIORITY 5: No social proof in the hero — Maps visitors arrive trusting the listing's star rating but they need to see it reinforced.
+  if (mobVerified && m.socialProofAboveFold === false) {
+    out.push({ key: 'noSocialProof', score: 5, finding: `there's no star rating or review count visible in your mobile hero — Maps visitors already trust your listing's stars, but the moment your site doesn't echo that signal in the hero, they doubt they're on the right page` });
+  }
+  // PRIORITY 6: Tap target too small — failed call button.
+  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
+    out.push({ key: 'tapTarget', score: 6, finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's local-business guideline is 48, and below that, mis-taps cost real conversions on thumb-driven mobile traffic` });
+  }
+  // PRIORITY 7: No responsive viewport meta — site shrinks instead of adapting.
+  if (m.hasViewportMeta === false) {
+    out.push({ key: 'viewport', score: 7, finding: `there's no responsive viewport tag, so your site shrinks the desktop layout on mobile instead of adapting — every Maps-to-mobile visitor sees tap targets that are too small to use` });
+  }
+  // PRIORITY 8: Generic CTA text on mobile.
   if (m.primaryCtaText != null) {
     const isGeneric = /^(contact|learn more|more|click here|submit|send|read more|see more|view more|get started|find out|discover)$/i.test(m.primaryCtaText.trim());
     if (isGeneric) {
-      out.push({ key: 'ctaText', score: 11, finding: `your main button says "${m.primaryCtaText.trim()}" — on mobile, action-specific buttons like "Call Now" or "Get Free Quote" convert significantly better` });
+      out.push({ key: 'ctaText', score: 8, finding: `your main mobile button says "${m.primaryCtaText.trim()}" — action-specific labels like "Call Now" or "Get Free Quote" tied to your Maps conversion path significantly outperform generic verbs` });
     }
   }
-  // PRIORITY 12: Phone number not visible as text above fold (only hidden tel: link)
-  // GATED 2026-05-21: requires mobVerified AND no obvious CALL CTA visible.
-  // If a "Call" / "Call Now" / "Tap to Call" labeled button exists above fold,
-  // the conversion path is clear and we don't fire — visitors don't need to
-  // see the digits when the call-button intent is unmistakable. Caught on
-  // Monkey Wrench: hero has a phone-icon CALL button + "CALL NOW" text but
-  // no number digits visible. Finding fired falsely. Locked 2026-05-21.
-  if (mobVerified && m.phoneVisibleAboveFold === false && m.clickToCallAboveFold === true && m.hasObviousCallCta !== true) {
-    out.push({ key: 'phoneNotVisible', score: 12, finding: `your phone number isn't visible as text above the fold on mobile — visitors shouldn't have to tap a button just to see your number` });
+  // PRIORITY 9: No HTTPS — local-trust signal failure.
+  if (m.isHttps === false) {
+    out.push({ key: 'https', score: 9, finding: `your site isn't on HTTPS — modern browsers warn visitors with a "Not Secure" badge, and Google demotes non-secure pages in local rankings` });
   }
-  // PRIORITY 13: No social proof visible above fold (GATED 2026-05-21)
-  if (mobVerified && m.socialProofAboveFold === false) {
-    out.push({ key: 'noSocialProof', score: 13, finding: `there's no star rating or review count visible in your mobile hero — first-time visitors have no trust signal before they scroll` });
+  // PRIORITY 10: Multiple H1 tags — confused on-page signal.
+  if (m.h1Count != null && m.h1Count > 1) {
+    out.push({ key: 'multiH1', score: 10, finding: `your mobile page has ${m.h1Count} H1 tags — Google reads one H1 as your page's primary topic, and stacking them dilutes the local-keyword relevance signal` });
+  }
+
+  // ============================================================
+  // TIER 3 — DEMOTED tech-spec findings (load time, page weight, render-blocking).
+  // These are website-vendor concerns, not local-SEO levers. They only fire
+  // when the local-SEO findings above don't fill the 3-finding slot.
+  // Reframed wording: tie every claim back to Maps clicks / abandonment.
+  // ============================================================
+
+  // PRIORITY 25 (DEMOTED): Mobile load > 3s — frame as Maps-click abandonment.
+  if (m.pageLoadSeconds != null && m.pageLoadSeconds > 3) {
+    out.push({ key: 'mobileLoad', score: 25, finding: `your mobile site takes ${m.pageLoadSeconds.toFixed(1)} seconds to load — more than half of the visitors Maps is sending you abandon before the page renders and call the next listing instead` });
+  }
+  // PRIORITY 26 (DEMOTED): Page weight too heavy.
+  if (m.pageWeightKb != null && m.pageWeightKb > 4000) {
+    out.push({ key: 'pageWeight', score: 26, finding: `your mobile page loads ${(m.pageWeightKb / 1024).toFixed(1)} megabytes — heavy enough that Maps visitors on cellular data lose the page before it loads and dial a competitor instead` });
+  }
+  // PRIORITY 27 (DEMOTED): Render-blocking resources.
+  if (m.renderBlockingHeadResources != null && m.renderBlockingHeadResources > 3) {
+    out.push({ key: 'renderBlock', score: 27, finding: `you have ${m.renderBlockingHeadResources} render-blocking resources in your head — the first paint stalls long enough that Maps visitors switch back to the search results before your hero appears` });
+  }
+  // PRIORITY 28 (DEMOTED): Images missing lazy loading.
+  if (m.imagesWithoutLazy != null && m.totalImages > 5 && (m.imagesWithoutLazy / m.totalImages) > 0.4) {
+    out.push({ key: 'lazyImg', score: 28, finding: `${m.imagesWithoutLazy} of your ${m.totalImages} images don't have lazy loading enabled, dragging out the mobile load time that Maps visitors are willing to wait through` });
   }
 
   return out.sort((a, b) => a.score - b.score);
