@@ -52,9 +52,12 @@ fi
 # covers step-1 scrape + step-2 email fallback for ~55 leads with margin).
 # Set MIN_SERPAPI_REMAINING=0 to bypass.
 MIN_SERPAPI_REMAINING="${MIN_SERPAPI_REMAINING:-100}"
-if [ -n "$SERPAPI_KEY" ] && [ "$MIN_SERPAPI_REMAINING" -gt 0 ]; then
+# Read SERPAPI_KEY from .env if not exported. The script runs under `set -u`
+# so any unset var would crash — use the :- default-empty pattern.
+SERPAPI_KEY_LOCAL="${SERPAPI_KEY:-$(grep -E '^SERPAPI_KEY=' .env 2>/dev/null | head -1 | cut -d= -f2-)}"
+if [ -n "${SERPAPI_KEY_LOCAL:-}" ] && [ "$MIN_SERPAPI_REMAINING" -gt 0 ]; then
   echo ">>> pre-flight: SerpAPI quota check (need ≥${MIN_SERPAPI_REMAINING} remaining)" | tee -a "$LOGFILE"
-  REMAINING=$(curl -s --max-time 10 "https://serpapi.com/account?api_key=${SERPAPI_KEY}" \
+  REMAINING=$(curl -s --max-time 10 "https://serpapi.com/account?api_key=${SERPAPI_KEY_LOCAL}" \
     | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('total_searches_left', 0))" 2>/dev/null || echo 0)
   echo "    SerpAPI total_searches_left = $REMAINING" | tee -a "$LOGFILE"
   if [ "$REMAINING" -lt "$MIN_SERPAPI_REMAINING" ]; then

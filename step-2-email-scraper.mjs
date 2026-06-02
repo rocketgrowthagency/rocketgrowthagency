@@ -600,12 +600,57 @@ async function processCsv() {
 
   console.log(`Loaded ${records.length} records from CSV.`);
 
+  // 2026-06-02 — Airtable email cache. Before scraping, fetch all leads that
+  // already have an Email + match this run's Business Name + Search Term.
+  // For those, skip the entire scrape (saves site fetch + SerpAPI fallback).
+  // Massive SerpAPI savings on re-runs of the same search.
+  // Memory: feedback_serpapi_quota_protection.md
+  const airtableCache = new Map(); // key: "biz|searchTerm" → email
+  if (process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID) {
+    try {
+      const tbl = process.env.AIRTABLE_TABLE_NAME || 'Leads';
+      const searchTerms = [...new Set(records.map(r => (r['Search Term'] || r.searchTerm || '').trim()).filter(Boolean))];
+      for (const sterm of searchTerms) {
+        const q = encodeURIComponent(`AND({Search Term}='${sterm.replace(/'/g, "\\'")}', {Email}!='')`);
+        let offset = '';
+        while (true) {
+          const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${encodeURIComponent(tbl)}?filterByFormula=${q}&fields%5B%5D=Business%20Name&fields%5B%5D=Email&pageSize=100${offset ? '&offset=' + encodeURIComponent(offset) : ''}`;
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } });
+          if (!res.ok) break;
+          const d = await res.json();
+          for (const r of d.records || []) {
+            const biz = (r.fields['Business Name'] || '').trim();
+            const email = (r.fields.Email || '').trim();
+            if (biz && email) airtableCache.set(`${biz}|${sterm}`, email);
+          }
+          if (!d.offset) break;
+          offset = d.offset;
+        }
+      }
+      console.log(`[airtable-cache] preloaded ${airtableCache.size} already-emailed leads (will skip re-scrape + SerpAPI fallback for these)`);
+    } catch (err) {
+      console.log(`[airtable-cache] preload failed (non-fatal): ${err.message}`);
+    }
+  }
+
   // Fetch in parallel batches of 5 — reduces total time ~5x vs sequential
   const BATCH = 5;
+  let cacheHits = 0;
   for (let i = 0; i < records.length; i += BATCH) {
     const batch = records.slice(i, i + BATCH);
     await Promise.all(
       batch.map(async (record, j) => {
+        // Airtable email cache — skip the entire scrape if we already have an
+        // email for this business+search. Saves site fetch + SerpAPI fallback.
+        const cacheKey = `${(record['Business Name'] || '').trim()}|${(record['Search Term'] || record.searchTerm || '').trim()}`;
+        const cachedEmail = airtableCache.get(cacheKey);
+        if (cachedEmail) {
+          record.email = cachedEmail;
+          ['facebook','instagram','linkedin','twitter','youtube','tiktok'].forEach(k => { if (!(k in record)) record[k] = ''; });
+          console.log(`Processing (${i + j + 1}/${records.length}): ${record['Business Name']} → CACHE HIT (Airtable email: ${cachedEmail})`);
+          cacheHits++;
+          return;
+        }
         // Prefer the discovered website (from step-1 Google Search fallback)
         // when present — that's the lead's real brand site, not the GBP-linked
         // aggregator. Locked 2026-05-20 (Richards Rooter case).
@@ -660,7 +705,7 @@ async function processCsv() {
 
   const csvWriter = createObjectCsvWriter({ path: OUTPUT_CSV, header: headers });
   await csvWriter.writeRecords(records);
-  console.log(`Done! Output saved to ${OUTPUT_CSV}`);
+  console.log(`Done! Output saved to ${OUTPUT_CSV} (${cacheHits} cache-hits saved scrape+SerpAPI calls)`);
 }
 
 processCsv().catch((err) => {

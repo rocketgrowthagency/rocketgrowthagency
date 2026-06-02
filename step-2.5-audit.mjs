@@ -1744,13 +1744,38 @@ async function auditGbp(_, gbpUrl, business) {
     findings.duplicateListingCount = null;
     findings.duplicateListingCountVerified = false;
     findings.duplicateListings = [];
-    // 2026-06-02: gated behind STEP25_ENABLE_DUPLICATE_LISTING=1 env var.
-    // Was running per-audit by default and exhausted the SerpAPI 1000/mo
-    // quota in a single day (multi-GBP lookup + step-2 email fallback +
-    // step-1 scrape compounded). Re-enable per-run when quota allows.
+    // 2026-06-02: gated behind STEP25_ENABLE_DUPLICATE_LISTING=1 env var
+    // (default ON now that Developer plan has 5000 quota; can disable for
+    // cost-sensitive runs). Also 30-day local file cache — duplicate
+    // listings don't change daily, so we save ~90% of SerpAPI calls on
+    // repeat audits of the same lead.
+    // Cache: output/.cache/duplicate-listings/<biz-slug>.json
     // Memory: feedback_serpapi_quota_protection.md
-    if (process.env.STEP25_ENABLE_DUPLICATE_LISTING === '1' && process.env.SERPAPI_KEY && business.name) {
+    const enableDup = process.env.STEP25_ENABLE_DUPLICATE_LISTING !== '0'; // default ON
+    if (enableDup && process.env.SERPAPI_KEY && business.name) {
+      // Cache check first (30-day TTL)
+      const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const cacheDir = path.join(process.cwd(), 'output', '.cache', 'duplicate-listings');
+      const cacheKey = `${slugify(business.name)}__${slugify(business.searchTerm || '')}`;
+      const cachePath = path.join(cacheDir, `${cacheKey}.json`);
+      const CACHE_TTL_DAYS = 30;
+      let usedCache = false;
       try {
+        if (fs.existsSync(cachePath)) {
+          const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+          const ageDays = (Date.now() - new Date(cached.checkedAt).getTime()) / (24 * 3600 * 1000);
+          if (ageDays >= 0 && ageDays < CACHE_TTL_DAYS) {
+            findings.duplicateListingCount = cached.duplicateListingCount;
+            findings.duplicateListingCountVerified = true;
+            findings.duplicateListings = cached.duplicateListings || [];
+            usedCache = true;
+            console.log(`  [gbp-diag] duplicateListingCount = ${cached.duplicateListingCount} (cached, age=${ageDays.toFixed(1)}d)`);
+          }
+        }
+      } catch (_) {}
+      if (usedCache) {
+        // Skip SerpAPI block entirely
+      } else try {
         const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
         const q = encodeURIComponent(`"${business.name}"`);
         const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
@@ -1781,6 +1806,17 @@ async function auditGbp(_, gbpUrl, business) {
             permanently_closed: !!m.permanently_closed,
           }));
           console.log(`  [gbp-diag] duplicateListingCount = ${findings.duplicateListingCount} (${distinctIds.size} total places matching "${business.name}")`);
+          // Write 30-day cache for future runs (saves a SerpAPI call per repeat audit).
+          try {
+            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+            fs.writeFileSync(cachePath, JSON.stringify({
+              checkedAt: new Date().toISOString(),
+              businessName: business.name,
+              searchTerm: business.searchTerm,
+              duplicateListingCount: findings.duplicateListingCount,
+              duplicateListings: findings.duplicateListings,
+            }, null, 2));
+          } catch (_) {}
         }
       } catch (err) {
         console.log(`  [gbp-diag] duplicateListingCount lookup failed: ${err.message}`);
