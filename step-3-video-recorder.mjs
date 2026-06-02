@@ -846,21 +846,70 @@ async function clickListingInResultsByName(page, businessName) {
   // 2026-05-18 (rev2) — switched from href-match to name-match in card text
   // because Maps DOM re-renders the href subtly between getListingHrefByName
   // and this call, causing the lookup to silently miss the card.
+  // 2026-06-02 (rev3) — HARD FIX. Previous version matched by text-includes,
+  // which (a) had no sponsored filter and (b) could match the wrong card if
+  // a sponsored result's "similar to" copy included the prospect's words.
+  // Caught on Beverly Hills Roofing Contractors single-lead test: blue
+  // outline landed on Hull Brothers (Sponsored). New algorithm:
+  //   1. Find the anchor whose href matches the resolved (already-filtered)
+  //      href from getListingHrefByName.
+  //   2. Walk up to its card root.
+  //   3. Re-check isSponsoredBlock locally as a belt-and-suspenders guard;
+  //      if true, refuse to highlight (better dark than wrong).
   try {
-    const centered = await page.evaluate((targetName) => {
-      const norm = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-      const target = norm(targetName);
-      // Find candidate cards in the results panel
-      const cards = Array.from(document.querySelectorAll('div[role="article"], div.Nv2PK'));
-      let match = null;
-      for (const card of cards) {
-        const text = norm(card.innerText || '');
-        if (text.includes(target) || target.split(' ').filter((w) => w.length >= 4).every((w) => text.includes(w))) {
-          match = card;
-          break;
+    const centered = await page.evaluate((targetHref) => {
+      // Inline sponsored detector — same logic as getListingHrefByName.
+      const isSponsoredBlock = (el) => {
+        let cursor = el;
+        for (let i = 0; i < 4 && cursor; i++) {
+          const t = (cursor.innerText || '').toLowerCase();
+          if (/\bsponsored\b/.test(t.slice(0, 120))) return true;
+          if (cursor.querySelector && cursor.querySelector(
+            '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
+          )) return true;
+          cursor = cursor.parentElement;
+        }
+        return false;
+      };
+
+      // 2026-06-02 — HIDE sponsored cards entirely from the recording. The
+      // voiceover claims "you rank #1" but a sponsored ad above the prospect
+      // visually contradicts that. Walk all result cards, detect sponsored,
+      // and remove them so the visible result list matches the organic rank.
+      const allCards = Array.from(document.querySelectorAll(
+        'div[role="article"], div.Nv2PK, div.UaQhfb'
+      ));
+      for (const card of allCards) {
+        if (isSponsoredBlock(card)) {
+          card.style.display = 'none';
         }
       }
+      // Also nuke common Google Ads side-panel chrome ("Ad" pill, sub-cards
+      // like "Free Installation Quote" that hang under sponsored result).
+      const adsChrome = Array.from(document.querySelectorAll(
+        '[aria-label="Ad" i], [aria-label*="Sponsored" i], [data-value="ad" i]'
+      ));
+      for (const el of adsChrome) {
+        const root = el.closest('div[role="article"], div.Nv2PK, div.UaQhfb') || el;
+        root.style.display = 'none';
+      }
+
+      // Locate the anchor whose href matches the resolved organic listing.
+      const anchors = Array.from(document.querySelectorAll('a.hfpxzc, a[href*="/maps/place/"]'));
+      const stripQuery = (h) => String(h || '').split('?')[0];
+      const targetStripped = stripQuery(targetHref);
+      const anchor =
+        anchors.find((a) => a.href === targetHref) ||
+        anchors.find((a) => stripQuery(a.href) === targetStripped);
+      if (!anchor) return false;
+
+      const match = anchor.closest('div[role="article"], div.Nv2PK') || anchor.parentElement;
       if (!match) return false;
+      // Belt-and-suspenders: refuse to outline a sponsored card even if the
+      // href resolver returned one (it shouldn't, but if Maps DOM changes
+      // shape it could). Better to show no outline than the wrong outline.
+      if (isSponsoredBlock(match)) return false;
+
       // Highlight the card so it pops in the recording
       match.style.outline = '4px solid #2f57eb';
       match.style.outlineOffset = '2px';
@@ -873,7 +922,7 @@ async function clickListingInResultsByName(page, businessName) {
         match.style.boxShadow = '';
       }, 4500);
       return true;
-    }, businessName);
+    }, href);
     if (centered) {
       await sleep(4000); // recording captures the card centered + highlighted
     } else {
