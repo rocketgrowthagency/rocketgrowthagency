@@ -56,6 +56,17 @@ if ! node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: sponsored-card filter regression failed — step-3 may match/outline a Sponsored Maps listing. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-02 — Mobile finding priority lock. Asserts local-SEO conversion
+# levers (stickyCta, c2cFold, clickToText, etc.) stay at score <= 10 and
+# tech-spec findings (mobileLoad, pageWeight, renderBlock, lazyImg) stay
+# at score >= 25. If anyone ever flips the order back, this aborts the
+# overnight before a single video gets rendered with the wrong priorities.
+# Memory: feedback_audit_focus_local_seo_over_tech_specs.md.
+echo ">>> pre-flight: mobile finding priority lock (local-SEO > tech-spec)" | tee -a "$LOGFILE"
+if ! node scripts/check-mobile-finding-priority.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: mobile finding priority regressed — tech-spec findings would dominate the voiceover. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
 # wasted 10 hours retrying against an exhausted monthly quota. Abort
 # cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
