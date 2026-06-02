@@ -1012,13 +1012,25 @@ function scoreMapsFindings(audit, top3Stats, record) {
       finding: `your Google Business Profile shows only ${audit.gbp.photoCount} photo${audit.gbp.photoCount === 1 ? '' : 's'} — top performers in this search average 50 or more. Photo count is a measured Maps-ranking signal Google reads on the profile`,
     });
   }
+  // 2026-06-02 — REFRAMED to only assert what we can observe from public data.
+  // Google publicly displays only the PRIMARY category in the knowledge panel
+  // + Maps panel; secondary categories live in the owner's GBP admin dashboard
+  // and aren't exposed to scrapers without paid tools like GMBspy. Our prior
+  // claim ("only a primary category set") was unprovable — the owner could
+  // have 5 secondaries we can't see. The new wording asserts what Google IS
+  // surfacing publicly, which still drives the same fix (add/confirm secondaries
+  // so Google promotes them into the public panel) without making a claim we
+  // can't back up. Applies to both rank 1-3 + rank 4+ flows since they share
+  // this scoreMapsFindings function. Memory: feedback_audit_focus_local_seo_over_tech_specs.md
+  // + feedback_no_hardcoded_stats.md (every claim must be empirically observable).
   if (audit?.gbp?.categoriesCountVerified === true
       && Number.isFinite(audit.gbp.categoriesCount)
       && audit.gbp.categoriesCount === 1) {
+    const primary = audit?.gbp?.primaryCategory || 'your primary category';
     out.push({
       key: 'secondaryCategoriesGap',
       score: 8,
-      finding: `your Google Business Profile has only a primary category set — adding 2 to 3 relevant secondary categories is one of the highest-leverage Maps ranking adjustments, since Google reads category breadth as a relevance signal`,
+      finding: `Google is only surfacing one category on your Maps panel — "${primary}" — which means even any secondaries you have configured aren't doing the ranking work they could be. Top performers in this search show multiple category labels publicly, and Google reads that breadth as a stronger relevance signal`,
     });
   }
 
@@ -1353,26 +1365,34 @@ function scoreMobileConfirmedGood(audit) {
   if (!audit?.mobile) return [];
   const m = audit.mobile;
   const out = [];
-  if (m.pageLoadSeconds != null && m.pageLoadSeconds <= 3) {
-    out.push({ key: 'mobileLoadGood', score: 100, finding: `we also checked your mobile load — ${m.pageLoadSeconds.toFixed(1)} seconds, under the 3-second mobile abandonment threshold` });
-  }
+  // 2026-06-02 — REORDERED: local-SEO conversion-lever positives first;
+  // tech-spec positives (mobile load time) demoted. Drops the "X seconds,
+  // under the 3-second threshold" line as a primary positive because it
+  // reads tech-spec, not local-SEO, and contradicts a heavy-pageWeight
+  // negative when both fire on the same segment.
   if (m.clickToCallAboveFold === true) {
-    out.push({ key: 'c2cFoldGood', score: 101, finding: `your tap-to-call button is visible above the fold on mobile — direct conversion path is set` });
-  }
-  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx >= 48) {
-    out.push({ key: 'tapTargetGood', score: 102, finding: `your primary call-to-action tap target is ${m.primaryCtaTapTargetPx} pixels — meets Google's 48-pixel mobile accessibility guideline` });
-  }
-  if (m.hasStickyCta === true) {
-    out.push({ key: 'stickyCtaGood', score: 103, finding: `you have a sticky call-to-action that stays visible during mobile scroll — top performers do this` });
-  }
-  if (m.hasViewportMeta === true) {
-    out.push({ key: 'viewportGood', score: 104, finding: `your responsive viewport meta tag is properly configured` });
+    out.push({ key: 'c2cFoldGood', score: 100, finding: `your tap-to-call button is visible above the fold on mobile — direct Maps-to-call conversion path is wide open` });
   }
   if (m.phoneVisibleAboveFold === true) {
-    out.push({ key: 'phoneVisibleGood', score: 105, finding: `your phone number is visible as text above the fold on mobile — no extra tap needed` });
+    out.push({ key: 'phoneVisibleGood', score: 101, finding: `your phone number is visible as text above the fold on mobile — visitors from Maps can see the digits they're about to dial before they even tap` });
+  }
+  if (m.hasStickyCta === true) {
+    out.push({ key: 'stickyCtaGood', score: 102, finding: `you have a sticky call-or-text button that stays visible during mobile scroll — Maps visitors keep the conversion path in view no matter how far they read` });
   }
   if (m.hasClickToText === true) {
-    out.push({ key: 'clickToTextGood', score: 106, finding: `you have tap-to-text set up on mobile — a conversion path most competitors are missing` });
+    out.push({ key: 'clickToTextGood', score: 103, finding: `you have tap-to-text set up on mobile — a free SMS conversion path most competitors are missing` });
+  }
+  if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx >= 48) {
+    out.push({ key: 'tapTargetGood', score: 104, finding: `your primary call-to-action tap target is ${m.primaryCtaTapTargetPx} pixels — meets Google's 48-pixel mobile accessibility guideline, so no mis-taps on thumb-driven traffic` });
+  }
+  if (m.hasViewportMeta === true) {
+    out.push({ key: 'viewportGood', score: 105, finding: `your responsive viewport meta tag is properly configured — site adapts cleanly for the 70 percent of local-search traffic that arrives on mobile` });
+  }
+  // TIER 3 (DEMOTED): mobile-load-time positive. Only fires when no local-SEO
+  // mobile positives match — avoids contradicting a heavy pageWeight negative
+  // and stops the mobile segment from sounding like a PageSpeed report.
+  if (m.pageLoadSeconds != null && m.pageLoadSeconds <= 3) {
+    out.push({ key: 'mobileLoadGood', score: 125, finding: `your mobile load comes in at ${m.pageLoadSeconds.toFixed(1)} seconds, under the 3-second mobile abandonment threshold` });
   }
   return out;
 }

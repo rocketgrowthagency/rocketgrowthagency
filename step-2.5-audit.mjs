@@ -1212,24 +1212,39 @@ async function auditMobile(browser, websiteUrl, business) {
     // Scroll back to top to leave the page in a clean state
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
 
-    // Iframe-aware override (locked 2026-05-21 round 2): when the page has
-    // iframes AND our DOM-based detector found nothing, the absence is
-    // UNKNOWABLE from headless DOM — chat widgets and sticky pills commonly
-    // render inside iframes we can't introspect (cross-origin), or sites
-    // bot-detect and skip rendering altogether for headless browsers.
-    // Convert false → null so step-6 absence-claim gates suppress the finding.
-    // Caught on Monkey Wrench: visible "Let's chat" + "SHOP" sticky pills in
-    // a real browser, but invisible to Playwright (only 1 iframe in DOM, no
-    // chat/sticky elements). Better to skip than fabricate.
-    if (findings.iframeCount > 0) {
+    // Iframe-aware override (locked 2026-05-21 round 2, REFINED 2026-06-02):
+    // The original Monkey Wrench fix blanket-converted false → null whenever
+    // ANY iframes existed. Too broad — Maps embeds, YouTube players, social
+    // embeds, etc. all triggered the safety even on sites where no widget-style
+    // iframe (chat, sticky pill, social proof widget) was present.
+    //
+    // BHRC case 2026-06-02: site has iframes (Maps embed + media) but visually
+    // NO sticky CTA. Our blanket null conversion suppressed a legitimate finding.
+    //
+    // Refined: only convert false → null when at least one iframe matches a
+    // KNOWN WIDGET pattern (chat/sticky/review providers we can't introspect
+    // cross-origin). If all iframes are content embeds, trust the DOM scan.
+    const WIDGET_IFRAME_SRC_RE = /\b(intercom|drift\.com|tawk\.to|freshchat|livechat|zoho|hubspot|crisp\.chat|olark|tidio|zendesk|smartsupp|messenger\.com|m\.me|trustpilot|yotpo|birdeye|reviewfilter|grade\.us|podium|nicejob|reviewbuzz|chatbase|signaling|chat-widget|sticky)\b/i;
+    const widgetIframeCount = await page.evaluate((reStr) => {
+      const re = new RegExp(reStr, 'i');
+      return Array.from(document.querySelectorAll('iframe'))
+        .filter((f) => re.test((f.src || '') + ' ' + (f.title || '') + ' ' + (f.className || ''))).length;
+    }, WIDGET_IFRAME_SRC_RE.source).catch(() => 0);
+    if (widgetIframeCount > 0) {
       if (findings.hasStickyCta === false) {
         findings.hasStickyCta = null;
-        console.log('  [audit-diag] hasStickyCta: page has iframes — absence unverifiable, set to null (suppresses noSticky finding).');
+        console.log(`  [audit-diag] hasStickyCta: page has ${widgetIframeCount} widget-pattern iframe(s) — absence unverifiable, set to null.`);
       }
       if (findings.hasChatWidget === false) {
         findings.hasChatWidget = null;
-        console.log('  [audit-diag] hasChatWidget: page has iframes — absence unverifiable, set to null (suppresses noSMS finding via chat gate).');
+        console.log(`  [audit-diag] hasChatWidget: page has ${widgetIframeCount} widget-pattern iframe(s) — absence unverifiable, set to null.`);
       }
+    } else if (findings.iframeCount > 0) {
+      console.log(`  [audit-diag] page has ${findings.iframeCount} iframe(s) but none match widget patterns — trusting DOM scan (hasStickyCta=${findings.hasStickyCta}, hasChatWidget=${findings.hasChatWidget}).`);
+    }
+    // OLD blanket override removed — preserved below for the social-proof case
+    // which is still iframe-blanket (review widgets are ubiquitous).
+    if (findings.iframeCount > 0) {
       // Same pattern for social proof — review/rating widgets commonly render
       // in cross-origin iframes (Trustpilot, Yotpo, Birdeye, Google reviews
       // embed). If we found no above-fold social proof AND the page has
