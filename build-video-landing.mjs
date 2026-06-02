@@ -125,10 +125,23 @@ async function findMp4s() {
     const fullRun = path.join(STEP7_DIR, runDir);
     const files = fs.readdirSync(fullRun).filter((f) => f.toLowerCase().endsWith(".mp4"));
     for (const f of files) {
-      results.push({ runDir, file: f, fullPath: path.join(fullRun, f) });
+      const fp = path.join(fullRun, f);
+      results.push({ runDir, file: f, fullPath: fp, mtimeMs: fs.statSync(fp).mtimeMs });
     }
   }
-  return results;
+  // 2026-06-02: DEDUPE by lead slug, keep NEWEST mp4 per slug. Caught when
+  // Beverly Hills Roofing Contractors landing served a May-19 SM-search
+  // version (orphan dir `beverly-hills-roofing-contractors-single-[step-2]`)
+  // instead of today's fresh BH-search version. Multiple orphan dirs across
+  // history can produce identically-named MP4s; whichever the readdir
+  // returned first was winning the slot non-deterministically. Now: group
+  // by file name (which contains the lead slug), keep highest mtimeMs.
+  const bySlug = new Map();
+  for (const r of results) {
+    const existing = bySlug.get(r.file);
+    if (!existing || r.mtimeMs > existing.mtimeMs) bySlug.set(r.file, r);
+  }
+  return Array.from(bySlug.values());
 }
 
 async function extractThumbnail(mp4Path, outJpg) {
