@@ -1744,7 +1744,12 @@ async function auditGbp(_, gbpUrl, business) {
     findings.duplicateListingCount = null;
     findings.duplicateListingCountVerified = false;
     findings.duplicateListings = [];
-    if (process.env.SERPAPI_KEY && business.name) {
+    // 2026-06-02: gated behind STEP25_ENABLE_DUPLICATE_LISTING=1 env var.
+    // Was running per-audit by default and exhausted the SerpAPI 1000/mo
+    // quota in a single day (multi-GBP lookup + step-2 email fallback +
+    // step-1 scrape compounded). Re-enable per-run when quota allows.
+    // Memory: feedback_serpapi_quota_protection.md
+    if (process.env.STEP25_ENABLE_DUPLICATE_LISTING === '1' && process.env.SERPAPI_KEY && business.name) {
       try {
         const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
         const q = encodeURIComponent(`"${business.name}"`);

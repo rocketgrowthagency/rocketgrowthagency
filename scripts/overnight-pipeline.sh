@@ -46,6 +46,23 @@ if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
+# wasted 10 hours retrying against an exhausted monthly quota. Abort
+# cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
+# covers step-1 scrape + step-2 email fallback for ~55 leads with margin).
+# Set MIN_SERPAPI_REMAINING=0 to bypass.
+MIN_SERPAPI_REMAINING="${MIN_SERPAPI_REMAINING:-100}"
+if [ -n "$SERPAPI_KEY" ] && [ "$MIN_SERPAPI_REMAINING" -gt 0 ]; then
+  echo ">>> pre-flight: SerpAPI quota check (need ≥${MIN_SERPAPI_REMAINING} remaining)" | tee -a "$LOGFILE"
+  REMAINING=$(curl -s --max-time 10 "https://serpapi.com/account?api_key=${SERPAPI_KEY}" \
+    | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('total_searches_left', 0))" 2>/dev/null || echo 0)
+  echo "    SerpAPI total_searches_left = $REMAINING" | tee -a "$LOGFILE"
+  if [ "$REMAINING" -lt "$MIN_SERPAPI_REMAINING" ]; then
+    echo "✗ FATAL: SerpAPI quota below threshold (${REMAINING} < ${MIN_SERPAPI_REMAINING}). Monthly quota likely exhausted." | tee -a "$LOGFILE"
+    echo "    Wait for billing cycle reset OR upgrade plan OR set MIN_SERPAPI_REMAINING=0 to bypass." | tee -a "$LOGFILE"
+    exit 1
+  fi
+fi
 echo "✓ pre-flight gates passed" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
