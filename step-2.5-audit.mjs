@@ -573,6 +573,36 @@ async function auditWebsite(browser, websiteUrl, business) {
       console.log(`    [parked-install] ${findings.parkedReason} on ${websiteUrl} — site has no real content`);
     }
 
+    // 2026-06-03 — EMPTY-AUDIT ABANDON GATE. Caught on Palisades Plumbing CO:
+    // their domain palisadesplumbinginc.com expired and now serves a JS-rendered
+    // GoDaddy parking page. Our page.goto returned in 0.43s before the parking
+    // content rendered, so the audit captured title="", h1Text="", wordCount=null
+    // — TOTALLY EMPTY. The existing detectParkedInstall regex needs body text
+    // to fire, so it returned false. Result: video rendered showing the GoDaddy
+    // parking page in the website segment. Same hard-fail as the 4xx case.
+    //
+    // Fix: when audit returns empty across title + h1 + wordCount, abandon
+    // the lead. The cause might be:
+    //   - JS-rendered parking page (Palisades case)
+    //   - Site requires user-agent we don't send
+    //   - Site bot-blocked us before content rendered
+    //   - Site actually has no content
+    // ANY of these → can't record a useful website segment → skip the lead.
+    const titleEmpty = !data.title || !data.title.trim();
+    const h1Empty = !data.h1 || !data.h1.trim();
+    const wordCountVeryLow = !Number.isFinite(data.wordCount) || data.wordCount < 30;
+    if (titleEmpty && h1Empty && wordCountVeryLow && !findings.siteLooksParked) {
+      const err = new Error(
+        `[step-2.5 ABANDON] Empty audit for ${websiteUrl} ` +
+        `(title="${(data.title || '').slice(0, 40)}" h1="${(data.h1 || '').slice(0, 40)}" wordCount=${data.wordCount}). ` +
+        `Likely JS-rendered parking page, bot-blocked, or empty site. ` +
+        `Abandoning lead to avoid shipping a video with a blank/parked website segment.`
+      );
+      err.skipLead = true;
+      err.emptyAudit = true;
+      throw err;
+    }
+
     // H1 category check: use first 2 words of category for specificity (avoid single generic words)
     let category = String(business.category || '').toLowerCase().trim();
     if (!category && business.searchTerm) {
