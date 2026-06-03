@@ -569,6 +569,18 @@ function scoreWebsiteFindings(audit, businessName) {
   // Filter out industry/service stopwords from the business name so we only check the
   // unique brand tokens against the domain. Otherwise "Alvin Garage Door" would match
   // sswhitegaragedoors.com just because the domain contains "garage" + "door".
+  //
+  // 2026-06-03: BROADENED + CROSS-GATED. Caught false positive on DX Plumbing
+  // and Hydro Jetting Inc — the 2-letter brand "DX" was filtered out by the
+  // length >= 3 rule, so "hydro" + "jetting" became the brand tokens, neither
+  // present in dxplumbing.com, fired false claim. Two changes:
+  //   1. Lower length filter to >= 2 (allow 2-letter brand acronyms: DX, JR,
+  //      AC, etc.). Single-letter tokens still filtered (too noisy).
+  //   2. ALSO check if any INDUSTRY-token that appears in BOTH the business
+  //      name AND the domain (e.g., "plumbing" in both "DX Plumbing" and
+  //      "dxplumbing.com") indicates partial alignment — suppress the mismatch
+  //      claim. The original Alvin Garage Door / sswhitegaragedoors.com case
+  //      still fires because Alvin's brand ("alvin") is in neither domain.
   if (w.websiteUrl && w.businessNameForCheck) {
     try {
       const host = new URL(w.websiteUrl).hostname.toLowerCase().replace(/^www\./, '');
@@ -586,11 +598,17 @@ function scoreWebsiteFindings(audit, businessName) {
         'pest','control','exterminator','exterminators',
         'electric','electrician','electricians','contractor','contractors','construction','remodel','remodeling'
       ]);
-      const brandTokens = w.businessNameForCheck.toLowerCase()
+      const allTokens = w.businessNameForCheck.toLowerCase()
         .split(/[^a-z0-9]+/)
-        .filter(t => t.length >= 3 && !INDUSTRY_STOPWORDS.has(t));
+        .filter(t => t.length >= 2);
+      const brandTokens = allTokens.filter(t => !INDUSTRY_STOPWORDS.has(t));
+      const industryTokensInName = allTokens.filter(t => INDUSTRY_STOPWORDS.has(t) && t.length >= 4);
       const hasBrandMatch = brandTokens.length > 0 && brandTokens.some(t => domainRoot.includes(t));
-      if (brandTokens.length && !hasBrandMatch) {
+      // Cross-gate: at least one industry word from the name also in the domain
+      // (e.g., "plumbing" in both "DX Plumbing" and "dxplumbing.com") indicates
+      // partial alignment — suppress the mismatch claim.
+      const hasIndustryAlignment = industryTokensInName.some(t => domainRoot.includes(t));
+      if (brandTokens.length && !hasBrandMatch && !hasIndustryAlignment) {
         out.push({
           key: 'domainNameMismatch',
           score: 1.3,
