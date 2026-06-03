@@ -550,7 +550,19 @@ function scoreWebsiteFindings(audit, businessName) {
   // was clearly in the header (visible in browser) but the scraper said
   // above-fold=false. If we found a phone anywhere on the page, suppress
   // this finding rather than risk a false absence claim.
-  if (webVerified && w.napAboveFold === false && (w.distinctSitePhoneCount || 0) === 0) {
+  // CROSS-GATED 2026-06-03 after ABC Plumber Service false negative (DOM walker
+  // missed phones in builder-rendered content). Don't fire napAboveFold absence
+  // claim when any of these positive signals shows there IS a phone on the page:
+  //   - hasTelLinkAnywhere: any <a href="tel:"> link exists
+  //   - telLinkAboveFold: tel: link in the first viewport
+  //   - phoneFoundInSource: phone pattern found in raw HTML source
+  // Memory: feedback_audit_only_observable_claims.md (cross-gate corollary).
+  if (webVerified
+      && w.napAboveFold === false
+      && (w.distinctSitePhoneCount || 0) === 0
+      && w.hasTelLinkAnywhere !== true
+      && w.telLinkAboveFold !== true
+      && w.phoneFoundInSource !== true) {
     out.push({ key: 'napAboveFold', score: 1.5, finding: `neither your phone number nor your address is visible above the fold — visitors and Google's local trust signals look for at least one NAP element in the hero, not buried in the footer` });
   }
   // PRIORITY 1.3 (NEW 2026-05-14): Domain doesn't match business BRAND name.

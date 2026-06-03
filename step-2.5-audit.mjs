@@ -170,8 +170,34 @@ async function auditWebsite(browser, websiteUrl, business) {
     page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
     const start = Date.now();
-    await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
+    const response = await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT });
     findings.pageLoadSeconds = Number(((Date.now() - start) / 1000).toFixed(2));
+
+    // 2026-06-03 — HTTP error gate. Caught on Safe Gas Services Inc whose
+    // safegasservices.com returned HTTP 403 ("Access Denied") to our crawler.
+    // The video shipped showing the error page in the website segment.
+    //
+    // Key insight: a 403/404/5xx from OUR crawler doesn't mean the prospect
+    // has no website — they likely have a real site with WAF/Cloudflare/bot
+    // protection blocking headless Playwright. Real visitors see a working
+    // page. So we CAN'T claim "you don't have a website" (that's false), AND
+    // we CAN'T ship a video showing the error page (that's worse).
+    //
+    // Right call: ABANDON the lead. The per-lead loop catches the throw,
+    // marks the lead as failed, moves on. No video created, no false claim.
+    // Memory: feedback_audit_only_observable_claims.md.
+    const httpStatus = response?.status() || 0;
+    findings.httpStatus = httpStatus;
+    if (httpStatus >= 400) {
+      const err = new Error(
+        `[step-2.5 ABANDON] Website ${websiteUrl} returned HTTP ${httpStatus} ` +
+        `— likely WAF/bot-block, prospect has a real site but our crawler can't reach it. ` +
+        `Abandoning lead to avoid shipping a video that shows an error page or makes a false "no website" claim.`
+      );
+      err.skipLead = true;
+      err.httpStatus = httpStatus;
+      throw err;
+    }
 
     const data = await page.evaluate(() => {
       const result = {
@@ -408,8 +434,21 @@ async function auditWebsite(browser, websiteUrl, business) {
       const titleEl = document.querySelector('title');
       result.title = ((titleEl?.textContent || '').trim()).slice(0, 200);
 
-      // NAP above fold — phone AND address visible as text above the fold (W2).
-      // Strict: both must be present in viewport on first paint.
+      // NAP above fold — phone OR address visible as text above the fold (W2).
+      // 2026-06-03: BROADENED. Original walker only checked leaf-node innerText
+      // which missed phones rendered through website-builder frameworks (caught
+      // on ABC Plumber Service at abcwi.org — phone visible in both top bar and
+      // orange CTA, but distinctSitePhoneCount=0 and napAboveFold=false). Adds
+      // 3 supplementary positive signals as cross-gates:
+      //   1. hasTelLinkAnywhere — any <a href="tel:"> link on the page
+      //   2. phoneFoundInSource — regex against full HTML source (catches text
+      //      inside non-leaf containers, builder-rendered content, deeply nested
+      //      styled spans where leaf-node walker would split the digits)
+      //   3. telLinkAboveFold — tel: link with a bounding rect inside the
+      //      first-viewport region
+      //
+      // Step-6 uses these as cross-gates: any positive signal blocks the
+      // napAboveFold absence claim. Memory: feedback_audit_only_observable_claims.md.
       const napFoldH = window.innerHeight;
       const phoneRegex = /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/;
       const addrRegex = /\b\d{2,5}\s+[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+(?:St|Ave|Blvd|Rd|Dr|Ln|Way|Pl|Ct|Pkwy|Highway|Hwy)\b/;
@@ -427,12 +466,26 @@ async function auditWebsite(browser, websiteUrl, business) {
         if (!napAddrFound && (addrRegex.test(t) || cityStateRegex.test(t))) napAddrFound = true;
         if (napPhoneFound && napAddrFound) break;
       }
-      // Relaxed 2026-05-21 (Chris design question): "why does address have to be
-      // above the fold???" — many legit sites have phone in header + address in
-      // footer, which is a valid local-trust pattern. Requiring BOTH was too
-      // strict and produced false claims. Now passes if EITHER phone or address
-      // is above the fold. The finding fires only when NEITHER is visible —
-      // i.e., the prospect can't see any local-trust signal in the hero.
+
+      // SUPPLEMENTARY SIGNAL 1: any tel: link anywhere on the page.
+      const telLinks = Array.from(document.querySelectorAll('a[href^="tel:"], a[href^="TEL:"]'));
+      result.hasTelLinkAnywhere = telLinks.length > 0;
+
+      // SUPPLEMENTARY SIGNAL 2: tel: link with bounding rect inside first viewport.
+      let telLinkAboveFold = false;
+      for (const a of telLinks) {
+        const r = a.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (r.top >= 0 && r.top < napFoldH) { telLinkAboveFold = true; break; }
+      }
+      result.telLinkAboveFold = telLinkAboveFold;
+
+      // SUPPLEMENTARY SIGNAL 3: phone pattern found anywhere in the raw HTML
+      // source. Catches builder content, deeply nested styled spans, JSON-LD
+      // schema phone fields, etc. — anything the leaf-node walker would miss.
+      const rawSrc = (document.documentElement?.outerHTML || '').slice(0, 200000);
+      result.phoneFoundInSource = phoneRegex.test(rawSrc) || /\btel:\+?[\d\-().\s]{7,}/i.test(rawSrc);
+
       result.napAboveFold = napPhoneFound || napAddrFound;
 
       // Canonical tag — points to a different URL? (W6 — silent ranking killer)
@@ -2249,11 +2302,30 @@ async function main() {
       //     concurrent navigation to the same URL hits Cloudflare/WAF
       //     softer than separate browser windows would.
       // Sequential ~85s/lead; parallel ~50s/lead. Saves ~35s × 30 = ~17min.
-      const [websiteFindings, mobileFindings, gbpFindings] = await Promise.all([
-        auditWebsite(browser, website, business),
-        auditMobile(browser, website, business),
-        auditGbp(browser, gbpUrl, business),
-      ]);
+      let websiteFindings, mobileFindings, gbpFindings;
+      try {
+        [websiteFindings, mobileFindings, gbpFindings] = await Promise.all([
+          auditWebsite(browser, website, business),
+          auditMobile(browser, website, business),
+          auditGbp(browser, gbpUrl, business),
+        ]);
+      } catch (auditErr) {
+        // 2026-06-03 — lead-abandon path. step-2.5 (auditWebsite) throws with
+        // err.skipLead=true on HTTP 4xx/5xx from the prospect's site (Safe Gas
+        // Services Inc case). Caught here so the entire lead is skipped from
+        // downstream rendering — no video, no landing, no false claim.
+        if (auditErr.skipLead) {
+          console.warn(`  ⚠️ SKIP LEAD: ${name} — ${auditErr.message}`);
+          audits[slug] = {
+            businessName: name,
+            skipReason: auditErr.message,
+            httpStatus: auditErr.httpStatus,
+            skipped: true,
+          };
+          continue; // skip to next lead in the for-loop
+        }
+        throw auditErr; // unrelated error — re-throw
+      }
 
       // Propagate step-1 suspect flags into audit findings so step-6 can fire
       // noOwnWebsite without re-reading the step-1 CSV. Locked 2026-05-20.

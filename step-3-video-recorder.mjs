@@ -2156,6 +2156,31 @@ async function main() {
         continue;
       }
 
+      // 2026-06-03 — abandon-lead gate. step-2.5 throws + writes skipped:true
+      // to audit-findings.json when the prospect's website returns HTTP 4xx/5xx
+      // (Safe Gas Services Inc 403 case). Read the audit here and skip the
+      // entire lead from recording so we don't generate a video that shows an
+      // error page or makes false claims about an unreachable site.
+      try {
+        const auditPath = path.join(
+          ROOT, 'output', 'Step 2.5 (Audit)',
+          path.basename(inputPath, '.csv'),
+          'audit-findings.json',
+        );
+        if (fs.existsSync(auditPath)) {
+          const auditDoc = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+          const slugKey = slugify(name, { lower: true, strict: true });
+          const auditEntry = auditDoc[slugKey];
+          if (auditEntry?.skipped === true) {
+            console.warn(`\n⚠️ SKIP LEAD: ${name} — step-2.5 marked skipped (${auditEntry.skipReason || 'unknown'}); not recording.`);
+            continue;
+          }
+        }
+      } catch (auditCheckErr) {
+        // Non-fatal — proceed to record even if the audit-check fails
+        console.warn(`   ⚠️ pre-record audit-check failed (non-fatal): ${auditCheckErr.message}`);
+      }
+
       console.log(`\n▶ Recording videos ${processed + 1}/${toRecord.length} for: ${name}`);
 
       try {
