@@ -118,22 +118,6 @@ function detectParkedInstall({ title, bodyTextSample, wordCount, businessName })
       /\b(this domain is parked|domain may be for sale)\b/i.test(bodyLower)) {
     return 'registrar-parking';
   }
-  // 2026-06-03: ACQUIRED BUSINESS signature. Caught on Morganized Plumbing
-  // whose old domain redirects to Adeedo (acquiring company). The title was
-  // "Morganized Plumbing Is Now Adeedo | Adeedo" and h1 said "Morganized
-  // Plumbing is Now a part of the Adeedo! & Service Champions Family!". The
-  // prospect's site effectively no longer exists — they ARE another company
-  // now. Treat as no-own-website so step-6 fires the noOwnWebsite finding
-  // (suppresses all other website + mobile claims about content that isn't
-  // theirs) instead of rendering false claims about the acquiring company's
-  // site.
-  if (/\bis\s+now\s+(?:part\s+of\s+)?(?:the\s+)?[A-Z]/i.test(t) ||
-      /\bis\s+now\s+(?:part\s+of\s+)?(?:the\s+)?[A-Z]/i.test(body.slice(0, 500)) ||
-      /\bwelcome\s+(?:our\s+)?[\w&!\s,]+\s+customers\s+to\s+(?:our|the)\b/i.test(body.slice(0, 500)) ||
-      /\bhas\s+(?:been\s+)?(?:acquired|joined|merged)\b/i.test(body.slice(0, 500)) ||
-      /\bproudly\s+(?:joined|part\s+of)\b/i.test(body.slice(0, 500))) {
-    return 'acquired-business-redirect';
-  }
   // Body too short + no business name in body + no contact info — likely
   // empty / unfinished. Threshold tuned to catch the Pro Plumber case
   // (Hello world + Sample Page menu = ~40 visible words).
