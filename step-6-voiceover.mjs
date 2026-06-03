@@ -1012,27 +1012,27 @@ function scoreMapsFindings(audit, top3Stats, record) {
       finding: `your Google Business Profile shows only ${audit.gbp.photoCount} photo${audit.gbp.photoCount === 1 ? '' : 's'} — top performers in this search average 50 or more. Photo count is a measured Maps-ranking signal Google reads on the profile`,
     });
   }
-  // 2026-06-02 — REFRAMED to only assert what we can observe from public data.
-  // Google publicly displays only the PRIMARY category in the knowledge panel
-  // + Maps panel; secondary categories live in the owner's GBP admin dashboard
-  // and aren't exposed to scrapers without paid tools like GMBspy. Our prior
-  // claim ("only a primary category set") was unprovable — the owner could
-  // have 5 secondaries we can't see. The new wording asserts what Google IS
-  // surfacing publicly, which still drives the same fix (add/confirm secondaries
-  // so Google promotes them into the public panel) without making a claim we
-  // can't back up. Applies to both rank 1-3 + rank 4+ flows since they share
-  // this scoreMapsFindings function. Memory: feedback_audit_focus_local_seo_over_tech_specs.md
-  // + feedback_no_hardcoded_stats.md (every claim must be empirically observable).
-  if (audit?.gbp?.categoriesCountVerified === true
-      && Number.isFinite(audit.gbp.categoriesCount)
-      && audit.gbp.categoriesCount === 1) {
-    const primary = audit?.gbp?.primaryCategory || 'your primary category';
-    out.push({
-      key: 'secondaryCategoriesGap',
-      score: 8,
-      finding: `Google is only surfacing one category on your Maps panel — "${primary}" — which means even any secondaries you have configured aren't doing the ranking work they could be. Top performers in this search show multiple category labels publicly, and Google reads that breadth as a stronger relevance signal`,
-    });
-  }
+  // 2026-06-03 — REMOVED secondaryCategoriesGap finding entirely.
+  //
+  // History: shipped 2026-06-01 with "your GBP has only a primary category set"
+  // wording. Chris flagged 2026-06-02 that we can't actually know the count
+  // because secondaries live in the owner-only admin dashboard. We reframed
+  // the wording to "Google is only surfacing one category" — but Chris pushed
+  // back again 2026-06-03: Google doesn't publicly display secondary categories
+  // for ANY listing — that's a structural property of Google Maps, not a
+  // ranking failure. The "top performers show multiple category labels publicly"
+  // implication was empirically false (no one does — Google doesn't show it).
+  //
+  // Result: cut the finding entirely. We can't observe secondaries, can't
+  // truthfully compare to competitors, and any wording invites the prospect
+  // to verify a claim that won't hold up.
+  //
+  // What survives elsewhere:
+  // - primaryCategoryMatchesSearch (we CAN observe the public primary)
+  // - mismatchedPrimaryCategory finding (still valid — public + observable)
+  //
+  // Memory: feedback_audit_only_observable_claims.md.
+  // (no-op block — finding cut)
 
   // GBP primary category doesn't match the search term — only fire if we confirmed what the category actually is.
   // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 ranks incorrect primary category as the

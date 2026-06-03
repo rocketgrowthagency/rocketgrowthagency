@@ -1059,6 +1059,37 @@ async function injectRankOverlay(page, businessName, rank, searchTerm) {
   }
 }
 
+// 2026-06-03 — Maps card-open often leaves the map zoomed-out at state/region
+// level instead of city-level. Cause: Maps' SPA picks a wide zoom to fit the
+// business's service-area bounds when the detail card opens. Effect: the
+// recording loses the competitive-context view (city + competing pins) that
+// makes the "you rank #X out of these" narrative work. Caught 2026-06-03 on
+// the Plumbers Santa Monica batch — confirmed on Santa Monica Drain Co. AND
+// Enviro Plumbing (state-zoom showing all of California / Mexico baja).
+//
+// Fix: after detail panel opens, fire keyboard '+' key presses to advance
+// Maps' built-in zoom-in handler. Each '+' = one zoom level. From typical
+// state-zoom (~7) we need ~5 presses to reach city-zoom (~12-13). Maps
+// responds to '+' globally (no focus required) — verified in headless
+// Chromium.
+//
+// Memory: feedback_maps_card_visibility_rules.md.
+async function forceMapsCityZoom(page, label = 'detail') {
+  const PRESSES = 5;
+  const PRESS_DELAY_MS = 180; // allow map to animate one zoom step
+  try {
+    for (let i = 0; i < PRESSES; i++) {
+      await page.keyboard.press('+');
+      await sleep(PRESS_DELAY_MS);
+    }
+    console.log(`   → ${label}: forced city-zoom via ${PRESSES}× '+' key`);
+  } catch (err) {
+    // Non-fatal — if keyboard input fails (rare), recording continues at
+    // whatever zoom Maps left us with. Better than crashing the lead.
+    console.warn(`   ⚠️ ${label}: forceMapsCityZoom failed (non-fatal): ${err.message || err}`);
+  }
+}
+
 // After direct-URL navigation to a business's Maps detail page (used for
 // deep-rank or scroll-find-failure cases), scroll the left panel to TOP so
 // the business name + rating is the dominant visual, and outline the heading.
@@ -1206,6 +1237,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // Re-inject overlay after navigation (page.goto wipes the DOM)
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
+        await forceMapsCityZoom(page, 'scroll-find-click');
         await sleep(12000);
         await dismissResultsInfoPopup(page);
         return 'results-click';
@@ -1317,6 +1349,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
       await injectRankOverlay(page, businessName, rank, searchTerm);
       await highlightBusinessOnDetailPage(page);
+      await forceMapsCityZoom(page, 'detail-hold');
       await sleep(18000);
       await dismissResultsInfoPopup(page);
       return 'direct-url-no-mapsurl';
@@ -1376,6 +1409,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           console.log(`   → Search URL resolved directly to Fenn's detail page ✓ (h1 loaded)`);
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
+          await forceMapsCityZoom(page, 'direct-search-detail');
           // Hold 16s on the detail page so the recording captures it cleanly.
           await sleep(16000);
           await dismissResultsInfoPopup(page);
@@ -1387,6 +1421,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           console.log(`   → Search URL landed on results, clicked prospect's listing → detail ✓`);
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
+          await forceMapsCityZoom(page, 'direct-search-results-click');
           await sleep(18000);
           await dismissResultsInfoPopup(page);
           return 'direct-search-results-click';
@@ -1414,6 +1449,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
+        await forceMapsCityZoom(page, 'direct-url-deep-rank');
         await sleep(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
@@ -1423,6 +1459,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await sleep(2500);
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
+        await forceMapsCityZoom(page, 'direct-url-last-resort');
         await sleep(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
