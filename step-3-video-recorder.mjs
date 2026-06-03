@@ -1297,7 +1297,19 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // ONLY name-based URLs: name+city first (most-likely-unique), then
       // bare name as last resort. Both keep the search bar showing the
       // business name, not the phone number.
+      //
+      // 2026-06-03: mapsUrl (step-1 GBP URL) inserted as FIRST attempt when
+      // present. Format: /maps/place/<Name>/@<lat>,<lng>,17z/data=...
+      // The @lat,lng,17z anchor disambiguates the specific business — Maps
+      // jumps straight to the detail page even for generic names like
+      // "Real Plumbers" or "Plumb Inc - Plumber" that would otherwise resolve
+      // to a results list of the city's top plumbers. Caught 2026-06-03 on
+      // multiple Plumbers Santa Monica leads. Memory:
+      // feedback_maps_card_visibility_rules.md.
       const urls = [];
+      if (mapsUrl && /\/maps\/place\//.test(mapsUrl)) {
+        urls.push(mapsUrl);
+      }
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
       urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`);
       if (businessName) {
