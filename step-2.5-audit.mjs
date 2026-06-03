@@ -349,16 +349,60 @@ async function auditWebsite(browser, websiteUrl, business) {
       const htmlSrc = (document.body?.outerHTML || '').toLowerCase().slice(0, 80000);
       result.reviewsMentionedInSource = /\b(reviews?|ratings?|testimonials?|rated\s+(?:outstanding|excellent|great)|aggregaterating|trustpilot|yotpo|birdeye)\b/.test(htmlSrc);
 
-      // Tier 2: service area — does body mention at least 2 distinct city/neighborhood names beyond the H1?
+      // Tier 2: service area — three layered checks, ANY positive sets the flag.
+      // Locked 2026-06-03 after Prodigy Plumbing false negative: the original
+      // text-pattern detector required "City, CA" adjacent strings, but Prodigy's
+      // site displays cities as standalone button chips (Cerritos / Compton /
+      // Lakewood / etc.) with no ", CA" suffix on each. Regex missed every one.
+      // Memory: feedback_audit_only_observable_claims.md.
       const bodyTxt = (document.body?.innerText || '').toLowerCase();
       const h1Txt = ((document.querySelector('h1')?.innerText||'')).toLowerCase();
+
+      // Layer 1: existing regex — "City, CA" / "City, California" adjacency.
       const serviceAreaPattern = /\b([a-z][a-z\s]{3,20}),?\s*(ca|california|ny|new york|tx|texas|fl|florida|il|illinois|wa|washington)\b/gi;
       const areaMentions = new Set();
       for (const m of (bodyTxt.matchAll ? bodyTxt.matchAll(serviceAreaPattern) : [])) {
         const place = m[1].trim();
         if (!h1Txt.includes(place)) areaMentions.add(place);
       }
-      result.hasServiceAreaListed = areaMentions.size >= 1;
+
+      // Layer 2 (NEW 2026-06-03): explicit "Areas served / Service areas / We serve"
+      // section heading + a cluster of links or capitalized place-name spans
+      // following it. Catches the standalone-city-button pattern.
+      const SECTION_HEADING_RE = /\b(areas?\s+(?:we\s+)?serv\w*|service\s+areas?|we\s+(?:serve|service)|cities\s+(?:we\s+)?(?:serve|service)|locations?\s+(?:we\s+)?(?:serve|service))\b/i;
+      let hasSectionHeading = false;
+      for (const h of document.querySelectorAll('h1, h2, h3, h4, h5, h6, [class*="title" i], [class*="heading" i], [class*="header" i]')) {
+        if (SECTION_HEADING_RE.test((h.innerText || h.textContent || '').trim())) {
+          hasSectionHeading = true;
+          break;
+        }
+      }
+
+      // Layer 3 (NEW 2026-06-03): cluster of city-name LINKS or buttons. If 5+
+      // anchors or buttons have short (1-3 word), title-cased text that looks
+      // like a place name (no verbs, no generic UI words), it's a service-area
+      // list. Distinguishes from navigation menus by requiring the cluster to
+      // be siblings or near-siblings (not spread across the page).
+      const UI_NOISE_RE = /^(home|about|services?|contact|menu|book|call|quote|reviews?|gallery|blog|faq|login|sign\s*in|search|cart|account|more|next|prev|previous|close|open)$/i;
+      const placeLikeTexts = [];
+      for (const el of document.querySelectorAll('a, button, li, span, [class*="city" i], [class*="area" i], [class*="location" i]')) {
+        const t = ((el.innerText || el.textContent || '').trim());
+        if (!t || t.length > 40 || t.length < 3) continue;
+        if (UI_NOISE_RE.test(t)) continue;
+        // Title-cased, 1-3 words, only letters + spaces + apostrophe + period.
+        if (!/^[A-Z][A-Za-z'.\s-]{2,39}$/.test(t)) continue;
+        const wordCount = t.split(/\s+/).length;
+        if (wordCount > 3) continue;
+        placeLikeTexts.push(t);
+      }
+      const hasCityCluster = placeLikeTexts.length >= 5;
+
+      result.hasServiceAreaListed = areaMentions.size >= 1 || hasSectionHeading || hasCityCluster;
+      result.serviceAreaSignals = {
+        regexMatches: areaMentions.size,
+        sectionHeading: hasSectionHeading,
+        cityClusterCount: placeLikeTexts.length,
+      };
 
       // Title tag — captured for "includes city + category" check (W1)
       const titleEl = document.querySelector('title');

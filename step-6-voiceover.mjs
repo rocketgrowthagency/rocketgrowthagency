@@ -661,8 +661,14 @@ function scoreWebsiteFindings(audit, businessName) {
       : `you only have one service-area page — top performers stack rankings across cities by publishing a dedicated landing page per location they serve`;
     out.push({ key: 'serviceAreaPages', score: 12.5, finding: msg });
   }
-  // PRIORITY 13: No service area listed (GATED 2026-05-21)
-  if (webVerified && w.hasServiceAreaListed === false) {
+  // PRIORITY 13: No service area listed (GATED 2026-05-21 + CROSS-GATED 2026-06-03)
+  // Cross-gate added 2026-06-03 after Chris caught a false negative on Prodigy
+  // Plumbing: hasServiceAreaListed=false (text regex required "City, CA" adjacent
+  // string) but serviceAreaPagesCount=6 (we found 6 dedicated service-area pages).
+  // Our own audit data contradicted itself. Per only-observable-claims rule:
+  // if we have ANY positive signal of service-area content (>=1 dedicated page),
+  // do NOT fire the absence claim.
+  if (webVerified && w.hasServiceAreaListed === false && (w.serviceAreaPagesCount || 0) < 1) {
     out.push({ key: 'noServiceArea', score: 13, finding: `your website doesn't list a service area — mentioning specific cities and neighborhoods you serve is a strong local SEO signal` });
   }
 
