@@ -654,8 +654,18 @@ function scoreWebsiteFindings(audit, businessName) {
   }
   // Social profile check lives in scoreSocialProfilesFinding (called from buildScript)
   // — it has access to the record. Don't duplicate it here.
-  // PRIORITY 12.5 (NEW): Few or no dedicated service-area / location pages
-  if (w.serviceAreaPagesCount != null && w.serviceAreaPagesCount <= 1) {
+  // PRIORITY 12.5 (CROSS-GATED 2026-06-03): Few or no dedicated service-area pages.
+  //
+  // Cross-gate added 2026-06-03 after Chris caught Santa Monica Drain Co. false
+  // negative: serviceAreaPagesCount=0 (URL regex missed /areas-served/) BUT
+  // hasServiceAreaListed=true (text detector found city mentions). Same class of
+  // bug as noServiceArea — narrow detector + positive contradicting signal in
+  // same audit. Suppress the absence claim when ANY positive signal of service-
+  // area content exists. Memory: feedback_audit_only_observable_claims.md
+  // (cross-gate-against-contradicting-positive corollary).
+  if (w.serviceAreaPagesCount != null
+      && w.serviceAreaPagesCount <= 1
+      && w.hasServiceAreaListed !== true) {
     const msg = w.serviceAreaPagesCount === 0
       ? `you don't have any dedicated city or service-area pages — top performers rank in multiple cities by publishing a focused landing page per location they serve`
       : `you only have one service-area page — top performers stack rankings across cities by publishing a dedicated landing page per location they serve`;

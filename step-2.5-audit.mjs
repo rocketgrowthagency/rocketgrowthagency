@@ -451,8 +451,14 @@ async function auditWebsite(browser, websiteUrl, business) {
 
       // Service-area pages count (W4) — internal links to /location/, /service-area/,
       // /cities/, /areas-we-serve/, or any /<city-name>/ path under same hostname.
+      //
+      // 2026-06-03: Broadened pattern after Chris caught Santa Monica Drain Co.
+      // false negative — their nav had "AREAS SERVED" button linking to /areas-
+      // served/, which the prior regex didn't match. Added: areas-served,
+      // areas-of-service, our-service-area, serving, coverage-area, service-map,
+      // and the standalone "/area-served/" / "/areas-serviced/" variants.
       const hostname = location.hostname;
-      const locPath = /\/(?:locations?|service-areas?|cities|areas?-we-serve|service-locations?|where-we-work)(?:\/|$)/i;
+      const locPath = /\/(?:locations?|service-areas?|service-area-map|service-maps?|cities|areas?-we-(?:serve|service)|areas?-(?:we-)?served|areas?-serviced|areas?-of-service|service-locations?|where-we-(?:work|serve|service)|our-service-areas?|coverage-areas?|cities-served|cities-we-serve|service-map)(?:\/|$)/i;
       const cityNamePath = /\/(?:culver-city|los-angeles|santa-monica|beverly-hills|west-hollywood|marina-del-rey|venice|inglewood|el-segundo|playa-vista|hollywood|brentwood|westwood|mar-vista|palms|mid-city|burbank|glendale|pasadena|long-beach|torrance|redondo-beach|manhattan-beach|hermosa-beach|hawthorne|gardena|compton|carson|cerritos|orange-county|san-diego)(?:\/|$)/i;
       const locationLinks = new Set();
       const allLinks = Array.from(document.querySelectorAll('a[href]'));
