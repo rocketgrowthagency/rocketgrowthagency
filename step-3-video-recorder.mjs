@@ -910,21 +910,34 @@ async function clickListingInResultsByName(page, businessName) {
       // shape it could). Better to show no outline than the wrong outline.
       if (isSponsoredBlock(match)) return false;
 
-      // Highlight the card so it pops in the recording
-      match.style.outline = '4px solid #2f57eb';
-      match.style.outlineOffset = '2px';
-      match.style.transition = 'outline 0.3s ease-in-out';
-      match.style.boxShadow = '0 0 0 6px rgba(47,87,235,0.25)';
+      // Highlight the card so it pops in the recording.
+      // 2026-06-03: Maps SPA can remove inline styles via DOM mutations during
+      // result-list updates (caught on Oasis Plumber's — outline appeared for
+      // <1s before being wiped). Re-apply every 250ms via setInterval so the
+      // outline persists for the full pre-click hold even if Maps mutates the
+      // card. Cleared on the 9000ms safety timeout.
+      const applyOutline = () => {
+        match.style.outline = '4px solid #2f57eb';
+        match.style.outlineOffset = '2px';
+        match.style.transition = 'outline 0.3s ease-in-out';
+        match.style.boxShadow = '0 0 0 6px rgba(47,87,235,0.25)';
+      };
+      applyOutline();
       match.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const reapplyId = setInterval(applyOutline, 250);
       setTimeout(() => {
+        clearInterval(reapplyId);
         match.style.outline = '';
         match.style.outlineOffset = '';
         match.style.boxShadow = '';
-      }, 4500);
+      }, 9000);
       return true;
     }, href);
     if (centered) {
-      await sleep(4000); // recording captures the card centered + highlighted
+      // 2026-06-03: extended from 4000 → 6000ms. Recording needs longer hold
+      // on the competitive context view (highlighted prospect among competitors)
+      // before navigation. Locked after Oasis Plumber's blue-outline-flash bug.
+      await sleep(6000);
     } else {
       console.warn(`   ⚠️ pre-click center: no card matched "${businessName}" in DOM (proceeding to nav)`);
     }
@@ -955,12 +968,34 @@ async function clickListingInResultsByName(page, businessName) {
   // Wait for the detail-page heading to appear (up to 8s). Maps' SPA may
   // animate the transition; without this wait, the 18s detail-hold can
   // start while we're still visually on the results panel.
-  await page.waitForFunction(
+  const detailH1Ok = await page.waitForFunction(
     () => !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]'),
     { timeout: 8000 },
-  ).catch(() => {
-    console.warn('   ⚠️ detail-page h1 not detected within 8s — proceeding');
-  });
+  ).then(() => true).catch(() => false);
+
+  // 2026-06-03: nav-verify fallback. If h1 didn't appear within 8s AND the URL
+  // didn't change to /place/, the click silently failed (caught on Oasis
+  // Plumber's — panel re-mounted, outline got wiped, click never registered).
+  // Fall back to explicit page.goto to force navigation. This gets us onto
+  // the detail page so the 12s detail-hold sleep actually shows the prospect's
+  // card, not a results panel.
+  if (!detailH1Ok) {
+    const currentUrl = page.url();
+    if (!/\/maps\/place\//.test(currentUrl)) {
+      console.warn(`   ⚠️ click didn't navigate to /place/ (still on ${currentUrl.slice(-80)}); forcing page.goto fallback`);
+      try {
+        await page.goto(href, { waitUntil: 'domcontentloaded', timeout: MAPS_NAV_TIMEOUT_MS });
+        await page.waitForFunction(
+          () => !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]'),
+          { timeout: 6000 },
+        ).catch(() => {});
+      } catch (gotoErr) {
+        console.warn(`   ⚠️ fallback page.goto also failed: ${gotoErr.message || gotoErr}`);
+      }
+    } else {
+      console.warn('   ⚠️ detail-page h1 not detected within 8s but URL is /place/ — proceeding');
+    }
+  }
   return true;
 }
 
