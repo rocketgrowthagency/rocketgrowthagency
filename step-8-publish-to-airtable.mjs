@@ -669,6 +669,30 @@ function buildRecord(row, scrapedDate) {
   set("Search Term", pick(row, "search term"));
   set("Search Source", pick(row, "search source"));
 
+  // 2026-06-03 — Seed appearance fields for first-time lead create. Cross-
+  // search dedup at step-2 captures subsequent appearances on existing
+  // records (via lib/dedup-by-email.mjs::appendAppearance). For BRAND NEW
+  // leads being POSTed here for the first time, seed the same JSON shape so
+  // every Leads record has the same Appearances structure from day one.
+  // step-8's dedupe-detect (line 838) skips this if a match exists; only
+  // NEW records flow through with these seeded fields.
+  // Memory: feedback_dedup_by_email_with_intel_capture.md.
+  const _seedSearchTerm = pick(row, "search term");
+  const _seedCity = pick(row, "city");
+  const _seedRank = parseInt(pick(row, "map rank"), 10);
+  if (_seedSearchTerm && Number.isFinite(_seedRank)) {
+    const _seedDate = scrapedDate || new Date().toISOString().slice(0, 10);
+    fields["Appearances"] = JSON.stringify([
+      { searchTerm: _seedSearchTerm, city: _seedCity || '', rank: _seedRank, date: _seedDate },
+    ]);
+    fields["Appearance Count"] = 1;
+    fields["Best Rank"] = _seedRank;
+    fields["Worst Rank"] = _seedRank;
+    fields["Cities Appeared In"] = _seedCity || '';
+    fields["First Search"] = _seedSearchTerm;
+    fields["Latest Appearance Date"] = _seedDate;
+  }
+
   // GBP detail fields — captured by step-1 while already on the profile page
   set("GBP Status", pick(row, "gbp status"));
   set("GBP Secondary Categories", pick(row, "gbp secondary categories"));

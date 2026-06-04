@@ -600,6 +600,22 @@ async function processCsv() {
 
   console.log(`Loaded ${records.length} records from CSV.`);
 
+  // 2026-06-03 — CROSS-SEARCH DEDUP. Preload all existing Airtable emails +
+  // Place IDs. When step-2 discovers an email for a candidate, check against
+  // the index — if already in Airtable from a PRIOR search, skip the entire
+  // pipeline for that lead AND patch the existing record with the new
+  // appearance (search term, city, rank, date). Captures regional-dominator
+  // data without re-emailing the prospect.
+  // Memory: feedback_dedup_by_email_with_intel_capture.md.
+  let dedupIndex = null;
+  let dedupHits = 0;
+  try {
+    const { preloadDedupIndex } = await import('./lib/dedup-by-email.mjs');
+    dedupIndex = await preloadDedupIndex({ verbose: true });
+  } catch (err) {
+    console.warn(`[dedup] preload failed (non-fatal, continuing without dedup): ${err.message}`);
+  }
+
   // 2026-06-02 — Airtable email cache. Before scraping, fetch all leads that
   // already have an Email + match this run's Business Name + Search Term.
   // For those, skip the entire scrape (saves site fetch + SerpAPI fallback).
@@ -699,13 +715,56 @@ async function processCsv() {
     );
   }
 
+  // 2026-06-03 — CROSS-SEARCH DEDUP CHECK. For each record with a discovered
+  // email OR Place ID, check the preloaded Airtable index. If hit:
+  //   1. Patch the EXISTING record with the new appearance (search/city/rank).
+  //   2. Mark this CSV row as duplicate-skip + clear the email field so
+  //      step-2.5/step-3 skip it (they already skip rows without email).
+  //   3. Log the dedup-hit for the morning report.
+  if (dedupIndex) {
+    const { checkDuplicate, appendAppearance } = await import('./lib/dedup-by-email.mjs');
+    for (const record of records) {
+      const email = (record.email || record.Email || '').trim();
+      const placeId = (record['Place ID'] || record.placeId || '').trim();
+      const bizName = (record['Business Name'] || record.businessName || '').trim();
+      const city = (record.City || record.city || '').trim();
+      const rank = parseInt(record['Map Rank'] || record.rank || '', 10);
+      const searchTerm = (record['Search Term'] || record.searchTerm || '').trim();
+      if (!email && !placeId) continue;
+      const { isDuplicate, matchedRecordId, matchedBy } = checkDuplicate({ email, placeId }, dedupIndex);
+      if (!isDuplicate) continue;
+      // It's a duplicate — append the new appearance to the existing record
+      try {
+        const out = await appendAppearance({
+          recordId: matchedRecordId,
+          searchTerm, city, rank,
+          matchedBy,
+        });
+        if (out.skippedNoop) {
+          console.log(`  [dedup] ${bizName}: noop (same search+rank already logged)`);
+        } else {
+          console.log(`  [dedup] ${bizName}: APPENDED appearance to ${matchedRecordId} (matched by ${matchedBy}); now ${out.appearanceCount} total appearances, best rank #${out.bestRank}, worst #${out.worstRank}`);
+        }
+      } catch (e) {
+        console.warn(`  [dedup] ${bizName}: appendAppearance failed (non-fatal): ${e.message}`);
+      }
+      // Block downstream pipeline by clearing the email + flagging the row.
+      // step-2.5 / step-3 already skip rows with empty email — this is enough
+      // to prevent rendering + outreach without breaking the CSV schema.
+      record.email = '';
+      record['Skip Reason'] = `dedup:matched-by-${matchedBy}:record=${matchedRecordId}`;
+      dedupHits++;
+    }
+    console.log(`[dedup] ${dedupHits} cross-search duplicate(s) detected → skipped from rendering, appearances captured on existing records.`);
+  }
+
   let headers = Object.keys(records[0]).map((key) => ({ id: key, title: key }));
   const ensureField = (id) => { if (!headers.find((h) => h.id === id)) headers.push({ id, title: id }); };
-  ['email','facebook','instagram','linkedin','twitter','youtube','tiktok'].forEach(ensureField);
+  ['email','facebook','instagram','linkedin','twitter','youtube','tiktok','Skip Reason'].forEach(ensureField);
 
   const csvWriter = createObjectCsvWriter({ path: OUTPUT_CSV, header: headers });
   await csvWriter.writeRecords(records);
-  console.log(`Done! Output saved to ${OUTPUT_CSV} (${cacheHits} cache-hits saved scrape+SerpAPI calls)`);
+  console.log(`Done! Output saved to ${OUTPUT_CSV} (${cacheHits} cache-hits saved scrape+SerpAPI calls; ${dedupHits} cross-search duplicates captured + skipped)`);
 }
 
 processCsv().catch((err) => {
