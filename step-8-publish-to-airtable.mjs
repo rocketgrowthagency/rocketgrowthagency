@@ -625,6 +625,11 @@ function buildRecord(row, scrapedDate) {
   const setUrl = (key, val) => { if (isHttpUrl(val)) fields[key] = cleanStr(val); };
   const setNum = (key, val) => { const n = toNumberOrNull(val); if (n !== null) fields[key] = n; };
 
+  // 2026-06-03 — Carry forward step-2's dedup skip-reason on this record
+  // object (not into Airtable fields — used by main loop to skip the
+  // overwrite for cross-search duplicates).
+  const _skipReason = (pick(row, "skip reason") || '').trim();
+
   set("Business Name", pick(row, "business name", "name"));
   set("Phone", pick(row, "phone"));
   const email = extractValidEmail(pick(row, "email", "emails"));
@@ -727,7 +732,9 @@ function buildRecord(row, scrapedDate) {
   fields["Status"] = "new";
   fields["Date Scraped"] = scrapedDate;
   fields["Raw Data"] = JSON.stringify(row, null, 0).slice(0, 99000);
-  return { fields };
+  // Attach _skipReason for the main loop's dedup gate. Underscore prefix
+  // signals it's a metadata flag (NOT a field to write to Airtable).
+  return { fields, _skipReason };
 }
 
 async function fetchWithRetry(url, opts, maxAttempts = 3) {
@@ -852,7 +859,20 @@ async function main() {
   const toCreateLeads = [];
   const toUpdateLeads = [];
   let skippedNoKey = 0;
+  let skippedDedup = 0;
   for (const rec of records) {
+    // 2026-06-03 — Cross-search dedup skip. step-2 sets _skipReason on rows it
+    // detected as duplicates of an existing Airtable lead. Per Chris's rule
+    // ("we don't want to overwrite them — just document when there is a
+    // duplicate"), step-8 must NOT overwrite the existing record's Search Term
+    // / City / Map Rank / etc. with this run's values. step-2's dedup-by-email
+    // module already appended the new appearance to the existing record's
+    // Appearances JSON — that's the documentation. step-8 just stays out of
+    // the way. Memory: feedback_dedup_by_email_with_intel_capture.md.
+    if (rec._skipReason && rec._skipReason.startsWith('dedup:')) {
+      skippedDedup += 1;
+      continue;
+    }
     const pk = rec.fields["Place ID"];
     if (!pk) {
       skippedNoKey += 1;
