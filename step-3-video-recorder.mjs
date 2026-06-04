@@ -1833,6 +1833,69 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
       throw new Error(`Desktop website unreachable for ${meta.name} — lead skipped`);
     } else {
       await sleep(2500);
+
+      // 2026-06-03 — WAF/error-page detection at RECORDING TIME. Caught on
+      // Black Cat Plumbing Co: step-2.5 audit saw the real site (title="Black
+      // Cat Plumbing", wordCount=640), but step-3's recording-time navigation
+      // hit Cloudways' WAF and captured a "403 Website Unavailable" page.
+      // Site behavior differs between audit + record (different request
+      // patterns, IP rotation, time-of-day). Detect at THIS moment and write
+      // a flag to audit-findings.json so step-6 can fire an override finding.
+      try {
+        const wafSignals = await page.evaluate(() => {
+          const title = (document.title || '').toLowerCase();
+          const h1 = (document.querySelector('h1')?.innerText || '').toLowerCase();
+          const bodyTextFirst1k = (document.body?.innerText || '').toLowerCase().slice(0, 1000);
+          const patterns = [
+            /\b(cloudways|cloudflare|sucuri|wordfence|incapsula|akamai)\b/i,
+            /\b403\b.*\b(forbidden|website\s+unavailable|unauthorized|access\s+denied)\b/i,
+            /\b(website|site)\s+unavailable\b/i,
+            /\b(security\s+measures|access\s+(?:has\s+been\s+)?blocked|your\s+access\s+(?:has\s+been\s+)?(?:denied|restricted))\b/i,
+            /\b(this\s+page\s+isn'?t\s+working|domain\s+not\s+authorized|unauthorized\s+(?:on|access))\b/i,
+            /\b(error\s+1020|error\s+1015|attention\s+required)\b/i, // Cloudflare-specific
+          ];
+          const sample = `${title} ${h1} ${bodyTextFirst1k}`;
+          for (let i = 0; i < patterns.length; i++) {
+            if (patterns[i].test(sample)) {
+              return { detected: true, signature: `pattern-${i}`, titleSample: title.slice(0, 100), h1Sample: h1.slice(0, 100) };
+            }
+          }
+          return { detected: false };
+        });
+        if (wafSignals?.detected) {
+          console.warn(`   ⚠️ [WAF-DETECT] website segment captured WAF/error page for ${meta.name}: ${wafSignals.signature} (title="${wafSignals.titleSample}", h1="${wafSignals.h1Sample}")`);
+          // Write override flag to audit-findings.json so step-6 picks it up.
+          // Step-6 reads the audit when scoring findings; this flag triggers
+          // the websiteUnreachable override finding (hard-suppresses every
+          // other website + mobile claim, narrates a single "website bad" line).
+          try {
+            const fs = await import('fs');
+            const path = await import('path');
+            const slug = (meta.csvBaseName || '').trim();
+            if (slug) {
+              const auditPath = path.join(process.cwd(), 'output', 'Step 2.5 (Audit)', slug, 'audit-findings.json');
+              if (fs.existsSync(auditPath)) {
+                const doc = JSON.parse(fs.readFileSync(auditPath, 'utf8'));
+                const slugKey = slugify(meta.name, { lower: true, strict: true });
+                if (doc[slugKey]) {
+                  doc[slugKey].website = doc[slugKey].website || {};
+                  doc[slugKey].website.recordingShowedError = true;
+                  doc[slugKey].website.recordingErrorSignature = wafSignals.signature;
+                  fs.writeFileSync(auditPath, JSON.stringify(doc, null, 2));
+                  console.log(`   ✓ wrote recordingShowedError=true to audit-findings.json for step-6 override`);
+                }
+              }
+            }
+          } catch (writeErr) {
+            console.warn(`   ⚠️ failed to write WAF flag to audit (non-fatal): ${writeErr.message}`);
+          }
+        }
+      } catch (wafErr) {
+        // Non-fatal — WAF detection failed, continue recording. Worst case
+        // step-6 fires normal findings against the error-page content.
+        console.warn(`   ⚠️ WAF detection failed (non-fatal): ${wafErr.message}`);
+      }
+
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
       // CSS safety net for first-party-proxied chat surfaces that slip past
@@ -2209,6 +2272,10 @@ async function main() {
             // search would be ambiguous (matches multiple businesses).
             lat: parseFloat(row.Latitude || row.latitude || '') || null,
             lng: parseFloat(row.Longitude || row.longitude || '') || null,
+            // 2026-06-03: csvBaseName carries the Step 2 CSV slug so the
+            // WAF detector in recordWebsiteVideo can locate the matching
+            // audit-findings.json and write the recordingShowedError flag.
+            csvBaseName: baseName,
           },
           mapsOut,
           websiteOut,

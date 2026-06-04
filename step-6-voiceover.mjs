@@ -489,6 +489,24 @@ function scoreWebsiteFindings(audit, businessName) {
     // key and uses out as-is.
     return out;
   }
+  // 2026-06-03 — WAF/error-page OVERRIDE. Locked after Chris caught Black Cat
+  // Plumbing Co video: step-3 recording captured Cloudways "403 Website
+  // Unavailable" page in the website segment. step-2.5 audit had seen the real
+  // site (audit happens at different time / pattern than recording). step-3's
+  // WAF detector writes `recordingShowedError=true` to audit-findings.json when
+  // it sees Cloudways/Cloudflare/Sucuri/Wordfence/etc. error content during
+  // recording. step-6 reads that flag here and fires a SINGLE override finding
+  // — Chris's words: "website bad period". HARD-SUPPRESSES all other website
+  // + mobile findings.
+  if (w.recordingShowedError === true) {
+    out.push({
+      key: 'websiteUnreachable',
+      score: 0,
+      reason: `recording-waf:${w.recordingErrorSignature || 'unknown'}`,
+      finding: `your website is currently being blocked by your hosting provider's security layer, so visitors clicking through from Maps see an error page instead of your homepage, and Google's crawler can't index your content at all. This single issue overrides every other ranking factor on your site — fixing the WAF or hosting configuration to allow normal traffic is the #1 priority, because none of your other SEO work matters if Google literally cannot read your pages`,
+    });
+    return out; // HARD SUPPRESS — same pattern as noOwnWebsite
+  }
   if (isSuspect) {
     const reason = w.websiteSuspectReason || '';
     if (/^name-mismatch:/i.test(reason)) {
