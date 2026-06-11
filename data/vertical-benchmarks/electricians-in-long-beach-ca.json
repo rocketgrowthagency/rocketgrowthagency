@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Electricians in Long Beach, CA",
+  "auditedDate": "2026-05-26",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Electrician": 10
+  },
+  "categoryDistributionTop5": {
+    "Electrician": 5
+  },
+  "categoryDistributionTop3": {
+    "Electrician": 3
+  },
+  "majorityCategoryTop10": "Electrician",
+  "majorityCategoryTop5": "Electrician",
+  "majorityCategoryTop3": "Electrician",
+  "reviewsTop10": {
+    "min": 8,
+    "max": 541,
+    "median": 79.5,
+    "p25": 66,
+    "p75": 92
+  },
+  "reviewsTop3Avg": 240,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

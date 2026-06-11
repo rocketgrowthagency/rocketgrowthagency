@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Pest control in Culver City, CA",
+  "auditedDate": "2026-05-27",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Pest control service": 10
+  },
+  "categoryDistributionTop5": {
+    "Pest control service": 5
+  },
+  "categoryDistributionTop3": {
+    "Pest control service": 3
+  },
+  "majorityCategoryTop10": "Pest control service",
+  "majorityCategoryTop5": "Pest control service",
+  "majorityCategoryTop3": "Pest control service",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 266,
+    "median": 105,
+    "p25": 35,
+    "p75": 117
+  },
+  "reviewsTop3Avg": 86,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}

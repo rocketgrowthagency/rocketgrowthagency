@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Movers in Culver City, CA",
+  "auditedDate": "2026-05-23",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Mover": 7,
+    "Moving and storage service": 3
+  },
+  "categoryDistributionTop5": {
+    "Mover": 3,
+    "Moving and storage service": 2
+  },
+  "categoryDistributionTop3": {
+    "Mover": 1,
+    "Moving and storage service": 2
+  },
+  "majorityCategoryTop10": "Mover",
+  "majorityCategoryTop5": "Mover",
+  "majorityCategoryTop3": "Moving and storage service",
+  "reviewsTop10": {
+    "min": 16,
+    "max": 1557,
+    "median": 369,
+    "p25": 33,
+    "p75": 1022
+  },
+  "reviewsTop3Avg": 135,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.63,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Plumbers in Santa Monica CA",
+  "auditedDate": "2026-05-21",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plumber": 9,
+    "Water damage restoration service": 1
+  },
+  "categoryDistributionTop5": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop3": {
+    "Plumber": 3
+  },
+  "majorityCategoryTop10": "Plumber",
+  "majorityCategoryTop5": "Plumber",
+  "majorityCategoryTop3": "Plumber",
+  "reviewsTop10": {
+    "min": 12,
+    "max": 548,
+    "median": 57,
+    "p25": 38,
+    "p75": 209
+  },
+  "reviewsTop3Avg": 371,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}
