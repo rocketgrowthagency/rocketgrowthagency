@@ -73,6 +73,15 @@ if ! node scripts/check-mobile-finding-priority.mjs 2>&1 | tee -a "$LOGFILE"; th
   echo "✗ FATAL: mobile finding priority regressed — tech-spec findings would dominate the voiceover. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-11 — step-8 Airtable create-payload shape. Locks edf2eb9: the create POST
+# must be { fields }-only; a leaked _skipReason (or any non-fields key) 422s every
+# brand-new-lead batch silently (created=0, videos still deploy). Memory:
+# feedback_step8_create_payload_fields_only.md.
+echo ">>> pre-flight: step-8 create-payload shape (fields-only)" | tee -a "$LOGFILE"
+if ! node scripts/check-step8-create-shape.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: step-8 create payload would leak non-fields keys → Airtable 422 on new-lead batches. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
 # wasted 10 hours retrying against an exhausted monthly quota. Abort
 # cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
