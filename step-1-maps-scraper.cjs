@@ -180,6 +180,49 @@ function pickQualifyingResult(candidates, businessName) {
 // Locked 2026-05-20 — feedback_gbp_wrong_website_pattern.md.
 // Caught: Richards Rooter and Plumbing (GBP → plumbingemergencylosangeles.com
 // aggregator; real site → richardsrooterandplumbing.com).
+// 2026-06-12: quality-filter — drop leads that are never good local-SEO outreach
+// targets BEFORE they enter the pipeline (saves renders + avoids embarrassing/garbage
+// outreach). Three layers: national chains, off-vertical suppliers/stores, and
+// spam/keyword-stuffed/emoji names. Returns a reason string to filter, or null to keep.
+// Memory: feedback_video_quality_fixes_2026-06-11 (quality-filter open item).
+function shouldFilterLead(businessName, category, _searchTerm) {
+  const name = String(businessName || '');
+  const norm = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const cat = String(category || '').toLowerCase();
+
+  // (a) National chain / franchise blocklist — corporate marketing, generic/legal
+  // emails, not local-SEO prospects. Match brand token as a standalone phrase.
+  const CHAIN_PATTERNS = [
+    /\broto rooter\b/, /\bmr rooter\b/, /\bbenjamin franklin plumbing\b/,
+    /\bars rescue rooter\b/, /\brescue rooter\b/, /\bmike diamond\b/,
+    /\bone hour heating\b/, /\baire serv\b/, /\b1 800 plumber\b/,
+    /\b1 800 anytime\b/, /\bbluefrog\b/, /\bapollo drain\b/, /\blen the plumber\b/,
+    /\bmr electric\b/, /\bmr handyman\b/, /\bglass doctor\b/, /\bservice experts\b/,
+    /\branbow international\b/, /\bmolly maid\b/, /\bwindow genie\b/,
+  ];
+  for (const re of CHAIN_PATTERNS) {
+    if (re.test(norm)) return `chain:${re.source.replace(/\\b/g, '').trim()}`;
+  }
+
+  // (b) Off-vertical — suppliers/stores/wholesalers are not service providers.
+  // Caught Specialty Hardware + Plumbing (a supply store) in the BH batch.
+  if (/\b(supply|supplies|supplier|wholesale|distributor|store|hardware|showroom|warehouse)\b/.test(cat)) {
+    return `off-vertical:${cat}`;
+  }
+
+  // (c) Spam / lead-gen / keyword-stuffed / emoji names.
+  if (/[^\x00-\x7F]/.test(name)) return 'spam:non-ascii-or-emoji';
+  if (name.length > 60) return 'spam:over-long-name';
+  // geo + service keyword stuffing ("Plumber Los Angeles, LA Plumbing, A.C. Company")
+  if (/\b(la|nyc|sf|usa|america|services?|company|inc|llc)\s+(plumber|plumbing|hvac|roofer|roofing|electrician|electric|locksmith|mover|moving|pest)\b/i.test(name)) {
+    return 'spam:geo-keyword-stuffed';
+  }
+  if (/^(plumber|plumbing|hvac|air|ac|roofer|roofing|electrician|locksmith|mover|moving)\s+(la|nyc|sf|los angeles)$/i.test(name.trim())) {
+    return 'spam:geo-keyword-only';
+  }
+  return null;
+}
+
 async function discoverWebsiteViaSearch(_browserUnused, businessName, city, category = '') {
   if (!businessName) return '';
   const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -1339,6 +1382,7 @@ async function main() {
     const CRITICAL_FIELDS = ['Business Name', 'Rating', 'Reviews', 'Detected Category', 'Google Maps URL', 'Map Rank', 'Latitude', 'Longitude'];
 
     const seenPlaces = new Set();
+    const filteredLeads = [];
     let written = 0;
 
     for (let i = 0; i < entriesUniq.length; i++) {
@@ -1447,6 +1491,15 @@ async function main() {
           discoveredWebsite,
         ];
 
+        // 2026-06-12: quality-filter gate — drop national chains / off-vertical
+        // suppliers / spam-keyword-stuffed names before they enter the pipeline.
+        const _filterReason = shouldFilterLead(name, (details.category || '').trim(), SEARCH_QUERY);
+        if (_filterReason) {
+          filteredLeads.push({ name: name || '(no name)', reason: _filterReason });
+          console.log(`   ⏭ FILTERED (quality-gate): ${name || '(no name)'} (${_filterReason})`);
+          continue;
+        }
+
         ws.write(rowOut.map(csvEscape).join(',') + '\n');
 
         // Track per-column coverage as we go
@@ -1479,6 +1532,14 @@ async function main() {
 
     ws.end();
     console.log(`📁 Done! Saved ${written} listings to ${outFile}`);
+
+    // 2026-06-12: quality-gate summary — what got dropped + why.
+    if (filteredLeads.length) {
+      console.log(`\n⏭ Quality-gate filtered ${filteredLeads.length} lead(s) (chains / off-vertical / spam names):`);
+      for (const f of filteredLeads) console.log(`   - ${f.name} → ${f.reason}`);
+    } else {
+      console.log('⏭ Quality-gate: 0 leads filtered.');
+    }
 
     // === Post-scrape coverage report — fails loudly on systemic gaps ===
     if (written > 0) {

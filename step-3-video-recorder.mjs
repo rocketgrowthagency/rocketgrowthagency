@@ -11,6 +11,9 @@ stealth.enabledEvasions.delete('user-agent-override');
 stealth.enabledEvasions.delete('sourceurl');
 puppeteer.use(stealth);
 
+// 2026-06-12: define ROOT (was referenced at the diag-dir + pre-record audit-check
+// paths but never declared → "ROOT is not defined" non-fatal warning on every lead).
+const ROOT = process.cwd();
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');
 // 2026-05-27 (Tier 2 #7 prep): CHROME_PROFILE_DIR override via env var, so the
