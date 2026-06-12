@@ -13,9 +13,9 @@ import csvParser from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
 import slugify from 'slugify';
 
-const ROOT = '/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code';
-const WEBSITE_V = '/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code/v';
-const WEBSITE_REPO = '/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code';
+const ROOT = '/Users/chris/RGA/Rocket Growth Agency Scraper VS Code';
+const WEBSITE_V = '/Users/chris/RGA/Rocket Growth Agency Website VS Code/v';
+const WEBSITE_REPO = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
 
 const VERTICALS = process.env.SEARCH_FILTER ? [process.env.SEARCH_FILTER] : [
   'Garage door repair in Culver City, CA',

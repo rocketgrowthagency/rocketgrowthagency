@@ -5,8 +5,8 @@
 # Continues on per-step failure; logs status at the end.
 
 set -uo pipefail
-cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
-WEBSITE_V="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code/v"
+cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
+WEBSITE_V="/Users/chris/RGA/Rocket Growth Agency Website VS Code/v"
 
 LEADS=(
   "lincoln-industries-plumbing-single-[step-2]|lincoln-industries-plumbing|01_lincoln-industries-plumbing"

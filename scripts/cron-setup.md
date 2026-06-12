@@ -5,7 +5,7 @@ Daily backlog crawl of the Airtable no-email leads. Pulls 200 leads/hr against t
 ## Manual one-shot
 
 ```bash
-cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
+cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
 node scripts/discover-no-email-leads.mjs
 ```
 
@@ -20,7 +20,7 @@ crontab -e
 
 Add this line (runs daily at 9am):
 ```cron
-0 9 * * * cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code" && /usr/local/bin/node scripts/discover-no-email-leads.mjs >> /tmp/discover-daily.log 2>&1
+0 9 * * * cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code" && /usr/local/bin/node scripts/discover-no-email-leads.mjs >> /tmp/discover-daily.log 2>&1
 ```
 
 The script will:

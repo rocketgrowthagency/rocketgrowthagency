@@ -18,8 +18,8 @@
 # ETA: ~20-30 hours wall clock for full 81-lead run.
 
 set -uo pipefail
-cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
-WEBSITE_REPO="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code"
+cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
+WEBSITE_REPO="/Users/chris/RGA/Rocket Growth Agency Website VS Code"
 WEBSITE_V="$WEBSITE_REPO/v"
 
 # Per-vertical search terms (process in this order)

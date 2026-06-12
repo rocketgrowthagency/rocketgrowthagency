@@ -13,9 +13,9 @@
 # Continues on per-lead failures; logs status per lead.
 
 set -uo pipefail
-cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
+cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
 
-WEBSITE_V="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code/v"
+WEBSITE_V="/Users/chris/RGA/Rocket Growth Agency Website VS Code/v"
 
 LEADS=(
   "an_integrity_garage_door_repai-single-[step-2]|an-integrity-garage-door-repair-los-angeles-la|01_an-integrity-garage-door-repair-los-angeles-la"

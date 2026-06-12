@@ -14,8 +14,8 @@
 # Memory: feedback_verification_gates_must_be_strict.md.
 
 set -u
-SCRAPER_DIR="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
-WEBSITE_DIR="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code"
+SCRAPER_DIR="/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
+WEBSITE_DIR="/Users/chris/RGA/Rocket Growth Agency Website VS Code"
 cd "$SCRAPER_DIR"
 
 FAIL=0

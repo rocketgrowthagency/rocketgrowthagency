@@ -8,8 +8,8 @@
 # Designed to be safe even when only some of the batch leads succeeded.
 
 set -uo pipefail
-cd "/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
-WEBSITE_V="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code/v"
+cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
+WEBSITE_V="/Users/chris/RGA/Rocket Growth Agency Website VS Code/v"
 
 CSVS=(
   "alvin-garage-door-single-[step-2]|alvin-garage-door"
