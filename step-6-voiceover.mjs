@@ -1487,9 +1487,10 @@ function scoreMapsConfirmedGood(audit, top3Stats, record) {
   if (audit?.gbp?.primaryCategoryMatchesSearch === true && audit?.gbp?.primaryCategory) {
     out.push({ key: 'categoryGood', score: 102, finding: `your Google Business Profile primary category — "${audit.gbp.primaryCategory}" — matches the search intent, which is the strongest category signal Google uses` });
   }
-  if (audit?.gbp?.hasBusinessHours === true) {
-    out.push({ key: 'hoursGood', score: 103, finding: `your business hours are set on your profile — completeness signal Google rewards` });
-  }
+  // 2026-06-11: hoursGood CUT — "your hours are set" is a useless point to voice
+  // to a prospect (it tells them nothing actionable + makes the video feel like
+  // we found nothing). Chris flagged it on the American Plumber review. Hours
+  // presence is table-stakes, not a selling point.
   if (audit?.gbp?.daysSinceLastReview != null && audit.gbp.daysSinceLastReview <= 30) {
     out.push({ key: 'reviewRecencyGood', score: 104, finding: `your last Google review was ${audit.gbp.daysSinceLastReview} days ago — solid review velocity` });
   }

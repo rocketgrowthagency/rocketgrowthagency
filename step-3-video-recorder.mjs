@@ -624,8 +624,24 @@ async function waitForMapsSearchInput(page) {
 }
 
 async function clearAndType(page, selector, value) {
+  // 2026-06-11: ROBUST clear. The old single-Backspace left residue when the
+  // search box already held text (prior nav / retry) — the new query got
+  // APPENDED, producing "Plumbers in Beverly Hills CAPlumbers in Beverly Hills
+  // CA..." in the visible Maps search bar (Chris caught it on review). A garbled
+  // query also broke card-open (Maps couldn't match the business → results list
+  // + state-zoom, no detail card). Now: select-all + delete, DOM-level hard
+  // clear, verify empty, THEN type.
   await page.click(selector, { clickCount: 3 });
-  await page.keyboard.press('Backspace');
+  const selectAllKey = process.platform === 'darwin' ? 'Meta' : 'Control';
+  await page.keyboard.down(selectAllKey);
+  await page.keyboard.press('a');
+  await page.keyboard.up(selectAllKey);
+  await page.keyboard.press('Delete');
+  // DOM-level hard clear (covers React-controlled input where select-all misses)
+  await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (el) { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); }
+  }, selector).catch(() => {});
   await page.type(selector, value, { delay: 45 });
 }
 

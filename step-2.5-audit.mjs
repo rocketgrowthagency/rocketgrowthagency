@@ -327,7 +327,10 @@ async function auditWebsite(browser, websiteUrl, business) {
       const ctaEls = Array.from(document.querySelectorAll(
         'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
       ));
-      const NAV_LIKE_DESKTOP = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search)$/i;
+      // 2026-06-11: also exclude back-to-top / scroll-to-top controls — "Top"
+      // was being detected as the primary CTA (Ford's + others), producing a
+      // false "your CTA says Top" finding. These are nav chrome, not CTAs.
+      const NAV_LIKE_DESKTOP = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|top|back\s*to\s*top|scroll\s*to\s*top|go\s*to\s*top|↑|⬆|\^)$/i;
       let primaryCtaText = null;
       let primaryCtaH = 0;
       for (const el of ctaEls) {
@@ -868,7 +871,8 @@ async function auditMobile(browser, websiteUrl, business) {
       const mobileCtaEls = Array.from(document.querySelectorAll(
         'a[class*="cta" i], a[class*="button" i], a[class*="btn" i], button, a[href*="contact"], a[href*="quote"], a[href*="schedule"], a[href*="call"], a[href^="tel:"]'
       ));
-      const NAV_LIKE_MOBILE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search)$/i;
+      // 2026-06-11: exclude back-to-top / scroll-to-top controls (see desktop note).
+      const NAV_LIKE_MOBILE = /^(?:toggle\s*menu|menu|open\s*menu|close\s*menu|navigation|hamburger|skip\s*to\s*content|×|☰|≡|search|top|back\s*to\s*top|scroll\s*to\s*top|go\s*to\s*top|↑|⬆|\^)$/i;
       let mobileCtaText = null;
       let mobileCtaH = 0;
       for (const el of mobileCtaEls) {
