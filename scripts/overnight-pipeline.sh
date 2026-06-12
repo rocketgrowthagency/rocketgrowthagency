@@ -13,9 +13,15 @@ set -u  # error on unset vars; tolerate command failures with explicit checks
 SEARCH_QUERY="${1:-Plumbers in Santa Monica CA}"
 DATE_STAMP=$(date +%Y-%m-%d)
 TIME_START=$(date +%H:%M)
-SCRAPER_DIR="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Scraper VS Code"
-WEBSITE_DIR="/Volumes/LaCie - APFS (Mac)/ALL NEWS SITES/Rocket Growth Agency/Rocket Growth Agency Website VS Code"
-REPORT="/tmp/overnight-report-${DATE_STAMP}.md"
+# 2026-06-11: portable paths — derive from the script's own location instead of
+# hardcoding (was machine-specific; old Mac=LaCie, new M4=~/RGA). Works on any
+# machine where Scraper + Website repos are siblings. Removes the per-Mac sed.
+SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WEBSITE_DIR="$(cd "$(dirname "$SCRAPER_DIR")" && pwd)/Rocket Growth Agency Website VS Code"
+# 2026-06-11: report now lands in the git-tracked Website reports/ dir per the
+# locked protocol (feedback_overnight_report_format), not /tmp.
+mkdir -p "${WEBSITE_DIR}/reports" 2>/dev/null || true
+REPORT="${WEBSITE_DIR}/reports/overnight-report-${DATE_STAMP}.md"
 LOGFILE="/tmp/overnight-pipeline-${DATE_STAMP}.log"
 
 cd "$SCRAPER_DIR"
@@ -238,6 +244,15 @@ with open("$LATEST_S2") as f:
         if email and '@' in email and not email.startswith('user@') and not email.endswith('.our'):
             print(f"{r['Business Name']}")
 EOPY
+
+# 2026-06-11: optional MAX_LEADS cap for sample/test runs (e.g. MAX_LEADS=5).
+# Caps the emailable list to the first N leads so quality can be validated before
+# committing to a full batch. Unset = process ALL emailable leads (default).
+if [ -n "${MAX_LEADS:-}" ]; then
+  head -n "$MAX_LEADS" /tmp/emailable_leads.txt > /tmp/emailable_leads.capped.txt \
+    && mv /tmp/emailable_leads.capped.txt /tmp/emailable_leads.txt
+  echo ">>> MAX_LEADS=$MAX_LEADS — sample run, capped to first $MAX_LEADS emailable leads" | tee -a "$LOGFILE"
+fi
 
 echo "" | tee -a "$LOGFILE"
 echo ">>> Emailable leads to process:" | tee -a "$LOGFILE"
@@ -711,6 +726,12 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   done
   COMMIT_MSG="Overnight deploy batch: ${#PENDING_DEPLOY_NAMES[@]} new videos ($(date +%Y-%m-%d))"
   git commit -m "$COMMIT_MSG" 2>&1 | tee -a "$LOGFILE" | tail -3
+  # 2026-06-11 (new-Mac takeover): auth netlify non-interactively from the Scraper
+  # .env so unattended overnight runs deploy without a ~/.netlify login session.
+  # Defensive: keeps any already-exported value, else reads .env, else empty (a Mac
+  # authed via `netlify login` falls through to its stored session unchanged).
+  export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
+  export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Production deploy|rocketgrowth|Deployed" | head -3
   cd "$SCRAPER_DIR"
 else
