@@ -82,6 +82,19 @@ if ! node scripts/check-step8-create-shape.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: step-8 create payload would leak non-fields keys → Airtable 422 on new-lead batches. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-12 — Maps card-open self-check. Verifies the recording environment can
+# actually match + open a detail card, so we never silently ship a whole batch of
+# cardless results-list videos (caught when the sponsored detector over-matched on
+# the logged-in Maps layout). FATAL only on the definitive-broken state (all cards
+# flagged sponsored / scorer matches nothing); transient (consent/CAPTCHA/no anchors)
+# warns + passes. Skip with SKIP_CARD_CHECK=1. Memory: feedback_video_quality_fixes_2026-06-11.
+if [ "${SKIP_CARD_CHECK:-0}" != "1" ]; then
+  echo ">>> pre-flight: Maps card-open self-check" | tee -a "$LOGFILE"
+  if ! node scripts/check-maps-card-open.mjs 2>&1 | tee -a "$LOGFILE"; then
+    echo "✗ FATAL: Maps card-open is broken in this environment — every lead would ship a cardless results-list video. Fix (logged-out profile / sponsored detector / selectors) before running. Override with SKIP_CARD_CHECK=1." | tee -a "$LOGFILE"
+    exit 1
+  fi
+fi
 # 2026-06-02 — SerpAPI quota pre-flight. Locked after 2026-06-01 overnight
 # wasted 10 hours retrying against an exhausted monthly quota. Abort
 # cleanly if remaining is below MIN_SERPAPI_REMAINING (default 100, which
