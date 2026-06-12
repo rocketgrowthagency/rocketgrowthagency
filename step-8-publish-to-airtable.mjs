@@ -532,16 +532,16 @@ function extractPlaceKey(mapsUrl) {
 async function loadExistingLeadsByPlaceKey() {
   const map = new Map();
   for (const [tableName, api] of [[AIRTABLE_TABLE, API_BASE], [NO_EMAIL_TABLE, NO_EMAIL_API]]) {
+    // "Day 1 Map Rank" exists only on the main Leads table (added in a71b058 for
+    // Email-5 rank comparison). The deprecated "Leads No Email" table lacks it, and
+    // requesting a non-existent field 422s the WHOLE lookup. Request it per-table.
+    const lookupFields = ['Place ID', 'GBP URL', 'Map Rank', 'Date Scraped', 'Business Name'];
+    if (tableName === AIRTABLE_TABLE) lookupFields.push('Day 1 Map Rank');
     let offset = null;
     do {
       const u = new URL(api);
       u.searchParams.set('pageSize', '100');
-      u.searchParams.append('fields[]', 'Place ID');
-      u.searchParams.append('fields[]', 'GBP URL');
-      u.searchParams.append('fields[]', 'Map Rank');
-      u.searchParams.append('fields[]', 'Day 1 Map Rank');
-      u.searchParams.append('fields[]', 'Date Scraped');
-      u.searchParams.append('fields[]', 'Business Name');
+      for (const f of lookupFields) u.searchParams.append('fields[]', f);
       if (offset) u.searchParams.set('offset', offset);
       const res = await fetch(u, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } });
       if (!res.ok) {
@@ -753,10 +753,16 @@ async function fetchWithRetry(url, opts, maxAttempts = 3) {
 }
 
 async function postBatchTo(api, records) {
+  // Airtable's create endpoint rejects any record key other than `fields`.
+  // buildRecord returns { fields, _skipReason } — _skipReason is consumed by the
+  // main loop's dedup gate (NOT meant for Airtable). Strip to fields-only before
+  // POSTing. Fixes 2026-06-03 dedup regression (422 INVALID_REQUEST_UNKNOWN —
+  // the create path was never run successfully end-to-end until 2026-06-11).
+  const clean = records.map((r) => ({ fields: r.fields }));
   const res = await fetchWithRetry(api, {
     method: "POST",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ records, typecast: true })
+    body: JSON.stringify({ records: clean, typecast: true })
   });
   return res.json();
 }
