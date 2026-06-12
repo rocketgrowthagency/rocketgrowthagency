@@ -793,18 +793,20 @@ async function getListingHrefByName(page, businessName, minScore = 24) {
     // business name, not "Sponsored\n". Step-3 then matched + clicked the
     // sponsored one, baking "Sponsored" into our cold-outreach video.
     // Memory: feedback_never_match_sponsored_maps_listing.md.
-    const isSponsoredBlock = (el) => {
-      let cursor = el;
-      for (let i = 0; i < 4 && cursor; i++) {
-        const t = (cursor.innerText || '').toLowerCase();
-        // Word-boundary "sponsored" anywhere in first 120 chars of the card.
-        if (/\bsponsored\b/.test(t.slice(0, 120))) return true;
-        // ARIA / data-attribute markers Google uses for sponsored listings.
-        if (cursor.querySelector && cursor.querySelector(
-          '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
-        )) return true;
-        cursor = cursor.parentElement;
-      }
+    const isSponsoredBlock = (root) => {
+      // 2026-06-12: inspect ONLY this card, NOT ancestors. The old 4-ancestor
+      // walk + 120-char innerText slice caught NEIGHBOURING sponsored cards' text
+      // via a shared ancestor when the Chrome profile is logged into a Google
+      // account (logged-in Maps nests cards under one container), flagging EVERY
+      // card → no card matched → no detail card in the video (Chris caught Ford's).
+      // Validated on Chrome 149: card-root-only flags only the real sponsored ads
+      // (2/22), not the prospect. The "Sponsored" badge is at the card's own start.
+      if (!root) return false;
+      const t = (root.innerText || '').toLowerCase();
+      if (/\bsponsored\b/.test(t.slice(0, 60))) return true;
+      if (root.querySelector && root.querySelector(
+        '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
+      )) return true;
       return false;
     };
 
@@ -875,16 +877,15 @@ async function clickListingInResultsByName(page, businessName) {
   try {
     const centered = await page.evaluate((targetHref) => {
       // Inline sponsored detector — same logic as getListingHrefByName.
-      const isSponsoredBlock = (el) => {
-        let cursor = el;
-        for (let i = 0; i < 4 && cursor; i++) {
-          const t = (cursor.innerText || '').toLowerCase();
-          if (/\bsponsored\b/.test(t.slice(0, 120))) return true;
-          if (cursor.querySelector && cursor.querySelector(
-            '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
-          )) return true;
-          cursor = cursor.parentElement;
-        }
+      const isSponsoredBlock = (root) => {
+        // 2026-06-12: card-root-only (see copy in getListingHrefByName). Ancestor
+        // walk over-matched on logged-in Maps layout, flagging every card.
+        if (!root) return false;
+        const t = (root.innerText || '').toLowerCase();
+        if (/\bsponsored\b/.test(t.slice(0, 60))) return true;
+        if (root.querySelector && root.querySelector(
+          '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
+        )) return true;
         return false;
       };
 
@@ -1223,15 +1224,25 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // The original search-term results-panel is still shown for 4s before
   // this nav, giving competitive context per the daily-cycle rule.
   // ============================================================
-  const DEEP_RANK_THRESHOLD = 10;
-  if (DEEP_RANK_THRESHOLD !== 10) {
-    throw new Error('[step-3 GUARDRAIL] DEEP_RANK_THRESHOLD must stay at 10. See feedback_maps_card_visibility_rules.md');
+  // 2026-06-12: raised 10 → 20. The URL-nav fallback (used for rank > threshold)
+  // is unreliable — for ambiguous / duplicate-listing names (e.g. Ford's Plumbing
+  // #14, which has a duplicate GBP) the bare-name Maps URL resolves to a RESULTS
+  // LIST, not a detail page, so the prospect's card never opens (Chris caught it
+  // on review). scroll-find-click is the only reliable card-open and reaches
+  // same-area leads through ~rank 20. URL fallback now only for genuinely deep /
+  // off-area leads (rank > 20, not on the scrollable results panel — see rev3).
+  const DEEP_RANK_THRESHOLD = 20;
+  if (DEEP_RANK_THRESHOLD !== 20) {
+    throw new Error('[step-3 GUARDRAIL] DEEP_RANK_THRESHOLD must stay at 20. See feedback_maps_card_visibility_rules.md');
   }
   const skipScrollAttempt = rank !== null && rank > DEEP_RANK_THRESHOLD;
 
   // Scroll enough panels to expose the business at its actual rank position.
   // Each scroll reveals ~5 listings; add 2 extra as buffer.
-  const scrollsNeeded = rank !== null ? Math.ceil(rank / 5) + 2 : 4;
+  // 2026-06-12: +4 buffer (was +2). Live Maps rank drifts vs the step-1 scrape
+  // (Ford's scraped #14 but lives at #17 now) + sponsored cards push the prospect
+  // down, so scroll a bit further than the scraped rank implies.
+  const scrollsNeeded = rank !== null ? Math.ceil(rank / 5) + 4 : 6;
 
   try {
     console.log('   → Google Maps segment');
@@ -1272,8 +1283,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // leaving more time for the prospect's detail card to be on screen
       // before the segment ends. Chris's locked priority: processing time +
       // detail card visibility > intermittent native-expand UX.
-      await page.waitForSelector('a.hfpxzc', { timeout: 3000 }).catch(() => {});
-      await sleep(500); // brief settle (was 1500)
+      // 2026-06-12: wait LONGER for result anchors to render before scroll-find.
+      // Chrome 149 renders the results panel slower than the old Mac's Chrome; the
+      // old 3s "bail fast" timeout meant scroll-find ran against ZERO anchors
+      // (top5 empty → no match → URL fallback → no detail card). Verified via a
+      // live DOM probe: anchors are present by ~7s. Chris's "card must show"
+      // priority overrides the earlier processing-time-first bail-fast rule.
+      await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
+      await sleep(1500); // settle so cards are interactive before scroll-find
     }
 
     if (businessName && !skipScrollAttempt) {
@@ -1283,7 +1300,11 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // variant), repeating it 6 times wastes ~25s of recording on empty
       // top5 logs. Bail fast to URL fallback so the prospect's detail card
       // gets more on-screen time before the segment ends. Per locked priority.
-      const clicked = await scrollUntilVisibleAndClick(page, businessName, 2);
+      // 2026-06-12: scale scroll depth to the lead's rank (was hardcoded 2, which
+      // couldn't reach rank 11-20 → card never opened for those). scrollsNeeded =
+      // ceil(rank/5)+2; clickListingInResultsByName checks before+after each scroll
+      // so in-area leads click as soon as they appear (no wasted scrolls).
+      const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded);
       if (clicked) {
         // Re-inject overlay after navigation (page.goto wipes the DOM)
         await injectRankOverlay(page, businessName, rank, searchTerm);

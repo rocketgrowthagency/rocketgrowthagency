@@ -96,16 +96,16 @@ function scopeInnerText(doc, sponsoredText, organicText) {
 // ===== Replicas of the filters in step-3-video-recorder.mjs =====
 // Keep these in sync. If step-3's filters drift, this test catches the drift.
 
-function isSponsoredBlock(el) {
-  let cursor = el;
-  for (let i = 0; i < 4 && cursor; i++) {
-    const t = (cursor.innerText || '').toLowerCase();
-    if (/\bsponsored\b/.test(t.slice(0, 120))) return true;
-    if (cursor.querySelector && cursor.querySelector(
-      '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
-    )) return true;
-    cursor = cursor.parentElement;
-  }
+// 2026-06-12: card-root-only (matches step-3). The 4-ancestor walk over-matched
+// on logged-in Maps layout (neighbouring sponsored cards' text reachable via a
+// shared ancestor → every card flagged → no card matched). Inspect only the card.
+function isSponsoredBlock(root) {
+  if (!root) return false;
+  const t = (root.innerText || '').toLowerCase();
+  if (/\bsponsored\b/.test(t.slice(0, 60))) return true;
+  if (root.querySelector && root.querySelector(
+    '[aria-label*="Sponsored" i], [aria-label="Ad" i], [data-value="ad" i], [data-tts="ad" i]'
+  )) return true;
   return false;
 }
 
