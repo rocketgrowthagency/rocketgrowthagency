@@ -29,6 +29,12 @@ const CHROME_PATH =
 
 const MAX_VIDEOS = Number(process.env.MAX_VIDEOS || 1);
 const DESKTOP_VIEWPORT = { width: 1280, height: 720, deviceScaleFactor: 1 };
+// 2026-06-12: record the MAPS segment at a WIDER viewport so Google serves the
+// 3-column (results | detail card | map) layout — keeps our blue-line highlight +
+// card popout visible (Chris's preferred look). Website stays 1280 (no squish);
+// step-4 scales the Maps segment back to 1280:720 in the combine. Verified on
+// American Plumber + Ford's. Overridable via MAPS_VW_WIDTH.
+const MAPS_VIEWPORT = { width: Number(process.env.MAPS_VW_WIDTH || 1600), height: 720, deviceScaleFactor: 1 };
 const MOBILE_VIEWPORT = {
   width: 390,
   height: 720,
@@ -1813,9 +1819,10 @@ function createScreencastRecorder(page, outputPath, viewport) {
 
 async function recordDesktopMapsVideo(browser, meta, outputPath) {
   const page = await browser.newPage();
-  await page.setViewport(DESKTOP_VIEWPORT);
+  // 2026-06-12: MAPS_VIEWPORT (wider) for the 3-column blue-line + card-popout layout.
+  await page.setViewport(MAPS_VIEWPORT);
 
-  const recorder = createScreencastRecorder(page, outputPath, DESKTOP_VIEWPORT);
+  const recorder = createScreencastRecorder(page, outputPath, MAPS_VIEWPORT);
   let hadFatal = false;
   let recorderStarted = false;
 
