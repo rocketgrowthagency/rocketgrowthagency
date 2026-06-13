@@ -451,10 +451,80 @@ function validateAuditContract(audit, slug) {
 // Each finding has a fixed priority (1-10, lower = more important).
 // Audit picks the top 3 lowest-priority findings that triggered.
 // "score" field == priority for sorting compatibility.
+//
+// 2026-06-12 STALE-SUSPECT GUARD (brandTokenInDomain + clearStaleSuspect):
+// step-1 flags a lead suspect (empty / aggregator / name-mismatch) against the
+// GBP-LINKED website, then a search-discovery fallback frequently finds and
+// substitutes the real first-party brand site — and step-2.5 audits that
+// discovered site. The step-1 suspect flag then rode along STALE, so step-6
+// fired false "you don't have a real website" / "your domain doesn't match your
+// business name" claims against a domain that DOES carry the brand. Chris caught
+// this across many videos. Confirmed false positives: Richards Rooter
+// (richardsrooterandplumbing.com flagged name-mismatch:richards,rooter — both
+// tokens literally in the domain), Advanced HVAC (advanced-hvac.com flagged
+// "empty"), Murphy Plumbing, Top LA Plumbers, Reliance Home Service. We re-validate
+// against the ACTUALLY-AUDITED url so the false claim never ships. Operates on the
+// cached audit too, so the held re-render batch is fixed without re-auditing.
+const STALE_SUSPECT_STOPWORDS = new Set([
+  'the','and','for','llc','inc','ltd','co','corp','of','at','your','best','top','our',
+  'garage','door','doors','repair','repairs','service','services','company','companies',
+  'shop','store','center','centers','solution','solutions','group','team','home',
+  'professional','professionals','expert','experts','specialist','specialists','pro','pros',
+  'plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning','comfort',
+  'roofing','roofer','roofers','locksmith','locksmiths','dentist','dentists','dental',
+  'auto','automotive','car','cars','vehicle','vehicles','water','rooter','rooters',
+  'painting','painters','painter','cleaning','cleaners','cleaner',
+  'landscaping','landscape','lawn','tree','trees',
+  'pest','control','exterminator','exterminators',
+  'electric','electrician','electricians','contractor','contractors','construction','remodel','remodeling',
+  'los','angeles','beverly','hills','santa','monica','city','county','ca',
+]);
+const STALE_SUSPECT_AGG_HOSTS = [
+  'yelp.com','facebook.com','instagram.com','linkedin.com','nextdoor.com','mapquest.com',
+  'yellowpages.com','bbb.org','angi.com','angieslist.com','thumbtack.com','houzz.com',
+  'manta.com','foursquare.com','tripadvisor.com','superpages.com','citysearch.com',
+];
+function brandTokenInDomain(businessName, websiteUrl) {
+  if (!businessName || !websiteUrl) return false;
+  let host = '';
+  try { host = new URL(websiteUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch { return false; }
+  const domainRoot = host.replace(/\.[a-z]+$/i, '').replace(/[^a-z0-9]/g, '');
+  if (!domainRoot) return false;
+  const tokens = String(businessName).toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ').split(/\s+/)
+    .filter(t => t.length >= 3 && !STALE_SUSPECT_STOPWORDS.has(t));
+  return tokens.some(t => domainRoot.includes(t));
+}
 function scoreWebsiteFindings(audit, businessName) {
   if (!audit?.website) return [];
   const w = { ...audit.website, businessNameForCheck: businessName || '' };
   const out = [];
+  // STALE-SUSPECT GUARD — re-validate the step-1 suspect flag against the URL we
+  // actually audited. If that flag is stale (discovery substituted a real site),
+  // clear it so the "no website" / "domain mismatch" findings below never fire falsely.
+  if (w.suspectWebsiteMismatch && w.websiteUrl) {
+    const reason = (w.websiteSuspectReason || '').toLowerCase();
+    const auditRan = w.pageLoadSeconds != null || w.title != null || w.hasLocalBusinessSchema != null;
+    let host = '';
+    try { host = new URL(w.websiteUrl).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) {}
+    const isAggHost = STALE_SUSPECT_AGG_HOSTS.some(a => host === a || host.endsWith('.' + a));
+    const brandPresent = brandTokenInDomain(businessName, w.websiteUrl);
+    let stale = false;
+    if (reason.startsWith('name-mismatch')) {
+      // "domain doesn't match" is legit ONLY if the audited domain truly lacks the
+      // brand (e.g. Alvin Garage Door → sswhitegaragedoors.com). If the brand IS in
+      // the audited domain, the flag is stale → clear. Richards Rooter, etc.
+      stale = brandPresent;
+    } else if (reason.startsWith('empty') || reason.startsWith('aggregator') || reason.startsWith('unparseable') || reason === '') {
+      // "you don't have a real website" is false if we actually audited a real,
+      // non-aggregator first-party site (discovery only returns brand-matched sites).
+      stale = auditRan && !isAggHost && (brandPresent || true);
+    }
+    if (stale) {
+      w.suspectWebsiteMismatch = false;
+      w.websiteSuspectReason = '';
+    }
+  }
   // Master verification flag — true when the website audit ran end-to-end.
   // Every absence-claim website finding gates on this. If the audit failed
   // (network error, timeout, parked-site detection skipped the scan), we

@@ -82,6 +82,16 @@ if ! node scripts/check-step8-create-shape.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: step-8 create payload would leak non-fields keys → Airtable 422 on new-lead batches. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-12 — stale-suspect guard. Ensures step-6/step-2.5 never fire a false
+# "you don't have a website" / "your domain doesn't match your business name" claim
+# when the search-discovery fallback already substituted the real first-party brand
+# site (Chris caught Richards Rooter, Advanced HVAC, Murphy, etc.). Memory:
+# feedback_audit_stale_suspect_false_no_website.md.
+echo ">>> pre-flight: stale-suspect guard (no false no-website/domain-mismatch claims)" | tee -a "$LOGFILE"
+if ! node scripts/check-stale-suspect-guard.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: stale-suspect guard regressed → false no-website/domain-mismatch claims would ship to prospects. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-12 — Maps card-open self-check. Verifies the recording environment can
 # actually match + open a detail card, so we never silently ship a whole batch of
 # cardless results-list videos (caught when the sponsored detector over-matched on

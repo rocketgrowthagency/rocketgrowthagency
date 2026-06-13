@@ -2364,7 +2364,16 @@ async function main() {
       // Propagate step-1 suspect flags into audit findings so step-6 can fire
       // noOwnWebsite without re-reading the step-1 CSV. Locked 2026-05-20.
       const suspectReason = (row['Website Suspect Reason'] || '').trim();
-      if (suspectReason) {
+      // 2026-06-12: don't propagate the step-1 suspect flag when the search-discovery
+      // fallback substituted a real first-party brand site (row['Discovered Website']).
+      // step-1 computed the flag against the OLD GBP-linked url; the discovered site
+      // already passed the brand-token filter (pickQualifyingResult), so the flag is
+      // STALE. Propagating it made step-6 fire false "no website / domain doesn't match"
+      // claims (Richards Rooter, Advanced HVAC, Murphy, etc. — Chris caught these). The
+      // url we actually audit here is the discovered site (line ~2316). step-6 carries a
+      // matching stale-suspect guard so already-cached audits are fixed without re-auditing.
+      const usedDiscoveredSite = !!(row['Discovered Website'] || '').trim();
+      if (suspectReason && !usedDiscoveredSite) {
         websiteFindings.suspectWebsiteMismatch = true;
         websiteFindings.websiteSuspectReason = suspectReason;
       }
