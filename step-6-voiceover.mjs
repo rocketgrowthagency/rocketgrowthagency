@@ -1125,18 +1125,35 @@ function scoreMapsFindings(audit, top3Stats, record) {
         score: 45,
         finding: `you have ${reviews} Google reviews vs ${compareLabel} at ${compareReviewsAvg} — closing that ${compareReviewsAvg - reviews}-review gap is the most direct lever for ${leadRank === 2 ? 'pushing into #1' : 'climbing past #2'}, since review volume is one of the highest-weighted Maps ranking signals`,
       });
+    } else if (!isTop3 && reviews < compareReviewsAvg) {
+      // 2026-06-12 — climb lever for rank 4+ leads behind on review VOLUME but not
+      // below the <60% threshold above (Doctor Pipe: 13 reviews vs the top-3's 20).
+      // Review volume is a more material + actionable Maps lever than a sub-0.3-star
+      // rating gap, so this is scored (25) to OUTRANK ratingGap (30) and take the slot.
+      // Chris flagged the weak "even a small rating gap" finding while the lead had
+      // only 13 reviews. Mirrors reviewGapToLeader but for the rank-4+ climb case.
+      out.push({
+        key: 'reviewGapToTop3',
+        score: 25,
+        finding: `you have ${reviews} Google reviews; the top 3 in this search average around ${compareReviewsAvg} — closing that ${Math.max(1, compareReviewsAvg - reviews)}-review gap with steady, recent reviews is one of the most direct levers to climb toward the top 3`,
+      });
     }
   }
 
   // Rating vs peer-set average (rank-aware)
+  // 2026-06-12: require a MATERIAL gap (>= 0.3 stars) for the general climb finding.
+  // A 0.2-star gap (e.g. 4.7 vs 4.9) is within review noise — especially at low review
+  // counts — and shouldn't take a Maps finding slot over a more material lever like
+  // review volume. Chris flagged a 4.7-vs-4.9 finding firing on a 13-review business.
+  // Top-3 #2/#3 defense still fires at ANY margin via ratingGapToLeader below.
   if (top3Stats && Number.isFinite(rating) && compareRatingAvg > 0) {
-    if (rating < compareRatingAvg - 0.15) {
+    if (rating <= compareRatingAvg - 0.3) {
       const labelClause = compare ? `${compareLabel} average around ${compareRatingAvg.toFixed(1)} stars`
         : `the top 3 average around ${compareRatingAvg.toFixed(1)}`;
       out.push({
         key: 'ratingGap',
         score: 30,
-        finding: `you're at ${rating} stars; ${labelClause} — even a small rating gap costs you Maps ranking position`,
+        finding: `you're at ${rating} stars; ${labelClause} — that rating gap costs you Maps ranking position`,
       });
     } else if (isTop3 && compare && (leadRank === 2 || leadRank === 3) && rating < compareRatingAvg) {
       // 2026-05-27 NEW — top-3 defense lever for rank #2/#3 when rating is below
