@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+// scripts/check-cross-search-dedup.mjs
+//
+// Regression guard for the ONE-EMAIL-PER-BUSINESS-EVER rule (Chris, 2026-06-03 +
+// re-emphasized 2026-06-12). A business that appears in multiple searches (e.g. Roto-
+// Rooter or any legit shop in BOTH "Plumbers in Beverly Hills" AND "Plumbers in Culver
+// City") must get exactly ONE video + ONE cold email — ever. The 2nd+ appearance is
+// captured as data on the existing Airtable record, never re-rendered or re-emailed.
+//
+// Enforcement chain this test locks:
+//   1. lib/dedup-by-email.mjs checkDuplicate() matches by normalized (case-insensitive)
+//      EMAIL first, then Place ID, against an index of ALL existing Airtable leads.
+//   2. step-2-email-scraper.mjs CLEARS the email (record.email='') on a dedup match.
+//   3. overnight-pipeline.sh builds emailable_leads.txt requiring a valid '@' email, so
+//      email-cleared (deduped) rows are excluded from rendering + outreach. step-2.5/
+//      step-3 also skip empty-email rows.
+//
+// Usage:  node scripts/check-cross-search-dedup.mjs   (0 = pass, 1 = fail)
+// Runs pre-flight in scripts/overnight-pipeline.sh.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+let failed = 0;
+const fail = (m) => { console.error(`  ✗ ${m}`); failed++; };
+const pass = (m) => console.log(`  ✓ ${m}`);
+
+// ── logic: the REAL checkDuplicate against a realistic index ─────────────────
+const { checkDuplicate } = await import('../lib/dedup-by-email.mjs');
+const index = {
+  emailToRecord: new Map([['info@rotorooter.com', 'recRoto'], ['hello@lordsplumbing.com', 'recLords']]),
+  placeIdToRecord: new Map([['PID_ROTO', 'recRoto'], ['PID_LORDS', 'recLords']]),
+};
+const L = [
+  ['same email, exact', { email: 'info@rotorooter.com', placeId: '' }, true, 'email'],
+  ['same email, different CASE', { email: 'INFO@RotoRooter.com', placeId: '' }, true, 'email'],
+  ['same email w/ whitespace', { email: '  hello@lordsplumbing.com ', placeId: '' }, true, 'email'],
+  ['same Place ID, no email', { email: '', placeId: 'PID_LORDS' }, true, 'placeId'],
+  ['brand-new business', { email: 'new@freshco.com', placeId: 'PID_NEW' }, false, null],
+];
+for (const [label, input, expectDup, expectBy] of L) {
+  const r = checkDuplicate(input, index);
+  if (r.isDuplicate === expectDup && (!expectDup || r.matchedBy === expectBy)) pass(`${label} → dup=${r.isDuplicate}${r.matchedBy ? ' by ' + r.matchedBy : ''}`);
+  else fail(`${label} → got dup=${r.isDuplicate} by ${r.matchedBy} (expected dup=${expectDup} by ${expectBy})`);
+}
+
+// ── static: the enforcement chain must stay intact ──────────────────────────
+const s2 = fs.readFileSync(path.join(ROOT, 'step-2-email-scraper.mjs'), 'utf8');
+const ov = fs.readFileSync(path.join(ROOT, 'scripts', 'overnight-pipeline.sh'), 'utf8');
+if (/isDuplicate/.test(s2) && /record\.email\s*=\s*''/.test(s2) && /Skip Reason.*dedup/.test(s2))
+  pass('step-2 clears email + flags Skip Reason on cross-search dedup match');
+else fail('step-2 dedup email-clear MISSING — deduped leads could be re-rendered/re-emailed');
+if (/preloadDedupIndex/.test(s2)) pass('step-2 preloads the full Airtable dedup index');
+else fail('step-2 preloadDedupIndex call MISSING');
+if (/email and '@' in email/.test(ov)) pass('overnight emailable-list builder requires a valid email (excludes deduped rows)');
+else fail('overnight emailable-list builder no longer gates on email — deduped rows could leak in');
+
+if (failed) { console.error(`\ncross-search dedup: ${failed} FAILED`); process.exit(1); }
+console.log('\ncross-search dedup: all checks passed (one email per business, ever)');

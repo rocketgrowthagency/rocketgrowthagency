@@ -107,6 +107,15 @@ if ! node scripts/check-maps-finding-rank-priority.mjs 2>&1 | tee -a "$LOGFILE";
   echo "✗ FATAL: maps finding rank-priority regressed → trivial rating gaps would outrank review-volume levers. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-12 — cross-search dedup (ONE email per business, EVER). A business in multiple
+# searches (Roto-Rooter in Beverly Hills + Culver City) must be emailed once: 2nd appearance
+# is captured on the existing record, never re-rendered/re-emailed. Memory:
+# feedback_dedup_by_email_with_intel_capture.md.
+echo ">>> pre-flight: cross-search dedup guard (one email per business, ever)" | tee -a "$LOGFILE"
+if ! node scripts/check-cross-search-dedup.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: cross-search dedup regressed → a business could be emailed twice across searches (trust-kill). Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-12 — Maps card-open self-check. Verifies the recording environment can
 # actually match + open a detail card, so we never silently ship a whole batch of
 # cardless results-list videos (caught when the sponsored detector over-matched on
