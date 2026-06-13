@@ -92,6 +92,14 @@ if ! node scripts/check-stale-suspect-guard.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: stale-suspect guard regressed → false no-website/domain-mismatch claims would ship to prospects. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-12 — duplicate-listing same-business guard. Ensures similarly-named DIFFERENT
+# competitors aren't counted as "duplicates of you" (Chris caught Doctor Pipe vs Pipe
+# Doctor Rooter). Memory: feedback_audit_duplicate_listing_same_business.md.
+echo ">>> pre-flight: duplicate-listing same-business guard" | tee -a "$LOGFILE"
+if ! node scripts/check-duplicate-listing-same-business.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: duplicate-listing guard regressed → false 'Google shows N other listings' claims would ship. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-12 — Maps card-open self-check. Verifies the recording environment can
 # actually match + open a detail card, so we never silently ship a whole batch of
 # cardless results-list videos (caught when the sponsored detector over-matched on

@@ -1937,14 +1937,31 @@ async function auditGbp(_, gbpUrl, business) {
           const local = Array.isArray(res.data.local_results) ? res.data.local_results : [];
           // Filter to listings whose normalized business name overlaps strongly
           // with target, then dedupe by place_id.
-          const tgt = String(business.name).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-          const tgtTokens = new Set(tgt.split(' ').filter((t) => t.length >= 3));
+          // 2026-06-12: a REAL duplicate is the SAME business listed twice, not a
+          // similarly-named competitor. Old logic counted any 2-token name overlap,
+          // so "Pipe Doctor Rooter & Plumbing Company" was flagged a duplicate of
+          // "Doctor Pipe | Los Angeles Plumbing Specialist" (reversed words, different
+          // address/phone/Place ID). Now require BOTH: the candidate title contains the
+          // target's ORDERED brand phrase, AND — when phones are available — the same
+          // phone (different phone = different business). step-6 carries a matching
+          // recount guard that corrects cached audits. See feedback_audit_duplicate_listing_same_business.md.
+          const DUP_STOP = new Set(['the','and','for','llc','inc','ltd','co','corp','of','at','your','best','top','our','dba','garage','door','doors','repair','repairs','service','services','company','companies','shop','store','center','centers','solution','solutions','group','team','home','professional','professionals','expert','experts','specialist','specialists','pro','pros','plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning','comfort','roofing','roofer','roofers','rooter','rooters','locksmith','locksmiths','dentist','dental','auto','automotive','car','cars','painting','painters','cleaning','cleaners','water','landscaping','landscape','lawn','tree','trees','pest','control','exterminator','electric','electrician','electricians','contractor','contractors','construction','remodeling','los','angeles','beverly','hills','santa','monica','city','county','ca']);
+          const brandPhrase = (name) => {
+            const toks = String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+            const phrase = [];
+            for (const t of toks) { if (t.length < 2 || DUP_STOP.has(t)) { if (phrase.length) break; else continue; } phrase.push(t); }
+            return phrase.join(' ');
+          };
+          const tgtPhrase = brandPhrase(business.name);
+          const tgtPhone = normalizePhone(business.phone || '');
           const matches = local.filter((r) => {
+            if (!tgtPhrase) return false; // brand too generic to confirm — skip (conservative)
             const n = String(r.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-            const nTokens = n.split(' ').filter((t) => t.length >= 3);
-            const overlap = nTokens.filter((t) => tgtTokens.has(t)).length;
-            // Require at least 2 token overlap (or all if target has fewer than 2)
-            return overlap >= Math.min(2, tgtTokens.size);
+            if (!n.includes(tgtPhrase)) return false; // must carry the target's ordered brand phrase
+            // If both phones known, they must match (different phone = different business).
+            const cPhone = normalizePhone(r.phone || '');
+            if (tgtPhone && cPhone && tgtPhone !== cPhone) return false;
+            return true;
           });
           const distinctIds = new Set(matches.map((m) => m.place_id).filter(Boolean));
           findings.duplicateListingCount = Math.max(0, distinctIds.size - 1);
@@ -1952,6 +1969,7 @@ async function auditGbp(_, gbpUrl, business) {
           findings.duplicateListings = matches.slice(0, 5).map((m) => ({
             title: m.title,
             address: m.address,
+            phone: m.phone || '',
             placeId: m.place_id,
             rating: m.rating,
             reviews: m.reviews,

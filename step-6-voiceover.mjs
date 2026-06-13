@@ -1027,6 +1027,56 @@ function joinPhrases(phrases) {
   return phrases.slice(0, -1).join(', ') + ', and ' + phrases[phrases.length - 1];
 }
 
+// 2026-06-12 DUPLICATE-LISTING SAME-BUSINESS GUARD. step-2.5's SerpAPI duplicate
+// lookup matched any listing sharing 2+ name tokens, so genuinely DIFFERENT
+// competitors with similar names were counted as "duplicates of you" — e.g. Doctor
+// Pipe | Los Angeles Plumbing Specialist falsely flagged "Pipe Doctor Rooter &
+// Plumbing Company" (reversed word order, different address 3312 Floyd Terrace,
+// different Place ID + phone, 55 vs 13 reviews) as a duplicate. A REAL duplicate is
+// the SAME business listed twice, so its title must contain the target's ORDERED
+// brand phrase ("doctor pipe"), which "pipe doctor rooter…" does not. trueDuplicateCount()
+// recomputes from the stored duplicateListings, correcting the CACHED audit at render
+// time (no SerpAPI re-call). Chris caught this on the Doctor Pipe video. Conservative:
+// if the brand is too generic to form a phrase, no duplicate is counted.
+const DUP_STOPWORDS = new Set([
+  'the','and','for','llc','inc','ltd','co','corp','of','at','your','best','top','our','dba',
+  'garage','door','doors','repair','repairs','service','services','company','companies',
+  'shop','store','center','centers','solution','solutions','group','team','home',
+  'professional','professionals','expert','experts','specialist','specialists','pro','pros',
+  'plumbing','plumber','plumbers','hvac','heating','cooling','air','conditioning','comfort',
+  'roofing','roofer','roofers','rooter','rooters','locksmith','locksmiths','dentist','dental',
+  'auto','automotive','car','cars','painting','painters','cleaning','cleaners','water',
+  'landscaping','landscape','lawn','tree','trees','pest','control','exterminator',
+  'electric','electrician','electricians','contractor','contractors','construction','remodeling',
+  'los','angeles','beverly','hills','santa','monica','city','county','ca',
+]);
+function dupBrandPhrase(name) {
+  const tokens = String(name || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  const phrase = [];
+  for (const t of tokens) {
+    if (t.length < 2 || DUP_STOPWORDS.has(t)) { if (phrase.length) break; else continue; }
+    phrase.push(t);
+  }
+  return phrase.join(' ');
+}
+function isSameListedBusiness(targetName, candidateTitle) {
+  const bp = dupBrandPhrase(targetName);
+  if (!bp) return false; // brand too generic to confirm — don't count (conservative)
+  const cand = String(candidateTitle || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  return cand.includes(bp);
+}
+function trueDuplicateCount(audit) {
+  const g = audit?.gbp || {};
+  // No detailed list to re-validate against → trust the stored count as-is.
+  if (!Array.isArray(g.duplicateListings) || !g.duplicateListings.length) {
+    return Number.isFinite(g.duplicateListingCount) ? g.duplicateListingCount : 0;
+  }
+  const target = audit.businessName || '';
+  const same = g.duplicateListings.filter((d) => isSameListedBusiness(target, d.title));
+  const distinct = new Set(same.map((d) => d.placeId).filter(Boolean));
+  // subtract the target's own listing — count only EXTRA same-business listings.
+  return Math.max(0, distinct.size - 1);
+}
 function scoreMapsFindings(audit, top3Stats, record) {
   const out = [];
   const rating = parseFloat(normalizeField(record, 'Rating') || '');
@@ -1277,13 +1327,14 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // duplicateListingCountVerified=true (SerpAPI lookup succeeded). A-1
   // Performance Rooter & Plumbing case: 2 listings → fires correctly.
   // 2026-06-01: tightened wording to ≤20 words to fit Maps segment budget.
-  if (audit?.gbp?.duplicateListingCountVerified === true
-      && Number.isFinite(audit.gbp.duplicateListingCount)
-      && audit.gbp.duplicateListingCount > 0) {
+  // Recount against stored listings so similarly-named DIFFERENT competitors
+  // (Pipe Doctor Rooter vs Doctor Pipe) don't get counted as duplicates of you.
+  const dupCount = trueDuplicateCount(audit);
+  if (audit?.gbp?.duplicateListingCountVerified === true && dupCount > 0) {
     out.push({
       key: 'duplicateListing',
       score: 5,
-      finding: `Google shows ${audit.gbp.duplicateListingCount} other listing${audit.gbp.duplicateListingCount === 1 ? '' : 's'} under your business name — Whitespark 2026 flags duplicates as a top-tier negative that splits your ranking authority`,
+      finding: `Google shows ${dupCount} other listing${dupCount === 1 ? '' : 's'} under your business name — Whitespark 2026 flags duplicates as a top-tier negative that splits your ranking authority`,
     });
   }
 
