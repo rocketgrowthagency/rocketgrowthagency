@@ -100,6 +100,13 @@ if ! node scripts/check-duplicate-listing-same-business.mjs 2>&1 | tee -a "$LOGF
   echo "✗ FATAL: duplicate-listing guard regressed → false 'Google shows N other listings' claims would ship. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-06-12 — rank-aware Maps finding priority (1-3 defense AND 4+ climb). Review volume
+# must beat a trivial (<0.3-star) rating gap. Memory: feedback_audit_review_volume_over_trivial_rating_gap.md.
+echo ">>> pre-flight: maps finding rank-priority guard (1-3 + 4+)" | tee -a "$LOGFILE"
+if ! node scripts/check-maps-finding-rank-priority.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: maps finding rank-priority regressed → trivial rating gaps would outrank review-volume levers. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-12 — Maps card-open self-check. Verifies the recording environment can
 # actually match + open a detail card, so we never silently ship a whole batch of
 # cardless results-list videos (caught when the sponsored detector over-matched on
