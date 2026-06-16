@@ -578,6 +578,29 @@ async function fetchWebsiteData(url, businessName = '', ctxPhone = '', ctxSearch
     }
   }
 
+  // 2026-06-15 — SMTP MAILBOX VERIFICATION. Catches "passes MX but the mailbox
+  // doesn't exist" hard bounces — the gap that auto-paused outreach Jun 4 (7
+  // bounces / 134 sends = 5.2% > Gmail's 5% RED line). FAIL OPEN: only DROP on a
+  // definitive 5xx mailbox rejection; greylist / catch-all / timeout / no-MX all
+  // keep the lead. Disable with VERIFY_MAILBOX=0. See lib/verify-mailbox.cjs +
+  // feedback_email_mailbox_verification.md.
+  if (combined.email && process.env.VERIFY_MAILBOX !== '0') {
+    try {
+      const { verifyMailbox } = await import('./lib/verify-mailbox.cjs');
+      const v = await verifyMailbox(combined.email);
+      if (v.result === 'invalid') {
+        console.log(`   [verify-mailbox] DROP ${combined.email} — undeliverable mailbox (code ${v.code}); lead will not be emailed.`);
+        combined.emailUndeliverable = combined.email;
+        combined.emailSkipReason = `undeliverable-mailbox:${v.code}`;
+        combined.email = '';
+      } else {
+        console.log(`   [verify-mailbox] ${v.result}${v.code ? ' (' + v.code + ')' : ''} — keeping ${combined.email}`);
+      }
+    } catch (err) {
+      console.log(`   [verify-mailbox] check failed (non-fatal, keeping email): ${err.message}`);
+    }
+  }
+
   return combined;
 }
 
@@ -711,6 +734,8 @@ async function processCsv() {
           }
         }
         for (const k of SOCIAL_KEYS) record[k] = result[k] || '';
+        // Surface the mailbox-verification drop (email already cleared in result).
+        if (result.emailSkipReason) record['Skip Reason'] = result.emailSkipReason;
       })
     );
   }
