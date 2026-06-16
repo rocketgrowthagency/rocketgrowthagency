@@ -2005,8 +2005,23 @@ function buildScript(record, top3Stats, audit) {
   // -------- MOBILE --------
   const mobileSegment = (() => {
     const mobileSuspect = noOwnWebsiteFired ? [] : applyValidationFilter(scoreMobileSuspectFindings(audit), disabledKeys);
-    const { list, realCount, totalCount } = renderWithPositives(mobileFindings, mobileGood, 3, mobileSuspect);
     const opener = `And then on mobile — where 70 percent of local-search traffic actually comes from.`;
+    // 2026-06-15: word-budget pre-trim. The post-TTS SEGMENT_MAX caps mobile at 42s;
+    // 3 verbose mobile findings can marginally overrun (American Drain came in at
+    // 42.72s and HARD-FAILED the whole lead). Rather than fail on a fraction of a
+    // second, drop the lowest-priority (3rd) finding when the 3-finding text would
+    // exceed the budget (~3.2 words/sec ⇒ ~118-word ceiling incl. opener). Tight
+    // videos preserved; everyone else still gets 3.
+    const MOBILE_WORD_BUDGET = 118;
+    const wc = (txt) => `${opener} ${txt}`.trim().split(/\s+/).length;
+    let { list, realCount, totalCount } = renderWithPositives(mobileFindings, mobileGood, 3, mobileSuspect);
+    if (list && wc(list) > MOBILE_WORD_BUDGET) {
+      const trimmed = renderWithPositives(mobileFindings, mobileGood, 2, mobileSuspect);
+      if (trimmed.list && wc(trimmed.list) < wc(list)) {
+        console.warn(`[step-6 WARN] mobile segment ~${wc(list)} words > ${MOBILE_WORD_BUDGET}; trimmed 3→2 findings to fit the 42s cap.`);
+        ({ list, realCount, totalCount } = trimmed);
+      }
+    }
     if (isTop3) {
       if (realCount >= 3) return `${opener} Here are the gaps a competitor could exploit: ${list}`;
       if (totalCount >= 1) return `${opener} Here's what stood out on mobile: ${list}`;
