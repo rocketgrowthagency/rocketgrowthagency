@@ -39,9 +39,16 @@ async function loadSendable() {
     if (d.error) throw new Error(JSON.stringify(d.error));
     recs = recs.concat(d.records || []); offset = d.offset;
   } while (offset);
+  // Covers BOTH paths that can dispatch an email:
+  //  - Day-1 (createOutreachDrafts): Status new/'' + Video URL + not yet drafted
+  //  - Follow-up (advanceFunnelState): already got Email #1 (Draft Created) + still in sequence
+  // Any non-suppressed, non-replied, non-terminal lead with an email that could send.
   return recs.filter((r) => {
     const f = r.fields, s = String(f.Status || 'new').toLowerCase();
-    return f.Email && f['Video URL'] && (s === 'new' || s === '') && !f['Draft Created'] && !f.Suppressed && TERMINAL.indexOf(f['Email Status']) < 0;
+    if (!f.Email || f.Suppressed || f.Replied || TERMINAL.indexOf(f['Email Status']) >= 0) return false;
+    const isDay1 = f['Video URL'] && (s === 'new' || s === '') && !f['Draft Created'];
+    const isFollowUp = !!f['Draft Created']; // sent Email #1, still active (not replied/suppressed/terminal)
+    return isDay1 || isFollowUp;
   });
 }
 
