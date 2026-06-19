@@ -745,6 +745,9 @@ async function auditMobile(browser, websiteUrl, business) {
     // New checks added 2026-05-13:
     hasStickyCta: null,              // fixed/sticky CTA visible after scroll (Mo1)
     hasClickToText: null,            // <a href="sms:..."> present anywhere (Mo2)
+    // New checks added 2026-06-19 (Google mobile-friendly criteria):
+    baseFontPx: null,                // computed body font-size in px (legible-font check)
+    contentWiderThanViewport: null,  // horizontal-scroll / content wider than screen
     error: null,
   };
 
@@ -790,7 +793,19 @@ async function auditMobile(browser, websiteUrl, business) {
         renderBlockingHeadResources: 0,
         imagesWithoutLazy: 0,
         isHttps: location.protocol === 'https:',
+        baseFontPx: null,
+        contentWiderThanViewport: false,
       };
+
+      // Mobile legibility: computed body font-size (Google guideline ~16px; <12px fails).
+      try {
+        const bf = parseFloat(getComputedStyle(document.body).fontSize);
+        if (Number.isFinite(bf)) result.baseFontPx = Math.round(bf);
+      } catch (_) {}
+      // Content wider than the mobile viewport → horizontal scroll (8px tolerance for scrollbars).
+      try {
+        result.contentWiderThanViewport = document.documentElement.scrollWidth > (window.innerWidth + 8);
+      } catch (_) {}
 
       const vp = document.querySelector('meta[name="viewport"]');
       if (vp) {
@@ -1177,6 +1192,8 @@ async function auditMobile(browser, websiteUrl, business) {
     findings.imagesWithoutLazy = data.imagesWithoutLazy;
     findings.totalImages = data.totalImages;
     findings.isHttps = data.isHttps;
+    findings.baseFontPx = data.baseFontPx ?? null;
+    findings.contentWiderThanViewport = data.contentWiderThanViewport ?? null;
     findings.primaryCtaText = data.primaryCtaText || null;
     findings.phoneVisibleAboveFold = data.phoneVisibleAboveFold || false;
     findings.hasObviousCallCta = data.hasObviousCallCta || false;

@@ -954,6 +954,17 @@ function scoreMobileFindings(audit) {
   if (mobVerified && m.socialProofAboveFold === false) {
     out.push({ key: 'noSocialProof', score: 5, finding: `there's no star rating or review count visible in your mobile hero — Maps visitors already trust your listing's stars, but the moment your site doesn't echo that signal in the hero, they doubt they're on the right page` });
   }
+  // PRIORITY 5.5 (NEW 2026-06-19): Content wider than the mobile screen — Google
+  // mobile-friendly criterion "content wider than screen". Deterministic measurement
+  // (scrollWidth > viewport), gated on mobVerified. Low false-positive.
+  if (mobVerified && m.contentWiderThanViewport === true) {
+    out.push({ key: 'contentOverflow', score: 5.5, finding: `your page content is wider than the mobile screen, so visitors have to scroll sideways or pinch-zoom to see it all — Google's mobile-friendly test flags "content wider than screen," and it's an instant signal to a Maps visitor that the site wasn't built for their phone` });
+  }
+  // PRIORITY 6.5 (NEW 2026-06-19): Body text too small — Google "use legible font
+  // sizes" criterion. Conservative threshold (<13px clearly fails); gated on mobVerified.
+  if (mobVerified && m.baseFontPx != null && m.baseFontPx < 13) {
+    out.push({ key: 'smallFont', score: 6.5, finding: `your mobile body text is set to about ${m.baseFontPx} pixels — Google recommends a 16-pixel base for mobile readability, and text this small forces visitors to pinch-zoom to read, which Google flags in its mobile usability report` });
+  }
   // PRIORITY 6: Tap target too small — failed call button.
   if (m.primaryCtaTapTargetPx != null && m.primaryCtaTapTargetPx < 48) {
     out.push({ key: 'tapTarget', score: 6, finding: `your primary call-to-action button is only ${m.primaryCtaTapTargetPx} pixels tall on mobile — Google's local-business guideline is 48, and below that, mis-taps cost real conversions on thumb-driven mobile traffic` });
