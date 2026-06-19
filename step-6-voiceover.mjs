@@ -1647,13 +1647,32 @@ function scoreMapsConfirmedGood(audit, top3Stats, record) {
 // and drop it from other sections. Walk sections in this order: maps (highest
 // priority surface), website, mobile (so cross-cutting findings prefer website
 // which is where SEO-impact is felt most).
+// 2026-06-19: CONCEPT-LEVEL dedup. Some findings have DIFFERENT keys but are the
+// SAME complaint to a prospect — e.g. "your website shows no reviews" (website
+// noReviews) and "no star rating in your mobile hero" (mobile noSocialProof). Both
+// fired on Pasadena Roofers and read as the same "no reviews" issue repeated across
+// two segments. Key-only dedup missed it (different keys). Map related keys to a
+// shared concept; once a concept is surfaced in an earlier section (maps → website →
+// mobile), suppress it in later sections so each ISSUE is spoken exactly once. The
+// dropped slot backfills with the section's next finding. Chris's "one issue, one
+// platform" rule. Keep groups TIGHT — only genuinely-equivalent complaints.
+const FINDING_CONCEPT_GROUPS = {
+  noReviews: 'site-review-display',
+  noReviewsSuspect: 'site-review-display',
+  noSocialProof: 'site-review-display',
+  noSocialProofSuspect: 'site-review-display',
+};
 function dedupAcrossSections(mapsFindings, websiteFindings, mobileFindings) {
   const seen = new Set();
+  const seenConcepts = new Set();
   const filterUnseen = (arr) => {
     const out = [];
     for (const f of arr) {
       if (seen.has(f.key)) continue;
+      const concept = FINDING_CONCEPT_GROUPS[f.key];
+      if (concept && seenConcepts.has(concept)) continue; // same issue already spoken in an earlier section
       seen.add(f.key);
+      if (concept) seenConcepts.add(concept);
       out.push(f);
     }
     return out;
