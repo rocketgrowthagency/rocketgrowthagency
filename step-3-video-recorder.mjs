@@ -2250,7 +2250,13 @@ async function main() {
       const name = row['Business Name'] || row.name || `business-${processed + 1}`;
       const city = row['City'] || row.city || '';
       const slug = slugify(name, { lower: true, strict: true }) || `business-${processed + 1}`;
-      const website = cleanUrl(row.Website || row.website || '');
+      // 2026-06-19: prefer the search-DISCOVERED website when the GBP-linked Website
+      // is empty — matching step-2.5's precedence (it audits the discovered site).
+      // Without this, leads whose GBP has no website link but discovery found one
+      // (e.g. Pasadena Roofing Co → lansfordroofing.com) reached the recorder with an
+      // empty URL → website + mobile segments skipped → 1/3 webms → mislabeled
+      // "bot-blocked" and the whole lead failed. Real root cause of the step-3 losses.
+      const website = cleanUrl(row['Discovered Website'] || row.Website || row.website || '');
       const mapsUrl = cleanUrl(row['Google Maps URL'] || row.mapsUrl || '');
 
       if (!website && !mapsUrl) {
