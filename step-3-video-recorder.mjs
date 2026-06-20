@@ -34,7 +34,13 @@ const DESKTOP_VIEWPORT = { width: 1280, height: 720, deviceScaleFactor: 1 };
 // card popout visible (Chris's preferred look). Website stays 1280 (no squish);
 // step-4 scales the Maps segment back to 1280:720 in the combine. Verified on
 // American Plumber + Ford's. Overridable via MAPS_VW_WIDTH.
-const MAPS_VIEWPORT = { width: Number(process.env.MAPS_VW_WIDTH || 1600), height: 720, deviceScaleFactor: 1 };
+// 2026-06-19: Maps viewport must be 16:9 to match the 1280×720 output, else step-4's
+// scale=1280:720 horizontally SQUISHES it (Chris caught the stretch). At width 1600 the
+// old height 720 made it 20:9 (1600×720) → squished to 16:9. Derive height from width so
+// it's always 16:9 (1600→900), and the downscale to 1280×720 is distortion-free while the
+// extra width still triggers Google's 3-column card-popout layout.
+const MAPS_VW_WIDTH = Number(process.env.MAPS_VW_WIDTH || 1600);
+const MAPS_VIEWPORT = { width: MAPS_VW_WIDTH, height: Math.round(MAPS_VW_WIDTH * 9 / 16), deviceScaleFactor: 1 };
 const MOBILE_VIEWPORT = {
   width: 390,
   height: 720,
