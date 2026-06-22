@@ -1227,7 +1227,32 @@ async function highlightBusinessOnDetailPage(page) {
   }
 }
 
-async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigation) {
+async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigation, recorderCtl = null) {
+  // 2026-06-22: hold on the prospect's detail card by INJECTING a dedicated card
+  // screenshot into the recorder instead of relying on the auto-capture loop, which
+  // returns stale/wrong frames on an auto-opened (page.goto) detail page. A standalone
+  // page.screenshot() captures the card reliably (proven via the diagnostic), so we pause
+  // the loop, push a real card frame, and re-prime periodically across the hold.
+  async function holdOnDetailCard(ms) {
+    if (!recorderCtl || !recorderCtl.pushFrame) { await sleep(ms); return; }
+    recorderCtl.pauseCapture();
+    try {
+      const grab = async () => {
+        try {
+          const buf = await page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 30000 });
+          recorderCtl.pushFrame(buf);
+        } catch (_) {}
+      };
+      await grab();
+      const until = Date.now() + ms;
+      while (Date.now() < until) {
+        await sleep(4000);
+        await grab(); // re-prime so the map's idle animation / lazy tiles refresh
+      }
+    } finally {
+      recorderCtl.resumeCapture();
+    }
+  }
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
   const mapsUrl = (meta.mapsUrl || '').trim();
@@ -1348,7 +1373,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
         await forceMapsCityZoom(page, 'scroll-find-click');
-        await sleep(12000);
+        await holdOnDetailCard(12000);
         await dismissResultsInfoPopup(page);
         return 'results-click';
       }
@@ -1485,7 +1510,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await injectRankOverlay(page, businessName, rank, searchTerm);
       await highlightBusinessOnDetailPage(page);
       await forceMapsCityZoom(page, 'detail-hold');
-      await sleep(18000);
+      await holdOnDetailCard(18000);
       await dismissResultsInfoPopup(page);
       return 'direct-url-no-mapsurl';
     }
@@ -1545,8 +1570,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await forceMapsCityZoom(page, 'direct-search-detail');
-          // Hold 16s on the detail page so the recording captures it cleanly.
-          await sleep(16000);
+          // Hold on the detail card (injected frames — see holdOnDetailCard).
+          await holdOnDetailCard(18000);
           await dismissResultsInfoPopup(page);
           return 'direct-search-detail';
         }
@@ -1557,7 +1582,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await forceMapsCityZoom(page, 'direct-search-results-click');
-          await sleep(18000);
+          await holdOnDetailCard(18000);
           await dismissResultsInfoPopup(page);
           return 'direct-search-results-click';
         }
@@ -1585,7 +1610,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
         await forceMapsCityZoom(page, 'direct-url-deep-rank');
-        await sleep(18000);
+        await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
       } else {
@@ -1595,7 +1620,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
         await forceMapsCityZoom(page, 'direct-url-last-resort');
-        await sleep(18000);
+        await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
       }
@@ -1681,6 +1706,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
   let frameCount = 0;
   let captureCount = 0;
   let latestFrame = null;
+  let capturePaused = false;
   const stderrChunks = [];
 
   async function start() {
@@ -1750,16 +1776,14 @@ function createScreencastRecorder(page, outputPath, viewport) {
       while (!stopped) {
         const startedAt = Date.now();
 
+        // 2026-06-22: when paused (deep-rank detail hold), the auto-capture is suppressed
+        // and the recorder emits manually-injected card frames instead — the loop's own
+        // screenshots return stale/wrong frames on an auto-opened detail page.
+        if (capturePaused) {
+          await sleep(150);
+          continue;
+        }
         try {
-          // 2026-06-22 ROOT-CAUSE FIX (deep-rank card never recorded): page.screenshot()
-          // HANGS indefinitely when issued during/right after a page.goto() to a Maps
-          // detail page. The in-flight capture stalls, captureCount stops, and the write
-          // loop keeps emitting the last good frame (the pre-nav results list) for the
-          // ENTIRE recording — so direct-`detail` deep-rank leads recorded the competitor
-          // list, never the prospect's card (the page itself was on the card the whole
-          // time, confirmed via a fresh page.evaluate + screenshot). An explicit timeout
-          // aborts a hung capture fast so the NEXT tick re-captures the now-settled card.
-          // SPA-click leads never hang, so this is a no-op for them.
           latestFrame = await page.screenshot({
             type: 'jpeg',
             quality: 78,
@@ -1866,7 +1890,16 @@ function createScreencastRecorder(page, outputPath, viewport) {
     });
   }
 
-  return { start, stop };
+  // 2026-06-22: manual-frame injection for the deep-rank detail hold. The auto-capture
+  // loop returns stale/wrong frames on an auto-opened (page.goto) Maps detail page — the
+  // card shows live + a DEDICATED page.screenshot() captures it fine, but the loop holds
+  // the prior results-list frame. So for the detail hold we PAUSE the loop and push a
+  // real card screenshot as the emitted frame. (feedback_maps_blank_home_must_fail_lead.md)
+  function pushFrame(buf) { if (buf && buf.length) latestFrame = buf; }
+  function pauseCapture() { capturePaused = true; }
+  function resumeCapture() { capturePaused = false; }
+
+  return { start, stop, pushFrame, pauseCapture, resumeCapture };
 }
 
 async function recordDesktopMapsVideo(browser, meta, outputPath) {
@@ -1888,7 +1921,11 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
       await sleep(300);
     };
 
-    const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder);
+    const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder, {
+      pushFrame: recorder.pushFrame,
+      pauseCapture: recorder.pauseCapture,
+      resumeCapture: recorder.resumeCapture,
+    });
     if (!recorderStarted) await startRecorder();
     if (mode !== 'none') await sleep(mode === 'search-only' ? DESKTOP_MAPS_HOLD_MS * 2 : DESKTOP_MAPS_HOLD_MS);
   } catch (err) {
