@@ -1377,9 +1377,15 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         return 'blank';
       }
       await sleep(2500);
-      // Detect detail page via h1 selector
+      // Detect detail page via h1 selector — 2026-06-22: require NON-EMPTY h1 text.
+      // A bare-name `/maps/place/Name` URL (no @lat,lng) often redirects to an
+      // empty `/maps/place//@coords` blank-home shell that still contains an EMPTY
+      // h1.DUwDvf — the old `!!querySelector` returned true and treated the blank
+      // as 'detail', stopping the chain on a blank. The real business name must be
+      // present. (feedback_maps_blank_home_must_fail_lead.md — Green Planet #25.)
       const onDetail = await page.evaluate(() => {
-        return !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+        const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+        return !!(h1 && h1.textContent.trim().length > 1);
       }).catch(() => false);
       if (onDetail) return 'detail';
       // Detect results panel via at least one a.hfpxzc
@@ -1861,7 +1867,11 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
   let validMapsState = true;
   try {
     validMapsState = await page.evaluate(() => {
-      const hasDetail = !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      // 2026-06-22: a real detail card needs a NON-EMPTY business-name h1 — an empty
+      // /maps/place//@coords blank-home shell renders an empty h1.DUwDvf that the old
+      // existence check wrongly accepted (Green Planet #25 shipped blank as a result).
+      const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      const hasDetail = !!(h1 && h1.textContent.trim().length > 1);
       const hasResults = document.querySelectorAll('a.hfpxzc').length > 0;
       return hasDetail || hasResults;
     });
