@@ -163,7 +163,7 @@
       if (exp && new Date() > new Date(exp)) {
         document.addEventListener("DOMContentLoaded", function() {
           var wrap = document.querySelector(".video-wrap");
-          if (wrap) wrap.innerHTML = '<div style="padding:40px 24px;text-align:center;background:#f8fafc;"><p style="font-size:1.1rem;color:#475569;margin:0 0 8px;">This walkthrough has expired.</p><p style="font-size:0.95rem;color:#94a3b8;margin:0;">Contact us for a fresh audit of your current rankings.</p></div>';
+          if (wrap) wrap.innerHTML = '<div style="padding:48px 24px;text-align:center;background:#f8fafc;line-height:1.5;"><p style="font-size:1.15rem;font-weight:700;color:#475569;margin:0 0 10px;">This walkthrough has expired.</p><p style="font-size:0.95rem;color:#94a3b8;margin:0;">Contact us for a fresh audit of your current rankings.</p></div>';
           var bc = document.querySelector(".body-copy");
           if (bc) bc.style.display = "none";
         });
