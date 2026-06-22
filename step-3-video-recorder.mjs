@@ -1359,13 +1359,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // multiple Plumbers Santa Monica leads. Memory:
       // feedback_maps_card_visibility_rules.md.
       const urls = [];
-      // 2026-06-22: ONLY use mapsUrl first if it carries an @lat,lng anchor — a
-      // coords-anchored /maps/place/Name/@lat,lng jumps straight to the detail card.
-      // A BARE-NAME /maps/place/Name (no coords) is unreliable: Google can't pin the
-      // name, so it loads a blank /maps/place//@<wrong-coords> shell for ~1s before
-      // redirecting — that's the blank flash Chris saw on Green Planet. Skip it and
-      // let the name+city search (reliable) be the first attempt instead.
-      if (mapsUrl && /\/maps\/place\/[^/]+\/@-?[\d.]+,-?[\d.]+/.test(mapsUrl)) {
+      // 2026-06-22: REVERTED the bare-name-skip experiment. Skipping the bare-name
+      // /maps/place/Name URL removed the ~1s blank flash but REGRESSED the prospect's
+      // detail-card pop-out (the deployed video stayed on the competitor results list
+      // and never showed Green Planet's card — Chris confirmed the card DID show in the
+      // version that still included this URL). Correctness (card must show) > polish
+      // (the brief flash). Keep the bare-name URL in the chain; the blank-Maps gate +
+      // non-empty-h1 detector still prevent a truly-blank recording from shipping.
+      if (mapsUrl && /\/maps\/place\//.test(mapsUrl)) {
         urls.push(mapsUrl);
       }
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
