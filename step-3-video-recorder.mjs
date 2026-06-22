@@ -1237,18 +1237,15 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     if (!recorderCtl || !recorderCtl.pushFrame) { await sleep(ms); return; }
     recorderCtl.pauseCapture();
     try {
-      const grab = async () => {
-        try {
-          const buf = await page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 30000 });
-          recorderCtl.pushFrame(buf);
-        } catch (_) {}
-      };
-      await grab();
-      const until = Date.now() + ms;
-      while (Date.now() < until) {
-        await sleep(4000);
-        await grab(); // re-prime so the map's idle animation / lazy tiles refresh
-      }
+      // Prime ONE real card screenshot, then hold on it. The writeLoop emits this frame
+      // for the whole hold, so the card shows steadily. We grab once (not in a loop) to
+      // keep the segment bounded — the earlier re-prime loop stacked slow ~30s grabs and
+      // blew the recording out to 234s. Total here is bounded at ~ms + one grab timeout.
+      try {
+        const buf = await page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 20000 });
+        recorderCtl.pushFrame(buf);
+      } catch (_) {}
+      await sleep(ms);
     } finally {
       recorderCtl.resumeCapture();
     }
