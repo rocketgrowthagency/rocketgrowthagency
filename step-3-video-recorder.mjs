@@ -1751,14 +1751,24 @@ function createScreencastRecorder(page, outputPath, viewport) {
         const startedAt = Date.now();
 
         try {
+          // 2026-06-22 ROOT-CAUSE FIX (deep-rank card never recorded): page.screenshot()
+          // HANGS indefinitely when issued during/right after a page.goto() to a Maps
+          // detail page. The in-flight capture stalls, captureCount stops, and the write
+          // loop keeps emitting the last good frame (the pre-nav results list) for the
+          // ENTIRE recording — so direct-`detail` deep-rank leads recorded the competitor
+          // list, never the prospect's card (the page itself was on the card the whole
+          // time, confirmed via a fresh page.evaluate + screenshot). An explicit timeout
+          // aborts a hung capture fast so the NEXT tick re-captures the now-settled card.
+          // SPA-click leads never hang, so this is a no-op for them.
           latestFrame = await page.screenshot({
             type: 'jpeg',
             quality: 78,
             captureBeyondViewport: false,
+            timeout: 2500,
           });
           captureCount += 1;
         } catch {
-          await sleep(250);
+          await sleep(120);
         }
 
         const elapsed = Date.now() - startedAt;
@@ -1896,15 +1906,23 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
   // the recording is unusable — discard it and FAIL the lead so it can't ship a blank.
   let validMapsState = true;
   try {
-    validMapsState = await page.evaluate(() => {
-      // 2026-06-22: a real detail card needs a NON-EMPTY business-name h1 — an empty
-      // /maps/place//@coords blank-home shell renders an empty h1.DUwDvf that the old
-      // existence check wrongly accepted (Green Planet #25 shipped blank as a result).
+    const diag = await page.evaluate(() => {
       const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
       const hasDetail = !!(h1 && h1.textContent.trim().length > 1);
       const hasResults = document.querySelectorAll('a.hfpxzc').length > 0;
-      return hasDetail || hasResults;
+      const searchBox = document.querySelector('input#searchboxinput, input[aria-label="Search Google Maps"]');
+      return { hasDetail, hasResults, h1Text: (h1 && h1.textContent.trim().slice(0, 40)) || '', searchVal: (searchBox && searchBox.value) || '', url: location.href };
     });
+    validMapsState = diag.hasDetail || diag.hasResults;
+    // 2026-06-22 DIAGNOSTIC: log the true final page state to compare against the recording.
+    console.log(`   [maps-final-state] hasDetail=${diag.hasDetail} hasResults=${diag.hasResults} h1="${diag.h1Text}" searchBox="${diag.searchVal}" url=${diag.url.slice(0, 90)}`);
+    if (process.env.MAPS_DIAG) {
+      try {
+        const dd = path.join(ROOT, 'output', 'diag');
+        fs.mkdirSync(dd, { recursive: true });
+        await page.screenshot({ path: path.join(dd, `final-${slugify(meta.name || 'lead', { lower: true, strict: true })}.png`) });
+      } catch (_) {}
+    }
   } catch (_) {
     validMapsState = true; // eval failed (page already gone) — don't false-fail a good recording
   }
