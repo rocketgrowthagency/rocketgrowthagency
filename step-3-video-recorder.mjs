@@ -1764,7 +1764,7 @@ function createScreencastRecorder(page, outputPath, viewport) {
             type: 'jpeg',
             quality: 78,
             captureBeyondViewport: false,
-            timeout: 2500,
+            timeout: 9000,
           });
           captureCount += 1;
         } catch {
