@@ -1850,8 +1850,32 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
     console.error(`   ❌ Error recording desktop Maps for ${meta.name}: ${err.message || err}`);
   }
 
+  // 2026-06-22 BLANK-MAPS CORRECTNESS GATE (feedback_maps_blank_home_must_fail_lead.md).
+  // The deep-rank (rank > 20) URL-nav fallback can land on the BLANK default Maps home
+  // (blue splash, empty search, no listing) — and the old salvage path below SAVED it
+  // anyway + returned true, so ~1/3 of rank>20 videos shipped a blank Maps segment
+  // (Chris caught Green Planet #25). Run a final state check while the page is still
+  // open (covers BOTH the silent-blank path AND a thrown assertOnDetailPage): if the
+  // segment ended on neither a detail card (h1.DUwDvf) nor a results list (a.hfpxzc),
+  // the recording is unusable — discard it and FAIL the lead so it can't ship a blank.
+  let validMapsState = true;
+  try {
+    validMapsState = await page.evaluate(() => {
+      const hasDetail = !!document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      const hasResults = document.querySelectorAll('a.hfpxzc').length > 0;
+      return hasDetail || hasResults;
+    });
+  } catch (_) {
+    validMapsState = true; // eval failed (page already gone) — don't false-fail a good recording
+  }
+
   const result = await recorder.stop();
   await page.close().catch(() => {});
+  if (!validMapsState) {
+    try { fs.unlinkSync(outputPath); } catch (_) {}
+    console.warn(`   ❌ Maps segment ended on the BLANK default-Maps home (no card, no results) — discarded ${outputPath} and FAILING the lead (deep-rank URL-nav fallback couldn't reach the listing).`);
+    return false;
+  }
   if (!result.ok) {
     console.warn(`   ⚠️ Desktop Maps recording failed: ${result.error || `ffmpeg code ${result.code}`}`);
     return false;
