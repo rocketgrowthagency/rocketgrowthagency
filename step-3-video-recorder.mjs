@@ -1234,32 +1234,19 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // page.screenshot() captures the card reliably (proven via the diagnostic), so we pause
   // the loop, push a real card frame, and re-prime periodically across the hold.
   async function holdOnDetailCard(ms) {
-    if (!recorderCtl || !recorderCtl.pushFrame) { await sleep(ms); return; }
+    // 2026-06-22: For leads reached via an SPA click (top-ranked + multi-result deep-rank),
+    // the auto-capture loop already captured the card before this hold, so we just pause
+    // (freezing on that card frame) and sleep — bounded + clean. For unique-name deep-rank
+    // leads Google auto-opens the card by direct URL and page.screenshot hangs ~176s on that
+    // state (CDP screencast destabilizes the frame), so we can't inject the card without a
+    // deeper recorder rewrite; those hold on the competitive-results frame instead. Pausing
+    // here keeps the duration bounded either way.
+    if (!recorderCtl || !recorderCtl.pauseCapture) { await sleep(ms); return; }
+    // Pause the auto-capture loop so its screenshots can't hang on a goto-opened detail
+    // page (the ~176s hang that bloated recordings). The writeLoop then holds the last
+    // captured frame: the card for SPA-click leads, the results panel for auto-open leads.
     recorderCtl.pauseCapture();
-    try {
-      // Prime ONE real card screenshot, then hold on it. The writeLoop emits this frame
-      // for the whole hold, so the card shows steadily. We grab once (not in a loop) to
-      // keep the segment bounded — the earlier re-prime loop stacked slow ~30s grabs and
-      // blew the recording out to 234s. Total here is bounded at ~ms + one grab timeout.
-      // 2026-06-22: the auto-opened Maps detail page never finishes its SPA loading, so
-      // page.screenshot()'s CDP captureScreenshot WAITS for a stable frame and hangs ~176s
-      // (its own timeout option does NOT abort it). Halt the page load first so the capture
-      // returns immediately, and hard-race it so it can never hang the recording again.
-      try {
-        await page.evaluate(() => { try { window.stop(); } catch (_) {} }).catch(() => {});
-        const t0 = Date.now();
-        const buf = await Promise.race([
-          page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 8000 }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('grab-race-timeout')), 8000)),
-        ]);
-        console.log(`   [timing] holdOnDetailCard grab took ${Date.now() - t0}ms`);
-        recorderCtl.pushFrame(buf);
-      } catch (e) { console.log(`   [timing] holdOnDetailCard grab skipped: ${e.message || e}`); }
-      await sleep(ms);
-      // Intentionally do NOT resumeCapture: the auto-capture loop's own screenshots also
-      // hang on this detail page, which would re-inflate the recording at stop(). The
-      // injected card frame is the last emitted frame and the segment ends shortly after.
-    } catch (_) { /* keep going — recording must still finalize */ }
+    await sleep(ms);
   }
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
@@ -1608,12 +1595,29 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await dismissResultsInfoPopup(page);
         return 'search-only';
       } else if (isBareNameUrl && skipScrollAttempt) {
-        // Deep-rank lead with bare-name URL → use multi-URL chain
-        // (phone → name+city → name) for reliable detail-page navigation.
-        console.log(`   → Bare-name URL for deep-rank — using URL chain (phone-first)`);
+        // Deep-rank lead. 2026-06-22: reach the card via an SPA typed-search + click —
+        // the click-opened detail captures fast, while a goto-opened detail hangs
+        // page.screenshot ~176s (feedback_maps_blank_home_must_fail_lead.md). Fall back to
+        // the goto URL chain only if the typed search doesn't surface a clickable listing.
+        console.log(`   → Deep-rank: SPA typed-search + click (fast-capture path)`);
         console.log(`   → Holding on results panel ~4s for competitive context`);
         await sleep(4000);
-        await navigateDeepRankChain();
+        let spaClicked = false;
+        try {
+          const q = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
+          const inputSel = await waitForMapsSearchInput(page);
+          await clearAndType(page, inputSel, q);
+          await page.keyboard.press('Enter');
+          await waitForMapsResults(page);
+          await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
+          await sleep(1500);
+          spaClicked = await clickListingInResultsByName(page, businessName);
+          console.log(`   → SPA typed-search+click: ${spaClicked ? 'clicked listing ✓' : 'no clickable listing'}`);
+        } catch (_) {}
+        if (!spaClicked) {
+          console.log(`   → Falling back to goto URL chain`);
+          await navigateDeepRankChain();
+        }
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
@@ -1792,18 +1796,15 @@ function createScreencastRecorder(page, outputPath, viewport) {
           continue;
         }
         try {
-          latestFrame = await page.screenshot({
-            type: 'jpeg',
-            quality: 78,
-            captureBeyondViewport: false,
-            // 2026-06-22: short timeout. A hung capture on a heavy/navigating Maps page
-            // SERIALIZES with the main flow's page ops (goto/evaluate/click) on the shared
-            // CDP session — at 9s each that stretched the maps recording to ~232s, pushing
-            // the (injected) card hold past where step-4 trims to the voiceover. 2s bounds
-            // the per-op blocking; light pages capture in <1s so no quality loss, and the
-            // detail-card hold uses injected frames anyway (holdOnDetailCard).
-            timeout: 2000,
-          });
+          // 2026-06-22: HARD race-abort. page.screenshot()'s own `timeout` does NOT abort a
+          // captureScreenshot that's stuck waiting for a stable surface (auto-opened Maps
+          // detail page hangs it ~176s, which bloated recordings to 232s). Race it against a
+          // real timer so a stuck capture is abandoned in ~2.5s and the loop keeps emitting
+          // the last good frame. Light pages capture in <1s, so no quality loss.
+          latestFrame = await Promise.race([
+            page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 2500 }),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('cap-race-timeout')), 2500)),
+          ]);
           captureCount += 1;
         } catch {
           await sleep(120);
