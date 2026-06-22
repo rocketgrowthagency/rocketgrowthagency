@@ -1241,14 +1241,25 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // for the whole hold, so the card shows steadily. We grab once (not in a loop) to
       // keep the segment bounded — the earlier re-prime loop stacked slow ~30s grabs and
       // blew the recording out to 234s. Total here is bounded at ~ms + one grab timeout.
+      // 2026-06-22: the auto-opened Maps detail page never finishes its SPA loading, so
+      // page.screenshot()'s CDP captureScreenshot WAITS for a stable frame and hangs ~176s
+      // (its own timeout option does NOT abort it). Halt the page load first so the capture
+      // returns immediately, and hard-race it so it can never hang the recording again.
       try {
-        const buf = await page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 20000 });
+        await page.evaluate(() => { try { window.stop(); } catch (_) {} }).catch(() => {});
+        const t0 = Date.now();
+        const buf = await Promise.race([
+          page.screenshot({ type: 'jpeg', quality: 78, captureBeyondViewport: false, timeout: 8000 }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('grab-race-timeout')), 8000)),
+        ]);
+        console.log(`   [timing] holdOnDetailCard grab took ${Date.now() - t0}ms`);
         recorderCtl.pushFrame(buf);
-      } catch (_) {}
+      } catch (e) { console.log(`   [timing] holdOnDetailCard grab skipped: ${e.message || e}`); }
       await sleep(ms);
-    } finally {
-      recorderCtl.resumeCapture();
-    }
+      // Intentionally do NOT resumeCapture: the auto-capture loop's own screenshots also
+      // hang on this detail page, which would re-inflate the recording at stop(). The
+      // injected card frame is the last emitted frame and the segment ends shortly after.
+    } catch (_) { /* keep going — recording must still finalize */ }
   }
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
@@ -1924,13 +1935,17 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
       await sleep(300);
     };
 
+    const _navT0 = Date.now();
     const mode = await goToMapsShowResultsThenOpenBusiness(page, meta, startRecorder, {
       pushFrame: recorder.pushFrame,
       pauseCapture: recorder.pauseCapture,
       resumeCapture: recorder.resumeCapture,
     });
+    console.log(`   [timing] nav (goToMaps...) took ${Date.now() - _navT0}ms, mode=${mode}`);
     if (!recorderStarted) await startRecorder();
+    const _holdT0 = Date.now();
     if (mode !== 'none') await sleep(mode === 'search-only' ? DESKTOP_MAPS_HOLD_MS * 2 : DESKTOP_MAPS_HOLD_MS);
+    console.log(`   [timing] wrapper hold took ${Date.now() - _holdT0}ms`);
   } catch (err) {
     hadFatal = true;
     console.error(`   ❌ Error recording desktop Maps for ${meta.name}: ${err.message || err}`);
