@@ -1145,13 +1145,36 @@ async function forceMapsCityZoom(page, label = 'detail') {
   const PRESSES = 5;
   const PRESS_DELAY_MS = 180; // allow map to animate one zoom step
   try {
+    // 2026-06-22 ROOT-CAUSE FIX (deep-rank card loss): the keyboard '+' goes to
+    // whatever element has focus. After a direct page.goto to a search/detail URL,
+    // focus sits on the SEARCH BOX — so the 5× '+' got TYPED INTO SEARCH, which
+    // re-ran a search and kicked the view back to a results list, destroying the
+    // prospect's detail card (TopCal #25 had no card; Green Planet survived only
+    // because its results→click path left focus on the map). Click the on-screen
+    // Zoom-in BUTTON instead: it's focus-independent and never types into a field.
+    const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
+    if (zoomBtn) {
+      for (let i = 0; i < PRESSES; i++) {
+        await zoomBtn.click({ delay: 20 }).catch(() => {});
+        await sleep(PRESS_DELAY_MS);
+      }
+      console.log(`   → ${label}: forced city-zoom via ${PRESSES}× zoom-in button`);
+      return;
+    }
+    // Fallback: blur the search box + focus the map canvas, THEN keyboard '+'.
+    await page.evaluate(() => {
+      const ae = document.activeElement;
+      if (ae && ae.tagName === 'INPUT') ae.blur();
+      const c = document.querySelector('canvas');
+      if (c) { c.setAttribute('tabindex', '0'); c.focus(); }
+    }).catch(() => {});
     for (let i = 0; i < PRESSES; i++) {
       await page.keyboard.press('+');
       await sleep(PRESS_DELAY_MS);
     }
-    console.log(`   → ${label}: forced city-zoom via ${PRESSES}× '+' key`);
+    console.log(`   → ${label}: forced city-zoom via ${PRESSES}× '+' key (fallback)`);
   } catch (err) {
-    // Non-fatal — if keyboard input fails (rare), recording continues at
+    // Non-fatal — if zoom input fails (rare), recording continues at
     // whatever zoom Maps left us with. Better than crashing the lead.
     console.warn(`   ⚠️ ${label}: forceMapsCityZoom failed (non-fatal): ${err.message || err}`);
   }
