@@ -1785,7 +1785,13 @@ function createScreencastRecorder(page, outputPath, viewport) {
             type: 'jpeg',
             quality: 78,
             captureBeyondViewport: false,
-            timeout: 9000,
+            // 2026-06-22: short timeout. A hung capture on a heavy/navigating Maps page
+            // SERIALIZES with the main flow's page ops (goto/evaluate/click) on the shared
+            // CDP session — at 9s each that stretched the maps recording to ~232s, pushing
+            // the (injected) card hold past where step-4 trims to the voiceover. 2s bounds
+            // the per-op blocking; light pages capture in <1s so no quality loss, and the
+            // detail-card hold uses injected frames anyway (holdOnDetailCard).
+            timeout: 2000,
           });
           captureCount += 1;
         } catch {
