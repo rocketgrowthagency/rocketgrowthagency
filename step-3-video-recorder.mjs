@@ -1359,7 +1359,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // multiple Plumbers Santa Monica leads. Memory:
       // feedback_maps_card_visibility_rules.md.
       const urls = [];
-      if (mapsUrl && /\/maps\/place\//.test(mapsUrl)) {
+      // 2026-06-22: ONLY use mapsUrl first if it carries an @lat,lng anchor — a
+      // coords-anchored /maps/place/Name/@lat,lng jumps straight to the detail card.
+      // A BARE-NAME /maps/place/Name (no coords) is unreliable: Google can't pin the
+      // name, so it loads a blank /maps/place//@<wrong-coords> shell for ~1s before
+      // redirecting — that's the blank flash Chris saw on Green Planet. Skip it and
+      // let the name+city search (reliable) be the first attempt instead.
+      if (mapsUrl && /\/maps\/place\/[^/]+\/@-?[\d.]+,-?[\d.]+/.test(mapsUrl)) {
         urls.push(mapsUrl);
       }
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
