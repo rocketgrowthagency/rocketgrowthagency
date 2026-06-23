@@ -638,6 +638,19 @@ async function waitForMapsSearchInput(page) {
   }
 }
 
+// 2026-06-23: Chris wants the Maps search box displayed in Title Case with the state code
+// uppercased — "roofers in pasadena, ca" -> "Roofers In Pasadena, CA" (EVERY word capitalized,
+// state = CA). Used to overwrite the box value after Google normalizes the typed search.
+function toTitleCaseSearch(s) {
+  if (!s) return s;
+  return s.split(',').map((seg, i, arr) => {
+    const t = seg.trim();
+    if (i === arr.length - 1 && /^[A-Za-z]{2}$/.test(t)) return t.toUpperCase(); // trailing state code
+    return t.replace(/\S+/g, w => /^[A-Z]{2,}$/.test(w) ? w               // keep acronyms (HVAC)
+      : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  }).join(', ');
+}
+
 async function clearAndType(page, selector, value) {
   // 2026-06-11: ROBUST clear. The old single-Backspace left residue when the
   // search box already held text (prior nav / retry) — the new query got
@@ -1255,52 +1268,99 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     try {
       await page.bringToFront().catch(() => {});
       const m = await page.evaluate(() => ({ sx: window.screenX, sy: window.screenY, iw: window.innerWidth, ih: window.innerHeight, oh: window.outerHeight, scrW: window.screen.width }));
-      // Determine the OS backing scale once: a full screencapture is in device px; the page
-      // reports screen width in points. scale = devicePx / points (2 on Retina). screencapture
-      // -R takes POINTS, but window.innerWidth etc. are device px (deviceScaleFactor:1), so we
-      // divide by scale. Without this the region is 2× too big (content fell in the corner).
-      if (!_osScale) {
-        try {
-          const probePng = `/tmp/sc-scale-${process.pid}.png`;
-          if (await execAsync('screencapture', ['-x', probePng]) && fs.existsSync(probePng)) {
-            const out = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width', '-of', 'csv=p=0', probePng]);
-            const pxW = parseInt(String(out.stdout || '').trim(), 10);
-            if (pxW && m.scrW) _osScale = Math.max(1, Math.round((pxW / m.scrW) * 100) / 100);
-            try { fs.unlinkSync(probePng); } catch (_) {}
-          }
-        } catch (_) {}
-        if (!_osScale) _osScale = 2; // sane Retina default
-      }
-      const s = _osScale;
-      const x = Math.max(0, Math.round(m.sx));
-      const y = Math.max(0, Math.round(m.sy + (m.oh - m.ih) / s)); // content top = window top + toolbar (points)
-      const w = Math.round(m.iw / s), h = Math.round(m.ih / s);
-      if (w < 200 || h < 200) return null;
+      // FULL-SCREEN capture + ffmpeg crop (NOT `screencapture -R`). `-R` fails outright here with
+      // "could not create image from rect" (every rect), while a full `screencapture -x` works and
+      // returns the whole display in DEVICE pixels. So we grab the full screen, then crop the
+      // Chrome content area in device-pixel space and downscale to the 16:9 output.
       const stamp = `${process.pid}-${Date.now()}`;
       const png = `/tmp/sc-${stamp}.png`, jpg = `/tmp/sc-${stamp}.jpg`;
-      const okPng = await execAsync('screencapture', ['-x', '-R', `${x},${y},${w},${h}`, png]);
+      const okPng = await execAsync('screencapture', ['-x', png]);
       if (!okPng || !fs.existsSync(png)) return null;
-      const okJpg = await execAsync('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-vf', `scale=${MAPS_VIEWPORT.width}:${MAPS_VIEWPORT.height}`, '-q:v', '4', jpg]);
+      // Device-pixel dimensions of the full capture, and the backing scale (devicePx / points).
+      const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', png]);
+      const [capW, capH] = String(probe.stdout || '').trim().split(',').map(n => parseInt(n, 10));
+      if (!capW || !capH) { try { fs.unlinkSync(png); } catch (_) {} return null; }
+      const s = (m.scrW ? capW / m.scrW : 2) || 2; // 2 on Retina
+      // Window content rect in POINTS → DEVICE px (×s). Content top = window top + full chrome.
+      let cx = Math.round(m.sx * s);
+      let cy = Math.round((m.sy + (m.oh - m.ih)) * s);
+      let cw = Math.round(m.iw * s);
+      let ch = Math.round(m.ih * s);
+      // Clamp to the captured image bounds.
+      cx = Math.max(0, Math.min(cx, capW - 2));
+      cy = Math.max(0, Math.min(cy, capH - 2));
+      cw = Math.max(2, Math.min(cw, capW - cx));
+      ch = Math.max(2, Math.min(ch, capH - cy));
+      if (process.env.SC_DEBUG) console.log(`   [sc-debug] m=${JSON.stringify(m)} cap=${capW}x${capH} s=${s} -> crop=${cw}:${ch}:${cx}:${cy}`);
+      if (cw < 200 || ch < 200) { try { fs.unlinkSync(png); } catch (_) {} return null; }
+      const okJpg = await execAsync('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-vf', `crop=${cw}:${ch}:${cx}:${cy},scale=${MAPS_VIEWPORT.width}:${MAPS_VIEWPORT.height}`, '-q:v', '4', jpg]);
       let buf = null;
       if (okJpg && fs.existsSync(jpg)) buf = fs.readFileSync(jpg);
+      if (process.env.SC_DEBUG) { try { fs.copyFileSync(jpg, '/tmp/sc-raw-debug.jpg'); } catch (_) {} }
       try { fs.unlinkSync(png); } catch (_) {}
       try { fs.unlinkSync(jpg); } catch (_) {}
       return buf;
     } catch (_) { return null; }
   };
+  async function zoomOutMap(page, steps) {
+    // Zoom the Maps canvas OUT `steps` times so the held frame shows a wide regional view.
+    // Prefer Google's on-map "Zoom out" button (focus-independent); fall back to keyboard '-'.
+    const n = Math.max(0, Math.min(8, Number(steps) || 0));
+    for (let i = 0; i < n; i++) {
+      let clicked = false;
+      try {
+        clicked = await page.evaluate(() => {
+          const btn = document.querySelector('button#widget-zoom-out, button[jsaction*="zoom.out"], button[aria-label="Zoom out"], button[aria-label*="Zoom out"]');
+          if (btn) { btn.click(); return true; }
+          return false;
+        });
+      } catch (_) {}
+      if (!clicked) {
+        try { await page.bringToFront(); } catch (_) {}
+        try {
+          // focus the map surface, then press '-'
+          await page.evaluate(() => { const c = document.querySelector('canvas, [aria-label="Map"]'); if (c) c.focus && c.focus(); });
+          await page.keyboard.press('Minus');
+        } catch (_) {}
+      }
+      await sleep(550); // let the zoom animation play between steps
+    }
+    console.log(`   [zoom-out] map zoomed out ${n} step(s) for wide regional view`);
+  }
+
   async function holdOnDetailCard(ms) {
     if (!recorderCtl || !recorderCtl.pauseCapture) { await sleep(ms); return; }
-    // Pause the auto-capture loop (its screenshots hang on a goto-opened detail page), then
-    // feed the recorder real screen-grabs of the card+map throughout the hold.
+    // Pause the auto-capture loop (its screenshots hang on a goto-opened detail page).
     recorderCtl.pauseCapture();
-    const until = Date.now() + ms;
-    let got = 0;
-    while (Date.now() < until) {
+    // CAPTURE-ONCE-THEN-FREEZE: grab a SINGLE good frame right after the card opens (full card +
+    // wide map at normal scale — the view Chris wants) and hold THAT one frame for the whole
+    // segment. Re-grabbing every 2s let Google's auto recenter/zoom-in animation drift the map
+    // into a tight "zoomed" view by the back half of the hold (the exact thing Chris rejected).
+    // Freezing the early frame keeps the wide, normal-scale view for the entire hold.
+    let frozen = null;
+    for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
       const buf = await grabViaScreenCapture();
-      if (buf) { recorderCtl.pushFrame(buf); got++; }
-      await sleep(2000);
+      if (buf) frozen = buf;
+      else await sleep(400);
     }
-    console.log(`   [screencap] detail-hold pushed ${got} real-screen card frame(s)`);
+    if (!frozen) {                                // grab failed entirely → fall back to the old re-grab loop
+      const until = Date.now() + ms;
+      let got = 0;
+      while (Date.now() < until) {
+        const buf = await grabViaScreenCapture();
+        if (buf) { recorderCtl.pushFrame(buf); got++; }
+        await sleep(2000);
+      }
+      console.log(`   [screencap] detail-hold (fallback) pushed ${got} real-screen card frame(s)`);
+      return;
+    }
+    const until = Date.now() + ms;
+    let pushed = 0;
+    while (Date.now() < until) {                  // freeze: feed the SAME early frame the whole hold
+      recorderCtl.pushFrame(frozen); pushed++;
+      await sleep(500);
+    }
+    console.log(`   [screencap] detail-hold froze 1 early frame, pushed ${pushed}x (no map-zoom drift)`);
   }
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
@@ -1404,19 +1464,26 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
       await sleep(1500); // settle so cards are interactive before scroll-find
       // 2026-06-22: Google normalizes the displayed category search to lowercase in the box
-      // ("roofers in pasadena, ca"). Overwrite it back to the proper-case search term —
-      // purely cosmetic, the search already ran. Chris wants "Roofers in Pasadena, CA".
+      // ("roofers in pasadena, ca"). Overwrite it back to Title Case with the state uppercased —
+      // purely cosmetic, the search already ran. Chris wants "Roofers In Pasadena, CA".
       // Re-assert a few times since React can re-render the controlled input.
-      for (let i = 0; i < 3; i++) {
-        await page.evaluate((sel, val) => {
+      // A one-shot set gets reverted by Maps' controlled React input within ~100ms, so install a
+      // persistent interval that keeps re-asserting the Title Case value. It ONLY rewrites when the
+      // box still holds the (lowercased) search term, so the later business-name search is untouched.
+      const displayQuery = toTitleCaseSearch(query);
+      await page.evaluate((sel, val) => {
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        const force = () => {
           const el = document.querySelector(sel);
           if (el && el.value && el.value.toLowerCase() === val.toLowerCase() && el.value !== val) {
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
             setter.call(el, val);
           }
-        }, inputSelector, query).catch(() => {});
-        await sleep(400);
-      }
+        };
+        if (window.__rgaBoxInterval) clearInterval(window.__rgaBoxInterval);
+        window.__rgaBoxInterval = setInterval(force, 150);
+        force();
+      }, inputSelector, displayQuery).catch(() => {});
+      await sleep(600);
     }
 
     if (businessName && !skipScrollAttempt) {
@@ -1670,6 +1737,19 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         console.log(`   → Deep-rank: SPA typed-search + click (fast-capture path)`);
         console.log(`   → Holding on results panel ~4s for competitive context`);
         await sleep(4000);
+        // 2026-06-23: stop the Title Case forcing interval + assert one clean final value BEFORE we
+        // freeze, so the frame held through the long nav shows "Roofers In Pasadena, CA" cleanly
+        // (not a mid-render "T" glitch from the interval racing React). Brief settle so it's the
+        // last live frame captured.
+        await page.evaluate((val) => {
+          if (window.__rgaBoxInterval) { clearInterval(window.__rgaBoxInterval); window.__rgaBoxInterval = null; }
+          const el = document.querySelector('input#searchboxinput') || document.querySelector('input[name="q"]');
+          if (el && el.value && el.value.toLowerCase() === val.toLowerCase() && el.value !== val) {
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(el, val);
+          }
+        }, toTitleCaseSearch(query)).catch(() => {});
+        await sleep(350);
         // 2026-06-22: freeze the recording on the competitive-results frame NOW, before the
         // deep-rank nav. Otherwise the auto-capture loop records the messy transitions —
         // the bare-name URL's blank splash + the city-zoom animation (the glitches Chris
@@ -1706,6 +1786,12 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           if (s && s !== document.body) s.scrollTop = 120;
         }).catch(() => {});
         await sleep(2000); // let the hero collapse + sticky header settle
+        // 2026-06-22: ZOOM THE MAP OUT to a wide regional view (Chris wants the map far less
+        // zoomed than the default detail view — the tight street-level map reads as "zoomed in").
+        // Click Google's on-map "Zoom out" control a few steps (keyboard '-' fallback), then let
+        // the tiles settle BEFORE the frozen grab so the held frame shows the wide area.
+        await zoomOutMap(page, Number(process.env.MAPS_ZOOM_OUT_STEPS || 3));
+        await sleep(1800); // let map tiles re-render at the wider zoom
         await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
@@ -2003,6 +2089,16 @@ function createScreencastRecorder(page, outputPath, viewport) {
 
 async function recordDesktopMapsVideo(browser, meta, outputPath) {
   const page = await browser.newPage();
+  // 2026-06-23: FORCE the physical window wide + top-left (the saved profile can restore a narrow
+  // window, overriding --window-size). A narrow window clips the 1600px Maps layout to its left
+  // half, so the screencapture spilled onto the desktop. Width 1640 > the 1600 capture region, so
+  // the capture stays fully inside the Chrome window. Done via CDP before the viewport emulation.
+  try {
+    const sess = await page.target().createCDPSession();
+    const { windowId } = await sess.send('Browser.getWindowForTarget');
+    await sess.send('Browser.setWindowBounds', { windowId, bounds: { left: 0, top: 0, width: 1640, height: 1040, windowState: 'normal' } });
+    await sess.detach().catch(() => {});
+  } catch (_) {}
   // 2026-06-12: MAPS_VIEWPORT (wider) for the 3-column blue-line + card-popout layout.
   await page.setViewport(MAPS_VIEWPORT);
 
@@ -2410,6 +2506,12 @@ async function launchBrowser() {
     // sliver atop the card grab). Removing it makes (outerHeight-innerHeight) accurate.
     ignoreDefaultArgs: ['--enable-automation'],
     args: [
+      // 2026-06-23: force a WIDE physical window at a known corner. The maps recording emulates a
+      // 1600px viewport (narrow-card + wide-map layout), but if the PHYSICAL window is narrow it
+      // only displays the left half (card + a sliver of map) — the screencapture then spills past
+      // the window onto the desktop/other apps. A 1640-wide window shows the full layout.
+      '--window-position=0,0',
+      '--window-size=1640,1040',
       '--disable-blink-features=AutomationControlled',
       '--no-sandbox',
       '--disable-setuid-sandbox',
