@@ -1648,6 +1648,12 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         console.log(`   → Deep-rank: SPA typed-search + click (fast-capture path)`);
         console.log(`   → Holding on results panel ~4s for competitive context`);
         await sleep(4000);
+        // 2026-06-22: freeze the recording on the competitive-results frame NOW, before the
+        // deep-rank nav. Otherwise the auto-capture loop records the messy transitions —
+        // the bare-name URL's blank splash + the city-zoom animation (the glitches Chris
+        // saw). With capture paused, the recording cuts straight from results → the injected
+        // card frames from holdOnDetailCard. No blank, no zoom jank.
+        if (recorderCtl && recorderCtl.pauseCapture) recorderCtl.pauseCapture();
         let spaClicked = false;
         try {
           const q = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
