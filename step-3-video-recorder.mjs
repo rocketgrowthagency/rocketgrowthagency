@@ -1395,6 +1395,20 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // priority overrides the earlier processing-time-first bail-fast rule.
       await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
       await sleep(1500); // settle so cards are interactive before scroll-find
+      // 2026-06-22: Google normalizes the displayed category search to lowercase in the box
+      // ("roofers in pasadena, ca"). Overwrite it back to the proper-case search term —
+      // purely cosmetic, the search already ran. Chris wants "Roofers in Pasadena, CA".
+      // Re-assert a few times since React can re-render the controlled input.
+      for (let i = 0; i < 3; i++) {
+        await page.evaluate((sel, val) => {
+          const el = document.querySelector(sel);
+          if (el && el.value && el.value.toLowerCase() === val.toLowerCase() && el.value !== val) {
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(el, val);
+          }
+        }, inputSelector, query).catch(() => {});
+        await sleep(400);
+      }
     }
 
     if (businessName && !skipScrollAttempt) {
@@ -1673,7 +1687,9 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
-        await forceMapsCityZoom(page, 'direct-url-deep-rank');
+        // 2026-06-22: NO forceMapsCityZoom on the screencapture path — the 5× zoom-in gave
+        // the over-zoomed "zoom look" Chris flagged. The auto-opened detail's natural zoom
+        // shows the clean card+neighborhood ("normal card detail" he wants).
         await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
