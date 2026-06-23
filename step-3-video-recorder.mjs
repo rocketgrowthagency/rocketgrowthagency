@@ -1694,8 +1694,18 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         }
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
-        // 2026-06-22: leave the card in its NATURAL auto-opened state, held still (no scroll
-        // forcing, no zoom, no CSS cap — those each broke it a different way). Stable.
+        // 2026-06-22: ONE fixed partial scroll (~250px) to collapse the tall hero photo to a
+        // compact header so the FULL card (name, rating, buttons, address, hours, website,
+        // phone) shows — Chris's desired view. Done ONCE, no re-scroll interval → held still,
+        // no jumping. Then settle before the screencapture hold.
+        await page.evaluate(() => {
+          const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+          if (!h1) return;
+          let s = h1.parentElement;
+          while (s && s !== document.body) { const o = getComputedStyle(s).overflowY; if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break; s = s.parentElement; }
+          if (s && s !== document.body) s.scrollTop = 120;
+        }).catch(() => {});
+        await sleep(2000); // let the hero collapse + sticky header settle
         await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
