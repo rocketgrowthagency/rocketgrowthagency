@@ -1233,20 +1233,66 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // returns stale/wrong frames on an auto-opened (page.goto) detail page. A standalone
   // page.screenshot() captures the card reliably (proven via the diagnostic), so we pause
   // the loop, push a real card frame, and re-prime periodically across the hold.
+  // 2026-06-22: capture the detail CARD via macOS screencapture of the real Chrome window.
+  // page.screenshot HANGS ~176s on a goto-opened detail page, and CDP screencast white-outs
+  // the WebGL map — but the OS screen-grab gets exactly what's on screen (card + map), which
+  // is what Chris sees live. Requires Screen Recording permission (granted). Crop to the
+  // Chrome content region, scale to the encoder's viewport size, inject as the frame.
+  const execAsync = (cmd, args) => new Promise((resolve) => {
+    try { const p = spawn(cmd, args, { stdio: 'ignore' }); p.on('close', (c) => resolve(c === 0)); p.on('error', () => resolve(false)); }
+    catch (_) { resolve(false); }
+  });
+  let _osScale = 0; // device-px ÷ points (Retina backing scale), computed once
+  const grabViaScreenCapture = async () => {
+    try {
+      await page.bringToFront().catch(() => {});
+      const m = await page.evaluate(() => ({ sx: window.screenX, sy: window.screenY, iw: window.innerWidth, ih: window.innerHeight, oh: window.outerHeight, scrW: window.screen.width }));
+      // Determine the OS backing scale once: a full screencapture is in device px; the page
+      // reports screen width in points. scale = devicePx / points (2 on Retina). screencapture
+      // -R takes POINTS, but window.innerWidth etc. are device px (deviceScaleFactor:1), so we
+      // divide by scale. Without this the region is 2× too big (content fell in the corner).
+      if (!_osScale) {
+        try {
+          const probePng = `/tmp/sc-scale-${process.pid}.png`;
+          if (await execAsync('screencapture', ['-x', probePng]) && fs.existsSync(probePng)) {
+            const out = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width', '-of', 'csv=p=0', probePng]);
+            const pxW = parseInt(String(out.stdout || '').trim(), 10);
+            if (pxW && m.scrW) _osScale = Math.max(1, Math.round((pxW / m.scrW) * 100) / 100);
+            try { fs.unlinkSync(probePng); } catch (_) {}
+          }
+        } catch (_) {}
+        if (!_osScale) _osScale = 2; // sane Retina default
+      }
+      const s = _osScale;
+      const x = Math.max(0, Math.round(m.sx));
+      const y = Math.max(0, Math.round(m.sy + (m.oh - m.ih) / s)); // content top = window top + toolbar (points)
+      const w = Math.round(m.iw / s), h = Math.round(m.ih / s);
+      if (w < 200 || h < 200) return null;
+      const stamp = `${process.pid}-${Date.now()}`;
+      const png = `/tmp/sc-${stamp}.png`, jpg = `/tmp/sc-${stamp}.jpg`;
+      const okPng = await execAsync('screencapture', ['-x', '-R', `${x},${y},${w},${h}`, png]);
+      if (!okPng || !fs.existsSync(png)) return null;
+      const okJpg = await execAsync('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-vf', `scale=${MAPS_VIEWPORT.width}:${MAPS_VIEWPORT.height}`, '-q:v', '4', jpg]);
+      let buf = null;
+      if (okJpg && fs.existsSync(jpg)) buf = fs.readFileSync(jpg);
+      try { fs.unlinkSync(png); } catch (_) {}
+      try { fs.unlinkSync(jpg); } catch (_) {}
+      return buf;
+    } catch (_) { return null; }
+  };
   async function holdOnDetailCard(ms) {
-    // 2026-06-22: For leads reached via an SPA click (top-ranked + multi-result deep-rank),
-    // the auto-capture loop already captured the card before this hold, so we just pause
-    // (freezing on that card frame) and sleep — bounded + clean. For unique-name deep-rank
-    // leads Google auto-opens the card by direct URL and page.screenshot hangs ~176s on that
-    // state (CDP screencast destabilizes the frame), so we can't inject the card without a
-    // deeper recorder rewrite; those hold on the competitive-results frame instead. Pausing
-    // here keeps the duration bounded either way.
     if (!recorderCtl || !recorderCtl.pauseCapture) { await sleep(ms); return; }
-    // Pause the auto-capture loop so its screenshots can't hang on a goto-opened detail
-    // page (the ~176s hang that bloated recordings). The writeLoop then holds the last
-    // captured frame: the card for SPA-click leads, the results panel for auto-open leads.
+    // Pause the auto-capture loop (its screenshots hang on a goto-opened detail page), then
+    // feed the recorder real screen-grabs of the card+map throughout the hold.
     recorderCtl.pauseCapture();
-    await sleep(ms);
+    const until = Date.now() + ms;
+    let got = 0;
+    while (Date.now() < until) {
+      const buf = await grabViaScreenCapture();
+      if (buf) { recorderCtl.pushFrame(buf); got++; }
+      await sleep(2000);
+    }
+    console.log(`   [screencap] detail-hold pushed ${got} real-screen card frame(s)`);
   }
   const searchTerm = (meta.searchTerm || '').trim();
   const businessName = (meta.name || '').trim();
