@@ -2366,6 +2366,11 @@ async function launchBrowser() {
     executablePath: CHROME_PATH,
     userDataDir: CHROME_PROFILE_DIR,
     defaultViewport: null,
+    // 2026-06-22: drop the default --enable-automation so the "Chrome is being controlled
+    // by automated test software" infobar doesn't render. That banner sits below
+    // outerHeight, so it threw off the screencapture content-top offset (left a chrome
+    // sliver atop the card grab). Removing it makes (outerHeight-innerHeight) accurate.
+    ignoreDefaultArgs: ['--enable-automation'],
     args: [
       '--disable-blink-features=AutomationControlled',
       '--no-sandbox',
