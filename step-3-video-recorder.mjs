@@ -1694,10 +1694,8 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         }
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
-        await highlightBusinessOnDetailPage(page);
-        // 2026-06-22: NO forceMapsCityZoom on the screencapture path — the 5× zoom-in gave
-        // the over-zoomed "zoom look" Chris flagged. The auto-opened detail's natural zoom
-        // shows the clean card+neighborhood ("normal card detail" he wants).
+        // 2026-06-22: leave the card in its NATURAL auto-opened state, held still (no scroll
+        // forcing, no zoom, no CSS cap — those each broke it a different way). Stable.
         await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
