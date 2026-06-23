@@ -1201,11 +1201,19 @@ async function highlightBusinessOnDetailPage(page) {
         }
         scroller = scroller.parentElement;
       }
-      // Hard-reset scroll to TOP. Re-reset every 500ms for 18s in case Maps
-      // tries to auto-scroll (focus changes, ad insertions). Cleared by page
-      // unload.
+      // 2026-06-22: position the business NAME near the top of the panel — NOT scrollTop=0,
+      // which shows the giant hero photo and pushes the address/hours/website/buttons off
+      // screen (Chris: "the full open card view so you can see the entire card", not the
+      // cut-off "zoom" view). Scrolling the h1 to the top collapses the hero to a compact
+      // header and reveals the full card detail. Re-assert every 500ms for 18s.
       const resetScroll = () => {
-        if (scroller && scroller !== document.body) scroller.scrollTop = 0;
+        if (scroller && scroller !== document.body) {
+          try {
+            const hRect = heading.getBoundingClientRect();
+            const sRect = scroller.getBoundingClientRect();
+            scroller.scrollTop += (hRect.top - sRect.top) - 6;
+          } catch (_) { scroller.scrollTop = 0; }
+        }
       };
       resetScroll();
       if (window.__rgaScrollLockInterval) clearInterval(window.__rgaScrollLockInterval);
