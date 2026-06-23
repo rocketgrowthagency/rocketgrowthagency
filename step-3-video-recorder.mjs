@@ -1774,18 +1774,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         }
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
-        // 2026-06-22: ONE fixed partial scroll (~250px) to collapse the tall hero photo to a
-        // compact header so the FULL card (name, rating, buttons, address, hours, website,
-        // phone) shows — Chris's desired view. Done ONCE, no re-scroll interval → held still,
-        // no jumping. Then settle before the screencapture hold.
+        // 2026-06-23: TOP-ALIGN the card — keep scrollTop=0 so the top of the business photo is
+        // visible (no scroll-down). Chris: it should be top aligned.
         await page.evaluate(() => {
           const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
           if (!h1) return;
           let s = h1.parentElement;
           while (s && s !== document.body) { const o = getComputedStyle(s).overflowY; if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break; s = s.parentElement; }
-          if (s && s !== document.body) s.scrollTop = 120;
+          if (s && s !== document.body) s.scrollTop = 0;
         }).catch(() => {});
-        await sleep(2000); // let the hero collapse + sticky header settle
+        await sleep(1000); // settle at top before the screencapture hold
         // 2026-06-22: ZOOM THE MAP OUT to a wide regional view (Chris wants the map far less
         // zoomed than the default detail view — the tight street-level map reads as "zoomed in").
         // Click Google's on-map "Zoom out" control a few steps (keyboard '-' fallback), then let
