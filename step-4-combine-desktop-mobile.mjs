@@ -160,6 +160,26 @@ async function makeMobileTmp(mobileInput, tmpOutput) {
   ]);
 }
 
+// 2026-06-24: the deep-rank Maps card appears too late in the video (~38s) because the variable
+// nav time pads the competitive-results portion of the webm with a frozen frame. The card freeze is
+// a long STATIC tail — detect where it starts via ffmpeg freezedetect, then trim that much dead
+// padding off the FRONT so the card lands ~MAPS_CARD_OFFSET_SEC into the maps segment (Chris wants
+// the card on screen ~27-30s, i.e. ~13s into maps, when the voiceover starts on the listing).
+const MAPS_CARD_OFFSET_SEC = Number(process.env.MAPS_CARD_OFFSET_SEC || 13);
+async function detectCardStart(webmPath) {
+  return new Promise((resolve) => {
+    let stderr = '';
+    const p = spawn('ffmpeg', ['-hide_banner', '-i', webmPath, '-vf', 'freezedetect=n=-50dB:d=2', '-map', '0:v', '-f', 'null', '-']);
+    p.stderr.on('data', (d) => { stderr += d.toString(); });
+    p.on('close', () => {
+      const starts = [...stderr.matchAll(/freeze_start:\s*([0-9.]+)/g)].map((m) => parseFloat(m[1]));
+      // the card freeze is the LAST (latest-starting) static segment
+      resolve(starts.length ? Math.max(...starts) : null);
+    });
+    p.on('error', () => resolve(null));
+  });
+}
+
 async function sliceAndPad(inputPath, startSec, endSec, targetSec, outPath, isDesktop) {
   // Use OUTPUT-side seek for accurate slicing (input-side seek lands on keyframes
   // which can be sparse in webm and miss the intended cut point by seconds).
@@ -364,10 +384,17 @@ async function main() {
         const mobileSegTmp = path.join(COMBINED_DIR, `${base}_mobile_seg_tmp.mp4`);
         tmpFiles.push(mapsTmp, websiteTmp, mobileSegTmp);
 
+        // 2026-06-24: trim dead competitive padding off the front of the maps webm so the detail
+        // card appears ~MAPS_CARD_OFFSET_SEC into the maps segment (synced to the voiceover).
+        const mapsCardStart = await detectCardStart(pair.mapsPath);
+        const mapsFrontTrim = (mapsCardStart != null && mapsCardStart > MAPS_CARD_OFFSET_SEC)
+          ? mapsCardStart - MAPS_CARD_OFFSET_SEC : 0;
+        console.log(`  Maps card-start=${mapsCardStart != null ? mapsCardStart.toFixed(2) : 'n/a'}s → front-trim ${mapsFrontTrim.toFixed(2)}s (card lands ~${MAPS_CARD_OFFSET_SEC}s into maps)`);
+
         // 2026-05-27 Tier 2.6: parallelize the 3 sliceAndPad ops (independent
         // inputs/outputs; concat below needs all 3 done before running).
         await Promise.all([
-          sliceAndPad(pair.mapsPath, 0, null, mapsTargetSec, mapsTmp, true),
+          sliceAndPad(pair.mapsPath, mapsFrontTrim, null, mapsTargetSec, mapsTmp, true),
           sliceAndPad(pair.websitePath, 0, null, websiteTargetSec, websiteTmp, true),
           sliceAndPad(pair.mobilePath, 0, null, mobileTargetSec, mobileSegTmp, false),
         ]);
