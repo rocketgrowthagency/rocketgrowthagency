@@ -2535,7 +2535,13 @@ async function launchBrowser() {
       // libx264 encoders.
       '--disable-gpu',
       '--disable-software-rasterizer',
-      '--disable-features=BackForwardCache,AcceleratedVideoEncoder,AcceleratedVideoDecoder',
+      // 2026-06-25: kill Chrome's Cast/Media-Router + mDNS local-network discovery so macOS does
+      // NOT raise the "Allow Google Chrome to find devices on local networks?" permission popup
+      // mid-recording (it appeared over the card in the new-vertical batch). MediaRouter +
+      // background-networking are the triggers.
+      '--disable-features=BackForwardCache,AcceleratedVideoEncoder,AcceleratedVideoDecoder,MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider',
+      '--disable-background-networking',
+      '--media-router=0',
       '--disable-accelerated-2d-canvas',
       // Reduce background tab work + extension overhead
       '--disable-background-timer-throttling=false',
