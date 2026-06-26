@@ -2570,11 +2570,14 @@ async function launchBrowser() {
       // libx264 encoders.
       '--disable-gpu',
       '--disable-software-rasterizer',
-      // 2026-06-25: kill Chrome's Cast/Media-Router + mDNS local-network discovery so macOS does
-      // NOT raise the "Allow Google Chrome to find devices on local networks?" permission popup
-      // mid-recording (it appeared over the card in the new-vertical batch). MediaRouter +
-      // background-networking are the triggers.
-      '--disable-features=BackForwardCache,AcceleratedVideoEncoder,AcceleratedVideoDecoder,MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider',
+      // 2026-06-25/26: kill Chrome's Cast/Media-Router + mDNS/WebRTC local-network discovery so macOS
+      // does NOT raise the "Allow Google Chrome to find devices on local networks?" permission popup
+      // mid-recording. NOTE: this only reduces the TRIGGERS — the popup is a macOS Local Network
+      // PRIVACY permission that re-prompts until the user clicks Allow/Don't Allow ONCE (System
+      // Settings > Privacy & Security > Local Network). Flags alone can't suppress a never-answered
+      // OS permission; the one-time Allow is the permanent fix. WebRtcHideLocalIpsWithMdns added
+      // 2026-06-26 (WebRTC mDNS ICE is another local-network trigger).
+      '--disable-features=BackForwardCache,AcceleratedVideoEncoder,AcceleratedVideoDecoder,MediaRouter,DialMediaRouteProvider,CastMediaRouteProvider,WebRtcHideLocalIpsWithMdns',
       '--disable-background-networking',
       '--media-router=0',
       '--disable-accelerated-2d-canvas',
