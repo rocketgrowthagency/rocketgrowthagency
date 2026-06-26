@@ -205,6 +205,7 @@ function isBlockedWebsiteUrl(url) {
     const parsed = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
     const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
     return [
+      // Social profiles — never the business's own site.
       'facebook.com',
       'fb.com',
       'instagram.com',
@@ -213,6 +214,48 @@ function isBlockedWebsiteUrl(url) {
       'twitter.com',
       'x.com',
       'youtube.com',
+      // 2026-06-26: third-party DIRECTORIES / marketplaces / aggregators. When a business has no
+      // website, step-2 "Discovered Website" sometimes grabs one of these and the recorder filmed
+      // the WRONG site (Chris caught A-to-Z Auto Repair → autotrader.com, which was even down).
+      // Blocking them here makes the lead maps-only (website/mobile segments skip) instead of
+      // recording a directory/error page. Extend as new ones appear.
+      // [[feedback-discovered-website-must-reject-directories]]
+      'autotrader.com',
+      'cars.com',
+      'carfax.com',
+      'wheree.com',
+      'autobodyshopnear.com',
+      'giftly.com',
+      'autotechiq.com',
+      'yelp.com',
+      'yellowpages.com',
+      'yellowpages.ca',
+      'mapquest.com',
+      'bbb.org',
+      'tripadvisor.com',
+      'angi.com',
+      'angieslist.com',
+      'thumbtack.com',
+      'nextdoor.com',
+      'foursquare.com',
+      'manta.com',
+      'chamberofcommerce.com',
+      'healthgrades.com',
+      'vitals.com',
+      'zocdoc.com',
+      'realself.com',
+      'opencare.com',
+      'justia.com',
+      'avvo.com',
+      'findlaw.com',
+      'lawyers.com',
+      'martindale.com',
+      'eyeexamsnow.com',
+      'birdeye.com',
+      'localsearch.com',
+      'superpages.com',
+      'citysearch.com',
+      'expertise.com',
     ].some((domain) => host === domain || host.endsWith(`.${domain}`));
   } catch {
     return false;
@@ -2661,7 +2704,19 @@ async function main() {
       // (e.g. Pasadena Roofing Co → lansfordroofing.com) reached the recorder with an
       // empty URL → website + mobile segments skipped → 1/3 webms → mislabeled
       // "bot-blocked" and the whole lead failed. Real root cause of the step-3 losses.
-      const website = cleanUrl(row['Discovered Website'] || row.Website || row.website || '');
+      let website = cleanUrl(row['Discovered Website'] || row.Website || row.website || '');
+      // 2026-06-26: reject third-party directories/marketplaces (autotrader, wheree.com, yelp, etc.)
+      // as the business's website. When a lead has no real first-party site, step-2 discovery may
+      // have grabbed a directory — recording it films the WRONG (often down) site (Chris caught
+      // A-to-Z Auto Repair → autotrader.com). A blocked site means there is NO real first-party
+      // website to audit; the website + mobile segments would be empty (1/3 webms) and the lead
+      // fails downstream anyway — so SKIP the lead deterministically rather than shipping a bad or
+      // broken video. [[feedback-discovered-website-must-reject-directories]]
+      const websiteWasDirectory = website && isBlockedWebsiteUrl(website);
+      if (websiteWasDirectory) {
+        console.log(`Skipping ${name} - only "website" is a directory/marketplace (${website}); no real first-party site to record.`);
+        continue;
+      }
       const mapsUrl = cleanUrl(row['Google Maps URL'] || row.mapsUrl || '');
 
       if (!website && !mapsUrl) {
