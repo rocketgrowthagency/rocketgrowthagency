@@ -1524,6 +1524,19 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // Re-inject overlay after navigation (page.goto wipes the DOM)
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
+        // 2026-06-26: TOP-ALIGN the card (scrollTop=0) so the business hero PHOTO at the top is
+        // visible. This was previously only on the deep-rank path — the top-ranked scroll-find path
+        // never had it, so cards opened at whatever scroll position Google left (some showed the
+        // photo, some were scrolled past it — Chris caught Derek R. Ewin scrolled down). Same block
+        // as the deep-rank path. highlightBusinessOnDetailPage can scroll to the heading, so do this
+        // AFTER it.
+        await page.evaluate(() => {
+          const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+          if (!h1) return;
+          let s = h1.parentElement;
+          while (s && s !== document.body) { const o = getComputedStyle(s).overflowY; if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break; s = s.parentElement; }
+          if (s && s !== document.body) s.scrollTop = 0; // top-align card → hero photo visible
+        }).catch(() => {});
         await forceMapsCityZoom(page, 'scroll-find-click');
         await holdOnDetailCard(12000);
         await dismissResultsInfoPopup(page);
