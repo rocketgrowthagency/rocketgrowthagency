@@ -1266,7 +1266,29 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   let _osScale = 0; // device-px ÷ points (Retina backing scale), computed once
   const grabViaScreenCapture = async () => {
     try {
+      // 2026-06-26: OS-LEVEL bring our Chrome to the front. page.bringToFront() only orders tabs
+      // WITHIN Chrome — it does NOT make Chrome the frontmost macOS app. So if another window is on
+      // top at grab time, the full-screen screencapture grabs THAT instead of Maps (Chris saw a
+      // Liberty Tribune window captured). Activate OUR specific Chrome process by PID via System
+      // Events (not by app name — that could surface Chris's separate Chrome window).
+      try {
+        const pid = page.browser().process() && page.browser().process().pid;
+        if (pid) await execAsync('osascript', ['-e', `tell application "System Events" to set frontmost of (first process whose unix id is ${pid}) to true`]);
+      } catch (_) {}
       await page.bringToFront().catch(() => {});
+      // 2026-06-26: RE-ASSERT the wide physical window right before the grab. A focus-stealing macOS
+      // system dialog (Dictation prompt, 'find devices on local networks', etc.) can shrink/move the
+      // Chrome window. Viewport emulation keeps window.innerWidth=1600 regardless, so the crop math
+      // below (which uses innerWidth) then captures the NARROW physical Chrome + white desktop beside
+      // it = the "1/4-size in the corner" defect Chris caught. Forcing bounds back to 1640 wide every
+      // grab keeps the capture tight no matter what stole focus. (Popups themselves are separately
+      // prevented: Chrome Cast/mDNS flags in launch args + macOS AppleDictationAutoEnable=0.)
+      try {
+        const _s = await page.target().createCDPSession();
+        const { windowId } = await _s.send('Browser.getWindowForTarget');
+        await _s.send('Browser.setWindowBounds', { windowId, bounds: { left: 0, top: 0, width: 1640, height: 1040, windowState: 'normal' } });
+        await _s.detach().catch(() => {});
+      } catch (_) {}
       const m = await page.evaluate(() => ({ sx: window.screenX, sy: window.screenY, iw: window.innerWidth, ih: window.innerHeight, oh: window.outerHeight, scrW: window.screen.width }));
       // FULL-SCREEN capture + ffmpeg crop (NOT `screencapture -R`). `-R` fails outright here with
       // "could not create image from rect" (every rect), while a full `screencapture -x` works and
@@ -2552,6 +2574,13 @@ async function launchBrowser() {
 }
 
 async function main() {
+  // 2026-06-26: suppress focus-stealing macOS SYSTEM dialogs that get captured by the full-screen
+  // grab (Chris saw the "enable Dictation?" prompt land in a video, which ALSO shrinks the capture
+  // into the corner). The Chrome "find devices on local networks" popup is prevented via launch
+  // flags; this kills the other common offender (Dictation auto-enable prompt). Idempotent + silent.
+  try {
+    spawnSync('defaults', ['write', 'com.apple.HIToolbox', 'AppleDictationAutoEnable', '-int', '0']);
+  } catch (_) {}
   const { inputPath, baseName } = findLatestStep2Csv();
   const records = await loadCsv(inputPath);
   console.log(`Loaded ${records.length} rows from Step 2 CSV.`);
