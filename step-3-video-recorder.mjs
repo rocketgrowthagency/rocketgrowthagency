@@ -1350,6 +1350,23 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     console.log(`   [zoom-out] map zoomed out ${n} step(s) for wide regional view`);
   }
 
+  // 2026-06-26: UNIVERSAL top-align. Per-branch one-shot scrollTop=0 was flaky — async card content
+  // (reviews/photos/owner blurbs) loads AFTER it and the panel re-scrolls, so some cards opened
+  // scrolled past the hero photo + rating (Chris caught Derek R. Ewin AND Crystal Vision). Fix: zero
+  // EVERY scrollable container in the detail panel RIGHT BEFORE the frozen grab — not the first one
+  // found, and re-asserted at capture time so nothing can re-scroll it. Applies to BOTH the deep-rank
+  // and scroll-find paths (both end in holdOnDetailCard), so it can't regress per-lead.
+  const forceCardToTop = async () => {
+    await page.evaluate(() => {
+      const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      const zero = (el) => { try { if (el && el.scrollHeight > el.clientHeight + 4) el.scrollTop = 0; } catch (_) {} };
+      // 1) every scrollable ANCESTOR of the card heading (whichever one Maps actually scrolls)
+      if (h1) { let el = h1.parentElement; while (el && el !== document.body) { const o = getComputedStyle(el).overflowY; if (o === 'auto' || o === 'scroll') zero(el); el = el.parentElement; } }
+      // 2) known Maps detail scroll panels by class/role, as a backstop
+      document.querySelectorAll('div[role="main"], div.m6QErb.DxyBCb, div.m6QErb.WNBkOb, div.m6QErb').forEach(zero);
+    }).catch(() => {});
+  };
+
   async function holdOnDetailCard(ms) {
     if (!recorderCtl || !recorderCtl.pauseCapture) { await sleep(ms); return; }
     // Pause the auto-capture loop (its screenshots hang on a goto-opened detail page).
@@ -1359,6 +1376,10 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // segment. Re-grabbing every 2s let Google's auto recenter/zoom-in animation drift the map
     // into a tight "zoomed" view by the back half of the hold (the exact thing Chris rejected).
     // Freezing the early frame keeps the wide, normal-scale view for the entire hold.
+    // Force the card to the top + let any reflow settle, THEN re-assert once more, THEN grab.
+    await forceCardToTop();
+    await sleep(500);
+    await forceCardToTop();
     let frozen = null;
     for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
       const buf = await grabViaScreenCapture();
