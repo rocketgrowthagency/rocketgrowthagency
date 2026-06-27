@@ -2540,9 +2540,19 @@ async function recordBusinessVideos(browser, meta, mapsOut, websiteOut, mobileOu
     return { mapsOk, websiteOk, mobileOk };
   }
 
+  // 2026-06-26: REUSE_EXISTING_SEGMENTS=1 — per-segment skip. When re-rendering only because of a
+  // Maps-segment fix, the website + mobile webms from the prior run are still valid, so skip
+  // re-recording them (they're the slow part) and reuse the existing files. Maps is always (re)recorded
+  // — the redo deletes only the maps webm first, so it's missing here and gets recorded. Gated behind
+  // an env flag so normal runs never reuse a possibly-stale segment. [[project-video-code-locked-2026-06-26]]
+  const reuse = process.env.REUSE_EXISTING_SEGMENTS === '1';
+  const haveGood = (p) => { try { return fs.existsSync(p) && fs.statSync(p).size > 10000; } catch { return false; } };
   const mapsOk = await recordDesktopMapsVideo(browser, meta, mapsOut);
-  const websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
-  const mobileOk = await recordMobileVideo(browser, meta, mobileOut);
+  let websiteOk, mobileOk;
+  if (reuse && haveGood(websiteOut)) { console.log(`   ⏭ Reusing existing website webm (REUSE_EXISTING_SEGMENTS)`); websiteOk = true; }
+  else websiteOk = await recordDesktopWebsiteVideo(browser, meta, websiteOut);
+  if (reuse && haveGood(mobileOut)) { console.log(`   ⏭ Reusing existing mobile webm (REUSE_EXISTING_SEGMENTS)`); mobileOk = true; }
+  else mobileOk = await recordMobileVideo(browser, meta, mobileOut);
   return { mapsOk, websiteOk, mobileOk };
 }
 
