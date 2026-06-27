@@ -1307,8 +1307,33 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     catch (_) { resolve(false); }
   });
   let _osScale = 0; // device-px ÷ points (Retina backing scale), computed once
+  // 2026-06-26: CROSS-WORKER MAPS-CAPTURE LOCK. The Maps grab takes a FULL-SCREEN screenshot + crops
+  // to the frontmost Chrome. With WORKER_COUNT>1 (parallel leads), two workers grabbing at once would
+  // capture EACH OTHER's window (same failure as a foreground app stealing the screen). So serialize
+  // ONLY the activate+screenshot (~the exclusive-screen moment) behind a lockfile; everything else
+  // (website/mobile recording, ffmpeg crop, encoding) still runs parallel across workers. No-op when
+  // WORKER_COUNT is unset/1 (sequential) → zero change to the current 1-at-a-time behavior.
+  // [[feedback-rerender-must-be-segment-scoped]] (don't-mess-with-optimization) + idle-base 3-worker plan.
+  const SCREEN_LOCK = '/tmp/rga-screencap.lock';
+  const lockActive = () => process.env.WORKER_COUNT && process.env.WORKER_COUNT !== '1';
+  const acquireScreenLock = async (timeoutMs = 90000) => {
+    if (!lockActive()) return true;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try { fs.writeFileSync(SCREEN_LOCK, String(process.pid), { flag: 'wx' }); return true; }
+      catch (_) {
+        try { const st = fs.statSync(SCREEN_LOCK); if (Date.now() - st.mtimeMs > 30000) { fs.unlinkSync(SCREEN_LOCK); continue; } } catch (_) {}
+        await sleep(150 + Math.floor((process.pid % 7) * 30)); // jitter by pid so workers don't lockstep
+      }
+    }
+    console.warn('   [screencap-lock] acquire timed out — proceeding fail-open');
+    return false; // fail-open: better a small risk than a hung worker
+  };
+  const releaseScreenLock = () => { if (!lockActive()) return; try { fs.unlinkSync(SCREEN_LOCK); } catch (_) {} };
   const grabViaScreenCapture = async () => {
+    let _held = false;
     try {
+      _held = await acquireScreenLock(); // exclusive screen for the activate+screenshot below
       // 2026-06-26: OS-LEVEL bring our Chrome to the front. page.bringToFront() only orders tabs
       // WITHIN Chrome — it does NOT make Chrome the frontmost macOS app. So if another window is on
       // top at grab time, the full-screen screencapture grabs THAT instead of Maps (Chris saw a
@@ -1340,6 +1365,9 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       const stamp = `${process.pid}-${Date.now()}`;
       const png = `/tmp/sc-${stamp}.png`, jpg = `/tmp/sc-${stamp}.jpg`;
       const okPng = await execAsync('screencapture', ['-x', png]);
+      // screenshot done → release the exclusive-screen lock NOW; the ffmpeg crop below is CPU-only
+      // and can overlap other workers' captures.
+      releaseScreenLock(); _held = false;
       if (!okPng || !fs.existsSync(png)) return null;
       // Device-pixel dimensions of the full capture, and the backing scale (devicePx / points).
       const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', png]);
@@ -1366,6 +1394,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       try { fs.unlinkSync(jpg); } catch (_) {}
       return buf;
     } catch (_) { return null; }
+    finally { if (_held) releaseScreenLock(); } // safety: never leave the lock held on an early return/throw
   };
   async function zoomOutMap(page, steps) {
     // Zoom the Maps canvas OUT `steps` times so the held frame shows a wide regional view.
