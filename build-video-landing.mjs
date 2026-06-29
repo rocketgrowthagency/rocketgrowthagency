@@ -392,9 +392,14 @@ async function main() {
     // when the re-render happened on May 27.
     const recordedDateObj = new Date();
     const recordedDate = recordedDateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const expiryDateObj = new Date(recordedDateObj);
-    expiryDateObj.setDate(expiryDateObj.getDate() + 30);
-    const expiryDate = expiryDateObj.toISOString().slice(0, 10); // YYYY-MM-DD
+    // 2026-06-29: EXPIRY DISABLED. The 30-day client-side expiry (based on page BUILD date) sent
+    // PROSPECTS to a dead "This walkthrough has expired" page: the outreach sequence runs to Day 45
+    // and backlog/follow-up sends land weeks after the page was built, so pages expired BEFORE or
+    // DURING the campaign (138 of 371 live pages were expired when the Monday send fired). A dead
+    // link to a prospect is far worse than a slightly-old video. Emit empty EXPIRY_DATE → the page's
+    // `if (exp && ...)` gate is skipped → never expires. Revisit later with a soft "recorded on X"
+    // note instead of killing the video.
+    const expiryDate = '';
 
     // Build the body intro from the locked Option B template:
     // "This video was created for {Business} on {Date}, based on the search '{Term}'.
