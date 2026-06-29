@@ -59,7 +59,7 @@ async function loadAll(table) {
 // is unused here, matching how advanceFunnelState calls it with []).
 function computeFunnelState(f) {
   if (f['Email Status'] === 'unsubscribed') return 'closed_unsubscribed';
-  if (f['Email Status'] === 'bounced') return 'closed_bounced';
+  if (['bounced', 'permanent-bounce', 'no-replacement-found', 'invalid', 'blocked'].indexOf(f['Email Status']) >= 0) return 'closed_bounced';
   if (f['Suppressed']) return 'closed_dnc';
   if (f['Replied']) return 'closed_replied';
   if (f['Date Client Signed']) return 'converted_to_client';
