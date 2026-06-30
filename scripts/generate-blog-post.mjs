@@ -62,6 +62,8 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const TODAY_HUMAN = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 const slugify = (s) => s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+// Title-case a vertical for display, preserving acronyms/mixed-case (HVAC, CPAs stay as-is).
+const titleCase = (s) => String(s).split(' ').map((w) => (w === w.toLowerCase() && /[a-z]/.test(w)) ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ---- LLM: structured, vertical-specific content ----
@@ -136,7 +138,8 @@ let lastEditorCost = 0;
 // ---- assemble HTML (we control all markup; LLM only supplies text) ----
 function renderPost(vertical, slug, c, siblings) {
   const url = `https://www.rocketgrowthagency.com/blog/${slug}/`;
-  const title = `Local SEO for ${vertical}: How to Rank in the Google Maps Top 3 (2026)`;
+  const V = titleCase(vertical);
+  const title = `Local SEO for ${V}: How to Rank in the Google Maps Top 3 (2026)`;
   const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
   const wordCount = (c.sections || []).reduce((n, s) => n + (s.paras || []).join(' ').split(/\s+/).length + (s.bullets || []).join(' ').split(/\s+/).length, 0);
   const industrySlug = slugify(vertical);
@@ -158,7 +161,7 @@ function renderPost(vertical, slug, c, siblings) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.rocketgrowthagency.com/' },
       { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://www.rocketgrowthagency.com/blog/' },
-      { '@type': 'ListItem', position: 3, name: `Local SEO for ${vertical}`, item: url },
+      { '@type': 'ListItem', position: 3, name: `Local SEO for ${V}`, item: url },
     ],
   }, null, 2);
 

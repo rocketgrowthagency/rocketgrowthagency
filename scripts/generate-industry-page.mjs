@@ -48,6 +48,7 @@ const readSpend = () => { try { return JSON.parse(fs.readFileSync(SPEND_FILE, 'u
 const writeSpend = (s) => { try { fs.writeFileSync(SPEND_FILE, JSON.stringify(s)); } catch (_) {} };
 const TODAY = new Date().toISOString().slice(0, 10);
 const slugify = (s) => s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const titleCase = (s) => String(s).split(' ').map((w) => (w === w.toLowerCase() && /[a-z]/.test(w)) ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 let lastUsage = null, lastEditorCost = 0;
 
@@ -112,8 +113,9 @@ const STYLE = `  <style>
 
 function render(vertical, slug, c) {
   const url = `https://www.rocketgrowthagency.com/industries/${slug}/`;
-  const title = `Local SEO for ${vertical} | Rocket Growth Agency`;
-  const h1 = `Local SEO for ${vertical}`;
+  const V = titleCase(vertical);
+  const title = `Local SEO for ${V} | Rocket Growth Agency`;
+  const h1 = `Local SEO for ${V}`;
   const blogSlug = `local-seo-for-${slugify(vertical)}`;
   const hasBlog = fs.existsSync(path.join(BLOG_DIR, blogSlug, 'index.html'));
   const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
