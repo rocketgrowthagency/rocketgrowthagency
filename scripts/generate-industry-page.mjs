@@ -108,7 +108,7 @@ const FOOTER = `    <footer class="footer"><div class="footer-inner"><div><h3>Ro
 // Minimal scoped extras — the page otherwise reuses the homepage's own components
 // (.section, .section-surface, .section-head, .eyebrow, .grid-3, .card, .btn-ghost).
 const STYLE = `  <style>
-    .ind-hero{background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
+    .section.ind-hero{width:100%;max-width:none;margin:0;padding-left:max(1.75rem,calc((100vw - var(--max-width))/2));padding-right:max(1.75rem,calc((100vw - var(--max-width))/2));background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
     .ind-hero .section-head{margin-bottom:1.2rem;}
     .ind-hero h1{line-height:1.08;}
     .ind-step{position:relative;}
