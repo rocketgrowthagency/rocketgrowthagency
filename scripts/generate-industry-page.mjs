@@ -50,6 +50,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const slugify = (s) => s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const titleCase = (s) => String(s).split(' ').map((w) => (w === w.toLowerCase() && /[a-z]/.test(w)) ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const unesc = (s) => String(s == null ? '' : s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 let lastUsage = null, lastEditorCost = 0;
 
 async function openai(model, messages, maxTokens, temp) {
@@ -98,17 +99,23 @@ const HEADER = `  <div class="topbar"><div class="topbar-inner"><div>Google Maps
 const FOOTER = `    <footer class="footer"><div class="footer-inner"><div><h3>Rocket Growth Agency</h3><p>Google Maps Local SEO for local service businesses focused on calls, forms, and measurable growth.</p></div><div><h4>Pages</h4><div class="footer-links"><a href="/services/">Services</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></div></div><div><h4>Legal</h4><div class="footer-links"><a href="/privacy/">Privacy Policy</a><a href="/terms/">Terms of Service</a></div></div></div><div class="footer-bottom">&copy; 2026 Rocket Growth Agency. All rights reserved.</div></footer>
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
 const STYLE = `  <style>
-    .ind-page.section{width:min(860px,calc(100% - 3rem));}
-    .ind-page h1{line-height:1.12;}
-    .ind-page .lead{font-size:1.18rem;line-height:1.6;margin-bottom:1.4rem;}
-    .ind-page .card{padding:1.9rem 2.1rem;}
-    .ind-page .card h2{margin:2.4rem 0 .7rem;line-height:1.22;}
-    .ind-page .card h2:first-child{margin-top:.2rem;}
-    .ind-page .card p{margin:0 0 1.1rem;line-height:1.7;}
-    .ind-page .card ul{margin:.2rem 0 1.2rem;padding-left:1.3rem;line-height:1.7;}
-    .ind-page .card li{margin-bottom:.5rem;}
-    .ind-page .card p + h3{margin-top:1.8rem;}
-    .ind-hero-cta{display:inline-block;margin:.4rem 0 0;}
+    /* Industry LANDING page — full-width alternating bands (a marketing page, not a boxed article) */
+    .ind-wrap{width:min(880px,calc(100% - 3rem));margin:0 auto;}
+    .ind-hero{padding:3.6rem 0 2.4rem;background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
+    .ind-hero h1{line-height:1.08;margin:.35rem 0 .7rem;}
+    .ind-hero .lead{font-size:1.22rem;line-height:1.55;color:var(--text-700);margin:0 0 1.4rem;max-width:60ch;}
+    .ind-hero .btn{display:inline-block;}
+    .ind-band{padding:2.9rem 0;border-bottom:1px solid #eef1f6;}
+    .ind-band.alt{background:#f6f8fc;}
+    .ind-band h2{margin:0 0 .9rem;line-height:1.2;font-size:1.6rem;}
+    .ind-band p{margin:0 0 1.05rem;line-height:1.75;}
+    .ind-band ul{margin:.3rem 0 1.1rem;padding-left:1.3rem;line-height:1.7;}
+    .ind-band li{margin-bottom:.5rem;}
+    .ind-faq h2{margin-bottom:1.2rem;}
+    .ind-faq h3{margin:1.5rem 0 .35rem;font-size:1.1rem;line-height:1.3;}
+    .ind-faq h3:first-of-type{margin-top:0;}
+    .ind-faq p{margin:0 0 .6rem;line-height:1.7;}
+    .ind-next p{margin:.2rem 0;color:var(--text-700);}
   </style>`;
 
 function render(vertical, slug, c) {
@@ -121,10 +128,10 @@ function render(vertical, slug, c) {
   const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
   const wordCount = (c.sections || []).reduce((n, s) => n + (s.paras || []).join(' ').split(/\s+/).length, 0);
 
-  const sectionsHtml = (c.sections || []).map((s) => {
-    let h = `      <h2>${esc(s.heading)}</h2>\n` + (s.paras || []).map((p) => `      <p>${esc(p)}</p>`).join('\n');
-    if (s.bullets && s.bullets.length) h += `\n      <ul>\n` + s.bullets.map((b) => `        <li>${esc(b)}</li>`).join('\n') + `\n      </ul>`;
-    return h;
+  const bandsHtml = (c.sections || []).map((s, i) => {
+    let inner = `      <h2>${esc(s.heading)}</h2>\n` + (s.paras || []).map((p) => `      <p>${esc(p)}</p>`).join('\n');
+    if (s.bullets && s.bullets.length) inner += `\n      <ul>\n` + s.bullets.map((b) => `        <li>${esc(b)}</li>`).join('\n') + `\n      </ul>`;
+    return `    <section class="ind-band${i % 2 ? ' alt' : ''}"><div class="ind-wrap">\n${inner}\n    </div></section>`;
   }).join('\n');
   const crossLink = hasBlog ? `      <p><strong>Prefer the DIY playbook first?</strong> Read our free guide: <a href="/blog/${blogSlug}/">Local SEO for ${esc(vertical)} — how to rank in the Maps top 3</a>.</p>` : '';
   const faqHtml = (c.faq || []).map((f) => `      <h3>${esc(f.q)}</h3>\n      <p>${esc(f.a)}</p>`).join('\n');
@@ -173,22 +180,22 @@ ${STYLE}
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MCGMSCCR" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 ${HEADER}
 
-  <main class="section ind-page" id="main">
-    <p class="eyebrow">Industries &bull; Done-for-you local SEO</p>
-    <h1>${esc(h1)}</h1>
-    <p class="lead">${esc(c.heroSub)}</p>
-    <a class="btn ind-hero-cta" href="/free-growth-audit/">Get Your Free Growth Audit</a>
-
-    <article class="card" style="margin-top:1.4rem">
-${sectionsHtml}
-${crossLink}
-      <p><strong>Next step:</strong> <a href="/services/google-maps-local-seo/">how our Google Maps Local SEO works</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.</p>
-    </article>
-
-    <section class="card" style="margin-top:1rem">
+  <main id="main">
+    <section class="ind-hero"><div class="ind-wrap">
+      <p class="eyebrow">Industries &bull; Done-for-you local SEO</p>
+      <h1>${esc(h1)}</h1>
+      <p class="lead">${esc(c.heroSub)}</p>
+      <a class="btn" href="/free-growth-audit/">Get Your Free Growth Audit</a>
+    </div></section>
+${bandsHtml}
+    <section class="ind-band alt ind-faq"><div class="ind-wrap">
       <h2>Frequently asked questions</h2>
 ${faqHtml}
-    </section>
+    </div></section>
+    <section class="ind-band ind-next"><div class="ind-wrap">
+${crossLink}
+      <p><strong>Next step:</strong> <a href="/services/google-maps-local-seo/">how our Google Maps Local SEO works</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.</p>
+    </div></section>
   </main>
 
   <section class="cta-band"><div class="cta-band-inner"><h2>${esc(c.ctaHeadline)}</h2><a class="btn-light" href="/free-growth-audit/">Get Your Free Growth Audit</a></div></section>
@@ -243,7 +250,10 @@ function buildHub() {
     cards.push({ slug: d, h1, desc });
   }
   cards.sort((a, b) => a.h1.localeCompare(b.h1));
-  const grid = cards.map((c) => `        <article class="blog-card"><div class="content"><p class="blog-meta">Done-for-you local SEO</p><h2>${esc(c.h1)}</h2><p>${esc(c.desc.slice(0, 150))}</p><a class="btn-ghost" href="/industries/${c.slug}/">View service</a></div></article>`).join('\n');
+  const grid = cards.map((c) => {
+    const name = c.h1.replace(/^Local SEO for\s+/i, '');
+    return `        <a class="ind-cat-card" href="/industries/${c.slug}/"><span class="ind-cat-name">${esc(name)}</span><span class="ind-cat-desc">${esc(unesc(c.desc).slice(0, 88))}…</span><span class="ind-cat-cta">View service &rarr;</span></a>`;
+  }).join('\n');
   const url = 'https://www.rocketgrowthagency.com/industries/';
   const page = `<!doctype html>
 <html lang="en">
@@ -258,14 +268,24 @@ function buildHub() {
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" /><script defer src="/script.js"></script>
+  <style>
+    .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
+    .ind-cat-card{display:flex;flex-direction:column;gap:.45rem;padding:1.5rem 1.6rem;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit;transition:.15s ease;}
+    .ind-cat-card:hover{border-color:#2f57eb;box-shadow:0 10px 26px rgba(47,87,235,.12);transform:translateY(-2px);}
+    .ind-cat-name{font-size:1.32rem;font-weight:800;color:#0f172a;line-height:1.18;}
+    .ind-cat-desc{font-size:.93rem;color:var(--text-700);line-height:1.5;}
+    .ind-cat-cta{font-weight:700;color:#2f57eb;margin-top:.35rem;font-size:.95rem;}
+  </style>
 </head>
-<body class="blog-page">
+<body>
 ${HEADER}
-  <main class="page-shell" id="main">
-    <section class="section hero"><p class="eyebrow">Industries</p><h1>Local SEO, tailored to your industry</h1><p class="lead">We do done-for-you Google Maps local SEO for local service businesses. Find your industry below to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p></section>
-    <section class="section blog-list-section"><div class="blog-grid">
+  <main class="section" id="main">
+    <p class="eyebrow">Industries</p>
+    <h1>Local SEO, tailored to your industry</h1>
+    <p class="lead" style="max-width:62ch">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p>
+    <div class="ind-cat-grid">
 ${grid}
-    </div></section>
+    </div>
   </main>
   <section class="cta-band"><div class="cta-band-inner"><h2>Not sure where your business ranks? Find out free.</h2><a class="btn-light" href="/free-growth-audit/">Get Your Free Growth Audit</a></div></section>
 ${FOOTER}
