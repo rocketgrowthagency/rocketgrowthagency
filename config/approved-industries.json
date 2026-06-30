@@ -1,15 +1,33 @@
 {
-  "_note": "RGA approved target industries (locked 2026-06-30 by Chris). The video pipeline, blog engine, and industry-page engine ONLY pull Search Queue rows whose Vertical is in this list. Real estate agents intentionally EXCLUDED for now. To change targets, edit this list — it's the single source of truth.",
+  "_note": "RGA LOCKED top-10 TARGET BUSINESSES (2026-06-30, Chris). Target = the BUSINESS we'd sign as a client; 'searchTerms' = the Search Queue verticals / Maps queries that surface that business (deduped at business level via Place ID + email — a firm found under multiple terms is emailed ONCE). Ordered best->least by retainer-ability x prospect volume x Maps-pipeline fit (NOT per-job ticket). Real estate EXCLUDED. 'approved' is the FLAT union of all searchTerms that the current filter code reads; 'businesses' is the structured umbrella model (used for the /industries/ hub pages + future selection). Edit here = single source of truth.",
+  "businesses": [
+    { "business": "HVAC", "rank": 1, "searchTerms": ["HVAC"] },
+    { "business": "Plumbers", "rank": 2, "searchTerms": ["Plumbers"] },
+    { "business": "Pest control", "rank": 3, "searchTerms": ["Pest control"] },
+    { "business": "Roofers", "rank": 4, "searchTerms": ["Roofers"] },
+    { "business": "Remodeling contractors", "rank": 5, "searchTerms": ["Kitchen remodeling", "Bathroom remodeling"] },
+    { "business": "Foundation repair", "rank": 6, "searchTerms": ["Foundation repair"] },
+    { "business": "Dentists", "rank": 7, "searchTerms": ["Orthodontists", "Cosmetic dentists"] },
+    { "business": "Plastic surgeons", "rank": 8, "searchTerms": ["Plastic surgeons"] },
+    { "business": "Lawyers", "rank": 9, "searchTerms": ["Personal injury lawyers", "DUI lawyers", "Family lawyers", "Estate planning lawyers", "Bankruptcy lawyers"] },
+    { "business": "Solar installers", "rank": 10, "searchTerms": ["Solar installers"] }
+  ],
   "approved": [
-    "Personal injury lawyers",
-    "Solar installers",
-    "Kitchen remodeling",
-    "Roofers",
-    "Bathroom remodeling",
-    "Plastic surgeons",
     "HVAC",
+    "Plumbers",
+    "Pest control",
+    "Roofers",
+    "Kitchen remodeling",
+    "Bathroom remodeling",
     "Foundation repair",
+    "Orthodontists",
+    "Cosmetic dentists",
+    "Plastic surgeons",
+    "Personal injury lawyers",
     "DUI lawyers",
-    "Orthodontists"
+    "Family lawyers",
+    "Estate planning lawyers",
+    "Bankruptcy lawyers",
+    "Solar installers"
   ]
 }
