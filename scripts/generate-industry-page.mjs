@@ -372,6 +372,8 @@ function buildHub() {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" /><script defer src="/script.js"></script>
   <style>
+    .section.ind-hero{width:100%;max-width:none;margin:0;padding-left:max(1.75rem,calc((100vw - var(--max-width))/2));padding-right:max(1.75rem,calc((100vw - var(--max-width))/2));background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
+    .section.ind-hero h1{line-height:1.08;}
     .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
     .ind-cat-card{display:flex;flex-direction:column;gap:.45rem;padding:1.5rem 1.6rem;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit;transition:.15s ease;}
     .ind-cat-card:hover{border-color:#2f57eb;box-shadow:0 10px 26px rgba(47,87,235,.12);transform:translateY(-2px);}
@@ -382,13 +384,19 @@ function buildHub() {
 </head>
 <body>
 ${HEADER}
-  <main class="section" id="main">
-    <p class="eyebrow">Industries</p>
-    <h1>Local SEO, tailored to your industry</h1>
-    <p class="lead" style="max-width:62ch">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p>
-    <div class="ind-cat-grid">
+  <main id="main">
+    <section class="section ind-hero">
+      <div class="section-head">
+        <p class="eyebrow">Industries</p>
+        <h1>Local SEO, tailored to your industry</h1>
+        <p class="lead">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p>
+      </div>
+    </section>
+    <section class="section section-tight">
+      <div class="ind-cat-grid">
 ${grid}
-    </div>
+      </div>
+    </section>
   </main>
   <section class="cta-band"><div class="cta-band-inner"><h2>Not sure where your business ranks? Find out free.</h2><a class="btn-light" href="/free-growth-audit/">Get Your Free Growth Audit</a></div></section>
 ${FOOTER}
