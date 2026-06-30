@@ -134,10 +134,33 @@ async function scoreDraft(vertical, content) {
 let lastEditorCost = 0;
 
 // ---- assemble HTML (we control all markup; LLM only supplies text) ----
-function renderPost(vertical, slug, c) {
+function renderPost(vertical, slug, c, siblings) {
   const url = `https://www.rocketgrowthagency.com/blog/${slug}/`;
   const title = `Local SEO for ${vertical}: How to Rank in the Google Maps Top 3 (2026)`;
+  const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
   const wordCount = (c.sections || []).reduce((n, s) => n + (s.paras || []).join(' ').split(/\s+/).length + (s.bullets || []).join(' ').split(/\s+/).length, 0);
+  const industrySlug = slugify(vertical);
+  const hasIndustryPage = fs.existsSync(path.join(WEBSITE_DIR, 'industries', industrySlug, 'index.html'));
+
+  const og = `  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${esc(title)}" />
+  <meta property="og:description" content="${esc(c.metaDescription)}" />
+  <meta property="og:url" content="${url}" />
+  <meta property="og:image" content="${ogImage}" />
+  <meta property="og:site_name" content="Rocket Growth Agency" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${esc(title)}" />
+  <meta name="twitter:description" content="${esc(c.metaDescription)}" />
+  <meta name="twitter:image" content="${ogImage}" />`;
+
+  const breadcrumbSchema = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.rocketgrowthagency.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://www.rocketgrowthagency.com/blog/' },
+      { '@type': 'ListItem', position: 3, name: `Local SEO for ${vertical}`, item: url },
+    ],
+  }, null, 2);
 
   const sectionsHtml = (c.sections || []).map((s) => {
     let h = `      <h2>${esc(s.heading)}</h2>\n`;
@@ -148,7 +171,10 @@ function renderPost(vertical, slug, c) {
     return h;
   }).join('\n');
 
-  const related = `      <p><strong>Related:</strong> <a href="/blog/google-maps-ranking-factors/">Google Maps ranking factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP optimization checklist</a>, <a href="/services/google-maps-local-seo/">our Google Maps Local SEO service</a>, <a href="/pricing/">pricing</a>.</p>`;
+  const siblingLinks = (siblings || []).slice(0, 3).map((s) => `<a href="/blog/${s.slug}/">Local SEO for ${esc(s.vertical)}</a>`).join(', ');
+  const doneForYou = hasIndustryPage ? ` <strong>Done-for-you:</strong> <a href="/industries/${industrySlug}/">our ${esc(vertical)} local SEO service</a>.` : '';
+  const related = `      <p><strong>Related industry guides:</strong> ${siblingLinks ? siblingLinks + ', ' : ''}<a href="/blog/google-maps-ranking-factors/">Google Maps ranking factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP optimization checklist</a>.</p>
+      <p><strong>Get help:</strong> <a href="/services/google-maps-local-seo/">Google Maps Local SEO service</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.${doneForYou}</p>`;
 
   const faqHtml = (c.faq || []).map((f) => `      <h3>${esc(f.q)}</h3>\n      <p>${esc(f.a)}</p>`).join('\n');
   const faqSchema = JSON.stringify({
@@ -189,6 +215,7 @@ ${HEAD_NAV}
   <meta name="description" content="${esc(c.metaDescription)}" />
   <link rel="canonical" href="${url}" />
   <meta name="robots" content="index,follow" />
+${og}
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon.png?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -200,12 +227,29 @@ ${blogSchema}
   <script type="application/ld+json">
 ${faqSchema}
   </script>
+  <script type="application/ld+json">
+${breadcrumbSchema}
+  </script>
+  <style>
+    /* Blog article readability — scoped to .blog-post, no effect on other pages */
+    .blog-post.section{width:min(820px,calc(100% - 3rem));}
+    .blog-post h1{line-height:1.12;}
+    .blog-post .lead{font-size:1.15rem;line-height:1.65;margin-bottom:1.9rem;}
+    .blog-post .card{padding:1.9rem 2.1rem;}
+    .blog-post .card h2{margin:2.5rem 0 .7rem;line-height:1.22;}
+    .blog-post .card h2:first-child{margin-top:.2rem;}
+    .blog-post .card h3{margin:1.7rem 0 .35rem;line-height:1.3;font-size:1.12rem;}
+    .blog-post .card p{margin:0 0 1.15rem;line-height:1.75;}
+    .blog-post .card ul{margin:.2rem 0 1.3rem;padding-left:1.3rem;line-height:1.7;}
+    .blog-post .card li{margin-bottom:.55rem;}
+    .blog-post .card p + h3{margin-top:2rem;}
+  </style>
 </head>
 <body>
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MCGMSCCR" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 ${HEADER}
 
-  <main class="section" id="main">
+  <main class="section blog-post" id="main">
     <p class="eyebrow">Blog &bull; ${TODAY_HUMAN} &bull; Local SEO by Industry</p>
     <h1>${esc(title)}</h1>
     <p class="lead">${esc(c.lead)}</p>
@@ -259,6 +303,19 @@ function addToBlogIndex(vertical, slug, metaDescription) {
   html = html.replace(/(<div class="blog-grid">\s*)/, `$1\n${card}`);
   fs.writeFileSync(idx, html);
   return true;
+}
+
+// ---- sibling posts (for cluster interlinking): {slug, vertical} from existing posts ----
+function listSiblingPosts(excludeSlug) {
+  const out = [];
+  for (const d of fs.existsSync(BLOG_DIR) ? fs.readdirSync(BLOG_DIR) : []) {
+    if (!d.startsWith('local-seo-for-') || d === excludeSlug) continue;
+    const f = path.join(BLOG_DIR, d, 'index.html');
+    if (!fs.existsSync(f)) continue;
+    const m = fs.readFileSync(f, 'utf8').match(/<title>Local SEO for ([^:]+):/);
+    if (m) out.push({ slug: d, vertical: m[1].trim() });
+  }
+  return out;
 }
 
 // ---- queue puller: prioritized verticals not yet covered ----
@@ -324,7 +381,7 @@ for (const vertical of workList) {
     for (let attempt = 1; attempt <= 3; attempt++) {
       const content = await generateContent(vertical);
       runCost += lastUsage ? lastUsage.cost : 0;
-      const r = renderPost(vertical, slug, content);
+      const r = renderPost(vertical, slug, content, listSiblingPosts(slug));
       try { assertQuality(r.html, r); } catch (qe) { lastErr = qe; process.stdout.write(`[retry ${attempt}: ${qe.message}] `); continue; }
       // editor gate
       const verdict = await scoreDraft(vertical, content); runCost += lastEditorCost;

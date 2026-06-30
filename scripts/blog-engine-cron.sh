@@ -19,19 +19,23 @@ LOG="/tmp/rga-blog-engine-${DATE_STAMP}.log"
 echo "=== blog-engine $(date) ===" | tee -a "$LOG"
 cd "$SCRAPER_DIR"
 
-# 1. Generate (respects daily post cap + cost ceiling internally)
+# 1. Generate the day's content — blog post (informational) + industry page
+# (commercial), each pulling the next-highest-value uncovered vertical from the
+# queue. They cross-link automatically (hub-and-spoke). Both respect their own
+# daily cap + the shared cost ceiling.
 node scripts/generate-blog-post.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
+node scripts/generate-industry-page.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
 
-# 2. Deploy any new/changed blog content.
+# 2. Deploy any new/changed blog + industry content.
 # NOTE: this site deploys via `netlify deploy --prod` (direct CLI), NOT GitHub
 # auto-build. GitHub is a backup mirror and is currently blocked by a >2GB pack
 # limit (the /v/ video history) — so we deploy to Netlify directly and commit
 # LOCALLY for versioning (no push). Netlify only uploads changed files (the new
 # blog HTML + sitemap), so this is fast despite publish=".".
 cd "$WEBSITE_DIR"
-if [ -n "$(git status --porcelain blog/ sitemap.xml 2>/dev/null)" ]; then
+if [ -n "$(git status --porcelain blog/ industries/ sitemap.xml 2>/dev/null)" ]; then
   echo ">>> new content — committing locally + deploying to Netlify" | tee -a "$LOG"
-  git add blog/ sitemap.xml
+  git add blog/ industries/ sitemap.xml
   git -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
     commit -q -m "blog: autonomous content engine — new local-SEO-by-vertical post(s) ${DATE_STAMP}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
