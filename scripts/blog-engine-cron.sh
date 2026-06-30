@@ -22,17 +22,24 @@ cd "$SCRAPER_DIR"
 # 1. Generate (respects daily post cap + cost ceiling internally)
 node scripts/generate-blog-post.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
 
-# 2. Commit + push any new/changed blog content
+# 2. Deploy any new/changed blog content.
+# NOTE: this site deploys via `netlify deploy --prod` (direct CLI), NOT GitHub
+# auto-build. GitHub is a backup mirror and is currently blocked by a >2GB pack
+# limit (the /v/ video history) — so we deploy to Netlify directly and commit
+# LOCALLY for versioning (no push). Netlify only uploads changed files (the new
+# blog HTML + sitemap), so this is fast despite publish=".".
 cd "$WEBSITE_DIR"
 if [ -n "$(git status --porcelain blog/ sitemap.xml 2>/dev/null)" ]; then
-  echo ">>> new content — committing + pushing" | tee -a "$LOG"
+  echo ">>> new content — committing locally + deploying to Netlify" | tee -a "$LOG"
   git add blog/ sitemap.xml
   git -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
     commit -q -m "blog: autonomous content engine — new local-SEO-by-vertical post(s) ${DATE_STAMP}" 2>&1 | tee -a "$LOG"
-  if git push 2>&1 | tee -a "$LOG"; then
-    echo ">>> pushed — Netlify will auto-deploy. Sitemap updated for Google rediscovery." | tee -a "$LOG"
+  export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
+  export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
+  if netlify deploy --prod --dir=. 2>&1 | grep -iE "Production|deploy|error|complete" | tee -a "$LOG"; then
+    echo ">>> deployed to Netlify prod. Sitemap updated for Google rediscovery." | tee -a "$LOG"
   else
-    echo "!!! push failed — content committed locally; will retry next run or push manually." | tee -a "$LOG"
+    echo "!!! netlify deploy failed — content committed locally; investigate." | tee -a "$LOG"
   fi
 else
   echo ">>> no new content this run (daily cap reached or queue exhausted)." | tee -a "$LOG"
