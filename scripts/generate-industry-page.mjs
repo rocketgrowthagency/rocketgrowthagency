@@ -68,8 +68,13 @@ async function openai(model, messages, maxTokens, temp) {
 }
 
 async function generateContent(vertical) {
-  const sys = `You are a conversion copywriter + local-SEO strategist for Rocket Growth Agency, an agency that does Google Maps local SEO for local service businesses. You write COMMERCIAL landing pages that convert business owners into free-audit leads — specific, credible, benefit-led, never generic or hypey.`;
+  const sys = `You are a conversion copywriter + local-SEO strategist for Rocket Growth Agency, an agency that does Google Maps local SEO for local service businesses. You write COMMERCIAL landing pages that convert business owners into free-audit leads — specific, credible, benefit-led, never generic or hypey. CRITICAL: every page you write must read as if it were written ONLY for this one industry — a reader in that trade should recognize their exact world. Never reuse template phrasing across industries.`;
   const user = `Write a COMMERCIAL service landing page: "Local SEO for ${vertical}" — RGA's done-for-you Google Maps local SEO service, tailored to ${vertical} businesses. It SELLS the service (not a how-to). Speak to a ${vertical} owner's real pains. Be specific to ${vertical} throughout — never generic.
+
+UNIQUENESS (mandatory — this page must NOT read like a template):
+- Do NOT open with generic boilerplate like "Our Google Maps SEO service is designed to..." or "Struggling to be found online?". Write a fresh hook grounded in how THIS industry's customers actually search and choose.
+- Anchor the whole page in ${vertical} reality: how their customers search (the actual phrases + urgency level), the real GBP primary/secondary categories for ${vertical}, seasonality/demand patterns, the specific objections and competitors, typical job/ticket value, and the real conversion path (call vs form vs booking).
+- Use concrete ${vertical} examples and language an owner would recognize. Vary your structure and emphasis — lead with whatever matters most for THIS industry, not a fixed formula.
 
 Return ONLY JSON with EXACTLY these keys:
 {
@@ -194,6 +199,19 @@ function render(vertical, slug, c) {
   const includedHtml = `        <ul class="ind-incl">\n` + (c.included || []).map((b) => `          <li>${esc(b)}</li>`).join('\n') + `\n        </ul>`;
   const whyUsHtml = (c.whyUs?.paras || []).map((p) => `        <p>${esc(p)}</p>`).join('\n');
   const crossLink = hasBlog ? `      <p style="margin-top:1.2rem"><strong>Prefer the DIY playbook first?</strong> Read our free guide: <a href="/blog/${blogSlug}/">Local SEO for ${esc(vertical)} — how to rank in the Maps top 3</a>.</p>` : '';
+  // Related industries (cluster interlinking) — link to up to 3 OTHER live industry pages.
+  const relatedHtml = (() => {
+    let others = [];
+    try { others = fs.readdirSync(IND_DIR).filter((d) => d !== slugify(vertical) && fs.existsSync(path.join(IND_DIR, d, 'index.html'))); } catch { /* none yet */ }
+    if (!others.length) return '';
+    const pick = others.slice(0, 3);
+    const links = pick.map((sl) => {
+      let name = titleCase(sl.replace(/-/g, ' '));
+      try { const h = fs.readFileSync(path.join(IND_DIR, sl, 'index.html'), 'utf8').match(/<h1>Local SEO for ([^<]+)<\/h1>/); if (h) name = h[1].replace(/&amp;/g, '&'); } catch (_) {}
+      return `<a href="/industries/${sl}/">${esc(name)}</a>`;
+    }).join(' &middot; ');
+    return `      <p style="margin-top:1rem"><strong>Related industries we serve:</strong> ${links} &middot; <a href="/industries/">see all industries</a>.</p>`;
+  })();
   const faqHtml = (c.faq || []).map((f) => `        <h3>${esc(f.q)}</h3>\n        <p>${esc(f.a)}</p>`).join('\n');
 
   const serviceSchema = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Service', name: h1, serviceType: 'Local SEO', description: c.metaDescription, areaServed: 'United States', provider: { '@type': 'Organization', name: 'Rocket Growth Agency', url: 'https://www.rocketgrowthagency.com/' }, url }, null, 2);
@@ -293,6 +311,7 @@ ${whyUsHtml}
         </article>
       </div>
 ${crossLink}
+${relatedHtml}
     </section>
 
     <section class="section section-tight ind-faq">

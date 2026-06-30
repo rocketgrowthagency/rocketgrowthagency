@@ -1,0 +1,14 @@
+{
+  "_note": "Ordered release queue for the 1/day inbound-content drip (locked 2026-06-30). drip-content.sh releases ONE industry+blog pair per day, in this order, skipping any whose industry page already exists. All 50 industries (content/SEO), ordered by value. Outreach still targets only the top 10 (see approved-industries.json). NEVER bulk-publish — Google scaled-content-abuse risk.",
+  "queue": [
+    "Personal injury lawyers","Kitchen remodeling","Solar installers","Roofers","Bathroom remodeling",
+    "Plastic surgeons","DUI lawyers","Foundation repair","Family lawyers","Real estate agents","HVAC",
+    "Orthodontists","Flooring contractors","Landscapers","Cosmetic dentists","Wedding photographers",
+    "Estate planning lawyers","Mortgage brokers","Body shop","Painters","Movers","Bankruptcy lawyers",
+    "Tree service","Electricians","Auto repair","CPAs","Plumbers","Garage door repair","Med spas",
+    "Optometrists","Pest control","Dermatologists","Insurance agents","Chiropractors","Pool service",
+    "Veterinarians","Auto glass repair","Junk removal","Handyman services","Window cleaning",
+    "Physical therapists","Carpet cleaning","Locksmiths","Auto detailing","Towing services",
+    "Mental health therapists","Yoga studios","Home cleaning services","Hair salons","Pet grooming"
+  ]
+}
