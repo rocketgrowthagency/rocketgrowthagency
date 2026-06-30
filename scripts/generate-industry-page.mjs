@@ -167,9 +167,7 @@ const FOOTER = `    <footer class="footer"><div class="footer-inner"><div><h3>Ro
 // Minimal scoped extras — the page otherwise reuses the homepage's own components
 // (.section, .section-surface, .section-head, .eyebrow, .grid-3, .card, .btn-ghost).
 const STYLE = `  <style>
-    .section.ind-hero{width:100%;max-width:none;margin:0;padding-left:max(1.75rem,calc((100vw - var(--max-width))/2));padding-right:max(1.75rem,calc((100vw - var(--max-width))/2));background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
-    .ind-hero .section-head{margin-bottom:1.2rem;}
-    .ind-hero h1{line-height:1.08;}
+    /* hero uses the site's real .hero class (blue radial + gradient + dot texture) — no custom override */
     .ind-step{position:relative;}
     .ind-step .ind-num{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:#2f57eb;color:#fff;font-weight:800;font-size:.95rem;margin-bottom:.6rem;}
     .ind-incl{list-style:none;padding:0;margin:0;display:grid;gap:.55rem;}
@@ -242,8 +240,8 @@ ${STYLE}
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MCGMSCCR" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 ${HEADER}
 
-  <main id="main">
-    <section class="section ind-hero">
+  <main class="page-shell" id="main">
+    <section class="section hero">
       <div class="section-head">
         <p class="eyebrow">Industries &bull; Done-for-you local SEO</p>
         <h1>${esc(h1)}</h1>
@@ -377,8 +375,7 @@ function buildHub() {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css?v=20260629e" /><script defer src="/script.js"></script>
   <style>
-    .section.ind-hero{width:100%;max-width:none;margin:0;padding-left:max(1.75rem,calc((100vw - var(--max-width))/2));padding-right:max(1.75rem,calc((100vw - var(--max-width))/2));background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
-    .section.ind-hero h1{line-height:1.08;}
+    /* hub hero uses the site's real .hero class — no custom override */
     .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
     .ind-cat-card{display:flex;flex-direction:column;gap:.45rem;padding:1.5rem 1.6rem;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit;transition:.15s ease;}
     .ind-cat-card:hover{border-color:#2f57eb;box-shadow:0 10px 26px rgba(47,87,235,.12);transform:translateY(-2px);}
@@ -389,8 +386,8 @@ function buildHub() {
 </head>
 <body>
 ${HEADER}
-  <main id="main">
-    <section class="section ind-hero">
+  <main class="page-shell" id="main">
+    <section class="section hero">
       <div class="section-head">
         <p class="eyebrow">Industries</p>
         <h1>Local SEO, tailored to your industry</h1>
