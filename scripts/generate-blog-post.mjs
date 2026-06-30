@@ -196,8 +196,62 @@ function renderPost(vertical, slug, c, siblings) {
   const HEAD_NAV = `  <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MCGMSCCR');</script>
   <!-- End Google Tag Manager -->`;
-  const HEADER = `  <div class="topbar"><div class="topbar-inner"><div>Google Maps Local SEO For Local Businesses</div><div class="topbar-right"><a href="tel:+14242422040" style="white-space:nowrap">Call (424) 242-2040</a></div></div></div>
-  <header class="site-header"><div class="header-inner"><a href="/" class="brand"><img src="/images/assets/rga_icon-header.png?v=20260311a" alt="Rocket Growth Agency logo" /><span class="brand-text">Rocket<span class="brand-growth">Growth</span>Agency</span></a><nav class="desktop-nav" aria-label="Main"><div id="servicesDropdown" class="services-dropdown"><button id="servicesDropdownToggle" class="nav-link dropdown-toggle" aria-expanded="false" aria-controls="servicesDropdownMenu" aria-haspopup="true">Services <span aria-hidden="true">&#9662;</span></button><div id="servicesDropdownMenu" class="dropdown-menu" role="menu" aria-label="Services menu"><a class="nav-link" data-path="/services/" href="/services/" role="menuitem">All Services</a><a class="nav-link" data-path="/services/google-maps-local-seo/" href="/services/google-maps-local-seo/" role="menuitem">Google Maps Local SEO</a><a class="nav-link" data-path="/services/gbp-optimization/" href="/services/gbp-optimization/" role="menuitem">GBP Optimization</a><a class="nav-link" data-path="/services/local-seo-website-support/" href="/services/local-seo-website-support/" role="menuitem">Website Support for Local SEO</a></div></div><a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a><a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a><a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a><a class="nav-link" data-path="/blog/" href="/blog/">Blog</a><a class="nav-link" data-path="/contact/" href="/contact/">Contact</a></nav><a class="btn desktop-cta" href="/free-growth-audit/">Free Growth Audit</a><button id="mobileNavToggle" class="menu-toggle" aria-controls="mobileNav" aria-expanded="false" onclick="toggleMobileNav()">&#9776;</button></div><nav id="mobileNav" class="mobile-nav" aria-label="Mobile"><details><summary>Services</summary><a href="/services/">All Services</a><a href="/services/google-maps-local-seo/">Google Maps Local SEO</a><a href="/services/gbp-optimization/">GBP Optimization</a><a href="/services/local-seo-website-support/">Website Support for Local SEO</a></details><a href="/industries/">Industries</a><a href="/process/">Process</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></nav></header>`;
+  const HEADER = `  <div class="topbar">
+    <div class="topbar-inner">
+      <div>Google Maps Local SEO For Local Businesses</div>
+      <div class="topbar-right">
+        <a href="tel:+14242422040" style="white-space:nowrap">Call (424) 242-2040</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="brand" aria-label="Rocket Growth Agency home">
+        <img src="/images/assets/rga_icon-header.png?v=20260311a" alt="Rocket Growth Agency logo" />
+        <span class="brand-text">Rocket<span class="brand-growth">Growth</span>Agency</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Main">
+        <div id="servicesDropdown" class="services-dropdown">
+          <button id="servicesDropdownToggle" class="nav-link dropdown-toggle" aria-expanded="false" aria-controls="servicesDropdownMenu" aria-haspopup="true">
+            Services
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div id="servicesDropdownMenu" class="dropdown-menu" role="menu" aria-label="Services menu">
+            <a class="nav-link" data-path="/services/" href="/services/" role="menuitem">All Services</a>
+            <a class="nav-link" data-path="/services/google-maps-local-seo/" href="/services/google-maps-local-seo/" role="menuitem">Google Maps Local SEO</a>
+            <a class="nav-link" data-path="/services/gbp-optimization/" href="/services/gbp-optimization/" role="menuitem">GBP Optimization</a>
+            <a class="nav-link" data-path="/services/local-seo-website-support/" href="/services/local-seo-website-support/" role="menuitem">Website Support for Local SEO</a>
+          </div>
+        </div>
+        
+        <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a>
+        <a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a>
+        <a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a>
+        <a class="nav-link" data-path="/blog/" href="/blog/">Blog</a>
+        <a class="nav-link" data-path="/contact/" href="/contact/">Contact</a>
+      </nav>
+
+      <a class="btn desktop-cta" href="/free-growth-audit/">Free Growth Audit</a>
+
+      <button id="mobileNavToggle" class="menu-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Open menu" onclick="toggleMobileNav()">☰</button>
+    </div>
+
+    <nav id="mobileNav" class="mobile-nav" aria-label="Mobile">
+      <details>
+        <summary>Services</summary>
+        <a href="/services/">All Services</a>
+        <a href="/services/google-maps-local-seo/">Google Maps Local SEO</a>
+        <a href="/services/gbp-optimization/">GBP Optimization</a>
+        <a href="/services/local-seo-website-support/">Website Support for Local SEO</a>
+      </details>
+      <a href="/industries/">Industries</a><a href="/process/">Process</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/faq/">FAQ</a>
+      <a href="/blog/">Blog</a>
+      <a href="/contact/">Contact</a></nav>
+  </header>`;
   const FOOTER = `    <footer class="footer">
     <div class="footer-inner">
       <div><h3>Rocket Growth Agency</h3><p>Google Maps Local SEO for local service businesses focused on calls, forms, and measurable growth.</p></div>

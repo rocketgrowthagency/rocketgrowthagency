@@ -101,8 +101,62 @@ async function scoreDraft(vertical, c) {
   } catch { return { score: 7, verdict: 'editor unavailable', issues: [] }; }
 }
 
-const HEADER = `  <div class="topbar"><div class="topbar-inner"><div>Google Maps Local SEO For Local Businesses</div><div class="topbar-right"><a href="tel:+14242422040" style="white-space:nowrap">Call (424) 242-2040</a></div></div></div>
-  <header class="site-header"><div class="header-inner"><a href="/" class="brand"><img src="/images/assets/rga_icon-header.png?v=20260311a" alt="Rocket Growth Agency logo" /><span class="brand-text">Rocket<span class="brand-growth">Growth</span>Agency</span></a><nav class="desktop-nav" aria-label="Main"><div id="servicesDropdown" class="services-dropdown"><button id="servicesDropdownToggle" class="nav-link dropdown-toggle" aria-expanded="false" aria-controls="servicesDropdownMenu" aria-haspopup="true">Services <span aria-hidden="true">&#9662;</span></button><div id="servicesDropdownMenu" class="dropdown-menu" role="menu" aria-label="Services menu"><a class="nav-link" data-path="/services/" href="/services/" role="menuitem">All Services</a><a class="nav-link" data-path="/services/google-maps-local-seo/" href="/services/google-maps-local-seo/" role="menuitem">Google Maps Local SEO</a><a class="nav-link" data-path="/services/gbp-optimization/" href="/services/gbp-optimization/" role="menuitem">GBP Optimization</a><a class="nav-link" data-path="/services/local-seo-website-support/" href="/services/local-seo-website-support/" role="menuitem">Website Support for Local SEO</a></div></div><a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a><a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a><a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a><a class="nav-link" data-path="/blog/" href="/blog/">Blog</a><a class="nav-link" data-path="/contact/" href="/contact/">Contact</a></nav><a class="btn desktop-cta" href="/free-growth-audit/">Free Growth Audit</a><button id="mobileNavToggle" class="menu-toggle" aria-controls="mobileNav" aria-expanded="false" onclick="toggleMobileNav()">&#9776;</button></div><nav id="mobileNav" class="mobile-nav" aria-label="Mobile"><a href="/services/">Services</a><a href="/industries/">Industries</a><a href="/process/">Process</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></nav></header>`;
+const HEADER = `  <div class="topbar">
+    <div class="topbar-inner">
+      <div>Google Maps Local SEO For Local Businesses</div>
+      <div class="topbar-right">
+        <a href="tel:+14242422040" style="white-space:nowrap">Call (424) 242-2040</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="brand" aria-label="Rocket Growth Agency home">
+        <img src="/images/assets/rga_icon-header.png?v=20260311a" alt="Rocket Growth Agency logo" />
+        <span class="brand-text">Rocket<span class="brand-growth">Growth</span>Agency</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Main">
+        <div id="servicesDropdown" class="services-dropdown">
+          <button id="servicesDropdownToggle" class="nav-link dropdown-toggle" aria-expanded="false" aria-controls="servicesDropdownMenu" aria-haspopup="true">
+            Services
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div id="servicesDropdownMenu" class="dropdown-menu" role="menu" aria-label="Services menu">
+            <a class="nav-link" data-path="/services/" href="/services/" role="menuitem">All Services</a>
+            <a class="nav-link" data-path="/services/google-maps-local-seo/" href="/services/google-maps-local-seo/" role="menuitem">Google Maps Local SEO</a>
+            <a class="nav-link" data-path="/services/gbp-optimization/" href="/services/gbp-optimization/" role="menuitem">GBP Optimization</a>
+            <a class="nav-link" data-path="/services/local-seo-website-support/" href="/services/local-seo-website-support/" role="menuitem">Website Support for Local SEO</a>
+          </div>
+        </div>
+        
+        <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a>
+        <a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a>
+        <a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a>
+        <a class="nav-link" data-path="/blog/" href="/blog/">Blog</a>
+        <a class="nav-link" data-path="/contact/" href="/contact/">Contact</a>
+      </nav>
+
+      <a class="btn desktop-cta" href="/free-growth-audit/">Free Growth Audit</a>
+
+      <button id="mobileNavToggle" class="menu-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Open menu" onclick="toggleMobileNav()">☰</button>
+    </div>
+
+    <nav id="mobileNav" class="mobile-nav" aria-label="Mobile">
+      <details>
+        <summary>Services</summary>
+        <a href="/services/">All Services</a>
+        <a href="/services/google-maps-local-seo/">Google Maps Local SEO</a>
+        <a href="/services/gbp-optimization/">GBP Optimization</a>
+        <a href="/services/local-seo-website-support/">Website Support for Local SEO</a>
+      </details>
+      <a href="/industries/">Industries</a><a href="/process/">Process</a>
+      <a href="/pricing/">Pricing</a>
+      <a href="/faq/">FAQ</a>
+      <a href="/blog/">Blog</a>
+      <a href="/contact/">Contact</a></nav>
+  </header>`;
 const FOOTER = `    <footer class="footer"><div class="footer-inner"><div><h3>Rocket Growth Agency</h3><p>Google Maps Local SEO for local service businesses focused on calls, forms, and measurable growth.</p></div><div><h4>Pages</h4><div class="footer-links"><a href="/services/">Services</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></div></div><div><h4>Legal</h4><div class="footer-links"><a href="/privacy/">Privacy Policy</a><a href="/terms/">Terms of Service</a></div></div></div><div class="footer-bottom">&copy; 2026 Rocket Growth Agency. All rights reserved.</div></footer>
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
 // Minimal scoped extras — the page otherwise reuses the homepage's own components
