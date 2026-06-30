@@ -1,0 +1,15 @@
+{
+  "_note": "RGA approved target industries (locked 2026-06-30 by Chris). The video pipeline, blog engine, and industry-page engine ONLY pull Search Queue rows whose Vertical is in this list. Real estate agents intentionally EXCLUDED for now. To change targets, edit this list — it's the single source of truth.",
+  "approved": [
+    "Personal injury lawyers",
+    "Solar installers",
+    "Kitchen remodeling",
+    "Roofers",
+    "Bathroom remodeling",
+    "Plastic surgeons",
+    "HVAC",
+    "Foundation repair",
+    "DUI lawyers",
+    "Orthodontists"
+  ]
+}

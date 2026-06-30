@@ -38,6 +38,12 @@ if (!VERTICAL_ARGS.length && !FROM_QUEUE) { console.error('Usage: node scripts/g
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEBSITE_DIR = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website VS Code');
 const BLOG_DIR = path.join(WEBSITE_DIR, 'blog');
+// Approved target industries (single source of truth). The engine ONLY pulls these from the
+// queue. Fail-closed: if the config can't load, match nothing (never silently pick off-list).
+const APPROVED_INDUSTRIES = (() => {
+  try { return new Set((JSON.parse(fs.readFileSync(path.join(SCRAPER_DIR, 'config', 'approved-industries.json'), 'utf8')).approved) || []); }
+  catch (e) { console.error('[approved-industries] could not load config/approved-industries.json — refusing to pull off-list:', e.message); return new Set(); }
+})();
 const SITEMAP = path.join(WEBSITE_DIR, 'sitemap.xml');
 
 // ---- env ----
@@ -396,6 +402,7 @@ async function loadQueueVerticals() {
   }
   // dedup vs already-published, sort by avg ticket desc (highest-value verticals first)
   return Object.values(seen)
+    .filter((x) => APPROVED_INDUSTRIES.has(x.vertical)) // only approved target industries
     .filter((x) => !fs.existsSync(path.join(BLOG_DIR, `local-seo-for-${slugify(x.vertical)}`)))
     .sort((a, b) => b.ticket - a.ticket)
     .map((x) => x.vertical);

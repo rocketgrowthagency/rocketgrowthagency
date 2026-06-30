@@ -31,6 +31,11 @@ if (!VERTICAL_ARGS.length && !FROM_QUEUE) { console.error('Usage: generate-indus
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEBSITE_DIR = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website VS Code');
 const IND_DIR = path.join(WEBSITE_DIR, 'industries');
+// Approved target industries (single source of truth). Fail-closed: bad/missing config → match nothing.
+const APPROVED_INDUSTRIES = (() => {
+  try { return new Set((JSON.parse(fs.readFileSync(path.join(SCRAPER_DIR, 'config', 'approved-industries.json'), 'utf8')).approved) || []); }
+  catch (e) { console.error('[approved-industries] could not load config/approved-industries.json — refusing to pull off-list:', e.message); return new Set(); }
+})();
 const BLOG_DIR = path.join(WEBSITE_DIR, 'blog');
 const SITEMAP = path.join(WEBSITE_DIR, 'sitemap.xml');
 
@@ -338,7 +343,7 @@ async function loadQueueVerticals() {
     for (const r of d.records || []) { const v = r.fields.Vertical; if (!v) continue; const t = Number(r.fields['Avg Ticket'] || 0); if (!seen[v] || t > seen[v].t) seen[v] = { v, t }; }
     offset = d.offset; if (!offset) break;
   }
-  return Object.values(seen).filter((x) => !fs.existsSync(path.join(IND_DIR, slugify(x.v)))).sort((a, b) => b.t - a.t).map((x) => x.v);
+  return Object.values(seen).filter((x) => APPROVED_INDUSTRIES.has(x.v)).filter((x) => !fs.existsSync(path.join(IND_DIR, slugify(x.v)))).sort((a, b) => b.t - a.t).map((x) => x.v);
 }
 
 // ---- pillar hub: rebuild industries/index.html from all industry pages ----
