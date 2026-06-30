@@ -18,30 +18,44 @@ LOG="/tmp/rga-drip-content-${DATE_STAMP}.log"
 echo "=== drip-content $(date) ===" | tee -a "$LOG"
 cd "$SCRAPER_DIR"
 
-# 1. Pick the next industry to release (exit 3 = queue complete).
-NEXT=$(node scripts/next-content.mjs 2>>"$LOG")
-RC=$?
-if [ "$RC" -eq 3 ]; then echo ">>> release queue complete — all industries published. Nothing to do." | tee -a "$LOG"; exit 0; fi
-if [ "$RC" -ne 0 ] || [ -z "$NEXT" ]; then echo "!!! next-content.mjs failed (rc=$RC) — aborting." | tee -a "$LOG"; exit 1; fi
-echo ">>> releasing today: \"$NEXT\"" | tee -a "$LOG"
+# TWO INDEPENDENT TRACKS:
+#  - INDUSTRY pages STOP at 50 (the content-release-queue). Finite by design.
+#  - BLOG posts NEVER stop (perpetual blog-topics queue; append more topics to extend forever).
+# For the first ~50 days both tracks pick the same vertical, so the day's industry page + blog post
+# PAIR and interlink. After the 50 industries are done, only the blog continues (long-tail topics).
+IND=$(node scripts/next-content.mjs 2>>"$LOG"); RC_IND=$?
+BLOG=$(node scripts/next-blog-topic.mjs 2>>"$LOG"); RC_BLOG=$?
+[ "$RC_IND" -eq 3 ] && echo ">>> industry queue complete (all 50 industry pages live). Industry track idle." | tee -a "$LOG"
+[ "$RC_BLOG" -eq 3 ] && echo ">>> blog queue exhausted — append topics to config/blog-topics.json." | tee -a "$LOG"
+if { [ "$RC_IND" -ne 0 ] || [ -z "$IND" ]; } && { [ "$RC_BLOG" -ne 0 ] || [ -z "$BLOG" ]; }; then
+  echo ">>> nothing pending in either track. Done." | tee -a "$LOG"; exit 0
+fi
+echo ">>> today — industry: \"${IND:-(none)}\"  |  blog: \"${BLOG:-(none)}\"" | tee -a "$LOG"
 
-# 2. Generate the interlinked pair (industry page first so the blog can link to it, then blog so
-#    the industry page's next run / hub picks it up; both --publish wire sitemap + hub/index).
-node scripts/generate-industry-page.mjs "$NEXT" --publish 2>&1 | tee -a "$LOG"
-node scripts/generate-blog-post.mjs "$NEXT" --publish 2>&1 | tee -a "$LOG"
-# Re-run the industry page once more so its blog cross-link resolves now that the blog exists.
-node scripts/generate-industry-page.mjs "$NEXT" --publish --force 2>&1 | tee -a "$LOG"
+# 2. INDUSTRY track (if pending): generate the industry page.
+if [ "$RC_IND" -eq 0 ] && [ -n "$IND" ]; then
+  node scripts/generate-industry-page.mjs "$IND" --publish 2>&1 | tee -a "$LOG"
+fi
+# 3. BLOG track (perpetual): generate the day's blog post.
+if [ "$RC_BLOG" -eq 0 ] && [ -n "$BLOG" ]; then
+  node scripts/generate-blog-post.mjs "$BLOG" --publish 2>&1 | tee -a "$LOG"
+fi
+# 4. If the industry page was built AND its matching blog now exists, re-run it --force so the
+#    industry->blog cross-link resolves (bidirectional interlinking).
+if [ "$RC_IND" -eq 0 ] && [ -n "$IND" ]; then
+  node scripts/generate-industry-page.mjs "$IND" --publish --force 2>&1 | tee -a "$LOG"
+fi
 
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
 if [ -n "$(git status --porcelain industries/ blog/ sitemap.xml 2>/dev/null)" ]; then
   git add industries/ blog/ sitemap.xml
   git -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
-    commit -q -m "drip: inbound content — ${NEXT} (industry + blog pair) ${DATE_STAMP}" 2>&1 | tee -a "$LOG"
+    commit -q -m "drip: inbound content ${DATE_STAMP} — industry: ${IND:-none} | blog: ${BLOG:-none}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   netlify deploy --prod --dir=. 2>&1 | grep -iE "Production URL|Deploy complete|error" | tee -a "$LOG"
-  echo ">>> deployed: ${NEXT}. Sitemap updated for Google rediscovery." | tee -a "$LOG"
+  echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap updated for Google rediscovery." | tee -a "$LOG"
 else
   echo ">>> no changes to deploy (already built?)." | tee -a "$LOG"
 fi
