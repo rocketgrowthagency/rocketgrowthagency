@@ -220,7 +220,7 @@ function render(vertical, slug, c) {
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon.png?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css?v=20260629e" />
   <script defer src="/script.js"></script>
   <script type="application/ld+json">
 ${serviceSchema}
@@ -370,7 +370,7 @@ function buildHub() {
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon.png?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" /><script defer src="/script.js"></script>
+  <link rel="stylesheet" href="/style.css?v=20260629e" /><script defer src="/script.js"></script>
   <style>
     .section.ind-hero{width:100%;max-width:none;margin:0;padding-left:max(1.75rem,calc((100vw - var(--max-width))/2));padding-right:max(1.75rem,calc((100vw - var(--max-width))/2));background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
     .section.ind-hero h1{line-height:1.08;}
