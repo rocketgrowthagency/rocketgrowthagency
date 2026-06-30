@@ -64,21 +64,22 @@ async function openai(model, messages, maxTokens, temp) {
 
 async function generateContent(vertical) {
   const sys = `You are a conversion copywriter + local-SEO strategist for Rocket Growth Agency, an agency that does Google Maps local SEO for local service businesses. You write COMMERCIAL landing pages that convert business owners into free-audit leads — specific, credible, benefit-led, never generic or hypey.`;
-  const user = `Write a COMMERCIAL service landing page: "Local SEO for ${vertical}" — RGA's done-for-you Google Maps local SEO service, tailored to ${vertical} businesses. This is NOT a how-to article; it sells the service. Speak to a ${vertical} owner's real pains (lost calls to competitors ranking above them, no time to do SEO themselves). Be specific to ${vertical}.
+  const user = `Write a COMMERCIAL service landing page: "Local SEO for ${vertical}" — RGA's done-for-you Google Maps local SEO service, tailored to ${vertical} businesses. It SELLS the service (not a how-to). Speak to a ${vertical} owner's real pains. Be specific to ${vertical} throughout — never generic.
 
-Return ONLY JSON:
+Return ONLY JSON with EXACTLY these keys:
 {
  "metaDescription": "150-160 chars, commercial, specific to ${vertical}",
- "heroSub": "1-2 sentence subheadline under the H1 — the promise, specific to ${vertical}",
- "sections": [ { "heading": "H2", "paras": ["..."], "bullets": ["optional"] } ],
+ "heroSub": "1-2 sentence promise under the H1, specific to ${vertical}",
+ "problem": { "heading": "The challenge ${vertical} face on Google Maps (rephrase naturally)", "paras": ["~70-90 words", "~70-90 words"] },
+ "services": [ {"title":"short service name","desc":"2 sentences (~30-45 words), ${vertical}-specific"} ],
+ "process": [ {"title":"step name","desc":"2 sentences (~30-45 words)"} ],
+ "included": ["deliverable bullet specific to ${vertical}", "..."],
+ "whyUs": { "heading":"why a done-for-you partner beats DIY for ${vertical} (rephrase)", "paras":["~70-90 words","~70-90 words"] },
  "ctaHeadline": "final CTA headline (a question), references ${vertical} + ranking/leads",
- "faq": [ { "q": "...", "a": "..." } ]
+ "faq": [ {"q":"commercial Q (pricing/timeline/what's included), ${vertical}-specific","a":"1-3 sentences"} ]
 }
-Requirements:
-- 7 to 8 sections: the problem ${vertical} owners face on Google Maps; what we do (our Maps/GBP/website work applied to ${vertical}); how it works (process/timeline); what makes results stick (the ongoing cadence we run); why ${vertical} owners choose a done-for-you partner over DIY; what's included; getting started. Conversion-focused, concrete, specific to ${vertical}.
-- 3 FAQ (commercial: pricing approach, timeline, what's included — specific to ${vertical}).
-- DEPTH IS MANDATORY: each section MUST have 3 full paragraphs of ~70-90 words each. Total body MUST be AT LEAST 850 words — thin output is rejected and wastes the call. Be thorough and concrete.
-- Plain text only in paras/bullets/faq (no HTML/markdown). No invented precise stats; defensible general terms.`;
+Counts (STRICT): "services" EXACTLY 3 items; "process" EXACTLY 4 items; "included" 5-6 bullets; "faq" EXACTLY 3.
+The "problem" and "whyUs" paragraphs carry the depth (70-90 words each). Be concrete and credible. Plain text only (no HTML/markdown). No invented precise stats; defensible general terms.`;
   const data = await openai(MODEL, [{ role: 'system', content: sys }, { role: 'user', content: user }], 4096, 0.7);
   const u = data.usage || {};
   lastUsage = { cost: (u.prompt_tokens || 0) / 1e6 * 2.5 + (u.completion_tokens || 0) / 1e6 * 10 };
@@ -86,7 +87,13 @@ Requirements:
 }
 
 async function scoreDraft(vertical, c) {
-  const body = (c.sections || []).map((s) => `## ${s.heading}\n${(s.paras || []).join('\n')}`).join('\n\n');
+  const body = [
+    (c.problem?.paras || []).join('\n'),
+    (c.services || []).map((x) => `${x.title}: ${x.desc}`).join('\n'),
+    (c.process || []).map((x) => `${x.title}: ${x.desc}`).join('\n'),
+    (c.included || []).join('\n'),
+    (c.whyUs?.paras || []).join('\n'),
+  ].join('\n\n');
   try {
     const data = await openai('gpt-4o-mini', [{ role: 'user', content: `Strict editor: score this COMMERCIAL "Local SEO for ${vertical}" landing page 1-10 on specificity to ${vertical}, credibility, conversion strength, NOT generic. 7+ publishable. JSON only: {"score":int,"verdict":"...","issues":[]}\n\n${body.slice(0, 6000)}` }], 400, 0.2);
     const u = data.usage || {}; lastEditorCost = (u.prompt_tokens || 0) / 1e6 * 0.15 + (u.completion_tokens || 0) / 1e6 * 0.6;
@@ -98,24 +105,20 @@ const HEADER = `  <div class="topbar"><div class="topbar-inner"><div>Google Maps
   <header class="site-header"><div class="header-inner"><a href="/" class="brand"><img src="/images/assets/rga_icon-header.png?v=20260311a" alt="Rocket Growth Agency logo" /><span class="brand-text">Rocket<span class="brand-growth">Growth</span>Agency</span></a><nav class="desktop-nav" aria-label="Main"><div id="servicesDropdown" class="services-dropdown"><button id="servicesDropdownToggle" class="nav-link dropdown-toggle" aria-expanded="false" aria-controls="servicesDropdownMenu" aria-haspopup="true">Services <span aria-hidden="true">&#9662;</span></button><div id="servicesDropdownMenu" class="dropdown-menu" role="menu" aria-label="Services menu"><a class="nav-link" href="/services/" role="menuitem">All Services</a><a class="nav-link" href="/services/google-maps-local-seo/" role="menuitem">Google Maps Local SEO</a><a class="nav-link" href="/services/gbp-optimization/" role="menuitem">GBP Optimization</a><a class="nav-link" href="/services/local-seo-website-support/" role="menuitem">Website Support for Local SEO</a></div></div><a class="nav-link" href="/industries/">Industries</a><a class="nav-link" href="/process/">Process</a><a class="nav-link" href="/pricing/">Pricing</a><a class="nav-link" href="/blog/">Blog</a><a class="nav-link" href="/contact/">Contact</a></nav><a class="btn desktop-cta" href="/free-growth-audit/">Free Growth Audit</a><button id="mobileNavToggle" class="menu-toggle" aria-controls="mobileNav" aria-expanded="false" onclick="toggleMobileNav()">&#9776;</button></div><nav id="mobileNav" class="mobile-nav" aria-label="Mobile"><a href="/services/">Services</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></nav></header>`;
 const FOOTER = `    <footer class="footer"><div class="footer-inner"><div><h3>Rocket Growth Agency</h3><p>Google Maps Local SEO for local service businesses focused on calls, forms, and measurable growth.</p></div><div><h4>Pages</h4><div class="footer-links"><a href="/services/">Services</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></div></div><div><h4>Legal</h4><div class="footer-links"><a href="/privacy/">Privacy Policy</a><a href="/terms/">Terms of Service</a></div></div></div><div class="footer-bottom">&copy; 2026 Rocket Growth Agency. All rights reserved.</div></footer>
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
+// Minimal scoped extras — the page otherwise reuses the homepage's own components
+// (.section, .section-surface, .section-head, .eyebrow, .grid-3, .card, .btn-ghost).
 const STYLE = `  <style>
-    /* Industry LANDING page — full-width alternating bands (a marketing page, not a boxed article) */
-    .ind-wrap{width:min(880px,calc(100% - 3rem));margin:0 auto;}
-    .ind-hero{padding:3.6rem 0 2.4rem;background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
-    .ind-hero h1{line-height:1.08;margin:.35rem 0 .7rem;}
-    .ind-hero .lead{font-size:1.22rem;line-height:1.55;color:var(--text-700);margin:0 0 1.4rem;max-width:60ch;}
-    .ind-hero .btn{display:inline-block;}
-    .ind-band{padding:2.9rem 0;border-bottom:1px solid #eef1f6;}
-    .ind-band.alt{background:#f6f8fc;}
-    .ind-band h2{margin:0 0 .9rem;line-height:1.2;font-size:1.6rem;}
-    .ind-band p{margin:0 0 1.05rem;line-height:1.75;}
-    .ind-band ul{margin:.3rem 0 1.1rem;padding-left:1.3rem;line-height:1.7;}
-    .ind-band li{margin-bottom:.5rem;}
-    .ind-faq h2{margin-bottom:1.2rem;}
-    .ind-faq h3{margin:1.5rem 0 .35rem;font-size:1.1rem;line-height:1.3;}
-    .ind-faq h3:first-of-type{margin-top:0;}
-    .ind-faq p{margin:0 0 .6rem;line-height:1.7;}
-    .ind-next p{margin:.2rem 0;color:var(--text-700);}
+    .ind-hero{background:linear-gradient(180deg,#eef2fb 0%,#ffffff 100%);}
+    .ind-hero .section-head{margin-bottom:1.2rem;}
+    .ind-hero h1{line-height:1.08;}
+    .ind-step{position:relative;}
+    .ind-step .ind-num{display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:#2f57eb;color:#fff;font-weight:800;font-size:.95rem;margin-bottom:.6rem;}
+    .ind-incl{list-style:none;padding:0;margin:0;display:grid;gap:.55rem;}
+    .ind-incl li{padding-left:1.6rem;position:relative;line-height:1.55;}
+    .ind-incl li::before{content:"✓";position:absolute;left:0;color:#2f57eb;font-weight:800;}
+    .ind-faq h3{margin:1.5rem 0 .35rem;font-size:1.12rem;line-height:1.3;}
+    .ind-faq h3:first-of-type{margin-top:.4rem;}
+    .ind-faq p{margin:0 0 .6rem;line-height:1.7;color:var(--text-700);}
   </style>`;
 
 function render(vertical, slug, c) {
@@ -126,15 +129,15 @@ function render(vertical, slug, c) {
   const blogSlug = `local-seo-for-${slugify(vertical)}`;
   const hasBlog = fs.existsSync(path.join(BLOG_DIR, blogSlug, 'index.html'));
   const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
-  const wordCount = (c.sections || []).reduce((n, s) => n + (s.paras || []).join(' ').split(/\s+/).length, 0);
+  const wordCount = [(c.problem?.paras || []).join(' '), (c.services || []).map((x) => x.desc).join(' '), (c.process || []).map((x) => x.desc).join(' '), (c.included || []).join(' '), (c.whyUs?.paras || []).join(' '), (c.faq || []).map((x) => x.a).join(' ')].join(' ').split(/\s+/).filter(Boolean).length;
 
-  const bandsHtml = (c.sections || []).map((s, i) => {
-    let inner = `      <h2>${esc(s.heading)}</h2>\n` + (s.paras || []).map((p) => `      <p>${esc(p)}</p>`).join('\n');
-    if (s.bullets && s.bullets.length) inner += `\n      <ul>\n` + s.bullets.map((b) => `        <li>${esc(b)}</li>`).join('\n') + `\n      </ul>`;
-    return `    <section class="ind-band${i % 2 ? ' alt' : ''}"><div class="ind-wrap">\n${inner}\n    </div></section>`;
-  }).join('\n');
-  const crossLink = hasBlog ? `      <p><strong>Prefer the DIY playbook first?</strong> Read our free guide: <a href="/blog/${blogSlug}/">Local SEO for ${esc(vertical)} — how to rank in the Maps top 3</a>.</p>` : '';
-  const faqHtml = (c.faq || []).map((f) => `      <h3>${esc(f.q)}</h3>\n      <p>${esc(f.a)}</p>`).join('\n');
+  const problemHtml = (c.problem?.paras || []).map((p) => `        <p>${esc(p)}</p>`).join('\n');
+  const servicesGrid = (c.services || []).slice(0, 3).map((s) => `        <article class="card"><h3>${esc(s.title)}</h3><p>${esc(s.desc)}</p></article>`).join('\n');
+  const processGrid = (c.process || []).slice(0, 4).map((s, i) => `        <article class="card ind-step"><span class="ind-num">${i + 1}</span><h3>${esc(s.title)}</h3><p>${esc(s.desc)}</p></article>`).join('\n');
+  const includedHtml = `        <ul class="ind-incl">\n` + (c.included || []).map((b) => `          <li>${esc(b)}</li>`).join('\n') + `\n        </ul>`;
+  const whyUsHtml = (c.whyUs?.paras || []).map((p) => `        <p>${esc(p)}</p>`).join('\n');
+  const crossLink = hasBlog ? `      <p style="margin-top:1.2rem"><strong>Prefer the DIY playbook first?</strong> Read our free guide: <a href="/blog/${blogSlug}/">Local SEO for ${esc(vertical)} — how to rank in the Maps top 3</a>.</p>` : '';
+  const faqHtml = (c.faq || []).map((f) => `        <h3>${esc(f.q)}</h3>\n        <p>${esc(f.a)}</p>`).join('\n');
 
   const serviceSchema = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Service', name: h1, serviceType: 'Local SEO', description: c.metaDescription, areaServed: 'United States', provider: { '@type': 'Organization', name: 'Rocket Growth Agency', url: 'https://www.rocketgrowthagency.com/' }, url }, null, 2);
   const faqSchema = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (c.faq || []).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }, null, 2);
@@ -181,21 +184,65 @@ ${STYLE}
 ${HEADER}
 
   <main id="main">
-    <section class="ind-hero"><div class="ind-wrap">
-      <p class="eyebrow">Industries &bull; Done-for-you local SEO</p>
-      <h1>${esc(h1)}</h1>
-      <p class="lead">${esc(c.heroSub)}</p>
+    <section class="section ind-hero">
+      <div class="section-head">
+        <p class="eyebrow">Industries &bull; Done-for-you local SEO</p>
+        <h1>${esc(h1)}</h1>
+        <p class="lead">${esc(c.heroSub)}</p>
+      </div>
       <a class="btn" href="/free-growth-audit/">Get Your Free Growth Audit</a>
-    </div></section>
-${bandsHtml}
-    <section class="ind-band alt ind-faq"><div class="ind-wrap">
-      <h2>Frequently asked questions</h2>
-${faqHtml}
-    </div></section>
-    <section class="ind-band ind-next"><div class="ind-wrap">
+    </section>
+
+    <section class="section section-tight">
+      <div class="section-head">
+        <p class="eyebrow">The Challenge</p>
+        <h2>${esc(c.problem?.heading || `Why ${vertical} struggle on Google Maps`)}</h2>
+      </div>
+${problemHtml}
+    </section>
+
+    <section class="section section-surface">
+      <div class="section-head">
+        <p class="eyebrow">What We Do</p>
+        <h2>Our ${esc(h1.replace(/^Local SEO for /, ''))} local SEO service</h2>
+        <p class="lead">Done-for-you Google Maps, profile, and website work — built around how your customers actually search.</p>
+      </div>
+      <div class="grid-3">
+${servicesGrid}
+      </div>
+    </section>
+
+    <section class="section section-tight">
+      <div class="section-head">
+        <p class="eyebrow">How It Works</p>
+        <h2>A clear, managed process</h2>
+      </div>
+      <div class="grid-3">
+${processGrid}
+      </div>
+    </section>
+
+    <section class="section section-surface">
+      <div class="section-head">
+        <p class="eyebrow">Why Done-For-You</p>
+        <h2>${esc(c.whyUs?.heading || 'Why owners choose a partner over DIY')}</h2>
+      </div>
+      <div class="grid-2">
+        <article class="card"><h3>What's included</h3>
+${includedHtml}
+        </article>
+        <article class="card"><h3>Why it works</h3>
+${whyUsHtml}
+        </article>
+      </div>
 ${crossLink}
-      <p><strong>Next step:</strong> <a href="/services/google-maps-local-seo/">how our Google Maps Local SEO works</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.</p>
-    </div></section>
+    </section>
+
+    <section class="section section-tight ind-faq">
+      <div class="section-head"><p class="eyebrow">FAQ</p><h2>Frequently asked questions</h2></div>
+${faqHtml}
+      <p style="margin-top:1.4rem"><strong>Next step:</strong> <a href="/services/google-maps-local-seo/">how our Google Maps Local SEO works</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.</p>
+    </section>
   </main>
 
   <section class="cta-band"><div class="cta-band-inner"><h2>${esc(c.ctaHeadline)}</h2><a class="btn-light" href="/free-growth-audit/">Get Your Free Growth Audit</a></div></section>
@@ -207,9 +254,11 @@ ${FOOTER}
 
 function assertQuality(html, meta) {
   const errs = [];
-  if (meta.wordCount < 600) errs.push(`thin: ${meta.wordCount} words`);
+  if (meta.wordCount < 330) errs.push(`thin: ${meta.wordCount} words`);
   if (!html.includes('"Service"')) errs.push('missing Service schema');
   if (!html.includes('FAQPage')) errs.push('missing FAQ schema');
+  if (!html.includes('class="grid-3"')) errs.push('missing service/process card grids');
+  if ((html.match(/class="card"/g) || []).length < 3) errs.push('missing service cards');
   if (!html.includes('/free-growth-audit/')) errs.push('missing CTA');
   if (!html.includes('/services/google-maps-local-seo/')) errs.push('missing service link');
   if (errs.length) throw new Error('GUARD: ' + errs.join('; '));
