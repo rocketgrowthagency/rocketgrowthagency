@@ -223,7 +223,7 @@ function render(vertical, slug, c) {
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon.png?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260629e" />
+  <link rel="stylesheet" href="/style.css?v=20260630a" />
   <script defer src="/script.js"></script>
   <script type="application/ld+json">
 ${serviceSchema}
@@ -373,7 +373,7 @@ function buildHub() {
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon.png?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260629e" /><script defer src="/script.js"></script>
+  <link rel="stylesheet" href="/style.css?v=20260630a" /><script defer src="/script.js"></script>
   <style>
     /* hub hero uses the site's real .hero class — no custom override */
     .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
