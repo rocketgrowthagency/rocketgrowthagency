@@ -1,0 +1,15 @@
+{
+  "_note": "The 50 business types for OUTREACH (Chris 2026-07-01: 'we do outreach to ALL 50'). Paired with config/socal-cities.json (city-first proximity order). next-search.mjs returns the nearest unscraped city+vertical. Real estate agents kept in 'excluded' (Chris delisted them + no own websites → step-3 renders fail). Move to 'verticals' to include.",
+  "verticals": [
+    "HVAC","Plumbers","Roofers","Foundation repair","Pest control","Electricians","Garage door repair",
+    "Landscapers","Tree service","Painters","Flooring contractors","Handyman services","Window cleaning",
+    "Carpet cleaning","Pool service","Junk removal","Movers","Locksmiths","Home cleaning services",
+    "Kitchen remodeling","Bathroom remodeling","Auto repair","Body shop","Auto glass repair","Auto detailing",
+    "Towing services","Personal injury lawyers","DUI lawyers","Family lawyers","Estate planning lawyers",
+    "Bankruptcy lawyers","Plastic surgeons","Dermatologists","Med spas","Orthodontists","Cosmetic dentists",
+    "Optometrists","Chiropractors","Physical therapists","Veterinarians","Mental health therapists",
+    "Solar installers","Insurance agents","Mortgage brokers","CPAs","Wedding photographers","Yoga studios",
+    "Hair salons","Pet grooming"
+  ],
+  "excluded": ["Real estate agents"]
+}
