@@ -68,44 +68,93 @@ async function openai(model, messages, maxTokens, temp) {
 }
 
 async function generateContent(vertical) {
-  const sys = `You are a conversion copywriter + local-SEO strategist for Rocket Growth Agency, an agency that does Google Maps local SEO for local service businesses. You write COMMERCIAL landing pages that convert business owners into free-audit leads — specific, credible, benefit-led, never generic or hypey. CRITICAL: every page you write must read as if it were written ONLY for this one industry — a reader in that trade should recognize their exact world. Never reuse template phrasing across industries.`;
-  const user = `Write a COMMERCIAL service landing page: "Local SEO for ${vertical}" — RGA's done-for-you Google Maps local SEO service, tailored to ${vertical} businesses. It SELLS the service (not a how-to). Speak to a ${vertical} owner's real pains. Be specific to ${vertical} throughout — never generic.
+  const sys = `You are a senior local-SEO strategist + conversion copywriter for Rocket Growth Agency (done-for-you Google Maps local SEO for local service businesses). You write COMMERCIAL landing pages that are GENUINELY UNIQUE per trade. Google's scaled-content-abuse + doorway-page policies DEMOTE templated, near-duplicate pages, so every page must read as if written ONLY for this one trade.
+THE TRADE-SWAP TEST (apply to every sentence — especially the opener + FAQ): if a line would still make sense with a DIFFERENT trade's name swapped in, it is generic and FAILS. The first sentence and the FAQ must contain details that are FALSE or nonsensical for any other trade.
+CRITICAL VOICE RULE — never break it: The READER is the OWNER of the ${vertical} business. YOU are Rocket Growth Agency, the marketing agency that gets THEIR business to the top of Google Maps. So "we / our / us" ALWAYS means RGA's SEO service — NEVER the ${vertical}'s field work. NEVER write in the trade's own customer-facing ad voice: forbidden are lines like "our team is ready 24/7", "we're fully licensed and insured", "call us for your plumbing needs", "book your appointment today". The customer's trigger event (burst pipe, toothache, car accident) is only a HOOK to illustrate the moment a customer searches Google Maps — then PIVOT to: that searching customer should find the OWNER's business, and RGA makes that happen. Address the owner as "you/your business"; describe THEIR customers in the third person ("homeowners search…", "your patients look for…").`;
+  const user = `Write a COMMERCIAL "Local SEO for ${vertical}" landing page for RGA's done-for-you Google Maps service.
 
-UNIQUENESS (mandatory — this page must NOT read like a template):
-- Do NOT open with generic boilerplate like "Our Google Maps SEO service is designed to..." or "Struggling to be found online?". Write a fresh hook grounded in how THIS industry's customers actually search and choose.
-- Anchor the whole page in ${vertical} reality: how their customers search (the actual phrases + urgency level), the real GBP primary/secondary categories for ${vertical}, seasonality/demand patterns, the specific objections and competitors, typical job/ticket value, and the real conversion path (call vs form vs booking).
-- Use concrete ${vertical} examples and language an owner would recognize. Vary your structure and emphasis — lead with whatever matters most for THIS industry, not a fixed formula.
+FIRST, silently establish THIS trade's reality (use it throughout; do NOT output it as its own section):
+- Search intent: emergency / considered-research / relationship-recurring / high-stakes-one-time?
+- The buyer's real TRIGGER EVENT + urgency (e.g. burst pipe at 2am; hailstorm tore off shingles; sudden toothache; just got in a car accident).
+- Avg ticket tier (low/mid/high) → dictates proof type + CTA.
+- Seasonality (or year-round steady).
+- 3-5 REAL search phrases ${vertical} customers actually type (e.g. "emergency plumber near me open now").
+- The licensing/credential body for this trade (state contractor license / state bar / dental board / medical board / etc.).
+- 2-3 real objections a buyer has before calling a ${vertical}.
+- Which proof converts for this trade (response time / warranties / case results / financing / reviews / before-after).
+
+Then write the page GROUNDED in that reality.
+
+HARD UNIQUENESS RULES:
+- OPENING (heroSub): lead with a trade-TRUE detail — a specific trigger event, number, season, or the exact phrase this trade's customer searches. Choose the hook that fits the intent (vivid scenario / a stat / a myth-buster / the trigger moment).
+- BANNED phrases — never use, anywhere, ESPECIALLY the opener + meta: "Boost your ${vertical}", "tailored Google Maps SEO", "In today's competitive landscape", "In today's digital", "Are you a ${vertical} looking to", "Whether you're a", "Struggling to be found", "take your business to the next level", "stand out from the competition". Any opener that reads the same with the trade word swapped = REWRITE it.
+- ~30% of the page must be trade-specific SUBSTANCE (real search phrases, GBP categories, seasonality, licensing, objections) — not generic benefits or synonym-spin.
+- CTA must match urgency/ticket: emergency trades → "call now" energy; legal → "free case review"; dental/medical → "book a consultation".
+- FAQ must be the EXACT questions THIS trade's buyers ask (drawn from the search phrases + objections) — never "what's your service area" filler.
 
 Return ONLY JSON with EXACTLY these keys:
 {
- "metaDescription": "150-160 chars, commercial, specific to ${vertical}",
- "heroSub": "1-2 sentence promise under the H1, specific to ${vertical}",
- "problem": { "heading": "The challenge ${vertical} face on Google Maps (rephrase naturally)", "paras": ["~70-90 words", "~70-90 words"] },
+ "metaDescription": "120-160 chars. UNIQUE to ${vertical}. Speak to the BUSINESS OWNER ('your business/practice/firm'), NEVER the end customer ('your home/kitchen/foundation/tooth'). Describe the customer's trigger in THIRD person ('when a homeowner's pipe bursts…'), then pivot to getting the OWNER found on Google Maps. Lead with the trigger + one concrete proof point + a trade-appropriate CTA verb. NEVER start with 'Boost your'.",
+ "heroSub": "the opening HOOK (1-2 sentences) — a trade-TRUE scene / stat / trigger moment. NOT boilerplate.",
+ "problem": { "heading": "trade-specific challenge headline (NOT 'The challenge X face on Google Maps')", "paras": ["~70-90 words grounded in how this trade's customers search + what's at stake", "~70-90 words"] },
  "services": [ {"title":"short service name","desc":"2 sentences (~30-45 words), ${vertical}-specific"} ],
  "process": [ {"title":"step name","desc":"2 sentences (~30-45 words)"} ],
  "included": ["deliverable bullet specific to ${vertical}", "..."],
- "whyUs": { "heading":"why a done-for-you partner beats DIY for ${vertical} (rephrase)", "paras":["~70-90 words","~70-90 words"] },
- "ctaHeadline": "final CTA headline (a question), references ${vertical} + ranking/leads",
- "faq": [ {"q":"commercial Q (pricing/timeline/what's included), ${vertical}-specific","a":"1-3 sentences"} ]
+ "whyUs": { "heading":"trade-specific reason done-for-you beats DIY (NOT generic)", "paras":["~70-90 words","~70-90 words"] },
+ "ctaHeadline": "final CTA headline (a question) matching this trade's urgency + ticket",
+ "faq": [ {"q":"a question THIS trade's buyer actually asks (from search phrases/objections)","a":"1-3 sentences"} ]
 }
-Counts (STRICT): "services" EXACTLY 3 items; "process" EXACTLY 4 items; "included" 5-6 bullets; "faq" EXACTLY 3.
-The "problem" and "whyUs" paragraphs carry the depth (70-90 words each). Be concrete and credible. Plain text only (no HTML/markdown). No invented precise stats; defensible general terms.`;
+Counts (STRICT): services EXACTLY 3; process EXACTLY 4; included 5-6; faq EXACTLY 4.
+Plain text only (no HTML/markdown). No invented precise stats (use defensible general terms). Before returning, apply the trade-swap test to the heroSub, metaDescription, and every FAQ — rewrite anything that passes for a different trade.`;
   const data = await openai(MODEL, [{ role: 'system', content: sys }, { role: 'user', content: user }], 4096, 0.7);
   const u = data.usage || {};
   lastUsage = { cost: (u.prompt_tokens || 0) / 1e6 * 2.5 + (u.completion_tokens || 0) / 1e6 * 10 };
   return JSON.parse(data.choices[0].message.content);
 }
 
+// Deterministic uniqueness gate — reject templated/banned openers before the editor sees them.
+const BANNED_RE = /boost your |tailored google maps seo|in today'?s (competitive|digital)|are you (a|an) .{2,30} looking to|whether you'?re (a|an) |struggling to be found|to the next level|stand out from the competition|in the digital age/i;
+// Voice-slip gate: RGA is the SEO agency, NOT the trade. Reject drafts that lapse into the
+// trade's own customer-facing field-service voice ("our team is ready 24/7", "we're licensed
+// & insured", "call us for your … needs", "book your appointment today"). Caught 2026-07-01
+// on Plumbers ("our team is ready 24/7 to tackle any plumbing crisis. Fully licensed.").
+const VOICE_SLIP_RE = /\b(our (team|technicians|crew|staff|plumbers|electricians|roofers|dentists|attorneys|contractors)\b.{0,40}\b(ready|available|standing by|24\/7|on call|dispatch))|we(?:'re| are) (fully )?(licensed|insured|bonded|certified)|(call|contact|book|schedule) (us|with us|your (free )?(appointment|consultation|estimate|service)) (today|now)\b.{0,30}\b(needs|service|repair|installation)|(our|your) (plumbing|roofing|dental|legal|hvac|electrical|remodeling) (crisis|emergency|needs|services) (is|are) (ready|handled|covered)/i;
+function bannedReason(c) {
+  const opener = `${c.metaDescription || ''} || ${c.heroSub || ''} || ${(c.problem && c.problem.paras && c.problem.paras[0]) || ''}`;
+  if (BANNED_RE.test(opener)) return 'banned/templated phrasing';
+  if ((c.metaDescription || '').trim().toLowerCase().startsWith('boost your')) return 'meta starts with "Boost your"';
+  if (!c.heroSub || c.heroSub.trim().length < 40) return 'heroSub too thin/generic';
+  if ((c.faq || []).length < 4) return 'need 4 trade-specific FAQs';
+  // Customer-address slip in the META/opener: 2nd-person "your <customer-owned thing>" means the
+  // copy is talking to the END CUSTOMER (homeowner/patient), not the business OWNER we're selling to.
+  // Owner-directed "your business/practice/firm/customers" is fine; "your kitchen/home/foundation/tooth"
+  // is not. Caught 2026-07-01 (foundation-repair, kitchen-remodeling, remodeling-contractors).
+  const CUSTOMER_ADDR_RE = /\byour (home|house|kitchen|bathroom|foundation|roof|renovation|remodel|property|tooth|teeth|smile|energy bill|air ?condition|furnace|yard|garden|pool|pipes?|drain)\b/i;
+  if (CUSTOMER_ADDR_RE.test(`${c.metaDescription || ''} ${c.heroSub || ''}`)) return 'opener addresses the customer ("your <thing>"), not the business owner';
+  // Scan ALL prose (services/process/included/whyUs/faq) for trade-voice slips, not just the opener.
+  const allProse = [
+    c.metaDescription, c.heroSub, ...(c.problem?.paras || []), ...(c.whyUs?.paras || []),
+    ...(c.services || []).map((x) => `${x.title} ${x.desc}`),
+    ...(c.process || []).map((x) => `${x.title} ${x.desc}`),
+    ...(c.included || []), ...(c.faq || []).map((x) => `${x.q} ${x.a}`),
+  ].join(' \n ');
+  if (VOICE_SLIP_RE.test(allProse)) return 'trade-voice slip (reads like the trade’s own ad, not RGA)';
+  return null;
+}
+
 async function scoreDraft(vertical, c) {
   const body = [
+    `META: ${c.metaDescription || ''}`,
+    `OPENER: ${c.heroSub || ''}`,
     (c.problem?.paras || []).join('\n'),
     (c.services || []).map((x) => `${x.title}: ${x.desc}`).join('\n'),
     (c.process || []).map((x) => `${x.title}: ${x.desc}`).join('\n'),
     (c.included || []).join('\n'),
     (c.whyUs?.paras || []).join('\n'),
+    `FAQ: ${(c.faq || []).map((x) => x.q).join(' | ')}`,
   ].join('\n\n');
   try {
-    const data = await openai('gpt-4o-mini', [{ role: 'user', content: `Strict editor: score this COMMERCIAL "Local SEO for ${vertical}" landing page 1-10 on specificity to ${vertical}, credibility, conversion strength, NOT generic. 7+ publishable. JSON only: {"score":int,"verdict":"...","issues":[]}\n\n${body.slice(0, 6000)}` }], 400, 0.2);
+    const data = await openai('gpt-4o-mini', [{ role: 'user', content: `Strict editor for a "Local SEO for ${vertical}" landing page. Score 1-10. The #1 criterion is the TRADE-SWAP TEST: would the OPENER, META, and FAQ still make sense if you swapped in a DIFFERENT trade? If yes → it's generic/templated → score ≤5. Reward: trade-specific trigger events, real customer search phrases, this trade's licensing/objections/seasonality, and a meta that is NOT a "Boost your…" template. 7+ = genuinely unique + publishable. JSON only: {"score":int,"verdict":"...","issues":[]}\n\n${body.slice(0, 6000)}` }], 400, 0.2);
     const u = data.usage || {}; lastEditorCost = (u.prompt_tokens || 0) / 1e6 * 0.15 + (u.completion_tokens || 0) / 1e6 * 0.6;
     return JSON.parse(data.choices[0].message.content);
   } catch { return { score: 7, verdict: 'editor unavailable', issues: [] }; }
@@ -446,16 +495,23 @@ for (const vertical of workList) {
   if (fs.existsSync(file) && !FORCE) { console.log(`SKIP ${vertical} — exists.`); continue; }
   process.stdout.write(`Generating industry page "${vertical}"... `);
   try {
-    let rendered = null, runCost = 0, lastErr = null, verdict = null;
-    for (let a = 1; a <= 3; a++) {
+    // Ban gate + assertQuality = HARD floor (guarantees non-templated, structurally valid).
+    // Editor score = SOFT ranking. We keep the best ban-clean attempt and ship it even if it
+    // never clears EDITOR_MIN — so we NEVER leave a stale "Boost your" file on disk. Only a
+    // total ban-gate/structure failure (no shippable attempt at all) throws.
+    let rendered = null, runCost = 0, lastErr = null, verdict = null, best = null;
+    for (let a = 1; a <= 4; a++) {
       const content = await generateContent(vertical); runCost += lastUsage.cost;
+      const br = bannedReason(content); if (br) { lastErr = new Error(br); process.stdout.write(`[retry ${a}: ${br}] `); continue; }
       const r = render(vertical, slug, content);
       try { assertQuality(r.html, r); } catch (qe) { lastErr = qe; process.stdout.write(`[retry ${a}: ${qe.message}] `); continue; }
       const v = await scoreDraft(vertical, content); runCost += lastEditorCost;
+      if (!best || v.score > best.verdict.score) best = { r, verdict: v };   // remember best ban-clean draft
       if (v.score < EDITOR_MIN) { lastErr = new Error(`editor ${v.score}`); process.stdout.write(`[retry ${a}: editor ${v.score}] `); continue; }
       rendered = r; verdict = v; break;
     }
-    if (!rendered) throw lastErr || new Error('failed after 3 attempts');
+    if (!rendered && best) { rendered = best.r; verdict = best.verdict; process.stdout.write(`[shipping best ban-clean draft: editor ${verdict.score}] `); }
+    if (!rendered) throw lastErr || new Error('failed after 4 attempts');
     fs.mkdirSync(path.join(IND_DIR, slug), { recursive: true });
     fs.writeFileSync(file, rendered.html);
     spend.cost += runCost; spend.posts += 1; writeSpend(spend); made++;
