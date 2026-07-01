@@ -94,7 +94,7 @@ HARD UNIQUENESS RULES:
 
 Return ONLY JSON with EXACTLY these keys:
 {
- "metaDescription": "120-160 chars. UNIQUE to ${vertical}. Speak to the BUSINESS OWNER ('your business/practice/firm'), NEVER the end customer ('your home/kitchen/foundation/tooth'). Describe the customer's trigger in THIRD person ('when a homeowner's pipe bursts…'), then pivot to getting the OWNER found on Google Maps. Lead with the trigger + one concrete proof point + a trade-appropriate CTA verb. NEVER start with 'Boost your'.",
+ "metaDescription": "The SEO meta/snippet — 130-160 chars, industry-standard formula: (1) START with the keyword 'Local SEO for ${vertical}' (or close variant 'Google Maps SEO for ${vertical}') so it ranks + Google bolds it; (2) ONE benefit specific to THIS trade's real payoff (plumbers→more emergency calls; dentists→booked new-patient appointments; lawyers→high-value cases; roofers→storm-season jobs; solar→financing-ready leads) — this clause is what makes it UNIQUE per trade; (3) a short CTA ('Get a free growth audit.'). Owner-voice ('your business'), NOT the customer. Do NOT open with a story/scene ('When a homeowner…') — that belongs in heroSub, never the snippet. NEVER 'Boost your'.",
  "heroSub": "the opening HOOK (1-2 sentences) — a trade-TRUE scene / stat / trigger moment. NOT boilerplate.",
  "problem": { "heading": "trade-specific challenge headline (NOT 'The challenge X face on Google Maps')", "paras": ["~70-90 words grounded in how this trade's customers search + what's at stake", "~70-90 words"] },
  "services": [ {"title":"short service name","desc":"2 sentences (~30-45 words), ${vertical}-specific"} ],
@@ -119,10 +119,18 @@ const BANNED_RE = /boost your |tailored google maps seo|in today'?s (competitive
 // & insured", "call us for your … needs", "book your appointment today"). Caught 2026-07-01
 // on Plumbers ("our team is ready 24/7 to tackle any plumbing crisis. Fully licensed.").
 const VOICE_SLIP_RE = /\b(our (team|technicians|crew|staff|plumbers|electricians|roofers|dentists|attorneys|contractors)\b.{0,40}\b(ready|available|standing by|24\/7|on call|dispatch))|we(?:'re| are) (fully )?(licensed|insured|bonded|certified)|(call|contact|book|schedule) (us|with us|your (free )?(appointment|consultation|estimate|service)) (today|now)\b.{0,30}\b(needs|service|repair|installation)|(our|your) (plumbing|roofing|dental|legal|hvac|electrical|remodeling) (crisis|emergency|needs|services) (is|are) (ready|handled|covered)/i;
-function bannedReason(c) {
+function bannedReason(vertical, c) {
   const opener = `${c.metaDescription || ''} || ${c.heroSub || ''} || ${(c.problem && c.problem.paras && c.problem.paras[0]) || ''}`;
   if (BANNED_RE.test(opener)) return 'banned/templated phrasing';
-  if ((c.metaDescription || '').trim().toLowerCase().startsWith('boost your')) return 'meta starts with "Boost your"';
+  const meta = (c.metaDescription || '').trim();
+  const metaLow = meta.toLowerCase();
+  if (metaLow.startsWith('boost your')) return 'meta starts with "Boost your"';
+  // The META is the SERP snippet + hub card: enforce the industry-standard keyword formula.
+  // No story-scene opener ("When a homeowner…") — that belongs in heroSub, not the snippet.
+  if (/^when\s+(a\s+|an\s+|the\s+)?(home\s?owner|customer|client|patient|resident|property\s?owner|you\b)/i.test(meta)) return 'meta opens with a story scene — start with the keyword "Local SEO for <trade>"';
+  // Must be keyword-forward: contain the trade name AND a local-SEO/Maps signal near the front.
+  if (!metaLow.includes(vertical.toLowerCase())) return 'meta missing the trade keyword';
+  if (!/local seo|google maps|local pack|top 3|top three/i.test(metaLow)) return 'meta missing the local-SEO/Maps keyword';
   if (!c.heroSub || c.heroSub.trim().length < 40) return 'heroSub too thin/generic';
   if ((c.faq || []).length < 4) return 'need 4 trade-specific FAQs';
   // Customer-address slip in the META/opener: 2nd-person "your <customer-owned thing>" means the
@@ -502,7 +510,7 @@ for (const vertical of workList) {
     let rendered = null, runCost = 0, lastErr = null, verdict = null, best = null;
     for (let a = 1; a <= 4; a++) {
       const content = await generateContent(vertical); runCost += lastUsage.cost;
-      const br = bannedReason(content); if (br) { lastErr = new Error(br); process.stdout.write(`[retry ${a}: ${br}] `); continue; }
+      const br = bannedReason(vertical, content); if (br) { lastErr = new Error(br); process.stdout.write(`[retry ${a}: ${br}] `); continue; }
       const r = render(vertical, slug, content);
       try { assertQuality(r.html, r); } catch (qe) { lastErr = qe; process.stdout.write(`[retry ${a}: ${qe.message}] `); continue; }
       const v = await scoreDraft(vertical, content); runCost += lastEditorCost;
