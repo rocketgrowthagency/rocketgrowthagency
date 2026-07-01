@@ -14,24 +14,33 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JWT } from 'google-auth-library';
+import { JWT, GoogleAuth } from 'google-auth-library';
 
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(fs.readFileSync(path.join(SCRAPER_DIR, '.env'), 'utf8').split('\n').filter(Boolean).map((l) => { const i = l.indexOf('='); return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
 
 const KEY_FILE = env.GOOGLE_SA_KEY_FILE;
 const GA4_PROPERTY = env.GA4_PROPERTY_ID || '514075067';           // keeper property
-const GSC_SITE = env.GSC_SITE_URL || 'https://www.rocketgrowthagency.com/';
+const GSC_SITE = process.env.GSC_SITE_URL || env.GSC_SITE_URL || 'sc-domain:rocketgrowthagency.com';
 const SITEMAP = 'https://www.rocketgrowthagency.com/sitemap.xml';
 const ARGS = process.argv.slice(2);
 const RUN = (f) => ARGS.length === 0 || ARGS.includes(f);
 
-if (!KEY_FILE || !fs.existsSync(KEY_FILE)) {
-  console.error(`\n[setup-analytics] No service-account key found.\n  Add to Scraper .env:  GOOGLE_SA_KEY_FILE=/absolute/path/to/key.json\n  (current value: ${KEY_FILE || '(unset)'})\n`);
-  process.exit(2);
-}
-const key = JSON.parse(fs.readFileSync(KEY_FILE, 'utf8'));
+// AUTH: prefer a service-account key file if present; otherwise fall back to Application Default
+// Credentials (ADC) — i.e. the user's own gcloud login. ADC is what we use here because the org
+// policy `iam.disableServiceAccountKeyCreation` blocks downloadable SA keys. Chris runs once:
+//   gcloud auth application-default login --scopes=openid,\
+//     https://www.googleapis.com/auth/analytics.edit,https://www.googleapis.com/auth/webmasters
+// Since Chris already owns GA4 + Search Console, ADC-as-Chris has all needed access (no SA grant).
+const USE_ADC = !KEY_FILE || !fs.existsSync(KEY_FILE);
+const key = USE_ADC ? null : JSON.parse(fs.readFileSync(KEY_FILE, 'utf8'));
 async function token(scopes) {
+  if (USE_ADC) {
+    const client = await new GoogleAuth({ scopes }).getClient();
+    const t = await client.getAccessToken();
+    if (!t || !t.token) throw new Error('No ADC token — run: gcloud auth application-default login --scopes=openid,https://www.googleapis.com/auth/analytics.edit,https://www.googleapis.com/auth/webmasters');
+    return t.token;
+  }
   const client = new JWT({ email: key.client_email, key: key.private_key, scopes });
   const { access_token } = await client.authorize();
   return access_token;
@@ -54,7 +63,7 @@ const DIMENSIONS = [
 ];
 
 (async () => {
-  console.log(`[setup-analytics] SA: ${key.client_email}\n  GA4 property: ${GA4_PROPERTY} | GSC site: ${GSC_SITE}\n`);
+  console.log(`[setup-analytics] auth: ${USE_ADC ? 'ADC (your gcloud login)' : 'service-account key ' + key.client_email}\n  GA4 property: ${GA4_PROPERTY} | GSC site: ${GSC_SITE}\n`);
 
   if (RUN('--check')) {
     const t = await token(['https://www.googleapis.com/auth/analytics.readonly', 'https://www.googleapis.com/auth/webmasters.readonly']);
