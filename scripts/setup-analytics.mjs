@@ -20,7 +20,7 @@ const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const env = Object.fromEntries(fs.readFileSync(path.join(SCRAPER_DIR, '.env'), 'utf8').split('\n').filter(Boolean).map((l) => { const i = l.indexOf('='); return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
 
 const KEY_FILE = env.GOOGLE_SA_KEY_FILE;
-const GA4_PROPERTY = env.GA4_PROPERTY_ID || '514075067';           // keeper property
+const GA4_PROPERTY = env.GA4_PROPERTY_ID || '529089636';           // keeper property
 const GSC_SITE = process.env.GSC_SITE_URL || env.GSC_SITE_URL || 'sc-domain:rocketgrowthagency.com';
 const SITEMAP = 'https://www.rocketgrowthagency.com/sitemap.xml';
 const ARGS = process.argv.slice(2);
