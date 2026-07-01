@@ -24,6 +24,10 @@ catch (e) { console.error('[next-search] cannot read socal-cities.json:', e.mess
 try { verticals = JSON.parse(fs.readFileSync(path.join(SCRAPER_DIR, 'config', 'outreach-verticals.json'), 'utf8')).verticals; }
 catch (e) { console.error('[next-search] cannot read outreach-verticals.json:', e.message); process.exit(2); }
 
+// Normalize a Search Term so "HVAC in Culver City, CA" == "HVAC in Culver City CA" == "hvac in culver
+// city  ca" — Airtable stores the comma form, older runs used no comma. Compare on the normalized key.
+const norm = (s) => String(s).toLowerCase().replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+
 // Pull every Search Term already scraped (a lead exists → that city+vertical is done).
 async function scrapedSet() {
   const set = new Set(); let off = null;
@@ -34,7 +38,7 @@ async function scrapedSet() {
     const r = await fetch(u, { headers: { Authorization: `Bearer ${KEY}` } });
     if (!r.ok) { console.error('[next-search] Airtable error', r.status); process.exit(2); }
     const d = await r.json();
-    for (const rec of (d.records || [])) { const s = rec.fields['Search Term']; if (s) set.add(String(s).trim().toLowerCase()); }
+    for (const rec of (d.records || [])) { const s = rec.fields['Search Term']; if (s) set.add(norm(s)); }
     off = d.offset;
   } while (off);
   return set;
@@ -43,8 +47,8 @@ async function scrapedSet() {
 const done = await scrapedSet();
 for (const city of cities) {
   for (const v of verticals) {
-    const q = `${v} in ${city} CA`;
-    if (!done.has(q.toLowerCase())) { process.stdout.write(q); process.exit(0); }
+    const q = `${v} in ${city}, CA`;              // match Airtable's stored comma format
+    if (!done.has(norm(q))) { process.stdout.write(q); process.exit(0); }
   }
 }
 console.error(`[next-search] SoCal exhausted — all ${cities.length} cities × ${verticals.length} verticals scraped. Time for NorCal.`);
