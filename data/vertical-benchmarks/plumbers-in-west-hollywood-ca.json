@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Plumbers in West Hollywood CA",
+  "auditedDate": "2026-06-17",
+  "source": "serpapi",
+  "leadsAudited": 7,
+  "categoryDistributionTop10": {
+    "Plumber": 7
+  },
+  "categoryDistributionTop5": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop3": {
+    "Plumber": 3
+  },
+  "majorityCategoryTop10": "Plumber",
+  "majorityCategoryTop5": "Plumber",
+  "majorityCategoryTop3": "Plumber",
+  "reviewsTop10": {
+    "min": 23,
+    "max": 136,
+    "median": 55,
+    "p25": 24,
+    "p75": 130
+  },
+  "reviewsTop3Avg": 75,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Real estate agents in Napa CA",
+  "auditedDate": "2026-06-30",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Real estate agency": 6,
+    "Real estate agent": 4
+  },
+  "categoryDistributionTop5": {
+    "Real estate agency": 3,
+    "Real estate agent": 2
+  },
+  "categoryDistributionTop3": {
+    "Real estate agency": 2,
+    "Real estate agent": 1
+  },
+  "majorityCategoryTop10": "Real estate agency",
+  "majorityCategoryTop5": "Real estate agency",
+  "majorityCategoryTop3": "Real estate agency",
+  "reviewsTop10": {
+    "min": 8,
+    "max": 246,
+    "median": 32.5,
+    "p25": 13,
+    "p75": 71
+  },
+  "reviewsTop3Avg": 120,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

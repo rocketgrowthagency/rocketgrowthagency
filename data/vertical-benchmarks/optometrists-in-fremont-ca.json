@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Optometrists in Fremont, CA",
+  "auditedDate": "2026-06-25",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Optometrist": 10
+  },
+  "categoryDistributionTop5": {
+    "Optometrist": 5
+  },
+  "categoryDistributionTop3": {
+    "Optometrist": 3
+  },
+  "majorityCategoryTop10": "Optometrist",
+  "majorityCategoryTop5": "Optometrist",
+  "majorityCategoryTop3": "Optometrist",
+  "reviewsTop10": {
+    "min": 10,
+    "max": 504,
+    "median": 302.5,
+    "p25": 118,
+    "p75": 336
+  },
+  "reviewsTop3Avg": 358,
+  "ratingTop10Median": 4.75,
+  "ratingTop3Avg": 4.67,
+  "findingsDisabled": [],
+  "notes": null
+}

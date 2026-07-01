@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Plumbers in Burbank, CA",
+  "auditedDate": "2026-06-20",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plumber": 10
+  },
+  "categoryDistributionTop5": {
+    "Plumber": 5
+  },
+  "categoryDistributionTop3": {
+    "Plumber": 3
+  },
+  "majorityCategoryTop10": "Plumber",
+  "majorityCategoryTop5": "Plumber",
+  "majorityCategoryTop3": "Plumber",
+  "reviewsTop10": {
+    "min": 25,
+    "max": 381,
+    "median": 80,
+    "p25": 46,
+    "p75": 201
+  },
+  "reviewsTop3Avg": 255,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

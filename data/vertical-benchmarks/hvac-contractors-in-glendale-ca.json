@@ -1,0 +1,30 @@
+{
+  "searchTerm": "HVAC contractors in Glendale, CA",
+  "auditedDate": "2026-06-19",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "HVAC contractor": 10
+  },
+  "categoryDistributionTop5": {
+    "HVAC contractor": 5
+  },
+  "categoryDistributionTop3": {
+    "HVAC contractor": 3
+  },
+  "majorityCategoryTop10": "HVAC contractor",
+  "majorityCategoryTop5": "HVAC contractor",
+  "majorityCategoryTop3": "HVAC contractor",
+  "reviewsTop10": {
+    "min": 8,
+    "max": 372,
+    "median": 72.5,
+    "p25": 19,
+    "p75": 160
+  },
+  "reviewsTop3Avg": 127,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,36 @@
+{
+  "searchTerm": "Plastic surgeons in Chula Vista, CA",
+  "auditedDate": "2026-06-25",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plastic surgeon": 7,
+    "Medical spa": 1,
+    "Plastic surgery clinic": 2
+  },
+  "categoryDistributionTop5": {
+    "Plastic surgeon": 2,
+    "Medical spa": 1,
+    "Plastic surgery clinic": 2
+  },
+  "categoryDistributionTop3": {
+    "Plastic surgeon": 1,
+    "Medical spa": 1,
+    "Plastic surgery clinic": 1
+  },
+  "majorityCategoryTop10": "Plastic surgeon",
+  "majorityCategoryTop5": "Plastic surgeon",
+  "majorityCategoryTop3": "Plastic surgeon",
+  "reviewsTop10": {
+    "min": 11,
+    "max": 283,
+    "median": 47,
+    "p25": 33,
+    "p75": 130
+  },
+  "reviewsTop3Avg": 76,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}
