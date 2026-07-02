@@ -46,7 +46,9 @@ const CASES = [
   ['Waterproofing service', 'Foundation repair in Culver City, CA', true],
   ['Concrete contractor', 'Foundation repair in Culver City, CA', true],
   // ---- vertical-awareness: same category is garbage for one vertical, valid for its own ----
-  ['Mental health service', 'Mental health therapists in Culver City, CA', true],
+  // Mental health / counseling is now a UNIVERSAL never-prospect (Chris 2026-07-02, "no counseling");
+  // the Mental health therapists vertical was removed. So it drops even under its former search.
+  ['Mental health service', 'Physical therapists in Culver City, CA', false],
   ['Electrician', 'Electricians in Culver City, CA', true],
   ['Animal hospital', 'Veterinarians in Culver City, CA', true],
   ['Church', 'Roofers in Culver City, CA', false],
@@ -62,17 +64,36 @@ const CASES = [
   // garbage cross-checks
   ['Grocery store', 'Plumbers in Culver City, CA', false],
   ['Real estate agency', 'Roofers in Culver City, CA', false],
+  // ---- UNIVERSAL never-prospect ban: churches/counseling/centers/museums/schools/nonprofits DROP under ANY vertical ----
+  ['Baptist church', 'Roofers in Culver City, CA', false, 'First Baptist Church'],
+  ['Catholic church', 'Plumbers in Culver City, CA', false, 'St Marys'],
+  ['Mosque', 'HVAC in Culver City, CA', false, 'Islamic Center'],
+  ['Mental health service', 'Plumbers in Culver City, CA', false, 'Kohan Foundation Counseling Center'],
+  ['Counselor', 'Electricians in Culver City, CA', false, 'Family Counseling Center'],
+  ['Community center', 'Landscapers in Culver City, CA', false, 'Culver City Community Center'],
+  ['Museum', 'Foundation repair in Culver City, CA', false, 'Star Eco Station'],
+  ['Elementary school', 'Painters in Culver City, CA', false, 'Lincoln Elementary'],
+  ['Non-profit organization', 'Tree service in Culver City, CA', false, 'Achievable Health'],
+  ['Animal rescue service', 'Plumbers in Culver City, CA', false, 'Perfect Pet Rescue'],
+  // ---- legit businesses with "Center"/"Foundation" in the NAME must KEEP (don't over-ban) ----
+  ['Optometrist', 'Optometrists in Culver City, CA', true, 'Culver City Eye Center'],
+  ['Plastic surgeon', 'Plastic surgeons in Culver City, CA', true, 'Beverly Hills Surgery Center'],
+  ['Auto body shop', 'Body shop in Culver City, CA', true, 'LA Collision Center'],
+  ['Foundation repair service', 'Foundation repair in Culver City, CA', true, 'Alpha Foundation Repair'],
 ];
 
+// Test through the REAL entry point shouldFilterLead (covers both the universal never-prospect
+// ban AND the per-vertical relevance gate). A null return = kept = a real prospect.
 let failed = 0;
 for (const [cat, term, expectPass, bizName] of CASES) {
   const name = bizName || 'Test Business';
-  const pass = categoryMatchesVertical(cat, term, name);
+  const reason = shouldFilterLead(name, cat, term);
+  const pass = !reason;                                    // kept = pass (real prospect)
   if (pass !== expectPass) {
     failed++;
-    console.log(`  ✗ FAIL: "${cat}" / "${name}" under "${term.split(' in ')[0]}" → matched=${pass}, expected ${expectPass}`);
+    console.log(`  ✗ FAIL: "${cat}" / "${name}" under "${term.split(' in ')[0]}" → ${pass ? 'kept' : 'dropped(' + reason + ')'}, expected ${expectPass ? 'keep' : 'drop'}`);
   } else {
-    console.log(`  ✓ "${cat}"${bizName ? ` / "${bizName}"` : ''} under "${term.split(' in ')[0]}" → ${pass ? 'keep' : 'drop'}`);
+    console.log(`  ✓ "${cat}"${bizName ? ` / "${bizName}"` : ''} under "${term.split(' in ')[0]}" → ${pass ? 'keep' : 'drop' + (reason ? ' (' + reason.split(':')[0] + ')' : '')}`);
   }
 }
 

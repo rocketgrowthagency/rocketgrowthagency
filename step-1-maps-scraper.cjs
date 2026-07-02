@@ -267,10 +267,24 @@ function categoryMatchesVertical(category, searchTerm, businessName) {
   return false;                                            // specific + off-vertical category → drop
 }
 
+// Universal NEVER-A-PROSPECT ban (Chris, 2026-07-02): businesses that are never local-SEO
+// clients regardless of which search surfaces them — churches of ANY type, counseling,
+// nonprofit/cultural/community CENTERS, museums, schools, government, animal orgs. The Google
+// CATEGORY is the precise signal (Google labels these exactly, e.g. "Baptist church", "Mental
+// health service", "Community center"), so we match on category. We deliberately do NOT ban bare
+// "center"/"foundation" in the NAME — that would nuke legit prospects like "Eye Center", "Surgery
+// Center", "Collision Center", "Alpha Foundation Repair". Only unambiguous org phrases in name.
+const NEVER_PROSPECT_CATEGORY_RE = /\b(church|mosque|temple|synagogue|place of worship|religious organization|chapel|cathedral|ministry|congregation|diocese|monastery|convent|non-?profit|charity|charitable|cultural center|community center|counseling|counselor|mental health|social services|museum|tourist attraction|monument|library|elementary school|middle school|high school|public school|private school|charter school|preschool|kindergarten|school district|university|college|animal rescue|animal shelter|animal control|wildlife|zoo|aquarium|government|city hall|courthouse|cemetery|funeral home|cremator)\b/i;
+const NEVER_PROSPECT_NAME_RE = /\b(mosque|synagogue|cathedral|counseling center|community center|cultural center|rescue mission|megachurch)\b/i;
+
 function shouldFilterLead(businessName, category, _searchTerm) {
   const name = String(businessName || '');
   const norm = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const cat = String(category || '').toLowerCase();
+
+  // (0) Universal never-a-prospect ban — applies to EVERY search vertical.
+  if (NEVER_PROSPECT_CATEGORY_RE.test(cat)) return `never-prospect-category:${cat}`;
+  if (NEVER_PROSPECT_NAME_RE.test(name)) return `never-prospect-name:${name.slice(0, 40)}`;
 
   // (d) Category-relevance gate — the business's Google category must belong to the searched
   // vertical. Blocks fuzzy Maps matches (Mosque/Museum/Nonprofit/Mental-health for "Foundation
@@ -1667,7 +1681,7 @@ async function main() {
 
 // Export the vertical-relevance gate so the regression checker + tests can guard it
 // without running the scraper. Only run main() when invoked directly.
-module.exports = { shouldFilterLead, categoryMatchesVertical, VERTICAL_CATEGORY_TOKENS };
+module.exports = { shouldFilterLead, categoryMatchesVertical, VERTICAL_CATEGORY_TOKENS, NEVER_PROSPECT_CATEGORY_RE, NEVER_PROSPECT_NAME_RE };
 
 if (require.main === module) {
   main();
