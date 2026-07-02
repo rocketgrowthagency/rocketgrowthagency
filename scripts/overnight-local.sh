@@ -54,3 +54,6 @@ echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG
 # the night it started (the log is named by start date).
 echo ">>> filing overnight videos to dated report" | tee -a "$LOG"
 DATE="$DATE_STAMP" node scripts/file-overnight-videos.mjs 2>&1 | tee -a "$LOG"
+
+# OpenAI quota alert (HARD RULE): notify Chris if voiceover generation hit an OpenAI balance error.
+bash scripts/notify-openai-quota.sh "/tmp/overnight-pipeline-$(date +%Y-%m-%d).log" 2>&1 | tee -a "$LOG"

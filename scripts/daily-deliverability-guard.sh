@@ -55,4 +55,10 @@ fi
 #    automatically when the drive is connected. Just confirm TM auto-backup stays enabled.
 echo ">>> backup: handled by Time Machine → X10 Pro (auto=$(defaults read /Library/Preferences/com.apple.TimeMachine.plist AutoBackup 2>/dev/null || echo '?'))" | tee -a "$LOG"
 
+# OpenAI quota alert re-surface (HARD RULE): if a standing alert exists, re-notify until funds added.
+if [ -f "$HOME/rga-ALERT-openai.log" ] && [ -f "/Users/chris/RGA/Rocket Growth Agency Website VS Code/reports/alerts/OPENAI-QUOTA-ALERT.md" ]; then
+  echo ">>> ⚠ STANDING OpenAI quota alert — add funds (see reports/alerts/OPENAI-QUOTA-ALERT.md)" | tee -a "$LOG"
+  osascript -e 'display notification "OpenAI still needs funds — content/videos blocked" with title "🚨 RGA: OpenAI needs funds"' 2>/dev/null
+fi
+
 echo "=== deliverability guard DONE $(date) — health=$HEALTH ===" | tee -a "$LOG"

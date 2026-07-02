@@ -46,6 +46,9 @@ if [ "$RC_IND" -eq 0 ] && [ -n "$IND" ]; then
   node scripts/generate-industry-page.mjs "$IND" --publish --force 2>&1 | tee -a "$LOG"
 fi
 
+# OpenAI balance/quota alert (HARD RULE): notify Chris immediately if a generator failed on quota.
+bash scripts/notify-openai-quota.sh "$LOG"
+
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
 if [ -n "$(git status --porcelain industries/ blog/ sitemap.xml 2>/dev/null)" ]; then
