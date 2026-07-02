@@ -25,6 +25,12 @@ CAFF_PID=$!
 trap 'kill $CAFF_PID 2>/dev/null' EXIT
 
 echo "=== overnight-local START $(date) — city-first, max ${MAX_SEARCHES} searches, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
+
+# Manually-flagged bad videos: ARM them (remove + block send + re-queue their search) and FINALIZE
+# any that were re-rendered on a prior night. Chris ticks {Redo Video} in Airtable; this self-heals.
+echo ">>> redo-flagged-videos: processing {Redo Video} flags" | tee -a "$LOG"
+node scripts/redo-flagged-videos.mjs 2>&1 | tee -a "$LOG"
+
 n=0
 while [ "$n" -lt "$MAX_SEARCHES" ]; do
   Q=$(node scripts/next-search.mjs 2>>"$LOG"); RC=$?

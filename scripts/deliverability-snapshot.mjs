@@ -55,4 +55,30 @@ if (bounced7.length) {
 }
 const worst = [s7, s1].includes('RED') ? 'RED' : [s7, s1].includes('AMBER') ? 'AMBER' : 'GREEN';
 console.log(`  OVERALL: ${worst}`);
+
+// Long-term record: append/upsert today's row in the "Deliverability Log" Airtable table
+// (set LOG_TO_AIRTABLE=1 — the daily guard does). Keeps a permanent bounce-rate trend line.
+if (process.env.LOG_TO_AIRTABLE === '1') {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const wH = { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
+    const q = new URL(`https://api.airtable.com/v0/${BASE}/Deliverability%20Log`);
+    q.searchParams.set('filterByFormula', `{Date}='${today}'`); q.searchParams.set('pageSize', '1');
+    const ex = await (await fetch(q, { headers: H })).json();
+    const fields = {
+      Date: today, Status: worst,
+      'Bounce Rate 7d': +rate7.toFixed(2), 'Bounce Rate 24h': +rate1.toFixed(2),
+      'Sends 7d': sent7.length, 'Sends 24h': sent1.length, 'Bounced 7d': bounced7.length,
+      'Sendable Queue': sendable.length,
+      Notes: bounced7.map((r) => `${f(r, 'Business Name')} <${f(r, 'Email')}> [${f(r, 'Email Status')}]`).join('; ') || '',
+    };
+    if (ex.records && ex.records[0]) {
+      await fetch(`https://api.airtable.com/v0/${BASE}/Deliverability%20Log/${ex.records[0].id}`, { method: 'PATCH', headers: wH, body: JSON.stringify({ fields }) });
+      console.log('  [log] updated today\'s Deliverability Log row');
+    } else {
+      await fetch(`https://api.airtable.com/v0/${BASE}/Deliverability%20Log`, { method: 'POST', headers: wH, body: JSON.stringify({ records: [{ fields }], typecast: true }) });
+      console.log('  [log] appended today\'s Deliverability Log row');
+    }
+  } catch (e) { console.error('  [log] Deliverability Log write failed:', e.message); }
+}
 process.exit(worst === 'GREEN' ? 0 : worst === 'AMBER' ? 2 : 3);

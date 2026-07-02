@@ -25,9 +25,10 @@ echo "=== deliverability guard START $(date) ===" | tee -a "$LOG"
 echo ">>> mailbox sweep (suppress dead)" | tee -a "$LOG"
 node scripts/verify-sendable-mailboxes.mjs 2>&1 | tee -a "$LOG" | grep -E "SUPPRESS|Results:|suppressed" | tail -5
 
-# 2) Deliverability health snapshot (auto-detect AMBER/RED).
-echo ">>> health snapshot" | tee -a "$LOG"
-node scripts/deliverability-snapshot.mjs 2>&1 | tee -a "$LOG"
+# 2) Deliverability health snapshot (auto-detect AMBER/RED) + append the daily row to the
+#    "Deliverability Log" Airtable table (long-term bounce-rate trend record).
+echo ">>> health snapshot + Airtable log" | tee -a "$LOG"
+LOG_TO_AIRTABLE=1 node scripts/deliverability-snapshot.mjs 2>&1 | tee -a "$LOG"
 HEALTH=${PIPESTATUS[0]}
 
 if [ "$HEALTH" = "3" ]; then
