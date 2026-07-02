@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Electricians in Culver City, CA",
+  "auditedDate": "2026-07-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Electrician": 9,
+    "Electrical installation service": 1
+  },
+  "categoryDistributionTop5": {
+    "Electrician": 5
+  },
+  "categoryDistributionTop3": {
+    "Electrician": 3
+  },
+  "majorityCategoryTop10": "Electrician",
+  "majorityCategoryTop5": "Electrician",
+  "majorityCategoryTop3": "Electrician",
+  "reviewsTop10": {
+    "min": 10,
+    "max": 114,
+    "median": 56,
+    "p25": 19,
+    "p75": 69
+  },
+  "reviewsTop3Avg": 69,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.95,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,34 @@
+{
+  "searchTerm": "Landscapers in Culver City, CA",
+  "auditedDate": "2026-07-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Landscaper": 6,
+    "Garden center": 1,
+    "Landscape designer": 2,
+    "Landscaping supply store": 1
+  },
+  "categoryDistributionTop5": {
+    "Landscaper": 4,
+    "Garden center": 1
+  },
+  "categoryDistributionTop3": {
+    "Landscaper": 3
+  },
+  "majorityCategoryTop10": "Landscaper",
+  "majorityCategoryTop5": "Landscaper",
+  "majorityCategoryTop3": "Landscaper",
+  "reviewsTop10": {
+    "min": 5,
+    "max": 177,
+    "median": 30,
+    "p25": 7,
+    "p75": 85
+  },
+  "reviewsTop3Avg": 14,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

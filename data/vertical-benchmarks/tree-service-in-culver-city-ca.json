@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Tree service in Culver City, CA",
+  "auditedDate": "2026-07-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Tree service": 10
+  },
+  "categoryDistributionTop5": {
+    "Tree service": 5
+  },
+  "categoryDistributionTop3": {
+    "Tree service": 3
+  },
+  "majorityCategoryTop10": "Tree service",
+  "majorityCategoryTop5": "Tree service",
+  "majorityCategoryTop3": "Tree service",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 639,
+    "median": 17.5,
+    "p25": 7,
+    "p75": 28
+  },
+  "reviewsTop3Avg": 223,
+  "ratingTop10Median": 4.75,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

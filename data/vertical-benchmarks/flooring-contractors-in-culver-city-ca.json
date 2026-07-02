@@ -1,0 +1,37 @@
+{
+  "searchTerm": "Flooring contractors in Culver City, CA",
+  "auditedDate": "2026-07-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Flooring contractor": 7,
+    "Contractor": 1,
+    "Wood floor installation service": 1,
+    "General contractor": 1
+  },
+  "categoryDistributionTop5": {
+    "Flooring contractor": 2,
+    "Contractor": 1,
+    "Wood floor installation service": 1,
+    "General contractor": 1
+  },
+  "categoryDistributionTop3": {
+    "Flooring contractor": 2,
+    "Contractor": 1
+  },
+  "majorityCategoryTop10": "Flooring contractor",
+  "majorityCategoryTop5": "Flooring contractor",
+  "majorityCategoryTop3": "Flooring contractor",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 86,
+    "median": 33,
+    "p25": 12,
+    "p75": 58
+  },
+  "reviewsTop3Avg": 15,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.8,
+  "findingsDisabled": [],
+  "notes": null
+}
