@@ -26,8 +26,14 @@ LOGFILE="/tmp/overnight-pipeline-${DATE_STAMP}.log"
 
 cd "$SCRAPER_DIR"
 
-# Caffeinate to prevent Mac sleep during the run
-caffeinate -dimsu -t 14400 &
+# Caffeinate to prevent Mac sleep during the run.
+# CRITICAL: redirect its stdin/stdout/stderr to /dev/null so it does NOT inherit this
+# script's stdout — otherwise, when overnight-local.sh runs us as `pipeline | tee`, an
+# orphaned caffeinate (e.g. if a per-lead watchdog SIGKILLs the tree, bypassing the EXIT
+# trap) keeps the pipe's write-end open, `tee` never sees EOF, and the parent loop wedges
+# forever between searches. Detaching the fds means a leaked caffeinate can't block the loop.
+# (2026-07-01: this exact leak stalled the Culver City run after the 1st vertical.)
+caffeinate -dimsu -t 14400 </dev/null >/dev/null 2>&1 &
 CAF_PID=$!
 trap "kill $CAF_PID 2>/dev/null" EXIT
 
