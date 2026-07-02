@@ -42,10 +42,25 @@ async function all(fields) {
 }
 const L = await all(['Business Name', 'Email', 'Phone', 'Lead Score', 'Lead Category', 'Search Term',
   'Highest Video Pct Watched', 'CTA Clicked At', 'Day 1 Clicked At', 'Replied', 'Audit Form Submitted',
-  'Call Outcome', 'Last Call At', 'Email Sent Date', 'Email Status', 'Suppressed', 'Video URL', 'Status', 'Draft Created']);
+  'Call Outcome', 'Last Call At', 'Last Text At', 'Email Sent Date', 'Day 4 Sent At', 'Day 9 Sent At',
+  'Day 16 Sent At', 'Day 45 Sent At', 'Email Status', 'Suppressed', 'Video URL', 'Status', 'Draft Created']);
 const f = (r, k) => r.fields[k];
 const has = (r, k) => { const v = f(r, k); return v !== undefined && v !== null && v !== '' && v !== false; };
 const TERM = /invalid|bounced|no-replacement|permanent|soft-bounced/i;
+
+// Keep table columns tight: strip Maps name-noise + cap at a word boundary; phone with non-breaking
+// spaces so it never wraps mid-number.
+const cleanName = (s) => { let n = String(s || '').trim().replace(/\s+(appointments?\s+recommended|open\s+24\s*hours|now\s+open|·.*|\|.*)$/i, ''); if (n.length > 34) n = n.slice(0, 32).replace(/\s+\S*$/, '') + '…'; return n; };
+const nbspPhone = (p) => String(p || '—').replace(/ /g, ' ');
+const vert = (r) => { const v = (f(r, 'Search Term') || '').split(/\s+in\s+/)[0] || '—'; return v.length > 20 ? v.slice(0, 19) + '…' : v; };
+// Days since we last touched them (any email send / call / text). null = never contacted.
+const lastTouchDays = (r) => {
+  const ts = ['Email Sent Date', 'Day 4 Sent At', 'Day 9 Sent At', 'Day 16 Sent At', 'Day 45 Sent At', 'Last Call At', 'Last Text At']
+    .map((k) => f(r, k)).filter(Boolean).map((x) => Date.parse(x)).filter(Boolean);
+  if (!ts.length) return null;
+  return Math.floor((nowMs - Math.max(...ts)) / D);
+};
+const touchCell = (r) => { const d = lastTouchDays(r); if (d === null) return '—'; return d >= 7 ? `⚠ ${d}d` : `${d}d`; };
 
 const cat = (c) => L.filter((r) => f(r, 'Lead Category') === c).sort((a, b) => (f(b, 'Lead Score') || 0) - (f(a, 'Lead Score') || 0));
 const hot = cat('Hot (SQL)'), warm = cat('Warm (MQL)'), engaged = cat('Engaged');
@@ -69,11 +84,13 @@ if (sendable.length) md += `${n++}. **${sendable.length} verified leads queued**
 if (n === 1) md += `- No hot/warm leads today — keep the outreach + render engines running to build the queue.\n`;
 
 md += `\n## 🔥 HOT — call today (${hot.length})\n\n`;
-if (hot.length) { md += `| Score | Business | Vertical | Why hot | Phone | Status |\n|---|---|---|---|---|---|\n`; hot.forEach((r) => md += `| ${f(r, 'Lead Score') || 0} | ${f(r, 'Business Name')} | ${(f(r, 'Search Term') || '').split(/\s+in\s+/)[0] || '—'} | ${engSummary(r)} | ${f(r, 'Phone') || '—'} | ${called(r)} |\n`); }
+if (hot.length) { md += `| Score | Business | Vertical | Why hot | Phone | Last touch | Status |\n|---:|---|---|---|---|---:|---|\n`; hot.forEach((r) => md += `| ${f(r, 'Lead Score') || 0} | ${cleanName(f(r, 'Business Name'))} | ${vert(r)} | ${engSummary(r)} | ${nbspPhone(f(r, 'Phone'))} | ${touchCell(r)} | ${called(r)} |\n`); }
 else md += `_none today_\n`;
 
-md += `\n## 🌤 WARM — follow up today (${warm.length})\n\n`;
-if (warm.length) { md += `| Score | Business | Vertical | Signal | Phone | Status |\n|---|---|---|---|---|---|\n`; warm.slice(0, 25).forEach((r) => md += `| ${f(r, 'Lead Score') || 0} | ${f(r, 'Business Name')} | ${(f(r, 'Search Term') || '').split(/\s+in\s+/)[0] || '—'} | ${engSummary(r)} | ${f(r, 'Phone') || '—'} | ${called(r)} |\n`); }
+// Warm = the follow-up list → surface the STALEST first (going cold), then by score.
+const warmSorted = warm.slice().sort((a, b) => ((lastTouchDays(b) ?? -1) - (lastTouchDays(a) ?? -1)) || ((f(b, 'Lead Score') || 0) - (f(a, 'Lead Score') || 0)));
+md += `\n## 🌤 WARM — follow up today (${warm.length}) · stalest first\n\n`;
+if (warm.length) { md += `| Score | Business | Vertical | Signal | Phone | Last touch | Status |\n|---:|---|---|---|---|---:|---|\n`; warmSorted.slice(0, 25).forEach((r) => md += `| ${f(r, 'Lead Score') || 0} | ${cleanName(f(r, 'Business Name'))} | ${vert(r)} | ${engSummary(r)} | ${nbspPhone(f(r, 'Phone'))} | ${touchCell(r)} | ${called(r)} |\n`); }
 else md += `_none today_\n`;
 
 md += `\n## Pipeline at a glance\n\n`;
