@@ -758,8 +758,16 @@ else
     fi
   done < /tmp/emailable_leads.txt
   echo "" | tee -a "$LOGFILE"
-  echo ">>> Waiting for ${#WORKER_PIDS[@]} remaining worker(s) to finish..." | tee -a "$LOGFILE"
-  wait "${WORKER_PIDS[@]+"${WORKER_PIDS[@]}"}"
+  # WATCHDOG-AWARE DRAIN (fixed 2026-07-02): a plain `wait` here left the FINAL batch of
+  # workers watchdog-exempt — reap_finished_workers() (which enforces PER_LEAD_TIMEOUT) is
+  # only called in the dispatch loop, so a hang in the last WC leads blocked forever and
+  # wedged the whole overnight loop. Caught live: a step-3 recorder hung 24 min during the
+  # Culver City "Painters" drain. Poll the same reaper until every worker is gone.
+  echo ">>> Waiting for ${#WORKER_PIDS[@]} remaining worker(s) to finish (watchdog active)..." | tee -a "$LOGFILE"
+  while [ "${#WORKER_PIDS[@]}" -gt 0 ]; do
+    sleep 2
+    reap_finished_workers
+  done
   echo ">>> All workers complete." | tee -a "$LOGFILE"
 fi
 
