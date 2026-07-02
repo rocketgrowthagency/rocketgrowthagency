@@ -185,10 +185,99 @@ function pickQualifyingResult(candidates, businessName) {
 // outreach). Three layers: national chains, off-vertical suppliers/stores, and
 // spam/keyword-stuffed/emoji names. Returns a reason string to filter, or null to keep.
 // Memory: feedback_video_quality_fixes_2026-06-11 (quality-filter open item).
+// Category-relevance gate (2026-07-02). Google Maps returns FUZZY matches for a search term:
+// "Foundation repair" pulled a Mosque, a Science museum, a Mental-health "foundation", a Pet
+// rescue — and we built + emailed foundation-repair pitch videos for all of them. The prior
+// quality filter was a denylist (chains/stores/spam) with NO check that the business's category
+// actually belongs to the searched vertical. This map is the allowlist: per vertical, the Google
+// category tokens a REAL prospect for that search would have. Vertical-aware so a category that's
+// garbage for one vertical (e.g. "Mental health service" under Foundation) is valid for its own
+// (Mental health therapists). Be GENEROUS to avoid dropping real leads; unmapped vertical = keep.
+const VERTICAL_CATEGORY_TOKENS = {
+  'hvac': ['hvac','heating','cooling','air condition','furnace','ventilat','refriger'],
+  'plumbers': ['plumb','drain','sewer','water heater','rooter','leak','hydro','septic'],
+  'roofers': ['roof'],
+  'foundation repair': ['foundation','concrete','structural','construction','contractor','waterproof','masonry','retrofit','builder','building','basement','pier','engineer','excavat','demolition','soil'],
+  'pest control': ['pest','exterminat','termite','wildlife','rodent','fumigat','bug'],
+  'electricians': ['electric'],
+  'garage door repair': ['garage door','door','gate'],
+  'landscapers': ['landscap','lawn','garden','irrigation','hardscape','nursery','sod','sprinkler','tree'],
+  'tree service': ['tree','arborist','stump'],
+  'painters': ['paint'],
+  'flooring contractors': ['floor','tile','hardwood','laminate','carpet','marble','stone','contractor'],
+  'handyman services': ['handyman','handyperson','home repair','repair service','construction','contractor'],
+  'window cleaning': ['window clean','window wash','pressure wash','cleaning'],
+  'carpet cleaning': ['carpet','rug','upholstery','cleaner','cleaning'],
+  'pool service': ['pool','hot tub','swimming'],
+  'junk removal': ['junk','hauling','debris','waste','dumpster','garbage','rubbish'],
+  'movers': ['mover','moving','relocat','storage'],
+  'locksmiths': ['locksmith','lock','key'],
+  'home cleaning services': ['clean','maid','housekeep','janitor'],
+  'kitchen remodeling': ['remodel','kitchen','cabinet','construction','contractor','renovat','countertop','carpentry'],
+  'bathroom remodeling': ['remodel','bathroom','bath','construction','contractor','renovat','tile','plumb'],
+  'auto repair': ['auto','car repair','mechanic','automotive','tire','transmission','brake','oil change','muffler','smog','repair shop','car service'],
+  'body shop': ['body shop','auto body','collision','dent','auto repair'],
+  'auto glass repair': ['auto glass','windshield','glass'],
+  'auto detailing': ['detail','car wash'],
+  'towing services': ['tow','roadside','wrecker'],
+  'personal injury lawyers': ['attorney','lawyer','legal','law firm','justice','law '],
+  'dui lawyers': ['attorney','lawyer','legal','law firm','law '],
+  'family lawyers': ['attorney','lawyer','legal','law firm','divorce','law '],
+  'estate planning lawyers': ['attorney','lawyer','legal','law firm','estate','law '],
+  'bankruptcy lawyers': ['attorney','lawyer','legal','law firm','bankrupt','law '],
+  'plastic surgeons': ['plastic surg','cosmetic surg','surgeon','surger','plastic'],
+  'dermatologists': ['dermatolog','skin'],
+  'med spas': ['med spa','medical spa','spa','aesthetic','cosmetic','skin care','laser'],
+  'orthodontists': ['orthodont','dental','dentist','braces'],
+  'cosmetic dentists': ['dentist','dental','endodont','periodont'],
+  'optometrists': ['optometr','eye ','optical','vision','ophthalmol','eyewear'],
+  'chiropractors': ['chiropract'],
+  'physical therapists': ['physical therap','physiotherap','rehab','sports medicine'],
+  'veterinarians': ['veterinar','animal hospital','vet clinic','pet hospital','animal clinic'],
+  'mental health therapists': ['mental health','therap','psycholog','counsel','psychiatr','marriage'],
+  'solar installers': ['solar'],
+  'insurance agents': ['insurance'],
+  'mortgage brokers': ['mortgage','loan','lending'],
+  'cpas': ['accountant','cpa','tax','bookkeep','accounting','financial'],
+  'wedding photographers': ['photograph','photo'],
+  'yoga studios': ['yoga','pilates'],
+  'hair salons': ['hair','salon','barber','beauty'],
+  'pet grooming': ['pet groom','groomer','grooming','pet '],
+};
+// GENERIC/ambiguous Google categories that don't identify a trade on their own. For these we
+// fall back to the business NAME (a "Repair service" named "Pros Garage Door Repair" is a real
+// garage-door lead). We do NOT fall back to name for SPECIFIC off categories (Mosque, Mental
+// health service, Animal rescue) — else "Kohan Foundation Counseling Center" would sneak back
+// in because its NAME contains "foundation" (the charity meaning). Category is the strong signal;
+// name only rescues the ambiguous-category cases.
+const GENERIC_CATEGORIES = [
+  'repair service', 'contractor', 'general contractor', 'service establishment',
+  'home improvement', 'building', 'establishment', 'business', 'consultant',
+];
+function categoryMatchesVertical(category, searchTerm, businessName) {
+  const cat = String(category || '').toLowerCase().trim();
+  const name = String(businessName || '').toLowerCase();
+  const vertical = String(searchTerm || '').toLowerCase().split(/\s+in\s+/)[0].trim();
+  const tokens = VERTICAL_CATEGORY_TOKENS[vertical];
+  if (!tokens) return true;                                // vertical not mapped → lenient, keep
+  if (!cat) return true;                                   // no category → can't judge, keep
+  if (tokens.some((t) => cat.includes(t))) return true;    // category matches the vertical → keep
+  // Category doesn't match. If it's a GENERIC/ambiguous category, rescue via the business name.
+  if (GENERIC_CATEGORIES.some((g) => cat.includes(g))) return tokens.some((t) => name.includes(t));
+  return false;                                            // specific + off-vertical category → drop
+}
+
 function shouldFilterLead(businessName, category, _searchTerm) {
   const name = String(businessName || '');
   const norm = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const cat = String(category || '').toLowerCase();
+
+  // (d) Category-relevance gate — the business's Google category must belong to the searched
+  // vertical. Blocks fuzzy Maps matches (Mosque/Museum/Nonprofit/Mental-health for "Foundation
+  // repair") BEFORE any render or outreach. Vertical-aware — never drops a legit in-vertical lead.
+  if (!categoryMatchesVertical(category, _searchTerm, businessName)) {
+    return `off-vertical-category:${cat || 'none'}`;
+  }
 
   // (a) National chain / franchise blocklist — corporate marketing, generic/legal
   // emails, not local-SEO prospects. Match brand token as a standalone phrase.
@@ -1576,4 +1665,10 @@ async function main() {
   }
 }
 
-main();
+// Export the vertical-relevance gate so the regression checker + tests can guard it
+// without running the scraper. Only run main() when invoked directly.
+module.exports = { shouldFilterLead, categoryMatchesVertical, VERTICAL_CATEGORY_TOKENS };
+
+if (require.main === module) {
+  main();
+}

@@ -58,6 +58,11 @@ if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+echo ">>> pre-flight: category-relevance gate (business must match the searched vertical)" | tee -a "$LOGFILE"
+if ! node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: category-relevance gate broken — off-vertical businesses (mosque/museum/nonprofit) could get videos + outreach. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — Sponsored-card filter regression. Locked after BHRC test
 # shipped with the blue outline on a Sponsored card. Validates that step-3's
 # isSponsoredBlock + getListingHrefByName + clickListingInResultsByName
