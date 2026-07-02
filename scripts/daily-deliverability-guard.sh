@@ -31,6 +31,11 @@ echo ">>> health snapshot + Airtable log" | tee -a "$LOG"
 LOG_TO_AIRTABLE=1 node scripts/deliverability-snapshot.mjs 2>&1 | tee -a "$LOG"
 HEALTH=${PIPESTATUS[0]}
 
+# 2.5) Redo-flagged videos: ARM any {Redo Video} lead PROMPTLY (remove + block the bad video)
+#      even on non-overnight days; FINALIZE re-rendered ones. Don't wait for the next overnight.
+echo ">>> redo-flagged-videos (arm/finalize)" | tee -a "$LOG"
+node scripts/redo-flagged-videos.mjs 2>&1 | tee -a "$LOG" | tail -5
+
 # 3) Lead scoring + categorization — refresh Lead Score + Lead Category on every lead from the
 #    latest engagement data. Keeps the CRM live.
 echo ">>> lead scoring + categorization" | tee -a "$LOG"
