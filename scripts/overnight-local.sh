@@ -33,6 +33,12 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   n=$((n+1))
   echo "" | tee -a "$LOG"
   echo ">>> [$n/${MAX_SEARCHES}] $(date +%H:%M) — scraping: \"$Q\"" | tee -a "$LOG"
+  # Record the ATTEMPT before running, so a zero-yield search (no Lead rows written, e.g. an
+  # all-art-studio "Painters" query) is never re-picked by next-search.mjs. Without this the
+  # loop spins forever on such a search (cost 2026-07-01: 17 re-runs / ~13h on Painters).
+  # See feedback_next_search_must_track_attempts.md.
+  mkdir -p "$SCRAPER_DIR/output"
+  echo "$Q" >> "$SCRAPER_DIR/output/attempted-searches.log"
   WORKER_COUNT="$WORKER_COUNT" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
 done
 echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG"

@@ -45,6 +45,20 @@ async function scrapedSet() {
 }
 
 const done = await scrapedSet();
+
+// ALSO treat any search already ATTEMPTED (recorded in the ledger by overnight-local.sh)
+// as done — even if it yielded ZERO leads. Without this, a search that legitimately produces
+// no writable leads (all no-email / dedup / landing-not-built, e.g. "Painters in Culver City"
+// = art studios) leaves no Lead row, so scrapedSet() never sees it and next-search picks it
+// again FOREVER. Cost 2026-07-01: 17 re-runs / ~13h stuck on Painters. The ledger closes the
+// loop on attempt, not on output. See feedback_next_search_must_track_attempts.md.
+const LEDGER = path.join(SCRAPER_DIR, 'output', 'attempted-searches.log');
+try {
+  for (const line of fs.readFileSync(LEDGER, 'utf8').split('\n')) {
+    const q = line.trim(); if (q) done.add(norm(q));
+  }
+} catch { /* no ledger yet — first run */ }
+
 for (const city of cities) {
   for (const v of verticals) {
     const q = `${v} in ${city}, CA`;              // match Airtable's stored comma format

@@ -5,3 +5,4 @@ output/
 .env
 rock-rerender.log
 .discover-state.json
+output/attempted-searches.log
