@@ -50,4 +50,8 @@ if [ "$HEALTH" = "3" ]; then
 elif [ "$HEALTH" = "2" ]; then
   echo ">>> DELIVERABILITY AMBER — swept dead mailboxes; monitor. If it climbs, the Apps Script auto-pauses at RED." | tee -a "$LOG"
 fi
+# 5) Off-machine backup to LaCie (memory + scripts + config + reports; skips if drive not connected).
+echo ">>> backup to LaCie" | tee -a "$LOG"
+bash scripts/backup-to-lacie.sh 2>&1 | tee -a "$LOG" | tail -2
+
 echo "=== deliverability guard DONE $(date) — health=$HEALTH ===" | tee -a "$LOG"
