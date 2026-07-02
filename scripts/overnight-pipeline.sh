@@ -890,7 +890,7 @@ echo "Full pipeline log: $LOGFILE" >> "$REPORT"
 AUDIT_REPORT="/tmp/audit-report-${DATE_STAMP}-${SLUG}.md"
 if node scripts/generate-audit-report.mjs "$DATE_STAMP" "$SLUG" "$AUDIT_REPORT" 2>&1 | tee -a "$LOGFILE"; then
   echo "" >> "$REPORT"
-  echo "## Human-audit report (for morning review)" >> "$REPORT"
+  echo "## Automated verification log (diagnostic — no manual step required)" >> "$REPORT"
   echo "- Per-lead voiceover + raw audit signals: \`$AUDIT_REPORT\`" >> "$REPORT"
 fi
 

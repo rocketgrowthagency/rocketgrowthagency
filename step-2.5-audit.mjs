@@ -2337,6 +2337,11 @@ async function main() {
     headless: !visible,
     executablePath: CHROME_PATH,
     userDataDir: CHROME_PROFILE_DIR,
+    // acceptInsecureCerts (2026-07-02): a bad/expired SSL cert is a config quirk, not a dead site —
+    // the site content is real and auditable. Without this we falsely marked cert-quirk sites
+    // unverified (ERR_CERT_DATE_INVALID / ERR_CERT_COMMON_NAME_INVALID), losing accurate audits.
+    // Does NOT rescue genuinely dead domains (ERR_NAME_NOT_RESOLVED) — those correctly stay failed.
+    acceptInsecureCerts: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
   });
 
