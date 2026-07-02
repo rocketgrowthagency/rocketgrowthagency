@@ -48,3 +48,7 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   WORKER_COUNT="$WORKER_COUNT" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
 done
 echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG"
+
+# File the night's deployed-video list into the dated reports/overnight-videos/YYYY/MM-Month/ tree.
+echo ">>> filing overnight videos to dated report" | tee -a "$LOG"
+node scripts/file-overnight-videos.mjs 2>&1 | tee -a "$LOG"

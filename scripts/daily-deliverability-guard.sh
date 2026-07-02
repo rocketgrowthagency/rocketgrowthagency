@@ -32,9 +32,13 @@ LOG_TO_AIRTABLE=1 node scripts/deliverability-snapshot.mjs 2>&1 | tee -a "$LOG"
 HEALTH=${PIPESTATUS[0]}
 
 # 3) Lead scoring + categorization — refresh Lead Score + Lead Category on every lead from the
-#    latest engagement data, and regenerate the daily call-list report. Keeps the CRM live.
+#    latest engagement data. Keeps the CRM live.
 echo ">>> lead scoring + categorization" | tee -a "$LOG"
 node scripts/score-and-categorize-leads.mjs 2>&1 | tee -a "$LOG" | tail -10
+
+# 4) Daily action report (M-F) — dated 'what to do today' briefing into the year/month/day tree.
+echo ">>> daily action report" | tee -a "$LOG"
+node scripts/daily-action-report.mjs 2>&1 | tee -a "$LOG"
 
 if [ "$HEALTH" = "3" ]; then
   echo "!!! DELIVERABILITY RED — the Apps Script auto-pause should have fired. Investigate the bounce source before resuming." | tee -a "$LOG"
