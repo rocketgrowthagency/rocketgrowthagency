@@ -235,7 +235,7 @@ function renderPost(vertical, slug, c, siblings) {
         <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a>
         <a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a>
         <a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a>
-        <a class="nav-link" data-path="/blog/" href="/blog/">Blog</a>
+
         <a class="nav-link" data-path="/contact/" href="/contact/">Contact</a>
       </nav>
 
@@ -255,13 +255,13 @@ function renderPost(vertical, slug, c, siblings) {
       <a href="/industries/">Industries</a><a href="/process/">Process</a>
       <a href="/pricing/">Pricing</a>
       <a href="/faq/">FAQ</a>
-      <a href="/blog/">Blog</a>
+
       <a href="/contact/">Contact</a></nav>
   </header>`;
   const FOOTER = `    <footer class="footer">
     <div class="footer-inner">
       <div><h3>Rocket Growth Agency</h3><p>Google Maps Local SEO for local service businesses focused on calls, forms, and measurable growth.</p></div>
-      <div><h4>Pages</h4><div class="footer-links"><a href="/services/">Services</a><a href="/process/">Process</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a><a href="/contact/">Contact</a></div></div>
+      <div><h4>Pages</h4><div class="footer-links"><a href="/services/">Services</a><a href="/process/">Process</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/contact/">Contact</a></div></div>
       <div><h4>Legal</h4><div class="footer-links"><a href="/privacy/">Privacy Policy</a><a href="/terms/">Terms of Service</a></div></div>
     </div>
     <div class="footer-bottom">&copy; 2026 Rocket Growth Agency. All rights reserved.</div>
