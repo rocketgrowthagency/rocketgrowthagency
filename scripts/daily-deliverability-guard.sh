@@ -50,8 +50,9 @@ if [ "$HEALTH" = "3" ]; then
 elif [ "$HEALTH" = "2" ]; then
   echo ">>> DELIVERABILITY AMBER — swept dead mailboxes; monitor. If it climbs, the Apps Script auto-pauses at RED." | tee -a "$LOG"
 fi
-# 5) Off-machine backup to external drive(s) (memory + scripts + config + reports; skips if drive not connected).
-echo ">>> backup to external drive(s)" | tee -a "$LOG"
-bash scripts/backup-external.sh 2>&1 | tee -a "$LOG" | tail -2
+# 5) Off-machine backup is handled by TIME MACHINE (the X10 Pro is a TM destination that includes
+#    all RGA folders + memory, with version history). No custom backup step needed — TM runs
+#    automatically when the drive is connected. Just confirm TM auto-backup stays enabled.
+echo ">>> backup: handled by Time Machine → X10 Pro (auto=$(defaults read /Library/Preferences/com.apple.TimeMachine.plist AutoBackup 2>/dev/null || echo '?'))" | tee -a "$LOG"
 
 echo "=== deliverability guard DONE $(date) — health=$HEALTH ===" | tee -a "$LOG"
