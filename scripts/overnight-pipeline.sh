@@ -63,6 +63,11 @@ if ! node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: category-relevance gate broken — off-vertical businesses (mosque/museum/nonprofit) could get videos + outreach. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+echo ">>> pre-flight: 6/6 verification gate (only fully-verified videos deploy)" | tee -a "$LOGFILE"
+if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — Sponsored-card filter regression. Locked after BHRC test
 # shipped with the blue outline on a Sponsored card. Validates that step-3's
 # isSponsoredBlock + getListingHrefByName + clickListingInResultsByName
@@ -574,6 +579,13 @@ EOPY
 
   if [ "${SERIAL_STEPS:-}" = "1" ]; then
     STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
+    # HARD 6/6 GATE: step-6 exits 3 when the lead is below the required verified-signal count.
+    # Skip deploy entirely and record it for redo — only fully-verified videos complete. (Chris 2026-07-02)
+    if [ "${PIPESTATUS[0]}" = "3" ]; then
+      append_result "$RESULTS_FAILED" "$BIZ_NAME|verification below 6/6 — flagged for redo"
+      echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
+      return
+    fi
     STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
     STEP2_CSV="$S2_FILTERED" MAX_BRANDS=1 node step-5-branding.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
     STEP2_CSV="$S2_FILTERED" MAX_RECORDINGS=1 node step-6b-subtitles.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
@@ -590,6 +602,13 @@ EOPY
     # desync. Make level-1 sequential.
     echo "  >> level-1 sequential: step-6 voiceover → step-4 combine (strict A/V sync)" | tee -a "$LOGFILE"
     STEP2_CSV="$S2_FILTERED" node step-6-voiceover.mjs 2>&1 | tee -a "$LOGFILE" | tail -5
+    # HARD 6/6 GATE: step-6 exits 3 when the lead is below the required verified-signal count.
+    # Skip deploy entirely and record it for redo — only fully-verified videos complete. (Chris 2026-07-02)
+    if [ "${PIPESTATUS[0]}" = "3" ]; then
+      append_result "$RESULTS_FAILED" "$BIZ_NAME|verification below 6/6 — flagged for redo"
+      echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
+      return
+    fi
     STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
 
     # Level 2: step-5 (needs step-4 + step-6) || step-6b (needs step-6)

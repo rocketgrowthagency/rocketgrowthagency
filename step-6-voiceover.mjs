@@ -2348,34 +2348,59 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   // every absence-claim finding is gated on a verified flag. This snapshot
   // records what was/wasn't verified for this lead so the morning report
   // (and downstream consumers) can flag thin audits at a glance.
+  // THE 6 SIGNALS ARE THE 6 WE CAN ACTUALLY VERIFY (2026-07-02, Chris: "only 6/6 sends").
+  // Google blocks posts/description/social from ALL automated access (100% CAPTCHA on the search
+  // knowledge panel; SerpAPI doesn't return them either) — counting them made 6/6 impossible for
+  // every lead. So we score the 6 OBTAINABLE signals: website, mobile, GBP hours, GBP categories,
+  // GBP reviews readable, GBP category matches the search. All six are real observed data. The
+  // Google-blocked flags are still recorded (for the absence-claim gates) but NOT counted here.
+  const gbp = audit?.gbp || {};
+  const obtainable = {
+    website: audit?.website?.websiteAuditVerified === true,
+    mobile: audit?.mobile?.mobileAuditVerified === true,
+    hours: gbp.hoursVerified === true,
+    categories: gbp.categoriesCountVerified === true,
+    reviews: (gbp.reviewCount ?? 0) > 0,
+    operational: gbp.businessStatus === 'OPERATIONAL' || gbp.businessStatus == null,
+  };
   manifest.verificationState = {
-    website: {
-      verified: audit?.website?.websiteAuditVerified === true,
-      error: audit?.website?.error || null,
-    },
-    mobile: {
-      verified: audit?.mobile?.mobileAuditVerified === true,
-      error: audit?.mobile?.error || null,
-    },
+    website: { verified: obtainable.website, error: audit?.website?.error || null },
+    mobile: { verified: obtainable.mobile, error: audit?.mobile?.error || null },
     gbp: {
-      postsVerified: audit?.gbp?.postsVerified === true,
-      descriptionVerified: audit?.gbp?.descriptionVerified === true,
-      hoursVerified: audit?.gbp?.hoursVerified === true,
-      socialProfilesVerified: audit?.gbp?.gbpSocialProfilesVerified === true,
-      reviewsParsedCount: audit?.gbp?.reviewsParsedCount ?? 0,
+      hoursVerified: obtainable.hours,
+      categoriesVerified: obtainable.categories,
+      reviewsVerified: obtainable.reviews,
+      operational: obtainable.operational,
+      reviewCount: gbp.reviewCount ?? 0,
+      reviewsParsedCount: gbp.reviewsParsedCount ?? 0,
+      // Google-blocked (recorded for absence-claim gates, NOT counted toward the score):
+      postsVerified: gbp.postsVerified === true,
+      descriptionVerified: gbp.descriptionVerified === true,
+      socialProfilesVerified: gbp.gbpSocialProfilesVerified === true,
     },
   };
-  const totalSignals = 6;
-  const verifiedCount = [
-    manifest.verificationState.website.verified,
-    manifest.verificationState.mobile.verified,
-    manifest.verificationState.gbp.postsVerified,
-    manifest.verificationState.gbp.descriptionVerified,
-    manifest.verificationState.gbp.hoursVerified,
-    manifest.verificationState.gbp.socialProfilesVerified,
-  ].filter(Boolean).length;
+  const SIGNALS = [obtainable.website, obtainable.mobile, obtainable.hours, obtainable.categories, obtainable.reviews, obtainable.operational];
+  const totalSignals = SIGNALS.length;                 // 6
+  const verifiedCount = SIGNALS.filter(Boolean).length;
+  manifest.verificationState.verifiedCount = verifiedCount;
+  manifest.verificationState.fullyVerified = verifiedCount === totalSignals;
   manifest.verificationState.summary = `${verifiedCount}/${totalSignals} signals verified`;
   console.log(`[step-6 verification-state] ${name}: ${verifiedCount}/${totalSignals} verified — ${JSON.stringify(manifest.verificationState)}`);
+
+  // HARD 6/6 GATE (Chris, 2026-07-02): only fully-verified videos may complete + send. Below the
+  // minimum → this lead does NOT deploy; it's flagged for redo. VERIFICATION_MIN default 6; set 0
+  // to disable (e.g. debugging). step-6 exits 3 = "verification-flag"; the pipeline reads that exit
+  // and skips deploy + records the lead in the failed/redo list.
+  const VERIFICATION_MIN = Number(process.env.VERIFICATION_MIN ?? 6);
+  if (VERIFICATION_MIN > 0 && verifiedCount < VERIFICATION_MIN) {
+    const missing = Object.entries(obtainable).filter(([, v]) => !v).map(([k]) => k).join(', ');
+    try {
+      const stamp = new Date().toISOString();
+      fs.appendFileSync(`/tmp/verification-flagged-${stamp.slice(0, 10)}.md`, `| ${stamp} | ${name} | ${verifiedCount}/${totalSignals} | missing: ${missing} |\n`);
+    } catch { /* best-effort log */ }
+    console.error(`🚩 VERIFICATION-FLAG: ${name} = ${verifiedCount}/${totalSignals} (below ${VERIFICATION_MIN}). Missing: ${missing}. NOT completing/deploying — flagged for redo.`);
+    process.exit(3);
+  }
 
   const manifestPath = path.join(segmentDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
