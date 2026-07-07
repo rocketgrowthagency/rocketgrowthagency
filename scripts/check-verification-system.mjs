@@ -25,7 +25,8 @@ const bad = (m) => { fails.push(m); console.log('  ✗ ' + m); };
 // 1. Required files exist
 console.log('\n[1] files present');
 for (const rel of ['lib/email-validation.cjs', 'lib/verify-email-bouncer.cjs', 'lib/verify-pipeline.cjs',
-  'config/disposable-domains.txt', 'scripts/verify-sendable-mailboxes.mjs', 'scripts/compare-free-vs-bouncer.mjs']) {
+  'config/disposable-domains.txt', 'config/learned-bad-domains.txt', 'scripts/verify-sendable-mailboxes.mjs',
+  'scripts/compare-free-vs-bouncer.mjs', 'scripts/daily-send-audit.mjs']) {
   fs.existsSync(path.join(ROOT, rel)) ? ok(rel) : bad(`MISSING ${rel}`);
 }
 
@@ -76,8 +77,16 @@ else {
                      : bad(`NOT({Suppressed}) found only ${suppressCount}× — a sender may no longer exclude suppressed leads!`);
 }
 
-// 7. Unit tests pass
-console.log('\n[7] email-validation unit tests');
+// 7. Auto-learn feedback loop wired: audit appends to learned-bad-domains + validator reads it
+console.log('\n[7] auto-learn feedback loop');
+const audit = fs.readFileSync(path.join(ROOT, 'scripts', 'daily-send-audit.mjs'), 'utf8');
+audit.includes('learned-bad-domains.txt') ? ok('daily-send-audit writes learned-bad-domains') : bad('audit no longer feeds the learned denylist');
+const val = fs.readFileSync(path.join(ROOT, 'lib', 'email-validation.cjs'), 'utf8');
+val.includes('LEARNED_BAD_DOMAINS.has(domain)') ? ok('isLikelyEmail reads the learned denylist') : bad('validator no longer applies learned-bad-domains');
+audit.includes('count >= 2') ? ok('auto-learn requires ≥2 bounces (single bounces flagged, not auto-acted)') : bad('auto-learn safety threshold (≥2) removed — risk of denylisting good domains on one bounce');
+
+// 8. Unit tests pass
+console.log('\n[8] email-validation unit tests');
 try {
   const out = execFileSync('node', [path.join(ROOT, 'lib', 'email-validation.test.cjs')], { encoding: 'utf8' });
   /(\d+) passed, 0 failed/.test(out) ? ok(out.trim().split('\n').pop()) : bad('unit tests FAILED:\n' + out);

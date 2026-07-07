@@ -1,0 +1,6 @@
+# learned-bad-domains.txt — AUTO-MANAGED by scripts/daily-send-audit.mjs. Do not hand-edit lightly.
+# Domains added here bounced ≥2 real cold emails with a domain-level failure (dead/does-not-exist),
+# i.e. they slipped past the static denylist + verifier. They're merged into isLikelyEmail's reject
+# set so the FREE layer permanently learns from every miss (closing the free-vs-Bouncer gap over time).
+# One domain per line. Lines starting with '#' are comments. Single bounces on normal business domains
+# are NOT added here — they're flagged for human review in reports/send-audit/ instead.

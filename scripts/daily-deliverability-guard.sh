@@ -41,6 +41,12 @@ VERIFY_POLICY="${VERIFY_POLICY:-}" node scripts/verify-sendable-mailboxes.mjs 2>
 echo ">>> quarantine report (held-emails note)" | tee -a "$LOG"
 node scripts/quarantine-report.mjs 2>&1 | tee -a "$LOG" | tail -3
 
+# 1.7) Self-improving send-verification audit: leak check (re-verify recently-sent → auto-suppress any
+#      that now fail), bounce gap-learning (auto-denylist domains that bounced ≥2×, flag single bounces),
+#      and the free-vs-Bouncer scorecard trend. All FREE (no Bouncer credits). See project_send_audit_system.
+echo ">>> send-verification audit (leak check + bounce gap-learning)" | tee -a "$LOG"
+node scripts/daily-send-audit.mjs 2>&1 | tee -a "$LOG" | grep -E "Leak check|LEAK|gap|AUTO-LEARNED|FLAGGED|scorecard" | tail -12
+
 # 2) Deliverability health snapshot (auto-detect AMBER/RED) + append the daily row to the
 #    "Deliverability Log" Airtable table (long-term bounce-rate trend record).
 echo ">>> health snapshot + Airtable log" | tee -a "$LOG"
