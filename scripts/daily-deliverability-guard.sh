@@ -21,9 +21,25 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 echo "=== deliverability guard START $(date) ===" | tee -a "$LOG"
 
-# 1) Pre-send mailbox sweep — suppress dead mailboxes before they can send.
-echo ">>> mailbox sweep (suppress dead)" | tee -a "$LOG"
-node scripts/verify-sendable-mailboxes.mjs 2>&1 | tee -a "$LOG" | grep -E "SUPPRESS|Results:|suppressed" | tail -5
+# 0) REGRESSION GUARD (locked 2026-07-07): verify the whole email-verification system is intact —
+#    free layers, disposable list, layered pipeline, AND the send path still filters NOT({Suppressed}).
+#    If anything regressed, ABORT before the sweep so we never send against a broken verifier.
+echo ">>> verification-system self-check" | tee -a "$LOG"
+node scripts/check-verification-system.mjs 2>&1 | tee -a "$LOG" | tail -3
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+  echo "!!! VERIFICATION SYSTEM REGRESSION — deliverability guard ABORTED (no sweep, no sends touched)." | tee -a "$LOG"
+  exit 1
+fi
+
+# 1) Pre-send mailbox sweep — DROP undeliverable (no-mx + invalid, permanent) before they can send.
+#    Set VERIFY_POLICY=strict to ALSO quarantine catch-all + unknown (held for a later 2nd-domain
+#    strategy). Preview impact first on a port-25-open network: VERIFY_POLICY=strict DRY_RUN=1 node …
+echo ">>> mailbox sweep (drop undeliverable${VERIFY_POLICY:+, policy=$VERIFY_POLICY})" | tee -a "$LOG"
+VERIFY_POLICY="${VERIFY_POLICY:-}" node scripts/verify-sendable-mailboxes.mjs 2>&1 | tee -a "$LOG" | grep -E "DROP|HOLD|Results:|Dropped|Quarantined|policy=" | tail -8
+
+# 1.5) Quarantine report — the durable NOTE of every held/undeliverable email (2nd-domain candidates).
+echo ">>> quarantine report (held-emails note)" | tee -a "$LOG"
+node scripts/quarantine-report.mjs 2>&1 | tee -a "$LOG" | tail -3
 
 # 2) Deliverability health snapshot (auto-detect AMBER/RED) + append the daily row to the
 #    "Deliverability Log" Airtable table (long-term bounce-rate trend record).
