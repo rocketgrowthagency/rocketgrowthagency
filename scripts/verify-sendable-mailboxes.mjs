@@ -21,6 +21,17 @@ const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { verifyMailbox } = require(path.join(ROOT, 'lib', 'verify-mailbox.cjs'));
 const { verifyEmailBouncer } = require(path.join(ROOT, 'lib', 'verify-email-bouncer.cjs'));
+const { isLikelyEmail, isDisposableDomain } = require(path.join(ROOT, 'lib', 'email-validation.cjs'));
+
+// FREE pre-filter — runs BEFORE Bouncer so free-catchable bad addresses cost 0 credits.
+// Returns a drop-reason string if our free layers can prove it bad, else null (→ Bouncer verifies).
+function freeReject(email) {
+  const addr = String(email || '').trim().toLowerCase();
+  const domain = addr.slice(addr.lastIndexOf('@') + 1);
+  if (isDisposableDomain(domain)) return 'disposable';
+  if (!isLikelyEmail(addr)) return 'invalid';   // syntax/placeholder/aggregator/vendor/malformed/bad-dot
+  return null;
+}
 
 const env = Object.fromEntries(fs.readFileSync(path.join(ROOT, '.env'), 'utf8').split('\n')
   .filter((l) => l.includes('=')).map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
@@ -110,13 +121,18 @@ function classify(v) {
   const sendable = await loadSendable();
   console.log(`Sendable leads to verify: ${sendable.length}  [engine=${USE_BOUNCER ? 'Bouncer' : 'SMTP'}, policy=${STRICT ? 'STRICT' : 'legacy'}]${DRY ? '  (DRY RUN — no writes)' : ''}`);
   const tally = { valid: 0, invalid: 0, 'catch-all': 0, unknown: 0 };
+  let freeCaught = 0;  // dropped by the free layer → 0 Bouncer credits spent on these
   const drops = [];        // { id } → Suppressed + status (permanent)
   const quarantines = [];  // { id } → Suppressed + held-* status (retained)
   const POOL = 6; let idx = 0;
   async function worker() {
     while (idx < sendable.length) {
       const r = sendable[idx++]; const f = r.fields;
-      let v; try { v = await verify(f.Email); } catch { v = { result: 'unknown' }; }
+      // FREE pre-filter first — if our own layers prove it bad, drop WITHOUT a Bouncer call.
+      const fr = freeReject(f.Email);
+      let v;
+      if (fr) { v = { result: fr, detail: 'free-layer', code: 'free' }; freeCaught++; }
+      else { try { v = await verify(f.Email); } catch { v = { result: 'unknown' }; } }
       tally[v.result] = (tally[v.result] || 0) + 1;
       const c = classify(v);
       const mark = c.bucket === 'drop' ? '  → DROP' : c.bucket === 'quarantine' ? '  → HOLD' : '';
@@ -127,6 +143,7 @@ function classify(v) {
   }
   await Promise.all(Array.from({ length: Math.min(POOL, sendable.length) }, worker));
   console.log(`\nResults: ${JSON.stringify(tally)}`);
+  console.log(`  FREE-layer caught (0 Bouncer credits): ${freeCaught}  |  Bouncer-verified: ${sendable.length - freeCaught}`);
   console.log(`  DROP (permanent, undeliverable): ${drops.length}`);
   console.log(`  QUARANTINE (held for later)${STRICT ? '' : ' [enable with VERIFY_POLICY=strict]'}: ${quarantines.length}`);
   if (!DRY) {
