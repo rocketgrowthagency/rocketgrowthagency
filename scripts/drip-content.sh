@@ -40,6 +40,19 @@ fi
 if [ "$RC_BLOG" -eq 0 ] && [ -n "$BLOG" ]; then
   node scripts/generate-blog-post.mjs "$BLOG" --publish 2>&1 | tee -a "$LOG"
 fi
+# 3b. CATEGORY-TOPIC track: fills the Maps SEO / GBP / Website blog sections (not just By Industry).
+#     Runs every OTHER day (even day-of-year) so total publishing cadence stays conservative
+#     (scaled-content safety). Each post is a unique, editor-gated (>=7/10) general topic.
+if [ $(( 10#$(date +%j) % 2 )) -eq 0 ]; then
+  TOPIC_LINE=$(node scripts/next-category-topic.mjs 2>>"$LOG"); RC_TOPIC=$?
+  if [ "$RC_TOPIC" -eq 0 ] && [ -n "$TOPIC_LINE" ]; then
+    TOPIC_TITLE="${TOPIC_LINE%%$'\t'*}"; TOPIC_CAT="${TOPIC_LINE##*$'\t'}"
+    echo ">>> category topic: \"$TOPIC_TITLE\" [$TOPIC_CAT]" | tee -a "$LOG"
+    node scripts/generate-blog-post.mjs --topic="$TOPIC_TITLE" --category="$TOPIC_CAT" --publish 2>&1 | tee -a "$LOG"
+  elif [ "$RC_TOPIC" -eq 3 ]; then
+    echo ">>> category topic queue exhausted — append to config/blog-topics-categories.json." | tee -a "$LOG"
+  fi
+fi
 # 4. If the industry page was built AND its matching blog now exists, re-run it --force so the
 #    industry->blog cross-link resolves (bidirectional interlinking).
 if [ "$RC_IND" -eq 0 ] && [ -n "$IND" ]; then
@@ -48,6 +61,17 @@ fi
 
 # OpenAI balance/quota alert (HARD RULE): notify Chris immediately if a generator failed on quota.
 bash scripts/notify-openai-quota.sh "$LOG"
+
+# 2.5 HARD LOCK GUARD (locked 2026-07-07): if ANY Chris-approved page regressed (lost its design
+# markers — e.g. a generator reverted it from a stale template), ABORT before deploy so the reverted
+# page can never go live. This is the net that would have caught the 2026-07-07 hub revert.
+node scripts/check-locked-pages.mjs 2>&1 | tee -a "$LOG"
+GUARD_RC=${PIPESTATUS[0]}
+if [ "$GUARD_RC" -ne 0 ]; then
+  echo ">>> ❌ LOCKED-PAGE REGRESSION — DEPLOY ABORTED. A protected page reverted; live site left untouched. Fix the page + the generator that rebuilt it." | tee -a "$LOG"
+  bash scripts/notify-openai-quota.sh "$LOG" 2>/dev/null || true
+  exit 1
+fi
 
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"

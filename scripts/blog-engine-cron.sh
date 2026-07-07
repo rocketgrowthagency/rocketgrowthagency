@@ -26,6 +26,12 @@ cd "$SCRAPER_DIR"
 node scripts/generate-blog-post.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
 node scripts/generate-industry-page.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
 
+# 1.5 HARD LOCK GUARD (locked 2026-07-07): abort before deploy if any approved page regressed.
+node scripts/check-locked-pages.mjs 2>&1 | tee -a "$LOG"
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+  echo "!!! LOCKED-PAGE REGRESSION — deploy ABORTED; live site left untouched." | tee -a "$LOG"; exit 1
+fi
+
 # 2. Deploy any new/changed blog + industry content.
 # NOTE: this site deploys via `netlify deploy --prod` (direct CLI), NOT GitHub
 # auto-build. GitHub is a backup mirror and is currently blocked by a >2GB pack
