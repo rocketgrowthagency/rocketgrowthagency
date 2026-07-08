@@ -1,0 +1,17 @@
+{
+  "_note": "Perpetual TOPIC-post queue for the non-industry blog categories (Maps SEO / GBP / Website), locked 2026-07-06. drip-content.sh generates ONE topic post/day from here in order, skipping any already built (by slug). Interleaved across the 3 categories so all filter sections on /blog/ fill evenly. category MUST be one of: maps | gbp | website (matches the filter pills + data-cat in blog/index.html). Append more {title, category} anytime to extend forever — safe because each is a distinct post keyed on its slugified title. Industry posts stay in blog-topics.json; these are the general-topic complement.",
+  "queue": [
+    { "title": "Google Maps Ranking Signals That Actually Move the 3-Pack in 2026", "category": "maps" },
+    { "title": "Google Business Profile Categories: How to Choose the Right Primary and Secondary", "category": "gbp" },
+    { "title": "Local Website Architecture: Service Pages That Reinforce Your Map Pack", "category": "website" },
+    { "title": "How Review Velocity and Recency Affect Google Maps Rankings", "category": "maps" },
+    { "title": "The Google Business Profile Photo and Post Strategy That Drives Calls", "category": "gbp" },
+    { "title": "Local Landing Pages: Location and Service Intent That Ranks", "category": "website" },
+    { "title": "Proximity, Relevance, and Prominence: The Local Pack Explained", "category": "maps" },
+    { "title": "GBP Services, Attributes, and Q&A: The Underused Fields That Convert", "category": "gbp" },
+    { "title": "Internal Linking for Local SEO: Sending Authority to Your Money Pages", "category": "website" },
+    { "title": "Why Your Google Maps Ranking Is Inconsistent (and How to Stabilize It)", "category": "maps" },
+    { "title": "Google Business Profile Hygiene: The Monthly Checklist That Protects Rankings", "category": "gbp" },
+    { "title": "LocalBusiness Schema and Page Speed: Technical Wins for Local Sites", "category": "website" }
+  ]
+}

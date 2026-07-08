@@ -6,3 +6,4 @@ output/
 rock-rerender.log
 .discover-state.json
 output/attempted-searches.log
+reports/

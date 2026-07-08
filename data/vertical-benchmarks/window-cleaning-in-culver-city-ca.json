@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Window cleaning in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Window cleaning service": 10
+  },
+  "categoryDistributionTop5": {
+    "Window cleaning service": 5
+  },
+  "categoryDistributionTop3": {
+    "Window cleaning service": 3
+  },
+  "majorityCategoryTop10": "Window cleaning service",
+  "majorityCategoryTop5": "Window cleaning service",
+  "majorityCategoryTop3": "Window cleaning service",
+  "reviewsTop10": {
+    "min": 16,
+    "max": 1079,
+    "median": 148,
+    "p25": 56,
+    "p75": 360
+  },
+  "reviewsTop3Avg": 472,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

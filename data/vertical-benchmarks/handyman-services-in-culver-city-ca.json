@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Handyman services in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Handyman/Handywoman/Handyperson": 10
+  },
+  "categoryDistributionTop5": {
+    "Handyman/Handywoman/Handyperson": 5
+  },
+  "categoryDistributionTop3": {
+    "Handyman/Handywoman/Handyperson": 3
+  },
+  "majorityCategoryTop10": "Handyman/Handywoman/Handyperson",
+  "majorityCategoryTop5": "Handyman/Handywoman/Handyperson",
+  "majorityCategoryTop3": "Handyman/Handywoman/Handyperson",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 214,
+    "median": 30,
+    "p25": 16,
+    "p75": 48
+  },
+  "reviewsTop3Avg": 34,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

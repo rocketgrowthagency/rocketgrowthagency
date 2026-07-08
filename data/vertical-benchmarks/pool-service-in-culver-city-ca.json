@@ -1,0 +1,35 @@
+{
+  "searchTerm": "Pool service in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Pool cleaning service": 2,
+    "Swimming pool repair service": 4,
+    "Swimming pool contractor": 4
+  },
+  "categoryDistributionTop5": {
+    "Pool cleaning service": 2,
+    "Swimming pool repair service": 2,
+    "Swimming pool contractor": 1
+  },
+  "categoryDistributionTop3": {
+    "Pool cleaning service": 2,
+    "Swimming pool repair service": 1
+  },
+  "majorityCategoryTop10": "Swimming pool repair service",
+  "majorityCategoryTop5": "Pool cleaning service",
+  "majorityCategoryTop3": "Pool cleaning service",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 83,
+    "median": 16,
+    "p25": 8,
+    "p75": 44
+  },
+  "reviewsTop3Avg": 37,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}

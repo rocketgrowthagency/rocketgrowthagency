@@ -1,0 +1,34 @@
+{
+  "searchTerm": "Junk removal in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Waste management service": 3,
+    "Junk removal service": 5,
+    "Garbage collection service": 2
+  },
+  "categoryDistributionTop5": {
+    "Waste management service": 2,
+    "Junk removal service": 3
+  },
+  "categoryDistributionTop3": {
+    "Waste management service": 1,
+    "Junk removal service": 2
+  },
+  "majorityCategoryTop10": "Junk removal service",
+  "majorityCategoryTop5": "Junk removal service",
+  "majorityCategoryTop3": "Junk removal service",
+  "reviewsTop10": {
+    "min": 5,
+    "max": 9750,
+    "median": 115.5,
+    "p25": 36,
+    "p75": 906
+  },
+  "reviewsTop3Avg": 765,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Carpet cleaning in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Carpet cleaning service": 10
+  },
+  "categoryDistributionTop5": {
+    "Carpet cleaning service": 5
+  },
+  "categoryDistributionTop3": {
+    "Carpet cleaning service": 3
+  },
+  "majorityCategoryTop10": "Carpet cleaning service",
+  "majorityCategoryTop5": "Carpet cleaning service",
+  "majorityCategoryTop3": "Carpet cleaning service",
+  "reviewsTop10": {
+    "min": 2,
+    "max": 165,
+    "median": 43,
+    "p25": 5,
+    "p75": 129
+  },
+  "reviewsTop3Avg": 25,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

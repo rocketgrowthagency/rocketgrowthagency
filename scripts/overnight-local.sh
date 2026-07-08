@@ -16,15 +16,37 @@ SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRAPER_DIR"
 DATE_STAMP=$(date +%Y-%m-%d)
 LOG="/tmp/overnight-local-${DATE_STAMP}.log"
-MAX_SEARCHES="${MAX_SEARCHES:-99}"
-WORKER_COUNT="${WORKER_COUNT:-2}"
 
-# Keep the machine awake for the whole night (10h). Pipeline also self-caffeinates per search.
-caffeinate -dimsu -t 36000 &
+# PRODUCTION PAUSE GATE (2026-07-03). The production governor (or Chris) pauses nightly video
+# production when the send side is caught up (sendable buffer >> daily send rate) or deliverability
+# is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes
+# output/PRODUCTION-PAUSED to resume when buffer drains + bounce is GREEN. See feedback_production_governor.
+if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
+  echo "=== overnight-local PAUSED $(date) — production paused (output/PRODUCTION-PAUSED). Not running. ===" | tee -a "$LOG"
+  cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
+  exit 0
+fi
+
+# HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
+# to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
+#   MAX_SEARCHES  — max cities/searches this run (default 3 — each ~2h, so ~6h total)
+#   MAX_RUN_HOURS — wall-clock cap; no NEW search starts past this (default 6h — matches 3 searches)
+#   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes
+MAX_SEARCHES="${MAX_SEARCHES:-3}"
+MAX_RUN_HOURS="${MAX_RUN_HOURS:-6}"
+WORKER_COUNT="${WORKER_COUNT:-2}"
+STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
+
+RUN_START=$(date +%s)
+DEADLINE=$(( RUN_START + MAX_RUN_HOURS * 3600 ))
+rm -f "$STOP_FLAG" 2>/dev/null   # clear any stale flag from a prior run
+
+# Keep the machine awake only for the capped window (+30m buffer). Pipeline self-caffeinates too.
+caffeinate -dimsu -t $(( MAX_RUN_HOURS * 3600 + 1800 )) &
 CAFF_PID=$!
 trap 'kill $CAFF_PID 2>/dev/null' EXIT
 
-echo "=== overnight-local START $(date) — city-first, max ${MAX_SEARCHES} searches, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
+echo "=== overnight-local START $(date) — city-first, cap: ${MAX_SEARCHES} searches / ${MAX_RUN_HOURS}h, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
 
 # Manually-flagged bad videos: ARM them (remove + block send + re-queue their search) and FINALIZE
 # any that were re-rendered on a prior night. Chris ticks {Redo Video} in Airtable; this self-heals.
@@ -33,6 +55,9 @@ node scripts/redo-flagged-videos.mjs 2>&1 | tee -a "$LOG"
 
 n=0
 while [ "$n" -lt "$MAX_SEARCHES" ]; do
+  # Wall-clock cap + graceful stop flag — checked BEFORE starting each new search.
+  if [ "$(date +%s)" -ge "$DEADLINE" ]; then echo ">>> wall-clock cap (${MAX_RUN_HOURS}h) reached — stopping after $n search(es)." | tee -a "$LOG"; break; fi
+  if [ -f "$STOP_FLAG" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG"; break; fi
   Q=$(node scripts/next-search.mjs 2>>"$LOG"); RC=$?
   if [ "$RC" -eq 3 ]; then echo ">>> SoCal fully exhausted — nothing left to scrape. Done." | tee -a "$LOG"; break; fi
   if [ "$RC" -ne 0 ] || [ -z "$Q" ]; then echo "!!! next-search failed (rc=$RC) — stopping." | tee -a "$LOG"; break; fi

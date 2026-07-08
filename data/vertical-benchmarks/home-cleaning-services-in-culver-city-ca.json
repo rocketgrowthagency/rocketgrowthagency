@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Home cleaning services in Culver City, CA",
+  "auditedDate": "2026-07-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "House cleaning service": 9,
+    "Cleaning service": 1
+  },
+  "categoryDistributionTop5": {
+    "House cleaning service": 5
+  },
+  "categoryDistributionTop3": {
+    "House cleaning service": 3
+  },
+  "majorityCategoryTop10": "House cleaning service",
+  "majorityCategoryTop5": "House cleaning service",
+  "majorityCategoryTop3": "House cleaning service",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 424,
+    "median": 73,
+    "p25": 25,
+    "p75": 125
+  },
+  "reviewsTop3Avg": 163,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}
