@@ -104,6 +104,12 @@ console.log('\n[9] proxy-MX IP detection (Playa Cleaning class)');
   // Real mail-server IPs (Google MX + a normal host) — MUST NOT be flagged (else we over-drop good domains).
   for (const ip of ['142.250.115.26', '64.233.184.27', '208.71.35.137'])
     isProxyIp(ip) ? bad(`WRONGLY flags real mail IP ${ip} — would over-drop good domains`) : ok(`allows real mail IP ${ip}`);
+  // CRITICAL false-positive guard (2026-07-08): proxy-mx only applies to a SELF-HOSTED MX. A third-party
+  // provider MX that resolves into a CDN range (Hostinger fronts SMTP via Cloudflare Spectrum) is legit —
+  // flagging it would over-drop a huge chunk of SMB leads. This exact case bit us in the pool sweep.
+  const { isSelfHostedMx } = require(path.join(ROOT, 'lib', 'verify-pipeline.cjs'));
+  isSelfHostedMx('mx.playacleaning.com', 'playacleaning.com') ? ok('self-hosted MX detected (playacleaning)') : bad('self-hosted MX not detected — proxy-mx would never fire');
+  isSelfHostedMx('mx1.hostinger.com', 'garagegurus.net') ? bad('WRONGLY treats Hostinger provider MX as self-hosted — over-drops Hostinger leads') : ok('third-party provider MX (Hostinger) NOT self-hosted → never proxy-dropped');
 }
 
 // 10. Unreachable-server 'unknown' → HOLD, not send — the actual send-path hole that let Playa through
