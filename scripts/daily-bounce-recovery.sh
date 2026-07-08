@@ -17,7 +17,7 @@
 # Add to crontab — runs M-F at 7:30am PT, AFTER the 7am Apps Script cron
 # has flipped fresh bounces → queued-recovery state:
 #
-#   30 7 * * 1-5 /Volumes/LaCie\ -\ APFS\ \(Mac\)/ALL\ NEWS\ SITES/Rocket\ Growth\ Agency/Rocket\ Growth\ Agency\ Scraper\ VS\ Code/scripts/daily-bounce-recovery.sh >> /tmp/daily-bounce-recovery.log 2>&1
+#   30 7 * * 1-5 /Users/chris/RGA/Rocket\ Growth\ Agency\ Scraper\ VS\ Code/scripts/daily-bounce-recovery.sh >> /tmp/daily-bounce-recovery.log 2>&1
 #
 # OR via launchd (~/Library/LaunchAgents/com.rga.bounce-recovery.plist) —
 # more reliable than crontab on macOS since launchd handles missed runs
