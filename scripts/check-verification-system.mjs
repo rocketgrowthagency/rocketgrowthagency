@@ -92,6 +92,40 @@ try {
   /(\d+) passed, 0 failed/.test(out) ? ok(out.trim().split('\n').pop()) : bad('unit tests FAILED:\n' + out);
 } catch (e) { bad('unit test run errored: ' + e.message); }
 
+// 9. CDN/web-proxy MX detection (locked 2026-07-08) — the Playa Cleaning class of miss. A real mail
+//    server NEVER lives on a CDN HTTP-proxy IP; an MX that resolves only there can't accept SMTP →
+//    guaranteed connect-timeout bounce that DNS-existence + Bouncer-'unknown' both wave through.
+console.log('\n[9] proxy-MX IP detection (Playa Cleaning class)');
+{
+  const { isProxyIp } = require(path.join(ROOT, 'lib', 'verify-pipeline.cjs'));
+  // Real Cloudflare web-proxy IPs from the order@playacleaning.com bounce + dig — MUST be flagged.
+  for (const ip of ['188.114.96.0', '188.114.97.0', '104.21.90.135', '172.67.200.171', '2a06:98c1:3121::', '2606:4700:3034::6815:5a87'])
+    isProxyIp(ip) ? ok(`flags CDN-proxy IP ${ip}`) : bad(`does NOT flag CDN-proxy IP ${ip} — proxy-MX check broken`);
+  // Real mail-server IPs (Google MX + a normal host) — MUST NOT be flagged (else we over-drop good domains).
+  for (const ip of ['142.250.115.26', '64.233.184.27', '208.71.35.137'])
+    isProxyIp(ip) ? bad(`WRONGLY flags real mail IP ${ip} — would over-drop good domains`) : ok(`allows real mail IP ${ip}`);
+}
+
+// 10. Unreachable-server 'unknown' → HOLD, not send — the actual send-path hole that let Playa through
+//     (Bouncer returned unknown/no-connect, and our policy sent on unknown).
+console.log('\n[10] Bouncer unreachable-unknown holds (not sends)');
+{
+  const { bouncerUnknownIsUnreachable } = require(path.join(ROOT, 'lib', 'verify-pipeline.cjs'));
+  for (const r of ['no_connect', 'timeout', 'unavailable_smtp', 'failed_mx_check', 'dns_error', 'connection refused'])
+    bouncerUnknownIsUnreachable(r) ? ok(`'${r}' → hold`) : bad(`'${r}' still sendable — an unreachable server would leak a bounce`);
+  for (const r of ['greylisted', 'accepted_email', '', 'low_deliverability'])
+    bouncerUnknownIsUnreachable(r) ? bad(`'${r}' wrongly force-held (benches good/transient leads)`) : ok(`'${r}' not force-held`);
+}
+
+// 11. End-to-end: the exact miss is closed — order@playacleaning.com now DROPS (learned denylist +
+//     proxy-MX both cover it). Deterministic (free-only, denylist short-circuits before any DNS).
+console.log('\n[11] Playa Cleaning address now drops');
+{
+  process.env.VERIFY_ENGINE = 'free';
+  const d = await verifyEmailLayered('order@playacleaning.com');
+  d.decision === 'drop' ? ok(`order@playacleaning.com → drop (${d.tier}/${d.result})`) : bad(`order@playacleaning.com → ${d.decision} — the exact miss is NOT closed`);
+}
+
 // Verdict
 if (fails.length) {
   console.error(`\n❌ VERIFICATION SYSTEM REGRESSION — ${fails.length} check(s) failed. Fix before sending.\n`);

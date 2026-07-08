@@ -4,3 +4,10 @@
 # set so the FREE layer permanently learns from every miss (closing the free-vs-Bouncer gap over time).
 # One domain per line. Lines starting with '#' are comments. Single bounces on normal business domains
 # are NOT added here — they're flagged for human review in reports/send-audit/ instead.
+#
+# MANUAL entries below are definitively-dead domains added by a human for a DEFINITIVE reason (not the
+# ≥2-bounce heuristic) — e.g. an MX pointed at a CDN/web proxy that can't accept SMTP. The verifier now
+# auto-drops these (proxy-mx), so these lines are belt-and-suspenders.
+# 2026-07-08 — MX (mx.playacleaning.com) resolves only to Cloudflare web-proxy IPs → SMTP connect
+# timed out on every attempt (soft-bounced order@playacleaning.com). Domain cannot receive mail.
+playacleaning.com
