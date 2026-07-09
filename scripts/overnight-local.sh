@@ -22,9 +22,20 @@ LOG="/tmp/overnight-local-${DATE_STAMP}.log"
 # is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes
 # output/PRODUCTION-PAUSED to resume when buffer drains + bounce is GREEN. See feedback_production_governor.
 if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
-  echo "=== overnight-local PAUSED $(date) — production paused (output/PRODUCTION-PAUSED). Not running. ===" | tee -a "$LOG"
-  cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
-  exit 0
+  # AUTO-RESUME (2026-07-09): the flag promised the governor would clear it when "buffer drains + bounce is
+  # GREEN", but nothing ever evaluated that → production silently stalled to 0 sendable leads. Now we
+  # re-check those exact conditions here. Domain protection = rule #1, so this FAILS SAFE: only a clean
+  # RESUME (exit 0) clears the flag; any doubt (exit 1/2) stays paused.
+  node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG"
+  RESUME_RC=${PIPESTATUS[0]}
+  if [ "$RESUME_RC" -eq 0 ]; then
+    echo "=== production governor AUTO-RESUME $(date) — conditions met; clearing PRODUCTION-PAUSED + proceeding. ===" | tee -a "$LOG"
+    rm -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED"
+  else
+    echo "=== overnight-local PAUSED $(date) — resume conditions NOT met (rc=$RESUME_RC). Not running. ===" | tee -a "$LOG"
+    cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
+    exit 0
+  fi
 fi
 
 # HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
