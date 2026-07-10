@@ -57,19 +57,26 @@ function blogTitle(slug) {
   return (m ? m[1] : slug).trim();
 }
 
-// Ensure/replace og:image + twitter:image (+ width/height) in a page. Returns true if changed.
+// Ensure og:image + twitter:image (+ card + width/height) point at imgUrl. INSERTS any that are missing
+// (some blog posts had no og:image tag at all), REPLACES any that exist. Returns true if changed.
 function patchMeta(pageFile, imgUrl) {
   let s = fs.readFileSync(pageFile, 'utf8');
   const before = s;
+  // 1) insert whichever tags are absent, just before </head>.
+  const adds = [];
+  if (!/property="og:image"/i.test(s)) adds.push(
+    `<meta property="og:image" content="${imgUrl}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`);
+  if (!/name="twitter:card"/i.test(s)) adds.push(`<meta name="twitter:card" content="summary_large_image" />`);
+  if (!/name="twitter:image"/i.test(s)) adds.push(`<meta name="twitter:image" content="${imgUrl}" />`);
+  if (adds.length) s = s.replace(/<\/head>/i, '  ' + adds.join('\n  ') + '\n</head>');
+  // 2) point any pre-existing tags at the new URL.
   s = s.replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/i, `$1${imgUrl}$2`);
   s = s.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/i, `$1${imgUrl}$2`);
-  // width/height help some scrapers; patch if present, insert after og:image if missing.
   if (/og:image:width/i.test(s)) {
     s = s.replace(/(<meta\s+property="og:image:width"\s+content=")[^"]*(")/i, `$11200$2`)
          .replace(/(<meta\s+property="og:image:height"\s+content=")[^"]*(")/i, `$1630$2`);
-  } else {
-    s = s.replace(/(<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>)/i,
-      `$1\n  <meta property="og:image:width" content="1200" />\n  <meta property="og:image:height" content="630" />`);
   }
   if (s !== before) { fs.writeFileSync(pageFile, s); return true; }
   return false;
