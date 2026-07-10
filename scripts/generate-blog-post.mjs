@@ -216,7 +216,9 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
   const V = titleCase(vertical);
   const cat = opts.cat || CATS.industry;                 // hero crumb/pill/icon (default: industry)
   const title = opts.title || `Local SEO for ${V}: How to Rank in the Google Maps Top 3 (2026)`;
-  const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
+  // Tailored Map-Pack link-preview card (rendered by scripts/build-og-cards.mjs after the post is written;
+  // it patches the exact ?v= stamp). This default keeps the tag correct for a brand-new post meanwhile.
+  const ogImage = `https://www.rocketgrowthagency.com/images/assets/og/blog-${slug}.jpg?v=20260710`;
   const wordCount = (c.sections || []).reduce((n, s) => n + (s.paras || []).join(' ').split(/\s+/).length + (s.bullets || []).join(' ').split(/\s+/).length, 0);
   const industrySlug = slugify(vertical);
   const hasIndustryPage = fs.existsSync(path.join(WEBSITE_DIR, 'industries', industrySlug, 'index.html'));

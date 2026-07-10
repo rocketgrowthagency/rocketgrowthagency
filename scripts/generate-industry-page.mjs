@@ -409,7 +409,9 @@ function render(vertical, slug, c) {
   const h1 = `Local SEO for ${V}`;
   const blogSlug = `local-seo-for-${slugify(vertical)}`;
   const hasBlog = fs.existsSync(path.join(BLOG_DIR, blogSlug, 'index.html'));
-  const ogImage = 'https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png';
+  // Tailored Map-Pack link-preview card (rendered by scripts/build-og-cards.mjs, which patches the exact
+  // ?v= stamp on render). This default keeps the tag correct for a brand-new page before that runs.
+  const ogImage = `https://www.rocketgrowthagency.com/images/assets/og/industry-${slug}.jpg?v=20260710`;
   const wordCount = [(c.problem?.paras || []).join(' '), (c.services || []).map((x) => x.desc).join(' '), (c.process || []).map((x) => x.desc).join(' '), (c.included || []).join(' '), (c.whyUs?.paras || []).join(' '), (c.faq || []).map((x) => x.a).join(' ')].join(' ').split(/\s+/).filter(Boolean).length;
 
   const searchTerm = `${vertical.toLowerCase()} near me`;

@@ -62,6 +62,12 @@ fi
 # OpenAI balance/quota alert (HARD RULE): notify Chris immediately if a generator failed on quota.
 bash scripts/notify-openai-quota.sh "$LOG"
 
+# 2.4 OG link-preview cards (added 2026-07-10): render the tailored Map-Pack card for any NEW industry
+# page / blog post (--all skips pages that already have a card → no churn) and patch its og:image so
+# shares show the branded card, not the plain icon. Headless Chrome, offscreen — safe any time.
+# Non-fatal: a render hiccup must NEVER block the content deploy. See project_og_cards_locked.
+node scripts/build-og-cards.mjs --all 2>&1 | tee -a "$LOG" || echo ">>> og-card build skipped (non-fatal)" | tee -a "$LOG"
+
 # 2.5 HARD LOCK GUARD (locked 2026-07-07): if ANY Chris-approved page regressed (lost its design
 # markers — e.g. a generator reverted it from a stale template), ABORT before deploy so the reverted
 # page can never go live. This is the net that would have caught the 2026-07-07 hub revert.
