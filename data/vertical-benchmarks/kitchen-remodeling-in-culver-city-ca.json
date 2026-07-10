@@ -1,0 +1,35 @@
+{
+  "searchTerm": "Kitchen remodeling in Culver City, CA",
+  "auditedDate": "2026-07-10",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Kitchen remodeler": 7,
+    "Contractor": 1,
+    "General contractor": 1,
+    "Construction company": 1
+  },
+  "categoryDistributionTop5": {
+    "Kitchen remodeler": 3,
+    "Contractor": 1,
+    "General contractor": 1
+  },
+  "categoryDistributionTop3": {
+    "Kitchen remodeler": 3
+  },
+  "majorityCategoryTop10": "Kitchen remodeler",
+  "majorityCategoryTop5": "Kitchen remodeler",
+  "majorityCategoryTop3": "Kitchen remodeler",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 150,
+    "median": 29.5,
+    "p25": 6,
+    "p75": 69
+  },
+  "reviewsTop3Avg": 80,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}
