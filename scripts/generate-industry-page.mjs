@@ -488,7 +488,7 @@ ${HEADER}
       <div class="ix-hero-in">
         <div>
           <p class="ix-eyebrow">Industries &bull; Done-for-you local SEO</p>
-          <h1 class="ix-h1">${esc(h1)}</h1>
+          <h1 class="ix-h1">Local SEO for <span class="solid-blue">${esc(V)}</span></h1>
           <p class="ix-sub">${esc(c.heroSub)}</p>
           <div class="ix-cta-row">
             <a class="ix-btn" href="/free-growth-audit/">Get Your Free Growth Audit ${IXSVG.arrow}</a>
@@ -659,7 +659,7 @@ function buildHub() {
     const f = path.join(IND_DIR, d, 'index.html');
     if (d === 'index.html' || !fs.existsSync(f)) continue;
     const html = fs.readFileSync(f, 'utf8');
-    const h1 = (html.match(/<h1[^>]*>([^<]+)<\/h1>/) || [])[1] || d;
+    const h1 = ((html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '').replace(/<[^>]+>/g, '').trim() || d;
     const desc = (html.match(/name="description" content="([^"]*)"/) || [])[1] || '';
     cards.push({ slug: d, h1, desc });
   }
@@ -708,8 +708,8 @@ function buildHub() {
     .ih-hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#eef3ff 0%,#f7f9ff 60%,#fff 100%)}
     .ih-hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(36,87,230,.10) 1.2px,transparent 1.2px);background-size:26px 26px;opacity:.5;pointer-events:none}
     .ih-in{position:relative;max-width:1160px;margin:0 auto;padding:3.6rem 1.75rem 3.8rem;display:grid;grid-template-columns:1.02fr .98fr;gap:3rem;align-items:center}
-    .ih-eyebrow{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2457e6;margin:0 0 1rem}
-    .ih-h1{font-size:3.1rem;font-weight:900;letter-spacing:-.025em;line-height:1.04;color:#0f1b3d;margin:0 0 1.1rem}
+    .ih-eyebrow{font-size:.8rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1f46bf;margin:0 0 .55rem}
+    .ih-h1{font-size:clamp(2.1rem,5vw,4.2rem);font-weight:900;letter-spacing:-.03em;line-height:1.05;color:#0f1a3a;margin:0 0 1.1rem}
     .ih-sub{font-size:1.12rem;line-height:1.6;color:#41506b;margin:0 0 1.7rem;max-width:42ch}
     .ih-cta{display:inline-flex;align-items:center;gap:.5rem;background:#2457e6;color:#fff;font-weight:800;font-size:1rem;padding:.9rem 1.5rem;border-radius:999px;text-decoration:none;box-shadow:0 14px 30px -12px rgba(36,87,230,.6)}
     .ih-cta:hover{color:#fff}
@@ -732,7 +732,7 @@ function buildHub() {
     .map-badge svg{width:17px;height:17px;color:#16a34a}
     .ih-float{position:absolute;left:-16px;top:46%;background:#fff;border:1px solid #e3e9f4;border-radius:12px;padding:.55rem .8rem;display:flex;align-items:center;gap:.5rem;font-weight:700;color:#0f1b3d;font-size:.86rem;box-shadow:0 16px 30px -14px rgba(20,40,90,.5);z-index:5}
     .ih-float .st{display:inline-flex}.ih-float .st svg{width:13px;height:13px;color:#f4b400}
-    @media(max-width:900px){.ih-in{grid-template-columns:1fr;gap:2.4rem}.ih-h1{font-size:2.4rem}}
+    @media(max-width:900px){.ih-in{grid-template-columns:1fr;gap:2.4rem}}
   </style>
 </head>
 <body>
@@ -742,7 +742,7 @@ ${HEADER}
       <div class="ih-in">
         <div>
           <p class="ih-eyebrow">Industries</p>
-          <h1 class="ih-h1">Local SEO, tailored to your industry</h1>
+          <h1 class="ih-h1">Local SEO, tailored to <span class="solid-blue">your industry</span></h1>
           <p class="ih-sub">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p>
           <a class="ih-cta" href="/free-growth-audit/">Get Your Free Growth Audit</a>
         </div>
