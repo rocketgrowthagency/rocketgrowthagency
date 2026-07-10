@@ -488,7 +488,7 @@ ${HEADER}
     <section class="ix-hero">
       <div class="ix-hero-in">
         <div>
-          <p class="ix-eyebrow">Industries &bull; Done-for-you local SEO</p>
+          <p class="ix-eyebrow">Industries &bull; ${esc(V)}</p>
           <h1 class="ix-h1">Local SEO for <span class="solid-blue">${esc(V)}</span></h1>
           <p class="ix-sub">${esc(c.heroSub)}</p>
           <div class="ix-cta-row">
