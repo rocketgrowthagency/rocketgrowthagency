@@ -467,7 +467,7 @@ function render(vertical, slug, c) {
   <link rel="apple-touch-icon" href="/images/assets/apple-touch-icon.png?v=20260706b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260706f" />
+  <link rel="stylesheet" href="/style.css?v=20260710a" />
   <script defer src="/script.js?v=20260706e"></script>
   <script type="application/ld+json">
 ${serviceSchema}
@@ -688,7 +688,7 @@ function buildHub() {
   <link rel="apple-touch-icon" href="/images/assets/apple-touch-icon.png?v=20260706b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260706f" /><script defer src="/script.js?v=20260706e"></script>
+  <link rel="stylesheet" href="/style.css?v=20260710a" /><script defer src="/script.js?v=20260706e"></script>
   <style id="promo-bar-style">
     .promo-bar{display:block;background:#2457e6;color:#fff;text-align:center;text-decoration:none;font-size:.92rem;font-weight:600;padding:.62rem 1rem;line-height:1.4}
     .promo-bar strong{font-weight:800}.promo-bar .promo-cta{text-decoration:underline;white-space:nowrap;margin-left:.35rem}.promo-bar:hover{background:#1c46c4}
