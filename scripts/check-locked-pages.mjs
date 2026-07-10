@@ -17,23 +17,26 @@ const WEB = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website V
 
 // Pinned pages → substrings that MUST all be present (design + chrome markers).
 const LOCKS = {
-  'index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"', '"streetAddress"'],
-  'pricing/index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"'],
+  // 'solid-blue' = the hero blue-accent phrase (added 2026-07-10 site-design finalize); locks the accent onto marketing heroes.
+  'index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"', '"streetAddress"', 'solid-blue'],
+  'pricing/index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"', 'solid-blue'],
   'contact/index.html': ['footer-address', 'contact-card', 'form-trust'],
   'start-growth-plan/index.html': ['gp-hero', 'footer-address', 'form-trust'],
   'free-growth-audit/index.html': ['form-trust', 'footer-address'],
   'privacy/index.html': ['lg-hero', 'lg-toc', '9937 Jefferson', 'footer-address'],
   'terms/index.html': ['lg-hero', 'lg-toc', '9937 Jefferson'],
-  'industries/index.html': ['ih-hero', 'ind-cat-icon', 'ind-cat-name', 'style.css?v=20260710a'],
+  // industries hub: hero accent + the fixed-point gutter (5rem top + calc gutter) so the eyebrow can't drift back.
+  'industries/index.html': ['ih-hero', 'ind-cat-icon', 'ind-cat-name', 'style.css?v=20260710a', 'solid-blue', 'padding:5rem max(1.75rem,calc'],
   'blog/index.html': ['bloghub-grid', 'bloghub-filters', 'bc-card'],
-  'process/index.html': ['footer-address', 'style.css?v=20260710a'],
+  'process/index.html': ['footer-address', 'style.css?v=20260710a', 'solid-blue'],
   'faq/index.html': ['footer-address', 'style.css?v=20260710a', 'faq-redesign', 'faq-layout', 'faq-help'],
-  'services/index.html': ['footer-address', 'style.css?v=20260710a'],
+  'services/index.html': ['footer-address', 'style.css?v=20260710a', 'solid-blue'],
 };
 
 // Directory rules: EVERY <dir>/<slug>/index.html (except skips) must contain ALL markers.
 const GLOBS = [
-  { dir: 'industries', skip: ['index.html'], markers: ['ix-hero', 'footer-address', 'scrollRestoration'] },  // redesign + address + open-at-top
+  // industries detail: redesign + address + open-at-top + hero blue accent + fixed-point hero gutter (locks the 2026-07-10 hero system so the generator can't regress it).
+  { dir: 'industries', skip: ['index.html'], markers: ['ix-hero', 'footer-address', 'scrollRestoration', 'solid-blue', 'padding:5rem max(1.75rem,calc'] },
   { dir: 'blog', skip: ['index.html'], markers: ['blog-redesign', 'footer-address', 'scrollRestoration'] },   // reading-experience + address + open-at-top
 ];
 
