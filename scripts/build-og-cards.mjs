@@ -29,7 +29,7 @@ const IND_DIR = path.join(WEB, 'industries');
 const BLOG_DIR = path.join(WEB, 'blog');
 const OUT_DIR = path.join(WEB, 'images', 'assets', 'og');
 const BASE = 'https://www.rocketgrowthagency.com/images/assets/og';
-const STAMP = new Date().toISOString().slice(0, 10).replace(/-/g, '');   // e.g. 20260710 — cache-bust
+const STAMP = process.env.OG_STAMP || new Date().toISOString().slice(0, 10).replace(/-/g, '');   // cache-bust; override with OG_STAMP when re-rendering same-day so previews refresh
 
 const ARGS = process.argv.slice(2);
 const has = (f) => ARGS.includes(f);

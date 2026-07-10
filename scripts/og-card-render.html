@@ -31,6 +31,7 @@
   .og-dot{width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(22,163,74,.16)}
   .og-h{font-size:82px;font-weight:900;letter-spacing:-0.03em;line-height:1.0;color:var(--text-900);margin:0}
   .og-h.sm{font-size:58px}
+  .og-h.xs{font-size:46px;line-height:1.05}
   .og-h .b{color:var(--primary)}
   .og-sub{font-size:29px;line-height:1.34;color:var(--text-700);max-width:610px;margin:20px 0 0;font-weight:500}
   .og-foot{display:flex;align-items:center;justify-content:space-between}
@@ -73,22 +74,28 @@ function mapsPanel(win){
     + '<div class="m-row dim"><div class="m-num">2</div><div class="m-body"><div class="m-bar"></div><div class="m-bar s"></div></div></div>'
     + '<div class="m-row dim"><div class="m-num">3</div><div class="m-body"><div class="m-bar"></div><div class="m-bar s"></div></div></div></div>';
 }
-function ogCard({pill, h, accent, sub, win, small}){
+function ogCard({pill, h, accent, accentWord, sub, win, small, size}){
+  // headline: accentWord highlights that substring in place (for real page h1s); accent appends a blue phrase.
+  let head = esc(h);
+  if (accentWord) head = head.replace(esc(accentWord), '<span class="b">'+esc(accentWord)+'</span>');
+  else if (accent) head = head + ' <span class="b">'+esc(accent)+'</span>';
+  const cls = size==='xs' ? ' xs' : (size==='sm' || small ? ' sm' : '');
   return '<div class="og">'
     + '<div class="og-logo"><div class="og-ico">'+ROCKET+'</div><div class="og-word">Rocket<span class="b">Growth</span>Agency</div></div>'
     + '<div class="og-pill"><span class="og-dot"></span>'+esc(pill)+'</div>'
-    + '<div class="og-mid"><div class="og-h'+(small?' sm':'')+'">'+esc(h)+(accent?' <span class="b">'+esc(accent)+'</span>':'')+'</div><div class="og-sub">'+esc(sub)+'</div></div>'
+    + '<div class="og-mid"><div class="og-h'+cls+'">'+head+'</div><div class="og-sub">'+esc(sub)+'</div></div>'
     + '<div class="og-foot"><div class="og-dom">rocketgrowthagency.com</div>'
     + '<div class="og-checks"><div class="og-chk">'+CHK+'Free Growth Audit</div><div class="og-chk">'+CHK+'Month-to-month</div></div></div>'
     + mapsPanel(win) + '</div>';
 }
 // Tailored copy for the high-intent marketing pages (approved 2026-07-10). Home stays on the flagship
 // og-image.jpg; utility pages (faq/contact/legal) keep the shared card — not tailored.
+// Copy MIRRORS each page's real hero (eyebrow → pill, h1 → headline w/ key word accented, real subhead).
 const MARK = {
-  pricing:  {pill:'Google Maps Local SEO · Pricing',     h:'Local SEO pricing,',    accent:'half off month 1.', sub:'Month-to-month. $625/mo after your first month — cancel anytime.'},
-  process:  {pill:'Google Maps Local SEO · Our Process', h:'How we get you in the',  accent:'Map Pack.',         sub:'Four systems working together to move you into the Google Maps top 3.'},
-  services: {pill:'Google Maps Local SEO · Services',    h:'Everything we do to',    accent:'rank you.',         sub:'GBP optimization, local content, citations & reviews — the full Map-Pack playbook.'},
-  fga:      {pill:'Free Growth Audit',                   h:'See exactly where you',  accent:'rank.',             sub:'A free, personalized Google Maps audit — where you stand and what’s holding you back.'},
+  pricing:  {pill:'Google Maps Local SEO · Pricing',  h:'Google Maps Local SEO Pricing',                       accentWord:'Pricing',  size:'sm', sub:'Simple structure, clear scope, and an explicit execution model — built for map visibility and lead gains.'},
+  process:  {pill:'Google Maps Local SEO · Process',  h:'In-House Google Maps + Local SEO Process',            accentWord:'Process',  size:'xs', sub:'Maps performance from connected assets: GBP, website relevance, trust, conversion flow, monthly execution.'},
+  services: {pill:'Google Maps Local SEO · Services', h:'Everything you need to own the Map Pack in your city', accentWord:'Map Pack', size:'xs', sub:'Three connected services — Maps SEO, Google Business Profile, and website support — working as one system.'},
+  fga:      {pill:'Free Growth Audit',                h:'See Exactly Where You Rank on Google Maps',           accentWord:'Rank',     size:'sm', sub:'Your Maps ranking, GBP gaps, website signals, and citations — a scored report with your top 5 fixes.'},
 };
 
 // Copy templates — identical logic to the mockup; keeps headlines short + name-led so any length fits.
@@ -97,7 +104,7 @@ function build(p){
   const win = p.get('win') || 'Your Business';
   if (MARK[type]){
     const m = MARK[type];
-    return ogCard({pill:m.pill, h:m.h, accent:m.accent, sub:m.sub, win, small:(m.h+' '+m.accent).length>26});
+    return ogCard({pill:m.pill, h:m.h, accentWord:m.accentWord, sub:m.sub, win, size:m.size});
   }
   if (type === 'blog'){
     let t = (p.get('title') || 'Local SEO, explained').trim();
