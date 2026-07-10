@@ -262,6 +262,7 @@ const STYLE = `  <style id="promo-bar-style">
     .ix-hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(36,87,230,.10) 1.2px,transparent 1.2px);background-size:26px 26px;opacity:.5;pointer-events:none}
     .ix-hero-in{position:relative;max-width:1160px;margin:0 auto;padding:3.4rem 1.75rem 3.6rem;display:grid;grid-template-columns:1.05fr .95fr;gap:3rem;align-items:center}
     .ix-eyebrow{font-size:.8rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1f46bf;margin:0 0 .55rem}
+    .solid-blue{color:var(--primary)}
     .ix-h1{font-size:clamp(2.1rem,5vw,4.2rem);font-weight:900;letter-spacing:-.03em;line-height:1.05;color:#0f1a3a;margin:0 0 1.1rem}
     .ix-sub{font-size:1.12rem;line-height:1.6;color:#41506b;margin:0 0 1.6rem;max-width:36ch}
     .ix-cta-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
@@ -709,6 +710,7 @@ function buildHub() {
     .ih-hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(36,87,230,.10) 1.2px,transparent 1.2px);background-size:26px 26px;opacity:.5;pointer-events:none}
     .ih-in{position:relative;max-width:1160px;margin:0 auto;padding:3.6rem 1.75rem 3.8rem;display:grid;grid-template-columns:1.02fr .98fr;gap:3rem;align-items:center}
     .ih-eyebrow{font-size:.8rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1f46bf;margin:0 0 .55rem}
+    .solid-blue{color:var(--primary)}
     .ih-h1{font-size:clamp(2.1rem,5vw,4.2rem);font-weight:900;letter-spacing:-.03em;line-height:1.05;color:#0f1a3a;margin:0 0 1.1rem}
     .ih-sub{font-size:1.12rem;line-height:1.6;color:#41506b;margin:0 0 1.7rem;max-width:42ch}
     .ih-cta{display:inline-flex;align-items:center;gap:.5rem;background:#2457e6;color:#fff;font-weight:800;font-size:1rem;padding:.9rem 1.5rem;border-radius:999px;text-decoration:none;box-shadow:0 14px 30px -12px rgba(36,87,230,.6)}
