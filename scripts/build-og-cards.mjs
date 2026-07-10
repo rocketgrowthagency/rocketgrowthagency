@@ -43,6 +43,15 @@ const WIN = {
 };
 const titleCase = (s) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+// High-intent marketing pages that get a tailored card (approved 2026-07-10). Home + utility pages
+// (faq/contact/legal) are intentionally NOT here — home keeps the flagship og-image.jpg card.
+const MARKETING = [
+  { slug: 'pricing', type: 'pricing', page: 'pricing/index.html' },
+  { slug: 'process', type: 'process', page: 'process/index.html' },
+  { slug: 'services', type: 'services', page: 'services/index.html' },
+  { slug: 'fga', type: 'fga', page: 'free-growth-audit/index.html' },
+];
+
 function industryName(slug) {
   try {
     const html = fs.readFileSync(path.join(IND_DIR, slug, 'index.html'), 'utf8');
@@ -96,6 +105,14 @@ function collectTargets() {
   const t = [];
   const wantAll = has('--all');
   if (wantAll || has('--hub')) t.push({ kind: 'hub', slug: 'industries-hub', params: { type: 'hub' }, page: path.join(IND_DIR, 'index.html'), file: 'industries-hub.jpg' });
+  const onePage = val('--page');
+  if (wantAll || has('--marketing') || onePage) {
+    for (const m of MARKETING) {
+      if (onePage && m.slug !== onePage) continue;
+      const pg = path.join(WEB, m.page);
+      if (fs.existsSync(pg)) t.push({ kind: 'marketing', slug: m.slug, params: { type: m.type }, page: pg, file: `marketing-${m.slug}.jpg` });
+    }
+  }
   const oneInd = val('--industry');
   if (wantAll || oneInd) {
     const slugs = oneInd ? [oneInd] : fs.readdirSync(IND_DIR).filter((d) => d !== 'index.html' && fs.existsSync(path.join(IND_DIR, d, 'index.html')));

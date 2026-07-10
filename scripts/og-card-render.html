@@ -82,10 +82,23 @@ function ogCard({pill, h, accent, sub, win, small}){
     + '<div class="og-checks"><div class="og-chk">'+CHK+'Free Growth Audit</div><div class="og-chk">'+CHK+'Month-to-month</div></div></div>'
     + mapsPanel(win) + '</div>';
 }
+// Tailored copy for the high-intent marketing pages (approved 2026-07-10). Home stays on the flagship
+// og-image.jpg; utility pages (faq/contact/legal) keep the shared card — not tailored.
+const MARK = {
+  pricing:  {pill:'Google Maps Local SEO · Pricing',     h:'Local SEO pricing,',    accent:'half off month 1.', sub:'Month-to-month. $625/mo after your first month — cancel anytime.'},
+  process:  {pill:'Google Maps Local SEO · Our Process', h:'How we get you in the',  accent:'Map Pack.',         sub:'Four systems working together to move you into the Google Maps top 3.'},
+  services: {pill:'Google Maps Local SEO · Services',    h:'Everything we do to',    accent:'rank you.',         sub:'GBP optimization, local content, citations & reviews — the full Map-Pack playbook.'},
+  fga:      {pill:'Free Growth Audit',                   h:'See exactly where you',  accent:'rank.',             sub:'A free, personalized Google Maps audit — where you stand and what’s holding you back.'},
+};
+
 // Copy templates — identical logic to the mockup; keeps headlines short + name-led so any length fits.
 function build(p){
   const type = p.get('type') || 'industry';
   const win = p.get('win') || 'Your Business';
+  if (MARK[type]){
+    const m = MARK[type];
+    return ogCard({pill:m.pill, h:m.h, accent:m.accent, sub:m.sub, win, small:(m.h+' '+m.accent).length>26});
+  }
   if (type === 'blog'){
     let t = (p.get('title') || 'Local SEO, explained').trim();
     if (t.length > 42) t = t.slice(0,40).replace(/\s+\S*$/,'') + '…';
