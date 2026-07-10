@@ -21,22 +21,26 @@ LOG="/tmp/overnight-local-${DATE_STAMP}.log"
 # production when the send side is caught up (sendable buffer >> daily send rate) or deliverability
 # is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes
 # output/PRODUCTION-PAUSED to resume when buffer drains + bounce is GREEN. See feedback_production_governor.
+# AUTONOMOUS SELF-REGULATION (2026-07-10): consult the production governor on EVERY run so nightly
+# production MATCHES SEND OUTPUT with zero human involvement. Build ONLY when the send side needs fuel
+# (sendable buffer <= RESUME_BUFFER_MAX) AND bounce is GREEN (< RESUME_BOUNCE_MAX). This replaces the
+# old "only check the governor IF a manual pause-flag happens to exist" logic — which meant that once
+# the flag was auto-cleared, production ran unconditionally every night and OVERPRODUCED. Domain
+# protection = rule #1 → FAILS SAFE: only a clean RESUME (exit 0) proceeds; STAY-PAUSED / undecidable
+# (exit 1 / 2) skips the night. A manual output/PRODUCTION-PAUSED file is a HARD override that
+# force-skips regardless of what the governor says (Chris's kill switch). See feedback_production_governor.
 if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
-  # AUTO-RESUME (2026-07-09): the flag promised the governor would clear it when "buffer drains + bounce is
-  # GREEN", but nothing ever evaluated that → production silently stalled to 0 sendable leads. Now we
-  # re-check those exact conditions here. Domain protection = rule #1, so this FAILS SAFE: only a clean
-  # RESUME (exit 0) clears the flag; any doubt (exit 1/2) stays paused.
-  node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG"
-  RESUME_RC=${PIPESTATUS[0]}
-  if [ "$RESUME_RC" -eq 0 ]; then
-    echo "=== production governor AUTO-RESUME $(date) — conditions met; clearing PRODUCTION-PAUSED + proceeding. ===" | tee -a "$LOG"
-    rm -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED"
-  else
-    echo "=== overnight-local PAUSED $(date) — resume conditions NOT met (rc=$RESUME_RC). Not running. ===" | tee -a "$LOG"
-    cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
-    exit 0
-  fi
+  echo "=== overnight-local SKIP $(date) — manual PRODUCTION-PAUSED override present; not producing. ===" | tee -a "$LOG"
+  cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
+  exit 0
 fi
+node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG"
+GOV_RC=${PIPESTATUS[0]}
+if [ "$GOV_RC" -ne 0 ]; then
+  echo "=== overnight-local SKIP $(date) — governor STAY-PAUSED (rc=$GOV_RC): sendable buffer still ample OR bounce not GREEN. Production matches send output; not building tonight. ===" | tee -a "$LOG"
+  exit 0
+fi
+echo "=== production governor RESUME $(date) — buffer drained + bounce GREEN; producing to refill the send pool. ===" | tee -a "$LOG"
 
 # HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
 # to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
