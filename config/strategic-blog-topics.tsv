@@ -1,0 +1,16 @@
+# Strategic / evergreen how-to blog topics (bias the engine toward these over more "Local SEO for <Vertical>"
+# clones). Format: <Title>\t<category>  where category is one of: maps | gbp | website.
+# The engine (generate-blog-post.mjs --from-topics) publishes the FIRST title whose slug isn't live yet,
+# one per run. Add new lines at the bottom. Keep titles genuinely distinct (Google demotes near-duplicates).
+How to Get More Google Reviews Without Breaking Google's Rules	gbp
+The Local SEO Cadence: Why One-Time Setup Never Ranks	maps
+How to Read a Geo-Grid Rank Map and What to Fix First	maps
+Google Business Profile Posts: A Simple Weekly Publishing System	gbp
+NAP Consistency and Citations: Do They Still Move Rankings in 2026?	maps
+LocalBusiness Schema Markup: A Practical Setup for More Local Visibility	website
+Rankings Up but Calls Flat? How to Fix Your Local Conversion Path	website
+How Long Does Local SEO Take? A Realistic 30/60/90-Day Timeline	maps
+Service-Area vs. Storefront Google Business Profiles: Which Setup Ranks	gbp
+Core Web Vitals for Local Businesses: Site Speed That Wins Calls	website
+How to Respond to Google Reviews: Templates That Build Trust	gbp
+Duplicate or Suspended Google Business Profile: How to Diagnose and Recover	gbp

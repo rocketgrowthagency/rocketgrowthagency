@@ -29,11 +29,11 @@ if [ "${BLOG_FORCE:-0}" != "1" ]; then
   esac
 fi
 
-# 1. Generate the day's content — blog post (informational) + industry page
-# (commercial), each pulling the next-highest-value uncovered vertical from the
-# queue. They cross-link automatically (hub-and-spoke). Both respect their own
-# daily cap + the shared cost ceiling.
-node scripts/generate-blog-post.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
+# 1. Generate the day's content. Bias shifted 2026-07-10 toward STRATEGIC evergreen how-to posts
+# (config/strategic-blog-topics.tsv) over more "Local SEO for <Vertical>" clones now that the core
+# verticals are covered — Google demotes scaled near-duplicates. The industry-page generator still
+# runs but self-limits (it no-ops once the vertical queue is exhausted).
+node scripts/generate-blog-post.mjs --from-topics --publish 2>&1 | tee -a "$LOG"
 node scripts/generate-industry-page.mjs --from-queue --publish 2>&1 | tee -a "$LOG"
 
 # 1.5 HARD LOCK GUARD (locked 2026-07-07): abort before deploy if any approved page regressed.

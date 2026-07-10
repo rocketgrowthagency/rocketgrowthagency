@@ -30,14 +30,15 @@ const ARGS = process.argv.slice(2);
 const PUBLISH = ARGS.includes('--publish');
 const FORCE = ARGS.includes('--force');
 const FROM_QUEUE = ARGS.includes('--from-queue');
+const FROM_TOPICS = ARGS.includes('--from-topics');   // rotate the curated strategic-topics list (evergreen how-to posts)
 const countArg = ARGS.find((a) => a.startsWith('--count='));
 const COUNT = countArg ? parseInt(countArg.split('=')[1], 10) : null;
 const VERTICAL_ARGS = ARGS.filter((a) => !a.startsWith('--'));
 const topicArg = ARGS.find((a) => a.startsWith('--topic='));
 const catArg = ARGS.find((a) => a.startsWith('--category='));
-const TOPIC = topicArg ? topicArg.slice('--topic='.length) : null;   // topic-post title (Maps SEO / GBP / Website)
-const CATEGORY = catArg ? catArg.slice('--category='.length) : null; // maps | gbp | website
-if (!VERTICAL_ARGS.length && !FROM_QUEUE && !TOPIC) { console.error('Usage: node scripts/generate-blog-post.mjs "<Vertical>" [...] | --from-queue [--count=N] | --topic="<Title>" --category=<maps|gbp|website> [--publish] [--force]'); process.exit(1); }
+let TOPIC = topicArg ? topicArg.slice('--topic='.length) : null;   // topic-post title (Maps SEO / GBP / Website)
+let CATEGORY = catArg ? catArg.slice('--category='.length) : null; // maps | gbp | website
+if (!VERTICAL_ARGS.length && !FROM_QUEUE && !TOPIC && !FROM_TOPICS) { console.error('Usage: node scripts/generate-blog-post.mjs "<Vertical>" [...] | --from-queue [--count=N] | --from-topics | --topic="<Title>" --category=<maps|gbp|website> [--publish] [--force]'); process.exit(1); }
 
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEBSITE_DIR = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website VS Code');
@@ -559,6 +560,23 @@ if (ARGS.includes('--publish-only')) {
     console.log(`published ${slug}: sitemap ${s ? 'added' : 'present'}, index ${b ? 'added' : 'present'}`);
   }
   process.exit(0);
+}
+
+// ---- strategic-topics rotation: pick the next uncovered curated topic (evergreen how-to,
+// biased over more "Local SEO for <Vertical>" clones now that the core verticals are covered) ----
+if (FROM_TOPICS && !TOPIC) {
+  const topicsFile = path.join(SCRAPER_DIR, 'config', 'strategic-blog-topics.tsv');
+  let picked = null;
+  try {
+    const lines = fs.readFileSync(topicsFile, 'utf8').split('\n').map((l) => l.replace(/\r$/, '')).filter((l) => l.trim() && !l.trim().startsWith('#'));
+    for (const line of lines) {
+      const [title, cat] = line.split('\t').map((s) => (s || '').trim());
+      if (!title || !cat) continue;
+      if (!fs.existsSync(path.join(BLOG_DIR, slugify(title), 'index.html'))) { picked = { title, cat }; break; }
+    }
+  } catch (e) { console.error(`[blog-engine] strategic-topics file error: ${e.message}`); process.exit(1); }
+  if (!picked) { console.log('[blog-engine] strategic topics: all covered — nothing to publish.'); process.exit(0); }
+  TOPIC = picked.title; CATEGORY = picked.cat;
 }
 
 // ---- topic-post mode (fills Maps SEO / GBP / Website categories) ----
