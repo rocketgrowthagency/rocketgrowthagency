@@ -17,6 +17,18 @@ cd "$SCRAPER_DIR"
 DATE_STAMP=$(date +%Y-%m-%d)
 LOG="/tmp/overnight-local-${DATE_STAMP}.log"
 
+# NIGHT-ONLY INTERLOCK (locked 2026-07-10 — Chris: "we only do at night"). The Maps segment is a live
+# SCREEN recording; running it while the Mac is in use bleeds the desktop (other apps, private notes,
+# FORBIDDEN Liberty Tribune content) into the outreach videos, and the 6/6 gate does NOT catch that.
+# This HARD guard refuses to capture outside the night window (21:00–06:59) so a manual/cron daytime
+# trigger can NEVER film the desktop. 10#$ forces base-10 (avoids the "08"/"09" octal trap). Override
+# ONLY if Chris has fully stepped away from the Mac: ALLOW_DAYTIME_CAPTURE=1. See feedback_video_capture_screen_must_be_clear.
+HOUR=$(( 10#$(date +%H) ))
+if [ -z "${ALLOW_DAYTIME_CAPTURE:-}" ] && [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 ]; then
+  echo "=== overnight-local BLOCKED $(date) — night-only interlock: video capture runs 21:00–06:59 to avoid filming the desktop. Set ALLOW_DAYTIME_CAPTURE=1 only if you've fully stepped away from the Mac. ===" | tee -a "$LOG"
+  exit 0
+fi
+
 # PRODUCTION PAUSE GATE (2026-07-03). The production governor (or Chris) pauses nightly video
 # production when the send side is caught up (sendable buffer >> daily send rate) or deliverability
 # is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes
