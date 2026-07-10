@@ -19,6 +19,16 @@ LOG="/tmp/rga-blog-engine-${DATE_STAMP}.log"
 echo "=== blog-engine $(date) ===" | tee -a "$LOG"
 cd "$SCRAPER_DIR"
 
+# Cadence gate (2026-07-10): publish 3x/week (Mon/Wed/Fri), not daily — quality over volume now that the
+# core verticals are covered. The launchd job still fires daily 9am; this just no-ops on off-days.
+# Override for a manual run any day: BLOG_FORCE=1 bash scripts/blog-engine-cron.sh
+if [ "${BLOG_FORCE:-0}" != "1" ]; then
+  case "$(date +%u)" in
+    1|3|5) : ;;                                                                 # Mon / Wed / Fri -> run
+    *) echo "[blog-engine] $(date '+%A') is off-cadence (Mon/Wed/Fri only) - skipping." | tee -a "$LOG"; exit 0 ;;
+  esac
+fi
+
 # 1. Generate the day's content — blog post (informational) + industry page
 # (commercial), each pulling the next-highest-value uncovered vertical from the
 # queue. They cross-link automatically (hub-and-spoke). Both respect their own
