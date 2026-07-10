@@ -63,6 +63,15 @@ node scripts/redo-flagged-videos.mjs 2>&1 | tee -a "$LOG" | tail -5
 echo ">>> lead scoring + categorization" | tee -a "$LOG"
 node scripts/score-and-categorize-leads.mjs 2>&1 | tee -a "$LOG" | tail -10
 
+# 3.5) OUTREACH-HEALTH BRAIN (added 2026-07-10): watch RUNWAY (sendable buffer ÷ daily send rate),
+#      send-stall, and overproduction. On a real problem it writes a STANDING alert
+#      (reports/alerts/OUTREACH-HEALTH-ALERT.md + ~/rga-ALERT-outreach.log) + a macOS notification, so
+#      Chris is told the moment the pool is starving / sends stalled — never again finds out by noticing.
+#      Claude surfaces the alert at session boot. Self-clears when healthy. Built because on 2026-07-10
+#      the pool drained to 0 and nobody was told. See project_production_governor_and_deliverability.
+echo ">>> outreach-health brain (runway / send-stall / overproduction alarm)" | tee -a "$LOG"
+node scripts/outreach-health-monitor.mjs 2>&1 | tee -a "$LOG"
+
 # 4) Daily action report (M-F) — dated 'what to do today' briefing into the year/month/day tree.
 echo ">>> daily action report" | tee -a "$LOG"
 node scripts/daily-action-report.mjs 2>&1 | tee -a "$LOG"
