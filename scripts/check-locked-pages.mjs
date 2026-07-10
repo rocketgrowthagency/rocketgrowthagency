@@ -17,18 +17,18 @@ const WEB = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website V
 
 // Pinned pages → substrings that MUST all be present (design + chrome markers).
 const LOCKS = {
-  'index.html': ['footer-address', 'style.css?v=20260706f', 'class="promo-bar"', '"streetAddress"'],
-  'pricing/index.html': ['footer-address', 'style.css?v=20260706f', 'class="promo-bar"'],
+  'index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"', '"streetAddress"'],
+  'pricing/index.html': ['footer-address', 'style.css?v=20260710a', 'class="promo-bar"'],
   'contact/index.html': ['footer-address', 'contact-card', 'form-trust'],
   'start-growth-plan/index.html': ['gp-hero', 'footer-address', 'form-trust'],
   'free-growth-audit/index.html': ['form-trust', 'footer-address'],
   'privacy/index.html': ['lg-hero', 'lg-toc', '9937 Jefferson', 'footer-address'],
   'terms/index.html': ['lg-hero', 'lg-toc', '9937 Jefferson'],
-  'industries/index.html': ['ih-hero', 'ind-cat-icon', 'ind-cat-name', 'style.css?v=20260706f'],
+  'industries/index.html': ['ih-hero', 'ind-cat-icon', 'ind-cat-name', 'style.css?v=20260710a'],
   'blog/index.html': ['bloghub-grid', 'bloghub-filters', 'bc-card'],
-  'process/index.html': ['footer-address', 'style.css?v=20260706f'],
-  'faq/index.html': ['footer-address', 'style.css?v=20260706f', 'faq-redesign', 'faq-layout', 'faq-help'],
-  'services/index.html': ['footer-address', 'style.css?v=20260706f'],
+  'process/index.html': ['footer-address', 'style.css?v=20260710a'],
+  'faq/index.html': ['footer-address', 'style.css?v=20260710a', 'faq-redesign', 'faq-layout', 'faq-help'],
+  'services/index.html': ['footer-address', 'style.css?v=20260710a'],
 };
 
 // Directory rules: EVERY <dir>/<slug>/index.html (except skips) must contain ALL markers.
