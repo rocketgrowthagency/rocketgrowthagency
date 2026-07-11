@@ -29,6 +29,7 @@ const K = process.env.AIRTABLE_API_KEY || ENV.AIRTABLE_API_KEY;
 const B = process.env.AIRTABLE_BASE_ID || ENV.AIRTABLE_BASE_ID;
 const BOUNCE_MAX = Number(process.env.RESUME_BOUNCE_MAX || 2.0);
 const DAILY_CAP = Number(process.env.PROD_DAILY_CAP || 50);          // matches Apps Script DAILY_CAP_OVERRIDE
+const MIN_DAY1_RESERVATION = Number(process.env.MIN_DAY1_RESERVATION || 5);  // matches Apps Script — #1 slots reserved/day when #1 supply exists
 const VIDEOS_PER_SEARCH = Number(process.env.VIDEOS_PER_SEARCH || 22);
 const MAX_SEARCHES_CAP = Number(process.env.MAX_SEARCHES_CAP || 3);   // hard ceiling — never build more/night
 
@@ -96,7 +97,9 @@ const fuActive = (f) => !!(f['Email Sent Date'] && !f['Date Client Signed'] && !
     if (fuActive(f) && fireDay(f)) followupsDue++;
     if (f.Email && f['Video URL'] && (!f.Status || f.Status === 'new') && !f['Draft Created'] && !f.Suppressed) backlog1++;
   }
-  const room1 = Math.max(0, DAILY_CAP - followupsDue);      // new-#1 slots left after follow-ups eat the cap
+  // #1 slots per send-day: follow-ups eat the cap FIRST, but the Apps Script ALWAYS reserves
+  // MIN_DAY1_RESERVATION for #1 once #1 supply exists — so the floor is the reservation, not 0.
+  const room1 = Math.max(MIN_DAY1_RESERVATION, DAILY_CAP - followupsDue);
   const need1 = Math.max(0, room1 - backlog1);              // ...beyond the #1s already built + waiting
   let searches = Math.min(MAX_SEARCHES_CAP, Math.ceil(need1 / VIDEOS_PER_SEARCH));
   if (!bounceOk) searches = 0;                              // domain protection = rule #1
