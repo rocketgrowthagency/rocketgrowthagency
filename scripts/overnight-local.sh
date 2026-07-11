@@ -29,16 +29,6 @@ if [ -z "${ALLOW_DAYTIME_CAPTURE:-}" ] && [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 
   exit 0
 fi
 
-# ONE-TIME RUN OVERRIDE (2026-07-10): if output/OVERRIDE-NEXT-RUN exists, apply its KEY=VALUE settings
-# (e.g. MAX_SEARCHES=8) for THIS run only, then DELETE it (consumed). Lets Chris force a bigger/full run
-# for a SINGLE night without permanently changing the locked caps or the launchd plist. Does NOT touch
-# the governor's bounce/domain safety — only run-SIZE caps. See feedback_overnight_run_cap.
-if [ -f "$SCRAPER_DIR/output/OVERRIDE-NEXT-RUN" ]; then
-  echo "=== one-time run override applied $(date): $(tr '\n' ' ' < "$SCRAPER_DIR/output/OVERRIDE-NEXT-RUN") ===" | tee -a "$LOG"
-  set -a; . "$SCRAPER_DIR/output/OVERRIDE-NEXT-RUN"; set +a
-  rm -f "$SCRAPER_DIR/output/OVERRIDE-NEXT-RUN"
-fi
-
 # PRODUCTION PAUSE GATE (2026-07-03). The production governor (or Chris) pauses nightly video
 # production when the send side is caught up (sendable buffer >> daily send rate) or deliverability
 # is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes
