@@ -107,6 +107,9 @@ const fuActive = (f) => !!(f['Email Sent Date'] && !f['Date Client Signed'] && !
   const detail = `bounce7d=${bounceRate.toFixed(2)}% (<${BOUNCE_MAX}%? ${bounceOk}), followupsDue=${followupsDue}, dailyCap=${DAILY_CAP} -> #1 room=${room1}, unsent-#1 backlog=${backlog1} -> need=${need1} -> searches=${searches} [sent7d=${sent7d}]`;
   console.log('RECOMMEND_SEARCHES=' + searches);
   if (searches >= 1) { console.log('BUILD: ' + detail); process.exit(0); }
-  console.log('STAY-PAUSED (build 0): ' + (!bounceOk ? 'bounce not GREEN. ' : (followupsDue >= DAILY_CAP ? 'follow-ups already fill the cap (0 #1 room). ' : 'enough #1 backlog already built. ')) + detail);
+  const why = !bounceOk ? 'bounce not GREEN (domain rule #1). '
+            : backlog1 >= room1 ? `enough #1 backlog already built (${backlog1} >= ${room1}/day room). `
+            : 'no #1 room today. ';
+  console.log('STAY-PAUSED (build 0): ' + why + detail);
   process.exit(1);
 })().catch((e) => { bail('STAY-PAUSED: unexpected error ' + e.message + ' → fail safe', 2); });
