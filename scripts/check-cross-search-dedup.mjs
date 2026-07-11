@@ -32,6 +32,7 @@ const { checkDuplicate } = await import('../lib/dedup-by-email.mjs');
 const index = {
   emailToRecord: new Map([['info@rotorooter.com', 'recRoto'], ['hello@lordsplumbing.com', 'recLords']]),
   placeIdToRecord: new Map([['PID_ROTO', 'recRoto'], ['PID_LORDS', 'recLords']]),
+  domainToRecord: new Map([['rotorooter.com', 'recRoto'], ['lordsplumbing.com', 'recLords']]),
 };
 const L = [
   ['same email, exact', { email: 'info@rotorooter.com', placeId: '' }, true, 'email'],
@@ -39,6 +40,16 @@ const L = [
   ['same email w/ whitespace', { email: '  hello@lordsplumbing.com ', placeId: '' }, true, 'email'],
   ['same Place ID, no email', { email: '', placeId: 'PID_LORDS' }, true, 'placeId'],
   ['brand-new business', { email: 'new@freshco.com', placeId: 'PID_NEW' }, false, null],
+  // website-domain dedup (2026-07-11): franchise 2nd location — different city, NO email, NEW Place ID,
+  // but SAME corporate domain → dedup by domain (don't render/email a 2nd time).
+  ['franchise 2nd loc, same domain', { email: '', placeId: 'PID_ROTO_SF', website: 'https://www.rotorooter.com/sanfrancisco/' }, true, 'domain'],
+  ['same domain, no scheme/path', { email: '', placeId: '', website: 'rotorooter.com' }, true, 'domain'],
+  // MUST NOT over-dedup: shared-host builder pages (business.site / Google Sites / Yelp) — many distinct
+  // businesses share the hostname → domain key is suppressed → treated as brand-new.
+  ['distinct biz on business.site', { email: '', placeId: 'PID_X', website: 'https://coolplumbingla.business.site/' }, false, null],
+  ['distinct biz on Google Sites', { email: '', placeId: 'PID_Y', website: 'https://sites.google.com/view/abcplumbing' }, false, null],
+  ['distinct biz on Yelp page', { email: '', placeId: 'PID_Z', website: 'https://www.yelp.com/biz/some-plumber' }, false, null],
+  ['distinct local, own domain', { email: '', placeId: 'PID_W', website: 'https://garysrooter.com/' }, false, null],
 ];
 for (const [label, input, expectDup, expectBy] of L) {
   const r = checkDuplicate(input, index);

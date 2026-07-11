@@ -755,8 +755,11 @@ async function processCsv() {
       const city = (record.City || record.city || '').trim();
       const rank = parseInt(record['Map Rank'] || record.rank || '', 10);
       const searchTerm = (record['Search Term'] || record.searchTerm || '').trim();
-      if (!email && !placeId) continue;
-      const { isDuplicate, matchedRecordId, matchedBy } = checkDuplicate({ email, placeId }, dedupIndex);
+      // 2026-07-11: website-domain dedup key (Chris — collapse same company/franchise across searches
+      // even with a different Place ID / no email). Prefer the discovered brand site over the GBP-linked one.
+      const website = (record['Discovered Website'] || record.discoveredWebsite || record.Website || record.website || '').trim();
+      if (!email && !placeId && !website) continue;
+      const { isDuplicate, matchedRecordId, matchedBy } = checkDuplicate({ email, placeId, website }, dedupIndex);
       if (!isDuplicate) continue;
       // It's a duplicate — append the new appearance to the existing record
       try {

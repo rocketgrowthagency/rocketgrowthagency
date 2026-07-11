@@ -80,6 +80,15 @@ const CASES = [
   ['Plastic surgeon', 'Plastic surgeons in Culver City, CA', true, 'Beverly Hills Surgery Center'],
   ['Auto body shop', 'Body shop in Culver City, CA', true, 'LA Collision Center'],
   ['Foundation repair service', 'Foundation repair in Culver City, CA', true, 'Alpha Foundation Repair'],
+  // ---- national-brand blocklist (2026-07-11): named national chains DROP even in-vertical ----
+  ['Plumber', 'Plumbers in Culver City, CA', false, '1-800-GOT-JUNK Plumbing'],
+  ['Plumber', 'Plumbers in Culver City, CA', false, 'Roto-Rooter Plumbing & Water Cleanup'],
+  ['Pest control service', 'Pest control in Culver City, CA', false, 'Terminix'],
+  ['Water damage restoration service', 'Water damage restoration in Culver City, CA', false, 'SERVPRO of Culver City'],
+  // ---- false-positive guard: legit LOCAL "___ Rooter" plumbers must KEEP (never bare-token ban) ----
+  ['Plumber', 'Plumbers in Culver City, CA', true, "Gary's Rooter"],
+  ['Plumber', 'Plumbers in Culver City, CA', true, 'Rooter Guy LA'],
+  ['Plumber', 'Plumbers in Culver City, CA', true, 'Agent Rooter Plumbing'],
 ];
 
 // Test through the REAL entry point shouldFilterLead (covers both the universal never-prospect

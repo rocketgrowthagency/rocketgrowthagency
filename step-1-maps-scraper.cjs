@@ -302,6 +302,16 @@ function shouldFilterLead(businessName, category, _searchTerm) {
     /\b1 800 anytime\b/, /\bbluefrog\b/, /\bapollo drain\b/, /\blen the plumber\b/,
     /\bmr electric\b/, /\bmr handyman\b/, /\bglass doctor\b/, /\bservice experts\b/,
     /\branbow international\b/, /\bmolly maid\b/, /\bwindow genie\b/,
+    // 2026-07-11 (Chris): national brands that slipped through — 1-800-GOT-JUNK got emailed +
+    // auto-replied. Anchored brand phrases only (never bare tokens like "rooter" — 18 legit local
+    // "___ Rooter" plumbers must PASS). Junk/hauling, restoration, cleaning, handyman, pest, gutters, moving.
+    /\b1 ?800 got junk\b/, /\bgot junk\b/, /\bjunk king\b/, /\bcollege hunks\b/,
+    /\bservpro\b/, /\bservicemaster\b/, /\bstanley steemer\b/, /\bchem dry\b/, /\bpuroclean\b/, /\bpaul davis\b/,
+    /\bmerry maids\b/, /\bthe maids\b/, /\btwo maids\b/, /\bmaid brigade\b/,
+    /\bace handyman\b/, /\bhandyman connection\b/, /\btrublue\b/,
+    /\bterminix\b/, /\borkin\b/, /\bmosquito joe\b/, /\bmosquito squad\b/, /\bhawx\b/, /\baptive\b/,
+    /\bleaffilter\b/, /\bleaf ?guard\b/, /\bgutter helmet\b/,
+    /\btwo men and a truck\b/, /\bcollege hunks hauling\b/,
   ];
   for (const re of CHAIN_PATTERNS) {
     if (re.test(norm)) return `chain:${re.source.replace(/\\b/g, '').trim()}`;
