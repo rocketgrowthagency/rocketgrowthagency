@@ -56,10 +56,12 @@ echo "=== production governor RESUME $(date) — buffer drained + bounce GREEN; 
 
 # HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
 # to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
-#   MAX_SEARCHES  — max cities/searches this run (default 3 — each ~2h, so ~6h total)
+#   MAX_SEARCHES  — max cities/searches this run (default 1 as of 2026-07-10 — production must match the
+#                   NEW-#1-email room left after follow-ups eat the 50/day cap; see feedback_overnight_run_cap.
+#                   Will become CAPACITY-DRIVEN once the follow-up-load calc is wired in.)
 #   MAX_RUN_HOURS — wall-clock cap; no NEW search starts past this (default 6h — matches 3 searches)
 #   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes
-MAX_SEARCHES="${MAX_SEARCHES:-3}"
+MAX_SEARCHES="${MAX_SEARCHES:-1}"
 MAX_RUN_HOURS="${MAX_RUN_HOURS:-6}"
 WORKER_COUNT="${WORKER_COUNT:-2}"
 STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
