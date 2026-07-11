@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-// check-resume-production.mjs
+// check-resume-production.mjs — CAPACITY-AWARE production governor (2026-07-11, Chris).
 //
-// The PRODUCTION GOVERNOR's auto-resume. PRODUCTION-PAUSED (set 2026-07-03) said the governor would
-// "auto-clear when buffer drains + bounce is GREEN" — but nothing ever evaluated that, so production
-// silently stalled (0 sendable leads by 2026-07-09; Chris had to notice). This restores the auto-clear.
+// Sizes nightly video production to the REAL room for new #1 (video) emails, because sends are M-F
+// capped at DAILY_CAP and follow-ups #2-#5 draw from that SAME cap FIRST. So:
+//     #1 room  =  DAILY_CAP  −  (follow-ups DUE)          (0 if follow-ups already fill the cap)
+//     to build =  max(0, #1 room  −  existing unsent-#1 backlog)   (don't overbuild what's already ready)
+//     searches =  ceil(to build ÷ VIDEOS_PER_SEARCH), capped at MAX_SEARCHES_CAP
+// Domain protection = rule #1: bounce must be GREEN or we build nothing. Follow-up "due" uses the send
+// engine's OWN day-gap logic (shouldFireFollowUp: Day4 @+4d, Day9 @+5d, Day16 @+7d, Day45 @+29d) so this
+// can never disagree with what the Apps Script actually sends. Validated live 2026-07-11 (66 due, 110 backlog).
 //
-// Prints RESUME or STAY-PAUSED + reason. Exit 0 = resume conditions MET (caller may clear the flag),
-// exit 1 = stay paused, exit 2 = could-not-evaluate → FAIL SAFE (stay paused; never resume blind).
-//
-// Resume requires BOTH (per the flag's own contract, protecting the domain = rule #1):
-//   1. 7-day bounce rate < RESUME_BOUNCE_MAX (default 2.0%) — GREEN, and
-//   2. sendable buffer <= RESUME_BUFFER_MAX (default 30) — drained enough to justify producing more.
-// Env-tunable: RESUME_BOUNCE_MAX, RESUME_BUFFER_MAX.
+// Prints `RECOMMEND_SEARCHES=N` (machine-parseable for overnight-local.sh) + a human line.
+// Exit 0 = build (N>=1), exit 1 = build nothing (N=0), exit 2 = could-not-evaluate → FAIL SAFE (build nothing).
+// Env-tunable: RESUME_BOUNCE_MAX, PROD_DAILY_CAP, VIDEOS_PER_SEARCH, MAX_SEARCHES_CAP.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -27,40 +28,82 @@ const ENV = (() => {
 const K = process.env.AIRTABLE_API_KEY || ENV.AIRTABLE_API_KEY;
 const B = process.env.AIRTABLE_BASE_ID || ENV.AIRTABLE_BASE_ID;
 const BOUNCE_MAX = Number(process.env.RESUME_BOUNCE_MAX || 2.0);
-const BUFFER_MAX = Number(process.env.RESUME_BUFFER_MAX || 30);
+const DAILY_CAP = Number(process.env.PROD_DAILY_CAP || 50);          // matches Apps Script DAILY_CAP_OVERRIDE
+const VIDEOS_PER_SEARCH = Number(process.env.VIDEOS_PER_SEARCH || 22);
+const MAX_SEARCHES_CAP = Number(process.env.MAX_SEARCHES_CAP || 3);   // hard ceiling — never build more/night
 
-async function countAll(table, formula, field) {
+function bail(msg, code) { console.log('RECOMMEND_SEARCHES=0'); console.log(msg); process.exit(code); }
+
+async function countLog(formula) {
   let n = 0, offset;
   do {
-    const u = new URL(`https://api.airtable.com/v0/${B}/${encodeURIComponent(table)}`);
-    if (formula) u.searchParams.set('filterByFormula', formula);
-    if (field) u.searchParams.set('fields[]', field);   // one existing field = light payload for counting
+    const u = new URL(`https://api.airtable.com/v0/${B}/${encodeURIComponent('Outreach Log')}`);
+    u.searchParams.set('filterByFormula', formula);
+    u.searchParams.set('fields[]', 'Date');
     u.searchParams.set('pageSize', '100');
     if (offset) u.searchParams.set('offset', offset);
     const r = await fetch(u, { headers: { Authorization: 'Bearer ' + K } });
     const d = await r.json();
-    if (d.error) throw new Error(`${table}: ${d.error.type || d.error.message || JSON.stringify(d.error)}`);
-    n += (d.records || []).length;
-    offset = d.offset;
+    if (d.error) throw new Error('Outreach Log: ' + (d.error.type || d.error.message));
+    n += (d.records || []).length; offset = d.offset;
   } while (offset);
   return n;
 }
+async function loadLeads() {
+  const fields = ['Email', 'Video URL', 'Status', 'Draft Created', 'Suppressed', 'Replied', 'Date Client Signed',
+    'Email Status', 'Email Sent Date', 'Day 4 Sent At', 'Day 9 Sent At', 'Day 16 Sent At', 'Day 45 Sent At'];
+  let all = [], offset;
+  do {
+    const u = new URL(`https://api.airtable.com/v0/${B}/Leads`);
+    fields.forEach((f) => u.searchParams.append('fields[]', f));
+    u.searchParams.set('pageSize', '100');
+    if (offset) u.searchParams.set('offset', offset);
+    const r = await fetch(u, { headers: { Authorization: 'Bearer ' + K } });
+    const d = await r.json();
+    if (d.error) throw new Error('Leads: ' + (d.error.type || d.error.message));
+    all = all.concat(d.records || []); offset = d.offset;
+  } while (offset);
+  return all;
+}
+
+const TERMINAL_ES = ['bounced', 'blocked', 'invalid', 'unsubscribed', 'queued-recovery', 'no-replacement-found', 'permanent-bounce', 'soft-bounced', 'build-failed'];
+const daysSince = (v) => { const s = (typeof v === 'string' && v.length >= 10) ? v.slice(0, 10) : ''; return s ? (Date.now() - new Date(s + 'T00:00:00Z').getTime()) / 864e5 : null; };
+// Exact port of the Apps Script shouldFireFollowUp gaps (Day4 +4, Day9 +5 since D4, Day16 +7 since D9, Day45 +29 since D16).
+function fireDay(f) {
+  if (!f['Day 4 Sent At']) { const d = daysSince(f['Email Sent Date']); if (d !== null && d >= 4) return 4; }
+  else if (!f['Day 9 Sent At']) { const d = daysSince(f['Day 4 Sent At']); if (d !== null && d >= 5) return 9; }
+  else if (!f['Day 16 Sent At']) { const d = daysSince(f['Day 9 Sent At']); if (d !== null && d >= 7) return 16; }
+  else if (!f['Day 45 Sent At']) { const d = daysSince(f['Day 16 Sent At']); if (d !== null && d >= 29) return 45; }
+  return null;
+}
+const fuActive = (f) => !!(f['Email Sent Date'] && !f['Date Client Signed'] && !f['Replied'] && !f['Suppressed'] && f['Status'] !== 'dead' && TERMINAL_ES.indexOf(f['Email Status']) < 0);
 
 (async () => {
-  if (!K || !B) { console.log('STAY-PAUSED: no Airtable creds → cannot evaluate (fail safe)'); process.exit(2); }
+  if (!K || !B) bail('STAY-PAUSED: no Airtable creds → cannot evaluate (fail safe)', 2);
   const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
-  let buffer, sent7d, bounced7d;
+  let sent7d, bounced7d, leads;
   try {
-    buffer = await countAll('Leads', `AND({Email}!="", NOT({Suppressed}=1), {Funnel State}="")`, 'Email');
-    sent7d = await countAll('Outreach Log', `AND({Direction}="outbound", {Outcome}="sent", IS_AFTER({Date}, "${since}"))`, 'Date');
-    bounced7d = await countAll('Outreach Log', `AND({Direction}="outbound", OR({Outcome}="bounced", {Outcome}="soft-bounced", {Outcome}="permanent-bounce"), IS_AFTER({Date}, "${since}"))`, 'Date');
-  } catch (e) {
-    console.log('STAY-PAUSED: could not evaluate (' + e.message + ') → fail safe'); process.exit(2);
-  }
+    sent7d = await countLog(`AND({Direction}="outbound", {Outcome}="sent", IS_AFTER({Date}, "${since}"))`);
+    bounced7d = await countLog(`AND({Direction}="outbound", OR({Outcome}="bounced", {Outcome}="soft-bounced", {Outcome}="permanent-bounce"), IS_AFTER({Date}, "${since}"))`);
+    leads = await loadLeads();
+  } catch (e) { bail('STAY-PAUSED: could not evaluate (' + e.message + ') → fail safe', 2); }
+
   const bounceRate = sent7d > 0 ? (bounced7d / sent7d * 100) : 0;
   const bounceOk = bounceRate < BOUNCE_MAX;
-  const bufferOk = buffer <= BUFFER_MAX;
-  const line = `bounce7d=${bounceRate.toFixed(2)}% (<${BOUNCE_MAX}%? ${bounceOk}), buffer=${buffer} (<=${BUFFER_MAX}? ${bufferOk}) [sent7d=${sent7d}, bounced7d=${bounced7d}]`;
-  if (bounceOk && bufferOk) { console.log('RESUME: conditions met — ' + line); process.exit(0); }
-  console.log('STAY-PAUSED: ' + line); process.exit(1);
-})().catch((e) => { console.log('STAY-PAUSED: unexpected error ' + e.message + ' → fail safe'); process.exit(2); });
+  let followupsDue = 0, backlog1 = 0;
+  for (const l of leads) {
+    const f = l.fields || {};
+    if (fuActive(f) && fireDay(f)) followupsDue++;
+    if (f.Email && f['Video URL'] && (!f.Status || f.Status === 'new') && !f['Draft Created'] && !f.Suppressed) backlog1++;
+  }
+  const room1 = Math.max(0, DAILY_CAP - followupsDue);      // new-#1 slots left after follow-ups eat the cap
+  const need1 = Math.max(0, room1 - backlog1);              // ...beyond the #1s already built + waiting
+  let searches = Math.min(MAX_SEARCHES_CAP, Math.ceil(need1 / VIDEOS_PER_SEARCH));
+  if (!bounceOk) searches = 0;                              // domain protection = rule #1
+
+  const detail = `bounce7d=${bounceRate.toFixed(2)}% (<${BOUNCE_MAX}%? ${bounceOk}), followupsDue=${followupsDue}, dailyCap=${DAILY_CAP} -> #1 room=${room1}, unsent-#1 backlog=${backlog1} -> need=${need1} -> searches=${searches} [sent7d=${sent7d}]`;
+  console.log('RECOMMEND_SEARCHES=' + searches);
+  if (searches >= 1) { console.log('BUILD: ' + detail); process.exit(0); }
+  console.log('STAY-PAUSED (build 0): ' + (!bounceOk ? 'bounce not GREEN. ' : (followupsDue >= DAILY_CAP ? 'follow-ups already fill the cap (0 #1 room). ' : 'enough #1 backlog already built. ')) + detail);
+  process.exit(1);
+})().catch((e) => { bail('STAY-PAUSED: unexpected error ' + e.message + ' → fail safe', 2); });

@@ -46,19 +46,24 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
   exit 0
 fi
-node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG"
-GOV_RC=${PIPESTATUS[0]}
-if [ "$GOV_RC" -ne 0 ]; then
-  echo "=== overnight-local SKIP $(date) — governor STAY-PAUSED (rc=$GOV_RC): sendable buffer still ample OR bounce not GREEN. Production matches send output; not building tonight. ===" | tee -a "$LOG"
+# CAPACITY-AWARE governor (2026-07-11): it computes how many searches to build tonight = the NEW-#1-email
+# room left after follow-ups eat the daily cap, minus the #1 backlog already built. It prints
+# RECOMMEND_SEARCHES=N; we build exactly N (0 = don't build). Domain protection: N=0 if bounce not GREEN.
+GOV_OUT="$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1)"; GOV_RC=$?
+echo "$GOV_OUT" | tee -a "$LOG"
+REC_SEARCHES="$(echo "$GOV_OUT" | grep -oE 'RECOMMEND_SEARCHES=[0-9]+' | tail -1 | cut -d= -f2)"
+if [ "$GOV_RC" -ne 0 ] || [ -z "$REC_SEARCHES" ] || [ "$REC_SEARCHES" -lt 1 ]; then
+  echo "=== overnight-local SKIP $(date) — capacity governor recommends 0 searches (follow-ups fill the cap / enough #1 backlog already built / bounce not GREEN). Not building tonight. ===" | tee -a "$LOG"
   exit 0
 fi
-echo "=== production governor RESUME $(date) — buffer drained + bounce GREEN; producing to refill the send pool. ===" | tee -a "$LOG"
+MAX_SEARCHES="$REC_SEARCHES"   # capacity-driven — overrides the default; sized to real #1 room
+echo "=== capacity governor: build ${REC_SEARCHES} search(es) tonight (matches the #1-email room after follow-ups). ===" | tee -a "$LOG"
 
 # HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
 # to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
-#   MAX_SEARCHES  — max cities/searches this run (default 1 as of 2026-07-10 — production must match the
-#                   NEW-#1-email room left after follow-ups eat the 50/day cap; see feedback_overnight_run_cap.
-#                   Will become CAPACITY-DRIVEN once the follow-up-load calc is wired in.)
+#   MAX_SEARCHES  — CAPACITY-DRIVEN (2026-07-11): set above by the governor to the #1-email room left after
+#                   follow-ups eat the 50/day cap, minus the #1 backlog already built. The :-1 below is only
+#                   a fallback if the governor didn't set it. Hard ceiling MAX_SEARCHES_CAP=3 in the governor.
 #   MAX_RUN_HOURS — wall-clock cap; no NEW search starts past this (default 6h — matches 3 searches)
 #   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes
 MAX_SEARCHES="${MAX_SEARCHES:-1}"
