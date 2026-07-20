@@ -94,8 +94,15 @@ for (const r of gaps) {
   const n = (attempts[r.id] || 0) + 1;
   if (n > MAX_ATTEMPTS) {
     exhausted++;
-    console.log(`  ✗ EXHAUSTED (${n - 1} attempts) — surfacing for review: ${name} [search: ${term}]`);
-    await patch(r.id, { 'Skip Reasons': `video-unrenderable-${n - 1}x` });
+    console.log(`  ✗ EXHAUSTED (${n - 1} attempts) — surfacing + retiring to build-failed: ${name} [search: ${term}]`);
+    // Surface for review AND retire to a terminal Email Status. Previously we only stamped the
+    // Skip Reasons tag and left the lead an active gap forever — so it re-fired the failed-video
+    // audit EVERY night and re-consumed render attempts on every ledger reset (the 28-lead
+    // FAILED↔draining oscillation, 2026-07-15→07-19). 'build-failed' is already in both scripts'
+    // TERMINAL_ES, so this drops the lead from the gap set cleanly. The lead has no Video URL and so
+    // is already non-sendable (verify-sendable-mailboxes requires a Video URL). To re-attempt after
+    // fixing the source, clear Skip Reasons AND reset Email Status. See feedback-every-email-gets-a-video.
+    await patch(r.id, { 'Skip Reasons': `video-unrenderable-${n - 1}x`, 'Email Status': 'build-failed' });
     continue;
   }
   attempts[r.id] = n;
