@@ -21,11 +21,13 @@ LOG="/tmp/overnight-local-${DATE_STAMP}.log"
 # SCREEN recording; running it while the Mac is in use bleeds the desktop (other apps, private notes,
 # FORBIDDEN Liberty Tribune content) into the outreach videos, and the 6/6 gate does NOT catch that.
 # This HARD guard refuses to capture outside the night window (21:00–06:59) so a manual/cron daytime
-# trigger can NEVER film the desktop. 10#$ forces base-10 (avoids the "08"/"09" octal trap). Override
-# ONLY if Chris has fully stepped away from the Mac: ALLOW_DAYTIME_CAPTURE=1. See feedback_video_capture_screen_must_be_clear.
+# trigger can NEVER film the desktop. 10#$ forces base-10 (avoids the "08"/"09" octal trap).
+# NO OVERRIDE (locked 2026-07-20): the old ALLOW_DAYTIME_CAPTURE=1 escape hatch was used on 07-18 and
+# filmed Chris's VS Code desktop (Echory/Liberty-Tribune) into a public video that got emailed. A rule a
+# human can bypass under pressure WILL be bypassed — so the override is deleted. Capture is night-only, full stop.
 HOUR=$(( 10#$(date +%H) ))
-if [ -z "${ALLOW_DAYTIME_CAPTURE:-}" ] && [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 ]; then
-  echo "=== overnight-local BLOCKED $(date) — night-only interlock: video capture runs 21:00–06:59 to avoid filming the desktop. Set ALLOW_DAYTIME_CAPTURE=1 only if you've fully stepped away from the Mac. ===" | tee -a "$LOG"
+if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 ]; then
+  echo "=== overnight-local BLOCKED $(date) — night-only interlock: video capture runs 21:00–06:59 to avoid filming the desktop. No override. ===" | tee -a "$LOG"
   exit 0
 fi
 
@@ -53,11 +55,15 @@ GOV_OUT="$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1)"; GOV_R
 echo "$GOV_OUT" | tee -a "$LOG"
 REC_SEARCHES="$(echo "$GOV_OUT" | grep -oE 'RECOMMEND_SEARCHES=[0-9]+' | tail -1 | cut -d= -f2)"
 if [ "$GOV_RC" -ne 0 ] || [ -z "$REC_SEARCHES" ] || [ "$REC_SEARCHES" -lt 1 ]; then
-  echo "=== overnight-local SKIP $(date) — capacity governor recommends 0 searches (follow-ups fill the cap / enough #1 backlog already built / bounce not GREEN). Not building tonight. ===" | tee -a "$LOG"
-  exit 0
+  # Governor says build 0 NEW searches — but DON'T exit. The recovery pass + audit below still run so the
+  # missing-video backlog keeps draining ("get caught up so we have a fresh system", Chris 2026-07-11). Only a
+  # manual PRODUCTION-PAUSED (handled above) fully skips the night. New scraping = 0; catch-up + audit proceed.
+  echo "=== capacity governor: 0 NEW searches tonight — proceeding to backlog recovery + audit only (catch-up continues). ===" | tee -a "$LOG"
+  MAX_SEARCHES=0
+else
+  MAX_SEARCHES="$REC_SEARCHES"   # capacity-driven — overrides the default; sized to real #1 room
+  echo "=== capacity governor: build ${REC_SEARCHES} search(es) tonight (matches the #1-email room after follow-ups). ===" | tee -a "$LOG"
 fi
-MAX_SEARCHES="$REC_SEARCHES"   # capacity-driven — overrides the default; sized to real #1 room
-echo "=== capacity governor: build ${REC_SEARCHES} search(es) tonight (matches the #1-email room after follow-ups). ===" | tee -a "$LOG"
 
 # HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
 # to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
@@ -93,7 +99,7 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   if [ "$(date +%s)" -ge "$DEADLINE" ]; then echo ">>> wall-clock cap (${MAX_RUN_HOURS}h) reached — stopping after $n search(es)." | tee -a "$LOG"; break; fi
   # NIGHT-ONLY (per-search): the startup interlock checks once; re-check before EACH new capture so a
   # long run that crosses into the workday (>=07:00) STOPS instead of filming the desktop. See feedback_video_capture_screen_must_be_clear.
-  NH=$(( 10#$(date +%H) )); if [ -z "${ALLOW_DAYTIME_CAPTURE:-}" ] && [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended ($(date +%H:%M)) — stopping before the workday (after $n search(es)); no desktop-bleed risk." | tee -a "$LOG"; break; fi
+  NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended ($(date +%H:%M)) — stopping before the workday (after $n search(es)); no desktop-bleed risk." | tee -a "$LOG"; break; fi
   if [ -f "$STOP_FLAG" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG"; break; fi
   Q=$(node scripts/next-search.mjs 2>>"$LOG"); RC=$?
   if [ "$RC" -eq 3 ]; then echo ">>> SoCal fully exhausted — nothing left to scrape. Done." | tee -a "$LOG"; break; fi
@@ -110,6 +116,45 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   WORKER_COUNT="$WORKER_COUNT" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
 done
 echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG"
+
+# ============================================================
+# RECOVERY PASS — GUARANTEE every emailed lead has a video (2026-07-11, Chris: "ALL emails we get MUST
+# have a video"). The fast parallel loop above is pass 1. Now find any emailable lead that STILL has no
+# Video URL and re-render it on a SLOWER pass: WORKER_COUNT=1 (no screen-lock contention between workers)
+# + a longer per-lead timeout. Idempotency-skip means ONLY the missing leads render. Bounded by
+# MAX_RECOVERY_SEARCHES, the wall-clock DEADLINE, and the night window. Leads that fail MAX_VIDEO_ATTEMPTS
+# times are surfaced (Skip Reasons=video-unrenderable-Nx), never silently dropped or looped forever.
+# See feedback_every_email_gets_a_video.md + feedback_landing_build_must_be_scoped.md.
+# ============================================================
+echo ">>> reconcile-missing-videos: finding emailable leads with no video" | tee -a "$LOG"
+node scripts/reconcile-missing-videos.mjs 2>&1 | tee -a "$LOG"
+MV_SEARCHES="$SCRAPER_DIR/output/missing-video-searches.txt"
+MAX_RECOVERY_SEARCHES="${MAX_RECOVERY_SEARCHES:-3}"
+if [ -s "$MV_SEARCHES" ]; then
+  rc=0
+  while IFS= read -r Q; do
+    [ -z "$Q" ] && continue
+    rc=$((rc+1))
+    if [ "$rc" -gt "$MAX_RECOVERY_SEARCHES" ]; then echo ">>> recovery cap ($MAX_RECOVERY_SEARCHES) reached — remaining missing-video searches retried tomorrow." | tee -a "$LOG"; break; fi
+    if [ "$(date +%s)" -ge "$DEADLINE" ]; then echo ">>> wall-clock cap reached — deferring remaining recovery to tomorrow." | tee -a "$LOG"; break; fi
+    NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended — deferring remaining recovery to tomorrow." | tee -a "$LOG"; break; fi
+    echo "" | tee -a "$LOG"
+    echo ">>> [recovery $rc] $(date +%H:%M) — slow single-worker re-render: \"$Q\"" | tee -a "$LOG"
+    WORKER_COUNT=1 PER_LEAD_TIMEOUT_MIN="${RECOVERY_PER_LEAD_TIMEOUT_MIN:-15}" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
+  done < "$MV_SEARCHES"
+else
+  echo ">>> no missing-video gap — every emailable lead has a video. ✓" | tee -a "$LOG"
+fi
+
+# ============================================================
+# AUTO-AUDIT — verify NO failed videos, notify Chris if any (Chris 2026-07-11: "an auto audit to verify there
+# are no failed videos and if there are ever to notify me and we fix the issue"). Runs AFTER the recovery pass
+# so it audits the FINAL state. Alerts (macOS + persistent file) only on leads the system CAN'T self-heal
+# (retries exhausted / no search term) — transient gaps that the next recovery pass will drain don't alarm.
+# See feedback_failed_video_audit.md + feedback_every_email_gets_a_video.md.
+# ============================================================
+echo ">>> auto-audit: verifying no failed videos" | tee -a "$LOG"
+node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 
 # File the night's deployed-video list into the dated reports/overnight-videos/YYYY/MM-Month/ tree.
 # Pass the run's START date (DATE_STAMP) — a run that finishes after midnight must still file under
