@@ -55,6 +55,26 @@ function run(cmd, args) {
   });
 }
 
+// POST-RENDER VISUAL GATE (2026-07-20). Looks at the FINAL rendered pixels — the one thing no other gate
+// did — and rejects quarter-scale/blank-region renders AND wrong-window desktop bleeds (the complete-auto
+// IDE/Liberty-Tribune leak). A failing video must NEVER get a landing page or a Video URL. No bypass: the
+// entire 07-18 incident was a bypassed rule. See scripts/check-video-visual.mjs + feedback_video_capture_screen_must_be_clear.
+function runVisualGate(mp4Path) {
+  return new Promise((resolve) => {
+    const child = spawn("node", [path.join(__dirname, "scripts", "check-video-visual.mjs"), mp4Path, "--json"], { stdio: ["ignore", "pipe", "pipe"] });
+    let out = "", err = "";
+    child.stdout.on("data", (d) => { out += String(d); });
+    child.stderr.on("data", (d) => { err += String(d); });
+    child.on("error", (e) => resolve({ pass: false, reason: "gate spawn error: " + e.message }));
+    child.on("exit", (code) => {
+      let reason = "";
+      try { reason = (JSON.parse(out).reasons || []).join(" | "); } catch { reason = (err || out).slice(0, 200); }
+      // exit 0 = pass; 2 = visual defect; 1 = analysis error → fail loud (never deploy an unverifiable video).
+      resolve({ pass: code === 0, reason: reason || `gate exit ${code}` });
+    });
+  });
+}
+
 // Parse the business slug out of "01_pacific-plumbing-team.mp4".
 // NOTE: the numeric prefix is the batch sequence order, NOT the Maps rank.
 function parseFilename(name) {
@@ -292,6 +312,18 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   return res.ok;
 }
 
+// Flag a lead whose render failed the visual gate: mark it so audit-failed-videos surfaces it and the
+// reconciler re-renders it (it stays a gap — no Video URL was written). Never silently drop it.
+async function flagVisualGateFail(recordId, reason) {
+  if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return false;
+  const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: { "Skip Reasons": `visual-gate-failed: ${String(reason).slice(0, 180)}` } })
+  });
+  return res.ok;
+}
+
 function renderTemplate(tpl, vars) {
   return Object.entries(vars).reduce((out, [k, v]) => out.replaceAll(`{{${k}}}`, v), tpl);
 }
@@ -315,6 +347,18 @@ async function main() {
   // so each per-lead step-7 call rebuilds just the current lead. Cuts
   // ~25 min per 48-lead run. Empty/unset = legacy behavior (build all).
   const ONLY_SLUG = (process.env.BUILD_ONLY_SLUG || "").trim();
+  // 🔴 ROOT-CAUSE GUARD (2026-07-11 — locked). The per-lead pipeline calls this once per lead. If a
+  // lead's step-7 made no MP4, BUILD_ONLY_SLUG arrives EMPTY — and the old code then fell through to
+  // rebuilding ALL ~500 landing pages (+~450 Airtable writes), which takes ~8min and trips the 8-min
+  // per-lead watchdog, SIGKILLing an otherwise-good lead MID-REBUILD. It got worse every night as the
+  // library grew (O(N) per lead → O(N²) per run) and wiped whole searches. The per-lead pipeline sets
+  // REQUIRE_SLUG=1 so an empty/zero-match slug EXITS FAST building nothing — a corpus rebuild can only
+  // happen on a DELIBERATE full call (REQUIRE_SLUG unset). See feedback_landing_build_must_be_scoped.md.
+  const REQUIRE_SLUG = process.env.REQUIRE_SLUG === "1";
+  if (REQUIRE_SLUG && !ONLY_SLUG) {
+    console.log("[build-landing] REQUIRE_SLUG=1 but BUILD_ONLY_SLUG is empty — building NOTHING (per-lead safety; refusing full-corpus rebuild). Nothing to publish for this lead.");
+    return;
+  }
   if (ONLY_SLUG) {
     const before = mp4s.length;
     mp4s = mp4s.filter((v) => parseFilename(v.file).slug === ONLY_SLUG);
@@ -353,6 +397,17 @@ async function main() {
 
     if (DRY) {
       console.log(`[DRY] ${slug}: ${v.file} → ${landingUrl}`);
+      continue;
+    }
+
+    // POST-RENDER VISUAL GATE — reject quarter-scale / wrong-window (desktop-leak) renders BEFORE they get a
+    // page or a Video URL, so a bad video can never reach a prospect. No bypass. (2026-07-20 incident.)
+    const gate = await runVisualGate(v.fullPath);
+    if (!gate.pass) {
+      console.error(`[build-landing] 🚫 VISUAL GATE FAILED — NOT publishing ${slug}: ${gate.reason}`);
+      if (!NO_AIRTABLE && airtableRecord?.id) {
+        try { await flagVisualGateFail(airtableRecord.id, gate.reason); } catch (e) { console.warn(`[build-landing] flag failed: ${e.message}`); }
+      }
       continue;
     }
 
