@@ -1206,33 +1206,28 @@ async function forceMapsCityZoom(page, label = 'detail') {
   // neither under-zoom (continent) nor over-zoom (street). Zoom-in BUTTON (not the '+' key) stays
   // the mechanism — the key types into the focused search box and re-runs the search (2026-06-22).
   const TARGET_ZOOM = 13;     // city level: local map pack + competing pins in frame
-  const MAX_PRESSES = 14;     // safety cap (continent→city is ~10 presses)
-  const PRESS_DELAY_MS = 280; // let the map animate + the URL settle before re-reading zoom
-  const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
+  const parseUrl = (u) => { const m = (u || '').match(/@(-?[\d.]+),(-?[\d.]+),([\d.]+)z/); return m ? { lat: m[1], lng: m[2], z: parseFloat(m[3]) } : null; };
   try {
-    const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
-    let pressed = 0, z = readZoom();
-    while (pressed < MAX_PRESSES && (z === null || z < TARGET_ZOOM)) {
-      if (zoomBtn) {
-        await zoomBtn.click({ delay: 20 }).catch(() => {});
-      } else {
-        // Fallback: blur the search box + focus the map canvas, THEN keyboard '+'.
-        await page.evaluate(() => {
-          const ae = document.activeElement;
-          if (ae && ae.tagName === 'INPUT') ae.blur();
-          const c = document.querySelector('canvas');
-          if (c) { c.setAttribute('tabindex', '0'); c.focus(); }
-        }).catch(() => {});
-        await page.keyboard.press('+');
-      }
-      pressed++;
-      await sleep(PRESS_DELAY_MS);
-      const nz = readZoom();
-      // If the URL never reports a zoom, don't blindly press MAX from a wide start — cap at a sane 8.
-      if (nz === null && z === null && pressed >= 8) break;
-      z = nz;
+    const cur = parseUrl(page.url());
+    // PRIMARY (drift-proof, verified headless 2026-07-21): the open detail card's URL is centered ON
+    // THE BUSINESS (@lat,lng). Keep that EXACT lat,lng and set only the zoom to city level via a
+    // same-URL navigation. This preserves the center AND keeps the card visible. The old button/'+'
+    // zoom is unreliable here — it zooms toward the viewport center and DRIFTS off the business
+    // (400+ mi off in tests), which is how the 07-20 batch shipped continent-wide, off-target maps.
+    if (cur && cur.z < TARGET_ZOOM) {
+      const fixed = page.url().replace(/@(-?[\d.]+),(-?[\d.]+),[\d.]+z/, `@$1,$2,${TARGET_ZOOM}z`);
+      await page.goto(fixed, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+      await sleep(2600); // let the map animate to the new zoom + the card re-render
+      const after = parseUrl(page.url());
+      console.log(`   → ${label}: URL city-zoom ${cur.z}→${after?.z ?? '?'} @${cur.lat},${cur.lng} (center preserved)`);
+      return;
     }
-    console.log(`   → ${label}: adaptive city-zoom — ${pressed} press(es), zoom≈${z ?? 'unknown'} (target ${TARGET_ZOOM})`);
+    if (cur && cur.z >= TARGET_ZOOM) { console.log(`   → ${label}: already city-zoom (${cur.z})`); return; }
+    // FALLBACK — URL has no @lat,lng,z to target. Press the on-screen Zoom-in BUTTON a few times
+    // (never the '+' key: it types into the focused search box and re-runs the search — 2026-06-22).
+    const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
+    for (let i = 0; i < 6; i++) { if (zoomBtn) await zoomBtn.click({ delay: 20 }).catch(() => {}); await sleep(220); }
+    console.log(`   → ${label}: city-zoom via zoom-in button fallback (no URL zoom to target)`);
   } catch (err) {
     // Non-fatal — if zoom input fails (rare), recording continues at
     // whatever zoom Maps left us with. Better than crashing the lead.
