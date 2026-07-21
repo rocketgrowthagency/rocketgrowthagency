@@ -1198,37 +1198,41 @@ async function injectRankOverlay(page, businessName, rank, searchTerm) {
 //
 // Memory: feedback_maps_card_visibility_rules.md.
 async function forceMapsCityZoom(page, label = 'detail') {
-  const PRESSES = 5;
-  const PRESS_DELAY_MS = 180; // allow map to animate one zoom step
+  // 2026-07-21 ADAPTIVE fix: the old FIXED 5 presses assumed the map opened at state-zoom (~7).
+  // On the 07-20 Auto-glass batch the detail card opened at CONTINENT zoom (~3 — the whole USA +
+  // oceans, scale "500 mi"), so 5 presses only reached region level and Culver City was a dot.
+  // Instead, read the LIVE zoom from the Maps URL (@lat,lng,Zz) and press the on-screen Zoom-in
+  // button until we reach city level. Adapts to ANY starting zoom and stops at target, so it can
+  // neither under-zoom (continent) nor over-zoom (street). Zoom-in BUTTON (not the '+' key) stays
+  // the mechanism — the key types into the focused search box and re-runs the search (2026-06-22).
+  const TARGET_ZOOM = 13;     // city level: local map pack + competing pins in frame
+  const MAX_PRESSES = 14;     // safety cap (continent→city is ~10 presses)
+  const PRESS_DELAY_MS = 280; // let the map animate + the URL settle before re-reading zoom
+  const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
   try {
-    // 2026-06-22 ROOT-CAUSE FIX (deep-rank card loss): the keyboard '+' goes to
-    // whatever element has focus. After a direct page.goto to a search/detail URL,
-    // focus sits on the SEARCH BOX — so the 5× '+' got TYPED INTO SEARCH, which
-    // re-ran a search and kicked the view back to a results list, destroying the
-    // prospect's detail card (TopCal #25 had no card; Green Planet survived only
-    // because its results→click path left focus on the map). Click the on-screen
-    // Zoom-in BUTTON instead: it's focus-independent and never types into a field.
     const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
-    if (zoomBtn) {
-      for (let i = 0; i < PRESSES; i++) {
+    let pressed = 0, z = readZoom();
+    while (pressed < MAX_PRESSES && (z === null || z < TARGET_ZOOM)) {
+      if (zoomBtn) {
         await zoomBtn.click({ delay: 20 }).catch(() => {});
-        await sleep(PRESS_DELAY_MS);
+      } else {
+        // Fallback: blur the search box + focus the map canvas, THEN keyboard '+'.
+        await page.evaluate(() => {
+          const ae = document.activeElement;
+          if (ae && ae.tagName === 'INPUT') ae.blur();
+          const c = document.querySelector('canvas');
+          if (c) { c.setAttribute('tabindex', '0'); c.focus(); }
+        }).catch(() => {});
+        await page.keyboard.press('+');
       }
-      console.log(`   → ${label}: forced city-zoom via ${PRESSES}× zoom-in button`);
-      return;
-    }
-    // Fallback: blur the search box + focus the map canvas, THEN keyboard '+'.
-    await page.evaluate(() => {
-      const ae = document.activeElement;
-      if (ae && ae.tagName === 'INPUT') ae.blur();
-      const c = document.querySelector('canvas');
-      if (c) { c.setAttribute('tabindex', '0'); c.focus(); }
-    }).catch(() => {});
-    for (let i = 0; i < PRESSES; i++) {
-      await page.keyboard.press('+');
+      pressed++;
       await sleep(PRESS_DELAY_MS);
+      const nz = readZoom();
+      // If the URL never reports a zoom, don't blindly press MAX from a wide start — cap at a sane 8.
+      if (nz === null && z === null && pressed >= 8) break;
+      z = nz;
     }
-    console.log(`   → ${label}: forced city-zoom via ${PRESSES}× '+' key (fallback)`);
+    console.log(`   → ${label}: adaptive city-zoom — ${pressed} press(es), zoom≈${z ?? 'unknown'} (target ${TARGET_ZOOM})`);
   } catch (err) {
     // Non-fatal — if zoom input fails (rare), recording continues at
     // whatever zoom Maps left us with. Better than crashing the lead.
