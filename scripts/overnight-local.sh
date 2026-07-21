@@ -48,32 +48,28 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
   exit 0
 fi
-# CAPACITY-AWARE governor (2026-07-11): it computes how many searches to build tonight = the NEW-#1-email
-# room left after follow-ups eat the daily cap, minus the #1 backlog already built. It prints
-# RECOMMEND_SEARCHES=N; we build exactly N (0 = don't build). Domain protection: N=0 if bounce not GREEN.
-GOV_OUT="$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1)"; GOV_RC=$?
-echo "$GOV_OUT" | tee -a "$LOG"
-REC_SEARCHES="$(echo "$GOV_OUT" | grep -oE 'RECOMMEND_SEARCHES=[0-9]+' | tail -1 | cut -d= -f2)"
-if [ "$GOV_RC" -ne 0 ] || [ -z "$REC_SEARCHES" ] || [ "$REC_SEARCHES" -lt 1 ]; then
-  # Governor says build 0 NEW searches — but DON'T exit. The recovery pass + audit below still run so the
-  # missing-video backlog keeps draining ("get caught up so we have a fresh system", Chris 2026-07-11). Only a
-  # manual PRODUCTION-PAUSED (handled above) fully skips the night. New scraping = 0; catch-up + audit proceed.
-  echo "=== capacity governor: 0 NEW searches tonight — proceeding to backlog recovery + audit only (catch-up continues). ===" | tee -a "$LOG"
-  MAX_SEARCHES=0
-else
-  MAX_SEARCHES="$REC_SEARCHES"   # capacity-driven — overrides the default; sized to real #1 room
-  echo "=== capacity governor: build ${REC_SEARCHES} search(es) tonight (matches the #1-email room after follow-ups). ===" | tee -a "$LOG"
-fi
+# PRODUCTION IS NOT THROTTLED (Chris 2026-07-21: "we don't throttle video production, we only throttle
+# sending"). Scrape + build the ENTIRE list every night. Excess videos become inventory that the SEND side
+# meters out at its daily cap — building videos costs nothing on deliverability; only SENDING does. So the
+# send-capacity governor NO LONGER limits how many searches we build. The send throttle lives entirely on
+# the send side (Apps Script daily cap + follow-up pacing) — untouched here. Production runs until one of the
+# REAL stops: night-only capture window ends (07:00), SoCal exhausted, wall-clock cap, or the manual
+# PRODUCTION-PAUSED kill switch above. We still run the governor once for VISIBILITY (bounce/room logging).
+node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG" || true
+echo "=== production NOT throttled — building the entire list tonight (send side stays capacity-throttled). ===" | tee -a "$LOG"
+MAX_SEARCHES=999   # run the whole list until the night window ends (07:00) or SoCal is exhausted
 
-# HARD CAP (locked 2026-07-03 — Chris: "this is too long we need a cap"). The loop used to run up
-# to 99 searches over ~10h, which dragged on all night. Now bounded THREE ways, all env-tunable:
-#   MAX_SEARCHES  — CAPACITY-DRIVEN (2026-07-11): set above by the governor to the #1-email room left after
-#                   follow-ups eat the 50/day cap, minus the #1 backlog already built. The :-1 below is only
-#                   a fallback if the governor didn't set it. Hard ceiling MAX_SEARCHES_CAP=3 in the governor.
-#   MAX_RUN_HOURS — wall-clock cap; no NEW search starts past this (default 6h — matches 3 searches)
-#   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes
-MAX_SEARCHES="${MAX_SEARCHES:-1}"
-MAX_RUN_HOURS="${MAX_RUN_HOURS:-6}"
+# RUN THE WHOLE LIST (Chris 2026-07-21: "every scraped lead that has an email MUST get a video — no less").
+# Video production is UNCAPPED — it runs the entire scraped+emailable list every night. The old 3-search
+# governor cap is gone (that throttled PRODUCTION; we only throttle SENDING now). Remaining bounds:
+#   MAX_SEARCHES  — set to 999 above (effectively "the whole list"); real stop is the night window / SoCal.
+#   MAX_RUN_HOURS — wall-clock cap; covers the full night window so it doesn't stop before 07:00 (default 10h).
+#   NIGHT-ONLY interlock (07:00) — the true stop; capture can't cross into the workday.
+#   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes.
+# Anything not finished in one night resumes the next (reconciler + next-search pick up where we left off),
+# so EVERY emailable lead ends up with a video — see feedback_every_email_gets_a_video.
+MAX_SEARCHES="${MAX_SEARCHES:-999}"
+MAX_RUN_HOURS="${MAX_RUN_HOURS:-10}"
 WORKER_COUNT="${WORKER_COUNT:-2}"
 STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
 
