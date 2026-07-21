@@ -48,27 +48,26 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
   exit 0
 fi
-# PRODUCTION IS NOT THROTTLED (Chris 2026-07-21: "we don't throttle video production, we only throttle
-# sending"). Scrape + build the ENTIRE list every night. Excess videos become inventory that the SEND side
-# meters out at its daily cap — building videos costs nothing on deliverability; only SENDING does. So the
-# send-capacity governor NO LONGER limits how many searches we build. The send throttle lives entirely on
-# the send side (Apps Script daily cap + follow-up pacing) — untouched here. Production runs until one of the
-# REAL stops: night-only capture window ends (07:00), SoCal exhausted, wall-clock cap, or the manual
-# PRODUCTION-PAUSED kill switch above. We still run the governor once for VISIBILITY (bounce/room logging).
+# ONE scrape/category per night, BUILD ALL ITS VIDEOS (Chris 2026-07-21: "run like it used to — 1 run per
+# night; I scrape a category and make ALL the videos for that scrape"). The send-capacity governor no longer
+# GATES production down to 0/throttled — we always run the 1 category and build a video for EVERY emailable
+# lead in it. The send throttle (Apps Script daily cap + follow-up pacing) is separate + untouched. We still
+# run the governor once for VISIBILITY only (bounce/room logging).
 node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG" || true
-echo "=== production NOT throttled — building the entire list tonight (send side stays capacity-throttled). ===" | tee -a "$LOG"
-MAX_SEARCHES=999   # run the whole list until the night window ends (07:00) or SoCal is exhausted
+echo "=== 1 category tonight — building a video for every emailable lead in the scrape (send side stays capacity-throttled). ===" | tee -a "$LOG"
+MAX_SEARCHES=1   # exactly one scrape/category per night; build all its videos
 
-# RUN THE WHOLE LIST (Chris 2026-07-21: "every scraped lead that has an email MUST get a video — no less").
-# Video production is UNCAPPED — it runs the entire scraped+emailable list every night. The old 3-search
-# governor cap is gone (that throttled PRODUCTION; we only throttle SENDING now). Remaining bounds:
-#   MAX_SEARCHES  — set to 999 above (effectively "the whole list"); real stop is the night window / SoCal.
-#   MAX_RUN_HOURS — wall-clock cap; covers the full night window so it doesn't stop before 07:00 (default 10h).
+# ONE category/night, ALL its videos (Chris 2026-07-21: "1 run per night — scrape a category, e.g. Plumbers
+# in Culver City; if 30 of the 50 have emails, make ALL 30 videos, not less than the full list of emailable
+# businesses"). Production is NOT throttled by send capacity — every emailable lead in the scrape gets a video.
+# Bounds:
+#   MAX_SEARCHES  — 1 (one scrape/category per night; set above). Build EVERY emailable lead's video in it.
+#   MAX_RUN_HOURS — wall-clock cap; kept generous so a big category finishes ALL its videos (default 10h).
 #   NIGHT-ONLY interlock (07:00) — the true stop; capture can't cross into the workday.
 #   output/STOP-OVERNIGHT — touch this file to gracefully stop after the current search finishes.
-# Anything not finished in one night resumes the next (reconciler + next-search pick up where we left off),
-# so EVERY emailable lead ends up with a video — see feedback_every_email_gets_a_video.
-MAX_SEARCHES="${MAX_SEARCHES:-999}"
+# If a big category can't finish in one night, the reconciler re-renders the remainder next night so EVERY
+# emailable lead ends up with a video — see feedback_every_email_gets_a_video.
+MAX_SEARCHES="${MAX_SEARCHES:-1}"
 MAX_RUN_HOURS="${MAX_RUN_HOURS:-10}"
 WORKER_COUNT="${WORKER_COUNT:-2}"
 STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
