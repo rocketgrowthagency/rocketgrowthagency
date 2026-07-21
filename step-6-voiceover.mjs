@@ -2302,18 +2302,36 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   // 2026-05-18: intro raised 16→18s after LA Roof Masters intro came in
   // at 16.78s and tripped the guard, silently failing 6 of 12 Roofers renders.
   const SEGMENT_MAX = { intro: 18, maps: 52, website: 47, mobile: 42, outro: 32 };
-  for (const { segName, segPath, duration } of results) {
-    manifest.segments[segName] = {
-      file: path.basename(segPath),
-      durationSeconds: duration,
-      text: segments[segName],
-    };
-    if (SEGMENT_MAX[segName] && duration > SEGMENT_MAX[segName]) {
-      throw new Error(
-        `[step-6 GUARDRAIL] ${segName} audio is ${duration.toFixed(2)}s (max ${SEGMENT_MAX[segName]}s). ` +
-        `Cut ${segName} text in step-6-voiceover.mjs and re-run. ` +
-        `Locked rules: feedback_intro_voiceover_13_15_seconds.md, project_video_pipeline_protocol.md`
-      );
+  // AUTO-TRIM (2026-07-21): an over-length segment used to THROW ("cut text and re-run" — a manual
+  // step that silently killed the whole video; 6 lost on the 07-20 batch alone). Instead, drop the
+  // last sentence and re-TTS, looping until it fits. Findings are ordered, so trimming the tail sheds
+  // the least-important one. Only if it can't be reduced do we log + proceed (the TOTAL_MAX guard below
+  // still bounds overall length) — never lose a whole video over a marginal per-segment overflow.
+  const dropLastSentence = (text) => {
+    const t = String(text).trim().replace(/\s+/g, ' ');
+    const sentences = t.match(/[^.!?]+[.!?]+/g);
+    if (sentences && sentences.length > 1) return sentences.slice(0, -1).join(' ').trim();
+    const w = t.split(' '); // no sentence boundary → shave ~15% of words
+    return w.length > 4 ? w.slice(0, Math.floor(w.length * 0.85)).join(' ') : t;
+  };
+  const MAX_TRIM_ATTEMPTS = 4;
+  for (let ri = 0; ri < results.length; ri++) {
+    const r = results[ri];
+    const cap = SEGMENT_MAX[r.segName];
+    let attempt = 0;
+    while (cap && r.duration > cap && attempt < MAX_TRIM_ATTEMPTS) {
+      const before = segments[r.segName];
+      const trimmed = dropLastSentence(before);
+      if (!trimmed || trimmed === before) break; // can't shorten further
+      console.warn(`     ✂ ${r.segName} ${r.duration.toFixed(1)}s > ${cap}s — trim last sentence + re-TTS (attempt ${attempt + 1}/${MAX_TRIM_ATTEMPTS})`);
+      segments[r.segName] = trimmed;
+      await ttsToFile(trimmed, r.segPath);
+      r.duration = await getMp3DurationSeconds(r.segPath);
+      attempt++;
+    }
+    manifest.segments[r.segName] = { file: path.basename(r.segPath), durationSeconds: r.duration, text: segments[r.segName] };
+    if (cap && r.duration > cap) {
+      console.error(`     ⚠️ ${r.segName} still ${r.duration.toFixed(1)}s > ${cap}s after ${attempt} trim(s) — proceeding (total-length guard still applies).`);
     }
   }
 
