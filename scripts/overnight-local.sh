@@ -48,14 +48,23 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
   exit 0
 fi
-# ONE scrape/category per night, BUILD ALL ITS VIDEOS (Chris 2026-07-21: "run like it used to — 1 run per
-# night; I scrape a category and make ALL the videos for that scrape"). The send-capacity governor no longer
-# GATES production down to 0/throttled — we always run the 1 category and build a video for EVERY emailable
-# lead in it. The send throttle (Apps Script daily cap + follow-up pacing) is separate + untouched. We still
-# run the governor once for VISIBILITY only (bounce/room logging).
-node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG" || true
-echo "=== 1 category tonight — building a video for every emailable lead in the scrape (send side stays capacity-throttled). ===" | tee -a "$LOG"
-MAX_SEARCHES=1   # exactly one scrape/category per night; build all its videos
+# BACKFILL MODE (Chris 2026-07-22: "finish the backfill THEN move to new scrape categories"). While
+# output/BACKFILL-MODE exists, do NO new category tonight — just re-render the broken/leaked-video backlog
+# via the recovery + reconcile pass below (MAX_SEARCHES=0 skips the fresh scrape but the recovery pass still
+# runs). Remove output/BACKFILL-MODE once the backlog is drained (missing-video gap = 0) to resume new scrapes.
+if [ -f "$SCRAPER_DIR/output/BACKFILL-MODE" ]; then
+  echo "=== BACKFILL MODE — re-rendering the broken-video backlog ONLY tonight (no new category). Remove output/BACKFILL-MODE when drained. ===" | tee -a "$LOG"
+  MAX_SEARCHES=0
+else
+  # ONE scrape/category per night, BUILD ALL ITS VIDEOS (Chris 2026-07-21: "run like it used to — 1 run per
+  # night; I scrape a category and make ALL the videos for that scrape"). The send-capacity governor no longer
+  # GATES production down to 0/throttled — we always run the 1 category and build a video for EVERY emailable
+  # lead. The send throttle (Apps Script daily cap + follow-up pacing) is separate + untouched. Governor runs
+  # once for VISIBILITY only (bounce/room logging).
+  node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG" || true
+  echo "=== 1 category tonight — building a video for every emailable lead in the scrape (send side stays capacity-throttled). ===" | tee -a "$LOG"
+  MAX_SEARCHES=1   # exactly one scrape/category per night; build all its videos
+fi
 
 # ONE category/night, ALL its videos (Chris 2026-07-21: "1 run per night — scrape a category, e.g. Plumbers
 # in Culver City; if 30 of the 50 have emails, make ALL 30 videos, not less than the full list of emailable
