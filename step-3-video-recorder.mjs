@@ -1205,29 +1205,35 @@ async function forceMapsCityZoom(page, label = 'detail') {
   // button until we reach city level. Adapts to ANY starting zoom and stops at target, so it can
   // neither under-zoom (continent) nor over-zoom (street). Zoom-in BUTTON (not the '+' key) stays
   // the mechanism — the key types into the focused search box and re-runs the search (2026-06-22).
-  const TARGET_ZOOM = 13;     // city level: local map pack + competing pins in frame
-  const parseUrl = (u) => { const m = (u || '').match(/@(-?[\d.]+),(-?[\d.]+),([\d.]+)z/); return m ? { lat: m[1], lng: m[2], z: parseFloat(m[3]) } : null; };
+  // Zoom the OPEN map to city level (~13) so the local map-pack + competing pins are in frame. Use ONLY
+  // the on-screen Zoom-in BUTTON — never a page.goto (a reload DESTROYS an SPA-selected card: the 07-21
+  // regression that shipped cardless "results view" videos), and never the '+' key (types into the search
+  // box + re-runs the search — 2026-06-22). ADAPTIVE: read the live zoom from the URL and press until >=13.
+  // A FIXED count under-zooms when the map opens at continent level (the 07-20 bug, whole-USA maps). Button
+  // clicks don't deselect the card, and with a place selected Maps anchors the zoom on it (stays centered).
+  const TARGET_ZOOM = 13, MAX_PRESSES = 14, PRESS_DELAY_MS = 280;
+  const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
   try {
-    const cur = parseUrl(page.url());
-    // PRIMARY (drift-proof, verified headless 2026-07-21): the open detail card's URL is centered ON
-    // THE BUSINESS (@lat,lng). Keep that EXACT lat,lng and set only the zoom to city level via a
-    // same-URL navigation. This preserves the center AND keeps the card visible. The old button/'+'
-    // zoom is unreliable here — it zooms toward the viewport center and DRIFTS off the business
-    // (400+ mi off in tests), which is how the 07-20 batch shipped continent-wide, off-target maps.
-    if (cur && cur.z < TARGET_ZOOM) {
-      const fixed = page.url().replace(/@(-?[\d.]+),(-?[\d.]+),[\d.]+z/, `@$1,$2,${TARGET_ZOOM}z`);
-      await page.goto(fixed, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
-      await sleep(2600); // let the map animate to the new zoom + the card re-render
-      const after = parseUrl(page.url());
-      console.log(`   → ${label}: URL city-zoom ${cur.z}→${after?.z ?? '?'} @${cur.lat},${cur.lng} (center preserved)`);
-      return;
-    }
-    if (cur && cur.z >= TARGET_ZOOM) { console.log(`   → ${label}: already city-zoom (${cur.z})`); return; }
-    // FALLBACK — URL has no @lat,lng,z to target. Press the on-screen Zoom-in BUTTON a few times
-    // (never the '+' key: it types into the focused search box and re-runs the search — 2026-06-22).
     const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
-    for (let i = 0; i < 6; i++) { if (zoomBtn) await zoomBtn.click({ delay: 20 }).catch(() => {}); await sleep(220); }
-    console.log(`   → ${label}: city-zoom via zoom-in button fallback (no URL zoom to target)`);
+    let pressed = 0, z = readZoom();
+    while (pressed < MAX_PRESSES && (z === null || z < TARGET_ZOOM)) {
+      if (zoomBtn) {
+        await zoomBtn.click({ delay: 20 }).catch(() => {});
+      } else {
+        // No zoom button found → focus the map canvas (not the search input) and use '+'.
+        await page.evaluate(() => {
+          const ae = document.activeElement; if (ae && ae.tagName === 'INPUT') ae.blur();
+          const c = document.querySelector('canvas'); if (c) { c.setAttribute('tabindex', '0'); c.focus(); }
+        }).catch(() => {});
+        await page.keyboard.press('+');
+      }
+      pressed++;
+      await sleep(PRESS_DELAY_MS);
+      const nz = readZoom();
+      if (nz === null && z === null && pressed >= 8) break; // no zoom readout → don't over-press from a wide start
+      z = nz;
+    }
+    console.log(`   → ${label}: city-zoom — ${pressed} button press(es), zoom≈${z ?? 'unknown'} (card preserved)`);
   } catch (err) {
     // Non-fatal — if zoom input fails (rare), recording continues at
     // whatever zoom Maps left us with. Better than crashing the lead.
