@@ -109,6 +109,18 @@ function csvEscape(v) {
 // DRY drift across step-1/step-2/discovery script. See lib/email-validation.cjs.
 const { AGGREGATOR_HOSTS, siteHost, businessNameTokens } = require('./lib/email-validation.cjs');
 
+// Geographic/place tokens that must NOT, on their own, qualify a fuzzy website match — a business named
+// after a neighborhood ("Mar Vista Detail") should not match that neighborhood's site (marvista.org).
+// Only tokens >= 3 chars matter (businessNameTokens drops shorter). SoCal-heavy since that's the beat.
+const GEO_STOP = new Set([
+  'los', 'angeles', 'san', 'santa', 'mar', 'vista', 'monica', 'culver', 'marina', 'del', 'rey', 'venice',
+  'west', 'east', 'north', 'south', 'valley', 'hills', 'beach', 'park', 'city', 'town', 'county', 'greater',
+  'california', 'hollywood', 'beverly', 'pasadena', 'burbank', 'glendale', 'torrance', 'inglewood', 'gardena',
+  'brentwood', 'westwood', 'palisades', 'manhattan', 'hermosa', 'redondo', 'carson', 'compton', 'downey',
+  'norwalk', 'whittier', 'pomona', 'ontario', 'riverside', 'anaheim', 'orange', 'irvine', 'fullerton',
+  'long', 'lake', 'valley', 'canyon', 'ranch', 'heights', 'grove', 'springs', 'harbor', 'bay', 'del',
+]);
+
 // Returns the reason string if website looks suspect, or '' if it looks OK.
 // Used in step-1 to flag leads whose GBP-linked "Website" isn't a real
 // first-party business site (aggregator, name-mismatch, etc.). Parked/empty
@@ -155,11 +167,17 @@ function pickQualifyingResult(candidates, businessName) {
       if (isAgg) continue;
       if (/^(google|bing|duckduckgo|youtube|googleusercontent|doubleclick|r\.bing|th\.bing)\./i.test(host)) continue;
       const domainStripped = host.replace(/\.[a-z]+$/, '').replace(/[^a-z0-9]/g, '');
+      // Relaxed (ANY-token) match must hit a DISTINCTIVE token, not just a geographic one — else a
+      // neighborhood/city domain matches a business that merely sits there. Locked 2026-07-21 after
+      // "Mar Vista Detail" matched marvista.org (the Mar Vista Community Council: matched "mar"+"vista"
+      // but not "detail"). Business domains carry the distinctive brand word; council/city portals don't.
+      const distinctive = tokens.filter((t) => !GEO_STOP.has(t));
+      const relaxedPool = distinctive.length > 0 ? distinctive : tokens; // all-geographic name → fall back
       const ok = tokens.length === 0
         ? true
         : requireAll
           ? tokens.every((t) => domainStripped.includes(t))
-          : tokens.some((t) => domainStripped.includes(t));
+          : relaxedPool.some((t) => domainStripped.includes(t));
       if (!ok) continue;
       try { return `${new URL(candidate).protocol}//${host}/`; } catch { return ''; }
     }
