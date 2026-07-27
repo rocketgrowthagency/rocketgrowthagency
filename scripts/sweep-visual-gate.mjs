@@ -62,6 +62,9 @@ await Promise.all(Array.from({ length: Math.min(CONC, queue.length) }, () => wor
 
 const qs = results.filter((x) => x.r && x.r.checkA_quarterScale === 'FAIL');
 const ww = results.filter((x) => x.r && x.r.checkB_wrongWindow === 'FAIL' && x.r.checkA_quarterScale !== 'FAIL');
+// Check C (map zoomed-out / missing pin, added 2026-07-27) — bucket zoom failures that aren't
+// already flagged by A/B so the sweep report doesn't silently undercount them.
+const mz = results.filter((x) => x.r && x.r.checkC_mapView === 'FAIL' && x.r.checkA_quarterScale !== 'FAIL' && x.r.checkB_wrongWindow !== 'FAIL');
 const err = results.filter((x) => !x.r);
 const pass = results.filter((x) => x.r && x.r.pass);
 
@@ -70,6 +73,7 @@ lines.push(`# Visual-gate library sweep — ${videos.length} videos`);
 lines.push('');
 lines.push(`- **Quarter-scale (Check A, high-confidence):** ${qs.length}`);
 lines.push(`- **Wrong-window (Check B vision — triage: leaks vs bad website captures):** ${ww.length}`);
+lines.push(`- **Map zoomed-out / missing pin (Check C vision):** ${mz.length}`);
 lines.push(`- **Passed:** ${pass.length}`);
 lines.push(`- **Analysis errors:** ${err.length}`);
 lines.push('');
@@ -78,6 +82,9 @@ qs.forEach((x) => lines.push(`- ${x.slug} — ${(x.r.reasons || []).join(' | ')}
 lines.push('');
 lines.push('## WRONG-WINDOW (triage: desktop/IDE leak = take down; expired-domain/404/wrong-site = re-scrape)');
 ww.forEach((x) => lines.push(`- ${x.slug} — ${(x.r.reasons || []).join(' | ')}`));
+lines.push('');
+lines.push('## MAP ZOOMED-OUT / MISSING PIN (re-render — forceMapsCityZoom failed)');
+mz.forEach((x) => lines.push(`- ${x.slug} — ${(x.r.reasons || []).join(' | ')}`));
 if (err.length) { lines.push(''); lines.push('## ANALYSIS ERRORS (re-check manually)'); err.forEach((x) => lines.push(`- ${x.slug}`)); }
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });

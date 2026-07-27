@@ -136,8 +136,9 @@ async function checkMapView(v, D) {
   })();
   if (NO_VISION) return { skipped: true, reason: '--no-vision' };
   if (!KEY) return { skipped: true, reason: 'no OPENAI_API_KEY' };
-  // The Maps segment sits early (after the intro, before the website). Sample across it.
-  const samples = [0.14, 0.20, 0.26, 0.32].map((p) => +(D * p).toFixed(1));
+  // The Maps segment sits early (after the intro, before the website), ~15–50s in. Sample
+  // across it (12–36% covers it for both the ~2:10 and ~2:29 renders). 5 frames for coverage.
+  const samples = [0.12, 0.18, 0.24, 0.30, 0.36].map((p) => +(D * p).toFixed(1));
   const wide = []; const noPin = []; let mapFrames = 0;
   for (const t of samples) {
     const b64 = frameJpeg(v, t).toString('base64');
@@ -180,12 +181,13 @@ async function checkMapView(v, D) {
     checkA_quarterScale: a.fail ? 'FAIL' : 'pass',
     checkB_wrongWindow: b.skipped ? `skipped (${b.reason})` : (b.fail ? 'FAIL' : 'pass'),
     checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.fail ? 'FAIL' : 'pass'),
+    checkC_mapFrames: c.skipped ? null : c.mapFrames,
     reasons,
   };
   if (JSON_OUT) console.log(JSON.stringify(result, null, 2));
   else {
     console.log(`[visual-gate] ${path.basename(VIDEO)} → ${pass ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}`);
+    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}${c.skipped ? '' : ` (${c.mapFrames} map frames seen)`}`);
     reasons.forEach((r) => console.log(`  ✗ ${r}`));
     if (b.skipped) console.log(`  ⚠ vision check skipped (${b.reason}) — Check A still enforced; wire OPENAI_API_KEY to catch wrong-window + zoom leaks.`);
   }
