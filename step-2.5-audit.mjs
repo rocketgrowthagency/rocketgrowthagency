@@ -1636,6 +1636,27 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_) {}
       console.log(`  [gbp-diag] photoCount = ${photoCount} (verified=${photoCountVerified})`);
 
+      // ZERO-PHOTOS detection (2026-07-27). The photoCount extractor above returns NULL
+      // (not 0) when a listing has no photos — so "no photos at all" was never a positive
+      // signal, and the photoGap finding floors at >=2. That left the single most impactful
+      // case (a listing with NO owner photos, e.g. Roxby Detailing) permanently un-flagged.
+      // Detect it POSITIVELY + CONSERVATIVELY so it can be claimed under the strict absence
+      // gate. Fires ONLY when ALL of: (a) no "Photo N" carousel thumbnail exists (the SAME
+      // trusted selector the count uses — any thumbnail = real photos → not zero), (b) the
+      // "Photos & videos" section heading is absent (present whenever photos exist), and
+      // (c) Google's empty-state "Add a photo" CTA is present. Any real photo indicator, or a
+      // mere load/selector miss, blocks it → fails safe to silent, never a false "no photos"
+      // claim. Memory: feedback_verification_gates_must_be_strict.md
+      let photoAbsenceVerified = false;
+      try {
+        const anyPhotoThumb = document.querySelector('button[aria-label^="Photo "], [role="img"][aria-label^="Photo "]');
+        const hasPhotosSection = /photos?\s*(&|and)\s*videos/i.test(document.body?.innerText || '');
+        const addPhotoCta = Array.from(document.querySelectorAll('button, a, [role="button"]'))
+          .some((el) => /^\s*add (a )?photos?\b/i.test((el.getAttribute('aria-label') || el.textContent || '').trim()));
+        photoAbsenceVerified = (!anyPhotoThumb && !hasPhotosSection && addPhotoCta);
+        console.log(`  [gbp-diag] photoAbsence: thumb=${!!anyPhotoThumb} photosSection=${hasPhotosSection} addCta=${addPhotoCta} → verified=${photoAbsenceVerified}`);
+      } catch (_) {}
+
       // Review recency + velocity: scope STRICTLY to review cards (must have
       // data-review-id). Removed the broad body-text fallback because it was
       // catching owner-response timestamps ("Response from owner 3 months ago")
@@ -1872,12 +1893,13 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_e) {}
       console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
 
-      return { reviewCount, photoCount, photoCountVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
+      return { reviewCount, photoCount, photoCountVerified, photoAbsenceVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
     findings.photoCount = data.photoCount;
     findings.photoCountVerified = !!data.photoCountVerified;
+    findings.photoAbsenceVerified = !!data.photoAbsenceVerified;
     findings.daysSinceLastReview = data.minDays;
     findings.reviewsLast30Days = data.reviewsLast30;
     findings.reviewsLast90Days = data.reviewsLast90;

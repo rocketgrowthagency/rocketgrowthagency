@@ -120,27 +120,74 @@ async function checkWrongWindow(v, D) {
   return { skipped: false, fail: realBad.length >= 2, bad };
 }
 
+// ---- CHECK C: map zoomed-out / missing pin (vision) ----
+// The Maps segment must show the business's CITY (streets, local map-pack) with its red
+// location pin centered — that's the whole point of the review. On the 2026-07-27 detailing
+// batch several maps shipped zoomed WAY out (whole state / country / continent, the pin a dot
+// or off-screen) because forceMapsCityZoom silently failed and NO gate looked at zoom. This
+// backstop rejects those. FAILS on a sustained "wide" zoom (the reliable, high-precision signal
+// that catches every flagged case: continent, country, and multi-county region). Pin visibility
+// is captured for the reason string but not hard-failed alone (small pins misread too easily to
+// gate on). Reuses the same cheap vision model as Check B.
+async function checkMapView(v, D) {
+  const KEY = (() => {
+    try { const e = fs.readFileSync(path.join(ROOT, '.env'), 'utf8'); const m = e.match(/^OPENAI_API_KEY=(.+)$/m); return m ? m[1].trim() : (process.env.OPENAI_API_KEY || ''); }
+    catch { return process.env.OPENAI_API_KEY || ''; }
+  })();
+  if (NO_VISION) return { skipped: true, reason: '--no-vision' };
+  if (!KEY) return { skipped: true, reason: 'no OPENAI_API_KEY' };
+  // The Maps segment sits early (after the intro, before the website). Sample across it.
+  const samples = [0.14, 0.20, 0.26, 0.32].map((p) => +(D * p).toFixed(1));
+  const wide = []; const noPin = []; let mapFrames = 0;
+  for (const t of samples) {
+    const b64 = frameJpeg(v, t).toString('base64');
+    const body = {
+      model: 'gpt-4o-mini',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'One frame from a LOCAL-business video that should show Google Maps zoomed to the business\'s CITY with its red location pin centered. If this frame shows a Google Maps map, judge: (1) zoom — "city" = streets/neighborhood/one town fills the view; "wide" = zoomed out so a whole state, multiple states/counties, an entire country/continent, or large oceans fill the frame (a single business would be a tiny dot). (2) pin — is a red/colored location map-pin marker clearly visible on the map? Reply ONLY compact JSON: {"is_map":true|false,"zoom":"city"|"wide"|"na","pin":true|false}. If is_map is false: zoom "na", pin false.' },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } },
+        ],
+      }],
+      max_tokens: 40, temperature: 0,
+    };
+    try {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const d = await r.json();
+      const j = JSON.parse((d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim());
+      if (j.is_map) { mapFrames++; if (j.zoom === 'wide') wide.push({ t }); if (j.pin === false) noPin.push({ t }); }
+    } catch (_) { /* soft — a misread frame shouldn't fail a good video */ }
+  }
+  // FAIL on a SUSTAINED wide zoom (≥2 frames), and only when we actually saw map frames
+  // (don't fail a video whose map segment we mis-sampled). Pin gaps ride along in the reason.
+  return { skipped: false, fail: mapFrames >= 2 && wide.length >= 2, wide, noPin, mapFrames };
+}
+
 // ---- run ----
 (async () => {
   const D = duration(VIDEO);
   const a = checkQuarterScale(VIDEO, D);
   const b = await checkWrongWindow(VIDEO, D);
+  const c = await checkMapView(VIDEO, D);
   const reasons = [];
   if (a.fail) reasons.push(`QUARTER-SCALE/BLANK-REGION at ${a.flagged.length} sampled frame(s): ${a.flagged.slice(0, 3).map((f) => `${f.t}s (${f.detail})`).join('; ')}`);
   if (b.fail) reasons.push(`WRONG-WINDOW (not Maps/website) at ${b.bad.filter((x) => !x.softError).map((x) => `${x.t}s "${x.desc}"`).join('; ')}`);
-  const pass = !a.fail && !b.fail;
+  if (c.fail) reasons.push(`MAP ZOOMED-OUT (not city level) at ${c.wide.map((f) => `${f.t}s`).join(', ')}${c.noPin.length ? `; pin missing at ${c.noPin.map((f) => `${f.t}s`).join(', ')}` : ''}`);
+  const pass = !a.fail && !b.fail && !c.fail;
   const result = {
     video: path.basename(VIDEO), pass,
     checkA_quarterScale: a.fail ? 'FAIL' : 'pass',
     checkB_wrongWindow: b.skipped ? `skipped (${b.reason})` : (b.fail ? 'FAIL' : 'pass'),
+    checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.fail ? 'FAIL' : 'pass'),
     reasons,
   };
   if (JSON_OUT) console.log(JSON.stringify(result, null, 2));
   else {
     console.log(`[visual-gate] ${path.basename(VIDEO)} → ${pass ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}`);
+    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}`);
     reasons.forEach((r) => console.log(`  ✗ ${r}`));
-    if (b.skipped) console.log(`  ⚠ vision check skipped (${b.reason}) — Check A still enforced; wire OPENAI_API_KEY to catch wrong-window leaks.`);
+    if (b.skipped) console.log(`  ⚠ vision check skipped (${b.reason}) — Check A still enforced; wire OPENAI_API_KEY to catch wrong-window + zoom leaks.`);
   }
   process.exit(pass ? 0 : 2);
 })().catch((e) => { console.error('[visual-gate] ERROR: ' + e.message); process.exit(1); });

@@ -1224,6 +1224,21 @@ function scoreMapsFindings(audit, top3Stats, record) {
       finding: `your Google Business Profile shows only ${audit.gbp.photoCount} photo${audit.gbp.photoCount === 1 ? '' : 's'} — top performers in this search average 50 or more. Photo count is a measured Maps-ranking signal Google reads on the profile`,
     });
   }
+  // ZERO-PHOTOS finding (2026-07-27) — the most impactful photo gap: a listing with NO
+  // owner photos at all (e.g. Roxby Detailing). photoCount returns null (not 0) in that
+  // state, so the photoGap finding above (floored at >=2) never covers it. This is an
+  // ABSENCE finding, so per the locked rule it fires ONLY on the positive photoAbsenceVerified
+  // flag from step-2.5 (no photo thumbnails + no "Photos & videos" section + Google's empty-
+  // state "Add a photo" CTA — fails safe to silent on any ambiguity, so it can never false-
+  // claim). Mutually exclusive with photoGap (that needs photoCount>=2; this needs zero).
+  // Memory: feedback_verification_gates_must_be_strict.md
+  else if (audit?.gbp?.photoAbsenceVerified === true) {
+    out.push({
+      key: 'photoAbsence',
+      score: 8,
+      finding: `your Google Business Profile has no photos on it — top-ranked competitors in this search have dozens. Photos are the first thing a customer looks at, and photo activity is a signal Google reads when it ranks the local map`,
+    });
+  }
   // 2026-06-03 — REMOVED secondaryCategoriesGap finding entirely.
   //
   // History: shipped 2026-06-01 with "your GBP has only a primary category set"
