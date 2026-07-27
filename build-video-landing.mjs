@@ -87,6 +87,19 @@ function parseFilename(name) {
 // when Airtable is skipped or the lead isn't in Airtable yet.
 // Uses csv-parser to handle quoted fields with embedded newlines.
 import csvParser from "csv-parser";
+
+// Airtable fetch timeout (2026-07-27) — un-guarded fetch() to Airtable can stall open on a dead socket
+// and hang node forever → holds the pipeline's stdout pipe → wedges the run. Give ONLY Airtable calls a
+// hard timeout; other fetches untouched. Watchdog backstops this; the timeout makes a stalled call fail
+// fast (retry-able) instead of hanging.
+{
+  const _rgaFetch = globalThis.fetch;
+  const _atMs = Number(process.env.AIRTABLE_FETCH_TIMEOUT_MS || 30000);
+  globalThis.fetch = (u, o = {}) =>
+    (String(u).includes("api.airtable.com") && !o.signal)
+      ? _rgaFetch(u, { ...o, signal: AbortSignal.timeout(_atMs) })
+      : _rgaFetch(u, o);
+}
 async function loadStep2Data() {
   const rankMap = {};
   const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)

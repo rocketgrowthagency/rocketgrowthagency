@@ -1213,10 +1213,16 @@ async function forceMapsCityZoom(page, label = 'detail') {
   // clicks don't deselect the card, and with a place selected Maps anchors the zoom on it (stays centered).
   const TARGET_ZOOM = 13, MAX_PRESSES = 14, PRESS_DELAY_MS = 280;
   const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
+  // 2026-07-27 HARDEN: re-query the zoom-in button EACH iteration + widen selectors. The old code
+  // fetched the handle ONCE before the loop; Maps re-renders its controls, so a stale/detached handle
+  // makes every .click() silently no-op → the map never zooms and a CONTINENT view ships (the 07-24
+  // failure this backstops with Check C). Re-querying picks up the live button; the bail threshold went
+  // 8→10 so an unreadable-zoom start still reaches city (~13) from a continent (~3) origin.
+  const ZOOM_SEL = 'button[aria-label="Zoom in"], button#widget-zoom-in, button[aria-label*="Zoom in"], button[jsaction*="zoom.in"]';
   try {
-    const zoomBtn = await page.$('button[aria-label="Zoom in"], button#widget-zoom-in');
     let pressed = 0, z = readZoom();
     while (pressed < MAX_PRESSES && (z === null || z < TARGET_ZOOM)) {
+      const zoomBtn = await page.$(ZOOM_SEL);   // live handle each iteration (Maps re-renders controls)
       if (zoomBtn) {
         await zoomBtn.click({ delay: 20 }).catch(() => {});
       } else {
@@ -1230,7 +1236,7 @@ async function forceMapsCityZoom(page, label = 'detail') {
       pressed++;
       await sleep(PRESS_DELAY_MS);
       const nz = readZoom();
-      if (nz === null && z === null && pressed >= 8) break; // no zoom readout → don't over-press from a wide start
+      if (nz === null && z === null && pressed >= 10) break; // no zoom readout → cap presses (10 reaches city from a continent start)
       z = nz;
     }
     console.log(`   → ${label}: city-zoom — ${pressed} button press(es), zoom≈${z ?? 'unknown'} (card preserved)`);

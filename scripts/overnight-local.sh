@@ -12,6 +12,10 @@
 #   ./scripts/overnight-local.sh            # loop until window/queue ends
 #   MAX_SEARCHES=3 ./scripts/overnight-local.sh
 set -u
+# pipefail (2026-07-27): make a piped stage report the real (leftmost) exit, not just tee's success,
+# so a crashing node step in a `node ... | tee` is visible via PIPESTATUS. Deliberately NO `set -e` —
+# many steps here fail intentionally with `|| true`, and aborting the whole night on one is wrong.
+set -o pipefail
 SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRAPER_DIR"
 DATE_STAMP=$(date +%Y-%m-%d)
@@ -204,6 +208,10 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   mkdir -p "$SCRAPER_DIR/output"
   echo "$Q" >> "$SCRAPER_DIR/output/attempted-searches.log"
   WORKER_COUNT="$WORKER_COUNT" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
+  _prc=${PIPESTATUS[0]}
+  if [ "$_prc" -ne 0 ]; then
+    echo "!!! overnight-pipeline exited non-zero ($_prc) for \"$Q\" — some leads may have failed; the recovery pass + auto-audit below will surface any gaps." | tee -a "$LOG"
+  fi
 done
 echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG"
 

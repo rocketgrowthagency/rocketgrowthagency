@@ -8,6 +8,20 @@ import OpenAI from 'openai';
 import slugify from 'slugify';
 import { spawn } from 'child_process';
 
+// Airtable fetch timeout (2026-07-27) — an un-guarded fetch() to Airtable can stall open on a dead
+// socket and, with no timeout, hang node forever → holds the pipeline's stdout pipe → wedges the run
+// (the 07-27 hang class). Give ONLY Airtable calls a hard timeout; OpenAI/other fetches are untouched
+// so a long TTS request is never aborted. The per-lead watchdog backstops this; the timeout makes a
+// stalled Airtable call fail fast (and retry-able) instead of hanging.
+{
+  const _rgaFetch = globalThis.fetch;
+  const _atMs = Number(process.env.AIRTABLE_FETCH_TIMEOUT_MS || 30000);
+  globalThis.fetch = (u, o = {}) =>
+    (String(u).includes('api.airtable.com') && !o.signal)
+      ? _rgaFetch(u, { ...o, signal: AbortSignal.timeout(_atMs) })
+      : _rgaFetch(u, o);
+}
+
 const STEP1_DIR = path.join(process.cwd(), 'output', 'Step 1');
 const STEP2_DIR = path.join(process.cwd(), 'output', 'Step 2');
 const VIDEOS_ROOT = path.join(process.cwd(), 'output', 'Step 3 (Video Recorder - Raw WebM)');

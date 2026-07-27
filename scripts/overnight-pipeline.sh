@@ -397,7 +397,7 @@ process_one_lead() {
     // Match the lead; we want both Video-URL-present (deployed) AND build-failed states.
     const formula = `AND({Business Name}="${escapeQ(biz)}", {Search Term}="${escapeQ(term)}")`;
     const url = "https://api.airtable.com/v0/" + b + "/Leads?pageSize=1&filterByFormula=" + encodeURIComponent(formula);
-    fetch(url, { headers: { Authorization: "Bearer " + k } })
+    fetch(url, { headers: { Authorization: "Bearer " + k }, signal: AbortSignal.timeout(15000) })
       .then(r => r.json())
       .then(d => {
         if (!d.records || !d.records.length) { console.log("NO"); return; }

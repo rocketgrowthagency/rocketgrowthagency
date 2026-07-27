@@ -23,6 +23,19 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import csvParser from "csv-parser";
 
+// Airtable fetch timeout (2026-07-27) — un-guarded fetch() to Airtable can stall open on a dead socket
+// and hang node forever → holds the pipeline's stdout pipe → wedges the run. Give ONLY Airtable calls a
+// hard timeout; other fetches untouched. Watchdog backstops this; the timeout makes a stalled call fail
+// fast (retry-able) instead of hanging. step-8 makes ~14 Airtable calls — this covers them all at once.
+{
+  const _rgaFetch = globalThis.fetch;
+  const _atMs = Number(process.env.AIRTABLE_FETCH_TIMEOUT_MS || 30000);
+  globalThis.fetch = (u, o = {}) =>
+    (String(u).includes("api.airtable.com") && !o.signal)
+      ? _rgaFetch(u, { ...o, signal: AbortSignal.timeout(_atMs) })
+      : _rgaFetch(u, o);
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, "output");
 const DRY = process.argv.includes("--dry-run");
