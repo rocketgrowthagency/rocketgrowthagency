@@ -45,7 +45,14 @@ for (const ln of lines) {
 let total = 0; const summary = [];
 for (const g of order) { const v = groups[g]; if (v.length) { total += v.length; summary.push([g, v.length]); } }
 
+// Was this a CLEAN end-of-run filing, or a partial/hung log? A complete run reaches the
+// "overnight-local DONE" marker before this reporter runs. If it's absent (the log was truncated
+// by a hang, or the reporter was run manually mid-run), the count below can UNDERCOUNT — say so
+// loudly rather than silently under-reporting (the 2026-07-24 hung run showed 28 not 42 this way).
+const runComplete = lines.some((l) => /=== overnight-local DONE/.test(l));
+
 let md = `# Overnight Videos — ${WEEK[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getDate()}, ${yyyy}\n\n`;
+if (!runComplete) md += `> ⚠️ **Run log is incomplete** (no clean end-of-run marker) — this count may be PARTIAL. Cross-check with \`node scripts/reconcile-missing-videos.mjs\` and \`node scripts/pipeline-status.mjs\`.\n\n`;
 md += `**${total} videos deployed** across ${summary.length} search${summary.length === 1 ? '' : 'es'} (only live, in-vertical, 6/6-gated videos shown; ${dropped} off-vertical/removed filtered out).\n\n`;
 if (summary.length) { md += `| Search | Videos |\n|---|---|\n`; summary.forEach(([g, n]) => md += `| ${g.replace(/, CA$/, '')} | ${n} |\n`); }
 else md += `_No videos deployed this run._\n`;

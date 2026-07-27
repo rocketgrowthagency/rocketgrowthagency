@@ -135,6 +135,35 @@ trap 'kill $CAFF_PID 2>/dev/null' EXIT
 
 echo "=== overnight-local START $(date) — city-first, cap: ${MAX_SEARCHES} searches / ${MAX_RUN_HOURS}h, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
 
+# CONNECTIVITY WAIT (2026-07-27). launchd fires at 21:00 with NO network guard, but Chris's mobile
+# data has been down at 21:00 before (out until ~21:40 on 07-23) — which would fail next-search +
+# the very first Airtable/scrape call and lose the whole night. The Mac is already caffeinated above,
+# so wait (up to NET_WAIT_MAX_MIN) for internet before ANY network work, re-checking the night window
+# each iteration so a long outage never bleeds capture into the workday. This is the connectivity
+# resilience the old external wrapper had, now built INTO the sole runner (per the 07-27 lesson: add
+# it HERE, never unload-launchd + wrap). No-op when the internet is already up.
+NET_WAIT_MAX_MIN="${NET_WAIT_MAX_MIN:-90}"
+net_up() { local c; c=$(curl -s --max-time 8 -o /dev/null -w "%{http_code}" https://www.google.com/generate_204 2>/dev/null); [ "$c" = "204" ] || [ "$c" = "200" ]; }
+if ! net_up; then
+  echo ">>> no internet at start — waiting up to ${NET_WAIT_MAX_MIN}min for connectivity..." | tee -a "$LOG"
+  _waited=0
+  while ! net_up; do
+    _nh=$(( 10#$(date +%H) ))
+    if [ "$_nh" -ge 7 ] && [ "$_nh" -lt 21 ]; then
+      echo ">>> internet still down and night window ended ($(date +%H:%M)) — skipping tonight." | tee -a "$LOG"
+      alert_skip "no internet during the night window — tonight produced nothing (mobile data down?)."
+      exit 0
+    fi
+    if [ "$_waited" -ge "$NET_WAIT_MAX_MIN" ]; then
+      echo ">>> internet still down after ${NET_WAIT_MAX_MIN}min — skipping tonight." | tee -a "$LOG"
+      alert_skip "no internet after ${NET_WAIT_MAX_MIN}min wait — tonight produced nothing (mobile data down?)."
+      exit 0
+    fi
+    sleep 180; _waited=$(( _waited + 3 ))
+  done
+  echo ">>> internet up after ~${_waited}min — proceeding." | tee -a "$LOG"
+fi
+
 # Manually-flagged bad videos: ARM them (remove + block send + re-queue their search) and FINALIZE
 # any that were re-rendered on a prior night. Chris ticks {Redo Video} in Airtable; this self-heals.
 echo ">>> redo-flagged-videos: processing {Redo Video} flags" | tee -a "$LOG"
