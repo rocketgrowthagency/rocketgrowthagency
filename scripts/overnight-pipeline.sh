@@ -708,14 +708,55 @@ EOPY
   fi
 }  # end process_one_lead
 
+# Recursively SIGKILL a process and ALL its descendants, deepest-first. Hoisted here
+# (2026-07-27) so BOTH the sequential and the parallel dispatchers can use it. See the
+# ROOT-CAUSE note at reap_finished_workers: the old `pkill -9 -P` killed only direct
+# children, orphaning node→Chrome→ffmpeg which held the stdout pipe open and hung the run.
+kill_tree() {
+  local top="$1" k
+  for k in $(pgrep -P "$top" 2>/dev/null); do
+    kill_tree "$k"
+  done
+  kill -9 "$top" 2>/dev/null
+}
+
+# SEQUENTIAL-PATH WATCHDOG (2026-07-27). The parallel pool has reap_finished_workers()+kill_tree,
+# but the sequential/recovery path (WORKER_COUNT=1, used by the nightly recovery pass) had NONE.
+# An un-timed-out network fetch (raw Airtable/landing fetch in step-6 / step-8 / build-video-landing
+# / the idempotency check) could wedge the WHOLE night the same way the step-3 capture hang did — a
+# hung child holds the `| tee` pipe open so the stage never returns and overnight-local never advances.
+# Run each lead in the background and kill_tree its whole subtree if it exceeds the per-lead timeout,
+# giving the sequential path the same protection as the pool. Normal completion is unaffected.
+run_lead_with_watchdog() {
+  local biz="$1" wid="$2" tsec="$3"
+  process_one_lead "$biz" "$wid" &
+  local lead_pid=$! start now
+  start=$(date +%s)
+  while kill -0 "$lead_pid" 2>/dev/null; do
+    sleep 3
+    now=$(date +%s)
+    if [ "$tsec" -gt 0 ] && [ "$(( now - start ))" -gt "$tsec" ]; then
+      echo ">>> [seq-watchdog] $biz exceeded $(( tsec / 60 ))min (elapsed $(( now - start ))s) — killing tree + skipping" | tee -a "$LOGFILE"
+      kill_tree "$lead_pid"
+      pkill -9 -f "chrome-profile-step3" 2>/dev/null
+      pkill -9 -f "chrome-profile-step25" 2>/dev/null
+      append_result "$RESULTS_FAILED" "$biz|seq-watchdog-timeout (${tsec}s)"
+      break
+    fi
+  done
+  wait "$lead_pid" 2>/dev/null
+}
+
 # ============================================================
 # DISPATCHER — sequential (WORKER_COUNT=1) or parallel worker pool (>1)
 # ============================================================
 if [ "$WORKER_COUNT" = "1" ]; then
-  # Legacy sequential mode — preserves exact pre-Tier-2-#7 behavior
+  # Legacy sequential mode — now wrapped in run_lead_with_watchdog so a hang (e.g. a stalled-open
+  # Airtable/landing fetch with no AbortSignal) can't wedge the night. PER_LEAD_TIMEOUT_SEC is the
+  # same cap the pool uses (recovery pass raises it to 15min via PER_LEAD_TIMEOUT_MIN=15).
   while IFS= read -r BIZ_NAME; do
     [ -z "$BIZ_NAME" ] && continue
-    process_one_lead "$BIZ_NAME" 1
+    run_lead_with_watchdog "$BIZ_NAME" 1 "$PER_LEAD_TIMEOUT_SEC"
   done < /tmp/emailable_leads.txt
 else
   echo "" | tee -a "$LOGFILE"
@@ -726,21 +767,10 @@ else
   WORKER_IDS_IN_USE=()
   WORKER_START_TIMES=()
   WORKER_BIZ_NAMES=()
-  # Recursively SIGKILL a process and ALL its descendants, deepest-first.
-  # 2026-07-27 ROOT-CAUSE FIX: the old watchdog used `pkill -9 -P "$pid"` which
-  # kills only DIRECT children. A hung step-3 tree is worker → subshell → node →
-  # Chrome → ffmpeg, so `pkill -P` left node/Chrome/ffmpeg ORPHANED (reparented to
-  # init) and still holding the pipeline's stdout pipe open. That kept the `| tee`
-  # from ever seeing EOF, so `overnight-pipeline.sh | tee` never returned and
-  # overnight-local.sh HUNG for 2.5 days (never reloaded launchd → 2 lost nights).
-  # kill_tree walks the whole descendant chain so nothing survives to hold the pipe.
-  kill_tree() {
-    local top="$1" k
-    for k in $(pgrep -P "$top" 2>/dev/null); do
-      kill_tree "$k"
-    done
-    kill -9 "$top" 2>/dev/null
-  }
+  # kill_tree() is defined above process_one_lead's dispatcher (hoisted 2026-07-27 so both
+  # the sequential and parallel paths share it). ROOT-CAUSE recap: the old `pkill -9 -P` killed
+  # only DIRECT children, orphaning node→Chrome→ffmpeg which held the stdout pipe open → the
+  # `| tee` never EOF'd → overnight-local.sh hung 2.5 days. kill_tree walks the whole chain.
   # 2026-06-01 — per-worker watchdog. If a worker exceeds PER_LEAD_TIMEOUT_SEC,
   # kill its process tree + log a failure-audit row + free the slot for the
   # next lead. Locked memory: feedback_per_lead_wall_time_watchdog.md.

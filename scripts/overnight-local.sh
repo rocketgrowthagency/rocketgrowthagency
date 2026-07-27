@@ -30,6 +30,26 @@ for _pat in "step-3-video-recorder.mjs" "chrome-profile-step3" "chrome-profile-s
   fi
 done
 
+# LOUD-SKIP ALERTING + FLAG TTL (2026-07-27) — a night that produces ZERO must NEVER be silent.
+# The 07-22/23 dead nights were a stale output/PRODUCTION-PAUSED file doing `exit 0` that looked like
+# success to launchd, with no alert. Any skip now (a) appends to a persistent human-visible log and
+# (b) fires a macOS notification, and a pause/backfill flag older than FLAG_TTL_DAYS escalates the
+# message as "likely forgotten" so it gets cleared. We do NOT auto-delete the flag (it's Chris's kill
+# switch) — we just make the skip impossible to miss.
+SKIP_ALERT_LOG="$SCRAPER_DIR/output/SKIPPED-NIGHTS.log"
+FLAG_TTL_DAYS="${FLAG_TTL_DAYS:-3}"
+alert_skip() {
+  local reason="$1"
+  mkdir -p "$SCRAPER_DIR/output"
+  echo "$(date '+%Y-%m-%d %H:%M') — NIGHT SKIPPED/DEGRADED: $reason" >> "$SKIP_ALERT_LOG"
+  osascript -e "display notification \"$reason\" with title \"RGA overnight SKIPPED\"" 2>/dev/null || true
+}
+flag_age_days() { # $1 = file → integer days since mtime (0 if absent)
+  local f="$1"; [ -f "$f" ] || { echo 0; return; }
+  local mt; mt=$(stat -f %m "$f" 2>/dev/null || echo 0)
+  echo $(( ( $(date +%s) - mt ) / 86400 ))
+}
+
 # NIGHT-ONLY INTERLOCK (locked 2026-07-10 — Chris: "we only do at night"). The Maps segment is a live
 # SCREEN recording; running it while the Mac is in use bleeds the desktop (other apps, private notes,
 # FORBIDDEN Liberty Tribune content) into the outreach videos, and the 6/6 gate does NOT catch that.
@@ -57,8 +77,14 @@ fi
 # (exit 1 / 2) skips the night. A manual output/PRODUCTION-PAUSED file is a HARD override that
 # force-skips regardless of what the governor says (Chris's kill switch). See feedback_production_governor.
 if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
-  echo "=== overnight-local SKIP $(date) — manual PRODUCTION-PAUSED override present; not producing. ===" | tee -a "$LOG"
+  PP_AGE=$(flag_age_days "$SCRAPER_DIR/output/PRODUCTION-PAUSED")
+  PP_MSG="PRODUCTION-PAUSED flag present (${PP_AGE}d old) — not producing tonight."
+  if [ "$PP_AGE" -ge "$FLAG_TTL_DAYS" ]; then
+    PP_MSG="STALE PRODUCTION-PAUSED flag (${PP_AGE}d old — likely forgotten). Delete output/PRODUCTION-PAUSED to resume. Not producing tonight."
+  fi
+  echo "=== overnight-local SKIP $(date) — $PP_MSG ===" | tee -a "$LOG"
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
+  alert_skip "$PP_MSG"
   exit 0
 fi
 # BACKFILL MODE (Chris 2026-07-22: "finish the backfill THEN move to new scrape categories"). While
@@ -66,7 +92,11 @@ fi
 # via the recovery + reconcile pass below (MAX_SEARCHES=0 skips the fresh scrape but the recovery pass still
 # runs). Remove output/BACKFILL-MODE once the backlog is drained (missing-video gap = 0) to resume new scrapes.
 if [ -f "$SCRAPER_DIR/output/BACKFILL-MODE" ]; then
-  echo "=== BACKFILL MODE — re-rendering the broken-video backlog ONLY tonight (no new category). Remove output/BACKFILL-MODE when drained. ===" | tee -a "$LOG"
+  BF_AGE=$(flag_age_days "$SCRAPER_DIR/output/BACKFILL-MODE")
+  echo "=== BACKFILL MODE (${BF_AGE}d old) — re-rendering the broken-video backlog ONLY tonight (no new category). Remove output/BACKFILL-MODE when drained. ===" | tee -a "$LOG"
+  if [ "$BF_AGE" -ge "$FLAG_TTL_DAYS" ]; then
+    alert_skip "BACKFILL-MODE flag is ${BF_AGE}d old — NO new categories are being scraped. Delete output/BACKFILL-MODE to resume fresh scrapes."
+  fi
   MAX_SEARCHES=0
 else
   # ONE scrape/category per night, BUILD ALL ITS VIDEOS (Chris 2026-07-21: "run like it used to — 1 run per
@@ -118,9 +148,23 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   # long run that crosses into the workday (>=07:00) STOPS instead of filming the desktop. See feedback_video_capture_screen_must_be_clear.
   NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended ($(date +%H:%M)) — stopping before the workday (after $n search(es)); no desktop-bleed risk." | tee -a "$LOG"; break; fi
   if [ -f "$STOP_FLAG" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG"; break; fi
-  Q=$(node scripts/next-search.mjs 2>>"$LOG"); RC=$?
+  # next-search with RETRY (2026-07-27): a transient Airtable/network hiccup returns rc=2 and used
+  # to kill the ENTIRE night (one API blip = zero videos, only a log line). Retry rc=2 up to 3x with
+  # backoff. rc=3 (SoCal exhausted) is legitimate — break immediately, no retry. Final failure alerts.
+  Q=""; RC=0
+  for _try in 1 2 3; do
+    Q=$(node scripts/next-search.mjs 2>>"$LOG"); RC=$?
+    { [ "$RC" -eq 3 ]; } && break
+    { [ "$RC" -eq 0 ] && [ -n "$Q" ]; } && break
+    echo "!!! next-search transient failure (rc=$RC, try ${_try}/3) — retrying in $(( _try * 20 ))s" | tee -a "$LOG"
+    sleep $(( _try * 20 ))
+  done
   if [ "$RC" -eq 3 ]; then echo ">>> SoCal fully exhausted — nothing left to scrape. Done." | tee -a "$LOG"; break; fi
-  if [ "$RC" -ne 0 ] || [ -z "$Q" ]; then echo "!!! next-search failed (rc=$RC) — stopping." | tee -a "$LOG"; break; fi
+  if [ "$RC" -ne 0 ] || [ -z "$Q" ]; then
+    echo "!!! next-search failed after 3 tries (rc=$RC) — stopping." | tee -a "$LOG"
+    alert_skip "next-search failed 3x (rc=$RC — likely Airtable/network); tonight got no fresh scrape."
+    break
+  fi
   n=$((n+1))
   echo "" | tee -a "$LOG"
   echo ">>> [$n/${MAX_SEARCHES}] $(date +%H:%M) — scraping: \"$Q\"" | tee -a "$LOG"
