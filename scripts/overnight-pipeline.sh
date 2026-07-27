@@ -68,6 +68,15 @@ if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-07-11 — landing-build scope guard. Root-caused this day: a per-lead build-video-landing call with
+# an EMPTY slug rebuilt the whole ~500-page corpus (~8min) → tripped the 8-min watchdog → SIGKILLed good
+# leads → silently lost videos. This asserts the per-lead landing build can NEVER expand to a full-corpus
+# rebuild. Memory: feedback_landing_build_must_be_scoped.md.
+echo ">>> pre-flight: landing-build scope guard (per-lead build can't rebuild all pages)" | tee -a "$LOGFILE"
+if ! node scripts/check-landing-build-scope.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: landing-build scope guard failed — a per-lead call could rebuild the whole corpus + trip the watchdog. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-06-02 — Sponsored-card filter regression. Locked after BHRC test
 # shipped with the blue outline on a Sponsored card. Validates that step-3's
 # isSponsoredBlock + getListingHrefByName + clickListingInResultsByName
@@ -634,15 +643,20 @@ EOPY
   if [ -n "$STEP7_MP4" ]; then
     BUILD_SLUG=$(basename "$STEP7_MP4" .mp4 | sed 's/^[0-9]*_//')
     echo "  Tier 1 #1: scoping landing build to slug=${BUILD_SLUG}" | tee -a "$LOGFILE"
+    # Build landing — STRICTLY per-lead. REQUIRE_SLUG=1 guarantees build-video-landing can NEVER fall
+    # back to rebuilding all ~500 pages (the O(N) bomb that tripped the 8-min watchdog + wiped whole
+    # searches — root-caused 2026-07-11). See feedback_landing_build_must_be_scoped.md.
+    REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "${BUILD_SLUG:-$BIZ_SLUG}" | head -1
+    # Find the deployed slug (also strictly scoped)
+    DEPLOY_SLUG=$(REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
   else
+    # No step-7 MP4 → there is NO video to publish. Do NOT call build-video-landing with an empty slug:
+    # empty slug = full-corpus rebuild = ~8min = watchdog SIGKILL of this (already-failed) lead, and it
+    # blocks the whole worker. Skip straight to FAILED; the missing-video reconciler retries it later.
     BUILD_SLUG=""
+    DEPLOY_SLUG=""
+    echo "  ✗ no step-7 MP4 for ${BIZ_NAME} — skipping landing build (refusing full-corpus rebuild)" | tee -a "$LOGFILE"
   fi
-
-  # Build landing (scoped if we discovered a slug, otherwise legacy iterate-all)
-  BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "${BUILD_SLUG:-$BIZ_SLUG}" | head -1
-
-  # Find the deployed slug
-  DEPLOY_SLUG=$(BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
 
   # 2026-05-28 BUG FIX: this used to derive its own SLUG_PATTERN from BIZ_NAME
   # (dropping '&' entirely) then fuzzy-grep the first 10 chars to find a
@@ -682,8 +696,8 @@ EOPY
     # becomes eligible for tomorrow's 7am cron. Cheap (~3s/lead).
     STEP2_CSV="$S2_FILTERED" node step-8-publish-to-airtable.mjs 2>&1 | tee -a "$LOGFILE" | tail -2
     # Re-run build-video-landing to patch the Lead's Video URL with the live
-    # URL (this writes to Airtable, not Netlify) — scoped via BUILD_ONLY_SLUG
-    BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
+    # URL (this writes to Airtable, not Netlify) — strictly scoped via BUILD_ONLY_SLUG + REQUIRE_SLUG
+    REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
 
     append_result "$RESULTS_DEPLOYED" "$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/"
     echo "  ✓ STAGED: $BIZ_NAME (deploy batched to end-of-run)" | tee -a "$LOGFILE"
@@ -712,6 +726,21 @@ else
   WORKER_IDS_IN_USE=()
   WORKER_START_TIMES=()
   WORKER_BIZ_NAMES=()
+  # Recursively SIGKILL a process and ALL its descendants, deepest-first.
+  # 2026-07-27 ROOT-CAUSE FIX: the old watchdog used `pkill -9 -P "$pid"` which
+  # kills only DIRECT children. A hung step-3 tree is worker → subshell → node →
+  # Chrome → ffmpeg, so `pkill -P` left node/Chrome/ffmpeg ORPHANED (reparented to
+  # init) and still holding the pipeline's stdout pipe open. That kept the `| tee`
+  # from ever seeing EOF, so `overnight-pipeline.sh | tee` never returned and
+  # overnight-local.sh HUNG for 2.5 days (never reloaded launchd → 2 lost nights).
+  # kill_tree walks the whole descendant chain so nothing survives to hold the pipe.
+  kill_tree() {
+    local top="$1" k
+    for k in $(pgrep -P "$top" 2>/dev/null); do
+      kill_tree "$k"
+    done
+    kill -9 "$top" 2>/dev/null
+  }
   # 2026-06-01 — per-worker watchdog. If a worker exceeds PER_LEAD_TIMEOUT_SEC,
   # kill its process tree + log a failure-audit row + free the slot for the
   # next lead. Locked memory: feedback_per_lead_wall_time_watchdog.md.
@@ -727,10 +756,14 @@ else
         # Still alive. Check watchdog.
         if [ "$PER_LEAD_TIMEOUT_SEC" -gt 0 ] && [ "$(( now - start ))" -gt "$PER_LEAD_TIMEOUT_SEC" ]; then
           local elapsed=$(( now - start ))
-          echo ">>> [worker-${wid}] WATCHDOG: $biz exceeded ${PER_LEAD_TIMEOUT_MIN} min (elapsed ${elapsed}s) — killing + skipping" | tee -a "$LOGFILE"
-          # Kill the process tree (the per-lead shell + its children)
-          pkill -9 -P "$pid" 2>/dev/null
-          kill -9 "$pid" 2>/dev/null
+          echo ">>> [worker-${wid}] WATCHDOG: $biz exceeded ${PER_LEAD_TIMEOUT_MIN} min (elapsed ${elapsed}s) — killing tree + skipping" | tee -a "$LOGFILE"
+          # Kill the ENTIRE descendant tree, not just direct children (2026-07-27
+          # fix — orphaned Chrome/ffmpeg held the stdout pipe open and hung the run).
+          kill_tree "$pid"
+          # Belt-and-suspenders: any Chrome that reparented to init and escaped the
+          # tree walk is still holding THIS worker's unique profile dir — kill by path.
+          pkill -9 -f "chrome-profile-step3-w${wid}" 2>/dev/null
+          pkill -9 -f "chrome-profile-step25-w${wid}" 2>/dev/null
           append_result "$RESULTS_FAILED" "$biz|watchdog-timeout (${elapsed}s > ${PER_LEAD_TIMEOUT_SEC}s)"
           printf "| %s | %s | %s | watchdog-timeout | %ds |\n" "$(date '+%H:%M:%S')" "$biz" "$wid" "$elapsed" >> "$FAILURE_AUDIT"
           continue  # don't carry forward, slot is free

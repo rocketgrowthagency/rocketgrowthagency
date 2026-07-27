@@ -17,6 +17,19 @@ cd "$SCRAPER_DIR"
 DATE_STAMP=$(date +%Y-%m-%d)
 LOG="/tmp/overnight-local-${DATE_STAMP}.log"
 
+# STALE-CAPTURE REAPER (2026-07-27) — self-heal before starting. A hung step-3 on
+# 2026-07-27 orphaned its Chrome/ffmpeg; those held a pipe open and wedged the run
+# for 2.5 days (launchd never reloaded → 2 lost nights). These automation-only
+# processes must NEVER exist at a fresh run's start (capture is night-only + one run
+# at a time), so anything matching is a straggler from a wedged prior run and is safe
+# to reap. Scoped strictly to the step-3 recorder + its dedicated chrome-profile-step3*
+# / chrome-profile-step25* dirs — this can NEVER touch Chris's real browser.
+for _pat in "step-3-video-recorder.mjs" "chrome-profile-step3" "chrome-profile-step25"; do
+  if pkill -9 -f "$_pat" 2>/dev/null; then
+    echo "=== reaped stale capture straggler(s) matching '$_pat' before start $(date) ===" | tee -a "$LOG"
+  fi
+done
+
 # NIGHT-ONLY INTERLOCK (locked 2026-07-10 — Chris: "we only do at night"). The Maps segment is a live
 # SCREEN recording; running it while the Mac is in use bleeds the desktop (other apps, private notes,
 # FORBIDDEN Liberty Tribune content) into the outreach videos, and the 6/6 gate does NOT catch that.

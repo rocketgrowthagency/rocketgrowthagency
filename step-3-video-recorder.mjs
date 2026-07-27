@@ -2698,6 +2698,28 @@ async function launchBrowser() {
 }
 
 async function main() {
+  // ── HARD WALL-CLOCK SELF-TIMEOUT (2026-07-27) ──────────────────────────────
+  // Defense-in-depth against a hung capture. The bash pool watchdog protects the
+  // PARALLEL path, but the recovery/sequential path (WORKER_COUNT=1) runs step-3
+  // INLINE with NO watchdog — a hang there wedged overnight-local.sh for 2.5 days
+  // on 2026-07-27 (Chrome→ffmpeg orphans kept the stdout pipe open so the `| tee`
+  // never saw EOF, so `overnight-pipeline.sh | tee` never returned). If the whole
+  // recorder exceeds STEP3_HARD_TIMEOUT_MIN, force-kill our Chrome + direct
+  // children and exit non-zero so the pipeline moves on instead of hanging forever.
+  // Default ON only for the single-lead pipeline path (MAX_VIDEOS=1). Batch mode
+  // (batch-render-*) processes MANY leads in one process — a flat cap would falsely
+  // trip it, so it stays 0 there unless STEP3_HARD_TIMEOUT_MIN is set explicitly.
+  const _singleLead = process.env.MAX_VIDEOS === '1';
+  const HARD_TIMEOUT_MIN = Number(process.env.STEP3_HARD_TIMEOUT_MIN || (_singleLead ? 12 : 0));
+  if (HARD_TIMEOUT_MIN > 0) {
+    const _hardTimer = setTimeout(() => {
+      console.error(`[recorder] HARD TIMEOUT — capture exceeded ${HARD_TIMEOUT_MIN} min; force-killing Chrome/ffmpeg and exiting (7).`);
+      try { spawnSync('pkill', ['-9', '-P', String(process.pid)]); } catch (_) {}
+      try { spawnSync('pkill', ['-9', '-f', `Google Chrome.*${CHROME_PROFILE_DIR}`]); } catch (_) {}
+      process.exit(7);
+    }, HARD_TIMEOUT_MIN * 60 * 1000);
+    _hardTimer.unref(); // never keep the event loop alive on a clean finish
+  }
   // 2026-06-26: suppress focus-stealing macOS SYSTEM dialogs that get captured by the full-screen
   // grab (Chris saw the "enable Dictation?" prompt land in a video, which ALSO shrinks the capture
   // into the corner). The Chrome "find devices on local networks" popup is prevented via launch
