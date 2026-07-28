@@ -174,6 +174,26 @@ if [ -n "${SERPAPI_KEY_LOCAL:-}" ] && [ "$MIN_SERPAPI_REMAINING" -gt 0 ]; then
     exit 1
   fi
 fi
+# 2026-07-27 — OpenAI credit pre-flight. Locked after the 2026-07-27 overnight where OpenAI ran out of
+# funds MID-RUN: 23 of 26 leads captured fine but got NO voiceover (429 "exceeded your current quota") →
+# "No audio to merge" → no MP4 → landing not built. A whole night of captures wasted, discovered only at
+# the end. Probe OpenAI with a ~free 1-token call BEFORE capturing; a 429 (out of credits) aborts loudly
+# with a macOS alert + SKIPPED-NIGHTS.log entry so Chris knows immediately. Set SKIP_OPENAI_PREFLIGHT=1 to bypass.
+OPENAI_KEY_LOCAL="${OPENAI_API_KEY:-$(grep -E '^OPENAI_API_KEY=' .env 2>/dev/null | head -1 | cut -d= -f2-)}"
+if [ -n "${OPENAI_KEY_LOCAL:-}" ] && [ "${SKIP_OPENAI_PREFLIGHT:-0}" != "1" ]; then
+  echo ">>> pre-flight: OpenAI credit check (tiny billed probe — 429 = out of funds)" | tee -a "$LOGFILE"
+  OAI_CODE=$(curl -s --max-time 15 -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions \
+    -H "Authorization: Bearer ${OPENAI_KEY_LOCAL}" -H "Content-Type: application/json" \
+    -d '{"model":"gpt-4o-mini","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}' 2>/dev/null || echo 000)
+  echo "    OpenAI probe HTTP = $OAI_CODE" | tee -a "$LOGFILE"
+  if [ "$OAI_CODE" = "429" ]; then
+    OAI_MSG="OpenAI OUT OF CREDITS (429) — aborting BEFORE capture so a night isn't wasted with no voiceover. Add funds: platform.openai.com/settings/organization/billing"
+    echo "✗ FATAL: $OAI_MSG" | tee -a "$LOGFILE"
+    osascript -e "display notification \"OpenAI out of credits — tonight's run ABORTED. Add funds.\" with title \"RGA overnight BLOCKED\"" 2>/dev/null || true
+    mkdir -p output; echo "$(date '+%Y-%m-%d %H:%M') — RUN ABORTED (pre-flight): $OAI_MSG" >> output/SKIPPED-NIGHTS.log
+    exit 1
+  fi
+fi
 echo "✓ pre-flight gates passed" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
