@@ -229,6 +229,15 @@ node scripts/reconcile-missing-videos.mjs 2>&1 | tee -a "$LOG"
 MV_SEARCHES="$SCRAPER_DIR/output/missing-video-searches.txt"
 MAX_RECOVERY_SEARCHES="${MAX_RECOVERY_SEARCHES:-3}"
 if [ -s "$MV_SEARCHES" ]; then
+  # 2026-07-29: FRESH Chrome before the recovery re-render. The main batch's failures are almost always
+  # LATE-RUN Chrome state-drift/memory degradation (the 2026-07-28 run's 3 failures ALL choked on website-
+  # capture as the last leads). Re-rendering with the same degraded profiles would just hit the same wall,
+  # so wipe the step-3 profiles first → the retry gets a clean browser and transient stalls self-heal.
+  # Safe: these are ephemeral scratch dirs, recreated on next Chrome launch. (protocol pitfall #7.)
+  echo ">>> recovery: resetting step-3 Chrome profiles for a clean retry" | tee -a "$LOG"
+  pkill -f "chrome-profile-step3" 2>/dev/null || true
+  sleep 1
+  rm -rf "$SCRAPER_DIR"/output/chrome-profile-step3* 2>/dev/null || true
   rc=0
   while IFS= read -r Q; do
     [ -z "$Q" ] && continue
