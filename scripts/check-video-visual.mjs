@@ -139,7 +139,7 @@ async function checkMapView(v, D) {
   // The Maps segment sits early (after the intro, before the website), ~15–50s in. Sample
   // across it (12–36% covers it for both the ~2:10 and ~2:29 renders). 5 frames for coverage.
   const samples = [0.12, 0.18, 0.24, 0.30, 0.36].map((p) => +(D * p).toFixed(1));
-  const wide = []; const noPin = []; let mapFrames = 0;
+  const wide = []; const noPin = []; const noCard = []; const blankPhotos = []; let mapFrames = 0; let cardFrames = 0;
   for (const t of samples) {
     const b64 = frameJpeg(v, t).toString('base64');
     const body = {
@@ -147,22 +147,38 @@ async function checkMapView(v, D) {
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: 'One frame from a LOCAL-business video that should show Google Maps zoomed to the business\'s CITY with its red location pin centered. If this frame shows a Google Maps map, judge: (1) zoom — "city" = streets/neighborhood/one town fills the view; "wide" = zoomed out so a whole state, multiple states/counties, an entire country/continent, or large oceans fill the frame (a single business would be a tiny dot). (2) pin — is a red/colored location map-pin marker clearly visible on the map? Reply ONLY compact JSON: {"is_map":true|false,"zoom":"city"|"wide"|"na","pin":true|false}. If is_map is false: zoom "na", pin false.' },
+          // 2026-07-29: also judge card_open + photos_visible so the gate catches the two systemic capture
+          // bugs Chris caught batch-wide — (a) the business detail card never opened (frozen on the raw
+          // results list, no business selected) and (b) the card opened but the Photos strip is blank/gray.
+          { type: 'text', text: 'One frame from a LOCAL-business review video. It should show Google Maps zoomed to the business\'s CITY, WITH a business detail panel/card open (business name + star rating + address), and that card should show real photo thumbnails. Judge: (1) is_map: does the frame show a Google Maps map? (2) zoom: "city" = streets/neighborhood/one town fills the view; "wide" = a whole state/multiple counties/country/continent/large oceans fill it. "na" if not a map. (3) pin: is a red/colored location map-pin visible? (4) card_open: is a business detail/info CARD or PANEL open, showing a business name + rating + address (NOT just a plain list of results with nothing selected)? (5) photos_visible: within that open card, is at least one REAL photo/image thumbnail visible — answer false if the photos area is a BLANK/gray/empty box or there is no card. Reply ONLY compact JSON: {"is_map":bool,"zoom":"city"|"wide"|"na","pin":bool,"card_open":bool,"photos_visible":bool}.' },
           { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } },
         ],
       }],
-      max_tokens: 40, temperature: 0,
+      max_tokens: 60, temperature: 0,
     };
     try {
       const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
       const j = JSON.parse((d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim());
-      if (j.is_map) { mapFrames++; if (j.zoom === 'wide') wide.push({ t }); if (j.pin === false) noPin.push({ t }); }
+      if (j.is_map) {
+        mapFrames++;
+        if (j.zoom === 'wide') wide.push({ t });
+        if (j.pin === false) noPin.push({ t });
+        if (j.card_open === false) noCard.push({ t });
+        else { cardFrames++; if (j.photos_visible === false) blankPhotos.push({ t }); }
+      }
     } catch (_) { /* soft — a misread frame shouldn't fail a good video */ }
   }
-  // FAIL on a SUSTAINED wide zoom (≥2 frames), and only when we actually saw map frames
-  // (don't fail a video whose map segment we mis-sampled). Pin gaps ride along in the reason.
-  return { skipped: false, fail: mapFrames >= 2 && wide.length >= 2, wide, noPin, mapFrames };
+  // FAIL conditions (all require ≥2 map frames so a mis-sampled segment can't false-reject):
+  //   • wide zoom sustained (≥2)  •  NO detail card sustained (≥3 map frames show no open card)
+  //   • blank photos sustained (card WAS open somewhere, but ≥2 of the card frames show a blank photo strip)
+  const mapWide = mapFrames >= 2 && wide.length >= 2;
+  const noCardFail = mapFrames >= 2 && noCard.length >= 3;
+  const blankPhotosFail = !noCardFail && cardFrames >= 2 && blankPhotos.length >= 2;
+  // Only mapWide GATES (validated 07-27). noCard/blankPhotos are ADVISORY — the vision model is not yet
+  // reliable enough on those (it false-PASSED a real blank-photos video 07-29), so we surface them for
+  // tuning but do NOT reject on them. The real blank-photos/no-card fix is in step-3 capture, not this gate.
+  return { skipped: false, fail: mapWide, mapWide, noCardFail, blankPhotosFail, wide, noPin, noCard, blankPhotos, mapFrames, cardFrames };
 }
 
 // ---- run ----
@@ -174,21 +190,29 @@ async function checkMapView(v, D) {
   const reasons = [];
   if (a.fail) reasons.push(`QUARTER-SCALE/BLANK-REGION at ${a.flagged.length} sampled frame(s): ${a.flagged.slice(0, 3).map((f) => `${f.t}s (${f.detail})`).join('; ')}`);
   if (b.fail) reasons.push(`WRONG-WINDOW (not Maps/website) at ${b.bad.filter((x) => !x.softError).map((x) => `${x.t}s "${x.desc}"`).join('; ')}`);
-  if (c.fail) reasons.push(`MAP ZOOMED-OUT (not city level) at ${c.wide.map((f) => `${f.t}s`).join(', ')}${c.noPin.length ? `; pin missing at ${c.noPin.map((f) => `${f.t}s`).join(', ')}` : ''}`);
+  const advisories = [];
+  if (c.mapWide) reasons.push(`MAP ZOOMED-OUT (not city level) at ${c.wide.map((f) => `${f.t}s`).join(', ')}${c.noPin.length ? `; pin missing at ${c.noPin.map((f) => `${f.t}s`).join(', ')}` : ''}`);
+  if (c.noCardFail) advisories.push(`NO-DETAIL-CARD suspected at ${c.noCard.map((f) => `${f.t}s`).join(', ')} (advisory — not gating; capture-side fix is primary)`);
+  if (c.blankPhotosFail) advisories.push(`BLANK-PHOTOS suspected at ${c.blankPhotos.map((f) => `${f.t}s`).join(', ')} (advisory — not gating)`);
   const pass = !a.fail && !b.fail && !c.fail;
   const result = {
     video: path.basename(VIDEO), pass,
     checkA_quarterScale: a.fail ? 'FAIL' : 'pass',
     checkB_wrongWindow: b.skipped ? `skipped (${b.reason})` : (b.fail ? 'FAIL' : 'pass'),
-    checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.fail ? 'FAIL' : 'pass'),
+    checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.mapWide ? 'FAIL' : 'pass'),
+    checkD_detailCard: c.skipped ? `skipped (${c.reason})` : (c.noCardFail ? 'FAIL' : 'pass'),
+    checkE_photos: c.skipped ? `skipped (${c.reason})` : (c.blankPhotosFail ? 'FAIL' : 'pass'),
     checkC_mapFrames: c.skipped ? null : c.mapFrames,
+    checkD_cardFrames: c.skipped ? null : c.cardFrames,
     reasons,
+    advisories,
   };
   if (JSON_OUT) console.log(JSON.stringify(result, null, 2));
   else {
     console.log(`[visual-gate] ${path.basename(VIDEO)} → ${pass ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}${c.skipped ? '' : ` (${c.mapFrames} map frames seen)`}`);
+    console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}   D detail-card: ${result.checkD_detailCard}   E photos: ${result.checkE_photos}${c.skipped ? '' : ` (${c.mapFrames} map / ${c.cardFrames} card frames)`}`);
     reasons.forEach((r) => console.log(`  ✗ ${r}`));
+    advisories.forEach((r) => console.log(`  ⚠ ${r}`));
     if (b.skipped) console.log(`  ⚠ vision check skipped (${b.reason}) — Check A still enforced; wire OPENAI_API_KEY to catch wrong-window + zoom leaks.`);
   }
   process.exit(pass ? 0 : 2);

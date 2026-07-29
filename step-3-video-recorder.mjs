@@ -1450,6 +1450,40 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     }).catch(() => {});
   };
 
+  // 2026-07-29 FIX (systemic blank-photos bug): Google LAZY-LOADS the GBP card's hero photo + Photos strip
+  // AFTER the card opens. The capture-once-then-freeze grabbed the frame TOO EARLY → froze a BLANK photos
+  // strip across many videos (Chris caught it batch-wide 2026-07-28). Poll (bounded) until (a) the card is
+  // actually open (h1 present) AND (b) a real Google-hosted photo <img> has rendered — THEN we freeze, so
+  // photos are in the frame. Returns after maxMs regardless (a genuinely photo-less GBP still proceeds).
+  // minMs GUARANTEES a settle window even if the quick photo-check is fooled by a map tile or a results-
+  // list image — the detection is scoped to business-photo CDNs (lh*.googleusercontent / streetviewpixels /
+  // gps-cs) and >90px, with map tiles (maps.gstatic/khms/vt) excluded, but the min-wait is the real
+  // safety net. maxMs caps it so a genuinely photo-less GBP still proceeds. Returns {open} so the caller
+  // can tell the card NEVER opened (the "no detail card" failure) vs opened-but-slow-photos.
+  const waitForDetailCardReady = async (minMs = 2600, maxMs = 5000) => {
+    const start = Date.now();
+    let everOpen = false;
+    while (Date.now() - start < maxMs) {
+      const elapsed = Date.now() - start;
+      const state = await page.evaluate(() => {
+        const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+        if (!h1) return { open: false, photo: false };
+        const imgs = Array.from(document.querySelectorAll('div[role="main"] img'));
+        const photo = imgs.some((im) => {
+          const s = im.currentSrc || im.src || '';
+          return im.complete && im.naturalWidth > 90 && im.naturalHeight > 90 &&
+            /(lh\d\.googleusercontent\.com|streetviewpixels-pa|\/gps-cs)/i.test(s) &&
+            !/(maps\.gstatic|khms|\/vt\/|\/maps\/vt)/i.test(s);
+        });
+        return { open: true, photo };
+      }).catch(() => ({ open: false, photo: false }));
+      if (state.open) everOpen = true;
+      if (state.open && state.photo && elapsed >= minMs) return { open: true };  // photos loaded + settled
+      await sleep(250);
+    }
+    return { open: everOpen };                            // timed out — proceed; .open===false ⇒ no card
+  };
+
   async function holdOnDetailCard(ms) {
     if (!recorderCtl || !recorderCtl.pauseCapture) { await sleep(ms); return; }
     // Pause the auto-capture loop (its screenshots hang on a goto-opened detail page).
@@ -1462,6 +1496,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // Force the card to the top + let any reflow settle, THEN re-assert once more, THEN grab.
     await forceCardToTop();
     await sleep(500);
+    await forceCardToTop();
+    // 2026-07-29 SYSTEMIC BLANK-PHOTOS FIX: do NOT freeze until the card's business photos have actually
+    // rendered (the frozen frame was locking in a gray placeholder strip). Guaranteed settle window +
+    // scoped photo detection. If the card never opened (.open===false), log it loudly — that's the
+    // "no detail card" failure (frozen on the raw results list); the 6/6 + visual gate should catch it.
+    const _cardReady = await waitForDetailCardReady();
+    if (!_cardReady.open) console.log('   [detail-card] ⚠ card never opened (h1 absent) — frame will show the raw results list, NOT a detail card');
     await forceCardToTop();
     let frozen = null;
     for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
