@@ -18,10 +18,22 @@ TIME_START=$(date +%H:%M)
 # machine where Scraper + Website repos are siblings. Removes the per-Mac sed.
 SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEBSITE_DIR="$(cd "$(dirname "$SCRAPER_DIR")" && pwd)/Rocket Growth Agency Website VS Code"
-# 2026-06-11: report now lands in the git-tracked Website reports/ dir per the
-# locked protocol (feedback_overnight_report_format), not /tmp.
-mkdir -p "${WEBSITE_DIR}/reports" 2>/dev/null || true
-REPORT="${WEBSITE_DIR}/reports/overnight-report-${DATE_STAMP}.md"
+# 2026-06-11: report lands in the git-tracked Website reports/ dir per the locked protocol
+# (feedback_overnight_report_format), not /tmp.
+# 2026-07-29: organized by YEAR / MM-Month / DD-prefixed file — MATCHES the existing archive convention
+# (reports/overnight-videos/ + reports/daily/ use the same tree) so the daily work-record archive is ONE
+# consistent, expandable system: reports/overnight/2026/07-July/28_overnight-report_2026-07-28.md.
+REPORT_YEAR="${DATE_STAMP:0:4}"
+REPORT_MM="${DATE_STAMP:5:2}"
+REPORT_DD="${DATE_STAMP:8:2}"
+case "$REPORT_MM" in
+  01) REPORT_MN=January;; 02) REPORT_MN=February;; 03) REPORT_MN=March;;   04) REPORT_MN=April;;
+  05) REPORT_MN=May;;     06) REPORT_MN=June;;     07) REPORT_MN=July;;    08) REPORT_MN=August;;
+  09) REPORT_MN=September;; 10) REPORT_MN=October;; 11) REPORT_MN=November;; 12) REPORT_MN=December;;
+esac
+REPORT_DIR="${WEBSITE_DIR}/reports/overnight/${REPORT_YEAR}/${REPORT_MM}-${REPORT_MN}"
+mkdir -p "${REPORT_DIR}" 2>/dev/null || true
+REPORT="${REPORT_DIR}/${REPORT_DD}_overnight-report_${DATE_STAMP}.md"
 LOGFILE="/tmp/overnight-pipeline-${DATE_STAMP}.log"
 
 cd "$SCRAPER_DIR"
