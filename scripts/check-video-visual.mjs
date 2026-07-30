@@ -175,10 +175,13 @@ async function checkMapView(v, D) {
   const mapWide = mapFrames >= 2 && wide.length >= 2;
   const noCardFail = mapFrames >= 2 && noCard.length >= 3;
   const blankPhotosFail = !noCardFail && cardFrames >= 2 && blankPhotos.length >= 2;
-  // Only mapWide GATES (validated 07-27). noCard/blankPhotos are ADVISORY — the vision model is not yet
-  // reliable enough on those (it false-PASSED a real blank-photos video 07-29), so we surface them for
-  // tuning but do NOT reject on them. The real blank-photos/no-card fix is in step-3 capture, not this gate.
-  return { skipped: false, fail: mapWide, mapWide, noCardFail, blankPhotosFail, wide, noPin, noCard, blankPhotos, mapFrames, cardFrames };
+  // 2026-07-30: noCard + blankPhotos now GATE (were advisory). Chris caught both shipping on the 07-29 batch
+  // (Vittas = no card ever; Probate = blank white Photos strip). Sustained-frame thresholds above (noCard≥3,
+  // blankPhotos≥2, always with mapFrames/cardFrames≥2) guard against a single mis-sampled frame false-rejecting
+  // a good video. Correctness > throughput — a false-reject just re-renders next night; a broken video that
+  // ships gets EMAILED. The step-3 capture hardening is the primary fix; this gate is the hard safety net.
+  const fail = mapWide || noCardFail || blankPhotosFail;
+  return { skipped: false, fail, mapWide, noCardFail, blankPhotosFail, wide, noPin, noCard, blankPhotos, mapFrames, cardFrames };
 }
 
 // ---- run ----

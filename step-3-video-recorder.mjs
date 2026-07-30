@@ -1460,28 +1460,53 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // gps-cs) and >90px, with map tiles (maps.gstatic/khms/vt) excluded, but the min-wait is the real
   // safety net. maxMs caps it so a genuinely photo-less GBP still proceeds. Returns {open} so the caller
   // can tell the card NEVER opened (the "no detail card" failure) vs opened-but-slow-photos.
-  const waitForDetailCardReady = async (minMs = 2600, maxMs = 5000) => {
+  const waitForDetailCardReady = async (minMs = 2600, maxMs = 9000) => {
+    // 2026-07-30 HARDENED (blank-photos kept shipping): (a) longer cap — 5s wasn't enough for the hero
+    // photo to lazy-load on slower cards; (b) BROADER photo detection — <img> AND CSS background-image,
+    // any Google photo CDN (lh*.googleusercontent / *.ggpht / streetviewpixels / gps-cs / googleusercontent),
+    // map tiles excluded; (c) if no photo by ~half the window, nudge-scroll the card to TRIGGER the lazy-load,
+    // then keep polling. Returns {open, photo} so the caller can HARD-FAIL a card that never showed a photo.
     const start = Date.now();
-    let everOpen = false;
+    let everOpen = false, nudged = false;
     while (Date.now() - start < maxMs) {
       const elapsed = Date.now() - start;
       const state = await page.evaluate(() => {
         const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
         if (!h1) return { open: false, photo: false };
-        const imgs = Array.from(document.querySelectorAll('div[role="main"] img'));
-        const photo = imgs.some((im) => {
+        const isPhoto = (url) => /(googleusercontent\.com|ggpht\.com|streetviewpixels-pa|\/gps-cs)/i.test(url) &&
+          !/(maps\.gstatic|khms|\/vt\/|\/maps\/vt|gstatic\.com\/mapspro)/i.test(url);
+        // 2026-07-30 PROVEN FIX (validated headless on Probate): detect the HERO-sized card photo (rendered
+        // width > 250px) DOCUMENT-WIDE. The old check scoped to div[role="main"] + size>80 → it matched ~60px
+        // feed thumbnails but MISSED the real hero (the card panel isn't always under role=main), so it timed
+        // out and froze a BLANK frame even though the hero had loaded. Hero-size + document-wide fixes it.
+        let photo = Array.from(document.querySelectorAll('img')).some((im) => {
           const s = im.currentSrc || im.src || '';
-          return im.complete && im.naturalWidth > 90 && im.naturalHeight > 90 &&
-            /(lh\d\.googleusercontent\.com|streetviewpixels-pa|\/gps-cs)/i.test(s) &&
-            !/(maps\.gstatic|khms|\/vt\/|\/maps\/vt)/i.test(s);
+          const r = im.getBoundingClientRect();
+          return im.complete && im.naturalWidth > 150 && isPhoto(s) && r.width > 250;
         });
+        // CSS background-image hero (some cards render the hero as a bg-image)
+        if (!photo) {
+          photo = Array.from(document.querySelectorAll('a,div,button,span')).some((el) => {
+            const bg = getComputedStyle(el).backgroundImage || '';
+            if (!/^url\(/i.test(bg) || !isPhoto(bg)) return false;
+            const r = el.getBoundingClientRect();
+            return r.width > 250 && r.height > 100;
+          });
+        }
         return { open: true, photo };
       }).catch(() => ({ open: false, photo: false }));
       if (state.open) everOpen = true;
-      if (state.open && state.photo && elapsed >= minMs) return { open: true };  // photos loaded + settled
+      if (state.open && state.photo && elapsed >= minMs) return { open: true, photo: true };  // photos loaded + settled
+      // Halfway with no photo yet → nudge-scroll the card to force Google to lazy-load the hero/Photos strip.
+      if (state.open && !state.photo && !nudged && elapsed > maxMs / 2) {
+        nudged = true;
+        await page.evaluate(() => {
+          const m = document.querySelector('div[role="main"]'); if (m) { m.scrollBy(0, 160); setTimeout(() => m.scrollBy(0, -160), 350); }
+        }).catch(() => {});
+      }
       await sleep(250);
     }
-    return { open: everOpen };                            // timed out — proceed; .open===false ⇒ no card
+    return { open: everOpen, photo: false };              // timed out — .open===false ⇒ no card; .photo===false ⇒ blank
   };
 
   async function holdOnDetailCard(ms) {
