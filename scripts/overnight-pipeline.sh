@@ -921,6 +921,10 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   # authed via `netlify login` falls through to its stored session unchanged).
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
+  # 2026-07-30 SAFEGUARD: production is kept LOCKED so a git-push auto-build can't wipe the videos (git excludes
+  # the gitignored .mp4s). To publish tonight's videos we UNLOCK, deploy, then RE-LOCK the freshly published deploy.
+  _cur=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
+  [ -n "$_cur" ] && netlify api unlockDeploy --data "{\"deploy_id\":\"$_cur\"}" >/dev/null 2>&1 && echo ">>> unlocked $_cur for publish" | tee -a "$LOGFILE"
   # 2026-07-30 FIX: do NOT truncate with `| head -3` — that closes the pipe early and can SIGPIPE-kill the
   # deploy before the large video.mp4 blobs finish uploading (2026-07-29: 17 landing pages went live but the
   # videos didn't → every /v/ page played the SPA homepage instead of the video). Let the deploy run to
@@ -936,6 +940,9 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
     echo ">>> Re-running deploy because video files did not serve on the first pass" | tee -a "$LOGFILE"
     netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed" || true
   fi
+  # RE-LOCK the freshly published deploy so a git-push auto-build can't wipe the new videos (2026-07-30 safeguard).
+  _new=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
+  [ -n "$_new" ] && netlify api lockDeploy --data "{\"deploy_id\":\"$_new\"}" >/dev/null 2>&1 && echo ">>> re-locked published deploy $_new (git-push can't overwrite the videos)" | tee -a "$LOGFILE"
   cd "$SCRAPER_DIR"
 else
   echo "" | tee -a "$LOGFILE"
