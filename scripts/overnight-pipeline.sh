@@ -921,7 +921,21 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   # authed via `netlify login` falls through to its stored session unchanged).
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
-  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Production deploy|rocketgrowth|Deployed" | head -3
+  # 2026-07-30 FIX: do NOT truncate with `| head -3` — that closes the pipe early and can SIGPIPE-kill the
+  # deploy before the large video.mp4 blobs finish uploading (2026-07-29: 17 landing pages went live but the
+  # videos didn't → every /v/ page played the SPA homepage instead of the video). Let the deploy run to
+  # completion, then VERIFY the video files actually serve and re-deploy once if not.
+  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed" || true
+  # Verify a sample of the just-deployed videos serve video/* (not the HTML catch-all); re-deploy once if broken.
+  _vok=1
+  for _s in "${PENDING_DEPLOY_SLUGS[@]:0:3}"; do
+    _ct=$(curl -s -o /dev/null -w "%{content_type}" --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/video.mp4" 2>/dev/null || echo "")
+    case "$_ct" in video/*) ;; *) echo ">>> ⚠ VIDEO NOT SERVING for $_s (content-type '$_ct') — re-deploying" | tee -a "$LOGFILE"; _vok=0 ;; esac
+  done
+  if [ "$_vok" -eq 0 ]; then
+    echo ">>> Re-running deploy because video files did not serve on the first pass" | tee -a "$LOGFILE"
+    netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed" || true
+  fi
   cd "$SCRAPER_DIR"
 else
   echo "" | tee -a "$LOGFILE"
