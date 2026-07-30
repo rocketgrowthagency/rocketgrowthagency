@@ -899,6 +899,20 @@ while IFS= read -r line; do [ -n "$line" ] && FAILED_LEADS+=("$line"); done < "$
 while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_SLUGS+=("$line"); done < "$RESULTS_PENDING_SLUGS"
 while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_NAMES+=("$line"); done < "$RESULTS_PENDING_NAMES"
 
+# 2026-07-30: CUMULATIVE report across the whole night. RESULTS_DIR is per-PID (/tmp/overnight-results-$$) and
+# truncated per invocation, so the RECOVERY pass (which re-invokes this script) would OVERWRITE the report with
+# only the recovery leads — losing the main pass's deployed list. Fix: append each invocation's deployed/failed
+# to a per-DATE accumulator, then rebuild DEPLOYED_URLS/FAILED_LEADS from the DEDUPED accumulator (a lead that
+# failed on pass-1 but re-rendered on the recovery pass counts as DEPLOYED, dropped from failed). awk-based =
+# bash-3.2-safe (no associative arrays). PENDING_* (the deploy set) intentionally stays this-invocation-only.
+ACCUM_DIR="$SCRAPER_DIR/output/run-accum/$DATE_STAMP"; mkdir -p "$ACCUM_DIR"
+cat "$RESULTS_DEPLOYED" >> "$ACCUM_DIR/deployed.txt" 2>/dev/null || true
+cat "$RESULTS_FAILED"   >> "$ACCUM_DIR/failed.txt"   2>/dev/null || true
+awk -F'|' '!seen[$2]++' "$ACCUM_DIR/deployed.txt" > "$ACCUM_DIR/deployed.dedup.txt" 2>/dev/null || true
+awk -F'|' 'NR==FNR{dep[$1]=1;next} !dep[$1] && !s[$0]++' "$ACCUM_DIR/deployed.dedup.txt" "$ACCUM_DIR/failed.txt" > "$ACCUM_DIR/failed.dedup.txt" 2>/dev/null || true
+DEPLOYED_URLS=(); while IFS= read -r line; do [ -n "$line" ] && DEPLOYED_URLS+=("$line"); done < "$ACCUM_DIR/deployed.dedup.txt"
+FAILED_LEADS=();  while IFS= read -r line; do [ -n "$line" ] && FAILED_LEADS+=("$line");  done < "$ACCUM_DIR/failed.dedup.txt"
+
 # === Tier 2 (locked 2026-05-27) — BATCHED end-of-run deploy ===
 # Replace per-lead `git commit` + `netlify deploy --prod` (~30s/lead × N) with
 # one final git commit + one final netlify deploy. Netlify's CDN

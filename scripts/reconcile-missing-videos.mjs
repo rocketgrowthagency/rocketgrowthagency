@@ -19,7 +19,7 @@
  *   - Leads with NO Search Term: surfaced as 'video-missing-no-search-term' (can't auto-retry).
  *
  * Prints machine-parseable `MISSING_VIDEO_SEARCHES=N`. Exit 0 always (advisory). DRY=1 to preview.
- * Env: MAX_VIDEO_ATTEMPTS (default 3).
+ * Env: MAX_VIDEO_ATTEMPTS (default 2 — Chris: fail after 2 attempts → mark error on report + alert).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,7 +30,7 @@ const env = Object.fromEntries(fs.readFileSync(path.join(ROOT, '.env'), 'utf8').
 const KEY = env.AIRTABLE_API_KEY, BASE = env.AIRTABLE_BASE_ID || 'appSKOMBz6OpGf3qu';
 const H = { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 const DRY = process.env.DRY === '1';
-const MAX_ATTEMPTS = Number(process.env.MAX_VIDEO_ATTEMPTS || 3);
+const MAX_ATTEMPTS = Number(process.env.MAX_VIDEO_ATTEMPTS || 2);
 const LEDGER = path.join(ROOT, 'output', 'attempted-searches.log');
 const ATTEMPTS_FILE = path.join(ROOT, 'output', 'video-retry-attempts.json');
 const SEARCHES_OUT = path.join(ROOT, 'output', 'missing-video-searches.txt');
