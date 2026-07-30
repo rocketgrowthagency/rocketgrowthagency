@@ -929,14 +929,69 @@ else
 fi
 
 # === Write morning report ===
+# LOCKED top-of-report header (Chris 2026-07-30): scrape date, category, location, #scraped, #with-email,
+# then issues+reasons — all ABOVE the video list. See feedback_overnight_report_format.md. Do NOT regress.
 TIME_END=$(date +%H:%M)
+
+# Split "Category in Location" (e.g. "Estate planning lawyers in Culver City, CA")
+REPORT_CATEGORY="$SEARCH_QUERY"
+REPORT_LOCATION="n/a"
+if [[ "$SEARCH_QUERY" == *" in "* ]]; then
+  REPORT_CATEGORY="${SEARCH_QUERY% in *}"
+  REPORT_LOCATION="${SEARCH_QUERY##* in }"
+fi
+
+# Scraped total = data rows in the step-2 master CSV (fallback step-1); emailable = /tmp/emailable_leads.txt
+SCRAPED_TOTAL="n/a"
+if [ -n "${LATEST_S2:-}" ] && [ -f "${LATEST_S2:-}" ]; then
+  SCRAPED_TOTAL=$(( $(wc -l < "$LATEST_S2") - 1 ))
+elif [ -n "${LATEST_S1:-}" ] && [ -f "${LATEST_S1:-}" ]; then
+  SCRAPED_TOTAL=$(( $(wc -l < "$LATEST_S1") - 1 ))
+fi
+EMAILABLE_TOTAL="n/a"
+[ -f /tmp/emailable_leads.txt ] && EMAILABLE_TOTAL=$(wc -l < /tmp/emailable_leads.txt | tr -d ' ')
+
+# Duration (HH:MM diff, midnight-safe; 10# forces base-10 so leading-zero hours don't parse as octal)
+_sm=$((10#${TIME_START%%:*} * 60 + 10#${TIME_START##*:}))
+_em=$((10#${TIME_END%%:*} * 60 + 10#${TIME_END##*:}))
+_dm=$((_em - _sm)); [ "$_dm" -lt 0 ] && _dm=$((_dm + 1440))
+DURATION="$((_dm / 60))h $((_dm % 60))m"
+
+DEPLOYED_TOTAL=${#DEPLOYED_URLS[@]}
+FAILED_TOTAL=${#FAILED_LEADS[@]}
+
 cat > "$REPORT" <<EOF
-# Overnight run — $DATE_STAMP — $SEARCH_QUERY
+# Overnight Pipeline Report — $DATE_STAMP
 
-Started: $TIME_START
-Finished: $TIME_END
+**Category:** $REPORT_CATEGORY
+**Location:** $REPORT_LOCATION
+**Scrape date:** $DATE_STAMP
+**Started:** $TIME_START  ·  **Finished:** $TIME_END  ·  **Duration:** $DURATION
 
-## Videos deployed (${#DEPLOYED_URLS[@]} total)
+## Summary
+
+| Metric | Count |
+|---|---|
+| Scraped (total businesses) | $SCRAPED_TOTAL |
+| With email (emailable) | $EMAILABLE_TOTAL |
+| Videos deployed | $DEPLOYED_TOTAL |
+| Failed / gated | $FAILED_TOTAL |
+
+## Issues / errors
+EOF
+
+if [ "$FAILED_TOTAL" -gt 0 ]; then
+  for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
+    IFS='|' read -r name reason <<< "$entry"
+    echo "- **$name** — $reason" >> "$REPORT"
+  done
+else
+  echo "- None — every emailable lead deployed successfully." >> "$REPORT"
+fi
+
+cat >> "$REPORT" <<EOF
+
+## Videos deployed ($DEPLOYED_TOTAL total)
 
 EOF
 N=1
@@ -963,14 +1018,6 @@ print(vs.get('summary', ''))
   fi
   N=$((N + 1))
 done
-if [ ${#FAILED_LEADS[@]} -gt 0 ]; then
-  echo "" >> "$REPORT"
-  echo "## Failed leads" >> "$REPORT"
-  for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
-    IFS='|' read -r name reason <<< "$entry"
-    echo "- $name — $reason" >> "$REPORT"
-  done
-fi
 echo "" >> "$REPORT"
 echo "## Apps Script drafts" >> "$REPORT"
 echo "- The Apps Script \`createOutreachDrafts\` cron runs every 2hrs and picks up new leads with Email + Video URL. Drafts should appear in Chris's Gmail within 2hrs of step-8 publish." >> "$REPORT"
