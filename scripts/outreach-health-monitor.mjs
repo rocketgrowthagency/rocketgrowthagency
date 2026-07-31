@@ -87,7 +87,15 @@ function notify(title, msg) {
   const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
   let buffer, sent7d, bounced7d, lastSend;
   try {
-    buffer = await countAll('Leads', `AND({Email}!="", NOT({Suppressed}=1), {Funnel State}="")`, 'Email');
+    // 2026-07-31 SYSTEMIC FIX: buffer MUST count what the SEND ENGINE actually considers sendable, or it lies.
+    // The old formula keyed on `{Funnel State}=""` — but new leads carry Funnel State="not_yet_sent" (a non-empty
+    // string meaning the same thing), so buffer read 0 while 182 video-ready leads sat waiting. That false "empty
+    // pool" misdiagnosed a SEND-ENGINE stall as "no inventory" (repeatedly). Mirror gmail-to-airtable.gs
+    // createOutreachDrafts EXACTLY: Email + Video URL + Status in (new,'') + NOT Draft Created + NOT Suppressed +
+    // Email Status not terminal. Now buffer=real ready count → the SEND-STALL detector below fires correctly.
+    const TERMINAL = ['bounced','blocked','invalid','unsubscribed','queued-recovery','no-replacement-found','permanent-bounce','soft-bounced'];
+    const notTerminal = TERMINAL.map((s) => `{Email Status}!="${s}"`).join(', ');
+    buffer = await countAll('Leads', `AND({Email}!="", {Video URL}!="", OR({Status}="new",{Status}=""), NOT({Draft Created}), NOT({Suppressed}=1), ${notTerminal})`, 'Email');
     sent7d = await countAll('Outreach Log', `AND({Direction}="outbound", {Outcome}="sent", IS_AFTER({Date}, "${since}"))`, 'Date');
     bounced7d = await countAll('Outreach Log', `AND({Direction}="outbound", OR({Outcome}="bounced", {Outcome}="soft-bounced", {Outcome}="permanent-bounce"), IS_AFTER({Date}, "${since}"))`, 'Date');
     lastSend = await lastSendDate();
