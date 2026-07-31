@@ -98,14 +98,26 @@ function notify(title, msg) {
   const avgDaily = sent7d / 7;
   const runwayDays = avgDaily > 0 ? buffer / avgDaily : (buffer > 0 ? 99 : 0);
   const bounceRate = sent7d > 0 ? (bounced7d / sent7d * 100) : 0;
-  const bounceGreen = bounceRate < BOUNCE_MAX;
+  // 2026-07-31 SAMPLE-SIZE GUARD (fixes the false-RED death spiral, [[feedback-domain-protection-runbook]]):
+  // bounceRate = bounced7d / sent7d. When sends STALL, sent7d collapses, so a few OLD bounces inflate the % into
+  // a false-RED — which disarms the self-refill (below), which deepens the stall, which shrinks sent7d further:
+  // a self-reinforcing spiral (2026-07-31: 3 old bounces / 53 sends = 5.66% "RED" while 24h bounce was 0%). The
+  // Apps Script auto-pause already requires sent7d>=100 before its rate gates anything (MIN_VOLUME_FOR_AUTOPAUSE);
+  // mirror that here. Below the sample floor the RATE is not trustworthy, so gate on the ABSOLUTE fresh-bounce
+  // count instead: healthy unless there's a real CLUSTER of recent bounces. Conservative — a genuine problem
+  // still trips it (either sent7d>=100 → the rate gates, or >MAX_LOWSAMPLE_BOUNCES fresh bounces → stays not-GREEN).
+  const BOUNCE_MIN_SAMPLE = Number(process.env.BOUNCE_MIN_SAMPLE || 100);      // sends needed for the RATE to be meaningful
+  const MAX_LOWSAMPLE_BOUNCES = Number(process.env.MAX_LOWSAMPLE_BOUNCES || 5); // fresh-bounce cluster ceiling when sample is thin
+  const bounceRateMeaningful = sent7d >= BOUNCE_MIN_SAMPLE;
+  const bounceGreen = bounceRateMeaningful ? (bounceRate < BOUNCE_MAX) : (bounced7d <= MAX_LOWSAMPLE_BOUNCES);
   const lastSendAgeH = lastSend ? (Date.now() - Date.parse(lastSend)) / 36e5 : Infinity;
   const dow = new Date().getDay();                 // 0 Sun … 6 Sat
   const buildScheduled = fs.existsSync(BUILD_PLIST);
   const manuallyPaused = fs.existsSync(PAUSE_FLAG);
   const selfRefillArmed = buildScheduled && !manuallyPaused && bounceGreen;   // will the loop refill on its own?
 
-  const metrics = `buffer=${buffer} sendable, runway=${runwayDays.toFixed(1)}d, sent7d=${sent7d} (~${avgDaily.toFixed(1)}/day), bounce7d=${bounceRate.toFixed(2)}%, lastSend=${lastSendAgeH === Infinity ? 'never' : lastSendAgeH.toFixed(0) + 'h ago'}`;
+  const bounceNote = bounceRateMeaningful ? '' : ` [low-sample: rate not meaningful <${BOUNCE_MIN_SAMPLE} sends; gating on ${bounced7d} fresh bounce(s)≤${MAX_LOWSAMPLE_BOUNCES}]`;
+  const metrics = `buffer=${buffer} sendable, runway=${runwayDays.toFixed(1)}d, sent7d=${sent7d} (~${avgDaily.toFixed(1)}/day), bounce7d=${bounceRate.toFixed(2)}%${bounceNote}, lastSend=${lastSendAgeH === Infinity ? 'never' : lastSendAgeH.toFixed(0) + 'h ago'}`;
 
   const reds = [], ambers = [];
   // 1) STARVATION — the failure that got missed.

@@ -41,13 +41,26 @@ const rate7 = sent7.length ? (bounced7.length / sent7.length * 100) : 0;
 const rate1 = sent1.length ? (bounced1.length / sent1.length * 100) : 0;
 const sendable = L.filter((r) => { const s = String(f(r, 'Status') || 'new').toLowerCase(); return !f(r, 'Suppressed') && f(r, 'Email') && !TERM.test(f(r, 'Email Status') || '') && f(r, 'Video URL') && (s === 'new' || s === '') && !f(r, 'Draft Created') && !f(r, 'Replied'); });
 
-const status = (v, red, amber) => v >= red ? 'RED' : v >= amber ? 'AMBER' : 'GREEN';
-const s7 = status(rate7, 5, 2), s1 = status(rate1, 20, 10);
+// 2026-07-31 SAMPLE-SIZE GUARD (fixes false-RED death spiral — see feedback_domain_protection_runbook.md):
+// bounce% = bounces / sent-in-window. When sends STALL the denominator collapses, so a few OLD bounces inflate the
+// % into a spurious RED that misleads the health system + disarms the refill. Below a minimum sample the RATE is
+// not statistically meaningful — report INSUFFICIENT (not RED/AMBER) and gate on the ABSOLUTE fresh-bounce count.
+// Mirrors the Apps Script's MIN_VOLUME_FOR_AUTOPAUSE (sent7d>=100 / sent24h>=30). Conservative: a real problem
+// still shows (sample>=floor → the rate classifies; or a fresh-bounce cluster > the ceiling → stays flagged).
+const MIN7 = Number(process.env.BOUNCE_MIN_SAMPLE_7D || 100);
+const MIN1 = Number(process.env.BOUNCE_MIN_SAMPLE_24H || 30);
+const MAX_LOWSAMPLE = Number(process.env.MAX_LOWSAMPLE_BOUNCES || 5);
+const status = (v, red, amber, sent, minSample, bounces) => {
+  if (sent < minSample) return bounces > MAX_LOWSAMPLE ? 'RED' : 'GREEN(low-sample)'; // rate untrustworthy → gate on absolute count
+  return v >= red ? 'RED' : v >= amber ? 'AMBER' : 'GREEN';
+};
+const s7 = status(rate7, 5, 2, sent7.length, MIN7, bounced7.length);
+const s1 = status(rate1, 20, 10, sent1.length, MIN1, bounced1.length);
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
 console.log(`[deliverability ${stamp}]`);
-console.log(`  bounce 7d:  ${rate7.toFixed(2)}% (${bounced7.length}/${sent7.length})  ${s7}   [AMBER≥2%, RED≥5%]`);
-console.log(`  bounce 24h: ${rate1.toFixed(2)}% (${bounced1.length}/${sent1.length})  ${s1}   [AMBER≥10%, RED≥20%]`);
+console.log(`  bounce 7d:  ${rate7.toFixed(2)}% (${bounced7.length}/${sent7.length})  ${s7}   [AMBER≥2%, RED≥5%; rate meaningful only at ≥${MIN7} sends]`);
+console.log(`  bounce 24h: ${rate1.toFixed(2)}% (${bounced1.length}/${sent1.length})  ${s1}   [AMBER≥10%, RED≥20%; ≥${MIN1} sends]`);
 console.log(`  sendable queue: ${sendable.length}`);
 if (bounced7.length) {
   console.log('  recent bounces:');
