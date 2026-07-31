@@ -125,7 +125,17 @@ fi
 # emailable lead ends up with a video — see feedback_every_email_gets_a_video.
 MAX_SEARCHES="${MAX_SEARCHES:-1}"
 MAX_RUN_HOURS="${MAX_RUN_HOURS:-10}"
-WORKER_COUNT="${WORKER_COUNT:-2}"
+# 2026-07-31 ROOT-CAUSE FIX (deep-rank "no card pullout / no blue lines", Chris caught batch-wide):
+# WORKER_COUNT=2 ran two Chrome windows that COMPETE for macOS "frontmost" at grab time. The Maps
+# card is frozen via a FULL-SCREEN `screencapture -x` + crop; deep-rank leads (>20) PAUSE live capture
+# on the results frame and rely ENTIRELY on that injected grab for the card. When the two workers'
+# timing phased badly, screencapture fired while the WRONG worker's window was front → the frozen frame
+# showed the raw results list (no card, business not selected) — and once phased, it STAYED wrong for
+# every subsequent lead ("broke partway, stayed broken"; hasDetail=true in the DOM but the pixels wrong).
+# The recovery pass already uses WORKER_COUNT=1 precisely to avoid this screen-lock contention. Make the
+# MAIN pass single-worker too: correctness > speed (a single-category night still finishes hours inside
+# the capture window). See feedback_video_capture_screen_must_be_clear.md + feedback_worker_count_concurrency_limit.md.
+WORKER_COUNT="${WORKER_COUNT:-1}"
 STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
 
 RUN_START=$(date +%s)

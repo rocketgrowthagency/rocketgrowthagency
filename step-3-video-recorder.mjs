@@ -1527,12 +1527,27 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // scoped photo detection. If the card never opened (.open===false), log it loudly — that's the
     // "no detail card" failure (frozen on the raw results list); the 6/6 + visual gate should catch it.
     const _cardReady = await waitForDetailCardReady();
-    if (!_cardReady.open) console.log('   [detail-card] ⚠ card never opened (h1 absent) — frame will show the raw results list, NOT a detail card');
+    // 2026-07-31 HARD-FAIL (Chris caught deep-rank "no card / no blue lines" batch-wide): the deep-rank
+    // path PAUSES live capture on the results frame, so the card exists ONLY via the injected grab below.
+    // If the card DOM never opened, freezing here would ship the raw results list forever. Do NOT ship it —
+    // throw so the lead FAILS the 6/6 gate and lands in the redo queue instead of going out with no card.
+    if (!_cardReady.open) {
+      throw new Error('[step-3 GUARDRAIL] holdOnDetailCard: detail card never opened (h1 absent) — refusing to freeze the raw results list. See feedback_maps_card_visibility_rules.md + feedback_video_capture_screen_must_be_clear.md');
+    }
     await forceCardToTop();
+    // Re-verify the card is STILL DOM-open at the exact instant we accept the frozen frame. grabViaScreenCapture
+    // re-asserts OUR Chrome as frontmost (System Events, by PID) + re-forces the wide window bounds every grab,
+    // so with the main pass now single-worker (no cross-worker frontmost fight) a confirmed-open card is what
+    // the screencapture sees. Gate the accept on a fresh h1 check so a transient close/deselect can't be frozen.
+    const _cardStillOpen = async () => await page.evaluate(() => {
+      const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+      return !!(h1 && (h1.textContent || '').trim().length > 1);
+    }).catch(() => false);
     let frozen = null;
     for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
+      if (!(await _cardStillOpen())) { await forceCardToTop(); await sleep(400); continue; }
       const buf = await grabViaScreenCapture();
-      if (buf) frozen = buf;
+      if (buf && await _cardStillOpen()) frozen = buf;   // card confirmed open BOTH sides of the grab
       else await sleep(400);
     }
     if (!frozen) {                                // grab failed entirely → fall back to the old re-grab loop
