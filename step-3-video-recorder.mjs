@@ -1499,7 +1499,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   };
   // Pick the freeze method: leak-safe page.screenshot for daytime rebuilds, else the night desktop grab.
   const DAYTIME_SAFE = process.env.DAYTIME_SAFE_CAPTURE === '1';
-  const grabFreeze = async () => (DAYTIME_SAFE ? grabViaPageShot() : grabViaScreenCapture());
+  // 2026-08-03 DEEP-RANK NO-CARD FIX: when the detail card was opened IN-PAGE (SPA typed-search or an in-list
+  // click), page.screenshot captures it reliably. The macOS `screencapture` path has a frontmost/crop race that
+  // intermittently returns null → the whole Maps segment then freezes on the pre-nav results LIST (the 08-02 Med
+  // spa batch: 17/21 deep-rank leads shipped card-less, caught by the visual gate = "landing not built"). Only a
+  // raw page.goto-opened card hangs page.screenshot; an in-page-opened one does not. So for an in-page-opened card
+  // force the page-shot grab. Set true by the deep-rank block after an SPA/click open, false on the goto fallback.
+  let _cardOpenedInPage = false;
+  const grabFreeze = async () => ((DAYTIME_SAFE || _cardOpenedInPage) ? grabViaPageShot() : grabViaScreenCapture());
 
   async function zoomOutMap(page, steps) {
     // Zoom the Maps canvas OUT `steps` times so the held frame shows a wide regional view.
@@ -2079,12 +2086,29 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           await waitForMapsResults(page);
           await page.waitForSelector('a.hfpxzc', { timeout: 9000 }).catch(() => {});
           await sleep(1500);
-          spaClicked = await clickListingInResultsByName(page, businessName);
-          console.log(`   → SPA typed-search+click: ${spaClicked ? 'clicked listing ✓' : 'no clickable listing'}`);
+          // 2026-08-03: a unique name+city search resolves DIRECTLY to the detail card (no results list), so
+          // clickListingInResultsByName finds no a.hfpxzc and returns false — which used to drop us to the goto
+          // URL chain (goto-opened card → page.screenshot hangs → screencapture-only → the no-card freeze bug).
+          // Check the detail h1 FIRST: if the SPA search already opened the card, treat it as landed IN-PAGE and
+          // skip BOTH the click and the goto fallback. Root fix for the 08-02 deep-rank no-card batch.
+          const _spaOnDetail = await page.evaluate(() => {
+            const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+            return !!(h1 && (h1.textContent || '').trim().length > 1);
+          }).catch(() => false);
+          if (_spaOnDetail) {
+            spaClicked = true;
+            console.log('   → SPA typed-search resolved DIRECTLY to the detail card ✓ (in-page, no goto)');
+          } else {
+            spaClicked = await clickListingInResultsByName(page, businessName);
+            console.log(`   → SPA typed-search+click: ${spaClicked ? 'clicked listing ✓' : 'no clickable listing'}`);
+          }
         } catch (_) {}
         if (!spaClicked) {
           console.log(`   → Falling back to goto URL chain`);
           await navigateDeepRankChain();
+          _cardOpenedInPage = false;   // goto-opened → page.screenshot hangs; must use the screencapture grab
+        } else {
+          _cardOpenedInPage = true;    // SPA/in-list-click opened the card in-page → page.screenshot is reliable
         }
         await assertOnDetailPage(slugify(businessName, { lower: true, strict: true }));
         await injectRankOverlay(page, businessName, rank, searchTerm);
