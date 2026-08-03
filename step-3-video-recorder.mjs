@@ -527,6 +527,72 @@ async function dismissCommonCookieBanner(page) {
   } catch {}
 }
 
+// Promotional / newsletter / email-signup MODALS (Klaviyo, Mailchimp, Privy, OptinMonster, Sumo,
+// Justuno, Poptin, Wisepops, Sleeknote, Wheelio, etc. + custom timer/exit-intent popups) drop a
+// full-screen backdrop + centered signup card over the WHOLE site. Cookie/chat dismissal above does
+// NOT catch these. Chris caught SoCal Skin & Surgery's "YOUR SKIN, BUT BETTER — Sign up..." modal
+// covering the entire desktop website segment (2026-08-03). Many appear on a TIMER (a few seconds in)
+// or on exit-intent, so a one-shot dismiss misses them — this installs a persistent killer that keeps
+// hiding them for the whole recording. Audit (step-2.5) keeps full render so it can still flag them.
+async function dismissPromoModals(page) {
+  try {
+    await page.keyboard.press('Escape').catch(() => {});
+    await sleep(150);
+    // Persistent, self-clearing killer: click a real close (X) inside any visible modal, hide known
+    // vendors + generic signup overlays + their backdrops. Re-runs every 1.1s for ~40s (covers the
+    // website segment) so delayed/exit-intent/re-opened popups get caught too.
+    await page.evaluate(() => {
+      if (window.__rgaPromoKiller) return;
+      const FORBIDDEN = /\b(book|schedule|appointment|quote|buy|shop|add to cart|checkout|sign in|log in|facebook|instagram|menu|call)\b/i;
+      const SIG = /sign\s?up|subscribe|newsletter|\d+%\s*off|join (our|the)|email address|early access|exclusive (offer|deal|access)|special offer|be the first|don'?t miss|stay (in touch|updated)|get expert|vip list/i;
+      const CLOSE_TXT = /^\s*[×✕✖xX✖️]\s*$|\bclose\b|\bdismiss\b|no,?\s*thanks|maybe later/i;
+      const CLOSE_CLS = /close|dismiss|modal__close|popup-close|mfp-close|needsclick|pum-close|fancybox-close|om-close/i;
+      const cls = (el) => (el.className && el.className.baseVal !== undefined ? el.className.baseVal : String(el.className || ''));
+      const vis = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0'; };
+      const kill = (el) => { el.style.setProperty('display', 'none', 'important'); el.style.setProperty('visibility', 'hidden', 'important'); el.style.setProperty('opacity', '0', 'important'); el.style.setProperty('pointer-events', 'none', 'important'); };
+      const VENDOR = '.klaviyo-form,[class^="kl-"],[class*=" kl-"],.mc-modal,#mc_embed_signup,.mc-modal-bg,#privy-container,[id^="privy-"],[class*="privy"],.om-holder,[id^="om-"],.optin-monster-holder,.optnmstr,[id*="sumome"],[class*="sumome"],[id*="justuno"],[class*="justuno"],[class*="poptin"],[id*="poptin"],[class*="wisepops"],[class*="sleeknote"],[class*="getsitecontrol"],[class*="wheelio"],[class*="optinly"],[class*="mailmunch"],[class*="hellobar"],.modal-backdrop,.modal-bg,.popup-overlay,.overlay-modal,.mfp-bg,.fancybox-overlay,.pum-overlay';
+      const sweep = () => {
+        try {
+          // 1) known vendors + backdrops
+          document.querySelectorAll(VENDOR).forEach((el) => kill(el));
+          // 2) click a genuine close button inside a visible modal
+          const modals = Array.from(document.querySelectorAll('[role="dialog"],[aria-modal="true"],.modal.show,.modal.in,[class*="popup" i],[class*="modal" i],[class*="optin" i],[class*="newsletter" i]')).filter(vis);
+          for (const m of modals) {
+            const btn = Array.from(m.querySelectorAll('button,a,[role="button"],span,i,svg')).filter(vis).find((b) => {
+              const t = (b.getAttribute('aria-label') || b.getAttribute('title') || b.textContent || '').trim();
+              if (FORBIDDEN.test(t)) return false;
+              return CLOSE_TXT.test(t) || CLOSE_CLS.test(cls(b)) || (b.getAttribute('aria-label') || '').toLowerCase().includes('close');
+            });
+            if (btn) { try { btn.click(); } catch (_) {} }
+          }
+          // 3) generic: hide fixed/absolute high-z full-ish overlays (or role=dialog) carrying a signup signal
+          const vw = window.innerWidth, vh = window.innerHeight;
+          Array.from(document.querySelectorAll('[role="dialog"],[aria-modal="true"],div,aside,section')).forEach((el) => {
+            const s = getComputedStyle(el);
+            if (s.display === 'none' || s.visibility === 'hidden') return;
+            const r = el.getBoundingClientRect();
+            const z = parseInt(s.zIndex, 10) || 0;
+            const isDialog = el.getAttribute('role') === 'dialog' || el.getAttribute('aria-modal') === 'true';
+            const isOverlay = (s.position === 'fixed' || s.position === 'absolute') && z >= 100 && r.width >= vw * 0.6 && r.height >= vh * 0.5;
+            if (!isDialog && !isOverlay) return;
+            const txt = (el.innerText || '').slice(0, 900);
+            if (!txt || txt.length > 1200) return; // never nuke the page's main content
+            if (SIG.test(txt)) kill(el);
+          });
+          // 4) release scroll-lock the modal added
+          document.body.classList.remove('modal-open', 'no-scroll', 'overflow-hidden', 'popup-open', 'fancybox-active', 'pum-open');
+          document.documentElement.style.removeProperty('overflow');
+          document.body.style.removeProperty('overflow');
+        } catch (_) {}
+      };
+      sweep();
+      let n = 0;
+      window.__rgaPromoKiller = setInterval(() => { sweep(); if (++n > 36) { clearInterval(window.__rgaPromoKiller); } }, 1100);
+    }).catch(() => {});
+    await sleep(400);
+  } catch {}
+}
+
 // Chat widgets (Tawk, Intercom, Drift, Zendesk, etc.) routinely pop over the
 // page content with "Hello we're here to help" overlays — blocks the fold,
 // covers CTAs, makes the recording visually noisy. Audit (step-2.5) keeps full
@@ -1407,6 +1473,34 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     } catch (_) { return null; }
     finally { if (_held) releaseScreenLock(); } // safety: never leave the lock held on an early return/throw
   };
+  // 2026-07-31 LEAK-SAFE DAYTIME FREEZE (DAYTIME_SAFE_CAPTURE=1). page.screenshot captures ONLY the
+  // browser PAGE (never the desktop, never another window), so it CANNOT leak desktop content — the exact
+  // risk the night-lock guards against — and it's immune to window-focus/cross-worker contention (the deep-
+  // rank "no card" bug). Proven to capture a CLICK-opened detail card reliably (the diagnostic at line ~1309;
+  // it only hangs on GOTO-opened pages, which this rebuild path never uses). Used to rebuild broken videos in
+  // the daytime without the desktop screencapture. Scales to the same MAPS_VIEWPORT output as the desktop grab.
+  const grabViaPageShot = async () => {
+    try {
+      const stamp = `${process.pid}-${Date.now()}`;
+      const raw = `/tmp/ps-${stamp}.jpg`, out = `/tmp/ps-${stamp}-s.jpg`;
+      const shot = await Promise.race([
+        page.screenshot({ type: 'jpeg', quality: 92, captureBeyondViewport: false }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('page.screenshot timeout')), 8000)),
+      ]).catch(() => null);
+      if (!shot) return null;
+      fs.writeFileSync(raw, shot);
+      const ok = await execAsync('ffmpeg', ['-y', '-loglevel', 'error', '-i', raw, '-vf', `scale=${MAPS_VIEWPORT.width}:${MAPS_VIEWPORT.height}`, '-q:v', '4', out]);
+      let buf = null;
+      if (ok && fs.existsSync(out)) buf = fs.readFileSync(out);
+      try { fs.unlinkSync(raw); } catch (_) {}
+      try { fs.unlinkSync(out); } catch (_) {}
+      return buf;
+    } catch (_) { return null; }
+  };
+  // Pick the freeze method: leak-safe page.screenshot for daytime rebuilds, else the night desktop grab.
+  const DAYTIME_SAFE = process.env.DAYTIME_SAFE_CAPTURE === '1';
+  const grabFreeze = async () => (DAYTIME_SAFE ? grabViaPageShot() : grabViaScreenCapture());
+
   async function zoomOutMap(page, steps) {
     // Zoom the Maps canvas OUT `steps` times so the held frame shows a wide regional view.
     // Prefer Google's on-map "Zoom out" button (focus-independent); fall back to keyboard '-'.
@@ -1546,7 +1640,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     let frozen = null;
     for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
       if (!(await _cardStillOpen())) { await forceCardToTop(); await sleep(400); continue; }
-      const buf = await grabViaScreenCapture();
+      const buf = await grabFreeze();
       if (buf && await _cardStillOpen()) frozen = buf;   // card confirmed open BOTH sides of the grab
       else await sleep(400);
     }
@@ -1554,7 +1648,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       const until = Date.now() + ms;
       let got = 0;
       while (Date.now() < until) {
-        const buf = await grabViaScreenCapture();
+        const buf = await grabFreeze();
         if (buf) { recorderCtl.pushFrame(buf); got++; }
         await sleep(2000);
       }
@@ -2490,6 +2584,8 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
       // CSS safety net for first-party-proxied chat surfaces that slip past
       // the network block.
       await hideChatWidgetSelectors(page);
+      // Promo/newsletter/email-signup modals (installs a persistent killer for timer/exit-intent popups).
+      await dismissPromoModals(page);
       await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })).catch(() => {});
 
       // Verify screenshots actually capture the website BEFORE recording
@@ -2552,6 +2648,7 @@ async function recordMobileVideo(browser, meta, outputPath) {
       await page.addStyleTag({ content: 'html,body{background:#ffffff !important;}' }).catch(() => {});
       await dismissCommonCookieBanner(page);
       await hideChatWidgetSelectors(page);
+      await dismissPromoModals(page);
 
       // Force a screenshot test BEFORE recording — confirms screenshots actually capture the website
       try {
