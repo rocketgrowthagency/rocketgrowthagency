@@ -256,6 +256,17 @@ function isBlockedWebsiteUrl(url) {
       'superpages.com',
       'citysearch.com',
       'expertise.com',
+      // 2026-08-03: parked / domain-for-sale marketplaces. A dead business whose domain lapsed now serves a
+      // "this domain is for sale" page (Chris caught luxury-skin-care-med-spa → luxurymedspa.com → HugeDomains
+      // $6,995). No real site to record. NOTE: this only catches a directly-discovered parking URL; a business's
+      // OWN domain that REDIRECTS to a parking page is caught by the content check in the website capture below.
+      'hugedomains.com',
+      'dan.com',
+      'sedo.com',
+      'afternic.com',
+      'buydomains.com',
+      'domainmarket.com',
+      'undeveloped.com',
     ].some((domain) => host === domain || host.endsWith(`.${domain}`));
   } catch {
     return false;
@@ -2560,6 +2571,10 @@ async function recordDesktopWebsiteVideo(browser, meta, outputPath) {
             /\b(security\s+measures|access\s+(?:has\s+been\s+)?blocked|your\s+access\s+(?:has\s+been\s+)?(?:denied|restricted))\b/i,
             /\b(this\s+page\s+isn'?t\s+working|domain\s+not\s+authorized|unauthorized\s+(?:on|access))\b/i,
             /\b(error\s+1020|error\s+1015|attention\s+required)\b/i, // Cloudflare-specific
+            // 2026-08-03: parked / domain-for-sale landing (a lapsed business domain now redirects to a
+            // marketplace). Chris caught luxurymedspa.com → HugeDomains "This domain is for sale: $6,995".
+            // Treat like an unreachable site so step-6 suppresses the website claims (no real site to show).
+            /\b(this\s+domain\s+(?:is|name)\s+(?:for\s+sale|may\s+be\s+for\s+sale)|domain\s+(?:is\s+)?for\s+sale|buy\s+this\s+domain|hugedomains|the\s+domain\s+.{0,30}\bfor\s+sale)\b/i,
           ];
           const sample = `${title} ${h1} ${bodyTextFirst1k}`;
           for (let i = 0; i < patterns.length; i++) {
