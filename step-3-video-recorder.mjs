@@ -1572,14 +1572,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   // gps-cs) and >90px, with map tiles (maps.gstatic/khms/vt) excluded, but the min-wait is the real
   // safety net. maxMs caps it so a genuinely photo-less GBP still proceeds. Returns {open} so the caller
   // can tell the card NEVER opened (the "no detail card" failure) vs opened-but-slow-photos.
-  const waitForDetailCardReady = async (minMs = 2600, maxMs = 9000) => {
+  const waitForDetailCardReady = async (minMs = 2600, maxMs = 18000) => {
     // 2026-07-30 HARDENED (blank-photos kept shipping): (a) longer cap — 5s wasn't enough for the hero
     // photo to lazy-load on slower cards; (b) BROADER photo detection — <img> AND CSS background-image,
     // any Google photo CDN (lh*.googleusercontent / *.ggpht / streetviewpixels / gps-cs / googleusercontent),
     // map tiles excluded; (c) if no photo by ~half the window, nudge-scroll the card to TRIGGER the lazy-load,
     // then keep polling. Returns {open, photo} so the caller can HARD-FAIL a card that never showed a photo.
     const start = Date.now();
-    let everOpen = false, nudged = false;
+    let everOpen = false, lastNudge = -99999;
     while (Date.now() - start < maxMs) {
       const elapsed = Date.now() - start;
       const state = await page.evaluate(() => {
@@ -1608,12 +1608,18 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         return { open: true, photo };
       }).catch(() => ({ open: false, photo: false }));
       if (state.open) everOpen = true;
-      if (state.open && state.photo && elapsed >= minMs) return { open: true, photo: true };  // photos loaded + settled
-      // Halfway with no photo yet → nudge-scroll the card to force Google to lazy-load the hero/Photos strip.
-      if (state.open && !state.photo && !nudged && elapsed > maxMs / 2) {
-        nudged = true;
+      if (state.open && state.photo && elapsed >= minMs) { await sleep(600); return { open: true, photo: true }; }  // photos loaded + let the paint settle before the caller grabs
+      // 2026-08-04 (blank-photos regression fix): nudge-scroll REPEATEDLY (every ~2.5s) while no photo, not just
+      // once, to keep forcing Google's lazy-load of the hero/Photos strip on slow cards — the single nudge + 9s cap
+      // wasn't enough and blank hero bands shipped (Chris caught coco-lane/trusmile orthodontists). Longer 18s cap.
+      if (state.open && !state.photo && elapsed - lastNudge > 2500) {
+        lastNudge = elapsed;
         await page.evaluate(() => {
-          const m = document.querySelector('div[role="main"]'); if (m) { m.scrollBy(0, 160); setTimeout(() => m.scrollBy(0, -160), 350); }
+          const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+          let s = h1 && h1.parentElement;
+          while (s && s !== document.body) { const o = getComputedStyle(s).overflowY; if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break; s = s.parentElement; }
+          const el = (s && s !== document.body) ? s : document.querySelector('div[role="main"]');
+          if (el) { el.scrollBy(0, 200); setTimeout(() => el.scrollBy(0, -200), 300); }
         }).catch(() => {});
       }
       await sleep(250);
