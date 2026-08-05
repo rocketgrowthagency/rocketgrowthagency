@@ -246,7 +246,7 @@ const VERTICAL_CATEGORY_TOKENS = {
   'plastic surgeons': ['plastic surg','cosmetic surg','surgeon','surger','plastic'],
   'dermatologists': ['dermatolog','skin'],
   'med spas': ['med spa','medical spa','spa','aesthetic','cosmetic','skin care','laser'],
-  'orthodontists': ['orthodont','dental','dentist','braces'],
+  'orthodontists': ['orthodont','braces'],
   'cosmetic dentists': ['dentist','dental','endodont','periodont'],
   'optometrists': ['optometr','eye ','optical','optician','vision','ophthalmol','eyewear','glasses','contact lens'],
   'chiropractors': ['chiropract'],

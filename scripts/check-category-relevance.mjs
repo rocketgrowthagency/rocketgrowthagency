@@ -59,6 +59,12 @@ const CASES = [
   ['Tree service', 'Tree service in Culver City, CA', true],
   ['Landscaper', 'Landscapers in Culver City, CA', true],
   ['Dentist', 'Cosmetic dentists in Culver City, CA', true],
+  // ---- ortho-vs-dentist: a general Dentist must DROP under an Orthodontists search (2026-08-05) ----
+  // A "Dentist" card under an "Orthodontists" overlay is a visible mismatch. Only true orthodontists pass.
+  ['Orthodontist', 'Orthodontists in Culver City, CA', true, 'Beverly Hills Orthodontics'],
+  ['Dentist', 'Orthodontists in Culver City, CA', false, 'Concierge Smile Boutique'],
+  ['Dental clinic', 'Orthodontists in Culver City, CA', false, 'Culver City Premium Dental Care'],
+  ['Cosmetic dentist', 'Orthodontists in Culver City, CA', false, 'Toothopia Dental'],
   ['Personal injury attorney', 'Personal injury lawyers in Culver City, CA', true],
   ['Hair salon', 'Hair salons in Culver City, CA', true],
   // garbage cross-checks

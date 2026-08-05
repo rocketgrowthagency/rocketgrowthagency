@@ -905,11 +905,19 @@ while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_NAMES+=("$line"); d
 # to a per-DATE accumulator, then rebuild DEPLOYED_URLS/FAILED_LEADS from the DEDUPED accumulator (a lead that
 # failed on pass-1 but re-rendered on the recovery pass counts as DEPLOYED, dropped from failed). awk-based =
 # bash-3.2-safe (no associative arrays). PENDING_* (the deploy set) intentionally stays this-invocation-only.
-ACCUM_DIR="$SCRAPER_DIR/output/run-accum/$DATE_STAMP"; mkdir -p "$ACCUM_DIR"
+# 2026-08-05: key the accumulator per-RUN (date + query SLUG), NOT per-date. A single date can host
+# several category runs (orthodontists, then med spas, …); a per-date bucket merged them, so the report
+# summed one run's Scraped/emailable against ALL that day's failures — deployed+failed overshot emailable
+# and "Failed / gated" mixed categories. SLUG is identical across a night's main+recovery passes (same
+# SEARCH_QUERY) but distinct per category, so recovery still accumulates correctly.
+ACCUM_DIR="$SCRAPER_DIR/output/run-accum/${DATE_STAMP}_${SLUG}"; mkdir -p "$ACCUM_DIR"
 cat "$RESULTS_DEPLOYED" >> "$ACCUM_DIR/deployed.txt" 2>/dev/null || true
 cat "$RESULTS_FAILED"   >> "$ACCUM_DIR/failed.txt"   2>/dev/null || true
 awk -F'|' '!seen[$2]++' "$ACCUM_DIR/deployed.txt" > "$ACCUM_DIR/deployed.dedup.txt" 2>/dev/null || true
-awk -F'|' 'NR==FNR{dep[$1]=1;next} !dep[$1] && !s[$0]++' "$ACCUM_DIR/deployed.dedup.txt" "$ACCUM_DIR/failed.txt" > "$ACCUM_DIR/failed.dedup.txt" 2>/dev/null || true
+# Dedup failed by BUSINESS NAME ($1), not by whole line: a business that fails at two stages (e.g.
+# "watchdog-timeout" at step-3 AND "landing page not built" downstream) is ONE failed lead, not two.
+# Keep the first reason seen. Also drop any name that ultimately deployed (recovery pass succeeded).
+awk -F'|' 'NR==FNR{dep[$1]=1;next} !dep[$1] && !fseen[$1]++' "$ACCUM_DIR/deployed.dedup.txt" "$ACCUM_DIR/failed.txt" > "$ACCUM_DIR/failed.dedup.txt" 2>/dev/null || true
 DEPLOYED_URLS=(); while IFS= read -r line; do [ -n "$line" ] && DEPLOYED_URLS+=("$line"); done < "$ACCUM_DIR/deployed.dedup.txt"
 FAILED_LEADS=();  while IFS= read -r line; do [ -n "$line" ] && FAILED_LEADS+=("$line");  done < "$ACCUM_DIR/failed.dedup.txt"
 
@@ -995,6 +1003,18 @@ DURATION="$((_dm / 60))h $((_dm % 60))m"
 DEPLOYED_TOTAL=${#DEPLOYED_URLS[@]}
 FAILED_TOTAL=${#FAILED_LEADS[@]}
 
+# Reconcile guard (2026-08-05): every emailable lead is attempted, so deployed + failed MUST equal
+# emailable (already-deployed skips count as deployed). If they don't, the accumulator has leaked
+# across runs/categories again or a lead was double-logged — surface it in the report instead of
+# shipping a table that silently doesn't add up.
+RECONCILE_NOTE=""
+if [ "$EMAILABLE_TOTAL" != "n/a" ]; then
+  _accounted=$((DEPLOYED_TOTAL + FAILED_TOTAL))
+  if [ "$_accounted" -ne "$EMAILABLE_TOTAL" ]; then
+    RECONCILE_NOTE=$'\n'"> ⚠️ **Reconcile:** deployed ($DEPLOYED_TOTAL) + failed ($FAILED_TOTAL) = $_accounted, expected $EMAILABLE_TOTAL emailable. Counts may span runs — verify \`output/run-accum/${DATE_STAMP}_${SLUG}\`."
+  fi
+fi
+
 cat > "$REPORT" <<EOF
 # Overnight Pipeline Report — $DATE_STAMP
 
@@ -1011,6 +1031,7 @@ cat > "$REPORT" <<EOF
 | With email (emailable) | $EMAILABLE_TOTAL |
 | Videos deployed | $DEPLOYED_TOTAL |
 | Failed / gated | $FAILED_TOTAL |
+$RECONCILE_NOTE
 
 ## Issues / errors
 EOF
