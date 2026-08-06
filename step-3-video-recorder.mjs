@@ -1579,12 +1579,12 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // map tiles excluded; (c) if no photo by ~half the window, nudge-scroll the card to TRIGGER the lazy-load,
     // then keep polling. Returns {open, photo} so the caller can HARD-FAIL a card that never showed a photo.
     const start = Date.now();
-    let everOpen = false, lastNudge = -99999;
+    let everOpen = false, lastNudge = -99999, sawPhotoAffordance = false;
     while (Date.now() - start < maxMs) {
       const elapsed = Date.now() - start;
       const state = await page.evaluate(() => {
         const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
-        if (!h1) return { open: false, photo: false };
+        if (!h1) return { open: false, photo: false, hasPhotos: false };
         const isPhoto = (url) => /(googleusercontent\.com|ggpht\.com|streetviewpixels-pa|\/gps-cs)/i.test(url) &&
           !/(maps\.gstatic|khms|\/vt\/|\/maps\/vt|gstatic\.com\/mapspro)/i.test(url);
         // 2026-07-30 PROVEN FIX (validated headless on Probate): detect the HERO-sized card photo (rendered
@@ -1605,10 +1605,25 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
             return r.width > 250 && r.height > 100;
           });
         }
-        return { open: true, photo };
-      }).catch(() => ({ open: false, photo: false }));
+        // Does the card ADVERTISE photos? (a photo COUNT / "Photos & videos" section / a hero photo button
+        // that exists even while its <img> is still loading). If the card claims photos exist but the hero
+        // never painted (photo===false), that's a LOAD FAILURE (blank-white hero) — NOT an honest photo-less
+        // business — and the caller HARD-FAILS it so a blank hero can't ship. Honest no-photo businesses show
+        // Google's blue placeholder with NO such affordance → photo===false + hasPhotos===false → still ship.
+        // 2026-08-06: added after main-street-optometry shipped a blank-white hero despite advertising 19 photos
+        // (the visual gate — the only backstop — was OpenAI-vision, fail-open, and blind during the credit outage).
+        let hasPhotos = false;
+        try {
+          const scope = document.querySelector('div[role="main"]') || document.body;
+          const txt = (scope.innerText || '');
+          if (/\b\d+\s+photos?\b/i.test(txt) || /photos?\s*&\s*videos?/i.test(txt)) hasPhotos = true;
+          if (!hasPhotos && document.querySelector('button[aria-label^="Photo" i], button[jsaction*="hero" i], button[data-photo-index]')) hasPhotos = true;
+        } catch (_e) {}
+        return { open: true, photo, hasPhotos };
+      }).catch(() => ({ open: false, photo: false, hasPhotos: false }));
       if (state.open) everOpen = true;
-      if (state.open && state.photo && elapsed >= minMs) { await sleep(600); return { open: true, photo: true }; }  // photos loaded + let the paint settle before the caller grabs
+      if (state.hasPhotos) sawPhotoAffordance = true;
+      if (state.open && state.photo && elapsed >= minMs) { await sleep(600); return { open: true, photo: true, hasPhotos: true }; }  // photos loaded + let the paint settle before the caller grabs
       // 2026-08-04 (blank-photos regression fix): nudge-scroll REPEATEDLY (every ~2.5s) while no photo, not just
       // once, to keep forcing Google's lazy-load of the hero/Photos strip on slow cards — the single nudge + 9s cap
       // wasn't enough and blank hero bands shipped (Chris caught coco-lane/trusmile orthodontists). Longer 18s cap.
@@ -1624,7 +1639,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       }
       await sleep(250);
     }
-    return { open: everOpen, photo: false };              // timed out — .open===false ⇒ no card; .photo===false ⇒ blank
+    return { open: everOpen, photo: false, hasPhotos: sawPhotoAffordance };  // timed out — .open===false ⇒ no card; .photo===false ⇒ blank hero; .hasPhotos===true ⇒ blank was a LOAD FAILURE (photos exist), not honest photo-less
   };
 
   async function holdOnDetailCard(ms) {
@@ -1651,6 +1666,17 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // throw so the lead FAILS the 6/6 gate and lands in the redo queue instead of going out with no card.
     if (!_cardReady.open) {
       throw new Error('[step-3 GUARDRAIL] holdOnDetailCard: detail card never opened (h1 absent) — refusing to freeze the raw results list. See feedback_maps_card_visibility_rules.md + feedback_video_capture_screen_must_be_clear.md');
+    }
+    // 2026-08-06 BLANK-HERO HARD-FAIL (deterministic, OpenAI-independent). The card opened but the hero photo
+    // never painted (photo===false) WHILE the card advertises photos (hasPhotos===true — a photo count /
+    // "Photos & videos" section / hero button). That's a load-failure blank-white hero, NOT an honest photo-less
+    // business — so freezing here would ship a blank-white photo band (main-street-optometry, 08-05: advertised
+    // 19 photos, hero blank). Throw to fail the lead into the redo queue rather than relying on the fail-OPEN
+    // OpenAI-vision visual gate (which was blind during the credit outage). Honest no-photo GBPs have no photo
+    // affordance (hasPhotos===false) and still ship with Google's blue placeholder.
+    // See feedback_video_creation_correctness_locked.md (blank-photos) + project_video_pipeline_integrity.md.
+    if (_cardReady.open && !_cardReady.photo && _cardReady.hasPhotos) {
+      throw new Error('[step-3 GUARDRAIL] holdOnDetailCard: hero photo never painted though the card advertises photos (blank-white hero = load failure) — refusing to freeze a blank hero; failing the lead to the redo queue. See feedback_video_creation_correctness_locked.md');
     }
     await forceCardToTop();
     // Re-verify the card is STILL DOM-open at the exact instant we accept the frozen frame. grabViaScreenCapture
