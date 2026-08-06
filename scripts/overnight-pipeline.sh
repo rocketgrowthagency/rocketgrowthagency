@@ -192,6 +192,7 @@ fi
 # the end. Probe OpenAI with a ~free 1-token call BEFORE capturing; a 429 (out of credits) aborts loudly
 # with a macOS alert + SKIPPED-NIGHTS.log entry so Chris knows immediately. Set SKIP_OPENAI_PREFLIGHT=1 to bypass.
 OPENAI_KEY_LOCAL="${OPENAI_API_KEY:-$(grep -E '^OPENAI_API_KEY=' .env 2>/dev/null | head -1 | cut -d= -f2-)}"
+rm -f /tmp/rga-openai-out-alerted   # re-arm the mid-run OpenAI-out alert (fires at most once per run)
 if [ -n "${OPENAI_KEY_LOCAL:-}" ] && [ "${SKIP_OPENAI_PREFLIGHT:-0}" != "1" ]; then
   echo ">>> pre-flight: OpenAI credit check (tiny billed probe — 429 = out of funds)" | tee -a "$LOGFILE"
   OAI_CODE=$(curl -s --max-time 15 -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions \
@@ -397,6 +398,20 @@ process_one_lead() {
     export CHROME_PROFILE_DIR="$(pwd)/output/chrome-profile-step3-w${WORKER_ID}"
   fi
   [ -z "$BIZ_NAME" ] && return 0
+
+  # MID-RUN OPENAI-CREDIT GUARD (2026-08-06) — the pre-flight probe only checks credit at 21:00; a tiny balance
+  # passes then drains after a few videos, and every remaining lead then fails at step-6 TTS (429 "no credits
+  # remaining") → no audio → no video → "landing page not built" (2026-08-05: 18 leads wasted, no alert). If that
+  # signature has already appeared in the log, credit is OUT — skip the rest (don't waste captures) and fire the
+  # alert ONCE (marker cleared at run start). See feedback_notify_openai_quota.md.
+  if grep -qiE "no credits remaining|429 .*no credits|add credits to continue|exceeded your current quota" "$LOGFILE" 2>/dev/null; then
+    if [ ! -f /tmp/rga-openai-out-alerted ]; then
+      touch /tmp/rga-openai-out-alerted
+      bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
+      echo "  ✗ OPENAI OUT OF CREDITS mid-run — skipping remaining leads (no voiceover possible). Alert fired. Add funds + re-run." | tee -a "$LOGFILE"
+    fi
+    return 0
+  fi
 
   # IDEMPOTENCY GUARD (locked 2026-05-23) — skip if Airtable already has a Video URL
   # for this Business Name + Search Term. Without this, every restart re-renders

@@ -9,7 +9,7 @@
 set -u
 LOG="${1:-}"
 [ -n "$LOG" ] && [ -f "$LOG" ] || exit 0
-if grep -qiE "exceeded your current quota|insufficient_quota|check your plan and billing|billing details|invalid_api_key|401 .*(quota|billing)" "$LOG"; then
+if grep -qiE "exceeded your current quota|insufficient_quota|no credits remaining|429 .*no credits|add credits to continue|check your plan and billing|billing details|invalid_api_key|401 .*(quota|billing)" "$LOG"; then
   MSG="OpenAI balance/quota exceeded — a run FAILED (no content/videos generated). Add funds: platform.openai.com/settings/organization/billing"
   STAMP=$(date '+%Y-%m-%d %H:%M')
   echo "🚨🚨 ALERT: $MSG" | tee -a "$LOG"
