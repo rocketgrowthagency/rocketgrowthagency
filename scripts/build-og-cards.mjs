@@ -25,6 +25,9 @@ import { fileURLToPath } from 'node:url';
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website VS Code');
 const TEMPLATE = 'file://' + path.join(SCRAPER_DIR, 'scripts', 'og-card-render.html');
+// The /demo/ card is a bespoke, fixed layout (portal dashboard, mirrors the homepage teaser) — NOT the shared
+// Map-Pack ogCard() template. It's a self-contained 1200x630 card rendered from its own file (params ignored).
+const DEMO_TEMPLATE = 'file://' + path.join(SCRAPER_DIR, 'scripts', 'og-card-demo.html');
 const IND_DIR = path.join(WEB, 'industries');
 const BLOG_DIR = path.join(WEB, 'blog');
 const OUT_DIR = path.join(WEB, 'images', 'assets', 'og');
@@ -93,7 +96,7 @@ function patchMeta(pageFile, imgUrl) {
 }
 
 async function shoot(page, params, outName) {
-  const url = TEMPLATE + '?' + new URLSearchParams(params).toString();
+  const url = params.type === 'demo' ? DEMO_TEMPLATE : (TEMPLATE + '?' + new URLSearchParams(params).toString());
   await page.goto(url, { waitUntil: 'networkidle0' });
   await page.evaluate(async () => { if (document.fonts && document.fonts.ready) await document.fonts.ready; });
   await new Promise((r) => setTimeout(r, 150));   // settle webfont paint

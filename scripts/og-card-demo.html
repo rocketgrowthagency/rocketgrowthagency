@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--ink:#0f1b3d;--ink2:#0f172a;--muted:#5a6c90;--line:#e5eaf2;--blue:#2457e6;--green:#16a34a;--amber:#f59e0b;--red:#ef4444}
+  body{font-family:'Inter',system-ui,sans-serif}
+  .card{width:1200px;height:630px;background:radial-gradient(125% 130% at 14% 8%,#ffffff 0%,#f5f8ff 58%,#eef3ff 100%);
+    display:flex;align-items:center;gap:40px;padding:54px 58px;overflow:hidden}
+
+  /* LEFT */
+  .left{width:468px;flex:0 0 468px;display:flex;flex-direction:column;height:100%}
+  .lock{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .lock .ic{width:66px;height:66px;border-radius:16px;background:var(--blue);display:grid;place-items:center;flex:0 0 auto;box-shadow:0 10px 22px -10px rgba(36,87,230,.55)}
+  .lock .ic svg{width:38px;height:38px}
+  .lock .wm{font-size:35px;font-weight:800;letter-spacing:-.9px;color:var(--ink)}
+  .lock .wm .b{color:var(--blue)}
+  .pill{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:#eef2f8;color:#33456a;
+    font-weight:700;font-size:17px;padding:10px 18px;border-radius:999px;margin-bottom:20px}
+  .pill .dot{width:9px;height:9px;border-radius:50%;background:var(--green)}
+  h1{font-size:55px;line-height:1.03;font-weight:900;letter-spacing:-1.5px;color:var(--ink);margin-bottom:18px}
+  h1 .g{color:var(--blue)}
+  .sub{font-size:21px;line-height:1.42;color:var(--muted);font-weight:500}
+  .foot{margin-top:auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .foot .url{font-size:25px;font-weight:800;color:var(--ink)}
+  .foot .chk{display:inline-flex;align-items:center;gap:8px;font-size:18px;font-weight:700;color:#334466}
+  .foot .chk svg{width:18px;height:18px;color:var(--green)}
+
+  /* RIGHT — browser-framed portal */
+  .win{flex:1;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    box-shadow:0 40px 80px -40px rgba(20,40,90,.45);align-self:stretch;margin:8px 0;display:flex;flex-direction:column}
+  .chrome{display:flex;align-items:center;gap:8px;padding:14px 18px;background:#f3f6fc;border-bottom:1px solid var(--line)}
+  .chrome i{width:12px;height:12px;border-radius:50%;display:block}
+  .chrome .r{background:#ff5f57}.chrome .y{background:#febc2e}.chrome .g{background:#28c840}
+  .chrome .addr{margin-left:12px;flex:1;background:#fff;border:1px solid #e6ecf6;border-radius:8px;text-align:center;
+    font-size:14px;color:#6b7a99;font-weight:600;padding:7px 0}
+  .body{padding:26px 24px;flex:1;display:flex;flex-direction:column}
+  .bhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
+  .bhead .nm{font-size:20px;font-weight:800;color:var(--ink)}
+  .bhead .mt{font-size:14px;color:var(--muted);font-weight:600;margin-top:2px}
+  .badge{display:inline-flex;align-items:center;gap:7px;background:#e9f7ee;color:#127a45;font-weight:700;font-size:13.5px;
+    padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .kpi{border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .kpi .k{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .kpi .v{font-size:26px;font-weight:900;color:var(--ink2);line-height:1.1;margin-top:2px}
+  .kpi .v.blue{color:var(--blue)}
+  .kpi .up{font-size:12.5px;font-weight:700;color:var(--green);margin-top:3px}
+  .panels{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;flex:1}
+  .pnl{border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column}
+  .pnl .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+  .pnl .pt{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .pnl .pv{font-size:12.5px;font-weight:800;color:var(--green)}
+  .geo{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;align-content:center;flex:1}
+  .geo i{aspect-ratio:1;border-radius:50%}
+  .geo i.g{background:var(--green)}.geo i.a{background:var(--amber)}.geo i.r{background:var(--red)}
+  /* rank trend */
+  .trend{position:relative;flex:1;min-height:0}
+  .trend svg{position:absolute;inset:0;width:100%;height:100%}
+  .trend .tag{position:absolute;top:6px;right:2px;background:var(--blue);color:#fff;font-size:12px;font-weight:800;
+    padding:3px 8px;border-radius:7px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="left">
+      <div class="lock">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>
+        <span class="wm">Rocket<span class="b">Growth</span>Agency</span>
+      </div>
+      <span class="pill"><span class="dot"></span>Client Portal · Live Demo</span>
+      <h1>Watch your visibility <span class="g">turn green.</span></h1>
+      <p class="sub">Every client gets a live portal — real geo-grid rank, calls, and leads, updated automatically.</p>
+      <div class="foot">
+        <span class="url">rocketgrowthagency.com</span>
+        <span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Free Growth Audit</span>
+        <span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Month-to-month</span>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="body">
+        <div class="bhead">
+          <div><div class="nm">Culver City Plumbing Co.</div><div class="mt">Google Maps · "plumber near me"</div></div>
+          <span class="badge"><span class="dot"></span>Live · updated today</span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Map Pack Rank</div><div class="v blue">#1</div><div class="up">↑ climbing</div></div>
+          <div class="kpi"><div class="k">Calls</div><div class="v">47</div><div class="up">↑ 62%</div></div>
+          <div class="kpi"><div class="k">Form Leads</div><div class="v">18</div><div class="up">↑ new</div></div>
+          <div class="kpi"><div class="k">Reviews</div><div class="v">4.9★</div><div class="up">↑ 9 new</div></div>
+        </div>
+        <div class="panels">
+          <div class="pnl">
+            <div class="ph"><span class="pt">Geo-Grid Coverage</span><span class="pv">83% in Map Pack</span></div>
+            <div class="geo" id="geo"></div>
+          </div>
+          <div class="pnl">
+            <div class="ph"><span class="pt">Map Rank Trend</span><span class="pv">#8 → #1</span></div>
+            <div class="trend">
+              <span class="tag">#1</span>
+              <svg viewBox="0 0 220 120" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2457e6" stop-opacity=".16"/><stop offset="1" stop-color="#2457e6" stop-opacity="0"/></linearGradient></defs><path d="M6 104 L60 86 L110 74 L160 44 L214 20 L214 120 L6 120 Z" fill="url(#f)"/><path d="M6 104 L60 86 L110 74 L160 44 L214 20" fill="none" stroke="#2457e6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // winning end-state: mostly green, a few amber, one red — 9x5
+    var g=['g','g','g','g','g','a','g','g','g', 'g','g','g','g','g','g','g','a','g', 'g','a','g','g','g','g','g','g','g', 'g','g','g','g','a','g','g','g','g', 'a','g','g','g','g','g','g','g','r'];
+    document.getElementById('geo').innerHTML=g.map(function(c){return '<i class="'+c+'"></i>';}).join('');
+  </script>
+</body>
+</html>
