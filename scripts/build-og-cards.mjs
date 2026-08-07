@@ -50,6 +50,7 @@ const MARKETING = [
   { slug: 'process', type: 'process', page: 'process/index.html' },
   { slug: 'services', type: 'services', page: 'services/index.html' },
   { slug: 'fga', type: 'fga', page: 'free-growth-audit/index.html' },
+  { slug: 'demo', type: 'demo', page: 'demo/index.html' },
 ];
 
 function industryName(slug) {
