@@ -75,6 +75,17 @@ if ! node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: category-relevance gate broken — off-vertical businesses (mosque/museum/nonprofit) could get videos + outreach. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-08-10 — ACCEPTANCE GATE regression. The deterministic fail-closed judgement of the FINISHED
+# video (card open + real hero photo + rank overlay + city zoom) is the last thing between a broken
+# render and a prospect's inbox — three distinct broken videos shipped from the 08-09 run before it
+# existed. This replays the four locked cases (blank-hero / no-card / zoomed-out / good) through the
+# real gate, so a loosened threshold fails HERE instead of in someone's inbox.
+# Memory: project_video_pipeline_rework.md.
+echo ">>> pre-flight: video acceptance gate regression (blank-hero / no-card / zoomed-out / good)" | tee -a "$LOGFILE"
+if ! node scripts/check-acceptance-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: acceptance gate regression — broken videos could reach prospects. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: 6/6 verification gate (only fully-verified videos deploy)" | tee -a "$LOGFILE"
 if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"

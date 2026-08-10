@@ -1290,6 +1290,41 @@ async function forceMapsCityZoom(page, label = 'detail') {
   // clicks don't deselect the card, and with a place selected Maps anchors the zoom on it (stays centered).
   const TARGET_ZOOM = 13, MAX_PRESSES = 14, PRESS_DELAY_MS = 280;
   const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
+  // 2026-08-10 — TRUST THE RENDERED SCALE BAR, NOT THE URL. alternative-energy-llc-california shipped
+  // with the whole state on screen ("50 mi") even though this function reported it was done: when a
+  // detail card opens, Maps fits the map to the business's bounds but the URL keeps the PLACE's own
+  // @…,17z token, so readZoom() said "already at city level" and zero presses fired. The scale bar in
+  // the bottom-right corner is the only signal that reflects what is actually drawn — and it's the same
+  // signal the acceptance gate measures, so capture and QA now agree by construction.
+  // Read it structurally (leaf node, bottom-right, "<number> <unit>") — no Maps class names to rot.
+  const CITY_SCALE_MAX_M = 2 * 1609.34;   // <= 2 mi on the bar = city level (matches check-video-acceptance)
+  const readScaleMeters = async () => {
+    try {
+      return await page.evaluate(() => {
+        const W = window.innerWidth, H = window.innerHeight;
+        const re = /^\s*(\d+(?:[.,]\d+)?)\s*(ft|mi|km|m)\s*$/i;
+        let widest = null;
+        for (const el of document.querySelectorAll('div,span,button,td')) {
+          if (el.children.length) continue;                       // leaf text nodes only
+          const m = (el.textContent || '').trim().match(re);
+          if (!m) continue;
+          const r = el.getBoundingClientRect();
+          if (!r.width || r.top < H * 0.8 || r.left < W * 0.5) continue;   // the scale bar's corner
+          const v = parseFloat(m[1].replace(',', '')), u = m[2].toLowerCase();
+          const meters = u === 'ft' ? v * 0.3048 : u === 'mi' ? v * 1609.34 : u === 'km' ? v * 1000 : v;
+          if (widest === null || meters > widest) widest = meters;
+        }
+        return widest;
+      });
+    } catch { return null; }
+  };
+  // City level per the RENDERED scale bar; fall back to the URL zoom only when the bar can't be read.
+  const atCityLevel = async () => {
+    const m = await readScaleMeters();
+    if (m !== null) return m <= CITY_SCALE_MAX_M;
+    const z = readZoom();
+    return z !== null && z >= TARGET_ZOOM;
+  };
   // 2026-07-27 HARDEN: re-query the zoom-in button EACH iteration + widen selectors. The old code
   // fetched the handle ONCE before the loop; Maps re-renders its controls, so a stale/detached handle
   // makes every .click() silently no-op → the map never zooms and a CONTINENT view ships (the 07-24
@@ -1298,7 +1333,7 @@ async function forceMapsCityZoom(page, label = 'detail') {
   const ZOOM_SEL = 'button[aria-label="Zoom in"], button#widget-zoom-in, button[aria-label*="Zoom in"], button[jsaction*="zoom.in"]';
   try {
     let pressed = 0, z = readZoom();
-    while (pressed < MAX_PRESSES && (z === null || z < TARGET_ZOOM)) {
+    while (pressed < MAX_PRESSES && !(await atCityLevel())) {
       const zoomBtn = await page.$(ZOOM_SEL);   // live handle each iteration (Maps re-renders controls)
       if (zoomBtn) {
         await zoomBtn.click({ delay: 20 }).catch(() => {});
@@ -1312,11 +1347,16 @@ async function forceMapsCityZoom(page, label = 'detail') {
       }
       pressed++;
       await sleep(PRESS_DELAY_MS);
-      const nz = readZoom();
-      if (nz === null && z === null && pressed >= 10) break; // no zoom readout → cap presses (10 reaches city from a continent start)
-      z = nz;
+      z = readZoom();
     }
-    console.log(`   → ${label}: city-zoom — ${pressed} button press(es), zoom≈${z ?? 'unknown'} (card preserved)`);
+    const finalScale = await readScaleMeters();
+    const scaleTxt = finalScale === null ? 'unreadable' : `${Math.round(finalScale)}m`;
+    console.log(`   → ${label}: city-zoom — ${pressed} button press(es), scale≈${scaleTxt}, zoom≈${z ?? 'unknown'} (card preserved)`);
+    // Leave a loud trace when the map is STILL wide after the press budget: the acceptance gate will
+    // reject the finished video for it, and this line is what explains why in the run log.
+    if (finalScale !== null && finalScale > CITY_SCALE_MAX_M) {
+      console.warn(`   ⚠️ ${label}: map still wide (scale ${scaleTxt} > ${Math.round(CITY_SCALE_MAX_M)}m) after ${pressed} press(es) — the acceptance gate will reject this render.`);
+    }
   } catch (err) {
     // Non-fatal — if zoom input fails (rare), recording continues at
     // whatever zoom Maps left us with. Better than crashing the lead.

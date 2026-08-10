@@ -75,6 +75,30 @@ function runVisualGate(mp4Path) {
   });
 }
 
+// ACCEPTANCE GATE (2026-08-10). The deterministic, fail-CLOSED judgement of the FINISHED video:
+// rank overlay on screen + detail card actually open + hero band is a real photo (not a white void)
+// + map at city zoom. Local Apple-Vision OCR + ffmpeg pixel stats — no API, no fail-open path.
+// Built after three distinct broken videos shipped from the 08-09 run (blank hero / no card / zoom).
+// See scripts/check-video-acceptance.mjs + project_video_pipeline_rework.md.
+function runAcceptanceGate(mp4Path, { business, rank } = {}) {
+  return new Promise((resolve) => {
+    const args = [path.join(__dirname, "scripts", "check-video-acceptance.mjs"), mp4Path, "--json"];
+    if (business) args.push("--business", business);
+    if (Number.isFinite(rank)) args.push("--rank", String(rank));
+    const child = spawn("node", args, { stdio: ["ignore", "pipe", "pipe"] });
+    let out = "", err = "";
+    child.stdout.on("data", (d) => { out += String(d); });
+    child.stderr.on("data", (d) => { err += String(d); });
+    child.on("error", (e) => resolve({ pass: false, reason: "acceptance spawn error: " + e.message }));
+    child.on("exit", (code) => {
+      let reason = "";
+      try { reason = (JSON.parse(out).reasons || []).join(" | "); } catch { reason = (err || out).slice(0, 200); }
+      // exit 0 = accept; 2 = a proven defect; 1 = could not analyse → reject (fail-closed by design).
+      resolve({ pass: code === 0, reason: reason || `acceptance exit ${code}` });
+    });
+  });
+}
+
 // Parse the business slug out of "01_pacific-plumbing-team.mp4".
 // NOTE: the numeric prefix is the batch sequence order, NOT the Maps rank.
 function parseFilename(name) {
@@ -325,15 +349,48 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   return res.ok;
 }
 
-// Flag a lead whose render failed the visual gate: mark it so audit-failed-videos surfaces it and the
-// reconciler re-renders it (it stays a gap — no Video URL was written). Never silently drop it.
-async function flagVisualGateFail(recordId, reason) {
+// A gate-rejected render must AUTO-REDO, not just leave a gap (Chris 2026-08-10: "any fail = auto-redo").
+// This arms the existing self-heal state machine directly, because no Video URL was ever written and
+// redo-flagged-videos.mjs only ARMs leads that HAVE one:
+//   • Redo Video = true      → the lead is tracked as a redo and FINALIZEs once it re-renders
+//   • Suppressed = true      → it cannot be emailed while it has no good video
+//   • Skip Reasons contains "redo-armed" → next-search.mjs re-picks this lead's Search Term even though
+//     the lead exists (scrapedSet excludes armed redos — feedback_redo_heal_requires_repickable_search)
+//   • the Search Term is dropped from output/attempted-searches.log so the search itself is re-run
+// The next overnight run then rebuilds this lead; when a passing video is published, redo-flagged-videos
+// FINALIZEs it (un-suppress, clear the flag) and it becomes sendable. No manual step anywhere.
+const ATTEMPTED_LEDGER = path.join(__dirname, "output", "attempted-searches.log");
+function unLedgerSearch(term) {
+  if (!term) return;
+  const norm = (s) => String(s).toLowerCase().replace(/,/g, " ").replace(/\s+/g, " ").trim();
+  try {
+    if (!fs.existsSync(ATTEMPTED_LEDGER)) return;
+    const keep = fs.readFileSync(ATTEMPTED_LEDGER, "utf8").split("\n").filter((l) => l.trim() && norm(l) !== norm(term));
+    fs.writeFileSync(ATTEMPTED_LEDGER, keep.join("\n") + "\n");
+  } catch { /* best-effort — the Airtable flag is the load-bearing part */ }
+}
+// A lead that fails the gate on every rebuild would otherwise re-arm forever and eat a slot of the
+// nightly capacity each time. After MAX_GATE_REDOS attempts it is parked as 'build-failed' (the same
+// state the pipeline's idempotency guard already skips) so a human can look at it.
+const MAX_GATE_REDOS = 3;
+async function armRedoAfterGateFail(record, gateName, reason) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return false;
-  const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
+  const prior = parseInt((record?.fields?.["Skip Reasons"] || "").match(/attempt (\d+)/)?.[1], 10);
+  const attempt = (Number.isFinite(prior) ? prior : 0) + 1;
+  const giveUp = attempt >= MAX_GATE_REDOS;
+  const fields = giveUp
+    ? { "Redo Video": false, "Suppressed": true, "Email Status": "build-failed",
+        "Skip Reasons": `gate-permafail after ${attempt} attempts: ${gateName} ${String(reason).slice(0, 140)}` }
+    : { "Redo Video": true, "Suppressed": true,
+        "Skip Reasons": `redo-armed (attempt ${attempt}): ${gateName} ${String(reason).slice(0, 140)}` };
+  if (!giveUp) unLedgerSearch(record?.fields?.["Search Term"]);
+  const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${record.id}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ fields: { "Skip Reasons": `visual-gate-failed: ${String(reason).slice(0, 180)}` } })
+    body: JSON.stringify({ fields })
   });
+  if (!res.ok) console.warn(`[build-landing] auto-redo arm failed (${res.status}) for ${record.id}`);
+  else console.log(`[build-landing] ${giveUp ? `⛔ gate-permafail (attempt ${attempt}) — parked as build-failed` : `↻ auto-redo armed (attempt ${attempt}) — rebuilds on the next run`}`);
   return res.ok;
 }
 
@@ -413,13 +470,32 @@ async function main() {
       continue;
     }
 
-    // POST-RENDER VISUAL GATE — reject quarter-scale / wrong-window (desktop-leak) renders BEFORE they get a
+    // ── THE TWO PIXEL GATES — both run BEFORE anything is written, so a broken video can never get a
+    // landing page, a Video URL, or an email. Any failure auto-arms a redo. No bypass on either.
+    //
+    // 1) ACCEPTANCE GATE (deterministic, fail-CLOSED): is the video actually the thing we promised —
+    //    card open, real hero photo, rank overlay, city zoom? Runs first: it's local, free and precise.
+    const expectedRank = (() => {
+      const csv = parseInt(step2Ranks[slug] ?? step2Ranks[fileSlug], 10);
+      if (Number.isFinite(csv)) return csv;
+      const at = parseInt(airtableRecord?.fields?.["Map Rank"], 10);
+      return Number.isFinite(at) ? at : null;
+    })();
+    const accept = await runAcceptanceGate(v.fullPath, { business: businessName, rank: expectedRank });
+    if (!accept.pass) {
+      console.error(`[build-landing] 🚫 ACCEPTANCE GATE FAILED — NOT publishing ${slug}: ${accept.reason}`);
+      if (!NO_AIRTABLE && airtableRecord?.id) {
+        try { await armRedoAfterGateFail(airtableRecord, "acceptance-gate:", accept.reason); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
+      }
+      continue;
+    }
+    // 2) POST-RENDER VISUAL GATE — reject quarter-scale / wrong-window (desktop-leak) renders BEFORE they get a
     // page or a Video URL, so a bad video can never reach a prospect. No bypass. (2026-07-20 incident.)
     const gate = await runVisualGate(v.fullPath);
     if (!gate.pass) {
       console.error(`[build-landing] 🚫 VISUAL GATE FAILED — NOT publishing ${slug}: ${gate.reason}`);
       if (!NO_AIRTABLE && airtableRecord?.id) {
-        try { await flagVisualGateFail(airtableRecord.id, gate.reason); } catch (e) { console.warn(`[build-landing] flag failed: ${e.message}`); }
+        try { await armRedoAfterGateFail(airtableRecord, "visual-gate:", gate.reason); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
       }
       continue;
     }

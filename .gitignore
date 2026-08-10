@@ -7,3 +7,6 @@ rock-rerender.log
 .discover-state.json
 output/attempted-searches.log
 reports/
+
+# compiled Vision OCR helper (built on demand by check-video-acceptance.mjs)
+scripts/.bin/
