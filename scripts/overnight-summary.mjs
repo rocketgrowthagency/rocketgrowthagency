@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+/*
+ * overnight-summary.mjs — print the LOCKED in-chat summary for an overnight run, straight from its
+ * report file. Use this ANY time Chris asks to "send the report" / "review the videos" — do NOT
+ * hand-assemble a summary or an inline video list (that drifts from the locked format). The pipeline
+ * already writes the full report; this just emits the fixed chat summary + the clickable link.
+ *
+ * The report lives in the WEBSITE workspace (NOT this Scraper repo):
+ *   <website>/reports/overnight/<YYYY>/<MM-Month>/<DD>_overnight-report_<YYYY-MM-DD>.md
+ *
+ * Usage:
+ *   node scripts/overnight-summary.mjs                 # latest report
+ *   node scripts/overnight-summary.mjs 2026-08-09      # one specific date
+ *   node scripts/overnight-summary.mjs 2026-08-08 2026-08-09   # several (each printed in order)
+ *
+ * Format spec (do-not-regress): feedback_overnight_report_format.md.
+ */
+import fs from 'fs';
+import path from 'path';
+
+const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+const ROOT = path.join(WEBSITE, 'reports', 'overnight');
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// relative path from the Website workspace root (what the clickable link must use)
+const relFor = (d) => {
+  const [y, m, dd] = d.split('-');
+  return `reports/overnight/${y}/${m}-${MONTHS[+m - 1]}/${dd}_overnight-report_${d}.md`;
+};
+
+function latestDate() {
+  const dates = [];
+  for (const y of fs.existsSync(ROOT) ? fs.readdirSync(ROOT) : []) {
+    const yd = path.join(ROOT, y);
+    if (!fs.statSync(yd).isDirectory()) continue;
+    for (const mm of fs.readdirSync(yd)) {
+      const md = path.join(yd, mm);
+      if (!fs.statSync(md).isDirectory()) continue;
+      for (const f of fs.readdirSync(md)) {
+        const m = f.match(/^(\d{2})_overnight-report_(\d{4}-\d{2}-\d{2})\.md$/);
+        if (m) dates.push(m[2]);
+      }
+    }
+  }
+  return dates.sort().pop();
+}
+
+const field = (s, label) => (s.match(new RegExp(`\\*\\*${label}:\\*\\*\\s*(.+)`)) || [])[1]?.trim() || '?';
+const count = (s, row) => (s.match(new RegExp(`\\|\\s*${row}\\s*\\|\\s*(\\d+)\\s*\\|`)) || [])[1] || '?';
+
+function summary(date) {
+  const rel = relFor(date);
+  const abs = path.join(WEBSITE, rel);
+  if (!fs.existsSync(abs)) return `⚠️ No report file for ${date} (expected ${rel}).`;
+  const s = fs.readFileSync(abs, 'utf8');
+  const cat = field(s, 'Category'), loc = field(s, 'Location');
+  return [
+    `Overnight run — ${cat} in ${loc} (${date})`,
+    ``,
+    `| Stage | Count |`,
+    `|---|---|`,
+    `| Scraped | ${count(s, 'Scraped \\(total businesses\\)')} |`,
+    `| Emailable | ${count(s, 'With email \\(emailable\\)')} |`,
+    `| Completed videos | ${count(s, 'Videos deployed')} |`,
+    `| Failed | ${count(s, 'Failed / gated')} |`,
+    ``,
+    `📄 [${rel}](${rel}) — Cmd+Shift+V for the clickable preview`,
+  ].join('\n');
+}
+
+const args = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+const dates = args.length ? args : [latestDate()].filter(Boolean);
+if (!dates.length) { console.error('No overnight report files found under ' + ROOT); process.exit(1); }
+console.log(dates.map(summary).join('\n\n---\n\n'));
