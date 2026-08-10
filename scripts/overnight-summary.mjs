@@ -65,7 +65,22 @@ function summary(date) {
     `| Failed | ${count(s, 'Failed / gated')} |`,
     ``,
     `📄 [${rel}](${rel}) — Cmd+Shift+V for the clickable preview`,
+    ``,
+    `**Completed videos (${count(s, 'Videos deployed')})** — click to review:`,
+    ...deployedLinks(s),
   ].join('\n');
+}
+
+// Pull the "## Videos deployed" list from the report and re-emit each as a clickable Markdown link.
+// Source rows look like:  `1. **Business Name** — https://…/v/slug/   _(6/6 signals verified)_`
+function deployedLinks(s) {
+  const sec = (s.split(/^##\s+Videos deployed[^\n]*$/m)[1] || '').split(/^##\s+/m)[0];
+  const out = [];
+  for (const line of sec.split('\n')) {
+    const m = line.match(/^\s*\d+\.\s*\*\*(.+?)\*\*\s*—\s*(https?:\/\/\S+)/);
+    if (m) out.push(`${out.length + 1}. [${m[1]}](${m[2]})`);
+  }
+  return out.length ? out : ['_(none)_'];
 }
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('-'));
