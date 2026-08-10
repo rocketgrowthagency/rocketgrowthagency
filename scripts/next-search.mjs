@@ -29,22 +29,36 @@ catch (e) { console.error('[next-search] cannot read outreach-verticals.json:', 
 const norm = (s) => String(s).toLowerCase().replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
 
 // Pull every Search Term already scraped (a lead exists → that city+vertical is done).
+// EXCEPTION: an armed redo (Skip Reasons='redo-armed', Video URL cleared, send blocked) leaves its lead
+// row in place — so its Search Term must NOT count as scraped, or next-search would permanently skip it
+// and the redo could never re-scrape / re-render (the pending video would be stuck forever). We collect
+// those separately and subtract them below so the search becomes re-pickable; a re-scrape re-renders that
+// lead through the 6/6 gate and every already-good lead in the search idempotency-skips. See
+// redo-flagged-videos.mjs (ARM/PENDING/FINALIZE) + feedback_verify_run_gates_before_arming.md.
 async function scrapedSet() {
-  const set = new Set(); let off = null;
+  const set = new Set(), redoPending = new Set(); let off = null;
   do {
     const u = new URL(`https://api.airtable.com/v0/${BASE}/Leads`);
-    u.searchParams.set('pageSize', '100'); u.searchParams.append('fields[]', 'Search Term');
+    u.searchParams.set('pageSize', '100');
+    u.searchParams.append('fields[]', 'Search Term');
+    u.searchParams.append('fields[]', 'Skip Reasons');
+    u.searchParams.append('fields[]', 'Video URL');
     if (off) u.searchParams.set('offset', off);
     const r = await fetch(u, { headers: { Authorization: `Bearer ${KEY}` } });
     if (!r.ok) { console.error('[next-search] Airtable error', r.status); process.exit(2); }
     const d = await r.json();
-    for (const rec of (d.records || [])) { const s = rec.fields['Search Term']; if (s) set.add(norm(s)); }
+    for (const rec of (d.records || [])) {
+      const s = rec.fields['Search Term']; if (!s) continue;
+      const key = norm(s);
+      const armed = /redo-armed/.test(rec.fields['Skip Reasons'] || '') && !rec.fields['Video URL'];
+      if (armed) redoPending.add(key); else set.add(key);
+    }
     off = d.offset;
   } while (off);
-  return set;
+  return { done: set, redoPending };
 }
 
-const done = await scrapedSet();
+const { done, redoPending } = await scrapedSet();
 
 // ALSO treat any search already ATTEMPTED (recorded in the ledger by overnight-local.sh)
 // as done — even if it yielded ZERO leads. Without this, a search that legitimately produces
@@ -58,6 +72,10 @@ try {
     const q = line.trim(); if (q) done.add(norm(q));
   }
 } catch { /* no ledger yet — first run */ }
+
+// A pending armed-redo overrides BOTH the lead check and the attempted-log: its search MUST be
+// re-pickable so the overnight run re-scrapes it and heals the stuck video.
+for (const k of redoPending) done.delete(k);
 
 for (const city of cities) {
   for (const v of verticals) {
