@@ -281,3 +281,16 @@ DATE="$DATE_STAMP" node scripts/file-overnight-videos.mjs 2>&1 | tee -a "$LOG"
 
 # OpenAI quota alert (HARD RULE): notify Chris if voiceover generation hit an OpenAI balance error.
 bash scripts/notify-openai-quota.sh "/tmp/overnight-pipeline-$(date +%Y-%m-%d).log" 2>&1 | tee -a "$LOG"
+
+# ============================================================
+# ENQUEUE the in-chat report post (2026-08-10, Chris: "this report gets posted with link in the chat after
+# each run … keeps getting skipped … fix it so it happens automatically as part of the pipeline"). The
+# in-chat summary can only be POSTED by Claude on the next session (the launchd run has no chat), so we can't
+# push it — but we can make it un-skippable: append this run's date to the Website-repo queue file. The
+# UserPromptSubmit hook (scripts/prompt-submit-hook.sh in the Website repo) then re-injects the ready-to-paste
+# summary on EVERY prompt until Claude posts it and clears the queue. See feedback_overnight_report_format.md.
+# ============================================================
+QUEUE="/Users/chris/RGA/Rocket Growth Agency Website VS Code/reports/.pending-chat-reports"
+mkdir -p "$(dirname "$QUEUE")"
+if ! grep -qxF "$DATE_STAMP" "$QUEUE" 2>/dev/null; then echo "$DATE_STAMP" >> "$QUEUE"; fi
+echo ">>> enqueued $DATE_STAMP for the mandatory in-chat report post (hook re-injects until posted)" | tee -a "$LOG"
