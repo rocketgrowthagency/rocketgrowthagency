@@ -716,6 +716,7 @@ EOPY
   # READ the actual Step 7 MP4 filename and extract the slug from it. If
   # step-7 didn't produce an MP4, BUILD_ONLY_SLUG falls back to empty →
   # legacy behavior preserved.
+  GATE_BLOCK=""   # reset per lead — a stale value would mis-attribute the previous lead's rejection
   STEP7_MP4=$(ls -t "output/Step 7 (Final Merge MP4)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp4 2>/dev/null | head -1)
   if [ -n "$STEP7_MP4" ]; then
     BUILD_SLUG=$(basename "$STEP7_MP4" .mp4 | sed 's/^[0-9]*_//')
@@ -723,7 +724,14 @@ EOPY
     # Build landing — STRICTLY per-lead. REQUIRE_SLUG=1 guarantees build-video-landing can NEVER fall
     # back to rebuilding all ~500 pages (the O(N) bomb that tripped the 8-min watchdog + wiped whole
     # searches — root-caused 2026-07-11). See feedback_landing_build_must_be_scoped.md.
-    REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "${BUILD_SLUG:-$BIZ_SLUG}" | head -1
+    # 2026-08-11 — CAPTURE THE GATE'S REASON. This used to pipe straight to grep, so when a gate
+    # rejected a video the WHY was thrown away and the lead was filed as the generic "landing page not
+    # built". On 08-10 that hid the fact that the acceptance gate had caught a blank-white hero
+    # (Magasinn & Feldman) — the single most important line of the night. Chris: the report must
+    # reflect this no matter what. See feedback_overnight_report_format.md.
+    BUILD_OUT=$(REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE")
+    echo "$BUILD_OUT" | grep -i "${BUILD_SLUG:-$BIZ_SLUG}" | head -1
+    GATE_BLOCK=$(echo "$BUILD_OUT" | grep -oE "(ACCEPTANCE|VISUAL) GATE FAILED — NOT publishing [^:]*: .*" | head -1 | sed 's/ — NOT publishing [^:]*:/:/')
     # Find the deployed slug (also strictly scoped)
     DEPLOY_SLUG=$(REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | grep -oE "/v/[a-z0-9-]+/ →" | head -1 | sed 's|/v/||;s|/.*||')
   else
@@ -780,8 +788,15 @@ EOPY
     echo "  ✓ STAGED: $BIZ_NAME (deploy batched to end-of-run)" | tee -a "$LOGFILE"
     echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"  # keep marker for grep idempotency
   else
-    append_result "$RESULTS_FAILED" "$BIZ_NAME|landing page not built"
-    echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
+    # A gate rejection is NOT the same event as "the build silently produced nothing" — it means we
+    # CAUGHT a broken video before it reached a prospect. Report it as such, with the gate's own reason.
+    if [ -n "${GATE_BLOCK:-}" ]; then
+      append_result "$RESULTS_FAILED" "$BIZ_NAME|🚫 BLOCKED BY GATE — ${GATE_BLOCK}"
+      echo "  🚫 BLOCKED BY GATE: $BIZ_NAME — ${GATE_BLOCK}" | tee -a "$LOGFILE"
+    else
+      append_result "$RESULTS_FAILED" "$BIZ_NAME|landing page not built"
+      echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
+    fi
   fi
 }  # end process_one_lead
 
@@ -1088,6 +1103,25 @@ if [ "$FAILED_TOTAL" -gt 0 ]; then
   done
 else
   echo "- None — every emailable lead deployed successfully." >> "$REPORT"
+fi
+
+# A gate block is the system WORKING — a broken video stopped before a prospect saw it. Call it out in
+# its own section so it is never mistaken for an ordinary build failure buried in the list above.
+GATE_BLOCKED=$(printf '%s\n' "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}" | grep -c "BLOCKED BY GATE" || true)
+cat >> "$REPORT" <<EOF
+
+## Blocked by the quality gates (${GATE_BLOCKED:-0})
+_A block means a broken video was CAUGHT before any page, video or Video URL was written — nothing
+reached a prospect. These leads need a rebuild, not a fix to the gate._
+EOF
+if [ "${GATE_BLOCKED:-0}" -gt 0 ]; then
+  for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
+    case "$entry" in
+      *"BLOCKED BY GATE"*) IFS='|' read -r name reason <<< "$entry"; echo "- **$name** — ${reason#🚫 BLOCKED BY GATE — }" >> "$REPORT" ;;
+    esac
+  done
+else
+  echo "- None — no video was rejected by the acceptance or visual gate tonight." >> "$REPORT"
 fi
 
 cat >> "$REPORT" <<EOF
