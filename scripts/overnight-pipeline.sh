@@ -336,7 +336,11 @@ WORKER_COUNT="${WORKER_COUNT:-1}"
 # is a real hang (stuck site, zombie browser, ffmpeg deadlock).
 # Set PER_LEAD_TIMEOUT_MIN=0 to disable watchdog entirely.
 # Memory: feedback_per_lead_wall_time_watchdog.md.
-PER_LEAD_TIMEOUT_MIN="${PER_LEAD_TIMEOUT_MIN:-8}"
+# 2026-08-10: 8 → 10 min. The acceptance gate (~10s) runs inside this budget and build-video-landing is
+# invoked 3x per lead, so every lead now costs ~30s more than when 8 was calibrated. The watchdog exists to
+# catch a genuine HANG (minutes of nothing), so 10 keeps that job while stopping the new, expected work from
+# SIGKILLing a healthy slow lead. Do not raise it to paper over a real hang.
+PER_LEAD_TIMEOUT_MIN="${PER_LEAD_TIMEOUT_MIN:-10}"
 PER_LEAD_TIMEOUT_SEC=$(( PER_LEAD_TIMEOUT_MIN * 60 ))
 # Failure audit file — one row per timed-out or failed lead so Chris can
 # spot-check quickly in the morning instead of re-running blind.
