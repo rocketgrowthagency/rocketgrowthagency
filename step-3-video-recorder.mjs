@@ -5,6 +5,9 @@ import csvParser from 'csv-parser';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import slugify from 'slugify';
+// ONE definition of "the hero band is a blank white void", shared with the acceptance gate
+// (scripts/check-video-acceptance.mjs) so capture and QA judge the pixels by the same rule.
+import { judgeHeroBand, heroRectFromHeading } from './scripts/lib/hero-band.mjs';
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -1259,6 +1262,35 @@ async function injectRankOverlay(page, businessName, rank, searchTerm) {
   }
 }
 
+// 2026-08-10 — TRUST THE RENDERED SCALE BAR, NOT THE URL. alternative-energy-llc-california shipped with
+// the whole state on screen ("50 mi") while forceMapsCityZoom reported it was done: when a detail card
+// opens, Maps fits the map to the business's bounds but the URL keeps the PLACE's own @…,17z token, so
+// the URL said "already city level" and zero presses fired. The scale bar in the bottom-right corner is
+// the only signal that reflects what is actually DRAWN — and it is the same signal the acceptance gate
+// measures on the finished video, so capture and QA agree by construction.
+// Read it structurally (leaf node, bottom-right corner, "<number> <unit>") — no Maps class names to rot.
+const CITY_SCALE_MAX_M = 2 * 1609.34;   // <= 2 mi on the bar = city level (matches check-video-acceptance)
+async function readMapScaleMeters(page) {
+  try {
+    return await page.evaluate(() => {
+      const W = window.innerWidth, H = window.innerHeight;
+      const re = /^\s*(\d+(?:[.,]\d+)?)\s*(ft|mi|km|m)\s*$/i;
+      let widest = null;
+      for (const el of document.querySelectorAll('div,span,button,td')) {
+        if (el.children.length) continue;                       // leaf text nodes only
+        const m = (el.textContent || '').trim().match(re);
+        if (!m) continue;
+        const r = el.getBoundingClientRect();
+        if (!r.width || r.top < H * 0.8 || r.left < W * 0.5) continue;   // the scale bar's corner
+        const v = parseFloat(m[1].replace(',', '')), u = m[2].toLowerCase();
+        const meters = u === 'ft' ? v * 0.3048 : u === 'mi' ? v * 1609.34 : u === 'km' ? v * 1000 : v;
+        if (widest === null || meters > widest) widest = meters;
+      }
+      return widest;
+    });
+  } catch { return null; }
+}
+
 // 2026-06-03 — Maps card-open often leaves the map zoomed-out at state/region
 // level instead of city-level. Cause: Maps' SPA picks a wide zoom to fit the
 // business's service-area bounds when the detail card opens. Effect: the
@@ -1290,35 +1322,9 @@ async function forceMapsCityZoom(page, label = 'detail') {
   // clicks don't deselect the card, and with a place selected Maps anchors the zoom on it (stays centered).
   const TARGET_ZOOM = 13, MAX_PRESSES = 14, PRESS_DELAY_MS = 280;
   const readZoom = () => { const m = (page.url() || '').match(/@-?[\d.]+,-?[\d.]+,([\d.]+)z/); return m ? parseFloat(m[1]) : null; };
-  // 2026-08-10 — TRUST THE RENDERED SCALE BAR, NOT THE URL. alternative-energy-llc-california shipped
-  // with the whole state on screen ("50 mi") even though this function reported it was done: when a
-  // detail card opens, Maps fits the map to the business's bounds but the URL keeps the PLACE's own
-  // @…,17z token, so readZoom() said "already at city level" and zero presses fired. The scale bar in
-  // the bottom-right corner is the only signal that reflects what is actually drawn — and it's the same
-  // signal the acceptance gate measures, so capture and QA now agree by construction.
-  // Read it structurally (leaf node, bottom-right, "<number> <unit>") — no Maps class names to rot.
-  const CITY_SCALE_MAX_M = 2 * 1609.34;   // <= 2 mi on the bar = city level (matches check-video-acceptance)
-  const readScaleMeters = async () => {
-    try {
-      return await page.evaluate(() => {
-        const W = window.innerWidth, H = window.innerHeight;
-        const re = /^\s*(\d+(?:[.,]\d+)?)\s*(ft|mi|km|m)\s*$/i;
-        let widest = null;
-        for (const el of document.querySelectorAll('div,span,button,td')) {
-          if (el.children.length) continue;                       // leaf text nodes only
-          const m = (el.textContent || '').trim().match(re);
-          if (!m) continue;
-          const r = el.getBoundingClientRect();
-          if (!r.width || r.top < H * 0.8 || r.left < W * 0.5) continue;   // the scale bar's corner
-          const v = parseFloat(m[1].replace(',', '')), u = m[2].toLowerCase();
-          const meters = u === 'ft' ? v * 0.3048 : u === 'mi' ? v * 1609.34 : u === 'km' ? v * 1000 : v;
-          if (widest === null || meters > widest) widest = meters;
-        }
-        return widest;
-      });
-    } catch { return null; }
-  };
-  // City level per the RENDERED scale bar; fall back to the URL zoom only when the bar can't be read.
+  // City level per the RENDERED scale bar (see readMapScaleMeters); fall back to the URL zoom only
+  // when the bar can't be read.
+  const readScaleMeters = () => readMapScaleMeters(page);
   const atCityLevel = async () => {
     const m = await readScaleMeters();
     if (m !== null) return m <= CITY_SCALE_MAX_M;
@@ -1348,6 +1354,10 @@ async function forceMapsCityZoom(page, label = 'detail') {
       pressed++;
       await sleep(PRESS_DELAY_MS);
       z = readZoom();
+      // Neither signal readable (no scale bar AND no URL zoom) → cap the presses instead of running the
+      // full budget, or we'd zoom past city all the way to street level. 10 reaches city from a continent
+      // start, which is what the old URL-only loop relied on.
+      if (z === null && (await readScaleMeters()) === null && pressed >= 10) break;
     }
     const finalScale = await readScaleMeters();
     const scaleTxt = finalScale === null ? 'unreadable' : `${Math.round(finalScale)}m`;
@@ -1418,6 +1428,14 @@ async function highlightBusinessOnDetailPage(page) {
     console.warn(`   ⚠️ detail-page highlight failed (non-fatal): ${err.message || err}`);
   }
 }
+
+// A GUARDRAIL error means "this render is known-bad — do not ship it" (no detail card, blank-white
+// hero). Those throws were being swallowed twice over: the Maps-nav catch turned them into a warning
+// and returned 'none', and the recorder's own catch logged "had error, but video was still saved" and
+// returned true. So the guards fired and the broken video shipped anyway — that is how sunko-solar went
+// out frozen on the raw results list (08-09). A guardrail failure must be TERMINAL for the lead.
+const isGuardrailError = (e) => /\[step-3 GUARDRAIL\]/.test(String((e && e.message) || e || ''));
+
 
 async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigation, recorderCtl = null) {
   // 2026-06-22: hold on the prospect's detail card by INJECTING a dedicated card
@@ -1560,10 +1578,21 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
   const grabFreeze = async () => ((DAYTIME_SAFE || _cardOpenedInPage) ? grabViaPageShot() : grabViaScreenCapture());
 
   async function zoomOutMap(page, steps) {
-    // Zoom the Maps canvas OUT `steps` times so the held frame shows a wide regional view.
-    // Prefer Google's on-map "Zoom out" button (focus-independent); fall back to keyboard '-'.
+    // Zoom the Maps canvas OUT `steps` times so the held frame shows a wider area than Maps' default
+    // street-level detail view (Chris, 2026-06-22: the tight map "reads as zoomed in").
+    //
+    // 2026-08-10 — BOUNDED. This ran a blind 3 steps AFTER the city-zoom pass, which is a straight
+    // fight between two rules: forceMapsCityZoom pulls to <= 2 mi, this pushed back out past it. That
+    // is how a card-correct render still shipped a 10 mi map (los-angeles-chiropractic-clinic). Now it
+    // stops the moment the RENDERED scale bar reaches the city limit — wider than street level, never
+    // wider than the acceptance gate allows.
     const n = Math.max(0, Math.min(8, Number(steps) || 0));
     for (let i = 0; i < n; i++) {
+      const scaleNow = await readMapScaleMeters(page);
+      if (scaleNow !== null && scaleNow >= CITY_SCALE_MAX_M) {
+        console.log(`   [zoom-out] stopped after ${i} step(s) — already at the city limit (scale ≈${Math.round(scaleNow)}m)`);
+        return;
+      }
       let clicked = false;
       try {
         clicked = await page.evaluate(() => {
@@ -1715,8 +1744,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // OpenAI-vision visual gate (which was blind during the credit outage). Honest no-photo GBPs have no photo
     // affordance (hasPhotos===false) and still ship with Google's blue placeholder.
     // See feedback_video_creation_correctness_locked.md (blank-photos) + project_video_pipeline_integrity.md.
-    if (_cardReady.open && !_cardReady.photo && _cardReady.hasPhotos) {
-      throw new Error('[step-3 GUARDRAIL] holdOnDetailCard: hero photo never painted though the card advertises photos (blank-white hero = load failure) — refusing to freeze a blank hero; failing the lead to the redo queue. See feedback_video_creation_correctness_locked.md');
+    // 2026-08-10: this DOM signal is now ADVISORY, not the verdict. It decided "load failure vs honest
+    // photo-less business" from whether the card ADVERTISES photos — a text heuristic that reads a section
+    // which is usually below the fold and unrendered, so it let real failures through (resonance, aliq,
+    // cosmetique) and could equally throw on a good card whose hero we simply failed to match in the DOM.
+    // The pixel check on the actual frame (below) is the single verdict. This line just explains the wait.
+    if (_cardReady.open && !_cardReady.photo) {
+      console.warn(`   ⚠️ hero photo not detected in the DOM after the wait (advertises photos: ${_cardReady.hasPhotos}) — the frame's pixels decide`);
     }
     await forceCardToTop();
     // Re-verify the card is STILL DOM-open at the exact instant we accept the frozen frame. grabViaScreenCapture
@@ -1727,12 +1761,61 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
       return !!(h1 && (h1.textContent || '').trim().length > 1);
     }).catch(() => false);
-    let frozen = null;
+    // 2026-08-10 — JUDGE THE ACTUAL PIXELS OF THE FRAME WE ARE ABOUT TO FREEZE.
+    // Every earlier blank-hero guard reasoned about the DOM (does an <img> exist? does the card
+    // ADVERTISE photos?) and each one had a hole — the "N Photos" section is often below the fold and
+    // unrendered, so a real load failure read as an honest photo-less business and shipped (resonance
+    // 08-09; aliq + cosmetique found in the 08-10 sweep). This measures the band that will be ON SCREEN,
+    // with the same rule the acceptance gate applies to the finished video: a WHITE void = failed load
+    // (Google's honest placeholder is a BLUE graphic, which reads as content). Frame coordinates equal
+    // CSS pixels here — the grab is cropped to the Chrome content region and scaled to MAPS_VIEWPORT.
+    const _heroRectFromDom = async () => {
+      const head = await page.evaluate(() => {
+        const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+        if (!h1) return null;
+        const r = h1.getBoundingClientRect();
+        if (!(r.width > 0) || r.top < 40) return null;         // no room above the name = nothing to judge
+        return { left: r.left, right: r.right, top: r.top };
+      }).catch(() => null);
+      return head ? heroRectFromHeading(head) : null;
+    };
+    const _heroOk = async (buf) => {
+      const rect = await _heroRectFromDom();
+      if (!rect || rect.h < 40) return { ok: true, skipped: true };   // hero not on screen → nothing to judge
+      const tmp = `/tmp/hero-${process.pid}-${Date.now()}.jpg`;
+      try {
+        fs.writeFileSync(tmp, buf);
+        const v = judgeHeroBand(tmp, rect);
+        return { ...v, rect };
+      } catch (e) {
+        return { ok: true, skipped: true, err: e.message };           // measurement failed → let the gate decide
+      } finally { try { fs.unlinkSync(tmp); } catch (_) {} }
+    };
+    let frozen = null, lastHero = null;
     for (let i = 0; i < 4 && !frozen; i++) {     // a few quick tries to land one clean grab
       if (!(await _cardStillOpen())) { await forceCardToTop(); await sleep(400); continue; }
       const buf = await grabFreeze();
-      if (buf && await _cardStillOpen()) frozen = buf;   // card confirmed open BOTH sides of the grab
-      else await sleep(400);
+      if (!buf || !(await _cardStillOpen())) { await sleep(400); continue; }   // card confirmed open BOTH sides of the grab
+      const hero = await _heroOk(buf);
+      lastHero = hero;
+      if (hero.ok) { frozen = buf; break; }
+      // Blank hero in the frame itself — do NOT freeze it. Nudge the panel to re-trigger Google's
+      // lazy-load, give it a moment, and grab again.
+      console.warn(`   ⚠️ blank hero in grab ${i + 1}/4 (${hero.contentRows} content / ${hero.blankRows} blank rows) — nudging + re-grabbing`);
+      await page.evaluate(() => {
+        const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+        let s = h1 && h1.parentElement;
+        while (s && s !== document.body) { const o = getComputedStyle(s).overflowY; if ((o === 'auto' || o === 'scroll') && s.scrollHeight > s.clientHeight) break; s = s.parentElement; }
+        const el = (s && s !== document.body) ? s : document.querySelector('div[role="main"]');
+        if (el) { el.scrollBy(0, 240); setTimeout(() => el.scrollBy(0, -240), 300); }
+      }).catch(() => {});
+      await sleep(1800);
+      await forceCardToTop();
+    }
+    // Every grab showed a white void where the photo belongs → fail the lead into the redo queue
+    // rather than encode a video we already know the acceptance gate will reject.
+    if (!frozen && lastHero && lastHero.ok === false) {
+      throw new Error(`[step-3 GUARDRAIL] holdOnDetailCard: hero band is a blank white void in every grab (${lastHero.contentRows} content / ${lastHero.blankRows} of ${lastHero.totalRows} rows blank) — refusing to freeze a blank hero; failing the lead to the redo queue. See feedback_video_acceptance_gate_locked.md`);
     }
     if (!frozen) {                                // grab failed entirely → fall back to the old re-grab loop
       const until = Date.now() + ms;
@@ -2209,6 +2292,10 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // zoomed than the default detail view — the tight street-level map reads as "zoomed in").
         // Click Google's on-map "Zoom out" control a few steps (keyboard '-' fallback), then let
         // the tiles settle BEFORE the frozen grab so the held frame shows the wide area.
+        // 2026-08-10: pull to city level FIRST. This branch previously widened from wherever Maps
+        // happened to leave the map after the card opened — which, when it fits to a business's
+        // bounds, can be a whole state. Same starting point for every lead, then a bounded widen.
+        await forceMapsCityZoom(page, 'deep-rank-click');
         await zoomOutMap(page, Number(process.env.MAPS_ZOOM_OUT_STEPS || 3));
         await sleep(1800); // let map tiles re-render at the wider zoom
         await holdOnDetailCard(18000);
@@ -2229,6 +2316,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
 
     return 'search-only';
   } catch (err) {
+    // NEVER swallow a guardrail — it is the deliberate "this render is broken" signal, and turning it
+    // into `return 'none'` here is what let a card-less Maps segment carry on to encoding and ship.
+    if (isGuardrailError(err)) {
+      console.error(`   🚫 ${err.message}`);
+      await saveDebug(page, 'step3-guardrail');
+      throw err;
+    }
     console.warn(`   ⚠️ Maps navigation failed: ${err.message || err}`);
     await saveDebug(page, 'step3-maps-failed');
     return 'none';
@@ -2523,6 +2617,7 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
 
   const recorder = createScreencastRecorder(page, outputPath, MAPS_VIEWPORT);
   let hadFatal = false;
+  let fatalGuardrail = null;   // set when a GUARDRAIL throw proves this segment is unshippable
   let recorderStarted = false;
 
   try {
@@ -2548,6 +2643,9 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
     console.log(`   [timing] wrapper hold took ${Date.now() - _holdT0}ms`);
   } catch (err) {
     hadFatal = true;
+    // A guardrail failure is not "an error we recovered from" — the segment is known-bad and must not
+    // be saved. Anything else keeps the old lenient behaviour (a partial segment is better than none).
+    if (isGuardrailError(err)) fatalGuardrail = err;
     console.error(`   ❌ Error recording desktop Maps for ${meta.name}: ${err.message || err}`);
   }
 
@@ -2584,6 +2682,13 @@ async function recordDesktopMapsVideo(browser, meta, outputPath) {
 
   const result = await recorder.stop();
   await page.close().catch(() => {});
+  // A guardrail proved the segment is broken (no detail card / blank-white hero). Discard the file and
+  // FAIL the lead so it lands in the redo queue — never "saved anyway", which is what shipped sunko.
+  if (fatalGuardrail) {
+    try { fs.unlinkSync(outputPath); } catch (_) {}
+    console.warn(`   ❌ Maps segment failed a hard guardrail — discarded ${outputPath} and FAILING the lead: ${fatalGuardrail.message}`);
+    return false;
+  }
   if (!validMapsState) {
     try { fs.unlinkSync(outputPath); } catch (_) {}
     console.warn(`   ❌ Maps segment ended on the BLANK default-Maps home (no card, no results) — discarded ${outputPath} and FAILING the lead (deep-rank URL-nav fallback couldn't reach the listing).`);

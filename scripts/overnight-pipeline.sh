@@ -86,6 +86,21 @@ if ! node scripts/check-acceptance-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: acceptance gate regression — broken videos could reach prospects. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# The blank-hero rule is the ONE verdict shared by step-3 (refuses to freeze a white-void hero) and the
+# acceptance gate (rejects the finished video). This checks it at the CAPTURE resolution too, which the
+# video-level test above can't cover.
+echo ">>> pre-flight: hero-band rule (step-3 capture + gate share one definition)" | tee -a "$LOGFILE"
+if ! node scripts/check-hero-band.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: hero-band rule regression — blank-white heroes could ship. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+# The guards were never the problem — the catches were. step-3 threw "detail card never opened" and two
+# nested catches turned it into a warning + a saved video (that is how sunko-solar shipped card-less).
+echo ">>> pre-flight: step-3 guardrails are terminal (a broken render fails its lead)" | tee -a "$LOGFILE"
+if ! node scripts/check-guardrails-terminal.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: a step-3 guardrail can be swallowed — known-broken videos could ship. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: 6/6 verification gate (only fully-verified videos deploy)" | tee -a "$LOGFILE"
 if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"

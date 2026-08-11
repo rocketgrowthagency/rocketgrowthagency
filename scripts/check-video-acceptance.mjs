@@ -35,6 +35,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// ONE definition of "blank hero", shared with step-3's capture-time check so the two ends of the
+// pipeline can't drift apart. See scripts/lib/hero-band.mjs.
+import { bandRows, heroVerdict, heroRectFromHeading } from './lib/hero-band.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OCR_SRC = path.join(ROOT, 'scripts', 'vision-ocr.swift');
@@ -57,10 +60,7 @@ const FINE_STEP_S = 1.2;                  // fine pass: inside the overlay windo
 const MIN_OVERLAY_FRAMES = 2;             // rank overlay must be sustained, not a transition frame
 const MIN_CARD_FRAMES = 2;                // detail card must be sustained
 const MAX_SCALE_MI = 2.0;                 // city level: 2000 ft / 1 mi / 2 mi ok; 5 mi+ is a fail
-const BLANK_MEAN = 228;                   // a "white void" row: this bright...
-const BLANK_SD = 7;                       // ...this flat...
-const BLANK_SAT = 12;                     // ...and this colourless (max channel spread)
-const MIN_HERO_CONTENT_ROWS = 25;         // hero must show at least this many real image rows
+// (the blank-hero thresholds live in scripts/lib/hero-band.mjs — shared with step-3)
 const ACTION_LABELS = ['directions', 'save', 'nearby', 'share', 'send to', 'send to phone'];
 
 function die(msg) { console.error(`[acceptance] ${msg}`); process.exit(1); }
@@ -86,29 +86,6 @@ function grabFrame(v, t, out) {
   execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v, '-frames:v', '1', '-q:v', '3', '-y', out]);
   return out;
 }
-/** Row statistics for a crop, downscaled to COLS columns (rows preserved). */
-const COLS = 48;
-function rowStats(v, t, { x, y, w, h }) {
-  const buf = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
-    '-vf', `crop=${Math.round(w)}:${Math.round(h)}:${Math.round(x)}:${Math.round(y)},scale=${COLS}:${Math.round(h)}:flags=area,format=rgb24`,
-    '-frames:v', '1', '-f', 'rawvideo', '-'], { maxBuffer: 64 * 1024 * 1024 });
-  const rows = [];
-  for (let r = 0; r < Math.round(h); r++) {
-    let sum = 0, sum2 = 0, sat = 0;
-    for (let c = 0; c < COLS; c++) {
-      const i = (r * COLS + c) * 3;
-      const R = buf[i], G = buf[i + 1], B = buf[i + 2];
-      const luma = 0.299 * R + 0.587 * G + 0.114 * B;
-      sum += luma; sum2 += luma * luma;
-      sat += Math.max(R, G, B) - Math.min(R, G, B);
-    }
-    const mean = sum / COLS;
-    const sd = Math.sqrt(Math.max(0, sum2 / COLS - mean * mean));
-    rows.push({ mean, sd, sat: sat / COLS });
-  }
-  return rows;
-}
-
 // ---- OCR of many frames in ONE process (Vision start-up dominates per-image cost) ----
 function ocrFrames(files) {
   const bin = ensureOcrBin();
@@ -231,26 +208,13 @@ function readScaleBars(video, times, work, W, H) {
   return ocrFrames(files).map((o, i) => ({ t: times[i], scale: parseScaleText(o.lines || []) }));
 }
 
-function heroVerdict(video, t, action, headline) {
-  // The hero band = everything between the top of the card and the business name.
-  // Anchor the card's LEFT edge on the headline, not on the action row: when the card floats
-  // over the results list, a list row's "Directions" can share the button row's baseline and
-  // drag minX into the list. The business-name heading is always inside the card's padding.
-  const top = Math.max(0, headline.y - 190);
-  const bottom = Math.max(top + 10, headline.y - 12);
-  const x = Math.max(0, headline.x - 24);
-  const right = Math.max(action.maxX + 30, headline.x + headline.w + 30);
-  const w = Math.max(200, right - x);
-  const rows = rowStats(video, t, { x, y: top, w, h: bottom - top });
-  let content = 0, blank = 0;
-  for (const r of rows) {
-    if (r.mean >= BLANK_MEAN && r.sd <= BLANK_SD && r.sat <= BLANK_SAT) blank++;
-    else if (r.sd > 10 || r.sat > 18) content++;   // a photo, or Google's blue no-photo graphic
-  }
-  // A partly-scrolled card shows only a sliver of hero — that is fine. The failure signature is
-  // a band that is DOMINATED by white void with almost no image in it.
-  const ok = content >= MIN_HERO_CONTENT_ROWS && blank / Math.max(1, rows.length) < 0.6;
-  return { contentRows: content, blankRows: blank, totalRows: rows.length, ok, rect: { x, y: top, w, h: bottom - top } };
+function judgeHero(video, t, action, headline) {
+  // Geometry is shared with step-3's capture-time check — see scripts/lib/hero-band.mjs.
+  const rect = heroRectFromHeading(
+    { left: headline.x, right: headline.x + headline.w, top: headline.y },
+    action.maxX,
+  );
+  return { ...heroVerdict(bandRows(video, rect, t)), rect };
 }
 
 function nameMatches(frameText, business) {
@@ -301,7 +265,7 @@ function nameMatches(frameText, business) {
     const loose = findActionRow(f.lines);
     const headline = loose ? findHeadline(f.lines, loose) : null;
     const action = (loose && headline) ? refineActionRow(loose, headline) : null;
-    const hero = (action && headline) ? heroVerdict(VIDEO, f.t, action, headline) : null;
+    const hero = (action && headline) ? judgeHero(VIDEO, f.t, action, headline) : null;
     analysed.push({ t: f.t, rank: overlay.rank, action, headline, hero, text: f.lines.map((l) => l.t).join(' ') });
   }
 
