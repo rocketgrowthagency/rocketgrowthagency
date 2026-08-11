@@ -717,6 +717,7 @@ EOPY
   # step-7 didn't produce an MP4, BUILD_ONLY_SLUG falls back to empty →
   # legacy behavior preserved.
   GATE_BLOCK=""   # reset per lead — a stale value would mis-attribute the previous lead's rejection
+  FAIL_DETAIL=""  # ditto: which stage came up empty, filled in by the no-step-7 branch below
   STEP7_MP4=$(ls -t "output/Step 7 (Final Merge MP4)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp4 2>/dev/null | head -1)
   if [ -n "$STEP7_MP4" ]; then
     BUILD_SLUG=$(basename "$STEP7_MP4" .mp4 | sed 's/^[0-9]*_//')
@@ -740,7 +741,19 @@ EOPY
     # blocks the whole worker. Skip straight to FAILED; the missing-video reconciler retries it later.
     BUILD_SLUG=""
     DEPLOY_SLUG=""
-    echo "  ✗ no step-7 MP4 for ${BIZ_NAME} — skipping landing build (refusing full-corpus rebuild)" | tee -a "$LOGFILE"
+    # 2026-08-11 — PINPOINT WHERE IT DIED. "landing page not built" was 56% of every night's failures
+    # (80 of ~143 across 8 runs) and explained nothing, so the single biggest source of lost videos has
+    # never been diagnosable. Walk back through the artifacts to name the LAST stage that produced output;
+    # that turns one opaque bucket into an actionable per-stage count. See project_video_throughput_analysis.md.
+    _last_artifact() {
+      ls "output/Step 6 (Voiceover MP3)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp3 >/dev/null 2>&1 && { echo "step-6 voiceover OK → step-7 merge produced nothing"; return; }
+      ls "output/Step 5 (Branding Overlay)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp4 >/dev/null 2>&1 && { echo "step-5 branding OK → step-6 voiceover produced nothing"; return; }
+      ls "output/Step 4 (Combine Desktop+Mobile)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.mp4 >/dev/null 2>&1 && { echo "step-4 combine OK → step-5 branding produced nothing"; return; }
+      ls "output/Step 3 (Video Recorder - Raw WebM)/${DATE_STAMP}_${BIZ_SLUG}-only-"*"-[step-2]"/*.webm >/dev/null 2>&1 && { echo "step-3 capture OK → step-4 combine produced nothing"; return; }
+      echo "nothing after step-3 capture"
+    }
+    FAIL_DETAIL="no final video — $(_last_artifact)"
+    echo "  ✗ no step-7 MP4 for ${BIZ_NAME} — ${FAIL_DETAIL}" | tee -a "$LOGFILE"
   fi
 
   # 2026-05-28 BUG FIX: this used to derive its own SLUG_PATTERN from BIZ_NAME
@@ -794,8 +807,16 @@ EOPY
       append_result "$RESULTS_FAILED" "$BIZ_NAME|🚫 BLOCKED BY GATE — ${GATE_BLOCK}"
       echo "  🚫 BLOCKED BY GATE: $BIZ_NAME — ${GATE_BLOCK}" | tee -a "$LOGFILE"
     else
-      append_result "$RESULTS_FAILED" "$BIZ_NAME|landing page not built"
-      echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
+      # Never file a bare "landing page not built" again — say WHICH stage came up empty.
+      if [ -n "${FAIL_DETAIL:-}" ]; then
+        REASON="$FAIL_DETAIL"
+      elif [ -z "${BUILD_SLUG:-}" ]; then
+        REASON="no final video — step-7 produced no MP4"
+      else
+        REASON="landing build produced no page for slug '${BUILD_SLUG}' (video exists, no gate block — check the Airtable/slug match)"
+      fi
+      append_result "$RESULTS_FAILED" "$BIZ_NAME|$REASON"
+      echo "  ✗ FAILED: $BIZ_NAME — $REASON" | tee -a "$LOGFILE"
     fi
   fi
 }  # end process_one_lead
@@ -1122,6 +1143,24 @@ if [ "${GATE_BLOCKED:-0}" -gt 0 ]; then
   done
 else
   echo "- None — no video was rejected by the acceptance or visual gate tonight." >> "$REPORT"
+fi
+
+# WHERE THE LOSSES HAPPENED — one line per stage, biggest first. Added 2026-08-11 after measuring that
+# "landing page not built" was 56% of every night's failures and named no stage at all, so the single
+# largest source of lost videos was undiagnosable. See project_video_throughput_analysis.md.
+if [ "$FAILED_TOTAL" -gt 0 ]; then
+  cat >> "$REPORT" <<EOF
+
+## Where the losses happened
+| Count | Stage / cause |
+|---|---|
+EOF
+  printf '%s\n' "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}" \
+    | sed 's/^[^|]*|//' \
+    | sed -e 's/(.*)//' -e 's/[0-9]\+\/3 WebMs/N\/3 WebMs/' -e 's/ at [0-9].*//' -e 's/—.*white void.*/— blank hero (white void)/' \
+    | sed 's/[[:space:]]*$//' \
+    | sort | uniq -c | sort -rn \
+    | awk '{c=$1; $1=""; sub(/^ /,""); printf "| %s | %s |\n", c, $0}' >> "$REPORT"
 fi
 
 cat >> "$REPORT" <<EOF
