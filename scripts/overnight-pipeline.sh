@@ -306,24 +306,38 @@ fi
 if [ -z "$SKIP_SCRAPE" ]; then
   echo "" | tee -a "$LOGFILE"
   echo ">>> step-2 email scrape" | tee -a "$LOGFILE"
-  node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"
-  LATEST_S2=$(ls -t "output/Step 2/"*"-[step-2].csv" | head -1)
+  node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"; S2_RC=${PIPESTATUS[0]}
+  # 2026-08-11: step-2 died silently at lead 46/55 and NOTHING checked its exit code — no master CSV was
+  # written, and the run then grabbed an unrelated CSV and rebuilt the wrong lead. A scrape that doesn't
+  # finish must stop the night loudly, not hand a half-done directory to the next stage.
+  if [ "${S2_RC:-0}" != "0" ]; then
+    echo "✗ FATAL: step-2 email scrape exited ${S2_RC} — the master CSV is missing or incomplete." | tee -a "$LOGFILE"
+    echo "         Aborting rather than building from a stale/unrelated CSV." | tee -a "$LOGFILE"
+    exit 1
+  fi
+  # 2026-08-11 — pick TODAY'S MASTER CSV FOR THIS SEARCH, explicitly. The old
+  # `ls -t "output/Step 2/"*"-[step-2].csv" | head -1` took the newest file in the whole directory with no
+  # check of date, search, or kind — so it could grab (a) a per-lead "<slug>-only-<search>" CSV from a
+  # previous night, or (b) a stray CSV left by another process. On 2026-08-11 it grabbed a leftover from a
+  # manual rebuild batch: the estate-planning run threw away its own 55 scraped leads, rebuilt a
+  # CHIROPRACTOR from a different search, and reported "1 scraped, 1 completed". A whole night, silently.
+  SEARCH_SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//')
+  MASTER_S2="output/Step 2/${DATE_STAMP}_${SEARCH_SLUG}-[step-2].csv"
+  if [ -f "$MASTER_S2" ]; then
+    LATEST_S2="$MASTER_S2"
+  else
+    # No master for tonight's search = step-2 found nothing NEW to build (every listing already scraped).
+    # That is a legitimate outcome, not an error — but it must NOT fall back to some older CSV, which is
+    # exactly how a stale lead gets rebuilt and reported as tonight's work.
+    echo "" | tee -a "$LOGFILE"
+    echo ">>> step-2 produced no master CSV for '$SEARCH_QUERY' (${DATE_STAMP}) — nothing new to build." | tee -a "$LOGFILE"
+    echo "    Not falling back to an older CSV (that is how 2026-08-11 rebuilt the wrong lead)." | tee -a "$LOGFILE"
+    echo "    This search is exhausted; the run moves on." | tee -a "$LOGFILE"
+    echo "SEARCH_EXHAUSTED=1" | tee -a "$LOGFILE"
+    exit 0
+  fi
 fi
 echo "Step-2 CSV: $LATEST_S2" | tee -a "$LOGFILE"
-# 2026-08-11 — VERIFY THE CSV BELONGS TO TONIGHT'S SEARCH. `ls -t | head -1` takes the newest file in the
-# whole directory with no check, so ANY stray same-day CSV wins the race. That night a leftover per-lead
-# CSV from a manual rebuild batch was newer than the scrape output, so the estate-planning run rebuilt a
-# CHIROPRACTOR from a different search, discarded its own 55 scraped leads, and reported "1 scraped".
-# Silent and very expensive: a whole night produced nothing.
-SEARCH_SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//')
-case "$(basename "$LATEST_S2")" in
-  *"$SEARCH_SLUG"*) : ;;
-  *)
-    echo "✗ FATAL: newest step-2 CSV is '$(basename "$LATEST_S2")' which does NOT belong to tonight's search" | tee -a "$LOGFILE"
-    echo "         ('$SEARCH_QUERY' → expected the name to contain '$SEARCH_SLUG')." | tee -a "$LOGFILE"
-    echo "         A stray CSV in output/Step 2/ would make this run build the WRONG lead. Aborting." | tee -a "$LOGFILE"
-    exit 1 ;;
-esac
 
 # === For each emailable lead, run individual chain ===
 DEPLOYED_URLS=()
