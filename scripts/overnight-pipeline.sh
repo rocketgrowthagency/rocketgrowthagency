@@ -306,7 +306,7 @@ fi
 if [ -z "$SKIP_SCRAPE" ]; then
   echo "" | tee -a "$LOGFILE"
   echo ">>> step-2 email scrape" | tee -a "$LOGFILE"
-  node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"; S2_RC=${PIPESTATUS[0]}
+  SEARCH_QUERY="$SEARCH_QUERY" node step-2-email-scraper.mjs 2>&1 | tee -a "$LOGFILE"; S2_RC=${PIPESTATUS[0]}
   # 2026-08-11: step-2 died silently at lead 46/55 and NOTHING checked its exit code — no master CSV was
   # written, and the run then grabbed an unrelated CSV and rebuilt the wrong lead. A scrape that doesn't
   # finish must stop the night loudly, not hand a half-done directory to the next stage.

@@ -40,6 +40,27 @@ function findLatestStep1Csv() {
     process.exit(1);
   }
 
+  // 2026-08-11 — PREFER THE FILE THAT BELONGS TO THIS RUN'S SEARCH. Picking purely by mtime is the same
+  // anti-pattern that cost a whole night on the overnight side: any stray step-1 CSV (a manual per-lead
+  // run, another vertical) that happens to be newest silently becomes this scrape's input, and every
+  // downstream stage then works on the wrong business. When the caller tells us the search (SEARCH_QUERY,
+  // exported by overnight-pipeline.sh), narrow to files whose name carries that slug FIRST.
+  // See feedback_pipeline_must_own_its_inputs.md.
+  const _searchSlug = String(process.env.SEARCH_QUERY || '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (_searchSlug) {
+    // Also exclude PER-LEAD files ("<slug>-only-<search>-[step-1].csv"). They carry the search slug too,
+    // so slug-scoping alone still lets a single-lead artifact masquerade as the night's master scrape —
+    // which is exactly the file that hijacked 2026-08-11.
+    const scoped = files.filter((f) => f.toLowerCase().includes(_searchSlug) && !f.toLowerCase().includes('-only-'));
+    if (scoped.length) {
+      files = scoped;
+    } else {
+      console.warn(`[step-2] no Step 1 CSV matches search "${process.env.SEARCH_QUERY}" — refusing to fall back to an unrelated newest file.`);
+      process.exit(1);
+    }
+  }
+
   // Sort by file mtime so the TRUE most-recent scrape wins even when
   // multiple scrapes share the same date prefix (e.g. plumbers + hvac
   // same day — alpha sort would pick plumbers over hvac).
