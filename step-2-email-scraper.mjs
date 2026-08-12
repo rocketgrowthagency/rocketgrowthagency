@@ -761,6 +761,13 @@ async function processCsv() {
       if (!email && !placeId && !website) continue;
       const { isDuplicate, matchedRecordId, matchedBy } = checkDuplicate({ email, placeId, website }, dedupIndex);
       if (!isDuplicate) continue;
+      // An ARMED REDO matches itself here. Blocking it is exactly what kept the redo queue from ever
+      // draining (0 of 10 healed, 2026-08-11) — the whole point of arming is that this lead SHOULD render
+      // again. Let it through; the acceptance gate decides whether the rebuild is good enough to publish.
+      if (dedupIndex.armedRedos?.has(matchedRecordId)) {
+        console.log(`  [dedup] ${bizName}: matched an ARMED REDO (${matchedRecordId}) — allowing through to rebuild`);
+        continue;
+      }
       // It's a duplicate — append the new appearance to the existing record
       try {
         const out = await appendAppearance({

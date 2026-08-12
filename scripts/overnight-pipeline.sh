@@ -96,6 +96,13 @@ if ! node scripts/check-hero-band.mjs 2>&1 | tee -a "$LOGFILE"; then
 fi
 # The guards were never the problem — the catches were. step-3 threw "detail card never opened" and two
 # nested catches turned it into a warning + a saved video (that is how sunko-solar shipped card-less).
+# A flagged redo needs THREE things to heal (re-pickable search, dedup letting it through, arming even
+# without an Airtable row). Each has broken silently before — the symptom is always "the queue never drains".
+echo ">>> pre-flight: redo heal path (flagged videos can actually rebuild)" | tee -a "$LOGFILE"
+if ! node scripts/check-redo-heal-path.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: the redo heal path is broken — flagged videos would never rebuild. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: step-3 guardrails are terminal (a broken render fails its lead)" | tee -a "$LOGFILE"
 if ! node scripts/check-guardrails-terminal.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: a step-3 guardrail can be swallowed — known-broken videos could ship. Aborting." | tee -a "$LOGFILE"

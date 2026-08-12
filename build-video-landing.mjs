@@ -373,8 +373,27 @@ function unLedgerSearch(term) {
 // nightly capacity each time. After MAX_GATE_REDOS attempts it is parked as 'build-failed' (the same
 // state the pipeline's idempotency guard already skips) so a human can look at it.
 const MAX_GATE_REDOS = 3;
-async function armRedoAfterGateFail(record, gateName, reason) {
+/**
+ * 2026-08-11 — works with or WITHOUT an existing Airtable record.
+ * On a FIRST-TIME build the lead row is only created at step-8, which runs AFTER this gate — so
+ * `fetchLeadBySlug` returned null and nothing was ever armed (both 08-10 gate blocks were silently
+ * dropped and needed queuing by hand). When there's no record we fall back to the step-2 CSV: mark the
+ * search re-runnable by un-ledgering it, and log loudly so the run report carries it.
+ */
+async function armRedoAfterGateFail(record, gateName, reason, fallback = {}) {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) return false;
+  if (!record?.id) {
+    // No lead row yet → the only durable lever is the attempted-searches ledger. Drop the search so the
+    // next overnight run re-scrapes it and rebuilds this business from scratch.
+    const term = fallback.searchTerm || "";
+    if (term) {
+      unLedgerSearch(term);
+      console.log(`[build-landing] ↻ no Airtable row yet (first-time build) — un-ledgered "${term}" so the next run re-attempts ${fallback.slug || "this lead"}`);
+    } else {
+      console.warn(`[build-landing] ⚠ ${gateName} blocked ${fallback.slug || "a lead"} with no Airtable row AND no search term — it will only be picked up by the missing-video reconciler`);
+    }
+    return true;
+  }
   const prior = parseInt((record?.fields?.["Skip Reasons"] || "").match(/attempt (\d+)/)?.[1], 10);
   const attempt = (Number.isFinite(prior) ? prior : 0) + 1;
   const giveUp = attempt >= MAX_GATE_REDOS;
@@ -484,8 +503,8 @@ async function main() {
     const accept = await runAcceptanceGate(v.fullPath, { business: businessName, rank: expectedRank });
     if (!accept.pass) {
       console.error(`[build-landing] 🚫 ACCEPTANCE GATE FAILED — NOT publishing ${slug}: ${accept.reason}`);
-      if (!NO_AIRTABLE && airtableRecord?.id) {
-        try { await armRedoAfterGateFail(airtableRecord, "acceptance-gate:", accept.reason); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
+      if (!NO_AIRTABLE) {
+        try { await armRedoAfterGateFail(airtableRecord, "acceptance-gate:", accept.reason, { slug, searchTerm: step2SearchTerms[slug] || step2SearchTerms[fileSlug] || "" }); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
       }
       continue;
     }
@@ -494,8 +513,8 @@ async function main() {
     const gate = await runVisualGate(v.fullPath);
     if (!gate.pass) {
       console.error(`[build-landing] 🚫 VISUAL GATE FAILED — NOT publishing ${slug}: ${gate.reason}`);
-      if (!NO_AIRTABLE && airtableRecord?.id) {
-        try { await armRedoAfterGateFail(airtableRecord, "visual-gate:", gate.reason); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
+      if (!NO_AIRTABLE) {
+        try { await armRedoAfterGateFail(airtableRecord, "visual-gate:", gate.reason, { slug, searchTerm: step2SearchTerms[slug] || step2SearchTerms[fileSlug] || "" }); } catch (e) { console.warn(`[build-landing] auto-redo failed: ${e.message}`); }
       }
       continue;
     }
