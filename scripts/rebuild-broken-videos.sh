@@ -23,9 +23,13 @@ say(){ echo "$*" | tee -a "$LOG"; }
 
 [ $# -gt 0 ] || { say "usage: $0 <slug> [<slug> ...]"; exit 1; }
 caffeinate -dimsu -t 5400 </dev/null >/dev/null 2>&1 & CAFF=$!
-trap 'kill $CAFF 2>/dev/null' EXIT
 
-OK=(); FAILED=()
+OK=(); FAILED=(); TEMP_CSVS=()
+# The overnight pipeline picks its step-2 CSV with `ls -t "output/Step 2/"*"-[step-2].csv" | head -1`.
+# Any today-dated file we leave there can win that race and make the night build the WRONG lead — it did
+# exactly that on 2026-08-11 (an estate-planning run built a chiropractor). Clean up on the way out.
+cleanup_csvs(){ for c in "${TEMP_CSVS[@]:-}"; do [ -n "$c" ] && rm -f "$c"; done; }
+trap 'kill $CAFF 2>/dev/null; cleanup_csvs' EXIT
 for SLUG in "$@"; do
   say ""; say "════ $SLUG — $(date +%H:%M:%S) ════"
 
@@ -34,7 +38,7 @@ for SLUG in "$@"; do
   if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV for $SLUG — skipping"; FAILED+=("$SLUG:no-csv"); continue; fi
   BASE=$(basename "$SRC"); SUFFIX=${BASE#*_}
   CSV="output/Step 2/${DATE}_${SUFFIX}"
-  cp "$SRC" "$CSV"
+  cp "$SRC" "$CSV"; TEMP_CSVS+=("$CSV")
   say "  csv: $CSV"
 
   RUN="${DATE}_${SUFFIX%.csv}"

@@ -92,4 +92,20 @@ if [ -f "$HOME/rga-ALERT-openai.log" ] && [ -f "/Users/chris/RGA/Rocket Growth A
   osascript -e 'display notification "OpenAI still needs funds — content/videos blocked" with title "🚨 RGA: OpenAI needs funds"' 2>/dev/null
 fi
 
+# 6) Failed-video audit (Chris 2026-07-11): verify DAILY that no emailable lead is stuck without a video and
+#    can't self-recover — notify + surface an alert file if so. Runs here (in the always-daily guard) as well
+#    as after each overnight run, so it fires even on nights the governor builds 0 searches.
+echo ">>> failed-video audit (every email must have a video)" | tee -a "$LOG"
+node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
+
+# 7) Duplicate-company guards (Chris 2026-07-11: "don't send multiple first emails to the same company"):
+#    (a) assert the send engine still has the one-first-email-per-inbox guard (catches a stale .gs paste);
+#    (b) surface any live shared-inbox duplicate leads (DRY — the send-time guard blocks them regardless).
+echo ">>> send-dedup guard (one first-email per inbox)" | tee -a "$LOG"
+if ! node scripts/check-send-dedup-guard.mjs 2>&1 | tee -a "$LOG"; then
+  osascript -e 'display notification "Send engine lost the one-email-per-inbox guard — re-paste gmail-to-airtable.gs" with title "🚨 RGA: dedup guard missing" sound name "Sosumi"' 2>/dev/null
+fi
+echo ">>> live duplicate-inbox check (should be 0)" | tee -a "$LOG"
+node scripts/dedup-existing-leads.mjs 2>&1 | tail -1 | tee -a "$LOG" || true
+
 echo "=== deliverability guard DONE $(date) — health=$HEALTH ===" | tee -a "$LOG"

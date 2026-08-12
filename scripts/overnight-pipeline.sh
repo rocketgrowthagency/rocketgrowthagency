@@ -310,6 +310,20 @@ if [ -z "$SKIP_SCRAPE" ]; then
   LATEST_S2=$(ls -t "output/Step 2/"*"-[step-2].csv" | head -1)
 fi
 echo "Step-2 CSV: $LATEST_S2" | tee -a "$LOGFILE"
+# 2026-08-11 — VERIFY THE CSV BELONGS TO TONIGHT'S SEARCH. `ls -t | head -1` takes the newest file in the
+# whole directory with no check, so ANY stray same-day CSV wins the race. That night a leftover per-lead
+# CSV from a manual rebuild batch was newer than the scrape output, so the estate-planning run rebuilt a
+# CHIROPRACTOR from a different search, discarded its own 55 scraped leads, and reported "1 scraped".
+# Silent and very expensive: a whole night produced nothing.
+SEARCH_SLUG=$(echo "$SEARCH_QUERY" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-//; s/-$//')
+case "$(basename "$LATEST_S2")" in
+  *"$SEARCH_SLUG"*) : ;;
+  *)
+    echo "✗ FATAL: newest step-2 CSV is '$(basename "$LATEST_S2")' which does NOT belong to tonight's search" | tee -a "$LOGFILE"
+    echo "         ('$SEARCH_QUERY' → expected the name to contain '$SEARCH_SLUG')." | tee -a "$LOGFILE"
+    echo "         A stray CSV in output/Step 2/ would make this run build the WRONG lead. Aborting." | tee -a "$LOGFILE"
+    exit 1 ;;
+esac
 
 # === For each emailable lead, run individual chain ===
 DEPLOYED_URLS=()

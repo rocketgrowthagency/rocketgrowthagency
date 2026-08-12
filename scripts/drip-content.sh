@@ -68,6 +68,19 @@ bash scripts/notify-openai-quota.sh "$LOG"
 # Non-fatal: a render hiccup must NEVER block the content deploy. See project_og_cards_locked.
 node scripts/build-og-cards.mjs --all 2>&1 | tee -a "$LOG" || echo ">>> og-card build skipped (non-fatal)" | tee -a "$LOG"
 
+# 2.55 GEO pages (2026-07-11): generate a "Local SEO for <vertical> in <city>" page for any NEW vertical
+# benchmark (--all skips combos that already have a page), then rebuild the /local-seo/ hub. Each page carries
+# real per-city competitive data (anti-doorway). Self-growing: every new city+vertical we scrape → a new SEO
+# page. Non-fatal. See project_programmatic_seo.md.
+node scripts/generate-geo-vertical-page.mjs --all 2>&1 | tee -a "$LOG" || echo ">>> geo pages skipped (non-fatal)" | tee -a "$LOG"
+node scripts/generate-geo-vertical-page.mjs --hub 2>&1 | tee -a "$LOG" || true
+node scripts/generate-data-report.mjs 2>&1 | tee -a "$LOG" || true
+
+# 2.6 SITEMAP regen (2026-07-11): rebuild sitemap.xml from disk so every new blog post / industry page is
+# discoverable by Google/Bing (the old sitemap was hand-maintained + went stale). Runs from the WEBSITE repo.
+# Non-fatal — a sitemap hiccup must NEVER block the content deploy. See project_sitemap_seo.md.
+node "$WEBSITE_DIR/scripts/build-sitemap.mjs" 2>&1 | tee -a "$LOG" || echo ">>> sitemap build skipped (non-fatal)" | tee -a "$LOG"
+
 # 2.5 HARD LOCK GUARD (locked 2026-07-07): if ANY Chris-approved page regressed (lost its design
 # markers — e.g. a generator reverted it from a stale template), ABORT before deploy so the reverted
 # page can never go live. This is the net that would have caught the 2026-07-07 hub revert.
@@ -81,14 +94,16 @@ fi
 
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
-if [ -n "$(git status --porcelain industries/ blog/ sitemap.xml 2>/dev/null)" ]; then
-  git add industries/ blog/ sitemap.xml
+if [ -n "$(git status --porcelain industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml 2>/dev/null)" ]; then
+  git add industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml
   git -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
     commit -q -m "drip: inbound content ${DATE_STAMP} — industry: ${IND:-none} | blog: ${BLOG:-none}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   netlify deploy --prod --dir=. 2>&1 | grep -iE "Production URL|Deploy complete|error" | tee -a "$LOG"
-  echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap updated for Google rediscovery." | tee -a "$LOG"
+  # IndexNow ping AFTER deploy (needs the fresh sitemap + /{key}.txt live) → Bing/Yandex crawl new posts fast.
+  node "$WEBSITE_DIR/scripts/indexnow-ping.mjs" 2>&1 | tee -a "$LOG" || true
+  echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap regenerated + IndexNow pinged." | tee -a "$LOG"
 else
   echo ">>> no changes to deploy (already built?)." | tee -a "$LOG"
 fi

@@ -241,7 +241,7 @@ const FOOTER = `    <footer class="footer">
         </div>
       </div>
       <nav class="footer-col"><h4>Services</h4><a href="/services/google-maps-local-seo/">Google Maps SEO</a><a href="/services/gbp-optimization/">GBP Optimization</a><a href="/services/local-seo-website-support/">Website Support</a><a href="/services/">All Services</a></nav>
-      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
+      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/industries/">Industries</a><a href="/local-seo/">Local SEO by City</a><a href="/state-of-local-seo/">Local SEO Data Report</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
       <nav class="footer-col"><h4>Company</h4><a href="/free-growth-audit/">Free Growth Audit</a><a href="/contact/">Contact</a><a href="/start-growth-plan/">Start Growth Plan</a></nav>
     </div>
     <div class="footer-bottom"><div class="footer-bottom-inner"><span>&copy; 2026 Rocket Growth Agency. All rights reserved.</span><span class="footer-legal"><a href="/privacy/">Privacy Policy</a> &middot; <a href="/terms/">Terms of Service</a></span></div></div>
