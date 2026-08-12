@@ -1774,21 +1774,26 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
         if (!h1) return null;
         const r = h1.getBoundingClientRect();
-        if (!(r.width > 0) || r.top < 40) return null;         // no room above the name = nothing to judge
+        if (!(r.width > 0)) return null;
         return { left: r.left, right: r.right, top: r.top };
       }).catch(() => null);
       return head ? heroRectFromHeading(head) : null;
     };
+    // 2026-08-12 — FAIL CLOSED. This used to return { ok: true } whenever it could not measure (heading
+    // near the top of the viewport, or an ffmpeg/IO error) — a fail-OPEN default inside a check whose whole
+    // purpose is to be fail-closed. That hole is why resonance-solar's blank hero sailed through capture on
+    // a FRESH rebuild and was only caught at the deploy gate, wasting a full render cycle. "Cannot verify"
+    // now counts as NOT ok, exactly like the acceptance gate treats an unverifiable video.
     const _heroOk = async (buf) => {
       const rect = await _heroRectFromDom();
-      if (!rect || rect.h < 40) return { ok: true, skipped: true };   // hero not on screen → nothing to judge
+      if (!rect || rect.h < 40) return { ok: false, unverified: 'hero band not measurable on screen' };
       const tmp = `/tmp/hero-${process.pid}-${Date.now()}.jpg`;
       try {
         fs.writeFileSync(tmp, buf);
         const v = judgeHeroBand(tmp, rect);
         return { ...v, rect };
       } catch (e) {
-        return { ok: true, skipped: true, err: e.message };           // measurement failed → let the gate decide
+        return { ok: false, unverified: `measurement failed: ${e.message}` };
       } finally { try { fs.unlinkSync(tmp); } catch (_) {} }
     };
     let frozen = null, lastHero = null;
@@ -1801,7 +1806,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (hero.ok) { frozen = buf; break; }
       // Blank hero in the frame itself — do NOT freeze it. Nudge the panel to re-trigger Google's
       // lazy-load, give it a moment, and grab again.
-      console.warn(`   ⚠️ blank hero in grab ${i + 1}/4 (${hero.contentRows} content / ${hero.blankRows} blank rows) — nudging + re-grabbing`);
+      console.warn(`   ⚠️ hero not acceptable in grab ${i + 1}/4 — ${hero.unverified ? hero.unverified : `${hero.contentRows} content / ${hero.blankRows} blank rows`} — nudging + re-grabbing`);
       await page.evaluate(() => {
         const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
         let s = h1 && h1.parentElement;
@@ -1815,8 +1820,14 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
     // Every grab showed a white void where the photo belongs → fail the lead into the redo queue
     // rather than encode a video we already know the acceptance gate will reject.
     if (!frozen && lastHero && lastHero.ok === false) {
-      throw new Error(`[step-3 GUARDRAIL] holdOnDetailCard: hero band is a blank white void in every grab (${lastHero.contentRows} content / ${lastHero.blankRows} of ${lastHero.totalRows} rows blank) — refusing to freeze a blank hero; failing the lead to the redo queue. See feedback_video_acceptance_gate_locked.md`);
+      const why = lastHero.unverified
+        ? `hero band could not be verified in any grab (${lastHero.unverified})`
+        : `hero band is a blank white void in every grab (${lastHero.contentRows} content / ${lastHero.blankRows} of ${lastHero.totalRows} rows blank)`;
+      throw new Error(`[step-3 GUARDRAIL] holdOnDetailCard: ${why} — refusing to freeze it; failing the lead to the redo queue. See feedback_video_acceptance_gate_locked.md`);
     }
+    // The fallback re-grab loop below pushes frames WITHOUT any hero check. Reaching it with a known-bad
+    // verdict would ship exactly the frames we just rejected, so that case throws above. Only genuine
+    // grab failures (no verdict at all) may use the fallback.
     if (!frozen) {                                // grab failed entirely → fall back to the old re-grab loop
       const until = Date.now() + ms;
       let got = 0;

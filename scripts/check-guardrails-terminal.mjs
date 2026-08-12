@@ -52,6 +52,12 @@ const CHECKS = [
     why: 'the pixel verdict is the single source of truth for a failed hero load',
   },
   {
+    name: 'the capture-side hero check FAILS CLOSED',
+    ok: () => /if \(!rect \|\| rect\.h < 40\) return \{ ok: false/.test(SRC)
+           && !/return \{ ok: true, skipped: true \}/.test(SRC),
+    why: 'an unverifiable hero must count as NOT ok — a fail-open default let a blank hero reach the deploy gate',
+  },
+  {
     name: 'the widen step is bounded by the city scale limit',
     ok: () => /const scaleNow = await readMapScaleMeters\(page\);[\s\S]{0,200}?scaleNow >= CITY_SCALE_MAX_M/.test(SRC),
     why: 'a blind zoom-out after the city-zoom pass is what shipped a 10 mi map',
