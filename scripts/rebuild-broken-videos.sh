@@ -33,9 +33,32 @@ trap 'kill $CAFF 2>/dev/null; cleanup_csvs' EXIT
 for SLUG in "$@"; do
   say ""; say "════ $SLUG — $(date +%H:%M:%S) ════"
 
-  # Find the newest step-2 CSV for this lead and re-date it so today's run owns the output dirs.
-  SRC=$(ls -t "output/Step 2/"*"_${SLUG}-only-"*"-[step-2].csv" 2>/dev/null | head -1)
-  if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV for $SLUG — skipping"; FAILED+=("$SLUG:no-csv"); continue; fi
+  # Pick the newest step-2 CSV for this lead THAT ACTUALLY CARRIES AN EMAIL, and re-date it so today's run
+  # owns the output dirs.
+  #
+  # 2026-08-13: plain `ls -t | head -1` is the anti-pattern from feedback_pipeline_must_own_its_inputs — the
+  # one that lost the 08-11 night. It bit here too: william-spiller has two CSVs, and the NEWER one (a
+  # bankruptcy search) has no email while the older estate-planning one does. step-3 then correctly skipped
+  # the lead ("no rows with email") and exited 0, and step-4 failed hunting for output that was never going
+  # to exist — a confusing error three steps downstream of the real cause.
+  # A video exists to be emailed (feedback_every_email_gets_a_video), so a CSV with no email is not a
+  # candidate at all.
+  # NOTE: `for CAND in $(ls …)` word-splits on the space in "Step 2" and shreds every path — read lines instead.
+  SRC=""
+  while IFS= read -r CAND; do
+    [ -n "$CAND" ] || continue
+    if python3 - "$CAND" <<'PYEOF'
+import csv, sys
+with open(sys.argv[1], newline="") as fh:
+    for row in csv.DictReader(fh):
+        if any("email" in (k or "").lower() and (v or "").strip() for k, v in row.items()):
+            sys.exit(0)
+sys.exit(1)
+PYEOF
+    then SRC="$CAND"; break; fi
+    say "  ↷ skipping $(basename "$CAND") — no email in it"
+  done < <(ls -t "output/Step 2/"*"_${SLUG}-only-"*"-[step-2].csv" 2>/dev/null)
+  if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV WITH AN EMAIL for $SLUG — skipping (a video is only built for a lead we can email)"; FAILED+=("$SLUG:no-emailable-csv"); continue; fi
   BASE=$(basename "$SRC"); SUFFIX=${BASE#*_}
   CSV="output/Step 2/${DATE}_${SUFFIX}"
   cp "$SRC" "$CSV"; TEMP_CSVS+=("$CSV")
