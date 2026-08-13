@@ -67,21 +67,33 @@ function photoBandVerdict(v, t, W, H) {
       { maxBuffer: 1 << 22 });
     const n = Math.floor(raw.length / 3);
     if (n < 64) return null;
-    let sum = 0, blues = 0; const lum = new Array(n);
+    let sum = 0, blues = 0, whites = 0; const lum = new Array(n);
     for (let i = 0; i < n; i++) {
       const r = raw[i * 3], g = raw[i * 3 + 1], b = raw[i * 3 + 2];
       const L = 0.299 * r + 0.587 * g + 0.114 * b;
       lum[i] = L; sum += L;
       if (b > r + 12 && b > g + 6) blues++;
+      if (r > 238 && g > 238 && b > 238) whites++;
     }
     const mean = sum / n;
     const sdLum = Math.sqrt(lum.reduce((a, L) => a + (L - mean) * (L - mean), 0) / n);
     const bluePct = (100 * blues) / n;
+    const whitePct = (100 * whites) / n;
+    // ⚠️ 2026-08-13 SECOND FIX — WHITE COVERAGE IS THE DECISIVE SIGNAL, not sdLum.
+    // The first version gated on `sdLum >= 12`, calibrated against a SYNTHETIC pure-white band (sdLum 0.1).
+    // A REAL blank band is not pure white — it contains the ✕ close button, the card border and an edge of
+    // the map, which lift it to sdLum 10.2–12.5 depending only on the downscale size. The threshold sat
+    // INSIDE that range, so two genuinely blank videos scored 12.4/12.5 and PASSED by half a point. Chris
+    // caught 13 seconds of white void in the shipped spiller video. Measured truth:
+    //   blank band  → white 98%, sdLum 10.2–10.4     blue placeholder → white  0%, blue 99%
+    //   real photo  → white 23%, sdLum 42.8          map (not a band) → white 71%, sdLum 28.8
+    // A near-white FIELD cannot be a photo or a placeholder, at any scale — that is the robust invariant.
+    if (whitePct >= 85 && bluePct < 40) return { visible: false, why: `BLANK band — ${whitePct.toFixed(0)}% white (sdLum ${sdLum.toFixed(1)})` };
     // blue illustration = Google saying "this business has no photos" — honest, ALWAYS passes (see
     // feedback_video_creation_correctness_locked: don't over-reject those).
     if (bluePct >= 40) return { visible: true, why: `blue no-photos placeholder (${bluePct.toFixed(0)}% blue)` };
-    // real imagery has texture; a failed-to-load band is flat white/grey.
-    if (sdLum >= 12) return { visible: true, why: `real photo (sdLum ${sdLum.toFixed(1)})` };
+    // real imagery has texture. 20, not 12 — 12 is inside the blank band's real range.
+    if (sdLum >= 20) return { visible: true, why: `real photo (sdLum ${sdLum.toFixed(1)})` };
     return { visible: false, why: `flat band — photo failed to load (sdLum ${sdLum.toFixed(1)}, mean ${mean.toFixed(0)})` };
   } catch (_) { return null; }
 }
@@ -238,13 +250,70 @@ async function checkMapView(v, D) {
   return { skipped: false, fail, mapWide, noCardFail, blankPhotosFail, wide, noPin, noCard, blankPhotos, mapFrames, cardFrames };
 }
 
+// ---- CHECK F: DENSE hero-band scan (2026-08-13, after a 13-second white void SHIPPED) ----
+// Check E could not catch this, structurally, for two reasons:
+//   1. It only judges frames the VISION MODEL called card_open. A blank hero band makes the model answer
+//      "not a card" (its own prompt defines a detail card as having "a LARGE photo banner across the TOP"),
+//      so the very frames that should fail are EXCLUDED from the check built to catch them — and there were
+//      too few of them (2) to trip noCardFail's ≥3 either. The video fell through the gap between two checks.
+//   2. It samples 5 frames. Cosmetique's blank window was 3s of a 144s video — 5 samples miss it by luck.
+// This scan is pure ffmpeg (no API, no model, ~1s/frame), so it can afford to look EVERY second across the
+// whole Maps segment, and it fails on a SUSTAINED blank window rather than a lucky sample.
+// Measured on the two shipped videos: spiller blank 16–28s (13s), cosmetique blank 24–26s (3s).
+// Is this frame the Maps view (vs the white intro/outro title card)? Deterministic, whole-frame.
+function isMapsFrame(v, t) {
+  try {
+    const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
+      '-vf', 'scale=96:54', '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 22 });
+    const n = Math.floor(raw.length / 3);
+    if (n < 32) return false;
+    let w = 0, col = 0;
+    for (let i = 0; i < n; i++) {
+      const r = raw[i * 3], g = raw[i * 3 + 1], b = raw[i * 3 + 2];
+      if (r > 238 && g > 238 && b > 238) w++;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 18) col++;
+    }
+    const whitePct = (100 * w) / n, colPct = (100 * col) / n;
+    return whitePct < 85 && colPct >= 6;
+  } catch (_) { return false; }
+}
+function checkHeroBandDense(v, D) {
+  let VW = 1280, VH = 720;
+  try {
+    const wh = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', v]).toString().trim().split(',');
+    if (+wh[0] > 0 && +wh[1] > 0) { VW = +wh[0]; VH = +wh[1]; }
+  } catch (_) {}
+  // The Maps segment lives ~10–40% in; scan it densely (a 1s grid).
+  const from = Math.max(1, D * 0.08), to = D * 0.42;
+  const blanks = [];
+  for (let t = from; t <= to; t += 1) {
+    // Only judge frames that ARE the Maps view. The intro title card ("Local Search Growth Audit") is a
+    // full-frame WHITE slide, so the band crop reads as blank and every video false-fails — caught when
+    // 3/3 unrelated shipped videos "failed" at ~12s, which is the intro, not the card. Measured:
+    //   intro          → fullWhite 94%, colourful  3%
+    //   real Maps view → fullWhite 59-67%, colourful 11-18%   (whether the band is blank or fine)
+    if (!isMapsFrame(v, +t.toFixed(1))) continue;
+    const r = photoBandVerdict(v, +t.toFixed(1), VW, VH);
+    if (r && r.visible === false && /BLANK band/.test(r.why)) blanks.push(+t.toFixed(1));
+  }
+  // Longest run of CONSECUTIVE blank seconds — one stray frame is not a defect, a held blank frame is.
+  let best = 0, cur = 0, startAt = null, bestStart = null;
+  for (let i = 0; i < blanks.length; i++) {
+    if (i && blanks[i] - blanks[i - 1] <= 1.01) { cur++; } else { cur = 1; startAt = blanks[i]; }
+    if (cur > best) { best = cur; bestStart = startAt; }
+  }
+  return { fail: best >= 2, longestRun: best, startAt: bestStart, blanks };
+}
+
 // ---- run ----
 (async () => {
   const D = duration(VIDEO);
   const a = checkQuarterScale(VIDEO, D);
   const b = await checkWrongWindow(VIDEO, D);
   const c = await checkMapView(VIDEO, D);
+  const f = checkHeroBandDense(VIDEO, D);
   const reasons = [];
+  if (f.fail) reasons.push(`BLANK-HERO-BAND held for ${f.longestRun}s from ${f.startAt}s (white void where the card's photo belongs)`);
   if (a.fail) reasons.push(`QUARTER-SCALE/BLANK-REGION at ${a.flagged.length} sampled frame(s): ${a.flagged.slice(0, 3).map((f) => `${f.t}s (${f.detail})`).join('; ')}`);
   if (b.fail) reasons.push(`WRONG-WINDOW (not Maps/website) at ${b.bad.filter((x) => !x.softError).map((x) => `${x.t}s "${x.desc}"`).join('; ')}`);
   const advisories = [];
@@ -253,7 +322,7 @@ async function checkMapView(v, D) {
   // they were logged-only. A no-card or blank-photos video FAILS the build. Report them as hard reasons.
   if (c.noCardFail) reasons.push(`NO-DETAIL-CARD (raw results list, no business selected) at ${c.noCard.map((f) => `${f.t}s`).join(', ')}`);
   if (c.blankPhotosFail) reasons.push(`BLANK-PHOTOS (card open but photo strip blank/gray) at ${c.blankPhotos.map((f) => `${f.t}s`).join(', ')}`);
-  const pass = !a.fail && !b.fail && !c.fail;
+  const pass = !a.fail && !b.fail && !c.fail && !f.fail;
   const result = {
     video: path.basename(VIDEO), pass,
     checkA_quarterScale: a.fail ? 'FAIL' : 'pass',
@@ -261,6 +330,7 @@ async function checkMapView(v, D) {
     checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.mapWide ? 'FAIL' : 'pass'),
     checkD_detailCard: c.skipped ? `skipped (${c.reason})` : (c.noCardFail ? 'FAIL' : 'pass'),
     checkE_photos: c.skipped ? `skipped (${c.reason})` : (c.blankPhotosFail ? 'FAIL' : 'pass'),
+    checkF_heroBandDense: f.fail ? `FAIL (${f.longestRun}s blank from ${f.startAt}s)` : 'pass',
     checkC_mapFrames: c.skipped ? null : c.mapFrames,
     checkD_cardFrames: c.skipped ? null : c.cardFrames,
     reasons,
@@ -270,6 +340,7 @@ async function checkMapView(v, D) {
   else {
     console.log(`[visual-gate] ${path.basename(VIDEO)} → ${pass ? '✅ PASS' : '❌ FAIL'}`);
     console.log(`  A quarter-scale/blank: ${result.checkA_quarterScale}   B wrong-window: ${result.checkB_wrongWindow}   C map-view: ${result.checkC_mapView}   D detail-card: ${result.checkD_detailCard}   E photos: ${result.checkE_photos}${c.skipped ? '' : ` (${c.mapFrames} map / ${c.cardFrames} card frames)`}`);
+    console.log(`  F hero-band dense scan: ${result.checkF_heroBandDense}`);
     reasons.forEach((r) => console.log(`  ✗ ${r}`));
     advisories.forEach((r) => console.log(`  ⚠ ${r}`));
     if (b.skipped) console.log(`  ⚠ vision check skipped (${b.reason}) — Check A still enforced; wire OPENAI_API_KEY to catch wrong-window + zoom leaks.`);
