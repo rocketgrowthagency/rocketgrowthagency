@@ -1285,10 +1285,21 @@ function scoreMapsFindings(audit, top3Stats, record) {
   // PRIORITY UPGRADE 2026-05-15: Whitespark 2026 ranks incorrect primary category as the
   // #2 worst NEGATIVE local-pack ranking factor with penalty score 214 — was P18, now P3.
   if (audit?.gbp?.primaryCategoryMatchesSearch === false && audit?.gbp?.primaryCategory) {
+    // 🔴 2026-08-13 — NAME THE TARGET. This finding told the prospect their category was wrong but never
+    // what it should be ("Legal services … is a mismatch"). Chris, watching the spiller video: "what should
+    // it be then? can we compare the category to the top 3?" The stronger, evidence-based comparison
+    // (categoryVsTop3, P2) DID exist but could never run: this P3 finding fires first and that block is
+    // gated on `!out.some(f => f.key === 'categoryMismatch')`. So the weaker wording always won.
+    // Now the top-3 majority is folded in HERE when we have it — one finding, with the answer in it.
+    const _yourCat = audit.gbp.primaryCategory.trim();
+    const _majCat = (top3Stats?.majorityCategory || '').trim();
+    const _target = (_majCat && _majCat.toLowerCase() !== _yourCat.toLowerCase()) ? _majCat : null;
     out.push({
       key: 'categoryMismatch',
       score: 3,
-      finding: `your Google Business Profile primary category is "${audit.gbp.primaryCategory}" — a mismatched primary category directly limits your visibility in this search`,
+      finding: _target
+        ? `your Google Business Profile primary category is "${_yourCat}" — but the top 3 ranked businesses in this search use "${_target}". A mismatched primary category directly limits your visibility in this search`
+        : `your Google Business Profile primary category is "${_yourCat}" — a mismatched primary category directly limits your visibility in this search`,
     });
   }
 
