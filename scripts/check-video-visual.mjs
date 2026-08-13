@@ -45,6 +45,46 @@ function frameJpeg(v, t) {
   // small JPEG (base64) for the vision check — downscaled to keep tokens/cost low
   return execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v, '-vf', 'scale=640:-2', '-frames:v', '1', '-q:v', '5', '-f', 'mjpeg', '-']);
 }
+// ---- DETERMINISTIC hero-photo-band verdict (2026-08-13) ----
+// WHY this exists: `photos_visible` was decided by gpt-4o-mini reading a 640px-wide, q:v-5 JPEG. In that
+// frame the card's hero band is only ~160x95px and heavily compressed, so BOTH a pale real photo AND
+// Google's blue "no photos" illustration degrade into "a light band" — and the prompt's tie-breaker
+// ("if unsure, answer FALSE") converts that ambiguity into a hard reject. On 2026-08-13 it false-rejected
+// two GOOD videos: william-spiller (blue placeholder, 97.3% blue pixels) and cosmetique (a real, pale
+// customer-testimonial photo, sdLum 46.1). Both were re-captured for nothing.
+//
+// This reads the SAME band at FULL resolution — strictly more information than the model gets — and is
+// authoritative for photos_visible. It is NOT a loosening of the gate: a genuinely blank band is near
+// uniform (sdLum ~2-5), an order of magnitude below the threshold. Calibrated against the two frames above.
+// Falls back to the model's answer if ffmpeg can't produce the crop, so the gate stays fail-closed.
+const BAND = { x: 0.3156, y: 0.0694, w: 0.25, h: 0.2667 }; // detail-card hero band, fractions of frame
+function photoBandVerdict(v, t, W, H) {
+  try {
+    const cw = Math.max(8, Math.round(W * BAND.w)), ch = Math.max(8, Math.round(H * BAND.h));
+    const cx = Math.round(W * BAND.x), cy = Math.round(H * BAND.y);
+    const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
+      '-vf', `crop=${cw}:${ch}:${cx}:${cy},scale=96:64`, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'],
+      { maxBuffer: 1 << 22 });
+    const n = Math.floor(raw.length / 3);
+    if (n < 64) return null;
+    let sum = 0, blues = 0; const lum = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const r = raw[i * 3], g = raw[i * 3 + 1], b = raw[i * 3 + 2];
+      const L = 0.299 * r + 0.587 * g + 0.114 * b;
+      lum[i] = L; sum += L;
+      if (b > r + 12 && b > g + 6) blues++;
+    }
+    const mean = sum / n;
+    const sdLum = Math.sqrt(lum.reduce((a, L) => a + (L - mean) * (L - mean), 0) / n);
+    const bluePct = (100 * blues) / n;
+    // blue illustration = Google saying "this business has no photos" — honest, ALWAYS passes (see
+    // feedback_video_creation_correctness_locked: don't over-reject those).
+    if (bluePct >= 40) return { visible: true, why: `blue no-photos placeholder (${bluePct.toFixed(0)}% blue)` };
+    // real imagery has texture; a failed-to-load band is flat white/grey.
+    if (sdLum >= 12) return { visible: true, why: `real photo (sdLum ${sdLum.toFixed(1)})` };
+    return { visible: false, why: `flat band — photo failed to load (sdLum ${sdLum.toFixed(1)}, mean ${mean.toFixed(0)})` };
+  } catch (_) { return null; }
+}
 function sd(cells) {
   const m = cells.reduce((a, b) => a + b, 0) / cells.length;
   return Math.sqrt(cells.reduce((a, b) => a + (b - m) * (b - m), 0) / cells.length);
@@ -139,6 +179,12 @@ async function checkMapView(v, D) {
   // The Maps segment sits early (after the intro, before the website), ~15–50s in. Sample
   // across it (12–36% covers it for both the ~2:10 and ~2:29 renders). 5 frames for coverage.
   const samples = [0.12, 0.18, 0.24, 0.30, 0.36].map((p) => +(D * p).toFixed(1));
+  // Frame size for the deterministic hero-band crop (band is defined as fractions, so any render size works).
+  let VW = 1280, VH = 720;
+  try {
+    const wh = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', v]).toString().trim().split(',');
+    if (+wh[0] > 0 && +wh[1] > 0) { VW = +wh[0]; VH = +wh[1]; }
+  } catch (_) { /* keep the 1280x720 default the renders use */ }
   const wide = []; const noPin = []; const noCard = []; const blankPhotos = []; let mapFrames = 0; let cardFrames = 0;
   for (const t of samples) {
     const b64 = frameJpeg(v, t).toString('base64');
@@ -165,7 +211,15 @@ async function checkMapView(v, D) {
         if (j.zoom === 'wide') wide.push({ t });
         if (j.pin === false) noPin.push({ t });
         if (j.card_open === false) noCard.push({ t });
-        else { cardFrames++; if (j.photos_visible === false) blankPhotos.push({ t }); }
+        else {
+          cardFrames++;
+          // Full-res pixels beat the model's read of a 160x95 compressed crop. Model only decides when
+          // the deterministic check can't run.
+          const pb = photoBandVerdict(v, t, VW, VH);
+          const blank = pb ? !pb.visible : (j.photos_visible === false);
+          if (pb && pb.visible === false) console.log(`   [photo-band] ${t}s BLANK — ${pb.why}`);
+          if (blank) blankPhotos.push({ t, why: pb ? pb.why : 'vision model' });
+        }
       }
     } catch (_) { /* soft — a misread frame shouldn't fail a good video */ }
   }
