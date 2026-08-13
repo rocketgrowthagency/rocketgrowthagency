@@ -2127,6 +2127,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           `URL chain exhausted without success. See memory: feedback_maps_card_visibility_rules.md Rule 3.11.`
         );
       }
+      // 🔴 2026-08-13 ROOT CAUSE OF THE SHIPPED WHITE VOID — pause LIVE capture the instant the card opens.
+      // The card opens here, but the only thing that waits for its hero photo to paint is
+      // waitForDetailCardReady, inside holdOnDetailCard — which runs AFTER injectRankOverlay, the
+      // scroll-to-top, sleep(1000), forceMapsCityZoom, zoomOutMap(3) and sleep(1800). Every one of those
+      // seconds was still being RECORDED LIVE, filming the card while its hero band was an unpainted white
+      // void. That is exactly what shipped: spiller held a blank white band for 13s (16-28s) and only turned
+      // correct at 29s, when holdOnDetailCard finally froze a ready frame. Chris caught it in the live video.
+      // Pausing here means no frame of a half-loaded card can reach the segment; holdOnDetailCard then
+      // supplies the whole hold from ONE frame it has verified is ready.
+      try { if (recorderCtl && recorderCtl.pauseCapture) recorderCtl.pauseCapture(); } catch (_) {}
     }
 
     if (!mapsUrl && skipScrollAttempt) {
