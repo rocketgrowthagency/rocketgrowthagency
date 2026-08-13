@@ -378,7 +378,13 @@ async function loadTop3Stats(baseName, step2CsvPath) {
   for (const row of top3Rows) {
     const ratingNum = parseNumber(row['Rating'] || row.rating);
     const reviewsNum = parseNumber(row['Reviews'] || row.reviews);
-    const cat = (row['Category'] || row.category || '').trim();
+    // 🔴 2026-08-13: the step-1 CSV column is "Detected Category" — `row['Category']` is ALWAYS undefined,
+    // so `categories` came back empty, majorityCategory was null, and the categoryVsTop3 finding (P2, the
+    // strongest category evidence we have — what the actual top 3 in THIS search use) NEVER fired. The audit
+    // silently fell back to the generic `verticalBenchmark` instead. Chris caught it on spiller: we told him
+    // "Legal services" was a mismatch without saying what it should be, while the step-1 CSV had the answer
+    // for all 55 rows. The Airtable path already maps Category ↔ "Detected Category" (see ~line 2276).
+    const cat = (row['Detected Category'] || row['Category'] || row.category || '').trim();
     if (ratingNum != null) ratings.push(ratingNum);
     if (reviewsNum != null) reviews.push(reviewsNum);
     if (cat) categories.push(cat);
