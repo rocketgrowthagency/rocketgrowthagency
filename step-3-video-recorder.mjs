@@ -1982,6 +1982,18 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // couldn't reach rank 11-20 → card never opened for those). scrollsNeeded =
       // ceil(rank/5)+2; clickListingInResultsByName checks before+after each scroll
       // so in-area leads click as soon as they appear (no wasted scrolls).
+      // 🔴 2026-08-13 — FREEZE ON THE RESULTS FRAME BEFORE THE CARD OPENS. This is the fix for the
+      // blank-white hero that shipped (spiller 13s, cosmetique 4s). The deep-rank path has done this since
+      // 2026-06-22 (see the pauseCapture below the typed-search); the scroll-find path never did, so the
+      // auto-capture loop kept filming while Google painted the card — including the seconds where the hero
+      // band is still an empty white void.
+      //
+      // ⚠️ WHY *BEFORE* THE CLICK, not after: pauseCapture() does NOT stop output. It stops the loop from
+      // UPDATING `latestFrame`, so the recording HOLDS whatever frame was captured last. Pausing after the
+      // card opens therefore FREEZES ON THE BLANK CARD and holds it until holdOnDetailCard pushes a verified
+      // frame — which is exactly the 13s void, and exactly what my first attempt at this fix did. Pausing
+      // here holds the RESULTS LIST (no hero band, nothing to load) until a VERIFIED card frame is pushed.
+      if (recorderCtl && recorderCtl.pauseCapture) recorderCtl.pauseCapture();
       const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded);
       if (clicked) {
         // Re-inject overlay after navigation (page.goto wipes the DOM)
@@ -2127,16 +2139,11 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           `URL chain exhausted without success. See memory: feedback_maps_card_visibility_rules.md Rule 3.11.`
         );
       }
-      // 🔴 2026-08-13 ROOT CAUSE OF THE SHIPPED WHITE VOID — pause LIVE capture the instant the card opens.
-      // The card opens here, but the only thing that waits for its hero photo to paint is
-      // waitForDetailCardReady, inside holdOnDetailCard — which runs AFTER injectRankOverlay, the
-      // scroll-to-top, sleep(1000), forceMapsCityZoom, zoomOutMap(3) and sleep(1800). Every one of those
-      // seconds was still being RECORDED LIVE, filming the card while its hero band was an unpainted white
-      // void. That is exactly what shipped: spiller held a blank white band for 13s (16-28s) and only turned
-      // correct at 29s, when holdOnDetailCard finally froze a ready frame. Chris caught it in the live video.
-      // Pausing here means no frame of a half-loaded card can reach the segment; holdOnDetailCard then
-      // supplies the whole hold from ONE frame it has verified is ready.
-      try { if (recorderCtl && recorderCtl.pauseCapture) recorderCtl.pauseCapture(); } catch (_) {}
+      // NOTE (2026-08-13): do NOT pause capture here. Pausing AFTER the card opens freezes `latestFrame` on
+      // the half-loaded card and holds that blank hero until holdOnDetailCard pushes a verified frame — it
+      // CAUSES the void rather than preventing it (measured: 13s). Every caller now pauses BEFORE the card
+      // opens, so the held frame is the results list. See the pauseCapture calls in the scroll-find and
+      // deep-rank paths.
     }
 
     if (!mapsUrl && skipScrollAttempt) {
@@ -3222,13 +3229,23 @@ async function main() {
       const websiteOut = path.join(videosDir, `${indexStr}_${slug}_desktop_website.webm`);
       const mobileOut = path.join(videosDir, `${indexStr}_${slug}_mobile.webm`);
 
-      const allExist = [mapsOut, websiteOut, mobileOut].every(
+      // 🔴 2026-08-13: FORCE_RECAPTURE=1 re-records even when WebMs exist. rebuild-broken-videos.sh prints
+      // "step-3 capture (fresh)" and its whole PURPOSE is to fix a CAPTURE defect (blank hero, wrong zoom) —
+      // but this skip silently reused the very footage that was broken, so the redo re-rendered the identical
+      // defect and reported success. Caught when a redo of the blank-hero videos reached step-4 in 20 seconds.
+      // A rebuild that cannot re-capture is not a rebuild. See feedback_pipeline_must_own_its_inputs.
+      const FORCE_RECAPTURE = process.env.FORCE_RECAPTURE === '1';
+      const allExist = !FORCE_RECAPTURE && [mapsOut, websiteOut, mobileOut].every(
         p => fs.existsSync(p) && fs.statSync(p).size > 10000
       );
       if (allExist) {
         console.log(`\n⏭ Skipping ${name} — all 3 videos already exist.`);
         processed += 1;
         continue;
+      }
+      if (FORCE_RECAPTURE) {
+        for (const p of [mapsOut, websiteOut, mobileOut]) { try { if (fs.existsSync(p)) fs.unlinkSync(p); } catch (_) {} }
+        console.log(`   [force-recapture] cleared any existing WebMs for ${name} — recording fresh`);
       }
 
       // 2026-06-03 — abandon-lead gate. step-2.5 throws + writes skipped:true

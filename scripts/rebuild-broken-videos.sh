@@ -70,7 +70,10 @@ PYEOF
   else say "  step-2.5 audit"; STEP2_CSV="$CSV" node step-2.5-audit.mjs >>"$LOG" 2>&1 || { say "  ✗ step-2.5"; FAILED+=("$SLUG:step-2.5"); continue; }; fi
 
   say "  step-3 capture (fresh)"
-  STEP2_CSV="$CSV" MAX_VIDEOS=1 node step-3-video-recorder.mjs >>"$LOG" 2>&1 || { say "  ✗ step-3 (guardrail or capture failure)"; FAILED+=("$SLUG:step-3"); continue; }
+  # FORCE_RECAPTURE=1 — this script exists to fix CAPTURE defects, so it must never reuse existing WebMs.
+  # Without it step-3 prints "all 3 videos already exist", skips, and the redo re-renders the SAME broken
+  # footage while reporting success (hit 2026-08-13 redoing the blank-hero videos — step-4 in 20 seconds).
+  STEP2_CSV="$CSV" MAX_VIDEOS=1 FORCE_RECAPTURE=1 node step-3-video-recorder.mjs >>"$LOG" 2>&1 || { say "  ✗ step-3 (guardrail or capture failure)"; FAILED+=("$SLUG:step-3"); continue; }
 
   say "  step-6 voiceover (6/6 gate)"
   STEP2_CSV="$CSV" node step-6-voiceover.mjs >>"$LOG" 2>&1; RC=$?
