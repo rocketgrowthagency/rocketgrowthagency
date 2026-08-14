@@ -60,6 +60,15 @@ echo "" | tee -a "$LOGFILE"
 # finding — DO NOT scrape/render/ship until fixed.
 # Memory: feedback_verification_gates_must_be_strict.md.
 # ============================================================
+# FIRST pre-flight, before anything else: can every stage even LOAD? A `const` that gets reassigned is a
+# TypeError thrown on first call — `node --check` parses it fine, so nothing caught it. It killed the
+# 2026-08-12 AND 2026-08-13 nights outright (crash at 21:05, 0 leads, 0 videos, no report, twice). Cheap,
+# ~10s, and it fails BEFORE the capture window is burned. See feedback_fix_the_night_run_live.md.
+echo ">>> pre-flight: every pipeline stage loads" | tee -a "$LOGFILE"
+if ! node scripts/check-pipeline-stages-load.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: a pipeline stage throws on load — aborting BEFORE burning the night. Fix the stage, then re-run." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: regression suite (step-6 gate behavior)" | tee -a "$LOGFILE"
 if ! node scripts/regression-audit-detectors.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: regression suite failed — aborting overnight run to prevent shipping false claims." | tee -a "$LOGFILE"

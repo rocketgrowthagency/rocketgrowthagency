@@ -31,7 +31,10 @@ function findLatestStep1Csv() {
     process.exit(1);
   }
 
-  const files = fs
+  // `let`, not `const` — the search-scoping block below REASSIGNS this. Declared const on 2026-08-12
+  // (623ab59) it threw "TypeError: Assignment to constant variable." on the first line of step-2 and
+  // killed the 08-12 AND 08-13 nights outright: 0 leads, 0 videos, no report, twice.
+  let files = fs
     .readdirSync(STEP1_DIR)
     .filter((f) => f.toLowerCase().endsWith('.csv') && f.includes('[step-1]'));
 
