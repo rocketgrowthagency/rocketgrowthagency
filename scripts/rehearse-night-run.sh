@@ -34,7 +34,7 @@ phase(){ echo; echo "── $* ──"; }
 # `node --check` PARSES that fine, which is why nothing caught it for two nights.
 phase "A. every pipeline stage loads"
 if node scripts/check-pipeline-stages-load.mjs >/tmp/reh-a.log 2>&1; then
-  pass "$(grep -oE '[0-9]+/[0-9]+ stages load clean' /tmp/reh-a.log | head -1)"
+  pass "$(grep -oE "[0-9]+/[0-9]+ stages parse clean" /tmp/reh-a.log | head -1)"
 else
   fail "a stage throws on load:"; grep -E "❌|THROWS|SYNTAX" /tmp/reh-a.log | head -4 | sed 's/^/       /'
 fi
@@ -44,9 +44,13 @@ fi
 phase "B. step-2 selects the CSV that belongs to its search"
 SQ="${REHEARSE_SEARCH:-Insurance agents in Culver City, CA}"
 SLUG=$(echo "$SQ" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\{1,\}/-/g; s/^-//; s/-$//')
-PICKED=$(SEARCH_QUERY="$SQ" node -e '
-const m=await import("./step-2-email-scraper.mjs").catch(e=>{console.error("LOAD_FAIL "+e.message);process.exit(3)});
-' 2>&1 | grep -oE "Using Step 1 CSV: .*" | head -1 | sed 's|.*/||')
+# ⚠️ 2026-08-14 — REHEARSE, DO NOT RUN. The first version imported step-2-email-scraper.mjs, whose module
+# body does not stop at CSV selection: it launched a REAL 55-lead scrape and opened a Chrome window on
+# Chris's screen while he was at his station. A rehearsal that performs the work it is rehearsing is not a
+# rehearsal. This now REPLICATES the selection rule (same slug-scope + per-lead exclusion as
+# findLatestStep1Csv) against the real directory, touching nothing and starting no process.
+PICKED=$(ls -t "output/Step 1"/*"[step-1].csv" 2>/dev/null \
+  | grep -i -- "$SLUG" | grep -v -- "-only-" | head -1 | sed 's|.*/||')
 if [ -z "$PICKED" ]; then
   fail "step-2 produced no CSV selection (see above)"
 elif echo "$PICKED" | grep -q -- "-only-"; then
