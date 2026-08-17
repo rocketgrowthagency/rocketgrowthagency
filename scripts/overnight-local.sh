@@ -136,7 +136,12 @@ MAX_RUN_HOURS="${MAX_RUN_HOURS:-10}"
 # MAIN pass single-worker too: correctness > speed (a single-category night still finishes hours inside
 # the capture window). See feedback_video_capture_screen_must_be_clear.md + feedback_worker_count_concurrency_limit.md.
 WORKER_COUNT="${WORKER_COUNT:-1}"
+# 2026-08-17 — the kill switch accepts EITHER path. A stale, empty STOP-OVERNIGHT sat in the repo ROOT
+# from 2026-08-12 while every run since proceeded normally: only output/STOP-OVERNIGHT was ever read, so
+# a flag dropped in the obvious place did nothing. A kill switch that silently fails to kill is worse
+# than no kill switch, and the repo root is where anyone would put it.
 STOP_FLAG="$SCRAPER_DIR/output/STOP-OVERNIGHT"
+STOP_FLAG_ROOT="$SCRAPER_DIR/STOP-OVERNIGHT"
 
 RUN_START=$(date +%s)
 DEADLINE=$(( RUN_START + MAX_RUN_HOURS * 3600 ))
@@ -190,7 +195,7 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   # NIGHT-ONLY (per-search): the startup interlock checks once; re-check before EACH new capture so a
   # long run that crosses into the workday (>=07:00) STOPS instead of filming the desktop. See feedback_video_capture_screen_must_be_clear.
   NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended ($(date +%H:%M)) — stopping before the workday (after $n search(es)); no desktop-bleed risk." | tee -a "$LOG"; break; fi
-  if [ -f "$STOP_FLAG" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG"; break; fi
+  if [ -f "$STOP_FLAG" ] || [ -f "$STOP_FLAG_ROOT" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG" "$STOP_FLAG_ROOT"; break; fi
   # next-search with RETRY (2026-07-27): a transient Airtable/network hiccup returns rc=2 and used
   # to kill the ENTIRE night (one API blip = zero videos, only a log line). Retry rc=2 up to 3x with
   # backoff. rc=3 (SoCal exhausted) is legitimate — break immediately, no retry. Final failure alerts.
