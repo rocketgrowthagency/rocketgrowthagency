@@ -141,6 +141,15 @@ if ! bash scripts/check-report-records.sh 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: the report record format is unsafe — failures could be miscounted. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+
+# The geographic filter DROPS leads, so a regression here silently costs real prospects. Asserted in
+# both directions: the ocean/Texas/Santa-Barbara leads are dropped, and a lead with no coordinates, a
+# 0,0 coordinate, an unparseable one, or a position 29 mi out is KEPT.
+echo ">>> pre-flight: geographic lead filter (drops impossible locations, keeps the rest)" | tee -a "$LOGFILE"
+if ! python3 scripts/check-lead-geo-filter.py 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: the geographic lead filter regressed — good leads could be dropped. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-07-11 — landing-build scope guard. Root-caused this day: a per-lead build-video-landing call with
 # an EMPTY slug rebuilt the whole ~500-page corpus (~8min) → tripped the 8-min watchdog → SIGKILLed good
 # leads → silently lost videos. This asserts the per-lead landing build can NEVER expand to a full-corpus
@@ -451,14 +460,35 @@ append_result() {
   printf '%s\n' "$line" >> "$file"
 }
 
-python3 <<EOPY > /tmp/emailable_leads.txt
-import csv
-with open("$LATEST_S2") as f:
-    for r in csv.DictReader(f):
-        email = (r.get('email','') or '').strip()
-        if email and '@' in email and not email.startswith('user@') and not email.endswith('.our'):
-            print(f"{r['Business Name']}")
-EOPY
+# 2026-08-17 — GEOGRAPHIC PLAUSIBILITY FILTER.
+# Businesses that hide their street address (service-area businesses) get ARBITRARY coordinates from
+# Google. Tyler Chase Collective came back at 29.27,-137.27 — the open Pacific, ~1,150 mi from Culver
+# City — and its Maps card rendered a SOLID BLANK BLUE map. It shipped anyway, with a "#34 Currently
+# Ranking for Wedding photographers in Culver City, CA" badge over an empty ocean, because every gate
+# passed: card open, hero photo fine, rank overlay present, scale bar reading "2 mi". The zoom rule
+# checks the scale NUMBER, never that the map shows anywhere real. Lexx Wake Photo (#64) and Catherine
+# Lacey shipped the same way; Enchantment Designs rendered rural TEXAS (Fort McKavett) under a Culver
+# City badge — worse, because it has map detail and so looks deliberate.
+#
+# Self-calibrating rather than a hardcoded city: the batch MEDIAN is the metro centre by construction
+# (219 of 262 leads across 08-14/15/16 sat within 5 mi of it), so this works for any search area. The
+# measured gap is wide and needs no tuning — the farthest legitimate lead was 36.5 mi, the nearest
+# bogus one 61.4 mi, with nothing in between.
+#
+# Distance, not the empty City field: 22 of 22 bogus leads had City empty, but so did 24 GOOD leads
+# inside the metro, which a City-based rule would have thrown away.
+LEAD_RADIUS_MI="${LEAD_RADIUS_MI:-60}"
+python3 scripts/select-emailable-leads.py "$LATEST_S2" "$LEAD_RADIUS_MI" \
+  > /tmp/emailable_leads.txt 2>/tmp/geo_excluded.txt
+
+GEO_EXCLUDED=$(grep -c "" /tmp/geo_excluded.txt 2>/dev/null || echo 0)
+if [ "${GEO_EXCLUDED:-0}" -gt 0 ]; then
+  echo ">>> Geographic filter: excluded $GEO_EXCLUDED lead(s) whose Google coordinates are >${LEAD_RADIUS_MI} mi from the search area" | tee -a "$LOGFILE"
+  echo "    (address-less listings get arbitrary coordinates; their Maps card renders a blank or wrong-city map)" | tee -a "$LOGFILE"
+  while IFS=$'\t' read -r gname gmiles; do
+    [ -n "$gname" ] && echo "    - $gname (${gmiles} mi)" | tee -a "$LOGFILE"
+  done < /tmp/geo_excluded.txt
+fi
 
 # 2026-06-11: optional MAX_LEADS cap for sample/test runs (e.g. MAX_LEADS=5).
 # Caps the emailable list to the first N leads so quality can be validated before
