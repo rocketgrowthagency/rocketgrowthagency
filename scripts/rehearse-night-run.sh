@@ -82,6 +82,10 @@ GOOD=""
 while IFS= read -r cand; do
   [ -z "$cand" ] && continue
   node scripts/check-video-acceptance.mjs "$cand" --json 2>/dev/null | grep -q '"pass": *true' || continue
+  # Must pass the VISUAL gate too. Passing only the acceptance gate is not "good": gregory-mancuso
+  # (2026-08-17) had a flawless card and a blank ocean map, so it cleared acceptance and was chosen as
+  # the known-good baseline — then the visual gate was blamed for rejecting it.
+  node scripts/check-video-visual.mjs "$cand" --no-vision >/dev/null 2>&1 || continue
   # A video can pass every gate and still be unusable: lexx-wake-photo passes the acceptance gate
   # with a SOLID BLANK OCEAN map (no coordinates → arbitrary centre). Require real cartographic
   # detail too, or the "known-good" baseline is itself a broken video — which it was.
@@ -111,7 +115,9 @@ else
   # ── blank hero: paint the card's ACTUAL photo band flat white ────────────────────────────────
   # The card sits at the left edge; its hero photo spans roughly x 5-30%, y 0-26% of the frame.
   BAD=/tmp/reh-blank-hero.mp4
-  ffmpeg -y -loglevel error -i "$GOOD" -vf "drawbox=x=iw*0.047:y=0:w=iw*0.254:h=ih*0.264:color=white@1.0:t=fill" \
+  # Cover the hero band in BOTH layouts (card-at-left AND results+card), or the sabotage silently
+  # misses and the test reports a false "gate is not discriminating".
+  ffmpeg -y -loglevel error -i "$GOOD" -vf "drawbox=x=iw*0.04:y=0:w=iw*0.54:h=ih*0.26:color=white@1.0:t=fill" \
          -c:v libx264 -preset ultrafast -crf 28 -an -t 60 "$BAD" >/dev/null 2>&1
   if [ -s "$BAD" ]; then
     if node scripts/check-video-acceptance.mjs "$BAD" --json >/tmp/reh-bad.log 2>&1 && grep -q '"pass": *true' /tmp/reh-bad.log; then
