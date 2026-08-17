@@ -10,3 +10,7 @@ reports/
 
 # compiled Vision OCR helper (built on demand by check-video-acceptance.mjs)
 scripts/.bin/
+
+# Python bytecode — a test importing select-emailable-leads.py regenerates these
+__pycache__/
+*.pyc
