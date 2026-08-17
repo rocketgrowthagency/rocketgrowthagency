@@ -836,7 +836,16 @@ for (const vertical of workList) {
       if (v.score < EDITOR_MIN) { lastErr = new Error(`editor ${v.score}`); process.stdout.write(`[retry ${a}: editor ${v.score}] `); continue; }
       rendered = r; verdict = v; break;
     }
-    if (!rendered && best) { rendered = best.r; verdict = best.verdict; process.stdout.write(`[shipping best ban-clean draft: editor ${verdict.score}] `); }
+    if (!rendered && best) {
+      rendered = best.r; verdict = best.verdict;
+      // 2026-08-17 — shipping below EDITOR_MIN is DELIBERATE (see the note above), and measurement
+      // supports it: the LIVE approved industry pages score 8/4/6/6 against this same editor, so 4-6 is
+      // this engine's normal band, not a regression. A hard 7 gate would halt the track and reject pages
+      // equivalent to ones already published. But the score must be VISIBLE rather than buried, so a
+      // genuine slide gets noticed instead of repeating the 14-day silent failure in a new form.
+      process.stdout.write(`[shipping best ban-clean draft: editor ${verdict.score}] `);
+      if (verdict.score <= 3) console.warn(`\n   ⚠️ LOW EDITOR SCORE ${verdict.score}/10 for "${vertical}" — below the normal 4-6 band; check the prompt before this becomes the norm.`);
+    }
     if (!rendered) throw lastErr || new Error('failed after 4 attempts');
     fs.mkdirSync(path.join(IND_DIR, slug), { recursive: true });
     fs.writeFileSync(file, rendered.html);
