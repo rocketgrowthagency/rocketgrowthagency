@@ -22,6 +22,23 @@ const SRC = fs.readFileSync(path.join(ROOT, 'step-3-video-recorder.mjs'), 'utf8'
 // Each check: a description + a predicate over the source.
 const CHECKS = [
   {
+    // 2026-08-17 — the #1 nightly failure (NO RANK OVERLAY, 23/28/43 on 08-14/15/16). BOTH in-page
+    // card-open paths must use the page-shot grab; the desktop screencapture path loses a frontmost
+    // race and returns null, which freezes the segment on the raw results list. FIX #7 (08-03) set
+    // this on the deep-rank block only, and the scroll-find path silently kept the racy grab for
+    // two weeks. There are exactly two set-true sites; a third path that forgets it regresses this.
+    name: 'both in-page card-open paths set _cardOpenedInPage',
+    ok: () => (SRC.match(/_cardOpenedInPage\s*=\s*true/g) || []).length >= 2,
+    why: 'an in-page-opened card must use grabViaPageShot; the screencapture grab races and returns null → segment freezes on the results list',
+  },
+  {
+    // The zero-push fallback was fail-OPEN directly beneath two guardrails that throw. It shipped a
+    // known-frozen segment into the full render chain every time (35/35 across three nights).
+    name: 'a zero-frame detail-hold fails the lead',
+    ok: () => /if \(got === 0\) \{[\s\S]{0,400}?throw new Error\('\[step-3 GUARDRAIL\]/.test(SRC),
+    why: 'got===0 means no card frame ever reached the encoder — returning normally encodes the raw results list',
+  },
+  {
     name: 'guardrail errors are identifiable',
     ok: () => /const isGuardrailError\s*=/.test(SRC) && /\\\[step-3 GUARDRAIL\\\]/.test(SRC),
     why: 'isGuardrailError() is how both catches tell a known-bad render from an ordinary error',
