@@ -232,13 +232,71 @@ async function checkMapView(v, D) {
 // business-name heading, derives the band from that heading, and judges it with the shared hero-band.mjs
 // (heroFail = blank on >=2 card frames AND >=50% of them). That gate blocks the same mp4 at the same
 // chokepoint in build-video-landing.mjs, so removing this loses no coverage.
+// ---- CHECK G: THE MAP MUST SHOW A REAL PLACE (2026-08-17) ----
+// Three videos SHIPPED with a map that is a solid blank rectangle — tyler-chase (#34), lexx-wake (#64)
+// and catherine-lacey — each carrying a "Currently Ranking in Culver City" badge over open ocean. A
+// fourth (gregory-mancuso) shipped the same way during testing on 08-17, AFTER the capture fix, which is
+// what proved a gate was missing rather than a capture bug.
+//
+// WHY NOTHING ELSE CATCHES IT: the zoom rule reads the scale NUMBER (a blank ocean at "2000 ft" passes),
+// the hero rule checks the card photo (fine), the rank rule checks the overlay (present). Every existing
+// check looks at the CARD; none looks at the MAP. And the geographic lead filter cannot help — it screens
+// the step-2 coordinates, but this failure happens later, when Maps re-centres the view. Gregory's card
+// reads "Marina Del Rey" while the map sits 18 miles out to sea.
+//
+// THE SIGNAL — colour dominance, not stddev. Measured on the real corpus:
+//     BAD : gregory 100%  tyler 100%  catherine 100%  lexx 81%
+//     GOOD: marianne 26%  lulan 43%   next-exit 55%   cfp 56%   danny 57%
+// Open water is overwhelmingly ONE colour; a real map is broken up by roads, labels, parks, buildings.
+// Stddev was tried first and FAILED — lexx-wake scored 23.8, inside the good range (19-27), because a
+// sliver of land sits at its right edge. Dominance across the whole map area catches it at 81%.
+// The 70% threshold sits in the middle of a 23-point gap, so it is not finely tuned.
+const MAP_AREA = { x: 0.62, y: 0.30, w: 0.36, h: 0.55 }; // map in BOTH layouts, clear of both overlays
+const MAP_FLAT_PCT = 70;
+function mapDominance(v, t) {
+  try {
+    const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
+      '-vf', `crop=iw*${MAP_AREA.w}:ih*${MAP_AREA.h}:iw*${MAP_AREA.x}:ih*${MAP_AREA.y},scale=64:48`,
+      '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 22 });
+    const n = Math.floor(raw.length / 3);
+    if (n < 64) return null;
+    const counts = new Map();
+    let whitish = 0;
+    for (let i = 0; i < n; i++) {
+      const r = raw[i * 3], g = raw[i * 3 + 1], b = raw[i * 3 + 2];
+      if (r > 240 && g > 240 && b > 240) whitish++;
+      const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    // The intro/outro title cards are full-frame white — not a map, must not be judged as one.
+    if ((100 * whitish) / n > 85) return null;
+    let top = 0;
+    for (const c of counts.values()) if (c > top) top = c;
+    return (100 * top) / n;
+  } catch (_) { return null; }
+}
+function checkMapContent(v, D) {
+  // Sample across the Maps segment. A single odd frame is not a defect; a sustained flat map is.
+  const flat = [];
+  let judged = 0;
+  for (let t = D * 0.20; t <= D * 0.42; t += Math.max(3, D * 0.03)) {
+    const pct = mapDominance(v, +t.toFixed(1));
+    if (pct === null) continue;
+    judged++;
+    if (pct >= MAP_FLAT_PCT) flat.push({ t: +t.toFixed(1), pct: Math.round(pct) });
+  }
+  return { fail: judged >= 2 && flat.length >= 2, judged, flat };
+}
+
 // ---- run ----
 (async () => {
   const D = duration(VIDEO);
   const a = checkQuarterScale(VIDEO, D);
   const b = await checkWrongWindow(VIDEO, D);
   const c = await checkMapView(VIDEO, D);
+  const g = checkMapContent(VIDEO, D);
   const reasons = [];
+  if (g.fail) reasons.push(`BLANK MAP — the map area is a single flat colour on ${g.flat.length} of ${g.judged} sampled frame(s) (${g.flat.slice(0,3).map((f)=>`${f.t}s ${f.pct}%`).join(", ")}). The card may be fine, but the map shows no real place.`);
   if (a.fail) reasons.push(`QUARTER-SCALE/BLANK-REGION at ${a.flagged.length} sampled frame(s): ${a.flagged.slice(0, 3).map((f) => `${f.t}s (${f.detail})`).join('; ')}`);
   if (b.fail) reasons.push(`WRONG-WINDOW (not Maps/website) at ${b.bad.filter((x) => !x.softError).map((x) => `${x.t}s "${x.desc}"`).join('; ')}`);
   const advisories = [];
@@ -247,11 +305,12 @@ async function checkMapView(v, D) {
   // they were logged-only. A no-card or blank-photos video FAILS the build. Report them as hard reasons.
   if (c.noCardFail) reasons.push(`NO-DETAIL-CARD (raw results list, no business selected) at ${c.noCard.map((f) => `${f.t}s`).join(', ')}`);
   if (c.blankPhotosFail) reasons.push(`BLANK-PHOTOS (card open but photo strip blank/gray) at ${c.blankPhotos.map((f) => `${f.t}s`).join(', ')}`);
-  const pass = !a.fail && !b.fail && !c.fail;
+  const pass = !a.fail && !b.fail && !c.fail && !g.fail;
   const result = {
     video: path.basename(VIDEO), pass,
     checkA_quarterScale: a.fail ? 'FAIL' : 'pass',
     checkB_wrongWindow: b.skipped ? `skipped (${b.reason})` : (b.fail ? 'FAIL' : 'pass'),
+    checkG_mapContent: g.fail ? `FAIL (${g.flat.length}/${g.judged} flat)` : `pass (${g.judged} judged)`,
     checkC_mapView: c.skipped ? `skipped (${c.reason})` : (c.mapWide ? 'FAIL' : 'pass'),
     checkD_detailCard: c.skipped ? `skipped (${c.reason})` : (c.noCardFail ? 'FAIL' : 'pass'),
     checkE_photos: c.skipped ? `skipped (${c.reason})` : (c.blankPhotosFail ? 'FAIL' : 'pass'),
