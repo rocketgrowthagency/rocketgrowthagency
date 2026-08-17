@@ -132,6 +132,15 @@ if ! node scripts/check-verification-signals.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: the 6/6 signal rule regressed — unverifiable claims could reach a prospect. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+
+# Business names come from Google and contain pipes ("... , LLC | Los Angeles"). The report record
+# format must survive them — a mangled split corrupts the morning report, and the end-of-run dedup keys
+# on the name, so a prefix collision would silently drop a failure from the count.
+echo ">>> pre-flight: report records survive real business names" | tee -a "$LOGFILE"
+if ! bash scripts/check-report-records.sh 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: the report record format is unsafe — failures could be miscounted. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-07-11 — landing-build scope guard. Root-caused this day: a per-lead build-video-landing call with
 # an EMPTY slug rebuilt the whole ~500-page corpus (~8min) → tripped the 8-min watchdog → SIGKILLed good
 # leads → silently lost videos. This asserts the per-lead landing build can NEVER expand to a full-corpus
@@ -407,6 +416,14 @@ if [ ! -f "$FAILURE_AUDIT" ]; then
   echo "| Time | Lead | Worker | Reason | Elapsed |" >> "$FAILURE_AUDIT"
   echo "|---|---|---|---|---|" >> "$FAILURE_AUDIT"
 fi
+# 2026-08-17 — RECORD SEPARATOR. Records are "<business name><SEP><reason>", and the name is NOT ours:
+# real Google listings contain pipes ("William C. Knox, Broker | All Saints Lending, Inc",
+# "Dean Wong Team CrossCountry Mortgage, LLC | Los Angeles"). With "|" as the delimiter those names
+# broke the split — the loss table printed half a business name as the CAUSE — and worse, the dedup at
+# the end of the run keys on the text before the first delimiter, so such a lead deduped on a truncated
+# prefix and two businesses sharing one would silently collapse into a single row. US (0x1f) is a
+# control character; it cannot appear in a business name or a gate reason.
+RSEP=$'\037'
 RESULTS_DIR="/tmp/overnight-results-$$"
 mkdir -p "$RESULTS_DIR"
 RESULTS_DEPLOYED="$RESULTS_DIR/deployed.txt"
@@ -712,7 +729,7 @@ EOPY
   if [ "$WEBM_COUNT" -lt 3 ]; then
     echo "" | tee -a "$LOGFILE"
     echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs (website or mobile recording failed — likely bot-blocked site)" | tee -a "$LOGFILE"
-    append_result "$RESULTS_FAILED" "$BIZ_NAME|step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
+    append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
     return 0
   fi
@@ -722,7 +739,7 @@ EOPY
     # HARD 6/6 GATE: step-6 exits 3 when the lead is below the required verified-signal count.
     # Skip deploy entirely and record it for redo — only fully-verified videos complete. (Chris 2026-07-02)
     if [ "${PIPESTATUS[0]}" = "3" ]; then
-      append_result "$RESULTS_FAILED" "$BIZ_NAME|verification below 6/6 — flagged for redo"
+      append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}verification below 6/6 — flagged for redo"
       echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
       return
     fi
@@ -745,7 +762,7 @@ EOPY
     # HARD 6/6 GATE: step-6 exits 3 when the lead is below the required verified-signal count.
     # Skip deploy entirely and record it for redo — only fully-verified videos complete. (Chris 2026-07-02)
     if [ "${PIPESTATUS[0]}" = "3" ]; then
-      append_result "$RESULTS_FAILED" "$BIZ_NAME|verification below 6/6 — flagged for redo"
+      append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}verification below 6/6 — flagged for redo"
       echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
       return
     fi
@@ -851,14 +868,14 @@ EOPY
     # URL (this writes to Airtable, not Netlify) — strictly scoped via BUILD_ONLY_SLUG + REQUIRE_SLUG
     REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1 | tee -a "$LOGFILE" | grep -i "$ACTUAL_SLUG" | head -1
 
-    append_result "$RESULTS_DEPLOYED" "$BIZ_NAME|https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/"
+    append_result "$RESULTS_DEPLOYED" "$BIZ_NAME${RSEP}https://www.rocketgrowthagency.com/v/$ACTUAL_SLUG/"
     echo "  ✓ STAGED: $BIZ_NAME (deploy batched to end-of-run)" | tee -a "$LOGFILE"
     echo "  ✓ DEPLOYED: $BIZ_NAME" | tee -a "$LOGFILE"  # keep marker for grep idempotency
   else
     # A gate rejection is NOT the same event as "the build silently produced nothing" — it means we
     # CAUGHT a broken video before it reached a prospect. Report it as such, with the gate's own reason.
     if [ -n "${GATE_BLOCK:-}" ]; then
-      append_result "$RESULTS_FAILED" "$BIZ_NAME|🚫 BLOCKED BY GATE — ${GATE_BLOCK}"
+      append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}🚫 BLOCKED BY GATE — ${GATE_BLOCK}"
       echo "  🚫 BLOCKED BY GATE: $BIZ_NAME — ${GATE_BLOCK}" | tee -a "$LOGFILE"
     else
       # Never file a bare "landing page not built" again — say WHICH stage came up empty.
@@ -869,7 +886,7 @@ EOPY
       else
         REASON="landing build produced no page for slug '${BUILD_SLUG}' (video exists, no gate block — check the Airtable/slug match)"
       fi
-      append_result "$RESULTS_FAILED" "$BIZ_NAME|$REASON"
+      append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}$REASON"
       echo "  ✗ FAILED: $BIZ_NAME — $REASON" | tee -a "$LOGFILE"
     fi
   fi
@@ -907,7 +924,7 @@ run_lead_with_watchdog() {
       kill_tree "$lead_pid"
       pkill -9 -f "chrome-profile-step3" 2>/dev/null
       pkill -9 -f "chrome-profile-step25" 2>/dev/null
-      append_result "$RESULTS_FAILED" "$biz|seq-watchdog-timeout (${tsec}s)"
+      append_result "$RESULTS_FAILED" "$biz${RSEP}seq-watchdog-timeout (${tsec}s)"
       break
     fi
   done
@@ -961,7 +978,7 @@ else
           # tree walk is still holding THIS worker's unique profile dir — kill by path.
           pkill -9 -f "chrome-profile-step3-w${wid}" 2>/dev/null
           pkill -9 -f "chrome-profile-step25-w${wid}" 2>/dev/null
-          append_result "$RESULTS_FAILED" "$biz|watchdog-timeout (${elapsed}s > ${PER_LEAD_TIMEOUT_SEC}s)"
+          append_result "$RESULTS_FAILED" "$biz${RSEP}watchdog-timeout (${elapsed}s > ${PER_LEAD_TIMEOUT_SEC}s)"
           printf "| %s | %s | %s | watchdog-timeout | %ds |\n" "$(date '+%H:%M:%S')" "$biz" "$wid" "$elapsed" >> "$FAILURE_AUDIT"
           continue  # don't carry forward, slot is free
         fi
@@ -1048,11 +1065,11 @@ while IFS= read -r line; do [ -n "$line" ] && PENDING_DEPLOY_NAMES+=("$line"); d
 ACCUM_DIR="$SCRAPER_DIR/output/run-accum/${DATE_STAMP}_${SLUG}"; mkdir -p "$ACCUM_DIR"
 cat "$RESULTS_DEPLOYED" >> "$ACCUM_DIR/deployed.txt" 2>/dev/null || true
 cat "$RESULTS_FAILED"   >> "$ACCUM_DIR/failed.txt"   2>/dev/null || true
-awk -F'|' '!seen[$2]++' "$ACCUM_DIR/deployed.txt" > "$ACCUM_DIR/deployed.dedup.txt" 2>/dev/null || true
+awk -v FS="$RSEP" '!seen[$2]++' "$ACCUM_DIR/deployed.txt" > "$ACCUM_DIR/deployed.dedup.txt" 2>/dev/null || true
 # Dedup failed by BUSINESS NAME ($1), not by whole line: a business that fails at two stages (e.g.
 # "watchdog-timeout" at step-3 AND "landing page not built" downstream) is ONE failed lead, not two.
 # Keep the first reason seen. Also drop any name that ultimately deployed (recovery pass succeeded).
-awk -F'|' 'NR==FNR{dep[$1]=1;next} !dep[$1] && !fseen[$1]++' "$ACCUM_DIR/deployed.dedup.txt" "$ACCUM_DIR/failed.txt" > "$ACCUM_DIR/failed.dedup.txt" 2>/dev/null || true
+awk -v FS="$RSEP" 'NR==FNR{dep[$1]=1;next} !dep[$1] && !fseen[$1]++' "$ACCUM_DIR/deployed.dedup.txt" "$ACCUM_DIR/failed.txt" > "$ACCUM_DIR/failed.dedup.txt" 2>/dev/null || true
 DEPLOYED_URLS=(); while IFS= read -r line; do [ -n "$line" ] && DEPLOYED_URLS+=("$line"); done < "$ACCUM_DIR/deployed.dedup.txt"
 FAILED_LEADS=();  while IFS= read -r line; do [ -n "$line" ] && FAILED_LEADS+=("$line");  done < "$ACCUM_DIR/failed.dedup.txt"
 
@@ -1173,7 +1190,7 @@ EOF
 
 if [ "$FAILED_TOTAL" -gt 0 ]; then
   for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
-    IFS='|' read -r name reason <<< "$entry"
+    IFS="$RSEP" read -r name reason <<< "$entry"
     echo "- **$name** — $reason" >> "$REPORT"
   done
 else
@@ -1192,7 +1209,7 @@ EOF
 if [ "${GATE_BLOCKED:-0}" -gt 0 ]; then
   for entry in "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}"; do
     case "$entry" in
-      *"BLOCKED BY GATE"*) IFS='|' read -r name reason <<< "$entry"; echo "- **$name** — ${reason#🚫 BLOCKED BY GATE — }" >> "$REPORT" ;;
+      *"BLOCKED BY GATE"*) IFS="$RSEP" read -r name reason <<< "$entry"; echo "- **$name** — ${reason#🚫 BLOCKED BY GATE — }" >> "$REPORT" ;;
     esac
   done
 else
@@ -1210,7 +1227,7 @@ if [ "$FAILED_TOTAL" -gt 0 ]; then
 |---|---|
 EOF
   printf '%s\n' "${FAILED_LEADS[@]+"${FAILED_LEADS[@]}"}" \
-    | sed 's/^[^|]*|//' \
+    | sed "s/^[^$RSEP]*$RSEP//" \
     | sed -e 's/(.*)//' -e 's/[0-9]\+\/3 WebMs/N\/3 WebMs/' -e 's/ at [0-9].*//' -e 's/—.*white void.*/— blank hero (white void)/' \
     | sed 's/[[:space:]]*$//' \
     | sort | uniq -c | sort -rn \
