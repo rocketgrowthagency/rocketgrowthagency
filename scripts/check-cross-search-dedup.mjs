@@ -59,13 +59,18 @@ for (const [label, input, expectDup, expectBy] of L) {
 
 // ── static: the enforcement chain must stay intact ──────────────────────────
 const s2 = fs.readFileSync(path.join(ROOT, 'step-2-email-scraper.mjs'), 'utf8');
-const ov = fs.readFileSync(path.join(ROOT, 'scripts', 'overnight-pipeline.sh'), 'utf8');
+const ov = fs.readFileSync(path.join(ROOT, 'scripts', 'overnight-pipeline.sh'), 'utf8')
+  // 2026-08-17: the emailable-list builder moved out of an inline heredoc into its own script so the
+  // geographic filter could be tested. The invariant is unchanged and still load-bearing — step-2
+  // CLEARS the email on a cross-search dedup match, so requiring a valid email is what keeps a
+  // deduped business from getting a second video. Scan both files so this follows the code.
+  + '\n' + fs.readFileSync(path.join(ROOT, 'scripts', 'select-emailable-leads.py'), 'utf8');
 if (/isDuplicate/.test(s2) && /record\.email\s*=\s*''/.test(s2) && /Skip Reason.*dedup/.test(s2))
   pass('step-2 clears email + flags Skip Reason on cross-search dedup match');
 else fail('step-2 dedup email-clear MISSING — deduped leads could be re-rendered/re-emailed');
 if (/preloadDedupIndex/.test(s2)) pass('step-2 preloads the full Airtable dedup index');
 else fail('step-2 preloadDedupIndex call MISSING');
-if (/email and '@' in email/.test(ov)) pass('overnight emailable-list builder requires a valid email (excludes deduped rows)');
+if (/'@' in email/.test(ov)) pass('overnight emailable-list builder requires a valid email (excludes deduped rows)');
 else fail('overnight emailable-list builder no longer gates on email — deduped rows could leak in');
 
 if (failed) { console.error(`\ncross-search dedup: ${failed} FAILED`); process.exit(1); }
