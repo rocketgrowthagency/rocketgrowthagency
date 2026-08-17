@@ -1837,6 +1837,15 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await sleep(2000);
       }
       console.log(`   [screencap] detail-hold (fallback) pushed ${got} real-screen card frame(s)`);
+      // 🔴 2026-08-17 FAIL CLOSED. `got === 0` means NOT ONE card frame reached the encoder, so the segment
+      // holds whatever was on screen before the pause — the raw RESULTS LIST. Returning normally here shipped
+      // that into the full render chain every time; the acceptance gate then rejected it as NO RANK OVERLAY
+      // after voiceover + merge + subtitles + encode had already been paid for. The two guardrails above
+      // (card-never-opened, blank-hero) already throw for exactly this class of "we know the output is
+      // broken" — this was the one remaining fail-OPEN path. Fail the lead to the redo queue immediately.
+      if (got === 0) {
+        throw new Error('[step-3 GUARDRAIL] holdOnDetailCard: the fallback re-grab pushed 0 card frames — every grabFreeze() returned null, so the segment would freeze on the raw results list (no card, no rank overlay). Refusing to encode it; failing the lead to the redo queue. See feedback_video_acceptance_gate_locked.md');
+      }
       return;
     }
     const until = Date.now() + ms;
@@ -1996,6 +2005,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (recorderCtl && recorderCtl.pauseCapture) recorderCtl.pauseCapture();
       const clicked = await scrollUntilVisibleAndClick(page, businessName, scrollsNeeded);
       if (clicked) {
+        // 🔴 2026-08-17 — THE #1 CAUSE OF "NO RANK OVERLAY" REJECTIONS (23/28/43 on 08-14/15/16).
+        // This is an IN-LIST CLICK, so the card opened IN-PAGE — the exact case the 2026-08-03 deep-rank
+        // fix identified as "page.screenshot is reliable" (see _cardOpenedInPage at the grabFreeze
+        // definition). That fix set the flag on the deep-rank SPA/click path but NOT here, so scroll-find
+        // captures kept using grabViaScreenCapture() and kept losing the documented frontmost/crop race:
+        // every grab returned null, holdOnDetailCard's fallback pushed 0 frames, and the segment froze on
+        // the pre-click RESULTS LIST — no card, no overlay. Measured: the fallback ran 35 times across
+        // three nights and pushed 0 frames on ALL 35. Without this line the whole render chain (voiceover,
+        // merge, subtitles, encode) burns before the acceptance gate rejects it at the very end.
+        _cardOpenedInPage = true;
         // Re-inject overlay after navigation (page.goto wipes the DOM)
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
