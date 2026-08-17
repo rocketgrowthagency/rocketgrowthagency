@@ -1689,6 +1689,29 @@ async function auditGbp(_, gbpUrl, business) {
       }
       console.log(`  [gbp-diag] review cards found: ${reviewCards.length}, parsed: ${cardsScanned}, minDays: ${minDays}, last30: ${reviewsLast30}, last90: ${reviewsLast90}`);
 
+      // 2026-08-17 — VERIFIED ZERO REVIEWS, as distinct from "could not read the review count".
+      // WHY: the rating widget (div.F7nice) only renders when a business HAS reviews, so a business
+      // with none leaves reviewCount === null — the same value a genuine scrape failure produces. The
+      // 6/6 gate counted that as an unverified signal and killed the lead: 13 of 98 leads on
+      // 08-14/15/16 (and 12 of the 15 sub-6/6 failures) had reviewCount=null while hours + category
+      // read fine, i.e. the panel WAS loaded. Those are prime prospects — a business with no reviews
+      // at all is the strongest version of our pitch — and they were being dropped silently.
+      //
+      // Same shape as photoAbsenceVerified above, and deliberately conservative: an explicit
+      // empty-state affordance must be PRESENT. A mere absence of reviews proves nothing (the section
+      // may not have rendered), so without the positive phrase this stays false and the lead keeps
+      // failing 6/6 exactly as it does today — never a false "you have no reviews" claim.
+      // Memory: feedback_verification_gates_must_be_strict.md
+      let reviewAbsenceVerified = false;
+      try {
+        const bodyTxt = document.body?.innerText || '';
+        const emptyState = /\bbe the first to review\b|\bno reviews yet\b|\bno reviews\b/i.test(bodyTxt);
+        const ratingWidget = document.querySelector('div.F7nice');
+        const hasAnyReviewCard = reviewCards.length > 0;
+        reviewAbsenceVerified = (reviewCount === null && !hasAnyReviewCard && !ratingWidget && emptyState);
+        console.log(`  [gbp-diag] reviewAbsence: count=${reviewCount} cards=${reviewCards.length} widget=${!!ratingWidget} emptyState=${emptyState} → verified=${reviewAbsenceVerified}`);
+      } catch (_) {}
+
       // Owner response count
       const ownerResponseCount = [...txt.matchAll(/Response from the owner/gi)].length;
 
@@ -1893,10 +1916,11 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_e) {}
       console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
 
-      return { reviewCount, photoCount, photoCountVerified, photoAbsenceVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
+      return { reviewCount, reviewAbsenceVerified, photoCount, photoCountVerified, photoAbsenceVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
+    findings.reviewAbsenceVerified = !!data.reviewAbsenceVerified;
     findings.photoCount = data.photoCount;
     findings.photoCountVerified = !!data.photoCountVerified;
     findings.photoAbsenceVerified = !!data.photoAbsenceVerified;

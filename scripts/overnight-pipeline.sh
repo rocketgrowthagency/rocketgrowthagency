@@ -122,6 +122,16 @@ if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# What the six signals MEAN. Each must answer "did we observe this?", never "is the answer flattering?".
+# The reviews signal used to test "reviewCount > 0", which failed every business that has no reviews —
+# our best prospects — because Google renders no rating widget for them (12 of 15 sub-6/6 losses on
+# 08-14/15/16). The risk when relaxing that is the opposite error, so this asserts BOTH directions:
+# a verified-zero scores, an UNREADABLE count still blocks.
+echo ">>> pre-flight: verification signals mean 'observed', not 'flattering'" | tee -a "$LOGFILE"
+if ! node scripts/check-verification-signals.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: the 6/6 signal rule regressed — unverifiable claims could reach a prospect. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-07-11 — landing-build scope guard. Root-caused this day: a per-lead build-video-landing call with
 # an EMPTY slug rebuilt the whole ~500-page corpus (~8min) → tripped the 8-min watchdog → SIGKILLed good
 # leads → silently lost videos. This asserts the per-lead landing build can NEVER expand to a full-corpus

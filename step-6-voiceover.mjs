@@ -6,6 +6,7 @@ import path from 'path';
 import csvParser from 'csv-parser';
 import OpenAI from 'openai';
 import slugify from 'slugify';
+import { obtainableSignals } from './scripts/lib/verification-signals.mjs';
 import { spawn } from 'child_process';
 
 // Airtable fetch timeout (2026-07-27) — an un-guarded fetch() to Airtable can stall open on a dead
@@ -2419,14 +2420,13 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
   // GBP reviews readable, GBP category matches the search. All six are real observed data. The
   // Google-blocked flags are still recorded (for the absence-claim gates) but NOT counted here.
   const gbp = audit?.gbp || {};
-  const obtainable = {
-    website: audit?.website?.websiteAuditVerified === true,
-    mobile: audit?.mobile?.mobileAuditVerified === true,
-    hours: gbp.hoursVerified === true,
-    categories: gbp.categoriesCountVerified === true,
-    reviews: (gbp.reviewCount ?? 0) > 0,
-    operational: gbp.businessStatus === 'OPERATIONAL' || gbp.businessStatus == null,
-  };
+  // 2026-08-17 — the six-signal rule lives in scripts/lib/verification-signals.mjs so it can be tested
+  // directly rather than re-implemented in a test. It also fixes the reviews signal: it now means "the
+  // reviews state was READABLE" (what the comment above always claimed) instead of "there is at least
+  // one review". Those differ for a business with none — Google renders no rating widget, so reviewCount
+  // is null and the lead failed 6/6. That was 12 of the 15 sub-6/6 losses on 08-14/15/16, and a business
+  // with zero reviews is the strongest prospect we have.
+  const obtainable = obtainableSignals(audit);
   manifest.verificationState = {
     website: { verified: obtainable.website, error: audit?.website?.error || null },
     mobile: { verified: obtainable.mobile, error: audit?.mobile?.error || null },
@@ -2436,6 +2436,8 @@ async function generateVoiceover(record, index, top3Stats, baseName) {
       reviewsVerified: obtainable.reviews,
       operational: obtainable.operational,
       reviewCount: gbp.reviewCount ?? 0,
+      // Distinguishes a verified-zero from a failed read — both used to serialise as reviewCount 0.
+      reviewAbsenceVerified: gbp.reviewAbsenceVerified === true,
       reviewsParsedCount: gbp.reviewsParsedCount ?? 0,
       // Google-blocked (recorded for absence-claim gates, NOT counted toward the score):
       postsVerified: gbp.postsVerified === true,
