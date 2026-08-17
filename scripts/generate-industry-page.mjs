@@ -593,8 +593,16 @@ function assertQuality(html, meta) {
   if (meta.wordCount < 330) errs.push(`thin: ${meta.wordCount} words`);
   if (!html.includes('"Service"')) errs.push('missing Service schema');
   if (!html.includes('FAQPage')) errs.push('missing FAQ schema');
-  if (!html.includes('class="grid-3"')) errs.push('missing service/process card grids');
-  if ((html.match(/class="card"/g) || []).length < 3) errs.push('missing service cards');
+  // 🔴 2026-08-17 — THESE TWO CHECKED FOR MARKUP THE TEMPLATE NO LONGER EMITS.
+  // The industry template was renamed grid-3 -> ix-grid3 and card -> ix-card, but the guard was left
+  // pointing at the old class names. Every generation therefore failed all 4 retries on
+  // "missing service/process card grids; missing service cards" and produced nothing — for 14 straight
+  // days. Confirmed against the 17 live industry pages: they contain ZERO `grid-3` and ZERO
+  // `class="card"`, so the guard was demanding markup even the approved pages do not have.
+  // 🔑 A guard must assert what the CURRENT template produces — verify against a shipped page before
+  // trusting a class name in an assertion.
+  if (!html.includes('class="ix-grid3"')) errs.push('missing service/process card grids (ix-grid3)');
+  if ((html.match(/class="ix-card"/g) || []).length < 3) errs.push('missing service cards (ix-card)');
   if (!html.includes('/free-growth-audit/')) errs.push('missing CTA');
   if (!html.includes('/services/google-maps-local-seo/')) errs.push('missing service link');
   if (errs.length) throw new Error('GUARD: ' + errs.join('; '));

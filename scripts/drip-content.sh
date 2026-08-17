@@ -33,8 +33,21 @@ fi
 echo ">>> today — industry: \"${IND:-(none)}\"  |  blog: \"${BLOG:-(none)}\"" | tee -a "$LOG"
 
 # 2. INDUSTRY track (if pending): generate the industry page.
+# 🔴 2026-08-17 — DETECT A SILENT TOTAL FAILURE.
+# generate-industry-page.mjs exits 0 even when it produces ZERO pages (all retries rejected by the
+# quality guard). The drip then carried on and committed "industry: <name>" as though it had worked.
+# A stale guard broke industry generation for 14 CONSECUTIVE DAYS and nothing surfaced it: the same
+# industry was re-picked and re-reported every night, because next-content.mjs picks the first vertical
+# whose page does not exist. Now we check the filesystem for the page the generator claimed to build.
 if [ "$RC_IND" -eq 0 ] && [ -n "$IND" ]; then
   node scripts/generate-industry-page.mjs "$IND" --publish 2>&1 | tee -a "$LOG"
+  # NOTE: BSD sed (macOS) has no \+ — use -E. Getting this wrong makes the check below fire on every
+  # run. Mirrors slugify() in scripts/next-content.mjs.
+  IND_SLUG=$(printf '%s' "$IND" | tr '[:upper:]' '[:lower:]' | sed -E 's/&/ and /g; s/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+  if [ ! -f "$WEBSITE_DIR/industries/$IND_SLUG/index.html" ]; then
+    echo ">>> ❌ INDUSTRY TRACK PRODUCED NOTHING for \"$IND\" (expected industries/$IND_SLUG/). The generator exited 0 with 0 pages — check the quality guard against the CURRENT template classes." | tee -a "$LOG"
+    bash scripts/notify-openai-quota.sh "$LOG" 2>/dev/null || true
+  fi
 fi
 # 3. BLOG track (perpetual): generate the day's blog post.
 if [ "$RC_BLOG" -eq 0 ] && [ -n "$BLOG" ]; then
