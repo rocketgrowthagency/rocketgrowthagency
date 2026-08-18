@@ -252,38 +252,67 @@ async function checkMapView(v, D) {
 // sliver of land sits at its right edge. Dominance across the whole map area catches it at 81%.
 // The 70% threshold sits in the middle of a 23-point gap, so it is not finely tuned.
 const MAP_AREA = { x: 0.62, y: 0.30, w: 0.36, h: 0.55 }; // map in BOTH layouts, clear of both overlays
-const MAP_FLAT_PCT = 70;
-function mapDominance(v, t) {
+const MAP_MIN_COLOURS = 40;   // bad: 4-5      good: 120-168
+const MAP_MIN_EDGE_PCT = 7;   // bad: 0.0-3.2  good: 11.5-31.3
+
+// Is this frame actually the Maps view? The Maps layout ALWAYS has a bright white panel down the left
+// (the results list and/or the detail card); a website segment does not.
+// Measured: Maps frames 228-244, a dark website page 78. Threshold 200 sits in a 150-point gap.
+// 🔴 WITHOUT THIS the check judged whatever happened to be on screen: tiny-sun-solutions was flagged
+// "blank map" at 36s when that timestamp is its WEBSITE segment (a dark green page). The 20-42% window
+// is NOT always the Maps segment.
+function isMapsView(v, t) {
   try {
     const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
-      '-vf', `crop=iw*${MAP_AREA.w}:ih*${MAP_AREA.h}:iw*${MAP_AREA.x}:ih*${MAP_AREA.y},scale=64:48`,
+      '-vf', 'crop=iw*0.26:ih*0.60:iw*0.02:ih*0.20,scale=32:24,format=gray',
+      '-frames:v', '1', '-f', 'rawvideo', '-'], { maxBuffer: 1 << 20 });
+    if (!raw.length) return false;
+    let sum = 0;
+    for (let i = 0; i < raw.length; i++) sum += raw[i];
+    return sum / raw.length >= 200;
+  } catch (_) { return false; }
+}
+function mapDetail(v, t) {
+  try {
+    const W = 96, H = 72;
+    const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', String(t), '-i', v,
+      '-vf', `crop=iw*${MAP_AREA.w}:ih*${MAP_AREA.h}:iw*${MAP_AREA.x}:ih*${MAP_AREA.y},scale=${W}:${H}`,
       '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 22 });
     const n = Math.floor(raw.length / 3);
     if (n < 64) return null;
-    const counts = new Map();
+    const seen = new Set();
     let whitish = 0;
     for (let i = 0; i < n; i++) {
       const r = raw[i * 3], g = raw[i * 3 + 1], b = raw[i * 3 + 2];
       if (r > 240 && g > 240 && b > 240) whitish++;
-      const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
-      counts.set(k, (counts.get(k) || 0) + 1);
+      seen.add(((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4));
     }
-    // The intro/outro title cards are full-frame white — not a map, must not be judged as one.
-    if ((100 * whitish) / n > 85) return null;
-    let top = 0;
-    for (const c of counts.values()) if (c > top) top = c;
-    return (100 * top) / n;
+    // Intro/outro title cards are a full-frame white slide — never judge one as a map.
+    if ((100 * whitish) / n > 92) return null;
+    let edges = 0;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W - 1; x++) {
+        const i = (y * W + x) * 3, j = i + 3;
+        if (Math.abs(raw[i] - raw[j]) + Math.abs(raw[i + 1] - raw[j + 1]) + Math.abs(raw[i + 2] - raw[j + 2]) > 24) edges++;
+      }
+    }
+    return { colours: seen.size, edgePct: (100 * edges) / (H * (W - 1)) };
   } catch (_) { return null; }
 }
 function checkMapContent(v, D) {
-  // Sample across the Maps segment. A single odd frame is not a defect; a sustained flat map is.
   const flat = [];
   let judged = 0;
   for (let t = D * 0.20; t <= D * 0.42; t += Math.max(3, D * 0.03)) {
-    const pct = mapDominance(v, +t.toFixed(1));
-    if (pct === null) continue;
+    const tt = +t.toFixed(1);
+    if (!isMapsView(v, tt)) continue;   // only judge frames that ARE the Maps view
+    const m = mapDetail(v, tt);
+    if (!m) continue;
     judged++;
-    if (pct >= MAP_FLAT_PCT) flat.push({ t: +t.toFixed(1), pct: Math.round(pct) });
+    // BOTH signals must be low. Either alone risks a false reject; together the margin is ~24x on
+    // colours and ~3.5x on edges, with nothing observed in between.
+    if (m.colours < MAP_MIN_COLOURS && m.edgePct < MAP_MIN_EDGE_PCT) {
+      flat.push({ t: tt, c: m.colours, e: Math.round(m.edgePct * 10) / 10 });
+    }
   }
   return { fail: judged >= 2 && flat.length >= 2, judged, flat };
 }
@@ -296,7 +325,7 @@ function checkMapContent(v, D) {
   const c = await checkMapView(VIDEO, D);
   const g = checkMapContent(VIDEO, D);
   const reasons = [];
-  if (g.fail) reasons.push(`BLANK MAP — the map area is a single flat colour on ${g.flat.length} of ${g.judged} sampled frame(s) (${g.flat.slice(0,3).map((f)=>`${f.t}s ${f.pct}%`).join(", ")}). The card may be fine, but the map shows no real place.`);
+  if (g.fail) reasons.push(`BLANK MAP — the map area has almost no cartographic detail on ${g.flat.length} of ${g.judged} sampled frame(s) (${g.flat.slice(0,3).map((f)=>`${f.t}s: ${f.c} colours, ${f.e}% edges`).join("; ")}). Either the map is centred on empty water, or the render is shrunken so this area is blank. Check A covers the second case; this catches both.`);
   if (a.fail) reasons.push(`QUARTER-SCALE/BLANK-REGION at ${a.flagged.length} sampled frame(s): ${a.flagged.slice(0, 3).map((f) => `${f.t}s (${f.detail})`).join('; ')}`);
   if (b.fail) reasons.push(`WRONG-WINDOW (not Maps/website) at ${b.bad.filter((x) => !x.softError).map((x) => `${x.t}s "${x.desc}"`).join('; ')}`);
   const advisories = [];
