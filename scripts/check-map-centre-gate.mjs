@@ -66,6 +66,20 @@ if (/const mapsCoordAnchor\s*=/.test(src) && /maps\/search\/\$\{encodeURICompone
   bad('the Maps results URL is NOT coordinate-anchored — Google will fit the viewport to ALL results and can open at state zoom');
 }
 
+// 3b — the direct-search fallback URL must ALSO carry the coordinate anchor. Without it the URL has no
+// `@lat,lng` token, readMapCentreFromUrl() returns null, and the fail-closed centre check SILENTLY
+// SKIPS on that path (logs `zoom≈unknown`). terra-towing-service rendered a blank map through this
+// exact hole on 08-17 with a perfectly valid coordinate and no guardrail fired.
+// ⚠️ Match the anchor's USE on the searchNavUrl line, not the whole template: the encodeURIComponent()
+// argument contains nested parens, so a `[^)]*` pattern stops at the first one and false-fails. (This
+// checker's first regex did exactly that — a checker needs verifying too.)
+const dsLine = lines.find((l) => /const searchNavUrl\s*=/.test(l)) || '';
+if (/const dsCoordAnchor\s*=/.test(src) && /maps\/search\//.test(dsLine) && /\$\{dsCoordAnchor\}/.test(dsLine)) {
+  ok('the direct-search fallback URL is coordinate-anchored (the centre check can see it)');
+} else {
+  bad('the direct-search fallback URL is NOT coordinate-anchored — the map-centre guardrail silently SKIPS on that path, so a wrong-location render there ships unchecked');
+}
+
 // 4 — the threshold must remain a physical bound, not quietly widened into uselessness.
 const thr = src.match(/const MAP_CENTRE_MAX_KM\s*=\s*([\d.]+)/);
 if (!thr) bad('MAP_CENTRE_MAX_KM is missing');

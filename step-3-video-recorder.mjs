@@ -2314,7 +2314,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // leads yesterday) instead of the bare-name place URL (loads an empty
         // skeleton without business data). Search URL renders the standard
         // results list which step-3 can click into via clickListingInResultsByName.
-        const searchNavUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}`;
+        // 🔴 2026-08-18 — ANCHOR THIS URL TOO. Without `@lat,lng,13z` Google picks the viewport, and
+        // `readMapCentreFromUrl()` finds no `@` token at all — so the fail-closed map-centre check
+        // SILENTLY SKIPS on this path (logged as `zoom≈unknown`). That is how terra-towing-service
+        // rendered a blank map on 08-17 with a perfectly valid coordinate and no guardrail fired.
+        // Same anchor the main results URL uses; empty when coords are missing, which restores the
+        // previous behaviour exactly rather than emitting a malformed URL.
+        const _dsLat = Number(meta?.lat), _dsLng = Number(meta?.lng);
+        const dsCoordAnchor = (Number.isFinite(_dsLat) && Number.isFinite(_dsLng)) ? `/@${_dsLat},${_dsLng},13z` : '';
+        const searchNavUrl = `https://www.google.com/maps/search/${encodeURIComponent(businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : ''))}${dsCoordAnchor}`;
+        if (!dsCoordAnchor) console.warn('   ⚠️ direct-search nav NOT anchored — no coordinates; the map-centre guardrail cannot verify this render.');
         console.log(`   → Scroll-find returned no anchors; navigating to name+city search URL: ${searchNavUrl}`);
         try {
           // 2026-05-27 use domcontentloaded (not networkidle2). Google Maps is
