@@ -252,7 +252,16 @@ async function checkMapView(v, D) {
 // sliver of land sits at its right edge. Dominance across the whole map area catches it at 81%.
 // The 70% threshold sits in the middle of a 23-point gap, so it is not finely tuned.
 const MAP_AREA = { x: 0.62, y: 0.30, w: 0.36, h: 0.55 }; // map in BOTH layouts, clear of both overlays
-const MAP_MIN_COLOURS = 40;   // bad: 4-5      good: 120-168
+// Thresholds set from the MEASURED distribution across the live corpus, not from a small sample.
+// My first value (40) sat ABOVE the good minimum and false-rejected a perfectly good video:
+// the-law-offices-of-johnson-and-johnson scored 35 because its map region is sparse suburban terrain —
+// pale, few roads — while still showing streets, labels and the business pin.
+//   confirmed BAD : 4, 5, 5, 5 (blank ocean) · 12, 13, 13, 14 (macOS dialog / quarter-scale)  → max 14
+//   confirmed GOOD: 34, 35, 74, 77, 80, 81, 83, 85, 88 …                                      → min 34
+// 22 sits mid-gap: 1.6x above the worst bad, 1.5x below the best good.
+// 🚫 Do NOT raise this without re-measuring min(good) across a WIDE sample — sparse suburban and rural
+// maps are legitimately low, and that is exactly what the first threshold got wrong.
+const MAP_MIN_COLOURS = 22;
 const MAP_MIN_EDGE_PCT = 7;   // bad: 0.0-3.2  good: 11.5-31.3
 
 // Is this frame actually the Maps view? The Maps layout ALWAYS has a bright white panel down the left
