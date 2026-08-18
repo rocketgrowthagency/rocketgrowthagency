@@ -481,8 +481,12 @@ LEAD_RADIUS_MI="${LEAD_RADIUS_MI:-60}"
 python3 scripts/select-emailable-leads.py "$LATEST_S2" "$LEAD_RADIUS_MI" \
   > /tmp/emailable_leads.txt 2>/tmp/geo_excluded.txt
 
-GEO_EXCLUDED=$(grep -c "" /tmp/geo_excluded.txt 2>/dev/null || echo 0)
-if [ "${GEO_EXCLUDED:-0}" -gt 0 ]; then
+# 🔴 NOT `grep -c "" file || echo 0`: on an EMPTY file grep prints "0" AND exits 1, so the `|| echo 0`
+# fires too and the command substitution captures "0\n0" → `[: 0\n0: integer expression expected`.
+# awk always exits 0 and emits exactly one number (and counts an unterminated final line correctly).
+GEO_EXCLUDED=$(awk 'END{print NR}' /tmp/geo_excluded.txt 2>/dev/null)
+GEO_EXCLUDED=${GEO_EXCLUDED:-0}
+if [ "$GEO_EXCLUDED" -gt 0 ]; then
   echo ">>> Geographic filter: excluded $GEO_EXCLUDED lead(s) whose Google coordinates are >${LEAD_RADIUS_MI} mi from the search area" | tee -a "$LOGFILE"
   echo "    (address-less listings get arbitrary coordinates; their Maps card renders a blank or wrong-city map)" | tee -a "$LOGFILE"
   while IFS=$'\t' read -r gname gmiles; do

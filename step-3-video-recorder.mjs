@@ -1276,7 +1276,17 @@ async function readMapScaleMeters(page) {
       const W = window.innerWidth, H = window.innerHeight;
       const re = /^\s*(\d+(?:[.,]\d+)?)\s*(ft|mi|km|m)\s*$/i;
       let widest = null;
-      for (const el of document.querySelectorAll('div,span,button,td')) {
+      // 🔴 2026-08-17 — `label` WAS MISSING AND THAT DISABLED THIS ENTIRE FUNCTION.
+      // Maps renders the scale bar as <label class="U5ELMd">2000 ft</label>. The only other nodes whose
+      // text matches ("div.BHeSBe", "button.LNGekf") both have children, so the leaf-only guard below
+      // skipped them — meaning there was NEVER a reachable match and this returned null 100% of the time.
+      // Measured across every retained run log: 99 of 99 card-zoom events logged `scale≈unreadable`, so
+      // the 2026-08-10 "trust the rendered scale bar, not the URL" fix never once executed and every
+      // video was silently judged by the URL-zoom fallback it was written to replace. That is how a
+      // whole-state map shipped while forceMapsCityZoom reported `zoom≈13` (team-plumbing, 08-17).
+      // Verified headless after adding `label`: card@17z=61m, card@14z=610m, state@7z=80467m (WIDE).
+      // 🚫 Do not narrow this selector. Confirm any change against a REAL Maps page in both directions.
+      for (const el of document.querySelectorAll('div,span,button,td,label')) {
         if (el.children.length) continue;                       // leaf text nodes only
         const m = (el.textContent || '').trim().match(re);
         if (!m) continue;
