@@ -2172,6 +2172,9 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // multiple Plumbers Santa Monica leads. Memory:
       // feedback_maps_card_visibility_rules.md.
       const urls = [];
+      // Declared before the first push: the scraped URL below needs it too (see the Null Island note).
+      const drLat0 = Number(meta?.lat), drLng0 = Number(meta?.lng);
+      const drAnchor = (Number.isFinite(drLat0) && Number.isFinite(drLng0)) ? `/@${drLat0},${drLng0},13z` : '';
       // 2026-06-22: REVERTED the bare-name-skip experiment. Skipping the bare-name
       // /maps/place/Name URL removed the ~1s blank flash but REGRESSED the prospect's
       // detail-card pop-out (the deployed video stayed on the competitor results list
@@ -2180,7 +2183,16 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // (the brief flash). Keep the bare-name URL in the chain; the blank-Maps gate +
       // non-empty-h1 detector still prevent a truly-blank recording from shipping.
       if (mapsUrl && /\/maps\/place\//.test(mapsUrl)) {
-        urls.push(mapsUrl);
+        // 🔴 2026-08-18 — ANCHOR THE SCRAPED URL TOO. This is the LAST Null Island hole: the step-1
+        // Google Maps URL is often a BARE name place URL with no @lat,lng —
+        //   https://www.google.com/maps/place/BSH+Landscape+%26+Hardscape+Design
+        // Maps cannot resolve a bare ambiguous name, and parks the viewport at EXACTLY @0,0. Because
+        // this URL is tried FIRST, anchoring only the two fallbacks below left the most common path
+        // unprotected: BSH measured 12550.3km (Culver City → 0,0 is 12590km) on TWO separate runs, once
+        // before the fallback fix and once after, which is what exposed this.
+        // Only append when the URL has no @ of its own — never override a real one Google gave us.
+        const hasAnchor = /@-?[\d.]+,-?[\d.]+/.test(mapsUrl);
+        urls.push(hasAnchor || !drAnchor ? mapsUrl : mapsUrl.replace(/\/+$/, "") + drAnchor);
       }
       // 🔴 2026-08-18 — NULL ISLAND, PROVEN. These deep-rank fallbacks were UNANCHORED, and Google
       // sometimes answers a name+city search by parking the viewport at EXACTLY @0,0 — the Gulf of
@@ -2192,8 +2204,6 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       // Anchoring pins the viewport to the business, so Maps has no room to default to 0,0.
       // 🚫 Never drop the anchor: without an `@` token the centre check cannot even measure the render
       // (readMapCentreFromUrl returns null → the fail-closed guardrail SKIPS).
-      const drLat = Number(meta?.lat), drLng = Number(meta?.lng);
-      const drAnchor = (Number.isFinite(drLat) && Number.isFinite(drLng)) ? `/@${drLat},${drLng},13z` : '';
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
       urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}${drAnchor}`);
       if (businessName) {
