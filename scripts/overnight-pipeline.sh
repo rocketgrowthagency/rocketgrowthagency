@@ -1288,7 +1288,14 @@ N=1
 # "unbound variable" and aborts the whole script before report-write.
 # Caused Pipeline 2 (Electricians Long Beach) crash overnight 2026-05-21.
 for entry in "${DEPLOYED_URLS[@]+"${DEPLOYED_URLS[@]}"}"; do
-  IFS='|' read -r name url <<< "$entry"
+  # 🔴 2026-08-18 — MUST be $RSEP, not '|'. append_result writes these rows with ${RSEP} ($'\037'),
+  # so reading with IFS='|' put the ENTIRE "name<US>url" into $name and left $url EMPTY. The report then
+  # rendered `**Hot 8 Yogahttps://…/v/hot-8-yoga/** — ` (URL swallowed into the bold name), the
+  # summary's `**Name** — URL` parser matched nothing, and the locked chat report listed the deployed
+  # videos as "_(none)_" — so Chris got no clickable links to review the night's output.
+  # A business name containing a dash ("ZOOGA KIDS – Culver City") corrupted the row further.
+  # Introduced 2026-08-17 when the writer moved to RSEP and this reader was not updated with it.
+  IFS="$RSEP" read -r name url <<< "$entry"
   # Locate this lead's voiceover manifest to pull verification summary.
   BIZ_SLUG_FOR_MANIFEST=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
   VERIF=$(python3 -c "
