@@ -79,6 +79,15 @@ if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-08-17 — MAP-CENTRE gate. A map at a perfect city zoom but centred on the WRONG PLACE passes every
+# pixel check we have (card open, rank overlay, scale bar, colour/edge density) — team-plumbing shipped a
+# 2-mile view of the Channel Islands. This static scan asserts the results URL stays coordinate-anchored
+# and that EVERY capture path is guarded by the fail-closed centre assertion.
+echo ">>> pre-flight: map-centre gate (viewport anchored + every capture path guarded)" | tee -a "$LOGFILE"
+if ! node scripts/check-map-centre-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: map-centre invariants broken — a wrong-location video could ship looking perfectly normal. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: category-relevance gate (business must match the searched vertical)" | tee -a "$LOGFILE"
 if ! node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: category-relevance gate broken — off-vertical businesses (mosque/museum/nonprofit) could get videos + outreach. Aborting." | tee -a "$LOGFILE"

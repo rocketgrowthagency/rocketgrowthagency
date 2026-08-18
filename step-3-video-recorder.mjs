@@ -1301,6 +1301,71 @@ async function readMapScaleMeters(page) {
   } catch { return null; }
 }
 
+// 🔴 2026-08-17 — THE MAP CAN BE PERFECTLY ZOOMED AND STILL SHOW THE WRONG PLACE.
+// Chris spotted `team-plumbing-west-los-angeles` rendering OPEN OCEAN ("San Miguel Island",
+// "Harris Point Essential Fish Habitat" — the Channel Islands, ~250km west of the business).
+// It passed EVERY gate we had: card open ✓, rank overlay ✓, scale bar "2 mi" ✓, and enough
+// blue/green/labels to clear the BLANK-MAP colour+edge thresholds.
+//
+// Mechanism, reproduced headlessly:
+//   /maps/search/Plumbers+in+Santa+Monica+CA/  →  settles @35.36,-119.70,7z  (STATEWIDE, Central Valley)
+// Google fits the results viewport to ALL results, and far-flung ones drag it across the state.
+// forceMapsCityZoom then presses Zoom-in, which zooms toward the VIEWPORT CENTRE — not the
+// business — so it lands at a textbook city zoom several hundred km out to sea.
+//
+// ⚠️ Fixing the zoom made this HARDER to catch, not easier: a statewide map is obviously broken,
+// but a crisp 2-mile view of the Pacific looks like a normal map to a colour/edge detector.
+// So the only reliable signal is GEOMETRIC — compare the map centre to the business's own
+// coordinates. We have both, exactly, so this is arithmetic, not pixel forensics.
+//
+// 25km is a PHYSICAL bound, not a tuned threshold: at city zoom (scale bar <= 2 mi) the visible
+// map is roughly 5-15km across, so a centre >25km away puts the business off-screen with
+// certainty. No legitimate render can exceed it.
+const MAP_CENTRE_MAX_KM = 25;
+function readMapCentreFromUrl(page) {
+  const m = (page.url() || '').match(/@(-?[\d.]+),(-?[\d.]+),([\d.]+)z/);
+  return m ? { lat: parseFloat(m[1]), lng: parseFloat(m[2]), z: parseFloat(m[3]) } : null;
+}
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, r = (d) => (d * Math.PI) / 180;
+  return 2 * R * Math.asin(Math.sqrt(
+    Math.sin(r(lat2 - lat1) / 2) ** 2 +
+    Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lng2 - lng1) / 2) ** 2));
+}
+// Always LOGS the measured offset, never just a pass/fail boolean — a constant diagnostic string is
+// how the dead scale-bar reader hid for a week (99/99 `scale≈unreadable`). A number builds a baseline.
+// Returns the offset in km, or null when the business has no usable coordinates.
+async function mapCentreOffsetKm(page, meta, label = 'detail') {
+  const lat = Number(meta?.lat), lng = Number(meta?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    console.log(`   → ${label}: map-centre check SKIPPED — no coordinates for this business`);
+    return null;
+  }
+  const c = readMapCentreFromUrl(page);
+  if (!c) {
+    console.log(`   → ${label}: map-centre check SKIPPED — no @lat,lng in the Maps URL`);
+    return null;
+  }
+  const off = haversineKm(lat, lng, c.lat, c.lng);
+  console.log(`   → ${label}: map centre is ${off.toFixed(1)}km from the business (limit ${MAP_CENTRE_MAX_KM}km, zoom ${c.z})`);
+  return off;
+}
+// FAIL-CLOSED wrapper. Throws when the viewport is anchored somewhere the business cannot possibly be
+// on screen. Applied to EVERY path that can reach a detail card — a defect that only one path guards is
+// a defect the other paths still ship (the scroll-find `_cardOpenedInPage` flag was exactly that bug).
+// Skips silently when coordinates or the URL anchor are unavailable: absent data is not evidence of a
+// wrong location, and failing on it would reject good leads.
+async function assertMapCentredOnBusiness(page, meta, label, businessName) {
+  const off = await mapCentreOffsetKm(page, meta, label);
+  if (off !== null && off > MAP_CENTRE_MAX_KM) {
+    throw new Error(
+      `[step-3 GUARDRAIL] ${label}: map centre is ${off.toFixed(1)}km from ${businessName || 'the business'} ` +
+      `(limit ${MAP_CENTRE_MAX_KM}km) — the Maps viewport is anchored somewhere else entirely, so this render ` +
+      `would show the WRONG LOCATION at a convincing zoom. Every pixel gate passes such a frame (card, overlay ` +
+      `and scale bar are all correct), so geometry is the only thing that can catch it. Failing the lead.`);
+  }
+}
+
 // 2026-06-03 — Maps card-open often leaves the map zoomed-out at state/region
 // level instead of city-level. Cause: Maps' SPA picks a wide zoom to fit the
 // business's service-area bounds when the detail card opens. Effect: the
@@ -1922,8 +1987,32 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
 
   try {
     console.log('   → Google Maps segment');
+    // 🔴 2026-08-17 — ANCHOR THE RESULTS VIEWPORT TO THE BUSINESS. This is the root-cause fix for
+    // "the map is over water" (Chris, 08-17), and it makes forceMapsCityZoom nearly a no-op.
+    //
+    // A bare /maps/search/<term> lets GOOGLE choose the viewport, and Google fits it to ALL results —
+    // so a handful of far-flung listings drag it to STATE level. Measured headlessly on the exact
+    // failing search:
+    //   bare      /maps/search/Plumbers+in+Santa+Monica+CA/         → @35.36,-119.70, 7z  scale 80467m
+    //   anchored  /maps/search/<same>/@34.0466643,-118.4365265,13z  → @34.05,-118.44,13z  scale  1609m
+    // The zoom-in loop then zooms toward the VIEWPORT CENTRE, not the business, so from the bare URL
+    // it climbed to a perfect city zoom ~250km out over the Channel Islands and PASSED every gate.
+    //
+    // Anchoring also (a) puts the prospect's card in the visible result set — the #17 lead that was
+    // "NOT FOUND on first page" from the bare URL was found and clicked from the anchored one — and
+    // (b) removes the 11-press zoom climb that was thrashing Maps' tile loader into a blank white pane.
+    // Verified after the card click: centre 7.0km off (panel offset), scale still 1609m. 🚫 Do not
+    // drop the @lat,lng,13z suffix. `mapsCoordAnchor` is empty when coords are missing/unparseable,
+    // which restores the previous behaviour exactly rather than emitting a malformed URL.
+    const _anchorLat = Number(meta?.lat), _anchorLng = Number(meta?.lng);
+    const mapsCoordAnchor = (Number.isFinite(_anchorLat) && Number.isFinite(_anchorLng))
+      ? `/@${_anchorLat},${_anchorLng},13z`
+      : '';
+    if (!mapsCoordAnchor) {
+      console.warn('   ⚠️ Maps results viewport NOT anchored — no coordinates for this business; Google will pick the viewport and may open at state zoom.');
+    }
     const initialMapsUrl = query
-      ? `https://www.google.com/maps/search/${encodeURIComponent(query)}`
+      ? `https://www.google.com/maps/search/${encodeURIComponent(query)}${mapsCoordAnchor}`
       : 'https://www.google.com/maps';
 
     await page.goto(initialMapsUrl, {
@@ -2042,6 +2131,13 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           if (s && s !== document.body) s.scrollTop = 0; // top-align card → hero photo visible
         }).catch(() => {});
         await forceMapsCityZoom(page, 'scroll-find-click');
+        // 🔴 2026-08-17 FAIL-CLOSED: correct zoom on the WRONG PLACE is invisible to every pixel check.
+        // team-plumbing-west-los-angeles shipped a crisp 2-mile view of the Channel Islands — card open,
+        // rank overlay present, scale bar "2 mi" — and passed the acceptance AND visual gates, because
+        // ocean + island + labels clear the colour/edge thresholds. Geometry is the only honest signal.
+        // Throwing here fails the lead BEFORE the render chain burns, and arms a redo, which is the
+        // locked behaviour for a capture defect ([[feedback-video-acceptance-gate-locked]]).
+        await assertMapCentredOnBusiness(page, meta, 'scroll-find-click', businessName);
         await holdOnDetailCard(12000);
         await dismissResultsInfoPopup(page);
         return 'results-click';
@@ -2184,6 +2280,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       await injectRankOverlay(page, businessName, rank, searchTerm);
       await highlightBusinessOnDetailPage(page);
       await forceMapsCityZoom(page, 'detail-hold');
+      await assertMapCentredOnBusiness(page, meta, 'detail-hold', businessName);
       await holdOnDetailCard(18000);
       await dismissResultsInfoPopup(page);
       return 'direct-url-no-mapsurl';
@@ -2244,6 +2341,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await forceMapsCityZoom(page, 'direct-search-detail');
+          await assertMapCentredOnBusiness(page, meta, 'direct-search-detail', businessName);
           // Hold on the detail card (injected frames — see holdOnDetailCard).
           await holdOnDetailCard(18000);
           await dismissResultsInfoPopup(page);
@@ -2256,6 +2354,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
           await injectRankOverlay(page, businessName, rank, searchTerm);
           await highlightBusinessOnDetailPage(page);
           await forceMapsCityZoom(page, 'direct-search-results-click');
+          await assertMapCentredOnBusiness(page, meta, 'direct-search-results-click', businessName);
           await holdOnDetailCard(18000);
           await dismissResultsInfoPopup(page);
           return 'direct-search-results-click';
@@ -2353,6 +2452,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         // happened to leave the map after the card opened — which, when it fits to a business's
         // bounds, can be a whole state. Same starting point for every lead, then a bounded widen.
         await forceMapsCityZoom(page, 'deep-rank-click');
+        await assertMapCentredOnBusiness(page, meta, 'deep-rank-click', businessName);
         await zoomOutMap(page, Number(process.env.MAPS_ZOOM_OUT_STEPS || 3));
         await sleep(1800); // let map tiles re-render at the wider zoom
         await holdOnDetailCard(18000);
@@ -2365,6 +2465,7 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
         await injectRankOverlay(page, businessName, rank, searchTerm);
         await highlightBusinessOnDetailPage(page);
         await forceMapsCityZoom(page, 'direct-url-last-resort');
+        await assertMapCentredOnBusiness(page, meta, 'direct-url-last-resort', businessName);
         await holdOnDetailCard(18000);
         await dismissResultsInfoPopup(page);
         return 'direct-url';
