@@ -2182,10 +2182,22 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       if (mapsUrl && /\/maps\/place\//.test(mapsUrl)) {
         urls.push(mapsUrl);
       }
+      // 🔴 2026-08-18 — NULL ISLAND, PROVEN. These deep-rank fallbacks were UNANCHORED, and Google
+      // sometimes answers a name+city search by parking the viewport at EXACTLY @0,0 — the Gulf of
+      // Guinea. Open ocean renders as a flat blue pane, which is why it was mis-read for weeks as a
+      // "blank map / missing tiles" bug. Reproduced headlessly on the real lead:
+      //   /maps/search/BSH+Landscape+%26+Hardscape+Design,+Culver+City+CA   → @0,0,15z   (12590 km)
+      //   same name, no city                                                → @34.085,-118.437 (8 km)
+      // 12590 km is within map-wobble of the 12550.3 km the centre guardrail measured on BSH on 08-17.
+      // Anchoring pins the viewport to the business, so Maps has no room to default to 0,0.
+      // 🚫 Never drop the anchor: without an `@` token the centre check cannot even measure the render
+      // (readMapCentreFromUrl returns null → the fail-closed guardrail SKIPS).
+      const drLat = Number(meta?.lat), drLng = Number(meta?.lng);
+      const drAnchor = (Number.isFinite(drLat) && Number.isFinite(drLng)) ? `/@${drLat},${drLng},13z` : '';
       const nameCity = businessName + (meta.city ? ', ' + meta.city + (meta.state ? ' ' + meta.state : '') : '');
-      urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}`);
+      urls.push(`https://www.google.com/maps/search/${encodeURIComponent(nameCity)}${drAnchor}`);
       if (businessName) {
-        urls.push(`https://www.google.com/maps/search/${encodeURIComponent(businessName)}`);
+        urls.push(`https://www.google.com/maps/search/${encodeURIComponent(businessName)}${drAnchor}`);
       }
       return urls;
     }
