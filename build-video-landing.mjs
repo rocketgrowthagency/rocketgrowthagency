@@ -335,6 +335,24 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
   const body = { fields: { "Video URL": videoUrl } };
   if (videoFile) body.fields["Video File"] = videoFile;
   if (slug) body.fields["Vid Slug"] = slug;
+  // 🔴 2026-08-17 — A SUCCESSFUL BUILD MUST UN-PARK A STALE 'build-failed'.
+  // Publishing a passing video used to leave `Email Status='build-failed'` + `Suppressed=true` exactly
+  // as the earlier gate-permafail left them, so the lead ended up with a perfectly good video AND a
+  // permanent do-not-email flag. Caught on team-plumbing-west-los-angeles: it was parked by the
+  // results+card NO-DETAIL-CARD FALSE REJECT, then rebuilt clean and deployed — and still could never
+  // be emailed. Any lead parked by a bug we later FIX would stay dead forever without this.
+  // 🚫 MUST be conditional. Clearing Email Status unconditionally would wipe REAL terminal states —
+  // 'bounced', 'unsubscribed', 'invalid', 'blocked' — and resurrect those contacts into outreach. Those
+  // are about the PERSON, not the video, and must survive any rebuild. So read the row first and only
+  // lift the parking when the status is literally the build-failure one we set ourselves.
+  const cur = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`,
+    { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (cur && cur.fields && cur.fields["Email Status"] === "build-failed") {
+    body.fields["Email Status"] = "";
+    body.fields["Suppressed"] = false;
+    body.fields["Redo Video"] = false;
+    console.log(`[build-landing] ↺ un-parked ${slug || recordId}: a passing video replaced an earlier 'build-failed' (was: ${String(cur.fields["Skip Reasons"] || '').slice(0, 90)})`);
+  }
   const auditSummary = loadAuditSummaryFromManifest(slug) || loadAuditSummary(slug);
   if (auditSummary) body.fields["Audit Summary"] = auditSummary;
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
