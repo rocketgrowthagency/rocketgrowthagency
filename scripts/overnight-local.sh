@@ -186,6 +186,9 @@ CAFF_PID=$!
 trap 'kill $CAFF_PID 2>/dev/null' EXIT
 
 echo "=== overnight-local START $(date) — city-first, cap: ${MAX_SEARCHES} searches / ${MAX_RUN_HOURS}h, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
+# Fresh per run: the set of searches THIS run has already attempted. next-search.mjs excludes them
+# unconditionally, so a mid-run re-arm defers to tomorrow instead of re-picking the same category now.
+mkdir -p "$SCRAPER_DIR/output"; : > "$SCRAPER_DIR/output/attempted-this-run.txt"
 
 # CONNECTIVITY WAIT (2026-07-27). launchd fires at 21:00 with NO network guard, but Chris's mobile
 # data has been down at 21:00 before (out until ~21:40 on 07-23) — which would fail next-search +
@@ -255,6 +258,16 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   # See feedback_next_search_must_track_attempts.md.
   mkdir -p "$SCRAPER_DIR/output"
   echo "$Q" >> "$SCRAPER_DIR/output/attempted-searches.log"
+  # 🔴 2026-08-19 — RUN-SCOPED LOCK. The line above is the post-Painters guard (a search is recorded as
+  # ATTEMPTED before it runs, so a zero-yield search can't be re-picked forever). On 2026-08-18 I broke
+  # it: unledger_search_for_redo() REMOVES the search from attempted-searches.log whenever a lead fails,
+  # so the guard was erased mid-run and the same category was re-picked immediately. "Yoga studios"
+  # consumed slots 1,2,3 and 4 of 5 — the Painters failure mode again, merely bounded by the per-lead cap.
+  # A re-arm is meant to mean "the NEXT run re-attempts this", never "retry it again in ten minutes":
+  # retrying a lead inside the same batch also contradicts feedback_capture_instability_in_long_batches
+  # (retry COLD, never at the end of a batch). This file is cleared at run start and is applied LAST in
+  # next-search.mjs, after every override, so nothing can resurrect a search within the run that started it.
+  echo "$Q" >> "$SCRAPER_DIR/output/attempted-this-run.txt"
   WORKER_COUNT="$WORKER_COUNT" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
   _prc=${PIPESTATUS[0]}
   if [ "$_prc" -ne 0 ]; then

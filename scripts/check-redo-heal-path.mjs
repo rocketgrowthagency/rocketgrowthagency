@@ -84,6 +84,22 @@ const CHECKS = [
     ok: () => /redo closed out for/.test(read('build-video-landing.mjs')),
     why: 'if success never clears the redo-armed marker, the stricter FINALIZE can never fire and fixed videos stay suppressed forever — the opposite silent failure' },
 
+  // 🔴 2026-08-19 — A RE-ARM MUST DEFER TO THE NEXT RUN, NOT RE-PICK NOW.
+  // overnight-local.sh records each search in attempted-searches.log BEFORE running it — the guard added
+  // after "Painters" span 17 times / ~13h. unledger_search_for_redo() DELETES that record whenever a lead
+  // fails, erasing the guard mid-run, so next-search handed the same category straight back.
+  // Measured 2026-08-18: "Yoga studios" took slots 1, 2, 3 and 4 of 5; only the per-lead cap stopped it,
+  // and the night's backlog drain never happened. Retrying a lead inside the same batch also contradicts
+  // feedback_capture_instability_in_long_batches (retry COLD).
+  { name: 'a mid-run re-arm cannot re-pick the same search',
+    ok: () => {
+      const ns = read('scripts/next-search.mjs'), ol = read('scripts/overnight-local.sh');
+      return /attempted-this-run/.test(ns) && /attempted-this-run/.test(ol)
+          && /thisRun\.has/.test(ns)            // the queue is filtered by it
+          && /: > "\$SCRAPER_DIR\/output\/attempted-this-run\.txt"/.test(ol); // and it is cleared per run
+    },
+    why: 'without the run-scoped lock a failing lead re-queues its own search and the run re-picks it immediately, burning the night on one category' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

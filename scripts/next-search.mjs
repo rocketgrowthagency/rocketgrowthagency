@@ -99,6 +99,26 @@ try {
   for (const q of queuedRebuilds) done.delete(norm(q));
 } catch { /* nothing queued — the normal case */ }
 
+// 🔴 2026-08-19 — RUN-SCOPED LOCK, APPLIED LAST SO NOTHING CAN OVERRIDE IT.
+// Every override above (redoPending, the pending-rebuild queue) exists to make a search re-pickable by
+// the NEXT run. None of them should make it re-pickable by the run that just tried it. On 2026-08-18
+// they did: overnight-pipeline.sh re-arms a search the moment a lead fails, which both re-queues it here
+// AND deletes it from attempted-searches.log — erasing the post-Painters guard mid-run. next-search then
+// handed the same category straight back. "Yoga studios" took slots 1, 2, 3 and 4 of 5, and only the
+// per-lead attempt cap stopped it; the night's backlog drain never happened.
+//
+// overnight-local.sh truncates this file at run start and appends each search as it begins. Applying it
+// AFTER the deletes means a mid-run re-arm defers to tomorrow — which is what "re-arm" always meant, and
+// what feedback_capture_instability_in_long_batches requires (retry COLD, never inside the same batch).
+const ATTEMPTED_THIS_RUN = path.join(SCRAPER_DIR, 'output', 'attempted-this-run.txt');
+const thisRun = new Set();
+try {
+  for (const line of fs.readFileSync(ATTEMPTED_THIS_RUN, 'utf8').split('\n')) {
+    const q = line.trim(); if (q) { thisRun.add(norm(q)); done.add(norm(q)); }
+  }
+} catch { /* first search of the run, or run not started by overnight-local.sh */ }
+queuedRebuilds = queuedRebuilds.filter((q) => !thisRun.has(norm(q)));
+
 // 🔴 2026-08-18 — A QUEUED REBUILD MUST JUMP THE QUEUE, not merely become eligible.
 // Removing the term from `done` only makes it *pickable*; the walk below still visits city × vertical in
 // a fixed order, so a queued search competes on its POSITION in that list. "Yoga studios" sits at #45 of
