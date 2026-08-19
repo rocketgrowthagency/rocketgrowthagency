@@ -238,6 +238,26 @@ const CHECKS = [
     },
     why: 'an orphaned Chrome locks its profile dir and wedges the NEXT lead; unlogged reasons cannot be tallied' },
 
+  // 2026-08-19 — TWO failures found by watching a live run, not by reading code:
+  //  (a) the breaker used `grep -c ... || echo 0`, which on ZERO matches yields "0\n0" (grep prints 0 AND
+  //      exits 1, so the fallback also fires) — the numeric test throws and the breaker SILENTLY SKIPS.
+  //      Round 1 built 0 of 6 and nothing stopped; round 2 re-ran the same six leads.
+  //  (b) parked leads were still selected every round, so two proven-dead sites were re-captured at
+  //      ~6 min each.
+  { name: 'recovery counters cannot yield "0\\n0"',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh');
+      return /CH_STAGED=\$\(awk /.test(rr) && !/grep -c '✓ staged'[^\n]*\|\| echo 0/.test(rr);
+    },
+    why: 'grep -c prints 0 AND exits 1 on no matches, so `|| echo 0` appends a second 0 and the breaker never fires' },
+
+  { name: 'parked unbuildable leads are never re-selected',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh');
+      return /unbuildable-leads\.tsv/.test(rr) && /is_unbuildable/.test(rr);
+    },
+    why: 'without the skip-list the same permanently dead sites are picked every round, ~6 min each' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

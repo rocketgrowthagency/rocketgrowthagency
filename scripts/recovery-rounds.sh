@@ -77,9 +77,16 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
     say ">>> recover-lost-leads failed (probe broken or rate-limited) — stopping rather than guessing."; break; fi
 
   # Filter to leads under the attempt cap, then take the next chunk.
+  # Leads whose own site cannot be loaded by ANY client are parked permanently — never re-pick them.
+  # Without this the SAME dead sites are selected every round: on 2026-08-19 round 2 re-attempted
+  # david-ostrove and jerome-b-smith, both already proven unreachable, at ~6 min each.
+  UNBUILDABLE="$SCRAPER/output/unbuildable-leads.tsv"
+  is_unbuildable(){ [ -f "$UNBUILDABLE" ] && cut -f1 "$UNBUILDABLE" | grep -qxF "$1"; }
+
   SLUGS=()
   while IFS= read -r slug; do
     [ -n "$slug" ] || continue
+    if is_unbuildable "$slug"; then say "    ⛔ skipping $slug — parked as permanently unbuildable"; continue; fi
     [ "$(attempts_for "$slug")" -lt "$CAP" ] || continue
     SLUGS+=("$slug")
     [ "${#SLUGS[@]}" -ge "$CHUNK" ] && break
@@ -109,9 +116,15 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   # BLANK-PHOTOS. Night runs on identical code have ranged 0% to 90% BLANK-PHOTOS (08-16: 0 of 41;
   # 08-17: 9 of 10), so photo lazy-loading is timing/network sensitive and some days simply cannot build.
   # On such a day the right move is to STOP and retry another day — not to burn 252 leads' attempts.
-  CH_STAGED=$(grep -c '✓ staged' "$CHUNK_LOG" 2>/dev/null || echo 0)
-  CH_LEADS=$(grep -c '════' "$CHUNK_LOG" 2>/dev/null || echo 0)
-  CH_BLANK=$(grep -c 'BLANK-PHOTOS' "$CHUNK_LOG" 2>/dev/null || echo 0)
+  # 🔴 NOT `grep -c ... || echo 0`: on ZERO matches grep prints "0" AND exits 1, so the `|| echo 0`
+  # ALSO fires and the variable becomes "0\n0" — the numeric test then throws and the breaker is silently
+  # skipped. That is exactly what happened on the 2026-08-19 15:23 run: round 1 built 0 of 6 and the
+  # breaker never fired, so round 2 re-attempted the SAME six leads including two dead sites.
+  # overnight-pipeline.sh documents this same trap. awk always exits 0 and prints exactly one number.
+  CH_STAGED=$(awk '/✓ staged/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)
+  CH_LEADS=$(awk '/════/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)
+  CH_BLANK=$(awk '/BLANK-PHOTOS/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)
+  CH_STAGED=${CH_STAGED:-0}; CH_LEADS=${CH_LEADS:-0}; CH_BLANK=${CH_BLANK:-0}
   rm -f "$CHUNK_LOG"
   if [ "$CH_LEADS" -ge 4 ] && [ "$CH_STAGED" -eq 0 ]; then
     say ""
