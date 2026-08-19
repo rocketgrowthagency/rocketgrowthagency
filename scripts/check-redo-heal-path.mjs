@@ -181,6 +181,20 @@ const CHECKS = [
     },
     why: 'unbounded rounds would capture into the workday and film the desktop, or run past the night entirely' },
 
+  // 2026-08-19 — the RECOVERY path needs its own breaker. overnight-pipeline.sh got one this morning, but
+  // the backlog path is where it matters MOST: every lead there has only RECOVERY_ATTEMPT_CAP tries before
+  // being parked forever, so grinding on a bad day spends the whole queue's budget at a rate that cannot
+  // succeed. Measured: a chunk went 0 staged / 5 leads, 4 BLANK-PHOTOS, on a day when night runs on the
+  // same code have ranged 0%-90% for that failure.
+  { name: 'recovery rounds stop on a dead chunk',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh');
+      return /RECOVERY CIRCUIT BREAKER/.test(rr)
+          && /CH_STAGED/.test(rr)
+          && /Refunded 1 attempt/.test(rr);   // a doomed chunk must not consume the leads' budget
+    },
+    why: 'without it a bad photo-loading day burns one of three attempts on every lead in the backlog and parks them permanently' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

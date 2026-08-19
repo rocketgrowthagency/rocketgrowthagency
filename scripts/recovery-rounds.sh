@@ -95,9 +95,38 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   # One chunk = one rebuild batch = ONE deploy at the end, so progress is banked even if the next round
   # never starts. DAYTIME_SAFE_CAPTURE is NOT set: this runs inside the night window, where the desktop
   # grab is the better path (page.screenshot is the daytime-only fallback).
-  DAYTIME_SAFE_CAPTURE="${DAYTIME_SAFE_CAPTURE:-0}" ./scripts/rebuild-broken-videos.sh "${SLUGS[@]}" 2>&1 | tee -a "$LOG"
+  CHUNK_LOG="/tmp/recovery-chunk-$$-${round}.log"
+  DAYTIME_SAFE_CAPTURE="${DAYTIME_SAFE_CAPTURE:-0}" ./scripts/rebuild-broken-videos.sh "${SLUGS[@]}" 2>&1 | tee -a "$LOG" "$CHUNK_LOG"
   RC=${PIPESTATUS[0]}
   say ">>> round ${round} finished (rc=$RC)"
+
+  # 🔴 2026-08-19 — CIRCUIT BREAKER FOR THE RECOVERY PATH.
+  # overnight-pipeline.sh has had one for the main build since this morning; the recovery path had NONE,
+  # and that is exactly where it matters most. Every lead here gets only RECOVERY_ATTEMPT_CAP tries before
+  # it is parked forever, so grinding through the backlog on a bad day SPENDS THE WHOLE QUEUE'S BUDGET at
+  # a rate that cannot succeed.
+  # MEASURED the day this was written: a Plastic-surgeons chunk went 0 staged / 5 leads, 4 of them
+  # BLANK-PHOTOS. Night runs on identical code have ranged 0% to 90% BLANK-PHOTOS (08-16: 0 of 41;
+  # 08-17: 9 of 10), so photo lazy-loading is timing/network sensitive and some days simply cannot build.
+  # On such a day the right move is to STOP and retry another day — not to burn 252 leads' attempts.
+  CH_STAGED=$(grep -c '✓ staged' "$CHUNK_LOG" 2>/dev/null || echo 0)
+  CH_LEADS=$(grep -c '════' "$CHUNK_LOG" 2>/dev/null || echo 0)
+  CH_BLANK=$(grep -c 'BLANK-PHOTOS' "$CHUNK_LOG" 2>/dev/null || echo 0)
+  rm -f "$CHUNK_LOG"
+  if [ "$CH_LEADS" -ge 4 ] && [ "$CH_STAGED" -eq 0 ]; then
+    say ""
+    say "🔴 RECOVERY CIRCUIT BREAKER — round ${round} built 0 of ${CH_LEADS} (${CH_BLANK} BLANK-PHOTOS)."
+    say "   A whole chunk failing is not per-lead flake; conditions today cannot produce a passing video."
+    say "   STOPPING so the remaining backlog keeps its retry budget — each lead only gets ${CAP} attempts."
+    say "   Nothing is wrong with the pipeline; re-run on another day (the nightly job will pick it up)."
+    # Refund the attempts spent on this doomed chunk — they were not a fair test of these leads.
+    for s in "${SLUGS[@]}"; do
+      n=$(( $(attempts_for "$s") - 1 )); [ "$n" -lt 0 ] && n=0
+      awk -F'\t' -v k="$s" -v n="$n" 'BEGIN{OFS="\t"} $1!=k{print} END{print k,n}' "$LEDGER" > "$LEDGER.tmp" && mv "$LEDGER.tmp" "$LEDGER"
+    done
+    say "   Refunded 1 attempt to each of the ${#SLUGS[@]} lead(s) in this chunk."
+    break
+  fi
 done
 
 say "=== recovery-rounds DONE $(date) — ${round} round(s) ==="
