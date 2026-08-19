@@ -59,11 +59,37 @@ async function probeOnce(slug) {
     return { code: r.status, ct: r.headers.get('content-type') || '' };
   } catch (e) { return { code: 'ERR', ct: String(e.message).slice(0, 40) }; }
 }
-async function hasVideo(slug) {
+// 🔴 2026-08-19 — THE CODEBASE HAS TWO SLUG RULES, so one probe form is not enough.
+// This file turns "Dr. Augusto Rojas, M.D." into `dr-augusto-rojas-m-d` (every non-alphanumeric run
+// becomes a hyphen), which matches the step-2 CSV and the capture directory. But the DEPLOYED page and
+// the gate's failure message use a COLLAPSED form, `dr-augusto-rojas-md`. Evidence: of the live /v/
+// directories, 45 use collapsed initials (md/dds/pc/llp) and ZERO use the hyphen-separated form.
+// Probing only the hyphen form therefore reports a live video as MISSING.
+// Measured impact here: 1 of 252 (face-and-skin-l-a vs face-and-skin-la) — small, but a false "missing"
+// sends a lead back for a rebuild it does not need, and it is what made a manual retry skip a lead.
+// Trying both forms is the proportionate fix; unifying the two slug rules across step-2 / step-3 /
+// build-video-landing is a much riskier change for a 1-in-252 defect.
+const collapseInitials = (s) => s.replace(/(?:^|-)((?:[a-z]-){1,3}[a-z])(?=-|$)/g,
+  (m, g) => (m.startsWith('-') ? '-' : '') + g.replace(/-/g, ''));
+
+async function probeSlug(slug) {
   let res = await probeOnce(slug);
   for (let a = 1; a <= 4 && INDETERMINATE(res.code); a++) { await sleep(a * 1500); res = await probeOnce(slug); }
+  return res;
+}
+
+async function hasVideo(slug) {
+  let res = await probeSlug(slug);
   if (INDETERMINATE(res.code)) return null;            // unknown — never counted as lost
-  return /video\/mp4/i.test(res.ct);
+  if (/video\/mp4/i.test(res.ct)) return true;
+  // Not found under this form — try the collapsed-initials variant before declaring it lost.
+  const alt = collapseInitials(slug);
+  if (alt !== slug) {
+    const res2 = await probeSlug(alt);
+    if (INDETERMINATE(res2.code)) return null;
+    if (/video\/mp4/i.test(res2.ct)) return true;
+  }
+  return false;
 }
 
 // ---- sensor self-test: a slug that cannot exist must not look like a video ----
