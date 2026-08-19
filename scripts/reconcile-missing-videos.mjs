@@ -76,7 +76,24 @@ const raw = await all(['Business Name', 'Email', 'Video URL', 'Suppressed', 'Sta
 // Exclude dedup-skipped leads: they matched an existing business in a later search (a repeat/multi-location
 // duplicate) and MUST NOT get their own video — building one would duplicate a business we already prospected.
 const isDedupSkip = (r) => /dedup-skip/i.test(String(f(r, 'Skip Reasons') || ''));
-const gaps = raw.filter((r) => !f(r, 'Suppressed') && String(f(r, 'Status') || '').toLowerCase() !== 'dead' && !isTerminal(r) && !isDedupSkip(r));
+
+// 🔴 2026-08-19 — THE SELF-HEAL LOOP WAS OPEN, AND THIS WAS THE BREAK.
+// The nightly run is supposed to be: build → gates catch a bad video → ARM it → the SAME NIGHT's
+// recovery pass re-renders it cold (single worker, fresh Chrome profiles) → it passes → done, with no
+// human in the loop by morning. It never closed, because ARM sets `Suppressed = true` (correct — that
+// is what stops a broken video being emailed, per feedback_broken_video_leads_must_be_suppressed) and
+// this filter excluded every suppressed lead. So the leads that MOST needed the second round were the
+// only ones structurally barred from it, and every gate failure waited for a human to notice.
+//
+// An armed redo is precisely a "lead that should have a video and doesn't" — the definition of a gap.
+// Including it does NOT un-suppress anything: this pass only re-renders. Suppression is lifted solely
+// by a PASSING build (updateLeadVideoUrl's redo-closeout), so a video that fails again stays blocked.
+//
+// Deliberately narrow: `redo-armed` in Skip Reasons AND no Video URL. `gate-permafail` is excluded by
+// TERMINAL_ES ('build-failed'), so a lead that has already burned its attempts is not looped forever.
+const isArmedRedo = (r) => /redo-armed/i.test(String(f(r, 'Skip Reasons') || '')) && !f(r, 'Video URL');
+const gaps = raw.filter((r) => (!f(r, 'Suppressed') || isArmedRedo(r))
+  && String(f(r, 'Status') || '').toLowerCase() !== 'dead' && !isTerminal(r) && !isDedupSkip(r));
 
 const attempts = loadAttempts();
 const toRetrySearches = new Set();

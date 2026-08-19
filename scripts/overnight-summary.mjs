@@ -17,8 +17,11 @@
  */
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+const SCRAPER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT = path.join(WEBSITE, 'reports', 'overnight');
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -68,7 +71,21 @@ function summary(date) {
     ``,
     `**Completed videos (${count(s, 'Videos deployed')})** — click to review:`,
     ...deployedLinks(s, count(s, 'Videos deployed')),
+    ...verdictLine(),
   ].join('\n');
+}
+
+// 2026-08-19 — the summary must answer "do I need to do anything?" without being asked.
+// A failure count alone doesn't say that: most failures are armed and retry themselves. This appends the
+// one line that distinguishes "handled" from "stopped retrying". Best-effort — if the verdict can't be
+// computed (no network / Airtable down) the summary still prints, because the locked report format is
+// the load-bearing part and must never be blocked by an advisory extra.
+function verdictLine() {
+  try {
+    const out = execFileSync('node', [path.join(SCRAPER, 'scripts', 'overnight-verdict.mjs'), '--brief'],
+      { encoding: 'utf8', timeout: 60000 }).trim();
+    return out ? ['', out] : [];
+  } catch { return []; }
 }
 
 // Pull the "## Videos deployed" list from the report and re-emit each as a clickable Markdown link.

@@ -324,6 +324,16 @@ fi
 echo ">>> auto-audit: verifying no failed videos" | tee -a "$LOG"
 node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 
+# 2026-08-19 — THE MORNING ANSWER, COMPUTED BY THE RUN ITSELF.
+# Chris: "i dont need to get here in the morning and say ok were there issues, if yes then fix."
+# The report lists failures, but reading it still needed a human to judge which ones matter. Almost none
+# do — an armed redo is retried automatically (the recovery pass above, else the next run). The only rows
+# worth attention are those that have STOPPED retrying (gate-permafail / video-unrenderable-Nx /
+# build-failed), because nothing will ever pick those up again.
+# Read-only: it classifies, it never changes a lead.
+echo ">>> verdict: what (if anything) needs a human" | tee -a "$LOG"
+node scripts/overnight-verdict.mjs 2>&1 | tee -a "$LOG" || true
+
 # File the night's deployed-video list into the dated reports/overnight-videos/YYYY/MM-Month/ tree.
 # Pass the run's START date (DATE_STAMP) — a run that finishes after midnight must still file under
 # the night it started (the log is named by start date).
