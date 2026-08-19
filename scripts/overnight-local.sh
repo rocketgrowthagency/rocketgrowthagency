@@ -128,9 +128,15 @@ else
   # (feedback_nightly_operating_cadence) and this is a drain, not a new normal. Alerts if left stale, the
   # same way BACKFILL-MODE does, so it can't quietly become permanent
   # (feedback_pending_action_memories_go_stale).
+  # The COUNT is read from the flag file's contents (first integer), defaulting to 3. Dial it by writing
+  # a number: `echo 5 > output/CLEAR-BACKLOG`. MAX_SEARCHES is a policy knob, not a safety one — the real
+  # stops are MAX_RUN_HOURS and the 07:00 night-only interlock, and both still apply, so a high count
+  # simply means "keep going until the night ends" rather than "run past it".
   if [ -f "$SCRAPER_DIR/output/CLEAR-BACKLOG" ]; then
     CB_AGE=$(flag_age_days "$SCRAPER_DIR/output/CLEAR-BACKLOG")
-    MAX_SEARCHES=3
+    CB_N=$(tr -cd '0-9' < "$SCRAPER_DIR/output/CLEAR-BACKLOG" | head -c 2)
+    MAX_SEARCHES=${CB_N:-3}
+    [ "$MAX_SEARCHES" -ge 1 ] 2>/dev/null || MAX_SEARCHES=3
     echo "=== CLEAR-BACKLOG (${CB_AGE}d old) — up to ${MAX_SEARCHES} categories tonight to drain the armed-rebuild queue. Delete output/CLEAR-BACKLOG to return to 1/night. ===" | tee -a "$LOG"
     if [ "$CB_AGE" -ge "$FLAG_TTL_DAYS" ]; then
       alert_skip "CLEAR-BACKLOG flag is ${CB_AGE}d old — still running 3 categories/night instead of 1. Delete output/CLEAR-BACKLOG to restore the normal cadence."
