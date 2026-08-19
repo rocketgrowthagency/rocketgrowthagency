@@ -120,6 +120,17 @@ const CHECKS = [
     },
     why: 'Skip Reasons keeps history ("was: video-unrenderable-3x"); matching it as current state reports freshly-paroled leads as still stuck' },
 
+  // 2026-08-19 — a systemic break must STOP the run, not burn every lead's 3-attempt cap.
+  { name: 'circuit breaker stops a collapsed run',
+    ok: () => {
+      const ol = read('scripts/overnight-local.sh');
+      // Must call it AND read PIPESTATUS[0] — `if ! node … | tee` tests tee (always 0) and the breaker
+      // would be silently dead, which is how it was first written.
+      return /run-health-check\.mjs/.test(ol)
+          && /run-health-check\.mjs[^\n]*\n\s*if \[ "\$\{PIPESTATUS\[0\]\}" -ne 0 \]/.test(ol);
+    },
+    why: 'without it a Chrome/Maps change fails every lead, burns all 3 attempts each and parks dozens of good leads; reading the pipeline status instead of PIPESTATUS[0] makes the breaker a no-op' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

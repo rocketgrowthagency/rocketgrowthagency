@@ -282,6 +282,23 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   if [ "$_prc" -ne 0 ]; then
     echo "!!! overnight-pipeline exited non-zero ($_prc) for \"$Q\" — some leads may have failed; the recovery pass + auto-audit below will surface any gaps." | tee -a "$LOG"
   fi
+
+  # 2026-08-19 — CIRCUIT BREAKER, checked after EVERY search.
+  # Each lead gets 3 attempts, then it is parked. That cap assumes failures are independent per-lead
+  # flakes. When something SYSTEMIC breaks (Chrome/Maps change, expired credential, gate regression) they
+  # aren't: the run would grind through every remaining category, fail everything, burn 3 attempts each
+  # and park dozens of good leads — reporting it as an ordinary set of failures. Stopping early costs one
+  # night; continuing costs the queue.
+  # The floor (40%) sits far below the measured 89% baseline on purpose: it must never fire on a merely
+  # bad night — 2026-08-18 ran at 59% and correctly did not trip — only on a broken one.
+  # 🔴 MUST read PIPESTATUS[0], not the pipeline's status. `if ! node … | tee` tests TEE's exit code,
+  # which is always 0 — the breaker would print its warning and the run would sail straight on. Exactly
+  # the trap in feedback_pipeline_must_own_its_inputs (never ignore a step's exit code).
+  node scripts/run-health-check.mjs "$DATE_STAMP" 2>&1 | tee -a "$LOG"
+  if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+    alert_skip "Pipeline circuit breaker tripped — build rate collapsed. Run STOPPED after $n search(es) to protect the remaining leads' retry budget. See reports/alerts/PIPELINE-HEALTH-ALERT.md"
+    break
+  fi
 done
 echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG"
 
