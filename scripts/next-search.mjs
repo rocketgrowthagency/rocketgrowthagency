@@ -93,11 +93,30 @@ for (const k of redoPending) done.delete(k);
 // removes the term when it starts processing it, and only re-adds it if a lead fails again — bounded
 // by the per-lead 3-attempt cap, so a permanently-broken lead cannot pin the pipeline to one category.
 const PENDING_REBUILD = path.join(SCRAPER_DIR, 'output', 'pending-rebuild-searches.txt');
+let queuedRebuilds = [];
 try {
-  for (const line of fs.readFileSync(PENDING_REBUILD, 'utf8').split('\n')) {
-    const q = line.trim(); if (q) done.delete(norm(q));
-  }
+  queuedRebuilds = fs.readFileSync(PENDING_REBUILD, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
+  for (const q of queuedRebuilds) done.delete(norm(q));
 } catch { /* nothing queued — the normal case */ }
+
+// 🔴 2026-08-18 — A QUEUED REBUILD MUST JUMP THE QUEUE, not merely become eligible.
+// Removing the term from `done` only makes it *pickable*; the walk below still visits city × vertical in
+// a fixed order, so a queued search competes on its POSITION in that list. "Yoga studios" sits at #45 of
+// 48, behind ~44 categories that have never been scraped — so the four leads lost on 2026-08-17 would
+// have waited weeks while brand-new categories were scraped ahead of them, even with the override in
+// place. A lead with NO video is more urgent than a category with no leads yet.
+// Safe against looping: overnight-pipeline.sh removes the entry when it STARTS that search, and only a
+// fresh failure re-adds it (capped per lead) — so this cannot pin the run to one category.
+//
+// A queued entry is AUTHORITATIVE — it is returned even though the category counts as "done", because
+// "done" is exactly the wrong answer here: the category was scraped, some leads deployed, and the ones
+// that failed are the reason it's queued. (Guarding this with `!done.has(...)` would be dead code: the
+// loop above already deleted these terms from `done`, so the condition could never be false — the same
+// always-passes shape as feedback_dead_check_selector_gap.)
+if (queuedRebuilds.length) {
+  process.stdout.write(queuedRebuilds[0]);
+  process.exit(0);
+}
 
 for (const city of cities) {
   for (const v of verticals) {

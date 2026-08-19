@@ -109,8 +109,35 @@ else
   # lead. The send throttle (Apps Script daily cap + follow-up pacing) is separate + untouched. Governor runs
   # once for VISIBILITY only (bounce/room logging).
   node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>&1 | tee -a "$LOG" || true
-  echo "=== 1 category tonight — building a video for every emailable lead in the scrape (send side stays capacity-throttled). ===" | tee -a "$LOG"
   MAX_SEARCHES=1   # exactly one scrape/category per night; build all its videos
+
+  # 2026-08-18 — TEMPORARY BACKLOG DRAIN. While output/CLEAR-BACKLOG exists, run up to 3 categories a
+  # night instead of 1, so a queue of armed rebuilds clears in days rather than weeks.
+  #
+  # WHY IT'S NEEDED: an armed redo only re-renders when ITS search is re-picked, and next-search walks
+  # the vertical list in a fixed order. With 5 searches queued (Landscapers #7, Body shop #22, Auto
+  # detailing #24, Towing #25, Yoga studios #45) the 1-category cadence takes FIVE nights to reach the
+  # last one — during which those leads have no video at all.
+  #
+  # 🔒 This does NOT weaken the real bound. Every emailable lead in each scrape still gets a video
+  # (feedback_every_email_gets_a_video), already-deployed leads idempotency-skip so a re-picked category
+  # only builds what's missing, and MAX_RUN_HOURS + the 07:00 night-only interlock still stop the run.
+  # 3 is the documented ceiling in feedback_overnight_run_cap.
+  #
+  # ⚠️ REVERT by deleting output/CLEAR-BACKLOG — the cadence is 1/night by default
+  # (feedback_nightly_operating_cadence) and this is a drain, not a new normal. Alerts if left stale, the
+  # same way BACKFILL-MODE does, so it can't quietly become permanent
+  # (feedback_pending_action_memories_go_stale).
+  if [ -f "$SCRAPER_DIR/output/CLEAR-BACKLOG" ]; then
+    CB_AGE=$(flag_age_days "$SCRAPER_DIR/output/CLEAR-BACKLOG")
+    MAX_SEARCHES=3
+    echo "=== CLEAR-BACKLOG (${CB_AGE}d old) — up to ${MAX_SEARCHES} categories tonight to drain the armed-rebuild queue. Delete output/CLEAR-BACKLOG to return to 1/night. ===" | tee -a "$LOG"
+    if [ "$CB_AGE" -ge "$FLAG_TTL_DAYS" ]; then
+      alert_skip "CLEAR-BACKLOG flag is ${CB_AGE}d old — still running 3 categories/night instead of 1. Delete output/CLEAR-BACKLOG to restore the normal cadence."
+    fi
+  else
+    echo "=== 1 category tonight — building a video for every emailable lead in the scrape (send side stays capacity-throttled). ===" | tee -a "$LOG"
+  fi
 fi
 
 # ONE category/night, ALL its videos (Chris 2026-07-21: "1 run per night — scrape a category, e.g. Plumbers
