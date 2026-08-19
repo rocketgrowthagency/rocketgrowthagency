@@ -69,6 +69,25 @@ PYEOF
   if [ -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json" ]; then say "  step-2.5 cached"
   else say "  step-2.5 audit"; STEP2_CSV="$CSV" node step-2.5-audit.mjs >>"$LOG" 2>&1 || { say "  ✗ step-2.5"; FAILED+=("$SLUG:step-2.5"); continue; }; fi
 
+  # 🔴 2026-08-19 — SKIP A LEAD WHOSE OWN SITE CANNOT BE LOADED BY ANY CLIENT.
+  # step-3 records three segments (Maps, desktop site, mobile site). If the site cannot connect at all,
+  # the lead can NEVER produce 3/3 WebMs and can never pass the 6/6 gate — so every retry burns ~6 minutes
+  # of capture and one of its three lifetime attempts, forever.
+  # PROVEN: davidostrovelaw.com serves ERR_SSL_VERSION_OR_CIPHER_MISMATCH in Chrome and fails curl with
+  # `sslv3 alert handshake failure` — an obsolete TLS config on THEIR server. It failed 08-10, failed again
+  # 08-19, and Chris confirmed it as a true fail. Nothing on our side can fix it.
+  # Only HARD failures park a lead (TLS handshake / DNS / connection refused). A timeout, 403 or bot-block
+  # is TRANSIENT — a real browser may still succeed — so those still get their capture.
+  SITE_URL=$(tail -n +2 "$CSV" 2>/dev/null | grep -oE 'https?://[^ ",]+' | head -1)
+  if [ -n "$SITE_URL" ]; then
+    REACH=$(node scripts/check-site-reachable.mjs "$SITE_URL" 2>/dev/null | cut -f1)
+    if [ "$REACH" = "unbuildable" ]; then
+      say "  ⛔ site unreachable by ANY client ($SITE_URL) — permanently unbuildable, skipping without spending a capture"
+      echo "$SLUG	$SITE_URL	$(date +%F)" >> "$SCRAPER/output/unbuildable-leads.tsv"
+      FAILED+=("$SLUG:site-unreachable"); continue
+    fi
+  fi
+
   say "  step-3 capture (fresh)"
   # FORCE_RECAPTURE=1 — this script exists to fix CAPTURE defects, so it must never reuse existing WebMs.
   # Without it step-3 prints "all 3 videos already exist", skips, and the redo re-renders the SAME broken

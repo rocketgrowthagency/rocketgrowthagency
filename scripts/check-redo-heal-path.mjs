@@ -209,6 +209,19 @@ const CHECKS = [
     },
     why: 'without this the probabilistic check false-rejects videos the deterministic band already passed, burning a full capture each time' },
 
+  // 2026-08-19 — a lead whose OWN site cannot be loaded by any client can never produce 3/3 WebMs, so
+  // every retry burns ~6 min and one of its three lifetime attempts. davidostrovelaw.com fails Chrome AND
+  // curl (sslv3 handshake) and had already failed twice. Only HARD failures park a lead; a timeout/403/
+  // bot-block is transient and still gets its capture.
+  { name: 'unreachable sites are parked, not re-captured',
+    ok: () => {
+      const rb = read('scripts/rebuild-broken-videos.sh');
+      return /check-site-reachable\.mjs/.test(rb)
+          && /site-unreachable/.test(rb)
+          && /unbuildable-leads\.tsv/.test(rb);   // and it is RECORDED, not silently dropped
+    },
+    why: 'a permanently unreachable site is retried forever, wasting a full capture and an attempt each time' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
