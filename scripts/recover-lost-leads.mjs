@@ -108,8 +108,11 @@ const pairs = [];
 for (const [term, names] of bySearch) for (const n of names) pairs.push({ term, name: n, slug: slugify(n) });
 // One business can fail on several nights; probe each slug once.
 const uniq = [...new Map(pairs.map((p) => [p.slug, p])).values()];
-console.log(`Reports scanned: ${files.length}${SINCE ? ` (since ${SINCE})` : ''}`);
-console.log(`Distinct failed businesses: ${uniq.length} across ${bySearch.size} search(es)\n`);
+const JSON_MODE = process.argv.includes('--json');
+if (!JSON_MODE) {
+  console.log(`Reports scanned: ${files.length}${SINCE ? ` (since ${SINCE})` : ''}`);
+  console.log(`Distinct failed businesses: ${uniq.length} across ${bySearch.size} search(es)\n`);
+}
 
 let i = 0; const lost = [], have = [], unknown = [];
 await Promise.all(Array.from({ length: CONC }, async () => {
@@ -119,6 +122,18 @@ await Promise.all(Array.from({ length: CONC }, async () => {
     if (v === null) unknown.push(p); else if (v) have.push(p); else lost.push(p);
   }
 }));
+
+// --json: machine-readable, for scripts/recovery-rounds.sh. Everything else this file prints goes to
+// stdout too, so the JSON mode must be the ONLY thing on stdout — hence the early exit.
+if (process.argv.includes('--json')) {
+  process.stdout.write(JSON.stringify({
+    scanned: files.length,
+    missing: lost.map((p) => ({ slug: p.slug, name: p.name, search: p.term })),
+    have: have.length,
+    indeterminate: unknown.length,
+  }));
+  process.exit(0);
+}
 
 console.log(`  ✅ now have a video : ${have.length}`);
 console.log(`  🔴 STILL missing    : ${lost.length}`);

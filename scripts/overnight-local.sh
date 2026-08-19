@@ -357,6 +357,17 @@ node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 # worth attention are those that have STOPPED retrying (gate-permafail / video-unrenderable-Nx /
 # build-failed), because nothing will ever pick those up again.
 # Read-only: it classifies, it never changes a lead.
+# 2026-08-19 — SELF-HEALING RECOVERY ROUNDS. Chris: "go through as many rounds as it needs until as many
+# videos are fixed." Everything above works TONIGHT's leads. This works the HISTORICAL backlog: 252 leads
+# that failed on earlier nights and that NOTHING else can see, because most died before step-8 and so have
+# no Airtable row (reconcile-missing-videos and parole are both blind to them — their only record is the
+# overnight report). Runs in chunks so each one deploys before the next begins, respects the wall clock
+# and the 07:00 interlock, and parks a lead after RECOVERY_ATTEMPT_CAP tries.
+# Expect ~1 in 3 to recover (project_video_failure_taxonomy) — the rest are reproducible-per-lead or
+# permanently unbuildable.
+echo ">>> recovery rounds: working the historical failed-video backlog" | tee -a "$LOG"
+RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash scripts/recovery-rounds.sh "$LOG" 2>&1 | tee -a "$LOG" || true
+
 echo ">>> verdict: what (if anything) needs a human" | tee -a "$LOG"
 node scripts/overnight-verdict.mjs 2>&1 | tee -a "$LOG" || true
 

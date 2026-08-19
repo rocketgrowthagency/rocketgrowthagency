@@ -160,6 +160,27 @@ const CHECKS = [
     },
     why: 'an unbounded capture hang stalls the entire rebuild batch forever, and `timeout` is not available on macOS so it cannot be used as the bound' },
 
+  // 2026-08-19 — SELF-HEALING ROUNDS over the historical backlog. 252 leads failed on earlier nights and
+  // NOTHING could see them: most died before step-8 so they have no Airtable row, leaving reconcile and
+  // parole both blind. Their only record is the overnight report.
+  { name: 'recovery rounds work the historical backlog',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh'), ol = read('scripts/overnight-local.sh');
+      return /recovery-rounds\.sh/.test(ol)                 // actually invoked by the nightly run
+          && /recover-lost-leads\.mjs --json/.test(rr)      // driven by report history, not Airtable
+          && /RECOVERY_ATTEMPT_CAP|CAP=/.test(rr);          // and a lead cannot be retried forever
+    },
+    why: 'without it the historical failed-video backlog is invisible to every other recovery route and nothing ever rebuilds it' },
+
+  { name: 'recovery rounds are bounded by clock AND night window',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh');
+      return /DEADLINE/.test(rr)
+          && /-ge 7 \] && \[ "\$NH" -lt 21/.test(rr)        // must stop before the workday
+          && /STOP-OVERNIGHT/.test(rr);
+    },
+    why: 'unbounded rounds would capture into the workday and film the desktop, or run past the night entirely' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
