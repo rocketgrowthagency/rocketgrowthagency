@@ -21,6 +21,25 @@ LOG="/tmp/rebuild-broken-${DATE}.log"
 : > "$LOG"
 say(){ echo "$*" | tee -a "$LOG"; }
 
+# 🔴 2026-08-19 (Chris: "if it fails close the browser of the failed") — REAP CHROME ON EVERY FAILURE.
+# A failed lead used to leave its Chrome window open, often parked on the site's own error page
+# (ERR_SSL_VERSION_OR_CIPHER_MISMATCH, ERR_ADDRESS_UNREACHABLE). Two costs: the windows pile up across a
+# long batch, and — the expensive one — an orphaned Chrome keeps its profile dir LOCKED, which wedges the
+# NEXT lead's capture. That is the 2026-07-27 orphaned-Chrome stall.
+# Scoped to the step-3/step-2.5 capture profiles so a browser Chris has open himself is never touched.
+reap_chrome(){ pkill -9 -f 'chrome-profile-step3' 2>/dev/null; pkill -9 -f 'chrome-profile-step25' 2>/dev/null; true; }
+
+# 🔴 2026-08-19 (Chris: "list the reason and what failed so we know and can tally fail reasons").
+# The run log holds the reasons in prose, which cannot be counted without grepping ad hoc every time.
+# This writes ONE TSV row per failure — date, slug, reason, detail — so a tally is a one-liner and the
+# same reason string is used everywhere. Reasons are the SHORT codes already used in FAILED[]
+# (site-unreachable, step-3-timeout, below-6of6, gate, no-mp4, ...) so they stay stable and countable.
+FAILLOG="$SCRAPER/output/rebuild-failures.tsv"
+[ -f "$FAILLOG" ] || printf 'date\tslug\treason\tdetail\n' > "$FAILLOG"
+note_fail(){ printf '%s\t%s\t%s\t%s\n' "$(date +%F\ %H:%M)" "$1" "$2" "${3:-}" >> "$FAILLOG"; }
+
+
+
 [ $# -gt 0 ] || { say "usage: $0 <slug> [<slug> ...]"; exit 1; }
 caffeinate -dimsu -t 5400 </dev/null >/dev/null 2>&1 & CAFF=$!
 
@@ -58,7 +77,7 @@ PYEOF
     then SRC="$CAND"; break; fi
     say "  ↷ skipping $(basename "$CAND") — no email in it"
   done < <(ls -t "output/Step 2/"*"_${SLUG}-only-"*"-[step-2].csv" 2>/dev/null)
-  if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV WITH AN EMAIL for $SLUG — skipping (a video is only built for a lead we can email)"; FAILED+=("$SLUG:no-emailable-csv"); continue; fi
+  if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV WITH AN EMAIL for $SLUG — skipping (a video is only built for a lead we can email)"; reap_chrome; note_fail "$SLUG" "no-emailable-csv"; FAILED+=("$SLUG:no-emailable-csv"); continue; fi
   BASE=$(basename "$SRC"); SUFFIX=${BASE#*_}
   CSV="output/Step 2/${DATE}_${SUFFIX}"
   cp "$SRC" "$CSV"; TEMP_CSVS+=("$CSV")
@@ -67,7 +86,7 @@ PYEOF
   RUN="${DATE}_${SUFFIX%.csv}"
   # step-2.5 audit — reuse if today's already exists, else fresh (the voiceover needs its findings)
   if [ -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json" ]; then say "  step-2.5 cached"
-  else say "  step-2.5 audit"; STEP2_CSV="$CSV" node step-2.5-audit.mjs >>"$LOG" 2>&1 || { say "  ✗ step-2.5"; FAILED+=("$SLUG:step-2.5"); continue; }; fi
+  else say "  step-2.5 audit"; STEP2_CSV="$CSV" node step-2.5-audit.mjs >>"$LOG" 2>&1 || { say "  ✗ step-2.5"; reap_chrome; note_fail "$SLUG" "step-2.5"; FAILED+=("$SLUG:step-2.5"); continue; }; fi
 
   # 🔴 2026-08-19 — SKIP A LEAD WHOSE OWN SITE CANNOT BE LOADED BY ANY CLIENT.
   # step-3 records three segments (Maps, desktop site, mobile site). If the site cannot connect at all,
@@ -84,7 +103,7 @@ PYEOF
     if [ "$REACH" = "unbuildable" ]; then
       say "  ⛔ site unreachable by ANY client ($SITE_URL) — permanently unbuildable, skipping without spending a capture"
       echo "$SLUG	$SITE_URL	$(date +%F)" >> "$SCRAPER/output/unbuildable-leads.tsv"
-      FAILED+=("$SLUG:site-unreachable"); continue
+      reap_chrome; note_fail "$SLUG" "site-unreachable"; FAILED+=("$SLUG:site-unreachable"); continue
     fi
   fi
 
@@ -121,21 +140,21 @@ PYEOF
     fi
   done
   wait "$S3PID" 2>/dev/null; S3RC=$?
-  if [ "$S3TIMEDOUT" = "1" ]; then FAILED+=("$SLUG:step-3-timeout"); continue; fi
-  [ "$S3RC" = "0" ] || { say "  ✗ step-3 (guardrail or capture failure)"; FAILED+=("$SLUG:step-3"); continue; }
+  if [ "$S3TIMEDOUT" = "1" ]; then reap_chrome; note_fail "$SLUG" "step-3-timeout"; FAILED+=("$SLUG:step-3-timeout"); continue; fi
+  [ "$S3RC" = "0" ] || { say "  ✗ step-3 (guardrail or capture failure)"; reap_chrome; note_fail "$SLUG" "step-3"; FAILED+=("$SLUG:step-3"); continue; }
 
   say "  step-6 voiceover (6/6 gate)"
   STEP2_CSV="$CSV" node step-6-voiceover.mjs >>"$LOG" 2>&1; RC=$?
-  if [ "$RC" = "3" ]; then say "  ⚠ below 6/6 — correctly blocked"; FAILED+=("$SLUG:below-6of6"); continue; fi
-  [ "$RC" = "0" ] || { say "  ✗ step-6 (rc=$RC)"; FAILED+=("$SLUG:step-6"); continue; }
+  if [ "$RC" = "3" ]; then say "  ⚠ below 6/6 — correctly blocked"; reap_chrome; note_fail "$SLUG" "below-6of6"; FAILED+=("$SLUG:below-6of6"); continue; fi
+  [ "$RC" = "0" ] || { say "  ✗ step-6 (rc=$RC)"; reap_chrome; note_fail "$SLUG" "step-6"; FAILED+=("$SLUG:step-6"); continue; }
 
   for STEP in "step-4-combine-desktop-mobile" "step-5-branding" "step-6b-subtitles" "step-7-merge-branded-audio"; do
     say "  ${STEP}"
-    STEP2_CSV="$CSV" MAX_BRANDS=1 MAX_RECORDINGS=1 node "${STEP}.mjs" >>"$LOG" 2>&1 || { say "  ✗ ${STEP}"; FAILED+=("$SLUG:${STEP}"); continue 2; }
+    STEP2_CSV="$CSV" MAX_BRANDS=1 MAX_RECORDINGS=1 node "${STEP}.mjs" >>"$LOG" 2>&1 || { say "  ✗ ${STEP}"; reap_chrome; note_fail "$SLUG" "${STEP}"; FAILED+=("$SLUG:${STEP}"); continue 2; }
   done
 
   MP4=$(find "output/Step 7 (Final Merge MP4)/${RUN}" -maxdepth 1 -name '*.mp4' 2>/dev/null | head -1)
-  [ -n "$MP4" ] || { say "  ✗ no step-7 mp4"; FAILED+=("$SLUG:no-mp4"); continue; }
+  [ -n "$MP4" ] || { say "  ✗ no step-7 mp4"; reap_chrome; note_fail "$SLUG" "no-mp4"; FAILED+=("$SLUG:no-mp4"); continue; }
   BUILD_SLUG=$(basename "$MP4" .mp4 | sed 's/^[0-9]*_//')
 
   # The acceptance gate runs inside build-video-landing — a broken rebuild simply won't publish.
@@ -143,15 +162,22 @@ PYEOF
   OUT=$(REQUIRE_SLUG=1 BUILD_ONLY_SLUG="$BUILD_SLUG" node build-video-landing.mjs 2>&1); echo "$OUT" >>"$LOG"
   if echo "$OUT" | grep -q "GATE FAILED"; then
     say "  🚫 $(echo "$OUT" | grep -oE '(ACCEPTANCE|VISUAL) GATE FAILED.*' | head -1 | cut -c1-140)"
-    FAILED+=("$SLUG:gate"); continue
+    reap_chrome; note_fail "$SLUG" "gate"; FAILED+=("$SLUG:gate"); continue
   fi
-  [ -d "output/landing-pages/v/$BUILD_SLUG" ] || { say "  ✗ no landing dir"; FAILED+=("$SLUG:no-landing"); continue; }
+  [ -d "output/landing-pages/v/$BUILD_SLUG" ] || { say "  ✗ no landing dir"; reap_chrome; note_fail "$SLUG" "no-landing"; FAILED+=("$SLUG:no-landing"); continue; }
   rsync -a --delete "output/landing-pages/v/$BUILD_SLUG/" "$WEBSITE/v/$BUILD_SLUG/"
   say "  ✓ staged /v/$BUILD_SLUG/"
   OK+=("$BUILD_SLUG")
 done
 
 say ""; say "════ rebuilt ${#OK[@]} · failed ${#FAILED[@]} ════"
+# Tally THIS batch's failures by reason, so the cause mix is visible without grepping the log.
+if [ "${#FAILED[@]}" -gt 0 ]; then
+  say "  failure reasons this batch:"
+  printf '%s\n' "${FAILED[@]}" | sed 's/.*://' | sort | uniq -c | sort -rn | while read -r n r; do say "    ${n}  ${r}"; done
+  say "  (full history: output/rebuild-failures.tsv — tally with:"
+  say "     cut -f3 output/rebuild-failures.tsv | tail -n +2 | sort | uniq -c | sort -rn )"
+fi
 [ ${#FAILED[@]} -gt 0 ] && say "failed: ${FAILED[*]}"
 [ ${#OK[@]} -eq 0 ] && { say "nothing to deploy"; exit 0; }
 

@@ -222,6 +222,22 @@ const CHECKS = [
     },
     why: 'a permanently unreachable site is retried forever, wasting a full capture and an attempt each time' },
 
+  // 2026-08-19 (Chris: "if it fails close the browser of the failed" + "list the reason ... so we can
+  // tally fail reasons"). A failed lead used to leave its Chrome parked on the site's own error page; the
+  // windows pile up AND an orphaned Chrome keeps its profile dir locked, wedging the next lead (the
+  // 2026-07-27 stall). Reasons lived only in prose in the log, so they could not be counted.
+  { name: 'failures reap Chrome and are logged by reason',
+    ok: () => {
+      const rb = read('scripts/rebuild-broken-videos.sh');
+      const paths = (rb.match(/FAILED\+=\(/g) || []).length;
+      const reaps = (rb.match(/reap_chrome;/g) || []).length;
+      const notes = (rb.match(/note_fail /g) || []).length;
+      // every failure path must both reap and record — a partially-covered set is how orphans return
+      return /reap_chrome\(\)/.test(rb) && /rebuild-failures\.tsv/.test(rb)
+          && reaps >= paths && notes >= paths;
+    },
+    why: 'an orphaned Chrome locks its profile dir and wedges the NEXT lead; unlogged reasons cannot be tallied' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
