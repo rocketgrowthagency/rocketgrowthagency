@@ -195,6 +195,22 @@ const CHECKS = [
     },
     why: 'without it a bad photo-loading day burns one of three attempts on every lead in the backlog and parks them permanently' },
 
+  // 2026-08-19 — BLANK-PHOTOS root cause: DOM-ready is not PAINTED. The wait passes on
+  // `img.complete && naturalWidth>150` (decoded in memory), which can precede compositing — the freeze
+  // then grabs a blank hero. Proof: across every rebuild that day the "hero photo not detected" warning
+  // fired ZERO times while BLANK-PHOTOS failures kept happening, so the wait was SUCCEEDING and the
+  // pixels were empty. More waiting could never have fixed it.
+  { name: 'card-ready confirms PIXELS, not just the DOM',
+    ok: () => {
+      const s3 = read('step-3-video-recorder.mjs');
+      return /photo-paint/.test(s3)              // the pixel probe exists
+          && /shot\.length > 3000/.test(s3)      // with the calibrated threshold
+          && /catch \(_e\) \{ painted = true; \}/.test(s3);  // the CATCH fails open — asserting the bare
+                                                       // `painted = true` would also match the initial
+                                                       // declaration and could never detect a fail-closed catch
+    },
+    why: 'without the pixel check a card whose hero is decoded-but-unpainted freezes blank — the single biggest source of lost videos' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

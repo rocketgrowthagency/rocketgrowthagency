@@ -1767,7 +1767,48 @@ async function goToMapsShowResultsThenOpenBusiness(page, meta, afterMapsNavigati
       }).catch(() => ({ open: false, photo: false, hasPhotos: false }));
       if (state.open) everOpen = true;
       if (state.hasPhotos) sawPhotoAffordance = true;
-      if (state.open && state.photo && elapsed >= minMs) { await sleep(600); return { open: true, photo: true, hasPhotos: true }; }  // photos loaded + let the paint settle before the caller grabs
+      // 🔴 2026-08-19 — DOM-READY IS NOT PAINTED. THIS IS THE BLANK-PHOTOS ROOT CAUSE.
+      // The check above passes on `img.complete && naturalWidth > 150`, which means the bitmap is DECODED
+      // IN MEMORY — not that Chrome has composited it. Straight after a nudge-scroll the two can differ by
+      // a frame or more, and the freeze grabs that gap: a blank hero band in a card the DOM swore was
+      // ready. Proof it is this and not the waiting: across every rebuild today the
+      // "hero photo not detected" warning fired ZERO times while BLANK-PHOTOS failures kept happening —
+      // so the wait was SUCCEEDING and the pixels were still empty. More waiting could never fix that.
+      //
+      // So confirm with PIXELS before declaring ready: screenshot the hero region and require real
+      // variance. A blank/gray band is near-uniform; a photo is not. Bounded by the existing maxMs, and
+      // FAIL-OPEN — if the probe itself errors we fall through to the old behaviour rather than block a
+      // good card ([[feedback-indeterminate-is-not-a-finding]]).
+      if (state.open && state.photo && elapsed >= minMs) {
+        await sleep(600);                                   // let the paint settle before sampling
+        let painted = true;                                 // fail-open default
+        try {
+          const box = await page.evaluate(() => {
+            const h1 = document.querySelector('h1.DUwDvf, h1[role="heading"][aria-level="1"]');
+            if (!h1) return null;
+            // The hero band sits directly above the business name.
+            const r = h1.getBoundingClientRect();
+            const top = Math.max(0, r.top - 200), height = Math.min(190, Math.max(60, r.top - top));
+            return { x: Math.max(0, r.left - 10), y: top, width: Math.min(420, Math.max(120, r.width + 20)), height };
+          });
+          if (box && box.width > 40 && box.height > 40) {
+            const shot = await page.screenshot({ clip: box, type: 'jpeg', quality: 70 });
+            // JPEG of a flat band compresses to almost nothing; a real photo carries detail.
+            // CALIBRATED on real captures at this exact crop size (420x190, q70-ish), NOT guessed:
+            //     real hero photo (samras maps capture) ... 10,600 B
+            //     flat gray band  (synthetic #F5F5F5) ....     706 B
+            //     flat white band (synthetic #FFFFFF) ....     706 B
+            // 15x separation, so 3,000 B sits ~4x above a flat band and ~3.5x below a real photo — far
+            // from both edges. Reproduce with:
+            //   ffmpeg -ss 35 -i <maps.webm> -vframes 1 -vf crop=420:190:100:180 -q:v 8 real.jpg
+            //   ffmpeg -f lavfi -i color=c=0xF5F5F5:s=420x190 -vframes 1 -q:v 8 flat.jpg
+            painted = shot && shot.length > 3000;
+            if (!painted) console.log(`   [photo-paint] hero region still flat (${shot ? shot.length : 0}B) at ${elapsed}ms — DOM says loaded, pixels disagree; continuing to wait`);
+          }
+        } catch (_e) { painted = true; }                    // probe failed → do not block the card
+        if (painted) return { open: true, photo: true, hasPhotos: true };
+        // Not painted: fall through so the nudge-scroll + poll below keep running until maxMs.
+      }
       // 2026-08-04 (blank-photos regression fix): nudge-scroll REPEATEDLY (every ~2.5s) while no photo, not just
       // once, to keep forcing Google's lazy-load of the hero/Photos strip on slow cards — the single nudge + 9s cap
       // wasn't enough and blank hero bands shipped (Chris caught coco-lane/trusmile orthodontists). Longer 18s cap.
