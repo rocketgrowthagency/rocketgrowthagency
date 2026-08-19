@@ -77,6 +77,28 @@ try {
 // re-pickable so the overnight run re-scrapes it and heals the stuck video.
 for (const k of redoPending) done.delete(k);
 
+// 🔴 2026-08-18 — THE SAME OVERRIDE, FOR LEADS THAT NEVER GOT AN AIRTABLE ROW.
+// `redoPending` above can only rescue a lead that HAS a row tagged redo-armed. But the three loss
+// paths that run before step-8 (6/6 verification gate, per-lead watchdog, step-3 WebM count) kill the
+// lead before its row is ever written — so they can never appear in redoPending, and the `done` set
+// above still contains their search because the leads that DID deploy in that same search each add it.
+//
+// Net effect before this: un-ledgering such a search accomplished nothing at all. Measured on
+// "Yoga studios in Culver City, CA" (2026-08-17) — ledger line removed, yet done.has(term) was still
+// true from the 5 deployed rows, so YogaSix, [solidcore], CorePower and Homebody were unreachable.
+// This also silently defeated build-video-landing.mjs's un-ledger (the 2026-08-11 leg-3 fix) for every
+// search that produced at least one deployed lead.
+//
+// overnight-pipeline.sh writes the search here when it re-arms a lead. Self-clearing: the pipeline
+// removes the term when it starts processing it, and only re-adds it if a lead fails again — bounded
+// by the per-lead 3-attempt cap, so a permanently-broken lead cannot pin the pipeline to one category.
+const PENDING_REBUILD = path.join(SCRAPER_DIR, 'output', 'pending-rebuild-searches.txt');
+try {
+  for (const line of fs.readFileSync(PENDING_REBUILD, 'utf8').split('\n')) {
+    const q = line.trim(); if (q) done.delete(norm(q));
+  }
+} catch { /* nothing queued — the normal case */ }
+
 for (const city of cities) {
   for (const v of verticals) {
     const q = `${v} in ${city}, CA`;              // match Airtable's stored comma format

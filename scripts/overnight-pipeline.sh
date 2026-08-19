@@ -53,6 +53,20 @@ echo "=== Overnight pipeline: $SEARCH_QUERY ===" | tee -a "$LOGFILE"
 echo "Started: $TIME_START" | tee -a "$LOGFILE"
 echo "" | tee -a "$LOGFILE"
 
+# Self-clear the rebuild queue for THIS search: we are processing it right now, so the request has been
+# honoured. Any lead that fails again re-adds it (capped per lead in unledger_search_for_redo), and a
+# lead that finally succeeds simply never re-adds it. Without this the entry is permanent and the
+# pipeline re-picks the same category every night forever — the failure mode that cost 17 re-runs /
+# ~13h on "Painters in Culver City" (see feedback_next_search_must_track_attempts.md).
+PENDING_REBUILD_FILE="$SCRAPER_DIR/output/pending-rebuild-searches.txt"
+if [ -f "$PENDING_REBUILD_FILE" ]; then
+  awk -v t="$SEARCH_QUERY" '
+    function norm(s){ s=tolower(s); gsub(/,/," ",s); gsub(/[ \t]+/," ",s); gsub(/^ +| +$/,"",s); return s }
+    BEGIN{ nt=norm(t) }
+    { if (length($0) && norm($0) != nt) print }
+  ' "$PENDING_REBUILD_FILE" > "$PENDING_REBUILD_FILE.tmp" && mv "$PENDING_REBUILD_FILE.tmp" "$PENDING_REBUILD_FILE"
+fi
+
 # ============================================================
 # Pre-flight: verification-gate regression + static absence-finding scan.
 # Locked 2026-05-21 alongside the universal verification-gate hardening.
@@ -524,13 +538,34 @@ unledger_search_for_redo() {
   # Same normalisation as unLedgerSearch() in build-video-landing.mjs: lowercase, commas→space,
   # collapse whitespace. If these two ever disagree, a term un-ledgered by one is invisible to the other.
   local ledger="$SCRAPER_DIR/output/attempted-searches.log"
-  [ -f "$ledger" ] || return 0
-  awk -v t="$term" '
-    function norm(s){ s=tolower(s); gsub(/,/," ",s); gsub(/[ \t]+/," ",s); gsub(/^ +| +$/,"",s); return s }
-    BEGIN{ nt=norm(t) }
-    { if (length($0) && norm($0) != nt) print }
-  ' "$ledger" > "$ledger.tmp" && mv "$ledger.tmp" "$ledger"
-  echo "  ↻ re-armed (attempt ${n}/${MAX_UNLEDGER_REDOS}): un-ledgered \"$term\" so the next run re-attempts $biz ($why)" | tee -a "$LOGFILE"
+  if [ -f "$ledger" ]; then
+    awk -v t="$term" '
+      function norm(s){ s=tolower(s); gsub(/,/," ",s); gsub(/[ \t]+/," ",s); gsub(/^ +| +$/,"",s); return s }
+      BEGIN{ nt=norm(t) }
+      { if (length($0) && norm($0) != nt) print }
+    ' "$ledger" > "$ledger.tmp" && mv "$ledger.tmp" "$ledger"
+  fi
+
+  # 🔴 UN-LEDGERING ALONE IS NOT ENOUGH — PROVEN 2026-08-18, AND IT SILENTLY WASN'T ENOUGH BEFORE EITHER.
+  # next-search.mjs builds its done-set from TWO sources: the attempted-searches ledger AND every
+  # Airtable lead row carrying that Search Term. Removing the ledger line only clears the first. The
+  # moment a search produces even ONE deployed lead, that lead's row keeps the search permanently
+  # "done", so the failed leads beside it can never be re-picked.
+  #
+  # Measured on "Yoga studios in Culver City, CA": the ledger line was gone, yet done.has(term) was
+  # still true from the 5 deployed rows, and the term was NOT in redoPending — so the 4 failures were
+  # unreachable. This also means build-video-landing.mjs's own un-ledger (the 2026-08-11 leg-3 fix) has
+  # been ineffective for every search with a deployed lead — i.e. nearly all of them.
+  #
+  # next-search only overrides its done-set for `redoPending`, which requires an AIRTABLE ROW carrying
+  # Skip Reasons=redo-armed. These leads have no row at all — that is the entire problem — so the
+  # override has to come from somewhere local. This file is that somewhere; next-search subtracts it
+  # from `done` exactly like redoPending.
+  local pending="$SCRAPER_DIR/output/pending-rebuild-searches.txt"
+  touch "$pending"
+  grep -qxF "$term" "$pending" 2>/dev/null || printf '%s\n' "$term" >> "$pending"
+
+  echo "  ↻ re-armed (attempt ${n}/${MAX_UNLEDGER_REDOS}): un-ledgered + queued \"$term\" so the next run re-attempts $biz ($why)" | tee -a "$LOGFILE"
 }
 
 # 2026-08-17 — GEOGRAPHIC PLAUSIBILITY FILTER.
