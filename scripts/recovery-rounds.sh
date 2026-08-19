@@ -45,7 +45,10 @@ say(){ echo "$*" | tee -a "$LOG"; }
 DEADLINE="${RECOVERY_DEADLINE_EPOCH:-$(date -j -f '%Y-%m-%d %H:%M' "$(date -v+1d +%Y-%m-%d) 06:30" +%s 2>/dev/null || echo 0)}"
 
 mkdir -p "$(dirname "$LEDGER")"; touch "$LEDGER"
-attempts_for(){ awk -F'\t' -v k="$1" '$1==k{c=$2} END{print c+0}' "$LEDGER"; }
+# 🔴 Must ALWAYS print a number. On a MISSING ledger awk prints nothing, so `[ "$(attempts_for x)" -lt
+# "$CAP" ]` throws "integer expression expected", the test is false, and EVERY lead is silently skipped —
+# the same shape as the `grep -c || echo 0` bug that killed the breaker. The `:-0` guarantees a value.
+attempts_for(){ local n; n=$(awk -F'\t' -v k="$1" '$1==k{c=$2} END{print c+0}' "$LEDGER" 2>/dev/null); echo "${n:-0}"; }
 bump_attempt(){ local k="$1" n; n=$(( $(attempts_for "$k") + 1 ))
   awk -F'\t' -v k="$k" -v n="$n" 'BEGIN{OFS="\t"} $1!=k{print} END{print k,n}' "$LEDGER" > "$LEDGER.tmp" && mv "$LEDGER.tmp" "$LEDGER"; }
 
@@ -66,9 +69,15 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   NH=$(( 10#$(date +%H) ))
   if [ "${DAYTIME_SAFE_CAPTURE:-0}" != "1" ] && [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then
     say ">>> night window ended ($(date +%H:%M)) — stopping; the desktop grab must not run in the workday."; break; fi
-  # Hard stop before the 21:00 scheduled run regardless of mode: two capture jobs would fight over Chrome.
-  if [ "$NH" -ge 20 ] && [ "${DAYTIME_SAFE_CAPTURE:-0}" = "1" ]; then
-    say ">>> 20:00 reached — stopping so the 21:00 scheduled run has the machine to itself."; break; fi
+  # A DAYTIME chain owns the machine only 07:00-19:59. Outside that the scheduled 21:00 job owns it, and
+  # two capture jobs fighting over Chrome profiles wedge each other.
+  # 🔴 The first version tested only `NH -ge 20`, which was wrong at BOTH ends:
+  #   • 05:00 -> "run"  — a daytime chain could start while the night job was still going
+  #   • 21:00-23:00 -> "stop" — if DAYTIME_SAFE_CAPTURE were ever set during a NIGHT run, its recovery
+  #     rounds would be skipped entirely
+  # Found by tabulating every hour x mode rather than re-reading the condition.
+  if [ "${DAYTIME_SAFE_CAPTURE:-0}" = "1" ] && { [ "$NH" -ge 20 ] || [ "$NH" -lt 7 ]; }; then
+    say ">>> outside the daytime window (07:00-19:59) — stopping so the scheduled 21:00 run owns the machine."; break; fi
   if [ -f "$SCRAPER/output/STOP-OVERNIGHT" ]; then say ">>> STOP-OVERNIGHT present — stopping."; break; fi
 
   # --- who is still missing a video? (reads the reports, probes the LIVE site by content-type) ---

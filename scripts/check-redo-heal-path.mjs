@@ -258,6 +258,18 @@ const CHECKS = [
     },
     why: 'without the skip-list the same permanently dead sites are picked every round, ~6 min each' },
 
+  // 2026-08-19 deep audit — three latent bugs, all the SAME SHAPE as the `grep -c || echo 0` one:
+  // a missing/invalid input yields EMPTY, the numeric or string test then throws, and the guard fails
+  // in the dangerous direction. Found by tabulating inputs, not by re-reading the code.
+  { name: 'recovery guards survive missing/invalid inputs',
+    ok: () => {
+      const rr = read('scripts/recovery-rounds.sh'), cs = read('scripts/check-site-reachable.mjs');
+      return /echo "\$\{n:-0\}"/.test(rr)                       // attempts_for always prints a number
+          && /NH" -ge 20 \] \|\| \[ "\$NH" -lt 7/.test(rr)      // daytime window closed at BOTH ends
+          && /state: 'invalid-url'/.test(cs);                   // malformed URL never parks a lead
+    },
+    why: 'a missing ledger made every lead skip silently; a bad CSV URL would park a good lead forever; a daytime chain could start at 05:00 and fight the night run for Chrome' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

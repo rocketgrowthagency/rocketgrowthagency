@@ -35,6 +35,12 @@ const tryOnce = (url) => {
 // One timeout can be a network blip, so it is retried once before the lead is parked.
 const verdict = (url) => {
   if (!url) return { url, state: 'no-url' };
+  // 🔴 A MALFORMED value must never PARK a lead. A bad CSV field ("not-a-url", a truncated string) makes
+  // curl fail DNS resolution, which the rules below would read as "permanently unbuildable" — parking a
+  // lead whose real site may be perfectly fine. Only judge things that are actually URLs.
+  let host = '';
+  try { host = new URL(url).hostname; } catch { return { url, state: 'invalid-url' }; }
+  if (!host || !host.includes('.')) return { url, state: 'invalid-url' };
   const a = tryOnce(url);
   if (a.ok) return { url, state: 'reachable' };
   const err = a.err;
