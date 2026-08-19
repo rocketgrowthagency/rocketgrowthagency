@@ -58,9 +58,17 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   # --- stop conditions checked BEFORE starting a chunk (a chunk is ~35 min at 6 leads) ---
   if [ "$DEADLINE" -gt 0 ] && [ "$(date +%s)" -ge "$DEADLINE" ]; then
     say ">>> deadline reached — stopping after $((round-1)) round(s)."; break; fi
+  # The night window guards ONE risk: the macOS desktop grab films whatever is on screen. With
+  # DAYTIME_SAFE_CAPTURE=1 the freeze comes from page.screenshot, which captures only the browser page and
+  # CANNOT see the desktop — so the risk the window exists for is gone, and daylight is allowed.
+  # Proven 2026-08-19: 7 videos rebuilt in daylight this way while Chris worked, all gate-passed.
+  # Without DAYTIME_SAFE_CAPTURE this stays a hard stop — a daytime desktop grab would film his screen.
   NH=$(( 10#$(date +%H) ))
-  if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then
-    say ">>> night window ended ($(date +%H:%M)) — stopping; capture must not run in the workday."; break; fi
+  if [ "${DAYTIME_SAFE_CAPTURE:-0}" != "1" ] && [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then
+    say ">>> night window ended ($(date +%H:%M)) — stopping; the desktop grab must not run in the workday."; break; fi
+  # Hard stop before the 21:00 scheduled run regardless of mode: two capture jobs would fight over Chrome.
+  if [ "$NH" -ge 20 ] && [ "${DAYTIME_SAFE_CAPTURE:-0}" = "1" ]; then
+    say ">>> 20:00 reached — stopping so the 21:00 scheduled run has the machine to itself."; break; fi
   if [ -f "$SCRAPER/output/STOP-OVERNIGHT" ]; then say ">>> STOP-OVERNIGHT present — stopping."; break; fi
 
   # --- who is still missing a video? (reads the reports, probes the LIVE site by content-type) ---
@@ -87,7 +95,7 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   # One chunk = one rebuild batch = ONE deploy at the end, so progress is banked even if the next round
   # never starts. DAYTIME_SAFE_CAPTURE is NOT set: this runs inside the night window, where the desktop
   # grab is the better path (page.screenshot is the daytime-only fallback).
-  ./scripts/rebuild-broken-videos.sh "${SLUGS[@]}" 2>&1 | tee -a "$LOG"
+  DAYTIME_SAFE_CAPTURE="${DAYTIME_SAFE_CAPTURE:-0}" ./scripts/rebuild-broken-videos.sh "${SLUGS[@]}" 2>&1 | tee -a "$LOG"
   RC=${PIPESTATUS[0]}
   say ">>> round ${round} finished (rc=$RC)"
 done
