@@ -195,6 +195,20 @@ const CHECKS = [
     },
     why: 'without it a bad photo-loading day burns one of three attempts on every lead in the backlog and parks them permanently' },
 
+  // 2026-08-19 — the vision model is asked `photos_visible` and answers FALSE for two different things:
+  // a GBP with no photo strip (fine) and a strip that failed to render (a defect). It cannot separate
+  // them; hero-band.mjs can (a failed load is a WHITE VOID, Google's honest no-photos state is a coloured
+  // placeholder). Measured on dr-augusto-rojas-md: deterministic ACCEPT + a visibly complete card +
+  // photoCount=2, yet three cold rebuilds were spent on it.
+  { name: 'vision model cannot override the deterministic hero band',
+    ok: () => {
+      const cv = read('scripts/check-video-visual.mjs');
+      return /heroDeterministicOk/.test(cv)
+          && /blankPhotosRaw && !heroDeterministicOk/.test(cv)      // conditional, not removed
+          && /catch \(_\) \{ heroDeterministicOk = false; \}/.test(cv);  // unavailable -> stay STRICT
+    },
+    why: 'without this the probabilistic check false-rejects videos the deterministic band already passed, burning a full capture each time' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

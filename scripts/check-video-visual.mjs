@@ -209,7 +209,42 @@ async function checkMapView(v, D) {
   //   • blank photos sustained (card WAS open somewhere, but ≥2 of the card frames show a blank photo strip)
   const mapWide = mapFrames >= 2 && wide.length >= 2;
   const noCardFail = mapFrames >= 2 && noCard.length >= 3;
-  const blankPhotosFail = !noCardFail && cardFrames >= 2 && blankPhotos.length >= 2;
+  // 🔴 2026-08-19 — THE VISION MODEL CANNOT TELL "NO PHOTOS" FROM "PHOTOS FAILED TO LOAD".
+  // It is asked `photos_visible`, and answers false for BOTH: a business whose GBP simply has no photo
+  // strip, and one whose strip failed to render. Only the second is a defect.
+  //
+  // MEASURED on dr-augusto-rojas-md, which failed BLANK-PHOTOS on three separate cold rebuilds:
+  //   • the DETERMINISTIC acceptance gate said ✅ ACCEPT — hero:pass card:pass overlay:pass zoom:pass
+  //   • the frame, inspected directly, showed a COMPLETE and correct card: name, 4.2★, 87 reviews,
+  //     address, hours, phone, the "CURRENTLY RANKING #9" overlay, map centred on the business
+  //   • step-2.5 recorded photoCount=2 — Google renders no photo strip for a GBP with almost none
+  // Three captures were spent re-rendering a video that was correct every time.
+  //
+  // hero-band.mjs is the SHARED, OpenAI-independent source of truth for "the hero is a blank void", and
+  // it exists precisely so the two ends of the pipeline cannot drift. It already distinguishes the two
+  // cases the vision model conflates: a failed load is a WHITE VOID, while Google's honest no-photos
+  // state is a coloured placeholder that reads as content. step-3 throws on a white void before encoding,
+  // and check-video-acceptance re-checks at the deploy chokepoint.
+  //
+  // So the vision model may no longer OVERRIDE that verdict. It keeps its value as a second opinion on
+  // frames the deterministic check cannot judge, but it cannot fail a video the deterministic band
+  // passed. This does NOT weaken the protection against blank heroes — that path is unchanged and still
+  // fail-closed; it removes a false-reject the deterministic check already rules out.
+  // Same principle as feedback_verification_gates_must_be_strict: act on the POSITIVE signal, and prefer
+  // the deterministic measurement over the probabilistic one when they disagree.
+  let heroDeterministicOk = false;
+  try {
+    const acc = execFileSync('node', [path.join(ROOT, 'scripts', 'check-video-acceptance.mjs'), v],
+      { encoding: 'utf8', timeout: 180000 });
+    heroDeterministicOk = /hero:pass/.test(acc);
+  } catch (_) { heroDeterministicOk = false; }   // unavailable → keep the old (stricter) behaviour
+
+  const blankPhotosRaw = !noCardFail && cardFrames >= 2 && blankPhotos.length >= 2;
+  const blankPhotosFail = blankPhotosRaw && !heroDeterministicOk;
+  if (blankPhotosRaw && heroDeterministicOk) {
+    console.log('[visual] vision model reported a blank photo strip, but the DETERMINISTIC hero band passed '
+      + '(hero:pass) — treating as an honest photo-less GBP, not a load failure. Not failing the video.');
+  }
   // 2026-07-30: noCard + blankPhotos now GATE (were advisory). Chris caught both shipping on the 07-29 batch
   // (Vittas = no card ever; Probate = blank white Photos strip). Sustained-frame thresholds above (noCard≥3,
   // blankPhotos≥2, always with mapFrames/cardFrames≥2) guard against a single mis-sampled frame false-rejecting
