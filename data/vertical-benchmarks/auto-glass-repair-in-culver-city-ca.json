@@ -1,0 +1,37 @@
+{
+  "searchTerm": "Auto glass repair in Culver City, CA",
+  "auditedDate": "2026-07-21",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "(none)": 1,
+    "Glass repair service": 2,
+    "Auto glass repair service": 3,
+    "Auto glass shop": 3,
+    "Glass & mirror shop": 1
+  },
+  "categoryDistributionTop5": {
+    "(none)": 1,
+    "Glass repair service": 2,
+    "Auto glass repair service": 2
+  },
+  "categoryDistributionTop3": {
+    "(none)": 1,
+    "Glass repair service": 2
+  },
+  "majorityCategoryTop10": "Auto glass repair service",
+  "majorityCategoryTop5": "Glass repair service",
+  "majorityCategoryTop3": "Glass repair service",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 206,
+    "median": 29.5,
+    "p25": 10,
+    "p75": 58
+  },
+  "reviewsTop3Avg": 35,
+  "ratingTop10Median": 4.5,
+  "ratingTop3Avg": 4,
+  "findingsDisabled": [],
+  "notes": null
+}

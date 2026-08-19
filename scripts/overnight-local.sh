@@ -221,6 +221,15 @@ fi
 
 # Manually-flagged bad videos: ARM them (remove + block send + re-queue their search) and FINALIZE
 # any that were re-rendered on a prior night. Chris ticks {Redo Video} in Airtable; this self-heals.
+# 2026-08-19 — PAROLE, before arming, so paroled leads join tonight's queue rather than waiting a day.
+# A lead parked after 3 failures is never retried again — right, unless the failure was OUR fault. It
+# usually was: project_video_pipeline_integrity measured 48 of 75 gate rejections as FALSE. So a lead
+# parked by a bug we later fixed stays dead forever. This gives each parked lead exactly ONE more attempt,
+# and ONLY when the capture/gate code has actually changed since the last parole (git commit time of
+# step-3 / build-video-landing / check-video-visual / step-6). No code change = no-op, so it cannot churn.
+echo ">>> parole: re-trying leads parked before the last capture-code fix" | tee -a "$LOG"
+node scripts/parole-permafails.mjs --apply 2>&1 | tee -a "$LOG" || true
+
 echo ">>> redo-flagged-videos: processing {Redo Video} flags" | tee -a "$LOG"
 node scripts/redo-flagged-videos.mjs 2>&1 | tee -a "$LOG"
 

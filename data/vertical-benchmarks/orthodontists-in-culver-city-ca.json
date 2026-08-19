@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Orthodontists in Culver City, CA",
+  "auditedDate": "2026-08-04",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Orthodontist": 9,
+    "Dentist": 1
+  },
+  "categoryDistributionTop5": {
+    "Orthodontist": 5
+  },
+  "categoryDistributionTop3": {
+    "Orthodontist": 3
+  },
+  "majorityCategoryTop10": "Orthodontist",
+  "majorityCategoryTop5": "Orthodontist",
+  "majorityCategoryTop3": "Orthodontist",
+  "reviewsTop10": {
+    "min": 13,
+    "max": 453,
+    "median": 211.5,
+    "p25": 78,
+    "p75": 332
+  },
+  "reviewsTop3Avg": 279,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.97,
+  "findingsDisabled": [],
+  "notes": null
+}

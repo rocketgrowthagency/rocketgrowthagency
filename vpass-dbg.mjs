@@ -1,0 +1,14 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const EMAIL=process.env.VP_EMAIL||'rocketgrowthagencyadmin@gmail.com';
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:EMAIL,redirect_to:'https://www.rocketgrowthagency.com/portal/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+p.on('console',m=>{if(m.type()==='error')console.log('CONSOLE ERR:',m.text().slice(0,300));});
+p.on('pageerror',e=>console.log('PAGE ERR:',String(e).slice(0,400)));
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});
+await new Promise(z=>setTimeout(z,6000));
+const st=await p.evaluate(()=>({loading:!!document.querySelector('.portal-loading:not([hidden])'),h:document.querySelector('#portalWelcomeHeading')?.textContent}));
+console.log('STATE:',JSON.stringify(st));
+await b.close();

@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Solar installers in Culver City, CA",
+  "auditedDate": "2026-08-10",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Solar energy company": 8,
+    "Solar energy equipment supplier": 2
+  },
+  "categoryDistributionTop5": {
+    "Solar energy company": 3,
+    "Solar energy equipment supplier": 2
+  },
+  "categoryDistributionTop3": {
+    "Solar energy company": 2,
+    "Solar energy equipment supplier": 1
+  },
+  "majorityCategoryTop10": "Solar energy company",
+  "majorityCategoryTop5": "Solar energy company",
+  "majorityCategoryTop3": "Solar energy company",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 267,
+    "median": 29,
+    "p25": 15,
+    "p75": 106
+  },
+  "reviewsTop3Avg": 25,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.95,
+  "findingsDisabled": [],
+  "notes": null
+}

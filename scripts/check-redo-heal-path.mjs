@@ -100,6 +100,26 @@ const CHECKS = [
     },
     why: 'without the run-scoped lock a failing lead re-queues its own search and the run re-picks it immediately, burning the night on one category' },
 
+  // 2026-08-19 — the loop must CLOSE: round 2 has to see the leads round 1 armed, and parked leads must
+  // get another chance when the code that rejected them changes. Both were silently absent.
+  { name: 'round 2 can see armed redos',
+    ok: () => /isArmedRedo/.test(read('scripts/reconcile-missing-videos.mjs')),
+    why: 'ARM sets Suppressed=true, so a !Suppressed-only gap filter hides exactly the leads the recovery pass exists to retry — the self-heal loop never closes' },
+
+  { name: 'parole retries leads parked before a capture fix',
+    ok: () => {
+      const p = read('scripts/parole-permafails.mjs'), ol = read('scripts/overnight-local.sh');
+      return /captureEpoch/.test(p) && /parole-epoch/.test(p) && /parole-permafails/.test(ol);
+    },
+    why: 'without it a lead parked by a gate bug we later FIXED stays dead forever (48 of 75 rejections were false)' },
+
+  { name: 'the verdict trusts armed state over historical text',
+    ok: () => {
+      const v = read('scripts/overnight-verdict.mjs');
+      return /!selfHealing\(r\) && parkedNow\(r\)/.test(v);
+    },
+    why: 'Skip Reasons keeps history ("was: video-unrenderable-3x"); matching it as current state reports freshly-paroled leads as still stuck' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

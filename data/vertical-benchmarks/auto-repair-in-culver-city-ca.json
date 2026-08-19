@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Auto repair in Culver City, CA",
+  "auditedDate": "2026-07-11",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Auto repair shop": 9,
+    "Tire shop": 1
+  },
+  "categoryDistributionTop5": {
+    "Auto repair shop": 5
+  },
+  "categoryDistributionTop3": {
+    "Auto repair shop": 3
+  },
+  "majorityCategoryTop10": "Auto repair shop",
+  "majorityCategoryTop5": "Auto repair shop",
+  "majorityCategoryTop3": "Auto repair shop",
+  "reviewsTop10": {
+    "min": 43,
+    "max": 1269,
+    "median": 311,
+    "p25": 136,
+    "p75": 480
+  },
+  "reviewsTop3Avg": 486,
+  "ratingTop10Median": 4.7,
+  "ratingTop3Avg": 4.77,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,32 @@
+{
+  "searchTerm": "Physical therapists in Culver City, CA",
+  "auditedDate": "2026-08-08",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Physical therapy clinic": 7,
+    "Physical therapist": 3
+  },
+  "categoryDistributionTop5": {
+    "Physical therapy clinic": 3,
+    "Physical therapist": 2
+  },
+  "categoryDistributionTop3": {
+    "Physical therapy clinic": 3
+  },
+  "majorityCategoryTop10": "Physical therapy clinic",
+  "majorityCategoryTop5": "Physical therapy clinic",
+  "majorityCategoryTop3": "Physical therapy clinic",
+  "reviewsTop10": {
+    "min": 11,
+    "max": 433,
+    "median": 30.5,
+    "p25": 25,
+    "p75": 144
+  },
+  "reviewsTop3Avg": 199,
+  "ratingTop10Median": 4.95,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

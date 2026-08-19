@@ -1,0 +1,39 @@
+{
+  "searchTerm": "Bathroom remodeling in Culver City, CA",
+  "auditedDate": "2026-07-11",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Bathroom remodeler": 6,
+    "General contractor": 1,
+    "Kitchen remodeler": 1,
+    "Construction company": 1,
+    "Home improvement store": 1
+  },
+  "categoryDistributionTop5": {
+    "Bathroom remodeler": 2,
+    "General contractor": 1,
+    "Kitchen remodeler": 1,
+    "Construction company": 1
+  },
+  "categoryDistributionTop3": {
+    "Bathroom remodeler": 1,
+    "General contractor": 1,
+    "Kitchen remodeler": 1
+  },
+  "majorityCategoryTop10": "Bathroom remodeler",
+  "majorityCategoryTop5": "Bathroom remodeler",
+  "majorityCategoryTop3": "Bathroom remodeler",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 150,
+    "median": 12,
+    "p25": 3,
+    "p75": 38
+  },
+  "reviewsTop3Avg": 86,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

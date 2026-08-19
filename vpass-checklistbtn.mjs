@@ -1,0 +1,16 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:'rocketgrowthagencyadmin@gmail.com',redirect_to:'https://www.rocketgrowthagency.com/portal/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+await p.setViewport({width:1200,height:900,deviceScaleFactor:1});
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});await new Promise(z=>setTimeout(z,6500));
+await p.evaluate(()=>{const a=[...document.querySelectorAll('.portal-nav a')].find(x=>x.textContent.toLowerCase().includes('setup'));a&&a.click();});
+await new Promise(z=>setTimeout(z,1500));
+const before=await p.evaluate(()=>({btn:document.querySelector('.pm-nextstep.amber .pm-btn')?.getAttribute('data-portal-scroll'),targetExists:!!document.getElementById('portal-active-step'),connectExists:!!document.getElementById('portal-connect-google'),scrollY:window.scrollY}));
+await p.evaluate(()=>document.querySelector('.pm-nextstep.amber .pm-btn')?.click());
+await new Promise(z=>setTimeout(z,900));
+const after=await p.evaluate(()=>window.scrollY);
+console.log('BEFORE:',JSON.stringify(before),'| scrollY after click:',after,'| scrolled:',after>before.scrollY);
+await b.close();

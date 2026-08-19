@@ -1,0 +1,20 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SP="/private/tmp/claude-501/-Users-chris-RGA-Rocket-Growth-Agency-Website-VS-Code/c82fa8f6-965d-4613-89b3-b14fb8343738/scratchpad";
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:'hello@rocketgrowthagency.com',redirect_to:'https://www.rocketgrowthagency.com/admin/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+await p.setViewport({width:1200,height:900,deviceScaleFactor:2});
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});
+await new Promise(z=>setTimeout(z,7000));
+await p.evaluate(()=>document.querySelector('#pendingActionsBanner [data-pending-go]')?.click());
+await new Promise(z=>setTimeout(z,10000));
+// trigger the rgaConfirm popup via Accept (but do NOT confirm)
+await p.evaluate(()=>document.getElementById('nextActionAcceptBtn')?.click());
+await new Promise(z=>setTimeout(z,1200));
+const info=await p.evaluate(()=>{const img=document.querySelector('.rga-modal-logo');return{isImg:img?.tagName,src:img?.getAttribute('src'),visible:!!document.querySelector('.rga-modal-overlay')};});
+console.log(JSON.stringify(info));
+const el=await p.$('.rga-modal');
+if(el)await el.screenshot({path:SP+'/vp_popup.png'});
+await b.close();

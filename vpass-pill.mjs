@@ -1,0 +1,13 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:'rocketgrowthagencyadmin@gmail.com',redirect_to:'https://www.rocketgrowthagency.com/portal/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});
+await new Promise(z=>setTimeout(z,6500));
+await p.evaluate(()=>{const a=[...document.querySelectorAll('.portal-nav a')].find(x=>x.textContent.toLowerCase().includes('rankings'));a&&a.click();});
+await new Promise(z=>setTimeout(z,1500));
+const st=await p.evaluate(()=>{const el=document.getElementById('portalStatusPill');const cs=el?getComputedStyle(el):null;return{hidden:el?.hidden,display:cs?.display,text:el?.textContent,pillCount:document.querySelectorAll('#portalStatusPill,.portal-pill').length,greenActive:[...document.querySelectorAll('*')].filter(n=>n.children.length===0&&/Active/.test(n.textContent)&&n.textContent.trim().length<12).map(n=>n.id||n.className).slice(0,6)};});
+console.log(JSON.stringify(st));
+await b.close();

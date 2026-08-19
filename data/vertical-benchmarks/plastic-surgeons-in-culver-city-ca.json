@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Plastic surgeons in Culver City, CA",
+  "auditedDate": "2026-08-01",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plastic surgeon": 7,
+    "Medical spa": 1,
+    "Plastic surgery clinic": 2
+  },
+  "categoryDistributionTop5": {
+    "Plastic surgeon": 4,
+    "Medical spa": 1
+  },
+  "categoryDistributionTop3": {
+    "Plastic surgeon": 3
+  },
+  "majorityCategoryTop10": "Plastic surgeon",
+  "majorityCategoryTop5": "Plastic surgeon",
+  "majorityCategoryTop3": "Plastic surgeon",
+  "reviewsTop10": {
+    "min": 40,
+    "max": 880,
+    "median": 96,
+    "p25": 71,
+    "p75": 481
+  },
+  "reviewsTop3Avg": 708,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

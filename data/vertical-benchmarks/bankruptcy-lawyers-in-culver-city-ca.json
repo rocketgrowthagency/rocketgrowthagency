@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Bankruptcy lawyers in Culver City, CA",
+  "auditedDate": "2026-07-31",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Bankruptcy attorney": 10
+  },
+  "categoryDistributionTop5": {
+    "Bankruptcy attorney": 5
+  },
+  "categoryDistributionTop3": {
+    "Bankruptcy attorney": 3
+  },
+  "majorityCategoryTop10": "Bankruptcy attorney",
+  "majorityCategoryTop5": "Bankruptcy attorney",
+  "majorityCategoryTop3": "Bankruptcy attorney",
+  "reviewsTop10": {
+    "min": 22,
+    "max": 317,
+    "median": 65,
+    "p25": 50,
+    "p75": 176
+  },
+  "reviewsTop3Avg": 85,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.13,
+  "findingsDisabled": [],
+  "notes": null
+}

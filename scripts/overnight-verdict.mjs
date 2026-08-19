@@ -61,14 +61,22 @@ const recs = await all();
 const isDead = (r) => String(f(r, 'Status') || '').toLowerCase() === 'dead';
 const isDedup = (r) => /dedup-skip|dedup-duplicate/i.test(String(f(r, 'Skip Reasons') || ''));
 const isBounced = (r) => /bounced|unsubscribed|invalid|blocked/i.test(String(f(r, 'Email Status') || ''));
-const needsHuman = (r) => /gate-permafail|video-unrenderable|exhausted after/i.test(String(f(r, 'Skip Reasons') || ''))
+// 🔴 ARMED STATE WINS OVER HISTORICAL TEXT.
+// Skip Reasons keeps HISTORY as well as current state — parole-permafails.mjs writes
+// `paroled <date> (was: video-unrenderable-3x)`, deliberately, so the past isn't lost. But matching
+// "video-unrenderable" anywhere in that string classified a freshly-PAROLED lead as still stuck: the
+// verdict read 24 "need you" seconds after those exact 24 had been re-armed and were about to retry.
+// Whether a lead is retrying is a fact about its CURRENT state (`Redo Video` / `redo-armed`), never
+// about words describing what once happened to it — so self-healing is evaluated first and wins.
+const selfHealing = (r) => f(r, 'Redo Video') || /redo-armed|^paroled |\bparoled /i.test(String(f(r, 'Skip Reasons') || ''));
+const parkedNow = (r) => /gate-permafail|video-unrenderable|exhausted after/i.test(String(f(r, 'Skip Reasons') || ''))
   || String(f(r, 'Email Status') || '').toLowerCase() === 'build-failed';
-const selfHealing = (r) => f(r, 'Redo Video') || /redo-armed/i.test(String(f(r, 'Skip Reasons') || ''));
+const needsHuman = (r) => !selfHealing(r) && parkedNow(r);
 
 const live = recs.filter((r) => !isDead(r) && !isDedup(r) && !isBounced(r));
+const healing = live.filter(selfHealing);
 const stuck = live.filter(needsHuman);
-const healing = live.filter((r) => !needsHuman(r) && selfHealing(r));
-const other = live.filter((r) => !needsHuman(r) && !selfHealing(r));
+const other = live.filter((r) => !selfHealing(r) && !needsHuman(r));
 
 if (BRIEF) {
   console.log(stuck.length === 0

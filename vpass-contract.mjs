@@ -1,0 +1,16 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SP="/private/tmp/claude-501/-Users-chris-RGA-Rocket-Growth-Agency-Website-VS-Code/c82fa8f6-965d-4613-89b3-b14fb8343738/scratchpad";
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:'rocketgrowthagencyadmin@gmail.com',redirect_to:'https://www.rocketgrowthagency.com/portal/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox','--window-size=1400,2000']});const p=await b.newPage();
+await p.setViewport({width:1400,height:2000,deviceScaleFactor:1});
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});
+await new Promise(z=>setTimeout(z,6500));
+const clicked=await p.evaluate(()=>{const btn=document.querySelector('[data-open-contract]');if(btn){btn.click();return true;}return false;});
+await new Promise(z=>setTimeout(z,1800));
+const st=await p.evaluate(()=>({clicked:!!document.getElementById('rga-contract-modal'),title:document.querySelector('.pm-c-head h2')?.textContent,hasGate:!!document.getElementById('rga-contract-scroll-hint')}));
+console.log('opened:',clicked,JSON.stringify(st));
+await p.screenshot({path:SP+'/vp_contract.png'});
+await b.close();

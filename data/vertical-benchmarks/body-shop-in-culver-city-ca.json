@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Body shop in Culver City, CA",
+  "auditedDate": "2026-07-18",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Auto body shop": 10
+  },
+  "categoryDistributionTop5": {
+    "Auto body shop": 5
+  },
+  "categoryDistributionTop3": {
+    "Auto body shop": 3
+  },
+  "majorityCategoryTop10": "Auto body shop",
+  "majorityCategoryTop5": "Auto body shop",
+  "majorityCategoryTop3": "Auto body shop",
+  "reviewsTop10": {
+    "min": 27,
+    "max": 196,
+    "median": 62,
+    "p25": 33,
+    "p75": 86
+  },
+  "reviewsTop3Avg": 57,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}

@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Cosmetic dentists in Culver City, CA",
+  "auditedDate": "2026-08-05",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Dentist": 10
+  },
+  "categoryDistributionTop5": {
+    "Dentist": 5
+  },
+  "categoryDistributionTop3": {
+    "Dentist": 3
+  },
+  "majorityCategoryTop10": "Dentist",
+  "majorityCategoryTop5": "Dentist",
+  "majorityCategoryTop3": "Dentist",
+  "reviewsTop10": {
+    "min": 77,
+    "max": 934,
+    "median": 313.5,
+    "p25": 246,
+    "p75": 366
+  },
+  "reviewsTop3Avg": 310,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

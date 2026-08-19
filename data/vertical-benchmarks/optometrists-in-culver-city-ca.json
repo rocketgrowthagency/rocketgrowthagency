@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Optometrists in Culver City, CA",
+  "auditedDate": "2026-08-06",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Optometrist": 10
+  },
+  "categoryDistributionTop5": {
+    "Optometrist": 5
+  },
+  "categoryDistributionTop3": {
+    "Optometrist": 3
+  },
+  "majorityCategoryTop10": "Optometrist",
+  "majorityCategoryTop5": "Optometrist",
+  "majorityCategoryTop3": "Optometrist",
+  "reviewsTop10": {
+    "min": 9,
+    "max": 1141,
+    "median": 266.5,
+    "p25": 26,
+    "p75": 353
+  },
+  "reviewsTop3Avg": 558,
+  "ratingTop10Median": 4.8,
+  "ratingTop3Avg": 4.83,
+  "findingsDisabled": [],
+  "notes": null
+}

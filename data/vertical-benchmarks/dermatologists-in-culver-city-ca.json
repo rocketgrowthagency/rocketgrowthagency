@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Dermatologists in Culver City, CA",
+  "auditedDate": "2026-08-02",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Skin care clinic": 1,
+    "Dermatologist": 9
+  },
+  "categoryDistributionTop5": {
+    "Skin care clinic": 1,
+    "Dermatologist": 4
+  },
+  "categoryDistributionTop3": {
+    "Skin care clinic": 1,
+    "Dermatologist": 2
+  },
+  "majorityCategoryTop10": "Dermatologist",
+  "majorityCategoryTop5": "Dermatologist",
+  "majorityCategoryTop3": "Dermatologist",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 612,
+    "median": 113,
+    "p25": 6,
+    "p75": 179
+  },
+  "reviewsTop3Avg": 112,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.77,
+  "findingsDisabled": [],
+  "notes": null
+}

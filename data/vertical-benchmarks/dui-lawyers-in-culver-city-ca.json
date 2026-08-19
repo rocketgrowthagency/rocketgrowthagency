@@ -1,0 +1,31 @@
+{
+  "searchTerm": "DUI lawyers in Culver City, CA",
+  "auditedDate": "2026-07-28",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Criminal justice attorney": 9,
+    "Personal injury attorney": 1
+  },
+  "categoryDistributionTop5": {
+    "Criminal justice attorney": 5
+  },
+  "categoryDistributionTop3": {
+    "Criminal justice attorney": 3
+  },
+  "majorityCategoryTop10": "Criminal justice attorney",
+  "majorityCategoryTop5": "Criminal justice attorney",
+  "majorityCategoryTop3": "Criminal justice attorney",
+  "reviewsTop10": {
+    "min": 15,
+    "max": 317,
+    "median": 58.5,
+    "p25": 23,
+    "p75": 224
+  },
+  "reviewsTop3Avg": 127,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

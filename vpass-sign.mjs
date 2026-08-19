@@ -1,0 +1,34 @@
+import puppeteer from 'puppeteer';
+import 'dotenv/config';
+const SUP=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r=await fetch(`${SUP}/auth/v1/admin/generate_link`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({type:'magiclink',email:'rocketgrowthagencyadmin@gmail.com',redirect_to:'https://www.rocketgrowthagency.com/portal/'})});
+const j=await r.json();const link=j.action_link||j.properties?.action_link;
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+let alertMsg=null;p.on('dialog',async d=>{alertMsg=d.message();await d.dismiss();});
+await p.goto(link,{waitUntil:'networkidle2',timeout:60000});
+await new Promise(z=>setTimeout(z,6500));
+await p.evaluate(()=>document.querySelector('[data-open-contract]')?.click());
+await new Promise(z=>setTimeout(z,1500));
+// stub fetch so the real contract-sign endpoint is NOT hit (no DB mutation), capture payload
+const result=await p.evaluate(async()=>{
+  const doc=document.getElementById('rga-contract-doc');
+  doc.scrollTop=doc.scrollHeight; doc.dispatchEvent(new Event('scroll'));
+  await new Promise(z=>setTimeout(z,300));
+  let captured=null;
+  const orig=window.fetch;
+  window.fetch=async(u,o)=>{ if(String(u).includes('contract-sign')){ captured=JSON.parse(o.body); captured=JSON.parse(o.body); throw new Error("STUB_BLOCKED_ok"); } return orig(u,o); };
+  document.getElementById('rga-contract-name').value='Chris Kapranos';
+  document.getElementById('rga-contract-name').dispatchEvent(new Event('input'));
+  document.getElementById('rga-contract-intent').checked=true;
+  document.getElementById('rga-contract-intent').dispatchEvent(new Event('change'));
+  document.getElementById('rga-contract-consent').checked=true;
+  document.getElementById('rga-contract-consent').dispatchEvent(new Event('change'));
+  const btn=document.getElementById('rga-contract-sign-submit');
+  const wasDisabled=btn.disabled;
+  btn.click();
+  await new Promise(z=>setTimeout(z,600));
+  return {formRevealed:document.getElementById('rga-contract-sign-form').style.display,btnWasDisabled:wasDisabled,captured};
+});
+console.log('alert:',alertMsg);
+console.log('result:',JSON.stringify(result));
+await b.close();

@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Veterinarians in Culver City, CA",
+  "auditedDate": "2026-08-09",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Animal hospital": 2,
+    "Veterinarian": 8
+  },
+  "categoryDistributionTop5": {
+    "Animal hospital": 2,
+    "Veterinarian": 3
+  },
+  "categoryDistributionTop3": {
+    "Animal hospital": 1,
+    "Veterinarian": 2
+  },
+  "majorityCategoryTop10": "Veterinarian",
+  "majorityCategoryTop5": "Veterinarian",
+  "majorityCategoryTop3": "Veterinarian",
+  "reviewsTop10": {
+    "min": 68,
+    "max": 911,
+    "median": 230.5,
+    "p25": 84,
+    "p75": 384
+  },
+  "reviewsTop3Avg": 411,
+  "ratingTop10Median": 4.2,
+  "ratingTop3Avg": 3.9,
+  "findingsDisabled": [],
+  "notes": null
+}

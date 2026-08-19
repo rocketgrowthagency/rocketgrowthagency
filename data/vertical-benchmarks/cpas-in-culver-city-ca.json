@@ -1,0 +1,33 @@
+{
+  "searchTerm": "CPAs in Culver City, CA",
+  "auditedDate": "2026-08-16",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Certified public accountant": 8,
+    "Tax preparation": 1,
+    "Accountant": 1
+  },
+  "categoryDistributionTop5": {
+    "Certified public accountant": 4,
+    "Tax preparation": 1
+  },
+  "categoryDistributionTop3": {
+    "Certified public accountant": 3
+  },
+  "majorityCategoryTop10": "Certified public accountant",
+  "majorityCategoryTop5": "Certified public accountant",
+  "majorityCategoryTop3": "Certified public accountant",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 58,
+    "median": 12,
+    "p25": 4,
+    "p75": 40
+  },
+  "reviewsTop3Avg": 40,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 5,
+  "findingsDisabled": [],
+  "notes": null
+}

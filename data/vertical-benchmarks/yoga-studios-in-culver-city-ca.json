@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Yoga studios in Culver City, CA",
+  "auditedDate": "2026-08-18",
+  "source": "serpapi",
+  "leadsAudited": 8,
+  "categoryDistributionTop10": {
+    "Yoga studio": 8
+  },
+  "categoryDistributionTop5": {
+    "Yoga studio": 5
+  },
+  "categoryDistributionTop3": {
+    "Yoga studio": 3
+  },
+  "majorityCategoryTop10": "Yoga studio",
+  "majorityCategoryTop5": "Yoga studio",
+  "majorityCategoryTop3": "Yoga studio",
+  "reviewsTop10": {
+    "min": 37,
+    "max": 369,
+    "median": 175,
+    "p25": 46,
+    "p75": 288
+  },
+  "reviewsTop3Avg": 250,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.87,
+  "findingsDisabled": [],
+  "notes": null
+}

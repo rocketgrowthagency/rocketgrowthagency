@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Med spas in Culver City, CA",
+  "auditedDate": "2026-08-03",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Medical spa": 10
+  },
+  "categoryDistributionTop5": {
+    "Medical spa": 5
+  },
+  "categoryDistributionTop3": {
+    "Medical spa": 3
+  },
+  "majorityCategoryTop10": "Medical spa",
+  "majorityCategoryTop5": "Medical spa",
+  "majorityCategoryTop3": "Medical spa",
+  "reviewsTop10": {
+    "min": 4,
+    "max": 765,
+    "median": 103,
+    "p25": 41,
+    "p75": 171
+  },
+  "reviewsTop3Avg": 98,
+  "ratingTop10Median": 5,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

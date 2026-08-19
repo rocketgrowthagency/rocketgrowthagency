@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Chiropractors in Culver City, CA",
+  "auditedDate": "2026-08-07",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Chiropractor": 10
+  },
+  "categoryDistributionTop5": {
+    "Chiropractor": 5
+  },
+  "categoryDistributionTop3": {
+    "Chiropractor": 3
+  },
+  "majorityCategoryTop10": "Chiropractor",
+  "majorityCategoryTop5": "Chiropractor",
+  "majorityCategoryTop3": "Chiropractor",
+  "reviewsTop10": {
+    "min": 14,
+    "max": 491,
+    "median": 125.5,
+    "p25": 49,
+    "p75": 264
+  },
+  "reviewsTop3Avg": 246,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.9,
+  "findingsDisabled": [],
+  "notes": null
+}

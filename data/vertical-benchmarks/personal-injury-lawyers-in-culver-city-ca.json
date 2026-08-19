@@ -1,0 +1,31 @@
+{
+  "searchTerm": "Personal injury lawyers in Culver City, CA",
+  "auditedDate": "2026-07-25",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Personal injury attorney": 9,
+    "Attorney": 1
+  },
+  "categoryDistributionTop5": {
+    "Personal injury attorney": 5
+  },
+  "categoryDistributionTop3": {
+    "Personal injury attorney": 3
+  },
+  "majorityCategoryTop10": "Personal injury attorney",
+  "majorityCategoryTop5": "Personal injury attorney",
+  "majorityCategoryTop3": "Personal injury attorney",
+  "reviewsTop10": {
+    "min": 1,
+    "max": 494,
+    "median": 62.5,
+    "p25": 34,
+    "p75": 179
+  },
+  "reviewsTop3Avg": 89,
+  "ratingTop10Median": 4.9,
+  "ratingTop3Avg": 4.93,
+  "findingsDisabled": [],
+  "notes": null
+}

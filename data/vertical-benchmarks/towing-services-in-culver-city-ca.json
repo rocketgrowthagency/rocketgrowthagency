@@ -1,0 +1,30 @@
+{
+  "searchTerm": "Towing services in Culver City, CA",
+  "auditedDate": "2026-07-22",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Towing service": 10
+  },
+  "categoryDistributionTop5": {
+    "Towing service": 5
+  },
+  "categoryDistributionTop3": {
+    "Towing service": 3
+  },
+  "majorityCategoryTop10": "Towing service",
+  "majorityCategoryTop5": "Towing service",
+  "majorityCategoryTop3": "Towing service",
+  "reviewsTop10": {
+    "min": 5,
+    "max": 536,
+    "median": 16,
+    "p25": 12,
+    "p75": 85
+  },
+  "reviewsTop3Avg": 90,
+  "ratingTop10Median": 4.550000000000001,
+  "ratingTop3Avg": 3.8,
+  "findingsDisabled": [],
+  "notes": null
+}

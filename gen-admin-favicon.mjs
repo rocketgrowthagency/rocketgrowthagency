@@ -1,0 +1,10 @@
+import puppeteer from 'puppeteer';
+import { readFileSync } from 'fs';
+const svg=readFileSync('/Users/chris/RGA/Rocket Growth Agency Website VS Code/favicon-admin.svg','utf8');
+const b=await puppeteer.launch({headless:'new',args:['--no-sandbox']});const p=await b.newPage();
+await p.setViewport({width:512,height:512,deviceScaleFactor:1});
+await p.setContent(`<style>*{margin:0;padding:0}</style>${svg.replace('width="512" height="512"','').replace('<svg ','<svg width="512" height="512" ')}`,{waitUntil:'networkidle0'});
+const el=await p.$('svg');
+await el.screenshot({path:'/Users/chris/RGA/Rocket Growth Agency Website VS Code/images/assets/rga_favicon-admin.png',omitBackground:true});
+console.log('png generated');
+await b.close();
