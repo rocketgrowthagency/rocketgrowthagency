@@ -131,6 +131,21 @@ const CHECKS = [
     },
     why: 'without it a Chrome/Maps change fails every lead, burns all 3 attempts each and parks dozens of good leads; reading the pipeline status instead of PIPESTATUS[0] makes the breaker a no-op' },
 
+  // 2026-08-19 — lead selection must reject addresses that cannot reach the business, AND the suite that
+  // proves it must actually run. Both were absent: junkContactReason existed but nothing asserted it was
+  // wired into isLikelyEmail, and email-validation.test.cjs was never invoked by the pipeline.
+  { name: 'unreachable contacts rejected at scrape time',
+    ok: () => {
+      const v = read('lib/email-validation.cjs');
+      // Defined AND actually hooked into the central gate — a helper nobody calls is dead code.
+      return /function junkContactReason/.test(v) && /if \(junkContactReason\(trimmed\)\) return '';/.test(v);
+    },
+    why: 'telemetry/hex/directory addresses enter the pipeline and burn a full ~6-min capture each before being refused downstream' },
+
+  { name: 'the email-validation suite runs pre-flight',
+    ok: () => /email-validation\.test\.cjs/.test(read('scripts/overnight-pipeline.sh')),
+    why: 'isLikelyEmail decides which leads enter the run; without the suite in pre-flight a regression is silent — too strict silently DROPS REAL PROSPECTS' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

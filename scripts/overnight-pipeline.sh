@@ -93,6 +93,25 @@ if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 2026-08-19 — EMAIL VALIDATION SUITE. It existed with 38 assertions but was never run by the pipeline,
+# so any regression in isLikelyEmail was silent — and that function decides which leads enter the run at
+# all. A break here is expensive in both directions: too loose sends outreach to unreachable addresses
+# and burns domain reputation; too strict silently DROPS REAL PROSPECTS (the no-vowel rule would have
+# discarded a firm we had already emailed — see feedback_unreachable_contact_emails).
+echo ">>> pre-flight: email-validation suite (lead selection correctness)" | tee -a "$LOGFILE"
+if ! node lib/email-validation.test.cjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: email-validation suite failed — lead selection is unsafe (drops real prospects or admits unreachable ones). Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+# 2026-08-19 — SerpApi rate-aware suite. Found ORPHANED in a sweep: 7 passing assertions that NOTHING
+# in the repo invoked. SerpApi backs email discovery and the website-search fallback on a 5k/month quota,
+# so a regression in the rate-aware wrapper burns quota silently or drops discovery for a whole night.
+# A test nobody runs is documentation, not a guard.
+echo ">>> pre-flight: serpapi rate-aware suite" | tee -a "$LOGFILE"
+if ! node lib/serpapi-rate-aware.test.cjs 2>&1 | tee -a "$LOGFILE"; then
+  echo "✗ FATAL: serpapi rate-aware suite failed — quota handling is unsafe. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 # 2026-08-17 — MAP-CENTRE gate. A map at a perfect city zoom but centred on the WRONG PLACE passes every
 # pixel check we have (card open, rank overlay, scale bar, colour/edge density) — team-plumbing shipped a
 # 2-mile view of the Channel Islands. This static scan asserts the results URL stays coordinate-anchored
