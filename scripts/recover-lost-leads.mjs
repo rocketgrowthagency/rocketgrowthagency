@@ -50,6 +50,23 @@ const slugify = (s) => String(s).toLowerCase()
   .replace(/&/g, ' and ').replace(/\|/g, ' or ')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+
+// 🔴 2026-08-19 — "HAS A PASSING MP4" IS NOT "IS SHIPPABLE". Rank goes stale.
+// I scanned 149 existing MP4s with check-video-acceptance and reported 47 as recoverable. Building their
+// landings, most were refused: `RANK MISMATCH — overlay shows #19, expected #5`. The videos are visually
+// perfect but FACTUALLY STALE — the rank is burned into the pixels, and the business has moved since the
+// capture. Shipping one would tell a prospect they rank #19 when they rank #5, which
+// [[feedback-no-hardcoded-stats]] and the accuracy rule forbid outright.
+//
+// The cause of my wrong number: check-video-acceptance takes an OPTIONAL --rank. Called without it, it
+// skips rank agreement entirely — so a standalone scan measures a WEAKER condition than the real gate in
+// build-video-landing, which always passes the expected rank. Same probe-incompleteness mistake as
+// reading a status code instead of a content type: I tested a subset of the criteria and reported the
+// optimistic answer.
+//
+// ⚠️ ANY tool that asks "could this existing MP4 ship?" MUST pass --rank <expected>. Without it the
+// answer is meaningless for salvage decisions, and a stale-rank video can never be salvaged by rebuilding
+// its landing page — only by a fresh capture.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const INDETERMINATE = (c) => c === 403 || c === 429 || c === 408 || (typeof c === 'number' && c >= 500) || c === 'ERR';
 
