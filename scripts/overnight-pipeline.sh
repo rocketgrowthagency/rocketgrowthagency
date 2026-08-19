@@ -469,6 +469,70 @@ append_result() {
   printf '%s\n' "$line" >> "$file"
 }
 
+# ============================================================================================
+# 🔴 2026-08-18 — A FIRST-TIME-BUILD LOSS HAD NO WAY BACK.
+# ============================================================================================
+# `scripts/reconcile-missing-videos.mjs` is the safety net under "every email gets a video", but its
+# rule is `Email present AND Video URL empty` — it queries AIRTABLE. On a FIRST-TIME build the lead's
+# Airtable row is only written at step-8, which runs AFTER the 6/6 verification gate and after the
+# per-lead watchdog. So a lead killed by either of those has NO ROW AT ALL, and the reconciler is
+# structurally incapable of seeing it. It is not "not yet retried" — it is invisible forever.
+#
+# MEASURED on the 2026-08-17 Yoga studios run: Airtable held exactly 5 rows for that search — the 5
+# leads that DEPLOYED. YogaSix (watchdog 602s), [solidcore] (5/6 — missing website), CorePower and
+# Homebody (visual gate) had none.
+#
+# The visual/acceptance gate already handles its own case: build-video-landing.mjs → armRedoAfterGateFail
+# un-ledgers the search when there is no Airtable row. That is why CorePower + Homebody healed on 08-17
+# — and, by pure luck, why YogaSix and [solidcore] healed too: they rode along on a search that someone
+# ELSE un-ledgered. Had the night's only failures been a watchdog kill and a 5/6, the search would have
+# stayed ledgered and all of them would have been lost silently.
+#
+# 🔒 Per [[feedback-redo-heal-requires-repickable-search]]: an armed redo that is not re-pickable by the
+# next search never heals. Un-ledgering is the ONLY durable lever when there is no Airtable row.
+#
+# CAPPED, because un-ledgering is not free: it makes tomorrow re-pick this category instead of a new
+# one. A lead that fails forever would pin the pipeline to one category and quietly eat the nightly
+# capacity. Mirrors MAX_GATE_REDOS=3 in build-video-landing.mjs. Past the cap we STOP re-arming and say
+# so loudly — surfaced, never silently looped and never silently dropped.
+REDO_ATTEMPTS_FILE="$SCRAPER_DIR/output/redo-attempts.tsv"
+MAX_UNLEDGER_REDOS=3
+unledger_search_for_redo() {
+  local biz="$1" why="$2" term="${3:-$SEARCH_QUERY}"
+  [ -n "$term" ] || { echo "  ⚠ cannot re-arm '$biz' ($why): no search term" | tee -a "$LOGFILE"; return 0; }
+  local key
+  key=$(printf '%s' "$biz" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' '-' | sed 's/--*/-/g; s/^-//; s/-$//')
+  # A name with no alphanumerics slugifies to "" — and every such lead would then SHARE one counter,
+  # so one business's failures would burn another's retry budget. Fall back to a hash of the raw name.
+  [ -n "$key" ] || key="h$(printf '%s' "$biz" | cksum | cut -d' ' -f1)"
+
+  mkdir -p "$(dirname "$REDO_ATTEMPTS_FILE")"
+  touch "$REDO_ATTEMPTS_FILE"
+  local n
+  n=$(awk -F'\t' -v k="$key" '$1==k{c=$2} END{print c+0}' "$REDO_ATTEMPTS_FILE")
+  n=$((n + 1))
+  # Rewrite the row for this key (awk to a temp, then move — no in-place edit).
+  awk -F'\t' -v k="$key" -v n="$n" 'BEGIN{OFS="\t"} $1!=k{print} END{print k, n}' \
+    "$REDO_ATTEMPTS_FILE" > "$REDO_ATTEMPTS_FILE.tmp" && mv "$REDO_ATTEMPTS_FILE.tmp" "$REDO_ATTEMPTS_FILE"
+
+  if [ "$n" -gt "$MAX_UNLEDGER_REDOS" ]; then
+    echo "  ⛔ EXHAUSTED: $biz failed $n times ($why) — NOT re-arming. This lead needs eyes, not another retry." | tee -a "$LOGFILE"
+    append_result "$RESULTS_FAILED" "$biz${RSEP}exhausted after ${n} attempts ($why) — needs review"
+    return 0
+  fi
+
+  # Same normalisation as unLedgerSearch() in build-video-landing.mjs: lowercase, commas→space,
+  # collapse whitespace. If these two ever disagree, a term un-ledgered by one is invisible to the other.
+  local ledger="$SCRAPER_DIR/output/attempted-searches.log"
+  [ -f "$ledger" ] || return 0
+  awk -v t="$term" '
+    function norm(s){ s=tolower(s); gsub(/,/," ",s); gsub(/[ \t]+/," ",s); gsub(/^ +| +$/,"",s); return s }
+    BEGIN{ nt=norm(t) }
+    { if (length($0) && norm($0) != nt) print }
+  ' "$ledger" > "$ledger.tmp" && mv "$ledger.tmp" "$ledger"
+  echo "  ↻ re-armed (attempt ${n}/${MAX_UNLEDGER_REDOS}): un-ledgered \"$term\" so the next run re-attempts $biz ($why)" | tee -a "$LOGFILE"
+}
+
 # 2026-08-17 — GEOGRAPHIC PLAUSIBILITY FILTER.
 # Businesses that hide their street address (service-area businesses) get ARBITRARY coordinates from
 # Google. Tyler Chase Collective came back at 29.27,-137.27 — the open Pacific, ~1,150 mi from Culver
@@ -774,6 +838,10 @@ EOPY
     echo ">>> step-3 produced only ${WEBM_COUNT}/3 WebMs (website or mobile recording failed — likely bot-blocked site)" | tee -a "$LOGFILE"
     append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
     echo "  ✗ FAILED: $BIZ_NAME — landing not built" | tee -a "$LOGFILE"
+    # Also pre-step-8, so also invisible to the reconciler. A bot-blocked site may well succeed on a
+    # cold retry ([[feedback-capture-instability-in-long-batches]]); the cap stops a truly dead site
+    # from pinning the pipeline to this category.
+    unledger_search_for_redo "$BIZ_NAME" "step-3 incomplete (${WEBM_COUNT}/3 WebMs)"
     return 0
   fi
 
@@ -784,6 +852,9 @@ EOPY
     if [ "${PIPESTATUS[0]}" = "3" ]; then
       append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}verification below 6/6 — flagged for redo"
       echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
+      # "flagged for redo" was only ever a REPORT STRING — nothing durable was written. step-8 never
+      # ran, so there is no Airtable row for the reconciler to find. Un-ledger or it is lost forever.
+      unledger_search_for_redo "$BIZ_NAME" "below 6/6"
       return
     fi
     STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
@@ -807,6 +878,8 @@ EOPY
     if [ "${PIPESTATUS[0]}" = "3" ]; then
       append_result "$RESULTS_FAILED" "$BIZ_NAME${RSEP}verification below 6/6 — flagged for redo"
       echo "  🚩 FLAGGED (redo): $BIZ_NAME — below 6/6, NOT deploying" | tee -a "$LOGFILE"
+      # Same as the SERIAL_STEPS branch above: no step-8, no Airtable row, no reconciler coverage.
+      unledger_search_for_redo "$BIZ_NAME" "below 6/6"
       return
     fi
     STEP2_CSV="$S2_FILTERED" MAX_COMBINES=1 node step-4-combine-desktop-mobile.mjs 2>&1 | tee -a "$LOGFILE" | tail -1
@@ -968,6 +1041,9 @@ run_lead_with_watchdog() {
       pkill -9 -f "chrome-profile-step3" 2>/dev/null
       pkill -9 -f "chrome-profile-step25" 2>/dev/null
       append_result "$RESULTS_FAILED" "$biz${RSEP}seq-watchdog-timeout (${tsec}s)"
+      # A watchdog kill happens BEFORE step-8, so no Airtable row exists and the missing-video
+      # reconciler cannot see this lead. Un-ledger the search or it is silently gone.
+      unledger_search_for_redo "$biz" "seq-watchdog-timeout"
       break
     fi
   done
@@ -1022,6 +1098,10 @@ else
           pkill -9 -f "chrome-profile-step3-w${wid}" 2>/dev/null
           pkill -9 -f "chrome-profile-step25-w${wid}" 2>/dev/null
           append_result "$RESULTS_FAILED" "$biz${RSEP}watchdog-timeout (${elapsed}s > ${PER_LEAD_TIMEOUT_SEC}s)"
+          # Killed before step-8 → no Airtable row → invisible to reconcile-missing-videos.mjs.
+          # This is how YogaSix Culver City was lost on 2026-08-17 (602s > 600s): the report said
+          # "watchdog-timeout" and nothing anywhere re-armed it.
+          unledger_search_for_redo "$biz" "watchdog-timeout"
           printf "| %s | %s | %s | watchdog-timeout | %ds |\n" "$(date '+%H:%M:%S')" "$biz" "$wid" "$elapsed" >> "$FAILURE_AUDIT"
           continue  # don't carry forward, slot is free
         fi

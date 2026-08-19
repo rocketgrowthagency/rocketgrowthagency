@@ -67,18 +67,39 @@ function summary(date) {
     `📄 [${rel}](${rel}) — Cmd+Shift+V for the clickable preview`,
     ``,
     `**Completed videos (${count(s, 'Videos deployed')})** — click to review:`,
-    ...deployedLinks(s),
+    ...deployedLinks(s, count(s, 'Videos deployed')),
   ].join('\n');
 }
 
 // Pull the "## Videos deployed" list from the report and re-emit each as a clickable Markdown link.
 // Source rows look like:  `1. **Business Name** — https://…/v/slug/   _(6/6 signals verified)_`
-function deployedLinks(s) {
+//
+// 🔴 2026-08-18 — THE MISMATCH MUST BE LOUD.
+// The 08-17 summary printed `**Completed videos (5)** — click to review:` immediately followed by
+// `_(none)_` and flagged NOTHING. Two numbers in the same report contradicted each other and the tool
+// read as if it had simply had a quiet night. (Root cause was upstream: overnight-pipeline.sh read the
+// deployed rows with IFS='|' when the writer used $RSEP, so every row rendered as
+// `**NameURL** — ` and this regex matched none of them.) That upstream bug is fixed, but the SENSOR
+// must fail loudly on its own — a parser that silently returns "_(none)_" when the report says 5 is
+// the same dead-check shape as `99/99 scale≈unreadable`: it can never distinguish "nothing deployed"
+// from "I could not read the rows".
+function deployedLinks(s, declared) {
   const sec = (s.split(/^##\s+Videos deployed[^\n]*$/m)[1] || '').split(/^##\s+/m)[0];
   const out = [];
   for (const line of sec.split('\n')) {
     const m = line.match(/^\s*\d+\.\s*\*\*(.+?)\*\*\s*—\s*(https?:\/\/\S+)/);
     if (m) out.push(`${out.length + 1}. [${m[1]}](${m[2]})`);
+  }
+  const n = Number(declared);
+  if (Number.isFinite(n) && n !== out.length) {
+    return [
+      ...out,
+      ``,
+      `⚠️ **PARSE MISMATCH — the report says ${n} deployed but ${out.length} link row(s) could be read.**`,
+      `The "## Videos deployed" rows in the report file are malformed, so this list is NOT the night's`,
+      `real output. Open the report file itself and check how those rows were written before trusting`,
+      `any count above.`,
+    ];
   }
   return out.length ? out : ['_(none)_'];
 }
