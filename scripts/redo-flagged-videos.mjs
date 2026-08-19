@@ -62,6 +62,11 @@ function deletePage(slug) {
   try { if (fs.existsSync(dir) && !DRY) fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ }
 }
 
+// A clean ARM tag is exactly `redo-armed` (set by the ARM branch below). armRedoAfterGateFail() writes
+// `redo-armed (attempt N): <gateName> <reason>` — same prefix, but it records a REJECTION, not a
+// rebuild. Distinguishing them is what stops a gate-failed video being un-suppressed.
+const isGateFailArm = (skip) => /redo-armed\s*\(attempt\s*\d+\)/i.test(String(skip || ''));
+
 const leads = await all(['Business Name', 'Video URL', 'Vid Slug', 'Suppressed', 'Skip Reasons', 'Search Term', 'Redo Video']);
 const f = (r, k) => r.fields[k];
 let armed = 0, pending = 0, finalized = 0;
@@ -75,11 +80,26 @@ for (const r of leads) {
     await patch(r.id, { Suppressed: true, 'Video URL': '', 'Vid Slug': '', 'Skip Reasons': 'redo-armed' });
     console.log(`  🔧 ARMED (will re-render): ${name}  [${term}]  — video removed, send blocked`);
     armed++;
-  } else if (isArmed && url) {
+  } else if (isArmed && url && !isGateFailArm(skip)) {
     // FINALIZE: re-rendered (fresh 6/6 video present again) → allow sending, clear the flag.
     await patch(r.id, { Suppressed: false, 'Redo Video': false, 'Skip Reasons': '' });
     console.log(`  ✅ FINALIZED (re-rendered, ready to send): ${name}`);
     finalized++;
+  } else if (isArmed && url && isGateFailArm(skip)) {
+    // 🔴 2026-08-18 — REFUSE TO FINALIZE ON A GATE-FAILURE RE-ARM.
+    // FINALIZE used to be plain `isArmed && url`, i.e. it inferred "successfully re-rendered" purely
+    // from a Video URL existing. But armRedoAfterGateFail() wrote `redo-armed (attempt N): <failure>`
+    // WITHOUT clearing the URL, so a lead whose video had just FAILED the gate looked identical to one
+    // that had passed. A DRY run caught three in that state (Terra Towing, Santa Monica Auto Body,
+    // Mar Vista Detail) about to be un-suppressed with broken videos.
+    // That writer now clears the URL, so this state should not recur — which is exactly why this branch
+    // must stay: a state that "can't happen" arriving anyway is the signal, and un-suppressing is the
+    // one action we must never take on a guess. Un-suppressing is irreversible in effect (the email
+    // goes out), so this fails CLOSED. Positive proof or nothing — [[feedback-verification-gates-must-be-strict]].
+    console.warn(`  ⛔ REFUSING to finalize ${name}: armed with a GATE FAILURE but still carrying a Video URL.`);
+    console.warn(`     Its last recorded outcome was a gate rejection, so the URL is not evidence of a good rebuild.`);
+    console.warn(`     Staying suppressed. Skip Reasons: ${String(skip).slice(0, 120)}`);
+    pending++;
   } else {
     console.log(`  ⏳ PENDING re-render: ${name}  [${term}]`);
     pending++;

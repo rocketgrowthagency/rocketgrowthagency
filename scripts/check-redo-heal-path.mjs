@@ -58,6 +58,32 @@ const CHECKS = [
     },
     why: 'the 6/6 gate, the watchdog and the step-3 WebM check all kill the lead BEFORE step-8 writes its Airtable row, so reconcile-missing-videos.mjs can never see it' },
 
+  // 🔴 2026-08-18 — THE REDO MACHINE ALMOST SENT THREE BROKEN VIDEOS.
+  // FINALIZE was `isArmed && url`: it inferred "successfully re-rendered" from a Video URL merely
+  // EXISTING. armRedoAfterGateFail() wrote `redo-armed (attempt N): <failure>` without clearing the
+  // URL, so a lead whose video had just been REJECTED looked identical to one that passed. A DRY run
+  // found Terra Towing, Santa Monica Auto Body and Mar Vista Detail all queued to be un-suppressed.
+  // Un-suppressing is effectively irreversible — the email goes out — so it must fail CLOSED.
+  { name: 'FINALIZE refuses a gate-failure re-arm',
+    ok: () => {
+      const s = read('scripts/redo-flagged-videos.mjs');
+      return /isGateFailArm/.test(s) && /REFUSING to finalize/.test(s);
+    },
+    why: 'without it, a lead re-armed by a FAILED gate is read as "re-rendered" and un-suppressed — broken videos go to prospects' },
+
+  { name: 'a gate re-arm clears the send signal',
+    ok: () => {
+      const s = read('build-video-landing.mjs');
+      // Both branches (retry and permafail) must blank Video URL + Vid Slug.
+      const arm = s.slice(s.indexOf('const fields = giveUp'), s.indexOf('if (!giveUp) unLedgerSearch'));
+      return (arm.match(/"Video URL":\s*""/g) || []).length >= 2 && (arm.match(/"Vid Slug":\s*""/g) || []).length >= 2;
+    },
+    why: 'outreach sends on Email + Video URL + !Suppressed; leaving the URL on a gate-failed lead makes Suppressed the only thing protecting the prospect' },
+
+  { name: 'a passing rebuild closes out its own redo',
+    ok: () => /redo closed out for/.test(read('build-video-landing.mjs')),
+    why: 'if success never clears the redo-armed marker, the stricter FINALIZE can never fire and fixed videos stay suppressed forever — the opposite silent failure' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

@@ -353,6 +353,30 @@ async function updateLeadVideoUrl(recordId, videoUrl, videoFile, slug) {
     body.fields["Redo Video"] = false;
     console.log(`[build-landing] ↺ un-parked ${slug || recordId}: a passing video replaced an earlier 'build-failed' (was: ${String(cur.fields["Skip Reasons"] || '').slice(0, 90)})`);
   }
+
+  // 🔴 2026-08-18 — A PASSING REBUILD MUST CLOSE OUT ITS OWN REDO.
+  // The redo state machine (scripts/redo-flagged-videos.mjs) is ARM → PENDING → FINALIZE, and FINALIZE
+  // fired on `redo-armed in Skip Reasons` + `Video URL present`. That inferred success purely from a
+  // URL existing — which is unsafe, so FINALIZE now refuses when Skip Reasons records a GATE FAILURE.
+  // But nothing ever cleared that failure text on success, so a genuinely rebuilt lead would have kept
+  // its stale `redo-armed (attempt N): <failure>` forever and could never be finalized. Fixing one end
+  // without the other would have traded "un-suppresses broken videos" for "never un-suppresses fixed
+  // ones" — both silent.
+  //
+  // So the passing build closes the loop itself, exactly like the build-failed un-park above. Clearing
+  // `Redo Video` also drops the lead out of redo-flagged-videos.mjs entirely (its Airtable query filters
+  // on `{Redo Video}`), so there is no window where the ARM branch could see a good video with no
+  // armed-marker and re-arm it.
+  //
+  // 🚫 Scoped to redo-armed suppressions ONLY. A lead suppressed for dedup, a missing email, or any
+  // person-level reason must stay suppressed — a working video says nothing about those.
+  const skipNow = String(cur?.fields?.["Skip Reasons"] || "");
+  if (/redo-armed/i.test(skipNow)) {
+    body.fields["Suppressed"] = false;
+    body.fields["Redo Video"] = false;
+    body.fields["Skip Reasons"] = "";
+    console.log(`[build-landing] ✅ redo closed out for ${slug || recordId}: passing video replaced a redo-armed failure (was: ${skipNow.slice(0, 90)})`);
+  }
   const auditSummary = loadAuditSummaryFromManifest(slug) || loadAuditSummary(slug);
   if (auditSummary) body.fields["Audit Summary"] = auditSummary;
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${recordId}`, {
@@ -415,10 +439,27 @@ async function armRedoAfterGateFail(record, gateName, reason, fallback = {}) {
   const prior = parseInt((record?.fields?.["Skip Reasons"] || "").match(/attempt (\d+)/)?.[1], 10);
   const attempt = (Number.isFinite(prior) ? prior : 0) + 1;
   const giveUp = attempt >= MAX_GATE_REDOS;
+  // 🔴 2026-08-18 — CLEARING THE VIDEO URL IS LOAD-BEARING, NOT TIDINESS.
+  // `Video URL` is the SEND signal: outreach sends on Email + Video URL + !Suppressed
+  // ([[feedback-broken-video-leads-must-be-suppressed]]). Re-arming while leaving the URL set left
+  // `Suppressed` as the ONLY thing standing between a gate-failed video and a prospect — a single
+  // point of failure. It then failed, in the worst possible way:
+  //
+  // redo-flagged-videos.mjs's FINALIZE branch is `isArmed && url` — it treats the presence of a Video
+  // URL as PROOF the lead was successfully re-rendered, and un-suppresses it. Because this function
+  // wrote `redo-armed (attempt N)` while leaving the URL intact, three leads whose videos had FAILED
+  // the gate (Terra Towing, Santa Monica Auto Body, Mar Vista Detail) sat in exactly that state. A
+  // DRY run on 2026-08-18 confirmed the next overnight pass would have FINALIZED all three — clearing
+  // Suppressed and making their broken videos sendable.
+  //
+  // Clearing both fields here restores the invariant the state machine assumes: an armed lead has no
+  // video, so a URL reappearing genuinely does mean "re-rendered". Matches what ARM itself does.
   const fields = giveUp
     ? { "Redo Video": false, "Suppressed": true, "Email Status": "build-failed",
+        "Video URL": "", "Vid Slug": "",
         "Skip Reasons": `gate-permafail after ${attempt} attempts: ${gateName} ${String(reason).slice(0, 140)}` }
     : { "Redo Video": true, "Suppressed": true,
+        "Video URL": "", "Vid Slug": "",
         "Skip Reasons": `redo-armed (attempt ${attempt}): ${gateName} ${String(reason).slice(0, 140)}` };
   if (!giveUp) unLedgerSearch(record?.fields?.["Search Term"]);
   const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}/${record.id}`, {
