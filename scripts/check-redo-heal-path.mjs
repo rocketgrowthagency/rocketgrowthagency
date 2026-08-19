@@ -146,6 +146,20 @@ const CHECKS = [
     ok: () => /email-validation\.test\.cjs/.test(read('scripts/overnight-pipeline.sh')),
     why: 'isLikelyEmail decides which leads enter the run; without the suite in pre-flight a regression is silent — too strict silently DROPS REAL PROSPECTS' },
 
+  // 2026-08-19 — rebuild-broken-videos.sh had NO per-lead bound while overnight-pipeline.sh has had one
+  // for months. Capture is a SILENT phase (~5 min, no output), so a hang looks exactly like progress and
+  // would take the whole batch with it. Must NOT use `timeout`: that is GNU coreutils and is absent on
+  // stock macOS, which would make the guard a silent no-op.
+  { name: 'rebuild script bounds each capture',
+    ok: () => {
+      const s2 = read('scripts/rebuild-broken-videos.sh');
+      return /STEP3_TIMEOUT_SEC/.test(s2)
+          && /kill -0 "\$S3PID"/.test(s2)                    // a real poll loop, not `timeout`
+          && !/\btimeout -k\b/.test(s2)                      // and never the coreutils binary
+          && /chrome-profile-step3/.test(s2);                // Chrome reaped, else it wedges the next lead
+    },
+    why: 'an unbounded capture hang stalls the entire rebuild batch forever, and `timeout` is not available on macOS so it cannot be used as the bound' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

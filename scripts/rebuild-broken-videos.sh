@@ -73,7 +73,37 @@ PYEOF
   # FORCE_RECAPTURE=1 — this script exists to fix CAPTURE defects, so it must never reuse existing WebMs.
   # Without it step-3 prints "all 3 videos already exist", skips, and the redo re-renders the SAME broken
   # footage while reporting success (hit 2026-08-13 redoing the blank-hero videos — step-4 in 20 seconds).
-  STEP2_CSV="$CSV" MAX_VIDEOS=1 FORCE_RECAPTURE=1 node step-3-video-recorder.mjs >>"$LOG" 2>&1 || { say "  ✗ step-3 (guardrail or capture failure)"; FAILED+=("$SLUG:step-3"); continue; }
+  #
+  # 🔴 2026-08-19 — PER-LEAD WATCHDOG. This script had none, while overnight-pipeline.sh has had one for
+  # months (PER_LEAD_TIMEOUT_SEC=600). Capture is a SILENT phase — it records three videos and prints
+  # nothing for ~5 minutes — so a genuine hang is indistinguishable from normal progress. Chris asked "is
+  # it stuck?" during a 314-second silence that was in fact a lead whose site (davidostrovelaw.com)
+  # serves a broken TLS handshake; without a bound, a real hang would have sat there forever and taken the
+  # rest of the batch with it. `timeout` sends TERM then KILL, and 124 is its distinct exit code.
+  # Chrome must be reaped explicitly: killing node orphans the browser, which then holds the profile dir
+  # and wedges the NEXT lead (the 2026-07-27 orphaned-Chrome stall).
+  # ⚠️ `timeout` is GNU coreutils and is NOT on stock macOS — using it here would have made this watchdog
+  # a silent no-op (verified: `command -v timeout` is empty on this machine). So this is the same manual
+  # PID + poll watchdog overnight-pipeline.sh already runs in production.
+  STEP3_TIMEOUT_SEC="${STEP3_TIMEOUT_SEC:-600}"
+  STEP2_CSV="$CSV" MAX_VIDEOS=1 FORCE_RECAPTURE=1 node step-3-video-recorder.mjs >>"$LOG" 2>&1 &
+  S3PID=$!
+  S3START=$(date +%s); S3TIMEDOUT=0
+  while kill -0 "$S3PID" 2>/dev/null; do
+    sleep 3
+    if [ "$(( $(date +%s) - S3START ))" -gt "$STEP3_TIMEOUT_SEC" ]; then
+      S3TIMEDOUT=1
+      say "  ⏱ step-3 exceeded ${STEP3_TIMEOUT_SEC}s — killing (hung capture, usually an unreachable/slow site)"
+      # Kill the node process AND the browser it spawned. Killing only node orphans Chrome, which keeps
+      # the profile dir locked and wedges the NEXT lead (the 2026-07-27 orphaned-Chrome stall).
+      kill -9 "$S3PID" 2>/dev/null
+      pkill -9 -f 'chrome-profile-step3' 2>/dev/null; pkill -9 -f 'chrome-profile-step25' 2>/dev/null
+      break
+    fi
+  done
+  wait "$S3PID" 2>/dev/null; S3RC=$?
+  if [ "$S3TIMEDOUT" = "1" ]; then FAILED+=("$SLUG:step-3-timeout"); continue; fi
+  [ "$S3RC" = "0" ] || { say "  ✗ step-3 (guardrail or capture failure)"; FAILED+=("$SLUG:step-3"); continue; }
 
   say "  step-6 voiceover (6/6 gate)"
   STEP2_CSV="$CSV" node step-6-voiceover.mjs >>"$LOG" 2>&1; RC=$?
