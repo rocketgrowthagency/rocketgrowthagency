@@ -270,6 +270,28 @@ const CHECKS = [
     },
     why: 'a missing ledger made every lead skip silently; a bad CSV URL would park a good lead forever; a daytime chain could start at 05:00 and fight the night run for Chrome' },
 
+  // 2026-08-19 — KILLING A WRAPPER DOES NOT KILL THE LOOP IT SPAWNED. I killed `away-chain` and reported
+  // "0 running"; recovery-rounds.sh was a CHILD that kept looping and launched a fresh batch minutes
+  // later, so Chris watched Chrome keep popping up while being told nothing was running.
+  { name: 'a single stop script kills every capture layer',
+    ok: () => {
+      const st = read('scripts/stop-all-capture.sh');
+      // Assert the KILL LIST itself, not merely that the word appears somewhere — the script also
+      // names these in comments and in its verification list, so a loose match passed while the kill
+      // loop had lost `recovery-rounds`. Same "count the call sites, not the mentions" lesson.
+      const killLoops = (st.match(/^for p in ([^;]+); do\s*\n\s*pkill -9 -f "\$p"/m) || [])[1] || '';
+      return /recovery-rounds/.test(killLoops)       // the loop that survived on 2026-08-19
+          && /away-chain/.test(killLoops)
+          && /rebuild-broken-videos/.test(st) && /step-3-video-recorder/.test(st)
+          && /chrome-profile-step/.test(st)          // capture Chrome ONLY
+          // Strip comments BEFORE asserting the negative: the script's own warning line contains the
+          // very string we forbid, so matching raw text made this check fail from birth (3rd time today
+          // I have written a born-red gate — see feedback_empty_output_breaks_the_test).
+          && !/pkill[^\n]*'Google Chrome'/.test(st.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n'))
+          && /verification/.test(st);                // and it VERIFIES rather than trusting the kill
+    },
+    why: 'killing the wrapper leaves the loop alive to relaunch a batch, and an unverified stop reports success while captures continue' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
