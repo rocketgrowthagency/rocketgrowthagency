@@ -11,6 +11,9 @@
  * every absent path answers 200 text/html — an invented slug returns 200 and so does its /video.mp4.
  * See feedback_curl_status_is_useless_check_content_type.
  *
+ * ℹ️ INTENTIONALLY MANUAL — no caller by design. Run it when you want to re-issue a past report against
+ * today's reality (after the backlog drains, or before quoting an old report's numbers). It is READ-ONLY.
+ *
  * Usage: node scripts/report-status-now.mjs 2026-08-15 [--write]
  *   --write also saves it next to the original as <DD>_status-now_<date>.md
  */

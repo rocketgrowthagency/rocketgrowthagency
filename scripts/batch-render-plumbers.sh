@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# ⚠️ SUPERSEDED 2026-08-19 — DO NOT USE FOR REBUILDS.
+# Last touched 2026-06-12. The maintained path is:
+#   scripts/rebuild-broken-videos.sh   (one lead at a time, per-lead watchdog, unreachable-site
+#                                       pre-check, Chrome reaped on failure, batched deploy)
+#   scripts/recovery-rounds.sh         (drives the above in rounds, with a circuit breaker)
+# This script predates ALL of those protections. It cannot ship an ungated video (verified), but it
+# will happily burn captures with no watchdog, no reachability check and no failure ledger.
+# Kept only as a historical reference. See project_rebuild_runner_hardening.
 # Full v14 pipeline for top-3 Culver City plumber leads.
 # Each lead: step-3 (fresh Maps + Website + Mobile recordings) → step-2.5
 # → step-2.6 → step-6 → step-4 → step-5 → step-6b → step-7 → copy MP4.

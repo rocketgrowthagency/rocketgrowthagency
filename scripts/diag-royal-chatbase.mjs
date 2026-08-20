@@ -1,4 +1,7 @@
 // Quick test: load Royal Moving in mobile-emulated puppeteer (same flow as
+/**
+ * ℹ️ DIAGNOSTIC (2026-06-11) — no caller by design. Manual, read-only investigation tool.
+ */
 // step-2.5 auditMobile) and dump all script src tags + iframe src tags so
 // we can see whether Chatbase is actually loaded or stripped by bot
 // detection.

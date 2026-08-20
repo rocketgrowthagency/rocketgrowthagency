@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/**
+ * ℹ️ ONE-OFF BACKFILL (2026-05-21) — no caller by design. Already run; kept for reference only.
+ *    Re-running it rewrites Day-1 Map Rank across Leads, so do not run casually.
+ */
 // scripts/backfill-day1-maprank.mjs
 //
 // One-time script: populate Day 1 Map Rank for any lead that has been sent
