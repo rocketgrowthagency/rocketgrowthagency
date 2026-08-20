@@ -318,6 +318,14 @@ const CHECKS = [
       return /UNRECOVERABLE BLOCKER/.test(r) && /FATAL: OpenAI OUT OF CREDITS/.test(r); },
     why: 'retrying only makes sense when the next attempt could differ; an empty account is not that' },
 
+  // 2026-08-20 — stop-all-capture.sh deleted "$(date)*" from output/Step 2, which included the MASTER
+  // scraped CSV, not just per-lead temps. A run crossing midnight makes "today" its own output date, so
+  // stopping at 04:18 destroyed the night's own inputs and made two credit-killed leads unrebuildable.
+  { name: 'the stop script deletes only per-lead temp CSVs, never the master',
+    ok: () => { const t = read('scripts/stop-all-capture.sh');
+      return /-only-\*/.test(t) && !/-name "\$\(date \+%Y-%m-%d\)\*" -delete/.test(t); },
+    why: 'deleting the master step-2 CSV makes every lead in that search permanently unrebuildable' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

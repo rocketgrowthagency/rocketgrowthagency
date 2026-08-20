@@ -43,7 +43,16 @@ echo "  (your own Chrome is untouched: $(ps aux | grep -c '[G]oogle Chrome') pro
 
 # 6) clean the transient artifacts that can hijack the next run
 cd "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code"
-N=$(find "output/Step 2" -maxdepth 1 -name "$(date +%Y-%m-%d)*" 2>/dev/null | wc -l | tr -d ' ')
-find "output/Step 2" -maxdepth 1 -name "$(date +%Y-%m-%d)*" -delete 2>/dev/null
-echo "  removed $N today-dated temp CSV(s) (they can hijack the night run's input)"
+# 🔴 2026-08-20 — ONLY the per-lead "-only-" temp CSVs, NEVER the master.
+# This used to delete EVERYTHING matching "$(date +%Y-%m-%d)*". Two ways that destroyed real data:
+#   1. The MASTER CSV ("<date>_<search>-[step-2].csv") is the run's own scraped output, not a temp file.
+#      Deleting it means a lead can never be rebuilt — rebuild-broken-videos.sh looks for a step-2 CSV
+#      with an email and skips when there is none. It cost the two leads OpenAI's outage had already
+#      killed (Craig Abrams DC, Faye & Faye Chiropractic): recoverable until this ran, then not.
+#   2. A NIGHT RUN CROSSES MIDNIGHT. Running this at 04:18 makes "today" the date the run has been
+#      writing under since 00:00 — so the stop script eats the output of the run it just stopped.
+# The hijack risk this guards against is only the per-lead "-only-" files, so match exactly those.
+N=$(find "output/Step 2" -maxdepth 1 -name "$(date +%Y-%m-%d)*-only-*" 2>/dev/null | wc -l | tr -d ' ')
+find "output/Step 2" -maxdepth 1 -name "$(date +%Y-%m-%d)*-only-*" -delete 2>/dev/null
+echo "  removed ${N:-0} today-dated per-lead temp CSV(s) (master CSVs kept — they are the run's own output)"
 exit 0
