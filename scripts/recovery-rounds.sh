@@ -130,6 +130,21 @@ while [ "$round" -lt "$MAX_ROUNDS" ]; do
   # skipped. That is exactly what happened on the 2026-08-19 15:23 run: round 1 built 0 of 6 and the
   # breaker never fired, so round 2 re-attempted the SAME six leads including two dead sites.
   # overnight-pipeline.sh documents this same trap. awk always exits 0 and prints exactly one number.
+  # 🔴 UNRECOVERABLE BLOCKER — stop the phase, don't grind against it (2026-08-20).
+  # On 2026-08-19 OpenAI ran out of credits at 04:00. rebuild-broken-videos.sh correctly aborted at
+  # pre-flight (BEFORE capture, so no lead burned an attempt — the guard did its job), but this loop had
+  # no idea what that abort meant and simply started the next round. It would have spun until the 07:00
+  # deadline re-running a check that CANNOT pass without a human adding funds.
+  # Retrying is only sensible when the next attempt could differ. An empty account is not that.
+  if awk '/FATAL: OpenAI OUT OF CREDITS|SerpAPI quota/{f=1} END{exit !f}' "$CHUNK_LOG" 2>/dev/null; then
+    say ">>> 🔴 UNRECOVERABLE BLOCKER hit in round ${round} — an external account is out of funds/quota."
+    say ">>>    No retry can clear this; stopping the recovery phase so it doesn't spin until the deadline."
+    say ">>>    The overnight verdict reports it as NEEDS YOU. Leads keep their attempts (the abort"
+    say ">>>    happens before capture), so the backlog resumes untouched once it's topped up."
+    rm -f "$CHUNK_LOG"
+    break
+  fi
+
   CH_STAGED=$(awk '/✓ staged/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)
   CH_LEADS=$(awk '/════/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)
   CH_BLANK=$(awk '/BLANK-PHOTOS/{n++} END{print n+0}' "$CHUNK_LOG" 2>/dev/null)

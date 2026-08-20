@@ -292,6 +292,32 @@ const CHECKS = [
     },
     why: 'killing the wrapper leaves the loop alive to relaunch a batch, and an unverified stop reports success while captures continue' },
 
+  // 2026-08-20 — A NIGHT RUN CROSSES MIDNIGHT. overnight-local.sh stamps DATE_STAMP once at 21:00 but
+  // overnight-pipeline.sh re-stamps it per search, so post-00:00 searches write accumulators under the
+  // NEXT day. The breaker read only the start date and stopped seeing new work at midnight: its view
+  // froze at 38/54 while the night actually built 71/112. Had the later searches failed at 0% it would
+  // still have reported "above the floor" from stale data.
+  { name: 'the breaker sees work on both sides of midnight',
+    ok: () => {
+      const h = read('scripts/run-health-check.mjs');
+      return /nextDay/.test(h) && /DATES\.some/.test(h);
+    },
+    why: 'a run that crosses midnight splits its accumulators across two dates; reading one date makes the breaker judge a stale, partial night' },
+
+  // 2026-08-20 — the verdict read ONLY Airtable lead state, so a night halted by an empty OpenAI account
+  // still printed "✅ Nothing needs you". A blocker never self-heals; it must land in the NEEDS-YOU line.
+  { name: 'the verdict surfaces run-level blockers, not just lead state',
+    ok: () => { const v = read('scripts/overnight-verdict.mjs');
+      return /BLOCKERS\s*=/.test(v) && /OUT OF CREDITS/i.test(v) && /RUN BLOCKER/.test(v); },
+    why: 'a run halted by an out-of-funds account would report "nothing needs you" while nothing could heal' },
+
+  // 2026-08-20 — and the recovery loop must STOP on that blocker rather than re-running a check that
+  // cannot pass until a human acts. It would otherwise spin from 04:00 to the 07:00 deadline.
+  { name: 'recovery rounds stop on an unrecoverable blocker',
+    ok: () => { const r = read('scripts/recovery-rounds.sh');
+      return /UNRECOVERABLE BLOCKER/.test(r) && /FATAL: OpenAI OUT OF CREDITS/.test(r); },
+    why: 'retrying only makes sense when the next attempt could differ; an empty account is not that' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

@@ -38,8 +38,18 @@ const date = process.argv.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)) || new Date
 
 const lines = (p) => { try { return fs.readFileSync(p, 'utf8').split('\n').filter((l) => l.trim()).length; } catch { return 0; } };
 
+// 🔴 2026-08-20 — A NIGHT RUN CROSSES MIDNIGHT, SO ONE DATE IS NOT ENOUGH.
+// overnight-local.sh stamps DATE_STAMP once at 21:00 and passes it here, but overnight-pipeline.sh
+// re-stamps `date +%Y-%m-%d` on EVERY invocation — so searches after 00:00 write their accumulators
+// under TOMORROW's directory. Reading only the start date meant the breaker stopped seeing new work at
+// midnight: on 2026-08-19 its view froze at 38/54 and never included the 33 videos built by the last two
+// searches. Worse, had those searches failed at 0% it would still have reported "above the floor" from
+// stale pre-midnight data — a safety mechanism silently judging the wrong night.
+// A run spans at most one midnight, so include the following day too.
+const nextDay = (d) => { const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+const DATES = [date, nextDay(date)];
 let dirs = [];
-try { dirs = fs.readdirSync(ACCUM).filter((d) => d.startsWith(date + '_')); } catch { /* none yet */ }
+try { dirs = fs.readdirSync(ACCUM).filter((d) => DATES.some((dt) => d.startsWith(dt + '_'))); } catch { /* none yet */ }
 if (!dirs.length) { console.log(`[health] no accumulators for ${date} yet — nothing to judge. ✓`); process.exit(0); }
 
 let deployed = 0, failed = 0;
@@ -48,7 +58,7 @@ for (const d of dirs) {
   const dep = lines(path.join(ACCUM, d, 'deployed.txt'));
   const fal = lines(path.join(ACCUM, d, 'failed.txt'));
   deployed += dep; failed += fal;
-  per.push({ search: d.slice(date.length + 1), dep, fal });
+  per.push({ search: d.replace(/^\d{4}-\d{2}-\d{2}_/, ''), dep, fal });
 }
 const attempted = deployed + failed;
 const pct = attempted ? Math.round((deployed / attempted) * 100) : 0;

@@ -26,6 +26,7 @@
  *         node scripts/overnight-verdict.mjs --brief   # one line, for the chat summary
  * Exit 0 always (advisory).
  */
+import fsSync from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,6 +70,50 @@ const isBounced = (r) => /bounced|unsubscribed|invalid|blocked/i.test(String(f(r
 // Whether a lead is retrying is a fact about its CURRENT state (`Redo Video` / `redo-armed`), never
 // about words describing what once happened to it — so self-healing is evaluated first and wins.
 const selfHealing = (r) => f(r, 'Redo Video') || /redo-armed|^paroled |\bparoled /i.test(String(f(r, 'Skip Reasons') || ''));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔴 RUN-LEVEL BLOCKERS (added 2026-08-20)
+//
+// This verdict used to read ONLY Airtable lead state, so it could see nothing wrong with a night that
+// was completely halted. On 2026-08-19 OpenAI ran out of credits at 04:00; every recovery round from
+// then on aborted at pre-flight, and this script still printed "✅ Nothing needs you." It was right
+// about the leads and wrong about the night.
+//
+// A blocker is NOT self-healing by definition: no number of retries fixes an empty account. It needs a
+// human, so it belongs in the NEEDS-YOU count — that line is the one thing Chris reads.
+//
+// Logs are scanned for BOTH the run's date and the next day, because a night crosses midnight and the
+// pipeline re-stamps its date per search (same trap fixed in run-health-check.mjs).
+// ─────────────────────────────────────────────────────────────────────────────
+const BLOCKERS = [
+  { re: /OpenAI OUT OF CREDITS|OpenAI balance\/quota exceeded/i,
+    what: 'OpenAI is out of credits — no voiceover can be generated',
+    fix : 'Add funds: https://platform.openai.com/settings/organization/billing' },
+  { re: /SerpAPI quota (exhausted|too low)|SerpAPI.*below the floor/i,
+    what: 'SerpAPI search quota is exhausted — no new leads can be scraped',
+    fix : 'Top up SerpApi (5k/mo plan): https://serpapi.com/dashboard' },
+  { re: /CIRCUIT BREAKER TRIPPED/i,
+    what: 'The circuit breaker stopped the run — something systemic broke',
+    fix : 'Diagnose the cause, then: node scripts/parole-permafails.mjs --apply' },
+];
+
+function findBlockers(dateStr) {
+  const nextDay = (d) => { const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+  const hits = new Map();
+  for (const d of [dateStr, nextDay(dateStr)]) {
+    for (const f of [`/tmp/overnight-local-${d}.log`, `/tmp/overnight-pipeline-${d}.log`]) {
+      let txt = ''; try { txt = fsSync.readFileSync(f, 'utf8'); } catch { continue; }
+      for (const b of BLOCKERS) {
+        const n = (txt.match(new RegExp(b.re.source, 'gi')) || []).length;
+        if (n) hits.set(b.what, { ...b, n: (hits.get(b.what)?.n || 0) + n });
+      }
+    }
+  }
+  return [...hits.values()];
+}
+const RUN_DATE = process.argv.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a)) || new Date().toISOString().slice(0, 10);
+const blockers = findBlockers(RUN_DATE);
+
 const parkedNow = (r) => /gate-permafail|video-unrenderable|exhausted after/i.test(String(f(r, 'Skip Reasons') || ''))
   || String(f(r, 'Email Status') || '').toLowerCase() === 'build-failed';
 const needsHuman = (r) => !selfHealing(r) && parkedNow(r);
@@ -79,9 +124,11 @@ const stuck = live.filter(needsHuman);
 const other = live.filter((r) => !selfHealing(r) && !needsHuman(r));
 
 if (BRIEF) {
-  console.log(stuck.length === 0
-    ? `✅ No action needed — ${healing.length} video(s) self-healing, 0 need you.`
-    : `🔴 ${stuck.length} video(s) NEED YOU (retries exhausted) · ${healing.length} self-healing.`);
+  const parts = [];
+  if (blockers.length) parts.push(`🔴 ${blockers.length} BLOCKER(S) need you — ${blockers.map((b) => b.what.split(' — ')[0]).join('; ')}`);
+  if (stuck.length) parts.push(`🔴 ${stuck.length} video(s) NEED YOU (retries exhausted) · ${healing.length} self-healing.`);
+  if (!parts.length) parts.push(`✅ No action needed — ${healing.length} video(s) self-healing, 0 need you.`);
+  console.log(parts.join('\n'));
   process.exit(0);
 }
 
@@ -96,6 +143,18 @@ if (stuck.length) {
     console.log(`  • ${String(f(r, 'Business Name') || '?').slice(0, 40).padEnd(40)} ${String(f(r, 'Skip Reasons') || f(r, 'Email Status') || '').slice(0, 70)}`);
   }
   console.log(`\n  To retry one anyway: set Redo Video=true on the lead (it re-enters the heal path).`);
-} else {
+} else if (!blockers.length) {
   console.log(`\n✅ Nothing needs you. Every outstanding gap is armed and will be retried automatically.`);
+}
+
+// A blocker outranks everything above: while it is open, the "self-healing" leads are NOT healing.
+if (blockers.length) {
+  console.log(`\n🔴 ${blockers.length} RUN BLOCKER(S) — these do NOT self-heal, they need you:`);
+  for (const b of blockers) {
+    console.log(`  • ${b.what}`);
+    console.log(`    → ${b.fix}`);
+    console.log(`    (hit ${b.n}× in tonight's log)`);
+  }
+  console.log(`\n  ⚠️  While this is open the ${healing.length} "self-healing" video(s) above are NOT healing —`);
+  console.log(`      every retry aborts at pre-flight. Clear the blocker, then they resume automatically.`);
 }
