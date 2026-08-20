@@ -380,6 +380,22 @@ const CHECKS = [
       return /check-orphan-videos\.mjs/.test(t) && /ORPHAN_FAIL_DAYS/.test(g); },
     why: 'a full build that can never produce an email is silent — every other check starts from the lead list' },
 
+  // 2026-08-20 — ROOT CAUSE of the orphaned videos. rebuild-broken-videos.sh never ran step-8, so a lead
+  // that died BEFORE step-8 in its original night got a rebuilt, deployed video and still no Airtable
+  // row — a video that can never be emailed. 27 such videos in 14 days, 67 across 977 deployed.
+  { name: 'the rebuild path publishes the lead to Airtable',
+    ok: () => { const t = read('scripts/rebuild-broken-videos.sh');
+      return /step-8-publish-to-airtable\.mjs/.test(t)
+        && /SERVED_CSV/.test(t)
+        && /case "\$CT" in video\/\*/.test(t); },
+    why: 'a rebuilt video with no lead behind it is invisible — every reconciliation starts from the lead list' },
+
+  // The rebuild's own deploy swallowed its exit code the same way the pipeline's did.
+  { name: 'the rebuild deploy reads its own exit code',
+    ok: () => { const t = read('scripts/rebuild-broken-videos.sh');
+      return /exit "\$\{PIPESTATUS\[0\]\}"/.test(t) && /DEPLOY FAILED/.test(t); },
+    why: 'a failed rebuild deploy would report success and leave the videos serving the SPA homepage' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

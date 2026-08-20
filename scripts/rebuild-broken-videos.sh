@@ -43,7 +43,7 @@ note_fail(){ printf '%s\t%s\t%s\t%s\n' "$(date +%F\ %H:%M)" "$1" "$2" "${3:-}" >
 [ $# -gt 0 ] || { say "usage: $0 <slug> [<slug> ...]"; exit 1; }
 caffeinate -dimsu -t 5400 </dev/null >/dev/null 2>&1 & CAFF=$!
 
-OK=(); FAILED=(); TEMP_CSVS=()
+OK=(); OK_CSV=(); FAILED=(); TEMP_CSVS=()
 # The overnight pipeline picks its step-2 CSV with `ls -t "output/Step 2/"*"-[step-2].csv" | head -1`.
 # Any today-dated file we leave there can win that race and make the night build the WRONG lead — it did
 # exactly that on 2026-08-11 (an estate-planning run built a chiropractor). Clean up on the way out.
@@ -168,6 +168,7 @@ PYEOF
   rsync -a --delete "output/landing-pages/v/$BUILD_SLUG/" "$WEBSITE/v/$BUILD_SLUG/"
   say "  ✓ staged /v/$BUILD_SLUG/"
   OK+=("$BUILD_SLUG")
+  OK_CSV+=("$CSV")        # kept so step-8 can publish this lead AFTER the deploy proves the video serves
 done
 
 say ""; say "════ rebuilt ${#OK[@]} · failed ${#FAILED[@]} ════"
@@ -187,9 +188,38 @@ TOK=$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER/.env" | head -1 | cut -d= -f2-)
 SITE="38f275c7-a4a8-4531-9989-1fc1ccb78f9e"
 CUR=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/sites/$SITE" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).published_deploy?.id||'')})")
 curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$CUR/unlock" -o /dev/null
-( cd "$WEBSITE" && NETLIFY_AUTH_TOKEN="$TOK" netlify deploy --prod --dir="." --site="$SITE" --message="rebuild broken videos: ${OK[*]}" 2>&1 | grep -iE "Unique deploy|error" ) | tee -a "$LOG"
-for s in "${OK[@]}"; do
-  say "  verify /v/$s/ → $(curl -s -o /dev/null -w '%{http_code} %{content_type}' "https://www.rocketgrowthagency.com/v/$s/video.mp4")"
+# 🔴 The deploy's exit code must be the DEPLOY's, not grep's. Same trap that hid a whole failed night on
+# 2026-08-19 (Netlify out of credits → JSONHTTPError: Forbidden → 53 pages silently served the homepage).
+( cd "$WEBSITE" && NETLIFY_AUTH_TOKEN="$TOK" netlify deploy --prod --dir="." --site="$SITE" --message="rebuild broken videos: ${OK[*]}" 2>&1 | tee -a "$LOG" | grep -iE "Unique deploy|error"; exit "${PIPESTATUS[0]}" )
+DRC=$?
+[ "${DRC:-1}" -ne 0 ] && say "🚨 DEPLOY FAILED (exit $DRC) — videos are NOT live. Check Netlify credits/token."
+
+# Verify each one SERVES before publishing anything to Airtable. content_type is the only proof:
+# netlify.toml ends in a /* SPA catch-all, so an absent path answers 200 text/html.
+SERVED=(); SERVED_CSV=()
+for i in "${!OK[@]}"; do
+  s="${OK[$i]}"
+  CT=$(curl -s -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$s/video.mp4")
+  say "  verify /v/$s/ → $CT"
+  case "$CT" in video/*) SERVED+=("$s"); SERVED_CSV+=("${OK_CSV[$i]}") ;; esac
+done
+
+# 🔴 2026-08-20 — PUBLISH THE LEAD. This script never ran step-8, so a lead that died BEFORE step-8 in
+# its original night got a rebuilt, deployed video and STILL no Airtable row. The result is a video that
+# can never be emailed, and nothing reported it: every reconciliation starts from the lead list, so a
+# video with no lead is invisible to all of them. The orphan sweep found 27 such videos built in 14 days
+# (67 across 977 deployed). recovery-rounds.sh even documents the precondition — "they died before
+# step-8" — without anyone closing the loop.
+# Runs only for videos PROVEN to serve, so the Video URL written to Airtable is a fact, not a claim.
+# step-8 is an upsert (it skips duplicate creates), so re-running for an existing lead is a no-op.
+for i in "${!SERVED[@]}"; do
+  s="${SERVED[$i]}"; c="${SERVED_CSV[$i]}"
+  [ -f "$c" ] || { say "  ⚠ no CSV for $s — cannot publish lead"; continue; }
+  if STEP2_CSV="$c" node step-8-publish-to-airtable.mjs >>"$LOG" 2>&1; then
+    say "  ✓ lead published/updated in Airtable — $s"
+  else
+    say "  ⚠ step-8 failed for $s — video is live but the lead may not exist (orphan). See $LOG"
+  fi
 done
 NEW=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/sites/$SITE" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).published_deploy?.id||'')})")
 curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$NEW/lock" -o /dev/null
