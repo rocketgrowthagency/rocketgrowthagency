@@ -13,6 +13,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
@@ -395,6 +398,31 @@ const CHECKS = [
     ok: () => { const t = read('scripts/rebuild-broken-videos.sh');
       return /exit "\$\{PIPESTATUS\[0\]\}"/.test(t) && /DEPLOY FAILED/.test(t); },
     why: 'a failed rebuild deploy would report success and leave the videos serving the SPA homepage' },
+
+  // 2026-08-20 — the build filter and step-8's filter must be THE SAME CODE. The rebuild used to accept
+  // "any non-empty value in an email-ish column" while step-8 additionally required a contactable
+  // business (phone OR website, not a directory/generic name). Katie B Creative passed the first and
+  // failed the second, so a full video build was spent on a row that could never become a lead.
+  { name: 'the build and step-8 share one emailable/usable rule',
+    ok: () => { const r = read('scripts/rebuild-broken-videos.sh');
+      const h = read('scripts/csv-has-emailable-row.mjs');
+      const l = read('lib/email-validation.cjs');
+      // The lib clause is BEHAVIOURAL, not a regex on the source: removing the export while leaving the
+      // function defined kept a source-regex green, which is exactly a gate that cannot fail.
+      let exported = false;
+      try {
+        const lib = require('../lib/email-validation.cjs');
+        exported = typeof lib.extractValidEmail === 'function' && typeof lib.isUsableLeadRow === 'function'
+          && lib.extractValidEmail('https://example.com/') === ''
+          && lib.isUsableLeadRow({ 'Business Name': 'X' }) === false;
+      } catch { exported = false; }
+      return /csv-has-emailable-row\.mjs/.test(r)
+        && !/PYEOF/.test(r)
+        && /isUsableLeadRow/.test(h) && /extractValidEmail/.test(h)
+        && /csv-parser/.test(h)
+        && exported
+        && /isUsableLeadRow/.test(l); },
+    why: 'two rules for "can we email this row" drift, and the build wastes a full render on a row step-8 will reject' },
 
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))

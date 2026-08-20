@@ -66,15 +66,15 @@ for SLUG in "$@"; do
   SRC=""
   while IFS= read -r CAND; do
     [ -n "$CAND" ] || continue
-    if python3 - "$CAND" <<'PYEOF'
-import csv, sys
-with open(sys.argv[1], newline="") as fh:
-    for row in csv.DictReader(fh):
-        if any("email" in (k or "").lower() and (v or "").strip() for k, v in row.items()):
-            sys.exit(0)
-sys.exit(1)
-PYEOF
-    then SRC="$CAND"; break; fi
+    # 🔴 2026-08-20 — ask the SAME question step-8 asks, via the SAME code.
+    # This used to test "any non-empty value in a column whose name contains email" — a SECOND rule for a
+    # question step-8 already answers, and two rules for one question WILL drift. It did: Katie B Creative
+    # had a valid email but no phone and no website, so step-8 filtered her row as a directory/generic
+    # listing. This script had already built and deployed her video, leaving a live video with no lead
+    # that can never be emailed ([[project-orphaned-videos]]).
+    # csv-has-emailable-row.mjs uses a REAL csv parser and calls isUsableLeadRow + extractValidEmail from
+    # lib/email-validation.cjs — the same rules step-8 applies.
+    if node scripts/csv-has-emailable-row.mjs "$CAND"; then SRC="$CAND"; break; fi
     say "  ↷ skipping $(basename "$CAND") — no email in it"
   done < <(ls -t "output/Step 2/"*"_${SLUG}-only-"*"-[step-2].csv" 2>/dev/null)
   if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV WITH AN EMAIL for $SLUG — skipping (a video is only built for a lead we can email)"; reap_chrome; note_fail "$SLUG" "no-emailable-csv"; FAILED+=("$SLUG:no-emailable-csv"); continue; fi
