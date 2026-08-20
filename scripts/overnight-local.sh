@@ -368,6 +368,18 @@ node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 echo ">>> recovery rounds: working the historical failed-video backlog" | tee -a "$LOG"
 RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash scripts/recovery-rounds.sh "$LOG" 2>&1 | tee -a "$LOG" || true
 
+# 🔴 2026-08-20 — RECONCILE VIDEOS → LEADS, the direction nothing ever checked.
+# Every other reconciliation starts from the lead list ("which lead is missing a video?"), so a video
+# with NO lead behind it is invisible to all of them. Found by hand while auditing 54 approved videos:
+# Digital Imaging Center was live and 6/6-verified with no Airtable record at all — a full build
+# (scrape → capture → voiceover → branding → deploy) that can never produce an email.
+# Reported, NEVER fatal: this is post-hoc reconciliation, and aborting a finished night helps nobody.
+echo ">>> orphan check: deployed videos with no lead behind them" | tee -a "$LOGFILE"
+node scripts/check-orphan-videos.mjs 2>&1 | tee -a "$LOGFILE"; _orc=${PIPESTATUS[0]}
+if [ "${_orc:-0}" -ne 0 ]; then
+  echo ">>> ⚠️  orphaned videos found — builds that can never be emailed. See the list above." | tee -a "$LOGFILE"
+fi
+
 echo ">>> verdict: what (if anything) needs a human" | tee -a "$LOG"
 node scripts/overnight-verdict.mjs 2>&1 | tee -a "$LOG" || true
 

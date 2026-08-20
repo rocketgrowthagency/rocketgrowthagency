@@ -371,6 +371,15 @@ const CHECKS = [
         && /parentElement/.test(t); },
     why: 'an h1-exists wait does not mean the card finished animating; a translucent ANCESTOR makes it see-through' },
 
+  // 2026-08-20 — reconciliation only ever ran leads → videos, so a video with NO lead was invisible.
+  // Digital Imaging Center was live and 6/6-verified with no Airtable record; the orphan sweep then
+  // found 27 more built in the previous 14 days. Reported nightly, never fatal.
+  { name: 'orphaned videos (no lead behind them) are reconciled nightly',
+    ok: () => { const t = read('scripts/overnight-local.sh');
+      const g = read('scripts/check-orphan-videos.mjs');
+      return /check-orphan-videos\.mjs/.test(t) && /ORPHAN_FAIL_DAYS/.test(g); },
+    why: 'a full build that can never produce an email is silent — every other check starts from the lead list' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
