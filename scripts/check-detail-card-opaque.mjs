@@ -116,8 +116,13 @@ if (!isMain) { /* imported as a library — export only */ }
 else if (args.includes('--selftest')) {
   // Labelled fixtures: Chris confirmed these by eye on 2026-08-20.
   const WEB = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+  // ⚠️ THE LABELLED POSITIVE NO LONGER EXISTS. dr-augusto-rojas-md was the translucent case at 20.1%;
+  // it was REBUILT on 2026-08-20 with the settleDetailPanel() fix and now measures 6.4% — solid, and
+  // squarely inside the good cluster. That 20.1 → 6.4 drop is itself the strongest evidence the fix
+  // works, but it means this selftest has no positive fixture left, so it can only show that
+  // known-good videos pass. Do NOT re-add Rojas as expectFail: it would now fail correctly.
   const CASES = [
-    { slug: 'dr-augusto-rojas-md', label: 'TRANSLUCENT (Chris flagged)', expectFail: true },
+    { slug: 'dr-augusto-rojas-md', label: 'REBUILT 08-20 — was 20.1%, now solid', expectFail: false },
     { slug: 'chaudhry-cpa', label: 'confirmed good', expectFail: false },
     { slug: 'the-pod-photography', label: 'confirmed good', expectFail: false },
     { slug: 'turbotax-culver-blvd-culver-city', label: 'confirmed good', expectFail: false },

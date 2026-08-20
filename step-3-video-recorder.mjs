@@ -1100,11 +1100,22 @@ async function clickListingInResultsByName(page, businessName) {
       //    it to scroll — that outer ring lands beyond the scroll container's top edge and is clipped.
       //    A NEGATIVE offset draws the ring INSIDE the card's own bounds, so it can never be clipped by
       //    the container no matter where the card sits. box-shadow is inset for the same reason.
+      // 🔴 NO `transition` — IT IS WHAT MADE THE HIGHLIGHT RENDER BLACK.
+      // Measured on a real Maps card (2026-08-20): with `transition: outline 0.3s` set, reading the
+      // computed style straight after applying gives `outline-width: 0px, outline-color: rgb(0,0,0)` —
+      // the START of the animation, i.e. exactly the black the videos showed. Maps wipes our inline
+      // style during result-list mutations and we re-apply every 250ms, against a 300ms transition, so
+      // the outline never finishes animating in and the recording catches it dark and thin. Without the
+      // transition the outline is correct on the very first frame.
+      // Longhands, not the `outline` shorthand: with all four set explicitly and !important, the
+      // computed value is verified `rgb(47,87,235) / 4px / solid` on a live Maps page.
       const applyOutline = () => {
-        match.style.setProperty('outline', '4px solid #2f57eb', 'important');
+        match.style.setProperty('outline-style', 'solid', 'important');
+        match.style.setProperty('outline-width', '4px', 'important');
+        match.style.setProperty('outline-color', '#2f57eb', 'important');
         match.style.setProperty('outline-offset', '-4px', 'important');
         match.style.setProperty('border-radius', '10px', 'important');
-        match.style.setProperty('transition', 'outline 0.3s ease-in-out', 'important');
+        match.style.setProperty('transition', 'none', 'important');
         match.style.setProperty('box-shadow', 'inset 0 0 0 8px rgba(47,87,235,0.18)', 'important');
       };
       applyOutline();
@@ -1113,7 +1124,7 @@ async function clickListingInResultsByName(page, businessName) {
       setTimeout(() => {
         clearInterval(reapplyId);
         // removeProperty (not `= ''`) so the `important` declarations set above are fully cleared.
-        for (const p of ['outline', 'outline-offset', 'border-radius', 'transition', 'box-shadow']) {
+        for (const p of ['outline', 'outline-style', 'outline-width', 'outline-color', 'outline-offset', 'border-radius', 'transition', 'box-shadow']) {
           match.style.removeProperty(p);
         }
       }, 9000);

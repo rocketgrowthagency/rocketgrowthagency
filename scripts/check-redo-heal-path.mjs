@@ -346,9 +346,11 @@ const CHECKS = [
   // plain inline style; a positive outline-offset also let the ring be clipped.
   { name: 'the Maps card highlight is !important and inset',
     ok: () => { const t = read('step-3-video-recorder.mjs');
-      return /setProperty\('outline', '4px solid #2f57eb', 'important'\)/.test(t)
-        && /setProperty\('outline-offset', '-\d+px', 'important'\)/.test(t); },
-    why: 'a plain inline style loses to Maps CSS and falls back to black; a positive offset gets clipped' },
+      return /setProperty\('outline-color', '#2f57eb', 'important'\)/.test(t)
+        && /setProperty\('outline-width', '4px', 'important'\)/.test(t)
+        && /setProperty\('outline-offset', '-\d+px', 'important'\)/.test(t)
+        && /setProperty\('transition', 'none', 'important'\)/.test(t); },
+    why: 'an animating outline is captured mid-fade as a BLACK 0px ring (measured on a live Maps card); a positive offset gets clipped' },
 
   // 2026-08-20 — a lead must never stay emailable while its video page serves the SPA homepage.
   { name: 'leads without a live video are held before sending',
