@@ -326,6 +326,49 @@ const CHECKS = [
       return /-only-\*/.test(t) && !/-name "\$\(date \+%Y-%m-%d\)\*" -delete/.test(t); },
     why: 'deleting the master step-2 CSV makes every lead in that search permanently unrebuildable' },
 
+  // 2026-08-20 — every pre-flight FATAL gate tested tee's exit code instead of the check's.
+  // `if ! node check.mjs 2>&1 | tee -a "$LOG"` takes $? from the LAST command in the pipeline (tee,
+  // which always succeeds), so all 24 gates printed their result and could never abort the run.
+  { name: 'pre-flight gates read the check exit code, not tee',
+    ok: () => { const t = read('scripts/overnight-pipeline.sh');
+      return !/if ! (node|bash|python3?) [^\n]*\| tee -a "\$LOGFILE"; then/.test(t)
+        && /_grc=\$\{PIPESTATUS\[0\]\}/.test(t); },
+    why: '24 FATAL gates could never fire; a failing check read as a pass' },
+
+  // 2026-08-20 — the deploy swallowed its own failure the same way, plus `|| true`.
+  { name: 'the netlify deploy failure is fatal, not swallowed',
+    ok: () => { const t = read('scripts/overnight-pipeline.sh');
+      return !/netlify deploy --prod --dir=\. 2>&1 \| tee -a "\$LOGFILE" \| grep -E "[^"]*" \|\| true/.test(t)
+        && /_drc=\$\{PIPESTATUS\[0\]\}/.test(t) && /DEPLOY FAILED/.test(t); },
+    why: 'Netlify ran out of credits and 53 of 71 landing pages silently served the homepage' },
+
+  // 2026-08-20 — the Maps highlight regressed to black because a stylesheet !important beat our
+  // plain inline style; a positive outline-offset also let the ring be clipped.
+  { name: 'the Maps card highlight is !important and inset',
+    ok: () => { const t = read('step-3-video-recorder.mjs');
+      return /setProperty\('outline', '4px solid #2f57eb', 'important'\)/.test(t)
+        && /setProperty\('outline-offset', '-\d+px', 'important'\)/.test(t); },
+    why: 'a plain inline style loses to Maps CSS and falls back to black; a positive offset gets clipped' },
+
+  // 2026-08-20 — a lead must never stay emailable while its video page serves the SPA homepage.
+  { name: 'leads without a live video are held before sending',
+    ok: () => { const t = read('scripts/overnight-pipeline.sh');
+      const g = read('scripts/hold-leads-without-live-video.mjs');
+      return /hold-leads-without-live-video\.mjs --apply/.test(t)
+        && /video\/mp4/.test(g) && /closed_/.test(g); },
+    why: '53 leads stayed sendable with dead pages and 5 prospects were emailed a homepage link' },
+
+  // 2026-08-20 — the Maps detail card recorded SEE-THROUGH (Chris caught it on Dr. Augusto Rojas:
+  // coastline and map labels visible through the white panel). The only wait was "does the h1 exist",
+  // which Maps satisfies the instant the panel starts rendering — so the recorded hold began mid-fade.
+  { name: 'the detail panel is opaque before the recording hold',
+    ok: () => { const t = read('step-3-video-recorder.mjs');
+      return /async function settleDetailPanel/.test(t)
+        && /await settleDetailPanel\(page\)/.test(t)
+        && /transition-duration: 0s !important/.test(t)
+        && /parentElement/.test(t); },
+    why: 'an h1-exists wait does not mean the card finished animating; a translucent ANCESTOR makes it see-through' },
+
   { name: 're-arming is capped',
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),

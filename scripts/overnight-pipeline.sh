@@ -79,17 +79,20 @@ fi
 # 2026-08-12 AND 2026-08-13 nights outright (crash at 21:05, 0 leads, 0 videos, no report, twice). Cheap,
 # ~10s, and it fails BEFORE the capture window is burned. See feedback_fix_the_night_run_live.md.
 echo ">>> pre-flight: every pipeline stage loads" | tee -a "$LOGFILE"
-if ! node scripts/check-pipeline-stages-load.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-pipeline-stages-load.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: a pipeline stage throws on load — aborting BEFORE burning the night. Fix the stage, then re-run." | tee -a "$LOGFILE"
   exit 1
 fi
 echo ">>> pre-flight: regression suite (step-6 gate behavior)" | tee -a "$LOGFILE"
-if ! node scripts/regression-audit-detectors.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/regression-audit-detectors.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: regression suite failed — aborting overnight run to prevent shipping false claims." | tee -a "$LOGFILE"
   exit 1
 fi
 echo ">>> pre-flight: static absence-gate scanner" | tee -a "$LOGFILE"
-if ! node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-absence-finding-gates.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: static absence-gate scan failed — an ungated absence finding exists in step-6. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -99,7 +102,8 @@ fi
 # and burns domain reputation; too strict silently DROPS REAL PROSPECTS (the no-vowel rule would have
 # discarded a firm we had already emailed — see feedback_unreachable_contact_emails).
 echo ">>> pre-flight: email-validation suite (lead selection correctness)" | tee -a "$LOGFILE"
-if ! node lib/email-validation.test.cjs 2>&1 | tee -a "$LOGFILE"; then
+node lib/email-validation.test.cjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: email-validation suite failed — lead selection is unsafe (drops real prospects or admits unreachable ones). Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -108,7 +112,8 @@ fi
 # so a regression in the rate-aware wrapper burns quota silently or drops discovery for a whole night.
 # A test nobody runs is documentation, not a guard.
 echo ">>> pre-flight: serpapi rate-aware suite" | tee -a "$LOGFILE"
-if ! node lib/serpapi-rate-aware.test.cjs 2>&1 | tee -a "$LOGFILE"; then
+node lib/serpapi-rate-aware.test.cjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: serpapi rate-aware suite failed — quota handling is unsafe. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -117,12 +122,14 @@ fi
 # 2-mile view of the Channel Islands. This static scan asserts the results URL stays coordinate-anchored
 # and that EVERY capture path is guarded by the fail-closed centre assertion.
 echo ">>> pre-flight: map-centre gate (viewport anchored + every capture path guarded)" | tee -a "$LOGFILE"
-if ! node scripts/check-map-centre-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-map-centre-gate.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: map-centre invariants broken — a wrong-location video could ship looking perfectly normal. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
 echo ">>> pre-flight: category-relevance gate (business must match the searched vertical)" | tee -a "$LOGFILE"
-if ! node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-category-relevance.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: category-relevance gate broken — off-vertical businesses (mosque/museum/nonprofit) could get videos + outreach. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -133,7 +140,8 @@ fi
 # real gate, so a loosened threshold fails HERE instead of in someone's inbox.
 # Memory: project_video_pipeline_rework.md.
 echo ">>> pre-flight: video acceptance gate regression (blank-hero / no-card / zoomed-out / good)" | tee -a "$LOGFILE"
-if ! node scripts/check-acceptance-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-acceptance-gate.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: acceptance gate regression — broken videos could reach prospects. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -141,7 +149,8 @@ fi
 # acceptance gate (rejects the finished video). This checks it at the CAPTURE resolution too, which the
 # video-level test above can't cover.
 echo ">>> pre-flight: hero-band rule (step-3 capture + gate share one definition)" | tee -a "$LOGFILE"
-if ! node scripts/check-hero-band.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-hero-band.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: hero-band rule regression — blank-white heroes could ship. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -150,17 +159,20 @@ fi
 # A flagged redo needs THREE things to heal (re-pickable search, dedup letting it through, arming even
 # without an Airtable row). Each has broken silently before — the symptom is always "the queue never drains".
 echo ">>> pre-flight: redo heal path (flagged videos can actually rebuild)" | tee -a "$LOGFILE"
-if ! node scripts/check-redo-heal-path.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-redo-heal-path.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: the redo heal path is broken — flagged videos would never rebuild. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
 echo ">>> pre-flight: step-3 guardrails are terminal (a broken render fails its lead)" | tee -a "$LOGFILE"
-if ! node scripts/check-guardrails-terminal.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-guardrails-terminal.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: a step-3 guardrail can be swallowed — known-broken videos could ship. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
 echo ">>> pre-flight: 6/6 verification gate (only fully-verified videos deploy)" | tee -a "$LOGFILE"
-if ! node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-verification-gate.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: 6/6 verification gate broken — sub-6/6 videos could deploy/send. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -170,7 +182,8 @@ fi
 # 08-14/15/16). The risk when relaxing that is the opposite error, so this asserts BOTH directions:
 # a verified-zero scores, an UNREADABLE count still blocks.
 echo ">>> pre-flight: verification signals mean 'observed', not 'flattering'" | tee -a "$LOGFILE"
-if ! node scripts/check-verification-signals.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-verification-signals.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: the 6/6 signal rule regressed — unverifiable claims could reach a prospect. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -179,7 +192,8 @@ fi
 # format must survive them — a mangled split corrupts the morning report, and the end-of-run dedup keys
 # on the name, so a prefix collision would silently drop a failure from the count.
 echo ">>> pre-flight: report records survive real business names" | tee -a "$LOGFILE"
-if ! bash scripts/check-report-records.sh 2>&1 | tee -a "$LOGFILE"; then
+bash scripts/check-report-records.sh 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: the report record format is unsafe — failures could be miscounted. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -188,7 +202,8 @@ fi
 # both directions: the ocean/Texas/Santa-Barbara leads are dropped, and a lead with no coordinates, a
 # 0,0 coordinate, an unparseable one, or a position 29 mi out is KEPT.
 echo ">>> pre-flight: geographic lead filter (drops impossible locations, keeps the rest)" | tee -a "$LOGFILE"
-if ! python3 scripts/check-lead-geo-filter.py 2>&1 | tee -a "$LOGFILE"; then
+python3 scripts/check-lead-geo-filter.py 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: the geographic lead filter regressed — good leads could be dropped. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -197,7 +212,8 @@ fi
 # leads → silently lost videos. This asserts the per-lead landing build can NEVER expand to a full-corpus
 # rebuild. Memory: feedback_landing_build_must_be_scoped.md.
 echo ">>> pre-flight: landing-build scope guard (per-lead build can't rebuild all pages)" | tee -a "$LOGFILE"
-if ! node scripts/check-landing-build-scope.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-landing-build-scope.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: landing-build scope guard failed — a per-lead call could rebuild the whole corpus + trip the watchdog. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -206,8 +222,21 @@ fi
 # isSponsoredBlock + getListingHrefByName + clickListingInResultsByName
 # centering pass all correctly filter sponsored Maps listings for BOTH
 # rank 1-3 + rank 4+ flows. Memory: feedback_never_match_sponsored_maps_listing.md.
+# 2026-08-20 — the Maps card highlight must stay RGA BLUE and must not be clipped.
+# Maps changed their CSS and began winning the outline-color cascade against our plain inline style, so
+# the highlight silently rendered BLACK (currentColor) for a full night of videos. A positive
+# outline-offset also let the ring be clipped when the card could not be centred, cutting the business
+# name in half. Neither is visible from our source — only from a rendered frame. See
+# scripts/check-maps-outline-style.mjs.
+echo ">>> pre-flight: Maps card highlight colour + inset" | tee -a "$LOGFILE"
+node scripts/check-maps-outline-style.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: Maps card highlight regressed (black or clipped) — videos would ship with a broken highlight. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
-if ! node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: sponsored-card filter regression failed — step-3 may match/outline a Sponsored Maps listing. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -218,7 +247,8 @@ fi
 # overnight before a single video gets rendered with the wrong priorities.
 # Memory: feedback_audit_focus_local_seo_over_tech_specs.md.
 echo ">>> pre-flight: mobile finding priority lock (local-SEO > tech-spec)" | tee -a "$LOGFILE"
-if ! node scripts/check-mobile-finding-priority.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-mobile-finding-priority.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: mobile finding priority regressed — tech-spec findings would dominate the voiceover. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -227,7 +257,8 @@ fi
 # brand-new-lead batch silently (created=0, videos still deploy). Memory:
 # feedback_step8_create_payload_fields_only.md.
 echo ">>> pre-flight: step-8 create-payload shape (fields-only)" | tee -a "$LOGFILE"
-if ! node scripts/check-step8-create-shape.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-step8-create-shape.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: step-8 create payload would leak non-fields keys → Airtable 422 on new-lead batches. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -237,7 +268,8 @@ fi
 # site (Chris caught Richards Rooter, Advanced HVAC, Murphy, etc.). Memory:
 # feedback_audit_stale_suspect_false_no_website.md.
 echo ">>> pre-flight: stale-suspect guard (no false no-website/domain-mismatch claims)" | tee -a "$LOGFILE"
-if ! node scripts/check-stale-suspect-guard.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-stale-suspect-guard.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: stale-suspect guard regressed → false no-website/domain-mismatch claims would ship to prospects. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -245,14 +277,16 @@ fi
 # competitors aren't counted as "duplicates of you" (Chris caught Doctor Pipe vs Pipe
 # Doctor Rooter). Memory: feedback_audit_duplicate_listing_same_business.md.
 echo ">>> pre-flight: duplicate-listing same-business guard" | tee -a "$LOGFILE"
-if ! node scripts/check-duplicate-listing-same-business.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-duplicate-listing-same-business.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: duplicate-listing guard regressed → false 'Google shows N other listings' claims would ship. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
 # 2026-06-12 — rank-aware Maps finding priority (1-3 defense AND 4+ climb). Review volume
 # must beat a trivial (<0.3-star) rating gap. Memory: feedback_audit_review_volume_over_trivial_rating_gap.md.
 echo ">>> pre-flight: maps finding rank-priority guard (1-3 + 4+)" | tee -a "$LOGFILE"
-if ! node scripts/check-maps-finding-rank-priority.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-maps-finding-rank-priority.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: maps finding rank-priority regressed → trivial rating gaps would outrank review-volume levers. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -261,7 +295,8 @@ fi
 # is captured on the existing record, never re-rendered/re-emailed. Memory:
 # feedback_dedup_by_email_with_intel_capture.md.
 echo ">>> pre-flight: cross-search dedup guard (one email per business, ever)" | tee -a "$LOGFILE"
-if ! node scripts/check-cross-search-dedup.mjs 2>&1 | tee -a "$LOGFILE"; then
+node scripts/check-cross-search-dedup.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: cross-search dedup regressed → a business could be emailed twice across searches (trust-kill). Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
@@ -273,7 +308,8 @@ fi
 # warns + passes. Skip with SKIP_CARD_CHECK=1. Memory: feedback_video_quality_fixes_2026-06-11.
 if [ "${SKIP_CARD_CHECK:-0}" != "1" ]; then
   echo ">>> pre-flight: Maps card-open self-check" | tee -a "$LOGFILE"
-  if ! node scripts/check-maps-card-open.mjs 2>&1 | tee -a "$LOGFILE"; then
+  node scripts/check-maps-card-open.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+  if [ "${_grc:-1}" -ne 0 ]; then
     echo "✗ FATAL: Maps card-open is broken in this environment — every lead would ship a cardless results-list video. Fix (logged-out profile / sponsored detector / selectors) before running. Override with SKIP_CARD_CHECK=1." | tee -a "$LOGFILE"
     exit 1
   fi
@@ -1280,7 +1316,22 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   # deploy before the large video.mp4 blobs finish uploading (2026-07-29: 17 landing pages went live but the
   # videos didn't → every /v/ page played the SPA homepage instead of the video). Let the deploy run to
   # completion, then VERIFY the video files actually serve and re-deploy once if not.
-  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed" || true
+  # 🔴 2026-08-20 — THE EXIT CODE MUST BE THE DEPLOY'S, NOT grep'S.
+  # This line was `netlify deploy … | tee … | grep … || true`. In a pipeline $? belongs to the LAST
+  # command (grep), and `|| true` swallows whatever is left, so a deploy that failed outright was
+  # structurally invisible. On 2026-08-19 Netlify ran out of build credits and answered
+  # `JSONHTTPError: Forbidden` — twice — and the run went on to re-lock, write "Videos deployed | 17 |",
+  # and report a clean verdict. 53 of 71 landing pages were never published; every one served the SPA
+  # homepage, so the emails pointed prospects at nothing. Use PIPESTATUS[0] and treat failure as fatal.
+  netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed"
+  _drc=${PIPESTATUS[0]}
+  if [ "${_drc:-1}" -ne 0 ]; then
+    echo "🚨🚨 DEPLOY FAILED (exit ${_drc}) — the landing pages were NOT published." | tee -a "$LOGFILE"
+    echo "     Most likely: Netlify is out of build credits (JSONHTTPError: Forbidden) or the token expired." | tee -a "$LOGFILE"
+    echo "     Check https://app.netlify.com/teams/rocketgrowthagency/billing then re-run the deploy." | tee -a "$LOGFILE"
+    echo "     🔴 DO NOT send outreach for these leads — their pages serve the homepage." | tee -a "$LOGFILE"
+    DEPLOY_FAILED=1; export DEPLOY_FAILED
+  fi
   # Verify a sample of the just-deployed videos serve video/* (not the HTML catch-all); re-deploy once if broken.
   _vok=1
   for _s in "${PENDING_DEPLOY_SLUGS[@]:0:3}"; do
@@ -1289,8 +1340,30 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   done
   if [ "$_vok" -eq 0 ]; then
     echo ">>> Re-running deploy because video files did not serve on the first pass" | tee -a "$LOGFILE"
-    netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed" || true
+    netlify deploy --prod --dir=. 2>&1 | tee -a "$LOGFILE" | grep -E "Deploy is live|Production|rocketgrowth|Deployed"
+    _drc2=${PIPESTATUS[0]}
+    # Re-verify AFTER the retry. Previously the retry's result was never checked at all, so a second
+    # failure looked identical to a success and the run reported the videos as deployed either way.
+    _vok2=1
+    for _s in "${PENDING_DEPLOY_SLUGS[@]:0:3}"; do
+      _ct2=$(curl -s -o /dev/null -w "%{content_type}" --max-time 45 "https://www.rocketgrowthagency.com/v/$_s/video.mp4" 2>/dev/null || echo "")
+      case "$_ct2" in video/*) ;; *) _vok2=0 ;; esac
+    done
+    if [ "${_drc2:-1}" -ne 0 ] || [ "$_vok2" -eq 0 ]; then
+      echo "🚨🚨 DEPLOY STILL FAILING after retry — landing pages are NOT live. Outreach must NOT go out." | tee -a "$LOGFILE"
+      DEPLOY_FAILED=1; export DEPLOY_FAILED
+      bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
+    fi
   fi
+  # 🔴 2026-08-20 — CLOSE THE LOOP BETWEEN "DEPLOYED" AND "SENDABLE".
+  # step-8 writes each lead's Video URL without ever checking the URL serves, so when the 08-19 deploy
+  # failed on exhausted Netlify credits, 53 leads stayed fully sendable while their pages showed the
+  # homepage — and five outreach emails went out to real prospects the next morning. Nothing connected
+  # the failed deploy to the send list. This does: any lead whose video does not answer video/mp4 is put
+  # on hold so the sender skips it, and released automatically once it serves.
+  echo ">>> holding any lead whose video is not actually serving" | tee -a "$LOGFILE"
+  node scripts/hold-leads-without-live-video.mjs --apply 2>&1 | tee -a "$LOGFILE" || true
+
   # RE-LOCK the freshly published deploy so a git-push auto-build can't wipe the new videos (2026-07-30 safeguard).
   _new=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
   [ -n "$_new" ] && netlify api lockDeploy --data "{\"deploy_id\":\"$_new\"}" >/dev/null 2>&1 && echo ">>> re-locked published deploy $_new (git-push can't overwrite the videos)" | tee -a "$LOGFILE"

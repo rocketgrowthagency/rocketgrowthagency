@@ -1084,20 +1084,38 @@ async function clickListingInResultsByName(page, businessName) {
       // <1s before being wiped). Re-apply every 250ms via setInterval so the
       // outline persists for the full pre-click hold even if Maps mutates the
       // card. Cleared on the 9000ms safety timeout.
+      // 🔴 2026-08-20 — TWO REGRESSIONS, both visible only by looking at a rendered frame.
+      //
+      // 1. THE HIGHLIGHT TURNED BLACK. Plain `style.outline = '4px solid #2f57eb'` is an inline style,
+      //    which a stylesheet rule marked `!important` still beats. Maps changed their CSS and began
+      //    winning the outline-color cascade; CSS then falls back to `currentColor`, which on a Maps card
+      //    is near-black text — so the highlight rendered as BLACK lines instead of RGA blue. Nothing in
+      //    this file changed: comparing an 08-19 frame (black) against an older one (blue) is the only
+      //    way this surfaces. setProperty(..., 'important') makes an inline declaration that a
+      //    stylesheet !important cannot override.
+      //
+      // 2. THE TOP EDGE WAS CLIPPED, cutting the business name in half. `outline` paints OUTSIDE the
+      //    element box, and a positive outlineOffset pushes it further out. When the matched card cannot
+      //    be centred — it is the first result in the visible list, so scrollIntoView has nothing above
+      //    it to scroll — that outer ring lands beyond the scroll container's top edge and is clipped.
+      //    A NEGATIVE offset draws the ring INSIDE the card's own bounds, so it can never be clipped by
+      //    the container no matter where the card sits. box-shadow is inset for the same reason.
       const applyOutline = () => {
-        match.style.outline = '4px solid #2f57eb';
-        match.style.outlineOffset = '2px';
-        match.style.transition = 'outline 0.3s ease-in-out';
-        match.style.boxShadow = '0 0 0 6px rgba(47,87,235,0.25)';
+        match.style.setProperty('outline', '4px solid #2f57eb', 'important');
+        match.style.setProperty('outline-offset', '-4px', 'important');
+        match.style.setProperty('border-radius', '10px', 'important');
+        match.style.setProperty('transition', 'outline 0.3s ease-in-out', 'important');
+        match.style.setProperty('box-shadow', 'inset 0 0 0 8px rgba(47,87,235,0.18)', 'important');
       };
       applyOutline();
       match.scrollIntoView({ block: 'center', behavior: 'smooth' });
       const reapplyId = setInterval(applyOutline, 250);
       setTimeout(() => {
         clearInterval(reapplyId);
-        match.style.outline = '';
-        match.style.outlineOffset = '';
-        match.style.boxShadow = '';
+        // removeProperty (not `= ''`) so the `important` declarations set above are fully cleared.
+        for (const p of ['outline', 'outline-offset', 'border-radius', 'transition', 'box-shadow']) {
+          match.style.removeProperty(p);
+        }
       }, 9000);
       return true;
     }, href);
@@ -1164,7 +1182,54 @@ async function clickListingInResultsByName(page, businessName) {
       console.warn('   ⚠️ detail-page h1 not detected within 8s but URL is /place/ — proceeding');
     }
   }
+  await settleDetailPanel(page);
   return true;
+}
+
+/**
+ * 🔴 2026-08-20 — THE DETAIL CARD RECORDED SEE-THROUGH.
+ * Chris caught it on Dr. Augusto Rojas: the white detail panel was transparent, with the coastline and
+ * map labels clearly visible THROUGH it.
+ *
+ * Cause: the only wait above is `waitForFunction(h1 exists)`. Maps inserts that h1 the moment the panel
+ * begins rendering, but the panel itself slides/fades in over a few hundred ms. So the detail-hold —
+ * the part that actually gets recorded — started while the card was still part-way through its
+ * animation, and the recording captured it at opacity < 1.
+ *
+ * Waiting longer would be a guess. Instead make it deterministic:
+ *   1. kill Maps' animations/transitions outright, so nothing can be captured mid-flight, and
+ *   2. poll the panel's COMPUTED opacity until it is actually solid before returning.
+ * Both, because (1) alone depends on our CSS winning and (2) alone still races a slow frame.
+ */
+async function settleDetailPanel(page) {
+  try {
+    await page.addStyleTag({
+      content: `*, *::before, *::after {
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+      }
+      /* the detail card must be fully opaque for the recording */
+      div.m6QErb, div[role="main"], .DUwDvf, .TIHf6d { opacity: 1 !important; }`,
+    });
+  } catch { /* style injection is best-effort; the opacity poll below is the real gate */ }
+
+  const solid = await page.waitForFunction(() => {
+    const panel = document.querySelector('div[role="main"]')
+      || document.querySelector('h1.DUwDvf')?.closest('div.m6QErb')
+      || document.querySelector('div.m6QErb');
+    if (!panel) return false;
+    // Walk up: a transparent ANCESTOR makes the card see-through even at opacity 1 itself.
+    for (let el = panel; el && el !== document.body; el = el.parentElement) {
+      const o = parseFloat(getComputedStyle(el).opacity);
+      if (!Number.isNaN(o) && o < 0.99) return false;
+    }
+    return true;
+  }, { timeout: 4000 }).then(() => true).catch(() => false);
+
+  if (!solid) console.warn('   ⚠️ detail panel still not fully opaque after 4s — recording may show it translucent');
+  return solid;
 }
 
 async function extractWebsiteFromMapsCard(page) {
