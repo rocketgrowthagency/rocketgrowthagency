@@ -286,6 +286,17 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — a cached step-2.5 audit made a 6/6 failure PERMANENT. California Dermatology
+# Institute failed "5/6 Missing: reviews" three times while SerpApi showed rating 4.5 / 6 reviews: the
+# first scrape returned 0 review cards and every retry reused it. "Missing: reviews" is the biggest
+# single rejection reason (7 of 11), so this silently capped output.
+echo ">>> pre-flight: a 6/6 failure re-scrapes instead of re-reading a cached audit" | tee -a "$LOGFILE"
+node scripts/check-audit-cache-invalidation.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: audit-cache invalidation regressed — leads that fail 6/6 could never heal. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then

@@ -104,6 +104,24 @@ for SLUG in "$@"; do
   say "  csv: $CSV"
 
   RUN="${DATE}_${SUFFIX%.csv}"
+
+  # 🔴 2026-08-21 — A CACHED AUDIT MAKES A 6/6 FAILURE PERMANENT.
+  # The cache below reuses today's audit-findings.json. That is right for a step-3/step-4 retry, but
+  # catastrophic when the LAST failure was a verification signal: the retry re-reads the same bad scrape
+  # and fails identically, forever, so a bad scrape is indistinguishable from a genuinely thin listing.
+  # California Dermatology Institute failed 5/6 "Missing: reviews" three times (09:35, 10:26, 11:25).
+  # SerpApi independently reports rating 4.5 with 6 reviews — the business HAS reviews; our first scrape
+  # returned `review cards found: 0, widget=true, emptyState=false` and every retry reused that zero.
+  # "Missing: reviews" is the single biggest rejection reason (7 of 11), so this silently caps output.
+  # Re-running is also the documented first move for a blank scrape (feedback_blank_photos_is_transient)
+  # — but it only means anything if the retry actually re-scrapes.
+  _prior_verif_fail=$(awk -F'\t' -v s="$SLUG" '$2==s && $3 ~ /below-6of6|gate/ {n++} END{print n+0}' output/rebuild-failures.tsv 2>/dev/null)
+  _prior_verif_fail=${_prior_verif_fail:-0}
+  if [ "$_prior_verif_fail" -gt 0 ] && [ -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json" ]; then
+    say "  ↻ prior 6/6 failure (${_prior_verif_fail}×) — discarding the cached audit so reviews are re-scraped"
+    rm -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json"
+  fi
+
   # step-2.5 audit — reuse if today's already exists, else fresh (the voiceover needs its findings)
   if [ -f "output/Step 2.5 (Audit)/${RUN}/audit-findings.json" ]; then say "  step-2.5 cached"
   else say "  step-2.5 audit"; STEP2_CSV="$CSV" node step-2.5-audit.mjs >>"$LOG" 2>&1 || { say "  ✗ step-2.5"; reap_chrome; note_fail "$SLUG" "step-2.5"; FAILED+=("$SLUG:step-2.5"); continue; }; fi
