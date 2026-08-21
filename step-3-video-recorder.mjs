@@ -1119,8 +1119,21 @@ async function clickListingInResultsByName(page, businessName) {
         match.style.setProperty('box-shadow', 'inset 0 0 0 8px rgba(47,87,235,0.18)', 'important');
       };
       applyOutline();
-      match.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      const reapplyId = setInterval(applyOutline, 250);
+      // 🔴 2026-08-21 — INSTANT, NEVER 'smooth'. Chris: "blue box too low not centered".
+      // `behavior: 'smooth'` is an ANIMATION. The recorder starts capturing before it lands, so the
+      // frames show the card wherever it was — for California Dermatology Institute (rank #4, last in
+      // the visible list) that was jammed against the bottom edge with the ring clipped.
+      // This is the SAME root cause as the black outline in this very function: a CSS animation still
+      // in flight when the frame is taken (feedback_video_creation_correctness_locked). Nothing that
+      // affects what a frame looks like may be animated — settle it before the first frame, always.
+      // Re-centred on every reapply tick below, because Maps re-renders the result list and can scroll
+      // it back under us.
+      const centreCard = () => {
+        try { match.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }); }
+        catch { match.scrollIntoView(true); }   // older engines: no options object
+      };
+      centreCard();
+      const reapplyId = setInterval(() => { applyOutline(); centreCard(); }, 250);
       setTimeout(() => {
         clearInterval(reapplyId);
         // removeProperty (not `= ''`) so the `important` declarations set above are fully cleared.
@@ -1240,6 +1253,34 @@ async function settleDetailPanel(page) {
   }, { timeout: 4000 }).then(() => true).catch(() => false);
 
   if (!solid) console.warn('   ⚠️ detail panel still not fully opaque after 4s — recording may show it translucent');
+
+  // 🔴 2026-08-21 — TOP-ALIGN THE PANEL. Chris: "the card detail pull out scrolls down so you cannot
+  // see the image".
+  // This function settled OPACITY but never scroll position, so a panel that opened scrolled down —
+  // Maps does this when it restores a previous view or jumps to a section — recorded with the business
+  // HERO PHOTO already scrolled out of frame. On California Dermatology Institute the panel went
+  // straight from the name to the tab strip: the photo was there, just above the visible area.
+  // Held for ~1.2s because Maps re-renders the panel after the first paint and scrolls it back; a
+  // one-shot scrollTop=0 loses that race (the same lesson as the outline reapply loop).
+  try {
+    await page.evaluate(() => new Promise((resolve) => {
+      const topAlign = () => {
+        // The panel's own scroller — the nearest ancestor that actually overflows.
+        const panel = document.querySelector('h1.DUwDvf')?.closest('div.m6QErb')
+          || document.querySelector('div[role="main"] div.m6QErb')
+          || document.querySelector('div.m6QErb');
+        for (let el = panel; el && el !== document.body; el = el.parentElement) {
+          try {
+            if (el.scrollHeight > el.clientHeight + 4 && el.scrollTop > 0) el.scrollTop = 0;
+          } catch { /* cross-origin or detached node — skip */ }
+        }
+      };
+      topAlign();
+      const id = setInterval(topAlign, 150);
+      setTimeout(() => { clearInterval(id); resolve(); }, 1200);
+    }));
+  } catch { /* best-effort: never let framing polish abort a capture that is otherwise fine */ }
+
   return solid;
 }
 

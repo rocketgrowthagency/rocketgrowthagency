@@ -297,6 +297,18 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — Chris, watching a finished video: "blue box too low not centered" and "the card
+# detail pull out scrolls down so you cannot see the image". The card was centred with
+# behavior:'smooth' — an animation still running when capture starts, so a low-ranked card recorded
+# jammed against the bottom edge with its ring clipped. Same root cause as the black outline. And
+# settleDetailPanel settled opacity but never scroll, so the hero photo recorded out of frame.
+echo ">>> pre-flight: Maps card centred instantly + detail panel top-aligned" | tee -a "$LOGFILE"
+node scripts/check-maps-framing.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: Maps framing regressed — videos would ship mis-framed. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
