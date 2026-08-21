@@ -77,6 +77,26 @@ for SLUG in "$@"; do
     if node scripts/csv-has-emailable-row.mjs "$CAND"; then SRC="$CAND"; break; fi
     say "  ↷ skipping $(basename "$CAND") — no email in it"
   done < <(ls -t "output/Step 2/"*"_${SLUG}-only-"*"-[step-2].csv" 2>/dev/null)
+
+  # 🔴 2026-08-21 — FALL BACK TO THE BATCH CSV. The glob above only finds PER-LEAD "-only-" files, which
+  # exist solely for leads already rebuilt once. A lead from a fresh scrape lives in the BATCH csv and has
+  # no per-lead file, so this script reported `no-emailable-csv` and skipped it — meaning it could never
+  # heal a NEW lead, only re-heal an old one.
+  # That is exactly the dead-window case: after the 2026-08-20 latched-guard night, 6 of the 7
+  # Dermatologists leads were unhealable by hand purely because the healer couldn't read the only file
+  # they existed in. Discovered by actually running it (Chris: "that's why we test now") — the static
+  # read of this loop looked fine.
+  # extract-lead-csv.mjs carves a per-lead CSV out of the newest batch that contains the slug, applying
+  # the SAME isUsableLeadRow + extractValidEmail rules step-8 uses.
+  if [ -z "$SRC" ]; then
+    say "  ↷ no per-lead CSV for $SLUG — trying the batch step-2 CSVs"
+    EXTRACTED=$(node scripts/extract-lead-csv.mjs "$SLUG" 2>>"$LOG")
+    if [ -n "$EXTRACTED" ] && [ -f "$EXTRACTED" ]; then
+      SRC="$EXTRACTED"; TEMP_CSVS+=("$EXTRACTED")
+      say "  ✓ carved per-lead CSV from batch: $(basename "$SRC")"
+    fi
+  fi
+
   if [ -z "$SRC" ]; then say "  ✗ no step-2 CSV WITH AN EMAIL for $SLUG — skipping (a video is only built for a lead we can email)"; reap_chrome; note_fail "$SLUG" "no-emailable-csv"; FAILED+=("$SLUG:no-emailable-csv"); continue; fi
   BASE=$(basename "$SRC"); SUFFIX=${BASE#*_}
   CSV="output/Step 2/${DATE}_${SUFFIX}"

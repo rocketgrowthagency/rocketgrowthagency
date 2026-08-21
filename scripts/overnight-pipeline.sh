@@ -245,6 +245,17 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — the repair path could not repair a FRESH lead. rebuild-broken-videos.sh only looked for
+# per-lead "-only-" CSVs, which exist solely for leads already rebuilt once, so a lead from a fresh scrape
+# (its record only in the BATCH csv) returned `no-emailable-csv`. After the 2026-08-20 dead window that
+# made 6 of 7 Dermatologists leads unrepairable — first run reported "rebuilt 0 · failed 7".
+echo ">>> pre-flight: rebuild can heal a lead that only exists in a batch CSV" | tee -a "$LOGFILE"
+node scripts/check-rebuild-csv-fallback.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: rebuild CSV fallback regressed — fresh leads could not be healed. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
