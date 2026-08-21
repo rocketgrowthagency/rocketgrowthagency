@@ -266,6 +266,26 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — one website must never become several prospects. Group practices list every physician
+# as a separate Maps entity on the SAME site: Beach City Dermatology / Wickwire MD / Ammar MD all point
+# at beachcitiesderm.com, so that practice was about to get three cold emails about one website.
+echo ">>> pre-flight: one website = one prospect (domain dedup)" | tee -a "$LOGFILE"
+node scripts/check-domain-dedup.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: domain dedup regressed — a single practice would get one email per practitioner. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
+# 🔴 2026-08-21 — the 165s audio cap fired only AFTER every segment was sent to OpenAI TTS, so an
+# over-long script cost the full spend and then killed the lead. 16 leads lost that way (165.3s min,
+# 174.4s max — every one recoverable by dropping one finding). Now trimmed BEFORE synthesis.
+echo ">>> pre-flight: audio budget trims before the TTS spend" | tee -a "$LOGFILE"
+node scripts/check-audio-budget-trim.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: audio budget trim regressed — over-long scripts would burn TTS spend and fail the lead. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
@@ -685,7 +705,32 @@ unledger_search_for_redo() {
 # inside the metro, which a City-based rule would have thrown away.
 LEAD_RADIUS_MI="${LEAD_RADIUS_MI:-60}"
 python3 scripts/select-emailable-leads.py "$LATEST_S2" "$LEAD_RADIUS_MI" \
-  > /tmp/emailable_leads.txt 2>/tmp/geo_excluded.txt
+  > /tmp/emailable_raw.txt 2>/tmp/geo_excluded.txt
+
+# 🔴 2026-08-21 — ONE WEBSITE = ONE PROSPECT.
+# Group practices list every physician as a separate Maps entity pointing at the SAME site. Google's own
+# data for the 2026-08-20 Dermatologists search:
+#     Beach City Dermatology / William J. Wickwire, MD / Neal M. Ammar, MD  → all beachcitiesderm.com
+# We built a video per listing, so one practice was about to get THREE cold emails, each about the same
+# website. Chris caught it by opening the Ammar video and seeing Beach Cities Dermatology's site — the
+# capture was correct, the LEAD LIST was wrong. Across 25 searches: 46 same-domain groups, 66 redundant
+# leads (Kaiser Permanente appeared as 4 "prospects"). That reads as spam and burns the sending domain
+# the whole outreach system depends on.
+# Keeps the lead whose name best matches the domain — the practice, not the practitioner. Leads with no
+# parsable/own website are never collapsed, and aggregator hosts (yelp/facebook/booksy…) are ignored.
+# FAILS OPEN to the raw list: building a duplicate is far cheaper than dropping a real prospect.
+node scripts/dedupe-by-website-domain.mjs "$LATEST_S2" \
+  < /tmp/emailable_raw.txt > /tmp/emailable_leads.txt 2>>"$LOGFILE"
+_ddrc=$?
+if [ "${_ddrc:-1}" -ne 0 ] || [ ! -s /tmp/emailable_leads.txt ]; then
+  echo ">>> ⚠️  domain-dedup failed (rc=${_ddrc:-?}) — falling back to the raw emailable list" | tee -a "$LOGFILE"
+  cp /tmp/emailable_raw.txt /tmp/emailable_leads.txt
+fi
+_raw_n=$(awk 'END{print NR}' /tmp/emailable_raw.txt 2>/dev/null); _raw_n=${_raw_n:-0}
+_ded_n=$(awk 'END{print NR}' /tmp/emailable_leads.txt 2>/dev/null); _ded_n=${_ded_n:-0}
+if [ "$_raw_n" -gt "$_ded_n" ]; then
+  echo ">>> domain-dedup: $_raw_n → $_ded_n emailable ($(( _raw_n - _ded_n )) listing(s) share a website with a kept lead)" | tee -a "$LOGFILE"
+fi
 
 # 🔴 NOT `grep -c "" file || echo 0`: on an EMPTY file grep prints "0" AND exits 1, so the `|| echo 0`
 # fires too and the command substitution captures "0\n0" → `[: 0\n0: integer expression expected`.

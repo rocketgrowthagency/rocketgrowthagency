@@ -2136,13 +2136,62 @@ function buildScript(record, top3Stats, audit) {
     );
   }
 
+  // ============================================================
+  // 🔴 PRE-TTS BUDGET TRIM (2026-08-21) — fit the cap BEFORE spending on audio.
+  // ============================================================
+  // The TOTAL_MAX=165s guardrail below fires only AFTER every segment has been sent to OpenAI TTS and
+  // concatenated. So an over-long script cost the full API spend and then failed the lead outright.
+  // Measured across recent runs: 16 leads killed this way, at 165.3s–174.4s — every one of them just
+  // barely over a 165s cap, and every one recoverable by dropping a single finding.
+  //
+  // Findings are rendered as "First: … Second: … Third: …", so the last clause of the longest section
+  // can be removed cleanly. Intro and outro are never touched: the intro is length-locked at 13–15s
+  // (feedback_intro_voiceover_13_15_seconds) and the outro carries the CTA.
+  //
+  // Pace is estimated from real output — 53 words of intro measured 14.5s ≈ 3.66 w/s. Using a slightly
+  // SLOWER figure makes the estimate longer than reality, so the trim errs toward being early rather
+  // than shipping a script that blows the cap after the spend.
+  const WORDS_PER_SEC = 3.5;
+  const TOTAL_BUDGET_S = 165;
+  const SAFETY_S = 5;                 // TTS pace varies per voice/lead; keep headroom
+  const wordCount = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
+  const estSec = (s) => wordCount(s) / WORDS_PER_SEC;
+
+  const seg = { maps: mapsSegment, website: websiteSegment, mobile: mobileSegment };
+  const fixedSec = estSec(intro) + estSec(outroText);
+  // Drop the LAST numbered finding. Third before Second so we shed one at a time; never take a section
+  // below its first finding — a section with no finding at all reads as broken to the prospect.
+  const dropLastFinding = (s) => {
+    for (const label of ['Third', 'Second']) {
+      const i = s.lastIndexOf(` ${label}: `);
+      if (i > -1) return s.slice(0, i).trimEnd();
+    }
+    return null;
+  };
+
+  let trims = 0;
+  while (
+    fixedSec + estSec(seg.maps) + estSec(seg.website) + estSec(seg.mobile) > TOTAL_BUDGET_S - SAFETY_S
+    && trims < 6
+  ) {
+    const longest = ['maps', 'website', 'mobile'].sort((a, b) => estSec(seg[b]) - estSec(seg[a]))[0];
+    const trimmed = dropLastFinding(seg[longest]);
+    if (!trimmed) break;              // nothing left to shed — let the hard guardrail catch it
+    seg[longest] = trimmed;
+    trims++;
+    console.log(`   [step-6 budget-trim] dropped a finding from "${longest}" (projected ${(fixedSec + estSec(seg.maps) + estSec(seg.website) + estSec(seg.mobile)).toFixed(1)}s / ${TOTAL_BUDGET_S}s)`);
+  }
+  if (trims) {
+    console.log(`   [step-6 budget-trim] ${trims} finding(s) dropped to fit the ${TOTAL_BUDGET_S}s cap — script shortened instead of failing the lead.`);
+  }
+
   return {
     intro,
-    maps: mapsSegment,
-    website: websiteSegment,
-    mobile: mobileSegment,
+    maps: seg.maps,
+    website: seg.website,
+    mobile: seg.mobile,
     outro: outroText,
-    combined: [intro, mapsSegment, websiteSegment, mobileSegment, outroText].join(' '),
+    combined: [intro, seg.maps, seg.website, seg.mobile, outroText].join(' '),
   };
 }
 
