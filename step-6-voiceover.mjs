@@ -2130,9 +2130,23 @@ function buildScript(record, top3Stats, audit) {
       `See memory: feedback_intro_voiceover_13_15_seconds.md`
     );
   }
-  if (introWordCount > INTRO_TARGET_WORDS + 4) {
+  // 🔴 2026-08-21 — WARN ON THE REAL CONSTRAINT (SECONDS), NOT A STALE WORD PROXY.
+  // This used to warn whenever the intro exceeded INTRO_TARGET_WORDS + 4 (i.e. 52). Measured across
+  // 188 real intros: min 53, median 53, max 54 — so it fired on essentially EVERY lead, every run.
+  // A warning that is always on is a warning nobody reads, and it hid nothing useful: the locked rule
+  // is 13–15 SECONDS (feedback_intro_voiceover_13_15_seconds), and 53 words at the measured TTS pace
+  // of ~3.66 w/s is 14.5s — comfortably INSIDE spec. The word target was the stale part, not the copy.
+  //
+  // 🚫 This is NOT relaxing the guardrail. INTRO_MAX_WORDS (55 ≈ 16s) still THROWS, untouched. This
+  // only changes the advisory so it tracks the thing that actually matters — duration — and therefore
+  // fires when an intro genuinely drifts out of the locked window instead of on every single lead.
+  const INTRO_WPS = 3.66;                 // measured: 53 words rendered 14.5s
+  const introEstSec = introWordCount / INTRO_WPS;
+  const INTRO_MIN_SEC = 13, INTRO_MAX_SEC = 15;
+  if (introEstSec < INTRO_MIN_SEC || introEstSec > INTRO_MAX_SEC) {
     console.warn(
-      `[step-6 WARN] Intro is ${introWordCount} words (locked target ${INTRO_TARGET_WORDS}). Still within max but trending long.`
+      `[step-6 WARN] Intro is ${introWordCount} words ≈ ${introEstSec.toFixed(1)}s — outside the locked ` +
+      `${INTRO_MIN_SEC}-${INTRO_MAX_SEC}s window. Adjust the intro template.`
     );
   }
 

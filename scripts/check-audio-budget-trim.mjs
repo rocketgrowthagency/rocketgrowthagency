@@ -119,4 +119,25 @@ for (const k of ['maps', 'website', 'mobile']) {
 }
 ok(`behavioural: ${before.toFixed(1)}s → ${total().toFixed(1)}s in ${t} trim(s), every section keeps a finding`);
 
+// ── 5. The intro advisory must track SECONDS, and the hard word cap must survive ─────────────────
+// The old advisory fired whenever the intro exceeded a 48-word target + 4. Measured across 188 real
+// intros: min 53, median 53, max 54 — so it fired on EVERY lead, every run. A warning that is always
+// on is a warning nobody reads. The locked rule is 13–15 SECONDS, and 53 words ≈ 14.5s is inside it.
+if (!/INTRO_MAX_WORDS/.test(src) || !/introWordCount > INTRO_MAX_WORDS/.test(src)) {
+  fail('the hard intro word cap (INTRO_MAX_WORDS ≈ 16s) is gone. Re-tuning the ADVISORY must never\n' +
+       '         remove the guardrail that actually throws.');
+}
+const introThrow = src.slice(src.indexOf('introWordCount > INTRO_MAX_WORDS'), src.indexOf('introWordCount > INTRO_MAX_WORDS') + 400);
+if (!/throw new Error/.test(introThrow)) fail('the intro word cap no longer throws.');
+// 🔴 Anchor on the CONDITION, not the identifier. A first version checked only that "introEstSec"
+// appeared somewhere in the file — and a sabotage that reverted the `if` to the word-count proxy still
+// passed, because the identifier survived inside the warning's message string. Assert the comparison
+// that actually decides whether the warning fires.
+if (!/if\s*\(\s*introEstSec\s*<\s*INTRO_MIN_SEC\s*\|\|\s*introEstSec\s*>\s*INTRO_MAX_SEC\s*\)/.test(src)) {
+  fail('the intro advisory condition is not duration-based. A word-count advisory fired on 188 of 188\n' +
+       '         real intros, which trains everyone to ignore it — and it cannot detect an intro that\n' +
+       '         drifts SHORT, only long.');
+}
+ok('intro advisory is duration-based; hard word cap still throws');
+
 console.log('✅ audio budget: trims before the spend, bounded, intro/outro safe, hard cap retained.');

@@ -47,6 +47,24 @@ if (!call) {
 if (!/--apply/.test(call)) fail('the nightly call omits --apply — it would report and repair nothing.');
 ok('wired into overnight-local.sh with --apply');
 
+// 🔴🔴 6. THIS STEP CAPTURES — it must re-check the night window immediately before running.
+// --apply calls rebuild-broken-videos.sh, which records the SCREEN and has no interlock of its own.
+// This block runs AFTER the search loop, so on a long night it can start past 07:00 and film Chris's
+// desktop into a public outreach video — the 2026-07-18 incident the NO-OVERRIDE interlock exists for.
+// The first version of this call carried only a COMMENT asserting it ran inside the window.
+// An assumption is not an interlock.
+const callIdx = local.indexOf(call);
+const guardWindow = local.slice(Math.max(0, callIdx - 900), callIdx);
+if (!/10#\$\(date \+%H\)/.test(guardWindow)) {
+  fail('the heal does not re-check the clock before capturing. It runs after the search loop, so on a\n' +
+       '         long night it would capture into the workday — the exact failure the night-only\n' +
+       '         interlock is locked against. A comment saying "runs inside the window" is not a check.');
+}
+if (!/-ge 7 \] && \[ .*-lt 21 \]/.test(guardWindow)) {
+  fail('the heal\'s clock check does not use the 21:00–06:59 capture window.');
+}
+ok('re-checks the 21:00–06:59 capture window immediately before capturing');
+
 // 2. ONE RULE — must shell out to the pipeline's selector, and must NOT re-derive the emailable test.
 if (!/select-emailable-leads\.py/.test(src)) {
   fail('does not use select-emailable-leads.py. "Should have been built" must be the PIPELINE\'s answer,\n' +
