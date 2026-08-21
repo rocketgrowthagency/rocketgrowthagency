@@ -81,14 +81,36 @@ function summary(date) {
 // above "🔴 Dead window — 12 consecutive searches built nothing". A report that reassures and alarms in
 // consecutive lines is worse than either alone: it teaches Chris to distrust the green line.
 // Productivity is the louder signal, so it goes FIRST and it cancels the all-clear.
+// 🔴 2026-08-21 — leads skipped BEFORE step-8 have no Airtable row, so the verdict (which counts leads)
+// cannot see them. On 2026-08-20 that hid ~150 dropped leads behind a confident "✅ Nothing needs you".
+// This reports what is still outstanding after the night's heal ran, so a backlog can't accumulate
+// silently across nights (feedback_self_healing_must_be_autonomous).
+function unpublishedLine() {
+  let raw = '';
+  try {
+    raw = execFileSync('node', [path.join(SCRAPER, 'scripts', 'heal-unpublished-leads.mjs'), '--days=7', '--by-search'],
+      { encoding: 'utf8', timeout: 120000 });
+  } catch (err) { raw = typeof err?.stdout === 'string' ? err.stdout : ''; }
+  const m = raw.match(/^unpublished\s*:\s*(\d+)/m);
+  if (!m) return [];
+  const n = Number(m[1]);
+  if (!n) return [];
+  const whole = (raw.match(/← ENTIRE search lost/g) || []).length;
+  const out = ['', `⚠️ **${n} selected lead(s) still unpublished** — scraped and selected, but no video and no CRM row.`];
+  if (whole) out.push(`- ${whole} search(es) lost their ENTIRE intake — that is a systemic fault, not per-lead failures.`);
+  out.push(`- The nightly heal rebuilds these in capped batches; the rest carry to tomorrow.`);
+  return out;
+}
+
 function nightOutcome() {
   const prod = productivityLine();
   const verdict = verdictLine();
-  if (!prod.length) return verdict;
+  const unpub = unpublishedLine();
+  if (!prod.length) return [...verdict, ...unpub];
   // A dead window means the night was NOT fine, whatever the lead-level verdict says. Drop the
   // all-clear but keep a real "needs you" verdict, which is still true and additive.
   const kept = verdict.filter((l) => !/^✅ No action needed/.test(l.trim()));
-  return [...prod, ...kept];
+  return [...prod, ...kept, ...unpub];
 }
 
 // 🔴 2026-08-21 — "Completed videos: 0" must never again arrive without a REASON.

@@ -387,6 +387,18 @@ fi
 # This is the opposite direction: work IN vs artefacts OUT, counted as real files on disk.
 # Reported, never fatal — the night is already over; aborting helps nobody. --heal re-arms the leads
 # that a KNOWN fault skipped, so the next run rebuilds them without Chris asking.
+# 🔴 HEAL LEADS THE PIPELINE SELECTED BUT NEVER PUBLISHED (2026-08-21).
+# Every other heal above starts from the Airtable LEAD list. A lead skipped before step-8 wrote a row is
+# unreachable from that direction: of the 7 Dermatologists leads lost to the 2026-08-20 dead window,
+# 0 of 7 had an Airtable row and 0 of 7 had a video, so nothing here could see them. That night dropped
+# ~150 selected leads across 8 searches that lost 100% of their intake.
+# This reconciles the OTHER way — the pipeline's own select-emailable-leads.py output vs two artefacts
+# (a video on disk, an Airtable row) — and rebuilds what is missing both. Runs inside the night window,
+# so capture is legal. Capped so it cannot starve the fresh scrape; the overflow carries to tomorrow.
+# Reported, never fatal.
+echo ">>> heal: leads selected but never published (no video AND no CRM row)" | tee -a "$LOG"
+node scripts/heal-unpublished-leads.mjs --apply --days=7 --max="${HEAL_MAX:-20}" 2>&1 | tee -a "$LOG" || true
+
 echo ">>> productivity: did the run actually build anything?" | tee -a "$LOG"
 node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
 if [ "${_prc:-0}" -ne 0 ]; then

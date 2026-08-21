@@ -256,6 +256,16 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — the heal for leads skipped BEFORE step-8. They have no Airtable row, so every other
+# heal is blind to them: 0 of 7 Dermatologists leads from the 2026-08-20 dead window had one, and that
+# night dropped ~150 selected leads across 8 searches that lost 100% of their intake.
+echo ">>> pre-flight: unpublished-lead heal is wired + single-rule" | tee -a "$LOGFILE"
+node scripts/check-unpublished-heal.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: unpublished-lead heal regressed — leads dropped before step-8 would stay invisible. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
