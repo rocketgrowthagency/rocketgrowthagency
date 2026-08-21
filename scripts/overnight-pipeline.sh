@@ -234,6 +234,17 @@ if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: Maps card highlight regressed (black or clipped) — videos would ship with a broken highlight. Aborting." | tee -a "$LOGFILE"
   exit 1
 fi
+# 🔴 2026-08-21 — the mid-run OpenAI guard used to grep the whole DAY-scoped $LOGFILE, so one transient
+# 429 latched it for the rest of the calendar day. On 2026-08-20 that silently skipped every lead across
+# 7 searches from 21:00 until DATE_STAMP rolled at 00:00 (all 39 videos landed 00:15-06:57, none before
+# midnight). It cost a night's first half while the alert re-fired per search and read as mere noise.
+echo ">>> pre-flight: mid-run OpenAI guard is search-scoped + re-probed" | tee -a "$LOGFILE"
+node scripts/check-openai-guard-scope.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: mid-run OpenAI guard regressed — a stale 429 could skip a whole night of leads. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
@@ -341,6 +352,17 @@ fi
 # with a macOS alert + SKIPPED-NIGHTS.log entry so Chris knows immediately. Set SKIP_OPENAI_PREFLIGHT=1 to bypass.
 OPENAI_KEY_LOCAL="${OPENAI_API_KEY:-$(grep -E '^OPENAI_API_KEY=' .env 2>/dev/null | head -1 | cut -d= -f2-)}"
 rm -f /tmp/rga-openai-out-alerted   # re-arm the mid-run OpenAI-out alert (fires at most once per run)
+rm -f /tmp/rga-openai-out-confirmed # re-arm the CONFIRMED-out latch (see the mid-run guard below)
+# 🔴 PER-SEARCH BASELINE for the mid-run OpenAI guard (2026-08-21).
+# $LOGFILE is DAY-scoped ("/tmp/overnight-pipeline-<date>.log") and EVERY search on that date appends to
+# it. The guard used to grep the WHOLE file, so a single transient 429 latched it for the rest of the
+# calendar day: on 2026-08-20 a 04:13 credit outage — resolved hours earlier by a top-up — kept skipping
+# every lead until DATE_STAMP rolled at 00:00 and handed the run a fresh file. ~20 hours of leads were
+# skipped while the alert re-fired once per search, so it read as noise rather than a stuck pipeline.
+# Only THIS search's own output may trip its own guard. Written to a file, not a shell var, because the
+# guard runs inside parallel worker subshells that cannot mutate the parent's environment.
+_ogb=$(wc -l < "$LOGFILE" 2>/dev/null)
+printf '%s\n' "$(( ${_ogb:-0} ))" > /tmp/rga-openai-guard-baseline
 if [ -n "${OPENAI_KEY_LOCAL:-}" ] && [ "${SKIP_OPENAI_PREFLIGHT:-0}" != "1" ]; then
   echo ">>> pre-flight: OpenAI credit check (tiny billed probe — 429 = out of funds)" | tee -a "$LOGFILE"
   OAI_CODE=$(curl -s --max-time 15 -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions \
@@ -702,13 +724,42 @@ process_one_lead() {
   # remaining") → no audio → no video → "landing page not built" (2026-08-05: 18 leads wasted, no alert). If that
   # signature has already appeared in the log, credit is OUT — skip the rest (don't waste captures) and fire the
   # alert ONCE (marker cleared at run start). See feedback_notify_openai_quota.md.
-  if grep -qiE "no credits remaining|429 .*no credits|add credits to continue|exceeded your current quota" "$LOGFILE" 2>/dev/null; then
-    if [ ! -f /tmp/rga-openai-out-alerted ]; then
-      touch /tmp/rga-openai-out-alerted
-      bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
-      echo "  ✗ OPENAI OUT OF CREDITS mid-run — skipping remaining leads (no voiceover possible). Alert fired. Add funds + re-run." | tee -a "$LOGFILE"
-    fi
+  # 🔴 HARDENED 2026-08-21 — two independent bugs, both proven on the 2026-08-20 log:
+  #   (1) SCOPE. It grepped the whole DAY-scoped $LOGFILE, so one transient 429 latched the guard for
+  #       every later search that day (~20 h of leads skipped). Now only lines added since this
+  #       search's baseline count — this search's OWN output — can trip it.
+  #   (2) NO RE-PROBE. A 429 is not proof credit is still out; the 2026-08-20 outage was fixed by a
+  #       top-up hours before the guard was still skipping leads. Never latch on log text alone —
+  #       CONFIRM with a live billed probe, the same one the pre-flight uses.
+  # Once confirmed out, latch via a marker FILE so parallel worker subshells all see it (a shell var
+  # set in a subshell dies with it — that is why this must not be a variable).
+  if [ -f /tmp/rga-openai-out-confirmed ]; then
     return 0
+  fi
+  _ogb_now=$(cat /tmp/rga-openai-guard-baseline 2>/dev/null)
+  _ogb_now=$(( ${_ogb_now:-0} ))
+  if tail -n "+$(( _ogb_now + 1 ))" "$LOGFILE" 2>/dev/null \
+       | grep -qiE "no credits remaining|429 .*no credits|add credits to continue|exceeded your current quota"; then
+    _oai_recheck=$(curl -s --max-time 15 -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions \
+      -H "Authorization: Bearer ${OPENAI_KEY_LOCAL}" -H "Content-Type: application/json" \
+      -d '{"model":"gpt-4o-mini","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}' 2>/dev/null)
+    # 429 = still out. 000/empty = probe could not be made (no key, network down) — treat as STILL OUT,
+    # because the log signature came from a REAL TTS call that really failed. Only a clean 2xx clears it.
+    # Fail-CLOSED here means "stop burning captures that can't get audio", which is the cheaper mistake.
+    if [ "${_oai_recheck:-000}" = "429" ] || [ "${_oai_recheck:-000}" = "000" ]; then
+      touch /tmp/rga-openai-out-confirmed
+      if [ ! -f /tmp/rga-openai-out-alerted ]; then
+        touch /tmp/rga-openai-out-alerted
+        bash "$SCRAPER_DIR/scripts/notify-openai-quota.sh" "$LOGFILE" 2>/dev/null || true
+        echo "  ✗ OPENAI OUT OF CREDITS mid-run — CONFIRMED by live re-probe (HTTP 429). Skipping remaining leads (no voiceover possible). Alert fired. Add funds + re-run." | tee -a "$LOGFILE"
+      fi
+      return 0
+    fi
+    # Transient: credit is back (or the 429 was rate-limiting, not billing). Do NOT skip, and move the
+    # baseline past the stale signature so every later lead doesn't re-probe on the same old text.
+    _ogb_new=$(wc -l < "$LOGFILE" 2>/dev/null)
+    printf '%s\n' "$(( ${_ogb_new:-0} ))" > /tmp/rga-openai-guard-baseline
+    echo "  ✓ OpenAI 429 in this search was TRANSIENT — live re-probe HTTP ${_oai_recheck:-000}. Continuing (guard NOT latched)." | tee -a "$LOGFILE"
   fi
 
   # IDEMPOTENCY GUARD (locked 2026-05-23) — skip if Airtable already has a Video URL

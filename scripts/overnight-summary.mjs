@@ -71,8 +71,61 @@ function summary(date) {
     ``,
     `**Completed videos (${count(s, 'Videos deployed')})** — click to review:`,
     ...deployedLinks(s, count(s, 'Videos deployed')),
-    ...verdictLine(),
+    ...nightOutcome(),
   ].join('\n');
+}
+
+// 🔴 The two advisory lines must not CONTRADICT each other.
+// The verdict answers "is any lead stuck?" and productivity answers "did the run build anything?".
+// They are independent, so on 2026-08-20 the summary would have printed "✅ No action needed" directly
+// above "🔴 Dead window — 12 consecutive searches built nothing". A report that reassures and alarms in
+// consecutive lines is worse than either alone: it teaches Chris to distrust the green line.
+// Productivity is the louder signal, so it goes FIRST and it cancels the all-clear.
+function nightOutcome() {
+  const prod = productivityLine();
+  const verdict = verdictLine();
+  if (!prod.length) return verdict;
+  // A dead window means the night was NOT fine, whatever the lead-level verdict says. Drop the
+  // all-clear but keep a real "needs you" verdict, which is still true and additive.
+  const kept = verdict.filter((l) => !/^✅ No action needed/.test(l.trim()));
+  return [...prod, ...kept];
+}
+
+// 🔴 2026-08-21 — "Completed videos: 0" must never again arrive without a REASON.
+// On 2026-08-20 a latched OpenAI guard skipped 156 leads across 12 consecutive searches. The report
+// dutifully printed `Completed videos | 0` and `✅ No action needed`, because every check it draws on
+// starts from the LEAD list and a lead skipped before any record existed is invisible there. Chris read
+// a zero with no explanation and had to ask what happened — the exact opposite of the standing rule
+// that the morning report is a FINISHED account, not a prompt to investigate
+// (feedback_self_healing_must_be_autonomous).
+// Best-effort like verdictLine(): the locked report format must never be blocked by an advisory extra.
+function productivityLine() {
+  // 🔴 A DEAD WINDOW EXITS 1 — so execFileSync THROWS in precisely the case we must report.
+  // Reading only the success path would have made this line permanently dead: green forever, silent on
+  // the one morning it matters (feedback_empty_output_breaks_the_test_not_the_command). The payload is
+  // on err.stdout, so parse that too and treat exit code as a signal, not an error.
+  let raw = '';
+  try {
+    raw = execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-run-productivity.mjs'), '--json'],
+      { encoding: 'utf8', timeout: 60000 });
+  } catch (err) {
+    raw = typeof err?.stdout === 'string' ? err.stdout : '';
+  }
+  if (!raw.trim()) return [];
+  let d;
+  try { d = JSON.parse(raw); } catch { return []; }
+  if (!d.deadWindow?.length) return [];
+  const known = (d.findings || []).find((f) => f.auto);
+  // NOTE: the leading '' is a REQUIRED blank line — without it Markdown absorbs the alert into the
+  // preceding numbered video list and the whole diagnosis renders as list item 16. Do not .filter(Boolean)
+  // the whole array; only the optional trailing line is conditional.
+  const body = [
+    `🔴 **Dead window — ${d.deadWindow.length} consecutive searches built nothing** (${d.totalDispatched} leads dispatched, ${d.totalBuilt} videos out).`,
+    known ? `- **Cause:** ${known.cause}` : `- **Cause:** not in the fault catalogue — a diagnostic packet was written to /tmp.`,
+    known ? `- **Fix:** ${known.remedy}` : `- **Fix:** needs diagnosis.`,
+  ];
+  if (known) body.push('- Skipped leads were re-armed automatically; the next run rebuilds them.');
+  return ['', ...body];
 }
 
 // 2026-08-19 — the summary must answer "do I need to do anything?" without being asked.

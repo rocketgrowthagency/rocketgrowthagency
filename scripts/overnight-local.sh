@@ -380,6 +380,19 @@ if [ "${_orc:-0}" -ne 0 ]; then
   echo ">>> ⚠️  orphaned videos found — builds that can never be emailed. See the list above." | tee -a "$LOGFILE"
 fi
 
+# 🔴 PRODUCTIVITY CHECK (2026-08-21) — "the run ran, but did it PRODUCE anything?"
+# Every other check here starts from the LEAD list and asks "which lead lacks a video?" A lead SKIPPED
+# before any record existed is unreachable from that direction, so on 2026-08-20 a latched OpenAI guard
+# wiped 12 consecutive searches (156 leads dispatched, 0 videos) and every check reported a clean night.
+# This is the opposite direction: work IN vs artefacts OUT, counted as real files on disk.
+# Reported, never fatal — the night is already over; aborting helps nobody. --heal re-arms the leads
+# that a KNOWN fault skipped, so the next run rebuilds them without Chris asking.
+echo ">>> productivity: did the run actually build anything?" | tee -a "$LOG"
+node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
+if [ "${_prc:-0}" -ne 0 ]; then
+  echo ">>> 🔴 DEAD WINDOW detected — searches ran and produced no videos. See the cause + fix above." | tee -a "$LOG"
+fi
+
 echo ">>> verdict: what (if anything) needs a human" | tee -a "$LOG"
 node scripts/overnight-verdict.mjs 2>&1 | tee -a "$LOG" || true
 

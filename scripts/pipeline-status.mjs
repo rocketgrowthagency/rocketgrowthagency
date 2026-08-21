@@ -20,11 +20,36 @@
  */
 import fs from 'fs';
 
-const stamp = new Date().toISOString().slice(0, 10);
-const logPath = process.argv[2] || `/tmp/overnight-pipeline-${stamp}.log`;
+/*
+ * 🔴 LOCAL date, never toISOString() — and check YESTERDAY too.
+ *
+ * This used to be `new Date().toISOString().slice(0,10)`, which is the UTC date. PDT is UTC-7, so the
+ * UTC date rolls over at 17:00 local — BEFORE the 21:00 run even starts. The result: this tool reported
+ * "no log ... (run may not have started)" for the ENTIRE overnight window, every single night. The one
+ * command Chris is told to use to check a running build could never see one.
+ *
+ * The run also CROSSES midnight, so after 00:00 local the live log is still stamped with the PREVIOUS
+ * local date. Both candidates must be tried, newest-mtime first. Same defect class as the circuit
+ * breaker that went blind at midnight (see feedback_empty_output_breaks_the_test_not_the_command:
+ * a check that cannot fire reads exactly like a pass).
+ */
+const localStamp = (d) => {
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().slice(0, 10);
+};
+const now = new Date();
+const yday = new Date(now.getTime() - 86400000);
+const CANDIDATES = [localStamp(now), localStamp(yday)].map((s) => `/tmp/overnight-pipeline-${s}.log`);
 
-if (!fs.existsSync(logPath)) {
-  console.log(`SAFE-STATUS: no log at ${logPath} (run may not have started).`);
+let logPath = process.argv[2];
+if (!logPath) {
+  const present = CANDIDATES.filter((p) => fs.existsSync(p))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  logPath = present[0];
+}
+
+if (!logPath || !fs.existsSync(logPath)) {
+  console.log(`SAFE-STATUS: no log at ${CANDIDATES.join(' or ')} (run may not have started).`);
   process.exit(0);
 }
 
@@ -56,11 +81,35 @@ const sixPass = count(/\b6\/6\b/g);
 const exhausted = count(/retries exhausted|EXHAUSTED/g);
 const failedMatch = raw.match(/FAILED_VIDEOS=(\d+)/);
 const failedVideos = failedMatch ? failedMatch[1] : null;
+/*
+ * 🔴 A SENSOR SELF-TEST QUOTES THE STRING IT DETECTS — strip those lines before testing.
+ *
+ * The SerpApi pre-flight gate prints `✓ detects "you have run out of searches"` to prove its detector
+ * works. That is a HEALTH signal, and it fired 14 times on 2026-08-20 while the account had 2,874 of
+ * 5,000 searches left. This script read those lines and reported "serpapi quota hit: YES" on a
+ * perfectly healthy run — a false blocker on the one command used to check a live build.
+ *
+ * The OpenAI twin was fixed for the same class of bug on 2026-07-18 (the benign "SerpAPI quota check"
+ * banner) but the SerpApi detector was left matching quoted sample text. Sanitize once, use for both.
+ * Related: feedback_indeterminate_is_not_a_finding, feedback_dead_check_selector_gap.
+ */
+const SELFTEST_LINE = /(^|\s)[✓✗×]\s*(detects|does not detect|no false)|self-?test|sensor check/i;
+const runtime = lines.filter((l) => !SELFTEST_LINE.test(l)).join('\n');
+
 // OpenAI billing/quota errors ONLY. The bare word "quota" also appears in the benign
 // ">>> pre-flight: SerpAPI quota check" banner — matching it there produced a false
 // "check OpenAI" flag (2026-07-18). Anchor on OpenAI's actual 429 error text instead.
-const openaiQuota = /insufficient_quota|exceeded your current quota|check your plan and billing/i.test(raw) ? 'YES (check OpenAI)' : 'no';
-const serpQuota = /searches are exhausted|run out of searches/i.test(raw) ? 'YES (check SerpApi)' : 'no';
+/*
+ * 🔴 MATCH THE PIPELINE'S OWN FATAL TEXT, not just the vendor's raw error string.
+ *
+ * These regexes originally matched only OpenAI's API error wording (`insufficient_quota` etc.). But the
+ * pre-flight gate CATCHES the 429 and prints its own message — `✗ FATAL: OpenAI OUT OF CREDITS (429)`.
+ * On 2026-08-20 that fired three real times and this tool still reported `openai quota hit: no`.
+ * A FALSE NEGATIVE is strictly worse than the false positive fixed above: it hides a live blocker on
+ * the one screen used to decide whether a night is healthy. Match BOTH the vendor string and ours.
+ */
+const openaiQuota = /insufficient_quota|exceeded your current quota|check your plan and billing|OpenAI OUT OF CREDITS|OpenAI balance\/quota exceeded/i.test(runtime) ? 'YES (check OpenAI)' : 'no';
+const serpQuota = /searches are exhausted|run out of searches|SerpAPI quota (exhausted|too low)|SerpAPI.*below the floor/i.test(runtime) ? 'YES (check SerpApi)' : 'no';
 
 // --- Liveness from file mtime ---
 const mtime = fs.statSync(logPath).mtime;
