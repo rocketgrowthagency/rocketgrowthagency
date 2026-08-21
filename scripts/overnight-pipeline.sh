@@ -309,6 +309,13 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+echo ">>> pre-flight: report cannot claim an unearned all-clear" | tee -a "$LOGFILE"
+node scripts/check-report-honesty.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: report honesty regressed — a silent-loss night could read as success. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
@@ -1583,6 +1590,18 @@ if [ "$FAILED_TOTAL" -gt 0 ]; then
     IFS="$RSEP" read -r name reason <<< "$entry"
     echo "- **$name** — $reason" >> "$REPORT"
   done
+elif [ "${DEPLOYED_TOTAL:-0}" -lt "${EMAILABLE_TOTAL:-0}" ]; then
+  # 🔴 2026-08-21 — DO NOT CLAIM SUCCESS ON A SILENT GAP.
+  # This branch used to print "None — every emailable lead deployed successfully" whenever
+  # FAILED_TOTAL was 0. But a lead that is SKIPPED never becomes a failure, so on 2026-08-20 the report
+  # showed "emailable 7 / deployed 0 / failed 0" and then declared every lead deployed successfully.
+  # Chris read that and reasonably concluded the night produced nothing and the pipeline had regressed.
+  # A gap with no failures is the MOST suspicious outcome there is — it means leads vanished before
+  # anything could record them (project_openai_guard_latched_a_half_night).
+  _gap=$(( ${EMAILABLE_TOTAL:-0} - ${DEPLOYED_TOTAL:-0} ))
+  echo "- 🔴 **${_gap} emailable lead(s) produced no video and no failure record.** Deployed ${DEPLOYED_TOTAL:-0} of ${EMAILABLE_TOTAL:-0}." >> "$REPORT"
+  echo "  A gap with zero failures means leads were SKIPPED before anything could log them — check the" >> "$REPORT"
+  echo "  mid-run guards and the dead-window report (\`node scripts/check-run-productivity.mjs\`)." >> "$REPORT"
 else
   echo "- None — every emailable lead deployed successfully." >> "$REPORT"
 fi
@@ -1623,6 +1642,26 @@ EOF
     | sort | uniq -c | sort -rn \
     | awk '{c=$1; $1=""; sub(/^ /,""); printf "| %s | %s |\n", c, $0}' >> "$REPORT"
 fi
+
+# 🔴 2026-08-21 — WHOLE-NIGHT ROLL-UP. THIS REPORT DESCRIBES ONE SEARCH.
+# overnight-pipeline.sh runs once PER SEARCH and each run overwrites the date's report, so a 16-search
+# night is represented by whatever ran last. On 2026-08-20 that was Dermatologists — 8 minutes, 7
+# emailable, 0 built, because it landed inside the dead window — while the night as a whole ran 21
+# search blocks, dispatched 234 leads and built 39 videos. Chris read the one-search report and
+# reasonably concluded the night had produced nothing and the pipeline had regressed.
+# check-run-productivity.mjs already measures the whole night correctly (local date + two-date span,
+# counting real video.mp4 files), so reuse it rather than writing a third counter that can disagree.
+{
+  echo ""
+  echo "## Whole night — all searches"
+  echo ""
+  echo "> This section covers the FULL night. The single-search summary above is only the last search"
+  echo "> that ran before this report was written."
+  echo ""
+  echo '```'
+  node scripts/check-run-productivity.mjs 2>/dev/null || echo "(night roll-up unavailable)"
+  echo '```'
+} >> "$REPORT"
 
 cat >> "$REPORT" <<EOF
 
