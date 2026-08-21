@@ -3476,7 +3476,17 @@ async function main() {
       // (e.g. Pasadena Roofing Co → lansfordroofing.com) reached the recorder with an
       // empty URL → website + mobile segments skipped → 1/3 webms → mislabeled
       // "bot-blocked" and the whole lead failed. Real root cause of the step-3 losses.
-      let website = cleanUrl(row['Discovered Website'] || row.Website || row.website || '');
+      // 🔴 2026-08-21 — GOOGLE'S OWN Website FIELD WINS. `Discovered Website` is a FALLBACK.
+      // This used to read `row['Discovered Website'] || row.Website`, so a bad discovery result
+      // OVERRODE the correct URL Google already gave us. Chris caught it live watching a capture:
+      //   Harvey's Pest Control · Website: http://mrsmartbug.com/  (matches Google Maps exactly)
+      //                         · Discovered Website: https://controllerdata.lacity.org/
+      // The pipeline filmed the LA City Controller's open-data portal as a pest-control company's
+      // website — Maps card correct, website completely wrong. Sending that to the prospect is worse
+      // than sending nothing.
+      // Discovery exists for leads with NO website at all; it must never outrank the real one.
+      // Same family as the autotrader.com incident that added the directory blocklist below.
+      let website = cleanUrl(row.Website || row.website || row['Discovered Website'] || '');
       // 2026-06-26: reject third-party directories/marketplaces (autotrader, wheree.com, yelp, etc.)
       // as the business's website. When a lead has no real first-party site, step-2 discovery may
       // have grabbed a directory — recording it films the WRONG (often down) site (Chris caught

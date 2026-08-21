@@ -316,6 +316,17 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-21 — Chris watching a live capture: "this is an LA GOV website?". step-3 preferred
+# `Discovered Website` over Google's own `Website`, so a bad discovery result overrode the correct URL:
+# Harvey's Pest Control (Website: mrsmartbug.com) was filmed showing controllerdata.lacity.org. Maps
+# card correct, website completely wrong — every existing gate passed.
+echo ">>> pre-flight: Google Website outranks a Discovered one" | tee -a "$LOGFILE"
+node scripts/check-website-precedence.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: website precedence regressed — videos could film the wrong company's site. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
