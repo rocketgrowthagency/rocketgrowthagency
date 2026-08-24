@@ -46,7 +46,32 @@ const DRY = process.argv.includes("--dry-run");
 // finished, NOT the lead step-8 was supposed to publish. Result: Target
 // Plumbers' video deployed but its step-8 ran against A-1's CSV instead,
 // so Target never got an Airtable row.
-const FILE_ARG = process.argv.find((a) => a.startsWith("--file="))?.slice(7) || process.env.STEP2_CSV || "";
+// 🔴 2026-08-24 — A POSITIONAL CSV PATH USED TO BE SILENTLY IGNORED, and that is how step-8 patched
+// the wrong business's CRM record. Invoked as `node step-8-publish-to-airtable.mjs "<hive-pro csv>"`,
+// it discarded the argument, fell through to latestStep2Csv() (newest by mtime), read
+// american-city-pest-and-termite instead, and printed `✓ patched 1 in Leads` — a TRUE count for a
+// lead nobody asked about, while hive-pro got no row at all and its live video became an orphan.
+//
+// > A wrong write that reports success is worse than a crash. The crash stops; this propagates.
+//
+// Accepting the positional form is the smaller half of the fix. The larger half: a path-shaped
+// argument we do not understand must ABORT, never fall through to "pick a file by mtime"
+// ([[feedback-pipeline-must-own-its-inputs]]).
+const POSITIONAL = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+const FILE_ARG = process.argv.find((a) => a.startsWith("--file="))?.slice(7)
+  || process.env.STEP2_CSV
+  || POSITIONAL.find((a) => /\.csv$/i.test(a))
+  || "";
+{
+  const strays = POSITIONAL.filter((a) => !/\.csv$/i.test(a) && (a.includes("/") || a.includes(".")));
+  if (strays.length) {
+    console.error(`❌ FATAL: unrecognised argument(s): ${strays.join(", ")}`);
+    console.error(`   These look like paths. Refusing to guess an input — step-8 WRITES to the CRM, and`);
+    console.error(`   silently reading a different CSV patches the wrong business's record.`);
+    console.error(`   Use: node step-8-publish-to-airtable.mjs <file.csv>   (or --file=<path>)`);
+    process.exit(2);
+  }
+}
 
 const PLACEHOLDER_EMAIL_PATTERNS = [
   /^user@domain\.com$/i,
@@ -196,6 +221,13 @@ function parseCsv(filePath) {
 
 async function latestStep2Csv() {
   // Match step 2's approach: sort by mtime so same-date runs pick the truly latest.
+  //
+  // 🔴 2026-08-24 — THIS IS A GUESS, and step-8 WRITES TO THE CRM. Callers that pass nothing
+  // (run-queue.mjs, run-pipeline.mjs) run step-1 → step-2 → step-8 in sequence, so the newest file is
+  // usually theirs — but "usually" is exactly how the wrong business's record got patched. The guess
+  // must therefore be LOUD: it announces the file it chose, how old it is, and what it beat. A silent
+  // guess reads identically to an explicit instruction in the log, which is why nobody caught it.
+  // ([[feedback-pipeline-must-own-its-inputs]], [[feedback-an-alert-nobody-sees-is-not-an-alert]])
   const { statSync } = await import("node:fs");
   const dirs = [path.join(OUTPUT_DIR, "Step 2"), OUTPUT_DIR];
   for (const dir of dirs) {
@@ -204,7 +236,19 @@ async function latestStep2Csv() {
     const matches = entries.filter((n) => /\[step-2\]\.csv$/.test(n));
     if (!matches.length) continue;
     matches.sort((a, b) => statSync(path.join(dir, b)).mtimeMs - statSync(path.join(dir, a)).mtimeMs);
-    return path.join(dir, matches[0]);
+    const chosen = matches[0];
+    const ageMin = Math.round((Date.now() - statSync(path.join(dir, chosen)).mtimeMs) / 60000);
+    console.warn(`[step-8] ⚠️  NO INPUT SPECIFIED — guessing the newest step-2 CSV by mtime.`);
+    console.warn(`[step-8]     chose: ${chosen}`);
+    console.warn(`[step-8]     age: ${ageMin} min · beat ${matches.length - 1} other candidate(s) in ${path.basename(dir)}`);
+    console.warn(`[step-8]     If that is not the lead you meant, pass it explicitly: <file.csv> or --file=<path>.`);
+    if (ageMin > 24 * 60) {
+      console.error(`[step-8] ❌ FATAL: the newest step-2 CSV is ${Math.round(ageMin / 60)}h old.`);
+      console.error(`   Publishing it would push stale leads into the CRM as if freshly scraped.`);
+      console.error(`   Pass the intended CSV explicitly if this is deliberate.`);
+      process.exit(2);
+    }
+    return path.join(dir, chosen);
   }
   return null;
 }
@@ -802,6 +846,28 @@ async function main() {
     }
     return true;
   });
+
+  // 🔴 2026-08-24 — ORPHAN PREVENTION, and deliberately the SAME CODE rather than a copy.
+  // katie-b-creative got a full build — scrape, capture, voiceover, branding, deploy — and only then
+  // did step-8 reject it as a directory/generic listing. The video is live and can never be emailed:
+  // an orphan, created by spending on a lead the publisher was always going to refuse.
+  //
+  // `--check-publishable` lets the build path ask this question BEFORE the spend. It runs the real
+  // filter above, not a re-implementation: a second copy of the rule drifts, and then the two answers
+  // disagree exactly when it matters ([[feedback-a-test-nobody-runs-is-not-a-guard]]).
+  //
+  // exit 0 = at least one publishable row · exit 3 = none, do not build.
+  if (process.argv.includes("--check-publishable")) {
+    const emailable = rows.filter((r) => extractValidEmail(pick(r, "email", "emails"))).length;
+    console.log(`[step-8 check] ${rawRows.length} row(s): ${rows.length} publishable, ${skipped.length} filtered, ${emailable} emailable`);
+    if (skipped.length) console.log(`[step-8 check] filtered: ${skipped.slice(0, 5).join(", ")}`);
+    if (!rows.length) {
+      console.log(`[step-8 check] ✗ NOT PUBLISHABLE — building this lead would create an orphan.`);
+      process.exit(3);
+    }
+    console.log(`[step-8 check] ✓ publishable`);
+    process.exit(0);
+  }
   const emailsFound = rows.filter((r) => extractValidEmail(pick(r, "email", "emails"))).length;
   console.log(`[step-8] ${rawRows.length} raw rows, ${skipped.length} filtered (directory/generic), ${rows.length} real, ${emailsFound} with valid email`);
   if (skipped.length) console.log(`[step-8] filtered: ${skipped.slice(0, 5).join(", ")}${skipped.length > 5 ? "…" : ""}`);
@@ -870,6 +936,27 @@ async function main() {
       const flag = n === 0 ? ' ← 🚨 CRITICAL: 0%' : (n / denom < 0.5 ? ' ← partial' : '');
       console.log(`   ${f.padEnd(28)} ${n}/${denom}${scope} (${pct}%)${flag}`);
       if (n === 0) atZero.push(f);
+    }
+    // 🔴 2026-08-24 — A STATISTIC NEEDS A SAMPLE. This guard exists to catch a SYSTEMIC column loss
+    // across a scrape — "Reviews was silently empty for the whole batch". On a single-lead rebuild
+    // that inference is unavailable: 0/1 means "this one business has no reviews", which for a
+    // zero-review business is the correct value and describes our strongest prospects.
+    //
+    // Measured: hive-pro-bee-removal-inc (zero reviews, confirmed against three SerpApi endpoints)
+    // was blocked by `rating 0%`, then by `reviews 0%`, AFTER its video had already gone live —
+    // orphaning it each time. Meanwhile the lead had already passed the independent 6/6 verification
+    // gate, which checks the reviews state far more rigorously than a fill-rate ever could.
+    //
+    // Below MIN_COVERAGE_SAMPLE the finding is reported LOUDLY but does not block: a fill-rate over
+    // one row cannot distinguish honest absence from systemic loss, and blocking on it publishes
+    // nothing while leaving a live video with no CRM row.
+    const MIN_COVERAGE_SAMPLE = 3;
+    if (atZero.length && !DRY && rows.length < MIN_COVERAGE_SAMPLE) {
+      console.warn(`\n⚠️  ${atZero.length} field(s) at 0% coverage: ${atZero.join(', ')} — but only ${rows.length} row(s).`);
+      console.warn(`   Too small a sample to evidence a systemic column loss; for a single lead this is`);
+      console.warn(`   usually honest absence (a business with no reviews has no reviews and no rating).`);
+      console.warn(`   Publishing. The 6/6 verification gate is the real check on this lead's data.`);
+      atZero.length = 0;
     }
     if (atZero.length && !DRY) {
       console.error(`\n❌ FATAL: refusing to publish — ${atZero.length} critical field(s) at 0% coverage: ${atZero.join(', ')}`);

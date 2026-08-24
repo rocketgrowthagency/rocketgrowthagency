@@ -75,6 +75,32 @@ if (!/if \(n === 0\) atZero\.push\(f\)/.test(src)) {
 if (!/process\.exit\(2\)/.test(src)) fail('step-8 no longer exits non-zero on a real coverage failure.');
 ok('a genuine 0% coverage still refuses to publish');
 
+// 5. A statistic needs a sample.
+// A 0% fill-rate over ONE row cannot distinguish honest absence from systemic column loss. Blocking
+// on it publishes nothing while leaving an already-live video with no CRM row — measured twice on
+// hive-pro-bee-removal-inc (first `rating`, then `reviews`).
+if (!/MIN_COVERAGE_SAMPLE/.test(src)) {
+  fail('there is no minimum sample size on the 0%-coverage block. On a single-lead rebuild a 0% fill\n' +
+       '         rate is honest absence, not evidence of a systemic gap, and blocking orphans the video.');
+}
+// Anchor on the MESSAGE, not on "a console.warn appears somewhere nearby". A byte window around the
+// constant still contained unrelated console.warn calls further down the file, so swapping all three
+// warnings in this block for silent logs passed the check — the gate was blind to the exact sabotage
+// it existed to catch. Verified by re-running the sabotage after this change.
+for (const phrase of ['Too small a sample', 'Publishing.']) {
+  const idx = src.indexOf(phrase);
+  if (idx === -1) fail(`the small-sample path no longer says "${phrase}" — its reasoning must stay visible.`);
+  const lineStart = src.lastIndexOf('\n', idx);
+  if (!/console\.warn/.test(src.slice(lineStart, idx))) {
+    fail(`"${phrase}" is not emitted via console.warn. Quietly publishing a 0% field is how a REAL gap\n` +
+         '         would slip through ([[feedback-an-alert-nobody-sees-is-not-an-alert]]).');
+  }
+}
+if (!/rows\.length < MIN_COVERAGE_SAMPLE/.test(src)) {
+  fail('the sample rule is not keyed to the row count.');
+}
+ok('a 0% finding below the sample threshold warns loudly instead of blocking');
+
 // 4. Other fields unchanged.
 if (!/f === 'rating' \? ratingEligible : rows/.test(src)) {
   fail('the row population is not narrowed for `rating` ALONE — other critical fields must still be\n' +

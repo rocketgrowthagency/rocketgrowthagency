@@ -794,12 +794,38 @@ async function extractPlaceDetails(page) {
           const hit = tryPatterns(allText);
           if (hit) return hit;
         }
-        // Source 2: any button/anchor aria-label matching reviews pattern
-        const btns = Array.from(document.querySelectorAll('button[aria-label], a[aria-label]'));
-        for (const b of btns) {
-          const aria = (b.getAttribute('aria-label') || '').trim();
-          const hit = tryPatterns(aria);
-          if (hit) return hit;
+        // Source 2: aria-labels — but ONLY inside this business's own detail pane, and only when the
+        // label actually says "review".
+        //
+        // 🔴 2026-08-24 — THIS WAS THE BOGUS-REVIEW-COUNT BUG. It used to scan `document` for ANY
+        // button/anchor aria-label, and `tryPatterns` accepts a bare `(\d+)`. So for a business with
+        // NO reviews (F7nice absent or empty) it walked the whole page and returned the first
+        // parenthesised number it found — usually a DIFFERENT business in the results sidebar.
+        //
+        // The fingerprint: one value landing on many unrelated businesses. Measured across 60 recent
+        // scrapes, 49 of 312 rows carried reviews>0 with an EMPTY rating, and `310` alone appeared on
+        // Roy Jahangard, Dr. Heidi Fahringer, We Care Eye Care, Katya S. Zelaya and Osako Eugene Y OD.
+        // Hive Pro Bee Removal was written as 310 reviews; three independent SerpApi endpoints (place,
+        // search, and google_maps_reviews returning 0 actual records) confirm it has NONE.
+        //
+        // > A single value repeated across unrelated subjects is never a finding about the subjects.
+        // > It is a defect in the probe. ([[feedback-suppression-reason-lives-in-funnel-state]])
+        //
+        // A reviewed business ALWAYS renders a rating, so "reviews>0 with no rating" is impossible on
+        // real data — that contradiction is now a hard gate in step-1's own coverage check.
+        const pane = (document.querySelector('h1.DUwDvf')
+          ?.closest('div[role="main"], div.tAiQdd, div.lMbq3e')) || null;
+        if (pane) {
+          const btns = Array.from(pane.querySelectorAll('button[aria-label], a[aria-label]'));
+          for (const b of btns) {
+            const aria = (b.getAttribute('aria-label') || '').trim();
+            // Require the word "review"/"star" so a bare "(12)" on some unrelated control can never
+            // become a review count. Inside F7nice (Source 1) a bare count is unambiguous; out here
+            // it is a guess, and a guess is what produced 310.
+            if (!/review|star/i.test(aria)) continue;
+            const hit = tryPatterns(aria);
+            if (hit) return hit;
+          }
         }
         // Source 3: page header text (last-resort heuristic)
         const header = document.querySelector('h1.DUwDvf');
@@ -1514,6 +1540,10 @@ async function main() {
 
     const seenPlaces = new Set();
     const filteredLeads = [];
+    // reviews>0 with an empty rating — impossible on real Google data, so each one is evidence the
+    // review count was read off a different business. Collected at write time because rows are
+    // streamed to disk rather than retained. See the FATAL check after the coverage table.
+    const reviewContradictions = [];
     let written = 0;
 
     for (let i = 0; i < entriesUniq.length; i++) {
@@ -1641,6 +1671,16 @@ async function main() {
           }
         }
 
+        // Contradiction watch (see the FATAL check below the coverage table): a business with reviews
+        // ALWAYS has a rating. reviews>0 + no rating means the count came from another business.
+        {
+          const _rv = String(rowOut[header.indexOf('Reviews')] ?? '').trim();
+          const _rt = String(rowOut[header.indexOf('Rating')] ?? '').trim();
+          if (/^\d+$/.test(_rv) && Number(_rv) > 0 && !_rt) {
+            reviewContradictions.push({ name: name || '(no name)', reviews: _rv });
+          }
+        }
+
         written++;
         console.log(
           `[${mapRank}/${entriesUniq.length}] ✅ saved: ${name || '(no name)'} (written=${written})`
@@ -1692,6 +1732,34 @@ async function main() {
         console.log(`   ${h.padEnd(28)} ${String(n).padStart(3)}/${written} (${pct.padStart(3)}%)${flag}`);
         if (n === 0 && isCritical) criticalAtZero.push(h);
       }
+      // 🔴 2026-08-24 — CONTRADICTION CHECK: reviews>0 with an EMPTY rating is impossible on real
+      // Google data. A business with even one review always renders a rating. When that pair shows up
+      // it means the review count came from somewhere that is not this business — which is exactly
+      // what the old unscoped `document.querySelectorAll('button[aria-label]')` fallback in
+      // findReviews() did: it returned the first parenthesised number on the page, usually a
+      // DIFFERENT business in the results sidebar.
+      //
+      // Measured before the fix: 49 of 312 rows across 60 scrapes, with a single value (310) landing
+      // on five unrelated businesses. Coverage checks could never catch this — the column was 100%
+      // POPULATED. It was populated with the wrong number.
+      //
+      // > Coverage proves a field is filled. It says nothing about whether it is TRUE.
+      if (reviewContradictions.length) {
+        const pct = (reviewContradictions.length / Math.max(written, 1) * 100).toFixed(0);
+        console.error(`\n❌ FATAL: ${reviewContradictions.length}/${written} (${pct}%) rows have reviews>0 but NO rating.`);
+        console.error(`   That combination cannot occur on Google — a reviewed business always shows a rating.`);
+        console.error(`   It means the review count was read from another business on the page.`);
+        for (const c of reviewContradictions.slice(0, 5)) {
+          console.error(`     ${String(c.name).slice(0, 40)} — reviews=${c.reviews}, rating=(empty)`);
+        }
+        const vals = [...new Set(reviewContradictions.map((c) => c.reviews))];
+        if (vals.length < reviewContradictions.length) {
+          console.error(`   ${reviewContradictions.length} rows share only ${vals.length} distinct value(s): ${vals.slice(0, 6).join(', ')}`);
+          console.error(`   A repeated value across unrelated businesses is a PROBE defect, not data.`);
+        }
+        process.exitCode = 2;
+      }
+
       if (criticalAtZero.length) {
         console.error(`\n❌ FATAL: ${criticalAtZero.length} critical field(s) at 0% coverage: ${criticalAtZero.join(', ')}`);
         console.error(`   This is the same class of silent gap that hid the Reviews + Category bug pre-2026-05-14.`);

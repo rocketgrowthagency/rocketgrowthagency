@@ -373,6 +373,9 @@ fi
 echo ">>> pre-flight: review fallback is CID-matched" | tee -a "$LOGFILE"
 node scripts/check-review-fallback-is-cid-matched.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 node scripts/check-rating-coverage-excludes-zero-review.mjs || exit 1
+node scripts/check-step8-owns-its-input.mjs || exit 1
+node scripts/check-review-count-probe-is-scoped.mjs || exit 1
+node scripts/check-publishability-precedes-build.mjs || exit 1
 if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: review fallback regressed — a video could state another business's reviews. Aborting." | tee -a "$LOGFILE"
   exit 1

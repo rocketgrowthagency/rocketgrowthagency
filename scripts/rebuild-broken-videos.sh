@@ -103,6 +103,20 @@ for SLUG in "$@"; do
   cp "$SRC" "$CSV"; TEMP_CSVS+=("$CSV")
   say "  csv: $CSV"
 
+  # 🔴 2026-08-24 — ASK THE PUBLISHER FIRST. katie-b-creative got a full build (scrape → capture →
+  # voiceover → branding → deploy) and only THEN did step-8 reject it as a directory/generic listing.
+  # The video is live and can never be emailed: an orphan, manufactured by spending on a lead the
+  # publisher was always going to refuse. 4 of today's 8 recent orphans are that shape.
+  #
+  # --check-publishable runs step-8's REAL filter (same code, not a copy), so the two answers cannot
+  # drift. Same principle as the step-3 maps assertion below: find out it is unbuildable BEFORE paying.
+  if ! node step-8-publish-to-airtable.mjs "$CSV" --check-publishable >>"$LOG" 2>&1; then
+    _why=$(grep -oE "\[step-8 check\] filtered: .{0,70}" "$LOG" 2>/dev/null | tail -1)
+    say "  ✗ step-8 would REFUSE this lead — skipping BEFORE the build (would become an orphan)"
+    [ -n "$_why" ] && say "     ${_why}"
+    reap_chrome; note_fail "$SLUG" "not-publishable"; FAILED+=("$SLUG:not-publishable"); continue
+  fi
+
   RUN="${DATE}_${SUFFIX%.csv}"
 
   # 🔴 2026-08-21 — A CACHED AUDIT MAKES A 6/6 FAILURE PERMANENT.
