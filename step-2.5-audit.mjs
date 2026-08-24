@@ -1921,6 +1921,54 @@ async function auditGbp(_, gbpUrl, business) {
 
     findings.reviewCount = data.reviewCount;
     findings.reviewAbsenceVerified = !!data.reviewAbsenceVerified;
+
+    // 🔴 2026-08-24 — SERPAPI FALLBACK, MATCHED ON CID (never on name).
+    // `reviewCount === null` with the widget present and no empty-state means the reviews panel never
+    // rendered — an INDETERMINATE read, not an absence. The strict gate rightly refuses to claim "no
+    // reviews", so the lead fails 6/6 and a good prospect is dropped. "Missing: reviews" was 42 of 56
+    // below-6of6 failures over three nights: the single biggest blocker.
+    //
+    // 🚫 A NAME-MATCHED fallback was built first and REVERTED. SerpApi returns FOUR businesses called
+    // "California Dermatology Institute" — 42 (Beverly Hills), 6 (Culver City, the real one), 12 (LA),
+    // 583 (Huntington Park). Name matching, even with `ll` coordinates, picked the wrong one. That
+    // would have stated a competitor's review count in the prospect's video as fact
+    // (project_wrong_website_filmed is the same class of error).
+    //
+    // ✅ The CID is exact identity. The navigated Maps URL carries it as `!1s0x…:0x…`, and SerpApi
+    // returns the same value as `data_id`. Accept a count ONLY on an exact CID match — no CID, no
+    // fallback. Failing 6/6 is far cheaper than a confident wrong number.
+    if (findings.reviewCount === null || findings.reviewCount === undefined) {
+      const cid = (() => {
+        try { return (page.url().match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i) || [])[1] || null; }
+        catch { return null; }
+      })();
+      if (!cid) {
+        console.log('  [gbp-diag] reviews unverified and no CID on the page URL — no fallback (name matching is unsafe)');
+      } else {
+        try {
+          const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
+          const q = encodeURIComponent(`"${business.name}"`);
+          const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
+          const sUrl = `https://serpapi.com/search?engine=google_maps&type=search&q=${q}${ll}&api_key=${process.env.SERPAPI_KEY}`;
+          const res = await serpapiGetRateAware(sUrl);
+          const cands = []
+            .concat(Array.isArray(res?.data?.local_results) ? res.data.local_results : [])
+            .concat(res?.data?.place_results ? [res.data.place_results] : []);
+          const want = cid.toLowerCase();
+          const hit = cands.find((c) => String(c?.data_id || '').toLowerCase() === want);
+          const n = Number(hit?.reviews);
+          if (Number.isFinite(n)) {
+            findings.reviewCount = n;
+            findings.reviewCountSource = 'serpapi-cid';
+            console.log(`  [gbp-diag] reviews via SerpAPI CID match: ${n} (CID ${cid}, DOM read was null)`);
+          } else {
+            console.log(`  [gbp-diag] no SerpAPI result with CID ${cid} — reviews stay unverified (correct: never guess by name)`);
+          }
+        } catch (e) {
+          console.log(`  [gbp-diag] SerpAPI CID fallback failed (${e.message}) — reviews stay unverified`);
+        }
+      }
+    }
     findings.photoCount = data.photoCount;
     findings.photoCountVerified = !!data.photoCountVerified;
     findings.photoAbsenceVerified = !!data.photoAbsenceVerified;

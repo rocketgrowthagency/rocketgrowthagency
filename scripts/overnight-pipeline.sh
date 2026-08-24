@@ -367,6 +367,16 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-24 — "Missing: reviews" was 42 of 56 below-6of6 failures. The fallback that fixes it MUST
+# match on CID: SerpApi returns four "California Dermatology Institute" listings (42/6/12/583 reviews)
+# and name matching picked the wrong one. A competitor's review count stated as fact is unshippable.
+echo ">>> pre-flight: review fallback is CID-matched" | tee -a "$LOGFILE"
+node scripts/check-review-fallback-is-cid-matched.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: review fallback regressed — a video could state another business's reviews. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
