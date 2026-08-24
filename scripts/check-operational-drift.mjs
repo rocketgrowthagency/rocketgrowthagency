@@ -114,6 +114,40 @@ try {
   }
 } catch { /* no queue file — nothing to judge */ }
 
+// ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
+// 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
+// ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already
+// lost. A quota that will run out in three nights needs saying on night one, not night three.
+// Same principle as the OpenAI credit outage that cost a night — an external balance is a dependency,
+// and dependencies get reported before they bite ([[feedback-notify-openai-quota]]).
+try {
+  const env = Object.fromEntries(
+    fs.readFileSync(path.join(SCRAPER, '.env'), 'utf8').split('\n')
+      .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
+      .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }));
+  if (env.SERPAPI_KEY) {
+    const r = await fetch(`https://serpapi.com/account?api_key=${env.SERPAPI_KEY}`, { signal: AbortSignal.timeout(15000) });
+    if (r.ok) {
+      const a = await r.json();
+      const left = Number(a.total_searches_left);
+      // Measured: a one-category night costs roughly 50-100 searches (website discovery + audits).
+      const PER_NIGHT = 100;
+      if (Number.isFinite(left)) {
+        const nights = Math.floor(left / PER_NIGHT);
+        if (left < PER_NIGHT) {
+          findings.push({ kind: 'serpapi-quota', severity: 'high',
+            msg: `SerpApi has ${left} searches left — less than one night's worth. The pre-flight guard will ABORT the run.`,
+            fix: 'Top up at serpapi.com/dashboard before 21:00.' });
+        } else if (nights <= 8) {   // ~a week's notice, not a surprise
+          findings.push({ kind: 'serpapi-quota', severity: 'medium',
+            msg: `SerpApi has ${left} searches left (~${nights} night(s) at ~${PER_NIGHT}/night). Used ${a.this_month_usage ?? '?'} of ${a.searches_per_month ?? '?'} this month.`,
+            fix: 'Top up or let the month roll over — but know the run aborts below 100, not at 0.' });
+        }
+      }
+    }
+  }
+} catch { /* an unreachable quota API is not a finding — never guess a balance */ }
+
 if (JSON_OUT) { console.log(JSON.stringify({ findings }, null, 2)); process.exit(0); }
 
 if (!findings.length) { console.log('✅ No operational drift.'); process.exit(0); }
