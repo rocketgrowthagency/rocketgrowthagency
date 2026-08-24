@@ -372,6 +372,7 @@ fi
 # and name matching picked the wrong one. A competitor's review count stated as fact is unshippable.
 echo ">>> pre-flight: review fallback is CID-matched" | tee -a "$LOGFILE"
 node scripts/check-review-fallback-is-cid-matched.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+node scripts/check-rating-coverage-excludes-zero-review.mjs || exit 1
 if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: review fallback regressed — a video could state another business's reviews. Aborting." | tee -a "$LOGFILE"
   exit 1

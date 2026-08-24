@@ -826,9 +826,30 @@ async function main() {
   // hid the systemic gap pre-2026-05-14).
   {
     const CRITICAL_CSV_FIELDS = ['business name', 'rating', 'reviews', 'detected category', 'google maps url', 'map rank'];
+
+    // 🔴 2026-08-24 — `rating` is not MISSING for a business with no reviews; it is correctly ABSENT.
+    // Google renders no rating on a zero-review listing, so the CSV cell is legitimately empty.
+    // Counting those rows as a coverage gap made this guard fire on precisely the leads we most want
+    // (a zero-review business is the strongest prospect we have) — and it fired AFTER the video was
+    // already published, leaving an ORPHAN: video live, no CRM row, invisible to every lead-based heal.
+    //
+    // Measured on hive-pro-bee-removal-inc, the first lead recovered by the CID review fallback:
+    // 6/6 verified, video live, then `rating 0/1 (0%)` → exit 2.
+    //
+    // The guard's real job is catching a SYSTEMIC column loss across a scrape. So score `rating` only
+    // over the rows that could HAVE one. If every reviewed business lost its rating, that is still 0%
+    // and still fatal — the check keeps its teeth and stops punishing honest absence.
+    const reviewsOf = (r) => {
+      const n = Number(String(pick(r, 'reviews') ?? '').replace(/[^\d]/g, ''));
+      return Number.isFinite(n) ? n : null;
+    };
+    const ratingEligible = rows.filter((r) => (reviewsOf(r) ?? 0) > 0);
+    const denomFor = (f) => (f === 'rating' ? ratingEligible.length : rows.length);
+    const rowsFor = (f) => (f === 'rating' ? ratingEligible : rows);
+
     const coverage = Object.fromEntries(CRITICAL_CSV_FIELDS.map((f) => [f, 0]));
-    for (const r of rows) {
-      for (const f of CRITICAL_CSV_FIELDS) {
+    for (const f of CRITICAL_CSV_FIELDS) {
+      for (const r of rowsFor(f)) {
         const v = pick(r, f);
         if (v && String(v).trim()) coverage[f]++;
       }
@@ -837,9 +858,17 @@ async function main() {
     const atZero = [];
     for (const f of CRITICAL_CSV_FIELDS) {
       const n = coverage[f];
-      const pct = (n / rows.length * 100).toFixed(0);
-      const flag = n === 0 ? ' ← 🚨 CRITICAL: 0%' : (n / rows.length < 0.5 ? ' ← partial' : '');
-      console.log(`   ${f.padEnd(28)} ${n}/${rows.length} (${pct}%)${flag}`);
+      const denom = denomFor(f);
+      // No eligible rows at all ⇒ the field is Not Applicable to this batch, not a gap. Never infer a
+      // systemic failure from an empty denominator (feedback_indeterminate_is_not_a_finding).
+      if (denom === 0) {
+        console.log(`   ${f.padEnd(28)} n/a (no rows with reviews — a rating cannot exist)`);
+        continue;
+      }
+      const pct = (n / denom * 100).toFixed(0);
+      const scope = f === 'rating' && denom !== rows.length ? ` of ${denom} reviewed` : '';
+      const flag = n === 0 ? ' ← 🚨 CRITICAL: 0%' : (n / denom < 0.5 ? ' ← partial' : '');
+      console.log(`   ${f.padEnd(28)} ${n}/${denom}${scope} (${pct}%)${flag}`);
       if (n === 0) atZero.push(f);
     }
     if (atZero.length && !DRY) {

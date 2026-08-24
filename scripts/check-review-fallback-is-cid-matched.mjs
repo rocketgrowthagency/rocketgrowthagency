@@ -19,15 +19,27 @@
  * COMPETITOR'S review count in the prospect's video as fact: the same class of error as filming the
  * wrong website, and worse, because the voiceover asserts the number.
  *
- * ✅ The CID is exact identity. The navigated Maps URL carries `!1s0x…:0x…`; SerpApi returns the same
- * value as `data_id`. Accept a count ONLY on an exact CID match.
+ * ✅ The CID is exact identity. The navigated Maps URL carries `!1s0x…:0x…`.
+ *
+ * 🔴 2026-08-24, SECOND ITERATION — search-then-filter was SAFE BUT USELESS. The first fix queried by
+ * name and kept the row whose `data_id` matched the CID. Measured over a live heal of 8 leads it matched
+ * ZERO times: the name search does not reliably return the listing at all, so the filter had nothing to
+ * keep. A fallback that never fires recovers no leads — it just fails 6/6 more politely.
+ *
+ * The endpoint is `type=place` + `data=!4m5!3m4!1s<CID>!8m2`, which asks for ONE place BY IDENTITY.
+ * There is no candidate list, so there is nothing to mis-match: strictly safer than filtering AND it
+ * actually returns data. Control-measured against live listings: 1450, 5 and 2 reviews all populated.
  *
  * INVARIANTS
  *  1. The fallback extracts a CID from the live page URL.
- *  2. It matches SerpApi results on `data_id` — exactly, case-insensitively.
+ *  2. It looks the place up BY CID (type=place + data=!4m5!3m4!1s…), not by name-then-filter.
  *  3. No CID ⇒ NO fallback (reviews stay unverified). Failing 6/6 beats a confident wrong number.
  *  4. It never falls back to a name/title comparison.
  *  5. It only runs when the DOM read was null — never overriding a real reading.
+ *  6. A ZERO is accepted only when a place payload actually came back — never from an empty or errored
+ *     response. Absent data is not evidence of zero (feedback_indeterminate_is_not_a_finding).
+ *  7. It never sets reviewAbsenceVerified. That flag licenses the voiceover to SAY "you have no
+ *     reviews"; this fallback restores the 6/6 SIGNAL only. Widening a signal must not widen a CLAIM.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -39,21 +51,66 @@ const fail = (m) => { console.error(`✗ FATAL: ${m}`); process.exit(1); };
 const ok = (m) => console.log(`  ✓ ${m}`);
 
 const raw = fs.readFileSync(AUDIT, 'utf8');
-const src = raw.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
+// Strip comments so this check can never match the audit file's own PROSE about the fix — the comment
+// there describes `type=place` in English, and a check satisfied by a comment is a check that passes
+// after the code is deleted. NOTE the `[^:]` guard: a naive /\/\/.*$/ deletes everything after the
+// `//` in `https://…`, which silently removed the very URL this gate exists to assert.
+const src = raw.replace(/\/\*[\s\S]*?\*\//g, '')
+  .split('\n').map((l) => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
 
 const i = src.indexOf('serpapi-cid');
 if (i === -1) fail('the CID-matched review fallback is gone. "Missing: reviews" is the largest single\n' +
                    '         blocker (42 of 56) and an indeterminate DOM read would again read as absence.');
-const block = src.slice(Math.max(0, i - 2600), i + 600);
+// Scope to the fallback ITSELF, by its real delimiters — not a byte window around a marker. A fixed
+// `i - 2600` slice reached back into the page.evaluate body and matched the legitimate
+// `reviewAbsenceVerified = …` assignment that lives there, failing this check on innocent code. A gate
+// that reports a defect in the wrong place is as costly as one that misses it.
+const start = src.indexOf('if (findings.reviewCount === null');
+const end = src.indexOf('findings.photoCount = data.photoCount', start);
+if (start === -1 || end === -1 || end <= start) {
+  fail('cannot delimit the review-fallback block — its surrounding anchors moved. Re-point this check\n' +
+       '         rather than widening it, or it will start judging unrelated code.');
+}
+const block = src.slice(start, end);
 
 if (!/!1s\(0x\[0-9a-f\]\+:0x\[0-9a-f\]\+\)/.test(block)) {
   fail('the fallback does not extract a CID from the page URL — it has no way to verify identity.');
 }
 ok('extracts the CID from the live Maps URL');
 
-if (!/data_id/.test(block)) fail('the fallback does not match on SerpApi data_id.');
-if (!/=== want|=== String\(/.test(block)) fail('data_id comparison is not an exact match.');
-ok('matches SerpApi results on data_id, exactly');
+if (!/type=place/.test(block)) {
+  fail('the fallback does not use the by-identity place endpoint. Search-then-filter was measured\n' +
+       '         matching 0 of 8 leads — safe, but it recovers nothing.');
+}
+if (!/!4m5!3m4!1s\$\{cid\}!8m2/.test(block)) {
+  fail('the place lookup does not carry the CID in its `data` parameter, so it is not an identity lookup.');
+}
+if (/local_results/.test(block)) {
+  fail('the fallback still reads a candidate LIST. Identity lookup returns one place; a list reintroduces\n' +
+       '         the chance of keeping the wrong business.');
+}
+ok('looks the place up by CID identity (no candidate list to mis-match)');
+
+// 6. A zero must require a real payload.
+if (!/gotPlace/.test(block)) {
+  fail('nothing distinguishes "place returned, no reviews field" from "no place returned". Treating an\n' +
+       '         empty or errored response as zero would manufacture a verified count out of a failed read.');
+}
+const zeroIdx = block.indexOf('findings.reviewCount = 0');
+if (zeroIdx === -1) fail('a verified zero is never recorded, so zero-review businesses still fail 6/6 —\n' +
+                         '         and those are the strongest prospects we have.');
+if (!/else if \(gotPlace\)/.test(block)) {
+  fail('the zero branch is not gated on a returned place payload.');
+}
+ok('a zero is only accepted when a place payload actually came back');
+
+// 7. The signal widens; the CLAIM must not.
+if (/reviewAbsenceVerified\s*=/.test(block)) {
+  fail('the fallback sets reviewAbsenceVerified. That flag is what lets the voiceover ASSERT "you have\n' +
+       '         no reviews". Restoring a scoring signal must never unlock a spoken absence claim —\n' +
+       '         that gate belongs to the DOM empty-state read (feedback_verification_gates_must_be_strict).');
+}
+ok('never sets reviewAbsenceVerified (signal widened, claim unchanged)');
 
 if (!/if \(!cid\)/.test(block)) {
   fail('no CID ⇒ the fallback still runs. Without identity it can pick a same-named business in another\n' +

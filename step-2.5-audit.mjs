@@ -1947,23 +1947,36 @@ async function auditGbp(_, gbpUrl, business) {
       } else {
         try {
           const { serpapiGetRateAware } = await import('./lib/serpapi-rate-aware.cjs');
-          const q = encodeURIComponent(`"${business.name}"`);
-          const ll = (business.lat && business.lon) ? `&ll=@${business.lat},${business.lon},14z` : '';
-          const sUrl = `https://serpapi.com/search?engine=google_maps&type=search&q=${q}${ll}&api_key=${process.env.SERPAPI_KEY}`;
+          // 🔴 2026-08-24 — SEARCH-then-FILTER was measured recovering NOTHING. Querying by name and
+          // keeping the row whose data_id matched the CID is safe but useless: across a live heal of 8
+          // leads it matched 0 times, because the name search simply does not return every listing.
+          // `type=place` + `data=!4m5!3m4!1s<CID>!8m2` asks SerpApi for ONE place BY IDENTITY. There is
+          // no candidate list, so there is nothing to mis-match — strictly safer AND it actually works.
+          const sUrl = `https://serpapi.com/search?engine=google_maps&type=place`
+            + `&data=${encodeURIComponent(`!4m5!3m4!1s${cid}!8m2`)}`
+            + `&api_key=${process.env.SERPAPI_KEY}`;
           const res = await serpapiGetRateAware(sUrl);
-          const cands = []
-            .concat(Array.isArray(res?.data?.local_results) ? res.data.local_results : [])
-            .concat(res?.data?.place_results ? [res.data.place_results] : []);
-          const want = cid.toLowerCase();
-          const hit = cands.find((c) => String(c?.data_id || '').toLowerCase() === want);
-          const n = Number(hit?.reviews);
-          if (Number.isFinite(n)) {
+          const pr = res?.data?.place_results || null;
+          const gotPlace = !!(pr && (pr.title || pr.place_id || pr.data_id));
+          const n = Number(pr?.reviews);
+          if (gotPlace && Number.isFinite(n)) {
             findings.reviewCount = n;
-            findings.reviewCountSource = 'serpapi-cid';
-            console.log(`  [gbp-diag] reviews via SerpAPI CID match: ${n} (CID ${cid}, DOM read was null)`);
+            findings.reviewCountSource = 'serpapi-cid-place';
+            console.log(`  [gbp-diag] reviews via SerpAPI place-by-CID: ${n} ("${pr.title}", CID ${cid})`);
+          } else if (gotPlace) {
+            // A populated place payload with NO `reviews` field is a genuine ZERO, not a failed read.
+            // Control-measured 2026-08-24 against this exact endpoint: 1450, 5 and 2 reviews all came
+            // back populated, so the field is not suppressed at low counts. Absent therefore means none
+            // — and a business with zero reviews is the strongest prospect we have.
+            findings.reviewCount = 0;
+            findings.reviewCountSource = 'serpapi-cid-place-zero';
+            console.log(`  [gbp-diag] reviews via SerpAPI place-by-CID: 0 ("${pr.title}", CID ${cid}) — verified zero`);
           } else {
-            console.log(`  [gbp-diag] no SerpAPI result with CID ${cid} — reviews stay unverified (correct: never guess by name)`);
+            console.log(`  [gbp-diag] no SerpAPI place for CID ${cid} — reviews stay unverified (never guess by name)`);
           }
+          // ⚠️ Deliberately does NOT set reviewAbsenceVerified. That flag licenses the voiceover to SAY
+          // "you have no reviews"; it stays owned by the DOM empty-state read. This fallback exists to
+          // restore the 6/6 reviews SIGNAL (Number.isFinite(reviewCount)), not to unlock a new claim.
         } catch (e) {
           console.log(`  [gbp-diag] SerpAPI CID fallback failed (${e.message}) — reviews stay unverified`);
         }
