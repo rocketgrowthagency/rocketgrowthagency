@@ -310,6 +310,31 @@ echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG
 # MAX_RECOVERY_SEARCHES, the wall-clock DEADLINE, and the night window. Leads that fail MAX_VIDEO_ATTEMPTS
 # times are surfaced (Skip Reasons=video-unrenderable-Nx), never silently dropped or looped forever.
 # See feedback_every_email_gets_a_video.md + feedback_landing_build_must_be_scoped.md.
+# 🔴 2026-08-24 — THE HEAL MUST RUN BEFORE THE NIGHT IS SPENT.
+# This block used to sit AFTER the search loop. Measured over three nights: 08-21 "heal: SKIPPED —
+# outside the 21:00–06:59 capture window (now 07:08)", 08-22 "healed 2/20", 08-23 "healed 0/20". The
+# searches consume the whole window, so by the time the heal is reached there is no night left and the
+# capture interlock (correctly) refuses. That is why the unpublished count sat at 153 for three nights
+# without moving. The interlock was right; the PLACEMENT was wrong.
+# Moved ahead of the search loop: these leads are already scraped and selected, so finishing them beats
+# scraping more that will also go unfinished.
+# 🔴🔴 NIGHT-WINDOW RE-CHECK — THIS STEP CAPTURES.
+# heal-unpublished-leads.mjs --apply calls rebuild-broken-videos.sh, which records the SCREEN, and that
+# script has NO interlock of its own. This block runs AFTER the search loop, so on a long night it can
+# begin well past 07:00 — filming Chris's desktop into a public outreach video. That is exactly the
+# 2026-07-18 incident the "NO OVERRIDE" interlock was locked for.
+# The first version of this call carried a COMMENT asserting "runs inside the night window, so capture
+# is legal". An assumption is not an interlock. Re-check the clock immediately before capturing, the
+# same way the per-search loop does. 10#$ forces base-10 (the "08"/"09" octal trap).
+_heal_hour=$(( 10#$(date +%H) ))
+if [ "$_heal_hour" -ge 7 ] && [ "$_heal_hour" -lt 21 ]; then
+  echo ">>> heal: SKIPPED — outside the 21:00–06:59 capture window (now $(date +%H:%M)). Carries to tomorrow." | tee -a "$LOG"
+else
+  echo ">>> heal: leads selected but never published (no video AND no CRM row)" | tee -a "$LOG"
+  node scripts/heal-unpublished-leads.mjs --apply --days=7 --max="${HEAL_MAX:-20}" 2>&1 | tee -a "$LOG" || true
+fi
+
+
 # ============================================================
 echo ">>> reconcile-missing-videos: finding emailable leads with no video" | tee -a "$LOG"
 node scripts/reconcile-missing-videos.mjs 2>&1 | tee -a "$LOG"
@@ -396,22 +421,6 @@ fi
 # (a video on disk, an Airtable row) — and rebuilds what is missing both. Runs inside the night window,
 # so capture is legal. Capped so it cannot starve the fresh scrape; the overflow carries to tomorrow.
 # Reported, never fatal.
-# 🔴🔴 NIGHT-WINDOW RE-CHECK — THIS STEP CAPTURES.
-# heal-unpublished-leads.mjs --apply calls rebuild-broken-videos.sh, which records the SCREEN, and that
-# script has NO interlock of its own. This block runs AFTER the search loop, so on a long night it can
-# begin well past 07:00 — filming Chris's desktop into a public outreach video. That is exactly the
-# 2026-07-18 incident the "NO OVERRIDE" interlock was locked for.
-# The first version of this call carried a COMMENT asserting "runs inside the night window, so capture
-# is legal". An assumption is not an interlock. Re-check the clock immediately before capturing, the
-# same way the per-search loop does. 10#$ forces base-10 (the "08"/"09" octal trap).
-_heal_hour=$(( 10#$(date +%H) ))
-if [ "$_heal_hour" -ge 7 ] && [ "$_heal_hour" -lt 21 ]; then
-  echo ">>> heal: SKIPPED — outside the 21:00–06:59 capture window (now $(date +%H:%M)). Carries to tomorrow." | tee -a "$LOG"
-else
-  echo ">>> heal: leads selected but never published (no video AND no CRM row)" | tee -a "$LOG"
-  node scripts/heal-unpublished-leads.mjs --apply --days=7 --max="${HEAL_MAX:-20}" 2>&1 | tee -a "$LOG" || true
-fi
-
 echo ">>> productivity: did the run actually build anything?" | tee -a "$LOG"
 node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
 if [ "${_prc:-0}" -ne 0 ]; then

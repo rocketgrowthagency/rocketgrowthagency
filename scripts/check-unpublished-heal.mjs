@@ -108,4 +108,20 @@ if (!/ENTIRE search lost/.test(src)) {
 }
 ok('flags searches that lost their entire intake');
 
+
+// 🔴 7. THE HEAL MUST RUN BEFORE THE SEARCH LOOP.
+// It used to sit after it. Measured over three nights: "heal: SKIPPED — outside the 21:00–06:59 window
+// (now 07:08)", then "healed 2/20", then "healed 0/20" — the searches consume the whole night, so the
+// capture interlock (correctly) refuses and the unpublished backlog sat at 153 for three nights without
+// moving. The interlock was right; the PLACEMENT was wrong. A heal that never gets a window is not a
+// heal, and the morning report would still say it ran.
+const iHeal = local.indexOf("heal-unpublished-leads.mjs --apply");
+const iLoop = local.indexOf("reconcile-missing-videos");
+if (iHeal === -1 || iLoop === -1) fail("cannot locate the heal call or the search/reconcile phase to compare ordering.");
+if (!(iHeal < iLoop)) {
+  fail("the heal runs AFTER the search loop. It will be skipped or starved every night — measured\n" +
+       "         healed 2/20, then 0/20, then SKIPPED at 07:08. Move it ahead of the loop.");
+}
+ok("heal runs before the search loop (gets a real window)");
+
 console.log('✅ unpublished-lead heal: wired, single-rule, artefact-verified, fails safe, capped.');

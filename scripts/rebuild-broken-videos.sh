@@ -181,6 +181,28 @@ for SLUG in "$@"; do
   if [ "$S3TIMEDOUT" = "1" ]; then reap_chrome; note_fail "$SLUG" "step-3-timeout"; FAILED+=("$SLUG:step-3-timeout"); continue; fi
   [ "$S3RC" = "0" ] || { say "  ✗ step-3 (guardrail or capture failure)"; reap_chrome; note_fail "$SLUG" "step-3"; FAILED+=("$SLUG:step-3"); continue; }
 
+  # 🔴 2026-08-24 — ASSERT step-3's OUTPUT, NOT JUST ITS EXIT CODE.
+  # step-3 can discard a segment on a hard guardrail (e.g. "map centre is 30.4km from <biz>, limit 25km"
+  # — feedback_map_must_be_centred_on_business) and still exit 0. The runner then spent a FULL OpenAI
+  # voiceover on a video that could never be assembled, and failed two steps later with
+  # "No desktop/mobile pairs found to combine" — a message that names the wrong stage entirely.
+  # 17 entries in the failure ledger over 3 nights were this, each one a wasted TTS spend and a
+  # misattributed cause. A discarded MAPS segment is unbuildable: maps is the opening of every video.
+  # Exit code is a claim; the files are the fact ([[feedback-verify-dont-assume]]).
+  S3DIR=$(ls -dt "output/Step 3 (Video Recorder - Raw WebM)/${DATE}_${SLUG}-only-"* 2>/dev/null | head -1)
+  _maps_n=0
+  if [ -n "$S3DIR" ]; then
+    _maps_n=$(ls "$S3DIR"/*maps*.webm 2>/dev/null | wc -l | tr -d ' ')
+  fi
+  _maps_n=${_maps_n:-0}
+  if [ "$_maps_n" -eq 0 ]; then
+    # Surface the guardrail line that actually caused it, so the ledger reason is the TRUE reason.
+    _why=$(grep -oE "\[step-3 GUARDRAIL\][^\"]{0,90}" "$LOG" 2>/dev/null | tail -1)
+    say "  ✗ step-3 produced no MAPS segment — unbuildable, skipping BEFORE the voiceover spend"
+    [ -n "$_why" ] && say "     cause: ${_why}"
+    reap_chrome; note_fail "$SLUG" "step-3-no-maps-segment"; FAILED+=("$SLUG:step-3-no-maps-segment"); continue
+  fi
+
   say "  step-6 voiceover (6/6 gate)"
   STEP2_CSV="$CSV" node step-6-voiceover.mjs >>"$LOG" 2>&1; RC=$?
   if [ "$RC" = "3" ]; then say "  ⚠ below 6/6 — correctly blocked"; reap_chrome; note_fail "$SLUG" "below-6of6"; FAILED+=("$SLUG:below-6of6"); continue; fi

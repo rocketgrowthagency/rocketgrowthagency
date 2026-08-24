@@ -327,6 +327,16 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-24 — step-3 can discard the maps segment on a hard guardrail and still exit 0, so the
+# runner spent a full OpenAI voiceover on an unbuildable lead and failed later as "step-4-combine".
+# 17 ledger entries over three nights were this. Assert the FILES, not the exit code.
+echo ">>> pre-flight: step-3 output asserted before the voiceover spend" | tee -a "$LOGFILE"
+node scripts/check-step3-output-asserted.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: step-3 output assertion regressed — doomed leads would burn voiceover spend again. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
