@@ -126,9 +126,10 @@ import csvParser from "csv-parser";
 }
 async function loadStep2Data() {
   const rankMap = {};
+  const rankHistory = {};   // slug → [{mtime, rank}] from every step-2 CSV
   const nameMap = {}; // slug → original scraped Business Name (preserves BRGD, KNR, etc.)
   const searchTermMap = {}; // slug → search term (so landing page can show "Audit performed for the search: X")
-  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap, searchTermMap };
+  if (!fs.existsSync(STEP2_DIR)) return { rankMap, nameMap, searchTermMap, rankHistory };
   // Read CSVs newest-first by mtime, and use FIRST-WRITE-WINS so the freshest
   // scrape's rank for each business is canonical. Without this, older CSVs with
   // the same business at a different rank (different city/search term) silently
@@ -142,6 +143,7 @@ async function loadStep2Data() {
     .sort((a, b) => b.mtime - a.mtime)
     .map(o => o.file);
   for (const file of csvFiles) {
+    const fileMtime = (() => { try { return fs.statSync(path.join(STEP2_DIR, file)).mtimeMs; } catch { return 0; } })();
     await new Promise((resolve) => {
       fs.createReadStream(path.join(STEP2_DIR, file))
         .pipe(csvParser())
@@ -155,6 +157,14 @@ async function loadStep2Data() {
               if (!(s in nameMap)) nameMap[s] = name;
               if (Number.isFinite(rank) && !(s in rankMap)) rankMap[s] = rank;
               if (sterm && !(s in searchTermMap)) searchTermMap[s] = sterm;
+              // 🔴 2026-08-24 — keep EVERY (mtime, rank) so the gate can ask "what was the rank when
+              // THIS video was made?". rankMap above is newest-CSV-wins, which compared a finished
+              // video against a scrape taken AFTER it. Solar 101: 08-09→44, 08-20→33 (the build),
+              // 08-22→32, 08-23→32 (what the gate read) ⇒ "overlay #33, expected #32". Both numbers
+              // were right for their own date; the COMPARISON was not. Ranks mostly improve over time,
+              // so the newer expectation sits below the older overlay — which is why 28 of 30
+              // mismatches read "worse than expected" (+7.6 mean).
+              if (Number.isFinite(rank)) (rankHistory[s] || (rankHistory[s] = [])).push({ mtime: fileMtime, rank });
             }
           }
         })
@@ -162,7 +172,7 @@ async function loadStep2Data() {
         .on('error', resolve);
     });
   }
-  return { rankMap, nameMap, searchTermMap };
+  return { rankMap, nameMap, searchTermMap, rankHistory };
 }
 
 // Prefer a clean business-name slug; fall back to filename slug.
@@ -521,7 +531,7 @@ async function main() {
 
   ensureDir(LANDING_OUT_DIR);
 
-  const { rankMap: step2Ranks, nameMap: step2Names, searchTermMap: step2SearchTerms } = await loadStep2Data();
+  const { rankMap: step2Ranks, nameMap: step2Names, searchTermMap: step2SearchTerms, rankHistory: step2RankHistory } = await loadStep2Data();
 
   let built = 0;
   let airtableWrites = 0;
@@ -553,7 +563,22 @@ async function main() {
     //
     // 1) ACCEPTANCE GATE (deterministic, fail-CLOSED): is the video actually the thing we promised —
     //    card open, real hero photo, rank overlay, city zoom? Runs first: it's local, free and precise.
+    // 🔴 2026-08-24 — COMPARE THE VIDEO AGAINST THE SCRAPE IT WAS BUILT FROM.
+    // step-3 stamps the overlay from the Map Rank in ITS input CSV. This used to consult a global
+    // newest-CSV-wins map, so a video captured 08-20 (rank 33) was judged against an 08-23 scrape
+    // (rank 32) and rejected: "overlay #33, expected #32". Neither number was wrong — the COMPARISON
+    // was. 31 mismatches over three nights, 28 of 30 skewed one way (+7.6 mean), because ranks improve
+    // over time so a newer expectation always sits below an older overlay. Every rejection threw away a
+    // CORRECT video after a full render.
+    // Use the newest CSV that already existed when this MP4 was written (60s slack for same-run writes).
     const expectedRank = (() => {
+      let vTime = 0;
+      try { vTime = fs.statSync(v.fullPath).mtimeMs; } catch { /* fall through */ }
+      const hist = (step2RankHistory?.[slug] || step2RankHistory?.[fileSlug] || []);
+      if (vTime && hist.length) {
+        const before = hist.filter((h) => h.mtime <= vTime + 60000).sort((a, b) => b.mtime - a.mtime);
+        if (before.length) return before[0].rank;
+      }
       const csv = parseInt(step2Ranks[slug] ?? step2Ranks[fileSlug], 10);
       if (Number.isFinite(csv)) return csv;
       const at = parseInt(airtableRecord?.fields?.["Map Rank"], 10);

@@ -357,6 +357,16 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-24 — the acceptance gate judged a video against a scrape taken AFTER it. Solar 101:
+# overlay #33 (built from the 08-21 scrape) vs expected #32 (the 08-24 scrape) → correct video rejected.
+# 31 mismatches in three nights, 28 of 30 one-directional (+7.6) because ranks improve over time.
+echo ">>> pre-flight: rank comparison is time-aware" | tee -a "$LOGFILE"
+node scripts/check-rank-comparison-is-time-aware.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: rank comparison regressed — correct videos would be rejected after a full render. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then
