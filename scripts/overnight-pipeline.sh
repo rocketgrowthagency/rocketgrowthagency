@@ -337,6 +337,26 @@ if [ "${_grc:-1}" -ne 0 ]; then
   exit 1
 fi
 
+# 🔴 2026-08-24 — Chris after three nights away: "did you auto send them to the chat like you're
+# supposed to without me asking?" No. The summary linked the overnight report but not the VIDEO-LINKS
+# file — the one he opens every morning. He had to ask three days running.
+echo ">>> pre-flight: morning summary carries the video-links file" | tee -a "$LOGFILE"
+node scripts/check-summary-has-video-links.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: morning summary lost its video-links line — Chris would have to ask again. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
+# 🔴 2026-08-24 — a CLEAR-BACKLOG flag meant for a one-off drain sat 4 days, drove 8-13 searches/night
+# instead of 1, exhausted every worked pair and tripped the breaker. alert_skip() DID fire — into a log
+# file and a macOS notification Chris never sees. Drift must reach the morning report.
+echo ">>> pre-flight: operational drift reaches the morning report" | tee -a "$LOGFILE"
+node scripts/check-drift-surfaces.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
+if [ "${_grc:-1}" -ne 0 ]; then
+  echo "✗ FATAL: drift reporting regressed — a stale flag could silently change the cadence again. Aborting." | tee -a "$LOGFILE"
+  exit 1
+fi
+
 echo ">>> pre-flight: sponsored-card filter regression" | tee -a "$LOGFILE"
 node scripts/check-sponsored-card-filter.mjs 2>&1 | tee -a "$LOGFILE"; _grc=${PIPESTATUS[0]}
 if [ "${_grc:-1}" -ne 0 ]; then

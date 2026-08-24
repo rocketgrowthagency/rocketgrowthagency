@@ -68,6 +68,12 @@ function summary(date) {
     `| Failed | ${count(s, 'Failed / gated')} |`,
     ``,
     `📄 [${rel}](${rel}) — Cmd+Shift+V for the clickable preview`,
+    // 🔴 2026-08-24 — THE VIDEO-LINKS REPORT MUST BE IN THE FIRST THING CHRIS SEES.
+    // Chris: "did you auto send them to the chat like you're supposed to without me asking?" — no. The
+    // summary linked the overnight REPORT but not the overnight-VIDEOS file, which is the one he
+    // actually opens every morning to review the night's work. He had to ask for it three days running.
+    // A report that omits the thing it exists to deliver is not a report.
+    ...videosLink(date),
     ``,
     `**Completed videos (${count(s, 'Videos deployed')})** — click to review:`,
     ...deployedLinks(s, count(s, 'Videos deployed')),
@@ -102,15 +108,38 @@ function unpublishedLine() {
   return out;
 }
 
+
+// 🔴 2026-08-24 — OPERATIONAL DRIFT BELONGS IN THE MORNING REPORT.
+// A CLEAR-BACKLOG flag meant for a one-off drain sat for four days, drove 8–13 searches a night
+// instead of 1, exhausted every worked Culver City pair and tripped the circuit breaker. The system
+// DID notice — alert_skip() wrote a log line and fired a macOS notification, neither of which Chris
+// ever sees. The one artefact he reads every morning said nothing.
+// An alert that lands somewhere nobody looks is not an alert.
+function driftLines() {
+  let raw = '';
+  try {
+    raw = execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-operational-drift.mjs'), '--json'],
+      { encoding: 'utf8', timeout: 60000 });
+  } catch (err) { raw = typeof err?.stdout === 'string' ? err.stdout : ''; }
+  if (!raw.trim()) return [];
+  let d; try { d = JSON.parse(raw); } catch { return []; }
+  const f = d.findings || [];
+  if (!f.length) return [];
+  const out = ['', '⚙️ **Operational drift**'];
+  for (const x of f) out.push(`- ${x.severity === 'high' ? '🔴' : '⚠️'} ${x.msg}  →  _${x.fix}_`);
+  return out;
+}
+
 function nightOutcome() {
   const prod = productivityLine();
   const verdict = verdictLine();
   const unpub = unpublishedLine();
-  if (!prod.length) return [...verdict, ...unpub];
+  const drift = driftLines();
+  if (!prod.length) return [...verdict, ...unpub, ...drift];
   // A dead window means the night was NOT fine, whatever the lead-level verdict says. Drop the
   // all-clear but keep a real "needs you" verdict, which is still true and additive.
   const kept = verdict.filter((l) => !/^✅ No action needed/.test(l.trim()));
-  return [...prod, ...kept, ...unpub];
+  return [...prod, ...kept, ...unpub, ...drift];
 }
 
 // 🔴 2026-08-21 — "Completed videos: 0" must never again arrive without a REASON.
@@ -155,6 +184,25 @@ function productivityLine() {
 // one line that distinguishes "handled" from "stopped retrying". Best-effort — if the verdict can't be
 // computed (no network / Airtable down) the summary still prints, because the locked report format is
 // the load-bearing part and must never be blocked by an advisory extra.
+
+// The per-night video-links file: reports/overnight-videos/YYYY/MM-Month/DD_overnight-videos_DATE.md
+// Filed by the night a run STARTED (a run that finishes after midnight still belongs to its start date).
+// Returns [] when the file is absent so a missing artefact can never break the locked report format —
+// but says so loudly, because silence would read as "no videos" when it means "file not written".
+function videosLink(date) {
+  const d = new Date(`${date}T12:00:00Z`);
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const rel = `reports/overnight-videos/${d.getUTCFullYear()}/${mm}-${MONTHS[d.getUTCMonth()]}/${dd}_overnight-videos_${date}.md`;
+  try {
+    if (!fs.existsSync(path.join(WEBSITE, rel))) {
+      return [`🎬 ⚠️ video-links file not written for ${date} (expected ${rel})`];
+    }
+  } catch { return []; }
+  return [`🎬 **[${rel}](${rel})** — every video from this night, grouped by search`];
+}
+
 function verdictLine() {
   try {
     const out = execFileSync('node', [path.join(SCRAPER, 'scripts', 'overnight-verdict.mjs'), '--brief'],
