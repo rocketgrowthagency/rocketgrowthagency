@@ -19,11 +19,28 @@
  */
 import { execFileSync } from 'node:child_process';
 
+// `-w %{http_code}` so the STATUS is available, not just "did curl connect". Without it a server
+// answering 404 looks identical to one serving the real site — see the status rules in verdict().
+// Exported so the gate can test the REAL classification without a network. The sandbox blocks curl to
+// both external hosts and localhost, so any fixture-server test would report the sandbox's rules as
+// our regression. Pure logic, testable directly — the alternative is a gate that asserts a COPY of
+// this table and therefore passes after the real one drifts.
+//
+// 🔒 4xx/5xx codes NOT listed here are deliberately transient: 403/429/5xx mean the server is fending
+// off a bot but still serves a real browser. Parking those would drop good prospects.
+export const permanentReason = (code) => ({
+  402: 'payment required (site suspended)',
+  404: 'page not found',
+  410: 'gone',
+  451: 'unavailable for legal reasons',
+}[code] || null);
+
 const tryOnce = (url) => {
   try {
-    execFileSync('curl', ['-sS', '-o', '/dev/null', '--max-time', '15', '--retry', '0', url],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    return { ok: true };
+    const code = execFileSync('curl',
+      ['-sS', '-L', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '15', '--retry', '0', url],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    return { ok: true, code: Number(code) || 0 };
   } catch (e) { return { ok: false, err: String(e.stderr || e.message || '') }; }
 };
 
@@ -42,7 +59,22 @@ const verdict = (url) => {
   try { host = new URL(url).hostname; } catch { return { url, state: 'invalid-url' }; }
   if (!host || !host.includes('.')) return { url, state: 'invalid-url' };
   const a = tryOnce(url);
-  if (a.ok) return { url, state: 'reachable' };
+  if (a.ok) {
+    // 🔴 2026-08-25 — REACHABLE IS NOT AUDITABLE. This check only ever asked "can a client connect?",
+    // so a live server handing back an error page counted as reachable. Measured on the solar batch:
+    //   gosolarwithaugust.com    402  (Payment Required — site suspended)
+    //   www.bruinsolar.com       404
+    //   bestlosangelessolarpanels.com  timeout
+    // All three were called "reachable", so each paid a full step-2.5 audit, a step-3 capture and a
+    // step-6 voiceover before dying at `missing: website` — 6 of the 9 failures that night.
+    //
+    // A PERMANENT status can never become a website audit, and filming it would show a prospect their
+    // own broken page. Park those. The transient list below is unchanged and deliberate: 403/503/429
+    // mean the server is fending off a bot but still serves a real browser.
+    const why = permanentReason(a.code);
+    if (why) return { url, state: 'unbuildable', why: `HTTP ${a.code} — ${why}` };
+    return { url, state: 'reachable', why: a.code ? `HTTP ${a.code}` : '' };
+  }
   const err = a.err;
   // Hard, permanent failures — no client can negotiate a connection.
   if (/handshake failure|sslv3 alert|SSL routines|wrong version number|unsupported protocol|no alternative certificate/i.test(err))
