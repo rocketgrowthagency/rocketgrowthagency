@@ -1,0 +1,33 @@
+{
+  "searchTerm": "Plastic surgeons in Santa Monica, CA",
+  "auditedDate": "2026-08-25",
+  "source": "serpapi",
+  "leadsAudited": 10,
+  "categoryDistributionTop10": {
+    "Plastic surgery clinic": 3,
+    "Plastic surgeon": 7
+  },
+  "categoryDistributionTop5": {
+    "Plastic surgery clinic": 2,
+    "Plastic surgeon": 3
+  },
+  "categoryDistributionTop3": {
+    "Plastic surgery clinic": 2,
+    "Plastic surgeon": 1
+  },
+  "majorityCategoryTop10": "Plastic surgeon",
+  "majorityCategoryTop5": "Plastic surgeon",
+  "majorityCategoryTop3": "Plastic surgery clinic",
+  "reviewsTop10": {
+    "min": 3,
+    "max": 244,
+    "median": 64,
+    "p25": 56,
+    "p75": 111
+  },
+  "reviewsTop3Avg": 140,
+  "ratingTop10Median": 4.85,
+  "ratingTop3Avg": 4.8,
+  "findingsDisabled": [],
+  "notes": null
+}
