@@ -46,6 +46,7 @@ const NOT_PREFLIGHT = {
   'check-operational-drift.mjs':  'advisory; surfaces in the morning report and must never block a run',
   'check-orphan-videos.mjs':      'reported via check-operational-drift so orphans reach the morning report',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
+  'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
 };
 
 if (!fs.existsSync(PIPELINE)) fail('overnight-pipeline.sh not found.');
