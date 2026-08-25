@@ -117,6 +117,29 @@ for SLUG in "$@"; do
     reap_chrome; note_fail "$SLUG" "not-publishable"; FAILED+=("$SLUG:not-publishable"); continue
   fi
 
+  # 🔴 2026-08-24 — NO WEBSITE ⇒ 6/6 IS ARITHMETICALLY IMPOSSIBLE. Two of the six signals are
+  # `website.websiteAuditVerified` and `mobile.mobileAuditVerified` (scripts/lib/verification-signals.mjs).
+  # With no site to audit, both are permanently false, so the ceiling is 4/6 and the gate ALWAYS blocks.
+  # Measured: kings-pest-control-culver-city paid a full step-2.5 audit, a step-3 capture and a step-6
+  # voiceover before failing at exactly 4/6 — website:false, mobile:false. Across the 200 most recent
+  # step-2 CSVs, 28 emailable leads have no website at all.
+  # There is nothing to discover here at runtime: the answer is in the CSV before anything is spent.
+  _site=$(python3 -c "
+import csv,sys
+try:
+    r=list(csv.DictReader(open(sys.argv[1],encoding='utf-8',errors='replace')))[0]
+    low={(k or '').strip().lower():(v or '').strip() for k,v in r.items()}
+    print(low.get('website') or low.get('discovered website') or '')
+except Exception:
+    print('UNKNOWN')" "$CSV" 2>/dev/null)
+  # 'UNKNOWN' = the CSV could not be read. That is NOT the same as "no website" — never turn an
+  # unreadable input into a verdict ([[feedback-indeterminate-is-not-a-finding]]). Fall through and let
+  # the normal pipeline decide.
+  if [ -z "$_site" ]; then
+    say "  ✗ no website (and none discovered) — 6/6 impossible (website+mobile unverifiable), skipping BEFORE the spend"
+    reap_chrome; note_fail "$SLUG" "no-website"; FAILED+=("$SLUG:no-website"); continue
+  fi
+
   RUN="${DATE}_${SUFFIX%.csv}"
 
   # 🔴 2026-08-21 — A CACHED AUDIT MAKES A 6/6 FAILURE PERMANENT.
