@@ -1449,6 +1449,78 @@ function haversineKm(lat1, lng1, lat2, lng2) {
     Math.sin(r(lat2 - lat1) / 2) ** 2 +
     Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lng2 - lng1) / 2) ** 2));
 }
+// 🔴 2026-08-24 — DETECTION WITHOUT RECOVERY IS A LOST LEAD.
+// The geometric guardrail above is correct and stays. But it only ever REFUSED: every statewide-fit
+// viewport became a dead lead. Measured on the 08-23 regression, the correlation is exact:
+//
+//     zoom 17 / 13  →  offset 0 km    (10 measurements, all fine)
+//     zoom 10       →  offset 30, 32, 41, 205 km   (4 measurements, all refused)
+//
+// 205km is not "the wrong place", it is a whole region — Google fitted the results viewport to ALL
+// results and never flew to the business. Zoom presses then zoom toward the VIEWPORT CENTRE, so the
+// map converges on a crisp view of nowhere.
+//
+// Nothing ever pulled the map BACK to the business. We have its exact coordinates, and Maps is a
+// Web Mercator projection, so the required pan is arithmetic: convert both points to world pixels at
+// the live zoom, drag the canvas by the difference.
+//
+// 🔒 STRICTLY NON-REGRESSIVE. It runs only when the offset already EXCEEDS the limit (i.e. the lead
+// was going to be refused anyway), never touches a map that is already correct, and the guardrail
+// still has the final word afterwards. Worst case it changes nothing and the lead fails exactly as
+// it does today — it cannot turn a passing capture into a failing one.
+// It also does NOT weaken the gate: MAP_CENTRE_MAX_KM is untouched
+// ([[feedback-blank-hero-live-capture-root-cause]] — never weaken a gate to pass a video).
+const _worldPx = (lat, lng, z) => {
+  const size = 256 * Math.pow(2, z);
+  const x = ((lng + 180) / 360) * size;
+  const s = Math.sin((lat * Math.PI) / 180);
+  const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * size;
+  return { x, y };
+};
+
+async function recentreMapOnBusiness(page, meta, label = 'detail') {
+  const lat = Number(meta?.lat), lng = Number(meta?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const c = readMapCentreFromUrl(page);
+    if (!c) return null;
+    const off = haversineKm(lat, lng, c.lat, c.lng);
+    if (off <= MAP_CENTRE_MAX_KM) return off;          // already good — nothing to do
+
+    const from = _worldPx(c.lat, c.lng, c.z);
+    const to = _worldPx(lat, lng, c.z);
+    let dx = to.x - from.x, dy = to.y - from.y;
+
+    // A pan larger than the viewport cannot be done in one drag. Move in bounded steps instead of
+    // attempting an impossible drag and concluding the map is stuck.
+    const vp = page.viewport() || { width: 1440, height: 900 };
+    const maxStep = Math.min(vp.width, vp.height) * 0.35;
+    const dist = Math.hypot(dx, dy);
+    if (dist > maxStep) { const k = maxStep / dist; dx *= k; dy *= k; }
+
+    // Drag the MAP CANVAS from a point on the map side of the layout, well clear of the detail card
+    // (left ~40%) and of the zoom controls in the bottom-right.
+    const sx = Math.round(vp.width * 0.72), sy = Math.round(vp.height * 0.42);
+    const ex = Math.round(sx - dx), ey = Math.round(sy - dy);
+    console.log(`   → ${label}: recentring map — off ${off.toFixed(1)}km, pan ${Math.round(-dx)},${Math.round(-dy)}px (attempt ${attempt}/3)`);
+    try {
+      await page.mouse.move(sx, sy);
+      await page.mouse.down();
+      // Several intermediate moves: Maps ignores a single teleporting drag.
+      for (let i = 1; i <= 6; i++) {
+        await page.mouse.move(sx + ((ex - sx) * i) / 6, sy + ((ey - sy) * i) / 6);
+        await sleep(45);
+      }
+      await page.mouse.up();
+    } catch { return null; }
+    await sleep(1100);                                  // let the URL + tiles settle
+  }
+
+  const c = readMapCentreFromUrl(page);
+  return c ? haversineKm(lat, lng, c.lat, c.lng) : null;
+}
+
 // Always LOGS the measured offset, never just a pass/fail boolean — a constant diagnostic string is
 // how the dead scale-bar reader hid for a week (99/99 `scale≈unreadable`). A number builds a baseline.
 // Returns the offset in km, or null when the business has no usable coordinates.
@@ -1473,7 +1545,21 @@ async function mapCentreOffsetKm(page, meta, label = 'detail') {
 // Skips silently when coordinates or the URL anchor are unavailable: absent data is not evidence of a
 // wrong location, and failing on it would reject good leads.
 async function assertMapCentredOnBusiness(page, meta, label, businessName) {
-  const off = await mapCentreOffsetKm(page, meta, label);
+  let off = await mapCentreOffsetKm(page, meta, label);
+  // Recovery lives HERE, inside the assertion, so every capture path gets it. There are 6 call sites;
+  // wiring it at one of them would leave the other 5 shipping the defect — the same shape as the
+  // `_cardOpenedInPage` bug this file already documents.
+  // Only fires on a map that is ALREADY over the limit, so it can never disturb a good capture.
+  if (off !== null && off > MAP_CENTRE_MAX_KM) {
+    const recovered = await recentreMapOnBusiness(page, meta, label);
+    if (recovered !== null && recovered <= MAP_CENTRE_MAX_KM) {
+      console.log(`   → ${label}: map RECOVERED by recentring — ${off.toFixed(1)}km → ${recovered.toFixed(1)}km`);
+      off = recovered;
+    } else if (recovered !== null) {
+      console.log(`   → ${label}: recentring did not reach the business (${off.toFixed(1)}km → ${recovered.toFixed(1)}km) — failing as before`);
+      off = recovered;
+    }
+  }
   if (off !== null && off > MAP_CENTRE_MAX_KM) {
     throw new Error(
       `[step-3 GUARDRAIL] ${label}: map centre is ${off.toFixed(1)}km from ${businessName || 'the business'} ` +
