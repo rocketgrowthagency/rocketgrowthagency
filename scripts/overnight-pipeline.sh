@@ -1635,15 +1635,79 @@ if [ "$EMAILABLE_TOTAL" != "n/a" ]; then
   fi
 fi
 
+# 🔴 2026-08-25 — PERSIST THIS SEARCH'S OWN NUMBERS.
+# The report headline describes ONE search — the last one to finish — while a night routinely runs
+# several. On 2026-08-24 four searches ran (Plastic surgeons/Santa Monica, Solar installers/Culver
+# City, Pest control/Culver City, Wedding photographers/Culver City) and the report said
+# "Category: Pest control · Scraped 55 · Emailable 7 · Deployed 5". Every other search was invisible.
+#
+# Chris, repeatedly: he wants scraped / emailable / built / issues PER CATEGORY, with the business
+# type AND city. The counts existed; they were simply never written down per search, so by the time
+# the report was assembled only the last search's variables survived.
+#
+# Each search now records its own four numbers next to the deployed/failed lists it already keeps.
+printf 'category=%s\ncity=%s\nscraped=%s\nemailable=%s\ndeployed=%s\nfailed=%s\nfinished=%s\n' \
+  "$REPORT_CATEGORY" "$REPORT_LOCATION" "$SCRAPED_TOTAL" "$EMAILABLE_TOTAL" \
+  "$DEPLOYED_TOTAL" "$FAILED_TOTAL" "$TIME_END" > "$ACCUM_DIR/stats.txt" 2>/dev/null || true
+
+# Build the per-category table from EVERY search that ran in this night's window, newest last.
+# Reads the stats each search persisted above, so a search that crashed before writing its stats
+# shows as "—" rather than being silently dropped from the night's totals.
+PER_CATEGORY_TABLE=$(python3 - "$SCRAPER_DIR/output/run-accum" "$DATE_STAMP" <<'PYEOF'
+import os, sys, datetime
+base, stamp = sys.argv[1], sys.argv[2]
+try: d0 = datetime.datetime.strptime(stamp, "%Y-%m-%d")
+except Exception: d0 = None
+rows, tot = [], [0, 0, 0, 0]
+if os.path.isdir(base):
+    names = sorted(os.listdir(base))
+    for n in names:
+        # a night spans midnight, so accept this date AND the next
+        if d0:
+            ok = n.startswith(stamp) or n.startswith((d0 + datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
+            if not ok: continue
+        p = os.path.join(base, n, "stats.txt")
+        s = {}
+        if os.path.exists(p):
+            for ln in open(p, encoding="utf-8", errors="replace"):
+                if "=" in ln:
+                    k, v = ln.split("=", 1); s[k.strip()] = v.strip()
+        else:
+            # No stats file: fall back to the lists this search DID keep, and mark the gap.
+            def cnt(f):
+                q = os.path.join(base, n, f)
+                return sum(1 for _ in open(q, encoding="utf-8", errors="replace")) if os.path.exists(q) else 0
+            s = {"category": n, "city": "", "scraped": "—", "emailable": "—",
+                 "deployed": str(cnt("deployed.dedup.txt")), "failed": str(cnt("failed.dedup.txt"))}
+        rows.append(s)
+        for i, k in enumerate(("scraped", "emailable", "deployed", "failed")):
+            try: tot[i] += int(s.get(k, 0))
+            except (TypeError, ValueError): pass
+if not rows:
+    print("_No per-search records for this window._")
+else:
+    print("| # | Business type | City | Scraped | With email | Videos OK | Issues |")
+    print("|---|---|---|---|---|---|---|")
+    for i, s in enumerate(rows, 1):
+        print(f"| {i} | {s.get('category','—')} | {s.get('city','—')} | {s.get('scraped','—')} "
+              f"| {s.get('emailable','—')} | {s.get('deployed','0')} | {s.get('failed','0')} |")
+    print(f"| | **{len(rows)} categories** | | **{tot[0]}** | **{tot[1]}** | **{tot[2]}** | **{tot[3]}** |")
+PYEOF
+)
+
 cat > "$REPORT" <<EOF
 # Overnight Pipeline Report — $DATE_STAMP
 
-**Category:** $REPORT_CATEGORY
-**Location:** $REPORT_LOCATION
 **Scrape date:** $DATE_STAMP
 **Started:** $TIME_START  ·  **Finished:** $TIME_END  ·  **Duration:** $DURATION
 
-## Summary
+## Per category — every search this night
+
+$PER_CATEGORY_TABLE
+
+## Last search — $REPORT_CATEGORY, $REPORT_LOCATION
+
+> Detail below covers ONLY this search. The whole night is the table above.
 
 | Metric | Count |
 |---|---|
