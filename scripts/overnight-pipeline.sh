@@ -378,6 +378,10 @@ node scripts/check-review-count-probe-is-scoped.mjs || exit 1
 node scripts/check-publishability-precedes-build.mjs || exit 1
 node scripts/check-map-recentre-recovery.mjs || exit 1
 node scripts/check-no-website-skipped-early.mjs || exit 1
+node scripts/check-every-gate-is-wired.mjs || exit 1
+node scripts/check-locked-pages.mjs || exit 1
+node scripts/check-verification-system.mjs || exit 1
+node scripts/check-send-dedup-guard.mjs || exit 1
 if [ "${_grc:-1}" -ne 0 ]; then
   echo "✗ FATAL: review fallback regressed — a video could state another business's reviews. Aborting." | tee -a "$LOGFILE"
   exit 1
