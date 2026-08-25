@@ -23,6 +23,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -113,6 +114,56 @@ try {
     });
   }
 } catch { /* no queue file — nothing to judge */ }
+
+// ── 3b. Orphaned videos — full builds that can never send an email ───────────────────────────────
+// 🔴 2026-08-24 — `check-orphan-videos.mjs` exists, is accurate, and is wired into NOTHING. It fails
+// only when someone runs it by hand, which is the same shape as the stale-flag alert above: the
+// system knew, and the one artefact Chris reads every morning said nothing.
+// Each orphan is a complete build — scrape, capture, voiceover, branding, deploy — that can never
+// produce an email. That is the most expensive possible way to waste a night.
+// Only RECENT orphans are reported: the historical set is mostly residue of intentional dedup/DNC
+// purges, and a number that never moves teaches everyone to ignore it.
+try {
+  const out = execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-orphan-videos.mjs')],
+    { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+  const m = out.match(/recent <14d:\s*(\d+)/);
+  const n = m ? Number(m[1]) : 0;
+  if (n > 0) {
+    const who = [...out.matchAll(/🔴 \/v\/([a-z0-9-]+)\//g)].map((x) => x[1]).slice(0, 4);
+    findings.push({
+      kind: 'orphan-videos', severity: n >= 5 ? 'high' : 'medium',
+      msg: `${n} video(s) built in the last 14 days have NO lead behind them${who.length ? ` (${who.join(', ')}${n > who.length ? ', …' : ''})` : ''}.`,
+      fix: 'Each is a full build that can never be emailed. Re-scrape the search to recreate the lead, or take the video down.',
+    });
+  }
+} catch (e) {
+  // check-orphan-videos exits non-zero WHEN IT FINDS ORPHANS, so a non-zero status is the normal
+  // signal, not an error — parse its output either way.
+  //
+  // 🔴 But distinguish "the child ran and reported orphans" from "we never ran it at all". The first
+  // version of this block referenced execFileSync without importing it; the ReferenceError landed
+  // here, `e.stdout` was undefined, and the check silently reported NO ORPHANS while 4 existed.
+  // A catch that treats "I could not look" as "there is nothing there" is the same silent-pass class
+  // this whole file exists to fight ([[feedback-indeterminate-is-not-a-finding]]).
+  if (e && e.stdout === undefined) {
+    findings.push({
+      kind: 'orphan-check-broken', severity: 'high',
+      msg: `The orphan check could not be run: ${String(e.message || e).slice(0, 120)}`,
+      fix: 'Fix scripts/check-orphan-videos.mjs (or this caller) — an unrunnable check reads as a clean result.',
+    });
+  }
+  const out = `${e.stdout || ''}`;
+  const m = out.match(/recent <14d:\s*(\d+)/);
+  const n = m ? Number(m[1]) : 0;
+  if (n > 0) {
+    const who = [...out.matchAll(/🔴 \/v\/([a-z0-9-]+)\//g)].map((x) => x[1]).slice(0, 4);
+    findings.push({
+      kind: 'orphan-videos', severity: n >= 5 ? 'high' : 'medium',
+      msg: `${n} video(s) built in the last 14 days have NO lead behind them${who.length ? ` (${who.join(', ')}${n > who.length ? ', …' : ''})` : ''}.`,
+      fix: 'Each is a full build that can never be emailed. Re-scrape the search to recreate the lead, or take the video down.',
+    });
+  }
+}
 
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
