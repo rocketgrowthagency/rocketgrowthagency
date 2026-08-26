@@ -22,6 +22,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSendable, queueBreakdown } from './lib/sendable.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.dirname(HERE);
@@ -37,8 +38,17 @@ const TABLE = env.AIRTABLE_TABLE_NAME || 'Leads';
 if (!KEY || !BASE) { console.error('✗ missing Airtable credentials — cannot judge the queue'); process.exit(2); }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const fields = ['Business Name', 'Video URL', 'Email', 'Email Sent Date']
-  .map((f) => `fields%5B%5D=${encodeURIComponent(f)}`).join('&');
+
+// 🔴 EVERY field the sendable rule reads must be requested. The first version asked for only
+// Business Name / Video URL / Email / Email Sent Date, so Suppressed, Status, Draft Created and
+// Replied all arrived UNDEFINED — and undefined passes every "not suppressed" style test. The gate
+// then reported 1,152 queued with 0 suppressed, against a true 184 queued and 229 suppressed.
+//
+// A projection that omits a field the filter depends on does not error. It silently answers a
+// different question ([[feedback-dead-check-selector-gap]]).
+const REQUIRED = ['Business Name', 'Video URL', 'Email', 'Email Sent Date',
+                  'Suppressed', 'Email Status', 'Status', 'Draft Created', 'Replied'];
+const fields = REQUIRED.map((f) => `fields%5B%5D=${encodeURIComponent(f)}`).join('&');
 
 let all = [], offset;
 try {
@@ -57,21 +67,45 @@ try {
   process.exit(2);
 }
 
-const queued = all.filter((r) => r.fields['Video URL'] && r.fields['Email'] && !r.fields['Email Sent Date']);
+// 🔴 2026-08-26 — WAS MEASURING THE WRONG QUEUE. This counted Video URL + Email + no send date and
+// got 425, while daily-action-report.mjs published 184. The 241 difference was 229 SUPPRESSED, 29
+// BOUNCED and 16 already drafted — none of which ever receive a send date. The gate would therefore
+// have reported "still draining" forever and never released the pause.
+//
+// A restart condition that can never be satisfied is not a safety check, it is an outage. Both files
+// now share lib/sendable.mjs so they cannot disagree again.
+// If a rule field is missing from every single record, the projection is wrong and the verdict is
+// meaningless — abort rather than report a confident wrong number.
+{
+  const seen = new Set();
+  all.forEach((r) => Object.keys(r.fields || {}).forEach((k) => seen.add(k)));
+  const missing = ['Suppressed', 'Status', 'Draft Created'].filter((k) => !seen.has(k));
+  if (all.length && missing.length === 3) {
+    console.error(`✗ none of ${missing.join(', ')} came back from Airtable — the field projection is`);
+    console.error('  broken, so every lead would look sendable. Refusing to judge the queue.');
+    process.exit(2);
+  }
+}
+const b = queueBreakdown(all);
+const queued = all.filter(isSendable);
 const sent = all.filter((r) => r.fields['Email Sent Date']);
-const PER_DAY = 50;
+const PER_DAY = 10;   // MEASURED, not the 50/day cap. See project_production_pause_2026-08-25.
 const days = Math.ceil(queued.length / PER_DAY);
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ leads: all.length, sent: sent.length, queued: queued.length, workingDays: days }, null, 2));
+  console.log(JSON.stringify({ leads: all.length, sent: sent.length, queued: queued.length, workingDays: days, breakdown: b }, null, 2));
   process.exit(queued.length === 0 ? 0 : 1);
 }
 
 console.log('\n===== SEND QUEUE =====');
 console.log(`  leads total     ${all.length}`);
 console.log(`  already emailed ${sent.length}`);
-console.log(`  QUEUED          ${queued.length}`);
-console.log(`  at ${PER_DAY}/day M–F   ~${days} working day(s) remaining`);
+console.log(`  QUEUED          ${queued.length}   (sendable — the daily report's own rule)`);
+console.log(`  ── not queued, and why ──`);
+console.log(`  suppressed      ${b.suppressed}`);
+console.log(`  bounced/invalid ${b.bounced}`);
+console.log(`  draft created   ${b.draftCreated}`);
+console.log(`  at ~${PER_DAY}/day M–F (measured)   ~${days} working day(s) remaining`);
 
 const paused = fs.existsSync(path.join(ROOT, 'output', 'PRODUCTION-PAUSED'));
 console.log(`  production      ${paused ? 'PAUSED' : 'RUNNING'}`);

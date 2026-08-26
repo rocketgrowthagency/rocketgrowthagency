@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSendable } from './lib/sendable.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = Object.fromEntries(fs.readFileSync(path.join(ROOT, '.env'), 'utf8').split('\n').filter(Boolean).map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }));
@@ -64,7 +65,10 @@ const touchCell = (r) => { const d = lastTouchDays(r); if (d === null) return 'â
 
 const cat = (c) => L.filter((r) => f(r, 'Lead Category') === c).sort((a, b) => (f(b, 'Lead Score') || 0) - (f(a, 'Lead Score') || 0));
 const hot = cat('Hot (SQL)'), warm = cat('Warm (MQL)'), engaged = cat('Engaged');
-const sendable = L.filter((r) => { const s = String(f(r, 'Status') || 'new').toLowerCase(); return !f(r, 'Suppressed') && has(r, 'Email') && !TERM.test(f(r, 'Email Status') || '') && f(r, 'Video URL') && (s === 'new' || s === '') && !f(r, 'Draft Created') && !has(r, 'Replied'); });
+// The sendable rule lives in lib/sendable.mjs so the pause-restart gate uses the SAME one.
+  // It used to live only here; the gate re-implemented it, counted suppressed and bounced leads,
+  // and would have kept production paused forever waiting on leads that can never send.
+  const sendable = L.filter(isSendable);
 // deliverability
 const sent7 = L.filter((r) => { const d = f(r, 'Email Sent Date'); return d && Date.parse(d) >= nowMs - 7 * D; });
 const bounced7 = sent7.filter((r) => TERM.test(f(r, 'Email Status') || ''));
