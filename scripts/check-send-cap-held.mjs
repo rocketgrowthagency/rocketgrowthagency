@@ -119,8 +119,8 @@ console.error(`   ${worst}: ${byDay[worst].length} sends in ${bursts} burst(s).`
 if (bursts > 1) {
   console.error('   More than one burst means the morning run executed twice. The script lock is');
   console.error('   tryLock — it stops CONCURRENT runs only, not a second run after the first ended.');
-  console.error('   Check: the once-per-day guard (LAST_OUTREACH_RUN_DATE) is present in the LIVE');
-  console.error('   Apps Script, and no duplicate trigger exists for runMorningOutreach or');
-  console.error('   createOutreachDrafts.');
+  console.error('   Check: the once-per-day guard (the MORNING_RUN_DATE comparison at the top of');
+  console.error('   runMorningOutreach) is present in the LIVE Apps Script, and no duplicate trigger');
+  console.error('   exists for runMorningOutreach or createOutreachDrafts. Guard pasted 2026-08-26.');
 }
 process.exit(1);
