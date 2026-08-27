@@ -381,6 +381,7 @@ node scripts/check-no-website-skipped-early.mjs || exit 1
 node scripts/check-every-gate-is-wired.mjs || exit 1
 node scripts/check-site-status-is-judged.mjs || exit 1
 node scripts/check-contract-matches-playbook.mjs || exit 1
+node scripts/check-send-cap-guards.mjs || exit 1
 node scripts/check-locked-pages.mjs || exit 1
 node scripts/check-verification-system.mjs || exit 1
 node scripts/check-send-dedup-guard.mjs || exit 1
