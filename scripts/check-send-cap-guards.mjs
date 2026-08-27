@@ -8,7 +8,7 @@
  *
  * 1. **A second run.** `runMorningOutreach` guards with `LockService.tryLock`, which blocks only
  *    CONCURRENT execution. The measured second run started 15–44 minutes AFTER the first finished, so
- *    the lock never engaged. Fixed with a once-per-day date stamp (`LAST_OUTREACH_RUN_DATE`).
+ *    the lock never engaged. Fixed with a once-per-day date stamp (`MORNING_RUN_DATE`).
  *
  * 2. **`countSentToday()` failing open.** It `break`-ed out of pagination on a non-200 (returning a
  *    PARTIAL count) and `return 0` in its catch. Either re-opens the budget: `cap - 45 = 5 more`, or
@@ -43,16 +43,22 @@ const src = raw.replace(/\/\*[\s\S]*?\*\//g, '')
   .split('\n').map((l) => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
 
 // ── 1. Once-per-day guard ───────────────────────────────────────────────────────────────────────
-if (!/LAST_OUTREACH_RUN_DATE/.test(src)) {
+if (!/MORNING_RUN_DATE/.test(src)) {
   fail('the once-per-day guard is gone. tryLock only blocks CONCURRENT runs — a second run 15-44\n' +
        '         minutes later sent 5 more Day-1 emails every day, breaching the cap.');
 }
-if (!/setProperty\('LAST_OUTREACH_RUN_DATE'/.test(src)) fail('the run date is never STORED, so the guard can never trip.');
-if (!/getProperty\('LAST_OUTREACH_RUN_DATE'\)\s*===\s*__today/.test(src)) fail('the stored date is never COMPARED to today.');
+if (!/setProperty\('MORNING_RUN_DATE'/.test(src)) fail('the run date is never STORED, so the guard can never trip.');
+// runMorningOutreach must CHECK the property, not only set it. That was the entire gap: the
+// 2026-08-06 fix stamped MORNING_RUN_DATE and only ensureMorningSendRan_ read it, so a duplicate
+// trigger calling runMorningOutreach directly sailed straight past.
+if (!/getProperty\('MORNING_RUN_DATE'\)\s*===\s*__today/.test(src)) {
+  fail('runMorningOutreach never COMPARES MORNING_RUN_DATE to today — it only sets it. A duplicate\n' +
+       '         trigger then runs a second full send, which is the measured 55/day breach.');
+}
 // Scope to the guard's own block. `releaseLock()` also appears in the normal finally, so a
 // whole-file search passes even when the guard leaks the lock — the sabotage proved it.
 {
-  const gi = src.indexOf("getProperty('LAST_OUTREACH_RUN_DATE')");
+  const gi = src.indexOf("getProperty('MORNING_RUN_DATE')");
   const guardBlock = gi === -1 ? '' : src.slice(gi, src.indexOf('return;', gi) + 8);
   if (!/__runLock\.releaseLock\(\)/.test(guardBlock)) {
     fail('the guard returns WITHOUT releasing the script lock. Every later run would then bail on\n' +
