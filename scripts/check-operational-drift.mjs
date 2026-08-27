@@ -165,6 +165,30 @@ try {
   }
 }
 
+// ── 3c. Daily send cap — domain protection is the #1 standing constraint ─────────────────────────
+// 🔴 2026-08-26 — the cap was breached every weekday for at least two weeks (55-56 against 50) and
+// nothing noticed, because the only number anyone looked at was Lead `Email Sent Date` (first touch,
+// ~10/day). A cap nobody measures is a hope. This puts the real figure in the morning report.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-send-cap-held.mjs'), '--days=7'],
+    { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/CAP BREACHED on (\d+) of (\d+) day/);
+  if (m) {
+    const worst = [...out.matchAll(/(\d{4}-\d{2}-\d{2})\s+(\d+)\s+⚠/g)].map((x) => `${x[1]} ${x[2]}`).slice(-3);
+    findings.push({
+      kind: 'send-cap-breach', severity: 'high',
+      msg: `Daily send cap BREACHED on ${m[1]} of ${m[2]} day(s)${worst.length ? ` — ${worst.join(', ')} vs 50` : ''}.`,
+      fix: 'Domain protection is the #1 constraint. Check the once-per-day guard (LAST_OUTREACH_RUN_DATE) is in the LIVE Apps Script and that no duplicate trigger exists.',
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'send-cap-unknown', severity: 'medium',
+      msg: 'Could not read the Outreach Log to verify the daily send cap.',
+      fix: 'An unverifiable cap is not a held cap — check Airtable access.' });
+  }
+}
+
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
 // ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already
