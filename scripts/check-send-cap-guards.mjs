@@ -100,7 +100,39 @@ const cap = 50;
 if (Math.max(0, cap - Number.MAX_SAFE_INTEGER) !== 0) fail('arithmetic check failed — sentinel does not zero the budget.');
 ok('behavioural: COUNT_UNKNOWN drives the budget to 0 on both the shared and standalone paths');
 
-// ── 4. The live-outcome detector must still exist ───────────────────────────────────────────────
+// ── 4. Day-1 sends must be logged INLINE (root cause of the 08-20→08-25 breach) ─────────────────
+// createOutreachDrafts sent the Day-1 email and never wrote an Outreach Log row; syncSent backfilled
+// it ~40 min later. countSentToday() reads that log, so it undercounted by exactly the Day-1 batch:
+//   run 1: 45 follow-ups (logged inline) + 5 Day-1 (unlogged) → run 2 sees 45 → budget 5 → 55/day.
+// Every observed second burst was step1-ONLY, which is this and nothing else.
+{
+  const s = src.indexOf('function createOutreachDrafts');
+  if (s === -1) fail('createOutreachDrafts() is gone.');
+  const body = src.slice(s, src.indexOf('\n}', s) + 2);
+
+  if (!/logOutreach\(/.test(body)) {
+    fail('createOutreachDrafts no longer logs its sends inline. The Outreach Log then misses every\n' +
+         '         Day-1 send until the hourly sync backfills it, and countSentToday() undercounts by\n' +
+         '         exactly that many — which is the measured 55/day breach.');
+  }
+  // The two halves are ONE fix. Logging inline without stamping Latest Sent Date makes syncSent write
+  // a SECOND row for the same send; double rows inflate countSentToday and suppress real sends.
+  if (!/'Latest Sent Date'\]\s*=\s*iso\(new Date\(\)\)/.test(body)) {
+    fail('createOutreachDrafts logs inline but no longer stamps Latest Sent Date. syncSent dedupes on\n' +
+         '         that field, so without it EVERY Day-1 send gets logged twice — inflating\n' +
+         '         countSentToday() and silently suppressing real sends.');
+  }
+  ok('Day-1 sends are logged inline, and deduped against syncSent');
+}
+// The dedup that makes the above safe lives in syncSent. If it is ever removed, the inline log
+// becomes a double-write — so it is load-bearing for the fix above, not incidental.
+if (!/if \(lead\.fields\['Latest Sent Date'\] === sentIso\) continue;/.test(src)) {
+  fail("syncSent's same-day dedup (`Latest Sent Date === sentIso`) is gone. Day-1 sends are now\n" +
+       '         logged inline, so without this every one of them is written to the Outreach Log twice.');
+}
+ok('syncSent still dedupes same-day sends');
+
+// ── 5. The live-outcome detector must still exist ───────────────────────────────────────────────
 if (!fs.existsSync(path.join(HERE, 'check-send-cap-held.mjs'))) {
   fail('check-send-cap-held.mjs is missing. The repo guards protect the SOURCE; only that script\n' +
        '         measures whether the cap actually held in production.');
