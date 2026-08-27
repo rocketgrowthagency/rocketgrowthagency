@@ -180,12 +180,36 @@ try {
     findings.push({
       kind: 'send-cap-breach', severity: 'high',
       msg: `Daily send cap BREACHED on ${m[1]} of ${m[2]} day(s)${worst.length ? ` — ${worst.join(', ')} vs 50` : ''}.`,
-      fix: 'Domain protection is the #1 constraint. Check the once-per-day guard (LAST_OUTREACH_RUN_DATE) is in the LIVE Apps Script and that no duplicate trigger exists.',
+      fix: 'Domain protection is the #1 constraint. Check the once-per-day guard (the MORNING_RUN_DATE comparison at the top of runMorningOutreach) is in the LIVE Apps Script. Duplicate triggers were ruled out 2026-08-26 — listTriggers showed exactly 5.',
     });
   } else if (e.status === 2) {
     findings.push({ kind: 'send-cap-unknown', severity: 'medium',
       msg: 'Could not read the Outreach Log to verify the daily send cap.',
       fix: 'An unverifiable cap is not a held cap — check Airtable access.' });
+  }
+}
+
+// ── 3d. Duplicate send rows — the failure mode the 08-27 fix INTRODUCES ──────────────────────────
+// createOutreachDrafts now logs Day-1 sends inline, and syncSent skips them via `Latest Sent Date`.
+// If that dedup stops matching, every Day-1 send is logged TWICE — countSentToday() then reads double
+// and SUPPRESSES real sends. Fail-safe for the domain, but it presents as a mysteriously quiet send
+// day rather than an error, so nothing else would surface it.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-no-duplicate-send-rows.mjs'), '--days=7'],
+    { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/(\d+) DUPLICATE ROW GROUP\(S\)/);
+  if (m) {
+    findings.push({
+      kind: 'duplicate-send-rows', severity: 'high',
+      msg: `${m[1]} send(s) written to the Outreach Log TWICE — countSentToday() is reading roughly double.`,
+      fix: "syncSent's `Latest Sent Date === sentIso` dedup is not matching. Confirm createOutreachDrafts still stamps Latest Sent Date (check-send-cap-guards.mjs §4). Effect is suppressed sends, not over-sends.",
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'duplicate-send-rows-unknown', severity: 'medium',
+      msg: 'Could not check the Outreach Log for duplicate send rows.',
+      fix: 'Check Airtable access — a double-write would silently starve outreach.' });
   }
 }
 
