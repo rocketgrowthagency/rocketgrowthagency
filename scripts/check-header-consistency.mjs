@@ -69,12 +69,20 @@ for (const f of files) {
   let body;
   try { body = fs.readFileSync(path.join(WEBSITE, f), 'utf8'); } catch { continue; }
   if (body.includes('class="promo-bar"')) promoPages++;
-  // historical snapshots are frozen on purpose and are not served as pages
-  if (!f.startsWith('_site-snapshots/')) {
+  // Excluded on purpose:
+  //   _site-snapshots/  frozen historical captures, never served
+  //   mockup-*.html     standalone design mockups. They inline ALL their CSS because they are
+  //                     opened straight off disk (file://), where /style.css cannot resolve.
+  //                     They are not part of the served marketing site and share no chrome with it.
+  const isMockup = /(^|\/)mockup[^/]*\.html$/.test(f);
+  if (!f.startsWith('_site-snapshots/') && !isMockup) {
     for (const block of body.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []) {
       if (!PROMO_RULE.test(block)) continue;
       const hits = block.match(/\.promo-bar(?![\w-])[^{}]*\{[^}]*\}/g) || [];
-      const colours = [...new Set(hits.flatMap((h) => h.match(/#[0-9a-f]{3,6}/gi) || []))];
+      // only the BACKGROUND decides the banner colour — `color:#fff` is correct and must not
+      // be reported as "a non-red colour" (it was, before this).
+      const colours = [...new Set(hits.flatMap((h) =>
+        [...h.matchAll(/background(?:-color)?\s*:\s*(#[0-9a-f]{3,8})/gi)].map((m) => m[1])))];
       overrides.push({ file: f, count: hits.length, colours });
       break;
     }
@@ -110,7 +118,8 @@ if (!promoShared) {
 }
 if (overrides.length) {
   bad = true;
-  const blue = overrides.filter((o) => o.colours.some((c) => c.toLowerCase() !== '#dc2626' && c.toLowerCase() !== '#b91c1c'));
+  const RED = new Set(['#dc2626', '#b91c1c']);
+  const blue = overrides.filter((o) => o.colours.some((c) => !RED.has(c.toLowerCase())));
   console.error(`\n✗ ${overrides.length} page(s) redefine .promo-bar in an inline <style> block:`);
   for (const o of overrides.slice(0, 12)) console.error(`     ${o.file}  ×${o.count}  ${o.colours.join(' ') || '(no colour)'}`);
   if (overrides.length > 12) console.error(`     … and ${overrides.length - 12} more`);
