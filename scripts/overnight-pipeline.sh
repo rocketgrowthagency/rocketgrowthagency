@@ -382,6 +382,10 @@ node scripts/check-every-gate-is-wired.mjs || exit 1
 node scripts/check-site-status-is-judged.mjs || exit 1
 node scripts/check-contract-matches-playbook.mjs || exit 1
 node scripts/check-send-cap-guards.mjs || exit 1
+# 2026-08-28 — every OG card a page references must be tracked, or the page ships a blank preview.
+# drip-content.sh staged the HTML but not images/assets/og/, so 4 live pages served the 404 fallback
+# as their social card. Static + offline, so it is safe pre-flight.
+node scripts/check-og-images-tracked.mjs || exit 1
 node scripts/check-locked-pages.mjs || exit 1
 node scripts/check-verification-system.mjs || exit 1
 node scripts/check-send-dedup-guard.mjs || exit 1

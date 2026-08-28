@@ -107,8 +107,18 @@ fi
 
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
-if [ -n "$(git status --porcelain industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml 2>/dev/null)" ]; then
-  git add industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml
+# 🔴 2026-08-28 — images/assets/og/ ADDED. The engine writes an OG card for every page it generates
+# but this list never staged it, so the HTML shipped and the image did not: the page went live
+# referencing an image that was never deployed, and Netlify served the 404 fallback for it.
+#
+# Silent by construction — the page looks perfect; only a link preview on LinkedIn/Slack/iMessage is
+# broken, and nobody opens their own posts that way. Found by curling the referenced images and
+# checking the CONTENT-TYPE: a 200 with `text/html` on a .jpg is the fallback page, not an image
+# ([[feedback-curl-status-is-useless-check-content-type]]). 4 of 119 were broken this way.
+#
+# Recurs on EVERY drip run, so this is the fix that matters more than backfilling the 4.
+if [ -n "$(git status --porcelain industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml images/assets/og/ 2>/dev/null)" ]; then
+  git add industries/ blog/ local-seo/ state-of-local-seo/ sitemap.xml images/assets/og/
   git -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
     commit -q -m "drip: inbound content ${DATE_STAMP} — industry: ${IND:-none} | blog: ${BLOG:-none}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
