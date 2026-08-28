@@ -213,6 +213,36 @@ try {
   }
 }
 
+// ── 3e. The Day-1 reservation is TEMPORARY — say so once it should be reverted ───────────────────
+// 🔴 2026-08-27 — MIN_DAY1_RESERVATION was raised 5 → 20 to drain the 184-lead send backlog faster
+// (~19 working days → ~9). It is correct ONLY while a backlog exists. Once drained, holding Day-1 at
+// 20 starves the follow-up sequence for no benefit.
+//
+// A note in a comment is not a reminder — nobody re-reads the Apps Script. So this checks the LIVE
+// condition (queue drained) against the LIVE setting and speaks up exactly when it becomes wrong.
+// See [[feedback-pending-action-memories-go-stale]]: an action item nobody is reminded of is an
+// action item that rots.
+try {
+  const gs = fs.readFileSync(path.join(WEBSITE, 'docs', 'apps-scripts', 'gmail-to-airtable.gs'), 'utf8');
+  const m = gs.match(/^const MIN_DAY1_RESERVATION = (\d+);/m);
+  const reservation = m ? Number(m[1]) : null;
+  if (reservation !== null && reservation > 5) {
+    let drained = false;
+    try {
+      execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-send-queue-drained.mjs')],
+        { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+      drained = true;              // exit 0 = drained
+    } catch (_e) { drained = false; }  // exit 1 = still draining, 2 = unknown → stay quiet
+    if (drained) {
+      findings.push({
+        kind: 'day1-reservation-stale', severity: 'medium',
+        msg: `Send backlog is DRAINED but MIN_DAY1_RESERVATION is still ${reservation} (was raised from 5 to speed the drain).`,
+        fix: 'Set it back to 5 in docs/apps-scripts/gmail-to-airtable.gs and paste into RGA Outreach Sync. Holding Day-1 high with no backlog starves the Day 4/9/16/45 follow-up sequence.',
+      });
+    }
+  }
+} catch (_e) { /* the .gs is in the other repo; never break drift over it */ }
+
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
 // ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already
