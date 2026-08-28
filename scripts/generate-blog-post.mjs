@@ -186,8 +186,12 @@ Requirements:
 }
 // Topic-post related-links block (also satisfies the quality guard's required internal links).
 function topicRelated() {
-  return `      <p><strong>Related reading:</strong> <a href="/blog/google-maps-ranking-factors/">Google Maps ranking factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP optimization checklist</a>, <a href="/blog/local-seo-website-structure/">local website structure</a>.</p>
-      <p><strong>Get help:</strong> <a href="/services/google-maps-local-seo/">Google Maps Local SEO service</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.</p>`;
+  // 🔴 2026-08-28 — LINK LABELS ARE TITLE CASE. The rest of the site titles every nav/CTA label
+  // ("Pricing" ×174, "Free Growth Audit" ×87); this template shipped lowercase ones, so 83 blog
+  // posts read "Google Maps Local SEO service · pricing · free Growth Audit" while every other
+  // page said "Pricing" and "Free Growth Audit". Keep new labels Title Case.
+  return `      <p><strong>Related reading:</strong> <a href="/blog/google-maps-ranking-factors/">Google Maps Ranking Factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP Optimization Checklist</a>, <a href="/blog/local-seo-website-structure/">Local Website Structure</a>.</p>
+      <p><strong>Get help:</strong> <a href="/services/google-maps-local-seo/">Google Maps Local SEO Service</a> &middot; <a href="/pricing/">Pricing</a> &middot; <a href="/free-growth-audit/">Free Growth Audit</a>.</p>`;
 }
 
 // ---- autonomous editor gate — replaces the human approval step ----
@@ -261,8 +265,8 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
 
   const siblingLinks = (siblings || []).slice(0, 3).map((s) => `<a href="/blog/${s.slug}/">Local SEO for ${esc(s.vertical)}</a>`).join(', ');
   const doneForYou = hasIndustryPage ? ` <strong>Done-for-you:</strong> <a href="/industries/${industrySlug}/">our ${esc(vertical)} local SEO service</a>.` : '';
-  const related = opts.related || `      <p><strong>Related industry guides:</strong> ${siblingLinks ? siblingLinks + ', ' : ''}<a href="/blog/google-maps-ranking-factors/">Google Maps ranking factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP optimization checklist</a>.</p>
-      <p><strong>Get help:</strong> <a href="/services/google-maps-local-seo/">Google Maps Local SEO service</a> &middot; <a href="/pricing/">pricing</a> &middot; <a href="/free-growth-audit/">free Growth Audit</a>.${doneForYou}</p>`;
+  const related = opts.related || `      <p><strong>Related industry guides:</strong> ${siblingLinks ? siblingLinks + ', ' : ''}<a href="/blog/google-maps-ranking-factors/">Google Maps Ranking Factors</a>, <a href="/blog/google-business-profile-optimization-checklist/">GBP Optimization Checklist</a>.</p>
+      <p><strong>Get help:</strong> <a href="/services/google-maps-local-seo/">Google Maps Local SEO Service</a> &middot; <a href="/pricing/">Pricing</a> &middot; <a href="/free-growth-audit/">Free Growth Audit</a>.${doneForYou}</p>`;
 
   const faqHtml = (c.faq || []).map((f) => `      <h3>${esc(f.q)}</h3>\n      <p>${esc(f.a)}</p>`).join('\n');
   const faqSchema = JSON.stringify({
