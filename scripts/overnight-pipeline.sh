@@ -402,6 +402,11 @@ node scripts/check-no-markup-in-text.mjs || exit 1
 # 1024px and 4px out below 640px. Only geometry shows it, so this one MEASURES — headless chromium
 # against a temp local server, never opens a window, safe at any hour.
 node scripts/check-section-gutter-alignment.mjs || exit 1
+# 2026-08-28 — a heading must line up with the block it labels. 21 sections across 8 pages put a
+# CENTRED content block (max-width + margin:auto) under a heading still pinned to the page gutter,
+# so the heading hung out to the left of its own content. Only geometry shows it, and only once
+# both boxes have real widths — so this MEASURES, headless, across every page at 3 widths.
+node scripts/check-heading-block-alignment.mjs || exit 1
 # 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
 # any unknown field, so one missing column silently broke the whole reply path: Replied never set,
 # repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
