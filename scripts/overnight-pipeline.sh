@@ -389,6 +389,10 @@ node scripts/check-og-images-tracked.mjs || exit 1
 # 2026-08-28 — the header nav must never render at a width where it overflows onto the CTA.
 # Static (reads the breakpoint out of style.css), so it is instant and safe pre-flight.
 node scripts/check-nav-breakpoint.mjs || exit 1
+# 2026-08-28 — the header must be identical sitewide. .promo-bar CSS lived only in an inline block,
+# so 65 pages (the whole blog) rendered the red offer banner as plain text; 36 pages had lost the
+# Demo nav link. Static + offline, safe pre-flight.
+node scripts/check-header-consistency.mjs || exit 1
 # 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
 # any unknown field, so one missing column silently broke the whole reply path: Replied never set,
 # repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
