@@ -386,6 +386,11 @@ node scripts/check-send-cap-guards.mjs || exit 1
 # drip-content.sh staged the HTML but not images/assets/og/, so 4 live pages served the 404 fallback
 # as their social card. Static + offline, so it is safe pre-flight.
 node scripts/check-og-images-tracked.mjs || exit 1
+# 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
+# any unknown field, so one missing column silently broke the whole reply path: Replied never set,
+# repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
+# the run itself, so it belongs here rather than only in the morning report.
+node scripts/check-airtable-fields-exist.mjs || exit 1
 node scripts/check-locked-pages.mjs || exit 1
 node scripts/check-verification-system.mjs || exit 1
 node scripts/check-send-dedup-guard.mjs || exit 1
