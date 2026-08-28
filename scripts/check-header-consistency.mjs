@@ -48,6 +48,18 @@ const css = fs.readFileSync(cssPath, 'utf8');
 const promoShared = /^\.promo-bar\s*\{[^}]*background:\s*#dc2626/m.test(css)
                  && /^\.promo-bar\s*\{[^}]*text-align:\s*center/m.test(css);
 
+// 1b. …and NO page may redefine it. Having it in style.css is not enough: an inline block later in
+// the cascade silently wins. 2026-08-28 — Chris: "why is header here blue. every page should just
+// use same header promo? why is it multiple?". 138 pages carried a redundant inline copy of the
+// promo-bar CSS and those copies had drifted into EIGHT variants; 12 industry pages painted the
+// banner #2457e6 blue instead of #dc2626 red. This gate reported ✅ throughout, because it only
+// asked whether the shared rule existed — never whether anything overrode it.
+//
+// > A gate that checks the fix is present but not that it is EFFECTIVE reads as a pass while the
+// > page is visibly broken. Assert the absence of overrides, not just the presence of the source.
+const PROMO_RULE = /\.promo-bar(?![\w-])[^{}]*\{/;
+const overrides = [];   // {file, count, colours}
+
 // 2. Every page carrying the nav must carry the same nav destinations.
 const NAV_PATHS = ['/industries/', '/process/', '/demo/', '/pricing/', '/faq/', '/contact/'];
 const missingNav = new Map();   // path -> count
@@ -57,6 +69,16 @@ for (const f of files) {
   let body;
   try { body = fs.readFileSync(path.join(WEBSITE, f), 'utf8'); } catch { continue; }
   if (body.includes('class="promo-bar"')) promoPages++;
+  // historical snapshots are frozen on purpose and are not served as pages
+  if (!f.startsWith('_site-snapshots/')) {
+    for (const block of body.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []) {
+      if (!PROMO_RULE.test(block)) continue;
+      const hits = block.match(/\.promo-bar(?![\w-])[^{}]*\{[^}]*\}/g) || [];
+      const colours = [...new Set(hits.flatMap((h) => h.match(/#[0-9a-f]{3,6}/gi) || []))];
+      overrides.push({ file: f, count: hits.length, colours });
+      break;
+    }
+  }
   if (!body.includes('class="desktop-nav"')) continue;
   navPages++;
   for (const p of NAV_PATHS) {
@@ -68,8 +90,9 @@ if (!navPages) { console.error('✗ no page carries .desktop-nav — the selecto
 const navDrift = [...missingNav.entries()].sort((a, b) => b[1] - a[1]);
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ navPages, promoPages, promoStyleShared: promoShared, navDrift }, null, 2));
-  process.exit((!promoShared || navDrift.length) ? 1 : 0);
+  console.log(JSON.stringify({ navPages, promoPages, promoStyleShared: promoShared, navDrift,
+    promoOverrides: overrides }, null, 2));
+  process.exit((!promoShared || navDrift.length || overrides.length) ? 1 : 0);
 }
 
 console.log(`\n===== HEADER CONSISTENCY =====`);
@@ -84,6 +107,16 @@ if (!promoShared) {
   console.error(`   If it only exists in an inline <style> block, every page generated without that`);
   console.error(`   block renders the offer banner as plain text instead of the red band — which is`);
   console.error(`   exactly what happened to 65 pages, the whole blog among them.`);
+}
+if (overrides.length) {
+  bad = true;
+  const blue = overrides.filter((o) => o.colours.some((c) => c.toLowerCase() !== '#dc2626' && c.toLowerCase() !== '#b91c1c'));
+  console.error(`\n✗ ${overrides.length} page(s) redefine .promo-bar in an inline <style> block:`);
+  for (const o of overrides.slice(0, 12)) console.error(`     ${o.file}  ×${o.count}  ${o.colours.join(' ') || '(no colour)'}`);
+  if (overrides.length > 12) console.error(`     … and ${overrides.length - 12} more`);
+  if (blue.length) console.error(`   ${blue.length} of them use a NON-RED colour — those render a differently coloured banner.`);
+  console.error(`   The header is shared chrome. It is styled once, in style.css. A per-page copy`);
+  console.error(`   sits later in the cascade and wins, so the page silently stops matching the site.`);
 }
 if (navDrift.length) {
   bad = true;
