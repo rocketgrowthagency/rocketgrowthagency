@@ -396,6 +396,12 @@ node scripts/check-header-consistency.mjs || exit 1
 # 2026-08-28 — escaped head markup must never render as visible page text. A title regex that
 # escaped its element put raw <title>/<meta>/<link> blobs into the anchor text of 11 live posts.
 node scripts/check-no-markup-in-text.mjs || exit 1
+# 2026-08-28 — every content band must share one left edge. A full-bleed .section-surface insets
+# with padding while a centred .section insets with width, so each breakpoint has to be spelled out
+# twice; two of them had drifted apart and 8 pages (incl. home/pricing/process) were 10px out at
+# 1024px and 4px out below 640px. Only geometry shows it, so this one MEASURES — headless chromium
+# against a temp local server, never opens a window, safe at any hour.
+node scripts/check-section-gutter-alignment.mjs || exit 1
 # 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
 # any unknown field, so one missing column silently broke the whole reply path: Replied never set,
 # repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
