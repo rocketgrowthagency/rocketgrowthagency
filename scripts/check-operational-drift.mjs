@@ -267,6 +267,31 @@ try {
   }
 }
 
+// ── 3g. A field the Apps Script writes but Airtable does not have breaks the WHOLE patch ─────────
+// Airtable rejects an entire PATCH with 422 on any unknown field. syncReplies writes Replied,
+// Reply Date, Reply Sentiment and Suggested Reply in one call; three of those did not exist, so the
+// whole write failed and `Replied` was never set - repliers stayed in the follow-up sequence and one
+// reply got logged 48 times. Only visible as a 422 in the Apps Script execution log.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-airtable-fields-exist.mjs')],
+    { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/(\d+) FIELD\(S\) WRITTEN BUT NOT IN AIRTABLE/);
+  if (m) {
+    const names = [...out.matchAll(/^\s+• (.+)$/gm)].map((x) => x[1].trim()).slice(0, 4);
+    findings.push({
+      kind: 'airtable-missing-fields', severity: 'high',
+      msg: `${m[1]} field(s) written by gmail-to-airtable.gs do not exist in Airtable${names.length ? ` (${names.join(', ')})` : ''} — every patch containing one fails ENTIRELY.`,
+      fix: 'Add the fields in Airtable (Leads table), or stop writing them in the .gs. While missing, replies never set Replied, so repliers keep receiving follow-ups.',
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'airtable-schema-unknown', severity: 'medium',
+      msg: 'Could not compare Apps Script writes against the Airtable schema.',
+      fix: 'Check the Airtable meta API token scope.' });
+  }
+}
+
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
 // ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already

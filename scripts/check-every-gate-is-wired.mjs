@@ -49,6 +49,7 @@ const NOT_PREFLIGHT = {
   'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',
+  'check-airtable-fields-exist.mjs': 'live Airtable schema, not code health; surfaced via operational drift (3g). Deliberately NOT pre-flight while it is RED - blocking every nightly build on a missing CRM column would be a worse outage than the bug. Move it to pre-flight once green',
   'check-apps-script-paste-owed.mjs': 'deployment state of a DIFFERENT repo (the website .gs files vs the live Apps Script projects); surfaced via operational drift (3f). Must not block a scraper build — an unpasted auto-reply script has nothing to do with tonight\'s videos',
 };
 
