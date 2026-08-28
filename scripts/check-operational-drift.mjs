@@ -243,6 +243,30 @@ try {
   }
 } catch (_e) { /* the .gs is in the other repo; never break drift over it */ }
 
+// ── 3f. An Apps Script edited but never pasted is code that does not run ─────────────────────────
+// Apps Script has no auto-deploy, so the repo lies by default: it looks like the source of truth
+// while production runs whatever was last pasted by hand. That gap killed FGA report delivery for 37
+// days. PASTED_STATE.json records the sha256 of what was actually pasted; this recompares.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-apps-script-paste-owed.mjs')],
+    { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/(\d+) SCRIPT\(S\) EDITED BUT NOT PASTED/);
+  if (m) {
+    const which = [...out.matchAll(/⚠ (.+?)\s{2,}/g)].map((x) => x[1].trim()).slice(0, 3);
+    findings.push({
+      kind: 'apps-script-paste-owed', severity: 'high',
+      msg: `${m[1]} Apps Script(s) edited but never pasted${which.length ? ` — ${which.join(', ')}` : ''}. Production is running the OLD code.`,
+      fix: 'Open the repo file, Cmd+A/Cmd+C, paste into the live project, save — then update sha256 + lastPasted in docs/apps-scripts/PASTED_STATE.json. Never update that file without a confirmed paste.',
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'apps-script-state-unknown', severity: 'medium',
+      msg: 'Could not determine which Apps Script version is live (PASTED_STATE.json missing or unparseable).',
+      fix: 'Restore it — without it there is no record of what production is running.' });
+  }
+}
+
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
 // ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already
