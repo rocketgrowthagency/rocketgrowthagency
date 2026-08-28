@@ -28,6 +28,33 @@ const SEARCH = process.env.CARD_CHECK_SEARCH || 'Plumbers in Beverly Hills CA';
 const warn = (m) => { console.log(`\n⚠️  check-maps-card-open WARN (not blocking): ${m}\n`); process.exit(0); };
 const fail = (m) => { console.error(`\n✗ check-maps-card-open FAILED: ${m}\n`); process.exit(1); };
 
+// 🔴 2026-08-28 — DAYTIME INTERLOCK. This gate launches `headless: false`: a REAL 1300x850 Chrome
+// window that pops up over whatever Chris is doing. That is invisible-by-luck, not by design — the
+// pipeline only ever runs it at 21:00.
+//
+// It bit for real: running the pre-flight gate suite by hand at 09:17 to audit the system opened a
+// Chrome window on Chris's screen mid-work. He asked "are you testing video now a chrome browser
+// with the video work just opened?" — he had to notice it and ask.
+//
+// Headful is REQUIRED here (a real profile + stealth is what gets past Google Maps' bot detection),
+// so this cannot simply be made headless like check-maps-outline-style. Instead it refuses to open
+// during Chris's hours. Same window as the capture interlock in recovery-rounds.sh:70 — 07:00-20:59.
+//
+// Skips LOUDLY. A skipped check must never be mistaken for a passed one
+// ([[feedback-dead-check-selector-gap]]) — the wording below says NOT VERIFIED, not "ok".
+{
+  // ⚠️ `hour:'2-digit', hour12:false` returns "24" for midnight in en-US, not "00". Here that happened
+  // to be harmless (24 is outside 7-20), but relying on a quirk is how a clock guard silently inverts.
+  // en-GB 24-hour formatting gives a real 00-23, so `% 24` normalises midnight to 0 explicitly.
+  const h = Number(new Date().toLocaleString('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', hour12: false })) % 24;
+  if (h >= 7 && h < 21 && process.env.ALLOW_HEADFUL_DAYTIME !== '1') {
+    console.log(`\n⏭  check-maps-card-open SKIPPED — NOT VERIFIED (it is ${String(h).padStart(2,'0')}:xx PT).`);
+    console.log('   This gate opens a VISIBLE Chrome window and would appear over your screen.');
+    console.log('   It runs for real in the 21:00 pipeline. To force it now: ALLOW_HEADFUL_DAYTIME=1\n');
+    process.exit(0);
+  }
+}
+
 let browser;
 try {
   browser = await puppeteer.launch({
