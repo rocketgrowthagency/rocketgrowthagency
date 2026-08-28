@@ -292,6 +292,34 @@ try {
   }
 }
 
+// ── 3h. Did the Day-1 reservation actually take effect in production? ────────────────────────────
+// MIN_DAY1_RESERVATION was raised 5 -> 20 to drain the send backlog. Apps Script has no auto-deploy,
+// so the constant means nothing until it is pasted - and the ONLY proof is the next morning's split.
+// This compares the LAST-PASTED value against what actually sent, so a paste that never landed shows
+// up here instead of being remembered as a human task.
+try {
+  const out = execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-day1-reservation-took.mjs')],
+    { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+  const mm = out.match(/step 1 \(new\)\s+(\d+)[\s\S]*?live MIN_DAY1_RESERVATION\s+(\d+)/)
+          || out.match(/live MIN_DAY1_RESERVATION\s+(\d+)[\s\S]*?step 1 \(new\)\s+(\d+)/);
+  if (/is BELOW the reservation/.test(out)) {
+    const res = (out.match(/live MIN_DAY1_RESERVATION\s+(\d+)/) || [])[1];
+    const s1 = (out.match(/step 1 \(new\)\s+(\d+)/) || [])[1];
+    findings.push({
+      kind: 'day1-reservation-not-taking', severity: 'medium',
+      msg: `Day-1 sends (${s1}) are below MIN_DAY1_RESERVATION (${res}) on the last completed send day.`,
+      fix: 'If the send queue still has a backlog, the Apps Script paste did not take - check MIN_DAY1_RESERVATION in the LIVE editor. If the queue is drained, this is fine: the reservation is a floor, not a quota.',
+    });
+  }
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  if (/above the reservation/.test(out)) {
+    findings.push({ kind: 'day1-reservation-exceeded', severity: 'high',
+      msg: 'Day-1 sends exceeded MIN_DAY1_RESERVATION - the follow-up/Day-1 split is not being honoured.',
+      fix: 'Check advanceFunnelState effectiveCap math in the live Apps Script.' });
+  }
+}
+
 // ── 4. External quota runway ─────────────────────────────────────────────────────────────────────
 // 🔴 2026-08-24 — SerpApi sat at 691 of 5,000 with the month still running. The pre-flight guard only
 // ABORTS below 100, which is a hard stop with no warning: by the time it fires, the night is already
