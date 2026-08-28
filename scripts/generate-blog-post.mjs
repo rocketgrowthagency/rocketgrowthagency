@@ -516,7 +516,24 @@ function listSiblingPosts(excludeSlug) {
     if (!d.startsWith('local-seo-for-') || d === excludeSlug) continue;
     const f = path.join(BLOG_DIR, d, 'index.html');
     if (!fs.existsSync(f)) continue;
-    const m = fs.readFileSync(f, 'utf8').match(/<title>Local SEO for ([^:]+):/);
+    // 🔴 2026-08-28 — WAS /<title>Local SEO for ([^:]+):/ and it corrupted 11 live pages.
+    //
+    // `[^:]+` means "anything that is not a colon", which does NOT stop at `</title>`. A title
+    // WITHOUT a colon — "Local SEO for Auto Detailing (2026 Guide) | Rocket Growth Agency" — let the
+    // capture run straight out of the title, through the whole <head>, and stop at the first colon
+    // it found: the `https:` in the canonical URL. The captured "vertical" was then rendered as the
+    // anchor text of a Related-industry-guides link, so real blog posts displayed:
+    //
+    //   Local SEO for Auto Detailing (2026 Guide)</title> <meta name="description" content="…" />
+    //   <link rel="canonical" href="https
+    //
+    // Only titles WITHOUT a colon broke, which is why it hit 11 pages and not all ~87 — the rest
+    // happened to contain a colon early enough to stop the run.
+    //
+    // `[^<:]` cannot leave the title element: it stops at the first `<` or `:`, whichever comes
+    // first. A character class that excludes the closing delimiter is the fix; a lazy quantifier
+    // would still have been free to cross the tag boundary.
+    const m = fs.readFileSync(f, 'utf8').match(/<title>Local SEO for ([^<:]+)[:<]/);
     if (m) out.push({ slug: d, vertical: m[1].trim() });
   }
   return out;

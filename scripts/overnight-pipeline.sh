@@ -393,6 +393,9 @@ node scripts/check-nav-breakpoint.mjs || exit 1
 # so 65 pages (the whole blog) rendered the red offer banner as plain text; 36 pages had lost the
 # Demo nav link. Static + offline, safe pre-flight.
 node scripts/check-header-consistency.mjs || exit 1
+# 2026-08-28 — escaped head markup must never render as visible page text. A title regex that
+# escaped its element put raw <title>/<meta>/<link> blobs into the anchor text of 11 live posts.
+node scripts/check-no-markup-in-text.mjs || exit 1
 # 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
 # any unknown field, so one missing column silently broke the whole reply path: Replied never set,
 # repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
