@@ -88,7 +88,20 @@ const today = new Date().toLocaleDateString('en-CA', { timeZone: SEND_TZ });
 
 // Today is still in progress — a partial count is not a pass and not a breach.
 const judged = days.filter((d) => d !== today);
-const breaches = judged.filter((d) => byDay[d].length > DAILY_CAP);
+const allBreaches = judged.filter((d) => byDay[d].length > DAILY_CAP);
+
+// 🔴 2026-08-28 — SPLIT PRE-FIX FROM POST-FIX. The once-per-day guard went live on this date; every
+// breach before it is settled history, not a live problem. Without this split the morning report
+// shouted "CAP BREACHED" for a full week after the fix, for days that were already explained.
+//
+// > An alert that fires for a known, fixed cause trains the reader to ignore it — and the next real
+// > breach arrives looking exactly like the noise they learned to skip.
+//
+// Historical breaches are still PRINTED (deleting evidence would be worse), just not treated as a
+// failure. Only a breach on or after the guard date means something is actually wrong now.
+const GUARD_LIVE_DATE = '2026-08-26';
+const breaches = allBreaches.filter((d) => d >= GUARD_LIVE_DATE);
+const historical = allBreaches.filter((d) => d < GUARD_LIVE_DATE);
 
 if (JSON_OUT) {
   console.log(JSON.stringify({ cap: DAILY_CAP, days: judged.map((d) => ({ day: d, sent: byDay[d].length })), breaches: breaches.length }, null, 2));
@@ -104,11 +117,17 @@ for (const d of days) {
 }
 
 if (!breaches.length) {
-  console.log(`\n✅ cap held on all ${judged.length} completed day(s).`);
+  const since = judged.filter((d) => d >= GUARD_LIVE_DATE);
+  console.log(`\n✅ cap held on all ${since.length} completed day(s) since the guard went live (${GUARD_LIVE_DATE}).`);
+  if (historical.length) {
+    console.log(`   ${historical.length} earlier breach(es) shown above (${historical.join(', ')}) predate the fix —`);
+    console.log(`   explained by the second-run defect, not a live problem. See project_send_cap_breach_2026-08-26.`);
+  }
+  if (since.length < 5) console.log(`   ⚠ only ${since.length} day(s) of post-fix evidence — not yet conclusive.`);
   process.exit(0);
 }
 
-console.error(`\n✗ CAP BREACHED on ${breaches.length} of ${judged.length} day(s).`);
+console.error(`\n✗ CAP BREACHED on ${breaches.length} day(s) SINCE the guard went live (${GUARD_LIVE_DATE}) — the fix is not holding.`);
 // Burst analysis: a second run after the first finished is the known cause, so name it rather than
 // leaving the reader to re-derive it.
 const worst = breaches[breaches.length - 1];
