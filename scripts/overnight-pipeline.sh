@@ -386,6 +386,9 @@ node scripts/check-send-cap-guards.mjs || exit 1
 # drip-content.sh staged the HTML but not images/assets/og/, so 4 live pages served the 404 fallback
 # as their social card. Static + offline, so it is safe pre-flight.
 node scripts/check-og-images-tracked.mjs || exit 1
+# 2026-08-28 — the header nav must never render at a width where it overflows onto the CTA.
+# Static (reads the breakpoint out of style.css), so it is instant and safe pre-flight.
+node scripts/check-nav-breakpoint.mjs || exit 1
 # 2026-08-28 — promoted to pre-flight the moment it went green. Airtable 422s an ENTIRE patch on
 # any unknown field, so one missing column silently broke the whole reply path: Replied never set,
 # repliers kept getting follow-ups, one reply logged 48x. Cheap (one meta-API call) and offline of
