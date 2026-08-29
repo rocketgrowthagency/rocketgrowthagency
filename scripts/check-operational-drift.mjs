@@ -267,6 +267,30 @@ try {
   }
 }
 
+// ── 3f2. An inbound text nobody sees is a lead nobody follows up ─────────────────────────────────
+// 2026-08-28: Chris got a text from a prospect number; it was nowhere in Airtable. SMS handling
+// shipped 2026-08-12 and had logged ZERO rows in 16 days, while inbound CALLS on the same webhook
+// logged fine. The handler was never the problem — Quo was not subscribed to `message.received`.
+// Non-blocking on purpose: an unregistered SMS event has nothing to do with tonight's videos.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-inbound-sms-flowing.mjs')],
+    { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/inbound CALLS are arriving but inbound TEXTS never have, in (\d+) days/);
+  if (m) {
+    findings.push({
+      kind: 'inbound-sms-not-logged', severity: 'high',
+      msg: `Inbound texts have never reached the CRM (${m[1]} days), while inbound calls on the same webhook do. Every text a prospect sends is invisible: no lead, no log row, no follow-up.`,
+      fix: "Quo → Settings → Webhooks → the rocketgrowthagency.com webhook → tick 'message.received' and 'message.delivered' alongside 'call.completed'. Then send a test text and re-run scripts/check-inbound-sms-flowing.mjs.",
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'inbound-sms-unknown', severity: 'medium',
+      msg: 'Could not determine whether inbound texts are reaching the CRM (Airtable unreachable).',
+      fix: 'Re-run scripts/check-inbound-sms-flowing.mjs once Airtable responds.' });
+  }
+}
+
 // ── 3g. A field the Apps Script writes but Airtable does not have breaks the WHOLE patch ─────────
 // Airtable rejects an entire PATCH with 422 on any unknown field. syncReplies writes Replied,
 // Reply Date, Reply Sentiment and Suggested Reply in one call; three of those did not exist, so the
