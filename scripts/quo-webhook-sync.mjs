@@ -65,77 +65,67 @@ async function api(method, pathname, body) {
   return { ok: res.ok, status: res.status, json, text };
 }
 
-// ── read what exists ─────────────────────────────────────────────────────────────────────────────
+// ── Quo models calls and messages as SEPARATE webhook resources ─────────────────────────────────
+// POST /v1/webhooks/calls  and  POST /v1/webhooks/messages  create DIFFERENT objects. A call webhook
+// cannot carry message.received — which is why ticking it in the UI never stuck. Both point at the
+// same URL; our handler dispatches on the event type.
+const RESOURCES = [
+  { kind: 'calls',    path: '/webhooks/calls',    want: ['call.completed'] },
+  { kind: 'messages', path: '/webhooks/messages', want: ['message.received', 'message.delivered'] },
+];
+
 const list = await api('GET', '/webhooks');
 if (!list.ok) {
   console.error(`✗ could not list webhooks: HTTP ${list.status} ${list.text.slice(0, 160)}`);
-  console.error(`   If this is 401, the key is wrong or lacks scope. Refusing to guess.`);
+  console.error(`   If this is 401 the key is wrong or lacks scope. Refusing to guess.`);
   process.exit(2);
 }
 const hooks = list.json?.data || list.json || [];
+const ours = hooks.filter((h) => String(h.url || '').includes('quo-call-webhook'));
+
 console.log(`\n===== QUO WEBHOOK SUBSCRIPTION =====`);
-console.log(`  webhooks on the account: ${hooks.length}`);
-for (const h of hooks) {
-  const url = h.url || '';
-  const mine = url.includes('quo-call-webhook');
-  console.log(`\n  ${mine ? '▶' : ' '} ${h.id || '(no id)'}  ${h.status || ''}`);
-  console.log(`      url    ${url.replace(/token=[^&]+/, 'token=***')}`);
+console.log(`  webhooks on the account: ${hooks.length}  (ours: ${ours.length})`);
+for (const h of ours) {
+  console.log(`\n  ${h.id || '(no id)'}  ${h.status || ''}`);
+  console.log(`      url    ${String(h.url).replace(/token=[^&]+/, 'token=***')}`);
   console.log(`      events ${(h.events || []).join(', ') || '(none)'}`);
 }
 
-const mine = hooks.filter((h) => String(h.url || '').includes('quo-call-webhook'));
-const missingFrom = (h) => WANT.filter((e) => !(h.events || []).includes(e));
+const covered = new Set(ours.flatMap((h) => h.events || []));
+const gaps = RESOURCES.filter((r) => r.want.some((e) => !covered.has(e)));
 
-if (mine.length > 1) {
-  console.error(`\n⚠ ${mine.length} webhooks point at our endpoint. Duplicates split delivery and make`);
-  console.error(`   behaviour depend on which one fires. Only the first is repaired below; delete the rest.`);
+if (!gaps.length) {
+  console.log(`\n✅ every needed event is subscribed: ${RESOURCES.flatMap(r=>r.want).join(', ')}`);
+  process.exit(0);
 }
-
-let broken = false;
-if (!mine.length) {
-  broken = true;
-  console.error(`\n✗ no webhook points at our endpoint — that is why nothing arrives.`);
-} else {
-  const miss = missingFrom(mine[0]);
-  if (miss.length) { broken = true; console.error(`\n✗ subscribed, but missing: ${miss.join(', ')}`); }
-  else console.log(`\n✅ subscription already correct — all of: ${WANT.join(', ')}`);
+for (const g of gaps) {
+  console.error(`\n✗ no webhook carries ${g.kind} events — missing: ${g.want.filter(e=>!covered.has(e)).join(', ')}`);
 }
-
-if (!broken) process.exit(0);
 if (!APPLY) {
-  console.error(`\n   Re-run with --apply to fix it:  node scripts/quo-webhook-sync.mjs --apply`);
+  console.error(`\n   Re-run with --apply to create them:  node scripts/quo-webhook-sync.mjs --apply`);
   process.exit(1);
 }
 
-// ── repair ───────────────────────────────────────────────────────────────────────────────────────
-let res;
-if (mine.length) {
-  const h = mine[0];
-  const events = [...new Set([...(h.events || []), ...WANT])];
-  console.log(`\n  patching ${h.id} → events: ${events.join(', ')}`);
-  res = await api('PATCH', `/webhooks/${h.id}`, { events, url: h.url, status: 'enabled' });
-  if (!res.ok && res.status === 404) {
-    console.log(`  PATCH unsupported here; recreating instead.`);
-    await api('DELETE', `/webhooks/${h.id}`);
-    res = await api('POST', '/webhooks/messages', { url: TARGET_URL, events: WANT, status: 'enabled' });
+// ── create the missing resource(s) ───────────────────────────────────────────────────────────────
+for (const g of gaps) {
+  console.log(`\n  creating ${g.kind} webhook → ${g.want.join(', ')}`);
+  const res = await api('POST', g.path, { url: TARGET_URL, events: g.want, status: 'enabled', label: `RGA ${g.kind}` });
+  if (!res.ok) {
+    console.error(`  ✗ rejected: HTTP ${res.status} ${res.text.slice(0, 200)}`);
+    process.exit(1);
   }
-} else {
-  console.log(`\n  creating a webhook → ${WANT.join(', ')}`);
-  res = await api('POST', '/webhooks/messages', { url: TARGET_URL, events: WANT, status: 'enabled' });
-}
-if (!res.ok) {
-  console.error(`\n✗ change rejected: HTTP ${res.status} ${res.text.slice(0, 200)}`);
-  process.exit(1);
+  console.log(`  ✅ created ${res.json?.data?.id || res.json?.id || ''}`);
 }
 
-// ── read it BACK — a 200 on the write is not proof the server agrees ─────────────────────────────
+// ── read back — a 200 on the write is not proof the server agrees ───────────────────────────────
 const after = await api('GET', '/webhooks');
 const now = (after.json?.data || after.json || []).filter((h) => String(h.url || '').includes('quo-call-webhook'));
-const stillMissing = now.length ? missingFrom(now[0]) : WANT;
-console.log(`\n  re-read from the API: events = ${(now[0]?.events || []).join(', ') || '(none)'}`);
-if (stillMissing.length) {
-  console.error(`✗ still missing after apply: ${stillMissing.join(', ')} — the account may not permit SMS events.`);
+const have = new Set(now.flatMap((h) => h.events || []));
+const missing = RESOURCES.flatMap((r) => r.want).filter((e) => !have.has(e));
+console.log(`\n  re-read from the API: ${[...have].join(', ') || '(none)'}`);
+if (missing.length) {
+  console.error(`✗ still missing: ${missing.join(', ')} — the plan may not permit SMS webhooks.`);
   process.exit(1);
 }
-console.log(`\n✅ subscription verified against the API. Text the number; it should log within seconds.`);
+console.log(`\n✅ verified against the API. Text the number; it should log within seconds.`);
 process.exit(0);
