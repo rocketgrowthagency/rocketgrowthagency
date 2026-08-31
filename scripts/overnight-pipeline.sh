@@ -401,6 +401,10 @@ node scripts/check-shared-components-not-forked.mjs || exit 1
 # seven pages, so ending it is seven edits; one missed page quotes a price RGA does not honour.
 # data/offer-pricing.json is the source of truth; this fails on any figure not accounted for there.
 node scripts/check-offer-prices-consistent.mjs || exit 1
+# 2026-08-31 — the sitemap and the pages' own robots tags must agree. /app/ declared index,follow,
+# was linked from ZERO pages and was absent from the sitemap: invisible to Google entirely. /demo/
+# was missing too despite 210 inbound links. Static and instant.
+node scripts/check-sitemap-matches-indexable.mjs || exit 1
 # 2026-08-28 — escaped head markup must never render as visible page text. A title regex that
 # escaped its element put raw <title>/<meta>/<link> blobs into the anchor text of 11 live posts.
 node scripts/check-no-markup-in-text.mjs || exit 1

@@ -116,6 +116,12 @@ node scripts/check-header-consistency.mjs 2>&1 | tee -a "$LOG"
   CHROME_RC0=${PIPESTATUS[0]}
   node scripts/check-shared-components-not-forked.mjs 2>&1 | tee -a "$LOG"
   node scripts/check-offer-prices-consistent.mjs 2>&1 | tee -a "$LOG"
+  node scripts/check-sitemap-matches-indexable.mjs 2>&1 | tee -a "$LOG"
+  SITEMAP_RC=${PIPESTATUS[0]}
+  if [ "$SITEMAP_RC" -ne 0 ]; then
+    echo ">>> ❌ SITEMAP / ROBOTS DISAGREE — DEPLOY ABORTED. A new page is indexable but unlisted, or listed but noindex." | tee -a "$LOG"
+    exit 1
+  fi
   PRICE_RC=${PIPESTATUS[0]}
   if [ "$PRICE_RC" -ne 0 ]; then
     echo ">>> ❌ UNEXPLAINED PRICE ON A LIVE PAGE — DEPLOY ABORTED. See data/offer-pricing.json." | tee -a "$LOG"
