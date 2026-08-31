@@ -397,6 +397,10 @@ node scripts/check-header-consistency.mjs || exit 1
 # per-page copies drifting: the section gutter, the promo bar (8 variants/138 pages), section-head
 # centring, the promo mobile rule, the FAQ card (4 names), and .metric. Static and instant.
 node scripts/check-shared-components-not-forked.mjs || exit 1
+# 2026-08-31 — a price on a live page is a PROMISE. The current offer is 50% off and is quoted on
+# seven pages, so ending it is seven edits; one missed page quotes a price RGA does not honour.
+# data/offer-pricing.json is the source of truth; this fails on any figure not accounted for there.
+node scripts/check-offer-prices-consistent.mjs || exit 1
 # 2026-08-28 — escaped head markup must never render as visible page text. A title regex that
 # escaped its element put raw <title>/<meta>/<link> blobs into the anchor text of 11 live posts.
 node scripts/check-no-markup-in-text.mjs || exit 1
