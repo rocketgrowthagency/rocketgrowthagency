@@ -105,6 +105,29 @@ if [ "$GUARD_RC" -ne 0 ]; then
   exit 1
 fi
 
+# 2.6 SHARED-CHROME GUARD (added 2026-08-31): the locked-page guard above only protects PINNED
+# pages — it cannot see a NEW page the generator just created. Three consecutive drip nights
+# (08-29/30/31) shipped industry + blog pages with a BLUE promo bar and no Demo nav link, because
+# the generators still carried the pre-08-28 chrome and nothing here checked their output.
+#
+# The gate existed and passed on demand; it simply was not wired into the path that publishes.
+# A guard that does not run where the damage happens is not a guard.
+node scripts/check-header-consistency.mjs 2>&1 | tee -a "$LOG"
+CHROME_RC=${PIPESTATUS[0]}
+if [ "$CHROME_RC" -ne 0 ]; then
+  echo ">>> ❌ SHARED-CHROME REGRESSION — DEPLOY ABORTED. A generated page redefines .promo-bar or is missing a nav link. Fix the GENERATOR, not just the page." | tee -a "$LOG"
+  bash scripts/notify-openai-quota.sh "$LOG" 2>/dev/null || true
+  exit 1
+fi
+
+# Escaped head markup must never render as visible page text.
+node scripts/check-no-markup-in-text.mjs 2>&1 | tee -a "$LOG"
+MARKUP_RC=${PIPESTATUS[0]}
+if [ "$MARKUP_RC" -ne 0 ]; then
+  echo ">>> ❌ MARKUP LEAKING INTO PAGE TEXT — DEPLOY ABORTED." | tee -a "$LOG"
+  exit 1
+fi
+
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
 # 🔴 2026-08-28 — images/assets/og/ ADDED. The engine writes an OG card for every page it generates

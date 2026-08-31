@@ -203,6 +203,7 @@ const HEADER = `  <a class="promo-bar" href="/pricing/#offer">
         </div>
         
         <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a>
+        <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/demo/" href="/demo/">Demo</a>
         <a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a>
         <a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a>
 
@@ -249,13 +250,9 @@ const FOOTER = `    <footer class="footer">
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
 // Minimal scoped extras — the page otherwise reuses the homepage's own components
 // (.section, .section-surface, .section-head, .eyebrow, .grid-3, .card, .btn-ghost).
-const STYLE = `  <style id="promo-bar-style">
-    .promo-bar{display:block;background:#2457e6;color:#fff;text-align:center;text-decoration:none;font-size:.92rem;font-weight:600;padding:.62rem 1rem;line-height:1.4}
-    .promo-bar strong{font-weight:800}
-    .promo-bar .promo-cta{text-decoration:underline;white-space:nowrap;margin-left:.35rem}
-    .promo-bar:hover{background:#1c46c4}
-    @media(max-width:640px){.promo-bar{font-size:.8rem;padding:.55rem .8rem}}
-  </style>
+const STYLE = `  <!-- .promo-bar is styled in style.css (2026-08-28). Never inline it here: an inline copy
+       sits later in the cascade and wins, so the page silently stops matching the site. Three
+       nights of generated pages shipped a BLUE banner that way. -->
   <style id="ix-redesign">
     /* INDUSTRY PAGE REDESIGN (.ix-*) — locked 2026-07-06. RGA blue only, all SVG, no stock images. */
     .ix-hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#eef3ff 0%,#f7f9ff 60%,#fff 100%);border-bottom:1px solid #eef1f7}
@@ -699,11 +696,6 @@ function buildHub() {
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css?v=20260710a" /><script defer src="/script.js?v=20260706e"></script>
-  <style id="promo-bar-style">
-    .promo-bar{display:block;background:#2457e6;color:#fff;text-align:center;text-decoration:none;font-size:.92rem;font-weight:600;padding:.62rem 1rem;line-height:1.4}
-    .promo-bar strong{font-weight:800}.promo-bar .promo-cta{text-decoration:underline;white-space:nowrap;margin-left:.35rem}.promo-bar:hover{background:#1c46c4}
-    @media(max-width:640px){.promo-bar{font-size:.8rem;padding:.55rem .8rem}}
-  </style>
   <style id="ind-visuals">
     .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
     .ind-cat-card{display:flex;flex-direction:column;gap:.45rem;padding:1.5rem 1.6rem;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit;transition:.15s ease;}

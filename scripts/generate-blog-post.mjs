@@ -320,6 +320,7 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
         </div>
         
         <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/process/" href="/process/">Process</a>
+        <a class="nav-link" data-path="/industries/" href="/industries/">Industries</a><a class="nav-link" data-path="/demo/" href="/demo/">Demo</a>
         <a class="nav-link" data-path="/pricing/" href="/pricing/">Pricing</a>
         <a class="nav-link" data-path="/faq/" href="/faq/">FAQ</a>
 
