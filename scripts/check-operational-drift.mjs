@@ -267,6 +267,33 @@ try {
   }
 }
 
+// ── 3f1. The Quo webhook subscription itself ────────────────────────────────────────────────────
+// 2026-08-31: the account had ZERO webhooks. Not a wrong event list — none at all, so inbound CALLS
+// were being dropped too and nothing noticed for 19 days. A third-party subscription is state we do
+// not control and cannot see; it can vanish via a UI action or a plan change and the failure mode is
+// pure silence. This checks the CAUSE directly, where 3f2 below only catches the consequence.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-quo-webhooks-live.mjs')],
+    { encoding: 'utf8', timeout: 45000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  if (e.status === 1) {
+    const none = /NO webhook points at our endpoint/.test(out);
+    const miss = (out.match(/missing: ([^\n]+)/) || [])[1] || '';
+    findings.push({
+      kind: 'quo-webhook-missing', severity: 'high',
+      msg: none
+        ? 'Quo has NO webhook pointing at our endpoint — inbound calls AND texts are being dropped silently right now.'
+        : `Quo webhook subscription incomplete — missing ${miss.trim()}. Those events are not reaching the CRM.`,
+      fix: 'node scripts/quo-webhook-sync.mjs --apply — creates whatever resource is missing (calls and messages are SEPARATE webhooks in Quo) and re-reads it from the API to confirm.',
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'quo-webhook-unknown', severity: 'medium',
+      msg: 'Could not verify the Quo webhook subscription (QUO_API_KEY missing or their API unreachable).',
+      fix: 'Check QUO_API_KEY in the Scraper .env, then re-run scripts/check-quo-webhooks-live.mjs.' });
+  }
+}
+
 // ── 3f2. An inbound text nobody sees is a lead nobody follows up ─────────────────────────────────
 // 2026-08-28: Chris got a text from a prospect number; it was nowhere in Airtable. SMS handling
 // shipped 2026-08-12 and had logged ZERO rows in 16 days, while inbound CALLS on the same webhook

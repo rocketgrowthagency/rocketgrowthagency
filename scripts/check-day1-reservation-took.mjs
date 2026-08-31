@@ -70,7 +70,14 @@ rows.filter((r) => String(r.fields?.Outcome || '').toLowerCase() === 'sent'
                 && r.fields?.Direction === 'outbound' && r.fields?.Date)
     .forEach((r) => { (byDay[day(r.fields.Date)] ||= []).push(r); });
 
-const completed = Object.keys(byDay).filter((d) => d !== today).sort();
+// A day counts as COMPLETED once its total reaches the 50/day cap — proof the morning run finished,
+// and it lets this answer on the SAME day a change is pasted. Excluding today outright (the old
+// rule) left it permanently a day behind: on 2026-08-31 the morning run had already proven
+// MIN_DAY1_RESERVATION 5→20 took (step1=20) while this still reported Friday's 5.
+const DAILY_CAP = 50;
+const completed = Object.keys(byDay)
+  .filter((d) => d !== today || (byDay[d] || []).length >= DAILY_CAP)
+  .sort();
 if (!completed.length) { console.error('✗ no completed send day found — nothing to judge'); process.exit(2); }
 const last = completed[completed.length - 1];
 const rs = byDay[last];
