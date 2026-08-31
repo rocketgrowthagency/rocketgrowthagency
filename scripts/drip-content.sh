@@ -113,6 +113,13 @@ fi
 # The gate existed and passed on demand; it simply was not wired into the path that publishes.
 # A guard that does not run where the damage happens is not a guard.
 node scripts/check-header-consistency.mjs 2>&1 | tee -a "$LOG"
+  CHROME_RC0=${PIPESTATUS[0]}
+  node scripts/check-shared-components-not-forked.mjs 2>&1 | tee -a "$LOG"
+  FORK_RC=${PIPESTATUS[0]}
+  if [ "$FORK_RC" -ne 0 ]; then
+    echo ">>> ❌ SHARED COMPONENT FORKED — DEPLOY ABORTED. A generated page redefines a component that lives in style.css." | tee -a "$LOG"
+    exit 1
+  fi
 CHROME_RC=${PIPESTATUS[0]}
 if [ "$CHROME_RC" -ne 0 ]; then
   echo ">>> ❌ SHARED-CHROME REGRESSION — DEPLOY ABORTED. A generated page redefines .promo-bar or is missing a nav link. Fix the GENERATOR, not just the page." | tee -a "$LOG"
