@@ -267,6 +267,25 @@ try {
   }
 }
 
+// ── 3f0. Every OTHER external subscription shaped like the Quo one ──────────────────────────────
+// Chiefly Netlify's submission_created hooks. If those are removed, website form submissions still
+// SAVE (they show in the Netlify UI) but notify nobody and reach no CRM — a silent lead leak that
+// looks like a quiet week. Same failure shape as the missing Quo webhook.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-integration-subscriptions.mjs')],
+    { encoding: 'utf8', timeout: 90000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  if (e.status === 1) {
+    const lines = [...out.matchAll(/\[([a-z-]+)\] ([^\n]+)/g)].map((m) => `${m[1]}: ${m[2]}`).slice(0, 3);
+    findings.push({
+      kind: 'external-subscription-missing', severity: 'high',
+      msg: `External subscription problem — ${lines.join(' · ') || 'see check-integration-subscriptions'}`,
+      fix: 'These fail silently: the sender reports success and nothing errors. Restore the hook (Netlify → Site settings → Forms → notifications, or node scripts/quo-webhook-sync.mjs --apply).',
+    });
+  }
+}
+
 // ── 3f1. The Quo webhook subscription itself ────────────────────────────────────────────────────
 // 2026-08-31: the account had ZERO webhooks. Not a wrong event list — none at all, so inbound CALLS
 // were being dropped too and nothing noticed for 19 days. A third-party subscription is state we do
