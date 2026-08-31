@@ -12,6 +12,8 @@
   <meta name="description" content="A short Google Maps + website walkthrough and growth audit for {{BUSINESS_NAME}} from Rocket Growth Agency.">
   <link rel="icon" type="image/png" href="/images/assets/rga_favicon-locked.png">
   <style>
+    .skip-link{position:absolute;left:-999px;top:0}
+    .skip-link:focus{left:10px;top:10px;z-index:90;background:#fff;color:#2457e6;padding:.6rem .9rem;border-radius:8px}
     :root {
       --ink: #0f172a;
       --muted: #475569;
@@ -186,7 +188,8 @@
   </script>
 </head>
 <body>
-  <main class="shell">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <main class="shell" id="main">
     <header>
       <a href="https://www.rocketgrowthagency.com/" style="display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
         <img src="/images/assets/rga_icon-header.png" alt="Rocket Growth Agency">
