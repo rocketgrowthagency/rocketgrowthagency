@@ -50,6 +50,7 @@ const NOT_PREFLIGHT = {
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',
   'check-day1-reservation-took.mjs': 'live Airtable state vs the last-pasted constant; surfaced via operational drift (3h). Not pre-flight - a thin Day-1 queue legitimately sends under the floor, so it must never fail a build',
+  'quo-webhook-sync.mjs': 'operator tool, not a gate — reads/repairs the Quo webhook subscription over their API; needs QUO_API_KEY',
   'check-inbound-sms-flowing.mjs': 'third-party webhook subscription state, not code health; surfaced via operational drift (3f2). Must never block a build — an unregistered SMS event has nothing to do with tonight\'s videos',
   'check-apps-script-paste-owed.mjs': 'deployment state of a DIFFERENT repo (the website .gs files vs the live Apps Script projects); surfaced via operational drift (3f). Must not block a scraper build — an unpasted auto-reply script has nothing to do with tonight\'s videos',
 };
