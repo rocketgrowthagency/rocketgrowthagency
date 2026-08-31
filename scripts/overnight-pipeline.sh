@@ -405,6 +405,10 @@ node scripts/check-offer-prices-consistent.mjs || exit 1
 # was linked from ZERO pages and was absent from the sitemap: invisible to Google entirely. /demo/
 # was missing too despite 210 inbound links. Static and instant.
 node scripts/check-sitemap-matches-indexable.mjs || exit 1
+# 2026-08-31 — every outreach video must have a REAL landing page. Three emailed prospects landed on
+# the homepage because v/<slug>/ had video.mp4 but no index.html: the URL 200s and falls through to
+# the SPA fallback, so status alone never showed it. Local + instant.
+node scripts/check-landing-pages-serve-real.mjs || exit 1
 # 2026-08-28 — escaped head markup must never render as visible page text. A title regex that
 # escaped its element put raw <title>/<meta>/<link> blobs into the anchor text of 11 live posts.
 node scripts/check-no-markup-in-text.mjs || exit 1
