@@ -48,12 +48,22 @@ try { dirs = fs.readdirSync(V, { withFileTypes: true }).filter((d) => d.isDirect
 catch (e) { console.error(`✗ could not read v/: ${String(e.message).slice(0, 80)}`); process.exit(2); }
 if (!dirs.length) { console.error('✗ v/ is empty — refusing to report healthy over nothing.'); process.exit(2); }
 
+// Slugs deliberately 404'd in netlify.toml (client asked for removal, wrong business filmed, etc).
+// They still have a local index.html, so the check below passes them — but reporting "every video
+// has a live page" would be false. Counted and named separately so the number is honest.
+let takedowns = new Set();
+try {
+  const toml = fs.readFileSync(path.join(WEBSITE, 'netlify.toml'), 'utf8');
+  takedowns = new Set([...toml.matchAll(/from\s*=\s*"\/v\/([a-z0-9-]+)(?:\/\*)?"/g)].map((m) => m[1]));
+} catch {}
+
 const broken = [];
-let withVideo = 0;
+let withVideo = 0, tookDown = 0;
 for (const slug of dirs) {
   const d = path.join(V, slug);
   if (!fs.existsSync(path.join(d, 'video.mp4'))) continue;   // no video = nothing promised
   withVideo++;
+  if (takedowns.has(slug)) { tookDown++; continue; }         // deliberately 404'd — not a failure
   const idx = path.join(d, 'index.html');
   if (!fs.existsSync(idx)) { broken.push({ slug, why: 'no index.html — the URL serves the homepage fallback' }); continue; }
   let html;
@@ -71,8 +81,10 @@ if (JSON_OUT) {
 console.log(`\n===== OUTREACH LANDING PAGES =====`);
 console.log(`  v/ directories     ${dirs.length}`);
 console.log(`  carrying a video   ${withVideo}`);
+console.log(`  taken down (404'd) ${tookDown}  — deliberate, excluded below`);
+console.log(`  expected live      ${withVideo - tookDown}`);
 
-if (!broken.length) { console.log(`\n✅ every video has a real, rendered landing page.`); process.exit(0); }
+if (!broken.length) { console.log(`\n✅ all ${withVideo - tookDown} live videos have a real, rendered landing page.`); process.exit(0); }
 
 console.error(`\n✗ ${broken.length} video(s) whose page would NOT render:`);
 for (const b of broken.slice(0, 15)) console.error(`     v/${b.slug}  —  ${b.why}`);
