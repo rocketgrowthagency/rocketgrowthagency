@@ -105,47 +105,40 @@ if [ "$GUARD_RC" -ne 0 ]; then
   exit 1
 fi
 
-# 2.6 SHARED-CHROME GUARD (added 2026-08-31): the locked-page guard above only protects PINNED
-# pages — it cannot see a NEW page the generator just created. Three consecutive drip nights
-# (08-29/30/31) shipped industry + blog pages with a BLUE promo bar and no Demo nav link, because
-# the generators still carried the pre-08-28 chrome and nothing here checked their output.
+# 2.6 PUBLISH GUARDS (2026-08-31, rewired 2026-09-01) — the locked-page guard above only protects
+# PINNED pages and is blind to a page the generator just created. Three drip nights (08-29/30/31)
+# shipped a blue promo bar and no Demo link because nothing here inspected generated output.
 #
-# The gate existed and passed on demand; it simply was not wired into the path that publishes.
-# A guard that does not run where the damage happens is not a guard.
-node scripts/check-header-consistency.mjs 2>&1 | tee -a "$LOG"
-  CHROME_RC0=${PIPESTATUS[0]}
-  node scripts/check-shared-components-not-forked.mjs 2>&1 | tee -a "$LOG"
-  node scripts/check-offer-prices-consistent.mjs 2>&1 | tee -a "$LOG"
-  node scripts/check-sitemap-matches-indexable.mjs 2>&1 | tee -a "$LOG"
-  SITEMAP_RC=${PIPESTATUS[0]}
-  if [ "$SITEMAP_RC" -ne 0 ]; then
-    echo ">>> ❌ SITEMAP / ROBOTS DISAGREE — DEPLOY ABORTED. A new page is indexable but unlisted, or listed but noindex." | tee -a "$LOG"
-    exit 1
+# 🔴 The first wiring of this block was BROKEN: ${PIPESTATUS[0]} was read several commands after the
+# gate it described, so PRICE_RC/FORK_RC captured the `[` test's status and CHROME_RC0 was captured
+# but never checked. Three gates ran and could not abort anything, while looking wired.
+# Capture the status on the VERY NEXT LINE, or do not capture it at all.
+run_gate() {                      # $1 script · $2 failure message · $3 "warn" = do not abort
+  node "scripts/$1" 2>&1 | tee -a "$LOG"
+  local rc=${PIPESTATUS[0]}
+  if [ "$rc" -ne 0 ]; then
+    echo ">>> $2" | tee -a "$LOG"
+    if [ "${3:-abort}" != "warn" ]; then
+      bash scripts/notify-openai-quota.sh "$LOG" 2>/dev/null || true
+      exit 1
+    fi
   fi
-  PRICE_RC=${PIPESTATUS[0]}
-  if [ "$PRICE_RC" -ne 0 ]; then
-    echo ">>> ❌ UNEXPLAINED PRICE ON A LIVE PAGE — DEPLOY ABORTED. See data/offer-pricing.json." | tee -a "$LOG"
-    exit 1
-  fi
-  FORK_RC=${PIPESTATUS[0]}
-  if [ "$FORK_RC" -ne 0 ]; then
-    echo ">>> ❌ SHARED COMPONENT FORKED — DEPLOY ABORTED. A generated page redefines a component that lives in style.css." | tee -a "$LOG"
-    exit 1
-  fi
-CHROME_RC=${PIPESTATUS[0]}
-if [ "$CHROME_RC" -ne 0 ]; then
-  echo ">>> ❌ SHARED-CHROME REGRESSION — DEPLOY ABORTED. A generated page redefines .promo-bar or is missing a nav link. Fix the GENERATOR, not just the page." | tee -a "$LOG"
-  bash scripts/notify-openai-quota.sh "$LOG" 2>/dev/null || true
-  exit 1
-fi
+}
 
-# Escaped head markup must never render as visible page text.
-node scripts/check-no-markup-in-text.mjs 2>&1 | tee -a "$LOG"
-MARKUP_RC=${PIPESTATUS[0]}
-if [ "$MARKUP_RC" -ne 0 ]; then
-  echo ">>> ❌ MARKUP LEAKING INTO PAGE TEXT — DEPLOY ABORTED." | tee -a "$LOG"
-  exit 1
-fi
+run_gate check-header-consistency.mjs \
+  "❌ SHARED-CHROME REGRESSION — DEPLOY ABORTED. A generated page redefines .promo-bar or is missing a nav link. Fix the GENERATOR, not just the page."
+run_gate check-shared-components-not-forked.mjs \
+  "❌ SHARED COMPONENT FORKED — DEPLOY ABORTED. A generated page redefines a component that lives in style.css."
+run_gate check-offer-prices-consistent.mjs \
+  "❌ UNEXPLAINED PRICE ON A LIVE PAGE — DEPLOY ABORTED. See data/offer-pricing.json."
+run_gate check-no-markup-in-text.mjs \
+  "❌ MARKUP LEAKING INTO PAGE TEXT — DEPLOY ABORTED."
+
+# WARN-only: build-sitemap.mjs above is deliberately non-fatal ("a sitemap hiccup must NEVER block
+# the content deploy"). Making its verification fatal here would smuggle that failure back in as a
+# hard abort. The overnight pre-flight still enforces this one strictly.
+run_gate check-sitemap-matches-indexable.mjs \
+  "⚠️ sitemap/robots disagree — content still deploying (sitemap failures are non-fatal by policy). Fix before the next overnight run." warn
 
 # 3. Deploy (whole dir; Netlify uploads only changed files). NOT git push (>2GB pack limit).
 cd "$WEBSITE_DIR"
