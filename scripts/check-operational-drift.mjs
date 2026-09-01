@@ -267,6 +267,29 @@ try {
   }
 }
 
+// ── 3e2. A do-not-contact applies to the BUSINESS, not one row ──────────────────────────────────
+// 2026-08-31: ten LIVE leads shared a website/email with a twin that was closed_dnc or
+// closed_bounced. Six were mid-sequence and would have kept sending follow-ups to a company that
+// had already asked us to stop — a compliance risk, and a deliverability one on the bounces.
+try {
+  execFileSync('node', [path.join(SCRAPER, 'scripts', 'check-duplicate-identity-leads.mjs')],
+    { encoding: 'utf8', timeout: 90000, stdio: ['ignore', 'pipe', 'pipe'] });
+} catch (e) {
+  const out = `${e.stdout || ''}${e.stderr || ''}`;
+  const m = out.match(/✗ (\d+) LIVE lead\(s\) share an identity/);
+  if (e.status === 1 && m) {
+    findings.push({
+      kind: 'duplicate-identity-live-lead', severity: 'high',
+      msg: `${m[1]} live lead(s) share a website or email with an opted-out lead — they will keep receiving follow-ups at a business that asked us to stop.`,
+      fix: 'Set Suppressed=true on the live row(s). Suppression keys on the BUSINESS identity, not the record.',
+    });
+  } else if (e.status === 2) {
+    findings.push({ kind: 'duplicate-identity-unknown', severity: 'medium',
+      msg: 'Could not check for duplicate-identity leads (Airtable unreachable).',
+      fix: 'Re-run scripts/check-duplicate-identity-leads.mjs.' });
+  }
+}
+
 // ── 3f0. Every OTHER external subscription shaped like the Quo one ──────────────────────────────
 // Chiefly Netlify's submission_created hooks. If those are removed, website form submissions still
 // SAVE (they show in the Netlify UI) but notify nobody and reach no CRM — a silent lead leak that
