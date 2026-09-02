@@ -72,6 +72,25 @@ say "── the sales surface ──"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
+# ── production pause: lift it automatically the day every condition clears ────────────────────────
+# Removing the pause was a MANUAL step waiting on a human to notice a condition had cleared, and a
+# manual step nobody is watching is how a pause outlives its reason. This checks and resumes on its
+# own; it is conservative — anything indeterminate counts as blocking.
+say ""
+say "── production pause ──"
+if [ -f output/PRODUCTION-PAUSED ]; then
+  ar=$(bash scripts/auto-resume-production.sh 2>&1)
+  if echo "$ar" | grep -q 'PRODUCTION RESUMED'; then
+    echo "  🚀 PRODUCTION AUTO-RESUMED — every pause condition cleared."
+    echo "$ar" | grep -E 'RESUMED|RESUME-FIRST-NIGHT' | sed 's/^/     /'
+  else
+    say "  ⏸️  still paused — $(echo "$ar" | grep -cE '^        · ') condition(s) open"
+    [ "$QUIET" -eq 1 ] || echo "$ar" | grep -E '^        · ' | sed 's/^/  /'
+  fi
+else
+  say "  ✅ production running (no pause flag)"
+fi
+
 say ""
 if [ "$FAIL" -gt 0 ]; then
   echo "🔴 $FAIL FAILING · $INDET indeterminate · $OK healthy"
