@@ -108,6 +108,105 @@ if (prices) {
   add('pricing-source-unreadable', 'data/offer-pricing.json could not be read — cannot verify quoted prices');
 }
 
+// ---- the GUIDED CALL decision tree ----
+// A dead end mid-call is worse than no tree at all: the rep is left staring at a button that does
+// nothing while a prospect is talking. The in-page checkFlow() only logs to the console, which
+// nobody is reading during a live call — so it is checked here, where it can fail a deploy.
+const fm = src.match(/const FLOW = \{[\s\S]*?\n {2}\};/);
+if (!fm) add('flow-missing', 'the guided-call FLOW tree could not be located');
+else {
+  let FLOW;
+  try {
+    FLOW = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
+      + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i});' + fm[0] + 'return FLOW;})()');
+  } catch (e) { add('flow-broken', `FLOW does not evaluate: ${e.message}`); }
+
+  if (FLOW) {
+    const nodes = Object.keys(FLOW);
+    if (!FLOW.start) add('flow-no-start', 'FLOW has no `start` node');
+    for (const [id, n] of Object.entries(FLOW)) {
+      for (const [label, to] of n.o || []) {
+        if (!FLOW[to]) add('flow-dead-link', `${id} → "${to}" (from "${String(label).slice(0, 30)}") does not exist`);
+      }
+      if (!(n.o || []).length && !n.out) add('flow-dead-end', `${id} has no options and no outcome`);
+      if (!n.t) add('flow-untitled', id);
+    }
+    // Every node must be reachable from start, or it is dead weight nobody can ever see.
+    const seen = new Set(['start']); const queue = ['start'];
+    while (queue.length) {
+      const cur = FLOW[queue.shift()]; if (!cur) continue;
+      for (const [, to] of cur.o || []) if (FLOW[to] && !seen.has(to)) { seen.add(to); queue.push(to); }
+    }
+    const orphans = nodes.filter((n) => !seen.has(n));
+    if (orphans.length) add('flow-unreachable-node', `${orphans.join(', ')} — cannot be reached from start`);
+
+    // The guided tree is the LIVE path. If the reference spine gained beats, the tree must have them
+    // too, or a rep following the buttons silently gets the old call.
+    for (const [node, why] of [['dig', 'problem depth (duration + cause)'], ['tried', 'solution awareness'],
+                               ['cost', 'consequence'], ['want', 'the commitment question']]) {
+      if (!FLOW[node]) add('flow-missing-beat', `no "${node}" node — ${why} is in the reference tabs but NOT in the live guided call`);
+    }
+  }
+}
+
+// ---- script sources that can drift apart ----
+// The call card renders its own opener/voicemail rather than reading the playbook (deliberate: the
+// Calls tab is self-contained so it can lift into /sales/ later). That makes drift possible, so the
+// INVARIANTS are asserted here rather than the exact wording.
+try {
+  const calls = fs.readFileSync(path.join(WEBSITE, 'admin/calls.js'), 'utf8');
+  const fn = calls.match(/function opener\(lead\)[\s\S]*?\n}/);
+  if (!fn) add('calls-opener-missing', 'admin/calls.js has no opener() — the call card would show no script');
+  else {
+    if (/bad time|sorry to bother|is now a good time/i.test(fn[0])) add('calls-opener-apologises', 'the call-card opener apologises — worst measured opener');
+    if (!/video/i.test(fn[0])) add('calls-opener-lost-the-video', 'the call-card opener no longer mentions the video — that is our entire reason for calling');
+  }
+  const vm = calls.match(/function voicemail\(lead\)[\s\S]*?\n}/);
+  if (vm && !/424-242-2040/.test(vm[0])) add('voicemail-missing-number', 'the voicemail script no longer says the callback number');
+} catch { add('calls-unreadable', 'admin/calls.js could not be read'); }
+
+// ---- Airtable consistency: the console, the server, and the guided tree must agree ----
+// The console writes Call Outcome / Call Objection into Airtable singleSelects. A value that is not
+// an allowed option is REJECTED by Airtable — so a rep taps the button, sees no error, and the call
+// is never logged. Silent data loss, and the call brain is blind to it.
+try {
+  const fnSrc = fs.readFileSync(path.join(WEBSITE, 'netlify/functions/sales-call-queue.js'), 'utf8');
+  const calls = fs.readFileSync(path.join(WEBSITE, 'admin/calls.js'), 'utf8');
+  const arr = (s, name) => { const m = s.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`)); return m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : null; };
+
+  const outcomes = arr(fnSrc, 'VALID_OUTCOMES');
+  const objServer = arr(fnSrc, 'VALID_OBJECTIONS');
+  const objClient = arr(calls, 'OBJECTIONS');
+
+  if (!outcomes) add('outcomes-unreadable', 'VALID_OUTCOMES not found in sales-call-queue.js');
+  if (!objServer || !objClient) add('objections-unreadable', 'objection list not found in one of the two files');
+  else if (JSON.stringify(objServer) !== JSON.stringify(objClient)) {
+    const only = (a, b) => a.filter((x) => !b.includes(x));
+    add('objection-list-drift', `client vs server differ — client-only: [${only(objClient, objServer)}] server-only: [${only(objServer, objClient)}]. A client-only value is REJECTED by Airtable and the call logs nothing.`);
+  }
+
+  // Every guided-tree terminal names an outcome in prose; its leading phrase must be a real option.
+  if (outcomes && fm) {
+    for (const mm of src.matchAll(/out: "([^"]+)"/g)) {
+      const prose = mm[1].replace(/\\u2014/g, '—');
+      if (!outcomes.some((o) => prose.startsWith(o))) {
+        add('guided-outcome-not-in-airtable', `"${prose.slice(0, 46)}…" does not start with a valid Call Outcome (${outcomes.join(' / ')})`);
+      }
+    }
+  }
+} catch (e) { add('airtable-consistency-unreadable', String(e.message).slice(0, 90)); }
+
+// ---- no forked copy of the playbook may drift unmarked ----
+try {
+  const mock = path.join(WEBSITE, 'mockup-sales-playbook.html');
+  if (fs.existsSync(mock)) {
+    const h = fs.readFileSync(mock, 'utf8');
+    if (!/SUPERSEDED|superseded/.test(h)) {
+      add('unmarked-playbook-fork', 'mockup-sales-playbook.html is a second copy of the playbook and is NOT marked superseded — it will drift and someone will train from it');
+    }
+  }
+} catch {}
+
 // ---- report ----
 const stats = { tabs: PB.length, blocks: PB.reduce((a, s) => a + (s.blocks || []).length, 0) };
 if (JSON_OUT) { console.log(JSON.stringify({ ...stats, defects: bad }, null, 2)); process.exit(bad.length ? 1 : 0); }
