@@ -133,6 +133,10 @@ run_gate check-offer-prices-consistent.mjs \
   "❌ UNEXPLAINED PRICE ON A LIVE PAGE — DEPLOY ABORTED. See data/offer-pricing.json."
 run_gate check-no-markup-in-text.mjs \
   "❌ MARKUP LEAKING INTO PAGE TEXT — DEPLOY ABORTED."
+# The deploy ships admin/ too, so a broken sales playbook reaches the live call console. A bad block
+# renders as NOTHING — a rep mid-call just sees a gap where the answer should be. Fails CLOSED.
+run_gate check-playbook-integrity.mjs \
+  "❌ SALES PLAYBOOK DEFECT — DEPLOY ABORTED. A broken block renders as nothing mid-call."
 
 # WARN-only: build-sitemap.mjs above is deliberately non-fatal ("a sitemap hiccup must NEVER block
 # the content deploy"). Making its verification fatal here would smuggle that failure back in as a

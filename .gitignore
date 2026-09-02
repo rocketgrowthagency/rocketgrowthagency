@@ -14,3 +14,4 @@ scripts/.bin/
 # Python bytecode — a test importing select-emailable-leads.py regenerates these
 __pycache__/
 *.pyc
+research/jeremy-miner/_run.log
