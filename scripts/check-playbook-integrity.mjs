@@ -198,6 +198,27 @@ try {
   }
 } catch (e) { add('airtable-consistency-unreadable', String(e.message).slice(0, 90)); }
 
+// ---- every admin module's cache-buster must be newer than the file it loads ----
+// 🔴 2026-09-02 — calls.js is imported with `?v=` from TWO places in admin.js. Bumping one and not
+// the other ships a browser the OLD module from whichever import wins, with no error anywhere. The
+// same trap as the playbook's ?v=, but worse, because the version lives in a DIFFERENT file from the
+// tag and there is more than one of it.
+for (const [file, loadedIn] of [['admin/calls.js', 'admin/admin.js'], ['admin/admin.js', 'admin/index.html'], ['admin/playbook.js', 'admin/index.html']]) {
+  try {
+    const base = file.split('/').pop();
+    const holder = fs.readFileSync(path.join(WEBSITE, loadedIn), 'utf8');
+    const refs = [...holder.matchAll(new RegExp(`${base.replace('.', '\\.')}\\?v=([A-Za-z0-9]+)`, 'g'))].map((x) => x[1]);
+    if (!refs.length) { add('module-not-versioned', `${file} is loaded from ${loadedIn} with no ?v= — browsers will cache it forever`); continue; }
+    const uniq = [...new Set(refs)];
+    if (uniq.length > 1) {
+      add('module-version-mismatch', `${file} is imported ${refs.length}× from ${loadedIn} with DIFFERENT versions (${uniq.join(', ')}) — one of them serves a stale module`);
+    }
+    const fT = fs.statSync(path.join(WEBSITE, file)).mtimeMs;
+    const hT = fs.statSync(path.join(WEBSITE, loadedIn)).mtimeMs;
+    if (fT > hT + 60000) add('module-cache-buster-stale', `${file} is newer than ${loadedIn} (?v=${uniq[0]}) — bump it or browsers serve the OLD module`);
+  } catch (e) { add('module-version-uncheckable', `${file}: ${String(e.message).slice(0, 60)}`); }
+}
+
 // ---- the ACTUAL Airtable field options (the only authority that can reject a write) ----
 // The two code lists agreeing with EACH OTHER proves nothing — they can both be wrong together.
 // Airtable's own field config is the contract. Read it and assert against it.

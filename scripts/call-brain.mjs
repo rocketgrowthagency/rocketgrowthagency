@@ -292,6 +292,52 @@ if (calls.length === 0) {
     say('');
   }
 
+  // ── 6. DID THE COMMITMENT QUESTION MOVE ANYTHING? ────────────────────────────────────────────
+  //
+  // 2026-09-02: the call spine gained a beat — "is this something you actually want to fix this
+  // year?" — asked BEFORE the audit is offered. The console tags the note `[beat:commitment=yes|no]`.
+  // This is the ONLY way to find out whether it helped: we do not record calls, so a change we
+  // cannot count is a change taken on faith.
+  //
+  // 🔴 Reports the split even when it is too small to trust, and SAYS it is too small. A silent
+  // section reads as "nothing to report" when it actually means "nobody has answered yet".
+  {
+    const beat = { yes: { n: 0, won: 0 }, no: { n: 0, won: 0 } };
+    const WON = /interested|callback scheduled/i;
+    for (const id of attempts.keys()) {
+      const f = leadById.get(id); if (!f) continue;
+      const m = /\[beat:commitment=(yes|no)\]/i.exec(String(f['Outreach Notes'] || ''));
+      if (!m) continue;
+      const b = beat[m[1].toLowerCase()];
+      b.n += 1;
+      const oc = String(f['Call Outcome'] || '');
+      if (WON.test(oc) && !/^not interested/i.test(oc)) b.won += 1;
+    }
+    const tagged = beat.yes.n + beat.no.n;
+    say('## 6. Did the commitment question help?');
+    say('');
+    if (!tagged) {
+      say('_No calls tagged yet._ The console asks after Interested / Not interested / Callback');
+      say('scheduled. Until there are tagged calls this stays empty — that is "no data", **not** "no effect".');
+    } else {
+      say('| asked it | calls | moved forward | rate |');
+      say('|---|---|---|---|');
+      for (const k of ['yes', 'no']) {
+        say(`| ${k === 'yes' ? '**Yes**' : 'No'} | ${beat[k].n} | ${beat[k].won} | ${pct(beat[k].won, beat[k].n)}% |`);
+      }
+      if (Math.min(beat.yes.n, beat.no.n) < 15) {
+        say('');
+        say(`⚠️ **Too few to trust** (${beat.yes.n} vs ${beat.no.n}; want 15+ each). Directional only — do not act on it yet.`);
+      } else {
+        const d = pct(beat.yes.won, beat.yes.n) - pct(beat.no.won, beat.no.n);
+        say('');
+        say(d > 0 ? `✅ Asking it is **+${d} points**. Keep doing it.`
+                  : `🔴 Asking it is **${d} points** — it is not helping as written. Re-read the wording before dropping the beat.`);
+      }
+    }
+    say('');
+  }
+
   const notes = [];
   for (const id of attempts.keys()) {
     const f = leadById.get(id); if (!f) continue;
