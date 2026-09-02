@@ -47,6 +47,7 @@ const NOT_PREFLIGHT = {
   'check-orphan-videos.mjs':      'reported via check-operational-drift so orphans reach the morning report',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
   'check-playbook-integrity.mjs': 'the sales playbook is website code, not tonight\'s videos — a bad block must never abort a video build. Runs in drip-content.sh (the deploy that ships admin/) and daily-health-check.sh',
+  'check-playbook-renders.mjs': 'needs a headless BROWSER (playwright) — far too slow and too environment-dependent to gate a nightly video build. Runs in preflight-site-deploy.sh and daily-health-check.sh',
   'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',

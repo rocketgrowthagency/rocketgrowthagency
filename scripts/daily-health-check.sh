@@ -70,6 +70,7 @@ run check-send-queue-drained.mjs       "queue drain progress" status
 say ""
 say "── the sales surface ──"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
+run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
 say ""
 if [ "$FAIL" -gt 0 ]; then

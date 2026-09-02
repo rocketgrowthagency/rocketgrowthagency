@@ -36,6 +36,7 @@ gate() {                                   # $1 = script  $2 = what it protects
 echo
 echo "═══ PRE-DEPLOY GATES ═══"
 gate check-playbook-integrity.mjs      "the sales playbook + guided call + Airtable contract"
+gate check-playbook-renders.mjs        "the playbook actually RENDERS — a structural gate cannot see a blank screen"
 gate check-locked-pages.mjs            "pages Chris has locked"
 gate check-header-consistency.mjs      "shared header/promo chrome"
 gate check-shared-components-not-forked.mjs "components silently forking"
