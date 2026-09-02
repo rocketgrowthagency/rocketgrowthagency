@@ -19,8 +19,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+const SCRAPER_ENV = path.dirname(path.dirname(fileURLToPath(import.meta.url)));  // NOT .pathname — spaces arrive %20-encoded and the .env is never found
 const PB_PATH = path.join(WEBSITE, 'admin/playbook.js');
 const HTML_PATH = path.join(WEBSITE, 'admin/index.html');
 const JSON_OUT = process.argv.includes('--json');
@@ -196,6 +198,48 @@ try {
   }
 } catch (e) { add('airtable-consistency-unreadable', String(e.message).slice(0, 90)); }
 
+// ---- the ACTUAL Airtable field options (the only authority that can reject a write) ----
+// The two code lists agreeing with EACH OTHER proves nothing — they can both be wrong together.
+// Airtable's own field config is the contract. Read it and assert against it.
+let fieldCheck = 'skipped';
+try {
+  const dotenv = await import('dotenv').catch(() => null);
+  if (dotenv) dotenv.config({ path: path.join(SCRAPER_ENV, '.env') });
+  const KEY = process.env.AIRTABLE_API_KEY, BASE = process.env.AIRTABLE_BASE_ID;
+  const TABLE = process.env.AIRTABLE_TABLE_NAME;
+
+  if (!KEY || !BASE) {
+    fieldCheck = 'NO CREDS — the live field options were NOT verified';
+  } else {
+    const r = await fetch(`https://api.airtable.com/v0/meta/bases/${BASE}/tables`, { headers: { Authorization: `Bearer ${KEY}` } });
+    if (!r.ok) fieldCheck = `Airtable meta API ${r.status} — options NOT verified`;
+    else {
+      const d = await r.json();
+      const tbl = (d.tables || []).find((t) => t.name === TABLE) || (d.tables || []).find((t) => t.name === 'Leads');
+      if (!tbl) fieldCheck = 'Leads table not found in the base — options NOT verified';
+      else {
+        const opts = (name) => {
+          const f = (tbl.fields || []).find((x) => x.name === name);
+          return f?.options?.choices ? f.options.choices.map((c) => c.name) : null;
+        };
+        const fnSrc2 = fs.readFileSync(path.join(WEBSITE, 'netlify/functions/sales-call-queue.js'), 'utf8');
+        const listOf = (s, n) => { const m = s.match(new RegExp(`const ${n} = \\[([\\s\\S]*?)\\];`)); return m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : []; };
+
+        for (const [field, constName] of [['Call Outcome', 'VALID_OUTCOMES'], ['Call Objection', 'VALID_OBJECTIONS']]) {
+          const live = opts(field);
+          if (!live) { add('airtable-field-missing', `"${field}" is not a select on the Leads table — every write to it is rejected`); continue; }
+          const code = listOf(fnSrc2, constName);
+          const notInAirtable = code.filter((v) => !live.includes(v));
+          if (notInAirtable.length) {
+            add('value-airtable-will-reject', `${constName} contains ${JSON.stringify(notInAirtable)} — NOT options on "${field}". Airtable rejects these and the call logs NOTHING, with no error shown to the rep.`);
+          }
+        }
+        fieldCheck = 'verified against the live Airtable field options';
+      }
+    }
+  }
+} catch (e) { fieldCheck = `could not verify (${String(e.message).slice(0, 50)})`; }
+
 // ---- no forked copy of the playbook may drift unmarked ----
 try {
   const mock = path.join(WEBSITE, 'mockup-sales-playbook.html');
@@ -215,6 +259,7 @@ console.log('\n===== SALES PLAYBOOK INTEGRITY =====');
 console.log(`  tabs    ${stats.tabs}`);
 console.log(`  blocks  ${stats.blocks}`);
 console.log(`  ${PB.map((s) => s.tab).join(' · ')}`);
+console.log(`  airtable  ${fieldCheck}`);
 
 if (!bad.length) { console.log('\n✅ structure sound · locked rules held · prices match the single source.'); process.exit(0); }
 
