@@ -44,11 +44,27 @@ if (!/\.\.\.drift/.test(src)) fail('driftLines() output is not spread into the s
 ok('morning summary calls the drift detector and includes its output');
 
 // 3. Must never exit non-zero.
+//
+// 🔴 2026-09-02 — THIS REPORTED A FALSE FAILURE FOR AN UNKNOWN NUMBER OF DAYS.
+// The timeout was 60s. The detector now makes enough live Airtable/network calls to take ~77s, so it
+// was being killed by SIGTERM — and the catch block reported that as "exited non-zero (status null)".
+// The detector was healthy the whole time; the gate was accusing it of the wrong crime.
+//
+// `status` is null on a signal kill. Reporting a TIMEOUT as a non-zero exit sends you looking for a
+// bug in the detector that does not exist ([[feedback-a-failure-reason-can-be-a-mask]]). Distinguish
+// them, and say which one happened.
+const DRIFT_TIMEOUT_MS = 180000;   // ~2.3x the measured 77s, so normal growth does not trip it
 try {
-  execFileSync('node', [DRIFT, '--json'], { encoding: 'utf8', timeout: 60000 });
+  execFileSync('node', [DRIFT, '--json'], { encoding: 'utf8', timeout: DRIFT_TIMEOUT_MS });
   ok('drift detector exits 0 (cannot break the locked report format)');
 } catch (e) {
-  fail(`drift detector exited non-zero (status ${e.status}) — an advisory extra must never block the report.`);
+  if (e.code === 'ETIMEDOUT' || e.signal) {
+    fail(`drift detector did NOT exit non-zero — it was KILLED after ${DRIFT_TIMEOUT_MS / 1000}s ` +
+         `(signal ${e.signal || 'n/a'}). It is too slow, not broken. Time it with\n` +
+         '         `time node scripts/check-operational-drift.mjs --json` and either speed it up or\n' +
+         '         raise DRIFT_TIMEOUT_MS here — do NOT go looking for a bug in the detector.');
+  }
+  fail(`drift detector exited ${e.status} — an advisory extra must never block the report.`);
 }
 
 // 4. Behavioural — it must actually catch a stale flag.

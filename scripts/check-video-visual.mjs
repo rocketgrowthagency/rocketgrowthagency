@@ -31,7 +31,10 @@ const VIDEO = args.find((a) => !a.startsWith('--'));
 const JSON_OUT = args.includes('--json');
 const NO_VISION = args.includes('--no-vision');
 
-if (!VIDEO || !fs.existsSync(VIDEO)) { console.error(`[visual-gate] no such video: ${VIDEO || '(none)'}`); process.exit(1); }
+// 🔴 Missing ARGUMENT = usage error (exit 2), not a gate failure. A per-video tool must never look
+// like a real defect in a bulk sweep of check-*.mjs.
+if (!VIDEO) { console.error('usage: node scripts/check-video-visual.mjs <video.mp4> — per-video tool, not a standalone gate'); process.exit(2); }
+if (!fs.existsSync(VIDEO)) { console.error(`[visual-gate] no such video: ${VIDEO}`); process.exit(1); }
 
 // ---- ffprobe / ffmpeg helpers ----
 function duration(v) {

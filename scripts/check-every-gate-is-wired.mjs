@@ -46,6 +46,7 @@ const NOT_PREFLIGHT = {
   'check-operational-drift.mjs':  'advisory; surfaces in the morning report and must never block a run',
   'check-orphan-videos.mjs':      'reported via check-operational-drift so orphans reach the morning report',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
+  'check-playbook-integrity.mjs': 'the sales playbook is website code, not tonight\'s videos — a bad block must never abort a video build. Runs in drip-content.sh (the deploy that ships admin/) and daily-health-check.sh',
   'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',
@@ -79,6 +80,29 @@ if (ghosts.length) {
        '         Remove them — an excuse list that drifts from reality stops being read.');
 }
 ok(`every NOT_PREFLIGHT entry names a real file (${Object.keys(NOT_PREFLIGHT).length} excused)`);
+
+// 🔴 An excuse is a CLAIM. If a reason says the gate "runs in <script>.sh", that must be verifiable —
+// otherwise NOT_PREFLIGHT degrades into the place gates go to be forgotten, which is the exact failure
+// this file exists to prevent. Added 2026-09-02 after check-playbook-integrity.mjs was excused with a
+// reason naming two runners; nothing had ever checked that such a claim was true.
+const brokenExcuses = [];
+for (const [gate, reason] of Object.entries(NOT_PREFLIGHT)) {
+  for (const m of String(reason).matchAll(/([a-z0-9-]+\.sh)/g)) {
+    const runner = path.join(HERE, m[1]);
+    if (!fs.existsSync(runner)) { brokenExcuses.push(`${gate}: names ${m[1]}, which does not exist`); continue; }
+    if (!fs.readFileSync(runner, 'utf8').includes(gate)) {
+      brokenExcuses.push(`${gate}: excuse claims it runs in ${m[1]}, but that script never invokes it`);
+    }
+  }
+}
+if (brokenExcuses.length) {
+  console.error(`✗ FATAL: ${brokenExcuses.length} NOT_PREFLIGHT excuse(s) claim something untrue:`);
+  for (const b of brokenExcuses) console.error(`     ${b}`);
+  console.error('');
+  console.error('   An excuse nobody verifies is how a gate stops running without anyone noticing.');
+  process.exit(1);
+}
+ok('every excuse that names a runner was verified against that runner');
 
 if (unwired.length) {
   console.error(`✗ FATAL: ${unwired.length} gate(s) exist but are never run:`);

@@ -64,7 +64,13 @@ const MAX_SCALE_MI = 2.0;                 // city level: 2000 ft / 1 mi / 2 mi o
 const ACTION_LABELS = ['directions', 'save', 'nearby', 'share', 'send to', 'send to phone'];
 
 function die(msg) { console.error(`[acceptance] ${msg}`); process.exit(1); }
-if (!VIDEO || !fs.existsSync(VIDEO)) die(`no such video: ${VIDEO || '(none)'}`);
+// 🔴 A missing ARGUMENT is a usage error, not a failing gate. Exit 2 (indeterminate), never 1 —
+// otherwise `for f in check-*.mjs; do node $f; done` reports this per-video tool as a real defect.
+if (!VIDEO) {
+  console.error('usage: node scripts/check-video-acceptance.mjs <video.mp4> — per-video tool, not a standalone gate');
+  process.exit(2);
+}
+if (!fs.existsSync(VIDEO)) die(`no such video: ${VIDEO}`);
 
 // ---- OCR binary (compiled once, cached; rebuilt when the source is newer) ----
 function ensureOcrBin() {
