@@ -204,6 +204,15 @@ await page.pdf({
 });
 await browser.close();
 
+// A second copy on the Desktop is a FORK, and forks go stale silently — the exact failure this
+// session kept finding. So: refresh it every build if it already exists, and only create it on
+// request. That way the printed-from copy can never drift behind the live playbook.
+const DESK = `${process.env.HOME}/Desktop/RGA Sales Playbook - print and study.pdf`;
+if (process.argv.includes('--desktop') || fs.existsSync(DESK)) {
+  fs.copyFileSync(OUT, DESK);
+  console.log(`\n🖨  Desktop copy refreshed: ${DESK.replace(process.env.HOME, '~')}`);
+}
+
 const kb = Math.round(fs.statSync(OUT).size / 1024);
 console.log(`\n✅ ${path.relative(WEBSITE, OUT)} — ${kb} KB · ${printable.length} sections + guided-call appendix`);
 console.log('   Every word comes from admin/playbook.js. Re-run after any playbook change.');
