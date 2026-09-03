@@ -1750,8 +1750,15 @@ async function auditGbp(_, gbpUrl, business) {
           .replace(/\s*[·|]\s*/g, ' · ')
           .replace(/(Hide|Show) open hours for the week/gi, '')
           .replace(/See more hours/gi, '')
+          // Maps appends provenance chatter after the hours. Cover BOTH wordings — the first pass
+          // only stripped "Confirmed by this business" and left "Confirmed by others 7 weeks ago"
+          // sitting in the value.
+          .replace(/Confirmed by (this business|others|the business)[^·|]*/gi, '')
+          .replace(/Updated by (this business|others)[^·|]*/gi, '')
           .replace(/\s{2,}/g, ' ')
+          .replace(/\s*·\s*·\s*/g, ' · ')          // stripping a segment leaves a doubled separator
           .replace(/^[\s·|]+|[\s·|]+$/g, '')
+          .replace(/[\s·]+$/, '')
           .slice(0, 300);
       }
 
