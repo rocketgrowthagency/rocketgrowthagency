@@ -88,7 +88,6 @@ const EXPECTED_EMPTY = {
   'Engagement Score': 'legacy, no writer — lead scoring computes this at report time',
   'Days Since Last Activity': 'legacy, no writer — computed at report time',
   'Text Count': 'legacy, no writer — SMS counts come from the Outreach Log',
-  '_rga_calltest': 'TEST DEBRIS from 2026-08. 0 refs, 0 values. Airtable cannot delete fields via API — Chris to remove in the UI',
 };
 
 const api = async (url) => {
