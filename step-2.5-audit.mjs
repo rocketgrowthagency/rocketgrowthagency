@@ -1733,6 +1733,28 @@ async function auditGbp(_, gbpUrl, business) {
         : /\b(open now|open\s*·|closes?\s+\d|closes?\s+at|open\s+\d|open 24|monday|tuesday|wednesday|thursday|friday|saturday|sunday|hours|\d+\s*(am|pm))\b/i.test(txt);
       const hoursVerified = hoursSectionVisible;
 
+      // 🔴 2026-09-03 — CAPTURE THE HOURS TEXT, not just "do they have hours".
+      // We have queried this element on every scrape since the audit was built and kept only a
+      // BOOLEAN, because the audit only ever needed to know whether hours were listed. The actual
+      // opening times were sitting in the same node and being discarded — `Leads.GBP Hours` was
+      // populated on 4 of 1,449 rows as a result. Chris: "we save more data the better".
+      //
+      // aria-label first: Maps puts the readable summary there ("Hours: Open ⋅ Closes 8 PM"), while
+      // textContent often concatenates the whole collapsed weekly table with no separators.
+      // Capped and whitespace-collapsed — this is a convenience field, never a parsing target.
+      let businessHoursText = '';
+      if (hoursEl) {
+        const label = (hoursEl.getAttribute('aria-label') || '').trim();
+        const inner = (hoursEl.textContent || '').replace(/\s+/g, ' ').trim();
+        businessHoursText = (label.length >= 8 ? label : inner)
+          .replace(/\s*[·|]\s*/g, ' · ')
+          .replace(/(Hide|Show) open hours for the week/gi, '')
+          .replace(/See more hours/gi, '')
+          .replace(/\s{2,}/g, ' ')
+          .replace(/^[\s·|]+|[\s·|]+$/g, '')
+          .slice(0, 300);
+      }
+
       // Category: specific GBP selectors first, then heuristic fallback
       let primaryCategory = null;
       const catEl = document.querySelector('button.DkEaL, span.YhemCb');
@@ -1916,7 +1938,7 @@ async function auditGbp(_, gbpUrl, business) {
       } catch (_e) {}
       console.log(`  [gbp-diag] gbpSocialProfiles=${gbpSocialProfiles.length} verified=${gbpSocialProfilesVerified} (${gbpSocialProfiles.map(s => s.platform).join(',') || 'none'})`);
 
-      return { reviewCount, reviewAbsenceVerified, photoCount, photoCountVerified, photoAbsenceVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
+      return { businessHoursText, reviewCount, reviewAbsenceVerified, photoCount, photoCountVerified, photoAbsenceVerified, minDays, reviewsLast30, reviewsLast90, ownerResponseCount, hasBusinessHours, hoursVerified, reviewsParsedCount: cardsScanned, primaryCategory, categoriesCount, categoriesCountVerified, description, hasPosts, lastPostDaysAgo, gbpSocialProfiles, gbpSocialProfilesVerified };
     }, CARD_SELECTOR);
 
     findings.reviewCount = data.reviewCount;
@@ -1991,6 +2013,8 @@ async function auditGbp(_, gbpUrl, business) {
     findings.ownerResponseCount = data.ownerResponseCount;
     findings.hasBusinessHours = data.hasBusinessHours;
     findings.hoursVerified = !!data.hoursVerified;
+    // The readable opening times, captured from the same element as the boolean above.
+    findings.businessHoursText = String(data.businessHoursText || '').trim();
     findings.reviewsParsedCount = Number.isFinite(data.reviewsParsedCount) ? data.reviewsParsedCount : 0;
     findings.primaryCategory = data.primaryCategory;
     findings.categoriesCount = data.categoriesCount;
@@ -2626,6 +2650,13 @@ async function main() {
           if (primaryCategory && typeof primaryCategory === 'string') fields['Category'] = primaryCategory;
           if (typeof description === 'string' && description.trim()) fields['GBP Description'] = description.trim();
           if (typeof hasPosts === 'boolean') fields['GBP Has Posts'] = hasPosts;
+          // 2026-09-03 — persist the readable opening times we now capture. Same writeback the
+          // parked/suspect flags use, so it needs no CSV column and no step-8 change.
+          // 🔴 Read from the persisted audit object like every other field here — the local
+          // `businessHoursText` lives inside page.evaluate() and is UNDEFINED in this scope. It
+          // parsed fine and would simply never have written. Caught by asserting scope, not syntax.
+          const gbpHours = String(a.gbp?.businessHoursText || '').trim();
+          if (gbpHours.length > 3) fields['GBP Hours'] = gbpHours;
           if (siteLooksParked) {
             fields['Site Looks Parked'] = true;
             if (parkedReason) fields['Parked Reason'] = parkedReason;
