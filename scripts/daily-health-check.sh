@@ -65,6 +65,7 @@ say "── pipeline state ──"
 run check-day1-reservation-took.mjs    "day-1 reservation applied as configured"
 run check-operational-drift.mjs        "config on disk matches what is running"
 run check-apps-script-paste-owed.mjs   "no Apps Script edit waiting to be pasted"
+run check-orphaned-airtable-fields.mjs "no Airtable field reads as coverage while holding nothing"
 run check-send-queue-drained.mjs       "queue drain progress" status
 
 say ""
