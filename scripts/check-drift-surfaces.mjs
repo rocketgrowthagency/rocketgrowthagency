@@ -75,11 +75,29 @@ try {
   const had = fs.existsSync(realFlag);
   if (had) { ok('behavioural check skipped — a real CLEAR-BACKLOG flag is currently set'); }
   else {
-    fs.writeFileSync(realFlag, '14\n');
-    const old = Date.now() / 1000 - 5 * 86400;
-    fs.utimesSync(realFlag, old, old);
-    const out = execFileSync('node', [DRIFT, '--json'], { encoding: 'utf8', timeout: 60000 });
-    fs.unlinkSync(realFlag);
+    // 🔴🔴 2026-09-04 — THIS BLOCK PLANTED THE EXACT LANDMINE IT EXISTS TO DETECT.
+    //
+    // It writes a REAL `output/CLEAR-BACKLOG` (value 14, backdated 5 days), runs the detector, then
+    // deletes it on the NEXT line. The inner timeout was still 60s against a detector that had grown
+    // to ~78s, so execFileSync threw and the unlink never ran — leaking a LIVE flag on every run.
+    //
+    // THREE leaked flags were found on 2026-09-04 (Aug 28, Aug 30 x2), every one containing `14`.
+    // A stale CLEAR-BACKLOG overrides the nightly search count; one did exactly that on 2026-08-23,
+    // exhausted every worked pair and tripped the circuit breaker. They had been recorded as
+    // hand-created during the production pause. They were not — this gate made them.
+    //
+    // Two fixes, both required:
+    //   1. the inner timeout must track the outer one, so a detector that gets slower cannot orphan a file
+    //   2. cleanup belongs in a `finally`, so a throw can NEVER leave the flag behind
+    let out;
+    try {
+      fs.writeFileSync(realFlag, '14\n');
+      const old = Date.now() / 1000 - 5 * 86400;
+      fs.utimesSync(realFlag, old, old);
+      out = execFileSync('node', [DRIFT, '--json'], { encoding: 'utf8', timeout: DRIFT_TIMEOUT_MS });
+    } finally {
+      try { fs.unlinkSync(realFlag); } catch { /* already gone — fine */ }
+    }
     const d = JSON.parse(out);
     if (!(d.findings || []).some((f) => f.kind === 'stale-flag')) {
       fail('a 5-day-old CLEAR-BACKLOG flag was NOT detected — the exact drift that caused the 2026-08-23\n' +
