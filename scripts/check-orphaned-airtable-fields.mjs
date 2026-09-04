@@ -49,7 +49,6 @@ const EXPECTED_EMPTY = {
   'Website Suspect': 'only when the audit finds a name/domain mismatch',
   'Website Suspect Reason': 'paired with Website Suspect',
   // Wired 2026-09-03, forward-only — will populate from the next scrape / click / call.
-  'GBP Hours': 'FIXED 2026-09-03 (step-2.5 now captures the text). Forward-only: populates when scraping resumes. REMOVE THIS EXCUSE once it is >0%',
   'Video Started At': 'attribution fixed 2026-09-03 in track-click.js. Forward-only: needs a real click',
   'Video 25% At': 'as Video Started At — forward-only',
   'Video 50% At': 'as Video Started At — forward-only',

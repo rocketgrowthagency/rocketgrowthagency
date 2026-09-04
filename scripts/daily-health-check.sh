@@ -77,6 +77,28 @@ run check-playbook-renders.mjs         "the playbook actually renders in a brows
 # Removing the pause was a MANUAL step waiting on a human to notice a condition had cleared, and a
 # manual step nobody is watching is how a pause outlives its reason. This checks and resumes on its
 # own; it is conservative — anything indeterminate counts as blocking.
+# ── GBP hours backfill: chip away within the daily Places quota ───────────────────────────────────
+# ~1,420 leads scraped before step-2.5 captured hours. The Cloud project has a low daily SearchText
+# quota (deliberate spend control), so a single run cannot finish it. Rather than ask Chris to babysit
+# it, run a capped batch each morning — it completes itself and stops the moment quota is hit.
+# Non-fatal by design: a completeness task must never fail the health check.
+say ""
+say "── gbp hours backfill ──"
+if [ -n "${QUO_WEBHOOK_TOKEN:-}" ] || grep -q '^QUO_WEBHOOK_TOKEN' .env 2>/dev/null; then
+  _t="${QUO_WEBHOOK_TOKEN:-$(grep '^QUO_WEBHOOK_TOKEN' .env | cut -d= -f2- | tr -d '"'"'"'"'"'"'"')}"
+  _r=$(curl -s --max-time 200 "https://www.rocketgrowthagency.com/.netlify/functions/backfill-gbp-hours?token=${_t}&limit=400&commit=1" 2>/dev/null)
+  _w=$(echo "$_r" | grep -oE '"written": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+  _f=$(echo "$_r" | grep -oE '"found": *[0-9]+' | grep -oE '[0-9]+' | head -1)
+  if [ -n "${_w:-}" ]; then
+    say "  ✅ wrote ${_w} lead(s) this run (found ${_f:-0})"
+    echo "$_r" | grep -q 'Quota exceeded' && say "     daily Places quota reached — resumes tomorrow, this is expected"
+  else
+    say "  ⚠️  backfill did not report a count (non-fatal)"
+  fi
+else
+  say "  ⚠️  QUO_WEBHOOK_TOKEN not available — backfill skipped"
+fi
+
 say ""
 say "── production pause ──"
 if [ -f output/PRODUCTION-PAUSED ]; then
