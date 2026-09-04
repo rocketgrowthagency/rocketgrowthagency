@@ -72,6 +72,39 @@ const flag = path.join(SCRAPER, 'output', '.drift-selftest-CLEAR-BACKLOG');
 try {
   // Use the real detector against a real stale file by temporarily creating the flag it watches.
   const realFlag = path.join(SCRAPER, 'output', 'CLEAR-BACKLOG');
+
+  // 🔴🔴 SELF-HEAL: recognise and remove OUR OWN orphaned fixture.
+  //
+  // `finally` unwinds on an exception but NOT on process termination. When this gate was killed
+  // (SIGTERM from a harness timeout) the fixture survived as a LIVE flag, and the next run then
+  // "skipped" the behavioural test because a flag was present — so one leak silently disabled this
+  // check indefinitely. That is how four leaked flags accumulated unnoticed.
+  //
+  // The fixture is identifiable: contents exactly `14` AND an mtime ~5 days old, because we backdate
+  // it ourselves. A REAL flag set by hand has a CURRENT mtime, so this cannot eat a deliberate one.
+  if (fs.existsSync(realFlag)) {
+    try {
+      const body = fs.readFileSync(realFlag, 'utf8').trim();
+      const ageDays = (Date.now() - fs.statSync(realFlag).mtimeMs) / 86400000;
+      if (body === '14' && ageDays > 4.5 && ageDays < 5.5) {
+        fs.unlinkSync(realFlag);
+        ok('cleaned an orphaned self-test fixture (a previous run was killed before cleanup)');
+      }
+    } catch { /* unreadable — leave it alone and let the skip below handle it */ }
+  }
+
+  // Cleanup must survive a kill, not just a throw. SIGKILL cannot be caught — the self-heal above is
+  // the backstop for that case.
+  //
+  // 🔴 `ours` is load-bearing. A first version armed this unconditionally and DELETED A FLAG CHRIS
+  // HAD SET DELIBERATELY — the cleanup ran on exit even when we never wrote anything. A scrubber must
+  // only ever remove what IT created. Caught by testing the safety case, not the happy path.
+  let ours = false;
+  const scrub = () => { if (ours) { try { fs.unlinkSync(realFlag); } catch { /* fine */ } } };
+  process.on('exit', scrub);
+  process.on('SIGINT', () => { scrub(); process.exit(130); });
+  process.on('SIGTERM', () => { scrub(); process.exit(143); });
+
   const had = fs.existsSync(realFlag);
   if (had) { ok('behavioural check skipped — a real CLEAR-BACKLOG flag is currently set'); }
   else {
@@ -92,11 +125,13 @@ try {
     let out;
     try {
       fs.writeFileSync(realFlag, '14\n');
+      ours = true;                       // only from here may the scrubber touch it
       const old = Date.now() / 1000 - 5 * 86400;
       fs.utimesSync(realFlag, old, old);
       out = execFileSync('node', [DRIFT, '--json'], { encoding: 'utf8', timeout: DRIFT_TIMEOUT_MS });
     } finally {
       try { fs.unlinkSync(realFlag); } catch { /* already gone — fine */ }
+      ours = false;
     }
     const d = JSON.parse(out);
     if (!(d.findings || []).some((f) => f.kind === 'stale-flag')) {
