@@ -96,6 +96,7 @@ say "── the sales surface ──"
 # accruing. Re-aggregate BEFORE checking, so the check judges the machinery rather than whether anyone
 # remembered to run the build. Output is quiet unless it fails.
 node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
+run check-orphan-functions.mjs         "no function was built and then never invoked"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
