@@ -71,6 +71,7 @@ run check-send-queue-drained.mjs       "queue drain progress" status
 
 say ""
 say "── the sales surface ──"
+run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
