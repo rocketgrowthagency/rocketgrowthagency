@@ -15,3 +15,6 @@ scripts/.bin/
 __pycache__/
 *.pyc
 research/jeremy-miner/_run.log
+
+# Client data exports contain LIVE OAuth refresh tokens. Local only — never git.
+backups/
