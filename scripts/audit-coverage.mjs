@@ -44,9 +44,12 @@ if (cmd === "summary") {
     const a = cs.filter((c) => c.status === "automated").length;
     const m = cs.filter((c) => c.status === "manual").length;
     const g = cs.filter((c) => c.status === "gap").length;
+    // 🔑 `not_measurable` is a FOURTH state, not a gap. Counting it as a gap would keep a permanent
+    // item on the backlog for something we have decided, on principle, never to build.
+    const n = cs.filter((c) => c.status === "not_measurable").length;
     const bar = "█".repeat(Math.round((a / cs.length) * 20)).padEnd(20, "░");
     console.log(`  ${surface.label.padEnd(28)} ${bar} ${String(a).padStart(2)}/${cs.length} automated` +
-      `${m ? `, ${m} manual` : ""}${g ? `, ${g} GAP` : ""}`);
+      `${m ? `, ${m} manual` : ""}${g ? `, ${g} GAP` : ""}${n ? `, ${n} not-measurable` : ""}`);
   }
   const a = byStatus("automated").length, m = byStatus("manual").length, g = byStatus("gap").length;
   console.log(`\n  TOTAL  ${all.length} checks · ${a} automated · ${m} manual · ${g} gaps`);

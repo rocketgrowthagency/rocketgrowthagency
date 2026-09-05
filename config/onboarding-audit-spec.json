@@ -122,10 +122,10 @@
       "label": "AI discovery",
       "why": "🔴🔴 THE FASTEST-MOVING SURFACE IN LOCAL SEARCH. AI tools went 6% → 45% as a local discovery channel in ONE YEAR and are now #3 overall; ChatGPT 31%, Google AI Mode 23%; 42% trust AI recommendations as much as written reviews — while Google's own discovery share FELL 83% → 71% (brightlocal_lcrs_2026). Nobody audits this yet, including us. Optimising purely for the map pack is optimising for a shrinking share.",
       "checks": [
-        { "id": "ai.mentioned", "label": "Does the business surface in AI answers for service + city", "weight": 4, "status": "gap" },
-        { "id": "ai.extractable_nap", "label": "NAP and services machine-extractable (schema, clean HTML)", "weight": 3, "status": "gap" },
-        { "id": "ai.faq_content", "label": "FAQ / Q&A content answering real buyer questions", "weight": 3, "status": "gap" },
-        { "id": "ai.third_party_corroboration", "label": "Consistent presence across sources an AI would cite", "weight": 3, "status": "gap" }
+        { "id": "ai.mentioned", "label": "Does the business surface in AI answers for service + city", "weight": 4, "status": "not_measurable", "note": "🔴🔴 DELIBERATELY NOT BUILT. AI answers are non-deterministic, personalised and differ every run — there is no API that answers this reliably. We measure READINESS (the signals), never PRESENCE (the outcome). Claiming a measured AI-presence metric would be fabricated proof and unfalsifiable to the client. If ever sampled, label it a dated SAMPLE with a run count, never a metric." },
+        { "id": "ai.extractable_nap", "label": "NAP and services machine-extractable (schema, clean HTML)", "weight": 3, "status": "automated", "impl": "ai-readiness-audit", "note": "Checks schema presence, that every JSON-LD block PARSES, that schema NAP matches the GBP, and that the phone is in readable text not only markup." },
+        { "id": "ai.faq_content", "label": "FAQ / Q&A content answering real buyer questions", "weight": 3, "status": "automated", "impl": "ai-readiness-audit", "note": "FAQPage/QAPage schema — the single most citable format for answer engines." },
+        { "id": "ai.third_party_corroboration", "label": "Consistent presence across sources an AI would cite", "weight": 3, "status": "automated", "impl": "ai-readiness-audit", "note": "sameAs links. Without them nothing tells an AI which external profiles are the same business." }
       ]
     }
   }
