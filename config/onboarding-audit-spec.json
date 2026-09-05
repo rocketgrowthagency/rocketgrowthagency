@@ -1,0 +1,132 @@
+{
+  "_readme": [
+    "THE CONTRACT: everything RGA checks when a client onboards. Built 2026-09-05.",
+    "",
+    "Chris: 'when we do onboarding do we do a deep dive scan of website and document current state and",
+    "then the recommended and fixes plan... audit GBP, website, maybe social media, list all things we",
+    "should be checking?'",
+    "",
+    "🔑 WHY A SPEC FILE AND NOT JUST CODE: an audit that lives only in code has no way to say what it",
+    "does NOT check. Every gap is invisible. This file lists the complete intended surface, and each",
+    "item declares its own automation status - so `audit-coverage.mjs` can report honestly that we",
+    "cover N of M, rather than a green tick implying completeness we do not have.",
+    "",
+    "🔴 `status` is the load-bearing field. Never mark an item `automated` because a task id exists -",
+    "only when a function actually produces the value. A field that exists is not data.",
+    "",
+    "status: automated = code produces it | manual = a human does it | gap = neither, yet",
+    "weight:  ranking leverage, 1-5. 5 = named by research as a top factor.",
+    "source:  where the benchmark or justification comes from (config/industry-benchmarks.json keys,",
+    "         or 'rga-almanac' for our own observed data, or 'observed' for direct measurement)."
+  ],
+  "version": "2026-09-05",
+  "surfaces": {
+    "gbp": {
+      "label": "Google Business Profile",
+      "why": "32% of local ranking weight (whitespark_lsrf_2026) — the single highest-leverage surface we control. Proximity outranks it at 55% but cannot be changed.",
+      "checks": [
+        { "id": "gbp.primary_category", "label": "Primary category is the best available match", "weight": 5, "status": "automated", "impl": "deep-assess-client:pullGBP", "source": "whitespark_lsrf_2026", "note": "🔴 Highest-leverage single field in local SEO. Cross-reference the dominant top-3 category for this vertical in rga-almanac — if the client's differs from what actually ranks, that IS the finding." },
+        { "id": "gbp.secondary_categories", "label": "Secondary categories present and accurate", "weight": 4, "status": "automated", "impl": "deep-assess-client:pullGBP", "source": "whitespark_lsrf_2026", "note": "Only categories the business genuinely serves. A stretch category brings wrong leads, not more leads." },
+        { "id": "gbp.description", "label": "Description ≥500 chars, leads with service + city", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGBP" },
+        { "id": "gbp.hours", "label": "Regular hours set", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGBP" },
+        { "id": "gbp.special_hours", "label": "Holiday / special hours maintained", "weight": 2, "status": "gap" },
+        { "id": "gbp.service_area", "label": "Service area configured", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGBP" },
+        { "id": "gbp.services_products", "label": "Services / products populated", "weight": 3, "status": "manual", "impl": "m1.gbp.services_products" },
+        { "id": "gbp.photos", "label": "Photo count and recency", "weight": 3, "status": "manual", "impl": "m1.gbp.photos", "source": "whitespark_lsrf_2026", "note": "Behavioural/engagement signals are climbing year over year." },
+        { "id": "gbp.posts", "label": "Posting cadence", "weight": 2, "status": "gap", "source": "whitespark_lsrf_2026" },
+        { "id": "gbp.qa", "label": "Q&A seeded with real questions", "weight": 2, "status": "manual", "impl": "m1.gbp.qa_seed" },
+        { "id": "gbp.attributes", "label": "Attributes set", "weight": 2, "status": "manual", "impl": "m1.gbp.attributes" },
+        { "id": "gbp.booking_link", "label": "Booking link present", "weight": 2, "status": "manual", "impl": "m1.gbp.booking_link" },
+        { "id": "gbp.messaging", "label": "Messaging enabled", "weight": 2, "status": "manual", "impl": "m1.gbp.messaging" },
+        { "id": "gbp.website_link", "label": "Website link correct and UTM-tagged", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGBP" },
+        { "id": "gbp.verification", "label": "Listing is verified", "weight": 5, "status": "manual", "impl": "m1.gbp.verify", "note": "An unverified listing cannot rank. Check this FIRST — every other GBP item is wasted effort until it passes." },
+        { "id": "gbp.review_count", "label": "Review count vs the vertical's top-3 median", "weight": 5, "status": "gap", "source": "rga-almanac", "note": "🔑 OUR DIFFERENTIATOR. 'You need more reviews' is meaningless; 'top-3 plumbers in your market hold a median of 237 and you have 40' is a target. Requires the vertical to clear the almanac publish bar." },
+        { "id": "gbp.rating", "label": "Rating vs vertical median", "weight": 4, "status": "gap", "source": "rga-almanac", "note": "31% of consumers will only use a business rated 4.5+ (brightlocal_lcrs_2026)." },
+        { "id": "gbp.review_velocity", "label": "New reviews per month", "weight": 4, "status": "gap", "source": "whitespark_lsrf_2026", "note": "Velocity is weighted above raw count." },
+        { "id": "gbp.review_response_rate", "label": "Owner responses to reviews", "weight": 4, "status": "gap", "source": "brightlocal_lcrs_2026", "note": "🔴 50% of consumers reject copy-paste replies — response QUALITY, not just rate." },
+        { "id": "gbp.conversion_rate", "label": "View-to-action rate vs the 4.8% SMB benchmark", "weight": 3, "status": "gap", "source": "brightlocal_gbp_insights", "note": "Below 3% needs work; above 7% is outperforming. Compare to the client's VERTICAL, not the global mean." }
+      ]
+    },
+    "website": {
+      "label": "Website",
+      "why": "19% of ranking weight (whitespark_lsrf_2026), and it is where the conversion happens after the map pack does its job.",
+      "checks": [
+        { "id": "web.title", "label": "Homepage title contains service + city", "weight": 4, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.h1", "label": "Homepage H1 contains city", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.meta_description", "label": "Meta description present", "weight": 2, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.schema", "label": "LocalBusiness schema present", "weight": 4, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.schema_valid", "label": "Schema VALIDATES and its NAP matches GBP", "weight": 4, "status": "gap", "note": "🔴 Presence is not correctness — schema with the wrong phone actively contradicts the GBP." },
+        { "id": "web.nap_consistency", "label": "Name/address/phone on site match GBP exactly", "weight": 5, "status": "gap", "note": "A mismatch between the site and the listing undermines both." },
+        { "id": "web.click_to_call", "label": "tel: link present", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.contact_form", "label": "Contact form present and submitting", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website", "note": "⚠️ Detects a <form> tag only — it does NOT prove submission works. Genuine end-to-end test is a gap." },
+        { "id": "web.https", "label": "HTTPS with correct redirect", "weight": 3, "status": "gap" },
+        { "id": "web.robots", "label": "robots.txt reachable and not blocking", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.sitemap", "label": "sitemap.xml reachable", "weight": 2, "status": "automated", "impl": "flow-execute:m1.audit.website" },
+        { "id": "web.mobile_viewport", "label": "Mobile viewport meta present", "weight": 4, "status": "automated", "impl": "client-state.mjs:website" },
+        { "id": "web.core_web_vitals", "label": "LCP / CLS / TBT and mobile performance score", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullPageSpeed" },
+        { "id": "web.service_pages", "label": "A page exists per service sold", "weight": 4, "status": "gap", "note": "🔴 Homepage-only audits miss this entirely. Today we fetch the homepage and nothing else." },
+        { "id": "web.location_pages", "label": "Pages targeting each service-area city", "weight": 4, "status": "gap", "note": "RGA's own GSC showed Pasadena demand with no page targeting it — the exact gap this catches." },
+        { "id": "web.internal_links", "label": "Homepage links to service pages", "weight": 2, "status": "gap" },
+        { "id": "web.broken_links", "label": "No 404s in the primary nav", "weight": 2, "status": "gap" },
+        { "id": "web.image_alt", "label": "Images carry alt text", "weight": 1, "status": "gap" },
+        { "id": "web.ga4", "label": "GA4 installed", "weight": 3, "status": "automated", "impl": "flow-execute:m1.web.tracking" },
+        { "id": "web.gsc", "label": "Search Console verified", "weight": 3, "status": "automated", "impl": "flow-execute:m1.web.tracking" }
+      ]
+    },
+    "search_presence": {
+      "label": "Search presence (GSC + GA4)",
+      "why": "The only source that shows what Google ALREADY associates with this business. 🔴 Read this BEFORE choosing a keyword to optimise for — skipping it is how RGA tracked a term it had zero impressions for, for five weeks.",
+      "checks": [
+        { "id": "gsc.baseline", "label": "Impressions / clicks / CTR, 90-day baseline", "weight": 4, "status": "automated", "impl": "deep-assess-client:pullGSC" },
+        { "id": "gsc.striking_distance", "label": "Position 8–25 terms with real demand", "weight": 5, "status": "automated", "impl": "deep-assess-client:pullGSC", "note": "Highest-ROI work available — already relevant, one push from page 1." },
+        { "id": "gsc.zero_click", "label": "High-impression, zero-click terms", "weight": 4, "status": "automated", "impl": "deep-assess-client:pullGSC", "note": "Visible to Google, invisible to buyers." },
+        { "id": "gsc.branded_split", "label": "Branded vs non-branded demand", "weight": 3, "status": "gap", "note": "Mostly-branded traffic means discovery is not happening — a very different problem from poor ranking." },
+        { "id": "gsc.top_pages", "label": "Which pages earn impressions", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGSC" },
+        { "id": "ga4.channels", "label": "Sessions / conversions by channel", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGA4" },
+        { "id": "ga4.conversion_setup", "label": "Conversion events actually configured", "weight": 4, "status": "gap", "note": "🔴 GA4 returning zero conversions may mean none are CONFIGURED, not that none happened. Distinguish before reporting." }
+      ]
+    },
+    "maps_rank": {
+      "label": "Maps rankings (geo-grid)",
+      "why": "The outcome measure. Everything else is a lever; this is the needle.",
+      "checks": [
+        { "id": "rank.keyword_validated", "label": "Tracked keyword has real GSC impressions", "weight": 5, "status": "automated", "impl": "validate-tracked-keyword", "note": "🔴🔴 Runs as m1.audit.keyword_validation, and m1.audit.grid_baseline now dependsOn it. Tracking a term Google never shows the business for produces a uniform not-found grid that looks like data. Proven: RGA old keyword = 3 impressions/90d, new = 1276. See project_rank_grid_uniform_sentinel." },
+        { "id": "rank.grid_baseline", "label": "Geo-grid baseline captured", "weight": 5, "status": "automated", "impl": "rankings-refresh" },
+        { "id": "rank.competitors", "label": "Who holds top-3 instead", "weight": 4, "status": "automated", "impl": "rankings-refresh" },
+        { "id": "rank.competitor_gap", "label": "Their review counts / categories vs the client", "weight": 4, "status": "gap", "source": "rga-almanac", "note": "Turns 'you rank 12th' into 'they hold 3x your reviews and a category you are missing'." }
+      ]
+    },
+    "citations": {
+      "label": "Citations / NAP",
+      "why": "Consistency across the web corroborates the listing.",
+      "checks": [
+        { "id": "cit.priority_top10", "label": "Top-10 priority directories claimed", "weight": 3, "status": "manual", "impl": "m1.cit.priority_top10" },
+        { "id": "cit.industry", "label": "Industry-specific directories", "weight": 3, "status": "manual", "impl": "m1.cit.industry_specific" },
+        { "id": "cit.nap_consistency", "label": "NAP identical across all citations", "weight": 4, "status": "gap" },
+        { "id": "cit.duplicates", "label": "No duplicate/competing listings", "weight": 4, "status": "gap", "note": "A duplicate listing splits ranking signals and is a common silent killer." },
+        { "id": "cit.bing_apple", "label": "Bing Places + Apple Business Connect", "weight": 2, "status": "manual", "impl": "m1.platform.bing_apple" }
+      ]
+    },
+    "social": {
+      "label": "Social presence",
+      "why": "🔴 Facebook is the #2 local discovery channel (brightlocal_lcrs_2026) — ahead of Yelp. Chris asked for this surface specifically and we currently check NONE of it.",
+      "checks": [
+        { "id": "soc.profiles_exist", "label": "Which profiles exist (FB, IG, LinkedIn, YouTube, Nextdoor, Yelp)", "weight": 3, "status": "gap" },
+        { "id": "soc.nap_consistency", "label": "NAP on each profile matches GBP", "weight": 3, "status": "gap" },
+        { "id": "soc.website_link", "label": "Each profile links back to the site", "weight": 2, "status": "gap" },
+        { "id": "soc.recency", "label": "Last post date per profile", "weight": 2, "status": "gap", "note": "A dormant profile ranking for the brand name is worse than none — it signals a dead business." },
+        { "id": "soc.yelp_reviews", "label": "Yelp rating and review count", "weight": 3, "status": "gap" }
+      ]
+    },
+    "ai_discovery": {
+      "label": "AI discovery",
+      "why": "🔴🔴 THE FASTEST-MOVING SURFACE IN LOCAL SEARCH. AI tools went 6% → 45% as a local discovery channel in ONE YEAR and are now #3 overall; ChatGPT 31%, Google AI Mode 23%; 42% trust AI recommendations as much as written reviews — while Google's own discovery share FELL 83% → 71% (brightlocal_lcrs_2026). Nobody audits this yet, including us. Optimising purely for the map pack is optimising for a shrinking share.",
+      "checks": [
+        { "id": "ai.mentioned", "label": "Does the business surface in AI answers for service + city", "weight": 4, "status": "gap" },
+        { "id": "ai.extractable_nap", "label": "NAP and services machine-extractable (schema, clean HTML)", "weight": 3, "status": "gap" },
+        { "id": "ai.faq_content", "label": "FAQ / Q&A content answering real buyer questions", "weight": 3, "status": "gap" },
+        { "id": "ai.third_party_corroboration", "label": "Consistent presence across sources an AI would cite", "weight": 3, "status": "gap" }
+      ]
+    }
+  }
+}

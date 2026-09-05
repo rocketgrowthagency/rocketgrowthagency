@@ -26,6 +26,26 @@ say() { [ "$QUIET" -eq 1 ] || printf "%s\n" "$1"; }
 # Each entry: script | what it protects | how to treat a non-zero exit
 #   abort  = a real problem, exit 1
 #   status = a legitimate ongoing state, report but do not fail the run
+# Same contract as run(), but passes a sub-command to the script. Kept separate rather than making
+# run() variadic, because run()'s first arg is used as the display label everywhere and quietly
+# changing that would misalign every existing line.
+run_args() {
+  local script="$1" args="$2" what="$3" mode="${4:-abort}"
+  if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
+  local out rc
+  out=$(node "scripts/$script" $args 2>&1); rc=$?
+  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"
+  elif [ "$rc" -eq 2 ]; then
+    INDET=$((INDET+1))
+    printf "  ⚠️  %-38s INDETERMINATE — %s\n" "$script" "$what"
+    echo "$out" | grep -E '✗|Error|error' | head -2 | sed 's/^/        /'
+  else
+    FAIL=$((FAIL+1))
+    printf "  🔴 %-38s %s\n" "$script" "$what"
+    echo "$out" | grep -E '✗|🔴' | head -3 | sed 's/^/        /'
+  fi
+}
+
 run() {
   local script="$1" what="$2" mode="${3:-abort}"
   if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
@@ -76,6 +96,7 @@ say "── the sales surface ──"
 # accruing. Re-aggregate BEFORE checking, so the check judges the machinery rather than whether anyone
 # remembered to run the build. Output is quiet unless it fails.
 node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
+run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
