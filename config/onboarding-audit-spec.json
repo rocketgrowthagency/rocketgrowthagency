@@ -40,8 +40,8 @@
         { "id": "gbp.messaging", "label": "Messaging enabled", "weight": 2, "status": "manual", "impl": "m1.gbp.messaging" },
         { "id": "gbp.website_link", "label": "Website link correct and UTM-tagged", "weight": 3, "status": "automated", "impl": "deep-assess-client:pullGBP" },
         { "id": "gbp.verification", "label": "Listing is verified", "weight": 5, "status": "manual", "impl": "m1.gbp.verify", "note": "An unverified listing cannot rank. Check this FIRST — every other GBP item is wasted effort until it passes." },
-        { "id": "gbp.review_count", "label": "Review count vs the vertical's top-3 median", "weight": 5, "status": "gap", "source": "rga-almanac", "note": "🔑 OUR DIFFERENTIATOR. 'You need more reviews' is meaningless; 'top-3 plumbers in your market hold a median of 237 and you have 40' is a target. Requires the vertical to clear the almanac publish bar." },
-        { "id": "gbp.rating", "label": "Rating vs vertical median", "weight": 4, "status": "gap", "source": "rga-almanac", "note": "31% of consumers will only use a business rated 4.5+ (brightlocal_lcrs_2026)." },
+        { "id": "gbp.review_count", "label": "Review count vs the vertical's top-3 median", "weight": 5, "status": "automated", "impl": "nap-and-review-audit", "source": "rga-almanac", "note": "🔑 OUR DIFFERENTIATOR. Aggregates vertical_benchmarks (one row per search TERM) and applies the ≥30-business/≥3-city bar. 🔴 Below the bar it reports 'not enough data', never a median. ▶️ RGA itself returns INDETERMINATE — we do not store review_count on the client record; it comes from scraper/FGA enrichment." },
+        { "id": "gbp.rating", "label": "Rating vs vertical median", "weight": 4, "status": "automated", "impl": "nap-and-review-audit", "source": "rga-almanac", "note": "31% of consumers will only use a business rated 4.5+ (brightlocal_lcrs_2026). Same publish-bar and stored-value caveats as gbp.review_count." },
         { "id": "gbp.review_velocity", "label": "New reviews per month", "weight": 4, "status": "gap", "source": "whitespark_lsrf_2026", "note": "Velocity is weighted above raw count." },
         { "id": "gbp.review_response_rate", "label": "Owner responses to reviews", "weight": 4, "status": "gap", "source": "brightlocal_lcrs_2026", "note": "🔴 50% of consumers reject copy-paste replies — response QUALITY, not just rate." },
         { "id": "gbp.conversion_rate", "label": "View-to-action rate vs the 4.8% SMB benchmark", "weight": 3, "status": "gap", "source": "brightlocal_gbp_insights", "note": "Below 3% needs work; above 7% is outperforming. Compare to the client's VERTICAL, not the global mean." }
@@ -56,7 +56,7 @@
         { "id": "web.meta_description", "label": "Meta description present", "weight": 2, "status": "automated", "impl": "flow-execute:m1.audit.website" },
         { "id": "web.schema", "label": "LocalBusiness schema present", "weight": 4, "status": "automated", "impl": "flow-execute:m1.audit.website" },
         { "id": "web.schema_valid", "label": "Schema VALIDATES and its NAP matches GBP", "weight": 4, "status": "gap", "note": "🔴 Presence is not correctness — schema with the wrong phone actively contradicts the GBP." },
-        { "id": "web.nap_consistency", "label": "Name/address/phone on site match GBP exactly", "weight": 5, "status": "gap", "note": "A mismatch between the site and the listing undermines both." },
+        { "id": "web.nap_consistency", "label": "Name/address/phone on site match GBP exactly", "weight": 5, "status": "automated", "impl": "nap-and-review-audit", "note": "A mismatch between the site and the listing undermines both. INDETERMINATE without a connected GBP — it is the source of truth." },
         { "id": "web.click_to_call", "label": "tel: link present", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website" },
         { "id": "web.contact_form", "label": "Contact form present and submitting", "weight": 3, "status": "automated", "impl": "flow-execute:m1.audit.website", "note": "⚠️ Detects a <form> tag only — it does NOT prove submission works. Genuine end-to-end test is a gap." },
         { "id": "web.https", "label": "HTTPS with correct redirect", "weight": 3, "status": "gap" },
@@ -111,11 +111,11 @@
       "label": "Social presence",
       "why": "🔴 Facebook is the #2 local discovery channel (brightlocal_lcrs_2026) — ahead of Yelp. Chris asked for this surface specifically and we currently check NONE of it.",
       "checks": [
-        { "id": "soc.profiles_exist", "label": "Which profiles exist (FB, IG, LinkedIn, YouTube, Nextdoor, Yelp)", "weight": 3, "status": "gap" },
+        { "id": "soc.profiles_exist", "label": "Which profiles are LINKED from the site or schema", "weight": 3, "status": "automated", "impl": "social-presence-audit", "note": "🔴 Reports NOT LINKED, never NOT EXISTING. Searching platforms by business name returns false matches constantly and a wrong profile is worse than a missing one." },
         { "id": "soc.nap_consistency", "label": "NAP on each profile matches GBP", "weight": 3, "status": "gap" },
-        { "id": "soc.website_link", "label": "Each profile links back to the site", "weight": 2, "status": "gap" },
+        { "id": "soc.website_link", "label": "Each linked profile resolves (not a dead page)", "weight": 2, "status": "automated", "impl": "social-presence-audit", "note": "GET not HEAD — several platforms return 405/999 for HEAD while serving fine. Unreachable is INDETERMINATE, not dead." },
         { "id": "soc.recency", "label": "Last post date per profile", "weight": 2, "status": "gap", "note": "A dormant profile ranking for the brand name is worse than none — it signals a dead business." },
-        { "id": "soc.yelp_reviews", "label": "Yelp rating and review count", "weight": 3, "status": "gap" }
+        { "id": "soc.yelp_presence", "label": "Yelp profile linked", "weight": 3, "status": "automated", "impl": "social-presence-audit", "note": "Presence only. Yelp rating/review counts need their API or scraping, which we do not do." }
       ]
     },
     "ai_discovery": {
