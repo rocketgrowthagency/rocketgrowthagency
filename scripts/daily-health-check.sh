@@ -100,6 +100,27 @@ else
   say "  ⚠️  QUO_WEBHOOK_TOKEN not available — backfill skipped"
 fi
 
+# ── own the data: snapshot every active client's state, every day ────────────────────────────────
+# Rankings and profile state are TIME-SERIES. A day not captured is gone permanently, so this runs
+# daily whether or not anything changed — "we looked and it had not moved" is evidence too.
+say ""
+say "── client state snapshots ──"
+_snap_n=0
+# 🔴 dotenv v17 prints its banner to STDOUT, so an unfiltered `node -e` here returned the tip line as
+# if it were client slugs — the loop then "snapshotted" words like "injecting". Silence it and accept
+# only real slug characters. A list command must return ONLY the list.
+for _slug in $(DOTENV_CONFIG_QUIET=true node -e '
+require("dotenv").config({quiet:true});
+(async()=>{const U=process.env.SUPABASE_URL,K=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r=await fetch(`${U}/rest/v1/clients?archived_at=is.null&select=portal_slug`,{headers:{apikey:K,Authorization:`Bearer ${K}`}});
+const d=await r.json(); if(Array.isArray(d)) console.log(d.map(c=>c.portal_slug).filter(Boolean).join(" "));})()' 2>/dev/null \
+  | tr " " "\n" | grep -E "^[a-z0-9][a-z0-9-]{2,}$"); do
+  if node scripts/client-state.mjs snapshot "$_slug" >/dev/null 2>&1; then _snap_n=$((_snap_n+1)); fi
+done
+say "  ✅ snapshotted ${_snap_n} active client(s)"
+_unver=$(node scripts/client-state.mjs unverified 2>/dev/null | grep -cE '^\s+⚠️' || echo 0)
+[ "${_unver:-0}" -gt 0 ] && say "  ⚠️  ${_unver} change(s) never confirmed by a read-back — an action that REPORTED success is not one that happened"
+
 say ""
 say "── production pause ──"
 if [ -f output/PRODUCTION-PAUSED ]; then
