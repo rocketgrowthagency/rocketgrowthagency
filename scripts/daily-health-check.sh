@@ -71,7 +71,13 @@ run check-send-queue-drained.mjs       "queue drain progress" status
 
 say ""
 say "── the sales surface ──"
+# 📊 The almanac is a long-horizon asset — worth little today, a lot in a year, but ONLY if it keeps
+# accruing. Re-aggregate BEFORE checking, so the check judges the machinery rather than whether anyone
+# remembered to run the build. Output is quiet unless it fails.
+node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
+run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
+run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
