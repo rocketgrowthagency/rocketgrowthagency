@@ -1,0 +1,91 @@
+{
+  "_readme": [
+    "Published third-party local-search benchmarks, each carrying its source URL, publisher, method and",
+    "sample size. Built 2026-09-05.",
+    "",
+    "🔴 WHY THIS FILE EXISTS AT ALL — read before adding anything:",
+    "The hard rule is NO HARDCODED STATS IN REPORTS (feedback_no_hardcoded_stats). That rule is about",
+    "inventing numbers, or asserting a figure with no provenance. It is NOT a ban on citing published",
+    "research. The difference is entirely this file's structure: every value carries publisher, method,",
+    "sample size, URL and as_of. A report may cite these ONLY with attribution attached.",
+    "",
+    "🔴 A stat with no `source_url` and `as_of` must NEVER be added here. If you cannot cite it, it does",
+    "not go in. And these are BENCHMARKS TO COMPARE AGAINST — never restate them as RGA's own results.",
+    "",
+    "These figures are external context. RGA's own measured data lives in data/vertical-benchmarks/ and",
+    "in Supabase client_state_snapshots — see scripts/local-search-almanac.mjs."
+  ],
+  "as_of": "2026-09-05",
+  "sources": {
+    "whitespark_lsrf_2026": {
+      "publisher": "Whitespark",
+      "title": "Local Search Ranking Factors 2026",
+      "url": "https://whitespark.ca/local-search-ranking-factors/",
+      "method": "expert opinion survey",
+      "sample": "47 local search experts scoring 187 factors",
+      "cadence": "annual",
+      "caveat": "🔑 This is an OPINION survey, not a measurement. Experts estimate weightings; nobody ran a controlled test. Cite it as informed consensus, never as proven causation.",
+      "findings": [
+        { "key": "proximity_share", "label": "Proximity to searcher, share of ranking decisions", "value": 55, "unit": "percent" },
+        { "key": "gbp_signal_share", "label": "Google Business Profile signals, share of local ranking weight", "value": 32, "unit": "percent" },
+        { "key": "onpage_share", "label": "On-page SEO, share of ranking weight", "value": 19, "unit": "percent" },
+        { "key": "review_share_low", "label": "Reviews, share of local ranking weight (low end)", "value": 16, "unit": "percent" },
+        { "key": "review_share_high", "label": "Reviews, share of local ranking weight (high end)", "value": 20, "unit": "percent" }
+      ],
+      "qualitative": [
+        "New for 2026: experts also estimated weightings for AI Search visibility.",
+        "Behavioural/engagement signals (posts, photos, clicks, calls, direction requests, review cadence) continue to climb.",
+        "Review velocity and response rate matter more than raw count."
+      ]
+    },
+    "brightlocal_lcrs_2026": {
+      "publisher": "BrightLocal",
+      "title": "Local Consumer Review Survey 2026",
+      "url": "https://www.brightlocal.com/research/local-consumer-review-survey/",
+      "method": "consumer survey",
+      "sample": "1,002 US adult consumers via SurveyMonkey",
+      "cadence": "annual",
+      "caveat": "Stated consumer intent, not observed behaviour. People report reading reviews more than they do.",
+      "findings": [
+        { "key": "read_reviews", "label": "Consumers who read reviews before choosing a local business", "value": 97, "unit": "percent" },
+        { "key": "always_read", "label": "Consumers who ALWAYS read reviews", "value": 41, "unit": "percent", "prior_year": 29, "note": "up from 29% in 2025" },
+        { "key": "positive_lift", "label": "More likely to use a business after positive reviews", "value": 85, "unit": "percent" },
+        { "key": "negative_deterrent", "label": "Put off by negative reviews", "value": 77, "unit": "percent" },
+        { "key": "min_rating_45", "label": "Would only use a business rated 4.5 stars or higher", "value": 31, "unit": "percent" },
+        { "key": "google_discovery_share", "label": "Google's share of local-business discovery", "value": 71, "unit": "percent", "prior_year": 83, "note": "fell from 83%" },
+        { "key": "ai_discovery_share", "label": "AI tools used for local discovery", "value": 45, "unit": "percent", "prior_year": 6, "note": "🔴 6% in 2025 → 45% in 2026; now the #3 discovery channel" },
+        { "key": "chatgpt_recommendations", "label": "Used ChatGPT for business recommendations", "value": 31, "unit": "percent" },
+        { "key": "google_ai_mode", "label": "Used Google AI Mode for business recommendations", "value": 23, "unit": "percent" },
+        { "key": "trust_ai_as_reviews", "label": "Trust AI-platform recommendations as much as written reviews", "value": 42, "unit": "percent" },
+        { "key": "reject_copy_paste_replies", "label": "Consumers who reject copy-paste review replies", "value": 50, "unit": "percent" }
+      ]
+    },
+    "brightlocal_gbp_insights": {
+      "publisher": "BrightLocal",
+      "title": "Google Business Profile Insights Study",
+      "url": "https://www.brightlocal.com/research/google-my-business-insights-study/",
+      "method": "aggregated GBP performance data across SMB profiles",
+      "sample": "aggregate of SMB Google Business Profiles",
+      "cadence": "periodic",
+      "caveat": "Averages across all verticals. Compare a client to their VERTICAL, not to this global mean.",
+      "findings": [
+        { "key": "monthly_searches", "label": "Average SMB GBP searches per month", "value": 1009, "unit": "count" },
+        { "key": "direct_views", "label": "Average direct views per month", "value": 228, "unit": "count" },
+        { "key": "discovery_views", "label": "Average discovery views per month", "value": 781, "unit": "count" },
+        { "key": "monthly_actions", "label": "Average conversion actions per month", "value": 60, "unit": "count" },
+        { "key": "view_to_action_rate", "label": "Average view-to-action conversion rate", "value": 4.8, "unit": "percent" },
+        { "key": "action_rate_poor", "label": "Below this rate, the profile needs work", "value": 3, "unit": "percent" },
+        { "key": "action_rate_strong", "label": "Above this rate, outperforming most businesses", "value": 7, "unit": "percent" },
+        { "key": "direction_requests", "label": "Average direction requests per month", "value": 14, "unit": "count" }
+      ],
+      "vertical_action_rates": {
+        "_note": "view-to-action conversion rate by vertical, percent",
+        "car dealerships": 7,
+        "dentists": 6,
+        "family services": 6,
+        "health and fitness": 6,
+        "pet services": 6
+      }
+    }
+  }
+}
