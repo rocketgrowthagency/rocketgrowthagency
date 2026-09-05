@@ -75,6 +75,7 @@ say "── the sales surface ──"
 # accruing. Re-aggregate BEFORE checking, so the check judges the machinery rather than whether anyone
 # remembered to run the build. Output is quiet unless it fails.
 node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
+run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
@@ -125,7 +126,11 @@ const d=await r.json(); if(Array.isArray(d)) console.log(d.map(c=>c.portal_slug)
   if node scripts/client-state.mjs snapshot "$_slug" >/dev/null 2>&1; then _snap_n=$((_snap_n+1)); fi
 done
 say "  ✅ snapshotted ${_snap_n} active client(s)"
-_unver=$(node scripts/client-state.mjs unverified 2>/dev/null | grep -cE '^\s+⚠️' || echo 0)
+# 🔴 NOT `|| echo 0`: on ZERO matches grep prints "0" AND exits 1, so `|| echo 0` appends a SECOND
+# line and the test below compares "0\n0" — "integer expression expected". Same shape as the bug
+# documented in overnight-pipeline.sh:885 and recovery-rounds.sh:128. `|| true` swallows the exit
+# code without printing anything; `:-0` covers the command dying outright.
+_unver=$(node scripts/client-state.mjs unverified 2>/dev/null | grep -cE '^\s+⚠️' || true)
 [ "${_unver:-0}" -gt 0 ] && say "  ⚠️  ${_unver} change(s) never confirmed by a read-back — an action that REPORTED success is not one that happened"
 
 say ""

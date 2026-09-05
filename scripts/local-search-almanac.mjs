@@ -28,10 +28,25 @@
  * once enough clients exist for the sample to mean anything. Publishing correlation as causation is
  * the exact dishonesty that makes prospects distrust agencies.
  *
+ * ─── THE THREE PRONGS (Chris, 2026-09-05: "we should use current maps rankings top 3 and all") ──
+ *
+ *   1. VERTICAL BENCHMARKS — what businesses that rank LOOK like (categories, reviews, ratings).
+ *      Observational, from the scrape corpus. Describes the finish line.
+ *   2. PUBLISHED RESEARCH — Whitespark opinion + BrightLocal stated intent. Context, not measurement.
+ *   3. 🆕 MAPS RANK SNAPSHOTS — where a business ACTUALLY SITS on a geo-grid, and how that moves.
+ *      `brain_rank_snapshots` (pct_top3 / avg_rank / competitors) + `client_keyword_rankings`
+ *      (per-grid-point map_rank). This is the OUTCOME measure.
+ *
+ * 🔑 Prong 3 is what eventually turns this from description into causation. Prongs 1-2 can only ever
+ * say "businesses that rank tend to look like X". Rank snapshots over time, joined to
+ * client_change_log's before→after pairs, say "we changed X and the grid moved" — which is the study
+ * nobody in local SEO publishes, because it needs both the changes AND the measurements.
+ *
  * Commands:
  *   local-search-almanac.mjs build              aggregate our corpus → reports/almanac/
  *   local-search-almanac.mjs vertical <slug>    one vertical, ours + published benchmarks
  *   local-search-almanac.mjs gaps               where our coverage is too thin to publish
+ *   local-search-almanac.mjs rankings           prong 3 — observed grid positions over time
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -206,4 +221,73 @@ if (cmd === "gaps") {
   }
   console.log(`\n  🔑 This is the scrape plan. Each line is a vertical+city the pipeline should cover`);
   console.log(`     next — coverage that serves outreach AND the almanac at the same cost.`);
+}
+
+if (cmd === "rankings") {
+  // Prong 3 lives in Supabase, not on disk, so this command reads .env directly rather than
+  // depending on dotenv resolving from whatever directory the caller happens to be in.
+  const envPath = path.join(REPO, ".env");
+  if (fs.existsSync(envPath)) {
+    for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+  }
+  const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!U || !K) { console.error("✗ SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY unavailable"); process.exit(2); }
+  const h = { apikey: K, Authorization: `Bearer ${K}` };
+
+  const snaps = await (await fetch(`${U}/rest/v1/brain_rank_snapshots?select=*&order=snapshot_date`, { headers: h })).json();
+  const clients = await (await fetch(`${U}/rest/v1/clients?select=id,business_name,primary_service,primary_market`, { headers: h })).json();
+  const nameById = new Map((clients || []).map((c) => [c.id, c.business_name]));
+
+  if (!Array.isArray(snaps) || !snaps.length) {
+    console.log("── maps rank snapshots ──\n  none stored yet");
+    process.exit(0);
+  }
+
+  console.log("── prong 3: observed maps rank, over time ──\n");
+  const byClientKw = new Map();
+  for (const s of snaps) {
+    const k = `${s.client_id}|${s.keyword}`;
+    if (!byClientKw.has(k)) byClientKw.set(k, []);
+    byClientKw.get(k).push(s);
+  }
+
+  for (const [k, series] of byClientKw) {
+    const [clientId, keyword] = k.split("|");
+    series.sort((a, b) => String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+    const first = series[0], last = series[series.length - 1];
+    console.log(`  ${nameById.get(clientId) || clientId} — "${keyword}"`);
+    console.log(`    ${series.length} scan(s), ${first.snapshot_date} → ${last.snapshot_date}`);
+    for (const s of series) {
+      const flat = (s.grid || []).flat().filter((v) => v != null);
+      const worst = flat.length ? Math.max(...flat) : null;
+      const best = flat.length ? Math.min(...flat) : null;
+      console.log(`      ${s.snapshot_date}  top3=${String(s.pct_top3 ?? "-").padStart(3)}%  top7=${String(s.pct_top7 ?? "-").padStart(3)}%  ` +
+        `avg=${s.avg_rank ?? "—"}  grid best/worst=${best ?? "—"}/${worst ?? "—"} over ${flat.length} point(s)`);
+    }
+
+    // 🔴 A grid that is UNIFORM across every point and every week is not a ranking result — it is a
+    // sentinel meaning "not found anywhere in range". Reporting it as "rank 21" implies we are close.
+    // We are not on the board at all, and that is a different problem with a different fix.
+    const allFlat = series.flatMap((s) => (s.grid || []).flat().filter((v) => v != null));
+    const uniform = allFlat.length && new Set(allFlat).size === 1;
+    const noMovement = series.every((s) => (s.pct_top3 ?? 0) === 0) && series.length >= 3;
+    if (uniform) {
+      console.log(`    🔴 UNIFORM ${allFlat[0]} across all ${allFlat.length} measurement(s) — that is a ` +
+        `"not found" sentinel, not a rank. The business is absent from this grid entirely.`);
+    }
+    if (noMovement) {
+      console.log(`    🔴 ${series.length} consecutive scans at 0% top-3 with no movement. Before optimising harder, ` +
+        `check the KEYWORD is one Google already associates with this business — measuring the wrong ` +
+        `term produces exactly this flat line.`);
+    }
+    const comps = (last.competitors || []).slice(0, 5).map((c) => c.name || c).filter(Boolean);
+    if (comps.length) console.log(`    who holds it instead: ${comps.join(" · ").slice(0, 160)}`);
+    console.log("");
+  }
+
+  console.log("  🔑 Prong 3 is the OUTCOME measure. Joined to client_change_log's before→after pairs it");
+  console.log("     becomes the causation study — see project_local_search_almanac.md.");
 }
