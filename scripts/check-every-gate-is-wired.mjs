@@ -54,6 +54,7 @@ const NOT_PREFLIGHT = {
   'check-almanac-accruing.mjs': 'aggregates the vertical-benchmark corpus on disk; slow and unrelated to tonight\'s videos. Runs in daily-health-check.sh, straight after the rebuild it verifies',
   'check-rank-tracking-sane.mjs': 'live Supabase rank snapshots, not code health; needs network. Runs in daily-health-check.sh — a badly tracked keyword must never abort a video build',
   'check-orphan-functions.mjs': 'scans the WEBSITE repo\'s netlify/functions and cross-references two repos — unrelated to tonight\'s videos, and an unwired function must never abort a video build. Runs in daily-health-check.sh',
+  'check-portal-data-boundary.mjs': 'static scan of the WEBSITE repo\'s portal/ — a commercial/architectural boundary, not video health, and it must never abort a video build. Runs in daily-health-check.sh',
   'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',
