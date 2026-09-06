@@ -86,8 +86,44 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   if [ "$PP_AGE" -ge "$FLAG_TTL_DAYS" ]; then
     PP_MSG="STALE PRODUCTION-PAUSED flag (${PP_AGE}d old — likely forgotten). Delete output/PRODUCTION-PAUSED to resume. Not producing tonight."
   fi
-  echo "=== overnight-local SKIP $(date) — $PP_MSG ===" | tee -a "$LOG"
+  echo "=== overnight-local PAUSED $(date) — $PP_MSG ===" | tee -a "$LOG"
   cat "$SCRAPER_DIR/output/PRODUCTION-PAUSED" 2>/dev/null | tee -a "$LOG"
+
+  # 🔴🔴 2026-09-06 — DEADLOCK FIX. This branch used to `exit 0` outright, which skipped the RECOVERY
+  # pass further down as well as the new scrape. That created a cycle nothing could break:
+  #
+  #   the governor holds at 0 searches while leads still owe videos (CATCH-UP)
+  #     → the ONLY thing that builds those videos is recovery-rounds.sh
+  #       → which sat AFTER this exit, so it never ran while paused
+  #         → so the gap never closed
+  #           → so the governor never recommended > 0
+  #             → so auto-resume never lifted the pause.  Forever.
+  #
+  # The queue would drain to zero and production would still sit paused, with nothing in any log
+  # saying why. Chris's own note reads "PRODUCTION PAUSED — NO NEW SCRAPES", and that is exactly the
+  # right scope: the pause must stop us CREATING new work, not stop us FINISHING work already owed.
+  #
+  # So: still no scraping, still no new category — but drain what we already owe, then exit.
+  PAUSED_OWED=$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null | grep -oE 'missing-video gap=[0-9]+' | grep -oE '[0-9]+$' || echo 0)
+  if [ "${PAUSED_OWED:-0}" -gt 0 ]; then
+    echo ">>> PAUSED, but ${PAUSED_OWED} lead(s) still owe a video — draining them (no new scraping)" | tee -a "$LOG"
+    # Recovery renders video, so it needs the same wakefulness and wall-clock deadline as a normal night.
+    # 🔴 MAX_RUN_HOURS is not assigned until line ~191, AFTER this branch. Referencing it here would
+    # expand to empty, making DEADLINE = RUN_START + 0 — a deadline already in the past, so recovery
+    # would exit instantly believing it was out of time. A silent no-op that looks like a clean run.
+    # Resolve it locally with the same default rather than depending on a later line.
+    PAUSE_RUN_HOURS="${MAX_RUN_HOURS:-10}"
+    RUN_START=$(date +%s); DEADLINE=$(( RUN_START + PAUSE_RUN_HOURS * 3600 ))
+    caffeinate -dimsu -t $(( PAUSE_RUN_HOURS * 3600 + 1800 )) &
+    CAFF_PID=$!
+    node "$SCRAPER_DIR/scripts/reconcile-missing-videos.mjs" 2>&1 | tee -a "$LOG" || true
+    RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash "$SCRAPER_DIR/scripts/recovery-rounds.sh" "$LOG" 2>&1 | tee -a "$LOG" || true
+    kill "$CAFF_PID" 2>/dev/null || true
+    echo ">>> paused-drain finished — $(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null | grep -oE 'missing-video gap=[0-9]+' || echo 'gap unknown')" | tee -a "$LOG"
+  else
+    echo ">>> PAUSED and nothing owed — nothing to drain tonight." | tee -a "$LOG"
+  fi
+
   alert_skip "$PP_MSG"
   exit 0
 fi
