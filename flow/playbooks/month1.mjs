@@ -66,7 +66,9 @@ Must contain, in this order:
   4. Who to contact and how.
 
 🔴 Do NOT re-sell, and do NOT re-open scope. They already said yes; the job now is to remove doubt.
-🔑 DONE = sent, and the agreement + calendar invite (next two steps) go out the same hour.`,
+🔑 DONE = sent, and the agreement + calendar invite (next two steps) go out the same hour.
+
+📄 PASTE-READY TEXT: docs/playbooks/close-phase0-templates.md (website repo) — section 1.`,
   },
   {
     id: "m1.close.kickoff_invite", title: "Send the kickoff calendar invite",
@@ -81,7 +83,9 @@ and the invite arrives from a domain they can verify).
   5. Invite the primary contact.
 
 🔴 DONE = the invite is ACCEPTED. A sent invite is not a booked call, and this is the single most
-common place momentum is lost between a yes and the work starting.`,
+common place momentum is lost between a yes and the work starting. Chase at 24h.
+
+📄 PASTE-READY TEXT: docs/playbooks/close-phase0-templates.md (website repo) — section 2.`,
   },
 
   // === Phase 1 — Kickoff & Access ===
