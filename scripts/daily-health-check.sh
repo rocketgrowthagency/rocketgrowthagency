@@ -104,6 +104,7 @@ run check-almanac-accruing.mjs         "the local-search almanac still reflects 
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
+run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified by snapshot)" status
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
