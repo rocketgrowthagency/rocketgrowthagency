@@ -35,7 +35,9 @@ echo "=== verification ==="
 LEFT=0
 for p in away-chain chain-recovery recovery-rounds rebuild-broken-videos step-3-video-recorder \
          step-2.5-audit build-video-landing chrome-profile-step ffmpeg; do
-  n=$(pgrep -fc "$p" 2>/dev/null || echo 0); n=${n:-0}
+  # 🔴 NOT `pgrep -fc … || echo 0`: with no match pgrep PRINTS "0" and EXITS 1, so `|| echo 0`
+  # appends a second line and n becomes $'0\n0' — which makes any numeric test throw.
+  n=$(pgrep -fc "$p" 2>/dev/null | head -1); n=${n:-0}
   [ "$n" -gt 0 ] && { echo "  🔴 STILL RUNNING: $p ($n)"; LEFT=$((LEFT+n)); }
 done
 [ "$LEFT" -eq 0 ] && echo "  ✓ nothing capture-related is running"

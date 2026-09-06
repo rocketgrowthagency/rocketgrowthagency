@@ -104,8 +104,32 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
   # right scope: the pause must stop us CREATING new work, not stop us FINISHING work already owed.
   #
   # So: still no scraping, still no new category — but drain what we already owe, then exit.
-  PAUSED_OWED=$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null | grep -oE 'missing-video gap=[0-9]+' | grep -oE '[0-9]+$' || echo 0)
-  if [ "${PAUSED_OWED:-0}" -gt 0 ]; then
+  # 🔴🔴 THE `|| echo 0` TRAP, AGAIN. This line originally read:
+  #     PAUSED_OWED=$(node … | grep … | grep … || echo 0)
+  # The governor EXITS 1 when it says STAY-PAUSED. `set -o pipefail` (line ~18) propagates that
+  # through the pipeline, so `|| echo 0` fired even though grep had already printed "8" — giving
+  # PAUSED_OWED=$'8\n0'. The test then said `[: 8\n0: integer expression expected`, which is FALSE,
+  # so the night logged "nothing to drain" while 8 videos were owed. It ran once, on 2026-09-05, and
+  # silently did nothing.
+  #
+  # 🔑 Same shape as the bug already documented in daily-health-check.sh and overnight-pipeline.sh:
+  # a non-zero exit alongside real output makes `|| echo N` APPEND rather than substitute. Capture
+  # first, default second — never inside the substitution.
+  GOV_OUT=$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null) || true
+  PAUSED_OWED=$(printf '%s' "$GOV_OUT" | grep -oE 'missing-video gap=[0-9]+' | grep -oE '[0-9]+$' | head -1)
+  PAUSED_OWED=${PAUSED_OWED:-}
+
+  # 🔴 An UNPARSEABLE governor is INDETERMINATE, not zero. Its fail-safe messages ("no Airtable creds",
+  # "could not evaluate") contain no gap at all — and treating "cannot tell" as "nothing owed" is how
+  # the drain silently skips itself. When we cannot tell, RUN the drain: it is harmless if nothing is
+  # owed, and skipping it is what caused the deadlock this whole branch exists to break.
+  if [ -z "$PAUSED_OWED" ]; then
+    echo ">>> PAUSED — could not read the owed-video count from the governor (INDETERMINATE, not zero)." | tee -a "$LOG"
+    echo "    Draining anyway: harmless if nothing is owed, and skipping is what caused the deadlock." | tee -a "$LOG"
+    PAUSED_OWED=1
+  fi
+
+  if [ "$PAUSED_OWED" -gt 0 ]; then
     echo ">>> PAUSED, but ${PAUSED_OWED} lead(s) still owe a video — draining them (no new scraping)" | tee -a "$LOG"
     # Recovery renders video, so it needs the same wakefulness and wall-clock deadline as a normal night.
     # 🔴 MAX_RUN_HOURS is not assigned until line ~191, AFTER this branch. Referencing it here would
@@ -119,7 +143,9 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
     node "$SCRAPER_DIR/scripts/reconcile-missing-videos.mjs" 2>&1 | tee -a "$LOG" || true
     RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash "$SCRAPER_DIR/scripts/recovery-rounds.sh" "$LOG" 2>&1 | tee -a "$LOG" || true
     kill "$CAFF_PID" 2>/dev/null || true
-    echo ">>> paused-drain finished — $(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null | grep -oE 'missing-video gap=[0-9]+' || echo 'gap unknown')" | tee -a "$LOG"
+    AFTER_OUT=$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null) || true
+    AFTER_GAP=$(printf '%s' "$AFTER_OUT" | grep -oE 'missing-video gap=[0-9]+' | head -1)
+    echo ">>> paused-drain finished — ${AFTER_GAP:-gap unknown}" | tee -a "$LOG"
   else
     echo ">>> PAUSED and nothing owed — nothing to drain tonight." | tee -a "$LOG"
   fi
