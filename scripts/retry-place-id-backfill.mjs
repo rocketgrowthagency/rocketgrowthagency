@@ -64,7 +64,15 @@ for (const r of res.results || []) {
     const reason = String(r.reason || "unknown");
     // 429/quota/5xx are indeterminate, not findings — do not report a business as unresolvable
     // when we simply could not ask (feedback_indeterminate_is_not_a_finding).
-    if (/429|quota|rate limit|50\d\b/i.test(reason)) { quotaBlocked++; console.log(`  ⏳ ${String(r.client).padEnd(24)} quota — retry tomorrow`); }
+    if (/429|quota|rate limit|50\d\b/i.test(reason)) {
+      quotaBlocked++;
+      // 🔑 Google Places quotas reset at MIDNIGHT PACIFIC, not UTC. Saying "tomorrow" at 18:00 PT is
+      // misleading — it is hours away, not a day. Say when, so nobody re-runs this pointlessly or
+      // concludes it is broken because a new UTC day did not clear it.
+      const pt = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles", hour: "2-digit", minute: "2-digit", hour12: false });
+      const hrs = (24 - Number(pt.split(":")[0])) % 24 || 24;
+      console.log(`  ⏳ ${String(r.client).padEnd(24)} SearchText quota exhausted — resets in ~${hrs}h (midnight Pacific; now ${pt} PT)`);
+    }
     else if (/DUPLICATE FOUND/i.test(reason)) { realFault++; console.log(`  🔴 ${String(r.client).padEnd(24)} ${reason}`); }
     else console.log(`  ▫️  ${String(r.client).padEnd(24)} ${reason.slice(0, 100)}`);
   }
@@ -73,6 +81,12 @@ for (const r of res.results || []) {
 console.log("");
 if (realFault) { console.error(`🔴 ${realFault} client(s) collided on place id — two rows are the same business`); process.exit(1); }
 if (res.resolved) { console.log(`✅ resolved ${res.resolved} this run; ${res.skipped} still open`); process.exit(0); }
-if (quotaBlocked) { console.error(`⚠️  all ${quotaBlocked} remaining blocked on Places quota — indeterminate, retry tomorrow`); process.exit(2); }
+if (quotaBlocked) {
+  console.error(`⚠️  ${quotaBlocked} blocked on the Places SearchText daily quota — INDETERMINATE, not a fault.`);
+  console.error(`   Places DETAILS is a SEPARATE quota and still works — which is why review metrics`);
+  console.error(`   succeed while this does not. Without that distinction the two look contradictory.`);
+  console.error(`   Resets at midnight PACIFIC; the daily run picks it up on its own.`);
+  process.exit(2);
+}
 console.log(`▫️  ${res.skipped} unresolved for non-transient reasons — see above; these need a manual place id or a GBP connection`);
 process.exit(0);
