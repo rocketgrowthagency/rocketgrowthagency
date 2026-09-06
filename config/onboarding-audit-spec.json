@@ -102,9 +102,10 @@
       "checks": [
         { "id": "cit.priority_top10", "label": "Top-10 priority directories claimed", "weight": 3, "status": "manual", "impl": "m1.cit.priority_top10" },
         { "id": "cit.industry", "label": "Industry-specific directories", "weight": 3, "status": "manual", "impl": "m1.cit.industry_specific" },
-        { "id": "cit.nap_consistency", "label": "NAP identical across all citations", "weight": 4, "status": "gap" },
-        { "id": "cit.duplicates", "label": "No duplicate/competing listings", "weight": 4, "status": "gap", "note": "A duplicate listing splits ranking signals and is a common silent killer." },
-        { "id": "cit.bing_apple", "label": "Bing Places + Apple Business Connect", "weight": 2, "status": "manual", "impl": "m1.platform.bing_apple" }
+        { "id": "cit.nap_consistency", "label": "NAP identical across citations we hold URLs for", "weight": 4, "status": "automated", "impl": "citation-audit", "note": "🔴 Only for URLs WE HOLD (site links + schema sameAs). Discovery needs a paid aggregator — 'not found' means we hold no URL, NEVER 'no citation exists'. Directories blocking datacentre IPs return INDETERMINATE, not broken." },
+        { "id": "cit.duplicates", "label": "No duplicate/competing listings", "weight": 4, "status": "gap", "note": "A duplicate listing splits ranking signals and is a common silent killer. 🔴 NOT buildable without a citation aggregator (Whitespark/BrightLocal/Yext) — detecting a duplicate requires discovering listings we hold no URL for." },
+        { "id": "cit.bing_apple", "label": "Bing Places + Apple Business Connect", "weight": 2, "status": "manual", "impl": "m1.platform.bing_apple" },
+        { "id": "cit.linked_from_site", "label": "Site links to its own directory profiles", "weight": 3, "status": "automated", "impl": "citation-audit", "note": "🔑 The one fully VERIFIABLE finding on this surface. We cannot know which citations exist, but we can count how many the site links to. Phrased 'links to N of 8', never 'has N citations'." }
       ]
     },
     "social": {
