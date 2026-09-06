@@ -90,12 +90,36 @@ common place momentum is lost between a yes and the work starting. Chase at 24h.
 
   // === Phase 1 — Kickoff & Access ===
   {
-    id: "m1.kickoff.create", title: "Create client in Supabase",
-    type: "auto", dependsOn: [],
+    id: "m1.kickoff.create", title: "Confirm the client record is complete enough to work",
+    type: "auto", dependsOn: ["m1.close.kickoff_invite"],
     async run({ client }) {
-      // Idempotent — onboard-client.mjs already ran during initial setup.
-      // This step just confirms the client row exists.
-      return { summary: `Client ${client.business_name} (${client.id}) exists`, outcome: "na" };
+      // 🔴 2026-09-06 — THIS STEP COULD NEVER FAIL. It was titled "Create client in Supabase" but the
+      // code only confirmed the row existed — and flow-execute 404s before reaching a runner if the
+      // client is missing, so it always returned "exists". A step that cannot fail teaches nothing
+      // and gives false confidence that the foundation is sound.
+      //
+      // 🔑 It now checks the fields LATER STEPS ACTUALLY DEPEND ON. Every one of these has a named
+      // consumer, so a gap here is a step that will fail or mislead further down:
+      const needs = [
+        ["business_name",         "everything — the title of every audit, video and report"],
+        ["website_url",           "the website audit, AI-readiness, social and citation audits"],
+        ["primary_contact_email", "the confirmation email and the portal invite"],
+        ["primary_market",        "the geo-grid centre — a wrong market measures the wrong city"],
+        ["primary_service",       "the TRACKED KEYWORD. Wrong here = a uniform not-found grid"],
+      ];
+      const missing = needs.filter(([f]) => !String(client[f] || "").trim());
+      if (missing.length) {
+        return {
+          summary: `🔴 ${missing.length} field(s) missing — later steps will fail or mislead:\n` +
+            missing.map(([f, why]) => `   • ${f} — needed by ${why}`).join("\n"),
+          outcome: "needs_work",
+          outcome_data: { missing: missing.map(([f]) => f) },
+        };
+      }
+      return {
+        summary: `Client record complete: ${client.business_name} — market "${client.primary_market}", tracked keyword "${client.primary_service}"`,
+        outcome: "verified",
+      };
     },
   },
   {
