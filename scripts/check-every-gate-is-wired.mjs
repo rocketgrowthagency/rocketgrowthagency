@@ -45,6 +45,11 @@ const NOT_PREFLIGHT = {
   'check-resume-production.mjs':  'the production governor; runs as its own pipeline step, not a gate',
   'check-operational-drift.mjs':  'advisory; surfaces in the morning report and must never block a run',
   'check-orphan-videos.mjs':      'reported via check-operational-drift so orphans reach the morning report',
+  // ── admin/delivery surface, added 2026-09-06. Both run in daily-health-check.sh, NOT in the
+  // video pre-flight: neither can affect whether a video is safe to build or send, and blocking a
+  // night's outreach on an admin-UI regression would be the wrong trade.
+  'check-netlify-publishing-live.mjs': 'deploy-surface gate; runs in daily-health-check.sh — a locked deploy cannot make a video unsafe',
+  'check-sop-fully-rendered.mjs':      'admin-UI gate; runs in daily-health-check.sh — SOP rendering does not gate video safety',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
   'check-playbook-integrity.mjs': 'the sales playbook is website code, not tonight\'s videos — a bad block must never abort a video build. Runs in drip-content.sh (the deploy that ships admin/) and daily-health-check.sh',
   'check-onboarding-errors-surfaced.mjs': 'live Supabase client state, not code health; needs network. Runs in daily-health-check.sh — a delivery failure must never block a video build',
