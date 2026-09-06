@@ -33,10 +33,12 @@ const FUNCS = path.join(WEB, "netlify", "functions");
 // Deliberately invoked by hand. Each needs a reason on the record, so an orphan is a DECISION rather
 // than an oversight. "It was easier" is never a reason — wire it or delete it.
 const MANUAL_ONLY = {
-  "gbp-apply-change.js":
-    "the Tier-1 WRITE path (snapshot → act → verify) for GBP fields. Deliberately hand-run until the " +
-    "recommendations plan exists to drive it — an automated writer with no prioritised plan behind it " +
-    "would make changes nobody chose. Wire it when Tier-1 delivery automation ships.",
+  // (gbp-apply-change came off this list on 2026-09-05: apply-plan-automatable now invokes it, driven
+  // by a stored prioritised plan. That was the precondition, and it is met.)
+  "apply-plan-automatable.js":
+    "the Tier-1 WRITE driver. Deliberately hand-run: it edits a client's PUBLIC listing, so a human " +
+    "decides when it fires. It is dry by default and only ever acts on items a stored plan ranked " +
+    "automatable. Wire it to a schedule only if Chris asks for unattended writes.",
 };
 
 // Files that are infrastructure, not capabilities.
