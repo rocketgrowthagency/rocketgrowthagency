@@ -24,8 +24,66 @@ async function fetchHomepage(url) {
   return { status: r.status, headers: Object.fromEntries(r.headers), body: await r.text() };
 }
 
+// 🔑 The audit chain runs as DEPLOYED functions, not locally — they need Google OAuth credentials
+// that deliberately live only in the Netlify environment. The local runner calls them so that both
+// entry points execute the SAME code rather than two implementations that drift.
+async function callFn(name, clientId) {
+  const token = process.env.QUO_WEBHOOK_TOKEN;
+  if (!token) throw new Error("QUO_WEBHOOK_TOKEN not set — cannot reach the deployed audits");
+  const r = await fetch(`https://www.rocketgrowthagency.com/.netlify/functions/${name}` +
+    `?token=${encodeURIComponent(token)}&clientId=${encodeURIComponent(clientId)}`);
+  const text = await r.text();
+  let j; try { j = JSON.parse(text); }
+  catch { throw new Error(`${name} returned non-JSON (HTTP ${r.status}): ${text.slice(0, 120)}`); }
+  if (j.ok === false) return { summary: `${name}: ${String(j.error || j.verdict).slice(0, 160)}`, outcome: "indeterminate", outcome_data: j };
+  const fixes = (j.fixes || []).length;
+  return {
+    summary: j.readiness_score != null ? `readiness ${j.readiness_score}%`
+      : j.totals ? `${j.totals.recommendations} recommendation(s), ${j.totals.unknowns} unknown`
+      : fixes ? `${fixes} fix(es) found` : "ok",
+    outcome: "verified", outcome_data: j,
+  };
+}
+
 // ---- the playbook ----
 export const month1 = [
+  // === Phase 0 — THE FIRST HOUR AFTER "YES" ===
+  // 🔴 Added 2026-09-06. The SOP used to begin at "create the client in Supabase" — an internal
+  // database write the client never sees. Everything they ACTUALLY experience first was undefined.
+  // The rep's closing line already promises three things ("I'll set your account up now, you'll get
+  // portal access, and the agreement will be over shortly"), so Phase 0 is simply: DELIVER THAT
+  // PROMISE, in writing, before anything internal. See MEMORY_delivery.md.
+  {
+    id: "m1.close.confirm", title: "Confirmation + expectations email (within the hour)",
+    type: "manual", dependsOn: [],
+    instructions: `Send within ONE HOUR of the yes, while they are still certain.
+
+Must contain, in this order:
+  1. What they bought — plan, price, and that it is MONTH-TO-MONTH (no lock-in).
+  2. What happens next, with dates — kickoff call, then first work inside 48h of that call.
+  3. What we need from them, listed once: GBP login, website/CMS login, GA4 + Search Console,
+     20+ photos, customer list for review outreach.
+  4. Who to contact and how.
+
+🔴 Do NOT re-sell, and do NOT re-open scope. They already said yes; the job now is to remove doubt.
+🔑 DONE = sent, and the agreement + calendar invite (next two steps) go out the same hour.`,
+  },
+  {
+    id: "m1.close.kickoff_invite", title: "Send the kickoff calendar invite",
+    type: "manual", dependsOn: ["m1.close.confirm"],
+    instructions: `Google Calendar + Google Meet (decided 2026-09-03 — Workspace is already paid for,
+and the invite arrives from a domain they can verify).
+
+  1. New event, 30 min, within 3 BUSINESS DAYS of the close. Momentum decays fast.
+  2. "Add Google Meet video conferencing".
+  3. Title: "RGA kickoff — {business name}".
+  4. Description = the same what-to-bring list from the confirmation email, so it is in both places.
+  5. Invite the primary contact.
+
+🔴 DONE = the invite is ACCEPTED. A sent invite is not a booked call, and this is the single most
+common place momentum is lost between a yes and the work starting.`,
+  },
+
   // === Phase 1 — Kickoff & Access ===
   {
     id: "m1.kickoff.create", title: "Create client in Supabase",
@@ -39,7 +97,18 @@ export const month1 = [
   {
     id: "m1.kickoff.call", title: "Schedule + run kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
-    instructions: `Schedule a 30-min Zoom with the primary contact.
+    instructions: `Schedule a 30-min GOOGLE MEET with the primary contact.
+
+📅 HOW TO BOOK IT (decided 2026-09-03 — Google Calendar + Meet, NOT Zoom):
+  1. Google Calendar → new event, 30 min, invite the primary contact's email.
+  2. "Add Google Meet video conferencing" — the link generates itself.
+  3. Title: "RGA kickoff — {business name}".
+  4. Description = what to bring: GBP login, website/CMS login, GA4 + Search Console access,
+     20+ photos, and their customer list for review outreach.
+  5. Send it. The invite arrives from hello@rocketgrowthagency.com — a domain they can verify.
+
+🔑 Workspace is already paid for. No new tool, nothing for them to install.
+🔴 DONE = the invite is ACCEPTED, not sent. An unaccepted invite is not a booked call.
 
 Cover: scope, timeline (3 months to ranking results), what RGA delivers vs what client provides, weekly cadence, monthly call rhythm.
 
@@ -132,6 +201,64 @@ Save all in the password manager vault.`,
         },
       };
     },
+  },
+  {
+    id: "m1.tracking.call_setup", title: "Set up call tracking (or decline)",
+    type: "manual", dependsOn: ["m1.access.website"],
+    instructions: `Decide WITH the client whether to use a tracking number.
+
+🔴 A tracking number on the GBP is a NAP risk — if it ever disagrees with the website or the
+citations, it splits the signal. Only use one if the client genuinely needs call attribution.
+
+If YES: use a number that forwards to their real line, put the REAL number in the GBP primary and
+the tracking number as an additional number — never the reverse.
+If NO: record the decision so nobody re-litigates it monthly. Declining is a valid outcome.`,
+  },
+  {
+    id: "m1.tracking.form_setup", title: "Set up form tracking",
+    type: "manual", dependsOn: ["m1.access.website"],
+    instructions: `Confirm the contact form actually submits AND that the submission is recorded.
+
+🔴 "A <form> tag exists" is not "the form works" — the on-page audit can only see the tag.
+Submit a real test enquiry and confirm it arrives. An unmonitored form is a lead leak that looks
+like poor conversion.`,
+  },
+  {
+    // The audit chain — each calls its deployed function. Built 2026-09-05/06.
+    id: "m1.audit.keyword_validation", title: "Validate the tracked keyword has real Search Console demand",
+    type: "auto", dependsOn: ["m1.access.search_console"],
+    async run({ client }) { return await callFn("validate-tracked-keyword", client.id); },
+  },
+  {
+    id: "m1.audit.deep_assess", title: "Deep assessment — GSC, GA4, GBP",
+    type: "auto", dependsOn: ["m1.access.search_console", "m1.access.analytics"],
+    async run({ client }) { return await callFn("deep-assess-client", client.id); },
+  },
+  {
+    id: "m1.audit.ai_readiness", title: "Audit AI readiness",
+    type: "auto", dependsOn: ["m1.audit.website"],
+    async run({ client }) { return await callFn("ai-readiness-audit", client.id); },
+  },
+  {
+    id: "m1.audit.nap_reviews", title: "Audit NAP consistency + reviews vs the vertical benchmark",
+    type: "auto", dependsOn: ["m1.access.gbp"],
+    async run({ client }) { return await callFn("nap-and-review-audit", client.id); },
+  },
+  {
+    id: "m1.audit.social", title: "Audit social presence linked from the site",
+    type: "auto", dependsOn: ["m1.audit.website"],
+    async run({ client }) { return await callFn("social-presence-audit", client.id); },
+  },
+  {
+    id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
+    type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.website"],
+    async run({ client }) { return await callFn("citation-audit", client.id); },
+  },
+  {
+    id: "m1.audit.recommendations", title: "Build the prioritised fix plan from every audit",
+    type: "auto",
+    dependsOn: ["m1.audit.ai_readiness", "m1.audit.nap_reviews", "m1.audit.social", "m1.audit.citations_nap", "m1.audit.deep_assess"],
+    async run({ client }) { return await callFn("build-recommendations-plan", client.id); },
   },
   {
     id: "m1.audit.competitors", title: "Snapshot top 3 SF/local competitors",
