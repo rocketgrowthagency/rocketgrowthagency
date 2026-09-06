@@ -88,6 +88,7 @@ run check-no-or-echo-append.mjs        "no `|| echo N` that appends instead of d
 run check-google-api-cost-safety.mjs   "every billed Google API caller is declared; video pipeline free"
 run check-netlify-publishing-live.mjs  "pushed code actually reaches production (deploy not locked)"
 run check-sop-fully-rendered.mjs       "every SOP step has a row + Run button in the admin"
+run check-status-maps-fail-soft.mjs    "a status the app writes cannot crash the page that reads it"
 run check-apps-script-paste-owed.mjs   "no Apps Script edit waiting to be pasted"
 run check-orphaned-airtable-fields.mjs "no Airtable field reads as coverage while holding nothing"
 run heal-onboarding-errors.mjs         "retry delivery steps whose cause was since fixed"
