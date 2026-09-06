@@ -99,6 +99,7 @@ node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
 run check-orphan-functions.mjs         "no function was built and then never invoked"
 run check-portal-data-boundary.mjs     "the client portal never touches RGA's work product"
 run check-sop-sources-agree.mjs        "both delivery-SOP definitions still describe one process"
+run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
