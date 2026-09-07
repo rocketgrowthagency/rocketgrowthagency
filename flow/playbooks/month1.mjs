@@ -72,7 +72,12 @@ Must contain, in this order:
   },
   {
     id: "m1.close.kickoff_invite", title: "Send the kickoff calendar invite",
-    type: "manual", dependsOn: ["m1.close.confirm"],
+    // 🔴 2026-09-06 — WAS "manual", and that was the whole problem. The confirmation email tells the
+    // client "Calendar invite is on its way" and nothing sent one; Chris closed RGA as its own first
+    // client and no invite ever arrived. RGA now holds its own calendar.events credential, so
+    // send-kickoff-invite creates the event and Google emails the guest.
+    // "hybrid": the system sends it, a human still confirms the client ACCEPTED.
+    type: "hybrid", dependsOn: ["m1.close.confirm"],
     instructions: `Google Calendar + Google Meet (decided 2026-09-03 — Workspace is already paid for,
 and the invite arrives from a domain they can verify).
 
