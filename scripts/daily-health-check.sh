@@ -90,6 +90,7 @@ run check-netlify-publishing-live.mjs  "pushed code actually reaches production 
 run check-sop-fully-rendered.mjs       "every SOP step has a row + Run button in the admin"
 run check-status-maps-fail-soft.mjs    "a status the app writes cannot crash the page that reads it"
 run check-every-action-reports-a-result.mjs "every button reports a visible result (admin + portal)"
+run check-archived-clients-excluded.mjs "an archived client is not work, revenue or a KPI"
 run check-apps-script-paste-owed.mjs   "no Apps Script edit waiting to be pasted"
 run check-orphaned-airtable-fields.mjs "no Airtable field reads as coverage while holding nothing"
 run heal-onboarding-errors.mjs         "retry delivery steps whose cause was since fixed"
