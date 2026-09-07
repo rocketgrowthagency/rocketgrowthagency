@@ -37,6 +37,21 @@ const FUNCS = path.join(WEB, "netlify", "functions");
 // Endpoints that cost real money on the Google billing line.
 const BILLED = /places\.googleapis\.com|maps\.googleapis\.com|pagespeedonline|googleapis\.com\/pagespeedonline/;
 
+// 🔴 2026-09-06 — FREE IS NOT THE SAME AS SAFE. Chris, on adding the Calendar API: "make sure there
+// is guards in place if any cost is involved so we dont overspend on this like other google APIs."
+//
+// 🔑 Both runaway spends were BOOKKEEPING failures, not volume ones — work repeating forever because
+// nothing recorded it was done. That shape is API-agnostic. On Places it burns dollars; on Calendar
+// it emails a real client the same invite over and over, which is worse than a bill.
+//
+// So a free-but-rate-limited Google API must be declared here too, with its bound. The declaration
+// IS the review step.
+// 🔴 NOT the oauth2 token endpoint. Every function that talks to Google refreshes a token, so
+// matching it flagged 9 files that consume no API at all — a mass finding, which by our own rule
+// means the probe is wrong before the code is. Token refresh is plumbing; an API CONSUMER is what
+// needs declaring.
+const WATCHED_FREE = /calendar\.googleapis\.com|googleapis\.com\/calendar\/v3/;
+
 /**
  * Declared billing-relevant callers. Adding a Google API caller means adding it HERE with an honest
  * per-run cost — that declaration is the review step.
@@ -67,6 +82,10 @@ const DECLARED = {
   // ever climbs.
   "fga-report-view.js": { perRun: "1 PSI, ONLY while cached mobileScore === 0", scheduled: "on demand (every report view)", stamps: "patches fga_report_cache on success — self-limiting once a score lands" },
   "backfill-place-ids-background.js": { perRun: "n/a", scheduled: "n/a", stamps: "n/a" },
+  // ── free, but bounded and declared (2026-09-06) ──
+  "send-kickoff-invite.js": { perRun: "1 Calendar insert per NEW client — FREE (quota, not billed)", scheduled: "on demand (SOP step / Phase 0 button)", stamps: "rga_google_credentials.sends_today + client_onboarding_records.kickoff_invite — counts the ATTEMPT before the call, and refuses a duplicate; hard cap RGA_CALENDAR_DAILY_CAP=10/day" },
+  "oauth-rga-init.js": { perRun: "0 — builds a consent URL, calls nothing", scheduled: "hand-run, once", stamps: "n/a" },
+  "oauth-google-callback.js": { perRun: "1 token exchange per consent — free", scheduled: "on demand (a human consents)", stamps: "client_google_oauth / rga_google_credentials" },
 };
 
 const fails = [];
@@ -76,13 +95,17 @@ if (!fs.existsSync(FUNCS)) { console.error(`✗ functions dir not found`); proce
 
 // 1 + 2. Every billed caller must be declared.
 const callers = fs.readdirSync(FUNCS).filter((f) => f.endsWith(".js"))
-  .filter((f) => BILLED.test(fs.readFileSync(path.join(FUNCS, f), "utf8")));
+  .filter((f) => {
+    const src = fs.readFileSync(path.join(FUNCS, f), "utf8");
+    return BILLED.test(src) || WATCHED_FREE.test(src);
+  });
 
 for (const f of callers) {
   const d = DECLARED[f];
   if (!d) {
     fails.push(f);
-    console.log(`  🔴 ${f} calls a BILLED Google API but is not declared in this gate.`);
+    const kind = BILLED.test(fs.readFileSync(path.join(FUNCS, f), "utf8")) ? "BILLED" : "rate-limited";
+    console.log(`  🔴 ${f} calls a ${kind} Google API but is not declared in this gate.`);
     console.log(`       Add it with an honest per-run cost and the field that records an attempt.`);
     console.log(`       If it is scheduled, multiply that cost by 365 before shipping it.`);
     continue;
