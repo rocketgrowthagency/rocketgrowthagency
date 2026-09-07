@@ -134,6 +134,28 @@ function analyse({ label, path }) {
   const captured = new Set(actions.map((a) => a.name));
   const dropped = [...declared].filter((d) => !captured.has(d) && !UI_ONLY[d]);
 
+  // 🔴🔴 ORPHANED CONTROLS. An action ATTRIBUTE rendered onto a button with NO dispatcher anywhere is
+  // the most dead a button can be — and the earlier version of this gate could not see it, because it
+  // only inspected actions it found being dispatched. It shipped exactly that: an "↩ Undo" button
+  // whose handler edit had aborted, so the control rendered and nothing listened.
+  //
+  // 🔑 A gate that only audits what is wired cannot catch what was never wired.
+  const rendered = new Set([...src.matchAll(/\bdata-(onboard|lead|note|v2|portal|svc|flow|repeater|updoc|goto|custom|google)-[a-z-]+=/g)]
+    .map((x) => x[0].replace(/=$/, "")));
+  // 🔑 A control can be wired THREE ways, not one. Delegation via closest("[data-x]"), a direct
+  // listener found with querySelector(`[data-x="…"]`), or a read via getAttribute("data-x"). The
+  // first version of this only knew delegation and declared 14 live controls dead — a mass finding,
+  // which by our own rule means the PROBE is wrong before the code is. It was.
+  //
+  // An attribute is orphaned only if EVERY occurrence is a render site (`data-x="`): it is never
+  // used as a selector (`[data-x`) and never read (`"data-x"`).
+  const orphans = [...rendered].filter((r) => {
+    if (/-(id|scope|client|url|biz|visible|status|row|content-id|idx|part|label|detail)$/.test(r)) return false;
+    const selector = new RegExp(`\\[${r}[\\]="]`);
+    const read = new RegExp(`["'\`]${r}["'\`]`);
+    return !selector.test(src) && !read.test(src);
+  });
+
   const SKIP = new Set(["if", "for", "while", "switch", "catch", "closest", "getAttribute",
     "preventDefault", "String", "Number", "querySelector", "parseInt", "Boolean"]);
   const silent = [];
@@ -159,7 +181,7 @@ function analyse({ label, path }) {
   }
 
   const excused = [...seen].filter((k) => UI_ONLY[k]).length;
-  return { label, silent, dropped, total: seen.size, excused, audited: seen.size - excused };
+  return { label, silent, dropped, orphans, total: seen.size, excused, audited: seen.size - excused };
 }
 
 console.log("── every action must report a result ──");
@@ -175,11 +197,15 @@ for (const t of TARGETS) {
     indeterminate++;
     continue;
   }
+  for (const o of r.orphans || []) {
+    fail++;
+    console.log(`  🔴 ${r.label}/${o} — rendered on a control but NOTHING dispatches it. The button is dead.`);
+  }
   for (const a of r.silent) {
     fail++;
     console.log(`  🔴 ${r.label}/${a.name.padEnd(26)} :${a.line} — no visible result on success or failure`);
   }
-  console.log(`  ${r.silent.length ? "🔴" : "✅"} ${r.label.padEnd(7)} ${r.audited} mutating action(s) audited · ${r.excused} excused as UI-only`);
+  console.log(`  ${r.silent.length || (r.orphans || []).length ? "🔴" : "✅"} ${r.label.padEnd(7)} ${r.audited} mutating action(s) audited · ${r.excused} excused as UI-only · ${(r.orphans || []).length} orphaned control(s)`);
 }
 
 console.log("");
