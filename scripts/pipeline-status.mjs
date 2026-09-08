@@ -39,7 +39,17 @@ const localStamp = (d) => {
 };
 const now = new Date();
 const yday = new Date(now.getTime() - 86400000);
-const CANDIDATES = [localStamp(now), localStamp(yday)].map((s) => `/tmp/overnight-pipeline-${s}.log`);
+// 🔴🔴 2026-09-08 — THIS READ A FILE THAT HAS NEVER EXISTED.
+// launchd runs overnight-local.sh, which writes /tmp/overnight-local-<date>.log and pipes
+// overnight-pipeline.sh's output INTO it via tee. `/tmp/overnight-pipeline-*.log` has never been
+// created — not once. So this tool reported "no log (run may not have started)" every single
+// morning, which is indistinguishable from a genuinely failed start.
+//
+// 🔑 A status tool that cannot see the run is worse than no status tool: the morning audit opens
+// with it, and it always said the same reassuring-sounding thing.
+const NAMES = ["overnight-local", "overnight-pipeline"];
+const CANDIDATES = [localStamp(now), localStamp(yday)]
+  .flatMap((s) => NAMES.map((n) => `/tmp/${n}-${s}.log`));
 
 let logPath = process.argv[2];
 if (!logPath) {

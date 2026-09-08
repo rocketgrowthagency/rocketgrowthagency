@@ -43,7 +43,10 @@ const HEAL = ARGS.includes('--heal');
 const localStamp = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const now = new Date();
 const DATES = [localStamp(new Date(now.getTime() - 86400000)), localStamp(now)];
-const LOGS = DATES.map((d) => `/tmp/overnight-pipeline-${d}.log`).filter((p) => fs.existsSync(p));
+// 🔴 Same blindness as pipeline-status.mjs — the runner writes overnight-local-<date>.log.
+// See that file's note: /tmp/overnight-pipeline-*.log has never existed.
+const LOGS = DATES.flatMap((d) => [`/tmp/overnight-local-${d}.log`, `/tmp/overnight-pipeline-${d}.log`])
+  .filter((p) => fs.existsSync(p));
 
 if (!LOGS.length) {
   console.log('PRODUCTIVITY: no overnight log for ' + DATES.join(' or ') + ' — nothing to judge.');

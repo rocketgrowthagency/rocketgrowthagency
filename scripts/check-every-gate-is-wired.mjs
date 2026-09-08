@@ -53,6 +53,7 @@ const NOT_PREFLIGHT = {
   'check-status-maps-fail-soft.mjs':   'admin/portal-UI gate; runs in daily-health-check.sh — a badge map cannot make a video unsafe',
   'check-every-action-reports-a-result.mjs': 'admin/portal-UI gate; runs in daily-health-check.sh — button feedback cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
+  'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
   'check-playbook-integrity.mjs': 'the sales playbook is website code, not tonight\'s videos — a bad block must never abort a video build. Runs in drip-content.sh (the deploy that ships admin/) and daily-health-check.sh',
   'check-onboarding-errors-surfaced.mjs': 'live Supabase client state, not code health; needs network. Runs in daily-health-check.sh — a delivery failure must never block a video build',
