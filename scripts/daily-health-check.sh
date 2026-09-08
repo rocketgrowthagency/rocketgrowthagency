@@ -93,6 +93,7 @@ run check-every-action-reports-a-result.mjs "every button reports a visible resu
 run check-archived-clients-excluded.mjs "an archived client is not work, revenue or a KPI"
 run check-status-tools-see-the-run.mjs "the morning audit can actually see the night run"
 run check-admin-selects-real-columns.mjs "every column the admin SELECTs exists in the live schema"
+run check-video-serving-reconciled.mjs  "a 404 is a TAKEDOWN or a BREAKAGE — never confuse them"
 run check-apps-script-paste-owed.mjs   "no Apps Script edit waiting to be pasted"
 run check-orphaned-airtable-fields.mjs "no Airtable field reads as coverage while holding nothing"
 run heal-onboarding-errors.mjs         "retry delivery steps whose cause was since fixed"

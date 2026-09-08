@@ -49,8 +49,15 @@ console.log("── production must serve a build that contains the videos ─�
 // 1. THE CONTENT CHECK — this is the one that matters.
 const vDir = path.join(WEB, "v");
 if (!fs.existsSync(vDir)) { console.log("  ▫️  no v/ directory — cannot sample"); process.exit(2); }
+// 🔴 2026-09-08 — SKIP THE TAKEDOWN LIST. 68 slugs are 404 ON PURPOSE (netlify.toml, the
+// 2026-07-20 emergency takedown). Sampling one and reporting "videos are not serving" would be a
+// false alarm — and chasing exactly that false alarm cost an hour before the list was found.
+const tomlPath = path.join(WEB, "netlify.toml");
+const takendown = fs.existsSync(tomlPath)
+  ? new Set([...fs.readFileSync(tomlPath, "utf8").matchAll(/from\s*=\s*"\/v\/([a-z0-9-]+)"/g)].map((m) => m[1]))
+  : new Set();
 const slugs = fs.readdirSync(vDir)
-  .filter((d) => fs.existsSync(path.join(vDir, d, "video.mp4")))
+  .filter((d) => fs.existsSync(path.join(vDir, d, "video.mp4")) && !takendown.has(d))
   .slice(0, 3);
 
 if (!slugs.length) { console.log("  ▫️  no local videos to sample against"); process.exit(2); }
