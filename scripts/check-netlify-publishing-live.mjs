@@ -1,98 +1,102 @@
 #!/usr/bin/env node
 /**
- * check-netlify-publishing-live.mjs — is what we PUSHED actually what's SERVED?
+ * check-netlify-publishing-live.mjs — is production serving a build that CONTAINS THE VIDEOS?
  *
- * ─── WHY ──────────────────────────────────────────────────────────────────────────────────────
- * 2026-09-06: three commits were pushed, built, and reported `state: "ready"` — and none of them
- * were live. The site's production deploy was **LOCKED**, so every subsequent build was published
- * to nothing. It was found only because a content check (`grep` for the new symbol in the served
- * file) disagreed with the deploy state.
+ * ─── 🔴🔴 THIS GATE WAS BUILT ON A WRONG PREMISE, AND THE FIX CAUSED AN OUTAGE ──────────────────
+ * 2026-09-06 I found production "locked", called it a defect, unlocked it, and wrote this gate to
+ * fail whenever it was locked again. 2026-09-08 the consequence landed:
  *
- *   published deploy: 21:14:05   ← a manual `netlify deploy --prod`, which PINS production
- *   pushed since:     21:14:52, 21:42:42, 21:43:16   all "ready", none served
+ *     every outreach video on the live site returned text/html instead of video/mp4
+ *     0 of 1,139 .mp4 files are in git — they are gitignored on purpose
  *
- * 🔑 THE TRAP: a manual CLI deploy locks the site. From that moment git pushes still build, still
- * go green, and still say "ready" — they just stop reaching production. There is no error anywhere.
- * Every signal you would normally trust says the deploy worked.
+ * **The lock was the protection, not the bug.** This site publishes with
+ * `netlify deploy --prod --dir=.`, which uploads the WORKING TREE. Git holds the landing pages but
+ * not the videos, so a git-triggered publish ships a site where every outreach link is dead. The
+ * lock exists to stop exactly that, and `preflight-site-deploy.sh` documents the intended dance:
+ * unlock → deploy --dir=. → verify → RELOCK.
  *
- * 🔴 This is the deploy-layer twin of the rule we already hold for videos: a status code proves
- * nothing, only CONTENT proves a thing is live ([[feedback-curl-status-is-useless-check-content-type]]).
+ * 🔑 **BEFORE REMOVING ANY LIMIT, FIND OUT WHAT IT WAS PROTECTING AGAINST.** Chris taught this on
+ * 2026-09-06 about the Places quota — the same day, on the same reasoning, I did it again here
+ * ([[feedback-google-cloud-billing-safety]], [[project-places-searchtext-quota-ceiling]]).
  *
- * CHECKS
- *   1. 🔴 Production must NOT be locked — a lock silently disables git auto-publish.
- *   2. 🔴 The published deploy must be the newest ready deploy on main. Anything newer is stranded.
+ * WHAT THIS NOW CHECKS — the invariant that actually matters
+ *   1. 🔴 A sampled landing-page video must serve `video/mp4`. Content is the ONLY proof; the dead
+ *      state returned HTTP **200** with `text/html`, so a status check saw nothing wrong.
+ *   2. ⚠️ If the published deploy is a GIT commit deploy, say so loudly — that build cannot contain
+ *      the videos.
+ *   3. ▫️ Locked is EXPECTED and is reported as such, never as a failure.
  *
- * Exit 0 = publishing is live.  1 = locked or stranded.  2 = could not tell (never 1 —
- * [[feedback-exit-code-semantics-for-gates]]).
+ * Exit 0 = videos are live. 1 = they are not. 2 = could not tell.
  */
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 
-const SITE = "38f275c7-a4a8-4531-9989-1fc1ccb78f9e";   // hilarious-baklava-87fbab / rocketgrowthagency.com
+const SITE = "38f275c7-a4a8-4531-9989-1fc1ccb78f9e";
+const WEB = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const ORIGIN = "https://www.rocketgrowthagency.com";
 
 function api(method, data) {
   try {
-    const out = execFileSync("netlify", ["api", method, "--data", JSON.stringify(data)], {
-      // 🔑 maxBuffer matters: the deploy list runs past Node's 1MB default and execFileSync then
-      // throws, which this function would report as "API unreachable" — an INDETERMINATE that hides
-      // a real answer. A truncated read must never look like a missing one.
+    return JSON.parse(execFileSync("netlify", ["api", method, "--data", JSON.stringify(data)], {
       encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 60_000, maxBuffer: 64 * 1024 * 1024,
-    });
-    return JSON.parse(out);
-  } catch {
-    return null;                                        // unauthenticated, offline, CLI absent
+    }));
+  } catch { return null; }
+}
+
+console.log("── production must serve a build that contains the videos ──");
+
+// 1. THE CONTENT CHECK — this is the one that matters.
+const vDir = path.join(WEB, "v");
+if (!fs.existsSync(vDir)) { console.log("  ▫️  no v/ directory — cannot sample"); process.exit(2); }
+const slugs = fs.readdirSync(vDir)
+  .filter((d) => fs.existsSync(path.join(vDir, d, "video.mp4")))
+  .slice(0, 3);
+
+if (!slugs.length) { console.log("  ▫️  no local videos to sample against"); process.exit(2); }
+
+let bad = 0;
+for (const slug of slugs) {
+  let ct = "", code = "";
+  try {
+    const out = execFileSync("curl", ["-sIL", "-o", "/dev/null", "-w", "%{http_code} %{content_type}",
+      `${ORIGIN}/v/${slug}/video.mp4`], { encoding: "utf8", timeout: 45_000 });
+    [code, ct] = out.trim().split(/\s+/);
+  } catch { console.log(`  ▫️  ${slug}: request failed — indeterminate`); process.exit(2); }
+
+  // 🔴 A 200 proves nothing. The dead state WAS a 200 — serving the HTML fallback.
+  if (/video\/mp4/.test(ct)) {
+    console.log(`  ✅ ${slug.slice(0, 44).padEnd(44)} ${ct}`);
+  } else {
+    bad++;
+    console.log(`  🔴 ${slug.slice(0, 44).padEnd(44)} HTTP ${code} ${ct} — NOT a video`);
   }
 }
 
-console.log("── Netlify: is what we pushed actually served? ──");
-
+// 2 + 3. Context, so a failure explains itself.
 const site = api("getSite", { site_id: SITE });
-if (!site) {
-  // 🔑 Indeterminate is NOT a pass and NOT a failure. In CI or on a machine where the Netlify CLI
-  // is not logged in, we simply cannot tell — say so and exit 2.
-  console.log("  ▫️  cannot reach the Netlify API (CLI absent or not logged in) — INDETERMINATE");
-  console.log("     Run `netlify login` to enable this gate.");
-  process.exit(2);
-}
-
-const pub = site.published_deploy || {};
-let fail = 0;
-
-// 1. The lock.
-if (pub.locked) {
-  fail++;
-  console.log("  🔴 PRODUCTION IS LOCKED — git pushes are building but NOT publishing.");
-  console.log(`     Production is pinned to ${String(pub.id).slice(0, 8)} from ${String(pub.published_at || pub.created_at).slice(0, 19)}.`);
-  console.log("     Everything pushed since then is stranded. Unlock:");
-  console.log(`       netlify api unlockDeploy --data '{"deploy_id":"${pub.id}"}'`);
-  console.log("     Then publish the newest build with restoreSiteDeploy.");
-} else {
-  console.log(`  ✅ not locked — git pushes auto-publish`);
-}
-
-// 2. Stranded builds.
-const deploys = api("listSiteDeploys", { site_id: SITE, per_page: 30 });
-if (!Array.isArray(deploys)) {
-  console.log("  ▫️  deploy list unavailable — cannot check for stranded builds");
-  process.exit(fail ? 1 : 2);
-}
-
-const newest = deploys.find((d) => d.state === "ready" && d.branch === "main");
-if (newest && pub.id && newest.id !== pub.id) {
-  fail++;
-  console.log(`  🔴 STRANDED: deploy ${String(newest.id).slice(0, 8)} (${String(newest.commit_ref || "manual").slice(0, 8)}) is ready but NOT published.`);
-  console.log(`     Published is ${String(pub.id).slice(0, 8)}, from ${String(pub.published_at || pub.created_at).slice(0, 19)}.`);
-  const stranded = deploys.filter((d) => d.state === "ready" && d.branch === "main" && new Date(d.created_at) > new Date(pub.published_at || pub.created_at));
-  for (const d of stranded.slice(0, 8)) {
-    console.log(`       ${String(d.created_at).slice(5, 19)}  ${String(d.commit_ref || "(manual)").slice(0, 8)}  ${String(d.title || "").slice(0, 56)}`);
+if (site) {
+  const pub = site.published_deploy || {};
+  const fromGit = !!pub.commit_ref;
+  console.log("");
+  console.log(`  published deploy : ${String(pub.id).slice(0, 8)}  ${fromGit ? `git ${String(pub.commit_ref).slice(0, 8)}` : "manual (working tree)"}`);
+  console.log(`  locked           : ${pub.locked ? "yes — EXPECTED, this is what stops a video-less git publish" : "🔴 NO — a git push can publish a build with no videos"}`);
+  if (fromGit) {
+    console.log("  🔴 production is serving a GIT deploy. Git holds the landing pages but NOT the .mp4s");
+    console.log("     (0 tracked, gitignored on purpose), so that build cannot contain the videos.");
   }
-} else if (newest) {
-  console.log(`  ✅ newest ready deploy IS the published one (${String(pub.commit_ref || "manual").slice(0, 8)})`);
+  if (!pub.locked) {
+    console.log("     Re-lock:  netlify api lockDeploy --data '{\"deploy_id\":\"" + pub.id + "\"}'");
+  }
+} else {
+  console.log("  ▫️  Netlify API unreachable — deploy context unavailable (content check above still stands)");
 }
 
 console.log("");
-if (fail) {
-  console.error(`🔴 ${fail} publishing problem(s) — pushed code is not reaching production.`);
-  console.error("   A 'ready' deploy is not a live one. See project_netlify_deploy_lock_stranded_pushes.");
+if (bad) {
+  console.error(`🔴 ${bad}/${slugs.length} sampled video(s) are NOT being served.`);
+  console.error("   Restore:  cd '" + WEB + "' && netlify deploy --prod --dir=.   then RE-LOCK.");
+  console.error("   See project_netlify_deploy_lock_stranded_pushes.");
   process.exit(1);
 }
-console.log("✅ production is publishing — what is pushed is what is served");
+console.log(`✅ ${slugs.length}/${slugs.length} sampled videos serve video/mp4 — production carries the working-tree build`);
