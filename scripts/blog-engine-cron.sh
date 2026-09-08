@@ -56,7 +56,11 @@ if [ -n "$(git status --porcelain blog/ industries/ sitemap.xml 2>/dev/null)" ];
     commit -q -m "blog: autonomous content engine — new local-SEO-by-vertical post(s) ${DATE_STAMP}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
-  if netlify deploy --prod --dir=. 2>&1 | grep -iE "Production|deploy|error|complete" | tee -a "$LOG"; then
+  # 🔴 2026-09-08 — production is deliberately LOCKED (git holds 0 of 1,139 .mp4 files, so a
+  # git-triggered publish kills every outreach video). A bare `netlify deploy --prod` is REFUSED
+  # while locked, so this path would have silently stopped publishing. deploy-site.sh does the
+  # unlock → deploy → publish-OURS → relock → verify-by-content dance.
+  if bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "blog engine" 2>&1 | tee -a "$LOG"; then
     echo ">>> deployed to Netlify prod. Sitemap updated for Google rediscovery." | tee -a "$LOG"
   else
     echo "!!! netlify deploy failed — content committed locally; investigate." | tee -a "$LOG"

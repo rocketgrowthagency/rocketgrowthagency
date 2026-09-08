@@ -1634,6 +1634,19 @@ if [ "${#PENDING_DEPLOY_SLUGS[@]+x}" ] && [ ${#PENDING_DEPLOY_SLUGS[@]} -gt 0 ];
   # RE-LOCK the freshly published deploy so a git-push auto-build can't wipe the new videos (2026-07-30 safeguard).
   _new=$(netlify api getSite --data "{\"site_id\":\"$NETLIFY_SITE_ID\"}" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).published_deploy.id)}catch(e){}})' 2>/dev/null)
   [ -n "$_new" ] && netlify api lockDeploy --data "{\"deploy_id\":\"$_new\"}" >/dev/null 2>&1 && echo ">>> re-locked published deploy $_new (git-push can't overwrite the videos)" | tee -a "$LOGFILE"
+
+  # 🔴 2026-09-08 — VERIFY THE RESULT, DO NOT ASSUME IT. The unlock window above is exactly when a
+  # queued git build can publish ITSELF, and this block would then re-lock that video-less build.
+  # Not theoretical: it happened, and all 1,139 outreach videos served text/html for hours.
+  # A 200 proves nothing here — the dead state IS a 200 — so check the CONTENT TYPE.
+  _slug=$(ls -d "$WEBSITE_DIR"/v/*/ 2>/dev/null | head -1 | xargs -n1 basename 2>/dev/null)
+  if [ -n "$_slug" ]; then
+    _ct=$(curl -sL -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$_slug/video.mp4" 2>/dev/null)
+    case "$_ct" in
+      video/mp4*) echo ">>> videos verified live ($_slug serves $_ct)" | tee -a "$LOGFILE" ;;
+      *) echo ">>> 🔴🔴 VIDEOS ARE NOT SERVING ($_ct) — production is likely on a GIT build. Fix: bash '$WEBSITE_DIR/scripts/deploy-site.sh' restore" | tee -a "$LOGFILE" ;;
+    esac
+  fi
   cd "$SCRAPER_DIR"
 else
   echo "" | tee -a "$LOGFILE"

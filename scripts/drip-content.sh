@@ -162,7 +162,8 @@ if [ -n "$(git status --porcelain industries/ blog/ local-seo/ state-of-local-se
     commit -q -m "drip: inbound content ${DATE_STAMP} — industry: ${IND:-none} | blog: ${BLOG:-none}" 2>&1 | tee -a "$LOG"
   export NETLIFY_AUTH_TOKEN="${NETLIFY_AUTH_TOKEN:-$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
-  netlify deploy --prod --dir=. 2>&1 | grep -iE "Production URL|Deploy complete|error" | tee -a "$LOG"
+  # 🔴 See blog-engine-cron.sh — production is LOCKED on purpose; a bare deploy is refused.
+  bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "drip content" 2>&1 | tee -a "$LOG"
   # IndexNow ping AFTER deploy (needs the fresh sitemap + /{key}.txt live) → Bing/Yandex crawl new posts fast.
   node "$WEBSITE_DIR/scripts/indexnow-ping.mjs" 2>&1 | tee -a "$LOG" || true
   echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap regenerated + IndexNow pinged." | tee -a "$LOG"

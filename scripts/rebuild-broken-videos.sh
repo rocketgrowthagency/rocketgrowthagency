@@ -287,7 +287,10 @@ CUR=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/si
 curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$CUR/unlock" -o /dev/null
 # 🔴 The deploy's exit code must be the DEPLOY's, not grep's. Same trap that hid a whole failed night on
 # 2026-08-19 (Netlify out of credits → JSONHTTPError: Forbidden → 53 pages silently served the homepage).
-( cd "$WEBSITE" && NETLIFY_AUTH_TOKEN="$TOK" netlify deploy --prod --dir="." --site="$SITE" --message="rebuild broken videos: ${OK[*]}" 2>&1 | tee -a "$LOG" | grep -iE "Unique deploy|error"; exit "${PIPESTATUS[0]}" )
+# 🔴 2026-09-08 — production is deliberately LOCKED and a bare `netlify deploy --prod` is REFUSED.
+# deploy-site.sh unlocks, deploys the working tree, publishes ITS OWN deploy id (a queued git
+# build otherwise wins the race and ships a video-less site), re-locks, and verifies by content.
+NETLIFY_AUTH_TOKEN="$TOK" bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "rebuild broken videos: ${OK[*]}" 2>&1 | tee -a "$LOG"
 DRC=$?
 [ "${DRC:-1}" -ne 0 ] && say "🚨 DEPLOY FAILED (exit $DRC) — videos are NOT live. Check Netlify credits/token."
 
