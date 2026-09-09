@@ -109,6 +109,8 @@ node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
 run check-orphan-functions.mjs         "no function was built and then never invoked"
 run check-portal-data-boundary.mjs     "the client portal never touches RGA's work product"
 run check-sop-sources-agree.mjs        "both delivery-SOP definitions still describe one process"
+run check-robot-does-not-overclaim.mjs "the SOP run-all robot reports what actually ran"
+run check-runners-never-swallow-errors.mjs "no SOP runner turns a failed fetch into a false finding"
 run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"

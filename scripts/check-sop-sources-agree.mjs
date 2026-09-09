@@ -87,6 +87,34 @@ if (typeDrift.length) {
   typeDrift.forEach((d) => console.log(`       ${d}`));
 } else console.log("  ✅ types agree");
 
+// 2b. INSTRUCTIONS must exist, and must be the SAME words in both sources.
+// 🔴 Added 2026-09-08. This gate compared ids, order, types and hasRunner — never the text a human
+// actually reads. Two consequences went unnoticed for as long as the gate has existed:
+//   · 15 steps had `instructions: null`, so the admin rendered a bare title with no explanation of
+//     what the step is or how to tell it worked. 14 had no editorial overlay to fall back on either.
+//   · Step 5's text was edited in the admin copy only, so the two sources described the same step
+//     differently and neither reader could tell which was current.
+// A step nobody can follow is not a documented process, and identical structure with different words
+// is still drift.
+const bare = local.filter((s) => !String(s.instructions || "").trim()
+  && !String(aBy.get(s.id)?.instructions || "").trim()).map((s) => s.id);
+if (bare.length) {
+  fails.push("steps with no instructions");
+  console.log(`  🔴 ${bare.length} step(s) have NO instructions in either source — they render as a bare title:`);
+  bare.forEach((i) => console.log(`       ${i}`));
+} else console.log(`  ✅ every step has instructions`);
+
+const insDrift = local.filter((s) => {
+  const a = s.instructions == null ? null : String(s.instructions);
+  const b = aBy.get(s.id)?.instructions == null ? null : String(aBy.get(s.id).instructions);
+  return aBy.has(s.id) && a !== b;
+}).map((s) => s.id);
+if (insDrift.length) {
+  fails.push("instruction drift");
+  console.log(`  🔴 ${insDrift.length} step(s) have DIFFERENT instruction text in the two sources:`);
+  insDrift.forEach((i) => console.log(`       ${i}`));
+} else console.log("  ✅ instruction text is identical in both sources");
+
 // 3. hasRunner must be true only where a handler exists.
 //    🔑 A false claim here is the worst of the three: the admin renders a Run button, the user clicks
 //    it, and gets a confident wrong explanation instead of the work happening.

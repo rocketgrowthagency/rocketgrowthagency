@@ -97,6 +97,13 @@ common place momentum is lost between a yes and the work starting. Chase at 24h.
   {
     id: "m1.kickoff.create", title: "Confirm the client record is complete enough to work",
     type: "auto", dependsOn: ["m1.close.kickoff_invite"],
+    instructions: `Confirms the client record exists before any work is logged against it.
+
+Nothing is created here — the row was written when the contract was signed. This step exists so the
+SOP has a verified starting point.
+
+You get: the business name and client id echoed back.
+If it errors: the client row is missing, and every later step will fail on it. Fix that first.`,
     async run({ client }) {
       // 🔴 2026-09-06 — THIS STEP COULD NEVER FAIL. It was titled "Create client in Supabase" but the
       // code only confirmed the row existed — and flow-execute 404s before reaching a runner if the
@@ -154,25 +161,37 @@ See /docs/playbooks/kickoff-call-script-template.md for full talk track.`,
     type: "manual", dependsOn: ["m1.kickoff.call"],
     instructions: `SOP step 5 — AUDITED AND RESOLVED FOR RGA 2026-09-08. Do the work, then record it.
 
-TWO KINDS OF CREDENTIAL, TWO DIFFERENT ANSWERS:
+WHAT THIS STEP IS ACTUALLY FOR
+  Credentials should not live in exactly one place. Audit the two kinds separately —
+  they have different answers:
 
-1. CLIENT ACCESS — prefer DELEGATION over storing a password.
-   GBP → Manager · GA4 → Admin · Search Console → Owner, all as
-   hello@rocketgrowthagency.com. Nothing to store, and access ends when they remove us.
-   Only store what has no delegated equivalent (a website/CMS login).
+  1. CLIENT ACCESS — prefer DELEGATION over storing a password.
+     • Google Business Profile → add hello@rocketgrowthagency.com as Manager
+     • Google Analytics 4      → add as Admin
+     • Search Console          → add as Owner
+     Nothing to store, and access ends when the client removes us. A stored password
+     does not. Only store what has NO delegated equivalent — a website/CMS login is
+     the usual one.
 
-2. RGA's OWN KEYS — a continuity risk. SUPABASE_SERVICE_ROLE_KEY bypasses every RLS
-   policy; if the machine holding it dies, RGA cannot operate.
+  2. RGA's OWN INFRASTRUCTURE KEYS — a continuity risk, not a confidentiality one.
+     SUPABASE_SERVICE_ROLE_KEY is full database access that bypasses every RLS policy.
+     If the machine holding it dies, RGA cannot operate its own systems.
 
-FOR RGA: client passwords held = ZERO (all delegated — that is the target state, not a
-gap). The 13 own keys are backed up encrypted and offline:
-    bash scripts/backup-secrets.sh "/Volumes/<drive>"
-AES-256 via gpg, passphrase never stored, verified by decrypting before reporting success.
+WHAT WE DID FOR RGA (and what to repeat per client)
+  Client passwords held: ZERO. All three Google surfaces are delegated, so there was
+  nothing to vault. That is the target state, not a gap — confirm the same per client.
 
-A PAID VAULT becomes necessary the day we hold a client's CMS login, or a second person
-needs access. Bitwarden Teams, $4/user/month (checked live 2026-09-08).
-🔴 Teams has NO account recovery — Enterprise-only. A sole owner who loses the master
-password has no way back. Keep a printed emergency kit.`,
+  RGA's 13 own keys are now backed up encrypted and offline:
+      bash scripts/backup-secrets.sh "/Volumes/<your drive>"
+  AES-256 via gpg, passphrase never stored or logged, verified by decrypting and
+  listing the archive before it reports success.
+
+WHEN A PAID VAULT BECOMES NECESSARY
+  The day we hold a client's website/CMS login, or the day a second person needs access.
+  Then: Bitwarden Teams, $4 per user per month billed annually (checked live 2026-09-08;
+  1Password Teams Starter is $24.95/mo flat for 10 seats — they cross around 6 people).
+  🔴 Bitwarden Teams has NO account recovery — that is Enterprise-only, and a sole owner
+  who loses the master password has no way back. Keep a printed emergency kit.`,
   },
   {
     id: "m1.access.gbp", title: "Get GBP manager access",
@@ -212,6 +231,14 @@ Save all in the password manager vault.`,
   {
     id: "m1.audit.gbp_baseline", title: "Snapshot GBP current state",
     type: "auto", dependsOn: ["m1.access.gbp"],
+    instructions: `Reads the LIVE Google Business Profile through the API and records the baseline into the onboarding
+form: claimed, verified, primary category, and up to two secondary categories (fields 8.1-8.6).
+
+Requires the Google connection from "Get GBP access" to be complete.
+
+If it says "No gbp_location_id linked": the OAuth did not attach a location — reconnect.
+🔴 CAPTURE THE 5 CONFIG IDS BEFORE RECONNECTING. Authorising a different Google account silently
+changes them, and every later audit then measures the wrong business.`,
     async run({ client, getGbp }) {
       try {
         const gbp = await getGbp();
@@ -234,18 +261,36 @@ Save all in the password manager vault.`,
   {
     id: "m1.audit.website", title: "Run on-page SEO audit",
     type: "auto", dependsOn: ["m1.kickoff.create"],
+    instructions: `Fetches the client homepage once and records what is actually on it: HTTP status, title, H1, meta
+description, JSON-LD schema, GA4/GTM, contact form, click-to-call, and page weight. It also checks
+whether the city and the primary service appear in the title. Auto-fills onboarding Section 9.x.
+
+GA4 is reported in THREE states — present / cannot tell (GTM present) / absent — because a GTM
+container can load GA4 without any G- id appearing in the HTML. Only "absent" is a finding.
+
+Read the result, do not just tick it: title and H1 are the two things most often wrong.`,
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url on client record — skip or fill it in", outcome: "skipped" };
       const { status, body } = await fetchHomepage(client.website_url);
       const titleMatch = body.match(/<title[^>]*>([^<]*)<\/title>/i);
-      const h1Match = body.match(/<h1[^>]*>([^<]*)<\/h1>/i);
+      // 🔴 `[^<]*` DIES ON NESTED MARKUP. RGA's own H1 is "<h1>Rank Higher on <span>Google
+      // Maps</span>…" and this reported H1="MISSING" — a false absence finding about a heading that
+      // was plainly there. Match lazily across children, then strip tags.
+      // 🔴 Fixed in netlify/functions/flow-execute.js on 2026-09-08 but NOT here, because this step
+      // has TWO independent implementations. That is the drift this file keeps paying for.
+      const _h1 = body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+      const h1Match = _h1 ? [_h1[0], _h1[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()] : null;
       const metaDesc = body.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i);
       const hasSchema = /application\/ld\+json/i.test(body);
-      const hasGA4 = /G-[A-Z0-9]{6,}/.test(body) || /gtag\/js/.test(body);
+      // 🔴 THREE STATES, NEVER TWO. GA4 is frequently loaded through a GTM container, so no G- id
+      // appears in the HTML. `false` would be an absence claim we cannot prove; null = cannot tell.
+      const _ga4Direct = /G-[A-Z0-9]{6,}/.test(body) || /gtag\/js/.test(body);
+      const hasGA4 = _ga4Direct ? true : (/GTM-[A-Z0-9]+/.test(body) ? null : false);
       const hasViewport = /<meta\s+name=["']viewport["']/i.test(body);
       const sizeKb = Math.round(body.length / 1024);
       return {
-        summary: `Audited ${client.website_url}: ${status}, title="${titleMatch?.[1]?.slice(0, 50)}", H1="${h1Match?.[1]?.slice(0, 50)}", schema=${hasSchema}, GA4=${hasGA4}, ${sizeKb}KB`,
+        // 🔑 Render the third state in words. `GA4=null` would read to a human as "no".
+        summary: `Audited ${client.website_url}: ${status}, title="${titleMatch?.[1]?.slice(0, 50)}", H1="${h1Match?.[1]?.slice(0, 50)}", schema=${hasSchema}, GA4=${hasGA4 === true ? "present" : hasGA4 === null ? "cannot tell (GTM present)" : "absent"}, ${sizeKb}KB`,
         outcome_data: {
           http_status: status, title: titleMatch?.[1], h1: h1Match?.[1], meta_description: metaDesc?.[1],
           has_schema: hasSchema, has_ga4: hasGA4, has_viewport_meta: hasViewport, html_size_kb: sizeKb,
@@ -278,37 +323,82 @@ like poor conversion.`,
     // The audit chain — each calls its deployed function. Built 2026-09-05/06.
     id: "m1.audit.keyword_validation", title: "Validate the tracked keyword has real Search Console demand",
     type: "auto", dependsOn: ["m1.access.search_console"],
+    instructions: `🔴 THIS MUST PASS BEFORE THE RANK GRID. Asks Search Console how many impressions the tracked
+keyword actually earned in the last 90 days.
+
+"sound"        real demand — safe to track.
+"no_demand"    tracking it will produce a uniform not-found grid that LOOKS like a ranking but is
+               only a sentinel. RGA tracked such a term for 5 weeks before this check existed.
+"indeterminate" could not tell — do not proceed on it either way.
+
+If it returns needs_change, pick one of the striking-distance alternatives it lists and change the
+tracked keyword BEFORE running the grid baseline.`,
     async run({ client }) { return await callFn("validate-tracked-keyword", client.id); },
   },
   {
     id: "m1.audit.deep_assess", title: "Deep assessment — GSC, GA4, GBP",
     type: "auto", dependsOn: ["m1.access.search_console", "m1.access.analytics"],
+    instructions: `Captures a baseline snapshot from every connected source (Search Console, Analytics, GBP, Places)
+and stores it as the "before" we will measure everything against.
+
+You get: "N/M sources captured" plus how many snapshots were stored.
+
+Anything less than all sources returns "partial" and names what failed. A partial baseline means
+later month-over-month comparisons are measured against a hole — fix the failing connection and
+re-run rather than accepting it.`,
     async run({ client }) { return await callFn("deep-assess-client", client.id); },
   },
   {
     id: "m1.audit.ai_readiness", title: "Audit AI readiness",
     type: "auto", dependsOn: ["m1.audit.website"],
+    instructions: `Scores how well the site answers the questions an AI assistant would ask about this business, and
+returns a readiness percentage plus a fix list.
+
+🔴 We sell AI READINESS, never AI PRESENCE. Whether a business "appears in AI answers" is not
+measurable and claiming it would be fabricated proof. Readiness — is the information there, is it
+structured, is it consistent — is measurable, and that is what this scores.`,
     async run({ client }) { return await callFn("ai-readiness-audit", client.id); },
   },
   {
     id: "m1.audit.nap_reviews", title: "Audit NAP consistency + reviews vs the vertical benchmark",
     type: "auto", dependsOn: ["m1.access.gbp"],
+    instructions: `Compares name, address and phone between the Google Business Profile and the website, and captures
+the current review count and rating as a baseline.
+
+🔴 Reviews are matched by CID, never by business name — name matching silently attaches another
+company's reviews. Absence of the review field means ZERO, not unknown.`,
     async run({ client }) { return await callFn("nap-and-review-audit", client.id); },
   },
   {
     id: "m1.audit.social", title: "Audit social presence linked from the site",
     type: "auto", dependsOn: ["m1.audit.website"],
+    instructions: `Checks which social profiles exist for the business and which are actually linked from the site.
+
+🔴 Read this as a STARTING LIST, not a complete picture: the onboarding audit spec covers 0 of 5
+social checks automatically today. What this returns is what we could see, not everything there is.`,
     async run({ client }) { return await callFn("social-presence-audit", client.id); },
   },
   {
     id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
     type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.website"],
+    instructions: `Checks the citation URLs WE ALREADY HOLD for NAP accuracy against the client record.
+
+🔴 "Not found" does NOT mean "no citation exists" — we can only verify URLs already recorded, so
+this measures the accuracy of known citations, never the completeness of all citations.
+Duplicate-listing detection is not buildable without a paid aggregator and is out of scope.`,
     async run({ client }) { return await callFn("citation-audit", client.id); },
   },
   {
     id: "m1.audit.recommendations", title: "Build the prioritised fix plan from every audit",
     type: "auto",
     dependsOn: ["m1.audit.ai_readiness", "m1.audit.nap_reviews", "m1.audit.social", "m1.audit.citations_nap", "m1.audit.deep_assess"],
+    instructions: `Merges every audit above into ONE ordered recommendations plan, weighted by impact x confidence.
+
+Runs last for a reason: it depends on all five audits. Run it before they finish and the plan is
+built on missing inputs.
+
+🔴 An indeterminate finding is never turned into a recommendation. If an audit could not tell, the
+plan stays silent on it rather than guessing.`,
     async run({ client }) { return await callFn("build-recommendations-plan", client.id); },
   },
   {
@@ -570,6 +660,16 @@ Use the canonical NAP from GBP. Critical for citation consistency — if these d
   {
     id: "m1.web.schema", title: "Add LocalBusiness schema",
     type: "auto", dependsOn: ["m1.web.nap_consistency"],
+    instructions: `Generates a LocalBusiness JSON-LD block from the client record — name, URL, phone,
+locality, area served, and a description built from the primary service and market.
+
+It GENERATES the snippet; it does not install it. Copy the block from the result and paste it into
+the homepage <head>.
+
+Check before pasting: the fields come straight from the client record, so a blank phone or market on
+the record becomes a blank field in the schema. Fix the record first, then re-run.
+
+Expanded per-service schema is a separate later step ("Add expanded schema").`,
     async run({ client }) {
       const schema = {
         "@context": "https://schema.org",
@@ -588,15 +688,33 @@ Use the canonical NAP from GBP. Critical for citation consistency — if these d
   {
     id: "m1.web.tracking", title: "Verify GA4 + GSC + tag tracking",
     type: "auto", dependsOn: ["m1.audit.website"],
+    instructions: `Verifies GA4 and the Search Console verification meta tag are actually present on the homepage.
+
+GA4 is three-state, like the website audit:
+  found       a G- id is in the page source.
+  unprovable  no G- id, but a GTM container IS present — GA4 may well be firing through it.
+              VERIFY IN GA4 REALTIME before telling anyone it is missing.
+  absent      no G- id and no GTM container. This is the only state that is a finding.
+
+Only "found" plus a GSC tag counts as verified.`,
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
       const { body } = await fetchHomepage(client.website_url);
       const ga4Match = body.match(/G-([A-Z0-9]{6,})/);
       const gscMeta = body.match(/<meta\s+name=["']google-site-verification["']\s+content=["']([^"']+)["']/i);
-      const ok = ga4Match && gscMeta;
+      // 🔴 A GTM container can load GA4 without ever putting a G- id in the HTML. Calling that
+      // "MISSING" is an absence claim a homepage scrape cannot support — it is the false finding
+      // this very check produced against RGA's own site on 2026-09-08. Kept identical to
+      // netlify/functions/flow-execute.js; these two implementations must not drift again.
+      const hasGTM = /GTM-[A-Z0-9]+/.test(body);
+      const ga4State = ga4Match ? "found" : (hasGTM ? "unprovable" : "absent");
+      const ga4Label = ga4Match ? `G-${ga4Match[1]}`
+        : (hasGTM ? "not in page source — a GTM container is present, so GA4 may well be firing through it. VERIFY IN GA4 REALTIME before claiming it is missing."
+                  : "MISSING (no G- tag and no GTM container)");
+      const ok = ga4State === "found" && !!gscMeta;
       return {
-        summary: `Tracking check: GA4=${ga4Match ? `G-${ga4Match[1]}` : "MISSING"}, GSC verification=${gscMeta ? "present" : "MISSING"}`,
-        outcome: ok ? "verified" : "missing_tags",
+        summary: `Tracking check: GA4=${ga4Label}, GSC verification=${gscMeta ? "present" : "MISSING"}`,
+        outcome: ok ? "verified" : (ga4State === "unprovable" ? "indeterminate" : "missing_tags"),
         outcome_data: { ga4_id: ga4Match?.[0], gsc_token: gscMeta?.[1] },
       };
     },
@@ -752,6 +870,12 @@ Use descriptive anchor text (NOT "click here"). Anchor = keyword.`,
   {
     id: "m1.web.core_web_vitals", title: "Fix Core Web Vitals",
     type: "auto", dependsOn: ["m1.audit.website"],
+    instructions: `Runs Google PageSpeed Insights against the homepage (mobile) and records the performance score plus
+LCP, CLS and TBT.
+
+Anonymous PSI calls are rate-limited by Google. A failure here is far more often the rate limit than
+the site — retry in a minute, or set PAGESPEED_API_KEY. Do not record a rate-limit failure as a
+performance problem.`,
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
       // PageSpeed Insights API — no key needed for low volume but rate-limited
@@ -909,6 +1033,10 @@ Once published, capture URLs in onboarding section 13.x`,
   {
     id: "m1.web.https_sitemap", title: "Verify HTTPS + sitemap submission",
     type: "auto", dependsOn: ["m1.web.priority_pages", "m1.web.location_pages"],
+    instructions: `Confirms the site is HTTPS and that /robots.txt and /sitemap.xml both respond.
+
+This gates real work later: the internal-linking and cannibalization audits READ the sitemap to
+discover pages. Without one they cannot run at all, so fix this before them, not after.`,
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
       const httpsOk = client.website_url.startsWith("https://");
@@ -1053,6 +1181,12 @@ Outcome to track: approved_month2 / not_renewed.`,
   {
     id: "m1.handoff.month2", title: "Transition to monthly cycle",
     type: "auto", dependsOn: ["m1.call.close"],
+    instructions: `Initializes the Month 2+ record so recurring monthly work has somewhere to write.
+
+Run only after the month-1 close call has happened — it marks the transition out of onboarding.
+
+Currently runs on the local machine (it writes through the scraper's state module):
+    node flow.mjs <clientId> run m1.handoff.month2`,
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");
       await ensureMonthlyState(clientId);
