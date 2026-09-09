@@ -68,6 +68,44 @@ if (!mapMatch) {
   }
 }
 
+// 1b. 🔴 THE FIELD THE BANNER READS MUST ACTUALLY BE PRODUCED.
+// This gate's first version only checked that the admin BRANCHES on `data.outcome`. It passed while
+// flow-execute returned `{ok, step_id, status, summary, result, followup}` and NO top-level
+// `outcome` — so `data.outcome` was permanently undefined, every branch fell through, and a Gmail
+// 403 was announced as "✅ Done". The gate proved the consumer existed and never asked whether the
+// producer did. Check both halves, always.
+// Brace-match the object literal — a length-capped regex misses it once the block grows.
+// 🔴 Take the block that carries `ok: true` AND `step_id` — the step-ran response. The FIRST
+// `return json(200, {` in the file is the `mustRunLocally` early-return, which legitimately has no
+// outcome; matching it made this check fire on correct code.
+function successResponse() {
+  let from = 0;
+  for (;;) {
+    const i = exec.indexOf("return json(200, {", from);
+    if (i < 0) return null;
+    const open = exec.indexOf("{", i + "return json(200,".length);
+    let d = 0, block = null;
+    for (let j = open; j < exec.length; j++) {
+      if (exec[j] === "{") d++;
+      else if (exec[j] === "}") { d--; if (d === 0) { block = exec.slice(open, j + 1); break; } }
+    }
+    if (block && /\bok:\s*true/.test(block) && /\bstep_id\b/.test(block)) return block;
+    from = i + 1;
+  }
+}
+const returnBlock = successResponse();
+if (!returnBlock) {
+  console.error("  ✗ could not find flow-execute's success response — probe is wrong");
+  process.exit(2);
+}
+if (/^\s*outcome:/m.test(returnBlock)) {
+  console.log("  ✅ flow-execute returns `outcome` at the top level, where the admin reads it");
+} else {
+  fails.push("outcome never produced");
+  console.log("  🔴 flow-execute does NOT return a top-level `outcome` — the admin reads");
+  console.log("     data.outcome, gets undefined, and shows Done for every result including failures");
+}
+
 // 2. The "Done" banner must be gated on the outcome, not merely on a successful response.
 const doneLine = admin.match(/title: `Done — \$\{stepLabel\(stepId\)\}`/);
 if (!doneLine) {

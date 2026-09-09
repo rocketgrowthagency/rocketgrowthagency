@@ -112,6 +112,8 @@ run check-sop-sources-agree.mjs        "both delivery-SOP definitions still desc
 run check-robot-does-not-overclaim.mjs "the SOP run-all robot reports what actually ran"
 run check-runners-never-swallow-errors.mjs "no SOP runner turns a failed fetch into a false finding"
 run check-refusal-is-not-done.mjs      "a step that refused is never announced as Done"
+run check-button-says-what-it-does.mjs "a button that emails a client says so, and asks first"
+run check-finished-work-shows-finished.mjs "a step whose runner finished is marked done, not Active"
 run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
