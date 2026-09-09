@@ -152,9 +152,27 @@ See /docs/playbooks/kickoff-call-script-template.md for full talk track.`,
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",
     type: "manual", dependsOn: ["m1.kickoff.call"],
-    instructions: `Open the team password manager (1Password / Bitwarden / etc).
-Create a new vault for this client.
-Will store all client logins here. Never paste credentials in chat or email.`,
+    instructions: `SOP step 5 — AUDITED AND RESOLVED FOR RGA 2026-09-08. Do the work, then record it.
+
+TWO KINDS OF CREDENTIAL, TWO DIFFERENT ANSWERS:
+
+1. CLIENT ACCESS — prefer DELEGATION over storing a password.
+   GBP → Manager · GA4 → Admin · Search Console → Owner, all as
+   hello@rocketgrowthagency.com. Nothing to store, and access ends when they remove us.
+   Only store what has no delegated equivalent (a website/CMS login).
+
+2. RGA's OWN KEYS — a continuity risk. SUPABASE_SERVICE_ROLE_KEY bypasses every RLS
+   policy; if the machine holding it dies, RGA cannot operate.
+
+FOR RGA: client passwords held = ZERO (all delegated — that is the target state, not a
+gap). The 13 own keys are backed up encrypted and offline:
+    bash scripts/backup-secrets.sh "/Volumes/<drive>"
+AES-256 via gpg, passphrase never stored, verified by decrypting before reporting success.
+
+A PAID VAULT becomes necessary the day we hold a client's CMS login, or a second person
+needs access. Bitwarden Teams, $4/user/month (checked live 2026-09-08).
+🔴 Teams has NO account recovery — Enterprise-only. A sole owner who loses the master
+password has no way back. Keep a printed emergency kit.`,
   },
   {
     id: "m1.access.gbp", title: "Get GBP manager access",
