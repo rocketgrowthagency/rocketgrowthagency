@@ -56,6 +56,8 @@ export const month1 = [
   {
     id: "m1.close.confirm", title: "Confirmation + expectations email (within the hour)",
     type: "hybrid", dependsOn: [],
+    actionLabel: "✉️ Send the email",
+    actionConfirm: "This SENDS a real email to {contact} right now. It is not a draft and cannot be unsent.",
     instructions: `Send within ONE HOUR of the yes, while they are still certain.
 
 Must contain, in this order:
@@ -86,6 +88,8 @@ Must contain, in this order:
     // send-kickoff-invite creates the event and Google emails the guest.
     // "hybrid": the system sends it, a human still confirms the client ACCEPTED.
     type: "hybrid", dependsOn: ["m1.close.confirm"],
+    actionLabel: "📅 Send the calendar invite",
+    actionConfirm: "This creates the event and GOOGLE EMAILS {contact} the invitation immediately.",
     instructions: `Google Calendar + Google Meet (decided 2026-09-03 — Workspace is already paid for,
 and the invite arrives from a domain they can verify).
 
@@ -105,6 +109,7 @@ common place momentum is lost between a yes and the work starting. Chase at 24h.
   {
     id: "m1.kickoff.create", title: "Confirm the client record is complete enough to work",
     type: "auto", dependsOn: ["m1.close.kickoff_invite"],
+    actionLabel: "⚡ Generate",
     instructions: `Confirms the client record exists before any work is logged against it.
 
 Nothing is created here — the row was written when the contract was signed. This step exists so the
@@ -145,6 +150,7 @@ If it errors: the client row is missing, and every later step will fail on it. F
   {
     id: "m1.kickoff.call", title: "Schedule + run kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `Schedule a 30-min GOOGLE MEET with the primary contact.
 
 📅 HOW TO BOOK IT (decided 2026-09-03 — Google Calendar + Meet, NOT Zoom):
@@ -167,6 +173,7 @@ See /docs/playbooks/kickoff-call-script-template.md for full talk track.`,
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",
     type: "manual", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Generate",
     instructions: `SOP step 5 — AUDITED AND RESOLVED FOR RGA 2026-09-08. Do the work, then record it.
 
 WHAT THIS STEP IS ACTUALLY FOR
@@ -216,6 +223,7 @@ login), or the day a second person needs access. Not before.`,
   {
     id: "m1.access.gbp", title: "Get GBP manager access",
     type: "hybrid", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Generate",
     async run({ client }) {
       const url = client.gbp_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.business_name + " " + (client.primary_market || ""))}`;
       return { summary: `Send invite via Google Business Profile Manager → Settings → People & Access → Add → role = Manager. GBP URL: ${url}` };
@@ -230,18 +238,21 @@ login), or the day a second person needs access. Not before.`,
   {
     id: "m1.access.analytics", title: "Get GA4 admin access",
     type: "manual", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Generate",
     instructions: `Have client open GA4 → Admin (gear) → Property Access Management → "+ Add users" → your email → Role: Administrator.
 If client has no GA4 yet: skip this step + flag m1.tracking.install_ga4 (we install during website work).`,
   },
   {
     id: "m1.access.search_console", title: "Get GSC owner access",
     type: "manual", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Generate",
     instructions: `Have client open https://search.google.com/search-console → Settings → Users and permissions → "Add user" → your email → Permission: Owner.
 If no GSC yet: skip + flag m1.tracking.install_gsc.`,
   },
   {
     id: "m1.access.website", title: "Get CMS / hosting access",
     type: "manual", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Generate",
     instructions: `Get WordPress / Wix / Shopify admin login (preferred) OR a contributor/editor account.
 Confirm SFTP / hosting credentials if you'll be making file changes.
 Save all in the password manager vault.`,
@@ -251,6 +262,8 @@ Save all in the password manager vault.`,
   {
     id: "m1.audit.gbp_baseline", title: "Snapshot GBP current state",
     type: "auto", dependsOn: ["m1.access.gbp"],
+    actionLabel: "⚡ Update Google Business Profile",
+    actionConfirm: "This WRITES to the client's live Google Business Profile — the change is public.",
     instructions: `Reads the LIVE Google Business Profile through the API and records the baseline into the onboarding
 form: claimed, verified, primary category, and up to two secondary categories (fields 8.1-8.6).
 
@@ -281,6 +294,7 @@ changes them, and every later audit then measures the wrong business.`,
   {
     id: "m1.audit.website", title: "Run on-page SEO audit",
     type: "auto", dependsOn: ["m1.kickoff.create"],
+    actionLabel: "⚡ Run and record",
     instructions: `Fetches the client homepage once and records what is actually on it: HTTP status, title, H1, meta
 description, JSON-LD schema, GA4/GTM, contact form, click-to-call, and page weight. It also checks
 whether the city and the primary service appear in the title. Auto-fills onboarding Section 9.x.
@@ -343,6 +357,7 @@ like poor conversion.`,
     // The audit chain — each calls its deployed function. Built 2026-09-05/06.
     id: "m1.audit.keyword_validation", title: "Validate the tracked keyword has real Search Console demand",
     type: "auto", dependsOn: ["m1.access.search_console"],
+    actionLabel: "⚡ Run the check",
     instructions: `🔴 THIS MUST PASS BEFORE THE RANK GRID. Asks Search Console how many impressions the tracked
 keyword actually earned in the last 90 days.
 
@@ -358,6 +373,7 @@ tracked keyword BEFORE running the grid baseline.`,
   {
     id: "m1.audit.deep_assess", title: "Deep assessment — GSC, GA4, GBP",
     type: "auto", dependsOn: ["m1.access.search_console", "m1.access.analytics"],
+    actionLabel: "⚡ Run the check",
     instructions: `Captures a baseline snapshot from every connected source (Search Console, Analytics, GBP, Places)
 and stores it as the "before" we will measure everything against.
 
@@ -371,6 +387,7 @@ re-run rather than accepting it.`,
   {
     id: "m1.audit.ai_readiness", title: "Audit AI readiness",
     type: "auto", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Scores how well the site answers the questions an AI assistant would ask about this business, and
 returns a readiness percentage plus a fix list.
 
@@ -382,6 +399,7 @@ structured, is it consistent — is measurable, and that is what this scores.`,
   {
     id: "m1.audit.nap_reviews", title: "Audit NAP consistency + reviews vs the vertical benchmark",
     type: "auto", dependsOn: ["m1.access.gbp"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Compares name, address and phone between the Google Business Profile and the website, and captures
 the current review count and rating as a baseline.
 
@@ -392,6 +410,7 @@ company's reviews. Absence of the review field means ZERO, not unknown.`,
   {
     id: "m1.audit.social", title: "Audit social presence linked from the site",
     type: "auto", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Checks which social profiles exist for the business and which are actually linked from the site.
 
 🔴 Read this as a STARTING LIST, not a complete picture: the onboarding audit spec covers 0 of 5
@@ -401,6 +420,7 @@ social checks automatically today. What this returns is what we could see, not e
   {
     id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
     type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.website"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Checks the citation URLs WE ALREADY HOLD for NAP accuracy against the client record.
 
 🔴 "Not found" does NOT mean "no citation exists" — we can only verify URLs already recorded, so
@@ -412,6 +432,7 @@ Duplicate-listing detection is not buildable without a paid aggregator and is ou
     id: "m1.audit.recommendations", title: "Build the prioritised fix plan from every audit",
     type: "auto",
     dependsOn: ["m1.audit.ai_readiness", "m1.audit.nap_reviews", "m1.audit.social", "m1.audit.citations_nap", "m1.audit.deep_assess"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Merges every audit above into ONE ordered recommendations plan, weighted by impact x confidence.
 
 Runs last for a reason: it depends on all five audits. Run it before they finish and the plan is
@@ -424,6 +445,7 @@ plan stays silent on it rather than guessing.`,
   {
     id: "m1.audit.competitors", title: "Snapshot top 3 SF/local competitors",
     type: "hybrid", dependsOn: ["m1.kickoff.create"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     async run({ client }) {
       // Stub — relies on existing scraper output. Real implementation would call step-1-maps-scraper for the search term.
       return { summary: `Run \`node step-1-maps-scraper.cjs\` for "${client.primary_service} in ${client.primary_market}", then capture top 5 competitors into onboarding fields 4.23-4.40.` };
@@ -433,6 +455,7 @@ plan stays silent on it rather than guessing.`,
   {
     id: "m1.strategy.keywords_locations", title: "Lock 3-5 primary keywords + 3 sub-locations",
     type: "hybrid", dependsOn: ["m1.audit.competitors"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You are a local SEO strategist. Suggest exactly 5 primary keywords and 3 sub-location targets for the business below. Return as YAML with keys 'keywords' (array of 5 strings) and 'locations' (array of 3 strings — sub-neighborhoods of the primary market). Plain text only, no commentary.`,
@@ -447,6 +470,7 @@ When confirmed, run: node flow.mjs <client_id> done m1.strategy.keywords_locatio
   {
     id: "m1.audit.grid_baseline", title: "Run 9x9 grid scan baseline",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     async run({ client, clientId }) {
       const cmd = `node grid-scan.mjs --client=${clientId} --keyword="<your-keyword>" --radius=5 --zoom=14`;
       return {
@@ -479,6 +503,7 @@ After scan: run again per remaining keyword.`,
   {
     id: "m1.audit.citations", title: "Run citation audit",
     type: "hybrid", dependsOn: ["m1.audit.gbp_baseline"],
+    actionLabel: "⚡ Generate",
     async run({ client }) {
       // For each top directory, do a Google search for "<business name> site:<directory>" — checks if a listing exists
       const directories = [
@@ -513,12 +538,14 @@ Fill onboarding section 11.0 with the audit summary.`,
   {
     id: "m1.gbp.verify", title: "Ensure GBP is claimed + verified",
     type: "manual", dependsOn: ["m1.access.gbp"],
+    actionLabel: "⚡ Generate",
     instructions: `Confirm green check next to business in GBP dashboard.
 If unverified: trigger postcard or video verification from inside GBP. Block on this until done — nothing else GBP-related works without verification.`,
   },
   {
     id: "m1.gbp.optimize_categories", title: "Lock primary + secondary categories",
     type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.audit.competitors"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client, getGbp }) {
       const draft = await aiSuggest(
         `You are a Google Business Profile optimizer. Suggest the BEST primary GBP category for the business below, plus 5-9 additional categories. Return as YAML with 'primary' (string — e.g. "Pest Control Service") and 'additional' (array of 5-9 strings). Plain text only.`,
@@ -544,6 +571,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   {
     id: "m1.gbp.services_products", title: "Add services + products",
     type: "hybrid", dependsOn: ["m1.gbp.optimize_categories"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You are a GBP services optimizer. Suggest 8-15 services for this business. Each service: short displayName + 1-sentence description. Return as YAML list with keys displayName + description. No prices unless obvious.`,
@@ -558,6 +586,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   {
     id: "m1.gbp.business_description", title: "Write compelling description",
     type: "hybrid", dependsOn: ["m1.gbp.optimize_categories"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client, getGbp }) {
       const { draftBusinessDescription } = await import("../../lib/gbp-content-ai.mjs");
       const draft = await draftBusinessDescription({
@@ -571,6 +600,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   {
     id: "m1.gbp.photos", title: "Upload 20+ quality photos",
     type: "manual", dependsOn: ["m1.gbp.verify"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `Upload to GBP: logo, cover, 5 team, 5 work-in-progress, 5 finished-job results, 3 truck/equipment, 2 office.
 Geotag if possible. Add captions with keywords.
 Once OAuth is connected: gbp.uploadPhoto(sourceUrl, "ADDITIONAL") batch from /data/clients/<slug>/photos/`,
@@ -578,6 +608,7 @@ Once OAuth is connected: gbp.uploadPhoto(sourceUrl, "ADDITIONAL") batch from /da
   {
     id: "m1.gbp.hours_attributes", title: "Confirm hours + attributes",
     type: "manual", dependsOn: ["m1.gbp.verify"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `Set regular hours, holiday hours, special hours.
 Add relevant attributes (Veteran-owned, Identifies as women-owned, Wheelchair accessible, etc).
 Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MONDAY",closeTime:{hours:17}},...])`,
@@ -585,6 +616,7 @@ Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MOND
   {
     id: "m1.gbp.messaging", title: "Enable GBP messaging + set response SLA",
     type: "hybrid", dependsOn: ["m1.gbp.verify"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You write GBP messaging welcome messages. Output 2 versions: (1) short business-hours greeting, (2) after-hours auto-reply. Each: warm, specific to the service, sets expectation on response time, ends with a question to keep them engaged. NO emojis. Plain prose, 1-2 sentences each.`,
@@ -599,6 +631,7 @@ Set notifications to push to phone/email — Google rewards <30 min response dur
   {
     id: "m1.gbp.booking_link", title: "Add appointment booking URL",
     type: "manual", dependsOn: ["m1.gbp.business_description"],
+    actionLabel: "⚡ Generate",
     instructions: `GBP → Edit Profile → Bookings → Add booking link.
 Use Calendly, Acuity, or website's contact form URL with UTM tag (?utm_source=gbp&utm_medium=booking).
 Direct booking from GBP shortcuts the buyer journey by 1+ steps.`,
@@ -606,6 +639,7 @@ Direct booking from GBP shortcuts the buyer journey by 1+ steps.`,
   {
     id: "m1.gbp.attributes", title: "Fill ALL relevant GBP attributes",
     type: "manual", dependsOn: ["m1.gbp.verify"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `GBP → Edit Profile → Edit your business → Highlights / From the business / Service options.
 Check ALL that apply: women/veteran/LGBTQ+/family-owned, online estimates, on-site, same-day, emergency hours, payment methods, accessibility, crowd, health & safety.
 Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
@@ -613,6 +647,7 @@ Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
   {
     id: "m1.gbp.qa_seed", title: "Seed Q&A with top-ask questions",
     type: "hybrid", dependsOn: ["m1.gbp.business_description"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You generate Google Business Profile Q&A pairs. Output 8 question + answer pairs that real customers of this business commonly ask. Format strictly:
@@ -635,6 +670,7 @@ Vary the questions: pricing, service area, response time, qualifications, what t
   {
     id: "m1.web.homepage_meta", title: "Optimize homepage title + meta",
     type: "hybrid", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You write SEO titles + meta descriptions. Output exactly:
@@ -650,6 +686,7 @@ META: <155 chars max — USP + CTA>`,
   {
     id: "m1.web.h1_cta", title: "Fix H1 + primary CTA",
     type: "hybrid", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You write homepage H1 + above-fold CTA copy. Output:
@@ -674,12 +711,14 @@ Test on mobile (Chrome DevTools → device toolbar).`,
   {
     id: "m1.web.nap_consistency", title: "Match NAP across header/footer/contact",
     type: "manual", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Run the check",
     instructions: `Header + footer + contact page = identical Name, Address, Phone.
 Use the canonical NAP from GBP. Critical for citation consistency — if these don't match, citation cleanup later won't help.`,
   },
   {
     id: "m1.web.schema", title: "Add LocalBusiness schema",
     type: "auto", dependsOn: ["m1.web.nap_consistency"],
+    actionLabel: "⚡ Generate",
     instructions: `Generates a LocalBusiness JSON-LD block from the client record — name, URL, phone,
 locality, area served, and a description built from the primary service and market.
 
@@ -708,6 +747,7 @@ Expanded per-service schema is a separate later step ("Add expanded schema").`,
   {
     id: "m1.web.tracking", title: "Verify GA4 + GSC + tag tracking",
     type: "auto", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Generate",
     instructions: `Verifies GA4 and the Search Console verification meta tag are actually present on the homepage.
 
 GA4 is three-state, like the website audit:
@@ -742,6 +782,7 @@ Only "found" plus a GSC tag counts as verified.`,
   {
     id: "m1.web.priority_pages", title: "Build/update top 3 service pages",
     type: "hybrid", dependsOn: ["m1.web.schema"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const services = client.primary_service?.split(/[,\/]/).map((s) => s.trim()).filter(Boolean).slice(0, 3) || [];
       if (!services.length) return { summary: `No services parsed from client.primary_service. Set it like "Service A, Service B, Service C" first.` };
@@ -778,6 +819,7 @@ INTERNAL_LINKS: <suggest 3 anchor texts pointing to homepage / location pages / 
   {
     id: "m1.web.location_pages", title: "Build location-targeted pages",
     type: "hybrid", dependsOn: ["m1.web.priority_pages"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You write SEO location pages. The PRIMARY market is provided. Suggest 3 sub-locations within the market AND draft a unique location page outline for each. Each outline must avoid template-feel — reference real neighborhood landmarks, ZIPs, demographic context.
@@ -811,6 +853,7 @@ NEVER copy-paste the same content across location pages — Google penalizes.`,
   {
     id: "m1.web.blog_seed", title: "Publish 2 seed blog posts (full draft)",
     type: "hybrid", dependsOn: ["m1.web.priority_pages", "m1.strategy.keywords_locations"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const drafts = [];
       const angles = [
@@ -851,6 +894,7 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
   {
     id: "m1.web.image_seo", title: "Image SEO: filenames + alt + geotag",
     type: "hybrid", dependsOn: ["m1.gbp.photos", "m1.web.priority_pages"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You generate image-SEO naming conventions for a local service business. Output:
@@ -880,6 +924,7 @@ Each example: actual filename + actual alt-tag string ready to copy.`,
   {
     id: "m1.web.internal_linking", title: "Build silo internal-link architecture",
     type: "manual", dependsOn: ["m1.web.priority_pages", "m1.web.location_pages"],
+    actionLabel: "⚡ Run the check",
     instructions: `Hub-and-spoke:
 - Homepage → all service pages
 - Each service page → relevant location pages, 2 blogs, contact
@@ -890,6 +935,7 @@ Use descriptive anchor text (NOT "click here"). Anchor = keyword.`,
   {
     id: "m1.web.core_web_vitals", title: "Fix Core Web Vitals",
     type: "auto", dependsOn: ["m1.audit.website"],
+    actionLabel: "⚡ Run the check",
     instructions: `Runs Google PageSpeed Insights against the homepage (mobile) and records the performance score plus
 LCP, CLS and TBT.
 
@@ -916,6 +962,7 @@ performance problem.`,
   {
     id: "m1.web.expanded_schema", title: "Add Service + FAQPage + Breadcrumb schema",
     type: "hybrid", dependsOn: ["m1.web.schema", "m1.web.priority_pages"],
+    actionLabel: "⚡ Generate",
     async run({ client }) {
       const services = client.primary_service?.split(/[,\/]/).map((s) => s.trim()).filter(Boolean) || [];
       const snippets = services.slice(0, 3).map((svc) => ({
@@ -935,6 +982,7 @@ Test all at https://search.google.com/test/rich-results`,
   {
     id: "m1.cit.priority_top10", title: "Build top-10 priority citations",
     type: "hybrid", dependsOn: ["m1.web.nap_consistency", "m1.audit.citations"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You generate canonical NAP + business descriptions for citation building. The SAME copy is pasted into 10+ directories — consistency is critical.
@@ -982,6 +1030,7 @@ Aim for 1-2 citations per day for 5-7 days. Consistent NAP across all = the enti
   {
     id: "m1.cit.industry_specific", title: "Build industry-specific citations",
     type: "hybrid", dependsOn: ["m1.cit.priority_top10"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You suggest industry-specific citation directories for a local business. The top-10 generic ones (Yelp, BBB, etc.) are already done — now suggest VERTICAL-specific ones.
@@ -1003,6 +1052,7 @@ Order by impact (highest first). Include any state/regional industry boards rele
   {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business Connect",
     type: "manual", dependsOn: ["m1.web.nap_consistency", "m1.gbp.verify"],
+    actionLabel: "⚡ Generate",
     instructions: `Bing Places (https://www.bingplaces.com/): Create account → Import from Google → verify by phone.
 Apple Business Connect (https://businessconnect.apple.com/): Claim listing → verify → add hours, photos, services.
 Free + ~10% combined market share.`,
@@ -1010,6 +1060,7 @@ Free + ~10% combined market share.`,
   {
     id: "m1.gbp.knowledge_panel", title: "Claim + optimize brand knowledge panel",
     type: "manual", dependsOn: ["m1.gbp.verify", "m1.web.expanded_schema"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `Search the brand name in Google. Knowledge panel on right = brand authority.
 Claim via "Suggest an edit" → "Claim this business" if not already.
 Ensure: logo, founded date, website, social links, services all populated.`,
@@ -1017,6 +1068,7 @@ Ensure: logo, founded date, website, social links, services all populated.`,
   {
     id: "m1.web.service_location_matrix", title: "Build service × location matrix pages",
     type: "hybrid", dependsOn: ["m1.web.priority_pages", "m1.web.location_pages", "m1.strategy.keywords_locations"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const services = (client.primary_service?.split(/[,\/]/).map((s) => s.trim()).filter(Boolean) || []).slice(0, 3);
       if (services.length < 2) return { summary: "Set client.primary_service like 'A, B, C' first." };
@@ -1053,6 +1105,7 @@ Once published, capture URLs in onboarding section 13.x`,
   {
     id: "m1.web.https_sitemap", title: "Verify HTTPS + sitemap submission",
     type: "auto", dependsOn: ["m1.web.priority_pages", "m1.web.location_pages"],
+    actionLabel: "⚡ Run the check",
     instructions: `Confirms the site is HTTPS and that /robots.txt and /sitemap.xml both respond.
 
 This gates real work later: the internal-linking and cannibalization audits READ the sitemap to
@@ -1071,6 +1124,7 @@ discover pages. Without one they cannot run at all, so fix this before them, not
   {
     id: "m1.brand.youtube_setup", title: "Create YouTube channel for video SEO",
     type: "hybrid", dependsOn: ["m1.kickoff.call"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
         `You write YouTube channel kickoff packages. Output:
@@ -1106,6 +1160,7 @@ VIDEO 2 — "Educational tip about a common problem"
   {
     id: "m1.review.system", title: "Set up review acquisition system",
     type: "hybrid", dependsOn: ["m1.gbp.verify"],
+    actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       // Try to extract place ID for review link
       const placeIdMatch = client.gbp_url?.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);
@@ -1155,12 +1210,14 @@ Goal: 30%+ of asked customers leave a review.`,
   {
     id: "m1.review.first_5", title: "Get first 5 reviews",
     type: "manual", dependsOn: ["m1.review.system"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `Push hard for 5 reviews from past customers (last 6 months).
 Send personalized requests. Goal: 5 in week 3, all 4★+, in Google.`,
   },
   {
     id: "m1.review.response", title: "Respond to all existing reviews",
     type: "hybrid", dependsOn: ["m1.review.system"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     async run({ getGbp, client }) {
       try {
         const gbp = await getGbp();
@@ -1180,6 +1237,7 @@ SLA going forward: 24-hr response. Use \`node gbp.mjs <client_id> reply <reviewI
   {
     id: "m1.report.month1", title: "Build + deliver Month 1 report",
     type: "hybrid", dependsOn: ["m1.audit.kpi_baseline", "m1.gbp.photos", "m1.review.first_5", "m1.cit.priority_top10"],
+    actionLabel: "⚡ Generate",
     async run({ clientId }) {
       const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");
       const result = await saveAndPublishReport(clientId, { publish: true });
@@ -1193,6 +1251,7 @@ SLA going forward: 24-hr response. Use \`node gbp.mjs <client_id> reply <reviewI
   {
     id: "m1.call.close", title: "Close-out call",
     type: "manual", dependsOn: ["m1.report.month1"],
+    actionLabel: "⚡ Draft this for me",
     instructions: `30-min call. Walk through report, set Month 2 expectations.
 Get client approval to start Month 2 work. Confirm next monthly call date.
 
@@ -1201,6 +1260,7 @@ Outcome to track: approved_month2 / not_renewed.`,
   {
     id: "m1.handoff.month2", title: "Transition to monthly cycle",
     type: "auto", dependsOn: ["m1.call.close"],
+    actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Initializes the Month 2+ record so recurring monthly work has somewhere to write.
 
 Run only after the month-1 close call has happened — it marks the transition out of onboarding.
