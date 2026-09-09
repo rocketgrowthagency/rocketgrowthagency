@@ -55,7 +55,7 @@ export const month1 = [
   // PROMISE, in writing, before anything internal. See MEMORY_delivery.md.
   {
     id: "m1.close.confirm", title: "Confirmation + expectations email (within the hour)",
-    type: "manual", dependsOn: [],
+    type: "hybrid", dependsOn: [],
     instructions: `Send within ONE HOUR of the yes, while they are still certain.
 
 Must contain, in this order:
@@ -68,7 +68,15 @@ Must contain, in this order:
 🔴 Do NOT re-sell, and do NOT re-open scope. They already said yes; the job now is to remove doubt.
 🔑 DONE = sent, and the agreement + calendar invite (next two steps) go out the same hour.
 
-📄 PASTE-READY TEXT: docs/playbooks/close-phase0-templates.md (website repo) — section 1.`,
+▶️ RUN IT — the Run button sends this email from hello@rocketgrowthagency.com and CAPTURES it.
+   Stored on the client record: the exact body, the recipient, and Gmail's own message id (checkable
+   in the Sent folder). The plan and price are read from the SIGNED CONTRACT, never typed — if there
+   is no signed contract it refuses rather than inventing a number.
+
+   It will not send twice: a second run returns what was already sent unless you force it.
+
+🔴 Was hand-sent until 2026-09-09, which left a bare timestamp and no record of what was promised.
+📄 Wording lives in docs/playbooks/close-phase0-templates.md — section 1.`,
   },
   {
     id: "m1.close.kickoff_invite", title: "Send the kickoff calendar invite",
@@ -191,7 +199,19 @@ WHEN A PAID VAULT BECOMES NECESSARY
   Then: Bitwarden Teams, $4 per user per month billed annually (checked live 2026-09-08;
   1Password Teams Starter is $24.95/mo flat for 10 seats — they cross around 6 people).
   🔴 Bitwarden Teams has NO account recovery — that is Enterprise-only, and a sole owner
-  who loses the master password has no way back. Keep a printed emergency kit.`,
+  who loses the master password has no way back. Keep a printed emergency kit.
+
+VAULT OPTIONS, DECIDED 2026-09-09 (Chris asked whether we can avoid the subscription):
+  · Write our own            NO. Rolling our own credential crypto is how every credential is lost
+                             at once. Never worth $4/user/month.
+  · Vaultwarden (self-host)  FREE and legitimate — open-source, Bitwarden-compatible server, runs in
+                             Docker, works with the official Bitwarden apps and extensions. This is
+                             running their protocol, not inventing crypto.
+  · Bitwarden Teams          $4/user/month. Note Teams has NO account recovery (Enterprise only).
+  · Nothing yet              CURRENT STATE, and correct: RGA holds 0 client passwords.
+
+TRIGGER TO REVISIT: the day we hold a credential with no delegated equivalent (a WordPress/CMS
+login), or the day a second person needs access. Not before.`,
   },
   {
     id: "m1.access.gbp", title: "Get GBP manager access",
