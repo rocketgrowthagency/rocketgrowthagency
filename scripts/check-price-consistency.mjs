@@ -109,6 +109,45 @@ for (const [label, n] of [
   console.log(`  ${ok ? "✅" : "🔴"} ${label.padEnd(44)} ${ok ? "present" : "ABSENT — the rep says a number nothing else knows"}`);
 }
 
+// 4. THE CONFIRMATION EMAIL — the FIRST place a client reads the price back.
+// 🔴 2026-09-09. This function described the plans in its OWN words and got three of four wrong:
+// it matched a tier "three_month" that does not exist (the real key is `commit_3mo`, so a 3-month
+// client would have been told they were month-to-month), computed the 3-month total as price x 3
+// (1,875, not the real 2,500), and rendered month-to-month as "$625/month" while dropping the
+// $1,250 setup. Only beta_unbilled was right — the one tier RGA is on — so a live send LOOKED fine.
+// 🔑 It must READ the PLANS table, not restate it. Restating is what drifts.
+const EMAIL = path.join(WEB, "netlify", "functions", "send-confirmation-email.js");
+if (fs.existsSync(EMAIL)) {
+  const emailSrc = fs.readFileSync(EMAIL, "utf8");
+  // 🔴 SCOPE THIS TO planLine(). A presence-check over the whole file passed under sabotage,
+  // because an unrelated `require("./contract-generate.js")` in an error message kept matching
+  // while the price logic had been replaced by a hardcoded table. Check the function that actually
+  // builds the number, not the file that happens to mention the module.
+  const plStart = emailSrc.indexOf("function planLine");
+  const plEnd = emailSrc.indexOf("function buildEmail");
+  const planLineSrc = plStart >= 0 && plEnd > plStart ? emailSrc.slice(plStart, plEnd) : "";
+  if (!planLineSrc) {
+    fails.push("planLine() not found");
+    console.log("  🔴 planLine() not found in the confirmation email — renamed?");
+  }
+  const readsPlans = /require\(["']\.\/contract-generate(\.js)?["']\)/.test(planLineSrc)
+    && /PLANS\[[^\]]*tier[^\]]*\]/.test(planLineSrc)
+    && !/schedule:\s*\[/.test(planLineSrc);   // a literal schedule here means it is restating the offer
+  if (readsPlans) {
+    console.log("  ✅ confirmation email reads PLANS from the contract generator");
+  } else {
+    fails.push("confirmation email restates the plans");
+    console.log("  🔴 the confirmation email does not read PLANS — it is describing the offer in its");
+    console.log("     own words, which is exactly how the rep, the email and the agreement drift apart");
+  }
+  // An unknown or price-less tier must REFUSE, never fall through to a cheerful default.
+  const refuses = /return null;/.test(emailSrc) && /is not a known plan/.test(emailSrc);
+  console.log(`  ${refuses ? "✅" : "🔴"} unknown tier ${refuses ? "refuses rather than guessing" : "IS NOT REFUSED — a wrong plan can reach a client"}`);
+  if (!refuses) fails.push("email does not refuse an unknown tier");
+} else {
+  console.log("  ▫️  send-confirmation-email.js not found — skipped");
+}
+
 console.log("");
 if (fails.length) {
   console.error(`🔴 PRICE DRIFT — ${fails.length} mismatch(es).`);
