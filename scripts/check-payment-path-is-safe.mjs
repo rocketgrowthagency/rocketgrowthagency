@@ -107,6 +107,29 @@ if (!/stripe_webhook_events/.test(webhook) || !/409/.test(webhook)) {
   ]);
 } else ok("redelivered events are deduped by a UNIQUE insert, not a read-then-write");
 
+// ── 6. AUTO-CHARGE: retries must be RETRYABLE, and the ladder must not nag before it tries. ───
+// Researched 2026-09-10: ~9-10% of subscription MRR is lost to failed payments (Baremetrics),
+// 20-40% of all churn is involuntary (Paddle), and timed retries recover 45-70%. A single attempt
+// discards most of that. 🔴 A FIXED idempotency key is worse than no retry: Stripe replays the
+// original decline forever, so the retry looks implemented and can never succeed.
+const BILLING = `${SITE}/netlify/functions/billing-daily-check.js`;
+if (fs.existsSync(BILLING)) {
+  let bsrc = strip(fs.readFileSync(BILLING, "utf8"));
+  if (SABOTAGE && CASE === "6") bsrc = bsrc.replace(/autocharge_\$\{invoice\.id\}_d\$\{attemptDay\}/, "autocharge_${invoice.id}");
+  const perAttempt = /Idempotency-Key["']?\s*:\s*`autocharge_\$\{invoice\.id\}_d\$\{attemptDay\}`/.test(bsrc);
+  const retries = /RETRY_DAYS\s*=\s*\[0,\s*3,\s*5,\s*7\]/.test(bsrc);
+  if (!perAttempt) {
+    bad("the auto-charge idempotency key is not per-attempt", [
+      "A fixed key makes Stripe replay the ORIGINAL decline forever — the retry can never succeed.",
+    ]);
+  } else ok("auto-charge retries are actually retryable (key includes the attempt)");
+  if (!retries) {
+    bad("no retry schedule on the auto-charge", [
+      "One attempt discards most recoverable revenue; timed retries recover 45-70%.",
+    ]);
+  } else ok("retries on days 0/3/5/7 — all inside the grace window, before the client is told");
+}
+
 if (fails) { console.log(`\n🔴 ${fails} check(s) failed — money and product can diverge.`); process.exit(1); }
 console.log("\n✅ the client never grants, the amount is ours, and a replay changes nothing.");
 process.exit(0);
