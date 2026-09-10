@@ -73,13 +73,14 @@ const SURFACES = {
   // LIVE customers exactly double. 🔑 An EXCLUDED classification is a CLAIM and needs the same proof
   // as a finding. Now DERIVED, and check-charge-equals-the-contract.mjs enforces it.
   "netlify/functions/stripe-create-checkout.js":["DERIVED", "first invoice → contract-generate.firstInvoiceAmount()"],
+  "netlify/functions/portal-payment-intent.js":  ["DERIVED", "inline Payment Element amount → contract-generate.firstInvoiceAmount()"],
+  "netlify/functions/stripe-webhook.js":        ["DERIVED", "invoice ledger amounts → contract-generate.firstInvoiceAmount() (was the 5th/6th pre-discount copy)"],
   // 🔑 These three matched the CODE pattern and are NOT prices — inspected 2026-09-10. A number is
   // only a price in context, so the inventory records the human decision rather than the regex
   // getting ever cleverer. Re-inspect if one of them ever starts handling money.
   "netlify/functions/backfill-gbp-hours.js":    ["EXCLUDED", "'limit=1500' in a usage comment — a page size, not money"],
   "netlify/functions/flow-execute.js":          ["EXCLUDED", "GBP description cap (750 chars) and maxTokens 1500 — limits, not money"],
   "netlify/functions/v2-rank-grid-background.js":["EXCLUDED", "1500 = search radius in metres"],
-  "netlify/functions/stripe-webhook.js":        ["EXCLUDED", "reads the session amount Stripe reports; sets no price"],
   "netlify/functions/admin-record-payment.js":  ["EXCLUDED", "marks an existing invoice paid; sets no price"],
 };
 
