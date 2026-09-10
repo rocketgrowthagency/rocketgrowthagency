@@ -76,13 +76,23 @@ for (const f of fs.readdirSync(FNS).filter((x) => x.endsWith(".js"))) {
     if (end < 0) continue;
     const body = src.slice(open + 1, end);
     // Walk the body tracking depth; a key at depth 0 (relative to the object) is a column.
+    // 🔴 DEPTH AT THE START OF THE LINE, not the end. This used to test `d === 0` at the newline —
+    // by which point a closing `}` on that same line had already decremented d back to 0. So
+    //
+    //     payload: { invoice_num: 1,
+    //       summary: "…" },          ← starts at depth 1, ENDS at depth 0
+    //
+    // read `summary` as a column of client_activity and invented a failure in billing-daily-check.
+    // Every other caller happened to put payload on ONE line, which is why it never showed before.
+    // 🔑 A parser that samples state at the wrong instant is not a stricter check, it is a wrong one.
     const cols = [];
-    let d = 0, line = "";
+    let d = 0, line = "", lineStartDepth = 0;
     for (const ch of body) {
       if (ch === "\n") {
-        const km = d === 0 && line.match(/^\s*([a-z_]+)\s*:/);
+        const km = lineStartDepth === 0 && d === 0 && line.match(/^\s*([a-z_]+)\s*:/);
         if (km) cols.push(km[1]);
         line = "";
+        lineStartDepth = d;
         continue;
       }
       if (d === 0) {
