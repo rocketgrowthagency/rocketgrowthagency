@@ -40,7 +40,10 @@ let checked = 0;
 
 for (const f of fs.readdirSync(FNS).filter((x) => x.endsWith(".js") && fs.statSync(path.join(FNS, x)).isFile())) {
   let src = fs.readFileSync(path.join(FNS, f), "utf8");
-  if (SABOTAGE && f === "admin-record-payment.js") {
+  // 🔴 Scoped so it does not shadow the "browser" case below. An unscoped sabotage block makes
+  // every later case "pass" by tripping this earlier assertion — proving nothing about the case
+  // you meant to test. Second time today.
+  if (SABOTAGE && (process.env.SABOTAGE_CASE || "fn") === "fn" && f === "admin-record-payment.js") {
     src = src.replace(/await notifyClientStage\(clientId, "stage_3_setup"\);/, "");
   }
   // Strip comments — this file's own documentation names the offending functions.
@@ -79,4 +82,33 @@ if (fails.length) {
   console.error("   A stage change is a promise to the client, not just a database write.");
   process.exit(1);
 }
+// ── BROWSER-SIDE STAGE WRITES (added 2026-09-10) ───────────────────────────────────────────────
+// 🔴 This gate scanned netlify/functions/ ONLY, and passed green while admin.js advanced a client's
+// stage with a direct supabase.from("clients").update({ client_portal_stage }) in the BROWSER — no
+// function involved, so no notifier ran and nothing here could see it.
+//
+// Proven live: the admin accepted a signed contract, the client moved to stage_2_payment, and was
+// told NOTHING. The confirm dialog even read "the client will see the payment banner on their next
+// portal visit" — the silent-transition problem written down as if it were the design.
+// 🔑 An in-app banner is not a notification: it only reaches people already coming back.
+// 🔑 A gate that scans one directory cannot vouch for behaviour that lives in another.
+const ADMIN_JS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js";
+if (fs.existsSync(ADMIN_JS)) {
+  let asrc = fs.readFileSync(ADMIN_JS, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  if (process.env.SABOTAGE === "1" && process.env.SABOTAGE_CASE === "browser") {
+    asrc = asrc.replace(/notify-client-stage/g, "some-other-endpoint");
+  }
+  const writesStage = /update\(\s*\{\s*client_portal_stage/.test(asrc);
+  const notifies = /notify-client-stage/.test(asrc);
+  if (writesStage && !notifies) {
+    console.error("🔴 admin.js writes client_portal_stage directly from the browser but never calls");
+    console.error("   notify-client-stage — the stage moves and nobody tells the client.");
+    process.exit(1);
+  }
+  console.log(writesStage
+    ? "✅ admin.js writes the stage in-browser AND calls notify-client-stage"
+    : "▫️  admin.js no longer writes client_portal_stage directly");
+}
+
 console.log(`✅ all ${checked} advancing transition(s) notify the client`);
