@@ -42,7 +42,16 @@ const m = src.match(/function messageFor[\s\S]*?\n}\n/);
 if (!m) { console.log("  ⚠️  could not locate messageFor() — the shape changed."); process.exit(2); }
 
 let body = m[0];
-if (SABOTAGE) body = body.replace(/`Hi \$\{first\},\\n\\nYour signed agreement[\s\S]*?Rocket Growth Agency`/, "`Hi ${first},\\n\\nSigned. Thanks.`");
+// 🔴 This pattern used to anchor on "Rocket Growth Agency" at the end of the body. When the
+// duplicate sign-off was removed the anchor vanished, the replace silently did nothing, and the
+// gate "passed" its own sabotage — proving nothing. Anchor on the SUBJECT instead, which is
+// stable, and verify the substitution actually happened.
+if (SABOTAGE) {
+  const before = body;
+  body = body.replace(/subject: "Got your signed agreement",\s*body:[\s\S]*?,\n      \};/,
+                      'subject: "Got your signed agreement", body: "Signed. Thanks." };');
+  if (body === before) { console.log("  ⚠️  SABOTAGE did not apply — the pattern is stale."); process.exit(2); }
+}
 
 const PORTAL = "https://www.rocketgrowthagency.com/portal/";
 let messageFor;
@@ -66,16 +75,23 @@ for (const stage of STAGES) {
   if (!r) { console.log(`  ▫️  ${stage} — deliberately silent, skipped`); continue; }
   checked++;
 
-  const len = r.body.length;
-  const links = (r.body.match(/https?:\/\//g) || []).length;
-  const signed = /Rocket Growth Agency\s*$/.test(r.body);
+  // 🔴 MEASURE THE EMAIL THAT IS SENT, NOT THE BODY ALONE. notify-client-stage appends a footer
+  // (phone + sign-off) to every message. Measuring `r.body` understated the real length AND
+  // required a sign-off inside the body — so when the bodies were rewritten, a second sign-off was
+  // added to all eight and the email went out signed twice. **The gate encoded the mistake instead
+  // of catching it**: it asserted a property of a fragment, not of the artifact.
+  const FOOTER = "\n\nAnything at all, reply here or call me on (424) 242-2040.\n\nChris\nRocket Growth Agency";
+  const sent = r.body + FOOTER;
+  const len = sent.length;
+  const links = (sent.match(/https?:\/\//g) || []).length;
+  const signoffs = (sent.match(/Rocket Growth Agency/g) || []).length;
   const problems = [];
-  if (len < FLOOR) problems.push(`${len} chars — under the ${FLOOR} spam floor`);
+  if (len < FLOOR) problems.push(`${len} chars sent — under the ${FLOOR} spam floor`);
   if (links > 1) problems.push(`${links} links — ONE call to action`);
-  if (!signed) problems.push("no sign-off");
+  if (signoffs !== 1) problems.push(`${signoffs} sign-offs — the footer already adds one`);
 
   if (problems.length) { console.log(`  🔴 ${stage}: ${problems.join(" · ")}`); fails++; }
-  else console.log(`  ✅ ${stage.padEnd(24)} ${String(len).padStart(4)} chars · ${links} link · signed`);
+  else console.log(`  ✅ ${stage.padEnd(24)} ${String(len).padStart(4)} chars sent · ${links} link · 1 sign-off`);
 }
 
 if (checked === 0) { console.log("  ⚠️  no stage produced a message — the probe is wrong."); process.exit(2); }
