@@ -19,6 +19,14 @@
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot enter scraper repo"; exit 2; }
 
+# 🔑 LOAD .env SO THE GATES CAN ACTUALLY CHECK. Several gates verify against LIVE Supabase — the
+# admin's SELECT columns, its INSERT columns, rank sanity. Without credentials they exit 2
+# ("could not tell"), which this runner reports as INDETERMINATE rather than a failure. That is
+# honest, but it means the check never ran, every day, forever — a dead check wearing a warning
+# label. Found 2026-09-09: check-inserts-use-real-columns had never once verified from here.
+# 🔴 `set -a` only; never echo a value. These are the 13 secrets backup-secrets.sh exists to protect.
+if [ -f .env ]; then set -a; . ./.env >/dev/null 2>&1 || true; set +a; fi
+
 QUIET=0; [ "${1:-}" = "--quiet" ] && QUIET=1
 FAIL=0; INDET=0; OK=0
 say() { [ "$QUIET" -eq 1 ] || printf "%s\n" "$1"; }
