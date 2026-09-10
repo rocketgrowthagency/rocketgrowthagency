@@ -75,6 +75,7 @@ const NOT_PREFLIGHT = {
   'check-kickoff-reader-matches-writer.mjs': 'static cross-check of two WEBSITE-repo functions — client-onboarding copy correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-deep-links-land-where-asked.mjs': 'static scan of the WEBSITE repo\'s admin router — navigation correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-no-shadowed-functions.mjs': 'static scan of the WEBSITE repo\'s admin.js/portal.js for redefined top-level functions — a fix that never runs; unrelated to tonight\'s videos. Runs in daily-health-check.sh',
+  'check-one-action-one-button.mjs': 'static scan of the WEBSITE repo\'s portal next-step banner — client-UI clarity, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-emails-clear-the-spam-floor.mjs': 'renders the WEBSITE repo\'s stage-notification email bodies and fails any under 500 characters — client-communication deliverability, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-price-surfaces-are-known.mjs': 'enumerates every price-bearing file in the WEBSITE repo and fails on an unclassified one — a price-change safety net, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-price-summary-is-derived.mjs': 'derives every client-facing price summary from data/plans.json and compares it to the real schedule — commercial correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
