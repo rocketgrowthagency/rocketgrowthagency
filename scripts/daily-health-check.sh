@@ -129,6 +129,7 @@ run check-deep-links-land-where-asked.mjs "a deep link opens the view it names, 
 run check-no-shadowed-functions.mjs     "no admin/portal function is silently redefined"
 run check-stage-changes-notify-client.mjs "a stage change tells the client, never silent"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
+run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run check-offer-matches-contract.mjs  "the price we advertise is the price the contract charges"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
