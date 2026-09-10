@@ -291,8 +291,16 @@ curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/
 # deploy-site.sh unlocks, deploys the working tree, publishes ITS OWN deploy id (a queued git
 # build otherwise wins the race and ships a video-less site), re-locks, and verifies by content.
 NETLIFY_AUTH_TOKEN="$TOK" bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "rebuild broken videos: ${OK[*]}" 2>&1 | tee -a "$LOG"
-DRC=$?
-[ "${DRC:-1}" -ne 0 ] && say "🚨 DEPLOY FAILED (exit $DRC) — videos are NOT live. Check Netlify credits/token."
+# 🔴 PIPESTATUS[0], NOT $?. After `| tee`, `$?` is TEE's exit code — 0 even when the deploy failed.
+# That is the very trap the comment above describes, reintroduced 2026-09-08 when this switched to
+# deploy-site.sh. A failed deploy would report success and step-8 would publish leads for videos
+# serving the SPA homepage — the failure that produced 67 unemailable videos.
+DRC=${PIPESTATUS[0]}
+if [ "${DRC:-1}" -ne 0 ]; then
+  say "🚨 DEPLOY FAILED (exit $DRC) — videos are NOT live. Check Netlify credits/token."
+  # 🔴 STOP. Publishing to Airtable now creates leads pointing at dead links.
+  exit "${PIPESTATUS[0]}"
+fi
 
 # Verify each one SERVES before publishing anything to Airtable. content_type is the only proof:
 # netlify.toml ends in a /* SPA catch-all, so an absent path answers 200 text/html.
