@@ -92,6 +92,23 @@ if (fails.length) {
 // portal visit" — the silent-transition problem written down as if it were the design.
 // 🔑 An in-app banner is not a notification: it only reaches people already coming back.
 // 🔑 A gate that scans one directory cannot vouch for behaviour that lives in another.
+// 🔴 billing-daily-check escalated active → overdue → warning → paused over 18 days and sent ZERO
+// emails — it flipped a flag and drew a portal banner. A BILLING state change is a stage change
+// as far as the client is concerned, so it belongs to the same rule.
+const BILLING_JS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/billing-daily-check.js";
+if (fs.existsSync(BILLING_JS)) {
+  let b = fs.readFileSync(BILLING_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  if (process.env.SABOTAGE === "1" && process.env.SABOTAGE_CASE === "billing") b = b.replace(/notify-client-stage/g, "nope");
+  const writes = /billing_status: newBillingStatus/.test(b);
+  const notifies = /notify-client-stage/.test(b);
+  if (writes && !notifies) {
+    console.error("🔴 billing-daily-check changes billing_status but never calls notify-client-stage.");
+    console.error("   A client can be escalated to PAUSED without a single email.");
+    process.exit(1);
+  }
+  console.log(writes ? "✅ billing-daily-check escalates AND emails the client" : "▫️  billing-daily-check no longer writes billing_status");
+}
+
 const ADMIN_JS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js";
 if (fs.existsSync(ADMIN_JS)) {
   let asrc = fs.readFileSync(ADMIN_JS, "utf8")

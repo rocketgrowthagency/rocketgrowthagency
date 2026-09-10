@@ -40,6 +40,7 @@ const SURFACES = {
   // DERIVED — reads a source at runtime. Nothing to do on a price change.
   "shared/contract-pricing.js":                 ["DERIVED", "the one price SUMMARY helper; reads data/plans.json"],
   "shared/contract-doc.js":                     ["DERIVED", "agreement plan pill → contract-pricing"],
+  "shared/invoice-doc.js":                      ["DERIVED", "client invoice — every line derived from data/plans.json + _addons"],
   "portal/portal.js":                           ["DERIVED", "sign card, signed meta, preview pill → contract-pricing"],
   "admin/admin.js":                             ["DERIVED", "plan picker + contract list → data/plans.json"],
   "netlify/functions/send-confirmation-email.js":["DERIVED", "intro email reads PLANS"],

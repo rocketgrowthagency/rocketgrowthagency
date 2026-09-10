@@ -53,7 +53,10 @@ try {
   process.exit(2);
 }
 
-const STAGES = ["stage_1b_admin_review", "stage_2_payment", "stage_3_setup", "stage_4_onboarding"];
+// 🔑 Billing notices added 2026-09-10. A new client-facing email that is not in this list is an
+// email nobody measures — the same "unwired gate" problem, one level up.
+const STAGES = ["stage_1b_admin_review", "stage_2_payment", "stage_3_setup", "stage_4_onboarding",
+                "billing_overdue", "billing_warning", "billing_paused"];
 let fails = 0, checked = 0;
 
 for (const stage of STAGES) {
