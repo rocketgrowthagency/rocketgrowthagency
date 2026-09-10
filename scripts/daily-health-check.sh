@@ -118,6 +118,8 @@ run check-email-headers-are-encoded.mjs "a client-facing Subject cannot arrive a
 run check-inserts-use-real-columns.mjs  "no write names a column the table does not have"
 run check-kickoff-reader-matches-writer.mjs "the email reads the kickoff record the invite writes"
 run check-deep-links-land-where-asked.mjs "a deep link opens the view it names, not Pipeline"
+run check-no-shadowed-functions.mjs     "no admin/portal function is silently redefined"
+run check-stage-changes-notify-client.mjs "a stage change tells the client, never silent"
 run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"

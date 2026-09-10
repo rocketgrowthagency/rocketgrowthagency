@@ -148,6 +148,55 @@ if (fs.existsSync(EMAIL)) {
   console.log("  ▫️  send-confirmation-email.js not found — skipped");
 }
 
+// 5. THE PLAN PICKER — what the REP reads before choosing what to send.
+// 🔴🔴 2026-09-09. admin.js hardcoded the plan blurbs with the PRE-DISCOUNT numbers:
+//     shown : "Month 1 $2,500 + Month 2 $1,250 + Month 3 $1,250 = $5,000 over 3 months LOCKED"
+//     sent  : $1,250 + $625 + $625 = $2,500, cancel any time
+// Exactly 2x, plus a "locked" claim contradicting an agreement that is explicitly cancel-anytime.
+// contract-generate.js was repriced 2026-08-25; the picker was not. This gate did not catch it
+// because it checked the playbook, the contract and the email — not the screen the rep decides on.
+// The blurbs are now DERIVED from data/plans.json, which is generated from PLANS. Verify the two
+// still agree, or the derivation is worthless.
+const PLANS_JSON = path.join(WEB, "data", "plans.json");
+if (!fs.existsSync(PLANS_JSON)) {
+  fails.push("data/plans.json missing");
+  console.log("  🔴 data/plans.json is missing — the admin plan picker has no prices to derive from");
+} else {
+  const pj = JSON.parse(fs.readFileSync(PLANS_JSON, "utf8"));
+  const drift = [];
+  for (const [code, plan] of Object.entries(PLANS)) {
+    const mirrored = pj[code];
+    if (!mirrored) { drift.push(`${code}: absent from plans.json`); continue; }
+    const a = JSON.stringify(plan.schedule || null);
+    const b = JSON.stringify(mirrored.schedule || null);
+    if (a !== b) drift.push(`${code}: schedule ${a} vs ${b}`);
+    if (Number(plan.recurring_after_term || 0) !== Number(mirrored.recurring_after_term || 0)) {
+      drift.push(`${code}: recurring ${plan.recurring_after_term} vs ${mirrored.recurring_after_term}`);
+    }
+    if (plan.early_termination !== mirrored.early_termination) {
+      drift.push(`${code}: terms "${plan.early_termination}" vs "${mirrored.early_termination}"`);
+    }
+  }
+  if (drift.length) {
+    fails.push("plans.json drift");
+    console.log(`  🔴 data/plans.json disagrees with contract-generate PLANS (${drift.length}):`);
+    drift.forEach((d) => console.log(`       ${d}`));
+    console.log("     Regenerate it — the rep is being shown a price the contract will not charge.");
+  } else {
+    console.log(`  ✅ plan picker mirrors the contract exactly (${Object.keys(PLANS).length} plans)`);
+  }
+  // 🔴 And no hardcoded money may remain in the picker's own copy.
+  const adminSrc = fs.readFileSync(path.join(WEB, "admin", "admin.js"), "utf8");
+  const block = adminSrc.slice(adminSrc.indexOf("let CONTRACT_PLANS"), adminSrc.indexOf("async function loadContractPlans"));
+  const hard = [...block.matchAll(/\$[0-9][0-9,]{2,}/g)].map((m) => m[0]);
+  if (hard.length) {
+    fails.push("hardcoded price in the picker");
+    console.log(`  🔴 the plan picker still hardcodes money: ${[...new Set(hard)].join(", ")}`);
+  } else {
+    console.log("  ✅ the plan picker hardcodes no prices — every figure is derived");
+  }
+}
+
 console.log("");
 if (fails.length) {
   console.error(`🔴 PRICE DRIFT — ${fails.length} mismatch(es).`);
