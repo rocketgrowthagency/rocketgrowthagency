@@ -59,6 +59,15 @@ if (SABOTAGE && (process.env.SABOTAGE_CASE || "1") === "1") {
 }
 
 let fails = 0;
+// 🔴 The WEBHOOK is scanned too. It held the 5th and 6th copies of the pre-discount table and
+// recorded invoice #1 at $2,500 — so the BOOKS would still have shown double after checkout was
+// fixed. Checking only the file that was reported is how a defect survives its own fix.
+const WH = `${SITE}/netlify/functions/stripe-webhook.js`;
+const PI = `${SITE}/netlify/functions/portal-payment-intent.js`;
+for (const extra of [WH, PI]) {
+  if (!fs.existsSync(extra)) continue;
+  coSrc += "\n" + strip(fs.readFileSync(extra, "utf8"));
+}
 const literals = [...new Set((coSrc.match(/\b(2500|3750|1500|3500|1250|1875|750|1750|625)\b/g) || []))];
 if (literals.length) {
   console.log(`  🔴 stripe-create-checkout.js contains price literals: ${literals.join(", ")}`);

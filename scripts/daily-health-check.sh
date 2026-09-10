@@ -131,6 +131,7 @@ run check-stage-changes-notify-client.mjs "a stage change tells the client, neve
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-charge-equals-the-contract.mjs "we charge exactly what the agreement schedules"
+run check-payment-path-is-safe.mjs "the client never grants; a replay changes nothing"
 run check-price-surfaces-are-known.mjs "every place a price lives is in the inventory"
 run check-emails-clear-the-spam-floor.mjs "no client email is short enough to look like spam"
 run check-one-action-one-button.mjs "arriving somewhere does not still show the way there"
