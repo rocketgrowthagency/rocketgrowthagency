@@ -27,6 +27,7 @@ import fs from "node:fs";
 const FILES = [
   "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js",
   "/Users/chris/RGA/Rocket Growth Agency Website VS Code/portal/portal.js",
+  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/portal/client-login.js",
 ];
 const SABOTAGE = process.env.SABOTAGE === "1";
 
