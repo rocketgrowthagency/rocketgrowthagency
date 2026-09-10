@@ -68,12 +68,33 @@ const SURFACES = {
   "docs/owner-earnings-with-rep.html":          ["EXCLUDED", "owner-economics projection"],
   "docs/reports/generated/ohh-rats-free-growth-audit-report.html": ["EXCLUDED", "frozen generated artifact"],
   "docs/reports/ohhrats-free-growth-audit-report.html":            ["EXCLUDED", "frozen generated artifact"],
-  "netlify/functions/stripe-create-checkout.js":["EXCLUDED", "amounts flow FROM the contract; no literal offer price"],
-  "netlify/functions/stripe-webhook.js":        ["EXCLUDED", "amounts flow FROM the contract"],
-  "netlify/functions/admin-record-payment.js":  ["EXCLUDED", "amounts flow FROM the contract"],
+  // 🔴 stripe-create-checkout.js was EXCLUDED here as "amounts flow FROM the contract; no literal
+  // offer price". THAT EXCUSE WAS FALSE — it held a private, PRE-DISCOUNT price table and charged
+  // LIVE customers exactly double. 🔑 An EXCLUDED classification is a CLAIM and needs the same proof
+  // as a finding. Now DERIVED, and check-charge-equals-the-contract.mjs enforces it.
+  "netlify/functions/stripe-create-checkout.js":["DERIVED", "first invoice → contract-generate.firstInvoiceAmount()"],
+  // 🔑 These three matched the CODE pattern and are NOT prices — inspected 2026-09-10. A number is
+  // only a price in context, so the inventory records the human decision rather than the regex
+  // getting ever cleverer. Re-inspect if one of them ever starts handling money.
+  "netlify/functions/backfill-gbp-hours.js":    ["EXCLUDED", "'limit=1500' in a usage comment — a page size, not money"],
+  "netlify/functions/flow-execute.js":          ["EXCLUDED", "GBP description cap (750 chars) and maxTokens 1500 — limits, not money"],
+  "netlify/functions/v2-rank-grid-background.js":["EXCLUDED", "1500 = search radius in metres"],
+  "netlify/functions/stripe-webhook.js":        ["EXCLUDED", "reads the session amount Stripe reports; sets no price"],
+  "netlify/functions/admin-record-payment.js":  ["EXCLUDED", "marks an existing invoice paid; sets no price"],
 };
 
-const PRICE_RE = /\$1,?250|\$625|\$1,?875|\$2,?500|\$3,?750|\$5,?000|commit_3mo|beta_unbilled|done_for_you/;
+// 🔴 TWO PATTERNS, because prose and code hide a price differently.
+//
+// The original required a "$", so it never saw `if (plan === "commit_3mo") return 2500;` — the line
+// that charged LIVE customers double. Widening it to bare numerals then flagged 58 files: daily
+// reports, rank grids, call logs, anything containing the number 625.
+// 🔑 A MASS finding means the PROBE is wrong. → feedback_a_check_must_not_validate_itself
+//
+// So: PROSE (.html/.md) must show a "$" — that is how a price appears to a reader. CODE (.js/.json)
+// is checked for a bare price literal ASSIGNED OR RETURNED, which is how a price appears to Stripe.
+// A number merely mentioned in code (a rank, a timeout, a count) is not a price.
+const PRICE_PROSE = /\$\s?(1,?250|625|1,?875|2,?500|3,?750|5,?000|1,?500|3,?500|1,?750|750)\b|commit_3mo|beta_unbilled|done_for_you/;
+const PRICE_CODE  = /(?:return|=|:)\s*(?:1250|625|1875|2500|3750|5000|1500|3500|1750|750)\b|commit_3mo|beta_unbilled|done_for_you/;
 
 console.log("── every price surface is known and classified ──");
 if (!fs.existsSync(SITE)) { console.log(`  ⚠️  missing: ${SITE}`); process.exit(2); }
@@ -92,7 +113,10 @@ for (const rel of files) {
   if (/^v\/|node_modules|^\.claude\/memory\/|mockup-/.test(rel)) continue;
   let src;
   try { src = fs.readFileSync(path.join(SITE, rel), "utf8"); } catch { continue; }
-  if (PRICE_RE.test(src)) found.push(rel);
+  // reports/ are generated, dated artifacts — a snapshot of a past day, not a surface to edit.
+  if (/^reports\//.test(rel)) continue;
+  const re = /\.(js|json)$/.test(rel) ? PRICE_CODE : PRICE_PROSE;
+  if (re.test(src)) found.push(rel);
 }
 if (SABOTAGE) found.push("services/new-pricing-widget.js");
 

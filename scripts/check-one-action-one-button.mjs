@@ -81,15 +81,21 @@ if (!fs.existsSync(ADMIN)) { console.log(`  ⚠️  missing: ${ADMIN}`); process
 let admin = strip(fs.readFileSync(ADMIN, "utf8"));
 const acase = process.env.SABOTAGE_CASE || "";
 if (SABOTAGE && acase === "3") admin = admin.replace(/if \(viewingClientId\) \{ host\.innerHTML = ""; return; \}/, "");
-if (SABOTAGE && acase === "4") admin = admin.replace(/if \(inAdminReview\) \{\s*els\.advanceStageButton\.style\.display = "none";\s*\} else if \(next\)/, "if (next)");
+if (SABOTAGE && acase === "4") admin = admin.replace(/if \(inAdminReview[\s\S]{0,140}?els\.advanceStageButton\.style\.display = "none";\s*\} else if \(next\)/, "if (next)");
 
 let adminFails = 0;
 if (/if \(viewingClientId\) \{ host\.innerHTML = ""; return; \}/.test(admin)) {
   console.log("  ✅ admin: no pending-actions banner on a client you are already viewing");
 } else { console.log("  🔴 admin: the pending-actions banner restates the next-action card below it"); adminFails++; }
 
-if (/if \(inAdminReview\) \{\s*els\.advanceStageButton\.style\.display = "none";/.test(admin)) {
-  console.log("  ✅ admin: raw stage-advance hidden while the Accept action owns the transition");
+// 🔑 Asserts the STAGES covered, not the exact spelling of the guard. The first version matched a
+// literal `if (inAdminReview) {` and failed the moment stage_2_payment was added to the same
+// condition — flagging a fix as a regression. A gate should constrain the OUTCOME.
+const advGuard = /els\.advanceStageButton[\s\S]{0,400}?style\.display = "none"/.test(admin);
+const guardsReview = /if \(inAdminReview/.test(admin);
+const guardsPayment = /stage_2_payment/.test(admin);
+if (advGuard && guardsReview && guardsPayment) {
+  console.log("  ✅ admin: raw stage-advance hidden at BOTH admin-review and payment");
 } else {
   console.log("  🔴 admin: 'Advance to 2. Payment' is offered during admin review. It skips accepting");
   console.log("     the agreement AND sending the payment link — the client is billed unasked.");
