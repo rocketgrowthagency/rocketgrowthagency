@@ -41,7 +41,7 @@ const SURFACES = {
   "shared/contract-pricing.js":                 ["DERIVED", "the one price SUMMARY helper; reads data/plans.json"],
   "shared/contract-doc.js":                     ["DERIVED", "agreement plan pill → contract-pricing"],
   "shared/invoice-doc.js":                      ["DERIVED", "client invoice — every line derived from data/plans.json + _addons"],
-  "shared/email-doc.js":                        ["DERIVED", "branded email shell — carries no price of its own"],
+  "shared/email-doc.js":                        ["EXCLUDED", "branded email SHELL — header/footer/KPI rows only. Verified 2026-09-10: not one price token in the file. Listed so nobody has to re-check."],
   "netlify/functions/send-invoice-email.js":    ["DERIVED", "receipt + invoice-due emails → invoice-doc, which derives from plans.json"],
   "netlify/functions/send-monthly-report.js":   ["EXCLUDED", "reports measured KPIs from client_monthly_records; sets and quotes no price"],
   "portal/portal.js":                           ["DERIVED", "sign card, signed meta, preview pill → contract-pricing"],
@@ -85,7 +85,7 @@ const SURFACES = {
   "netlify/functions/backfill-gbp-hours.js":    ["EXCLUDED", "'limit=1500' in a usage comment — a page size, not money"],
   "netlify/functions/flow-execute.js":          ["EXCLUDED", "GBP description cap (750 chars) and maxTokens 1500 — limits, not money"],
   "netlify/functions/v2-rank-grid-background.js":["EXCLUDED", "1500 = search radius in metres"],
-  "netlify/functions/admin-record-payment.js":  ["EXCLUDED", "marks an existing invoice paid; sets no price"],
+  "netlify/functions/admin-record-payment.js":  ["DERIVED", "manual/check/ACH payments — CREATES invoice #1 and #2, so it must derive: contract-generate.firstInvoiceAmount(). Was EXCLUDED with a false excuse and held pre-discount $2,500/$1,250 (fixed 2026-09-10)"],
 };
 
 // 🔴 TWO PATTERNS, because prose and code hide a price differently.
