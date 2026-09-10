@@ -43,6 +43,7 @@ const SURFACES = {
   "shared/invoice-doc.js":                      ["DERIVED", "client invoice — every line derived from data/plans.json + _addons"],
   "shared/email-doc.js":                        ["DERIVED", "branded email shell — carries no price of its own"],
   "netlify/functions/send-invoice-email.js":    ["DERIVED", "receipt + invoice-due emails → invoice-doc, which derives from plans.json"],
+  "netlify/functions/send-monthly-report.js":   ["EXCLUDED", "reports measured KPIs from client_monthly_records; sets and quotes no price"],
   "portal/portal.js":                           ["DERIVED", "sign card, signed meta, preview pill → contract-pricing"],
   "admin/admin.js":                             ["DERIVED", "plan picker + contract list → data/plans.json"],
   "netlify/functions/send-confirmation-email.js":["DERIVED", "intro email reads PLANS"],
