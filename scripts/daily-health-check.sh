@@ -115,6 +115,7 @@ run check-refusal-is-not-done.mjs      "a step that refused is never announced a
 run check-button-says-what-it-does.mjs "a button that emails a client says so, and asks first"
 run check-finished-work-shows-finished.mjs "a step whose runner finished is marked done, not Active"
 run check-email-headers-are-encoded.mjs "a client-facing Subject cannot arrive as mojibake"
+run check-inserts-use-real-columns.mjs  "no write names a column the table does not have"
 run check-price-consistency.mjs       "phone, email and agreement state the same price"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
