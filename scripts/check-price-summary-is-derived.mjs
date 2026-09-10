@@ -116,6 +116,36 @@ if (/beta/i.test(dfy.chip)) {
   console.log(`  ✅ done_for_you reads "${dfy.chip}", not "beta"`);
 }
 
+// ── 4. ADD-ONS: what we ADVERTISE must equal what contract-generate CHARGES. ───────────────────
+// 2026-09-10: contract-generate charged WEBSITE_LITE=750 while the agreement PROSE it generated in
+// the very same file said "$1,500 one-time fee", and the admin checkbox agreed with the prose. The
+// document contradicted the invoice beside it. Naming a constant does not help if the copy next to
+// it still spells the number out.
+const OFFER = JSON.parse(fs.readFileSync(path.join(SITE, "data/offer-pricing.json"), "utf8"));
+// 🔴 STRIP COMMENTS FIRST. contract-generate.js documents this very bug by quoting the old strings
+// ("$1,500 one-time fee"), and the first version of this check matched that comment and failed on
+// already-fixed code. A gate that reads prose is testing the documentation, not the behaviour.
+let genSrc = strip(fs.readFileSync(path.join(SITE, "netlify/functions/contract-generate.js"), "utf8"));
+if (SABOTAGE && process.env.SABOTAGE_CASE === "4") genSrc = genSrc.replace(/const WEBSITE_LITE = \d+;/, "const WEBSITE_LITE = 1500;");
+const ADDONS = [["website_lite", "WEBSITE_LITE"], ["website_full", "WEBSITE_FULL"]];
+let addonBad = 0;
+for (const [offerKey, constName] of ADDONS) {
+  const m = genSrc.match(new RegExp(`const ${constName} = (\\d+);`));
+  const advertised = OFFER.prices?.[offerKey]?.now;
+  if (!m || advertised == null) {
+    console.log(`  ⚠️  could not resolve ${offerKey} / ${constName}`);
+    process.exit(2);
+  }
+  if (Number(m[1]) !== Number(advertised)) {
+    console.log(`  🔴 ${offerKey}: advertised $${advertised} but ${constName} charges $${m[1]}`);
+    addonBad++;
+  }
+}
+// And no add-on fee may be spelled out as a literal in the agreement prose.
+const proseLiteral = /one-time fee/.test(genSrc) && /\$[13],[05]00 one-time fee/.test(genSrc);
+if (proseLiteral) { console.log("  🔴 an add-on fee is typed into the agreement prose instead of read from its constant"); addonBad++; }
+if (addonBad) { fails++; } else { console.log(`  ✅ add-ons: advertised price == the price the contract charges`); }
+
 if (fails) {
   console.log(`\n🔴 ${fails} check(s) failed — a client can be shown a price we do not charge.`);
   process.exit(1);
