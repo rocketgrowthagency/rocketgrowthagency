@@ -65,6 +65,12 @@ for (const file of FILES) {
       const l = lines[i];
       if (isComment(l)) continue;
       // an ASSIGNMENT to the binding, above its declaration
+      // 🔴 MODULE SCOPE ONLY (zero indentation). The first version flagged any assignment above
+      // the declaration, including ones inside functions that run much later — where the
+      // declaration has long since evaluated and there is no TDZ at all. It produced a false
+      // positive on docsPendingFile (a click handler) within a minute of being written.
+      // 🔑 A gate that cries wolf gets muted, and a muted gate is a dormant one.
+      if (/^\s/.test(l)) continue;
       if (new RegExp(`(^|[^\\w$.])${name}\\s*=[^=]`).test(l) && !new RegExp(`(let|const|var)\\s+${name}`).test(l)) {
         offenders.push({ name, declLine, useLine: i + 1, text: l.trim().slice(0, 76) });
         break;
