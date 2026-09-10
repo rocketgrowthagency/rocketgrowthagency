@@ -131,6 +131,7 @@ run check-stage-changes-notify-client.mjs "a stage change tells the client, neve
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-charge-equals-the-contract.mjs "we charge exactly what the agreement schedules"
+run check-billing-history-is-derived.mjs "the payment step survives month 3, not just month 1"
 run check-payment-path-is-safe.mjs "the client never grants; a replay changes nothing"
 run check-no-module-tdz.mjs "no module binding is used above its declaration"
 run check-price-surfaces-are-known.mjs "every place a price lives is in the inventory"
