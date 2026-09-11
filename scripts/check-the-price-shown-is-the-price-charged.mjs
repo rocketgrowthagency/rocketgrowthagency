@@ -103,7 +103,36 @@ for (const [tier, addons] of CASES) {
 }
 if (mismatches) fails += mismatches;
 
-// ── 3. THE RECURRING RATE AGREES TOO ──────────────────────────────────────────────────────────
+// ── 3. A ONE-TIME ADD-ON MUST NOT RIDE EVERY INVOICE ──────────────────────────────────────────
+// 🔑 The most expensive way to get add-ons wrong. A website build repeating on invoice #2 is a
+// recurring double-charge for work done once; an extra GBP location MISSING from #2 is revenue
+// never billed. The two behave oppositely, so one rule cannot cover both.
+const docMod = await import(path.join(SITE, "shared/invoice-doc.js"));
+for (const [tier, addons, pt] of [
+  ["commit_3mo", { website_full: true }, 0],
+  ["monthly", { website_lite: true }, 0],
+  ["monthly", { website_full: true, extra_gbp_locations: 2 }, 0],
+  ["commit_3mo", { extra_gbp_locations: 3 }, 0],
+  ["done_for_you", {}, 8000],
+]) {
+  const label = `${tier}${Object.keys(addons).length ? " +" + Object.keys(addons).join("+") : ""}`;
+  const inv2 = docMod.invoiceLines({ tier, invoiceNum: 2, addons, plans, projectTotal: pt });
+  const inv3 = docMod.invoiceLines({ tier, invoiceNum: 3, addons, plans, projectTotal: pt });
+  const problems = [];
+  if (inv2 && inv2.lines.some((l) => /Website/.test(l.label))) {
+    problems.push("a ONE-TIME website build repeats on invoice #2 — a recurring double-charge");
+  }
+  const wantGbp = Number(addons.extra_gbp_locations || 0) > 0;
+  const hasGbp = !!(inv2 && inv2.lines.some((l) => /Google Business Profile/.test(l.label)));
+  if (wantGbp && !hasGbp) problems.push("a RECURRING GBP add-on is missing from invoice #2 — revenue never billed");
+  if (!wantGbp && hasGbp) problems.push("invoice #2 bills for GBP locations the contract does not include");
+  if (tier === "done_for_you" && inv3) problems.push("done_for_you rendered an invoice #3 — it is exactly two");
+
+  if (problems.length) { problems.forEach((x) => console.log(`  🔴 ${label}: ${x}`)); fails += problems.length; }
+  else console.log(`  ✅ ${label.padEnd(38)} add-on recurrence correct`);
+}
+
+// ── 4. THE RECURRING RATE AGREES TOO ──────────────────────────────────────────────────────────
 // An extra GBP location rides EVERY invoice — a mismatch here under-bills forever, not once.
 for (const [tier, addons] of [["commit_3mo", { extra_gbp_locations: 2 }], ["monthly", {}]]) {
   const shown = browser.recurringRate(tier, addons, plans);
