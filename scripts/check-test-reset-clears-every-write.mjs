@@ -29,10 +29,20 @@ const SABOTAGE = process.env.SABOTAGE === "1";
 const RESET = path.join(SITE, "scripts/reset-test-client.mjs");
 
 // What the post-close payment flow writes. Derived by scanning these files for table writes.
+// 🔴 THIS LIST WAS HAND-PICKED AND THAT IS WHY THE GATE MISSED A REAL ONE. It omitted
+// send-invoice-email.js, which writes `invoice_email_<kind>_<tone>_<num>` idempotency keys into
+// client_onboarding_records.data. The reset cleared stage_notifications but not those, so the next
+// test paid successfully and sent NO RECEIPT — the exact failure this gate exists to prevent,
+// sailing past it because I chose the scope by memory.
+// 🔑 A gate is only as honest as its input set. Every function that writes client state during the
+// post-close flow belongs here.
 const FLOW = [
   "netlify/functions/stripe-webhook.js",
   "netlify/functions/portal-payment-intent.js",
   "netlify/functions/notify-client-stage.js",
+  "netlify/functions/send-invoice-email.js",
+  "netlify/functions/billing-daily-check.js",
+  "netlify/functions/admin-record-payment.js",
 ];
 
 // Writes the reset deliberately KEEPS, each with the reason. An entry here is a decision, not an
@@ -67,7 +77,17 @@ for (const rel of FLOW) {
   for (const m of s.matchAll(/supa\(\s*`\/([a-z_]+)[^`]*`\s*,\s*\{[^}]*method:\s*"(POST|PATCH)"/g)) {
     if (!written.has(m[1])) written.set(m[1], rel);
   }
-  // the stage-notification log is a nested KEY, not a table — it needs naming explicitly
+  // 🔑 Nested KEYS inside client_onboarding_records.data are state too, and a table-level scan
+  // cannot see them. Discovered from the code rather than listed, so a new key fails this gate.
+  // 🔴 Match the key PREFIX anywhere, not `data[literal]`. send-invoice-email builds its key in a
+  // variable — `const sentKey = \`invoice_email_${kind}_${tone}_${invoiceNum}\`` — so a pattern
+  // anchored on `data[` saw nothing and the gate passed while the bug was live. Twice now the
+  // scope, not the logic, has been what failed.
+  for (const prefix of ["stage_notifications", "invoice_email_"]) {
+    if (!s.includes(prefix)) continue;
+    const norm = prefix === "invoice_email_" ? "invoice_email_*" : prefix;
+    if (!written.has(`client_onboarding_records.${norm}`)) written.set(`client_onboarding_records.${norm}`, rel);
+  }
   if (/stage_notifications/.test(s) && !written.has("client_onboarding_records.stage_notifications")) {
     written.set("client_onboarding_records.stage_notifications", rel);
   }
@@ -82,7 +102,11 @@ for (const [target, by] of [...written].sort()) {
 
   // Cleared = the reset DELETEs the table, or explicitly removes the nested key.
   const clearsTable = new RegExp(`supa\\(\\s*\`/${base}[^\`]*\`[^)]*method:\\s*"DELETE"`).test(reset);
-  const clearsKey = key ? new RegExp(`delete\\s+\\w+\\.${key}\\b`).test(reset) : false;
+  const clearsKey = key
+    ? (key === "invoice_email_*"
+        ? /startsWith\("invoice_email_"\)/.test(reset) && /delete nextData\[k\]/.test(reset)
+        : new RegExp(`delete\\s+\\w+\\.${key}\\b`).test(reset))
+    : false;
   const cleared = key ? clearsKey : clearsTable;
   const excused = !key && Object.prototype.hasOwnProperty.call(KEPT, base);
 
