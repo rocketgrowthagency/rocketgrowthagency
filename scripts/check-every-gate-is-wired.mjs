@@ -99,6 +99,7 @@ const NOT_PREFLIGHT = {
   'check-scheduled-jobs-are-alive.mjs': 'inspects the machine\'s launchd agents, not the code; it is the thing that INVOKES the pre-flight, so running it inside the pre-flight would be circular. Runs in daily-health-check.sh',
   'check-report-matches-the-mockup.mjs': 'client-facing design gate over the WEBSITE repo; a drifted report cannot make a video unsafe. Runs in daily-health-check.sh',
   'check-standing-alerts.mjs': 'reads the alerts directory the monitors write into; it reports an ALREADY-DETECTED condition rather than detecting one, and must never abort a video build. Runs in daily-health-check.sh',
+  'check-admin-tabs-render.mjs': 'needs a headless BROWSER and an admin sign-in link; far too slow and credential-dependent for a nightly video build, and a blank admin cannot make a video unsafe. Runs in daily-health-check.sh',
   'check-app-pages-boot.mjs': 'needs a headless BROWSER and the LIVE site — too slow and too network-dependent to gate a nightly video build, and a blank admin cannot make a video unsafe. Runs in daily-health-check.sh',
   'check-browser-js-parses-as-the-browser-does.mjs': 'front-end gate; runs in daily-health-check.sh — a blank admin page cannot make a video unsafe, but it is checked every morning',
   'check-decline-copy-is-client-facing.mjs': 'client-copy gate; runs in daily-health-check.sh — what a refused card says to a client cannot make a video unsafe',

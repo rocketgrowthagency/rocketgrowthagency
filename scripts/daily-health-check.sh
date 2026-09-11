@@ -169,6 +169,7 @@ run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified
 run check-report-matches-the-mockup.mjs "the client report has not drifted from its approved design"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-browser-js-parses-as-the-browser-does.mjs "every script the site loads actually parses"
+run check-admin-tabs-render.mjs       "every admin tab renders for a signed-in admin"
 run check-app-pages-boot.mjs          "admin, portal and the homepage actually come up in a browser"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
