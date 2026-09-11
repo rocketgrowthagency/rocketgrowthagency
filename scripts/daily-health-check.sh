@@ -144,6 +144,7 @@ run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour t
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"
 run check-a-charge-settles-its-invoice.mjs "a charge is complete when OUR ledger says so, not when Stripe does"
+run check-the-price-shown-is-the-price-charged.mjs "the number on the button must be the number taken"
 run check-emails-clear-the-spam-floor.mjs "no client email is short enough to look like spam"
 run check-one-action-one-button.mjs "arriving somewhere does not still show the way there"
 run check-sign-flow-is-passable.mjs "a client can actually sign, and only a fresh session can"
