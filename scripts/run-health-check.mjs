@@ -70,7 +70,23 @@ if (attempted < MIN_SAMPLE) {
   console.log(`[health] only ${attempted} attempt(s) — too few to judge (need ${MIN_SAMPLE}). Continuing. ✓`);
   process.exit(0);
 }
-if (pct >= FLOOR) { console.log(`[health] above the floor — continuing. ✓`); process.exit(0); }
+if (pct >= FLOOR) {
+  console.log(`[health] above the floor — continuing. ✓`);
+  // ✅ A run back above the floor RETRACTS the breaker alert. 🔴 2026-09-11: this only ever wrote
+  // the file, so the 2026-08-23 alert was still standing 19 days later — through a deliberate
+  // production pause it had no way to know about. A permanently-red file is one nobody reads, and
+  // it was keeping company with a stale OpenAI alert while a REAL outreach RED went unseen.
+  // 🔑 Only the check that raised it can honestly retract it, and only on evidence: a real run,
+  // above the floor, on a real sample.
+  try {
+    const alertFile = path.join(ROOT, '..', 'Rocket Growth Agency Website VS Code', 'reports', 'alerts', 'PIPELINE-HEALTH-ALERT.md');
+    if (fs.existsSync(alertFile)) {
+      fs.unlinkSync(alertFile);
+      console.log(`[health] circuit-breaker alert CLEARED — ${pct}% over ${attempted} attempts is back above the ${FLOOR}% floor.`);
+    }
+  } catch (e) { console.warn(`[health] could not clear the breaker alert: ${e.message}`); }
+  process.exit(0);
+}
 
 // TRIPPED. Say plainly what this is and is not, so the morning reader doesn't mistake it for lead flake.
 const msg = [

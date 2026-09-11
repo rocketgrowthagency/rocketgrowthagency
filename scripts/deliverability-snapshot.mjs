@@ -56,7 +56,9 @@ const status = (v, red, amber, sent, minSample, bounces) => {
 };
 const s7 = status(rate7, 5, 2, sent7.length, MIN7, bounced7.length);
 const s1 = status(rate1, 20, 10, sent1.length, MIN1, bounced1.length);
-const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+// 🔑 Business time with the zone SAID. A bare toISOString() reads as a local time hours in the
+// future to whoever is looking at it. → outreach-health-monitor, same defect, 2026-09-11.
+const stamp = new Date().toLocaleString('sv-SE', { timeZone: 'America/Los_Angeles' }).slice(0, 16) + ' PT';
 
 console.log(`[deliverability ${stamp}]`);
 console.log(`  bounce 7d:  ${rate7.toFixed(2)}% (${bounced7.length}/${sent7.length})  ${s7}   [AMBER≥2%, RED≥5%; rate meaningful only at ≥${MIN7} sends]`);

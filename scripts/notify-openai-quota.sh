@@ -22,4 +22,18 @@ if grep -qiE "exceeded your current quota|insufficient_quota|no credits remainin
   osascript -e "display notification \"$MSG\" with title \"🚨 RGA: OpenAI needs funds\" sound name \"Sosumi\"" 2>/dev/null
   exit 2
 fi
+
+# ✅ NO QUOTA ERROR IN THIS LOG → the condition that raised the alert is over. CLEAR IT.
+# 🔴 2026-09-11: this file only ever WROTE. The 2026-08-20 alert was still sitting there 22 days
+# later, long after the quota recovered, and a live OpenAI call proved it stale. Two permanently-red
+# files taught everyone to ignore the alerts directory — which is why a genuine outreach RED sat
+# unread the same morning.
+# 🔑 An alert that cannot clear itself becomes wallpaper. The check that raises it is the only thing
+# that can honestly retract it, so it does — on evidence (a clean run log), never on a timer.
+WEB="/Users/chris/RGA/Rocket Growth Agency Website VS Code"
+ALERT="$WEB/reports/alerts/OPENAI-QUOTA-ALERT.md"
+if [ -f "$ALERT" ]; then
+  rm -f "$ALERT"
+  echo "✅ OpenAI quota alert CLEARED — this run shows no quota error (was: $(head -1 "$HOME/rga-ALERT-openai.log" 2>/dev/null | cut -c1-40))" | tee -a "$LOG"
+fi
 exit 0

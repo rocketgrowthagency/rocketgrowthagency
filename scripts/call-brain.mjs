@@ -142,7 +142,9 @@ const need = (have, want, what) => `_Not enough data yet — ${have} of ${want} 
 
 say(`# ☎️ Call brain — last ${DAYS} days`);
 say('');
-say(`Generated ${new Date().toISOString().slice(0, 16).replace('T', ' ')} · **${calls.length} call(s)** logged.`);
+// 🔑 Business time with the zone SAID — a bare UTC stamp reads as a local time in the future.
+const generatedAt = new Date().toLocaleString('sv-SE', { timeZone: 'America/Los_Angeles' }).slice(0, 16) + ' PT';
+say(`Generated ${generatedAt} · **${calls.length} call(s)** logged.`);
 say('');
 say('> Coaching here is about **patterns**, not wording. Without recording, the words spoken are never');
 say('> captured, so "you should have said X" is not derivable. Every section refuses to draw a conclusion');

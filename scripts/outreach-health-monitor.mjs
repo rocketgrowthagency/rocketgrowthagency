@@ -143,7 +143,12 @@ function notify(title, msg) {
   }
 
   if (reds.length) {
-    const body = `# 🚨 RGA OUTREACH HEALTH — RED (${new Date().toISOString().slice(0, 16).replace('T', ' ')})\n\n`
+    // 🔴 2026-09-11 — this printed `toISOString()` (UTC) with NO zone marker, so the 6am PT guard
+    // stamped the alert "13:01" and it read as a local time SEVEN HOURS IN THE FUTURE. An alert
+    // whose timestamp looks impossible is an alert people start distrusting.
+    // 🔑 Same defect class as invoice dates in the runtime's timezone — say the zone, or use ours.
+    const stampedAt = new Date().toLocaleString('sv-SE', { timeZone: 'America/Los_Angeles' }).slice(0, 16) + ' PT';
+    const body = `# 🚨 RGA OUTREACH HEALTH — RED (${stampedAt})\n\n`
       + `**Metrics:** ${metrics}\n\n`
       + reds.map((r) => `- 🔴 ${r}`).join('\n') + '\n'
       + (ambers.length ? '\n' + ambers.map((a) => `- 🟡 ${a}`).join('\n') + '\n' : '')
