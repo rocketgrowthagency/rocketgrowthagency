@@ -138,6 +138,7 @@ run check-price-surfaces-are-known.mjs "every place a price lives is in the inve
 run check-price-excuses-are-still-true.mjs "an EXCLUDED classification is a CLAIM, not a pass"
 run check-charges-use-the-right-stripe-account.mjs "a charge lands where the card actually is"
 run check-email-suppression-actually-reaches-the-sender.mjs "a test harness must not mail real clients"
+run check-invoice-dates-are-business-time.mjs "two copies of one invoice must never disagree"
 run check-emails-clear-the-spam-floor.mjs "no client email is short enough to look like spam"
 run check-one-action-one-button.mjs "arriving somewhere does not still show the way there"
 run check-sign-flow-is-passable.mjs "a client can actually sign, and only a fresh session can"
