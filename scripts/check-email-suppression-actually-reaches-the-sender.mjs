@@ -98,6 +98,24 @@ for (const [f, src] of senders) {
   }
 }
 
+// ── AND A SUPPRESSED SEND MUST NOT LOOK LIKE A FAILED ONE ─────────────────────────────────────
+// 🔴 2026-09-10: sendGmail's short-circuit returned { suppressed: true } with no `ok`. Its caller
+// checks `outcome.ok`, so suppression surfaced as HTTP 502 "send_failed". A safety guard that
+// reports an outage is worse than no guard — the next person switches it off to make the red go
+// away. A short-circuit must return the SHAPE the happy path returns.
+for (const [f, src] of senders) {
+  const shortCircuits = [...src.matchAll(/return\s+(?:jsonRes\(\d+,\s*)?\{[^}]*suppressed:\s*true[^}]*\}/g)];
+  if (!shortCircuits.length) continue;
+  for (const sc of shortCircuits) {
+    if (!/\bok:\s*true/.test(sc[0])) {
+      console.log(`  🔴 ${f}: a suppressed send returns ${sc[0].slice(0, 60)}… with no \`ok: true\``);
+      console.log("       Its caller checks outcome.ok — suppression would surface as a 502 failure.");
+      fails++;
+    }
+  }
+  if (!fails) console.log(`  ✅ ${f.padEnd(26)} suppressed send returns the happy-path shape`);
+}
+
 if (fails) {
   console.log(`\n🔴 ${fails} problem(s). A test harness would mail real clients about states that never happened.`);
   process.exit(1);
