@@ -166,6 +166,7 @@ run check-client-dedupe-gate.mjs       "an archived client cannot be silently re
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
 run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified by snapshot)" status
+run check-report-matches-the-mockup.mjs "the client report has not drifted from its approved design"
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
 run check-browser-js-parses-as-the-browser-does.mjs "every script the site loads actually parses"
 run check-app-pages-boot.mjs          "admin, portal and the homepage actually come up in a browser"
