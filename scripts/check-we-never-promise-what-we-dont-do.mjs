@@ -41,7 +41,7 @@ let src = fs.readFileSync(SENDER, "utf8");
 if (SABOTAGE) {
   // Re-create the defect: make the charge-promise copy unconditional again.
   const before = src;
-  src = src.replace(/upcoming: hasCardOnFile \? \{/, "upcoming: true ? {");
+  src = src.replace(/overdue: hasCardOnFile \? \{/, "overdue: true ? {");
   if (src === before) { console.log("  ⚠️  SABOTAGE did not apply — the pattern is stale."); process.exit(2); }
 }
 
@@ -56,27 +56,48 @@ function tonesWith(hasCardOnFile) {
 }
 
 const PROMISES_A_CHARGE = /charge the card on file|we'll charge your card|card will be charged/i;
+// 🔴 EVERY tone, not just `upcoming`. Making the pre-billing notice card-aware and leaving
+// `overdue` saying "most often that's simply an expired card" to a client who never saved one was
+// fixing the instance, not the class — the second time that exact mistake happened in one day.
+// → feedback_fix_the_class_not_the_instance
+// Any phrasing that ASSUMES a stored card. "Update your card" is fine only when one exists.
+const ASSUMES_A_CARD = /the card on file|expired card|your card (?:will be|has been) charged|we'll charge your card|update your card/i;
+const TONE_KEYS = ["upcoming", "due", "overdue", "warning", "paused"];
 
 for (const hasCard of [true, false]) {
   let tones;
   try { tones = tonesWith(hasCard); }
   catch (e) { console.log(`  ⚠️  TONES threw (hasCard=${hasCard}): ${e.message}`); process.exit(2); }
 
+  // The pre-billing notice must promise the charge when a card exists, and must NOT when it does not.
   const up = tones.upcoming || {};
-  const blob = `${up.title || ""} ${up.intro || ""} ${up.cta || ""} ${up.foot || ""}`;
-  const promises = PROMISES_A_CHARGE.test(blob);
-
+  const upBlob = `${up.title || ""} ${up.intro || ""} ${up.cta || ""} ${up.foot || ""}`;
+  const promises = PROMISES_A_CHARGE.test(upBlob);
   if (hasCard && !promises) {
     console.log("  🔴 a client WITH a saved card is not told we will charge it — the pre-billing");
     console.log("     notice exists to prevent a surprise charge being disputed.");
     fails++;
   } else if (!hasCard && promises) {
-    console.log("  🔴 a client with NO card on file is told \"we'll charge the card on file\".");
-    console.log(`     copy: ${String(up.title || "").slice(0, 70)}`);
-    console.log("     They will do nothing, then be marked overdue for an invoice we said was handled.");
+    console.log("  🔴 a client with NO card is told \"we'll charge the card on file\".");
+    console.log("     They do nothing, then get marked overdue for an invoice we said was handled.");
     fails++;
-  } else {
-    console.log(`  ✅ card ${hasCard ? "on file " : "absent  "} → "${String(up.title || "").slice(0, 52)}"`);
+  }
+
+  // And NO tone may reference a stored card when there is not one.
+  let bad = 0;
+  for (const key of TONE_KEYS) {
+    const t = tones[key];
+    if (!t) continue;
+    const blob = `${t.title || ""} ${t.intro || ""} ${t.cta || ""} ${t.foot || ""}`;
+    if (!hasCard && ASSUMES_A_CARD.test(blob)) {
+      const hit = blob.match(ASSUMES_A_CARD)[0];
+      console.log(`  🔴 tone "${key}" says "${hit}" to a client who never saved a card.`);
+      console.log("     It explains away a problem they do not have, and implies we tried to charge them.");
+      bad++; fails++;
+    }
+  }
+  if (!bad) {
+    console.log(`  ✅ card ${hasCard ? "on file " : "absent  "} → all ${TONE_KEYS.length} tones consistent · "${String(up.title || "").slice(0, 44)}"`);
   }
 }
 
