@@ -67,6 +67,20 @@ try {
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 110)));
 
+  // 🔴 2026-09-11 — RENDERING IS NOT ENOUGH. Enforcing a CSP blocked every Supabase call on the
+  // admin: the page still rendered, every panel still had text, and it showed "Onboarding 0%",
+  // "No contract", "Google not connected" for a client that has all three. A gate that only counts
+  // characters would have called that healthy.
+  // 🔑 So watch the DATA requests too. A blocked or failed fetch to Supabase or our own functions is
+  // the signature of exactly that class of breakage.
+  const dataFails = [];
+  page.on("requestfailed", (r) => {
+    const u = r.url();
+    if (/supabase\.co\/rest|\/\.netlify\/functions\//.test(u)) {
+      dataFails.push(`${u.split("/").pop().split("?")[0]} — ${r.failure()?.errorText || "failed"}`);
+    }
+  });
+
   await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
   await new Promise((r) => setTimeout(r, 6000));
   await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=overview`, { waitUntil: "networkidle2", timeout: 60000 });
@@ -81,6 +95,39 @@ try {
     else console.log("       nothing threw, so this is most likely the sign-in, not the code.");
     await browser.close();
     process.exit(errs.length ? 1 : 2);
+  }
+
+  // 🔑 Assert the SYMPTOM, not the transport. A first version failed on any aborted data request and
+  // immediately flagged `lead_intakes`, which aborts in the HEALTHY state too — a racy count that is
+  // cancelled on navigation. A gate that cries wolf daily gets muted.
+  // 🔴 So compare what the page SHOWS against what the database SAYS. When the CSP starved the admin
+  // it rendered "No contract" and "Google not connected" for a client that has both — the page was
+  // full of text and completely wrong, which is the failure mode character-counting cannot see.
+  let truth = { contract: false, google: false };
+  try {
+    const h = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` };
+    const [c, g] = await Promise.all([
+      fetch(`${SUPA_URL}/rest/v1/client_contracts?client_id=eq.${clientId}&status=eq.signed&select=id&limit=1`, { headers: h }).then((r) => r.json()),
+      fetch(`${SUPA_URL}/rest/v1/client_google_oauth?client_id=eq.${clientId}&select=client_id&limit=1`, { headers: h }).then((r) => r.json()),
+    ]);
+    truth.contract = Array.isArray(c) && c.length > 0;
+    truth.google = Array.isArray(g) && g.length > 0;
+  } catch { /* if the truth cannot be read, the comparison below is skipped rather than guessed */ }
+
+  const shown = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
+  const lies = [];
+  if (truth.contract && /No contract/i.test(shown)) lies.push('says "No contract" — the database has a SIGNED one');
+  if (truth.google && /Google not connected/i.test(shown)) lies.push('says "Google not connected" — the OAuth row exists');
+  if (/Onboarding 0% \(0\//.test(shown) && truth.contract) lies.push("shows Onboarding 0% for an onboarded client");
+
+  if (lies.length) {
+    console.log("  🔴 the admin is rendering, but showing the WRONG data:");
+    lies.forEach((l) => console.log(`       it ${l}`));
+    console.log("     The page is full of text and completely wrong — suspect the CSP (connect-src)");
+    console.log("     or anything else blocking Supabase calls. Counting characters cannot see this.");
+    fails++;
+  } else {
+    console.log(`  ✅ client data matches the database (contract ${truth.contract}, google ${truth.google})`);
   }
 
   const tabs = await page.evaluate(() => [...document.querySelectorAll(".admin-side-tab")].map((t) => t.dataset.tab));
