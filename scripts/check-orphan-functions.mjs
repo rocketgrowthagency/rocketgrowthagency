@@ -33,7 +33,7 @@ const FUNCS = path.join(WEB, "netlify", "functions");
 // Deliberately invoked by hand. Each needs a reason on the record, so an orphan is a DECISION rather
 // than an oversight. "It was easier" is never a reason — wire it or delete it.
 const MANUAL_ONLY = {
-  "stripe-go-live-check": "run BY HAND before going live, and after any Stripe account change. It exists precisely because the live key is masked from the CLI — it reports account + webhook readiness from inside the function. Nothing should call it automatically: it is a question you ask, not a step in a flow.",
+  "stripe-go-live-check.js": "run BY HAND before going live, and after any Stripe account change. It exists precisely because the live key is masked from the CLI — it reports account + webhook readiness from inside the function. Nothing should call it automatically: it is a question you ask, not a step in a flow.",
   // (gbp-apply-change came off this list on 2026-09-05: apply-plan-automatable now invokes it, driven
   // by a stored prioritised plan. That was the precondition, and it is met.)
   "apply-plan-automatable.js":
