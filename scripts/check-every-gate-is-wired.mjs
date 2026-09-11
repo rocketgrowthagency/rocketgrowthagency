@@ -93,6 +93,8 @@ const NOT_PREFLIGHT = {
   'check-invoice-dates-are-business-time.mjs': 'client-document gate; runs in daily-health-check.sh — an invoice date cannot make a video unsafe',
   'check-email-suppression-actually-reaches-the-sender.mjs': 'client-email safety gate; runs in daily-health-check.sh — whether a harness can mail a client cannot make a video unsafe',
   'check-charges-use-the-right-stripe-account.mjs': 'billing-correctness gate; runs in daily-health-check.sh — which Stripe account a charge lands on cannot make a video unsafe',
+  'check-no-test-card-path.mjs': 'billing-safety gate; runs in daily-health-check.sh — it asks the DEPLOYED site whether a test-card path is open, which has no bearing on tonight\'s videos',
+  'check-decline-copy-is-client-facing.mjs': 'client-copy gate; runs in daily-health-check.sh — what a refused card says to a client cannot make a video unsafe',
   'check-price-excuses-are-still-true.mjs': 'billing-correctness gate; runs in daily-health-check.sh — a stale price excuse cannot make a video unsafe',
   'check-billing-history-is-derived.mjs': 'portal-UI gate; runs in daily-health-check.sh — how the payment step renders month 3 cannot make a video unsafe',
   'check-price-summary-is-derived.mjs': 'derives every client-facing price summary from data/plans.json and compares it to the real schedule — commercial correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
