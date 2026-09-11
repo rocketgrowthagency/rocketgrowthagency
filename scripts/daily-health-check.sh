@@ -84,6 +84,7 @@ run check-inbound-sms-flowing.mjs      "inbound texts still reaching Airtable"
 
 say ""
 say "── outreach safety ──"
+run check-scheduled-jobs-are-alive.mjs "the jobs that run RGA overnight are still loaded"
 run check-standing-alerts.mjs          "an alert nobody reads is not an alert"
 run check-send-cap-held.mjs            "the 50/day send cap actually held"
 run check-no-duplicate-send-rows.mjs   "no double-counted sends in the Outreach Log"
