@@ -48,6 +48,24 @@ if (!/errEl\.textContent\s*=\s*`\$\{declineMessage\(/.test(src)) {
   process.exit(2);
 }
 
+// ── 1b. THE SAME DEFECT ANYWHERE ELSE IN THE PORTAL ────────────────────────────────────────────
+// 🔑 The decline message was one INSTANCE. The class is "render whatever an API threw at a client".
+// Two more were live on 2026-09-11: the photo upload and the customer-list upload both did
+// `statusEl.textContent = \`Error: ${e.message}\``, so a Supabase failure would have shown a client
+// "new row violates row-level security policy for table ..." — alarming, meaningless to them, and a
+// description of our schema. → feedback_fix_the_class_not_the_instance
+const RAW_ANYWHERE = /(?:innerHTML|textContent|innerText)\s*=[^;\n]*\$\{\s*(?:e|err|error|ex)\.(?:message|error|detail)\s*\}/g;
+const leaks = [...src.matchAll(RAW_ANYWHERE)];
+if (leaks.length) {
+  console.log(`  🔴 ${leaks.length} place(s) render a raw exception message into the page:`);
+  for (const m of leaks.slice(0, 6)) {
+    console.log(`       …${m[0].slice(0, 78)}`);
+  }
+  console.log("     Route these through clientError(e, \"<what failed>\") — plain sentence to the");
+  console.log("     client, real error to the console where it is useful to us.");
+  process.exit(1);
+}
+
 // ── 2. run the real mapper ─────────────────────────────────────────────────────────────────────
 const START = "const DECLINE_COPY = {";
 const END = "  return PAYMENT_UNAVAILABLE;\n}";
