@@ -163,6 +163,7 @@ run retry-place-id-backfill.mjs        "every client has a Google place id (stro
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
 run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified by snapshot)" status
 run check-playbook-integrity.mjs       "playbook, guided call, and the Airtable contract"
+run check-browser-js-parses-as-the-browser-does.mjs "every script the site loads actually parses"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
 
 # ── production pause: lift it automatically the day every condition clears ────────────────────────

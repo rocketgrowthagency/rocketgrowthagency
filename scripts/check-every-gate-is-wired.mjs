@@ -94,6 +94,7 @@ const NOT_PREFLIGHT = {
   'check-email-suppression-actually-reaches-the-sender.mjs': 'client-email safety gate; runs in daily-health-check.sh — whether a harness can mail a client cannot make a video unsafe',
   'check-charges-use-the-right-stripe-account.mjs': 'billing-correctness gate; runs in daily-health-check.sh — which Stripe account a charge lands on cannot make a video unsafe',
   'check-no-test-card-path.mjs': 'billing-safety gate; runs in daily-health-check.sh — it asks the DEPLOYED site whether a test-card path is open, which has no bearing on tonight\'s videos',
+  'check-browser-js-parses-as-the-browser-does.mjs': 'front-end gate; runs in daily-health-check.sh — a blank admin page cannot make a video unsafe, but it is checked every morning',
   'check-decline-copy-is-client-facing.mjs': 'client-copy gate; runs in daily-health-check.sh — what a refused card says to a client cannot make a video unsafe',
   'check-every-stripe-charge-reached-our-ledger.mjs': 'billing-reconciliation gate; runs in daily-health-check.sh — it pulls Stripe and compares to our ledger, which has no bearing on tonight\'s videos',
   'check-price-excuses-are-still-true.mjs': 'billing-correctness gate; runs in daily-health-check.sh — a stale price excuse cannot make a video unsafe',
