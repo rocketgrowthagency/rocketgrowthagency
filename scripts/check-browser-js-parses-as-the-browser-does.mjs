@@ -39,17 +39,36 @@ import os from "node:os";
 import { execFileSync } from "node:child_process";
 
 const SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-// The app surfaces. A marketing page with no local script has nothing to break.
-const HTML = ["admin/index.html", "portal/index.html", "index.html", "client-login/index.html"];
+
+// 🔑 EVERY page, not a hand-picked four. The first version of this gate listed the app surfaces by
+// name, which gave it a blind spot by construction — the same shape as the bug it was written for.
+// `v/` is excluded: those are ~1,100 GENERATED outreach landing pages built from one template, so
+// they add a thousand duplicate parses of the same handful of scripts and nothing else.
+const SKIP_DIRS = ["v", "node_modules", ".git", ".netlify", "dist"];
 
 console.log("── every script the site loads parses the way the browser parses it ──");
 
 /** @type {Map<string, {module: boolean, from: string[]}>} */
 const targets = new Map();
 
-for (const rel of HTML) {
-  const file = path.join(SITE, rel);
-  if (!fs.existsSync(file)) continue;
+/** Every .html in the repo except the generated outreach pages. */
+function htmlFiles(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) {
+      if (SKIP_DIRS.includes(e.name) || e.name.startsWith(".")) continue;
+      htmlFiles(path.join(dir, e.name), out);
+    } else if (e.name.endsWith(".html")) out.push(path.join(dir, e.name));
+  }
+  return out;
+}
+
+let pages;
+try { pages = htmlFiles(SITE); }
+catch (e) { console.log(`  ⚠️  could not walk the site: ${e.message}`); process.exit(2); }
+if (!pages.length) { console.log("  ⚠️  found NO .html at all — the probe must be wrong."); process.exit(2); }
+
+for (const file of pages) {
+  const rel = path.relative(SITE, file);
   const html = fs.readFileSync(file, "utf8");
   // Only LOCAL scripts — a CDN file is not ours to fix and not ours to gate.
   const tags = [...html.matchAll(/<script\b([^>]*)\bsrc=["']([^"']+)["']([^>]*)>/gi)];
