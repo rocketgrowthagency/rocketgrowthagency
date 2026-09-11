@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check-admin-tabs-render.mjs — every admin tab must actually render, signed in.
+ * check-admin-tabs-render.mjs — the admin AND the report it produces must render, signed in.
  *
  * ─── WHY ──────────────────────────────────────────────────────────────────────────────────────
  * 2026-09-11. Adding one link to the client cockpit used `client.id` inside `renderClientCockpit`,
@@ -85,6 +85,28 @@ try {
 
   const tabs = await page.evaluate(() => [...document.querySelectorAll(".admin-side-tab")].map((t) => t.dataset.tab));
   if (!tabs.length) { console.log("  ⚠️  no tabs found — the probe must be wrong."); await browser.close(); process.exit(2); }
+
+  // 🔑 The CLIENT REPORT is the thing this admin exists to produce, and it is the surface Chris
+  // rebuilt today. Checking it in the SAME signed-in session costs one navigation and closes the
+  // other half of the gap: the admin renders, but does the document it produces?
+  try {
+    await page.goto(`${SITE}/portal/report/?client=${clientId}`, { waitUntil: "networkidle2", timeout: 60000 });
+    await new Promise((r) => setTimeout(r, 8000));
+    const rep = await page.evaluate(() => ({
+      chars: document.body.innerText.trim().length,
+      sections: [...document.querySelectorAll("section")].filter((s) => s.offsetParent !== null).length,
+      mast: !!document.querySelector(".mast h1"),
+    }));
+    if (rep.chars < 400 || !rep.mast) {
+      console.log(`  🔴 client report rendered ${rep.chars} chars, masthead ${rep.mast ? "present" : "MISSING"} — blank or broken`);
+      fails++;
+    } else {
+      console.log(`  ✅ client report    ${String(rep.chars).padStart(6)} chars · ${rep.sections} sections`);
+    }
+  } catch (e) { console.log(`  ⚠️  could not load the client report: ${e.message}`); }
+
+  await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=overview`, { waitUntil: "networkidle2", timeout: 60000 });
+  await new Promise((r) => setTimeout(r, 10000));
 
   for (const tab of tabs) {
     const before = errs.length;
