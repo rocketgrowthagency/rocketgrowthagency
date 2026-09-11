@@ -79,6 +79,7 @@ const SURFACES = {
   "netlify/functions/stripe-create-checkout.js":["DERIVED", "first invoice → contract-generate.firstInvoiceAmount()"],
   "netlify/functions/portal-payment-intent.js":  ["DERIVED", "inline Payment Element amount → contract-generate.firstInvoiceAmount()"],
   "netlify/functions/stripe-webhook.js":        ["DERIVED", "invoice ledger amounts → contract-generate.firstInvoiceAmount() (was the 5th/6th pre-discount copy)"],
+  "netlify/functions/billing-daily-check.js": ["DERIVED", "the NEXT invoice's amount when an auto-charge settles one → contract-generate PLANS.recurring_after_term (added 2026-09-10; would have been the 8th copy)"],
   // 🔑 These three matched the CODE pattern and are NOT prices — inspected 2026-09-10. A number is
   // only a price in context, so the inventory records the human decision rather than the regex
   // getting ever cleverer. Re-inspect if one of them ever starts handling money.

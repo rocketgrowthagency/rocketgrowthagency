@@ -83,6 +83,7 @@ const NOT_PREFLIGHT = {
   'check-no-module-tdz.mjs': 'static scan for module-scope let/const assigned above its own declaration — a runtime ReferenceError node --check cannot see. Front-end/app correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-payment-path-is-safe.mjs': 'static scan of the WEBSITE repo\'s inline-payment path (portal, intent function, webhook) — billing/security correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-charge-equals-the-contract.mjs': 'calls the WEBSITE repo\'s first-invoice code and compares it to the contract schedule — billing correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
+  'check-a-charge-settles-its-invoice.mjs': 'billing-correctness gate; runs in daily-health-check.sh — an unsettled invoice cannot make a video unsafe',
   'check-we-never-promise-what-we-dont-do.mjs': 'client-copy gate; runs in daily-health-check.sh — a false promise in the portal cannot make a video unsafe',
   'check-post-payment-shows-real-data.mjs': 'portal-UI gate; runs in daily-health-check.sh — what the payment screen renders cannot make a video unsafe',
   'check-test-reset-clears-every-write.mjs': 'test-harness gate; runs in daily-health-check.sh — the test reset never touches the video pipeline',
