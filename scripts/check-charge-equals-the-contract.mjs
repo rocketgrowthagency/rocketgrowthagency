@@ -29,6 +29,7 @@
  */
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import path from "node:path";
 
 const SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const SABOTAGE = process.env.SABOTAGE === "1";
@@ -116,6 +117,47 @@ if (c3 === 2500) {
   fails++;
 } else {
   console.log(`  ✅ commit_3mo month 1 = $${c3.toLocaleString()} (not the $2,500 3-month total)`);
+}
+
+// ─── AND THE DOCUMENT THE CLIENT READS ────────────────────────────────────────────────────────
+// 🔴 Added 2026-09-10. This gate proved the CHARGE matched the contract, but never that the
+// INVOICE matched either. Those can drift apart: the invoice is rendered by shared/invoice-doc.js
+// from data/plans.json, the charge by contract-generate.firstInvoiceAmount(). A client who is
+// charged correctly but reads a different number on the document they downloaded has still been
+// given a wrong bill — and that document is the one they forward to their accountant.
+// 🔑 Every PLAN and every invoice NUMBER, not just the first — testing only #1 previously let
+// done_for_you render a third and fourth "Project balance (50%)".
+{
+  const plans = JSON.parse(fs.readFileSync(path.join(SITE, "data/plans.json"), "utf8"));
+  const doc = await import(path.join(SITE, "shared/invoice-doc.js"));
+  const DOC_CASES = [
+    ["commit_3mo", {}, 0], ["monthly", {}, 0],
+    ["commit_3mo", { extra_gbp_locations: 2 }, 0],
+    ["commit_3mo", { website_lite: true }, 0],
+    ["monthly", { website_full: true }, 0],
+    ["done_for_you", {}, 4000], ["beta_unbilled", {}, 0],
+  ];
+  let docBad = 0;
+  for (const [tier, addons, projectTotal] of DOC_CASES) {
+    const label = `${tier}${Object.keys(addons).length ? " +" + Object.keys(addons).join("+") : ""}`;
+    const inv1 = doc.invoiceLines({ tier, invoiceNum: 1, addons, plans, projectTotal });
+    // done_for_you is quoted per project, so firstInvoiceAmount cannot know its number.
+    if (tier !== "done_for_you" && tier !== "beta_unbilled") {
+      const charge = f(tier, addons);
+      if (!inv1 || inv1.total !== charge) {
+        console.log(`  🔴 ${label}: invoice #1 reads $${inv1?.total} but Stripe charges $${charge}`);
+        docBad++; continue;
+      }
+    }
+    // done_for_you is a two-invoice plan — anything beyond #2 is a bill for work already paid for.
+    if (tier === "done_for_you" && doc.invoiceLines({ tier, invoiceNum: 3, addons, plans, projectTotal })) {
+      console.log(`  🔴 ${label}: renders an invoice #3 — this plan has exactly two.`);
+      docBad++; continue;
+    }
+    console.log(`  ✅ ${label.padEnd(32)} document == charge, schedule terminates correctly`);
+  }
+  if (docBad) fails += docBad;
+  else console.log(`  ✅ all ${DOC_CASES.length} plan(s): the invoice the CLIENT reads == what we charge`);
 }
 
 if (fails) { console.log(`\n🔴 ${fails} check(s) failed — a client could be charged an amount they never agreed to.`); process.exit(1); }
