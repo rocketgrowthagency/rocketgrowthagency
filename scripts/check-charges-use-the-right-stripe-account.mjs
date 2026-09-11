@@ -31,6 +31,16 @@ const SABOTAGE = process.env.SABOTAGE === "1";
 // Endpoints that MOVE MONEY. A read (customers.retrieve, prices.list) is not in scope.
 const CHARGING = /\/v1\/(payment_intents|checkout\/sessions|charges|setup_intents)/;
 
+// 🔴 2026-09-11 — THE PATH ALONE IS NOT THE TEST. `stripe-reconcile-payments.js` LISTS succeeded
+// PaymentIntents to compare them against our ledger; it creates nothing and moves nothing, but it
+// names `/v1/payment_intents`, so it was flagged as a charge path pinned to the live account.
+// 🔑 That is the correct key for a read — the live key is the only one that can see live charges.
+// The header comment already said "a read is not in scope"; the PROBE could not tell a read from a
+// write, so it enforced something the rule never claimed.
+// Every real charge path here issues an explicit POST (directly or via a `stripePost` helper), so
+// a file that names a money endpoint and never POSTs at all cannot be creating a charge.
+const WRITES = /method:\s*["']POST["']|stripePost\s*\(/;
+
 console.log("── every Stripe charge path picks its key from the client ──");
 
 if (!fs.existsSync(DIR)) { console.log(`  ⚠️  missing: ${DIR}`); process.exit(2); }
@@ -40,6 +50,7 @@ try { files = fs.readdirSync(DIR).filter((f) => f.endsWith(".js")); }
 catch (e) { console.log(`  ⚠️  could not list functions: ${e.message}`); process.exit(2); }
 
 const charging = [];
+const readOnly = [];
 for (const f of files) {
   let src = fs.readFileSync(path.join(DIR, f), "utf8");
   if (SABOTAGE && f === "billing-daily-check.js") {
@@ -48,7 +59,11 @@ for (const f of files) {
                       "async function stripePost(path, body, extraHeaders = {})")
              .replace(/Authorization: `Bearer \$\{secretKey\}`/, "Authorization: `Bearer ${STRIPE_SECRET_KEY}`");
   }
-  if (CHARGING.test(src)) charging.push([f, src]);
+  if (!CHARGING.test(src)) continue;
+  // 🔑 Name the read-only ones out loud. A file that silently drops out of scope is how a real
+  // charge path stops being checked without anyone noticing. → feedback_dead_check_selector_gap
+  if (!WRITES.test(src)) { readOnly.push(f); continue; }
+  charging.push([f, src]);
 }
 
 if (!charging.length) {
@@ -85,5 +100,6 @@ if (fails) {
   console.log("   A real client charged on the test account silently collects NOTHING.");
   process.exit(1);
 }
+if (readOnly.length) console.log(`  \u2139\ufe0f  read-only, not a charge path: ${readOnly.join(", ")}`);
 console.log(`\n✅ all ${charging.length} charge path(s) resolve the key from the client id.`);
 process.exit(0);

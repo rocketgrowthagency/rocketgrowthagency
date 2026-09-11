@@ -139,6 +139,7 @@ run check-price-excuses-are-still-true.mjs "an EXCLUDED classification is a CLAI
 run check-charges-use-the-right-stripe-account.mjs "a charge lands where the card actually is"
 run check-no-test-card-path.mjs         "no client can pay us with a card that moves no money"
 run check-decline-copy-is-client-facing.mjs "a refused card never explains our integration"
+run check-every-stripe-charge-reached-our-ledger.mjs "money in Stripe equals money in our books"
 run check-email-suppression-actually-reaches-the-sender.mjs "a test harness must not mail real clients"
 run check-invoice-dates-are-business-time.mjs "two copies of one invoice must never disagree"
 run check-memory-has-no-orphans.mjs "a memory nothing links to is a memory nobody will read"
