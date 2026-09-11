@@ -83,11 +83,19 @@ if (borrows) {
 // ── C. THE ESTIMATE IS LABELLED AS ONE ────────────────────────────────────────────────────────
 // When the due date is estimated rather than read, the UI prefixes "~". If that marker is dropped,
 // a guess becomes indistinguishable from a fact.
-if (!/inv2DuePfx\s*=\s*inv2Status === "upcoming" \? "~" : ""/.test(src)) {
-  console.log("  🔴 the estimated due date is no longer marked with \"~\" — a guess must look like one.");
+// 🔑 The marker must track WHERE THE DATE CAME FROM, not the invoice's status. It originally keyed
+// on `status === "upcoming"`, which meant a real ledger date (Oct 11) was shown as "~Oct 11" —
+// a FACT dressed as a guess, the mirror of the defect the marker exists to prevent.
+const pfx = src.match(/const inv2DuePfx = ([^;]+);/);
+if (!pfx) {
+  console.log("  🔴 the estimated-date marker is gone — a guess must look like one.");
+  fails++;
+} else if (!/dbInv2\?\.due_date/.test(pfx[1])) {
+  console.log(`  🔴 the "~" marker keys on ${pfx[1].trim()} rather than whether a ledger row exists.`);
+  console.log("     A computed date must be marked; a real one must not be.");
   fails++;
 } else {
-  console.log("  ✅ an estimated due date is still prefixed \"~\"");
+  console.log("  ✅ \"~\" marks a computed date only — a ledger date shows unqualified");
 }
 
 if (fails) {

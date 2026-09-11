@@ -43,10 +43,23 @@ const FLOW = [
   "netlify/functions/send-invoice-email.js",
   "netlify/functions/billing-daily-check.js",
   "netlify/functions/admin-record-payment.js",
+  // Earlier-stage senders. They are NOT cleared (see KEPT_KEYS) — but they are listed so that
+  // decision is re-checked every run instead of being invisible.
+  "netlify/functions/send-confirmation-email.js",
+  "netlify/functions/send-kickoff-invite.js",
 ];
 
 // Writes the reset deliberately KEEPS, each with the reason. An entry here is a decision, not an
 // oversight — and it has to stay true, so the reason names what depends on it.
+// Nested keys deliberately NOT cleared, with the reason. The reset rewinds to stage_2_payment —
+// keys written at EARLIER stages are not replayed, so clearing them would only re-send emails the
+// client already has. Listed rather than omitted, so the judgement is re-checked, not assumed.
+const KEPT_KEYS = {
+  confirmation_email_sent: "written at contract stage (1b), before the point the reset rewinds to — re-clearing would re-send an intro email the client already has",
+  kickoff_invite: "written at stage 4, after setup; the reset never reaches that stage, and a duplicate calendar invite is worse than none",
+  report_sent: "monthly reporting, unrelated to the post-close payment flow",
+};
+
 const KEPT = {
   client_contracts: "the signed contract IS the test fixture — invoiceNumber() derives from its id, so clearing it would change the invoice number and void the 'same number before and after payment' property",
   client_activity: "an append-only audit log; the reset ADDS to it rather than erasing history",
@@ -83,7 +96,8 @@ for (const rel of FLOW) {
   // variable — `const sentKey = \`invoice_email_${kind}_${tone}_${invoiceNum}\`` — so a pattern
   // anchored on `data[` saw nothing and the gate passed while the bug was live. Twice now the
   // scope, not the logic, has been what failed.
-  for (const prefix of ["stage_notifications", "invoice_email_"]) {
+  for (const prefix of ["stage_notifications", "invoice_email_", "confirmation_email_sent",
+                        "kickoff_invite", "report_sent"]) {
     if (!s.includes(prefix)) continue;
     const norm = prefix === "invoice_email_" ? "invoice_email_*" : prefix;
     if (!written.has(`client_onboarding_records.${norm}`)) written.set(`client_onboarding_records.${norm}`, rel);
@@ -108,12 +122,14 @@ for (const [target, by] of [...written].sort()) {
         : new RegExp(`delete\\s+\\w+\\.${key}\\b`).test(reset))
     : false;
   const cleared = key ? clearsKey : clearsTable;
-  const excused = !key && Object.prototype.hasOwnProperty.call(KEPT, base);
+  const excused = key
+    ? Object.prototype.hasOwnProperty.call(KEPT_KEYS, key)
+    : Object.prototype.hasOwnProperty.call(KEPT, base);
 
   if (cleared) {
     console.log(`  ✅ ${target.padEnd(46)} cleared`);
   } else if (excused) {
-    console.log(`  ▫️  ${target.padEnd(46)} kept — ${KEPT[base].slice(0, 60)}…`);
+    console.log(`  ▫️  ${target.padEnd(46)} kept — ${(key ? KEPT_KEYS[key] : KEPT[base]).slice(0, 58)}…`);
   } else {
     console.log(`  🔴 ${target.padEnd(46)} written by ${by}, NOT cleared and NOT excused`);
     fails++;

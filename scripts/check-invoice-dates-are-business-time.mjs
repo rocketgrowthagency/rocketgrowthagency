@@ -99,8 +99,40 @@ if (!failed && ref.paid !== "September 10, 2026") {
   failed = true;
 }
 
+// ── AND EVERY OTHER CLIENT DOCUMENT ───────────────────────────────────────────────────────────
+// 🔴 Added 2026-09-10 after the sweep: the SIGNED AGREEMENT had the same defect. `contract-doc.js`
+// formatted the execution date with no timeZone, so a contract signed at 5 PM Pacific would read as
+// signed the NEXT DAY in the emailed copy — and the two copies of one agreement would disagree
+// about when it was executed. Fixing the invoice alone was fixing the instance, not the class.
+// → feedback_fix_the_class_not_the_instance
+{
+  const DOCS = ["shared/invoice-doc.js", "shared/contract-doc.js"];
+  // Formatting a NUMBER (`toLocaleString("en-US", { minimumFractionDigits… })`) needs no zone.
+  const DATE_FORMAT = /toLocale(?:Date|Time)?String\(\s*"en-US"\s*,\s*\{([^}]*)\}/g;
+  for (const rel of DOCS) {
+    const p = path.join(SITE, rel);
+    if (!fs.existsSync(p)) { console.log(`  ⚠️  missing: ${rel}`); process.exit(2); }
+    let src = fs.readFileSync(p, "utf8");
+    if (SABOTAGE && rel === "shared/contract-doc.js") src = src.replace(/,\s*timeZone: BUSINESS_TZ/g, "");
+    DATE_FORMAT.lastIndex = 0;
+    let m, bare = 0;
+    while ((m = DATE_FORMAT.exec(src))) {
+      const opts = m[1];
+      const isNumber = /FractionDigits|style:\s*"currency"/.test(opts);
+      if (isNumber) continue;
+      if (!/timeZone/.test(opts)) bare++;
+    }
+    if (bare) {
+      console.log(`  🔴 ${rel}: ${bare} date format(s) with no timeZone — the runtime's zone decides.`);
+      failed = true;
+    } else {
+      console.log(`  ✅ ${rel.padEnd(26)} every date format pins a timezone`);
+    }
+  }
+}
+
 if (failed) {
-  console.log("\n🔴 The same invoice reads differently depending on where it is rendered.");
+  console.log("\n🔴 A client document reads differently depending on where it is rendered.");
   console.log("   The emailed copy comes from a UTC Netlify function; the portal copy from a browser.");
   process.exit(1);
 }
