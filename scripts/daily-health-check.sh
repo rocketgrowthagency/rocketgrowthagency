@@ -162,6 +162,7 @@ run_args audit-coverage.mjs verify     "no onboarding-audit check claims automat
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-no-two-clients-share-a-google-property.mjs "no client reports another business's Google data"
+run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
