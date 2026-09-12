@@ -173,7 +173,18 @@ if (todo.length === 0) {
           }
           return out;
         });
-        const rankIdx = places.findIndex((p) => p.key === targetPlaceKey);
+        // 🔴 2026-09-11 — MATCH ON THE CID, NOT THE WHOLE KEY. The key is `0x<ftid>:0x<cid>`, and the
+        // two halves come from different places: the CID uniquely identifies the business, while the
+        // ftid half varies by source (SerpApi's data_id gave `0xbbdfa820c985be7` where Google's own
+        // hrefs use a `0x80c2…` form). Comparing the WHOLE key made every point report "not found"
+        // no matter the real rank — and 60 identical points is a not-found SENTINEL, not a ranking.
+        // → project_rank_grid_uniform_sentinel
+        const targetCid = (targetPlaceKey.split(":")[1] || "").toLowerCase();
+        const rankIdx = places.findIndex((p) => {
+          const k = String(p.key || "").toLowerCase();
+          if (k === targetPlaceKey) return true;               // exact, when both halves agree
+          return targetCid && k.endsWith(":" + targetCid);      // CID is the identity
+        });
         const rank = rankIdx >= 0 ? rankIdx + 1 : null;
         console.log(`[grid] ✓ rank ${rank == null ? `not in top ${places.length}` : `#${rank}`} (of ${places.length} visible)`);
 
