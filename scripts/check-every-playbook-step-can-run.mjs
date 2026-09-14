@@ -34,6 +34,7 @@ const FLOW = path.join(SITE, 'netlify/functions/flow-execute.js');
 // thing being checked. The reason must say what runs it instead.
 const NO_EXECUTOR_OK = {
   'm1.audit.grid_baseline': 'runs in the LOCAL scraper (grid-scan.mjs, puppeteer, ~1h headful). flow-execute answers mustRunLocally with the exact command, which is the designed path for heavy local work.',
+  'm2.snap.grid_scan': 'the monthly re-run of the same LOCAL grid scan as m1.audit.grid_baseline. Same reason: headful puppeteer, ~1h, cannot run in a Netlify function.',
 };
 
 const fail = [];
@@ -51,13 +52,41 @@ try {
 // → feedback_a_check_must_not_validate_itself
 const ID = '[a-z0-9_.]+';
 
+// 🔴🔴 DO NOT PATTERN-MATCH THE SHAPE OF A HANDLER — READ THE MAP.
+// The first version recognised exactly two spellings: `"id": async` and `["id", "fn-name"]`. Seven
+// executors added 2026-09-14 register through
+//     ...Object.fromEntries([...ids].map((id) => [id, async …]))
+// which is neither, so the gate reported four steps as having NO executor when their code was sitting
+// right there. A gate that only understands the shapes it was born knowing will keep raising false
+// alarms as the code grows — and a gate that cries wolf gets muted.
+// 🔑 So: take the EXECUTORS object literal by brace balance, strip comments, and treat EVERY step id
+// quoted inside it as handled. That is shape-independent.
+function executorIdsIn(src, prefix) {
+  const at = src.indexOf('const EXECUTORS');
+  if (at < 0) return null;                       // structure changed — caller reports INDETERMINATE
+  const open = src.indexOf('{', at);
+  let depth = 0, end = -1;
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end < 0) return null;
+  const body = src.slice(open, end)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+  return new Set([...body.matchAll(new RegExp(`["'](${prefix}\\.${ID})["']`, 'g'))].map((m) => m[1]));
+}
+
 for (const [bookName, steps] of Object.entries({ month1: pb.month1, month2plus: pb.month2plus || [] })) {
   if (!steps.length) continue;
   const ids = new Set(steps.map((s) => s.id));
   const prefix = steps[0].id.split('.')[0];
-  const direct = new Set([...src.matchAll(new RegExp(`"(${prefix}\\.${ID})":\\s*async`, 'g'))].map((m) => m[1]));
-  const deleg = new Set([...src.matchAll(new RegExp(`\\["(${prefix}\\.${ID})",\\s*"[a-z-]+"\\]`, 'g'))].map((m) => m[1]));
-  const have = new Set([...direct, ...deleg]);
+  const have = executorIdsIn(src, prefix);
+  if (!have) {
+    console.error('[playbook] INDETERMINATE — could not find/parse the EXECUTORS object in flow-execute.js');
+    process.exit(2);
+  }
 
   for (const s of steps) {
     for (const d of s.dependsOn || []) {
