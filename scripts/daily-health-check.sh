@@ -110,6 +110,7 @@ run check-orphaned-airtable-fields.mjs "no Airtable field reads as coverage whil
 run heal-onboarding-errors.mjs         "retry delivery steps whose cause was since fixed"
 run check-onboarding-errors-surfaced.mjs "no client carries a caught-but-unsurfaced delivery failure"
 run check-send-queue-drained.mjs       "queue drain progress" status
+run check-send-queue-can-reach-zero.mjs "the send queue is DRAINABLE — no phantom lead can lock production"
 
 say ""
 say "── the sales surface ──"

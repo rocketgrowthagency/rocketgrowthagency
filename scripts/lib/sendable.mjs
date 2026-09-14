@@ -50,7 +50,23 @@ export function isSendable(record) {
     present(record, 'Video URL') &&
     (status === 'new' || status === '') &&
     !fieldOf(record, 'Draft Created') &&
-    !present(record, 'Replied')
+    !present(record, 'Replied') &&
+    // 🔴🔴 2026-09-14 — THE SAME OUTAGE AS 2026-08-26, ON A DIFFERENT FIELD. This rule is documented
+    // above as "has a Video URL + an Email + NO Email Sent Date", and every caller means "waiting for
+    // a FIRST email" — but the code never tested the send date.
+    //
+    // Revive Carpet Repair was emailed 2026-08-06 and completed a day-4 follow-up on 08-14. Its
+    // Status was blank, it was not suppressed, not drafted, had not replied — so it stayed "sendable"
+    // permanently. Nothing could ever clear it: the sender will not first-touch an already-emailed
+    // lead, so no field it watches would ever change.
+    //
+    // That single phantom held `check-send-queue-drained` at "1 to go", which is the ONE condition
+    // auto-resume-production waits on. Production sat paused for **19 consecutive nights** — zero
+    // scrapes, zero videos — while every other resume condition was green.
+    //
+    // 🔑 A restart condition that can never be satisfied is not a safety check, it is an outage.
+    // Gated by check-send-queue-can-reach-zero.mjs so it cannot come back a third time.
+    !present(record, 'Email Sent Date')
   );
 }
 
