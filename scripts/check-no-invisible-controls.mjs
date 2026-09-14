@@ -29,7 +29,29 @@ import path from 'node:path';
 
 const SELF_TEST = process.argv.includes('--self-test');
 const SITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
-const FILES = ['admin/admin.css', 'portal/portal.css', 'portal/report/report.css', 'styles.css'];
+// 🔴🔴 THIS WAS A HARDCODED LIST OF FOUR, AND ONE OF THEM DID NOT EXIST.
+// It named `styles.css`; the real file is `style.css` (singular). `fs.existsSync` skipped the typo
+// silently, so the PUBLIC SITE's main stylesheet and docs/reports/report.css were never scanned —
+// and the gate still printed a confident green tick.
+// 🔑 A gate with a hardcoded file list does not fail when a file is added or renamed. It just
+// quietly covers less, which reads identically to covering everything.
+// → feedback_dead_check_selector_gap · feedback_a_hardcoded_count_is_a_skipped_query
+function discoverStylesheets(root) {
+  const out = [];
+  const SKIP = new Set(['node_modules', '.git', 'vendor', '.netlify', 'dist']);
+  (function walk(dir) {
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (SKIP.has(e.name)) continue;
+      const full = path.join(dir, e.name);
+      // /v/ holds ~hundreds of generated landing pages; they share the site stylesheet.
+      if (e.isDirectory()) { if (full.endsWith('/v')) continue; walk(full); }
+      else if (e.name.endsWith('.css')) out.push(path.relative(root, full));
+    }
+  })(root);
+  return out.sort();
+}
 
 // Colours that vanish against the surface they usually sit on.
 const RISKY_COLOR = /color\s*:\s*(#fff(f{3})?\b|#f{3}\b|white\b|#000\b|#000000\b|black\b)/i;
@@ -81,16 +103,15 @@ if (SELF_TEST) {
   process.exit(bad ? 1 : 0);
 }
 
-let all = [], read = 0;
-for (const f of FILES) {
-  const p = path.join(SITE, f);
-  if (!fs.existsSync(p)) continue;
-  read++;
-  all = all.concat(findings(fs.readFileSync(p, 'utf8'), f));
-}
-if (!read) { console.error('[contrast] INDETERMINATE — no stylesheets found'); process.exit(2); }
+const FILES = discoverStylesheets(SITE);
+// 🔴 Finding nothing is "could not look", never "nothing to find".
+if (!FILES.length) { console.error('[contrast] INDETERMINATE — no stylesheets discovered under the site repo'); process.exit(2); }
 
-console.log(`[contrast] ${read} stylesheet(s) scanned`);
+let all = [];
+for (const f of FILES) all = all.concat(findings(fs.readFileSync(path.join(SITE, f), 'utf8'), f));
+
+// Name them, so shrinking coverage is visible rather than silent.
+console.log(`[contrast] ${FILES.length} stylesheet(s) scanned: ${FILES.join(', ')}`);
 if (all.length) {
   console.error('\n✗ these controls can render invisible if one custom property fails to resolve:');
   for (const a of all) console.error(`    ${a}`);
