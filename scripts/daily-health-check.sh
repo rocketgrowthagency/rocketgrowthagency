@@ -111,6 +111,7 @@ run heal-onboarding-errors.mjs         "retry delivery steps whose cause was sin
 run check-onboarding-errors-surfaced.mjs "no client carries a caught-but-unsurfaced delivery failure"
 run check-send-queue-drained.mjs       "queue drain progress" status
 run check-send-queue-can-reach-zero.mjs "the send queue is DRAINABLE — no phantom lead can lock production"
+run check-ai-drafts-do-not-invent-prices.mjs "no AI draft invents a price, stat or testimonial"
 
 say ""
 say "── the sales surface ──"
