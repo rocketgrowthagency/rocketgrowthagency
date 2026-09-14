@@ -114,6 +114,7 @@ run check-send-queue-can-reach-zero.mjs "the send queue is DRAINABLE — no phan
 run check-ai-drafts-do-not-invent-prices.mjs "no AI draft invents a price, stat or testimonial"
 run check-every-playbook-step-can-run.mjs "every auto/hybrid onboarding step has something that can run it"
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
+run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 
 say ""
 say "── the sales surface ──"
