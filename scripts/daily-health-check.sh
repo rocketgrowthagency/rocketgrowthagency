@@ -116,6 +116,7 @@ run check-every-playbook-step-can-run.mjs "every auto/hybrid onboarding step has
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
+run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
 
 say ""
 say "── the sales surface ──"
