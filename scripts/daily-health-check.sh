@@ -112,6 +112,7 @@ run check-onboarding-errors-surfaced.mjs "no client carries a caught-but-unsurfa
 run check-send-queue-drained.mjs       "queue drain progress" status
 run check-send-queue-can-reach-zero.mjs "the send queue is DRAINABLE — no phantom lead can lock production"
 run check-ai-drafts-do-not-invent-prices.mjs "no AI draft invents a price, stat or testimonial"
+run check-every-playbook-step-can-run.mjs "every auto/hybrid onboarding step has something that can run it"
 
 say ""
 say "── the sales surface ──"

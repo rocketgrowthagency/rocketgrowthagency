@@ -119,6 +119,7 @@ const NOT_PREFLIGHT = {
   'check-send-queue-drained.mjs': 'manual restart probe for the 2026-08-25 production pause; not a nightly gate',
   'check-send-queue-can-reach-zero.mjs': 'restart-condition gate; runs in daily-health-check.sh. Reads the whole Airtable table, and a phantom queue entry cannot make tonight\'s video unsafe -- it makes production never START.',
   'check-ai-drafts-do-not-invent-prices.mjs': 'content-safety gate; runs in daily-health-check.sh. Reads the site repo and the onboarding records -- a fabricated price cannot make tonight\'s video unsafe, it makes a CLIENT PAGE false.',
+  'check-every-playbook-step-can-run.mjs': 'onboarding-graph gate; runs in daily-health-check.sh. Reads the site repo playbook and runner -- a step with no executor cannot make tonight\'s video unsafe, it makes CLIENT WORK unable to start.',
   'check-send-cap-held.mjs': 'reports a REAL cap breach from live data; surfaced via operational drift, must not block a build',
   'check-no-duplicate-send-rows.mjs': 'live Airtable state, not code health; surfaced via operational drift (3d). Watches the failure mode the 2026-08-27 inline-logging fix introduces — a double-write inflates countSentToday and SUPPRESSES sends, which looks like a quiet day, not an error',
   'check-day1-reservation-took.mjs': 'live Airtable state vs the last-pasted constant; surfaced via operational drift (3h). Not pre-flight - a thin Day-1 queue legitimately sends under the floor, so it must never fail a build',
