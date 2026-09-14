@@ -62,6 +62,12 @@ for (const line of src.split('\n')) {
   }
 }
 
+// A truncation marker must be detected wherever it appears in a body.
+{
+  const sample = 'Q2: What is ...\n\n[[TRUNCATED: this draft hit the token ceiling and is INCOMPLETE]]';
+  if (!sample.includes('[[TRUNCATED')) failures.push('self-test: truncation marker not detectable');
+}
+
 console.log(`[drafts] static: ${failures.length ? `${failures.length} problem(s)` : 'prompts clean'}`);
 if (SELF_TEST) {
   for (const f of failures) console.error(`  ✗ ${f}`);
@@ -103,6 +109,11 @@ for (const row of rows) {
     const invented = [...new Set(amounts)].filter((a) => !REAL.has(a));
     if (invented.length) {
       failures.push(`${key} (client ${String(row.client_id).slice(0, 8)}) contains price(s) that are not ours: $${invented.join(', $')}`);
+    }
+    // 🔴 A draft that ran out of tokens stops mid-sentence and silently drops whole sections. The RGA
+    // service page lost its CTA and internal links that way and still read as finished.
+    if (summary.includes('[[TRUNCATED')) {
+      failures.push(`${key} (client ${String(row.client_id).slice(0, 8)}) is TRUNCATED — sections are missing, do not approve`);
     }
   }
 }
