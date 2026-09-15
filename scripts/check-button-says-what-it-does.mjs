@@ -60,7 +60,18 @@ function body(id) {
 }
 
 // Reaching outside RGA = mail to a person, or a write to the client's public Google presence.
-const REACHES_OUT = /send-confirmation-email|gmail\.googleapis|send-kickoff-invite|calendar\/v3|mybusiness|push-gbp|localpost/i;
+// These always reach a human the moment they run — no further test needed.
+const ALWAYS_OUT = /send-confirmation-email|gmail\.googleapis|send-kickoff-invite|calendar\/v3|push-gbp|localpost/i;
+
+// 🔴 A Google Business API call is outward only when it MUTATES. `m1.gbp.optimize_categories` GETs
+// Google's global category taxonomy (v1/categories) so the model can only ever propose real category
+// names — that call touches no client and changes nothing, and flagging it as an unconfirmed outward
+// action was a false positive that would have trained someone to add a confirmation dialog to a
+// read. The write it feeds lives in gbp-publish, which is hand-run and gated on an approval.
+// 🔑 Keep the mutation test STRICT: any PATCH/POST/PUT/DELETE in the same runner re-arms this.
+const GBP_API = /mybusiness/i;
+const MUTATES = /method:\s*["'`](PATCH|POST|PUT|DELETE)["'`]/i;
+const reachesOut = (b) => ALWAYS_OUT.test(b) || (GBP_API.test(b) && MUTATES.test(b));
 
 console.log("── a button that reaches outside RGA must say so, and must ask ──");
 const fails = [];
@@ -75,7 +86,7 @@ if (unlabelled.length) {
 const outward = [];
 for (const s of steps) {
   const b = body(s.id);
-  if (b && REACHES_OUT.test(b)) outward.push(s);
+  if (b && reachesOut(b)) outward.push(s);
 }
 if (!outward.length) { console.error("  ✗ no outward-facing runner found — probe is wrong"); process.exit(2); }
 
