@@ -71,7 +71,15 @@ async function snapshotSurface(client, surface) {
     payload = {
       count: rows.length,
       by_keyword: rows.reduce((a, r) => { (a[r.keyword] ||= []).push({ rank: r.map_rank, at: r.created_at }); return a; }, {}),
-      best: rows.filter((r) => r.map_rank != null).reduce((m, r) => Math.min(m, r.map_rank), 999),
+      // 🔴 NULL, NOT 999. `Math.min(..., 999)` returns the seed when nothing ranks, so a business
+      // absent from every grid point recorded "best map rank 999" — and brain-record-audit reads
+      // this straight into `best_map_rank`, the field the client brain compares clients on. A
+      // sentinel in a numeric field is a fabricated measurement, the same defect as the grid's 21.
+      // → feedback_an_absence_must_never_be_readable_as_a_value
+      best: (() => {
+        const ranked = rows.map((r) => r.map_rank).filter((v) => v != null && v > 0);
+        return ranked.length ? Math.min(...ranked) : null;
+      })(),
     };
   } else if (surface === 'gbp') {
     // No live GBP read yet (needs the manager add to actually work — fixed 2026-09-05, unproven).

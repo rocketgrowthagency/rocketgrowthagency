@@ -492,13 +492,15 @@ After scan: run again per remaining keyword.`,
   },
   {
     id: "m1.audit.kpi_baseline", title: "Capture baseline KPIs",
-    type: "manual", dependsOn: ["m1.access.analytics", "m1.access.search_console"],
-    instructions: `Pull last 30 days from GA4 + GSC + GBP Insights. Fill onboarding section 10.0:
-- Total leads, calls, form leads, GBP calls/clicks/directions/views
-- Organic sessions + impressions
-- Review count + rating
-- Priority keywords in top 3 / top 10
-- Conversion rate, revenue from tracked leads`,
+    // 🔴 Was manual — "pull last 30 days and fill section 10.0" is a recommendation to do work by
+    // hand, and a hand-copied baseline is a number nobody can re-derive. Step 58's whole report is
+    // measured against it, so a typo here becomes a month of wrong progress.
+    // The runner reads what the deep assessment already captured; it re-fetches nothing.
+    type: "auto", dependsOn: ["m1.access.analytics", "m1.access.search_console"],
+    actionLabel: "⚡ Capture the baseline",
+    instructions: `Reads the baseline straight out of the snapshots the deep assessment already captured — Search Console, Analytics, the Google listing, the map grid and site speed — and writes them down as the numbers Month 1 is measured against.
+
+Nothing is re-fetched and nothing is typed by hand. A source that was unavailable is named as unavailable rather than recorded as zero, because 'we did not measure' and 'we measured nothing' are different baselines and only one of them leaves room to show progress.`,
   },
   {
     id: "m1.audit.citations", title: "Run citation audit",
