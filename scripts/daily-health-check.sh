@@ -27,6 +27,14 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot ente
 # 🔴 `set -a` only; never echo a value. These are the 13 secrets backup-secrets.sh exists to protect.
 if [ -f .env ]; then set -a; . ./.env >/dev/null 2>&1 || true; set +a; fi
 
+
+# 🔑 RECORD EVERY VERDICT. check-no-gate-is-permanently-indeterminate reads this to find gates that
+# have NEVER once answered — wired, counted, and blind. Cheap: one line appended per gate per run.
+# → feedback_dead_check_selector_gap
+VERDICT_LOG="output/gate-verdicts.jsonl"
+mkdir -p output
+record_verdict() { printf '{"gate":"%s","exit":%s,"at":"%s"}\n' "$1" "$2" "$(date -u +%FT%TZ)" >> "$VERDICT_LOG"; }
+
 QUIET=0; [ "${1:-}" = "--quiet" ] && QUIET=1
 FAIL=0; INDET=0; OK=0
 say() { [ "$QUIET" -eq 1 ] || printf "%s\n" "$1"; }
@@ -42,6 +50,7 @@ run_args() {
   if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
   local out rc
   out=$(node "scripts/$script" $args 2>&1); rc=$?
+  record_verdict "$script" "$rc"
   if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"
   elif [ "$rc" -eq 2 ]; then
     INDET=$((INDET+1))
@@ -59,6 +68,7 @@ run() {
   if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
   local out rc
   out=$(node "scripts/$script" 2>&1); rc=$?
+  record_verdict "$script" "$rc"
   if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"
   elif [ "$rc" -eq 2 ]; then
     INDET=$((INDET+1))
@@ -147,6 +157,7 @@ run check-change-ledger-is-append-only.mjs "the record of what we changed cannot
 run check-no-horizontal-bleed.mjs "no card or page can be pushed sideways by its own content"
 run check-one-palette.mjs               "colour comes from tokens; a rank scale is never coloured like a state"
 run check-ga4-property-is-the-one-receiving-data.mjs "we read the GA4 property the site actually reports to"
+run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
 say "── the sales surface ──"
