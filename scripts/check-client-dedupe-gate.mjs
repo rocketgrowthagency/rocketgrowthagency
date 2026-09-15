@@ -48,6 +48,15 @@ async function q(sql) {
     body: JSON.stringify({ query: sql }),
   });
   const t = await r.text();
+  // 🔴 A 5xx / 429 means WE COULD NOT LOOK — never that the index is missing. This threw an
+  // unhandled error during a Supabase maintenance window on 2026-09-15, and the runner reported
+  // "an archived client cannot be silently re-created" as FAILING. A gate that cries wolf during
+  // planned maintenance is a gate people learn to skim past.
+  // → feedback_indeterminate_is_not_a_finding · feedback_exit_code_semantics_for_gates
+  if (r.status >= 500 || r.status === 429) {
+    console.error(`[dedupe] INDETERMINATE — Supabase returned ${r.status}: ${t.slice(0, 160)}`);
+    process.exit(2);
+  }
   if (!r.ok) throw new Error(`${r.status}: ${t.slice(0, 200)}`);
   return JSON.parse(t);
 }
