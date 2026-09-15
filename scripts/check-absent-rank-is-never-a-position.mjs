@@ -169,8 +169,17 @@ if (adminColor && adminBody) {
     const col = new Function(`${adminBody}; ${adminColor}; return rankColor;`)();
     const absent = col(null);
     const first = col(1);
+    // 🔴 The DISTINCTION is the property, not the literal. Asserting `=== "#c3cad6"` broke the day
+    // colours moved into design tokens — rankColor now returns `var(--admin-rank-absent,#c3cad6)`,
+    // which is the same colour and better code. A gate pinned to a literal fails on a correct
+    // refactor and passes on a wrong one that happens to use the right string.
+    // 🔑 What must hold: absent is not the #1 colour, and it names the ABSENT swatch.
     if (absent === first) problems.push(`admin rankColor(null) === rankColor(1) (${absent}) — a business absent from a point is painted as if it ranked #1 there.`);
-    if (absent !== "#c3cad6") problems.push(`admin rankColor(null) = ${absent} — expected the neutral absent swatch #c3cad6.`);
+    if (!/c3cad6|rank-absent/i.test(String(absent))) {
+      problems.push(`admin rankColor(null) = ${absent} — expected the neutral absent swatch (#c3cad6 or --admin-rank-absent).`);
+    }
+    // The scale must still be a scale: #1 and #8-20 cannot collapse to the same colour.
+    if (col(1) === col(15)) problems.push(`admin rankColor(1) === rankColor(15) — the rank scale has collapsed to one colour.`);
   } catch (e) { problems.push(`admin rankColor could not be executed: ${String(e.message).slice(0, 90)}`); }
 }
 
