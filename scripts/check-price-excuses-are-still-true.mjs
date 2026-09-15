@@ -56,7 +56,10 @@ const ALLOWED = {
   "docs/reports/generated/ohh-rats-free-growth-audit-report.html": ["$2,500"],
   "docs/reports/ohhrats-free-growth-audit-report.html":            ["$1,250","$2,500"],
   "netlify/functions/backfill-gbp-hours.js":  ["=1500"],
-  "netlify/functions/flow-execute.js":        [": 1500",": 3500",": 750"],
+  // `commit_3mo` recorded 2026-09-14: priceCtx() looks plans up BY KEY out of contract-generate.PLANS.
+  // It is a plan identifier, not an amount — but it is recorded here rather than pattern-excused, so
+  // that any FURTHER price token appearing in this file still fails the gate.
+  "netlify/functions/flow-execute.js":        [": 1500",": 3500",": 750","commit_3mo"],
   "netlify/functions/v2-rank-grid-background.js": [": 1500"],
 };
 

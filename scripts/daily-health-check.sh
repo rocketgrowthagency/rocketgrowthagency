@@ -172,6 +172,7 @@ run check-price-consistency.mjs       "phone, email and agreement state the same
 run check-offer-matches-contract.mjs  "the price we advertise is the price the contract charges"
 run_args audit-coverage.mjs verify     "no onboarding-audit check claims automation it lacks"
 run check-rank-tracking-sane.mjs       "every tracked grid measures a real position"
+run check-absent-rank-is-never-a-position.mjs "a business absent from the grid never renders as a rank"
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-no-two-clients-share-a-google-property.mjs "no client reports another business's Google data"
 run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"

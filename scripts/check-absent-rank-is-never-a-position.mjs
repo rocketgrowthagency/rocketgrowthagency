@@ -1,0 +1,190 @@
+#!/usr/bin/env node
+/**
+ * check-absent-rank-is-never-a-position.mjs — "we searched and found nothing" must never render,
+ * count, or average as a rank.
+ *
+ * ─── WHY (2026-09-14) ────────────────────────────────────────────────────────────────────────────
+ * The geo-grid scanner seeded every cell with **21** and wrote 21 for any point where the business
+ * was not found. Three months of RGA's own scans therefore stored "rank 21" at all 25 points for a
+ * business that ranked NOWHERE — indistinguishable from genuinely holding position 21, and read by
+ * the brain, the admin grid, the client portal and the monthly report as if it were a measurement.
+ *
+ * Storing NULL instead is the honest fix, and on its own it made things WORSE, because every
+ * consumer compared ranks with `<=`:
+ *
+ *     Number(null)            === 0        // "finite", so it passed every isFinite() guard
+ *     null <= 2               === true     // painted bright green at #1
+ *     ranks.filter(r => r<=3) .length      // counted EVERY absent cell as a top-3 position
+ *
+ * A portal showing a business that ranks nowhere would have read **"best rank 0, 100% in top 3"** —
+ * the exact inverse of the truth, in the client's own dashboard.
+ *
+ * 🔑 The class: an ABSENCE sentinel and a POSITION must never share a type. Every read of a stored
+ * cell goes through one helper that returns `null` for absent, and every comparison null-guards.
+ * → project_rank_grid_uniform_sentinel · feedback_an_excluded_classification_is_a_claim
+ * → feedback_fix_the_class_not_the_instance
+ *
+ * ─── WHAT IT ASSERTS ─────────────────────────────────────────────────────────────────────────────
+ *   1. The producer seeds grids with null and writes null for not-found — never a 21 sentinel.
+ *   2. No consumer coerces a stored rank with bare `Number(...)`; they use the shared helper.
+ *   3. BEHAVIOURAL: the real helpers, extracted from the shipped files and executed, classify
+ *      null / undefined / "" / 0 / 21 as ABSENT and a real position as a position.
+ *
+ * Exit 0 = absent stays absent · 1 = an absence can be read as a rank · 2 = could not tell.
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+// Overridable ONLY so the sabotage harness can point at mutated copies of these same files; the
+// default is always the real repo. → feedback_a_test_nobody_runs_is_not_a_guard
+const SITE = process.env.RANK_GATE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const F = {
+  portal: path.join(SITE, "portal/portal.js"),
+  admin: path.join(SITE, "admin/admin.js"),
+  producer: path.join(SITE, "netlify/functions/v2-rank-grid-background.js"),
+  brain: path.join(SITE, "netlify/functions/v2-brain-analysis-background.js"),
+};
+
+const problems = [];
+const read = (p) => { try { return fs.readFileSync(p, "utf8"); } catch { return null; } };
+
+const src = {};
+for (const [k, p] of Object.entries(F)) {
+  src[k] = read(p);
+  if (src[k] == null) { console.error(`[absent-rank] INDETERMINATE — cannot read ${p}`); process.exit(2); }
+}
+
+// ── 1. The producer must not manufacture a sentinel ──────────────────────────────────────────────
+// Strip comments first: this file DOCUMENTS the old `fill(21)` in prose, and a check that trips on
+// its own explanation is a dead check. → feedback_a_check_must_not_validate_itself
+const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const prod = stripComments(src.producer);
+if (/Array\(\s*GRID\s*\)\.fill\(\s*21\s*\)/.test(prod) || /\.fill\(\s*21\s*\)/.test(prod)) {
+  problems.push("v2-rank-grid-background seeds the grid with 21 — not-found must seed as null.");
+}
+if (/map_rank:\s*\([^)]*\)\s*\?\s*21\s*:/.test(prod)) {
+  problems.push("v2-rank-grid-background writes map_rank 21 for not-found — it must write null.");
+}
+// Every aggregate over grid cells must null-guard, or `null <= 20` counts absence as a position.
+for (const m of prod.matchAll(/allRanks\.filter\(\s*r\s*=>\s*([^)]+)\)/g)) {
+  if (!/r\s*!=\s*null/.test(m[1])) {
+    problems.push(`v2-rank-grid-background aggregates without a null guard: filter(r => ${m[1].trim()}) — null <= N is TRUE in JS.`);
+  }
+}
+
+// ── 2. No consumer may bare-coerce a stored rank ─────────────────────────────────────────────────
+// `Number(null)` is 0 and passes Number.isFinite, so a bare coercion silently turns absence into #0.
+for (const [name, key] of [["portal/portal.js", "portal"], ["admin/admin.js", "admin"]]) {
+  const body = stripComments(src[key]);
+  for (const m of body.matchAll(/Number\(\s*([A-Za-z_$][\w$]*)\.map_rank\s*\)/g)) {
+    problems.push(`${name} coerces a stored rank with Number(${m[1]}.map_rank) — route it through the shared cell-rank helper so null stays absent.`);
+  }
+}
+
+// ── 3. The brain prompt must not hardcode a grid size ────────────────────────────────────────────
+// The scanner dropped 9×9 → 5×5 for cost control and is env-configurable; a competitor holding all
+// 25 points was described as "25/81 searches (31% coverage)".
+// → feedback_a_hardcoded_count_is_a_skipped_query
+const brain = stripComments(src.brain);
+for (const bad of [/\/81\s+searches/, /of\s+81\s+cells/, /\*\s*0\.81/, /appearances\s*\/\s*81/]) {
+  if (bad.test(brain)) problems.push(`v2-brain-analysis-background hardcodes an 81-cell grid (${bad}) — derive the count from the grid it was handed.`);
+}
+if (/avg_rank\s*\|\|\s*21/.test(brain)) {
+  problems.push("v2-brain-analysis-background coerces a null avg_rank to 21 — 'nowhere → nowhere' then subtracts to 0 and prints 'improving'.");
+}
+if (/rankGrid\.avg_rank\s*>\s*20\s*\?/.test(brain)) {
+  problems.push("v2-brain-analysis-background tests `avg_rank > 20` to detect not-ranking — avg_rank is NULL when nothing ranks, and null > 20 is FALSE, so that branch never fires.");
+}
+
+// ── 4. BEHAVIOURAL — run the shipped helpers, don't just read them ───────────────────────────────
+// A static scan proves the text changed. Executing the real functions proves the behaviour did.
+function extract(body, decl) {
+  const i = body.indexOf(decl);
+  if (i < 0) return null;
+  // Walk braces from the first { after the declaration to find the function body.
+  const start = body.indexOf("{", i);
+  if (start < 0) return null;
+  let depth = 0;
+  for (let j = start; j < body.length; j++) {
+    if (body[j] === "{") depth++;
+    else if (body[j] === "}") { depth--; if (depth === 0) return body.slice(i, j + 1); }
+  }
+  return null;
+}
+
+const ABSENT_INPUTS = [null, undefined, "", 0, 21, 99];
+const REAL_INPUTS = [1, 3, 7, 20];
+
+// portal: CA_CELL_RANK is an arrow const, terminated by the following newline.
+const caLine = src.portal.split("\n").find((l) => l.trim().startsWith("const CA_CELL_RANK"));
+const caBody = extract(src.portal, "const CA_CELL_RANK");
+const adminBody = extract(src.admin, "function cellRank");
+
+if (!caBody && !caLine) problems.push("portal/portal.js no longer defines CA_CELL_RANK — the single reading of a stored cell is gone.");
+if (!adminBody) problems.push("admin/admin.js no longer defines cellRank() — the single reading of a stored cell is gone.");
+
+for (const [label, body, callee] of [["portal CA_CELL_RANK", caBody, "CA_CELL_RANK"], ["admin cellRank", adminBody, "cellRank"]]) {
+  if (!body) continue;
+  let fn;
+  try { fn = new Function(`${body}; return ${callee};`)(); } catch (e) {
+    problems.push(`${label} could not be executed: ${String(e.message).slice(0, 90)}`);
+    continue;
+  }
+  for (const v of ABSENT_INPUTS) {
+    const got = fn(v);
+    // 21 and 99 are "out of range" rather than strictly absent — both must simply never be a
+    // top-of-grid position. What matters is that they are not treated as a held rank <= 20.
+    const okAbsent = v === 21 || v === 99 ? (got == null || got > 20) : got == null;
+    if (!okAbsent) problems.push(`${label}(${JSON.stringify(v)}) returned ${JSON.stringify(got)} — an absence became a position.`);
+  }
+  for (const v of REAL_INPUTS) {
+    if (fn(v) !== v) problems.push(`${label}(${v}) returned ${JSON.stringify(fn(v))} — a real position was lost.`);
+  }
+}
+
+// The colour/class functions must paint absence as absent, never as #1.
+const classBody = src.portal.split("\n").find((l) => l.trim().startsWith("const CA_GRID_CLASS"));
+const adminClass = extract(src.admin, "function rankCellClass");
+const adminColor = extract(src.admin, "function rankColor");
+
+if (classBody && caBody) {
+  try {
+    const cls = new Function(`${caBody}; ${classBody}; return CA_GRID_CLASS;`)();
+    for (const v of [null, undefined, 21]) {
+      if (cls(v) !== "n") problems.push(`portal CA_GRID_CLASS(${JSON.stringify(v)}) = "${cls(v)}" — absence must use the neutral "n" class, not a ranked colour.`);
+    }
+    if (cls(1) !== "g1") problems.push(`portal CA_GRID_CLASS(1) = "${cls(1)}" — a real #1 lost its class.`);
+  } catch (e) { problems.push(`portal CA_GRID_CLASS could not be executed: ${String(e.message).slice(0, 90)}`); }
+}
+if (adminClass && adminBody) {
+  try {
+    const cls = new Function(`${adminBody}; ${adminClass}; return rankCellClass;`)();
+    for (const v of [null, undefined, 21]) {
+      if (cls(v) !== "n") problems.push(`admin rankCellClass(${JSON.stringify(v)}) = "${cls(v)}" — absence must use the neutral "n" class.`);
+    }
+  } catch (e) { problems.push(`admin rankCellClass could not be executed: ${String(e.message).slice(0, 90)}`); }
+}
+if (adminColor && adminBody) {
+  try {
+    const col = new Function(`${adminBody}; ${adminColor}; return rankColor;`)();
+    const absent = col(null);
+    const first = col(1);
+    if (absent === first) problems.push(`admin rankColor(null) === rankColor(1) (${absent}) — a business absent from a point is painted as if it ranked #1 there.`);
+    if (absent !== "#c3cad6") problems.push(`admin rankColor(null) = ${absent} — expected the neutral absent swatch #c3cad6.`);
+  } catch (e) { problems.push(`admin rankColor could not be executed: ${String(e.message).slice(0, 90)}`); }
+}
+
+// ── Report ───────────────────────────────────────────────────────────────────────────────────────
+console.log("── absent ranks stay absent ──");
+if (problems.length) {
+  console.error("\n✗ an absence can be read as a rank:");
+  for (const p of problems) console.error(`    ${p}`);
+  console.error("\n  A business that ranks NOWHERE must never display, count or average as a position.");
+  console.error("  Store null, read through the shared helper, and null-guard every comparison.");
+  process.exit(1);
+}
+console.log("  ✅ producer stores null for not-found; no bare Number() coercions");
+console.log("  ✅ brain prompt derives the grid size instead of assuming 81");
+console.log("  ✅ portal + admin helpers executed: null / 21 classify as ABSENT, real ranks survive");
+console.log("\n✅ absence and position cannot be confused on any surface.");
+process.exit(0);

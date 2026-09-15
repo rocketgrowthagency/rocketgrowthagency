@@ -29,6 +29,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+const SELF_TEST = process.argv.includes("--self-test");
+
+// How many flat scans before we call it a measurement problem rather than a slow month.
+const FLAT_SCAN_LIMIT = 3;
+
+if (SELF_TEST) { await selfTest(); process.exit(0); }
+
 for (const line of fs.readFileSync(path.resolve(HERE, "..", ".env"), "utf8").split("\n")) {
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
@@ -36,9 +43,6 @@ for (const line of fs.readFileSync(path.resolve(HERE, "..", ".env"), "utf8").spl
 const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!U || !K) { console.error("✗ Supabase credentials unavailable"); process.exit(2); }
 const h = { apikey: K, Authorization: `Bearer ${K}` };
-
-// How many flat scans before we call it a measurement problem rather than a slow month.
-const FLAT_SCAN_LIMIT = 3;
 
 let snaps, clients;
 try {
@@ -51,9 +55,21 @@ try {
 if (!Array.isArray(snaps)) { console.error(`✗ unexpected response: ${JSON.stringify(snaps).slice(0, 160)}`); process.exit(2); }
 if (!snaps.length) { console.log("── map-rank tracking ──\n  no rank snapshots stored yet — nothing to judge"); process.exit(2); }
 
+console.log("── map-rank tracking ──");
+const fails = evaluate(snaps, clients);
+
+console.log("");
+if (fails.length) {
+  console.error(`🔴 ${fails.length} tracked keyword(s) are measuring nothing usable — see above`);
+  process.exit(1);
+}
+console.log("✅ map-rank tracking sane: every active grid is measuring a real position");
+process.exit(0);
+
+/** Judge every (client, keyword) series. Pure: takes rows, returns failure labels, logs as it goes. */
+function evaluate(snaps, clients) {
 const byId = new Map((clients || []).map((c) => [c.id, c]));
 const fails = [];
-console.log("── map-rank tracking ──");
 
 const series = new Map();
 for (const s of snaps) {
@@ -79,11 +95,34 @@ for (const [k, rows] of series) {
     continue;
   }
 
-  const flat = (last.grid || []).flat().filter((v) => v != null);
-  if (!flat.length) { console.log(`  ▫️  ${name} — "${keyword}": latest scan holds no grid points`); continue; }
+  const cells = (last.grid || []).flat();
+  const flat = cells.filter((v) => v != null);
+  const flatRun = rows.slice(-FLAT_SCAN_LIMIT);
+
+  // 🔴 ABSENT EVERYWHERE, SCAN AFTER SCAN. A grid of all-NULL is honest data — we searched every
+  // point and the business was in none of them — but it is also the loudest possible signal that the
+  // tracked keyword is wrong, and it must not pass quietly just because nothing is fabricated.
+  //
+  // This branch exists because the previous scanner wrote 21 into every empty cell, and the UNIFORM
+  // check below was catching that by accident. Storing null instead was the correct fix, and on its
+  // own it would have DELETED the alarm: `flat` goes empty, the old code logged a ▫️ note and moved
+  // on. A fix that silences the check it was meant to satisfy is not a fix.
+  // → feedback_a_fix_without_a_gate_regresses · feedback_correct_is_not_the_same_as_happening
+  if (!flat.length) {
+    const blankRun = flatRun.filter((s) => !(s.grid || []).flat().some((v) => v != null));
+    if (cells.length && blankRun.length >= FLAT_SCAN_LIMIT) {
+      fails.push(`${name} "${keyword}" absent`);
+      console.log(`  🔴 ${name} — "${keyword}": absent from ALL ${cells.length} grid points across the last ` +
+        `${blankRun.length} scans (${blankRun.map((s) => s.snapshot_date).join(", ")}). The scan is working — it ` +
+        `is the ranking that does not exist. Confirm the keyword has real Search Console impressions for this ` +
+        `business before spending another month optimising for it.`);
+    } else {
+      console.log(`  ▫️  ${name} — "${keyword}": not found at any grid point this scan (${cells.length || "no"} points searched)`);
+    }
+    continue;
+  }
 
   const uniform = new Set(flat).size === 1;
-  const flatRun = rows.slice(-FLAT_SCAN_LIMIT);
   const pinnedZero = flatRun.length >= FLAT_SCAN_LIMIT && flatRun.every((s) => (s.pct_top3 ?? 0) === 0);
 
   if (uniform) {
@@ -103,10 +142,50 @@ for (const [k, rows] of series) {
       `range ${Math.min(...flat)}–${Math.max(...flat)} across ${flat.length} points`);
   }
 }
-
-console.log("");
-if (fails.length) {
-  console.error(`🔴 ${fails.length} tracked keyword(s) are measuring nothing usable — see above`);
-  process.exit(1);
+return fails;
 }
-console.log("✅ map-rank tracking sane: every active grid is measuring a real position");
+
+/**
+ * Credential-free sabotage test. Each case is a grid this gate MUST judge a specific way — the
+ * absence case exists because nulling the 21 sentinel very nearly removed the alarm it was raising.
+ */
+async function selfTest() {
+  const C = "11111111-1111-1111-1111-111111111111";
+  const clients = [{ id: C, business_name: "Test Co", primary_service: "seo company", archived_at: null }];
+  const sq = (v, n = 25) => { const w = Math.sqrt(n); return Array.from({ length: w }, () => Array(w).fill(v)); };
+  const snap = (date, grid, extra = {}) => ({ client_id: C, keyword: "seo company", snapshot_date: date, grid, pct_top3: 0, avg_rank: null, ...extra });
+  const varied = () => { const g = sq(null); let i = 0; for (const r of g) for (let c = 0; c < r.length; c++) r[c] = (i++ % 9) + 1; return g; };
+
+  const cases = [
+    { name: "uniform 21 sentinel still caught",
+      snaps: [snap("2026-01-01", sq(21))], expect: true },
+    { name: "uniform 15 (a different sentinel) caught",
+      snaps: [snap("2026-01-01", sq(15))], expect: true },
+    { name: "THREE all-absent scans are reported",
+      snaps: ["2026-01-01", "2026-02-01", "2026-03-01"].map((d) => snap(d, sq(null))), expect: true },
+    { name: "ONE all-absent scan is not yet a pattern",
+      snaps: [snap("2026-01-01", sq(null))], expect: false },
+    { name: "a real varied grid passes",
+      snaps: [snap("2026-01-01", varied(), { avg_rank: 5, pct_top3: 20 })], expect: false },
+    { name: "real ranks with a null average is caught",
+      snaps: [snap("2026-01-01", varied(), { avg_rank: null, pct_top3: 20 })], expect: true },
+    { name: "three scans pinned at 0% top-3 is caught",
+      snaps: ["2026-01-01", "2026-02-01", "2026-03-01"].map((d) => snap(d, varied(), { avg_rank: 12, pct_top3: 0 })), expect: true },
+    { name: "an archived client is never judged",
+      snaps: [snap("2026-01-01", sq(21))],
+      clients: [{ id: C, business_name: "Test Co", primary_service: "seo company", archived_at: "2026-01-02" }], expect: false },
+  ];
+
+  const log = console.log; let pass = 0;
+  for (const c of cases) {
+    console.log = () => {};
+    const fails = evaluate(c.snaps, c.clients || clients);
+    console.log = log;
+    const got = fails.length > 0;
+    const ok = got === c.expect;
+    if (ok) pass++;
+    log(`  ${ok ? "✅" : "🔴"} ${c.name} — expected ${c.expect ? "CAUGHT" : "pass"}, got ${got ? "CAUGHT" : "pass"}`);
+  }
+  log(`\n${pass}/${cases.length} self-test cases passed`);
+  if (pass !== cases.length) process.exit(1);
+}

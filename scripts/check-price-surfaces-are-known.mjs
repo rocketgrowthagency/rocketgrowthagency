@@ -84,7 +84,12 @@ const SURFACES = {
   // only a price in context, so the inventory records the human decision rather than the regex
   // getting ever cleverer. Re-inspect if one of them ever starts handling money.
   "netlify/functions/backfill-gbp-hours.js":    ["EXCLUDED", "'limit=1500' in a usage comment — a page size, not money"],
-  "netlify/functions/flow-execute.js":          ["EXCLUDED", "GBP description cap (750 chars) and maxTokens 1500 — limits, not money"],
+  // Excuse rewritten 2026-09-14: the file gained `priceCtx()`, so it now NAMES plans where before it
+  // only held char/token caps. It stays EXCLUDED because it owns no price VALUE — every number comes
+  // from `require("./contract-generate").PLANS` (schedule[0].amount, recurring_after_term). It cannot
+  // be DERIVED in this gate's sense, since that class forbids any assigned numeric literal and this
+  // file legitimately has a 750-char GBP cap and 1500/3500 token ceilings.
+  "netlify/functions/flow-execute.js":          ["EXCLUDED", "priceCtx() injects real pricing into AI draft prompts so a draft cannot invent one; it READS contract-generate.PLANS and owns no price value. 'commit_3mo' is a plan KEY used for that lookup, not an amount. 750 = GBP description cap, 1500/3500 = maxTokens"],
   "netlify/functions/v2-rank-grid-background.js":["EXCLUDED", "1500 = search radius in metres"],
   "netlify/functions/admin-record-payment.js":  ["DERIVED", "manual/check/ACH payments — CREATES invoice #1 and #2, so it must derive: contract-generate.firstInvoiceAmount(). Was EXCLUDED with a false excuse and held pre-discount $2,500/$1,250 (fixed 2026-09-10)"],
 };

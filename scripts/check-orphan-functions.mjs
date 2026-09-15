@@ -40,6 +40,14 @@ const MANUAL_ONLY = {
     "the Tier-1 WRITE driver. Deliberately hand-run: it edits a client's PUBLIC listing, so a human " +
     "decides when it fires. It is dry by default and only ever acts on items a stored plan ranked " +
     "automatable. Wire it to a schedule only if Chris asks for unattended writes.",
+  "gbp-publish.js":
+    "pushes an APPROVED deliverable to a client's live Google Business Profile — same family as " +
+    "apply-plan-automatable, and hand-run for the same reason: it edits a PUBLIC listing under the " +
+    "client's name. It already refuses unless `approval.decision === 'approved'`, publishes only the " +
+    "frozen `approved_content`, and reads the listing back to confirm the field actually changed. A " +
+    "one-click admin button would make an irreversible public write one mis-click away, so the " +
+    "trigger stays deliberate. The admin's job is to SHOW what was published (task.published), not " +
+    "to fire it. Wire a button only if Chris asks for one.",
 };
 
 // Files that are infrastructure, not capabilities.
