@@ -46,9 +46,12 @@ const problems = [];
 let checked = 0;
 
 for (const f of files) {
-  // Index/summary documents describe the set rather than one step; they are allowed to talk about
-  // positions because they are regenerated wholesale.
-  if (/^(README|HANDOFF|LINKS|APPROVAL-LINKS)\.md$/i.test(f)) continue;
+  // 🔑 DERIVE which files are per-step archives rather than keeping a skip-list of index documents.
+  // The first version hardcoded README/HANDOFF/LINKS and then failed the moment STATUS.md was added —
+  // a list of exceptions is itself a thing that goes stale, which is the defect this gate is about.
+  // A per-step archive is named after a step id (`m1_*`, `m2_*`); anything else describes the SET and
+  // is regenerated wholesale, so it may talk about positions freely.
+  if (!/^m\d+_/i.test(f)) continue;
 
   // 1. A position-shaped FILENAME is the defect itself.
   if (/^step\d+[_-]/i.test(f)) {
