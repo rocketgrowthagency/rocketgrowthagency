@@ -144,6 +144,7 @@ fi
 run check-every-approval-is-archived.mjs "every decision is archived AND committed, with its content"
 run check-artifacts-are-keyed-by-id.mjs "no archived mockup is keyed by, or lying about, a step position"
 run check-change-ledger-is-append-only.mjs "the record of what we changed cannot itself be changed"
+run check-no-horizontal-bleed.mjs "no card or page can be pushed sideways by its own content"
 
 say ""
 say "── the sales surface ──"
