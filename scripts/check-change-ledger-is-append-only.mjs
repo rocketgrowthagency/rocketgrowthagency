@@ -36,7 +36,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB = process.env.LEDGER_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = path.join(WEB, "netlify/functions");
-const TABLE = "client_change_ledger";
+const TABLE = "client_change_log";
 
 if (!fs.existsSync(FNS)) { console.error(`[ledger] INDETERMINATE — no functions dir at ${FNS}`); process.exit(2); }
 
@@ -53,8 +53,18 @@ for (const f of files) {
   // A PATCH or DELETE against this table is the defect, wherever it appears.
   for (const m of src.matchAll(new RegExp(`${TABLE}[^\\n]*`, "g"))) {
     const line = m[0];
-    const near = src.slice(Math.max(0, m.index - 260), m.index + 260);
-    if (/method:\s*["'`](PATCH|PUT|DELETE)["'`]/i.test(near) && !/selftest|probe/i.test(near)) {
+    // 🔴 LOOK FORWARD ONLY, AND ONLY WITHIN THIS CALL. The first version scanned 260 chars either
+    // side of the table name and reported heal-onboarding-errors for a `method: "PATCH"` belonging
+    // to a completely different fetch three lines above — which writes the onboarding record, not
+    // the ledger. The ledger write there is a correct POST.
+    //
+    // 🔑 A false finding is as expensive as a missed one: it sends someone to "fix" working code,
+    // and the next person learns to skim past this gate. Bound the window to the options object of
+    // the fetch that names the table. → feedback_a_check_must_not_validate_itself
+    const tail = src.slice(m.index, m.index + 300);
+    const optsEnd = tail.indexOf("})");
+    const opts = optsEnd > 0 ? tail.slice(0, optsEnd) : tail;
+    if (/method:\s*["'`](PATCH|PUT|DELETE)["'`]/i.test(opts) && !/selftest|probe/i.test(opts)) {
       problems.push(`${f} issues a PATCH/PUT/DELETE against ${TABLE} — the ledger is append-only. (${line.slice(0, 80)})`);
     }
   }
@@ -108,7 +118,7 @@ try {
 const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (U && K) {
   try {
-    const r = await fetch(`${U}/rest/v1/${TABLE}?select=id,after_value,content_hash&limit=500`, {
+    const r = await fetch(`${U}/rest/v1/${TABLE}?select=id,value_after,content_hash&limit=500`, {
       headers: { apikey: K, Authorization: `Bearer ${K}` },
     });
     const rows = await r.json();
@@ -116,7 +126,7 @@ if (U && K) {
       let bad = 0;
       for (const row of rows) {
         if (!row.content_hash) continue;
-        const v = row.after_value;
+        const v = row.value_after;
         const s = typeof v === "string" ? v : JSON.stringify(v, Object.keys(v || {}).sort());
         const h = crypto.createHash("sha256").update(s || "").digest("hex").slice(0, 32);
         if (h !== row.content_hash) { bad++; problems.push(`ledger row ${row.id} has an after_value that does not match its stored hash — it was edited outside the app.`); }
