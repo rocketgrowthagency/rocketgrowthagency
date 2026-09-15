@@ -158,6 +158,7 @@ run check-no-horizontal-bleed.mjs "no card or page can be pushed sideways by its
 run check-one-palette.mjs               "colour comes from tokens; a rank scale is never coloured like a state"
 run check-ga4-property-is-the-one-receiving-data.mjs "we read the GA4 property the site actually reports to"
 run check-client-boundary-is-declared.mjs "one field decides what a client sees, and both portals read it"
+run check-client-never-sees-our-internals.mjs "no client endpoint returns a step id, raw JSON or an error payload"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
