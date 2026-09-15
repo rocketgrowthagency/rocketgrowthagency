@@ -117,6 +117,8 @@ run check-no-invisible-controls.mjs   "no control can render invisible if a CSS 
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
+run check-drafts-use-real-services.mjs  "no draft describes a client using their search term"
+run export-approvals.mjs               "every client decision archived to markdown"
 
 say ""
 say "── the sales surface ──"
