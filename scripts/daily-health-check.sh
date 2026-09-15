@@ -146,6 +146,7 @@ run check-artifacts-are-keyed-by-id.mjs "no archived mockup is keyed by, or lyin
 run check-change-ledger-is-append-only.mjs "the record of what we changed cannot itself be changed"
 run check-no-horizontal-bleed.mjs "no card or page can be pushed sideways by its own content"
 run check-one-palette.mjs               "colour comes from tokens; a rank scale is never coloured like a state"
+run check-ga4-property-is-the-one-receiving-data.mjs "we read the GA4 property the site actually reports to"
 
 say ""
 say "── the sales surface ──"
