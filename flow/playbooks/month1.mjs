@@ -292,6 +292,36 @@ changes them, and every later audit then measures the wrong business.`,
     },
   },
   {
+    // 🔴 A DUPLICATE LISTING IS NOT A RANK PROBLEM, AND A RANK NUMBER CANNOT SAY SO. RGA's own
+    // 81-point grid reported the business nowhere; the cause was two live listings under one name,
+    // which split Google's confidence so one gets suppressed. Only counting the listings finds it —
+    // the Business Profile API reports how many locations we OWN, and a duplicate under a different
+    // Google account is invisible to it.
+    id: "m1.audit.gbp_duplicate", title: "Check for a duplicate Google listing",
+    type: "auto", dependsOn: ["m1.audit.gbp_baseline"],
+    actionLabel: "⚡ Check for duplicates",
+    instructions: `Searches Google Maps for the business name from its own map centre and compares every same-name result against the listing we hold.
+
+The Business Profile API cannot answer this — it reports how many locations we OWN, and a duplicate claimed under a different Google account is invisible to it. Counting the listings is the only way to see one.
+
+If a duplicate exists the step stays OPEN and surfaces in the client portal with the steps to merge it, because the duplicate almost always sits under a Google account only the owner can reach. A rank grid cannot be read as a measure of the work until it is resolved.`,
+    async run({ clientId }) {
+      // Delegates to the deployed function so the CLASSIFIER has exactly one implementation.
+      const base = process.env.URL || "https://www.rocketgrowthagency.com";
+      const r = await fetch(`${base}/.netlify/functions/gbp-duplicate-scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-internal-secret": process.env.INTERNAL_FN_SECRET || "" },
+        body: JSON.stringify({ client_id: clientId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) return { summary: `Could not check for a duplicate listing: ${j?.error || `HTTP ${r.status}`}. This is a failure to look, not a clean result.`, outcome: "indeterminate" };
+      const f = j.finding || {};
+      if (f.verdict === "clean") return { summary: `Exactly ONE Google listing under this name (${f.own_place_key}).`, outcome: "verified", completed: true };
+      if (f.verdict !== "duplicate") return { summary: `Could not determine whether a duplicate exists — ${f.reason || "nothing usable returned"}. NOT a clean result.`, outcome: "indeterminate" };
+      return { summary: `🔴 ${(f.duplicates || []).length} duplicate listing(s) found. Merging is a CLIENT action — surfaced in their portal with the steps.`, outcome: "needs_fix", outcome_data: f };
+    },
+  },
+  {
     id: "m1.audit.website", title: "Run on-page SEO audit",
     type: "auto", dependsOn: ["m1.kickoff.create"],
     actionLabel: "⚡ Run and record",

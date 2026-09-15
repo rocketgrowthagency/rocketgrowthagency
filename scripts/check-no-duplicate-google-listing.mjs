@@ -67,29 +67,20 @@ const sqlStr = (v) => (v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`
 // "Rocket Growth Agency" and "rocket-growth agency." are one business to a human, so they must be to us.
 // 🔑 This is an EXACT-name test on purpose. "Growth Rocket" is a real different agency in the same
 // city; reporting it as a duplicate would be a fabricated finding.
-const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+// 🔴 IMPORTED, NOT RE-IMPLEMENTED. This verdict now also drives a live product surface: the client
+// portal shows the duplicate and the steps to merge it, and the admin mirrors it. Two copies of the
+// classifier is two verdicts, and the one nobody is watching is the one that drifts — so the gate and
+// the function share ONE definition. If the shared module moves, this gate fails loudly rather than
+// quietly judging by its own private rules.
+// → feedback_fix_the_class_not_the_instance
+const { createRequire } = await import("node:module");
+const _req = createRequire(import.meta.url);
+const { classify, latLngFrom, placeKeyFrom } = _req(
+  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/_gbp-duplicate.js"
+);
 
-const latLngFrom = (url) => {
-  const m = String(url || "").match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-  return m ? { lat: parseFloat(m[1]), lng: parseFloat(m[2]) } : null;
-};
-const placeKeyFrom = (url) => {
-  const m = String(url || "").match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);
-  return m ? m[1].toLowerCase() : null;
-};
 
-// The whole verdict, as one pure function — so `--self-test` exercises the SAME logic that runs live
-// rather than a re-implementation of it that can silently drift. → feedback_a_check_must_not_validate_itself
-function classify(businessName, ownKey, results) {
-  const sameName = (results || []).filter((r) => norm(r.title) === norm(businessName));
-  if (!sameName.length) {
-    // The business did not come back for its OWN name. Never a pass — either the search is wrong or
-    // something is badly broken with the listing.
-    return { verdict: "indeterminate", reason: `no result for its own name (${(results || []).length} other results)` };
-  }
-  const others = sameName.filter((r) => String(r.data_id || "").toLowerCase() !== ownKey);
-  return others.length ? { verdict: "duplicate", others } : { verdict: "clean", others: [] };
-}
+
 
 if (SELF_TEST) {
   const OURS = "0xbbdfa820c985be7:0x6c0a0556549b4073";
