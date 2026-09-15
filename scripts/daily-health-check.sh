@@ -142,6 +142,7 @@ else
 fi
 
 run check-every-approval-is-archived.mjs "every decision is archived AND committed, with its content"
+run check-artifacts-are-keyed-by-id.mjs "no archived mockup is keyed by, or lying about, a step position"
 
 say ""
 say "── the sales surface ──"
