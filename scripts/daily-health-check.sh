@@ -123,6 +123,26 @@ run check-heavy-steps-cannot-time-out.mjs "no drafting step can exceed the 26s r
 run check-hosting-bandwidth-headroom.mjs "pages AND videos are serving — not out of allowance"
 run export-approvals.mjs               "every client decision archived to markdown"
 
+# 🔴 WRITING THE ARCHIVE IS NOT KEEPING IT. export-approvals writes markdown into the website repo,
+# and until 2026-09-15 nothing committed it — so every approval record lived as an untracked file on
+# one machine, one `git clean` from gone. The whole point is to outlive the database.
+# Chris: "each mockup approved we save the file in an md file system in vs code and git, so we have
+# reference." Committed is the only reading of "in git" that means anything.
+SITE_REPO="/Users/chris/RGA/Rocket Growth Agency Website VS Code"
+if [ -n "$(git -C "$SITE_REPO" status --porcelain -uall -- reports/approvals)" ]; then
+  git -C "$SITE_REPO" add -A reports/approvals
+  if git -C "$SITE_REPO" -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
+       commit -qm "Archive client approvals ($(date +%Y-%m-%d))"; then
+    echo "  ✅ committed new/changed approval archives"
+  else
+    echo "  🔴 approval archive changed but the commit FAILED — the record is not in git"
+  fi
+else
+  echo "  ▫️  approval archive already committed, nothing new"
+fi
+
+run check-every-approval-is-archived.mjs "every decision is archived AND committed, with its content"
+
 say ""
 say "── the sales surface ──"
 # 📊 The almanac is a long-horizon asset — worth little today, a lot in a year, but ONLY if it keeps
