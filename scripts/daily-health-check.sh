@@ -118,6 +118,7 @@ run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
 run check-drafts-use-real-services.mjs  "no draft describes a client using their search term"
+run check-approval-matches-what-was-shown.mjs "an approval records the content that was shown"
 run export-approvals.mjs               "every client decision archived to markdown"
 
 say ""

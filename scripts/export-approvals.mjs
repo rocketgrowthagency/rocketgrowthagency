@@ -79,7 +79,9 @@ for (const row of rows) {
     // alone, and it could not. Take the richest field available, and say so when none carries content.
     const ar = t.auto_result || {};
     const od = ar.outcome_data || t.outcome_data || {};
-    const draft = od.description || od.draft || od.text || od.body
+    // 🔴 The FROZEN copy wins. A draft regenerated after the decision is not what was approved.
+    const draft = a.approved_content
+      || od.description || od.draft || od.text || od.body
       || (typeof ar.summary === 'string' && ar.summary.length > 120 ? ar.summary : '')
       || ar.summary || '';
     // 🔴 The FULL content, never a summary — the point of this file is that the approved thing can be
@@ -92,6 +94,7 @@ for (const row of rows) {
       `**By:** ${a.by || 'unknown'}  `,
       `**Decided at:** ${a.at || 'unknown'}  `,
       `**Draft prepared:** ${t.completed_at || t.started_at || 'unknown'}  `,
+      `**Content source:** ${a.content_source === 'shown_to_client' ? 'frozen at approval — exactly what the client saw' : 'draft as it stood at decision time'}  `,
       `**Exported:** ${new Date().toISOString()}`,
       '',
       a.note ? `## Note from the client\n\n> ${a.note.replace(/\n/g, '\n> ')}\n` : '',
