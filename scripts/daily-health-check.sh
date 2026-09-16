@@ -166,6 +166,7 @@ run check-the-owner-questions-ui-contract.mjs "the owner-questions card behaves 
 run build-owner-questions-mockup.mjs "the approved mockup still matches the schema"
 run check-setup-step-count-agrees.mjs "client and admin show the same setup step count"
 run check-client-portal-renders.mjs "the signed-in client portal actually puts its cards on screen"
+run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
