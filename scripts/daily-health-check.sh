@@ -169,6 +169,7 @@ run check-client-portal-renders.mjs "the signed-in client portal actually puts i
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-call-metrics-are-not-conflated.mjs "GBP calls and tracked calls are shown separately"
+run check-no-duplicate-call-rows.mjs "one call, one log row, one lead"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
