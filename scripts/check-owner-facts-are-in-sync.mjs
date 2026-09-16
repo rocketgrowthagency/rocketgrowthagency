@@ -21,6 +21,13 @@
  *      "nothing supplied", which is an invitation to invent.
  *   5. An unmapped industry falls back to NEUTRAL examples, never a guessed trade.
  *   6. Neither portal holds its own option list — both go through _client-facts.
+ *   7. ALL FIVE questions — including geography, whose ANSWER lives in its own column — offer the
+ *      same three lines per option: a label, a "Pick this if…" hint, and what choosing it means.
+ *
+ * 🔴 (7) exists because the gate used to read only client-facts.json. Geography's copy was written
+ * inline in the endpoint and `urgent_support` still carried pre-mockup single-line text; both
+ * rendered visibly differently from the approved mockup for a whole session while this gate passed.
+ * A question a gate cannot read is a question that will drift. → feedback_fix_the_class_not_the_instance
  *
  * Exit 0 = in sync · 1 = drifted · 2 = could not tell.
  */
@@ -41,7 +48,26 @@ try {
 }
 
 const fail = [];
-console.log("── the four owner questions are in sync ──");
+console.log("── the five owner questions are in sync ──");
+
+// 7 ─ EVERY question the card renders, geography included, offers the same three lines per option.
+const RENDERED = [
+  { key: "geography_model", type: "choice", options: M.geographyQuestion().options, label: "How customers reach you" },
+  ...M.FIELDS,
+];
+for (const f of RENDERED) {
+  if (f.type !== "choice") continue;                       // ticks are a different control
+  for (const o of f.options || []) {
+    if (!/^Pick this if:/.test(o.hint || "")) {
+      fail.push(`${f.key}.${o.key} — hint is ${o.hint ? `"${String(o.hint).slice(0, 40)}…"` : "missing"}; every choice option opens "Pick this if:" so the five questions read as one component`);
+    }
+    if (!o.meaning) {
+      fail.push(`${f.key}.${o.key} — no meaning line; the option renders two lines where the mockup has three`);
+    }
+  }
+}
+if (!M.geographyQuestion("admin").ask_on_call) fail.push("geography has no ask_on_call line for the kickoff call");
+if (M.GEO_KEYS.length !== M.geographyQuestion().options.length) fail.push("geography key list and option list disagree");
 
 // 1 ─ every question is completely declared
 for (const f of M.FIELDS) {
@@ -104,7 +130,7 @@ for (const rel of ["portal/portal.js", "admin/admin.js"]) {
 }
 
 const groups = Object.keys(SCHEMA.industry_groups?.groups || {}).length;
-console.log(`  ${M.FIELDS.length} questions · ${M.FIELDS.reduce((n, f) => n + (f.options || []).length, 0)} options · ${groups} industry groups`);
+console.log(`  ${RENDERED.length} questions rendered (geography + ${M.FIELDS.length}) · ${RENDERED.reduce((n, f) => n + (f.options || []).length, 0)} options · ${groups} industry groups`);
 console.log(`  validator: ${CASES.length} cases · both portals read the shared module`);
 
 if (fail.length) {
