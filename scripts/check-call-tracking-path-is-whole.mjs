@@ -147,6 +147,29 @@ try {
   }
 }
 
+// 4e ─ the pull must RUN ON ITS OWN. A sync nobody triggers leaves the tile showing whatever the
+// last manual run left behind, and a client reads a stale number as this month's.
+{
+  const cron = fs.readFileSync(path.join(SITE, "netlify/functions/metrics-daily-refresh.js"), "utf8");
+  if (!/call-tracking-sync/.test(cron)) {
+    fail.push("the nightly refresh no longer calls call-tracking-sync — the pull would only ever run when someone remembered");
+  }
+  if (!/kpi_config\?\.call_tracking/.test(cron)) {
+    fail.push("the nightly refresh does not filter on kpi_config.call_tracking — it would sync clients who never opted in");
+  }
+  // 🔑 It must walk the CLIENT list, not the Google-OAuth list: a client can have call tracking
+  // without ever connecting Google.
+  if (!/rest\/v1\/clients\?select=/.test(cron)) {
+    fail.push("the nightly call sync reads the OAuth list rather than the client list — a client with tracking but no Google connection would be skipped");
+  }
+  // and the report must show it, labelled by what the provider can see
+  const report = fs.readFileSync(path.join(SITE, "portal/report/report.js"), "utf8");
+  if (!/total_calls/.test(report)) fail.push("the monthly report does not show tracked calls at all");
+  if (!/call_tracking_attributed/.test(report)) {
+    fail.push("the monthly report ignores call_tracking_attributed — a phone system's total would read as search-driven in the document the client judges the retainer by");
+  }
+}
+
 // 5 ─ the step is runnable
 if (!/"m1\.tracking\.call_setup":\s*async/.test(flow)) {
   fail.push("m1.tracking.call_setup has no executor — the admin Run button would fall through");
