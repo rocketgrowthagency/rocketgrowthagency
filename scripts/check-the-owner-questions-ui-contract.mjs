@@ -24,6 +24,8 @@
  *      failure rather than offering a reload that can never work.
  *   8. A tap paints IMMEDIATELY and the save returns the card — the two fixes that took a tap from
  *      4.4s to 6ms. Losing either puts a 2-3s stare back in front of every answer.
+ *  10. The client checklist is ONE list in number order — no "done pile" — and every settled step
+ *      carries a way to change it, chosen by whether the client told us or we observed it.
  *   9. NO PENDING STATE anywhere in the portal. A one-tap answer that disables its row and reads
  *      "Saving…" looks broken, not busy — Chris reported it as "greyed out" twice.
  *
@@ -134,6 +136,36 @@ if (!/if \(j\.card\)\s*renderFactsCard\(j\.card\)/.test(js)) {
 const saveCatch = js.match(/const msg = clientError\(err, "save that answer"\);[\s\S]{0,320}?\n  \}/);
 if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
   fail.push("a failed save does not re-read the card — the optimistic paint would leave an answer on screen that was never stored");
+}
+
+// 10 ─ one ordered checklist, and settled steps stay editable
+{
+  const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (/class="ai-done"/.test(code) || /already done<\/summary>/.test(code)) {
+    fail.push("the completed-steps drawer is back — the visible list would read 4, 5, 7, 9 and a client told \"you're on 6\" could not find 6");
+  }
+  if (!/numbered\.map\(rowHtml\)/.test(code)) {
+    fail.push("the checklist no longer renders every step in order — completed rows are being split out again");
+  }
+  // 🔑 Check the BUTTON and the HANDLER separately. `data-step-reopen` appears in both, so a single
+  // file-wide match stayed green when the button was removed and only the listener remained — a
+  // listener for a control that no longer renders. → feedback_dead_check_selector_gap
+  if (!/data-step-reopen="\$\{escapeAttribute\(step\.id\)\}"/.test(code)) {
+    fail.push("the Change button is gone from the row — a settled step the client told us about could not be changed");
+  }
+  if (!/closest\("\[data-step-reopen\],\[data-step-wrong\]"\)/.test(code)) {
+    fail.push("nothing listens for Change / This isn't right — the buttons would render and do nothing");
+  }
+  if (!/data-step-wrong="\$\{escapeAttribute\(step\.id\)\}"/.test(code)) {
+    fail.push("an observed step offers no way to tell us it is wrong");
+  }
+  // 🔴 An observed step must never be reopenable: its status is re-derived every render, so the
+  // flip would bounce back and the portal would look like it ignored the client.
+  const observed = code.match(/const OBSERVED = new Set\(\[[^\]]+\]\)/);
+  if (!observed) fail.push("the OBSERVED set is gone — every done step would offer Change, including ones we only detect");
+  else for (const id of ["m1.access.gbp", "m1.access.analytics", "m1.access.search_console", "m1.gbp.photos"]) {
+    if (!observed[0].includes(id)) fail.push(`${id} is no longer marked observed — reopening it would be re-derived straight back to done`);
+  }
 }
 
 // 9 ─ no pending state on a one-tap answer, anywhere
