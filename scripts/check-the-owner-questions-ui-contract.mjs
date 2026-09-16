@@ -24,6 +24,8 @@
  *      failure rather than offering a reload that can never work.
  *   8. A tap paints IMMEDIATELY and the save returns the card — the two fixes that took a tap from
  *      4.4s to 6ms. Losing either puts a 2-3s stare back in front of every answer.
+ *   9. NO PENDING STATE anywhere in the portal. A one-tap answer that disables its row and reads
+ *      "Saving…" looks broken, not busy — Chris reported it as "greyed out" twice.
  *
  * Exit 0 = the card still behaves as agreed · 1 = it drifted · 2 = could not tell.
  */
@@ -134,7 +136,20 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
   fail.push("a failed save does not re-read the card — the optimistic paint would leave an answer on screen that was never stored");
 }
 
-console.log(`  portal: pick saves · confirm gated · clear+undo · no blanket padding · optimistic paint`);
+// 9 ─ no pending state on a one-tap answer, anywhere
+{
+  const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const saving = [...code.matchAll(/"Saving…"|'Saving…'|>Saving…</g)];
+  if (saving.length) {
+    fail.push(`${saving.length} "Saving…" pending state(s) are back — a one-tap answer that greys its own row reads as broken, not busy`);
+  }
+  // …and the row must not disable its siblings while the write is in flight
+  if (/\[data-choose\]"\)\.forEach\(\(b\) => \{ b\.disabled = true/.test(code)) {
+    fail.push("the choice handler disables every button while saving — that is the exact grey-out Chris reported");
+  }
+}
+
+console.log(`  portal: pick saves · confirm gated · clear+undo · no blanket padding · optimistic paint · no pending state`);
 console.log(`  admin:  heading counts from data · boot failure visible and named`);
 
 if (fail.length) {
