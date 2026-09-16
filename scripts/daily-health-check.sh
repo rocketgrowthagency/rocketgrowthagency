@@ -167,6 +167,8 @@ run build-owner-questions-mockup.mjs "the approved mockup still matches the sche
 run check-setup-step-count-agrees.mjs "client and admin show the same setup step count"
 run check-client-portal-renders.mjs "the signed-in client portal actually puts its cards on screen"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
+run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
+run check-call-metrics-are-not-conflated.mjs "GBP calls and tracked calls are shown separately"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
