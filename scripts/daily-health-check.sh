@@ -162,6 +162,7 @@ run check-client-never-sees-our-internals.mjs "no client endpoint returns a step
 run check-nothing-reaches-a-client-unreviewed.mjs "nothing reaches a client until RGA has reviewed it"
 run check-owner-facts-are-in-sync.mjs "the five owner questions mean the same thing in both portals"
 run check-only-the-client-can-approve.mjs "admin may read a client's portal; only the client may approve"
+run check-the-owner-questions-ui-contract.mjs "the owner-questions card behaves the way it was agreed"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
