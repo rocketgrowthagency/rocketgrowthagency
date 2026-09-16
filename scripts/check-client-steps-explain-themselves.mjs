@@ -25,7 +25,7 @@ import path from "node:path";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // The backlog on the day this gate was written. It may shrink, never grow.
-const BASELINE_MISSING = 14;
+const BASELINE_MISSING = 0;   // all 15 written 2026-09-16 — this may never grow again
 
 let js, PB;
 try {
