@@ -96,12 +96,23 @@ const CASES = [
   ["credentials",      { ticks: ["none", "years"] },                 false, '"none of these" combined with another'],
   ["credentials",      { ticks: ["made_up"] },                       false, "an unknown tick"],
   ["urgent_support",   { option: "none" },                           true,  "the no-rush option"],
+  // 🔴 CLEARING IS A REAL ANSWER STATE. A client who realises they were guessing must be able to
+  // put a question back to unanswered. `String(submitted?.option || submitted)` made this branch
+  // unreachable for a whole build — an empty option fell through to the raw object.
+  ["urgent_support",   { option: "", ticks: [] },                    true,  "clearing a choice"],
+  ["credentials",      { option: "", ticks: [] },                    true,  "clearing a tick list"],
 ];
 for (const [key, input, shouldPass, label] of CASES) {
   const r = M.normaliseAnswer(key, input);
   const passed = !r.error;
   if (passed !== shouldPass) fail.push(`validator ${passed ? "ACCEPTED" : "rejected"} ${label} — it should have ${shouldPass ? "accepted" : "rejected"} it`);
 }
+for (const [key, input, label] of [["urgent_support", { option: "", ticks: [] }, "a cleared choice"],
+                                   ["credentials", { option: "", ticks: [] }, "a cleared tick list"]]) {
+  const r = M.normaliseAnswer(key, input);
+  if (r.value !== null) fail.push(`${label} stored ${JSON.stringify(r.value)} — clearing must store null, not a value`);
+}
+
 const none = M.normaliseAnswer("credentials", { ticks: ["none"] });
 if (!none.value || !/do not publish/i.test(none.value)) {
   fail.push(`"none of these" stores ${JSON.stringify(none.value)} — it must be an explicit prohibition, not a blank`);
