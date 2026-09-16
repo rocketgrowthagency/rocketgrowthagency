@@ -23,6 +23,7 @@
  *   6. Neither portal holds its own option list — both go through _client-facts.
  *   7. ALL FIVE questions — including geography, whose ANSWER lives in its own column — offer the
  *      same three lines per option: a label, a "Pick this if…" hint, and what choosing it means.
+ *   8. Each question's HOW-TO-DECIDE is written for THAT question, and speaks to the client as "you".
  *
  * 🔴 (7) exists because the gate used to read only client-facts.json. Geography's copy was written
  * inline in the endpoint and `urgent_support` still carried pre-mockup single-line text; both
@@ -51,10 +52,10 @@ const fail = [];
 console.log("── the five owner questions are in sync ──");
 
 // 7 ─ EVERY question the card renders, geography included, offers the same three lines per option.
-const RENDERED = [
-  { key: "geography_model", type: "choice", options: M.geographyQuestion().options, label: "How customers reach you" },
-  ...M.FIELDS,
-];
+// 🔑 Spread the WHOLE question, not a hand-built stand-in. The first version listed only its
+// options, so every later check silently skipped geography's guidance — the exact blind spot this
+// gate exists to close. → feedback_a_check_must_not_validate_itself
+const RENDERED = [{ ...M.geographyQuestion(), key: "geography_model" }, ...M.FIELDS];
 for (const f of RENDERED) {
   if (f.type !== "choice") continue;                       // ticks are a different control
   for (const o of f.options || []) {
@@ -138,6 +139,38 @@ for (const rel of ["portal/portal.js", "admin/admin.js"]) {
     }
   }
   if (!src.includes("client-facts")) fail.push(`${rel} never calls client-facts`);
+}
+
+// 8 ─ the guidance belongs to the question it sits under, and the voice is consistent.
+//
+// 🔴🔴 Q1 read "How do customers reach you?" — a question about CHANNEL — while every option and
+// every line of its guidance answered "where does the work happen?". Chris caught it on screen; no
+// check could, because nothing compared a question's label to its own guidance.
+// → feedback_fix_the_class_not_the_instance
+for (const f of RENDERED) {
+  const paras = f.guidance?.paragraphs || [];
+  if (!f.guidance?.summary) fail.push(`${f.key} — guidance has no summary heading`);
+  // Instructions, not rationale: Chris asked for the read-this to say HOW TO ANSWER, with the
+  // "why we ask" stated once at the top of the card instead of repeated per question.
+  const notSteps = paras.filter((p) => !/^\d+\./.test(p));
+  if (notSteps.length) {
+    fail.push(`${f.key} — ${notSteps.length} guidance paragraph(s) are not numbered steps; the read-this must say how to answer, not why we ask`);
+  }
+  // 🔑 "We" means RGA everywhere in the portal. An option label that says "We call to confirm"
+  // reads as RGA calling, when it means the CLIENT calling their own customer.
+  for (const o of f.options || []) {
+    if (/^(We|Our)\b/.test(o.label || "")) {
+      fail.push(`${f.key}.${o.key} — option label "${o.label}" opens with "We", which in this portal means RGA; write it to the client as "You"`);
+    }
+  }
+}
+if (!SCHEMA.stakes?.destinations?.length) {
+  fail.push("stakes has no destinations list — the lede states where answers get published (option B, approved 2026-09-16)");
+}
+// Geography's label is tapped by a human; its prompt_label is injected into 41 prompts.
+for (const m of req("./data/geography-models.json").models || []) {
+  if (!m.prompt_label) fail.push(`geography ${m.key} — no prompt_label; flow-execute would hand the model the second-person client label`);
+  if (m.prompt_label === m.label) fail.push(`geography ${m.key} — prompt_label is identical to the tapped label`);
 }
 
 const groups = Object.keys(SCHEMA.industry_groups?.groups || {}).length;
