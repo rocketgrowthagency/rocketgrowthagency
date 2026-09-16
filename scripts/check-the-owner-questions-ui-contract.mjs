@@ -22,6 +22,8 @@
  *      "1 of 5 captured".
  *   7. A failed admin boot says so even after the shell leaves "booting", and names an access
  *      failure rather than offering a reload that can never work.
+ *   8. A tap paints IMMEDIATELY and the save returns the card — the two fixes that took a tap from
+ *      4.4s to 6ms. Losing either puts a 2-3s stare back in front of every answer.
  *
  * Exit 0 = the card still behaves as agreed · 1 = it drifted · 2 = could not tell.
  */
@@ -103,7 +105,36 @@ if (!/does not have admin access/.test(admin)) {
   fail.push('a boot that fails on permissions no longer names the cause — "usually temporary" sends someone reloading forever');
 }
 
-console.log(`  portal: pick saves · confirm gated · clear+undo · no blanket padding`);
+// 8 ─ the latency work, which is invisible until it is gone
+// 🔑 Assert the CALL inside the function that needs it, not merely that the painter is declared.
+// A first version matched `paintSavedNow(` anywhere — and restoreFact's call kept it green while
+// saveFacts had lost its own. A declaration nothing calls is the same as no painter.
+// → feedback_dead_check_selector_gap
+const bodyOf = (name) => {
+  const i = js.indexOf(`async function ${name}(`);
+  return i === -1 ? "" : js.slice(i, js.indexOf("\n}", i));
+};
+if (!/function paintSavedNow/.test(js)) fail.push("paintSavedNow is gone");
+if (!/paintSavedNow\(/.test(bodyOf("saveFacts"))) {
+  fail.push("saveFacts no longer paints before the write — a tap would wait ~2s before the row moves");
+}
+if (!/function paintClearedNow/.test(js)) fail.push("paintClearedNow is gone");
+if (!/paintClearedNow\(/.test(bodyOf("clearFact"))) {
+  fail.push("clearFact no longer paints immediately — clearing would wait for the round trip");
+}
+// 🔑 Match the BEHAVIOUR, not one spelling of it. The first version of this line expected a
+// ternary and failed against the `if (j.card) …` the code actually uses.
+if (!/if \(j\.card\)\s*renderFactsCard\(j\.card\)/.test(js)) {
+  fail.push("the save response is no longer rendered — the browser is back to a second round trip per tap");
+}
+// 🔴 The paint claims a save that has not happened yet. If it fails, the screen MUST go back to
+// what the database holds, or the client walks away believing an answer was stored.
+const saveCatch = js.match(/const msg = clientError\(err, "save that answer"\);[\s\S]{0,320}?\n  \}/);
+if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
+  fail.push("a failed save does not re-read the card — the optimistic paint would leave an answer on screen that was never stored");
+}
+
+console.log(`  portal: pick saves · confirm gated · clear+undo · no blanket padding · optimistic paint`);
 console.log(`  admin:  heading counts from data · boot failure visible and named`);
 
 if (fail.length) {

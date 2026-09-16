@@ -63,12 +63,22 @@ function optionHtml(q, o, chosen) {
             ${lines.join("\n            ")}</span></div>`;
 }
 
-// 🔑 Use the mockup's OWN class names (.tick / .bx), not the portal's. The mockup has its own
-// stylesheet; emitting markup it cannot style renders an unstyled list and reads as a broken card.
-// → feedback_dead_check_selector_gap
+// 🔑 The tick list renders as the SAME option card as every other question — Chris asked for it to
+// "flow as all others". It stays multi-select; only the marker differs (a square box rather than a
+// radio dot). Emitting the old pill row here would put the mockup back out of step with production,
+// which is the whole thing this generator exists to prevent.
 function tickHtml(q) {
-  return `        <div class="ticks">
-${(q.options || []).map((o) => `          <span class="tick"><span class="bx"></span>${esc(o.label)}</span>`).join("\n")}
+  return `        <div class="opts">
+${(q.options || []).map((o) => {
+    const lines = [`<b>${esc(o.label)}</b>`];
+    if (o.hint) lines.push(`<span class="eg">${esc(o.hint)}</span>`);
+    if (o.meaning) lines.push(`<span class="mn">${esc(o.meaning)}</span>`);
+    const inline = o.input
+      ? `\n          <label class="inline"><span>${esc(o.input)}</span><input placeholder="${esc(o.placeholder || "")}" disabled></label>`
+      : "";
+    return `          <div class="opt tickopt"><span class="bx"></span><span class="ot">
+            ${lines.join("\n            ")}</span></div>${inline}`;
+  }).join("\n")}
         </div>`;
 }
 
