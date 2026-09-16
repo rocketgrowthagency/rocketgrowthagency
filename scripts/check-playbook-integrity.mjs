@@ -19,6 +19,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
@@ -213,9 +214,28 @@ for (const [file, loadedIn] of [['admin/calls.js', 'admin/admin.js'], ['admin/ad
     if (uniq.length > 1) {
       add('module-version-mismatch', `${file} is imported ${refs.length}× from ${loadedIn} with DIFFERENT versions (${uniq.join(', ')}) — one of them serves a stale module`);
     }
-    const fT = fs.statSync(path.join(WEBSITE, file)).mtimeMs;
-    const hT = fs.statSync(path.join(WEBSITE, loadedIn)).mtimeMs;
-    if (fT > hT + 60000) add('module-cache-buster-stale', `${file} is newer than ${loadedIn} (?v=${uniq[0]}) — bump it or browsers serve the OLD module`);
+    // 🔴 ASK THE REAL QUESTION: will a browser requesting ?v=<current> get THESE bytes?
+    //
+    // This compared mtimes, which is a PROXY. Restoring a file from a backup, a checkout, or a
+    // `touch` moves mtime without changing a byte, and the gate then cried wolf — and a gate that
+    // cries wolf is one people learn to scroll past.
+    // → feedback_an_alert_nobody_reads_is_not_an_alert · feedback_a_check_must_not_validate_itself
+    const localBytes = fs.readFileSync(path.join(WEBSITE, file));
+    let served = null;
+    try {
+      const r = await fetch(`https://www.rocketgrowthagency.com/${file}?v=${uniq[0]}`, { redirect: 'follow' });
+      if (r.ok && /javascript/i.test(r.headers.get('content-type') || '')) served = Buffer.from(await r.arrayBuffer());
+    } catch { /* offline — fall through to the mtime heuristic below */ }
+    if (served) {
+      const same = crypto.createHash('sha256').update(localBytes).digest('hex')
+                 === crypto.createHash('sha256').update(served).digest('hex');
+      if (!same) add('module-cache-buster-stale', `${file} differs from what ?v=${uniq[0]} actually serves — bump it or browsers keep the OLD module`);
+    } else {
+      // Could not read what is served. Say so rather than passing silently.
+      const fT = fs.statSync(path.join(WEBSITE, file)).mtimeMs;
+      const hT = fs.statSync(path.join(WEBSITE, loadedIn)).mtimeMs;
+      if (fT > hT + 60000) add('module-cache-buster-maybe-stale', `${file} is newer than ${loadedIn} (?v=${uniq[0]}) and the deployed copy could not be read to confirm — bump it if you changed it`);
+    }
   } catch (e) { add('module-version-uncheckable', `${file}: ${String(e.message).slice(0, 60)}`); }
 }
 
