@@ -164,6 +164,7 @@ run check-owner-facts-are-in-sync.mjs "the five owner questions mean the same th
 run check-only-the-client-can-approve.mjs "admin may read a client's portal; only the client may approve"
 run check-the-owner-questions-ui-contract.mjs "the owner-questions card behaves the way it was agreed"
 run build-owner-questions-mockup.mjs "the approved mockup still matches the schema"
+run check-setup-step-count-agrees.mjs "client and admin show the same setup step count"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"
 
 say ""
