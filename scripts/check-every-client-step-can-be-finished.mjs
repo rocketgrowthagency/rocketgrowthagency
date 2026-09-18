@@ -321,6 +321,12 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
   try { pm = read("netlify/functions/portal-message.js"); }
   catch { bad("portal-message.js is missing — every help link would 404"); }
   if (pm) {
+    // 🔑 MECHANISM CHECKS RUN AGAINST CODE, NOT PROSE. The first version of the clientStepNo
+    // assertion passed against a file where the field had been replaced with null — because the
+    // NAME still appeared in the comment explaining why it mattered. A gate that matches the
+    // mention instead of the mechanism confirms nothing.
+    // → feedback_a_check_must_not_validate_itself
+    const pmCode = pm.replace(/^\s*\/\*[\s\S]*?\*\//gm, "").replace(/^\s*\/\/.*$/gm, "");
     if (!/requirePortalOwner/.test(pm)) bad("portal-message is not auth-gated");
     if (!/kind: "client_message"/.test(pm)) bad("the message is not stored as client_message — admin could not label it");
     // 🔴 A message that is not stored must NOT report success. That is the failure the mailto at
@@ -328,7 +334,36 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
     if (!/if \(!logged\) return json\(500/.test(pm)) {
       bad("portal-message reports success without confirming the write — a client would believe they had told us");
     }
-    if (!/LABEL_FOR\[stepId\]/.test(pm)) bad("the message carries no step context — a reply could not be specific");
+    if (!/STEP_FOR\[stepId\]/.test(pmCode)) bad("the message carries no step context — a reply could not be specific");
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // 🔴 THE STEP NUMBER AND THE SENDER, IN THE LINE ADMIN READS. Chris, 2026-09-18: *"should we
+    // do a what step number they asked for help on? … the email will say this was from this
+    // client (email) and on this step (step 3)"*. The label alone makes us match wording against
+    // a list; the number is what both sides say out loud. `clientStepNo` is the STABLE number, so
+    // inserting a step never renumbers what an old message referred to.
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    if (!/Step \$\{step\.no\}/.test(pmCode)) {
+      bad("the message names the step but not its NUMBER — the one thing the client and admin both say out loud");
+    }
+    if (!/clientStepNo/.test(pmCode)) bad("portal-message does not read clientStepNo — the number would drift when a step is inserted");
+    if (!/const summary = `\$\{who\}/.test(pmCode)) {
+      bad("the summary does not lead with WHO sent it — admin cannot tell which client without opening the payload");
+    }
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // 🔴 AND THE CLIENT MUST NOT WAIT ON A PUSH THAT PUSHES NOTHING. Measured 2026-09-18: the
+    // awaited notify-rga hop cost 1993ms, and with RGA_NOTIFICATION_WEBHOOK_URL unset it does
+    // nothing at all — it re-authenticates, finds no webhook, returns. The durable row is already
+    // written before this point, and client_activity IS the surface admin reads.
+    // → project_notifications_had_nowhere_to_go
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    if (!/if \(process\.env\.RGA_NOTIFICATION_WEBHOOK_URL\)/.test(pmCode)) {
+      bad("portal-message awaits the notify hop unconditionally — with no webhook configured that is ~2s "
+        + "of a client watching a spinner for a call that delivers nothing");
+    }
+    // The durable write must still happen BEFORE the response, whatever the push does.
+    if (!/logged = Array\.isArray\(rows\)/.test(pmCode)) {
+      bad("portal-message no longer confirms the activity row landed — speed must not come from skipping the write");
+    }
   }
   // 🔴 And admin must SURFACE it, not bury it in a collapsed audit log among robot events.
   const adm = read("admin/admin.js");
