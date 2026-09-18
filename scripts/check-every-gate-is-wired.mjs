@@ -56,6 +56,30 @@ const NOT_PREFLIGHT = {
   'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
   'check-admin-selects-real-columns.mjs': 'admin-schema gate; runs in daily-health-check.sh — needs live Supabase, and a schema drift cannot make a video unsafe',
   'check-video-serving-reconciled.mjs': 'live-serving gate; runs in daily-health-check.sh — samples production over the network, too slow for per-run pre-flight',
+  // ── client-portal / delivery surface. All run in daily-health-check.sh. None of them can make
+  //    tonight's VIDEO unsafe, which is what the per-run pre-flight exists to protect — so they are
+  //    excused from pre-flight and checked every morning instead. Backfilled 2026-09-16: these had
+  //    accumulated unexcused, so this gate's own "nobody invokes these" list was crying wolf on 14
+  //    gates that run daily. → feedback_a_new_gate_must_be_wired_or_excused
+  'check-call-metrics-are-not-conflated.mjs': 'reporting-label gate; runs in daily-health-check.sh',
+  'check-call-tracking-path-is-whole.mjs': 'onboarding-path gate; runs in daily-health-check.sh',
+  'check-client-boundary-is-declared.mjs': 'client-visibility gate; runs in daily-health-check.sh',
+  'check-client-never-sees-our-internals.mjs': 'client-visibility gate; runs in daily-health-check.sh',
+  'check-client-portal-renders.mjs': 'portal-render gate; needs playwright + a live magic link, too slow for per-run pre-flight',
+  'check-we-only-name-tools-we-use.mjs': 'client-copy gate; runs in daily-health-check.sh — naming the wrong meeting tool cannot make a video unsafe',
+  'check-client-steps-explain-themselves.mjs': 'client-copy gate; runs in daily-health-check.sh',
+  'check-every-client-step-can-be-finished.mjs': 'client-checklist gate; runs in daily-health-check.sh — a dead-end step cannot make a video unsafe',
+  'check-no-duplicate-call-rows.mjs': 'CRM-integrity gate; runs in daily-health-check.sh, needs live Airtable',
+  'check-nothing-reaches-a-client-unreviewed.mjs': 'approval-gate check; runs in daily-health-check.sh',
+  'check-only-the-client-can-approve.mjs': 'approval-authority gate; runs in daily-health-check.sh',
+  'check-owner-facts-are-in-sync.mjs': 'owner-questions gate; runs in daily-health-check.sh',
+  'check-questions-fit-the-trade.mjs': 'owner-questions gate; runs in daily-health-check.sh',
+  'check-setup-step-count-agrees.mjs': 'admin/portal parity gate; runs in daily-health-check.sh',
+  'check-the-owner-questions-ui-contract.mjs': 'portal-UI contract gate; runs in daily-health-check.sh',
+  'check-css-declarations-are-valid.mjs': 'stylesheet gate; runs in daily-health-check.sh — a dropped declaration cannot make a video unsafe',
+  'check-portal-calls-stay-authenticated.mjs': 'portal-auth gate; runs in daily-health-check.sh — a stale token cannot make a video unsafe',
+  'check-every-jump-lands-somewhere-visible.mjs': 'portal-navigation gate; runs in daily-health-check.sh — a dead jump cannot make a video unsafe',
+  'check-the-sop-is-not-public.mjs': 'boundary gate; runs in daily-health-check.sh — it fetches production, too slow for per-run pre-flight',
   'check-no-duplicate-google-listing.mjs': 'client-data gate; runs in daily-health-check.sh --all. Needs live SerpApi (one credit per client) and a duplicate LISTING cannot make tonight\'s video unsafe.',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
   'check-playbook-integrity.mjs': 'the sales playbook is website code, not tonight\'s videos — a bad block must never abort a video build. Runs in drip-content.sh (the deploy that ships admin/) and daily-health-check.sh',
