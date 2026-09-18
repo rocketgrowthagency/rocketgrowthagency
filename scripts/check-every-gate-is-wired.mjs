@@ -80,6 +80,7 @@ const NOT_PREFLIGHT = {
   'check-portal-calls-stay-authenticated.mjs': 'portal-auth gate; runs in daily-health-check.sh — a stale token cannot make a video unsafe',
   'check-every-jump-lands-somewhere-visible.mjs': 'portal-navigation gate; runs in daily-health-check.sh — a dead jump cannot make a video unsafe',
   'check-an-audit-cannot-write.mjs': 'audit-safety gate; runs in daily-health-check.sh — an audit that writes cannot make a video unsafe',
+  'check-a-question-gets-an-answer.mjs': 'client-thread gate; runs in daily-health-check.sh — an unanswered question cannot make a video unsafe',
   'check-the-sop-is-not-public.mjs': 'boundary gate; runs in daily-health-check.sh — it fetches production, too slow for per-run pre-flight',
   'check-no-duplicate-google-listing.mjs': 'client-data gate; runs in daily-health-check.sh --all. Needs live SerpApi (one credit per client) and a duplicate LISTING cannot make tonight\'s video unsafe.',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
