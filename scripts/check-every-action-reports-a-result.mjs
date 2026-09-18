@@ -47,6 +47,23 @@ const UI_ONLY = {
   "data-flow-toggle": "expands a step's detail panel — the panel visibly opens",
   "data-portal-tab": "switches a portal tab — the pane visibly changes",
   "data-step-toggle": "expands a step — the step visibly expands",
+  // ── Surfaced 2026-09-16 when the guard-case body stopped being a fixed 6000-char slice. The old
+  //    window ran past the end of these short handlers into the NEXT one and borrowed its feedback
+  //    call, so all three passed for a reason that had nothing to do with them. They are genuine
+  //    navigation/disclosure: nothing is written, and the movement IS the result.
+  "data-portal-goto": "switches the portal view — the destination pane is the feedback",
+  "data-portal-scroll": "scrolls to an element in the same tab — the scroll is the feedback",
+  "data-svc-access-toggle": "expands the how-to panel and relabels itself Show/Hide — no mutation",
+  "data-gap-toggle": "expands a gap card — the card visibly opens",
+  "data-svc-diy-toggle": "expands the do-it-yourself steps and flips its arrow — no mutation",
+  "data-stage-done-toggle": "expands a completed stage and relabels itself View/Hide — no mutation",
+  "data-ap-toggle": "opens one approval in the queue and closes the others — the queue visibly moves",
+  // The two gestures inside a step's input surface. Neither writes anything — the submit button
+  // beside them is the mutating action, and it reports. Added 2026-09-16 with the input surfaces.
+  "data-in-tick": "toggles one tick in a checklist — the pill visibly fills green",
+  "data-in-closed": "marks a day closed and disables its time fields — both visibly change",
+  "data-in-oneoff-add": "appends an empty closure row and focuses it — the row visibly appears",
+  "data-oneoff-remove": "removes a closure row — the row visibly disappears; a blank one is kept so the field never vanishes entirely",
 };
 
 // The legitimate ways an action can report. The global banner is the main one, but a dedicated
@@ -59,12 +76,22 @@ const FEEDBACK = new RegExp([
   "\\balert\\(",
   "audit-confirm",
   "status(?:El|Element|Node|Msg)\\s*\\.\\s*(?:textContent|innerHTML)",
+  // 🔑 THE IDIOM, NOT THE VARIABLE NAME. The line above only recognises a status element if someone
+  // happened to call it `statusEl`. The owner-questions card writes `state.textContent = "Saved"` and
+  // then reveals it — a perfectly visible report this gate could not see, so the debounced answer
+  // save (`data-fq-detail`) read as silent. Match the SHAPE: a short human string assigned to
+  // .textContent, followed by the element being shown or given a state class.
+  "\\.textContent\\s*=\\s*[\"'`][^\"'`]{1,40}[\"'`]\\s*;[\\s\\S]{0,140}?\\.(?:hidden\\s*=\\s*false|className\\s*=|classList\\.add\\()",
   "\\.textContent\\s*=\\s*[^;]{0,80};[\\s\\S]{0,150}?\\.disabled\\s*=",
   "\\.textContent\\s*=\\s*[\"'`][^\"'`]*[\\u2713\\u2717\\u2026]",
   // The client portal has its own vocabulary — a modal, and in-place innerHTML state ("Saving…",
   // "Disconnecting…"). A gate that only knows the admin's primitives would report the portal as
   // broken while it was doing exactly the right thing.
-  "\\bportal(?:Alert|Confirm|Modal|Toast)\\(",
+  // 🔑 `\\bportal…` could not see `showPortalToast(` — no word boundary before a capitalised
+  // "Portal" mid-identifier. The portal's most-used confirmation primitive, called in four places,
+  // was invisible to this gate, so a handler that pops a toast reported as SILENT. A probe that
+  // cannot see the right answer manufactures defects. → feedback_a_check_must_not_validate_itself
+  "(?:^|[^A-Za-z])(?:show)?[Pp]ortal(?:Alert|Confirm|Modal|Toast)\\(",
   // 🔑 NOT [^;] — the spinner markup carries inline CSS, which is full of semicolons, so a
   // semicolon-bounded pattern died on the first style rule and reported a reporting action as silent.
   "\\.innerHTML\\s*=\\s*[\\s\\S]{0,400}?(?:\\u2026|Saving|Sending|Loading|Disconnect|Working)",
@@ -83,11 +110,27 @@ function analyse({ label, path }) {
     return src.slice(openIdx);
   };
 
+  // 🔴🔴 SKIP THE PARAMETER LIST. This took the FIRST `{` after the function name — so
+  // `async function saveFacts(key, opts = {}) {` resolved to the default value `{}` and returned an
+  // EMPTY body. Every function with an object default parameter was invisible to this gate: whatever
+  // it reported, the caller read as silent. That is how `data-fq-detail` (the owner-questions
+  // debounced save, which writes "Saved" into a status element) showed up as a silent action.
+  //
+  // 🔑 Balance the parentheses of the signature first, then take the brace after them.
+  // → feedback_dead_check_selector_gap · feedback_a_check_must_not_validate_itself
   const bodyOf = (name) => {
     const re = new RegExp(`(?:async\\s+)?function\\s+${name}\\s*\\(|(?:const|let)\\s+${name}\\s*=\\s*(?:async\\s*)?\\(`);
     const m = src.match(re);
     if (!m) return "";
-    const open = src.indexOf("{", m.index);
+    const paren = src.indexOf("(", m.index);
+    if (paren < 0) return "";
+    let depth = 0, close = -1;
+    for (let i = paren; i < src.length && i < paren + 2000; i++) {
+      if (src[i] === "(") depth++;
+      else if (src[i] === ")") { depth--; if (!depth) { close = i; break; } }
+    }
+    if (close < 0) return "";
+    const open = src.indexOf("{", close);
     return open < 0 ? "" : blockFrom(open);
   };
 
@@ -122,7 +165,22 @@ function analyse({ label, path }) {
     const bm = after.match(branch);
     let body;
     if (bm && (!gm || bm.index < gm.index)) body = blockFrom(m.index + bm.index + bm[0].length - 1);
-    else if (gm) body = after.slice(gm.index, gm.index + 6000);
+    else if (gm) {
+      // 🔴🔴 BRACE-MATCH, NEVER A FIXED WINDOW. This sliced 6000 characters after the early-return
+      // guard — and the portal's `data-svc-set` handler reports at +6324 (a toast) and +6650 (an
+      // alert in its catch). Both fell just outside, so a handler doing exactly the right thing was
+      // reported as silent, and the "fix" would have been to add a SECOND confirmation to a screen
+      // that already had one.
+      //
+      // 🔑 A window measured in characters fails the moment a handler grows. The header of this very
+      // file already argues this for the branch case ("two earlier versions chunked N lines and broke
+      // on a heuristic"); the guard case was never converted. Same reasoning, same fix: walk out to
+      // the enclosing listener and match its braces.
+      // → feedback_dead_check_selector_gap · feedback_a_check_must_not_validate_itself
+      const listener = src.lastIndexOf("addEventListener(", m.index);
+      const open = listener >= 0 ? src.indexOf("{", src.indexOf("=>", listener)) : -1;
+      body = open >= 0 && open < m.index ? blockFrom(open) : after.slice(gm.index, gm.index + 6000);
+    }
     else body = after.slice(0, 3000);
     actions.push({ name: action, line, body });
   }
@@ -140,7 +198,16 @@ function analyse({ label, path }) {
   // whose handler edit had aborted, so the control rendered and nothing listened.
   //
   // 🔑 A gate that only audits what is wired cannot catch what was never wired.
-  const rendered = new Set([...src.matchAll(/\bdata-(onboard|lead|note|v2|portal|svc|flow|repeater|updoc|goto|custom|google)-[a-z-]+=/g)]
+  // 🔴 EVERY data-attribute, not a list of PREFIXES somebody maintained. The allow-list below used
+  // to read `data-(onboard|lead|note|v2|portal|svc|flow|repeater|updoc|goto|custom|google)-…`, so a
+  // control named anything else was invisible to the orphan check — and on 2026-09-16 the portal's
+  // new `data-attest-confirm` / `data-step-attest` buttons fell straight through it. Shipping them
+  // with no handler at all would have passed this gate clean.
+  //
+  // 🔑 The container discriminator below is what makes the wide net safe: identifiers on cards and
+  // rows are filtered by WHAT THEY SIT ON, not by whether their prefix was remembered.
+  // → feedback_fix_the_class_not_the_instance · feedback_dead_check_selector_gap
+  const rendered = new Set([...src.matchAll(/\bdata-[a-z][a-z0-9-]*=/g)]
     .map((x) => x[0].replace(/=$/, "")));
   // 🔑 A control can be wired THREE ways, not one. Delegation via closest("[data-x]"), a direct
   // listener found with querySelector(`[data-x="…"]`), or a read via getAttribute("data-x"). The
@@ -149,11 +216,43 @@ function analyse({ label, path }) {
   //
   // An attribute is orphaned only if EVERY occurrence is a render site (`data-x="`): it is never
   // used as a selector (`[data-x`) and never read (`"data-x"`).
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔑 AN ORPHANED CONTROL IS A CONTROL. This gate already learned, on the dispatch side, that a
+  // container lookup is not a button (`data-svc-row`) — and the fix there was to ask WHAT ELEMENT
+  // the attribute sits on. The orphan side never asked, so it judged by suffix alone, and a
+  // hand-maintained suffix list can only ever recognise the identifiers somebody remembered.
+  //
+  // 2026-09-16: deleting a genuinely dead lookup table made this report `data-portal-charts` as a
+  // dead button. It is an attribute on `<article class="portal-card">` — a card identifier that
+  // was never clickable. Flagging it would have pushed someone to "wire up" a control that does
+  // not exist. → feedback_a_check_must_not_validate_itself · feedback_fix_the_class_not_the_instance
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  const CONTROL_TAGS = /^(button|a|input|select|textarea|summary|label)$/i;
+  /** Does EVERY place this attribute is rendered sit on a non-interactive container? */
+  const onlyOnContainers = (attr) => {
+    const sites = [...src.matchAll(new RegExp(`${attr}=`, "g"))];
+    if (!sites.length) return false;
+    return sites.every((s) => {
+      // Walk back to the opening `<` of the element carrying the attribute and read its tag.
+      const open = src.lastIndexOf("<", s.index);
+      if (open < 0) return false;
+      const tag = (src.slice(open + 1, open + 14).match(/^[a-zA-Z][a-zA-Z0-9]*/) || [""])[0];
+      if (!tag) return false;
+      if (CONTROL_TAGS.test(tag)) return false;
+      // A div/article can still be a control if it is given a click role or a button class.
+      const el = src.slice(open, s.index);
+      return !/role="button"|class="[^"]*\b(btn|button|-choice|-tab|pm-amend)\b/.test(el);
+    });
+  };
+
   const orphans = [...rendered].filter((r) => {
     if (/-(id|scope|client|url|biz|visible|status|row|content-id|idx|part|label|detail)$/.test(r)) return false;
     const selector = new RegExp(`\\[${r}[\\]="]`);
     const read = new RegExp(`["'\`]${r}["'\`]`);
-    return !selector.test(src) && !read.test(src);
+    if (selector.test(src) || read.test(src)) return false;
+    // Unreferenced AND not on anything clickable → it is a stale identifier, not a dead button.
+    if (onlyOnContainers(r)) return false;
+    return true;
   });
 
   const SKIP = new Set(["if", "for", "while", "switch", "catch", "closest", "getAttribute",

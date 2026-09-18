@@ -171,6 +171,7 @@ run check-every-client-step-can-be-finished.mjs "every client step declares how 
 run check-the-sop-is-not-public.mjs "the raw SOP is staff-only; clients get the projection"
 run check-portal-calls-stay-authenticated.mjs "no portal call sends a token captured at boot; every notification is sent and checked"
 run check-every-jump-lands-somewhere-visible.mjs "every in-portal jump lands on something the client can see — not a card in a hidden tab"
+run check-an-audit-cannot-write.mjs "no audit script can change production; the FGA score measures the record's own URL"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"

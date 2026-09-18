@@ -153,18 +153,45 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
   if (!/data-step-reopen="\$\{escapeAttribute\(step\.id\)\}"/.test(code)) {
     fail.push("the Change button is gone from the row — a settled step the client told us about could not be changed");
   }
-  if (!/closest\("\[data-step-reopen\],\[data-step-wrong\]"\)/.test(code)) {
-    fail.push("nothing listens for Change / This isn't right — the buttons would render and do nothing");
+  // 🔑 Updated 2026-09-16 when "This isn't right" became a persisted FLAG and gained an undo.
+  // Assert the three attributes are all dispatched, not the exact selector string — the old exact
+  // match failed the moment a third control joined the same listener.
+  const disputeListener = code.match(/closest\("\[data-step-reopen\][^"]*"\)/);
+  if (!disputeListener) fail.push("nothing listens for Change / Not right? — the buttons would render and do nothing");
+  else for (const attr of ["data-step-reopen", "data-step-wrong", "data-step-unflag"]) {
+    if (!disputeListener[0].includes(attr)) fail.push(`${attr} is rendered but not dispatched by that listener`);
   }
   if (!/data-step-wrong="\$\{escapeAttribute\(step\.id\)\}"/.test(code)) {
     fail.push("an observed step offers no way to tell us it is wrong");
   }
   // 🔴 An observed step must never be reopenable: its status is re-derived every render, so the
   // flip would bounce back and the portal would look like it ignored the client.
-  const observed = code.match(/const OBSERVED = new Set\(\[[^\]]+\]\)/);
-  if (!observed) fail.push("the OBSERVED set is gone — every done step would offer Change, including ones we only detect");
-  else for (const id of ["m1.access.gbp", "m1.access.analytics", "m1.access.search_console", "m1.gbp.photos"]) {
-    if (!observed[0].includes(id)) fail.push(`${id} is no longer marked observed — reopening it would be re-derived straight back to done`);
+  //
+  // 🔑 2026-09-16: this used to assert a hardcoded `OBSERVED` set in portal.js. That set was a
+  // SECOND source of truth, and it had already drifted — everything outside it fell through to
+  // "Change", so a client was offered the chance to un-do a kickoff call that really happened.
+  // The mechanism is now declared on the step itself (`clientDone`), and the deeper contract is
+  // enforced by check-every-client-step-can-be-finished.mjs. What stays here is the invariant:
+  // whatever decides it, a DETECTED step must not get Change.
+  if (/const OBSERVED = new Set\(/.test(code)) {
+    fail.push("the hardcoded OBSERVED set is back — the step's own clientDone declaration is the source of truth");
+  }
+  // 🔑 The split used to collapse `detected` and `rga` into one `observed` flag. It no longer can:
+  // a DETECTED step now offers "Check again" (it can be re-derived) while an RGA-recorded step
+  // offers "Not right?" (it cannot). Assert each mechanism reaches its own control.
+  // → project_client_step_completion
+  if (!/mech === "detected"[\s\S]{0,300}?data-step-recheck/.test(code)) {
+    fail.push("a detected step no longer routes to Check again — it would be back to disputing our own detection");
+  }
+  if (!/mech === "rga"[\s\S]{0,200}?data-step-wrong/.test(code)) {
+    fail.push("an RGA-recorded step no longer routes to the flag control");
+  }
+  const pb = JSON.parse(fs.readFileSync(path.join(SITE, "data/playbooks/playbooks.json"), "utf8"));
+  const byId = Object.fromEntries([...pb.month1, ...pb.month2plus].map((s) => [s.id, s]));
+  for (const id of ["m1.access.gbp", "m1.access.analytics", "m1.access.search_console", "m1.gbp.photos"]) {
+    if (byId[id]?.clientDone !== "detected") {
+      fail.push(`${id} is no longer clientDone="detected" — reopening it would be re-derived straight back to done`);
+    }
   }
 }
 
