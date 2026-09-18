@@ -173,6 +173,7 @@ run check-portal-calls-stay-authenticated.mjs "no portal call sends a token capt
 run check-every-jump-lands-somewhere-visible.mjs "every in-portal jump lands on something the client can see — not a card in a hidden tab"
 run check-an-audit-cannot-write.mjs "no audit script can change production; the FGA score measures the record's own URL"
 run check-a-question-gets-an-answer.mjs "a client question is stored, emailed and answerable from admin — and the answer lands in their portal"
+run check-no-test-data-in-production.mjs "no test scaffolding is sitting in a client's portal"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"
