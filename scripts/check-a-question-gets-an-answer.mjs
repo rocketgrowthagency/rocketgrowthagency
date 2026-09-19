@@ -124,6 +124,33 @@ if (!/threadHtml\(step\.id\)/.test(portal)) {
   bad("the thread is not rendered on the step it belongs to — a client who asked from step 2 looks for the answer on step 2");
 }
 if (!/portal-thread/.test(portal)) bad("the portal never loads the thread");
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 A MESSAGE WITH NO STEP MUST STILL HAVE A HOME. The first version filtered on
+// `m.step_id === stepId`, so anything sent from the SUPPORT card — which carries no step — was
+// stored, returned by the endpoint, and rendered nowhere. The client saw no record of asking, and
+// our reply would have been invisible to them, in the one place a client goes when they do not
+// know which step their problem belongs to.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔑 IN THE SUPPORT CARD, not merely somewhere in the file. The first version of this assertion
+// matched the `threadHtml(null)` inside repaintSupportThread(), so deleting the card's own render
+// left the gate green. Scope the window to the card.
+{
+  const card = (portal.match(/pm-card pm-support[\s\S]{0,1200}?<\/div>\s*<\/div>/) || [""])[0];
+  if (!/\$\{threadHtml\(null\)\}/.test(card)) {
+    bad("the Support card does not render the step-less conversation — a message sent from there would "
+      + "vanish from the client's view, in the one place they go when they do not know which step it belongs to");
+  }
+}
+if (!/stepId \? m\.step_id === stepId : !m\.step_id/.test(portal)) {
+  bad("threadHtml does not handle the step-less case — passing no step id must select the messages that belong to no step");
+}
+// 🔑 And it must be filled BEFORE the Support card renders, or that card paints empty and is never redrawn.
+if (!/loadPortalThread\(row\.client_id\)/.test(portal)) {
+  bad("the thread is not loaded before the client section is built — the Support card would render empty on first paint");
+}
+if (!/function repaintSupportThread\s*\(/.test(portal)) {
+  bad("no repaint for the Support card — the thread would arrive after the card was already drawn");
+}
 // 🔴 A failed load must keep what we had rather than blanking it.
 if (!/catch[\s\S]{0,160}could not load your messages/.test(portal)) {
   bad("a failed thread load is not handled distinctly — blanking on error would read as 'we never answered you'");
