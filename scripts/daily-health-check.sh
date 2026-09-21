@@ -175,7 +175,7 @@ run check-an-audit-cannot-write.mjs "no audit script can change production; the 
 run check-a-question-gets-an-answer.mjs "a client question is stored, emailed and answerable from admin — and the answer lands in their portal"
 run check-no-test-data-in-production.mjs "no test scaffolding is sitting in a client's portal"
 run check-review-requests-can-actually-be-sent.mjs "a review request we promise is one the client can actually send"
-run check-every-admin-view-survives-a-reload.mjs "every admin view survives a reload and a shared link — no login screen, no fallback to Pipeline"
+run check-every-view-survives-a-reload.mjs "every admin view survives a reload and a shared link — no login screen, no fallback to Pipeline"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"

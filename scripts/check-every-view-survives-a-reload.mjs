@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * check-every-admin-view-survives-a-reload.mjs
+ * check-every-view-survives-a-reload.mjs
  *
  * ═══════════════════════════════════════════════════════════════════════════════════════════════
  * 🔴🔴 A NEW ADMIN VIEW MUST BE REGISTERED IN FOUR PLACES, AND NOTHING CHECKED THAT IT WAS.
@@ -152,6 +152,39 @@ for (const v of views) {
       bad(`"${v}" has neither a VIEW_OPENER entry nor a boot branch — a deep link would switch the `
         + `sidebar and load nothing`);
     }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE CLIENT PORTAL USES THE SAME MECHANISM, SO IT HAS THE SAME FAILURE AVAILABLE TO IT. Its
+// panes are `.pv` (display:none by default) revealed by `body[data-portal-view="X"] .pv-X`. Nothing
+// was broken there on 2026-09-21 — six panes, six rules — but a seventh pane added without its rule
+// would render blank exactly as the admin Messages tab did, and the portal has no login screen to
+// make it obvious. Checked here so the CLASS is covered, not just the instance that bit.
+// → feedback_fix_the_class_not_the_instance
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const pjs = path.join(SITE, "portal/portal.js");
+  const pcss = path.join(SITE, "portal/portal.css");
+  if (!fs.existsSync(pjs) || !fs.existsSync(pcss)) {
+    bad("portal/portal.js or portal.css not found — portal view visibility cannot be verified");
+  } else {
+    const js = fs.readFileSync(pjs, "utf8");
+    const css = fs.readFileSync(pcss, "utf8");
+    const panes = [...new Set([...js.matchAll(/class="pv pv-([a-z-]+)"/g)].map((m) => m[1]))];
+    if (!panes.length) bad("no .pv panes found in portal.js — this check is reading the wrong thing");
+    for (const pane of panes) {
+      if (!new RegExp(`data-portal-view="${pane}"\\]\\s*\\.pv-${pane}\\b`).test(css)) {
+        bad(`portal pane ".pv-${pane}" has no CSS rule revealing it — \`.pv\` is display:none by `
+          + `default, so that tab would render blank`);
+      }
+    }
+    // 🔑 And the default pane must survive having no attribute at all, or a first paint before
+    // setPortalView runs shows nothing.
+    if (!/body:not\(\[data-portal-view\]\)/.test(css)) {
+      bad("no rule covers a portal with no data-portal-view yet — the first paint would be blank");
+    }
+    if (panes.length) console.log(`  ✅ portal: ${panes.length} pane(s), each revealed by its own rule`);
   }
 }
 
