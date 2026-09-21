@@ -157,7 +157,18 @@ if (!/catch[\s\S]{0,160}could not load your messages/.test(portal)) {
 }
 const css = read("portal/portal.css");
 if (!/\.pm-thread\{/.test(css)) bad(".pm-thread has no styles — the conversation would render as unstyled text");
-if (!/\.pm-msg\.is-rga\{/.test(css)) bad("our replies are not visually distinguished from theirs");
+// 🔑 Class renamed with the approved redesign (.pm-msg → .pm-m). The gate caught the rename,
+// which is the point: a renamed class could have silently dropped the distinction.
+if (!/\.pm-m\.is-rga .pm-m-bub\{/.test(css)) bad("our replies are not visually distinguished from theirs");
+if (!/\.pm-m-av\{/.test(css)) bad("the conversation has no avatars — it reads as stacked boxes, not an exchange");
+// 🔴 REPLY IN PLACE. Without it the only way to answer us is to reopen the composer and re-explain
+// which step they meant — the client doing our filing.
+if (!/data-thread-reply/.test(portal)) {
+  bad("no reply form inside the thread — a client could not answer where the conversation is");
+}
+if (!/step_id: stepId \|\| undefined/.test(portal)) {
+  bad("the in-place reply does not carry its step — it would file as a general message and lose its context");
+}
 
 // ── 5. Reply-To, so "reply" is true ────────────────────────────────────────────────────────────
 let gmail = "";
