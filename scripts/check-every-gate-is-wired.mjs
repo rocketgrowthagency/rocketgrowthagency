@@ -83,6 +83,7 @@ const NOT_PREFLIGHT = {
   'check-a-question-gets-an-answer.mjs': 'client-thread gate; runs in daily-health-check.sh — an unanswered question cannot make a video unsafe',
   'check-no-test-data-in-production.mjs': 'test-data gate; runs in daily-health-check.sh — a leftover test row cannot make a video unsafe',
   'check-review-requests-can-actually-be-sent.mjs': 'review-request gate; runs in daily-health-check.sh — an unsendable request cannot make a video unsafe',
+  'check-every-admin-view-survives-a-reload.mjs': 'admin-routing gate; runs in daily-health-check.sh — an unreachable admin view cannot make a video unsafe',
   'check-the-sop-is-not-public.mjs': 'boundary gate; runs in daily-health-check.sh — it fetches production, too slow for per-run pre-flight',
   'check-no-duplicate-google-listing.mjs': 'client-data gate; runs in daily-health-check.sh --all. Needs live SerpApi (one credit per client) and a duplicate LISTING cannot make tonight\'s video unsafe.',
   'check-every-gate-is-wired.mjs': 'this meta-gate itself',
