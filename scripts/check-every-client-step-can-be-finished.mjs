@@ -82,6 +82,24 @@ for (const s of steps) {
     //  build time, so the source correctly carries none)
       // 🔴 A step that takes a SECRET must never ask for the secret itself. Step 5 takes a
       // one-time link, which destroys itself on first read, so nothing lands in our database.
+      // ═══════════════════════════════════════════════════════════════════════════════════
+      // 🔑 A PLATFORM PICKER MUST OFFER REAL INSTRUCTIONS, NOT JUST LABELS. The point of asking
+      // which platform they run is that the step can then say what to actually DO — "Users → Add
+      // New. Role: Administrator" rather than "WordPress / Wix / Shopify admin login", which is a
+      // list of possibilities. An option with no hint is a control promising what it lacks.
+      // → feedback_we_never_promise_what_we_dont_do
+      // ═══════════════════════════════════════════════════════════════════════════════════
+      if (inp.platform) {
+        const opts = inp.platform.options || [];
+        if (opts.length < 3) bad(`${s.id} offers a platform picker with ${opts.length} option(s) — too few to be worth asking`);
+        if (!inp.platform.prompt) bad(`${s.id} has a platform picker that never says what it is asking`);
+        for (const o of opts) {
+          if (!o.key || !o.label) bad(`${s.id} has a platform option missing its key or label`);
+          if (!o.hint) bad(`${s.id} platform "${o.key}" offers no instructions — picking it would change nothing on screen`);
+        }
+        const keys = opts.map((o) => o.key);
+        if (new Set(keys).size !== keys.length) bad(`${s.id} has duplicate platform keys — two chips would store the same answer`);
+      }
       if (/password|login|credential/i.test(s.clientLabel || "") && inp.kind !== "url") {
         bad(`${s.id} asks for credentials as "${inp.kind}" — it must take a one-time LINK, never the password`);
       }
@@ -536,6 +554,15 @@ else {
     // a CHANGED verdict still writes, because that is genuinely new.
     // → project_inbound_call_logging (an upsert, not check-then-write)
     // ═══════════════════════════════════════════════════════════════════════════════════════
+    // 🔴 AND THE PLATFORM IS ALLOW-LISTED SERVER-SIDE. It is rendered in admin, so "the UI only
+    // offers ours" is not a control — nothing stops a crafted POST.
+    {
+      const si = read("netlify/functions/portal-step-input.js");
+      if (!/spec\.platform\?\.options/.test(si) || !/offered\.includes\(got\)/.test(si)) {
+        bad("portal-step-input does not allow-list the submitted platform against the options we offered — "
+          + "a crafted POST could store any string, and admin renders it");
+      }
+    }
     if (!/payload->>verdict=eq\./.test(rc) || !/created_at=gte\.\$\{today\}/.test(rc)) {
       bad("re-check writes its activity row unconditionally — a cron retry duplicates every line, "
         + "and a duplicated flip would notify us twice for one change");
