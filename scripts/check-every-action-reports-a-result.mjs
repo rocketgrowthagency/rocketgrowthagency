@@ -54,6 +54,11 @@ const UI_ONLY = {
   "data-portal-goto": "switches the portal view — the destination pane is the feedback",
   "data-portal-scroll": "scrolls to an element in the same tab — the scroll is the feedback",
   "data-svc-access-toggle": "expands the how-to panel and relabels itself Show/Hide — no mutation",
+  // ── 2026-09-21, step 2's CMS platform picker. Tapping a chip writes NOTHING: it highlights the
+  //    chosen platform and swaps that platform's instructions into the panel below. The answer
+  //    rides along with the secure link when the client submits, because it describes the thing
+  //    they are about to send — one control, one act. The visible result IS the swap.
+  "data-platform-pick": "selects a CMS platform — the chip highlights and its instructions replace the panel; nothing is written until submit",
   "data-gap-toggle": "expands a gap card — the card visibly opens",
   "data-svc-diy-toggle": "expands the do-it-yourself steps and flips its arrow — no mutation",
   "data-stage-done-toggle": "expands a completed stage and relabels itself View/Hide — no mutation",
