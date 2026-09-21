@@ -102,6 +102,23 @@ if (rr) {
 if (!/data-review-send/.test(portalSrc)) bad("the portal renders no tap-to-send control — the prepared requests would sit unused");
 if (!/href="sms:/.test(portalSrc)) bad("no sms: link — the client would have to retype the message we wrote");
 if (!/loadReviewRequests\(/.test(portalSrc)) bad("nothing loads the prepared requests");
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 A LOADER MUST NOT CAPTURE ITS HOSTS BEFORE THE SURFACE EXISTS. Hit twice in one week: the
+// Support card, then this. Both ran alongside the client section's render, both did
+// `querySelectorAll` at the TOP of the function, and at that moment the card was not in the DOM —
+// so the function returned immediately and the card rendered permanently empty. The element
+// existed by the time the fetch resolved; the reference taken before it did not.
+// → feedback_an_element_that_exists_is_not_one_they_can_see
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const fn = (portalSrc.match(/async function loadReviewRequests[\s\S]*?\n\}/) || [""])[0];
+  const q = fn.indexOf('querySelectorAll("[data-review-requests]")');
+  const fetched = fn.indexOf("await fetch");
+  if (q >= 0 && fetched >= 0 && q < fetched) {
+    bad("loadReviewRequests resolves its hosts BEFORE awaiting the data — the customer-list card is not "
+      + "in the DOM at call time, so it would find nothing and render empty forever");
+  }
+}
 
 console.log(fail
   ? `\n🔴 ${fail} problem(s). A review request we promise must be one the client can actually send.`
