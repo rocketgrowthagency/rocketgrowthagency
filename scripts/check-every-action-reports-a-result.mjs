@@ -59,6 +59,12 @@ const UI_ONLY = {
   //    rides along with the secure link when the client submits, because it describes the thing
   //    they are about to send — one control, one act. The visible result IS the swap.
   "data-platform-pick": "selects a CMS platform — the chip highlights and its instructions replace the panel; nothing is written until submit",
+  // ── 2026-09-21, the Messages redesign.
+  "data-open-client": "opens that client's record — the destination IS the result, same as every other navigation control here",
+  // 🔑 This one DOES write (it stamps messages_seen_at) but its result is visible twice over:
+  //    the portal jumps to the step and the unread count on the Setup tab clears. Verified in a
+  //    browser — count 1 → gone, step on screen — not assumed.
+  "data-mark-thread-read": "jumps to the step and clears the unread count; both are visible immediately",
   "data-gap-toggle": "expands a gap card — the card visibly opens",
   "data-svc-diy-toggle": "expands the do-it-yourself steps and flips its arrow — no mutation",
   "data-stage-done-toggle": "expands a completed stage and relabels itself View/Hide — no mutation",
