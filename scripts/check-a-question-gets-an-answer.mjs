@@ -113,6 +113,35 @@ if (!/r\.kind !== "client_message" \? "" :/.test(admin)) {
   bad("the reply box is not restricted to client messages — a Reply box under a Stripe webhook is noise");
 }
 if (!/portal-reply/.test(admin)) bad("admin's reply control posts nowhere");
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 A CLASS THAT IS NOT DEFINED ANYWHERE STYLES NOTHING. The reply buttons shipped with
+// `admin-btn admin-btn-primary` — neither exists in admin.css, so the primary action rendered as a
+// bare browser button while the secondary one next to it looked louder. The earlier assertion here
+// checked the class ATTRIBUTE and passed, which is the same mistake in gate form: it confirmed the
+// name was written, never that the name means anything.
+// → feedback_a_check_must_not_validate_itself · feedback_an_invalid_css_declaration_is_dropped_silently
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const adminCss = read("admin/admin.css");
+  const used = [...admin.matchAll(/class="(admin-[a-z- ]+)"[^>]*data-(?:send-reply|open-client)/g)]
+    .flatMap((m) => m[1].split(/\s+/)).filter(Boolean);
+  for (const cls of [...new Set(used)]) {
+    if (!new RegExp(`\\.${cls}[\\s,{:.]`).test(adminCss)) {
+      bad(`the reply controls use ".${cls}", which is not defined in admin.css — that button renders `
+        + `with the browser's default styling, and a primary action that looks secondary inverts the hierarchy`);
+    }
+  }
+  // 🔑 EVERY send button, not "somewhere in the file". There are two — the per-client activity
+  // panel and the Messages queue — and checking the union let one lose the primary class while the
+  // other kept it. A union test over a list of controls is not a test of the controls.
+  const sendButtons = [...admin.matchAll(/class="([^"]*)"[^>]*data-send-reply/g)].map((m) => m[1]);
+  if (!sendButtons.length) bad("no Send reply control found at all");
+  sendButtons.forEach((cls, i) => {
+    if (!/\badmin-button\b/.test(cls) || /\badmin-button-secondary\b/.test(cls)) {
+      bad(`Send reply button #${i + 1} carries "${cls}" — it must be the PRIMARY button; it is the main action on the screen`);
+    }
+  });
+}
 // 🔑 A fresh token per call. The activity panel can sit open for hours.
 if (!/auth\.getSession\(\)\)\?\.data\?\.session\?\.access_token/.test(admin)) {
   bad("admin's reply uses no freshly-read session token — after an hour every reply would 401");
