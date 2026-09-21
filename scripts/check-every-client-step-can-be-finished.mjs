@@ -352,7 +352,14 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
     if (!/if \(!logged\) return json\(500/.test(pm)) {
       bad("portal-message reports success without confirming the write — a client would believe they had told us");
     }
-    if (!/STEP_FOR\[stepId\]/.test(pmCode)) bad("the message carries no step context — a reply could not be specific");
+    // 🔑 The lookup is on the RAW value now, and only a resolved step is stored — an unrecognised
+    // id used to be kept verbatim, which made the message render on no step AND outside the
+    // Support card, so the client never saw it. Assert the resolution, not the old variable name.
+    if (!/STEP_FOR\[rawStepId\]/.test(pmCode)) bad("the message carries no step context — a reply could not be specific");
+    if (!/const stepId = step \? rawStepId : ""/.test(pmCode)) {
+      bad("portal-message stores an unresolved step id — a message carrying a step the portal cannot "
+        + "render matches neither its step nor the Support card, and is invisible to the client");
+    }
     // ═══════════════════════════════════════════════════════════════════════════════════════
     // 🔴 THE STEP NUMBER AND THE SENDER, IN THE LINE ADMIN READS. Chris, 2026-09-18: *"should we
     // do a what step number they asked for help on? … the email will say this was from this
