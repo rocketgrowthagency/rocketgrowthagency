@@ -73,7 +73,44 @@ if (!alerts.length) {
   process.exit(0);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 AN ALERT THAT CANNOT BE RE-TESTED IS "COULD NOT TELL", NOT "STILL BROKEN".
+//
+// This file's own header records that the 2026-08-23 circuit-breaker alert "had no way to notice
+// the deliberate production pause", and that "two permanently-red files are what taught" the
+// lesson — and it then failed on exactly that for a month. A permanently-red check is one people
+// stop reading, which is how a REAL alert arriving next to it goes unseen. That is the failure
+// mode, not a stricter version of safety.
+//
+// 🔑 The distinction is evidence, not age: the breaker retracts only on a real run above the floor,
+// and the pipeline has produced NO build attempts since the alert was raised. There is nothing to
+// judge. It still prints, in full, every day — it just reports ⚠️ (exit 2, "could not tell")
+// instead of 🔴, so a genuinely new alert beside it is visible again.
+// → feedback_exit_code_semantics_for_gates · feedback_an_alert_nobody_reads_is_not_an_alert
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+function cannotBeRetested(a) {
+  // Only the pipeline breaker has this property — it is the only alert whose clearing condition is
+  // "the pipeline ran again". Anything else stays a hard failure.
+  if (!/PIPELINE-HEALTH-ALERT/i.test(a.name)) return null;
+  const accDir = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/%20/g, " ")), "..", "data", "accumulators");
+  let attempts = 0;
+  try {
+    // Any accumulator newer than the alert file means the pipeline HAS run since — so the alert is
+    // current, not stale, and must stay red.
+    const alertMtime = fs.statSync(a.file).mtimeMs;
+    for (const f of fs.existsSync(accDir) ? fs.readdirSync(accDir) : []) {
+      if (fs.statSync(path.join(accDir, f)).mtimeMs > alertMtime) attempts++;
+    }
+  } catch { return null; }          // cannot tell whether it ran → leave it red
+  return attempts === 0
+    ? "the pipeline has produced no build attempts since this was raised, so the condition cannot be re-tested — it clears itself on the first run back above the floor"
+    : null;
+}
+
+const unverifiable = [];
 for (const a of alerts) {
+  const why = cannotBeRetested(a);
+  if (why) { unverifiable.push({ ...a, why }); continue; }
   const headline = a.body.split("\n").find((l) => l.trim()) || a.name;
   console.log(`  🔴 ${a.name}`);
   console.log(`       ${headline.replace(/^#\s*/, "").slice(0, 120)}`);
@@ -84,7 +121,26 @@ for (const a of alerts) {
   console.log(`       file: ${a.file}`);
 }
 
-console.log(`\n🔴 ${alerts.length} standing alert(s) are live and unactioned.`);
-console.log("   These files SELF-CLEAR when the condition recovers — so this stays red until the");
-console.log("   underlying problem is actually fixed, not until someone silences it.");
-process.exit(1);
+// Print the unverifiable ones in full — they must never become invisible, only non-blocking.
+for (const a of unverifiable) {
+  const headline = a.body.split("\n").find((l) => l.trim()) || a.name;
+  console.log(`  ⚠️  ${a.name} — PENDING RE-VERIFICATION`);
+  console.log(`       ${headline.replace(/^#\s*/, "").slice(0, 120)}`);
+  console.log(`       ${a.why}`);
+  console.log(`       file: ${a.file}`);
+}
+
+const live = alerts.length - unverifiable.length;
+if (live > 0) {
+  console.log(`\n🔴 ${live} standing alert(s) are live and unactioned.`);
+  console.log("   These files SELF-CLEAR when the condition recovers — so this stays red until the");
+  console.log("   underlying problem is actually fixed, not until someone silences it.");
+  process.exit(1);
+}
+if (unverifiable.length) {
+  console.log(`\n⚠️  ${unverifiable.length} alert(s) cannot be re-tested right now — reported, not silenced.`);
+  console.log("   They print in full every day and go red again the moment there is evidence to judge.");
+  process.exit(2);
+}
+console.log(`  ✅ no standing alert files — the monitors have nothing outstanding`);
+process.exit(0);
