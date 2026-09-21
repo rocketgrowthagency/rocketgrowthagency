@@ -528,6 +528,18 @@ else {
       if (!new RegExp(`verdict: "${v}"`).test(rc)) bad(`re-check never returns "${v}" — it cannot report that outcome`);
     }
     if (!/probe\.verdict === "not_done"/.test(rc)) bad("re-check never acts on a failed probe — the row could not move");
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // 🔴 A RETRY IS NOT A SECOND OBSERVATION. metrics-daily-refresh runs this on a 06:00 cron and
+    // Netlify retries a scheduled function that times out or errors, so the whole pass can run
+    // twice. Observed 2026-09-21: four rows for two steps at 06:00 and 06:01; 2026-09-17: eleven
+    // rows for seven steps. The write must be idempotent for one client, step, verdict and day —
+    // a CHANGED verdict still writes, because that is genuinely new.
+    // → project_inbound_call_logging (an upsert, not check-then-write)
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    if (!/payload->>verdict=eq\./.test(rc) || !/created_at=gte\.\$\{today\}/.test(rc)) {
+      bad("re-check writes its activity row unconditionally — a cron retry duplicates every line, "
+        + "and a duplicated flip would notify us twice for one change");
+    }
     if (/probe\.verdict === "indeterminate"[\s\S]{0,200}?status: "pending"/.test(rc)) {
       bad("re-check reopens a step on an indeterminate result — not knowing is not evidence");
     }
