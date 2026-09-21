@@ -210,6 +210,34 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
 
 console.log(`  portal: pick saves · confirm gated · clear+undo · no blanket padding · optimistic paint · no pending state`);
 console.log(`  admin:  heading counts from data · boot failure visible and named`);
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 A SAVE MUST NOT REPAINT A CARD THAT IS ALREADY CORRECT. Chris, 2026-09-21: *"there is still a
+// little lag and its confusing."* The tap itself was instant — the row went green, ticked, and
+// opened the next question. Then 1.5-2.5s later the whole card re-rendered from the response, so
+// every row redrew and the page moved under the cursor. THAT second event, long after the tap, is
+// what read as lag; the save was already as fast as a verified write can be.
+//
+// 🔑 The response is still compared against the screen — it is the proof the write landed. It just
+// stops being a repaint when it has nothing to correct, and a disagreement still redraws.
+// → feedback_autosave_the_answer_gate_the_effect
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const portalSrc = read("portal/portal.js");
+  const saveFn = (portalSrc.match(/async function saveFacts[\s\S]*?\n\}/) || [""])[0];
+  if (!/function cardMatchesScreen\s*\(/.test(portalSrc)) {
+    fail.push("cardMatchesScreen is gone — nothing can tell whether a repaint is needed, so every tap redraws the card seconds after it");
+  }
+  if (/if \(j\.card\) renderFactsCard\(j\.card\)/.test(saveFn)) {
+    fail.push("saveFacts repaints unconditionally on every save — the redraw lands seconds after the tap and reads as lag");
+  }
+  if (!/cardMatchesScreen\(j\.card\)/.test(saveFn)) {
+    fail.push("saveFacts does not compare the server's card against the screen before repainting");
+  }
+  if (!/renderFactsCard\(j\.card\)/.test(saveFn)) {
+    fail.push("saveFacts can no longer repaint at all — when the server DISAGREES the screen must be corrected");
+  }
+}
+
 
 if (fail.length) {
   console.error(`\n✗ the owner-questions card drifted from what was agreed — ${fail.length} problem(s):`);
