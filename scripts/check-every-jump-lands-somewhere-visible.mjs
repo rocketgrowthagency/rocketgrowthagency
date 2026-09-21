@@ -134,6 +134,24 @@ if (!banner) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE OTHER JUMP MECHANISM. `data-jump-to` predates the shared handler and scrolls to a SELECTOR
+// rather than an id, so it cannot use it. Today its two targets share a view with their buttons —
+// but nothing enforced that, and moving either form would have made them inert in the same silent
+// way the billing banner was. It must switch the view itself before it measures anything.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const jumpTo = (code.match(/querySelectorAll\("\[data-jump-to\]"\)[\s\S]{0,900}?\n  \}\);/) || [""])[0];
+  if (jumpTo) {
+    if (!/setPortalView\(/.test(jumpTo)) {
+      bad("the data-jump-to handler scrolls without switching view — if its target ever moves tab it goes silently inert");
+    }
+    if (!/requestAnimationFrame/.test(jumpTo)) {
+      bad("the data-jump-to handler scrolls in the same tick as the view switch — it would measure the OLD layout");
+    }
+  }
+}
+
 console.log(fail
   ? `\n🔴 ${fail} jump(s) that could land nowhere.`
   : `\n✅ ${scrolls} in-portal jump(s): each names its tab, and one handler switches before it scrolls.`);
