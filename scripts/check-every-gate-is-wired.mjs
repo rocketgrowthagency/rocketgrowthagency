@@ -66,6 +66,7 @@ const NOT_PREFLIGHT = {
   'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
   'check-admin-selects-real-columns.mjs': 'admin-schema gate; runs in daily-health-check.sh — needs live Supabase, and a schema drift cannot make a video unsafe',
   'check-video-serving-reconciled.mjs': 'live-serving gate; runs in daily-health-check.sh — samples production over the network, too slow for per-run pre-flight',
+  'check-a-truncated-scan-is-not-a-measurement.mjs': 'rank-data gate; runs in daily-health-check.sh — static analysis of the site repo, and a truncated grid cannot make a video unsafe',
   'check-a-failure-reaches-a-human.mjs': 'admin-queue gate; runs in daily-health-check.sh — static analysis of the site repo, and an unreachable alert cannot make a video unsafe',
   // ── client-portal / delivery surface. All run in daily-health-check.sh. None of them can make
   //    tonight's VIDEO unsafe, which is what the per-run pre-flight exists to protect — so they are
