@@ -180,6 +180,7 @@ run check-a-truncated-scan-is-not-a-measurement.mjs "the rank baseline runs in-p
 run check-an-unauthenticated-endpoint-leaks-nothing.mjs "an endpoint that cannot require auth never hands out a client email, phone or token"
 run check-a-promise-of-automation-has-a-schedule.mjs "every 'we do this automatically' the client reads is kept by a function that is actually scheduled"
 run check-no-gate-has-unreachable-code.mjs "no gate carries code after its own exit — in a gate, dead code reports as a PASS"
+run check-internal-work-cannot-look-client-facing.mjs "internal audit findings cannot render as an ordinary client-facing card"
 run check-review-requests-can-actually-be-sent.mjs "a review request we promise is one the client can actually send"
 run check-every-view-survives-a-reload.mjs "every admin view survives a reload and a shared link — no login screen, no fallback to Pipeline"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"

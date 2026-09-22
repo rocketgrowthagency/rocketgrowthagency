@@ -37,6 +37,7 @@ const UI_ONLY = {
   "data-goto-tab": "navigates to another tab — the destination is the feedback",
   "data-accordion-toggle": "expands/collapses a section — the section visibly moves",
   "data-field-help": "opens inline help — the text appearing is the feedback",
+  "data-card-note": "opens the card's ⓘ note — the panel appearing IS the result, and the button carries aria-expanded",
   "data-note-id": "selects a note for editing — the editor visibly loads it",
   "data-custom-field": "focuses a custom field — no mutation",
   "data-doc": "opens a document — the document opening is the feedback",
