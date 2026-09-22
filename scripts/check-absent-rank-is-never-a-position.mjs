@@ -183,6 +183,82 @@ if (adminColor && adminBody) {
   } catch (e) { problems.push(`admin rankColor could not be executed: ${String(e.message).slice(0, 90)}`); }
 }
 
+// ── 5. THE STORED DATA — the check this gate did not have, and the regression walked past ───────
+//
+// 🔴 2026-09-22. This gate existed, ran daily, and PASSED while a uniform `21` sat in
+// brain_rank_snapshots for 2026-09-21. It audited the producer CODE and executed the consumer
+// HELPERS, and never once read what had actually been written. Sections 1-4 prove the code cannot
+// produce a sentinel TODAY; they say nothing about the rows already on file or about a writer this
+// gate never knew to look at (`saveRankGrid` stored the raw grid while `saveGridRows` normalised
+// it, so ONE scan wrote nulls to the rows and 21s to the blob).
+//
+// 🔑 The same lesson check-ai-drafts-do-not-invent-prices already learned: scan what was WRITTEN,
+// not only what writes it. A prompt fix does not un-write the bad draft; a producer fix does not
+// un-write the bad row. → feedback_correct_is_not_the_same_as_happening · feedback_a_guard_must_reach_the_thing_it_guards
+const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!U || !K) {
+  console.error("⚠️  INDETERMINATE — no Supabase credentials, so the STORED grids could not be read.");
+  console.error("   Sections 1-4 passed, but those only prove the code cannot write a sentinel today.");
+  process.exit(2);
+}
+{
+  const h = { apikey: K, Authorization: `Bearer ${K}` };
+  const get = async (path) => {
+    const r = await fetch(`${U}/rest/v1/${path}`, { headers: h });
+    if (!r.ok) return null;
+    return r.json();
+  };
+
+  const snaps = await get("brain_rank_snapshots?select=client_id,snapshot_date,keyword,grid,avg_rank&order=snapshot_date.desc&limit=60");
+  if (!Array.isArray(snaps)) {
+    console.error("⚠️  INDETERMINATE — could not read brain_rank_snapshots.");
+    process.exit(2);
+  }
+  for (const s of snaps) {
+    const flat = Array.isArray(s.grid) ? s.grid.flat() : [];
+    if (!flat.length) continue;
+    const sentinels = flat.filter((v) => v != null && v > 20);
+    if (sentinels.length) {
+      const uniq = [...new Set(sentinels)];
+      problems.push(`brain_rank_snapshots ${s.snapshot_date} "${s.keyword}" stores ${sentinels.length} `
+        + `cell(s) above rank 20 (${JSON.stringify(uniq)}). Above 20 is "not found in range", not a `
+        + `position — stored as a number it reads as a rank the business holds. `
+        + `Normalise to null, or delete the row if it was never a real measurement.`);
+    }
+  }
+
+  // The blob the brain COPIES must agree with the rows written by the same scan. This is the
+  // disagreement that produced the regression: two stores of one measurement, one migrated.
+  const recs = await get("client_onboarding_records?select=client_id,data&limit=200");
+  for (const rec of Array.isArray(recs) ? recs : []) {
+    const rg = rec?.data?.v2Campaign?.rank_grid;
+    const flat = Array.isArray(rg?.grid) ? rg.grid.flat() : [];
+    if (!flat.length) continue;
+    const bad = flat.filter((v) => v != null && v > 20);
+    if (bad.length) {
+      problems.push(`the stored rank_grid blob for client ${String(rec.client_id).slice(0, 8)} holds `
+        + `${bad.length} cell(s) above 20 (${JSON.stringify([...new Set(bad)])}) while saveGridRows `
+        + `normalises the same scan to null. The brain copies THIS blob into the time series.`);
+    }
+  }
+}
+
+// ── 6. THE DATE MUST BE WHEN IT WAS MEASURED, NOT WHEN THE JOB RAN ──────────────────────────────
+// 🔴 The brain wrote `snapshot_date: today` regardless of the grid's age, and it runs on its own
+// schedule — so it re-snapshotted an 11-day-old blob as a fresh weekly measurement. This is a TIME
+// SERIES: a re-dated copy is a data point that never happened.
+{
+  // `brain` is already comment-stripped above — a gate that greps raw source matches the prose
+  // explaining the rule instead of the rule. → feedback_dead_check_selector_gap
+  const snapWrite = brain.match(/brain_rank_snapshots`[\s\S]{0,900}?snapshot_date:\s*(\w+)/);
+  if (!snapWrite) {
+    problems.push("could not find the brain_rank_snapshots write — this gate can no longer tell how it is dated.");
+  } else if (/^today$/.test(snapWrite[1])) {
+    problems.push("v2-brain-analysis-background dates a snapshot `today` — it must date it by the "
+      + "grid's own timestamp, or every run re-records an old grid as this week's measurement.");
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────────────────────────────────
 console.log("── absent ranks stay absent ──");
 if (problems.length) {
@@ -195,5 +271,6 @@ if (problems.length) {
 console.log("  ✅ producer stores null for not-found; no bare Number() coercions");
 console.log("  ✅ brain prompt derives the grid size instead of assuming 81");
 console.log("  ✅ portal + admin helpers executed: null / 21 classify as ABSENT, real ranks survive");
+console.log("  ✅ STORED grids carry no cell above rank 20, and snapshots are dated when measured");
 console.log("\n✅ absence and position cannot be confused on any surface.");
 process.exit(0);
