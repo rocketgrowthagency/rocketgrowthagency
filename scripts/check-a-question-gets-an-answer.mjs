@@ -232,6 +232,41 @@ try {
   process.exit(2);
 }
 
+
+// ── CLIENT-VISIBLE NOTICES ───────────────────────────────────────────────────────────────────────
+// 🔴 2026-09-22. `gbp-duplicate-recheck` wrote a "your duplicate listing is gone" note to
+// `client_activity` — the surface ADMIN reads. `portal-thread` serves the client from an allow-list
+// (VISIBLE), and the new kind was not in it, so the note existed, was well-formed, and the client
+// could never see it. Writing a notice is not delivering one.
+//
+// 🔴 Two further traps in the same projection: it mapped anything that was not `rga_reply` to
+// `from: "you"`, so a system note would render in the CLIENT's own voice; and it reads
+// `payload.message` while a background job writes `payload.summary`, so the note would be filtered
+// out as empty even once allow-listed. → feedback_a_clean_payload_is_not_a_clean_page
+//
+// 🔑 This block sits ABOVE the report on purpose. My first attempt appended it AFTER
+// `process.exit()` — dead code that reported green, the same defect this file's own history
+// records. Placement is part of the check. → feedback_dead_check_selector_gap
+{
+  const stripped = read("netlify/functions/portal-thread.js").replace(/^\s*\/\/.*$/gm, "");
+  const visible = stripped.match(/const VISIBLE\s*=\s*\[([^\]]*)\]/);
+  if (!visible) {
+    bad("portal-thread no longer declares VISIBLE — the client-facing allow-list is gone");
+  } else {
+    for (const kind of ["gbp_duplicate_resolved"]) {
+      if (!visible[1].includes(kind)) {
+        bad(`portal-thread VISIBLE omits "${kind}" — a notice written FOR the client that the client cannot read`);
+      }
+    }
+    if (/kind\s*===\s*"rga_reply"\s*\?\s*"rga"\s*:\s*"you"/.test(stripped)) {
+      bad("portal-thread attributes every non-rga_reply kind to \"you\" — a system note would render in the client's own voice");
+    }
+    if (!/payload\?\.summary/.test(stripped)) {
+      bad("portal-thread reads only payload.message — a system note carries `summary` and is filtered out as empty");
+    }
+  }
+}
+
 console.log(fail
   ? `\n🔴 ${fail} way(s) a client question goes unanswered or an answer goes unseen.`
   : "\n✅ a question is stored, emailed and answerable from admin; the answer lands in their portal and their inbox.");
