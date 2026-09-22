@@ -51,7 +51,13 @@ for (const f of fs.readdirSync(FNS).filter((x) => x.endsWith(".js"))) {
   // crossed a `});` and picked up the NEXT call's body — it attributed client_activity's kind/payload
   // to client_subscriptions, inventing a failure in stripe-webhook. Brace-match the options object
   // and only look for `body:` within it.
-  const re = /supa\(`\/([a-z_]+)`\s*,\s*\{/g;
+  // 🔴 AND ALLOW A QUERY STRING (2026-09-22). This required a BARE table path — supa(`/clients`, {
+  // — so it could only ever see INSERTs. Every UPDATE needs a filter (`/clients?id=eq.${id}`), which
+  // means no PATCH was matchable BY CONSTRUCTION, whatever the method test said. Widening POST to
+  // PATCH changed nothing until this line changed too, and the count stayed at 49 — a coverage
+  // number that does not move when you widen the net is telling you the net never reached.
+  // → feedback_dead_check_selector_gap
+  const re = /supa\(`\/([a-z_]+)(?:\?[^`]*)?`\s*,\s*\{/g;
   let m;
   while ((m = re.exec(src))) {
     const optOpen = src.lastIndexOf("{", re.lastIndex);
@@ -62,7 +68,14 @@ for (const f of fs.readdirSync(FNS).filter((x) => x.endsWith(".js"))) {
     }
     if (optEnd < 0) continue;
     const opts = src.slice(optOpen, optEnd + 1);
-    if (!/method:\s*"POST"/.test(opts)) continue;
+    // 🔴 PATCH COUNTS TOO (2026-09-22). This tested only for POST, so an UPDATE naming a column
+    // that does not exist sailed straight through. `gbp-duplicate-scan` PATCHed
+    // `clients.gbp_duplicate_finding` — no such column — and Supabase answered PGRST204 on EVERY
+    // run since it shipped, so the duplicate finding was never saved and the client portal
+    // rendered a frozen verdict for a week while promising it re-checked automatically.
+    // A write is a write: the verb does not change whether the column has to exist.
+    // → project_admin_selected_a_missing_column · feedback_verify_the_write_not_just_the_intent
+    if (!/method:\s*"(POST|PATCH|PUT)"/.test(opts)) continue;
     const bodyIdx = opts.indexOf("body: JSON.stringify(");
     // A pre-built `body` variable carries no visible columns — nothing to verify, so skip it.
     if (bodyIdx < 0) continue;
@@ -85,26 +98,28 @@ for (const f of fs.readdirSync(FNS).filter((x) => x.endsWith(".js"))) {
     // read `summary` as a column of client_activity and invented a failure in billing-daily-check.
     // Every other caller happened to put payload on ONE line, which is why it never showed before.
     // 🔑 A parser that samples state at the wrong instant is not a stricter check, it is a wrong one.
+    // 🔴 SPLIT ON DEPTH-0 COMMAS, NOT ON NEWLINES (2026-09-22). This harvested a key only when it
+    // reached a `\n`, with `^\s*` anchored to the line start — so a single-line body,
+    // `JSON.stringify({ data: {...}, updated_at: x, not_a_column: 1 })`, surrendered only its FIRST
+    // key and every later column on that line went unchecked. Multi-line bodies happened to work,
+    // which is why it looked correct. Commas at depth 0 separate columns in BOTH shapes, and
+    // nesting is still skipped because a nested key never sits at depth 0.
     const cols = [];
-    let d = 0, line = "", lineStartDepth = 0;
-    for (const ch of body) {
-      if (ch === "\n") {
-        const km = lineStartDepth === 0 && d === 0 && line.match(/^\s*([a-z_]+)\s*:/);
+    {
+      let d = 0, buf = "";
+      const take = () => {
+        const km = buf.match(/^\s*([a-z_][a-z0-9_]*)\s*:/);
         if (km) cols.push(km[1]);
-        line = "";
-        lineStartDepth = d;
-        continue;
+        buf = "";
+      };
+      for (const ch of body) {
+        if (ch === "{" || ch === "[") d++;
+        else if (ch === "}" || ch === "]") d--;
+        if (ch === "," && d === 0) { take(); continue; }
+        buf += ch;
       }
-      if (d === 0) {
-        const km = line.match(/^\s*([a-z_]+)\s*:\s*$/);
-        if (ch === "{" && km) { cols.push(km[1]); }
-      }
-      if (ch === "{" || ch === "[") d++;
-      else if (ch === "}" || ch === "]") d--;
-      line += ch;
+      take();
     }
-    const km = d === 0 && line.match(/^\s*([a-z_]+)\s*:/);
-    if (km) cols.push(km[1]);
     const uniq = [...new Set(cols)];
     if (uniq.length) writes.push({ file: f, table: m[1], cols: uniq });
   }
