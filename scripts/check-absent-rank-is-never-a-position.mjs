@@ -259,6 +259,32 @@ if (!U || !K) {
   }
 }
 
+// ── 7. NO INLINE RANK PAINTER MAY BYPASS THE SHARED HELPERS ────────────────────────────────────
+// 🔴 2026-09-22. Chris saw the admin Map coverage card showing 25 GREEN cells reading "0" above
+// the caption "0% of the map in the top 3" — the grid and its own caption contradicting each other,
+// both wrong, for a business found at NONE of its points.
+//
+// Cause: that card ran `rg.grid.flat().map(Number)`, and **`Number(null)` is 0, not NaN**. Zero
+// then passed `0 <= 2` into the best colour band and `0 <= 20` into the ranked count. The shared
+// `cellRank`/`rankCellClass`/`rankLabel` helpers thirty lines away handle null correctly — the card
+// simply never called them, so sections 1-4 above, which audit those helpers, stayed green
+// throughout. A gate that checks the shared path cannot see the copy that avoided it.
+// → feedback_fix_the_class_not_the_instance
+{
+  const adminRaw = String(src.admin || "").replace(/^\s*\/\/.*$/gm, "");
+  // `.map(Number)` applied to grid data is the exact coercion that turns absent into zero.
+  for (const m of adminRaw.matchAll(/(\w+)\.flat\(\)\.map\(Number\)/g)) {
+    problems.push(`admin.js coerces grid data with \`${m[1]}.flat().map(Number)\` — Number(null) is 0, which `
+      + `paints "found nowhere" as rank 0 in the best colour band. Use cellRank()/rankLabel()/rankCellClass().`);
+  }
+  // A locally-declared colour-band function is a second palette that will drift from the shared one.
+  for (const m of adminRaw.matchAll(/const\s+cls\s*=\s*\(\s*r\s*\)\s*=>[^\n]*g1/g)) {
+    problems.push("admin.js declares an inline rank-colour function (`const cls = (r) => … g1 …`) instead of "
+      + "rankCellClass() — a second palette that will drift from the shared one, and that null "
+      + "handling has to be re-fixed in.");
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────────────────────────────────
 console.log("── absent ranks stay absent ──");
 if (problems.length) {
