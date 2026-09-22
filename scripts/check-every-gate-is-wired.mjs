@@ -38,7 +38,17 @@ const ok = (m) => console.log(`  ✓ ${m}`);
 // Deliberately NOT pre-flight. Each needs a REASON, so excusing a gate is a decision on the record
 // rather than an oversight. "It was failing" is never a valid reason — fix it or delete it.
 const NOT_PREFLIGHT = {
-  'check-detail-card-opaque.mjs': 'per-video tool — takes <video.mp4>; runs inside the visual gate',
+  // 🔴 THIS EXCUSE USED TO READ "runs inside the visual gate". It does not, and nothing else does
+  // either (audit, 2026-09-22). The visual gate's checkD asks whether a detail card is PRESENT;
+  // this asks whether it is OPAQUE — a different question, and still the only thing that would
+  // catch the Dr. Augusto Rojas translucent card. It is deliberately not a gate (false positives,
+  // reasoning in its own header), which is a sound call — but an excuse claiming a caller that
+  // does not exist makes the defect look covered when it is not. State the real reason.
+  // 🔑 Translucency remains UNGATED by design. → feedback_a_ledger_line_outlives_the_bug
+  'check-detail-card-opaque.mjs': 'DIAGNOSTIC ONLY, never a gate — its saturation metric measures '
+    + 'layout, not translucency, and flagged 3 videos Chris confirmed good. Run by hand to rank '
+    + 'videos for eyeballing. Translucency is not gated by anything; fixing that needs per-frame '
+    + 'card-region detection, not this threshold.',
   'check-video-acceptance.mjs':   'per-video tool — takes <video.mp4>; runs at build-landing time',
   'check-video-visual.mjs':       'per-video tool — takes <video.mp4>; runs at build-landing time',
   'check-site-reachable.mjs':     'per-lead tool — takes a URL; runs inside the rebuild runner',
@@ -56,6 +66,7 @@ const NOT_PREFLIGHT = {
   'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
   'check-admin-selects-real-columns.mjs': 'admin-schema gate; runs in daily-health-check.sh — needs live Supabase, and a schema drift cannot make a video unsafe',
   'check-video-serving-reconciled.mjs': 'live-serving gate; runs in daily-health-check.sh — samples production over the network, too slow for per-run pre-flight',
+  'check-a-failure-reaches-a-human.mjs': 'admin-queue gate; runs in daily-health-check.sh — static analysis of the site repo, and an unreachable alert cannot make a video unsafe',
   // ── client-portal / delivery surface. All run in daily-health-check.sh. None of them can make
   //    tonight's VIDEO unsafe, which is what the per-run pre-flight exists to protect — so they are
   //    excused from pre-flight and checked every morning instead. Backfilled 2026-09-16: these had

@@ -174,6 +174,7 @@ run check-every-jump-lands-somewhere-visible.mjs "every in-portal jump lands on 
 run check-an-audit-cannot-write.mjs "no audit script can change production; the FGA score measures the record's own URL"
 run check-a-question-gets-an-answer.mjs "a client question is stored, emailed and answerable from admin — and the answer lands in their portal"
 run check-no-test-data-in-production.mjs "no test scaffolding is sitting in a client's portal"
+run check-a-failure-reaches-a-human.mjs "every failure we log can actually reach the admin queue — no declined card or unsent receipt is invisible"
 run check-review-requests-can-actually-be-sent.mjs "a review request we promise is one the client can actually send"
 run check-every-view-survives-a-reload.mjs "every admin view survives a reload and a shared link — no login screen, no fallback to Pipeline"
 run check-questions-fit-the-trade.mjs "every approved trade is asked questions that fit it"
