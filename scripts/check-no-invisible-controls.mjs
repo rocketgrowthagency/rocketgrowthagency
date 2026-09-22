@@ -110,6 +110,31 @@ if (!FILES.length) { console.error('[contrast] INDETERMINATE — no stylesheets 
 let all = [];
 for (const f of FILES) all = all.concat(findings(fs.readFileSync(path.join(SITE, f), 'utf8'), f));
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE MIRROR OF AN INVISIBLE CONTROL: A VISIBLE ONE THAT SHOULD NOT BE THERE. `hidden` gets
+// its `display:none` from the UA stylesheet, so ANY author rule setting `display` outranks it.
+// `#noticeBanner` was marked hidden in the DOM and still rendered — an empty 42px white bar at the
+// top of every admin view, on every screenshot Chris sent for weeks, because
+// `.admin-banner{display:grid}` quietly won. Nothing failed; it read as deliberate spacing.
+//
+// 🔑 274 rules in admin.css set `display` and five guarded `[hidden]`. Fixing that one banner would
+// have left the class intact, so the attribute is made authoritative with a baseline rule — and
+// this asserts the baseline is still there. → feedback_fix_the_class_not_the_instance
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const SHEETS = ["admin/admin.css", "portal/portal.css"];
+  for (const rel of SHEETS) {
+    const full = path.join(SITE, rel);
+    if (!fs.existsSync(full)) continue;
+    const css = fs.readFileSync(full, "utf8");
+    if (!/\[hidden\]\s*\{[^}]*display\s*:\s*none\s*!important/.test(css)) {
+      all.push(`${rel}: no baseline \`[hidden]{display:none!important}\` — any rule that sets `
+        + `display outranks the attribute, so an element marked hidden can still render (an empty `
+        + `banner did exactly that on every admin page)`);
+    }
+  }
+}
+
 // Name them, so shrinking coverage is visible rather than silent.
 console.log(`[contrast] ${FILES.length} stylesheet(s) scanned: ${FILES.join(', ')}`);
 if (all.length) {
@@ -120,3 +145,4 @@ if (all.length) {
 }
 console.log('✅ no control depends on an unresolvable custom property for its contrast.');
 process.exit(0);
+
