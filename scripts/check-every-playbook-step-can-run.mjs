@@ -33,8 +33,11 @@ const FLOW = path.join(SITE, 'netlify/functions/flow-execute.js');
 // Steps with no in-function executor ON PURPOSE. "It has no runner" is never a reason — that is the
 // thing being checked. The reason must say what runs it instead.
 const NO_EXECUTOR_OK = {
-  'm1.audit.grid_baseline': 'runs in the LOCAL scraper (grid-scan.mjs, puppeteer, ~1h headful). flow-execute answers mustRunLocally with the exact command, which is the designed path for heavy local work.',
-  'm2.snap.grid_scan': 'the monthly re-run of the same LOCAL grid scan as m1.audit.grid_baseline. Same reason: headful puppeteer, ~1h, cannot run in a Netlify function.',
+  // 🔴 BOTH GRID EXCUSES REMOVED 2026-09-22. They claimed the scan "cannot run in a Netlify
+  // function" — it can, and did: `v2-rank-grid-background` was already scheduled and already
+  // wired to an admin button while these two steps told people to open a terminal and wait an
+  // hour. The excuse was not a trade-off, it was a description of the wrong implementation.
+  // Two hand-run scans on RGA died partway and persisted as complete-looking sessions.
 };
 
 const fail = [];

@@ -45,11 +45,17 @@ const src = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 const problems = [];
 
-// ── 1. The step must RUN in the product, not hand back a terminal command.
-if (!/"m1\.audit\.grid_baseline":\s*async/.test(src)) {
-  problems.push("m1.audit.grid_baseline has no executor in flow-execute — the product would answer "
-    + "it with `mustRunLocally` and a terminal command, which is a manual step and cannot be "
-    + "interrupted safely.");
+// ── 1. BOTH grid steps must RUN in the product, not hand back a terminal command.
+//    🔑 The monthly re-run is included deliberately. Fixing only the month-1 baseline would leave
+//    the MONTHLY number — the one a client's month-2+ report is measured against — still coming
+//    from a script anyone could interrupt. → feedback_fix_the_class_not_the_instance
+const GRID_STEPS = ["m1.audit.grid_baseline", "m2.snap.grid_scan"];
+for (const id of GRID_STEPS) {
+  if (!new RegExp(`"${id.replace(/\./g, "\\.")}":\\s*async`).test(src)) {
+    problems.push(`${id} has no executor in flow-execute — the product would answer it with `
+      + `\`mustRunLocally\` and a terminal command, which is a manual step and cannot be `
+      + `interrupted safely.`);
+  }
 }
 
 // ── 2. The instructions must not send anyone to a terminal.
@@ -59,7 +65,7 @@ try {
   const walk = (o) => {
     if (Array.isArray(o)) return o.forEach(walk);
     if (o && typeof o === "object") {
-      if (o.id === "m1.audit.grid_baseline") {
+      if (GRID_STEPS.includes(o.id)) {
         steps++;
         const i = String(o.instructions || "");
         // 🔴 MATCH THE INSTRUCTION, NOT THE VOCABULARY. This first tested for the bare word
@@ -73,8 +79,8 @@ try {
           /\bVS Code repo\b/i,
         ];
         if (MANUAL.some((re) => re.test(i))) {
-          problems.push(`m1.audit.grid_baseline instructions still describe a manual terminal `
-            + `procedure: "${i.slice(0, 90)}…"`);
+          problems.push(`${o.id} instructions still describe a manual terminal procedure: `
+            + `"${i.slice(0, 90)}…"`);
         }
       }
       Object.values(o).forEach(walk);
@@ -85,8 +91,8 @@ try {
   console.error(`⚠️  INDETERMINATE — playbooks.json did not parse: ${e.message}`);
   process.exit(2);
 }
-if (steps === 0) {
-  console.error("⚠️  INDETERMINATE — m1.audit.grid_baseline not present in playbooks.json.");
+if (steps < GRID_STEPS.length) {
+  console.error(`⚠️  INDETERMINATE — found ${steps} of ${GRID_STEPS.length} grid steps in playbooks.json.`);
   process.exit(2);
 }
 
@@ -98,10 +104,12 @@ if (steps === 0) {
 // it per-source is that the max folds in THAT SOURCE's own running value, so match that.
 const perSource = [...src.matchAll(
   /fullFor\[\s*s\.source\s*\]\s*=\s*Math\.max\(\s*fullFor\[\s*s\.source\s*\]\s*\|\|\s*0\s*,/g)].length;
+// The baseline and the monthly re-run now share readGridSessions(), so the fold lives in ONE
+// place plus the tracker's own copy. Fewer than two means a reader stopped judging per source.
 if (perSource < 2) {
-  problems.push(`completeness is judged per-source in only ${perSource} place(s); both `
-    + `m1.audit.grid_baseline and m2.snap.rank_tracker must do it, or a complete 25-point automated `
-    + `scan gets branded truncated next to an 81-point hand-run one.`);
+  problems.push(`completeness is judged per-source in only ${perSource} place(s) — the shared `
+    + `readGridSessions() and m2.snap.rank_tracker must each do it, or a complete 25-point `
+    + `automated scan gets branded truncated next to an 81-point hand-run one.`);
 }
 
 // ── 4. The comparison must actually DROP the truncated sessions rather than note them.
