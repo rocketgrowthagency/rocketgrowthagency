@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// check-a-promise-of-automation-has-a-schedule.mjs
+//
+// 🔴 WHY (Chris, 2026-09-22): "i thought this was shown as resolved. so we need a way it updates
+// and sends the note on the client portal."
+//
+// The duplicate-listing card told the client, in their own words:
+//
+//     "We re-check this automatically. It clears itself here once the duplicate is gone —
+//      there is nothing for you to tick."
+//
+// Nothing re-checked it. `gbp-duplicate-scan` had ONE caller — a human running the SOP step — and
+// no schedule anywhere, so the card rendered a frozen verdict for a week while the client waited
+// for something that was never going to happen.
+//
+// 🔑 A SENTENCE IN CLIENT-FACING COPY IS A COMMITMENT THE SYSTEM HAS TO KEEP. Copy is the cheapest
+// thing in the repo to write and the most expensive to be wrong about: the client cannot see that
+// the cron does not exist, so they wait instead of acting.
+// → feedback_we_never_promise_what_we_dont_do · feedback_correct_is_not_the_same_as_happening
+//
+// HOW: every promise of ongoing automation must be REGISTERED with the scheduled function that
+// keeps it, and that function must actually carry a `schedule =` in netlify.toml. Copy that makes
+// such a promise WITHOUT a registry entry fails — so a new promise cannot be written without
+// naming what keeps it.
+//
+// exit 0 = every promise is kept by something real · 1 = a promise with no mechanism · 2 = can't tell
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+import fs from "node:fs";
+import path from "node:path";
+
+const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const TOML = path.join(SITE, "netlify.toml");
+
+// Client-facing copy. Anything a CLIENT reads and could wait on.
+const SURFACES = [
+  "netlify/functions/_deliverables.js",
+  "data/playbooks/playbooks.json",
+  "portal/portal.js",
+];
+
+// A promise of ONGOING automation — not "we will do X" (a one-off we may do by hand), but "this
+// keeps happening without you". Deliberately narrow: a gate that fires on ordinary copy gets muted.
+const PROMISE = [
+  /re-?checks? (?:this|it) automatically/i,
+  /clears itself/i,
+  // 🔴 The object is not always "this". A first version required `we check (this|it|these)` and
+  // sailed past "We update your rankings automatically every day" — real copy names the THING, not
+  // a pronoun. Widened to any object, still anchored on an explicit ongoing-automation word so
+  // ordinary "we will do X" copy does not trip it.
+  /\bwe (?:re-?check|check|update|refresh|monitor|watch)\b[^.]{0,70}\b(?:automatically|every day|daily|weekly|each month)/i,
+  /nothing for you to tick/i,
+];
+
+// Each registered promise names the scheduled function that keeps it. Adding a line here is a
+// decision on the record — same contract as the gate-wiring excuse list.
+// 🔑 The surface is where the CLIENT reads it, which is not always where the card is defined. I
+// registered this against `_deliverables.js` (where the card's config lives) and the gate corrected
+// me on its first run: the sentence is rendered from `portal/portal.js`. Registering a promise
+// against the wrong file would have guarded nothing while reporting green.
+const KEPT_BY = [
+  {
+    match: /re-?check this automatically|clears itself here|nothing for you to tick/i,
+    surface: "portal/portal.js",
+    keptBy: "gbp-duplicate-recheck",
+    note: "the duplicate-listing card — re-scans daily and writes a client_activity note on clear",
+  },
+];
+
+if (!fs.existsSync(TOML)) {
+  console.error("⚠️  INDETERMINATE — netlify.toml not found; cannot verify any schedule.");
+  process.exit(2);
+}
+const toml = fs.readFileSync(TOML, "utf8");
+
+/**
+ * Is this function actually scheduled?
+ *
+ * 🔴 NETLIFY HAS TWO WAYS TO SCHEDULE and a check that knows one is a check that lies. A first
+ * version read only netlify.toml — but `flow-cron-daily` and `flow-cron-weekly-digest` declare
+ * `exports.config = { schedule: "0 9 * * *" }` INSIDE the function file, which is equally valid.
+ * A keeper scheduled that way would have been reported as unkept, and the gate would have been
+ * demanding a fix for something already working. Found while sweeping for dormant functions the
+ * same hour this gate was written. → feedback_a_check_must_not_validate_itself
+ */
+function isScheduled(fn) {
+  const block = toml.match(new RegExp(`\\[functions\\."${fn.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}"\\]([\\s\\S]{0,300}?)(?=\\n\\[|$)`));
+  if (block && /schedule\s*=\s*"[^"]+"/.test(block[1])) return true;
+  const file = path.join(SITE, "netlify", "functions", `${fn}.js`);
+  if (!fs.existsSync(file)) return false;
+  const src = fs.readFileSync(file, "utf8").replace(/^\s*\/\/.*$/gm, "");
+  return /exports\.config\s*=\s*\{[\s\S]{0,200}?schedule\s*:\s*["'`][^"'`]+["'`]/.test(src);
+}
+
+const problems = [];
+let promisesFound = 0, surfacesRead = 0;
+
+for (const rel of SURFACES) {
+  const p = path.join(SITE, rel);
+  if (!fs.existsSync(p)) continue;
+  surfacesRead++;
+  // Comments are not client-facing copy — and this file's own explanation of the rule contains the
+  // very phrases it forbids. → feedback_dead_check_selector_gap
+  const src = rel.endsWith(".json")
+    ? fs.readFileSync(p, "utf8")
+    : fs.readFileSync(p, "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  for (const line of src.split("\n")) {
+    if (!PROMISE.some((re) => re.test(line))) continue;
+    promisesFound++;
+    const entry = KEPT_BY.find((k) => k.surface === rel && k.match.test(line));
+    if (!entry) {
+      problems.push(`${rel} promises ongoing automation with no registered mechanism:\n       `
+        + `"${line.trim().slice(0, 120)}"\n       Register it in KEPT_BY with the scheduled function `
+        + `that keeps it, or delete the promise.`);
+      continue;
+    }
+    if (!isScheduled(entry.keptBy)) {
+      problems.push(`${rel} promises "${line.trim().slice(0, 70)}…" and names \`${entry.keptBy}\`, `
+        + `but that function has no \`schedule =\` in netlify.toml. The promise is unkept.`);
+    }
+  }
+}
+
+if (!surfacesRead) {
+  console.error("⚠️  INDETERMINATE — none of the client-facing surfaces were readable.");
+  process.exit(2);
+}
+
+// Every registry entry must still correspond to real copy — a stale entry means the gate is
+// guarding a sentence nobody shows any more. → feedback_a_ledger_line_outlives_the_bug
+for (const k of KEPT_BY) {
+  const p = path.join(SITE, k.surface);
+  if (!fs.existsSync(p) || !k.match.test(fs.readFileSync(p, "utf8"))) {
+    problems.push(`KEPT_BY names copy in ${k.surface} (${k.note}) that no longer exists. `
+      + `Remove the entry, or restore the promise.`);
+  }
+}
+
+if (problems.length) {
+  console.error(`🔴 FAIL — ${problems.length} promise(s) the system does not keep:\n`);
+  for (const p of problems) console.error(`   • ${p}\n`);
+  process.exit(1);
+}
+
+console.log(`✅ ${promisesFound} promise(s) of ongoing automation across ${surfacesRead} client-facing `
+  + `surface(s), each kept by a function that is actually scheduled.`);
+process.exit(0);
