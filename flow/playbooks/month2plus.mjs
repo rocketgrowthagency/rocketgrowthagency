@@ -22,14 +22,27 @@ export const month2plus = [
     },
   },
   {
-    id: "m2.snap.grid_scan", title: "Re-run 9x9 grid scan",
+    // 🔴 SAME DEFECT AS THE MONTH-1 BASELINE, fixed the same day (2026-09-22). Fixing only the
+    // baseline would have left the MONTHLY number — the one a client's month-2+ report is measured
+    // against — still coming from a script anyone could interrupt.
+    // → feedback_fix_the_class_not_the_instance
+    id: "m2.snap.grid_scan", title: "Re-run the geo-grid map-rank scan",
     type: "hybrid", dependsOn: ["m2.snap.rank_tracker"],
-    async run({ clientId }) {
-      const cmd = `node grid-scan.mjs --client=${clientId} --keyword="<keyword>" --radius=5`;
-      return { summary: `Run for each tracked keyword: ${cmd}\nCompare avg rank + top-3% to last month's grid_session_id results.` };
+    async run() {
+      return {
+        summary: `The monthly geo-grid re-scan runs in the product — there is no terminal step.
+
+Run this step from the admin. If this month's scan has not happened yet it starts automatically;
+re-run the step in a few minutes to record the comparison against the previous COMPLETE scan of
+the same grid size.`,
+      };
     },
-    instructions: `Re-run grid-scan.mjs per tracked keyword. Compare to prior month's grid_session_id avg rank + top-3 coverage %.
-"Average grid rank improved from 28 → 14" tells a richer story than "ranked #15 in SF."`,
+    instructions: `We re-run the geo-grid map-rank scan for you each month — there is no terminal step.
+
+1. Run this step. If this month's scan has not happened yet it starts automatically; re-run the step in a few minutes to record the comparison.
+2. The result compares this month's average grid rank against the previous COMPLETE scan of the same grid size.
+
+"Average grid rank improved from 28 to 14" tells a richer story than "ranked #15 in SF" — it is movement across the whole service area, not one point. Scans that stopped partway are ignored rather than averaged: a scan that stops early has measured one part of the map, so comparing it would report movement that never happened.`,
   },
   {
     id: "m2.snap.gbp_metrics", title: "Capture GBP performance",

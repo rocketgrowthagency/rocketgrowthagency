@@ -498,27 +498,40 @@ plan stays silent on it rather than guessing.`,
 When confirmed, run: node flow.mjs <client_id> done m1.strategy.keywords_locations`,
   },
   {
-    id: "m1.audit.grid_baseline", title: "Run 9x9 grid scan baseline",
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    // 🔴 THIS STEP TOLD A HUMAN TO OPEN A TERMINAL (rewritten 2026-09-22). It is a manual-step
+    // recommendation, and it broke the data: a script you run by hand can be interrupted, and the
+    // partial persists as its own session. RGA's history holds two — 62 points and 5 points of 81 —
+    // stored as complete-looking sessions, because the indices run contiguously from zero and
+    // nothing inside a session reveals the truncation. The monthly comparison took the NEWEST
+    // session, which on 09-12 was the five-point run.
+    //
+    // 🔑 The automated path already existed, already scheduled, already on an admin button. The
+    // executor lives in netlify/functions/flow-execute.js ("m1.audit.grid_baseline") and cannot be
+    // interrupted halfway. → feedback_no_manual_step_recommendations · project_rank_grid_uniform_sentinel
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    id: "m1.audit.grid_baseline", title: "Run the geo-grid map-rank baseline",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run",
     async run({ client, clientId }) {
-      const cmd = `node grid-scan.mjs --client=${clientId} --keyword="<your-keyword>" --radius=5 --zoom=14`;
       return {
-        summary: `Run grid-scan.mjs for each tracked keyword (one at a time, ~1 hour per scan).
-Example: ${cmd}
+        summary: `The geo-grid map-rank scan runs in the product — there is no terminal step.
 
-Resumable — same --client + --keyword + --session= will continue an interrupted scan.
-Output: avg rank, top-3 coverage %, ASCII heatmap, all 81 points saved to client_keyword_rankings with grid_session_id.
+Run this step from the admin. If a complete scan already exists for the tracked keyword it is
+reported straight away; otherwise the scan starts automatically and results land on the Map
+Rankings tab within a few minutes.
 
-After scan: run again per remaining keyword.`,
+Scans that stopped partway are ignored rather than averaged: a scan that stops early has measured
+one part of the map, not a smaller sample of all of it.`,
       };
     },
-    instructions: `Per tracked keyword (from m1.strategy.keywords_locations):
-1. Open the scraper VS Code repo terminal
-2. Run: node grid-scan.mjs --client=<client_id> --keyword="<keyword>"
-3. Wait ~1 hour (81 points × ~45s each)
-4. Note avg rank + top-3 coverage % from output
-5. Repeat for each tracked keyword (recommend 1/day to avoid Google rate-limit)`,
+    instructions: `We run the geo-grid map-rank scan for you — there is no terminal step and nothing to install.
+
+1. The tracked keyword must pass keyword validation first. An unvalidated term produces a grid that is not-found at every point, which measures nothing.
+2. Run this step. If a complete scan already exists for the tracked keyword it is reported straight away; otherwise the scan starts automatically.
+3. Results appear on the Map Rankings tab within a few minutes. Re-run this step then to record the baseline.
+
+The baseline is the number every later month is measured against, so it must come from a COMPLETE scan. Scans that stopped partway are ignored rather than averaged — a scan that stops early has measured one part of the map, not a smaller sample of all of it.`,
   },
   {
     id: "m1.audit.kpi_baseline", title: "Capture baseline KPIs",

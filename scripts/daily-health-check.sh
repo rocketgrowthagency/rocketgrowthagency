@@ -294,6 +294,42 @@ const d=await r.json(); if(Array.isArray(d)) console.log(d.map(c=>c.portal_slug)
   if node scripts/client-state.mjs snapshot "$_slug" >/dev/null 2>&1; then _snap_n=$((_snap_n+1)); fi
 done
 say "  ✅ snapshotted ${_snap_n} active client(s)"
+
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+# 🔴 RECORD THE BRAIN WE JUST INVALIDATED (2026-09-22). Taking a snapshot makes every client's
+# `brain_knowledge(type='client_audit')` row older than the newest snapshot it claims to summarise —
+# so check-client-work-reaches-the-brain went red EVERY DAY, caused by this very loop. Only
+# flow-execute recorded the brain, and only when an audit step ran.
+#
+# The gate's advice was "Run brain-record-audit for that client", which is a manual step naming a
+# NETLIFY FUNCTION, not a script — there was nothing to run. A remediation instruction that names a
+# tool you cannot invoke is not actionable.
+#
+# 🔑 A runner that invalidates state must refresh it. Writes here are consistent with what this
+# block already does (snapshots, healing, review metrics) — this is the daily operations runner, not
+# a read-only audit. → feedback_a_finding_must_be_actionable_inside_the_product
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+_brain_n=0; _brain_fail=0
+for _cid in $(DOTENV_CONFIG_QUIET=true node -e '
+require("dotenv").config({quiet:true});
+(async()=>{const U=process.env.SUPABASE_URL,K=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r=await fetch(`${U}/rest/v1/clients?archived_at=is.null&select=id`,{headers:{apikey:K,Authorization:`Bearer ${K}`}});
+const d=await r.json(); if(Array.isArray(d)) console.log(d.map(c=>c.id).filter(Boolean).join(" "));})()' 2>/dev/null \
+  | tr " " "\n" | grep -E "^[0-9a-f-]{36}$"); do
+  _code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+    "https://www.rocketgrowthagency.com/.netlify/functions/brain-record-audit" \
+    -H "Content-Type: application/json" -H "x-internal-secret: ${INTERNAL_FN_SECRET:-}" \
+    -d "{\"client_id\":\"${_cid}\"}" 2>/dev/null)
+  # 🔴 A 200 is the only success. Anything else is counted and SAID — a swallowed failure here puts
+  # the brain quietly out of date, which is the exact condition this block exists to prevent.
+  if [ "$_code" = "200" ]; then _brain_n=$((_brain_n+1)); else _brain_fail=$((_brain_fail+1)); fi
+done
+if [ "$_brain_fail" -gt 0 ]; then
+  printf "  🔴 brain recorded for %s client(s), %s FAILED — the brain will read stale tomorrow\n" "$_brain_n" "$_brain_fail"
+  FAIL=$((FAIL+1))
+else
+  say "  ✅ brain re-recorded for ${_brain_n} client(s) (the snapshot above invalidated it)"
+fi
 # 🔴 NOT `|| echo 0`: on ZERO matches grep prints "0" AND exits 1, so `|| echo 0` appends a SECOND
 # line and the test below compares "0\n0" — "integer expression expected". Same shape as the bug
 # documented in overnight-pipeline.sh:885 and recovery-rounds.sh:128. `|| true` swallows the exit
