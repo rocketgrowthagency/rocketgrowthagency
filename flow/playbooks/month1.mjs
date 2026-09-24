@@ -148,27 +148,36 @@ If it errors: the client row is missing, and every later step will fail on it. F
     },
   },
   {
-    id: "m1.kickoff.call", title: "Schedule + run kickoff call",
+    // 🔴 THIS TOLD YOU TO BOOK A CALL THE PRODUCT HAS ALREADY BOOKED (rewritten 2026-09-24).
+    // It opened with five numbered steps for creating the Google Calendar event by hand — which is
+    // exactly what `m1.close.kickoff_invite` does automatically from the Overview card. Chris hit
+    // this the obvious way: he found step 4, saw "Schedule a 30-min GOOGLE MEET", and asked whether
+    // it was the same thing as Phase 0. Two steps describing one job is how a checklist stops being
+    // trusted. → feedback_no_manual_step_recommendations · feedback_fix_the_class_not_the_instance
+    //
+    // 🔑 This step's real work is RUNNING the call. It now starts where the call starts.
+    id: "m1.kickoff.call", title: "Run the kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Schedule a 30-min GOOGLE MEET with the primary contact.
+    instructions: `The invite is already sent — "The first hour after they say yes" on the Overview tab books it, on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
 
-📅 HOW TO BOOK IT (decided 2026-09-03 — Google Calendar + Meet, NOT Zoom):
-  1. Google Calendar → new event, 30 min, invite the primary contact's email.
-  2. "Add Google Meet video conferencing" — the link generates itself.
-  3. Title: "RGA kickoff — {business name}".
-  4. Description = what to bring: GBP login, website/CMS login, GA4 + Search Console access,
-     20+ photos, and their customer list for review outreach.
-  5. Send it. The invite arrives from hello@rocketgrowthagency.com — a domain they can verify.
+🔴 The call is not booked until the invite is ACCEPTED. If it is still unaccepted at 24h, chase it.
 
-🔑 Workspace is already paid for. No new tool, nothing for them to install.
-🔴 DONE = the invite is ACCEPTED, not sent. An unaccepted invite is not a booked call.
+ON THE CALL — cover:
+  1. Scope: what RGA delivers versus what they provide.
+  2. Timeline: roughly 3 months to ranking results, and what moves before then.
+  3. Cadence: weekly work, a monthly call.
 
-Cover: scope, timeline (3 months to ranking results), what RGA delivers vs what client provides, weekly cadence, monthly call rhythm.
+COLLECT (this is the real purpose — without these, delivery stalls):
+  · Google Business Profile login
+  · Website / CMS login
+  · GA4 + Search Console access
+  · 20+ photos
+  · Their customer list, for review outreach
 
-Send a recap email after with: action items, dates, what you need from them (logins, photos, customer list).
+AFTER: send a recap email — action items, dates, and exactly what you are still waiting on.
 
-See /docs/playbooks/kickoff-call-script-template.md for full talk track.`,
+See /docs/playbooks/kickoff-call-script-template.md for the full talk track.`,
   },
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",

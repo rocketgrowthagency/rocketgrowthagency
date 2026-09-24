@@ -72,6 +72,7 @@ const NOT_PREFLIGHT = {
   'check-a-promise-of-automation-has-a-schedule.mjs': 'client-copy gate; runs in daily-health-check.sh — an unkept promise cannot make a video unsafe',
   'check-no-gate-has-unreachable-code.mjs': 'meta-gate; runs in daily-health-check.sh — it reads the other gates, and dead code in a gate cannot make a video unsafe',
   'check-internal-work-cannot-look-client-facing.mjs': 'admin-UI gate; runs in daily-health-check.sh — a screen-shared card cannot make a video unsafe',
+  'check-no-step-redoes-an-automated-job.mjs': 'SOP-copy gate; runs in daily-health-check.sh — a duplicated instruction cannot make a video unsafe',
   'check-a-failure-reaches-a-human.mjs': 'admin-queue gate; runs in daily-health-check.sh — static analysis of the site repo, and an unreachable alert cannot make a video unsafe',
   // ── client-portal / delivery surface. All run in daily-health-check.sh. None of them can make
   //    tonight's VIDEO unsafe, which is what the per-run pre-flight exists to protect — so they are
