@@ -134,6 +134,7 @@ run check-the-confirmation-email-says-one-true-thing.mjs "the client welcome ema
 run check-step-instructions-are-not-shredded.mjs "every step card renders its instructions as written - nothing cut off, orphaned or truncated"
 run check-a-withdrawn-contract-is-not-offered.mjs "a voided contract stops being offered in the client portal"
 run check-every-report-section-is-composed.mjs "no client-report section is built and then never shown"
+run check-a-loading-surface-does-not-lie.mjs "a surface that is still loading never renders a confident wrong answer"
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
 run check-css-declarations-are-valid.mjs "no CSS declaration the browser would silently discard"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
