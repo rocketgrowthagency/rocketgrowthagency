@@ -105,28 +105,62 @@ if (!reg) {
   }
 }
 
-// ── 2. the choke point consults it ────────────────────────────────────────────────────────────
-const mutate = admin.match(/async function mutateFlowStep\([\s\S]*?\n\}/);
-if (!mutate) {
-  problems.push(`mutateFlowStep is gone. It was the single choke point every manual status change `
-    + `passed through; if status writes now happen elsewhere they are each unguarded.`);
+// ── 2. the shared guard, and EVERY writer going through it ────────────────────────────────────
+//
+// 🔴🔴 THIS SECTION USED TO CHECK ONLY mutateFlowStep, AND THAT IS HOW IT PASSED ON A BROKEN FIX.
+// I placed the guard in mutateFlowStep, called it "the single choke point", and gated exactly that.
+// It was not the only writer: the onboarding checklist's "✓ Mark step complete" runs through
+// `markOnboardingStep`, which calls `state.adapter.updateFlowTask` directly — the most-used path,
+// and the likely origin of the unsubstantiated tick this whole gate exists to prevent.
+//
+// 🔑 ASSERT THE NEGATIVE: not "the door I know about is locked" but "there is no OTHER door".
+// Every call site that writes a status must pass through the shared guard.
+// → feedback_a_guard_must_reach_the_thing_it_guards · feedback_fix_the_class_not_the_instance
+const guard = admin.match(/async function guardUnsubstantiatedDone\([\s\S]*?\n\}/);
+if (!guard) {
+  problems.push(`there is no shared guardUnsubstantiatedDone(). With the check inlined in one `
+    + `function, every other path that writes a status is unguarded by default — which is exactly `
+    + `how the checklist's "Mark step complete" bypassed the first version of this fix.`);
 } else {
-  if (!/STEP_ARTIFACTS/.test(mutate[0])) {
-    problems.push(`mutateFlowStep does not consult STEP_ARTIFACTS. The registry exists but nothing `
-      + `reads it on the path that marks a step done — a check that cannot fire.`);
+  if (!/STEP_ARTIFACTS/.test(guard[0])) {
+    problems.push(`guardUnsubstantiatedDone does not consult STEP_ARTIFACTS — a check that cannot fire.`);
   }
-  if (!/marked_without_artifact\s*=\s*true/.test(mutate[0])) {
-    problems.push(`mutateFlowStep never sets marked_without_artifact. Allowing the claim without `
-      + `recording that it was unproven leaves the row byte-identical to a proven one, which is the `
-      + `entire defect.`);
+  if (!/marked_without_artifact\s*=\s*true/.test(guard[0])) {
+    problems.push(`guardUnsubstantiatedDone never sets marked_without_artifact. Allowing the claim `
+      + `without recording that it was unproven leaves the row byte-identical to a proven one.`);
   }
-  // 🔴 The guard must run BEFORE the UI is locked. Awaiting a dialog after setting flowBusy leaves
-  // the admin frozen while the operator reads, and the early return skips the unlock.
-  const busyAt = mutate[0].indexOf("state.flowBusy = true");
-  const guardAt = mutate[0].indexOf("STEP_ARTIFACTS");
+}
+
+// Every function that writes a task status must call the guard first. Find them by their write,
+// then check the enclosing function — rather than naming the two I happen to know about, which is
+// the mistake that made the first version of this gate useless.
+const WRITERS = [
+  { fn: "mutateFlowStep", why: "Mission Control's complete/block controls" },
+  { fn: "markOnboardingStep", why: `the onboarding checklist's "✓ Mark step complete"` },
+];
+for (const w of WRITERS) {
+  const body = admin.match(new RegExp(`async function ${w.fn}\\([\\s\\S]*?\\n\\}`));
+  if (!body) {
+    problems.push(`${w.fn} (${w.why}) no longer exists — if that work moved somewhere else, the new `
+      + `home is unguarded and must be added to this gate's WRITERS list.`);
+    continue;
+  }
+  if (!/guardUnsubstantiatedDone/.test(body[0])) {
+    problems.push(`${w.fn} writes a step status without calling guardUnsubstantiatedDone. `
+      + `${w.why} can therefore record a "done" with no artifact, indistinguishable from a proven one.`);
+  }
+  // 🔴 The guard must run BEFORE the UI is locked, and before the write. Awaiting a dialog after
+  // flowBusy leaves the admin frozen while the operator reads, and declining skips the unlock.
+  const busyAt = body[0].indexOf("state.flowBusy = true");
+  const guardAt = body[0].indexOf("guardUnsubstantiatedDone");
   if (busyAt >= 0 && guardAt >= 0 && guardAt > busyAt) {
-    problems.push(`the artifact guard runs AFTER state.flowBusy = true. Its dialog then blocks with `
-      + `the UI locked, and declining returns without ever clearing the flag.`);
+    problems.push(`in ${w.fn} the guard runs AFTER state.flowBusy = true, so its dialog blocks with `
+      + `the UI locked and declining never clears the flag.`);
+  }
+  const writeAt = body[0].search(/updateFlowTask|adapter\.updateFlowTask/);
+  if (writeAt >= 0 && guardAt >= 0 && guardAt > writeAt) {
+    problems.push(`in ${w.fn} the guard runs AFTER the write — the unsubstantiated status is already `
+      + `saved by the time anyone is asked about it.`);
   }
 }
 
