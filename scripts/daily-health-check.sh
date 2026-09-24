@@ -131,6 +131,7 @@ run check-a-done-step-can-be-substantiated.mjs "a step marked done by hand is re
 run check-a-step-locks-on-its-whole-chain.mjs "a step stays locked until its WHOLE dependency chain is done, not just its parent"
 run check-the-next-action-names-the-real-step.mjs "the next-action card names the actual next step, and the header % agrees with the checklist"
 run check-the-confirmation-email-says-one-true-thing.mjs "the client welcome email never contradicts its own plan, and exists in exactly one place"
+run check-step-instructions-are-not-shredded.mjs "every step card renders its instructions as written - nothing cut off, orphaned or truncated"
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
 run check-css-declarations-are-valid.mjs "no CSS declaration the browser would silently discard"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
