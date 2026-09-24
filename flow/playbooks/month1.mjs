@@ -93,11 +93,15 @@ Must contain, in this order:
     instructions: `Google Calendar + Google Meet (decided 2026-09-03 — Workspace is already paid for,
 and the invite arrives from a domain they can verify).
 
-  1. New event, 30 min, within 3 BUSINESS DAYS of the close. Momentum decays fast.
-  2. "Add Google Meet video conferencing".
-  3. Title: "RGA kickoff — {business name}".
-  4. Description = the same what-to-bring list from the confirmation email, so it is in both places.
-  5. Invite the primary contact.
+Press "Send the email" on step 1 first, then use this step's button. It creates the event,
+mints the Meet link, invites the primary contact and lets Google email them — 30 minutes,
+two business days out, at 10:00 in the CLIENT's timezone.
+
+You do not open Google Calendar. Pressing the button twice does not send a second invite:
+it offers to MOVE the existing one, keeping the same Meet link.
+
+To pick a different time, or to call the meeting off, use "Change the time" or "Cancel the
+meeting" on the card "The first hour after they say yes" on the Overview tab.
 
 🔴 DONE = the invite is ACCEPTED. A sent invite is not a booked call, and this is the single most
 common place momentum is lost between a yes and the work starting. Chase at 24h.
@@ -159,7 +163,8 @@ If it errors: the client row is missing, and every later step will fail on it. F
     id: "m1.kickoff.call", title: "Run the kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `The invite is already sent — "The first hour after they say yes" on the Overview tab books it, on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
+    instructions: `Step 2, "Send the kickoff calendar invite", books this call — on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
+If step 2 is not complete then the call is not booked, and this step is not yours to run yet.
 
 🔴 The call is not booked until the invite is ACCEPTED. If it is still unaccepted at 24h, chase it.
 

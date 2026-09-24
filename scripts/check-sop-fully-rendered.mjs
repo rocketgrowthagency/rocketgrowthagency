@@ -28,7 +28,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const WEB = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔑 Overridable so this gate can be MUTATION-TESTED against a sandbox copy. A gate that can only
+// ever read the live repo cannot be proven to fail when the thing it guards actually breaks — and
+// an unfalsifiable gate is indistinguishable from one that is always green.
+// → feedback_a_fix_without_a_gate_regresses
+const WEB = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const ADMIN = path.join(WEB, "admin", "admin.js");
 const SOP = path.join(WEB, "data", "playbooks", "playbooks.json");
 
@@ -64,12 +68,42 @@ if (!hasBuilder || !readsPlaybook) {
   console.log(`  ✅ sopChecklistSteps() builds the checklist from the SOP playbook`);
 }
 
-// 2. The renderer actually calls it.
-if (!/renderOnboardingChecklist[\s\S]{0,900}?sopChecklistSteps\(/.test(src)) {
+// 2. The renderer actually reaches it — DIRECTLY OR THROUGH ONE HOP.
+//
+// 🔴 2026-09-24: this failed on working code. The sequencing was extracted into
+// `sopSequencedSteps()` so the next-action card and the checklist could not disagree about which
+// step is active; `renderOnboardingChecklist` now calls THAT, which calls `sopChecklistSteps`. The
+// builder was not dead — the gate was asserting one particular call graph.
+//
+// 🔑 A gate must assert the OUTCOME ("the renderer reaches the SOP builder"), not the shape of the
+// code that achieves it, or every refactor looks like a regression and the gate gets muted. Same
+// lesson as check-every-playbook-step-can-run, which reported four working executors as missing
+// because it recognised only two handler shapes.
+// → feedback_a_gate_window_measured_in_characters_will_lie
+const reaches = (fnName, target, seen = new Set()) => {
+  if (seen.has(fnName) || seen.size > 6) return false;
+  seen.add(fnName);
+  const at = src.indexOf(`function ${fnName}`);
+  if (at < 0) return false;
+  // brace-balance the function body rather than counting characters forward from its name
+  let d = 0, end = src.length;
+  for (let i = src.indexOf("{", at); i < src.length; i++) {
+    if (src[i] === "{") d++;
+    else if (src[i] === "}") { d--; if (!d) { end = i; break; } }
+  }
+  const body = src.slice(at, end);
+  if (new RegExp(`\\b${target}\\s*\\(`).test(body)) return true;
+  // follow same-file helpers this function calls, one level at a time
+  for (const m of body.matchAll(/\b(sop[A-Za-z]+)\s*\(/g)) {
+    if (m[1] !== fnName && reaches(m[1], target, seen)) return true;
+  }
+  return false;
+};
+if (!reaches("renderOnboardingChecklist", "sopChecklistSteps")) {
   fails.push("wiring");
-  console.log("  🔴 renderOnboardingChecklist() does not call sopChecklistSteps() — the builder is dead code.");
+  console.log("  🔴 renderOnboardingChecklist() never reaches sopChecklistSteps() — the builder is dead code.");
 } else {
-  console.log("  ✅ renderOnboardingChecklist() calls it");
+  console.log("  ✅ renderOnboardingChecklist() reaches the SOP builder");
 }
 
 // 3. The Run button must key off the SOP's own hasRunner, or steps outside the curated table lose it.

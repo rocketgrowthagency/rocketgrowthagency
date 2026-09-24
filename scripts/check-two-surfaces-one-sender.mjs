@@ -83,7 +83,25 @@ if (composeAsPrimary) {
 // label — `account.invited_at ? … : "Not recorded"` — so deleting the real warning left the gate
 // green. The same file-wide-grep trap as checking cardNote's guard across the whole file.
 // → feedback_dead_check_selector_gap
-const draftHandler = admin.match(/data-open-draft\][\s\S]{0,700}?\n  \}\);/);
+// 🔴 2026-09-24: THIS WINDOW LIED, exactly as its own sibling rule warns. It was a 700-character
+// slice ending at the first `\n  });`. The handler grew a try/catch/finally when the draft route
+// was changed to fetch the sender's real body — past 700 characters — so the window stopped
+// reaching the warning that was sitting right there, and the gate failed working code.
+//
+// 🔑 Balance the braces from the handler's own `forEach`. A window measured in characters is a
+// guess about how long code will be, and code grows.
+// → feedback_a_gate_window_measured_in_characters_will_lie
+const draftHandler = (() => {
+  const at = admin.indexOf("data-open-draft]");
+  if (at < 0) return null;
+  let d = 0, start = admin.indexOf("{", at);
+  if (start < 0) return null;
+  for (let i = start; i < admin.length; i++) {
+    if (admin[i] === "{") d++;
+    else if (admin[i] === "}") { d--; if (!d) return [admin.slice(at, i + 1)]; }
+  }
+  return null;
+})();
 if (admin.includes("data-open-draft") && (!draftHandler || !/not recorded/i.test(draftHandler[0]))) {
   problems.push(`the "open a draft" route exists but never warns that sending from Gmail is not `
     + `recorded here — silence there is how the duplicate send happens.`);
