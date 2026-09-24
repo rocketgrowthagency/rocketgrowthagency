@@ -69,6 +69,7 @@ const NOT_PREFLIGHT = {
   'check-a-truncated-scan-is-not-a-measurement.mjs': 'rank-data gate; runs in daily-health-check.sh — static analysis of the site repo, and a truncated grid cannot make a video unsafe',
   'check-a-booking-can-be-unbooked.mjs': 'admin/calendar-surface gate; runs in daily-health-check.sh — a missing cancel control cannot make a video unsafe, and this analyses the site repo not the video pipeline',
   'check-a-done-step-can-be-substantiated.mjs': 'admin-UI/ledger gate; runs in daily-health-check.sh — static analysis of the site repo, and an unsubstantiated checklist tick cannot make a video unsafe',
+  'check-a-step-locks-on-its-whole-chain.mjs': 'admin-checklist gate; runs in daily-health-check.sh — executes the site repo\'s lock computation against synthetic graphs and the live records; a falsely unlocked onboarding step cannot make a video unsafe',
   'check-an-unauthenticated-endpoint-leaks-nothing.mjs': 'security gate; runs in daily-health-check.sh — static analysis of the site repo, and a public endpoint cannot make a video unsafe',
   'check-functions-select-real-columns.mjs': 'schema gate; runs in daily-health-check.sh — needs live Supabase, and a bad SELECT cannot make a video unsafe',
   'check-a-promise-of-automation-has-a-schedule.mjs': 'client-copy gate; runs in daily-health-check.sh — an unkept promise cannot make a video unsafe',
