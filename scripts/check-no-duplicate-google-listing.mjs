@@ -133,6 +133,17 @@ let duplicates = 0;
 let indeterminate = 0;
 
 for (const c of clients) {
+  // 🔑 What we ALREADY KNOW is a duplicate for this client. The stored finding is written by
+  // gbp-duplicate-scan, which reads by listing id — so it survives a name search going quiet.
+  // Without this the gate has nothing to re-verify and a suppressed duplicate reads as removed.
+  try {
+    const rows = await pgQuery(
+      `select data->'tasks'->'m1.audit.gbp_duplicate'->'outcome_data'->'duplicates' as d
+         from client_onboarding_records where client_id = ${sqlStr(c.id)} limit 1`);
+    const d = rows?.[0]?.d || [];
+    c.__knownDupeIds = (Array.isArray(d) ? d : []).map((x) => x && x.place_id).filter(Boolean);
+  } catch { c.__knownDupeIds = []; }
+
   const center = latLngFrom(c.gbp_url);
   const ownKey = placeKeyFrom(c.gbp_url);
   if (!center || !ownKey) {
@@ -170,6 +181,29 @@ for (const c of clients) {
     continue;
   }
   if (v.verdict === "clean") {
+    // 🔴 A NAME SEARCH THAT COMES BACK CLEAN IS NOT PROOF OF REMOVAL. Re-check any duplicate we
+    // already know about BY ITS LISTING ID before declaring this client clear — Google suppressing
+    // a duplicate looks identical, from a name query, to the duplicate being deleted.
+    const known = (c.__knownDupeIds || []).filter(Boolean);
+    let stillLive = null;
+    for (const pid of known) {
+      const live = await stillResolvesById(pid, SERPAPI_KEY);
+      if (live === true) { stillLive = pid; break; }
+      if (live === null) stillLive = stillLive === null ? undefined : stillLive;  // could not tell
+    }
+    if (stillLive) {
+      console.log(`[dupe] FAIL ${c.business_name} — the name search returned one listing, but a known`);
+      console.log(`         duplicate STILL RESOLVES by id: ${stillLive}`);
+      console.log(`         Google suppressing a duplicate is not the same as it being removed.`);
+      duplicates++;
+      continue;
+    }
+    if (stillLive === undefined) {
+      console.log(`[dupe] ? ${c.business_name} — name search clean, but a known duplicate could not be`);
+      console.log(`         re-checked by id. Indeterminate, not clean.`);
+      indeterminate++;
+      continue;
+    }
     console.log(`[dupe] OK ${c.business_name} — exactly one listing (${ownKey})`);
     continue;
   }
@@ -189,3 +223,33 @@ console.log(`\n[dupe] ${clients.length} client(s): ${duplicates} with duplicates
 if (duplicates) process.exit(1);
 if (indeterminate) process.exit(2);
 process.exit(0);
+
+/**
+ * Does this specific listing still resolve, BY ID?
+ * true = still live · false = genuinely gone · null = could not tell (never treat as gone).
+ *
+ * 🔴 WHY THIS EXISTS (2026-09-24). This gate classified from a NAME SEARCH. On 2026-09-24 it
+ * reported "exactly one listing" and went green — while `gbp-duplicate-scan`, reading the same
+ * business by LISTING ID, reported the duplicate still live. Google had simply stopped returning
+ * the duplicate for the name query.
+ *
+ * 🔑 SUPPRESSION IS NOT REMOVAL, and a gate that cannot tell them apart says "all clear" about a
+ * listing that is still splitting the client's ranking signals. The product's own scan carries that
+ * warning in its output; the gate did not implement it.
+ * → feedback_an_excluded_classification_is_a_claim · feedback_indeterminate_is_not_a_finding
+ */
+async function stillResolvesById(placeId, key) {
+  if (!placeId) return null;
+  try {
+    const u = new URL("https://serpapi.com/search.json");
+    u.searchParams.set("engine", "google_maps");
+    u.searchParams.set("type", "place");
+    u.searchParams.set("place_id", placeId);
+    u.searchParams.set("api_key", key);
+    const r = await fetch(u);
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (d.error) return null;
+    return !!(d.place_results && Object.keys(d.place_results).length);
+  } catch { return null; }
+}
