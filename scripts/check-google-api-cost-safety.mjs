@@ -84,6 +84,23 @@ const DECLARED = {
   "backfill-place-ids-background.js": { perRun: "n/a", scheduled: "n/a", stamps: "n/a" },
   // ── free, but bounded and declared (2026-09-06) ──
   "send-kickoff-invite.js": { perRun: "1 Calendar insert per NEW client — FREE (quota, not billed)", scheduled: "on demand (SOP step / Phase 0 button)", stamps: "rga_google_credentials.sends_today + client_onboarding_records.kickoff_invite — counts the ATTEMPT before the call, and refuses a duplicate; hard cap RGA_CALENDAR_DAILY_CAP=10/day" },
+  // ── the rest of the kickoff lifecycle (2026-09-24). Calendar is quota-limited, NOT billed, so
+  //    neither of these can spend money — but both are declared because the runaway risk is
+  //    BOOKKEEPING, not pricing: work repeating forever because nothing recorded it was done. That
+  //    shape is API-agnostic, and it is what caused both real Google overspends.
+  //    → feedback_google_cloud_billing_safety
+  "kickoff-rsvp-check.js": {
+    perRun: "1 Calendar events.get per check — FREE (quota, not billed)",
+    // 🔴 The one to watch. It is invoked on every paint of the client Overview, so its ceiling is
+    // "how often is a client page opened", not "how many clients exist". Bounded only by that.
+    scheduled: "on demand (every render of the Phase 0 card, plus after send/move/cancel)",
+    stamps: "client_onboarding_records.kickoff_invite.rsvp_checked_at — the result is persisted so the admin can render without re-asking Google",
+  },
+  "cancel-kickoff-invite.js": {
+    perRun: "1 Calendar events.delete per cancellation — FREE (quota, not billed)",
+    scheduled: "on demand (a human confirms a destructive dialog)",
+    stamps: "removes client_onboarding_records.kickoff_invite and appends kickoff_cancellations — a second call finds no event_id and returns nothingToCancel without calling Google at all",
+  },
   "oauth-rga-init.js": { perRun: "0 — builds a consent URL, calls nothing", scheduled: "hand-run, once", stamps: "n/a" },
   "oauth-google-callback.js": { perRun: "1 token exchange per consent — free", scheduled: "on demand (a human consents)", stamps: "client_google_oauth / rga_google_credentials" },
 };
