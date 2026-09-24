@@ -116,7 +116,12 @@ if (!checked) indeterminate("no step carried any instruction text — the harnes
 // anything called it — a guard that does not reach the thing it guards.
 // → feedback_a_guard_must_reach_the_thing_it_guards · feedback_correct_is_not_the_same_as_happening
 const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
-if (!/sop:\s*o\.sop\s*\|\|\s*sopBlocks\(/.test(code)) {
+// 🔑 Assert the OUTCOME — that the projection's `sop:` field is built by the parser — not one
+// particular expression. The first version matched `o.sop || sopBlocks(` literally and went red
+// the moment that became `o.sop ? … : sopBlocks(`, which was a fix, not a regression. Third time
+// today a gate has failed working code by pinning a shape.
+// → feedback_a_gate_window_measured_in_characters_will_lie
+if (!/\bsop:\s*[^,\n]*\bsopBlocks\(/.test(code)) {
   problems.push(`The step projection does not build its instructions with sopBlocks(). The parser `
     + `exists but nothing calls it, so the card is back to shredding prose into a numbered list.`);
 }
