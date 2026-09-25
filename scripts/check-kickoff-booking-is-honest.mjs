@@ -304,6 +304,53 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE PICKER SHOWS THE CLIENT'S ZONE, AND THE LABEL MUST NOT BE ABLE TO CONTRADICT IT.
+//
+// Chris, 2026-09-25: *"lets also make sure if cleint address is eastern it swtiches to match their
+// time zone."* The server already resolves it from `primary_market` — but the PORTAL formatted
+// every time with `undefined`, which means the BROWSER's zone. So the buttons rendered in wherever
+// the laptop was while the chip read "America/Los Angeles", and the two could disagree.
+//
+// 🔑 Grouping is the quieter half: keying days off the browser's calendar date can file a late slot
+// under the wrong day, lighting up a date that holds nothing the client expects.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const portal = src.portal || strip(fs.readFileSync(F("portal/portal.js"), "utf8"));
+  const i = portal.indexOf("function renderKickoffCalendar");
+  const body = i === -1 ? "" : portal.slice(i, portal.indexOf("\n}", i));
+  if (!body) {
+    problems.push("renderKickoffCalendar is gone — this timezone check is not reading anything");
+  } else {
+    // 🔴 SCOPED TO REAL INSTANTS. The month heading is built from `new Date(year, month, 1)` — a
+    // SYNTHETIC local date with no instant behind it, and forcing a zone onto that would shift it
+    // into the previous month for any zone behind the browser. The rule is about slot times, which
+    // are real instants parsed from ISO strings.
+    // 🔑 The gate's first version flagged that heading and would have had me "fix" correct code.
+    for (const call of body.match(/new Date\([^)]*\.start[^)]*\)\.toLocale[A-Za-z]*\([^)]*\)/g) || []) {
+      if (!/timeZone/.test(call)) {
+        problems.push(`a slot time is formatted without a timeZone (${call.slice(0, 52)}…) — it would render in the BROWSER's zone while the chip names the client's`);
+        break;
+      }
+    }
+    // …and the helpers the slots actually go through must carry one.
+    for (const helper of ["timeIn", "dayIn"]) {
+      const h = body.match(new RegExp(`const ${helper} = [^;]*;`));
+      if (!h) problems.push(`${helper} is gone — slot times would fall back to ad-hoc formatting`);
+      else if (!/timeZone/.test(h[0])) problems.push(`${helper} formats without a timeZone — slot times would render in the browser's zone`);
+    }
+    // 🔴 `keyOf` SPECIFICALLY. The first version asked whether a timeZone appeared ANYWHERE in the
+    // function, so `timeIn` still having one covered for a `keyOf` that had lost it — the day grid
+    // could go back to the browser's calendar and the check stayed green.
+    const key = body.match(/const keyOf = [\s\S]*?;\n/);
+    if (!key) problems.push("keyOf is gone — the day grid has no defined grouping");
+    else if (!/timeZone/.test(key[0])) {
+      problems.push("the day grid is keyed without a timeZone — a late slot can be filed under the wrong date, lighting up a day that holds nothing");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
