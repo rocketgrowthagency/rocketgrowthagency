@@ -276,6 +276,20 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   } else if (!/seesExternalCalendar/.test(adminJs)) {
     problems.push("the admin never reads seesExternalCalendar — a client could book over a real meeting and no screen would say so");
   }
+  // 🔴🔴 AND THE LOADER MUST ACTUALLY RUN. 2026-09-25: every assertion below passed while
+  // `loadKickoffRequests` was never called on a client Overview — `renderClientCockpit` ran its
+  // querySelectorAll before the async `renderPhase0` had written `#kickoffRequests`, so it matched
+  // nothing. The request list AND this warning were invisible, and the source looked perfect.
+  // 🔑 The function that RENDERS the host must also FILL it; a caller that already ran cannot.
+  // → feedback_poll_for_what_the_screen_renders
+  {
+    const phase0 = adminJs.slice(adminJs.indexOf("async function renderPhase0"));
+    const body = phase0.slice(0, phase0.indexOf("\n}"));
+    if (body && !/loadKickoffRequests\s*\(/.test(body)) {
+      problems.push("renderPhase0 writes #kickoffRequests but never loads it — the request list and the blind-calendar warning would both be invisible while the source looked correct");
+    }
+  }
+
   // 🔑 A warning with no way to fix it is a complaint. The button must exist AND be dispatched.
   if (/seesExternalCalendar/.test(adminJs)) {
     // 🔴 THE RENDERED BUTTON, NOT THE SELECTOR. A bare /data-kickoff-grant-freebusy/ also matches
