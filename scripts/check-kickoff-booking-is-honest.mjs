@@ -351,6 +351,30 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+
+// 🔴 THE ECHOED RULES MUST BE RENDERED. `kickoff-availability` returns `rules` with a comment saying
+// exactly why — "so the picker can say Mon–Fri, 9am–4pm rather than leaving the client to infer the
+// rules from the gaps" — and for its whole life the portal read it ZERO times. A grid of grey
+// numbers with no stated window leaves a client guessing whether the product is broken, which is
+// the question Chris asked out loud: *"why is today not selected?"*
+// → feedback_a_capability_nobody_calls_looks_finished
+{
+  const avail2 = strip(fs.readFileSync(F("netlify/functions/kickoff-availability.js"), "utf8"));
+  const portal2 = strip(fs.readFileSync(F("portal/portal.js"), "utf8"));
+  // 🔑 COMPUTED IS NOT RENDERED. The first version asked whether the word `rules` appeared in the
+  // renderer — which stayed true with the chip builder intact but its output never interpolated.
+  // That is the exact defect shape being guarded against, so assert the INTERPOLATION.
+  if (/rules:\s*\{/.test(avail2)) {
+    // 🔴 \b — /const windowChip/ matches `const windowChipXX`, so a rename left this green. Third
+    // time today. A substring is not a reference. → feedback_a_gate_that_cannot_fail
+    if (!/const windowChip\b/.test(portal2)) {
+      problems.push("the picker no longer derives a bookable-window chip — `rules` is sent and thrown away");
+    } else if (!/\$\{windowChip\}/.test(portal2)) {
+      problems.push("windowChip is built but never interpolated — the bookable window is computed and then discarded, which is the defect this guards");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
