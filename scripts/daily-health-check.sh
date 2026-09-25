@@ -141,6 +141,7 @@ run check-no-invisible-controls.mjs   "no control can render invisible if a CSS 
 run check-css-declarations-are-valid.mjs "no CSS declaration the browser would silently discard"
 run check-no-new-dormant-css.mjs      "no NEW style rule that nothing on any page can match"
 run check-live-matches-the-approved-mockup.mjs "the live surface still uses the words Chris approved"
+run check-the-setup-accordion-behaves.mjs "the client checklist folds without hiding a step or locking one"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
