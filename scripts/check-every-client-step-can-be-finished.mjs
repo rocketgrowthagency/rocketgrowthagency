@@ -27,7 +27,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔑 Overridable so this gate can be MUTATION-TESTED against a sandbox copy. A gate that can
+// only read the live repo cannot be proven to fail when the thing it guards breaks.
+const SITE = process.env.CSF_SITE || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
 
 const MECHANISMS = new Set(["detected", "choice", "client", "rga", "approval"]);
@@ -104,8 +106,25 @@ for (const s of steps) {
         bad(`${s.id} asks for credentials as "${inp.kind}" — it must take a one-time LINK, never the password`);
       }
     } else {
-      if (!s.clientDoneCta) bad(`${s.id} is the client's to finish but has no clientDoneCta and takes no input — nothing to press`);
-      else if (/^mark (as )?done$/i.test(s.clientDoneCta.trim())) {
+      // 🔑 A clientForm can BE the control. 2026-09-24: the kickoff step finishes by booking a time
+      // in a calendar rendered inside its own row — submitting it completes the step, exactly like
+      // clientInput, so demanding a separate "✓ I did it" button would be demanding a second
+      // control that could mark the step done WITHOUT the booking ever happening.
+      //
+      // 🔴 NOT a free pass for any clientForm value. The portal must actually render a control for
+      // it — otherwise this branch would excuse the very dead end the gate exists to catch.
+      // → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+      const PORTAL = fs.readFileSync(path.join(SITE, "portal", "portal.js"), "utf8");
+      const formRendersAControl = s.clientForm
+        && s.clientForm !== "generic"
+        && new RegExp(`clientForm === "${s.clientForm}"`).test(PORTAL);
+      if (!s.clientDoneCta && !formRendersAControl) {
+        bad(`${s.id} is the client's to finish but has no clientDoneCta, takes no input, and its `
+          + `clientForm (${s.clientForm || "none"}) renders no control in portal.js — nothing to press`);
+      }
+      // 🔑 Only meaningful when a CTA exists — a form-controlled step legitimately has none, and
+      // the previous `else if` read .trim() off undefined the moment that became possible.
+      else if (s.clientDoneCta && /^mark (as )?done$/i.test(s.clientDoneCta.trim())) {
         bad(`${s.id} clientDoneCta is generic ("${s.clientDoneCta}") — it must name what they actually did`);
       }
     }
