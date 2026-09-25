@@ -105,6 +105,84 @@ if (!/kickoff_availability/.test(src.avail) || !/kickoff_availability/.test(src.
   }
 }
 
+// ── 4b. OUR LEDGER IS THE SOURCE OF TRUTH, AND ITS LIFECYCLE IS COMPLETE ──────────────────────
+// 🔴 Chris chose to own the scheduling rather than depend on a Google read: *"i want it built into
+// the portal."* That makes `kickoff_slot_holds` the thing that stops a slot being sold twice, so
+// every edge of its lifecycle has to hold or a slot silently disappears forever.
+{
+  const slots = src.slots, send = src.send, cancel = strip(fs.readFileSync(F("netlify/functions/cancel-kickoff-invite.js"), "utf8"));
+
+  // 🔑 ASSERT THE CALL, NOT THE WORD. A first version checked that identifiers merely APPEARED, and
+  // mutation-testing walked straight through it: renaming a function's DEFINITION leaves its name
+  // at every call site, and `kickoff_slot_holds_DISABLED` still matches /kickoff_slot_holds/.
+  // Four of five mutations passed a "green" gate. → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+  // 🔴 SKIP THE PARAMETER LIST. `freeSlots(accessToken, { rules }) ` has a DESTRUCTURING brace in
+  // its parameters — starting the brace count at the first `{` captured the parameter object and
+  // returned an almost-empty body, so the gate reported working code as unwired. Walk the parens
+  // to the end of the signature first, then take the body brace.
+  const bodyOf = (text, name) => {
+    const at = text.indexOf(`function ${name}`);
+    if (at < 0) return "";
+    let i = text.indexOf("(", at);
+    if (i < 0) return "";
+    let paren = 0;
+    for (; i < text.length; i++) {
+      if (text[i] === "(") paren++;
+      else if (text[i] === ")") { paren--; if (!paren) { i++; break; } }
+    }
+    const open = text.indexOf("{", i);
+    if (open < 0) return "";
+    let d = 0;
+    for (let k = open; k < text.length; k++) {
+      if (text[k] === "{") d++;
+      else if (text[k] === "}") { d--; if (!d) return text.slice(at, k + 1); }
+    }
+    return "";
+  };
+
+  // The slot engine must CALL the ledger read, not merely define it.
+  const freeSlotsBody = bodyOf(slots, "freeSlots");
+  const isFreeBody = bodyOf(slots, "isSlotFree");
+  if (!/ourBusyIntervals\s*\(/.test(freeSlotsBody) || !/ourBusyIntervals\s*\(/.test(isFreeBody)) {
+    problems.push(`freeSlots/isSlotFree do not CALL the booking ledger. Availability would come only `
+      + `from Google — the dependency the portal build exists to remove.`);
+  }
+  if (!/if \(accessToken\)/.test(freeSlotsBody)) {
+    problems.push(`The slot engine does not treat Google as OPTIONAL. Without a token it must still `
+      + `answer from our own ledger, or the picker dies whenever the scope is missing.`);
+  }
+
+  // A booking must PERSIST — the success path must CALL confirmSlotHold.
+  if (!/confirmSlotHold\s*\(/.test(send) || !bodyOf(send, "confirmSlotHold")) {
+    problems.push(`send-kickoff-invite does not promote its hold to a booking. If the hold is simply `
+      + `deleted on success the slot becomes bookable again the moment the call is confirmed.`);
+  }
+  if (/await releaseSlotHold\([^)]*slotHeld\);\s*\n\s*\/\/ Booked/.test(send)) {
+    problems.push(`The success path RELEASES the hold instead of confirming it — that frees a slot `
+      + `that has just been sold.`);
+  }
+
+  // Cancelling must actually DELETE from the ledger table, by its real name.
+  if (!/kickoff_slot_holds\?/.test(cancel) || !/method:\s*"DELETE"/.test(cancel)) {
+    problems.push(`cancel-kickoff-invite does not DELETE the slot from kickoff_slot_holds. A cancelled `
+      + `call would block that time permanently — a meeting nobody has that nobody else can book, `
+      + `with nothing on screen to explain it.`);
+  }
+
+  // A stale hold must be filtered by AGE, not merely have a constant named after one.
+  const ledgerBody = bodyOf(slots, "ourBusyIntervals");
+  if (!/HOLD_TTL_MS/.test(ledgerBody) || !/created_at/.test(ledgerBody)) {
+    problems.push(`The ledger read does not filter holds by age. A request that dies between taking `
+      + `the mutex and booking would block that slot for good.`);
+  }
+
+  // And a failed ledger read must never read as "nothing is booked".
+  if (!/throw new Error\(`Could not read the booking ledger/.test(slots)) {
+    problems.push(`A failed ledger read does not throw. Returning an empty busy list would offer `
+      + `slots that are already sold.`);
+  }
+}
+
 // ── 5. the scope that makes any of it possible ────────────────────────────────────────────────
 if (!/calendar\.events\.freebusy/.test(src.oauth)) {
   problems.push(`oauth-rga-init no longer requests calendar.events.freebusy, so a fresh connection `
