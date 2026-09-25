@@ -93,15 +93,20 @@ Must contain, in this order:
     instructions: `Google Calendar + Google Meet (decided 2026-09-03 — Workspace is already paid for,
 and the invite arrives from a domain they can verify).
 
-Press "Send the email" on step 1 first, then use this step's button. It creates the event,
-mints the Meet link, invites the primary contact and lets Google email them — 30 minutes,
-two business days out, at 10:00 in the CLIENT's timezone.
+🔑 THE CLIENT NORMALLY PICKS THE TIME THEMSELVES. Their portal shows "Pick a time that suits you"
+with your real open slots, and booking one creates the event, mints the Meet link and emails them.
+You usually do not need this button at all.
+
+Use it when you want to book on their behalf — they asked on the call, or they have not chosen.
+It takes the FIRST genuinely free slot inside your bookable hours, 30 minutes, in the CLIENT's
+timezone. It never books over something already in the ledger.
 
 You do not open Google Calendar. Pressing the button twice does not send a second invite:
 it offers to MOVE the existing one, keeping the same Meet link.
 
 To pick a different time, or to call the meeting off, use "Change the time" or "Cancel the
-meeting" on the card "The first hour after they say yes" on the Overview tab.
+meeting" on the card "The first hour after they say yes" on the Overview tab. Bookable hours and
+days are set from that same card.
 
 🔴 DONE = the invite is ACCEPTED. A sent invite is not a booked call, and this is the single most
 common place momentum is lost between a yes and the work starting. Chase at 24h.
