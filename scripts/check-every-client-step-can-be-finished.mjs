@@ -73,7 +73,16 @@ for (const s of steps) {
     if (inp) {
       if (!INPUT_KINDS.has(inp.kind)) bad(`${s.id} declares clientInput.kind="${inp.kind}", which the portal cannot render`);
       if (!inp.cta) bad(`${s.id} takes an input but its submit button has no label`);
-      if (!inp.prompt) bad(`${s.id} takes an input but never says what it is asking for`);
+      // 🔑 A PROMPT, OR A PLATFORM QUESTION THAT LABELS THE SAME BLOCK. 2026-09-25: the CMS-login
+      // step's prompt repeated its own ask word for word — "Create a one-time secure link at
+      // onetimesecret.com, then paste it below" was the row's first line AND the field's label, so
+      // the client read it twice under two stacked small-caps headings. The approved mockup says it
+      // once and labels the block with the platform question instead.
+      // 🔴 The rule still holds: SOMETHING visible must say what is being asked. It just does not
+      // have to be `prompt` when `platform.prompt` heads the same control block.
+      if (!inp.prompt && !inp.platform?.prompt) {
+        bad(`${s.id} takes an input and nothing labels it — no prompt and no platform question`);
+      }
       if (s.clientDoneCta) bad(`${s.id} has BOTH an input and an attestation button — two controls for one act`);
       if (inp.kind === "checklist" && !(inp.options || []).length) bad(`${s.id} is a checklist with nothing to tick`);
       if (inp.kind === "numbers" && !(inp.fields || []).length) bad(`${s.id} asks for numbers but names no figures`);
