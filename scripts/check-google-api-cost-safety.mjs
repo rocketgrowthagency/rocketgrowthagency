@@ -101,6 +101,17 @@ const DECLARED = {
     scheduled: "on demand (a human confirms a destructive dialog)",
     stamps: "removes client_onboarding_records.kickoff_invite and appends kickoff_cancellations — a second call finds no event_id and returns nothingToCancel without calling Google at all",
   },
+  // 🔑 The slot engine (2026-09-25). Every availability question in the product goes through it —
+  // the portal picker, the admin request list, and the sender's final "is it still free" check.
+  "_kickoff-slots.js": {
+    perRun: "at most 1 Calendar freeBusy query per availability read — FREE (quota, not billed), and SKIPPED ENTIRELY when no access token is present",
+    // 🔴 The ceiling is "how often does anyone open a time picker", not "how many clients exist".
+    // It is bounded ahead of Google rather than after it: OUR ledger answers first, the horizon is
+    // clamped to 10 days, and a failed read THROWS instead of retrying — so a broken token
+    // produces one error, not a loop. → feedback_an_absence_must_never_be_readable_as_a_value
+    scheduled: "on demand (a human opens the picker, or an invite is confirmed)",
+    stamps: "kickoff_slot_holds — every slot handed out or taken is a row, so nothing is decided from a Google answer alone",
+  },
   "oauth-rga-init.js": { perRun: "0 — builds a consent URL, calls nothing", scheduled: "hand-run, once", stamps: "n/a" },
   "oauth-google-callback.js": { perRun: "1 token exchange per consent — free", scheduled: "on demand (a human consents)", stamps: "client_google_oauth / rga_google_credentials" },
 };

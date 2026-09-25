@@ -144,8 +144,47 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
   if (/class="ai-done"/.test(code) || /already done<\/summary>/.test(code)) {
     fail.push("the completed-steps drawer is back — the visible list would read 4, 5, 7, 9 and a client told \"you're on 6\" could not find 6");
   }
-  if (!/numbered\.map\(rowHtml\)/.test(code)) {
-    fail.push("the checklist no longer renders every step in order — completed rows are being split out again");
+  // 🔑 2026-09-25: this used to demand the literal `numbered.map(rowHtml)`, which is a SPELLING, not
+  // the rule. The list was grouped by whose job each step is — an approved change that renders every
+  // row and keeps each one in place — and this line failed working code.
+  //
+  // The rule is: a row's position must not depend on its STATUS. Grouping by a property of the STEP
+  // is stable; partitioning finished steps into their own bucket is the done pile by another name.
+  {
+    // 🔑 Brace-balanced, and it matches a PLAIN nested function at any indentation — `bodyOf` above
+    // only finds top-level `async function`, so it returns "" for this one and the check would fall
+    // through to the branch below and fail working code.
+    // → feedback_a_gate_window_measured_in_characters_will_lie
+    const grouper = (() => {
+      const m = code.match(/^\s*(?:async\s+)?function groupedRows\s*\(/m);
+      if (!m) return "";
+      let i = code.indexOf("{", m.index + m[0].length - 1);
+      if (i === -1) return "";
+      let depth = 0;
+      for (let j = i; j < code.length; j++) {
+        if (code[j] === "{") depth++;
+        else if (code[j] === "}" && --depth === 0) return code.slice(i, j + 1);
+      }
+      return "";
+    })();
+    if (!grouper) {
+      // No grouping at all is fine — but then every row must still be rendered from one list.
+      if (!/numbered\.map\(rowHtml\)/.test(code)) {
+        fail.push("the checklist no longer renders every step in order — completed rows are being split out again");
+      }
+    } else {
+      // Any filter on status/done-ness inside the grouper moves rows when they complete.
+      const statusSplit = grouper.match(/(status\s*===\s*"(done|skipped)"|\.status\b[^\n]*filter|filter\([^)]*\bdone\b)/);
+      if (statusSplit) {
+        fail.push(`the checklist groups rows by STATUS (${statusSplit[0].trim().slice(0, 48)}) — a step that jumps position the moment it completes is the done pile, and a client told "you're on 6" could not find 6`);
+      }
+      // Every group must come from the SAME list, or rows silently vanish.
+      const sources = [...grouper.matchAll(/rows:\s*([a-zA-Z_$][\w$]*)[.\s]/g)].map((m) => m[1]);
+      if (!sources.length) fail.push("the grouper builds no groups from the row list — this check is not reading anything");
+      else if (new Set(sources).size !== 1) {
+        fail.push(`the groups are built from more than one list (${[...new Set(sources)].join(", ")}) — a row present in neither would never render`);
+      }
+    }
   }
   // 🔑 Check the BUTTON and the HANDLER separately. `data-step-reopen` appears in both, so a single
   // file-wide match stayed green when the button was removed and only the listener remained — a
