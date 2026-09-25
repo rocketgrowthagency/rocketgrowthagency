@@ -62,6 +62,14 @@ const NOT_PREFLIGHT = {
   'check-sop-fully-rendered.mjs':      'admin-UI gate; runs in daily-health-check.sh — SOP rendering does not gate video safety',
   'check-status-maps-fail-soft.mjs':   'admin/portal-UI gate; runs in daily-health-check.sh — a badge map cannot make a video unsafe',
   'check-every-action-reports-a-result.mjs': 'admin/portal-UI gate; runs in daily-health-check.sh — button feedback cannot make a video unsafe',
+
+  // ── client-portal surface, added 2026-09-25. All four run in daily-health-check.sh. None can
+  //    make a VIDEO unsafe, which is what the overnight pre-flight exists to protect — but every
+  //    one of them guards something a client sees, so none may be silently dropped either.
+  'check-the-setup-accordion-behaves.mjs':    'client-portal UI gate; runs in daily-health-check.sh — a folded checklist cannot make a video unsafe',
+  'check-messages-have-a-shape.mjs':          'client-portal UI gate; runs in daily-health-check.sh — message styling cannot make a video unsafe',
+  'check-live-matches-the-approved-mockup.mjs': 'client-portal UI gate; runs in daily-health-check.sh — approved wording cannot make a video unsafe',
+  'check-no-new-dormant-css.mjs':             'stylesheet-hygiene gate; runs in daily-health-check.sh — an unmatched CSS rule cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
   'check-status-tools-see-the-run.mjs': 'diagnostic-layer gate; runs in daily-health-check.sh — it EXECUTES the status tools, too slow for per-run pre-flight',
   'check-admin-selects-real-columns.mjs': 'admin-schema gate; runs in daily-health-check.sh — needs live Supabase, and a schema drift cannot make a video unsafe',
