@@ -542,7 +542,25 @@ else {
   }
   if (!/flagged:\s*\{ text: "⚠/.test(portal)) bad("there is no flagged badge — the row has no way to show it");
   if (!/data-step-unflag/.test(rowSrc)) bad("a flagged row cannot be un-flagged — the client is stuck in the state they raised");
-  if (!/isDone \|\| flagged \? ""/.test(rowSrc)) bad('a flagged row still renders an actor pill — it would say "Your turn" on a row handed back to us');
+  // 🔑 2026-09-25: this used to demand the literal `isDone || flagged ? ""` — one SPELLING of the
+  // rule, from when a flagged row suppressed its owner chip and leaned on a separate status chip.
+  // The row now carries ONE pill, so the requirement is different and stronger: the flag must be
+  // the FIRST branch, so it outranks both Done and "Your turn".
+  // 🔴 It caught a real regression on the way past — collapsing two pills into one had deleted the
+  // only on-screen acknowledgement that a client's "this isn't right" had registered.
+  {
+    const pill = rowSrc.match(/const ownerPill = ([\s\S]*?);\n/);
+    if (!pill) bad("the row no longer derives an ownership pill — a client could not tell whose turn a step is");
+    else {
+      // 🔴 NOT /flag/ — that matches the word "flagged" in the condition itself, so the check
+      // passed on a pill that had no flag branch at all. Assert the RESULT: a flag-classed pill.
+      if (!/cls:\s*"flag"/.test(pill[1])) {
+        bad('a flagged row shows nothing about the flag — the client\'s "this isn\'t right" would leave no mark on the row');
+      } else if (!/^\s*flagged \?/.test(pill[1])) {
+        bad("the flag is not the first branch of the pill — Done or \"Your turn\" would outrank the client's own word about their business");
+      }
+    }
+  }
 
   // The flag has to be PERSISTED, or it vanishes on reload exactly as it used to.
   // 🔑 Read the source here rather than reusing `fn` from section 7 — that binding is declared
