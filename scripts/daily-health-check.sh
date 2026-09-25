@@ -135,6 +135,7 @@ run check-step-instructions-are-not-shredded.mjs "every step card renders its in
 run check-a-withdrawn-contract-is-not-offered.mjs "a voided contract stops being offered in the client portal"
 run check-every-report-section-is-composed.mjs "no client-report section is built and then never shown"
 run check-a-loading-surface-does-not-lie.mjs "a surface that is still loading never renders a confident wrong answer"
+run check-kickoff-booking-is-honest.mjs "the kickoff picker, the portal booking and the sender agree on what is free"
 run check-no-tab-flashes-a-wrong-answer.mjs "no admin tab flashes a contradicting number on refresh (browser sweep)"
 run check-no-invisible-controls.mjs   "no control can render invisible if a CSS variable fails"
 run check-css-declarations-are-valid.mjs "no CSS declaration the browser would silently discard"
