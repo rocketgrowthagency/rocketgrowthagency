@@ -49,7 +49,10 @@ function readAllCode(root) {
 }
 
 function dormantIn(cssPath, code) {
-  const src = fs.readFileSync(path.join(SITE, cssPath), "utf8");
+  // 🔴 STRIP COMMENTS FIRST. This scanned the raw file, so a class name MENTIONED in a comment —
+  // "exactly as `.cal-foot` is in the approved mockup" — was counted as a declared rule and then
+  // reported as dormant. The gate flagged prose. A selector only exists outside a comment.
+  const src = fs.readFileSync(path.join(SITE, cssPath), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const names = new Set([...src.matchAll(/\.([a-zA-Z][a-zA-Z0-9_-]{2,})/g)].map((m) => m[1]));
   const dormant = [];
   for (const name of names) {
