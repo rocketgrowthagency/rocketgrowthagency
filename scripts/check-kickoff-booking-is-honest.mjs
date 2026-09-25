@@ -105,6 +105,28 @@ if (!/kickoff_availability/.test(src.avail) || !/kickoff_availability/.test(src.
   }
 }
 
+// ── 4a. THE PICKER'S LOADER MUST RUN AFTER ITS CARD IS IN THE DOM ────────────────────────────
+// 🔴 Found on screen 2026-09-24: the card rendered "Loading available times…" and never changed.
+// loadKickoffSlots finds its host with querySelector, and it was called BEFORE appendChild — so it
+// found nothing, returned early, and left the placeholder up permanently. It looked exactly like a
+// slow network, and no error was logged anywhere.
+// 🔑 A loader that runs before its target exists is indistinguishable from one that never runs.
+// → feedback_correct_is_not_the_same_as_happening
+{
+  const p = src.portal;
+  const call = p.indexOf("loadKickoffSlots(row.client_id)");
+  const append = p.indexOf("els.sections.appendChild(section)");
+  if (call >= 0 && append >= 0 && call < append) {
+    problems.push(`loadKickoffSlots is called BEFORE els.sections.appendChild, so its querySelector `
+      + `finds no host and returns early. The picker would show "Loading available times…" forever.`);
+  }
+  // And the card must carry the next-step treatment — it is the client's outstanding action.
+  if (!/pm-kickoff-next/.test(p)) {
+    problems.push(`The kickoff picker no longer uses the shared "Your next step" card. A second `
+      + `urgent style for the same meaning is how a design language stops meaning anything.`);
+  }
+}
+
 // ── 4b. OUR LEDGER IS THE SOURCE OF TRUTH, AND ITS LIFECYCLE IS COMPLETE ──────────────────────
 // 🔴 Chris chose to own the scheduling rather than depend on a Google read: *"i want it built into
 // the portal."* That makes `kickoff_slot_holds` the thing that stops a slot being sold twice, so
