@@ -258,6 +258,38 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE PICKER MUST SAY WHEN IT IS BLIND TO RGA'S OWN CALENDAR.
+//
+// Two sources decide whether a slot greys out: OUR ledger (always on) and Google free/busy (needs
+// the `calendar.events.freebusy` scope). Without the scope a client can book straight over a real
+// meeting — and for its first day `kickoff-availability` computed `seesExternalCalendar` and NO
+// SURFACE READ IT. The fact was right there and discarded.
+// → feedback_a_capability_nobody_calls_looks_finished
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const avail = strip(fs.readFileSync(F("netlify/functions/kickoff-availability.js"), "utf8"));
+  const adminJs = strip(fs.readFileSync(F("admin/admin.js"), "utf8"));
+  if (!/seesExternalCalendar/.test(avail)) {
+    problems.push("kickoff-availability no longer reports seesExternalCalendar — nothing can tell whether the picker is blind to RGA's own calendar");
+  } else if (!/seesExternalCalendar/.test(adminJs)) {
+    problems.push("the admin never reads seesExternalCalendar — a client could book over a real meeting and no screen would say so");
+  }
+  // 🔑 A warning with no way to fix it is a complaint. The button must exist AND be dispatched.
+  if (/seesExternalCalendar/.test(adminJs)) {
+    // 🔴 THE RENDERED BUTTON, NOT THE SELECTOR. A bare /data-kickoff-grant-freebusy/ also matches
+    // the listener's own `closest("[data-kickoff-grant-freebusy]")`, so deleting the button left the
+    // check green — the same check-the-call-not-the-declaration trap as every other time. The markup
+    // form is followed by `>` or a space; the selector form is followed by `]`.
+    if (!/data-kickoff-grant-freebusy(?!\])/.test(adminJs)) {
+      problems.push("the blind-calendar warning offers no way to grant the scope — it would state a problem and leave no action");
+    } else if (!/closest\("\[data-kickoff-grant-freebusy\]"\)/.test(adminJs)) {
+      problems.push("nothing listens for data-kickoff-grant-freebusy — the button would render and do nothing");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
