@@ -110,6 +110,58 @@ if (!/function\s+sopPlaybookLoaded\s*\(/.test(code)) {
   }
 }
 
+// ── 6. the header badges must not accuse before the fetch resolves ────────────────────────────
+// 🔴 Found the same day, by reading rather than by the browser sweep: `state.contracts` is reset to
+// [] on client-select, and [] is EXACTLY what a client with no contracts looks like — so the header
+// flashed "No contract" on every refresh of a client whose agreement is signed. And the Google rows
+// did `state.googleOauth || {}`, turning "not fetched" into three separate "Not connected" verdicts.
+// 🔑 An empty collection cannot double as "not loaded". Track the fetch itself.
+{
+  if (!/state\.contractsLoaded\s*=\s*false/.test(code) || !/state\.contractsLoaded\s*=\s*true/.test(code)) {
+    problems.push(`There is no state.contractsLoaded flag set both false (on select) and true (after `
+      + `the fetch). Without it, [] means both "no contracts" and "not fetched yet", and the header `
+      + `badge accuses a signed client of having no contract on every refresh.`);
+  }
+  const at = code.indexOf('label: "No contract"');
+  if (at >= 0) {
+    const before = code.slice(Math.max(0, at - 300), at);
+    if (!/contractsLoaded/.test(before)) {
+      problems.push(`The "No contract" badge is not gated on state.contractsLoaded, so it renders `
+        + `while the contracts fetch is still in flight.`);
+    }
+  }
+  // 🔑 Check the VERDICT, not the idiom. A first version banned the spelling
+  // `state.googleOauth || {}` outright and then failed code that reads it but correctly carries an
+  // unknown state through to the render. What matters is that nothing PRINTS "Not connected" (or
+  // tells the operator to go connect something) without having checked.
+  {
+    const lines = code.split("\n");
+    const GUARD = /oauthUnknown|googleOauth\s*===\s*null|Checking…|verdict\(/;
+    lines.forEach((ln, i) => {
+      if (!/"Not connected"|connect Google/.test(ln)) return;
+      // 🔑 SCOPE TO THE ENCLOSING FUNCTION, not N lines. renderKpiSourceChips() guards correctly on
+      // its second line and emits the chips ten lines later — an 8-line window missed the guard and
+      // failed correct code. Fifth character-window miss today; stop measuring in lines.
+      // → feedback_a_gate_window_measured_in_characters_will_lie
+      let start = i;
+      while (start > 0 && !/^(async\s+)?function\s/.test(lines[start])) start--;
+      let end = i;
+      while (end < lines.length - 1 && !/^(async\s+)?function\s/.test(lines[end + 1])) end++;
+      const window = lines.slice(start, end + 1).join("\n");
+      // 🔑 Only a verdict DERIVED FROM CLIENT STATE can be wrong-while-loading. A message built
+      // from a server response ("gbp_scope_missing") is authoritative the moment it arrives, and
+      // flagging those made this gate cry wolf on two correct handlers. A noisy gate gets muted.
+      // → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+      if (!/state\.googleOauth|\bg\.(gbp|ga4|gsc|youtube)|\bo\.(ga4|gsc|gbp)/.test(window)) return;
+      if (!GUARD.test(window)) {
+        problems.push(`a "not connected" verdict is rendered with no check that the `
+          + `Google connection state has actually loaded. state.googleOauth is null until its fetch `
+          + `resolves, so this accuses a connected client on every refresh: ${ln.trim().slice(0, 90)}`);
+      }
+    });
+  }
+}
+
 // ── 5. do not accuse the client of a connection we have not checked ───────────────────────────
 {
   // 🔴 Assert the STRUCTURE, not proximity. The first version looked for the word "oauthKnown"
