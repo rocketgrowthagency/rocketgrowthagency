@@ -67,6 +67,41 @@ if (missing.length > BASELINE_MISSING) {
   fail.push(`${missing.length} client steps lack instructions, up from ${BASELINE_MISSING}: ${missing.slice(0, 4).map((s) => s.id).join(", ")}…`);
 }
 
+// ── THE ASK MUST BE SEPARATED FROM THE WHY ────────────────────────────────────────────────────
+// 🔴 Approved from the client_setup_steps_v2 mockup, 2026-09-24. Chris: *"card needs to show more
+// of what to do."* Every row rendered its whole hint as ONE grey paragraph, so the instruction and
+// the context carried identical weight and the client had to work out which was which.
+//
+// 🔑 Asserted on BEHAVIOUR, not on the presence of a word: the real splitter is pulled out of
+// portal.js and run over every authored hint. A step whose hint yields no instruction is a row
+// that still says nothing about what to do.
+{
+  const portalSrc = fs.readFileSync(path.join(SITE, "portal", "portal.js"), "utf8");
+  const m = portalSrc.match(/function splitAskWhy[\s\S]*?\n}/);
+  if (!m) {
+    fail.push(`portal.js has no splitAskWhy — step rows are back to rendering the whole hint as `
+      + `one undifferentiated paragraph, with no instruction standing out.`);
+  } else if (!/pm-ask/.test(portalSrc) || !/class="pm-ask"/.test(portalSrc)) {
+    fail.push(`splitAskWhy exists but nothing renders a .pm-ask — the split is computed and thrown away.`);
+  } else {
+    const split = new Function("escapeHtml", m[0] + "; return splitAskWhy;")((x) => x);
+    // 🔑 EVERY client-visible step, not the generic-form subset — the ask matters most on
+    // the rows that DO have a control.
+    for (const st of steps) {
+      if (!st.clientHint) continue;
+      const ask = (split(st.clientHint).match(/pm-ask">([^<]*)/) || [])[1] || "";
+      if (!ask.trim()) {
+        fail.push(`${st.id} produces no ask from its clientHint — the row would show context `
+          + `with no instruction.`);
+      }
+      if (ask.length > 180) {
+        fail.push(`${st.id}'s ask is ${ask.length} characters — that is a paragraph, not an `
+          + `instruction. Put the action in the first sentence.`);
+      }
+    }
+  }
+}
+
 console.log(`  ${clientSteps.length} client action steps · ${clientSteps.length - missing.length} with instructions · ${missing.length} still to write`);
 if (missing.length) console.log(`  backlog: ${missing.map((s) => s.id).join(", ")}`);
 
@@ -77,4 +112,6 @@ if (fail.length) {
   process.exit(1);
 }
 console.log("  ✅ no step offers instructions it does not have");
+
+
 process.exit(0);
