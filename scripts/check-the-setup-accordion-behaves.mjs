@@ -98,6 +98,22 @@ if (/is-collapsed[\s\S]{0,200}(pointer-events:\s*none|cursor:\s*not-allowed)/.te
   fail.push("collapsed rows are being LOCKED, not just folded — the access list is meant to be collected before the kickoff, not unlocked by it");
 }
 
+// 5b ─ 🔴 EXACTLY ONE ROW IS MARKED "NOW". Chris, 2026-09-25: *"it should not be yellow until its
+//      ready right? so NEXT step is yellow."* The approved mockup carries is-now on ONE article out
+//      of eight. Marking every row the client could act on paints eight orange rails at once, which
+//      is wallpaper, not emphasis.
+//      🔑 "Now" is the NEXT step, not the OPEN one — expanding a later row must not move the marker.
+{
+  const m = code.match(/class="pm-step-row\$\{([^}]*)\}/);
+  if (!m) fail.push("the row no longer computes its own classes — this check is not reading anything");
+  else if (!/\bnowStepId\b/.test(m[1])) {
+    fail.push('the "now" marker is not driven by a single next-step id — every actionable row would carry the orange edge at once, which is wallpaper rather than emphasis');
+  }
+  if (/nowStepId\s*=\s*openStepId/.test(code)) {
+    fail.push("the marker follows whatever is EXPANDED — opening a later row would move \"where am I up to\"");
+  }
+}
+
 // 6 ─ the chosen row must survive a re-render, or the accordion snaps shut on every badge flip
 // 🔑 \b, and BOTH halves of the round trip. A bare /_openStep/ still matched after the map was
 // renamed to _openStepXX — a substring is not a reference. → feedback_a_gate_that_cannot_fail
