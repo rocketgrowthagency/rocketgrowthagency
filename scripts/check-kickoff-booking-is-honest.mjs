@@ -120,10 +120,38 @@ if (!/kickoff_availability/.test(src.avail) || !/kickoff_availability/.test(src.
     problems.push(`loadKickoffSlots is called BEFORE els.sections.appendChild, so its querySelector `
       + `finds no host and returns early. The picker would show "Loading available times…" forever.`);
   }
-  // And the card must carry the next-step treatment — it is the client's outstanding action.
-  if (!/pm-kickoff-next/.test(p)) {
-    problems.push(`The kickoff picker no longer uses the shared "Your next step" card. A second `
-      + `urgent style for the same meaning is how a design language stops meaning anything.`);
+  // 🔑 ONE PLACE TO BOOK. Approved 2026-09-24: the calendar renders INSIDE the action row, the same
+  // way clientInput steps render their form. The earlier version of this rule checked for a
+  // bespoke "pm-kickoff-next" card — which was the very second surface Chris called out ("its
+  // still in 2 places"), so the check is now the opposite: that card must NOT come back.
+  if (!/clientForm === "kickoff_booking"/.test(p)) {
+    problems.push(`The picker no longer renders inside the action row (no kickoff_booking branch). `
+      + `A standalone card would be a second place to book, which is the confusion this replaced.`);
+  }
+  if (/id="kickoff-picker-/.test(p)) {
+    problems.push(`A standalone kickoff card is back (id="kickoff-picker-…"). The calendar belongs `
+      + `in the action row; two surfaces for one booking is what was removed.`);
+  }
+  // 🔴 And the banner's scroll target must EXIST. Deleting that card once broke every link to it
+  // silently — the view switched and nothing scrolled.
+  {
+    const target = (p.match(/data-portal-scroll="([^"$]+)"/g) || [])
+      .map((m) => m.replace(/.*="|"$/g, ""))
+      .filter((t) => /kickoff/i.test(t));
+    // 🔑 IDS ARE TEMPLATED. The row renders `id="step-row-${step.id}"`, so a literal search for
+    // "step-row-m1.kickoff.call" finds nothing even though the element exists at runtime. Resolve
+    // the template instead: the prefix must be rendered, AND the suffix must be a real step id.
+    // Asserting the literal would have failed working code — the same shape-vs-outcome mistake
+    // that has bitten this session repeatedly.
+    const stepIds = new Set([...(JSON.parse(fs.readFileSync(F("data/playbooks/playbooks.json"), "utf8")).month1 || [])].map((x) => x.id));
+    for (const t of target) {
+      const m = t.match(/^step-row-(.+)$/);
+      const prefixRendered = /id="step-row-\$\{/.test(p);
+      if (m && prefixRendered && stepIds.has(m[1])) continue;          // resolves to a real element
+      if (new RegExp(`id="${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(p)) continue;  // literal id
+      problems.push(`The kickoff banner scrolls to "${t}", but nothing in portal.js renders that `
+        + `id — the button switches tab and then does nothing, which reads as dead.`);
+    }
   }
 }
 
