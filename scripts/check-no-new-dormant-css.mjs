@@ -104,6 +104,61 @@ for (const sheet of SHEETS) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A `var()` FALLBACK BESIDE A DECLARED TOKEN IS DORMANT CODE THAT READS AS A DECISION.
+//
+// 2026-09-26. Porting the client's five message shapes into admin.css, I wrote
+// `border-left-color: var(--admin-warning, #b45309)` — meaning "the client's orange". But
+// `--admin-warning` IS declared (#8a5a00, a brown), so the declared value always wins and the
+// fallback is unreachable. Live, the shapes rendered in the admin's brown: the exact drift the port
+// existed to prevent. The code SAID #b45309, the screen SHOWED #8a5a00, and every reader of the
+// source would have agreed with me. A fallback only applies when the token is ABSENT.
+//
+// 🔑 This is worse than an unmatched rule, because an unmatched rule is merely inert — this one
+// actively misinforms the next person about what colour the surface is.
+// → feedback_a_css_rule_that_looks_applied_can_be_losing
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 AND IT MUST BE BASELINED, NOT ZEROED. My first version demanded zero and reported 180 — the
+// house style across both sheets is `var(--token, #hex-from-the-mockup)`, and almost all of those
+// fallbacks are unreachable and harmless. It failed identically with and without the bug it was
+// written for, which is a gate that cannot PASS: exactly as worthless as one that cannot fail.
+// → feedback_a_gate_that_cannot_fail
+const FALLBACK_BASELINE = { "portal/portal.css": 83, "admin/admin.css": 71 };
+console.log("\n── no NEW var() fallback that can never apply ──");
+let deadFallbacks = 0;
+for (const sheet of SHEETS) {
+  let sheetDead = 0;
+  const src = fs.readFileSync(path.join(SITE, sheet), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  // Which custom properties does this sheet actually declare a value for?
+  const declared = new Set([...src.matchAll(/(--[a-zA-Z0-9-]+)\s*:/g)].map((m) => m[1]));
+  for (const m of src.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)\s*,\s*([^),;]+)\)/g)) {
+    const [, token, fallback] = m;
+    if (!declared.has(token)) continue;                    // genuinely a fallback — fine
+    // 🔑 Only judge COLOURS. A declared token with a differing numeric fallback (a length, a
+    // z-index) is harmless belt-and-braces; a differing colour is a lie about what you will see.
+    if (!/^#[0-9a-fA-F]{3,8}$/.test(fallback.trim())) continue;
+    // What is the token's own value? Compare only when both are plain hex.
+    const decl = src.match(new RegExp(token.replace(/-/g, "\\-") + "\\s*:\\s*(#[0-9a-fA-F]{3,8})\\s*[;}]"));
+    if (!decl) continue;                                   // computed/derived — cannot compare
+    const norm = (h) => h.toLowerCase().replace(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/, "#$1$1$2$2$3$3");
+    if (norm(decl[1]) === norm(fallback.trim())) continue;  // agrees — no one is misled
+    sheetDead++;
+    deadFallbacks++;
+    // Only NAME the offenders when the sheet is over its ceiling — otherwise 180 lines of known debt
+    // buries the one line that is new.
+    if (sheetDead > (FALLBACK_BASELINE[sheet] ?? 0)) {
+      failed = true;
+      console.log(`  🔴 ${sheet}: var(${token}, ${fallback.trim()}) — ${token} is declared ${decl[1]}, so`);
+      console.log(`       ${fallback.trim()} NEVER applies. The source claims one colour, the screen shows another.`);
+      console.log(`       Fix: use the colour you mean directly, or give it its OWN token (e.g. --pm-turn).`);
+    }
+  }
+  const cap = FALLBACK_BASELINE[sheet] ?? 0;
+  if (sheetDead > cap) console.log(`  🔴 ${sheet}: ${sheetDead} unreachable colour fallback(s), baseline ${cap} — ${sheetDead - cap} NEW.`);
+  else if (sheetDead < cap) console.log(`  ✅ ${sheet}: ${sheetDead} unreachable (baseline ${cap}) — 🔑 lower FALLBACK_BASELINE["${sheet}"] to ${sheetDead}.`);
+  else console.log(`  ✅ ${sheet}: ${sheetDead} unreachable colour fallback(s), unchanged from baseline.`);
+}
+
 if (failed) {
   console.log("\n🔴 A rule nothing can match is dead weight every browser still downloads and parses.");
   console.log("   Either emit the class, or delete the rule. Do not raise the baseline.");

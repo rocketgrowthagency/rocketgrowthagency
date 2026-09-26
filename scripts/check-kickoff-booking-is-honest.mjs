@@ -414,6 +414,109 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A STEP ID IN THE CODE IS A CLAIM ABOUT THE PLAYBOOK, AND A PROPERTY READ IS A CLAIM ABOUT
+//      THE SHAPE. BOTH WERE FALSE IN THE SAME LINE, AND EVERY GATE STAYED GREEN.
+//
+// 2026-09-26. "Needs your attention" kept telling Chris «Next: Send the kickoff calendar invite»
+// while the client's 1:00 PM request sat unconfirmed — the button that step points at books the
+// FIRST free slot, so following the instruction would have booked the WRONG TIME and emailed it.
+// The third surface of a defect already fixed twice.
+//
+// The cause: `/kickoff/i.test(next.obj?.flowId || "")`. `next` is a PLAYBOOK STEP — `{id, title,
+// dependsOn, …}`. It has no `.obj`. I had copied the expression from the next-action card, where the
+// rows genuinely ARE `{obj: {flowId}}`. Optional chaining turned the wrong shape into `undefined`
+// instead of a crash, so the test was always false: the hook attribute never rendered and the
+// in-place correction had nothing to patch. The strings the earlier gates looked for were all
+// present, so all of them passed.
+//
+// 🔑 Two checks, because there were two claims:
+//   1. every `m1.*` / `m2.*` id in admin.js EXISTS in playbooks.json — catches renames and typos
+//   2. the cockpit's kickoff hook is decided from `.id`, never from `.obj`/`.flowId`
+// → feedback_position_is_not_identity · feedback_a_gate_that_exists_is_not_a_gate_that_it_works
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const pbPath = F("data/playbooks/playbooks.json");
+  if (!fs.existsSync(pbPath)) {
+    console.error(`⚠️  INDETERMINATE — playbooks.json missing at ${pbPath}`);
+    process.exit(2);
+  }
+  const ids = new Set();
+  (function walk(o) {
+    if (Array.isArray(o)) o.forEach(walk);
+    else if (o && typeof o === "object") {
+      if (typeof o.id === "string") ids.add(o.id);
+      Object.values(o).forEach(walk);
+    }
+  })(JSON.parse(fs.readFileSync(pbPath, "utf8")));
+  if (ids.size < 20) {
+    console.error(`⚠️  INDETERMINATE — only ${ids.size} step id(s) parsed from playbooks.json; cannot judge.`);
+    process.exit(2);
+  }
+
+  // 1 ─ every step id the admin names must be a step that exists.
+  const named = new Set([...src.admin.matchAll(/["'`](m[12]\.[a-z0-9_]+\.[a-z0-9_]+)["'`]/g)].map((m) => m[1]));
+  const ghosts = [...named].filter((id) => !ids.has(id)).sort();
+  if (ghosts.length) {
+    problems.push(`admin.js names ${ghosts.length} step id(s) that do not exist in playbooks.json — ${ghosts.join(" · ")}. `
+      + "Any comparison against one of these is permanently false, so whatever it guards never fires.");
+  }
+
+  // 2 ─ the "Needs your attention" kickoff correction must key off the real shape.
+  //     Window the CHECK on the enclosing block, not a character count.
+  //     → feedback_a_gate_window_measured_in_characters_will_lie
+  const i = src.admin.indexOf("_kickoffPendingAsk.get(state.selectedClient.id)");
+  if (i === -1) {
+    problems.push("the 'Needs your attention' panel no longer reads _kickoffPendingAsk — a pending request would stop overruling the step name there, which is the surface that told Chris to press the wrong button");
+  } else {
+    // the enclosing `if (next) { … }` block
+    const open = src.admin.lastIndexOf("if (next) {", i);
+    const block = src.admin.slice(open === -1 ? Math.max(0, i - 1500) : open, src.admin.indexOf("alertsHtml", i));
+    if (/next\.obj|next\?\.obj|\.flowId/.test(block)) {
+      problems.push("the attention panel decides the kickoff step from `next.obj` / `.flowId` — `next` is a playbook step and has neither, "
+        + "so optional chaining makes the test silently false and the panel keeps pointing at the button that books the FIRST free slot rather than the time the client asked for");
+    }
+    if (!/next\.id\s*===/.test(block)) {
+      problems.push("the attention panel does not compare `next.id` to a named step id — an `/kickoff/i` pattern also matches `m1.kickoff.call`, which a booking request says nothing about");
+    }
+  }
+
+  // 3 ─ 🔴🔴 EVERY SURFACE, NOT THE ONES ON THE TAB I HAPPENED TO OPEN.
+  //     Four places tell Chris what to do about the kickoff invite. Three were corrected one at a
+  //     time; the fourth — the "promised a calendar invite" banner — renders only on the Onboarding
+  //     tab, so every live check run on Overview reported clean while it still said "Send it from
+  //     step 2 below". Step 2 books the FIRST FREE SLOT.
+  //     🔑 So the rule is structural: ANY place that sends Chris to the step-2 sender must first ask
+  //     whether the client has already picked a time. → feedback_fix_the_class_not_the_instance
+  // 3a ─ the DESTINATION itself: the active step-2 card owns the dangerous button, so it must say
+  //      so when a request is open. Its own SOP copy reads "use it when … they have not chosen",
+  //      which the pending request contradicts.
+  //      🔴 ANCHOR ON THE EXPRESSION, NOT A CHARACTER WINDOW. My first version was
+  //      /m1\.close\.kickoff_invite"[\s\S]{0,200}?_kickoffPendingAsk/ and it passed with the card
+  //      note deleted, because 200 characters downstream of the UNRELATED `stepDone(
+  //      "m1.close.kickoff_invite")` in the promise-gap block sits that block's own
+  //      `_kickoffPendingAsk`. It matched a different site and called it proof.
+  //      → feedback_a_gate_window_measured_in_characters_will_lie
+  if (!/o\.flowId\s*===\s*"m1\.close\.kickoff_invite"[\s\S]{0,120}?_kickoffPendingAsk/.test(src.admin)) {
+    problems.push("the active step-2 card does not consult _kickoffPendingAsk — its SOP copy says to use the button when the client "
+      + "'has not chosen', and it said that with their request already in the ledger");
+  }
+
+  const senderPointers = [...src.admin.matchAll(/Send it from step 2|Go to step 2|Send the kickoff calendar invite<\/strong>/g)];
+  for (const m of senderPointers) {
+    // The enclosing template literal, then the statement that builds it.
+    const open = src.admin.lastIndexOf("`", m.index);
+    const stmt = src.admin.slice(Math.max(0, open - 1200), m.index);
+    // Lock messages ("Unlocks when … is complete") merely NAME the step; they issue no instruction.
+    if (/Unlocks when|blockers|ob-lockmsg/.test(stmt.slice(-300))) continue;
+    if (!/_kickoffPendingAsk|pendingAsk|pendingRequest/.test(stmt)) {
+      const near = src.admin.slice(m.index, m.index + 60).replace(/\s+/g, " ");
+      problems.push(`a surface points Chris at the step-2 sender ("${near}…") without first checking `
+        + "_kickoffPendingAsk — with a request pending, that button books the FIRST FREE SLOT and emails the client a time they did not choose");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
