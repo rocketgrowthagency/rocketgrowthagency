@@ -578,6 +578,56 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE "TIME REQUESTED" DIALOG MUST NOT WEAR A GREEN **DONE** BADGE.
+//
+// 2026-09-26. Chris: *"do we need to update this popup too?"* — and yes, for a reason the screenshot
+// made obvious. The new dialog system defaults an alert to the `result` kind, which renders a GREEN
+// pill reading DONE. It sat directly over a heading saying "Time requested". Nothing is done: no
+// calendar event exists and RGA has not agreed. A green DONE tells a client the call is settled —
+// the exact "a sent invite is not a booked call" lie this whole flow exists to avoid — and it
+// contradicted the ORANGE "Requested" card rendering right behind the dialog.
+//
+// 🔴 The same screenshot caught a second one: the step row still read YOUR TURN behind it, because
+// the pill correction only fired inside loadKickoffSlots and the just-booked path never calls it.
+// The row contradicted the card beneath it until the next page load.
+// → feedback_a_promise_in_client_copy_is_a_commitment · feedback_a_client_message_must_agree_with_itself
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const p = src.portal;
+  const i = p.indexOf('title: "Time requested"');
+  if (i === -1) {
+    problems.push('the "Time requested" acknowledgement is gone — the client would book a time and be told nothing, which is the silence this replaced');
+  } else {
+    const region = p.slice(Math.max(0, i - 700), i + 700);
+    if (!/tone:\s*["']turn["']/.test(region)) {
+      problems.push('the "Time requested" dialog does not pass tone:"turn" — it falls back to the `result` kind, whose pill reads a GREEN **DONE** '
+        + "over a heading that says the time was merely requested. No event exists and RGA has not agreed");
+    }
+    if (/pill:\s*["']DONE["']/i.test(region)) {
+      problems.push('the "Time requested" dialog is badged DONE — a request awaiting RGA is not done, and a client told "done" stops watching for the invite');
+    }
+  }
+  // Both paths that record a request must set _kickoffMine and correct the step pill: the fetched
+  // one (loadKickoffSlots) and the optimistic one (straight after booking).
+  // 🔑 ANCHOR ON THE PATH, NOT A COUNT. My first version required ≥3 occurrences — but the fetched
+  // path alone contains the definition plus TWO calls, so deleting the just-booked one still left 3
+  // and the mutation passed. Counting a symbol says nothing about WHERE it is.
+  // → feedback_a_gate_that_cannot_fail · feedback_position_is_not_identity
+  // 🔴 THE CALL, NOT THE DEFINITION. `kickoffRequestedHtml(startIso` matches the function's own
+  // signature first — its parameter is literally named `startIso` — so the window landed on the
+  // renderer and failed the clean tree. Third time today a gate anchored on the first mention of a
+  // name rather than the occurrence it meant.
+  // → feedback_a_gate_window_measured_in_characters_will_lie · feedback_position_is_not_identity
+  const opt = p.indexOf("host.innerHTML = kickoffRequestedHtml(startIso");
+  if (opt === -1) {
+    problems.push("the just-booked path no longer paints the requested card — the client would click a time and see the calendar they were reading vanish");
+  } else if (!/markKickoffWaitingOnRga\(/.test(p.slice(opt, opt + 1200))) {
+    problems.push("the just-booked path does not correct the step pill — the row keeps saying YOUR TURN directly above a card that says Requested, "
+      + "until the next page load. The optimistic path needs the same state change as the fetched one");
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
