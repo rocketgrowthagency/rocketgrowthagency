@@ -375,6 +375,45 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE BOOKING FLOW MUST CLOSE. Chris, 2026-09-25: *"i clicked a date and time. but when i did
+// the cleint side never got a popup card message saying done."*
+//
+// The outcome card was correct and it appeared where the client was NOT looking — they had just
+// clicked a time in the right-hand pane, and the card replaced the calendar they were reading. A
+// flow that OPENS with a confirmation ("Request this time") and then ends in silence reads as if
+// nothing happened. Every booking product closes this loop on purpose.
+//
+// 🔑 Both halves are required: the modal BEFORE (so a mis-tap cannot reserve a slot) and the
+// acknowledgement AFTER (so the client knows it took).
+// → feedback_every_action_must_report_its_result
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const portal3 = strip(fs.readFileSync(F("portal/portal.js"), "utf8"));
+  const i = portal3.indexOf('data-kickoff-pick]');
+  const flow = i === -1 ? "" : portal3.slice(i, i + 4200);
+  if (!flow) {
+    problems.push("the slot-pick handler is gone — this check is not reading anything");
+  } else {
+    if (!/portalConfirm\(/.test(flow)) {
+      problems.push("picking a time no longer asks first — a mis-tap would reserve a slot outright");
+    }
+    // 🔴 THE SUCCESS ALERT, NOT ANY ALERT. A bare /portalAlert\(/ also matched the catch block's
+    // "We couldn't reach the booking service" — so deleting the acknowledgement left this green
+    // while the happy path went silent, which is the exact defect. The success one is the OBJECT
+    // form with a title; the error one is a bare string.
+    if (!/portalAlert\(\{[\s\S]{0,300}?title:/.test(flow)) {
+      problems.push("the booking flow ends in silence — it opens with a confirmation and then swaps a panel the client is not looking at, which reads as nothing having happened");
+    }
+    // 🔴 And it must never say "booked": RGA has not agreed and no calendar event exists yet.
+    const ack = flow.match(/portalAlert\(\{[\s\S]{0,700}?\}\)/);
+    if (ack && /\bbooked\b|\bconfirmed for\b|\byou're all set\b/i.test(ack[0])) {
+      problems.push("the acknowledgement claims the call is BOOKED — it is only requested until RGA confirms, and a client told 'booked' stops watching for the invite");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
