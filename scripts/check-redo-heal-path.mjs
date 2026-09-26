@@ -11,7 +11,9 @@
  * Usage: node scripts/check-redo-heal-path.mjs   Exit 0 = intact, 1 = the redo queue can't drain.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -428,6 +430,55 @@ const CHECKS = [
     ok: () => /MAX_UNLEDGER_REDOS/.test(read('scripts/overnight-pipeline.sh'))
            && /exhausted after/.test(read('scripts/overnight-pipeline.sh')),
     why: 'an always-failing lead would re-arm forever and pin the pipeline to one category, eating the nightly capacity' },
+
+  // 🔴🔴 2026-09-26 — THE HEAL PATH RETRIED SIX LEADS EVERY NIGHT FOR NINETEEN NIGHTS.
+  // rebuild-broken-videos.sh had no attempt cap while every sibling did (MAX_BUILD_FAILS=3,
+  // RECOVERY_ATTEMPT_CAP=3, build-failed). heal-unpublished-leads.mjs selects leads with NO Airtable row
+  // by construction, so every Airtable-based retirement is structurally blind to them — the ledger is
+  // their only record. Six plastic-surgery slugs burned the first ~40 min of each night re-failing.
+  // These two RUN the real script rather than reading it: a static regex would have passed all nineteen
+  // nights ([[feedback_a_gate_that_reads_code_never_sees_the_data]]). Both probes use a slug with no
+  // step-2 CSV and a fixture ledger, so neither can start a capture or touch production data.
+  { name: 'the rebuild attempt cap RETIRES an over-cap lead',
+    ok: () => {
+      const led = path.join(os.tmpdir(), `cap-probe-retire-${process.pid}.tsv`);
+      fs.writeFileSync(led, 'date\tslug\treason\tdetail\n'
+        + ['1','2','3','4'].map(() => '2099-01-01 00:00\t__cap-probe__\tbelow-6of6\t\n').join(''));
+      try {
+        const out = execFileSync('bash', [path.join(ROOT, 'scripts/rebuild-broken-videos.sh'), '__cap-probe__'],
+          { cwd: ROOT, encoding: 'utf8', env: { ...process.env, REBUILD_FAILLOG: led, REBUILD_ATTEMPT_CAP: '3' } });
+        return /RETIRED/.test(out) && /retired 1/.test(out) && !/step-2\.5|step-3 capture/.test(out);
+      } catch { return false; } finally { try { fs.unlinkSync(led); } catch {} }
+    },
+    why: 'without the cap, leads that can never build retry every night forever — nineteen nights and ~40 min/night, measured' },
+
+  { name: 'the rebuild attempt cap lets an under-cap lead through',
+    ok: () => {
+      const led = path.join(os.tmpdir(), `cap-probe-pass-${process.pid}.tsv`);
+      fs.writeFileSync(led, 'date\tslug\treason\tdetail\n2099-01-01 00:00\t__cap-probe__\tbelow-6of6\t\n');
+      try {
+        const out = execFileSync('bash', [path.join(ROOT, 'scripts/rebuild-broken-videos.sh'), '__cap-probe__'],
+          { cwd: ROOT, encoding: 'utf8', env: { ...process.env, REBUILD_FAILLOG: led, REBUILD_ATTEMPT_CAP: '3' } });
+        return !/RETIRED/.test(out) && /retired 0/.test(out);
+      } catch (e) {
+        // The script exits non-zero when a lead fails for an unrelated reason; that still proves it got
+        // PAST the cap. Only a RETIRED verdict means the cap wrongly fired.
+        const out = String(e.stdout || '');
+        return out.length > 0 && !/RETIRED/.test(out);
+      } finally { try { fs.unlinkSync(led); } catch {} }
+    },
+    why: 'a cap that fires on everything silently stops all healing — it must be provable in BOTH directions ([[feedback_a_gate_that_cannot_fail]])' },
+
+  { name: 'the rebuild cap is parole-aware and overridable',
+    ok: () => {
+      const r = read('scripts/rebuild-broken-videos.sh');
+      return /REBUILD_ATTEMPT_CAP/.test(r)
+          && /REBUILD_IGNORE_CAP/.test(r)
+          && /date=format-local/.test(r)                 // counts only failures since the capture-code change
+          && /step-3-video-recorder\.mjs build-video-landing\.mjs/.test(r)
+          && /\$3!="attempt-cap"/.test(r);               // a retirement can't inflate its own count
+    },
+    why: 'without the capture-code epoch the cap becomes the permanent burial parole exists to prevent (48 of 75 rejections were once false)' },
 ];
 
 let bad = 0;

@@ -34,7 +34,10 @@ reap_chrome(){ pkill -9 -f 'chrome-profile-step3' 2>/dev/null; pkill -9 -f 'chro
 # This writes ONE TSV row per failure — date, slug, reason, detail — so a tally is a one-liner and the
 # same reason string is used everywhere. Reasons are the SHORT codes already used in FAILED[]
 # (site-unreachable, step-3-timeout, below-6of6, gate, no-mp4, ...) so they stay stable and countable.
-FAILLOG="$SCRAPER/output/rebuild-failures.tsv"
+# REBUILD_FAILLOG overrides the path so a gate can exercise the real cap logic against a fixture ledger
+# instead of production data. A guard that cannot be run without polluting the thing it guards ends up
+# never being run (feedback_a_gate_can_run_the_code_it_checks).
+FAILLOG="${REBUILD_FAILLOG:-$SCRAPER/output/rebuild-failures.tsv}"
 [ -f "$FAILLOG" ] || printf 'date\tslug\treason\tdetail\n' > "$FAILLOG"
 note_fail(){ printf '%s\t%s\t%s\t%s\n' "$(date +%F\ %H:%M)" "$1" "$2" "${3:-}" >> "$FAILLOG"; }
 
@@ -43,7 +46,37 @@ note_fail(){ printf '%s\t%s\t%s\t%s\n' "$(date +%F\ %H:%M)" "$1" "$2" "${3:-}" >
 [ $# -gt 0 ] || { say "usage: $0 <slug> [<slug> ...]"; exit 1; }
 caffeinate -dimsu -t 5400 </dev/null >/dev/null 2>&1 & CAFF=$!
 
-OK=(); OK_CSV=(); FAILED=(); TEMP_CSVS=()
+OK=(); OK_CSV=(); FAILED=(); TEMP_CSVS=(); RETIRED=()
+
+# 🔴🔴 2026-09-26 — THIS SCRIPT HAD NO ATTEMPT CAP, AND IT IS THE ONE PATH THAT NEEDED ITS OWN.
+# Every sibling path gives up: overnight-pipeline.sh has MAX_BUILD_FAILS=3, recovery-rounds.sh has
+# RECOVERY_ATTEMPT_CAP=3, reconcile-missing-videos.mjs retires to Email Status='build-failed'. This
+# script had none — so the leads that reach it retried EVERY NIGHT, forever.
+# Measured 2026-09-25: six plastic-surgery slugs had failed 14–19 times each, on 19 consecutive nights,
+# all at 21:04. They were the entire heal batch, so the first ~40 minutes of every night was spent
+# re-failing the same six leads before any new work started.
+#
+# 🔑 Why the existing guards could never reach them: heal-unpublished-leads.mjs selects on
+# `!known.has(slug)` — leads with NO Airtable row BY CONSTRUCTION. Every Airtable-based retirement
+# (build-failed, parole, reconcile) is therefore structurally blind to exactly this population. Their
+# only record is output/rebuild-failures.tsv, which this script already reads (line ~155) to invalidate
+# a stale audit — it counted the failures and then retried anyway.
+# → feedback_a_guard_must_reach_the_thing_it_guards · feedback_fix_the_class_not_the_instance
+#
+# PAROLE-AWARE ON PURPOSE: the count is of failures NEWER than the last change to the capture/gate code,
+# using the same GATE_FILES + git-epoch idea as parole-permafails.mjs. A lead parked by a capture bug we
+# later fix un-retires itself on the next run — without that, this cap would be the permanent burial
+# that parole exists to prevent (48 of 75 rejections once turned out to be false).
+# 'attempt-cap' rows are excluded from the tally so a retirement can never inflate its own count.
+REBUILD_ATTEMPT_CAP="${REBUILD_ATTEMPT_CAP:-3}"
+_cap_epoch=$(git -C "$SCRAPER" log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' \
+  -- step-3-video-recorder.mjs build-video-landing.mjs scripts/check-video-visual.mjs step-6-voiceover.mjs 2>/dev/null)
+if [ -n "$_cap_epoch" ]; then
+  say "attempt cap: ${REBUILD_ATTEMPT_CAP} failures since capture code last changed (${_cap_epoch})"
+else
+  # git unreadable — fall back to the all-time count rather than retrying forever. Stated, not silent.
+  say "attempt cap: ${REBUILD_ATTEMPT_CAP} failures (all-time — could not read the capture-code epoch from git)"
+fi
 # The overnight pipeline picks its step-2 CSV with `ls -t "output/Step 2/"*"-[step-2].csv" | head -1`.
 # Any today-dated file we leave there can win that race and make the night build the WRONG lead — it did
 # exactly that on 2026-08-11 (an estate-planning run built a chiropractor). Clean up on the way out.
@@ -51,6 +84,24 @@ cleanup_csvs(){ for c in "${TEMP_CSVS[@]:-}"; do [ -n "$c" ] && rm -f "$c"; done
 trap 'kill $CAFF 2>/dev/null; cleanup_csvs' EXIT
 for SLUG in "$@"; do
   say ""; say "════ $SLUG — $(date +%H:%M:%S) ════"
+
+  # The cap is checked FIRST, before the CSV pick and every other pre-flight, because its whole purpose
+  # is to spend nothing at all on a lead that has already proven it cannot build.
+  # REBUILD_IGNORE_CAP=1 forces a retry — a deliberate manual re-run is a different intent from the
+  # unattended nightly heal, and the escape hatch stays in the product
+  # (feedback_the_escape_hatch_stays_in_the_product).
+  if [ "${REBUILD_IGNORE_CAP:-0}" -ne 1 ]; then
+    _cap_fails=$(awk -F'\t' -v s="$SLUG" -v e="$_cap_epoch" \
+      '$2==s && $3!="attempt-cap" && (e=="" || $1>e) {n++} END{print n+0}' "$FAILLOG" 2>/dev/null)
+    _cap_fails=${_cap_fails:-0}
+    if [ "$_cap_fails" -ge "$REBUILD_ATTEMPT_CAP" ]; then
+      say "  ⏭ RETIRED — ${_cap_fails} failures since ${_cap_epoch:-the ledger began} ≥ cap ${REBUILD_ATTEMPT_CAP}."
+      say "     Spending nothing. Retries resume by itself when the capture/gate code changes."
+      say "     Force one run with: REBUILD_IGNORE_CAP=1 $0 $SLUG"
+      RETIRED+=("$SLUG:${_cap_fails}")
+      continue
+    fi
+  fi
 
   # Pick the newest step-2 CSV for this lead THAT ACTUALLY CARRIES AN EMAIL, and re-date it so today's run
   # owns the output dirs.
@@ -268,7 +319,12 @@ except Exception:
   OK_CSV+=("$CSV")        # kept so step-8 can publish this lead AFTER the deploy proves the video serves
 done
 
-say ""; say "════ rebuilt ${#OK[@]} · failed ${#FAILED[@]} ════"
+say ""; say "════ rebuilt ${#OK[@]} · failed ${#FAILED[@]} · retired ${#RETIRED[@]} ════"
+# A cap that drops work silently reads as "we covered everything". Name every skipped lead and its count.
+if [ "${#RETIRED[@]}" -gt 0 ]; then
+  say "  retired (cap ${REBUILD_ATTEMPT_CAP}, nothing spent — re-enter on the next capture-code change):"
+  for _r in "${RETIRED[@]}"; do say "    ${_r%%:*}  (${_r##*:} prior failures)"; done
+fi
 # Tally THIS batch's failures by reason, so the cause mix is visible without grepping the log.
 if [ "${#FAILED[@]}" -gt 0 ]; then
   say "  failure reasons this batch:"
