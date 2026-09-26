@@ -95,6 +95,43 @@ if (!targets.size) {
   process.exit(2);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A <script src> TAG IS NOT THE ONLY WAY A FILE REACHES THE BROWSER.
+//
+// 2026-09-26. This gate reported "all 6 local script(s) parse" — and `admin/calls.js` was not one
+// of them, because nothing loads it with a tag: `admin.js` does `import { openCallConsole } from
+// "/admin/calls.js"`. I edited calls.js that same minute, and a syntax error in it would have
+// broken the Call Console with this gate green. `shared/*.js` are reached the same way.
+//
+// 🔑 Follow the import graph from every entry point. A module's dependencies ARE scripts the site
+// loads; discovering them by tag alone is a claim about how files get included.
+// → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const IMPORT_RE = /(?:^|[\s;])(?:import|export)\s+(?:[\s\S]*?\sfrom\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g;
+  const queue = [...targets.keys()];
+  const seen = new Set(queue);
+  while (queue.length) {
+    const abs = queue.shift();
+    let src;
+    try { src = fs.readFileSync(abs, "utf8"); } catch { continue; }
+    for (const m of src.matchAll(IMPORT_RE)) {
+      const spec = m[1] || m[2];
+      if (!spec || /^https?:|^\/\//i.test(spec)) continue;       // a CDN file is not ours to gate
+      if (!/^[./]/.test(spec)) continue;                          // bare specifier — not a file path
+      const clean = spec.split("?")[0];
+      const dep = clean.startsWith("/")
+        ? path.join(SITE, clean.replace(/^\//, ""))
+        : path.resolve(path.dirname(abs), clean);
+      if (seen.has(dep) || !fs.existsSync(dep) || !dep.endsWith(".js")) continue;
+      seen.add(dep);
+      queue.push(dep);
+      // Anything reached by `import` is, by definition, parsed under the MODULE goal.
+      targets.set(dep, { module: true, from: [`${path.relative(SITE, abs)} (import)`] });
+    }
+  }
+}
+
 let fails = 0;
 for (const [abs, info] of targets) {
   const rel = path.relative(SITE, abs);

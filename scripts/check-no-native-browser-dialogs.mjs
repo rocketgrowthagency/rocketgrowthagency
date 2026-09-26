@@ -24,7 +24,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-const FILES = ["admin/admin.js", "portal/portal.js", "portal/client-login.js", "portal/report/report.js"];
+
+// 🔴🔴 MY FIRST VERSION NAMED FOUR FILES — and that list was the same mistake one level up. It
+// missed `admin/calls.js` (a window.alert in the Call Console) and two standalone playbook pages
+// whose reset button used a native confirm inside an inline <script>. A hand-written file list is a
+// claim about what I thought to include; it goes stale the moment anyone adds a file.
+// 🔑 WALK THE TREE instead. Every .js and every inline <script> in every .html the site serves.
+// → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+const SKIP_DIRS = new Set(["node_modules", ".git", ".netlify", "vendor", "reports", "docs", "netlify", "scripts"]);
 
 // 🔑 `window.`-prefixed forms count too. My first conversion pass excluded them with a lookbehind on
 // `.` and left six behind — including three the client could see.
@@ -32,27 +39,38 @@ const NATIVE = /(?:^|[^.\w$"'`])(?:window\.)?(alert|confirm|prompt)\s*\(/g;
 
 console.log("── no native browser dialogs ──");
 
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 let checked = 0;
 const found = [];
-for (const rel of FILES) {
-  const p = path.join(SITE, rel);
-  if (!fs.existsSync(p)) continue;
-  const raw = fs.readFileSync(p, "utf8");
-  if (raw.length < 1000) {
-    console.log(`  ⚠️  ${rel} is only ${raw.length} bytes — cannot judge.`);
-    process.exit(2);
-  }
-  checked++;
-  const src = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const m of src.matchAll(NATIVE)) {
-    const line = src.slice(0, m.index).split("\n").length;
-    found.push({ rel, line, kind: m[1], snippet: src.slice(m.index, m.index + 90).replace(/\s+/g, " ").trim() });
+
+function scan(dir) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+  for (const e of entries) {
+    if (SKIP_DIRS.has(e.name)) continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) { scan(full); continue; }
+    const rel = path.relative(SITE, full);
+    let raw;
+    if (e.name.endsWith(".js")) {
+      try { raw = strip(fs.readFileSync(full, "utf8")); } catch { continue; }
+    } else if (e.name.endsWith(".html")) {
+      // Inline <script> blocks only — prose in the markup is not code.
+      let html; try { html = fs.readFileSync(full, "utf8"); } catch { continue; }
+      raw = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => strip(m[1])).join("\n");
+    } else continue;
+    checked++;
+    for (const m of raw.matchAll(NATIVE)) {
+      const line = raw.slice(0, m.index).split("\n").length;
+      found.push({ rel, line, kind: m[1], snippet: raw.slice(m.index, m.index + 90).replace(/\s+/g, " ").trim() });
+    }
   }
 }
+scan(SITE);
 
-// 🔴 An empty run is not a pass. If the paths moved, this would report "none" forever.
-if (checked === 0) {
-  console.log(`  ⚠️  none of the ${FILES.length} known script(s) were found under ${SITE} — cannot judge.`);
+// 🔴 An empty run is not a pass. If the tree moved, this would report "none" forever.
+if (checked < 20) {
+  console.log(`  ⚠️  only ${checked} script source(s) found under ${SITE} — cannot judge.`);
   process.exit(2);
 }
 
@@ -66,6 +84,6 @@ if (found.length) {
   process.exit(1);
 }
 
-console.log(`  ✅ ${checked} script(s) scanned, zero native alert/confirm/prompt.`);
+console.log(`  ✅ ${checked} script source(s) scanned across the whole site — zero native alert/confirm/prompt.`);
 console.log("\n✅ every popup goes through the dialog system.");
 process.exit(0);
