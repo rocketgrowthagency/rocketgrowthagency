@@ -517,6 +517,67 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 CONFIRMING A REQUEST MUST NOT COLLIDE WITH THE REQUEST ITSELF.
+//
+// 2026-09-26. Chris pressed "Confirm & send invite" and it silently did nothing: *"it shows again
+// in blue like it didn't complete."* It hadn't. `portal-book-kickoff` writes a `requested` hold when
+// the client picks a time; confirming then INSERTs a hold for the same slot, one row per
+// (workspace, slot_start), so the unique constraint fired and we told Chris *"That time was just
+// taken by someone else."* The someone else was the client whose request he was confirming.
+//
+// Every safety property held — no event, no email, hold still `requested` — so the whole confirm
+// flow was safe, silent and 100% broken. It could never have worked for any client.
+//
+// 🔑 A race is "a DIFFERENT client holds this slot". Identity decides, not the mere existence of a
+// row. → feedback_position_is_not_identity
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const send = src.send;
+  const i = send.indexOf("holdRes.status === 409");
+  if (i === -1) {
+    problems.push("send-kickoff-invite no longer handles a 409 from the slot-hold insert — a genuine race would either crash or double-book");
+  } else {
+    const block = send.slice(i, i + 1400);
+    if (!/client_id\s*!==\s*client\.id|client_id\s*===\s*client\.id/.test(block)) {
+      problems.push("the slot-hold 409 path does not compare the existing hold's client_id to this client — "
+        + "the client's OWN pending request collides with the confirm that is trying to honour it, and the whole confirm flow fails "
+        + "with \"that time was just taken by someone else\"");
+    }
+    // 🔴 And it must NOT adopt the row into slotHeld: the finally releases what it holds, so a later
+    // failure would delete the client's standing request.
+    // 🔑 Scoped to the 409 BLOCK ITSELF, not a pattern about how the ownership test is spelled. My
+    // first version keyed on `client_id === client.id` while the code says `!==`, so it matched
+    // nothing and the mutation sailed through — a check that could not fail.
+    // → feedback_a_gate_that_cannot_fail
+    const endOf409 = block.search(/\n\s*\}\s*else if \(holdRes\.ok\)|\n\s*if \(holdRes\.ok\)/);
+    const inside409 = endOf409 === -1 ? block.slice(0, 900) : block.slice(0, endOf409);
+    if (/slotHeld\s*=/.test(inside409)) {
+      problems.push("the confirm path assigns the client's own hold to slotHeld — the `finally` releases whatever slotHeld names, "
+        + "so any later failure would DELETE the request the client is waiting on");
+    }
+  }
+}
+
+// 🔴 AND THE FAILURE MUST BE VISIBLE. The reason was reported into a banner at the top of the
+// document while Chris was ~2000px down looking at the card. Correct code, nothing learned.
+// → feedback_an_element_that_exists_is_not_one_they_can_see
+{
+  const sb = src.admin.indexOf("function setBanner(");
+  if (sb === -1) {
+    problems.push("setBanner is gone — every admin action reports its result through it");
+  } else {
+    const body = src.admin.slice(sb, sb + 5000);
+    if (!/scrollIntoView/.test(body)) {
+      problems.push("setBanner never scrolls an error into view — the banner lives at the top of the page, so a failure reported while "
+        + "the operator is scrolled down appears and times out entirely off-screen, and they must guess from a button colour");
+    }
+    if (!/type\s*===\s*"error"/.test(body)) {
+      problems.push("setBanner scrolls without checking the type — yanking the page upward on every success banner is its own defect");
+    }
+  }
+}
+
 if (problems.length) {
   console.error("🔴 KICKOFF BOOKING IS NOT HONEST\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);

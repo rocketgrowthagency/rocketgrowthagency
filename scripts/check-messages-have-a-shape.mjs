@@ -192,6 +192,86 @@ if (fs.existsSync(MOCK)) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A DIALOG HAS A KIND TOO — AND ALL 57 LOOKED IDENTICAL.
+//
+// Chris, 2026-09-26: *"can we make these popups better designed. send mockup for ALL popups using
+// our new design"* → approved, built (reports/mockups/dialog_system_v1.html).
+//
+// "Delete this note?" and "this GOOGLE EMAILS the client the invitation immediately" were the same
+// grey paragraph with the same two buttons. The only thing separating a reversible internal tidy-up
+// from an irrevocable message to a paying client was SHOUTING IN CAPITALS inside the prose.
+//
+// 🔑 What this locks is the VOCABULARY, not the pixels: four kinds exist, orange still means "it
+// leaves the building" on both sides, the dialog that emails a client declares itself explicitly
+// rather than trusting a regex, and a result dialog never grows a second button.
+// → feedback_a_control_has_a_kind_like_a_message_does · feedback_a_message_needs_a_shape
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const ADMIN_JS = path.join(SITE, "admin/admin.js");
+  const ADMIN_CSS = path.join(SITE, "admin/admin.css");
+  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const ac = fs.readFileSync(ADMIN_CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // 1 ─ the four kinds exist on both sides
+  for (const k of ["routine", "outward", "danger", "result"]) {
+    if (!new RegExp(`\\b${k}\\s*:`).test(aj.slice(aj.indexOf("RGA_DIALOG_KIND"), aj.indexOf("RGA_DIALOG_KIND") + 600))) {
+      fail.push(`the admin dialog has no "${k}" kind — without it that class of dialog is indistinguishable from the rest, which is the defect this replaced`);
+    }
+  }
+  if (!/PORTAL_MODAL_KIND/.test(code)) {
+    fail.push("the portal modal has no kind map — the client's dialogs would drift back to one grey paragraph while the admin's have four kinds");
+  }
+
+  // 2 ─ 🔴 ORANGE MUST STILL MEAN "IT LEAVES THE BUILDING" on both sides, and must be the SAME
+  //     orange the pills/cards already use. A second orange is a second meaning.
+  {
+    const i = aj.indexOf("RGA_DIALOG_KIND");
+    const map = i === -1 ? "" : aj.slice(i, i + 600);
+    if (!/outward\s*:\s*\{[^}]*is-turn/.test(map)) {
+      fail.push("the admin's `outward` kind is not wired to .is-turn — the dialog that emails a client would not carry the orange that means exactly that everywhere else");
+    }
+    if (!/\.rga-modal\.is-turn\s*\{[^}]*--pm-turn/.test(ac)) {
+      fail.push(".rga-modal.is-turn does not use --pm-turn — a second orange is a second meaning, and the whole point is that this colour says one thing on every surface");
+    }
+  }
+
+  // 3 ─ 🔴 THE DIALOG THAT EMAILS A CLIENT DECLARES ITSELF. The regex fallback is a safety net for
+  //     the other 56 call sites, never the mechanism for the one that costs the most.
+  {
+    // 🔑 THE DEFINITION, NOT THE FIRST MENTION. `answerKickoffRequest` appears first as a call site
+    // in the click handler, ~200 lines above the function — so a window anchored there contains no
+    // dialog at all and failed the clean tree. → feedback_a_gate_window_measured_in_characters_will_lie
+    const i = aj.indexOf("async function answerKickoffRequest");
+    const body = i === -1 ? "" : aj.slice(i, i + 1600);
+    if (i === -1) fail.push("answerKickoffRequest is gone — that is the confirm/decline path for a client's kickoff request");
+    // 🔑 BOTH ARMS. This is a ternary — confirm AND decline — and each key therefore appears twice.
+    // Testing "does it appear at all" let me delete the confirm arm's tone entirely and still pass,
+    // because the decline arm's copy satisfied the regex. Count them.
+    // → feedback_a_check_must_not_validate_itself
+    const tones = (body.match(/tone:\s*["']outward["']/g) || []).length;
+    const conseq = (body.match(/consequence\s*:/g) || []).length;
+    if (tones < 2) {
+      fail.push(`only ${tones} of the 2 kickoff dialogs (confirm / decline) pass tone:'outward' explicitly — these stand between a click and a client's inbox, `
+        + "and must not depend on a regex noticing the word 'email' in their copy");
+    }
+    if (conseq < 2) {
+      fail.push(`only ${conseq} of the 2 kickoff dialogs state a consequence — what happens the instant you press must never be buried in the prose`);
+    }
+  }
+
+  // 4 ─ a RESULT reports; it offers no choice. One button.
+  if (!/isAlert\s*\?\s*""\s*:/.test(aj)) {
+    fail.push("the admin dialog renders a cancel button on alerts — a dialog that only reports something is offering a choice that does not exist");
+  }
+
+  // 5 ─ legacy call sites must keep working: a bare string still splits into title + detail
+  if (!/indexOf\("\\n\\n"\)/.test(aj)) {
+    fail.push("rgaDialog no longer splits a legacy one-string message on its blank line — all 57 existing call sites pass `title?\\n\\ndetail`, "
+      + "so without the split they collapse into one run-on headline");
+  }
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
