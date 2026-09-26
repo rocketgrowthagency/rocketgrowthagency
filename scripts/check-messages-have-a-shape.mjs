@@ -171,6 +171,21 @@ if (fs.existsSync(MOCK)) {
         fail.push(".pm-settings-grid is not a grid with declared columns — a row of ALIGNED columns cannot be built from wrapped flex, which is exactly how the footer broke");
       }
     }
+    // 🔴 ONE CARD, ONE RIGHT EDGE. Chris, 2026-09-26: *"keep grey bar same width."* The shapes were
+    // ported from the portal with their `ch` caps intact — .pm-outcome 64ch, .pm-note 62ch — so in a
+    // 789px admin card they measured 646px and 508px beside a full-width footer: three ragged right
+    // edges. A `ch` cap is a reading-width rule for a column of prose; these are panels in a card
+    // that already sets the measure. Portal keeps its own caps; the ADMIN must not re-grow them.
+    for (const cls of ["pm-note", "pm-outcome"]) {
+      const ri = ac.indexOf(`.${cls}{`);
+      if (ri === -1) continue;
+      const rule = ac.slice(ri, ac.indexOf("}", ri));
+      if (/max-width:\s*\d+ch/.test(rule)) {
+        fail.push(`.${cls} has a ch-based max-width in admin.css — inside the kickoff card that produces a right edge `
+          + "that does not line up with the outcome box above it or the footer below it");
+      }
+    }
+
     // The state and the repair share one row; neither is allowed to be orphaned again.
     if (!/class="pm-set-status"/.test(aj)) {
       fail.push("the footer has no .pm-set-status row — 'No invite sent yet.' becomes a lonely sentence again and Reconnect Google a stranded link");
