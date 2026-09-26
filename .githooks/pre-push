@@ -1,39 +1,72 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# RGA identity guard — pre-push (scraper repo). Guards the DESTINATION, which pre-commit cannot see.
+#
+# WHY BOTH: pre-commit checks WHO authored (user.email). pre-push checks WHERE it goes. Different failure
+# modes. Re-pointing the remote at HTTPS or bare git@github.com passes every author check and can still
+# authenticate as the wrong account — HTTPS falls through to the osxkeychain helper, bare git@ offers
+# whichever key the agent answers with. Suggested by the Los Angeles Landscape Co. project 2026-09-25
+# while auditing multi-account isolation on this Mac.
+#
+# 🔴 2026-09-26 — REWRITTEN. The previous version BLOCKED unless `gh auth status` showed
+# rocketgrowthagency active. That is the wrong signal twice over:
+#   1. This repo authenticates by SSH key. gh's active account has no bearing on who the push lands as.
+#   2. RGA's gh login is currently absent entirely — so the old hook, had it ever been wired, would have
+#      blocked EVERY push while the actual identity was perfectly correct.
+# gh is now ADVISORY. The blocking checks are the remote URL and the commit identity.
+#
+# Args from git: $1 = remote name, $2 = remote URL.
+# Emergency bypass: git push --no-verify
 set -e
 
-EXPECTED_USER="rocketgrowthagency"
+OWNER_EXPECTED="rocketgrowthagency"
+REPO_EXPECTED="rocketgrowthagency"
+EMAIL_EXPECTED="hello@rocketgrowthagency.com"
 
-if ! command -v gh >/dev/null 2>&1; then
-  echo "RGA GUARD: gh CLI is not installed. Install GitHub CLI before pushing."
+REMOTE_NAME="$1"
+REMOTE_URL="$2"
+[ -n "$REMOTE_URL" ] || REMOTE_URL="$(git config --get remote.origin.url || true)"
+
+fail=0
+
+case "$REMOTE_URL" in
+  "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
+  "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}") ;;
+  *)
+    echo
+    echo "❌ RGA GUARD BLOCKED PUSH"
+    echo "   remote '${REMOTE_NAME:-?}' resolves to: ${REMOTE_URL:-<empty>}"
+    echo "   Expected:  git@github.com-rga:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
+    echo
+    echo "   An HTTPS or bare git@github.com URL can authenticate as a DIFFERENT GitHub account"
+    echo "   (keychain / first-key-offered). That is how this repo's history was polluted before."
+    echo "   Fix: git remote set-url origin git@github.com-rga:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
+    fail=1 ;;
+esac
+
+email="$(git config user.email || true)"
+if [ "$email" != "$EMAIL_EXPECTED" ]; then
+  echo
+  echo "❌ RGA GUARD BLOCKED PUSH: git user.email is '$email' (expected ${EMAIL_EXPECTED})"
+  echo "   Fix: git config user.email ${EMAIL_EXPECTED}"
+  fail=1
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "   Bypass only if you are certain: git push --no-verify"
   exit 1
 fi
 
-ACTIVE_USER="$(gh auth status -h github.com 2>/dev/null | awk '
-/Logged in to github.com account/ {user=$7}
-/Active account: true/ {active=user}
-END {print active}
-')"
-
-if [ -z "$ACTIVE_USER" ]; then
-  echo
-  echo "RGA GUARD BLOCKED PUSH:"
-  echo "  Could not determine active GitHub CLI user."
-  echo "  Run: gh auth status -h github.com"
-  echo "  Then ensure you are logged in as: $EXPECTED_USER"
-  echo
-  exit 1
+# ── ADVISORY: gh's active account. Never blocking — SSH decides who this push is. ─────────────────
+if command -v gh >/dev/null 2>&1; then
+  active="$(gh auth status -h github.com 2>/dev/null | awk '
+    /Logged in to github.com account/ {u=$7} /Active account: true/ {a=u} END{print a}')"
+  if [ -n "$active" ] && [ "$active" != "$OWNER_EXPECTED" ]; then
+    echo "⚠️  advisory: gh CLI is active as '$active', not ${OWNER_EXPECTED}."
+    echo "    Harmless for this push (SSH authenticates it), but any \`gh\` command you run acts as '$active'."
+    echo "    Fix when convenient: gh auth login  (SSH, key id_ed25519_rga.pub, authorize as ${OWNER_EXPECTED})"
+  fi
 fi
 
-if [ "$ACTIVE_USER" != "$EXPECTED_USER" ]; then
-  echo
-  echo "RGA GUARD BLOCKED PUSH:"
-  echo "  Expected GitHub CLI user: $EXPECTED_USER"
-  echo "  Detected GitHub CLI user: $ACTIVE_USER"
-  echo
-  echo "Fix: switch accounts, then push again:"
-  echo "  gh auth switch -u $EXPECTED_USER"
-  echo
-  exit 1
-fi
-
+echo "✅ RGA push guard passed → ${OWNER_EXPECTED}/${REPO_EXPECTED} via the RGA SSH alias"
 exit 0

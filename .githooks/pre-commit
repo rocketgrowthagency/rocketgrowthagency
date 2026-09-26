@@ -1,41 +1,78 @@
 #!/bin/sh
+# RGA identity guard — pre-commit (scraper repo).
+#
+# WHY THIS EXISTS: this Mac's GLOBAL git identity is EchoryLLC / chriskapranos2@gmail.com. Any RGA repo
+# that loses its LOCAL override silently commits under that name. THIS repo is the one it happened to —
+# its history carried four wrong identities (EchoryLLC, Liberty Tribune, chriskapranos1, chriskapranos2)
+# and had to be rewritten with git-filter-repo on 2026-05-07.
+#
+# 🔴 2026-09-26 — THESE HOOKS EXISTED SINCE 2026-06-11 AND HAD NEVER RUN ONCE.
+# They were tracked here in .githooks/ but `core.hooksPath` was never set, so git kept looking in
+# .git/hooks (empty). A guard that is written but not wired is not a guard
+# (feedback_a_new_gate_must_be_wired_or_excused). Wire with:
+#   git config core.hooksPath .githooks
+#
+# Emergency bypass: git commit --no-verify
 set -e
 
 OWNER_EXPECTED="rocketgrowthagency"
 REPO_EXPECTED="rocketgrowthagency"
+EMAIL_EXPECTED="hello@rocketgrowthagency.com"
+NAME_EXPECTED="rocketgrowthagency"
 
-remote="$(git config --get remote.origin.url)"
-# Accept https, plain SSH, and SSH host-alias forms (`git@github.com-anything:owner/repo`).
-# The host-alias pattern is common when juggling multiple GitHub identities via ~/.ssh/config.
+fail=0
+
+# ── 1. The DESTINATION: this repo must point at the RGA repo, via the RGA SSH alias ───────────────
+remote="$(git config --get remote.origin.url || true)"
 case "$remote" in
-  "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
-  "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}"|\
-  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
-  "git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}"|\
   "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}.git"|\
   "git@github.com-"*":${OWNER_EXPECTED}/${REPO_EXPECTED}") ;;
+  "https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}"*|"git@github.com:${OWNER_EXPECTED}/${REPO_EXPECTED}"*)
+    echo "❌ RGA guard: remote is '$remote' — correct repo, but NOT via the github.com-rga SSH alias."
+    echo "   HTTPS falls through to the keychain; bare git@ offers whichever key answers first."
+    echo "   Fix: git remote set-url origin git@github.com-rga:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
+    fail=1 ;;
   *)
-    echo "❌ RGA guard: remote.origin.url is '$remote' (expected owner/repo ${OWNER_EXPECTED}/${REPO_EXPECTED})"
-    echo "    Fix with: git remote set-url origin https://github.com/${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
-    exit 1
-    ;;
+    echo "❌ RGA guard: remote.origin.url is '$remote'"
+    echo "   Expected: git@github.com-rga:${OWNER_EXPECTED}/${REPO_EXPECTED}.git"
+    fail=1 ;;
 esac
 
-if command -v gh >/dev/null 2>&1; then
-  actual="$(gh repo view --json owner,name -q '.owner.login + \"/\" + .name' 2>/dev/null || true)"
-  if [ "$actual" != "${OWNER_EXPECTED}/${REPO_EXPECTED}" ] && [ -n "$actual" ]; then
-    echo "⚠️  RGA guard: gh default repo is '$actual' (expected ${OWNER_EXPECTED}/${REPO_EXPECTED})"
-    echo "    Hint: gh repo set-default ${OWNER_EXPECTED}/${REPO_EXPECTED}"
+# ── 2. The AUTHOR — BLOCKS. ───────────────────────────────────────────────────────────────────────
+# 🔴 The previous version only WARNED on a wrong email. A warning is indistinguishable from no guard in
+# any scripted or unattended commit, where nobody reads stdout — and this is the repo whose history the
+# wrong email actually polluted.
+email="$(git config user.email || true)"
+if [ "$email" != "$EMAIL_EXPECTED" ]; then
+  echo "❌ RGA guard: git user.email is '$email' (expected ${EMAIL_EXPECTED})"
+  echo "   Fix: git config user.email ${EMAIL_EXPECTED}"
+  fail=1
+fi
+
+name="$(git config user.name || true)"
+if [ "$name" != "$NAME_EXPECTED" ]; then
+  echo "❌ RGA guard: git user.name is '$name' (expected ${NAME_EXPECTED})"
+  echo "   Fix: git config user.name ${NAME_EXPECTED}"
+  fail=1
+fi
+
+# ── 3. No Claude attribution, ever (permanent rule) ───────────────────────────────────────────────
+if [ -f "$(git rev-parse --git-dir)/COMMIT_EDITMSG" ]; then
+  if grep -qiE 'co-authored-by:.*(claude|anthropic)|generated with .*claude' \
+       "$(git rev-parse --git-dir)/COMMIT_EDITMSG" 2>/dev/null; then
+    echo "❌ RGA guard: commit message carries Claude attribution — never allowed on RGA work."
+    fail=1
   fi
 fi
 
-email="$(git config user.email || true)"
-if [ "$email" != "hello@rocketgrowthagency.com" ]; then
-  echo "⚠️  RGA guard: local git email is '$email' (expected hello@rocketgrowthagency.com)"
-  echo "    Fix with: git config user.email hello@rocketgrowthagency.com"
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "❌ COMMIT BLOCKED by the RGA identity guard (.githooks/pre-commit)."
+  echo "   Bypass only if you are certain: git commit --no-verify"
+  exit 1
 fi
 
-echo "✅ RGA guard passed"
+echo "✅ RGA identity guard passed (${name} <${email}> → ${OWNER_EXPECTED}/${REPO_EXPECTED})"
 
 # ============================================================
 # Verification-gate auto-audit (locked 2026-05-21)
