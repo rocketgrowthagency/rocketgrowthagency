@@ -244,7 +244,10 @@ if (!/step\.clientInput \? inputHtml\(/.test(rowSrc)) {
     const tail = c > 0 ? b.slice(c) : "";
     if (!tail) bad("the input submit has no catch — a rejected answer would vanish silently");
     else if (/_rerender/.test(tail)) bad("a failed submit re-renders the row — it would wipe what the client typed");
-    else if (!/msg\.textContent|alert\(/.test(tail)) bad("a failed submit reports nothing");
+    // 🔑 ANY way of telling the client, not one spelling. This pinned `alert(` and therefore FAILED
+    // the day the 56 native dialogs were replaced with the branded ones — a gate that fails a
+    // correct refactor teaches the next person to "fix" it by reverting the improvement.
+    else if (!/msg\.textContent|portalAlert\(|portalConfirm\(|alert\(/.test(tail)) bad("a failed submit reports nothing");
   }
 }
 {
@@ -460,7 +463,13 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
 
 // 🔴 The pill must follow the CONTROLS, not the mechanism. "Your turn" on a row with nothing to
 // press is the step-7 defect in miniature, and it came back the moment two steps became detected.
-if (!/const theirsToAct = Boolean\(step\.clientInput\)/.test(rowSrc)) {
+// 🔑 THE PROPERTY, NOT THE PREFIX. This pinned `const theirsToAct = Boolean(step.clientInput)`
+// exactly, so it failed the moment a legitimate condition was added in front — a kickoff step with a
+// request already in becomes "RGA is doing it", which is the same rule being applied, not broken.
+// What must hold is that the flag is still COMPUTED FROM WHAT THE ROW OFFERS.
+const ta = rowSrc.indexOf("const theirsToAct");
+const taBody = ta < 0 ? "" : rowSrc.slice(ta, rowSrc.indexOf(";", ta));
+if (!taBody || !/step\.clientInput/.test(taBody) || !/clientChoices|clientForm|clientDoneCta/.test(taBody)) {
   bad('the "Your turn" pill no longer derives from whether the row offers the client anything');
 }
 {
@@ -509,7 +518,7 @@ else {
   else if (!/classList\.remove\("on"\)/.test(tail) || !/_rerender\(rollback\)/.test(tail)) {
     bad("the attest handler does not revert its optimistic tick and row when the write fails");
   }
-  else if (!/alert\(/.test(tail)) bad("the attest handler reverts silently — a silent revert is worse than a wrong badge");
+  else if (!/portalAlert\(|portalConfirm\(|alert\(/.test(tail)) bad("the attest handler reverts silently — a silent revert is worse than a wrong badge");
   if (/Saving…|Marking…/.test(body)) {
     bad("the attest handler shows a pending state on a one-tap answer");
   }

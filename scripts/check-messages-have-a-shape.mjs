@@ -157,12 +157,34 @@ if (fs.existsSync(MOCK)) {
 
   // 2 ─ every group carries a label saying what its controls are FOR (the repair is the exception:
   //     it is deliberately unlabelled and pushed out of the peer set)
-  const groups = [...aj.matchAll(/<div class="pm-set-group([^"]*)">([\s\S]{0,700}?)<\/div>/g)];
+  // 🔴 THE ROW MUST BE A GRID, NOT WRAPPED FLEX. Chris, 2026-09-26: *"the bottom part is bad."*
+  // With `display:flex;flex-wrap:wrap` and a full-width label inside each group, the groups cannot
+  // share a baseline: live, the three labels sat at three different heights and the repair was
+  // stranded on its own line. Declared columns are the whole fix, so they are what is locked.
+  {
+    const gi = ac.indexOf(".pm-settings-grid{");
+    if (gi === -1) {
+      fail.push(".pm-settings-grid has no rule — the footer falls back to wrapped flex, where the group labels land at different heights and nothing aligns");
+    } else {
+      const rule = ac.slice(gi, ac.indexOf("}", gi));
+      if (!/display:\s*grid/.test(rule) || !/grid-template-columns/.test(rule)) {
+        fail.push(".pm-settings-grid is not a grid with declared columns — a row of ALIGNED columns cannot be built from wrapped flex, which is exactly how the footer broke");
+      }
+    }
+    // The state and the repair share one row; neither is allowed to be orphaned again.
+    if (!/class="pm-set-status"/.test(aj)) {
+      fail.push("the footer has no .pm-set-status row — 'No invite sent yet.' becomes a lonely sentence again and Reconnect Google a stranded link");
+    }
+    if (!/pm-set-status[\s\S]{0,400}?data-rga-google-connect/.test(aj)) {
+      fail.push("Reconnect Google is not in the status row — it is a repair for the state stated beside it, not a peer of the settings above");
+    }
+  }
+
+  const groups = [...aj.matchAll(/<div class="pm-set-group([^"]*)">([\s\S]{0,900}?)<\/span>\s*<\/div>/g)];
   if (groups.length < 3) {
     fail.push(`only ${groups.length} control group(s) found — the row is meant to separate settings, the confirmation email and navigation`);
   }
   for (const [, extra, body] of groups) {
-    if (/pm-set-repair/.test(extra)) continue;              // the repair is intentionally label-free
     if (!/pm-set-label/.test(body)) {
       const first = (body.match(/>([^<]{3,40})</) || [, "?"])[1].trim();
       fail.push(`a control group ("${first}…") has no pm-set-label — an unlabelled group is just the flat row again`);
@@ -185,7 +207,7 @@ if (fs.existsSync(MOCK)) {
   // 🔑 BASE DECLARATIONS ONLY — anchored to start-of-line. The loose form counted the `@media`
   // responsive override (`  .pm-set-repair{margin-left:0}`) as a duplicate and failed the clean
   // tree. A media-query override is the opposite of a collision: it is scoped on purpose.
-  for (const cls of ["pm-settings", "pm-set-group", "pm-set-label", "pm-set-repair"]) {
+  for (const cls of ["pm-settings", "pm-settings-grid", "pm-set-group", "pm-set-label", "pm-set-links", "pm-set-status"]) {
     const decls = (ac.match(new RegExp(`^\\.${cls}\\{`, "gm")) || []).length;
     if (decls === 0) fail.push(`.${cls} is rendered but has no rule — the group would collapse to unstyled text`);
     if (decls > 1) fail.push(`.${cls} is declared ${decls} times — a duplicate selector is not an override, it is a coin toss (this exact mistake shipped column-then-row on .pm-set-group)`);

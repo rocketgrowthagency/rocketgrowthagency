@@ -58,9 +58,29 @@ if (iFilter === -1 || iCheck === -1 || !(iFilter < iCheck)) {
 ok('the check mode reuses step-8\'s real filter (one rule, not a copy)');
 
 // 3 — wired ahead of the expensive stages.
-const iWire = sh.indexOf('--check-publishable');
-const iCapture = sh.indexOf('step-3-video-recorder.mjs');
-const iVoice = sh.indexOf('step-6-voiceover.mjs');
+// 🔑 THE INVOCATION AGAIN — the flag is NAMED in a comment four lines above the line that
+// actually runs it, so indexOf found the prose. With iWire pointing at a comment, moving the
+// real check after capture did not move iWire at all and the mutation test passed.
+const _wireRe = new RegExp(String.raw`node\s+\S*step-8\S*\.mjs[^\n]*--check-publishable`, 'm');
+const _wireM = sh.match(_wireRe);
+const iWire = _wireM ? _wireM.index : -1;
+if (iWire < 0) fail('nothing in the runner actually invokes --check-publishable — only prose mentions it.');
+// 🔴 THE INVOCATION, NOT ANY MENTION OF THE FILENAME. `indexOf('step-3-video-recorder.mjs')` finds
+// the first place the STRING appears — and on 2026-09-26 the attempt-cap work added
+// `git log -- step-3-video-recorder.mjs … step-6-voiceover.mjs` near the top of the runner, purely
+// to date the capture code. Both gates then reported FATAL: "the check runs after capture", with
+// the ordering entirely correct. A position test on a name is not a test on the thing.
+// → feedback_position_is_not_identity · feedback_a_gate_must_pin_the_property_not_the_spelling
+const runAt = (script) => {
+  // 🔑 The "m" flag belongs to the RegExp, not to String.match — I closed the paren one early and
+  // `^` then only matched the start of the whole file, so this found nothing and the gate still
+  // failed. A misplaced paren in a check is a check that cannot pass.
+  const re = new RegExp(String.raw`(?:^|[;&|(]|\bthen\b|\bdo\b)\s*(?:[A-Za-z_][\w]*=\S+\s+)*node\s+(?:"[^"]*"|\S+)*\s*` + script.replace(/[.]/g, "\\."), "m");
+  const m = sh.match(re);
+  return m ? m.index : -1;
+};
+const iCapture = runAt('step-3-video-recorder.mjs');
+const iVoice = runAt('step-6-voiceover.mjs');
 if (iWire === -1) fail('rebuild-broken-videos.sh never asks whether the lead is publishable.');
 if (!(iWire < iCapture && iWire < iVoice)) {
   fail('the publishability check runs AFTER capture or voiceover. Its whole purpose is to precede the\n' +

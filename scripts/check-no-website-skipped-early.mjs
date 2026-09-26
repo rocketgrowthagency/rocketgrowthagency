@@ -56,8 +56,22 @@ ok('premise holds: website+mobile need a verified audit, so no site ⇒ max 4/6'
 
 // 1 — ordering.
 const iCheck = sh.indexOf('no-website');
-const iCapture = sh.indexOf('step-3-video-recorder.mjs');
-const iVoice = sh.indexOf('step-6-voiceover.mjs');
+// 🔴 THE INVOCATION, NOT ANY MENTION OF THE FILENAME. `indexOf('step-3-video-recorder.mjs')` finds
+// the first place the STRING appears — and on 2026-09-26 the attempt-cap work added
+// `git log -- step-3-video-recorder.mjs … step-6-voiceover.mjs` near the top of the runner, purely
+// to date the capture code. Both gates then reported FATAL: "the check runs after capture", with
+// the ordering entirely correct. A position test on a name is not a test on the thing.
+// → feedback_position_is_not_identity · feedback_a_gate_must_pin_the_property_not_the_spelling
+const runAt = (script) => {
+  // 🔑 The "m" flag belongs to the RegExp, not to String.match — I closed the paren one early and
+  // `^` then only matched the start of the whole file, so this found nothing and the gate still
+  // failed. A misplaced paren in a check is a check that cannot pass.
+  const re = new RegExp(String.raw`(?:^|[;&|(]|\bthen\b|\bdo\b)\s*(?:[A-Za-z_][\w]*=\S+\s+)*node\s+(?:"[^"]*"|\S+)*\s*` + script.replace(/[.]/g, "\\."), "m");
+  const m = sh.match(re);
+  return m ? m.index : -1;
+};
+const iCapture = runAt('step-3-video-recorder.mjs');
+const iVoice = runAt('step-6-voiceover.mjs');
 if (iCheck === -1) fail('the runner never checks for a missing website.');
 if (!(iCheck < iCapture && iCheck < iVoice)) {
   fail('the website check runs AFTER capture or voiceover — which is the spend it exists to avoid.');
