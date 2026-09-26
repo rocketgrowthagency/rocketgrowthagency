@@ -44,6 +44,63 @@ const portal = strip(read("portal/portal.js"));
 if (!/async function portalToken\(\)/.test(portal)) {
   bad("portalToken() is gone — the portal would be back to one token for the life of the tab");
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 COUNTING THE RIGHT PATTERN IS NOT FORBIDDING THE WRONG ONE.
+//
+// 2026-09-26. Chris pressed "Pick a different time" in the portal and got "We couldn't load
+// available times just now." Try again did nothing — it retried with the credential that WAS the
+// failure. His tab had been open for hours, the access token had expired, and the kickoff picker
+// read `_portalSession.access_token` directly instead of `await portalToken()`.
+//
+// That is the identical defect fixed on 2026-09-16, reintroduced by code written after the fix —
+// and THIS GATE WAS GREEN THROUGHOUT. It asserted "at least 8 sites call portalToken()" and found
+// 17, while SEVEN OTHER SITES still read the boot-time token, including the kickoff picker, the
+// booking POST and the Google-connect handler. The good pattern being present says nothing about
+// the bad pattern being absent.
+//
+// 🔑 My Playwright probes could never have caught it: they mint a fresh magic link every run, so
+// the token is always seconds old. The bug only exists after an hour — the state a real client's
+// tab is always in. → feedback_rga_as_a_client_is_a_rehearsal
+// → feedback_a_gate_that_exists_is_not_a_gate_that_it_works · feedback_fix_the_class_not_the_instance
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  // Any read of the captured session's token, in any spelling, outside portalToken() itself.
+  const tokenReads = [...portal.matchAll(/_portalSession\s*(?:&&\s*_portalSession)?\??\.access_token/g)];
+  // 🔑 Brace-counted body range, not indexOf("\n}") — the loose form ends at the first line that
+  // happens to start with a brace, which is usually a nested block, and then the "is it inside?"
+  // test is answered against the wrong span.
+  const bodyRange = (needle) => {
+    const i = portal.indexOf(needle);
+    if (i === -1) return null;
+    let d = 0, started = false;
+    for (let k = portal.indexOf("{", i); k < portal.length; k++) {
+      if (portal[k] === "{") { d++; started = true; }
+      else if (portal[k] === "}") { d--; if (started && d === 0) return [i, k]; }
+    }
+    return null;
+  };
+  // Two functions may legitimately read the captured token:
+  //   portalToken()        — it is the thing that refreshes and stores it
+  //   _signSessionIsFresh()— 🔴 it must NOT refresh. It decodes the CURRENT token's `iat` to decide
+  //                          whether the sign-in is recent enough for a BINDING SIGNATURE. Calling
+  //                          portalToken() there would mint a token with a fresh `iat` and make the
+  //                          freshness gate pass forever. → project_portal_session_security
+  const allowed = [bodyRange("async function portalToken()"), bodyRange("function _signSessionIsFresh()")]
+    .filter(Boolean);
+  const outside = tokenReads.filter((m) => !allowed.some(([a, b]) => m.index > a && m.index < b));
+  if (outside.length) {
+    const where = outside.map((m) => {
+      const line = portal.slice(0, m.index).split("\n").length;
+      return `line ~${line}`;
+    }).join(" · ");
+    bad(`${outside.length} portal call(s) read _portalSession.access_token directly instead of awaiting portalToken() — ${where}. `
+      + "That token is captured at boot and dies after an hour, so these fail for any client who leaves the tab open; "
+      + "assigning portalToken() to it inside its own body is the only legitimate read.");
+  } else {
+    ok("no portal call reads the boot-time token directly — every one goes through portalToken()");
+  }
+}
 // 🔑 Scoped to the FUNCTION BODY. The loose form matched `portalToken()` at one of its ten call
 // sites and then found an unrelated `auth.getSession()` further down the file — so it stayed green
 // with the refresh deleted. → feedback_dead_check_selector_gap
