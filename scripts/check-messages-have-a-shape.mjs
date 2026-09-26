@@ -121,6 +121,77 @@ if (fs.existsSync(MOCK)) {
   process.exit(2);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 A CONTROL HAS A KIND TOO, AND A ROW OF PEERS HIDES IT.
+//
+// Chris, 2026-09-26, on the admin kickoff card: *"should all these links be pills? whats best
+// deisgn"*. Pills were the wrong answer — on that card a pill already MEANS state ("They asked
+// for"), so re-using the shape for controls would collide with the system this gate protects, and
+// pills read LOUDER, which is backwards for settings.
+//
+// The real defect was the same one as the messages: SIX peer links were four different kinds —
+// a setting, a repair, a navigation link, and an alternative to an action — all identical, so none
+// could be told apart without reading all six.
+//
+// 🔑 What this locks is the GROUPING, not the pixels: every control in that row lives in a labelled
+// group, the repair is not a peer of the settings, and the reconnect duplicate does not come back.
+// → feedback_a_message_needs_a_shape · feedback_the_escape_hatch_stays_in_the_product
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const ADMIN_JS = path.join(SITE, "admin/admin.js");
+  const ADMIN_CSS = path.join(SITE, "admin/admin.css");
+  if (!fs.existsSync(ADMIN_JS) || !fs.existsSync(ADMIN_CSS)) {
+    console.log("  ⚠️  admin/admin.js or admin.css missing — cannot judge the control grouping.");
+    process.exit(2);
+  }
+  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const ac = fs.readFileSync(ADMIN_CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // 1 ─ the grouped row exists and the flat one has not come back
+  if (!/class="pm-settings"/.test(aj)) {
+    fail.push("the kickoff card no longer renders .pm-settings — the controls would be back to one undifferentiated row");
+  }
+  if (/class="pm-settings-row"/.test(aj)) {
+    fail.push("the flat .pm-settings-row is being rendered again — that is the six-peer-links layout this replaced");
+  }
+
+  // 2 ─ every group carries a label saying what its controls are FOR (the repair is the exception:
+  //     it is deliberately unlabelled and pushed out of the peer set)
+  const groups = [...aj.matchAll(/<div class="pm-set-group([^"]*)">([\s\S]{0,700}?)<\/div>/g)];
+  if (groups.length < 3) {
+    fail.push(`only ${groups.length} control group(s) found — the row is meant to separate settings, the confirmation email and navigation`);
+  }
+  for (const [, extra, body] of groups) {
+    if (/pm-set-repair/.test(extra)) continue;              // the repair is intentionally label-free
+    if (!/pm-set-label/.test(body)) {
+      const first = (body.match(/>([^<]{3,40})</) || [, "?"])[1].trim();
+      fail.push(`a control group ("${first}…") has no pm-set-label — an unlabelled group is just the flat row again`);
+    }
+  }
+
+  // 3 ─ 🔴 THE REPAIR MUST STAY REACHABLE. Removing it entirely would strand Chris if RGA's Google
+  //     auth lapses before any invite exists. → feedback_the_escape_hatch_stays_in_the_product
+  if (!/data-rga-google-connect/.test(aj)) {
+    fail.push("nothing offers Reconnect Google any more — if RGA's Google auth lapses there is no way back into the product");
+  }
+
+  // 4 ─ ...but exactly once on this card. It used to appear twice: in the settings row AND on the
+  //     "No invite sent yet" line, where it read as a fault report for a card in good order.
+  if (/not_sent[\s\S]{0,400}?\?\s*connect/.test(aj) || /"not_sent"\s*\?\s*connect/.test(aj)) {
+    fail.push("the RSVP line offers Reconnect on `not_sent` again — that state means 'you have not pressed Confirm yet', not 'Google is broken', and it duplicates the settings-row control");
+  }
+
+  // 5 ─ every class the new row renders must actually have a rule, declared ONCE
+  // 🔑 BASE DECLARATIONS ONLY — anchored to start-of-line. The loose form counted the `@media`
+  // responsive override (`  .pm-set-repair{margin-left:0}`) as a duplicate and failed the clean
+  // tree. A media-query override is the opposite of a collision: it is scoped on purpose.
+  for (const cls of ["pm-settings", "pm-set-group", "pm-set-label", "pm-set-repair"]) {
+    const decls = (ac.match(new RegExp(`^\\.${cls}\\{`, "gm")) || []).length;
+    if (decls === 0) fail.push(`.${cls} is rendered but has no rule — the group would collapse to unstyled text`);
+    if (decls > 1) fail.push(`.${cls} is declared ${decls} times — a duplicate selector is not an override, it is a coin toss (this exact mistake shipped column-then-row on .pm-set-group)`);
+  }
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
