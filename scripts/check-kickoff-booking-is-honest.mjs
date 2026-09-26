@@ -559,21 +559,29 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   }
 }
 
-// 🔴 AND THE FAILURE MUST BE VISIBLE. The reason was reported into a banner at the top of the
-// document while Chris was ~2000px down looking at the card. Correct code, nothing learned.
-// → feedback_an_element_that_exists_is_not_one_they_can_see
+// 🔴 THE NOTICE BANNER MUST STAY A FIXED TOAST.
+//
+// 2026-09-26. I claimed the banner was "at the top of the document, ~2000px above the card" and
+// gated a scrollIntoView to drag it into view. Both the claim and the gate were wrong:
+// `#noticeBanner:not([hidden])` has been `position:fixed; top:16px; z-index:9999` since
+// 2026-09-06 — measured live at viewport y=16 while scrolled 2137px down. The branch I gated could
+// never fire, and the gate demanded dead code.
+//
+// 🔑 So what IS worth locking is the thing that was actually fixed back then and that I nearly
+// broke by "fixing" it again: the banner must remain fixed-position, or every action's result
+// really does render 1500px above the button that caused it.
+// → feedback_a_css_rule_that_looks_applied_can_be_losing · feedback_a_gate_that_cannot_fail
 {
-  const sb = src.admin.indexOf("function setBanner(");
-  if (sb === -1) {
-    problems.push("setBanner is gone — every admin action reports its result through it");
+  const css = fs.readFileSync(F("admin/admin.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const i = css.indexOf("#noticeBanner:not([hidden])");
+  if (i === -1) {
+    problems.push("#noticeBanner:not([hidden]) is gone — without it `.admin-banner{display:grid}` outranks the hidden attribute AND the "
+      + "toast stops being fixed, so every action's result renders at the top of the document instead of in front of the operator");
   } else {
-    const body = src.admin.slice(sb, sb + 5000);
-    if (!/scrollIntoView/.test(body)) {
-      problems.push("setBanner never scrolls an error into view — the banner lives at the top of the page, so a failure reported while "
-        + "the operator is scrolled down appears and times out entirely off-screen, and they must guess from a button colour");
-    }
-    if (!/type\s*===\s*"error"/.test(body)) {
-      problems.push("setBanner scrolls without checking the type — yanking the page upward on every success banner is its own defect");
+    const rule = css.slice(i, css.indexOf("}", i));
+    if (!/position:\s*fixed/.test(rule)) {
+      problems.push("#noticeBanner is no longer position:fixed — it reverts to a static div at the top of the page, which is the 2026-09-06 defect "
+        + "where 'Running…', '✓ Done' and 'Step failed' all rendered ~1500px above the Run button that produced them");
     }
   }
 }

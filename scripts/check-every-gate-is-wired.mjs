@@ -68,6 +68,7 @@ const NOT_PREFLIGHT = {
   //    one of them guards something a client sees, so none may be silently dropped either.
   'check-the-setup-accordion-behaves.mjs':    'client-portal UI gate; runs in daily-health-check.sh — a folded checklist cannot make a video unsafe',
   'check-messages-have-a-shape.mjs':          'client-portal UI gate; runs in daily-health-check.sh — message styling cannot make a video unsafe',
+  'check-no-native-browser-dialogs.mjs':      'UI gate; runs in daily-health-check.sh — a raw alert() is ugly and unbranded, it cannot make a video unsafe',
   'check-live-matches-the-approved-mockup.mjs': 'client-portal UI gate; runs in daily-health-check.sh — approved wording cannot make a video unsafe',
   'check-no-new-dormant-css.mjs':             'stylesheet-hygiene gate; runs in daily-health-check.sh — an unmatched CSS rule cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
