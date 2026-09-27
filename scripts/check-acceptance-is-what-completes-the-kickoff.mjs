@@ -144,7 +144,69 @@ function stepLiteral(src) {
   }
 }
 
-// ── 4. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
+// ── 4. "SENT, WAITING ON THEM" IS A STATE THE CARDS MUST DESCRIBE ───────────────────────────────
+// 🔴 MAKING ACCEPTANCE THE COMPLETION CREATED A THIRD STATE AND IMMEDIATELY RE-OPENED AN OLD BUG.
+// While sending marked the step done there were only two states to describe: nothing sent, or
+// finished. Now there is an in-between — the invite is out and unanswered — and every card that
+// picks "the first step that is not done" fell through to the step's own instruction:
+// *"Send the kickoff calendar invite."* That button books the FIRST FREE SLOT, so following the
+// admin's own advice would book a second, different time for a call already in the diary.
+//
+// The identical defect was found on 2026-09-26 with a pending REQUEST and guarded; the guard reads
+// `_kickoffPendingAsk`, which is empty in this new state. A fix that creates a state must check every
+// card that enumerates states. → feedback_fix_the_class_not_the_instance
+{
+  const admin = read(WEB, "admin/admin.js", 100000);
+  if (admin) {
+    const code = strip(admin);
+    const at = code.indexOf("function kickoffSentAwaiting(");
+    if (at < 0) {
+      fail.push("admin/admin.js — kickoffSentAwaiting() is gone, so nothing distinguishes \"invite sent, "
+        + "waiting on them\" from \"no invite sent\", and the cards fall back to \"Send the calendar invite\".");
+    } else {
+      const open = code.indexOf("{", at);
+      let d = 0, fn = "";
+      for (let i = open; i < code.length; i++) {
+        if (code[i] === "{") d++;
+        else if (code[i] === "}") { d--; if (d === 0) { fn = code.slice(at, i + 1); break; } }
+      }
+      try {
+        const ctx = { Date, Math, state: {}, result: null };
+        vm.createContext(ctx);
+        vm.runInContext(fn + `
+          const run = (k) => { state.onboardingData = k ? { kickoff_invite: k } : null; return kickoffSentAwaiting(); };
+          const SENT = { event_id: "e1", rsvp: "awaiting", sent_at: new Date(Date.now() - 3*3600000).toISOString(), start: "2026-09-28T19:00:00Z", attendee: "c@x.com" };
+          result = {
+            awaiting:  run(SENT),
+            stale:     run({ ...SENT, sent_at: new Date(Date.now() - 40*3600000).toISOString() }),
+            accepted:  run({ ...SENT, rsvp: "accepted" }),
+            declined:  run({ ...SENT, rsvp: "declined" }),
+            neverSent: run({ rsvp: "awaiting" }),
+            nothing:   run(null),
+          };`, ctx, { timeout: 2000 });
+        const r = ctx.result;
+        if (!r.awaiting) fail.push("admin/admin.js — a sent, unanswered invite is not recognised, so the cards will tell Chris to send another one.");
+        else pass.push("admin/admin.js — a sent, unanswered invite is a state the cards can see");
+        if (r.accepted || r.declined) fail.push("admin/admin.js — an ANSWERED invite still reads as waiting; the card would nag after they replied.");
+        else pass.push("admin/admin.js — an answered invite is not 'waiting'");
+        if (r.neverSent || r.nothing) fail.push("admin/admin.js — a client with NO invite reads as waiting, which would hide the real instruction to send one.");
+        else pass.push("admin/admin.js — no invite sent is not mistaken for waiting");
+        if (!r.stale || r.stale.chase !== true) fail.push("admin/admin.js — an invite unanswered for 40h does not raise the chase; the playbook's 24h rule is not applied.");
+        else pass.push("admin/admin.js — an invite unanswered past 24h asks to be chased");
+      } catch (e) { indet.push(`admin/admin.js: kickoffSentAwaiting would not run in isolation (${e.message})`); }
+
+      // 🔑 And both cards that name the next action must CONSULT it — a reader nobody calls is the
+      // very shape this whole gate exists for.
+      const callers = (code.match(/kickoffSentAwaiting\s*\(/g) || []).length - 1;
+      if (callers < 2) {
+        fail.push(`admin/admin.js — kickoffSentAwaiting is called ${callers} time(s); both the next-action `
+          + `sequencer and the cockpit alert must consult it or one of them still says "Send the invite".`);
+      } else pass.push(`admin/admin.js — ${callers} cards consult the waiting state`);
+    }
+  }
+}
+
+// ── 5. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
 // 🔑 THE HALF THAT MADE IT INVISIBLE. The checker worked; its only caller was `refreshKickoffRsvp`,
 // which runs when Chris opens a client's Overview. A client could accept on Friday and the record
 // still read "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
