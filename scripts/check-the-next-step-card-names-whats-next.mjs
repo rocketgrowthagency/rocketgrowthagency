@@ -106,6 +106,21 @@ if (/<div class="eyebrow">Your next step<\/div>/.test(src)) {
   }
 }
 
+// 7 ─ 🔴 THE OWED LINE MUST NOT INVENT A DEADLINE.
+//     I shipped "N other things still need you BEFORE THEN" beside the kickoff date. The open list
+//     includes "Attend Month 1 close-out call" and "Send review requests to 5 past customers" —
+//     end-of-month work, not pre-kickoff. The call's own copy says nothing needs preparing. Counting
+//     what is open is a fact; saying when it is due is a claim, and that one was false.
+//     → feedback_we_never_promise_what_we_dont_do · feedback_a_client_message_must_agree_with_itself
+// 🔑 A plain substring, not a clever one. My first pattern was
+// /still need[^`"']{0,20}you before then/ — and the gap between "need" and "you" is
+// `${mine.length === 1 ? "s" : ""} `, which contains the very quote characters the class excluded.
+// It matched nothing and the mutation sailed through. → feedback_a_gate_that_cannot_fail
+if (/you before then/i.test(src)) {
+  fail.push('the owed line says items are needed "before then" — the open list includes month-end work with no such deadline, '
+    + "and the kickoff call itself needs nothing prepared. Count what is open; do not invent when it is due");
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
