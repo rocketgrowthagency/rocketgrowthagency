@@ -176,6 +176,11 @@ run check-an-abandoned-oauth-grant-is-never-silent.mjs "an abandoned Google gran
 run check-a-reschedule-never-looks-like-a-first-booking.mjs "a moved call never reads as a new one"
 run check-booked-and-accepted-are-different-words.mjs "booked and accepted are two different facts"
 run check-a-jump-moves-the-page.mjs "a jump button never does nothing"
+# 🔑 Not a gate — a CALLER. kickoff-rsvp-check could always read an acceptance; until 2026-09-27 the
+# only thing that ever asked it was an admin page view, so a client could accept on Friday and the
+# record still say "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
+run check-acceptance-is-what-completes-the-kickoff.mjs "an unaccepted invite never passes as a booked call"
+run sweep-kickoff-rsvps.mjs "an acceptance is noticed without anyone opening a tab"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
