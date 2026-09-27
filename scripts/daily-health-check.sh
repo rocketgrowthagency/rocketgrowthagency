@@ -149,6 +149,7 @@ run check-the-next-step-card-names-whats-next.mjs "the next-step card names the 
 run check-the-client-reads-their-own-timezone.mjs "the client picks in their own timezone"
 run check-the-client-can-release-their-booking.mjs "a confirmed call has a way out"
 run check-an-abandoned-oauth-grant-is-never-silent.mjs "an abandoned Google grant reports itself"
+run check-a-reschedule-never-looks-like-a-first-booking.mjs "a moved call never reads as a new one"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
