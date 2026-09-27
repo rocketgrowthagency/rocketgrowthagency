@@ -63,7 +63,15 @@ const OPEN = new Set(["awaiting", "tentative", "unknown", undefined, null, ""]);
 const pending = rows.filter((r) => {
   const k = r?.data?.kickoff_invite;
   if (!k || !k.event_id) return false;
-  if (!OPEN.has(k.rsvp)) return false;
+  // 🔴 RE-ASK WHEN THE ANSWER AND THE STEP DISAGREE. The first version filtered on the ANSWER alone
+  // — `accepted` is settled, so skip — which stranded any client whose acceptance was recorded while
+  // the step write failed: the step sits pending and nothing ever asks again, because the answer
+  // looks finished. Found 2026-09-27 the first time a real acceptance came back.
+  // 🔑 A sweep that only looks at its own last answer cannot heal a half-applied write.
+  // → feedback_verify_the_write_not_just_the_intent · feedback_a_cleanup_that_only_runs_on_success_is_not_a_cleanup
+  const step = r?.data?.tasks?.["m1.close.kickoff_invite"] || {};
+  const outOfSync = k.rsvp === "accepted" && step.status !== "done";
+  if (!OPEN.has(k.rsvp) && !outOfSync) return false;
   // A call whose time has long passed is history, not a pending answer.
   if (k.start && new Date(k.start).getTime() < Date.now() - 36 * 3600000) return false;
   return true;

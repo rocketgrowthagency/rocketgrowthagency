@@ -137,6 +137,28 @@ function stepLiteral(src) {
         if (r.declinesHand.status !== "done") {
           fail.push("kickoff-rsvp-check.js — a HAND-MARKED completion is reopened by a decline. Chris marked it done deliberately; that must not be undone behind him.");
         } else pass.push("kickoff-rsvp-check.js — a hand-marked completion survives a decline");
+
+        // 🔴 A NETLIFY FUNCTION'S CLOCK IS UTC. Without an explicit timeZone, `toLocaleString`
+        // rendered a 12:00 PM Pacific call as "7:00 PM" — right instant, wrong hour, no zone named —
+        // into the checklist summary Chris reads. Caught the first time a real acceptance completed
+        // a step. → project_client_timezone_rule
+        const ctx2 = { Date, Object, result: null };
+        vm.createContext(ctx2);
+        vm.runInContext(fn + `
+          const P = { attendee: "c@x.com", start: "2026-09-28T19:00:00Z" };
+          result = {
+            tz:   nextKickoffTask("accepted", { status: "pending" }, { ...P, tz: "America/Los_Angeles" }).auto_result.summary,
+            noTz: nextKickoffTask("accepted", { status: "pending" }, { ...P, tz: null }).auto_result.summary,
+          };`, ctx2, { timeout: 2000 });
+        const q = ctx2.result;
+        if (!/12:00\s*PM/.test(q.tz)) {
+          fail.push(`kickoff-rsvp-check.js — a 19:00Z call does not render as 12:00 PM for a client in `
+            + `America/Los_Angeles: "${q.tz}". The summary names an hour the client never agreed to.`);
+        } else pass.push("kickoff-rsvp-check.js — the summary uses the client's own zone");
+        if (!/UTC/.test(q.noTz)) {
+          fail.push(`kickoff-rsvp-check.js — with no client zone the summary prints a BARE hour: `
+            + `"${q.noTz}". An unlabelled time from a UTC server reads as local and is wrong by hours.`);
+        } else pass.push("kickoff-rsvp-check.js — with no zone known, the summary says UTC out loud");
       } catch (e) {
         indet.push(`kickoff-rsvp-check.js: nextKickoffTask would not run in isolation (${e.message})`);
       }
