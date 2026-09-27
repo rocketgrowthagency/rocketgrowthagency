@@ -37,6 +37,51 @@ record_verdict() { printf '{"gate":"%s","exit":%s,"at":"%s"}\n' "$1" "$2" "$(dat
 
 QUIET=0; [ "${1:-}" = "--quiet" ] && QUIET=1
 FAIL=0; INDET=0; OK=0
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+# 🔴🔴 EXIT 127 IS NOT A VERDICT. IT MEANS THE GATE NEVER RAN.
+#
+# 2026-09-27. The verdict log showed 154 gates returning 127 at 07:30 every morning — every single
+# one — and had done since 2026-09-16. On 09-20 and 09-23 the healthy count was ZERO: nothing was
+# checked at all on those days. The cause was one line missing from the launchd plist: no PATH, so
+# `node` (in /usr/local/bin) was not found, so every `node scripts/...` returned "command not found".
+#
+# The run reported it perfectly — "152 FAILING, 0 healthy" — into
+# /tmp/com.rga.daily-health-check.out, which nobody opens. **The write is not the delivery.**
+# Eleven days of a dead safety net, announced daily to no one.
+#
+# So 127 is counted SEPARATELY (150 gates that could not launch is ONE fault, not 150) and any run
+# containing one RAISES A STANDING ALERT, which check-standing-alerts.mjs fails on until cleared —
+# the one channel in this system that is actually read.
+# → feedback_a_swallowed_send_failure_is_an_outage · feedback_a_gate_that_cannot_fail
+# ═══════════════════════════════════════════════════════════════════════════════════════════════
+UNRUNNABLE=0
+ALERT_DIR="/Users/chris/RGA/Rocket Growth Agency Website VS Code/reports/alerts"
+ALERT_FILE="$ALERT_DIR/HEALTH-CHECK-CANNOT-RUN.md"
+# 🔑 ONE classifier, called by BOTH runners. They already had duplicate bodies; adding the 127 arm
+# to only one of them is how half a fix ships.
+classify() {
+  local script="$1" rc="$2" what="$3" mode="$4" out="$5"
+  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"; return; fi
+  if [ "$rc" -eq 127 ]; then
+    UNRUNNABLE=$((UNRUNNABLE+1))
+    printf "  ⛔ %-38s COULD NOT RUN — %s\n" "$script" "$(printf '%s' "$out" | head -1)"
+    return
+  fi
+  if [ "$rc" -eq 2 ]; then
+    INDET=$((INDET+1))
+    printf "  ⚠️  %-38s INDETERMINATE — %s\n" "$script" "$what"
+    printf '%s' "$out" | grep -E '✗|Error|error' | head -2 | sed 's/^/        /'
+    return
+  fi
+  if [ "$mode" = "status" ]; then
+    say "  ℹ️  $(printf '%-38s' "$script") ongoing state, not a fault"
+    [ "$QUIET" -eq 1 ] || printf '%s' "$out" | tail -2 | sed 's/^/        /'
+    return
+  fi
+  FAIL=$((FAIL+1))
+  printf "  🔴 %-38s %s\n" "$script" "$what"
+  printf '%s' "$out" | grep -E '✗|🔴' | head -3 | sed 's/^/        /'
+}
 say() { [ "$QUIET" -eq 1 ] || printf "%s\n" "$1"; }
 
 # Each entry: script | what it protects | how to treat a non-zero exit
@@ -51,16 +96,7 @@ run_args() {
   local out rc
   out=$(node "scripts/$script" $args 2>&1); rc=$?
   record_verdict "$script" "$rc"
-  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"
-  elif [ "$rc" -eq 2 ]; then
-    INDET=$((INDET+1))
-    printf "  ⚠️  %-38s INDETERMINATE — %s\n" "$script" "$what"
-    echo "$out" | grep -E '✗|Error|error' | head -2 | sed 's/^/        /'
-  else
-    FAIL=$((FAIL+1))
-    printf "  🔴 %-38s %s\n" "$script" "$what"
-    echo "$out" | grep -E '✗|🔴' | head -3 | sed 's/^/        /'
-  fi
+  classify "$script" "$rc" "$what" "$mode" "$out"
 }
 
 run() {
@@ -69,19 +105,7 @@ run() {
   local out rc
   out=$(node "scripts/$script" 2>&1); rc=$?
   record_verdict "$script" "$rc"
-  if [ "$rc" -eq 0 ]; then OK=$((OK+1)); say "  ✅ $(printf '%-38s' "$script") $what"
-  elif [ "$rc" -eq 2 ]; then
-    INDET=$((INDET+1))
-    printf "  ⚠️  %-38s INDETERMINATE — %s\n" "$script" "$what"
-    echo "$out" | grep -E '✗|Error|error' | head -2 | sed 's/^/        /'
-  elif [ "$mode" = "status" ]; then
-    say "  ℹ️  $(printf '%-38s' "$script") ongoing state, not a fault"
-    [ "$QUIET" -eq 1 ] || echo "$out" | tail -2 | sed 's/^/        /'
-  else
-    FAIL=$((FAIL+1))
-    printf "  🔴 %-38s %s\n" "$script" "$what"
-    echo "$out" | grep -E '✗|🔴' | head -3 | sed 's/^/        /'
-  fi
+  classify "$script" "$rc" "$what" "$mode" "$out"
 }
 
 say ""
@@ -150,6 +174,7 @@ run check-the-client-reads-their-own-timezone.mjs "the client picks in their own
 run check-the-client-can-release-their-booking.mjs "a confirmed call has a way out"
 run check-an-abandoned-oauth-grant-is-never-silent.mjs "an abandoned Google grant reports itself"
 run check-a-reschedule-never-looks-like-a-first-booking.mjs "a moved call never reads as a new one"
+run check-booked-and-accepted-are-different-words.mjs "booked and accepted are two different facts"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
@@ -382,6 +407,36 @@ else
 fi
 
 say ""
+# ── could the gates run AT ALL? ──────────────────────────────────────────────────────────────────
+if [ "$UNRUNNABLE" -gt 0 ]; then
+  mkdir -p "$ALERT_DIR"
+  {
+    echo "# 🔴 THE DAILY HEALTH CHECK CANNOT RUN"
+    echo ""
+    echo "**$UNRUNNABLE of its gates could not be launched** on $(date '+%Y-%m-%d %H:%M %Z')."
+    echo "They did not fail — they never started. Exit 127 is \"command not found\"."
+    echo ""
+    echo "Almost always this is PATH. \`node\` lives in \`/usr/local/bin\`, and launchd gives a job only"
+    echo "\`/usr/bin:/bin:/usr/sbin:/sbin\` unless its plist sets one."
+    echo ""
+    echo "**Look:** \`plutil -p ~/Library/LaunchAgents/com.rga.daily-health-check.plist\`"
+    echo "**Prove it:** \`env -i PATH=/usr/bin:/bin bash -c 'node --version'\` — if that says"
+    echo "\"command not found\", every gate in the scheduled run is returning 127."
+    echo ""
+    echo "🔑 While this file exists, \`check-standing-alerts.mjs\` fails. It is removed automatically by"
+    echo "the first run in which every gate launches — never by hand, never on a timer."
+    echo ""
+    echo "Surface it at session boot."
+  } > "$ALERT_FILE"
+  echo "⛔ $UNRUNNABLE GATE(S) COULD NOT RUN — the safety net is not running. Alert raised: $ALERT_FILE"
+  exit 3
+fi
+# 🔑 ONLY THIS WRITER RETRACTS IT, AND ONLY ON EVIDENCE: a run in which every gate launched.
+if [ -f "$ALERT_FILE" ]; then
+  rm -f "$ALERT_FILE"
+  echo "✅ every gate launched — cleared $ALERT_FILE"
+fi
+
 if [ "$FAIL" -gt 0 ]; then
   echo "🔴 $FAIL FAILING · $INDET indeterminate · $OK healthy"
   exit 1

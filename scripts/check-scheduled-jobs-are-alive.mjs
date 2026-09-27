@@ -64,6 +64,7 @@ try {
 }
 
 let fails = 0;
+let indeterminate = false;
 for (const f of files) {
   const file = path.join(DIR, f);
   let d;
@@ -94,6 +95,38 @@ for (const f of files) {
   if (!isLoaded) problems.push("NOT LOADED — it will never fire");
   for (const m of missing) problems.push(`points at a file that does not exist: ${m}`);
   if (!targets.length) problems.push("no resolvable target — the plist shape changed");
+
+  // ═════════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴🔴 LOADED IS NOT THE SAME AS ABLE TO RUN. 2026-09-27: com.rga.daily-health-check was loaded,
+  // on schedule, pointing at a real script — and every gate it ran returned 127 for ELEVEN DAYS.
+  // launchd hands a job only /usr/bin:/bin:/usr/sbin:/sbin unless its plist says otherwise, and
+  // `node` lives in /usr/local/bin. So the script started, and not one line of its work could run.
+  // On 09-20 and 09-23 the healthy count was zero: nothing was checked at all.
+  //
+  // This gate passed that job green every single one of those days, because "loaded and pointing at
+  // a real file" was the whole question it asked. → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+  //
+  // 🔑 So: if the script a job runs invokes `node`, the job must be able to FIND node — either an
+  // explicit PATH in EnvironmentVariables that contains node's directory, or `bash -lc`, which
+  // loads the login profile. Checked against `which node`, not against a hardcoded directory, so
+  // this keeps working if node moves.
+  // ═════════════════════════════════════════════════════════════════════════════════════════════
+  const usesNode = targets.some((t) => {
+    try { return /(^|\s)node\s/m.test(fs.readFileSync(t, "utf8")); } catch { return false; }
+  });
+  if (usesNode) {
+    const login = args.some((a) => typeof a === "string" && /^-[a-z]*l[a-z]*c?$/.test(a));
+    const envPath = (d.EnvironmentVariables || {}).PATH || "";
+    let nodeDir = "";
+    try { nodeDir = path.dirname(execFileSync("which", ["node"], { encoding: "utf8" }).trim()); } catch { nodeDir = ""; }
+    if (!nodeDir) {
+      console.log(`  ⚠️  ${label} — could not locate node, so its PATH cannot be judged`);
+      indeterminate = true;
+    } else if (!login && !envPath.split(":").includes(nodeDir)) {
+      problems.push(`runs node, but its launchd PATH cannot reach ${nodeDir} — every node command `
+        + `will return 127 "command not found". Add EnvironmentVariables.PATH to the plist, or use bash -lc.`);
+    }
+  }
 
   if (problems.length) {
     console.log(`  🔴 ${label}`);
