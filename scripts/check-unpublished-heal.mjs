@@ -116,7 +116,13 @@ ok('flags searches that lost their entire intake');
 // moving. The interlock was right; the PLACEMENT was wrong. A heal that never gets a window is not a
 // heal, and the morning report would still say it ran.
 const iHeal = local.indexOf("heal-unpublished-leads.mjs --apply");
-const iLoop = local.indexOf("reconcile-missing-videos");
+// 🔴 THE SEARCH LOOP, NOT THE FIRST MENTION OF A SCRIPT NAME. `reconcile-missing-videos` appears
+// FIRST inside the paused-drain branch (~line 143), which is not the loop this rule is about — the
+// real loop is `while [ "$n" -lt "$MAX_SEARCHES" ]`. The verdict happened to be right, but only by
+// luck: the anchor was measuring a different thing entirely, and would have passed the moment the
+// paused-drain block moved. Fifth time in two days a check keyed on the first occurrence of a name.
+// → feedback_position_is_not_identity · feedback_a_gate_must_pin_the_property_not_the_spelling
+const iLoop = local.search(/while \[ "\$n" -lt "\$MAX_SEARCHES" \]/);
 if (iHeal === -1 || iLoop === -1) fail("cannot locate the heal call or the search/reconcile phase to compare ordering.");
 if (!(iHeal < iLoop)) {
   fail("the heal runs AFTER the search loop. It will be skipped or starved every night — measured\n" +
