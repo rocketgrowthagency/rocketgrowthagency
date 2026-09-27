@@ -70,6 +70,7 @@ const NOT_PREFLIGHT = {
   'check-messages-have-a-shape.mjs':          'client-portal UI gate; runs in daily-health-check.sh — message styling cannot make a video unsafe',
   'check-no-native-browser-dialogs.mjs':      'UI gate; runs in daily-health-check.sh — a raw alert() is ugly and unbranded, it cannot make a video unsafe',
   'check-portal-prefetch-actually-fires.mjs': 'portal performance gate; runs in daily-health-check.sh — a slow boot cannot make a video unsafe',
+  'check-the-next-step-card-names-whats-next.mjs': 'client-portal copy gate; runs in daily-health-check.sh — a stale next-step card cannot make a video unsafe',
   'check-live-matches-the-approved-mockup.mjs': 'client-portal UI gate; runs in daily-health-check.sh — approved wording cannot make a video unsafe',
   'check-no-new-dormant-css.mjs':             'stylesheet-hygiene gate; runs in daily-health-check.sh — an unmatched CSS rule cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
