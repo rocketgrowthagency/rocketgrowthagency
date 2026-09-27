@@ -146,6 +146,7 @@ run check-messages-have-a-shape.mjs   "no client-facing message is a loose grey 
 run check-no-native-browser-dialogs.mjs "no popup bypasses the dialog system"
 run check-portal-prefetch-actually-fires.mjs "the portal boot prefetch is not a silent no-op"
 run check-the-next-step-card-names-whats-next.mjs "the next-step card names the soonest concrete thing"
+run check-the-client-reads-their-own-timezone.mjs "the client picks in their own timezone"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
