@@ -175,6 +175,7 @@ run check-the-client-can-release-their-booking.mjs "a confirmed call has a way o
 run check-an-abandoned-oauth-grant-is-never-silent.mjs "an abandoned Google grant reports itself"
 run check-a-reschedule-never-looks-like-a-first-booking.mjs "a moved call never reads as a new one"
 run check-booked-and-accepted-are-different-words.mjs "booked and accepted are two different facts"
+run check-a-jump-moves-the-page.mjs "a jump button never does nothing"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
 run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share ONE deliverable list"
