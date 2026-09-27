@@ -228,7 +228,71 @@ function stepLiteral(src) {
   }
 }
 
-// ── 5. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
+// ── 5. NOTHING MAY READ "STEP NOT DONE" AS "NO INVITE SENT" ─────────────────────────────────────
+// 🔴🔴 THE FIFTH SURFACE, AND MY OWN FIX BROKE IT. The onboarding banner asked
+// `!stepDone("m1.close.kickoff_invite")` to mean *"no invite has been sent"* — true only while
+// SENDING was what completed the step. Acceptance-gating turned that expression into *"sent, but
+// unanswered"*, and the banner went on announcing **"none has been sent yet. Send it from step 2
+// below"** — pointing at the button that books the FIRST FREE SLOT — to a client who already had the
+// invite in their inbox. Four other surfaces of that same stale instruction had been corrected on
+// 09-26 and are documented three lines above where this one lived.
+//
+// 🔑 "Was an invite sent?" and "is the step done?" became two different questions on 2026-09-27.
+// Anything asking the first must test the INVITE, never the step.
+// → feedback_fix_the_class_not_the_instance · feedback_a_promise_in_client_copy_is_a_commitment
+{
+  const admin = read(WEB, "admin/admin.js", 100000);
+  if (admin) {
+    const code = strip(admin);
+    // Find every claim that nothing has been sent, and check what it is conditioned on.
+    // 🔑 SCOPE IT TO THE KICKOFF. A first version matched any "no invite has been sent" and flagged
+    // the PORTAL-ACCESS banner — "No invite has been sent, so they have no way in" — which is a
+    // different invite entirely. The claim only matters where a CALENDAR invite is the subject.
+    const re = /none has been sent yet|no invite has been sent|has not been sent/gi;
+    let m, found = 0;
+    while ((m = re.exec(code))) {
+      const near = code.slice(Math.max(0, m.index - 400), m.index + 200);
+      if (!/calendar invite|kickoff/i.test(near)) continue;   // a different kind of invite
+      found++;
+      // 🔴 READ THE GUARD'S OWN EXPRESSION, NOT A WINDOW BEFORE IT. A 4000-character look-back was
+      // satisfied by the word `inviteSent` still being DECLARED above — a mutation that reverted the
+      // condition to `!stepDone(...)` left that declaration in place, unused, and the check passed.
+      // The flag that guards this copy is what has to be examined.
+      // → feedback_a_gate_window_measured_in_characters_will_lie
+      const line = code.slice(0, m.index).split("\n").length;
+      const decl = code.match(/const\s+promiseGap\s*=\s*([^;]+);/);
+      if (!decl) { indet.push("admin/admin.js: could not find the promiseGap expression"); continue; }
+      const expr = decl[1];
+      const guardsOnStep = /!stepDone\(\s*["']m1\.close\.kickoff_invite["']\s*\)/.test(expr);
+      const guardsOnInvite = /inviteSent|kickoff_invite\?\.event_id|kickoff_invite\.event_id/.test(expr);
+      if (guardsOnStep && !guardsOnInvite) {
+        fail.push(`admin/admin.js:${line} — claims no invite has been sent, conditioned on the STEP not `
+          + `being done. Since acceptance became the completion that is true while the invite is sitting `
+          + `in the client's inbox, and the copy points at the button that books a different slot.`);
+      } else if (!guardsOnInvite) {
+        fail.push(`admin/admin.js:${line} — claims no invite has been sent without testing whether one `
+          + `exists (kickoff_invite.event_id).`);
+      } else {
+        // 🔑 And the flag it trusts must actually read the invite — a `const inviteSent = true` would
+        // satisfy the name and nothing else.
+        const flag = code.match(/const\s+inviteSent\s*=\s*([^;]+);/);
+        if (flag && !/kickoff_invite\??\.?\[?["']?kickoff_invite|event_id/.test(flag[1])) {
+          fail.push(`admin/admin.js:${line} — inviteSent is not derived from the invite's event_id: `
+            + `\`${flag[1].trim().slice(0, 80)}\``);
+        } else pass.push(`admin/admin.js:${line} — "nothing sent" is conditioned on the invite, not the step`);
+      }
+    }
+    if (!found) indet.push("admin/admin.js: found no \"none has been sent\" copy — the banner was reworded");
+
+    // And a completed step must be substantiable by the ACCEPTANCE now that acceptance is what completes it.
+    if (!/accepted_at/.test((code.match(/"m1\.close\.kickoff_invite":\s*\{[\s\S]{0,400}?\}/) || [""])[0])) {
+      fail.push("admin/admin.js — the step's proof rule does not accept `accepted_at`. Done now means "
+        + "accepted, so the acceptance is what substantiates it.");
+    } else pass.push("admin/admin.js — a completed kickoff step is substantiated by the acceptance");
+  }
+}
+
+// ── 6. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
 // 🔑 THE HALF THAT MADE IT INVISIBLE. The checker worked; its only caller was `refreshKickoffRsvp`,
 // which runs when Chris opens a client's Overview. A client could accept on Friday and the record
 // still read "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
