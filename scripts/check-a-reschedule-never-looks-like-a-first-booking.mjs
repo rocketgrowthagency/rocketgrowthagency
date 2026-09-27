@@ -61,6 +61,23 @@ function extract(src, signature) {
   return null;
 }
 
+// Blank out comment bodies so a comment that QUOTES a string is not mistaken for a producer of it.
+// 🔑 Length-preserving: offsets stay valid, so reported line numbers still point at real code.
+// A `//` preceded by `:` is left alone — that is a URL, not a comment.
+function blankComments(src) {
+  const out = src.split("");
+  let i = 0;
+  while (i < src.length) {
+    if (src[i] === "/" && src[i + 1] === "/" && src[i - 1] !== ":") {
+      while (i < src.length && src[i] !== "\n") { out[i] = " "; i++; }
+    } else if (src[i] === "/" && src[i + 1] === "*") {
+      while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) { if (src[i] !== "\n") out[i] = " "; i++; }
+      out[i] = " "; out[i + 1] = " "; i += 2;
+    } else i++;
+  }
+  return out.join("");
+}
+
 const admin = read("admin/admin.js");
 
 // ── 1 + 2. IS IT A MOVE? ────────────────────────────────────────────────────────────────────────
@@ -219,7 +236,114 @@ if (admin) {
   }
 }
 
-// ── 6. A SLOT THAT WAS NOT RELEASED SAYS SO ─────────────────────────────────────────────────────
+// ── 6. THE ASK SENTENCE HAS EXACTLY ONE IMPLEMENTATION ──────────────────────────────────────────
+// 🔴 THE CARD SHIPPED MOVE-AWARE AND TWO OTHER RENDERERS KEPT TELLING THE OLD STORY. Chris
+// screenshotted the Onboarding tab reading "They picked Monday…" over a call already in the diary,
+// minutes after the move-aware card went live — and a first version of this gate then found a THIRD
+// producer I had not known existed. Each tab reaches a different subset of the three.
+//
+// 🔑 Trying to gate "is this producer's ternary move-aware?" failed twice: deleting the move arm of
+// the BODY left the move arm of the TITLE in scope, so every structural check still saw move copy.
+// The fix was not a cleverer regex — it was collapsing three copies of the sentence into
+// `kickoffAskCopy`, which is a thing a gate can state plainly.
+// → feedback_fix_the_class_not_the_instance · feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  const src = admin;
+  if (src) {
+    const fn = extract(src, "function kickoffAskCopy(");
+    if (!fn) {
+      fail.push("admin/admin.js — kickoffAskCopy() is gone. The ask sentence is hand-written again, and "
+        + "whichever producer you do not think of will keep describing a reschedule as a first booking.");
+    } else {
+      // 🔴 RUN IT. Asking "does the move wording appear in this function?" passed when the move TITLE
+      // was reverted (the move LINE still matched) and again when the move LINE was reverted (the
+      // TITLE still matched). The helper is small and pure — call it both ways and compare.
+      // → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+      try {
+        const ctx = { result: null };
+        vm.createContext(ctx);
+        vm.runInContext(fn + `
+          result = { move: kickoffAskCopy("SOMETIME", true), pick: kickoffAskCopy("SOMETIME", false) };`,
+          ctx, { timeout: 2000 });
+        const { move, pick } = ctx.result;
+        if (!move || !pick) {
+          fail.push("admin/admin.js — kickoffAskCopy did not return copy for both cases.");
+        } else if (move.title === pick.title) {
+          fail.push(`admin/admin.js — kickoffAskCopy gives a move and a first booking the SAME title ("${move.title}"). The operator cannot tell them apart.`);
+        } else if (move.line === pick.line) {
+          fail.push(`admin/admin.js — kickoffAskCopy gives a move and a first booking the SAME line ("${move.line}").`);
+        } else if (/They picked/i.test(move.title + " " + move.line)) {
+          fail.push(`admin/admin.js — the MOVE copy still says "They picked": "${move.line}"`);
+        } else if (!/move|instead/i.test(move.title + " " + move.line)) {
+          fail.push(`admin/admin.js — the move copy never mentions moving: "${move.title} — ${move.line}"`);
+        } else pass.push("admin/admin.js — kickoffAskCopy returns a different title AND line for a move");
+      } catch (e) {
+        indet.push(`admin/admin.js: kickoffAskCopy would not run in isolation (${e.message})`);
+      }
+
+      // 🔴 AND NOTHING ELSE MAY SAY IT. This is the half that actually prevents the regression:
+      // a new producer that hand-writes the sentence fails here by construction.
+      const at = src.indexOf("function kickoffAskCopy(");
+      const inHelper = (i) => i >= at && i < at + fn.length;
+      const code = blankComments(src);   // comments may quote the sentence; they are not producers
+      for (const [re, what] of [
+        [/They picked \$\{[A-Za-z_$][\w$]*\}/g, "the ask sentence"],
+        [/["'`]Confirm the kickoff time they asked for["'`]/g, "the ask title"],
+      ]) {
+        re.lastIndex = 0;
+        let m, strays = 0;
+        while ((m = re.exec(code))) { if (!inHelper(m.index)) { strays++;
+          fail.push(`admin/admin.js:${code.slice(0, m.index).split("\n").length} — hand-writes ${what} outside `
+            + `kickoffAskCopy. That producer cannot stay move-aware; route it through the helper.`); } }
+        if (!strays) pass.push(`admin/admin.js — ${what} exists only inside kickoffAskCopy`);
+      }
+
+      // And the producers must actually CALL it — a helper nobody uses looks finished.
+      const calls = (src.match(/kickoffAskCopy\s*\(/g) || []).length - 1;   // minus the declaration
+      if (calls < 3) {
+        fail.push(`admin/admin.js — kickoffAskCopy is called ${calls} time(s); all three producers `
+          + `(cockpit alert, next-action, Overview patch) must route through it.`);
+      } else pass.push(`admin/admin.js — all ${calls} producers route through kickoffAskCopy`);
+    }
+  }
+}
+
+// ── 7. A MOVE MUST NOT DISCARD THE CLIENT'S OWN TIMEZONE ────────────────────────────────────────
+// 🔴 FOUND IN THE LIVE RECORD AFTER THE FIRST REAL MOVE, 2026-09-27. `client_tz` went from
+// `America/Los_Angeles` to null, because `data.kickoff_invite` is REPLACED wholesale by an object
+// that does not carry it — and only `portal-book-kickoff` ever writes it, at the moment the client
+// picks. So the first invite named the hour the client actually read and the first reschedule fell
+// back to deriving a zone from the state code in `primary_market`. Nine states straddle two zones.
+// 🔑 Nothing on screen showed this. It was only visible by reading the row back.
+// → project_client_timezone_rule · feedback_verify_the_write_not_just_the_intent
+{
+  const src = read("netlify/functions/send-kickoff-invite.js");
+  if (src) {
+    const at = src.indexOf("const record = {");
+    if (at < 0) {
+      indet.push("send-kickoff-invite.js: could not find the kickoff_invite record literal");
+    } else {
+      let d = 0, end = -1;
+      for (let i = src.indexOf("{", at); i < src.length; i++) {
+        if (src[i] === "{") d++;
+        else if (src[i] === "}") { d--; if (d === 0) { end = i; break; } }
+      }
+      const lit = end > 0 ? src.slice(at, end + 1) : "";
+      if (!/client_tz/.test(lit)) {
+        fail.push("send-kickoff-invite.js — the kickoff_invite record does not carry client_tz forward, so "
+          + "every reschedule DISCARDS the timezone the client actually read and later emails derive one "
+          + "from their state code instead.");
+      } else if (/\.\.\.prior[,\s}]/.test(lit)) {
+        // A blanket spread would also restore requested_start/requested_at — the request this very
+        // send just answered — and the card would keep showing a pending ask that no longer exists.
+        fail.push("send-kickoff-invite.js — the record spreads the whole prior stamp, which restores "
+          + "requested_start/requested_at for a request that was just answered. Carry client_tz explicitly.");
+      } else pass.push("send-kickoff-invite.js — client_tz survives a move, and only client_tz");
+    }
+  }
+}
+
+// ── 8. A SLOT THAT WAS NOT RELEASED SAYS SO ─────────────────────────────────────────────────────
 {
   const src = read("netlify/functions/send-kickoff-invite.js");
   if (src) {
