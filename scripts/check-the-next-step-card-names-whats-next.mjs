@@ -121,6 +121,18 @@ if (/you before then/i.test(src)) {
     + "and the kickoff call itself needs nothing prepared. Count what is open; do not invent when it is due");
 }
 
+// 8 ─ 🔴 THE COUNT MUST NOT INCLUDE WHAT THE CLIENT IS WAITING ON US FOR.
+//     The card said "10 other things still need you" while four of those rows carried a
+//     clientWaitingNote saying the opposite on the same screen — "We'll book this with you at the
+//     end of month 1", "We are building your keyword plan", "We check this with Google directly".
+//     Two messages, one page, contradicting, with the number doing the shouting.
+//     🔑 Counted on the SAME field the row renders, so the number and the row cannot disagree.
+//     → feedback_a_client_message_must_agree_with_itself
+if (!/clientWaitingNote/.test(src.slice(src.indexOf("const mine = open.filter"), src.indexOf("const mine = open.filter") + 400))) {
+  fail.push("the owed count does not exclude items carrying a clientWaitingNote — those rows tell the client WE are handling it, "
+    + "so counting them as \"still needs you\" contradicts the row's own text on the same screen");
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
