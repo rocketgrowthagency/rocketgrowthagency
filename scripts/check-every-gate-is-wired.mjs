@@ -73,6 +73,7 @@ const NOT_PREFLIGHT = {
   'check-the-next-step-card-names-whats-next.mjs': 'client-portal copy gate; runs in daily-health-check.sh — a stale next-step card cannot make a video unsafe',
   'check-the-client-reads-their-own-timezone.mjs': 'client-portal gate; runs in daily-health-check.sh — a mis-rendered hour cannot make a video unsafe',
   'check-the-client-can-release-their-booking.mjs': 'client-portal gate; runs in daily-health-check.sh — a missing cancel control cannot make a video unsafe',
+  'check-an-abandoned-oauth-grant-is-never-silent.mjs': 'admin+portal gate; runs in daily-health-check.sh — a silent OAuth abandonment cannot make a video unsafe',
   'check-live-matches-the-approved-mockup.mjs': 'client-portal UI gate; runs in daily-health-check.sh — approved wording cannot make a video unsafe',
   'check-no-new-dormant-css.mjs':             'stylesheet-hygiene gate; runs in daily-health-check.sh — an unmatched CSS rule cannot make a video unsafe',
   'check-archived-clients-excluded.mjs': 'admin-UI gate; runs in daily-health-check.sh — client lifecycle state cannot make a video unsafe',
