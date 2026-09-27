@@ -99,6 +99,50 @@ if (!/client_activity|activity log/.test(cancel)) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE CLIENT HAS TWO MOVES, AND THEY ARE CALLED RESCHEDULE AND CANCEL.
+//
+// Chris, 2026-09-27: *"dont say release say cancel. right? client is either reschedule or cancel."*
+// The dialog was already contradicting itself — title *"Release this time?"*, body *"We'll CANCEL
+// the calendar invite."* `releaseSlotHold` is a LEDGER operation: freeing a row so another client
+// can take the hour. The client is not releasing anything; they are cancelling a meeting. And the
+// admin has said "Cancel the meeting" since it was built, so the two sides of one action were
+// being described in two vocabularies.
+//
+// 🔑 THE ATTRIBUTE AND CLASS STAY `…-release`. Those are ours, they name the ledger operation
+// correctly, and renaming them would churn every selector for no reader's benefit. What is pinned
+// is the WORDS A CLIENT SEES. → feedback_a_client_message_must_agree_with_itself
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  // The handler for the "Can't make it" control — everything it puts on screen.
+  const at = src.indexOf('closest("[data-kickoff-release]")');
+  if (at < 0) {
+    fail.push("could not find the cancel handler, so its wording cannot be judged");
+  } else {
+    // Bounded by the next top-level listener, not by a character count.
+    const after = src.slice(at);
+    const stop = after.search(/\ndocument\.addEventListener\(/);
+    const body = stop > 0 ? after.slice(0, stop) : after;
+    // Only what a CLIENT reads: quoted strings and template literals, not identifiers or attributes.
+    const strings = [...body.matchAll(/["'`]([^"'`\n]{4,})["'`]/g)].map((m) => m[1]);
+    const leaks = strings.filter((t) => /releas/i.test(t) && !/data-|pm-amend|is-release/.test(t));
+    if (leaks.length) {
+      fail.push(`the client is shown our ledger word "release": ${leaks.map((l) => `"${l.slice(0, 60)}"`).join(", ")}`
+        + ` — the client's two moves are RESCHEDULE and CANCEL`);
+    }
+    // And it must actually say cancel somewhere, or the fix went the other way into vagueness.
+    if (!strings.some((t) => /cancel/i.test(t))) {
+      fail.push("the cancel handler never uses the word cancel — the client cannot tell what the control does");
+    }
+    // 🔴 Never a bare "Cancel" as the CONFIRM button: in a dialog that word already means
+    // "close this and do nothing". → feedback_the_label_must_ask_what_the_options_answer
+    const confirmLabel = (body.match(/confirmText:\s*["'`]([^"'`]*)["'`]/) || [])[1] || "";
+    if (/^\s*cancel\s*$/i.test(confirmLabel)) {
+      fail.push('the confirm button is a bare "Cancel", which in a dialog reads as "close this and do nothing"');
+    }
+  }
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
@@ -107,5 +151,6 @@ if (fail.length) {
 }
 console.log("  both controls on the confirmed card · owner-scoped client path · admin gate intact");
 console.log("  always logged for RGA · confirms, reports, and hands the step back");
-console.log("\n✅ the client can release their own booking.");
+console.log("  the client reads RESCHEDULE and CANCEL, never our ledger word \"release\"");
+console.log("\n✅ the client can move or cancel their own booking.");
 process.exit(0);
