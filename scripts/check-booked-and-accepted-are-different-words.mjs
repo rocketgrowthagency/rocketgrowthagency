@@ -117,11 +117,19 @@ if (admin) {
 if (portal) {
   // 🔑 Ignore comments: "in the diary" also appears in a comment ABOUT this copy, so scanning the
   // whole file found the premise intact after the real sentence had been changed.
-  const code = portal.replace(/^\s*\/\/.*$/gm, "");
-  if (!/in the diary/i.test(code)) {
-    indet.push("portal/portal.js: the confirmed-kickoff copy no longer says the call is \"in the diary\" — "
-      + "the premise of this gate changed. Re-read both surfaces before editing either.");
-  } else pass.push("portal/portal.js — still tells the client the confirmed call is in the diary");
+  const code = portal.replace(/^[ \t]*\/\/.*$/gm, "");
+  // 🔑 PIN THE CLAIM, NOT THE WORDING. This checked for the literal phrase "in the diary" — and when
+  // that copy was rewritten on 2026-09-27 ("diary" is British; the clients are American) the gate
+  // went INDETERMINATE and said so, which is the behaviour I wanted. But a premise expressed as one
+  // exact sentence will do that on every innocent edit. What matters is that the portal TELLS THE
+  // CLIENT THE CALL IS SETTLED, however it words it — that is what makes the admin saying
+  // "not booked" a contradiction. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const ASSERTS_BOOKED = /locked in|in the diary|is booked|in your calendar|on your calendar/i;
+  if (!ASSERTS_BOOKED.test(code)) {
+    indet.push("portal/portal.js: the confirmed-kickoff copy no longer asserts the call is settled in "
+      + "ANY of the known wordings — the premise of this gate changed. Re-read both surfaces before "
+      + "editing either.");
+  } else pass.push("portal/portal.js — still tells the client the confirmed call is settled");
 }
 
 for (const p of pass) console.log(`  ✅ ${p}`);
