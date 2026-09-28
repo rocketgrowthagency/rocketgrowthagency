@@ -356,7 +356,83 @@ function stepLiteral(src) {
   }
 }
 
-// ── 6. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
+// ── 6. SOMETHING ASKS WHETHER THE CALL HAPPENED ─────────────────────────────────────────────────
+// 🔴 ACCEPTING THE INVITE COMPLETES STEP 2. NOTHING COMPLETES THE CALL. `m1.kickoff.call` is
+// `actor: both` and has no automatic completion — correctly, because only a human knows whether a
+// meeting took place. What was missing until 2026-09-28 is that **nothing asked**: the step sat
+// pending with no prompt on any surface, and FOUR access steps are locked behind it — the vault,
+// GBP manager, GA4 admin and GSC owner, which gate the Brain and everything downstream.
+//
+// 🔑 IT ASKS, IT NEVER ASSUMES. The end time passing is evidence the call was SCHEDULED to have
+// happened, not that it did; Google cannot say whether anyone joined.
+// → feedback_a_done_step_must_be_substantiable · feedback_every_action_must_report_its_result
+{
+  const admin = read(WEB, "admin/admin.js", 100000);
+  if (admin) {
+    const code = strip(admin);
+    const at = code.indexOf("function kickoffCallDue(");
+    if (at < 0) {
+      fail.push("admin/admin.js — kickoffCallDue() is gone. Nothing asks whether the kickoff call "
+        + "happened, and four access steps stay locked behind a tick nobody is prompted to make.");
+    } else {
+      const open = code.indexOf("{", at);
+      let d = 0, fn = "";
+      for (let i = open; i < code.length; i++) {
+        if (code[i] === "{") d++;
+        else if (code[i] === "}") { d--; if (d === 0) { fn = code.slice(at, i + 1); break; } }
+      }
+      try {
+        const ctx = { Date, Number, Math, state: {}, result: null };
+        vm.createContext(ctx);
+        vm.runInContext(fn + `
+          const put = (k) => { state.onboardingData = { kickoff_invite: k }; return kickoffCallDue(); };
+          const iso = (ms) => new Date(Date.now() + ms).toISOString();
+          result = {
+            future:  put({ event_id: "e", start: iso(4 * 3600000) }),
+            justEnded: put({ event_id: "e", start: iso(-90 * 60000) }),
+            longAgo: put({ event_id: "e", start: iso(-30 * 3600000) }),
+            nothing: put({}),
+            // 🔴 A START WITH NO EVENT means nothing was ever sent. The empty-object case above is
+            // masked by the NaN guard further down, so it cannot tell whether event_id is checked.
+            // (No backticks in here — this comment lives INSIDE a template literal, and one backtick
+            //  ends the string early. The gate then fails to parse and exits 1 for EVERY mutation,
+            //  which reads exactly like five perfect catches.)
+            noEvent: put({ start: iso(-90 * 60000) }),
+          };`, ctx, { timeout: 2000 });
+        const r = ctx.result;
+        // 🔴 A call still in the future must NOT be asked about — that is a prompt to lie.
+        if (r.future !== null) fail.push(`admin/admin.js — a call four hours in the FUTURE is already being asked about ("did it happen?"). That invites a tick before the meeting.`);
+        else pass.push("admin/admin.js — a call that has not ended is not asked about");
+        if (!r.justEnded) fail.push("admin/admin.js — a call that ended 90 minutes ago raises no question, so the step waits forever.");
+        else pass.push("admin/admin.js — a finished call raises the question");
+        if (!r.longAgo || r.longAgo.overdue !== true) fail.push("admin/admin.js — a call 30h past is not flagged overdue; the 24h rule is not applied.");
+        else pass.push("admin/admin.js — a call unanswered past 24h is flagged overdue");
+        if (r.nothing !== null) fail.push("admin/admin.js — a client with NO booking is asked whether the call happened.");
+        else if (r.noEvent !== null) fail.push("admin/admin.js — a time with no calendar EVENT is asked about. Nothing was ever sent, so there was no call to hold.");
+        else pass.push("admin/admin.js — no booking, and no event, means no question");
+      } catch (e) { indet.push(`admin/admin.js: kickoffCallDue would not run in isolation (${e.message})`); }
+
+      // 🔑 And every surface that names the next action must ASK it — step card, sequencer, cockpit.
+      // 🔴 FOUR, NOT THREE. The step card's band, the next-action sequencer, the cockpit alert AND
+      // the button label all consult it — a `< 3` threshold let a mutation delete the cockpit's call
+      // and still pass. Count what is actually there.
+      const callers = (code.match(/kickoffCallDue\s*\(/g) || []).length - 1;
+      if (callers < 4) {
+        fail.push(`admin/admin.js — kickoffCallDue is called ${callers} time(s), expected 4: the step `
+          + `card's band, the next-action sequencer, the cockpit alert and the button label. One `
+          + `missing is one surface Chris might be looking at that stays silent.`);
+      } else pass.push(`admin/admin.js — ${callers} surfaces ask whether the call happened`);
+
+      // 🔴 The button must ANSWER the question the band asks.
+      if (!/Yes — we held it/.test(code)) {
+        fail.push("admin/admin.js — the card asks \"did the kickoff call happen?\" and its only button "
+          + "says something else. The answer to a question must be phrased as an answer.");
+      } else pass.push("admin/admin.js — the button answers the question the card asks");
+    }
+  }
+}
+
+// ── 7. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
 // 🔑 THE HALF THAT MADE IT INVISIBLE. The checker worked; its only caller was `refreshKickoffRsvp`,
 // which runs when Chris opens a client's Overview. A client could accept on Friday and the record
 // still read "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
