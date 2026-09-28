@@ -121,7 +121,29 @@ function fnBody(name) {
     // misses a gutted const; checking only the const misses a band dropped from the template — a
     // mutation removing `${bandHtml}` passed a check that looked for the class name in a window
     // covering both. Pin the pair.
-    const branch = code.slice(Math.max(0, retAt - 2200), retAt);
+    //
+    // 🔴🔴 THIS WAS A 2200-CHARACTER WINDOW BACK FROM THE `return`, AND IT LIED. 2026-09-28 the call
+    // console was added between `const bandHtml =` and the return; the declaration moved 4577 chars
+    // back, fell out of the window, and the gate reported that `bandHtml` no longer builds the band
+    // — of code that was correct. A distance is not a relationship. Read the DECLARATION.
+    // → feedback_a_gate_window_measured_in_characters_will_lie
+    const declOf = (name) => {
+      const m = new RegExp(`const\\s+${name}\\s*=`).exec(code);
+      if (!m) return "";
+      // Scan to the end of the assignment: the first `;` at depth 0, tracking the template literals,
+      // interpolations and braces this codebase nests inside these declarations.
+      let i = m.index + m[0].length, tick = 0, brace = 0;
+      for (; i < code.length; i++) {
+        const c = code[i];
+        if (c === "\\") { i++; continue; }
+        if (c === "`") { tick ^= 1; continue; }
+        if (tick) { if (c === "$" && code[i + 1] === "{") { brace++; i++; } continue; }
+        if (c === "{" || c === "(") { brace++; continue; }
+        if (c === "}" || c === ")") { brace--; continue; }
+        if (c === ";" && brace <= 0) break;
+      }
+      return code.slice(m.index, i);
+    };
     const want = [
       ["bandHtml", /ob-state/, "the state band — what is true now, and whose turn it is"],
       ["ruleHtml", /ob-rule/, "the done-when rule — what finishes this step"],
@@ -132,10 +154,10 @@ function fnBody(name) {
       if (!new RegExp(`\\$\\{${v}\\}`).test(card)) {
         missing++;
         fail.push(`admin/admin.js — the active card no longer renders ${what} (\`\${${v}}\` is not in the template).`);
-      } else if (!re.test(branch)) {
+      } else if (!re.test(declOf(v))) {
         missing++;
         fail.push(`admin/admin.js — \`${v}\` no longer builds ${what}.`);
-      } else if (v === "bandHtml" && !/band\.title[\s\S]{0,160}band\.detail/.test(branch)) {
+      } else if (v === "bandHtml" && !/band\.title[\s\S]{0,160}band\.detail/.test(declOf(v))) {
         // 🔴 The class surviving is not the band surviving. It must still print what it is FOR.
         missing++;
         fail.push("admin/admin.js — the state band renders neither its title nor its detail, so it is "
@@ -144,7 +166,7 @@ function fnBody(name) {
     }
     if (!missing) pass.push("the active card renders all three bands, and each is still built");
     // 🔴 The instruction list must live INSIDE the fold, or the wall is back above the buttons.
-    const fold = branch.match(/<details class="ob-how"[\s\S]*?<\/details>/);
+    const fold = declOf("howHtml").match(/<details class="ob-how"[\s\S]*?<\/details>/);
     if (!fold) {
       fail.push("admin/admin.js — the reference fold is gone; the instructions are back in the open.");
     } else if (!/ob-sop/.test(fold[0])) {
