@@ -345,6 +345,20 @@ if (admin) {
 
 // ── 8. A SLOT THAT WAS NOT RELEASED SAYS SO ─────────────────────────────────────────────────────
 {
+  // 🔑 BOTH functions that free a slot, not just the one that had the bug. A cancel that silently
+  // fails to free the hour blocks it forever exactly as a reschedule would.
+  for (const [file, sig] of [
+    ["netlify/functions/send-kickoff-invite.js", "async function releaseSlotHold("],
+    ["netlify/functions/cancel-kickoff-invite.js", null],
+  ]) {
+    if (!sig) {
+      const c = read(file);
+      if (c && !/SLOT NOT FREED/.test(c)) {
+        fail.push(`${file} — frees the slot on cancel without reading the DELETE back. A 4xx, or a `
+          + `DELETE matching no row, both look like success and leave that hour blocked forever.`);
+      } else if (c) pass.push(`${file} — a cancel that frees nothing reports itself`);
+      continue;
+    }
   const src = read("netlify/functions/send-kickoff-invite.js");
   if (src) {
     const fn = extract(src, "async function releaseSlotHold(");
@@ -376,6 +390,7 @@ if (admin) {
         } else pass.push("send-kickoff-invite.js — a release that frees nothing reports itself");
       }
     }
+  }
   }
 }
 
