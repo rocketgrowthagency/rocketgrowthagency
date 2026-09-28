@@ -73,6 +73,7 @@ const NOT_PREFLIGHT = {
   'check-the-next-step-card-names-whats-next.mjs': 'client-portal copy gate; runs in daily-health-check.sh — a stale next-step card cannot make a video unsafe',
   'check-the-client-reads-their-own-timezone.mjs': 'client-portal gate; runs in daily-health-check.sh — a mis-rendered hour cannot make a video unsafe',
   'check-the-client-can-release-their-booking.mjs': 'client-portal gate; runs in daily-health-check.sh — a missing cancel control cannot make a video unsafe',
+  'check-client-copy-is-american.mjs': 'client-copy gate; runs in daily-health-check.sh — an idiom cannot make a video unsafe',
   'check-a-settled-step-never-says-do-it.mjs': 'client-portal copy gate; runs in daily-health-check.sh — a stale heading cannot make a video unsafe',
   'check-a-step-card-never-renders-itself-twice.mjs': 'admin-UI gate; runs in daily-health-check.sh — checklist card layout cannot make a video unsafe',
   'check-acceptance-is-what-completes-the-kickoff.mjs': 'kickoff-lifecycle gate; runs in daily-health-check.sh — step completion cannot make a video unsafe',
