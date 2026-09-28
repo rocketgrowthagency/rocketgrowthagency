@@ -65,6 +65,17 @@ const KEPT_BY = [
     keptBy: "gbp-duplicate-recheck",
     note: "the duplicate-listing card — re-scans daily and writes a client_activity note on clear",
   },
+  {
+    // 🔑 Added 2026-09-28 with the client step card's "Done when" line. The promise is TRUE — it was
+    // simply never registered. `metrics-daily-refresh` (06:00 daily, netlify.toml) sweeps every step
+    // that declares `clientDone: "detected"` and calls `portal-step-recheck` against the live source.
+    // Nine steps rely on it: GBP/GA4/GSC access, form tracking, GBP verify + photos, first 5 reviews,
+    // and the two month-2 execution steps.
+    match: /we check automatically/i,
+    surface: "portal/portal.js",
+    keptBy: "metrics-daily-refresh",
+    note: "the client step card's Done-when line for a DETECTED step",
+  },
 ];
 
 if (!fs.existsSync(TOML)) {
@@ -84,13 +95,29 @@ const toml = fs.readFileSync(TOML, "utf8");
  * same hour this gate was written. → feedback_a_check_must_not_validate_itself
  */
 function isScheduled(fn) {
-  const block = toml.match(new RegExp(`\\[functions\\."${fn.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}"\\]([\\s\\S]{0,300}?)(?=\\n\\[|$)`));
-  if (block && /schedule\s*=\s*"[^"]+"/.test(block[1])) return true;
+  // 🔴🔴 THIS READ A 300-CHARACTER WINDOW AND IT LIED (2026-09-28). The old regex ran from the
+  // section header to the next `\n[` within 300 chars. `[functions."gbp-duplicate-recheck"]` is
+  // followed immediately by the next section, so it matched; `[functions."metrics-daily-refresh"]`
+  // is followed by a long comment, so its `schedule = "0 6 * * *"` — sitting on the very next line —
+  // was invisible. The gate reported a real, scheduled function as unkept.
+  // 🔑 A TOML section ends at the next SECTION HEADER, not at a number of characters. Read lines.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  const header = `[functions."${fn}"]`;
+  const lines = toml.split("\n");
+  let inBlock = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (line === header) { inBlock = true; continue; }
+    // A new section header — of any kind — ends the block we were reading.
+    if (inBlock && /^\[/.test(line)) break;
+    if (inBlock && /^schedule\s*=\s*"[^"]+"/.test(line)) return true;
+  }
   const file = path.join(SITE, "netlify", "functions", `${fn}.js`);
   if (!fs.existsSync(file)) return false;
   const src = fs.readFileSync(file, "utf8").replace(/^\s*\/\/.*$/gm, "");
   return /exports\.config\s*=\s*\{[\s\S]{0,200}?schedule\s*:\s*["'`][^"'`]+["'`]/.test(src);
 }
+
 
 const problems = [];
 let promisesFound = 0, surfacesRead = 0;
