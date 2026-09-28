@@ -29,6 +29,37 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔒 AN ALERT CAN ONLY LEAVE THE WAY IT CAME — approved 2026-09-28.
+// A raise records a line beside the alert files; only the monitor that raised it clears that line,
+// and only when it retracts on evidence. `check-standing-alerts.mjs` then reports any file that has
+// vanished while its line still stands — the case that was previously indistinguishable from health,
+// because "is there a file?" reads an empty directory as good news.
+// → feedback_an_absence_must_never_be_readable_as_a_value
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+function ledgerPath(dir) { return path.join(dir, '_raised.json'); }
+function ledgerRead(dir) {
+  try { return JSON.parse(fs.readFileSync(ledgerPath(dir), 'utf8')); } catch { return {}; }
+}
+function ledgerRaise(dir, name, by) {
+  try {
+    const l = ledgerRead(dir);
+    // 🔑 Keep the ORIGINAL raise date. A breaker that re-trips nightly is still the same standing
+    // condition, and re-stamping it would hide how long it has stood.
+    if (!l[name]) l[name] = { raised: new Date().toISOString().slice(0, 10), by };
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(ledgerPath(dir), JSON.stringify(l, null, 2) + '\n');
+  } catch (e) { console.warn(`[health] could not record the alert in the ledger: ${e.message}`); }
+}
+function ledgerClear(dir, name) {
+  try {
+    const l = ledgerRead(dir);
+    if (!(name in l)) return;
+    delete l[name];
+    fs.writeFileSync(ledgerPath(dir), JSON.stringify(l, null, 2) + '\n');
+  } catch (e) { console.warn(`[health] could not clear the ledger line: ${e.message}`); }
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ACCUM = path.join(ROOT, 'output', 'run-accum');
 const FLOOR = Number(process.env.HEALTH_FLOOR_PCT || 40);
@@ -82,6 +113,7 @@ if (pct >= FLOOR) {
     const alertFile = path.join(ROOT, '..', 'Rocket Growth Agency Website VS Code', 'reports', 'alerts', 'PIPELINE-HEALTH-ALERT.md');
     if (fs.existsSync(alertFile)) {
       fs.unlinkSync(alertFile);
+      ledgerClear(path.dirname(alertFile), 'PIPELINE-HEALTH-ALERT.md');
       console.log(`[health] circuit-breaker alert CLEARED — ${pct}% over ${attempted} attempts is back above the ${FLOOR}% floor.`);
     }
   } catch (e) { console.warn(`[health] could not clear the breaker alert: ${e.message}`); }
@@ -108,6 +140,7 @@ console.error(msg);
 try {
   const alertDir = path.join(ROOT, '..', 'Rocket Growth Agency Website VS Code', 'reports', 'alerts');
   fs.mkdirSync(alertDir, { recursive: true });
+  ledgerRaise(alertDir, 'PIPELINE-HEALTH-ALERT.md', 'run-health-check.mjs');
   fs.writeFileSync(path.join(alertDir, 'PIPELINE-HEALTH-ALERT.md'),
     `# 🔴 Pipeline circuit breaker tripped — ${date}\n\n` +
     `Build rate **${pct}%** over ${attempted} attempts (floor ${FLOOR}%, baseline 89%).\n\n` +

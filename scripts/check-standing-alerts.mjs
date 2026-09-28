@@ -43,6 +43,28 @@ const DIRS = [
 
 console.log("── standing alerts have been seen by someone ──");
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔒 AN ALERT CAN ONLY LEAVE THE WAY IT CAME — approved 2026-09-28,
+// reports/mockups/alert_that_vanishes_v1.html.
+//
+// 2026-09-28: `PIPELINE-HEALTH-ALERT.md` was deleted from the working tree and nothing in the alert
+// system noticed. `deploy-site.sh` caught it only because it compares the tree against the commit —
+// luck, not a system. It should not have gone: only `run-health-check.mjs` may unlink it, and only on
+// a run above the floor with a real sample; `data/accumulators/` was EMPTY, zero attempts since
+// Sep 21. The file was restored and what removed it was never identified.
+//
+// 🔴 The flaw is not the deletion. It is that this check asks *"is there a file?"* — and an empty
+// directory is its happiest answer, byte-identical to a genuinely clear system.
+// → feedback_an_absence_must_never_be_readable_as_a_value
+//
+// 🔑 So every raise records a line here. A monitor may retract its OWN alert, which clears the line
+// with it. A file that vanishes while its line stands is REPORTED, with the command to restore it.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+const LEDGER = path.join(DIRS[0], "_raised.json");
+function readLedger() {
+  try { return JSON.parse(fs.readFileSync(LEDGER, "utf8")); } catch { return {}; }
+}
+
 let looked = 0;
 const alerts = [];
 for (const dir of DIRS) {
@@ -66,6 +88,23 @@ if (!looked) {
   // "could not tell", never "all clear". → feedback_indeterminate_is_not_a_finding
   console.log(`  ⚠️  no alerts directory found at either path — the probe must be wrong.`);
   process.exit(2);
+}
+
+// 🔴 RAISED, AND NOW MISSING. Checked before "all clear" can be printed, because this is the exact
+// case that used to be indistinguishable from health.
+const ledger = readLedger();
+const present = new Set(alerts.map((a) => a.name));
+const vanished = Object.entries(ledger).filter(([name]) => !present.has(name));
+if (vanished.length) {
+  for (const [name, meta] of vanished) {
+    console.log(`  🔴 ${name} — RAISED ${meta.raised || "(date unknown)"}, FILE IS GONE`);
+    console.log(`       Nothing retracted it. Only ${meta.by || "the monitor that raised it"} may, and`);
+    console.log(`       only on evidence — so the condition is still unverified and something removed`);
+    console.log(`       the file outside the sanctioned path.`);
+    console.log(`       Restore it:  git checkout -- reports/alerts/${name}`);
+  }
+  console.log(`\n🔴 ${vanished.length} alert(s) were raised and have disappeared without being retracted.`);
+  process.exit(1);
 }
 
 if (!alerts.length) {
