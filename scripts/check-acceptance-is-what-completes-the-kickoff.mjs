@@ -485,7 +485,70 @@ function stepLiteral(src) {
   }
 }
 
-// ── 8. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
+// ── 8. THE CALL CONSOLE READS REAL STATUS, AND NEVER SENDS ──────────────────────────────────────
+// 🔒 Approved 2026-09-28 — reports/mockups/admin_kickoff_call_console_v1.html. A talk track already
+// existed and the step already linked to it; the gap was that nothing brought it to the call, and
+// that the five things the SOP says the call exists to COLLECT are already steps with real status.
+{
+  const admin = read(WEB, "admin/admin.js", 100000);
+  if (admin) {
+    const code = strip(admin);
+    // 🔑 The collect list must point at REAL steps. A label with no step behind it is a checklist
+    // that cannot know whether the thing arrived.
+    const ids = [...code.matchAll(/id:\s*"(m1\.[a-z_.]+)",\s*label:/g)].map((m) => m[1]);
+    if (ids.length < 5) {
+      fail.push(`admin/admin.js — the call console lists ${ids.length} collect item(s); the SOP names `
+        + `five: GBP, GA4, Search Console, website/CMS and photos, plus the customer list.`);
+    } else {
+      const pb = path.join(WEB, "data/playbooks/playbooks.json");
+      try {
+        const raw = JSON.parse(fs.readFileSync(pb, "utf8"));
+        const known = new Set();
+        (function walk(o) {
+          if (Array.isArray(o)) return o.forEach(walk);
+          if (o && typeof o === "object") { if (o.id && o.title) known.add(o.id); Object.values(o).forEach(walk); }
+        })(raw);
+        const ghosts = ids.filter((i) => !known.has(i));
+        if (ghosts.length) {
+          fail.push(`admin/admin.js — the call console reads step(s) that do not exist: ${ghosts.join(", ")}. `
+            + `Their status would silently read "still need" forever.`);
+        } else pass.push(`admin/admin.js — all ${ids.length} collect items point at real playbook steps`);
+      } catch (e) { indet.push(`could not read playbooks.json (${e.message})`); }
+    }
+
+    // 🔴 THE RECAP DRAFTS, IT NEVER SENDS. This composes a client-facing email.
+    const rc = code.indexOf("data-kickoff-recap");
+    if (rc < 0) {
+      fail.push("admin/admin.js — the call console has no recap. The SOP requires one after every call.");
+    } else {
+      const h = code.indexOf('closest("[data-kickoff-recap]")');
+      const body = h < 0 ? "" : code.slice(h, h + 3000);
+      if (!body) indet.push("could not isolate the recap handler");
+      else if (/send-|sendUpdates|notify-rga|method:\s*"POST"/.test(body)) {
+        fail.push("admin/admin.js — the recap handler posts somewhere. It must DRAFT only: it composes "
+          + "a client-facing email, and nothing here may reach a client without Chris pressing send in "
+          + "his own mail client.");
+      } else if (!/window\.open/.test(body)) {
+        fail.push("admin/admin.js — the recap never opens a draft, so the button does nothing.");
+      } else pass.push("admin/admin.js — the recap opens a draft and sends nothing");
+
+      // 🔴 An empty To: is a hatch that looks like it worked.
+      if (!/if \(!to\)/.test(body)) {
+        fail.push("admin/admin.js — the recap opens a compose window even with no contact email, which "
+          + "looks like it worked and is not recoverable.");
+      } else pass.push("admin/admin.js — no contact email is reported, not silently drafted");
+    }
+
+    // 🔴 NO DEAD CONTROL TO THE TALK TRACK. /docs/* is 404'd at the edge on purpose and DOCS_LIBRARY
+    // serves PDFs by filename — a markdown file in a blocked path is in neither.
+    if (/data-open-talk-track/.test(code)) {
+      fail.push("admin/admin.js — a button links to the talk track, but /docs/* is blocked at the edge "
+        + "and the docs library serves PDFs. That control cannot work.");
+    } else pass.push("admin/admin.js — no dead control pointing at the blocked docs path");
+  }
+}
+
+// ── 9. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
 // 🔑 THE HALF THAT MADE IT INVISIBLE. The checker worked; its only caller was `refreshKickoffRsvp`,
 // which runs when Chris opens a client's Overview. A client could accept on Friday and the record
 // still read "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
