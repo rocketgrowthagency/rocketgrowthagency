@@ -15,7 +15,7 @@ import vm from "node:vm";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const JS = path.join(SITE, "admin", "admin.js");
-const pass = [], fail = [];
+const pass = [], fail = [], indet = [];
 
 if (!fs.existsSync(JS)) { console.error("⚠️  INDETERMINATE — admin.js not found."); process.exit(2); }
 const code = fs.readFileSync(JS, "utf8");
@@ -102,7 +102,61 @@ const after = at(KICKOFF_SLOT_MIN + 5, 5);
 if (after.phase !== "after") fail.push(`five minutes past the slot the phase is "${after.phase}", not "after".`);
 else pass.push("past the slot, the call is over");
 
+// ── 7. RUN THE CONSOLE ITSELF, AND READ THE PANE IT RETURNS ────────────────────────────────────
+// 🔴 The clock computed "after" from day one and NOTHING BRANCHED ON IT, so two hours past a call
+// the console still rendered the live rail, a clock reading 131:54 of 30:00, and four buttons
+// offering to cut sections of a call that was over. Checking the arithmetic could never see that —
+// the defect was in the render. So render it. → feedback_a_capability_nobody_calls_looks_finished
+const consoleFn = code.match(/function kickoffConsoleHtml\(o\) \{[\s\S]*?\n\}/);
+const dueFn = code.match(/function kickoffCallDue\(\) \{[\s\S]*?\n\}/);
+const collectFn = code.match(/function kickoffCollectStatus\(\) \{[\s\S]*?\n\}/);
+const collectList = code.match(/const KICKOFF_COLLECT = \[[\s\S]*?\n\];/);
+const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
+if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn) {
+  fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
+} else {
+  const box = {
+    state: { selectedClient: { id: "c1", website_url: "" }, kickoffYes: {}, kickoffCuts: {} },
+    escapeHtml: (x) => String(x == null ? "" : x),
+    escapeAttribute: (x) => String(x == null ? "" : x),
+    cellRank: (v) => (typeof v === "number" ? v : null),
+    Date, Math, Number, String, Object, Array, JSON, console,
+  };
+  vm.createContext(box);
+  // 🔑 Define ONCE, then call per case. Re-running the definitions in the same context throws
+  // "already been declared" on the second render — which silently cost a check the first time.
+  const src = [collectList[0], textFn[0], dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
+    "globalThis.__render = () => kickoffConsoleHtml({ flowId: 'm1.kickoff.call' });"].join("\n");
+  vm.runInContext(src, box, { timeout: 4000 });
+  const renderAt = (minsIn) => {
+    box.state.onboardingData = { kickoff_invite: { event_id: "e", start: new Date(Date.now() - minsIn * 60000).toISOString(), meet_link: "" }, tasks: {} };
+    box.state.flowM1State = box.state.onboardingData;
+    box.state.kickoffSectionIdx = 0;
+    return box.__render() || "";
+  };
+  try {
+    const over = renderAt(131.9);
+    if (/kc-rail/.test(over)) fail.push("admin/admin.js — two hours after the call the console still renders the live rail.");
+    else pass.push("after the call, the live rail is gone");
+    if (/data-kc-cut/.test(over)) fail.push("admin/admin.js — the console offers to cut sections of a call that is already over.");
+    else pass.push("a finished call is offered no cuts");
+    if (/of 30:00/.test(over)) fail.push("admin/admin.js — the console still shows a clock counting against the slot after the call ended.");
+    else pass.push("no clock counts on past a finished call");
+    if (!/data-kickoff-recap/.test(over)) fail.push("admin/admin.js — the after-call pane offers no way to draft the recap, which is the one thing still outstanding.");
+    else pass.push("the after-call pane offers the recap");
+
+    const live = renderAt(13);
+    if (!/kc-rail/.test(live)) fail.push("admin/admin.js — during the call the console does not render the rail.");
+    else pass.push("during the call, the rail renders");
+  // 🔴 A RENDER THAT THROWS IS A BROKEN CONSOLE, NOT AN UNKNOWN ONE. This was `indet` for one run,
+  // and it reported the real TDZ crash — `collect` read above its own declaration — as a grey
+  // "could not check" line that a tired reader scrolls past. It fails.
+  // → feedback_unloaded_is_not_an_answer
+  } catch (e) { fail.push(`admin/admin.js — the console THREW instead of rendering: ${e.message}`); }
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
+for (const d of indet) console.log(`  ▫️  ${d}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s) with the call clock:`);
   for (const f of fail) console.error(`   • ${f}`);
