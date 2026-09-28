@@ -56,7 +56,13 @@ const code = src.replace(/^[ \t]*\/\/.*$/gm, "");
         + "still carries an instruction to do it. A confirmed booking sits under \"Choose a date and time\".");
     } else pass.push("the control heading follows the settled state");
 
-    const pairs = [...expr.matchAll(/settled\s*\?\s*"([^"]*)"\s*:\s*"([^"]*)"/g)];
+    // 🔴 ANY SETTLED-NESS FLAG, NOT THE ONE IDENTIFIER. This matched `settled` literally and
+    // case-sensitively, so when the kickoff heading moved to `bookingSettled` — a confirmed booking
+    // is settled for copy purposes even while the task row is still pending — the pair vanished from
+    // the count and a correct tree failed. The property is that the heading is CHOSEN BY STATE, not
+    // that one variable is spelled one way.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+    const pairs = [...expr.matchAll(/[A-Za-z_$]*[Ss]ettled\s*\?\s*"([^"]*)"\s*:\s*"([^"]*)"/g)];
 
     // 🔴 COUNTING PAIRS IS NOT THE PROPERTY. Reverting the kickoff heading to a fixed string left
     // three other pairs standing, and a `>= 3` count passed while a confirmed booking went back to
@@ -112,8 +118,10 @@ const code = src.replace(/^[ \t]*\/\/.*$/gm, "");
       } else pass.push(`every clientDone kind in the data is covered (${kinds.join(", ")})`);
     }
     // 🔴 Hidden once settled — by then it is answered, not pending.
-    const before = code.slice(Math.max(0, at - 400), at);
-    if (!/settled\s*\?\s*""/.test(before)) {
+    // 🔑 Same reason: the guard may be `settled ? "" :` or `(settled || …) ? "" :`. What matters is
+    // that settled-ness gates it at all.
+    const before = code.slice(Math.max(0, at - 700), at);
+    if (!/[Ss]ettled[^?]{0,80}\?\s*""/.test(before)) {
       fail.push("portal/portal.js — the \"you are done when\" line is not hidden once the step is "
         + "settled, so a finished step still explains how to finish it.");
     } else pass.push("the line is hidden once the step is settled");

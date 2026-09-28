@@ -389,6 +389,7 @@ function stepLiteral(src) {
           const iso = (ms) => new Date(Date.now() + ms).toISOString();
           result = {
             future:  put({ event_id: "e", start: iso(4 * 3600000) }),
+            justStarted: put({ event_id: "e", start: iso(-5 * 60000) }),
             justEnded: put({ event_id: "e", start: iso(-90 * 60000) }),
             longAgo: put({ event_id: "e", start: iso(-30 * 3600000) }),
             nothing: put({}),
@@ -401,12 +402,16 @@ function stepLiteral(src) {
           };`, ctx, { timeout: 2000 });
         const r = ctx.result;
         // 🔴 A call still in the future must NOT be asked about — that is a prompt to lie.
-        if (r.future !== null) fail.push(`admin/admin.js — a call four hours in the FUTURE is already being asked about ("did it happen?"). That invites a tick before the meeting.`);
-        else pass.push("admin/admin.js — a call that has not ended is not asked about");
-        if (!r.justEnded) fail.push("admin/admin.js — a call that ended 90 minutes ago raises no question, so the step waits forever.");
-        else pass.push("admin/admin.js — a finished call raises the question");
-        if (!r.longAgo || r.longAgo.overdue !== true) fail.push("admin/admin.js — a call 30h past is not flagged overdue; the 24h rule is not applied.");
-        else pass.push("admin/admin.js — a call unanswered past 24h is flagged overdue");
+        // 🔄 START-TIME semantics since 2026-09-28: the card speaks from the moment the call BEGINS,
+        // because that is when the steps behind it unlock and when Chris is on the call working them.
+        if (r.future !== null) fail.push("admin/admin.js — a call four hours in the FUTURE already reads as happening.");
+        else pass.push("admin/admin.js — a call that has not started says nothing");
+        if (!r.justStarted || r.justStarted.live !== true) fail.push("admin/admin.js — a call that started five minutes ago does not read as live, so the card does not say the checklist is open.");
+        else pass.push("admin/admin.js — a call in progress reads as live");
+        if (!r.justEnded || r.justEnded.live !== false) fail.push("admin/admin.js — a call that ended an hour ago still reads as live.");
+        else pass.push("admin/admin.js — a finished call stops reading as live");
+        if (!r.longAgo) fail.push("admin/admin.js — a call 30h past says nothing at all.");
+        else pass.push("admin/admin.js — a past call is still described");
         if (r.nothing !== null) fail.push("admin/admin.js — a client with NO booking is asked whether the call happened.");
         else if (r.noEvent !== null) fail.push("admin/admin.js — a time with no calendar EVENT is asked about. Nothing was ever sent, so there was no call to hold.");
         else pass.push("admin/admin.js — no booking, and no event, means no question");
@@ -416,23 +421,71 @@ function stepLiteral(src) {
       // 🔴 FOUR, NOT THREE. The step card's band, the next-action sequencer, the cockpit alert AND
       // the button label all consult it — a `< 3` threshold let a mutation delete the cockpit's call
       // and still pass. Count what is actually there.
+      // 🔄 THREE since 2026-09-28, not four. The button label used to consult this to ask "did we
+      // hold it?"; the clock model removed that question, so the button is a plain completion again.
+      // A threshold left at 4 is a check describing a design that no longer exists.
       const callers = (code.match(/kickoffCallDue\s*\(/g) || []).length - 1;
-      if (callers < 4) {
-        fail.push(`admin/admin.js — kickoffCallDue is called ${callers} time(s), expected 4: the step `
-          + `card's band, the next-action sequencer, the cockpit alert and the button label. One `
-          + `missing is one surface Chris might be looking at that stays silent.`);
-      } else pass.push(`admin/admin.js — ${callers} surfaces ask whether the call happened`);
+      if (callers < 3) {
+        fail.push(`admin/admin.js — kickoffCallDue is called ${callers} time(s), expected 3: the step `
+          + `card's band, the next-action sequencer and the cockpit alert. One missing is one surface `
+          + `Chris might be looking at that stays silent.`);
+      } else pass.push(`admin/admin.js — ${callers} surfaces describe the call window`);
 
-      // 🔴 The button must ANSWER the question the band asks.
-      if (!/Yes — we held it/.test(code)) {
-        fail.push("admin/admin.js — the card asks \"did the kickoff call happen?\" and its only button "
-          + "says something else. The answer to a question must be phrased as an answer.");
-      } else pass.push("admin/admin.js — the button answers the question the card asks");
+      // 🔄 REMOVED 2026-09-28. This required the button to read "Yes — we held it", the answer to
+      // "did the kickoff call happen?". The clock model stopped asking, so the check was pinning a
+      // sentence the product deliberately no longer says — a gate enforcing a retired design is a
+      // gate that blocks the fix. The rule it protected now lives in check 7: the unlock is what
+      // matters, not the tick. → feedback_a_ledger_line_outlives_the_bug
     }
   }
 }
 
-// ── 7. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
+// ── 7. THE CALL UNLOCKS THE NEXT STEPS ON THE CLOCK ─────────────────────────────────────────────
+// 🔒 Chris, 2026-09-28: *"lets make it time based so after the call time, we then unlock it… so then
+// we can be on the call with them and walk through anything."* Four access steps sit behind
+// `m1.kickoff.call` — the vault, GBP, GA4 and Search Console — and gating them on a manual tick meant
+// they were still locked during the very call where they get set up together.
+//
+// 🔑 DERIVED, NOT WRITTEN: nothing runs at 1:30 to make this true. It is computed from the confirmed
+// booking on every render, so it cannot drift, cannot fire twice and needs no scheduler.
+{
+  const admin = read(WEB, "admin/admin.js", 100000);
+  if (admin) {
+    const code = strip(admin);
+    if (!/callStarted/.test(code)) {
+      fail.push("admin/admin.js — nothing completes the kickoff call on the clock. The four access "
+        + "steps behind it stay locked through the call itself, waiting on a manual tick.");
+    } else {
+      // 🔴 EIGHT `const done =` EXIST in this bundle. Anchor on the one that follows the callStarted
+      // computation, not the first in the file. Nth time.
+      // → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+      const csAt = code.indexOf("const callStarted");
+      const m = csAt < 0 ? null : code.slice(csAt).match(/const\s+done\s*=\s*([^;]+);/);
+      if (!m) indet.push("could not find the step done-ness expression after callStarted");
+      else if (!/callStarted/.test(m[1])) {
+        fail.push("admin/admin.js — `callStarted` is computed but the step's done-ness ignores it, so "
+          + "nothing actually unlocks.");
+      } else pass.push("the kickoff call completes on the clock, unlocking the steps behind it");
+
+      // 🔴 IT MUST BE THE START, NOT THE END. Unlocking after the call defeats the point.
+      const blk = code.slice(code.indexOf("const callStarted"), code.indexOf("const callStarted") + 600);
+      if (/\+\s*30\s*\*\s*60000|30 \* 60000/.test(blk)) {
+        fail.push("admin/admin.js — the unlock is offset past the start time. It must fire AT the "
+          + "start, so the checklist is open while the call is happening.");
+      } else if (!/Date\.now\(\)\s*>=/.test(blk)) {
+        fail.push("admin/admin.js — the unlock does not compare the clock to the booked start.");
+      } else pass.push("the unlock fires at the START of the call, not after it");
+
+      // 🔑 And only for a real booking.
+      if (!/event_id/.test(blk)) {
+        fail.push("admin/admin.js — the clock unlock does not require a real booking, so a client with "
+          + "no call could have the steps unlocked by a stale timestamp.");
+      } else pass.push("the clock unlock requires a confirmed booking");
+    }
+  }
+}
+
+// ── 8. SOMETHING OTHER THAN A PAGE VIEW ASKS ────────────────────────────────────────────────────
 // 🔑 THE HALF THAT MADE IT INVISIBLE. The checker worked; its only caller was `refreshKickoffRsvp`,
 // which runs when Chris opens a client's Overview. A client could accept on Friday and the record
 // still read "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
