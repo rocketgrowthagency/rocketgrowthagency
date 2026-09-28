@@ -60,6 +60,28 @@ if (!/await\s+requireWorkspaceForClient\s*\(\s*event\s*,/.test(fn))
   fail.push("send-kickoff-recap.js — no workspace auth is actually CALLED. A client email endpoint must be gated like every other one.");
 else pass.push("it is gated by the same guard as the other client senders");
 
+// ── 3b. AND ITS ANSWER IS READ ─────────────────────────────────────────────────────────────────
+// 🔴🔴 CALLING A GUARD IS NOT BEING GUARDED. This function shipped with the call wrapped in a
+// try/catch — but `requireWorkspaceForClient` RETURNS `{ error }`, it never throws, so the refusal
+// went into a void and an unauthenticated POST reached the client lookup on production.
+// The gate above passed the whole time, because the call was right there.
+// 🔑 Every caller of these guards must branch on the returned `.error`.
+// → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+{
+  const RETURNING_GUARDS = ["requireWorkspaceForClient", "requireUser", "requireWorkspaceUser", "requirePortalOwner"];
+  for (const g of RETURNING_GUARDS) {
+    const call = new RegExp(`(?:const|let)\\s+(\\w+)\\s*=\\s*await\\s+${g}\\s*\\(`).exec(fn);
+    if (!call) continue;
+    const name = call[1];
+    if (!new RegExp(`if\\s*\\(\\s*${name}\\.error\\s*\\)`).test(fn))
+      fail.push(`send-kickoff-recap.js — ${g}() is called and its refusal is never read. It RETURNS { error }, it does not throw, so an unauthenticated caller walks straight past it.`);
+    else pass.push(`the ${g}() refusal is actually read`);
+  }
+  if (/try\s*\{\s*(?:const|let|\w+)?\s*\w*\s*=?\s*await\s+require(?:WorkspaceForClient|User|PortalOwner)/.test(fn))
+    fail.push("send-kickoff-recap.js — an auth guard is wrapped in try/catch. These guards return their refusal rather than throwing, so a catch silently allows the request.");
+  else pass.push("no auth guard is wrapped in a catch that would swallow its refusal");
+}
+
 // ── 4. NOTHING SENDS WITHOUT ASKING, AND THE ASK NAMES THE RECIPIENT ───────────────────────────
 const handler = admin.slice(Math.max(0, admin.indexOf("data-kickoff-recap]")), admin.indexOf("data-kickoff-recap]") + 6000);
 if (!/rgaDialog\(\{[\s\S]{0,600}?tone: "outward"/.test(handler))

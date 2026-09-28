@@ -102,6 +102,41 @@ const after = at(KICKOFF_SLOT_MIN + 5, 5);
 if (after.phase !== "after") fail.push(`five minutes past the slot the phase is "${after.phase}", not "after".`);
 else pass.push("past the slot, the call is over");
 
+// ── 6b. EVERY THING THE CALL COLLECTS IS A REAL STEP THE CLIENT CAN ACTUALLY GIVE US ───────────
+// 🔴 Found 2026-09-28: one of the six pointed at `m1.review.system` — "Set up review acquisition
+// system", an APPROVE-bucket step about the messages WE send, not the customer list the call asks
+// for. It could never be satisfied by the client handing anything over, so the card would have read
+// "still need" forever while Chris chased something the row was not actually about.
+// 🔴 And the `auto` flags were hand-kept, two of six wrong: it told him to ask for photos the
+// product already watches. They are derived from the playbook's clientDone now.
+{
+  const PB = path.join(SITE, "data", "playbooks", "playbooks.json");
+  if (!fs.existsSync(PB)) indet.push("playbooks.json not found; the collect list cannot be checked");
+  else {
+    const pb = JSON.parse(fs.readFileSync(PB, "utf8"));
+    const all = [...(pb.month1 || []), ...(pb.month2plus || [])];
+    const listSrc = code.match(/const KICKOFF_COLLECT = \[[\s\S]*?\n\];/);
+    if (!listSrc) fail.push("admin/admin.js — KICKOFF_COLLECT is gone; the call collects nothing.");
+    else {
+      // 🔴 A HARDCODED `auto` IS A SECOND SOURCE OF TRUTH ABOUT WHAT WE CAN DETECT.
+      if (/\bauto:\s*(true|false)/.test(listSrc[0]))
+        fail.push("admin/admin.js — KICKOFF_COLLECT hardcodes `auto`. Whether a thing is detected is the playbook's clientDone, and two of six were wrong when it was kept by hand.");
+      else pass.push("no collect row hardcodes whether we can detect it");
+
+      const ids = [...listSrc[0].matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
+      if (!ids.length) fail.push("admin/admin.js — KICKOFF_COLLECT has no step ids.");
+      for (const id of ids) {
+        const step = all.find((x) => x.id === id);
+        if (!step) { fail.push(`admin/admin.js — the call collects "${id}", which is not a step in the playbook. It can never be satisfied.`); continue; }
+        // The client has to be able to hand this over: supply or act. An approve/admin step is ours.
+        if (step.clientBucket && !["supply", "act"].includes(step.clientBucket))
+          fail.push(`admin/admin.js — the call collects "${id}" ("${step.title}"), but that is a ${step.clientBucket}-bucket step — not something the client gives us. The row can never be satisfied by asking them.`);
+      }
+      if (!fail.some((f) => /the call collects/.test(f))) pass.push(`all ${ids.length} collect rows are real steps the client can hand over`);
+    }
+  }
+}
+
 // ── 7. RUN THE CONSOLE ITSELF, AND READ THE PANE IT RETURNS ────────────────────────────────────
 // 🔴 The clock computed "after" from day one and NOTHING BRANCHED ON IT, so two hours past a call
 // the console still rendered the live rail, a clock reading 131:54 of 30:00, and four buttons
