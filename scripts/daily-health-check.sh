@@ -181,6 +181,7 @@ run check-a-jump-moves-the-page.mjs "a jump button never does nothing"
 # record still say "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
 run check-acceptance-is-what-completes-the-kickoff.mjs "an unaccepted invite never passes as a booked call"
 run check-a-step-card-never-renders-itself-twice.mjs "a step card renders each string once"
+run check-a-settled-step-never-says-do-it.mjs "a finished step never tells the client to do it"
 run sweep-kickoff-rsvps.mjs "an acceptance is noticed without anyone opening a tab"
 run check-contract-doc-gets-every-field-it-renders.mjs "the contract document is given every field it renders"
 run check-client-work-reaches-the-brain.mjs "every audited client teaches the client brain"
