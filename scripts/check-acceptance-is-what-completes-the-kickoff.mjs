@@ -217,6 +217,70 @@ function stepLiteral(src) {
         else pass.push("admin/admin.js — an invite unanswered past 24h asks to be chased");
       } catch (e) { indet.push(`admin/admin.js: kickoffSentAwaiting would not run in isolation (${e.message})`); }
 
+      // ── THE STATE BEFORE "SENT": nothing sent AND nothing picked ─────────────────────────────
+      // 🔴 After a client cancelled, the admin's headline read "Step 2 · Send the kickoff calendar
+      // invite" while the portal had just told them "Pick a new time whenever you're ready." Chris
+      // asked, reasonably, *"do we need to send calendar invite?"* — the step's OWN card says
+      // "You usually do not need this button at all." The cards were reading the step's TITLE, which
+      // names the fallback, and presenting it as the primary act.
+      const wAt = code.indexOf("function kickoffWaitingOnPick(");
+      if (wAt < 0) {
+        fail.push("admin/admin.js — kickoffWaitingOnPick() is gone. With nothing sent and nothing "
+          + "picked, the cards fall back to the step title and tell Chris to book on the client's "
+          + "behalf while the client is mid-choice.");
+      } else {
+        const wOpen = code.indexOf("{", wAt);
+        let wd = 0, wfn = "";
+        for (let i = wOpen; i < code.length; i++) {
+          if (code[i] === "{") wd++;
+          else if (code[i] === "}") { wd--; if (wd === 0) { wfn = code.slice(wAt, i + 1); break; } }
+        }
+        try {
+          const c3 = { state: {}, _kickoffPendingAsk: new Map(), result: null };
+          vm.createContext(c3);
+          vm.runInContext(wfn + `
+            const set = (k, ask) => { state.onboardingData = k ? { kickoff_invite: k } : null;
+              _kickoffPendingAsk.clear(); if (ask) _kickoffPendingAsk.set("c1", ask);
+              return kickoffWaitingOnPick("c1"); };
+            result = {
+              nothing:  set(null, null),
+              cancelled: set({}, null),
+              picked:   set(null, "Mon 12:00 PM"),
+              sent:     set({ event_id: "e1" }, null),
+            };`, c3, { timeout: 2000 });
+          const w = c3.result;
+          if (!w.nothing || !w.cancelled) fail.push("admin/admin.js — a client who has not picked is not recognised as waiting on THEM, so the admin is told to book on their behalf.");
+          else pass.push("admin/admin.js — nothing sent and nothing picked reads as their turn");
+          if (w.picked) fail.push("admin/admin.js — a client who HAS picked still reads as waiting on them; the request would be ignored.");
+          else pass.push("admin/admin.js — a pending request is our turn, not theirs");
+          if (w.sent) fail.push("admin/admin.js — an invite already sent still reads as waiting on them to pick.");
+          else pass.push("admin/admin.js — a sent invite is not 'waiting on them to pick'");
+        } catch (e) { indet.push(`admin/admin.js: kickoffWaitingOnPick would not run in isolation (${e.message})`); }
+
+        // 🔴 COUNT REACHABLE CALLS, NOT CALL TEXT. `if (false && kickoffWaitingOnPick(...))` leaves
+        // the call spelled out while the branch can never run — a mutation doing exactly that passed.
+        const pickCalls = [...code.matchAll(/kickoffWaitingOnPick\s*\(/g)].slice(1);
+        const dead = pickCalls.filter((m) => /false\s*&&\s*$/.test(code.slice(Math.max(0, m.index - 40), m.index)));
+        const pickCallers = pickCalls.length - dead.length;
+        if (dead.length) {
+          fail.push(`admin/admin.js — ${dead.length} call(s) to kickoffWaitingOnPick are behind a literal `
+            + `false, so the branch can never run while the call still reads as present.`);
+        }
+        if (pickCallers < 2) {
+          fail.push(`admin/admin.js — kickoffWaitingOnPick is reachably called ${pickCallers} time(s); both `
+            + `the next-action sequencer and the cockpit alert must consult it.`);
+        } else if (!dead.length) pass.push(`admin/admin.js — ${pickCallers} cards consult the waiting-on-pick state`);
+
+        // 🔑 And the copy must exist on BOTH — a consulted flag with nothing to show for it is the
+        // same defect one layer down. Two distinct renderings of the same idea.
+        const pickCopy = (code.match(/Waiting on them to pick a kickoff time/g) || []).length;
+        if (pickCopy < 2) {
+          fail.push(`admin/admin.js — "Waiting on them to pick a kickoff time" appears ${pickCopy} time(s); `
+            + `the next-action card and the cockpit alert must each say it, or one still reads `
+            + `"Send the kickoff calendar invite" while the client is mid-choice.`);
+        } else pass.push("admin/admin.js — both cards say they are waiting on the client to pick");
+      }
+
       // 🔑 And both cards that name the next action must CONSULT it — a reader nobody calls is the
       // very shape this whole gate exists for.
       const callers = (code.match(/kickoffSentAwaiting\s*\(/g) || []).length - 1;
