@@ -63,7 +63,11 @@ else {
   // 🔑 Pin the PROPERTY: the link renders only behind a condition, and that condition must require
   // both a confirmed booking and the call not having ended.
   // → feedback_a_gate_must_pin_the_property_not_the_spelling
-  const joinRender = portal.match(/(\w+) && meetLink \? `<a class="pm-join"/);
+  // 🔑 The join moved ONTO the countdown card and gained a modifier class, so an exact-class match
+  // stopped finding it. Match the class as a PREFIX. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  // 🔑 Whitespace-tolerant: the markup wraps across lines now that the join sits on the countdown
+  // card. A regex that assumes one line is pinning formatting, not behaviour.
+  const joinRender = portal.match(/(\w+) && meetLink\s*\?\s*`<a class="pm-join[^"]*"/);
   if (!joinRender)
     fail.push("portal/portal.js — the join control is not gated on a link existing; it can render a dead button.");
   else {

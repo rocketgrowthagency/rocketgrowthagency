@@ -186,6 +186,42 @@ const code = fs.readFileSync(JS, "utf8");
   else pass.push(`all ${readers.size} reader(s) of a pending request either ask for it or are excused with a reason`);
 }
 
+// ── 8. 🔒 THE NEXT-ACTION CARD v2 — THE FACT IS THE HERO ───────────────────────────────────────
+// Approved 2026-09-29 (reports/mockups/admin_next_action_card_v2.html). The old card buried the one
+// thing you needed — the time — in the sixth word of a three-sentence paragraph, gave three
+// instructions equal weight, and filled its second column with the same sentence for every client
+// in every state. Principle 4: numbers are the hero.
+{
+  const html = fs.readFileSync(path.join(SITE, "admin", "index.html"), "utf8");
+  for (const [id, what] of [
+    ["adminNextActionFact", "the fact (usually the time), at metric size"],
+    ["adminNextActionWas", "the time it replaces, struck through"],
+    ["adminNextActionCaution", "the caution, in its own shape"],
+    ["clientNextActionCount", "a real count of what the client still owes"],
+    ["clientNextActionList", "the names of what they owe"],
+  ]) {
+    if (!html.includes(`id="${id}"`)) fail.push(`admin/index.html — the card has no slot for ${what}.`);
+  }
+  if (!fail.some((f) => /no slot for/.test(f))) pass.push("the card has slots for the fact, the strike-through, the caution and the client's real list");
+
+  // 🔑 Every one must be FILLED, not merely present — an empty slot is a shape that renders nothing.
+  const i = code.indexOf("function renderNextAction()");
+  const body = i < 0 ? "" : code.slice(i, code.indexOf("\n}", i));
+  if (!/adminNextActionFact/.test(body)) fail.push("admin/admin.js — nothing fills the fact slot, so the time stays buried in prose.");
+  else if (!/clientNextActionCount/.test(body)) fail.push("admin/admin.js — nothing fills the client column's count, so it is furniture again.");
+  else pass.push("the renderer fills the fact and the client's real list");
+
+  // 🔴 And the column must DISAPPEAR when there is nothing to say, rather than saying "nothing".
+  if (!/col\.style\.display = "none"/.test(body))
+    fail.push("admin/admin.js — the client column never hides, so with nothing outstanding it exists only to say so.");
+  else pass.push("the client column hides when nothing is outstanding");
+
+  // 🔴 The move state must carry the time it replaces — a move you can SEE, not read.
+  if (!/function kickoffPriorBookingWhen\(\)/.test(code))
+    fail.push("admin/admin.js — nothing reads the booking a pending request would replace, so a move cannot be shown as one.");
+  else pass.push("a pending move can show the time it replaces");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s): a client's action may not reach the admin.`);

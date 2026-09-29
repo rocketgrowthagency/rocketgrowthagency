@@ -57,7 +57,9 @@ const admin = read(F("admin", "admin.js")) || "";
 // countdown's guard still matched and the check passed. Presence is not location.
 // → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
 {
-  const at = portal.indexOf('data-kickoff-countdown="');
+  // 🔑 Anchor on the CARD ELEMENT, not the data attribute. The attribute now sits inside the
+  // returned template, so walking back from it lands on an interpolation rather than the guard.
+  const at = portal.indexOf('<div class="pm-cd ');
   const expr = at < 0 ? "" : portal.slice(portal.lastIndexOf("${", at), at);
   if (!expr)
     fail.push("portal/portal.js — the client card renders no countdown at all.");
@@ -90,6 +92,35 @@ for (const [rel, src] of [["portal/portal.js", portal], ["admin/admin.js", admin
   if (!/getAttribute\("data-kickoff-countdown"\)/.test(m[0]))
     fail.push(`${rel} — the timer does not read the start time from the element, so it can keep counting to a booking that has since moved.`);
   else pass.push(`${rel} reads the start time from the element it is updating`);
+}
+
+// ── 4. JOIN ONLY WHEN IT IS TIME, AND THE TONE MEANS SOMETHING ─────────────────────────────────
+// 🔒 Chris, 2026-09-29: "dont put join the call until its time. just countdown until the time of the
+// call then when call is ready put join." A way in offered before there is anything to join is an
+// invitation to sit alone in a room.
+{
+  const join = portal.match(/const joinable = [^;]+;/);
+  if (!join) fail.push("portal/portal.js — the join gate is gone.");
+  else if (/startMs - \d+/.test(join[0]))
+    fail.push("portal/portal.js — the join link appears BEFORE the call starts; it may only appear once it is time.");
+  else if (!/Date\.now\(\) >= startMs/.test(join[0]))
+    fail.push("portal/portal.js — the join link is not gated on the call having started.");
+  else pass.push("the join link appears only once the call has started");
+}
+// 🔴 TONAL BY PROXIMITY, NOT ALWAYS RED. Red for a call three days out is an alarm about nothing,
+// and teaches a client to ignore the next red thing that matters. → reference_backend_design_system
+// 🔴 SCOPED TO THE RENDER BLOCK. Both of these strings also appear in the TICKER, so a whole-file
+// search passed even with the render's tone and threshold deleted. A check about what is drawn must
+// read what is drawn. → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/admin.js", admin, "kc-cd"]]) {
+  const at = src.indexOf(`<div class="${cls} `);
+  if (at < 0) { fail.push(`${rel} — the countdown card is not rendered with a tone class, so it cannot say how close the call is.`); continue; }
+  const block = src.slice(src.lastIndexOf("${", at), at + 40);
+  if (!new RegExp(`${cls} \\$\\{tone\\}`).test(block))
+    fail.push(`${rel} — the countdown card renders a fixed tone, so it looks the same whether the call is in ten minutes or ten days.`);
+  else if (!/4 \* 3600000/.test(block))
+    fail.push(`${rel} — the countdown's tone is not chosen by proximity, so red would mean nothing.`);
+  else pass.push(`${rel} tunes the countdown's tone by how close the call is`);
 }
 
 for (const p of pass) console.log(`  ✅ ${p}`);

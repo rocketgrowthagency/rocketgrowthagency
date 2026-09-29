@@ -59,9 +59,12 @@ else pass.push("two hours ahead there is no Join link");
 if (!/Confirmed/.test(early)) fail.push("portal/portal.js — an upcoming confirmed call no longer reads Confirmed.");
 else pass.push("ahead of time it reads Confirmed");
 
+// 🔒 CHANGED BY CHRIS 2026-09-29: "dont put join the call until its time." The join used to appear
+// 15 minutes early; a way in offered before there is anything to join is an invitation to sit alone
+// in a room. The countdown owns everything up to the start.
 const near = render(-5);               // five minutes before
-if (!/pm-join/.test(near)) fail.push("portal/portal.js — five minutes before the call there is no way in.");
-else pass.push("five minutes before, the Join link is there");
+if (/pm-join/.test(near)) fail.push("portal/portal.js — the Join link appears five minutes before the call; it may only appear once it is time.");
+else pass.push("before the start there is no Join link — the countdown owns that time");
 
 const during = render(10);
 if (!/pm-join/.test(during)) fail.push("portal/portal.js — during the call there is no Join link.");
