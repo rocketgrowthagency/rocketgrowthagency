@@ -383,11 +383,13 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
     };
     const CASES = [
       // label,                 required tier,  why
-      // 🔑 `is-go-line` is the GO tier drawn as an accent OUTLINE — same tier, different weight. The
-      // approved mockup draws it that way (`.btn.go` over a white `.btn`) because this button sits
-      // ALONE inside an outcome box that is already bordered and tinted; a filled block competes
-      // with the box instead of sitting in it. The fill is for a row in a busy list.
-      ["Book another time",     "pm-act is-go-line", "it is the only control on a call that has passed, and the only way forward"],
+      // 🔴 THIS SAID `pm-act is-go-line` FOR ONE HOUR. I had built an outline variant to match a
+      // mockup's throwaway `.btn.go` declaration, and Chris put the two live cards side by side:
+      // "Upload photos →" filled, "Book another time" outlined, same list, same tier. The primary is
+      // FILLED in this product, and both admin mockups draw it that way too. A mockup's CSS sketches
+      // the tier; the design system owns the pixels.
+      // → feedback_deliverable_loop_mockup_then_portal
+      ["Book another time",     "pm-act is-go", "it is the only control on a call that has passed, and the only way forward"],
       ["Change the time",       "pm-amend",     "the call still stands, so changing it is an amendment to it"],
       ["Pick a different time", "pm-amend",     "the request is already with RGA, so changing it is an amendment"],
     ];
