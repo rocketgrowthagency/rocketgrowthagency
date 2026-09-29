@@ -51,7 +51,10 @@ if (!/event_id/.test(branch)) {
     + "so a booked kickoff falls through to \"Your foundation is being built\"");
 }
 {
-  const iBooked = branch.search(/const booked\s*=|if \(booked\)/);
+  // 🔴 `if \(booked\)` was a SPELLING. The branch was correctly tightened to `if (booked && !callOver)`
+  // — so that a call in the past stops being "Next up" — and this gate read the tightening as the
+  // branch having been deleted. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const iBooked = branch.search(/const booked\s*=|if \(booked\b/);
   const iFallback = branch.indexOf("foundation is being built");
   if (iBooked === -1) {
     fail.push("there is no `booked` state — the approved ladder puts a dated commitment first");
@@ -62,7 +65,19 @@ if (!/event_id/.test(branch)) {
 
 // 2 ─ the dated state carries the DATE and the NEXT UP eyebrow
 {
-  const b = branch.slice(branch.search(/if \(booked\)/) >>> 0, branch.indexOf("if (requested)") >>> 0);
+  // 🔴 TWO MORE SPELLINGS, AND A MISS THAT LOOKED LIKE A SLICE. Both anchors were the exact text
+  // `if (booked)` / `if (requested)`, which stopped matching when the branches were tightened to
+  // `if (booked && !callOver)`. And `-1 >>> 0` is 4294967295, so a failed search produced an EMPTY
+  // window rather than an error — every check below then failed against nothing at all.
+  // 🔑 Anchor on the identifier, and refuse to judge an empty window.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_unloaded_is_not_an_answer
+  const iStart = branch.search(/if \(booked\b/);
+  const iEnd = branch.search(/if \(requested\b/);
+  if (iStart === -1 || iEnd === -1 || iEnd <= iStart) {
+    console.log("  ⚠️  could not isolate the booked state between its own branch and the next one.");
+    process.exit(2);
+  }
+  const b = branch.slice(iStart, iEnd);
   if (!/eyebrow:\s*["']Next up["']/i.test(b)) {
     fail.push('the booked state does not set the "Next up" eyebrow — a scheduled call is not a step the client performs, '
       + 'and "Your next step" over a dated event is the label/content mismatch this replaced');

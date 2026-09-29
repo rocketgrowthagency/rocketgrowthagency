@@ -57,9 +57,25 @@ else {
 const portal = read(F("portal", "portal.js"));
 if (!portal) fail.push("portal/portal.js is missing.");
 else {
-  if (!/confirmed && meetLink \? `<a class="pm-join"/.test(portal))
-    fail.push("portal/portal.js — the join control is not gated on the booking being confirmed AND a link existing; one of those missing renders a dead or premature button.");
-  else pass.push("the portal renders the join only when confirmed and a link exists");
+  // 🔴 THIS PINNED THE SPELLING `confirmed && meetLink`, and broke the day the gate got STRICTER:
+  // the condition became `joinable`, which is confirmed AND inside the call's time window. A gate
+  // that names an expression cannot tell a tightening from a removal.
+  // 🔑 Pin the PROPERTY: the link renders only behind a condition, and that condition must require
+  // both a confirmed booking and the call not having ended.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const joinRender = portal.match(/(\w+) && meetLink \? `<a class="pm-join"/);
+  if (!joinRender)
+    fail.push("portal/portal.js — the join control is not gated on a link existing; it can render a dead button.");
+  else {
+    const cond = joinRender[1];
+    const decl = new RegExp(`const ${cond} = ([^;]+);`).exec(portal);
+    const src = cond === "confirmed" ? "confirmed" : (decl ? decl[1] : "");
+    if (!/confirmed/.test(src))
+      fail.push(`portal/portal.js — the join control's condition (\`${cond}\`) does not require a CONFIRMED booking, so it can offer a room for a time nobody agreed.`);
+    else if (cond !== "confirmed" && !/ended|Date\.now\(\)/.test(src))
+      fail.push(`portal/portal.js — the join control's condition (\`${cond}\`) is not time-aware, so it survives the end of the call.`);
+    else pass.push("the portal renders the join only for a confirmed booking, inside its time window");
+  }
   const css = read(F("portal", "portal.css")) || "";
   if (!/\.pm-join\{/.test(css)) fail.push("portal/portal.css — .pm-join has no styling, so the join control renders as a bare link.");
   else pass.push("the join control is styled");
