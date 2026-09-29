@@ -140,6 +140,52 @@ const code = fs.readFileSync(JS, "utf8");
   else pass.push(`all ${calls.length} callers pass a stable key`);
 }
 
+// ── 7. EVERY SURFACE THAT READS THE ANSWER ASKS FOR IT ─────────────────────────────────────────
+// 🔴🔴 THIS IS THE CLASS, not the instance. `_kickoffPendingAsk` is filled by ONE probe. Any surface
+// that reads it without calling that probe renders whatever happens to be in the map — and an empty
+// map reads exactly like "this client has made no request". Three surfaces did this in turn: the
+// onboarding checklist, the next-action card, and the cockpit alert, each found only when Chris
+// screenshotted it.
+// 🔑 A reader either asks, or is re-rendered by a function that does.
+{
+  const lines = code.split("\n");
+  const owner = (i) => {
+    for (let j = i; j >= 0; j--) {
+      const m = lines[j].match(/^(?:async )?function (\w+)/);
+      if (m) return m[1];
+    }
+    return "(top level)";
+  };
+  // Helpers that only COMPUTE from the map, and renderers driven by one that asks, are excused here
+  // with a reason — the same discipline the pre-flight excuse list uses.
+  const EXCUSED = {
+    kickoffWaitingOnPick: "a pure predicate — its callers ask",
+    kickoffSentAwaiting: "a pure reader of the invite, not of the request map",
+    ensureKickoffPendingAsk: "this IS the probe",
+    loadKickoffRequests: "fetches the answer itself via fetchKickoffAnswers",
+    stepStateBand: "rendered by renderOnboardingChecklist, which asks",
+    kickoffAskCopy: "formats a value it is handed",
+    kickoffBookingBeingMoved: "compares two times it is handed",
+  };
+  const readers = new Map();
+  lines.forEach((ln, i) => {
+    if (/^\s*(\/\/|\*)/.test(ln)) return;
+    if (!/_kickoffPendingAsk\.get\(/.test(ln)) return;
+    const f = owner(i);
+    if (!readers.has(f)) readers.set(f, i + 1);
+  });
+  const deaf = [];
+  for (const [fn, line] of readers) {
+    if (EXCUSED[fn]) continue;
+    const at = code.indexOf(`function ${fn}(`);
+    const body = at < 0 ? "" : code.slice(at, code.indexOf("\n}", at));
+    if (!/ensureKickoffPendingAsk\(/.test(body)) deaf.push(`${fn}() (line ${line})`);
+  }
+  if (deaf.length)
+    fail.push(`admin/admin.js — ${deaf.length} surface(s) read a client's pending request without asking for it, so they render an empty map as "no request": ${deaf.join(", ")}.`);
+  else pass.push(`all ${readers.size} reader(s) of a pending request either ask for it or are excused with a reason`);
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s): a client's action may not reach the admin.`);
