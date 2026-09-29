@@ -36,7 +36,11 @@ const box = {
   Date, Math, Number, String, Boolean, console,
 };
 vm.createContext(box);
-try { vm.runInContext(`${fn[0]}\nglobalThis.__r = kickoffRequestedHtml;`, box, { timeout: 4000 }); }
+// 🔑 The card now reads the SHARED definition, so the harness must load it too — otherwise this
+// gate reports the structural fix as a crash.
+const phaseFn = code.match(/function kickoffPhase\(\{[\s\S]*?\n\}/);
+if (!phaseFn) { console.error("🔴 FAIL — kickoffPhase() is gone; every surface derives the kickoff's state for itself again."); process.exit(1); }
+try { vm.runInContext(`${phaseFn[0]}\n${fn[0]}\nglobalThis.__r = kickoffRequestedHtml;`, box, { timeout: 4000 }); }
 catch (e) { console.error(`⚠️  INDETERMINATE — could not execute the renderer: ${e.message}`); process.exit(2); }
 
 const MIN = 60000;
@@ -281,20 +285,58 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   const branch = i < 0 ? "" : code.slice(i, code.indexOf("\n    })(),", i));
   if (!branch) fail.push("portal/portal.js — the onboarding headline branch is gone.");
   else {
+    // 🔑 THE RULE MOVED INTO `kickoffPhase`, WHICH IS THE POINT. Check the property wherever it
+    // lives: either the headline derives it itself and must handle a superseding request, or it
+    // delegates — and the shared function's own supersession rule is checked below.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+    const phaseSrc = (code.match(/function kickoffPhase\(\{[\s\S]*?\n\}/) || [""])[0];
     if (/const requested = k\?\.requested_start && !booked;/.test(branch))
       fail.push("portal/portal.js — the headline treats booked and requested as mutually exclusive, so a reschedule (which leaves BOTH on the record) can never reach the request branch.");
-    else if (!/movePending/.test(branch))
+    else if (!/movePending/.test(branch) && !/kickoffPhase\(/.test(branch))
       fail.push("portal/portal.js — the headline has no notion of a request that supersedes a standing booking, so a reschedule is invisible to it.");
-    else pass.push("the headline treats a disagreeing request as superseding the booking");
+    else if (/kickoffPhase\(/.test(branch) && !/rTime !== bTime/.test(phaseSrc))
+      fail.push("portal/portal.js — the shared definition no longer treats a disagreeing request as superseding the booking, so a reschedule is invisible everywhere at once.");
+    else pass.push("a disagreeing request supersedes the booking");
     // 🔴 And the superseded booking must stop claiming to be the dated commitment.
     if (!/if \(booked && !requested && !callOver\)/.test(branch))
       fail.push("portal/portal.js — a booking that has been superseded by a pending request still claims the headline as a dated commitment.");
     else pass.push("a superseded booking yields the headline to the request");
     // 🔑 And the clock must measure whichever time is currently authoritative.
     const cs = branch.match(/const callStartMs = [^;]+;/);
-    if (cs && !/requested \? /.test(cs[0]))
+    const delegated = cs && /phase\.startMs/.test(cs[0]);
+    if (cs && !delegated && !/requested \? /.test(cs[0]))
       fail.push("portal/portal.js — the headline's clock always measures the BOOKED time, so a pending move is judged against the call it replaced.");
+    else if (delegated && !/pending \? rTime/.test(phaseSrc))
+      fail.push("portal/portal.js — the shared definition no longer measures the authoritative time, so a pending move is judged against the call it replaced.");
     else if (cs) pass.push("the clock measures whichever time is authoritative");
+  }
+}
+
+// ── 12. 🔒 ONE DEFINITION OF THE KICKOFF'S STATE, AND EVERY SURFACE READS IT ────────────────────
+// 🔴🔴 THE STRUCTURAL FIX, 2026-09-29. Chris: "why is this so much back and forth. LETS FIX IT ONCE
+// AND FOR ALL!!!" He was right and the reason was structural: the headline derived the state from
+// the onboarding record and the card derived it from the holds ledger, so every fix corrected ONE
+// derivation while the other went on being wrong. Four rounds, one morning.
+// 🔑 Two stores may keep existing. They must agree on the RULE — so the rule is a pure function and
+// both surfaces feed it. Nothing may compute "is it over" for itself.
+{
+  if (!/function kickoffPhase\(\{/.test(code))
+    fail.push("portal/portal.js — kickoffPhase() is gone; each surface is deriving the kickoff's state for itself again, which is what caused a morning of contradictory cards.");
+  else {
+    pass.push("there is one definition of the kickoff's state");
+    const headline = code.slice(code.indexOf("stage_4_onboarding: (() => {"), code.indexOf("\n    })(),", code.indexOf("stage_4_onboarding: (() => {")));
+    if (!/kickoffPhase\(/.test(headline))
+      fail.push("portal/portal.js — the next-step headline does not read kickoffPhase(), so it can disagree with the card about the same call.");
+    else pass.push("the headline reads the shared definition");
+    const cardFn = code.match(/function kickoffRequestedHtml\([\s\S]*?\n\}/);
+    if (cardFn && !/kickoffPhase\(/.test(cardFn[0]))
+      fail.push("portal/portal.js — the step card does not read kickoffPhase(), so it can disagree with the headline about the same call.");
+    else if (cardFn) pass.push("the card reads the shared definition");
+    // 🔴 And no surface may quietly recompute "is it over" from a raw timestamp.
+    const strays = [headline, cardFn ? cardFn[0] : ""].filter((b) => /Date\.now\(\) >= \w+ \+ \w* ?\* ?60000/.test(b));
+    if (strays.length)
+      fail.push(`${strays.length} surface(s) still compute the end of the call from a raw timestamp instead of reading the shared definition.`);
+    else pass.push("no surface recomputes the end of the call for itself");
   }
 }
 
