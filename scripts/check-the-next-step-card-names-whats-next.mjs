@@ -159,13 +159,60 @@ if (!/clientWaitingNote/.test(src.slice(src.indexOf("const mine = open.filter"),
     + "so counting them as \"still needs you\" contradicts the row's own text on the same screen");
 }
 
+// ── ONE KIND, ONE EYEBROW ───────────────────────────────────────────────────────────────────────
+// 🔴🔴 2026-09-29. Chris asked whether every card follows next_step_card_v1. Six of seven states did.
+// The seventh — "Waiting on Rocket Growth Agency", shown once every Google service is connected —
+// rendered the DEFAULT eyebrow, **YOUR NEXT STEP**, directly above *"nothing more is needed from you
+// right now"*. That is the precise mismatch the mockup was written to remove ("the eyebrow promises
+// their step and the body gives ours"), surviving in the one state nobody re-read. The correct
+// eyebrow already existed two branches below, on the kickoff's identical situation.
+//
+// 🔑 PIN THE NARROW PROPERTY, NOT "no card may say YOUR NEXT STEP over calm copy". The last-resort
+// card — "Your foundation is being built … Nothing needs you right now" — is APPROVED with YOUR NEXT
+// STEP in the mockup's own ladder table, so the broad rule would go red on Chris's own decision.
+// The property that is actually true: **a state that declares RGA is the actor names itself as one.**
+// → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_message_needs_a_shape
+{
+  // 🔴 `branch` is the KICKOFF sub-branch only — 3 states. The card's whole ladder spans the
+  // `stage_3_setup` branch too, and the state this check exists for lives THERE. Slicing the wrong
+  // region made the check print a warning and pass, which is a gate that cannot fail.
+  // → feedback_a_gate_that_cannot_fail · feedback_position_is_not_identity
+  const ladderFrom = src.indexOf("stage_3_setup: (function () {");
+  const ladderTo = src.indexOf("const action = ACTIONS[stage];");
+  const ladder = (ladderFrom !== -1 && ladderTo > ladderFrom) ? src.slice(ladderFrom, ladderTo) : "";
+  const states = [...ladder.matchAll(/return \{([\s\S]*?)\n\s*\};/g)].map((m) => m[1]);
+  if (states.length < 6) {
+    fail.push(`only ${states.length} ladder states parsed from the card builder (expected 6+). Either the `
+      + `ladder was restructured or this check is slicing the wrong region — and a check that cannot `
+      + `see the states cannot judge them, so it fails rather than reassuring`);
+  } else {
+    const waiting = states.filter((b) => /title:\s*["'`]Waiting on/.test(b));
+    if (!waiting.length) {
+      fail.push('no ladder state has a "Waiting on …" headline any more — either the state is gone, or '
+        + "it has been renamed and this check has stopped watching anything");
+    }
+    for (const b of waiting) {
+      const t = (b.match(/title:\s*["'`]([^"'`]+)/) || [])[1] || "?";
+      if (!/eyebrow:\s*["'`]Waiting on RGA["'`]/.test(b)) {
+        const eye = (b.match(/eyebrow:\s*["'`]([^"'`]+)/) || [])[1] || "the default, YOUR NEXT STEP";
+        fail.push(`the state headed "${t}" carries the eyebrow "${eye}". A card whose body says the ball `
+          + `is with RGA must not be labelled as a step the client takes — the kickoff branch already `
+          + `says "Waiting on RGA" for the same kind, and two labels for one kind is the defect`);
+      }
+    }
+    if (waiting.length && !fail.length) {
+      console.log(`  ${waiting.length} "waiting on RGA" state(s) · each labelled as one, not as the client's step`);
+    }
+  }
+}
+
 if (fail.length) {
   console.log(`\n🔴 ${fail.length} problem(s):`);
   for (const f of fail) console.log(`    ${f}`);
   console.log("\n   Ladder: dated commitment → their open action → reassurance. The eyebrow names which.");
   process.exit(1);
 }
-console.log("  booked state first · dated + NEXT UP · \"all set\" gated on a seen acceptance · requested names the time");
+console.log("  booked state first · dated + NEXT UP · \"all set\" once RGA has confirmed · requested names the time");
 console.log("  eyebrow driven by state · owed line hidden until known · every card updated, not the first");
 console.log("\n✅ the next-step card names the soonest concrete thing.");
 process.exit(0);
