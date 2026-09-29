@@ -188,6 +188,7 @@ run check-a-client-action-reaches-the-admin.mjs "a client waiting on us reaches 
 # only thing that ever asked it was an admin page view, so a client could accept on Friday and the
 # record still say "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
 run check-the-kickoff-is-booked-when-rga-confirms.mjs "the kickoff is booked when RGA confirms; the RSVP holds nothing up"
+run check-a-step-title-has-one-home.mjs "no surface holds its own copy of a step title"
 run check-a-step-card-never-renders-itself-twice.mjs "a step card renders each string once"
 run check-a-settled-step-never-says-do-it.mjs "a finished step never tells the client to do it"
 run check-client-copy-is-american.mjs "client copy reads as American, not British"

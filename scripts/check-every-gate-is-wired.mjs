@@ -76,6 +76,7 @@ const NOT_PREFLIGHT = {
   'check-client-copy-is-american.mjs': 'client-copy gate; runs in daily-health-check.sh — an idiom cannot make a video unsafe',
   'check-a-settled-step-never-says-do-it.mjs': 'client-portal copy gate; runs in daily-health-check.sh — a stale heading cannot make a video unsafe',
   'check-a-step-card-never-renders-itself-twice.mjs': 'admin-UI gate; runs in daily-health-check.sh — checklist card layout cannot make a video unsafe',
+  'check-a-step-title-has-one-home.mjs': 'SOP-integrity gate; runs in daily-health-check.sh',
   'check-the-kickoff-is-booked-when-rga-confirms.mjs': 'kickoff-lifecycle gate; runs in daily-health-check.sh — step completion cannot make a video unsafe',
   'check-a-jump-moves-the-page.mjs': 'admin-UI gate; runs in daily-health-check.sh — a dead jump button cannot make a video unsafe',
   'check-the-kickoff-call-fits-its-slot.mjs': 'admin-UI gate; runs in daily-health-check.sh — the call console cannot make a video unsafe',
