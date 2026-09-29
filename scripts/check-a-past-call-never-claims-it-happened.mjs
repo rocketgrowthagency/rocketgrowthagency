@@ -93,9 +93,12 @@ else pass.push("a finished call carries no controls");
 if (!/booked && !callOver/.test(code))
   fail.push('portal/portal.js — the next-step banner is not gated on the call still being ahead, so it will read "Next up" about yesterday.');
 else pass.push("the banner stops calling a past call next up");
-if (!/requested && !callOver/.test(code))
-  fail.push('portal/portal.js — an unconfirmed hold whose time has passed still reads "we\'re holding it".');
-else pass.push("a lapsed unconfirmed hold stops claiming to be held");
+// 🔴 THIS PINNED THE SPELLING `requested && !callOver`, and the code moved ON — the branch now
+// fires for ANY pending request and distinguishes the lapsed case INSIDE it, which is strictly
+// better: a request we never answered is still owed, and dropping it from the headline was the
+// defect Chris reported. The property is checked in section 10, against the branch's contents.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+pass.push("the lapsed-hold wording is checked against the branch, not a spelling");
 
 // ── 5. AND THE HEADLINE MUST NOT RE-OFFER THE BOOKING ──────────────────────────────────────────
 // 🔴🔴 THE REGRESSION THE FIRST FIX CAUSED. Gating the banner on `!callOver` made it fall through to
@@ -225,6 +228,34 @@ else pass.push("a lapsed unconfirmed hold stops claiming to be held");
       fail.push("portal/portal.js — the headline patch still branches on the text it wrote itself, so a re-run cannot correct it.");
     else pass.push("the headline patch recomputes from the original copy");
   }
+}
+
+// ── 10. A REQUEST WE NEVER ANSWERED IS STILL OWED ──────────────────────────────────────────────
+// 🔴🔴 Chris, 2026-09-29: "should say waiting on RGA to approve kickoff call right?" His headline had
+// skipped a kickoff request he was waiting on US to confirm and named his CMS login instead —
+// because the branch was gated on `!callOver`, which ALSO dropped it once the requested slot itself
+// went by. Two different facts behind one flag.
+// 🔑 A pending request is never the client's next action and never nothing. A slot that passes
+// unconfirmed does not stop being owed — it becomes MORE owed.
+{
+  const reqBranch = code.match(/if \(requested\)[\s\S]{0,1800}?\n      \}/);
+  if (!reqBranch) {
+    if (/if \(requested && !callOver\)/.test(code))
+      fail.push("portal/portal.js — a pending kickoff request is dropped from the headline once its slot passes, so a client waiting on RGA is shown their own to-do list instead.");
+    else fail.push("portal/portal.js — the pending-request branch of the headline is gone.");
+  } else {
+    if (!/Waiting on RGA/.test(reqBranch[0]))
+      fail.push("portal/portal.js — the headline does not say a pending request is waiting on RGA, so the client cannot tell whose turn it is.");
+    else pass.push("a pending request tells the client it is waiting on RGA");
+    if (!/callOver/.test(reqBranch[0]))
+      fail.push("portal/portal.js — the headline gives the same wording whether the requested slot is ahead or already past.");
+    else pass.push("a lapsed request gets its own wording, not \"we're holding it\"");
+  }
+  // 🔑 And the card must stop promising an invite for a time that has gone.
+  const cardFn = code.match(/function kickoffRequestedHtml\([\s\S]*?\n\}/);
+  if (cardFn && !/has now passed and we haven/.test(cardFn[0]))
+    fail.push("portal/portal.js — the card keeps saying it is holding a requested time after that time has passed.");
+  else if (cardFn) pass.push("the card owns a request it never confirmed");
 }
 
 for (const p of pass) console.log(`  ✅ ${p}`);
