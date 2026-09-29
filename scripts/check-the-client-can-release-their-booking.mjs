@@ -39,8 +39,14 @@ if (!/\bdata-kickoff-release\b/.test(src)) {
   fail.push("there is no \"Can't make it\" control — a confirmed call would again be un-releasable, and the client's only route back is an email to Chris");
 }
 {
+  // 🔴🔴 THIS WAS A 2,200-CHARACTER WINDOW AND IT LIED (2026-09-29). The card gained an
+  // after-the-time branch — "Time has passed", with Join/Change/Can't-make-it correctly removed
+  // for a call already held — which pushed the confirmed card's controls past 2,200 characters.
+  // The gate reported that a client could no longer release their booking, of code that was right.
+  // 🔑 Bound by the SYNTAX: the renderer's own end. → feedback_a_gate_window_measured_in_characters_will_lie
   const i = src.indexOf("const confirmed = status === \"booked\"");
-  const card = i === -1 ? "" : src.slice(i, i + 2200);
+  const fnEnd = i === -1 ? -1 : src.indexOf("\nfunction ", i);
+  const card = i === -1 ? "" : src.slice(i, fnEnd === -1 ? src.length : fnEnd);
   if (!/data-kickoff-change/.test(card) || !/data-kickoff-release/.test(card)) {
     fail.push("the confirmed card does not carry both controls — moving a booking and releasing it are different needs and both vanish without them");
   }

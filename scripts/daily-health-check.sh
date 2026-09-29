@@ -176,6 +176,13 @@ run check-an-abandoned-oauth-grant-is-never-silent.mjs "an abandoned Google gran
 run check-a-reschedule-never-looks-like-a-first-booking.mjs "a moved call never reads as a new one"
 run check-booked-and-accepted-are-different-words.mjs "booked and accepted are two different facts"
 run check-a-jump-moves-the-page.mjs "a jump button never does nothing"
+run check-the-kickoff-call-fits-its-slot.mjs "the kickoff call fits its 30-minute slot"
+run check-the-recap-sends-what-you-saw.mjs "the recap sends what you saw, to the person on the record"
+run check-the-join-link-is-the-invites-link.mjs "one event, one room"
+run check-a-past-call-never-claims-it-happened.mjs "a past call claims it happened only with a recap"
+run check-a-settled-booking-corrects-every-sentence.mjs "a confirmed booking settles every sentence"
+run check-a-sentence-never-points-where-it-cannot-see.mjs "no shared copy names a direction"
+run check-a-client-action-reaches-the-admin.mjs "a client waiting on us reaches the next-action card"
 # 🔑 Not a gate — a CALLER. kickoff-rsvp-check could always read an acceptance; until 2026-09-27 the
 # only thing that ever asked it was an admin page view, so a client could accept on Friday and the
 # record still say "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
