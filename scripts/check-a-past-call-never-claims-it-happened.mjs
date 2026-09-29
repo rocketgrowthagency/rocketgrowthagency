@@ -350,6 +350,54 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   }
 }
 
+// ── THE CONTROL'S TIER MUST MATCH THE STATE IT SITS IN ──────────────────────────────────────────
+// 🔴 2026-09-29, Chris: *"are these the buttons as mockup?"* — "Book another time" rendered as
+// `pm-amend`, and portal.css states in so many words what that tier means: *"the low-stakes
+// afterthought (Check again / Change / Not right?)"*. That is right for **Change the time** beside a
+// CONFIRMED booking: the call stands, and changing it is an amendment to it. On a call whose time has
+// passed it is the ONLY control on the card and the only way forward — `pm-act.is-go`, *"the one that
+// starts something"*. The approved mockup marked it `btn go` for the same reason.
+//
+// 🔑 THE SAME WORDS CAN NEED DIFFERENT TIERS ON DIFFERENT STATES, so this pins the pairing, not the
+// button. → feedback_a_control_has_a_kind_like_a_message_does · feedback_a_message_needs_a_shape
+{
+  // 🔴 `code` is the module's own already-read source. My first draft called `readPortal()`, a
+  // function that does not exist in this file — the third invented symbol of the day, each one
+  // plausible. A name written from memory is a claim about the file.
+  // → feedback_a_symbol_name_is_a_claim_about_the_codebase
+  const src = code;
+  {
+    const btn = (label) => {
+      const at = src.indexOf(`>${label}</button>`);
+      if (at < 0) return null;
+      const open = src.lastIndexOf("<button", at);
+      return open < 0 ? null : src.slice(open, at);
+    };
+    const CASES = [
+      // label,                 required tier,  why
+      ["Book another time",     "pm-act is-go", "it is the only control on a call that has passed, and the only way forward"],
+      ["Change the time",       "pm-amend",     "the call still stands, so changing it is an amendment to it"],
+      ["Pick a different time", "pm-amend",     "the request is already with RGA, so changing it is an amendment"],
+    ];
+    let checked = 0;
+    for (const [label, tier, why] of CASES) {
+      const b = btn(label);
+      if (!b) { console.log(`  ⚠️  no "${label}" button found — not judged`); continue; }
+      checked++;
+      if (!b.includes(`class="${tier}"`)) {
+        const got = (b.match(/class="([^"]*)"/) || [])[1] || "(no class)";
+        fail.push(`"${label}" is rendered as \`${got}\` but must be \`${tier}\` — ${why}. `
+          + `portal.css defines these tiers by how much the control matters, so the wrong one tells `
+          + `the client the wrong thing about what to do next.`);
+      }
+    }
+    if (checked < CASES.length) {
+      fail.push(`only ${checked} of ${CASES.length} kickoff controls could be found, so this check is `
+        + `not measuring what it claims`);
+    } else if (!fail.length) pass.push(`all ${checked} kickoff controls carry the tier their state calls for`);
+  }
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s) with a call whose time has passed:`);
