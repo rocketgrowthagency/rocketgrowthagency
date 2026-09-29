@@ -30,6 +30,9 @@ const fn = code.match(/function kickoffRequestedHtml\([\s\S]*?\n\}/);
 if (!fn) { console.error("🔴 FAIL — kickoffRequestedHtml() is gone; the client sees nothing about their call."); process.exit(1); }
 
 const box = {
+  // 🔑 The card now renders a countdown from the shared module. Stubbed so this gate keeps testing
+  // the CARD's states rather than the countdown's wording, which has its own gate.
+  kickoffCountdown: () => ({ text: "", tone: "far" }),
   escapeHtml: (x) => String(x == null ? "" : x),
   escapeAttribute: (x) => String(x == null ? "" : x),
   clientReadingZone: () => "America/Los_Angeles",
@@ -249,7 +252,11 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
 // 🔑 A pending request is never the client's next action and never nothing. A slot that passes
 // unconfirmed does not stop being owed — it becomes MORE owed.
 {
-  const reqBranch = code.match(/if \(requested\)[\s\S]{0,1800}?\n      \}/);
+  // 🔴🔴 A CHARACTER WINDOW, IN A GATE WRITTEN THIS MORNING — `{0,1800}` — and a comment added to
+  // the branch pushed its closing brace past it, so the gate reported the branch as GONE. Fifth
+  // time today. Bound by the SYNTAX: the first close at the branch's own indentation.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  const reqBranch = code.match(/if \(requested\)[\s\S]*?\n      \}/);
   if (!reqBranch) {
     if (/if \(requested && !callOver\)/.test(code))
       fail.push("portal/portal.js — a pending kickoff request is dropped from the headline once its slot passes, so a client waiting on RGA is shown their own to-do list instead.");

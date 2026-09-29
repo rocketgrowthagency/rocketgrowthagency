@@ -82,6 +82,7 @@ const NOT_PREFLIGHT = {
   'check-the-recap-sends-what-you-saw.mjs': 'admin-UI gate; runs in daily-health-check.sh — the recap composer cannot make a video unsafe',
   'check-the-join-link-is-the-invites-link.mjs': 'admin+portal gate; runs in daily-health-check.sh — a meeting link cannot make a video unsafe',
   'check-a-past-call-never-claims-it-happened.mjs': 'portal-UI gate; runs in daily-health-check.sh — a past-call card cannot make a video unsafe',
+  'check-the-countdown-agrees-across-portals.mjs': 'portal+admin UI gate; runs in daily-health-check.sh — a countdown cannot make a video unsafe',
   'check-a-settled-booking-corrects-every-sentence.mjs': 'portal-UI gate; runs in daily-health-check.sh — a settled step card cannot make a video unsafe',
   'check-a-sentence-never-points-where-it-cannot-see.mjs': 'portal-copy gate; runs in daily-health-check.sh — a direction word cannot make a video unsafe',
   'check-a-client-action-reaches-the-admin.mjs': 'admin-UI gate; runs in daily-health-check.sh — a next-action card cannot make a video unsafe',

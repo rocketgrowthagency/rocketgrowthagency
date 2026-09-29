@@ -180,6 +180,7 @@ run check-the-kickoff-call-fits-its-slot.mjs "the kickoff call fits its 30-minut
 run check-the-recap-sends-what-you-saw.mjs "the recap sends what you saw, to the person on the record"
 run check-the-join-link-is-the-invites-link.mjs "one event, one room"
 run check-a-past-call-never-claims-it-happened.mjs "a past call claims it happened only with a recap"
+run check-the-countdown-agrees-across-portals.mjs "both portals count down in the same words"
 run check-a-settled-booking-corrects-every-sentence.mjs "a confirmed booking settles every sentence"
 run check-a-sentence-never-points-where-it-cannot-see.mjs "no shared copy names a direction"
 run check-a-client-action-reaches-the-admin.mjs "a client waiting on us reaches the next-action card"
