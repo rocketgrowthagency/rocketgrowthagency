@@ -123,6 +123,41 @@ for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/ad
   else pass.push(`${rel} tunes the countdown's tone by how close the call is`);
 }
 
+// ── 5. THE HERO SURVIVES ITS CONTAINER ─────────────────────────────────────────────────────────
+// 🔴🔴 THE ADMIN CARD SHIPPED WITH THE RIGHT BACKGROUND AND A SMALL GREY NUMBER (2026-09-29).
+// It renders inside `.pm-outcome`, whose `.pm-outcome p { font-size:13px; color:muted }` is
+// specificity (0,1,1) — one class plus one element — and therefore BEAT a bare `.kc-cd-big` at
+// (0,1,0). The tone applied; the hero did not. Chris spotted it against the mockup.
+//
+// 🔑 A nested card inherits its container's ELEMENT rules. Every part of a card that lives inside
+// another card must be scoped by its own card class, so two classes (0,2,0) win — and without
+// naming the container, which would tie the component to where it happens to sit.
+{
+  const css = {
+    "admin/admin.css": fs.readFileSync(F("admin", "admin.css"), "utf8"),
+    "portal/portal.css": fs.readFileSync(F("portal", "portal.css"), "utf8"),
+  };
+  const parts = [["admin/admin.css", "kc-cd"], ["portal/portal.css", "pm-cd"]];
+  for (const [rel, cls] of parts) {
+    for (const part of ["big", "lab"]) {
+      const scoped = new RegExp(`\\.${cls} \\.${cls}-${part}\\s*\\{`).test(css[rel]);
+      const bare = new RegExp(`(^|[^ ])\\.${cls}-${part}\\s*\\{`, "m").test(css[rel]);
+      if (!scoped && bare)
+        fail.push(`${rel} — .${cls}-${part} is styled unscoped, so any container rule like ".card p" outranks it and the hero silently loses its size.`);
+    }
+  }
+  if (!fail.some((f) => /is styled unscoped/.test(f))) pass.push("the countdown's parts outrank their container's element rules");
+
+  // 🔑 And both cards carry the same three parts — label, number, date.
+  for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/admin.js", admin, "kc-cd"]]) {
+    for (const part of ["lab", "big", "sub"]) {
+      if (!new RegExp(`${cls}-${part}`).test(src))
+        fail.push(`${rel} — the countdown card has no ${part === "sub" ? "date line" : part === "big" ? "number" : "label"}; the two portals no longer show the same component.`);
+    }
+  }
+  if (!fail.some((f) => /no longer show the same component/.test(f))) pass.push("both cards carry the same three parts");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s) with the kickoff countdown:`);
