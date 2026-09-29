@@ -250,6 +250,74 @@ const code = fs.readFileSync(JS, "utf8");
   else pass.push("admin copy names the client rather than saying \"them\"");
 }
 
+// ── THE CARD THAT NAMES THE DECISION MUST BE ABLE TO MAKE IT ────────────────────────────────────
+// 🔒 Approved 2026-09-29 — Chris: *"do it and match mockups exactly"*, answering the open question in
+// reports/mockups/admin_next_action_card_v2.html: *"Approve from the card, or keep the jump?"*
+//
+// The card described the decision in full and then offered "Go to the request →" — another tab, to
+// press a button saying the same thing. A card that names the next action and cannot perform it is
+// the same defect as a step that says "do it" with no control on it.
+// → feedback_a_finding_must_be_actionable_inside_the_product
+{
+  const live = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+  // 1 · the approve action is emitted, and ONLY with a real ISO behind it.
+  if (!/approve:\s*askedIso\s*\?/.test(live)) {
+    fail.push('admin/admin.js — the pending-request branch does not emit an `approve` action gated on '
+      + "a known ISO. Either the card is back to only pointing at the work, or it can render an "
+      + "Approve button with no slot behind it.");
+  } else pass.push("the pending-request card offers the approval itself, only when the slot is known");
+
+  // 2 · the label carries the TIME. A bare "Approve" reads the same on every request, so the button
+  //     cannot be checked against the card it sits on. → feedback_instruct_by_what_is_on_screen
+  if (!/label:\s*`Approve \$\{kickoffShortWhen\(/.test(live)) {
+    fail.push("admin/admin.js — the approve button's label no longer names the time it would confirm.");
+  } else pass.push("the approve button names the slot it confirms");
+
+  // 3 · pressing it must reach the real sender, with the move-ness it was rendered with.
+  //     🔴 `movesFrom` decides whether the dialog describes a MOVE or a first booking, and whether
+  //     Google sends a reschedule notice or an invitation. Dropping it silently mis-describes both.
+  const wired = /onclick\s*=\s*\(\)\s*=>\s*\n?\s*answerKickoffRequest\(a\.clientId,\s*a\.start,\s*"confirm"/.test(live);
+  if (!wired) {
+    fail.push("admin/admin.js — the approve button is not wired to answerKickoffRequest, so it renders "
+      + "as a control and does nothing.");
+  } else if (!/a\.movesFrom/.test(live)) {
+    fail.push("admin/admin.js — the approve button drops `movesFrom`, so a reschedule would be "
+      + "described to Chris, and emailed to the client, as a first booking.");
+  } else pass.push("the approve button reaches the real sender, carrying whether it is a move");
+
+  // 4 · 🔴🔴 THE GHOST HAD NO HANDLER. `handleTabClick` is bound to `els.tabButtons`, not the
+  //     document, so `data-tab` on a button inside a card is read by NOBODY. Nothing populated `alt`
+  //     until today, so it was a dead control waiting to be switched on.
+  //     → feedback_a_capability_nobody_calls_looks_finished
+  const altBlock = live.slice(live.indexOf("const alt = document.getElementById(\"adminNextActionAlt\")"));
+  if (!altBlock) {
+    fail.push("admin/admin.js — the secondary action on the next-action card is gone.");
+    // 🔴 `alt.onclick =` ALONE IS SATISFIED BY THE TEARDOWN. The else-branch sets `alt.onclick = null`
+    // to clear it, and a mutation that deleted the real handler still passed on that line. Require an
+    // assignment to a FUNCTION, which only the live branch can have.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  } else if (!/alt\.onclick\s*=\s*(\(\s*\)|function|async)/.test(altBlock.slice(0, 1400))) {
+    fail.push("admin/admin.js — the next-action card's secondary button has NO click handler. It sets "
+      + "data-tab, but handleTabClick is bound to the tab bar, not the document — so it renders, "
+      + "looks pressable, and does nothing.");
+  } else pass.push("the card's secondary action is actually wired, not merely attributed");
+
+  // 5 · the handler must be ASSIGNED, never added, or a re-render stacks a second confirm.
+  if (/adminNextActionBtn\.addEventListener\("click"[\s\S]{0,200}answerKickoffRequest/.test(live)) {
+    fail.push("admin/admin.js — the approve handler is ADDED rather than assigned, so a re-render "
+      + "stacks another one and a single click confirms the slot twice.");
+  } else pass.push("the approve handler is assigned, so a re-render cannot stack a second one");
+
+  // 6 · and it must be cleared on every other branch, or it survives onto the next client's card.
+  const cleared = (live.match(/adminNextActionBtn\.onclick\s*=\s*null/g) || []).length;
+  if (cleared < 2) {
+    fail.push(`admin/admin.js — the approve handler is cleared on ${cleared} other branch(es); it must `
+      + `be cleared on every one, or a card for a client with nothing pending still confirms the last `
+      + `client's slot.`);
+  } else pass.push("the approve handler is cleared on every branch that does not use it");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s): a client's action may not reach the admin.`);

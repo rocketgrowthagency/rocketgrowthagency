@@ -142,8 +142,16 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   if (!pill) fail.push("portal/portal.js — the time-has-passed pill is gone.");
   else if (/class="dot"/.test(pill[0])) {
     const css = fs.readFileSync(path.join(SITE, "portal", "portal.css"), "utf8");
-    if (!/\.pm-msg\.past \.dot\s*\{[^}]*background/.test(css))
-      fail.push("portal/portal.js — the time-has-passed pill renders a dot that no CSS colours, so it is an invisible element taking up space inside the pill.");
+    // 🔴 THE PROPERTY IS "THIS DOT ENDS UP WITH A COLOUR", NOT "A VARIANT RULE EXISTS FOR IT".
+    // This demanded `.pm-msg.past .dot{…background…}` and went red on the CORRECT fix: the base rule
+    // `.pm-msg .dot` now takes `currentColor`, which is how the approved mockup does it and which
+    // gives every present and future variant a right-coloured dot for free. A gate that names one
+    // expression reads a generalisation as a removal.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_fix_the_class_not_the_instance
+    const variantRule = /\.pm-msg\.past \.dot\s*\{[^}]*background/.test(css);
+    const baseRule = /\.pm-msg \.dot\s*\{[^}]*background\s*:\s*currentColor/i.test(css);
+    if (!variantRule && !baseRule)
+      fail.push("portal/portal.js — the time-has-passed pill renders a dot that no CSS colours, so it is an invisible element taking up space inside the pill. Give `.pm-msg .dot` a `currentColor` background, or colour it on the `.past` variant.");
     else pass.push("the past pill's dot is actually visible");
   } else pass.push("the past pill carries no dot, so its text is not pushed off-centre");
 }
@@ -375,7 +383,11 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
     };
     const CASES = [
       // label,                 required tier,  why
-      ["Book another time",     "pm-act is-go", "it is the only control on a call that has passed, and the only way forward"],
+      // 🔑 `is-go-line` is the GO tier drawn as an accent OUTLINE — same tier, different weight. The
+      // approved mockup draws it that way (`.btn.go` over a white `.btn`) because this button sits
+      // ALONE inside an outcome box that is already bordered and tinted; a filled block competes
+      // with the box instead of sitting in it. The fill is for a row in a busy list.
+      ["Book another time",     "pm-act is-go-line", "it is the only control on a call that has passed, and the only way forward"],
       ["Change the time",       "pm-amend",     "the call still stands, so changing it is an amendment to it"],
       ["Pick a different time", "pm-amend",     "the request is already with RGA, so changing it is an amendment"],
     ];
