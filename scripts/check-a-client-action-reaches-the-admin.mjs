@@ -222,6 +222,34 @@ const code = fs.readFileSync(JS, "utf8");
   else pass.push("a pending move can show the time it replaces");
 }
 
+// ── 9. THE CARD IS WRITTEN FROM THE ADMIN'S SIDE, AND THE BADGE AGREES WITH THE SENTENCE ───────
+// 🔴🔴 Two faults Chris caught on one screenshot, 2026-09-29:
+//   · the badge read "● YOUR ACTION" above "Waiting on them to accept the invite" — whose turn it
+//     was had been decided per STAGE (onboarding hardcoded to "you") while the individual state knew
+//     perfectly well it was waiting on somebody else. Two claims, one card.
+//   · the right column's pill read "WAITING ON RGA" — written from the CLIENT's point of view and
+//     then shown to RGA. "the admin is RGA."
+// 🔑 A state that knows whose turn it is overrides the stage's guess, and every label on this card
+// is written from the side that reads it.
+{
+  const i = code.indexOf("function renderNextAction()");
+  const body = i < 0 ? "" : code.slice(i, code.indexOf("\n}", i));
+  if (!/data\.admin\.owner/.test(body))
+    fail.push("admin/admin.js — the turn badge is decided per stage only, so a state that is waiting on the client can still be labelled \"Your action\".");
+  else pass.push("a state that knows whose turn it is overrides the stage's guess");
+  if (/ownerClient\.textContent = [^;]*Waiting on RGA/.test(body))
+    fail.push("admin/admin.js — the client column is labelled \"Waiting on RGA\" on RGA's own screen.");
+  else pass.push("no column tells RGA it is waiting on RGA");
+
+  // 🔴 "them" is the client. On an operator's screen the actor should be named.
+  // 🔑 Comments are stripped — the notes explaining this very fix quote the old wording.
+  const live = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const vague = [...live.matchAll(/"[^"]*\b(?:on|with|for) them\b[^"]*"/g)].map((m) => m[0]);
+  if (vague.length)
+    fail.push(`admin/admin.js — ${vague.length} admin string(s) still say "them" where they mean the client: ${vague.slice(0, 2).join(" · ")}`);
+  else pass.push("admin copy names the client rather than saying \"them\"");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s): a client's action may not reach the admin.`);
