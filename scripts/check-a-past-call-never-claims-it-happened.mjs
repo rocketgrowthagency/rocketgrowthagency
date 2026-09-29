@@ -90,9 +90,16 @@ if (/data-kickoff-change|data-kickoff-release|pm-join/.test(held))
 else pass.push("a finished call carries no controls");
 
 // ── 4. THE BANNER STOPS CALLING A PAST CALL "NEXT UP" ──────────────────────────────────────────
-if (!/booked && !callOver/.test(code))
-  fail.push('portal/portal.js — the next-step banner is not gated on the call still being ahead, so it will read "Next up" about yesterday.');
-else pass.push("the banner stops calling a past call next up");
+// 🔴 PINNED A SPELLING, AND THE CONDITION CORRECTLY GREW. It was `booked && !callOver`; it is now
+// `booked && !requested && !callOver`, because a booking superseded by a pending request must also
+// yield the headline. Match the PROPERTY: the dated branch must require the call to be ahead.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  const dated = code.match(/if \(booked[^)]*\)/);
+  if (!dated || !/!callOver/.test(dated[0]))
+    fail.push('portal/portal.js — the next-step banner is not gated on the call still being ahead, so it will read "Next up" about yesterday.');
+  else pass.push("the banner stops calling a past call next up");
+}
 // 🔴 THIS PINNED THE SPELLING `requested && !callOver`, and the code moved ON — the branch now
 // fires for ANY pending request and distinguishes the lapsed case INSIDE it, which is strictly
 // better: a request we never answered is still owed, and dropping it from the headline was the
@@ -256,6 +263,39 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   if (cardFn && !/has now passed and we haven/.test(cardFn[0]))
     fail.push("portal/portal.js — the card keeps saying it is holding a requested time after that time has passed.");
   else if (cardFn) pass.push("the card owns a request it never confirmed");
+}
+
+// ── 11. BOOKED AND REQUESTED CAN BE TRUE AT ONCE, AND THE REQUEST WINS ─────────────────────────
+// 🔴🔴 THE ROOT CAUSE OF A WHOLE MORNING (2026-09-29). `portal-book-kickoff` SPREADS the existing
+// invite and adds `requested_start` — it never clears `event_id`. So a reschedule leaves a confirmed
+// OLD booking and a pending NEW request on the same record. The headline computed
+// `requested = requested_start && !booked`, which is false in exactly that case, so the request
+// branch could never run; the old booking's time had passed so its branch was skipped too; and the
+// headline fell through to the client's own to-do list.
+//
+// 🔑 The card (holds table, via kickoff-availability) and the headline (kickoff_invite, on the
+// onboarding record) read DIFFERENT RECORDS. They must at least agree on the RULE: a request that
+// disagrees with the booking supersedes it.
+{
+  const i = code.indexOf("stage_4_onboarding: (() => {");
+  const branch = i < 0 ? "" : code.slice(i, code.indexOf("\n    })(),", i));
+  if (!branch) fail.push("portal/portal.js — the onboarding headline branch is gone.");
+  else {
+    if (/const requested = k\?\.requested_start && !booked;/.test(branch))
+      fail.push("portal/portal.js — the headline treats booked and requested as mutually exclusive, so a reschedule (which leaves BOTH on the record) can never reach the request branch.");
+    else if (!/movePending/.test(branch))
+      fail.push("portal/portal.js — the headline has no notion of a request that supersedes a standing booking, so a reschedule is invisible to it.");
+    else pass.push("the headline treats a disagreeing request as superseding the booking");
+    // 🔴 And the superseded booking must stop claiming to be the dated commitment.
+    if (!/if \(booked && !requested && !callOver\)/.test(branch))
+      fail.push("portal/portal.js — a booking that has been superseded by a pending request still claims the headline as a dated commitment.");
+    else pass.push("a superseded booking yields the headline to the request");
+    // 🔑 And the clock must measure whichever time is currently authoritative.
+    const cs = branch.match(/const callStartMs = [^;]+;/);
+    if (cs && !/requested \? /.test(cs[0]))
+      fail.push("portal/portal.js — the headline's clock always measures the BOOKED time, so a pending move is judged against the call it replaced.");
+    else if (cs) pass.push("the clock measures whichever time is authoritative");
+  }
 }
 
 for (const p of pass) console.log(`  ✅ ${p}`);
