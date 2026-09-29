@@ -87,10 +87,21 @@ if (!/event_id/.test(branch)) {
   }
 }
 
-// 3 ─ 🔴 "YOU'RE ALL SET" ONLY ON A SEEN ACCEPTANCE. Done means accepted, not sent.
-if (/all set/i.test(branch) && !/rsvp\s*===\s*["']accepted["']/.test(branch)) {
-  fail.push('the card can say "you\'re all set" without checking rsvp === "accepted" — that claims a booking from the fact we SENT an invite, '
-    + "which is the exact failure the kickoff flow exists to prevent");
+// 3 ─ 🔴🔴 INVERTED 2026-09-29. This used to demand the OPPOSITE: that "you're all set" be gated on
+// `rsvp === "accepted"`. Chris: *"RGA side doesnt wait on client to accept invite. the sequence is
+// this. client picks date and time. then its RGA side, they then confrim it. Then its BOOKED."*
+// Reaching the booked branch means RGA confirmed, so the client owes nothing and withholding the
+// reassurance until they clicked Yes in Gmail asked them for something they had already done.
+//
+// 🔑 A second gate had quietly pinned the same misreading, and it went red on the correct fix — which
+// is what a gate written from a slogan rather than from the requirement does.
+// → project_kickoff_meeting_lifecycle · feedback_do_what_chris_asked_not_the_principled_version
+if (/rsvp\s*===\s*["']accepted["']\s*\n?\s*\?/.test(branch)) {
+  fail.push('the booked state gates its copy on rsvp === "accepted" again — RGA confirming is what '
+    + "books the call, so the client's RSVP must not decide what the card says");
+} else if (!/all set/i.test(branch)) {
+  fail.push('the booked state never tells the client they are all set — a confirmed call that reads '
+    + "like an outstanding task is the defect this branch exists to remove");
 }
 
 // 4 ─ the requested state must name the time it is holding

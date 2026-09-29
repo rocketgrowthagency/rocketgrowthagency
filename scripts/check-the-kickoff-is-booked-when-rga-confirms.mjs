@@ -1,31 +1,44 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════
- * GATE — THE KICKOFF STEP COMPLETES ON ACCEPTANCE, NOT ON SENDING
+ * GATE — THE KICKOFF CALL IS BOOKED WHEN **RGA CONFIRMS**, AND THE CLIENT'S RSVP HOLDS NOTHING UP
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════
  *
- * Chris, 2026-09-27: *"is it built out yet? if not build it."*
+ * Chris, 2026-09-29, after a week on one step: *"RGA side doesnt wait on client to accept invite.
+ * the sequnce is this. client picks date and time. then its RGA side, they then confrim it. Then its
+ * BOOKED. so make all verbiage and cards for this!!!"*
  *
- * Half of it was. `kickoff-rsvp-check` has been able to read the client's acceptance off the Google
- * event since the day it was written — and stored it for DISPLAY only, while `send-kickoff-invite`
- * wrote `status: "done"` the moment the event was created.
+ * 🔴🔴 THIS GATE USED TO ENFORCE THE OPPOSITE, AND THAT IS THE LESSON IN IT.
  *
- * So the standard every surface states had **a reader and no writer**:
- *   · the admin card — *"Done when the invite is ACCEPTED, not sent"*
- *   · the playbook, in capitals — *"DONE = the invite is ACCEPTED, not sent. An unaccepted invite
- *     is not a booked call."*
- *   · and `kickoff-rsvp-check`'s own header, describing the defect it was written to fix.
+ * Two days earlier I had built, gated and locked "DONE = the invite is ACCEPTED, not sent" —
+ * reasoning from a slogan that several surfaces already carried, and never once checking it against
+ * how the business actually books a call. It produced a **fourth state that does not exist**:
+ * *waiting on the client's Google RSVP*. Every step after the kickoff sat behind a click in somebody
+ * else's inbox, three admin cards faithfully reported a step that could not finish, and the client's
+ * portal asked them for something after they had already done their part.
  *
- * A client who never opened the invite, or who DECLINED it, looked identical to one who had
- * confirmed the call. → feedback_correct_is_not_the_same_as_happening
+ * A gate makes the rule it was given harder to change. So a gate written from a misread requirement
+ * is worse than no gate: it defends the misreading. Pinning a rule is only safe once the rule has
+ * come from Chris in his own words, not from prose already in the repo.
+ * → feedback_do_what_chris_asked_not_the_principled_version · project_kickoff_meeting_lifecycle
+ *
+ * THE SEQUENCE, WHICH IS THREE STATES AND NOT FOUR:
+ *   1. the client picks a date and time  → waiting on RGA
+ *   2. RGA confirms it                   → BOOKED, and step 2 is DONE
+ *   3. the RSVP arrives, or never does   → news about attendance; nothing waits on it
  *
  * WHAT IS PINNED:
- *   1. Sending does NOT complete the step.
- *   2. Accepting DOES — and `unknown` never moves it, because a failed read of Google is not
- *      evidence about the client.
- *   3. A hand-marked completion is never quietly undone (the escape hatch stays).
- *   4. Something OTHER than an admin page view calls the checker — a capability nobody calls looks
- *      finished, and for two weeks the only caller was a tab being opened.
+ *   1. Confirming DOES complete the step, and records `confirmed_at` so the completion is
+ *      substantiable — a `done` nothing can evidence is the defect one layer down.
+ *   2. An acceptance completes NOTHING and must not move a pending step. `unknown` and `deleted`
+ *      move nothing either, because a failed read of Google is not evidence about the client.
+ *   3. A DECLINE is the one answer that reopens it — a call the client refused is not happening —
+ *      and a hand-marked completion still survives it (the escape hatch stays).
+ *   4. A booking confirmed under the OLD rule reconciles itself, because changing the writer does
+ *      nothing for the records the old rule stranded.
+ *   5. No surface may present the RSVP as an outstanding ask, and nothing may chase one.
+ *   6. The states that DO exist are still distinguishable, so no card falls back to the step title
+ *      and tells Chris to "Send the calendar invite" over a call already booked.
  *
  * Exit 0 pass · 1 fail · 2 indeterminate. Mutation log at the bottom.
  */
@@ -47,7 +60,6 @@ function read(base, rel, min = 1000) {
 }
 const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "");   // comments quote these strings when explaining
 
-// Pull the object literal written for the kickoff step, so the assertion is about THAT step.
 function stepLiteral(src) {
   const at = src.indexOf(`"${STEP}": {`);
   if (at < 0) return null;
@@ -60,95 +72,159 @@ function stepLiteral(src) {
   return null;
 }
 
-// ── 1. SENDING DOES NOT COMPLETE IT ─────────────────────────────────────────────────────────────
+// Pull a named function's source out of a bundle so the gate can RUN the decision instead of
+// scanning for it. A static version of these checks was escaped twice — once by
+// `false && state === "accepted"`, once by a rename that left the words in the comments.
+// → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+function fnSource(code, name) {
+  const at = code.indexOf(`function ${name}(`);
+  if (at < 0) return null;
+  const open = code.indexOf("{", at);
+  let d = 0;
+  for (let i = open; i < code.length; i++) {
+    if (code[i] === "{") d++;
+    else if (code[i] === "}") { d--; if (d === 0) return code.slice(at, i + 1); }
+  }
+  return null;
+}
+
+// ── 1. CONFIRMING COMPLETES THE STEP, WITH EVIDENCE ─────────────────────────────────────────────
+// 🔴 The inverse of what this section used to demand. `send-kickoff-invite` wrote `status: "pending"`
+// with the summary *"Waiting on them to accept — this step completes when they do."* That one write
+// was the SOURCE of the fourth state; every card downstream was reporting it correctly.
 {
   const src = read(WEB, "netlify/functions/send-kickoff-invite.js", 5000);
   if (src) {
     const lit = stepLiteral(strip(src));
     if (!lit) indet.push("send-kickoff-invite.js: could not find the step literal it writes");
-    else if (/status:\s*["']done["']/.test(lit)) {
-      fail.push(`send-kickoff-invite.js — sending writes status "done" for ${STEP}. A client who never `
-        + `opened the invite, or who declined it, then looks identical to one who confirmed the call. `
-        + `Every surface says DONE = ACCEPTED, not sent.`);
-    } else pass.push("send-kickoff-invite.js — sending records the send, it does not complete the step");
+    else {
+      if (!/status:\s*["']done["']/.test(lit)) {
+        fail.push(`send-kickoff-invite.js — confirming does NOT write status "done" for ${STEP}. RGA `
+          + `confirming a time the client picked is what books the call, so it is what completes the `
+          + `step. Leaving it pending is the fourth state Chris removed on 2026-09-29: every step `
+          + `after this one then waits on a click in the client's inbox.`);
+      } else pass.push("send-kickoff-invite.js — confirming the time completes the step");
+
+      // 🔑 A `done` that nothing can evidence is the defect one layer down, and STEP_ARTIFACTS is
+      // built to ask for exactly this. → feedback_a_done_step_must_be_substantiable
+      if (!/confirmed_at/.test(lit)) {
+        fail.push(`send-kickoff-invite.js — the completion records no \`confirmed_at\`, so nothing can `
+          + `substantiate it and the step is indistinguishable from one ticked by hand.`);
+      } else pass.push("send-kickoff-invite.js — the completion records when RGA confirmed");
+
+      if (/[Ww]aiting on them to accept|completes when they do/.test(lit)) {
+        fail.push("send-kickoff-invite.js — the summary still tells the reader the step completes when "
+          + "the client accepts. The ledger line outlives the bug and is what everyone acts on.");
+      } else pass.push("send-kickoff-invite.js — the summary describes a booking, not a wait");
+    }
   }
 }
 
-// ── 2 + 3. ACCEPTING COMPLETES IT; UNKNOWN NEVER MOVES IT ───────────────────────────────────────
+// ── 2 + 3. THE RSVP IS NEWS: IT COMPLETES NOTHING, AND ONLY A DECLINE UNDOES A BOOKING ──────────
 {
   const src = read(WEB, "netlify/functions/kickoff-rsvp-check.js", 3000);
   if (src) {
     const code = strip(src);
-    if (!new RegExp(`"${STEP}"`).test(code)) {
-      fail.push(`kickoff-rsvp-check.js — never writes ${STEP}. It reads the acceptance and acts on `
-        + `nothing, which is the exact defect its own header was written about.`);
-    } else pass.push("kickoff-rsvp-check.js — writes the step, not only the display field");
-
-    // 🔴 RUN THE DECISION, DO NOT SCAN FOR IT. Two mutations escaped a static version of this:
-    // `false && state === "accepted"` left the text intact, and renaming the hand-marked guard left
-    // the words in the comments. The decision is a pure function; call it.
-    // → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
-    const fn = (() => {
-      const at = code.indexOf("function nextKickoffTask(");
-      if (at < 0) return null;
-      const open = code.indexOf("{", at);
-      let d = 0;
-      for (let i = open; i < code.length; i++) {
-        if (code[i] === "{") d++;
-        else if (code[i] === "}") { d--; if (d === 0) return code.slice(at, i + 1); }
-      }
-      return null;
-    })();
+    const fn = fnSource(code, "nextKickoffTask");
     if (!fn) {
-      fail.push("kickoff-rsvp-check.js — nextKickoffTask() is gone, so the acceptance decision is "
-        + "inline again and cannot be exercised.");
+      fail.push("kickoff-rsvp-check.js — nextKickoffTask() is gone, so the RSVP decision is inline "
+        + "again and cannot be exercised.");
     } else {
       try {
         const ctx = { Date, Object, result: null };
         vm.createContext(ctx);
         vm.runInContext(fn + `
-          const SENT = { status: "pending", auto_result: { summary: "Invite sent" } };
-          const ACCEPTED_DONE = { status: "done", auto_result: { accepted_at: "2026-09-27T00:00:00Z" } };
+          const P = { attendee: "c@x.com", start: "2026-09-28T19:00:00Z", tz: "America/Los_Angeles" };
+          const BOOKED    = { status: "done", auto_result: { confirmed_at: "2026-09-29T00:00:00Z" } };
+          const STRANDED  = { status: "pending", auto_result: { summary: "Invite sent" } };
           const HAND_DONE = { status: "done", auto_result: { summary: "marked by hand" } };
           result = {
-            accepts:    nextKickoffTask("accepted", SENT, {}),
-            unknown:    nextKickoffTask("unknown", SENT, {}),
-            awaiting:   nextKickoffTask("awaiting", SENT, {}),
-            declinesReal: nextKickoffTask("declined", ACCEPTED_DONE, {}),
-            declinesHand: nextKickoffTask("declined", HAND_DONE, {}),
+            acceptKeepsDone: nextKickoffTask("accepted", BOOKED, P),
+            awaitingBooked:  nextKickoffTask("awaiting", BOOKED, P),
+            tentativeBooked: nextKickoffTask("tentative", BOOKED, P),
+            unknownBooked:   nextKickoffTask("unknown", BOOKED, P),
+            deletedBooked:   nextKickoffTask("deleted", BOOKED, P),
+            declineReal:     nextKickoffTask("declined", BOOKED, P),
+            declineHand:     nextKickoffTask("declined", HAND_DONE, P),
+            healAwaiting:    nextKickoffTask("awaiting", STRANDED, { ...P, sentAt: "2026-09-27T01:00:00Z" }),
+            healAccepted:    nextKickoffTask("accepted", STRANDED, { ...P, sentAt: "2026-09-27T01:00:00Z" }),
+            unknownPending:  nextKickoffTask("unknown", STRANDED, P),
+            deletedPending:  nextKickoffTask("deleted", STRANDED, P),
           };`, ctx, { timeout: 2000 });
         const r = ctx.result;
-        if (r.accepts.status !== "done") {
-          fail.push(`kickoff-rsvp-check.js — an ACCEPTED invite leaves the step "${r.accepts.status}". Acceptance completes nothing.`);
-        } else if (!r.accepts.auto_result?.accepted_at) {
-          fail.push("kickoff-rsvp-check.js — acceptance completes the step without recording WHEN they accepted, so the completion is not substantiable.");
-        } else pass.push("kickoff-rsvp-check.js — an acceptance completes the step, with the acceptance as proof");
 
-        if (r.unknown !== undefined && r.unknown.status !== "pending") {
-          fail.push(`kickoff-rsvp-check.js — an UNKNOWN read moved the step to "${r.unknown.status}". A failed read of Google is not evidence about the client.`);
-        } else if (r.awaiting.status !== "pending") {
-          fail.push(`kickoff-rsvp-check.js — an AWAITING answer moved the step to "${r.awaiting.status}".`);
-        } else pass.push("kickoff-rsvp-check.js — unknown and awaiting never move the step");
+        // ── an acceptance is recorded, never required ──────────────────────────────────────────
+        if (r.acceptKeepsDone.status !== "done") {
+          fail.push(`kickoff-rsvp-check.js — an acceptance moved a BOOKED step to `
+            + `"${r.acceptKeepsDone.status}". A confirmed booking is already done; an RSVP must not `
+            + `re-adjudicate it.`);
+        } else if (!r.acceptKeepsDone.auto_result?.accepted_at) {
+          fail.push("kickoff-rsvp-check.js — an acceptance is not recorded at all, so the admin card "
+            + "can never tell a client who confirmed they are coming from one who has not replied.");
+        } else pass.push("kickoff-rsvp-check.js — an acceptance is recorded as news, and changes no status");
 
-        if (r.declinesReal.status !== "pending") {
-          fail.push("kickoff-rsvp-check.js — a client who accepted and then DECLINED leaves the step done. They have un-booked the call.");
-        } else pass.push("kickoff-rsvp-check.js — a later decline reopens the step");
+        // 🔴 THE REGRESSION THIS SECTION EXISTS FOR: acceptance quietly becoming the completion
+        // again, by way of a pending step it feels entitled to finish. A pending step here means the
+        // CONFIRM never landed, and the cure for that is confirming.
+        if (r.healAccepted.status === "done" && !r.healAccepted.auto_result?.confirmed_at) {
+          fail.push("kickoff-rsvp-check.js — an acceptance completed a pending step with no "
+            + "`confirmed_at`. That is the old rule back: the client's click, not RGA's confirm, "
+            + "is finishing the step.");
+        } else pass.push("kickoff-rsvp-check.js — acceptance alone never supplies the completion");
 
-        if (r.declinesHand.status !== "done") {
-          fail.push("kickoff-rsvp-check.js — a HAND-MARKED completion is reopened by a decline. Chris marked it done deliberately; that must not be undone behind him.");
+        // ── nothing else moves it ──────────────────────────────────────────────────────────────
+        const inert = [["awaiting", r.awaitingBooked], ["tentative", r.tentativeBooked],
+                       ["unknown", r.unknownBooked], ["deleted", r.deletedBooked]];
+        const moved = inert.filter(([, v]) => v.status !== "done");
+        if (moved.length) {
+          fail.push(`kickoff-rsvp-check.js — ${moved.map(([n, v]) => `${n} → "${v.status}"`).join(", ")} `
+            + `on a booked call. Only a DECLINE takes a booking away; a failed read of Google is not `
+            + `evidence about the client.`);
+        } else pass.push("kickoff-rsvp-check.js — awaiting, tentative, unknown and deleted leave a booking alone");
+
+        const stranded = [["unknown", r.unknownPending], ["deleted", r.deletedPending]];
+        const wrong = stranded.filter(([, v]) => v.status === "done");
+        if (wrong.length) {
+          fail.push(`kickoff-rsvp-check.js — ${wrong.map(([n]) => n).join(", ")} completed a pending step. `
+            + `Neither answer says an event exists, so neither is evidence of a booking.`);
+        } else pass.push("kickoff-rsvp-check.js — a read that found no live event never completes the step");
+
+        // ── a decline reopens it; a hand-marked done survives ──────────────────────────────────
+        if (r.declineReal.status !== "pending") {
+          fail.push("kickoff-rsvp-check.js — a DECLINE leaves the step done. The client has said they "
+            + "are not coming, so somebody must agree a new time.");
+        } else pass.push("kickoff-rsvp-check.js — a decline reopens the step");
+
+        if (r.declineHand.status !== "done") {
+          fail.push("kickoff-rsvp-check.js — a HAND-MARKED completion is reopened by a decline. Chris "
+            + "marked it done deliberately; that must not be undone behind him.");
         } else pass.push("kickoff-rsvp-check.js — a hand-marked completion survives a decline");
+
+        // ── 4. the records the old rule stranded reconcile themselves ──────────────────────────
+        // 🔴 Changing the writer fixes the NEXT booking and does nothing for the ones already held
+        // at pending with a real event on Google. "Correct going forward" is not the same as right
+        // on the screen Chris is looking at. → feedback_correct_is_not_the_same_as_happening
+        if (r.healAwaiting.status !== "done") {
+          fail.push(`kickoff-rsvp-check.js — a live event on a PENDING step stays `
+            + `"${r.healAwaiting.status}". Every client confirmed before 2026-09-29 is in exactly that `
+            + `shape, so their kickoff step never completes and every later step stays blocked.`);
+        } else if (r.healAwaiting.auto_result?.confirmed_at !== "2026-09-27T01:00:00Z") {
+          fail.push(`kickoff-rsvp-check.js — the reconciled completion stamps `
+            + `"${r.healAwaiting.auto_result?.confirmed_at}" instead of the invite's own sent_at. `
+            + `Backdating to when RGA actually confirmed is the point; today's date invents a fact.`);
+        } else pass.push("kickoff-rsvp-check.js — a live event on a stranded step completes it, dated to the real confirm");
 
         // 🔴 A NETLIFY FUNCTION'S CLOCK IS UTC. Without an explicit timeZone, `toLocaleString`
         // rendered a 12:00 PM Pacific call as "7:00 PM" — right instant, wrong hour, no zone named —
-        // into the checklist summary Chris reads. Caught the first time a real acceptance completed
-        // a step. → project_client_timezone_rule
+        // into the checklist summary Chris reads. → project_client_timezone_rule
         const ctx2 = { Date, Object, result: null };
         vm.createContext(ctx2);
         vm.runInContext(fn + `
           const P = { attendee: "c@x.com", start: "2026-09-28T19:00:00Z" };
+          const S = { status: "pending" };
           result = {
-            tz:   nextKickoffTask("accepted", { status: "pending" }, { ...P, tz: "America/Los_Angeles" }).auto_result.summary,
-            noTz: nextKickoffTask("accepted", { status: "pending" }, { ...P, tz: null }).auto_result.summary,
+            tz:   nextKickoffTask("awaiting", S, { ...P, tz: "America/Los_Angeles" }).auto_result.summary,
+            noTz: nextKickoffTask("awaiting", S, { ...P, tz: null }).auto_result.summary,
           };`, ctx2, { timeout: 2000 });
         const q = ctx2.result;
         if (!/12:00\s*PM/.test(q.tz)) {
@@ -163,132 +239,150 @@ function stepLiteral(src) {
         indet.push(`kickoff-rsvp-check.js: nextKickoffTask would not run in isolation (${e.message})`);
       }
     }
+
+    // ── nothing chases an RSVP ────────────────────────────────────────────────────────────────
+    // 🔴 A "chase it" banner over a booked call is the fourth state wearing a different hat, and it
+    // would have survived every wording fix. `chase_due` is pinned false at the source.
+    // 🔴 THE LOOKAHEAD MUST SWALLOW THE WHITESPACE, or `*` backtracks to zero width and the negative
+    // lookahead sits on " false" — which is not "false", so the gate accuses correct code. Two
+    // spellings of this check went red on `chase_due: false` before the regex itself was the bug.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+    if (/chase_due:(?![ \t]*false\b)/.test(code)) {
+      fail.push("kickoff-rsvp-check.js — `chase_due` is computed again. Nothing is waiting on the "
+        + "RSVP, so telling RGA to chase one re-creates the state Chris removed.");
+    } else pass.push("kickoff-rsvp-check.js — nothing computes a reason to chase the RSVP");
   }
 }
 
-// ── 4. "SENT, WAITING ON THEM" IS A STATE THE CARDS MUST DESCRIBE ───────────────────────────────
-// 🔴 MAKING ACCEPTANCE THE COMPLETION CREATED A THIRD STATE AND IMMEDIATELY RE-OPENED AN OLD BUG.
-// While sending marked the step done there were only two states to describe: nothing sent, or
-// finished. Now there is an in-between — the invite is out and unanswered — and every card that
-// picks "the first step that is not done" fell through to the step's own instruction:
-// *"Send the kickoff calendar invite."* That button books the FIRST FREE SLOT, so following the
-// admin's own advice would book a second, different time for a call already in the diary.
-//
-// The identical defect was found on 2026-09-26 with a pending REQUEST and guarded; the guard reads
-// `_kickoffPendingAsk`, which is empty in this new state. A fix that creates a state must check every
-// card that enumerates states. → feedback_fix_the_class_not_the_instance
+// ── 4b. THE FOURTH STATE IS GONE FROM THE ADMIN, NOT RENAMED ────────────────────────────────────
+// 🔴🔴 A STATE THAT SHOULD NOT EXIST IS REMOVED, NOT REWORDED. Rewording the three cards would have
+// left `kickoffSentAwaiting()` computing it, still blocking step 3, and still ready to come back the
+// next time somebody asked what the card should say. → feedback_fix_the_class_not_the_instance
 {
   const admin = read(WEB, "admin/admin.js", 100000);
   if (admin) {
     const code = strip(admin);
-    const at = code.indexOf("function kickoffSentAwaiting(");
-    if (at < 0) {
-      fail.push("admin/admin.js — kickoffSentAwaiting() is gone, so nothing distinguishes \"invite sent, "
-        + "waiting on them\" from \"no invite sent\", and the cards fall back to \"Send the calendar invite\".");
+
+    if (fnSource(code, "kickoffSentAwaiting")) {
+      fail.push("admin/admin.js — kickoffSentAwaiting() is back. It computes \"waiting on the client to "
+        + "accept the invite\", which is not a state this business has: the client picks, RGA confirms, "
+        + "and then it is BOOKED.");
+    } else pass.push("admin/admin.js — the acceptance-waiting state is gone, not reworded");
+
+    const nags = [
+      [/[Ww]aiting on the client to accept the invite/, '"Waiting on the client to accept the invite"'],
+      [/This step completes when the client accepts/, '"This step completes when the client accepts"'],
+      [/[Cc]hase the (kickoff )?invite/, '"Chase the invite"'],
+      [/[Dd]one when the invite is <strong>accepted/, '"Done when the invite is accepted"'],
+      // 🔴 CASE AND MARKUP ARE NOT THE PROPERTY. This pinned `not accepted yet</strong>` and a
+      // mutation writing `Not accepted yet</strong>` walked straight past it. The phrase itself is
+      // the fourth state, wherever it appears and however it is capitalised.
+      // → feedback_a_gate_must_pin_the_property_not_the_spelling
+      [/not accepted yet/i, '"not accepted yet" as a state'],
+      [/[Nn]ot booked until/, '"not booked until they accept"'],
+    ];
+    const found = nags.filter(([re]) => re.test(code)).map(([, label]) => label);
+    if (found.length) {
+      fail.push(`admin/admin.js — ${found.length} surface(s) still present the RSVP as an outstanding `
+        + `ask: ${found.join(", ")}. Confirming books the call; the RSVP holds nothing up.`);
+    } else pass.push("admin/admin.js — no surface presents the RSVP as an outstanding ask");
+
+    // 🔑 And the proof of done must be the BOOKING. Asking for `accepted_at` is what made a
+    // confirmed call read as unsubstantiated. → feedback_a_done_step_must_be_substantiable
+    const art = stepLiteral(code);
+    if (!art) indet.push("admin/admin.js: could not find the STEP_ARTIFACTS entry for the kickoff step");
+    else if (!/confirmed_at/.test(art)) {
+      fail.push("admin/admin.js — STEP_ARTIFACTS does not accept `confirmed_at` as proof of the kickoff "
+        + "step, so every call RGA confirms renders as \"Done — unverified\".");
+    } else pass.push("admin/admin.js — a confirmed booking substantiates the completed step");
+
+    // ── THE STATES THAT DO EXIST: nothing picked yet, versus picked and waiting on RGA ─────────
+    // 🔴 After a client cancelled, the admin's headline read "Step 2 · Send the kickoff calendar
+    // invite" while the portal had just told them "Pick a new time whenever you're ready." Chris
+    // asked, reasonably, *"do we need to send calendar invite?"* — the step's OWN card says
+    // "You usually do not need this button at all." The cards were reading the step's TITLE, which
+    // names the fallback, and presenting it as the primary act.
+    const wfn = fnSource(code, "kickoffWaitingOnPick");
+    if (!wfn) {
+      fail.push("admin/admin.js — kickoffWaitingOnPick() is gone. With nothing sent and nothing "
+        + "picked, the cards fall back to the step title and tell Chris to book on the client's "
+        + "behalf while the client is mid-choice.");
     } else {
-      const open = code.indexOf("{", at);
-      let d = 0, fn = "";
-      for (let i = open; i < code.length; i++) {
-        if (code[i] === "{") d++;
-        else if (code[i] === "}") { d--; if (d === 0) { fn = code.slice(at, i + 1); break; } }
-      }
       try {
-        const ctx = { Date, Math, state: {}, result: null };
-        vm.createContext(ctx);
-        vm.runInContext(fn + `
-          const run = (k) => { state.onboardingData = k ? { kickoff_invite: k } : null; return kickoffSentAwaiting(); };
-          const SENT = { event_id: "e1", rsvp: "awaiting", sent_at: new Date(Date.now() - 3*3600000).toISOString(), start: "2026-09-28T19:00:00Z", attendee: "c@x.com" };
+        const c3 = { state: {}, _kickoffPendingAsk: new Map(), result: null };
+        vm.createContext(c3);
+        vm.runInContext(wfn + `
+          const set = (k, ask) => { state.onboardingData = k ? { kickoff_invite: k } : null;
+            _kickoffPendingAsk.clear(); if (ask) _kickoffPendingAsk.set("c1", ask);
+            return kickoffWaitingOnPick("c1"); };
           result = {
-            awaiting:  run(SENT),
-            stale:     run({ ...SENT, sent_at: new Date(Date.now() - 40*3600000).toISOString() }),
-            accepted:  run({ ...SENT, rsvp: "accepted" }),
-            declined:  run({ ...SENT, rsvp: "declined" }),
-            neverSent: run({ rsvp: "awaiting" }),
-            nothing:   run(null),
-          };`, ctx, { timeout: 2000 });
-        const r = ctx.result;
-        if (!r.awaiting) fail.push("admin/admin.js — a sent, unanswered invite is not recognised, so the cards will tell Chris to send another one.");
-        else pass.push("admin/admin.js — a sent, unanswered invite is a state the cards can see");
-        if (r.accepted || r.declined) fail.push("admin/admin.js — an ANSWERED invite still reads as waiting; the card would nag after they replied.");
-        else pass.push("admin/admin.js — an answered invite is not 'waiting'");
-        if (r.neverSent || r.nothing) fail.push("admin/admin.js — a client with NO invite reads as waiting, which would hide the real instruction to send one.");
-        else pass.push("admin/admin.js — no invite sent is not mistaken for waiting");
-        if (!r.stale || r.stale.chase !== true) fail.push("admin/admin.js — an invite unanswered for 40h does not raise the chase; the playbook's 24h rule is not applied.");
-        else pass.push("admin/admin.js — an invite unanswered past 24h asks to be chased");
-      } catch (e) { indet.push(`admin/admin.js: kickoffSentAwaiting would not run in isolation (${e.message})`); }
+            nothing:  set(null, null),
+            cancelled: set({}, null),
+            picked:   set(null, "Mon 12:00 PM"),
+            sent:     set({ event_id: "e1" }, null),
+          };`, c3, { timeout: 2000 });
+        const w = c3.result;
+        if (!w.nothing || !w.cancelled) fail.push("admin/admin.js — a client who has not picked is not recognised as waiting on THEM, so the admin is told to book on their behalf.");
+        else pass.push("admin/admin.js — nothing sent and nothing picked reads as the client's turn");
+        if (w.picked) fail.push("admin/admin.js — a client who HAS picked still reads as waiting on them; the request would be ignored.");
+        else pass.push("admin/admin.js — a pending request is RGA's turn, not the client's");
+        if (w.sent) fail.push("admin/admin.js — a confirmed booking still reads as waiting on the client to pick.");
+        else pass.push("admin/admin.js — a confirmed booking is not 'waiting on the client to pick'");
+      } catch (e) { indet.push(`admin/admin.js: kickoffWaitingOnPick would not run in isolation (${e.message})`); }
 
-      // ── THE STATE BEFORE "SENT": nothing sent AND nothing picked ─────────────────────────────
-      // 🔴 After a client cancelled, the admin's headline read "Step 2 · Send the kickoff calendar
-      // invite" while the portal had just told them "Pick a new time whenever you're ready." Chris
-      // asked, reasonably, *"do we need to send calendar invite?"* — the step's OWN card says
-      // "You usually do not need this button at all." The cards were reading the step's TITLE, which
-      // names the fallback, and presenting it as the primary act.
-      const wAt = code.indexOf("function kickoffWaitingOnPick(");
-      if (wAt < 0) {
-        fail.push("admin/admin.js — kickoffWaitingOnPick() is gone. With nothing sent and nothing "
-          + "picked, the cards fall back to the step title and tell Chris to book on the client's "
-          + "behalf while the client is mid-choice.");
-      } else {
-        const wOpen = code.indexOf("{", wAt);
-        let wd = 0, wfn = "";
-        for (let i = wOpen; i < code.length; i++) {
-          if (code[i] === "{") wd++;
-          else if (code[i] === "}") { wd--; if (wd === 0) { wfn = code.slice(wAt, i + 1); break; } }
-        }
-        try {
-          const c3 = { state: {}, _kickoffPendingAsk: new Map(), result: null };
-          vm.createContext(c3);
-          vm.runInContext(wfn + `
-            const set = (k, ask) => { state.onboardingData = k ? { kickoff_invite: k } : null;
-              _kickoffPendingAsk.clear(); if (ask) _kickoffPendingAsk.set("c1", ask);
-              return kickoffWaitingOnPick("c1"); };
-            result = {
-              nothing:  set(null, null),
-              cancelled: set({}, null),
-              picked:   set(null, "Mon 12:00 PM"),
-              sent:     set({ event_id: "e1" }, null),
-            };`, c3, { timeout: 2000 });
-          const w = c3.result;
-          if (!w.nothing || !w.cancelled) fail.push("admin/admin.js — a client who has not picked is not recognised as waiting on THEM, so the admin is told to book on their behalf.");
-          else pass.push("admin/admin.js — nothing sent and nothing picked reads as their turn");
-          if (w.picked) fail.push("admin/admin.js — a client who HAS picked still reads as waiting on them; the request would be ignored.");
-          else pass.push("admin/admin.js — a pending request is our turn, not theirs");
-          if (w.sent) fail.push("admin/admin.js — an invite already sent still reads as waiting on them to pick.");
-          else pass.push("admin/admin.js — a sent invite is not 'waiting on them to pick'");
-        } catch (e) { indet.push(`admin/admin.js: kickoffWaitingOnPick would not run in isolation (${e.message})`); }
-
-        // 🔴 COUNT REACHABLE CALLS, NOT CALL TEXT. `if (false && kickoffWaitingOnPick(...))` leaves
-        // the call spelled out while the branch can never run — a mutation doing exactly that passed.
-        const pickCalls = [...code.matchAll(/kickoffWaitingOnPick\s*\(/g)].slice(1);
-        const dead = pickCalls.filter((m) => /false\s*&&\s*$/.test(code.slice(Math.max(0, m.index - 40), m.index)));
-        const pickCallers = pickCalls.length - dead.length;
-        if (dead.length) {
-          fail.push(`admin/admin.js — ${dead.length} call(s) to kickoffWaitingOnPick are behind a literal `
-            + `false, so the branch can never run while the call still reads as present.`);
-        }
-        if (pickCallers < 2) {
-          fail.push(`admin/admin.js — kickoffWaitingOnPick is reachably called ${pickCallers} time(s); both `
-            + `the next-action sequencer and the cockpit alert must consult it.`);
-        } else if (!dead.length) pass.push(`admin/admin.js — ${pickCallers} cards consult the waiting-on-pick state`);
-
-        // 🔑 And the copy must exist on BOTH — a consulted flag with nothing to show for it is the
-        // same defect one layer down. Two distinct renderings of the same idea.
-        const pickCopy = (code.match(/Waiting on them to pick a kickoff time/g) || []).length;
-        if (pickCopy < 2) {
-          fail.push(`admin/admin.js — "Waiting on them to pick a kickoff time" appears ${pickCopy} time(s); `
-            + `the next-action card and the cockpit alert must each say it, or one still reads `
-            + `"Send the kickoff calendar invite" while the client is mid-choice.`);
-        } else pass.push("admin/admin.js — both cards say they are waiting on the client to pick");
+      // 🔴 COUNT REACHABLE CALLS, NOT CALL TEXT. `if (false && kickoffWaitingOnPick(...))` leaves
+      // the call spelled out while the branch can never run — a mutation doing exactly that passed.
+      const pickCalls = [...code.matchAll(/kickoffWaitingOnPick\s*\(/g)].slice(1);
+      const dead = pickCalls.filter((m) => /false\s*&&\s*$/.test(code.slice(Math.max(0, m.index - 40), m.index)));
+      const pickCallers = pickCalls.length - dead.length;
+      if (dead.length) {
+        fail.push(`admin/admin.js — ${dead.length} call(s) to kickoffWaitingOnPick are behind a literal `
+          + `false, so the branch can never run while the call still reads as present.`);
       }
+      if (pickCallers < 2) {
+        fail.push(`admin/admin.js — kickoffWaitingOnPick is reachably called ${pickCallers} time(s); both `
+          + `the next-action sequencer and the cockpit alert must consult it.`);
+      } else if (!dead.length) pass.push(`admin/admin.js — ${pickCallers} cards consult the waiting-on-pick state`);
 
-      // 🔑 And both cards that name the next action must CONSULT it — a reader nobody calls is the
-      // very shape this whole gate exists for.
-      const callers = (code.match(/kickoffSentAwaiting\s*\(/g) || []).length - 1;
-      if (callers < 2) {
-        fail.push(`admin/admin.js — kickoffSentAwaiting is called ${callers} time(s); both the next-action `
-          + `sequencer and the cockpit alert must consult it or one of them still says "Send the invite".`);
-      } else pass.push(`admin/admin.js — ${callers} cards consult the waiting state`);
+      // 🔑 And the copy must exist on BOTH — a consulted flag with nothing to show for it is the
+      // same defect one layer down. 🔴 The spelling is NOT pinned: an earlier version of this check
+      // grepped "Waiting on them to pick", which went red the day Chris asked for "them" → "client"
+      // on a change that was entirely correct. Pin the PROPERTY — that both cards name a wait on the
+      // client's pick. → feedback_a_gate_must_pin_the_property_not_the_spelling
+      const pickCopy = (code.match(/[Ww]aiting on the client to pick a (kickoff )?time/g) || []).length;
+      if (pickCopy < 2) {
+        fail.push(`admin/admin.js — a wait on the client's own pick is named ${pickCopy} time(s); the `
+          + `next-action card and the cockpit alert must each say it, or one still reads `
+          + `"Send the kickoff calendar invite" while the client is mid-choice.`);
+      } else pass.push("admin/admin.js — both cards say they are waiting on the client to pick");
     }
+  }
+}
+
+// ── 4c. THE CLIENT PORTAL NEVER ASKS FOR THE RSVP EITHER ────────────────────────────────────────
+// 🔴 The client half of the same invented state: the portal withheld "you're all set" until it had
+// seen their Google click, so it asked them for something after they had already done their part.
+{
+  const portal = read(WEB, "portal/portal.js", 100000);
+  if (portal) {
+    const code = strip(portal);
+    const asks = [
+      [/[Aa]ccept the invite so it/, '"Accept the invite so it shows on your calendar"'],
+      [/accept it so it shows on your calendar/, '"accept it so it shows on your calendar"'],
+      [/rsvp === "accepted"\s*\n?\s*\?/, "gating the reassurance on rsvp === \"accepted\""],
+    ];
+    const found = asks.filter(([re]) => re.test(code)).map(([, l]) => l);
+    if (found.length) {
+      fail.push(`portal/portal.js — ${found.length} place(s) still make the client's RSVP a condition: `
+        + `${found.join(", ")}. RGA confirmed the time they picked, so the call is booked and they owe `
+        + `nothing.`);
+    } else pass.push("portal/portal.js — a confirmed booking tells the client they are all set");
+
+    // 🔑 And it must still SAY booked. Removing the ask without leaving the reassurance would be a
+    // card that describes a confirmed call and reassures nobody.
+    if (!/You're all set/.test(code)) {
+      fail.push("portal/portal.js — nothing tells a client with a booked call that they are all set.");
+    } else pass.push("portal/portal.js — the booked call is stated as settled");
   }
 }
 
@@ -583,8 +677,8 @@ function stepLiteral(src) {
 for (const x of pass) console.log(`  ✅ ${x}`);
 for (const x of indet) console.log(`  ⚠️  INDETERMINATE — ${x}`);
 for (const x of fail) console.log(`  🔴 ${x}`);
-if (fail.length) { console.log(`\n🔴 FAIL — ${fail.length} way(s) an unaccepted invite passes as a booked call.`); process.exit(1); }
+if (fail.length) { console.log(`\n🔴 FAIL — ${fail.length} way(s) the kickoff booking disagrees with "client picks, RGA confirms, BOOKED".`); process.exit(1); }
 if (indet.length) { console.log(`\n⚠️  INDETERMINATE — ${indet.length} thing(s) this gate could not read.`); process.exit(2); }
-console.log(`\n✅ the kickoff step completes on acceptance, and something asks without being asked (${pass.length} checks).`);
+console.log(`\n✅ the kickoff is booked when RGA confirms the time the client picked; the RSVP holds nothing up (${pass.length} checks).`);
 
 /* MUTATION LOG — filled in below. */
