@@ -97,6 +97,74 @@ if (!/requested && !callOver/.test(code))
   fail.push('portal/portal.js — an unconfirmed hold whose time has passed still reads "we\'re holding it".');
 else pass.push("a lapsed unconfirmed hold stops claiming to be held");
 
+// ── 5. AND THE HEADLINE MUST NOT RE-OFFER THE BOOKING ──────────────────────────────────────────
+// 🔴🔴 THE REGRESSION THE FIRST FIX CAUSED. Gating the banner on `!callOver` made it fall through to
+// the last-resort copy — which is then replaced by the first OPEN client action, and the kickoff
+// step was still in that list. The page read **"Book your kickoff call · Pick a 30-minute slot
+// below"** directly above a card saying **DONE · Time has passed**.
+// 🔑 The card has treated a `booked` hold as settled since 09-28. The open-actions list must use the
+// SAME fact, or the headline and the card can always disagree.
+{
+  const filter = code.match(/const mine = open\.filter\([\s\S]{0,400}?\);/);
+  if (!filter) fail.push("portal/portal.js — the open-actions filter is gone; the headline cannot name the next thing.");
+  else if (!/kickoff_booking/.test(filter[0]))
+    fail.push("portal/portal.js — the open-actions list does not exclude a settled kickoff, so the headline can tell a client to book a call they have already had.");
+  else if (!/_kickoffMine\.get\(clientId\) === "booked"/.test(code))
+    fail.push("portal/portal.js — the exclusion is not driven by the same booked fact the card uses, so the two can disagree.");
+  else pass.push("a settled kickoff is not offered as the next open action");
+}
+
+// ── 6. THE PAST PILL HAS NO INVISIBLE DOT ──────────────────────────────────────────────────────
+// 🔴 Every pill kind colours its own dot. The past state had none, so a 7px TRANSPARENT dot and its
+// gap sat inside the pill and pushed the text off-centre.
+{
+  const pill = code.match(/<span class="pm-msg past">([\s\S]{0,80}?)<\/span>/);
+  if (!pill) fail.push("portal/portal.js — the time-has-passed pill is gone.");
+  else if (/class="dot"/.test(pill[0])) {
+    const css = fs.readFileSync(path.join(SITE, "portal", "portal.css"), "utf8");
+    if (!/\.pm-msg\.past \.dot\s*\{[^}]*background/.test(css))
+      fail.push("portal/portal.js — the time-has-passed pill renders a dot that no CSS colours, so it is an invisible element taking up space inside the pill.");
+    else pass.push("the past pill's dot is actually visible");
+  } else pass.push("the past pill carries no dot, so its text is not pushed off-centre");
+}
+
+// ── 7. THE LEDE ABOVE THE CARD SAYS THE SAME THING THE CARD DOES ───────────────────────────────
+// 🔴 It read "Your kickoff call is booked. The calendar invite is in your inbox — accept it so it
+// shows on your calendar" the morning AFTER the call: present tense, and an instruction to accept
+// an invite for a meeting that had been and gone, directly above "Time has passed".
+{
+  const fnLede = code.match(/function markKickoffWaitingOnRga[\s\S]*?\n\}/);
+  if (!fnLede) fail.push("portal/portal.js — markKickoffWaitingOnRga() is gone; nothing corrects the step in place.");
+  else {
+    // 🔴 A DECLARATION IS NOT A DECISION. This first tested that `callEnded` appeared anywhere in
+    // the function — so replacing the lede's condition with `true` left the declaration standing and
+    // the check passed. Require the lede's own assignment to branch on it.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+    // 🔴🔴 AND THIS WAS A CHARACTER WINDOW — `{0,400}` — WRITTEN THE SAME DAY THAT TRAP WAS
+    // DOCUMENTED. The assignment is longer than 400 chars, so the gate went red on correct code.
+    // Bound it by the SYNTAX (the statement's own semicolon), never by a distance.
+    // → feedback_a_gate_window_measured_in_characters_will_lie
+    const ledeAssign = fnLede[0].match(/const ledeText = [^;]*;/);
+    if (!ledeAssign)
+      fail.push("portal/portal.js — the lede's text is no longer chosen in one place, so its states cannot be checked.");
+    else if (!/callEnded/.test(ledeAssign[0]))
+      fail.push("portal/portal.js — the lede's wording does not branch on whether the call has ended, so it will say the call \"is booked\" after it has happened.");
+    else pass.push("the lede's wording branches on whether the call has ended");
+    // 🔴 The same evidence rule as the card: only a recap may say it happened.
+    const done = fnLede[0].match(/recapSentAt[\s\S]{0,160}/);
+    if (!done || !/is done/.test(done[0]))
+      fail.push("portal/portal.js — the lede's \"done\" wording is not gated on a recap, so it can claim the call happened from the clock alone.");
+    else pass.push("only a recap lets the lede say the call is done");
+  }
+  // 🔑 Two maps describing one booking must be cleared together, or a cancelled call leaves its
+  // time behind and the lede reads a slot that no longer exists.
+  const sets = (code.match(/_kickoffMine\.(set|delete)\(/g) || []).length;
+  const whens = (code.match(/_kickoffWhen\.(set|delete)\(/g) || []).length;
+  if (whens < sets)
+    fail.push(`portal/portal.js — the booking status map is written in ${sets} places but the call-facts map in only ${whens}; a cancel can leave a stale time behind.`);
+  else pass.push("the booking's status and its facts are written and cleared together");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s) with a call whose time has passed:`);

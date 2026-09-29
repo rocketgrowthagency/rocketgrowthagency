@@ -76,6 +76,10 @@ function run(status) {
   const dom = buildDom();
   const sandbox = {
     _kickoffMine: new Map(status ? [["c1", status]] : []),
+    // 🔑 The corrector now also reads the call's own facts (start, length, recap) to decide the
+    // lede's tense. A missing stub makes this gate INDETERMINATE, which reads like "not checked"
+    // — so it is stubbed with an upcoming call, the case this gate is actually about.
+    _kickoffWhen: new Map([["c1", { startMs: Date.now() + 3600000, mins: 30, recapSentAt: null }]]),
     document: { querySelector: () => ({ closest: () => dom.row }) },
   };
   vm.createContext(sandbox);

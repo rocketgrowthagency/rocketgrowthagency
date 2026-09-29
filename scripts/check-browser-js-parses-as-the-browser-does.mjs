@@ -172,5 +172,39 @@ if (fails) {
   console.log("   🔑 `node --check <file>.js` does NOT catch this — it uses the CommonJS goal.");
   process.exit(1);
 }
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A BLOCK-COMMENT OPENER INSIDE A LINE COMMENT (added 2026-09-29)
+//
+// A line comment mentioning a path with a star in it is perfectly valid JavaScript — the line
+// comment swallows it. It is POISON to every tool that strips comments with a regex, because the
+// opener pairs with the NEXT close and eats everything between. One such line in admin.js swallowed
+// 33,354 characters, including the only reads of `client_input`, and a gate then reported six
+// client steps as dead ends — of code that was right there.
+//
+// 🔑 Same family as a backtick inside a template literal: the CONTENT of a comment can break the
+// tools that read the file, long after the compiler has stopped caring.
+// → feedback_a_gate_window_measured_in_characters_will_lie · project_admin_was_blank_for_a_day
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const poisoned = [];
+  for (const abs of targets.keys()) {
+    let lines;
+    try { lines = fs.readFileSync(abs, "utf8").split("\n"); } catch { continue; }
+    lines.forEach((ln, i) => {
+      const t = ln.trim();
+      if (t.startsWith("//") && t.includes("/" + "*")) {
+        poisoned.push(`${path.relative(SITE, abs)}:${i + 1}`);
+      }
+    });
+  }
+  if (poisoned.length) {
+    console.error(`\n🔴 FAIL — ${poisoned.length} line comment(s) carry a block-comment opener:`);
+    for (const q of poisoned) console.error(`   • ${q}`);
+    console.error("   Any tool that strips comments by regex swallows everything to the next close.");
+    process.exit(1);
+  }
+  console.log("  ✅ no line comment carries a block-comment opener");
+}
+
 console.log(`\n✅ all ${targets.size} local script(s) parse under the goal their own tag declares.`);
 process.exit(0);
