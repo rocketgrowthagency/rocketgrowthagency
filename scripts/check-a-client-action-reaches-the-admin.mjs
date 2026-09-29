@@ -112,6 +112,34 @@ const code = fs.readFileSync(JS, "utf8");
   }
 }
 
+// ── 6. AND NOTIFYING THEM CANNOT LOOP ──────────────────────────────────────────────────────────
+// 🔴🔴 THIS HUNG THE ENTIRE ADMIN ON 2026-09-29 — a blank page that sat there loading, with no
+// error, because it was never a crash. Listeners lived in a Set and every caller passed a FRESH
+// arrow, so `add` never deduped; firing them re-entered the renderer, which registered ANOTHER
+// listener into the Set being iterated — and a Set VISITS ITEMS ADDED DURING ITERATION.
+// 🔑 Two properties, and one without the other still loops: keyed registration, and a snapshot.
+{
+  const i = code.indexOf("async function ensureKickoffPendingAsk");
+  const body = i < 0 ? "" : code.slice(i, code.indexOf("\n}", i));
+  if (!body) fail.push("admin/admin.js — ensureKickoffPendingAsk() is gone.");
+  else {
+    if (/\.add\(onChange\)/.test(body))
+      fail.push("admin/admin.js — listeners are added to a Set by identity, so every render registers another one and firing them never ends.");
+    else if (!/\.set\(key \|\| onChange, onChange\)/.test(body))
+      fail.push("admin/admin.js — listeners are not keyed by surface, so re-registering accumulates instead of replacing.");
+    else pass.push("listeners are keyed by surface, so re-registering replaces");
+    if (!/\[\.\.\./.test(body))
+      fail.push("admin/admin.js — the listener loop iterates the live collection; a listener that registers another extends the loop it is running inside.");
+    else pass.push("the listener loop iterates a snapshot");
+  }
+  // 🔑 Both call sites must actually pass a key, or the Map degrades to identity again.
+  const calls = [...code.matchAll(/ensureKickoffPendingAsk\(([^;]*)\);/g)].map((m) => m[1]);
+  const unkeyed = calls.filter((c) => c.split(",").length < 3);
+  if (unkeyed.length)
+    fail.push(`admin/admin.js — ${unkeyed.length} call(s) to ensureKickoffPendingAsk pass no key, so their listeners accumulate on every render.`);
+  else pass.push(`all ${calls.length} callers pass a stable key`);
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s): a client's action may not reach the admin.`);

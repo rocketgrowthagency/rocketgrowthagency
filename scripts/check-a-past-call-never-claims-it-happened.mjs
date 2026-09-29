@@ -165,6 +165,68 @@ else pass.push("a lapsed unconfirmed hold stops claiming to be held");
   else pass.push("the booking's status and its facts are written and cleared together");
 }
 
+// ── 8. A RESCHEDULE SHOWS THE NEW TIME, AND THE HEADLINE AGREES WITH THE CARD ──────────────────
+// 🔴🔴 Chris moved a Sep 28 call to Sep 29 and his portal showed **Sep 28, "Time has passed"**, with
+// the new request nowhere — because the endpoint took `order=slot_start.asc&limit=1` and the OLD
+// booking sorts first. Above it the headline still read "Book your kickoff call", because it is
+// computed from a map the kickoff fetch fills and was never re-run.
+{
+  const availRaw = fs.readFileSync(path.join(SITE, "netlify", "functions", "kickoff-availability.js"), "utf8");
+  // 🔑 Strip comments: the note explaining this very bug quotes the old query, so the raw file always
+  // contains it. A gate that reads its own rationale as the defect is no gate at all.
+  // → feedback_a_check_must_not_validate_itself
+  const avail = availRaw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (/order=slot_start\.asc&limit=1/.test(avail))
+    fail.push("kickoff-availability.js — the booking is read as the EARLIEST hold, so after a reschedule the client is shown their old time and the new request is invisible.");
+  else pass.push("the endpoint does not pick the earliest hold");
+  // 🔴 PRESENCE IS NOT PRECEDENCE. This first checked only that "requested" appeared in the
+  // expression — and swapping the two so the BOOKING wins still contains it. Check the order.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const yr = avail.match(/yourRequest:[^\n]*/);
+  const iReq = yr ? yr[0].indexOf('status === "requested"') : -1;
+  const iBook = yr ? yr[0].indexOf('status === "booked"') : -1;
+  if (iReq === -1)
+    fail.push("kickoff-availability.js — a pending request is never considered, so a reschedule cannot reach the card.");
+  else if (iBook !== -1 && iBook < iReq)
+    fail.push("kickoff-availability.js — a standing booking outranks a pending request, so a client who rescheduled is shown their OLD time.");
+  else pass.push("a pending request outranks a standing booking");
+  if (!/movingFrom:/.test(avail))
+    fail.push("kickoff-availability.js — the card is never told a reschedule IS a move, so it greets one as a first booking.");
+  else pass.push("the card is told when a request is a move");
+
+  // 🔑 The headline and the card are driven by ONE call, or they disagree on screen.
+  if (!/function refreshNextStepCards\(\)/.test(code))
+    fail.push("portal/portal.js — the next-step headline cannot be re-run, so it keeps its first-paint answer after the kickoff fetch lands.");
+  else {
+    const mk = code.match(/function markKickoffWaitingOnRga[\s\S]*?\n\}/);
+    if (!mk || !/refreshNextStepCards\(\)/.test(mk[0]))
+      fail.push("portal/portal.js — correcting the card does not refresh the headline above it, so a DONE card can sit under \"Book your kickoff call\".");
+    else pass.push("correcting the card also refreshes the headline");
+  }
+  // 🔴 A rescheduled client has a `requested` hold, not a booked one. Booking is not their next action.
+  if (/kickoffSettled = _kickoffMine\.get\(clientId\) === "booked"/.test(code))
+    fail.push("portal/portal.js — only a BOOKED hold settles the kickoff, so a client who rescheduled is told to book it again.");
+  else pass.push("any hold, requested or booked, settles the kickoff for the headline");
+}
+
+// ── 9. THE HEADLINE PATCH MUST BE ABLE TO CORRECT ITSELF ───────────────────────────────────────
+// 🔴🔴 It replaced the headline only while the title still read "foundation is being built" — so the
+// FIRST pass (before the kickoff answer landed) wrote "Book your kickoff call", and every re-run
+// afterwards failed that same test and left it there, above a card reading RGA IS DOING IT.
+// 🔑 A patch that reads the text it wrote last time can only ever be right on its first pass.
+{
+  const i = code.indexOf("function refreshNextStepCards()");
+  if (i < 0) fail.push("portal/portal.js — refreshNextStepCards() is gone; the headline cannot be corrected after the answer lands.");
+  else {
+    const body = code.slice(i, code.indexOf("\n}\n", i));
+    if (!/nsOrigTitle/.test(body))
+      fail.push("portal/portal.js — the headline patch does not remember the original copy, so it cannot recompute and its first answer is final.");
+    else if (/test\(titleEl\.textContent\)/.test(body))
+      fail.push("portal/portal.js — the headline patch still branches on the text it wrote itself, so a re-run cannot correct it.");
+    else pass.push("the headline patch recomputes from the original copy");
+  }
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 if (fail.length) {
   console.error(`\n🔴 FAIL — ${fail.length} problem(s) with a call whose time has passed:`);

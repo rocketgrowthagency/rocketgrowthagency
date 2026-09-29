@@ -80,6 +80,9 @@ function run(status) {
     // lede's tense. A missing stub makes this gate INDETERMINATE, which reads like "not checked"
     // — so it is stubbed with an upcoming call, the case this gate is actually about.
     _kickoffWhen: new Map([["c1", { startMs: Date.now() + 3600000, mins: 30, recapSentAt: null }]]),
+    // 🔑 The corrector now also refreshes the next-step headline, because the card and the headline
+    // are driven by one booking fact. Stubbed so this gate tests the CARD, not the page around it.
+    refreshNextStepCards: () => {},
     document: { querySelector: () => ({ closest: () => dom.row }) },
   };
   vm.createContext(sandbox);
@@ -105,14 +108,23 @@ for (const [what, ok, why] of SURFACES) {
   else fail.push(`portal/portal.js — a CONFIRMED booking does not settle ${what}: ${why()}`);
 }
 
-// ── 2. AND A PENDING ONE LEAVES THEM ALONE (the mutation that matters in the other direction) ───
+// ── 2. AND A CLIENT WITH NO HOLD AT ALL IS STILL ASKED ─────────────────────────────────────────
+// 🔴🔴 THIS CHECK USED TO ASSERT THE OPPOSITE, AND IT WAS WRONG (corrected 2026-09-29). It read
+// "a REQUESTED booking hides the done-when line; the client is still waiting and needs it" — written
+// when `requested` was assumed to mean *we are still waiting on them*. It does not: a requested hold
+// is a time THEY HAVE ALREADY CHOSEN, sitting with us to confirm. Telling them "the step waits until
+// you do" is then false, and the pill beside it already says RGA IS DOING IT.
+//
+// 🔑 The state that still needs asking is NO HOLD AT ALL. That is what this now tests — the real
+// other direction. A gate that encodes a wrong assumption defends the defect.
+// → feedback_a_client_message_must_agree_with_itself
 try {
-  const waiting = run("requested");
-  if (waiting.knowDone.hidden) fail.push("portal/portal.js — a REQUESTED booking hides the done-when line; the client is still waiting and needs it.");
-  else pass.push("a requested booking keeps the done-when line");
-  if (!/choose a date/i.test(waiting.doitH.textContent)) fail.push(`portal/portal.js — a REQUESTED booking changed the heading to "${waiting.doitH.textContent}"; they still have to pick.`);
-  else pass.push("a requested booking keeps its heading");
-} catch (e) { indet.push(`could not execute the pending case: ${e.message}`); }
+  const none = run(null);
+  if (none.knowDone.hidden) fail.push("portal/portal.js — a client with NO booking hides the done-when line, so nothing tells them how the step finishes.");
+  else pass.push("a client with no booking keeps the done-when line");
+  if (!/choose a date/i.test(none.doitH.textContent)) fail.push(`portal/portal.js — a client with NO booking sees the heading "${none.doitH.textContent}"; they still have to pick.`);
+  else pass.push("a client with no booking is still asked to choose");
+} catch (e) { indet.push(`could not execute the no-booking case: ${e.message}`); }
 
 // ── 3. THE HIDE MUST ACTUALLY HIDE ─────────────────────────────────────────────────────────────
 // 🔴 `.pm-knowdone{display:block}` is an AUTHOR rule and beats the UA's `[hidden]{display:none}`,
@@ -122,6 +134,32 @@ else {
   const css = fs.readFileSync(CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   if (/\.pm-knowdone\[hidden\]\s*\{[^}]*display\s*:\s*none/.test(css)) pass.push("`hidden` on the done-when block actually hides it");
   else fail.push("portal/portal.css — `.pm-knowdone` sets `display:block` with no `[hidden]` rule, so hiding it does nothing.");
+}
+
+// ── 4. A REQUESTED HOLD IS SETTLED TOO — ONE VOCABULARY ACROSS THE CARD ────────────────────────
+// 🔴🔴 Chris, 2026-09-29: "lets get the lingo the same." The pill read RGA IS DOING IT and the
+// booking read "Requested · Tue 29 Sep, 10:00 AM", while the lede above still said "Pick a
+// 30-minute slot below", the heading still said "Choose a date and time", and the done-when line
+// still said "the step waits until you do" — of a step waiting on US. Every one of those was gated
+// on the hold being BOOKED, and a reschedule leaves it REQUESTED.
+{
+  const req = run("requested");
+  if (!/confirming/i.test(req.lede.textContent))
+    fail.push("portal/portal.js — with a time requested, the lede still gives the booking instruction, contradicting the pill beside it.");
+  else pass.push("a requested hold gets its own lede, not the booking instruction");
+  if (req.knowDone.hidden !== true)
+    fail.push('portal/portal.js — with a time requested, the card still says "the step waits until you do" — it is waiting on RGA.');
+  else pass.push("a requested hold hides the done-when line");
+  // 🔴 And the heading must not still be asking them to choose.
+  // 🔴 SCOPED TO THE DECLARATION. Testing the whole file for `_kickoffMine.has(clientId)` passed even
+  // when the HEADING was reverted, because another surface uses the same call. Read the declaration.
+  // → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+  const bs = code.match(/const bookingSettled = [^;]*;/);
+  if (!bs)
+    fail.push("portal/portal.js — bookingSettled is gone; the control heading cannot know the booking is settled.");
+  else if (!/_kickoffMine\.has\(/.test(bs[0]))
+    fail.push('portal/portal.js — the control heading is settled only by a BOOKED hold, so a rescheduled client is told to "Choose a date and time" over the time they just chose.');
+  else pass.push("any hold settles the control heading");
 }
 
 for (const p of pass) console.log(`  ✅ ${p}`);
