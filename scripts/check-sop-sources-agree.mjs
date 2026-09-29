@@ -115,6 +115,26 @@ if (insDrift.length) {
   insDrift.forEach((i) => console.log(`       ${i}`));
 } else console.log("  ✅ instruction text is identical in both sources");
 
+// 🔴🔴 AND THE TITLE, WHICH NOTHING COMPARED UNTIL 2026-09-29. Renaming step 2 from "Send the kickoff
+// calendar invite" to "Book the kickoff call" touched `playbooks.json` only; this gate went red on the
+// INSTRUCTIONS and stayed silent about the name. Had the rename been a title and nothing else, the two
+// sources would have carried different names for the same step and every check here would have passed.
+//
+// 🔑 The title is the MOST-READ field in the SOP — it is the line on the checklist row, on the cockpit
+// alert and on the next-action card. A gate that guards the body and not the heading guards the part
+// nobody reads first. Measured before pinning: all 61 titles agreed, so this is absolute, not a
+// tolerance. → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep · feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+const titleDrift = local.filter((s) => {
+  const a = s.title == null ? null : String(s.title);
+  const b = aBy.get(s.id)?.title == null ? null : String(aBy.get(s.id).title);
+  return aBy.has(s.id) && a !== b;
+});
+if (titleDrift.length) {
+  fails.push("title drift");
+  console.log(`  🔴 ${titleDrift.length} step(s) are NAMED DIFFERENTLY in the two sources:`);
+  titleDrift.forEach((s) => console.log(`       ${s.id}\n         canonical: ${JSON.stringify(s.title)}\n         admin    : ${JSON.stringify(aBy.get(s.id)?.title)}`));
+} else console.log(`  ✅ all ${local.length} step titles are identical in both sources`);
+
 // 3. hasRunner must be true only where a handler exists.
 //    🔑 A false claim here is the worst of the three: the admin renders a Run button, the user clicks
 //    it, and gets a confident wrong explanation instead of the work happening.

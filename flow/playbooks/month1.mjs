@@ -81,12 +81,14 @@ Must contain, in this order:
 📄 Wording lives in docs/playbooks/close-phase0-templates.md — section 1.`,
   },
   {
-    id: "m1.close.kickoff_invite", title: "Send the kickoff calendar invite",
+    id: "m1.close.kickoff_invite", title: "Book the kickoff call",
     // 🔴 2026-09-06 — WAS "manual", and that was the whole problem. The confirmation email tells the
     // client "Calendar invite is on its way" and nothing sent one; Chris closed RGA as its own first
     // client and no invite ever arrived. RGA now holds its own calendar.events credential, so
     // send-kickoff-invite creates the event and Google emails the guest.
-    // "hybrid": the system sends it, a human still confirms the client ACCEPTED.
+    // "hybrid": the client picks the time, a human CONFIRMS it, and that books the call.
+    // 🔴 NOT "a human confirms the client accepted" — that was a fourth state the business
+    // does not have, removed 2026-09-29. → project_kickoff_meeting_lifecycle
     type: "hybrid", dependsOn: ["m1.close.confirm"],
     actionLabel: "📅 Send the calendar invite",
     actionConfirm: "This creates the event and GOOGLE EMAILS {contact} the invitation immediately.",
@@ -108,8 +110,10 @@ To pick a different time, or to call the meeting off, use "Change the time" or "
 meeting" on the card "The first hour after they say yes" on the Overview tab. Bookable hours and
 days are set from that same card.
 
-🔴 DONE = the invite is ACCEPTED. A sent invite is not a booked call, and this is the single most
-common place momentum is lost between a yes and the work starting. Chase at 24h.
+🔴 DONE = RGA HAS CONFIRMED THE TIME. The sequence is: the client picks a date and time, RGA confirms
+it, and then it is BOOKED. Confirming is what finishes this step — the client's RSVP is news about
+attendance and nothing waits on it. This is the single most common place momentum is lost between a
+yes and the work starting, so confirm a request the day it arrives.
 
 📄 PASTE-READY TEXT: docs/playbooks/close-phase0-templates.md (website repo) — section 2.`,
   },
@@ -168,7 +172,7 @@ If it errors: the client row is missing, and every later step will fail on it. F
     id: "m1.kickoff.call", title: "Run the kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Step 2, "Send the kickoff calendar invite", books this call — on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
+    instructions: `Step 2, "Book the kickoff call", is what puts this call on the calendar — on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
 If step 2 is not complete then the call is not booked, and this step is not yours to run yet.
 
 🔴 The call is not booked until the invite is ACCEPTED. If it is still unaccepted at 24h, chase it.
