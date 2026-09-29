@@ -162,6 +162,42 @@ else {
   else pass.push("any hold settles the control heading");
 }
 
+// ── 5. EVERY SENTENCE READS ONE DECISION, NOT ITS OWN COPY OF THE CONDITION ────────────────────
+// 🔴🔴 Three separate `state.cls === "done"` tests lived in this corrector, and when the
+// "RGA is confirming" state arrived I updated TWO of them. The third — the control heading — went
+// on saying "Choose a date and time" over a time the client had already picked.
+// 🔑 Three copies of a condition is three chances to update two. One boolean, declared once.
+{
+  const i = code.indexOf("function markKickoffWaitingOnRga");
+  const body = i < 0 ? "" : code.slice(i, code.indexOf("\n}", i));
+  if (!body) fail.push("portal/portal.js — markKickoffWaitingOnRga() is gone.");
+  else {
+    if (!/const clientHasChosen = /.test(body))
+      fail.push("portal/portal.js — the card's sentences do not share one settled decision, so they can drift apart state by state.");
+    else pass.push("every sentence on the card reads one shared decision");
+    // 🔴 And no SENTENCE may keep its own private copy of the test.
+    // 🔑 Counted precisely: comments are stripped (this gate's own rationale quotes the test), the
+    // declaration of the shared boolean is excluded, and `is-kickoff-booked` is left alone — that
+    // CSS class asks a genuinely different question (BOOKED, not merely chosen).
+    // → feedback_a_check_must_not_validate_itself
+    const live = body
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "")
+      .split("\n")
+      .filter((l) => !/const clientHasChosen/.test(l) && !/is-kickoff-booked/.test(l))
+      .join("\n");
+    const copies = (live.match(/state\.cls === "done"/g) || []).length;
+    if (copies)
+      fail.push(`portal/portal.js — ${copies} sentence(s) keep a private copy of the settled test instead of reading clientHasChosen; adding a state will update some and miss others.`);
+    else pass.push("no sentence keeps a private copy of the settled test");
+  }
+  // 🔑 And it must actually settle all three, proven by running it.
+  const req = run("requested");
+  if (/choose a date/i.test(req.doitH.textContent))
+    fail.push('portal/portal.js — with a time requested the heading still says "Choose a date and time" over the time they just picked.');
+  else pass.push("a requested hold settles the control heading");
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 for (const d of indet) console.log(`  ▫️  ${d}`);
 if (fail.length) {
