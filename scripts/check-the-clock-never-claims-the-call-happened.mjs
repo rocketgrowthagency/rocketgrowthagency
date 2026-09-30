@@ -137,6 +137,45 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm,
   }
 }
 
+// ── 3 · un-answering is a WRITE, and only a `held` may be un-answered ──────────────────────────
+// 🔴🔴 "Change what happened" deleted `call_outcome` from the admin's own in-memory copy and then
+// called `reloadScopeAndRerender`, which re-READS the record — so the value came straight back and
+// the pane went on saying "The call happened". The button had no server side at all.
+// 🔑 A local delete followed by a read is not a change, it is a flicker.
+// → feedback_verify_the_write_not_just_the_intent
+{
+  const raw = read("netlify/functions/kickoff-call-outcome.js", 2000);
+  const adm = read("admin/admin.js", 100000);
+  if (raw && adm) {
+    const fn = strip(raw), aj = strip(adm);
+
+    if (!/outcome === "clear"/.test(fn)) {
+      fail.push("netlify/functions/kickoff-call-outcome.js — there is no way to un-answer an outcome, "
+        + 'so "Change what happened" can only clear a copy the next read overwrites.');
+    } else pass.push("the endpoint can un-answer an outcome");
+
+    // 🔴 A released booking cannot be un-released, so it must not be un-answerable either.
+    if (!/cur !== "held"/.test(fn)) {
+      fail.push("netlify/functions/kickoff-call-outcome.js — a no-show or a move can be cleared. "
+        + "Those RELEASE the slot and there is no undo for a release, so clearing one puts the "
+        + "question back on screen for a booking that is already free and possibly re-taken.");
+    } else pass.push("only a held call — which releases nothing — can be un-answered");
+
+    const i = aj.indexOf('closest("[data-kickoff-outcome-reset]")');
+    const h = i < 0 ? "" : aj.slice(0, aj.indexOf("const REOPENS", i) > 0 ? aj.indexOf("const REOPENS", i) : i + 4000).slice(i);
+    if (!h) {
+      indet.push("could not locate the reset branch in admin.js");
+    } else if (/delete inv\.call_outcome/.test(h)) {
+      fail.push("admin/admin.js — the reset deletes the outcome from the in-memory record again. "
+        + "reloadScopeAndRerender re-reads from Supabase, so the value returns and the pane keeps "
+        + "saying the call happened.");
+    } else if (!/outcome: "clear"/.test(h)) {
+      fail.push("admin/admin.js — the reset does not call the endpoint, so nothing is written and "
+        + "the old answer survives the re-read.");
+    } else pass.push("the reset writes, rather than clearing a copy the next read overwrites");
+  }
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 for (const i of indet) console.log(`  ⚠️  ${i}`);
 for (const f of fail) console.log(`  🔴 ${f}`);
