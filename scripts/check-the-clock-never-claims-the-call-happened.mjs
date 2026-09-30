@@ -62,12 +62,28 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm,
     const after = code.slice(code.indexOf('class="kc kc-after"'));
     const askAt = after.indexOf("data-kickoff-outcome=");
     const recapAt = after.indexOf("data-kickoff-recap=");
+    // The UNANSWERED arm only: from the first disposition to the end of the footer.
+    const uStart = after.indexOf('data-kickoff-outcome="held"');
+    const uEnd = after.indexOf("</div></div>", uStart);
+    const unanswered = uStart >= 0 && uEnd > uStart ? after.slice(uStart, uEnd) : "";
     if (askAt < 0 || recapAt < 0) {
       indet.push("could not locate both controls in the after-call pane");
     } else if (!/oc\s*\?/.test(after.slice(0, 2600))) {
-      fail.push("admin/admin.js — the after-call pane offers the recap and the disposition without "
-        + "branching on whether an outcome is recorded, so it asks and answers at the same time.");
-    } else pass.push("the pane asks what happened before it offers the recap");
+      fail.push("admin/admin.js — the after-call pane does not branch on whether an outcome is "
+        + "recorded, so it cannot lead with the question and it cannot lead with the recap after.");
+    // 🔴 THE FIRST VERSION COMPARED POSITIONS ACROSS TWO MUTUALLY EXCLUSIVE BRANCHES. The
+    // outcome-recorded arm renders the recap, the unanswered arm renders the question — so in SOURCE
+    // order the recap "precedes" the question while on SCREEN they never appear together. Order only
+    // means something INSIDE one branch. → feedback_position_is_not_identity
+    } else if (unanswered && unanswered.indexOf("data-kickoff-recap") < unanswered.indexOf('data-kickoff-outcome="held"')) {
+      // 🔑 The QUESTION leads while it is open; the RECAP stays reachable beside it. My first
+      // version hid the recap entirely until an outcome was recorded — overriding a prior decision
+      // (`check-the-kickoff-call-fits-its-slot`: the pane must offer a way to draft the recap) that
+      // Chris never asked me to change. Both are pinned now, which is what stops me doing it again.
+      // → feedback_do_what_chris_asked_not_the_principled_version
+      fail.push("admin/admin.js — the recap is offered before the disposition, so the pane answers "
+        + "before it asks.");
+    } else pass.push("the question leads, and the recap stays reachable beside it");
 
     // 🔴 And it must not assert the call took place on the clock alone.
     // 🔴 PINNED ON THE PHRASE, NOT THE RENDERED MARKUP. The first version matched
