@@ -171,11 +171,11 @@ If it errors: the client row is missing, and every later step will fail on it. F
     // 🔑 This step's real work is RUNNING the call. It now starts where the call starts.
     id: "m1.kickoff.call", title: "Run the kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
-    actionLabel: "⚡ Draft this for me",
+    actionLabel: "⚡ Prep questions for this call",
     instructions: `Step 2, "Book the kickoff call", is what puts this call on the calendar — on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
 If step 2 is not complete then the call is not booked, and this step is not yours to run yet.
 
-🔴 The call is not booked until the invite is ACCEPTED. If it is still unaccepted at 24h, chase it.
+🔴 THE CALL IS BOOKED ONCE RGA CONFIRMS IT — the client's RSVP is news about attendance, not a condition. Nothing here waits on it.
 
 ON THE CALL — cover:
   1. Scope: what RGA delivers versus what they provide.
@@ -191,7 +191,7 @@ COLLECT (this is the real purpose — without these, delivery stalls):
 
 AFTER: send a recap email — action items, dates, and exactly what you are still waiting on.
 
-See /docs/playbooks/kickoff-call-script-template.md for the full talk track.`,
+📄 Full talk track: docs/playbooks/kickoff-call-script-template.md in the website repo. It is a FILE, not a link — /docs/ is deliberately not served.`,
   },
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",
