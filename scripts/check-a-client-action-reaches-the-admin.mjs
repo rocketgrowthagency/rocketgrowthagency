@@ -149,13 +149,32 @@ const code = fs.readFileSync(JS, "utf8");
 // 🔑 A reader either asks, or is re-rendered by a function that does.
 {
   const lines = code.split("\n");
-  const owner = (i) => {
-    for (let j = i; j >= 0; j--) {
-      const m = lines[j].match(/^(?:async )?function (\w+)/);
-      if (m) return m[1];
-    }
-    return "(top level)";
-  };
+  // 🔴🔴 THE NEAREST PRECEDING `function` IS NOT THE ENCLOSING ONE. This scanned backwards for the
+  // last `function X` at any depth — so a helper DECLARED INSIDE another function captured every
+  // read below it. On 2026-09-29 `obPhaseBody` / `obPhasedHtml` were added inside the body of
+  // `renderOnboardingChecklist`, and from that moment this gate blamed `obPhasedHtml()` for a read
+  // that belongs to `renderOnboardingChecklist` — which DOES call the probe, on its first line.
+  //
+  // It accused correct code, and it stayed red unnoticed for a day because that session's sweep died
+  // partway and exited 0. The helpers have been lifted to top level; this now tracks brace depth so
+  // it cannot make the same mistake about the next one.
+  // 🔑 A heuristic that names a function is a claim about SCOPE. Scope is depth, not distance.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_gate_window_measured_in_characters_will_lie
+  const owner = (() => {
+    const stack = [];           // [{ name, depth }]
+    const at = [];              // enclosing function name per line
+    let depth = 0;
+    lines.forEach((ln) => {
+      const m = ln.match(/^\s*(?:async\s+)?function\s+(\w+)/);
+      if (m) stack.push({ name: m[1], depth });
+      at.push(stack.length ? stack[stack.length - 1].name : "(top level)");
+      // Strings and regexes can carry stray braces; the count is close enough because a declaration
+      // only ever POPS when depth returns to the level it was opened at.
+      for (const ch of ln) { if (ch === "{") depth++; else if (ch === "}") depth--; }
+      while (stack.length && depth <= stack[stack.length - 1].depth) stack.pop();
+    });
+    return (i) => at[i] || "(top level)";
+  })();
   // Helpers that only COMPUTE from the map, and renderers driven by one that asks, are excused here
   // with a reason — the same discipline the pre-flight excuse list uses.
   const EXCUSED = {
