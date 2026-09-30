@@ -76,6 +76,12 @@ function run(status) {
   const dom = buildDom();
   const sandbox = {
     _kickoffMine: new Map(status ? [["c1", status]] : []),
+    // 🔑 The corrector gained a third state on 2026-09-29 — "we could not load" — and without this
+    // stub it threw, turning this gate INDETERMINATE, which reads as "not checked". Empty on purpose:
+    // this gate is about what a KNOWN booking corrects; the unknown case has its own gate
+    // (check-a-failed-load-never-says-you-have-not-booked).
+    // → feedback_unloaded_is_not_an_answer
+    _kickoffUnknown: new Set(),
     // 🔑 The corrector now also reads the call's own facts (start, length, recap) to decide the
     // lede's tense. A missing stub makes this gate INDETERMINATE, which reads like "not checked"
     // — so it is stubbed with an upcoming call, the case this gate is actually about.

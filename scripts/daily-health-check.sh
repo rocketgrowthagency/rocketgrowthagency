@@ -191,6 +191,7 @@ run check-the-kickoff-is-booked-when-rga-confirms.mjs "the kickoff is booked whe
 run check-a-step-title-has-one-home.mjs "no surface holds its own copy of a step title"
 run check-every-control-has-a-style.mjs "no button wears a class the stylesheet has never heard of"
 run check-the-portal-has-one-button-scale.mjs "the client portal has two button sizes, not six"
+run check-a-failed-load-never-says-you-have-not-booked.mjs "a failed load never renders as \"you have not booked\""
 run check-a-step-card-never-renders-itself-twice.mjs "a step card renders each string once"
 run check-a-settled-step-never-says-do-it.mjs "a finished step never tells the client to do it"
 run check-client-copy-is-american.mjs "client copy reads as American, not British"
