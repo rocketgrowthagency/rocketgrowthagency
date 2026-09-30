@@ -134,6 +134,80 @@ if (checked < FAMILIES.length - 2) {
   pass.push(`all ${checked} control families sit on one of the two rungs, text size included`);
 }
 
+// ── EVERY CONTROL IN USE, NOT A LIST I REMEMBERED TO WRITE ──────────────────────────────────────
+// 🔴🔴 2026-09-29. Chris: *"it is so fucked up i cant keep asking you to fix it. go through every
+// step in detail and then fix all."* He was right, and the reason it kept happening is that the
+// section above checks a HARDCODED list of families — so every family I did not think to add was
+// invisible to the gate, and only became visible when he saw it.
+//
+// A pass over all 16 client steps found THIRTEEN more sizing themselves from padding: .pm-choice,
+// .pm-plat-opt, .fq-opt, .pm-join, .kickoff-slot, .pm-in-tick, .pm-in-closed and the rest.
+//
+// 🔑 THIS CHECK ENUMERATES WHAT THE PORTAL ACTUALLY RENDERS and demands every one of them declare a
+// min-height. It cannot go stale when a new control is added, which the list above can.
+// → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+//
+// EXEMPT, each for a stated reason — a control with `padding:0` is a text link, and a disclosure
+// header is a full-width row, not a button. Adding to this list is a decision, not a shortcut.
+const EXEMPT = {
+  "fq-undo": "text link (padding:0)",
+  "how-ask": "text link (padding:0)",
+  "pm-link": "text link (padding:0)",
+  "ap-head": "disclosure header — a full-width row, not a button",
+  "fq-head": "disclosure header — a full-width row, not a button",
+  "ai-pointer": "an inline pointer banner, not a control in the scale",
+};
+{
+  const jsPath = path.join(SITE, "portal", "portal.js");
+  if (!fs.existsSync(jsPath)) indet.push("portal.js not found — the exhaustive sweep did not run");
+  else {
+    const js = fs.readFileSync(jsPath, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const used = new Set();
+    for (const m of js.matchAll(/<(?:button|a)\b[^>]*?class="([^"]*)"/g)) {
+      // 🔑 The LITERAL PREFIX, before any `${…}` — `class="pm-choice${on}"` is still `.pm-choice`.
+      for (const c of m[1].split("${")[0].split(/\s+/)) {
+        if (/^[A-Za-z][A-Za-z0-9_-]*$/.test(c)) used.add(c);
+      }
+    }
+    if (used.size < 25) {
+      indet.push(`only ${used.size} control families found in portal.js — the markup shape changed, so the exhaustive sweep is not measuring what it thinks`);
+    } else {
+      const off = [];
+      for (const c of [...used].sort()) {
+        if (EXEMPT[c]) continue;
+        const b = block("." + c);
+        if (!b || /min-height/.test(b)) continue;
+        if (/padding\s*:/.test(b)) off.push(c);
+      }
+      if (off.length) {
+        fail.push(`portal.css — ${off.length} control family(ies) size themselves from padding instead of `
+          + `declaring a rung: ${off.map((c) => "." + c).join(" · ")}. Each is a height nobody chose, and `
+          + `it only becomes visible when Chris sees it.`);
+      } else pass.push(`all ${used.size} control families in portal.js are on the scale or explicitly exempt`);
+    }
+  }
+}
+
+// ── THE OVERRIDES THAT ARE TARGETED BY ATTRIBUTE, WHICH A CLASS SWEEP CANNOT SEE ────────────────
+// 🔴 The sweep above enumerates CLASS rules. "Check now" is raised by `[data-step-recheck]`, so
+// deleting that rule left the sweep green — the button falls back to `.pm-amend` (quiet), which is
+// correctly sized for its class and wrong for its role. Found by mutation-testing the sweep.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  const b = block("[data-step-recheck]{");
+  if (!b) {
+    fail.push('portal.css — the `[data-step-recheck]` size rule is gone, so "Check now" drops to the '
+      + "quiet size. It is the ONLY control on a detected step — steps 4, 6 and \"Add RGA as "
+      + "Manager\" — and the way that step resolves.");
+  } else {
+    const mh = decl(b, "min-height");
+    if (!mh || !/var\(\s*--pm-h\s*[,)]/.test(mh)) {
+      fail.push(`portal.css — "Check now" is ${mh || "unsized"}, not \`var(--pm-h)\`.`);
+    } else pass.push('"Check now" — the sole control on a detected step — takes the action size');
+  }
+}
+
 // ── AND THE ACTION ROW RAISES ITS AMENDMENTS ────────────────────────────────────────────────────
 // 🔴 2026-09-29, Chris pointing at "Pick a different time": the only control on a settled kickoff
 // card, drawn at the quiet 30px while every other card's control row is 38px. The scale says 38px is
