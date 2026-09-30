@@ -94,38 +94,26 @@ const code = src.replace(/^[ \t]*\/\/.*$/gm, "");
   }
 }
 
-// ── 3. THE CARD SAYS HOW IT FINISHES ────────────────────────────────────────────────────────────
+// ── 3. …AND IT NO LONGER SAYS HOW IT FINISHES, BECAUSE CHRIS REMOVED THAT LINE ─────────────────
+// 🔴🔴 2026-09-29. This section used to REQUIRE a "You are done when …" line for every `clientDone`
+// kind, and require it to be hidden once settled. Chris, after it reappeared once too often:
+// *"why the fuck does this keep showing … Ive told you remove from every fucking card in every
+// fucking way possible i never want to see this again."*
+//
+// It kept reappearing because it was defended by conditions — hidden when settled, then also when a
+// booking was confirmed, then also when a load failed — and each new state I had not thought of
+// un-hid it. **A line that must never appear cannot be defended by a condition.** The producer is
+// deleted; `check-the-done-when-line-is-gone.mjs` now bans it outright.
+//
+// 🔑 A GATE THAT DEMANDS THE THING CHRIS REMOVED IS A GATE ARGUING WITH THE OWNER. Inverted here
+// rather than left to fail, because a red gate nobody can satisfy gets ignored, and then it stops
+// guarding the four checks above it that are still right.
+// → feedback_a_gate_written_from_a_slogan_defends_the_misreading
 {
-  const at = code.indexOf("DONE_WHEN");
-  if (at < 0) {
-    fail.push("portal/portal.js — nothing tells the client how a step gets ticked. Seven of sixteen "
-      + "finish by detection, and the card cannot say whether they must come back and press something.");
-  } else {
-    const block = code.slice(at, at + 1400);
-    // Every kind the DATA actually uses must be covered — read the data, do not assume the list.
-    const dataPath = path.join(WEB, "data/playbooks/client-steps.json");
-    let kinds = [];
-    try {
-      const raw = JSON.parse(fs.readFileSync(dataPath, "utf8"));
-      const steps = Array.isArray(raw) ? raw : (raw.steps || Object.values(raw).find(Array.isArray) || []);
-      kinds = [...new Set(steps.map((s) => s && s.clientDone).filter(Boolean))];
-    } catch (e) { indet.push(`could not read client-steps.json (${e.message})`); }
-    if (kinds.length) {
-      const missing = kinds.filter((k) => !new RegExp(`\\b${k}\\s*:`).test(block));
-      if (missing.length) {
-        fail.push(`portal/portal.js — no "you are done when" copy for clientDone kind(s): `
-          + `${missing.join(", ")}. Those steps say nothing about how they finish.`);
-      } else pass.push(`every clientDone kind in the data is covered (${kinds.join(", ")})`);
-    }
-    // 🔴 Hidden once settled — by then it is answered, not pending.
-    // 🔑 Same reason: the guard may be `settled ? "" :` or `(settled || …) ? "" :`. What matters is
-    // that settled-ness gates it at all.
-    const before = code.slice(Math.max(0, at - 700), at);
-    if (!/[Ss]ettled[^?]{0,80}\?\s*""/.test(before)) {
-      fail.push("portal/portal.js — the \"you are done when\" line is not hidden once the step is "
-        + "settled, so a finished step still explains how to finish it.");
-    } else pass.push("the line is hidden once the step is settled");
-  }
+  if (/DONE_WHEN/.test(code)) {
+    fail.push('portal/portal.js — the DONE_WHEN map is back. The "You are done when …" line is '
+      + "deleted on Chris's explicit instruction; it must not return in any form or on any state.");
+  } else pass.push('the "You are done when …" line has no producer');
 }
 
 // ── 4. THE ADMIN'S DEFECT HAS NOT BEEN IMPORTED ─────────────────────────────────────────────────

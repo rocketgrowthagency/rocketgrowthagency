@@ -127,8 +127,9 @@ const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 // → feedback_correct_is_not_the_same_as_happening · feedback_a_gate_that_cannot_fail
 {
   const SURFACES = [
-    [/if \(knowDone\) knowDone\.hidden = settledOrUnknown;/,
-     'the "You are done when you tell us…" line', "it would tell a client they still owe us a time"],
+    // 🔑 The "You are done when…" line used to be checked here. It is DELETED (2026-09-29) — Chris:
+    // "i never want to see this again" — so there is nothing left to gate. Its absence is enforced
+    // by check-the-done-when-line-is-gone.mjs, which bans the producer outright.
     [/if \(lede && settledOrUnknown\) \{/,
      'the "Pick a 30-minute slot below" lede', "it would tell a client to book a call that may already be booked"],
     [/if \(doitH && settledOrUnknown\) \{/,

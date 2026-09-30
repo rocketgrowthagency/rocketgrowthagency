@@ -106,8 +106,9 @@ const SURFACES = [
   ["the lede", () => /booked/i.test(booked.lede.textContent), () => `lede reads "${booked.lede.textContent}"`],
   ["the control heading", () => !/choose a date/i.test(booked.doitH.textContent),
     () => `heading still reads "${booked.doitH.textContent}" — it is telling them to pick a time they have picked`],
-  ["the \"You are done when\" line", () => booked.knowDone.hidden === true,
-    () => `the done-when block is still shown — it tells a settled step to wait on the client`],
+  // 🔑 The done-when strip used to be checked here. Chris DELETED it on 2026-09-29 — "i never want
+  // to see this again" — so there is no longer a sentence to settle. Its absence is enforced by
+  // check-the-done-when-line-is-gone.mjs, which bans the producer outright rather than gating it.
 ];
 for (const [what, ok, why] of SURFACES) {
   if (ok()) pass.push(`a confirmed booking settles ${what}`);
@@ -126,8 +127,6 @@ for (const [what, ok, why] of SURFACES) {
 // → feedback_a_client_message_must_agree_with_itself
 try {
   const none = run(null);
-  if (none.knowDone.hidden) fail.push("portal/portal.js — a client with NO booking hides the done-when line, so nothing tells them how the step finishes.");
-  else pass.push("a client with no booking keeps the done-when line");
   if (!/choose a date/i.test(none.doitH.textContent)) fail.push(`portal/portal.js — a client with NO booking sees the heading "${none.doitH.textContent}"; they still have to pick.`);
   else pass.push("a client with no booking is still asked to choose");
 } catch (e) { indet.push(`could not execute the no-booking case: ${e.message}`); }
@@ -153,9 +152,7 @@ else {
   if (!/confirming/i.test(req.lede.textContent))
     fail.push("portal/portal.js — with a time requested, the lede still gives the booking instruction, contradicting the pill beside it.");
   else pass.push("a requested hold gets its own lede, not the booking instruction");
-  if (req.knowDone.hidden !== true)
-    fail.push('portal/portal.js — with a time requested, the card still says "the step waits until you do" — it is waiting on RGA.');
-  else pass.push("a requested hold hides the done-when line");
+  // 🔑 The third and last check of the done-when strip. Deleted with the strip itself (09-29).
   // 🔴 And the heading must not still be asking them to choose.
   // 🔴 SCOPED TO THE DECLARATION. Testing the whole file for `_kickoffMine.has(clientId)` passed even
   // when the HEADING was reverted, because another surface uses the same call. Read the declaration.
