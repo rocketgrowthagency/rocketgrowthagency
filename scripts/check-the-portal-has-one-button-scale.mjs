@@ -134,6 +134,26 @@ if (checked < FAMILIES.length - 2) {
   pass.push(`all ${checked} control families sit on one of the two rungs, text size included`);
 }
 
+// ── AND THE ACTION ROW RAISES ITS AMENDMENTS ────────────────────────────────────────────────────
+// 🔴 2026-09-29, Chris pointing at "Pick a different time": the only control on a settled kickoff
+// card, drawn at the quiet 30px while every other card's control row is 38px. The scale says 38px is
+// "a step's action, AND every control in a card's action row" — those three buttons ARE the row.
+// They stay OUTLINED (nothing there is the one thing to do); only the size moves.
+// 🔑 Scoped to `.pm-row-actions` so it reaches exactly those three and no inline amendment.
+{
+  const b = block(".pm-row-actions .pm-amend{");
+  if (!b) {
+    fail.push("portal.css — `.pm-row-actions .pm-amend` is gone, so \"Change the time\", \"Can't make it\" "
+      + "and \"Pick a different time\" drop back to the quiet size and a settled kickoff card is the "
+      + "only card in the portal whose control row is smaller than every other.");
+  } else {
+    const mh = decl(b, "min-height");
+    if (!mh || !/var\(\s*--pm-h\s*[,)]/.test(mh)) {
+      fail.push(`portal.css — the action row's amendments are ${mh || "unsized"}, not \`var(--pm-h)\`.`);
+    } else pass.push("an amendment inside a card's action row takes the action size, outlined");
+  }
+}
+
 for (const p of pass) console.log(`  ✅ ${p}`);
 for (const i of indet) console.log(`  ⚠️  ${i}`);
 for (const f of fail) console.log(`  🔴 ${f}`);
