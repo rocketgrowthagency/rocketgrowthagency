@@ -147,7 +147,16 @@ const liars = [];
 for (const t of admin) {
   if (!t.hasRunner) continue;
   const canonicalHasRun = typeof localBy.get(t.id)?.run === "function";
-  const inExec = new RegExp(`"${t.id.replace(/\./g, "\\.")}"`).test(execSrc);
+  // 🔴🔴 THIS WAS A PRESENCE TEST REPORTED AS EXECUTABILITY — the exact defect the comment above
+  // warns about, three lines down from it. `"m1.foo.bar"` appearing ANYWHERE in flow-execute counted
+  // as a handler: a comment, a list, a routing table key for a DIFFERENT purpose. Found 2026-09-29
+  // while auditing all 61 steps for Chris.
+  // 🔑 A handler is one of exactly two shapes: an inline `"id": async (` entry, or an id→function
+  // routing pair `["id", "some-function"]`. Anything else is a mention.
+  // → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works · feedback_a_literal_grep_misses_computed_writes
+  const q = t.id.replace(/\./g, "\\.");
+  const inExec = new RegExp(`"${q}"\\s*:\\s*async\\s*\\(`).test(execSrc)
+    || new RegExp(`\\[\\s*"${q}"\\s*,\\s*"[a-z0-9-]+"\\s*\\]`).test(execSrc);
   if (!canonicalHasRun && !inExec) liars.push(t.id);
 }
 if (liars.length) {
