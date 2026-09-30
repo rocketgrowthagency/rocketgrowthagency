@@ -88,6 +88,7 @@ const NOT_PREFLIGHT = {
   'check-a-past-call-never-claims-it-happened.mjs': 'portal-UI gate; runs in daily-health-check.sh — a past-call card cannot make a video unsafe',
   'check-the-countdown-agrees-across-portals.mjs': 'portal+admin UI gate; runs in daily-health-check.sh — a countdown cannot make a video unsafe',
   'check-a-settled-booking-corrects-every-sentence.mjs': 'portal-UI gate; runs in daily-health-check.sh — a settled step card cannot make a video unsafe',
+  'check-the-phases-account-for-every-step.mjs': 'onboarding-structure gate; runs in daily-health-check.sh',
   'check-the-clock-never-claims-the-call-happened.mjs': 'kickoff-honesty gate; runs in daily-health-check.sh',
   'check-the-done-when-line-is-gone.mjs': 'portal-copy gate; runs in daily-health-check.sh — replaced check-a-sentence-never-points-where-it-cannot-see when Chris deleted that line',
   'check-a-client-action-reaches-the-admin.mjs': 'admin-UI gate; runs in daily-health-check.sh — a next-action card cannot make a video unsafe',
