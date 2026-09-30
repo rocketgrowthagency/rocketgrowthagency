@@ -183,6 +183,7 @@ run check-a-past-call-never-claims-it-happened.mjs "a past call claims it happen
 run check-the-countdown-agrees-across-portals.mjs "both portals count down in the same words"
 run check-a-settled-booking-corrects-every-sentence.mjs "a confirmed booking settles every sentence"
 run check-the-done-when-line-is-gone.mjs "the \"You are done when …\" strip is deleted and cannot return"
+run check-the-clock-never-claims-the-call-happened.mjs "only a person says the kickoff call happened"
 run check-a-client-action-reaches-the-admin.mjs "a client waiting on us reaches the next-action card"
 # 🔑 Not a gate — a CALLER. kickoff-rsvp-check could always read an acceptance; until 2026-09-27 the
 # only thing that ever asked it was an admin page view, so a client could accept on Friday and the
