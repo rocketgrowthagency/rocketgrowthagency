@@ -199,7 +199,11 @@ try {
   if (errs.length) bad(`the page threw while the checklist was being worked: ${[...new Set(errs)].slice(0, 2).join(" | ")}`);
   else console.log("  ✅ nothing threw across every view and every phase opened");
 } finally {
-  await browser.close();
+  // 🔴 A CLEAN PASS MUST NOT EXIT NON-ZERO. Closing the browser occasionally throws after every
+  // check has already printed ✅, and the throw became the exit code — a gate reported as failing
+  // on a run where nothing failed. Teardown is not a finding.
+  // → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+  await browser.close().catch(() => {});
 }
 
 if (fails) { console.log(`\n🔴 FAIL — ${fails} rendering defect(s) in the one list.`); process.exit(1); }
