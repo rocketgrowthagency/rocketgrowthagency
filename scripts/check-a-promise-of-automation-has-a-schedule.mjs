@@ -65,17 +65,13 @@ const KEPT_BY = [
     keptBy: "gbp-duplicate-recheck",
     note: "the duplicate-listing card — re-scans daily and writes a client_activity note on clear",
   },
-  {
-    // 🔑 Added 2026-09-28 with the client step card's "Done when" line. The promise is TRUE — it was
-    // simply never registered. `metrics-daily-refresh` (06:00 daily, netlify.toml) sweeps every step
-    // that declares `clientDone: "detected"` and calls `portal-step-recheck` against the live source.
-    // Nine steps rely on it: GBP/GA4/GSC access, form tracking, GBP verify + photos, first 5 reviews,
-    // and the two month-2 execution steps.
-    match: /we check automatically/i,
-    surface: "portal/portal.js",
-    keptBy: "metrics-daily-refresh",
-    note: "the client step card's Done-when line for a DETECTED step",
-  },
+  // 🔑 An entry for the client step card's done-when strip lived here from 2026-09-28. Chris DELETED
+  // that strip on 09-29 ("i never want to see this again"), so the copy it registered no longer
+  // exists and this gate correctly reported a registry naming a promise nothing makes.
+  // 🔴 REMOVING THE ENTRY IS THE FIX, NOT WEAKENING THE CHECK. The automation is unchanged —
+  // `metrics-daily-refresh` still sweeps every `clientDone: "detected"` step at 06:00 — we simply no
+  // longer PROMISE it in that sentence, and an unmade promise needs no registration.
+  // → feedback_a_line_that_must_never_appear_cannot_be_gated · feedback_we_never_promise_what_we_dont_do
 ];
 
 if (!fs.existsSync(TOML)) {
