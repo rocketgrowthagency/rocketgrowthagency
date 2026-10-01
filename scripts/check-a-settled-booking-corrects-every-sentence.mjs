@@ -89,6 +89,9 @@ function run(status) {
     // 🔑 The corrector now also refreshes the next-step headline, because the card and the headline
     // are driven by one booking fact. Stubbed so this gate tests the CARD, not the page around it.
     refreshNextStepCards: () => {},
+    // 🔑 The picker's "way out" (2026-10-01) — the set of clients mid-pick, so a reopened picker can
+    // be closed without changing the time. Empty on purpose: this gate is about a SETTLED booking.
+    _kickoffPicking: new Set(),
     document: { querySelector: () => ({ closest: () => dom.row }) },
   };
   vm.createContext(sandbox);
@@ -99,7 +102,25 @@ function run(status) {
 // ── 1. A CONFIRMED BOOKING SETTLES EVERY SENTENCE ON THE CARD ───────────────────────────────────
 let booked;
 try { booked = run("booked"); }
-catch (e) { console.error(`⚠️  INDETERMINATE — could not execute the correction: ${e.message}`); process.exit(2); }
+catch (e) {
+  // 🔴🔴 A MISSING STUB IS OUR BUG, NOT AN ENVIRONMENT LIMIT. Every time the corrector gained a
+  // symbol — _kickoffUnknown, _kickoffWhen, refreshNextStepCards, _kickoffPicking — this gate threw
+  // and exited 2, which reads as "could not check" and gets scrolled past. It then protected
+  // NOTHING, while the defect class it exists for ("You are done when…" surviving a confirmed
+  // booking) is one Chris has hit three times. A ReferenceError means ADD ONE LINE to the sandbox,
+  // so it is a FAILURE and it names the symbol. Exit 2 stays for a genuinely unreadable source.
+  // → feedback_a_gate_that_cannot_fail · feedback_a_line_that_must_never_appear_cannot_be_gated
+  if (e instanceof ReferenceError || /is not defined/.test(e.message)) {
+    const sym = (e.message.match(/(\w+) is not defined/) || [])[1] || "a symbol";
+    console.error(`🔴 THIS GATE COULD NOT RUN, AND THAT IS A DEFECT IN THE GATE, NOT THE PRODUCT.`);
+    console.error(`   markKickoffWaitingOnRga now reads \`${sym}\`, which the sandbox does not stub.`);
+    console.error(`   Add \`${sym}\` to the sandbox in run() — stubbed for a SETTLED booking — and re-run.`);
+    console.error(`   Until then nothing is checking that a confirmed booking settles every sentence.`);
+    process.exit(1);
+  }
+  console.error(`⚠️  INDETERMINATE — could not execute the correction: ${e.message}`);
+  process.exit(2);
+}
 
 const SURFACES = [
   ["the pill", () => booked.pill.textContent === "Done", () => `pill reads "${booked.pill.textContent}"`],
