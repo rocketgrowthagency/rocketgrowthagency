@@ -39,6 +39,25 @@ const W="/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
       !/\.ob-out-body\s*\{[^}]*(padding|border|background)\s*:/.test(css.replace(/\/\*[\s\S]*?\*\//g, ""))],
     ["a bullet CHARACTER is treated as a bullet",
       /const ul = t\.match\([^)]*\\u2022/.test(js)],
+    // 🔴🔴 THE CARD FRAME, IN THE SOURCE. The render half reads the DEPLOYED page and is also the
+    // flaky half — a load failure there is COULD-NOT-RUN, so it cannot be the only guard on the
+    // regression Chris actually hit: steps inside a phase stripped of border, radius and gap.
+    ["a step inside a phase keeps its frame",
+      (() => {
+        const m = css.replace(/\/\*[\s\S]*?\*\//g, "").match(/\.ob-ph-b\s*>\s*\.ob-step\s*\{([^}]*)\}/);
+        if (!m) return false;                       // the rule may be gone entirely, which is fine
+        return !/border[a-z-]*\s*:\s*0|border-radius\s*:\s*0/.test(m[1]);
+      })()],
+    ["a step inside a phase keeps a gap before the next",
+      (() => {
+        const m = css.replace(/\/\*[\s\S]*?\*\//g, "").match(/\.ob-ph-b\s*>\s*\.ob-step\s*\{([^}]*)\}/);
+        if (!m) return true;                        // no rule means it keeps .ob-step's own margin
+        const mm = m[1].match(/margin\s*:\s*([^;]+)/);
+        if (!mm) return true;
+        const parts = mm[1].trim().split(/\s+/);
+        const bottom = parts.length === 1 ? parts[0] : parts.length === 2 ? parts[0] : parts[2];
+        return parseFloat(bottom) >= 6;
+      })()],
     ["the closing remark cannot swallow a block",
       /ob-out-why[\s\S]{0,80}/.test(js) && /\(\?!<\\\/\?\(\?:p\|ul\|ol/.test(js)],
   ];
@@ -112,6 +131,46 @@ if (!struct.outs) {
   process.exit(2);
 }
 let n=0,d=0;
+// ═══ THE CARD ITSELF ═══════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE GATE THAT PASSED WHILE THE CARDS RAN TOGETHER. The first version compared seven elements
+// I had chosen, and the card was not one of them — so 21 properties matched while the steps had no
+// border, no radius and no gap, and step 6's green header butted onto step 5's last line.
+// Chris: "i told you to follow the design of this". A chosen property list is a claim about what I
+// thought to look at. → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+{
+  const card = await page.evaluate(() => {
+    const els = [...document.querySelectorAll(".ob-phase .ob-step.done")];
+    if (!els.length) return null;
+    const cs = getComputedStyle(els[0]);
+    const r1 = els[0].getBoundingClientRect();
+    const r2 = els[1] ? els[1].getBoundingClientRect() : null;
+    const row = els[0].querySelector(".ob-row");
+    return {
+      borderWidth: cs.borderTopWidth, borderStyle: cs.borderTopStyle, borderColor: cs.borderTopColor,
+      radius: cs.borderTopLeftRadius, bottomRadius: cs.borderBottomLeftRadius,
+      cardBg: cs.backgroundColor,
+      headerBg: row ? getComputedStyle(row).backgroundColor : null,
+      gapToNext: r2 ? Math.round(r2.top - r1.bottom) : null,
+      count: els.length,
+    };
+  });
+  if (!card) { console.log("  ⚠️  no done step inside a phase — nothing to measure."); }
+  else {
+    const want = [
+      ["the card has a visible border", parseFloat(card.borderWidth) >= 1 && card.borderStyle === "solid", `${card.borderWidth} ${card.borderStyle}`],
+      ["the border is the mockup's green", card.borderColor === "rgb(207, 227, 207)", card.borderColor],
+      ["the card is rounded, top and bottom", parseFloat(card.radius) >= 10 && parseFloat(card.bottomRadius) >= 10, `${card.radius} / ${card.bottomRadius}`],
+      ["the card body is white", card.cardBg === "rgb(255, 255, 255)", card.cardBg],
+      ["the header carries the tint", card.headerBg === "rgb(230, 242, 230)", card.headerBg],
+      ["cards do not touch", card.gapToNext === null || card.gapToNext >= 6, `${card.gapToNext}px to the next card`],
+    ];
+    for (const [what, ok, got] of want) {
+      if (ok) console.log(`  \u2705 ${what}`);
+      else { console.log(`  \ud83d\udd34 ${what} — got ${got}`); d++; }
+    }
+  }
+}
+
 for(const s of SPEC){
   const w=want[s.name]; if(!w){console.log(`  ⚠️  mockup has no ${s.mock}`);continue;}
   const g=await page.evaluate(read,s.live,s.props);
