@@ -26,7 +26,10 @@ const SITE = process.env.SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Webs
 const SHEETS = ["portal/portal.css", "admin/admin.css"];
 
 // The ceiling, measured 2026-09-25. Lower it whenever a cleanup lands. Never raise it.
-const BASELINE = { "portal/portal.css": 20, "admin/admin.css": 51 };
+// 🔑 ZERO, 2026-10-01. The 71 were removed after proving, with the BROWSER's own CSS parser,
+// that every live selector part survives with identical declarations and no comment was lost.
+// It can only go up from here by someone adding a rule nothing matches.
+const BASELINE = { "portal/portal.css": 0, "admin/admin.css": 0 };
 
 const SKIP_DIRS = new Set(["node_modules", ".git", ".netlify", "reports"]);
 const CODE = /\.(js|mjs|cjs|html|json)$/;
@@ -123,7 +126,9 @@ for (const sheet of SHEETS) {
 // fallbacks are unreachable and harmless. It failed identically with and without the bug it was
 // written for, which is a gate that cannot PASS: exactly as worthless as one that cannot fail.
 // → feedback_a_gate_that_cannot_fail
-const FALLBACK_BASELINE = { "portal/portal.css": 81, "admin/admin.css": 71 };
+// 🔑 ZERO, 2026-10-01. All 141 were rewritten to the value the token actually declares — the
+// fallback still never applies, but it no longer names a colour the screen does not show.
+const FALLBACK_BASELINE = { "portal/portal.css": 0, "admin/admin.css": 0 };
 console.log("\n── no NEW var() fallback that can never apply ──");
 let deadFallbacks = 0;
 for (const sheet of SHEETS) {
