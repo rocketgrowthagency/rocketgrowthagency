@@ -172,26 +172,22 @@ If it errors: the client row is missing, and every later step will fail on it. F
     id: "m1.kickoff.call", title: "Run the kickoff call",
     type: "manual", dependsOn: ["m1.kickoff.create"],
     actionLabel: "⚡ Prep questions for this call",
-    instructions: `Step 2, "Book the kickoff call", is what puts this call on the calendar — on Google Meet, from hello@rocketgrowthagency.com. You do not book anything here.
-If step 2 is not complete then the call is not booked, and this step is not yours to run yet.
+    instructions: `COVER, IN THIS ORDER:
+  1. Scope — what RGA delivers versus what they provide.
+  2. Timeline — roughly 3 months to ranking results, and what moves before then.
+  3. Cadence — weekly work, a monthly call.
 
-🔴 THE CALL IS BOOKED ONCE RGA CONFIRMS IT — the client's RSVP is news about attendance, not a condition. Nothing here waits on it.
-
-ON THE CALL — cover:
-  1. Scope: what RGA delivers versus what they provide.
-  2. Timeline: roughly 3 months to ranking results, and what moves before then.
-  3. Cadence: weekly work, a monthly call.
-
-COLLECT (this is the real purpose — without these, delivery stalls):
+🔴 LEAVE THE CALL WITH THESE — without them, delivery stalls:
   · Google Business Profile login
   · Website / CMS login
   · GA4 + Search Console access
   · 20+ photos
   · Their customer list, for review outreach
+  🔑 The console tracks which of these you already have, live, while the call runs.
 
-AFTER: send a recap email — action items, dates, and exactly what you are still waiting on.
+After: send the recap — action items, dates, and exactly what you are still waiting on. The console drafts it from what is still outstanding.
 
-📄 Full talk track: docs/playbooks/kickoff-call-script-template.md in the website repo. It is a FILE, not a link — /docs/ is deliberately not served.`,
+📄 The full talk track: opens in the call console fifteen minutes before the start — the agenda with timings, what to say in each section, and a clock that names what to cut if you run long.`,
   },
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",
