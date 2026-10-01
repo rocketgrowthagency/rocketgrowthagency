@@ -283,6 +283,22 @@ run check-kickoff-reader-matches-writer.mjs "the email reads the kickoff record 
 run check-deep-links-land-where-asked.mjs "a deep link opens the view it names, not Pipeline"
 run check-no-shadowed-functions.mjs     "no admin/portal function is silently redefined"
 run check-stage-changes-notify-client.mjs "a stage change tells the client, never silent"
+
+# ── ADMIN CHECKLIST + CLIENT PORTAL (built 2026-09-29 → 10-01, wired 10-01) ────────────────────
+# 🔴 Ten gates existed and nothing invoked them — "a gate nobody invokes is indistinguishable from a
+# gate that is always green". Found by check-every-gate-is-wired, which is why that gate exists.
+run check-the-checklist-is-one-list.mjs      "the onboarding checklist is ONE list of 61, not two"
+run check-the-checklist-has-one-numbering-system.mjs "the disc carries state, .ob-sid carries the identifier"
+run check-step-instructions-render-as-bands.mjs "a step's instructions render as bands, not a wall of prose"
+run check-a-step-output-takes-its-own-weight.mjs "stored output is weighted, linkified and cannot scroll sideways"
+run check-every-detected-step-is-actually-checked.mjs "every clientDone:detected step has a probe that runs"
+run check-the-call-console-survives-a-manual-tick.mjs "ticking the kickoff step by hand never removes the console"
+run check-the-picker-has-a-way-out.mjs       "the client can close the time picker without changing the time"
+run check-the-live-call-surfaces-keep-up.mjs "the Join button and the clock track the call in real time"
+# 🔑 These two drive a real browser signed in. No browser / no Supabase env → exit 2, INDETERMINATE,
+# which is correct: not a pass, and not a design failure either.
+run check-the-checklist-renders-one-list.mjs "61 rows, one pill each, the view switch filtering them — ON SCREEN"
+run check-the-checklist-numbering-matches-the-mockup.mjs "the live render matches the approved mockup, property by property"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-charge-equals-the-contract.mjs "we charge exactly what the agreement schedules"

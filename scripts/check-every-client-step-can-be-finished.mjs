@@ -660,8 +660,30 @@ else {
     if (!/portal-step-recheck/.test(nightly)) {
       bad("the nightly never runs the step probes — an open detected step would wait for a button nobody can see");
     }
-    for (const id of ["m1.gbp.verify", "m1.tracking.form_setup"]) {
-      if (!nightly.includes(id)) bad(`the nightly sweep does not probe ${id}`);
+    // 🔴 PIN THE PROPERTY, NOT THE SPELLING. This used to demand the two step ids appear LITERALLY
+    // in the nightly's source. metrics-daily-refresh now DERIVES its list from
+    // portal-step-recheck.PROBE_IDS(), so it can never drift from the probe table — a strict
+    // tightening, which this gate read as a removal and reported as two dead ends.
+    // The property is: EVERY `clientDone: "detected"` step is in the set the nightly sweeps.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
+    {
+      let swept = null;
+      if (/PROBE_IDS\(\)/.test(nightly)) {
+        try {
+          const req = (await import("node:module")).createRequire(import.meta.url);
+          const mod = req(path.join(SITE, "netlify/functions/portal-step-recheck.js"));
+          if (typeof mod.PROBE_IDS === "function") swept = mod.PROBE_IDS();
+        } catch (e) {
+          bad(`the nightly derives its probe list from PROBE_IDS(), but it could not be loaded: ${e.message}`);
+        }
+      }
+      // No derivation? Then the ids must be named literally — the old contract still holds.
+      const detectedIds = steps.filter((x) => x.clientDone === "detected").map((x) => x.id);
+      for (const id of detectedIds) {
+        const covered = swept ? swept.includes(id) : nightly.includes(id);
+        if (!covered) bad(`the nightly sweep does not probe ${id}`);
+      }
+      if (swept && !detectedIds.length) bad("no step declares clientDone:\"detected\" — this check is auditing nothing");
     }
     // 🔑 A number computed and never reported is a check nobody can see the result of.
     if (/stepsConfirmed/.test(nightly) && !/step probes: \$\{stepResults\.length\}/.test(nightly)) {

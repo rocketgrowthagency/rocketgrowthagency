@@ -95,10 +95,25 @@ if (/\.fct-card\s*>\s*\*/.test(cssCode)) {
 }
 
 // 6 ─ the admin heading counts from the data
-const heading = admin.match(/<h3[^>]*>([^<]*things to ask on the kickoff call)<\/h3>/);
-if (!heading) fail.push("the admin kickoff heading is gone or was renamed");
-else if (!/\$\{d\.total\}/.test(heading[1])) {
-  fail.push(`the admin heading hardcodes its count ("${heading[1].trim()}") — it read "Four things to ask" above "1 of 5 captured"`);
+// 🔴 PIN THE PROPERTY, NOT THE WORDING. This matched the literal heading "N things to ask on the
+// kickoff call". The approved 2026-10-01 redesign renamed the card to "The N owner questions", and
+// this gate reported the rename as a loss. What matters is unchanged: THE NUMBER IN THE HEADING IS
+// COMPUTED FROM THE QUESTION DATA, never typed. It read "Four things to ask" above five questions
+// once, and later became a literal "five" in index.html — the same defect, a different number.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_no_hardcoded_stats
+{
+  let html = "";
+  try { html = read("admin/index.html"); } catch { /* the card may be rendered entirely from js */ }
+  const hm = html.match(/<h3[^>]*id="ownerQuestionsHeading"[^>]*>([^<]*)<\/h3>/)
+          || admin.match(/<h3[^>]*>([^<]*(?:things to ask on the kickoff call|owner questions))<\/h3>/i);
+  if (!hm) fail.push("the owner-questions heading is gone — nothing names the card");
+  else if (/\b(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\b/i.test(hm[1])) {
+    fail.push(`the owner-questions heading states a count as a literal ("${hm[1].trim()}") — it goes stale the day the question set changes`);
+  }
+  if (!/ownerQuestionsHeading[\s\S]{0,400}?(qs|questions)\.length/.test(admin)
+      && !/<h3[^>]*>\$\{[^}]*(qs|questions)[^}]*\.length/.test(admin)) {
+    fail.push("nothing sets the owner-questions heading from the question data — the count cannot be trusted");
+  }
 }
 
 // 7 ─ a failed boot is visible and named

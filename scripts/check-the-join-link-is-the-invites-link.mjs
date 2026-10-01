@@ -48,11 +48,58 @@ if (!fail.some((f) => /meet\.google\.com URL itself/.test(f))) pass.push("no sur
 const avail = read(F("netlify", "functions", "kickoff-availability.js"));
 if (!avail) fail.push("netlify/functions/kickoff-availability.js is missing.");
 else {
-  const line = avail.match(/meetLink:[^\n]*/);
-  if (!line) fail.push("netlify/functions/kickoff-availability.js — the portal is no longer sent a meetLink, so the client has no way into the call from the page.");
-  else if (!/status === "booked"/.test(line[0]))
-    fail.push('netlify/functions/kickoff-availability.js — meetLink is returned without checking the hold is "booked", so a client could be handed a room for a time nobody has agreed.');
-  else pass.push("the link is only sent once the booking is confirmed");
+  // 🔴 THIS USED TO READ ONE LINE — `meetLink:[^\n]*` — and demand the literal `status === "booked"`
+  // on it. meetLink became a multi-line IIFE (authuser pinning, 09-30) and the check fell off the
+  // end of the first line: it reported a guard that was there all along. Worse, a one-line regex
+  // could never have seen the REAL defect, which was WHICH hold the guard was reading.
+  // So: RUN the expressions out of the file, over the states a client can actually be in.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+  const grab = (key) => {
+    const i = avail.indexOf(`${key}: (() => {`);
+    if (i < 0) return null;
+    let d = 0, j = avail.indexOf("{", i + key.length);
+    for (; j < avail.length; j++) { if (avail[j] === "{") d++; else if (avail[j] === "}") { d--; if (!d) break; } }
+    const end = avail.indexOf("(),", j);
+    return end < 0 ? null : avail.slice(i + key.length + 2, end + 2);
+  };
+  const srcLink = grab("meetLink"), srcCode = grab("meetCode");
+  if (!srcLink) {
+    fail.push("netlify/functions/kickoff-availability.js — the portal is no longer sent a meetLink, so the client has no way into the call from the page.");
+  } else {
+    let link, code;
+    try {
+      link = new Function("mine", "onb", `return ${srcLink};`);
+      code = srcCode ? new Function("mine", "onb", `return ${srcCode};`) : () => null;
+    } catch (e) { fail.push(`kickoff-availability.js — meetLink/meetCode will not execute: ${e.message}`); }
+    if (link) {
+      const onb = [{ data: { kickoff_invite: { meet_link: "https://meet.google.com/abc-defg-hij", attendee: "owner@acme.com" } } }];
+      const BOOKED = { status: "booked", slot_start: "2026-10-08T21:00:00Z" };
+      const EARLIER_REQ = { status: "requested", slot_start: "2026-10-07T17:00:00Z" };
+      const cases = [
+        ["a confirmed booking", [BOOKED], true],
+        ["a request nobody has confirmed", [EARLIER_REQ], false],
+        // 🔴 THE ONE THAT WAS BROKEN. `mine` is ordered by slot_start, so a client asking to move a
+        // confirmed call to an EARLIER time put the REQUEST at mine[0]; a guard reading mine[0]
+        // returned null and took the Join button off a call that is still the agreed one.
+        ["an earlier request alongside a standing booking (a MOVE)", [EARLIER_REQ, BOOKED], true],
+        ["no holds at all", [], false],
+      ];
+      for (const [what, mine, wantLink] of cases) {
+        let got, gotCode;
+        try { got = !!link(mine, onb); gotCode = code(mine, onb); }
+        catch (e) { fail.push(`kickoff-availability.js — meetLink threw on ${what}: ${e.message}`); continue; }
+        if (got !== wantLink) {
+          fail.push(wantLink
+            ? `kickoff-availability.js — with ${what} the client is given NO join link, for a call that IS agreed.`
+            : `kickoff-availability.js — with ${what} a join link is returned, handing them a room for a time nobody has agreed.`);
+        }
+        if (!!gotCode !== wantLink) {
+          fail.push(`kickoff-availability.js — with ${what} the dial-in code disagrees with the join button; two ways into one room must not disagree.`);
+        }
+      }
+    }
+  }
+  if (!fail.some((f) => /kickoff-availability\.js/.test(f))) pass.push("the link, and the code, are sent only for a booking that is confirmed — including while a move is pending");
 }
 const portal = read(F("portal", "portal.js"));
 if (!portal) fail.push("portal/portal.js is missing.");

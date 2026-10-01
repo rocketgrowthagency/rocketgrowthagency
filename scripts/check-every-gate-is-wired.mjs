@@ -66,6 +66,20 @@ const NOT_PREFLIGHT = {
   // ── client-portal surface, added 2026-09-25. All four run in daily-health-check.sh. None can
   //    make a VIDEO unsafe, which is what the overnight pre-flight exists to protect — but every
   //    one of them guards something a client sees, so none may be silently dropped either.
+  // ── admin checklist + client portal, built 2026-09-29 → 10-01, wired 10-01. All ten run in
+  // daily-health-check.sh. 🔴 NONE belongs in overnight-pipeline.sh: video and scraper work is
+  // PARKED, and a failing admin gate must never abort a video build.
+  'check-the-checklist-is-one-list.mjs':          'admin-UI gate; runs in daily-health-check.sh — a checklist split in two cannot make a video unsafe',
+  'check-the-checklist-has-one-numbering-system.mjs': 'admin-UI gate; runs in daily-health-check.sh — a step badge cannot make a video unsafe',
+  'check-the-checklist-renders-one-list.mjs':     'admin-UI gate, drives a browser; runs in daily-health-check.sh — rendering cannot make a video unsafe',
+  'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
+  'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',
+  'check-a-step-output-takes-its-own-weight.mjs': 'admin-UI gate; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
+  'check-every-detected-step-is-actually-checked.mjs': 'onboarding-probe gate; runs in daily-health-check.sh — an unprobed client step stalls CLIENT WORK, not tonight\'s videos',
+  'check-the-call-console-survives-a-manual-tick.mjs': 'admin-UI gate; runs in daily-health-check.sh — the kickoff console cannot make a video unsafe',
+  'check-the-picker-has-a-way-out.mjs':           'client-portal UI gate; runs in daily-health-check.sh — a time picker cannot make a video unsafe',
+  'check-the-live-call-surfaces-keep-up.mjs':     'client-portal UI gate; runs in daily-health-check.sh — a Join button cannot make a video unsafe',
+
   'check-the-setup-accordion-behaves.mjs':    'client-portal UI gate; runs in daily-health-check.sh — a folded checklist cannot make a video unsafe',
   'check-messages-have-a-shape.mjs':          'client-portal UI gate; runs in daily-health-check.sh — message styling cannot make a video unsafe',
   'check-no-native-browser-dialogs.mjs':      'UI gate; runs in daily-health-check.sh — a raw alert() is ugly and unbranded, it cannot make a video unsafe',

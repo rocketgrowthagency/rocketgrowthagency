@@ -36,6 +36,12 @@ const UI_ONLY = {
   "data-v2tab": "switches a sub-tab — the pane visibly changes",
   "data-goto-tab": "navigates to another tab — the destination is the feedback",
   "data-accordion-toggle": "expands/collapses a section — the section visibly moves",
+  // ── the onboarding checklist's own view controls (2026-09-29 → 10-01). Each one's result IS the
+  // list changing under it; there is nothing else to report. The one control here that MUTATES —
+  // data-task-set — is NOT excused and is audited.
+  "data-ob-view": "filters the checklist to one kind — the rows visibly change and the head recounts them",
+  "data-ob-phase-toggle": "opens/closes a phase — the rows appear, and the phase marker is corrected in place",
+  "data-ob-rollup-toggle": "opens/closes the automated-checks rollup — the rows appear",
   "data-field-help": "opens inline help — the text appearing is the feedback",
   "data-card-note": "opens the card's ⓘ note — the panel appearing IS the result, and the button carries aria-expanded",
   "data-note-id": "selects a note for editing — the editor visibly loads it",

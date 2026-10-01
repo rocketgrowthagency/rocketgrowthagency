@@ -123,7 +123,7 @@ for (const sheet of SHEETS) {
 // fallbacks are unreachable and harmless. It failed identically with and without the bug it was
 // written for, which is a gate that cannot PASS: exactly as worthless as one that cannot fail.
 // → feedback_a_gate_that_cannot_fail
-const FALLBACK_BASELINE = { "portal/portal.css": 83, "admin/admin.css": 71 };
+const FALLBACK_BASELINE = { "portal/portal.css": 81, "admin/admin.css": 71 };
 console.log("\n── no NEW var() fallback that can never apply ──");
 let deadFallbacks = 0;
 for (const sheet of SHEETS) {
