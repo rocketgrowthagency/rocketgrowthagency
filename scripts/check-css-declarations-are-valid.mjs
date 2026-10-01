@@ -83,7 +83,13 @@ for (const rel of FILES) {
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 {
   const css = fs.readFileSync(path.join(SITE, "portal/portal.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const cls of ["pm-step-row", "pm-step-row-head", "pm-hint", "pm-detail"]) {
+  // 🔴 `pm-hint` WAS REMOVED FROM THIS LIST on 2026-10-01. portal.js stopped emitting it in
+  // 5bfec788 ("Every client step leads with what to do"), so the rule matched nothing from that
+  // commit on — and when the dormant-CSS sweep deleted it, this gate reported the DELETION of dead
+  // code as a defect. A gate must require a rule only while something can wear it; otherwise it
+  // forces dead code to be carried forever. Its siblings are all still emitted and still listed.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  for (const cls of ["pm-step-row", "pm-step-row-head", "pm-detail"]) {
     const blocks = [...css.matchAll(new RegExp(`(^|\\n)\\.${cls}\\s*\\{`, "g"))];
     if (blocks.length === 0) bad(`.${cls} is gone — the checklist row would fall back to browser defaults`);
     if (blocks.length > 1) {
