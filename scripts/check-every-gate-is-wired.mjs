@@ -75,6 +75,7 @@ const NOT_PREFLIGHT = {
   'check-every-setting-can-be-changed.mjs': 'admin-UI gate; runs in daily-health-check.sh — a Change control cannot make a video unsafe',
   'check-a-step-email-is-sent-and-seen.mjs': 'admin/portal gate; runs in daily-health-check.sh — whether a step email can be sent cannot make a video unsafe',
   'check-what-this-produced-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
+  'check-a-designed-draft-escapes-exactly-once.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — HTML escaping in an admin card cannot make a video unsafe',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
   'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',
   'check-a-step-output-takes-its-own-weight.mjs': 'admin-UI gate; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
