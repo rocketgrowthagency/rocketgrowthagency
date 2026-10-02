@@ -19,6 +19,11 @@ you know when to update all on admin so have all notes ready".
 2. PDF fix (builder, already in place): the hidden page-number markers ("@@T1@@") no longer survive into
    the printed PDF. They showed up when Chris copied text out of v6. The live v6 in admin Docs still has
    them until admin is updated.
+3. The call: how to ask (Chris, 2026-10-02 — "asking questions exactly and in the order and skip if
+   already answered"). An ACTION box at the top of The call says beats 2–6 are the script: ask every
+   question, in order, one at a time, and skip only what is already answered. Beat 2 says ask it every
+   time and explains why this question (referrals / Google / ads). Beat 3 says all four in order. Beat 4
+   says all three in order, and to skip "How did that go?" and go to beat 5 if they tried nothing.
 
 ## When Chris says "update admin" (do ALL of this, in order)
 1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because
