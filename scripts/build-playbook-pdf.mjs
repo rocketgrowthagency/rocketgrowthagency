@@ -81,7 +81,10 @@ const SEE_TARGETS = new Set();
 (function collect(list) { for (const b of list || []) { if (b.k === 'see') SEE_TARGETS.add(tid(b.tab, b.h)); if (b.k === 'obj') collect(b.a); } })(PB.flatMap((x) => x.blocks || []));
 const TID_LIST = [...SEE_TARGETS];
 // An invisible, absolutely-positioned marker: extractable by pdftotext, zero effect on layout.
-const marker = (id) => SEE_TARGETS.has(id) ? `<span class="pgm">@@T${TID_LIST.indexOf(id)}@@</span>` : '';
+// 🔴 2026-10-02: the marker was invisible on paper but COPYABLE — Chris pasted a section and got
+// "@ @ T 1 @ @" in it. So markers exist only in the measuring passes; the PDF that ships has none.
+let MARKERS = true;
+const marker = (id) => MARKERS && SEE_TARGETS.has(id) ? `<span class="pgm">@@T${TID_LIST.indexOf(id)}@@</span>` : '';
 const anchor = (id) => `<a id="${id}"></a>${marker(id)}`;
 
 function block(b) {
@@ -260,7 +263,22 @@ for (let pass = 1; pass <= 4 && !settled; pass++) {
   settled = TID_LIST.every((id) => found[id] && found[id] === PAGES[id]);
   PAGES = found;
 }
+// Final print WITHOUT markers. They are absolutely positioned, so removing them cannot move a line —
+// but that is a claim, so it is checked: every target's heading must still be on the page its box names.
+MARKERS = false;
+await page.setContent(makeHtml(), { waitUntil: 'load' });
+await page.pdf({ ...PDF_OPTS, path: OUT });
 await browser.close();
+{
+  const pages = execFileSync('pdftotext', [OUT, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\f');
+  const norm = (x) => clean(String(x || '')).toLowerCase().replace(/[“”"]/g, '').replace(/\s+/g, ' ');
+  if (pages.some((t) => /@@T\d+@@/.test(t))) { console.error('✗ a page-number marker survived into the final PDF'); process.exit(1); }
+  const heads = {};
+  (function walk(list, tab) { for (const b of list || []) { if (b.k === 'h') heads[tid(tab, b.t)] = b.t; if (b.k === 'obj') { heads[tid(tab, b.q)] = b.q; walk(b.a, tab); } } })([], '');
+  for (const sec of PB) { heads[tid(sec.id, null)] = sec.tab; (function walk(list) { for (const b of list || []) { if (b.k === 'h') heads[tid(sec.id, b.t)] = b.t; if (b.k === 'obj') { heads[tid(sec.id, b.q)] = b.q; walk(b.a); } } })(sec.blocks); }
+  const moved = TID_LIST.filter((id) => !norm(pages[PAGES[id] - 1]).includes(norm(heads[id]).slice(0, 24)));
+  if (moved.length) { console.error(`✗ after removing markers, ${moved.length} SEE target(s) are not on their printed page: ${moved.join(', ')}`); process.exit(1); }
+}
 const unresolved = TID_LIST.filter((id) => !PAGES[id]);
 if (unresolved.length || !settled) {
   console.error(`✗ SEE page numbers did not resolve (${unresolved.join(', ') || 'still moving after 4 passes'}) — refusing to ship a box that points at the wrong page.`);

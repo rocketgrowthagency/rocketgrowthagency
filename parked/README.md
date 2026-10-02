@@ -16,6 +16,9 @@ you know when to update all on admin so have all notes ready".
 1. ⏱ 30-SECOND VERSION gets its own marked heading in We call them §1 and The call beat 1. Every
    mention points to the label, and the guided-call node uses the same words.
    (Also accepted by the gate: a heading may be numbered ⏱.)
+2. PDF fix (builder, already in place): the hidden page-number markers ("@@T1@@") no longer survive into
+   the printed PDF. They showed up when Chris copied text out of v6. The live v6 in admin Docs still has
+   them until admin is updated.
 
 ## When Chris says "update admin" (do ALL of this, in order)
 1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because
