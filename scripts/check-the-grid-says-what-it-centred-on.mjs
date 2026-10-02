@@ -47,7 +47,7 @@ if (!/return placesTextSearch\(query, lat, lng, placesKey, fieldMask\);/.test(gr
 const callers = (grid.match(/(?<!async function )placesTextSearch\(/g) || []).length;
 if (callers !== 1) fail.push(`placesTextSearch has ${callers} caller(s); exactly 1 is expected, inside rankSearch`);
 if (!/await rankSearch\(query, null, null,/.test(grid)) fail.push("the centre lookup no longer goes through rankSearch");
-if (!/await rankSearch\(keyword, lat, lng,/.test(grid)) fail.push("the per-point scan no longer goes through rankSearch");
+if (!/await rankSearch\(kw, lat, lng,/.test(grid)) fail.push("the per-point scan no longer goes through rankSearch");
 // 🔴 the env guard must not demand a key the scan no longer needs
 if (/if \(!SUPABASE_URL \|\| !SUPABASE_SERVICE_ROLE_KEY \|\| !GOOGLE_PLACES_API_KEY\)/.test(grid)) {
   fail.push("the env guard still REQUIRES GOOGLE_PLACES_API_KEY — it would refuse to run on SerpAPI alone");
@@ -91,6 +91,44 @@ if (!/\$\{client\.business_name\}'s location/.test(flow)) fail.push("the summary
 }
 // the anchor travels to every reader, not just the sentence
 if (!/anchor: anchorKind, centred_on:/.test(flow)) fail.push("outcome_data no longer carries the anchor and what it centred on");
+
+// ── 4 · IT MEASURES THE LOCKED PLAN, AND SIZES ITSELF TO IT ─────────────────────────────────
+// 🔴 The scan measured `primary_service` — ONE term — while the plan locks FIVE, so four of every
+// five were never measured. And the default 5×5 @ 0.5mi reaches only 1.61 km, while RGA's locked
+// sub-locations sit at 1.4 / 2.7 / 4.6 km — TWO WERE OUTSIDE THE GRID and would still have been
+// reported "not found". An absence we did not look for is the worst number this system can produce.
+if (!/function readLockedPlan\(/.test(flow)) fail.push("readLockedPlan is gone — the scan would measure a placeholder term again");
+if (!/const plan = readLockedPlan\(recs\);/.test(flow)) fail.push("the grid step no longer reads the locked plan");
+if (!/if \(!plan\) \{/.test(flow)) fail.push("the grid step no longer refuses when the plan is not locked");
+if (!/startRankScan\(client, clientId, plan\.keywords, market, plan\.locations\)/.test(flow)) {
+  fail.push("the scan is not being given the locked keywords and sub-locations");
+}
+if (!/keywords: list, subLocations: locations/.test(flow)) fail.push("the plan is not reaching the grid function");
+
+// the grid scans EVERY keyword, not the first one five times
+if (!/for \(const kw of kwList\)/.test(grid)) fail.push("the grid no longer loops the locked keywords");
+if (!/await rankSearch\(kw, lat, lng,/.test(grid)) fail.push("🔴 the per-point scan uses the OUTER keyword — every keyword would scan the same term");
+{
+  const li = grid.indexOf("for (const kw of kwList) {");
+  const lo = grid.indexOf("perKeyword.push(");
+  const body = li >= 0 && lo > li ? grid.slice(li, lo) : "";
+  if (!body) fail.push("the per-keyword loop body could not be read — re-check this gate before trusting it");
+  else {
+    if (/(?<![\w.$])keyword(?![\w:])/.test(body.replace(/^\s*\/\/.*$/gm, ""))) {
+      fail.push("the outer `keyword` is used inside the per-keyword loop");
+    }
+    if (/saveMonthlyRankSummary/.test(body)) {
+      fail.push("the monthly summary is back INSIDE the loop — it would write `tracked: 1` once per keyword");
+    }
+  }
+}
+if (!/keywords_tracked_count: perKeyword\.length/.test(grid)) fail.push("the monthly summary no longer counts the whole plan");
+
+// the radius is derived from the plan, with a floor
+if (!/let reachKm = 5, locationsUsed = \[\];/.test(grid)) fail.push("the radius is no longer derived, or lost its 5 km floor");
+if (!/reachKm = Math\.max\(reachKm, d2 \* 1\.15\)/.test(grid)) fail.push("the furthest locked sub-location no longer sets the reach, with margin");
+if (!/\(reachKm \/ KM_PER_MI\) \/ HALF/.test(grid)) fail.push("the grid spacing is no longer computed from the reach — a fixed span can miss the plan entirely");
+if (!/radius_km: Math\.round\(reachKm \* 10\) \/ 10/.test(grid)) fail.push("the radius actually used is not recorded with the scan");
 
 if (fail.length) {
   console.error("🔴 the grid cannot run, or does not say what it measured:");

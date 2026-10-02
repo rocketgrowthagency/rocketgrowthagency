@@ -55,7 +55,7 @@ for (const need of ["ST_VERDICT", "stIndent", "stZero"]) {
 const ctx = vm.createContext({ console, URL });
 try {
   vm.runInContext(consts + "\n" + ["escapeHtml", "escapeAttribute", "renderStepMarkdown", "outShapes",
-    "stInline", "stValue", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stepBodyHtml"]
+    "stInline", "stValue", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stRating", "stepBodyHtml"]
     .map(pick).join("\n\n"), ctx);
 } catch (e) { console.error("⛔ cannot evaluate the renderer: " + e.message); process.exit(2); }
 const call = (n) => vm.runInContext(n, ctx);
@@ -204,6 +204,38 @@ else {
   const ch = call("structuredTextHtml")(call("parseStructuredText")(CITE));
   if (!/Search Google/.test(ch)) fail.push("a rendered citation row does not read as its destination");
   if (/google\.com\/search\?q=[^<"]*<\/a>/.test(ch)) fail.push("a rendered link still shows the encoded query as its label");
+}
+
+// ── a link is ONE treatment · the count never repeats its heading · a ranking shows its rank ──
+// Chris, 2026-10-02: *"why do these links look different?"* / *"why the added 3 at the end"* /
+// *"also can we add rank #?"* → approved admin_competitor_rows_v1
+{
+  // 🔴 No 48-character threshold: three links in one list must not wear two looks.
+  if (/href\.length <= 48/.test(src)) fail.push("the 48-character link threshold is back — long and short URLs would look different again");
+  if (/class="u-tail"/.test(src)) fail.push("LINKIFY emits a faded path tail again");
+  const L = call("renderStepMarkdown")("a https://example.com/very/long/path?x=1&utm_source=google&utm_medium=x b");
+  const lab = (L.match(/>([^<]*)<\/a>/) || [])[1] || "";
+  if (!/^example\.com/.test(lab)) fail.push(`a long URL no longer shows just its host: ${JSON.stringify(lab)}`);
+  const S = call("renderStepMarkdown")("a https://example.com/seo/ b");
+  const lab2 = (S.match(/>([^<]*)<\/a>/) || [])[1] || "";
+  if (lab2.replace(/\s*\u2197\s*$/, "") !== lab.replace(/\s*\u2197\s*$/, "")) {
+    fail.push(`a short and a long URL on the same host render differently: ${JSON.stringify(lab2)} vs ${JSON.stringify(lab)}`);
+  }
+  if (!L.includes("utm_medium=x")) fail.push("the full URL no longer survives in the href");
+
+  // 🔴 The count chip must not repeat a number the heading already states.
+  const dup = call("structuredTextHtml")(call("parseStructuredText")(
+    `Top 3 competitors for "x":\n  1. A — 5 (4 reviews) · cat\n  2. B — 4 (3 reviews) · cat\n  3. C — 3 (2 reviews) · cat`));
+  if (/<span class="c">3<\/span>/.test(dup)) fail.push('the count chip repeats a number the heading already states ("Top 3 … 3")');
+  const keep = call("structuredTextHtml")(call("parseStructuredText")(
+    `Keywords:\n  1. A — 5 (4 reviews) · cat\n  2. B — 4 (3 reviews) · cat`));
+  if (!/<span class="c">2<\/span>/.test(keep)) fail.push("the count chip is gone even where the heading does NOT state it");
+
+  // 🔑 A ranking shows its rank — and a numbered PROCEDURE does not.
+  if (!/ob-rank">#1</.test(dup)) fail.push("a ranked list no longer shows its rank badge");
+  const proc = call("structuredTextHtml")(call("parseStructuredText")(
+    `How this works:\n  1. Generate the brief\n  2. Map each keyword`));
+  if (/ob-rank/.test(proc)) fail.push("a numbered PROCEDURE is wearing rank badges — that asserts an order of merit that does not exist");
 }
 
 // ── prose is LEFT ALONE, and an unreadable group falls back ALONE ────────────────────────────
