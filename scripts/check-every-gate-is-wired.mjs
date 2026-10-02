@@ -78,6 +78,7 @@ const NOT_PREFLIGHT = {
   'check-a-designed-draft-escapes-exactly-once.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — HTML escaping in an admin card cannot make a video unsafe',
   'check-a-step-number-has-one-home.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — what an admin surface calls a step cannot make a video unsafe',
   'check-the-next-action-performs-the-decision.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — an admin card button cannot make a video unsafe',
+  'check-a-plain-text-output-is-designed.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a stored output is laid out cannot make a video unsafe',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
   'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',
   'check-a-step-output-takes-its-own-weight.mjs': 'admin-UI gate; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
