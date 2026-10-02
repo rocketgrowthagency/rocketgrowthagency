@@ -50,7 +50,12 @@ const BILLED = /places\.googleapis\.com|maps\.googleapis\.com|pagespeedonline|go
 // matching it flagged 9 files that consume no API at all — a mass finding, which by our own rule
 // means the probe is wrong before the code is. Token refresh is plumbing; an API CONSUMER is what
 // needs declaring.
-const WATCHED_FREE = /calendar\.googleapis\.com|googleapis\.com\/calendar\/v3/;
+// 🔑 2026-10-02 — the Google Ads API joins this list. It has NO per-call charge (verified against
+// Google's own quota docs, not recited) and is capped at 15,000 operations/day at Basic access, so
+// it cannot produce a bill and does not touch the Places quota that caused the $755 suspension.
+// It is declared anyway for exactly the reason Calendar is: the runaway shape is BOOKKEEPING, not
+// pricing. → project_real_search_volume_is_live
+const WATCHED_FREE = /calendar\.googleapis\.com|googleapis\.com\/calendar\/v3|googleads\.googleapis\.com/;
 
 /**
  * Declared billing-relevant callers. Adding a Google API caller means adding it HERE with an honest
@@ -112,6 +117,41 @@ const DECLARED = {
     scheduled: "on demand (a human opens the picker, or an invite is confirmed)",
     stamps: "kickoff_slot_holds — every slot handed out or taken is a row, so nothing is decided from a Google answer alone",
   },
+  // ── 🔴 FOUND 2026-10-02 WHEN THIS GATE LEARNED TO FOLLOW A `require`. All three reach Google
+  //    through a helper module, so for as long as this gate matched endpoint URLs in a file's own
+  //    source, none of them had ever been declared — the review step they were supposed to pass.
+  "validate-tracked-keyword.js": {
+    perRun: "≤7 Ads operations per validation — FREE (quota, not billed), via _ads-keywords",
+    scheduled: "NEVER — on demand, from the keyword-validation step a human clicks Run on",
+    stamps: "task outcome_data (verdict + volume + volume_geo), so re-rendering never re-measures",
+  },
+  "_fga-report-builder.js": {
+    perRun: "1 SearchText + 1 PSI per report build, via enrichAuditRecord",
+    scheduled: "on demand (per FGA report build)",
+    stamps: "fga_report_cache — the enrichment is cached and not re-fetched once stored",
+  },
+  // ✅ FIXED 2026-10-02. It used to call `enrichAuditRecord` UNCONDITIONALLY at the top of the
+  // handler — the prior snapshot was merged in AFTERWARDS, so the spend had already happened — and
+  // every press of Autofill cost a Places SearchText call against the 32/day quota with nothing
+  // stopping repeat presses. It now reads a 6-hour cache first and only spends on a miss.
+  "admin-onboarding-autofill.js": {
+    perRun: "1 SearchText + 1 PSI on a CACHE MISS only; 0 while a snapshot under 6h exists",
+    scheduled: "on demand (an admin presses Autofill)",
+    stamps: "client_state_snapshots surface=onboarding_enrichment, written on the attempt — a repeat press inside the TTL costs nothing, and the response reports `enrichment.cached` so a hit is visible without reading the code",
+  },
+  // ── Google Ads Keyword Planner (2026-10-02). FREE — quota-limited at 15,000 ops/day, never
+  //    billed, and on a quota entirely separate from Places SearchText.
+  //    🔑 The cost figure below is MEASURED, not estimated: a full run of
+  //    m1.strategy.keywords_locations was instrumented and used exactly 7 operations.
+  "_ads-keywords.js": {
+    perRun: "≤7 operations per keyword-plan run, MEASURED — 1 geo suggest + ≤2 parent lookups + ≤3 ladder probes + 1 ideas + 1 verification. FREE (quota, not billed); 15,000/day at Basic",
+    // 🔴 THE PROPERTY THAT MATTERS. Nothing schedules this and nothing calls it on a render. It is
+    // reached only from a step a human clicks Run on, and the numbers are written into the task
+    // record so opening the card again renders from storage and asks Google nothing. A view that
+    // can trigger an API call is the exact shape of the $755 incident.
+    scheduled: "NEVER — on demand only, from a human clicking Run on the keyword step",
+    stamps: "client_onboarding_records task outcome_data.demand + measuredAt — the measurement is persisted, so re-rendering never re-measures and only a deliberate re-Run spends anything",
+  },
   "oauth-rga-init.js": { perRun: "0 — builds a consent URL, calls nothing", scheduled: "hand-run, once", stamps: "n/a" },
   "oauth-google-callback.js": { perRun: "1 token exchange per consent — free", scheduled: "on demand (a human consents)", stamps: "client_google_oauth / rga_google_credentials" },
 };
@@ -122,11 +162,27 @@ console.log("── Google API cost safety ──");
 if (!fs.existsSync(FUNCS)) { console.error(`✗ functions dir not found`); process.exit(2); }
 
 // 1 + 2. Every billed caller must be declared.
-const callers = fs.readdirSync(FUNCS).filter((f) => f.endsWith(".js"))
-  .filter((f) => {
-    const src = fs.readFileSync(path.join(FUNCS, f), "utf8");
-    return BILLED.test(src) || WATCHED_FREE.test(src);
+// 🔴🔴 2026-10-02 — A CALLER THAT REACHES GOOGLE THROUGH A HELPER WAS INVISIBLE TO THIS GATE.
+// It matched the endpoint URL in a file's own source, so `validate-tracked-keyword.js` — which calls
+// the Ads API via `require("./_ads-keywords")` — was not flagged as needing a declaration at all.
+// Every shared `_module.js` is this hole: the declaration IS the review step, and a function could
+// skip it simply by importing one. Follow one level of local require.
+// 🔑 Found by a NEW gate noticing a caller this one did not. Two gates disagreeing about the same
+// fact is a finding, not noise. → feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+const allFiles = fs.readdirSync(FUNCS).filter((f) => f.endsWith(".js"));
+const touchesGoogle = (src) => BILLED.test(src) || WATCHED_FREE.test(src);
+const helperModules = allFiles.filter((f) => f.startsWith("_") && touchesGoogle(fs.readFileSync(path.join(FUNCS, f), "utf8")));
+
+const callers = allFiles.filter((f) => {
+  const src = fs.readFileSync(path.join(FUNCS, f), "utf8");
+  if (touchesGoogle(src)) return true;
+  // …or it pulls in a module that does.
+  return helperModules.some((m) => {
+    const base = m.replace(/\.js$/, "");
+    return new RegExp(`require\\(\\s*["']\\./${base}["']\\s*\\)`).test(src);
   });
+});
+if (helperModules.length) console.log(`  (helper modules that reach Google: ${helperModules.join(", ")})`);
 
 for (const f of callers) {
   const d = DECLARED[f];

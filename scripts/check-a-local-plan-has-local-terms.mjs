@@ -95,15 +95,64 @@ if (!/if \(!key\) return null;\s*\/\/ unknown is not zero/.test(step)) {
 }
 if (!/d2\.suggestions === 0/.test(step)) fail.push("zero-suggestion terms are no longer flagged");
 if (!/never suggested/.test(step)) fail.push("the card no longer says which phrases Google has never suggested");
-// 🔴 and it must never be called search volume
-if (!/Autocomplete is not search volume/.test(step)) {
-  fail.push("the caveat is gone — autocomplete would read as measured search volume");
+// ── 🔴🔴 UPDATED 2026-10-02 — THESE THREE WENT RED ON A CORRECT CHANGE ───────────────────────────
+// They pinned the SPELLING of a temporary situation: that we had no real search volume and could
+// only approximate it with autocomplete. The Ads Keyword Planner went live, the step now measures
+// actual volume, and the gate read that as the safeguard being removed. A gate written for an
+// episode outlives the episode; what is permanent is the PROPERTY underneath:
+//
+//   🔑 A PROXY MUST NEVER BE PRESENTED AS A MEASUREMENT.
+//
+// So: if the step still uses autocomplete, that branch must disclaim it; and if the step names
+// search volume, it must actually be reading the Keyword Planner.
+// → feedback_a_gate_written_for_a_temporary_state_outlives_it · feedback_a_gate_must_pin_the_property_not_the_spelling
+// 🔴 STRIP THE COMMENTS FIRST. The comments inside this very step explain that autocomplete is not
+// search volume — so the disclaimer check passed on the PROSE after the actual disclaimer had been
+// deleted from the card. A comment asserting a fix is not the fix.
+// → feedback_a_comment_asserting_a_fix_is_not_the_fix
+const code = step.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+
+const usesAutocomplete = /engine=google_autocomplete/.test(code);
+const namesVolume = /search volume/i.test(code);
+const measuresVolume = /_ads-keywords/.test(code) && /keywordVolumes|volumeFor/.test(code);
+
+if (usesAutocomplete) {
+  // The disclaimer must exist, in whatever words — pin that it says what autocomplete is NOT.
+  const disclaims = /autocomplete[^.]{0,240}?(not search volume|not a search count|indicates only)/i.test(code)
+    || /(not search volume|not a search count)[^.]{0,240}?autocomplete/i.test(code);
+  if (!disclaims) fail.push("autocomplete is used without saying it is not a search count — a proxy presented as a measurement");
 }
-if (/search volume/i.test(step.replace(/not search volume/gi, "").replace(/^\s*\/\/.*$/gm, ""))) {
-  fail.push("the step claims search volume it does not have");
+if (namesVolume && !measuresVolume) {
+  fail.push("the step names search volume without reading the Keyword Planner — that is a claim it cannot support");
 }
-if (!/demand\b/.test(step) || !/outcome_data: \{ draft, grounded_in_gsc: !note, note, demand \}/.test(step)) {
-  fail.push("the demand result is computed but not carried in outcome_data");
+// 🔑 And where it DOES measure, the figure must be labelled with the geography it was measured in.
+// A number without its location is not evidence: during development a geo id written from memory
+// resolved to a city 350 miles away and the API answered it with 200 and real figures.
+// 🔴 Pin the LINE THAT CARRIES THE NUMBERS, not the file — `canonicalName` appears several times,
+// so a whole-step test stayed green after the measured line stopped naming the place.
+if (measuresVolume) {
+  const measuredLine = (code.match(/^.*Measured in \$\{[^\n]*$/m) || [""])[0];
+  const geoLabelDecl = (code.match(/^\s*const geoLabel\s*=.*$/m) || [""])[0];
+  if (!/\$\{geoLabel\}/.test(measuredLine) || !/canonicalName/.test(geoLabelDecl)) {
+    fail.push("measured volume is printed without naming the geography it was measured in");
+  }
+}
+
+// The demand result must be CARRIED, not just computed. Read the persisted object by brace-matching
+// rather than pinning its exact field list, which grew when real volume landed.
+{
+  const at = step.lastIndexOf("outcome_data: {");
+  let block = "";
+  if (at >= 0) {
+    let depth = 0;
+    for (let i = step.indexOf("{", at); i < step.length; i++) {
+      if (step[i] === "{") depth++;
+      else if (step[i] === "}") { depth--; if (!depth) { block = step.slice(at, i + 1); break; } }
+    }
+  }
+  if (!block || !/(^|[{,]\s*)demand\s*[,:}]/m.test(block)) {
+    fail.push("the demand result is computed but not carried in outcome_data");
+  }
 }
 
 if (fail.length) {

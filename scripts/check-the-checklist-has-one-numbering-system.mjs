@@ -97,6 +97,13 @@ vm.runInContext(
     slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
     slice("function obPhaseBody(", "\n}", "obPhaseBody"),
     slice("function obBuckets(", "\n}", "obBuckets"),
+    // 🔴 `obPageOrdered` CALLS `obRespectDeps`, added 2026-10-02 when page order became a stable
+    // topological sort. Lifting the caller without its callee made this gate THROW
+    // `ReferenceError: obRespectDeps is not defined` — and a gate that throws is not a gate that
+    // fails: it is noise in the sweep, which is how a real red signal gets ignored.
+    // 🔑 A lifted function is a claim that its whole dependency set came with it.
+    // → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
+    slice("function obRespectDeps(", "\n}", "obRespectDeps"),
     slice("function obPageOrdered(", "\n}", "obPageOrdered"),
     slice("function obPageNumbers(", "\n}", "obPageNumbers"),
     slice("function obGotoLabel(", "\n}", "obGotoLabel"),

@@ -62,7 +62,17 @@ if (!/anchorKind = "business";/.test(grid)) fail.push('the grid never records a 
 if (!/anchorKind = "area";/.test(grid)) fail.push('the grid never records the "area" fallback');
 if (!/(?<![\w$])anchor: \{ kind: anchorKind,/.test(grid)) fail.push("the anchor is no longer saved with the grid under that exact key");
 // 🔴 recorded and never read is the defect it was added to fix
-if (!/let anchorKind = "unknown";/.test(flow)) fail.push("the step no longer reads the anchor back — recorded and never read");
+// 🔑 PIN THE PROPERTY, NOT THE SPELLING. This used to require the exact line
+// `let anchorKind = "unknown";` and went RED on a correct 2026-10-02 change that added a second
+// declarator (`let anchorKind = "unknown", anchorErr = null;`) so the catch could record WHY the
+// read failed. A tightening must not read as a removal.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+if (!/\banchorKind\s*=\s*"unknown"/.test(flow)) {
+  fail.push("the step no longer defaults the anchor to unknown — an absent anchor would read as confirmed");
+}
+if (!/\banchorKind\b/.test(flow.replace(/anchorKind\s*=\s*"unknown"/g, ""))) {
+  fail.push("the step no longer reads the anchor back — recorded and never read");
+}
 if (!/v2Campaign\?\.rank_grid\?\.anchor/.test(flow)) fail.push("the step no longer reads the anchor from the record the grid writes");
 if (!/anchorKind = a2\.kind;/.test(flow)) fail.push("the anchor is fetched but never ASSIGNED — the value is read and thrown away");
 if (!/anchorKind === "area"/.test(flow)) fail.push("the summary no longer distinguishes an area-centred grid from a listing-centred one");
