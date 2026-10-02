@@ -38,6 +38,7 @@
       sub: "Inbound is the highest-intent call you'll get — they dialled you. Job: sound like a real business, find out what they want, leave with a SPECIFIC next step.",
       blocks: [
         WHY("Never end an inbound call with “someone will follow up.” A named day and time converts; a vague promise doesn't."),
+        NOTE("<b>[search term]</b> = the keyword AND the location, exactly as on the lead card. Say both, the way a customer would type it — e.g. “plumber in Culver City”."),
         { k: "h", n: 1, t: "Answer — every time, the same way" },
         SAY("“Rocket Growth Agency, this is [name] — how can I help?”"),
         DONT("“Hello?” — you sound like a mobile, not a business. That costs you credibility in two seconds and you don't get it back."),
@@ -73,6 +74,7 @@
       blocks: [
         { k: "kpi", items: [["6.6×", "“How've you been?” vs a standard open"], ["2.1×", "stating your reason for calling"], ["0.9%", "“Did I catch you at a bad time?” — worst measured"]] },
         WHY("Gong, ~300M calls. ⚠ NEVER open by apologising for calling. Anchor the reason immediately — we have the best possible one: a video we made for them."),
+        NOTE("<b>[search term]</b> = the keyword AND the location, exactly as on the lead card. Say both, the way a customer would type it — e.g. “plumber in Culver City”."),
         { k: "h", n: 1, t: "Warm-but-silent — watched the video, never replied" },
         SAY("“Hey [first name], it's [name] at Rocket Growth Agency — I sent you a short video a couple of weeks back showing where [business] comes up on Google Maps. Did you get a chance to watch it?”"),
         BRANCH([
@@ -172,6 +174,7 @@
           "Skip a question ONLY if they have already answered it. Asking again tells them you weren't listening.",
           "Your own words are fine, as long as it is the same question.",
         ]),
+        NOTE("<b>[search term]</b> = the keyword AND the location, exactly as on the lead card. Say both, the way a customer would type it — e.g. “plumber in Culver City”."),
         { k: "h", n: 1, t: "Open" },
         NOTE("Pick the line for who you're calling. Same words as the We call them tab — here so you don't have to flip back mid-call."),
         SAY("WATCHED THE VIDEO, NEVER REPLIED — “Hey [first name], it's [name] at Rocket Growth Agency — I sent you a short video a couple of weeks back showing where [business] comes up on Google Maps. Did you get a chance to watch it?”"),

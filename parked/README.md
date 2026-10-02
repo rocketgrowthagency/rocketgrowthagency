@@ -24,6 +24,9 @@ you know when to update all on admin so have all notes ready".
    question, in order, one at a time, and skip only what is already answered. Beat 2 says ask it every
    time and explains why this question (referrals / Google / ads). Beat 3 says all four in order. Beat 4
    says all three in order, and to skip "How did that go?" and go to beat 5 if they tried nothing.
+4. [search term] defined on the script (Chris: "do we say both or what does term imply"). A note at the
+   top of They call us, We call them and The call says it is the keyword AND the location from the lead
+   card, said both together, e.g. "plumber in Culver City". The Airtable field is stored as "<keyword> in <location>".
 
 ## When Chris says "update admin" (do ALL of this, in order)
 1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because
