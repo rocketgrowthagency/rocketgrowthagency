@@ -219,6 +219,30 @@ fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
   builtAt: new Date().toISOString(),
 }, null, 2) + '\n');
 
+// 🔒 EVERY VERSION IS KEPT (Chris, 2026-10-02: "keep track of all versions"). When the playbook
+// SOURCE changes, this print becomes a new numbered version in docs/playbook-versions/ and is added
+// to versions.json — which admin-doc.js reads as its allowlist for that folder and admin → Docs lists.
+// A rebuild of an unchanged source adds nothing, so re-running the script never invents a version.
+const VDIR = path.join(WEBSITE, 'docs/playbook-versions');
+const VJSON = path.join(VDIR, 'versions.json');
+fs.mkdirSync(VDIR, { recursive: true });
+let versions = [];
+try { versions = JSON.parse(fs.readFileSync(VJSON, 'utf8')); } catch { /* first run */ }
+const latest = versions[versions.length - 1];
+if (!latest || latest.sourceSha256 !== sha(src)) {
+  const v = (latest ? latest.v : 0) + 1;
+  const date = new Date().toISOString().slice(0, 10);
+  const file = `sales-playbook-v${v}-${date}.pdf`;
+  fs.copyFileSync(OUT, path.join(VDIR, file));
+  const note = (process.argv.find((a) => a.startsWith('--note=')) || '').slice(7) || 'Playbook updated';
+  versions.push({ v, date, file, note, sourceSha256: sha(src) });
+  fs.writeFileSync(VJSON, JSON.stringify(versions, null, 2) + '\n');
+  console.log(`\n📚 Saved as version ${v}: docs/playbook-versions/${file}`);
+} else {
+  // Same source, fresh print: keep the archived copy byte-equal to what admin and the Desktop show.
+  fs.copyFileSync(OUT, path.join(VDIR, latest.file));
+}
+
 // A second copy on the Desktop is a FORK, and forks go stale silently — the exact failure this
 // session kept finding. So: refresh it every build if it already exists, and only create it on
 // request. That way the printed-from copy can never drift behind the live playbook.

@@ -221,6 +221,18 @@ try {
     if (receipt.sourceSha256 !== sha(src)) add('printed-playbook-stale', 'admin/playbook.js changed since the PDF was printed — run build-playbook-pdf.mjs (admin Docs + Desktop copy are behind)');
     const pdfBytes = fs.readFileSync(PDF);
     if (receipt.pdfSha256 !== sha(pdfBytes)) add('printed-playbook-replaced', 'docs/sales-playbook.pdf is not the file the build wrote — something overwrote it. Rebuild.');
+    // 🔒 Every version is kept (2026-10-02). The newest archived version must BE the current print,
+    // and every version the manifest lists must still exist — a missing file is a lost version.
+    const VDIR = path.join(WEBSITE, 'docs/playbook-versions');
+    let versions = null;
+    try { versions = JSON.parse(fs.readFileSync(path.join(VDIR, 'versions.json'), 'utf8')); } catch { /* reported below */ }
+    if (!Array.isArray(versions) || !versions.length) add('playbook-versions-missing', 'docs/playbook-versions/versions.json is missing or empty — the version history is gone');
+    else {
+      for (const x of versions) if (!fs.existsSync(path.join(VDIR, x.file))) add('playbook-version-lost', `version ${x.v} (${x.file}) is listed but the file is gone`);
+      const last = versions[versions.length - 1];
+      if (last.sourceSha256 !== sha(src)) add('playbook-version-not-recorded', 'the current playbook is not the newest archived version — run build-playbook-pdf.mjs --note="what changed"');
+      else if (fs.existsSync(path.join(VDIR, last.file)) && sha(fs.readFileSync(path.join(VDIR, last.file))) !== sha(pdfBytes)) add('playbook-version-differs', `${last.file} is not the same file as docs/sales-playbook.pdf`);
+    }
     const deskDir = `${process.env.HOME}/Desktop`;
     let desk = [];
     try { desk = fs.readdirSync(deskDir).filter((f) => /^RGA Sales Playbook.*\.pdf$/.test(f)); } catch { /* no Desktop on this host */ }
