@@ -71,7 +71,7 @@ function HomePage() {
     if (subjectInput) {
       const safeName = nameValue || 'New Lead';
       const safeEmail = emailValue ? ` <${emailValue}>` : '';
-      subjectInput.value = `[Rocket Growth] Growth Audit – ${safeName}${safeEmail}`;
+      subjectInput.value = `[Rocket Growth Agency] Growth Audit – ${safeName}${safeEmail}`;
     }
 
     const fd = new FormData(form);

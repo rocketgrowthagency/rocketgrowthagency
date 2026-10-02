@@ -92,13 +92,13 @@ try {
   // 🔴 And do NOT measure innerText length: the tab strip plus a tab's `sub` line is ~400 chars on an
   // ENTIRELY EMPTY tab, so a length check happily passed a tab whose blocks had all been deleted.
   // Count rendered block ELEMENTS against what the data says, and check each tab's title landed.
-  const BLOCK_SEL = '.pb-say, .pb-dont, .pb-why, .pb-note, .pb-h, .pb-kpi, .pb-branch, .pb-table, .pb-obj';
+  const BLOCK_SEL = '.pb-say, .pb-dont, .pb-why, .pb-action, .pb-note, .pb-h, .pb-kpi, .pb-branch, .pb-table, .pb-obj';
   const renderedBlocks = await page.$$eval(`#playbookView ${BLOCK_SEL}`, (e) => e.length).catch(() => 0);
   const dataBlocks = (() => {
     try {
       const m2 = pbSrc.match(/const PB = \[[\s\S]*?\n {2}\];/);
       const PB2 = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-        + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i});' + m2[0] + 'return PB;})()');
+        + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});' + m2[0] + 'return PB;})()');
       return PB2.reduce((a, x) => a + (x.blocks || []).length, 0);
     } catch { return null; }
   })();

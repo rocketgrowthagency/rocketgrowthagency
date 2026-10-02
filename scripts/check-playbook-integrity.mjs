@@ -38,11 +38,11 @@ if (!m) { console.error('✗ could not locate the PB data array — refusing to 
 let PB;
 try {
   PB = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-    + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i});' + m[0] + 'return PB;})()');
+    + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});' + m[0] + 'return PB;})()');
 } catch (e) { console.error(`✗ PB array does not evaluate (${e.message}) — the playbook is BROKEN.`); process.exit(1); }
 if (!Array.isArray(PB) || PB.length < 8) { console.error(`✗ PB has ${PB?.length} tabs — implausibly few, refusing to pass.`); process.exit(2); }
 
-const KINDS = new Set(['h', 'say', 'dont', 'why', 'note', 'kpi', 'branch', 'table', 'obj']);
+const KINDS = new Set(['h', 'say', 'dont', 'why', 'note', 'kpi', 'branch', 'table', 'obj', 'action']);
 const bad = [];
 const add = (t, d) => bad.push({ type: t, detail: d });
 
@@ -63,6 +63,8 @@ for (const s of PB) {
         else for (const r of b.rows) if (r.length !== b.head.length) add('ragged-table-row', `${where}: ${r.length} cells vs ${b.head.length} headers`);
       }
       if (b.k === 'branch' && (!Array.isArray(b.items) || b.items.some((i) => i.length !== 2))) add('malformed-branch', where);
+      // An Action is a numbered list of steps; an empty one, or a step that is not text, paints a blank card.
+      if (b.k === 'action' && (!Array.isArray(b.items) || !b.items.length || b.items.some((i) => typeof i !== 'string' || !i.trim()))) add('malformed-action', where);
       if (b.k === 'kpi' && (!Array.isArray(b.items) || b.items.some((i) => i.length !== 2))) add('malformed-kpi', where);
       if (b.k === 'obj') { if (!b.q || !Array.isArray(b.a) || !b.a.length) add('empty-objection', where); else walk(b.a, `${where} › ${String(b.q).slice(0, 40)}`); }
     }
@@ -121,7 +123,7 @@ else {
   let FLOW;
   try {
     FLOW = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-      + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i});' + fm[0] + 'return FLOW;})()');
+      + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});' + fm[0] + 'return FLOW;})()');
   } catch (e) { add('flow-broken', `FLOW does not evaluate: ${e.message}`); }
 
   if (FLOW) {
@@ -204,6 +206,26 @@ try {
 // the other ships a browser the OLD module from whichever import wins, with no error anywhere. The
 // same trap as the playbook's ?v=, but worse, because the version lives in a DIFFERENT file from the
 // tag and there is more than one of it.
+// 🔒 THE PRINTED PLAYBOOK IS THE SAME PLAYBOOK (2026-10-02). docs/sales-playbook.pdf is served in
+// admin → Docs as "Sales Playbook (print)" and copied to Chris's Desktop. It is printed FROM
+// playbook.js, so a playbook edit that was never reprinted leaves two surfaces quietly behind.
+// The build writes a receipt naming the source it printed; a mismatch is a defect, not a warning.
+{
+  const PDF = path.join(WEBSITE, 'docs/sales-playbook.pdf');
+  const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
+  let receipt = null;
+  try { receipt = JSON.parse(fs.readFileSync(`${PDF}.source.json`, 'utf8')); } catch { /* reported below */ }
+  if (!fs.existsSync(PDF)) add('printed-playbook-missing', 'docs/sales-playbook.pdf is gone — admin Docs links to nothing. Run build-playbook-pdf.mjs');
+  else if (!receipt) add('printed-playbook-unproven', 'docs/sales-playbook.pdf has no .source.json receipt — cannot tell which playbook it was printed from. Run build-playbook-pdf.mjs');
+  else {
+    if (receipt.sourceSha256 !== sha(src)) add('printed-playbook-stale', 'admin/playbook.js changed since the PDF was printed — run build-playbook-pdf.mjs (admin Docs + Desktop copy are behind)');
+    const pdfBytes = fs.readFileSync(PDF);
+    if (receipt.pdfSha256 !== sha(pdfBytes)) add('printed-playbook-replaced', 'docs/sales-playbook.pdf is not the file the build wrote — something overwrote it. Rebuild.');
+    const DESK = `${process.env.HOME}/Desktop/RGA Sales Playbook - print and study.pdf`;
+    if (fs.existsSync(DESK) && sha(fs.readFileSync(DESK)) !== sha(pdfBytes)) add('printed-playbook-desktop-stale', 'the Desktop copy differs from docs/sales-playbook.pdf — rebuild refreshes it');
+  }
+}
+
 for (const [file, loadedIn] of [['admin/calls.js', 'admin/admin.js'], ['admin/admin.js', 'admin/index.html'], ['admin/playbook.js', 'admin/index.html']]) {
   try {
     const base = file.split('/').pop();

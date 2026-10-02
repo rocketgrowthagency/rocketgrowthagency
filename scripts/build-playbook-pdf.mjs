@@ -25,6 +25,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
 
 const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
 const OUT = path.join(WEBSITE, 'docs/sales-playbook.pdf');
@@ -40,7 +41,7 @@ const flM = src.match(/const FLOW = \{[\s\S]*?\n {2}\};/);
 if (!pbM) { console.error('✗ could not locate the PB array.'); process.exit(1); }
 
 const HELPERS = 'const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-  + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i});';
+  + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});';
 let PB, FLOW = {};
 try { PB = eval(`(function(){${HELPERS}${pbM[0]}return PB;})()`); }
 catch (e) { console.error(`✗ PB does not evaluate: ${e.message}`); process.exit(1); }
@@ -48,7 +49,8 @@ try { if (flM) FLOW = eval(`(function(){${HELPERS}${flM[0]}return FLOW;})()`); }
 
 const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 // [placeholders] print as underlined blanks — you fill them in from the lead card.
-const ph = (s) => esc(s).replace(/\[([^\]]+)\]/g, '<u>$1</u>');
+// <b> is the one tag the data carries — esc() printed it as literal "<b>" text until 2026-10-02.
+const ph = (s) => esc(s).replace(/&lt;(\/?)b&gt;/g, '<$1b>').replace(/\[([^\]]+)\]/g, '<u>$1</u>');
 // Strip screen-only emoji: they print as tofu boxes on many printers and add nothing on paper.
 const clean = (s) => String(s ?? '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, '').replace(/\s{2,}/g, ' ').trim();
 
@@ -67,6 +69,7 @@ function block(b) {
     case 'dont': return `<div class="dont"><span class="lbl">DON'T</span><p>${t}</p></div>`;
     case 'why': return `<div class="why"><span class="lbl">WHY</span><p>${t}</p></div>`;
     case 'note': return `<p class="note">${t}</p>`;
+    case 'action': return `<div class="action"><span class="lbl">ACTION</span><ol>${b.items.map((i) => `<li>${ph(clean(i))}</li>`).join('')}</ol></div>`;
     case 'kpi': return `<table class="kpi"><tr>${b.items.map(([n]) => `<th>${esc(n)}</th>`).join('')}</tr><tr>${b.items.map(([, d]) => `<td>${esc(clean(d))}</td>`).join('')}</tr></table>`;
     case 'branch': return `<dl class="branch">${b.items.map(([q, a]) => `<dt>${ph(clean(q))}</dt><dd>${ph(clean(a))}</dd>`).join('')}</dl>`;
     case 'table': return `<table class="tbl"><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${ph(clean(String(c).replace(/<\/?b>/g, '')))}</td>`).join('')}</tr>`).join('')}</table>`;
@@ -121,7 +124,9 @@ const html = `<!doctype html><meta charset="utf-8"><title>RGA Sales Playbook</ti
   .contents .study { border:1.5pt solid #000; padding:10pt 13pt; margin-top:16pt; }
   .tab { page-break-before:always; }
   .lead { font-style:italic; margin:6pt 0 12pt; }
-  .say,.dont,.why { margin:0 0 7pt; padding-left:52pt; position:relative; }
+  .say,.dont,.why,.action { margin:0 0 7pt; padding-left:52pt; position:relative; }
+  .action ol { margin:0; padding-left:14pt; font-size:10pt; } .action li { margin-bottom:2pt; }
+  .action .lbl { border-width:1.5pt; }
   .say p,.dont p,.why p { margin:0; }
   .lbl { position:absolute; left:0; top:1pt; font:bold 7.5pt/1.4 Helvetica,Arial,sans-serif;
          letter-spacing:.9pt; border:1pt solid #000; padding:1pt 4pt; }
@@ -203,6 +208,16 @@ await page.pdf({
     + '<span class="pageNumber"></span></div>',
 });
 await browser.close();
+
+// 🔒 The receipt: WHICH playbook.js this PDF was printed from. check-playbook-integrity compares it
+// to the live source, so a playbook change that never got reprinted fails a gate instead of quietly
+// leaving the admin Docs tab and the Desktop copy behind. Chris, 2026-10-02: "so we dont ever lose
+// it, forget or regress".
+const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
+fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
+  source: 'admin/playbook.js', sourceSha256: sha(src), pdfSha256: sha(fs.readFileSync(OUT)),
+  builtAt: new Date().toISOString(),
+}, null, 2) + '\n');
 
 // A second copy on the Desktop is a FORK, and forks go stale silently — the exact failure this
 // session kept finding. So: refresh it every build if it already exists, and only create it on
