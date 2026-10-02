@@ -42,6 +42,8 @@ const UI_ONLY = {
   "data-ob-view": "filters the checklist to one kind — the rows visibly change and the head recounts them",
   "data-ob-phase-toggle": "opens/closes a phase — the rows appear, and the phase marker is corrected in place",
   "data-ob-rollup-toggle": "opens/closes the automated-checks rollup — the rows appear",
+  "data-setting-change": "opens the Change editor — the editor appearing IS the result, and it writes nothing; data-setting-save is the mutating action and IS audited",
+  "data-setting-cancel": "closes the Change editor without writing anything — the editor disappearing IS the result",
   "data-field-help": "opens inline help — the text appearing is the feedback",
   "data-card-note": "opens the card's ⓘ note — the panel appearing IS the result, and the button carries aria-expanded",
   "data-note-id": "selects a note for editing — the editor visibly loads it",
