@@ -41,7 +41,8 @@ const flM = src.match(/const FLOW = \{[\s\S]*?\n {2}\};/);
 if (!pbM) { console.error('✗ could not locate the PB array.'); process.exit(1); }
 
 const HELPERS = 'const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-  + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});';
+  + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i}),'
+  + 'SEE=(tab,h,lead)=>({k:"see",tab,h,lead});';
 let PB, FLOW = {};
 try { PB = eval(`(function(){${HELPERS}${pbM[0]}return PB;})()`); }
 catch (e) { console.error(`✗ PB does not evaluate: ${e.message}`); process.exit(1); }
@@ -61,10 +62,34 @@ const trim = (s, n) => {
   return cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:.\u2014-]+$/, '') + '\u2026';
 };
 
+// ── SEE boxes: a pointer that works on PAPER (Chris, 2026-10-02: "this is a PDF so there is no way to
+// click an arrow"). Each box prints the real page number of what it points at. Page numbers are not
+// guessed: the document is printed, each target's page is READ BACK out of the PDF, and it is printed
+// again with those numbers — repeated until the numbers stop moving. A box is also a live link when
+// the PDF is opened on a screen.
+let CUR_TAB = '';
+let PAGES = {};
+const slug = (x) => clean(String(x || '')).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const tid = (tab, h) => `t-${tab}-${slug(h)}`;
+const SEE_TARGETS = new Set();
+(function collect(list) { for (const b of list || []) { if (b.k === 'see') SEE_TARGETS.add(tid(b.tab, b.h)); if (b.k === 'obj') collect(b.a); } })(PB.flatMap((x) => x.blocks || []));
+const TID_LIST = [...SEE_TARGETS];
+// An invisible, absolutely-positioned marker: extractable by pdftotext, zero effect on layout.
+const marker = (id) => SEE_TARGETS.has(id) ? `<span class="pgm">@@T${TID_LIST.indexOf(id)}@@</span>` : '';
+const anchor = (id) => `<a id="${id}"></a>${marker(id)}`;
+
 function block(b) {
   const t = ph(clean(b.t));
   switch (b.k) {
-    case 'h': return `<h3><span class="n">${b.n}</span>${esc(clean(b.t))}</h3>`;
+    case 'see': {
+      const id = tid(b.tab, b.h);
+      const sec = PB.find((x) => x.id === b.tab);
+      const pg = PAGES[id];
+      return `<a class="see" href="#${id}"><span class="lbl">SEE</span><span class="st">${b.lead ? `${ph(clean(b.lead))} &mdash; ` : ''}`
+        + `<strong>${esc(clean(sec ? sec.tab : b.tab))}</strong>${b.h ? ` &middot; ${ph(clean(b.h))}` : ''}</span>`
+        + `<span class="pg">page ${pg ? pg : '&nbsp;&nbsp;'}</span></a>`;
+    }
+    case 'h': return `<h3>${anchor(tid(CUR_TAB, b.t))}<span class="n">${b.n}</span>${esc(clean(b.t))}</h3>`;
     case 'say': return `<div class="say"><span class="lbl">SAY</span><p>${t}</p></div>`;
     case 'dont': return `<div class="dont"><span class="lbl">DON'T</span><p>${t}</p></div>`;
     case 'why': return `<div class="why"><span class="lbl">WHY</span><p>${t}</p></div>`;
@@ -73,7 +98,7 @@ function block(b) {
     case 'kpi': return `<table class="kpi"><tr>${b.items.map(([n]) => `<th>${esc(n)}</th>`).join('')}</tr><tr>${b.items.map(([, d]) => `<td>${esc(clean(d))}</td>`).join('')}</tr></table>`;
     case 'branch': return `<dl class="branch">${b.items.map(([q, a]) => `<dt>${ph(clean(q))}</dt><dd>${ph(clean(a))}</dd>`).join('')}</dl>`;
     case 'table': return `<table class="tbl"><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${ph(clean(String(c).replace(/<\/?b>/g, '')))}</td>`).join('')}</tr>`).join('')}</table>`;
-    case 'obj': return `<div class="obj"><h4>${ph(clean(b.q))}</h4>${b.a.map(block).join('')}</div>`;
+    case 'obj': return `<div class="obj"><h4>${anchor(tid(CUR_TAB, b.q))}${ph(clean(b.q))}</h4>${b.a.map(block).join('')}</div>`;
     default: return '';
   }
 }
@@ -106,7 +131,7 @@ function flowTree() {
 const today = execFileSync('date', ['+%B %-d, %Y'], { encoding: 'utf8' }).trim();
 const printable = PB.filter((s) => (s.blocks || []).length);
 
-const html = `<!doctype html><meta charset="utf-8"><title>RGA Sales Playbook</title><style>
+const makeHtml = () => `<!doctype html><meta charset="utf-8"><title>RGA Sales Playbook</title><style>
   @page { size: Letter; margin: 18mm 16mm 20mm; }
   * { box-sizing: border-box; }
   body { font: 10.5pt/1.5 Georgia,"Times New Roman",serif; color:#000; margin:0; }
@@ -152,6 +177,14 @@ const html = `<!doctype html><meta charset="utf-8"><title>RGA Sales Playbook</ti
   .fopts li { margin-bottom:3pt; }
   .rep { font:italic 8.5pt Georgia,serif; }
   u { text-decoration:none; border-bottom:1pt solid #000; padding:0 8pt; }
+  .pgm { position:absolute; font-size:2pt; color:#fff; }
+  h2, h3, h4 { position:relative; }
+  .see { display:flex; gap:10pt; align-items:baseline; margin:0 0 7pt; padding:4pt 8pt; border:1pt solid #000;
+         color:#000; text-decoration:none; break-inside:avoid; font-size:9.5pt; }
+  .see .lbl { position:static; font:bold 7.5pt/1.4 Helvetica,Arial,sans-serif; letter-spacing:.9pt;
+              background:#000; color:#fff; padding:1pt 4pt; }
+  .see .st { flex:1 1 auto; }
+  .see .pg { font:bold 9.5pt Helvetica,Arial,sans-serif; white-space:nowrap; min-width:46pt; text-align:right; }
 </style>
 <body>
 
@@ -185,29 +218,49 @@ const html = `<!doctype html><meta charset="utf-8"><title>RGA Sales Playbook</ti
   </div>
 </section>
 
-${printable.map((s) => `<section class="tab">
-  <h2>${esc(clean(s.tab))}</h2>
+${printable.map((s) => { CUR_TAB = s.id; return `<section class="tab">
+  <h2>${anchor(tid(s.id, null))}${esc(clean(s.tab))}</h2>
   ${s.sub ? `<p class="lead">${esc(clean(s.sub))}</p>` : ''}
   ${(s.blocks || []).map(block).join('')}
-</section>`).join('')}
+</section>`; }).join('')}
 
 ${flowTree()}
 `;
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
-await page.setContent(html, { waitUntil: 'load' });
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-await page.pdf({
-  path: OUT, format: 'Letter', printBackground: true,
+const PDF_OPTS = {
+  format: 'Letter', printBackground: true,
   margin: { top: '18mm', bottom: '20mm', left: '16mm', right: '16mm' },
   displayHeaderFooter: true,
   headerTemplate: '<div></div>',
   footerTemplate: '<div style="width:100%;font:8pt Georgia,serif;color:#000;padding:0 16mm;'
     + 'display:flex;justify-content:space-between;"><span>RGA Sales Playbook &middot; internal</span>'
     + '<span class="pageNumber"></span></div>',
-});
+};
+// Print → read each target's page back out of the PDF → print again, until the numbers settle.
+const readPages = (file) => {
+  const pages = execFileSync('pdftotext', ['-layout', file, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).split('\f');
+  const found = {};
+  pages.forEach((txt, i) => { for (const m of txt.matchAll(/@@T(\d+)@@/g)) found[TID_LIST[Number(m[1])]] ??= i + 1; });
+  return found;
+};
+let settled = false;
+for (let pass = 1; pass <= 4 && !settled; pass++) {
+  await page.setContent(makeHtml(), { waitUntil: 'load' });
+  await page.pdf({ ...PDF_OPTS, path: OUT });
+  const found = readPages(OUT);
+  settled = TID_LIST.every((id) => found[id] && found[id] === PAGES[id]);
+  PAGES = found;
+}
 await browser.close();
+const unresolved = TID_LIST.filter((id) => !PAGES[id]);
+if (unresolved.length || !settled) {
+  console.error(`✗ SEE page numbers did not resolve (${unresolved.join(', ') || 'still moving after 4 passes'}) — refusing to ship a box that points at the wrong page.`);
+  process.exit(1);
+}
+console.log(`   ${TID_LIST.length} SEE targets, every page number read back from the printed PDF`);
 
 // 🔒 The receipt: WHICH playbook.js this PDF was printed from. check-playbook-integrity compares it
 // to the live source, so a playbook change that never got reprinted fails a gate instead of quietly

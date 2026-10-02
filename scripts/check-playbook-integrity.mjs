@@ -38,11 +38,11 @@ if (!m) { console.error('✗ could not locate the PB data array — refusing to 
 let PB;
 try {
   PB = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-    + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});' + m[0] + 'return PB;})()');
+    + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i}),SEE=(tab,h,lead)=>({k:"see",tab,h,lead});' + m[0] + 'return PB;})()');
 } catch (e) { console.error(`✗ PB array does not evaluate (${e.message}) — the playbook is BROKEN.`); process.exit(1); }
 if (!Array.isArray(PB) || PB.length < 8) { console.error(`✗ PB has ${PB?.length} tabs — implausibly few, refusing to pass.`); process.exit(2); }
 
-const KINDS = new Set(['h', 'say', 'dont', 'why', 'note', 'kpi', 'branch', 'table', 'obj', 'action']);
+const KINDS = new Set(['h', 'say', 'dont', 'why', 'note', 'kpi', 'branch', 'table', 'obj', 'action', 'see']);
 const bad = [];
 const add = (t, d) => bad.push({ type: t, detail: d });
 
@@ -64,6 +64,15 @@ for (const s of PB) {
       }
       if (b.k === 'branch' && (!Array.isArray(b.items) || b.items.some((i) => i.length !== 2))) add('malformed-branch', where);
       // An Action is a numbered list of steps; an empty one, or a step that is not text, paints a blank card.
+      // A SEE box must point at something that EXISTS — a renamed heading would otherwise leave a box
+      // that jumps nowhere in admin and prints a blank page number on paper.
+      if (b.k === 'see') {
+        const sec = PB.find((x) => x.id === b.tab);
+        const heads = [];
+        (function walk(list) { for (const x of list || []) { if (x.k === 'h') heads.push(x.t); if (x.k === 'obj') { heads.push(x.q); walk(x.a); } } })(sec ? sec.blocks : []);
+        if (!sec) add('see-target-missing', `${where}: SEE points at a tab "${b.tab}" that does not exist`);
+        else if (b.h && !heads.includes(b.h)) add('see-target-missing', `${where}: SEE points at "${b.h}" — no such heading in ${sec.tab}`);
+      }
       if (b.k === 'action' && (!Array.isArray(b.items) || !b.items.length || b.items.some((i) => typeof i !== 'string' || !i.trim()))) add('malformed-action', where);
       if (b.k === 'kpi' && (!Array.isArray(b.items) || b.items.some((i) => i.length !== 2))) add('malformed-kpi', where);
       if (b.k === 'obj') { if (!b.q || !Array.isArray(b.a) || !b.a.length) add('empty-objection', where); else walk(b.a, `${where} › ${String(b.q).slice(0, 40)}`); }
@@ -123,7 +132,7 @@ else {
   let FLOW;
   try {
     FLOW = eval('(function(){const SAY=t=>({k:"say",t}),DONT=t=>({k:"dont",t}),WHY=t=>({k:"why",t}),'
-      + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i});' + fm[0] + 'return FLOW;})()');
+      + 'NOTE=t=>({k:"note",t}),BRANCH=i=>({k:"branch",items:i}),ACTION=i=>({k:"action",items:i}),SEE=(tab,h,lead)=>({k:"see",tab,h,lead});' + fm[0] + 'return FLOW;})()');
   } catch (e) { add('flow-broken', `FLOW does not evaluate: ${e.message}`); }
 
   if (FLOW) {
