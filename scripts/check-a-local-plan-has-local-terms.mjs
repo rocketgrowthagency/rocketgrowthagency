@@ -85,6 +85,27 @@ if (!/Never state a compass direction, a distance or a drive time/.test(step)) {
   fail.push("the prompt no longer forbids inventing compass directions and distances between places");
 }
 
+// ── 5 · A PHRASE NOBODY TYPES IS NOT A KEYWORD ──────────────────────────────────────────────
+// Two of the five locked terms returned ZERO Google autocomplete suggestions. The plan was
+// internally consistent and demand-blind. → project_the_keyword_plan_audit
+if (!/const demandOf = async \(term\)/.test(step)) fail.push("the demand check is gone — a phrase nobody types can be locked again");
+if (!/engine=google_autocomplete/.test(step)) fail.push("the demand check no longer asks Google what it suggests");
+if (!/if \(!key\) return null;\s*\/\/ unknown is not zero/.test(step)) {
+  fail.push("a missing SERPAPI_KEY no longer returns UNKNOWN — it would read as zero demand");
+}
+if (!/d2\.suggestions === 0/.test(step)) fail.push("zero-suggestion terms are no longer flagged");
+if (!/never suggested/.test(step)) fail.push("the card no longer says which phrases Google has never suggested");
+// 🔴 and it must never be called search volume
+if (!/Autocomplete is not search volume/.test(step)) {
+  fail.push("the caveat is gone — autocomplete would read as measured search volume");
+}
+if (/search volume/i.test(step.replace(/not search volume/gi, "").replace(/^\s*\/\/.*$/gm, ""))) {
+  fail.push("the step claims search volume it does not have");
+}
+if (!/demand\b/.test(step) || !/outcome_data: \{ draft, grounded_in_gsc: !note, note, demand \}/.test(step)) {
+  fail.push("the demand result is computed but not carried in outcome_data");
+}
+
 if (fail.length) {
   console.error("🔴 the keyword plan can be national for a local business:");
   for (const f of fail) console.error("   · " + f);

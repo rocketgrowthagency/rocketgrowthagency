@@ -30,8 +30,9 @@ import vm from "node:vm";
 const W = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
 const SRC = W + "admin/admin.js";
 let src;
-try { src = fs.readFileSync(SRC, "utf8"); }
-catch { console.error("⛔ cannot read admin/admin.js"); process.exit(2); }
+let css;
+try { src = fs.readFileSync(SRC, "utf8"); css = fs.readFileSync(W + "admin/admin.css", "utf8"); }
+catch { console.error("⛔ cannot read admin/admin.js or admin.css"); process.exit(2); }
 
 const fail = [];
 
@@ -150,6 +151,39 @@ if (!/_under_/.test(plain)) fail.push("escaped underscores did not survive");
 if (!/<em>emphasis<\/em>/.test(html)) fail.push("real emphasis stopped working");
 if (!/<strong>strong<\/strong>/.test(html)) fail.push("real strong stopped working");
 if (/\u0000/.test(html)) fail.push("a masking sentinel leaked into the rendering");
+
+// ── A CHIP IS A LABEL, NOT A SENTENCE ───────────────────────────────────────────────────────
+// Chris, 2026-10-02: *"i just dont like the pill with description inside of it"*. This design was
+// built against the GBP categories (2-3 words) and became wrong the moment a value carried a clause.
+{
+  const SHORT = `categories:\n  - "Marketing agency"\n  - "Website designer"`;
+  const sp = call("parseYamlish")(SHORT);
+  const sh = sp ? call("structuredHtml")(sp) : "";
+  if (!/ob-chips/.test(sh)) fail.push("a list of SHORT values no longer renders as chips — that design was right for the GBP categories");
+  if (/ob-places/.test(sh)) fail.push("a list of short values was split into rows it does not need");
+
+  const WORDY = `locations:\n  - Culver City Downtown (around Culver Blvd and Main Street)\n  - Mar Vista (within the service footprint)`;
+  const wp = call("parseYamlish")(WORDY);
+  const wh = wp ? call("structuredHtml")(wp) : "";
+  if (!wp) fail.push("the locations list no longer parses");
+  else {
+    if (!/ob-places/.test(wh)) fail.push("a value carrying a clause is still rendered as a pill holding a sentence");
+    if (!/<span class="ob-chip">Culver City Downtown<\/span>/.test(wh)) fail.push("the pill no longer holds just the place name");
+    if (!/<span class="note">around Culver Blvd and Main Street<\/span>/.test(wh)) fail.push("the clause did not move out beside the pill");
+    if (/ob-chip">Culver City Downtown \(/.test(wh)) fail.push("the clause is back INSIDE the pill");
+    // 🔴 and nothing may be lost in the split
+    const txt = wh.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    for (const frag of ["Culver City Downtown", "around Culver Blvd and Main Street", "Mar Vista", "within the service footprint"]) {
+      if (!txt.includes(frag)) fail.push(`the pill/note split lost ${JSON.stringify(frag)}`);
+    }
+    // 🔴 A CLASS NO STYLESHEET DEFINES THROWS NOTHING — it renders unstyled and nobody is told.
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const sel of [".ob-places", ".ob-place", ".ob-place .note"]) {
+      const rule = new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*[,{]");
+      if (!rule.test(bare)) fail.push(`${sel} has no rule of its own — the row renders unstyled`);
+    }
+  }
+}
 
 if (fail.length) {
   console.error("🔴 a designed draft is not escaping exactly once:");
