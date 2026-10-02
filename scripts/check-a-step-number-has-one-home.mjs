@@ -135,6 +135,24 @@ const byId = new Map(m1.map((s, i) => [s.id, pageNo.get(i)]));
   }
 }
 
+// ═══ PART 2c — "ACTIVE" IS THE FIRST UNFINISHED ROW AS DISPLAYED ═════════════════════════════
+// Chris: *"why does step 23 show next but weve already completed 24 and 25 and now on 26?"* The
+// number came from the page order while the active step was picked by walking the RAW playbook
+// array, so a lower-numbered row sat above the active one wearing "Up next".
+if (!/const visit = scope === "month1" \? obPageOrdered\(steps\) : steps\.map/.test(src)) {
+  fail.push("the active step is no longer chosen by walking the ORDER THE PAGE EMITS — a queued row can sit above it again");
+}
+if (/let seenActive = false;\s*\n\s*steps\.forEach/.test(src)) {
+  fail.push("the sequencer is back to walking the raw playbook array");
+}
+// 🔴 and the dependency guard must still run BEFORE the active pick, or display order could
+// promote a step whose dependencies are unmet.
+{
+  const i2 = src.indexOf("const visit = scope ===");
+  const guard = src.lastIndexOf("s.locked || s.blocked", i2 + 900);
+  if (guard < i2) fail.push("the locked/blocked guard no longer precedes the active pick");
+}
+
 // ═══ PART 3 — EVERY HARDCODED "step N" IN A USER-FACING STRING ═══════════════════════════════
 // 🔴 An unregistered occurrence FAILS. Registering one is a decision someone makes on purpose.
 const REGISTRY = [
