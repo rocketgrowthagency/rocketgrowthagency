@@ -81,6 +81,7 @@ const NOT_PREFLIGHT = {
   'check-a-plain-text-output-is-designed.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a stored output is laid out cannot make a video unsafe',
   'check-a-callout-has-a-kind.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the layout of a step\'s reference fold cannot make a video unsafe',
   'check-an-arrow-points-where-it-goes.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — a glyph on an admin control cannot make a video unsafe',
+  'check-a-local-plan-has-local-terms.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the shape of a keyword prompt cannot make a video unsafe',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
   'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',
   'check-a-step-output-takes-its-own-weight.mjs': 'admin-UI gate; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',

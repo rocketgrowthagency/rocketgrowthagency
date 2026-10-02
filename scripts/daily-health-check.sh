@@ -306,6 +306,7 @@ run check-the-next-action-performs-the-decision.mjs "the next-action card perfor
 run check-a-plain-text-output-is-designed.mjs "a plain-text step output keeps the structure its indentation carries"
 run check-a-callout-has-a-kind.mjs "the step's reference fold has one scale and named callout kinds"
 run check-an-arrow-points-where-it-goes.mjs "an arrow points the way the content actually moves"
+run check-a-local-plan-has-local-terms.mjs "a local client gets geo-modified keywords and in-market locations"
 run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks first, and reaches the client's portal"
 run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
