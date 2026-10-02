@@ -304,6 +304,7 @@ run check-a-designed-draft-escapes-exactly-once.mjs "a designed draft parses the
 run check-a-step-number-has-one-home.mjs "every surface naming a step number agrees with the page"
 run check-the-next-action-performs-the-decision.mjs "the next-action card performs the decision it names"
 run check-a-plain-text-output-is-designed.mjs "a plain-text step output keeps the structure its indentation carries"
+run check-a-callout-has-a-kind.mjs "the step's reference fold has one scale and named callout kinds"
 run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks first, and reaches the client's portal"
 run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
