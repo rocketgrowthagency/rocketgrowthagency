@@ -55,7 +55,7 @@ for (const need of ["ST_VERDICT", "stIndent", "stZero"]) {
 const ctx = vm.createContext({ console, URL });
 try {
   vm.runInContext(consts + "\n" + ["escapeHtml", "escapeAttribute", "renderStepMarkdown", "outShapes",
-    "stInline", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stepBodyHtml"]
+    "stInline", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stepBodyHtml"]
     .map(pick).join("\n\n"), ctx);
 } catch (e) { console.error("⛔ cannot evaluate the renderer: " + e.message); process.exit(2); }
 const call = (n) => vm.runInContext(n, ctx);
@@ -94,6 +94,9 @@ else {
   if (!res) fail.push("the RESULT verdict is gone");
   // 🔴 Tone comes from the FACTS it introduces, never from reading its prose for sentiment.
   else if (res.tone !== "bad") fail.push(`RESULT is toned "${res.tone}" — it introduces zero coverage rows, so it must be bad`);
+  // 🔑 The label took the start of the sentence with it, so the text must still read as a sentence.
+  if (res && !/^Not found at ANY/.test(res.text)) fail.push(`the RESULT text does not read as a sentence: ${JSON.stringify(String(res.text).slice(0, 40))}`);
+  if (call("stSentence")("iPhone setup is done") !== "iPhone setup is done") fail.push("stSentence mangled a word deliberately lower-cased at the start");
   const probe = verdicts.find((v) => v.key === "PROBE VERIFIED");
   if (!probe || probe.tone !== "note") fail.push("PROBE VERIFIED must read as a note, not a failure");
   const factGroups = g.body.filter((b) => b.kind === "facts");
@@ -162,6 +165,19 @@ else {
   const h = call("structuredTextHtml")(c);
   // 🔴 THE WHOLE URL MUST SURVIVE INTO THE HREF even though the label is shortened.
   if (!h.includes("https://seooptimizers.com/?a=1&amp;b=2")) fail.push("a competitor URL is not intact in its href");
+}
+// 🔴 NOTHING MAY BE PRINTED AFTER A LINK. `trail` was measured against the ESCAPED string, so
+// un-escaping `&amp;` (4 chars to 1) made it emit the URL's last characters as loose text — Chris's
+// step-21 card read `…&ut… \u2197 _profile`. Two separators, eight stray characters. 2026-10-02.
+{
+  const L = call("renderStepMarkdown")("see https://x.com/?a=1&b=2&c=3 after");
+  const close = L.lastIndexOf("</a>");
+  if (close < 0) fail.push("the URL was not linkified at all");
+  else {
+    const tail = text(L.slice(close + 4));
+    if (tail !== "after") fail.push(`${JSON.stringify(tail)} is printed after the link \u2014 it must be exactly "after"`);
+  }
+  if (!L.includes('href="https://x.com/?a=1&amp;b=2&amp;c=3"')) fail.push("the href lost part of the query string");
 }
 
 // ── prose is LEFT ALONE, and an unreadable group falls back ALONE ────────────────────────────
