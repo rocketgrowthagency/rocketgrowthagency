@@ -111,11 +111,39 @@ const paused = fs.existsSync(path.join(ROOT, 'output', 'PRODUCTION-PAUSED'));
 console.log(`  production      ${paused ? 'PAUSED' : 'RUNNING'}`);
 
 if (queued.length === 0) {
+  // 🔑 The restart checklist only applies while the pause is still in place. It lifts itself now, so
+  // telling the reader to run a checklist "before removing" a flag the system already archived is
+  // instructing them to undo working automation.
+  const stillPaused = fs.existsSync(path.join(ROOT, 'output', 'PRODUCTION-PAUSED'));
   console.log('\n✅ DRAINED — the overage is sent.');
-  console.log('   Tell Chris, then run the restart checklist BEFORE removing output/PRODUCTION-PAUSED:');
-  console.log('     memory: project_production_pause_2026-08-25.md');
+  console.log(stillPaused
+    ? '   The pause is still in place; auto-resume lifts it the day every other condition clears.\n     memory: project_production_pause_2026-08-25.md'
+    : '   Production is already running — the pause lifted itself and archived its own flag.');
   process.exit(0);
 }
-console.log(`\n⏳ STILL DRAINING — ${queued.length} to go. Leave output/PRODUCTION-PAUSED in place.`);
-console.log('   The nightly log will call the flag "stale" after 3 days. That is expected; ignore it.');
-process.exit(1);
+// 🔴🔴 THIS GATE FAILED EVERY NIGHT FOR 17 DAYS ON A HEALTHY SYSTEM. It exited 1 whenever the queue
+// was non-empty and told the reader to "Leave output/PRODUCTION-PAUSED in place" — but the pause
+// LIFTS ITSELF (scripts/auto-resume-production.sh, inside daily-health-check.sh) and did so correctly
+// on 2026-09-14, archiving the flag as PRODUCTION-PAUSED.lifted-2026-09-14 and writing
+// RESUME-FIRST-NIGHT. The guidance was written for the paused period and outlived it.
+//
+// 🔑 A DRAINING QUEUE IS THE EXPECTED STATE, NOT A FAULT. While the pause is in place the auto-resume
+// owns the decision and this gate only reports progress. The condition that IS a fault is the one
+// the pause existed for: building far faster than we can send, with nothing holding it back.
+// A backlog of more than 10 working days unpaused is that. The original pause tripped at ~19 working
+// days, which was already too late to notice.
+// → project_production_pause_2026-08-25 · feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
+const BACKLOG_FAULT_WD = 10;
+if (paused) {
+  console.log(`\n⏳ STILL DRAINING — ${queued.length} to go, ~${days} working day(s).`);
+  console.log('   The pause lifts itself the day every condition clears; nothing to do here.');
+  process.exit(0);
+}
+if (days > BACKLOG_FAULT_WD) {
+  console.error(`\n✗ THE OVERAGE IS BACK — ${queued.length} queued, ~${days} working days, and production is RUNNING.`);
+  console.error(`   We are building faster than we can send again. The 08-25 pause tripped at ~19 working`);
+  console.error(`   days, which was already too late. → project_production_pause_2026-08-25`);
+  process.exit(1);
+}
+console.log(`\n✅ SENDING NORMALLY — ${queued.length} queued, ~${days} working day(s), production RUNNING.`);
+process.exit(0);
