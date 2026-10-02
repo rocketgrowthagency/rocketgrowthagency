@@ -127,11 +127,24 @@ if (!/\.ob-set\s*\{/.test(css)) F(".ob-set has no style — the strip would fall
       vm.runInContext(admin.slice(i, e + 2) + "globalThis._ct=callTrackingActions;", ctx);
       const ct = ctx._ct;
       const on = ct({ flowId: "m1.tracking.call_setup" }, {});
-      if (!/data-ct="set_up"/.test(on) || !/data-ct="connect"/.test(on) || !/data-ct="decline"/.test(on))
-        F("step 13 no longer offers all three call-tracking actions");
+      // TWO actions here — the decline is the step's own "Customer declined" button, not a third one.
+      if (!/data-ct="set_up"/.test(on) || !/data-ct="connect"/.test(on))
+        F("step 13 no longer offers Set one up and Connect theirs");
       if (ct({ flowId: "m1.web.schema" }, {}) !== "") F("the call-tracking actions appear on a step they do not belong to");
       if (ct({ flowId: "m1.tracking.call_setup" }, { client_choice: "skip" }) !== "")
         F("a recorded decline still offers to set up call tracking");
+      // 🔴🔴 ONE DECLINE. On 10-01 a second "Record a decline" was added beside the step's existing
+      // "Customer declined call tracking" — the same words, DIFFERENT effects: one closed the step
+      // without recording the choice, the other recorded the choice without closing the step.
+      // Neither did the whole job and nothing on screen said which was which.
+      if (/decline/i.test(on)) F("step 13 offers a SECOND decline beside its own 'Customer declined' button — two buttons, the same words, different effects");
+    } catch (err) { F(`callTrackingActions would not run: ${err.message}`); }
+    // and the one decline must record the choice, or the provisioner thinks nobody decided
+    if (!/\brecordCallTrackingDecline\b\s*\(/.test(code) || !/async function recordCallTrackingDecline\b/.test(code))
+      F("declining step 13 no longer records the client's choice as skip — call-tracking-provision would think nobody has decided");
+    if (!/m1\.tracking\.call_setup[\s\S]{0,200}?\brecordCallTrackingDecline\b\s*\(/.test(code))
+      F("the decline handler does not record the choice for m1.tracking.call_setup specifically");
+    try {
     } catch (err) { F(`callTrackingActions would not run: ${err.message}`); }
     const h = (() => {
       const at = code.indexOf('closest("[data-ct]")');
