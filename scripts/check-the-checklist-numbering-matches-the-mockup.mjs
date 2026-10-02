@@ -57,7 +57,7 @@ if (!link) { console.log("  ⚠️  no sign-in link."); process.exit(2); }
 
 // what each element must match, and on which properties. Font FAMILY of the body face differs
 // between a standalone mockup and the admin shell by design, so it is compared only where the
-// monospace treatment IS the design (.ob-sid, .ob-goto .sid).
+// monospace treatment IS the design (.ob-sid — the row's id column).
 const SPEC = [
   { name: "step disc",            live: ".ob-step.done .ob-num",  mock: "#after .ob-step.done .ob-num",
     props: ["width","height","borderRadius","fontSize","fontWeight","display","alignItems","justifyContent","backgroundColor","color"] },
@@ -71,8 +71,12 @@ const SPEC = [
     props: ["minHeight","paddingLeft","paddingRight","borderRadius","borderTopWidth","borderTopStyle","borderTopColor","backgroundColor","color","fontSize","fontWeight","display","alignItems","columnGap","textDecorationLine"] },
   { name: "the way back's row",   live: ".ob-ph-back",            mock: "#after .ob-ph-back",
     props: ["display","justifyContent","paddingTop","marginTop","borderTopWidth","borderTopStyle","borderTopColor"] },
-  { name: "the way back's number", live: ".ob-goto .sid",         mock: "#after .ob-goto .sid",
-    props: ["fontFamily","fontSize","fontWeight","color"] },
+  // 🔴 WAS `.ob-goto .sid` — a grey monospace numeral between two blue phrases. Chris, 2026-10-01:
+  // "i dont like how the 9 looks different". Approved treatment: the number lives INSIDE the words
+  // ("Step 9 · <title>") and the only quiet mark left is the middot.
+  // → admin_the_way_back_control_v1, option 4
+  { name: "the way back's middot", live: ".ob-goto .dot",          mock: "#after .ob-goto .dot",
+    props: ["fontSize","fontWeight","color"] },
   { name: "the row's spacing",    live: ".ob-step.done .ob-row",  mock: "#after .ob-step.done .ob-row",
     props: ["display","alignItems","columnGap"] },
 ];
@@ -135,6 +139,7 @@ try {
       gotoInActivePhase: phases.filter((p) => p.querySelector(".ob-step.active") && p.querySelector(".ob-goto")).length,
       oldLabel: /Go to step \d/.test(host.textContent || ""),
       gotoText: (host.querySelector(".ob-goto")?.textContent || "").replace(/\s+/g, " ").trim(),
+      strayGotoId: host.querySelectorAll(".ob-goto .sid").length,
       // 🔑 a settled phase must never ring green-with-a-circle or amber
       falseTick: phases.filter((p) => {
         const settled = [...p.querySelectorAll(".ob-step")].length > 0 &&
@@ -156,6 +161,11 @@ try {
   if (survey.discHoldsDigit) bad(`${survey.discHoldsDigit} discs still contain a digit — that is the bug`);
   if (survey.oldPhaseNumerals) bad(`${survey.oldPhaseNumerals} phases still render the old .ob-ph-idx numeral`);
   if (survey.oldLabel) bad(`the old "Go to step N" label is still on screen`);
+  // 🔑 ONE PRODUCER, BOTH SITES. The label is built once per phase on month 1 and once on a queued
+  // row on month 2+. Assert the SHAPE every control shows, not just that one of them is right.
+  if (survey.gotoText && !/^\u2191 Step \d+ \u00b7 .+/.test(survey.gotoText))
+    bad(`the way back reads "${survey.gotoText}" — the approved shape is "\u2191 Step N \u00b7 <title>"`);
+  if (survey.strayGotoId) bad(`${survey.strayGotoId} way-back control(s) still carry a separate grey id`);
   if (survey.falseTick) bad(`${survey.falseTick} unsettled phase(s) render ✓ — a false all-clear`);
   if (survey.gotoInActivePhase) bad(`${survey.gotoInActivePhase} phase(s) hold the active step AND a link back to it`);
   if (survey.queued > 2 && survey.gotos >= survey.queued)

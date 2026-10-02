@@ -61,6 +61,31 @@ if (markerCalls < 5) F(`only ${markerCalls} of the 5 row builders call obMarker(
   }
 }
 
+// ── 2c. THE WAY BACK: ONE PRODUCER, AND THE APPROVED SHAPE ────────────────────────────────
+// 🔴 The label used to read "The step to do now <9> Get CMS / hosting access" — a grey MONOSPACE
+// numeral between two blue phrases: a different colour, a different type family, and no grammar.
+// Chris, 2026-10-01: "i dont like how the 9 looks different". Approved (admin_the_way_back_control_v1,
+// option 4): ONE blue phrase, the number inside the words — "↑ Step 9 · Get CMS / hosting access".
+// 🔴 NOT circled: a disc on this screen means STATE, and the number was moved out of it that morning.
+{
+  const fn = js.match(/function obGotoLabel\(num, title\)[\s\S]{0,400}?\n\}/);
+  if (!fn) F("obGotoLabel() is gone — the two render sites are building the label by hand again");
+  else {
+    const body = fn[0];
+    if (!/Step \$\{num\}/.test(body)) F(`the way-back label no longer reads "Step N": ${body.split("\n").find(l => l.includes("return")) || ""}`.slice(0, 150));
+    if (!/class="dot"/.test(body)) F("the way-back label lost its middot — the step name runs into the title");
+    if (/class="sid"/.test(body)) F("the way-back label is back to a separate grey id");
+    if (!/escapeHtml\(title\)/.test(body)) F("the way-back label no longer escapes the title — a step named with & or < would break the button");
+  }
+  // both sites must CALL it rather than build their own
+  const calls = (js.match(/\$\{obGotoLabel\(/g) || []).length;
+  if (calls < 2) F(`only ${calls} of the 2 way-back render sites call obGotoLabel() — month 1 has phases, month 2+ does not, and they drift`);
+  const handBuilt = (js.match(/class="ob-goto"[^`]*<span class="ar">/g) || []).length;
+  if (handBuilt) F(`${handBuilt} way-back control(s) still build the label inline instead of calling obGotoLabel()`);
+  if (/The step to do now/.test(js.replace(/^\s*\/\/.*$/gm, ""))) F('the old "The step to do now" label is still produced');
+  if (/\.ob-goto \.sid\s*\{/.test(css)) F(".ob-goto .sid is still styled — a rule nothing can wear");
+}
+
 // ── 3. RUN the phase renderer ─────────────────────────────────────────────────────────────
 const ctx = vm.createContext({});
 vm.runInContext(
@@ -71,6 +96,7 @@ vm.runInContext(
     slice("const obGroupOf =", ";", "obGroupOf"),
     slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
     slice("function obPhaseBody(", "\n}", "obPhaseBody"),
+    slice("function obGotoLabel(", "\n}", "obGotoLabel"),
     slice("function obPhaseMarker(", "\n}", "obPhaseMarker"),
     slice("function obPhasedHtml(", "\n}\n", "obPhasedHtml"),
     slice("  const OB_GLYPH = {", "\n", "OB_GLYPH").trim(),
