@@ -29,7 +29,12 @@ try { src = fs.readFileSync(W + "netlify/functions/flow-execute.js", "utf8"); }
 catch { console.error("⛔ cannot read flow-execute.js"); process.exit(2); }
 
 const fail = [];
-const i = src.indexOf('"m1.strategy.keywords_locations"');
+// 🔴 LOCATE THE HANDLER, NOT A MENTION OF IT. `readLockedPlan` now reads
+// `tasks["m1.strategy.keywords_locations"]` and is DEFINED EARLIER in the file, so a bare
+// indexOf of the quoted id found that mention and extracted the wrong function — every assertion
+// below then failed against code it was never meant to read. Match the key AND its handler.
+// → feedback_a_symbol_name_is_a_claim_about_the_codebase
+const i = src.search(/"m1\.strategy\.keywords_locations":\s*async\s*\(/);
 if (i < 0) { console.error("⛔ the keyword step is gone"); process.exit(2); }
 // 🔴 BRACE-MATCH FROM THE ARROW'S BODY. The first `{` after the key is the DESTRUCTURING brace in
 // `async ({ client, clientId }) =>`, which opens and closes immediately — matching from there made

@@ -83,6 +83,7 @@ const NOT_PREFLIGHT = {
   'check-an-arrow-points-where-it-goes.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — a glyph on an admin control cannot make a video unsafe',
   'check-a-local-plan-has-local-terms.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the shape of a keyword prompt cannot make a video unsafe',
   'check-the-grid-says-what-it-centred-on.mjs': 'admin/rank gate, pure source read; runs in daily-health-check.sh — the rank grid is client reporting, not the video pipeline',
+  'check-nothing-is-rga-shaped.mjs': 'product-wide gate, pure source read; runs in daily-health-check.sh — client-scoping in the admin/portal cannot make a video unsafe',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
   'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',
   'check-a-step-output-takes-its-own-weight.mjs': 'admin-UI gate; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
