@@ -128,6 +128,18 @@ try {
   const all = await survey();
   if (!all) { console.log("  ⚠️  #onboardingChecklistHost is not on the page — the probe is wrong."); await browser.close(); process.exit(2); }
 
+  // 🔴 ZERO ROWS IS A PAGE THAT DID NOT LOAD, NOT A DESIGN DEFECT. The host exists (checked above)
+  // but nothing rendered into it — on a repeated headless run that is a navigation or auth timeout,
+  // and reporting it as "the checklist renders 0 rows; the SOP has 61" cries wolf in the nightly.
+  // Noise is not neutral: a gate that fails at random is why a real failure goes unlooked-at.
+  // → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
+  if (all.rows === 0) {
+    console.log("  ⚠️  the checklist host is present but empty — the page did not finish loading.");
+    console.log("      Reported as COULD-NOT-RUN. A genuinely blank admin is caught by check-app-pages-boot.");
+    await browser.close();
+    process.exit(2);
+  }
+
   // ── 1 · every step in the SOP is a row on the screen ─────────────────────────────────────────
   if (all.rows !== EXPECT.total) {
     bad(`the checklist renders ${all.rows} rows; the SOP has ${EXPECT.total}. `
