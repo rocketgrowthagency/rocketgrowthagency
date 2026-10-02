@@ -252,7 +252,9 @@ if (!latest || latest.sourceSha256 !== sha(src)) {
 const DESK_DIR = `${process.env.HOME}/Desktop`;
 const isDeskPlaybook = (f) => /^RGA Sales Playbook.*\.pdf$/.test(f);
 const priorDesk = fs.readdirSync(DESK_DIR).filter(isDeskPlaybook);
-const DESK = `${DESK_DIR}/RGA Sales Playbook - updated ${new Date().toISOString().slice(0, 10)}.pdf`;
+// Version number first: two prints on the same day had the SAME dated name, so v5 looked like v4.
+const cur = versions[versions.length - 1];
+const DESK = `${DESK_DIR}/RGA Sales Playbook - v${cur.v} - ${cur.date}.pdf`;
 if (process.argv.includes('--desktop') || priorDesk.length) {
   for (const f of priorDesk) if (`${DESK_DIR}/${f}` !== DESK) fs.unlinkSync(`${DESK_DIR}/${f}`);
   fs.copyFileSync(OUT, DESK);
