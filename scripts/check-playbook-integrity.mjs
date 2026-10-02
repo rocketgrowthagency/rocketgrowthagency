@@ -57,7 +57,9 @@ for (const s of PB) {
   const walk = (blocks, where) => {
     for (const b of blocks) {
       if (!KINDS.has(b.k)) { add('unsupported-block-kind', `${where}: "${b.k}" renders as NOTHING`); continue; }
-      if (b.k === 'h' && typeof b.n !== 'number') add('heading-without-number', where);
+      // A heading carries its section number — or ⏱, the one MARKED line a rep must find fast
+      // (the 30-second version, Chris 2026-10-02). Nothing else.
+      if (b.k === 'h' && typeof b.n !== 'number' && b.n !== '⏱') add('heading-without-number', where);
       if (b.k === 'table') {
         if (!Array.isArray(b.head) || !Array.isArray(b.rows)) add('malformed-table', where);
         else for (const r of b.rows) if (r.length !== b.head.length) add('ragged-table-row', `${where}: ${r.length} cells vs ${b.head.length} headers`);
