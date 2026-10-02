@@ -1,25 +1,31 @@
-# Parked work — NOT deployed on purpose
+# Parked playbook work — PDF only, NOT in admin yet (on purpose)
 
-## Sales playbook v7 (2026-10-02) — waiting until the admin/live-site work in the other chat settles
+Chris, 2026-10-02: "we wont update admin until later. so we dont interfere with the other chat thats
+doing alot of work with live site" · "just updating the PDF for now. then at end of session ill let
+you know when to update all on admin so have all notes ready".
 
-Chris: "we wont update admin until later. so we dont interfere with the other chat thats doing alot
-of work with live site."
+## How PDF-only updates work while this is parked
+- `parked/playbook.js` is the DRAFT playbook. Edit THIS file, never `admin/playbook.js`.
+- `node scripts/build-playbook-pdf.mjs --draft` prints it to the Desktop as the next version number
+  ("RGA Sales Playbook - v7 - <date>.pdf"). The website repo, admin, admin Docs and the version archive
+  are not touched, so another session's deploy cannot ship it.
+- Expected while parked: check-playbook-integrity reports `printed-playbook-desktop-stale`, because the
+  Desktop has the draft and the repo has v6. That is known and fine.
 
-What v7 is: the 30-second line gets its own marked heading — "⏱ 30-SECOND VERSION — they don't
-remember the video, or they're vague" — in We call them §1 and The call beat 1, and every mention
-points at that label. Chris has the v7 PDF on his Desktop to review.
+## Changes waiting for admin (add a line for every change)
+1. ⏱ 30-SECOND VERSION gets its own marked heading in We call them §1 and The call beat 1. Every
+   mention points to the label, and the guided-call node uses the same words.
+   (Also accepted by the gate: a heading may be numbered ⏱.)
 
-Files here:
-- `playbook-v7-admin.patch` — admin/playbook.js + the playbook.js?v= bump in admin/index.html
-- `sales-playbook-v7-2026-10-02.pdf` — the printed v7
-- `versions-v7.json` — the version manifest including v7
-
-To ship it later (Website repo):
-1. `git apply "../Rocket Growth Agency Scraper VS Code/parked/playbook-v7-admin.patch"`
-   (if the ?v= number moved, bump playbook.js?v= by hand instead)
-2. `node scripts/build-playbook-pdf.mjs --note="30-SECOND VERSION marked with its own heading"` in this
-   repo. It reprints, archives v7, and refreshes the Desktop. Do not copy the parked PDF in by hand.
-3. Gates green, commit, deploy with deploy-site.sh, verify by content, then delete this folder's v7 files.
-
-Expected while parked: check-playbook-integrity reports printed-playbook-desktop-stale, because the
-Desktop has v7 and the repo has v6. That one is known and fine until v7 ships.
+## When Chris says "update admin" (do ALL of this, in order)
+1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because
+   deploy-site.sh ships only commits.
+2. `cp parked/playbook.js "<Website>/admin/playbook.js"`, then compare it against the live v6 to be sure only
+   the listed changes moved: `git diff admin/playbook.js`.
+3. Bump `playbook.js?v=` in admin/index.html (and admin.css?v= only if CSS changed).
+4. `node scripts/build-playbook-pdf.mjs --note="<the list above, short>"` (NOT --draft). This archives the
+   new version, writes the receipt, updates admin Docs, and replaces the Desktop copy.
+5. Gates: check-playbook-integrity (only the pre-deploy cache-buster line may show), check-playbook-renders,
+   check-browser-js-parses-as-the-browser-does.
+6. Commit both repos, `bash scripts/deploy-site.sh "..."`, then verify the live playbook.js by CONTENT.
+7. Empty the "Changes waiting" list above and delete parked/playbook.js + parked/sales-playbook-draft.pdf.

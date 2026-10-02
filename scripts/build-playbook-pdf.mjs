@@ -26,16 +26,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
-const OUT = path.join(WEBSITE, 'docs/sales-playbook.pdf');
+// 🅿️ --draft (Chris, 2026-10-02): "just updating the PDF for now… at end of session ill let you know
+// when to update all on admin". Prints from parked/playbook.js to the Desktop ONLY — the website repo
+// (admin, admin Docs, the version archive) is not touched, so another session's deploys cannot ship it.
+const DRAFT = process.argv.includes('--draft');
+const PARKED = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'parked');  // NOT .pathname — spaces arrive %20-encoded
+const OUT = DRAFT ? path.join(PARKED, 'sales-playbook-draft.pdf') : path.join(WEBSITE, 'docs/sales-playbook.pdf');
 const OPEN = process.argv.includes('--open');
 
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { console.error('✗ playwright unavailable — cannot render a PDF.'); process.exit(2); }
 
-const src = fs.readFileSync(path.join(WEBSITE, 'admin/playbook.js'), 'utf8');
+const src = fs.readFileSync(DRAFT ? path.join(PARKED, 'playbook.js') : path.join(WEBSITE, 'admin/playbook.js'), 'utf8');
 const pbM = src.match(/const PB = \[[\s\S]*?\n {2}\];/);
 const flM = src.match(/const FLOW = \{[\s\S]*?\n {2}\};/);
 if (!pbM) { console.error('✗ could not locate the PB array.'); process.exit(1); }
@@ -267,7 +273,7 @@ console.log(`   ${TID_LIST.length} SEE targets, every page number read back from
 // leaving the admin Docs tab and the Desktop copy behind. Chris, 2026-10-02: "so we dont ever lose
 // it, forget or regress".
 const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
-fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
+if (!DRAFT) fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
   source: 'admin/playbook.js', sourceSha256: sha(src), pdfSha256: sha(fs.readFileSync(OUT)),
   builtAt: new Date().toISOString(),
 }, null, 2) + '\n');
@@ -278,11 +284,15 @@ fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
 // A rebuild of an unchanged source adds nothing, so re-running the script never invents a version.
 const VDIR = path.join(WEBSITE, 'docs/playbook-versions');
 const VJSON = path.join(VDIR, 'versions.json');
-fs.mkdirSync(VDIR, { recursive: true });
+if (!DRAFT) fs.mkdirSync(VDIR, { recursive: true });
 let versions = [];
 try { versions = JSON.parse(fs.readFileSync(VJSON, 'utf8')); } catch { /* first run */ }
 const latest = versions[versions.length - 1];
-if (!latest || latest.sourceSha256 !== sha(src)) {
+if (DRAFT) {
+  // A draft is the NEXT version, not yet released: numbered for the Desktop, archived nowhere.
+  versions = [...versions, { v: (latest ? latest.v : 0) + 1, date: new Date().toISOString().slice(0, 10) }];
+  console.log(`\n🅿️  DRAFT v${versions[versions.length - 1].v} — Desktop only; admin and the archive are untouched`);
+} else if (!latest || latest.sourceSha256 !== sha(src)) {
   const v = (latest ? latest.v : 0) + 1;
   const date = new Date().toISOString().slice(0, 10);
   const file = `sales-playbook-v${v}-${date}.pdf`;
