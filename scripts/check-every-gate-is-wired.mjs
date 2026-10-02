@@ -72,6 +72,7 @@ const NOT_PREFLIGHT = {
   'check-the-checklist-is-one-list.mjs':          'admin-UI gate; runs in daily-health-check.sh — a checklist split in two cannot make a video unsafe',
   'check-the-checklist-has-one-numbering-system.mjs': 'admin-UI gate; runs in daily-health-check.sh — a step badge cannot make a video unsafe',
   'check-the-checklist-renders-one-list.mjs':     'admin-UI gate, drives a browser; runs in daily-health-check.sh — rendering cannot make a video unsafe',
+  'check-every-setting-can-be-changed.mjs': 'admin-UI gate; runs in daily-health-check.sh — a Change control cannot make a video unsafe',
   'check-a-step-email-is-sent-and-seen.mjs': 'admin/portal gate; runs in daily-health-check.sh — whether a step email can be sent cannot make a video unsafe',
   'check-what-this-produced-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — how stored output is shown cannot make a video unsafe',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',

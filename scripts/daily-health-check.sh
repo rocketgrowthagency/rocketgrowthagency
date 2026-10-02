@@ -301,6 +301,7 @@ run check-the-checklist-renders-one-list.mjs "61 rows, one pill each, the view s
 run check-the-checklist-numbering-matches-the-mockup.mjs "the live render matches the approved mockup, property by property"
 run check-what-this-produced-matches-the-mockup.mjs "a step's stored output matches the approved output mockup"
 run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks first, and reaches the client's portal"
+run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-charge-equals-the-contract.mjs "we charge exactly what the agreement schedules"
