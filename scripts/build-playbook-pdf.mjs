@@ -222,8 +222,15 @@ fs.writeFileSync(`${OUT}.source.json`, JSON.stringify({
 // A second copy on the Desktop is a FORK, and forks go stale silently — the exact failure this
 // session kept finding. So: refresh it every build if it already exists, and only create it on
 // request. That way the printed-from copy can never drift behind the live playbook.
-const DESK = `${process.env.HOME}/Desktop/RGA Sales Playbook - print and study.pdf`;
-if (process.argv.includes('--desktop') || fs.existsSync(DESK)) {
+// 🔑 The Desktop name carries the BUILD DATE. With one fixed name, an updated copy looked exactly like
+// the previous one and Chris could not tell he had the new playbook (2026-10-02). Older dated copies
+// are removed, so there is only ever ONE playbook on the Desktop.
+const DESK_DIR = `${process.env.HOME}/Desktop`;
+const isDeskPlaybook = (f) => /^RGA Sales Playbook.*\.pdf$/.test(f);
+const priorDesk = fs.readdirSync(DESK_DIR).filter(isDeskPlaybook);
+const DESK = `${DESK_DIR}/RGA Sales Playbook - updated ${new Date().toISOString().slice(0, 10)}.pdf`;
+if (process.argv.includes('--desktop') || priorDesk.length) {
+  for (const f of priorDesk) if (`${DESK_DIR}/${f}` !== DESK) fs.unlinkSync(`${DESK_DIR}/${f}`);
   fs.copyFileSync(OUT, DESK);
   console.log(`\n🖨  Desktop copy refreshed: ${DESK.replace(process.env.HOME, '~')}`);
 }

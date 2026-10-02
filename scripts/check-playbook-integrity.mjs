@@ -221,8 +221,11 @@ try {
     if (receipt.sourceSha256 !== sha(src)) add('printed-playbook-stale', 'admin/playbook.js changed since the PDF was printed — run build-playbook-pdf.mjs (admin Docs + Desktop copy are behind)');
     const pdfBytes = fs.readFileSync(PDF);
     if (receipt.pdfSha256 !== sha(pdfBytes)) add('printed-playbook-replaced', 'docs/sales-playbook.pdf is not the file the build wrote — something overwrote it. Rebuild.');
-    const DESK = `${process.env.HOME}/Desktop/RGA Sales Playbook - print and study.pdf`;
-    if (fs.existsSync(DESK) && sha(fs.readFileSync(DESK)) !== sha(pdfBytes)) add('printed-playbook-desktop-stale', 'the Desktop copy differs from docs/sales-playbook.pdf — rebuild refreshes it');
+    const deskDir = `${process.env.HOME}/Desktop`;
+    let desk = [];
+    try { desk = fs.readdirSync(deskDir).filter((f) => /^RGA Sales Playbook.*\.pdf$/.test(f)); } catch { /* no Desktop on this host */ }
+    if (desk.length > 1) add('printed-playbook-desktop-forked', `${desk.length} playbook PDFs on the Desktop (${desk.join(', ')}) — there must be ONE`);
+    for (const f of desk) if (sha(fs.readFileSync(`${deskDir}/${f}`)) !== sha(pdfBytes)) add('printed-playbook-desktop-stale', `Desktop "${f}" differs from docs/sales-playbook.pdf — rebuild refreshes it`);
   }
 }
 
