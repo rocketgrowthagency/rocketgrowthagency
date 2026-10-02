@@ -96,18 +96,79 @@ vm.runInContext(
     slice("const obGroupOf =", ";", "obGroupOf"),
     slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
     slice("function obPhaseBody(", "\n}", "obPhaseBody"),
+    slice("function obBuckets(", "\n}", "obBuckets"),
+    slice("function obPageOrdered(", "\n}", "obPageOrdered"),
+    slice("function obPageNumbers(", "\n}", "obPageNumbers"),
     slice("function obGotoLabel(", "\n}", "obGotoLabel"),
     slice("function obPhaseMarker(", "\n}", "obPhaseMarker"),
     slice("function obPhasedHtml(", "\n}\n", "obPhasedHtml"),
     slice("  const OB_GLYPH = {", "\n", "OB_GLYPH").trim(),
     slice("  const obMarker = (num, kind) =>", ";", "obMarker").trim(),
-    `globalThis._x = { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker };`,
+    `globalThis._x = { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker, obPageNumbers, obPageOrdered };`,
   ].join("\n"),
   ctx
 );
-const { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker } = ctx._x;
+const { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker, obPageNumbers, obPageOrdered } = ctx._x;
 
 const m1 = JSON.parse(fs.readFileSync(W + "data/playbooks/playbooks.json", "utf8")).month1;
+
+// ── 2d. THE NUMBER COUNTS THE PAGE ────────────────────────────────────────────────────────
+// 🔴🔴 It used to be the step's position in the PLAYBOOK FILE while the page regroups those steps
+// into phases by topic — so reading top to bottom it went BACKWARDS 3 times, was non-consecutive at
+// 10 of 60 boundaries and jumped by 16. Chris, 2026-10-02: "it jumps from 13, 14 to 23 then 27".
+// 🔴 And bucket order is still not DOM order: "The audit" collapses its automated checks into a
+// rollup that is emitted BEFORE the steps needing a human. Number in EMITTED order or it drifts
+// again by 1 backwards and 3 gaps.
+{
+  const steps = m1.map((s) => ({ obj: { ...s, flowId: s.id, sopType: s.type } }));
+  const pos = obPageNumbers(steps);
+  const order = obPageOrdered(steps);
+  if (pos.size !== m1.length) F(`${pos.size} of ${m1.length} steps got a number`);
+  if (new Set(pos.values()).size !== pos.size) F("two steps share a number");
+  const vals = [...pos.values()].sort((a, b) => a - b);
+  if (vals[0] !== 1 || vals[vals.length - 1] !== m1.length) F(`the numbers run ${vals[0]}..${vals[vals.length - 1]}, not 1..${m1.length}`);
+  // 🔴 COMPARING pos TO obPageOrdered IS SELF-CONSISTENT — both move together, so it can never
+  // fail. RENDER the page and read the numbers in DOM order; that is independent of the producer.
+  {
+    const rows = steps.map((st, i) => `<div class="ob-step done"><span class="ob-sid">${pos.get(i)}</span></div>`);
+    const html = obPhasedHtml(steps, rows, true, null);
+    const seen = [...html.matchAll(/<span class="ob-sid">(\d+)<\/span>/g)].map((m) => +m[1]);
+    if (seen.length !== m1.length) F(`${seen.length} numbers rendered for ${m1.length} steps`);
+    let back = 0, gaps = 0;
+    for (let k = 1; k < seen.length; k++) { const d = seen[k] - seen[k - 1]; if (d < 0) back++; if (d !== 1) gaps++; }
+    if (back) F(`reading the RENDERED page top to bottom the number goes BACKWARDS ${back} time(s)`);
+    if (gaps) F(`the number is not the next number at ${gaps} boundary(ies) on the rendered page`);
+  }
+  // 🔑 The references we actually use must survive. Measured when this changed: steps 1-12 untouched.
+  for (const [n, id] of [[1, "m1.close.confirm"], [2, "m1.close.kickoff_invite"], [3, "m1.kickoff.create"], [9, "m1.access.website"]]) {
+    const i = m1.findIndex((x) => x.id === id);
+    if (i < 0) { F(`${id} is gone from the playbook`); continue; }
+    if (pos.get(i) !== n) F(`"step ${n}" (${id}) is now number ${pos.get(i)} — the vocabulary we speak would go stale`);
+  }
+}
+
+// ── 2e. "NOW SET TO" IS ONE LINE ──────────────────────────────────────────────────────────
+// 🔴 It was a full-width band: the label outside the card's text column, the value and the button at
+// opposite edges with dead space between, and the provenance on its own line — a whole row for four
+// words. → admin_numbering_and_now_set_to_v1
+{
+  const set = css.replace(/\/\*[\s\S]*?\*\//g, "").match(/\.ob-set\s*\{([^}]*)\}/);
+  if (!set) F(".ob-set has no rule");
+  else {
+    if (!/align-items:\s*baseline/.test(set[1])) F("the setting strip no longer aligns its parts on one baseline");
+    if (!/padding:[^;]*\s15px/.test(set[1])) F("the setting strip is not inset to the card's text column");
+  }
+  const v = css.replace(/\/\*[\s\S]*?\*\//g, "").match(/\.ob-set \.v\s*\{([^}]*)\}/);
+  if (!v) F(".ob-set .v has no rule");
+  else {
+    if (!/white-space:\s*nowrap/.test(v[1]) || !/text-overflow:\s*ellipsis/.test(v[1]))
+      F("the setting value wraps instead of truncating — a long draft opens the card");
+    // 🔴 Without min-width:0 a flex child never shrinks, so the ellipsis never fires and the control
+    // is pushed off the row. → feedback_a_grid_child_needs_min_width_zero
+    if (!/min-width:\s*0/.test(v[1])) F("the setting value has no min-width:0, so the ellipsis can never fire");
+  }
+}
+
 
 // the phase-marker producer: all four combinations of (settled, open)
 for (const [settled, open, glyph, todo] of [[true,true,"\u2713",false],[true,false,"\u2713",false],[false,true,"\u25cf",false],[false,false,"\u25cb",true]]) {
