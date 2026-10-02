@@ -138,8 +138,16 @@ if (/<li class="ob-sop-note">/.test(code)) {
 for (const [needle, what, why] of [
   ["const isBandNote =", "a 🔑 note under a list",
    "a note written under a band's items belongs INSIDE that band; outside it reads as a new thought about nothing"],
-  ["const isRef =", "a 📄 reference fold",
+  // 🔑 RE-POINTED 2026-10-02, NOT DELETED. The PROPERTY this defends is unchanged — a 📄 reference
+  // is set apart from the instruction prose rather than left inline as file-path sentences. What
+  // changed is the SHAPE: Chris approved admin_how_this_step_works_v1, where a reference is a typed
+  // note ("Reference", quiet, no fill) instead of a <details> fold. The old `isRef` was folded into
+  // the four-kind callout table. A gate that fails on the fix it was asked for is a gate defending
+  // its own wording. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  ['{ re: /^📄', "a 📄 reference, set apart from the prose",
    "reference is read once — left inline it is two sentences of file-path prose in the middle of the instructions"],
+  ['label: "Reference"', "the 📄 reference's own label",
+   "an unlabelled quiet box does not say what kind of thing it is"],
   ["const LABEL =", "a `Label: sentence` line",
    "\"AFTER:\" rendered as shouted prose; it is a label and its sentence, one paragraph"],
   ["const liHtml =", "the bold lead in a list item",
@@ -178,11 +186,23 @@ for (const [needle, what, why] of [
 for (const [sel, what] of [
   ["\\.ob-band-note", "the band note"],
   ["\\.ob-line", "the labelled line"],
-  ["\\.ob-ref", "the reference fold"],
+
 ]) {
   if (!new RegExp(sel + "[\\s,{:>]").test(css)) {
     fail.push(`admin/admin.css — ${what} has no rule, so it renders unstyled.`);
   } else pass.push(`${what} is styled`);
+}
+
+// 🔴 THE REFERENCE NOTE IS THE QUIET ONE. Checking that ".ob-note.ref" merely APPEARS passes on
+// ".ob-note.ref p" alone — a substring is not a rule, and a renamed base rule slipped through.
+// Pin the property that makes it a reference: no fill, so it recedes behind the three louder kinds.
+{
+  const i = css.indexOf(".ob-note.ref {");
+  const rule = i < 0 ? "" : css.slice(i, css.indexOf("}", i));
+  if (!rule) fail.push("admin/admin.css — the reference note has no rule of its own, so it renders like any other callout.");
+  else if (!/background:\s*transparent/.test(rule)) {
+    fail.push("admin/admin.css — the reference note has a fill; it is the quiet kind and must recede behind the other three.");
+  } else pass.push("the reference note is the quiet kind");
 }
 
 // ── 5 · the critical band is not wearing the WARNING fill ─────────────────────────────────────
