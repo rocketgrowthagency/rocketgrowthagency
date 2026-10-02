@@ -55,7 +55,7 @@ for (const need of ["ST_VERDICT", "stIndent", "stZero"]) {
 const ctx = vm.createContext({ console, URL });
 try {
   vm.runInContext(consts + "\n" + ["escapeHtml", "escapeAttribute", "renderStepMarkdown", "outShapes",
-    "stInline", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stepBodyHtml"]
+    "stInline", "stValue", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stepBodyHtml"]
     .map(pick).join("\n\n"), ctx);
 } catch (e) { console.error("⛔ cannot evaluate the renderer: " + e.message); process.exit(2); }
 const call = (n) => vm.runInContext(n, ctx);
@@ -178,6 +178,32 @@ else {
     if (tail !== "after") fail.push(`${JSON.stringify(tail)} is printed after the link \u2014 it must be exactly "after"`);
   }
   if (!L.includes('href="https://x.com/?a=1&amp;b=2&amp;c=3"')) fail.push("the href lost part of the query string");
+}
+
+// ── a bare-URL fact value reads as its DESTINATION, not as an encoded query ──────────────────
+// 🔴 The citation audit is ten directories, each a Google `site:` search, so a host+tail label
+// rendered all ten as `google.com/search?q=%22Rocket%20…`. The row label already says which
+// directory; ten copies of an encoded query say nothing. Chris, 2026-10-02.
+{
+  const u = "https://www.google.com/search?q=%22X%22%20site%3Ayelp.com";
+  const out = call("stValue")(u);
+  const label = (out.match(/>([^<]*)<\/a>/) || [])[1] || "";
+  if (!/^Search Google/.test(label)) fail.push(`a Google search URL reads as ${JSON.stringify(label)}, not "Search Google"`);
+  if (!out.includes(`href="${u}"`)) fail.push("the full search URL is not intact in the href");
+  if (!/target="_blank"/.test(out)) fail.push("a link that leaves our origin is not opening elsewhere");
+  const plain = call("stValue")("https://rocketgrowthagency.com/pricing");
+  if (!/>rocketgrowthagency\.com/.test(plain)) fail.push("a non-search URL no longer keeps its host as the label");
+  if (call("stValue")("0 held") !== call("stInline")("0 held")) fail.push("a value that is not a URL is no longer passed through untouched");
+  // 🔴 AND THE FACT RENDERER MUST ACTUALLY CALL IT. Testing stValue in isolation passes happily
+  // while the rows still render through stInline — a capability nobody calls looks finished.
+  // → feedback_a_capability_nobody_calls_looks_finished
+  if (!/<span class="v">\$\{stValue\(f\.v\)\}/.test(src)) {
+    fail.push("the fact row no longer renders its value through stValue");
+  }
+  const CITE = `Links:\n  Yelp   https://www.google.com/search?q=a%20site%3Ayelp.com\n  BBB    https://www.google.com/search?q=a%20site%3Abbb.org`;
+  const ch = call("structuredTextHtml")(call("parseStructuredText")(CITE));
+  if (!/Search Google/.test(ch)) fail.push("a rendered citation row does not read as its destination");
+  if (/google\.com\/search\?q=[^<"]*<\/a>/.test(ch)) fail.push("a rendered link still shows the encoded query as its label");
 }
 
 // ── prose is LEFT ALONE, and an unreadable group falls back ALONE ────────────────────────────

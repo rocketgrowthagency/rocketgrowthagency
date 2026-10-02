@@ -78,7 +78,7 @@ try {
   vm.runInContext(
     block(/const OB_PHASES = \[/, "OB_PHASES") + "\n" +
     src.split("\n").filter((l) => /^const obGroupOf =/.test(l)).join("\n") + "\n" +
-    ["obBuckets", "obPageOrdered", "obPageNumbers"].map(pick).join("\n\n"),
+    ["obBuckets", "obRespectDeps", "obPageOrdered", "obPageNumbers"].map(pick).join("\n\n"),
     ctx,
   );
 } catch (e) { console.error("⛔ cannot evaluate the numbering functions: " + e.message); process.exit(2); }
@@ -86,8 +86,9 @@ try {
 const m1 = playbooks.month1;
 if (!Array.isArray(m1) || !m1.length) { console.error("⛔ playbooks.json has no month1 array"); process.exit(2); }
 // 🔑 The MINIMUM shape obBuckets/obPageOrdered actually read: the flow id and the SOP type.
-const steps = m1.map((s) => ({ obj: { flowId: s.id, sopType: s.type } }));
+const steps = m1.map((s) => ({ obj: { flowId: s.id, sopType: s.type }, dependsOn: s.dependsOn || [] }));
 const pageNo = vm.runInContext("obPageNumbers", ctx)(steps);
+const vmOrder = () => vm.runInContext("obPageOrdered", ctx)(steps);
 
 const nums = m1.map((_, i) => pageNo.get(i));
 if (nums.some((n) => !n)) fail.push(`${nums.filter((n) => !n).length} step(s) got no page number at all`);
@@ -96,6 +97,43 @@ for (let i = 0; i < sorted.length; i++) {
   if (sorted[i] !== i + 1) { fail.push(`the numbering is not 1..${m1.length} — expected ${i + 1} at position ${i}, got ${sorted[i]}`); break; }
 }
 const byId = new Map(m1.map((s, i) => [s.id, pageNo.get(i)]));
+
+// ═══ PART 2b — THE PAGE MAY REGROUP, BUT NEVER PAST A DEPENDENCY ═════════════════════════════
+// Chris, 2026-10-02: *"how can we run snapshot and geo grid before we have keywords?"* He was
+// right — `m1.audit.grid_baseline` DECLARES `dependsOn: ['m1.strategy.keywords_locations']`, and the
+// phase grouping rendered the baseline at 22 and the keywords at 26, so the grid scanned
+// `primary_service` instead of the planned keywords. Two pairs were backwards across all 61 steps.
+// 🔑 This is the rule that makes the number mean "do this next".
+{
+  const order = vmOrder();
+  const at = new Map();
+  order.forEach((i, k) => at.set(m1[i].id, k));
+  const backwards = [];
+  for (const s of m1) {
+    for (const d of (s.dependsOn || [])) {
+      if (!at.has(d)) continue;                       // not in this scope — not ours to order
+      if (at.get(d) > at.get(s.id)) backwards.push(`${s.id} (#${byId.get(s.id)}) needs ${d} (#${byId.get(d)})`);
+    }
+  }
+  for (const b2 of backwards) fail.push(`a dependency renders BACKWARDS: ${b2}`);
+  // 🔴 And the repair must never drop or duplicate a row.
+  if (order.length !== m1.length) fail.push(`the page order emits ${order.length} of ${m1.length} steps`);
+  if (new Set(order).size !== order.length) fail.push("the page order repeats a step");
+
+  // 🔴 A CYCLE MUST NOT SWALLOW ROWS. The real playbook has none, so the fallback that keeps
+  // unresolvable steps is otherwise never exercised — and untested defensive code is a claim.
+  // A mis-ordered row is recoverable; a row that vanishes from the checklist is not.
+  // → feedback_an_absence_must_never_be_readable_as_a_value
+  const cyc = [
+    { obj: { flowId: "a", sopType: "auto" }, dependsOn: ["b"] },
+    { obj: { flowId: "b", sopType: "auto" }, dependsOn: ["a"] },
+    { obj: { flowId: "c", sopType: "auto" }, dependsOn: [] },
+  ];
+  const repaired = vm.runInContext("obRespectDeps", ctx)(cyc, [0, 1, 2]);
+  if (repaired.length !== 3 || new Set(repaired).size !== 3) {
+    fail.push(`a dependency cycle loses rows — obRespectDeps returned ${JSON.stringify(repaired)} for 3 steps`);
+  }
+}
 
 // ═══ PART 3 — EVERY HARDCODED "step N" IN A USER-FACING STRING ═══════════════════════════════
 // 🔴 An unregistered occurrence FAILS. Registering one is a decision someone makes on purpose.
