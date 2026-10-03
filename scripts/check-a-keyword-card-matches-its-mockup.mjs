@@ -41,12 +41,22 @@ const grab = (name) => {
   return null;
 };
 const fn = grab("structuredHtml");
+const panelFn = grab("measurementPanelHtml");
 if (!fn) { console.error("⚠️  INDETERMINATE — structuredHtml not found."); process.exit(2); }
+if (!panelFn) { console.error("⚠️  INDETERMINATE — measurementPanelHtml not found."); process.exit(2); }
 const ctx = vm.createContext({});
 try {
-  vm.runInContext(`const escapeHtml=(s)=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");`
-    + fn + ";globalThis._h = structuredHtml;", ctx);
-} catch (e) { console.error(`⚠️  INDETERMINATE — structuredHtml did not evaluate: ${e.message}`); process.exit(2); }
+  vm.runInContext(`const escapeHtml=(s)=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");const MEASURE_FLOOR=10;`
+    + fn + panelFn + ";globalThis._h = structuredHtml; globalThis._p = measurementPanelHtml;", ctx);
+} catch (e) { console.error(`⚠️  INDETERMINATE — the lifted renderers did not evaluate: ${e.message}`); process.exit(2); }
+
+// 🔑 The panel is built from outcome_data, so the gate feeds it outcome_data — not prose.
+const PANEL = ctx._p({ auto_result: { outcome_data: {
+  demand: [{ term: "a", volume: 2900 }, { term: "b", volume: 2900 }, { term: "c", volume: 1900 },
+           { term: "d", volume: 10 }, { term: "e", volume: null }],
+  geo: { canonicalName: "California,United States" },
+  alternatives: [{ term: "digital marketing", volume: 18100 }],
+} } });
 
 const html = ctx._h([{ head: "Keywords", count: 3, items: [
   { title: "seo services near me", fields: { searches: "2,900 searches/mo", why: "Ready to hire, not research." } },
@@ -60,7 +70,7 @@ catch (e) { console.error(`⚠️  INDETERMINATE — no browser: ${e.message}`);
 
 const live = await browser.newPage();
 await live.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${fs.readFileSync(CSS, "utf8")}</style></head>
-<body>${html}</body></html>`, { waitUntil: "load" });
+<body>${html}${PANEL}</body></html>`, { waitUntil: "load" });
 
 const mock = await browser.newPage();
 await mock.setContent(fs.readFileSync(MOCK, "utf8"), { waitUntil: "load" });
@@ -83,6 +93,17 @@ const liveNone = await read(live, ".ob-vol.none");
 const mockQuery = await read(mock, ".kw.v2 .q > span");
 const mockOk = await read(mock, ".kw.v2 .vol:not(.floor):not(.none)");
 const mockFloor = await read(mock, ".kw.v2 .vol.floor");
+// 🔴 READ EVERYTHING BEFORE CLOSING. The panel checks were written after `browser.close()` and died
+// with "Execution context was destroyed" — a harness failure that exits 1 and reads exactly like a
+// product failure. → feedback_three_ways_i_broke_my_own_sweep
+const panelFacts = await live.evaluate(() => {
+  const h = document.querySelector(".ob-panel-h .m");
+  return {
+    header: h ? h.textContent.trim() : null,
+    order: [...document.querySelectorAll(".ob-vd")].map((e) => e.className.replace("ob-vd", "").trim()),
+    okText: (document.querySelector(".ob-vd.ok") || {}).textContent || "",
+  };
+});
 await browser.close();
 
 let bad = 0;
@@ -109,6 +130,20 @@ for (const [n, el, want] of [["figure", liveOk, "searches/mo"], ["floor", liveFl
 const same = liveOk && liveFloor && liveOk.backgroundColor === liveFloor.backgroundColor;
 if (same) { bad++; console.log("  🔴 a floor renders in the same colour as a measurement — the defect this card exists to stop"); }
 else console.log("  ✅ a floor is visually distinct from a measurement");
+
+console.log("\n── the measurement panel ──");
+{
+  if (!panelFacts.header) { bad++; console.log("  🔴 no measurement panel rendered"); }
+  else {
+    const says = /California/.test(panelFacts.header) && /Keyword Planner/.test(panelFacts.header) && /searches a month/.test(panelFacts.header);
+    if (says) console.log("  ✅ one header carries place, source and unit");
+    else { bad++; console.log(`  🔴 header is missing place/source/unit: ${JSON.stringify(panelFacts.header)}`); }
+  }
+  if (panelFacts.order.join(",") === "ok,warn,info") console.log("  ✅ verdicts read good · needs action · context");
+  else { bad++; console.log(`  🔴 verdict order is ${JSON.stringify(panelFacts.order)} — expected ok,warn,info`); }
+  if (/3 of 5/.test(panelFacts.okText)) console.log("  ✅ the floor is excluded from the count (3 of 5, not 5 of 5)");
+  else { bad++; console.log(`  🔴 count does not exclude the floor: ${JSON.stringify(panelFacts.okText.slice(0, 60))}`); }
+}
 
 console.log("");
 if (bad) {
