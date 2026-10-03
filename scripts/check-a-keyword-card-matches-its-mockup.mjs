@@ -58,6 +58,18 @@ const PANEL = ctx._p({ auto_result: { outcome_data: {
   alternatives: [{ term: "digital marketing", volume: 18100 }],
 } } });
 
+// 🔴🔴 THE OLD STORED FORMAT. A card renders STORED text, so a draft written before this design
+// still says `2900/mo` and `10/mo`. The first build classified on the WORDS, so an old `10/mo` — the
+// value meaning Google cannot size the phrase — rendered GREEN. A renderer that only understands
+// what it writes today lies about every card it wrote yesterday.
+const LEGACY = ctx._h([{ head: "Keywords", count: 4, items: [
+  { title: "a", fields: { searches: "2900/mo", why: "x" } },
+  { title: "b", fields: { searches: "10/mo", why: "x" } },
+  { title: "c", fields: { searches: "110/mo", why: "x" } },
+  { title: "d", fields: { searches: "no data", why: "x" } },
+] }]);
+const legacyBands = [...LEGACY.matchAll(/<span class="ob-vol ([a-z]+)">([^<]*)</g)].map((m) => ({ band: m[1], text: m[2] }));
+
 const html = ctx._h([{ head: "Keywords", count: 3, items: [
   { title: "seo services near me", fields: { searches: "2,900 searches/mo", why: "Ready to hire, not research." } },
   { title: "seo company Culver City", fields: { searches: "below Google's floor", why: "Too few type this exact phrase." } },
@@ -143,6 +155,28 @@ console.log("\n── the measurement panel ──");
   else { bad++; console.log(`  🔴 verdict order is ${JSON.stringify(panelFacts.order)} — expected ok,warn,info`); }
   if (/3 of 5/.test(panelFacts.okText)) console.log("  ✅ the floor is excluded from the count (3 of 5, not 5 of 5)");
   else { bad++; console.log(`  🔴 count does not exclude the floor: ${JSON.stringify(panelFacts.okText.slice(0, 60))}`); }
+}
+
+console.log("\n── a stored draft from before this design still reads correctly ──");
+{
+  const want = [
+    { band: "ok", has: "2,900 searches/mo" },
+    { band: "floor", has: "below Google's floor" },
+    { band: "low", has: "110 searches/mo" },
+    { band: "none", has: "no data" },
+  ];
+  want.forEach((w, i) => {
+    const got = legacyBands[i];
+    if (got && got.band === w.band && got.text.includes(w.has)) {
+      console.log(`  ✅ ${JSON.stringify(w.has)} → ${w.band}`);
+    } else {
+      bad++;
+      console.log(`  🔴 expected ${w.band} / ${JSON.stringify(w.has)}, got ${JSON.stringify(got)}`);
+    }
+  });
+  // The whole point: the floor must never wear the colour of real demand.
+  const floorBand = legacyBands.find((x) => /floor/i.test(x.text));
+  if (floorBand && floorBand.band === "ok") { bad++; console.log("  🔴 a legacy floor value renders as real demand"); }
 }
 
 console.log("");
