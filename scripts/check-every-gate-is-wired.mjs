@@ -84,6 +84,7 @@ const NOT_PREFLIGHT = {
   'check-a-local-plan-has-local-terms.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the shape of a keyword prompt cannot make a video unsafe',
   'check-the-grid-says-what-it-centred-on.mjs': 'admin/rank gate, pure source read; runs in daily-health-check.sh — the rank grid is client reporting, not the video pipeline',
   'check-nothing-is-rga-shaped.mjs': 'product-wide gate, pure source read; runs in daily-health-check.sh — client-scoping in the admin/portal cannot make a video unsafe',
+  'check-the-banner-matches-its-mockup.mjs': 'admin-UI render gate, launches a browser and diffs computed styles against the approved mockup; runs in daily-health-check.sh — a banner cannot make a video unsafe',
   'check-a-confirmation-says-what-happened.mjs': 'admin-UI gate, lifts and RUNS the banner producer; runs in daily-health-check.sh — a confirmation banner cannot make a video unsafe',
   'check-a-step-never-renders-before-its-dependency.mjs': 'admin-UI gate, lifts and RUNS the checklist ordering code; runs in daily-health-check.sh — the onboarding list is an admin surface and cannot make a video unsafe',
   'check-the-model-never-writes-the-numbers.mjs': 'admin/keyword-step gate, pure source read; runs in daily-health-check.sh — the keyword plan is an admin surface and cannot make a video unsafe',
