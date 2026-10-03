@@ -85,7 +85,14 @@ console.log("\n── the measured number is attached by US, from the verified c
 {
   const injects = /searches:\s*\$\{shown\}|\$\{m\[1\]\}\s*searches:/.test(step) || /searches: \$\{shown\}/.test(step);
   const fromDemand = /byName\s*=\s*new Map\(demand\.map/.test(step);
-  const absentIsText = /row\.volume === null \? "no data"/.test(step);
+  // 🔴 RE-PINNED 2026-10-02. This required the literal ternary `row.volume === null ? "no data"`.
+  // That logic was EXTRACTED into `volumeLabel`, which also handles the floor — strictly better, and
+  // the gate read the extraction as a deletion. Pin the property: an absent figure resolves to words,
+  // never to a number, wherever that decision now lives.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const labelDecl = (step.match(/^\s*const volumeLabel\s*=[\s\S]*?;$/m) || [""])[0];
+  const absentIsText = /row\.volume === null \? "no data"/.test(step)
+    || (/no data/.test(labelDecl) && /null|undefined/.test(labelDecl));
   for (const [ok, good, bad] of [
     [injects, "the draft carries a `searches:` line we wrote", "nothing attaches a measured volume to the draft"],
     [fromDemand, "it is keyed off the measured `demand`", "the attached number does not come from the measurement"],

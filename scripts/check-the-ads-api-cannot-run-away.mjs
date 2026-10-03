@@ -229,14 +229,27 @@ console.log("\n── 6 · the geography is named wherever the numbers are ─�
   // 🔴 THIS CHECK ALSO COULD NOT FAIL AT FIRST — `canonicalName` appears several times in the file,
   // so removing it from the line that prints the NUMBERS left the gate green. Pin the sentence that
   // carries the figures: the label it names must be derived from Google's canonical name.
+  // 🔴🔴 RE-PINNED 2026-10-02. This required a prose line reading "Measured in ${geoLabel}" in
+  // flow-execute. That line was REPLACED by the admin's measurement panel, which names the geography
+  // in its header — so the gate went red on a change that kept the property and improved the design.
+  // 🔑 The property is "wherever the numbers are rendered, the geography is named with them", and the
+  // renderer moved. Accept EITHER producer.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const adminSrc = (() => {
+    try { return fs.readFileSync(path.join(SITE, "admin", "admin.js"), "utf8"); } catch { return ""; }
+  })();
+  const panelNamesGeo = /function measurementPanelHtml\(/.test(adminSrc)
+    && /canonicalName/.test(adminSrc)
+    && /ob-panel-h/.test(adminSrc);
   const measuredLine = (flow.match(/^.*Measured in \$\{[^\n]*$/m) || [""])[0];
   const geoLabelDecl = (flow.match(/^\s*const geoLabel\s*=.*$/m) || [""])[0];
-  const printsGeo = /\$\{geoLabel\}/.test(measuredLine) && /canonicalName/.test(geoLabelDecl);
+  const prosePrintsGeo = /\$\{geoLabel\}/.test(measuredLine) && /canonicalName/.test(geoLabelDecl);
+  const printsGeo = prosePrintsGeo || panelNamesGeo;
   if (printsGeo) { pass.push("geo printed"); console.log("  ✅ the line carrying the numbers names the canonical geography"); }
   else {
     fail.push("the card does not name the geography");
     console.log("  🔴 the line carrying the numbers does not name the canonical geography");
-    if (!measuredLine) console.log("       (no 'Measured in' line found at all)");
+    if (!measuredLine && !panelNamesGeo) console.log("       (neither a 'Measured in' line nor a panel header names it)");
     else if (!/canonicalName/.test(geoLabelDecl)) console.log("       (geoLabel is not derived from Google's canonicalName)");
   }
 

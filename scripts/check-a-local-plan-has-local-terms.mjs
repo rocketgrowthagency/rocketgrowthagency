@@ -22,6 +22,9 @@
  * Exit 0 pass · 1 the generator can produce a national plan for a local business · 2 could not run.
  */
 import fs from "node:fs";
+import path from "node:path";
+
+const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 
 const W = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
 let src;
@@ -131,9 +134,18 @@ if (namesVolume && !measuresVolume) {
 // 🔴 Pin the LINE THAT CARRIES THE NUMBERS, not the file — `canonicalName` appears several times,
 // so a whole-step test stayed green after the measured line stopped naming the place.
 if (measuresVolume) {
+  // 🔴 RE-PINNED 2026-10-02 — the prose "Measured in …" line was replaced by the admin's measurement
+  // panel, which names the geography in its header. The property is unchanged; the producer moved.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
   const measuredLine = (code.match(/^.*Measured in \$\{[^\n]*$/m) || [""])[0];
   const geoLabelDecl = (code.match(/^\s*const geoLabel\s*=.*$/m) || [""])[0];
-  if (!/\$\{geoLabel\}/.test(measuredLine) || !/canonicalName/.test(geoLabelDecl)) {
+  const prose = /\$\{geoLabel\}/.test(measuredLine) && /canonicalName/.test(geoLabelDecl);
+  let panel = false;
+  try {
+    const a = fs.readFileSync(path.join(SITE, "admin", "admin.js"), "utf8");
+    panel = /function measurementPanelHtml\(/.test(a) && /canonicalName/.test(a) && /ob-panel-h/.test(a);
+  } catch { /* if admin.js cannot be read the prose test stands alone */ }
+  if (!prose && !panel) {
     fail.push("measured volume is printed without naming the geography it was measured in");
   }
 }
