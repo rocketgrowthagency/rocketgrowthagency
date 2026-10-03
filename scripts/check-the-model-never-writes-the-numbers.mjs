@@ -83,8 +83,16 @@ console.log("\n── a gap marker can never reach the card ──");
 
 console.log("\n── the measured number is attached by US, from the verified call ──");
 {
-  const injects = /searches:\s*\$\{shown\}|\$\{m\[1\]\}\s*searches:/.test(step) || /searches: \$\{shown\}/.test(step);
-  const fromDemand = /byName\s*=\s*new Map\(demand\.map/.test(step);
+  // 🔴 RE-PINNED 2026-10-02 (third time for this family). The `searches:` line used to be INJECTED
+  // into the model's draft by a second pass; the draft is now REBUILT from `demand` directly, which
+  // writes the line itself — one producer instead of two, after running both put the figure on every
+  // keyword twice. The gate pinned the injection's spelling and read the consolidation as removal.
+  // 🔑 The property is: the draft carries a `searches:` line, and its value comes from `demand`.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const injects = /searches:\s*\$\{shown\}/.test(step)
+    || /searches:\s*\$\{volumeLabel\(/.test(step);
+  const fromDemand = /byName\s*=\s*new Map\(demand\.map/.test(step)
+    || /for \(const d3 of demand\)/.test(step);
   // 🔴 RE-PINNED 2026-10-02. This required the literal ternary `row.volume === null ? "no data"`.
   // That logic was EXTRACTED into `volumeLabel`, which also handles the floor — strictly better, and
   // the gate read the extraction as a deletion. Pin the property: an absent figure resolves to words,
