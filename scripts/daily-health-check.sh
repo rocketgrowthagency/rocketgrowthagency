@@ -315,6 +315,7 @@ run check-the-model-never-writes-the-numbers.mjs "every volume on the keyword ca
 run check-a-step-never-renders-before-its-dependency.mjs "the checklist never shows a step before something it depends on"
 run check-a-confirmation-says-what-happened.mjs "every step confirmation says what happened, not what it produced"
 run check-the-banner-matches-its-mockup.mjs "the live confirmation banner matches its approved mockup, property by property"
+run check-a-keyword-card-matches-its-mockup.mjs "the keyword card matches its mockup, and a floor never passes for a measurement"
 run check-nothing-is-rga-shaped.mjs "the product is client-shaped, not RGA-shaped"
 run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks first, and reaches the client's portal"
 run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
