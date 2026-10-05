@@ -204,6 +204,7 @@ run check-admin-sees-what-the-client-sees.mjs "admin and the client portal share
 run check-drafts-use-real-services.mjs  "no draft describes a client using their search term"
 run check-approval-matches-what-was-shown.mjs "an approval records the content that was shown"
 run check-heavy-steps-cannot-time-out.mjs "no drafting step can exceed the 26s request ceiling"
+run check-a-queued-step-updates-the-card.mjs "a queued step updates the card when it lands"
 run check-hosting-bandwidth-headroom.mjs "pages AND videos are serving — not out of allowance"
 run export-approvals.mjs               "every client decision archived to markdown"
 
