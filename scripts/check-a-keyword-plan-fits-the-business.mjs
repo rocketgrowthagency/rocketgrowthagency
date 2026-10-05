@@ -85,6 +85,34 @@ const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ")
   }
 }
 
+// ── 2b · THE GEO ASK IS VERIFIED, AND THE SEEDS USE EVERY VERIFIED RUNG ─────────────────────────
+// 🔴 "AT LEAST 3 of the 5 MUST carry a geo-modifier" was asked of the model and never checked. RGA's
+// locked plan came back with ZERO. A requirement asked for and never verified is a hope.
+{
+  if (!/AT LEAST 3 of the 5 MUST carry a geo-modifier/.test(code)) {
+    fail.push("the prompt no longer asks a local client for geo-modified keywords");
+  }
+  if (!/geoShortfallNote/.test(code) || !/lines\.push\(\s*geoShortfallNote\s*\)/.test(code)) {
+    fail.push("the plan's geo-modifier count is never checked against the ask, or the shortfall is "
+      + "never put on the card — the requirement would go unmet in silence");
+  }
+  // 🔴 The seeds must use the LADDER, not only the town. For a suburb the town is the one level with
+  // no measurable demand, so seeding it alone guarantees a pool with no geo candidate worth taking.
+  if (!/geoLadder/.test(code)) {
+    fail.push("the geography ladder is not used — geo seeds would be built from the town alone");
+  }
+  const gs = (code.match(/const geoSeeds =[\s\S]{0,300}?;/) || [""])[0];
+  if (gs && !/placeNames/.test(gs)) {
+    fail.push("geo seeds are not built from the resolved place names");
+  }
+  // 🔴 And the classifier must know the same places, or a term naming a rung is judged `bare`.
+  const gt = (code.match(/const geoTokens =[\s\S]{0,300}?\];/) || [""])[0];
+  if (gt && !/geoLadder/.test(gt)) {
+    fail.push("the geo classifier does not know the ladder's place names — a term naming the metro "
+      + "we seed with would be classified as a bare head term and dropped from the pool");
+  }
+}
+
 // ── 3 · THE RULE ITSELF, OVER SEVERAL TRADES ────────────────────────────────────────────────────
 const lift = (name) => {
   const m = src.match(new RegExp("^function " + name + "\\s*\\(", "m"));
