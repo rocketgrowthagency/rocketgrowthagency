@@ -53,6 +53,41 @@ export function verdict(src, hasBackground) {
       out.push(`${name} asks for ${tok[1]} tokens and runs SYNCHRONOUSLY — it can exceed 26s and 504`);
     }
   }
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴🔴 SLOW FOR A REASON THE TOKEN COUNT CANNOT SEE (added 2026-10-05).
+  //
+  // Chris pressed Run again on `m1.strategy.keywords_locations` and got
+  // `Unexpected token '<', "<HTML> <HE"... is not valid JSON` — the 504 HTML page, parsed as JSON.
+  // The step asks for few tokens, so the maxTokens rule above passed it. It is slow because of what
+  // it CALLS: a geography ladder, Keyword Planner volumes for up to 25 terms, and map-pack
+  // difficulty probes. `core_web_vitals` and `audit.website` had already been added to HEAVY BY HAND
+  // for exactly this reason — which means the rule existed in a comment and not in the gate.
+  //
+  // 🔑 HEAVINESS IS DERIVABLE FROM WHAT AN EXECUTOR CALLS, NOT ONLY FROM WHAT IT ASKS FOR. Any
+  // executor that reaches a third-party API — or a module whose whole job is to reach one — can
+  // outlast the ceiling whatever its token budget.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  const EXTERNAL = [
+    [/_ads-keywords/, 'the Google Ads Keyword Planner'],
+    [/serpapi\.com|SERPAPI_KEY/, 'SerpAPI'],
+    [/places\.googleapis\.com|GOOGLE_PLACES_API_KEY/, 'the Places API'],
+    [/pagespeedonline|PAGESPEED/i, 'the PageSpeed API'],
+  ];
+  for (let i = 1; i < blocks.length; i += 2) {
+    const name = blocks[i], body = blocks[i + 1] || '';
+    if (heavy.has(name)) continue;
+    // Strip comments: these executors DOCUMENT the APIs they used to call.
+    const code = body.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+    for (const [re, label] of EXTERNAL) {
+      if (re.test(code)) {
+        out.push(`${name} calls ${label} and runs SYNCHRONOUSLY — an external API is slow for a `
+          + `reason maxTokens cannot see, and it can exceed 26s and 504`);
+        break;
+      }
+    }
+  }
+
   for (const h of heavy) {
     if (!known.has(h)) out.push(`HEAVY names ${h}, which is not an executor — the list has drifted`);
   }
