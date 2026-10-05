@@ -44,7 +44,7 @@ const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ")
 // Find each `owner: "<kind>"` that belongs to the next-action card (it has a `title:` beside it) and
 // pull the surrounding object literal by brace-matching backwards to its `{`.
 const states = [];
-const re = /owner:\s*"(you|client|clock)"/g;
+const re = /owner:\s*"(you|client|clock|unknown)"/g;
 let m;
 while ((m = re.exec(code))) {
   // walk back to the opening brace of this object literal
@@ -87,31 +87,90 @@ for (const st of states) {
 }
 
 // ── 3 · THE RENDERER KNOWS THE THIRD KIND, AND RESOLVES IT FIRST ────────────────────────────────
-if (!/data\.admin\.owner === "clock"/.test(code)) {
-  fail.push("the turn resolver no longer accepts `clock` — a third-kind state would fall back to the stage's guess and be blamed on somebody");
+for (const kind of ["clock", "unknown"]) {
+  if (!new RegExp(`"${kind}"`).test(code) || !/\[\s*"client",\s*"you",\s*"clock",\s*"unknown"\s*\]\.includes\(data\.admin\.owner\)/.test(code)) {
+    fail.push(`the turn resolver no longer accepts \`${kind}\` — such a state would fall back to the stage's guess and be blamed on somebody`);
+  }
+}
+
+// ── 3b · A STATE THAT HAS NOT LOADED MUST NOT CLAIM A TURN ──────────────────────────────────────
+// 🔴 The loading and failure branches carried NO `owner`, so they inherited the stage default
+// (`you` for onboarding) and the card read **● YOUR ACTION** above "Loading the onboarding
+// checklist…" — and above "Onboarding checklist unavailable", blaming the operator for a fetch that
+// never came back. → feedback_unloaded_is_not_an_answer
+{
+  const NOT_LOADED = /Loading the onboarding checklist|checklist unavailable/i;
+  for (const st of states) {
+    if (NOT_LOADED.test(st.title) && st.owner !== "unknown") {
+      fail.push(`a not-loaded state is owned by "${st.owner}" — the card claims whose turn it is `
+        + `before anything has told it: "${st.title}"`);
+    }
+  }
+  // and both of those branches must still EXIST as owned states at all
+  const notLoaded = states.filter((st) => NOT_LOADED.test(st.title));
+  if (notLoaded.length < 2) {
+    fail.push(`only ${notLoaded.length} of the 2 not-loaded states carry an owner — one of them is `
+      + `inheriting the stage's guess again`);
+  }
 }
 {
-  // The label must branch on the third kind BEFORE the two-way ternary, or `clock` renders as
-  // "Waiting on the client" again — the exact defect.
-  const line = (code.match(/^.*ownerYou\.textContent\s*=.*$/m) || [""])[0];
-  if (!line) {
-    console.error("⚠️  INDETERMINATE — cannot find the owner label assignment.");
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 RE-PINNED 2026-10-05 — this tested the SPELLING of a ternary
+  // (`onClock ? "On the calendar" : …`). A fourth kind arrived and the ternary was correctly
+  // replaced by a kind + a label MAP, which is strictly better — one expression decides the label
+  // and the class together, so they cannot drift. The gate read the improvement as a deletion.
+  //
+  // 🔑 THE PROPERTY IS: every kind resolves to a label, and no kind that belongs to nobody carries
+  // a label naming a party. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  const map = (code.match(/const YOU_LABEL\s*=\s*\{[\s\S]*?\n\s*\};/) || [""])[0];
+  if (!map) {
+    console.error("⚠️  INDETERMINATE — cannot find the left pill's label map.");
     process.exit(2);
   }
-  const iClock = line.search(/onClock|=== "clock"/);
-  const iYou = line.search(/youActive/);
-  if (iClock < 0) {
-    fail.push("the left-column label does not branch on the clock state — a booked-but-not-due call reads as 'Waiting on the client' again");
-  } else if (iYou >= 0 && iClock > iYou) {
-    fail.push("the clock state is tested AFTER youActive in the label — the two-way answer wins and the third kind never renders");
+  const labelFor = (kind) => {
+    const m = map.match(new RegExp(`${kind}:\\s*(?:data\\.admin\\.ownerLabel\\s*\\|\\|\\s*)?"([^"]*)"`));
+    return m ? m[1] : null;
+  };
+  for (const kind of ["settled", "unknown", "active", "waiting"]) {
+    if (labelFor(kind) === null) fail.push(`the pill's label map has no entry for "${kind}" — it would render undefined`);
   }
-  // 🔴 And whatever it says, it must not claim a person owes something.
-  const clockLabel = (line.match(/onClock\s*\?\s*"([^"]*)"/) || ["", ""])[1];
-  if (clockLabel && /your action|waiting on the client|client action/i.test(clockLabel)) {
-    fail.push(`the clock state's label still names a party: "${clockLabel}"`);
+  // 🔴 A kind that belongs to NOBODY must not name a party in its label.
+  for (const kind of ["settled", "unknown"]) {
+    const lab = labelFor(kind);
+    if (lab && /your action|waiting on the client|client action/i.test(lab)) {
+      fail.push(`the "${kind}" kind's label still names a party: "${lab}"`);
+    }
   }
-  if (iClock >= 0 && !clockLabel) {
-    fail.push("the clock branch does not resolve to a literal label this gate can read");
+  // 🔑 ONE EXPRESSION DECIDES BOTH the label and the class. Two separate ternaries is how a pill
+  // ends up reading "● Client action" while styled as the dimmed, inactive one.
+  if (!/const youKind\s*=/.test(code)) {
+    fail.push("the pill's kind is no longer decided in one place — label and class can drift apart");
+  }
+  if (!/ownerYou\.className\s*=\s*"admin-turn-owner "\s*\+\s*youKind/.test(code)) {
+    fail.push("the left pill's class is not derived from the same kind as its label");
+  }
+  if (!/ownerYou\.textContent\s*=\s*YOU_LABEL\[youKind\]/.test(code)) {
+    fail.push("the left pill's label is not derived from the same kind as its class");
+  }
+  // 🔴 And the kind itself must test the no-party kinds BEFORE the binary, or they never render.
+  const kindLine = (code.match(/^.*const youKind\s*=.*$/m) || [""])[0];
+  const iNoParty = Math.min(...["unknownTurn", "onClock"].map((t) => {
+    const i = kindLine.indexOf(t); return i < 0 ? Infinity : i;
+  }));
+  const iYou = kindLine.indexOf("youActive");
+  if (!Number.isFinite(iNoParty)) {
+    fail.push("the pill kind does not consider the clock/unknown states — they would render as somebody's turn");
+  } else if (iYou >= 0 && iNoParty > iYou) {
+    fail.push("the no-party kinds are tested AFTER youActive — the binary answer wins and they never render");
+  }
+  const css = (() => {
+    try { return fs.readFileSync(`${SITE}/admin/admin.css`, "utf8"); } catch { return ""; }
+  })();
+  for (const kind of ["settled", "unknown"]) {
+    if (css && !new RegExp(`\\.admin-turn-owner\\.${kind}\\s*\\{`).test(css)) {
+      fail.push(`\`.admin-turn-owner.${kind}\` is not defined — the pill would render unstyled`);
+    }
   }
 }
 // 🔴 The left column must stay DIMMED on the clock — marking it active would claim the operator has
@@ -135,21 +194,29 @@ if (/const youActive = turn === "clock"/.test(code)) {
     console.error("⚠️  INDETERMINATE — cannot find the left column's dim toggle.");
     process.exit(2);
   }
-  if (!/onClock/.test(line)) {
+  if (!/noParty|onClock/.test(line)) {
     fail.push("the left column is dimmed without excluding the clock state — a settled, booked fact "
       + "would render at opacity 0.55, so the date reads as disabled");
   }
   // And the pill must have its own kind, not borrow the grey "somebody else has it" one.
-  const pill = (code.match(/^.*ownerYou\.className\s*=.*$/m) || [""])[0];
-  if (!/onClock\s*\?\s*" settled"/.test(pill)) {
-    fail.push("the clock state does not get its own pill kind — it would wear the grey 'waiting on "
-      + "the other side' look for a fact that is settled");
+  // 🔑 ONE EXPRESSION DECIDES BOTH the label and the class. Two separate ternaries is how a pill
+  // ends up reading "● Client action" while styled as the dimmed, inactive one.
+  if (!/const youKind\s*=/.test(code)) {
+    fail.push("the pill's kind is no longer decided in one place — label and class can drift apart");
+  }
+  if (!/ownerYou\.className\s*=\s*"admin-turn-owner "\s*\+\s*youKind/.test(code)) {
+    fail.push("the left pill's class is not derived from the same kind as its label");
+  }
+  if (!/ownerYou\.textContent\s*=\s*YOU_LABEL\[youKind\]/.test(code)) {
+    fail.push("the left pill's label is not derived from the same kind as its class");
   }
   const css = (() => {
     try { return fs.readFileSync(`${SITE}/admin/admin.css`, "utf8"); } catch { return ""; }
   })();
-  if (css && !/\.admin-turn-owner\.settled\s*\{/.test(css)) {
-    fail.push("`.admin-turn-owner.settled` is not defined — the pill would render unstyled");
+  for (const kind of ["settled", "unknown"]) {
+    if (css && !new RegExp(`\\.admin-turn-owner\\.${kind}\\s*\\{`).test(css)) {
+      fail.push(`\`.admin-turn-owner.${kind}\` is not defined — the pill would render unstyled`);
+    }
   }
 }
 
