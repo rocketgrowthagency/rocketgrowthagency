@@ -91,6 +91,26 @@ try {
   if (!link) { console.log(`  ⚠️  no sign-in link: ${JSON.stringify(j).slice(0, 140)}`); process.exit(2); }
 } catch (e) { console.log(`  ⚠️  could not mint a sign-in link: ${e.message}`); process.exit(2); }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THIS GATE WAS FLAKY, AND A FLAKY GATE IS WORSE THAN A FAILING ONE (2026-10-05). Three runs
+// against an unchanged site returned exit 0, 1 and 2. It clicked a view and then slept a fixed
+// 900ms; when the re-render took longer, it surveyed a half-rendered list and reported counts that
+// were nothing to do with the product.
+//
+// 🔑 WAIT FOR THE RENDER, NOT FOR A NUMBER OF MILLISECONDS. Poll until the row count stops moving,
+// then survey. A gate whose red cannot be trusted is noise, and noise is exactly how a real red
+// signal gets ignored. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+const settle = async (page, { tries = 40, every = 150 } = {}) => {
+  let last = -1, stable = 0;
+  for (let i = 0; i < tries; i++) {
+    const n = await page.evaluate(() => document.querySelectorAll(".ob-step").length);
+    if (n === last && n > 0) { if (++stable >= 3) return n; } else { stable = 0; last = n; }
+    await new Promise((r) => setTimeout(r, every));
+  }
+  return last;
+};
+
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 let fails = 0;
 const bad = (m) => { console.log(`  🔴 ${m}`); fails++; };
@@ -99,10 +119,40 @@ try {
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 140)));
 
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴🔴 AN UNCAUGHT NAVIGATION TIMEOUT EXITED 1, WHICH MEANS "THE PRODUCT IS BROKEN" (2026-10-05).
+  // Roughly one run in five, `page.goto` threw `TimeoutError: Navigation timeout of 60000 ms
+  // exceeded`; Node exits 1 on an uncaught throw, so the sweep recorded a rendering defect on a
+  // healthy site, with no finding printed — I grepped the output for 🔴 and found nothing.
+  //
+  // 🔑 COULD-NOT-TELL IS EXIT 2, NEVER 1. A red that is sometimes false teaches the reader to
+  // ignore the ones that are true, which is the only thing worse than no gate at all.
+  // 🔑 `networkidle2` is also the wrong condition for an admin that polls: it may never go idle.
+  // Load the DOM, then wait for the rows — which `settle` already does, and which is the thing this
+  // gate actually needs. → feedback_a_gate_that_throws_is_not_a_gate_that_fails
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  const nav = async (url, what) => {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    } catch (e) {
+      console.log(`  ⚠️  could not load ${what}: ${e.message.split("\n")[0]} — NOT reporting healthy.`);
+      await browser.close().catch(() => {});
+      process.exit(2);
+    }
+  };
+  await nav(link, "the sign-in link");
   await new Promise((r) => setTimeout(r, 6000));
-  await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`, { waitUntil: "networkidle2", timeout: 60000 });
-  await new Promise((r) => setTimeout(r, 14000));
+  await nav(`${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`, "the admin onboarding tab");
+  // 🔴 A FIXED 14s WAS THE REST OF THE FLAKINESS. The checklist loads its playbook and the client's
+  // flow state after the page settles, and on a slow run 14s was not enough: the host existed, was
+  // empty, and the gate reported "the page did not finish loading" — an exit 2 on an unchanged,
+  // healthy site, roughly one run in three. Wait for the rows, with a generous ceiling.
+  // → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+  if (!(await settle(page, { tries: 200, every: 150 }))) {
+    console.log("  ⚠️  the checklist never rendered a row within 30s — NOT reporting healthy.");
+    await browser.close();
+    process.exit(2);
+  }
 
   // 🔑 OPEN EVERY PHASE BEFORE COUNTING. Nine of ten are collapsed by design, and their rows are
   // `hidden`, not absent — counting without opening them would report 6 of 61 and call the feature
@@ -202,7 +252,7 @@ try {
   for (const v of ["you", "client", "auto"]) {
     if (!all.views.includes(v)) { bad(`the view switch offers no "${v}" view.`); continue; }
     await page.evaluate((k) => document.querySelector(`.ob-views [data-ob-view="${k}"]`).click(), v);
-    await new Promise((r) => setTimeout(r, 900));
+    await settle(page);
     await openAll();
     const s = await survey();
     const own = s.kinds[KINDCLS[v]] || 0;
@@ -221,7 +271,7 @@ try {
   }
 
   await page.evaluate(() => document.querySelector('.ob-views [data-ob-view="all"]').click());
-  await new Promise((r) => setTimeout(r, 900));
+  await settle(page);
   await openAll();
   const back = await survey();
   if (back.rows !== EXPECT.total) {
