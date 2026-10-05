@@ -113,6 +113,68 @@ const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ")
   }
 }
 
+// ── 2c · FIT BINDS THE FINAL PLAN, NOT JUST THE SHORTLIST ───────────────────────────────────────
+// 🔴 Measured 2026-10-05: with the shortlist correctly filtered, the model STILL returned "internet
+// marketing service" — it is told it may choose "close variants" and reached outside the list. A
+// filter on what it sees is not a rule about what it picks.
+{
+  const loop = (code.match(/for \(const d2 of demand\)[\s\S]*?\n        \}/) || [""])[0];
+  if (!loop) {
+    console.error("⚠️  INDETERMINATE — cannot find the swap loop; re-pin this gate.");
+    process.exit(2);
+  }
+  if (!/svcFits\s*\(/.test(loop)) {
+    fail.push("the swap loop does not check service fit — a term the model invented outside the "
+      + "shortlist stays in the locked plan");
+  }
+  if (!/swaps\.push\([^)]*not one of this business/.test(loop)) {
+    fail.push("a term dropped for not fitting the business is not disclosed as a swap — the plan "
+      + "would change with no reason given");
+  }
+}
+
+// ── 2d · A CARRIED-OVER REASON MUST NOT DESCRIBE A SWAP THAT DID NOT HAPPEN ─────────────────────
+// 🔴 "internet marketing service" carried *"Chosen to replace 'seo services near me'"* while this
+// run's swaps list was EMPTY — reasoning preserved from an earlier run, read as a statement about
+// the run on screen.
+if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
+  fail.push("a carried-over `why` is reused without checking it is still true of THIS run — a "
+    + "keyword can claim it replaced something that was never replaced");
+}
+
+// ── 2e · THE GEO NOTE'S CLAIMS ARE MEASURED, NOT ASSERTED ───────────────────────────────────────
+// 🔴🔴 It told Chris *"No keyword name a place … Say so on the kickoff call"* while the plan held
+// "la seo company". A note that instructs someone to repeat it to a CLIENT must be true of this run.
+{
+  const blk = (code.match(/if \(!national && terms\.length\)[\s\S]*?\n    \}/) || [""])[0];
+  if (!blk) {
+    console.error("⚠️  INDETERMINATE — cannot find the geo-shortfall block; re-pin this gate.");
+    process.exit(2);
+  }
+  if (!/townIdeas/.test(blk) || !/ideas\.filter/.test(blk)) {
+    fail.push("the geo note does not measure what the town-name candidates actually returned — it "
+      + "would assert there is no city demand without looking");
+  }
+  // 🔴 The old wording was built by concatenating "No keyword" with "name", which is ungrammatical
+  // AND absolute. The count must be reported as a number out of the total.
+  if (/No keyword["'`]/.test(blk)) {
+    fail.push("the geo note still uses the absolute 'No keyword' phrasing — it was both "
+      + "ungrammatical and a claim the place test cannot support");
+  }
+  if (!/withPlace/.test(blk) || !/terms\.length/.test(blk)) {
+    fail.push("the geo note does not report how many of how many keywords name a place");
+  }
+  // 🔑 The places it tests against must be the VERIFIED ones, and short enough to catch an
+  // abbreviation the ladder supplies.
+  if (!/geoLadder/.test(blk)) {
+    fail.push("the geo note does not test against the resolved ladder's place names");
+  }
+  if (/length > 3/.test(blk)) {
+    fail.push("the geo note still filters place words to 4+ characters — a two-letter metro "
+      + "abbreviation could never be recognised");
+  }
+}
+
 // ── 3 · THE RULE ITSELF, OVER SEVERAL TRADES ────────────────────────────────────────────────────
 const lift = (name) => {
   const m = src.match(new RegExp("^function " + name + "\\s*\\(", "m"));
