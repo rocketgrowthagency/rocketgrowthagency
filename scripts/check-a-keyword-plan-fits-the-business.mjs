@@ -209,8 +209,12 @@ try {
 }
 
 const CASES = [
-  { name: "local SEO agency",
-    client: { primary_service: "seo company", secondary_services: ["Google Business Profile Optimization", "Google Maps Local SEO", "Website Support for Local SEO"] },
+  // 🔴 THE REAL RGA ROW: its GBP `business_type` is literally "Internet marketing service", which is
+  // why that keyword survived two rounds of fixes. A declared service list must not be widened by a
+  // Google category. This case is the regression test for exactly that.
+  { name: "local SEO agency (GBP category is an umbrella)",
+    client: { primary_service: "seo company", business_type: "Internet marketing service",
+      secondary_services: ["Google Business Profile Optimization", "Google Maps Local SEO", "Website Support for Local SEO"] },
     keep: ["seo company near me", "local seo los angeles", "google maps seo", "seo near me"],
     drop: ["marketing agency near me", "digital marketing services", "internet marketing service", "content marketers"] },
   { name: "plumber",
@@ -230,6 +234,11 @@ const CASES = [
     client: { primary_service: "appliance repair", secondary_services: ["Refrigerator Repair", "Washer Repair"] },
     keep: ["refrigerator repair near me", "appliance repair los angeles", "washer repair"],
     drop: ["plumber near me"] },
+  // 🔑 No service list → the GBP category is the only evidence there is, and it must count.
+  { name: "plumber with only a GBP category",
+    client: { primary_service: "", business_type: "Plumber", secondary_services: [] },
+    keep: ["emergency plumber near me", "plumbing company"],
+    drop: ["dentist near me", "roof repair"] },
   // 🔴 Nothing on file: the filter must NOT pretend to judge.
   { name: "no services on file",
     client: { primary_service: "", secondary_services: [] },
