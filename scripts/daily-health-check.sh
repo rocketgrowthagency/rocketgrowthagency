@@ -310,6 +310,7 @@ run check-a-failed-scan-is-not-no-scan.mjs "a failed scan says it failed, never 
 run check-a-callout-has-a-kind.mjs "the step's reference fold has one scale and named callout kinds"
 run check-an-arrow-points-where-it-goes.mjs "an arrow points the way the content actually moves"
 run check-a-local-plan-has-local-terms.mjs "a local client gets geo-modified keywords and in-market locations"
+run check-a-keyword-plan-fits-the-business.mjs "the pool comes from the client record and a candidate must be their business"
 run check-the-grid-says-what-it-centred-on.mjs "the rank grid can run, and says what it centred on"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-a-places-call-is-not-spent-twice.mjs "an Autofill press reuses a cached Places lookup instead of buying another"
