@@ -305,6 +305,7 @@ run check-a-step-number-has-one-home.mjs "every surface naming a step number agr
 run check-the-next-action-performs-the-decision.mjs "the next-action card performs the decision it names"
 run check-a-plain-text-output-is-designed.mjs "a plain-text step output keeps the structure its indentation carries"
 run check-a-loose-list-keeps-its-numbers.mjs "a loose list stays one list and keeps its numbers"
+run check-a-rebuilt-draft-keeps-its-fences.mjs "a rebuilt draft keeps the fence its card is built from"
 run check-a-failed-scan-is-not-no-scan.mjs "a failed scan says it failed, never "no scan yet""
 run check-a-callout-has-a-kind.mjs "the step's reference fold has one scale and named callout kinds"
 run check-an-arrow-points-where-it-goes.mjs "an arrow points the way the content actually moves"
