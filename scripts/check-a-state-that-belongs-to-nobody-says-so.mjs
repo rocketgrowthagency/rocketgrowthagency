@@ -120,7 +120,37 @@ if (!/const onClock = turn === "clock"/.test(code)) {
   fail.push("`onClock` is gone — the renderer cannot distinguish the third kind");
 }
 if (/const youActive = turn === "clock"/.test(code)) {
-  fail.push("the clock state is being treated as the operator's turn — it must stay dimmed");
+  fail.push("the clock state is being treated as the operator's turn");
+}
+
+// ── 4 · SETTLED IS NOT IDLE — THE COLUMN MUST STAY LEGIBLE ──────────────────────────────────────
+// 🔴 The first version of this fix reused `is-waiting` for the clock. That class is opacity:0.55 on
+// the WHOLE column, so the booked date — the single most useful thing on the card — rendered grey
+// above a button that looked switched off. Chris sent back a screenshot of a card that appeared
+// disabled. Dimming means "somebody else is holding this up", NOT "there is nothing to click".
+// → feedback_a_booked_call_is_waiting_on_the_clock_not_on_a_person
+{
+  const line = (code.match(/^.*colYou\.classList\.toggle\("is-waiting".*$/m) || [""])[0];
+  if (!line) {
+    console.error("⚠️  INDETERMINATE — cannot find the left column's dim toggle.");
+    process.exit(2);
+  }
+  if (!/onClock/.test(line)) {
+    fail.push("the left column is dimmed without excluding the clock state — a settled, booked fact "
+      + "would render at opacity 0.55, so the date reads as disabled");
+  }
+  // And the pill must have its own kind, not borrow the grey "somebody else has it" one.
+  const pill = (code.match(/^.*ownerYou\.className\s*=.*$/m) || [""])[0];
+  if (!/onClock\s*\?\s*" settled"/.test(pill)) {
+    fail.push("the clock state does not get its own pill kind — it would wear the grey 'waiting on "
+      + "the other side' look for a fact that is settled");
+  }
+  const css = (() => {
+    try { return fs.readFileSync(`${SITE}/admin/admin.css`, "utf8"); } catch { return ""; }
+  })();
+  if (css && !/\.admin-turn-owner\.settled\s*\{/.test(css)) {
+    fail.push("`.admin-turn-owner.settled` is not defined — the pill would render unstyled");
+  }
 }
 
 if (fail.length) {
