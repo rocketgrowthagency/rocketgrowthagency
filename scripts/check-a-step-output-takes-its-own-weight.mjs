@@ -125,14 +125,42 @@ if (/class="ob-result-body"/.test(code)) {
     + "whatever its size.");
 } else pass.push("the one-box renderer is gone");
 
-// 🔴 A document's fold must NAME ITS REAL LENGTH, read from the text.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 RE-PINNED 2026-10-05 — THIS GATE DEFENDED A DECISION CHRIS HAD REVERSED.
+//
+// It required `${n}` in the fold: the CHARACTER COUNT. Chris removed that deliberately on 10-02
+// ("produced: 2,525 characters do we need character count? i feel we dont?") — and the footer's
+// version was WORSE than useless, because it was FALSE while expanded: "Showing the start of 2,525
+// characters" sat beside a "Show less" control, describing a view the reader was no longer in.
+//
+// 🔑 THE PERMANENT PROPERTY IS NOT A NUMBER. It is: a partial view must SAY it is partial, must
+// offer the way to the whole, and must STOP saying it the moment it is not partial any more. The
+// current fold does all three with words and a CSS rule, which is strictly better than a count.
+// → project_step_26_card_locked (deliberately REMOVED) · feedback_a_gate_written_for_a_temporary_state_outlives_it
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
 {
   const i = code.indexOf('class="ob-out-f"');
-  const f = i < 0 ? "" : code.slice(i, i + 260);
-  if (!f || !/\$\{n\}/.test(f)) {
-    fail.push("admin/admin.js — the document fold does not state the output's real length, so a "
-      + "preview is indistinguishable from the whole thing.");
-  } else pass.push("the fold names the real length, derived from the text");
+  const f = i < 0 ? "" : code.slice(i, i + 400);
+  if (!f) {
+    fail.push("admin/admin.js — the document fold is gone, so a preview is indistinguishable from the whole thing.");
+  } else {
+    // 1 · it says the view is partial
+    const saysPartial = /ob-out-cut/.test(f) && /showing the start|preview|first part/i.test(f);
+    // 2 · it offers the way to the whole
+    const offersFull = /data-out-full/.test(f);
+    // 3 · and the partial claim is suppressed once expanded — the half the count got WRONG
+    let suppressed = false;
+    try {
+      const css = fs.readFileSync(`${SITE}/admin/admin.css`, "utf8");
+      suppressed = /\.is-full\s+\.ob-out-cut\s*\{[^}]*display\s*:\s*none/.test(css);
+    } catch { /* leave false */ }
+    if (!saysPartial) fail.push("admin/admin.js — the document fold does not say the view is partial, so a preview is indistinguishable from the whole thing.");
+    if (!offersFull) fail.push("admin/admin.js — the document fold offers no way to the full output.");
+    if (!suppressed) fail.push("admin/admin.css — the 'showing the start' notice is not hidden when the output is expanded, so it keeps describing a view the reader has left.");
+    if (saysPartial && offersFull && suppressed) {
+      pass.push("the fold says the view is partial, offers the whole, and stops saying it once expanded");
+    }
+  }
 }
 
 // ── 3 · nothing may scroll sideways, and the styles exist ──────────────────────────────────────

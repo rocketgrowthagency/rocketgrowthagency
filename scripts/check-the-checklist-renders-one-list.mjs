@@ -47,9 +47,25 @@ catch (e) { console.log(`  ⚠️  playbooks.json unreadable: ${e.message}`); pr
 
 // 🔑 The EXPECTED numbers come from the SOP, never from a constant here. A gate that restates the
 // count it is checking goes green on the day both are wrong together. → feedback_no_hardcoded_stats
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 UPDATED 2026-10-05 — THERE IS A FOURTH PILL, AND THE PRODUCT IS RIGHT ABOUT IT.
+// `actor: "both"` ("RGA does the work; the client confirms it in their portal") renders its own pill,
+// **You + client** (class `bo`), and `inView` deliberately puts such a step in BOTH the "you" and the
+// "client" view — it needs both of them. This gate still had three kinds, so it read 10 correct rows
+// as "the page shows 6 client rows, the SOP has 16" and as "foreign pills" in every view.
+// 🔑 A GATE THAT KNOWS FEWER KINDS THAN THE PRODUCT ACCUSES CORRECT CODE.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
 const clientFacing = (s) => !s.ongoing && (s.clientBucket === "supply" || s.clientBucket === "act") && !!s.clientLabel;
-const EXPECT = { total: m1.length, client: 0, auto: 0, you: 0 };
-m1.forEach((s) => { EXPECT[clientFacing(s) ? "client" : s.type === "auto" ? "auto" : "you"]++; });
+const kindOf = (s) => (clientFacing(s) ? (s.actor === "both" ? "both" : "client") : s.type === "auto" ? "auto" : "you");
+const EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
+m1.forEach((s) => { EXPECT[kindOf(s)]++; });
+// A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.
+const EXPECT_VIEW = {
+  you: EXPECT.you + EXPECT.both,
+  client: EXPECT.client + EXPECT.both,
+  auto: EXPECT.auto,
+};
 
 let puppeteer;
 try { ({ default: puppeteer } = await import("puppeteer")); }
@@ -154,13 +170,16 @@ try {
       + "must say whose move it is, exactly once — two pills stating one fact 61 times is what this replaced.");
   } else console.log("  ✅ every row wears exactly one kind pill");
 
-  for (const [k, cls] of [["you", "you"], ["client", "cl"], ["auto", "fl"]]) {
+  for (const [k, cls] of [["you", "you"], ["client", "cl"], ["auto", "fl"], ["both", "bo"]]) {
     if ((all.kinds[cls] || 0) !== EXPECT[k]) {
       bad(`the page shows ${all.kinds[cls] || 0} "${k}" rows; the SOP has ${EXPECT[k]}. The pill and `
         + "the data disagree about who owns the work.");
     }
   }
-  if (!fails) console.log(`  ✅ the pills match the SOP — ${EXPECT.you} you · ${EXPECT.client} client · ${EXPECT.auto} runs itself`);
+  if (!fails) {
+    console.log(`  ✅ the pills match the SOP — ${EXPECT.you} you · ${EXPECT.client} client · `
+      + `${EXPECT.both} you + client · ${EXPECT.auto} runs itself`);
+  }
 
   // ── 3 · the client's rows carry the override the deleted card held ──────────────────────────
   //    Done rows do not: ↩ Undo already reopens them by the same write.
@@ -177,7 +196,9 @@ try {
   } else console.log(`  ✅ the head's "${all.headDone} of ${all.headTotal} done" counts the rows on screen`);
 
   // ── 5 · the switch filters, and every view comes back ────────────────────────────────────────
+  // 🔑 `bo` is NOT foreign in the "you" or the "client" view — it is the kind that belongs to both.
   const KINDCLS = { you: "you", client: "cl", auto: "fl" };
+  const ALLOWED = { you: ["you", "bo"], client: ["cl", "bo"], auto: ["fl"] };
   for (const v of ["you", "client", "auto"]) {
     if (!all.views.includes(v)) { bad(`the view switch offers no "${v}" view.`); continue; }
     await page.evaluate((k) => document.querySelector(`.ob-views [data-ob-view="${k}"]`).click(), v);
@@ -185,11 +206,11 @@ try {
     await openAll();
     const s = await survey();
     const own = s.kinds[KINDCLS[v]] || 0;
-    const foreign = Object.entries(s.kinds).filter(([c]) => c !== KINDCLS[v]).reduce((a, [, n]) => a + n, 0);
-    if (s.rows !== EXPECT[v] || foreign) {
-      bad(`the "${v}" view shows ${s.rows} rows (${foreign} of them wearing another pill); it should `
-        + `show exactly the ${EXPECT[v]} rows that wear its own. The switch and the pill are supposed `
-        + "to be one function.");
+    const foreign = Object.entries(s.kinds).filter(([c]) => !ALLOWED[v].includes(c)).reduce((a, [, n]) => a + n, 0);
+    if (s.rows !== EXPECT_VIEW[v] || foreign) {
+      bad(`the "${v}" view shows ${s.rows} rows (${foreign} of them wearing a pill that does not belong `
+        + `in this view); it should show exactly the ${EXPECT_VIEW[v]} rows that wear its own pill or `
+        + `"You + client". The switch and the pill are supposed to be one function.`);
     } else if (s.headTotal !== s.rows || s.headDone !== s.doneRows) {
       bad(`the "${v}" view's head says "${s.headDone} of ${s.headTotal} done" over ${s.doneRows} of `
         + `${s.rows} rows — the counts still describe the unfiltered list.`);

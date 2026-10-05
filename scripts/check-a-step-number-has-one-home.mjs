@@ -78,7 +78,12 @@ try {
   vm.runInContext(
     block(/const OB_PHASES = \[/, "OB_PHASES") + "\n" +
     src.split("\n").filter((l) => /^const obGroupOf =/.test(l)).join("\n") + "\n" +
-    ["obBuckets", "obRespectDeps", "obPageOrdered", "obPageNumbers"].map(pick).join("\n\n"),
+    // 🔴 `obPhaseIndexOf` ADDED 2026-10-05 — `obBuckets` began calling it, and this lift did not
+    // bring it. The gate then THREW at CALL time, which the try/catch around the eval cannot
+    // see, so it crashed with a stack trace instead of reporting anything. A lifted function is
+    // a claim that its whole DEPENDENCY SET came too.
+    // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+    ["obDependsOn", "obPhaseIndexOf", "obBuckets", "obRespectDeps", "obPageOrdered", "obPageNumbers"].map(pick).join("\n\n"),
     ctx,
   );
 } catch (e) { console.error("⛔ cannot evaluate the numbering functions: " + e.message); process.exit(2); }
@@ -194,6 +199,50 @@ for (const f of files) {
       }
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE TWO MECHANISMS ARE REDUNDANT ON THE REAL SOP, SO THE PAGE ORDER ALONE CANNOT TEST EITHER.
+// Measured 2026-10-05: breaking the phase promotion OR the within-phase sort, one at a time, left
+// the rendered order correct — only breaking the shared `obDependsOn` reader failed. A gate that
+// only catches the combined failure lets half the fix regress silently.
+// 🔑 So each mechanism is also exercised DIRECTLY, on a shape built to need exactly that one.
+// → feedback_a_gate_that_cannot_fail
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const phaseIndexOf = vm.runInContext("obPhaseIndexOf", ctx);
+  const respectDeps = vm.runInContext("obRespectDeps", ctx);
+
+  // Two steps in DIFFERENT phases, the earlier one depending on the later: only promotion can fix it.
+  const groups = m1.map((x) => x.id);
+  const early = groups.find((id) => /^m1\.(audit|strategy)\./.test(id)) || groups[0];
+  const late = [...groups].reverse().find((id) => id !== early);
+  const promo = [
+    { obj: { flowId: early, sopType: "auto" }, dependsOn: [late] },
+    { obj: { flowId: late, sopType: "auto" }, dependsOn: [] },
+  ];
+  const idx = phaseIndexOf(promo);
+  if (!Array.isArray(idx) || idx.length !== 2) {
+    fail.push("obPhaseIndexOf did not return a phase per step");
+  } else if (idx[0] < idx[1]) {
+    fail.push(`obPhaseIndexOf no longer promotes a step to its dependency's phase (${early} landed in `
+      + `phase ${idx[0]}, but it needs ${late} in phase ${idx[1]}) — a step would render before the `
+      + `thing it needs`);
+  }
+
+  // Two steps in the SAME bucket, the first depending on the second: only the within-phase sort fixes it.
+  const a = groups[0], b = groups[1];
+  const sameBucket = [
+    { obj: { flowId: a, sopType: "auto" }, dependsOn: [b] },
+    { obj: { flowId: b, sopType: "auto" }, dependsOn: [] },
+  ];
+  const ordered = respectDeps(sameBucket, [0, 1]);
+  if (!Array.isArray(ordered) || ordered.length !== 2) {
+    fail.push("obRespectDeps did not return the indices it was given");
+  } else if (ordered[0] !== 1) {
+    fail.push(`obRespectDeps no longer reorders within a phase (${a} still renders before ${b}, which `
+      + `it depends on)`);
+  }
 }
 
 if (fail.length) {

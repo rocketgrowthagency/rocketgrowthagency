@@ -161,7 +161,31 @@ if (!/const clientOverride = \(o, task[,)]/.test(code)) {
   // 🔑 A row's markup begins at `class="ob-step <state>"` and ends at the backtick that closes the
   // returned template. Both are real edges in the source.
   // → feedback_a_gate_window_measured_in_characters_will_lie
+  // 🔴🔴 AND THE EDGE STILL STARTED TOO LATE (2026-10-05). Slicing from `class="ob-step queued"`
+  // reads only the TEMPLATE. The queued branch builds its controls one line ABOVE that string —
+  // `const qActions = \`${qRerun}${clientOverride(o, s.task)}\`` — so the override was present and
+  // this gate reported it missing. It accused correct code.
+  //
+  // 🔑 THE BRANCH IS THE UNIT, NOT THE MARKUP. Start at the `if (s.uiState === "<state>")` that owns
+  // the row and brace-match to its close; everything the branch assembles is then inside the window.
+  // A state with no such `if` (the active one is reached differently) falls back to the markup edge.
+  // → feedback_a_gate_window_measured_in_characters_will_lie · feedback_a_gate_must_pin_the_property_not_the_spelling
+  const braceBlockAt = (from) => {
+    const open = code.indexOf("{", from);
+    if (open < 0) return null;
+    let d = 0;
+    for (let i = open; i < code.length; i++) {
+      if (code[i] === "{") d++;
+      else if (code[i] === "}") { d--; if (!d) return code.slice(from, i + 1); }
+    }
+    return null;
+  };
   const branchOf = (stateCls) => {
+    const ifAt = code.indexOf(`if (s.uiState === "${stateCls}")`);
+    if (ifAt >= 0) {
+      const blk = braceBlockAt(ifAt);
+      if (blk) return blk;
+    }
     const a = code.indexOf(`class="ob-step ${stateCls}"`);
     if (a < 0) return null;
     const b = code.indexOf("`;", a);

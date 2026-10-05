@@ -34,8 +34,18 @@ const fail = [];
 
 // ═══ PART 1 — ONE ENTRY POINT ════════════════════════════════════════════════════════════════
 // 🔴 A card must not get the designed view at one length and the flat wall at another.
-const sites = (src.match(/\$\{stepBodyHtml\(t\)\}/g) || []).length;
+// 🔴 RE-PINNED 2026-10-05 — this counted the literal `${stepBodyHtml(t)}`. The argument was later
+// wrapped (`stepBodyHtml(stripMeasurementProse(t))`), which is the same entry point doing MORE, and
+// the gate read a correct change as both call sites disappearing.
+// 🔑 The property is ONE ENTRY POINT USED BY BOTH WEIGHTS — not the shape of its argument.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+const sites = (src.match(/\$\{stepBodyHtml\(/g) || []).length;
 if (sites !== 2) fail.push(`${sites} of the 2 output weights render through stepBodyHtml — the note and document weights must agree`);
+// And both weights must be the ones we think: the note body and the document body.
+for (const cls of ["ob-out-body", "ob-out-b"]) {
+  const re = new RegExp(`class="${cls}">\\$\\{stepBodyHtml\\(`);
+  if (!re.test(src)) fail.push(`the \`.${cls}\` weight no longer renders through stepBodyHtml`);
+}
 if (/\$\{outShapes\(renderStepMarkdown\(t\)\)\}/.test(src)) fail.push("an output weight still calls outShapes(renderStepMarkdown(t)) directly, bypassing the designed view");
 
 // ═══ PART 2 — THE BEHAVIOUR, running the real functions ══════════════════════════════════════

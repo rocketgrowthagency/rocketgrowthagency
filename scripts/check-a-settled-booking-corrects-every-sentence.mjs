@@ -89,6 +89,11 @@ function run(status) {
     // 🔑 The corrector now also refreshes the next-step headline, because the card and the headline
     // are driven by one booking fact. Stubbed so this gate tests the CARD, not the page around it.
     refreshNextStepCards: () => {},
+    // 🔑 Added 2026-10-05, when markKickoffWaitingOnRga began rebuilding the dashboard's
+    // next-step banner from the holds ledger. It is a no-op here: this gate is about the
+    // SENTENCES on the step card, and the banner has its own gate
+    // (check-the-next-step-card-matches-its-mockup).
+    refreshKickoffNextStepBanner: () => {},
     // 🔑 The picker's "way out" (2026-10-01) — the set of clients mid-pick, so a reopened picker can
     // be closed without changing the time. Empty on purpose: this gate is about a SETTLED booking.
     _kickoffPicking: new Set(),

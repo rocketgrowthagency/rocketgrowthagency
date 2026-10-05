@@ -96,6 +96,12 @@ vm.runInContext(
     slice("const obGroupOf =", ";", "obGroupOf"),
     slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
     slice("function obPhaseBody(", "\n}", "obPhaseBody"),
+    // 🔴 AND IT HAPPENED AGAIN, 2026-10-05, with `obPhaseIndexOf` — `obBuckets` began calling it
+    // and this list did not grow. Same crash, same cause, three days apart. The comment below
+    // was not enough; what would actually stop it is the lift reporting a MISSING NAME as
+    // exit 2 instead of letting the call throw. → feedback_a_gate_that_throws_is_not_a_gate_that_fails
+    slice("function obDependsOn(", "\n}", "obDependsOn"),
+    slice("function obPhaseIndexOf(", "\n}", "obPhaseIndexOf"),
     slice("function obBuckets(", "\n}", "obBuckets"),
     // 🔴 `obPageOrdered` CALLS `obRespectDeps`, added 2026-10-02 when page order became a stable
     // topological sort. Lifting the caller without its callee made this gate THROW
