@@ -60,6 +60,37 @@ for (const rel of FILES) {
       bad(`${rel}:${line} — \`${m[0].trim().slice(0, 52)}\` puts a var() with no fallback in the \`font\` shorthand; if it fails to resolve the whole declaration goes.`);
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴🔴 THE GENERAL CASE, ADDED 2026-10-05 — AND THIS GATE WAS GREEN WHILE TEN OF THEM SHIPPED.
+  //
+  // `var(--x)` with NO FALLBACK, where `--x` is never defined, makes the whole declaration invalid
+  // and it is DROPPED SILENTLY: no error, no warning, the rule simply does not apply. Found in
+  // `admin.css`: `--admin-dim`, `--admin-line`, `--admin-text` — 10 uses, 0 definitions — so a row
+  // of Docs-tab borders and Playbook text colours were never actually being set.
+  //
+  // 🔑 IT HAD ALREADY BITTEN ONCE. `--admin-brand-bg` was in exactly this state, which is why every
+  // "Running…" banner lost its icon tile while success, error and warning kept theirs. Chris found
+  // that by eye; nothing in the build could have.
+  //
+  // 🔑 A FALLBACK IS ALWAYS ACCEPTABLE. This does not demand the variable exist — only that the
+  // declaration survives if it does not. → feedback_an_invalid_css_declaration_is_dropped_silently
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  {
+    const defined = new Set();
+    for (const d of code.matchAll(/(--[a-z0-9-]+)\s*:/g)) defined.add(d[1]);
+    const seen = new Set();
+    for (const u of code.matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)) {   // no comma = no fallback
+      const name = u[1];
+      if (defined.has(name) || seen.has(name)) continue;
+      seen.add(name);
+      const line = code.slice(0, u.index).split("\n").length;
+      const uses = (code.match(new RegExp(`var\\(\\s*${name}\\s*\\)`, "g")) || []).length;
+      bad(`${rel}:${line} — \`var(${name})\` has no fallback and \`${name}\` is never defined `
+        + `(${uses} use${uses === 1 ? "" : "s"}). Every one of those declarations is invalid and is `
+        + `dropped silently — the rule simply does not apply.`);
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
