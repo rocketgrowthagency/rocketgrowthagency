@@ -44,11 +44,33 @@ if (!/const booked/.test(branch)) {
   process.exit(2);
 }
 
-// 1 ─ 🔴 A CONFIRMED CALL MUST BE ITS OWN STATE. This is the whole defect: `event_id` existing has
+// 1 ─ 🔴 A CONFIRMED CALL MUST BE ITS OWN STATE. This is the whole defect: a confirmed booking has
 //     to be handled BEFORE the fallback, or it drops into the reassurance copy.
-if (!/event_id/.test(branch)) {
-  fail.push("the branch never reads event_id — a confirmed call cannot be distinguished from no call at all, "
-    + "so a booked kickoff falls through to \"Your foundation is being built\"");
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 RE-PINNED 2026-10-05 — THIS WENT RED ON A CORRECT CHANGE. It tested for the literal string
+// `event_id` inside this branch. The branch was tightened so the kickoff state is resolved by
+// `kickoffFacts`, which reads the holds LEDGER first and the `event_id` stamp only as a fallback —
+// strictly more correct, because the stamp is a best-effort write that is allowed to fail. The
+// `event_id` read moved one function along and the gate called it a deletion.
+//
+// 🔑 THE PROPERTY IS "A CONFIRMED CALL IS DISTINGUISHABLE FROM NO CALL", not the name of the column
+// it is distinguished by. Accept either: the branch reads the stamp itself, OR it resolves a booked
+// instant through the facts resolver.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_gate_written_for_a_temporary_state_outlives_it
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const readsStamp = /event_id/.test(branch);
+  const resolvesBooked = /kickoffFacts\s*\(/.test(branch) && /\bbookedIso\b/.test(branch);
+  if (!readsStamp && !resolvesBooked) {
+    fail.push("the branch cannot tell a confirmed call from no call at all — it neither reads the "
+      + "event_id stamp nor resolves a booked instant through kickoffFacts, so a booked kickoff "
+      + "falls through to \"Your foundation is being built\"");
+  }
+  // 🔴 And wherever it is resolved, a BOOKED instant must actually reach kickoffPhase — a resolver
+  // that is called and whose answer is never used is the defect this gate exists for.
+  if (resolvesBooked && !/bookedIso:\s*facts\.bookedIso/.test(branch)) {
+    fail.push("kickoffFacts is called but its booked instant is never passed to kickoffPhase");
+  }
 }
 {
   // 🔴 `if \(booked\)` was a SPELLING. The branch was correctly tightened to `if (booked && !callOver)`
