@@ -288,9 +288,26 @@ globalThis.C = coreOf;`, ctx);
     "the seed tells the model it may rewrite the plan — that is the behaviour this fix exists to stop, "
     + "and it would silently replace this month's targets on every press of Run");
   // 🔑 UNIVERSAL: a client with nothing locked must still draft freely.
-  ok(/catch \(_\)/.test(note) || /if \(locked &&/.test(note),
-    "a client with no locked plan is not handled — the first run for every new client would break or "
-    + "be seeded with nothing");
+  // 🔴 THE WINDOW HAS TO CONTAIN THE GUARD. This was anchored on the seed ASSIGNMENT, so the `if
+  // (locked && …)` above it was outside the window and the test only passed because of a `catch (_)`
+  // alternative — which was then correctly removed when that silent catch turned out to be a bug.
+  // The assertion failed on a correct change, for the second time in this file, for the same reason.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  const bi = flow.indexOf("let lockedNote");
+  const block = bi >= 0 ? flow.slice(bi, bi + 2000) : "";
+  ok(/if \(locked &&/.test(block),
+    "the seed is built without checking that a locked plan exists — a brand-new client, who has "
+    + "nothing to keep, would be handed an empty lock to preserve");
+  // 🔴 AN ASSIGNMENT INSIDE THE CATCH, not a mention. `lockedReadError` is also DECLARED in this
+  // window, so a bare search for the name passed a mutation that replaced the recording line with a
+  // comment. → feedback_a_literal_grep_misses_computed_writes
+  ok(/catch\s*\([a-z_]+\)\s*\{[\s\S]{0,600}?lockedReadError\s*=/.test(block),
+    "a failed read of the locked plan is swallowed — and drafting from a blank page is exactly the "
+    + "failure this block exists to prevent, so it must be recorded");
+  ok(/lockedReadError\)\s*\{[\s\S]{0,400}?lines\.push\(/.test(flow)
+     || /if \(lockedReadError\)/.test(flow),
+    "a failed read is recorded and never said on the card — the operator would act on a plan that may "
+    + "have silently replaced the terms they had settled on");
 }
 
 if (fail.length) {
