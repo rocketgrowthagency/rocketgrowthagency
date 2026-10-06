@@ -114,8 +114,19 @@ if (!/function readLockedPlan\(/.test(flow)) fail.push("readLockedPlan is gone �
 // The property is that the grid step reads the locked plan and scans it.
 // → feedback_a_gate_must_pin_the_property_not_the_spelling
 {
+  // 🔴 BRACE-MATCH, NEVER A CHARACTER COUNT. A 9000-char window stopped ~150 lines into an executor
+  // that is longer than that, so `startRankScan(... plan.keywords ...)` fell outside it and the gate
+  // reported the opposite of the truth. → feedback_a_gate_window_measured_in_characters_will_lie
   const gi = flow.indexOf('"m1.audit.grid_baseline"');
-  const body = gi >= 0 ? flow.slice(gi, gi + 9000) : "";
+  let body = "";
+  if (gi >= 0) {
+    const o = flow.indexOf("{", flow.indexOf("=>", gi));
+    let d = 0;
+    for (let k = o; k < flow.length; k++) {
+      if (flow[k] === "{") d++;
+      else if (flow[k] === "}") { d--; if (!d) { body = flow.slice(gi, k + 1); break; } }
+    }
+  }
   if (!/readLockedPlan\(recs\)/.test(body)) fail.push("the grid step no longer reads the locked plan");
   if (!/startRankScan\([^)]*plan\.keywords/.test(body)) {
     fail.push("the grid step no longer SCANS the locked plan's keywords — reading the plan and then "
