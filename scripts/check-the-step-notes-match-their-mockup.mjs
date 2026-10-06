@@ -171,6 +171,41 @@ const PAIRS = [
   }
 }
 
+// ── THE SAME FACT MUST NOT APPEAR THREE TIMES ───────────────────────────────────────────────────
+// 🔴 Chris's "too wordy" came back in a new place: the geography explanation printed as a paragraph
+// in the fold, AGAIN as a second paragraph written 100 lines away in the step, AND as the "Volume
+// measured at" row. One producer, and the structured row is the home.
+{
+  const flowSrc = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8")
+    .replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  const adminSrc = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")
+    .replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  if (/These figures are for \$\{geoLabel\}/.test(flowSrc)) {
+    diffs.push("the second geography paragraph is back — it says what the geo note already says, in "
+      + "different words, and both print on the same card");
+  }
+  if (!/geo_note:/.test(flowSrc)) {
+    diffs.push("the geography note is not stored in outcome_data, so the card cannot drop the paragraph "
+      + "once it has rendered the same fact as a row");
+  }
+  if (!/d\.geo_note[\s\S]{0,60}?superseded\.add/.test(adminSrc)) {
+    diffs.push("the card renders the geography row AND keeps the paragraph — the same fact twice");
+  }
+  // 🔑 A canonical name is a machine string. Shown raw ("California,United States") it reads as a typo.
+  if (!/function obPlaceLabel\(/.test(adminSrc)) {
+    diffs.push("there is no single producer humanising Google's canonical names, so the card prints "
+      + "`California,United States` with no space in some places and not others");
+  }
+  if (/\$\{esc\(geo\)\}/.test(adminSrc)) {
+    diffs.push("the measured-panel header prints the raw canonical name instead of the humanised one");
+  }
+  // the fold's title must describe what is still inside it
+  if (/Why these, and where you compete/.test(adminSrc)) {
+    diffs.push("the notes fold is still titled \"…and where you compete\" — that content is its own "
+      + "panel now, so the title promises something the fold no longer holds");
+  }
+}
+
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const read = (page, sel) => page.evaluate((s, props) => {
