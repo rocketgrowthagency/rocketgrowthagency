@@ -84,6 +84,7 @@ const NOT_PREFLIGHT = {
   //    regression must never abort a video build.
   'check-a-failed-scan-is-not-no-scan.mjs': 'admin-UI gate; runs in daily-health-check.sh — how a failed rank scan is labelled cannot make a video unsafe',
   'check-a-keyword-draft-survives-the-round-trip.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a keyword draft renders cannot make a video unsafe',
+  'check-the-step-notes-match-their-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — how a step\'s output is laid out cannot make a video unsafe',
   'check-a-keyword-knows-its-surface.mjs': 'keyword-plan gate, stubbed fetch; runs in daily-health-check.sh — whether a keyword triggers a map pack cannot make a video unsafe',
   'check-a-keyword-plan-fits-the-business.mjs': 'keyword-plan gate, pure source+vm; runs in daily-health-check.sh — a keyword pool cannot make a video unsafe',
   'check-a-keyword-plan-is-decided-on-evidence.mjs': 'keyword-plan gate, pure source+vm; runs in daily-health-check.sh — how plan slots are allocated cannot make a video unsafe',
