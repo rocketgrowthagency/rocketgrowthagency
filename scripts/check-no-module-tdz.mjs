@@ -27,14 +27,20 @@
 import fs from "node:fs";
 
 const FILES = [
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/portal/portal.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/portal/client-login.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/shared/contract-pricing.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/shared/contract-doc.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/contract-generate.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/stripe-webhook.js",
-  "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/portal-payment-intent.js",
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+  `${__SITE}/portal/portal.js`,
+  `${__SITE}/admin/admin.js`,
+  `${__SITE}/portal/client-login.js`,
+  `${__SITE}/shared/contract-pricing.js`,
+  `${__SITE}/shared/contract-doc.js`,
+  `${__SITE}/netlify/functions/contract-generate.js`,
+  `${__SITE}/netlify/functions/stripe-webhook.js`,
+  `${__SITE}/netlify/functions/portal-payment-intent.js`,
 ];
 const SABOTAGE = process.env.SABOTAGE === "1";
 

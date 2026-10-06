@@ -10,7 +10,11 @@
  */
 import fs from 'node:fs';
 
-const GS = '/Users/chris/RGA/Rocket Growth Agency Website VS Code/docs/apps-scripts/gmail-to-airtable.gs';
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
+// copy and its mutations actually run. A gate nobody can make fail is a gate nobody has
+// checked. → feedback_a_gate_that_cannot_fail
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const GS = `${__SITE}/docs/apps-scripts/gmail-to-airtable.gs`;
 let src;
 try { src = fs.readFileSync(GS, 'utf8'); }
 catch (e) { console.error('✗ cannot read gmail-to-airtable.gs: ' + e.message); process.exit(1); }

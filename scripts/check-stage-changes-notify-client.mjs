@@ -23,7 +23,13 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const FNS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions";
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const FNS = `${__SITE}/netlify/functions`;
 const SABOTAGE = process.env.SABOTAGE === "1";
 if (!fs.existsSync(FNS)) { console.error("  ✗ functions dir not found"); process.exit(2); }
 
@@ -95,7 +101,7 @@ if (fails.length) {
 // 🔴 billing-daily-check escalated active → overdue → warning → paused over 18 days and sent ZERO
 // emails — it flipped a flag and drew a portal banner. A BILLING state change is a stage change
 // as far as the client is concerned, so it belongs to the same rule.
-const BILLING_JS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/billing-daily-check.js";
+const BILLING_JS = `${__SITE}/netlify/functions/billing-daily-check.js`;
 if (fs.existsSync(BILLING_JS)) {
   let b = fs.readFileSync(BILLING_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
   if (process.env.SABOTAGE === "1" && process.env.SABOTAGE_CASE === "billing") b = b.replace(/notify-client-stage/g, "nope");
@@ -109,7 +115,7 @@ if (fs.existsSync(BILLING_JS)) {
   console.log(writes ? "✅ billing-daily-check escalates AND emails the client" : "▫️  billing-daily-check no longer writes billing_status");
 }
 
-const ADMIN_JS = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js";
+const ADMIN_JS = `${__SITE}/admin/admin.js`;
 if (fs.existsSync(ADMIN_JS)) {
   let asrc = fs.readFileSync(ADMIN_JS, "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");

@@ -29,7 +29,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const WEB = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const WEB = `${__SITE}`;
 const CONTRACT = path.join(WEB, "netlify", "functions", "contract-generate.js");
 const ADMIN = path.join(WEB, "admin", "admin.js");
 const PLAYBOOK = path.join(WEB, "admin", "playbook.js");

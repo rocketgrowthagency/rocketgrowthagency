@@ -26,7 +26,13 @@
  */
 import fs from "node:fs";
 
-const PORTAL = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/portal/portal.js";
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const PORTAL = `${__SITE}/portal/portal.js`;
 const SABOTAGE = process.env.SABOTAGE === "1";
 
 console.log("── one action offers exactly one button ──");
@@ -76,7 +82,7 @@ console.log("  ✅ no scroll-instead-of-navigate disguise remains");
 // copy that told you to use the Accept button instead. 🔑 The raw Advance was not a shortcut: it
 // moves the STAGE only, skipping acceptance and the payment link, so the client would be marked as
 // owing money nobody had asked them for. An escape hatch beside the correct path is a trap.
-const ADMIN = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js";
+const ADMIN = `${__SITE}/admin/admin.js`;
 if (!fs.existsSync(ADMIN)) { console.log(`  ⚠️  missing: ${ADMIN}`); process.exit(2); }
 let admin = strip(fs.readFileSync(ADMIN, "utf8"));
 const acase = process.env.SABOTAGE_CASE || "";

@@ -388,4 +388,38 @@ if (weak.length) {
 }
 ok('every pre-flight gate invocation reads its exit code');
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A GATE THAT CANNOT BE POINTED AT A COPY CANNOT BE MUTATION-TESTED.
+//
+// Found 2026-10-06, by accident: all three mutations of `check-refusal-is-not-done` came back GREEN.
+// Its paths were hardcoded absolutes, so it read the real working tree and never saw the scratch
+// copy the mutations were written into. The gate was not strict — it was BLIND, and had been since
+// it was written. A census then found **86 of 180** gates in the same state.
+//
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. Honouring APPROVAL_ARCHIVE_SITE_DIR costs nothing
+// when it is unset — every one of the 86 produced an identical verdict after the swap — and it is
+// the difference between a gate somebody has proven can fail and one nobody has ever tested.
+// → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+const SITE_LITERAL = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const unredirectable = [];
+for (const g of gates) {
+  const src = fs.readFileSync(`${HERE}/${g}`, "utf8");
+  // 🔴 Strip LINE comments before BLOCK comments — a `/*` that only ever existed inside a `//`
+  // otherwise opens a scan that swallows the declaration this is looking for.
+  // → feedback_a_comment_stripper_in_the_wrong_order_deletes_code
+  const code = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  if (!code.includes(SITE_LITERAL)) continue;          // does not read the site at all
+  if (code.includes("APPROVAL_ARCHIVE_SITE_DIR")) continue;  // the hardcode is only a default
+  unredirectable.push(g);
+}
+if (unredirectable.length) {
+  console.error(`✗ ${unredirectable.length} gate(s) hardcode the site path with no APPROVAL_ARCHIVE_SITE_DIR override,`);
+  console.error(`  so they can only ever read the real working tree and their mutations cannot be run:`);
+  for (const g of unredirectable.slice(0, 20)) console.error(`    · ${g}`);
+  if (unredirectable.length > 20) console.error(`    … and ${unredirectable.length - 20} more`);
+  process.exit(1);
+}
+console.log(`  ✓ every gate that reads the site can be pointed at a copy, so its mutations can run`);
+
 console.log(`✅ ${gates.length} gates: ${wired} wired, ${Object.keys(NOT_PREFLIGHT).length} excused with a reason, 0 dormant.`);

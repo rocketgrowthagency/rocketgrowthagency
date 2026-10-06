@@ -115,7 +115,11 @@ const args = process.argv.slice(2);
 if (!isMain) { /* imported as a library — export only */ }
 else if (args.includes('--selftest')) {
   // Labelled fixtures: Chris confirmed these by eye on 2026-08-20.
-  const WEB = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
+// copy and its mutations actually run. A gate nobody can make fail is a gate nobody has
+// checked. → feedback_a_gate_that_cannot_fail
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+  const WEB = `${__SITE}`;
   // ⚠️ THE LABELLED POSITIVE NO LONGER EXISTS. dr-augusto-rojas-md was the translucent case at 20.1%;
   // it was REBUILT on 2026-08-20 with the settleDetailPanel() fix and now measures 6.4% — solid, and
   // squarely inside the good cluster. That 20.1 → 6.4 drop is itself the strongest evidence the fix

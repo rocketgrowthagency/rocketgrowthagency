@@ -25,7 +25,13 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const SITE = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const SITE = `${__SITE}`;
 const SABOTAGE = process.env.SABOTAGE === "1";
 
 console.log("── the invoice renders the same dates in every timezone ──");

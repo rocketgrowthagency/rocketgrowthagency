@@ -28,7 +28,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const SELF_TEST = process.argv.includes('--self-test');
-const SITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
+// copy and its mutations actually run. A gate nobody can make fail is a gate nobody has
+// checked. → feedback_a_gate_that_cannot_fail
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const SITE = `${__SITE}`;
 // 🔴🔴 THIS WAS A HARDCODED LIST OF FOUR, AND ONE OF THEM DID NOT EXIST.
 // It named `styles.css`; the real file is `style.css` (singular). `fs.existsSync` skipped the typo
 // silently, so the PUBLIC SITE's main stylesheet and docs/reports/report.css were never scanned —

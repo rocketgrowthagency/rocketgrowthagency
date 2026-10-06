@@ -22,7 +22,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-const WEBSITE = '/Users/chris/RGA/Rocket Growth Agency Website VS Code';
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
+// copy and its mutations actually run. A gate nobody can make fail is a gate nobody has
+// checked. → feedback_a_gate_that_cannot_fail
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const WEBSITE = `${__SITE}`;
 const SCRAPER_ENV = path.dirname(path.dirname(fileURLToPath(import.meta.url)));  // NOT .pathname — spaces arrive %20-encoded and the .env is never found
 const PB_PATH = path.join(WEBSITE, 'admin/playbook.js');
 const HTML_PATH = path.join(WEBSITE, 'admin/index.html');

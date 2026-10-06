@@ -27,7 +27,13 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SCRAPER_ENV = path.resolve(HERE, "..", ".env");
 // This gate lives in the scraper repo (where daily-health-check.sh runs) but inspects admin.js in the
 // website repo. Absolute, and asserted below — a silently-missing file would make check 4 vacuous.
-const WEB_REPO = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
+// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
+// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
+// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
+// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const WEB_REPO = `${__SITE}`;
 
 for (const line of fs.readFileSync(SCRAPER_ENV, "utf8").split("\n")) {
   const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
