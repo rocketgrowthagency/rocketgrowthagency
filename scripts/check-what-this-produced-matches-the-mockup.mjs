@@ -72,7 +72,17 @@ const W="/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
 const { default: puppeteer } = await import("puppeteer");
 const MOCK=W+"reports/mockups/admin_what_this_produced_v2.html";
 const U=process.env.SUPABASE_URL,K=process.env.SUPABASE_SERVICE_ROLE_KEY,SITE="https://www.rocketgrowthagency.com";
-const cid=(await (await fetch(`${U}/rest/v1/clients?archived_at=is.null&select=id&limit=1`,{headers:{apikey:K,Authorization:`Bearer ${K}`}})).json())[0].id;
+// 🔴 WITHOUT CREDENTIALS THIS THREW, AND A THROW IS NOT A FAILURE. The bare fetch below built the
+// URL "undefined/rest/v1/clients?…" and the TypeError propagated — in the sweep that reads as the
+// product being broken, which is how a real red signal gets ignored. Could-not-tell is exit 2.
+// → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+if(!U||!K){console.error("⚠️  INDETERMINATE — no Supabase credentials; cannot sign in to read the live card.");process.exit(2);}
+let cid;
+try{
+  const rows=await (await fetch(`${U}/rest/v1/clients?archived_at=is.null&select=id&limit=1`,{headers:{apikey:K,Authorization:`Bearer ${K}`},signal:AbortSignal.timeout(20000)})).json();
+  if(!Array.isArray(rows)||!rows[0]?.id){console.error("⚠️  INDETERMINATE — no unarchived client to render the card against.");process.exit(2);}
+  cid=rows[0].id;
+}catch(e){console.error(`⚠️  INDETERMINATE — could not reach Supabase: ${e.message}`);process.exit(2);}
 const j=await (await fetch(`${U}/auth/v1/admin/generate_link`,{method:"POST",headers:{apikey:K,Authorization:`Bearer ${K}`,"Content-Type":"application/json"},body:JSON.stringify({type:"magiclink",email:"hello@rocketgrowthagency.com"})})).json();
 const b=await puppeteer.launch({headless:"new",args:["--no-sandbox"]});
 const read=(sel,props)=>{const el=document.querySelector(sel); if(!el)return null;

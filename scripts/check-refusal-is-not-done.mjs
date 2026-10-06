@@ -25,8 +25,13 @@
  */
 import fs from "node:fs";
 
-const ADMIN = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/admin/admin.js";
-const EXEC = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/functions/flow-execute.js";
+// 🔴 THE PATHS WERE HARDCODED, SO THIS GATE COULD NEVER BE MUTATION-TESTED. Every mutation of
+// admin.js in a scratch copy was read right past, and all three came back GREEN — a gate that
+// cannot fail. Same env var the rest of the suite honours.
+// → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const ADMIN = `${SITE}/admin/admin.js`;
+const EXEC = `${SITE}/netlify/functions/flow-execute.js`;
 const SABOTAGE = process.env.SABOTAGE === "1";
 
 for (const f of [ADMIN, EXEC]) {
@@ -106,18 +111,43 @@ if (/^\s*outcome:/m.test(returnBlock)) {
   console.log("     data.outcome, gets undefined, and shows Done for every result including failures");
 }
 
-// 2. The "Done" banner must be gated on the outcome, not merely on a successful response.
-const doneLine = admin.match(/title: `Done — \$\{stepLabel\(stepId\)\}`/);
-if (!doneLine) {
-  console.log("  ▫️  no Done banner found — renamed? treating as indeterminate");
-  process.exit(2);
-}
-const around = admin.slice(Math.max(0, doneLine.index - 900), doneLine.index + 200);
-if (/const ui = OUTCOME_BANNER\[data\.outcome\]/.test(around) && /ui\s*\?/.test(around)) {
-  console.log("  ✅ the Done banner is reached only when the outcome is not a refusal");
-} else {
+// 2. The run's banner must be gated on the outcome, not merely on a successful response.
+//
+// 🔴 THIS PINNED A SPELLING AND WENT BLIND. It searched for the literal title
+// `` title: `Done — ${stepLabel(stepId)}` ``. When the confirmation card was given ONE producer for
+// every step (2026-10-06) the title became the step's own name and the outcome moved into the
+// sentence and the banner KIND — a strictly better design — and this gate reported INDETERMINATE
+// from then on, which in a sweep is indistinguishable from green.
+// 🔑 PIN THE PROPERTY: whatever the banner is called, its KIND must be chosen from the outcome, so
+// a refusal cannot be painted as success. → feedback_a_gate_must_pin_the_property_not_the_spelling
+const uiPick = admin.match(/const ui = OUTCOME_BANNER\[\s*data\.outcome\s*\]/);
+if (!uiPick) {
+  console.log("  🔴 nothing selects a banner kind from data.outcome — every result paints as success");
   fails.push("Done is outcome-blind");
-  console.log("  🔴 the Done banner does not branch on data.outcome — a refusal will render as success");
+} else {
+  // Brace-match the setBanner call that follows, so the window is the real call and not a character
+  // count. → feedback_a_gate_window_measured_in_characters_will_lie
+  const sb = admin.indexOf("setBanner(", uiPick.index);
+  let around = "";
+  if (sb > 0) {
+    let d = 0;
+    for (let i = admin.indexOf("(", sb); i < admin.length; i++) {
+      if (admin[i] === "(") d++;
+      else if (admin[i] === ")") { d--; if (!d) { around = admin.slice(sb, i + 1); break; } }
+    }
+  }
+  if (!around) {
+    console.log("  ▫️  could not read the setBanner call that uses it — treating as indeterminate");
+    process.exit(2);
+  }
+  const kindFromOutcome = /\bui\s*\?[^:]*\.type\s*:/.test(around) || /\bui\.type\b/.test(around);
+  const sentenceSeesOutcome = /bannerSentence\(\s*data\s*,\s*ui\s*\)/.test(around);
+  if (kindFromOutcome && sentenceSeesOutcome) {
+    console.log("  ✅ the run banner takes its KIND and its SENTENCE from the outcome, so a refusal is not painted as success");
+  } else {
+    fails.push("Done is outcome-blind");
+    console.log(`  🔴 the run banner does not branch on data.outcome (kind:${kindFromOutcome} sentence:${sentenceSeesOutcome}) — a refusal will render as success`);
+  }
 }
 
 // 3. Instructions must not be alerted as a "follow-up".
