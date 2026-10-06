@@ -75,6 +75,46 @@ ok(S(mk("b", "B", "not-a-date", ["m1.strategy.keywords_locations"]), [K]).length
     `dependencies that did NOT move are reported too (got ${got.join(", ") || "none"})`);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A TICKED BOX IS NOT OUTPUT (corrected 2026-10-06, same day it shipped).
+//
+// The first build used `ran_at || completed_at` on BOTH sides, and the live card immediately said
+// step 24 "Set up form tracking" was out of date because "Get CMS / hosting access" had "last
+// produced something" — a human ticking it done. Measured on the real record: **ONE task has
+// `ran_at` and THIRTY-THREE have only `completed_at`**, across SIXTY steps declaring a dependency.
+// The checklist would have been papered in warnings, which is how a true one stops being read.
+//
+// 🔑 THE FILE'S OWN COMMENT ALREADY SAID "produced, not ticked" and the code did the opposite. A
+// stated rule contradicted by its implementation is worse than neither — the comment stops anyone
+// checking. → feedback_a_comment_asserting_a_fix_is_not_the_fix
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const ticked = mk("dep", "A manual step somebody ticked", null, ["x"]);
+  ticked.task = { ran_at: null, completed_at: "2026-10-02T02:06:38Z" };
+  const dependent = mk("me", "Me", "2026-09-18T06:00:59Z", ["dep"]);
+  dependent.task = { ran_at: null, completed_at: "2026-09-18T06:00:59Z" };
+  ok(S(dependent, [ticked, dependent]).length === 0,
+    "a dependency that was merely MARKED DONE later flags its dependent as out of date — 33 of this "
+    + "client's tasks have only completed_at and 60 steps declare a dependency, so the checklist "
+    + "would carry a warning almost everywhere, and a warning everywhere is a warning nowhere");
+
+  // and the dependent's OWN completed_at must still count as having finished
+  const produced = mk("p", "Produced", null, []);
+  produced.task = { ran_at: "2026-10-06T17:55:11Z", completed_at: null };
+  const onlyTicked = mk("d2", "Ticked dependent", null, ["p"]);
+  onlyTicked.task = { ran_at: null, completed_at: "2026-09-15T03:30:45Z" };
+  ok(S(onlyTicked, [produced, onlyTicked]).length === 1,
+    "a step that was marked done (no ran_at of its own) is never compared at all — step 26 is exactly "
+    + "that shape, and it is the case this gate was written for");
+
+  const src2 = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  ok(/function obOutputAt\(/.test(src2),
+    "there is no separate reading of when a step PRODUCED output — the two sides of the comparison "
+    + "are not the same question");
+  ok(/const at = obOutputAt\(dep/.test(src2),
+    "the dependency side does not use obOutputAt — it would count a ticked box as new output");
+}
+
 // ── IT IS WIRED INTO THE ROW ────────────────────────────────────────────────────────────────────
 {
   const code = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
