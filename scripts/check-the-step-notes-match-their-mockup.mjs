@@ -96,7 +96,17 @@ const html = parts.map(([, h]) => h).join("");
   // admin.js with the three renderers blanked out — everything else that emits a class
   const mine = (() => {
     let t = JS;
-    for (const f of ["obSurfaceBlockHtml", "obPlacesBlockHtml", "obNarrowedBlockHtml"]) {
+    // 🔴🔴 A HAND-WRITTEN LIST OF THE RENDERERS WENT STALE THE DAY A FOURTH ONE SHIPPED. The
+    // baseline panel deliberately REUSES `ob-crow` / `ob-split` / `ob-legend` — it is the same
+    // component answering the same kind of question — and the gate read that as a collision with an
+    // unrelated element. 🔑 EVERY RENDERER IN THE FAMILY, FOUND BY SHAPE, NEVER BY LIST.
+    // → feedback_a_lift_list_is_a_promise_somebody_will_remember
+    const FAMILY = [...JS.matchAll(/^function (ob[A-Za-z]*BlockHtml)\s*\(/gm)].map((m) => m[1]);
+    if (FAMILY.length < 3) {
+      console.error(`⚠️  INDETERMINATE — only ${FAMILY.length} block renderer(s) found; re-pin this gate.`);
+      process.exit(2);
+    }
+    for (const f of FAMILY) {
       const i2 = t.indexOf(`function ${f}(`);
       if (i2 < 0) continue;
       const o = t.indexOf("{", i2);

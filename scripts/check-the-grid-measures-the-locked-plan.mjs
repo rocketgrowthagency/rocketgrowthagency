@@ -114,6 +114,43 @@ ok(/ran_at[\s\S]{0,160}?completed_at/.test(body),
     "the started-scan record stores the placeholder keyword rather than the plan's keywords");
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴🔴 THE BASELINE REPORTED ONE KEYWORD OF FIVE, UNDER THE WRONG NAME (2026-10-06).
+//
+// The first correct scan recorded: `"seo company" — 25-point grid … Found at NONE of the 25 points.`
+// The scan had measured FIVE keywords across 125 points; the record read only the first, printed
+// `client.primary_service` as its name, and replaced a card carrying coverage figures with one prose
+// line. Chris: *"where did the card details and design go?"*
+//
+// 🔑 A STEP MUST NOT GET LESS INFORMATIVE THE DAY IT BECOMES CORRECT.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  ok(/const planKeywords = \(planForCheck/.test(code),
+    "the baseline still reads a single keyword — a scan of five keywords reported as one is a baseline "
+    + "for a plan nobody locked");
+  ok(/for \(const kw of planKeywords\)[\s\S]{0,400}?readGridSessions\(clientId, kw\)/.test(code),
+    "the recorded baseline does not read EVERY locked keyword's grid");
+  ok(/per_keyword: perKeyword/.test(code),
+    "the per-keyword coverage is not stored, so the card has nothing to render but prose");
+  ok(!/summary: `"\$\{keyword\}" — \$\{fullSize\}-point grid/.test(code),
+    "the baseline sentence still prints `keyword` (client.primary_service) while the data it read is "
+    + "the plan's — the name and the measurement describing different things");
+  ok(/locked keyword/.test(code),
+    "the baseline sentence does not say it covers the locked plan");
+
+  const adminSrc = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")
+    .replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  ok(/function obBaselineBlockHtml\(/.test(adminSrc),
+    "there is no designed panel for the baseline — the step reports a prose line where step 25 reports "
+    + "a readable table of the same shape");
+  ok(/obBaselineBlockHtml\(d\)/.test(adminSrc) && /out\.push\(baselineBlock\)/.test(adminSrc),
+    "the baseline panel is defined and never rendered");
+  // 🔑 UNSCANNED IS ITS OWN STATE: a keyword with no grid on file must not read as "absent everywhere".
+  ok(/not scanned/.test(adminSrc) && /no scan on file/.test(adminSrc),
+    "a keyword with no scan on file is drawn as absent — an absence we did not look for is the worst "
+    + "number this system can produce");
+}
+
 if (fail.length) {
   console.error("🔴 the geo grid can report on something other than the locked plan:");
   for (const f of fail) console.error(`   · ${f}`);
