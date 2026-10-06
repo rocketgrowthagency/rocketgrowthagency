@@ -88,6 +88,7 @@ const NOT_PREFLIGHT = {
   'check-the-step-notes-match-their-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — how a step\'s output is laid out cannot make a video unsafe',
   'check-a-button-does-not-lie-about-where-it-runs.mjs': 'playbook gate, pure source read; runs in daily-health-check.sh — a button label cannot make a video unsafe',
   'check-a-confirmation-names-the-work-done.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a confirmation sentence cannot make a video unsafe',
+  'check-a-done-step-carries-the-time-it-was-done.mjs': 'onboarding-record gate, pure source+vm; runs in daily-health-check.sh — a task timestamp cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',
