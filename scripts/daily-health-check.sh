@@ -366,6 +366,7 @@ run check-a-refusal-names-what-is-on-screen.mjs "a blocked step is refused by nu
 run check-now-set-to-says-what-the-step-set.mjs "the Now-set-to line summarises what the step settled, never a YAML key"
 run check-a-confirmation-names-the-work-done.mjs "every step confirmation describes the work that step actually did"
 run check-a-done-step-carries-the-time-it-was-done.mjs "one producer owns a task's shape: done carries its time, reopened clears it, started_at is the real start"
+run check-a-note-never-contradicts-the-measurement.mjs "no note on the keyword card states something the measurement beside it contradicts"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
