@@ -346,6 +346,7 @@ run check-a-confirmation-says-what-happened.mjs "every step confirmation says wh
 run check-the-banner-matches-its-mockup.mjs "the live confirmation banner matches its approved mockup, property by property"
 run check-a-keyword-card-matches-its-mockup.mjs "the keyword card matches its mockup, and a floor never passes for a measurement"
 run check-the-step-notes-match-their-mockup.mjs "the step's measurement blocks match their approved mockup, property by property"
+run check-a-finished-step-knows-its-input-moved.mjs "a finished step whose dependency re-ran says it is out of date"
 run check-a-keyword-plan-is-decided-on-evidence.mjs "one searcher gets one slot, and the plan carries a keyword with reportable volume"
 run check-a-keyword-knows-its-surface.mjs "every locked keyword is measured for whether Google shows a map pack for it"
 run check-a-sub-location-is-a-real-place.mjs "a sub-location is a real place in this client's own market, not just a real place"

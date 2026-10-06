@@ -147,6 +147,30 @@ const PAIRS = [
   ["the notes fold",         "details.ob-note",     "details.note"],
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE SAME THREE PLACES RENDERED TWICE ON ONE CARD (2026-10-06). The draft's own LOCATIONS list
+// printed them with the model's reason, and the new SUB-LOCATIONS block printed them again with the
+// type and reach. I had attached the verification to a COPY of the thing instead of to the thing —
+// which is the exact mistake this whole design set out to fix.
+// 🔑 ONE LIST, CARRYING BOTH: the reason is the strategy, the type and reach are the evidence.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const code3 = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  if (!/obPlaceEvidenceHtml\(verified\.get\(/.test(code3)) {
+    diffs.push("the draft's own location rows do not carry the verification — so it can only appear in "
+      + "a second list, and the same places print twice on one card");
+  }
+  if (!/draftHasPlaces\s*\?\s*""\s*:\s*obPlacesBlockHtml\(/.test(code3)) {
+    diffs.push("the standalone sub-location block renders even when the draft already lists those "
+      + "places — the same three places twice");
+  }
+  if (!/function obVerifiedPlaces\(/.test(code3) || !/replace\(\/\[\^a-z0-9\]\+\/g/.test(code3)) {
+    diffs.push("the verification is not matched to a place by a NORMALISED name — a client whose draft "
+      + "capitalises or punctuates a place differently would silently lose its evidence");
+  }
+}
+
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const read = (page, sel) => page.evaluate((s, props) => {

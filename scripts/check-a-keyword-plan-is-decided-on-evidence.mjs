@@ -248,6 +248,51 @@ globalThis.C = coreOf;`, ctx);
     + "to one word and then keeping that word in the key is the bug this fixed");
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴🔴 RUN AGAIN WAS REWRITING THE LOCK (2026-10-06). This step's own subtitle is "Sets this month's
+// targets — every other task points at these." Measured across two runs ninety minutes apart, with
+// nothing about the business changed, ONE term of five survived:
+//
+//   08:51  seo company near me · local seo services · google business profile optimization ·
+//          local seo agency Culver City CA · seo company Los Angeles
+//   10:53  local seo services near me · google business profile optimization ·
+//          local seo agency culver city · seo company culver city ca ·
+//          search engine optimization agencies
+//
+// The model drafted from scratch every time because it was never shown the plan already locked.
+// 🔑 A SECOND RUN IS A RE-MEASUREMENT, NOT A SECOND OPINION.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const flow = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  ok(/readLockedPlan\(recs0\)/.test(flow) || /const locked = readLockedPlan\(/.test(flow),
+    "the step never reads the plan this client already has locked — every run drafts from a blank page, "
+    + "so pressing Run again silently replaces this month's targets");
+  ok(/lockedNote/.test(flow) && /\$\{lockedNote\}/.test(flow),
+    "the locked plan is read and never reaches the model's context — reading it changes nothing");
+  // 🔴 ANCHOR ON THE ASSIGNMENT, NOT THE DECLARATION. `indexOf("lockedNote = ")` found
+  // `let lockedNote = "";` and the 900-char window then covered the guard above the seed — so
+  // deleting the sub-locations line from the seed still matched `locked.locations` in the `if`.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  const li = flow.indexOf("lockedNote = `");
+  const note = li >= 0 ? flow.slice(li, li + 1100) : "";
+  ok(li >= 0, "cannot find where the locked-plan seed is built; re-pin this gate");
+  ok(/locked\.keywords/.test(note) && /locked\.locations/.test(note),
+    "the seed names only half the lock — keywords AND sub-locations are both this step's output");
+  // 🔴 BOTH SIDES. A bare search for "keep" passed a mutation that replaced the keep instruction with
+  // "Rewrite freely." — because a LATER sentence still said "the ones you keep". One word appearing
+  // somewhere is not an instruction. → feedback_a_literal_grep_misses_computed_writes
+  ok(/\b(keep|retain)\b/i.test(note),
+    "the seed hands the model the old plan without telling it to KEEP it, which is an invitation to "
+    + "rewrite rather than refine");
+  ok(!/\b(rewrite|start over|from scratch|ignore the (existing|current|previous))\b/i.test(note),
+    "the seed tells the model it may rewrite the plan — that is the behaviour this fix exists to stop, "
+    + "and it would silently replace this month's targets on every press of Run");
+  // 🔑 UNIVERSAL: a client with nothing locked must still draft freely.
+  ok(/catch \(_\)/.test(note) || /if \(locked &&/.test(note),
+    "a client with no locked plan is not handled — the first run for every new client would break or "
+    + "be seeded with nothing");
+}
+
 if (fail.length) {
   console.error("🔴 the keyword plan is not decided on evidence:");
   for (const f of fail) console.error(`   · ${f}`);
