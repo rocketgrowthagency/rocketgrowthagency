@@ -37,6 +37,7 @@ record_verdict() { printf '{"gate":"%s","exit":%s,"at":"%s"}\n' "$1" "$2" "$(dat
 
 QUIET=0; [ "${1:-}" = "--quiet" ] && QUIET=1
 FAIL=0; INDET=0; OK=0
+THREW=0        # gates that crashed rather than reported — harness faults, never product findings
 # ═══════════════════════════════════════════════════════════════════════════════════════════════
 # 🔴🔴 EXIT 127 IS NOT A VERDICT. IT MEANS THE GATE NEVER RAN.
 #
@@ -104,6 +105,26 @@ run() {
   if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
   local out rc
   out=$(node "scripts/$script" 2>&1); rc=$?
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  # 🔴🔴 A GATE THAT THREW IS NOT A GATE THAT FAILED — AND IT HAD BEEN REPORTED AS ONE.
+  #
+  # Three gates went blind on 2026-10-05, each because a hand-written lift list went stale when the
+  # product grew a helper (`obRespectDeps`, then `obPhaseIndexOf`, then `obDependsOn`). Node exits 1
+  # on an uncaught throw, so the sweep recorded them as PRODUCT FAILURES, with a stack trace where a
+  # finding should be. A red nobody can trust teaches the reader to ignore the ones that are true.
+  #
+  # 🔑 AN UNCAUGHT STACK TRACE IS A BROKEN HARNESS, NOT A BROKEN PRODUCT. Caught here, once, for
+  # every gate — including ones written years from now — rather than in each gate's own try/catch.
+  # → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  if [ "$rc" != "0" ] && printf '%s' "$out" | grep -qE '^\s+at .*\(.*:[0-9]+:[0-9]+\)|^[A-Za-z]*Error: '; then
+    printf "  ⚠️   %-38s GATE THREW — not a product failure\n" "$script"
+    printf "       %s\n" "$(printf '%s' "$out" | grep -m1 -E '^[A-Za-z]*Error: ' | cut -c1-150)"
+    printf "       Fix the gate. Until then nothing is checking: %s\n" "$what"
+    THREW=$((THREW+1))
+    record_verdict "$script" "2"
+    return
+  fi
   record_verdict "$script" "$rc"
   classify "$script" "$rc" "$what" "$mode" "$out"
 }
@@ -506,12 +527,17 @@ if [ -f "$ALERT_FILE" ]; then
   echo "✅ every gate launched — cleared $ALERT_FILE"
 fi
 
+# 🔑 A CRASHED GATE IS COUNTED AND NAMED SEPARATELY. Folding it into "indeterminate" hides the one
+# fact that matters about it: somebody has to go and fix the gate, or that area is unguarded.
+if [ "$THREW" -gt 0 ]; then
+  echo "⚠️  $THREW GATE(S) THREW — harness faults, not product findings. Nothing is checking those areas."
+fi
 if [ "$FAIL" -gt 0 ]; then
-  echo "🔴 $FAIL FAILING · $INDET indeterminate · $OK healthy"
+  echo "🔴 $FAIL FAILING · $INDET indeterminate · $THREW threw · $OK healthy"
   exit 1
 fi
 if [ "$INDET" -gt 0 ]; then
-  echo "⚠️  $INDET INDETERMINATE (could not verify — NOT the same as healthy) · $OK healthy"
+  echo "⚠️  $INDET INDETERMINATE (could not verify — NOT the same as healthy) · $THREW threw · $OK healthy"
   exit 2
 fi
 say "✅ all $OK checks healthy"

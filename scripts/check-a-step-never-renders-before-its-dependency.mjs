@@ -31,6 +31,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import { liftAdmin, safeCall } from "./_lift-admin.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const JS = path.join(SITE, "admin", "admin.js");
@@ -40,30 +41,17 @@ if (!fs.existsSync(JS)) { console.error("⚠️  INDETERMINATE — admin.js not 
 if (!fs.existsSync(PB)) { console.error("⚠️  INDETERMINATE — playbooks.json not found."); process.exit(2); }
 const raw = fs.readFileSync(JS, "utf8");
 
-/** Lift a declaration out of admin.js by its opening and closing text. */
-function slice(open, close, label) {
-  const i = raw.indexOf(open);
-  if (i < 0) { console.error(`⚠️  INDETERMINATE — could not find ${label}.`); process.exit(2); }
-  const j = raw.indexOf(close, i + open.length);
-  if (j < 0) { console.error(`⚠️  INDETERMINATE — could not close ${label}.`); process.exit(2); }
-  return raw.slice(i, j + close.length);
-}
-
-const ctx = vm.createContext({});
-try {
-  vm.runInContext([
-    slice("const obGroupOf =", ";", "obGroupOf"),
-    slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
-    slice("function obRespectDeps(", "\n}", "obRespectDeps"),
-    slice("function obPhaseIndexOf(", "\n}", "obPhaseIndexOf"),
-    slice("function obBuckets(", "\n}", "obBuckets"),
-    "globalThis._x = { obBuckets, obRespectDeps, OB_PHASES };",
-  ].join("\n"), ctx);
-} catch (e) {
-  console.error(`⚠️  INDETERMINATE — the lifted ordering code did not evaluate: ${e.message}`);
-  process.exit(2);
-}
-const { obBuckets, obRespectDeps } = ctx._x;
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THIS GATE WENT BLIND THREE TIMES, EACH TIME FOR THE SAME REASON (2026-10-05).
+// It carried a hand-written list of which admin functions to lift. Every time the product grew a
+// helper — `obRespectDeps`, then `obPhaseIndexOf`, then `obDependsOn` — the list went stale and the
+// gate THREW instead of checking, which is noise in the sweep rather than a finding.
+// 🔑 The shared lifter resolves its own dependency set, so there is no list left to go stale.
+// → scripts/_lift-admin.mjs · feedback_a_gate_that_throws_is_not_a_gate_that_fails
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+const lifted = liftAdmin(["obBuckets", "obRespectDeps", "obPhaseIndexOf"]);
+const obBuckets = lifted.get("obBuckets");
+const obRespectDeps = lifted.get("obRespectDeps");
 
 // ── real steps, from the real playbook ──────────────────────────────────────────────────────────
 const pb = JSON.parse(fs.readFileSync(PB, "utf8"));
@@ -85,7 +73,7 @@ console.log("── the dependency sort actually reorders ──");
   // that is deliberately backwards and require it to move something.
   const a = { obj: { flowId: "x.b", dependsOn: ["x.a"] } };
   const b = { obj: { flowId: "x.a", dependsOn: [] } };
-  const got = obRespectDeps([a, b], [0, 1]);
+  const got = lifted.call("obRespectDeps", [[a, b], [0, 1]]);
   if (got[0] === 1 && got[1] === 0) console.log("  ✅ a dependant placed first is moved behind its dependency");
   else {
     console.error("  🔴 obRespectDeps did NOT reorder a backwards pair — it is a no-op");
@@ -98,7 +86,7 @@ console.log("── the dependency sort actually reorders ──");
 
 console.log("\n── no backwards edge in the rendered order ──");
 {
-  const buckets = obBuckets(steps);
+  const buckets = lifted.call("obBuckets", [steps]);
   const order = [].concat(...buckets.map((x) => x.idx));
   if (order.length !== steps.length) {
     console.error(`  🔴 ${steps.length} steps in, ${order.length} out — rows are being dropped or duplicated.`);
