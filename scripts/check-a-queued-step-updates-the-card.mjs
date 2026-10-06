@@ -118,6 +118,62 @@ if (!/\bdata\.queued\b/.test(code)) {
   }
 }
 
+// ── A SILENT WAIT IS INDISTINGUISHABLE FROM A HANG ─────────────────────────────────────────────
+// 🔴 Chris waited two minutes on a step that takes two and a half and concluded it was broken. The
+// run was fine; the banner was one unchanging sentence for the whole time. The step got slower when
+// the map-pack and sub-location probes were added, and the waiting message did not change.
+// 🔑 AN ELAPSED COUNT IS THE CHEAPEST POSSIBLE PROOF OF LIFE.
+{
+  const code2 = admin.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  if (!/onTick/.test(code2)) {
+    fail.push("the background wait has no per-poll callback — the banner cannot change while a step runs, "
+      + "so a two-minute wait looks exactly like a hang");
+  }
+  if (!/onTick\s*:/.test(code2)) {
+    fail.push("the queued branch never passes onTick — the wait supports progress and nothing asks for it");
+  }
+  // 🔴 SCOPE IT TO THE CALLBACK. A file-wide search for "elapsed" passed with the count deleted from
+  // the banner — the kickoff call console has an elapsed clock of its own, nine thousand lines away.
+  // 🔑 A WORD THAT APPEARS SOMEWHERE ELSE IN THE FILE IS NOT EVIDENCE ABOUT THIS BRANCH.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  {
+    const ti = code2.indexOf("onTick:");
+    let body = "";
+    if (ti >= 0) {
+      const o = code2.indexOf("{", code2.indexOf("=>", ti));
+      let d = 0;
+      for (let i = o; i < code2.length && i < o + 4000; i++) {
+        if (code2[i] === "{") d++;
+        else if (code2[i] === "}") { d--; if (!d) { body = code2.slice(o, i + 1); break; } }
+      }
+    }
+    if (!body) {
+      fail.push("cannot isolate the onTick callback body — the progress banner cannot be checked");
+    } else {
+      if (!/setBanner\(/.test(body)) {
+        fail.push("the per-poll callback does not update the banner — the wait ticks and the screen never changes");
+      }
+      // 🔴 THE PRINTED LINE, NOT THE CALCULATION. Checking the body for `secs` passed with the count
+      // deleted from the banner text, because the seconds are still computed two lines above to build
+      // a variable nothing prints. A number worked out and not shown is not feedback.
+      const printed = (body.match(/lines\s*:\s*\[([\s\S]*?)\]/) || [])[1] || "";
+      if (!printed) {
+        fail.push("the per-poll callback builds no banner line at all");
+      } else if (!/\$\{\s*(clock|secs|elapsed)/i.test(printed)) {
+        fail.push("the per-poll banner line does not interpolate how long the step has been running — the "
+          + "sentence is identical on every poll, which is exactly the signal a reader uses to decide "
+          + "nothing is happening");
+      }
+    }
+  }
+  // 🔑 And it must say a refresh is unnecessary, because the last two times this broke, the first
+  // thing Chris did was refresh — which destroys the wait that was about to deliver the answer.
+  if (!/do not need to refresh|no need to refresh/i.test(code2)) {
+    fail.push("the waiting banner does not tell the operator a refresh is unnecessary — refreshing cancels "
+      + "the wait that would have shown the result");
+  }
+}
+
 if (fail.length) {
   console.error("🔴 a queued step can finish without the screen saying so:");
   for (const f of fail) console.error("   · " + f);
