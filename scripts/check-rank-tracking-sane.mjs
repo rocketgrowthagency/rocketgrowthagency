@@ -44,10 +44,23 @@ const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!U || !K) { console.error("✗ Supabase credentials unavailable"); process.exit(2); }
 const h = { apikey: K, Authorization: `Bearer ${K}` };
 
+// 🔑 clientId → the keywords step 25 locked. Module scope, because `evaluate` needs it.
+const LOCKED = new Map();
 let snaps, clients;
 try {
   snaps = await (await fetch(`${U}/rest/v1/brain_rank_snapshots?select=*&order=snapshot_date`, { headers: h })).json();
   clients = await (await fetch(`${U}/rest/v1/clients?select=id,business_name,primary_service,archived_at`, { headers: h })).json();
+  // 🔑 The locked plan per client, read the same way the product reads it: the draft stored by
+  // m1.strategy.keywords_locations. A client with none falls back to primary_service.
+  try {
+    const recs = await (await fetch(`${U}/rest/v1/client_onboarding_records?select=client_id,data`, { headers: h })).json();
+    for (const r of Array.isArray(recs) ? recs : []) {
+      const raw = String(r?.data?.tasks?.["m1.strategy.keywords_locations"]?.outcome_data?.draft || "");
+      const kws = [...raw.matchAll(/^\s*-\s*(?:term|phrase|keyword)\s*:\s*(.+)$/gim)]
+        .map((m) => m[1].trim().replace(/^["'](.*)["']$/, "$1")).filter(Boolean);
+      if (kws.length) LOCKED.set(r.client_id, kws);
+    }
+  } catch (_) { /* no lock on file is not an error — primary_service is the fallback */ }
 } catch (e) {
   console.error(`✗ could not read rank snapshots: ${String(e.message).slice(0, 140)}`);
   process.exit(2);
@@ -90,8 +103,23 @@ for (const [k, rows] of series) {
   // 🔴 Only judge scans taken on the CURRENT tracked keyword. After a keyword change the old series
   // measures a different question, and carrying its flat line forward would report a fault that was
   // already fixed — and would keep firing forever.
-  if (client?.primary_service && keyword !== client.primary_service) {
-    console.log(`  ▫️  ${name} — "${keyword}" is no longer the tracked keyword (now "${client.primary_service}"); historic series skipped`);
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴🔴 THIS AUDITED THE PLACEHOLDER, NOT THE PLAN (fixed 2026-10-06).
+  //
+  // It compared each scan against `client.primary_service` — "seo company" — and so went on reporting
+  // a September series for a keyword that step 25 replaced hours earlier, while saying nothing at all
+  // about the five keywords actually locked. The grid had exactly this bug one level down: the step
+  // scanned the placeholder because the guard in front of it asked about the placeholder.
+  //
+  // 🔑 THE WHOLE CHAIN READS ONE SOURCE OF TRUTH. Step 25 locks the plan, step 26 scans the plan, and
+  // the gate that audits step 26 judges it against the plan. `primary_service` remains the fallback
+  // for a client with nothing locked yet.
+  // → project_the_grid_never_scanned_the_plan · feedback_fix_the_class_not_the_instance
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════
+  const locked = LOCKED.get(clientId) || null;
+  const tracked = locked && locked.length ? locked : (client?.primary_service ? [client.primary_service] : []);
+  if (tracked.length && !tracked.some((t) => String(t).toLowerCase() === String(keyword).toLowerCase())) {
+    console.log(`  ▫️  ${name} — "${keyword}" is not in this client's locked plan (${tracked.map((t) => `"${t}"`).join(", ")}); historic series skipped`);
     continue;
   }
 
