@@ -229,6 +229,16 @@ if (!/\bdata\.queued\b/.test(code)) {
     fail.push("obStalledRun does not require two real timestamps in the wrong order — a hybrid step "
       + "that finished stays in_progress forever and would be branded dead");
   }
+  // 🔴🔴 A MISSING ran_at IS UNKNOWN, NOT "NEVER PRODUCED". Treating it as evidence branded SIX
+  // healthy steps DID NOT FINISH on the live card — hybrid steps that ran successfully on 2026-09-15,
+  // carry an auto_result, and have no ran_at only because the field did not exist then. The notice
+  // claims "the server stopped without recording why", and an absence cannot support a claim that
+  // specific. → feedback_an_absence_must_never_be_readable_as_a_value
+  if (!/if \(!Number\.isFinite\(ran\)\) return null;/.test(sbody)) {
+    fail.push("obStalledRun treats a MISSING ran_at as proof the step never produced anything — every "
+      + "hybrid step that ran before ran_at existed would be branded a dead run, and a warning on six "
+      + "healthy steps is how the one true warning stops being read");
+  }
 }
 
 if (fail.length) {
