@@ -29,6 +29,10 @@
 
 import "dotenv/config";
 
+// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT — so this gate can be pointed at a scratch
+// copy and its mutations actually run. → feedback_a_gate_that_cannot_fail
+const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+
 const RGA_PROJECT_REF = "jetgayimvfeslqnkbfdq";
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
@@ -76,12 +80,6 @@ const sqlStr = (v) => (v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`
 const { createRequire } = await import("node:module");
 const _req = createRequire(import.meta.url);
 const { classify, latLngFrom, placeKeyFrom } = _req(
-// 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
-// working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
-// gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
-// mutations of `check-refusal-is-not-done` all came back green: it was reading straight past
-// them. → feedback_a_gate_that_cannot_fail · feedback_the_harness_i_wrote_to_check_my_work_can_lie
-const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
   `${__SITE}/netlify/functions/_gbp-duplicate.js`
 );
 
