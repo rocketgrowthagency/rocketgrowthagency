@@ -156,7 +156,7 @@ const PAIRS = [
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 {
   const code3 = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+    .replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   if (!/obPlaceEvidenceHtml\(verified\.get\(/.test(code3)) {
     diffs.push("the draft's own location rows do not carry the verification — so it can only appear in "
       + "a second list, and the same places print twice on one card");

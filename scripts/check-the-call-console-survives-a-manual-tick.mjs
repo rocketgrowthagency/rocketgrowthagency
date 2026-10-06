@@ -45,7 +45,7 @@ const raw = fs.readFileSync(p, "utf8");
 if (raw.length < 500000) { console.error(`⚠️  INDETERMINATE — admin.js is only ${raw.length} bytes.`); process.exit(2); }
 // 🔴 The comment explaining the deletion NAMES the dead flag. Strip comments or this gate goes red
 // on the record of its own fix. → feedback_a_comment_asserting_a_fix_is_not_the_fix
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · the done card asks the console, it does not second-guess it ────────────────────────────
 {

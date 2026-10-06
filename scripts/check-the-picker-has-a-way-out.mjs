@@ -47,7 +47,7 @@ const css = read("portal/portal.css", 50000);
 if (!raw || !css) { console.error("⚠️  INDETERMINATE — portal sources not readable."); process.exit(2); }
 // 🔴 The comments describing the fix quote the old behaviour. Strip them or this reads its own
 // changelog as code. → feedback_a_comment_asserting_a_fix_is_not_the_fix
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · the picker knows what it would be going back to ────────────────────────────────────────
 // 🔑 Read from the response the picker already has. A second fetch, or a module-level "remember
@@ -188,7 +188,7 @@ if (!/\.kc-keep\s*\{/.test(css)) {
   const fn = read("netlify/functions/kickoff-availability.js", 3000);
   if (!fn) { indet.push("kickoff-availability.js not readable"); }
   else {
-    const f = fn.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const f = fn.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     if (!/authuser=\$\{encodeURIComponent\(who\)\}/.test(f)) {
       fail.push("netlify/functions/kickoff-availability.js — the Meet link no longer pins the account. "
         + "Google then guesses which of the profile's accounts to use, and on 2026-09-30 that guess "

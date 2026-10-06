@@ -37,7 +37,7 @@ for (const f of [JS, CSS]) {
 }
 const js = fs.readFileSync(JS, "utf8");
 const css = fs.readFileSync(CSS, "utf8");
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 const fail = [];
 console.log("── every message has a shape ──");
@@ -144,7 +144,7 @@ if (fs.existsSync(MOCK)) {
     console.log("  ⚠️  admin/admin.js or admin.css missing — cannot judge the control grouping.");
     process.exit(2);
   }
-  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const ac = fs.readFileSync(ADMIN_CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 
   // 1 ─ the grouped row exists and the flat one has not come back
@@ -247,7 +247,7 @@ if (fs.existsSync(MOCK)) {
 {
   const ADMIN_JS = path.join(SITE, "admin/admin.js");
   const ADMIN_CSS = path.join(SITE, "admin/admin.css");
-  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const ac = fs.readFileSync(ADMIN_CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 
   // 1 ─ the four kinds exist on both sides

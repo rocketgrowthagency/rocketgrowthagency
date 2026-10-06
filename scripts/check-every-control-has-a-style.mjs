@@ -54,7 +54,7 @@ for (const s of SURFACES) {
   if (raw.length < 50000) { indet.push(`${s.js} is only ${raw.length} bytes`); continue; }
 
   // 🔴 Comments quote markup while explaining it — including the very buttons this gate is about.
-  const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
   let css = "";
   for (const c of s.css) {

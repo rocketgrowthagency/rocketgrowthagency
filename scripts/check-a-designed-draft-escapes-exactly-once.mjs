@@ -70,7 +70,12 @@ if (!/yIndent/.test(helpers) || !/yUnquote/.test(helpers)) { console.error("⛔ 
 const ctx = vm.createContext({ console });
 try {
   vm.runInContext(
-    helpers + "\n" + ["escapeHtml", "parseYamlish", "parseYamlBlock", "structuredCoversSource", "structuredHtml"].map(pick).join("\n\n"),
+    // 🔴🔴 A HAND-WRITTEN LIFT LIST GOES STALE THE DAY THE PRODUCT GROWS A HELPER. `structuredHtml`
+    // began calling `obVerifiedPlaces` / `obPlaceEvidenceHtml` and this gate THREW — a stack trace
+    // where a finding should be, which the sweep counts separately precisely because it is noise.
+    // 🔑 scripts/_lift-admin.mjs resolves its own dependency set; this list is the third copy of a
+    // promise somebody has to remember. → feedback_a_lift_list_is_a_promise_somebody_will_remember
+    helpers + "\n" + ["escapeHtml", "parseYamlish", "parseYamlBlock", "structuredCoversSource", "obVerifiedPlaces", "obPlaceEvidenceHtml", "structuredHtml"].map(pick).join("\n\n"),
     ctx,
   );
 } catch (e) { console.error("⛔ cannot evaluate the product functions: " + e.message); process.exit(2); }
@@ -132,7 +137,7 @@ const ctx2 = vm.createContext({ console, URL });
 try {
   vm.runInContext(
     helpers + "\n" +
-    ["escapeHtml", "escapeAttribute", "parseYamlish", "parseYamlBlock", "structuredCoversSource", "structuredHtml", "renderStepMarkdown"]
+    ["escapeHtml", "escapeAttribute", "parseYamlish", "parseYamlBlock", "structuredCoversSource", "obVerifiedPlaces", "obPlaceEvidenceHtml", "structuredHtml", "renderStepMarkdown"]
       .map(pick).join("\n\n"),
     ctx2,
   );

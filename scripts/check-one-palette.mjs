@@ -39,7 +39,7 @@ const files = JS.filter((f) => fs.existsSync(f));
 if (!files.length || !fs.existsSync(CSS)) { console.error("[palette] INDETERMINATE — files missing"); process.exit(2); }
 
 const problems = [];
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 + 2. Bare hex, and var() without a fallback ────────────────────────────────────────────────
 let scanned = 0;

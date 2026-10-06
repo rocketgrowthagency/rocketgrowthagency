@@ -37,7 +37,7 @@ if (!fs.existsSync(JS) || !fs.existsSync(CSS)) {
 }
 const js = fs.readFileSync(JS, "utf8");
 const css = fs.readFileSync(CSS, "utf8");
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 const fail = [];
 console.log("── the setup accordion behaves ──");

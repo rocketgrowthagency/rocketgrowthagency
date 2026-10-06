@@ -77,7 +77,7 @@ ok(S(mk("b", "B", "not-a-date", ["m1.strategy.keywords_locations"]), [K]).length
 
 // ── IT IS WIRED INTO THE ROW ────────────────────────────────────────────────────────────────────
 {
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const code = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   ok(/\$\{obStaleNoteHtml\(/.test(code),
     "nothing renders the stale note — the rule exists and no card shows it");
   // 🔴 ON THE DONE ROW. A warning rendered only on an active step would never appear on the one that

@@ -46,7 +46,7 @@ console.log("── every in-portal jump lands on something the client can actua
 
 if (!fs.existsSync(FILE)) { console.error("[jumps] INDETERMINATE — portal/portal.js not found"); process.exit(2); }
 const src = fs.readFileSync(FILE, "utf8");
-const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1. No hand-rolled jumps ────────────────────────────────────────────────────────────────────
 // An inline onclick that looks up an element and scrolls it is the exact shape that shipped broken.

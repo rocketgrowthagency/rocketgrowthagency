@@ -262,7 +262,7 @@ const code = fs.readFileSync(JS, "utf8");
 
   // 🔴 "them" is the client. On an operator's screen the actor should be named.
   // 🔑 Comments are stripped — the notes explaining this very fix quote the old wording.
-  const live = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const live = code.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const vague = [...live.matchAll(/"[^"]*\b(?:on|with|for) them\b[^"]*"/g)].map((m) => m[0]);
   if (vague.length)
     fail.push(`admin/admin.js — ${vague.length} admin string(s) still say "them" where they mean the client: ${vague.slice(0, 2).join(" · ")}`);
@@ -278,7 +278,7 @@ const code = fs.readFileSync(JS, "utf8");
 // the same defect as a step that says "do it" with no control on it.
 // → feedback_a_finding_must_be_actionable_inside_the_product
 {
-  const live = code.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const live = code.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
   // 1 · the approve action is emitted, and ONLY with a real ISO behind it.
   if (!/approve:\s*askedIso\s*\?/.test(live)) {

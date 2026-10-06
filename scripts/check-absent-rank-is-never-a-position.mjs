@@ -57,7 +57,7 @@ for (const [k, p] of Object.entries(F)) {
 // ── 1. The producer must not manufacture a sentinel ──────────────────────────────────────────────
 // Strip comments first: this file DOCUMENTS the old `fill(21)` in prose, and a check that trips on
 // its own explanation is a dead check. → feedback_a_check_must_not_validate_itself
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const stripComments = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 const prod = stripComments(src.producer);
 if (/Array\(\s*GRID\s*\)\.fill\(\s*21\s*\)/.test(prod) || /\.fill\(\s*21\s*\)/.test(prod)) {
   problems.push("v2-rank-grid-background seeds the grid with 21 — not-found must seed as null.");

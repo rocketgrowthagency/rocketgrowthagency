@@ -57,7 +57,7 @@ if (!fn) { console.error("⚠️  INDETERMINATE — cannot read volumeLabel; re-
 // function's string literals carries this bug until it does.
 // → feedback_a_gate_window_measured_in_characters_will_lie · feedback_the_harness_i_wrote_to_check_my_work_can_lie
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-const decomment = (t) => t.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+const decomment = (t) => t.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 const fnCode = decomment(fn);
 
 // String literals it can return, minus the interpolated numeric one (covered separately).
@@ -190,7 +190,7 @@ for (const [n, want] of [["2,400 searches/mo", "ok"], ["300 searches/mo", "low"]
 // 🔴 The card printed "N are below Google's floor … Replace them before locking" about the very
 // keywords the floor rule had just kept on evidence.
 {
-  const code = flow.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+  const code = flow.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   // 🔴 THE WHOLE STATEMENT, NOT THE FIRST LINE. The declaration spans two lines, and a `^.*$`
   // alternative matched only the first — which does not contain the guard — so the gate accused
   // correct code on its first run.

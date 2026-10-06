@@ -210,8 +210,8 @@ else {
     // CSS class asks a genuinely different question (BOOKED, not merely chosen).
     // → feedback_a_check_must_not_validate_itself
     const live = body
-      .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
       .split("\n")
       .filter((l) => !/const clientHasChosen/.test(l) && !/is-kickoff-booked/.test(l))
       .join("\n");

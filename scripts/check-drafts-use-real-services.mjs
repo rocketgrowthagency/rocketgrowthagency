@@ -32,7 +32,7 @@ const FLOW = '/Users/chris/RGA/Rocket Growth Agency Website VS Code/netlify/func
 
 export function verdict(src) {
   const problems = [];
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const code = src.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
 
   if (!/function svcCtx\s*\(/.test(code)) {
     problems.push('svcCtx() is missing — there is no single place that feeds prompts the real service list');

@@ -155,7 +155,7 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
 
 // 10 ─ one ordered checklist, and settled steps stay editable
 {
-  const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (/class="ai-done"/.test(code) || /already done<\/summary>/.test(code)) {
     fail.push("the completed-steps drawer is back — the visible list would read 4, 5, 7, 9 and a client told \"you're on 6\" could not find 6");
   }
@@ -251,7 +251,7 @@ if (saveCatch && !/refreshFacts\(\)/.test(saveCatch[0])) {
 
 // 9 ─ no pending state on a one-tap answer, anywhere
 {
-  const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const saving = [...code.matchAll(/"Saving…"|'Saving…'|>Saving…</g)];
   if (saving.length) {
     fail.push(`${saving.length} "Saving…" pending state(s) are back — a one-tap answer that greys its own row reads as broken, not busy`);

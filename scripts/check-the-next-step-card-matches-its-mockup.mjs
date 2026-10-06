@@ -64,7 +64,7 @@ const fail = [];
     console.error("⚠️  INDETERMINATE — kickoffFacts is gone or unbalanced; this gate cannot read the rule it exists to pin.");
     process.exit(2);
   }
-  const code = facts.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+  const code = facts.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   const iUnknown = code.search(/_kickoffUnknown\s*\.\s*has\s*\(/);
   const iLedger = code.search(/_kickoffMine\s*\.\s*get\s*\(/);
   const iStampReturn = code.lastIndexOf("return");

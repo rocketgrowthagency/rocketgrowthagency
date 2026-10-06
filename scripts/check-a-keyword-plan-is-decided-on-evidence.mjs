@@ -191,7 +191,7 @@ globalThis.C = coreOf;`, ctx);
 
 // ═══ PART 3 · THE STEP WIRES BOTH, AND CLEANS UP AFTER ITSELF ═══════════════════════════════════
 {
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const code = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   // 🔴 A LIVE CALL, NOT A MENTION. `const chosen = null && chooseAnchorSwap({…})` satisfied a bare
   // `/chooseAnchorSwap\(\{/` and the gate passed over a selector that could never run.
   // → feedback_a_literal_grep_misses_computed_writes
@@ -263,7 +263,7 @@ globalThis.C = coreOf;`, ctx);
 // 🔑 A SECOND RUN IS A RE-MEASUREMENT, NOT A SECOND OPINION.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 {
-  const flow = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const flow = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   ok(/readLockedPlan\(recs0\)/.test(flow) || /const locked = readLockedPlan\(/.test(flow),
     "the step never reads the plan this client already has locked — every run drafts from a blank page, "
     + "so pressing Run again silently replaces this month's targets");

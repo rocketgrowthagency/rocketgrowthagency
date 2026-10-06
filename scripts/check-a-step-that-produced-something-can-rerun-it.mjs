@@ -32,7 +32,7 @@ if (!fs.existsSync(JS)) { console.error("⚠️  INDETERMINATE — admin.js not 
 const raw = fs.readFileSync(JS, "utf8");
 if (raw.length < 100000) { console.error(`⚠️  INDETERMINATE — admin.js is only ${raw.length} bytes.`); process.exit(2); }
 // 🔴 The comments here quote the fix in detail; strip them or the gate passes on the prose.
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = raw.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 /**
  * The source of the checklist's `if (s.uiState === "<name>")` branch.

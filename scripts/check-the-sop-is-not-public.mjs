@@ -46,7 +46,7 @@ const admin = read("admin/admin.js");
 
 for (const [name, src] of [["portal/portal.js", portal], ["admin/admin.js", admin]]) {
   // Ignore comments — this path is named in the explanations of why it was closed.
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (code.includes(RAW)) bad(`${name} still fetches ${RAW} — that is the public SOP`);
 }
 if (!/client-steps\.json/.test(portal)) bad("the portal does not read the client-safe projection");

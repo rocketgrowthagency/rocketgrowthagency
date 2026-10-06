@@ -29,7 +29,7 @@ const ads = read("netlify/functions/_ads-keywords.js");
 const bg = read("netlify/functions/flow-execute-heavy-background.js");
 if (!ads || !bg) { console.error("⚠️  INDETERMINATE — cannot read the function sources"); process.exit(2); }
 
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 const fail = [];
 
 // ── 1 · EVERY OUTBOUND CALL IN THE ADS MODULE GOES THROUGH THE DEADLINE WRAPPER ─────────────────
@@ -147,10 +147,11 @@ const fail = [];
 //
 // 🔑 SO IT IS A RATCHET. The hot path must be clean, and the backlog may only ever shrink.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-const BARE_FETCH_BASELINE = Number(process.env.DEADLINE_BASELINE || 446);
-// Files the heavy steps actually run through. These must be clean, not merely no-worse.
-const HOT_PATH = ["flow-execute-heavy-background.js", "_ads-keywords.js"];
-
+// 🔑 A FILE IS COVERED IF IT REQUIRES `_deadline` (which puts a floor under every request the whole
+// process makes, including ones inside libraries) OR if every call it makes carries its own signal.
+// The backlog was 446 bare fetches across 101 files; editing 446 call sites would have been 446
+// chances to miss one, and could not have reached a request made inside a dependency.
+// → feedback_fix_the_class_not_the_instance
 {
   const dir = `${SITE}/netlify/functions`;
   let files = [];
@@ -158,55 +159,64 @@ const HOT_PATH = ["flow-execute-heavy-background.js", "_ads-keywords.js"];
   catch { console.error("⚠️  INDETERMINATE — cannot list netlify/functions"); process.exit(2); }
   if (files.length < 5) { console.error("⚠️  INDETERMINATE — too few function files found."); process.exit(2); }
 
-  let bare = 0, scanned = 0;
-  const hotFails = [];
+  // the module itself must still do the one thing it claims
+  let dl = "";
+  try { dl = fs.readFileSync(`${dir}/_deadline.js`, "utf8"); }
+  catch { fail.push("_deadline.js is gone — every function that relied on it for a floor now has none"); }
+  if (dl) {
+    if (!/AbortSignal\.timeout\(/.test(dl)) fail.push("_deadline.js no longer sets a timeout signal");
+    if (!/if \(i\.signal\) return underlying/.test(dl)) {
+      fail.push("_deadline.js no longer honours a caller's OWN signal — the surface probe's 45s and "
+        + "the ads 20s would be silently overridden by the default floor");
+    }
+    if (!/__rgaFetchDeadlineInstalled/.test(dl)) {
+      fail.push("_deadline.js can install itself twice — a timeout stacked on a timeout, with the "
+        + "behaviour depending on how many modules happened to import it");
+    }
+  }
+
+  let scanned = 0, uncovered = 0;
   for (const f of files) {
+    if (f === "_deadline.js") continue;
     let src2;
     try { src2 = fs.readFileSync(`${dir}/${f}`, "utf8"); } catch { continue; }
-    const code2 = src2.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
-    for (const m of code2.matchAll(/\b(?:globalThis\.)?fetch\s*\(/g)) {
+    // 🔴🔴 LINE COMMENTS FIRST, THEN BLOCK COMMENTS. The other order loses code: `brain-record-audit.js`
+    // has `//   OPS MEMORY (~/.claude/.../memory/*.md)` on line 12, and that stray `/*` inside a LINE
+    // comment made the block-comment pass swallow 120 lines — including the `require("./_deadline")`
+    // this gate was looking for. It then reported a correct file as unprotected.
+    // 🔑 A COMMENT STRIPPER THAT RUNS IN THE WRONG ORDER DELETES CODE, and every gate in this repo
+    // that greps stripped source shares the idiom. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+    const code2 = src2.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+    const calls = [...code2.matchAll(/\b(?:globalThis\.)?fetch\s*\(/g)];
+    if (!calls.length) continue;
+    scanned += calls.length;
+    if (/require\(['"]\.\/_deadline['"]\)/.test(code2)) continue;   // covered process-wide
+    for (const m of calls) {
       const start = m.index;
       let d = 0, end = start;
       for (let k = code2.indexOf("(", start); k < code2.length; k++) {
         if (code2[k] === "(") d++;
         else if (code2[k] === ")") { d--; if (!d) { end = k; break; } }
       }
-      const call = code2.slice(start, end + 1);
-      scanned++;
-      if (/signal\s*:/.test(call)) continue;
+      if (/signal\s*:/.test(code2.slice(start, end + 1))) continue;
       const before = code2.slice(Math.max(0, start - 1200), start);
       const encl = [...before.matchAll(/(?:async )?function (\w+)\s*\(/g)].pop();
       const name = encl ? encl[1] : null;
       if (name && new RegExp(`function ${name}\\s*\\([\\s\\S]{0,900}?signal\\s*:`).test(code2)) continue;
-      bare++;
-      if (HOT_PATH.includes(f)) {
-        hotFails.push(`${f}: an outbound fetch${name ? ` in ${name}()` : ""} carries no deadline, and this `
-          + "file is on the heavy-step path — a request that never answers burns the whole run and the "
-          + "record is killed still saying in_progress");
-      }
+      uncovered++;
+      fail.push(`${f}: an outbound fetch${name ? ` in ${name}()` : ""} has no deadline, and the file does `
+        + "not require ./_deadline — a request that never answers kills the run in silence");
     }
   }
   if (scanned < 5) {
     console.error(`⚠️  INDETERMINATE — only ${scanned} fetch call(s) found across ${files.length} files.`);
     process.exit(2);
   }
-  for (const h of hotFails) fail.push(h);
-  if (bare > BARE_FETCH_BASELINE) {
-    fail.push(`un-deadlined outbound fetches rose to ${bare} (baseline ${BARE_FETCH_BASELINE}) — the `
-      + "backlog may shrink, never grow. A new bare fetch is how the last hung run got in");
-  }
-  // 🔑 AND THE BASELINE MUST FOLLOW THE WORK DOWN, or it stops meaning anything.
-  if (bare < BARE_FETCH_BASELINE - 25) {
-    fail.push(`un-deadlined fetches are down to ${bare} from a baseline of ${BARE_FETCH_BASELINE} — `
-      + "lower DEADLINE_BASELINE in this gate so the ratchet keeps holding the new level");
-  }
-  // 🔴 THE ONE THAT CAUSED IT. Named, because it is the helper every Supabase call in the heaviest
-  // function goes through — one wrapper covering all of its callers, present and future.
-  const fe = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8");
+  // 🔴 THE ONE THAT CAUSED IT, still pinned by name.
+  const fe = fs.readFileSync(`${dir}/flow-execute.js`, "utf8");
   if (!/async function supa\([\s\S]{0,800}?signal:\s*AbortSignal\.timeout/.test(fe)) {
-    fail.push("`supa()` in flow-execute.js has no deadline — every Supabase read and write in the "
-      + "heaviest step goes through it, and one that never answers hangs the run with the record "
-      + "still saying in_progress");
+    fail.push("`supa()` in flow-execute.js has no deadline of its own — every Supabase read and write "
+      + "in the heaviest step goes through it");
   }
 }
 

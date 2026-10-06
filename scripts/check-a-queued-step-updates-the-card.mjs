@@ -31,7 +31,7 @@ try {
   flow = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8");
 } catch { console.error("⚠️  INDETERMINATE — cannot read the sources"); process.exit(2); }
 
-const code = admin.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = admin.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 const fail = [];
 
 // ── 1 · THE SERVER STILL ANSWERS `queued` FOR A BACKGROUND STEP ─────────────────────────────────
@@ -124,7 +124,7 @@ if (!/\bdata\.queued\b/.test(code)) {
 // the map-pack and sub-location probes were added, and the waiting message did not change.
 // 🔑 AN ELAPSED COUNT IS THE CHEAPEST POSSIBLE PROOF OF LIFE.
 {
-  const code2 = admin.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const code2 = admin.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   if (!/onTick/.test(code2)) {
     fail.push("the background wait has no per-poll callback — the banner cannot change while a step runs, "
       + "so a two-minute wait looks exactly like a hang");
@@ -189,7 +189,7 @@ if (!/\bdata\.queued\b/.test(code)) {
 // → feedback_unloaded_is_not_an_answer
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 {
-  const c = admin.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const c = admin.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   if (!/function obStalledRun\(/.test(c)) {
     fail.push("nothing decides that a run has died — the card depends entirely on the server writing a "
       + "failure, and a killed process cannot write one");

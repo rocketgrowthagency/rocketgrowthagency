@@ -113,7 +113,7 @@ if (!/never suggested/.test(step)) fail.push("the card no longer says which phra
 // search volume — so the disclaimer check passed on the PROSE after the actual disclaimer had been
 // deleted from the card. A comment asserting a fix is not the fix.
 // → feedback_a_comment_asserting_a_fix_is_not_the_fix
-const code = step.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = step.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 const usesAutocomplete = /engine=google_autocomplete/.test(code);
 const namesVolume = /search volume/i.test(code);

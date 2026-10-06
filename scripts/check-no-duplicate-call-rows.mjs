@@ -102,7 +102,7 @@ if (unkeyed) fail.push(`${unkeyed} phone row(s) carry a call id in Notes but not
 try {
   const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
   const wh = fs.readFileSync(path.join(SITE, "netlify/functions/quo-call-webhook.js"), "utf8");
-  const code = wh.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = wh.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (!/const silent = !answeredAt/.test(code)) {
     fail.push("the webhook no longer distinguishes a silent call — every unanswered unknown number would become a lead again");
   }

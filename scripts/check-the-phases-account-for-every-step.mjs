@@ -39,7 +39,7 @@ const pbPath = path.join(SITE, "data/playbooks/playbooks.json");
 if (!js || !fs.existsSync(pbPath)) {
   console.error("⚠️  INDETERMINATE — admin.js or playbooks.json not found."); process.exit(2);
 }
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 let m1;
 try { m1 = JSON.parse(fs.readFileSync(pbPath, "utf8")).month1; }
 catch (e) { console.error(`⚠️  INDETERMINATE — playbooks.json will not parse: ${e.message}`); process.exit(2); }

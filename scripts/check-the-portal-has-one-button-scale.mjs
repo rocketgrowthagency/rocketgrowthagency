@@ -162,7 +162,7 @@ const EXEMPT = {
   if (!fs.existsSync(jsPath)) indet.push("portal.js not found — the exhaustive sweep did not run");
   else {
     const js = fs.readFileSync(jsPath, "utf8")
-      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+      .replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     const used = new Set();
     for (const m of js.matchAll(/<(?:button|a)\b[^>]*?class="([^"]*)"/g)) {
       // 🔑 The LITERAL PREFIX, before any `${…}` — `class="pm-choice${on}"` is still `.pm-choice`.

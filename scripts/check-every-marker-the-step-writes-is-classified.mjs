@@ -62,7 +62,7 @@ catch (e) { console.error(`⚠️  INDETERMINATE — could not evaluate the clas
 // 🔴 COMMENTS STRIPPED FIRST. These files quote their own output in explanatory prose, and a marker
 // inside a comment is not a marker the step writes. Harvesting one made a sibling gate demand that
 // the card classify a sentence. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
-const code = flow.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+const code = flow.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // 🔴 ANY STRING THAT STARTS WITH A MARKER, WHEREVER IT IS WRITTEN. The first version matched only a

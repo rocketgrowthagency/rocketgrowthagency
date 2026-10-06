@@ -33,7 +33,7 @@ const fail = [], pass = [];
 
 if (!fs.existsSync(F)) { console.error("⚠️  INDETERMINATE — flow-execute.js not found."); process.exit(2); }
 const raw = fs.readFileSync(F, "utf8");
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = raw.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 /** The keyword step's handler body. */
 const step = (() => {

@@ -32,7 +32,7 @@ try { src = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"); }
 catch { console.error("⚠️  INDETERMINATE — cannot read admin.js"); process.exit(2); }
 
 // The file documents the old wrong behaviour at length; a naive scan reads the explanation as the bug.
-const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = src.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 const fail = [];
 
 // ── 1 · THE "NOT YET" SENTENCE IS GATED ON THERE BEING NO ERROR ─────────────────────────────────

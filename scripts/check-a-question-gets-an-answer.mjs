@@ -35,7 +35,7 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
 // 🔑 Strip only LINE-LEADING comments: the obvious block-comment regex eats the `/*` inside strings
 // like a route glob and deletes live code after it. → feedback_a_gate_window_measured_in_characters_will_lie
-const code = (s) => s.replace(/^\s*\/\*[\s\S]*?\*\//gm, "").replace(/^\s*\/\/.*$/gm, "");
+const code = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/^\s*\/\*[\s\S]*?\*\//gm, "");
 
 let fail = 0;
 const bad = (m) => { console.log(`  🔴 ${m}`); fail++; };

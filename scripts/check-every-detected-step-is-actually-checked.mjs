@@ -82,7 +82,7 @@ if (ids) {
 // ── 3 · the nightly reads the table rather than restating it ───────────────────────────────────
 {
   const md = fs.readFileSync(mdPath, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    .replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const m = md.match(/const PROBED_STEPS\s*=\s*([^;]+);/);
   if (!m) {
     fail.push("netlify/functions/metrics-daily-refresh.js — PROBED_STEPS is gone, so nothing "

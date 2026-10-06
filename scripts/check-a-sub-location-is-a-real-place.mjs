@@ -285,7 +285,7 @@ try {
   }
 
   // ── 7 · THE STEP ACTUALLY CALLS IT, AND READS THE DRAFT'S LOCATIONS ──────────────────────────
-  const code = flow.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const code = flow.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   ok(/await ads\.verifyPlaces\(/.test(code),
     "flow-execute never calls ads.verifyPlaces — the sub-locations reach the record unverified, which is "
     + "the state this gate exists to end");

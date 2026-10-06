@@ -36,7 +36,7 @@ for (const rel of FILES) {
   try { src = fs.readFileSync(path.join(SITE, rel), "utf8"); }
   catch { continue; }
   // strip comments — this gate's own reasoning names the pattern it forbids
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
   for (const [rx, what] of [
     [/gbp_calls\s*\?\?\s*[\w.]*total_calls/g, "a fallback from gbp_calls to total_calls"],

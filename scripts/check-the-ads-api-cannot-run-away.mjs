@@ -46,7 +46,7 @@ const rawFlow = fs.readFileSync(FLOW, "utf8");
 // 🔴 The comments in this module quote the very strings the checks look for — strip them, or the
 // gate passes on prose describing the fix instead of the code performing it.
 // → feedback_a_comment_asserting_a_fix_is_not_the_fix
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 const mod = strip(rawMod);
 const flow = strip(rawFlow);
 

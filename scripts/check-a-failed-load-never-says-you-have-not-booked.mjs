@@ -42,7 +42,7 @@ if (!fs.existsSync(JS)) { console.error("⚠️  INDETERMINATE — portal.js not
 const raw = fs.readFileSync(JS, "utf8");
 if (raw.length < 100000) { console.error(`⚠️  INDETERMINATE — portal.js is only ${raw.length} bytes.`); process.exit(2); }
 // 🔴 The comments explaining this very fix quote the strings it is about.
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · RUN THE REAL DECISION, do not re-implement it ───────────────────────────────────────────
 // 🔑 Lift the exact `const state = …` ladder out of the source and evaluate it against stub maps.

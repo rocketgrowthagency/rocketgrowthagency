@@ -203,7 +203,7 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   // 🔑 Strip comments: the note explaining this very bug quotes the old query, so the raw file always
   // contains it. A gate that reads its own rationale as the defect is no gate at all.
   // → feedback_a_check_must_not_validate_itself
-  const avail = availRaw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const avail = availRaw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (/order=slot_start\.asc&limit=1/.test(avail))
     fail.push("kickoff-availability.js — the booking is read as the EARLIEST hold, so after a reschedule the client is shown their old time and the new request is invisible.");
   else pass.push("the endpoint does not pick the earliest hold");

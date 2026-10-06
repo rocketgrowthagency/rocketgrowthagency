@@ -75,7 +75,7 @@ const OWNS_A_PRICE = /(?:return|=|:)\s*(?:1250|625|1875|2500|3750|5000|1500|3500
 // 🔴 Strip comments before asking "does this file own a price". stripe-webhook.js documents the old
 // $2,500 bug in prose; a gate that cannot tell a comment from code punishes writing the lesson down.
 // Conservative on purpose: only whole-line `//`, so `https://` inside a string is never touched.
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+const stripComments = (s) => s.replace(/^[ \t]*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 console.log("── every EXCLUDED / DERIVED price excuse is re-proved from the file ──");
 

@@ -80,7 +80,7 @@ if (!looked) {
   const p = path.join(SITE, "portal", "portal.js");
   if (fs.existsSync(p)) {
     const raw = fs.readFileSync(p, "utf8");
-    const live = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const live = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     const renders = [...live.matchAll(/<div class="pm-knowdone"/g)];
     if (renders.length) {
       fail.push(`portal/portal.js — a step card renders the done-when strip again (${renders.length}×). `

@@ -31,7 +31,7 @@ try { src = fs.readFileSync(F, "utf8"); }
 catch { console.error("⚠️  INDETERMINATE — cannot read flow-execute.js"); process.exit(2); }
 
 const fail = [];
-const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = src.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 // ── 1 · THE REASSEMBLY KEEPS THE HEAD ───────────────────────────────────────────────────────────
 // 🔑 Pin the PROPERTY — everything before the section being replaced survives — not the variable

@@ -38,7 +38,7 @@ const fail = [];
 
 // Strip comments first: this file DOCUMENTS the old wrong labels at length, and a naive scan reads
 // the explanation of the bug as the bug. → feedback_a_comment_asserting_a_fix_is_not_the_fix
-const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = src.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 // ── 1 · EVERY next-action state, read as an object ──────────────────────────────────────────────
 // Find each `owner: "<kind>"` that belongs to the next-action card (it has a `title:` beside it) and

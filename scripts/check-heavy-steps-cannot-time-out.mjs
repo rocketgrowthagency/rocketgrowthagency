@@ -78,7 +78,7 @@ export function verdict(src, hasBackground) {
     const name = blocks[i], body = blocks[i + 1] || '';
     if (heavy.has(name)) continue;
     // Strip comments: these executors DOCUMENT the APIs they used to call.
-    const code = body.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+    const code = body.replace(/^\s*\/\/.*$/gm, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
     for (const [re, label] of EXTERNAL) {
       if (re.test(code)) {
         out.push(`${name} calls ${label} and runs SYNCHRONOUSLY — an external API is slow for a `

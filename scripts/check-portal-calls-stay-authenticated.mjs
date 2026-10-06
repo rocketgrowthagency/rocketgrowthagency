@@ -30,7 +30,7 @@ import path from "node:path";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
-const strip = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const strip = (src) => src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 let fail = 0;
 const bad = (m) => { console.log(`  🔴 ${m}`); fail++; };

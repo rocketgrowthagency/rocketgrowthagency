@@ -42,7 +42,7 @@ if (!fs.existsSync(FNS)) { console.error(`[ledger] INDETERMINATE — no function
 
 const problems = [];
 const files = fs.readdirSync(FNS).filter((f) => f.endsWith(".js"));
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1. Nothing may mutate the ledger ─────────────────────────────────────────────────────────────
 let writers = 0;

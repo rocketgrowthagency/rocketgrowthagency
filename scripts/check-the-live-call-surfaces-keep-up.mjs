@@ -38,7 +38,7 @@ const read = (rel, min) => {
   const s = fs.readFileSync(p, "utf8");
   return s.length < min ? null : s;
 };
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 const portal = read("portal/portal.js", 200000);
 const admin = read("admin/admin.js", 500000);

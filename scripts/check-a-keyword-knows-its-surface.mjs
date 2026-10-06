@@ -185,7 +185,7 @@ try {
   // map pack decides whether it is won with the profile or with a page.
   {
     const ks = fs.readFileSync(`${SITE}/netlify/functions/_ads-keywords.js`, "utf8")
-      .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+      .replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
     const fi = ks.indexOf("async function localSurface");
     const body = fi >= 0 ? ks.slice(fi, fi + 6000) : "";
     ok(/await Promise\.all\(list\.map\(/.test(body),
@@ -209,7 +209,7 @@ try {
     + "never run over a candidate pool");
 
   // ── 7 · THE STEP USES IT TO DECIDE AND TO DISCLOSE ────────────────────────────────────────────
-  const code = flow.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const code = flow.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   // 🔴 A LIVE CALL. `surf = surf || await ads.localSurface(…)` satisfied a bare search for the call and
   // never ran, because `surf` is initialised to a truthy placeholder. Pin the assignment.
   // → feedback_a_literal_grep_misses_computed_writes

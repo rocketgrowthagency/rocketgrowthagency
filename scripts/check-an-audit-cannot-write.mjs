@@ -56,7 +56,7 @@ for (const f of files) {
   // route glob `"**/*"` and deleted every line after it — so this gate reported the blocker's own
   // method check and refusals as missing, on a file that had them.
   // → feedback_a_gate_window_measured_in_characters_will_lie
-  const code = src.replace(/^\s*\/\*[\s\S]*?\*\//gm, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/^\s*\/\*[\s\S]*?\*\//gm, "");
   // The blocker must (a) route requests, (b) branch on method, (c) refuse non-GET to our origins.
   const routes = /\.route\(/.test(code);
   const checksMethod = /\.method\(\)/.test(code);
@@ -93,7 +93,7 @@ if (!drivers) {
     bad("fga-pagespeed-background.js is gone — the FGA mobile score has no source");
   } else {
     const src = fs.readFileSync(p, "utf8");
-    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const code = src.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     if (/body\.website/.test(code) || /const\s*\{[^}]*\bwebsite\b[^}]*\}\s*=\s*body/.test(code)) {
       bad("fga-pagespeed-background reads `website` from the REQUEST BODY — the caller can choose "
         + "which site we measure and whose report we write the score into");

@@ -34,7 +34,7 @@ const cssPath = path.join(SITE, "admin/admin.css");
 for (const p of [jsPath, cssPath]) if (!fs.existsSync(p)) { console.error(`⚠️  INDETERMINATE — ${p} missing.`); process.exit(2); }
 const js = fs.readFileSync(jsPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · RUN the classifier and the linkifier ───────────────────────────────────────────────────
 // 🔑 A regex over them would be a claim about the source. Feed them text and look at what comes out.

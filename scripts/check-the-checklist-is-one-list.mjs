@@ -64,7 +64,7 @@ catch (e) { console.error(`⚠️  INDETERMINATE — playbooks.json will not par
 // 🔴 COMMENTS ARE NOT CODE. The first version of this gate matched the word `rgaSide` and went red
 // on the comment explaining its removal — it accused the very change it exists to confirm.
 // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_comment_asserting_a_fix_is_not_the_fix
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · nothing filters the playbook on its way to the checklist ────────────────────────────────
 if (/\brgaSide\s*[=(]/.test(code)) {

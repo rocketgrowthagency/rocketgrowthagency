@@ -76,8 +76,8 @@ function executorIdsIn(src, prefix) {
   }
   if (end < 0) return null;
   const body = src.slice(open, end)
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
   return new Set([...body.matchAll(new RegExp(`["'](${prefix}\\.${ID})["']`, 'g'))].map((m) => m[1]));
 }
 

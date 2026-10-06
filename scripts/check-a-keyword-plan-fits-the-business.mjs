@@ -32,7 +32,7 @@ try { src = fs.readFileSync(F, "utf8"); }
 catch { console.error("⚠️  INDETERMINATE — cannot read flow-execute.js"); process.exit(2); }
 
 const fail = [];
-const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = src.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 
 // ── 1 · NO HARDCODED INDUSTRY IN THE SEEDS, AND THE REAL FIELD IS READ ──────────────────────────
 {

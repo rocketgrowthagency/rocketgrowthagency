@@ -42,7 +42,7 @@ const read = (rel, min) => {
   if (s.length < min) { indet.push(`${rel} is only ${s.length} bytes`); return null; }
   return s;
 };
-const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · the admin asks, and asks before it offers the recap ─────────────────────────────────────
 {

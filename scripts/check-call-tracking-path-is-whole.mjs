@@ -84,7 +84,7 @@ if (!/did not stick/.test(choiceFn)) fail.push("portal-step-choice does not read
 if (!/notify-rga/.test(choiceFn)) fail.push("portal-step-choice never notifies RGA");
 
 // 4 ─ the pull is honest
-const code = sync.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = sync.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 if (/gbp_calls/.test(code)) fail.push("callrail-sync touches gbp_calls — that column is the Google listing metric, not tracked calls");
 if (!/total_calls/.test(code)) fail.push("callrail-sync never writes total_calls");
 if (!/indeterminate/.test(code)) fail.push("callrail-sync has no indeterminate path — it would write a 0 when it could not tell, and a 0 claims nobody rang");
@@ -110,7 +110,7 @@ try {
 
 // 4c ─ provisioning must refuse to give a second number to a client who already has one
 {
-  const pcode = prov.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const pcode = prov.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (!/already_have/.test(pcode)) {
     fail.push("call-tracking-provision does not check the client's choice — it would create a SECOND number for a client who already pays for one, splitting their reporting and billing them twice");
   }
@@ -134,7 +134,7 @@ try {
   if (quo && quo.attributed !== false) {
     fail.push("Quo/OpenPhone is marked attributed — it has no number swapping, so it cannot tie a call to a search, and its calls would be reported as if search produced them");
   }
-  const pcode2 = prov.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const pcode2 = prov.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (!/call_tracking_attributed/.test(pcode2)) {
     fail.push("provisioning does not copy the attribution fact onto the client — the portal would label a phone system's calls as search-driven");
   }

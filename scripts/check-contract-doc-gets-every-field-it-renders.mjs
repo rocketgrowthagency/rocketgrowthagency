@@ -48,7 +48,7 @@ const DERIVED = {
 
 function fieldsRead(src) {
   // Strip comments so prose describing a field is not mistaken for code reading it.
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const code = src.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
   return [...new Set([...code.matchAll(/\bcontract\.([a-z_][a-z0-9_]*)/g)].map((m) => m[1]))];
 }
 

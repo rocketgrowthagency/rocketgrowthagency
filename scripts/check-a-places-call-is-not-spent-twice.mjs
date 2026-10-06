@@ -34,7 +34,7 @@ if (!fs.existsSync(F)) { console.error("⚠️  INDETERMINATE — admin-onboardi
 const raw = fs.readFileSync(F, "utf8");
 // 🔴 The comments here quote the defect in detail — strip them, or the gate passes on the prose that
 // describes the fix rather than the code performing it.
-const code = raw.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
+const code = raw.replace(/^\s*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
 if (code.length < 3000) { console.error(`⚠️  INDETERMINATE — only ${code.length} bytes of code.`); process.exit(2); }
 
 console.log("── the cache is read BEFORE the billed call ──");

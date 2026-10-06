@@ -34,7 +34,7 @@ for (const p of [jsPath, cssPath, pbPath]) {
 }
 const js = fs.readFileSync(jsPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
-const code = js.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+const code = js.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // ── 1 · RUN the splitter against the real SOP ─────────────────────────────────────────────────
 // 🔑 A regex over sopBlocks would be a claim about its source. The only honest answer to "does a

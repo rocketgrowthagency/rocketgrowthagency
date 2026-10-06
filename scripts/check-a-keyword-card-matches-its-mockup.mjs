@@ -44,10 +44,20 @@ const fn = grab("structuredHtml");
 const panelFn = grab("measurementPanelHtml");
 if (!fn) { console.error("⚠️  INDETERMINATE — structuredHtml not found."); process.exit(2); }
 if (!panelFn) { console.error("⚠️  INDETERMINATE — measurementPanelHtml not found."); process.exit(2); }
+// 🔴🔴 A HAND-WRITTEN LIFT LIST GOES STALE THE DAY THE PRODUCT GROWS A HELPER. `structuredHtml`
+// began calling `obVerifiedPlaces` and `obPlaceEvidenceHtml`, and this gate THREW — a stack trace
+// where a finding should be, which the sweep counts separately precisely because it is noise.
+// 🔑 scripts/_lift-admin.mjs resolves its own dependency set. This file lifts by hand, so the two
+// helpers are pulled in explicitly — and the next helper will break it again.
+// → feedback_a_lift_list_is_a_promise_somebody_will_remember
+const deps = ["obVerifiedPlaces", "obPlaceEvidenceHtml"]
+  .map((n) => { const m = raw.match(new RegExp(`^function ${n}\\s*\\([\\s\\S]*?\\n\\}`, "m")); return m ? m[0] : ""; })
+  .join("\n\n");
+if (!deps.trim()) { console.error("⚠️  INDETERMINATE — structuredHtml's helpers did not lift."); process.exit(2); }
 const ctx = vm.createContext({});
 try {
   vm.runInContext(`const escapeHtml=(s)=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");const MEASURE_FLOOR=10;`
-    + fn + panelFn + ";globalThis._h = structuredHtml; globalThis._p = measurementPanelHtml;", ctx);
+    + deps + fn + panelFn + ";globalThis._h = structuredHtml; globalThis._p = measurementPanelHtml;", ctx);
 } catch (e) { console.error(`⚠️  INDETERMINATE — the lifted renderers did not evaluate: ${e.message}`); process.exit(2); }
 
 // 🔑 The panel is built from outcome_data, so the gate feeds it outcome_data — not prose.

@@ -341,7 +341,7 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
 // endpoint gated by requirePortalOwner, so with no session it could only fail.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 {
-  const code = portal.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const code = portal.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   // Every mailto that survives must be either a signed-out screen or the client's OWN contact.
   // 🔑 EXCUSED BY REASON, NOT BY COUNT. A threshold ("no more than 4") passes the moment someone
   // adds a fifth for a bad reason and removes a good one. Each surviving mailto must sit in a
@@ -375,7 +375,7 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
     // NAME still appeared in the comment explaining why it mattered. A gate that matches the
     // mention instead of the mechanism confirms nothing.
     // → feedback_a_check_must_not_validate_itself
-    const pmCode = pm.replace(/^\s*\/\*[\s\S]*?\*\//gm, "").replace(/^\s*\/\/.*$/gm, "");
+    const pmCode = pm.replace(/^\s*\/\/.*$/gm, "").replace(/^\s*\/\*[\s\S]*?\*\//gm, "");
     if (!/requirePortalOwner/.test(pm)) bad("portal-message is not auth-gated");
     if (!/kind: "client_message"/.test(pm)) bad("the message is not stored as client_message — admin could not label it");
     // 🔴 A message that is not stored must NOT report success. That is the failure the mailto at
@@ -541,7 +541,7 @@ else {
 {
   // 🔑 Strip comments first: the note explaining that this label was REMOVED quotes the label.
   // A gate that reads its own explanation as a regression is a gate nobody will trust.
-  const portalCode = portal.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const portalCode = portal.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   if (/We've been told|We&#39;ve been told/.test(portalCode)) {
     bad('"We\'ve been told" is back — a dead-end label in our voice, on the client\'s button');
   }
@@ -731,7 +731,7 @@ else {
   // 🔑 Strip comments: the note explaining this very bug quotes `client_input`, so the raw file
   // always contains it. A gate that reads its own rationale as the feature is no gate at all.
   // → feedback_a_check_must_not_validate_itself
-  const adminCode = admin.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const adminCode = admin.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const inputSteps = steps.filter((s) => s.clientInput);
   if (inputSteps.length && !/client_input\b/.test(adminCode)) {
     bad(`${inputSteps.length} step(s) take an answer in the portal and admin reads client_input NOWHERE — every one is a black hole`);
