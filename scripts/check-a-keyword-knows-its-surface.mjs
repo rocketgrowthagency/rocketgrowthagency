@@ -201,6 +201,23 @@ try {
   ok(/h\.pack === false \? null/.test(code),
     "a term measured as having NO map pack keeps whatever review count the maps search gave it — a real "
     + "number describing a contest the term is not in");
+  // 🔴 THE MAPS FALLBACK MUST NOT RUN BEFORE THE SURFACE CHECK AND BE OVERWRITTEN. It used to probe
+  // every plan term with no review count, and the surface block then replaced every answer — up to
+  // five metered requests per run, discarded by the next block, for a number about the wrong surface.
+  // 🔑 It is a fallback for terms whose surface is UNKNOWN, which is the only case where a maps figure
+  // is better than nothing. → feedback_google_cloud_billing_safety
+  {
+    const si = code.indexOf("ads.localSurface(");
+    const fi = code.lastIndexOf("ads.localDifficulty(");
+    ok(si >= 0 && fi > si,
+      "the maps difficulty probe for the plan's own terms runs BEFORE the surface check, so its answers are "
+      + "overwritten the moment the surface is known — metered requests bought and thrown away");
+    const tail = fi > 0 ? code.slice(Math.max(0, fi - 400), fi) : "";
+    ok(/pack === null|pack === undefined/.test(tail),
+      "the maps difficulty fallback is not restricted to terms whose surface is unknown — it would put a "
+      + "review count back on a term measured as having no map pack");
+  }
+
   ok(/geo grid|geo-grid/i.test(code) && /no keyword in this plan triggers a map pack/i.test(code),
     "the card never says that a plan with no pack term cannot be measured by the geo-grid baseline — the "
     + "operator would report grid position over a plan that can never move it");
