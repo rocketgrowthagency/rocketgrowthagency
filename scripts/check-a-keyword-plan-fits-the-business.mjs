@@ -162,10 +162,33 @@ if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
     fail.push("the geo note still uses the absolute 'No keyword' phrasing — it was both "
       + "ungrammatical and a claim the place test cannot support");
   }
-  // 🔑 `planTerms.length` or `terms.length` — the property is that it reports N of N, not which
-  // variable holds the total.
-  if (!/withPlace/.test(blk) || !/(plan)?[Tt]erms\.length/.test(blk)) {
-    fail.push("the geo note does not report how many of how many keywords name a place");
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 RE-PINNED 2026-10-05 — THIS GATE DEFENDED A COUNT THAT CANNOT BE COMPUTED.
+  // It required "N of M keywords name a place". We cannot tell whether an arbitrary phrase names a
+  // place without geocoding it: "los angeles" is unverifiable because Google's suggest returns no
+  // metro rung for a suburb. The note said "2 of 5" over a plan with three local terms, and in the
+  // same breath "no Culver City candidate was returned" over two Culver City keywords.
+  // 🔑 THE PROPERTY IS THAT IT WARNS ONLY WHEN THERE IS NO LOCALLY SPECIFIC TERM AT ALL, and that a
+  // term kept at the floor counts as one — that is what "too specific to size" means.
+  // → feedback_a_gate_written_for_a_temporary_state_outlives_it
+  // ═══════════════════════════════════════════════════════════════════════════════════════════
+  if (!/localTerms/.test(blk)) {
+    fail.push("the geo note does not compute the plan's locally specific terms");
+  }
+  // 🔴 USED IN THE COMPUTATION, not merely declared above it. Deleting it from the filter left the
+  // declaration behind and a bare /floorTerms/ test passed on it.
+  const localDecl = (blk.match(/^.*const localTerms\s*=.*$/m) || [""])[0];
+  if (!localDecl || !/floorTerms/.test(localDecl)) {
+    fail.push("a keyword kept at the floor does not count as locally specific — those are precisely "
+      + "the terms too specific for Google to size, so the note would warn over a local plan");
+  }
+  if (!/!localTerms\.length/.test(blk)) {
+    fail.push("the warning is not gated on there being NO locally specific term — it would fire over "
+      + "a plan that already has local coverage");
+  }
+  if (/\bwithPlace\b/.test(blk)) {
+    fail.push("the geo note is counting keywords that name a place again — that number cannot be "
+      + "computed without geocoding, and it under-reported and contradicted the card");
   }
   // 🔑 The places it tests against must be the VERIFIED ones, and short enough to catch an
   // abbreviation the ladder supplies.
