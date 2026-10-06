@@ -174,6 +174,53 @@ if (!/\bdata\.queued\b/.test(code)) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴🔴 THE THING THAT DIED CANNOT TELL YOU IT DIED (2026-10-06).
+//
+// A run started 18:21:53 and was never heard from again — one INFO line in the function log and
+// nothing after it. **Ten and a half minutes later the row still read `in_progress`, `failed_at:
+// null`, `error: null`.** The server's own nine-minute deadline, written precisely for this, NEVER
+// FIRED: the platform killed the process before the timer could run.
+//
+// 🔑 A SERVER-SIDE DEADLINE IS A COURTESY, NOT A GUARANTEE. The browser is the only party still alive
+// when a run dies, so it must reach the conclusion from the timestamps it can already see — and it
+// must do so ON A COLD LOAD, because a hard refresh throws the wait away, which is exactly what
+// Chris did before reporting "still not showing updated".
+// → feedback_unloaded_is_not_an_answer
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const c = admin.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  if (!/function obStalledRun\(/.test(c)) {
+    fail.push("nothing decides that a run has died — the card depends entirely on the server writing a "
+      + "failure, and a killed process cannot write one");
+  }
+  // 🔴 ON A COLD LOAD, not only inside the wait.
+  if (!/\$\{obStalledNoteHtml\(s\.task\)\}/.test(c)) {
+    fail.push("the dead-run notice is not rendered on a step row — it would only ever appear inside a "
+      + "live wait, and a hard refresh throws that away");
+  }
+  const rows = (c.match(/\$\{obStalledNoteHtml\(/g) || []).length;
+  if (rows < 2) {
+    fail.push(`the dead-run notice renders on ${rows} row state(s) — a stalled run shows as ACTIVE, so `
+      + "putting it only on the done row means it never appears where it happens");
+  }
+  // 🔴 AND THE WAIT MUST REACH THE SAME CONCLUSION, rather than sitting out its full window on a run
+  // that is already dead and then saying "it will finish on its own".
+  const wi = c.indexOf("async function waitForStepToLand");
+  const wbody = wi >= 0 ? c.slice(wi, wi + 2200) : "";
+  if (!/obStalledRun\(/.test(wbody)) {
+    fail.push("the background wait does not check for a stalled run — it would report \"still running\" "
+      + "for its whole window over a process that is already gone");
+  }
+  // 🔑 UNKNOWN IS NEVER DEAD: it must need two real timestamps in the wrong order.
+  const si = c.indexOf("function obStalledRun(");
+  const sbody = si >= 0 ? c.slice(si, si + 1100) : "";
+  if (!/Number\.isFinite\(started\)/.test(sbody) || !/ran >= started/.test(sbody)) {
+    fail.push("obStalledRun does not require two real timestamps in the wrong order — a hybrid step "
+      + "that finished stays in_progress forever and would be branded dead");
+  }
+}
+
 if (fail.length) {
   console.error("🔴 a queued step can finish without the screen saying so:");
   for (const f of fail) console.error("   · " + f);
