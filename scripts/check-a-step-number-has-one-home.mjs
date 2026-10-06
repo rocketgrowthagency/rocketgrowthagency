@@ -26,6 +26,7 @@
  */
 import fs from "node:fs";
 import vm from "node:vm";
+import { liftAdmin } from "./_lift-admin.mjs";
 
 const W = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
 let src, playbooks;
@@ -50,50 +51,20 @@ if (!/obPageNumbers\(steps\)\.get\(idx\)/.test(src)) fail.push("the next-action 
 if (!/if \(i < 0\) return null;/.test(src)) fail.push("obNumberOf no longer returns null for a step it cannot find");
 
 // ═══ PART 2 — THE NUMBERING, from the real functions over the real playbook ═══════════════════
-const pick = (name) => {
-  const i = src.indexOf(`function ${name}(`);
-  if (i < 0) { console.error(`⛔ ${name} not found`); process.exit(2); }
-  let d = 0;
-  for (let k = src.indexOf("{", i); k < src.length; k++) {
-    if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(i, k + 1); }
-  }
-  console.error(`⛔ ${name} unbalanced`); process.exit(2);
-};
-const block = (startRe, name) => {
-  const m = src.match(startRe);
-  if (!m) { console.error(`⛔ ${name} not found`); process.exit(2); }
-  const i = m.index;
-  // read to the matching close bracket of the array/arrow literal
-  let d = 0, started = false;
-  for (let k = i; k < src.length; k++) {
-    const c = src[k];
-    if (c === "[" || c === "(") { d++; started = true; }
-    else if (c === "]" || c === ")") { d--; if (started && !d) return src.slice(i, src.indexOf(";", k) + 1); }
-  }
-  console.error(`⛔ ${name} unbalanced`); process.exit(2);
-};
-
-const ctx = vm.createContext({ console });
-try {
-  vm.runInContext(
-    block(/const OB_PHASES = \[/, "OB_PHASES") + "\n" +
-    src.split("\n").filter((l) => /^const obGroupOf =/.test(l)).join("\n") + "\n" +
-    // 🔴 `obPhaseIndexOf` ADDED 2026-10-05 — `obBuckets` began calling it, and this lift did not
-    // bring it. The gate then THREW at CALL time, which the try/catch around the eval cannot
-    // see, so it crashed with a stack trace instead of reporting anything. A lifted function is
-    // a claim that its whole DEPENDENCY SET came too.
-    // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_the_harness_i_wrote_to_check_my_work_can_lie
-    ["obDependsOn", "obPhaseIndexOf", "obBuckets", "obRespectDeps", "obPageOrdered", "obPageNumbers"].map(pick).join("\n\n"),
-    ctx,
-  );
-} catch (e) { console.error("⛔ cannot evaluate the numbering functions: " + e.message); process.exit(2); }
+// 🔴🔴 THE HAND-WRITTEN LIFT LIST IS GONE (2026-10-05). It went stale three times in one day, once
+// here: `obBuckets` began calling `obPhaseIndexOf`, the list did not grow, and the gate THREW at
+// call time — which the try/catch around the eval could not see. A lifted function is a claim that
+// its whole dependency set came too, and a list is a promise somebody will remember to update.
+// 🔑 The shared lifter resolves its own set, at eval time and at call time.
+// → scripts/_lift-admin.mjs · feedback_a_gate_that_throws_is_not_a_gate_that_fails
+const lifted = liftAdmin(["obPageNumbers", "obPageOrdered", "obPhaseIndexOf", "obRespectDeps"]);
 
 const m1 = playbooks.month1;
 if (!Array.isArray(m1) || !m1.length) { console.error("⛔ playbooks.json has no month1 array"); process.exit(2); }
 // 🔑 The MINIMUM shape obBuckets/obPageOrdered actually read: the flow id and the SOP type.
 const steps = m1.map((s) => ({ obj: { flowId: s.id, sopType: s.type }, dependsOn: s.dependsOn || [] }));
-const pageNo = vm.runInContext("obPageNumbers", ctx)(steps);
-const vmOrder = () => vm.runInContext("obPageOrdered", ctx)(steps);
+const pageNo = lifted.call("obPageNumbers", [steps]);
+const vmOrder = () => lifted.call("obPageOrdered", [steps]);
 
 const nums = m1.map((_, i) => pageNo.get(i));
 if (nums.some((n) => !n)) fail.push(`${nums.filter((n) => !n).length} step(s) got no page number at all`);
@@ -134,7 +105,7 @@ const byId = new Map(m1.map((s, i) => [s.id, pageNo.get(i)]));
     { obj: { flowId: "b", sopType: "auto" }, dependsOn: ["a"] },
     { obj: { flowId: "c", sopType: "auto" }, dependsOn: [] },
   ];
-  const repaired = vm.runInContext("obRespectDeps", ctx)(cyc, [0, 1, 2]);
+  const repaired = lifted.call("obRespectDeps", [cyc, [0, 1, 2]]);
   if (repaired.length !== 3 || new Set(repaired).size !== 3) {
     fail.push(`a dependency cycle loses rows — obRespectDeps returned ${JSON.stringify(repaired)} for 3 steps`);
   }
@@ -210,8 +181,9 @@ for (const f of files) {
 // → feedback_a_gate_that_cannot_fail
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 {
-  const phaseIndexOf = vm.runInContext("obPhaseIndexOf", ctx);
-  const respectDeps = vm.runInContext("obRespectDeps", ctx);
+  // 🔑 Through the resolver, so a helper reached on one branch cannot blind this gate.
+  const phaseIndexOf = (st) => lifted.call("obPhaseIndexOf", [st]);
+  const respectDeps = (st, idx) => lifted.call("obRespectDeps", [st, idx]);
 
   // Two steps in DIFFERENT phases, the earlier one depending on the later: only promotion can fix it.
   const groups = m1.map((x) => x.id);

@@ -51,11 +51,17 @@ function liftFunction(src, name) {
   return "";
 }
 
-/** A top-level `const NAME = …;` on one line, or a bracketed literal spanning lines. */
+/**
+ * A `const NAME = …;` — one line, or a bracketed literal spanning lines.
+ * 🔑 INDENTED DECLARATIONS COUNT. `OB_GLYPH` and `obMarker` live INSIDE `obPhasedHtml`, and a lifter
+ * that only matched column-zero `const` returned nothing for them — the gate then read `null[...]`
+ * and crashed with a TypeError that looked nothing like a missing lift. Anything a gate names is
+ * something it needs, wherever the product happens to declare it.
+ */
 function liftConst(src, name) {
-  const one = src.match(new RegExp(`^const ${name} = .*;$`, "m"));
-  if (one) return one[0];
-  const m = src.match(new RegExp(`^const ${name} = `, "m"));
+  const one = src.match(new RegExp(`^\\s*const ${name} = .*;$`, "m"));
+  if (one) return one[0].trim();
+  const m = src.match(new RegExp(`^\\s*const ${name} = `, "m"));
   if (!m) return "";
   let d = 0, started = false;
   for (let k = m.index; k < src.length; k++) {
@@ -65,7 +71,7 @@ function liftConst(src, name) {
       d--;
       if (started && !d) {
         const semi = src.indexOf(";", k);
-        return semi < 0 ? "" : src.slice(m.index, semi + 1);
+        return semi < 0 ? "" : src.slice(m.index, semi + 1).replace(/^\s+/, "");
       }
     }
   }
@@ -135,8 +141,29 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
           }
           return fn;
         },
+        /**
+         * Read a lifted CONSTANT, pulling it in on demand. Returns the value, or exits 2 — never
+         * `null`, because a gate that goes on to index a null reports a TypeError that looks nothing
+         * like the missing lift it actually is.
+         */
+        constant(name) {
+          for (let i = 0; i < 5; i++) {
+            const v = vm.runInContext(`typeof ${name} !== "undefined" ? ${name} : undefined`, ctx);
+            if (v !== undefined) return v;
+            if (included.has(name) || !addDep(name)) break;
+          }
+          console.error(`⚠️  INDETERMINATE — the constant ${name} did not lift from admin.js.`);
+          process.exit(2);
+        },
         /** Call a lifted function, resolving any dependency it reaches for mid-run. */
         call(name, args = [], rounds = 20) {
+          // 🔑 RESOLVE THE NAMED FUNCTION ITSELF, not only what it reaches for. `obMarker` is an
+          // indented arrow declared inside another function; asking for it without pulling it in
+          // first reported "did not lift" when the lifter could perfectly well have fetched it.
+          if (!included.has(name)) {
+            const present = vm.runInContext(`typeof ${name} === "function"`, ctx);
+            if (!present) addDep(name);
+          }
           for (let i = 0; i < rounds; i++) {
             try { return api.get(name)(...args); }
             catch (e) {

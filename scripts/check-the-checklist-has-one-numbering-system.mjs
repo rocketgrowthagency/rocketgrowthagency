@@ -14,6 +14,7 @@
  */
 import fs from "node:fs";
 import vm from "node:vm";
+import { liftAdmin } from "./_lift-admin.mjs";
 
 const W = "/Users/chris/RGA/Rocket Growth Agency Website VS Code/";
 const js = fs.readFileSync(W + "admin/admin.js", "utf8");
@@ -87,41 +88,25 @@ if (markerCalls < 5) F(`only ${markerCalls} of the 5 row builders call obMarker(
 }
 
 // ── 3. RUN the phase renderer ─────────────────────────────────────────────────────────────
-const ctx = vm.createContext({});
-vm.runInContext(
-  [
-    `const escapeHtml = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");`,
-    `const escapeAttribute = escapeHtml;`,
-    `const _obPhaseOpen = new Set(); const _obPhaseShut = new Set();`,
-    slice("const obGroupOf =", ";", "obGroupOf"),
-    slice("const OB_PHASES = [", "\n];", "OB_PHASES"),
-    slice("function obPhaseBody(", "\n}", "obPhaseBody"),
-    // 🔴 AND IT HAPPENED AGAIN, 2026-10-05, with `obPhaseIndexOf` — `obBuckets` began calling it
-    // and this list did not grow. Same crash, same cause, three days apart. The comment below
-    // was not enough; what would actually stop it is the lift reporting a MISSING NAME as
-    // exit 2 instead of letting the call throw. → feedback_a_gate_that_throws_is_not_a_gate_that_fails
-    slice("function obDependsOn(", "\n}", "obDependsOn"),
-    slice("function obPhaseIndexOf(", "\n}", "obPhaseIndexOf"),
-    slice("function obBuckets(", "\n}", "obBuckets"),
-    // 🔴 `obPageOrdered` CALLS `obRespectDeps`, added 2026-10-02 when page order became a stable
-    // topological sort. Lifting the caller without its callee made this gate THROW
-    // `ReferenceError: obRespectDeps is not defined` — and a gate that throws is not a gate that
-    // fails: it is noise in the sweep, which is how a real red signal gets ignored.
-    // 🔑 A lifted function is a claim that its whole dependency set came with it.
-    // → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
-    slice("function obRespectDeps(", "\n}", "obRespectDeps"),
-    slice("function obPageOrdered(", "\n}", "obPageOrdered"),
-    slice("function obPageNumbers(", "\n}", "obPageNumbers"),
-    slice("function obGotoLabel(", "\n}", "obGotoLabel"),
-    slice("function obPhaseMarker(", "\n}", "obPhaseMarker"),
-    slice("function obPhasedHtml(", "\n}\n", "obPhasedHtml"),
-    slice("  const OB_GLYPH = {", "\n", "OB_GLYPH").trim(),
-    slice("  const obMarker = (num, kind) =>", ";", "obMarker").trim(),
-    `globalThis._x = { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker, obPageNumbers, obPageOrdered };`,
-  ].join("\n"),
-  ctx
+// 🔴🔴 THE HAND-WRITTEN LIFT LIST IS GONE (2026-10-05). The comments it used to carry tell the
+// story: it threw on `obRespectDeps` in October, then on `obPhaseIndexOf` three days later, and the
+// note left behind each time ("a lifted function is a claim that its whole dependency set came too")
+// did not stop the next one. A comment is not a mechanism.
+// 🔑 The shared lifter resolves its own set, at eval time and at call time, and reports a gap as
+// INDETERMINATE rather than letting a call throw.
+// → scripts/_lift-admin.mjs · feedback_a_comment_asserting_a_fix_is_not_the_fix
+const lifted = liftAdmin(
+  ["obPhasedHtml", "obPhaseMarker", "obPageNumbers", "obPageOrdered", "obGroupOf", "OB_PHASES"],
+  { extraGlobals: { _obPhaseOpen: new Set(), _obPhaseShut: new Set() } },
 );
-const { obPhasedHtml, OB_PHASES, obGroupOf, obMarker, OB_GLYPH, obPhaseMarker, obPageNumbers, obPageOrdered } = ctx._x;
+const OB_PHASES = lifted.constant("OB_PHASES");
+const obGroupOf = lifted.get("obGroupOf");
+const obPhasedHtml = (...a) => lifted.call("obPhasedHtml", a);
+const obPhaseMarker = (...a) => lifted.call("obPhaseMarker", a);
+const obPageNumbers = (...a) => lifted.call("obPageNumbers", a);
+const obPageOrdered = (...a) => lifted.call("obPageOrdered", a);
+const obMarker = (...a) => lifted.call("obMarker", a);
+const OB_GLYPH = lifted.constant("OB_GLYPH");
 
 const m1 = JSON.parse(fs.readFileSync(W + "data/playbooks/playbooks.json", "utf8")).month1;
 
