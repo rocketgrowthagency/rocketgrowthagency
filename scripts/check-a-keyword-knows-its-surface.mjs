@@ -177,6 +177,32 @@ try {
   ok((await ads.localSurface(["seo company near me"], { location: null })).error,
     "the surface probe runs without a location — the answer would describe nowhere in particular");
 
+  // ── 5b · CONCURRENT, AND RETRIED EXACTLY ONCE ────────────────────────────────────────────────
+  // 🔴 MEASURED: five probes run one after another took 68.6s and three came back `SerpAPI 504`,
+  // even at the town rung where a single probe answers in under three seconds. Concurrent, the batch
+  // costs the slowest probe instead of the sum — and one retry over only the failures took it from
+  // 4 of 5 checked to 5 of 5. A term left unknown costs a real fact: whether Google answers it with a
+  // map pack decides whether it is won with the profile or with a page.
+  {
+    const ks = fs.readFileSync(`${SITE}/netlify/functions/_ads-keywords.js`, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+    const fi = ks.indexOf("async function localSurface");
+    const body = fi >= 0 ? ks.slice(fi, fi + 6000) : "";
+    ok(/await Promise\.all\(list\.map\(/.test(body),
+      "the surface probes run sequentially — five in a row took 68.6s and three timed out, because a "
+      + "20-second deadline applied five times over loses most of the measurement");
+    ok(/pack === null \|\| r?\.?pack === undefined|filter\(\(\{ r \}\) => r\.pack === null/.test(body),
+      "the retry pass is not restricted to probes that FAILED — re-asking a question already answered "
+      + "spends a metered request for nothing");
+    // 🔴 ONE pass, not a loop. A retry loop against a metered API is how a bounded call becomes a runaway.
+    ok(!/for\s*\([^)]*retry|while\s*\([^)]*(retry|attempt)/i.test(body),
+      "the surface retry is a loop — one pass is a bounded cost, a loop is not");
+    const passes = (body.match(/await Promise\.all\(/g) || []).length;
+    ok(passes === 2,
+      `localSurface makes ${passes} concurrent pass(es); it must be exactly two — the probe and one retry `
+      + "over what failed");
+  }
+
   // ── 6 · IT IS BOUNDED ─────────────────────────────────────────────────────────────────────────
   ok(typeof ads.MAX_SURFACE_PROBES === "number" && ads.MAX_SURFACE_PROBES <= 8,
     `the surface probe is bounded at ${ads.MAX_SURFACE_PROBES} — SerpAPI is a metered plan and this must `
@@ -216,6 +242,36 @@ try {
     ok(/pack === null|pack === undefined/.test(tail),
       "the maps difficulty fallback is not restricted to terms whose surface is unknown — it would put a "
       + "review count back on a term measured as having no map pack");
+  }
+
+  // ── A FAILED MEASUREMENT MUST NOT BECOME A FINDING ────────────────────────────────────────────
+  // 🔴🔴 2026-10-06: all five probes returned `SerpAPI 504` and the card said *"0 of 5 keywords
+  // trigger a Google map pack"* as a measured fact, then *"5 could not be checked"* in the next
+  // sentence, then advised abandoning grid-position reporting for the month. The data layer was
+  // right (`pack: null`); every sentence built on top of it treated the absence as a zero.
+  {
+    // the surface is measured where the BUSINESS stands, not at the rung the volume climbed to
+    ok(/geoLadder\.find\(\(g\) => g\.targetType === "City"\)/.test(code),
+      "the surface probe does not pick the finest (City) rung for its location — for a suburb the "
+      + "volume ladder climbs to the STATE, and measuring a map pack there is both wrong (a pack is "
+      + "proximity-bound) and four times slower, which is what made all five probes time out");
+    ok(!/serpLocation\(\s*v\.geo/.test(code),
+      "the surface probe takes its location from `v.geo` — the rung the VOLUME was measured at");
+    // the count is over what was checked
+    ok(/checked2/.test(code),
+      "the surface note counts over the whole plan rather than over the keywords actually checked — an "
+      + "unchecked term becomes a 'does not trigger a pack'");
+    const warn = code.match(/if \(([^)]*)\)\s*\{\s*bits2\.push\(`⚠️ No keyword in this plan triggers a map pack/);
+    ok(warn && /checked2/.test(warn[1]),
+      "the 'no keyword triggers a map pack' warning does not require that anything was actually "
+      + "checked — it told the operator to stop reporting grid position off five timed-out requests");
+    // the map-pack cost table only lists terms that HAD a pack
+    const mi = code.indexOf("const measured = demand.filter");
+    const mline = mi >= 0 ? code.slice(mi, mi + 220) : "";
+    ok(/pack === true/.test(mline),
+      "the \"what winning the map pack costs\" table lists every term with a review count, including "
+      + "ones whose pack was never seen — those numbers come from the maps engine, which returns local "
+      + "businesses whatever you type. A heading is a claim: if it says map pack, every row had one");
   }
 
   ok(/geo grid|geo-grid/i.test(code) && /no keyword in this plan triggers a map pack/i.test(code),
