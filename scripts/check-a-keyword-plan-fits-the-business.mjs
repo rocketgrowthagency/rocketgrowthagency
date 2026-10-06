@@ -194,6 +194,55 @@ if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
   }
 }
 
+// ── 2f · THE FLOOR MEANS UNMEASURED, NOT ZERO ───────────────────────────────────────────────────
+// 🔴🔴🔴 THE ROOT CAUSE OF A LOCAL PLAN TURNING GENERIC. Measured 2026-10-05: the model proposed
+// five keywords, FOUR of them geo-modified; all four were discarded as "no measurable demand" and
+// all four replacements were broad non-local terms. The ladder climbs to a geography wide enough to
+// tell terms apart — a whole STATE for a suburb — and at that scale a phrase naming one town is
+// exactly what Google cannot size. The measurement guaranteed the floor, and the floor was read as a
+// verdict. `_ads-keywords.js` says it plainly: "10 is treated as UNMEASURED".
+{
+  const loop = (code.match(/for \(const d2 of demand\)[\s\S]*?\n        \}/) || [""])[0];
+  if (!loop) {
+    console.error("⚠️  INDETERMINATE — cannot find the swap loop; re-pin this gate.");
+    process.exit(2);
+  }
+  // 🔑 An at-floor term must reach a SECOND source before it can be discarded.
+  if (!/atFloorV\(d2\.volume\)/.test(loop)) {
+    fail.push("the swap loop no longer tests the floor at all");
+  }
+  const floorBranch = (loop.match(/if \(atFloorV\(d2\.volume\)\)[\s\S]*?\n          \}/) || [""])[0];
+  if (!floorBranch) {
+    fail.push("the at-floor branch is a one-liner again — it discards on volume alone, with no "
+      + "second source, which is what hollowed a local plan into a generic one");
+  } else {
+    if (!/demandOf\(/.test(floorBranch)) {
+      fail.push("an at-floor term is discarded without asking autocomplete — an absence of "
+        + "measurement is being read as a measurement of absence");
+    }
+    // 🔴 ONLY a phrase Google has NEVER suggested may be dropped.
+    if (!/sugg\s*&&\s*sugg\.length === 0/.test(floorBranch)) {
+      fail.push("the at-floor branch does not require ZERO autocomplete suggestions before "
+        + "discarding — an unavailable check would drop the term on an absence");
+    }
+    if (!/take\(d2\)/.test(floorBranch)) {
+      fail.push("an at-floor term that Google does suggest is not kept — the plan would still lose "
+        + "every term too specific for the Planner to size");
+    }
+    // 🔴 Bounded, or a plan of 25 terms is 25 paid lookups.
+    // 🔴 THE BOUND, NOT A MENTION OF THE COUNTER. Removing `floorProbes < 5` from the call left the
+    // increment behind, and a bare /floorProbes/ test passed on it.
+    if (!/floorProbes\s*<\s*\d+\s*\?[^:]*demandOf\(/.test(floorBranch)) {
+      fail.push("the autocomplete lookups are unbounded — the call is not gated on a probe budget, "
+        + "so a long plan would spend a paid lookup per term");
+    }
+  }
+  // 🔑 And a term kept despite the floor must be DISCLOSED, or it is an invisible decision.
+  if (!/floorNote/.test(code) || !/lines\.push\(floorNote\)/.test(code)) {
+    fail.push("a keyword kept despite being below the floor is not disclosed on the card");
+  }
+}
+
 // ── 3 · THE RULE ITSELF, OVER SEVERAL TRADES ────────────────────────────────────────────────────
 const lift = (name) => {
   const m = src.match(new RegExp("^function " + name + "\\s*\\(", "m"));
