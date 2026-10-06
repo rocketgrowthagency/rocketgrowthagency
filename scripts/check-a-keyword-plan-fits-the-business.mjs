@@ -146,7 +146,8 @@ if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
 // 🔴🔴 It told Chris *"No keyword name a place … Say so on the kickoff call"* while the plan held
 // "la seo company". A note that instructs someone to repeat it to a CLIENT must be true of this run.
 {
-  const blk = (code.match(/if \(!national && terms\.length\)[\s\S]*?\n    \}/) || [""])[0];
+  // 🔴 RE-PINNED: the block now tests the FINAL plan, so its condition names `planTerms`.
+  const blk = (code.match(/if \(!national && planTerms\.length\)[\s\S]*?\n    \}/) || [""])[0];
   if (!blk) {
     console.error("⚠️  INDETERMINATE — cannot find the geo-shortfall block; re-pin this gate.");
     process.exit(2);
@@ -161,7 +162,9 @@ if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
     fail.push("the geo note still uses the absolute 'No keyword' phrasing — it was both "
       + "ungrammatical and a claim the place test cannot support");
   }
-  if (!/withPlace/.test(blk) || !/terms\.length/.test(blk)) {
+  // 🔑 `planTerms.length` or `terms.length` — the property is that it reports N of N, not which
+  // variable holds the total.
+  if (!/withPlace/.test(blk) || !/(plan)?[Tt]erms\.length/.test(blk)) {
     fail.push("the geo note does not report how many of how many keywords name a place");
   }
   // 🔑 The places it tests against must be the VERIFIED ones, and short enough to catch an
@@ -172,6 +175,22 @@ if (!/chosen to replace\\b/i.test(code) || !/priorRaw/.test(code)) {
   if (/length > 3/.test(blk)) {
     fail.push("the geo note still filters place words to 4+ characters — a two-letter metro "
       + "abbreviation could never be recognised");
+  }
+  // 🔴🔴 IT MUST JUDGE THE PLAN, NOT THE DRAFT. Measured 2026-10-05: the model proposed four
+  // town-named phrases, the check saw them and stayed silent, and every one was then SWAPPED OUT for
+  // having no demand — so the plan that reached the card named no place at all, with no note.
+  // 🔴 THE DECLARATION ITSELF must derive from `demand`. Testing the file for `demand.map(`
+  // anywhere passed while `planTerms` was reassigned to the draft — the match came from elsewhere.
+  const decl = (code.match(/^.*const planTerms\s*=.*$/m) || [""])[0];
+  if (!decl) {
+    fail.push("the geo check has no `planTerms` — it would judge the model's draft rather than the "
+      + "plan that survived the swaps");
+  } else if (!/\bdemand\b/.test(decl)) {
+    fail.push("`planTerms` is not derived from the final `demand` list — the geo check would judge "
+      + "terms that the swaps already removed");
+  }
+  if (/\bterms\.filter\(namesPlace\)/.test(blk)) {
+    fail.push("the geo check counts `terms` — the model's original answer — instead of the final plan");
   }
 }
 
