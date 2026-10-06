@@ -76,6 +76,44 @@ ok(/ran_at[\s\S]{0,160}?completed_at/.test(body),
   "the lock date is read from only one field — a step marked done by a human carries completed_at, "
   + "one that produced output carries ran_at, and the grid must honour whichever exists");
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴🔴 AND NOTHING ABOVE MATTERS IF THE ADMIN NEVER CALLS THE EXECUTOR (2026-10-06).
+//
+// Chris pressed Run on step 26 and got "Step marked complete". Measured: fresh grid rows written for
+// **"seo company"** — `client.primary_service` — while the plan locked that morning held five
+// entirely different keywords. `runOnboardingStep` had a special case for this one step:
+//
+//   refreshMapRankings();                        // POSTs keyword: c.primary_service
+//   markOnboardingStep(flowId, "done", scope);   // marks it complete before the scan has run
+//   return;                                      // the executor is never called
+//
+// 🔑 A FIX APPLIED TO ONE PATH IS UNDONE BY A SECOND PATH THAT SKIPS IT. The executor had been
+// corrected twice and both corrections were dead code.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  let admin;
+  try { admin = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"); }
+  catch { console.error("⚠️  INDETERMINATE — cannot read admin.js"); process.exit(2); }
+  const a = admin.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  const ri = a.indexOf("async function runOnboardingStep");
+  const body = ri >= 0 ? a.slice(ri, ri + 3000) : "";
+  ok(body, "cannot find runOnboardingStep; re-pin this gate");
+  ok(!/flowId === "m1\.audit\.grid_baseline"/.test(body),
+    "runOnboardingStep still special-cases the grid step — it scans client.primary_service instead of "
+    + "the locked plan, marks the step done before the scan has run, and returns without ever calling "
+    + "the executor that does all of the above correctly");
+  ok(!/refreshMapRankings\(\)[\s\S]{0,200}?markOnboardingStep\([^,]*,\s*"done"/.test(a),
+    "something still fires a map-rank scan and immediately marks a step done — a green tick that means "
+    + "'a request was sent', not 'a baseline exists'");
+  // 🔑 And the executor's own sentence must name what it scanned.
+  ok(/Started a map-rank scan for \$\{plan\.keywords\.length\}/.test(code),
+    "the scan confirmation names `keyword` (client.primary_service) rather than the plan it actually "
+    + "started scanning — the sentence and the work describing different things is how the two drifted "
+    + "apart unnoticed");
+  ok(/outcome_data: \{ keywords: plan\.keywords/.test(code),
+    "the started-scan record stores the placeholder keyword rather than the plan's keywords");
+}
+
 if (fail.length) {
   console.error("🔴 the geo grid can report on something other than the locked plan:");
   for (const f of fail) console.error(`   · ${f}`);

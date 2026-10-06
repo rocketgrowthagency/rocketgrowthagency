@@ -108,7 +108,20 @@ if (!/anchor: anchorKind, centred_on:/.test(flow)) fail.push("outcome_data no lo
 // sub-locations sit at 1.4 / 2.7 / 4.6 km — TWO WERE OUTSIDE THE GRID and would still have been
 // reported "not found". An absence we did not look for is the worst number this system can produce.
 if (!/function readLockedPlan\(/.test(flow)) fail.push("readLockedPlan is gone — the scan would measure a placeholder term again");
-if (!/const plan = readLockedPlan\(recs\);/.test(flow)) fail.push("the grid step no longer reads the locked plan");
+// 🔴 PIN THE PROPERTY, NOT THE LINE. This matched the literal `const plan = readLockedPlan(recs);`
+// and failed when the read legitimately MOVED EARLIER in the function — it now has to happen before
+// the stored-scan freshness check, so that check can ask about the plan rather than the placeholder.
+// The property is that the grid step reads the locked plan and scans it.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  const gi = flow.indexOf('"m1.audit.grid_baseline"');
+  const body = gi >= 0 ? flow.slice(gi, gi + 9000) : "";
+  if (!/readLockedPlan\(recs\)/.test(body)) fail.push("the grid step no longer reads the locked plan");
+  if (!/startRankScan\([^)]*plan\.keywords/.test(body)) {
+    fail.push("the grid step no longer SCANS the locked plan's keywords — reading the plan and then "
+      + "scanning something else is the state this gate exists to prevent");
+  }
+}
 if (!/if \(!plan\) \{/.test(flow)) fail.push("the grid step no longer refuses when the plan is not locked");
 if (!/startRankScan\(client, clientId, plan\.keywords, market, plan\.locations\)/.test(flow)) {
   fail.push("the scan is not being given the locked keywords and sub-locations");
