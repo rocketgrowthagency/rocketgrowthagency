@@ -312,6 +312,7 @@ run check-a-callout-has-a-kind.mjs "the step's reference fold has one scale and 
 run check-an-arrow-points-where-it-goes.mjs "an arrow points the way the content actually moves"
 run check-a-local-plan-has-local-terms.mjs "a local client gets geo-modified keywords and in-market locations"
 run check-a-keyword-plan-fits-the-business.mjs "the pool comes from the client record and a candidate must be their business"
+run check-the-volume-chip-agrees-with-the-step.mjs "every label the step writes maps to a card state, and a kept term is not painted dead"
 run check-the-grid-says-what-it-centred-on.mjs "the rank grid can run, and says what it centred on"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
