@@ -86,6 +86,7 @@ const NOT_PREFLIGHT = {
   'check-a-keyword-draft-survives-the-round-trip.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a keyword draft renders cannot make a video unsafe',
   'check-a-finished-step-knows-its-input-moved.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a stale-input warning on a checklist step cannot make a video unsafe',
   'check-the-step-notes-match-their-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — how a step\'s output is laid out cannot make a video unsafe',
+  'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',
   'check-a-keyword-knows-its-surface.mjs': 'keyword-plan gate, stubbed fetch; runs in daily-health-check.sh — whether a keyword triggers a map pack cannot make a video unsafe',
   'check-a-keyword-plan-fits-the-business.mjs': 'keyword-plan gate, pure source+vm; runs in daily-health-check.sh — a keyword pool cannot make a video unsafe',

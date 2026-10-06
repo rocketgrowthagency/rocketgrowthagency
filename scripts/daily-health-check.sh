@@ -362,6 +362,7 @@ run check-the-volume-chip-agrees-with-the-step.mjs "every label the step writes 
 run check-a-keyword-draft-survives-the-round-trip.mjs "a keyword draft written by the step renders as the card the mockup approved"
 run check-the-grid-says-what-it-centred-on.mjs "the rank grid can run, and says what it centred on"
 run check-the-grid-measures-the-locked-plan.mjs "the geo grid scans the locked plan, and a scan older than the plan does not count"
+run check-a-refusal-names-what-is-on-screen.mjs "a blocked step is refused by number and title, naming the action that clears it"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
 run check-a-places-call-is-not-spent-twice.mjs "an Autofill press reuses a cached Places lookup instead of buying another"
