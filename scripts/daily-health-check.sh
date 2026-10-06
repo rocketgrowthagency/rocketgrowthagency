@@ -314,6 +314,7 @@ run check-a-local-plan-has-local-terms.mjs "a local client gets geo-modified key
 run check-a-keyword-plan-fits-the-business.mjs "the pool comes from the client record and a candidate must be their business"
 run check-the-grid-says-what-it-centred-on.mjs "the rank grid can run, and says what it centred on"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
+run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
 run check-a-places-call-is-not-spent-twice.mjs "an Autofill press reuses a cached Places lookup instead of buying another"
 run check-a-step-that-produced-something-can-rerun-it.mjs "a step holding a stored result can always re-run it"
 run check-the-model-never-writes-the-numbers.mjs "every volume on the keyword card was measured by us, not written by the model"
