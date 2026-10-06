@@ -85,7 +85,14 @@ if (!/anchorKind = "unknown"/.test(flow) || /anchorKind = "business";[\s\S]{0,20
 }
 
 // ── 3 · IT NAMES THE CLIENT, AND SAYS "LOCATION" NOT "OFFICE" ───────────────────────────────
-if (!/grid centred on \$\{anchorKind/.test(flow)) fail.push("the summary no longer states what the grid was centred on");
+// 🔴 PIN THE PROPERTY, NOT THE LINE BREAK. This matched the literal "grid centred on ${anchorKind"
+// and failed when the summary legitimately grew — it now names how many locked keywords were
+// measured before saying where — so the two halves sit on different lines.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+if (!/grid centred on /.test(flow) || !/anchorKind === "area"/.test(flow)) {
+  fail.push("the summary no longer states what the grid was centred on, or no longer distinguishes a "
+    + "grid centred on the LISTING from one that fell back to the AREA");
+}
 if (!/\$\{client\.business_name\}'s location/.test(flow)) fail.push("the summary no longer names the CLIENT's location");
 // 🔴 Scoped to the GRID SUMMARY, not the whole file. A blanket ban caught `national_one_office`
 // (a geography-model key) and the metros prompt — both legitimate. A gate that accuses correct code
@@ -100,7 +107,11 @@ if (!/\$\{client\.business_name\}'s location/.test(flow)) fail.push("the summary
   }
 }
 // the anchor travels to every reader, not just the sentence
-if (!/anchor: anchorKind, centred_on:/.test(flow)) fail.push("outcome_data no longer carries the anchor and what it centred on");
+// 🔴 Two fields, not one adjacency. They were on one line; the record grew and they are not any more.
+if (!/anchor: anchorKind/.test(flow) || !/centred_on:/.test(flow)) {
+  fail.push("outcome_data no longer carries the anchor and what it centred on — a grid centred on the "
+    + "city centre reports identically to one centred on the client's own listing");
+}
 
 // ── 4 · IT MEASURES THE LOCKED PLAN, AND SIZES ITSELF TO IT ─────────────────────────────────
 // 🔴 The scan measured `primary_service` — ONE term — while the plan locks FIVE, so four of every
