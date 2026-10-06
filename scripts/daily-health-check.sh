@@ -365,6 +365,7 @@ run check-the-grid-measures-the-locked-plan.mjs "the geo grid scans the locked p
 run check-a-refusal-names-what-is-on-screen.mjs "a blocked step is refused by number and title, naming the action that clears it"
 run check-now-set-to-says-what-the-step-set.mjs "the Now-set-to line summarises what the step settled, never a YAML key"
 run check-a-confirmation-names-the-work-done.mjs "every step confirmation describes the work that step actually did"
+run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
 run check-a-places-call-is-not-spent-twice.mjs "an Autofill press reuses a cached Places lookup instead of buying another"
