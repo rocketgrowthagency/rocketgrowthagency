@@ -199,10 +199,20 @@ if (!/\bdata\.queued\b/.test(code)) {
     fail.push("the dead-run notice is not rendered on a step row — it would only ever appear inside a "
       + "live wait, and a hard refresh throws that away");
   }
-  const rows = (c.match(/\$\{obStalledNoteHtml\(/g) || []).length;
-  if (rows < 2) {
-    fail.push(`the dead-run notice renders on ${rows} row state(s) — a stalled run shows as ACTIVE, so `
-      + "putting it only on the done row means it never appears where it happens");
+  // 🔴 EVERY ROW STATE A TASK CAN SIT IN. The first build put it on `done` and `active`; the real
+  // stalled step rendered as **queued** ("Up next"), so the notice was nowhere to be seen on the one
+  // card it was written for. A new state is not finished until every surface that renders it knows
+  // its name. → feedback_a_marker_that_encodes_state_goes_stale_on_an_in_place_toggle
+  for (const state of ["done", "active", "queued"]) {
+    const i = c.indexOf(state === "done"
+      ? 'class="ob-step ${declined ? "declined" : "done"}'
+      : `class="ob-step ${state}"`);
+    const row = i < 0 ? "" : c.slice(i, i + 900);
+    if (!row) { fail.push(`cannot find the ${state} row to check; re-pin this gate`); continue; }
+    if (!/obStalledNoteHtml\(/.test(row)) {
+      fail.push(`the dead-run notice is not rendered on the ${state.toUpperCase()} row — a step whose `
+        + `run died can sit in that state, and there it would say nothing at all`);
+    }
   }
   // 🔴 AND THE WAIT MUST REACH THE SAME CONCLUSION, rather than sitting out its full window on a run
   // that is already dead and then saying "it will finish on its own".

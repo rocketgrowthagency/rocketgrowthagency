@@ -104,7 +104,32 @@ run() {
   local script="$1" what="$2" mode="${3:-abort}"
   if [ ! -f "scripts/$script" ]; then printf "  ✗  %-38s MISSING\n" "$script"; FAIL=$((FAIL+1)); return; fi
   local out rc
-  out=$(node "scripts/$script" 2>&1); rc=$?
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  # 🔴🔴 ONE GATE HUNG AND THE WHOLE SWEEP STOPPED (2026-10-06). `check-no-tab-flashes-a-wrong-answer`
+  # drives a browser; it sat for SEVENTEEN MINUTES with no output and the nightly run simply stalled
+  # behind it. Nothing failed, nothing was reported — the sweep just never reached the other 190
+  # gates, which is worse than any single red, because it is silent.
+  #
+  # 🔑 THE SAME RULE THE PRODUCT NOW LIVES BY: every call gets a deadline, including the ones this
+  # harness makes. A gate that exceeds it is INDETERMINATE (exit 2) — could-not-tell, never a product
+  # finding. 🔴 `timeout` is not on macOS by default, so the bound is a background child and a kill.
+  # → feedback_a_request_without_a_deadline_hangs_the_whole_run · feedback_a_gate_that_throws_is_not_a_gate_that_fails
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  local limit="${GATE_TIMEOUT_SECONDS:-300}" tmp
+  tmp=$(mktemp)
+  node "scripts/$script" >"$tmp" 2>&1 &
+  local pid=$! waited=0
+  while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$limit" ]; do sleep 1; waited=$((waited+1)); done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -9 "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    out="⚠️  INDETERMINATE — this gate ran for ${limit}s without finishing and was stopped. It is not
+     a product failure; nothing is checking: $what"
+    rc=2
+  else
+    wait "$pid"; rc=$?
+    out=$(cat "$tmp")
+  fi
+  rm -f "$tmp"
   # ═══════════════════════════════════════════════════════════════════════════════════════════════
   # 🔴🔴 A GATE THAT THREW IS NOT A GATE THAT FAILED — AND IT HAD BEEN REPORTED AS ONE.
   #
