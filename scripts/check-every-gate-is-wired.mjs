@@ -90,6 +90,7 @@ const NOT_PREFLIGHT = {
   'check-a-confirmation-names-the-work-done.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a confirmation sentence cannot make a video unsafe',
   'check-a-done-step-carries-the-time-it-was-done.mjs': 'onboarding-record gate, pure source+vm; runs in daily-health-check.sh — a task timestamp cannot make a video unsafe',
   'check-a-note-never-contradicts-the-measurement.mjs': 'admin-UI gate, pure source scan; runs in daily-health-check.sh — a note on a step card cannot make a video unsafe',
+  'check-a-block-renders-from-the-record-not-the-prose.mjs': 'admin-UI gate, lifts and renders admin.js in a vm; runs in daily-health-check.sh — a step card panel cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',
