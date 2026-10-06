@@ -19,6 +19,8 @@ import fs from "node:fs";
 import puppeteer from "puppeteer";
 import { liftAdmin } from "./_lift-admin.mjs";
 
+const diffs = [];
+
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const CSSP = `${SITE}/admin/admin.css`;
 const MOCKP = `${SITE}/reports/mockups/admin_step_notes_v1.html`;
@@ -50,13 +52,74 @@ const D = {
   service_fit_note: "ℹ️ 20 candidates dropped for not matching what this business sells (Google Business Profile Optimization, Google Maps Local SEO, Website Support for Local SEO).",
 };
 
-const html = lifted.call("obSurfaceBlockHtml", [D])
-  + lifted.call("obPlacesBlockHtml", [D])
-  + lifted.call("obNarrowedBlockHtml", [D]);
-
-if (!/ob-crow/.test(html) || !/ob-place/.test(html) || !/ob-ctx-row/.test(html)) {
-  console.error("⚠️  INDETERMINATE — the lifted renderers produced no blocks; re-pin this gate.");
+// 🔴 THE GUARD MUST NOT NAME A CLASS. Pinning it to `ob-subloc` meant that renaming that class —
+// exactly the regression the collision check exists to catch — tripped "cannot run" first, and the
+// gate went INDETERMINATE over its own finding. The precondition is that each renderer produced
+// markup, which is true whatever the classes are called.
+const parts = ["obSurfaceBlockHtml", "obPlacesBlockHtml", "obNarrowedBlockHtml"]
+  .map((f) => [f, String(lifted.call(f, [D]) || "")]);
+const empty = parts.filter(([, h]) => h.trim().length < 40).map(([f]) => f);
+if (empty.length) {
+  console.error(`⚠️  INDETERMINATE — ${empty.join(", ")} produced no markup; re-pin this gate.`);
   process.exit(2);
+}
+const html = parts.map(([, h]) => h).join("");
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A NEW BLOCK NEEDS A NAME NOTHING ELSE ANSWERS TO — checked, not assumed.
+//
+// Two class collisions in one afternoon. `.ob-note` was declared twice, so a bordered note box fifty
+// lines below had been handing the notes fold its ink and font size. Then these blocks shipped using
+// `.ob-place` / `.ob-places`, which the draft's own LOCATIONS list has used since long before — so
+// the new rules, being later in the stylesheet, silently restyled a component nobody was touching.
+//
+// 🔑 THE RENDER DIFF CANNOT SEE THIS. It renders the new blocks alone, so a collision that damages
+// the OTHER component leaves the new one matching its mockup perfectly. The check has to be on NAMES.
+//
+// 🔴 AND THE LIST OF NAMES IS READ OUT OF THE MARKUP, NEVER WRITTEN HERE. A hand-kept list made the
+// gate go BLIND the moment a class was renamed — it reported "cannot run" over exactly the
+// regression it exists to catch. → feedback_a_lift_list_is_a_promise_somebody_will_remember
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const JS = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8");
+  // 🔑 A CLASS IS "OURS" ONLY IF THIS BLOCK'S OWN CSS SECTION DECLARES IT. The blocks deliberately
+  // reuse the shared panel chrome (`ob-panel`, `ob-panel-h`, `ob-panel-b`, `ob-note`) — consuming a
+  // shared class is correct and must not be reported as a collision. Declaring one twice is the bug.
+  const SECTION = CSS.slice(Math.max(0, CSS.indexOf("STEP OUTPUT — the measurements")));
+  const emitted = new Set([...html.matchAll(/class="([^"]+)"/g)]
+    .flatMap((m) => m[1].split(/\s+/)).filter((c) => /^ob-/.test(c)));
+  const OWN = [...emitted].filter((c) => new RegExp(`(^|\\n)\\.${c}[\\s{.:]`).test(SECTION));
+  if (OWN.length < 4) {
+    console.error(`⚠️  INDETERMINATE — only ${OWN.length} block class(es) harvested from the markup.`);
+    process.exit(2);
+  }
+  // admin.js with the three renderers blanked out — everything else that emits a class
+  const mine = (() => {
+    let t = JS;
+    for (const f of ["obSurfaceBlockHtml", "obPlacesBlockHtml", "obNarrowedBlockHtml"]) {
+      const i2 = t.indexOf(`function ${f}(`);
+      if (i2 < 0) continue;
+      const o = t.indexOf("{", i2);
+      let d = 0, end = o;
+      for (let k = o; k < t.length; k++) {
+        if (t[k] === "{") d++;
+        else if (t[k] === "}") { d--; if (!d) { end = k + 1; break; } }
+      }
+      t = t.slice(0, i2) + " ".repeat(end - i2) + t.slice(end);
+    }
+    return t;
+  })();
+  for (const c of OWN) {
+    if (new RegExp(`class="[^"]*\\b${c}\\b`).test(mine)) {
+      diffs.push(`the class "${c}" is also emitted elsewhere in admin.js — these blocks' CSS comes `
+        + `later in the stylesheet, so it silently restyles that other component`);
+    }
+    const defs = (CSS.match(new RegExp(`(^|\\n)\\.${c}\\s*\\{`, "g")) || []).length;
+    if (defs > 1) {
+      diffs.push(`".${c}" is declared ${defs} times in admin.css — the later rule wins, and whichever `
+        + `component did not expect it is the one that breaks`);
+    }
+  }
 }
 
 const PROPS = ["display", "gridTemplateColumns", "backgroundColor", "color", "fontSize", "fontWeight",
@@ -69,9 +132,9 @@ const PAIRS = [
   ["the cost figure",        ".ob-crow .v",         ".row .v"],
   ["the split bar",          ".ob-split",           ".split"],
   ["the legend",             ".ob-legend",          ".legend"],
-  ["a sub-location row",     ".ob-place",           ".place"],
-  ["a sub-location pill",    ".ob-place .pill",     ".place .pill"],
-  ["the verified tick",      ".ob-place .tick",     ".place .tick"],
+  ["a sub-location row",     ".ob-subloc",          ".place"],
+  ["a sub-location pill",    ".ob-subloc .pill",     ".place .pill"],
+  ["the verified tick",      ".ob-subloc .tick",     ".place .tick"],
   ["a context row",          ".ob-ctx-row",         ".ctx-row"],
   ["a context label",        ".ob-ctx-row .k",      ".ctx-row .k"],
   ["a context tag",          ".ob-ctx-row .tag",    ".ctx-row .tag"],
@@ -85,7 +148,6 @@ const PAIRS = [
 ];
 
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
-const diffs = [];
 try {
   const read = (page, sel) => page.evaluate((s, props) => {
     const el = document.querySelector(s);
