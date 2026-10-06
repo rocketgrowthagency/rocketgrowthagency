@@ -98,7 +98,27 @@ console.log("\n── the measured number is attached by US, from the verified c
   // the gate read the extraction as a deletion. Pin the property: an absent figure resolves to words,
   // never to a number, wherever that decision now lives.
   // → feedback_a_gate_must_pin_the_property_not_the_spelling
-  const labelDecl = (step.match(/^\s*const volumeLabel\s*=[\s\S]*?;$/m) || [""])[0];
+  // 🔴 RE-PINNED AGAIN 2026-10-05. This stopped at the FIRST `;` at end of line, which worked while
+  // `volumeLabel` was a one-line ternary. It became a multi-line function (it now also names the
+  // "too specific to size" state), so the slice ended inside the body and contained neither "no
+  // data" nor the null test — the gate read a truncated extraction as a missing property and
+  // accused correct code. Brace-match the whole declaration.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_gate_window_measured_in_characters_will_lie
+  const labelDecl = (() => {
+    const i = step.indexOf("const volumeLabel");
+    if (i < 0) return "";
+    const arrow = step.indexOf("=>", i);
+    const brace = step.indexOf("{", arrow);
+    const semi = step.indexOf(";", arrow);
+    // A one-line ternary has no body brace before its terminating semicolon.
+    if (brace < 0 || (semi >= 0 && semi < brace)) return step.slice(i, semi + 1);
+    let d = 0;
+    for (let k = brace; k < step.length; k++) {
+      if (step[k] === "{") d++;
+      else if (step[k] === "}") { d--; if (!d) return step.slice(i, k + 1); }
+    }
+    return "";
+  })();
   const absentIsText = /row\.volume === null \? "no data"/.test(step)
     || (/no data/.test(labelDecl) && /null|undefined/.test(labelDecl));
   for (const [ok, good, bad] of [
