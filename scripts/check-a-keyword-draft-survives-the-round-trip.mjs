@@ -73,7 +73,11 @@ const labelFn = (() => {
   return "";
 })();
 if (!labelFn) { console.error("⚠️  INDETERMINATE — cannot read volumeLabel; re-pin this gate."); process.exit(2); }
-const stepLabels = [...new Set([...labelFn.matchAll(/"([^"]{3,60})"/g)].map((m) => m[1]))];
+// 🔴 STRIP THE COMMENTS FIRST. A quoted phrase inside an explanatory comment is not a label the step
+// can write, and harvesting one made this gate demand that the card classify a sentence.
+// → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const labelCode = labelFn.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+const stepLabels = [...new Set([...labelCode.matchAll(/"([^"]{3,60})"/g)].map((m) => m[1]))];
 if (stepLabels.length < 2) { console.error("⚠️  INDETERMINATE — harvested too few labels."); process.exit(2); }
 
 // A measured figure is interpolated, not a literal, so it is added explicitly.

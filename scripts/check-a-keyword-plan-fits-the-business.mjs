@@ -89,8 +89,29 @@ const code = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ")
 // 🔴 "AT LEAST 3 of the 5 MUST carry a geo-modifier" was asked of the model and never checked. RGA's
 // locked plan came back with ZERO. A requirement asked for and never verified is a hope.
 {
-  if (!/AT LEAST 3 of the 5 MUST carry a geo-modifier/.test(code)) {
-    fail.push("the prompt no longer asks a local client for geo-modified keywords");
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════
+  // 🔴 THIS PINNED THE SENTENCE AND FAILED ON A CORRECT CHANGE (2026-10-05). It matched the literal
+  // "AT LEAST 3 of the 5 MUST carry a geo-modifier", so the day the ask was rebalanced on MEASURED
+  // evidence — an explicit "<service> <small town>" phrase often returns no map pack at all, and the
+  // month-one baseline is a map-pack instrument — the gate reported that the prompt "no longer asks a
+  // local client for geo-modified keywords". It still did. It asked for two instead of three, plus an
+  // implicit-local term for the pack.
+  //
+  // 🔑 PIN THE PROPERTY: a non-national client's ask must REQUIRE SOME geo-modified terms, and must
+  // also require a term that can win the surface the baseline measures. The numbers are a strategy
+  // call and will move again. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════
+  const geoAsk = /AT LEAST (?:ONE|TWO|THREE|\d+)[^.]{0,80}geo-modifier/i.test(code);
+  const packAsk = /AT LEAST ONE[^.]{0,200}(?:names? NO place|implicit-local)/i.test(code);
+  if (!geoAsk) {
+    fail.push("the prompt no longer requires a local client's plan to carry geo-modified keywords — a bare "
+      + "head term cannot be won from one address");
+  }
+  if (!packAsk) {
+    fail.push("the prompt no longer requires an implicit-local term that names no place — those are the "
+      + "searches Google answers with a MAP PACK, and the 81-point geo grid taken as the month-one "
+      + "baseline can measure nothing else. A plan of city-modified phrases alone cannot move it. "
+      + "→ project_a_keyword_has_a_surface");
   }
   if (!/geoShortfallNote/.test(code) || !/lines\.push\(\s*geoShortfallNote\s*\)/.test(code)) {
     fail.push("the plan's geo-modifier count is never checked against the ask, or the shortfall is "

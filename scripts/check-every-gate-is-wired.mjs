@@ -78,6 +78,24 @@ const NOT_PREFLIGHT = {
   'check-a-designed-draft-escapes-exactly-once.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — HTML escaping in an admin card cannot make a video unsafe',
   'check-a-step-number-has-one-home.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — what an admin surface calls a step cannot make a video unsafe',
   'check-the-next-action-performs-the-decision.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — an admin card button cannot make a video unsafe',
+
+  // ── keyword + sub-location plan (step 26), built 2026-10-05. All run in daily-health-check.sh.
+  //    🔴 NONE belongs in overnight-pipeline.sh: video and scraper work is PARKED, and a keyword-plan
+  //    regression must never abort a video build.
+  'check-a-failed-scan-is-not-no-scan.mjs': 'admin-UI gate; runs in daily-health-check.sh — how a failed rank scan is labelled cannot make a video unsafe',
+  'check-a-keyword-draft-survives-the-round-trip.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a keyword draft renders cannot make a video unsafe',
+  'check-a-keyword-knows-its-surface.mjs': 'keyword-plan gate, stubbed fetch; runs in daily-health-check.sh — whether a keyword triggers a map pack cannot make a video unsafe',
+  'check-a-keyword-plan-fits-the-business.mjs': 'keyword-plan gate, pure source+vm; runs in daily-health-check.sh — a keyword pool cannot make a video unsafe',
+  'check-a-keyword-plan-is-decided-on-evidence.mjs': 'keyword-plan gate, pure source+vm; runs in daily-health-check.sh — how plan slots are allocated cannot make a video unsafe',
+  'check-a-loose-list-keeps-its-numbers.mjs': 'admin-UI gate; runs in daily-health-check.sh — markdown list rendering cannot make a video unsafe',
+  'check-a-queued-step-updates-the-card.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — whether a queued step refreshes the card cannot make a video unsafe',
+  'check-a-rebuilt-draft-keeps-its-fences.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a draft fence cannot make a video unsafe',
+  'check-a-state-that-belongs-to-nobody-says-so.mjs': 'admin/portal-UI gate; runs in daily-health-check.sh — whose turn a step shows cannot make a video unsafe',
+  'check-a-sub-location-is-a-real-place.mjs': 'keyword-plan gate, stubbed fetch; runs in daily-health-check.sh — a wrong sub-location cannot make a video unsafe',
+  'check-an-outbound-call-has-a-deadline.mjs': 'admin/API gate, pure source read; runs in daily-health-check.sh — a timeout on an admin step cannot make a video unsafe',
+  'check-every-marker-the-step-writes-is-classified.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a step note is panelled cannot make a video unsafe',
+  'check-the-next-step-card-matches-its-mockup.mjs': 'portal-UI gate, drives a browser; runs in daily-health-check.sh — the portal next-step card cannot make a video unsafe',
+  'check-the-volume-chip-agrees-with-the-step.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a volume chip colour cannot make a video unsafe',
   'check-a-plain-text-output-is-designed.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — how a stored output is laid out cannot make a video unsafe',
   'check-a-callout-has-a-kind.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the layout of a step\'s reference fold cannot make a video unsafe',
   'check-an-arrow-points-where-it-goes.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — a glyph on an admin control cannot make a video unsafe',
