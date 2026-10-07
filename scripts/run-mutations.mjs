@@ -50,13 +50,19 @@ const FILES = {
   css: "admin/admin.css",
   portal: "portal/portal.js",
   playbook: "data/playbooks/playbooks.json",
+  dormant: "netlify/functions/_dormant.json",
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five
 // files; `check-the-grid-says-what-it-centred-on` also reads `v2-rank-grid-background.js`, so its
 // unmutated run exited 2 and the whole suite was unjudgeable. Copy the SOURCE DIRECTORIES by rule
 // instead, skipping media, so a gate that starts reading a new file needs nothing here.
 // → feedback_a_lift_list_is_a_promise_somebody_will_remember
-const CARRY_DIRS = ["admin", "portal", "shared", "netlify/functions", "data", "partials", "reports/mockups"];
+// 🔴 A DIRECTORY ALLOW-LIST IS THE SAME PROMISE AS A FILE LIST, ONE LEVEL UP. The first version
+// named seven directories; `check-no-dormant-endpoints` walks the WHOLE tree, so in a copy holding
+// only those seven, ten endpoints whose callers live elsewhere looked dormant and its unmutated run
+// failed. Copy everything that is not obviously not-code, and name what is skipped instead.
+// → feedback_a_lift_list_is_a_promise_somebody_will_remember
+const SKIP_DIRS = /^(node_modules|\.git|\.claude|\.netlify|v|dist|coverage|reports)$/;
 const SKIP = /\.(mp4|mov|png|jpe?g|gif|webp|pdf|zip|ico|woff2?)$/i;
 const copyTree = (rel) => {
   const from = `${SITE}/${rel}`;
@@ -81,7 +87,26 @@ if (only) suites = suites.filter((f) => f.includes(only.replace(/\.(mjs|json)$/,
 if (!suites.length) { console.error(`⚠️  INDETERMINATE — no suite matches "${only}"`); process.exit(2); }
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "rga-mut-"));
-const seed = () => { for (const d of CARRY_DIRS) copyTree(d); };
+// 🔴 THE ROOT FILES COUNT TOO. `script.js` calls `verify-turnstile` and `netlify.toml` names the
+// scheduled functions; without them a copy looks like a site where those endpoints have no caller,
+// and `check-no-dormant-endpoints` failed its UNMUTATED run. Copy the root's own text files, not
+// its directories, which CARRY_DIRS already handles.
+const copyRootFiles = () => {
+  let entries;
+  try { entries = fs.readdirSync(SITE, { withFileTypes: true }); } catch { return; }
+  for (const e of entries) {
+    if (e.isDirectory() || SKIP.test(e.name)) continue;
+    try { fs.copyFileSync(`${SITE}/${e.name}`, `${tmp}/${e.name}`); } catch { /* unreadable */ }
+  }
+};
+const seed = () => {
+  copyRootFiles();
+  // `reports` is skipped wholesale except the mockups, which render-diff gates read.
+  for (const e of fs.readdirSync(SITE, { withFileTypes: true })) {
+    if (e.isDirectory() && !SKIP_DIRS.test(e.name)) copyTree(e.name);
+  }
+  copyTree("reports/mockups");
+};
 const runGate = (gate) => {
   try { execFileSync("node", [`${HERE}/${gate}`], { env: { ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp }, stdio: "pipe" }); return 0; }
   catch (e) { return e.status ?? 99; }
