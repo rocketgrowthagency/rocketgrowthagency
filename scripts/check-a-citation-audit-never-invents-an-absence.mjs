@@ -98,7 +98,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 // ── CASE 2 · a real hit ───────────────────────────────────────────────────────────────────────
 {
   const rows = await run({ reply: (u) => resp(u.includes("yelp.com")
-    ? { organic_results: [{ link: "https://www.yelp.com/biz/rocket-growth-agency" }] }
+    ? { organic_results: [{ link: "https://www.yelp.com/biz/rocket-growth-agency", title: "Rocket Growth Agency" }] }
     : { organic_results: [] }) });
   const yelp = rows.find((r) => r.source === "Yelp");
   if (yelp?.status !== "found") F(`CASE 2 — a yelp.com result in the SERP produced status "${yelp?.status}", not "found"`);
@@ -134,7 +134,10 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 
 // ── CASE 6 · a lookalike host must not satisfy a directory ────────────────────────────────────
 {
-  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://notyelp.com/biz/rocket" }, { link: "https://yelp.com.evil.test/biz/x" }] }) });
+  const rows = await run({ reply: () => resp({ organic_results: [
+    { link: "https://notyelp.com/biz/rocket-growth-agency", title: "Rocket Growth Agency" },
+    { link: "https://yelp.com.evil.test/biz/rocket-growth-agency", title: "Rocket Growth Agency" },
+  ] }) });
   const yelp = rows.find((r) => r.source === "Yelp");
   if (yelp?.status === "found") F(`CASE 6 — "${yelp.url}" was accepted as a Yelp listing`);
 }
@@ -204,6 +207,66 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (rows.some((r) => r.status === "missing")) F("CASE 6e — a quota refusal was counted as an absent listing");
 }
 
+// ── CASE 6i · 🔴🔴 GOOGLE IGNORING `site:` IS NOT AN ABSENCE ───────────────────────────────────
+// MEASURED: `"Patagonia" site:facebook.com` → youtube.com, patagonia.com. `"Blue Bottle Coffee"
+// site:foursquare.com` → bluebottlecoffee.com ×4. A full page of results, none on the directory —
+// we never looked at the directory at all, and calling that "nothing on angi.com" is the false
+// absence that sends step 52 to build a duplicate.
+{
+  const rows = await run({ reply: () => resp({ organic_results: [
+    { link: "https://www.youtube.com/watch?v=abc" },
+    { link: "https://www.patagonia.com/shop/" },
+    { link: "https://en.wikipedia.org/wiki/Plumber" },
+  ] }) });
+  // 🔑 BOTH FORMS RAN HERE, so "nothing from this domain in either search" IS evidence — the plain
+  // query is not subject to the site: problem, and Google would surface a name-matching listing for
+  // it. What must still never happen is concluding an absence when a form did NOT run.
+  if (!rows.every((r) => r.status === "missing")) F("CASE 6i — both query forms answered and returned nothing on-host; that is a measured absence");
+  if (!rows.every((r) => /in either search/.test(r.note || ""))) F("CASE 6i — the note does not say both searches were consulted");
+}
+{
+  // 🔴 AND THE RULE THAT SURVIVES: one form failing means we cannot call it absent.
+  let n = 0;
+  const rows = await run({ reply: () => { n++; return n % 2 ? resp({ organic_results: [{ link: "https://example.com/x" }] }) : resp({}, false, 503); } });
+  if (rows.some((r) => r.status === "missing")) F("CASE 6i — a directory was declared absent although only one of its two searches completed");
+  if (!rows.every((r) => /only one|neither/.test(r.note || ""))) F("CASE 6i — the card does not say that one of the two searches failed");
+}
+
+// ── CASE 6j · 🔴🔴 THE RIGHT SHAPE ON THE RIGHT HOST FOR THE WRONG BUSINESS ────────────────────
+// MEASURED against the live record while testing: searching "Rocket Growth Agency" returned
+// `facebook.com/rocketdigitalagency/` — a real Page, correct shape, correct host, belonging to
+// Rocket DIGITAL Agency. Structure alone cannot tell two businesses apart; the plain query form
+// does not restrict results to the directory, so a similar name passes every other check.
+{
+  const rows = await run({ reply: (u) => resp(u.includes("facebook.com") ? { organic_results: [
+    { link: "https://www.facebook.com/rocketdigitalagency/", title: "Rocket Digital Agency" },
+  ] } : { organic_results: [] }) });
+  const fb = rows.find((r) => r.source === "Facebook");
+  if (fb?.status === "found") F(`CASE 6j — "${fb.url}" belongs to a different business and was reported as the client's listing`);
+  if (fb && !/not this business/.test(fb.note || "")) F(`CASE 6j — a profile for a similarly-named business is not surfaced as a near miss: "${fb?.note}"`);
+}
+{
+  // and the client's OWN page, named, is still accepted
+  const rows = await run({ reply: (u) => resp(u.includes("facebook.com") ? { organic_results: [
+    { link: "https://www.facebook.com/rocketgrowthagency/", title: "Rocket Growth Agency" },
+  ] } : { organic_results: [] }) });
+  const fb = rows.find((r) => r.source === "Facebook");
+  if (fb?.status !== "found") F(`CASE 6j — the client's own correctly-named Page was rejected (got "${fb?.status}": ${fb?.note})`);
+}
+
+// ── CASE 6k · the SHAPE check, isolated from the name check ───────────────────────────────────
+// 🔑 These two guards overlap, and overlapping guards hide each other: a fixture that fails both
+// proves neither. This URL carries the business name AND sits on the host — only its SHAPE is
+// wrong — so it isolates the shape rule. → feedback_a_fixture_must_fail_for_the_reason_it_tests
+{
+  const rows = await run({ reply: (u) => resp(u.includes("yelp.com") ? { organic_results: [
+    { link: "https://www.yelp.com/search?find_desc=Rocket+Growth+Agency", title: "Rocket Growth Agency" },
+    { link: "https://www.yelp.com/questions/rocket-growth-agency-are-they-good/abc", title: "Rocket Growth Agency" },
+  ] } : { organic_results: [] }) });
+  const y = rows.find((r) => r.source === "Yelp");
+  if (y?.status === "found") F(`CASE 6k — "${y.url}" names the business and is on Yelp, but is a search/question page, not a listing`);
+}
+
 // ── CASE 6f · the listing gate itself, directly ───────────────────────────────────────────────
 // 🔴 EVERY searchable directory must REJECT its own bare domain. That is the shape Google falls back
 // to when the business is absent, so if any directory accepts it, that directory reports a listing
@@ -227,8 +290,10 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 // — other accounts posting ABOUT the business. A Page's own URL is one segment with nothing under it.
 {
   const rows = await run({ reply: (u) => resp(u.includes("facebook.com") ? { organic_results: [
-    { link: "https://www.facebook.com/RetailMeNot/videos/trying-the-new-menu/1490756406113892/" },
-    { link: "https://www.facebook.com/sbworkersunited/posts/a-message-from-a-barista/2021960332071470/" },
+    { link: "https://www.facebook.com/somelocalgroup/posts/rocket-growth-agency-did-our-website/2021960332071470/",
+      title: "Rocket Growth Agency did our website" },
+    { link: "https://www.facebook.com/anotherpage/videos/rocket-growth-agency-review/1490756406113892/",
+      title: "Rocket Growth Agency review" },
   ] } : { organic_results: [] }) });
   const fb = rows.find((r) => r.source === "Facebook");
   if (fb?.status === "found") F(`CASE 6g — "${fb.url}" is another account's post mentioning the business and was reported as the client's Page`);
@@ -264,7 +329,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 {
   const stale = [{ source: "Yelp", url: null, status: "unknown", updated_at: new Date().toISOString(),
     notes: "[v2-listing-shape] 2026-10-07 — no listing page found by site: search" }];
-  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://www.yelp.com/biz/x" }] }), cached: stale });
+  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://www.yelp.com/biz/rocket-growth-agency", title: "Rocket Growth Agency" }] }), cached: stale });
   const yelp = rows.find((r) => r.source === "Yelp");
   if (yelp?.status !== "found") F(`CASE 7 — a cached "unknown" was re-read instead of retried, so pressing Run again changes nothing (got "${yelp?.status}")`);
 }
@@ -274,7 +339,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 // ONCE, for the whole output — appending it to each row's note hid it on every `found` row, because
 // a found row renders its URL and never its note.
 {
-  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://www.yelp.com/biz/x" }] }), writeFails: true });
+  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://www.yelp.com/biz/rocket-growth-agency", title: "Rocket Growth Agency" }] }), writeFails: true });
   if (!rows.writeError) F("CASE 8 — a failed write left no trace at all, so the card would imply step 52 can read these rows");
   if (rows.some((r) => /not saved/.test(r.note || ""))) F("CASE 8 — the write failure is stamped on individual rows, where a found row's note never renders");
   if (rows.find((r) => r.source === "Yelp")?.status !== "found") F("CASE 8 — a failed write threw away the measurement that did succeed");
@@ -334,6 +399,31 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (!/Press Run again/.test(allFailed.summary)) F("a run that learned nothing does not tell the reader to run it again");
   if (/reads these rows/.test(allFailed.summary)) F("a run that stored nothing still promises step 52 rows to read — it handed over nothing");
   if (!/reads these rows/.test(allCached.summary)) F("a run with real results does not name the step that consumes them");
+}
+
+// ═══ PART 1b — EVERY SEARCHED DIRECTORY IS BACKED BY A REAL LISTING ══════════════════════════
+// 🔴🔴 THE RULE CHRIS'S FEEDBACK BOUGHT. Four of these patterns were written from what I expected a
+// listing URL to look like, and `/service/` and `/pages/` were simply wrong — which would have
+// produced a PERMANENT false "missing" on those directories, and a false missing is what sends step
+// 52 to build a duplicate.
+//
+// 🔑 SO THE EVIDENCE LIVES BESIDE THE RULE. Each directory carries `listingExample`, a URL measured
+// against the live directory, and this asserts the directory's own pattern still accepts it. A
+// pattern edited later that no longer matches its own proof fails here.
+// 🔴 And a directory with NO verified example must not be searched at all — it could only ever
+// conclude "no profile matched my pattern", which says more about the pattern than the client.
+{
+  for (const d of DIRMOD.discoverableDirectories()) {
+    if (!d.listingExample) { F(`PART 1b — ${d.source} is searched but carries no verified listing example, so a "missing" from it is unfalsifiable`); continue; }
+    if (!DIRMOD.isDirectoryListing(d.listingExample, d)) {
+      F(`PART 1b — ${d.source}'s own proven listing no longer matches its pattern: ${d.listingExample}`);
+    }
+    if (!DIRMOD.onDirectoryHost(d.listingExample, d)) F(`PART 1b — ${d.source}'s example is not even on its own host: ${d.listingExample}`);
+  }
+  // every unsearched directory must say WHY, or it reads as an oversight
+  for (const d of DIRMOD.CITATION_DIRECTORIES.filter((x) => !x.discoverable)) {
+    if (!d.note) F(`PART 1b — ${d.source} is excluded from the search with no reason recorded`);
+  }
 }
 
 // ═══ PART 2b — THE CONSUMING SIDE DISTRUSTS AN OLD-METHOD ROW TOO ════════════════════════════
@@ -400,4 +490,4 @@ if (fails.length) {
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log("✅ a failed citation search is never an absent listing — 18 discovery cases + 4 summary runs, unknown stays unknown and is never stored");
+console.log("✅ a failed citation search is never an absent listing — 22 discovery cases + 4 summary runs, unknown stays unknown and is never stored");

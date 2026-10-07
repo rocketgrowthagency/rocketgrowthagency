@@ -2,26 +2,26 @@
  [
   "a body with no organic_results is read as an empty result set (the map-pack bug, on citations)",
   "exec",
-  "    if (!Array.isArray(j?.organic_results)) return unknown(\"the search returned no result set we could read\");",
-  "    if (!j?.organic_results) j = { organic_results: [] };"
+  "    if (!Array.isArray(j?.organic_results)) return { ran: false, why: \"no result set we could read\" };",
+  "    if (!Array.isArray(j?.organic_results)) return { ran: true, results: [] };"
  ],
  [
   "a timeout becomes a missing listing",
   "exec",
-  "      return unknown(`the search could not be completed (${why})`);",
-  "      out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: `no listing found (${why})` }; return;"
+  "      return { ran: false, why };",
+  "      return { ran: true, results: [] };"
  ],
  [
   "a SerpAPI refusal becomes a missing listing",
   "exec",
-  "    if (j?.error) return unknown(`the search was refused (${String(j.error).slice(0, 70)})`);",
-  "    if (j?.error) { out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: \"no listing found\" }; return; }"
+  "    if (j?.error) return { ran: false, why: `refused (${String(j.error).slice(0, 60)})` };",
+  "    if (j?.error) return { ran: true, results: [] };"
  ],
  [
   "a non-200 becomes a missing listing",
   "exec",
-  "    if (!r.ok) return unknown(`the search returned ${r.status}`);",
-  "    if (!r.ok) { out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: \"no listing found\" }; return; }"
+  "    if (!r.ok) return { ran: false, why: `the search returned ${r.status}` };",
+  "    if (!r.ok) return { ran: true, results: [] };"
  ],
  [
   "a missing API key is treated as proof of absence",
@@ -50,8 +50,8 @@
  [
   "a found listing stops carrying its URL",
   "exec",
-  "      ? { ...d, status: \"found\", url: String(match.link).slice(0, 500), title: String(match.title || \"\").slice(0, 120),\n          searched: true, spent: true, note: \"\" }",
-  "      ? { ...d, status: \"found\", url: null, title: null, searched: true, spent: true, note: \"\" }"
+  "      out[i] = { ...d, status: \"found\", url: String(match.link).slice(0, 500),",
+  "      out[i] = { ...d, status: \"found\", url: null,"
  ],
  [
   "the catch swallows a programming error again",
@@ -80,8 +80,8 @@
  [
   "a directory's own search page counts as the client's listing",
   "exec",
-  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
-  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d));"
+  "      && !CIT_NOT_A_LISTING.test(String(x.link))",
+  "      && true"
  ],
  [
   "a failed write is stamped on each row, where a found row never shows it",
@@ -128,8 +128,8 @@
  [
   "a page on the host counts as a listing again (the false positive that shipped)",
   "exec",
-  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
-  "    const match = onHost[0];"
+  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d)",
+  "    const match = onHost.find((x) => true"
  ],
  [
   "a directory with no listingPath passes everything",
@@ -140,26 +140,26 @@
  [
   "an empty SERP goes back to being a refusal",
   "exec",
-  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) {",
-  "    if (false) {"
+  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) return { ran: true, results: [] };",
+  "    if (false) return { ran: true, results: [] };"
  ],
  [
   "a quota refusal is treated as an empty SERP",
   "exec",
-  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) {",
-  "    if (j?.error) {"
+  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) return { ran: true, results: [] };",
+  "    if (j?.error) return { ran: true, results: [] };"
  ],
  [
   "Yelp's listing shape stops being required",
   "citdirs",
-  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\/biz\\// },",
-  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\// },"
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\/biz\\//,",
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\//,"
  ],
  [
   "a Facebook post by someone else counts as the client's Page",
   "citdirs",
-  "    listingPath: /^\\/(p\\/[^/]+\\/?$|pages\\/[^/]+\\/[^/]+\\/?$|profile\\.php|(?!business|policies|help|legal|terms|privacy|about|careers|ads|watch|groups|events|marketplace|login|settings|safety|gaming|share|story\\.php|permalink\\.php)[^/]{3,}\\/?$)/ },",
-  "    listingPath: /^\\/(p\\/|pages\\/|profile\\.php|[^/]{3,})/ },"
+  "    listingPath: /^\\/(p\\/[^/]+\\/?$|pages\\/[^/]+\\/[^/]+\\/?$|profile\\.php|(?!business|policies|help|legal|terms|privacy|about|careers|ads|watch|groups|events|marketplace|login|settings|safety|gaming|share|story\\.php|permalink\\.php)[^/]{3,}\\/?$)/ ,",
+  "    listingPath: /^\\/(p\\/|pages\\/|profile\\.php|[^/]{3,})/ ,"
  ],
  [
   "a row from the old host-matching method is trusted again",
@@ -184,5 +184,47 @@
   "exec",
   "    if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS.",
   "    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS."
+ ],
+ [
+  "a listing pattern stops matching the real listing that proves it",
+  "citdirs",
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\/biz\\//,",
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\/business\\//,"
+ ],
+ [
+  "a directory is searched with no verified listing example",
+  "citdirs",
+  "  { key: \"nextdoor\", source: \"Nextdoor\", host: \"nextdoor.com\", matchHosts: [\"nextdoor.com\"],\n    tier: \"general\", weight: 2, discoverable: false,",
+  "  { key: \"nextdoor\", source: \"Nextdoor\", host: \"nextdoor.com\", matchHosts: [\"nextdoor.com\"],\n    tier: \"general\", weight: 2, discoverable: true, listingPath: /^\\/pages\\//,"
+ ],
+ [
+  "an unsearched directory stops saying why it was excluded",
+  "citdirs",
+  "    note: \"an owner portal, not indexed pages — confirm in the Bing Places dashboard\" },",
+  "  },"
+ ],
+ [
+  "a listing for a DIFFERENT business with a similar name is accepted",
+  "exec",
+  "      && listingNamesBusiness(x?.link, x?.title, name));",
+  "      );"
+ ],
+ [
+  "the name check stops comparing the name at all",
+  "citdirs",
+  "  const hay = `${citNorm(path)} ${citNorm(title)}`;\n  return hay.includes(want);",
+  "  const hay = `${citNorm(path)} ${citNorm(title)}`;\n  return true;"
+ ],
+ [
+  "an absence is declared although only one of the two searches ran",
+  "exec",
+  "    if (!bySite.ran || !byName.ran) {",
+  "    if (false) {"
+ ],
+ [
+  "only one query form runs, so each form's blind spot becomes a false absence",
+  "exec",
+  "    const [bySite, byName] = await Promise.all([\n      askGoogle(`\"${name}\" site:${d.host}`),\n      askGoogle(`\"${name}\" ${d.source}`),\n    ]);",
+  "    const bySite = await askGoogle(`\"${name}\" site:${d.host}`); const byName = bySite;"
  ]
 ]
