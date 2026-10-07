@@ -378,6 +378,7 @@ run check-the-card-says-what-finishes-the-step.mjs "an active card says what fin
 run check-a-citation-audit-never-invents-an-absence.mjs "a failed citation search is never reported as a missing listing"
 run check-a-finished-step-stays-on-screen.mjs "the step you just acted on is the step you see afterwards"
 run check-on-screen-copy-is-us-idiom.mjs "every word a human reads on screen is US English"
+run check-a-client-rule-works-for-any-business.mjs "a rule about a client works for a client we do not have"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"

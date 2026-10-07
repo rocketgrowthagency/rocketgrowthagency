@@ -1,0 +1,50 @@
+[
+ [
+  "a website stored without a scheme stops resolving (the false 'not secure')",
+  "exec",
+  "  const withScheme = /^[a-z][a-z0-9+.-]*:\\/\\//i.test(raw) ? raw : `https://${raw}`;",
+  "  const withScheme = raw;"
+ ],
+ [
+  "an uppercase host stops being normalized",
+  "exec",
+  "  return `${u.protocol}//${u.hostname.toLowerCase()}${u.pathname.replace(/\\/$/, \"\")}`;",
+  "  return `${u.protocol}//${u.hostname}${u.pathname}`;"
+ ],
+ [
+  "junk is probed instead of refused",
+  "exec",
+  "  if (!u.hostname.includes(\".\")) return null;",
+  "  void 0;"
+ ],
+ [
+  "a non-web scheme is accepted",
+  "exec",
+  "  if (u.protocol !== \"http:\" && u.protocol !== \"https:\") return null;",
+  "  void 0;"
+ ],
+ [
+  "plain http is silently upgraded, hiding an insecure site",
+  "exec",
+  "  const withScheme = /^[a-z][a-z0-9+.-]*:\\/\\//i.test(raw) ? raw : `https://${raw}`;",
+  "  const withScheme = `https://${raw.replace(/^[a-z]+:\\/\\//i, \"\")}`;"
+ ],
+ [
+  "a step goes back to doing its own URL surgery",
+  "exec",
+  "    const root = clientSiteUrl(client);\n    if (!root) return { summary: \"No usable website address on the client record\", outcome: \"indeterminate\" };",
+  "    const root = client.website_url.replace(/\\\\/$/, \"\");"
+ ],
+ [
+  "the name matcher goes back to needing the whole string",
+  "citdirs",
+  "  return want.every((t) => hayTokens.has(t) || hayJoined.includes(t));",
+  "  return hayJoined.includes(citNorm(businessName));"
+ ],
+ [
+  "legal suffixes stop being stripped from the client's name",
+  "citdirs",
+  "  \"llc\", \"l.l.c\", \"inc\", \"incorporated\", \"corp\", \"corporation\", \"ltd\", \"limited\", \"co\", \"company\",",
+  ""
+ ]
+]
