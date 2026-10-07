@@ -1,0 +1,20 @@
+[
+ [
+  "the plan drops back below what the step needs to finish",
+  "exec",
+  "      `20-photo shot list for a Google Business Profile. Categories: LOGO (1) / COVER (1) / ` +",
+  "      `12-photo shot list for a Google Business Profile. Categories: LOGO (1) / COVER (1) / ` +"
+ ],
+ [
+  "the SOP text states a different number from the detection threshold",
+  "playbook",
+  "20 in all, which is what completion is detected at (client_photos >= 20).",
+  "22 in all, which is what completion is detected at (client_photos >= 20)."
+ ],
+ [
+  "the detection threshold moves without the plan following",
+  "recheck",
+  "countProbe(id, \"client_photos\", 20, \"photo\")",
+  "countProbe(id, \"client_photos\", 30, \"photo\")"
+ ]
+]

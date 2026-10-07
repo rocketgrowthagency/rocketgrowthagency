@@ -53,20 +53,46 @@ try {
   const page = await b.newPage();
   await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
   await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=client-setup`, { waitUntil: "networkidle2", timeout: 60000 });
-  await page.waitForSelector(".ob-step", { timeout: 45000 }).catch(() => {});
-  await new Promise((r) => setTimeout(r, 2500));
+  // 🔴🔴 THE SWALLOWED WAIT WAS THE FLAKINESS. `waitForSelector(...).catch(() => {})` followed by a
+  // fixed 2.5s sleep meant a slow render reported "the checklist rendered no rows" — which reads as
+  // "the admin is broken" and did exactly that today, right after a deploy. A probe that cannot tell
+  // "not loaded yet" from "nothing there" is worse than no probe.
+  // 🔑 WAIT FOR THE CONDITION, NOT A CLOCK: poll until the row count is non-zero AND stable.
+  // → feedback_a_flaky_gate_is_worse_than_a_failing_one · feedback_a_silent_catch_hides_an_optimisation_doing_nothing
+  const countRows = () => page.evaluate(() => document.querySelectorAll(".ob-step").length);
+  let n = 0, stable = 0;
+  for (let i = 0; i < 60; i++) {
+    const c = await countRows();
+    if (c > 0 && c === n) { if (++stable >= 3) break; } else { stable = 0; }
+    n = c;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!n) {
+    console.error("⚠️  INDETERMINATE — the checklist never rendered a row in 30s.");
+    console.error("   This is the PROBE failing to see the page, not proof the admin is broken.");
+    console.error("   Check it by hand: " + `${SITE}/admin/?view=client&id=${clientId}&tab=client-setup`);
+    process.exit(2);
+  }
+
   const rows = await page.evaluate(() => [...document.querySelectorAll(".ob-step")].map((el) => ({
     // 🔑 `.ob-num` is the STATUS DISC (✓ / ·). The number is `.ob-sid`, right beside it — reading the
     // disc printed a glyph where a number belongs, which is the whole failure this probe prevents.
     n: (el.querySelector(".ob-sid")?.textContent || "").trim(),
     title: (el.querySelector(".ob-title")?.textContent || "").trim(),
-    id: el.getAttribute("data-flow-id") || el.getAttribute("data-step") || "",
-    state: [...el.classList].find((c) => ["done", "active", "ready", "queued", "locked", "skipped"].includes(c)) || "",
+    // 🔑 `data-ob-step` is the id the card actually carries (added 2026-10-07 so a finished step can
+    // be scrolled back to). `data-flow-id` never existed, so filtering by id silently matched nothing.
+    // → feedback_a_symbol_name_is_a_claim_about_the_codebase
+    id: el.getAttribute("data-ob-step") || "",
+    state: [...el.classList].find((c) => ["done", "active", "ready", "queued", "locked", "skipped", "declined"].includes(c)) || "",
     until: (el.querySelector(".ob-until")?.textContent || "").trim(),
   })).filter((r) => r.title));
-  if (!rows.length) { console.error("⚠️  INDETERMINATE — the checklist rendered no rows."); process.exit(2); }
+
+  // 🔴 NAME THE SCOPE THE PAGE IS ACTUALLY SHOWING. This printed "month-1 checklist" over whatever
+  // was on screen, and today that was the 28-row Month 2+ list — a label stating something the rows
+  // contradicted. → feedback_a_client_message_must_agree_with_itself
+  const scope = `${rows.length} rows on screen`;
   const show = needle ? rows.filter((r) => r.title.toLowerCase().includes(needle) || r.id.toLowerCase().includes(needle)) : rows;
-  console.log(`── month-1 checklist as the page prints it (${rows.length} rows)\n`);
+  console.log(`── checklist as the page prints it — ${scope}\n`);
   for (const r of show) console.log(`  step ${String(r.n || "?").padStart(3)}  ${r.title.slice(0, 46).padEnd(48)}${r.state ? `[${r.state}]`.padEnd(10) : "".padEnd(10)}${r.until}`);
   if (needle && !show.length) console.log(`  (no row matches "${needle}")`);
 } finally { await b.close(); }

@@ -677,9 +677,11 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
     id: "m1.gbp.photos", title: "Upload 20+ quality photos",
     type: "manual", dependsOn: ["m1.gbp.verify"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Upload to GBP: logo, cover, 5 team, 5 work-in-progress, 5 finished-job results, 3 truck/equipment, 2 office.
+    instructions: `Upload to GBP: logo, cover, 4 team, 4 work-in-progress, 4 finished-job results, 3 workspace or premises, 3 equipment — 20 in all, which is what completion is detected at (client_photos >= 20).
+Press Draft this for me for a 20-shot list written for this business.
 Geotag if possible. Add captions with keywords.
-Once OAuth is connected: gbp.uploadPhoto(sourceUrl, "ADDITIONAL") batch from /data/clients/<slug>/photos/`,
+Once OAuth is connected: gbp.uploadPhoto(sourceUrl, "ADDITIONAL") batch from /data/clients/<slug>/photos/
+DONE = 20 or more photos are on the profile; the portal detects this and ticks the step itself.`,
   },
   {
     id: "m1.gbp.hours_attributes", title: "Confirm hours + attributes",
