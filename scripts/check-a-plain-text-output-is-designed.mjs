@@ -295,4 +295,23 @@ if (fail.length) {
   for (const f of fail) console.error("   · " + f);
   process.exit(1);
 }
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔑 A HEADING THAT NAMES ITS OWN QUANTITY USES IT AS THE CHIP (2026-10-06).
+// `COVERAGE 3` counted the rows a reader can already see. `COVERAGE 125 points` is the number the
+// group exists to report. A heading with no stated quantity must still count its rows, because that
+// is where the chip earns its place (`Keywords 5`).
+// → reports/mockups/admin_structured_text_v1.html · feedback_a_message_needs_a_shape
+{
+  const stated = call("structuredTextHtml")(call("parseStructuredText")("Coverage (125 points)\n  Top-3        0 / 125\n  Not found    125 / 125"));
+  const m = String(stated).match(/<div class="ob-grp-h"><b>([^<]*)<\/b><span class="c">([^<]*)<\/span>/);
+  if (!m) fail("a group heading that states a quantity renders no heading at all");
+  else {
+    if (m[2] !== "125 points") fail(`the stated quantity is not the chip — chip reads "${m[2]}"`);
+    if (/\(/.test(m[1])) fail(`the quantity is left in the heading text too: "${m[1]}"`);
+  }
+  const counted = call("structuredTextHtml")(call("parseStructuredText")("Keywords\n  a   1\n  b   2\n  c   3"));
+  const m2 = String(counted).match(/<span class="c">([^<]*)<\/span>/);
+  if (!m2 || m2[1] !== "3") fail(`a heading with no stated quantity no longer counts its rows (chip "${m2 ? m2[1] : "none"}")`);
+}
+
 console.log("✅ a plain-text output is designed — flush columns, headless rows, verdict tone from its facts, per-block fallback, prose untouched");

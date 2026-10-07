@@ -111,6 +111,13 @@ if (!p) {
     if (!rows.some((r) => r.zero)) F("a 0 / 125 coverage row is not flagged as a zero, so it renders as an ordinary number");
   }
 
+  // 🔑 THE GROUP HEADING STATES THE MEASURED QUANTITY, NOT THE NUMBER OF ROWS. The approved mockup
+  // reads `COVERAGE  81 points`; the generic row count rendered `COVERAGE  3`, which tells a reader
+  // something they can already see and withholds the one number they want.
+  // → reports/mockups/admin_structured_text_v1.html
+  if (facts && !/\(\s*\d[^)]*\)/.test(String(facts.title || "")))
+    F(`the Coverage heading states no quantity ("${facts.title}"), so the card chips its ROW COUNT instead of the points measured`);
+
   // 🔑 THE WHOLE GRID, NOT ONE KEYWORD'S. The old sentence said "NONE of the 25 points for any of
   // them" while five keywords × 25 points had been measured — understating the work fivefold.
   if (!text.includes("125")) F("the summary never states the total points measured across the plan (5 × 25 = 125)");
