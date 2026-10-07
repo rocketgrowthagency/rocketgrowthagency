@@ -471,4 +471,35 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴 THE CATALOGUE IN MEMORY NAMES EVERY GATE, OR IT IS WORSE THAN NONE.
+// A future session asking "is this already covered?" reads `reference_gate_catalogue.md`. If a gate
+// is missing from it, the honest answer it gets is "no" — and it builds a duplicate, which is
+// exactly how `check-no-dormant-endpoints` came to exist on top of `check-orphan-functions`.
+// A stale index is a confident wrong answer. Regenerate: node scripts/build-gate-catalogue.mjs
+// → feedback_preflight_before_you_build · feedback_a_lift_list_is_a_promise_somebody_will_remember
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const MEM = process.env.RGA_MEMORY_DIR
+    || "/Users/chris/.claude/projects/-Users-chris-RGA-Rocket-Growth-Agency-Website-VS-Code/memory";
+  let cat = null;
+  try { cat = fs.readFileSync(`${MEM}/reference_gate_catalogue.md`, "utf8"); } catch { /* absent */ }
+  if (cat == null) {
+    console.error("✗ reference_gate_catalogue.md is missing from ops memory.");
+    console.error("  Run: node scripts/build-gate-catalogue.mjs");
+    process.exit(1);
+  }
+  const listed = new Set([...cat.matchAll(/^\| `(check-[a-z0-9-]+)`/gm)].map((m) => m[1]));
+  const missing = gates.map((g) => g.slice(0, -4)).filter((n) => !listed.has(n));
+  const extra = [...listed].filter((n) => !gates.includes(`${n}.mjs`));
+  if (missing.length || extra.length) {
+    console.error(`✗ the gate catalogue in ops memory is out of date.`);
+    if (missing.length) console.error(`  ${missing.length} gate(s) missing from it: ${missing.slice(0, 6).join(", ")}${missing.length > 6 ? " …" : ""}`);
+    if (extra.length) console.error(`  ${extra.length} listed that no longer exist: ${extra.slice(0, 6).join(", ")}${extra.length > 6 ? " …" : ""}`);
+    console.error(`  Run: node scripts/build-gate-catalogue.mjs`);
+    process.exit(1);
+  }
+  console.log(`  ✓ ops memory's gate catalogue names all ${listed.size} gates`);
+}
+
 console.log(`✅ ${gates.length} gates: ${wired} wired, ${Object.keys(NOT_PREFLIGHT).length} excused with a reason, 0 dormant.`);
