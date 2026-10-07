@@ -1,0 +1,38 @@
+[
+ [
+  "a wrong active account is let through",
+  "ghguardpy",
+  "    if acct is None or acct == EXPECTED:",
+  "    if True:"
+ ],
+ [
+  "the remedy is blocked, so the account can never be fixed",
+  "ghguardpy",
+  "    if all(s == \"auth\" for s in subs):",
+  "    if False:"
+ ],
+ [
+  "a logged-out gh is treated as the wrong account",
+  "ghguardpy",
+  "    if acct is None or acct == EXPECTED:",
+  "    if acct == EXPECTED:"
+ ],
+ [
+  "heredoc bodies stop being stripped, so prose blocks the terminal",
+  "ghguardpy",
+  "        close = re.search(r\"^\\s*\" + re.escape(tag) + r\"\\s*$\", cmd[m.end():], re.M)",
+  "            close = None"
+ ],
+ [
+  "quoted strings stop being stripped",
+  "ghguardpy",
+  "    cmd = re.sub(r\"'[^']*'\", \" \", cmd)",
+  "    cmd = cmd"
+ ],
+ [
+  "gh is matched anywhere, not only where a command starts",
+  "ghguardpy",
+  "    return re.findall(r\"(?:^|[;&|(]|\\n)\\s*gh\\s+([a-zA-Z-]+)\", cmd)",
+  "    return re.findall(r\"gh\\s+([a-zA-Z-]+)\", cmd)"
+ ]
+]
