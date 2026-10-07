@@ -38,8 +38,8 @@
  [
   "a cached unknown is re-read, so pressing Run again changes nothing",
   "exec",
-  "      if (Number.isFinite(t) && t > floor && (r.status === \"found\" || r.status === \"missing\")) fresh.set(r.source, r);",
-  "      if (Number.isFinite(t) && t > floor) fresh.set(r.source, r);"
+  "      if (Number.isFinite(t) && t > floor && citIsCurrentMethod(r)\n          && (r.status === \"found\" || r.status === \"missing\")) fresh.set(r.source, r);",
+  "      if (Number.isFinite(t) && t > floor && citIsCurrentMethod(r)) fresh.set(r.source, r);"
  ],
  [
   "a lookalike host satisfies the directory",
@@ -56,8 +56,8 @@
  [
   "the catch swallows a programming error again",
   "exec",
-  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;",
-  "      void 0;"
+  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n      const why = e?.name === \"TimeoutError\"",
+  "      const why = e?.name === \"TimeoutError\""
  ],
  [
   "a failed run and a re-read run get the same confident sentence (the original bug)",
@@ -80,8 +80,8 @@
  [
   "a directory's own search page counts as the client's listing",
   "exec",
-  "    const match = j.organic_results.find((x) => onDirectoryHost(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
-  "    const match = j.organic_results.find((x) => onDirectoryHost(x?.link, d));"
+  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
+  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d));"
  ],
  [
   "a failed write is stamped on each row, where a found row never shows it",
@@ -110,8 +110,8 @@
  [
   "a submission-only aggregator gets searched and reported missing",
   "citdirs",
-  "  { key: \"dataaxle\",   source: \"Data Axle\",   host: \"data-axle.com\",  matchHosts: [\"data-axle.com\", \"infogroup.com\"], tier: \"aggregator\", weight: 3, discoverable: false,",
-  "  { key: \"dataaxle\",   source: \"Data Axle\",   host: \"data-axle.com\",  matchHosts: [\"data-axle.com\", \"infogroup.com\"], tier: \"aggregator\", weight: 3, discoverable: true,"
+  "  { key: \"dataaxle\", source: \"Data Axle\", host: \"data-axle.com\", matchHosts: [\"data-axle.com\", \"infogroup.com\"],\n    tier: \"aggregator\", weight: 3, discoverable: false,",
+  "  { key: \"dataaxle\", source: \"Data Axle\", host: \"data-axle.com\", matchHosts: [\"data-axle.com\", \"infogroup.com\"],\n    tier: \"aggregator\", weight: 3, discoverable: true, listingPath: /^\\//,"
  ],
  [
   "the column width goes back to a constant that the longest label overruns",
@@ -122,7 +122,67 @@
  [
   "Facebook, a Tier-1 platform, drops out of the shared list",
   "citdirs",
-  "  { key: \"facebook\",   source: \"Facebook\",    host: \"facebook.com\",   matchHosts: [\"facebook.com\", \"fb.com\"],      tier: \"core\", weight: 3, discoverable: true },\n",
-  ""
+  "  { key: \"facebook\", source: \"Facebook\", host: \"facebook.com\", matchHosts: [\"facebook.com\", \"fb.com\"],\n    tier: \"core\", weight: 3, discoverable: true,",
+  "  { key: \"facebook\", source: \"Facebook\", host: \"facebook.com\", matchHosts: [\"facebook.com\", \"fb.com\"],\n    tier: \"core\", weight: 3, discoverable: false,"
+ ],
+ [
+  "a page on the host counts as a listing again (the false positive that shipped)",
+  "exec",
+  "    const match = onHost.find((x) => isDirectoryListing(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
+  "    const match = onHost[0];"
+ ],
+ [
+  "a directory with no listingPath passes everything",
+  "citdirs",
+  "  if (!onDirectoryHost(url, dir) || !dir.listingPath) return false;",
+  "  if (!onDirectoryHost(url, dir)) return false;\n  if (!dir.listingPath) return true;"
+ ],
+ [
+  "an empty SERP goes back to being a refusal",
+  "exec",
+  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) {",
+  "    if (false) {"
+ ],
+ [
+  "a quota refusal is treated as an empty SERP",
+  "exec",
+  "    if (j?.error && /returned any results|no results (found|for)/i.test(String(j.error))) {",
+  "    if (j?.error) {"
+ ],
+ [
+  "Yelp's listing shape stops being required",
+  "citdirs",
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\/biz\\// },",
+  "    tier: \"core\", weight: 3, discoverable: true, listingPath: /^\\// },"
+ ],
+ [
+  "a Facebook post by someone else counts as the client's Page",
+  "citdirs",
+  "    listingPath: /^\\/(p\\/[^/]+\\/?$|pages\\/[^/]+\\/[^/]+\\/?$|profile\\.php|(?!business|policies|help|legal|terms|privacy|about|careers|ads|watch|groups|events|marketplace|login|settings|safety|gaming|share|story\\.php|permalink\\.php)[^/]{3,}\\/?$)/ },",
+  "    listingPath: /^\\/(p\\/|pages\\/|profile\\.php|[^/]{3,})/ },"
+ ],
+ [
+  "a row from the old host-matching method is trusted again",
+  "exec",
+  "      if (Number.isFinite(t) && t > floor && citIsCurrentMethod(r)",
+  "      if (Number.isFinite(t) && t > floor && true"
+ ],
+ [
+  "step 52 reads rows from the old method",
+  "exec",
+  "    return (rows || []).filter((r) => (r.status === \"found\" || r.status === \"missing\") && citIsCurrentMethod(r));",
+  "    return (rows || []).filter((r) => r.status === \"found\" || r.status === \"missing\");"
+ ],
+ [
+  "the write catch swallows a programming error again",
+  "exec",
+  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n      // 🔑 THE MEASUREMENT STILL HAPPENED.",
+  "      // 🔑 THE MEASUREMENT STILL HAPPENED."
+ ],
+ [
+  "citationRows swallows a programming error and reports 'nothing measured yet'",
+  "exec",
+  "    if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;\n    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS.",
+  "    // 🔴 A DATABASE WE CANNOT READ IS NOT A CLIENT WITH NO CITATIONS."
  ]
 ]

@@ -134,7 +134,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
 
 // ── CASE 6 · a lookalike host must not satisfy a directory ────────────────────────────────────
 {
-  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://notyelp.com/rocket" }, { link: "https://yelp.com.evil.test/x" }] }) });
+  const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://notyelp.com/biz/rocket" }, { link: "https://yelp.com.evil.test/biz/x" }] }) });
   const yelp = rows.find((r) => r.source === "Yelp");
   if (yelp?.status === "found") F(`CASE 6 — "${yelp.url}" was accepted as a Yelp listing`);
 }
@@ -171,9 +171,99 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (rows.length !== DIRMOD.discoverableDirectories().length) F(`CASE 6c — searched ${rows.length} directories, the shared list has ${DIRMOD.discoverableDirectories().length} searchable`);
 }
 
+// ── CASE 6d · 🔴🔴 THE FALSE POSITIVE THAT SHIPPED. A page on the host is not a listing ────────
+// MEASURED on the live card 2026-10-07: "Listed — Yelp business.yelp.com · Angie legal.angi.com".
+// Searching a business that is NOT on Yelp returns Yelp's own corporate pages, because Google falls
+// back to the domain's top results. Host-matching therefore reports a listing on exactly the
+// directories the client is missing from — and step 52 then builds nothing.
+{
+  const rows = await run({ reply: () => resp({ organic_results: [
+    { link: "https://business.yelp.com/", title: "Yelp for Business" },
+    { link: "https://blog.yelp.com/", title: "Yelp Blog" },
+    { link: "https://legal.angi.com/", title: "Angi Legal" },
+  ] }) });
+  for (const src of ["Yelp", "Angie"]) {
+    const r = rows.find((x) => x.source === src);
+    if (r?.status === "found") F(`CASE 6d — "${r.url}" is ${src}'s own corporate page and was reported as the client's listing`);
+    if (r && r.status !== "missing") F(`CASE 6d — ${src} saw on-host pages but no profile; expected missing, got "${r.status}"`);
+    if (r && !/no profile page/.test(r.note || "")) F(`CASE 6d — ${src}'s note does not say a profile was absent among pages that were seen: "${r?.note}"`);
+  }
+}
+
+// ── CASE 6e · "Google hasn't returned any results" is a RESULT, not a refusal ──────────────────
+// 🔴 SerpAPI reports an empty SERP through the same `error` field it uses for quota failures. On the
+// live card that turned two genuine absences into "Could not check — the search was refused".
+{
+  const rows = await run({ reply: () => resp({ error: "Google hasn't returned any results for this query." }) });
+  if (rows.some((r) => r.status === "unknown")) F("CASE 6e — an empty SERP was read as a refusal, hiding a directory the client really is missing from");
+  if (!rows.every((r) => r.status === "missing")) F("CASE 6e — an empty SERP must be a measured absence on every directory");
+}
+{
+  // and a REAL refusal still is one
+  const rows = await run({ reply: () => resp({ error: "Your account has run out of searches" }) });
+  if (rows.some((r) => r.status === "missing")) F("CASE 6e — a quota refusal was counted as an absent listing");
+}
+
+// ── CASE 6f · the listing gate itself, directly ───────────────────────────────────────────────
+// 🔴 EVERY searchable directory must REJECT its own bare domain. That is the shape Google falls back
+// to when the business is absent, so if any directory accepts it, that directory reports a listing
+// for every client who does not have one.
+{
+  for (const d of DIRMOD.discoverableDirectories()) {
+    if (DIRMOD.isDirectoryListing(`https://www.${d.host}/`, d)) F(`CASE 6f — ${d.source} accepts its own homepage as a listing`);
+    if (DIRMOD.isDirectoryListing(`https://business.${d.host}/`, d)) F(`CASE 6f — ${d.source} accepts a corporate subdomain root as a listing`);
+    if (!d.listingPath) F(`CASE 6f — ${d.source} is searched but states no listing shape, so nothing can prove a result is a profile`);
+  }
+  // 🔑 A DIRECTORY WITH NO STATED SHAPE MUST FAIL CLOSED. An unstated rule must never read as a
+  // rule that passes. → feedback_an_absence_must_never_be_readable_as_a_value
+  const shapeless = { source: "Nowhere", host: "example.com", matchHosts: ["example.com"] };
+  if (DIRMOD.isDirectoryListing("https://example.com/anything", shapeless)) {
+    F("CASE 6f — a directory that states no listing shape accepts every URL on its host");
+  }
+}
+
+// ── CASE 6g · 🔴 someone else's post is not the client's Page ──────────────────────────────────
+// MEASURED: `"Starbucks" site:facebook.com` returns RetailMeNot/videos/… and sbworkersunited/posts/…
+// — other accounts posting ABOUT the business. A Page's own URL is one segment with nothing under it.
+{
+  const rows = await run({ reply: (u) => resp(u.includes("facebook.com") ? { organic_results: [
+    { link: "https://www.facebook.com/RetailMeNot/videos/trying-the-new-menu/1490756406113892/" },
+    { link: "https://www.facebook.com/sbworkersunited/posts/a-message-from-a-barista/2021960332071470/" },
+  ] } : { organic_results: [] }) });
+  const fb = rows.find((r) => r.source === "Facebook");
+  if (fb?.status === "found") F(`CASE 6g — "${fb.url}" is another account's post mentioning the business and was reported as the client's Page`);
+}
+{
+  // 🔑 AND THE DIRECTORY'S OWN SEARCH PAGE. Facebook's rule is "one path segment", and `/search` is
+  // one path segment — the only place CIT_NOT_A_LISTING still does work the shape rule cannot.
+  const rows = await run({ reply: (u) => resp(u.includes("facebook.com")
+    ? { organic_results: [{ link: "https://www.facebook.com/search?q=rocket+growth+agency" }] }
+    : { organic_results: [] }) });
+  const fb = rows.find((r) => r.source === "Facebook");
+  if (fb?.status === "found") F(`CASE 6g — "${fb.url}" is Facebook's own search page and was reported as the client's Page`);
+}
+
+// ── CASE 6h · 🔴🔴 A ROW FROM AN OLDER DETECTION METHOD IS NEVER BELIEVED ──────────────────────
+// The first version matched on host alone and wrote `Yelp → business.yelp.com` to the live record.
+// A stored row is indistinguishable from a correct one, so the cache would re-read that "found" and
+// step 52 would skip Yelp forever. Rows carry the method that produced them; older ones are
+// re-measured, never trusted and never treated as an absence.
+{
+  const stale = [
+    { source: "Yelp", url: "https://business.yelp.com/", status: "found", notes: "citation audit 2026-10-07 — listing found by site: search", updated_at: new Date().toISOString() },
+  ];
+  const rows = await run({ cached: stale, reply: (u) => resp(u.includes("yelp.com")
+    ? { organic_results: [{ link: "https://business.yelp.com/" }] }
+    : { organic_results: [] }) });
+  const yelp = rows.find((r) => r.source === "Yelp");
+  if (yelp?.status === "found") F(`CASE 6h — a host-matched row from the old method was re-read as a real listing ("${yelp.url}")`);
+  if (yelp && !yelp.spent) F("CASE 6h — an old-method row was re-read from cache instead of being measured again");
+}
+
 // ── CASE 7 · a cached unknown must never be reused ────────────────────────────────────────────
 {
-  const stale = [{ source: "Yelp", url: null, status: "unknown", updated_at: new Date().toISOString() }];
+  const stale = [{ source: "Yelp", url: null, status: "unknown", updated_at: new Date().toISOString(),
+    notes: "[v2-listing-shape] 2026-10-07 — no listing page found by site: search" }];
   const rows = await run({ reply: () => resp({ organic_results: [{ link: "https://www.yelp.com/biz/x" }] }), cached: stale });
   const yelp = rows.find((r) => r.source === "Yelp");
   if (yelp?.status !== "found") F(`CASE 7 — a cached "unknown" was re-read instead of retried, so pressing Run again changes nothing (got "${yelp?.status}")`);
@@ -246,6 +336,23 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (!/reads these rows/.test(allCached.summary)) F("a run with real results does not name the step that consumes them");
 }
 
+// ═══ PART 2b — THE CONSUMING SIDE DISTRUSTS AN OLD-METHOD ROW TOO ════════════════════════════
+// 🔴 Step 52 reads `client_citations` directly. A host-matched "found" left in the table would make
+// it skip that directory — the client stays unlisted on the one platform the audit was run to find.
+// Fixing only the cache would leave the failure intact on the side that acts on it.
+{
+  const rows = [
+    { source: "Yelp",  status: "found",   url: "https://business.yelp.com/", notes: "citation audit 2026-10-07 — listing found by site: search" },
+    { source: "BBB",   status: "missing", url: null, notes: "[v2-listing-shape] 2026-10-07 — no listing page found by site: search" },
+  ];
+  const api2 = liftAdmin(["citationRows"], { file: "netlify/functions/flow-execute.js",
+    extraGlobals: { supa: async () => rows, console } });
+  const out = await api2.call("citationRows", ["client-1"]);
+  const sources = (out || []).map((r) => r.source);
+  if (sources.includes("Yelp")) F("PART 2b — step 52's reader accepts a row written by the old host-matching method, so it will skip a directory the client is missing from");
+  if (!sources.includes("BBB")) F("PART 2b — step 52's reader rejects a current-method row as well, so it would see no measurements at all");
+}
+
 // ═══ PART 3 — EVERY INDENTED ROW MUST STILL BE A ROW ═════════════════════════════════════════
 // 🔴 parseStructuredText splits an indented row on TWO spaces. A label that outgrows its column
 // runs into its own value, the split fails, and stGroupOf returns null — which does not look like
@@ -293,4 +400,4 @@ if (fails.length) {
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log("✅ a failed citation search is never an absent listing — 11 discovery cases + 4 summary runs, unknown stays unknown and is never stored");
+console.log("✅ a failed citation search is never an absent listing — 18 discovery cases + 4 summary runs, unknown stays unknown and is never stored");
