@@ -96,6 +96,7 @@ const NOT_PREFLIGHT = {
   'check-the-step-card-renders-in-a-browser.mjs': 'admin-UI gate, lifts the renderer into chromium with the real CSS; runs in daily-health-check.sh — a step card cannot make a video unsafe',
   'check-a-step-declares-who-finishes-it.mjs': 'playbook+portal data gate, pure source scan; runs in daily-health-check.sh — a step completion mechanism cannot make a video unsafe',
   'check-a-client-step-number-is-declared.mjs': 'portal data gate, pure source scan; runs in daily-health-check.sh — a step number in the portal cannot make a video unsafe',
+  'check-a-locked-row-says-why.mjs': 'admin-UI gate, pure source scan; runs in daily-health-check.sh — a lock reason cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',

@@ -1,0 +1,26 @@
+[
+ [
+  "the reason is dropped from the row",
+  "admin",
+  "      ${untilHtml}<span class=\"ob-status locked\"",
+  "      <span class=\"ob-status locked\""
+ ],
+ [
+  "blockerIds stops being kept, so nothing can be numbered",
+  "admin",
+  "    r.blockerIds = blockers;",
+  "    r.blockerIds = [];\n    void blockers;"
+ ],
+ [
+  "waiting your turn is coloured like a problem",
+  "admin",
+  "      untilHtml = `<span class=\"ob-until\">until <b>${bNo ? `step ${bNo} \u00b7 ` : \"\"}`",
+  "      untilHtml = `<span class=\"ob-until warn\">until <b>${bNo ? `step ${bNo} \u00b7 ` : \"\"}`"
+ ],
+ [
+  "the warn style is removed from the stylesheet",
+  "css",
+  ".ob-until.warn { color:#8a5a00; }",
+  ""
+ ]
+]

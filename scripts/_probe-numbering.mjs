@@ -62,10 +62,11 @@ try {
     title: (el.querySelector(".ob-title")?.textContent || "").trim(),
     id: el.getAttribute("data-flow-id") || el.getAttribute("data-step") || "",
     state: [...el.classList].find((c) => ["done", "active", "ready", "queued", "locked", "skipped"].includes(c)) || "",
+    until: (el.querySelector(".ob-until")?.textContent || "").trim(),
   })).filter((r) => r.title));
   if (!rows.length) { console.error("⚠️  INDETERMINATE — the checklist rendered no rows."); process.exit(2); }
   const show = needle ? rows.filter((r) => r.title.toLowerCase().includes(needle) || r.id.toLowerCase().includes(needle)) : rows;
   console.log(`── month-1 checklist as the page prints it (${rows.length} rows)\n`);
-  for (const r of show) console.log(`  step ${String(r.n || "?").padStart(3)}  ${r.title.slice(0, 52).padEnd(54)}${r.state ? `[${r.state}]` : ""}`);
+  for (const r of show) console.log(`  step ${String(r.n || "?").padStart(3)}  ${r.title.slice(0, 46).padEnd(48)}${r.state ? `[${r.state}]`.padEnd(10) : "".padEnd(10)}${r.until}`);
   if (needle && !show.length) console.log(`  (no row matches "${needle}")`);
 } finally { await b.close(); }
