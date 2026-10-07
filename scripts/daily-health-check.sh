@@ -372,6 +372,7 @@ run check-the-grid-summary-fits-its-design.mjs "the geo-grid summary is written 
 run check-a-step-output-states-a-time-not-an-age.mjs "a step output says WHEN something happened, never how long ago"
 run check-the-step-card-renders-in-a-browser.mjs "the step card renders right in a real browser, not just in a vm"
 run check-a-step-declares-who-finishes-it.mjs "an act step declares who finishes it, and its copy agrees"
+run check-a-client-step-number-is-declared.mjs "no two rows in the client portal carry the same number"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"

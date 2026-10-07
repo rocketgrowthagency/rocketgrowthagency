@@ -1,0 +1,20 @@
+[
+ [
+  "the index fallback comes back",
+  "portal",
+  "  const numbered = items.map((it) => ({ ...it, num: it.step.clientStepNo ?? null }));",
+  "  const numbered = items.map((it, idx) => ({ ...it, num: it.step.clientStepNo ?? idx + 1 }));"
+ ],
+ [
+  "two client rows are given the same number",
+  "playbook",
+  "\"clientStepNo\": 5,",
+  "\"clientStepNo\": 4,"
+ ],
+ [
+  "the declared numbers stop ascending",
+  "playbook",
+  "\"clientStepNo\": 12",
+  "\"clientStepNo\": 2"
+ ]
+]

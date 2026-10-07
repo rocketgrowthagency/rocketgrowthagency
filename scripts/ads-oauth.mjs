@@ -34,7 +34,10 @@ const code = await new Promise((resolve, reject) => {
   server.on("request", (req, res) => {
     const u = new URL(req.url, redirect);
     const c = u.searchParams.get("code"), e = u.searchParams.get("error");
-    res.writeHead(200, { "Content-Type": "text/html" });
+    // 🔴 THE CHARSET IS NOT OPTIONAL. Without it the browser falls back to Latin-1 and the em-dash
+    // in the line below renders as "Done â€" you can close this tab." Node sends UTF-8 bytes; the
+    // header has to say so. Seen by Chris 2026-10-07 on the live callback page.
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`<h2 style="font:600 20px system-ui">${c ? "Done — you can close this tab." : "Failed: " + e}</h2>`);
     clearTimeout(t);
     c ? resolve(c) : reject(new Error(e || "no code"));
