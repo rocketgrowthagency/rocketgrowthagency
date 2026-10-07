@@ -602,7 +602,7 @@ Nothing is re-fetched and nothing is typed by hand. A source that was unavailabl
         outcome_data: { directories_to_audit: directories.length },
       };
     },
-    instructions: `The runner searches Google for this business on each of 10 directories and records what it finds in client_citations. It reports three answers per directory:
+    instructions: `The runner searches Google for this business on each of the tracked directories and records what it finds in client_citations. It reports three answers per directory:
 1. Listed → the listing URL it found
 2. No listing found → step 52 will build it
 3. Could not check → the search itself failed; nothing is claimed either way, press Run again

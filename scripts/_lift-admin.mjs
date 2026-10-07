@@ -143,7 +143,20 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
     parts.unshift(dep);
     included.add(name);
     ctx = makeCtx();
-    vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx);
+    // 🔴 A REBUILD THAT THROWS MUST NOT ESCAPE AS A RAW STACK. Pulling in a const whose initialiser
+    // calls something the sandbox does not have (a `require`d helper, say) threw straight out of
+    // here — past every INDETERMINATE guard — and printed a node stack trace, which reads exactly
+    // like the product crashing. Roll the dependency back and report "could not supply it" instead.
+    // → feedback_a_gate_that_throws_is_not_a_gate_that_fails
+    try {
+      vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx);
+    } catch {
+      parts.shift();
+      included.delete(name);
+      ctx = makeCtx();
+      try { vm.runInContext(`${prelude}${parts.join("\n\n")}\n${expose}`, ctx); } catch { /* reported by the caller */ }
+      return false;
+    }
     return true;
   };
 

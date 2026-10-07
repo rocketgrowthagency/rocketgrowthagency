@@ -26,6 +26,7 @@
 
 import fs from "node:fs";
 import vm from "node:vm";
+import { createRequire } from "node:module";
 import { liftAdmin } from "./_lift-admin.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -39,6 +40,21 @@ let asked = [];            // every SerpAPI URL the run requested
 const resp = (body, ok = true, status = 200) => ({
   ok, status, async json() { if (body instanceof Error) throw body; return body; }, async text() { return "{}"; },
 });
+
+// 🔑 THE SANDBOX GETS THE REAL SHARED DIRECTORY LIST, not a fixture copy of it. The point of
+// _citation-directories.js is that there is one list; a gate that invents its own would pass while
+// the product searched a different set. → feedback_fix_the_class_not_the_instance
+const DIRMOD = createRequire(import.meta.url)(`${SITE}/netlify/functions/_citation-directories.js`);
+
+// 🔑 THE REAL citPad, SLICED FROM THE PRODUCT — never a copy. A gate carrying its own column-width
+// logic would keep passing while the product's drifted, which is the whole failure it tests for.
+function realCitPad() {
+  const src = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8");
+  const i = src.indexOf("const citPad = (labels)");
+  if (i < 0) { console.error("⚠️  INDETERMINATE — citPad is not in flow-execute.js"); process.exit(2); }
+  const body = src.slice(i, src.indexOf("};", i) + 1).replace("const citPad = ", "");
+  return vm.runInNewContext(`(${body})`, { Math, String });
+}
 
 function bench({ reply, key = "test-key", cached = [], writeFails = false }) {
   written = []; asked = [];
@@ -54,6 +70,7 @@ function bench({ reply, key = "test-key", cached = [], writeFails = false }) {
     fetch: async (url) => { asked.push(String(url)); return reply(String(url)); },
     AbortSignal: { timeout: () => undefined },
     process: { env: { SERPAPI_KEY: key } },
+    ...DIRMOD,
   };
 }
 
@@ -136,6 +153,24 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (yelp?.status !== "missing") F(`CASE 6b — a search that ran and surfaced no profile should be missing, got "${yelp?.status}"`);
 }
 
+// ── CASE 6c · a directory we cannot measure must never be searched or reported ────────────────
+// 🔴 Data Axle and Neustar Localeze carry most of US citation distribution and are SUBMISSION-ONLY:
+// a site: search cannot prove presence either way. Searching them would spend a call to learn
+// nothing and then report a confident "no listing found".
+{
+  const rows = await run({ reply: () => resp({ organic_results: [] }) });
+  const names = rows.map((r) => r.source);
+  // 🔴 PINNED BY NAME, NOT READ FROM THE FILE UNDER TEST. Deriving this list from `discoverable`
+  // made the gate move with its own mutation: flip the flag and the assertion stops asking about
+  // that directory. These two are submission-only as a fact about the world, not a config value.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_a_gate_that_cannot_fail
+  for (const name of ["Data Axle", "Neustar Localeze"]) {
+    if (names.includes(name)) F(`CASE 6c — ${name} is submission-only (a site: search cannot prove presence either way) and was searched anyway, then reported "${rows.find((r) => r.source === name)?.status}"`);
+  }
+  if (!names.includes("Facebook")) F("CASE 6c — Facebook is a Tier-1 platform and is not among the directories searched");
+  if (rows.length !== DIRMOD.discoverableDirectories().length) F(`CASE 6c — searched ${rows.length} directories, the shared list has ${DIRMOD.discoverableDirectories().length} searchable`);
+}
+
 // ── CASE 7 · a cached unknown must never be reused ────────────────────────────────────────────
 {
   const stale = [{ source: "Yelp", url: null, status: "unknown", updated_at: new Date().toISOString() }];
@@ -189,7 +224,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   const body = src.slice(src.indexOf("async", start), end);
 
   const runExec = async (rows) => {
-    const ctx = vm.createContext({ auditCitations: async () => rows, Date, JSON, Math, String, Number, Array, Object, console });
+    const ctx = vm.createContext({ auditCitations: async () => rows, citPad: realCitPad(), Date, JSON, Math, String, Number, Array, Object, console });
     return vm.runInContext(`(${body})`, ctx)({ client: { business_name: "RGA" }, clientId: "c1" });
   };
   const failedRow = (source) => ({ source, host: `${source.toLowerCase()}.com`, status: "unknown", searched: false, spent: false, url: null, note: "the search returned 429" });
@@ -211,9 +246,51 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (!/reads these rows/.test(allCached.summary)) F("a run with real results does not name the step that consumes them");
 }
 
+// ═══ PART 3 — EVERY INDENTED ROW MUST STILL BE A ROW ═════════════════════════════════════════
+// 🔴 parseStructuredText splits an indented row on TWO spaces. A label that outgrows its column
+// runs into its own value, the split fails, and stGroupOf returns null — which does not look like
+// a narrow column, it dumps the ENTIRE group out as raw text. Found when "Neustar Localeze" (16
+// chars) met a hardcoded padEnd(14) and rendered as "Neustar Localezesubmission-only".
+// → feedback_a_design_that_reads_a_grammar_is_broken_by_rewriting_the_text
+{
+  const checkRows = (summary, which) => {
+    for (const line of String(summary).split("\n")) {
+      if (!line.trim() || !/^ {2,}\S/.test(line)) continue;      // only indented rows
+      if (!/^\s+\S[^]*?\s{2,}\S/.test(line)) {
+        F(`${which} — the indented row "${line.trim().slice(0, 60)}" has no two-space gap, so the whole group renders as raw text`);
+      }
+    }
+  };
+  const src = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8");
+  // the longest label the shared list can produce, so the column is tested at its worst case
+  const longest = DIRMOD.CITATION_DIRECTORIES.reduce((a, b) => (String(a.source).length >= String(b.source).length ? a : b));
+  const rows = await run({ reply: (u) => resp(u.includes(DIRMOD.discoverableDirectories()[0].host)
+    ? { organic_results: [{ link: `https://www.${DIRMOD.discoverableDirectories()[0].host}/biz/x` }] }
+    : { organic_results: [] }) });
+  const execBody = (() => {
+    const start = src.indexOf('  "m1.audit.citations": async ({ client, clientId }) => {');
+    let d = 0, end = -1;
+    for (let i = src.indexOf("{", start + 40); i < src.length; i++) {
+      if (src[i] === "{") d++; else if (src[i] === "}") { d--; if (!d) { end = i + 1; break; } }
+    }
+    return src.slice(src.indexOf("async", start), end);
+  })();
+  const ctx = vm.createContext({ auditCitations: async () => rows, citPad: realCitPad(), Date, JSON, Math, String, Number, Array, Object, console });
+  const out = await vm.runInContext(`(${execBody})`, ctx)({ client: { business_name: "RGA" }, clientId: "c1" });
+  checkRows(out.summary, "step 22");
+  // 🔴 STRIP COMMENTS FIRST, AND LINE COMMENTS BEFORE BLOCK COMMENTS. This check matched the very
+  // comment above `citPad` explaining why padEnd(14) was wrong — a gate accusing the product of the
+  // defect its own documentation describes. And stripping `/*…*/` first lets a `/*` inside a `//`
+  // swallow real code. → feedback_a_comment_stripper_in_the_wrong_order_deletes_code
+  const code = src.split("\n").map((l) => l.replace(/^\s*\/\/.*$/, "").replace(/\s\/\/\s.*$/, "")).join("\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  if (!/\bcitPad\(/.test(code)) F("the summary columns are no longer measured from the data — a padEnd constant will collide with the longest label");
+  if (/padEnd\(1[0-9]\)/.test(code)) F(`a hardcoded column width is back in flow-execute: ${(code.match(/padEnd\(1[0-9]\)/) || [])[0]} — "${longest.source}" is ${String(longest.source).length} characters`);
+}
+
 if (fails.length) {
   console.error("🔴 a citation audit is inventing an absence:");
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log("✅ a failed citation search is never an absent listing — 10 discovery cases + 3 summary runs, unknown stays unknown and is never stored");
+console.log("✅ a failed citation search is never an absent listing — 11 discovery cases + 4 summary runs, unknown stays unknown and is never stored");

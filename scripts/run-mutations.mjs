@@ -50,6 +50,7 @@ const FILES = {
   css: "admin/admin.css",
   portal: "portal/portal.js",
   playbook: "data/playbooks/playbooks.json",
+  citdirs: "netlify/functions/_citation-directories.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

@@ -43,9 +43,9 @@
  ],
  [
   "a lookalike host satisfies the directory",
-  "exec",
-  "const citOnHost = (u, host) => { const h = citHostOf(u); return h === host || h.endsWith(`.${host}`); };",
-  "const citOnHost = (u, host) => String(u || \"\").includes(host);"
+  "citdirs",
+  "  return (dir.matchHosts || [dir.host]).some((m) => h === m || h.endsWith(`.${m}`));",
+  "  return (dir.matchHosts || [dir.host]).some((m) => String(url || \"\").includes(m));"
  ],
  [
   "a found listing stops carrying its URL",
@@ -80,8 +80,8 @@
  [
   "a directory's own search page counts as the client's listing",
   "exec",
-  "    const match = j.organic_results.find((x) => citOnHost(x?.link, d.host) && !CIT_NOT_A_LISTING.test(String(x.link)));",
-  "    const match = j.organic_results.find((x) => citOnHost(x?.link, d.host));"
+  "    const match = j.organic_results.find((x) => onDirectoryHost(x?.link, d) && !CIT_NOT_A_LISTING.test(String(x.link)));",
+  "    const match = j.organic_results.find((x) => onDirectoryHost(x?.link, d));"
  ],
  [
   "a failed write is stamped on each row, where a found row never shows it",
@@ -106,5 +106,23 @@
   "exec",
   "  const name = String(client?.business_name || \"\").replace(/[\"\\u201C\\u201D]/g, \" \").replace(/\\s+/g, \" \").trim();",
   "  const name = String(client?.business_name || \"\").trim();"
+ ],
+ [
+  "a submission-only aggregator gets searched and reported missing",
+  "citdirs",
+  "  { key: \"dataaxle\",   source: \"Data Axle\",   host: \"data-axle.com\",  matchHosts: [\"data-axle.com\", \"infogroup.com\"], tier: \"aggregator\", weight: 3, discoverable: false,",
+  "  { key: \"dataaxle\",   source: \"Data Axle\",   host: \"data-axle.com\",  matchHosts: [\"data-axle.com\", \"infogroup.com\"], tier: \"aggregator\", weight: 3, discoverable: true,"
+ ],
+ [
+  "the column width goes back to a constant that the longest label overruns",
+  "exec",
+  "  const w = Math.max(12, ...labels.map((l) => String(l).length)) + 2;\n  return (l) => String(l).padEnd(w);",
+  "  return (l) => String(l).padEnd(14);"
+ ],
+ [
+  "Facebook, a Tier-1 platform, drops out of the shared list",
+  "citdirs",
+  "  { key: \"facebook\",   source: \"Facebook\",    host: \"facebook.com\",   matchHosts: [\"facebook.com\", \"fb.com\"],      tier: \"core\", weight: 3, discoverable: true },\n",
+  ""
  ]
 ]
