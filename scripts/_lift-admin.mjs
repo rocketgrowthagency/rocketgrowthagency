@@ -90,9 +90,21 @@ export function liftAdmin(wanted, { extraGlobals = {}, maxRounds = 40 } = {}) {
   // 🔴 A FRESH CONTEXT PER REBUILD. Re-evaluating the lifted code into the SAME context redeclares
   // every `const` it contains — "Identifier has already been declared" — which looked like a product
   // error the first time it happened. Contexts are cheap; rebuild rather than patch.
+  // 🔴🔴 THE BROWSER GLOBALS THE PRODUCT ASSUMES. `stValue` does `new URL(t)` to decide whether a
+  // link should read "Search Google ↗" or show its raw address — and in a context without `URL` it
+  // threw, took its catch, and rendered the full 105-character percent-encoded query as the link
+  // TEXT. A gate reading that would report a defect the product does not have. Found 2026-10-07
+  // walking the citation audit: the row was correct on screen and wrong in the sandbox.
+  //
+  // 🔑 A SANDBOX THAT IS MISSING WHAT THE BROWSER HAS DOES NOT TEST THE PRODUCT, IT TESTS THE
+  // SANDBOX. Anything standard and side-effect-free belongs here; a caller can still add its own.
+  // → feedback_the_harness_i_wrote_to_check_my_work_can_lie · feedback_correct_is_not_the_same_as_happening
   const makeCtx = () => vm.createContext({
     console: { log() {}, warn() {}, error() {} },
     document: undefined,
+    URL, URLSearchParams, TextEncoder, TextDecoder,
+    Intl, Date, Math, JSON, RegExp, Number, String, Array, Object, Boolean, Map, Set,
+    encodeURIComponent, decodeURIComponent, encodeURI, decodeURI, isFinite, isNaN, parseInt, parseFloat,
     ...extraGlobals,
   });
   let ctx = makeCtx();
