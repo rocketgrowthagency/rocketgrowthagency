@@ -74,6 +74,7 @@ const scope = {
   // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_fixture_must_fail_for_the_reason_it_tests
   measuredKw: Array.from({ length: 5 }, (_, i) => ({ keyword: `kw${i}`, measured: true, points: 25, ranked: 0, top3: 0, top10: 0 })),
   partials: 0, keyword: "seo company", scanKeyword: "local seo services near me", radiusKm: 5.3,
+  newest: { at: "2026-10-06T23:41:58.420Z" },
   rankedKw: [], totalPoints: 125, totalRanked: 0, totalTop3: 0, totalTop10: 0,
   pctOf: (n) => (Math.round((n / 125) * 1000) / 10).toFixed(1),
 };
@@ -157,6 +158,22 @@ if (!p) {
   // 🔑 THE RADIUS IS MEASURED. A literal here would be a hardcoded stat on a client-facing card.
   if (/\d+(\.\d+)?\s*km radius/.test(literal) && !/radiusKm/.test(literal)) {
     F("the header prints a radius that is not read from the record");
+  }
+
+  // 🔴 IT SAYS WHEN IT WAS MEASURED, NOT A ROUNDED AGE. "Scanned 1 day(s) ago" was
+  // Math.round(14.5 hours / 24) on a card stamped with this morning, after a press that re-read a
+  // stored measurement rather than scanning. A date cannot be misread as "the button I just pressed
+  // did this". → feedback_a_client_message_must_agree_with_itself
+  if (/\bday\(s\) ago\b|\bdays? ago\b/.test(text)) {
+    F("the summary still reports a rounded AGE instead of when it was measured");
+  }
+  if (!/\bMeasured\b/.test(text)) F("the summary never says when the grid was measured");
+  // the zone is named, so a time on an admin card cannot be read in the wrong one
+  // 🔑 A CLOCK TIME WITH NO ZONE IS AMBIGUOUS. Read it off the rendered text: the zone must follow
+  // the time. (The first version of this check was convoluted enough that it never fired, and the
+  // mutation removing `timeZoneName` came back green.)
+  if (/\bMeasured\b[^.]*\d:\d{2}\s?(AM|PM)/.test(text) && !/\bMeasured\b[^.]*\d:\d{2}\s?(AM|PM)\s+[A-Z]{2,4}\b/.test(text)) {
+    F("the measured time states no timezone, so a clock time on an admin card is ambiguous");
   }
 
   // 🔑 THE WHOLE GRID, NOT ONE KEYWORD'S. The old sentence said "NONE of the 25 points for any of

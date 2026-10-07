@@ -58,5 +58,17 @@
   "exec",
   "radiusKm ? `${radiusKm} km radius` : null",
   "`5 km radius`"
+ ],
+ [
+  "the rounded age comes back",
+  "exec",
+  "          `Measured ${new Date(newest.at).toLocaleString(\"en-US\", {",
+  "          `Scanned ${Math.round(ageDays)} day(s) ago. ${\"\"}${new Date(newest.at).toLocaleString(\"en-US\", {"
+ ],
+ [
+  "the measured time loses its timezone",
+  "exec",
+  "            timeZone: \"America/Los_Angeles\", timeZoneName: \"short\",",
+  "            timeZone: \"America/Los_Angeles\","
  ]
 ]
