@@ -46,5 +46,35 @@
   "citdirs",
   "  \"llc\", \"l.l.c\", \"inc\", \"incorporated\", \"corp\", \"corporation\", \"ltd\", \"limited\", \"co\", \"company\",",
   ""
+ ],
+ [
+  "a metro area is published as a city in the client's schema",
+  "exec",
+  "  const locality = region ? parts[0] : null;",
+  "  const locality = parts[0] || null;"
+ ],
+ [
+  "a two-letter token that is not a state is accepted as one",
+  "exec",
+  "    if (US_STATES.has(up)) { region = up; break; }",
+  "    if (up.length === 2) { region = up; break; }"
+ ],
+ [
+  "a spelled-out state stops resolving",
+  "exec",
+  "    const spelled = US_STATE_NAMES[up];",
+  "    const spelled = null;"
+ ],
+ [
+  "a service-area business publishes a storefront address again",
+  "exec",
+  "    const storefront = client.geography_model === \"national_one_office\";",
+  "    const storefront = true;"
+ ],
+ [
+  "a step goes back to splitting the market itself",
+  "exec",
+  "    const loc = clientLocality(client);",
+  "    const loc = { locality: (client.primary_market || \"\").split(\",\")[0], market: client.primary_market };"
  ]
 ]

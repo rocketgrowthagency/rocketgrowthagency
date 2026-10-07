@@ -87,6 +87,104 @@ for (const [raw, want, why] of URLS) {
   }
 }
 
+// ═══ 1b — THE CLIENT'S MARKET, AS REAL RECORDS STORE IT ══════════════════════════════════════
+// 🔴🔴 `primary_market` is free text a human typed, and six places split it on a comma as though it
+// were always "City, ST" — RGA's format. The worst consequence was PUBLISHED: a storefront schema
+// with `addressLocality: "Greater Boston"`, which is not a city and does not match the client's
+// Google profile. The first rule of local SEO is that this NAP matches the GBP exactly, so a
+// locality we guessed is an inconsistency we created.
+// 🔑 EACH FIELD IS KNOWN OR null. A consumer omits what it does not have.
+{
+  const stSet = flow.match(/^const US_STATES = new Set\(\[[\s\S]*?\]\);$/m);
+  const stNames = flow.match(/^const US_STATE_NAMES = \{[\s\S]*?\n\};$/m);
+  const i = flow.indexOf("function clientLocality(client) {");
+  let d = 0, end = -1;
+  for (let k = flow.indexOf("{", i + 30); k < flow.length; k++) {
+    if (flow[k] === "{") d++;
+    else if (flow[k] === "}") { d--; if (!d) { end = k + 1; break; } }
+  }
+  if (!stSet || !stNames || i < 0 || end < 0) {
+    console.error("⚠️  INDETERMINATE — clientLocality did not lift from flow-execute.js"); process.exit(2);
+  }
+  let locality;
+  try { locality = vm.runInNewContext(`${stSet[0]}\n${stNames[0]}\n${flow.slice(i, end)}\nclientLocality`, { String, Set }); }
+  catch { console.error("⚠️  INDETERMINATE — clientLocality would not evaluate"); process.exit(2); }
+
+  const MARKETS = [
+    ["Culver City, CA", "Culver City", "CA", "the one client we have"],
+    ["Culver City, California", "Culver City", "CA", "a state spelled out"],
+    ["New York, New York", "New York", "NY", "a city and state with the same name"],
+    ["Austin, TX, USA", "Austin", "TX", "a trailing country"],
+    ["Greater Boston", null, null, "a metro area — names no city and no state"],
+    ["Los Angeles County", null, null, "a county is not a locality"],
+    ["Springfield, ZZ", null, null, "a two-letter token that is not a state"],
+    ["", null, null, "empty"],
+    [null, null, null, "absent"],
+  ];
+  for (const [market, wantLoc, wantReg, why] of MARKETS) {
+    const got = locality({ primary_market: market });
+    if (got.locality !== wantLoc) F(`market ${JSON.stringify(market)} (${why}) gives locality ${JSON.stringify(got.locality)}, expected ${JSON.stringify(wantLoc)} — a guessed locality published in schema contradicts the client's Google profile`);
+    if (got.region !== wantReg) F(`market ${JSON.stringify(market)} (${why}) gives region ${JSON.stringify(got.region)}, expected ${JSON.stringify(wantReg)}`);
+  }
+
+  // 🔴 AND NO STEP MAY GO BACK TO SPLITTING THE MARKET ITSELF.
+  const code = flow.split("\n").map((l) => l.replace(/^\s*\/\/.*$/, "").replace(/\s\/\/\s.*$/, "")).join("\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const m of code.matchAll(/primary_market[^\n]{0,40}\.split\(/g)) {
+    F(`flow-execute line ${code.slice(0, m.index).split("\n").length} splits primary_market itself — use clientLocality(client), which returns null rather than a guess`);
+  }
+}
+
+// ═══ 1c — THE MARKUP WE PUBLISH ON THE CLIENT'S OWN SITE ═════════════════════════════════════
+// 🔴🔴 This is the one output that leaves our product and lives on the client's homepage, where a
+// wrong field contradicts their Google profile. Current guidance: a service-area business omits the
+// street address entirely — a non-public dispatch address confuses Google and fails verification —
+// and `addressRegion` is expected as a two-letter state.
+{
+  const start = flow.indexOf('  "m1.web.schema": async ({ client }) => {');
+  if (start < 0) { console.error("⚠️  INDETERMINATE — the schema step is not in flow-execute.js"); process.exit(2); }
+  const lp = flow.indexOf("(", start);
+  let pd = 0, after = -1;
+  for (let i = lp; i < flow.length; i++) { if (flow[i] === "(") pd++; else if (flow[i] === ")") { pd--; if (!pd) { after = i + 1; break; } } }
+  let d = 0, end = -1;
+  for (let i = flow.indexOf("{", after); i < flow.length; i++) { if (flow[i] === "{") d++; else if (flow[i] === "}") { d--; if (!d) { end = i + 1; break; } } }
+  const stSet = flow.match(/^const US_STATES = new Set\(\[[\s\S]*?\]\);$/m)[0];
+  const stNames = flow.match(/^const US_STATE_NAMES = \{[\s\S]*?\n\};$/m)[0];
+  const grab = (name) => {
+    const i = flow.indexOf(`function ${name}(`);
+    let dd = 0, e = -1;
+    for (let k = flow.indexOf("{", i + name.length); k < flow.length; k++) { if (flow[k] === "{") dd++; else if (flow[k] === "}") { dd--; if (!dd) { e = k + 1; break; } } }
+    return flow.slice(i, e);
+  };
+  let runSchema;
+  try {
+    const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services" });
+    const padSrc = flow.slice(flow.indexOf("const citPad = (labels)"), flow.indexOf("};", flow.indexOf("const citPad = (labels)")) + 1);
+    vm.runInContext(`${stSet}\n${stNames}\n${padSrc}\n${grab("clientSiteUrl")}\n${grab("clientLocality")}`, ctx);
+    runSchema = vm.runInContext(`(${flow.slice(flow.indexOf("async", start), end)})`, ctx);
+  } catch (e) {
+    console.error(`⚠️  INDETERMINATE — the schema step would not evaluate: ${e.message}`); process.exit(2);
+  }
+  const of = async (client) => JSON.parse((await runSchema({ client })).outcome_data.snippet
+    .replace(/^<script[^>]*>/, "").replace(/<\/script>$/, ""));
+
+  const sab = await of({ business_name: "Acme Plumbing LLC", primary_market: "Austin, TX",
+    website_url: "acme.com", primary_contact_phone: "(512) 555-0100", geography_model: "service_area" });
+  if (sab.address) F(`a service-area business publishes a street address (${JSON.stringify(sab.address)}) — current guidance omits it, and a non-public address fails Google verification`);
+  if (!sab.areaServed) F("a service-area business publishes no areaServed, which is the field that replaces the address");
+  if (sab.url !== "https://acme.com") F(`the published url is ${JSON.stringify(sab.url)} — a site stored without a scheme must still publish as a real URL`);
+
+  const shop = await of({ business_name: "Katz's Deli", primary_market: "New York, NY",
+    website_url: "https://katzs.com", primary_contact_phone: "(212) 254-2246", geography_model: "national_one_office" });
+  if (!shop.address) F("a storefront with a city and state publishes no address at all");
+  if (shop.address && shop.address.addressLocality !== "New York") F(`addressLocality is ${JSON.stringify(shop.address?.addressLocality)}, expected "New York"`);
+  if (shop.address && shop.address.addressRegion !== "NY") F(`addressRegion is ${JSON.stringify(shop.address?.addressRegion)} — the spec expects a two-letter state`);
+
+  const vague = await of({ business_name: "Boston Legal Group", primary_market: "Greater Boston",
+    website_url: "https://blg.com", primary_contact_phone: "(617) 555-0100", geography_model: "national_one_office" });
+  if (vague.address) F(`"Greater Boston" produced ${JSON.stringify(vague.address)} — a metro area is not a city, and publishing it as addressLocality contradicts the client's Google profile`);
+}
+
 // ═══ 2 — THE CLIENT'S NAME, AS REAL BUSINESSES ARE NAMED ═════════════════════════════════════
 const citNormSrc = dirmod.match(/^const citNorm = .*;$/m);
 const citTokSrc = dirmod.match(/^const CIT_NOISE = new Set\(\[[\s\S]*?\]\);$/m);
@@ -130,5 +228,5 @@ if (fails.length) {
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log(`✅ client rules hold for businesses we do not have — ${URLS.length} website shapes, `
+console.log(`✅ client rules hold for businesses we do not have — ${URLS.length} website shapes, 9 market shapes, 3 published-schema shapes, `
   + `${NAMES_MATCH.length} names that must match, ${NAMES_REJECT.length} that must not`);
