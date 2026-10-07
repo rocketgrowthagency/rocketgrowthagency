@@ -103,6 +103,7 @@ const NOT_PREFLIGHT = {
   'check-on-screen-copy-is-us-idiom.mjs': 'copy gate over admin + portal + functions, pure source scan; runs in daily-health-check.sh — a spelling cannot make a video unsafe',
   'check-a-client-rule-works-for-any-business.mjs': 'client-data gate, lifts the real helpers and runs them against businesses we do not have; runs in daily-health-check.sh — a client rule cannot make a video unsafe',
   'check-gh-cannot-run-as-the-wrong-account.mjs': 'account-isolation gate over the gh CLI hook; runs in daily-health-check.sh — which GitHub account gh holds cannot make a video unsafe',
+  'check-every-identity-points-at-rga.mjs': 'reads LIVE credential state (git, ssh, gh, netlify, gcloud); runs in daily-health-check.sh — an identity pointing elsewhere cannot make a video unsafe, and it must not block a build on a machine mid-login',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',
@@ -457,7 +458,30 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
   for (const sfile of suites) {
     if (!gates.includes(`${sfile}.mjs`)) fail(`scripts/mutations/${sfile}.json has no gate`);
   }
-  const without = gates.filter((g) => !suites.includes(g.slice(0, -4)));
+  // 🔑 A GATE THAT READS LIVE SYSTEM STATE CANNOT BE MUTATION-TESTED BY THIS RUNNER — it mutates a
+  // COPY of the site tree, and gates run from their real path, so there is no file to change. The
+  // ratchet's purpose is "a new gate must prove it can fail", and such a gate can still prove it: by
+  // running its own parsers against output whose answer is known and exiting 2 when they are wrong.
+  //
+  // 🔴 THE EXEMPTION IS VERIFIED, NOT TAKEN ON TRUST. A gate may only sit here if it actually
+  // contains that self-test — otherwise this list becomes the place gates go to avoid being proven,
+  // which is exactly what NOT_PREFLIGHT would have become without the same check.
+  // → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
+  const SELF_PROVING = {
+    "check-every-identity-points-at-rga.mjs":
+      "reads live credential state (git, ssh, gh, netlify, gcloud); no file for a mutation to change. "
+      + "Proves itself by parsing known output and exiting 2 when its own reading is wrong.",
+  };
+  for (const [g, why] of Object.entries(SELF_PROVING)) {
+    if (!gates.includes(g)) { fail(`SELF_PROVING names ${g}, which does not exist`); continue; }
+    const src = fs.readFileSync(`${HERE}/${g}`, "utf8");
+    if (!/INDETERMINATE/.test(src) || !/process\.exit\(2\)/.test(src)) {
+      fail(`${g} claims a self-test but has no INDETERMINATE path that exits 2 — it is not proving anything`);
+    }
+    if (!why || why.length < 40) fail(`${g} is exempt from the mutation ratchet with no real reason recorded`);
+  }
+
+  const without = gates.filter((g) => !suites.includes(g.slice(0, -4)) && !(g in SELF_PROVING));
   let baseline;
   try { baseline = JSON.parse(fs.readFileSync(`${HERE}/_mutation-baseline.json`, "utf8")).count; }
   catch { baseline = null; }

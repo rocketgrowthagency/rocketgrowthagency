@@ -380,6 +380,7 @@ run check-a-finished-step-stays-on-screen.mjs "the step you just acted on is the
 run check-on-screen-copy-is-us-idiom.mjs "every word a human reads on screen is US English"
 run check-a-client-rule-works-for-any-business.mjs "a rule about a client works for a client we do not have"
 run check-gh-cannot-run-as-the-wrong-account.mjs "gh cannot act on RGA GitHub as another business's account"
+run check-every-identity-points-at-rga.mjs "every live identity on this machine points at RGA"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
