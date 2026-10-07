@@ -75,6 +75,7 @@ const scope = {
   measuredKw: Array.from({ length: 5 }, (_, i) => ({ keyword: `kw${i}`, measured: true, points: 25, ranked: 0, top3: 0, top10: 0 })),
   partials: 0, keyword: "seo company", scanKeyword: "local seo services near me", radiusKm: 5.3,
   newest: { at: "2026-10-06T23:41:58.420Z" },
+  laterScanTitle: "Re-run the geo-grid map-rank scan",
   rankedKw: [], totalPoints: 125, totalRanked: 0, totalTop3: 0, totalTop10: 0,
   pctOf: (n) => (Math.round((n / 125) * 1000) / 10).toFixed(1),
 };
@@ -174,6 +175,36 @@ if (!p) {
   // mutation removing `timeZoneName` came back green.)
   if (/\bMeasured\b[^.]*\d:\d{2}\s?(AM|PM)/.test(text) && !/\bMeasured\b[^.]*\d:\d{2}\s?(AM|PM)\s+[A-Z]{2,4}\b/.test(text)) {
     F("the measured time states no timezone, so a clock time on an admin card is ambiguous");
+  }
+
+  // 🎨 IT NAMES THE STEP THAT MEASURES AGAINST THIS (approved 2026-10-07).
+  // "Every later scan" is one step with a title; a promise with no address cannot tell a reader
+  // whether the comparison recurs or is something they must remember.
+  // 🔴 AND THE TITLE IS READ, NOT TYPED — a copy in the executor goes stale on a rename, and the
+  // card would then name a step nobody can find.
+  if (!/measures against this/.test(text)) {
+    F("the closing line does not say what measures against this baseline");
+  }
+  if (!/\bMonth 2\+?\b/i.test(text)) F("the closing line does not say which playbook the later scan lives in");
+  {
+    const pbPath = `${SITE}/data/playbooks/playbooks.json`;
+    let realTitle = null;
+    try { realTitle = (JSON.parse(fs.readFileSync(pbPath, "utf8")).month2plus || [])
+      .find((x) => x.id === "m2.snap.grid_scan")?.title || null; } catch { /* unreadable */ }
+    if (!realTitle) {
+      console.error("⚠️  INDETERMINATE — cannot read m2.snap.grid_scan's title from the playbook.");
+      process.exit(2);
+    }
+    if (!text.includes(realTitle)) F(`the closing line names something other than the step's own title ("${realTitle}")`);
+    // the executor must READ it, not carry a copy
+    // 🔴 STRIP COMMENTS FIRST. The executor's own comment EXPLAINS that the title is read rather
+    // than typed, and quotes the title to do so — so this check read the documentation and accused
+    // the code it documents. Line comments before block comments, as ever.
+    // → feedback_a_comment_stripper_in_the_wrong_order_deletes_code · feedback_a_check_must_not_validate_itself
+    const srcCode = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+    const literalTitle = new RegExp(`["\`']${realTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+    if (literalTitle.test(srcCode)) F("the step's title is written into flow-execute.js — a second copy that goes stale on a rename");
+    if (!/month2plus[\s\S]{0,200}m2\.snap\.grid_scan/.test(src)) F("the later-scan step is not looked up in the playbook");
   }
 
   // 🔑 THE WHOLE GRID, NOT ONE KEYWORD'S. The old sentence said "NONE of the 25 points for any of

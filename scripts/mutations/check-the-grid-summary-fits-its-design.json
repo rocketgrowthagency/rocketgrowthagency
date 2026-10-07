@@ -70,5 +70,23 @@
   "exec",
   "            timeZone: \"America/Los_Angeles\", timeZoneName: \"short\",",
   "            timeZone: \"America/Los_Angeles\","
+ ],
+ [
+  "the closing line stops naming the later-scan step",
+  "exec",
+  "            ? `${laterScanTitle}, in the Month 2+ playbook, measures against this.`",
+  "            ? \"That is the baseline every later scan is measured against.\""
+ ],
+ [
+  "the step title is typed into the executor instead of read",
+  "exec",
+  "        const later = (pb.month2plus || []).find((x) => x.id === \"m2.snap.grid_scan\");\n        if (later && typeof later.title === \"string\" && later.title.trim()) laterScanTitle = later.title.trim();",
+  "        laterScanTitle = \"Re-run the geo-grid map-rank scan\";"
+ ],
+ [
+  "the closing line stops saying which playbook",
+  "exec",
+  ", in the Month 2+ playbook, measures against this.`",
+  " measures against this.`"
  ]
 ]
