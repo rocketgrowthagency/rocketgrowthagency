@@ -100,6 +100,7 @@ const NOT_PREFLIGHT = {
   'check-the-card-says-what-finishes-the-step.mjs': 'admin-UI gate, lifts admin.js in a vm; runs in daily-health-check.sh — what a card says finishes a step cannot make a video unsafe',
   'check-a-citation-audit-never-invents-an-absence.mjs': 'admin/flow-execute gate, runs the executor against stubbed SERPs; runs in daily-health-check.sh — a citation measurement cannot make a video unsafe',
   'check-a-finished-step-stays-on-screen.mjs': 'admin-UI gate, pure source scan; runs in daily-health-check.sh — where the page scrolls cannot make a video unsafe',
+  'check-on-screen-copy-is-us-idiom.mjs': 'copy gate over admin + portal + functions, pure source scan; runs in daily-health-check.sh — a spelling cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',
