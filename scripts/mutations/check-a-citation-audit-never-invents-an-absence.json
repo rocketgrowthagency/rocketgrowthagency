@@ -250,5 +250,23 @@
   "citdirs",
   "  if (!want.length || want.join(\"\").length < 3) return false;",
   "  if (!want.length) return false;"
+ ],
+ [
+  "the stored note throws away what was measured",
+  "exec",
+  "     : (r.note || \"no listing page found by site: search\"));",
+  "     : \"no listing page found by site: search\");"
+ ],
+ [
+  "a re-read replaces the stored evidence with a generic line",
+  "exec",
+  "          ? `${kept || \"no listing found\"} (re-read, not re-measured)`",
+  "          ? \"no listing found (re-read, still current)\""
+ ],
+ [
+  "the method tag leaks onto the card",
+  "exec",
+  "      const kept = String(hit.notes || \"\").replace(/^\\[[^\\]]*\\]\\s*\\d{4}-\\d{2}-\\d{2}\\s*—\\s*/, \"\").trim();",
+  "      const kept = String(hit.notes || \"\");"
  ]
 ]

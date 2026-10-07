@@ -52,6 +52,8 @@ const FILES = {
   playbook: "data/playbooks/playbooks.json",
   citdirs: "netlify/functions/_citation-directories.js",
   recheck: "netlify/functions/portal-step-recheck.js",
+  stepsql: "docs/supabase/RGA_CLIENT_STEP_RUNS_2026-10-07.sql",
+  heavy: "netlify/functions/flow-execute-heavy-background.js",
   ghguardpy: "scripts/gh-account-guard.py",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,

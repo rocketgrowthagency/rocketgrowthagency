@@ -1,0 +1,38 @@
+[
+ [
+  "a run is saved to the record but never kept in history",
+  "exec",
+  "    await recordStepRun(client, step_id, taskState, is_monthly, step_id === \"m1.audit.citations\" ? CIT_METHOD : null);",
+  "    void 0;"
+ ],
+ [
+  "the recorder is gone entirely",
+  "exec",
+  "async function recordStepRun(client, stepId, state, isMonthly, method = null) {",
+  "async function __removed(client, stepId, state, isMonthly, method = null) {"
+ ],
+ [
+  "the append-only trigger is dropped from the migration",
+  "stepsql",
+  "  before update or delete on public.client_step_runs",
+  "  before insert on public.client_step_runs"
+ ],
+ [
+  "the trigger stops raising, so an update silently succeeds",
+  "stepsql",
+  "  raise exception 'client_step_runs is append-only: % is not allowed. A run is what happened; correct it by inserting a new run.', tg_op;",
+  "  return new;"
+ ],
+ [
+  "a heavy step that fails stops being recorded",
+  "heavy",
+  "    await fetch(`${SUPA}/rest/v1/client_step_runs`, {",
+  "    await Promise.resolve({"
+ ],
+ [
+  "outcome_data is dropped, so nothing can be compared between runs",
+  "stepsql",
+  "  outcome_data  jsonb,",
+  "  unused_col  jsonb,"
+ ]
+]

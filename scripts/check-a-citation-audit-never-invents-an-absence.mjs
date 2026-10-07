@@ -325,6 +325,38 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   if (yelp && !yelp.spent) F("CASE 6h — an old-method row was re-read from cache instead of being measured again");
 }
 
+// ── CASE 6l · 🔴 THE EVIDENCE MUST SURVIVE THE WRITE, AND THE RE-READ ──────────────────────────
+// The first live run reported "a Facebook profile exists but is not this business — ROCKETDIGITAL"
+// and "no profile page — 10 other yelp.com pages seen". Both were replaced by a generic sentence the
+// moment they were stored, so the re-read said only "no listing found" and step 52 — which reads
+// these rows — never saw either. A confusable business is exactly what somebody needs to know before
+// building that listing.
+{
+  const rows = await run({ reply: (u) => resp(u.includes("facebook.com") ? { organic_results: [
+    { link: "https://www.facebook.com/rocketdigitalagency/", title: "ROCKETDIGITAL" },
+  ] } : { organic_results: [] }) });
+  const fb = rows.find((r) => r.source === "Facebook");
+  const stored = written.find((w) => w.source === "Facebook");
+  if (!stored) F("CASE 6l — the Facebook row was not stored at all");
+  else if (!/not this business/.test(stored.notes || "")) {
+    F(`CASE 6l — the stored note throws away what was measured: "${stored.notes}" — step 52 reads this and learns nothing about the confusable business`);
+  }
+  if (fb && !/not this business/.test(fb.note || "")) F("CASE 6l — the card lost the near-miss evidence");
+}
+{
+  // and a re-read renders the stored evidence rather than a sentence about it
+  const stale = [{ source: "Yelp", url: null, status: "missing",
+    notes: "[v2-listing-shape] 2026-10-07 — no profile page — 10 other yelp.com pages seen",
+    updated_at: new Date().toISOString() }];
+  const rows = await run({ cached: stale, reply: () => resp({ organic_results: [] }) });
+  const y = rows.find((r) => r.source === "Yelp");
+  if (!/10 other yelp\.com pages seen/.test(y?.note || "")) {
+    F(`CASE 6l — a re-read replaced the stored evidence with a generic line: "${y?.note}"`);
+  }
+  if (/\[v2-listing-shape\]/.test(y?.note || "")) F("CASE 6l — the re-read leaks the method tag onto the card; that is bookkeeping, not evidence");
+  if (!/re-read/.test(y?.note || "")) F("CASE 6l — a re-read does not say it re-read rather than re-measured");
+}
+
 // ── CASE 7 · a cached unknown must never be reused ────────────────────────────────────────────
 {
   const stale = [{ source: "Yelp", url: null, status: "unknown", updated_at: new Date().toISOString(),
@@ -530,4 +562,4 @@ if (fails.length) {
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log("✅ a failed citation search is never an absent listing — 22 discovery cases + 4 summary runs, unknown stays unknown and is never stored");
+console.log("✅ a failed citation search is never an absent listing — 24 discovery cases + 4 summary runs, unknown stays unknown and is never stored");
