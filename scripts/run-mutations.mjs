@@ -18,9 +18,17 @@
 //   node scripts/run-mutations.mjs                      # every suite
 //   node scripts/run-mutations.mjs check-a-done-step…   # one
 //
-// A suite is a JSON array of [name, file, find, replace], where `file` is admin | exec | css. Each
-// mutation is applied to a THROWAWAY COPY of the site — never the working tree — and the gate must
-// exit 1. An unmutated run must exit 0.
+// A suite is a JSON array of [name, file, find, replace, expect?]. `file` names a source the gate
+// reads; `expect` is the exit code the mutation should produce and defaults to 1.
+//
+// 🔑 SOMETIMES THE RIGHT ANSWER IS "I CANNOT TELL". A mutation that breaks the gate's PREMISE rather
+// than the product — moving the condition the gate mirrors — should make it exit 2 and ask to be
+// re-read, not accuse whatever happens to use that condition. Writing `2` records that intent, so
+// the day it starts exiting 1 instead (quietly accusing correct code) the suite says so.
+// → feedback_a_gate_that_throws_is_not_a_gate_that_fails
+//
+// Each mutation is applied to a THROWAWAY COPY of the site — never the working tree. An unmutated
+// run must exit 0.
 //
 // → feedback_a_gate_that_cannot_fail · feedback_a_gate_that_cannot_be_pointed_at_a_copy_was_never_tested
 // Exit 0 all suites prove their gate can fail · 1 a gate could not be made to fail · 2 INDETERMINATE
@@ -40,6 +48,8 @@ const FILES = {
   admin: "admin/admin.js",
   exec: "netlify/functions/flow-execute.js",
   css: "admin/admin.css",
+  portal: "portal/portal.js",
+  playbook: "data/playbooks/playbooks.json",
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five
 // files; `check-the-grid-says-what-it-centred-on` also reads `v2-rank-grid-background.js`, so its
@@ -87,7 +97,7 @@ for (const file of suites) {
   if (base !== 0) { console.log(`⚠️  ${gate} — UNMUTATED run exits ${base}; cannot judge its mutations`); gatesBad++; continue; }
 
   let caught = 0, skipped = 0;
-  for (const [name, which, find, repl] of muts) {
+  for (const [name, which, find, repl, expect] of muts) {
     const rel = FILES[which];
     if (!rel) { console.log(`   ⚠️  unknown target "${which}" for: ${name}`); skipped++; continue; }
     const orig = fs.readFileSync(`${SITE}/${rel}`, "utf8");
@@ -100,8 +110,10 @@ for (const file of suites) {
     }
     seed();
     fs.writeFileSync(`${tmp}/${rel}`, orig.replace(find, repl));
-    if (runGate(gate) === 1) caught++;
-    else console.log(`   🔴 NOT CAUGHT: ${name}`);
+    const want = expect ?? 1;
+    const got = runGate(gate);
+    if (got === want) caught++;
+    else console.log(`   🔴 NOT CAUGHT: ${name} (expected exit ${want}, got ${got})`);
   }
   seed();
   totalCaught += caught; totalRun += muts.length - skipped;

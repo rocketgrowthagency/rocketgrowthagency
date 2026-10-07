@@ -1,0 +1,27 @@
+[
+ [
+  "the duplicate-listing step goes back to a silent default",
+  "playbook",
+  "\"clientDone\": \"client\",\n      \"clientDoneCta\": \"The duplicate is merged\",\n      \"clientDoneConfirm\": \"You merged the duplicate listing\",\n      ",
+  ""
+ ],
+ [
+  "a client-finished act step loses every control",
+  "playbook",
+  "\"clientDoneCta\": \"The duplicate is merged\",\n      ",
+  ""
+ ],
+ [
+  "an act step declares a mechanism the portal never handles",
+  "playbook",
+  "\"clientDone\": \"client\",\n      \"clientDoneCta\": \"The duplicate is merged\"",
+  "\"clientDone\": \"owner\",\n      \"clientDoneCta\": \"The duplicate is merged\""
+ ],
+ [
+  "the portal stops requiring a control for \"Your turn\" \u2192 the gate must say it cannot tell, not accuse",
+  "portal",
+  "      || (mech === \"client\" && step.clientDoneCta));",
+  "      || mech === \"client\");",
+  2
+ ]
+]
