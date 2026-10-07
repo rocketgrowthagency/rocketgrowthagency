@@ -16,5 +16,11 @@
   "admin",
   "          : saidInTitle ? \"\" : `<span class=\"c\">${n}</span>`) + `</div>`",
   "          : \"\") + `</div>`"
+ ],
+ [
+  "the trailing trim eats the first line's indentation again",
+  "admin",
+  ".join(\"\\n\").replace(/\\n{3,}/g, \"\\n\\n\").replace(/^\\n+/, \"\").replace(/\\s+$/, \"\");",
+  ".join(\"\\n\").replace(/\\n{3,}/g, \"\\n\\n\").trim();"
  ]
 ]

@@ -68,10 +68,28 @@ const consts = src.split("\n").filter((l) => /^const (ST_VERDICT|ST_NOTE_KEYS|ST
 for (const need of ["ST_VERDICT", "stIndent", "stZero"]) {
   if (!new RegExp(`^const ${need} =`, "m").test(consts)) { console.error(`⛔ ${need} not found`); process.exit(2); }
 }
+// 🔴 A MULTI-LINE CONST NEEDS BRACKET MATCHING, NOT A LINE FILTER. `VERDICT_KIND` is an array
+// spanning several lines; taking only its first line left the bundle unparseable.
+const pickConst = (n) => {
+  const m = src.match(new RegExp(`^const ${n} = `, "m"));
+  if (!m) { console.error(`⛔ ${n} not found in admin.js`); process.exit(2); }
+  let d = 0, started = false;
+  for (let k = m.index; k < src.length; k++) {
+    const c = src[k];
+    if (c === "[" || c === "{" || c === "(") { d++; started = true; }
+    else if (c === "]" || c === "}" || c === ")") { d--; if (started && !d) return src.slice(m.index, src.indexOf(";", k) + 1); }
+    else if (c === ";" && !started) return src.slice(m.index, k + 1);
+  }
+  console.error(`⛔ ${n} unbalanced`); process.exit(2);
+};
 const ctx = vm.createContext({ console, URL });
 try {
-  vm.runInContext(consts + "\n" + ["escapeHtml", "escapeAttribute", "renderStepMarkdown", "outShapes",
-    "stInline", "stValue", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stRating", "stepBodyHtml"]
+  vm.runInContext(consts + "\n" + pickConst("VERDICT_KIND") + "\n" + ["escapeHtml", "escapeAttribute", "renderStepMarkdown", "outShapes",
+    "stInline", "stValue", "stGroupOf", "stFact", "stItem", "parseStructuredText", "structuredTextHtml", "stTitleCase", "stSentence", "stRating", "stepBodyHtml",
+    // 🔑 stripMeasurementProse runs BEFORE the renderer, so a check that skips it tests a different
+    // input than the product uses — which is how a `.trim()` eating the first line's indentation
+    // went unseen. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+    "stripMeasurementProse"]
     .map(pick).join("\n\n"), ctx);
 } catch (e) { console.error("⛔ cannot evaluate the renderer: " + e.message); process.exit(2); }
 const call = (n) => vm.runInContext(n, ctx);
@@ -290,6 +308,23 @@ if (!/\.ob-grp \.ob-facts \{[^}]*margin-bottom:\s*0/.test(css)) {
   fail.push("the facts box inside a group no longer zeroes its margin — groups would sit 27px apart, not 14px");
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE TEXT REACHES THE PARSER WITH ITS INDENTATION INTACT (2026-10-07).
+// `stripMeasurementProse` runs before the renderer and ended with `.trim()`, which removed the
+// leading spaces of the FIRST line only. The approved scan header opens with two indented
+// `label  value` rows; the first became flush-left, the parser correctly read a flush-left line as a
+// HEADING, and the card rendered "SEARCHED 5 LOCKED KEYWORDS" as a heading with one row under it.
+// 🔑 In a block whose structure is carried by indentation, `.trim()` is a structural edit.
+// → feedback_a_design_that_reads_a_grammar_is_broken_by_rewriting_the_text
+{
+  const HDR = "  Searched      5 locked keywords (125 points measured in all)\n"
+    + "  Centred on    Rocket Growth Agency (Culver City, CA)\n\nRESULT: not found.";
+  const kept = call("stripMeasurementProse")(HDR);
+  if (!/^ {2}Searched/.test(String(kept))) {
+    fail.push("stripMeasurementProse strips the first line's indentation, so an indented header "
+      + "becomes a flush-left heading and its rows collapse into one");
+  }
+
 if (fail.length) {
   console.error("🔴 a plain-text output is not being designed correctly:");
   for (const f of fail) console.error("   · " + f);
@@ -312,6 +347,15 @@ if (fail.length) {
   const counted = call("structuredTextHtml")(call("parseStructuredText")("Keywords\n  a   1\n  b   2\n  c   3"));
   const m2 = String(counted).match(/<span class="c">([^<]*)<\/span>/);
   if (!m2 || m2[1] !== "3") fail(`a heading with no stated quantity no longer counts its rows (chip "${m2 ? m2[1] : "none"}")`);
+}
+
+  const parsed = call("parseStructuredText")(String(kept));
+  const grp = parsed && (parsed.body || []).find((b) => b.kind === "facts");
+  if (!grp) fail.push("the indented header does not parse into a fact group at all");
+  else {
+    if (String(grp.title || "").trim()) fail.push(`the indented header became a HEADING ("${String(grp.title).slice(0,40)}…") instead of rows`);
+    if ((grp.facts || []).length !== 2) fail.push(`the indented header rendered ${(grp.facts||[]).length} row(s), not 2`);
+  }
 }
 
 console.log("✅ a plain-text output is designed — flush columns, headless rows, verdict tone from its facts, per-block fallback, prose untouched");
