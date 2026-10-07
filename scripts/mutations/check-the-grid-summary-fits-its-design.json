@@ -28,5 +28,35 @@
   "exec",
   "            : `RESULT: not found at any of the ${totalPoints} points measured.`",
   "            : `RESULT: not found at any of the ${fullSize} points for any of them.`"
+ ],
+ [
+  "the header rows lose their indentation and flatten back into prose",
+  "exec",
+  "          `  Searched      ${perKeyword.length} locked keyword",
+  "          `Searched ${perKeyword.length} locked keyword"
+ ],
+ [
+  "the header stops saying where the grid was centred",
+  "exec",
+  "            : `  Centred on    ${client.business_name}`",
+  "            : `  Centre        ${client.business_name}`"
+ ],
+ [
+  "the header loses the total points measured",
+  "exec",
+  " (${totalPoints} point${totalPoints === 1 ? \"\" : \"s\"} measured in all)`,",
+  " (every keyword)`,"
+ ],
+ [
+  "the area-centred header stops saying why",
+  "exec",
+  " (we could not find ${client.business_name} on Google Maps, so this measures the market, not their listing)`",
+  " (the area)`"
+ ],
+ [
+  "the radius becomes a literal instead of a measurement",
+  "exec",
+  "radiusKm ? `${radiusKm} km radius` : null",
+  "`5 km radius`"
  ]
 ]

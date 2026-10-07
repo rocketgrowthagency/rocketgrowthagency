@@ -73,7 +73,7 @@ const scope = {
   // surroundings is what lets the gate judge a rewrite instead of giving up on it.
   // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_fixture_must_fail_for_the_reason_it_tests
   measuredKw: Array.from({ length: 5 }, (_, i) => ({ keyword: `kw${i}`, measured: true, points: 25, ranked: 0, top3: 0, top10: 0 })),
-  partials: 0, keyword: "seo company", scanKeyword: "local seo services near me",
+  partials: 0, keyword: "seo company", scanKeyword: "local seo services near me", radiusKm: 5.3,
   rankedKw: [], totalPoints: 125, totalRanked: 0, totalTop3: 0, totalTop10: 0,
   pctOf: (n) => (Math.round((n / 125) * 1000) / 10).toFixed(1),
 };
@@ -92,7 +92,14 @@ if (!p) {
     + "instead of the approved verdict-and-coverage design");
 } else {
   const body = Array.isArray(p.body) ? p.body : [];
-  if (!(p.lead || []).length) F("the summary has no lead line");
+  // 🔴 NO LEAD SENTENCE ANY MORE, ON PURPOSE. Until 2026-10-07 this required one, and the approved
+  // scan header REPLACES it: the facts it carried are rows now, and leaving the sentence as well
+  // would be the "a structured block competes with a paragraph" defect this card was redesigned to
+  // remove. The header is asserted below instead. → reports/mockups/admin_scan_header_v2.html
+  if ((p.lead || []).join(" ").trim()) {
+    F(`the summary still opens with a lead sentence ("${(p.lead || []).join(" ").slice(0, 60)}…") as well as `
+      + "the scan header — the same facts twice");
+  }
 
   const verdict = body.find((b) => b.kind === "verdict");
   if (!verdict) F("the summary carries no RESULT verdict — the one line the output exists to deliver");
@@ -117,6 +124,40 @@ if (!p) {
   // → reports/mockups/admin_structured_text_v1.html
   if (facts && !/\(\s*\d[^)]*\)/.test(String(facts.title || "")))
     F(`the Coverage heading states no quantity ("${facts.title}"), so the card chips its ROW COUNT instead of the points measured`);
+
+  // ═════════════════════════════════════════════════════════════════════════════════════════════
+  // 🎨 THE SCAN HEADER — approved 2026-10-07, reports/mockups/admin_scan_header_v2.html
+  // A rank measurement means nothing without WHAT was searched and WHERE FROM. Both were buried in
+  // one flattened sentence, and the total points measured was not in it at all.
+  // ═════════════════════════════════════════════════════════════════════════════════════════════
+  const header = body.find((b) => b.kind === "facts" && !String(b.title || "").trim());
+  if (!header) {
+    F("the summary opens with no scan header — the approved design leads with Searched / Centred on "
+      + "as fact rows, not with a sentence");
+  } else {
+    const keys = (header.facts || []).map((f) => String(f.k || "").toLowerCase());
+    if (!keys.some((k) => k.includes("searched"))) F("the scan header never says WHAT was searched");
+    if (!keys.some((k) => k.includes("centred"))) F("the scan header never says WHERE it was centred");
+    // each row carries its incidentals as a sub-value, which is what keeps them out of the headline
+    for (const f of header.facts || []) {
+      if (!f.note) F(`the scan header row "${f.k}" has no sub-value, so its incidentals are either missing or in the headline`);
+    }
+    // 🔑 THE TOTAL BELONGS IN THE HEADER. It is the number the whole scan produces and it used to
+    // appear only two blocks later, inside the result.
+    const said = (header.facts || []).map((f) => `${f.v} ${f.note}`).join(" ");
+    if (!said.includes(String(scope.totalPoints))) F("the scan header never states the total points measured");
+  }
+  // 🔴 THE AREA STATE MUST SAY WHY, because "not found across N points" reads identically whether we
+  // searched around their pin or around downtown.
+  const areaBranch = (literal.match(/anchorKind === "area"[\s\S]{0,500}/) || [""])[0];
+  if (!/could not find|could not be found/i.test(areaBranch)) {
+    F("the area-centred header does not say the business could not be found, so a grid centred on the "
+      + "city reports identically to one centred on the client");
+  }
+  // 🔑 THE RADIUS IS MEASURED. A literal here would be a hardcoded stat on a client-facing card.
+  if (/\d+(\.\d+)?\s*km radius/.test(literal) && !/radiusKm/.test(literal)) {
+    F("the header prints a radius that is not read from the record");
+  }
 
   // 🔑 THE WHOLE GRID, NOT ONE KEYWORD'S. The old sentence said "NONE of the 25 points for any of
   // them" while five keywords × 25 points had been measured — understating the work fivefold.

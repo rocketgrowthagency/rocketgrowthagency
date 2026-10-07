@@ -91,8 +91,15 @@ if (!/anchorKind === "area"/.test(flow)) fail.push("the summary no longer distin
 {
   const i = flow.indexOf('anchorKind === "area"');
   const branch = i < 0 ? "" : flow.slice(i, i + 700);
-  const namesBusiness = /\$\{client\.business_name\}/.test(branch);
-  const givesReason = /could not be found|could not find|not found on|because/i.test(branch);
+  // 🔴 EACH SIDE OF THE TERNARY IS JUDGED ON ITS OWN. Testing the whole 800-char window let the
+  // LISTING side satisfy a claim about the AREA side: a mutation that removed the business name from
+  // the area branch passed, because the name was still there four lines down.
+  // → feedback_a_gate_window_measured_in_characters_will_lie
+  const sides = branch.match(/\?([\s\S]*?)\n\s*:\s/);
+  const areaSide = sides ? sides[1] : "";
+  if (!areaSide) fail.push("cannot read the area side of the centred-on ternary");
+  const namesBusiness = /\$\{client\.business_name\}/.test(areaSide);
+  const givesReason = /could not be found|could not find|not found on|because/i.test(areaSide);
   if (!branch || !namesBusiness || !givesReason) {
     fail.push("an area-centred grid no longer says WHY it is centred on the market"
       + ` (names the business: ${namesBusiness}, gives a reason: ${givesReason})`);
@@ -112,8 +119,32 @@ if (!/grid centred on /.test(flow) || !/anchorKind === "area"/.test(flow)) {
   fail.push("the summary no longer states what the grid was centred on, or no longer distinguishes a "
     + "grid centred on the LISTING from one that fell back to the AREA");
 }
-// 🔑 The LISTING branch names the client's own location. Property, not phrasing.
-if (!/\$\{client\.business_name\}'s location/.test(flow)) fail.push("the summary no longer names the CLIENT's location");
+// 🔑 THE LISTING BRANCH NAMES THE CLIENT AND THEIR MARKET. Property, not phrasing.
+//
+// 🔴🔴 THIS PINNED `${client.business_name}'s location` AND A CORRECT REWRITE BROKE IT — the SECOND
+// spelling pin in this one gate to do that in two days. The approved scan header (2026-10-07) reads
+// `Centred on  <business>` with the market as a sub-value, so the business is named and the market
+// is named and the possessive is gone. Pin what must be TRUE, not how it reads.
+// → feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  // 🔴 FIND THE TERNARY THAT ACTUALLY WRITES THE HEADER. Searching for `anchorKind === "area"` AFTER
+  // the first "Centred on" walked past it to the one in `outcome_data`, and the gate then judged the
+  // wrong branch. Take the `anchorKind === "area"` that is followed by "Centred on".
+/** The `: …` side of the centred-on ternary — what runs when the grid IS on the client's listing. */
+const sidesOf = (b) => { const m2 = b.match(/\n\s*:\s([\s\S]*)$/); return m2 ? m2[1] : ""; };
+  let i = -1;
+  for (let at = flow.indexOf('anchorKind === "area"'); at >= 0; at = flow.indexOf('anchorKind === "area"', at + 1)) {
+    if (flow.slice(at, at + 400).includes("Centred on")) { i = at; break; }
+  }
+  const branch = i < 0 ? "" : flow.slice(i, i + 800);
+  if (!branch) fail.push("the grid summary no longer branches on the anchor where it names the centre");
+  else {
+    // the non-area side of the ternary is what names the client
+    const listing = sidesOf(branch);
+    if (!/\$\{client\.business_name\}/.test(listing)) fail.push("the summary no longer names the CLIENT when the grid is centred on their listing");
+    if (!/\$\{market\b|\bmarket\b/.test(listing)) fail.push("the summary no longer names the MARKET the client's grid sits in");
+  }
+}
 // 🔴 Scoped to the GRID SUMMARY, not the whole file. A blanket ban caught `national_one_office`
 // (a geography-model key) and the metros prompt — both legitimate. A gate that accuses correct code
 // is noise, and noise is how a real failure gets ignored.
