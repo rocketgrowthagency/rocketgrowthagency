@@ -1,0 +1,13 @@
+[
+ ["the render-path trim eats the first line's indentation again", "admin",
+  "    const result = trimOutputText(s.task?.auto_result?.summary);",
+  "    const result = String(s.task?.auto_result?.summary || \"\").trim();"],
+ ["stepOutputHtml trims the text it was given", "admin",
+  "function stepOutputHtml(text, task, o) {\n  const t = trimOutputText(text);",
+  "function stepOutputHtml(text, task, o) {\n  const t = String(text || \"\").trim();"],
+ ["the one producer starts stripping leading spaces", "admin",
+  "  return String(v == null ? \"\" : v).replace(/^\\n+/, \"\").replace(/\\s+$/, \"\");",
+  "  return String(v == null ? \"\" : v).trim();"],
+ ["stripMeasurementProse stops going through the producer", "admin",
+  "  return trimOutputText(out);", "  return out.trim();"]
+]

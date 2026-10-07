@@ -89,7 +89,7 @@ try {
     // 🔑 stripMeasurementProse runs BEFORE the renderer, so a check that skips it tests a different
     // input than the product uses — which is how a `.trim()` eating the first line's indentation
     // went unseen. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
-    "stripMeasurementProse"]
+    "stripMeasurementProse", "trimOutputText"]
     .map(pick).join("\n\n"), ctx);
 } catch (e) { console.error("⛔ cannot evaluate the renderer: " + e.message); process.exit(2); }
 const call = (n) => vm.runInContext(n, ctx);

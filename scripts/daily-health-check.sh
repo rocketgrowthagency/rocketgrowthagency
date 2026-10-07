@@ -369,6 +369,7 @@ run check-a-done-step-carries-the-time-it-was-done.mjs "one producer owns a task
 run check-a-note-never-contradicts-the-measurement.mjs "no note on the keyword card states something the measurement beside it contradicts"
 run check-a-block-renders-from-the-record-not-the-prose.mjs "a designed panel renders from the stored record, not from whether the step's prose classifies"
 run check-the-grid-summary-fits-its-design.mjs "the geo-grid summary is written in the shape its approved design reads"
+run check-the-step-card-renders-in-a-browser.mjs "the step card renders right in a real browser, not just in a vm"
 run check-a-step-declares-who-finishes-it.mjs "an act step declares who finishes it, and its copy agrees"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
