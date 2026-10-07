@@ -212,8 +212,8 @@
  [
   "the name check stops comparing the name at all",
   "citdirs",
-  "  const hay = `${citNorm(path)} ${citNorm(title)}`;\n  return hay.includes(want);",
-  "  const hay = `${citNorm(path)} ${citNorm(title)}`;\n  return true;"
+  "  return want.every((t) => hayTokens.has(t) || hayJoined.includes(t));",
+  "  return true;"
  ],
  [
   "an absence is declared although only one of the two searches ran",
@@ -226,5 +226,29 @@
   "exec",
   "    const [bySite, byName] = await Promise.all([\n      askGoogle(`\"${name}\" site:${d.host}`),\n      askGoogle(`\"${name}\" ${d.source}`),\n    ]);",
   "    const bySite = await askGoogle(`\"${name}\" site:${d.host}`); const byName = bySite;"
+ ],
+ [
+  "the matcher goes back to whole-string containment, so only a clean name like RGA's works",
+  "citdirs",
+  "  return want.every((t) => hayTokens.has(t) || hayJoined.includes(t));",
+  "  return hayJoined.includes(citNorm(businessName));"
+ ],
+ [
+  "legal suffixes and articles stop being stripped",
+  "citdirs",
+  "  \"llc\", \"l.l.c\", \"inc\", \"incorporated\", \"corp\", \"corporation\", \"ltd\", \"limited\", \"co\", \"company\",",
+  ""
+ ],
+ [
+  "only SOME tokens need to match, so a different business passes",
+  "citdirs",
+  "  return want.every((t) => hayTokens.has(t) || hayJoined.includes(t));",
+  "  return want.some((t) => hayTokens.has(t) || hayJoined.includes(t));"
+ ],
+ [
+  "a one- or two-letter name is allowed to identify any listing containing it",
+  "citdirs",
+  "  if (!want.length || want.join(\"\").length < 3) return false;",
+  "  if (!want.length) return false;"
  ]
 ]

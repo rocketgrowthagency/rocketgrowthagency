@@ -426,6 +426,46 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
   }
 }
 
+// ═══ PART 1c — THE MATCHER WORKS FOR EVERY BUSINESS, NOT JUST THE ONE WE HAVE ════════════════
+// 🔴🔴🔴 RGA IS THE ONLY CLIENT ROW, WHICH IS EXACTLY WHEN A RULE SHAPED TO ONE BUSINESS LOOKS
+// UNIVERSAL. The first matcher required the whole normalized business name inside the slug or title.
+// "Rocket Growth Agency" is a clean name — no legal suffix, no article, no honorific, no punctuation
+// — so it passed, and **five of nine realistic names would have had a REAL listing reported as
+// "no listing found"**, which is what sends step 52 to create a duplicate.
+// → project_the_product_is_client_shaped · feedback_a_host_match_is_not_a_presence_proof
+{
+  const MUST_MATCH = [
+    ["Rocket Growth Agency", "https://www.yelp.com/biz/rocket-growth-agency", "Rocket Growth Agency", "the one client we actually have"],
+    ["Acme Plumbing LLC", "https://www.yelp.com/biz/acme-plumbing-boston", "Acme Plumbing", "a legal suffix on our record but not in the listing"],
+    ["Smith & Jones Law", "https://www.yelp.com/biz/smith-and-jones-law-chicago", "Smith & Jones Law", "an ampersand the directory spells out"],
+    ["The Corner Cafe", "https://www.yelp.com/biz/corner-cafe-austin", "Corner Cafe", "a leading article the directory drops"],
+    ["Dr. Alan Patel, DDS", "https://www.yelp.com/biz/alan-patel-dds-miami", "Alan Patel, DDS", "an honorific and a credential"],
+    ["Bright Smile Dental Group, Inc.", "https://www.yelp.com/biz/bright-smile-dental-group", "Bright Smile Dental Group", "Inc."],
+    ["KFC", "https://www.yelp.com/biz/kfc-houston", "KFC", "a three-character name"],
+    ["Mr. Rooter Plumbing", "https://www.homeadvisor.com/rated.MrRooterPlumbing.95220155.html", "Mr. Rooter Plumbing", "a slug that runs the words together"],
+  ];
+  // 🔑 AND LOOSER ON OUR NAME MUST NOT MEAN LOOSER ON THEIRS.
+  const MUST_REJECT = [
+    ["Rocket Growth Agency", "https://www.facebook.com/rocketdigitalagency/", "ROCKETDIGITAL (@rocketdigitalagency)", "a different business, measured live"],
+    ["Acme Plumbing", "https://www.yelp.com/biz/acme-electrical-boston", "Acme Electrical", "same first word, different trade"],
+    ["Smith Dental", "https://www.yelp.com/biz/smith-orthodontics", "Smith Orthodontics", "same surname, different practice"],
+    ["Bright Smile Dental", "https://www.yelp.com/biz/bright-smile-spa", "Bright Smile Spa", "two tokens of three"],
+    ["The Company", "https://www.yelp.com/biz/anything-at-all", "Anything", "a name that is only noise words"],
+    ["Jo", "https://www.yelp.com/biz/joes-pizza-new-york", "Joe's Pizza", "a two-letter name that appears inside an unrelated slug"],
+    ["Rocket Growth Agency", "https://business.yelp.com/", "Yelp for Business", "a corporate page naming nobody"],
+  ];
+  for (const [name, url, title, why] of MUST_MATCH) {
+    if (!DIRMOD.listingNamesBusiness(url, title, name)) {
+      F(`PART 1c — a real listing for "${name}" would be reported as MISSING (${why}) → step 52 would build a duplicate`);
+    }
+  }
+  for (const [name, url, title, why] of MUST_REJECT) {
+    if (DIRMOD.listingNamesBusiness(url, title, name)) {
+      F(`PART 1c — "${url}" was accepted as "${name}"'s listing (${why})`);
+    }
+  }
+}
+
 // ═══ PART 2b — THE CONSUMING SIDE DISTRUSTS AN OLD-METHOD ROW TOO ════════════════════════════
 // 🔴 Step 52 reads `client_citations` directly. A host-matched "found" left in the table would make
 // it skip that directory — the client stays unlisted on the one platform the audit was run to find.
