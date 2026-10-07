@@ -1,0 +1,32 @@
+[
+ [
+  "the summary collapses back into one flowing sentence (the original bug)",
+  "exec",
+  "            : \"That is the baseline every later scan is measured against.\"}`,\n        ].join(\"\\n\")",
+  "            : \"That is the baseline every later scan is measured against.\"}`,\n        ].join(\" \")"
+ ],
+ [
+  "the RESULT verdict is dropped",
+  "exec",
+  "            ? `RESULT: ranking at ${totalRanked} of the ${totalPoints} points measured.`\n            : `RESULT: not found at any of the ${totalPoints} points measured.`",
+  "            ? `Ranking at ${totalRanked} of ${totalPoints} points.`\n            : `Not found at any of the ${totalPoints} points.`"
+ ],
+ [
+  "the Coverage group loses its Top-10 row",
+  "exec",
+  "          `  Top-10       ${totalTop10} / ${totalPoints} (${pctOf(totalTop10)}%)`,\n",
+  ""
+ ],
+ [
+  "the coverage rows stop being indented, so they read as prose",
+  "exec",
+  "          `  Top-3        ${totalTop3} / ${totalPoints} (${pctOf(totalTop3)}%)`,",
+  "          `Top-3 ${totalTop3} of ${totalPoints}`,"
+ ],
+ [
+  "the totals quote ONE keyword's grid instead of the whole plan",
+  "exec",
+  "            : `RESULT: not found at any of the ${totalPoints} points measured.`",
+  "            : `RESULT: not found at any of the ${fullSize} points for any of them.`"
+ ]
+]

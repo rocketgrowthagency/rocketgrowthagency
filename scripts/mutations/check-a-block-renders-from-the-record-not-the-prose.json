@@ -1,0 +1,32 @@
+[
+ [
+  "the prose gate comes back (the original bug)",
+  "admin",
+  "  const v = classifyVerdicts(text) || { ok: [], warn: [], change: [], metric: [], note: [] };",
+  "  const v = classifyVerdicts(text); if (!v) return \"\";"
+ ],
+ [
+  "the baseline panel stops being pushed",
+  "admin",
+  "  const baselineBlock = obBaselineBlockHtml(d);\n  if (baselineBlock) out.push(baselineBlock);",
+  "  const baselineBlock = \"\";"
+ ],
+ [
+  "an unscanned keyword reads as absent everywhere",
+  "admin",
+  "    const label = !x.measured ? \"not scanned\" : (x.ranked > 0 ? \"ranking\" : \"absent\");",
+  "    const label = x.ranked > 0 ? \"ranking\" : \"absent\";"
+ ],
+ [
+  "the best position stops reaching the card",
+  "admin",
+  "best #${x.best}</span>",
+  "</span>"
+ ],
+ [
+  "the rows stop naming the keyword",
+  "admin",
+  "<span class=\"t\">${esc(x.keyword)}</span>",
+  "<span class=\"t\">keyword</span>"
+ ]
+]

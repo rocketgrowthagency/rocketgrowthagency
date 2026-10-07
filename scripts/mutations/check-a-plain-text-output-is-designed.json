@@ -1,0 +1,20 @@
+[
+ [
+  "the quantity chip is dropped, back to the row count",
+  "admin",
+  "        + (stated ? `<span class=\"c\">${escapeHtml(stated)}</span>`\n          : saidInTitle ? \"\" : `<span class=\"c\">${n}</span>`) + `</div>`",
+  "        + (saidInTitle ? \"\" : `<span class=\"c\">${n}</span>`) + `</div>`"
+ ],
+ [
+  "the quantity is left in the heading text as well",
+  "admin",
+  "    const title = qm ? qm[1] : titleRaw;",
+  "    const title = titleRaw;"
+ ],
+ [
+  "a heading with no quantity stops counting its rows",
+  "admin",
+  "          : saidInTitle ? \"\" : `<span class=\"c\">${n}</span>`) + `</div>`",
+  "          : \"\") + `</div>`"
+ ]
+]

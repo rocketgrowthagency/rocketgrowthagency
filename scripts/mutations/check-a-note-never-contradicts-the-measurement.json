@@ -1,0 +1,56 @@
+[
+ [
+  "admin: the surface claim returns to the unsized row",
+  "admin",
+  "typed by real searchers.`",
+  "typed, so a page can rank for them.`"
+ ],
+ [
+  "server: the surface claim returns to the note",
+  "exec",
+  "typed by real searchers — the demand is there, only too small for Google to measure at this scale.",
+  "typed — a page can rank for them even though the volume cannot be measured here."
+ ],
+ [
+  "server: floorKept stops recording whether Google sized it",
+  "exec",
+  "sized: d2.volume !== null && d2.volume !== undefined });",
+  "});"
+ ],
+ [
+  "server: null and at-the-floor collapse to one sentence again",
+  "exec",
+  "f.sized === true ? \"below Google's reporting floor\"\n            : f.sized === false ? \"Google returned no volume for it at all\"\n            : \"Google could not size it\";",
+  "\"below Google's reporting floor\";"
+ ],
+ [
+  "server: an ABSENT measurement is described as the floor too",
+  "exec",
+  ": f.sized === false ? \"Google returned no volume for it at all\"",
+  ": f.sized === false ? \"below Google's reporting floor as well\""
+ ],
+ [
+  "admin: the three sized states collapse to one",
+  "admin",
+  "x.sized === true ? \"below Google\\u2019s floor\"\n      : x.sized === false ? \"no volume returned\" : null;",
+  "\"below Google\\u2019s floor\";"
+ ],
+ [
+  "admin: the services are chipped as if they were the dropped candidates",
+  "admin",
+  "+ `business sells${sells.length ? ` — measured against ${esc(sells.join(\", \"))}` : \"\"}.`]);",
+  "+ `business sells — ` + sells.map((x) => `<span class=\"tag\">${esc(x)}</span>`).join(\" \")]);"
+ ],
+ [
+  "css: the unsized annotation loses its style",
+  "css",
+  ".ob-ctx-row .ob-unsized { display:inline-block;",
+  ".ob-ctx-row .ob-unsizedXX { display:inline-block;"
+ ],
+ [
+  "admin: the annotation steals the existing .ob-why component name",
+  "admin",
+  "<span class=\"ob-unsized\">",
+  "<span class=\"ob-why\">"
+ ]
+]

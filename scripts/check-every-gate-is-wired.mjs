@@ -424,4 +424,49 @@ if (unredirectable.length) {
 }
 console.log(`  ✓ every gate that reads the site can be pointed at a copy, so its mutations can run`);
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 A GATE NOBODY CAN MAKE FAIL IS A GATE NOBODY HAS CHECKED — AND UNTIL 2026-10-06 THE PROOF
+// WAS THROWN AWAY. Every gate here is mutation-tested when it is written, but those runs lived in a
+// scratch directory that vanished with the session. The NUMBER survived in a commit message
+// ("9/9 mutations"); the ability to re-check it did not. So a gate that silently went blind months
+// later looked exactly like one that still worked — and two did, in one day.
+//
+// The suites are in `scripts/mutations/` now and `node scripts/run-mutations.mjs` re-runs them.
+//
+// 🔑 A RATCHET, NOT A WALL. Most gates predate this and have no suite; failing on all of them would
+// be permanently red, which teaches the reader to ignore every red — the one outcome worse than no
+// check at all. So the backlog may only SHRINK, and a NEW gate must bring its suite.
+// → feedback_a_gate_that_cannot_fail · feedback_a_flaky_gate_is_worse_than_a_failing_one
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const suiteDir = `${HERE}/mutations`;
+  let suites = [];
+  try { suites = fs.readdirSync(suiteDir).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5)); }
+  catch { /* no suites yet */ }
+  for (const sfile of suites) {
+    if (!gates.includes(`${sfile}.mjs`)) fail(`scripts/mutations/${sfile}.json has no gate`);
+  }
+  const without = gates.filter((g) => !suites.includes(g.slice(0, -4)));
+  let baseline;
+  try { baseline = JSON.parse(fs.readFileSync(`${HERE}/_mutation-baseline.json`, "utf8")).count; }
+  catch { baseline = null; }
+  if (baseline == null) {
+    console.error("✗ _mutation-baseline.json is missing — the mutation backlog has no ratchet");
+    process.exit(1);
+  }
+  if (without.length > baseline) {
+    console.error(`✗ ${without.length - baseline} gate(s) were added without a mutation suite proving they can fail.`);
+    console.error(`  The backlog may only shrink (baseline ${baseline}). Add scripts/mutations/<gate>.json and`);
+    console.error(`  run: node scripts/run-mutations.mjs <gate>`);
+    const recent = without.slice(-8);
+    for (const g of recent) console.error(`    · ${g}`);
+    process.exit(1);
+  }
+  if (without.length < baseline) {
+    console.log(`  ✓ ${suites.length} gate(s) carry a mutation suite — backlog ${without.length}, below the recorded ${baseline}; lower the baseline`);
+  } else {
+    console.log(`  ✓ ${suites.length} gate(s) carry a mutation suite that proves they can fail (backlog ${without.length}, not growing)`);
+  }
+}
+
 console.log(`✅ ${gates.length} gates: ${wired} wired, ${Object.keys(NOT_PREFLIGHT).length} excused with a reason, 0 dormant.`);

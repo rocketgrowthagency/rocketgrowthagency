@@ -1,0 +1,17 @@
+[
+ ["the area branch stops naming the business", "exec",
+  "              ? `${market || \"the market\"} — the AREA, because ${client.business_name} could not be found on Google Maps, so this measures the market and not their listing`",
+  "              ? `${market || \"the market\"} — the AREA`"],
+ ["the area branch names the business but gives no reason", "exec",
+  "— the AREA, because ${client.business_name} could not be found on Google Maps, so this measures the market and not their listing`",
+  "— the AREA for ${client.business_name}`"],
+ ["the summary stops stating the grid size", "exec",
+  "          `${fullSize}-point geo-grid, ${perKeyword.length} locked keyword`",
+  "          `Geo-grid, ${perKeyword.length} locked keyword`"],
+ ["the summary says \"office\" again", "exec",
+  "            : `${client.business_name}'s location${market ? ` (${market})` : \"\"}`}.`,",
+  "            : `${client.business_name}'s office${market ? ` (${market})` : \"\"}`}.`,"],
+ ["the anchor is read and thrown away", "exec",
+  "      if (a2 && typeof a2.kind === \"string\") anchorKind = a2.kind;",
+  "      if (a2 && typeof a2.kind === \"string\") { /* read */ }"]
+]

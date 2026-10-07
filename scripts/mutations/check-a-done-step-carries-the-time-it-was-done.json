@@ -1,0 +1,68 @@
+[
+ [
+  "admin: the done branch is deleted",
+  "admin",
+  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n  } else if",
+  "  if (false) {\n  } else if"
+ ],
+ [
+  "admin: reopen no longer clears the stamp",
+  "admin",
+  "  } else if (patch.status === \"pending\") {\n    next.completed_at = null;\n  }",
+  "  }"
+ ],
+ [
+  "admin: every done re-dates the approval",
+  "admin",
+  "if (!next.completed_at) next.completed_at = new Date().toISOString();",
+  "next.completed_at = new Date().toISOString();"
+ ],
+ [
+  "admin: the done branch fires on anything-but-pending (a ran_at bump stamps a step nobody finished)",
+  "admin",
+  "  if (patch.status === \"done\" || patch.status === \"declined\") {",
+  "  if (patch.status !== \"pending\") {"
+ ],
+ [
+  "admin: the override writer merges inline again",
+  "admin",
+  "    const merged = mergeTaskState(existing.tasks?.[taskId], { status: newStatus, updated_at: new Date().toISOString() });",
+  "    const merged = { ...(existing.tasks?.[taskId] || {}), status: newStatus, updated_at: new Date().toISOString() };"
+ ],
+ [
+  "admin: the Supabase adapter hand-merges a patch again",
+  "admin",
+  "        data.tasks[stepId] = mergeTaskState(data.tasks[stepId], patch);\n        if (existing) {\n          const { error } = await supabase.from(\"client_onboarding_records\")",
+  "        data.tasks[stepId] = { ...(data.tasks[stepId] || {}), ...patch };\n        if (existing) {\n          const { error } = await supabase.from(\"client_onboarding_records\")"
+ ],
+ [
+  "server: the done branch is deleted",
+  "exec",
+  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n  } else if",
+  "  if (false) {\n  } else if"
+ ],
+ [
+  "server: started_at goes back to the clock at persist time",
+  "exec",
+  "      started_at: startedAt,",
+  "      started_at: new Date().toISOString(),"
+ ],
+ [
+  "server: the start stamp moves after the work",
+  "exec",
+  "  const startedAt = new Date().toISOString();\n  try {\n    const result = await executor({ client, clientId: client_id });",
+  "  try {\n    const result = await executor({ client, clientId: client_id });\n    const startedAt = new Date().toISOString();"
+ ],
+ [
+  "server: the one-key ternary for the two stamps returns",
+  "exec",
+  "      started_at: startedAt,",
+  "      [isDone ? \"completed_at\" : \"started_at\"]: new Date().toISOString(),"
+ ],
+ [
+  "server: saveTaskState hand-merges again",
+  "exec",
+  "    data.tasks[stepId] = mergeTaskState(data.tasks[stepId], patch);\n    await supa(`/client_onboarding_records",
+  "    data.tasks[stepId] = { ...(data.tasks[stepId] || {}), ...patch };\n    await supa(`/client_onboarding_records"
+ ]
+]

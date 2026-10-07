@@ -82,8 +82,21 @@ if (!/\banchorKind\b/.test(flow.replace(/anchorKind\s*=\s*"unknown"/g, ""))) {
 if (!/v2Campaign\?\.rank_grid\?\.anchor/.test(flow)) fail.push("the step no longer reads the anchor from the record the grid writes");
 if (!/anchorKind = a2\.kind;/.test(flow)) fail.push("the anchor is fetched but never ASSIGNED — the value is read and thrown away");
 if (!/anchorKind === "area"/.test(flow)) fail.push("the summary no longer distinguishes an area-centred grid from a listing-centred one");
-if (!/could not find \$\{client\.business_name\} on Google Maps/.test(flow)) {
-  fail.push("an area-centred grid no longer says WHY it is centred on the market");
+// 🔴🔴 THIS PINNED A WORD ORDER AND MY OWN CORRECT REWRITE BROKE IT (2026-10-06). It required the
+// literal `could not find ${client.business_name} on Google Maps`; the summary was restructured into
+// the approved design and now reads `${client.business_name} could not be found on Google Maps` —
+// the same fact, the same name, the same reason. The gate reported a defect that did not exist.
+// 🔑 PIN THE PROPERTY: the area branch must NAME THE BUSINESS and GIVE A REASON. How it is worded
+// is the writer's business. → feedback_a_gate_must_pin_the_property_not_the_spelling
+{
+  const i = flow.indexOf('anchorKind === "area"');
+  const branch = i < 0 ? "" : flow.slice(i, i + 700);
+  const namesBusiness = /\$\{client\.business_name\}/.test(branch);
+  const givesReason = /could not be found|could not find|not found on|because/i.test(branch);
+  if (!branch || !namesBusiness || !givesReason) {
+    fail.push("an area-centred grid no longer says WHY it is centred on the market"
+      + ` (names the business: ${namesBusiness}, gives a reason: ${givesReason})`);
+  }
 }
 // 🔴 an older scan has no anchor; unknown must not be assumed to be "business"
 if (!/anchorKind = "unknown"/.test(flow) || /anchorKind = "business";[\s\S]{0,200}catch/.test(flow)) {
@@ -99,15 +112,37 @@ if (!/grid centred on /.test(flow) || !/anchorKind === "area"/.test(flow)) {
   fail.push("the summary no longer states what the grid was centred on, or no longer distinguishes a "
     + "grid centred on the LISTING from one that fell back to the AREA");
 }
+// 🔑 The LISTING branch names the client's own location. Property, not phrasing.
 if (!/\$\{client\.business_name\}'s location/.test(flow)) fail.push("the summary no longer names the CLIENT's location");
 // 🔴 Scoped to the GRID SUMMARY, not the whole file. A blanket ban caught `national_one_office`
 // (a geography-model key) and the metros prompt — both legitimate. A gate that accuses correct code
 // is noise, and noise is how a real failure gets ignored.
 // → feedback_a_gate_must_pin_the_property_not_the_spelling
 {
-  const i = flow.indexOf("point grid centred on");
-  const sentence = i < 0 ? "" : flow.slice(Math.max(0, i - 400), i + 600);
-  if (!sentence) fail.push("the grid summary sentence is gone");
+  // 🔴 ANCHORED ON THE LITERAL "point grid centred on", which the restructure removed — the summary
+  // now reads "${fullSize}-point geo-grid, N locked keywords, centred on …". Find the summary by
+  // the PROPERTY that it is the grid step's `summary:`, then read it as a block.
+  // 🔴 NOT THE FIRST `summary:` AFTER THE STEP ID — the executor returns several REFUSAL summaries
+  // before it reaches the baseline ("No tracked keyword is set…", "has not been validated…"), and
+  // the first match was one of those, which states no grid size and never could.
+  // 🔑 The baseline summary is the only one built as an ARRAY, because it is the only one with a
+  // shape the design reads. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const si = flow.indexOf("summary: [", flow.indexOf('"m1.audit.grid_baseline"'));
+  let sentence = "";
+  if (si >= 0) {
+    // to the end of the statement, never a character window
+    // → feedback_a_gate_window_measured_in_characters_will_lie
+    let depth = 0, j = si;
+    for (; j < flow.length; j++) {
+      const c = flow[j];
+      if (c === "[" || c === "(" || c === "{") depth++;
+      else if (c === "]" || c === ")" || c === "}") { if (!depth) break; depth--; }
+      else if (c === "," && !depth) break;
+    }
+    sentence = flow.slice(si, j);
+  }
+  if (!sentence) fail.push("the grid summary is gone");
+  else if (!/\$\{fullSize\}/.test(sentence)) fail.push("the grid summary no longer states the grid's size");
   else if (/office/i.test(sentence.replace(/^\s*\/\/.*$/gm, ""))) {
     fail.push('the grid summary says "office" again — we hold a map pin, not an office address');
   }
