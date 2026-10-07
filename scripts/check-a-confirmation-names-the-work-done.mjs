@@ -96,16 +96,28 @@ ok(/2 keywords tracked/.test(tracked),
   ok(/started: true/.test(f), "no runner reports a started-but-unfinished scan, so the started shape is dead");
 }
 
-// ── AND MARKING A STEP DONE PUTS THE READER IN FRONT OF THE NEXT ONE ────────────────────────────
+// ── AND MARKING A STEP DONE PUTS THE READER IN FRONT OF THE STEP THEY ACTED ON ──────────────────
+// 🔴🔴 SUPERSEDED, 2026-10-07 — AND THIS GATE WAS DEFENDING THE OLD RULE. It asserted that marking a
+// step done scrolls to the NEXT actionable row, and that an undo is excluded from that scroll. Both
+// were the approved 2026-09-27 behaviour. Chris then watched step 22 finish and land him on step 28:
+//
+//   *"Whenever a step finishes it should show the step it just did on screen and then show it
+//    completed — not jumping to another step #. This should be the CASE FOR ALL STEPS."*
+//
+// 🔑 A GATE OUTLIVES THE DECISION IT ENCODES. Left alone this would have failed the product for
+// obeying its owner, and the honest fix is to move the rule, not to revert the behaviour.
+// → feedback_a_gate_written_for_a_temporary_state_outlives_it · project_a_finished_step_stays_on_screen
+//
+// The behaviour is now owned, in full, by `check-a-finished-step-stays-on-screen`: one producer,
+// five addressable card states, and every write path. Asserting it in two places is how two gates
+// come to disagree, so this one only checks that the hand-off exists.
 {
   const a = src.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   const mi = a.indexOf("async function markOnboardingStep");
   const body = mi >= 0 ? a.slice(mi, mi + 4000) : "";
-  ok(/scrollIntoView/.test(body),
-    "the banner says \"the next step is unlocked\" and leaves the page on the step just finished — in a "
-    + "list of 61 rows the next one is usually below the fold");
-  ok(/if \(!isReset\)/.test(body),
-    "reopening a step also yanks the page elsewhere — the reader just chose to work on THAT step");
+  ok(/revealStep\s*\(/.test(body),
+    "marking a step done leaves the page wherever the re-render happens to put it — the reader loses "
+    + "the step they just finished");
 }
 
 if (fail.length) {
@@ -114,5 +126,5 @@ if (fail.length) {
   process.exit(1);
 }
 console.log("✅ all six executor shapes produce a sentence that matches the work: a started scan says it "
-  + "started, a tracked keyword is not drafted, a runner's own verb wins, and marking a step done scrolls "
-  + "to the next actionable one");
+  + "started, a tracked keyword is not drafted, a runner's own verb wins, and marking a step done puts "
+  + "the reader back in front of that step");
