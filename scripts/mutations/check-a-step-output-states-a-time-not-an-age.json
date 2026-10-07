@@ -1,0 +1,14 @@
+[
+ [
+  "the rounded age comes back on the grid baseline",
+  "exec",
+  "          `  Measured      ${measuredLabel}${reReadStoredScan",
+  "          `  Measured      ${Math.round(ageDays)} day(s) ago${reReadStoredScan"
+ ],
+ [
+  "another executor starts reporting an age",
+  "exec",
+  "        summary: \"No tracked keyword is set for this client, so there is nothing to scan. Set the primary service first.\",",
+  "        summary: \"No tracked keyword is set for this client, checked 3 hours ago, so there is nothing to scan. Set the primary service first.\","
+ ]
+]

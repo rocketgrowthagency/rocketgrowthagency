@@ -92,6 +92,7 @@ const NOT_PREFLIGHT = {
   'check-a-note-never-contradicts-the-measurement.mjs': 'admin-UI gate, pure source scan; runs in daily-health-check.sh — a note on a step card cannot make a video unsafe',
   'check-a-block-renders-from-the-record-not-the-prose.mjs': 'admin-UI gate, lifts and renders admin.js in a vm; runs in daily-health-check.sh — a step card panel cannot make a video unsafe',
   'check-the-grid-summary-fits-its-design.mjs': 'admin-UI gate, runs the producer template in a vm and parses it; runs in daily-health-check.sh — a step summary cannot make a video unsafe',
+  'check-a-step-output-states-a-time-not-an-age.mjs': 'step-output gate, pure source scan; runs in daily-health-check.sh — the wording of a summary cannot make a video unsafe',
   'check-the-step-card-renders-in-a-browser.mjs': 'admin-UI gate, lifts the renderer into chromium with the real CSS; runs in daily-health-check.sh — a step card cannot make a video unsafe',
   'check-a-step-declares-who-finishes-it.mjs': 'playbook+portal data gate, pure source scan; runs in daily-health-check.sh — a step completion mechanism cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
