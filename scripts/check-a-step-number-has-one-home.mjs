@@ -145,6 +145,14 @@ const REGISTRY = [
   { file: "netlify/functions/cancel-kickoff-invite.js", needle: "open again",                          step: "m1.close.kickoff_invite" },
   { file: "netlify/functions/kickoff-rsvp-check.js",    needle: "kickoff invite",                      step: "m1.close.kickoff_invite" },
   { file: "netlify/functions/flow-execute.js",          needle: "deep assessment (step",               step: "m1.audit.deep_assess" },
+  // 🔗 Step 22's citation audit and step 52's build step name each other, because Chris asked for
+  // numbers in descriptions. Registered rather than dropped: the number now has to KEEP matching the
+  // page, so a renumbering fails here instead of shipping a card that cites a step nobody can find.
+  { file: "netlify/functions/flow-execute.js",          needle: "Run step 22, Run citation audit",     step: "m1.audit.citations" },
+  { file: "netlify/functions/flow-execute.js",          needle: "Measured by   step 22",               step: "m1.audit.citations" },
+  { file: "netlify/functions/flow-execute.js",          needle: "so step 52 cannot read them",          step: "m1.cit.priority_top10" },
+  { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows — it", step: "m1.cit.priority_top10" },
+  { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows.",     step: "m1.cit.priority_top10" },
 ];
 // 🔑 The client portal has its OWN sequence on purpose — `clientStepNo` / SETUP_STEP_COPY. A client
 // sees eight steps, not sixty-one, and must never be told "step 26 of 61".

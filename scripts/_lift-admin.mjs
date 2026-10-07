@@ -29,7 +29,10 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 
 /** Brace-match a `function NAME(...)` declaration out of the source. */
 function liftFunction(src, name) {
-  const m = src.match(new RegExp("^function " + name + "\\s*\\(", "m"));
+  // 🔑 `async` IS PART OF THE DECLARATION. Matching only `function NAME(` silently lifted nothing
+  // for every async helper — reported as "could not be lifted", which reads like the name is wrong
+  // rather than like the matcher is. Found lifting `auditCitations` out of flow-execute.js.
+  const m = src.match(new RegExp("^(?:async )?function " + name + "\\s*\\(", "m"));
   if (!m) return "";
   // 🔴 WALK THE PARAMETER LIST FIRST. A destructured parameter (`function f({a, b} = {})`) opens with
   // a brace that closes immediately; matching from it lifts two words and every later assertion then
@@ -82,10 +85,15 @@ function liftConst(src, name) {
  * Lift the named admin functions and whatever they need.
  * Returns { ctx, get, included } — or exits 2 with a clear reason if it cannot run.
  */
-export function liftAdmin(wanted, { extraGlobals = {}, maxRounds = 40 } = {}) {
+export function liftAdmin(wanted, { extraGlobals = {}, maxRounds = 40, file = "admin/admin.js" } = {}) {
+  // 🔑 ONE LIFTER, ANY FILE. `file` defaults to admin.js so every gate written before this keeps
+  // working untouched — but the brace-matching, the dependency walk and the browser globals are not
+  // facts about the admin, and a second copy of them for `flow-execute.js` would be the third place
+  // this logic lives. → feedback_fix_the_class_not_the_instance
+  const WHERE = String(file).split("/").pop();
   let src;
-  try { src = fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"); }
-  catch { console.error("⚠️  INDETERMINATE — cannot read admin.js"); process.exit(2); }
+  try { src = fs.readFileSync(`${SITE}/${file}`, "utf8"); }
+  catch { console.error(`⚠️  INDETERMINATE — cannot read ${file}`); process.exit(2); }
 
   // 🔴 A FRESH CONTEXT PER REBUILD. Re-evaluating the lifted code into the SAME context redeclares
   // every `const` it contains — "Identifier has already been declared" — which looked like a product
@@ -120,7 +128,7 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
     if (f) { parts.push(f); included.add(n); }
   }
   if (!parts.length) {
-    console.error(`⚠️  INDETERMINATE — none of [${wanted.join(", ")}] could be lifted from admin.js.`);
+    console.error(`⚠️  INDETERMINATE — none of [${wanted.join(", ")}] could be lifted from ${WHERE}.`);
     process.exit(2);
   }
 
@@ -148,7 +156,7 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
         get(name) {
           const fn = vm.runInContext(`typeof ${name} === "function" ? ${name} : null`, ctx);
           if (!fn) {
-            console.error(`⚠️  INDETERMINATE — ${name} did not lift from admin.js.`);
+            console.error(`⚠️  INDETERMINATE — ${name} did not lift from ${WHERE}.`);
             process.exit(2);
           }
           return fn;
@@ -164,7 +172,7 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
             if (v !== undefined) return v;
             if (included.has(name) || !addDep(name)) break;
           }
-          console.error(`⚠️  INDETERMINATE — the constant ${name} did not lift from admin.js.`);
+          console.error(`⚠️  INDETERMINATE — the constant ${name} did not lift from ${WHERE}.`);
           process.exit(2);
         },
         /** Call a lifted function, resolving any dependency it reaches for mid-run. */
@@ -176,16 +184,37 @@ function escapeAttribute(s){return escapeHtml(s);}\n`;
             const present = vm.runInContext(`typeof ${name} === "function"`, ctx);
             if (!present) addDep(name);
           }
-          for (let i = 0; i < rounds; i++) {
-            try { return api.get(name)(...args); }
-            catch (e) {
-              const m = /(\w+) is not defined/.exec(e.message || "");
-              if (!m || included.has(m[1]) || !addDep(m[1])) {
-                console.error(`⚠️  INDETERMINATE — ${name} needs a dependency the lift cannot supply: ${e.message}`);
-                console.error("   Fix the lift; do NOT read this as a product failure.");
-                process.exit(2);
-              }
+          // 🔴🔴 AN ASYNC FUNCTION REJECTS, IT DOES NOT THROW. This loop's try/catch sees nothing
+          // when the lifted function is `async`: the ReferenceError arrives as a rejected promise
+          // AFTER `call` has already returned, so the dependency walk never ran and the gate died
+          // with a raw stack trace that looked like a product bug. Found 2026-10-07 lifting
+          // `auditCitations`. A sync lift still returns synchronously and is untouched.
+          // → feedback_a_gate_that_throws_is_not_a_gate_that_fails
+          const giveUp = (e) => {
+            console.error(`⚠️  INDETERMINATE — ${name} needs a dependency the lift cannot supply: ${e.message}`);
+            console.error("   Fix the lift; do NOT read this as a product failure.");
+            process.exit(2);
+          };
+          const resolvable = (e) => {
+            const m = /(\w+) is not defined/.exec(e.message || "");
+            return m && !included.has(m[1]) && addDep(m[1]);
+          };
+          const attemptAsync = async (left) => {
+            for (let i = 0; i < left; i++) {
+              try { return await api.get(name)(...args); }
+              catch (e) { if (!resolvable(e)) giveUp(e); }
             }
+            console.error(`⚠️  INDETERMINATE — gave up resolving dependencies for ${name}.`);
+            process.exit(2);
+          };
+          for (let i = 0; i < rounds; i++) {
+            try {
+              const out = api.get(name)(...args);
+              if (out && typeof out.then === "function") {
+                return out.catch((e) => { if (!resolvable(e)) giveUp(e); return attemptAsync(rounds); });
+              }
+              return out;
+            } catch (e) { if (!resolvable(e)) giveUp(e); }
           }
           console.error(`⚠️  INDETERMINATE — gave up resolving dependencies for ${name}.`);
           process.exit(2);

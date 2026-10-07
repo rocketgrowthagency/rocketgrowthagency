@@ -567,7 +567,18 @@ Nothing is re-fetched and nothing is typed by hand. A source that was unavailabl
   {
     id: "m1.audit.citations", title: "Run citation audit",
     type: "hybrid", dependsOn: ["m1.audit.gbp_baseline"],
-    actionLabel: "⚡ Generate",
+    actionLabel: "⚡ Run citation audit",
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // 🔴🔴 THIS LOCAL RUNNER IS SUPERSEDED — flow-execute.js `auditCitations` IS CANONICAL (10-07).
+    // The server executor now MEASURES: ten SerpAPI `site:` searches, `found`/`missing`/`unknown`
+    // per directory, written to `client_citations`, with `missing` gated on a positive `searched`
+    // flag. The version below only PRINTS ten links and measures nothing.
+    // 🔑 It is left in place because the admin's Run button calls the server, not this file — but
+    // if anything ever runs it locally it will produce the OLD behaviour, and the step would look
+    // like it had been audited when nothing was checked. Do not extend it; delete it when the
+    // local flow runner is retired.
+    // → project_step_22_citation_audit_automated · project_sop_step_audit_2026-09-08
+    // ═══════════════════════════════════════════════════════════════════════════════════════
     async run({ client }) {
       // For each top directory, do a Google search for "<business name> site:<directory>" — checks if a listing exists
       const directories = [
@@ -591,11 +602,12 @@ Nothing is re-fetched and nothing is typed by hand. A source that was unavailabl
         outcome_data: { directories_to_audit: directories.length },
       };
     },
-    instructions: `Click through each Google search link above. For each:
-1. If found + NAP matches → status='found', record listing_url, nap_match=true
-2. If found + NAP wrong → status='wrong_nap', record what's wrong, fix it
-3. If not found → status='missing', plan to claim/create in m1.cit.priority_top10
-Fill onboarding section 11.0 with the audit summary.`,
+    instructions: `The runner searches Google for this business on each of 10 directories and records what it finds in client_citations. It reports three answers per directory:
+1. Listed → the listing URL it found
+2. No listing found → step 52 will build it
+3. Could not check → the search itself failed; nothing is claimed either way, press Run again
+Your part: open the listings it found and confirm the name, address and phone match Google. Fix any that do not, and fill onboarding section 11.0 with the summary.
+DONE = every listing the audit found has been opened and its NAP confirmed against the GBP.`,
   },
 
   // === Phase 3 — GBP Foundation ===

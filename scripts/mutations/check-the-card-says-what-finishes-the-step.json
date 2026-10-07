@@ -1,0 +1,68 @@
+[
+ [
+  "the strip reads the raw property again (the original bug: 87 of 89 cards blank)",
+  "admin",
+  "      const doneWhenLine = stepDoneWhenLine(o, s.task);\n      const ruleHtml = doneWhenLine",
+  "      const doneWhenLine = o.doneWhen;\n      const ruleHtml = doneWhenLine"
+ ],
+ [
+  "the producer never sees the task, so it cannot tell a run that happened from one that did not",
+  "admin",
+  "stepDoneWhenLine(o, s.task)",
+  "stepDoneWhenLine(o, null)"
+ ],
+ [
+  "the floor stops firing for hybrid steps",
+  "admin",
+  "  if (!o || o.sopType !== \"hybrid\" || !o.hasRunner) return \"\";",
+  "  if (!o) return \"\"; return \"\";"
+ ],
+ [
+  "the line stops naming the button that finishes the step",
+  "admin",
+  "so this step stays open until you press \"✓ Mark step complete\".`;",
+  "so this step stays open until you mark it done.`;"
+ ],
+ [
+  "the line stops naming the step's own action",
+  "admin",
+  "  const act = String(o.actionLabel || \"\").trim() || \"The runner\";",
+  "  const act = \"The runner\";"
+ ],
+ [
+  "a step's own DONE rule is overwritten by the generic floor",
+  "admin",
+  "  if (o && o.doneWhen) return o.doneWhen;",
+  "  void 0;"
+ ],
+ [
+  "a finished step is told it still has work to do",
+  "admin",
+  "  if (task.status === \"done\" || task.status === \"declined\" || task.status === \"skipped\") return \"\";",
+  "  void 0;"
+ ],
+ [
+  "a failed run gets a second, contradictory explanation",
+  "admin",
+  "  if (task.error || task.outcome === \"error\" || task.outcome === \"blocked\") return \"\";",
+  "  void 0;"
+ ],
+ [
+  "an indeterminate run is silenced, exactly where a human is most needed",
+  "admin",
+  "  if (task.error || task.outcome === \"error\" || task.outcome === \"blocked\") return \"\";",
+  "  if (task.error || task.outcome !== \"verified\") return \"\";"
+ ],
+ [
+  "a step that never ran is told its runner has run",
+  "admin",
+  "  if (!task || !task.ran_at) return \"\";",
+  "  if (!task) return \"\";"
+ ],
+ [
+  "step 22's DONE rule stops being readable from its prose",
+  "playbook",
+  "DONE = every listing the audit found has been opened and its NAP confirmed against the GBP.",
+  "Every listing the audit found should be opened and its NAP confirmed against the GBP."
+ ]
+]

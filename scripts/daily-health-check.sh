@@ -374,6 +374,8 @@ run check-the-step-card-renders-in-a-browser.mjs "the step card renders right in
 run check-a-step-declares-who-finishes-it.mjs "an act step declares who finishes it, and its copy agrees"
 run check-a-client-step-number-is-declared.mjs "no two rows in the client portal carry the same number"
 run check-a-locked-row-says-why.mjs "a locked row names the step it waits on, by number"
+run check-the-card-says-what-finishes-the-step.mjs "an active card says what finishes the step, not just that it is active"
+run check-a-citation-audit-never-invents-an-absence.mjs "a failed citation search is never reported as a missing listing"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"

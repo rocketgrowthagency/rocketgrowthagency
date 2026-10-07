@@ -1,0 +1,110 @@
+[
+ [
+  "a body with no organic_results is read as an empty result set (the map-pack bug, on citations)",
+  "exec",
+  "    if (!Array.isArray(j?.organic_results)) return unknown(\"the search returned no result set we could read\");",
+  "    if (!j?.organic_results) j = { organic_results: [] };"
+ ],
+ [
+  "a timeout becomes a missing listing",
+  "exec",
+  "      return unknown(`the search could not be completed (${why})`);",
+  "      out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: `no listing found (${why})` }; return;"
+ ],
+ [
+  "a SerpAPI refusal becomes a missing listing",
+  "exec",
+  "    if (j?.error) return unknown(`the search was refused (${String(j.error).slice(0, 70)})`);",
+  "    if (j?.error) { out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: \"no listing found\" }; return; }"
+ ],
+ [
+  "a non-200 becomes a missing listing",
+  "exec",
+  "    if (!r.ok) return unknown(`the search returned ${r.status}`);",
+  "    if (!r.ok) { out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: true, note: \"no listing found\" }; return; }"
+ ],
+ [
+  "a missing API key is treated as proof of absence",
+  "exec",
+  "    if (!key) return unknown(\"SERPAPI_KEY is not set, so no search could be run\");",
+  "    if (!key) { out[i] = { ...d, status: \"missing\", url: null, searched: true, spent: false, note: \"no listing found\" }; return; }"
+ ],
+ [
+  "unknown rows get written to client_citations",
+  "exec",
+  "  const writable = out.filter((r) => r.status === \"found\" || r.status === \"missing\");",
+  "  const writable = out;"
+ ],
+ [
+  "a cached unknown is re-read, so pressing Run again changes nothing",
+  "exec",
+  "      if (Number.isFinite(t) && t > floor && (r.status === \"found\" || r.status === \"missing\")) fresh.set(r.source, r);",
+  "      if (Number.isFinite(t) && t > floor) fresh.set(r.source, r);"
+ ],
+ [
+  "a lookalike host satisfies the directory",
+  "exec",
+  "const citOnHost = (u, host) => { const h = citHostOf(u); return h === host || h.endsWith(`.${host}`); };",
+  "const citOnHost = (u, host) => String(u || \"\").includes(host);"
+ ],
+ [
+  "a found listing stops carrying its URL",
+  "exec",
+  "      ? { ...d, status: \"found\", url: String(match.link).slice(0, 500), title: String(match.title || \"\").slice(0, 120),\n          searched: true, spent: true, note: \"\" }",
+  "      ? { ...d, status: \"found\", url: null, title: null, searched: true, spent: true, note: \"\" }"
+ ],
+ [
+  "the catch swallows a programming error again",
+  "exec",
+  "      if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;",
+  "      void 0;"
+ ],
+ [
+  "a failed run and a re-read run get the same confident sentence (the original bug)",
+  "exec",
+  "      : reread ? `no new searches — ${reread} result${reread === 1 ? \" was\" : \"s were\"} still current`\n      : \"not one search completed\";",
+  "      : \"no new searches — every result was still current\";"
+ ],
+ [
+  "a run that learned nothing still claims the step is complete",
+  "exec",
+  "      completed: unknown.length < rows.length && !rows.writeError,",
+  "      completed: true,"
+ ],
+ [
+  "a run that stored nothing still promises step 52 something to read",
+  "exec",
+  "        : unknown.length === rows.length\n        ? `Nothing was recorded, so nothing downstream has changed. Press Run again.`",
+  "        : false\n        ? `Nothing was recorded, so nothing downstream has changed. Press Run again.`"
+ ],
+ [
+  "a directory's own search page counts as the client's listing",
+  "exec",
+  "    const match = j.organic_results.find((x) => citOnHost(x?.link, d.host) && !CIT_NOT_A_LISTING.test(String(x.link)));",
+  "    const match = j.organic_results.find((x) => citOnHost(x?.link, d.host));"
+ ],
+ [
+  "a failed write is stamped on each row, where a found row never shows it",
+  "exec",
+  "      out.writeError = String(e.message).slice(0, 80);",
+  "      for (const r of out) if (r.status !== \"unknown\") r.note = `${r.note ? `${r.note} · ` : \"\"}not saved`;"
+ ],
+ [
+  "a run whose results could not be saved still completes the step",
+  "exec",
+  "      completed: unknown.length < rows.length && !rows.writeError,",
+  "      completed: unknown.length < rows.length,"
+ ],
+ [
+  "the card stops saying the results could not be saved",
+  "exec",
+  "      rows.writeError\n        ? `These results could NOT be saved (${rows.writeError}), so step 52 cannot read them. The measurements above stand; press Run again to store them.`\n        : unknown.length === rows.length",
+  "      false\n        ? `These results could NOT be saved (${rows.writeError}), so step 52 cannot read them. The measurements above stand; press Run again to store them.`\n        : unknown.length === rows.length"
+ ],
+ [
+  "a quote in the business name is left in the exact-phrase query",
+  "exec",
+  "  const name = String(client?.business_name || \"\").replace(/[\"\\u201C\\u201D]/g, \" \").replace(/\\s+/g, \" \").trim();",
+  "  const name = String(client?.business_name || \"\").trim();"
+ ]
+]
