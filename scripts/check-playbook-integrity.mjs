@@ -252,7 +252,36 @@ try {
     let desk = [];
     try { desk = fs.readdirSync(deskDir).filter((f) => /^RGA Sales Playbook.*\.pdf$/.test(f)); } catch { /* no Desktop on this host */ }
     if (desk.length > 1) add('printed-playbook-desktop-forked', `${desk.length} playbook PDFs on the Desktop (${desk.join(', ')}) — there must be ONE`);
-    for (const f of desk) if (sha(fs.readFileSync(`${deskDir}/${f}`)) !== sha(pdfBytes)) add('printed-playbook-desktop-stale', `Desktop "${f}" differs from docs/sales-playbook.pdf — rebuild refreshes it`);
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    // 🔴🔴 A DRAFT AHEAD OF THE SHIPPED VERSION IS NOT A STALE COPY. This compared the Desktop PDF
+    // byte-for-byte against `docs/sales-playbook.pdf` and called any difference stale — so it went
+    // red the moment Chris did the thing the workflow is FOR: print v7 to the Desktop with
+    // `--draft` while the admin stays on v6, deliberately, so this session does not collide with
+    // another chat's live-site work.
+    //
+    // It had been red for five days on a DECISION, and a gate that is permanently red teaches the
+    // reader to ignore every red — the one outcome worse than no gate.
+    //
+    // 🔑 THE RULE IS DIRECTION, NOT DIFFERENCE. A Desktop copy numbered ABOVE the newest shipped
+    // version is the next draft and is expected. One at or below that number which still differs is
+    // genuinely stale, and that is what this reports.
+    // → feedback_a_flaky_gate_is_worse_than_a_failing_one · project_sales_playbook
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+    const shippedV = Array.isArray(versions) && versions.length ? Number(versions[versions.length - 1].v) : NaN;
+    for (const f of desk) {
+      if (sha(fs.readFileSync(`${deskDir}/${f}`)) === sha(pdfBytes)) continue;
+      const m = f.match(/\bv(\d+)\b/i);
+      const deskV = m ? Number(m[1]) : NaN;
+      if (Number.isFinite(deskV) && Number.isFinite(shippedV) && deskV > shippedV) {
+        console.log(`  ▫️  Desktop "${f}" is v${deskV}, ahead of the shipped v${shippedV} — a draft, not a stale copy.`);
+        continue;
+      }
+      // 🔴 An UNNUMBERED Desktop copy is unknown, not a draft: it cannot show it is ahead, so it is
+      // reported. Naming it with its version is what makes it legible.
+      add('printed-playbook-desktop-stale',
+        `Desktop "${f}" differs from docs/sales-playbook.pdf and is not numbered ahead of the shipped `
+        + `v${Number.isFinite(shippedV) ? shippedV : "?"} — rebuild refreshes it`);
+    }
   }
 }
 

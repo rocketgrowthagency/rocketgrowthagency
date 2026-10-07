@@ -50,7 +50,9 @@ const FILES = {
   css: "admin/admin.css",
   portal: "portal/portal.js",
   playbook: "data/playbooks/playbooks.json",
-  dormant: "netlify/functions/_dormant.json",
+  // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
+  playbookgate: null,
+
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five
 // files; `check-the-grid-says-what-it-centred-on` also reads `v2-rank-grid-background.js`, so its
