@@ -62,14 +62,14 @@
  [
   "the rounded age comes back",
   "exec",
-  "          `Measured ${new Date(newest.at).toLocaleString(\"en-US\", {",
-  "          `Scanned ${Math.round(ageDays)} day(s) ago. ${\"\"}${new Date(newest.at).toLocaleString(\"en-US\", {"
+  "          `  Measured      ${measuredLabel}${reReadStoredScan",
+  "          `  Measured      ${Math.round(ageDays)} day(s) ago${reReadStoredScan"
  ],
  [
   "the measured time loses its timezone",
   "exec",
-  "            timeZone: \"America/Los_Angeles\", timeZoneName: \"short\",",
-  "            timeZone: \"America/Los_Angeles\","
+  "        timeZone: \"America/Los_Angeles\", timeZoneName: \"short\",\n      });\n      const RE_READ_GAP_MS",
+  "        timeZone: \"America/Los_Angeles\",\n      });\n      const RE_READ_GAP_MS"
  ],
  [
   "the closing line stops naming the later-scan step",
@@ -88,5 +88,23 @@
   "exec",
   ", in the Month 2+ playbook, measures against this.`",
   " measures against this.`"
+ ],
+ [
+  "the Measured row is dropped from the header",
+  "exec",
+  "          `  Measured      ${measuredLabel}${reReadStoredScan\n            ? \" (this run read that scan \u2014 it took no new measurements)\" : \"\"}`,\n",
+  ""
+ ],
+ [
+  "the explanation becomes unconditional",
+  "exec",
+  "${measuredLabel}${reReadStoredScan\n            ? \" (this run read that scan \u2014 it took no new measurements)\" : \"\"}`,",
+  "${measuredLabel} (this run read that scan \u2014 it took no new measurements)`,"
+ ],
+ [
+  "the Measured row loses its explanation entirely",
+  "exec",
+  "${reReadStoredScan\n            ? \" (this run read that scan \u2014 it took no new measurements)\" : \"\"}`,",
+  "`,"
  ]
 ]

@@ -76,9 +76,23 @@ const scope = {
   partials: 0, keyword: "seo company", scanKeyword: "local seo services near me", radiusKm: 5.3,
   newest: { at: "2026-10-06T23:41:58.420Z" },
   laterScanTitle: "Re-run the geo-grid map-rank scan",
+
   rankedKw: [], totalPoints: 125, totalRanked: 0, totalTop3: 0, totalTop10: 0,
   pctOf: (n) => (Math.round((n / 125) * 1000) / 10).toFixed(1),
 };
+// 🔴 RUN THE REAL `measuredLabel`, DO NOT SUPPLY ONE. The first version handed the template a
+// fixture string, so mutating the producer — restoring a rounded age, dropping the timezone —
+// changed nothing the gate could see and both mutations came back green. A gate that supplies the
+// thing under test cannot test it. → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+// 🔑 ITS OWN CONSTANT TOO. `reReadStoredScan` reads `RE_READ_GAP_MS`, declared beside it — a
+// producer's threshold is part of the producer, and supplying my own would hide a change to it.
+for (const name of ["RE_READ_GAP_MS", "measuredLabel", "reReadStoredScan"]) {
+  const m2 = src.match(new RegExp(`\\n( *)const ${name} = ([\\s\\S]*?);\\n`));
+  if (!m2) { console.error(`⚠️  INDETERMINATE — cannot find the ${name} producer in flow-execute.js`); process.exit(2); }
+  try { scope[name] = vm.runInNewContext(`(${m2[2]})`, { ...scope, Date, Math, Number, Intl, String }); }
+  catch (e) { console.error(`⚠️  INDETERMINATE — ${name} would not evaluate: ${e.message}`); process.exit(2); }
+}
+
 let text;
 try { text = vm.runInNewContext(`(${literal})`, { ...scope }); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the summary template reads something this gate does not supply: ${e.message}`); process.exit(2); }
@@ -140,6 +154,14 @@ if (!p) {
     const keys = (header.facts || []).map((f) => String(f.k || "").toLowerCase());
     if (!keys.some((k) => k.includes("searched"))) F("the scan header never says WHAT was searched");
     if (!keys.some((k) => k.includes("centred"))) F("the scan header never says WHERE it was centred");
+    // 🎨 THE MEASUREMENT TIME IS A HEADER ROW (approved 2026-10-07). It used to sit alone in the
+    // closing note, a whole card away from the Produced stamp it appears to contradict.
+    if (!keys.some((k) => k.includes("measured"))) F("the scan header never says WHEN it was measured");
+    const mRow = (header.facts || []).find((f) => /measured/i.test(String(f.k)));
+    if (mRow && !/read that scan|no new measurements/i.test(String(mRow.note || ""))) {
+      F("the Measured row does not explain why it differs from the Produced stamp — two true times "
+        + "reading as a contradiction is what this row exists to end");
+    }
     // each row carries its incidentals as a sub-value, which is what keeps them out of the headline
     for (const f of header.facts || []) {
       if (!f.note) F(`the scan header row "${f.k}" has no sub-value, so its incidentals are either missing or in the headline`);
@@ -205,6 +227,14 @@ if (!p) {
     const literalTitle = new RegExp(`["\`']${realTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
     if (literalTitle.test(srcCode)) F("the step's title is written into flow-execute.js — a second copy that goes stale on a rename");
     if (!/month2plus[\s\S]{0,200}m2\.snap\.grid_scan/.test(src)) F("the later-scan step is not looked up in the playbook");
+  }
+
+  // 🔴 AND IT IS CONDITIONAL. A scan launched by the PREVIOUS press lands within minutes, and on
+  // that run the two stamps mean the same thing; a standing note explaining a gap that is not there
+  // would be noise on every card. → feedback_a_message_needs_a_shape
+  if (!/reReadStoredScan\s*\n?\s*\?/.test(literal) && !/\$\{reReadStoredScan/.test(literal)) {
+    F("the Measured row's explanation is unconditional — it would claim a stored re-read on a run "
+      + "that actually measured");
   }
 
   // 🔑 THE WHOLE GRID, NOT ONE KEYWORD'S. The old sentence said "NONE of the 25 points for any of

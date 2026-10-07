@@ -71,6 +71,7 @@ const bundle = CONSTS.map(pickConst).join("\n") + "\n" + [ "stepOutputWeight", "
 const SUMMARY = [
   "  Searched      5 locked keywords (125 points measured in all)",
   "  Centred on    Rocket Growth Agency (Culver City, CA \u00b7 25 points each \u00b7 5.3 km radius)",
+  "  Measured      Oct 6, 2026, 4:41 PM PDT (this run read that scan \u2014 it took no new measurements)",
   "",
   "RESULT: not found at any of the 125 points measured.",
   "",
@@ -79,7 +80,7 @@ const SUMMARY = [
   "  Top-10       0 / 125 (0.0%)",
   "  Not found    125 / 125",
   "",
-  "Measured Oct 6, 2026, 4:41 PM PDT. That is the baseline every later scan is measured against.",
+  "Re-run the geo-grid map-rank scan, in the Month 2+ playbook, measures against this.",
 ].join("\n");
 const task = { outcome_data: {} };
 
@@ -157,10 +158,18 @@ for (const g of dom.groups) {
 }
 console.log(`  verdict: ${dom.verdict}`);
 const hdr = dom.groups[0];
-const ok = hdr && !hdr.heading && hdr.rows.length === 2
-  && hdr.rows[0].k === "Searched" && hdr.rows[1].k === "Centred on";
-console.log(`\n  ${ok ? "✅" : "🔴"} the header is ONE headless group with TWO rows (Searched, Centred on)`);
+const ok = hdr && !hdr.heading && hdr.rows.length === 3
+  && hdr.rows[0].k === "Searched" && hdr.rows[1].k === "Centred on" && hdr.rows[2].k === "Measured"
+  // 🔑 the explanation rides on the Measured row as its sub-value, where the gap it explains is
+  && /read that scan/.test(String(hdr.rows[2].sub || ""));
+console.log(`\n  ${ok ? "✅" : "🔴"} the header is ONE headless group with THREE rows (Searched, Centred on, Measured + its explanation)`);
 console.log(`  ${/day\(s\) ago/.test(dom.screen) ? "🔴" : "✅"} no rounded age on screen`);
-console.log(`  ${/Measured .*PDT/.test(dom.screen) ? "✅" : "🔴"} the measured time with its zone is on screen`);
+// 🔴 READ IT OFF THE ROW, NOT OFF innerText. This was `/Measured .*PDT/` against the page text, and
+// `.` does not cross a line break — the moment the measured time became a ROW, with its label above
+// its value, the assertion failed on correct output.
+const measuredRow = (hdr?.rows || []).find((r) => r.k === "Measured");
+const zoned = measuredRow && /\d:\d{2}\s?(AM|PM)\s+[A-Z]{2,4}\b/.test(String(measuredRow.v || ""));
+console.log(`  ${zoned ? "✅" : "🔴"} the measured time carries its timezone (${measuredRow ? measuredRow.v : "no row"})`);
+if (!zoned) process.exitCode = 1;
 await b.close();
 process.exit(ok ? 0 : 1);
