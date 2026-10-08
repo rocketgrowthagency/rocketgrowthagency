@@ -1,0 +1,16 @@
+[
+ [
+  "the welcome email stops asking them to book",
+  "confirmemail",
+  "    : `BOOK YOUR KICKOFF CALL\\n  30 minutes on Google Meet.",
+  "    : `NEXT STEPS\\n  30 minutes on Google Meet.",
+  1
+ ],
+ [
+  "the welcome email mentions the invoice again",
+  "confirmemail",
+  "  const opener = signed\n    ? `Google is connected, so we can start. Thank you.`",
+  "  const opener = signed\n    ? `Google is connected. Your first invoice is on its way.`",
+  1
+ ]
+]

@@ -54,31 +54,21 @@ export const month1 = [
   // portal access, and the agreement will be over shortly"), so Phase 0 is simply: DELIVER THAT
   // PROMISE, in writing, before anything internal. See MEMORY_delivery.md.
   {
-    id: "m1.close.confirm", title: "Confirmation + expectations email (within the hour)",
+    id: "m1.close.confirm", title: "Welcome email — book your kickoff call",
     type: "hybrid", dependsOn: [],
     actionLabel: "✉️ Send the email",
     actionConfirm: "This SENDS a real email to {contact} right now. It is not a draft and cannot be unsent.",
-    instructions: `Send within ONE HOUR of the yes, while they are still certain.
+    instructions: `Send when Onboarding starts — Google is connected, payment (or the beta agreement) is done.
 
 Must contain, in this order:
-  1. What they bought — plan, price, and that it is MONTH-TO-MONTH (no lock-in).
-  2. What happens next, with dates — kickoff call, then first work inside 48h of that call.
-  3. What we need from them, listed once: GBP login, website/CMS login, GA4 + Search Console,
-     20+ photos, customer list for review outreach.
-  4. Who to contact and how.
+  1. Their plan, read from the signed agreement.
+  2. BOOK YOUR KICKOFF CALL — the portal link to book it (or the booked time, if already booked).
+  3. What we'll need from them next — THEIR open steps, read from the record.
+  4. What we start on now.
 
-🔴 Do NOT re-sell, and do NOT re-open scope. They already said yes; the job now is to remove doubt.
-🔑 DONE = sent, and the agreement + calendar invite (next two steps) go out the same hour.
+▶️ RUN IT — the Run button sends it from hello@rocketgrowthagency.com and CAPTURES the exact body, the recipient and Gmail's message id. It will not send twice unless you force it.
 
-▶️ RUN IT — the Run button sends this email from hello@rocketgrowthagency.com and CAPTURES it.
-   Stored on the client record: the exact body, the recipient, and Gmail's own message id (checkable
-   in the Sent folder). The plan and price are read from the SIGNED CONTRACT, never typed — if there
-   is no signed contract it refuses rather than inventing a number.
-
-   It will not send twice: a second run returns what was already sent unless you force it.
-
-🔴 Was hand-sent until 2026-09-09, which left a bare timestamp and no record of what was promised.
-📄 Wording lives in docs/playbooks/close-phase0-templates.md — section 1.`,
+🔒 Approved 2026-10-08 (client_emails_yes_to_kickoff_v1). It replaces the automatic stage-4 email, which is retired.`,
   },
   {
     id: "m1.close.kickoff_invite", title: "Book the kickoff call",

@@ -75,6 +75,8 @@ const FILES = {
   sendstep: "netlify/functions/send-step-email.js",
   kickinvite: "netlify/functions/send-kickoff-invite.js",
   admincss: "admin/admin.css",
+  notifystage: "netlify/functions/notify-client-stage.js",
+  confirmemail: "netlify/functions/send-confirmation-email.js",
   portalcss: "portal/portal.css",
   kickreqs: "netlify/functions/kickoff-requests.js",
   mockupwait: "reports/mockups/step31_waiting_on_client_v1.html",

@@ -1,0 +1,23 @@
+[
+ [
+  "the stage-4 email comes back",
+  "notifystage",
+  "      return null;\n    case \"billing_overdue\":",
+  "      return { subject: \"You're connected — we're starting work\", body: \"Google is connected. That is everything I need from you. \".repeat(12) };\n    case \"billing_overdue\":",
+  1
+ ],
+ [
+  "a beta client is told Payment received again",
+  "notifystage",
+  "(beta ? `Your agreement is countersigned — you're all set to start.\\n\\n` : `Payment received, thank you.\\n\\n`)",
+  "`Payment received, thank you.\\n\\n`",
+  1
+ ],
+ [
+  "stage 2 says the last thing again",
+  "notifystage",
+  "about a minute, then we book your kickoff call.",
+  "about a minute, and the last thing I need from you.",
+  1
+ ]
+]

@@ -133,9 +133,14 @@ for (const tier of Object.keys(PLANS)) {
         problems.push(`${when} — the email mentions an INVOICE for a plan whose schedule totals $0. `
           + `This email also tells them "no charge", so it contradicts itself in the same message.`);
       }
-      if (billed && !/invoice/i.test(body) && status === "signed") {
-        problems.push(`${when} — a BILLED plan's signed email never mentions the invoice. The client `
-          + `is owed the next money step in writing.`);
+      // 🔄 2026-10-08 (approved client_sequence_and_kickoff_v1 + client_emails_yes_to_kickoff_v1): the signed
+      // email is now the WELCOME email at the start of Onboarding — AFTER payment. Its job is the
+      // kickoff booking; an invoice line there would describe money already paid.
+      if (status === "signed") {
+        if (/invoice/i.test(body)) problems.push(`${when} — the welcome email mentions an invoice; it goes out after payment, so that is already done.`);
+        if (!kickoffWhen && !/BOOK YOUR KICKOFF CALL/.test(body)) problems.push(`${when} — the welcome email never asks them to book the kickoff call — the one thing this email is for.`);
+        if (kickoffWhen && !/YOUR KICKOFF CALL/.test(body)) problems.push(`${when} — a booked client's welcome email does not state the booked call.`);
+        if (/nothing (else )?(is )?needed from you|everything I need from you|last thing I need/i.test(body)) problems.push(`${when} — the welcome email claims nothing more is needed from them.`);
       }
       // 2. nothing counter-signs
       if (/counter-sign/i.test(body)) {
