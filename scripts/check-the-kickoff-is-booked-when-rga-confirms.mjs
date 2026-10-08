@@ -524,12 +524,18 @@ function fnSource(code, name) {
       // 🔄 THREE since 2026-09-28, not four. The button label used to consult this to ask "did we
       // hold it?"; the clock model removed that question, so the button is a plain completion again.
       // A threshold left at 4 is a check describing a design that no longer exists.
+      // 🔄 TWO + THE STATE since 2026-10-08 (kickoff_everywhere_v1). The cockpit alert now reads
+      // kickoffState(), which derives live / ended from the same booking start + slot length, so it
+      // no longer calls this. The property — every surface naming the next action describes the
+      // call window — is held by: the band and sequencer calling it, and the cockpit reading the state.
       const callers = (code.match(/kickoffCallDue\s*\(/g) || []).length - 1;
-      if (callers < 3) {
-        fail.push(`admin/admin.js — kickoffCallDue is called ${callers} time(s), expected 3: the step `
-          + `card's band, the next-action sequencer and the cockpit alert. One missing is one surface `
-          + `Chris might be looking at that stays silent.`);
-      } else pass.push(`admin/admin.js — ${callers} surfaces describe the call window`);
+      const cockpitReadsState = /kickoffAlertFor\(kickoffState\(\), next\)/.test(code)
+        && /function kickoffState\([\s\S]{0,2500}?"live"[\s\S]{0,400}?"ended"/.test(code);
+      if (callers < 2 || !cockpitReadsState) {
+        fail.push(`admin/admin.js — kickoffCallDue is called ${callers} time(s) (need 2: the step card's band and the `
+          + `next-action sequencer) and the cockpit ${cockpitReadsState ? "reads" : "does NOT read"} kickoffState()'s live/ended. `
+          + `One missing is one surface Chris might be looking at that stays silent.`);
+      } else pass.push(`admin/admin.js — ${callers} surfaces + the cockpit's state describe the call window`);
 
       // 🔄 REMOVED 2026-09-28. This required the button to read "Yes — we held it", the answer to
       // "did the kickoff call happen?". The clock model stopped asking, so the check was pinning a
@@ -622,15 +628,29 @@ function fnSource(code, name) {
       fail.push("admin/admin.js — the call console has no recap. The SOP requires one after every call.");
     } else {
       const h = code.indexOf('closest("[data-kickoff-recap]")');
-      const body = h < 0 ? "" : code.slice(h, h + 3000);
+      // The handler's own body — to the listener's close — not a character count (the recap
+      // composer grew past 3000 chars on 2026-10-08 and the window cut off its window.open).
+      const end = h < 0 ? -1 : code.indexOf("\n});", h);
+      const body = h < 0 || end < 0 ? "" : code.slice(h, end);
       if (!body) indet.push("could not isolate the recap handler");
-      else if (/send-|sendUpdates|notify-rga|method:\s*"POST"/.test(body)) {
-        fail.push("admin/admin.js — the recap handler posts somewhere. It must DRAFT only: it composes "
-          + "a client-facing email, and nothing here may reach a client without Chris pressing send in "
-          + "his own mail client.");
-      } else if (!/window\.open/.test(body)) {
-        fail.push("admin/admin.js — the recap never opens a draft, so the button does nothing.");
-      } else pass.push("admin/admin.js — the recap opens a draft and sends nothing");
+      // 🔄 RE-PINNED 2026-10-08. Until 09-28 the recap could only DRAFT (Gmail). Chris then approved
+      // sending from the product ("can we not send it from within the portal") — 60f46b69. The old
+      // 3000-char window ended before the POST, so this check passed by not looking. The property now:
+      // nothing posts until a composer that NAMES THE RECIPIENT returns, a cancel sends nothing, and
+      // Gmail stays as the escape hatch. → feedback_never_send_client_email_without_asking
+      else {
+        const post = body.search(/method:\s*"POST"/);
+        const dlg = body.search(/await rgaDialog\(\{/);
+        if (post >= 0 && (dlg < 0 || dlg > post)) {
+          fail.push("admin/admin.js — the recap handler posts before (or without) the composer — a client email can leave without Chris reading it.");
+        } else if (post >= 0 && !/\{\s*k:\s*"To",\s*v:\s*to\s*\}/.test(body.slice(dlg, post))) {
+          fail.push("admin/admin.js — the recap composer does not show the To row, so it can be fired at the wrong client by reflex.");
+        } else if (post >= 0 && !/if \(edited == null\) return;/.test(body.slice(dlg, post))) {
+          fail.push("admin/admin.js — cancelling the recap composer does not stop the send.");
+        } else if (!/window\.open/.test(body)) {
+          fail.push("admin/admin.js — the recap lost its Gmail escape hatch.");
+        } else pass.push("admin/admin.js — the recap sends only from a composer that names the recipient; cancel sends nothing");
+      }
 
       // 🔴 An empty To: is a hatch that looks like it worked.
       if (!/if \(!to\)/.test(body)) {

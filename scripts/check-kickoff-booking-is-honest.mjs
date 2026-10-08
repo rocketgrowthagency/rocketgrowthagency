@@ -465,19 +465,30 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
   // 2 ─ the "Needs your attention" kickoff correction must key off the real shape.
   //     Window the CHECK on the enclosing block, not a character count.
   //     → feedback_a_gate_window_measured_in_characters_will_lie
-  const i = src.admin.indexOf("_kickoffPendingAsk.get(state.selectedClient.id)");
-  if (i === -1) {
-    problems.push("the 'Needs your attention' panel no longer reads _kickoffPendingAsk — a pending request would stop overruling the step name there, which is the surface that told Chris to press the wrong button");
+  // 🔄 RE-PINNED 2026-10-08 (kickoff_everywhere_v1): the panel no longer reads the request map itself —
+  //    it asks kickoffAlertFor(kickoffState(), next), and the STATE carries the request. The property
+  //    is unchanged: the panel's kickoff line comes from the request when one exists, and `next` is
+  //    read by `.id` only. Window = the producer's own function body, not a character count.
+  if (!/const kickAlert = kickoffAlertFor\(kickoffState\(\), next\);/.test(src.admin)) {
+    problems.push("the 'Needs your attention' panel no longer takes its kickoff line from kickoffAlertFor(kickoffState()) — a pending request would stop overruling the step name there, which is the surface that told Chris to press the wrong button");
   } else {
-    // the enclosing `if (next) { … }` block
-    const open = src.admin.lastIndexOf("if (next) {", i);
-    const block = src.admin.slice(open === -1 ? Math.max(0, i - 1500) : open, src.admin.indexOf("alertsHtml", i));
-    if (/next\.obj|next\?\.obj|\.flowId/.test(block)) {
-      problems.push("the attention panel decides the kickoff step from `next.obj` / `.flowId` — `next` is a playbook step and has neither, "
-        + "so optional chaining makes the test silently false and the panel keeps pointing at the button that books the FIRST free slot rather than the time the client asked for");
-    }
-    if (!/next\.id\s*===/.test(block)) {
-      problems.push("the attention panel does not compare `next.id` to a named step id — an `/kickoff/i` pattern also matches `m1.kickoff.call`, which a booking request says nothing about");
+    const fa = src.admin.indexOf("function kickoffAlertFor(");
+    const fb = src.admin.indexOf("\n}\n", fa);
+    const block = fa < 0 || fb < 0 ? "" : src.admin.slice(fa, fb);
+    const sa = src.admin.indexOf("function kickoffState(");
+    const stateBody = sa < 0 ? "" : src.admin.slice(sa, src.admin.indexOf("\n}\n", sa));
+    if (!block || !stateBody) problems.push("could not isolate kickoffAlertFor / kickoffState");
+    else {
+      if (/next\.obj|next\?\.obj|\.flowId/.test(block)) {
+        problems.push("the attention panel decides the kickoff step from `next.obj` / `.flowId` — `next` is a playbook step and has neither, "
+          + "so optional chaining makes the test silently false and the panel keeps pointing at the button that books the FIRST free slot rather than the time the client asked for");
+      }
+      if (!/next\.id\s*===/.test(block)) {
+        problems.push("the attention panel does not compare `next.id` to a named step id — an `/kickoff/i` pattern also matches `m1.kickoff.call`, which a booking request says nothing about");
+      }
+      if (!/_kickoffPendingAsk|_kickoffPendingIso/.test(stateBody)) {
+        problems.push("kickoffState() no longer reads the pending request — the panel cannot know the client asked for a time");
+      }
     }
   }
 

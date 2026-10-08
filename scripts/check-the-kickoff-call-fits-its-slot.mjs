@@ -152,7 +152,9 @@ const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
 // 🔑 + the call sheet (2026-10-08, admin_kickoff_prep_v2.html): the console's right column is
 // built from it, so its topic table and three helpers are lifted too.
 const topicsConst = (code.match(/const KICKOFF_TOPICS = \[[\s\S]*?\n\];/) || [null])[0];
-const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml"].map((n) =>
+// 🔑 + kickoffState (2026-10-08, kickoff_everywhere_v1): the console asks the one state whether a
+// move / rebook is pending before it renders the run of show.
+const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml", "kickoffState"].map((n) =>
   (code.match(new RegExp(`function ${n}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);
 if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsConst || helperFns.some((x) => !x)) {
   fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
@@ -165,6 +167,8 @@ if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsCons
     // the shared formatter's contract, enough for the console to render; its words are held by
     // check-the-countdown-agrees-across-portals against the real module
     kickoffCountdown: (ms) => ({ text: ms > 60000 ? "In " + Math.round(ms / 60000) + "m" : ms > -1800000 ? "Happening now" : "" }),
+    KICKOFF_SLOT_MIN: 30, KICKOFF_INVITE_STEP_ID: "m1.close.kickoff_invite",
+    _kickoffPendingIso: new Map(), _kickoffPendingAsk: new Map(), _kickoffAskProbed: new Set(),
     Date, Math, Number, String, Object, Array, JSON, console,
   };
   vm.createContext(box);

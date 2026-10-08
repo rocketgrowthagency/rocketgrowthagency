@@ -1,0 +1,58 @@
+[
+ [
+  "a request after the call is read as a move again",
+  "admin",
+  "  if (request) name = !booking ? \"picked\" : booking.passed ? \"rebook\" : \"move\";",
+  "  if (request) name = !booking ? \"picked\" : \"move\";",
+  1
+ ],
+ [
+  "a no-show stops releasing the booking",
+  "admin",
+  "  const released = outcome === \"no_show\" || outcome === \"rescheduled\";",
+  "  const released = false;",
+  1
+ ],
+ [
+  "the attention list decides on its own again",
+  "admin",
+  "    const kickAlert = kickoffAlertFor(kickoffState(), next);",
+  "    const kickAlert = null;",
+  1
+ ],
+ [
+  "the request loader patches the line with its own words",
+  "admin",
+  "      const al = kickoffAlertFor(kickoffState(clientId), null) || {};",
+  "      const al = {};",
+  1
+ ],
+ [
+  "step 2 offers Run again",
+  "admin",
+  " && o.flowId !== KICKOFF_INVITE_STEP_ID\n",
+  "\n",
+  1
+ ],
+ [
+  "the phase header counts step 2 done over an open request",
+  "admin",
+  "      && !(steps[i].obj?.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open())).length;",
+  "      ).length;",
+  1
+ ],
+ [
+  "the client calls a new time a move",
+  "portal",
+  "You asked for a new time",
+  "You asked to move it",
+  1
+ ],
+ [
+  "the state function is renamed, so the gate cannot judge it",
+  "admin",
+  "function kickoffState(clientId = state.selectedClient?.id) {",
+  "function kickoffNow(clientId = state.selectedClient?.id) {",
+  2
+ ]
+]

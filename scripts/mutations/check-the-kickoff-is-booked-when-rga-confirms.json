@@ -12,5 +12,19 @@
   "        kind: `onboarding_step_${newStatus === \"pending\" ? \"reset\" : newStatus}`,",
   "        kind: \"x\",",
   1
+ ],
+ [
+  "cancelling the recap composer no longer stops the send",
+  "admin",
+  "  if (edited == null) return;                       // cancelled — nothing sent, nothing said",
+  "  // cancel ignored",
+  1
+ ],
+ [
+  "the recap composer stops naming the recipient",
+  "admin",
+  "    title: \"Send the kickoff recap\",\n    detail: \"Filled in from the call. Edit anything — this is what they receive.\",\n    // 🔑 Proof-read in the page font: the client never sees a monospace box (approved mockup).\n    areaFont: \"page\",\n    fields: [\n      { k: \"To\", v: to },",
+  "    title: \"Send the kickoff recap\",\n    detail: \"Filled in from the call. Edit anything — this is what they receive.\",\n    // 🔑 Proof-read in the page font: the client never sees a monospace box (approved mockup).\n    areaFont: \"page\",\n    fields: [\n      { k: \"Recipient\", v: to },",
+  1
  ]
 ]
