@@ -79,7 +79,11 @@ function branch(name) {
  * not rendered, however complete it looks.
  */
 function renders(branchSrc, needle) {
-  const retAt = branchSrc.lastIndexOf("return `");
+  // 🔑 The ROW's return, not the last `return \`` in the branch: since 2026-10-08 the done row
+  // interpolates IIFEs (its status pill) that have their own `return \``, and lastIndexOf landed on
+  // that pill — a `<span>` that never contains the run button — so a correct row read as "no re-run".
+  const rowAt = branchSrc.indexOf('return `<div class="ob-step');
+  const retAt = rowAt >= 0 ? rowAt : branchSrc.lastIndexOf("return `");
   if (retAt < 0) return false;
   const template = branchSrc.slice(retAt);
   const decls = new Map();

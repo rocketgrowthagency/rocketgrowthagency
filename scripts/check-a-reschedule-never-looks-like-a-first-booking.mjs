@@ -184,6 +184,7 @@ if (admin) {
           escapeHtml: (x) => String(x == null ? "" : x).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])),
           escapeAttribute: (x) => String(x == null ? "" : x).replace(/"/g, "&quot;"),
           _kickoffPendingMove: new Map(),
+          KICKOFF_SLOT_MIN: 30,   // module-scope in admin.js; the card asks whether the booked call has passed
           clientId: "c1",
           blindWarning: "",
           // 🔴 A zone that is NOT the runner's, so the "their time" lines are actually drawn.
@@ -192,11 +193,16 @@ if (admin) {
         };
         stubs.kickoffBookingBeingMoved = new Function("return (" + extract(admin, "function kickoffBookingBeingMoved(") + ")")();
         stubs.kickoffTheirHour = new Function("return (" + extract(admin, "function kickoffTheirHour(") + ")")();
+        // 🔴 RELATIVE TO NOW (2026-10-08). The fixture was fixed at Sep 28; once that date passed, the
+        // card correctly read the booked call as PASSED and rendered "New time requested" — the gate
+        // then failed a correct product. A move is a booking still AHEAD.
+        stubs.OLD_ISO = new Date(Date.now() + 3 * 864e5).toISOString();
+        stubs.NEW_ISO = new Date(Date.now() + 3 * 864e5 + 3 * 3600e3).toISOString();
         vm.createContext(stubs);
         vm.runInContext(`
           const render = (${arrow});
-          const REQ = { slot_start: "2026-09-28T20:00:00+00:00" };
-          let j = { booked: [{ slot_start: "2026-09-28T17:00:00+00:00" }] };
+          const REQ = { slot_start: NEW_ISO };
+          let j = { booked: [{ slot_start: OLD_ISO }] };
           const move = render(REQ);
           j = { booked: [] };
           const first = render(REQ);
@@ -213,8 +219,8 @@ if (admin) {
 
         // 🔴 BOTH times, or the operator has to go and look the other one up — which is where a
         // wrong answer on a live call comes from.
-        const oldHour = new Date("2026-09-28T17:00:00+00:00").toLocaleString("en-US", { hour: "numeric", minute: "2-digit" });
-        const newHour = new Date("2026-09-28T20:00:00+00:00").toLocaleString("en-US", { hour: "numeric", minute: "2-digit" });
+        const oldHour = new Date(stubs.OLD_ISO).toLocaleString("en-US", { hour: "numeric", minute: "2-digit" });
+        const newHour = new Date(stubs.NEW_ISO).toLocaleString("en-US", { hour: "numeric", minute: "2-digit" });
         // 🔴 ASSERT ON THE FROM→TO ROW, NOT THE WHOLE CARD. Checking the card passed with the entire
         // `From` value deleted, because the old hour also appears in the "Keep 10:00 AM" button — so
         // the gate was reading a different element than the one the defect lives in.

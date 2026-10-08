@@ -37,8 +37,8 @@
  [
   "the phase header counts step 2 done over an open request",
   "admin",
-  "      && !(steps[i].obj?.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open())).length;",
-  "      ).length;",
+  "      && !(steps[i].obj?.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open())\n",
+  "      && !(false)\n",
   1
  ],
  [
@@ -54,5 +54,19 @@
   "function kickoffState(clientId = state.selectedClient?.id) {",
   "function kickoffNow(clientId = state.selectedClient?.id) {",
   2
+ ],
+ [
+  "the kickoff step id goes back to being a local inside one function",
+  "admin",
+  "const KICKOFF_INVITE_STEP_ID = \"m1.close.kickoff_invite\";",
+  "  const KICKOFF_INVITE_STEP_ID = \"m1.close.kickoff_invite\";",
+  1
+ ],
+ [
+  "step 4 goes green again while its call is moving",
+  "admin",
+  "class=\"ob-step ${kick2 || kick4Req ? \"active\"",
+  "class=\"ob-step ${kick2 ? \"active\"",
+  1
  ]
 ]

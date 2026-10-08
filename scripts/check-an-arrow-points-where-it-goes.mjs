@@ -54,7 +54,11 @@ const LEAVES = [
   { needle: ">View as client ↗</a>", why: "an anchor to the client report" },
   { needle: ">Join the call ↗</a>", why: "the Meet link, target=_blank" },
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
-  { needle: ">Join Meet ↗</a>", why: "the Meet link, target=_blank" },
+  // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
+  { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },
+  // the Your-action card: a button carrying `href` is wired to window.open (the `data.admin.href` branch)
+  { needle: 'btn: "Join the call ↗"', why: "Your action's Meet button, opened with window.open(href)" },
+  { needle: 'textContent = data.admin.btn || "Open ↗"', why: "Your action's href branch, window.open" },
   { needle: "${label} ↗</a>", why: "a linkified URL in stored output, target=_blank" },
 ];
 const isComment = (l) => /^\s*(\/\/|\*|\/\*)/.test(l);
@@ -75,7 +79,7 @@ for (const x of LEAVES) {
 // 🔴 And an anchor that carries ↗ must actually open elsewhere. The two inline anchors declare it
 // on the same line; the DOM-built one sets it two lines above, so check its block.
 for (const [needle, want] of [[">Join the call ↗</a>", 'target="_blank"'], [">Their website ↗</a>", 'target="_blank"'],
-  [">Join Meet ↗</a>", 'target="_blank"'], ["${label} ↗</a>", 'target="_blank"']]) {
+  [">Their audit report ↗</a>", 'target="_blank"'], ["${label} ↗</a>", 'target="_blank"']]) {
   const line = src.split("\n").find((l) => l.includes(needle));
   if (line && !line.includes(want)) fail.push(`${needle.replace(/[<>/]/g, "")} carries ↗ but no ${want} on its own line`);
 }

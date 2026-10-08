@@ -104,7 +104,9 @@ else {
 // 🔴 EVERY OTHER BRANCH MUST CLEAR IT, or the approve handler survives onto the next client's card.
 const tail = chainAt(src, i);
 const elseBranches = (tail.match(/\} else[^{]*\{/g) || []).length;
-const clears = (tail.match(/adminNextActionBtn\.onclick = null/g) || []).length;
+// 🔑 REPLACING it clears it too: the Meet branch (2026-10-08) assigns its own window.open handler,
+// which overwrites the approve handler as surely as `= null` does. An ADDED listener would not.
+const clears = (tail.match(/adminNextActionBtn\.onclick = (null|\((ev)?\) =>)/g) || []).length;
 if (elseBranches < 2) fail.push("the approve branch's else-chain changed shape — re-read it before trusting this gate");
 else if (clears < elseBranches) {
   fail.push(`only ${clears} of ${elseBranches} non-approve branch(es) clear onclick — the handler can fire for the next client selected`);

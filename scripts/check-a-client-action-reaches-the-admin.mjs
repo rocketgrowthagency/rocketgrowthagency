@@ -185,6 +185,7 @@ const code = fs.readFileSync(JS, "utf8");
     stepStateBand: "rendered by renderOnboardingChecklist, which asks",
     kickoffAskCopy: "formats a value it is handed",
     kickoffBookingBeingMoved: "compares two times it is handed",
+    kickoffState: "a pure reader — every function that CALLS it must ask (checked just below)",
   };
   const readers = new Map();
   lines.forEach((ln, i) => {
@@ -200,6 +201,25 @@ const code = fs.readFileSync(JS, "utf8");
     const body = at < 0 ? "" : code.slice(at, code.indexOf("\n}", at));
     if (!/ensureKickoffPendingAsk\(/.test(body)) deaf.push(`${fn}() (line ${line})`);
   }
+  // 🔑 kickoffState() is excused only because its CALLERS ask. Hold that: each function that calls
+  // it either probes, is itself a pure reader, or is rendered inside one that probes.
+  const STATE_CALLER_OK = {
+    kickoffAlertFor: "formats the state it is handed",
+    kickoffStep2Open: "a predicate over the state it is handed",
+    kickoffCallOpen: "formats a number",
+    kickoffConsoleHtml: "rendered by renderOnboardingChecklist, which asks",
+    obPhasedHtml: "its only caller is renderOnboardingChecklist (line ~8309), which asks",
+    _refreshKickoffRsvp: "the Overview footer — the booking-card loader beside it fetches the requests",
+    loadKickoffRequests: "fetches the answer itself via fetchKickoffAnswers",
+  };
+  lines.forEach((ln, i) => {
+    if (/^\s*(\/\/|\*)/.test(ln) || !/kickoffState\(/.test(ln) || /function kickoffState\(/.test(ln)) return;
+    const f = owner(i);
+    if (f === "(top level)" || EXCUSED[f] || STATE_CALLER_OK[f]) return;
+    const at = code.indexOf(`function ${f}(`);
+    const body = at < 0 ? "" : code.slice(at, code.indexOf("\n}", at));
+    if (!/ensureKickoffPendingAsk\(/.test(body)) deaf.push(`${f}() calls kickoffState() (line ${i + 1})`);
+  });
   if (deaf.length)
     fail.push(`admin/admin.js — ${deaf.length} surface(s) read a client's pending request without asking for it, so they render an empty map as "no request": ${deaf.join(", ")}.`);
   else pass.push(`all ${readers.size} reader(s) of a pending request either ask for it or are excused with a reason`);

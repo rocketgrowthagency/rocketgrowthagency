@@ -173,24 +173,19 @@ if (fs.existsSync(CANCEL) && !/\/\.netlify\/functions\/cancel-kickoff-invite/.te
 // `not_sent` or `unknown` states would promise to remove something that is not there — and `unknown`
 // means we could not READ the event, which is not knowing it is gone.
 // → feedback_we_never_promise_what_we_dont_do · feedback_indeterminate_is_not_a_finding
-const gateVar = admin.match(/const\s+BOOKED\s*=\s*\[([^\]]*)\]/);
-if (!gateVar) {
-  problems.push(`the kickoff manage controls are not gated on a named list of booked states. They `
-    + `must render only where a meeting actually exists.`);
-} else {
-  const states = gateVar[1];
-  for (const forbidden of ["deleted", "not_sent", "unknown"]) {
-    if (new RegExp(`["']${forbidden}["']`).test(states)) {
-      problems.push(`"${forbidden}" is listed as a state that shows the cancel/reschedule controls. `
-        + `There is no meeting to act on in that state — ${forbidden === "unknown"
-          ? "we could not read the event, which is not the same as knowing it is gone"
-          : "the event is not on the calendar"}.`);
+// 🔄 RE-PINNED 2026-10-08 (admin_kickoff_call_v1). The controls left the RSVP status line (it
+// repeated them) and live ONCE on the Overview booking card, which renders only from a slot the
+// calendar holds (`j.booked`, from kickoff-availability) — so they appear exactly where a meeting
+// exists. The property is unchanged: no cancel/move without a meeting.
+{
+  const cancels = [...admin.matchAll(/data-cancel-kickoff="\$\{/g)].map((m) => m.index);
+  if (!cancels.length) problems.push("the admin renders no Cancel the meeting control at all.");
+  for (const at of cancels) {
+    const before = admin.slice(Math.max(0, admin.lastIndexOf("\n    if (!reqs.length) {", at)), at);
+    if (!/const booked = \(j\.booked \|\| \[\]\)\[0\];[\s\S]*const html = booked\s*\n?\s*\?/.test(before)) {
+      problems.push(`admin/admin.js:${admin.slice(0, at).split("\n").length} — a Cancel the meeting control is not inside the booking card's \`booked ?\` branch — `
+        + `it can render where no meeting is on the calendar (deleted, not sent, or unreadable).`);
     }
-  }
-  if (!/["']awaiting["']/.test(states) || !/["']accepted["']/.test(states)) {
-    problems.push(`the booked-state list does not include both "accepted" and "awaiting" — a meeting `
-      + `the client has not answered yet is still a meeting on the calendar, and is the one most `
-      + `likely to need moving.`);
   }
 }
 

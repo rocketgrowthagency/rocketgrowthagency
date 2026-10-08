@@ -26,9 +26,9 @@ const read = (rel) => { try { return fs.readFileSync(`${SITE}/${rel}`, "utf8"); 
 const admin = read("admin/admin.js"), portal = read("portal/portal.js");
 const fails = []; const F = (m) => fails.push(m);
 const lift = (name) => { const a = admin.indexOf(`function ${name}(`); if (a < 0) return null; const b = admin.indexOf("\n}\n", a); return b < 0 ? null : admin.slice(a, b + 3); };
-const stateFn = lift("kickoffState"), alertFn = lift("kickoffAlertFor");
+const stateFn = lift("kickoffState"), alertFn = lift("kickoffAlertFor"), askFn = lift("kickoffAskCopy"), openFn = lift("kickoffCallOpen");
 const open2 = (admin.match(/const kickoffStep2Open = [^\n]+\n/) || [null])[0];
-if (!stateFn || !alertFn || !open2) { console.error("⚠️  INDETERMINATE — kickoffState / kickoffAlertFor / kickoffStep2Open not found in admin.js"); process.exit(2); }
+if (!stateFn || !alertFn || !open2 || !askFn || !openFn) { console.error("⚠️  INDETERMINATE — kickoffState / kickoffAlertFor / kickoffStep2Open not found in admin.js"); process.exit(2); }
 
 const NOW = Date.parse("2026-10-08T19:40:00Z");     // 12:40 PT
 const ctx = {
@@ -38,8 +38,16 @@ const ctx = {
   kickoffStartsIn: () => "24m", kickoffWaitingOnPick: () => true,
   Date: class extends Date { constructor(...a) { super(...(a.length ? a : [NOW])); } static now() { return NOW; } static parse(x) { return Date.parse(x); } },
 };
+// 🔴🔴 A NAME THE BOX SUPPLIES MUST EXIST IN THE FILE (live 2026-10-08). This box defined
+// KICKOFF_INVITE_STEP_ID, the real file had it only as a LOCAL inside one function — every check
+// here passed while the onboarding checklist threw on load in production. So each constant and map
+// handed to the sandbox must be declared at MODULE scope (column 0) in admin.js.
+// → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+for (const n of ["KICKOFF_SLOT_MIN", "KICKOFF_INVITE_STEP_ID", "_kickoffPendingIso", "_kickoffPendingAsk", "_kickoffAskProbed"]) {
+  if (!new RegExp(`^(const|let|var) ${n}\\b`, "m").test(admin)) F(`${n} is supplied by this gate's sandbox but is not declared at module scope in admin.js — the real page throws ReferenceError where this gate passes`);
+}
 vm.createContext(ctx);
-vm.runInContext(`${stateFn}\n${open2}\n${alertFn}\nthis.ks = kickoffState; this.open2 = kickoffStep2Open; this.al = kickoffAlertFor;`, ctx);
+vm.runInContext(`${openFn}\n${askFn}\n${stateFn}\n${open2}\n${alertFn}\nthis.ks = kickoffState; this.open2 = kickoffStep2Open; this.al = kickoffAlertFor;`, ctx);
 
 const iso = (minsFromNow) => new Date(NOW + minsFromNow * 60000).toISOString();
 const setCase = ({ booking, request, outcome, recap }) => {
@@ -85,6 +93,8 @@ const WIRED = [
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
   ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],
   ["step 4's active pill", /kcl && \["move", "rebook"\]\.includes\(kickoffState\(\)\.name\)/],
+  ["step 4's row (not green while its call is moving)", /class="ob-step \$\{kick2 \|\| kick4Req \? "active"/],
+  ["step 4 in the phase count", /kickoff\\\.call\$\/\.test\(steps\[i\]\.obj\?\.flowId \|\| ""\) && \["move", "rebook"\]\.includes\(kickoffState\(\)\.name\)/],
 ];
 for (const [what, re] of WIRED) if (!re.test(admin)) F(`${what} no longer reads kickoffState() — it can tell its own story again`);
 

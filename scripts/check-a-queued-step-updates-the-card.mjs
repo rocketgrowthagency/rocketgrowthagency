@@ -204,9 +204,11 @@ if (!/\bdata\.queued\b/.test(code)) {
   // card it was written for. A new state is not finished until every surface that renders it knows
   // its name. → feedback_a_marker_that_encodes_state_goes_stale_on_an_in_place_toggle
   for (const state of ["done", "active", "queued"]) {
-    const i = c.indexOf(state === "done"
-      ? 'class="ob-step ${declined ? "declined" : "done"}'
-      : `class="ob-step ${state}"`);
+    // the done row's class grew a kickoff prefix on 2026-10-08 (`kick2 || kick4Req ? "active" : …`);
+    // find it by its declined/done tail, not its exact spelling
+    const i = state === "done"
+      ? c.search(/class="ob-step \$\{[^`]*?declined \? "declined" : "done"\}/)
+      : c.indexOf(`class="ob-step ${state}"`);
     const row = i < 0 ? "" : c.slice(i, i + 900);
     if (!row) { fail.push(`cannot find the ${state} row to check; re-pin this gate`); continue; }
     if (!/obStalledNoteHtml\(/.test(row)) {

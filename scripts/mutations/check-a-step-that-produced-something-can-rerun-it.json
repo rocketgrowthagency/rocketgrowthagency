@@ -1,0 +1,9 @@
+[
+ [
+  "the done row stops rendering its re-run button",
+  "admin",
+  "        <span class=\"ob-actions-inline\">${rerunBtn}${undoBtn}</span>",
+  "        <span class=\"ob-actions-inline\">${undoBtn}</span>",
+  1
+ ]
+]
