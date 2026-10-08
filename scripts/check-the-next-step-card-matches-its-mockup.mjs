@@ -166,7 +166,11 @@ try {
   process.exit(2);
 }
 
-const ISO = "2026-10-08T18:30:00.000Z";          // Thu Oct 8, 11:30 AM Los Angeles
+// 🔴 RELATIVE TO NOW (2026-10-08). This was fixed at Oct 8, 11:30 AM; once that passed, the card
+// correctly treated the call as over and the gate failed a correct product. A week ahead, 11:30 LA.
+const ISO = (() => { const d = new Date(Date.now() + 7 * 864e5); d.setUTCHours(18, 30, 0, 0); return d.toISOString(); })();
+const LA = (o) => new Date(ISO).toLocaleString("en-US", { timeZone: "America/Los_Angeles", ...o });
+const DAY = LA({ month: "long", day: "numeric" }), WEEKDAY = LA({ weekday: "long" }), HOUR = LA({ hour: "numeric", minute: "2-digit" }).replace(/\s?[AP]M$/, "");
 const CID = "gate-client";
 ctx.TZ.set(CID, "America/Los_Angeles");
 const stamp = { data: { kickoff_invite: { requested_start: ISO } } };
@@ -220,9 +224,9 @@ for (const [name, w] of Object.entries(WANT)) {
   const html = STATES.waiting;
   if (!/class="pm-nextstep-when"/.test(html)) fail.push("the requested state no longer shows the time in a chip");
   if (!/Requested/.test(html)) fail.push("the chip no longer labels the time as Requested");
-  if (!/October 8/.test(html)) fail.push("the chip does not carry the requested time");
+  if (!html.includes(DAY)) fail.push("the chip does not carry the requested time");
   const desc = (html.match(/data-nextstep-desc>([^<]*)</) || ["", ""])[1];
-  if (/October|11:30|Thursday/.test(desc)) {
+  if (desc.includes(DAY) || desc.includes(HOUR) || desc.includes(WEEKDAY)) {
     fail.push("the requested state names the time in BOTH the sentence and the chip — two copies of one fact will drift");
   }
   // 🔴 And it must come from the LEDGER even when the stamp is missing entirely — that is the defect.

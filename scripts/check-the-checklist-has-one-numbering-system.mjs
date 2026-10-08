@@ -48,7 +48,9 @@ if (inDisc) F(`${inDisc} row builder(s) interpolate into the disc directly — t
 const markerCalls = (js.match(/\$\{obMarker\(n, /g) || []).length;
 // 🔴 A DECLINED STEP MUST NOT WEAR THE DONE TICK. Pin the PROPERTY — that the kind VARIES with
 // `declined` — not the exact expression. → feedback_a_gate_must_pin_the_property_not_the_spelling
-const doneCall = js.match(/ob-step \$\{declined[\s\S]{0,160}?\$\{obMarker\(n, ([^)]*)\)\}/);
+// 🔄 2026-10-08: the done row's class/marker gained a kickoff prefix (`kick2 || kick4Req ? "active" : declined ? …`);
+// find it by the declined test inside the class expression, not by its first token.
+const doneCall = js.match(/ob-step \$\{[^}`]*?declined[\s\S]{0,200}?\$\{obMarker\(n, ([^)]*)\)\}/);
 if (!doneCall) F("cannot find the done/declined row builder's obMarker call — the anchor moved");
 else if (!/declined/.test(doneCall[1]))
   F(`the done row passes a fixed kind (\`${doneCall[1].trim()}\`) — a DECLINED step would render the done tick`);
@@ -103,7 +105,10 @@ if (markerCalls < 5) F(`only ${markerCalls} of the 5 row builders call obMarker(
 // → scripts/_lift-admin.mjs · feedback_a_comment_asserting_a_fix_is_not_the_fix
 const lifted = liftAdmin(
   ["obPhasedHtml", "obPhaseMarker", "obPageNumbers", "obPageOrdered", "obGroupOf", "OB_PHASES"],
-  { extraGlobals: { _obPhaseOpen: new Set(), _obPhaseShut: new Set() } },
+  // 🔑 + the kickoff state (2026-10-08): the phase count asks kickoffState() whether step 2/4 is open.
+  // No client selected = no request, which is the honest default for a numbering check.
+  { extraGlobals: { _obPhaseOpen: new Set(), _obPhaseShut: new Set(), state: { selectedClient: null, onboardingData: {} },
+    _kickoffPendingIso: new Map(), _kickoffPendingAsk: new Map(), _kickoffAskProbed: new Set() } },
 );
 const OB_PHASES = lifted.constant("OB_PHASES");
 const obGroupOf = lifted.get("obGroupOf");

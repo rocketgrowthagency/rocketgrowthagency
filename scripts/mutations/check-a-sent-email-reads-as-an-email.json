@@ -1,0 +1,44 @@
+[
+ [
+  "the raw tier code comes back",
+  "admin",
+  "    const label = PACKAGE_LABELS[ps.tier] || \"\";",
+  "    const label = ps.tier || \"\";",
+  1
+ ],
+ [
+  "wrapped lines stop joining",
+  "admin",
+  "      if (i) html += lines[i - 1].length >= 50",
+  "      if (i) html += lines[i - 1].length >= 5000",
+  1
+ ],
+ [
+  "the body goes back to being a setting",
+  "admin",
+  "    if (sent && k === \"body\") continue;",
+  "    if (false) continue;",
+  1
+ ],
+ [
+  "Run again comes back on a sent email",
+  "admin",
+  " && o.flowId !== KICKOFF_INVITE_STEP_ID && !sentEmailOf(s.task)",
+  " && o.flowId !== KICKOFF_INVITE_STEP_ID",
+  1
+ ],
+ [
+  "Open in Gmail without a message id",
+  "admin",
+  "  const gmail = mail.gmail_message_id && mail.sent_from",
+  "  const gmail = mail.sent_from",
+  1
+ ],
+ [
+  "an unparseable sent_at counts as sent",
+  "admin",
+  "  if (!Number.isFinite(Date.parse(od.sent_at))) return null;\n  return od;",
+  "  return od;",
+  1
+ ]
+]

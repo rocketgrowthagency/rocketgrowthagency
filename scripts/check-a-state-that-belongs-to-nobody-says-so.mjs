@@ -150,7 +150,7 @@ for (const kind of ["clock", "unknown"]) {
   if (!/ownerYou\.className\s*=\s*"admin-turn-owner "\s*\+\s*youKind/.test(code)) {
     fail.push("the left pill's class is not derived from the same kind as its label");
   }
-  if (!/ownerYou\.textContent\s*=\s*YOU_LABEL\[youKind\]/.test(code)) {
+  if (!/ownerYou\.textContent\s*=\s*(?:KICK_LABEL\[data\.admin\.kick\]\s*\|\|\s*)?YOU_LABEL\[youKind\]/.test(code)) {
     fail.push("the left pill's label is not derived from the same kind as its class");
   }
   // 🔴 And the kind itself must test the no-party kinds BEFORE the binary, or they never render.
@@ -207,7 +207,7 @@ if (/const youActive = turn === "clock"/.test(code)) {
   if (!/ownerYou\.className\s*=\s*"admin-turn-owner "\s*\+\s*youKind/.test(code)) {
     fail.push("the left pill's class is not derived from the same kind as its label");
   }
-  if (!/ownerYou\.textContent\s*=\s*YOU_LABEL\[youKind\]/.test(code)) {
+  if (!/ownerYou\.textContent\s*=\s*(?:KICK_LABEL\[data\.admin\.kick\]\s*\|\|\s*)?YOU_LABEL\[youKind\]/.test(code)) {
     fail.push("the left pill's label is not derived from the same kind as its class");
   }
   const css = (() => {

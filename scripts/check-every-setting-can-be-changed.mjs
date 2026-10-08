@@ -40,7 +40,10 @@ try {
   const i = admin.indexOf("const SETTING_AUTHORED"), e = admin.indexOf("function stepSettingHtml");
   if (i < 0 || e < 0) throw new Error("stepSetting / stepSettingHtml anchors are gone");
   const ctx = vm.createContext({});
-  vm.runInContext(admin.slice(i, e) + "globalThis._x={stepSetting,settingOneLine};", ctx);
+  // 🔑 + sentEmailOf (2026-10-08): a SENT email's body is not a setting, so the classifier asks it.
+  const se = admin.indexOf("function sentEmailOf("), see = se < 0 ? -1 : admin.indexOf("\n}\n", se);
+  if (se < 0 || see < 0) throw new Error("sentEmailOf is gone");
+  vm.runInContext(admin.slice(se, see + 3) + admin.slice(i, e) + "globalThis._x={stepSetting,settingOneLine};", ctx);
   ({ stepSetting, settingOneLine } = ctx._x);
 } catch (err) {
   console.error(`🔴 the setting classifier would not run: ${err.message}`);
@@ -59,6 +62,9 @@ const CASES = [
   ["a competitor SNAPSHOT",    { outcome_data: { keyword: "seo", competitors: [1], captured_at: "x" } }, false],
   ["nothing stored",           {}, false],
   ["an empty draft",           { outcome_data: { draft: "   " } }, false],
+  // 🔴 a SENT email: delivered, cannot be changed — "Now set to: Hi Chris," · Change was the defect
+  ["a SENT email",             { outcome_data: { sent_to: "a@b.co", subject: "S", body: "Hi,\n\nBody", sent_at: "2026-09-24T20:14:53.006Z" } }, false],
+  ["an UNSENT email body",     { outcome_data: { body: "Hi,\n\nBody" } }, true],
 ];
 for (const [what, task, want] of CASES) {
   const got = !!stepSetting(task);

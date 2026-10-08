@@ -237,6 +237,7 @@ run check-a-client-action-reaches-the-admin.mjs "a client waiting on us reaches 
 # record still say "awaiting" on Monday. → feedback_a_capability_nobody_calls_looks_finished
 run check-the-kickoff-is-booked-when-rga-confirms.mjs "the kickoff is booked when RGA confirms; the RSVP holds nothing up"
 run check-the-kickoff-reads-one-state.mjs "every kickoff surface in the admin and portal reads one state and tells one story"
+run check-a-sent-email-reads-as-an-email.mjs "a sent email shows as an email: envelope, plan in words, paragraphs, no Change, no Run again"
 run check-a-step-title-has-one-home.mjs "no surface holds its own copy of a step title"
 run check-every-control-has-a-style.mjs "no button wears a class the stylesheet has never heard of"
 run check-the-portal-has-one-button-scale.mjs "the client portal has two button sizes, not six"

@@ -56,6 +56,8 @@ const LEAVES = [
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
   // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
   { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },
+  { needle: ">Open in Gmail ↗</a>", why: "the sent email in hello@'s Gmail, target=_blank" },
+  { needle: 'rel="noopener">${escapeHtml(l.replace(', why: "a URL inside a sent email's body, target=_blank" },
   // the Your-action card: a button carrying `href` is wired to window.open (the `data.admin.href` branch)
   { needle: 'btn: "Join the call ↗"', why: "Your action's Meet button, opened with window.open(href)" },
   { needle: 'textContent = data.admin.btn || "Open ↗"', why: "Your action's href branch, window.open" },
@@ -79,7 +81,7 @@ for (const x of LEAVES) {
 // 🔴 And an anchor that carries ↗ must actually open elsewhere. The two inline anchors declare it
 // on the same line; the DOM-built one sets it two lines above, so check its block.
 for (const [needle, want] of [[">Join the call ↗</a>", 'target="_blank"'], [">Their website ↗</a>", 'target="_blank"'],
-  [">Their audit report ↗</a>", 'target="_blank"'], ["${label} ↗</a>", 'target="_blank"']]) {
+  [">Their audit report ↗</a>", 'target="_blank"'], [">Open in Gmail ↗</a>", 'target="_blank"'], ["${label} ↗</a>", 'target="_blank"']]) {
   const line = src.split("\n").find((l) => l.includes(needle));
   if (line && !line.includes(want)) fail.push(`${needle.replace(/[<>/]/g, "")} carries ↗ but no ${want} on its own line`);
 }

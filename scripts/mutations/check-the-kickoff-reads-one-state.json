@@ -30,15 +30,8 @@
  [
   "step 2 offers Run again",
   "admin",
-  " && o.flowId !== KICKOFF_INVITE_STEP_ID\n",
-  "\n",
-  1
- ],
- [
-  "the phase header counts step 2 done over an open request",
-  "admin",
-  "      && !(steps[i].obj?.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open())\n",
-  "      && !(false)\n",
+  " && o.flowId !== KICKOFF_INVITE_STEP_ID && !sentEmailOf(s.task)",
+  " && !sentEmailOf(s.task)",
   1
  ],
  [
@@ -67,6 +60,20 @@
   "admin",
   "class=\"ob-step ${kick2 || kick4Req ? \"active\"",
   "class=\"ob-step ${kick2 ? \"active\"",
+  1
+ ],
+ [
+  "the phase header counts step 2/4 done over an open request",
+  "admin",
+  "      && !kickoffReopened(steps[i].obj?.flowId, kst)).length;",
+  "      ).length;",
+  1
+ ],
+ [
+  "the checklist head counts a reopened kickoff step as done",
+  "admin",
+  "  const doneCount = steps.filter((s) => s.uiState === \"done\" && !kickoffReopened(s.obj?.flowId, kstHead)).length;",
+  "  const doneCount = steps.filter((s) => s.uiState === \"done\").length;",
   1
  ]
 ]

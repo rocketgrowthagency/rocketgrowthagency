@@ -123,7 +123,8 @@ ok(S(mk("b", "B", "not-a-date", ["m1.strategy.keywords_locations"]), [K]).length
   // 🔴 ON THE DONE ROW. A warning rendered only on an active step would never appear on the one that
   // matters: the step that already finished.
   const doneRow = (() => {
-    const i = code.indexOf('class="ob-step ${declined ? "declined" : "done"}');
+    // found by the declined/done tail of the class expression — it gained a kickoff prefix 2026-10-08
+    const i = code.search(/class="ob-step \$\{[^`]*?declined \? "declined" : "done"\}/);
     return i < 0 ? "" : code.slice(i, i + 1200);
   })();
   ok(doneRow && /obStaleNoteHtml\(/.test(doneRow),

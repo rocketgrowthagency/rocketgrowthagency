@@ -89,12 +89,14 @@ const WIRED = [
   ["the request loader's in-place patch", /kickoffAlertFor\(kickoffState\(clientId\), null\)/],
   ["the booking card", /const fromPassed = Date\.now\(\) >= new Date\(from\.slot_start\)/],
   ["the footer status line", /if \(kickoffStep2Open\(kickoffState\(clientId\)\)\) \{ say\(""\); return; \}/],
-  ["the phase count", /!\(steps\[i\]\.obj\?\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(\)\)/],
+  ["the phase count", /&& !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kst\)\)\.length;/],
+  ["the checklist head", /s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstHead\)/],
+  ["the checklist head's filtered views", /steps\[i\]\.uiState === "done" && !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kstHead\)/],
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
   ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],
   ["step 4's active pill", /kcl && \["move", "rebook"\]\.includes\(kickoffState\(\)\.name\)/],
   ["step 4's row (not green while its call is moving)", /class="ob-step \$\{kick2 \|\| kick4Req \? "active"/],
-  ["step 4 in the phase count", /kickoff\\\.call\$\/\.test\(steps\[i\]\.obj\?\.flowId \|\| ""\) && \["move", "rebook"\]\.includes\(kickoffState\(\)\.name\)/],
+  ["the reopened predicate covers step 2 and step 4", /function kickoffReopened\(flowId, st = kickoffState\(\)\) \{\s*if \(flowId === KICKOFF_INVITE_STEP_ID\) return kickoffStep2Open\(st\);\s*if \(\/kickoff\\\.call\$\/\.test\(flowId \|\| ""\)\) return st\.name === "move" \|\| st\.name === "rebook";/],
 ];
 for (const [what, re] of WIRED) if (!re.test(admin)) F(`${what} no longer reads kickoffState() — it can tell its own story again`);
 

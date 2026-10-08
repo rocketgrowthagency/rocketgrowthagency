@@ -32,7 +32,7 @@
  [
   "a done card loses its id, so the one card this exists for cannot be found",
   "admin",
-  "return `<div class=\"ob-step ${declined ? \"declined\" : \"done\"}${liveConsole ? \" has-console\" : \"\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\"><div class=\"ob-row\">",
-  "return `<div class=\"ob-step ${declined ? \"declined\" : \"done\"}${liveConsole ? \" has-console\" : \"\"}\"><div class=\"ob-row\">"
+  "return `<div class=\"ob-step ${kick2 || kick4Req ? \"active\" : declined ? \"declined\" : \"done\"}${liveConsole ? \" has-console\" : \"\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\"><div class=\"ob-row\">",
+  "return `<div class=\"ob-step ${kick2 || kick4Req ? \"active\" : declined ? \"declined\" : \"done\"}${liveConsole ? \" has-console\" : \"\"}\"><div class=\"ob-row\">"
  ]
 ]
