@@ -65,7 +65,14 @@ if (/status:\s*isHybrid\s*\?\s*"in_progress"\s*:\s*"done"/.test(exec)) {
   fails.push("status ignores the runner");
   console.log('  🔴 status is decided by TYPE alone (`isHybrid ? "in_progress" : "done"`) — a runner');
   console.log("     that finished the job cannot say so, and its own `done` gets overwritten");
-} else if (/const isDone = runnerCompleted \|\| !isHybrid;/.test(exec)) {
+} else if (/const isDone = runnerCompleted \|\|/.test(exec)) {
+  // 🔑 PIN THE PROPERTY: `runnerCompleted` LEADS THE DECISION. What follows it is allowed to grow —
+  // it now reads `runnerCompleted || (!isHybrid && !isDetected)`, because a step whose completion is
+  // DETECTED must not be finished by merely pressing Run. This gate failed on that correct change
+  // while pinning the old sentence word for word.
+  // 🔑 The full decision is EVALUATED, against every real step definition, by
+  // check-a-detected-step-is-never-done-by-running-it. This one only guards the leading clause.
+  // → feedback_a_gate_must_pin_the_property_not_the_spelling
   console.log("  ✅ a runner reporting `completed: true` marks the step done regardless of type");
 } else {
   console.log("  ▫️  could not recognise the status decision — renamed?");

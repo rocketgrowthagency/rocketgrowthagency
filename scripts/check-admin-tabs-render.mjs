@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// 🔴 AN UNCAUGHT NAVIGATION TIMEOUT EXITS 1, WHICH MEANS "THE PRODUCT IS BROKEN". Four browser
+// gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
+// admin. `nav` exits 2 and names the navigation it could not complete.
+// → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * check-admin-tabs-render.mjs — the admin AND the report it produces must render, signed in.
  *
@@ -81,9 +87,9 @@ try {
     }
   });
 
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  await navOrIndeterminate(page, link);
   await new Promise((r) => setTimeout(r, 6000));
-  await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=overview`, { waitUntil: "networkidle2", timeout: 60000 });
+  await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=overview`);
   await new Promise((r) => setTimeout(r, 12000));
 
   const chars = await page.evaluate(() => document.body.innerText.trim().length);
@@ -137,7 +143,7 @@ try {
   // rebuilt today. Checking it in the SAME signed-in session costs one navigation and closes the
   // other half of the gap: the admin renders, but does the document it produces?
   try {
-    await page.goto(`${SITE}/portal/report/?client=${clientId}`, { waitUntil: "networkidle2", timeout: 60000 });
+    await navOrIndeterminate(page, `${SITE}/portal/report/?client=${clientId}`);
     await new Promise((r) => setTimeout(r, 8000));
     const rep = await page.evaluate(() => ({
       chars: document.body.innerText.trim().length,
@@ -152,7 +158,7 @@ try {
     }
   } catch (e) { console.log(`  ⚠️  could not load the client report: ${e.message}`); }
 
-  await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=overview`, { waitUntil: "networkidle2", timeout: 60000 });
+  await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=overview`);
   await new Promise((r) => setTimeout(r, 10000));
 
   for (const tab of tabs) {

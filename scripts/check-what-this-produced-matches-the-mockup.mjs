@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// 🔴 AN UNCAUGHT NAVIGATION TIMEOUT EXITS 1, WHICH MEANS "THE PRODUCT IS BROKEN". Four browser
+// gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
+// admin. `nav` exits 2 and names the navigation it could not complete.
+// → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * ═══════════════════════════════════════════════════════════════════════════════════════════════
  * GATE — "WHAT THIS PRODUCED" MATCHES THE APPROVED MOCKUP, PROPERTY BY PROPERTY
@@ -24,6 +30,7 @@
  */
 // Property-by-property: the live "What this produced" vs the approved mockup, in one browser.
 import fs from "node:fs";
+
 // 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
 // working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
 // gate nobody can make fail is a gate nobody has checked. Found 2026-10-06 when three
@@ -116,9 +123,9 @@ const want={}; for(const s of SPEC) want[s.name]=await mp.evaluate(read,s.mock,s
 
 const page=await b.newPage(); await page.setViewport({width:1280,height:1000});
 const errs=[]; page.on("pageerror",e=>errs.push(e.message.split("\n")[0].slice(0,140)));
-await page.goto(j.action_link||j.properties.action_link,{waitUntil:"networkidle2",timeout:60000});
+await navOrIndeterminate(page, j.action_link||j.properties.action_link);
 await new Promise(r=>setTimeout(r,6000));
-await page.goto(`${SITE}/admin/?view=client&id=${cid}&tab=onboarding-v2`,{waitUntil:"networkidle2",timeout:60000});
+await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${cid}&tab=onboarding-v2`);
 await new Promise(r=>setTimeout(r,15000));
 await page.evaluate(()=>{document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach(x=>x.click());});
 await new Promise(r=>setTimeout(r,1200));

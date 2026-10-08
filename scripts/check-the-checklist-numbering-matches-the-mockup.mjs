@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+// 🔴 AN UNCAUGHT NAVIGATION TIMEOUT EXITS 1, WHICH MEANS "THE PRODUCT IS BROKEN". Four browser
+// gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
+// admin. `nav` exits 2 and names the navigation it could not complete.
+// → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+const { nav: _sharedNav } = await import("./_admin-session.mjs");
+const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
  * ═══════════════════════════════════════════════════════════════════════════════════════════════
  * GATE — THE LIVE CHECKLIST'S MARKERS MATCH THE APPROVED MOCKUP, PROPERTY BY PROPERTY
@@ -20,6 +26,7 @@
  * Exit 0 pass · 1 the live render differs from the mockup · 2 could not sign in / no browser.
  */
 import fs from "node:fs";
+
 
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -107,9 +114,9 @@ try {
   await page.setViewport({ width: 1280, height: 1000 });
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 160)));
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  await navOrIndeterminate(page, link);
   await new Promise((r) => setTimeout(r, 6000));
-  await page.goto(`${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`, { waitUntil: "networkidle2", timeout: 60000 });
+  await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`);
   await new Promise((r) => setTimeout(r, 14000));
 
   if (errs.length) bad(`the page threw: ${errs.slice(0, 2).join(" | ")}`);
