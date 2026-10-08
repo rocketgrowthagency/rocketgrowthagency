@@ -433,6 +433,12 @@ run check-every-stripe-charge-reached-our-ledger.mjs "money in Stripe equals mon
 run check-email-suppression-actually-reaches-the-sender.mjs "a test harness must not mail real clients"
 run check-invoice-dates-are-business-time.mjs "two copies of one invoice must never disagree"
 run check-memory-has-no-orphans.mjs "a memory nothing links to is a memory nobody will read"
+# 🔑 Nothing approved is forgotten (2026-10-08): rebuild the generated mockup registry, then require
+# every new mockup to be cited by its system's memory; and run the memory audit STRICT (broken
+# links, orphans, files not mirrored to git) so drift fails instead of being logged and ignored.
+node scripts/build-mockup-registry.mjs >/dev/null 2>&1 || echo "  ⚠️  build-mockup-registry did not run — the next gate will say what is stale"
+run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
+run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"
