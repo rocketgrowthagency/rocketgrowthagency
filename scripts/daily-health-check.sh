@@ -390,6 +390,7 @@ run check-the-detection-block-matches-the-mockup.mjs "the detection block matche
 run check-a-run-says-what-it-produced.mjs "a run says what it produced, and the drafted shape is parsed once on the server"
 run check-the-gbp-parent-is-built-once.mjs "the Google Business Profile v4 parent is built in one place"
 run check-a-photo-reaches-google.mjs "a client's photo reaches their Google profile by itself, or says exactly why not"
+run check-a-jump-opens-what-it-lands-on.mjs "a portal button that jumps to a form opens the fold that holds it (browser)"
 run check-a-claim-about-another-surface-is-true.mjs "no surface claims something another surface does not do"
 run check-the-deliverable-matches-the-mockup.mjs "the deliverable block and its list match the approved mockup, property for property"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"

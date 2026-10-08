@@ -1,0 +1,23 @@
+[
+ [
+  "the jump goes back to opening the card's FIRST fold — the bug Chris hit",
+  "portal",
+  "        for (let d = el.closest(\"details\"); d; d = d.parentElement?.closest(\"details\")) d.open = true;",
+  "        el.closest(\"article\")?.querySelector(\"details\")?.setAttribute(\"open\", \"\");",
+  1
+ ],
+ [
+  "the jump opens nothing at all",
+  "portal",
+  "        for (let d = el.closest(\"details\"); d; d = d.parentElement?.closest(\"details\")) d.open = true;",
+  "",
+  1
+ ],
+ [
+  "the upload form moves out of the card the gate renders, so it cannot judge",
+  "portal",
+  "const PHOTO_CATEGORIES = [",
+  "const PHOTO_KINDS = [",
+  2
+ ]
+]
