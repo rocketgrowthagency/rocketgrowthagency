@@ -208,7 +208,7 @@ if (!/\bdata\.queued\b/.test(code)) {
     // find it by its declined/done tail, not its exact spelling
     const i = state === "done"
       ? c.search(/class="ob-step \$\{[^`]*?declined \? "declined" : "done"\}/)
-      : state === "active" ? c.search(/class="ob-step (active"|\$\{step4Waits \? "waits" : "active"\}")/)
+      : state === "active" ? c.search(/class="ob-step (active"|\$\{step4Waits \? "waits" : "active"\})/)
       : c.indexOf(`class="ob-step ${state}"`);
     const row = i < 0 ? "" : c.slice(i, i + 900);
     if (!row) { fail.push(`cannot find the ${state} row to check; re-pin this gate`); continue; }

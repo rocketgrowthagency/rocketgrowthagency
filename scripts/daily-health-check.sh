@@ -439,6 +439,7 @@ run check-memory-has-no-orphans.mjs "a memory nothing links to is a memory nobod
 node scripts/build-mockup-registry.mjs >/dev/null 2>&1 || echo "  ⚠️  build-mockup-registry did not run — the next gate will say what is stale"
 run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
+run check-colours-come-from-the-system.mjs "every state colour comes from the one approved system, in both portals"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"

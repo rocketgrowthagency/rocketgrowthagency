@@ -105,7 +105,7 @@ function fnBody(name) {
   // that BUILDS the band — so deleting `${bandHtml}` from the template left the window satisfied.
   // The card is what the branch returns.
   // 🔄 2026-10-08: the active row's class is `${step4Waits ? "waits" : "active"}` (step 4 waits on step 2)
-  const at = code.search(/class="ob-step (active"|\$\{step4Waits \? "waits" : "active"\}")/);
+  const at = code.search(/class="ob-step (active"|\$\{step4Waits \? "waits" : "active"\})/);
   if (at < 0) { fail.push("admin/admin.js — the active step card is gone."); }
   else {
     // 🔑 The template nests backticks inside `${…}`, so the first `` `; `` after the match is not its

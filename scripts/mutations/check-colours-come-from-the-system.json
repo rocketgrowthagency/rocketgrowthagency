@@ -1,0 +1,51 @@
+[
+ [
+  "a state token drifts between the two portals",
+  "portalcss",
+  "--state-you:#b45309;",
+  "--state-you:#b45310;",
+  1
+ ],
+ [
+  "--portal-amber is declared twice again",
+  "portalcss",
+  ":root { --portal-amber: #b45309;",
+  ":root { --portal-amber: #5e4200; } :root { --portal-amber: #b45309;",
+  1
+ ],
+ [
+  "a your-move notice goes back to yellow",
+  "portalcss",
+  ".pm-notice.is-warn { border-left: 4px solid var(--state-you,#b45309); }",
+  ".pm-notice.is-warn { border-left: 4px solid #eab308; }",
+  1
+ ],
+ [
+  "waiting on the client goes back to amber (Decision 1)",
+  "admincss",
+  ".ob-wait { border:1px solid var(--state-other-line,#cfdcfb);",
+  ".ob-wait { border:1px solid #f0dcc0;",
+  1
+ ],
+ [
+  "a live call goes back to green (Decision 2)",
+  "admincss",
+  ".ob-status.active.is-live { background:var(--state-other-edge,#2457e6);",
+  ".ob-status.active.is-live { background:#0c5132;",
+  1
+ ],
+ [
+  "the client status pill is forced green again",
+  "portalcss",
+  "font-size:var(--fs-xs); font-weight: 600; }   /* the state class decides",
+  "font-size:var(--fs-xs); font-weight: 600; background:#e3f1df; color:#0c5132; }   /* the state class decides",
+  1
+ ],
+ [
+  "a new off-system colour is picked",
+  "admincss",
+  ".admin-pill.k {",
+  ".zz-new { color:#123456; background:#654321; } .admin-pill.k {",
+  1
+ ]
+]
