@@ -1,0 +1,37 @@
+[
+ [
+  "a bare location becomes a parent again — the exact silent-zeros bug",
+  "gbpparent",
+  "  if (!acct) return null;",
+  "  if (!acct) return loc;",
+  1
+ ],
+ [
+  "the producer stops joining the two halves",
+  "gbpparent",
+  "return `${acct}/${loc}`;",
+  "return loc;",
+  1
+ ],
+ [
+  "a location that already carries its account is mangled",
+  "gbpparent",
+  "if (loc.startsWith(\"accounts/\")) return loc;",
+  "if (false) return loc;",
+  1
+ ],
+ [
+  "v2-gbp-profile goes back to building the URL from the location alone",
+  "gbpprofile",
+  "const locationName = gbpParent(oauth);",
+  "const locationName = oauth.gbp_location_id;",
+  1
+ ],
+ [
+  "the producer is renamed, so the gate cannot find what it judges",
+  "gbpparent",
+  "function gbpParent(oauth)",
+  "function buildGbpParent(oauth)",
+  2
+ ]
+]

@@ -1,0 +1,30 @@
+[
+ [
+  "the portal stops reading the drafted shape — the admin's sentence becomes false again",
+  "portal",
+  "const photoShotList = onboarding?.data?.tasks?.[\"m1.gbp.photos\"]?.draft_shape || null;",
+  "const photoShotList = null;",
+  1
+ ],
+ [
+  "step 31 reverts to counting our uploads instead of the profile — the original defect returning",
+  "recheckfn",
+  "\"m1.gbp.photos\": async (id) => gbpPhotoProbe(id, 20),",
+  "\"m1.gbp.photos\": async (id) => countProbe(id, \"client_photos\", 20, \"photo\"),",
+  1
+ ],
+ [
+  "the admin's promise is reworded, so it slips out of its own guard",
+  "admin",
+  "The client sees this list on their own",
+  "Your client can view this list on their",
+  1
+ ],
+ [
+  "the fold's promise about where the number comes from is reworded",
+  "playbook",
+  "We read the count from Google",
+  "We check this periodically",
+  1
+ ]
+]

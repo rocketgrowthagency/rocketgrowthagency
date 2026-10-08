@@ -62,6 +62,8 @@ const FILES = {
   mockupdet: "reports/mockups/admin_detected_step_v1.html",
   mockupdlv: "reports/mockups/admin_shot_list_deliverable_v2.html",
   draftshape: "netlify/functions/_draft-shape.js",
+  gbpparent: "netlify/functions/_gbp-parent.js",
+  gbpprofile: "netlify/functions/v2-gbp-profile.js",
   recheckfn: "netlify/functions/portal-step-recheck.js",
   detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
   usidiom: "netlify/functions/_us-idiom.js",
