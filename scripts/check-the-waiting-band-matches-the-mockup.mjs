@@ -112,7 +112,10 @@ try {
     if (row?.classList.contains("is-collapsed")) row.querySelector("[data-step-toggle]")?.click();
   });
   await new Promise((r) => setTimeout(r, 900));
-  if (!(await p.evaluate(() => document.querySelector(".pm-how-st")?.checkVisibility()))) {
+  // 🔄 2026-10-08: on the photo step the approved step-7 design (client_photos_setup_and_ongoing_v1)
+  // REPLACES the how-to list with the 20 slots — so the list/step pairs exist only where a list does.
+  const hasList = await p.evaluate(() => !!document.querySelector(".pm-how2 .pm-how-st"));
+  if (!(await p.evaluate(() => document.querySelector(".pm-how2")?.checkVisibility()))) {
     console.error("⚠️  INDETERMINATE — the how-to is on the page but not visible after opening its row.");
     process.exit(2);
   }
@@ -132,8 +135,11 @@ try {
     ["tip", ".ptips span", ".pm-how-tips span"],
   ];
   if (await p.evaluate(() => !!document.querySelector(".pm-how-st .pm-act.is-guide"))) portalPairs.push(["ghostButton", ".pbtn.ghost", ".pm-how-st .pm-act.is-guide"]);
+  const LIST_ONLY = new Set(["list", "listHead", "stepNum", "stepDo", "stepWhere", "stepWho", "button", "ghostButton"]);
+  if (!hasList) { for (let i = portalPairs.length - 1; i >= 0; i--) if (LIST_ONLY.has(portalPairs[i][0])) portalPairs.splice(i, 1);
+    console.log("  portal: the how-to list is replaced by the step-7 slots here — comparing the shared parts only (slots gate owed)"); }
   const pd = await comparePairs(m, p, portalPairs);
-  { const r = await comparePairs(m, p, [["step", ".st", ".pm-how-st"]], NO_GTC); pd.compared += r.compared; pd.diffs.push(...r.diffs); pd.missingInMock.push(...r.missingInMock);
+  if (hasList) { const r = await comparePairs(m, p, [["step", ".st", ".pm-how-st"]], NO_GTC); pd.compared += r.compared; pd.diffs.push(...r.diffs); pd.missingInMock.push(...r.missingInMock);
     const [w, g] = [await firstTrack(m, ".st"), await firstTrack(p, ".pm-how-st")];
     if (w !== g) pd.diffs.push(`step number column: mockup ${w} · live ${g}`); }
   if (pd.missingInMock.length) { console.error(`⚠️  INDETERMINATE — the mockup no longer has: ${pd.missingInMock.join(", ")}`); process.exit(2); }
