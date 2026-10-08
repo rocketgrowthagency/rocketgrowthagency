@@ -50,6 +50,15 @@ const PROMISE = [
   // ordinary "we will do X" copy does not trip it.
   /\bwe (?:re-?check|check|update|refresh|monitor|watch)\b[^.]{0,70}\b(?:automatically|every day|daily|weekly|each month)/i,
   /nothing for you to tick/i,
+  // 🔴 2026-10-08 — TWO PROMISES THIS GATE COULD NOT HEAR. "RGA will push to GBP within 24 hrs" and
+  // "automatic once their Google account is connected" were both unkept for months, and neither
+  // matched a pattern above: a deadline and a condition are promises too, not only "automatically".
+  // A DEADLINE ONLY WHEN SOMETHING "WILL" MEET IT. The bare form fired on the operator's own
+  // instructions — "Confirmation email (within the hour)", "SMS within 1 hour of the job" — which are
+  // things a person does, not things the system promises.
+  /\b(?:will|we'll)\b[^.]{0,70}\bwithin (?:the hour|\d+ ?(?:hrs?|hours?|days?))\b/i,
+  /\bonce (?:your|their) Google account is connected\b/i,
+  /\bwe retry (?:it |them )?automatically\b/i,
 ];
 
 // Each registered promise names the scheduled function that keeps it. Adding a line here is a
@@ -59,6 +68,21 @@ const PROMISE = [
 // me on its first run: the sentence is rendered from `portal/portal.js`. Registering a promise
 // against the wrong file would have guarded nothing while reporting green.
 const KEPT_BY = [
+  // 🔑 PHOTOS GO TO GOOGLE BY THEMSELVES. The upload publishes at once; the hourly sweep keeps the
+  // three conditional promises — a connection made later, a retry, and "within the hour" when the
+  // upload's own call did not answer. → check-a-photo-reaches-google holds the mechanism itself.
+  {
+    match: /once your Google account is connected|we retry (?:it )?automatically|within the hour/i,
+    surface: "portal/portal.js",
+    keptBy: "photos-publish-sweep",
+    note: "the client's photo tiles and upload message",
+  },
+  {
+    match: /once their Google account is connected/i,
+    surface: "data/playbooks/playbooks.json",
+    keptBy: "photos-publish-sweep",
+    note: "step 31's How fold — RGA publishes the photos",
+  },
   {
     match: /re-?check this automatically|clears itself here|nothing for you to tick/i,
     surface: "portal/portal.js",

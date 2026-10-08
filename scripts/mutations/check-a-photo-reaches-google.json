@@ -1,0 +1,86 @@
+[
+ [
+  "team photos go back to TEAM, a value Google does not have",
+  "photopublish",
+  "  team: \"TEAMS\",",
+  "  team: \"TEAM\",",
+  1
+ ],
+ [
+  "the portal offers a category the publisher cannot map",
+  "photopublish",
+  "  interior: \"INTERIOR\",\n",
+  "",
+  1
+ ],
+ [
+  "the claim is ignored, so the upload and the sweep can both send one photo",
+  "photopublish",
+  "    if (!Array.isArray(claimed) || !claimed.length) { summary.skipped++; continue; }\n",
+  "",
+  1
+ ],
+ [
+  "the sweep's retry loses its cap",
+  "photopublish",
+  ": `and(publish_state.eq.failed,publish_attempts.lt.${MAX_ATTEMPTS})`",
+  ": \"publish_state.eq.failed\"",
+  1
+ ],
+ [
+  "a file Google refuses is sent anyway",
+  "photopublish",
+  "    const reason = rejectionReason(photo);",
+  "    const reason = null;",
+  1
+ ],
+ [
+  "a photo waiting on a connection is rewritten every hour",
+  "photopublish",
+  "    if (!token && photo.publish_state === \"waiting_connection\" && !rejectionReason(photo)) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "a refusal stops counting toward the cap",
+  "photopublish",
+  "publish_state: \"failed\", publish_error: error, publish_attempts: (Number(photo.publish_attempts) || 0) + 1",
+  "publish_state: \"failed\", publish_error: error, publish_attempts: (Number(photo.publish_attempts) || 0)",
+  1
+ ],
+ [
+  "the portal's upload stops publishing what it sent",
+  "portal",
+  "body: JSON.stringify({ client_id: clientId, photo_ids: ids }),",
+  "body: JSON.stringify({ client_id: clientId }),",
+  1
+ ],
+ [
+  "the push goes back to admin-only, so the client's upload cannot publish",
+  "photopush",
+  "await requirePortalOwnerOrWorkspace(event, client_id);",
+  "await requireWorkspaceForClient(event, client_id);",
+  1
+ ],
+ [
+  "the hourly sweep loses its schedule",
+  "toml",
+  "[functions.\"photos-publish-sweep\"]\n  schedule = \"20 * * * *\"",
+  "[functions.\"photos-publish-sweep\"]\n  # schedule = \"20 * * * *\"",
+  1
+ ],
+ [
+  "the publish log stops being append-only",
+  "photosql",
+  "create trigger client_photo_publishes_no_update",
+  "-- create trigger client_photo_publishes_no_update",
+  1
+ ],
+ [
+  "the producer is renamed, so the gate cannot find what it judges",
+  "photopublish",
+  "module.exports = { publishClientPhotos,",
+  "module.exports = { publishPhotos: publishClientPhotos,",
+  2
+ ]
+]

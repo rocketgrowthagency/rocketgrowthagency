@@ -1,0 +1,23 @@
+[
+ [
+  "the portal's old promise returns — a 24-hour push nothing performs",
+  "portal",
+  "they will be published to your Google profile within the hour",
+  "RGA will push to GBP within 24 hrs",
+  1
+ ],
+ [
+  "the sweep that keeps the photo promises loses its schedule",
+  "toml",
+  "[functions.\"photos-publish-sweep\"]\n  schedule = \"20 * * * *\"",
+  "[functions.\"photos-publish-sweep\"]\n  # schedule = \"20 * * * *\"",
+  1
+ ],
+ [
+  "the fold makes a new connection promise nobody registered",
+  "playbook",
+  "or waits and goes up once their Google account is connected",
+  "and refreshes itself every day automatically",
+  1
+ ]
+]

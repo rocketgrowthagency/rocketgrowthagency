@@ -67,6 +67,11 @@ const FILES = {
   recheckfn: "netlify/functions/portal-step-recheck.js",
   detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
   usidiom: "netlify/functions/_us-idiom.js",
+  photopublish: "netlify/functions/_photo-publish.js",
+  photopush: "netlify/functions/photos-push-to-gbp.js",
+  photosweep: "netlify/functions/photos-publish-sweep.js",
+  toml: "netlify.toml",
+  photosql: "docs/supabase/RGA_CLIENT_PHOTO_PUBLISHES_2026-10-08.sql",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

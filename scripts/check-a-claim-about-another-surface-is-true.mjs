@@ -57,6 +57,16 @@ const CLAIMS = [
     needs: ["gbpPhotoProbe(id, 20)", "totalMediaItemCount", "gbpParent"],
     why: "if the probe stops asking Google the fold is promising a measurement nobody takes",
   },
+  {
+    // 🔴 2026-10-08 — THIS SENTENCE WAS FALSE FOR ITS WHOLE LIFE. It said "automatic once their Google
+    // account is connected" while the only caller was an admin button.
+    what: "the How fold tells the operator each client upload goes straight to Google",
+    claimIn: "data/playbooks/playbooks.json",
+    claim: "each upload goes straight to Google",
+    trueIn: "portal/portal.js",
+    needs: ["/.netlify/functions/photos-push-to-gbp", "photo_ids: ids"],
+    why: "if the portal's upload stops asking for a publish, the photos wait on the sweep and the fold overstates it",
+  },
 ];
 
 let checked = 0;
