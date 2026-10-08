@@ -391,6 +391,8 @@ run check-a-run-says-what-it-produced.mjs "a run says what it produced, and the 
 run check-the-gbp-parent-is-built-once.mjs "the Google Business Profile v4 parent is built in one place"
 run check-a-photo-reaches-google.mjs "a client's photo reaches their Google profile by itself, or says exactly why not"
 run check-a-jump-opens-what-it-lands-on.mjs "a portal button that jumps to a form opens the fold that holds it (browser)"
+run check-waiting-on-the-client-is-built.mjs "a client-owned step says it waits on the client, and the nudge, the thread and the how-to each tell the truth"
+run check-the-waiting-band-matches-the-mockup.mjs "the live waiting band and client how-to match the approved mockup, property by property (browser)"
 run check-a-claim-about-another-surface-is-true.mjs "no surface claims something another surface does not do"
 run check-the-deliverable-matches-the-mockup.mjs "the deliverable block and its list match the approved mockup, property for property"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"

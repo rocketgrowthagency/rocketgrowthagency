@@ -44,6 +44,10 @@ try {
     await b.close(); process.exit(2);
   }
   const n = await settle(p, ".ob-dlv");
+  // 🔑 2026-10-08 — ON A STEP WAITING ON THE CLIENT, "What this produced" is folded shut under the
+  // approved "Our part · done" line (step31_waiting_on_client_v1.html). A person opens it to look;
+  // so does the gate, before it measures. Measuring a closed fold reads layout that is not drawn.
+  await p.evaluate(() => document.querySelectorAll("details.ob-out").forEach((d) => { d.open = true; }));
   if (!n) {
     console.error("⚠️  INDETERMINATE — no deliverable block rendered.");
     console.error("   A step only has one once its runner has drafted a list the server could parse;");

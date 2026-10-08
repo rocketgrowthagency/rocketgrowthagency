@@ -81,6 +81,10 @@ try {
   // 🔴 WAIT FOR THE STRIP, NOT A CLOCK — the lesson from the numbering probe, which reported a
   // healthy admin as empty because it slept a fixed 2.5s. → project_the_numbering_probe_was_flaky
   const n = await settle(p, ".ob-hrun");
+  // 🔑 2026-10-08 — ON A STEP WAITING ON THE CLIENT, "What this produced" is folded shut under the
+  // approved "Our part · done" line (step31_waiting_on_client_v1.html). A person opens it to look;
+  // so does the gate, before it measures. Measuring a closed fold reads layout that is not drawn.
+  await p.evaluate(() => document.querySelectorAll("details.ob-out").forEach((d) => { d.open = true; }));
   if (!n) {
     console.error("⚠️  INDETERMINATE — no run-history row rendered on any card.");
     console.error(`   A step needs TWO runs before the strip appears, by design; this client's checklist rendered ${rows} rows.`);

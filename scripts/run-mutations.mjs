@@ -72,6 +72,9 @@ const FILES = {
   photosweep: "netlify/functions/photos-publish-sweep.js",
   toml: "netlify.toml",
   photosql: "docs/supabase/RGA_CLIENT_PHOTO_PUBLISHES_2026-10-08.sql",
+  sendstep: "netlify/functions/send-step-email.js",
+  mockupwait: "reports/mockups/step31_waiting_on_client_v1.html",
+  thread: "netlify/functions/portal-thread.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

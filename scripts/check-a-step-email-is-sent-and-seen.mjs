@@ -76,7 +76,10 @@ if (!/onRecord[\s\S]{0,200}?toLowerCase\(\) !== to\.toLowerCase\(\)[\s\S]{0,160}
 // ── 4 · the client sees it ─────────────────────────────────────────────────────────────────────
 if (!/VISIBLE\s*=\s*\[[^\]]*"step_email_sent"/.test(thread))
   F('portal-thread does not allow-list "step_email_sent", so the client\'s thread will never show the email that was sent to them');
-if (!/kind:\s*"step_email_sent"/.test(send)) F("send-step-email.js never writes a step_email_sent row — the send is invisible in the portal");
+// 🔑 THE PROPERTY, NOT THE SPELLING (2026-10-08): the same writer now records a nudge as
+// `step_nudge_sent` and an email as `step_email_sent`, via one ternary. What matters is that the
+// email path still writes `step_email_sent` as the activity kind. → feedback_a_gate_must_pin_the_property_not_the_spelling
+if (!/kind:\s*(?:[\w.]+\s*\?\s*"[\w]+"\s*:\s*)?"step_email_sent"/.test(send)) F("send-step-email.js never writes a step_email_sent row — the send is invisible in the portal");
 if (!/payload:\s*\{[^}]*step_id/.test(send)) F("the client_activity row carries no step_id, so the message cannot attach to the step");
 if (!/payload:\s*\{[^}]*message:/.test(send)) F("the client_activity row carries no `message` — portal-thread drops rows whose message is empty");
 

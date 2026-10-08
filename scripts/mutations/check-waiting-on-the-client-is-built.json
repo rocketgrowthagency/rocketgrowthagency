@@ -1,0 +1,93 @@
+[
+ [
+  "the card says waiting on the client while our draft is still undone",
+  "admin",
+  "const waiting = stepKind(o) === \"client\" && !band && (!runnable || !!result);",
+  "const waiting = stepKind(o) === \"client\" && !band;",
+  1
+ ],
+ [
+  "the nudge invents a count on a step nobody measured",
+  "admin",
+  "const measured = d && Number.isFinite(d.n) && Number.isFinite(d.threshold) && d.threshold > 0 && d.n < d.threshold;",
+  "const measured = true;",
+  1
+ ],
+ [
+  "the nudge stops linking to the step",
+  "admin",
+  "const link = `https://www.rocketgrowthagency.com/portal/#step-${o.flowId}`;",
+  "const link = `https://www.rocketgrowthagency.com/portal/`;",
+  1
+ ],
+ [
+  "waiting since ignores our own draft",
+  "admin",
+  "  const ran = Date.parse(task?.ran_at || \"\");",
+  "  const ran = NaN;",
+  1
+ ],
+ [
+  "a nudge may be sent about any step at all",
+  "sendstep",
+  "  if (isNudge ? !NUDGE_STEPS.has(stepId) : !EMAIL_STEPS.has(stepId)) {",
+  "  if (isNudge ? false : !EMAIL_STEPS.has(stepId)) {",
+  1
+ ],
+ [
+  "a nudge stamps the step's one-email Sent marker",
+  "sendstep",
+  "  if (!isNudge) try {",
+  "  try {",
+  1
+ ],
+ [
+  "the client stops seeing nudges",
+  "thread",
+  "\"step_email_sent\", \"step_nudge_sent\"]",
+  "\"step_email_sent\"]",
+  1
+ ],
+ [
+  "the stored detection drops its source",
+  "recheckfn",
+  "noun: probe.noun || null, source: probe.source || null }",
+  "noun: probe.noun || null }",
+  1
+ ],
+ [
+  "the banned done-when line comes back in the client's how-to",
+  "portal",
+  "    ${h.why ? `<p class=\"pm-how-why\">",
+  "    <p>Done when the step ticks itself.</p>\n    ${h.why ? `<p class=\"pm-how-why\">",
+  1
+ ],
+ [
+  "the pill goes back to Active now",
+  "admin",
+  "${waiting ? \"Waiting on client\" : \"Active now\"}",
+  "Active now",
+  1
+ ],
+ [
+  "the draft function is renamed, so the gate cannot judge it",
+  "admin",
+  "function stepNudgeDraft(o, task) {",
+  "function nudgeDraft(o, task) {",
+  2
+ ],
+ [
+  "the step link stops being held across sign-in — the live bug of 2026-10-08",
+  "portal",
+  "  if (m) { try { localStorage.setItem(DEEP_STEP_KEY, JSON.stringify({ id: m[1], at: Date.now() })); } catch { /* private mode */ } return m[1]; }",
+  "  if (m) { return m[1]; }",
+  1
+ ],
+ [
+  "the captured step is never opened",
+  "portal",
+  "    const row = listEl.querySelector(`#step-row-${CSS.escape(_deepStep)}`);",
+  "    const row = null;",
+  1
+ ]
+]

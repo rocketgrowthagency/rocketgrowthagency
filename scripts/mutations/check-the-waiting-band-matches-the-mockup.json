@@ -1,0 +1,23 @@
+[
+ [
+  "the approved band's headline size moves — the live card must be flagged as different",
+  "mockupwait",
+  ".hand-top .big{font-size:17px;",
+  ".hand-top .big{font-size:21px;",
+  1
+ ],
+ [
+  "the approved eyebrow colour moves",
+  "mockupwait",
+  "text-transform:uppercase;color:var(--open-ink)}\n.hand-top .big",
+  "text-transform:uppercase;color:#0a5c52}\n.hand-top .big",
+  1
+ ],
+ [
+  "the approved client step-number ring moves",
+  "mockupwait",
+  ".st .n{width:24px;height:24px;",
+  ".st .n{width:30px;height:30px;",
+  1
+ ]
+]
