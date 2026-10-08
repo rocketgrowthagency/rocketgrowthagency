@@ -1,0 +1,22 @@
+[
+  ["the list panel's top bar has different padding in the approved design — the exact miss the first build made",
+   "mockupdlv", ".ptop{display:flex;align-items:center;gap:12px;padding:15px 18px;", ".ptop{display:flex;align-items:center;gap:12px;padding:9px 11px;", 1],
+
+  ["the shot number badge is a different size",
+   "mockupdlv", ".num{flex-shrink:0;width:22px;height:22px;", ".num{flex-shrink:0;width:30px;height:30px;", 1],
+
+  ["the list is one column in the design, two in the build",
+   "mockupdlv", ".grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;", ".grid{display:grid;grid-template-columns:1fr;gap:1px;", 1],
+
+  ["the count inside a group chip is a different weight",
+   "mockupdlv", ".chip i{font-style:normal;font-weight:700;font-size:11px;", ".chip i{font-style:normal;font-weight:400;font-size:11px;", 1],
+
+  ["the instruction line is a different size",
+   "mockupdlv", ".sc .do{margin:0;font-size:13.8px;", ".sc .do{margin:0;font-size:16px;", 1],
+
+  ["the deliverable block's corner radius moved",
+   "mockupdlv", ".dlv{border:1px solid var(--line);border-radius:11px;", ".dlv{border:1px solid var(--line);border-radius:2px;", 1],
+
+  ["the design pins the block's text colour and the build only inherits it",
+   "mockupdlv", ".dlv{border:1px solid", ".dlv{color:#111111;border:1px solid", 1]
+]

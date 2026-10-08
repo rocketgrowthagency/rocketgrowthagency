@@ -60,6 +60,8 @@ const FILES = {
   // the gate would notice an undeployed CSS edit, and nothing should claim it does.
   mockup: "reports/mockups/admin_every_run_is_kept_v1.html",
   mockupdet: "reports/mockups/admin_detected_step_v1.html",
+  mockupdlv: "reports/mockups/admin_shot_list_deliverable_v2.html",
+  draftshape: "netlify/functions/_draft-shape.js",
   recheckfn: "netlify/functions/portal-step-recheck.js",
   detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
   usidiom: "netlify/functions/_us-idiom.js",

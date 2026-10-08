@@ -1,0 +1,31 @@
+[
+  ["the run row prints the raw database status again — the original defect, in_progress four times",
+   "admin", "if (r.status === \"in_progress\") return \"Running…\";", "return String(r.status || \"ran\");", 1],
+
+  ["the run describer stops using the drafted shape, so it cannot say what the run made",
+   "admin", "const shape = r?.outcome_data?.draft_shape;", "const shape = null;", 1],
+
+  ["the deliverable block stops reading the stored shape",
+   "admin", "const shape = task && task.draft_shape;", "const shape = task && task.auto_result;", 1],
+
+  ["the server stops parsing the draft when it writes the task",
+   "exec", "draft_shape: draftShape(result?.summary) || null,", "draft_shape: null,", 1],
+
+  ["the run row stops carrying the shape, so the history has nothing to compare",
+   "exec", "draft_shape: state.draft_shape }", "draft_shape: null }", 1],
+
+  ["the parser accepts a stray SHOT line in prose as a one-row table",
+   "draftshape", "if (items.length < 3) return null;", "if (items.length < 1) return null;", 1],
+
+  ["the parser stops returning the items themselves",
+   "draftshape", "return { items, groups, count: items.length };", "return { items: [], groups, count: items.length };", 1],
+
+  ["a group label is shouted again — LOGO and TEAM are words, not acronyms",
+   "draftshape", "if (ACRONYMS.has(s.toUpperCase())) return s.toUpperCase();", "if (/^[A-Z]{2,4}$/.test(s)) return s;", 1],
+
+  ["the parser drops the WHY line",
+   "draftshape", "if (w && items.length) items[items.length - 1].why = w[1];", "if (false) items[items.length - 1].why = w[1];", 1],
+
+  ["the parser is renamed, so the gate cannot find what it judges",
+   "draftshape", "function draftShape(text)", "function parseDraft(text)", 2]
+]

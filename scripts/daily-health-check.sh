@@ -387,6 +387,8 @@ run check-a-detected-step-is-never-done-by-running-it.mjs "a step whose completi
 run check-the-run-strip-matches-the-mockup.mjs "the run history on a step card matches the approved mockup, property for property"
 run check-every-detection-is-kept.mjs "every measurement of a detected step is kept, and the number never comes out of the prose"
 run check-the-detection-block-matches-the-mockup.mjs "the detection block matches the approved mockup, property for property"
+run check-a-run-says-what-it-produced.mjs "a run says what it produced, and the drafted shape is parsed once on the server"
+run check-the-deliverable-matches-the-mockup.mjs "the deliverable block and its list match the approved mockup, property for property"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"

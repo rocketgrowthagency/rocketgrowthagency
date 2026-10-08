@@ -26,7 +26,13 @@
 
 // 🔑 THE PROPERTIES A READER ACTUALLY SEES. Not all 340 — a diff of everything is noise nobody
 // reads, and noise is how a real difference gets skipped.
-export const PROPS = ["display", "flexBasis", "flexGrow", "gap", "paddingTop", "paddingBottom",
+// 🔴 `gridTemplateColumns` AND `alignItems` WERE MISSING, and a mutation found it: changing the
+// approved two-column list to ONE column was NOT CAUGHT, because the gate compared `display:grid`
+// and never the thing that makes a grid a grid. The same shape as the border-radius shorthand miss
+// — a property nobody listed is a property nobody checks.
+// → feedback_a_chosen_property_list_is_a_claim_about_what_i_looked_at
+export const PROPS = ["display", "gridTemplateColumns", "flexBasis", "flexGrow", "flexWrap",
+  "alignItems", "gap", "paddingTop", "paddingBottom",
   "paddingLeft", "marginTop", "marginBottom",
   "borderTopStyle", "borderTopWidth", "borderBottomStyle", "borderBottomWidth",
   "fontSize", "fontWeight", "letterSpacing", "textTransform", "color", "backgroundColor",
@@ -99,6 +105,21 @@ export const readProps = async (page, sel, props = PROPS) => page.evaluate((s, p
  * "the mockup has no such element" is an INDETERMINATE (the gate's premise moved), while "the live
  * card has no such element" is a real defect.
  */
+// 🔴🔴 A GRID'S COLUMNS RESOLVE TO PIXELS, AND PIXELS ARE THE CONTAINER'S WIDTH, NOT THE DESIGN.
+// `1fr 1fr` computes to "382.5px 382.5px" in a 1040px mockup and "294.5px 294.5px" in the admin
+// card. Comparing those strings reports a difference on a design that matches perfectly — while
+// comparing nothing at all (the first version) let a two-column list become one column uncaught.
+//
+// 🔑 SO COMPARE THE STRUCTURE THE DESIGNER CHOSE: how many tracks, and their ratio. Two equal
+// columns stay equal at any width; one column is a different answer at every width.
+const normalize = (prop, value) => {
+  if (prop !== "gridTemplateColumns" || typeof value !== "string") return value;
+  const t = value.trim().split(/\s+/).map((x) => parseFloat(x)).filter((x) => Number.isFinite(x));
+  if (!t.length) return value;                       // "none", "auto", a named-line template
+  const min = Math.min(...t);
+  return `${t.length} track(s) ${t.map((x) => (x / min).toFixed(2)).join(":")}`;
+};
+
 export async function comparePairs(mockPage, livePage, pairs, props = PROPS) {
   const diffs = [], missingInMock = [];
   let compared = 0, inherited = 0;
@@ -114,7 +135,7 @@ export async function comparePairs(mockPage, livePage, pairs, props = PROPS) {
     inherited += props.length - check.length;
     compared += check.length;
     for (const p of check) {
-      if (w[p] !== g[p]) {
+      if (normalize(p, w[p]) !== normalize(p, g[p])) {
         const who = dm.has(p)
           ? (dl.has(p) ? "both declare it" : "the mockup declares it, the build does not")
           : "the build declares it, the mockup never asked for it";
