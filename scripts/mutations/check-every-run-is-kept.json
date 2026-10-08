@@ -34,5 +34,26 @@
   "stepsql",
   "  outcome_data  jsonb,",
   "  unused_col  jsonb,"
+ ],
+ [
+  "a verification row that cannot be deleted counts against the 500-row history window",
+  "admin",
+  "if (String(r.step_id || \"\").startsWith(\"__\")) continue;",
+  "if (false) continue;",
+  1
+ ],
+ [
+  "the test rows are filtered with a SQL LIKE, where `_` is a wildcard that excludes every step",
+  "admin",
+  "if (String(r.step_id || \"\").startsWith(\"__\")) continue;",
+  "if (false) continue; // .not(\"step_id\",\"like\",\"__%\")",
+  1
+ ],
+ [
+  "the loader is renamed, so the gate cannot find what it judges",
+  "admin",
+  "async function loadStepRuns",
+  "async function loadStepRunHistory",
+  2
  ]
 ]

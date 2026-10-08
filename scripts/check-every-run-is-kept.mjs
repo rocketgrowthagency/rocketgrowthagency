@@ -95,9 +95,34 @@ const read = (rel, what) => {
   if (!writers) F("nothing writes client_step_runs at all");
 }
 
+// ═══ 4 — A VERIFICATION ROW NEVER EATS INTO A CLIENT'S HISTORY ═══════════════════════════════
+// 🔑 The table is append-only and enforced by a trigger, so a row written to PROVE that — e.g.
+// `__trigger_test__`, and a `__repro_probe__` written on 2026-10-07 while reproducing a failed
+// insert — can never be deleted. That is the design working. But the reader takes the newest 500
+// rows, so junk rows silently shorten the window a real step's history is drawn from.
+// 🔴 AND THE OBVIOUS FIX IS WRONG: in SQL `_` is itself a single-character wildcard, so a `__%`
+// LIKE filter excludes EVERY step. The convention is read in the loader instead.
+{
+  const admin = strip(read("admin/admin.js", "admin/admin.js"));
+  const i = admin.indexOf("async function loadStepRuns");
+  if (i < 0) {
+    console.error("⚠️  INDETERMINATE — cannot find loadStepRuns in admin.js");
+    process.exit(2);
+  }
+  const body = admin.slice(i, i + 1800);
+  if (!/startsWith\("__"\)/.test(body)) {
+    F('loadStepRuns does not skip `__name__` step ids, so a verification row that CANNOT be deleted '
+      + "counts against the 500-row history window every real step is read from");
+  }
+  if (/\.like\(|\.not\(\s*["']step_id["']\s*,\s*["']like["']/.test(body)) {
+    F("loadStepRuns filters step ids with a SQL LIKE pattern — `_` is a single-character wildcard "
+      + "there, so `__%` would exclude every step rather than only the test rows");
+  }
+}
+
 if (fails.length) {
   console.error("🔴 a step's history can be lost or rewritten:");
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log("✅ every run is kept — the table is append-only in the database, both finish paths insert a run, and no code rewrites one");
+console.log("✅ every run is kept — the table is append-only in the database, both finish paths insert a run, no code rewrites one, and a verification row never shortens a client's history");
