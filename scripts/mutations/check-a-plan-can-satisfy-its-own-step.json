@@ -12,9 +12,9 @@
   "22 in all, which is what completion is detected at (client_photos >= 20)."
  ],
  [
-  "the detection threshold moves without the plan following",
+  "the detection threshold moves without the plan following it",
   "recheck",
-  "countProbe(id, \"client_photos\", 20, \"photo\")",
-  "countProbe(id, \"client_photos\", 30, \"photo\")"
+  "gbpPhotoProbe(id, 20)",
+  "gbpPhotoProbe(id, 26)"
  ]
 ]

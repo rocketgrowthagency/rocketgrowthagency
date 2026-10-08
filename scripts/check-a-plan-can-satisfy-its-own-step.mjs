@@ -47,8 +47,14 @@ catch { console.error("⚠️  INDETERMINATE — playbooks.json does not parse")
 
 // 🔑 EVERY DETECTED STEP, derived from the product — never a list someone typed. `countProbe` is how
 // a step says "I am finished when there are N of these", so each one is a threshold a plan must meet.
-const probes = [...recheck.matchAll(/"([a-z0-9._]+)":\s*async\s*\([^)]*\)\s*=>\s*countProbe\([^,]+,\s*"([a-z_]+)",\s*(\d+)/g)]
-  .map((m) => ({ id: m[1], table: m[2], threshold: Number(m[3]) }));
+// 🔴 NOT ONLY `countProbe`. On 2026-10-08 step 31 moved to `gbpPhotoProbe(id, 20)` — it counts the
+// photos on the Google profile instead of the files uploaded to us — and this gate stopped seeing
+// the step it was WRITTEN FOR. It still said ✅, over one step instead of two. A gate that derives
+// its subjects from one function name loses them the day a better function appears.
+// 🔑 Match any probe whose last argument is the threshold, and name the ones we know count.
+// → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
+const probes = [...recheck.matchAll(/"([a-z0-9._]+)":\s*async\s*\([^)]*\)\s*=>\s*(?:countProbe\([^,]+,\s*"([a-z_]+)",\s*(\d+)|gbpPhotoProbe\([^,]+,\s*(\d+))/g)]
+  .map((m) => ({ id: m[1], table: m[2] || "the profile", threshold: Number(m[3] ?? m[4]) }));
 
 if (!probes.length) {
   console.error("⚠️  INDETERMINATE — no countProbe thresholds found; this gate has nothing to compare");
