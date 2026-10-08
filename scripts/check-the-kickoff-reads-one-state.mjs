@@ -104,9 +104,9 @@ const WIRED = [
   ["the header's Onboarding N% pill", /seq\.filter\(\(s\) => s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstPill\)\)/],
   ["the checklist head's filtered views", /steps\[i\]\.uiState === "done" && !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kstHead\)/],
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
-  ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "passed"\) \{[\s\S]{0,900}?if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],
-  ["step 4's active pill", /kcl && \["move", "rebook", "passed"\]\.includes\(kickoffState\(\)\.name\)/],
-  ["step 4's row (not green while its call is moving)", /class="ob-step \$\{kick2 \|\| kick4Req \? "active"/],
+  ["step 4's console waits on step 2", /const kq = kickoffState\(\);[\s\S]{0,600}?if \(kickoffReopened\(o\.flowId, kq\)\) return kickoffStep4WaitsHtml\(kq\);/],
+  ["step 4's active row + pill wait (grey)", /const step4Waits = \/kickoff\\\.call\$\/\.test\(o\.flowId \|\| ""\) && kickoffReopened\(o\.flowId\);[\s\S]{0,200}?class="ob-step \$\{step4Waits \? "waits" : "active"\}"/],
+  ["step 4's done row waits (grey, queued marker, Waits on step N)", /class="ob-step \$\{kick2 \? "active" : kick4Req \? "waits"[\s\S]{0,1600}?if \(kick4Req\) return `<span class="ob-status queued">\$\{escapeHtml\(kickoffStep4WaitsLabel\(\)\)\}/],
   ["the reopened predicate covers step 2 and step 4", /function kickoffReopened\(flowId, st = kickoffState\(\)\) \{\s*if \(flowId === KICKOFF_INVITE_STEP_ID\) return kickoffStep2Open\(st\);\s*if \(\/kickoff\\\.call\$\/\.test\(flowId \|\| ""\)\) return st\.name === "move" \|\| st\.name === "rebook" \|\| st\.name === "passed";/],
 ];
 for (const [what, re] of WIRED) if (!re.test(admin)) F(`${what} no longer reads kickoffState() — it can tell its own story again`);
@@ -121,7 +121,7 @@ const PASSED = [
   ["a lapsed move leaves the request list under a standing booking", /const lapsedMoves = standing \?/, admin],
   ["the admin refuses to confirm a passed time", /if \(gone && action === "confirm"\) \{ setBanner\(/, admin],
   ["step 2's passed band", /kick2 && kst2\.name === "passed"[\s\S]{0,300}?Waiting on a new pick/, admin],
-  ["step 4's passed band", /if \(kq\.name === "passed"\) \{[\s\S]{0,400}?No call booked/, admin],
+  ["step 4 says ONE line, with the step number from the page", /function kickoffStep4WaitsHtml\([\s\S]{0,300}?obNumberOf\(KICKOFF_INVITE_STEP_ID, "month1"\)[\s\S]{0,700}?data-ob-jump=/, admin],
   ["the server never books a passed time", /Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, inviteFn],
   ["the server never confirms a passed request", /if \(Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, reqFn],
   ["a booking clears the client's other open requests", /status=eq\.requested&slot_start=neq\./, inviteFn],

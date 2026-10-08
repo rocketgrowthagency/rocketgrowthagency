@@ -154,8 +154,8 @@ const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
 const topicsConst = (code.match(/const KICKOFF_TOPICS = \[[\s\S]*?\n\];/) || [null])[0];
 // 🔑 + kickoffState (2026-10-08, kickoff_everywhere_v1): the console asks the one state whether a
 // move / rebook is pending before it renders the run of show.
-const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml", "kickoffState"].map((n) =>
-  (code.match(new RegExp(`function ${n}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);
+const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml", "kickoffState", "kickoffReopened", "kickoffStep4WaitsHtml"].map((n) =>
+  (code.match(new RegExp(`function ${n}\\([^\\n]*?\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);   // a default arg may hold parens
 if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsConst || helperFns.some((x) => !x)) {
   fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
 } else {
@@ -174,7 +174,8 @@ if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsCons
   vm.createContext(box);
   // 🔑 Define ONCE, then call per case. Re-running the definitions in the same context throws
   // "already been declared" on the second render — which silently cost a check the first time.
-  const src = [collectList[0], textFn[0], topicsConst, ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
+  const step2Open = (code.match(/const kickoffStep2Open = [^\n]+\n/) || [""])[0];
+  const src = [collectList[0], textFn[0], topicsConst, step2Open, ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
     "globalThis.__render = () => kickoffConsoleHtml({ flowId: 'm1.kickoff.call' });"].join("\n");
   vm.runInContext(src, box, { timeout: 4000 });
   const renderAt = (minsIn) => {

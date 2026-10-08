@@ -56,13 +56,6 @@
   1
  ],
  [
-  "step 4 goes green again while its call is moving",
-  "admin",
-  "class=\"ob-step ${kick2 || kick4Req ? \"active\"",
-  "class=\"ob-step ${kick2 ? \"active\"",
-  1
- ],
- [
   "the phase header counts step 2/4 done over an open request",
   "admin",
   "      && !kickoffReopened(steps[i].obj?.flowId, kst)).length;",
@@ -137,6 +130,20 @@
   "portal",
   "  const requestPassed = pending && Number.isFinite(rTime) && t >= rTime;",
   "  const requestPassed = pending && Number.isFinite(rTime) && t >= rTime + mins * 60000;",
+  1
+ ],
+ [
+  "step 4 goes amber with its own band again while step 2 has the action",
+  "admin",
+  "  if (kickoffReopened(o.flowId, kq)) return kickoffStep4WaitsHtml(kq);\n",
+  "",
+  1
+ ],
+ [
+  "step 4's done row stops waiting (back to amber)",
+  "admin",
+  "class=\"ob-step ${kick2 ? \"active\" : kick4Req ? \"waits\"",
+  "class=\"ob-step ${kick2 || kick4Req ? \"active\" : kick4Req ? \"waits\"",
   1
  ]
 ]
