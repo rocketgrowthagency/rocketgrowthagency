@@ -91,6 +91,8 @@ const WIRED = [
   ["the footer status line", /if \(kickoffStep2Open\(kickoffState\(clientId\)\)\) \{ say\(""\); return; \}/],
   ["the phase count", /&& !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kst\)\)\.length;/],
   ["the checklist head", /s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstHead\)/],
+  ["\"Month 1 is complete\" only when there is no next step", /\} else if \(!next && !blocked\.length && !unverified\.length\) \{\s*(\/\/[^\n]*\n\s*)*alerts\.push\(\{ k: "i", t: "Month 1 is complete"/],
+  ["the header's Onboarding N% pill", /seq\.filter\(\(s\) => s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstPill\)\)/],
   ["the checklist head's filtered views", /steps\[i\]\.uiState === "done" && !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kstHead\)/],
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
   ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],

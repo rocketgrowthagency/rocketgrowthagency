@@ -75,5 +75,19 @@
   "  const doneCount = steps.filter((s) => s.uiState === \"done\" && !kickoffReopened(s.obj?.flowId, kstHead)).length;",
   "  const doneCount = steps.filter((s) => s.uiState === \"done\").length;",
   1
+ ],
+ [
+  "Month 1 is complete fires while a kickoff step is next",
+  "admin",
+  "    } else if (!next && !blocked.length && !unverified.length) {",
+  "    } else if (!blocked.length && !unverified.length) {",
+  1
+ ],
+ [
+  "the header pill counts a reopened kickoff step as done",
+  "admin",
+  "      ? seq.filter((s) => s.uiState === \"done\" && !kickoffReopened(s.obj?.flowId, kstPill)).length",
+  "      ? seq.filter((s) => s.uiState === \"done\").length",
+  1
  ]
 ]
