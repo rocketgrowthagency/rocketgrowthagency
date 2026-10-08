@@ -149,9 +149,12 @@ const collectList = code.match(/const KICKOFF_COLLECT = \[[\s\S]*?\n\];/);
 const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
 // 🔑 v2 (2026-10-08): the console reads three helpers — the shared-words countdown, the scan (in
 // either shape) and the prep draft's questions. Lifted beside it, or the render throws in the copy.
-const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffQuestions"].map((n) =>
+// 🔑 + the call sheet (2026-10-08, admin_kickoff_prep_v2.html): the console's right column is
+// built from it, so its topic table and three helpers are lifted too.
+const topicsConst = (code.match(/const KICKOFF_TOPICS = \[[\s\S]*?\n\];/) || [null])[0];
+const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml"].map((n) =>
   (code.match(new RegExp(`function ${n}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);
-if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || helperFns.some((x) => !x)) {
+if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsConst || helperFns.some((x) => !x)) {
   fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
 } else {
   const box = {
@@ -167,7 +170,7 @@ if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || helperFns.s
   vm.createContext(box);
   // 🔑 Define ONCE, then call per case. Re-running the definitions in the same context throws
   // "already been declared" on the second render — which silently cost a check the first time.
-  const src = [collectList[0], textFn[0], ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
+  const src = [collectList[0], textFn[0], topicsConst, ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
     "globalThis.__render = () => kickoffConsoleHtml({ flowId: 'm1.kickoff.call' });"].join("\n");
   vm.runInContext(src, box, { timeout: 4000 });
   const renderAt = (minsIn) => {
