@@ -134,10 +134,12 @@ if (/rsvp\s*===\s*["']accepted["']\s*\n?\s*\?/.test(branch)) {
 
 // 4 ─ the requested state must name the time it is holding
 {
-  const r = branch.indexOf("if (requested)");
+  // 🔄 2026-10-08: the PLAIN `if (requested) {` branch — the passed-time branches above it
+  // (kickoff_request_time_passed_v1) are their own states. The time may be named in the chip.
+  const r = branch.indexOf("if (requested) {");
   if (r !== -1) {
-    const rb = branch.slice(r, r + 700);
-    if (!/\$\{at\}|requested_start/.test(rb)) {
+    const rb = branch.slice(r, r + 1400);
+    if (!/\$\{at\}|requested_start|text: at\b/.test(rb)) {
       fail.push('the "we have your kickoff time" state does not name the time — the client has to go and check we got it right');
     }
   }

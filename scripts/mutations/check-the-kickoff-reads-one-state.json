@@ -2,8 +2,8 @@
  [
   "a request after the call is read as a move again",
   "admin",
-  "  if (request) name = !booking ? \"picked\" : booking.passed ? \"rebook\" : \"move\";",
-  "  if (request) name = !booking ? \"picked\" : \"move\";",
+  "  else if (request && !reqPassed) name = !booking ? \"picked\" : booking.passed ? \"rebook\" : \"move\";",
+  "  else if (request && !reqPassed) name = !booking ? \"picked\" : \"move\";",
   1
  ],
  [
@@ -88,6 +88,55 @@
   "admin",
   "      ? seq.filter((s) => s.uiState === \"done\" && !kickoffReopened(s.obj?.flowId, kstPill)).length",
   "      ? seq.filter((s) => s.uiState === \"done\").length",
+  1
+ ],
+ [
+  "a request whose time passed reads as still pending",
+  "admin",
+  "  if (request && reqPassed && !bookingStands) name = \"passed\";",
+  "  if (false) name = \"passed\";",
+  1
+ ],
+ [
+  "Your action offers Approve on a passed request again",
+  "admin",
+  "    if (kst0 && kst0.name === \"passed\") {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "the server books a time that has passed",
+  "kickinvite",
+  "  if (startIso && Number.isFinite(Date.parse(startIso)) && Date.parse(startIso) <= Date.now()) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "the server confirms a passed request",
+  "kickreqs",
+  "    if (Date.parse(startIso) <= Date.now()) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "a booking leaves the client's old request standing",
+  "kickinvite",
+  "&status=eq.requested&slot_start=neq.",
+  "&status=eq.requested&slot_start=eq.",
+  1
+ ],
+ [
+  "the client pill stays RGA is doing it after the time passed",
+  "portal",
+  "    : reqPassed ? { cls: \"you\", text: \"Your turn\" }\n",
+  "",
+  1
+ ],
+ [
+  "a request lapses only at its end again",
+  "portal",
+  "  const requestPassed = pending && Number.isFinite(rTime) && t >= rTime;",
+  "  const requestPassed = pending && Number.isFinite(rTime) && t >= rTime + mins * 60000;",
   1
  ]
 ]

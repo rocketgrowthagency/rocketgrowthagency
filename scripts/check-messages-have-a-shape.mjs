@@ -286,7 +286,9 @@ if (fs.existsSync(MOCK)) {
     // in the click handler, ~200 lines above the function — so a window anchored there contains no
     // dialog at all and failed the clean tree. → feedback_a_gate_window_measured_in_characters_will_lie
     const i = aj.indexOf("async function answerKickoffRequest");
-    const body = i === -1 ? "" : aj.slice(i, i + 1600);
+    // 🔄 the function's own body, not 1600 chars: a passed-request arm (2026-10-08) pushed the two
+    // outward arms past the window. → feedback_a_gate_window_measured_in_characters_will_lie
+    const body = i === -1 ? "" : aj.slice(i, aj.indexOf("\n}\n", i) > i ? aj.indexOf("\n}\n", i) : i + 4000);
     if (i === -1) fail.push("answerKickoffRequest is gone — that is the confirm/decline path for a client's kickoff request");
     // 🔑 BOTH ARMS. This is a ternary — confirm AND decline — and each key therefore appears twice.
     // Testing "does it appear at all" let me delete the confirm arm's tone entirely and still pass,

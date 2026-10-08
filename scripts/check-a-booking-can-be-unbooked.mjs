@@ -191,7 +191,14 @@ if (fs.existsSync(CANCEL) && !/\/\.netlify\/functions\/cancel-kickoff-invite/.te
 
 // 🔴 Moving MUST pass force. Without it the idempotence guard returns alreadySent, the new time is
 // discarded, and the control reports success having changed nothing.
-const moveCall = admin.match(/data-change-kickoff-time[\s\S]{0,3000}?send-kickoff-invite[\s\S]{0,600}?\}\)/);
+// 🔄 2026-10-08: the change control calls ONE function, pickKickoffTime, shared with "Pick a time for
+// them". Read that function's body, not a window after the attribute.
+const pkAt = admin.indexOf("async function pickKickoffTime(");
+const pkBody = pkAt < 0 ? "" : admin.slice(pkAt, admin.indexOf("\n}\n", pkAt));
+if (!/closest\("\[data-change-kickoff-time\]"\)[\s\S]{0,300}?await pickKickoffTime\(/.test(admin)) {
+  problems.push("the change-the-time control no longer goes through pickKickoffTime — a second move path can drop the time");
+}
+const moveCall = pkBody.match(/send-kickoff-invite[\s\S]{0,600}?\}\)/);
 if (moveCall && !/force:\s*"1"/.test(moveCall[0])) {
   problems.push(`the "change the time" control calls send-kickoff-invite without force:"1". The `
     + `idempotence guard will return alreadySent, the chosen time is silently dropped, and the `

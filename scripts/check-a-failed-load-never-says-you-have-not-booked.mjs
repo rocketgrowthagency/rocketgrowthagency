@@ -55,7 +55,9 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   } else {
     const end = code.indexOf(";", code.indexOf("const state =", at));
     const ladder = code.slice(at, end + 1);
-    const hasChosen = /const clientHasChosen = state\.cls === "done" \|\| state\.cls === "rga";/.test(code);
+    // 🔄 + `|| reqPassed` (2026-10-08, kickoff_request_time_passed_v1): a pick whose time passed is
+    // also a choice the client made — the card names it ("Passed") rather than asking them to start.
+    const hasChosen = /const clientHasChosen = state\.cls === "done" \|\| state\.cls === "rga"( \|\| reqPassed)?;/.test(code);
     const settled = /const settledOrUnknown = clientHasChosen \|\| unknown;/.test(code);
     if (!hasChosen) fail.push("portal/portal.js — `clientHasChosen` is gone or changed shape.");
     if (!settled) {
@@ -64,15 +66,16 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
         + "again — which is the bug.");
     }
     try {
-      const ctx = { _kickoffMine: new Map(), _kickoffUnknown: new Set(), clientId: "c1", result: null };
+      const ctx = { _kickoffMine: new Map(), _kickoffUnknown: new Set(), _kickoffWhen: new Map(), clientId: "c1", result: null, Date, Number };
       vm.createContext(ctx);
       vm.runInContext(`
-        const run = (st, unk) => {
-          _kickoffMine.clear(); _kickoffUnknown.clear();
+        const run = (st, unk, startOffsetMin) => {
+          _kickoffMine.clear(); _kickoffUnknown.clear(); _kickoffWhen.clear();
           if (st) _kickoffMine.set(clientId, st);
           if (unk) _kickoffUnknown.add(clientId);
+          _kickoffWhen.set(clientId, { startMs: Date.now() + (startOffsetMin == null ? 60 * 24 : startOffsetMin) * 60000, mins: 30 });
           ${ladder}
-          const clientHasChosen = state.cls === "done" || state.cls === "rga";
+          const clientHasChosen = state.cls === "done" || state.cls === "rga" || (typeof reqPassed !== "undefined" && reqPassed);
           const settledOrUnknown = clientHasChosen || unknown;
           return { cls: state.cls, text: state.text, settledOrUnknown };
         };
@@ -82,6 +85,7 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
           none:     run(null, false),
           unknown:  run(null, true),
           unknownOverBooked: run("booked", true),
+          askedPassed: run("requested", false, -5),
         };`, ctx, { timeout: 2000 });
       const r = ctx.result;
 
@@ -108,6 +112,10 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
       if (r.booked.cls !== "done" || r.asked.cls !== "rga") {
         fail.push(`portal/portal.js — the settled states changed: booked→${r.booked.cls}, requested→${r.asked.cls}.`);
       } else pass.push("booked and requested still read as done and with-RGA");
+      // 🔒 a pick whose start passed unconfirmed is the client's move again — and still a choice
+      if (r.askedPassed.cls !== "you" || !r.askedPassed.settledOrUnknown) {
+        fail.push(`portal/portal.js — a requested time that passed unconfirmed reads "${r.askedPassed.text}" (settled=${r.askedPassed.settledOrUnknown}); it must be the client's turn, named as passed.`);
+      } else pass.push("a requested time that passed reads as the client's turn, not RGA's");
     } catch (e) {
       // 🔴 NOT `indet`. These five assertions ARE this gate; skipping them and still printing ✅ is a
       // gate that cannot fail — the pattern I fixed twice already today.

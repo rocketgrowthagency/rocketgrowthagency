@@ -66,13 +66,18 @@ const CASES = [
   ["move", { booking: 60 * 24, request: 60 * 48 }],
   ["rebook", { booking: -70, request: 50 }],
   ["notPicked", { booking: -70, outcome: "no_show" }],        // a no-show released the booking
+  // 🔒 kickoff_request_time_passed_v1 — a request can only be confirmed before its START
+  ["passed", { request: -5 }],                                // first pick, its time went by
+  ["passed", { booking: -70, request: -5 }],                  // rebook whose new time went by (the live case)
+  ["booked", { booking: 60 * 24, request: -5 }],              // a move that lapsed under a call that stands
+  ["picked", { request: 50 }],                                // inside the last 2 hours → urgent
 ];
 for (const [want, c] of CASES) {
   setCase(c);
   const st = ctx.ks("c");
   if (st.name !== want) F(`facts ${JSON.stringify(c)} gave "${st.name}", expected "${want}"`);
   const isOpen = ctx.open2(st);
-  if (isOpen !== ["picked", "move", "rebook"].includes(want)) F(`step 2 open=${isOpen} in state "${want}"`);
+  if (isOpen !== ["picked", "move", "rebook", "passed"].includes(want)) F(`step 2 open=${isOpen} in state "${want}"`);
   const al = ctx.al(st, { id: "m1.close.kickoff_invite" });
   if (["picked", "move", "rebook"].includes(want)) {
     if (!al || !/asked|picked/i.test(al.t) || /ended|record/i.test(al.t + al.s)) F(`state "${want}": the alert does not talk about the request ("${al?.t}")`);
@@ -80,6 +85,10 @@ for (const [want, c] of CASES) {
   if (want === "rebook" && !/new kickoff time/i.test(al?.t || "")) F(`a request after the call is not worded as a new time ("${al?.t}")`);
   if (want === "ended" && !/record/i.test(al?.t || "")) F("an ended call with no outcome does not ask to record it");
   if (want === "booked" && al) F("a booked call far ahead raises an alert");
+  if (want === "passed" && (!al || !/passed unconfirmed/i.test(al.t) || al.k !== "c" || /approve/i.test(al.t + al.s))) F(`a passed request's alert is not the red "passed unconfirmed" line ("${al?.t}", k=${al?.k})`);
+  if (want === "booked" && c.request != null && (st.request || !st.lapsed)) F("a move that lapsed under a standing booking still reads as an open request");
+  if (want === "picked" && c.request === 50 && (!st.urgent || al?.k !== "c")) F("a request inside its last 2 hours is not urgent / red");
+  if (want === "picked" && c.request === 60 * 24 && st.urgent) F("a request a day out reads as urgent");
 }
 
 // 4 · every surface wired to the one state
@@ -95,12 +104,38 @@ const WIRED = [
   ["the header's Onboarding N% pill", /seq\.filter\(\(s\) => s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstPill\)\)/],
   ["the checklist head's filtered views", /steps\[i\]\.uiState === "done" && !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kstHead\)/],
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
-  ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],
-  ["step 4's active pill", /kcl && \["move", "rebook"\]\.includes\(kickoffState\(\)\.name\)/],
+  ["step 4's console", /const kq = kickoffState\(\);\s*if \(kq\.name === "passed"\) \{[\s\S]{0,900}?if \(kq\.name === "move" \|\| kq\.name === "rebook"\)/],
+  ["step 4's active pill", /kcl && \["move", "rebook", "passed"\]\.includes\(kickoffState\(\)\.name\)/],
   ["step 4's row (not green while its call is moving)", /class="ob-step \$\{kick2 \|\| kick4Req \? "active"/],
-  ["the reopened predicate covers step 2 and step 4", /function kickoffReopened\(flowId, st = kickoffState\(\)\) \{\s*if \(flowId === KICKOFF_INVITE_STEP_ID\) return kickoffStep2Open\(st\);\s*if \(\/kickoff\\\.call\$\/\.test\(flowId \|\| ""\)\) return st\.name === "move" \|\| st\.name === "rebook";/],
+  ["the reopened predicate covers step 2 and step 4", /function kickoffReopened\(flowId, st = kickoffState\(\)\) \{\s*if \(flowId === KICKOFF_INVITE_STEP_ID\) return kickoffStep2Open\(st\);\s*if \(\/kickoff\\\.call\$\/\.test\(flowId \|\| ""\)\) return st\.name === "move" \|\| st\.name === "rebook" \|\| st\.name === "passed";/],
 ];
 for (const [what, re] of WIRED) if (!re.test(admin)) F(`${what} no longer reads kickoffState() — it can tell its own story again`);
+
+// 4b · the passed state on every admin surface + the server (kickoff_request_time_passed_v1)
+const SITE_FN = (rel) => { try { return fs.readFileSync(`${SITE}/${rel}`, "utf8"); } catch { return ""; } };
+const inviteFn = SITE_FN("netlify/functions/send-kickoff-invite.js"), reqFn = SITE_FN("netlify/functions/kickoff-requests.js");
+const PASSED = [
+  ["Your action's passed card", /if \(kst0 && kst0\.name === "passed"\) \{[\s\S]{0,900}?title: "Their requested kickoff time passed unconfirmed"[\s\S]{0,700}?pickForThem:[\s\S]{0,300}?label: "Send the client a note…"/, admin],
+  ["Your action's 2-hour warning", /title: kst\.urgent && askedIso\s*\? `Confirm before \$\{/, admin],
+  ["the request card's passed variant (no Approve)", /if \(Date\.now\(\) >= new Date\(q\.slot_start\)\.getTime\(\)\) \{[\s\S]{0,2400}?Request passed[\s\S]{0,2400}?Pick a time for the client[\s\S]{0,400}?Send the client a note…[\s\S]{0,400}?Clear the request<\/button>\s*<\/div><\/div>`;\s*\}/, admin],
+  ["a lapsed move leaves the request list under a standing booking", /const lapsedMoves = standing \?/, admin],
+  ["the admin refuses to confirm a passed time", /if \(gone && action === "confirm"\) \{ setBanner\(/, admin],
+  ["step 2's passed band", /kick2 && kst2\.name === "passed"[\s\S]{0,300}?Waiting on a new pick/, admin],
+  ["step 4's passed band", /if \(kq\.name === "passed"\) \{[\s\S]{0,400}?No call booked/, admin],
+  ["the server never books a passed time", /Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, inviteFn],
+  ["the server never confirms a passed request", /if \(Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, reqFn],
+  ["a booking clears the client's other open requests", /status=eq\.requested&slot_start=neq\./, inviteFn],
+  ["the client banner: Pick a new kickoff time", /if \(requested && phase\.requestPassed && !phase\.bookingStands\) \{[\s\S]{0,700}?title: "Pick a new kickoff time"/, portal],
+  ["the client card: Your turn + Passed + Pick a new time", /if \(!confirmed && ph\.requestPassed\) \{[\s\S]{0,300}?>Passed<\/span>[\s\S]{0,500}?>Pick a new time<\/button>/, portal],
+  ["the client pill flips to Your turn", /: reqPassed \? \{ cls: "you", text: "Your turn" \}/, portal],
+  ["a request lapses at its start, not its end", /const requestPassed = pending && Number\.isFinite\(rTime\) && t >= rTime;/, portal],
+];
+for (const [what, re, src] of PASSED) if (!re.test(src)) F(`${what} is missing — the passed state can tell its own story again`);
+// 🔴 the promises nothing keeps must not come back (Chris's 2:04 PM screenshot)
+for (const bad of ["We'll email you to sort a new one", "we'll confirm a new one with you today"]) {
+  const code = portal.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
+  if (code.includes(bad)) F(`the client portal still promises "${bad}" — nothing sends that`);
+}
 
 // 5 · no Run again on step 2
 if (!/const rerunBtn = runnable && [^\n]*o\.flowId !== KICKOFF_INVITE_STEP_ID/.test(admin)) F("step 2 offers Run again — its runner books the first free slot");

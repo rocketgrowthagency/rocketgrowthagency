@@ -5,5 +5,12 @@
   "      const html = booked\n        ? `<div class=\"kb\">",
   "      const html = true\n        ? `<div class=\"kb\">",
   1
+ ],
+ [
+  "the move drops force and the chosen time is silently ignored",
+  "admin",
+  "      body: JSON.stringify({ client_id: clientId, force: \"1\", start: when.toISOString() }),",
+  "      body: JSON.stringify({ client_id: clientId, start: when.toISOString() }),",
+  1
  ]
 ]

@@ -209,6 +209,9 @@ const code = fs.readFileSync(JS, "utf8");
     kickoffCallOpen: "formats a number",
     kickoffConsoleHtml: "rendered by renderOnboardingChecklist, which asks",
     obPhasedHtml: "its only caller is renderOnboardingChecklist (line ~8309), which asks",
+    kickoffReopened: "a predicate over the state it is handed",
+    kickoffNextAction: "its only caller is renderNextAction, which asks",
+    kickoffPassedNote: "only reachable from a control drawn by Your action or the request card, both of which ask",
     _refreshKickoffRsvp: "the Overview footer — the booking-card loader beside it fetches the requests",
     loadKickoffRequests: "fetches the answer itself via fetchKickoffAnswers",
   };

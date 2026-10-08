@@ -267,7 +267,12 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
   // the branch pushed its closing brace past it, so the gate reported the branch as GONE. Fifth
   // time today. Bound by the SYNTAX: the first close at the branch's own indentation.
   // → feedback_a_gate_window_measured_in_characters_will_lie
-  const reqBranch = code.match(/if \(requested\)[\s\S]*?\n      \}/);
+  // 🔄 2026-10-08 — Chris approved kickoff_request_time_passed_v1: a request whose START went by
+  // unconfirmed is the CLIENT's move again ("Pick a new kickoff time"), not "more owed" by RGA —
+  // nothing is left to confirm. The plain request branch keeps "Waiting on RGA"; the lapsed one has
+  // its own branch, before it.
+  const reqBranch = code.match(/if \(requested\) \{[\s\S]*?\n      \}/);
+  const passedBranch = code.match(/if \(requested && phase\.requestPassed && !phase\.bookingStands\) \{[\s\S]*?\n      \}/);
   if (!reqBranch) {
     if (/if \(requested && !callOver\)/.test(code))
       fail.push("portal/portal.js — a pending kickoff request is dropped from the headline once its slot passes, so a client waiting on RGA is shown their own to-do list instead.");
@@ -276,13 +281,14 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
     if (!/Waiting on RGA/.test(reqBranch[0]))
       fail.push("portal/portal.js — the headline does not say a pending request is waiting on RGA, so the client cannot tell whose turn it is.");
     else pass.push("a pending request tells the client it is waiting on RGA");
-    if (!/callOver/.test(reqBranch[0]))
+    if (!passedBranch || /Waiting on RGA/.test(passedBranch[0]) || !/Pick a new kickoff time/.test(passedBranch[0]))
       fail.push("portal/portal.js — the headline gives the same wording whether the requested slot is ahead or already past.");
     else pass.push("a lapsed request gets its own wording, not \"we're holding it\"");
   }
   // 🔑 And the card must stop promising an invite for a time that has gone.
   const cardFn = code.match(/function kickoffRequestedHtml\([\s\S]*?\n\}/);
-  if (cardFn && !/has now passed and we haven/.test(cardFn[0]))
+  const passedCard = cardFn && cardFn[0].match(/if \(!confirmed && ph\.requestPassed\) \{[\s\S]*?\n  \}/);
+  if (cardFn && (!passedCard || /holding/i.test(passedCard[0]) || !/>Passed</.test(passedCard[0])))
     fail.push("portal/portal.js — the card keeps saying it is holding a requested time after that time has passed.");
   else if (cardFn) pass.push("the card owns a request it never confirmed");
 }
