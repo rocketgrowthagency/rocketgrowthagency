@@ -181,7 +181,7 @@ let n=0,d=0;
   else {
     const want = [
       ["the card has a visible border", parseFloat(card.borderWidth) >= 1 && card.borderStyle === "solid", `${card.borderWidth} ${card.borderStyle}`],
-      ["the border is the mockup's green", card.borderColor === "rgb(207, 227, 207)", card.borderColor],
+      ["the border is the mockup's green", card.borderColor === "rgb(207, 230, 200)", card.borderColor],
       ["the card is rounded, top and bottom", parseFloat(card.radius) >= 10 && parseFloat(card.bottomRadius) >= 10, `${card.radius} / ${card.bottomRadius}`],
       ["the card body is white", card.cardBg === "rgb(255, 255, 255)", card.cardBg],
       ["the header carries the tint", card.headerBg === "rgb(230, 242, 230)", card.headerBg],
