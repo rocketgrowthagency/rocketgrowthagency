@@ -106,6 +106,8 @@ const NOT_PREFLIGHT = {
   'check-every-identity-points-at-rga.mjs': 'reads LIVE credential state (git, ssh, gh, netlify, gcloud); runs in daily-health-check.sh — an identity pointing elsewhere cannot make a video unsafe, and it must not block a build on a machine mid-login',
   'check-a-plan-can-satisfy-its-own-step.mjs': 'playbook + runner-prompt consistency, pure source scan; runs in daily-health-check.sh — a shot-list count cannot make a video unsafe',
   'check-every-run-is-kept.mjs': 'append-only history gate over flow-execute + the migration, pure source scan; runs in daily-health-check.sh — step history cannot make a video unsafe',
+  'check-a-detected-step-is-never-done-by-running-it.mjs': 'lifts the done decision out of flow-execute and evaluates it against the real step definitions; runs in daily-health-check.sh — whether a checklist row says done cannot make a video unsafe',
+  'check-the-run-strip-matches-the-mockup.mjs': 'renders the admin step card in chromium and diffs it against the approved mockup; runs in daily-health-check.sh — needs a browser and the live admin, and how a history strip looks cannot make a video unsafe',
   'check-now-set-to-says-what-the-step-set.mjs': 'admin-UI gate, pure source+vm; runs in daily-health-check.sh — a summary line on a step card cannot make a video unsafe',
   'check-a-refusal-names-what-is-on-screen.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — how a refusal is worded cannot make a video unsafe',
   'check-the-grid-measures-the-locked-plan.mjs': 'keyword/grid gate, pure source read; runs in daily-health-check.sh — what the geo grid scans cannot make a video unsafe',

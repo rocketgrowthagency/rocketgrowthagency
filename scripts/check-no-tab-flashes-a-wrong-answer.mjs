@@ -28,7 +28,14 @@
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_EMAIL = process.env.RGA_ADMIN_EMAIL || "rocketgrowthagencyadmin@gmail.com";
+// 🔴🔴 THIS SIGNED INTO THE ADMIN AS A CLIENT (found 2026-10-07). `rocketgrowthagencyadmin@gmail.com`
+// is a CLIENT PORTAL login, not the owner, so every admin tab threw inside `init` and rendered a
+// signed-out shell. The shell is longer than 100 characters, so it counted as "swept" — and a
+// signed-out page makes no claims at all, so there was nothing to contradict and the gate reported
+// "✅ no wrong answer flashed — 11 surface(s) swept" about eleven pages it never saw.
+// 🔑 A GATE THAT SWEEPS A PAGE IT CANNOT LOAD IS A GATE THAT IS ALWAYS GREEN.
+// → feedback_an_unwired_gate_is_a_gate_that_is_always_green · feedback_fix_the_class_not_the_instance
+const { ADMIN_EMAIL, nav } = await import("./_admin-session.mjs");
 const SITE = process.env.FLASH_SITE || "https://www.rocketgrowthagency.com";
 
 const say = (s) => console.log(s);
@@ -82,13 +89,19 @@ const TABS = ["overview", "mission", "client-setup", "onboarding-v2", "monthlyne
 
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const problems = [];
-let checked = 0;
+let checked = 0, judged = 0;
+const silent = [];
 try {
   const page = await browser.newPage();
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 120)));
 
-  await page.goto(link, { waitUntil: "networkidle2", timeout: 60000 });
+  // 🔴🔴 THIS GOTO WAS UNGUARDED AND USED `networkidle2` (2026-10-07). The admin polls, so idle may
+  // never arrive; the navigation timed out, Node exited 1 on the uncaught throw, and the sweep
+  // recorded "the product is broken" with no finding printed at all.
+  // 🔑 COULD-NOT-SIGN-IN IS EXIT 2, NEVER 1. `nav` does that, in one place, for every gate.
+  // → feedback_a_flaky_gate_is_worse_than_a_failing_one · feedback_a_gate_that_throws_is_not_a_gate_that_fails
+  await nav(page, link, "the sign-in link");
   await new Promise((r) => setTimeout(r, 6000));
 
   const targets = [
@@ -114,6 +127,9 @@ try {
     if (settledTxt.trim().length < 100) continue;       // nothing rendered; other gates own that
     checked++;
     const settled = claimsIn(settledTxt);
+    // 🔑 A SURFACE WITH NO CLAIM TEACHES THIS GATE NOTHING. There is nothing for an early frame to
+    // contradict, so counting it as swept inflates the evidence. Track it separately and say so.
+    if (settled.size) judged++; else silent.push(t.name);
 
     for (const f of early) {
       if (!f.txt || f.txt.trim().length < 100) continue;
@@ -141,6 +157,16 @@ try {
 
 if (!checked) { say("  ⚠️  no surface rendered enough to judge — cannot tell."); process.exit(2); }
 
+// 🔴 AND "IT RENDERED" IS NOT "IT SAID SOMETHING". If not one surface made a single claim, every
+// page was almost certainly signed out or empty, which is exactly how this gate used to pass.
+if (!judged) {
+  say(`  ⚠️  ${checked} surface(s) rendered but NOT ONE made a claim an operator could act on.`);
+  say("     That is what a signed-out admin looks like — reporting healthy here would be reporting");
+  say("     on pages this gate never actually read. Check the sign-in identity, not the product.");
+  process.exit(2);
+}
+if (silent.length) say(`  · ${silent.length} surface(s) made no claim, so nothing there could flash: ${silent.join(", ")}`);
+
 if (problems.length) {
   const uniq = [...new Set(problems)];
   console.error(`🔴 ${uniq.length} SURFACE(S) FLASH A WRONG ANSWER ON REFRESH\n`);
@@ -150,4 +176,4 @@ if (problems.length) {
   process.exit(1);
 }
 
-say(`✅ no wrong answer flashed — ${checked} surface(s) swept, sampled at 250–1400ms against settled`);
+say(`✅ no wrong answer flashed — ${judged} of ${checked} surface(s) swept, sampled at 250–1400ms against settled`);

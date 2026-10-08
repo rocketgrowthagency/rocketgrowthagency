@@ -55,6 +55,10 @@ const FILES = {
   stepsql: "docs/supabase/RGA_CLIENT_STEP_RUNS_2026-10-07.sql",
   heavy: "netlify/functions/flow-execute-heavy-background.js",
   ghguardpy: "scripts/gh-account-guard.py",
+  // 🔑 A LIVE-RENDER GATE READS PRODUCTION FOR ITS "GOT" SIDE, so the only input a mutation can
+  // reach is the mockup it compares against. Mutating it proves the diff can fail; it cannot prove
+  // the gate would notice an undeployed CSS edit, and nothing should claim it does.
+  mockup: "reports/mockups/admin_every_run_is_kept_v1.html",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

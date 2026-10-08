@@ -1,0 +1,58 @@
+[
+ [
+  "the time column is a different width in the approved design",
+  "mockup",
+  ".run .when{flex:0 0 164px;",
+  ".run .when{flex:0 0 132px;",
+  1
+ ],
+ [
+  "the strip's top rule is solid in the design, dashed in the build",
+  "mockup",
+  ".runs{margin:14px 0 0;border-top:1px dashed var(--line);padding-top:12px}",
+  ".runs{margin:14px 0 0;border-top:1px solid var(--line);padding-top:12px}",
+  1
+ ],
+ [
+  "the design asks for a different row rhythm",
+  "mockup",
+  ".run{display:flex;align-items:baseline;gap:12px;padding:7px 0;",
+  ".run{display:flex;align-items:baseline;gap:12px;padding:11px 0;",
+  1
+ ],
+ [
+  "the run count beside the heading is a different size",
+  "mockup",
+  ".runs-h .c{font-size:12px;",
+  ".runs-h .c{font-size:15px;",
+  1
+ ],
+ [
+  "the heading is not upper-cased in the design",
+  "mockup",
+  ".runs-h b{font:700 10px/1.6 system-ui;letter-spacing:.07em;text-transform:uppercase;",
+  ".runs-h b{font:700 10px/1.6 system-ui;letter-spacing:.07em;text-transform:none;",
+  1
+ ],
+ [
+  "the design pins the strip's text colour and the build only inherits it \u2014 the exact property the first diff tempted me to delete",
+  "mockup",
+  ".runs{margin:14px 0 0;",
+  ".runs{color:#111111;margin:14px 0 0;",
+  1
+ ],
+ [
+  "the design drops the row's layout rule entirely, so the built row no longer matches it",
+  "mockup",
+  ".run{display:flex;align-items:baseline",
+  ".runZZ{display:flex;align-items:baseline",
+  1
+ ],
+ [
+  "the mockup has no strip AT ALL \u2014 the gate's premise is gone, not the product's",
+  "mockup",
+  "<div class=\"runs\">",
+  "<div class=\"runsGONE\">",
+  2
+ ]
+]

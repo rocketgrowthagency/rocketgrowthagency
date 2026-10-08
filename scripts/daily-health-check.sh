@@ -383,6 +383,8 @@ run check-gh-cannot-run-as-the-wrong-account.mjs "gh cannot act on RGA GitHub as
 run check-every-identity-points-at-rga.mjs "every live identity on this machine points at RGA"
 run check-a-plan-can-satisfy-its-own-step.mjs "a drafted plan asks for enough to finish the step it belongs to"
 run check-every-run-is-kept.mjs "every run of a step is kept, and no run is ever rewritten"
+run check-a-detected-step-is-never-done-by-running-it.mjs "a step whose completion is detected is never finished by pressing Run"
+run check-the-run-strip-matches-the-mockup.mjs "the run history on a step card matches the approved mockup, property for property"
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
