@@ -1,0 +1,79 @@
+[
+ [
+  "the append-only trigger no longer fires on UPDATE, so a reading can be rewritten",
+  "detsql",
+  "before update or delete on public.client_step_detections",
+  "before insert on public.client_step_detections",
+  1
+ ],
+ [
+  "the trigger returns instead of raising, so it permits the write it exists to refuse",
+  "detsql",
+  "raise exception 'client_step_detections is append-only",
+  "return new; -- 'client_step_detections is append-only",
+  1
+ ],
+ [
+  "the number has nowhere to live, so the card is back to parsing prose",
+  "detsql",
+  "  measured_n    integer,",
+  "  mn            integer,",
+  1
+ ],
+ [
+  "the read policy stops scoping to the workspace that owns the client",
+  "detsql",
+  "current_user_owns_client(client_id)",
+  "true",
+  1
+ ],
+ [
+  "the reading is never recorded, so every re-check destroys the one before it",
+  "recheckfn",
+  "await recordDetection(",
+  "await Promise.resolve(",
+  1
+ ],
+ [
+  "countProbe stops returning the number beside its sentence",
+  "recheckfn",
+  "const counts = { n, threshold, noun };",
+  "const counts = {};",
+  1
+ ],
+ [
+  "recordDetection's catch swallows a ReferenceError, so a typo becomes a silent no-op",
+  "recheckfn",
+  "if (e instanceof ReferenceError || e instanceof SyntaxError) throw e;",
+  "if (false) throw e;",
+  1
+ ],
+ [
+  "a bar is drawn without a finite count, so an absence renders as zero progress",
+  "admin",
+  "Number.isFinite(d.n)",
+  "true",
+  1
+ ],
+ [
+  "the never-measured state loses its wording and reads as an answer",
+  "admin",
+  "chip = \"Not checked yet\";",
+  "chip = \"No\";",
+  1
+ ],
+ [
+  "an emoji carries the state again, and goes stale the moment the state moves",
+  "admin",
+  "chip = \"Not yet\";",
+  "chip = \"🔴 Not yet\";",
+  1
+ ],
+ [
+  "the renderer is renamed, so the gate cannot find what it judges",
+  "admin",
+  "function obDetectionHtml(",
+  "function obDetBlockHtml(",
+  2
+ ]
+]

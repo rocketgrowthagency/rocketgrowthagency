@@ -59,6 +59,9 @@ const FILES = {
   // reach is the mockup it compares against. Mutating it proves the diff can fail; it cannot prove
   // the gate would notice an undeployed CSS edit, and nothing should claim it does.
   mockup: "reports/mockups/admin_every_run_is_kept_v1.html",
+  mockupdet: "reports/mockups/admin_detected_step_v1.html",
+  recheckfn: "netlify/functions/portal-step-recheck.js",
+  detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

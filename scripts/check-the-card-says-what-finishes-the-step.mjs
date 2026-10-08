@@ -39,7 +39,18 @@ let playbooks;
 try { playbooks = JSON.parse(read("data/playbooks/playbooks.json", "playbooks.json")); }
 catch { console.error("⚠️  INDETERMINATE — playbooks.json does not parse"); process.exit(2); }
 
-const api = liftAdmin(["stepDoneWhenLine", "stepDoneWhen"]);
+// 🔑 `state` IS SUPPLIED, AND IT CARRIES A PLAYBOOK. `stepDoneButtonLabel` asks whether the step is
+// DETECTED, which reads the loaded playbook — so a sandbox without one cannot test the wording that
+// only appears on a measured step. Two step definitions, one of each kind.
+// → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+const PB = [
+  { id: "x.detected", clientDone: "detected" },
+  { id: "x.plain", clientDone: "client" },
+];
+const api = liftAdmin(["stepDoneWhenLine", "stepDoneWhen", "stepDoneButtonLabel"], {
+  extraGlobals: { state: { flowM1Playbook: PB, flowM2Playbook: [], flowAllPlaybook: PB, flowPlaybook: PB } },
+});
+const btnLabel = (o) => api.call("stepDoneButtonLabel", [o]);
 const line = (o, task) => api.call("stepDoneWhenLine", [o, task]);
 const scrape = (s) => api.call("stepDoneWhen", [s]);
 
@@ -56,20 +67,41 @@ const scrape = (s) => api.call("stepDoneWhen", [s]);
 }
 
 // ═══ PART 2 — THE BUTTON IS NAMED AS IT READS ON SCREEN ══════════════════════════════════════
-// 🔑 PIN THE PROPERTY, NOT A SPELLING I INVENTED. The label is read out of the product, so renaming
-// the button fails here instead of leaving the sentence pointing at a control nobody can find.
+// 🔑 PIN THE PRODUCER, NOT A SPELLING I INVENTED. The sentence used to hardcode "✓ Mark step
+// complete" while the button on a DETECTED step reads "Mark complete anyway" — the card naming a
+// control that is not on it. Both now come from `stepDoneButtonLabel`, so this checks that they
+// still do, and that it really does produce two different words.
 // → feedback_a_gate_must_pin_the_property_not_the_spelling · feedback_instruct_by_what_is_on_screen
-const btn = (adminSrc.match(/data-onboard-done="\$\{escapeAttribute\(o\.flowId\)\}"\$\{sc\}>([^<]+)<\/button>/) || [])[1];
-if (!btn) {
-  console.error("⚠️  INDETERMINATE — cannot find the active card's done button label");
-  process.exit(2);
+{
+  const markup = (adminSrc.match(/data-onboard-done="\$\{escapeAttribute\(o\.flowId\)\}"\$\{sc\}>([^<]+)<\/button>/) || [])[1];
+  if (!markup) {
+    console.error("⚠️  INDETERMINATE — cannot find the active card's done button label");
+    process.exit(2);
+  }
+  if (!/stepDoneButtonLabel\(o\)/.test(markup)) {
+    F(`the done button's label is \`${markup.trim()}\` — it must come from stepDoneButtonLabel, or `
+      + "the sentence that names it can drift away from the button itself");
+  }
+  const detected = btnLabel({ flowId: "x.detected" });
+  const plain = btnLabel({ flowId: "x.plain" });
+  if (!detected || !plain) F("stepDoneButtonLabel returned nothing for one of the two step kinds");
+  else if (detected === plain) {
+    F(`a measured step and an ordinary step get the SAME button wording ("${plain}") — ticking a `
+      + "step whose completion is measured is an override, and the label has to say so");
+  } else {
+    console.log(`  ✅ the done button reads "${plain}" normally and "${detected}" on a measured step`);
+  }
 }
+
 const hybrid = { sopType: "hybrid", hasRunner: true, actionLabel: "⚡ Generate", doneWhen: "" };
 const ranOpen = { ran_at: "2026-10-07T16:45:00Z", status: "in_progress" };
 {
   const t = line(hybrid, ranOpen);
   if (!t) F("a hybrid step whose runner has run and did not finish says nothing about what finishes it — the defect this gate exists for");
-  if (t && !t.includes(btn.trim())) F(`the line does not name the button that finishes the step (expected "${btn.trim()}", got "${t}")`);
+  // 🔑 THE SENTENCE MUST NAME WHAT THE PRODUCER PRODUCES FOR THIS STEP — not a fixed string. On a
+  // measured step that is "Mark complete anyway"; anywhere else "✓ Mark step complete".
+  const want = btnLabel(hybrid);
+  if (t && !t.includes(want)) F(`the line does not name the button that finishes the step (expected "${want}", got "${t}")`);
   if (t && !t.includes("⚡ Generate")) F("the line does not name the step's own action, so it reads the same on every card");
 }
 
@@ -123,4 +155,4 @@ if (fails.length) {
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log(`✅ the card says what finishes the step — the strip reads one producer, names "${btn.trim()}", and stays quiet on ${quiet.length} states where it would be false`);
+console.log(`✅ the card says what finishes the step — the strip reads one producer, names the button by the same producer the button uses, and stays quiet on ${quiet.length} states where it would be false`);
