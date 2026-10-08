@@ -109,7 +109,13 @@ const fail = [];
   }
   // 🔴 `ran_at` RECORDS WHEN SOMETHING WAS PRODUCED. A failure produced nothing.
   const wf = (code.match(/async function writeFailure[\s\S]*?\n\}/) || [""])[0];
-  if (wf && /ran_at:/.test(wf)) {
+  // 🔴 TWO DIFFERENT `ran_at`s LIVE IN THIS FUNCTION, and checking the whole block confuses them.
+  // The TASK's `ran_at` says when the step last produced something, and a failure produced nothing.
+  // The HISTORY ROW's `ran_at` says when the run happened — a failed run happened, and keeping it is
+  // the entire point of `client_step_runs` ("it failed twice before it worked").
+  // Scope the check to the task write. → feedback_a_gate_must_pin_the_property_not_the_spelling
+  const taskWrite = (wf.match(/tasks\[stepId\]\s*=\s*\{[\s\S]*?\};/) || [""])[0];
+  if (wf && taskWrite && /ran_at:/.test(taskWrite)) {
     fail.push("the failure path writes `ran_at` — that would make the card claim this run's output "
       + "is the one on screen, when this run produced nothing");
   }

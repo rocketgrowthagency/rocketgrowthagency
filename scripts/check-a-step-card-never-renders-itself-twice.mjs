@@ -150,14 +150,19 @@ function fnBody(name) {
       }
       return code.slice(m.index, i);
     };
+    // 🔑 PIN THE PROPERTY, NOT ONE PRODUCER'S NAME. On a DETECTED step the detection block states
+    // the rule as its own last row, so the card renders `${detHtml || ruleHtml}` — the rule is still
+    // there, by whichever producer owns it. This gate failed on that change while the card was
+    // correct, which is the spelling trap it was written to avoid in the first place.
+    // → feedback_a_gate_must_pin_the_property_not_the_spelling
     const want = [
       ["bandHtml", /ob-state/, "the state band — what is true now, and whose turn it is"],
-      ["ruleHtml", /ob-rule/, "the done-when rule — what finishes this step"],
+      ["ruleHtml", /ob-rule/, "the done-when rule — what finishes this step", /\$\{detHtml \|\| ruleHtml\}|\$\{ruleHtml\}/],
       ["howHtml", /ob-how/, "the reference fold — how this step works"],
     ];
     let missing = 0;
-    for (const [v, re, what] of want) {
-      if (!new RegExp(`\\$\\{${v}\\}`).test(card)) {
+    for (const [v, re, what, alt] of want) {
+      if (!(alt ? alt.test(card) : new RegExp(`\\$\\{${v}\\}`).test(card))) {
         missing++;
         fail.push(`admin/admin.js — the active card no longer renders ${what} (\`\${${v}}\` is not in the template).`);
       } else if (!re.test(declOf(v))) {

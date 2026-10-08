@@ -40,6 +40,12 @@ const UI_ONLY = {
   "data-v2tab": "switches a sub-tab — the pane visibly changes",
   "data-goto-tab": "navigates to another tab — the destination is the feedback",
   "data-accordion-toggle": "expands/collapses a section — the section visibly moves",
+  // 🔑 The shot list's two controls. Each one's result IS what you see: the panel opens under the
+  // button (whose label flips to "Close the list"), and the whys appear or disappear in place. A
+  // banner for either would be noise reporting something already on screen.
+  // → project_the_shot_list_is_a_deliverable
+  "data-dlv-open": "opens/closes the shot list panel in place — the list and the button's own label are the result",
+  "data-dlv-whys": "shows/hides the why line on each shot — the rows visibly change, and the label flips",
   // ── the onboarding checklist's own view controls (2026-09-29 → 10-01). Each one's result IS the
   // list changing under it; there is nothing else to report. The one control here that MUTATES —
   // data-task-set — is NOT excused and is audited.
