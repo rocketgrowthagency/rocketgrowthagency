@@ -20,6 +20,7 @@
 // Exit 0 healthy · 1 the product is wrong · 2 INDETERMINATE
 
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -73,8 +74,22 @@ const ALLOWED = [
   { needle: "centred on", why: "the same approved card wording, rendered on the admin's grid summary line" },
 ];
 
+// 🔑 THE DICTIONARY IS NOT PROSE. `_us-idiom.js` has to NAME every British word in order to convert
+// it — "colour", "centre", "programme", "whilst" are its data, and its prompt clause spells the
+// contrast out on purpose ("color not colour"). Scanning it as copy a reader sees reports the fix
+// as the defect. It is instead exercised DIRECTLY below, by running it against known words.
+// 🔴 THIS IS THE ONLY EXCLUSION, and it is one FILE, not a pattern — a pattern here would quietly
+// stop scanning the next file somebody names similarly.
+// → feedback_a_gate_written_for_a_temporary_state_outlives_it
+const NOT_PROSE = "netlify/functions/_us-idiom.js";
 const FILES = ["admin/admin.js", "portal/portal.js",
-  ...fs.readdirSync(path.join(SITE, "netlify/functions")).filter((f) => f.endsWith(".js")).map((f) => "netlify/functions/" + f)];
+  ...fs.readdirSync(path.join(SITE, "netlify/functions")).filter((f) => f.endsWith(".js")).map((f) => "netlify/functions/" + f)]
+  .filter((rel) => rel !== NOT_PROSE);
+if (!fs.existsSync(path.join(SITE, NOT_PROSE))) {
+  console.error(`⚠️  INDETERMINATE — ${NOT_PROSE} is excluded from the scan but does not exist.`);
+  console.error("   Either the converter was removed (a real problem) or this exclusion is stale.");
+  process.exit(2);
+}
 
 let scanned = 0, strings = 0;
 const used = new Set();
@@ -120,6 +135,74 @@ if (!scanned) { console.error("⚠️  INDETERMINATE — no source files were re
 // a stale exception is its own drift
 for (const a of ALLOWED) {
   if (!used.has(a.needle)) F(`the exception for "${a.needle}" no longer matches anything — remove it, or it will excuse something it was never meant to`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴🔴 THE MODEL'S OUTPUT IS TEXT A HUMAN READS, AND THIS GATE COULD NOT SEE IT.
+//
+// Everything above scans SOURCE. On 2026-10-07 step 31's shot list — a document the CLIENT reads —
+// came back from the model with "centred", "colour" and "optimised", while the two runs before it,
+// from the same prompt, were clean. Nothing in the repo was wrong; the model drifted, and this gate
+// was green throughout.
+//
+// 🔑 A LINE THAT MUST NEVER APPEAR NEEDS ITS PRODUCER REMOVED. `aiDraft` is the one boundary every
+// runner's text crosses, so it asks for US English in the system prompt AND converts on the way
+// back. This part RUNS that converter rather than grepping for it.
+// → feedback_a_line_that_must_never_appear_cannot_be_gated · feedback_a_gate_that_it_exists_is_not_a_gate_that_it_works
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const mod = `${SITE}/netlify/functions/_us-idiom.js`;
+  if (!fs.existsSync(mod)) {
+    F("netlify/functions/_us-idiom.js is gone — model output crosses into client-facing copy unconverted");
+  } else {
+    let toUsIdiom, US_IDIOM_PROMPT;
+    try { ({ toUsIdiom, US_IDIOM_PROMPT } = createRequire(import.meta.url)(mod)); }
+    catch (e) {
+      console.error(`⚠️  INDETERMINATE — _us-idiom.js does not load: ${e.message}`);
+      process.exit(2);
+    }
+    // 🔑 IT MUST FIX EVERY WORD THIS GATE KNOWS IS BRITISH …
+    const missed = MUST_FLAG.filter((w) => toUsIdiom(w) === w);
+    if (missed.length) {
+      F(`the converter leaves ${missed.length} British word(s) untouched: ${missed.join(", ")} — `
+        + "the detector and the converter must know the same words, or the gate passes on copy the converter cannot fix");
+    }
+    // … AND LEAVE EVERY CORRECT WORD ALONE. The detector's first version flagged "analysis",
+    // "analyst" and "optimism"; a converter making that mistake would silently corrupt working copy.
+    const broke = MUST_NOT_FLAG.filter((w) => toUsIdiom(w) !== w);
+    if (broke.length) F(`the converter CHANGES correct US words: ${broke.map((w) => `${w}→${toUsIdiom(w)}`).join(", ")}`);
+    // 🔴 AND IT MUST NOT TOUCH A PROPER NOUN. These are real business names; this runs for every
+    // client, not ours. → feedback_a_rule_tested_on_one_client_is_shaped_to_that_client
+    const NAMES = ["Pacific Centre Dental", "Colour Me Mine", "The Grey Dog", "Centre Street Cafe"];
+    const mangled = NAMES.filter((n) => toUsIdiom(n) !== n);
+    if (mangled.length) F(`the converter rewrites business names: ${mangled.map((n) => `"${n}" → "${toUsIdiom(n)}"`).join(", ")}`);
+    // …and words a suffix rule would have mangled
+    for (const w of ["advertise", "exercise", "franchise", "merchandise", "supervise", "surprise", "promise", "comprise"]) {
+      if (toUsIdiom(w) !== w) F(`the converter mangles "${w}" → "${toUsIdiom(w)}" — an -ise SUFFIX rule instead of an explicit stem list`);
+    }
+
+    // 🔑 AND IT MUST ACTUALLY BE WIRED, ON EVERY RETURN PATH. A converter nobody calls is a gate
+    // that is always green. → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
+    let exec;
+    try { exec = fs.readFileSync(`${SITE}/netlify/functions/flow-execute.js`, "utf8"); }
+    catch { console.error("⚠️  INDETERMINATE — cannot read flow-execute.js"); process.exit(2); }
+    const fn = /async function aiDraft\([\s\S]*?\n}/.exec(exec);
+    if (!fn) { console.error("⚠️  INDETERMINATE — cannot find aiDraft in flow-execute.js"); process.exit(2); }
+    const body = fn[0];
+    const returns = body.match(/return markIfTruncated\([^\n]*/g) || [];
+    if (!returns.length) { console.error("⚠️  INDETERMINATE — aiDraft has no markIfTruncated return to check"); process.exit(2); }
+    const unconverted = returns.filter((r) => !/toUsIdiom\(/.test(r));
+    if (unconverted.length) {
+      F(`${unconverted.length} of ${returns.length} aiDraft return path(s) hand back model text without converting it — `
+        + "the Anthropic and OpenAI branches both reach the client");
+    }
+    if (!/US_IDIOM_PROMPT/.test(body)) {
+      F("aiDraft no longer asks the model for US English in its system prompt — the converter is the net, not the plan");
+    }
+    if (US_IDIOM_PROMPT && !/US English/i.test(US_IDIOM_PROMPT)) {
+      F("US_IDIOM_PROMPT no longer says US English");
+    }
+  }
 }
 
 if (fails.length) {

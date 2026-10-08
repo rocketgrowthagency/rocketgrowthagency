@@ -62,6 +62,7 @@ const FILES = {
   mockupdet: "reports/mockups/admin_detected_step_v1.html",
   recheckfn: "netlify/functions/portal-step-recheck.js",
   detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
+  usidiom: "netlify/functions/_us-idiom.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
 

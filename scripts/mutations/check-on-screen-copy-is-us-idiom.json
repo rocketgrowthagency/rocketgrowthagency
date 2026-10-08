@@ -16,5 +16,47 @@
   "exec",
   "from its own map center",
   "from its own map centre"
+ ],
+ [
+  "the Anthropic branch hands back model text unconverted",
+  "exec",
+  "toUsIdiom((data.content?.[0]?.text || \"\").trim())",
+  "((data.content?.[0]?.text || \"\").trim())",
+  1
+ ],
+ [
+  "aiDraft stops asking the model for US English",
+  "exec",
+  "${NO_FABRICATION}\\n\\n${US_IDIOM_PROMPT}\\n\\n${systemPrompt}",
+  "${NO_FABRICATION}\\n\\n${systemPrompt}",
+  1
+ ],
+ [
+  "the converter starts changing a correct US plural noun (three analyses of the data)",
+  "usidiom",
+  "analyse: \"analyze\", analysed: \"analyzed\",",
+  "analyse: \"analyze\", analyses: \"analyzes\", analysed: \"analyzed\",",
+  1
+ ],
+ [
+  "the converter mangles a correct US word an -ise suffix rule would have caught",
+  "usidiom",
+  "grey: \"gray\",",
+  "grey: \"gray\", advertise: \"advertize\",",
+  1
+ ],
+ [
+  "the converter goes case-insensitive and starts rewriting business names",
+  "usidiom",
+  "new RegExp(`\\\\b${brit}\\\\b`, \"g\")",
+  "new RegExp(`\\\\b${brit}\\\\b`, \"gi\")",
+  1
+ ],
+ [
+  "the converter forgets a word the detector flags",
+  "usidiom",
+  "colour: \"color\", colours: \"colors\",",
+  "colours: \"colors\",",
+  1
  ]
 ]
