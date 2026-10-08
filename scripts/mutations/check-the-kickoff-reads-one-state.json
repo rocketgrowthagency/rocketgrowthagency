@@ -145,5 +145,12 @@
   "class=\"ob-step ${kick2 ? \"active\" : kick4Req ? \"waits\"",
   "class=\"ob-step ${kick2 || kick4Req ? \"active\" : kick4Req ? \"waits\"",
   1
+ ],
+ [
+  "step 2 goes back to the first-hour phase",
+  "admin",
+  "const obGroupOf = (flowId) => flowId === \"m1.close.kickoff_invite\" ? \"kickoff\" : (String(flowId || \"\").split(\".\")[1] || \"\");",
+  "const obGroupOf = (flowId) => (String(flowId || \"\").split(\".\")[1] || \"\");",
+  1
  ]
 ]

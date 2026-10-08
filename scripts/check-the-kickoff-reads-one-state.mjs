@@ -137,6 +137,10 @@ for (const bad of ["We'll email you to sort a new one", "we'll confirm a new one
   if (code.includes(bad)) F(`the client portal still promises "${bad}" — nothing sends that`);
 }
 
+// 4c · steps 2, 3 and 4 share ONE phase card (approved client_sequence_and_kickoff_v1)
+if (!/const obGroupOf = \(flowId\) => flowId === "m1\.close\.kickoff_invite" \? "kickoff"/.test(admin)) F("step 2 is grouped away from the kickoff phase again — booking and the call read as unrelated cards");
+if (!/\{ key: "kickoff",\s+name: "The kickoff call", sub: "Book it · record check · run it"/.test(admin)) F("the kickoff phase no longer names all three of its steps");
+
 // 5 · no Run again on step 2
 if (!/const rerunBtn = runnable && [^\n]*o\.flowId !== KICKOFF_INVITE_STEP_ID/.test(admin)) F("step 2 offers Run again — its runner books the first free slot");
 
