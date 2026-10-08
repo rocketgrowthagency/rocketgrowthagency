@@ -680,6 +680,28 @@ function fnSource(code, name) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 2026-10-08 — AN ADMIN SKIP HID A BOOKED CALL FROM THE CLIENT, eleven minutes before it.
+// The admin's "Run the kickoff call" and the client's "Book your kickoff call" share one task id.
+// Step 4 was skipped in the admin to reach step 22; the portal read `skipped` as DONE and dropped
+// the booked time and both release controls. And the Skip itself left no record of who pressed it.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+{
+  const portalSrc = read(WEB, "portal/portal.js", 100000);
+  const adminSrc = read(WEB, "admin/admin.js", 100000);
+  if (portalSrc) {
+    const blk = /if \(s\.clientForm === "kickoff_booking" && status === "skipped"\) \{\s*const kf = kickoffFacts\(clientId, onboarding\?\.data\?\.kickoff_invite\);\s*if \(kf\.unknown \|\| kf\.bookedIso \|\| kf\.requestedIso\) status = "in_progress";/;
+    if (!blk.test(portalSrc)) fail.push("portal/portal.js — an admin Skip can hide a booked kickoff call from the client again: the booking no longer outranks `skipped` on their row");
+    else pass.push("portal/portal.js — a booked or requested call outranks an admin Skip on the client's row");
+  }
+  if (adminSrc) {
+    const fn = (adminSrc.match(/async function setClientTaskStatus\([\s\S]*?\n\}\n/) || [""])[0];
+    if (!fn) indet.push("admin/admin.js: setClientTaskStatus not found");
+    else if (!/from\("client_activity"\)\.insert\(/.test(fn) || !/kind: `onboarding_step_\$\{/.test(fn)) fail.push("admin/admin.js — the Done/Skip/Reset override writes no activity record; the next hidden call will have no trace of who did it");
+    else pass.push("admin/admin.js — every Done/Skip/Reset override leaves an activity record");
+  }
+}
+
 for (const x of pass) console.log(`  ✅ ${x}`);
 for (const x of indet) console.log(`  ⚠️  INDETERMINATE — ${x}`);
 for (const x of fail) console.log(`  🔴 ${x}`);

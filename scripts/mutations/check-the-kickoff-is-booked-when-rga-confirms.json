@@ -1,0 +1,16 @@
+[
+ [
+  "an admin Skip hides a booked call from the client again — the live bug of 2026-10-08",
+  "portal",
+  "      if (kf.unknown || kf.bookedIso || kf.requestedIso) status = \"in_progress\";",
+  "      if (false) status = \"in_progress\";",
+  1
+ ],
+ [
+  "the admin override stops leaving a record",
+  "admin",
+  "        kind: `onboarding_step_${newStatus === \"pending\" ? \"reset\" : newStatus}`,",
+  "        kind: \"x\",",
+  1
+ ]
+]
