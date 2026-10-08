@@ -129,6 +129,12 @@ const PASSED = [
   ["the client card: Your turn + Passed + Pick a new time", /if \(!confirmed && ph\.requestPassed\) \{[\s\S]{0,300}?>Passed<\/span>[\s\S]{0,500}?>Pick a new time<\/button>/, portal],
   ["the client pill flips to Your turn", /: reqPassed \? \{ cls: "you", text: "Your turn" \}/, portal],
   ["a request lapses at its start, not its end", /const requestPassed = pending && Number\.isFinite\(rTime\) && t >= rTime;/, portal],
+  // 🔒 client_pick_after_time_passed_v1 — "Pick a new time" over a passed time (Chris 10-08 4:34 PM)
+  ["the picker keeps the standing time (the pill stays Your turn)", /if \(standing\) _kickoffPicking\.add\(clientId\); else _kickoffPicking\.delete\(clientId\);[\s\S]{0,600}?if \(standing\) _kickoffWhen\.set\(clientId, \{\s*startMs: new Date\(standing\.start\)\.getTime\(\)/, portal],
+  ["a passed standing time is never put in the slot list", /if \(standing && !kickoffStandingPassed\(standing\)\) \{\s*const ms = new Date\(standing\.start\)/, portal],
+  ["a passed standing time is never marked on the calendar", /const isMine = standing && !kickoffStandingPassed\(standing\) && keyOf/, portal],
+  ["a passed standing time has no Keep control", /if \(kickoffStandingPassed\(standing\)\) return booked\s*\?\s*`<div class="kc-past">[^`]*has passed\.[^`]*`\s*:\s*`<div class="kc-past">[^`]*not confirmed, so it's not on the calendar[^`]*`;/, portal],
+  ["the picker lede over a passed time", /pickingPassed\s*\?\s*"Pick any open time below\. We'll confirm it and email you the calendar invite\."/, portal],
 ];
 for (const [what, re, src] of PASSED) if (!re.test(src)) F(`${what} is missing — the passed state can tell its own story again`);
 // 🔴 the promises nothing keeps must not come back (Chris's 2:04 PM screenshot)

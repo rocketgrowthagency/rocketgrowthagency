@@ -152,5 +152,33 @@
   "const obGroupOf = (flowId) => flowId === \"m1.close.kickoff_invite\" ? \"kickoff\" : (String(flowId || \"\").split(\".\")[1] || \"\");",
   "const obGroupOf = (flowId) => (String(flowId || \"\").split(\".\")[1] || \"\");",
   1
+ ],
+ [
+  "the picker forgets the standing time again",
+  "portal",
+  "    if (standing) _kickoffWhen.set(clientId, {",
+  "    if (false) _kickoffWhen.set(clientId, {",
+  1
+ ],
+ [
+  "a passed standing time is pushed into the slots",
+  "portal",
+  "if (standing && !kickoffStandingPassed(standing)) {",
+  "if (standing) {",
+  1
+ ],
+ [
+  "a passed time is marked on the calendar",
+  "portal",
+  "const isMine = standing && !kickoffStandingPassed(standing) && keyOf",
+  "const isMine = standing && keyOf",
+  1
+ ],
+ [
+  "a passed time gets the Keep bar",
+  "portal",
+  "    if (kickoffStandingPassed(standing)) return booked",
+  "    if (false) return booked",
+  1
  ]
 ]
