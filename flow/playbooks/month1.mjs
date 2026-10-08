@@ -68,7 +68,7 @@ Must contain, in this order:
 
 ▶️ RUN IT — the Run button sends it from hello@rocketgrowthagency.com and CAPTURES the exact body, the recipient and Gmail's message id. It will not send twice unless you force it.
 
-🔒 Approved 2026-10-08 (client_emails_yes_to_kickoff_v1). It replaces the automatic stage-4 email, which is retired.`,
+Approved 2026-10-08 (client_emails_yes_to_kickoff_v1). It replaces the automatic stage-4 email, which is retired.`,
   },
   {
     id: "m1.close.kickoff_invite", title: "Book the kickoff call",

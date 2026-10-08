@@ -72,7 +72,8 @@ const SPEC = [
     props: ["width","height","borderRadius","backgroundColor","color"] },
   { name: "step identifier",      live: ".ob-step.done .ob-sid",  mock: "#after .ob-step.done .ob-sid",
     props: ["fontFamily","fontSize","fontWeight","color","fontVariantNumeric","letterSpacing","flexGrow","flexShrink"] },
-  { name: "phase marker (open)",  live: ".ob-phase.open .ob-ph-state", mock: "#after .ob-ph-state",
+  { name: "phase marker (open)",  live: ".ob-phase.open:not(.is-complete) .ob-ph-state",   // a finished phase stays green when open (state system)
+    mock: "#after .ob-ph-state",
     props: ["width","height","borderRadius","fontSize","fontWeight","backgroundColor","color","display","alignItems","justifyContent"] },
   { name: "the way back",         live: ".ob-goto",               mock: "#after .ob-goto",
     props: ["minHeight","paddingLeft","paddingRight","borderRadius","borderTopWidth","borderTopStyle","borderTopColor","backgroundColor","color","fontSize","fontWeight","display","alignItems","columnGap","textDecorationLine"] },
