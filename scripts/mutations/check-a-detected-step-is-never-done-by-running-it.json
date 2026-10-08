@@ -1,0 +1,22 @@
+[
+  ["the detected clause is dropped from the decision — the original defect",
+   "exec", "(!isHybrid && !isDetected)", "(!isHybrid)", 1],
+
+  ["the flag reads a property playbooks.json never sets",
+   "exec", "stepDef?.clientDone === \"detected\"", "stepDef?.clientDoneMode === \"detected\"", 1],
+
+  ["the flag is pinned to a word no step uses",
+   "exec", "=== \"detected\"", "=== \"observed\"", 1],
+
+  ["a runner can no longer report that it finished the job",
+   "exec", "runnerCompleted || (!isHybrid && !isDetected)", "(!isHybrid && !isDetected)", 1],
+
+  ["over-corrected: only an explicit claim finishes anything, so plain automated steps never complete",
+   "exec", "const isDone = runnerCompleted || (!isHybrid && !isDetected);", "const isDone = runnerCompleted;", 1],
+
+  ["the decision is renamed, so the gate can no longer find what it judges",
+   "exec", "const isDone = runnerCompleted", "const isStepDone = runnerCompleted", 2],
+
+  ["the detected flag is renamed, so the lifted rule no longer compiles against it",
+   "exec", "const isDetected = stepDef", "const isDetectedStep = stepDef", 2]
+]

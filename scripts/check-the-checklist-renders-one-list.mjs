@@ -185,6 +185,12 @@ try {
       doneRows: host.querySelectorAll(".ob-step.done, .ob-step.declined").length,
       overrideOnClientRows: rows.filter((r) => r.querySelector(".ob-row .ob-kind.cl") && r.querySelector("[data-task-set]")).length,
       clientRows: rows.filter((r) => r.querySelector(".ob-row .ob-kind.cl")).length,
+      // 🔴 THE DENOMINATOR IS THE ROWS THAT SHOULD HAVE ONE. A done row carries ↩ Undo instead of
+      // Done/Skip/Reset, by design — so on a client whose every row is done, zero overrides is the
+      // CORRECT render and the old check accused it. Measured 2026-10-07 on a live client: all 6
+      // client rows done, gate red, product right. → feedback_a_gate_written_from_a_slogan_defends_the_misreading
+      openClientRows: rows.filter((r) => r.querySelector(".ob-row .ob-kind.cl")
+        && !r.classList.contains("done") && !r.classList.contains("declined")).length,
       note: (host.querySelector(".ob-viewnote")?.textContent || "").replace(/\s+/g, " ").trim(),
       views: [...host.querySelectorAll(".ob-views [data-ob-view]")].map((b) => b.dataset.obView),
     };
@@ -233,10 +239,14 @@ try {
 
   // ── 3 · the client's rows carry the override the deleted card held ──────────────────────────
   //    Done rows do not: ↩ Undo already reopens them by the same write.
-  if (all.clientRows && all.overrideOnClientRows === 0) {
-    bad(`none of the ${all.clientRows} client rows offers Done/Skip/Reset. The override was moved out `
+  if (all.openClientRows && all.overrideOnClientRows === 0) {
+    bad(`none of the ${all.openClientRows} OPEN client rows offers Done/Skip/Reset. The override was moved out `
       + "of its own card onto these rows; if it is not here it exists nowhere.");
-  } else console.log(`  ✅ ${all.overrideOnClientRows} of ${all.clientRows} client rows carry the override (done rows use ↩ Undo)`);
+  } else if (!all.openClientRows) {
+    console.log(`  ✅ all ${all.clientRows} client rows are done or declined, so none carries Done/Skip/Reset `
+      + `— ↩ Undo reopens them by the same write. Nothing to check here on this client.`);
+  } else console.log(`  ✅ ${all.overrideOnClientRows} of ${all.openClientRows} open client rows carry the override `
+    + `(${all.clientRows - all.openClientRows} done row(s) use ↩ Undo)`);
 
   // ── 4 · the head agrees with the rows below it ───────────────────────────────────────────────
   if (all.headTotal !== all.rows || all.headDone !== all.doneRows) {
