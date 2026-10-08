@@ -65,8 +65,8 @@
  [
   "the pill goes back to Active now",
   "admin",
-  "${waiting ? \"Waiting on client\" : \"Active now\"}",
-  "Active now",
+  "${waiting ? \"Waiting on client\"",
+  "${false ? \"Waiting on client\"",
   1
  ],
  [
@@ -86,8 +86,8 @@
  [
   "the captured step is never opened",
   "portal",
-  "    const row = listEl.querySelector(`#step-row-${CSS.escape(_deepStep)}`);",
-  "    const row = null;",
+  "  const row = scope.querySelector(`#step-row-${CSS.escape(_deepStep)}`);",
+  "  const row = null;",
   1
  ]
 ]

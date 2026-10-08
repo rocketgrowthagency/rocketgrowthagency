@@ -1,0 +1,16 @@
+[
+ [
+  "the console's countdown goes back to its own formatter — the two portals can disagree",
+  "admin",
+  "  const cd = kickoffCountdown(new Date(startIso).getTime() - Date.now(), KICKOFF_SLOT_MIN);\n  return (cd.text || \"Starting now\").replace(/^In /, \"\");",
+  "  return String(Math.round((new Date(startIso).getTime() - Date.now()) / 60000)) + \" min\";",
+  1
+ ],
+ [
+  "the console's ticker writes its own words",
+  "admin",
+  "    if (ki2?.start) el.textContent = kickoffStartsIn(ki2.start);",
+  "    if (ki2?.start) el.textContent = \"soon\";",
+  1
+ ]
+]

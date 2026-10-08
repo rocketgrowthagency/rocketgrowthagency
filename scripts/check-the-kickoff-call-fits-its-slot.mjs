@@ -147,7 +147,11 @@ const dueFn = code.match(/function kickoffCallDue\(\) \{[\s\S]*?\n\}/);
 const collectFn = code.match(/function kickoffCollectStatus\(\) \{[\s\S]*?\n\}/);
 const collectList = code.match(/const KICKOFF_COLLECT = \[[\s\S]*?\n\];/);
 const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
-if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn) {
+// 🔑 v2 (2026-10-08): the console reads three helpers — the shared-words countdown, the scan (in
+// either shape) and the prep draft's questions. Lifted beside it, or the render throws in the copy.
+const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffQuestions"].map((n) =>
+  (code.match(new RegExp(`function ${n}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);
+if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || helperFns.some((x) => !x)) {
   fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
 } else {
   const box = {
@@ -155,12 +159,15 @@ if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn) {
     escapeHtml: (x) => String(x == null ? "" : x),
     escapeAttribute: (x) => String(x == null ? "" : x),
     cellRank: (v) => (typeof v === "number" ? v : null),
+    // the shared formatter's contract, enough for the console to render; its words are held by
+    // check-the-countdown-agrees-across-portals against the real module
+    kickoffCountdown: (ms) => ({ text: ms > 60000 ? "In " + Math.round(ms / 60000) + "m" : ms > -1800000 ? "Happening now" : "" }),
     Date, Math, Number, String, Object, Array, JSON, console,
   };
   vm.createContext(box);
   // 🔑 Define ONCE, then call per case. Re-running the definitions in the same context throws
   // "already been declared" on the second render — which silently cost a check the first time.
-  const src = [collectList[0], textFn[0], dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
+  const src = [collectList[0], textFn[0], ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
     "globalThis.__render = () => kickoffConsoleHtml({ flowId: 'm1.kickoff.call' });"].join("\n");
   vm.runInContext(src, box, { timeout: 4000 });
   const renderAt = (minsIn) => {

@@ -1,0 +1,9 @@
+[
+ [
+  "the console renders with nothing booked",
+  "admin",
+  "  const clk = kickoffCallClock(state.kickoffSectionIdx);\n  if (!clk) return \"\";                                     // nothing booked: no console",
+  "  const clk = kickoffCallClock(state.kickoffSectionIdx) || { phase: \"pre\", minsToStart: 0 };",
+  1
+ ]
+]

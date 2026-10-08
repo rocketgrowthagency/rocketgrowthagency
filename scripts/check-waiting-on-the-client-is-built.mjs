@@ -83,7 +83,7 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
 if (!/const waiting = stepKind\(o\) === "client" && !band && \(!runnable \|\| !!result\);/.test(admin)) {
   F("the card can say \"Waiting on client\" while our own draft is still undone — the waiting test lost its our-part-done clause");
 }
-if (!/\$\{waiting \? "Waiting on client" : "Active now"\}/.test(admin)) F("the pill no longer says \"Waiting on client\" when it is the client's move");
+if (!/\$\{waiting \? "Waiting on client"/.test(admin)) F("the pill no longer says \"Waiting on client\" when it is the client's move");
 
 // 4 · 5 · one send path, allow-listed, no "Sent" stamp
 if (!/kind: "nudge", clientId: c\.id, stepId/.test(admin)) F("the admin's nudge does not go through send-step-email with kind \"nudge\"");

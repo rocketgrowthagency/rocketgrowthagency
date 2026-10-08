@@ -71,19 +71,21 @@ const admin = read(F("admin", "admin.js")) || "";
 // went red on correct code because the countdown sits further than 900 characters into the branch.
 // Bound by the BRANCH, not by a distance: from `const html = booked ?` to the `:` that begins the
 // not-booked arm. → feedback_a_gate_window_measured_in_characters_will_lie
+// 🔑 v2 (2026-10-08, admin_kickoff_call_v1.html): the admin no longer repeats the client's countdown
+// CARD on Overview — its countdown lives in step 4's console and the Your action card. What this gate
+// exists for is unchanged: THE SAME WORDS. So the admin's countdown text must come from the shared
+// formatter, both when it renders and when it ticks.
 {
-  const start = admin.indexOf("const html = booked");
-  const elseAt = start < 0 ? -1 : admin.indexOf(': `<div class="pm-prompt">', start);
-  const bookedArm = start >= 0 && elseAt > start ? admin.slice(start, elseAt) : "";
-  if (!bookedArm)
-    fail.push("admin/admin.js — could not isolate the booked arm of the kickoff card; the countdown's placement cannot be judged.");
-  else if (!/kickoffCountdown\(/.test(bookedArm))
-    fail.push("admin/admin.js — the countdown is not inside the booked branch, so it can render for a call nobody has confirmed.");
-  else pass.push("the admin card counts down only to a confirmed call");
+  const fn = (admin.match(/function kickoffStartsIn\([^)]*\) \{[\s\S]*?\n\}/) || [""])[0];
+  if (!/kickoffCountdown\(/.test(fn)) fail.push("admin/admin.js — the console's countdown is not written by the shared formatter, so it can name the call differently from the client's card.");
+  else pass.push("the admin's countdown text comes from the shared formatter");
+  if (!/data-kc-countdown>' \+ escapeHtml\(kickoffStartsIn\(/.test(admin)) fail.push("admin/admin.js — the console renders its countdown without the shared formatter.");
+  else pass.push("the console renders its countdown in the shared words");
+  if (!/el\.textContent = kickoffStartsIn\(/.test(admin)) fail.push("admin/admin.js — the console's ticker writes its own words, so the countdown drifts from the client's as it ticks.");
+  else pass.push("the console's ticker keeps the shared words");
 }
 
-// 🔴 A timer that re-renders a card is how this codebase got a fetch loop and, separately, a hang.
-for (const [rel, src] of [["portal/portal.js", portal], ["admin/admin.js", admin]]) {
+for (const [rel, src] of [["portal/portal.js", portal]]) {
   const m = src.match(/setInterval\(\(\) => \{[\s\S]*?data-kickoff-countdown[\s\S]*?\n\}, \d+\);/);
   if (!m) { fail.push(`${rel} — nothing ticks the countdown, so it freezes at whatever it said when the card rendered.`); continue; }
   if (/render\w*\(/.test(m[0]))
@@ -112,7 +114,7 @@ for (const [rel, src] of [["portal/portal.js", portal], ["admin/admin.js", admin
 // 🔴 SCOPED TO THE RENDER BLOCK. Both of these strings also appear in the TICKER, so a whole-file
 // search passed even with the render's tone and threshold deleted. A check about what is drawn must
 // read what is drawn. → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
-for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/admin.js", admin, "kc-cd"]]) {
+for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"]]) {
   const at = src.indexOf(`<div class="${cls} `);
   if (at < 0) { fail.push(`${rel} — the countdown card is not rendered with a tone class, so it cannot say how close the call is.`); continue; }
   const block = src.slice(src.lastIndexOf("${", at), at + 40);
@@ -137,7 +139,7 @@ for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/ad
     "admin/admin.css": fs.readFileSync(F("admin", "admin.css"), "utf8"),
     "portal/portal.css": fs.readFileSync(F("portal", "portal.css"), "utf8"),
   };
-  const parts = [["admin/admin.css", "kc-cd"], ["portal/portal.css", "pm-cd"]];
+  const parts = [["portal/portal.css", "pm-cd"]];
   for (const [rel, cls] of parts) {
     for (const part of ["big", "lab"]) {
       const scoped = new RegExp(`\\.${cls} \\.${cls}-${part}\\s*\\{`).test(css[rel]);
@@ -149,7 +151,7 @@ for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/ad
   if (!fail.some((f) => /is styled unscoped/.test(f))) pass.push("the countdown's parts outrank their container's element rules");
 
   // 🔑 And both cards carry the same three parts — label, number, date.
-  for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"], ["admin/admin.js", admin, "kc-cd"]]) {
+  for (const [rel, src, cls] of [["portal/portal.js", portal, "pm-cd"]]) {
     for (const part of ["lab", "big", "sub"]) {
       if (!new RegExp(`${cls}-${part}`).test(src))
         fail.push(`${rel} — the countdown card has no ${part === "sub" ? "date line" : part === "big" ? "number" : "label"}; the two portals no longer show the same component.`);

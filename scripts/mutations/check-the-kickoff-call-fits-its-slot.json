@@ -1,0 +1,16 @@
+[
+ [
+  "after the call the console renders the live rail again",
+  "admin",
+  "  if (clk.phase === \"after\") {\n    const yesRows",
+  "  if (false) {\n    const yesRows",
+  1
+ ],
+ [
+  "a helper the console needs is renamed, so the render throws",
+  "admin",
+  "function kickoffRankFact(rg) {",
+  "function rankFactOf(rg) {",
+  1
+ ]
+]

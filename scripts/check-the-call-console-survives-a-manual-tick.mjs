@@ -88,11 +88,14 @@ if (/\bdoneByClock\b/.test(code)) {
     fail.push("admin/admin.js — kickoffConsoleHtml is gone. This is the console itself: the T-5 facts, "
       + "the 27-minute script in a 30-minute slot, the clock that names the cut, and the recap.");
   } else {
-    if (!/callNow\s*\|\|\s*\(clk && clk\.phase === "pre" && clk\.minsToStart <= 15\)/.test(body)) {
+    // 🔑 v2 (2026-10-08): the console now shows from the moment a call is booked (the approved
+    // mockup has a "before" state), so the gate is the booking itself — `kickoffCallClock` returns
+    // null when nothing is booked, and the console must return nothing then.
+    if (!/const clk = kickoffCallClock\([^)]*\);\s*if \(!clk\) return "";/.test(body)) {
       fail.push("admin/admin.js — the console no longer gates itself on the booking's clock. With the "
         + "done card now calling it unconditionally, this IS the only gate — losing it would put a "
         + "call console on a step with no call booked.");
-    } else pass.push("the console still gates itself on the booking: T-15, live, then the recap pane");
+    } else pass.push("the console still gates itself on the booking: nothing booked, no console");
   }
 }
 
