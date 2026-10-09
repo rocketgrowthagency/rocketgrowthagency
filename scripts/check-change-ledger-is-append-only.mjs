@@ -135,7 +135,12 @@ if (U && K) {
         const v = row.value_after;
         const s = typeof v === "string" ? v : JSON.stringify(v, Object.keys(v || {}).sort());
         const h = crypto.createHash("sha256").update(s || "").digest("hex").slice(0, 32);
-        if (h !== row.content_hash) { bad++; problems.push(`ledger row ${row.id} has an after_value that does not match its stored hash — it was edited outside the app.`); }
+        // 🔑 LEGACY FORM (rows written before 2026-10-09): the producer hashed the OBJECT (compact, sorted keys)
+        // while storing it pretty-printed. Re-derive that form from the stored text — it still proves the row
+        // was not edited; only the producer's choice of what to hash differed.
+        let legacy = null;
+        if (typeof v === "string") { try { const o = JSON.parse(v); if (o && typeof o === "object") legacy = crypto.createHash("sha256").update(JSON.stringify(o, Object.keys(o).sort())).digest("hex").slice(0, 32); } catch { /* not JSON */ } }
+        if (h !== row.content_hash && legacy !== row.content_hash) { bad++; problems.push(`ledger row ${row.id} has an after_value that does not match its stored hash — it was edited outside the app.`); }
       }
       live = `${rows.length} row(s) hash-checked, ${bad} mismatched`;
     }
