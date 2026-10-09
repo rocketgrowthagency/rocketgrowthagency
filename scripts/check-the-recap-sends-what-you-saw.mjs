@@ -31,7 +31,7 @@ if (!admin) { console.error("⚠️  INDETERMINATE — admin.js not found."); pr
 const sendCall = fn.match(/sendAsRga\(\{[\s\S]*?\}\)/);
 if (!sendCall) fail.push("send-kickoff-recap.js — nothing calls sendAsRga, so the recap cannot go at all.");
 else {
-  if (!/body:\s*text\b/.test(sendCall[0]))
+  if (!/(body|markup):\s*text\b/.test(sendCall[0]))   // 🔄 markup: since client_emails_one_format_v1
     fail.push("send-kickoff-recap.js — the body sent is not the composed `text` from the request, so Chris's edits after the call are discarded.");
   else pass.push("what leaves is the body that was on screen");
   if (!/suppress:/.test(sendCall[0]))

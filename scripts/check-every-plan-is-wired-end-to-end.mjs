@@ -69,8 +69,10 @@ for (const [tier, addons, pt] of CASES) {
   if (tier === "beta_unbilled") { if (!/no charge/i.test(line)) F(`${label}: beta plan line does not say "no charge"`); }
   else if (!line.includes(money(first))) F(`${label}: the plan line does not state the first invoice the charge computes (${money(first)}): "${line.replace(/\s+/g, " ")}"`);
   if (addons.website_full && !/Website Full/.test(line)) F(`${label}: the add-on is missing from the plan line`);
-  const next = email.body.slice(email.body.indexOf("NEXT STEPS"));
-  if (!/NEXT STEPS/.test(email.body)) F(`${label}: the agreement email has no NEXT STEPS`);
+  // 🔄 2026-10-09: the email is letter markup (client_emails_one_format_v1) — the next steps are "## Then"
+  const NEXT = "## Then";
+  const next = email.body.slice(email.body.indexOf(NEXT));
+  if (!email.body.includes(NEXT)) F(`${label}: the agreement email has no next steps ("## Then")`);
   else {
     const g = next.search(/Google/), k = next.search(/kickoff/);
     if (g < 0 || k < 0 || g > k) F(`${label}: NEXT STEPS do not put connecting Google before the kickoff`);

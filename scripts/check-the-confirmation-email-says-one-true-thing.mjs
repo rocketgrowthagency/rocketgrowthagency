@@ -138,8 +138,8 @@ for (const tier of Object.keys(PLANS)) {
       // kickoff booking; an invoice line there would describe money already paid.
       if (status === "signed") {
         if (/invoice/i.test(body)) problems.push(`${when} — the welcome email mentions an invoice; it goes out after payment, so that is already done.`);
-        if (!kickoffWhen && !/BOOK YOUR KICKOFF CALL/.test(body)) problems.push(`${when} — the welcome email never asks them to book the kickoff call — the one thing this email is for.`);
-        if (kickoffWhen && !/YOUR KICKOFF CALL/.test(body)) problems.push(`${when} — a booked client's welcome email does not state the booked call.`);
+        if (!kickoffWhen && !/book your kickoff call/i.test(body)) problems.push(`${when} — the welcome email never asks them to book the kickoff call — the one thing this email is for.`);
+        if (kickoffWhen && !/your kickoff call/i.test(body)) problems.push(`${when} — a booked client's welcome email does not state the booked call.`);
         if (/nothing (else )?(is )?needed from you|everything I need from you|last thing I need/i.test(body)) problems.push(`${when} — the welcome email claims nothing more is needed from them.`);
       }
       // 2. nothing counter-signs
@@ -147,12 +147,12 @@ for (const tier of Object.keys(PLANS)) {
         problems.push(`${when} — the email promises to "counter-sign". Nothing in the product `
           + `counter-signs anything, and for a signed agreement it already happened.`);
       }
-      // 3. plain-text shape
-      const longest = Math.max(...body.split("\n").map((l) => l.length));
-      if (longest > 78) {
-        problems.push(`${when} — longest line is ${longest} chars. This is a PLAIN-TEXT email that `
-          + `nothing re-flows; clients that hard-wrap at 78 break it mid-word.`);
-      }
+      // 3. 🔄 2026-10-09 (client_emails_one_format_v1): the body is LETTER MARKUP, sent as a formatted HTML email
+      // with a plain twin — the client's mail app flows the paragraphs, so the old 78-column rule (which existed
+      // because this was bare plain text) is replaced by: no hard-wrapped paragraph, no space-indent, no ALL CAPS.
+      const lines = body.split("\n");
+      if (lines.some((l) => /^ {2,}\S/.test(l))) problems.push(`${when} — a space-indented line; Gmail slips these. Use "- item".`);
+      if (lines.some((l) => /^[A-Z][A-Z ,'&/-]{7,}$/.test(l))) problems.push(`${when} — an ALL-CAPS heading; use "## Sentence case".`);
       if (body.length < 500) {
         problems.push(`${when} — body is ${body.length} chars. Under ~500 trips spam filters `
           + `(Email on Acid), the floor recorded in reference_welcome_email_evidence.`);
@@ -218,6 +218,6 @@ if (problems.length) {
 console.log("✅ the confirmation email says one true thing, in one place");
 console.log(`   ${rendered} plan/contract/kickoff variants rendered from the REAL template`);
 console.log("   no invoice promised to an unbilled plan · nothing counter-signs · unstateable plans refuse");
-console.log("   every variant wraps <=78 and clears the 500-char spam floor");
+console.log("   every variant is letter markup and clears the 500-char spam floor");
 console.log("   admin.js holds no second copy · the draft hatch uses the sender's preview");
 console.log("   the duplicate-send guard reaches the artifact · the banner reads what was sent");

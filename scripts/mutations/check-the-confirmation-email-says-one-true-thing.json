@@ -2,8 +2,8 @@
  [
   "the welcome email stops asking them to book",
   "confirmemail",
-  "    : `BOOK YOUR KICKOFF CALL\\n  30 minutes on Google Meet.",
-  "    : `NEXT STEPS\\n  30 minutes on Google Meet.",
+  "    : `## Book your kickoff call\\n30 minutes on Google Meet.",
+  "    : `## Next steps\\n30 minutes on Google Meet.",
   1
  ],
  [
@@ -11,6 +11,13 @@
   "confirmemail",
   "  const opener = signed\n    ? `Google is connected, so we can start. Thank you.`",
   "  const opener = signed\n    ? `Google is connected. Your first invoice is on its way.`",
+  1
+ ],
+ [
+  "the agreement email gets a space-indented list again",
+  "confirmemail",
+  "## Your plan\\n${plan}\\n\\n",
+  "## Your plan\\n  ${plan}\\n\\n",
   1
  ]
 ]

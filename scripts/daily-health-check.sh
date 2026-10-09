@@ -456,6 +456,7 @@ run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2â
 run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtable calls; only the read-only check caches"
 run check-outreach-emails-went-out.mjs "the cold-outreach emails actually went out on the last weekday (Apps Script runs outside every machine we check)"
 run check-the-kickoff-promises-agree.mjs "the call script and the recap promise the same timeline and only cadences that are scheduled"
+run check-client-emails-have-one-format.mjs "every client email: letter markup, links as words, one sign-off, American copy"
 run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story in every state on every surface, admin and client"
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"
 run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends on the record; the portal honours it (10-09 test call)"

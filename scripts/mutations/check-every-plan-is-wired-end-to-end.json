@@ -2,7 +2,7 @@
  [
   "agreement email writes step 1 again",
   "confirmemail",
-  "if (isAgreementSend) {\n      // \ud83d\udd12 The agreement email is ITS OWN record \u2014 it never touches step 1.\n      data.agreement_email =",
+  "if (isAgreementSend) {\n      // 🔒 The agreement email is ITS OWN record — it never touches step 1.\n      data.agreement_email =",
   "if (false) {\n      data.agreement_email =",
   1
  ],
@@ -23,22 +23,22 @@
  [
   "beta told about an invoice",
   "confirmemail",
-  "? `Once it's signed, you connect your Google accounts",
-  "? `Once it's signed, your invoice is in the portal. You connect your Google accounts",
+  "        ? `You connect your Google accounts — about a minute — and I'll email you",
+  "        ? `Your invoice is in the portal. You connect your Google accounts — about a minute — and I'll email you",
   1
  ],
  [
   "stage-2 amount dropped",
   "notifystage",
-  "Pay ${amount > 0 ?",
-  "Pay ${false ?",
+  "${pay(amount > 0 ?",
+  "${pay(false ?",
   1
  ],
  [
   "beta 1b mentions invoice again",
   "notifystage",
-  "            ? `WHAT HAPPENS NEXT\\n  I check the details against what we agreed and countersign. Then you\\n`",
-  "            ? `WHAT HAPPENS NEXT\\n  I countersign and send your first invoice. Then you\\n`",
+  "            ? `## What happens next\\nI countersign, then you connect",
+  "            ? `## What happens next\\nI countersign and send your first invoice, then you connect",
   1
  ],
  [

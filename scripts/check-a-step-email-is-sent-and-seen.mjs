@@ -60,9 +60,14 @@ else if (!/const gate = await requireWorkspaceForClient[\s\S]{0,120}?if \(gate\.
 const listed = [...(send.match(/"m1\.[a-z0-9_.]+"/g) || [])].map((s) => s.replace(/"/g, ""));
 const emailRunners = [];
 {
-  const re = /"(m1\.[a-z0-9_.]+)":\s*async[\s\S]*?summary:\s*`([\s\S]*?)`/g;
-  let m;
-  while ((m = re.exec(flow))) if (/^Email to /.test(m[2])) emailRunners.push(m[1]);
+  // 🔴 ONE RUNNER AT A TIME (2026-10-09). The old single regex was lazy ACROSS runners: a runner whose summary is
+  // not a template (password_manager's [..].join, call.close's AI draft) borrowed the NEXT runner's "Email to",
+  // so the gate demanded the wrong ids be mailable and called the real one drifted. Slice at each runner's start.
+  const starts = [...flow.matchAll(/^\s*"([a-z0-9]+\.[a-z0-9_.]+)":\s*async\b/gm)];
+  starts.forEach((m, i) => {
+    const body = flow.slice(m.index, i + 1 < starts.length ? starts[i + 1].index : m.index + 8000);
+    if (m[1].startsWith("m1.") && /summary:\s*`Email to /.test(body)) emailRunners.push(m[1]);
+  });
 }
 if (!emailRunners.length) F("no runner in flow-execute returns an email draft any more — this gate is auditing nothing");
 for (const id of emailRunners) if (!listed.includes(id)) F(`${id} generates an email but is not in send-step-email's allow-list, so it can never be sent`);

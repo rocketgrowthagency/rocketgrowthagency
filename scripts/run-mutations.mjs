@@ -101,6 +101,11 @@ const FILES = {
   reportview: "netlify/functions/fga-report-view.js",
   outcomefn: "netlify/functions/kickoff-call-outcome.js",
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
+  letter: "netlify/functions/_letter.js",
+  gmail: "netlify/functions/_gmail.js",
+  emaildoc: "shared/email-doc.js",
+  replyfn: "netlify/functions/portal-reply.js",
+  monthlyreport: "netlify/functions/send-monthly-report.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
   // 🔑 SCRAPER-SIDE targets (prefix "scraper:"): copied to <tmp>/__scraper/<rel>; the gate finds the copy via

@@ -67,13 +67,17 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
 // 2 · the nudge draft
 {
   const o = { flowId: "m1.gbp.photos", clientLabel: "Provide 20+ business photos" };
-  const m = ctx.draft(o, { detected: { n: 1, threshold: 20, evidence: "Your Google Business Profile has 1 photo — 20 are needed." } });
-  if (m.subject !== "Provide 20+ business photos: 19 to go") F(`measured subject was "${m.subject}"`);
+  // 🔄 2026-10-09 (client_emails_one_format_v1): short subjects — "Your photos — 19 to go"; the body states the
+  // record's own numbers. A measurement without a noun still carries its count.
+  const m = ctx.draft(o, { detected: { n: 1, threshold: 20, noun: "photo", evidence: "Your Google Business Profile has 1 photo — 20 are needed." } });
+  if (m.subject !== "Your photos — 19 to go") F(`measured subject was "${m.subject}"`);
+  const mn = ctx.draft(o, { detected: { n: 3, threshold: 5 } });
+  if (!/— 2 to go$/.test(mn.subject) || !mn.body.includes("3 of the 5")) F(`a measurement with no noun lost its count: "${mn.subject}"`);
   if (!m.body.startsWith("Hi Dana,")) F("the nudge does not greet the contact by first name");
-  if (!m.body.includes("Your Google Business Profile has 1 photo")) F("the nudge does not carry the measurement's own words");
+  if (!m.body.includes("1 of the 20 photos")) F("the nudge does not carry the measurement's own numbers");
   if (!m.body.includes("/portal/#step-m1.gbp.photos")) F("the nudge does not link to the step itself");
   const u = ctx.draft({ flowId: "m1.gbp.messaging", clientLabel: "Turn on GBP messaging" }, {});
-  if (u.subject !== "Turn on GBP messaging: your turn") F(`an unmeasured step's subject was "${u.subject}"`);
+  if (u.subject !== "Your next step: Turn on GBP messaging") F(`an unmeasured step's subject was "${u.subject}"`);
   if (/\d+ of \d+|to go/.test(u.body + u.text)) F("an unmeasured step's nudge contains a count — an invented number");
   ctx.state.selectedClient = {};
   if (!ctx.draft(o, {}).body.startsWith("Hi there,")) F("with no contact name the nudge must say \"Hi there\", not \"Hi undefined\"");
