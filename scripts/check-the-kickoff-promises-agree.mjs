@@ -23,7 +23,8 @@ const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } ca
 const admin = read("admin/admin.js"), toml = read("netlify.toml"), digest = read("netlify/functions/flow-cron-weekly-digest.js");
 const code = admin.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
 const agenda = (code.match(/const KICKOFF_AGENDA = \[[\s\S]*?\n\];/) || [""])[0];
-const recapAt = code.indexOf("`WHAT HAPPENS NEXT`");
+// 🔄 2026-10-09: the recap is letter markup now (client_emails_one_format_v1) — "## What happens next"
+const recapAt = code.indexOf("`## What happens next`") >= 0 ? code.indexOf("`## What happens next`") : code.indexOf("`WHAT HAPPENS NEXT`");
 const recap = recapAt < 0 ? "" : code.slice(code.lastIndexOf('e.target.closest("[data-kickoff-recap]")', recapAt), code.indexOf("].join(\"\\n\");", recapAt));
 if (!agenda || !recap) { console.error("⚠️  INDETERMINATE — could not find the script or the recap body"); process.exit(2); }
 const F = []; const fail = (m) => F.push(m);
@@ -42,7 +43,7 @@ if (/report arrives by email/.test(agenda + recap) && !/\[functions\."send-month
 if (/Friday/i.test(agenda) || /Friday/i.test(recap)) fail("the kickoff script or recap promises something on a Friday — nothing sends on Fridays");
 // 4
 if (/kickoffAgreedBy\(/.test(code) || /by Sunday/.test(code)) fail("a computed weekday (kickoffAgreedBy / \"by Sunday\") is back in the kickoff");
-if (!/const y = kickoffCallObj\(\)\.yes\[r\.id\];/.test(recap) || !/y \? ` — by \$\{y\.by\}, as agreed` : ""/.test(recap)) fail("the recap no longer reads back each item's own agreed date");
+if (!/const y = kickoffCallObj\(\)\.yes\[r\.id\];/.test(recap) || !/y \? ` — by \$\{y\.by\}/.test(recap)) fail("the recap no longer reads back each item's own agreed date");
 
 if (F.length) { console.error("🔴 the kickoff's promises disagree:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ the kickoff's promises agree: one timeline, every cadence is a scheduled job, per-item agreed dates in the recap");
