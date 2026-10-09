@@ -92,7 +92,8 @@ A.obFoldStep(el("s.live"), true);
 if (el("s.live").classList.contains("ob-folded")) F("the live kickoff call folded");
 // 7 — wiring
 const code = src.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
-if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
+// (step 39's photo review is injected first, so its body folds like any other — 2026-10-09)
+if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(if \(isM1\) injectPhotoReview\(host\);\s*)?if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
 if (!/_obLastActed = flowId;[^\n]*\n\s*obOpenStep\(el\);/.test(code)) F("revealStep no longer opens the step you acted on");
 if (!/if \(typeof obOpenStep === "function"\) obOpenStep\(target\);/.test(code)) F("a jump no longer opens its target");
 

@@ -1,8 +1,51 @@
 [
- ["a slot kind loses its example", "photoexamples", "  equipment: { art: \"gear\",", "  equipment_x: { art: \"gear\",", 1],
- ["an example points at a drawing the sprite lacks", "photoexamples", "<symbol id=\"pmx-inside\"", "<symbol id=\"pmx-insidex\"", 1],
- ["a turned-down photo fills its slot", "portal", "if (p.publish_state === \"turned_down\") { if (!turnedByShot.has(p.shot_n)) turnedByShot.set(p.shot_n, p); }\n    else if", "if (false) {}\n    else if", 1],
- ["the review reason is not read", "portal", "shot_n, review_note, created_at", "shot_n, created_at", 1],
- ["step 39 loses its status", "admin", "${prvN ? `Review ${prvN}` : waiting", "${waiting", 1],
- ["Your action stops naming the photos", "admin", "reveal: PHOTO_REVIEW_STEP, tab:", "tab:", 1]
+ [
+  "a slot kind loses its example",
+  "photoexamples",
+  "  equipment: { art: \"gear\",",
+  "  equipment_x: { art: \"gear\",",
+  1
+ ],
+ [
+  "an example points at a drawing the sprite lacks",
+  "photoexamples",
+  "<symbol id=\"pmx-inside\"",
+  "<symbol id=\"pmx-insidex\"",
+  1
+ ],
+ [
+  "a turned-down photo fills its slot",
+  "portal",
+  "if (p.publish_state === \"turned_down\") { if (!turnedByShot.has(p.shot_n)) turnedByShot.set(p.shot_n, p); }\n    else if",
+  "if (false) {}\n    else if",
+  1
+ ],
+ [
+  "the review reason is not read",
+  "portal",
+  "shot_n, review_note, created_at",
+  "shot_n, created_at",
+  1
+ ],
+ [
+  "step 39 loses its status",
+  "admin",
+  "${prvN ? `Review ${prvN}` : waiting",
+  "${waiting",
+  1
+ ],
+ [
+  "Your action stops naming the photos",
+  "admin",
+  "reveal: PHOTO_REVIEW_STEP, tab:",
+  "tab:",
+  1
+ ],
+ [
+  "the review only rides on the active step again",
+  "admin",
+  "  if (isM1) injectPhotoReview(host);\n",
+  "",
+  1
+ ]
 ]
