@@ -1,0 +1,6 @@
+[
+ ["the recap goes back to month 2–3", "admin", "    `  · First movement in the rankings usually shows in 30 to 60 days, and it builds from there.`,", "    `  · Rankings usually move in month 2–3, not week 2.`,", 1],
+ ["the script promises a Friday email again", "admin", "Every Monday your portal shows what we did that week, and on the 1st", "Every Friday you get a short email of what we did, and on the 1st", 1],
+ ["the recap loses the per-item date", "admin", "    return [`  · ${what}${y ? ` — by ${y.by}, as agreed` : \"\"}`, `    ${PORTAL}#step-${r.id}`];", "    return [`  · ${what}`, `    ${PORTAL}#step-${r.id}`];", 1],
+ ["the monthly report loses its schedule", "toml", "[functions.\"send-monthly-report\"]\n  schedule = \"0 9 1 * *\"", "[functions.\"send-monthly-report\"]\n  # schedule = \"0 9 1 * *\"", 1]
+]
