@@ -1,0 +1,6 @@
+[
+ ["the photo upload's activity insert gets its .catch back", "portal", "summary: `Client uploaded ${uploaded} photo(s) (category: ${category})` },\n    });", "summary: `Client uploaded ${uploaded} photo(s) (category: ${category})` },\n    }).catch(() => {});", 1],
+ ["the customer-list activity insert gets its .catch back", "portal", "    }); // no .catch — a Supabase query has none", "    }).catch(() => {}); // no .catch — a Supabase query has none", 1],
+ ["an admin rpc with .catch", "admin", "  // Save into onboarding record's data.google_services_inventory\n", "  // Save into onboarding record's data.google_services_inventory\n  const { error } = await supabase.rpc(\"noop\").catch(() => ({ error: null }));\n", 1],
+ ["a .then before the .catch is a real Promise — allowed", "admin", "  // Save into onboarding record's data.google_services_inventory\n", "  // Save into onboarding record's data.google_services_inventory\n  await supabase.rpc(\"noop\").then((r) => r).catch(() => null);\n", 0]
+]
