@@ -1,0 +1,37 @@
+[
+ [
+  "the old silent catch comes back",
+  "portal",
+  "  catch (e1) {\n    console.warn(",
+  "  catch { }\n  if (0) {\n    console.warn(",
+  1
+ ],
+ [
+  "no retry after refreshing the sign-in",
+  "portal",
+  "try { await _portalSupabase.auth.refreshSession(); data = await sign(); }",
+  "try { data = []; }",
+  1
+ ],
+ [
+  "the image is shown without proving it loads",
+  "portal",
+  "    img.onerror = unavailable;\n",
+  "",
+  1
+ ],
+ [
+  "a slot with no link stays blank",
+  "portal",
+  "    if (!url) return unavailable();\n",
+  "    if (!url) return;\n",
+  1
+ ],
+ [
+  "the No preview state loses its style",
+  "portalcss",
+  ".pm-slot .thumb.nothumb { display:flex;",
+  ".pm-slot .thumb.nothumbx { display:flex;",
+  1
+ ]
+]
