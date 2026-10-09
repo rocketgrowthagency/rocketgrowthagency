@@ -49,17 +49,17 @@
   1
  ],
  [
-  "the portal's upload stops publishing what it sent",
+  "the portal's upload skips RGA's review",
   "portal",
-  "body: JSON.stringify({ client_id: clientId, photo_ids: ids }),",
-  "body: JSON.stringify({ client_id: clientId }),",
+  "publish_state: \"in_review\",",
+  "publish_state: \"pending\",",
   1
  ],
  [
-  "the push goes back to admin-only, so the client's upload cannot publish",
+  "the push admits the client's portal again",
   "photopush",
-  "await requirePortalOwnerOrWorkspace(event, client_id);",
-  "await requireWorkspaceForClient(event, client_id);",
+  "const g = await requireWorkspaceForClient(event, client_id);",
+  "const g = await requirePortalOwnerOrWorkspace(event, client_id);",
   1
  ],
  [
@@ -82,5 +82,33 @@
   "module.exports = { publishClientPhotos,",
   "module.exports = { publishPhotos: publishClientPhotos,",
   2
+ ],
+ [
+  "a client can approve their own photo",
+  "photoreview",
+  "const g = await requireWorkspaceForClient(event, client_id);",
+  "const g = await requirePortalOwnerOrWorkspace(event, client_id);",
+  1
+ ],
+ [
+  "a review stops checking the photo is still in review",
+  "photoreview",
+  "&publish_state=eq.in_review`,",
+  "`,",
+  1
+ ],
+ [
+  "approving stops publishing",
+  "photoreview",
+  "out.publish = await publishClientPhotos(",
+  "out.publish = await Promise.resolve(",
+  1
+ ],
+ [
+  "the database stops forcing review",
+  "reviewsql",
+  "new.publish_state := 'in_review';",
+  "null;",
+  1
  ]
 ]

@@ -81,7 +81,7 @@ const KEPT_BY = [
     match: /once their Google account is connected/i,
     surface: "data/playbooks/playbooks.json",
     keptBy: "photos-publish-sweep",
-    note: "step 31's How fold — RGA publishes the photos",
+    note: "step 39's How fold — an approved photo waiting on the Google connection goes up by itself",
   },
   {
     match: /re-?check this automatically|clears itself here|nothing for you to tick/i,

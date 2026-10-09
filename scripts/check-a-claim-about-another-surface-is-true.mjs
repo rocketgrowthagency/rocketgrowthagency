@@ -43,7 +43,8 @@ const CLAIMS = [
     claimIn: "admin/admin.js",
     claim: "The client sees this list on their own",
     trueIn: "portal/portal.js",
-    needs: ["draft_shape", "portal-shotlist", "buildPhotoUploadHtml"],
+    // 🔑 the exact read, not the word — "draft_shape" also appears in the step-7 slots (found 2026-10-09)
+    needs: ['tasks?.["m1.gbp.photos"]?.draft_shape', "portal-shotlist", "buildPhotoUploadHtml"],
     why: "the list is written FOR the client; if the portal does not render it the sentence is false",
   },
   {
@@ -60,12 +61,13 @@ const CLAIMS = [
   {
     // 🔴 2026-10-08 — THIS SENTENCE WAS FALSE FOR ITS WHOLE LIFE. It said "automatic once their Google
     // account is connected" while the only caller was an admin button.
-    what: "the How fold tells the operator each client upload goes straight to Google",
+    // 🔒 2026-10-09 — the rule changed (photo_review_before_google_v1): a photo goes up when RGA approves it.
+    what: "the How fold tells the operator each photo goes up once RGA approves it",
     claimIn: "data/playbooks/playbooks.json",
-    claim: "each upload goes straight to Google",
-    trueIn: "portal/portal.js",
-    needs: ["/.netlify/functions/photos-push-to-gbp", "photo_ids: ids"],
-    why: "if the portal's upload stops asking for a publish, the photos wait on the sweep and the fold overstates it",
+    claim: "each photo goes up once RGA approves it",
+    trueIn: "netlify/functions/admin-photo-review.js",
+    needs: ["out.publish = await publishClientPhotos(", "publish_state=eq.in_review"],
+    why: "if approving stops publishing, approved photos wait on the sweep and the fold overstates it",
   },
 ];
 

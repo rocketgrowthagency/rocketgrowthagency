@@ -28,16 +28,16 @@
   1
  ],
  [
-  "the portal's upload stops asking for a publish — the fold's 'straight to Google' becomes false",
-  "portal",
-  "body: JSON.stringify({ client_id: clientId, photo_ids: ids }),",
-  "body: JSON.stringify({ client_id: clientId }),",
+  "approving stops publishing — the fold's 'goes up once RGA approves it' becomes false",
+  "photoreview",
+  "out.publish = await publishClientPhotos(",
+  "out.publish = await Promise.resolve(",
   1
  ],
  [
   "the fold's publish promise is reworded, so it slips out of its own guard",
   "playbook",
-  "each upload goes straight to Google",
+  "each photo goes up once RGA approves it",
   "uploads are sent along",
   1
  ]

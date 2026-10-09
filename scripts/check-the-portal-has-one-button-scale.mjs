@@ -156,6 +156,7 @@ const EXEMPT = {
   "ap-head": "disclosure header — a full-width row, not a button",
   "fq-head": "disclosure header — a full-width row, not a button",
   "ai-pointer": "an inline pointer banner, not a control in the scale",
+  "pm-ex": "the example drawing beside a photo slot — the 64×48 picture IS the control (padding:0), not a text button (2026-10-09)",
 };
 {
   const jsPath = path.join(SITE, "portal", "portal.js");

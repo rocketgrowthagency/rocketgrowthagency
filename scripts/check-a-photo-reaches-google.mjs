@@ -182,12 +182,21 @@ await scenario("retry cap", async () => {
 // ── source: the client's upload publishes, the sweep is scheduled, the log is append-only ──────
 const strip = (s) => s.replace(/^\s*\/\/.*$/gm, "");
 const portalCode = strip(portal);
-if (!/fetch\(\s*"\/\.netlify\/functions\/photos-push-to-gbp"/.test(portalCode) || !/photo_ids:\s*ids/.test(portalCode)) {
-  F("the portal's upload no longer asks for its photos to be published — they wait for the hourly sweep at best");
+// 🔒 2026-10-09 — RGA REVIEWS BEFORE GOOGLE (photo_review_before_google_v1). The client's upload must NOT
+// publish; it lands in_review, and only RGA's approval (admin-photo-review) sends it.
+if (/photos-push-to-gbp/.test(portalCode)) F("the portal calls photos-push-to-gbp again — a client's upload would skip RGA's review");
+if (!/publish_state:\s*"in_review"/.test(portalCode)) F("the portal's upload no longer files the photo for RGA's review");
+const review = strip(read("netlify/functions/admin-photo-review.js"));
+if (!/await requireWorkspaceForClient\(event, client_id\)/.test(review) || /requirePortalOwner/.test(review)) F("admin-photo-review is not RGA-only — a client could approve their own photo");
+if (!/publish_state=eq\.in_review/.test(review)) F("a review is not conditional on in_review — a stale page could pull a published photo back, or approve twice");
+if (!/out\.publish = await publishClientPhotos\(/.test(review)) F("approving does not publish through the one producer");
+const reviewSql = read("docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql").replace(/--.*$/gm, "");
+if (!/new\.publish_state := 'in_review';/.test(reviewSql) || !/create trigger client_photos_force_review\s+before insert on public\.client_photos/.test(reviewSql)) {
+  F("the database no longer forces a client's upload into review — an old or edited page could publish unseen");
 }
 if (/within 24 hrs/i.test(portalCode)) F("the portal still promises a 24-hour push");
 const push = strip(read("netlify/functions/photos-push-to-gbp.js"));
-if (!/await requirePortalOwnerOrWorkspace\(event/.test(push)) F("photos-push-to-gbp does not admit the client's own portal — their upload cannot publish");
+if (/requirePortalOwner/.test(push) || !/await requireWorkspaceForClient\(event, client_id\)/.test(push)) F("photos-push-to-gbp admits the client's portal — it would publish photos RGA has not reviewed");
 if (!/publishClientPhotos\(/.test(push)) F("photos-push-to-gbp does not use the one producer");
 const sweep = strip(read("netlify/functions/photos-publish-sweep.js"));
 if (!/publishClientPhotos\(/.test(sweep)) F("photos-publish-sweep does not use the one producer");

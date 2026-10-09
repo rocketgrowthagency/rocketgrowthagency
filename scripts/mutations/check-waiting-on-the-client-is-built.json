@@ -65,8 +65,8 @@
  [
   "the pill goes back to Active now",
   "admin",
-  "${waiting ? \"Waiting on client\"",
-  "${false ? \"Waiting on client\"",
+  ": waiting ? \"Waiting on client\"",
+  ": false ? \"Waiting on client\"",
   1
  ],
  [
