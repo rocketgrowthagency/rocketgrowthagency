@@ -441,6 +441,7 @@ run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
 run check-colours-come-from-the-system.mjs "every state colour comes from the one approved system, in both portals"
 run check-client-emails-tell-the-truth.mjs "no client email says nothing is needed while steps are open; a beta client is never told it paid"
+run check-the-client-journey-tells-one-story.mjs "the client sets up their Business Profile now, RGA sets up GA4/GSC in week 1, no Calendly, the playbook says Google before the kickoff"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"

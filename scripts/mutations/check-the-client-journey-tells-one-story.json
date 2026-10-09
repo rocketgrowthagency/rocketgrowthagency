@@ -1,0 +1,65 @@
+[
+ [
+  "the profile is deferred to the kickoff call again",
+  "portal",
+  "set it up now with our guide",
+  "we'll guide you through it on the kickoff call; set it up now with our guide",
+  1
+ ],
+ [
+  "a Calendly link comes back",
+  "portal",
+  "const SETUP_ASK = `<button",
+  "const BOOK = \"https://calendly.com/x\"; const SETUP_ASK = `<button",
+  1
+ ],
+ [
+  "no-profile falls back to the generic RGA branch",
+  "portal",
+  "} else if (status === \"no\" && svc.key === \"gbp\") {",
+  "} else if (status === \"no\" && svc.key === \"gbpX\") {",
+  1
+ ],
+ [
+  "the No answer says RGA sets up the profile",
+  "portal",
+  "\"No \u2014 I need to set it up\"",
+  "\"No \u2014 RGA sets it up!\"",
+  1
+ ],
+ [
+  "Setup Complete shows while the profile is owed",
+  "portal",
+  "if (gbpOwed && (oauthGranted || !hasYes)) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "GA4 promise drifts",
+  "portal",
+  "RGA sets it up for you in week 1, once we have your website login. It",
+  "RGA installs it in week 1, once we have your website login. It",
+  1
+ ],
+ [
+  "connected path hands the profile to RGA",
+  "portal",
+  "if (svc.key === \"gbp\") return inventory.gbp?.status === \"yes\" ? \"connected\" : \"gap\";",
+  "",
+  1
+ ],
+ [
+  "awaiting card hides the guide",
+  "portal",
+  "if (phase === \"awaiting_rga\" && inventory.gbp?.status !== \"no\") {",
+  "if (phase === \"awaiting_rga\") {",
+  1
+ ],
+ [
+  "GA4/GSC become client gaps",
+  "portal",
+  "if (svc.key === \"ga4\" || svc.key === \"gsc\") return \"rga\";",
+  "",
+  1
+ ]
+]

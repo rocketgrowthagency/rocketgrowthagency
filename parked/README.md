@@ -28,6 +28,12 @@ you know when to update all on admin so have all notes ready".
    top of They call us, We call them and The call says it is the keyword AND the location from the lead
    card, said both together, e.g. "plumber in Culver City". The Airtable field is stored as "<keyword> in <location>".
 
+5. After "yes" (approved client_journey_video_to_kickoff_v1, 2026-10-08). Call 2 beat 7, What we sell §6,
+   Close & log (the close line ×2 + §8 table) and the guided-call note now give the real order: sign →
+   first invoice (beta skips) → connect Google → the welcome email asks them to book the kickoff call.
+   The close line no longer promises work "this week" or "as soon as it's signed we kick off". Call 2
+   beat 3 gains the no-Business-Profile line (they set it up right away; it's theirs).
+
 ## When Chris says "update admin" (do ALL of this, in order)
 1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because
    deploy-site.sh ships only commits.
