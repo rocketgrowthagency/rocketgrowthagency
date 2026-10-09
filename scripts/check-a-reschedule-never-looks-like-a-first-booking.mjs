@@ -174,7 +174,10 @@ if (admin) {
     // 🔑 EXTRACT THE ARROW ITSELF and call it. An earlier attempt sliced from `reqs.map((q) => {`,
     // which yields `reqs.map((q) => {…}` — not a callable expression, and the vm threw
     // "missing ) after argument list". Take the arrow, brace-matched, and evaluate it alone.
-    const arrowAt = admin.indexOf("(q) => {", admin.indexOf("host.innerHTML = reqs.map("));
+    // 🔄 2026-10-09: the card now leads with an intro line (`host.innerHTML = \`…\` + reqs.map(`), so anchor on the map.
+    const mapAt = admin.indexOf("+ reqs.map((q) => {") >= 0 ? admin.indexOf("+ reqs.map((q) => {") : admin.indexOf("host.innerHTML = reqs.map(");
+    if (mapAt < 0) { indet.push("admin/admin.js: the request card's reqs.map is gone"); }
+    const arrowAt = mapAt < 0 ? -1 : admin.indexOf("(q) => {", mapAt);
     const arrow = arrowAt < 0 ? null : extract(admin.slice(arrowAt), "(q) => {");
     if (!arrow) indet.push("admin/admin.js: could not brace-match the request-card arrow function");
     else {

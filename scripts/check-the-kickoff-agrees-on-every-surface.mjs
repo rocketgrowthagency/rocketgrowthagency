@@ -43,12 +43,12 @@ const min = 60000, ago = (m) => new Date(Date.now() - m * min).toISOString();
 // One row per state of the approved table: the facts, then what each surface must say.
 const ROWS = [
   { name: "booked (6 days out)", inv: { start: ago(-6 * 1440) }, state: "booked", card: "booked:Booked", alert: null, portal: "booked_ahead" },
-  { name: "soon (42 min out)", inv: { start: ago(-42) }, state: "soon", card: /^booked:In /, alert: /is in/, portal: "booked_ahead" },
-  { name: "due (time reached, not started)", inv: { start: ago(4) }, state: "live", card: "due:Due now", alert: /due now/, portal: "booked_live" },
-  { name: "live (started 14 min ago)", inv: { start: ago(14), call_started_at: ago(14) }, state: "live", card: /^live:Live · 14 min$/, alert: /happening now/, portal: "booked_live" },
+  { name: "soon (42 min out)", inv: { start: ago(-42) }, state: "soon", card: "booked:Booked", alert: /is in/, portal: "booked_ahead" },
+  { name: "due (time reached, not started)", inv: { start: ago(4) }, state: "live", card: "due:Happening now", alert: /happening now — start it/, portal: "booked_live" },
+  { name: "live (started 14 min ago)", inv: { start: ago(14), call_started_at: ago(14) }, state: "live", card: "live:Happening now", alert: /happening now/, portal: "booked_live" },
   { name: "call over? (started, 31 min)", inv: { start: ago(31), call_started_at: ago(31) }, state: "live", card: "live:Call over?", alert: /ran past its slot/, portal: "booked_live" },
-  { name: "held, recap not sent (End at 12 min)", inv: { start: ago(12), call_started_at: ago(12), call_ended_at: ago(0), call_outcome: "held" }, state: "held", card: "held:Call held", alert: /recap has not been sent/, portal: "held", portalHeld: true },
-  { name: "held by a sent recap (the 10-09 test call)", inv: { start: ago(120), recap_sent_at: ago(100) }, state: "held", card: "held:Call held", alert: null, portal: "held" },
+  { name: "held, recap not sent (End at 12 min)", inv: { start: ago(12), call_started_at: ago(12), call_ended_at: ago(0), call_outcome: "held" }, state: "held", card: "held:Done", alert: /recap has not been sent/, portal: "held", portalHeld: true },
+  { name: "held by a sent recap (the 10-09 test call)", inv: { start: ago(120), recap_sent_at: ago(100) }, state: "held", card: "held:Done", alert: null, portal: "held" },
   { name: "ended, never recorded", inv: { start: ago(120) }, state: "ended", card: "ended:Time passed", alert: /record how it went/, portal: "booked_passed" },
 ];
 const F = [];
@@ -73,6 +73,12 @@ for (const r of ROWS) {
 // the step-7 after pane never asks "Did the call happen?" once a recap went
 if (!/const oc = ki\.call_outcome \|\| \(ki\.recap_sent_at \? "held" : ""\);/.test(admin)) F.push("step 7's after pane asks \"Did the call happen?\" after a recap went");
 if (/Clients can book over meetings in/.test(admin)) F.push("the calendar note still says clients book over your Google Calendar — reworded in the approved mockup");
+// 🔒 kickoff_booking_card_v3 — one word per state on every surface. A retired word on screen is a second vocabulary.
+const visible = admin.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
+for (const [w, why] of [['"Call held"', "Call held → Done"], ['>Live now<', "Live now → Happening now"], ['"Due now"', "Due now → Happening now"], ['`Live · ', "Live · N min → Happening now"]])
+  if (visible.includes(w)) F.push(`admin still shows the retired word ${w} (${why})`);
+if (/pm-msg past"><span class="dot"><\/span>Time has passed/.test(portal)) F.push("the client card still says Time has passed (→ Time passed)");
+if (/\$\{confirmed \? "Confirmed" : "Requested"\}/.test(portal)) F.push("the client card still says Confirmed (→ Booked)");
 
 if (F.length) { console.error("🔴 the kickoff tells more than one story:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ the kickoff agrees on every surface: ${ROWS.length} states × Overview card · attention · Your action · client portal`);

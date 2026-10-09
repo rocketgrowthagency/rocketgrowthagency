@@ -56,8 +56,9 @@ const render = (mins, recap) =>
 const early = render(-120);            // two hours before
 if (/pm-join/.test(early)) fail.push("portal/portal.js — the Join link shows two hours early; it leads to an empty room.");
 else pass.push("two hours ahead there is no Join link");
-if (!/Confirmed/.test(early)) fail.push("portal/portal.js — an upcoming confirmed call no longer reads Confirmed.");
-else pass.push("ahead of time it reads Confirmed");
+// 🔄 2026-10-09 (kickoff_booking_card_v3): one word per state on both portals — a confirmed call reads "Booked".
+if (!/Booked/.test(early)) fail.push("portal/portal.js — an upcoming confirmed call no longer reads Booked.");
+else pass.push("ahead of time it reads Booked");
 
 // 🔒 CHANGED BY CHRIS 2026-09-29: "dont put join the call until its time." The join used to appear
 // 15 minutes early; a way in offered before there is anything to join is an invitation to sit alone
@@ -80,7 +81,7 @@ for (const claim of ["Done", "finished", "Thanks for your time"]) {
   if (new RegExp(claim, "i").test(after))
     fail.push(`portal/portal.js — with no recap sent, the card says "${claim}" — a claim that the call happened, which nothing observed.`);
 }
-if (!/Time has passed/.test(after)) fail.push("portal/portal.js — after the end time the card does not say the time has passed.");
+if (!/Time passed/.test(after)) fail.push("portal/portal.js — after the end time the card does not say Time passed.");
 else pass.push("it states the one thing we can prove: the time has passed");
 // 🔴 They may well have attended. Telling them they missed it is a claim too.
 if (/you missed it/i.test(after) && !/If you missed it/i.test(after))

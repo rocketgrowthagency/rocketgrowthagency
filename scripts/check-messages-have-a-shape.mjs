@@ -153,35 +153,26 @@ if (fs.existsSync(MOCK)) {
   const aj = fs.readFileSync(ADMIN_JS, "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const ac = fs.readFileSync(ADMIN_CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 
-  // 1 ─ the grouped row exists and the flat one has not come back
-  if (!/class="pm-settings"/.test(aj)) {
-    fail.push("the kickoff card no longer renders .pm-settings — the controls would be back to one undifferentiated row");
+  // 🔄 RE-PINNED 2026-10-09 (approved kickoff_booking_card_v3). Chris replaced the 09-26 three-column footer: the
+  // setup links were about MAKING a booking and stayed after the call, step 1's confirmation email did not belong
+  // on this card, and the status line repeated the pill. What stays locked is the PROPERTY: the controls are not
+  // one undifferentiated row of peers — they live in ONE labelled fold, and the repair sits apart, last.
+  // 1 ─ one labelled fold, and the flat row has not come back
+  if (!/<details class="pm-settings pm-settings-fold"/.test(aj) || !/<summary>Booking settings<\/summary>/.test(aj)) {
+    fail.push("the kickoff card's controls are not in the Booking settings fold — they would be back to a row of peers under the card");
   }
   if (/class="pm-settings-row"/.test(aj)) {
     fail.push("the flat .pm-settings-row is being rendered again — that is the six-peer-links layout this replaced");
   }
-
-  // 2 ─ every group carries a label saying what its controls are FOR (the repair is the exception:
-  //     it is deliberately unlabelled and pushed out of the peer set)
-  // 🔴 THE ROW MUST BE A GRID, NOT WRAPPED FLEX. Chris, 2026-09-26: *"the bottom part is bad."*
-  // With `display:flex;flex-wrap:wrap` and a full-width label inside each group, the groups cannot
-  // share a baseline: live, the three labels sat at three different heights and the repair was
-  // stranded on its own line. Declared columns are the whole fix, so they are what is locked.
+  // 2 ─ the repair is not a peer: it sits on its own line, after the settings, inside the fold
+  if (!/class="pm-set-rep">[^<]*<button class="mod-quiet" type="button" data-rga-google-connect="1">Reconnect Google<\/button>/.test(aj)) {
+    fail.push("Reconnect Google is not on its own quiet line inside Booking settings — it is a repair, not a peer of the settings");
+  }
+  if (/data-send-confirmation="\$\{escapeAttribute\(client\.id\)\}">Send it</.test(aj)) {
+    fail.push("step 1's confirmation email is back on the kickoff card — it belongs to step 1 (kickoff_booking_card_v3)");
+  }
   {
-    const gi = ac.indexOf(".pm-settings-grid{");
-    if (gi === -1) {
-      fail.push(".pm-settings-grid has no rule — the footer falls back to wrapped flex, where the group labels land at different heights and nothing aligns");
-    } else {
-      const rule = ac.slice(gi, ac.indexOf("}", gi));
-      if (!/display:\s*grid/.test(rule) || !/grid-template-columns/.test(rule)) {
-        fail.push(".pm-settings-grid is not a grid with declared columns — a row of ALIGNED columns cannot be built from wrapped flex, which is exactly how the footer broke");
-      }
-    }
-    // 🔴 ONE CARD, ONE RIGHT EDGE. Chris, 2026-09-26: *"keep grey bar same width."* The shapes were
-    // ported from the portal with their `ch` caps intact — .pm-outcome 64ch, .pm-note 62ch — so in a
-    // 789px admin card they measured 646px and 508px beside a full-width footer: three ragged right
-    // edges. A `ch` cap is a reading-width rule for a column of prose; these are panels in a card
-    // that already sets the measure. Portal keeps its own caps; the ADMIN must not re-grow them.
+    // 🔴 ONE CARD, ONE RIGHT EDGE (2026-09-26) — still true of the shapes inside the card.
     for (const cls of ["pm-note", "pm-outcome"]) {
       const ri = ac.indexOf(`.${cls}{`);
       if (ri === -1) continue;
@@ -190,25 +181,6 @@ if (fs.existsSync(MOCK)) {
         fail.push(`.${cls} has a ch-based max-width in admin.css — inside the kickoff card that produces a right edge `
           + "that does not line up with the outcome box above it or the footer below it");
       }
-    }
-
-    // The state and the repair share one row; neither is allowed to be orphaned again.
-    if (!/class="pm-set-status"/.test(aj)) {
-      fail.push("the footer has no .pm-set-status row — 'No invite sent yet.' becomes a lonely sentence again and Reconnect Google a stranded link");
-    }
-    if (!/pm-set-status[\s\S]{0,400}?data-rga-google-connect/.test(aj)) {
-      fail.push("Reconnect Google is not in the status row — it is a repair for the state stated beside it, not a peer of the settings above");
-    }
-  }
-
-  const groups = [...aj.matchAll(/<div class="pm-set-group([^"]*)">([\s\S]{0,900}?)<\/span>\s*<\/div>/g)];
-  if (groups.length < 3) {
-    fail.push(`only ${groups.length} control group(s) found — the row is meant to separate settings, the confirmation email and navigation`);
-  }
-  for (const [, extra, body] of groups) {
-    if (!/pm-set-label/.test(body)) {
-      const first = (body.match(/>([^<]{3,40})</) || [, "?"])[1].trim();
-      fail.push(`a control group ("${first}…") has no pm-set-label — an unlabelled group is just the flat row again`);
     }
   }
 
@@ -228,7 +200,8 @@ if (fs.existsSync(MOCK)) {
   // 🔑 BASE DECLARATIONS ONLY — anchored to start-of-line. The loose form counted the `@media`
   // responsive override (`  .pm-set-repair{margin-left:0}`) as a duplicate and failed the clean
   // tree. A media-query override is the opposite of a collision: it is scoped on purpose.
-  for (const cls of ["pm-settings", "pm-settings-grid", "pm-set-group", "pm-set-label", "pm-set-links", "pm-set-status"]) {
+  // 🔄 2026-10-09: the classes the Booking settings fold renders (kickoff_booking_card_v3)
+  for (const cls of ["pm-settings", "pm-set-links"]) {
     const decls = (ac.match(new RegExp(`^\\.${cls}\\{`, "gm")) || []).length;
     if (decls === 0) fail.push(`.${cls} is rendered but has no rule — the group would collapse to unstyled text`);
     if (decls > 1) fail.push(`.${cls} is declared ${decls} times — a duplicate selector is not an override, it is a coin toss (this exact mistake shipped column-then-row on .pm-set-group)`);

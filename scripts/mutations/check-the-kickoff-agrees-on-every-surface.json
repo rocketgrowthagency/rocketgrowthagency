@@ -1,9 +1,65 @@
 [
- ["a sent recap stops counting as held (admin)", "admin", "  else if (outcome === \"held\" || (ki.recap_sent_at && now >= startMs)) name = \"held\";", "  else if (outcome === \"held\") name = \"held\";", 1],
- ["the Overview card goes back to Booked after the call", "admin", "  if (kst.name === \"held\") {\n    const yes", "  if (false) {\n    const yes", 1],
- ["the attention panel stops saying due", "admin", "      if (c && c.phase === \"pre\" && c.due) return { k: \"w\", t: \"The kickoff call is due now\"", "      if (false) return { k: \"w\", t: \"The kickoff call is due now\"", 1],
- ["Your action asks to record a recapped call", "admin", "  if (c.phase === \"after\" && !ki.call_outcome && !ki.recap_sent_at && c.elapsed < 12 * 60) {", "  if (c.phase === \"after\" && !ki.call_outcome && c.elapsed < 12 * 60) {", 1],
- ["the portal waits for 30 minutes after RGA ended it", "portal", "  const ended = ((Number.isFinite(startMs) && t >= startMs + mins * 60000) && !runningOver) || heldEarly;", "  const ended = ((Number.isFinite(startMs) && t >= startMs + mins * 60000) && !runningOver);", 1],
- ["the portal says Time has passed mid-call", "portal", "  const runningOver = !pending && hasBooking && callStarted === true && !heldEarly;", "  const runningOver = false;", 1],
- ["step 7 asks Did the call happen after a recap", "admin", "    const oc = ki.call_outcome || (ki.recap_sent_at ? \"held\" : \"\");", "    const oc = ki.call_outcome || \"\";", 1]
+ [
+  "a sent recap stops counting as held (admin)",
+  "admin",
+  "  else if (outcome === \"held\" || (ki.recap_sent_at && now >= startMs)) name = \"held\";",
+  "  else if (outcome === \"held\") name = \"held\";",
+  1
+ ],
+ [
+  "the Overview card goes back to Booked after the call",
+  "admin",
+  "  if (kst.name === \"held\") {\n    const yes",
+  "  if (false) {\n    const yes",
+  1
+ ],
+ [
+  "the attention panel stops saying due",
+  "admin",
+  "      if (c && c.phase === \"pre\" && c.due) return { k: \"w\", t: \"The kickoff call is happening now — start it\"",
+  "      if (false) return { k: \"w\", t: \"The kickoff call is happening now — start it\"",
+  1
+ ],
+ [
+  "Your action asks to record a recapped call",
+  "admin",
+  "  if (c.phase === \"after\" && !ki.call_outcome && !ki.recap_sent_at && c.elapsed < 12 * 60) {",
+  "  if (c.phase === \"after\" && !ki.call_outcome && c.elapsed < 12 * 60) {",
+  1
+ ],
+ [
+  "the portal waits for 30 minutes after RGA ended it",
+  "portal",
+  "  const ended = ((Number.isFinite(startMs) && t >= startMs + mins * 60000) && !runningOver) || heldEarly;",
+  "  const ended = ((Number.isFinite(startMs) && t >= startMs + mins * 60000) && !runningOver);",
+  1
+ ],
+ [
+  "the portal says Time has passed mid-call",
+  "portal",
+  "  const runningOver = !pending && hasBooking && callStarted === true && !heldEarly;",
+  "  const runningOver = false;",
+  1
+ ],
+ [
+  "step 7 asks Did the call happen after a recap",
+  "admin",
+  "    const oc = ki.call_outcome || (ki.recap_sent_at ? \"held\" : \"\");",
+  "    const oc = ki.call_outcome || \"\";",
+  1
+ ],
+ [
+  "Call held comes back on the card",
+  "admin",
+  "    return { mode: \"held\", tone: \"ok\", pill: \"Done\", cta: \"\",",
+  "    return { mode: \"held\", tone: \"ok\", pill: \"Call held\", cta: \"\",",
+  1
+ ],
+ [
+  "the client card says Confirmed again",
+  "portal",
+  "${confirmed ? \"Booked\" : \"Requested\"}",
+  "${confirmed ? \"Confirmed\" : \"Requested\"}",
+  1
+ ]
 ]
