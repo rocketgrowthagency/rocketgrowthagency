@@ -102,6 +102,7 @@ const FILES = {
   outcomefn: "netlify/functions/kickoff-call-outcome.js",
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
   letter: "netlify/functions/_letter.js",
+  photolists: "netlify/functions/_photo-lists.js",
   gmail: "netlify/functions/_gmail.js",
   emaildoc: "shared/email-doc.js",
   replyfn: "netlify/functions/portal-reply.js",

@@ -1,0 +1,100 @@
+[
+ [
+  "a shot asks for a monitor again",
+  "photolists",
+  "\"A wide shot of the workspace, tidy and well lit.\"",
+  "\"A wide shot of the workspace, a monitor glowing on the desk.\"",
+  1
+ ],
+ [
+  "a shot loses its source",
+  "photolists",
+  "\"The owner, in uniform, looking at the camera.\", \"People trust a face before letting someone into their home.\", \"G\"",
+  "\"The owner, in uniform, looking at the camera.\", \"People trust a face before letting someone into their home.\", \"\"",
+  1
+ ],
+ [
+  "list A drops to 19 shots",
+  "photolists",
+  "      s(\"TEAMS\", \"The whole crew together, in front of the vans or the shop.\", \"Google: show the personal side of your business.\", \"G\"),\n",
+  "",
+  1
+ ],
+ [
+  "a trade loses a shot",
+  "photolists",
+  "\"A truck loaded neatly.\", \"The crew wrapping furniture.\", ",
+  "\"A truck loaded neatly.\", ",
+  1
+ ],
+ [
+  "an unapproved list goes out",
+  "photolists",
+  "  if (!L.approved || !t.approved) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a guess for an unknown category",
+  "photolists",
+  "  return TYPES.find((t) => t.match.test(c)) || null;",
+  "  return TYPES.find((t) => t.match.test(c)) || TYPES[0];",
+  1
+ ],
+ [
+  "a hidden address still asks for the building",
+  "photolists",
+  "  const isStorefront = storefront == null ? !L.sabDefault : !!storefront;",
+  "  const isStorefront = true;",
+  1
+ ],
+ [
+  "British spelling in a shot",
+  "photolists",
+  "\"A gift card, package or price board customers can buy.\"",
+  "\"A gift card, package or colour-coded price board customers can buy.\"",
+  1
+ ],
+ [
+  "the runner asks an AI again",
+  "exec",
+  "    const L = buildShotList({ category, typeOverride: override, storefront });",
+  "    const L = buildShotList({ category, typeOverride: override, storefront }); await aiDraft(\"x\", \"y\");",
+  1
+ ],
+ [
+  "the runner's shape is dropped",
+  "exec",
+  "      draft_shape: result?.draft_shape || draftShape(result?.summary) || null,",
+  "      draft_shape: draftShape(result?.summary) || null,",
+  1
+ ],
+ [
+  "the admin picker drifts from the types",
+  "admin",
+  "\"Hair salons\", \"Pet grooming\", \"Yoga studios\"",
+  "\"Hair salons\", \"Pet grooming\", \"Yoga studios\", \"Nail salons\"",
+  1
+ ],
+ [
+  "the measurement counts only",
+  "recheck",
+  "r = await fetch(`https://mybusiness.googleapis.com/v4/${parent}/media?pageSize=100`,",
+  "r = await fetch(`https://mybusiness.googleapis.com/v4/${parent}/media?pageSize=1`,",
+  1
+ ],
+ [
+  "a publish no longer recounts",
+  "photopublish",
+  "  if (summary.published && d.recount) {",
+  "  if (false && d.recount) {",
+  1
+ ],
+ [
+  "existing Google photos stop filling slots",
+  "portal",
+  "Already on your Google profile</span></div>",
+  "On Google</span></div>",
+  1
+ ]
+]

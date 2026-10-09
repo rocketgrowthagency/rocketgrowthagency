@@ -83,7 +83,7 @@ catch (e) { console.error(`⚠️  INDETERMINATE — _draft-shape.js does not lo
 // ═══ 2 — THE SERVER PARSES AND STORES IT; NOBODY ELSE PARSES ═════════════════════════════════
 {
   const exec = strip(read("netlify/functions/flow-execute.js", "flow-execute.js"));
-  if (!/draft_shape:\s*draftShape\(/.test(exec)) {
+  if (!/draft_shape:\s*(result\?\.draft_shape \|\| )?draftShape\(/.test(exec)) {   // 🔄 a runner may hand its own shape over (photo lists, 10-09)
     F("flow-execute no longer parses the draft into `draft_shape` when it writes the task");
   }
   if (!/draft_shape:\s*state\.draft_shape/.test(exec)) {
