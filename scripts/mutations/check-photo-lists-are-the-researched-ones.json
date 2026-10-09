@@ -28,13 +28,6 @@
   1
  ],
  [
-  "an unapproved list goes out",
-  "photolists",
-  "  if (!L.approved || !t.approved) return",
-  "  if (false) return",
-  1
- ],
- [
   "a guess for an unknown category",
   "photolists",
   "  return TYPES.find((t) => t.match.test(c)) || null;",
@@ -95,6 +88,20 @@
   "portal",
   "Already on your Google profile</span></div>",
   "On Google</span></div>",
+  1
+ ],
+ [
+  "an unapproved list goes out",
+  "photolists",
+  "  if (!L.approved || !t.approved) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a trade's approval is ignored",
+  "photolists",
+  "  if (!L.approved || !t.approved) return",
+  "  if (!L.approved) return",
   1
  ]
 ]

@@ -70,10 +70,16 @@ for (const [cat, want] of CASES) {
 }
 // 4 · approval
 const ok = (cat, extra = {}) => P.buildShotList({ category: cat, ...extra });
-if (!ok("Plumber").ok || !ok("Internet marketing service").ok) fail("an approved list (A / marketing agencies) no longer builds");
-for (const cat of ["Dentist", "Locksmith", "Roofing contractor", "Hair salon"]) {
-  const r = ok(cat);
-  if (r.ok || r.reason !== "not_approved") fail(`"${cat}" uses a list or trade Chris has not approved, yet buildShotList ${r.ok ? "built it" : `said ${r.reason}`}`);
+// 🔄 2026-10-09: Chris approved every list and trade. The refusal is still proven — on a copy flagged unapproved —
+// because the next list or trade added starts unapproved.
+for (const cat of ["Plumber", "Internet marketing service", "Dentist", "Locksmith", "Roofing contractor", "Hair salon", "Wedding photographer"])
+  if (!ok(cat).ok) fail(`"${cat}" is approved but buildShotList refused it (${ok(cat).reason})`);
+{
+  const L = P.LISTS.D, t = P.typeByName("Cosmetic dentists"), keepL = L.approved, keepT = t.approved;
+  L.approved = false; const r1 = ok("Dentist"); L.approved = keepL;
+  t.approved = false; const r2 = ok("Dentist"); t.approved = keepT;
+  if (r1.ok || r1.reason !== "not_approved") fail("an UNAPPROVED list still builds — a new list would reach clients before Chris sees it");
+  if (r2.ok || r2.reason !== "not_approved") fail("an UNAPPROVED trade still builds — a new trade would reach clients before Chris sees it");
 }
 if (ok("Restaurant").ok || ok("Restaurant").reason !== "no_match") fail("a category with no list must return no_match, never a list");
 // 5 · storefront swap
