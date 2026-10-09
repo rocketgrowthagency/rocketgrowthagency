@@ -1,0 +1,4 @@
+[
+ ["the recap goes back to writing `at`", "recapfn", "kind: \"kickoff_recap_sent\", occurred_at: sentAt,", "kind: \"kickoff_recap_sent\", at: sentAt,", 1],
+ ["the call outcome goes back to writing `at`", "outcomefn", "kind: \"kickoff_call_outcome\", occurred_at: at,", "kind: \"kickoff_call_outcome\", at,", 1]
+]
