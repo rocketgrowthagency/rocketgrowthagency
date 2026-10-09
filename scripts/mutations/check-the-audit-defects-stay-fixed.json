@@ -1,0 +1,65 @@
+[
+ [
+  "location pages invent sub-locations",
+  "exec",
+  "`Draft a UNIQUE location page outline for EACH of these sub-locations, exactly as named (the ones the map grid measures): ${_plan.locations.join(\"; \")}.",
+  "`Suggest 3 sub-locations within the market + draft a UNIQUE location page outline for each.",
+  1
+ ],
+ [
+  "description ignores the plan",
+  "exec",
+  "GBP descriptions. HARD LIMIT: 750 chars. Lead with what + where, mention 2-3 services, end with contact action. Plain prose, no bullets, no emojis.`,\n      `${clientCtx(client)}${planBlock(_plan)}`",
+  "GBP descriptions. HARD LIMIT: 750 chars. Lead with what + where, mention 2-3 services, end with contact action. Plain prose, no bullets, no emojis.`,\n      `${clientCtx(client)}`",
+  1
+ ],
+ [
+  "hours title asks attributes",
+  "playbookjson",
+  "\"title\": \"Confirm hours\"",
+  "\"title\": \"Confirm hours + attributes\"",
+  1
+ ],
+ [
+  "GBP access hardcoded done",
+  "oauthcb",
+  "    gbp: !!gbpLocationId,",
+  "    gbp: true,",
+  1
+ ],
+ [
+  "Verified written unmeasured",
+  "exec",
+  "\"8.2 GBP Verified - Yes/No\": verified,",
+  "\"8.2 GBP Verified - Yes/No\": \"Yes\",",
+  1
+ ],
+ [
+  "place id not saved",
+  "oauthcb",
+  "body: JSON.stringify({ google_place_id: gbpPlaceId }),",
+  "body: JSON.stringify({}),",
+  1
+ ],
+ [
+  "fix plan drops the grid",
+  "recplan",
+  "const grid = task(\"m1.audit.grid_baseline\");",
+  "const grid = null;",
+  1
+ ],
+ [
+  "unmeasured scan becomes a finding",
+  "recplan",
+  "      if (k.measured !== true || !(k.points > 0)) continue;",
+  "",
+  1
+ ],
+ [
+  "handoff stops creating month 2",
+  "exec",
+  "        if (!row?.id) return { summary: \"Could not create the Month 2 record.",
+  "        if (false) return { summary: \"Could not create the Month 2 record.",
+  1
+ ]
+]

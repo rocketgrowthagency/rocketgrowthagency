@@ -444,6 +444,7 @@ run check-client-emails-tell-the-truth.mjs "no client email says nothing is need
 run check-the-client-journey-tells-one-story.mjs "the client sets up their Business Profile now, RGA sets up GA4/GSC in week 1, no Calendly, the playbook says Google before the kickoff"
 run check-every-plan-is-wired-end-to-end.mjs "every contract plan: one price from agreement to charge, Accept emails, the welcome email unblocked, DFY balance billed"
 run check-google-access-is-told-truthfully.mjs "the portal and privacy policy describe exactly the Google scopes the connect requests"
+run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2–#9) stay fixed"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"

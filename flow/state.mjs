@@ -85,7 +85,7 @@ export async function ensureMonthlyState(clientId, reportingMonth = currentRepor
   const created = await rest(`/client_monthly_records`, {
     method: "POST",
     body: JSON.stringify({
-      workspace_id: client.workspace_id,
+      // 🔴 no workspace_id — client_monthly_records has no such column (found 2026-10-08).
       client_id: clientId,
       reporting_month: reportingMonth,
       data: { playbook_version: "month2plus-v1", tasks: {} },

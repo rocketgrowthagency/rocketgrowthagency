@@ -674,11 +674,11 @@ Every photo the client uploads is published to their Google profile by itself: a
 DONE = 20 or more photos are on the profile; the portal detects this and ticks the step itself.`,
   },
   {
-    id: "m1.gbp.hours_attributes", title: "Confirm hours + attributes",
+    id: "m1.gbp.hours_attributes", title: "Confirm hours",
     type: "manual", dependsOn: ["m1.gbp.verify"],
     actionLabel: "⚡ Draft this for me",
     instructions: `Set regular hours, holiday hours, special hours.
-Add relevant attributes (Veteran-owned, Identifies as women-owned, Wheelchair accessible, etc).
+Attributes are asked once, in "Fill ALL relevant GBP attributes" (approved 2026-10-08 — they were asked twice).
 Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MONDAY",closeTime:{hours:17}},...])`,
   },
   {
