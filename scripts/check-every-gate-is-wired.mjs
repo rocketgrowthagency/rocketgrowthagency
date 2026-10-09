@@ -114,6 +114,7 @@ const NOT_PREFLIGHT = {
   'check-the-waiting-band-matches-the-mockup.mjs': 'renders the live admin card and the live client portal in a browser and diffs them against the approved mockup; runs in daily-health-check.sh — needs a browser and both live sites, and how a band looks cannot make a video unsafe',
   'check-a-sent-email-reads-as-an-email.mjs': 'runs the sent-email card against the real step-1 record and nine edge cases; runs in daily-health-check.sh — how a sent email is drawn cannot make a video unsafe',
   'check-every-mockup-is-in-memory.mjs': 'requires every new mockup to be cited by its system memory and every mockup to be in the generated registry; runs in daily-health-check.sh — memory hygiene cannot make a video unsafe',
+  'check-every-plan-is-wired-end-to-end.mjs': 'renders every plan through the real email + pricing code and pins the billing wiring; runs in daily-health-check.sh — billing copy cannot make a video unsafe',
   'check-the-client-journey-tells-one-story.mjs': 'reads the portal Google setup step + the playbook after-yes order; runs in daily-health-check.sh — client-journey wording cannot make a video unsafe',
   'check-client-emails-tell-the-truth.mjs': 'renders every stage email (paid + beta) through messageFor; runs in daily-health-check.sh — email wording cannot make a video unsafe',
   'check-colours-come-from-the-system.mjs': 'holds the approved UI state system (tokens, retired shades, decisions, ratchet); runs in daily-health-check.sh — colour cannot make a video unsafe',

@@ -1,0 +1,93 @@
+[
+ [
+  "agreement email writes step 1 again",
+  "confirmemail",
+  "if (isAgreementSend) {\n      // \ud83d\udd12 The agreement email is ITS OWN record \u2014 it never touches step 1.\n      data.agreement_email =",
+  "if (false) {\n      data.agreement_email =",
+  1
+ ],
+ [
+  "already-sent counts agreement emails",
+  "confirmemail",
+  "c.gmail_message_id && !isAgreementRecord(c))",
+  "c.gmail_message_id)",
+  1
+ ],
+ [
+  "plan line reads PLANS only (add-ons lost)",
+  "confirmemail",
+  "const s = priceSummaryForContract(contract);",
+  "const s = { ...priceSummaryForContract(contract), schedule: plan.schedule || [], recurring_monthly: plan.recurring_after_term, addons: {} };",
+  1
+ ],
+ [
+  "beta told about an invoice",
+  "confirmemail",
+  "? `Once it's signed, you connect your Google accounts",
+  "? `Once it's signed, your invoice is in the portal. You connect your Google accounts",
+  1
+ ],
+ [
+  "stage-2 amount dropped",
+  "notifystage",
+  "Pay ${amount > 0 ?",
+  "Pay ${false ?",
+  1
+ ],
+ [
+  "beta 1b mentions invoice again",
+  "notifystage",
+  "            ? `WHAT HAPPENS NEXT\\n  I check the details against what we agreed and countersign. Then you\\n`",
+  "            ? `WHAT HAPPENS NEXT\\n  I countersign and send your first invoice. Then you\\n`",
+  1
+ ],
+ [
+  "Accept unsigned again",
+  "admin",
+  "        method: \"POST\",\n        headers: await authHeaders(),\n        body: JSON.stringify({ client_id: state.selectedClient.id, stage: next.key }),",
+  "        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: JSON.stringify({ client_id: state.selectedClient.id, stage: next.key }),",
+  1
+ ],
+ [
+  "beta charged",
+  "payintent",
+  "if (contract.tier === \"beta_unbilled\") amount = 0;",
+  "if (false) amount = 0;",
+  1
+ ],
+ [
+  "DFY deposit ignores add-ons",
+  "stripewebhook",
+  "return require(\"./contract-generate.js\").dfyHalf(contract);",
+  "return Math.round((generated.project_total || 0) / 2);",
+  1
+ ],
+ [
+  "invoice doc halves bare price",
+  "invoicedoc",
+  "const half = dfyHalf({ projectTotal, addons, plans });",
+  "const half = Math.round(projectTotal / 2);",
+  1
+ ],
+ [
+  "balance before deposit paid",
+  "balance",
+  "String(inv1.status).toLowerCase() !== \"paid\"",
+  "false",
+  1
+ ],
+ [
+  "contract says commitment",
+  "contractgen",
+  "Client has chosen the <strong>3-month plan</strong>",
+  "Client has committed to a <strong>3-month initial term</strong>",
+  1
+ ],
+ [
+  "DFY half wrong",
+  "contractgen",
+  "return s ? Math.round((s.project_total || 0) / 2) : 0;",
+  "return s ? Math.round((s.project_total || 0) / 3) : 0;",
+  1
+ ]
+]

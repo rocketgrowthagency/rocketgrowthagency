@@ -83,6 +83,8 @@ const SURFACES = {
   // LIVE customers exactly double. 🔑 An EXCLUDED classification is a CLAIM and needs the same proof
   // as a finding. Now DERIVED, and check-charge-equals-the-contract.mjs enforces it.
   "netlify/functions/stripe-create-checkout.js":["DERIVED", "first invoice → contract-generate.firstInvoiceAmount()"],
+  "netlify/functions/notify-client-stage.js":    ["DERIVED", "\"Your first invoice is ready\" amount → contract-generate.firstInvoiceAmount() / dfyHalf() (2026-10-08)"],
+  "netlify/functions/admin-send-balance-invoice.js": ["DERIVED", "Done-For-You balance invoice #2 → contract-generate.dfyHalf() (2026-10-08)"],
   "netlify/functions/portal-payment-intent.js":  ["DERIVED", "inline Payment Element amount → contract-generate.firstInvoiceAmount()"],
   "netlify/functions/stripe-webhook.js":        ["DERIVED", "invoice ledger amounts → contract-generate.firstInvoiceAmount() (was the 5th/6th pre-discount copy)"],
   "netlify/functions/billing-daily-check.js": ["DERIVED", "the NEXT invoice's amount when an auto-charge settles one → contract-generate PLANS.recurring_after_term (added 2026-09-10; would have been the 8th copy)"],
