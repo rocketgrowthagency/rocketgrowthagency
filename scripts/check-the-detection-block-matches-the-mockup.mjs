@@ -59,6 +59,23 @@ try {
     await b.close(); process.exit(2);
   }
 
+  // 🔴 OPEN THE STEP THAT HOLDS IT (2026-10-09). Since the admin step accordion (one step open per card) the first
+  // block in the DOM usually sits in a FOLDED step — display:none — and this gate reported "block.display none,
+  // rule value + evidence missing": the instrument measuring a closed drawer, not a broken design. A person opens
+  // the step to read the block, so the gate does too: the phase, then the step's row.
+  await p.evaluate(() => {
+    const det = document.querySelector(".ob-det");
+    const ph = det && det.closest(".ob-phase");
+    if (ph && !ph.classList.contains("open")) ph.querySelector("[data-ob-phase-toggle]")?.click();
+    const st = det && det.closest(".ob-step");
+    if (st && st.classList.contains("ob-folded")) st.querySelector(".ob-title")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  await new Promise((r) => setTimeout(r, 600));
+  if (!(await p.evaluate(() => { const d = document.querySelector(".ob-det"); return !!d && d.getClientRects().length > 0; }))) {
+    console.error("⚠️  INDETERMINATE — the step holding the detection block would not open, so there is nothing visible to measure.");
+    await b.close(); process.exit(2);
+  }
+
   // 🔑 THE CHIP AND THE METER ARE MATCHED ON THEIR ACTUAL STATE. `.ob-detchip` carries yes|no|unk
   // and each has its own colours BY DESIGN, so reading the mockup's `.no` against whatever the live
   // card happens to show would be a false difference. Ask the live card what it is.
@@ -71,15 +88,28 @@ try {
   if (!state) { console.error("⚠️  INDETERMINATE — the live chip carries no yes/no/unk class."); await b.close(); process.exit(2); }
   const MOCKSTATE = { yes: "yes", no: "no", unk: "unk" }[state];
 
+  // 🔴 A PART THIS CLIENT'S SCREEN DOES NOT SHOW IS STILL MEASURED (2026-10-09). The test client's visible blocks are
+  // all yes/no connection checks, so the meter, the "Done when" row, the evidence and the override never rendered and
+  // three of this gate's mutations went uncaught. When the live page lacks a part, the gate adds that part — in the
+  // markup admin.js renderDetection/override writes — INSIDE the live block, so the live stylesheet styles it and
+  // the comparison is still live CSS against the mockup. The output line says which parts were built this way.
+  const built = await p.evaluate(() => {
+    const det = document.querySelector(".ob-det"); const made = [];
+    if (!det) return made;
+    const m = det.querySelector(".ob-det-r.m .v");
+    if (m && !det.querySelector(".ob-meter")) { m.insertAdjacentHTML("beforeend", '<span class="ob-meter"><i style="width:35%"></i></span>'); made.push("meter"); }
+    if (m && !det.querySelector(".ob-evid")) { m.insertAdjacentHTML("beforeend", '<span class="ob-evid">Your Google Business Profile has 7 photos — 20 are needed.</span>'); made.push("evidence"); }
+    if (!det.querySelector(".ob-det-r.rule")) { det.insertAdjacentHTML("beforeend", '<div class="ob-det-r rule"><span class="k">Done when</span><span class="v">20 photos on the profile</span></div>'); made.push("rule row"); }
+    if (!document.querySelector(".ob-ovr")) { det.insertAdjacentHTML("afterend", '<div class="ob-ovr"><span class="lab">Override</span><button type="button" class="admin-button">Mark done</button></div>'); made.push("override"); }
+    return made;
+  });
   const pairs = [
     ["block",    ".det",               ".ob-det"],
     ["row",      ".det-r",             ".ob-det-r"],
     ["label",    ".det-r .k",          ".ob-det-r .k"],
     ["value",    ".det-r .v",          ".ob-det-r .v"],
     ["measured", ".det-r.m",           ".ob-det-r.m"],
-    ["ruleValue",".det-r.rule .v",     ".ob-det-r.rule .v"],
     ["chip",     `.state.${MOCKSTATE}`, `.ob-detchip.${state}`],
-    ["evidence", ".evid",              ".ob-evid"],
     ["when",     ".when",              ".ob-when"],
     ["recheck",  ".recheck",           ".ob-recheck"],
   ];
@@ -88,6 +118,14 @@ try {
   if (hasMeter) {
     pairs.push(["meter", ".bar", ".ob-meter"], ["meterFill", ".bar i", ".ob-meter > i"]);
   }
+  // 🔄 2026-10-09: the "Done when" rule row and the evidence line render only when the step HAS a rule / a headline
+  // (admin.js renderDetection: `rule ? … : ""`). A yes/no connection check (GBP / GA4 / GSC answered) has neither by
+  // design, and the test client's visible blocks are all of that kind — the gate called them "missing". Compared
+  // when present, exactly like the meter; the line below says which were compared so a skip is never silent.
+  const hasRule = await p.evaluate(() => !!document.querySelector(".ob-det-r.rule .v"));
+  if (hasRule) pairs.push(["ruleValue", ".det-r.rule .v", ".ob-det-r.rule .v"]);
+  const hasEvid = await p.evaluate(() => !!document.querySelector(".ob-evid"));
+  if (hasEvid) pairs.push(["evidence", ".evid", ".ob-evid"]);
   // the override row only exists on an ACTIVE detected step
   const hasOvr = await p.evaluate(() => !!document.querySelector(".ob-ovr"));
   if (hasOvr) {
@@ -102,7 +140,7 @@ try {
   }
 
   console.log(`  ${pairs.length} paired elements · ${compared} declared properties compared`);
-  console.log(`  live state: "${state}" · ${n} detection block(s) on screen · meter ${hasMeter ? "present" : "absent"} · override row ${hasOvr ? "present" : "absent"}`);
+  console.log(`  live state: "${state}" · ${n} detection block(s) on screen · meter ${hasMeter ? "present" : "absent"} · override row ${hasOvr ? "present" : "absent"} · rule row ${hasRule ? "present" : "absent"} · evidence ${hasEvid ? "present" : "absent"}${built.length ? ` · built in the live page from its own CSS: ${built.join(", ")}` : ""}`);
   console.log(`  ${inherited} property/element pairs are declared by neither side (inherited from the host page) and are not design decisions`);
 
   if (diffs.length) {

@@ -96,5 +96,19 @@
   "      markup: `${first",
   "      body: `${first",
   1
+ ],
+ [
+  "the welcome email lists GBP to a client again",
+  "confirmemail",
+  ".replace(/\\bGBP\\b/g, \"Google profile\")",
+  "",
+  1
+ ],
+ [
+  "the nudge names the step in shorthand",
+  "admin",
+  "  const short = clientWords(label);",
+  "  const short = String(label);",
+  1
  ]
 ]

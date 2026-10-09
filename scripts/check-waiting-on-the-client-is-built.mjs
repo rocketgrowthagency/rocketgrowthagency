@@ -45,7 +45,7 @@ const lift = (name) => {
   return b < 0 ? null : admin.slice(a, b + 3);
 };
 const srcSince = lift("stepWaitingSince");
-const srcDraft = lift("stepNudgeDraft");
+const srcDraft = lift("stepNudgeDraft") && `${lift("clientWords") || ""}\n${lift("stepNudgeDraft")}`;   // the draft names steps through clientWords()
 if (!srcSince || !srcDraft) {
   console.error(`⚠️  INDETERMINATE — could not lift ${!srcSince ? "stepWaitingSince" : "stepNudgeDraft"} from admin.js`);
   process.exit(2);
@@ -77,7 +77,7 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
   if (!m.body.includes("1 of the 20 photos")) F("the nudge does not carry the measurement's own numbers");
   if (!m.body.includes("/portal/#step-m1.gbp.photos")) F("the nudge does not link to the step itself");
   const u = ctx.draft({ flowId: "m1.gbp.messaging", clientLabel: "Turn on GBP messaging" }, {});
-  if (u.subject !== "Your next step: Turn on GBP messaging") F(`an unmeasured step's subject was "${u.subject}"`);
+  if (u.subject !== "Your next step: Turn on Google profile messaging") F(`an unmeasured step's subject was "${u.subject}"`);
   if (/\d+ of \d+|to go/.test(u.body + u.text)) F("an unmeasured step's nudge contains a count — an invented number");
   ctx.state.selectedClient = {};
   if (!ctx.draft(o, {}).body.startsWith("Hi there,")) F("with no contact name the nudge must say \"Hi there\", not \"Hi undefined\"");

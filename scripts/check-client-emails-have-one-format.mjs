@@ -113,5 +113,12 @@ if (/Hi \$\{esc\(first\)\}, \$\{intro\}/.test(C.report) && /const intro = `Here'
 if (/summary: `Kickoff call — [^`]*×/.test(C.invite)) fail("the calendar invite title uses \"×\" — say \"and\"");
 if (/\\n\$\{clientShareLink\(clientId\)\}/.test(C.invite)) fail("the calendar invite shows the report ADDRESS — link the words");
 
+// 7. our shorthand never reaches a client: the welcome email's step list is written for them
+if (!/\.replace\(\/\\bGBP\\b\/g, "Google profile"\)/.test(C.confirm)) fail("send-confirmation-email lists steps with our shorthand (GBP / GA4 / GSC) — the client reads \"Google profile\"");
+
+if (!/function clientWords\(label\)[\s\S]{0,200}\\bGBP\\b\/g, "Google profile"/.test(C.admin)) fail("admin.js lost clientWords() — a nudge or a note can name a step in our shorthand");
+for (const [where, re] of [["the nudge", /const short = clientWords\(label\);/], ["the setting-changed note", /const stepName = clientWords\(/]])
+  if (!re.test(C.admin)) fail(`${where} names the step without clientWords() — "Turn on GBP messaging" reaches the client`);
+
 if (F.length) { console.error("🔴 a client email left the one format:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ every client email has the one format: letter markup, links as words, one sign-off, American copy, documents signed");
