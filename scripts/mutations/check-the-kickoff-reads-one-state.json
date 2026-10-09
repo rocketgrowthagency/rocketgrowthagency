@@ -180,5 +180,40 @@
   "    if (kickoffStandingPassed(standing)) return booked",
   "    if (false) return booked",
   1
+ ],
+ [
+  "the requested card loses Cancel this request",
+  "portal",
+  ">Cancel this request</button>",
+  ">Withdraw</button>",
+  1
+ ],
+ [
+  "the server lets an admin session withdraw",
+  "cancelinvite",
+  "if (!byClient) return jsonRes(403,",
+  "if (false) return jsonRes(403,",
+  1
+ ],
+ [
+  "the server stops reading the withdrawal back",
+  "cancelinvite",
+  "if (!Array.isArray(left) || left.length) return jsonRes(500",
+  "if (false) return jsonRes(500",
+  1
+ ],
+ [
+  "sending a time leaves the picker lede",
+  "portal",
+  "      _kickoffPicking.delete(clientId);\n      markKickoffWaitingOnRga(clientId);",
+  "      markKickoffWaitingOnRga(clientId);",
+  1
+ ],
+ [
+  "the passed picker loses its Cancel",
+  "portal",
+  ">Cancel</button>`;",
+  ">Close</button>`;",
+  1
  ]
 ]

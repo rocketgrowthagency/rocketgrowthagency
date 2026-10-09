@@ -74,6 +74,7 @@ const FILES = {
   photosql: "docs/supabase/RGA_CLIENT_PHOTO_PUBLISHES_2026-10-08.sql",
   sendstep: "netlify/functions/send-step-email.js",
   kickinvite: "netlify/functions/send-kickoff-invite.js",
+  cancelinvite: "netlify/functions/cancel-kickoff-invite.js",
   admincss: "admin/admin.css",
   notifystage: "netlify/functions/notify-client-stage.js",
   confirmemail: "netlify/functions/send-confirmation-email.js",

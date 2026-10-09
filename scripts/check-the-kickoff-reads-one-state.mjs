@@ -24,6 +24,7 @@ import vm from "node:vm";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (rel) => { try { return fs.readFileSync(`${SITE}/${rel}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${rel}`); process.exit(2); } };
 const admin = read("admin/admin.js"), portal = read("portal/portal.js");
+const cancelFn = read("netlify/functions/cancel-kickoff-invite.js");
 const fails = []; const F = (m) => fails.push(m);
 const lift = (name) => { const a = admin.indexOf(`function ${name}(`); if (a < 0) return null; const b = admin.indexOf("\n}\n", a); return b < 0 ? null : admin.slice(a, b + 3); };
 const stateFn = lift("kickoffState"), alertFn = lift("kickoffAlertFor"), askFn = lift("kickoffAskCopy"), openFn = lift("kickoffCallOpen");
@@ -134,8 +135,17 @@ const PASSED = [
   ["a passed standing time is never put in the slot list", /if \(standing && !kickoffStandingPassed\(standing\)\) \{\s*const ms = new Date\(standing\.start\)/, portal],
   ["a passed standing time is never marked on the calendar", /const isMine = standing && !kickoffStandingPassed\(standing\) && keyOf/, portal],
   ["a passed standing time has no Keep control", /if \(kickoffStandingPassed\(standing\)\) return booked\s*\?\s*`<div class="kc-past">[^`]*has passed\.[^`]*`\s*:\s*`<div class="kc-past">[^`]*not confirmed, so it's not on the calendar[^`]*`;/, portal],
+  // 🔒 client_pick_and_cancel_v1 — a request can be cancelled; the picker over a passed time has a Cancel
+  ["the requested card offers Cancel this request", />Pick a different time<\/button>\s*\$\{[^}]*\}\s*<button type="button" class="pm-amend is-release" data-kickoff-withdraw=[^>]*>Cancel this request<\/button>/, portal],
+  ["the withdraw handler calls the request path", /closest\("\[data-kickoff-withdraw\]"\)[\s\S]{0,2500}?what: "request"/, portal],
+  ["the passed line carries a Cancel that closes the picker", /const closeBtn = `[^`]*data-kickoff-keep=[^`]*>Cancel<\/button>`;/, portal],
+  ["sending a time closes the picker (the lede follows)", /_kickoffWhen\.delete\(clientId\);[\s\S]{0,400}?_kickoffPicking\.delete\(clientId\);\s*markKickoffWaitingOnRga\(clientId\);/, portal],
+  ["the server withdraws only the owner's requested holds", /if \(body\.what === "request"\) \{\s*if \(!byClient\) return jsonRes\(403[\s\S]{0,400}?&status=eq\.requested`/, cancelFn],
+  ["the server reads the withdrawal back", /const left = await fetch\(`\$\{holdsUrl\}&select=slot_start`[\s\S]{0,200}?if \(!Array\.isArray\(left\) \|\| left\.length\) return jsonRes\(500/, cancelFn],
   ["the picker lede over a passed time", /pickingPassed\s*\?\s*"Pick any open time below\. We'll confirm it and email you the calendar invite\."/, portal],
 ];
+if (/>Keep the \$\{escapeHtml\(hourOnly\(from\.slot_start\)\)\} record</.test(admin)) F("the request card offers to KEEP a call whose time passed — nothing is left to keep (Chris 10-08 5:01 PM)");
+if (!/if \(fromPassed\) \{[\s\S]{0,2600}?data-change-kickoff-time=[^>]*>Pick a different time<\/button>/.test(admin)) F("a rebook request card has no Pick a different time");
 for (const [what, re, src] of PASSED) if (!re.test(src)) F(`${what} is missing — the passed state can tell its own story again`);
 // 🔴 the promises nothing keeps must not come back (Chris's 2:04 PM screenshot)
 for (const bad of ["We'll email you to sort a new one", "we'll confirm a new one with you today"]) {
