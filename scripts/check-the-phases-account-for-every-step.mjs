@@ -27,6 +27,7 @@
  *
  * Exit 0 pass · 1 fail · 2 indeterminate. Mutation log at the bottom.
  */
+import { liftAdmin } from "./_lift-admin.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -53,8 +54,13 @@ if (tableAt < 0) {
   const claimed = [...table.matchAll(/groups:\s*\[([^\]]*)\]/g)]
     .flatMap((mm) => [...mm[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
 
+  // 🔑 2026-10-08 — the card a step sits in is what the PRODUCT's obGroupOf says (an id map for the
+  // steps whose middle segment does not name their card, approved onboarding_order_audit_v1), so the
+  // real function is lifted and asked, never re-derived from the id here.
+  const groupOf = (() => { try { return liftAdmin(["obGroupOf", "OB_CARD_OF", "OB_SEGMENT_CARD"]).get("obGroupOf"); } catch { return null; } })();
+  if (typeof groupOf !== "function") { console.error("⚠️  INDETERMINATE — obGroupOf could not be lifted"); process.exit(2); }
   // 1 · every group in the DATA is claimed by a phase
-  const groups = [...new Set(m1.map((s) => String(s.id).split(".")[1]))];
+  const groups = [...new Set(m1.map((s) => groupOf(s.id)))];
   const unclaimed = groups.filter((g) => !claimed.includes(g));
   if (unclaimed.length) {
     fail.push(`admin/admin.js — ${unclaimed.length} step group(s) belong to no phase: ${unclaimed.join(", ")}. `
@@ -71,7 +77,7 @@ if (tableAt < 0) {
   // 3 · the denominators must sum to the real total
   const perPhase = [...table.matchAll(/groups:\s*\[([^\]]*)\]/g)]
     .map((mm) => [...mm[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]))
-    .map((gs) => m1.filter((s) => gs.includes(String(s.id).split(".")[1])).length);
+    .map((gs) => m1.filter((s) => gs.includes(groupOf(s.id))).length);
   const sum = perPhase.reduce((a, b) => a + b, 0);
   if (sum !== m1.length) {
     fail.push(`admin/admin.js — the phases account for ${sum} steps but Month 1 has ${m1.length}. `
@@ -86,7 +92,10 @@ if (tableAt < 0) {
     fail.push("admin/admin.js — obPhaseBody is gone, so the automated audit checks are back to 11 separate rows.");
   } else {
     const body = code.slice(fn, code.indexOf("\n}", fn));
-    if (!/sopType\)\s*===\s*"auto"/.test(body) && !/sopType === "auto"/.test(body)) {
+    // 🔑 2026-10-08: the rollup takes the leading AUTOMATED run in page order — it stops at the first
+    // step that is not automatic (`sopType !== "auto"`), so it can still never summarise manual work.
+    if (!/sopType\)\s*===\s*"auto"/.test(body) && !/sopType === "auto"/.test(body)
+        && !/firstHuman = ordered\.findIndex\(\(i\) => \(steps\[i\]\.obj \|\| \{\}\)\.sopType !== "auto"\)/.test(body)) {
       fail.push("admin/admin.js — the rollup no longer selects on `sopType === \"auto\"`, so it can "
         + "summarise steps that are NOT automatic and tell Chris work runs itself when it does not.");
     } else pass.push("the rollup selects the steps that really are automatic");

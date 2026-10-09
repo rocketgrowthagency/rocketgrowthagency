@@ -104,7 +104,7 @@ if (markerCalls < 5) F(`only ${markerCalls} of the 5 row builders call obMarker(
 // INDETERMINATE rather than letting a call throw.
 // → scripts/_lift-admin.mjs · feedback_a_comment_asserting_a_fix_is_not_the_fix
 const lifted = liftAdmin(
-  ["obPhasedHtml", "obPhaseMarker", "obPageNumbers", "obPageOrdered", "obGroupOf", "OB_PHASES"],
+  ["obPhasedHtml", "obPhaseMarker", "obPageNumbers", "obPageOrdered", "obGroupOf", "OB_PHASES", "OB_CARD_OF", "OB_SEGMENT_CARD"],
   // 🔑 + the kickoff state (2026-10-08): the phase count asks kickoffState() whether step 2/4 is open.
   // No client selected = no request, which is the honest default for a numbering check.
   { extraGlobals: { _obPhaseOpen: new Set(), _obPhaseShut: new Set(), state: { selectedClient: null, onboardingData: {} },
@@ -148,8 +148,9 @@ const m1 = JSON.parse(fs.readFileSync(W + "data/playbooks/playbooks.json", "utf8
     if (back) F(`reading the RENDERED page top to bottom the number goes BACKWARDS ${back} time(s)`);
     if (gaps) F(`the number is not the next number at ${gaps} boundary(ies) on the rendered page`);
   }
-  // 🔑 The references we actually use must survive. Measured when this changed: steps 1-12 untouched.
-  for (const [n, id] of [[1, "m1.close.confirm"], [2, "m1.close.kickoff_invite"], [3, "m1.kickoff.create"], [9, "m1.access.website"]]) {
+  // 🔑 The references we actually use must survive. Re-pinned 2026-10-08 to the APPROVED Month-1 order
+  // (onboarding_order_audit_v1): record check 1, welcome email 5, booking 6, the call 7, website access 8.
+  for (const [n, id] of [[1, "m1.kickoff.create"], [5, "m1.close.confirm"], [6, "m1.close.kickoff_invite"], [7, "m1.kickoff.call"], [8, "m1.access.website"]]) {
     const i = m1.findIndex((x) => x.id === id);
     if (i < 0) { F(`${id} is gone from the playbook`); continue; }
     if (pos.get(i) !== n) F(`"step ${n}" (${id}) is now number ${pos.get(i)} — the vocabulary we speak would go stale`);

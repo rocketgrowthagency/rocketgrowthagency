@@ -179,15 +179,15 @@ if (titles.length >= 40) {
     // ── 3. AND THE SIGNPOST ITSELF STILL NAMES THE STEP ──────────────────────────────────────────
     // 🔑 Removing the name would also pass check 1, and would be worse: "Send it from step 2 below."
     // with no name is the instruction Chris cannot ⌘F. → feedback_instruct_by_what_is_on_screen
-    const at = code.indexOf("Send it from step 2 below");
+    const at = code.indexOf("Send it from the step below");   // 2026-10-08: no hard-coded number
     if (at < 0) {
-      fail.push('admin/admin.js — the "Send it from step 2 below" signpost is gone. It is the banner '
+      fail.push('admin/admin.js — the "Send it from the step below" signpost is gone. It is the banner '
         + "that tells Chris where to act when the confirmation email promised an invite that has not "
         + "been booked.");
     } else {
       const win = code.slice(at, at + 220);
       if (!/kickoffStepTitle\s*\(/.test(win)) {
-        fail.push('admin/admin.js — the "Send it from step 2 below" signpost does not call '
+        fail.push('admin/admin.js — the "Send it from the step below" signpost does not call '
           + "kickoffStepTitle(); it names the step some other way, which is the copy this gate exists "
           + "to prevent.");
       } else pass.push("admin/admin.js — the signpost asks for the step's name");

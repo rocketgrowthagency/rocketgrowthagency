@@ -38,6 +38,14 @@ try {
 const vis = [...portal.matchAll(/clientBucket !== "(\w+)" && s\.clientBucket !== "(\w+)"/g)][0];
 const BUCKETS = vis ? [vis[1], vis[2]] : ["supply", "act"];
 const rows = Object.keys(pb).flatMap((b) => (pb[b] || []).filter((s) => BUCKETS.includes(s.clientBucket)));
+// 🔑 2026-10-08 — the client reads the PROJECTION, ordered by their own numbers since the admin's
+// Month-1 order changed (onboarding_order_audit_v1). Same rule as build-client-steps byClientNumber.
+const byClientNumber = (steps) => { let last = 0;
+  return steps.map((st, i) => { if (st.clientStepNo != null) last = Number(st.clientStepNo);
+    return { st, i, key: st.clientStepNo != null ? Number(st.clientStepNo) : last + 0.5 }; })
+    .sort((a, b) => a.key - b.key || a.i - b.i).map((k) => k.st); };
+let cs = null;
+try { cs = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8")); } catch { /* reported below */ }
 if (!rows.length) { console.error("⚠️  INDETERMINATE — no client-visible steps found."); process.exit(2); }
 
 // 1 · the render must not invent a number from the array index
@@ -60,9 +68,17 @@ for (const s of declared) {
 }
 
 // 3 · declared numbers must ascend in the order the client reads them
-let prev = -Infinity, order = true;
-for (const s of declared) { if (s.clientStepNo < prev) order = false; prev = s.clientStepNo; }
-if (!order) fails.push("the declared numbers do not ascend in playbook order — the client counts backwards");
+if (!cs) fails.push("client-steps.json (what the client reads) cannot be read");
+else for (const scope of ["month1", "month2plus"]) {
+  const shown = (cs[scope] || []).filter((s) => BUCKETS.includes(s.clientBucket));
+  let prev = -Infinity, order = true;
+  for (const s of shown) { if (s.clientStepNo == null) continue; if (s.clientStepNo < prev) order = false; prev = s.clientStepNo; }
+  if (!order) fails.push(`${scope}: the numbers do not ascend in the order the client reads them — the client counts backwards`);
+  const inProj = new Set((cs[scope] || []).map((s) => s.id));
+  const want = byClientNumber((pb[scope] || []).filter((s) => inProj.has(s.id))).filter((s) => BUCKETS.includes(s.clientBucket)).map((s) => `${s.id}#${s.clientStepNo ?? "-"}`).join("|");
+  const got = shown.map((s) => `${s.id}#${s.clientStepNo ?? "-"}`).join("|");
+  if (want !== got) fails.push(`${scope}: what the client reads is not the playbook in client-number order — rebuild with scripts/build-client-steps.mjs`);
+}
 
 // 4 · 🔑 UNDECLARED IS ALLOWED, AND REPORTED. It is honest on screen; it is still a gap somebody
 //     should close deliberately, so it is named rather than silently accepted.

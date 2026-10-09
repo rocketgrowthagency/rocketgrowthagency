@@ -147,10 +147,10 @@
   1
  ],
  [
-  "step 2 goes back to the first-hour phase",
+  "step 2 leaves the kickoff card",
   "admin",
-  "const obGroupOf = (flowId) => flowId === \"m1.close.kickoff_invite\" ? \"kickoff\" : (String(flowId || \"\").split(\".\")[1] || \"\");",
-  "const obGroupOf = (flowId) => (String(flowId || \"\").split(\".\")[1] || \"\");",
+  "\"m1.close.kickoff_invite\": \"kickoff\",",
+  "\"m1.close.kickoff_invite\": \"close\",",
   1
  ],
  [

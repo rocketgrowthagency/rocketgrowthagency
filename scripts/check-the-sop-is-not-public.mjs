@@ -87,7 +87,9 @@ if (pb && cs) {
   const visible = (s) => !s.ongoing && s.clientLabel && (s.clientBucket === "supply" || s.clientBucket === "act");
   const srcIds = [...(pb.month1 || []), ...(pb.month2plus || [])].filter(visible).map((s) => s.id);
   const outIds = [...(cs.month1 || []), ...(cs.month2plus || [])].map((s) => s.id);
-  if (srcIds.join("|") !== outIds.join("|")) {
+  // 🔑 2026-10-08 — the projection is ordered by the CLIENT's own numbers (build-client-steps
+  // byClientNumber), not the admin's playbook order, so freshness is the same SET of steps.
+  if ([...srcIds].sort().join("|") !== [...outIds].sort().join("|")) {
     bad(`the projection is STALE — source has ${srcIds.length} client steps, it has ${outIds.length}. Run scripts/build-client-steps.mjs`);
   }
   // 🔑 Same ids is not the same content: a re-worded label would leave the client on old copy.
