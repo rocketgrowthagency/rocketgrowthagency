@@ -26,7 +26,8 @@
 import fs from "node:fs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-const PB = process.env.PLAYBOOK_FILE || "/Users/chris/RGA/Rocket Growth Agency Scraper VS Code/parked/playbook.js";
+// PDF-only mode was lifted 2026-10-08 (v7 into admin): the live playbook is admin/playbook.js.
+const PB = process.env.PLAYBOOK_FILE || `${SITE}/admin/playbook.js`;
 const read = (f) => { try { return fs.readFileSync(f, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${f}`); process.exit(2); } };
 const portal = read(`${SITE}/portal/portal.js`);
 const playbook = read(PB);
@@ -75,6 +76,6 @@ const steps = B.indexOf('["4. They connect Google"'); const kick = B.indexOf('["
 if (steps < 0 || kick < 0 || steps > kick) F("What we sell §6 does not list connecting Google before the kickoff call");
 if (!/You don't have a Google Business Profile yet\./.test(B)) F("Call 2 lost the no-Business-Profile line");
 
-console.log(`  portal setup step + playbook (${PB.includes("/parked/") ? "parked draft" : PB}) checked`);
+console.log(`  portal setup step + playbook (${PB.includes("/parked/") ? "parked draft" : "admin/playbook.js"}) checked`);
 if (fails.length) { console.error("🔴 the client journey tells more than one story:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ one story: the client sets up their profile now, RGA sets up GA4/GSC in week 1, no Calendly, Google before the kickoff");

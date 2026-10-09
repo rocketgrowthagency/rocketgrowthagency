@@ -1,4 +1,4 @@
-# Parked playbook work — PDF only, NOT in admin yet (on purpose)
+# Parked playbook work — LIFTED 2026-10-08 (v7 is live in admin)
 
 Chris, 2026-10-02: "we wont update admin until later. so we dont interfere with the other chat thats
 doing alot of work with live site" · "just updating the PDF for now. then at end of session ill let
@@ -12,27 +12,9 @@ you know when to update all on admin so have all notes ready".
 - Expected while parked: check-playbook-integrity reports `printed-playbook-desktop-stale`, because the
   Desktop has the draft and the repo has v6. That is known and fine.
 
-## Changes waiting for admin (add a line for every change)
-1. ⏱ 30-SECOND VERSION gets its own marked heading in We call them §1 and The call beat 1. Every
-   mention points to the label, and the guided-call node uses the same words.
-   (Also accepted by the gate: a heading may be numbered ⏱.)
-2. PDF fix (builder, already in place): the hidden page-number markers ("@@T1@@") no longer survive into
-   the printed PDF. They showed up when Chris copied text out of v6. The live v6 in admin Docs still has
-   them until admin is updated.
-3. The call: how to ask (Chris, 2026-10-02 — "asking questions exactly and in the order and skip if
-   already answered"). An ACTION box at the top of The call says beats 2–6 are the script: ask every
-   question, in order, one at a time, and skip only what is already answered. Beat 2 says ask it every
-   time and explains why this question (referrals / Google / ads). Beat 3 says all four in order. Beat 4
-   says all three in order, and to skip "How did that go?" and go to beat 5 if they tried nothing.
-4. [search term] defined on the script (Chris: "do we say both or what does term imply"). A note at the
-   top of They call us, We call them and The call says it is the keyword AND the location from the lead
-   card, said both together, e.g. "plumber in Culver City". The Airtable field is stored as "<keyword> in <location>".
-
-5. After "yes" (approved client_journey_video_to_kickoff_v1, 2026-10-08). Call 2 beat 7, What we sell §6,
-   Close & log (the close line ×2 + §8 table) and the guided-call note now give the real order: sign →
-   first invoice (beta skips) → connect Google → the welcome email asks them to book the kickoff call.
-   The close line no longer promises work "this week" or "as soon as it's signed we kick off". Call 2
-   beat 3 gains the no-Business-Profile line (they set it up right away; it's theirs).
+## Changes waiting for admin
+(none — all five went live as v7 on 2026-10-08, when Chris approved "playbook v7 into the admin".
+PDF-only mode is LIFTED: edit admin/playbook.js directly and follow project_sales_playbook's update steps.)
 
 ## When Chris says "update admin" (do ALL of this, in order)
 1. Check the Website repo is calm: `git status`. Another session's uncommitted files are fine, because

@@ -61,5 +61,26 @@
   "if (svc.key === \"ga4\" || svc.key === \"gsc\") return \"rga\";",
   "",
   1
+ ],
+ [
+  "playbook close line back to kick-off",
+  "adminpb",
+  "waiting for you to sign. Once it's signed you connect your Google accounts \u2014 about a minute \u2014 and then we book your kickoff call.\u201d\"),",
+  "waiting for you to sign. As soon as it's signed we kick off.\u201d\"),",
+  1
+ ],
+ [
+  "after-yes loses Google",
+  "adminpb",
+  "[\"4. They connect Google\"",
+  "[\"4. They link Google\"",
+  1
+ ],
+ [
+  "Call 2 loses no-profile line",
+  "adminpb",
+  "You don't have a Google Business Profile yet.",
+  "No profile yet.",
+  1
  ]
 ]
