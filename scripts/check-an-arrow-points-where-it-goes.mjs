@@ -54,8 +54,7 @@ const LEAVES = [
   { needle: ">View as client ↗</a>", why: "an anchor to the client report" },
   // 🔄 2026-10-09 (kickoff_call_script_v1): "Join the call ↗" became "Join and start the call" (a button that opens
   // Meet itself) and, while live, the quiet ">Meet ↗</a>" link beside End the call.
-  { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },
-  { needle: ">Join the call ↗</a>", why: "the Overview booking card's Meet link, target=_blank" },
+  { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },  // 🔄 2026-10-09: the Overview card's "Join the call ↗" is gone — the call console owns joining (kickoff_every_surface_every_state_v1).
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
   // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
   { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },

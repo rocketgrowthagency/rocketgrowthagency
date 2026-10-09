@@ -212,6 +212,7 @@ const code = fs.readFileSync(JS, "utf8");
     kickoffReopened: "a predicate over the state it is handed",
     kickoffStep4WaitsHtml: "formats the state it is handed (called with kq by kickoffConsoleHtml)",
     kickoffNextAction: "its only caller is renderNextAction, which asks",
+    kickoffBookingCardModel: "its only caller is the request loader, after fetchKickoffAnswers answered (no request pending) — kickoff_every_surface_every_state_v1",
     kickoffPassedNote: "only reachable from a control drawn by Your action or the request card, both of which ask",
     _refreshKickoffRsvp: "the Overview footer — the booking-card loader beside it fetches the requests",
     loadKickoffRequests: "fetches the answer itself via fetchKickoffAnswers",

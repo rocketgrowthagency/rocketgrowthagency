@@ -101,7 +101,7 @@ if (/\bdoneByClock\b/.test(code)) {
 
 // ── 4 · what the week was spent building is still in it ───────────────────────────────────────
 for (const [needle, what] of [
-  ["Join the call", "the Join the call button"],
+  ["Join and start the call", "the Join and start the call button (v3, 2026-10-09)"],
   ["data-kickoff-recap", "the recap that sends from the product"],
   ["data-kickoff-outcome", "the after-call disposition"],
   ["kc-countdown", "the countdown"],

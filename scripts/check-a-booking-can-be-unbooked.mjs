@@ -182,7 +182,9 @@ if (fs.existsSync(CANCEL) && !/\/\.netlify\/functions\/cancel-kickoff-invite/.te
   if (!cancels.length) problems.push("the admin renders no Cancel the meeting control at all.");
   for (const at of cancels) {
     const before = admin.slice(Math.max(0, admin.lastIndexOf("\n    if (!reqs.length) {", at)), at);
-    if (!/const booked = \(j\.booked \|\| \[\]\)\[0\];[\s\S]*const html = booked\s*\n?\s*\?/.test(before)) {
+    // 🔄 2026-10-09 (kickoff_every_surface_every_state_v1): the card follows the call; Change/Cancel live in the
+    // `: booked ?` branch for a call still AHEAD — still only where a meeting exists.
+    if (!/const booked = \(j\.booked \|\| \[\]\)\[0\];[\s\S]*const html = booked( && [^\n]+)?\s*\n?\s*\?/.test(before) || !/\n\s*: booked\s*\n\s*\? `<div class="kb">/.test(before)) {
       problems.push(`admin/admin.js:${admin.slice(0, at).split("\n").length} — a Cancel the meeting control is not inside the booking card's \`booked ?\` branch — `
         + `it can render where no meeting is on the calendar (deleted, not sent, or unreadable).`);
     }
