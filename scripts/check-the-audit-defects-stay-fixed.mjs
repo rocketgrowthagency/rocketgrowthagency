@@ -38,6 +38,8 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");
 if (!/_plan\.locations\.join\("; "\)/.test(block("m1.web.location_pages"))) F("#2 the location pages do not name the plan's sub-locations");
 if (!/_plan\.locations\.join\("; "\)/.test(block("m1.web.service_location_matrix"))) F("#2 the matrix does not name the plan's sub-locations");
+// universal: the category shortlist never pins one trade's categories first
+if (/marketing\|advertis/.test(block("m1.gbp.optimize_categories"))) F("the category shortlist pins marketing categories first again — RGA's trade, not the client's");
 // #4
 const hours = (PB.month1 || []).find((s) => s.id === "m1.gbp.hours_attributes");
 if (!hours || /attribute/i.test(hours.title || "") || /attribute/i.test(hours.clientLabel || "")) F("#4 the hours step asks about attributes again (title/label)");

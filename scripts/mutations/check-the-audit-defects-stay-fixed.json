@@ -61,5 +61,12 @@
   "        if (!row?.id) return { summary: \"Could not create the Month 2 record.",
   "        if (false) return { summary: \"Could not create the Month 2 record.",
   1
+ ],
+ [
+  "category shortlist pins marketing",
+  "exec",
+  "    const choices = [...new Set(scored.map((x) => x.c))].slice(0, 60);",
+  "    const industry = real.filter((c) => /marketing|advertis/i.test(c));\n    const choices = [...new Set([...industry, ...scored.map((x) => x.c)])].slice(0, 60);",
+  1
  ]
 ]
