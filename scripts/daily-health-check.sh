@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# 🔒 AIRTABLE METER (2026-10-08): every node step below appends its Airtable call count to
+# output/airtable-calls.log, so the monthly cap can be traced to the job that spends it. Read-only job, so
+# repeat GETs within 30 min are served from /tmp (AIRTABLE_GET_CACHE=1).
+_METER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--import=file://${_METER_DIR// /%20}/_airtable-meter.mjs"
+export AIRTABLE_METER_JOB="daily-health-check"
+export AIRTABLE_GET_CACHE=1
+
 # daily-health-check.sh — run the OPERATIONAL gates that nothing else was running.
 #
 # ─── WHY (2026-09-02) ─────────────────────────────────────────────────────────────────────────────
@@ -445,6 +453,7 @@ run check-the-client-journey-tells-one-story.mjs "the client sets up their Busin
 run check-every-plan-is-wired-end-to-end.mjs "every contract plan: one price from agreement to charge, Accept emails, the welcome email unblocked, DFY balance billed"
 run check-google-access-is-told-truthfully.mjs "the portal and privacy policy describe exactly the Google scopes the connect requests"
 run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2–#9) stay fixed"
+run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtable calls; only the read-only check caches"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"

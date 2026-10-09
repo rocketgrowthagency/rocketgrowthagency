@@ -1,4 +1,11 @@
 #!/bin/bash
+# 🔒 AIRTABLE METER (2026-10-08): every node step below appends its Airtable call count to
+# output/airtable-calls.log, so the monthly cap can be traced to the job that spends it.
+# Counting ONLY — this job writes, and a cached read here could act on stale data.
+_METER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--import=file://${_METER_DIR// /%20}/_airtable-meter.mjs"
+export AIRTABLE_METER_JOB="overnight-local"
+
 # overnight-local.sh — CITY-FIRST local-domination overnight runner (locked 2026-07-01).
 #
 # When Chris says "I'm leaving for the night", THIS is what runs. It:

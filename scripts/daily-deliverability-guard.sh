@@ -1,4 +1,11 @@
 #!/bin/bash
+# 🔒 AIRTABLE METER (2026-10-08): every node step below appends its Airtable call count to
+# output/airtable-calls.log, so the monthly cap can be traced to the job that spends it.
+# Counting ONLY — this job writes, and a cached read here could act on stale data.
+_METER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--import=file://${_METER_DIR// /%20}/_airtable-meter.mjs"
+export AIRTABLE_METER_JOB="deliverability-guard"
+
 # daily-deliverability-guard.sh — automated pre-send domain protection (locked 2026-07-02).
 #
 # Runs ~6am PT DAILY, BEFORE the 7am Apps Script outreach send, so only mailbox-verified-clean
