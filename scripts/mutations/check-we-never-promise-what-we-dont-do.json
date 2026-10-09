@@ -1,0 +1,16 @@
+[
+ [
+  "the no-card notice promises an automatic charge",
+  "invoiceemail",
+  "title: \"Your invoice is due in 3 days\",\n      intro: `Hi ${esc(first)}, your next invoice for ${amount} is due${dueStr ? ` on ${dueStr}` : \" shortly\"}. You can pay it in your portal in about a minute.`,",
+  "title: \"Your invoice is due in 3 days\",\n      intro: `Hi ${esc(first)}, your next invoice for ${amount} is due${dueStr ? ` on ${dueStr}` : \" shortly\"}. We'll charge the card on file \u2014 nothing is needed from you.`,",
+  1
+ ],
+ [
+  "a surface credits Stripe with our receipt",
+  "portal",
+  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";",
+  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";\nconst __receiptNote = \"Stripe will email you a receipt for this payment.\";",
+  1
+ ]
+]

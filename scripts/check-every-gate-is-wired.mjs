@@ -114,6 +114,7 @@ const NOT_PREFLIGHT = {
   'check-the-waiting-band-matches-the-mockup.mjs': 'renders the live admin card and the live client portal in a browser and diffs them against the approved mockup; runs in daily-health-check.sh — needs a browser and both live sites, and how a band looks cannot make a video unsafe',
   'check-a-sent-email-reads-as-an-email.mjs': 'runs the sent-email card against the real step-1 record and nine edge cases; runs in daily-health-check.sh — how a sent email is drawn cannot make a video unsafe',
   'check-every-mockup-is-in-memory.mjs': 'requires every new mockup to be cited by its system memory and every mockup to be in the generated registry; runs in daily-health-check.sh — memory hygiene cannot make a video unsafe',
+  'check-outreach-emails-went-out.mjs': 'reads the last 10 days of the Outreach Log; runs in daily-health-check.sh at 7:30 AM after the 7 AM sends',
   'check-airtable-calls-are-metered.mjs': 'pins the Airtable meter in the scheduled jobs + the call-queue filter; runs in daily-health-check.sh — metering cannot make a video unsafe',
   'check-the-audit-defects-stay-fixed.mjs': 'pins the eight Month-1 audit defect fixes in the runners, callback, fix plan and report; runs in daily-health-check.sh — runner wiring cannot make a video unsafe',
   'check-google-access-is-told-truthfully.mjs': 'compares the requested OAuth scopes to the portal + privacy wording; runs in daily-health-check.sh — consent copy cannot make a video unsafe',

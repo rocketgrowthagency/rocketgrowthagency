@@ -454,6 +454,7 @@ run check-every-plan-is-wired-end-to-end.mjs "every contract plan: one price fro
 run check-google-access-is-told-truthfully.mjs "the portal and privacy policy describe exactly the Google scopes the connect requests"
 run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2–#9) stay fixed"
 run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtable calls; only the read-only check caches"
+run check-outreach-emails-went-out.mjs "the cold-outreach emails actually went out on the last weekday (Apps Script runs outside every machine we check)"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"
 run check-test-reset-clears-every-write.mjs "a partial reset makes the next run skip steps that look like defects"
