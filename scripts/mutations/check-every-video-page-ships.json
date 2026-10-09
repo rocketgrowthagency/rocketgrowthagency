@@ -1,0 +1,6 @@
+[
+ ["the rebuild stops adding its pages", "rebuild", "for s in \"${OK[@]}\"; do git -C \"$WEB\" add \"v/$s\"", "for s in \"${OK[@]}\"; do : \"$WEB\" \"v/$s\"", 1],
+ ["the rebuild stops committing", "rebuild", "git -C \"$WEB\" -c user.name", "echo -c user.name", 1],
+ ["the verify stops fetching the page", "rebuild", "| grep -c \"video.mp4\")", "| wc -c)", 1],
+ ["a lead is published without its page", "rebuild", "case \"$CT\" in video/*) [ \"${PG:-0}\" -gt 0 ] && { SERVED+=", "case \"$CT\" in video/*) true && { SERVED+=", 1]
+]

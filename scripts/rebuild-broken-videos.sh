@@ -341,6 +341,15 @@ TOK=$(grep -E '^NETLIFY_AUTH_TOKEN=' "$SCRAPER/.env" | head -1 | cut -d= -f2-)
 SITE="38f275c7-a4a8-4531-9989-1fc1ccb78f9e"
 CUR=$(curl -s -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/sites/$SITE" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{console.log(JSON.parse(d).published_deploy?.id||'')})")
 curl -s -X POST -H "Authorization: Bearer $TOK" "https://api.netlify.com/api/v1/deploys/$CUR/unlock" -o /dev/null
+# 🔴 2026-10-09 — COMMIT THE LANDING PAGES FIRST. deploy-site.sh ships the COMMIT and holds back every
+# untracked file; this script never committed, so on 10-07 and 10-08 nine rebuilt leads went live with
+# their video.mp4 (gitignored → always deployed) but WITHOUT index.html — /v/<slug>/ served the homepage
+# while step-8 published the Video URL. The main pipeline's batched deploy has always `git add v/$slug`.
+WEB="/Users/chris/RGA/Rocket Growth Agency Website VS Code"
+for s in "${OK[@]}"; do git -C "$WEB" add "v/$s" >>"$LOG" 2>&1; done
+git -C "$WEB" -c user.name=rocketgrowthagency -c user.email=hello@rocketgrowthagency.com \
+  commit -q -m "Rebuild deploy: ${#OK[@]} rebuilt video(s) ($(date +%Y-%m-%d))" >>"$LOG" 2>&1 \
+  || say "  (nothing new to commit — pages already tracked)"
 # 🔴 The deploy's exit code must be the DEPLOY's, not grep's. Same trap that hid a whole failed night on
 # 2026-08-19 (Netlify out of credits → JSONHTTPError: Forbidden → 53 pages silently served the homepage).
 # 🔴 2026-09-08 — production is deliberately LOCKED and a bare `netlify deploy --prod` is REFUSED.
@@ -364,8 +373,11 @@ SERVED=(); SERVED_CSV=()
 for i in "${!OK[@]}"; do
   s="${OK[$i]}"
   CT=$(curl -s -o /dev/null -w '%{content_type}' "https://www.rocketgrowthagency.com/v/$s/video.mp4")
-  say "  verify /v/$s/ → $CT"
-  case "$CT" in video/*) SERVED+=("$s"); SERVED_CSV+=("${OK_CSV[$i]}") ;; esac
+  # The PAGE must serve too: an absent index.html falls through to the SPA homepage (200 text/html), and
+  # the homepage never references a video.mp4 — the landing page does. (10-07/10-08: video served, page did not.)
+  PG=$(curl -s "https://www.rocketgrowthagency.com/v/$s/?v=$(date +%s)" | grep -c "video.mp4")
+  say "  verify /v/$s/ → video $CT · page refs video: $PG"
+  case "$CT" in video/*) [ "${PG:-0}" -gt 0 ] && { SERVED+=("$s"); SERVED_CSV+=("${OK_CSV[$i]}"); } || say "  🚨 /v/$s/ serves the homepage — lead NOT published" ;; esac
 done
 
 # 🔴 2026-08-20 — PUBLISH THE LEAD. This script never ran step-8, so a lead that died BEFORE step-8 in

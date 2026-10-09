@@ -455,6 +455,7 @@ run check-google-access-is-told-truthfully.mjs "the portal and privacy policy de
 run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2–#9) stay fixed"
 run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtable calls; only the read-only check caches"
 run check-outreach-emails-went-out.mjs "the cold-outreach emails actually went out on the last weekday (Apps Script runs outside every machine we check)"
+run check-every-video-page-ships.mjs "every rebuilt video landing page is committed before deploy and actually serves (10-07/10-08: 9 served the homepage)"
 run check-the-admin-step-accordion-behaves.mjs "admin Onboarding steps fold accordion-style: one open per card, live call never folds"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"

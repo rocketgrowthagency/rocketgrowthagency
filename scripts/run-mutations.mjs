@@ -95,6 +95,9 @@ const FILES = {
   thread: "netlify/functions/portal-thread.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
+  // 🔑 SCRAPER-SIDE targets (prefix "scraper:"): copied to <tmp>/__scraper/<rel>; the gate finds the copy via
+  // SCRAPER_COPY_DIR. Added 2026-10-09 for check-every-video-page-ships (rebuild-broken-videos.sh).
+  rebuild: "scraper:scripts/rebuild-broken-videos.sh",
 
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five
@@ -151,9 +154,17 @@ const seed = () => {
     if (e.isDirectory() && !SKIP_DIRS.test(e.name)) copyTree(e.name);
   }
   copyTree("reports/mockups");
+  // scraper-side targets: an unmutated copy of each, so a gate pointed at SCRAPER_COPY_DIR always finds them
+  fs.rmSync(`${tmp}/__scraper`, { recursive: true, force: true });
+  for (const rel of Object.values(FILES)) {
+    if (!rel || !rel.startsWith("scraper:")) continue;
+    const r = rel.slice(8);
+    fs.mkdirSync(path.dirname(`${tmp}/__scraper/${r}`), { recursive: true });
+    fs.copyFileSync(`${path.dirname(HERE)}/${r}`, `${tmp}/__scraper/${r}`);
+  }
 };
 const runGate = (gate) => {
-  try { execFileSync("node", [`${HERE}/${gate}`], { env: { ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp }, stdio: "pipe" }); return 0; }
+  try { execFileSync("node", [`${HERE}/${gate}`], { env: { ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp, SCRAPER_COPY_DIR: `${tmp}/__scraper` }, stdio: "pipe" }); return 0; }
   catch (e) { return e.status ?? 99; }
 };
 
@@ -170,7 +181,10 @@ for (const file of suites) {
   for (const [name, which, find, repl, expect] of muts) {
     const rel = FILES[which];
     if (!rel) { console.log(`   ⚠️  unknown target "${which}" for: ${name}`); skipped++; continue; }
-    const orig = fs.readFileSync(`${SITE}/${rel}`, "utf8");
+    const isScr = rel.startsWith("scraper:");
+    const srcPath = isScr ? `${path.dirname(HERE)}/${rel.slice(8)}` : `${SITE}/${rel}`;
+    const dstPath = isScr ? `${tmp}/__scraper/${rel.slice(8)}` : `${tmp}/${rel}`;
+    const orig = fs.readFileSync(srcPath, "utf8");
     const n = orig.split(find).length - 1;
     if (n !== 1) {
       // 🔑 AN ANCHOR THAT NO LONGER MATCHES IS NEWS, NOT A PASS. The product moved under the suite;
@@ -179,7 +193,8 @@ for (const file of suites) {
       skipped++; continue;
     }
     seed();
-    fs.writeFileSync(`${tmp}/${rel}`, orig.replace(find, repl));
+    fs.mkdirSync(path.dirname(dstPath), { recursive: true });
+    fs.writeFileSync(dstPath, orig.replace(find, repl));
     const want = expect ?? 1;
     const got = runGate(gate);
     if (got === want) caught++;
