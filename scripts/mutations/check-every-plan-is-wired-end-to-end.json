@@ -89,5 +89,12 @@
   "return s ? Math.round((s.project_total || 0) / 2) : 0;",
   "return s ? Math.round((s.project_total || 0) / 3) : 0;",
   1
+ ],
+ [
+  "welcome email not sent on connect",
+  "oauthcb",
+  "  await sendWelcomeEmail(supaUrl, supaKey, clientId);\n}",
+  "}",
+  1
  ]
 ]

@@ -115,6 +115,9 @@ if (!/const half = dfyHalf\(\{ projectTotal, addons, plans \}\);/.test(ID)) F("t
 const BAL = code(read("netlify/functions/admin-send-balance-invoice.js"));
 if (!/invoice_num: 2, amount/.test(BAL) || !/const amount = dfyHalf\(contract\);/.test(BAL)) F("the balance invoice is not invoice #2 at dfyHalf");
 if (!/String\(inv1\.status\)\.toLowerCase\(\) !== "paid"/.test(BAL)) F("the balance invoice can open before the deposit is paid");
+const OC = code(read("netlify/functions/oauth-google-callback.js"));
+if (!/await notifyClientStage\(clientId, "stage_4_onboarding"\);\s*await sendWelcomeEmail\(supaUrl, supaKey, clientId\);/.test(OC)) F("connecting Google no longer sends the welcome email (the stage-3 email promises it)");
+if (!/kind: "welcome_email_failed"/.test(OC)) F("a failed automatic welcome email is no longer recorded on the client");
 const CG = code(read("netlify/functions/contract-generate.js"));
 if (/Client has committed to a/.test(CG) || /-month commitment<\/strong>/.test(CG)) F("the 3-Month agreement calls itself a commitment again");
 if (/first business day of each billing period/.test(CG)) F("the agreement promises a billing day the code does not use");

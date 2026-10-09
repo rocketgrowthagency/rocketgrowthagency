@@ -1,0 +1,6 @@
+[
+ ["privacy drops business.manage","privacy","          <li><strong>Google Business Profile</strong> (<code>business.manage</code>)","          <li><strong>Google Business Profile</strong> (<code>business</code>)",1],
+ ["privacy claims never modify again","privacy","Google Analytics and Search Console access is read-only:","We request read-only access only. We never create, edit, delete, or otherwise modify any of your Google data. Analytics:",1],
+ ["portal says read-only again","portal","line-height:1.5;\">One click ${GOOGLE_ACCESS_SENTENCE}</p>","line-height:1.5;\">One click grants RGA read-only access to your Google Analytics and Search Console.</p>",1],
+ ["sentence drops manage","portal","and manage your Google Business Profile","and view your Google Business Profile",1]
+]

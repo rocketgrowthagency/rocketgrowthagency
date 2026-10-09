@@ -76,6 +76,8 @@ const FILES = {
   kickinvite: "netlify/functions/send-kickoff-invite.js",
   cancelinvite: "netlify/functions/cancel-kickoff-invite.js",
   payintent: "netlify/functions/portal-payment-intent.js",
+  privacy: "privacy/index.html",
+  oauthcb: "netlify/functions/oauth-google-callback.js",
   balance: "netlify/functions/admin-send-balance-invoice.js",
   invoicedoc: "shared/invoice-doc.js",
   contractgen: "netlify/functions/contract-generate.js",

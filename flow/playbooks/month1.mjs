@@ -66,7 +66,7 @@ Must contain, in this order:
   3. What we'll need from them next — THEIR open steps, read from the record.
   4. What we start on now.
 
-▶️ RUN IT — the Run button sends it from hello@rocketgrowthagency.com and CAPTURES the exact body, the recipient and Gmail's message id. It will not send twice unless you force it.
+▶️ IT SENDS ITSELF the moment the client connects Google (approved 2026-10-08) — from hello@rocketgrowthagency.com, capturing the exact body, the recipient and Gmail's message id. Run is the fallback if it shows as not sent. It will not send twice unless you force it.
 
 Approved 2026-10-08 (client_emails_yes_to_kickoff_v1). It replaces the automatic stage-4 email, which is retired.`,
   },
