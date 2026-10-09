@@ -79,7 +79,7 @@ const admin = read(F("admin", "admin.js")) || "";
   const fn = (admin.match(/function kickoffStartsIn\([^)]*\) \{[\s\S]*?\n\}/) || [""])[0];
   if (!/kickoffCountdown\(/.test(fn)) fail.push("admin/admin.js — the console's countdown is not written by the shared formatter, so it can name the call differently from the client's card.");
   else pass.push("the admin's countdown text comes from the shared formatter");
-  if (!/data-kc-countdown>' \+ escapeHtml\(kickoffStartsIn\(/.test(admin)) fail.push("admin/admin.js — the console renders its countdown without the shared formatter.");
+  if (!/data-kc-countdown>(' \+ |\$\{)escapeHtml\(kickoffStartsIn\(/.test(admin)) /* v3 console is a template literal (2026-10-09) */ fail.push("admin/admin.js — the console renders its countdown without the shared formatter.");
   else pass.push("the console renders its countdown in the shared words");
   if (!/el\.textContent = kickoffStartsIn\(/.test(admin)) fail.push("admin/admin.js — the console's ticker writes its own words, so the countdown drifts from the client's as it ticks.");
   else pass.push("the console's ticker keeps the shared words");

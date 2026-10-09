@@ -107,7 +107,7 @@ const WIRED = [
   ["step 2's card", /const kick2 = o\.flowId === KICKOFF_INVITE_STEP_ID && kickoffStep2Open\(kst2\);/],
   ["step 4's console waits on step 2", /const kq = kickoffState\(\);[\s\S]{0,600}?if \(kickoffReopened\(o\.flowId, kq\)\) return kickoffStep4WaitsHtml\(kq\);/],
   ["step 4's active row + pill wait (grey)", /const step4Waits = \/kickoff\\\.call\$\/\.test\(o\.flowId \|\| ""\) && kickoffReopened\(o\.flowId\);[\s\S]{0,200}?class="ob-step \$\{step4Waits \? "waits" : "active"\}/],
-  ["step 4's done row waits (grey, queued marker, Waits on step N)", /class="ob-step \$\{kick2 \? "active" : kick4Req \? "waits"[\s\S]{0,1600}?if \(kick4Req\) return `<span class="ob-status queued">\$\{escapeHtml\(kickoffStep4WaitsLabel\(\)\)\}/],
+  ["step 4's done row waits (grey, queued marker, Waits on step N)", /class="ob-step \$\{kick2( \|\| callOn)? \? "active" : kick4Req \? "waits"[\s\S]{0,2600}?if \(kick4Req\) return `<span class="ob-status queued">\$\{escapeHtml\(kickoffStep4WaitsLabel\(\)\)\}/],
   ["the reopened predicate covers step 2 and step 4", /function kickoffReopened\(flowId, st = kickoffState\(\)\) \{\s*if \(flowId === KICKOFF_INVITE_STEP_ID\) return kickoffStep2Open\(st\);\s*if \(\/kickoff\\\.call\$\/\.test\(flowId \|\| ""\)\) return st\.name === "move" \|\| st\.name === "rebook" \|\| st\.name === "passed";/],
 ];
 for (const [what, re] of WIRED) if (!re.test(admin)) F(`${what} no longer reads kickoffState() — it can tell its own story again`);

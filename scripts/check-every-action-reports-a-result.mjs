@@ -40,6 +40,8 @@ const UI_ONLY = {
   "data-v2tab": "switches a sub-tab — the pane visibly changes",
   "data-goto-tab": "navigates to another tab — the destination is the feedback",
   "data-accordion-toggle": "expands/collapses a section — the section visibly moves",
+  "data-ex-toggle": "opens the larger example drawing under a photo slot and sets aria-expanded — the drawing visibly opens (2026-10-09)",
+  "data-ob-expand-all": "opens or folds every step in an Onboarding card and relabels itself — the steps visibly open (2026-10-09)",
   "data-ob-jump": "scrolls to another step on the same checklist and flashes it — the row visibly moves into view",
   "data-sent-more": "expands/collapses a sent email's body — the body visibly opens and the label flips",
   // 🔑 The shot list's two controls. Each one's result IS what you see: the panel opens under the

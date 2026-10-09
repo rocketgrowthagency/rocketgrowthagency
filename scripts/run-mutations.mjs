@@ -96,6 +96,9 @@ const FILES = {
   photoreview: "netlify/functions/admin-photo-review.js",
   photoexamples: "shared/photo-examples.js",
   recapfn: "netlify/functions/send-kickoff-recap.js",
+  calllive: "netlify/functions/kickoff-call-live.js",
+  reportbg: "netlify/functions/report-build-background.js",
+  reportview: "netlify/functions/fga-report-view.js",
   outcomefn: "netlify/functions/kickoff-call-outcome.js",
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.

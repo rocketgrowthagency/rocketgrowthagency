@@ -114,6 +114,8 @@ const NOT_PREFLIGHT = {
   'check-the-waiting-band-matches-the-mockup.mjs': 'renders the live admin card and the live client portal in a browser and diffs them against the approved mockup; runs in daily-health-check.sh — needs a browser and both live sites, and how a band looks cannot make a video unsafe',
   'check-a-sent-email-reads-as-an-email.mjs': 'runs the sent-email card against the real step-1 record and nine edge cases; runs in daily-health-check.sh — how a sent email is drawn cannot make a video unsafe',
   'check-every-mockup-is-in-memory.mjs': 'requires every new mockup to be cited by its system memory and every mockup to be in the generated registry; runs in daily-health-check.sh — memory hygiene cannot make a video unsafe',
+  'check-the-audit-report-is-fresh-and-in-hand.mjs': 'pins the client report build/refresh wiring and its cost bounds; runs in daily-health-check.sh — reports are not videos',
+  'check-the-call-has-a-start-and-an-end.mjs': 'pins the kickoff call start/end wiring across the function, admin and portal; runs in daily-health-check.sh — a call console cannot make a video unsafe',
   'check-activity-rows-use-real-columns.mjs': 'static scan of every client_activity write against the table columns; runs in daily-health-check.sh — a timeline row cannot make a video unsafe',
   'check-photo-review-before-google.mjs': 'pins the photo review UI (examples per kind, slot states, step 39, Your action); runs in daily-health-check.sh — a photo card cannot make a video unsafe',
   'check-no-catch-on-a-supabase-query.mjs': 'static scan of portal/admin browser code for .catch on a Supabase query builder; runs in daily-health-check.sh — browser code cannot make a video unsafe',

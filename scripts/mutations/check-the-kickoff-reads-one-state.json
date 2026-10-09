@@ -142,8 +142,8 @@
  [
   "step 4's done row stops waiting (back to amber)",
   "admin",
-  "class=\"ob-step ${kick2 ? \"active\" : kick4Req ? \"waits\"",
-  "class=\"ob-step ${kick2 || kick4Req ? \"active\" : kick4Req ? \"waits\"",
+  "class=\"ob-step ${kick2 || callOn ? \"active\" : kick4Req ? \"waits\"",
+  "class=\"ob-step ${kick2 || callOn || kick4Req ? \"active\" : kick4Req ? \"waits\"",
   1
  ],
  [

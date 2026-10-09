@@ -52,14 +52,16 @@ if (/\? "Open full [^"]*" : "Open full [^"]*"/.test(src)) fail.push("the expand 
 const LEAVES = [
   { needle: 'open.textContent = "Open ↗"', why: "a cs-linkopen anchor with target=_blank" },
   { needle: ">View as client ↗</a>", why: "an anchor to the client report" },
-  { needle: ">Join the call ↗</a>", why: "the Meet link, target=_blank" },
+  // 🔄 2026-10-09 (kickoff_call_script_v1): "Join the call ↗" became "Join and start the call" (a button that opens
+  // Meet itself) and, while live, the quiet ">Meet ↗</a>" link beside End the call.
+  { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },
+  { needle: ">Join the call ↗</a>", why: "the Overview booking card's Meet link, target=_blank" },
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
   // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
   { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },
   { needle: ">Open in Gmail ↗</a>", why: "the sent email in hello@'s Gmail, target=_blank" },
   { needle: 'rel="noopener">${escapeHtml(l.replace(', why: "a URL inside a sent email's body, target=_blank" },
   // the Your-action card: a button carrying `href` is wired to window.open (the `data.admin.href` branch)
-  { needle: 'btn: "Join the call ↗"', why: "Your action's Meet button, opened with window.open(href)" },
   { needle: 'textContent = data.admin.btn || "Open ↗"', why: "Your action's href branch, window.open" },
   { needle: "${label} ↗</a>", why: "a linkified URL in stored output, target=_blank" },
 ];

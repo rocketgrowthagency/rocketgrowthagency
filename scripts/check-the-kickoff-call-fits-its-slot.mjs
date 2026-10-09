@@ -58,7 +58,7 @@ else pass.push("every section's start minute follows from the one before");
 // 🔴 "What I need from you" is the only section that produces artifacts the work is blocked on, and
 // the close is where commitments get read back. If either becomes cuttable the call can still run
 // to time while doing nothing. That is the failure this whole design exists to prevent.
-for (const title of ["What I need from you", "Close + action items"]) {
+for (const title of ["What I need from you", "Read back + close"]) {   // renamed 2026-10-09 (kickoff_call_script_v1)
   const a = KICKOFF_AGENDA.find((x) => x.t === title);
   if (!a) fail.push(`the "${title}" section is gone from the agenda.`);
   else if (!a.protected) fail.push(`"${title}" is no longer protected — the cut planner may now offer it.`);
@@ -66,8 +66,15 @@ for (const title of ["What I need from you", "Close + action items"]) {
 }
 
 // ── 4. RUN THE PLANNER: BEHIND SCHEDULE, IT NAMES A CUT AND NEVER A PROTECTED ONE ──────────────
-const at = (minsIn, idx) => {
-  sandbox.state.onboardingData = { kickoff_invite: { event_id: "e", start: new Date(Date.now() - minsIn * 60000).toISOString() } };
+// 🔒 2026-10-09 (kickoff_call_script_v1): the timer runs from "Join and start the call", not the booking.
+// `at` is a call STARTED on time; `atBooked` is one nobody has started.
+const at = (minsIn, idx, extra = {}) => {
+  const start = new Date(Date.now() - minsIn * 60000).toISOString();
+  sandbox.state.onboardingData = { kickoff_invite: { event_id: "e", start, call_started_at: start, ...extra } };
+  return sandbox.__kc.kickoffCallClock(idx);
+};
+const atBooked = (minsIn, idx, extra = {}) => {
+  sandbox.state.onboardingData = { kickoff_invite: { event_id: "e", start: new Date(Date.now() - minsIn * 60000).toISOString(), ...extra } };
   return sandbox.__kc.kickoffCallClock(idx);
 };
 const onTime = at(13, 3);
@@ -95,12 +102,33 @@ if (hopeless.behind && hopeless.planCovers && hopeless.plan.reduce((n, p) => n +
 else pass.push("a plan that cannot cover the overrun reports that honestly");
 
 // ── 6. THE PHASES ARE REAL, INCLUDING BEFORE THE CALL ──────────────────────────────────────────
-const before = at(-5, 0);
+const before = atBooked(-5, 0);
 if (before.phase !== "pre") fail.push(`five minutes before the call the phase is "${before.phase}", not "pre" — the T-5 pane never shows.`);
 else pass.push("five minutes before, it is in the pre-call phase");
-const after = at(KICKOFF_SLOT_MIN + 5, 5);
-if (after.phase !== "after") fail.push(`five minutes past the slot the phase is "${after.phase}", not "after".`);
-else pass.push("past the slot, the call is over");
+const after = atBooked(KICKOFF_SLOT_MIN + 5, 5);
+if (after.phase !== "after") fail.push(`five minutes past a slot nobody started the phase is "${after.phase}", not "after".`);
+else pass.push("past the slot, an unstarted call is over");
+// ── the 10-09 test call, as cases ──────────────────────────────────────────────────────────────
+{
+  // joined 9 minutes late: the clock counts from the start press, so 0:46 in is on pace, not "5 min behind"
+  const start = new Date(Date.now() - 9.75 * 60000).toISOString();
+  sandbox.state.onboardingData = { kickoff_invite: { event_id: "e", start, call_started_at: new Date(Date.now() - 0.77 * 60000).toISOString() } };
+  const late9 = sandbox.__kc.kickoffCallClock(0);
+  if (late9.phase !== "live" || late9.behind || late9.elapsed > 1) fail.push(`started 9 min after the booking, 46 s in reads behind=${late9.behind} elapsed=${late9.elapsed.toFixed(1)} — the clock is counting from the booking again.`);
+  else pass.push("a call started late counts from its start, not the booking");
+  const due = atBooked(3, 0);
+  if (due.phase !== "pre" || !due.due) fail.push(`3 min after the booked time, unstarted, the phase is "${due.phase}" due=${due.due} — the console cannot offer "Join and start".`);
+  else pass.push("booked time reached, not started: due, waiting for Join and start");
+  const ended = at(12, 2, { call_ended_at: new Date().toISOString(), call_outcome: "held" });
+  if (ended.phase !== "after") fail.push(`ended 12 min in, the phase is "${ended.phase}" — End the call did not end it.`);
+  else pass.push("End the call ends it, whatever the clock says");
+  const runOver = at(31, 5);
+  if (!runOver.overSlot || runOver.phase !== "live") fail.push(`a started call 31 min in reads phase=${runOver.phase} overSlot=${runOver.overSlot} — "Call over?" never appears and it sits live forever.`);
+  else pass.push("a started call past its slot asks \"Call over?\"");
+  const oneMin = at(3, 1);
+  if (oneMin.behind) fail.push(`one minute over raises behind=${oneMin.behind} — the 10-09 console threw a red cut banner at 1 minute.`);
+  else pass.push("one minute over is not an alarm");
+}
 
 // ── 6b. EVERY THING THE CALL COLLECTS IS A REAL STEP THE CLIENT CAN ACTUALLY GIVE US ───────────
 // 🔴 Found 2026-09-28: one of the six pointed at `m1.review.system` — "Set up review acquisition
@@ -154,7 +182,9 @@ const textFn = code.match(/function kickoffClockText\(mins\) \{[\s\S]*?\n\}/);
 const topicsConst = (code.match(/const KICKOFF_TOPICS = \[[\s\S]*?\n\];/) || [null])[0];
 // 🔑 + kickoffState (2026-10-08, kickoff_everywhere_v1): the console asks the one state whether a
 // move / rebook is pending before it renders the run of show.
-const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffSheetMiniHtml", "kickoffState", "kickoffReopened", "kickoffStep4WaitsHtml"].map((n) =>
+// 🔑 v3 (2026-10-09, kickoff_call_script_v1): the beat renderer and its helpers, and the call object.
+const helperFns = ["kickoffStartsIn", "kickoffRankFact", "kickoffSheet", "kickoffSheetState", "kickoffState", "kickoffReopened", "kickoffStep4WaitsHtml",
+  "kickoffCallObj", "kickoffCallLoad", "kickoffBusinessDay", "kickoffFill", "kickoffCollectHtml", "kickoffTopicHtml", "kickoffBeatHtml"].map((n) =>
   (code.match(new RegExp(`function ${n}\\([^\\n]*?\\) \\{[\\s\\S]*?\\n\\}`)) || [null])[0]);   // a default arg may hold parens
 if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsConst || helperFns.some((x) => !x)) {
   fail.push("admin/admin.js — could not isolate the console and its helpers; the render cannot be checked.");
@@ -175,7 +205,8 @@ if (!consoleFn || !dueFn || !collectFn || !collectList || !textFn || !topicsCons
   // 🔑 Define ONCE, then call per case. Re-running the definitions in the same context throws
   // "already been declared" on the second render — which silently cost a check the first time.
   const step2Open = (code.match(/const kickoffStep2Open = [^\n]+\n/) || [""])[0];
-  const src = [collectList[0], textFn[0], topicsConst, step2Open, ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
+  const constLines = ["kickoffBlock", "kickoffDayLabel"].map((n) => (code.match(new RegExp(`const ${n} = [^\\n]+\\n`)) || [""])[0]).join("");
+  const src = [collectList[0], textFn[0], topicsConst, step2Open, constLines, ...helperFns, dueFn[0], collectFn[0], agenda, clock, consoleFn[0],
     "globalThis.__render = () => kickoffConsoleHtml({ flowId: 'm1.kickoff.call' });"].join("\n");
   vm.runInContext(src, box, { timeout: 4000 });
   const renderAt = (minsIn) => {

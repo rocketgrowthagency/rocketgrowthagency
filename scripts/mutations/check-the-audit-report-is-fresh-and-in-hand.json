@@ -1,0 +1,7 @@
+[
+ ["a client report expires again", "reportbg", "  const exp = clientId ? null :", "  const exp = clientId ? Date.now() :", 1],
+ ["the expired row is deleted again", "reportview", "    if (row.exp && Date.now() > row.exp) {\n", "    if (row.exp && Date.now() > row.exp) {\n      fetch(\"x\", { method: \"DELETE\" });\n", 1],
+ ["RGA views alert again", "reportview", "      if (!fromRga) logReEngagement({", "      if (true) logReEngagement({", 1],
+ ["booking builds without the guard", "kickinvite", "if ((!last || Date.now() - Date.parse(last.builtAt) > 14 * 86400000) && !(await clientBuildRunning(clientId))) {", "if (true) {", 1],
+ ["the invite loses the link", "kickinvite", "${clientShareLink(clientId)}", "", 1]
+]

@@ -93,7 +93,7 @@ const pj = strip(portal), aj = strip(admin);
 
 // ── 3 · changing section must not throw the page ───────────────────────────────────────────────
 {
-  const i = aj.indexOf('closest("[data-kc-seg],[data-kc-yes],[data-kc-cut]")');
+  const i = aj.indexOf('closest("[data-kc-seg],[data-kc-yes],[data-kc-cut]');   // v3 adds yes-clear + extend to the same handler
   const h = i < 0 ? "" : aj.slice(i, aj.indexOf("}, false);", i));
   if (!h) {
     fail.push("admin/admin.js — the console's section handler is gone.");

@@ -1,0 +1,7 @@
+[
+ ["End stops recording held", "calllive", "    next.call_outcome = \"held\";\n", "", 1],
+ ["the call state goes back to localStorage", "admin", "      const r = await fetch(\"/.netlify/functions/kickoff-call-live\", { method: \"POST\", headers: await authHeaders(),\n        body: JSON.stringify({ client_id: cid, action: \"save\",", "      try { localStorage.setItem(\"k\", \"1\"); } catch {}\n      const r = await fetch(\"/.netlify/functions/kickoff-call-live\", { method: \"POST\", headers: await authHeaders(),\n        body: JSON.stringify({ client_id: cid, action: \"save\",", 1],
+ ["a started call is not live", "admin", "  else if (ki.call_started_at) name = \"live\";\n", "", 1],
+ ["the portal waits for the clock after End", "portal", "  if (confirmed && (ended || held)) {", "  if (confirmed && ended) {", 1],
+ ["the portal offers changes mid-call", "portal", "    ${confirmed && Number.isFinite(startMs) && Date.now() >= startMs ? \"\"", "    ${false ? \"\"", 1]
+]

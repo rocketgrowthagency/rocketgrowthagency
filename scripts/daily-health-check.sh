@@ -455,6 +455,8 @@ run check-google-access-is-told-truthfully.mjs "the portal and privacy policy de
 run check-the-audit-defects-stay-fixed.mjs "the eight Month-1 audit defects (#2–#9) stay fixed"
 run check-airtable-calls-are-metered.mjs "every scheduled job meters its Airtable calls; only the read-only check caches"
 run check-outreach-emails-went-out.mjs "the cold-outreach emails actually went out on the last weekday (Apps Script runs outside every machine we check)"
+run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"
+run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends on the record; the portal honours it (10-09 test call)"
 run check-activity-rows-use-real-columns.mjs "every client_activity write names real columns (10-09: the recap never reached the timeline)"
 run check-photo-review-before-google.mjs "a client photo waits for RGA's review; every slot kind has an example; step 39 + Your action carry the review"
 run check-no-catch-on-a-supabase-query.mjs "no Supabase query chains a .catch it does not have (10-09: it broke the photo upload after the photo saved)"
