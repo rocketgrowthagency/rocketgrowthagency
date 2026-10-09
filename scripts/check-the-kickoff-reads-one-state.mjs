@@ -154,6 +154,10 @@ for (const bad of ["We'll email you to sort a new one", "we'll confirm a new one
 }
 
 // 4c · steps 2, 3 and 4 share ONE phase card (approved client_sequence_and_kickoff_v1)
+// 🔒 2026-10-08 8:09 PM — Approve disabled the shared Your-action button and the redraw never re-enabled it.
+if (!/els\.adminNextActionBtn\.disabled = false;\s*if \(data\.admin\.pickForThem\)/.test(admin)) F("Your action's button can stay disabled after Approve redraws the card (\"Open the checklist\" greyed out)");
+if (!/alt\.disabled = false;/.test(admin)) F("Your action's second button can stay disabled after a redraw");
+if (!/document\.contains\(b\) && \/\^\(Booking\|Moving\)…\$\/\.test\(b\.textContent\)/.test(admin)) F("pickKickoffTime writes its old label back over a card that redrew");
 // 🔒 onboarding_order_audit_v1: the kickoff card holds the welcome email, the booking and the call.
 if (!/"m1\.close\.confirm": "kickoff", "m1\.close\.kickoff_invite": "kickoff", "m1\.kickoff\.call": "kickoff"/.test(admin)) F("step 2 is grouped away from the kickoff phase again — booking and the call read as unrelated cards");
 if (!/\{ key: "kickoff",\s+name: "The kickoff call", sub: "Welcome email · book it · run it"/.test(admin)) F("the kickoff phase no longer names all three of its steps");

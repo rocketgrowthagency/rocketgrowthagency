@@ -215,5 +215,12 @@
   ">Cancel</button>`;",
   ">Close</button>`;",
   1
+ ],
+ [
+  "Approve leaves the button dead",
+  "admin",
+  "  els.adminNextActionBtn.disabled = false;\n  if (data.admin.pickForThem) {",
+  "  if (data.admin.pickForThem) {",
+  1
  ]
 ]
