@@ -43,5 +43,12 @@ if (!/addAgain\("Pick another"\)/.test(js) || !/Too small for Google/.test(js)) 
 if (!/catch \(e\) \{\s*failed\.push\(e\);\s*onStage\(i, "failed"/.test(js)) fail("one file's failure stops the rest of the batch");
 if (!/function photoToast\(n, target = null\)/.test(js) || !/Show me/.test(js)) fail("the bottom note (N photos sent to RGA · Show me) is gone");
 if (!/\.pm-toast \{ position:fixed;/.test(css) || !/\.pm-slot \.thumb\.pm-up\.dim/.test(css)) fail("the upload styles are gone");
+// 7 · the weekly customer list (2026-10-09, Chris: "YES" — the same fix): no reload, a true message, its card rebuilds
+const custHandler = between('const form = ev.target.closest("form[data-customer-list-form]");', "\n});");   // the handler's own closing line
+if (!custHandler) fail("the customer-list handler could not be found");
+if (/location\.reload/.test(custHandler)) fail("submitting the customer list reloads the whole portal again");
+if (/will start going out automatically/.test(js)) fail("the customer list promises review requests go out automatically — nothing sends them; the client does");
+if (!/card\.replaceWith\(fresh\)/.test(custHandler) || !/loadReviewRequests\(clientId\);/.test(custHandler)) fail("the customer card no longer rebuilds itself (and loads its review requests) after a submit");
+
 if (F.length) { console.error("🔴 an upload no longer confirms in its slot:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ an upload confirms in its own slot — preview, real progress, Sent to RGA, then With RGA for review — and nothing reloads");

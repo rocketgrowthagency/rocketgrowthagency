@@ -40,5 +40,19 @@
   "      failed.push(e);\n      onStage(i, \"failed\", { shot, error: e });",
   "      throw e;",
   1
+ ],
+ [
+  "the customer list reloads again",
+  "portal",
+  "    loadReviewRequests(clientId);\n    portalToast(",
+  "    location.reload();\n    portalToast(",
+  1
+ ],
+ [
+  "the false promise comes back",
+  "portal",
+  "We'll write a review request for each — you send ${n === 1 ? \"it\" : \"them\"} from your phone.",
+  "Review requests will start going out automatically.",
+  1
  ]
 ]
