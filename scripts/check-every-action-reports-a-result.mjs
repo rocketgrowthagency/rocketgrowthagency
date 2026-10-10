@@ -43,6 +43,7 @@ const UI_ONLY = {
   "data-ex-toggle": "opens the larger example drawing under a photo slot and sets aria-expanded — the drawing visibly opens (2026-10-09)",
   "data-ob-expand-all": "opens or folds every step in an Onboarding card and relabels itself — the steps visibly open (2026-10-09)",
   "data-ob-jump": "scrolls to another step on the same checklist and flashes it — the row visibly moves into view",
+  "data-pr-jump": "a count chip at the top of step 39 scrolls to its group of photos — the group visibly moves into view (2026-10-09)",
   "data-sent-more": "expands/collapses a sent email's body — the body visibly opens and the label flips",
   // 🔑 The shot list's two controls. Each one's result IS what you see: the panel opens under the
   // button (whose label flips to "Close the list"), and the whys appear or disappear in place. A
