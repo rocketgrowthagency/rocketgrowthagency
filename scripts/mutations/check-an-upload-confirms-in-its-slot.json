@@ -1,0 +1,44 @@
+[
+ [
+  "a slot upload reloads again",
+  "portal",
+  "  } finally { input.value = \"\"; groupUploading(list, 0); }",
+  "  } finally { input.value = \"\"; groupUploading(list, 0); location.reload(); }",
+  1
+ ],
+ [
+  "the monthly form reloads again",
+  "portal",
+  "    if (out.uploaded) { photoToast(out.uploaded); refreshPhotoCard(form, clientId, photoOutcomeText(out)); }",
+  "    if (out.uploaded) setTimeout(() => location.reload(), 3000);",
+  1
+ ],
+ [
+  "progress made up",
+  "portal",
+  "    x.upload.onprogress = (e) => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };",
+  "    x.upload.onprogress = () => onPct(50);",
+  1
+ ],
+ [
+  "no local preview",
+  "portal",
+  "  try { url = URL.createObjectURL(file); }",
+  "  try { url = \"\"; }",
+  1
+ ],
+ [
+  "it never settles",
+  "portal",
+  "      }, 2000);\n    },\n    refused(reason) {",
+  "      }, 2000000);\n    },\n    refused(reason) {",
+  1
+ ],
+ [
+  "a failure stops the batch",
+  "portal",
+  "      failed.push(e);\n      onStage(i, \"failed\", { shot, error: e });",
+  "      throw e;",
+  1
+ ]
+]

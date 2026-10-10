@@ -114,6 +114,7 @@ const NOT_PREFLIGHT = {
   'check-the-waiting-band-matches-the-mockup.mjs': 'renders the live admin card and the live client portal in a browser and diffs them against the approved mockup; runs in daily-health-check.sh — needs a browser and both live sites, and how a band looks cannot make a video unsafe',
   'check-a-sent-email-reads-as-an-email.mjs': 'runs the sent-email card against the real step-1 record and nine edge cases; runs in daily-health-check.sh — how a sent email is drawn cannot make a video unsafe',
   'check-every-mockup-is-in-memory.mjs': 'requires every new mockup to be cited by its system memory and every mockup to be in the generated registry; runs in daily-health-check.sh — memory hygiene cannot make a video unsafe',
+  'check-an-upload-confirms-in-its-slot.mjs': 'static: the photo upload confirmation; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-done-step-is-never-the-headline.mjs': 'static: the portal headline never names a done step; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-photo-is-what-rga-confirmed.mjs': 'static: which photo is which + the fixed slot row; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-photo-examples-match-the-lists.mjs': 'static + render: the per-shot example drawings; runs in daily-health-check.sh — copy cannot make a video unsafe',

@@ -32,7 +32,9 @@ if (/items\.find\(\(it\) => it\.google === g\.category/.test(portal)) fail("the 
 if (!/<details class="pm-sec pm-already pm-fold" data-fold="already">/.test(portal) || !/already on your Google profile<\/b>/.test(portal) || !/RGA is sorting it<\/span>/.test(portal) || !/Extra · counts toward 20/.test(portal)) fail("photos already on Google no longer get their one-line section with a state per photo");
 if (!/<div class="pm-arow"><span class="th"/.test(portal)) fail("an opened already-on-Google photo is no longer a small row");
 if (!/return `\$\{alreadySection\}\$\{beforeList\}<div class="pm-slots">/.test(portal)) fail("the step's order changed — it is: already on your profile → the tips → the upload list");
-if (/class="pm-pill you"|pm-pill warn/.test(portal)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
+const alreadySrc = (portal.match(/const alreadySection = already\.length \?[\s\S]*?: "";/) || [""])[0];
+if (!alreadySrc) fail("the already-on-Google section could not be found");
+if (/class="pm-pill you"|pm-pill warn|pm-pill bad/.test(alreadySrc)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
 // 2
 if (!/const g = await requireWorkspaceForClient\(event, client_id\);\s*if \(g\.error\) return g\.error;/.test(fn)) fail("photo-match is not workspace-only");
 if (!/That slot is not on this client's list/.test(fn)) fail("confirm accepts a slot that is not on the client's list");
