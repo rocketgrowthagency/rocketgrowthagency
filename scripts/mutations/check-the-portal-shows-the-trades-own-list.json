@@ -1,0 +1,51 @@
+[
+ [
+  "plumbers stop matching",
+  "photolists",
+  "match: /plumb|drain(age)? (service|cleaning)|water heater|sewer/,",
+  "match: /plumbXX/,",
+  1
+ ],
+ [
+  "the address is ignored",
+  "exec",
+  "          storefront = !!(addr && (addr.addressLines?.length || addr.locality));",
+  "          storefront = false;",
+  1
+ ],
+ [
+  "RGA's pick is ignored",
+  "exec",
+  "      override = rec?.data?.photo_list?.type || null;",
+  "      override = null;",
+  1
+ ],
+ [
+  "the list switches under photos",
+  "exec",
+  "      if (inSlots && !rgaPicked) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "no fallback to the stored type",
+  "exec",
+  "    let category = client.business_type || null, storefront = null, from = \"the client record\";",
+  "    let category = null, storefront = null, from = \"the client record\";",
+  1
+ ],
+ [
+  "the portal drops the shot's own drawing",
+  "portal",
+  "  const exArt = (it, ex) => { const k = artKey(shape, it);",
+  "  const exArt = (it, ex) => { const k = \"\";",
+  1
+ ],
+ [
+  "every trade gets the first trade's shots",
+  "photolists",
+  "    const text = Number.isInteger(sh.trade) ? t.shots[sh.trade] : (alt ? alt.do : sh.do);",
+  "    const text = Number.isInteger(sh.trade) ? TYPES[0].shots[sh.trade] : (alt ? alt.do : sh.do);",
+  1
+ ]
+]

@@ -117,6 +117,7 @@ const NOT_PREFLIGHT = {
   'check-a-done-step-is-never-the-headline.mjs': 'static: the portal headline never names a done step; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-photo-is-what-rga-confirmed.mjs': 'static: which photo is which + the fixed slot row; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-photo-examples-match-the-lists.mjs': 'static + render: the per-shot example drawings; runs in daily-health-check.sh — copy cannot make a video unsafe',
+  'check-the-portal-shows-the-trades-own-list.mjs': 'render: the real runner + portal renderer per trade; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-photo-lists-are-the-researched-ones.mjs': 'static + render: the photo shot lists and how they reach the client; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-photo-preview-says-when-it-fails.mjs': 'static: the portal photo preview fails loudly; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-client-emails-have-one-format.mjs': 'static + render: the format of client emails; runs in daily-health-check.sh — copy cannot make a video unsafe',

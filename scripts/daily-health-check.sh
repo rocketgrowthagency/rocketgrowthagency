@@ -459,6 +459,7 @@ run check-the-kickoff-promises-agree.mjs "the call script and the recap promise 
 run check-client-emails-have-one-format.mjs "every client email: letter markup, links as words, one sign-off, American copy"
 run check-a-photo-preview-says-when-it-fails.mjs "a photo preview that cannot load says so, never a silent grey square"
 run check-photo-lists-are-the-researched-ones.mjs "the photo shot lists are the researched ones for each trade; unknown categories pick nothing"
+run check-the-portal-shows-the-trades-own-list.mjs "each trade's client sees its own photo list in the portal (real runner + real renderer)"
 run check-photo-examples-match-the-lists.mjs "every photo shot has its own example drawing and people count, served as a fresh build"
 run check-a-photo-is-what-rga-confirmed.mjs "a slot shows a photo already on Google only after RGA confirms it; rows hold their columns"
 run check-a-done-step-is-never-the-headline.mjs "a step already done never flashes as the portal's next step"
