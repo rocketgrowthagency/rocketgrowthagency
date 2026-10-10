@@ -72,8 +72,15 @@
  [
   "the sorting state is lost",
   "portal",
-  "<span class=\"pm-pill other\">RGA is sorting this one</span>",
+  "<span class=\"pm-pill other\">RGA is sorting it</span>",
   "<span class=\"pm-pill other\">Checking</span>",
+  1
+ ],
+ [
+  "the section opens as postcards again",
+  "portal",
+  "<div class=\"pm-arow\"><span class=\"th\"",
+  "<div class=\"pm-tile\"><span class=\"img\"",
   1
  ]
 ]

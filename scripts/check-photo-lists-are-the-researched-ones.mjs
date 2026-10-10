@@ -132,7 +132,8 @@ for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.j
   if (!photoTips) { fail(`${f}: step 7's client tips ("Before you take your photos") are gone`); continue; }
   if (photoTips.length !== 3 || photoTips.some((t) => !t || typeof t !== "object" || !t.t || !t.why || !t.how)) fail(`${f}: every photo tip needs a title, a why and a how`);
 }
-if (!/<section class="pm-sec pm-tipsec">/.test(portal) || !/<b>How:<\/b>/.test(portal)) fail("the portal shows the tips as bare pills again");
+if (!/<details class="pm-sec pm-tipsec pm-fold" data-fold="tips"\$\{startedUploading \? "" : " open"\}>/.test(portal) || !/<b>How:<\/b>/.test(portal)) fail("the tips are no longer one explained section that opens by itself only before the first upload");
+if (!/localStorage\.setItem\(key, d\.open \? "1" : "0"\)/.test(portal)) fail("an opened or closed section is no longer remembered on the device");
 
 { const page = read("new-client-playbook/detailed/index.html");
   if (/Geotag (if uploading|the videos)|geotag intact|alt \+ geotag|geotagged \+/i.test(page)) fail("the detailed playbook page still advises geotagging"); }
