@@ -145,5 +145,19 @@
   "      if (inSlots && !rgaPicked) {",
   "      if (false) {",
   1
+ ],
+ [
+  "video step advises geotag again",
+  "playbooksjson",
+  "Record both. Title + description + tags exactly as drafted. Embed",
+  "Record both. Title + description + tags exactly as drafted. Geotag the videos. Embed",
+  1
+ ],
+ [
+  "the detailed page advises geotag again",
+  "detailedpage",
+  "(filename + alt + compress)",
+  "(filename + alt + geotag + compress)",
+  1
  ]
 ]

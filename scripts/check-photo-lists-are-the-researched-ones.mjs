@@ -124,6 +124,8 @@ for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.j
   let step7 = "";
   JSON.parse(txt, (k, v) => { if (v && typeof v === "object" && (v.id === "m1.gbp.photos" || v.tipsTitle === "Before you take your photos")) step7 += JSON.stringify(v); return v; });
   if (/geotag(\s+\w+){0,2}\s+(if|where)\s+possible|\bdo\s+geotag|\bgeotag\s+(each|every|your|the)\b/i.test(step7)) fail(`${f}: step 7 tells someone to geotag — tested: no ranking effect (Sterling Sky, Whitespark)`);
+  // 🔄 2026-10-09 ("do all recommended"): no step advises geotagging — image SEO, blog photos, YouTube setup + videos fixed
+  if (/geotag(\s+\w+){0,3}\s+(if|where)\s+(possible|uploading)|\bgeotag\s+(each|every|your|the|intact)\b|\bgeotagged\s*\+|filenames \+ alt \+ geotag/i.test(txt)) fail(`${f}: a step advises geotagging — tested: no ranking effect`);
   if (/Press Draft this for me for a 20-shot list/.test(txt)) fail(`${f}: RGA's step 7 instructions describe the retired AI-drafted list`);
   let photoTips = null;
   JSON.parse(txt, (k, v) => { if (v && typeof v === "object" && Array.isArray(v.tips) && v.tipsTitle === "Before you take your photos") photoTips = v.tips; return v; });
@@ -132,6 +134,8 @@ for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.j
 }
 if (!/<section class="pm-sec pm-tipsec">/.test(portal) || !/<b>How:<\/b>/.test(portal)) fail("the portal shows the tips as bare pills again");
 
+{ const page = read("new-client-playbook/detailed/index.html");
+  if (/Geotag (if uploading|the videos)|geotag intact|alt \+ geotag|geotagged \+/i.test(page)) fail("the detailed playbook page still advises geotagging"); }
 // 9 · every client gets its list without RGA pressing Run (audit 2026-10-09), and a list never switches under photos
 const nightly = read("netlify/functions/metrics-daily-refresh.js"), cb = read("netlify/functions/oauth-google-callback.js");
 if (!/step_id: "m1\.gbp\.photos"/.test(nightly) || !/const due = /.test(nightly)) fail("the nightly refresh no longer builds a missing photo list");
