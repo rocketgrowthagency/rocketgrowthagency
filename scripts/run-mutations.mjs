@@ -106,6 +106,8 @@ const FILES = {
   playbooksjson: "data/playbooks/playbooks.json",
   clientstepsjson: "data/playbooks/client-steps.json",
   photomatch: "netlify/functions/photo-match.js",
+  nightlyfn: "netlify/functions/metrics-daily-refresh.js",
+  oauthcb: "netlify/functions/oauth-google-callback.js",
   photoartA: "shared/photo-art/A.json",
   photoartjs: "shared/photo-art.js",
   photokit: "scripts/photo-examples/kit.js",

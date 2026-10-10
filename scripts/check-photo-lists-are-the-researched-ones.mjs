@@ -63,7 +63,7 @@ const CASES = [["Plumber", "Plumbers"], ["HVAC contractor", "HVAC"], ["Air condi
   ["Medical spa", "Med spas"], ["Personal injury attorney", "Personal injury lawyers"], ["DUI attorney", "DUI lawyers"],
   ["Internet marketing service", "Marketing agencies"], ["Hair salon", "Hair salons"], ["Barber shop", "Hair salons"],
   ["Wedding photographer", "Wedding photographers"], ["Kitchen remodeler", "Kitchen remodeling"], ["Landscaper", "Landscapers"],
-  ["Lawyer", null], ["Restaurant", null], ["", null], [null, null]];
+  ["Lawyer", "Law firms"], ["Attorney", "Law firms"], ["General contractor", "General contractors"], ["Painting", "Painters"], ["Key duplication service", "Locksmiths"], ["Paint store", null], ["Restaurant", null], ["", null], [null, null]];
 for (const [cat, want] of CASES) {
   const got = P.typeForCategory(cat)?.type || null;
   if (got !== want) fail(`Google category "${cat}" picks ${got ? `"${got}"` : "nothing"} — expected ${want ? `"${want}"` : "nothing (RGA picks)"}`);
@@ -118,13 +118,26 @@ if (!/const itemCategory = \(it\) => it\.category \|\|/.test(portal)) fail("the 
 // 8 · the tips (approved photo_step_already_on_google_and_tips_v1): explained, research-true, rendered as a section
 for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.json"]) {
   const txt = read(f);
-  if (/geotag where possible/i.test(txt)) fail(`${f} tells someone to geotag — tested: no ranking effect (Sterling Sky, Whitespark)`);
+  // the 10-09 audit found "Geotag if possible" in RGA's instructions after "geotag where possible" was gated — any advice to geotag
+  // scoped to step 7 (its instructions, RGA tips and client tips). Other steps' geotag advice is a decision for Chris
+  // (audit 2026-10-09: m1.web.image_seo, blog photos, videos) — see project_photo_shot_lists_by_industry.
+  let step7 = "";
+  JSON.parse(txt, (k, v) => { if (v && typeof v === "object" && (v.id === "m1.gbp.photos" || v.tipsTitle === "Before you take your photos")) step7 += JSON.stringify(v); return v; });
+  if (/geotag(\s+\w+){0,2}\s+(if|where)\s+possible|\bdo\s+geotag|\bgeotag\s+(each|every|your|the)\b/i.test(step7)) fail(`${f}: step 7 tells someone to geotag — tested: no ranking effect (Sterling Sky, Whitespark)`);
+  if (/Press Draft this for me for a 20-shot list/.test(txt)) fail(`${f}: RGA's step 7 instructions describe the retired AI-drafted list`);
   let photoTips = null;
   JSON.parse(txt, (k, v) => { if (v && typeof v === "object" && Array.isArray(v.tips) && v.tipsTitle === "Before you take your photos") photoTips = v.tips; return v; });
   if (!photoTips) { fail(`${f}: step 7's client tips ("Before you take your photos") are gone`); continue; }
   if (photoTips.length !== 3 || photoTips.some((t) => !t || typeof t !== "object" || !t.t || !t.why || !t.how)) fail(`${f}: every photo tip needs a title, a why and a how`);
 }
 if (!/<section class="pm-sec pm-tipsec">/.test(portal) || !/<b>How:<\/b>/.test(portal)) fail("the portal shows the tips as bare pills again");
+
+// 9 · every client gets its list without RGA pressing Run (audit 2026-10-09), and a list never switches under photos
+const nightly = read("netlify/functions/metrics-daily-refresh.js"), cb = read("netlify/functions/oauth-google-callback.js");
+if (!/step_id: "m1\.gbp\.photos"/.test(nightly) || !/const due = /.test(nightly)) fail("the nightly refresh no longer builds a missing photo list");
+if (!/!picked && nowType && builtType && nowType !== builtType/.test(nightly)) fail("the nightly refresh no longer follows a changed Google category (or ignores RGA's pick)");
+if (!/sendWelcomeEmail\(supaUrl, supaKey, clientId\);[\s\S]{0,900}step_id: "m1\.gbp\.photos"/.test(cb)) fail("connecting Google no longer builds the client's photo list");
+if (!/if \(inSlots && !rgaPicked\)/.test(runner) || !/draft_shape: cur, outcome: "manual_required"/.test(runner)) fail("a rebuild can switch the list under photos already in its slots");
 
 if (F.length) { console.error("🔴 the photo lists drifted from the researched ones:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ ${Object.keys(P.LISTS).length} photo lists × 20 researched shots, ${P.TYPES.length} trades, every vertical covered; unknown categories pick nothing; existing Google photos fill slots; a publish recounts`);

@@ -117,5 +117,33 @@
   "\"why\": \"Screenshots are smaller and lose detail, and Google shows photos best at 720 × 720 or larger.\",",
   "",
   1
+ ],
+ [
+  "geotag advice in another wording",
+  "playbooksjson",
+  "Never geotag: tested, it has no ranking effect.",
+  "Geotag if possible.",
+  1
+ ],
+ [
+  "the nightly stops building lists",
+  "nightlyfn",
+  "body: JSON.stringify({ client_id: r.client_id, step_id: \"m1.gbp.photos\" }),",
+  "body: JSON.stringify({ client_id: r.client_id, step_id: \"m1.gbp.nothing\" }),",
+  1
+ ],
+ [
+  "connect stops building the list",
+  "oauthcb",
+  "      body: JSON.stringify({ client_id: clientId, step_id: \"m1.gbp.photos\" }),\n",
+  "      body: JSON.stringify({ client_id: clientId }),\n",
+  1
+ ],
+ [
+  "a rebuild switches the list under photos",
+  "exec",
+  "      if (inSlots && !rgaPicked) {",
+  "      if (false) {",
+  1
  ]
 ]
