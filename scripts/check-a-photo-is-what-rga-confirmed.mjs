@@ -27,7 +27,10 @@ const F = []; const fail = (m) => F.push(m);
 // 1
 if (!/const m = matches\[g\.name\];/.test(portal) || !/if \(n !== null && items\.some\(\(it\) => Number\(it\.n\) === n\)/.test(portal)) fail("the portal no longer fills a slot only from RGA's confirmation");
 if (/items\.find\(\(it\) => it\.google === g\.category/.test(portal)) fail("the portal fills a slot from Google's CATEGORY again — that is how RGA's logo became \"your building\"");
-if (!/Also on your Google profile: \$\{also\.length\}/.test(portal)) fail("unconfirmed photos are no longer listed under \"Also on your Google profile\"");
+// 🔄 2026-10-09 (approved photo_step_already_on_google_and_tips_v1): its own section near the top, one tile per photo
+if (!/<h4>Already on your Google profile<\/h4>/.test(portal) || !/RGA is sorting this one/.test(portal) || !/Extra, not one of your 20 shots/.test(portal)) fail("photos already on Google no longer get their own section with a state per photo");
+if (!/return `\$\{alreadySection\}\$\{beforeList\}<div class="pm-slots">/.test(portal)) fail("the step's order changed — it is: already on your profile → the tips → the upload list");
+if (/class="pm-pill you"|pm-pill warn/.test(portal)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
 // 2
 if (!/const g = await requireWorkspaceForClient\(event, client_id\);\s*if \(g\.error\) return g\.error;/.test(fn)) fail("photo-match is not workspace-only");
 if (!/That slot is not on this client's list/.test(fn)) fail("confirm accepts a slot that is not on the client's list");

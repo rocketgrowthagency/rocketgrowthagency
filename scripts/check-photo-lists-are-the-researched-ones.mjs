@@ -111,9 +111,20 @@ const pub = read("netlify/functions/_photo-publish.js");
 if (!/if \(summary\.published && d\.recount\)/.test(pub) || !/step_id: "m1\.gbp\.photos"/.test(pub)) fail("a publish no longer recounts the profile — the step goes stale (\"1 of 20\" with 2 on Google)");
 if (!/at_work: "AT_WORK"/.test(pub) || !/exterior: "EXTERIOR"/.test(pub)) fail("the publisher cannot send the lists' Google categories");
 const portal = read("portal/portal.js").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
-if (!/const existingByShot = new Map\(\)/.test(portal) || !/Already on your Google profile/.test(portal)) fail("a confirmed photo already on Google no longer fills its slot in the portal");
+if (!/const existingByShot = new Map\(\)/.test(portal) || !/✓<\/span>Already on your Google profile<\/span>/.test(portal)) fail("a confirmed photo already on Google no longer fills its slot in the portal");
 if (!/class="pm-sgrp\$\{done \? " done" : ""\}/.test(portal)) fail("a full group no longer shows done");
 if (!/const itemCategory = \(it\) => it\.category \|\|/.test(portal)) fail("the portal ignores the shot's own Google category");
+
+// 8 · the tips (approved photo_step_already_on_google_and_tips_v1): explained, research-true, rendered as a section
+for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.json"]) {
+  const txt = read(f);
+  if (/geotag where possible/i.test(txt)) fail(`${f} tells someone to geotag — tested: no ranking effect (Sterling Sky, Whitespark)`);
+  let photoTips = null;
+  JSON.parse(txt, (k, v) => { if (v && typeof v === "object" && Array.isArray(v.tips) && v.tipsTitle === "Before you take your photos") photoTips = v.tips; return v; });
+  if (!photoTips) { fail(`${f}: step 7's client tips ("Before you take your photos") are gone`); continue; }
+  if (photoTips.length !== 3 || photoTips.some((t) => !t || typeof t !== "object" || !t.t || !t.why || !t.how)) fail(`${f}: every photo tip needs a title, a why and a how`);
+}
+if (!/<section class="pm-sec pm-tipsec">/.test(portal) || !/<b>How:<\/b>/.test(portal)) fail("the portal shows the tips as bare pills again");
 
 if (F.length) { console.error("🔴 the photo lists drifted from the researched ones:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ ${Object.keys(P.LISTS).length} photo lists × 20 researched shots, ${P.TYPES.length} trades, every vertical covered; unknown categories pick nothing; existing Google photos fill slots; a publish recounts`);

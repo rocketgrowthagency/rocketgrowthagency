@@ -86,8 +86,8 @@
  [
   "existing Google photos stop filling slots",
   "portal",
-  "Already on your Google profile</span></div>",
-  "On Google</span></div>",
+  "Already on your Google profile</span>${g.at ? `",
+  "On Google</span>${g.at ? `",
   1
  ],
  [
@@ -102,6 +102,20 @@
   "photolists",
   "  if (!L.approved || !t.approved) return",
   "  if (!L.approved) return",
+  1
+ ],
+ [
+  "geotag advice comes back",
+  "playbooksjson",
+  "\"Never geotag — tested, no ranking effect\"",
+  "\"Geotag where possible\"",
+  1
+ ],
+ [
+  "a tip loses its why",
+  "clientstepsjson",
+  "\"why\": \"Screenshots are smaller and lose detail, and Google shows photos best at 720 × 720 or larger.\",",
+  "",
   1
  ]
 ]

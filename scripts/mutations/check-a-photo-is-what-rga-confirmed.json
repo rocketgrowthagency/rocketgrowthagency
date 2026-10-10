@@ -61,5 +61,19 @@
   "`<span class=\"thumb empty\" aria-hidden=\"true\"></span>`",
   "\"\"",
   1
+ ],
+ [
+  "the already section drops back under the list",
+  "portal",
+  "  return `${alreadySection}${beforeList}<div class=\"pm-slots\">${PHOTO_EXAMPLE_SPRITE}",
+  "  return `${beforeList}<div class=\"pm-slots\">${PHOTO_EXAMPLE_SPRITE}${alreadySection}",
+  1
+ ],
+ [
+  "the sorting state is lost",
+  "portal",
+  "<span class=\"pm-pill other\">RGA is sorting this one</span>",
+  "<span class=\"pm-pill other\">Checking</span>",
+  1
  ]
 ]
