@@ -48,11 +48,11 @@ if (!/confirmed\.has\(Number\(it\.n\)\)/.test(recheck)) fail("the done rule igno
 // 4
 if (!/function photoExistingHtml\(\)/.test(admin) || !/data-pm-confirm=/.test(admin) || !/data-pm-none=/.test(admin)) fail("admin step 39 cannot sort the photos already on Google");
 if (!/fillExampleArt\(root\);\s*ensurePhotoAiCheck\(\);/.test(admin)) fail("admin never asks the AI to look");
-if (!/class="pr-flag">Looks like:/.test(admin)) fail("an upload that doesn't match its slot no longer carries the AI's flag");
+if (!/a\.matches \? prVerdict\("ok"[^;]{0,160}?: prVerdict\("you", "\?", "Doesn't look like this shot\."/.test(admin)) fail("an upload that doesn't match its slot no longer carries the AI's flag");
 // 5
 if (!/\.pm-slot \{ grid-template-columns:28px minmax\(0,1fr\) 64px 64px 190px; \}/.test(css)) fail("the slot row is no longer five fixed columns — a photo would push the text again");
 if (!/<div class="sy">\$\{yours\}<\/div>\s*<div class="sz">\$\{status\}<\/div>/.test(portal)) fail("the slot no longer renders its Yours and Status columns");
-if (!/<span class="thumb empty" aria-hidden="true"><\/span>/.test(portal)) fail("an empty slot no longer holds its photo's place with an empty box");
+if (!/yours: p \? [^\n]*: `<span class="thumb empty" aria-hidden="true"><\/span>`,/.test(portal)) fail("an empty slot no longer holds its photo's place with an empty box");
 
 if (F.length) { console.error("🔴 a photo can be called what it isn't, or the row moves:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a slot shows a photo already on Google only after RGA confirms it; the done rule counts what's truly there; every row holds its columns");

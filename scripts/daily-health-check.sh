@@ -464,6 +464,7 @@ run check-photo-examples-match-the-lists.mjs "every photo shot has its own examp
 run check-a-photo-is-what-rga-confirmed.mjs "a slot shows a photo already on Google only after RGA confirms it; rows hold their columns"
 run check-a-done-step-is-never-the-headline.mjs "a step already done never flashes as the portal's next step"
 run check-an-upload-confirms-in-its-slot.mjs "a photo upload confirms in its own slot and never reloads the portal"
+run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Google twice; step 39 leads with the right button"
 run check-no-emoji-in-stored-data.mjs "no emoji in stored data; the portal writes no row the database refuses"
 run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story in every state on every surface, admin and client"
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"

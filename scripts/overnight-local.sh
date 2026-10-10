@@ -75,6 +75,21 @@ if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 ]; then
   exit 0
 fi
 
+# STRAY PER-LEAD CSV ARCHIVER (2026-10-09). The previous night's per-lead "-only-" CSVs are written after
+# midnight, so they carry TODAY's date — the 19:00 rehearsal failed on them two evenings running ("stray
+# today-dated per-lead CSV(s) — these hijack the run") and nobody was there to clear them. Like the reaper
+# above: at a fresh run's start every one of them is a leftover, by definition. MOVED (not deleted) to
+# _archived-strays/, so nothing is lost; a rebuild of an older lead falls back to the batch CSV (gated by
+# check-rebuild-csv-fallback). Runs only inside the night window, after the interlock.
+for _d in "output/Step 1" "output/Step 2"; do
+  _n=$(find "$_d" -maxdepth 1 -name "${DATE_STAMP}_*-only-*.csv" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${_n:-0}" != "0" ]; then
+    mkdir -p "$_d/_archived-strays"
+    find "$_d" -maxdepth 1 -name "${DATE_STAMP}_*-only-*.csv" -exec mv {} "$_d/_archived-strays/" \;
+    echo "=== archived $_n leftover per-lead CSV(s) from $_d before start $(date) ===" | tee -a "$LOG"
+  fi
+done
+
 # PRODUCTION PAUSE GATE (2026-07-03). The production governor (or Chris) pauses nightly video
 # production when the send side is caught up (sendable buffer >> daily send rate) or deliverability
 # is unsafe. If paused, exit immediately WITHOUT caffeinating or scraping. The governor removes

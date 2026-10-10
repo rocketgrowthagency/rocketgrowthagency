@@ -106,6 +106,7 @@ const FILES = {
   playbooksjson: "data/playbooks/playbooks.json",
   clientstepsjson: "data/playbooks/client-steps.json",
   photomatch: "netlify/functions/photo-match.js",
+  photofp: "netlify/functions/_photo-fingerprint.js",
   notifyrga: "netlify/functions/notify-rga.js",
   nightlyfn: "netlify/functions/metrics-daily-refresh.js",
   detailedpage: "new-client-playbook/detailed/index.html",

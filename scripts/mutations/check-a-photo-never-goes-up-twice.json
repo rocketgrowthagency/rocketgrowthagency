@@ -1,0 +1,72 @@
+[
+ [
+  "the server approves a duplicate",
+  "photoreview",
+  "        if (same && same.id !== id) { duplicates.push(",
+  "        if (false) { duplicates.push(",
+  1
+ ],
+ [
+  "two copies in one approval both go",
+  "photoreview",
+  "        if (h) taken.set(h, all.find((p) => p.id === id) || { id });\n",
+  "",
+  1
+ ],
+ [
+  "an unreadable file gets a made-up fingerprint",
+  "photofp",
+  "    if (!r.ok) { console.error(`[photo-fingerprint] ${storagePath}: HTTP ${r.status}`); return null; }",
+  "    if (!r.ok) return \"unreadable\";",
+  1
+ ],
+ [
+  "the duplicate card offers Send again",
+  "admin",
+  "    const acts = dup ? down(true, \"Same photo as another slot\")",
+  "    const acts = dup ? `${down(true, \"Same photo as another slot\")}${send(\"Send to Google\", true)}`",
+  1
+ ],
+ [
+  "the wrong copy is kept",
+  "admin",
+  "copies.filter((p) => ups[p.id]?.matches === true)",
+  "copies.filter((p) => ups[p.id]?.matches === false)",
+  1
+ ],
+ [
+  "bulk sends every photo again",
+  "admin",
+  "data-photo-approve-all=\"${escapeAttribute(fitting.map((p) => p.id).join(\",\"))}\"",
+  "data-photo-approve-all=\"${escapeAttribute(review.map((p) => p.id).join(\",\"))}\"",
+  1
+ ],
+ [
+  "a misfit leads with Send",
+  "admin",
+  "      : misfit ? `${down(true, \"Wrong shot for this slot\")}${send(\"Send to Google anyway\", false)}`",
+  "      : misfit ? `${send(\"Send to Google\", true)}${down(false)}`",
+  1
+ ],
+ [
+  "turn down opens with nothing picked",
+  "admin",
+  "      if (chip) chip.click();\n",
+  "",
+  1
+ ],
+ [
+  "the slot's drawing leaves the card",
+  "admin",
+  "    const askPic = it ? prAskPic(p.shot_n) : prPic(\"Example\", photoExampleArt(ex), \"art\");",
+  "    const askPic = \"\";",
+  1
+ ],
+ [
+  "a second copy on Google leads with Confirm",
+  "admin",
+  "    const acts = fits\n",
+  "    const acts = true\n",
+  1
+ ]
+]

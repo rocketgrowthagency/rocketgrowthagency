@@ -58,8 +58,8 @@
  [
   "an empty slot loses its box",
   "portal",
-  "`<span class=\"thumb empty\" aria-hidden=\"true\"></span>`",
-  "\"\"",
+  ": `<span class=\"thumb empty\" aria-hidden=\"true\"></span>`,",
+  ": \"\",",
   1
  ],
  [
