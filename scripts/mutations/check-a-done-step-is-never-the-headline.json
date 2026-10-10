@@ -1,0 +1,37 @@
+[
+ [
+  "the recap stops settling the step",
+  "recapfn",
+  "    if (kt.status !== \"done\") tasks[\"m1.kickoff.call\"] = { ...kt, status: \"done\", completed_at: kt.completed_at || sentAt, done_by: \"recap_sent\" };\n",
+  "",
+  1
+ ],
+ [
+  "the answered flag is never set",
+  "portal",
+  "    _kickoffUnknown.delete(clientId);\n    _kickoffAnswered.add(clientId);",
+  "    _kickoffUnknown.delete(clientId);",
+  1
+ ],
+ [
+  "an empty map reads as no booking again",
+  "portal",
+  "    const kickoffOwed = _kickoffAnswered.has(clientId) && !_kickoffMine.has(clientId)",
+  "    const kickoffOwed = !_kickoffMine.has(clientId)",
+  1
+ ],
+ [
+  "a sent recap no longer blocks the headline",
+  "portal",
+  "      && !(kStamp && kStamp.recap_sent_at);",
+  "      ;",
+  1
+ ],
+ [
+  "no re-run when the answer lands",
+  "portal",
+  "    setTimeout(() => { try { refreshNextStepCards(); }",
+  "    setTimeout(() => { try { void 0; }",
+  1
+ ]
+]

@@ -461,6 +461,7 @@ run check-a-photo-preview-says-when-it-fails.mjs "a photo preview that cannot lo
 run check-photo-lists-are-the-researched-ones.mjs "the photo shot lists are the researched ones for each trade; unknown categories pick nothing"
 run check-photo-examples-match-the-lists.mjs "every photo shot has its own example drawing and people count, served as a fresh build"
 run check-a-photo-is-what-rga-confirmed.mjs "a slot shows a photo already on Google only after RGA confirms it; rows hold their columns"
+run check-a-done-step-is-never-the-headline.mjs "a step already done never flashes as the portal's next step"
 run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story in every state on every surface, admin and client"
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"
 run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends on the record; the portal honours it (10-09 test call)"
