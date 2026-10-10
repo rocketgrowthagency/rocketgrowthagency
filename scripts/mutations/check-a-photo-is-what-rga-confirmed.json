@@ -1,0 +1,65 @@
+[
+ [
+  "the portal fills a slot by Google's category again",
+  "portal",
+  "    if (n !== null && items.some((it) => Number(it.n) === n) && !byShot.has(n) && !existingByShot.has(n)) existingByShot.set(n, g);",
+  "    const open0 = items.find((it) => it.google === g.category && !byShot.has(Number(it.n))); if (open0) existingByShot.set(Number(open0.n), g);",
+  1
+ ],
+ [
+  "confirm takes any slot",
+  "photomatch",
+  "    if (slot !== null && !items.some((it) => Number(it.n) === slot)) return json(400, { error: \"That slot is not on this client's list\" });\n",
+  "",
+  1
+ ],
+ [
+  "two photos into one slot",
+  "photomatch",
+  "if (v && v.slot === slot && k !== name) matches[k] = { ...v, slot: null, freed_by: name };",
+  "if (false) matches[k] = { ...v, slot: null, freed_by: name };",
+  1
+ ],
+ [
+  "our own logo checked as another photo",
+  "photomatch",
+  "&& !ourSingleton(m.category) &&",
+  "&&",
+  1
+ ],
+ [
+  "photo-match open to anyone",
+  "photomatch",
+  "  const g = await requireWorkspaceForClient(event, client_id);\n  if (g.error) return g.error;",
+  "  const g = {};",
+  1
+ ],
+ [
+  "done rule back on Google's categories",
+  "recheck",
+  "(have[cat] || 0) < k)",
+  "(byCategory[cat] || 0) < k)",
+  1
+ ],
+ [
+  "admin never asks the AI",
+  "admin",
+  "  fillExampleArt(root);\n  ensurePhotoAiCheck();",
+  "  fillExampleArt(root);",
+  1
+ ],
+ [
+  "the row loses its fixed columns",
+  "portalcss",
+  ".pm-slot { grid-template-columns:28px minmax(0,1fr) 64px 64px 190px; }",
+  ".pm-slot { grid-template-columns:28px 1fr auto auto; }",
+  1
+ ],
+ [
+  "an empty slot loses its box",
+  "portal",
+  "`<span class=\"thumb empty\" aria-hidden=\"true\"></span>`",
+  "\"\"",
+  1
+ ]
+]

@@ -106,12 +106,12 @@ for (const m of pick.matchAll(/"([A-G]) · [^"]+": \[([^\]]*)\]/g)) for (const n
 // 7 · measurement, recount, portal
 const recheck = read("netlify/functions/portal-step-recheck.js");
 if (!/media\?pageSize=100`,/.test(recheck) || !/byCategory\[cat\]/.test(recheck) || !/photoCategoryNeeds\(clientId\)/.test(recheck)) fail("the photo measurement no longer reads every photo by category with done rule B");
-if (!/\.\.\.\(probe\.byCategory \? \{ byCategory: probe\.byCategory, need: probe\.need, items: probe\.items \}/.test(recheck)) fail("the per-category reading is measured but not kept on the step");
+if (!/\.\.\.\(probe\.byCategory \? \{ byCategory: probe\.byCategory, need: probe\.need, have: probe\.have, items: probe\.items \}/.test(recheck)) fail("the per-category reading is measured but not kept on the step");
 const pub = read("netlify/functions/_photo-publish.js");
 if (!/if \(summary\.published && d\.recount\)/.test(pub) || !/step_id: "m1\.gbp\.photos"/.test(pub)) fail("a publish no longer recounts the profile — the step goes stale (\"1 of 20\" with 2 on Google)");
 if (!/at_work: "AT_WORK"/.test(pub) || !/exterior: "EXTERIOR"/.test(pub)) fail("the publisher cannot send the lists' Google categories");
 const portal = read("portal/portal.js").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
-if (!/const existingByShot = new Map\(\)/.test(portal) || !/Already on your Google profile/.test(portal)) fail("photos already on Google no longer fill their slot in the portal");
+if (!/const existingByShot = new Map\(\)/.test(portal) || !/Already on your Google profile/.test(portal)) fail("a confirmed photo already on Google no longer fills its slot in the portal");
 if (!/class="pm-sgrp\$\{done \? " done" : ""\}/.test(portal)) fail("a full group no longer shows done");
 if (!/const itemCategory = \(it\) => it\.category \|\|/.test(portal)) fail("the portal ignores the shot's own Google category");
 

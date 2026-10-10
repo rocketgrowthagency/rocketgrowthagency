@@ -103,6 +103,7 @@ const FILES = {
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
   letter: "netlify/functions/_letter.js",
   photolists: "netlify/functions/_photo-lists.js",
+  photomatch: "netlify/functions/photo-match.js",
   photoartA: "shared/photo-art/A.json",
   photoartjs: "shared/photo-art.js",
   photokit: "scripts/photo-examples/kit.js",
