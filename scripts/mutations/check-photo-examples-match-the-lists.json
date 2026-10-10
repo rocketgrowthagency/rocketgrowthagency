@@ -1,0 +1,58 @@
+[
+ [
+  "a scene changes and nobody rebuilds",
+  "photoscenes",
+  "A3: [0, () => K.sky() + K.street() + K.tree(212, 146) + K.van(30, 168, 1.6)],",
+  "A3: [0, () => K.sky() + K.street() + K.van(30, 168, 1.6)],",
+  1
+ ],
+ [
+  "a people count changes and nobody rebuilds",
+  "photoscenes",
+  "  A6: [1, () =>",
+  "  A6: [2, () =>",
+  1
+ ],
+ [
+  "a trade loses its third drawing",
+  "photoscenes",
+  "    [1, () => K.room(\"#e9e6e0\", 150, \"#c3cad4\") + Ci(70, 128, 22, \"#3b4658\")",
+  "    // [1, () => K.room(\"#e9e6e0\", 150, \"#c3cad4\") + Ci(70, 128, 22, \"#3b4658\")",
+  1
+ ],
+ [
+  "artKey counts trade slots wrong",
+  "photoartjs",
+  "it.trade && Number(it.n) < Number(item.n)",
+  "it.trade && Number(it.n) <= Number(item.n)",
+  1
+ ],
+ [
+  "artKey guesses a list for an old draft",
+  "photoartjs",
+  "  if (!shape || !shape.list || !item) return \"\";",
+  "  if (!item) return \"\";",
+  1
+ ],
+ [
+  "the portal stops filling the drawings",
+  "portal",
+  "  fillSlotThumbs(listEl);\n  fillExampleArt(listEl);",
+  "  fillSlotThumbs(listEl);",
+  1
+ ],
+ [
+  "the people line is dropped",
+  "portal",
+  "<span class=\"pm-ppl\" data-ex-ppl=",
+  "<span class=\"pm-ppl\" data-x-ppl=",
+  1
+ ],
+ [
+  "admin review loses the drawing",
+  "admin",
+  "async function fillPhotoReviewThumbs(root) {\n  fillExampleArt(root);",
+  "async function fillPhotoReviewThumbs(root) {",
+  1
+ ]
+]
