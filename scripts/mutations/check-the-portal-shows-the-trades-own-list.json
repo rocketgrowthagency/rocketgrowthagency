@@ -47,5 +47,19 @@
   "    const text = Number.isInteger(sh.trade) ? t.shots[sh.trade] : (alt ? alt.do : sh.do);",
   "    const text = Number.isInteger(sh.trade) ? TYPES[0].shots[sh.trade] : (alt ? alt.do : sh.do);",
   1
+ ],
+ [
+  "the batch picker opens on a full kind",
+  "portal",
+  "    const sel = empty.length && firstOpen ? (firstOpen = false, \" selected\") : \"\";",
+  "    const sel = firstOpen ? (firstOpen = false, \" selected\") : \"\";",
+  1
+ ],
+ [
+  "a full kind can be picked for a batch",
+  "portal",
+  "${empty.length ? sel : \" disabled\"}",
+  "${sel}",
+  1
  ]
 ]

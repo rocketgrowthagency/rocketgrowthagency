@@ -99,6 +99,12 @@ for (const c of CASES) {
   if (/computer screen|monitor/i.test(txt) && c.type !== "Marketing agencies") fail(`${label}: a screen shot reached a ${c.type} client`);
   rendered++;
 }
+// 🔒 the batch picker opens on a kind with room — never a full one (2026-10-12: it opened on "Logo (0 empty)")
+{ const s = (await runRunner({ category: "Plumber", storefront: false })).draft_shape;
+  const html = pctx.render({ clientForm: "photo_upload" }, { draft_shape: s }, [{ id: "p1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "x" }], "c1");
+  const sel = (html.match(/<option[^>]*selected[^>]*>([^<]*)<\/option>/) || [])[1] || "";
+  if (!sel || /\(full\)|\(0 empty\)/.test(sel)) fail(`the batch picker opens on "${sel || "nothing"}" — a kind with no room`);
+  if (!/<option[^>]*disabled[^>]*>Logo \(full\)/.test(html)) fail("a full kind can still be picked for a batch"); }
 // RGA's pick overrides the category
 { const out = await runRunner({ category: "Plumber", storefront: false, record: { photo_list: { type: "Roofers", set_at: "2026-10-09T00:00:00Z" } } });
   if (out?.draft_shape?.type !== "Roofers") fail(`RGA picked Roofers for a "Plumber" profile, but the runner built ${out?.draft_shape?.type}`); }
