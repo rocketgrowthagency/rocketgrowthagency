@@ -140,6 +140,7 @@ if (!/Sending to Google is paused/.test(paused) || !/step 11 found 2 Google list
 const sends = (h) => h.match(/<button[^>]*data-photo-approve(?:-all)?=[^>]*>/g) || [];
 if (!sends(paused).length || sends(paused).some((b) => !/\bdisabled\b/.test(b))) fail("admin step 39 still offers Send to Google with 2 listings");
 if (/Sending to Google is paused/.test(going) || sends(going).some((b) => /\bdisabled\b/.test(b))) fail("admin step 39 is paused even though step 11 found one listing");
+if (!/el\.querySelectorAll\("\.ob-body:not\(\.ol-host\) > \.ob-actions, \.ob-body:not\(\.ol-host\) > details\.ob-out"\)\.forEach\(\(n\) => \{ n\.style\.display = "none"; \}\);/.test(admin)) fail("step 11 shows its generic 'Mark step complete' beside a live duplicate again");
 if (!/Waits on \$\{dupStepName\(\)\}/.test(admin)) fail("the step 39 row no longer says it waits on step 11");
 
 // ── 7 · the nightly re-check ──

@@ -138,5 +138,12 @@
   "  if (v.verdict !== \"duplicate\") {\n    const priorTask = await priorFinding(clientId);",
   "  if (v.verdict === \"clean\") {\n    const priorTask = await priorFinding(clientId);",
   1
+ ],
+ [
+  "step 11 shows Mark step complete again",
+  "admin",
+  "  el.querySelectorAll(\".ob-body:not(.ol-host) > .ob-actions, .ob-body:not(.ol-host) > details.ob-out\").forEach((n) => { n.style.display = \"none\"; });\n",
+  "",
+  1
  ]
 ]
