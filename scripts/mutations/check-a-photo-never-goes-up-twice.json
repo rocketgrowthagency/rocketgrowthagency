@@ -68,5 +68,19 @@
   "    const acts = fits\n",
   "    const acts = true\n",
   1
+ ],
+ [
+  "a refusal is announced as going up",
+  "admin",
+  "moved - published - failedNow > 0 ? `, ${moved - published - failedNow} going up",
+  "moved - published > 0 ? `, ${moved - published} going up",
+  1
+ ],
+ [
+  "Google's reason is dropped",
+  "photopublish",
+  "        const why = (ge.details || []).flatMap(",
+  "        const why = ([]).flatMap(",
+  1
  ]
 ]

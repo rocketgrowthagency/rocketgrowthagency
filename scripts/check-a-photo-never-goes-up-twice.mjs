@@ -130,6 +130,11 @@ if (!/What slot 7 asks for/.test(c7) || !/The meeting room, set for a client\./.
 const ex = html.slice(html.indexOf('data-pm-row="m/logo2"'));
 if (!/second copy of slot 1/.test(ex) || !(ex.indexOf('data-pm-none="m/logo2"') < ex.indexOf("data-pm-slot="))) fail("a second copy already on Google doesn't lead with Not a slot photo");
 if (/class="pr-band/.test(html)) fail("the stacked amber bands are back");
+// 🔴 2026-10-12: a photo Google refused was announced as "going up on the hourly sync"
+const rp = cut("async function reviewPhotos(", "\ndocument.addEventListener");
+if (!rp || !/failedNow \+= /.test(rp) || !/moved - published - failedNow/.test(rp) || !/refused by Google/.test(rp)) fail("the approve banner can call a photo Google refused 'going up on the hourly sync'");
+const pub = read("netlify/functions/_photo-publish.js");
+if (!/ge\.details/.test(pub)) fail("a Google refusal is stored without Google's reason (error.details)");
 
 if (F.length) { console.error("🔴 a photo can go up twice, or step 39 says the wrong thing:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ the same photo never goes up twice (server refuses by fingerprint), and step 39's cards show the duplicate, the misfit and the fit with the right lead button");
