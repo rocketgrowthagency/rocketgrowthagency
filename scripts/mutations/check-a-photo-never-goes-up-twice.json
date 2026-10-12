@@ -49,13 +49,6 @@
   1
  ],
  [
-  "turn down opens with nothing picked",
-  "admin",
-  "      if (chip) chip.click();\n",
-  "",
-  1
- ],
- [
   "the slot's drawing leaves the card",
   "admin",
   "    const askPic = it ? prAskPic(p.shot_n) : prPic(\"Example\", photoExampleArt(ex), \"art\");",
@@ -81,6 +74,20 @@
   "photopublish",
   "        const why = (ge.details || []).flatMap(",
   "        const why = ([]).flatMap(",
+  1
+ ],
+ [
+  "turn down opens with nothing picked",
+  "admin",
+  "      if (!box.hidden && !box.querySelector(\"[data-photo-td-reason]\").value) prTurnDownPick(box, pick || \"\");\n",
+  "",
+  1
+ ],
+ [
+  "the turn-down leaves the card",
+  "admin",
+  "        ${prTurnDownHtml(p, it)}\n      </div></div>`;",
+  "      </div>${prTurnDownHtml(p, it)}</div>`;",
   1
  ]
 ]

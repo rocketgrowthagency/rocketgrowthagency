@@ -91,9 +91,9 @@ const admin = read("admin/admin.js");
 const cut = (a, b) => { const i = admin.indexOf(a), j = i < 0 ? -1 : admin.indexOf(b, i); return i < 0 || j < 0 ? null : admin.slice(i, j); };
 const partA = cut("const PHOTO_KIND_LABEL = {", "let photoAiAsked");
 const partB = cut("// 🔒 THE SAME FILE IN TWO SLOTS", "\n// 🔴 PHOTOS ARRIVE WHENEVER");
-const clickSrc = cut('  } else if (t.hasAttribute("data-photo-td-open")) {', '  } else if (t.hasAttribute("data-photo-td-chip")) {');
+const clickSrc = cut('  } else if (t.hasAttribute("data-photo-td-open")) {', '  } else if (t.hasAttribute("data-photo-td-edit")) {');
 if (!partA || !partB || !clickSrc) { console.error("⚠️  INDETERMINATE — could not lift the step 39 renderer"); process.exit(2); }
-if (!/data-photo-td-pick/.test(clickSrc) || !/chip\.click\(\)/.test(clickSrc)) fail("Turn down no longer opens with the reason that fits already picked");
+if (!/data-photo-td-pick/.test(clickSrc) || !/prTurnDownPick\(box, pick/.test(clickSrc)) fail("Turn down no longer opens with the reason that fits already picked");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const H = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: i === 0 ? "PROFILE" : "INTERIOR", do: i === 6 ? "The meeting room, set for a client." : i === 7 ? "A wide shot of the workspace." : `Shot ${i + 1}` }));
@@ -130,6 +130,15 @@ if (!/What slot 7 asks for/.test(c7) || !/The meeting room, set for a client\./.
 const ex = html.slice(html.indexOf('data-pm-row="m/logo2"'));
 if (!/second copy of slot 1/.test(ex) || !(ex.indexOf('data-pm-none="m/logo2"') < ex.indexOf("data-pm-slot="))) fail("a second copy already on Google doesn't lead with Not a slot photo");
 if (/class="pr-band/.test(html)) fail("the stacked amber bands are back");
+// 🔒 the turn-down panel (admin_photo_turn_down_v1): inside the card's info column, one reason picker, the client's preview
+const info7 = c7.slice(c7.indexOf('class="pr-info"'));
+// depth by counting divs: the panel must sit INSIDE the card's info column (the slice starts inside the card tag: pr-info + the panel's own div = 2)
+const tdAt = c7.indexOf('data-photo-td="p7"'), before = c7.slice(0, tdAt);
+const depth = (before.match(/<div\b/g) || []).length - (before.match(/<\/div>/g) || []).length;
+const infoOpen = before.lastIndexOf('class="pr-info"') > before.lastIndexOf('class="pr-card"');
+if (tdAt < 0 || depth !== 2 || !infoOpen) fail(`the turn-down panel no longer opens inside the card's info column (depth ${depth})`);
+if (!/<select[^>]*data-photo-td-reason="p7"/.test(info7) || /pr-chip/.test(html)) fail("the turn-down is back to reason chips, not one picker");
+if (!/The client will see[\s\S]*Please retake[\s\S]*From RGA:/.test(info7)) fail("the turn-down no longer previews what the client sees on their slot");
 // 🔴 2026-10-12: a photo Google refused was announced as "going up on the hourly sync"
 const rp = cut("async function reviewPhotos(", "\ndocument.addEventListener");
 if (!rp || !/failedNow \+= /.test(rp) || !/moved - published - failedNow/.test(rp) || !/refused by Google/.test(rp)) fail("the approve banner can call a photo Google refused 'going up on the hourly sync'");
