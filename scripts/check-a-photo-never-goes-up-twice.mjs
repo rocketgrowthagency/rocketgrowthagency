@@ -29,7 +29,7 @@ const F = []; const fail = (m) => F.push(m);
 // ── 1 + 2 · the real server guard ──
 process.env.SUPABASE_URL = "https://supa.test"; process.env.SUPABASE_SERVICE_ROLE_KEY = "k";
 const BYTES = { "c/a.jpg": "OFFICE", "c/b.jpg": "OFFICE", "c/c.jpg": "TEAM", "c/d.jpg": "VAN", "c/e.jpg": "VAN", "c/x.jpg": null, "c/y.jpg": null };
-let PHOTOS = [], patched = [];
+let PHOTOS = [], patched = [], LISTING = "clean";
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url);
   if (u.includes("/storage/v1/object/client-photos/")) {
@@ -39,7 +39,7 @@ globalThis.fetch = async (url, init = {}) => {
   }
   const rest = u.split("/rest/v1")[1] || "";
   const reply = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v) });
-  if (rest.startsWith("/client_onboarding_records")) return reply([{ data: {} }]);
+  if (rest.startsWith("/client_onboarding_records")) return reply([{ data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: LISTING } } } } }]);
   if (rest.startsWith("/client_photo_publishes")) return reply([]);
   if (rest.startsWith("/client_photos") && init.method === "PATCH") {
     const ids = (rest.match(/id=in\.\(([^)]*)\)/) || [])[1]?.split(",").filter(Boolean) || [];
@@ -81,6 +81,9 @@ PHOTOS = [
 { const r = await approve([2]);
   if (r.status !== 409 || r.patched.length) fail(`approving only a duplicate went through (HTTP ${r.status})`);
   if (!/Same photo as slot 8/.test(r.body.error || "")) fail(`the refusal doesn't say what's wrong: "${r.body.error}"`); }
+// 🔒 one Google listing first: with a duplicate listing, approving sends nothing
+{ LISTING = "duplicate"; const r = await approve([3]); LISTING = "clean";
+  if (r.status !== 409 || r.patched.length || r.body.listing !== "duplicate") fail(`a photo was approved while the client has 2 Google listings (HTTP ${r.status})`); }
 { const r = await approve([4, 5]);
   if (!r.patched.includes(ID(4)) || r.patched.includes(ID(5))) fail("two identical photos in one approval both went up (or neither did)"); }
 { const r = await approve([6, 7]);
@@ -99,13 +102,13 @@ const H = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: i === 0 ? "PROFILE" : "INTERIOR", do: i === 6 ? "The meeting room, set for a client." : i === 7 ? "A wide shot of the workspace." : `Shot ${i + 1}` }));
 const ctx = {
   escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
-  photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9",
+  photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   state: { selectedClient: { id: "c1" }, photos: [
     { id: "p1", client_id: "c1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "c/l.png" },
     { id: "p7", client_id: "c1", shot_n: 7, category: "interior", publish_state: "in_review", storage_path: "c/b.jpg", created_at: "2026-10-09T18:24" },
     { id: "p8", client_id: "c1", shot_n: 8, category: "interior", publish_state: "in_review", storage_path: "c/a.jpg", created_at: "2026-10-09T18:22" },
     { id: "p9", client_id: "c1", shot_n: 9, category: "interior", publish_state: "in_review", storage_path: "c/n.jpg", created_at: "2026-10-09T18:30" },
-  ], onboardingData: { tasks: { "m1.gbp.photos": { draft_shape: { items }, photo_matches: {},
+  ], onboardingData: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "clean" } }, "m1.gbp.photos": { draft_shape: { items }, photo_matches: {},
     detected: { items: [{ name: "m/logo2", category: "EXTERIOR", thumb: "t" }] },
     photo_ai: { hashes: { p1: H("LOGO"), p7: H("OFFICE"), p8: H("OFFICE") },
       uploads: { p7: { matches: false, what: "an office lounge" }, p8: { matches: true, what: "an open office" }, p9: { matches: false, what: "a car" } },

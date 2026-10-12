@@ -66,7 +66,7 @@ for (const v of offered) {
 }
 
 // ── a fake world ────────────────────────────────────────────────────────────────────────────────
-function world({ oauth, photos, google = () => ({ status: 200, body: { name: "accounts/1/locations/2/media/m1", googleUrl: "https://lh3.example/x" } }), claimLost = false }) {
+function world({ oauth, photos, google = () => ({ status: 200, body: { name: "accounts/1/locations/2/media/m1", googleUrl: "https://lh3.example/x" } }), claimLost = false, listing = "clean" }) {
   const w = { googleCalls: [], logRows: [], patches: [], queries: [], ledger: [], photos: photos.map((p) => ({ ...p })) };
   w.deps = {
     now: () => Date.parse("2026-10-08T12:00:00Z"),
@@ -86,6 +86,8 @@ function world({ oauth, photos, google = () => ({ status: 200, body: { name: "ac
         if (path.startsWith("/client_photos")) return w.photos;
         if (path.startsWith("/client_google_oauth")) return oauth ? [oauth] : [];
         if (path.startsWith("/clients")) return [{ workspace_id: "ws" }];
+        // step 11's verdict — the publisher sends nothing until it says ONE listing (one_google_listing_first_v1)
+        if (path.startsWith("/client_onboarding_records")) return [{ data: { tasks: listing ? { "m1.audit.gbp_duplicate": { outcome_data: { verdict: listing } } } : {} } }];
         return [];
       }
       if (method === "POST" && path === "/client_photo_publishes") { w.logRows.push(JSON.parse(init.body)); return null; }
@@ -114,6 +116,12 @@ async function scenario(name, fn) {
 
 // ── 2 · connected → published ───────────────────────────────────────────────────────────────────
 await scenario("connected", async () => {
+  // 🔒 one Google listing first: a duplicate, or no check yet, sends NOTHING and writes nothing
+  for (const listing of ["duplicate", "indeterminate", null]) {
+    const wl = world({ oauth: CONNECTED, photos: [photo({ publish_state: "pending" })], listing });
+    const sl = await publishClientPhotos({ clientId: "c1", trigger: "schedule", deps: wl.deps });
+    if (wl.googleCalls.length || wl.patches.length || sl.held !== 1) F(`step 11 said "${listing || "nothing yet"}" and the publisher still ${wl.googleCalls.length ? "sent to Google" : wl.patches.length ? "changed the photo" : "did not hold it"}`);
+  }
   const w = world({ oauth: CONNECTED, photos: [photo()] });
   const s = await publishClientPhotos({ clientId: "c1", trigger: "upload", deps: w.deps });
   if (w.googleCalls.length !== 1) return F(`a connected client's photo made ${w.googleCalls.length} Google calls, expected 1`);

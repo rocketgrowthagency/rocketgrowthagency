@@ -1,0 +1,121 @@
+[
+ [
+  "not checked reads as one listing",
+  "onelisting",
+  "  return { open: false, state: \"unknown\", duplicates: [], checked_at: o.checked_at || null, override: null,\n    reason:",
+  "  return { open: true, state: \"unknown\", duplicates: [], checked_at: o.checked_at || null, override: null,\n    reason:",
+  1
+ ],
+ [
+  "an override with no reason opens it",
+  "onelisting",
+  "  if (t.override && t.override.reason) return { open: true, state: \"override\"",
+  "  if (t.override) return { open: true, state: \"override\"",
+  1
+ ],
+ [
+  "the portal's copy drifts",
+  "portal",
+  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates };",
+  "  if (o.verdict === \"duplicate\") return { open: true, state: \"duplicate\", duplicates };",
+  1
+ ],
+ [
+  "gbp-publish writes anyway",
+  "gbppublishfn",
+  "  if (!listing.open) return json(409, { error: `${listing.reason} Nothing was sent to Google.`, listing: listing.state });",
+  "",
+  1
+ ],
+ [
+  "gbp-apply-change writes anyway",
+  "gbpapplyfn",
+  "    if (!listing.open) return json(409, { ok: false, error: `${listing.reason} Nothing was written.`, listing: listing.state });",
+  "",
+  1
+ ],
+ [
+  "a photo approved with 2 listings",
+  "photoreview",
+  "      if (!listing.open) return json(409, { ok: false, error: listing.reason, listing: listing.state, moved: [], skipped: [] });",
+  "",
+  1
+ ],
+ [
+  "the publisher sends with 2 listings",
+  "photopublish",
+  "  if (!listing.open) {\n    summary.held = photos.length;",
+  "  if (false) {\n    summary.held = photos.length;",
+  1
+ ],
+ [
+  "the scan marks a duplicate done",
+  "dupscan",
+  "      next = { status: keep ? \"done\" : \"pending\",",
+  "      next = { status: \"done\",",
+  1
+ ],
+ [
+  "a failed look erases the answer",
+  "dupscan",
+  "    } else if (prevReal) {\n      next = { last_failed_scan: record };",
+  "    } else if (false) {\n      next = { last_failed_scan: record };",
+  1
+ ],
+ [
+  "flow-execute ignores completed:false",
+  "exec",
+  "    const isDone = result?.completed === false ? false : (runnerCompleted || (!isHybrid && !isDetected));",
+  "    const isDone = runnerCompleted || (!isHybrid && !isDetected);",
+  1
+ ],
+ [
+  "the runner closes step 11 on a duplicate",
+  "exec",
+  "      completed: !!j.override,",
+  "      completed: true,",
+  1
+ ],
+ [
+  "Q&A (a profile step) stops waiting",
+  "playbooksjson",
+  "        \"m1.gbp.attributes\",\n        \"m1.audit.gbp_duplicate\"\n      ],",
+  "        \"m1.gbp.attributes\"\n      ],",
+  1
+ ],
+ [
+  "step 7 lets a photo be picked",
+  "portal",
+  "body.replace(/<input type=\"file\"/g, '<input disabled type=\"file\"')",
+  "body",
+  1
+ ],
+ [
+  "step 39 sends with 2 listings",
+  "admin",
+  "data-photo-approve=\"${escapeAttribute(p.id)}\"${paused ? ` disabled",
+  "data-photo-approve=\"${escapeAttribute(p.id)}\"${false ? ` disabled",
+  1
+ ],
+ [
+  "the recheck skips the unchecked",
+  "duprecheck",
+  "    if (!hasRecord || before?.verdict === \"clean\" || task?.override?.reason) continue;",
+  "    if (before?.verdict !== \"duplicate\") continue;",
+  1
+ ],
+ [
+  "'it's gone' told when there never was one",
+  "duprecheck",
+  "    if (!(before?.verdict === \"duplicate\" && finding?.verdict === \"clean\")) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "anyone can override",
+  "dupoverride",
+  "  const g = await requireWorkspaceForClient(event, clientId);\n  if (g.error) return g.error;",
+  "  const g = {};",
+  1
+ ]
+]

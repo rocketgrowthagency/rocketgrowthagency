@@ -65,8 +65,8 @@
  [
   "the already section drops back under the list",
   "portal",
-  "  return `${alreadySection}${beforeList}<div class=\"pm-slots\">${PHOTO_EXAMPLE_SPRITE}",
-  "  return `${beforeList}<div class=\"pm-slots\">${PHOTO_EXAMPLE_SPRITE}${alreadySection}",
+  "  const body = `${alreadySection}${beforeList}<div class=\"pm-slots${locked ? \" is-locked\" : \"\"}\">${PHOTO_EXAMPLE_SPRITE}",
+  "  const body = `${beforeList}<div class=\"pm-slots${locked ? \" is-locked\" : \"\"}\">${PHOTO_EXAMPLE_SPRITE}${alreadySection}",
   1
  ],
  [

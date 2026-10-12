@@ -674,7 +674,7 @@ If unverified: trigger postcard or video verification from inside GBP. Block on 
   },
   {
     id: "m1.gbp.optimize_categories", title: "Lock primary + secondary categories",
-    type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.strategy.keywords_locations"],
+    type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.strategy.keywords_locations", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     async run({ client, getGbp }) {
       const draft = await aiSuggest(
@@ -700,7 +700,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   },
   {
     id: "m1.gbp.services_products", title: "Add services + products",
-    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories"],
+    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -715,7 +715,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   },
   {
     id: "m1.gbp.business_description", title: "Write compelling description",
-    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories"],
+    type: "hybrid", dependsOn: ["m1.gbp.optimize_categories", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     async run({ client, getGbp }) {
       const { draftBusinessDescription } = await import("../../lib/gbp-content-ai.mjs");
@@ -729,7 +729,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
   },
   {
     id: "m1.gbp.hours_attributes", title: "Confirm hours",
-    type: "manual", dependsOn: ["m1.gbp.verify"],
+    type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     instructions: `Set regular hours, holiday hours, special hours.
 Attributes are asked once, in "Fill ALL relevant GBP attributes" (approved 2026-10-08 — they were asked twice).
@@ -737,7 +737,7 @@ Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MOND
   },
   {
     id: "m1.gbp.attributes", title: "Fill ALL relevant GBP attributes",
-    type: "manual", dependsOn: ["m1.gbp.verify"],
+    type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     instructions: `GBP → Edit Profile → Edit your business → Highlights / From the business / Service options.
 Check ALL that apply: women/veteran/LGBTQ+/family-owned, online estimates, on-site, same-day, emergency hours, payment methods, accessibility, crowd, health & safety.
@@ -745,7 +745,7 @@ Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
   },
   {
     id: "m1.gbp.messaging", title: "Enable GBP messaging + set response SLA",
-    type: "hybrid", dependsOn: ["m1.gbp.verify"],
+    type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -760,7 +760,7 @@ Set notifications to push to phone/email — Google rewards <30 min response dur
   },
   {
     id: "m1.gbp.booking_link", title: "Add appointment booking URL",
-    type: "manual", dependsOn: ["m1.gbp.verify"],
+    type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Generate",
     instructions: `GBP → Edit Profile → Bookings → Add booking link.
 Use Calendly, Acuity, or website's contact form URL with UTM tag (?utm_source=gbp&utm_medium=booking).
@@ -768,7 +768,7 @@ Direct booking from GBP shortcuts the buyer journey by 1+ steps.`,
   },
   {
     id: "m1.gbp.qa_seed", title: "Seed Q&A with top-ask questions",
-    type: "hybrid", dependsOn: ["m1.gbp.services_products", "m1.gbp.hours_attributes", "m1.gbp.attributes"],
+    type: "hybrid", dependsOn: ["m1.gbp.services_products", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(

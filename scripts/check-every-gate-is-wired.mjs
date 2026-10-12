@@ -116,6 +116,7 @@ const NOT_PREFLIGHT = {
   'check-every-mockup-is-in-memory.mjs': 'requires every new mockup to be cited by its system memory and every mockup to be in the generated registry; runs in daily-health-check.sh — memory hygiene cannot make a video unsafe',
   'check-no-emoji-in-stored-data.mjs': 'static + live: the no-emoji hard rule; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-an-upload-confirms-in-its-slot.mjs': 'static: the photo upload confirmation; runs in daily-health-check.sh — copy cannot make a video unsafe',
+  'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-a-photo-never-goes-up-twice.mjs': 'behavioural: step 39 duplicate guard + review cards; runs in daily-health-check.sh — a client photo cannot make a video unsafe',
   'check-a-done-step-is-never-the-headline.mjs': 'static: the portal headline never names a done step; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-a-photo-is-what-rga-confirmed.mjs': 'static: which photo is which + the fixed slot row; runs in daily-health-check.sh — copy cannot make a video unsafe',
