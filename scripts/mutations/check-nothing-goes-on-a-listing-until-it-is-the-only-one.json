@@ -117,5 +117,12 @@
   "  const g = await requireWorkspaceForClient(event, clientId);\n  if (g.error) return g.error;",
   "  const g = {};",
   1
+ ],
+ [
+  "a failed look overwrites the answer (runner)",
+  "exec",
+  "        outcome_data: kept,\n",
+  "        outcome_data: f,\n",
+  1
  ]
 ]
