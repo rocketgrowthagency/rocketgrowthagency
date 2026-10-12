@@ -79,6 +79,8 @@ if (!/const isDone = result\?\.completed === false \? false :/.test(flow)) fail(
 const runner = lift(flow, '"m1.audit.gbp_duplicate": async', '"m1.audit.deep_assess": async');
 if (!runner || !/completed: !!j\.override/.test(runner) || (runner.match(/completed: false/g) || []).length < 2) fail("step 11's runner no longer keeps itself open on a duplicate / a failed look");
 if (!/const kept = j\.task && j\.task\.outcome_data;[\s\S]{0,900}outcome_data: kept,/.test(runner || "")) fail("a failed look's runner result can overwrite step 11's last real answer (flow-execute saves the runner's outcome_data)");
+if (!/const noResults = d\.error && \/hasn't returned any results\/i/.test(scan) || !/if \(!r\.ok \|\| \(d\.error && !noResults\)\) throw/.test(scan)) fail("zero Maps results is read as 'could not look' again, so a known duplicate is never re-checked");
+if (!/if \(v\.verdict !== "duplicate"\) \{\s*const priorTask = await priorFinding\(clientId\);/.test(scan)) fail("a known duplicate is re-checked only when the name search looks clean — Google hiding both listings would read as 'could not tell'");
 if (!/task: storedTask \}\);/.test(scan)) fail("the scan no longer hands back what it saved");
 const ovFn = code("netlify/functions/gbp-listing-override.js");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(ovFn) || !/reason\.length < 10/.test(ovFn)) fail("the override is not staff-only with a written reason");

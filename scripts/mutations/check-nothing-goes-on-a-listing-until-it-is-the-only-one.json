@@ -124,5 +124,19 @@
   "        outcome_data: kept,\n",
   "        outcome_data: f,\n",
   1
+ ],
+ [
+  "zero results read as a failure",
+  "dupscan",
+  "    if (!r.ok || (d.error && !noResults)) throw",
+  "    if (!r.ok || d.error) throw",
+  1
+ ],
+ [
+  "known duplicate re-checked only on clean",
+  "dupscan",
+  "  if (v.verdict !== \"duplicate\") {\n    const priorTask = await priorFinding(clientId);",
+  "  if (v.verdict === \"clean\") {\n    const priorTask = await priorFinding(clientId);",
+  1
  ]
 ]
