@@ -221,6 +221,21 @@ try {
 // the other ships a browser the OLD module from whichever import wins, with no error anywhere. The
 // same trap as the playbook's ?v=, but worse, because the version lives in a DIFFERENT file from the
 // tag and there is more than one of it.
+// 🔒 CALL 1 RUNS ON THE VIDEO, NOT THE AUDIT (Chris, 2026-10-12: "they still have not requested the
+// Free Growth Audit yet. no one has to this date"). In the Call 1 tabs a spoken line may OFFER the audit,
+// but never claim the prospect asked for it or has already seen it. v7 opened a booked callback with
+// "you asked me to call back today about the Google Maps audit" — said to people who had asked for nothing.
+// Pinned on the CLAIM (a prospect asking for / having the audit), not on one sentence's spelling.
+{
+  const CALL1 = new Set(['inbound', 'outbound', 'spine']);
+  const claim = /\byou(?:'ve)?\s+(?:asked|requested|wanted|got|saw|seen|read|opened|went through)\b[^.”"]{0,50}\b(?:audit|report)\b|\byour\s+audit\s+(?:showed|shows|said)\b/i;
+  const walkSay = (blocks, tab) => { for (const b of blocks || []) {
+    if (b.k === 'say' && claim.test(b.t)) add('call1-assumes-audit', `${tab}: "${String(b.t).slice(0, 80)}…" — Call 1 may OFFER the audit, never assume they asked for or saw it`);
+    if (b.k === 'obj') walkSay(b.a, tab);
+  } };
+  for (const s of PB) if (CALL1.has(s.id)) walkSay(s.blocks, s.tab);
+}
+
 // 🔒 THE PRINTED PLAYBOOK IS THE SAME PLAYBOOK (2026-10-02). docs/sales-playbook.pdf is served in
 // admin → Docs as "Sales Playbook (print)" and copied to Chris's Desktop. It is printed FROM
 // playbook.js, so a playbook edit that was never reprinted leaves two surfaces quietly behind.
