@@ -164,9 +164,17 @@ let n=0,d=0;
 // Chris: "i told you to follow the design of this". A chosen property list is a claim about what I
 // thought to look at. → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
 {
+  // 🔴 MEASURE VISIBLE NEIGHBOURS (2026-10-13). A folded phase's rows measure 0×0, so "the gap to the next card" read
+  // 0px whenever the first done step sat in a shut phase — red with the cards 6px apart. Opening it would fold the phase
+  // the rest of this gate reads (one phase open at a time), so measure two VISIBLE, ADJACENT done cards where they are.
+  // → feedback_unloaded_is_not_an_answer
   const card = await page.evaluate(() => {
-    const els = [...document.querySelectorAll(".ob-phase .ob-step.done")];
-    if (!els.length) return null;
+    const vis = (e) => { const r = e.getBoundingClientRect(); return r.height > 0 && r.width > 0; };
+    const all = [...document.querySelectorAll(".ob-phase .ob-step.done")].filter(vis);
+    if (!all.length) return null;
+    // the first done card whose NEXT sibling is also a visible done card (same phase, adjacent)
+    const i = all.findIndex((e, k) => all[k + 1] && e.nextElementSibling === all[k + 1]);
+    const els = i >= 0 ? [all[i], all[i + 1]] : [all[0]];
     const cs = getComputedStyle(els[0]);
     const r1 = els[0].getBoundingClientRect();
     const r2 = els[1] ? els[1].getBoundingClientRect() : null;

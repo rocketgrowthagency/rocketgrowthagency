@@ -65,7 +65,9 @@ if (/status:\s*isHybrid\s*\?\s*"in_progress"\s*:\s*"done"/.test(exec)) {
   fails.push("status ignores the runner");
   console.log('  🔴 status is decided by TYPE alone (`isHybrid ? "in_progress" : "done"`) — a runner');
   console.log("     that finished the job cannot say so, and its own `done` gets overwritten");
-} else if (/const isDone = runnerCompleted \|\|/.test(exec)) {
+// 🔄 2026-10-13: the decision gained a leading VETO (`result?.completed === false ? false : (…)`, 10-12: a runner that
+// says it did NOT finish is believed). runnerCompleted still leads everything after it; the veto is allowed.
+} else if (/const isDone = (?:result\?\.completed === false \? false : \()?runnerCompleted \|\|/.test(exec)) {
   // 🔑 PIN THE PROPERTY: `runnerCompleted` LEADS THE DECISION. What follows it is allowed to grow —
   // it now reads `runnerCompleted || (!isHybrid && !isDetected)`, because a step whose completion is
   // DETECTED must not be finished by merely pressing Run. This gate failed on that correct change
