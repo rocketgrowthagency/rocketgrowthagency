@@ -166,9 +166,15 @@ for (const st of [...(cs.month1 || []), ...(cs.month2plus || [])]) {
 }
 for (const [f, label] of [["netlify/functions/portal-step-input.js", "saving an answer"], ["netlify/functions/portal-step-choice.js", "\"I've done it\""]]) {
   const src = code(f);
-  const guard = src.search(/if \(waitsOnListing\((?:step|s)\) && !listingState\(data\.tasks\)\.open\) return json\(409/);
-  const write = src.indexOf('status: "done"', guard < 0 ? 0 : guard);
-  if (guard < 0 || write < 0) fail(`${label} in the portal can finish a listing step while step 11 hasn't found one listing (${f})`);
+  // 🔑 EVERY "done" write has its own guard in its own branch (2026-10-12: a guard added to a later branch kept this
+  // green with the "I've done it" guard removed): the nearest guard before each write, with no other write between.
+  const guards = [...src.matchAll(/if \(waitsOnListing\((?:step|s)\) && !listingState\(data\.tasks\)\.open\) return json\(409/g)].map((m) => m.index);
+  const writes = [...src.matchAll(/status: "done"/g)].map((m) => m.index);
+  if (!writes.length) fail(`${label}: no status write found in ${f} — re-read this gate`);
+  for (const w of writes) {
+    const g = guards.filter((x) => x < w).pop();
+    if (g === undefined || writes.some((o) => o > g && o < w)) fail(`${label} in the portal can finish a listing step while step 11 hasn't found one listing (${f})`);
+  }
 }
 const waitFns = lift(portal, "function rowListingWaits(step, status, tasks) {", "\nfunction photoListingLockHtml");
 if (!waitFns) fail("the portal's row-wait helpers are gone (rowListingWaits / listingWaitHtml)");
@@ -182,9 +188,12 @@ else {
   if (!/two Google listings/.test(wctx.h(wctx.ls(dupT))) || !/data-photo-lock-approvals/.test(wctx.h(wctx.ls(dupT)))) fail("a waiting portal step doesn't say why or offer the way out");
 }
 const pcode = code("portal/portal.js");
-if (!/const theirsToAct = !kickoffPending && !listingWait && \(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
+// 🔑 2026-10-12: the same lines now also carry the RGA wait (check-a-client-step-waits-on-what-it-needs); this pins the
+// listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
+if (!/const theirsToAct = !kickoffPending && !listingWait && (?:!rgaWait && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
 if (!/: listingWait \? \{ text: "Waits on your Google listing", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Google listing\"");
-if (!/const theirs = \(r\) => !rowListingWaits\(r\.step, r\.status/.test(pcode)) fail("a waiting portal step can be marked as the client's NEXT step");
+if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)
+  || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
 if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");
 
 if (F.length) { console.error("🔴 something can go on a Google listing that isn't confirmed to be the only one:"); for (const f of F) console.error("   · " + f); process.exit(1); }

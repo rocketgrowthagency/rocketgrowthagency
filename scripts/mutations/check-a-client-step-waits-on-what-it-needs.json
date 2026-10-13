@@ -1,0 +1,184 @@
+[
+ [
+  "a declined step 56 still holds 57",
+  "clientwaits",
+  "(t.status === \"done\" || t.status === \"skipped\" || t.status === \"declined\")",
+  "(t.status === \"done\" || t.status === \"skipped\")",
+  1
+ ],
+ [
+  "the rule stops at the first hop",
+  "clientwaits",
+  "    for (const up of s.dependsOn || []) stack.push(up);",
+  "",
+  1
+ ],
+ [
+  "the kickoff booking waits on RGA",
+  "clientwaits",
+  "if (!step || step.clientForm === \"kickoff_booking\") return [];",
+  "if (!step) return [];",
+  1
+ ],
+ [
+  "the client's own step reads as RGA's",
+  "clientwaits",
+  ".filter((id) => id !== DUP_STEP && !isClientVisible(byId.get(id)))",
+  ".filter((id) => id !== DUP_STEP)",
+  1
+ ],
+ [
+  "the listing check reads as RGA's",
+  "clientwaits",
+  ".filter((id) => id !== DUP_STEP && !isClientVisible(byId.get(id)))",
+  ".filter((id) => !isClientVisible(byId.get(id)))",
+  1
+ ],
+ [
+  "a finished step waits",
+  "clientwaits",
+  "  if (isFinished(tasks && tasks[step.id])) return null;",
+  "",
+  1
+ ],
+ [
+  "Month 2 reads the Month-1 record",
+  "clientwaits",
+  "  const list = playbooks[SCOPE] || [];\n  return list.some((s) => s.id === stepId) ? list : [];",
+  "  for (const k of [\"month1\", \"month2plus\"]) if ((playbooks[k] || []).some((s) => s.id === stepId)) return playbooks[k];\n  return [];",
+  1
+ ],
+ [
+  "the projection publishes the graph",
+  "clientstepsjson",
+  "\"clientStepNo\": 13,\n      \"waitsOnRga\": true",
+  "\"clientStepNo\": 13,\n      \"waitsOnRga\": [\"m1.report.month1\"]",
+  1
+ ],
+ [
+  "anyone can ask which steps wait",
+  "stepwaitsfn",
+  "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);\n  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "a failed read says nothing waits",
+  "stepwaitsfn",
+  "  if (!r.ok) return json(502, { error: \"Could not read the setup record.\" });",
+  "  if (!r.ok) return json(200, { rga: [] });",
+  1
+ ],
+ [
+  "portal save: an answer finishes a step that waits",
+  "stepinputfn",
+  "  if (waitsOnRgaNow(PLAYBOOKS, step, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
+  "  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
+  1
+ ],
+ [
+  "portal: I've done it finishes a step that waits",
+  "stepchoicefn",
+  "    if (waitsOnRgaNow(PLAYBOOKS, s, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n",
+  "",
+  1
+ ],
+ [
+  "portal: a choice finishes a step that waits",
+  "stepchoicefn",
+  "  if (waitsOnRgaNow(PLAYBOOKS, step, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n",
+  "",
+  1
+ ],
+ [
+  "the recheck finishes 57 on 5 customers",
+  "recheckfn",
+  "t0[stepId].status !== \"done\" && !waitingOnRga)",
+  "t0[stepId].status !== \"done\")",
+  1
+ ],
+ [
+  "portal: the pill says Your turn",
+  "portal",
+  "      : rgaWait ? { text: \"Waits on RGA\", cls: \"wait\" }\n",
+  "",
+  1
+ ],
+ [
+  "portal: a waiting row is the client's turn",
+  "portal",
+  "const theirsToAct = !kickoffPending && !listingWait && !rgaWait && (",
+  "const theirsToAct = !kickoffPending && !listingWait && (",
+  1
+ ],
+ [
+  "portal: not known reads as open",
+  "portal",
+  "  return rgaWaits ? rgaWaits.has(step.id) : true;",
+  "  return rgaWaits ? rgaWaits.has(step.id) : false;",
+  1
+ ],
+ [
+  "portal: a failed answer says nothing waits",
+  "portal",
+  "    if (!r.ok) return null;\n    const j = await r.json();\n    return Array.isArray(j.rga)",
+  "    if (!r.ok) return new Set();\n    const j = await r.json();\n    return Array.isArray(j.rga)",
+  1
+ ],
+ [
+  "portal: the headline names a waiting row",
+  "portal",
+  "      && !rowWaits(i.step, i.status, _nextStepInputs?.tasks, _nextStepInputs?.rgaWaits)\n",
+  "",
+  1
+ ],
+ [
+  "portal: Submit list stays live",
+  "portal",
+  "data-jump-to=\"customer\"${rgaWait ? \" disabled\" : \"\"}>",
+  "data-jump-to=\"customer\">",
+  1
+ ],
+ [
+  "portal: rows render before the answer",
+  "portal",
+  "  const rgaWaits = await loadRgaWaits(clientId);",
+  "  const rgaWaits = null; loadRgaWaits(clientId);",
+  1
+ ],
+ [
+  "step 57's foot is reworded without approval",
+  "playbooksjson",
+  "\"foot\": \"This opens when your review messages are ready.\"",
+  "\"foot\": \"This opens soon.\"",
+  1
+ ],
+ [
+  "the band turns amber",
+  "portalcss",
+  ".pm-lock.other { background:var(--state-other-bg",
+  ".pm-lock.other { background:var(--state-you-bg",
+  1
+ ],
+ [
+  "the next-steps email asks for a waiting step",
+  "confirmemailfn",
+  "&& !done(st.id) && !waits(st.id))",
+  "&& !done(st.id))",
+  1
+ ],
+ [
+  "a nudge goes out on a step that waits on RGA",
+  "stepemailfn",
+  "    if (holder) return jsonRes(409,",
+  "    if (false) return jsonRes(409,",
+  1
+ ],
+ [
+  "a nudge goes out on a step that waits on the listing",
+  "stepemailfn",
+  "    if (waitsOnListing(sop) && !listingState(tasks).open) {",
+  "    if (false) {",
+  1
+ ]
+]

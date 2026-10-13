@@ -466,6 +466,7 @@ run check-a-done-step-is-never-the-headline.mjs "a step already done never flash
 run check-an-upload-confirms-in-its-slot.mjs "a photo upload confirms in its own slot and never reloads the portal"
 run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Google twice; step 39 leads with the right button"
 run check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs "nothing goes on a Google listing until step 11 confirms it is the only one"
+run check-a-client-step-waits-on-what-it-needs.mjs "a client step waits on what RGA must finish first (step 57 waits on step 56)"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
 run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"
 run check-no-emoji-in-stored-data.mjs "no emoji in stored data; the portal writes no row the database refuses"
