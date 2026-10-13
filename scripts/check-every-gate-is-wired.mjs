@@ -120,6 +120,7 @@ const NOT_PREFLIGHT = {
   'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-the-night-run-stops-before-morning.mjs': 'behavioural: the night run\'s real clock lines on 6 start times + every start point + the watchdog; runs in daily-health-check.sh',
   'check-a-step-that-opens-is-told-once.mjs': 'behavioural: the step-open email sweep (states, words, hours, guards, stamp order); runs in daily-health-check.sh — a client email gate cannot make a video unsafe',
+  'check-every-mutation-still-applies.mjs': 'static: every mutation anchor matches its file exactly once (shared target map lib/mutation-targets.mjs); runs in daily-health-check.sh — a meta-gate cannot make a video unsafe',
   'check-month-2-lives-in-the-monthly-record.mjs': 'behavioural: the real client writers against a stub database + the UTC month key in server/admin/portal; runs in daily-health-check.sh — a portal record gate cannot make a video unsafe',
   'check-the-new-client-stays-new.mjs': 'live-data: the acceptance walk\'s day-0 test client (read-only) + the crons that must skip it; runs in daily-health-check.sh before the new-client walk — a fixture gate cannot make a video unsafe',
   'check-a-client-step-waits-on-what-it-needs.mjs': 'behavioural: the RGA-wait rule vs an independent walk of the graph + 4 writers + portal rows; runs in daily-health-check.sh — a portal step gate cannot make a video unsafe',

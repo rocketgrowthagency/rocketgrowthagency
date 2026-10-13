@@ -9,15 +9,15 @@
  [
   "a beta client is told Payment received again",
   "notifystage",
-  "(beta ? `Your agreement is countersigned — you're all set to start.\\n\\n` : `Payment received, thank you.\\n\\n`)",
-  "`Payment received, thank you.\\n\\n`",
+  "(beta ? `Your agreement is countersigned — you're all set to start.\\n\\n` : `Payment received — thank you.\\n\\n`)",
+  "`Payment received — thank you.\\n\\n`",
   1
  ],
  [
   "stage 2 says the last thing again",
   "notifystage",
-  "about a minute, then we book your kickoff call.",
-  "about a minute, and the last thing I need from you.",
+  "then you connect your Google accounts — it takes about a minute — and we book your kickoff call.",
+  "then you connect your Google accounts — it takes about a minute — and the last thing I need from you.",
   1
  ]
 ]

@@ -16,14 +16,14 @@
  [
   "the deliverable block stops reading the stored shape",
   "admin",
-  "const shape = task && task.draft_shape;",
-  "const shape = task && task.auto_result;",
+  "function stepDeliverableHtml(task, o) {\n  const shape = task && task.draft_shape;",
+  "function stepDeliverableHtml(task, o) {\n  const shape = task && task.auto_result;",
   1
  ],
  [
   "the server stops parsing the draft when it writes the task",
   "exec",
-  "draft_shape: draftShape(result?.summary) || null,",
+  "draft_shape: result?.draft_shape || draftShape(result?.summary) || null,",
   "draft_shape: null,",
   1
  ],

@@ -2,8 +2,8 @@
  [
   "after the call the console renders the live rail again",
   "admin",
-  "  if (clk.phase === \"after\") {\n    const oc = ki.call_outcome || \"\";",
-  "  if (false) {\n    const oc = ki.call_outcome || \"\";",
+  "  if (clk.phase === \"after\") {\n    // 🔒 a sent recap IS the record that it happened",
+  "  if (false) {\n    // 🔒 a sent recap IS the record that it happened",
   1
  ],
  [

@@ -37,7 +37,7 @@
  [
   "countProbe stops returning the number beside its sentence",
   "recheckfn",
-  "const counts = { n, threshold, noun };",
+  "const counts = { n, threshold, noun, source: \"sent_to_us\" };",
   "const counts = {};",
   1
  ],
@@ -51,8 +51,8 @@
  [
   "a bar is drawn without a finite count, so an absence renders as zero progress",
   "admin",
-  "Number.isFinite(d.n)",
-  "true",
+  "const hasCount = d && Number.isFinite(d.n) && Number.isFinite(d.threshold) && d.threshold > 0;",
+  "const hasCount = d && Number.isFinite(d.threshold) && d.threshold > 0;",
   1
  ],
  [

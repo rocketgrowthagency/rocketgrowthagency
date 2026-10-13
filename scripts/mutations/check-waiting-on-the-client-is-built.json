@@ -44,8 +44,8 @@
  [
   "the client stops seeing nudges",
   "thread",
-  "\"step_email_sent\", \"step_nudge_sent\"]",
-  "\"step_email_sent\"]",
+  "\"step_email_sent\", \"step_nudge_sent\", \"step_open_sent\"]",
+  "\"step_email_sent\", \"step_open_sent\"]",
   1
  ],
  [

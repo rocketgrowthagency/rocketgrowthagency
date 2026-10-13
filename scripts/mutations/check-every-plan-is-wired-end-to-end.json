@@ -93,8 +93,8 @@
  [
   "welcome email not sent on connect",
   "oauthcb",
-  "  await sendWelcomeEmail(supaUrl, supaKey, clientId);\n}",
-  "}",
+  "  await notifyClientStage(clientId, \"stage_4_onboarding\");\n  await sendWelcomeEmail(supaUrl, supaKey, clientId);\n",
+  "  await notifyClientStage(clientId, \"stage_4_onboarding\");\n",
   1
  ]
 ]

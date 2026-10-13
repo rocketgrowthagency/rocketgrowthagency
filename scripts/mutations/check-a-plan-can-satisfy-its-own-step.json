@@ -1,15 +1,15 @@
 [
  [
-  "the plan drops back below what the step needs to finish",
-  "exec",
-  "      `20-photo shot list for a Google Business Profile. Categories: LOGO (1) / COVER (1) / ` +",
-  "      `12-photo shot list for a Google Business Profile. Categories: LOGO (1) / COVER (1) / ` +"
+  "one trade's photo list drops below what the step needs to finish",
+  "photolists",
+  "    name: \"Trades that come to you\", approved: true, sabDefault: true,\n    shots: [\n      s(\"PROFILE\", \"Your logo on a plain background, square, readable when small.\", \"Shown beside your name everywhere on Google.\", \"G\"),\n",
+  "    name: \"Trades that come to you\", approved: true, sabDefault: true,\n    shots: [\n"
  ],
  [
   "the SOP text states a different number from the detection threshold",
   "playbook",
-  "20 in all, which is what completion is detected at (client_photos >= 20).",
-  "22 in all, which is what completion is detected at (client_photos >= 20)."
+  "\"title\": \"Upload 20+ quality photos\"",
+  "\"title\": \"Upload 22+ quality photos\""
  ],
  [
   "the detection threshold moves without the plan following it",

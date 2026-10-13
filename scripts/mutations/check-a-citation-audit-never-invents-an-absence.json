@@ -98,8 +98,8 @@
  [
   "the card stops saying the results could not be saved",
   "exec",
-  "      rows.writeError\n        ? `These results could NOT be saved (${rows.writeError}), so step 52 cannot read them. The measurements above stand; press Run again to store them.`\n        : unknown.length === rows.length",
-  "      false\n        ? `These results could NOT be saved (${rows.writeError}), so step 52 cannot read them. The measurements above stand; press Run again to store them.`\n        : unknown.length === rows.length"
+  "      rows.writeError\n        ? `These results could NOT be saved (${rows.writeError}), so the top-10 citations step cannot read them.",
+  "      false\n        ? `These results could NOT be saved (${rows.writeError}), so the top-10 citations step cannot read them."
  ],
  [
   "a quote in the business name is left in the exact-phrase query",

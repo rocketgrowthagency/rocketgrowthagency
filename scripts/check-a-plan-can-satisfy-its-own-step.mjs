@@ -71,11 +71,23 @@ for (const { id, table, threshold } of probes) {
   const at = exec.indexOf(`"${id}": async`);
   if (at < 0) continue;                       // no runner: nothing drafts a plan, nothing to reconcile
   const body = exec.slice(at, at + 2600);
-  const asked = [...body.matchAll(/(\d+)\s*-?\s*(?:photo|item|shot|review|customer|entry|entries)/gi)].map((m) => Number(m[1]));
-  if (!asked.length) continue;                // the runner drafts no counted list
+  // 🔴 A RUNNER THAT BUILDS ITS LIST FROM `_photo-lists.js` HAS NO NUMBER IN ITS PROSE (2026-10-13). The photo runner's
+  // "20-photo" text moved past this window when it was rebuilt by industry (10-09), and from then on this gate checked
+  // nothing for the photo step while reporting green. Its plan IS the lists: the SMALLEST must still meet the threshold.
+  let asked, best;
+  if (/buildShotList\(/.test(body)) {
+    const { createRequire } = await import("node:module");
+    const PL = createRequire(`${SITE}/netlify/functions/x.js`)("./_photo-lists.js");
+    asked = Object.values(PL.LISTS || {}).map((l) => (l.shots || []).length);
+    if (!asked.length) { console.error(`⚠️  INDETERMINATE — ${id} builds from _photo-lists.js, which holds no lists`); process.exit(2); }
+    best = Math.min(...asked);
+  } else {
+    asked = [...body.matchAll(/(\d+)\s*-?\s*(?:photo|item|shot|review|customer|entry|entries)/gi)].map((m) => Number(m[1]));
+    if (!asked.length) continue;                // the runner drafts no counted list
+    best = Math.max(...asked);
+  }
 
   checked++;
-  const best = Math.max(...asked);
   if (best < threshold) {
     F(`${id}: the runner drafts a plan for ${best}, but the step is only marked done at `
       + `${threshold} ${table} rows — follow the plan exactly and the step never completes`);

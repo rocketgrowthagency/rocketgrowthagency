@@ -1,0 +1,23 @@
+[
+ [
+  "the product moves under an anchor (admin)",
+  "admin",
+  "  const t = trimOutputText(text);",
+  "  const t = trimOutputText(text );",
+  1
+ ],
+ [
+  "the product moves under an anchor (a function)",
+  "stepwaitsfn",
+  "(scopeOf(s.id) === \"month2plus\" ? m2Tasks : m1Tasks) || {}",
+  "(scopeOf(s.id) === \"month2plus\" ? m2Tasks : m1Tasks) ?? {}",
+  1
+ ],
+ [
+  "an anchor comes to match twice",
+  "portal",
+  "  const waitTasks = { ...m1Tasks, ...m2Tasks };",
+  "  const waitTasks = { ...m1Tasks, ...m2Tasks };\n  /*\n  const waitTasks = { ...m1Tasks, ...m2Tasks };\n  */",
+  1
+ ]
+]

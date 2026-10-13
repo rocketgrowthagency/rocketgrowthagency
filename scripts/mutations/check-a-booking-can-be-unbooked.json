@@ -2,8 +2,8 @@
  [
   "Cancel the meeting renders on the Overview card with no booked slot",
   "admin",
-  "      const html = booked\n        ? `<div class=\"kb\">",
-  "      const html = true\n        ? `<div class=\"kb\">",
+  "      const html = booked && kcard.mode !== \"booked\"\n        ? `<div class=\"kb kb-${kcard.mode}\">",
+  "      const html = kcard.mode !== \"booked\"\n        ? `<div class=\"kb kb-${kcard.mode}\">",
   1
  ],
  [
