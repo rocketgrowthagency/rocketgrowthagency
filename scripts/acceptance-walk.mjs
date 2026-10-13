@@ -342,6 +342,10 @@ async function portalPass() {
       try {
         await page.goto(await portalLink(), { waitUntil: "domcontentloaded", timeout: 60000 });
         await page.waitForSelector('.portal-nav a[data-view="setup"]', { timeout: 45000 });
+        // 🔴 THE NAV IS IN THE PAGE BEFORE THE SESSION IS (2026-10-13): one Month-2 run read Dashboard and Approvals while
+        // "Loading portal · Checking your secure session" was still up, and failed them as empty. Signed in = the
+        // loading panel has gone. → feedback_a_flaky_gate_is_worse_than_a_failing_one
+        await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
         signedIn = true;
       } catch (e) {
         console.error(`   (portal sign-in attempt ${i} did not reach the portal: ${String(e.message).split("\n")[0]})`);
