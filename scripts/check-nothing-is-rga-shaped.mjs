@@ -80,6 +80,27 @@ for (const [f, text] of Object.entries(src)) {
   }
 }
 
+// ── 2b · …AND SO IS EVERY CLIENT A GATE OPENS (2026-10-13) ─────────────────────────────────
+// 🔴 Nine scraper scripts (render gates, the numbering probe, the shared admin session) picked "whichever client
+// comes back first". It was RGA until the walk's test clients were created; then a gate could open a day-0 fixture
+// with nothing done and measure nothing. A gate names its client: firstClient() / WALK_CLIENTS from
+// scripts/acceptance/clients.mjs. → feedback_a_gate_that_signs_in_as_the_wrong_identity_is_always_green
+{
+  const SCR = process.env.SCRAPER_COPY_DIR || new URL("..", import.meta.url).pathname.replace(/\/$/, "").replace(/%20/g, " ");
+  let names = [];
+  try { names = fs.readdirSync(`${SCR}/scripts`).filter((n) => /\.(mjs|js)$/.test(n)); } catch { /* reported below */ }
+  if (!process.env.SCRAPER_COPY_DIR && names.length < 50) { console.error(`⚠️  INDETERMINATE — could not list the scraper's scripts (${names.length})`); process.exit(2); }
+  for (const n of names) {
+    let t; try { t = fs.readFileSync(`${SCR}/scripts/${n}`, "utf8"); } catch { continue; }
+    const live = strip(t);
+    for (const m of live.matchAll(/\/clients\?([^`"'\s]*)/g)) {
+      const q = m[1];
+      if (/(^|&)(id|portal_slug|workspace_id|source)=eq\./.test(q)) continue;
+      if (!/limit=1\b/.test(q)) continue;            // a list query is not a pick
+      fail.push(`scripts/${n} opens /clients?${q.slice(0, 54)} — "whichever row is first", which can be a test client. Name it (firstClient / WALK_CLIENTS)`);
+    }
+  }
+}
 // ── 3 · A BRAND-NEW CLIENT DEGRADES HONESTLY ────────────────────────────────────────────────
 // 🔑 Client #2 has no locked plan, no sub-locations and maybe no market. Each must produce a
 // REFUSAL or a documented default — never RGA's values, and never a confident wrong number.

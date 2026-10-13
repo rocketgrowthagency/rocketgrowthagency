@@ -109,6 +109,7 @@ export const FILES = {
   flowcrondigest: "netlify/functions/flow-cron-weekly-digest.js",
   walkclients: "scraper:scripts/acceptance/clients.mjs",
   steprecord: "netlify/functions/_step-record.js",
+  probenumbering: "scraper:scripts/_probe-numbering.mjs",
   admindeliv: "netlify/functions/admin-deliverables.js",
   portaldeliv: "netlify/functions/portal-deliverables.js",
 

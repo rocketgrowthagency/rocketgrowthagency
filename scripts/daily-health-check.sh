@@ -468,6 +468,7 @@ run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Googl
 run check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs "nothing goes on a Google listing until step 11 confirms it is the only one"
 run check-a-client-step-waits-on-what-it-needs.mjs "a client step waits on what it needs: their own earlier step, the listing, or RGA"
 run check-a-step-that-opens-is-told-once.mjs "a step that opens after waiting on RGA is emailed once, in the approved words"
+run check-a-success-clears-the-failure-it-supersedes.mjs "no stored failure outlives the success that supersedes it (every failure field declared with its clear)"
 run check-every-mutation-still-applies.mjs "every mutation in every suite still applies to today's code (an anchor that stopped matching proves nothing)"
 run check-month-2-lives-in-the-monthly-record.mjs "a client's Month-2 answer lands in this month's monthly record, the one the admin and their portal read"
 run check-the-night-run-stops-before-morning.mjs "the nightly video run starts nothing after 04:00 and stops at 06:30, recording what it stopped"

@@ -1,0 +1,51 @@
+[
+ [
+  "the duplicate scan keeps an old failed look",
+  "dupscan",
+  "    if (record.verdict === \"clean\" || record.verdict === \"duplicate\") delete tasks[\"m1.audit.gbp_duplicate\"].last_failed_scan;",
+  "",
+  1
+ ],
+ [
+  "a successful manager auto-add keeps the old error",
+  "oauthcb",
+  "  else if (result.success) delete data.gbp_manager_auto_add_error;",
+  "",
+  1
+ ],
+ [
+  "a booking that worked keeps the credential's old error",
+  "kickinvite",
+  "      ...(cred.last_error ? { last_error: null } : {}),",
+  "",
+  1
+ ],
+ [
+  "a finished step keeps its error (server)",
+  "exec",
+  "    if (!(\"error\" in patch)) delete next.error;\n    if (!(\"failed_at\" in patch)) delete next.failed_at;\n",
+  "",
+  1
+ ],
+ [
+  "a finished step keeps its error (admin)",
+  "admin",
+  "    if (!(\"error\" in patch)) delete next.error;\n    if (!(\"failed_at\" in patch)) delete next.failed_at;\n",
+  "",
+  1
+ ],
+ [
+  "a new failure field nobody declared",
+  "photopublish",
+  "      await setState({ publish_state: \"rejected\", publish_error: reason });",
+  "      await setState({ publish_state: \"rejected\", publish_error: reason, review_failed_reason: reason });",
+  1
+ ],
+ [
+  "a published photo keeps its old error",
+  "photopublish",
+  "      publish_state: \"published\", publish_error: null,",
+  "      publish_state: \"published\",",
+  1
+ ]
+]

@@ -2,8 +2,8 @@
  [
   "admin: the done branch is deleted",
   "admin",
-  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n  } else if",
-  "  if (false) {\n  } else if"
+  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n",
+  "  if (false) {\n"
  ],
  [
   "admin: reopen no longer clears the stamp",
@@ -38,8 +38,8 @@
  [
   "server: the done branch is deleted",
   "exec",
-  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n  } else if",
-  "  if (false) {\n  } else if"
+  "  if (patch.status === \"done\" || patch.status === \"declined\") {\n    if (!next.completed_at) next.completed_at = new Date().toISOString();\n",
+  "  if (false) {\n"
  ],
  [
   "server: started_at goes back to the clock at persist time",

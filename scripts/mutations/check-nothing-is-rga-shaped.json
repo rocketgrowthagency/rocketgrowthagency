@@ -1,0 +1,9 @@
+[
+ [
+  "a gate opens whichever client comes back first",
+  "probenumbering",
+  "`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`",
+  "`${SUPA_URL}/rest/v1/clients?archived_at=is.null&select=id&limit=1`",
+  1
+ ]
+]
