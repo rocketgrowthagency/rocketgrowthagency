@@ -1,0 +1,100 @@
+[
+ [
+  "a step that opened long ago gets a stale email",
+  "notifyopenfn",
+  "    if (t.waited_on_rga_at && !t.open_told_at && !waitsAtAll(s, tasks)) due.push(s.id);",
+  "    if (!t.open_told_at && !waitsAtAll(s, tasks)) due.push(s.id);",
+  1
+ ],
+ [
+  "told twice",
+  "notifyopenfn",
+  "    if (t.waited_on_rga_at && !t.open_told_at && !waitsAtAll(s, tasks)) due.push(s.id);",
+  "    if (t.waited_on_rga_at && !waitsAtAll(s, tasks)) due.push(s.id);",
+  1
+ ],
+ [
+  "told while their own step still holds it",
+  "notifyopenfn",
+  "  return !!waitNow(PLAYBOOKS, step, tasks) || (waitsOnListing(step) && !listingState(tasks).open);",
+  "  return !!waitsOnRgaNow(PLAYBOOKS, step, tasks);",
+  1
+ ],
+ [
+  "the close-out call triggers it",
+  "notifyopenfn",
+  "const CANDIDATES = M1.filter((s) => isClientVisible(s) && rgaPrereqs(s, M1).length > 0 && asksClient(s));",
+  "const CANDIDATES = M1.filter((s) => isClientVisible(s) && rgaPrereqs(s, M1).length > 0);",
+  1
+ ],
+ [
+  "sent at 10 PM",
+  "notifyopenfn",
+  "  return hour >= 8 && hour < 19;",
+  "  return hour >= 8 && hour < 23;",
+  1
+ ],
+ [
+  "sent on the server's clock",
+  "notifyopenfn",
+  "new Intl.DateTimeFormat(\"en-US\", { timeZone: clientTimezone(client), hour",
+  "new Intl.DateTimeFormat(\"en-US\", { timeZone: \"UTC\", hour",
+  1
+ ],
+ [
+  "anyone can start the sweep",
+  "notifyopenfn",
+  "  const cron = requireCronOrInternal(event);\n  if (!cron.ok) return cron.error || json(401, { error: \"Scheduler only.\" });\n",
+  "",
+  1
+ ],
+ [
+  "anyone can send a test",
+  "notifyopenfn",
+  "    if (!internal) { const gate = await requireWorkspaceForClient(event, clientId); if (gate.error) return gate.error; }\n",
+  "",
+  1
+ ],
+ [
+  "stamped after the send",
+  "notifyopenfn",
+  "      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);\n      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)));",
+  "      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)));\n      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);",
+  1
+ ],
+ [
+  "a failed send keeps its stamp",
+  "notifyopenfn",
+  "        for (const id of still) { tasks[id] = { ...tasks[id] }; delete tasks[id].open_told_at; }\n",
+  "",
+  1
+ ],
+ [
+  "the link shows as a raw URL",
+  "notifyopenfn",
+  "## What we need from you\\n${c.need}\\n\\n[${c.cta}](${c.link})`",
+  "## What we need from you\\n${c.need}\\n\\n${c.link}`",
+  1
+ ],
+ [
+  "the email is reworded without approval",
+  "playbooksjson",
+  "\"intro\": \"Your review request messages are ready, so step 12 in your portal is open now.\"",
+  "\"intro\": \"Good news! Step 12 is now unlocked.\"",
+  1
+ ],
+ [
+  "not scheduled",
+  "toml",
+  "[functions.\"notify-step-open\"]\n  schedule = \"40 * * * *\"",
+  "[functions.\"notify-step-open\"]",
+  1
+ ],
+ [
+  "the client can't see it in the thread",
+  "thread",
+  "\"step_nudge_sent\", \"step_open_sent\"]",
+  "\"step_nudge_sent\"]",
+  1
+ ]
+]

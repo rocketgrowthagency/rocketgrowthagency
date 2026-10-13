@@ -118,6 +118,7 @@ const NOT_PREFLIGHT = {
   'check-an-upload-confirms-in-its-slot.mjs': 'static: the photo upload confirmation; runs in daily-health-check.sh — copy cannot make a video unsafe',
   'check-netlify-credits-will-last.mjs': 'live-data: Netlify credit forecast (API); runs in daily-health-check.sh + after every deploy — billing, not video safety; self-tests its arithmetic (4 mut)',
   'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
+  'check-a-step-that-opens-is-told-once.mjs': 'behavioural: the step-open email sweep (states, words, hours, guards, stamp order); runs in daily-health-check.sh — a client email gate cannot make a video unsafe',
   'check-a-client-step-waits-on-what-it-needs.mjs': 'behavioural: the RGA-wait rule vs an independent walk of the graph + 4 writers + portal rows; runs in daily-health-check.sh — a portal step gate cannot make a video unsafe',
   'check-a-photo-never-goes-up-twice.mjs': 'behavioural: step 39 duplicate guard + review cards; runs in daily-health-check.sh — a client photo cannot make a video unsafe',
   'check-a-done-step-is-never-the-headline.mjs': 'static: the portal headline never names a done step; runs in daily-health-check.sh — copy cannot make a video unsafe',

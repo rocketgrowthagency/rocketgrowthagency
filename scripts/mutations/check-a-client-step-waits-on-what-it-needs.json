@@ -23,22 +23,22 @@
  [
   "the client's own step reads as RGA's",
   "clientwaits",
-  ".filter((id) => id !== DUP_STEP && !isClientVisible(byId.get(id)))",
-  ".filter((id) => id !== DUP_STEP)",
+  "  return prereqs(step, steps).filter((id) => !isClientVisible(byId.get(id)));",
+  "  return prereqs(step, steps);",
   1
  ],
  [
   "the listing check reads as RGA's",
   "clientwaits",
-  ".filter((id) => id !== DUP_STEP && !isClientVisible(byId.get(id)))",
-  ".filter((id) => !isClientVisible(byId.get(id)))",
+  "  return [...out].filter((id) => id !== DUP_STEP).sort(",
+  "  return [...out].sort(",
   1
  ],
  [
   "a finished step waits",
   "clientwaits",
-  "  if (isFinished(tasks && tasks[step.id])) return null;",
-  "",
+  "  if (isFinished(tasks && tasks[step.id])) return null;   // a finished step never waits, as in the admin\n",
+  "\n",
   1
  ],
  [
@@ -72,28 +72,28 @@
  [
   "portal save: an answer finishes a step that waits",
   "stepinputfn",
-  "  if (waitsOnRgaNow(PLAYBOOKS, step, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
+  "  const waiting = waitNow(PLAYBOOKS, step, data.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
   "  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
   1
  ],
  [
   "portal: I've done it finishes a step that waits",
   "stepchoicefn",
-  "    if (waitsOnRgaNow(PLAYBOOKS, s, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n",
+  "    const waiting = waitNow(PLAYBOOKS, s, data.tasks);\n    if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
   "",
   1
  ],
  [
   "portal: a choice finishes a step that waits",
   "stepchoicefn",
-  "  if (waitsOnRgaNow(PLAYBOOKS, step, data.tasks)) return json(409, { error: CLIENT_RGA_WAIT_MESSAGE, waits_on: \"rga\" });\n",
-  "",
+  "  const waiting = waitNow(PLAYBOOKS, step, data.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
+  "  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
   1
  ],
  [
   "the recheck finishes 57 on 5 customers",
   "recheckfn",
-  "t0[stepId].status !== \"done\" && !waitingOnRga)",
+  "t0[stepId].status !== \"done\" && !waiting)",
   "t0[stepId].status !== \"done\")",
   1
  ],
@@ -107,8 +107,8 @@
  [
   "portal: a waiting row is the client's turn",
   "portal",
-  "const theirsToAct = !kickoffPending && !listingWait && !rgaWait && (",
-  "const theirsToAct = !kickoffPending && !listingWait && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && (",
   1
  ],
  [
@@ -135,7 +135,7 @@
  [
   "portal: Submit list stays live",
   "portal",
-  "data-jump-to=\"customer\"${rgaWait ? \" disabled\" : \"\"}>",
+  "data-jump-to=\"customer\"${rgaWait || ownWait ? \" disabled\" : \"\"}>",
   "data-jump-to=\"customer\">",
   1
  ],
@@ -170,8 +170,8 @@
  [
   "a nudge goes out on a step that waits on RGA",
   "stepemailfn",
-  "    if (holder) return jsonRes(409,",
-  "    if (false) return jsonRes(409,",
+  "    if (waiting) return jsonRes(409, { error: waiting.on === \"rga\"",
+  "    if (false) return jsonRes(409, { error: waiting.on === \"rga\"",
   1
  ],
  [
@@ -179,6 +179,83 @@
   "stepemailfn",
   "    if (waitsOnListing(sop) && !listingState(tasks).open) {",
   "    if (false) {",
+  1
+ ],
+ [
+  "own: the rule ignores the client's own step",
+  "clientwaits",
+  "  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {",
+  "  const own = null;\n  if (own) {",
+  1
+ ],
+ [
+  "own: RGA outranks the client's own step",
+  "clientwaits",
+  "  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n",
+  "  const own = waitsOnRgaNow(playbooks, step, tasks) ? null : waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n",
+  1
+ ],
+ [
+  "own: the refusal says something else",
+  "clientwaits",
+  "  return s && s.clientStepNo != null ? `Do step ${s.clientStepNo} first.` : \"Connect Google first.\";",
+  "  return \"Not yet.\";",
+  1
+ ],
+ [
+  "own: the projection drops needsFirst",
+  "clientstepsjson",
+  "\"clientStepNo\": 8,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
+  "\"clientStepNo\": 8,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  1
+ ],
+ [
+  "own: portal row never waits on their step",
+  "portal",
+  "  if (!step || !Array.isArray(step.needsFirst) || status === \"done\" || status === \"skipped\") return null;",
+  "  return null;",
+  1
+ ],
+ [
+  "own: the listing outranks their step",
+  "portal",
+  "    const listingWait = !ownWait && rowListingWaits(step, status, onboarding?.data?.tasks);",
+  "    const listingWait = rowListingWaits(step, status, onboarding?.data?.tasks);",
+  1
+ ],
+ [
+  "own: the pill says Your turn",
+  "portal",
+  "      : ownWait ? { text: ownFirstPill(ownFirst), cls: \"wait\" }\n",
+  "",
+  1
+ ],
+ [
+  "own: the pill is reworded",
+  "portal",
+  "`Do step ${first.clientStepNo} first` : \"Connect Google first\";",
+  "`Step ${first.clientStepNo} needed` : \"Connect Google first\";",
+  1
+ ],
+ [
+  "own: no way to step 6",
+  "portal",
+  "    ? `<a class=\"pm-lock-go\" href=\"#step-${escapeAttribute(first.id)}\">Go to step ${no} →</a>`",
+  "    ? \"\"",
+  1
+ ],
+ [
+  "own: the ask shows under the band",
+  "portal",
+  "!isDone && step.clientHint && !ownWait && ",
+  "!isDone && step.clientHint && ",
+  1
+ ],
+ [
+  "own: the headline and marker ignore it",
+  "portal",
+  "  return !!rowOwnWaits(step, status, tasks) || rowListingWaits(step, status, tasks) ||",
+  "  return rowListingWaits(step, status, tasks) ||",
   1
  ]
 ]

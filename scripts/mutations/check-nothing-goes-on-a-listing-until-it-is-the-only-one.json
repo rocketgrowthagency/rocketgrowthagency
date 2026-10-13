@@ -156,8 +156,8 @@
  [
   "portal: a waiting step is the client's turn (orange edge)",
   "portal",
-  "const theirsToAct = !kickoffPending && !listingWait && !rgaWait && (",
-  "const theirsToAct = !kickoffPending && !rgaWait && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !rgaWait && (",
   1
  ],
  [
@@ -212,15 +212,15 @@
  [
   "portal: the shared wait question forgets the listing",
   "portal",
-  "  return rowListingWaits(step, status, tasks) || rowRgaWaits(step, status, rgaWaits);",
-  "  return rowRgaWaits(step, status, rgaWaits);",
+  "  return !!rowOwnWaits(step, status, tasks) || rowListingWaits(step, status, tasks) || rowRgaWaits(step, status, rgaWaits);",
+  "  return !!rowOwnWaits(step, status, tasks) || rowRgaWaits(step, status, rgaWaits);",
   1
  ],
  [
   "portal save: a choice saved with 2 listings",
   "stepchoicefn",
-  "  if (waitsOnListing(step) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n  if (waitsOnRgaNow",
-  "  if (waitsOnRgaNow",
+  "  if (waitsOnListing(step) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n  const waiting = waitNow",
+  "  const waiting = waitNow",
   1
  ]
 ]

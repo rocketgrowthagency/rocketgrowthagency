@@ -15,6 +15,9 @@
 //   4. The portal: the row says "Waits on RGA", is never the client's turn, never the NEXT step, never the headline;
 //      its action is disabled; NOT KNOWN IS NOT OPEN (a failed answer waits).
 //   5. Step 57's words are the approved mockup's.
+//   6. (client_step_waits_on_own_step_v1, 2026-10-13) A step that needs the client's OWN earlier step waits too:
+//      "Do step N first" / "Connect Google first", the amber band with the way there, the form disabled; the client's
+//      own step outranks the listing, which outranks RGA; writers refuse with the same words.
 // exit 0 = a client is never asked to do a step that waits on RGA · 1 = they can be · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 import fs from "node:fs";
@@ -44,7 +47,7 @@ if (W.waitsOnRgaNow(pb, s57, { [S57]: done })) fail("a finished step reads as wa
 // An independent walk: every RGA-held ancestor of every Month-1 client step must hold it, alone.
 const vis = (s) => !!s && !s.ongoing && !!s.clientLabel && (s.clientBucket === "supply" || s.clientBucket === "act");
 const ancestors = (s) => { const out = new Set(), st = [...(s.dependsOn || [])]; while (st.length) { const d = st.pop(); if (out.has(d) || !byId.has(d)) continue; out.add(d); st.push(...(byId.get(d).dependsOn || [])); } return out; };
-let pairs = 0;
+let pairs = 0, ownPairs = 0;
 for (const s of m1.filter(vis)) {
   const held = [...ancestors(s)].filter((a) => a !== DUP && !vis(byId.get(a)));
   const allDone = Object.fromEntries([...ancestors(s)].map((a) => [a, done]));
@@ -56,7 +59,24 @@ for (const s of m1.filter(vis)) {
   }
   for (const a of [...ancestors(s)].filter((x) => x === DUP || vis(byId.get(x)))) {
     if (W.waitsOnRgaNow(pb, s, { ...allDone, [a]: { status: "pending" } })) fail(`${s.id} says "Waits on RGA" for ${a}, which RGA doesn't hold (the listing check or the client's own step)`);
+    if (a === DUP) { if (W.waitsOnClientNow(pb, s, { ...allDone, [a]: { status: "pending" } })) fail(`${s.id} reads the listing check as the client's own step`); continue; }
+    if (s.clientForm === "kickoff_booking") continue;
+    ownPairs++;
+    const w = W.waitNow(pb, s, { ...allDone, [a]: { status: "pending" } });
+    if (!w || w.on !== "you" || w.id !== a) fail(`${s.id} opens while the client's own step ${a} is unfinished — the admin says Locked`);
+    // their own step outranks RGA (approved decision 3): with RGA's part open too, the answer is still theirs
+    const rgaA = [...ancestors(s)].find((x) => x !== DUP && !vis(byId.get(x)));
+    if (rgaA) { const w2 = W.waitNow(pb, s, { ...allDone, [a]: { status: "pending" }, [rgaA]: { status: "pending" } }); if (!w2 || w2.on !== "you") fail(`${s.id}: RGA's step outranks the client's own (${a}) — the pill must name what they can do now`); }
   }
+}
+if (ownPairs < 5) { console.error(`⚠️  INDETERMINATE — only ${ownPairs} client-held prerequisites found; the graph changed`); process.exit(2); }
+// The refusal's words are the approved pill's.
+{
+  const v = byId.get("m1.gbp.hours_attributes");
+  const m = W.waitNow(pb, v, { "m1.access.gbp": done })?.message || "";
+  if (!/^Do step 6 first\. Nothing was saved\.$/.test(m)) fail(`a refused save of step 8 doesn't say "Do step 6 first" (says: ${m})`);
+  const g = W.waitNow(pb, v, {})?.message || "";
+  if (!/^Connect Google first\. Nothing was saved\.$/.test(g)) fail(`a refused save waiting on Google doesn't say "Connect Google first" (says: ${g})`);
 }
 if (pairs < 2) { console.error(`⚠️  INDETERMINATE — only ${pairs} RGA-held prerequisites found on Month-1 client steps; the graph changed`); process.exit(2); }
 // A chain through a DONE step still holds (the admin walks through it): synthetic C(client) → B(rga, done) → A(rga, open).
@@ -73,6 +93,9 @@ for (const st of [...(cs.month1 || []), ...(cs.month2plus || [])]) {
   const want = !!src && W.rgaPrereqs(src, m1).length > 0;
   if (st.waitsOnRga !== undefined && st.waitsOnRga !== true) fail(`client-steps.json: ${st.id} waitsOnRga is ${JSON.stringify(st.waitsOnRga).slice(0, 40)} — a flag only, never ids (the graph stays private)`);
   if (!!st.waitsOnRga !== want) fail(`client-steps.json: ${st.id} waitsOnRga is ${!!st.waitsOnRga}, the SOP says ${want} — re-run build-client-steps`);
+  const wantOwn = src ? W.ownPrereqs(src, m1) : [];
+  if (JSON.stringify(st.needsFirst || []) !== JSON.stringify(wantOwn)) fail(`client-steps.json: ${st.id} needsFirst is ${JSON.stringify(st.needsFirst || [])}, the SOP says ${JSON.stringify(wantOwn)} — re-run build-client-steps`);
+  if ((st.needsFirst || []).some((id) => !vis(byId.get(id)))) fail(`client-steps.json: ${st.id} needsFirst names a step the client can't see (the graph stays private)`);
 }
 const ep = req("./portal-step-waits.js");
 if (typeof ep.rgaWaitsFor !== "function") fail("portal-step-waits no longer exports the rule it serves");
@@ -87,7 +110,7 @@ if (gateAt < 0 || readAt < gateAt) fail("portal-step-waits reads a client's reco
 if (!/if \(!r\.ok\) return json\(5\d\d/.test(epc)) fail("portal-step-waits answers a failed read with a list (an empty one says nothing waits)");
 
 // ── 3 · every writer of the status asks first ──
-const guardRe = /if \(waitsOnRgaNow\(PLAYBOOKS, (?:step|s), data\.tasks\)\) return json\(409/g;
+const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), data\.tasks\);\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
 const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll(guardRe)) { const w = src.indexOf('status: "done"', m.index); out.push(w); } return out; };
 {
   const src = code("netlify/functions/portal-step-input.js");
@@ -105,7 +128,7 @@ const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll
 }
 {
   const src = code("netlify/functions/portal-step-recheck.js");
-  if (!/const waitingOnRga = waitsOnRgaNow\(PLAYBOOKS, step, d0\.tasks\);/.test(src) || !/if \(probe\.verdict === "confirmed" && t0\[stepId\]\.status !== "done" && !waitingOnRga\)/.test(src)) fail("a detection (5 customers in) finishes a step that waits on RGA (portal-step-recheck)");
+  if (!/const waiting = waitNow\(PLAYBOOKS, step, d0\.tasks\);/.test(src) || !/if \(probe\.verdict === "confirmed" && t0\[stepId\]\.status !== "done" && !waiting\)/.test(src)) fail("a detection (5 customers in) finishes a step that waits on RGA (portal-step-recheck)");
 }
 
 // ── 3b · the emails that name a client step: the "what we'll need from you next" list skips a waiting step (run for
@@ -115,19 +138,20 @@ const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll
   const i = cf.indexOf("function openClientSteps(tasks) {"), j = i < 0 ? -1 : cf.indexOf("\n}\n", i);
   if (i < 0 || j < 0) { console.error("⚠️  INDETERMINATE — could not lift openClientSteps from send-confirmation-email.js"); process.exit(2); }
   const L = req("./_one-listing.js");
-  const ectx = { require: req, listingState: L.listingState, waitsOnListing: L.waitsOnListing, waitsOnRgaNow: W.waitsOnRgaNow };
+  const ectx = { require: req, listingState: L.listingState, waitsOnListing: L.waitsOnListing, waitNow: W.waitNow };
   vm.createContext(ectx);
   vm.runInContext(`${cf.slice(i, j + 2)}\nthis.open = openClientSteps;`, ectx);
   const lab = s57.clientLabel;
   const one = { [DUP]: { outcome_data: { verdict: "clean" } } };
   if (ectx.open({ ...one }).includes(lab)) fail("the kickoff \"yes\" email asks for step 57 (\"what we'll need from you next\") while it waits on RGA");
-  if (!ectx.open({ ...one, [S56]: done }).includes(lab)) fail("the kickoff \"yes\" email never asks for step 57, even once RGA's part is done");
+  if (!ectx.open({ ...one, [S56]: done, "m1.access.gbp": done, "m1.gbp.verify": done }).includes(lab)) fail("the kickoff \"yes\" email never asks for step 57, even once RGA's part is done");
   const hrs = byId.get("m1.gbp.hours_attributes")?.clientLabel;
   if (hrs && ectx.open({ [S56]: done }).includes(hrs)) fail("the kickoff \"yes\" email asks for hours while the business may have two Google listings");
+  if (hrs && ectx.open({ ...one, "m1.access.gbp": done }).includes(hrs)) fail("the kickoff \"yes\" email asks for hours before step 6 (verify) is done");
 }
 {
   const sc = code("netlify/functions/send-step-email.js");
-  const g = sc.search(/if \(isNudge\) \{[\s\S]{0,1200}?const holder = waitsOnRgaNow\(PB, sop, tasks\);\s*if \(holder\) return jsonRes\(409/);
+  const g = sc.search(/if \(isNudge\) \{[\s\S]{0,1200}?const waiting = waitNow\(PB, sop, tasks\);\s*if \(waiting\) return jsonRes\(409/);
   const sendAt = sc.indexOf("sent = await sendAsRga(");
   if (g < 0 || sendAt < 0 || g > sendAt) fail("RGA can nudge a client about a step that waits on RGA (send-step-email sends before asking)");
   if (!/if \(waitsOnListing\(sop\) && !listingState\(tasks\)\.open\) \{\s*return jsonRes\(409/.test(sc)) fail("RGA can nudge a client about a step that waits on one Google listing");
@@ -138,9 +162,25 @@ const portal = read("portal/portal.js");
 const lift = (src, start, end) => { const i = src.indexOf(start); const j = i < 0 ? -1 : src.indexOf(end, i); return i < 0 || j < 0 ? null : src.slice(i, j); };
 const fns = lift(portal, "function portalListingStateOf(tasks) {", "\nfunction photoListingLockHtml");
 if (!fns || !/function rowRgaWaits\(/.test(fns) || !/function rowWaits\(/.test(fns)) { console.error("⚠️  INDETERMINATE — could not lift the portal's wait helpers"); process.exit(2); }
-const ctx = { escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") };
+const ctx = { escapeAttribute: (x) => String(x).replace(/"/g, "&quot;"), escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") };
 vm.createContext(ctx);
-vm.runInContext(`${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml;`, ctx);
+vm.runInContext(`${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
+{
+  const cs1 = new Map((cs.month1 || []).map((x) => [x.id, x]));
+  const hrsRow = cs1.get("m1.gbp.hours_attributes");
+  if (!hrsRow) { console.error("⚠️  INDETERMINATE — step 8 (hours) is not in the projection"); process.exit(2); }
+  const g = { "m1.access.gbp": done };
+  if (ctx.o(hrsRow, "pending", g) !== "m1.gbp.verify") fail("portal step 8 doesn't wait on step 6 while the profile isn't verified");
+  if (ctx.o(hrsRow, "pending", {}) !== "m1.access.gbp") fail("portal step 8 doesn't wait on Google access first (the root of the chain)");
+  if (ctx.o(hrsRow, "pending", { ...g, "m1.gbp.verify": done })) fail("portal step 8 still waits once step 6 is done");
+  if (ctx.o(hrsRow, "done", {})) fail("a finished row reads as waiting on an earlier step");
+  if (!ctx.w(hrsRow, "pending", { [DUP]: { outcome_data: { verdict: "clean" } }, ...g }, new Set())) fail("rowWaits (the marker's + the headline's question) ignores the client's own earlier step");
+  const v6 = cs1.get("m1.gbp.verify"), gb = cs1.get("m1.access.gbp");
+  if (ctx.op(v6) !== "Do step 6 first" || ctx.op(gb) !== "Connect Google first") fail(`the pill isn't the approved wording ("${ctx.op(v6)}" / "${ctx.op(gb)}")`);
+  const b6 = ctx.oh(v6), bg = ctx.oh(gb);
+  if (!/First: verify your Google profile \(step 6\)\./.test(b6) || !/href="#step-m1\.gbp\.verify">Go to step 6 →/.test(b6)) fail("the band for step 6 doesn't say what to do first or take them there");
+  if (!/First: connect Google\./.test(bg) || !/data-jump-google>Connect Google →/.test(bg)) fail("the band for Google access doesn't say what to do first or take them there");
+}
 const row = { id: S57, waitsOnRga: true, clientWait: s57.clientWait };
 if (!ctx.r(row, "pending", new Set([S57]))) fail("the portal doesn't wait when the server says step 57 waits");
 if (ctx.r(row, "pending", new Set())) fail("the portal waits when the server says nothing does");
@@ -153,13 +193,17 @@ if (!band.includes("pm-lock other") || !band.includes(ctx.escapeHtml(s57.clientW
 if (ctx.h({ id: "x" }) !== "") fail("a row with no wait copy draws an empty band");
 const pcode = code("portal/portal.js");
 const checks = [
-  [/const rgaWait = !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA"],
-  [/const theirsToAct = !kickoffPending && !listingWait && !rgaWait && \(/, "a row that waits on RGA still counts as the client's turn (the orange edge)"],
-  [/: isDone \? \{ text: "Done", cls: "done" \}\s*: rgaWait \? \{ text: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved pill)"],
+  [/const ownWait = !!ownFirstId;\s*const listingWait = !ownWait && rowListingWaits\(/, "the listing outranks the client's own earlier step (approved: their step first)"],
+  [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
+  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && \(/, "a row that waits still counts as the client's turn (the orange edge)"],
+  [/: ownWait \? \{ text: ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
+  [/\$\{ownWait \? ownWaitHtml\(ownFirst\) : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
+  [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
+  [/: rgaWait \? \{ text: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved pill)"],
   [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, onboarding\?\.data\?\.tasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
-  [/data-jump-to="customer"\$\{rgaWait \? " disabled" : ""\}>Submit list →/, "step 57's \"Submit list →\" stays live while it waits"],
-  [/: rgaWait && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
+  [/data-jump-to="customer"\$\{rgaWait \|\| ownWait \? " disabled" : ""\}>Submit list →/, "step 57's \"Submit list →\" stays live while it waits"],
+  [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
 ];
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
 const lr = pcode.indexOf("const rgaWaits = await loadRgaWaits(clientId);"), rh = pcode.indexOf("const rowHtml = ({");
@@ -177,4 +221,4 @@ for (const k of ["head", "body", "foot"]) if (!cw[k] || !mock.includes(cw[k].rep
 if (!mock.includes("Waits on RGA")) fail("the approved mockup no longer names the pill");
 
 if (F.length) { console.error("🔴 a client can be asked to do a step that waits on RGA:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / client-held / kickoff / Month 2 left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words`);
+console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / client-held / kickoff / Month 2 left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA`);
