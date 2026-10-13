@@ -471,6 +471,8 @@ run check-a-step-that-opens-is-told-once.mjs "a step that opens after waiting on
 run check-the-night-run-stops-before-morning.mjs "the nightly video run starts nothing after 04:00 and stops at 06:30, recording what it stopped"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
 run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"
+run check-the-new-client-stays-new.mjs "the walk's brand-new test client is still day 0, and no cron that spends or moves steps reaches it"
+run acceptance-walk-new-client.mjs "the same walk as a BRAND-NEW client (day 0): own-step waits + the kickoff row — report: website reports/acceptance/latest-new-client.md"
 run check-no-emoji-in-stored-data.mjs "no emoji in stored data; the portal writes no row the database refuses"
 run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story in every state on every surface, admin and client"
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"

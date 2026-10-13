@@ -24,7 +24,9 @@
  *    as "blocked write: …".
  *
  * Usage:  node scripts/acceptance-walk.mjs [--step=<id>] [--card=<n>] [--no-shots]
- *                                         [--admin-only] [--portal-only] [--client=<uuid>]
+ *                                         [--admin-only] [--portal-only] [--as=main|new] [--client=<uuid>]
+ *         --as picks the test client from scripts/acceptance/clients.mjs (default main). `new` = the brand-new
+ *         client frozen at day 0; its report is reports/acceptance/latest-new-client.md (<date>/new-client/).
  * Exit:   0 all PASS (UNKNOWN allowed) · 1 any FAIL · 2 could not run (sign-in failed / site down)
  */
 import fs from "node:fs";
@@ -32,6 +34,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { classify } from "./acceptance/guard.mjs";
 import { EXPECTATIONS } from "./acceptance/expectations.mjs";
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 
 const SCRAPER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const WEBSITE = process.env.RGA_WEBSITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -54,9 +57,12 @@ const arg = (k) => { const a = process.argv.find((x) => x === `--${k}` || x.star
 const OPT = {
   step: arg("step"), card: arg("card") ? Number(arg("card")) : null, shots: !arg("no-shots"),
   admin: !arg("portal-only"), portal: !arg("admin-only"),
-  client: arg("client") || "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3",
+  as: arg("as") || "main",
 };
-const PORTAL_EMAIL = "rocketgrowthagencyadmin@gmail.com";
+const WHO = WALK_CLIENTS[OPT.as];
+if (!WHO || !WHO.id) cantRun(`--as=${OPT.as}: no such test client in scripts/acceptance/clients.mjs`);
+OPT.client = arg("client") || WHO.id;
+const PORTAL_EMAIL = WHO.email;
 
 const { openAdminClient, settle, SITE } = await import("./_admin-session.mjs");
 const PORTAL_URL = `${SITE}/portal/`;
@@ -64,7 +70,7 @@ const PORTAL_URL = `${SITE}/portal/`;
 const pad = (n) => String(n).padStart(2, "0");
 const now = new Date();
 const DATE = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-const OUT = path.join(WEBSITE, "reports", "acceptance", DATE);
+const OUT = path.join(WEBSITE, "reports", "acceptance", DATE, WHO.dir);
 const T0 = Date.now();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fileSafe = (id) => id.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -427,7 +433,10 @@ function portalDoneness(p) {
 function agree(r) {
   if (!OPT.admin || !OPT.portal) return;
   const cf = clientFacing(r.def);
-  if (!r.portal) { if (cf && r.admin) r.unknown.push("client-facing step, but no visible portal row to compare"); return; }
+  // 🔴 2026-10-13: the new client's first walk compared NONE of its 13 client-facing steps (at stage 3 the portal has no
+  // Month-1 rows) and exited 0. A walk that compared nothing is not a pass: for a test client whose stage shows the rows
+  // (WALK_CLIENTS[..].portalRowsRequired), a missing row FAILS.
+  if (!r.portal) { if (cf && r.admin) (WHO.portalRowsRequired ? r.fail : r.unknown).push("client-facing step, but no visible portal row to compare"); return; }
   if (!r.admin) { r.unknown.push("portal row exists but the admin row was not read"); return; }
   const a = adminDoneness(r.admin), p = portalDoneness(r.portal);
   if (!a || !p) { r.unknown.push(`cannot tell done-ness (admin "${r.admin.pill}", portal "${r.portal.pill}")`); return; }
@@ -439,6 +448,14 @@ function agree(r) {
   // "Your turn" on an upload it had locked — two true things that contradict. A step the admin shows as WAITING ON
   // SOMETHING (locked / waits on another step) must not be presented to the client as their move.
   // → feedback_a_card_can_state_two_true_things_that_contradict
+  // 🔑 THE ONE PAIRING THAT IS CORRECT (2026-10-13, first walk as a brand-new client): the kickoff call is 🔒 Locked
+  // in the admin until RGA confirms a time (its prerequisite, "Book the kickoff call"), and that confirm WAITS FOR the
+  // client's pick. So "Your turn" on the client's booking row is the step that unlocks the admin's — not a client
+  // asked to do a waiting step. Exempt ONLY while the portal really shows the time picker (a date heading + slots);
+  // any other "Your turn" on that row still fails. → project_a_client_step_waits_on_what_it_needs (left out, item 2)
+  else if (r.def?.clientForm === "kickoff_booking" && /^(🔒\s*)?Locked\b/i.test(String(r.admin.pill || "").trim())
+    && p === "client-turn" && /choose a date and time/i.test(r.portal.text || "") && /\b\d{1,2}:\d{2}\s?(AM|PM)\b/.test(r.portal.text || ""))
+    r.notes.push("kickoff: the admin's lock waits for this pick (the time picker is showing) — correct, exempt");
   else if (/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()) && (p === "client-turn" || r.portal.isNow))
     r.fail.push(`admin says "${r.admin.pill}" but the portal tells the client "${r.portal.pill}"${r.portal.isNow ? " (their next step)" : ""} — the client is asked to do a step that is waiting`);
   // …and the other way: the portal holds the client back on a step the admin has open to work.
@@ -493,9 +510,9 @@ for (const b of blocked) {
 function renderReport(prefix) {
   const L = [];
   const mode = [OPT.admin && "admin", OPT.portal && "portal"].filter(Boolean).join(" + ");
-  L.push(`# Acceptance walk — ${DATE}`, "");
+  L.push(`# Acceptance walk — ${DATE}${OPT.as !== "main" ? ` — ${WHO.label}` : ""}`, "");
   L.push(`**${rows.length} steps · ${counts.PASS} PASS · ${counts.FAIL} FAIL · ${counts.UNKNOWN} UNKNOWN** · page checks: ${pageChecks.length - pageFails}/${pageChecks.length} pass · ${blocked.length} blocked write(s) · run ${dur} · ${mode}${OPT.step ? ` · step ${OPT.step}` : ""}${OPT.card ? ` · card ${OPT.card}` : ""}`, "");
-  L.push(`Test client \`${OPT.client}\` · read-only: only row/fold toggles and nav links were clicked; every write request was blocked.`, "");
+  L.push(`${WHO.label} \`${OPT.client}\` (${PORTAL_EMAIL}) · read-only: only row/fold toggles and nav links were clicked; every write request was blocked.`, "");
   const bad = rows.filter((r) => verdict(r) !== "PASS");
   if (bad.length || pageFails) {
     L.push("## Needs a look", "");
@@ -532,9 +549,9 @@ function renderReport(prefix) {
 }
 
 fs.writeFileSync(path.join(OUT, "report.md"), renderReport(""));
-fs.writeFileSync(path.join(WEBSITE, "reports", "acceptance", "latest.md"), renderReport(`${DATE}/`));
+fs.writeFileSync(path.join(WEBSITE, "reports", "acceptance", WHO.report), renderReport(`${DATE}/${WHO.dir ? `${WHO.dir}/` : ""}`));
 fs.writeFileSync(path.join(OUT, "results.json"), JSON.stringify({
-  date: DATE, client: OPT.client, durationSec: secs, counts, pageChecks, blocked,
+  date: DATE, as: OPT.as, client: OPT.client, durationSec: secs, counts, pageChecks, blocked,
   steps: rows.map((r) => ({ id: r.id, title: r.def?.title, card: r.card?.name, verdict: verdict(r), fail: r.fail, unknown: r.unknown, warn: r.warn, notes: r.notes,
     admin: r.admin && { ...r.admin, text: r.admin.text.slice(0, 4000) }, portal: r.portal && { ...r.portal, text: r.portal.text.slice(0, 4000) },
     adminShot: r.adminShot, portalShot: r.portalShot })),

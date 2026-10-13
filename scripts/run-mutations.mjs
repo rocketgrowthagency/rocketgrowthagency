@@ -147,6 +147,10 @@ const FILES = {
   rebuild: "scraper:scripts/rebuild-broken-videos.sh",
   netlifyforecast: "scraper:scripts/lib/netlify-credit-forecast.mjs",
   overnightlocal: "scraper:scripts/overnight-local.sh",
+  braindispatch: "netlify/functions/brain-weekly-dispatch.js",
+  flowcrondaily: "netlify/functions/flow-cron-daily.js",
+  flowcrondigest: "netlify/functions/flow-cron-weekly-digest.js",
+  walkclients: "scraper:scripts/acceptance/clients.mjs",
 
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five

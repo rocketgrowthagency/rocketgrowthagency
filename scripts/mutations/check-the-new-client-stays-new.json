@@ -1,0 +1,93 @@
+[
+ [
+  "the weekly AI run reaches the test client",
+  "braindispatch",
+  "billing_status=eq.active&or=(source.is.null,source.not.like.test:*)",
+  "billing_status=eq.active",
+  1
+ ],
+ [
+  "the daily robot works the test client",
+  "flowcrondaily",
+  "status=eq.active&or=(source.is.null,source.not.like.test:*)",
+  "status=eq.active",
+  1
+ ],
+ [
+  "the weekly digest reaches the test client",
+  "flowcrondigest",
+  "status=eq.active&or=(source.is.null,source.not.like.test:*)",
+  "status=eq.active",
+  1
+ ],
+ [
+  "the skip drops clients with no source",
+  "flowcrondaily",
+  "or=(source.is.null,source.not.like.test:*)",
+  "source=not.like.test:*",
+  1
+ ],
+ [
+  "the fixture is declared active (robot runs it)",
+  "walkclients",
+  "  status: \"onboarding\",",
+  "  status: \"active\",",
+  1
+ ],
+ [
+  "the fixture gets a keyword (Places spend)",
+  "walkclients",
+  "  primary_service: null,",
+  "  primary_service: \"drain cleaning\",",
+  1
+ ],
+ [
+  "the fixture gets a real website",
+  "walkclients",
+  "  website_url: null,",
+  "  website_url: \"https://example.com\",",
+  1
+ ],
+ [
+  "the fixture is not marked test",
+  "walkclients",
+  "export const NEW_CLIENT_SOURCE = \"test:acceptance-walk-new-client\";",
+  "export const NEW_CLIENT_SOURCE = \"acceptance-walk-new-client\";",
+  1
+ ],
+ [
+  "the walk signs in as nobody",
+  "walkclients",
+  "    id: \"cde1ca89-1b89-4af1-8b01-b7a0c3ea0fe0\",",
+  "    id: null,",
+  1
+ ],
+ [
+  "both clients share one sign-in",
+  "walkclients",
+  "    email: \"rocketgrowthagencyadmin+newclient@gmail.com\",",
+  "    email: \"rocketgrowthagencyadmin@gmail.com\",",
+  1
+ ],
+ [
+  "the live row drifts from day 0 (market)",
+  "walkclients",
+  "  primary_market: \"Austin, TX\",",
+  "  primary_market: \"Dallas, TX\",",
+  1
+ ],
+ [
+  "the fixture goes back to stage 3 (walk sees no rows)",
+  "walkclients",
+  "  client_portal_stage: \"stage_4_onboarding\",",
+  "  client_portal_stage: \"stage_3_setup\",",
+  1
+ ],
+ [
+  "a missing portal row is allowed again",
+  "walkclients",
+  "    dir: \"new-client\",\n    portalRowsRequired: true,",
+  "    dir: \"new-client\",\n    portalRowsRequired: false,",
+  1
+ ]
+]
