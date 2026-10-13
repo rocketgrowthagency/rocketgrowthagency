@@ -113,6 +113,7 @@ const FILES = {
   confirmemailfn: "netlify/functions/send-confirmation-email.js",
   stepemailfn: "netlify/functions/send-step-email.js",
   notifyopenfn: "netlify/functions/notify-step-open.js",
+  stepopentest: "netlify/functions/step-open-test-send.js",
   mockupopen: "reports/mockups/step_open_now_email_v1.html",
   stepinputfn: "netlify/functions/portal-step-input.js",
   stepchoicefn: "netlify/functions/portal-step-choice.js",

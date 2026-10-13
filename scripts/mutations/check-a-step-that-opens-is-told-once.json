@@ -50,8 +50,8 @@
  ],
  [
   "anyone can send a test",
-  "notifyopenfn",
-  "    if (!internal) { const gate = await requireWorkspaceForClient(event, clientId); if (gate.error) return gate.error; }\n",
+  "stepopentest",
+  "  const gate = await requireWorkspaceForClientOrInternal(event, clientId);\n  if (gate.error) return gate.error;\n",
   "",
   1
  ],
@@ -95,6 +95,13 @@
   "thread",
   "\"step_nudge_sent\", \"step_open_sent\"]",
   "\"step_nudge_sent\"]",
+  1
+ ],
+ [
+  "the test send stamps the step",
+  "stepopentest",
+  "    const r = await N.sendFor(client, [step], { test: true });",
+  "    const r = await N.sendFor(client, [step], { test: true }); /* open_told_at */",
   1
  ]
 ]

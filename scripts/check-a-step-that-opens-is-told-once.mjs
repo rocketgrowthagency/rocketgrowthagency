@@ -11,7 +11,8 @@
 //      or the listing still holds it. Only steps that ask the client for something.
 //   2. The words are the approved mockup's; the link is words; the letter signs it once.
 //   3. 8 AM to 7 PM in the client's time zone.
-//   4. The sweep starts only from the scheduler or the internal secret; the test send is staff-only and stamps nothing.
+//   4. The sweep starts only from the scheduler or the internal secret; the test send (its own function) is staff-only
+//      and stamps nothing.
 //   5. The stamp is written BEFORE the send (two runs can't both send), a failed send takes it back, and the detection
 //      runs first so a step already done is finished instead of announced.
 //   6. Scheduled hourly; the client sees it in the step's thread.
@@ -87,10 +88,13 @@ if (N.inSendingHours(NY, at("2026-10-14T02:00:00Z"))) fail("10 PM in New York re
 const src = code("netlify/functions/notify-step-open.js");
 const cronAt = src.search(/const cron = requireCronOrInternal\(event\);\s*if \(!cron\.ok\) return/), sweepAt = src.indexOf("await sweep()");
 if (cronAt < 0 || sweepAt < 0 || cronAt > sweepAt) fail("anyone hitting the URL can start the sweep that emails clients");
-const testAt = src.indexOf("if (body.test !== undefined) {"), staffAt = src.indexOf("const gate = await requireWorkspaceForClient(event, clientId); if (gate.error) return gate.error;", testAt);
-const testSend = src.indexOf("sendFor(client, [step], { test: true })", testAt);
-if (testAt < 0 || staffAt < 0 || testSend < 0 || staffAt > testSend) fail("the test send isn't staff-only");
-if (/open_told_at/.test(src.slice(testAt, src.indexOf("\n  }\n", testAt)))) fail("the test send stamps the step as told");
+// 🔑 The test send is its own function: Netlify answers 403 to any URL call on a scheduled one (found live, 10-13).
+if (/body\.test/.test(src)) fail("notify-step-open.js carries a test route again; a scheduled function can't be called by URL, so it is dead");
+const ts = code("netlify/functions/step-open-test-send.js");
+const tGate = ts.search(/const gate = await requireWorkspaceForClientOrInternal\(event, clientId\);\s*if \(gate\.error\) return gate\.error;/);
+const tSend = ts.indexOf("await N.sendFor(client, [step], { test: true })");
+if (tGate < 0 || tSend < 0 || tGate > tSend) fail("the test send isn't staff-only");
+if (/open_told_at|writeTasks|client_onboarding_records/.test(ts)) fail("the test send stamps the step as told");
 
 // ── 5 · never twice, and already-done is finished, not announced ──
 const stampAt = src.indexOf("for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };");
