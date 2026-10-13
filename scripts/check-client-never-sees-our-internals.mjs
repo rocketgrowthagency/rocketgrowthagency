@@ -30,6 +30,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SELF_TEST = process.argv.includes("--self-test");
@@ -121,7 +124,7 @@ if (!U || !K) { console.error("[internals] INDETERMINATE — Supabase credential
 
 let token, clientId;
 try {
-  const cr = await fetch(`${U}/rest/v1/clients?select=id&limit=1`, { headers: { apikey: K, Authorization: `Bearer ${K}` } });
+  const cr = await fetch(`${U}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`, { headers: { apikey: K, Authorization: `Bearer ${K}` } });
   if (cr.status >= 500) { console.error(`[internals] INDETERMINATE — Supabase ${cr.status}`); process.exit(2); }
   clientId = (await cr.json())[0]?.id;
   const g = await fetch(`${U}/auth/v1/admin/generate_link`, {

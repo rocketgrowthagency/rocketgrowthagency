@@ -26,6 +26,9 @@ const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate me
  * Exit 0 pass · 1 the live render differs from the mockup · 2 could not sign in / no browser.
  */
 import fs from "node:fs";
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 
 
 const SUPA_URL = process.env.SUPABASE_URL;
@@ -46,7 +49,7 @@ catch { console.log("  ⚠️  puppeteer unavailable — NOT reporting healthy."
 const api = async (p) => (await fetch(`${SUPA_URL}/rest/v1/${p}`,
   { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } })).json();
 let clientId;
-try { clientId = (await api("clients?archived_at=is.null&select=id&limit=1"))?.[0]?.id; }
+try { clientId = (await api(`clients?id=eq.${WALK_CLIENTS.main.id}&select=id`))?.[0]?.id; }
 catch (e) { console.log(`  ⚠️  could not read a client: ${e.message}`); process.exit(2); }
 if (!clientId) { console.log("  ⚠️  no active client to open."); process.exit(2); }
 

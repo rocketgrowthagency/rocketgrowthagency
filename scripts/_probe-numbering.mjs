@@ -19,6 +19,9 @@
 // → feedback_a_step_number_is_computed_and_i_changed_the_computation · project_a_step_number_has_one_home
 // Exit 0 printed · 2 could not read the page (no browser, no credentials, not signed in)
 
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 const SITE = process.env.RGA_SITE_URL || "https://www.rocketgrowthagency.com";
 const SUPA_URL = process.env.SUPABASE_URL, SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_EMAIL = process.env.RGA_ADMIN_EMAIL || "hello@rocketgrowthagency.com";
@@ -32,7 +35,7 @@ catch { console.error("⚠️  INDETERMINATE — puppeteer is not available here
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` };
 let clientId;
 try {
-  const rows = await (await fetch(`${SUPA_URL}/rest/v1/clients?archived_at=is.null&select=id&limit=1`, { headers: H })).json();
+  const rows = await (await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`, { headers: H })).json();
   clientId = rows?.[0]?.id;
 } catch { /* reported below */ }
 if (!clientId) { console.error("⚠️  INDETERMINATE — no active client to open."); process.exit(2); }

@@ -196,5 +196,13 @@ if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/
   || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return (?:!!rowOwnWaits\(step, status, tasks\) \|\| )?rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
 if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");
 
+// 🔒 (2026-10-13) a nightly check that could not look is SAID on step 11's card, not hidden behind the last real answer:
+// the footer read "re-checked every night" over checks that were failing (`last_failed_scan`, written by the scan).
+{
+  const card = (/function listingCardHtml\(\) \{[\s\S]*?\n\}/.exec(admin) || [""])[0];
+  if (!/last_failed_scan/.test(card) || !/couldn't look/.test(card) || !/failedNewer \?/.test(card))
+    fail("step 11's card hides a nightly check that could not look (it shows the last real answer as if the check ran)");
+}
+
 if (F.length) { console.error("🔴 something can go on a Google listing that isn't confirmed to be the only one:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ one rule (3 copies agree on ${CASES.length} cases); 4 writers ask first; step 11 is never done on a duplicate; 8 profile steps wait on it in both SOPs; client step 7 locks and admin step 39 pauses — and both open on one listing; the portal never says "Your turn" on a waiting step and its saves refuse`);

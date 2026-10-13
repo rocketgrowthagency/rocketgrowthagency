@@ -35,6 +35,9 @@ const ADMIN_EMAIL = "hello@rocketgrowthagency.com";
 const SITE = "https://www.rocketgrowthagency.com";
 
 import fs from "node:fs";
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 const SITE_DIR = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 
 console.log("── the onboarding checklist renders one list ──");
@@ -73,7 +76,7 @@ catch { console.log("  ⚠️  puppeteer unavailable — NOT reporting healthy."
 
 let clientId;
 try {
-  const r = await fetch(`${SUPA_URL}/rest/v1/clients?archived_at=is.null&select=id&limit=1`,
+  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`,
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   clientId = (await r.json())?.[0]?.id;
   if (!clientId) { console.log("  ⚠️  no active client to open."); process.exit(2); }

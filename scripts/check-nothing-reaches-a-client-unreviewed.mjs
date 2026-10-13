@@ -32,6 +32,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -81,7 +84,7 @@ const sb = (p, init = {}) => fetch(`${U}/rest/v1${p}`, { ...init, headers: { api
 
 let clientId, token, tasks;
 try {
-  const cr = await sb("/clients?select=id&limit=1");
+  const cr = await sb(`/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`);
   if (cr.status >= 500) { console.error(`[gate] INDETERMINATE — Supabase ${cr.status}`); process.exit(2); }
   clientId = (await cr.json())[0]?.id;
   if (!clientId) { console.error("[gate] INDETERMINATE — no client to test against"); process.exit(2); }

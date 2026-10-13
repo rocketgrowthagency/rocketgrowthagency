@@ -182,9 +182,13 @@ else {
       liveChecked++;
       const oldWay = Object.values(tasks).filter((t) => DONE.has(t?.status)).length;
       const newWay = m1.filter((s) => DONE.has(tasks[s.id]?.status)).length;
+      // 🔴 EVIDENCE, NOT A DEFECT (2026-10-13). This failed the night the walk's Month-2 client (every Month-1 step done,
+      // the client's own included) was created: ANY client who finishes Month 1 has more done tasks than the RGA-side
+      // denominator, so the OLD method reads over 100% for every finished client, forever. That proves the old method is
+      // wrong, which is why the badge must not use it, and sections 1-5 fail if it does. The data is not the bug.
+      // → feedback_a_gate_written_for_a_temporary_state_outlives_it
       if (oldWay > m1.length) {
-        problems.push(`LIVE ${rec.client_id} — the old counting method yields ${oldWay} done out of `
-          + `a denominator of ${m1.length}. A percentage above 100% is the drift made undeniable.`);
+        console.log(`   live ${rec.client_id.slice(0, 8)}…: the OLD method would read ${oldWay}/${m1.length} (over 100%) — the badge counts the playbook set`);
       }
       if (oldWay !== newWay) {
         const strays = Object.keys(tasks).filter((k) => DONE.has(tasks[k]?.status) && !m1.some((s) => s.id === k));

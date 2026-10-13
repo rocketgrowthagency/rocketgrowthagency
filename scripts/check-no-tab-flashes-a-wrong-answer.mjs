@@ -26,6 +26,9 @@
 //
 // exit 0 = no tab flashes a wrong answer · 1 = one does · 2 = could not tell (no browser/creds)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // 🔴🔴 THIS SIGNED INTO THE ADMIN AS A CLIENT (found 2026-10-07). `rocketgrowthagencyadmin@gmail.com`
@@ -53,7 +56,7 @@ const api = async (p, init) => {
 
 let clientId;
 try {
-  const rows = await api("/rest/v1/clients?archived_at=is.null&select=id&limit=1");
+  const rows = await api(`/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`);
   clientId = rows?.[0]?.id;
 } catch { /* handled */ }
 if (!clientId) { say("  ⚠️  no active client to open."); process.exit(2); }

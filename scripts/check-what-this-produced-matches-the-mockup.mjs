@@ -30,6 +30,9 @@ const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate me
  */
 // Property-by-property: the live "What this produced" vs the approved mockup, in one browser.
 import fs from "node:fs";
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 
 // 🔑 THE SITE PATH IS A DEFAULT, NOT A CONSTANT. A gate that can only ever read the real
 // working tree cannot be pointed at a scratch copy, so its mutations cannot be run — and a
@@ -92,7 +95,7 @@ const U=process.env.SUPABASE_URL,K=process.env.SUPABASE_SERVICE_ROLE_KEY,SITE="h
 if(!U||!K){console.error("⚠️  INDETERMINATE — no Supabase credentials; cannot sign in to read the live card.");process.exit(2);}
 let cid;
 try{
-  const rows=await (await fetch(`${U}/rest/v1/clients?archived_at=is.null&select=id&limit=1`,{headers:{apikey:K,Authorization:`Bearer ${K}`},signal:AbortSignal.timeout(20000)})).json();
+  const rows=await (await fetch(`${U}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`,{headers:{apikey:K,Authorization:`Bearer ${K}`},signal:AbortSignal.timeout(20000)})).json();
   if(!Array.isArray(rows)||!rows[0]?.id){console.error("⚠️  INDETERMINATE — no unarchived client to render the card against.");process.exit(2);}
   cid=rows[0].id;
 }catch(e){console.error(`⚠️  INDETERMINATE — could not reach Supabase: ${e.message}`);process.exit(2);}

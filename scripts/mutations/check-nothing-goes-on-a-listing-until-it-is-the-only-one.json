@@ -222,5 +222,12 @@
   "  if (waitsOnListing(step) && !listingState(rec.listingTasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n  const waiting = waitNow",
   "  const waiting = waitNow",
   1
+ ],
+ [
+  "step 11 hides a failed nightly check",
+  "admin",
+  "    + (failedNewer ? ` · the check on ${escapeHtml(formatDateTime(failed.checked_at))} couldn't look",
+  "    + (false ? ` · the check on ${escapeHtml(formatDateTime(failed.checked_at))} couldn't look",
+  1
  ]
 ]

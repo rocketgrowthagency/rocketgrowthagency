@@ -3,6 +3,9 @@
 // gates threw in one sweep on 2026-10-08 purely because they ran concurrently against the live
 // admin. `nav` exits 2 and names the navigation it could not complete.
 // → feedback_a_gate_that_throws_is_not_a_gate_that_fails · feedback_a_flaky_gate_is_worse_than_a_failing_one
+// 🔒 THE RENDER CLIENT IS NAMED, never "whichever row comes back first" (2026-10-13): with the walk's test clients in
+// the table, an unordered `limit=1` could open a client with nothing done and measure nothing. → acceptance/clients.mjs
+import { WALK_CLIENTS } from "./acceptance/clients.mjs";
 const { nav: _sharedNav } = await import("./_admin-session.mjs");
 const navOrIndeterminate = (pg, url) => _sharedNav(pg, url, "a page this gate measures");
 /**
@@ -46,7 +49,7 @@ catch { console.log("  ⚠️  puppeteer unavailable — NOT reporting healthy."
 // A real client to open. Any non-archived one will do; the tabs are what is under test.
 let clientId;
 try {
-  const r = await fetch(`${SUPA_URL}/rest/v1/clients?archived_at=is.null&select=id,business_name&limit=1`,
+  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id,business_name`,
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
   const rows = await r.json();
   clientId = rows?.[0]?.id;

@@ -47,7 +47,10 @@ export function requireCreds() {
 export async function firstClient(select = "id") {
   requireCreds();
   let rows;
-  try { rows = await (await fetch(`${SUPA}/rest/v1/clients?select=${select}&limit=1`, { headers: H() })).json(); }
+  // 🔒 NAMED, not "the first row" (2026-10-13): the walk's test clients are in the table now, and a render gate must
+  // measure the far-along client (RGA), never a day-0 fixture with nothing done. → acceptance/clients.mjs
+  const { WALK_CLIENTS } = await import("./acceptance/clients.mjs");
+  try { rows = await (await fetch(`${SUPA}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=${select}`, { headers: H() })).json(); }
   catch (e) { die(`could not read a client: ${e.message}`); }
   if (!Array.isArray(rows) || !rows[0]) die("there is no client row to render");
   return rows[0];
