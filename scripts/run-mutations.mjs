@@ -136,6 +136,7 @@ const FILES = {
   // 🔑 SCRAPER-SIDE targets (prefix "scraper:"): copied to <tmp>/__scraper/<rel>; the gate finds the copy via
   // SCRAPER_COPY_DIR. Added 2026-10-09 for check-every-video-page-ships (rebuild-broken-videos.sh).
   rebuild: "scraper:scripts/rebuild-broken-videos.sh",
+  netlifyforecast: "scraper:scripts/lib/netlify-credit-forecast.mjs",
 
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five

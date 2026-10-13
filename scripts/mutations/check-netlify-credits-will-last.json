@@ -1,0 +1,30 @@
+[
+ [
+  "the run-out check is gone",
+  "netlifyforecast",
+  "  if (atReset < 0) problems.push(",
+  "  if (false) problems.push(",
+  1
+ ],
+ [
+  "per-fix deploying isn't flagged",
+  "netlifyforecast",
+  "  if (last24 > dailyMax) problems.push(",
+  "  if (false) problems.push(",
+  1
+ ],
+ [
+  "deploys stop costing credits",
+  "netlifyforecast",
+  "  const left = left0 - (sinceAnchor * perDeploy +",
+  "  const left = left0 - (0 * perDeploy +",
+  1
+ ],
+ [
+  "the pace ignores deploys",
+  "netlifyforecast",
+  "  const rate = (last48 / 2) * perDeploy + gbPerDay * perGb;",
+  "  const rate = gbPerDay * perGb;",
+  1
+ ]
+]
