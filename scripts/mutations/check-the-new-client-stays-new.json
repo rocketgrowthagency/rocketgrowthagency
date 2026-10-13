@@ -37,15 +37,15 @@
  [
   "the fixture gets a keyword (Places spend)",
   "walkclients",
-  "  primary_service: null,",
-  "  primary_service: \"drain cleaning\",",
+  "  primary_service: null,\n  primary_market: \"Austin, TX\",",
+  "  primary_service: \"drain cleaning\",\n  primary_market: \"Austin, TX\",",
   1
  ],
  [
   "the fixture gets a real website",
   "walkclients",
-  "  website_url: null,",
-  "  website_url: \"https://example.com\",",
+  "  primary_contact_email: \"rocketgrowthagencyadmin+newclient@gmail.com\",\n  primary_contact_phone: null,\n  website_url: null,",
+  "  primary_contact_email: \"rocketgrowthagencyadmin+newclient@gmail.com\",\n  primary_contact_phone: null,\n  website_url: \"https://example.com\",",
   1
  ],
  [

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /**
- * create-new-test-client.mjs — creates (once) the acceptance walk's BRAND-NEW test client, frozen at day 0.
+ * create-new-test-client.mjs — creates (once) one of the acceptance walk's fixture clients:
+ *   --as=new     (default) the BRAND-NEW client, frozen at day 0 of Month 1
+ *   --as=month2  the MONTH-2 client: Month 1 finished, the Monthly cycle open, nothing sent this month
+ *               (also writes its onboarding record: every Month-1 step done, one Google listing confirmed)
  * See scripts/acceptance/clients.mjs for what it is and why each field is what it is.
  *
  * Idempotent: finds the client by its `source` marker, creates it only when absent, and creates the portal
@@ -8,12 +11,12 @@
  * client only with --sync, and then only the declared day-0 fields (NEW_CLIENT_ROW), only on the marked row.
  * Writes production — run it by hand.
  *
- * Usage: node scripts/create-new-test-client.mjs [--dry-run] [--sync]
+ * Usage: node scripts/create-new-test-client.mjs [--as=new|month2] [--dry-run] [--sync]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { WALK_CLIENTS, NEW_CLIENT_ROW, NEW_CLIENT_SOURCE } from "./acceptance/clients.mjs";
+import { WALK_CLIENTS, fixtureFor } from "./acceptance/clients.mjs";
 
 const SCRAPER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 for (const line of fs.readFileSync(path.join(SCRAPER, ".env"), "utf8").split("\n")) {
@@ -24,6 +27,11 @@ const SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_K
 if (!SUPA || !KEY) { console.error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing"); process.exit(2); }
 const DRY = process.argv.includes("--dry-run");
 const SYNC = process.argv.includes("--sync");
+const AS = (process.argv.find((a) => a.startsWith("--as=")) || "--as=new").slice(5);
+const FIX = fixtureFor(AS);
+if (!FIX || !WALK_CLIENTS[AS]) { console.error(`--as=${AS}: not a fixture client (new | month2)`); process.exit(2); }
+const NEW_CLIENT_ROW = FIX.row, NEW_CLIENT_SOURCE = FIX.source;
+const WEBSITE = process.env.RGA_WEBSITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
 async function rest(p, opt = {}) {
@@ -59,7 +67,7 @@ else {
 }
 
 // 2. the auth user the portal signs in as
-const email = WALK_CLIENTS.new.email;
+const email = WALK_CLIENTS[AS].email;
 let userId = null;
 for (let page = 1; page <= 10 && !userId; page++) {
   const r = await fetch(`${SUPA}/auth/v1/admin/users?page=${page}&per_page=200`, { headers: H, signal: AbortSignal.timeout(20000) });
@@ -92,4 +100,18 @@ if (client && userId) {
     console.log("created portal access (active)");
   }
 }
-console.log(client ? `\nnew test client id: ${client.id}` : "");
+// 4. MONTH 2 ONLY: Month 1 finished. Every Month-1 step done, and the one-listing check clean (the monthly photos
+//    step waits on it). Never a monthly record: "nothing sent this month" is the state under test, every month.
+if (AS === "month2" && client) {
+  const pb = JSON.parse(fs.readFileSync(path.join(WEBSITE, "data/playbooks/playbooks.json"), "utf8"));
+  const at = new Date().toISOString();
+  const tasks = Object.fromEntries((pb.month1 || []).map((s) => [s.id, { status: "done", completed_at: at, completed_by: "test-fixture" }]));
+  tasks["m1.audit.gbp_duplicate"].outcome_data = { verdict: "clean", duplicates: [], checked_at: at };
+  const ob = await rest(`client_onboarding_records?client_id=eq.${client.id}&select=id`);
+  const data = { playbook_version: "month1-v1", tasks };
+  if (ob.length && !SYNC) console.log(`onboarding record exists (${ob.length})`);
+  else if (DRY) console.log(`would ${ob.length ? "rewrite" : "create"} the onboarding record: ${Object.keys(tasks).length} Month-1 steps done`);
+  else if (ob.length) { await rest(`client_onboarding_records?client_id=eq.${client.id}`, { method: "PATCH", body: JSON.stringify({ data }) }); console.log(`onboarding record rewritten: ${Object.keys(tasks).length} Month-1 steps done`); }
+  else { await rest("client_onboarding_records", { method: "POST", body: JSON.stringify({ workspace_id: main.workspace_id, client_id: client.id, data }) }); console.log(`onboarding record created: ${Object.keys(tasks).length} Month-1 steps done`); }
+}
+console.log(client ? `\n${AS} test client id: ${client.id}` : "");

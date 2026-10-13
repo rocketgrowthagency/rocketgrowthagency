@@ -24,9 +24,11 @@
  *    as "blocked write: …".
  *
  * Usage:  node scripts/acceptance-walk.mjs [--step=<id>] [--card=<n>] [--no-shots]
- *                                         [--admin-only] [--portal-only] [--as=main|new] [--client=<uuid>]
+ *                                         [--admin-only] [--portal-only] [--as=main|new|month2] [--client=<uuid>]
  *         --as picks the test client from scripts/acceptance/clients.mjs (default main). `new` = the brand-new
  *         client frozen at day 0; its report is reports/acceptance/latest-new-client.md (<date>/new-client/).
+ *         `month2` = the Month-2 client (Month 1 finished, nothing sent this month), walked on MONTH 2: the admin's
+ *         Monthly checklist vs the portal's Month-2 steps; its report is reports/acceptance/latest-month2.md.
  * Exit:   0 all PASS (UNKNOWN allowed) · 1 any FAIL · 2 could not run (sign-in failed / site down)
  */
 import fs from "node:fs";
@@ -79,8 +81,20 @@ const fileSafe = (id) => id.replace(/[^a-zA-Z0-9._-]/g, "_");
 let PLAYBOOK;
 try { PLAYBOOK = JSON.parse(fs.readFileSync(path.join(WEBSITE, "data/playbooks/playbooks.json"), "utf8")); }
 catch (e) { cantRun(`could not read playbooks.json: ${e.message}`); }
-const M1 = (PLAYBOOK.month1 || []).filter((s) => String(s.id).startsWith("m1."));
-if (!M1.length) cantRun("playbooks.json has no month-1 steps");
+// 🔑 WHICH MONTH (2026-10-13): a walk client with `month: 2` (WALK_CLIENTS.month2) is walked on Month 2: the admin's
+// Monthly checklist against the portal's Month-2 rows. Same readers, same agreement rules. `M1` = the steps walked.
+const MONTH = WHO.month === 2 ? 2 : 1;
+const PFX = MONTH === 2 ? "m2." : "m1.";
+const ADMIN_TAB = MONTH === 2 ? "monthlynew" : "onboarding-v2";
+const ADMIN_TAB_NAME = MONTH === 2 ? "Monthly" : "Onboarding";
+// Month 1's checklist is grouped into phase cards (.ob-phase); Month 2's is ONE flat list in #monthlyChecklistHost
+// (measured live 2026-10-13: 28 m2 rows, no .ob-phase), so the whole list is read as one card.
+const PHASES = MONTH === 2 ? "#monthlyChecklistHost" : ".ob-phase[data-ob-phase]";
+const STEP_SCOPE = MONTH === 2 ? "#monthlyChecklistHost" : ".ob-phase";
+// The portal view the step rows are read in: Month 1 = Setup; Month 2 = Ongoing work (approved 10-08 design).
+const ROW_VIEW = MONTH === 2 ? "ongoing" : "setup";
+const M1 = ((MONTH === 2 ? PLAYBOOK.month2plus : PLAYBOOK.month1) || []).filter((s) => String(s.id).startsWith(PFX));
+if (!M1.length) cantRun(`playbooks.json has no month-${MONTH} steps`);
 const DEF = new Map(M1.map((s) => [s.id, s]));
 const clientFacing = (d) => d && (d.clientStepNo != null);
 
@@ -170,23 +184,23 @@ async function adminPass() {
     });
 
     console.log("── admin: signing in as the owner …");
-    const rows = await openAdminClient(page, OPT.client, "onboarding-v2");
-    if (!rows) cantRun("the admin Onboarding tab rendered no step rows (twice) — sign-in or render failed");
+    const rows = await openAdminClient(page, OPT.client, ADMIN_TAB);
+    if (!rows) cantRun(`the admin ${ADMIN_TAB_NAME} tab rendered no step rows (twice) — sign-in or render failed`);
     await t.quiet(1500, 20000);
     // Sign-in sanity: we must be on the admin, not a login form.
     const onLogin = await page.evaluate(() => !!document.querySelector("input[type=password], #loginForm") && !document.querySelector(".ob-step"));
     if (onLogin) cantRun("the admin showed a sign-in form after the magic link");
 
-    CARDS = await page.evaluate(() => [...document.querySelectorAll(".ob-phase[data-ob-phase]")].map((ph, i) => ({
-      n: i + 1, key: ph.dataset.obPhase,
-      name: (ph.querySelector(".ob-ph-name")?.childNodes[0]?.textContent || ph.dataset.obPhase).trim(),
-      ids: [...new Set([...ph.querySelectorAll(".ob-step[data-ob-step]")].map((e) => e.dataset.obStep))].filter((id) => id.startsWith("m1.")),
-    })));
+    CARDS = await page.evaluate(({ PHASES, PFX }) => [...document.querySelectorAll(PHASES)].map((ph, i) => ({
+      n: i + 1, key: ph.dataset.obPhase || ph.id,
+      name: (ph.querySelector(".ob-ph-name")?.childNodes[0]?.textContent || ph.dataset.obPhase || ph.querySelector(".ob-h")?.textContent || ph.id).trim(),
+      ids: [...new Set([...ph.querySelectorAll(".ob-step[data-ob-step]")].map((e) => e.dataset.obStep))].filter((id) => id.startsWith(PFX)),
+    })), { PHASES, PFX });
     const onPage = new Set(CARDS.flatMap((c) => c.ids));
-    for (const s of M1) if (!onPage.has(s.id)) { const r = R(s.id); r.fail.push("no admin row for this step on the Onboarding tab"); }
+    for (const s of M1) if (!onPage.has(s.id)) { const r = R(s.id); r.fail.push(`no admin row for this step on the ${ADMIN_TAB_NAME} tab`); }
 
     const loadB = t.b("page load");
-    pageChecks.push({ side: "admin", name: "Admin Onboarding tab loads", fail: [
+    pageChecks.push({ side: "admin", name: `Admin ${ADMIN_TAB_NAME} tab loads`, fail: [
       ...loadB.errors.map((e) => `page error on load: ${e}`), ...loadB.fail5xx.map((e) => `function failed on load: ${e}`)],
       warn: loadB.warn4xx.map((e) => `function ${e} on load`) });
 
@@ -198,7 +212,7 @@ async function adminPass() {
       const r = R(id);
       r.card = card;
       t.current = id;
-      const sel = `.ob-phase .ob-step[data-ob-step="${id.replace(/"/g, '\\"')}"]`;
+      const sel = `${STEP_SCOPE} .ob-step[data-ob-step="${id.replace(/"/g, '\\"')}"]`;
       // make sure its card and rollup are unfolded (UI toggles only)
       await page.evaluate((sel) => {
         const el = document.querySelector(sel); if (!el) return;
@@ -337,7 +351,8 @@ async function portalPass() {
     await t.quiet(1500, 20000);
 
     // Views
-    for (const v of ["dashboard", "approvals", "setup"]) {
+    // the step rows are read in the LAST view opened, so it is the one they live in
+    for (const v of ["dashboard", "approvals", ...(ROW_VIEW === "setup" ? [] : ["setup"]), ROW_VIEW]) {
       t.current = `view:${v}`;
       await page.evaluate((v) => document.querySelector(`.portal-nav a[data-view="${v}"]`)?.click(), v);
       await sleep(1200); await t.quiet(800, 12000);
@@ -361,7 +376,7 @@ async function portalPass() {
       ...loadB.errors.map((e) => `page error on load: ${e}`), ...loadB.fail5xx.map((e) => `function failed on load: ${e}`)],
       warn: loadB.warn4xx.map((e) => `function ${e} on load`) });
 
-    // Step rows, in the setup view
+    // Step rows, in the view they live in (ROW_VIEW)
     const ids = OPT.step ? [OPT.step] : M1.map((s) => s.id);
     for (const id of ids) {
       const loc = page.locator(`[id="step-row-${id}"]`).filter({ visible: true });

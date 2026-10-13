@@ -30,6 +30,47 @@ export const WALK_CLIENTS = {
     dir: "new-client",
     portalRowsRequired: true,
   },
+  // 🔑 A MONTH-2 CLIENT (2026-10-13, Chris: "yes we dont stop until all steps and checks are done"). Month 1 finished,
+  // the Monthly cycle open (stage 5), and nothing sent THIS month: the state every client is in on the 1st. No monthly
+  // record is ever written for it, so it is the same state every month with nothing to reset. Walked with `--month=2`
+  // against the admin's Monthly checklist. Again NOT RGA-shaped: house cleaning, Manchester NH (Eastern time).
+  month2: {
+    label: "Month-2 client (start of the month)",
+    // Created 2026-10-13 by scripts/create-new-test-client.mjs --as=month2.
+    id: "7e62bbb3-7d9c-4f72-99f1-9884fcc5765c",
+    email: "rocketgrowthagencyadmin+month2@gmail.com",
+    report: "latest-month2.md",
+    dir: "month2",
+    portalRowsRequired: true,
+    month: 2,
+  },
+};
+
+// The Month-2 fixture's marker and row (scripts/create-new-test-client.mjs --as=month2; gate
+// check-the-month-2-client-stays-at-month-start). stage_5_monthly = the Monthly cycle. status "active" like a real
+// Month-2 client: every cron that acts on active / billing-active / stage 5-6 clients skips `source` = test:*.
+// primary_service, website, GBP and Place id stay null so rankings-refresh and the grid never spend on it.
+export const MONTH2_CLIENT_SOURCE = "test:acceptance-walk-month2";
+export const MONTH2_CLIENT_ROW = {
+  business_name: "Granite State Home Cleaning (TEST - month 2 walk)",
+  portal_slug: "test-daily-walk-month2",
+  primary_contact_name: "Walk Tester",
+  primary_contact_email: "rocketgrowthagencyadmin+month2@gmail.com",
+  primary_contact_phone: null,
+  website_url: null,
+  gbp_url: null,
+  google_place_id: null,
+  primary_service: null,
+  primary_market: "Manchester, NH",
+  industry: "House Cleaning",
+  business_type: "House cleaning service",
+  geography_model: "service_area",
+  status: "active",
+  billing_status: "active",
+  client_portal_stage: "stage_5_monthly",
+  contract_signed: true,
+  invoice_paid: true,
+  source: MONTH2_CLIENT_SOURCE,
 };
 
 // The marker the fixture is created with and found by. Never reused for anything else.
@@ -65,6 +106,13 @@ export const NEW_CLIENT_ROW = {
   invoice_paid: true,
   source: NEW_CLIENT_SOURCE,
 };
+
+/** The fixture behind a walk client key: { row, source }, or null for `main` (a real record, never re-made). */
+export function fixtureFor(as) {
+  if (as === "new") return { row: NEW_CLIENT_ROW, source: NEW_CLIENT_SOURCE };
+  if (as === "month2") return { row: MONTH2_CLIENT_ROW, source: MONTH2_CLIENT_SOURCE };
+  return null;
+}
 
 export async function resolveNewClientId(supa, key) {
   if (WALK_CLIENTS.new.id) return WALK_CLIENTS.new.id;

@@ -1,0 +1,37 @@
+[
+ [
+  "the monthly report emails test clients again",
+  "monthlyreport",
+  "/clients?client_portal_stage=in.(stage_5_monthly,stage_6_mature)&or=(source.is.null,source.not.like.test:*)&select=id,business_name",
+  "/clients?client_portal_stage=in.(stage_5_monthly,stage_6_mature)&select=id,business_name",
+  1
+ ],
+ [
+  "the fixture is given a keyword",
+  "walkclients",
+  "  primary_market: \"Manchester, NH\",\n  industry: \"House Cleaning\",",
+  "  primary_market: \"Manchester, NH\",\n  primary_service: \"house cleaning\",\n  industry: \"House Cleaning\",",
+  1
+ ],
+ [
+  "the fixture is declared at another stage",
+  "walkclients",
+  "  client_portal_stage: \"stage_5_monthly\",\n  contract_signed: true,\n  invoice_paid: true,\n  source: MONTH2_CLIENT_SOURCE,",
+  "  client_portal_stage: \"stage_6_mature\",\n  contract_signed: true,\n  invoice_paid: true,\n  source: MONTH2_CLIENT_SOURCE,",
+  1
+ ],
+ [
+  "the fixture walks Month 1",
+  "walkclients",
+  "    portalRowsRequired: true,\n    month: 2,",
+  "    portalRowsRequired: true,",
+  1
+ ],
+ [
+  "the weekly Claude run reaches test clients",
+  "braindispatch",
+  "billing_status=eq.active&or=(source.is.null,source.not.like.test:*)",
+  "billing_status=eq.active",
+  1
+ ]
+]
