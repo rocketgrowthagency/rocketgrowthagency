@@ -108,6 +108,8 @@ const FILES = {
   photomatch: "netlify/functions/photo-match.js",
   photofp: "netlify/functions/_photo-fingerprint.js",
   onelisting: "netlify/functions/_one-listing.js",
+  stepinputfn: "netlify/functions/portal-step-input.js",
+  stepchoicefn: "netlify/functions/portal-step-choice.js",
   gbppublishfn: "netlify/functions/gbp-publish.js",
   gbpapplyfn: "netlify/functions/gbp-apply-change.js",
   dupscan: "netlify/functions/gbp-duplicate-scan.js",

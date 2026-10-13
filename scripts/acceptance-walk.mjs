@@ -404,7 +404,8 @@ async function portalPass() {
 //   (admin.js row builders ~7944, 8249, 8303, 8315, 8357). Open rows are active / waits / queued /
 //   ready / locked.
 // Portal: one pill per row (portal.js ~4290): .pm-pill.done "Done" · .you "Your turn" ·
-//   .rga "RGA is doing it" · .auto "Detected automatically" · .flag "You flagged this";
+//   .rga "RGA is doing it" · .auto "Detected automatically" · .flag "You flagged this" ·
+//   .wait "Waits on your Google listing" (one_google_listing_first_v1, live 10-13);
 //   `.is-now` marks the client's next action.
 function adminDoneness(a) {
   if (!a) return null;
@@ -419,6 +420,7 @@ function portalDoneness(p) {
   if (/ flag /.test(c)) return "flagged";
   if (/ done /.test(c) || p.pill === "Done") return "finished";
   if (/ you /.test(c) || p.pill === "Your turn") return "client-turn";
+  if (/ wait /.test(c) || /^Waits on\b/.test(p.pill || "")) return "waiting";
   if (/ (rga|auto) /.test(c)) return "open";
   return null;
 }
@@ -439,6 +441,9 @@ function agree(r) {
   // → feedback_a_card_can_state_two_true_things_that_contradict
   else if (/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()) && (p === "client-turn" || r.portal.isNow))
     r.fail.push(`admin says "${r.admin.pill}" but the portal tells the client "${r.portal.pill}"${r.portal.isNow ? " (their next step)" : ""} — the client is asked to do a step that is waiting`);
+  // …and the other way: the portal holds the client back on a step the admin has open to work.
+  else if (p === "waiting" && !/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()))
+    r.fail.push(`the portal says "${r.portal.pill}" but the admin shows "${r.admin.pill}" — the client is held back on a step that is open`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════

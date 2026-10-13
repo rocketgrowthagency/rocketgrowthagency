@@ -145,5 +145,68 @@
   "  el.querySelectorAll(\".ob-body:not(.ol-host) > .ob-actions, .ob-body:not(.ol-host) > details.ob-out\").forEach((n) => { n.style.display = \"none\"; });\n",
   "",
   1
+ ],
+ [
+  "portal: a waiting step says Your turn",
+  "portal",
+  "      : listingWait ? { text: \"Waits on your Google listing\", cls: \"wait\" }\n",
+  "",
+  1
+ ],
+ [
+  "portal: a waiting step is the client's turn (orange edge)",
+  "portal",
+  "const theirsToAct = !kickoffPending && !listingWait && (",
+  "const theirsToAct = !kickoffPending && (",
+  1
+ ],
+ [
+  "portal: a waiting step is the NEXT step",
+  "portal",
+  "const theirs = (r) => !rowListingWaits(r.step, r.status, onboarding?.data?.tasks) && (",
+  "const theirs = (r) => (",
+  1
+ ],
+ [
+  "portal: a waiting step's form stays live",
+  "portal",
+  "const completionCtl = listingWait && completionCtlLive && !step.clientHow",
+  "const completionCtl = false && listingWait && completionCtlLive && !step.clientHow",
+  1
+ ],
+ [
+  "portal: rows wait whatever step 11 says",
+  "portal",
+  "status !== \"skipped\" && !portalListingStateOf(tasks).open;",
+  "status !== \"skipped\";",
+  1
+ ],
+ [
+  "portal save: hours saved with 2 listings",
+  "stepinputfn",
+  "  if (waitsOnListing(step) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
+  "",
+  1
+ ],
+ [
+  "portal save: messaging attested with 2 listings",
+  "stepchoicefn",
+  "    if (waitsOnListing(s) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
+  "",
+  1
+ ],
+ [
+  "the photo step stops waiting",
+  "onelisting",
+  "|| step.clientForm === \"photo_upload\";",
+  ";",
+  1
+ ],
+ [
+  "the projection loses a flag",
+  "clientstepsjson",
+  "\"clientStepNo\": 8,\n      \"waitsOnListing\": true",
+  "\"clientStepNo\": 8",
+  1
  ]
 ]

@@ -19,6 +19,8 @@
 //   6. Admin step 39: paused → the pause band and every Send disabled; open → Send enabled.
 //   7. The nightly re-check asks every client without a real answer, and tells a client "it's gone" ONLY when a
 //      duplicate it had checks clean.
+//   8. The portal never asks the client to do a waiting step: "Waits on your Google listing", the form disabled, never
+//      the NEXT step; the projection carries `waitsOnListing`; both portal save endpoints refuse with a 409.
 // exit 0 = nothing goes on a listing until it is the only one · 1 = something can · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 import fs from "node:fs";
@@ -148,5 +150,42 @@ const re = code("netlify/functions/gbp-duplicate-recheck.js");
 if (!/if \(!hasRecord \|\| before\?\.verdict === "clean" \|\| task\?\.override\?\.reason\) continue;/.test(re)) fail("the nightly re-check skips clients that have no real answer yet");
 if (!/if \(!\(before\?\.verdict === "duplicate" && finding\?\.verdict === "clean"\)\)/.test(re)) fail("the re-check can tell a client 'the second listing is gone' when there never was one");
 
+// ── 8 · the client is never asked to do a step that waits (acceptance walk, 2026-10-12: steps 33, 34, 36, 39 read
+//        admin "Locked" / "Waits on step 11" while the portal said "Your turn", and saving hours there marked the step
+//        Done with nothing able to reach Google). Approved one_google_listing_first_v1, decisions 2 + 3.
+const { waitsOnListing } = req("./_one-listing.js");
+const allSteps = [...(pj.month1 || []), ...(pj.month2plus || [])];
+for (const id of ["m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.messaging", "m1.gbp.photos"]) {
+  if (!waitsOnListing(allSteps.find((x) => x.id === id))) fail(`${id} does not wait on one Google listing (waitsOnListing)`);
+}
+if (waitsOnListing(allSteps.find((x) => x.id === "m1.gbp.verify"))) fail("waitsOnListing is true for a step that doesn't touch the listing (m1.gbp.verify)");
+const cs = JSON.parse(read("data/playbooks/client-steps.json"));
+for (const st of [...(cs.month1 || []), ...(cs.month2plus || [])]) {
+  const want = waitsOnListing(allSteps.find((x) => x.id === st.id));
+  if (!!st.waitsOnListing !== want) fail(`client-steps.json: ${st.id} waitsOnListing is ${!!st.waitsOnListing}, the SOP says ${want} — re-run build-client-steps`);
+}
+for (const [f, label] of [["netlify/functions/portal-step-input.js", "saving an answer"], ["netlify/functions/portal-step-choice.js", "\"I've done it\""]]) {
+  const src = code(f);
+  const guard = src.search(/if \(waitsOnListing\((?:step|s)\) && !listingState\(data\.tasks\)\.open\) return json\(409/);
+  const write = src.indexOf('status: "done"', guard < 0 ? 0 : guard);
+  if (guard < 0 || write < 0) fail(`${label} in the portal can finish a listing step while step 11 hasn't found one listing (${f})`);
+}
+const waitFns = lift(portal, "function rowListingWaits(step, status, tasks) {", "\nfunction photoListingLockHtml");
+if (!waitFns) fail("the portal's row-wait helpers are gone (rowListingWaits / listingWaitHtml)");
+else {
+  const wctx = {}; vm.createContext(wctx);
+  vm.runInContext(`${pFn}\n${waitFns}\nthis.w = rowListingWaits; this.h = listingWaitHtml; this.ls = portalListingStateOf;`, wctx);
+  const dupT = { [DUP]: { outcome_data: { verdict: "duplicate", duplicates: [{}] } } }, cleanT = { [DUP]: { outcome_data: { verdict: "clean" } } };
+  const hrs = { id: "m1.gbp.hours_attributes", waitsOnListing: true };
+  if (!wctx.w(hrs, "pending", dupT) || !wctx.w(hrs, "pending", {})) fail("a portal listing step doesn't wait on a duplicate / an unchecked listing");
+  if (wctx.w(hrs, "pending", cleanT) || wctx.w(hrs, "done", dupT) || wctx.w({ id: "x" }, "pending", dupT)) fail("a portal step waits when it shouldn't (one listing, already done, or not a listing step)");
+  if (!/two Google listings/.test(wctx.h(wctx.ls(dupT))) || !/data-photo-lock-approvals/.test(wctx.h(wctx.ls(dupT)))) fail("a waiting portal step doesn't say why or offer the way out");
+}
+const pcode = code("portal/portal.js");
+if (!/const theirsToAct = !kickoffPending && !listingWait && \(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
+if (!/: listingWait \? \{ text: "Waits on your Google listing", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Google listing\"");
+if (!/const theirs = \(r\) => !rowListingWaits\(r\.step, r\.status/.test(pcode)) fail("a waiting portal step can be marked as the client's NEXT step");
+if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");
+
 if (F.length) { console.error("🔴 something can go on a Google listing that isn't confirmed to be the only one:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ one rule (3 copies agree on ${CASES.length} cases); 4 writers ask first; step 11 is never done on a duplicate; 8 profile steps wait on it in both SOPs; client step 7 locks and admin step 39 pauses — and both open on one listing`);
+console.log(`✅ one rule (3 copies agree on ${CASES.length} cases); 4 writers ask first; step 11 is never done on a duplicate; 8 profile steps wait on it in both SOPs; client step 7 locks and admin step 39 pauses — and both open on one listing; the portal never says "Your turn" on a waiting step and its saves refuse`);
