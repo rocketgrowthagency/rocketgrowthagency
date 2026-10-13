@@ -467,6 +467,7 @@ run check-an-upload-confirms-in-its-slot.mjs "a photo upload confirms in its own
 run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Google twice; step 39 leads with the right button"
 run check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs "nothing goes on a Google listing until step 11 confirms it is the only one"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"
+run acceptance-walk.mjs "every Month-1 step clicks through in admin + portal (read-only), both sides agree — report: website reports/acceptance/latest.md"
 run check-no-emoji-in-stored-data.mjs "no emoji in stored data; the portal writes no row the database refuses"
 run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story in every state on every surface, admin and client"
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"

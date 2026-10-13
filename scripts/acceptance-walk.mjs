@@ -433,6 +433,12 @@ function agree(r) {
   if (a === "finished" && (p === "client-turn" || r.portal.isNow)) r.fail.push(`admin says "${r.admin.pill}" but the portal asks the client to act ("${r.portal.pill}"${r.portal.isNow ? ", marked as their next step" : ""})`);
   else if (p === "finished" && a !== "finished") r.fail.push(`portal says Done but the admin shows "${r.admin.pill}"`);
   else if (a === "finished" && p !== "finished") r.fail.push(`admin says "${r.admin.pill}" but the portal shows "${r.portal.pill}"`);
+  // 🔴 2026-10-12: done-ness alone passed step 39 while the admin said "Waits on step 11" and the portal told the client
+  // "Your turn" on an upload it had locked — two true things that contradict. A step the admin shows as WAITING ON
+  // SOMETHING (locked / waits on another step) must not be presented to the client as their move.
+  // → feedback_a_card_can_state_two_true_things_that_contradict
+  else if (/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()) && (p === "client-turn" || r.portal.isNow))
+    r.fail.push(`admin says "${r.admin.pill}" but the portal tells the client "${r.portal.pill}"${r.portal.isNow ? " (their next step)" : ""} — the client is asked to do a step that is waiting`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -440,6 +446,12 @@ function agree(r) {
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 fs.mkdirSync(path.join(OUT, "admin"), { recursive: true });
 fs.mkdirSync(path.join(OUT, "portal"), { recursive: true });
+// keep a week of runs — 60+ screenshots a day would otherwise grow without end
+try {
+  const root = path.join(WEBSITE, "reports", "acceptance");
+  const keep = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  for (const d of fs.readdirSync(root)) if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d < keep) fs.rmSync(path.join(root, d), { recursive: true, force: true });
+} catch { /* pruning is housekeeping, never a reason to fail the walk */ }
 try {
   if (OPT.admin) await adminPass();
   if (OPT.portal) await portalPass();
