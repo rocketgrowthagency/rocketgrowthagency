@@ -75,6 +75,55 @@ if [ "$HOUR" -ge 7 ] && [ "$HOUR" -lt 21 ]; then
   exit 0
 fi
 
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════
+# 🔒 THE NIGHT ENDS AT 06:30, WHATEVER IS RUNNING (Chris, 2026-10-13: "fix limit. and attempts and time if failing
+# then record and we fix later").
+# The 10-12 run's recovery pass STARTED at 06:12 (every time check here sat BETWEEN searches, so a pass that began at
+# 06:12 had no limit at all) and was still opening Chrome windows on Chris's screen at 08:23. Now:
+#   · HARD_STOP (06:30): a watchdog stops the pipeline mid-step, records what it stopped, and the run goes straight
+#     to its reports. Nothing waits for a step to finish.
+#   · LAST_START (04:00): no new search, retry pass or backlog round STARTS after it.
+#   · Anything stopped or skipped is RECORDED (reports/overnight-stops.md in the website repo + this log) and fixed
+#     later; the next night's missing-video check picks the leads up (each lead still has its 3-night limit).
+# → feedback_a_night_run_must_end_before_morning
+# ═══════════════════════════════════════════════════════════════════════════════════════════════════
+HARD_STOP_HHMM="${HARD_STOP_HHMM:-0630}"
+LAST_START_HHMM="${LAST_START_HHMM:-0400}"
+STOPS_RECORD="/Users/chris/RGA/Rocket Growth Agency Website VS Code/reports/overnight-stops.md"
+HARD_STOP_MARK="$SCRAPER_DIR/output/HARD-STOPPED-${DATE_STAMP}"
+# The next HH:MM strictly after an epoch (DST-safe: tomorrow is computed as a calendar day, not +86400s).
+next_clock_epoch() { # $1 = HHMM, $2 = from epoch
+  local d t; d=$(date -r "$2" +%Y-%m-%d)
+  t=$(date -j -f "%Y-%m-%d %H%M %S" "$d $1 00" +%s)
+  if [ "$t" -le "$2" ]; then d=$(date -j -v+1d -r "$2" +%Y-%m-%d); t=$(date -j -f "%Y-%m-%d %H%M %S" "$d $1 00" +%s); fi
+  echo "$t"
+}
+NIGHT_START_EPOCH=$(date +%s)
+HARD_STOP_EPOCH=$(next_clock_epoch "$HARD_STOP_HHMM" "$NIGHT_START_EPOCH")
+LAST_START_EPOCH=$(next_clock_epoch "$LAST_START_HHMM" "$NIGHT_START_EPOCH")
+# Started after LAST_START (its next one is tomorrow, past the hard stop): already too late to start anything.
+[ "$LAST_START_EPOCH" -gt "$HARD_STOP_EPOCH" ] && LAST_START_EPOCH=$NIGHT_START_EPOCH
+record_stop() { # $1 = what happened — one dated line, kept for the morning report and the fix-later list
+  mkdir -p "$(dirname "$STOPS_RECORD")"
+  [ -f "$STOPS_RECORD" ] || printf '# Overnight stops — what the night ended or skipped, to fix later\n\nNewest last. Written by scripts/overnight-local.sh (scraper repo).\n\n' > "$STOPS_RECORD"
+  echo "- $(date '+%Y-%m-%d %H:%M') · run of ${DATE_STAMP} · $1" >> "$STOPS_RECORD"
+  echo ">>> RECORDED (fix later): $1" | tee -a "$LOG"
+}
+too_late_to_start() { [ "$(date +%s)" -ge "$LAST_START_EPOCH" ]; }
+rm -f "$SCRAPER_DIR"/output/HARD-STOPPED-* 2>/dev/null
+(
+  sleep $(( HARD_STOP_EPOCH - $(date +%s) ))
+  touch "$HARD_STOP_MARK"
+  _inflight=$(ps -eo command | grep -E "overnight-pipeline\.sh " | grep -v grep | head -1 | sed 's/.*overnight-pipeline\.sh //')
+  for _pat in "scripts/overnight-pipeline.sh" "scripts/recovery-rounds.sh" "node step-" "step-3-video-recorder.mjs" "chrome-profile-step3" "chrome-profile-step25"; do
+    pkill -9 -f "$_pat" 2>/dev/null || true
+  done
+  record_stop "HARD STOP at $(date +%H:%M): stopped mid-run${_inflight:+ while working \"${_inflight}\"}. Unfinished leads are retried by the next night's missing-video check."
+) &
+HARD_STOP_PID=$!
+trap 'pkill -P $HARD_STOP_PID 2>/dev/null; kill $HARD_STOP_PID 2>/dev/null' EXIT
+echo "=== night limits: no new work after $(date -r "$LAST_START_EPOCH" +%H:%M), everything stops at $(date -r "$HARD_STOP_EPOCH" +%H:%M) ===" | tee -a "$LOG"
+
 # STRAY PER-LEAD CSV ARCHIVER (2026-10-09). The previous night's per-lead "-only-" CSVs are written after
 # midnight, so they carry TODAY's date — the 19:00 rehearsal failed on them two evenings running ("stray
 # today-dated per-lead CSV(s) — these hijack the run") and nobody was there to clear them. Like the reaper
@@ -160,10 +209,12 @@ if [ -f "$SCRAPER_DIR/output/PRODUCTION-PAUSED" ]; then
     # Resolve it locally with the same default rather than depending on a later line.
     PAUSE_RUN_HOURS="${MAX_RUN_HOURS:-10}"
     RUN_START=$(date +%s); DEADLINE=$(( RUN_START + PAUSE_RUN_HOURS * 3600 ))
+    [ "$DEADLINE" -gt "$HARD_STOP_EPOCH" ] && DEADLINE=$HARD_STOP_EPOCH
     caffeinate -dimsu -t $(( PAUSE_RUN_HOURS * 3600 + 1800 )) &
     CAFF_PID=$!
     node "$SCRAPER_DIR/scripts/reconcile-missing-videos.mjs" 2>&1 | tee -a "$LOG" || true
-    RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash "$SCRAPER_DIR/scripts/recovery-rounds.sh" "$LOG" 2>&1 | tee -a "$LOG" || true
+    if too_late_to_start; then record_stop "paused-drain backlog rounds skipped: too late to start (after $(date -r "$LAST_START_EPOCH" +%H:%M))."
+    else RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash "$SCRAPER_DIR/scripts/recovery-rounds.sh" "$LOG" 2>&1 | tee -a "$LOG" || true; fi
     kill "$CAFF_PID" 2>/dev/null || true
     AFTER_OUT=$(node "$SCRAPER_DIR/scripts/check-resume-production.mjs" 2>/dev/null) || true
     AFTER_GAP=$(printf '%s' "$AFTER_OUT" | grep -oE 'missing-video gap=[0-9]+' | head -1)
@@ -262,12 +313,13 @@ STOP_FLAG_ROOT="$SCRAPER_DIR/STOP-OVERNIGHT"
 
 RUN_START=$(date +%s)
 DEADLINE=$(( RUN_START + MAX_RUN_HOURS * 3600 ))
+[ "$DEADLINE" -gt "$HARD_STOP_EPOCH" ] && DEADLINE=$HARD_STOP_EPOCH   # the night's hard stop wins
 rm -f "$STOP_FLAG" 2>/dev/null   # clear any stale flag from a prior run
 
 # Keep the machine awake only for the capped window (+30m buffer). Pipeline self-caffeinates too.
 caffeinate -dimsu -t $(( MAX_RUN_HOURS * 3600 + 1800 )) &
 CAFF_PID=$!
-trap 'kill $CAFF_PID 2>/dev/null' EXIT
+trap 'pkill -P $HARD_STOP_PID 2>/dev/null; kill $CAFF_PID $HARD_STOP_PID 2>/dev/null' EXIT
 
 echo "=== overnight-local START $(date) — city-first, cap: ${MAX_SEARCHES} searches / ${MAX_RUN_HOURS}h, WC=${WORKER_COUNT} ===" | tee -a "$LOG"
 # Fresh per run: the set of searches THIS run has already attempted. next-search.mjs excludes them
@@ -354,6 +406,7 @@ while [ "$n" -lt "$MAX_SEARCHES" ]; do
   # NIGHT-ONLY (per-search): the startup interlock checks once; re-check before EACH new capture so a
   # long run that crosses into the workday (>=07:00) STOPS instead of filming the desktop. See feedback_video_capture_screen_must_be_clear.
   NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended ($(date +%H:%M)) — stopping before the workday (after $n search(es)); no desktop-bleed risk." | tee -a "$LOG"; break; fi
+  if too_late_to_start; then [ "$n" -lt "$MAX_SEARCHES" ] && record_stop "search $((n+1))/${MAX_SEARCHES} not started: too late (after $(date -r "$LAST_START_EPOCH" +%H:%M))."; break; fi
   if [ -f "$STOP_FLAG" ] || [ -f "$STOP_FLAG_ROOT" ]; then echo ">>> STOP-OVERNIGHT flag found — graceful stop after $n search(es)." | tee -a "$LOG"; rm -f "$STOP_FLAG" "$STOP_FLAG_ROOT"; break; fi
   # next-search with RETRY (2026-07-27): a transient Airtable/network hiccup returns rc=2 and used
   # to kill the ENTIRE night (one API blip = zero videos, only a log line). Retry rc=2 up to 3x with
@@ -430,7 +483,9 @@ echo "=== overnight-local DONE $(date) — ran $n search(es) ===" | tee -a "$LOG
 echo ">>> reconcile-missing-videos: finding emailable leads with no video" | tee -a "$LOG"
 node scripts/reconcile-missing-videos.mjs 2>&1 | tee -a "$LOG"
 MV_SEARCHES="$SCRAPER_DIR/output/missing-video-searches.txt"
-MAX_RECOVERY_SEARCHES="${MAX_RECOVERY_SEARCHES:-3}"
+# 🔒 ONE same-night retry search (was 3). A lead that still fails is recorded and waits for the next night (its own
+# 3-night limit still applies); the night does not keep retrying into the morning. (Chris, 2026-10-13.)
+MAX_RECOVERY_SEARCHES="${MAX_RECOVERY_SEARCHES:-1}"
 if [ -s "$MV_SEARCHES" ]; then
   # 2026-07-29: FRESH Chrome before the recovery re-render. The main batch's failures are almost always
   # LATE-RUN Chrome state-drift/memory degradation (the 2026-07-28 run's 3 failures ALL choked on website-
@@ -445,9 +500,10 @@ if [ -s "$MV_SEARCHES" ]; then
   while IFS= read -r Q; do
     [ -z "$Q" ] && continue
     rc=$((rc+1))
-    if [ "$rc" -gt "$MAX_RECOVERY_SEARCHES" ]; then echo ">>> recovery cap ($MAX_RECOVERY_SEARCHES) reached — remaining missing-video searches retried tomorrow." | tee -a "$LOG"; break; fi
+    if [ "$rc" -gt "$MAX_RECOVERY_SEARCHES" ]; then record_stop "retry cap ($MAX_RECOVERY_SEARCHES search) reached: \"$Q\" and any after it wait for the next night."; break; fi
     if [ "$(date +%s)" -ge "$DEADLINE" ]; then echo ">>> wall-clock cap reached — deferring remaining recovery to tomorrow." | tee -a "$LOG"; break; fi
     NH=$(( 10#$(date +%H) )); if [ "$NH" -ge 7 ] && [ "$NH" -lt 21 ]; then echo ">>> night window ended — deferring remaining recovery to tomorrow." | tee -a "$LOG"; break; fi
+    if too_late_to_start; then record_stop "retry pass for \"$Q\" not started: too late (after $(date -r "$LAST_START_EPOCH" +%H:%M)). Its leads are retried next night."; break; fi
     echo "" | tee -a "$LOG"
     echo ">>> [recovery $rc] $(date +%H:%M) — slow single-worker re-render: \"$Q\"" | tee -a "$LOG"
     WORKER_COUNT=1 PER_LEAD_TIMEOUT_MIN="${RECOVERY_PER_LEAD_TIMEOUT_MIN:-15}" ./scripts/overnight-pipeline.sh "$Q" 2>&1 | tee -a "$LOG"
@@ -482,7 +538,8 @@ node scripts/audit-failed-videos.mjs 2>&1 | tee -a "$LOG" || true
 # Expect ~1 in 3 to recover (project_video_failure_taxonomy) — the rest are reproducible-per-lead or
 # permanently unbuildable.
 echo ">>> recovery rounds: working the historical failed-video backlog" | tee -a "$LOG"
-RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash scripts/recovery-rounds.sh "$LOG" 2>&1 | tee -a "$LOG" || true
+if too_late_to_start; then record_stop "backlog rounds skipped: too late to start (after $(date -r "$LAST_START_EPOCH" +%H:%M))."
+else RECOVERY_DEADLINE_EPOCH="$DEADLINE" bash scripts/recovery-rounds.sh "$LOG" 2>&1 | tee -a "$LOG" || true; fi
 
 # 🔴 2026-08-20 — RECONCILE VIDEOS → LEADS, the direction nothing ever checked.
 # Every other reconciliation starts from the lead list ("which lead is missing a video?"), so a video
@@ -513,7 +570,9 @@ fi
 # so capture is legal. Capped so it cannot starve the fresh scrape; the overflow carries to tomorrow.
 # Reported, never fatal.
 echo ">>> productivity: did the run actually build anything?" | tee -a "$LOG"
-node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
+# After the hard stop, report only: no --heal (healing renders video).
+if [ -f "$HARD_STOP_MARK" ]; then node scripts/check-run-productivity.mjs 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}
+else node scripts/check-run-productivity.mjs --heal 2>&1 | tee -a "$LOG"; _prc=${PIPESTATUS[0]}; fi
 if [ "${_prc:-0}" -ne 0 ]; then
   echo ">>> 🔴 DEAD WINDOW detected — searches ran and produced no videos. See the cause + fix above." | tee -a "$LOG"
 fi

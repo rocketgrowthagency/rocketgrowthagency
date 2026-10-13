@@ -1,0 +1,93 @@
+[
+ [
+  "the night stops at 9:30",
+  "overnightlocal",
+  "HARD_STOP_HHMM=\"${HARD_STOP_HHMM:-0630}\"",
+  "HARD_STOP_HHMM=\"${HARD_STOP_HHMM:-0930}\"",
+  1
+ ],
+ [
+  "new work may start until 6",
+  "overnightlocal",
+  "LAST_START_HHMM=\"${LAST_START_HHMM:-0400}\"",
+  "LAST_START_HHMM=\"${LAST_START_HHMM:-0600}\"",
+  1
+ ],
+ [
+  "a late start may still start work",
+  "overnightlocal",
+  "&& LAST_START_EPOCH=$NIGHT_START_EPOCH",
+  "&& LAST_START_EPOCH=$HARD_STOP_EPOCH",
+  1
+ ],
+ [
+  "tomorrow = +24h (wrong on clock-change nights)",
+  "overnightlocal",
+  "if [ \"$t\" -le \"$2\" ]; then d=$(date -j -v+1d -r \"$2\" +%Y-%m-%d); t=$(date -j -f \"%Y-%m-%d %H%M %S\" \"$d $1 00\" +%s); fi",
+  "if [ \"$t\" -le \"$2\" ]; then t=$(( t + 86400 )); fi",
+  1
+ ],
+ [
+  "the hard stop leaves the recorder running",
+  "overnightlocal",
+  "\"node step-\" \"step-3-video-recorder.mjs\" \"chrome-profile-step3\"",
+  "\"node step-\" \"chrome-profile-step3\"",
+  1
+ ],
+ [
+  "the hard stop isn't recorded",
+  "overnightlocal",
+  "  record_stop \"HARD STOP at $(date +%H:%M)",
+  "  echo \"HARD STOP at $(date +%H:%M)",
+  1
+ ],
+ [
+  "the retry pass starts at 6:12 again",
+  "overnightlocal",
+  "    if too_late_to_start; then record_stop \"retry pass for",
+  "    if false; then record_stop \"retry pass for",
+  1
+ ],
+ [
+  "a new search starts after 4",
+  "overnightlocal",
+  "  if too_late_to_start; then [ \"$n\" -lt \"$MAX_SEARCHES\" ]",
+  "  if false; then [ \"$n\" -lt \"$MAX_SEARCHES\" ]",
+  1
+ ],
+ [
+  "backlog rounds start after 4",
+  "overnightlocal",
+  "if too_late_to_start; then record_stop \"backlog rounds skipped",
+  "if false; then record_stop \"backlog rounds skipped",
+  1
+ ],
+ [
+  "3 same-night retries again",
+  "overnightlocal",
+  "MAX_RECOVERY_SEARCHES=\"${MAX_RECOVERY_SEARCHES:-1}\"",
+  "MAX_RECOVERY_SEARCHES=\"${MAX_RECOVERY_SEARCHES:-3}\"",
+  1
+ ],
+ [
+  "the main deadline ignores the hard stop",
+  "overnightlocal",
+  "[ \"$DEADLINE\" -gt \"$HARD_STOP_EPOCH\" ] && DEADLINE=$HARD_STOP_EPOCH   # the night",
+  "true   # the night",
+  1
+ ],
+ [
+  "heals after the hard stop",
+  "overnightlocal",
+  "if [ -f \"$HARD_STOP_MARK\" ]; then node scripts/check-run-productivity.mjs 2>&1",
+  "if false; then node scripts/check-run-productivity.mjs 2>&1",
+  1
+ ],
+ [
+  "a normal finish leaves the watchdog",
+  "overnightlocal",
+  "trap 'pkill -P $HARD_STOP_PID 2>/dev/null; kill $CAFF_PID $HARD_STOP_PID 2>/dev/null' EXIT",
+  "trap 'kill $CAFF_PID 2>/dev/null' EXIT",
+  1
+ ]
+]
