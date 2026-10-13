@@ -243,7 +243,9 @@ if (!/step\.clientInput \? inputHtml\(/.test(rowSrc)) {
     const end = portal.indexOf("\n});", sub);
     const b = portal.slice(sub, end > sub ? end : sub + 4000);
     if (!/portal-step-input/.test(b)) bad("the input submit does not call portal-step-input");
-    if (!/_rerender/.test(b)) bad("submitting an input does not settle the row");
+    // 🔑 settleStepResult re-renders the record the server says it wrote (Month 2 = this month's monthly record);
+    // check-month-2-lives-in-the-monthly-record runs it.
+    if (!/await settleStepResult\(/.test(b)) bad("submitting an input does not settle the row");
     // 🔴 A failed submit must NOT re-render: that rebuilds the form empty and throws away what
     // the client typed. Assert the catch reports without re-rendering.
     const c = b.indexOf("} catch (err)");
@@ -263,7 +265,8 @@ if (!/step\.clientInput \? inputHtml\(/.test(rowSrc)) {
   if (ife) {
     if (!/requirePortalOwner/.test(ife)) bad("portal-step-input is not auth-gated");
     if (!/s\.clientInput && s\.clientInput\.kind/.test(ife)) bad("portal-step-input is not allow-listed to steps that declare an input");
-    if (!/after\?\.data\?\.tasks\?\.\[stepId\]\?\.client_input/.test(ife)) bad("portal-step-input does not read its write back");
+    // 🔑 writeStepTasks (_step-record.js) writes the step's own record and returns what it READ BACK.
+    if (!/const after = await writeStepTasks\(supa, rec, tasks\);\s*if \(!after\?\.tasks\?\.\[stepId\]\?\.client_input\)/.test(ife)) bad("portal-step-input does not read its write back");
     if (!/protocol !== "https:"/.test(ife)) bad("the url validator accepts any scheme — javascript: is a url too");
     if (!/Number\.isFinite/.test(ife)) bad("the numbers validator does not reject non-numbers — Number(\"\") is 0, and a silent 0 in a revenue field is a claim");
     if (!/allowed\.has/.test(ife)) bad("the checklist validator does not restrict to the offered options");
@@ -521,7 +524,7 @@ else {
   const c = body.indexOf("} catch (err)");
   const tail = c > 0 ? body.slice(c) : "";
   if (!tail) bad("the attest handler has no catch — a failed write would leave a false tick on screen");
-  else if (!/classList\.remove\("on"\)/.test(tail) || !/_rerender\(rollback\)/.test(tail)) {
+  else if (!/classList\.remove\("on"\)/.test(tail) || !/_rerender\(rollback, rollbackMonthly\)/.test(tail)) {
     bad("the attest handler does not revert its optimistic tick and row when the write fails");
   }
   else if (!/portalAlert\(|portalConfirm\(|alert\(/.test(tail)) bad("the attest handler reverts silently — a silent revert is worse than a wrong badge");
@@ -529,7 +532,7 @@ else {
     bad("the attest handler shows a pending state on a one-tap answer");
   }
   // The optimistic settle must go through the render path, never hand-patch the badge.
-  if (!/_rerender\(optimistic\)/.test(body)) {
+  if (!/_rerender\(optimistic\.onboarding, optimistic\.monthly\)/.test(body)) {
     bad("the attest handler does not settle the row optimistically — the badge would lag the tap by seconds");
   }
 }
@@ -779,7 +782,7 @@ else {
   if (!/completed_by: "client"/.test(body)) {
     bad("mark_done stores no author — a claim recorded as an observation is indistinguishable from one");
   }
-  if (!/after\?\.data\?\.tasks/.test(body)) bad("mark_done does not read the write back");
+  if (!/const after = await writeStepTasks\(supa, rec, tasks\);\s*if \(after\?\.tasks\?\.\[stepId\]\?\.status !== "done"\)/.test(body)) bad("mark_done does not read the write back");
   if (!/tellRga\(/.test(body)) bad("mark_done tells nobody — several of these unblock our work");
   if (!/client_step_marked_done/.test(body)) bad("mark_done writes no activity row");
 }

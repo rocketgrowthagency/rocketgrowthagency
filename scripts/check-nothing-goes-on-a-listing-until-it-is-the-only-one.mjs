@@ -168,7 +168,7 @@ for (const [f, label] of [["netlify/functions/portal-step-input.js", "saving an 
   const src = code(f);
   // 🔑 EVERY "done" write has its own guard in its own branch (2026-10-12: a guard added to a later branch kept this
   // green with the "I've done it" guard removed): the nearest guard before each write, with no other write between.
-  const guards = [...src.matchAll(/if \(waitsOnListing\((?:step|s)\) && !listingState\(data\.tasks\)\.open\) return json\(409/g)].map((m) => m.index);
+  const guards = [...src.matchAll(/if \(waitsOnListing\((?:step|s)\) && !listingState\(rec\.listingTasks\)\.open\) return json\(409/g)].map((m) => m.index);
   const writes = [...src.matchAll(/status: "done"/g)].map((m) => m.index);
   if (!writes.length) fail(`${label}: no status write found in ${f} — re-read this gate`);
   for (const w of writes) {

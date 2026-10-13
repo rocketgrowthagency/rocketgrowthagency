@@ -151,6 +151,9 @@ const FILES = {
   flowcrondaily: "netlify/functions/flow-cron-daily.js",
   flowcrondigest: "netlify/functions/flow-cron-weekly-digest.js",
   walkclients: "scraper:scripts/acceptance/clients.mjs",
+  steprecord: "netlify/functions/_step-record.js",
+  admindeliv: "netlify/functions/admin-deliverables.js",
+  portaldeliv: "netlify/functions/portal-deliverables.js",
 
 };
 // 🔴 A HAND-WRITTEN FILE LIST IS A PROMISE SOMEBODY WILL REMEMBER. The first version named five

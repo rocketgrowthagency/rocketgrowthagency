@@ -110,7 +110,8 @@ if (gateAt < 0 || readAt < gateAt) fail("portal-step-waits reads a client's reco
 if (!/if \(!r\.ok\) return json\(5\d\d/.test(epc)) fail("portal-step-waits answers a failed read with a list (an empty one says nothing waits)");
 
 // ── 3 · every writer of the status asks first ──
-const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), data\.tasks\);\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
+// 🔑 The guard reads the STEP'S OWN record (`rec.tasks`, from _step-record.js: Month 2 = this month's monthly record).
+const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), rec\.tasks\);\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
 const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll(guardRe)) { const w = src.indexOf('status: "done"', m.index); out.push(w); } return out; };
 {
   const src = code("netlify/functions/portal-step-input.js");
@@ -128,7 +129,7 @@ const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll
 }
 {
   const src = code("netlify/functions/portal-step-recheck.js");
-  if (!/const waiting = waitNow\(PLAYBOOKS, step, d0\.tasks\);/.test(src) || !/if \(probe\.verdict === "confirmed" && t0\[stepId\]\.status !== "done" && !waiting\)/.test(src)) fail("a detection (5 customers in) finishes a step that waits on RGA (portal-step-recheck)");
+  if (!/const waiting = waitNow\(PLAYBOOKS, step, r0\.tasks\);/.test(src) || !/if \(probe\.verdict === "confirmed" && t0\[stepId\]\.status !== "done" && !waiting\)/.test(src)) fail("a detection (5 customers in) finishes a step that waits on RGA (portal-step-recheck)");
 }
 
 // ── 3b · the emails that name a client step: the "what we'll need from you next" list skips a waiting step (run for

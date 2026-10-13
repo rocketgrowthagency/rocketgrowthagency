@@ -72,22 +72,22 @@
  [
   "portal save: an answer finishes a step that waits",
   "stepinputfn",
-  "  const waiting = waitNow(PLAYBOOKS, step, data.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
-  "  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  const now",
+  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  const now",
+  "  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  const now",
   1
  ],
  [
   "portal: I've done it finishes a step that waits",
   "stepchoicefn",
-  "    const waiting = waitNow(PLAYBOOKS, s, data.tasks);\n    if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
+  "    const waiting = waitNow(PLAYBOOKS, s, rec.tasks);\n    if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
   "",
   1
  ],
  [
   "portal: a choice finishes a step that waits",
   "stepchoicefn",
-  "  const waiting = waitNow(PLAYBOOKS, step, data.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
-  "  const tasks = { ...(data.tasks || {}) };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
+  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
+  "  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
   1
  ],
  [

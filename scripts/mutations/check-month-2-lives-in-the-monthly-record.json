@@ -1,0 +1,121 @@
+[
+ [
+  "every step reads as Month 1",
+  "steprecord",
+  "  return MONTH2_IDS.has(stepId) ? \"month2plus\" : \"month1\";",
+  "  return \"month1\";",
+  1
+ ],
+ [
+  "the server's month is the local one",
+  "steprecord",
+  "  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\n/**\n * The record that holds",
+  "  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\n/**\n * The record that holds",
+  1
+ ],
+ [
+  "the first Month-2 save creates nothing",
+  "steprecord",
+  "  } else if (rec.scope === \"month2plus\") {",
+  "  } else if (false) {",
+  1
+ ],
+ [
+  "the monthly insert sends workspace_id",
+  "steprecord",
+  "body: JSON.stringify({ client_id: rec.client_id, reporting_month: rec.reporting_month, data }),",
+  "body: JSON.stringify({ workspace_id: \"w\", client_id: rec.client_id, reporting_month: rec.reporting_month, data }),",
+  1
+ ],
+ [
+  "the monthly read ignores the month",
+  "steprecord",
+  "`/client_monthly_records?client_id=eq.${clientId}&reporting_month=eq.${month}&select=id,data&limit=1`",
+  "`/client_monthly_records?client_id=eq.${clientId}&select=id,data&limit=1`",
+  1
+ ],
+ [
+  "the write says nothing about its record",
+  "steprecord",
+  "  return { scope: rec.scope, reporting_month: rec.reporting_month };",
+  "  return {};",
+  1
+ ],
+ [
+  "portal save writes the onboarding record again",
+  "stepinputfn",
+  "  const after = await writeStepTasks(supa, rec, tasks);",
+  "  await supa(`/client_onboarding_records?client_id=eq.${clientId}`, { method: \"PATCH\", body: JSON.stringify({ data: { ...rec.listingTasks && {}, tasks } }) });\n  const after = { tasks };",
+  1
+ ],
+ [
+  "portal save forgets to say which record",
+  "stepinputfn",
+  "  return json(200, { ok: true, step_id: stepId, tasks, ...recordMeta(rec) });",
+  "  return json(200, { ok: true, step_id: stepId, tasks });",
+  1
+ ],
+ [
+  "a detection creates a monthly record",
+  "recheckfn",
+  "    const r0 = await readStepRecord(supa, clientId, stepId);\n    if (r0 && r0.id) {",
+  "    const r0 = await readStepRecord(supa, clientId, stepId);\n    if (r0) {",
+  1
+ ],
+ [
+  "admin month is the browser's",
+  "admin",
+  "  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\nfunction currentMonthValue() {",
+  "  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, \"0\")}-01`;\n}\n\nfunction currentMonthValue() {",
+  1
+ ],
+ [
+  "admin checklist reads by local month",
+  "admin",
+  "    async getFlowState(client, scope) {\n      if (scope === \"month2plus\") {\n        const month = currentReportingMonthUtc();\n        const { data, error } = await supabase",
+  "    async getFlowState(client, scope) {\n      if (scope === \"month2plus\") {\n        const d = new Date();\n        const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, \"0\")}-01`;\n        const { data, error } = await supabase",
+  1
+ ],
+ [
+  "portal reads the latest monthly record",
+  "portal",
+  "  const m2Tasks = thisMonthsRecord(monthlyRecords)?.data?.tasks || {};",
+  "  const m2Tasks = (monthlyRecords || [])[0]?.data?.tasks || {};",
+  1
+ ],
+ [
+  "portal month is the browser's",
+  "portal",
+  "function portalReportingMonth(now = new Date()) {\n  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;",
+  "function portalReportingMonth(now = new Date()) {\n  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, \"0\")}-01`;",
+  1
+ ],
+ [
+  "portal re-renders a Month-2 answer into onboarding",
+  "portal",
+  "  if (j.scope === \"month2plus\") {\n    const month = j.reporting_month || portalReportingMonth();",
+  "  if (false) {\n    const month = j.reporting_month || portalReportingMonth();",
+  1
+ ],
+ [
+  "portal optimistic tick goes to onboarding",
+  "portal",
+  "  if (!isMonth2Step(stepId)) {\n    return { onboarding:",
+  "  if (true) {\n    return { onboarding:",
+  1
+ ],
+ [
+  "portal input handler re-renders by hand",
+  "portal",
+  "    await settleStepResult(wrap.closest(\"[id^='action-items-list-']\"), j);",
+  "    { const listEl = wrap.closest(\"[id^='action-items-list-']\"); if (j.tasks && listEl?._rerender) await listEl._rerender({ ...(listEl._onboarding || {}), data: { ...(listEl._onboarding?.data || {}), tasks: j.tasks } }); }",
+  1
+ ],
+ [
+  "admin deliverables reads any month",
+  "admindeliv",
+  "${monthly ? `&reporting_month=eq.${currentReportingMonth()}` : \"\"}",
+  "",
+  1
+ ]
+]

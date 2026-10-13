@@ -184,14 +184,14 @@
  [
   "portal save: hours saved with 2 listings",
   "stepinputfn",
-  "  if (waitsOnListing(step) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
+  "  if (waitsOnListing(step) && !listingState(rec.listingTasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
   "",
   1
  ],
  [
   "portal save: messaging attested with 2 listings",
   "stepchoicefn",
-  "    if (waitsOnListing(s) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
+  "    if (waitsOnListing(s) && !listingState(rec.listingTasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n",
   "",
   1
  ],
@@ -219,7 +219,7 @@
  [
   "portal save: a choice saved with 2 listings",
   "stepchoicefn",
-  "  if (waitsOnListing(step) && !listingState(data.tasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n  const waiting = waitNow",
+  "  if (waitsOnListing(step) && !listingState(rec.listingTasks).open) return json(409, { error: CLIENT_WAIT_MESSAGE, waits_on: \"one_listing\" });\n  const waiting = waitNow",
   "  const waiting = waitNow",
   1
  ]
