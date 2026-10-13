@@ -229,5 +229,12 @@
   "    + (failedNewer ? ` · the check on ${escapeHtml(formatDateTime(failed.checked_at))} couldn't look",
   "    + (false ? ` · the check on ${escapeHtml(formatDateTime(failed.checked_at))} couldn't look",
   1
+ ],
+ [
+  "a real answer keeps the old failed look",
+  "dupscan",
+  "    if (record.verdict === \"clean\" || record.verdict === \"duplicate\") delete tasks[\"m1.audit.gbp_duplicate\"].last_failed_scan;",
+  "",
+  1
  ]
 ]

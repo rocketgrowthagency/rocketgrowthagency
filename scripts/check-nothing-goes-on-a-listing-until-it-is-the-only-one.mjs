@@ -202,6 +202,10 @@ if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow
   const card = (/function listingCardHtml\(\) \{[\s\S]*?\n\}/.exec(admin) || [""])[0];
   if (!/last_failed_scan/.test(card) || !/couldn't look/.test(card) || !/failedNewer \?/.test(card))
     fail("step 11's card hides a nightly check that could not look (it shows the last real answer as if the check ran)");
+  // …and a real answer clears an older failed look, or the failure outlives every successful check after it
+  const scan = read("netlify/functions/gbp-duplicate-scan.js");
+  if (!/if \(record\.verdict === "clean" \|\| record\.verdict === "duplicate"\) delete tasks\["m1\.audit\.gbp_duplicate"\]\.last_failed_scan;/.test(scan))
+    fail("a successful duplicate check keeps an older failed look on the record (it reads as current, forever)");
 }
 
 if (F.length) { console.error("🔴 something can go on a Google listing that isn't confirmed to be the only one:"); for (const f of F) console.error("   · " + f); process.exit(1); }
