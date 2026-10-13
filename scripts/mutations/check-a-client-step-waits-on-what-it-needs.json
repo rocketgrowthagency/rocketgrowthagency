@@ -42,13 +42,6 @@
   1
  ],
  [
-  "Month 2 reads the Month-1 record",
-  "clientwaits",
-  "  const list = playbooks[SCOPE] || [];\n  return list.some((s) => s.id === stepId) ? list : [];",
-  "  for (const k of [\"month1\", \"month2plus\"]) if ((playbooks[k] || []).some((s) => s.id === stepId)) return playbooks[k];\n  return [];",
-  1
- ],
- [
   "the projection publishes the graph",
   "clientstepsjson",
   "\"clientStepNo\": 13,\n      \"waitsOnRga\": true",
@@ -65,8 +58,8 @@
  [
   "a failed read says nothing waits",
   "stepwaitsfn",
-  "  if (!r.ok) return json(502, { error: \"Could not read the setup record.\" });",
-  "  if (!r.ok) return json(200, { rga: [] });",
+  "  if (!r.ok || !m.ok) return json(502, { error: \"Could not read the setup record.\" });",
+  "  if (!r.ok || !m.ok) return json(200, { rga: [] });",
   1
  ],
  [
@@ -177,7 +170,7 @@
  [
   "a nudge goes out on a step that waits on the listing",
   "stepemailfn",
-  "    if (waitsOnListing(sop) && !listingState(tasks).open) {",
+  "    if (waitsOnListing(sop) && !listingState(rec ? rec.listingTasks : {}).open) {",
   "    if (false) {",
   1
  ],
@@ -219,8 +212,8 @@
  [
   "own: the listing outranks their step",
   "portal",
-  "    const listingWait = !ownWait && rowListingWaits(step, status, onboarding?.data?.tasks);",
-  "    const listingWait = rowListingWaits(step, status, onboarding?.data?.tasks);",
+  "    const listingWait = !ownWait && rowListingWaits(step, status, waitTasks);",
+  "    const listingWait = rowListingWaits(step, status, waitTasks);",
   1
  ],
  [
@@ -256,6 +249,76 @@
   "portal",
   "  return !!rowOwnWaits(step, status, tasks) || rowListingWaits(step, status, tasks) ||",
   "  return rowListingWaits(step, status, tasks) ||",
+  1
+ ],
+ [
+  "the rule is Month 1 only again",
+  "clientwaits",
+  "  for (const k of SCOPES) {\n    const list = playbooks[k] || [];\n    if (list.some((s) => s.id === stepId)) return list;\n  }\n  return [];",
+  "  const list = playbooks.month1 || [];\n  return list.some((s) => s.id === stepId) ? list : [];",
+  1
+ ],
+ [
+  "the endpoint judges Month 2 by the onboarding record",
+  "stepwaitsfn",
+  "(scopeOf(s.id) === \"month2plus\" ? m2Tasks : m1Tasks) || {}",
+  "m1Tasks || {}",
+  1
+ ],
+ [
+  "the endpoint ignores this month's record",
+  "stepwaitsfn",
+  "rgaWaitsFor(rows[0]?.data?.tasks, mrows[0]?.data?.tasks)",
+  "rgaWaitsFor(rows[0]?.data?.tasks, rows[0]?.data?.tasks)",
+  1
+ ],
+ [
+  "the monthly photos wait on RGA's plan again",
+  "playbookjson",
+  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add 5+ new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [],",
+  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add 5+ new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m2.plan.tasks_for_month\"],",
+  1
+ ],
+ [
+  "step 18's band says something unapproved",
+  "playbookjson",
+  "\"head\": \"First: we're writing your monthly report.\"",
+  "\"head\": \"First: we're busy.\"",
+  1
+ ],
+ [
+  "step 15 counts every photo again",
+  "portal",
+  "if (s.id === \"m2.exec.gbp_photos\" && photosThisMonth >= 5) status = \"done\";",
+  "if (s.id === \"m2.exec.gbp_photos\" && photoCount >= 5) status = \"done\";",
+  1
+ ],
+ [
+  "the nightly photo check counts every photo again",
+  "recheckfn",
+  "countProbe(id, \"client_photos\", 5, \"photo\", { since: currentReportingMonth(), what: \"new this month\" })",
+  "countProbe(id, \"client_photos\", 5, \"photo\")",
+  1
+ ],
+ [
+  "a Month-2 row's wait reads the onboarding record",
+  "portal",
+  "  const waitTasks = { ...m1Tasks, ...m2Tasks };",
+  "  const waitTasks = { ...m1Tasks };",
+  1
+ ],
+ [
+  "the nudge looks steps up in Month 1 only",
+  "stepemailfn",
+  "const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === stepId);",
+  "const sop = (PB.month1 || []).find((s) => s.id === stepId);",
+  1
+ ],
+ [
+  "the step-open email reaches Month 2",
+  "notifyopenfn",
+  "const M1 = PLAYBOOKS.month1 || [];",
+  "const M1 = [...(PLAYBOOKS.month1 || []), ...(PLAYBOOKS.month2plus || [])];",
   1
  ]
 ]

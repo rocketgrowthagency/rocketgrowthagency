@@ -9,7 +9,7 @@
 // HOLDS — running the real code where it can:
 //   1. ONE rule (`_client-waits.js`) gives the admin's answer: the WHOLE chain (an independent walk of every Month-1
 //      client step finds the same prerequisites), finished = done / skipped / declined, a finished step never waits.
-//      Left out on purpose: the listing check (its own rule), the client's own steps, the kickoff booking, Month 2.
+//      Left out on purpose: the listing check (its own rule), the kickoff booking.
 //   2. The public projection carries a FLAG, never an admin step id; the server endpoint answers with the real rule.
 //   3. Every writer of the step's status asks first: the input save, "I've done it", a choice, the detection recheck.
 //   4. The portal: the row says "Waits on RGA", is never the client's turn, never the NEXT step, never the headline;
@@ -18,6 +18,9 @@
 //   6. (client_step_waits_on_own_step_v1, 2026-10-13) A step that needs the client's OWN earlier step waits too:
 //      "Do step N first" / "Connect Google first", the amber band with the way there, the form disabled; the client's
 //      own step outranks the listing, which outranks RGA; writers refuse with the same words.
+//   7. (month2_waits_v1, 2026-10-13) MONTH 2 TOO, judged against this month's record: the same independent walk on the
+//      Month-2 list; steps 14/15/16 need nothing (decision 1); step 18 says "Do step 14 first", then waits on RGA with
+//      the approved words (decision 2); step 15 counts this month's photos (decision 3); no step-open email for Month 2.
 // exit 0 = a client is never asked to do a step that waits on RGA · 1 = they can be · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 import fs from "node:fs";
@@ -29,6 +32,11 @@ const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } ca
 const code = (r) => read(r).split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 const F = []; const fail = (m) => F.push(m);
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
+// 🔑 The endpoint is RUN against a stub database (section 2), and it reads its address when it loads: set it first.
+// Never the real one: this gate must not read production.
+process.env.SUPABASE_URL = "https://stub.supabase.invalid"; process.env.SUPABASE_SERVICE_ROLE_KEY = "stub";
+// …and the endpoint takes its auth check when it loads, so the stub signs in first too.
+req("./_auth.js").requirePortalOwnerOrWorkspace = async () => ({ email: "owner@example.com" });
 const DUP = "m1.audit.gbp_duplicate";
 const S57 = "m1.review.first_5", S56 = "m1.review.system";
 
@@ -82,32 +90,90 @@ if (pairs < 2) { console.error(`⚠️  INDETERMINATE — only ${pairs} RGA-held
 // A chain through a DONE step still holds (the admin walks through it): synthetic C(client) → B(rga, done) → A(rga, open).
 const syn = { month1: [{ id: "A", dependsOn: [] }, { id: "B", dependsOn: ["A"] }, { id: "C", dependsOn: ["B"], clientLabel: "c", clientBucket: "act" }] };
 if (W.waitsOnRgaNow(syn, syn.month1[2], { B: done }) !== "A") fail("the rule stops at a done step and misses an unfinished step further up the chain");
-const m2 = (pb.month2plus || []).find((s) => vis(s) && W.rgaPrereqs(s, pb.month2plus).length);
-if (!m2) { console.error("⚠️  INDETERMINATE — no Month-2 client step has an RGA prerequisite to prove Month 2 is left out"); process.exit(2); }
-if (W.waitsOnRgaNow(pb, m2, {})) fail(`a Month-2 step (${m2.id}) waits by reading the Month-1 record — its status lives in the monthly record`);
+// ── 1b · Month 2, the same independent walk on its own list (approved month2_waits_v1) ──
+const M2 = pb.month2plus || [];
+const byId2 = new Map(M2.map((s) => [s.id, s]));
+const anc2 = (s) => { const out = new Set(), st = [...(s.dependsOn || [])]; while (st.length) { const d = st.pop(); if (out.has(d) || !byId2.has(d)) continue; out.add(d); st.push(...(byId2.get(d).dependsOn || [])); } return out; };
+let m2pairs = 0;
+for (const s of M2.filter(vis)) {
+  const all = anc2(s), allDone = Object.fromEntries([...all].map((a) => [a, done]));
+  if (W.waitNow(pb, s, allDone)) fail(`Month 2: ${s.id} still waits with every step it needs finished`);
+  for (const a of all) {
+    m2pairs++;
+    const w = W.waitNow(pb, s, { ...allDone, [a]: { status: "pending" } });
+    const want = vis(byId2.get(a)) ? "you" : "rga";
+    if (!w || w.on !== want || w.id !== a) fail(`Month 2: ${s.id} doesn't wait on ${a} (${want === "you" ? "their own step" : "RGA's"}) while it's unfinished — the admin says Locked`);
+  }
+}
+if (!m2pairs) { console.error("⚠️  INDETERMINATE — no Month-2 client step needs anything; re-read this gate"); process.exit(2); }
+// (That Month 2 is judged against THIS MONTH'S record, not the onboarding one, is checked on the endpoint in section 2.)
+// decision 1: numbers, monthly photos and the weekly customer list need nothing, so neither screen ever locks them.
+for (const id of ["m2.snap.business_outcomes", "m2.exec.gbp_photos", "m2.exec.review_push"]) {
+  const st = byId2.get(id);
+  if (!st) { console.error(`⚠️  INDETERMINATE — ${id} is gone from Month 2`); process.exit(2); }
+  if ((st.dependsOn || []).some((d) => byId2.has(d))) fail(`Month 2: ${id} needs ${(st.dependsOn || []).join(", ")} again — approved: it never waits on RGA's monthly plan (month2_waits_v1, decision 1)`);
+}
+// decision 2: the monthly call — their numbers first, then RGA's report
+{
+  const call = byId2.get("m2.call.monthly");
+  const w0 = call && W.waitNow(pb, call, {});
+  if (!w0 || w0.on !== "you" || w0.id !== "m2.snap.business_outcomes" || !/^Do step 14 first\. Nothing was saved\.$/.test(w0.message)) fail(`Month 2: the monthly call doesn't say "Do step 14 first" before their numbers are in (${JSON.stringify(w0)})`);
+  const w1 = call && W.waitNow(pb, call, { "m2.snap.business_outcomes": done });
+  if (!w1 || w1.on !== "rga") fail("Month 2: the monthly call doesn't wait on RGA once their numbers are in (the report isn't sent)");
+  const mock2 = read("reports/mockups/month2_waits_v1.html");
+  const cw2 = call?.clientWait || {};
+  for (const k of ["head", "body", "foot"]) if (!cw2[k] || !mock2.includes(cw2[k])) fail(`Month 2: step 18's ${k} isn't the approved mockup's words (month2_waits_v1)`);
+  const cf = byId2.get("m2.snap.business_outcomes")?.clientFirst || {};
+  if (!cf.head || !mock2.includes(cf.head) || !cf.body || !mock2.includes(cf.body)) fail("Month 2: step 14's \"first\" band isn't the approved mockup's words (month2_waits_v1)");
+}
 
 // ── 2 · the projection carries a flag, never the graph; the endpoint runs the rule ──
 const cs = JSON.parse(read("data/playbooks/client-steps.json"));
 for (const st of [...(cs.month1 || []), ...(cs.month2plus || [])]) {
-  const src = byId.get(st.id);
-  const want = !!src && W.rgaPrereqs(src, m1).length > 0;
+  const own = byId.has(st.id) ? m1 : M2;              // each step within its own month's list
+  const src = byId.get(st.id) || byId2.get(st.id);
+  const want = !!src && W.rgaPrereqs(src, own).length > 0;
   if (st.waitsOnRga !== undefined && st.waitsOnRga !== true) fail(`client-steps.json: ${st.id} waitsOnRga is ${JSON.stringify(st.waitsOnRga).slice(0, 40)} — a flag only, never ids (the graph stays private)`);
   if (!!st.waitsOnRga !== want) fail(`client-steps.json: ${st.id} waitsOnRga is ${!!st.waitsOnRga}, the SOP says ${want} — re-run build-client-steps`);
-  const wantOwn = src ? W.ownPrereqs(src, m1) : [];
+  const wantOwn = src ? W.ownPrereqs(src, own) : [];
   if (JSON.stringify(st.needsFirst || []) !== JSON.stringify(wantOwn)) fail(`client-steps.json: ${st.id} needsFirst is ${JSON.stringify(st.needsFirst || [])}, the SOP says ${JSON.stringify(wantOwn)} — re-run build-client-steps`);
-  if ((st.needsFirst || []).some((id) => !vis(byId.get(id)))) fail(`client-steps.json: ${st.id} needsFirst names a step the client can't see (the graph stays private)`);
+  if ((st.needsFirst || []).some((id) => !vis(byId.get(id) || byId2.get(id)))) fail(`client-steps.json: ${st.id} needsFirst names a step the client can't see (the graph stays private)`);
 }
 const ep = req("./portal-step-waits.js");
 if (typeof ep.rgaWaitsFor !== "function") fail("portal-step-waits no longer exports the rule it serves");
 else {
-  const a = ep.rgaWaitsFor({}), b = ep.rgaWaitsFor({ [S56]: done });
+  const a = ep.rgaWaitsFor({}, {}), b = ep.rgaWaitsFor({ [S56]: done }, {});
   if (!a.includes(S57) || b.includes(S57)) fail("the endpoint's answer for step 57 doesn't follow step 56");
+  // Month 2 from this month's record: everything done in it opens the call; the same done in the MONTH-1 map does not.
+  const m2done = Object.fromEntries(M2.map((x) => [x.id, done]));
+  const callId = "m2.call.monthly";
+  if (ep.rgaWaitsFor({}, m2done).includes(callId)) fail("the endpoint keeps the monthly call waiting with this month's report sent");
+  if (!ep.rgaWaitsFor(m2done, {}).includes(callId)) fail("the endpoint judges Month-2 steps against the Month-1 record (it must read this month's monthly record)");
+  if (!ep.rgaWaitsFor({}, {}).includes(callId)) fail("the endpoint opens the monthly call before this month's report is sent");
   if (a.some((id) => !vis(byId.get(id)) && !(pb.month2plus || []).some((s) => s.id === id))) fail("the endpoint answers with a step the client cannot see");
+}
+// 🔑 THE HANDLER, RUN: it must hand Month-2 steps THIS MONTH'S monthly record (a stub database answers both reads).
+{
+  const realFetch = globalThis.fetch;
+  const month = req("./_step-record.js").currentReportingMonth();
+  const m2all = Object.fromEntries(M2.map((x) => [x.id, done]));
+  const runEp = async (monthly) => {
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes("/client_monthly_records?")) return new Response(JSON.stringify(u.includes(`reporting_month=eq.${month}`) ? monthly : [{ data: { tasks: m2all } }]), { status: 200 });
+      return new Response(JSON.stringify([{ data: { tasks: {} } }]), { status: 200 });
+    };
+    try { const r = await ep.handler({ httpMethod: "GET", headers: {}, queryStringParameters: { client_id: "11111111-1111-4111-8111-111111111111" } }); return JSON.parse(r.body).rga || null; }
+    finally { globalThis.fetch = realFetch; }
+  };
+  const open = await runEp([{ data: { tasks: m2all } }]), shut = await runEp([]);
+  if (!open || open.includes("m2.call.monthly")) fail("the endpoint keeps the monthly call waiting with this month's report sent (it doesn't read this month's monthly record)");
+  if (!shut || !shut.includes("m2.call.monthly")) fail("the endpoint opens the monthly call when this month has no record (it read another month's, or the onboarding record)");
 }
 const epc = code("netlify/functions/portal-step-waits.js");
 const gateAt = epc.search(/const gate = await requirePortalOwner(?:OrWorkspace)?\(event, clientId\);\s*if \(gate\.error\) return gate\.error;/), readAt = epc.indexOf("client_onboarding_records");
 if (gateAt < 0 || readAt < gateAt) fail("portal-step-waits reads a client's record before checking who is asking");
-if (!/if \(!r\.ok\) return json\(5\d\d/.test(epc)) fail("portal-step-waits answers a failed read with a list (an empty one says nothing waits)");
+if (!/if \(!r\.ok \|\| !m\.ok\) return json\(5\d\d/.test(epc) || !/client_monthly_records\?client_id=eq\.\$\{clientId\}&reporting_month=eq\.\$\{currentReportingMonth\(\)\}/.test(epc)) fail("portal-step-waits answers a failed read with a list (an empty one says nothing waits)");
 
 // ── 3 · every writer of the status asks first ──
 // 🔑 The guard reads the STEP'S OWN record (`rec.tasks`, from _step-record.js: Month 2 = this month's monthly record).
@@ -152,10 +218,11 @@ const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll
 }
 {
   const sc = code("netlify/functions/send-step-email.js");
-  const g = sc.search(/if \(isNudge\) \{[\s\S]{0,1200}?const waiting = waitNow\(PB, sop, tasks\);\s*if \(waiting\) return jsonRes\(409/);
+  const g = sc.search(/if \(isNudge\) \{[\s\S]{0,1200}?const waiting = waitNow\(PB, sop, rec \? rec\.tasks : \{\}\);\s*if \(waiting\) return jsonRes\(409/);
   const sendAt = sc.indexOf("sent = await sendAsRga(");
   if (g < 0 || sendAt < 0 || g > sendAt) fail("RGA can nudge a client about a step that waits on RGA (send-step-email sends before asking)");
-  if (!/if \(waitsOnListing\(sop\) && !listingState\(tasks\)\.open\) \{\s*return jsonRes\(409/.test(sc)) fail("RGA can nudge a client about a step that waits on one Google listing");
+  if (!/rec = await readStepRecord\(supa, encodeURIComponent\(clientId\), stepId\);/.test(sc) || !/const sop = \[\.\.\.\(PB\.month1 \|\| \[\]\), \.\.\.\(PB\.month2plus \|\| \[\]\)\]\.find/.test(sc)) fail("the nudge can't see a Month-2 step's wait (it must look the step up in both months and read its own record)");
+  if (!/if \(waitsOnListing\(sop\) && !listingState\(rec \? rec\.listingTasks : \{\}\)\.open\) \{\s*return jsonRes\(409/.test(sc)) fail("RGA can nudge a client about a step that waits on one Google listing");
 }
 
 // ── 4 · the portal ──
@@ -201,7 +268,13 @@ const checks = [
   [/\$\{ownWait \? ownWaitHtml\(ownFirst\) : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
   [/: rgaWait \? \{ text: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved pill)"],
-  [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, onboarding\?\.data\?\.tasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
+  [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
+  [/const waitTasks = \{ \.\.\.m1Tasks, \.\.\.m2Tasks \};/, "a Month-2 row's wait isn't read from this month's record"],
+  [/const ownFirstId = rowOwnWaits\(step, status, waitTasks\);/, "a Month-2 row's \"Do step 14 first\" isn't read from this month's record"],
+  [/tasks: waitTasks, rgaWaits \};/, "the \"your next step\" headline reads Month-2 waits from the onboarding record"],
+  [/const ownFirst = ownFirstId \? \(\[\.\.\.\(playbook\.month1 \|\| \[\]\), \.\.\.\(playbook\.month2plus \|\| \[\]\)\]\.find/, "a Month-2 \"Do step N first\" can't find its step (no number)"],
+  [/if \(s\.id === "m2\.exec\.gbp_photos" && photosThisMonth >= 5\) status = "done";/, "step 15 counts every photo ever, not this month's (month2_waits_v1, decision 3)"],
+  [/const photosThisMonth = \(photos \|\| \[\]\)\.filter\(\(p\) => p && p\.created_at\s*&& sameReportingMonth\(portalReportingMonth\(new Date\(p\.created_at\)\), portalReportingMonth\(\)\)\)\.length;/, "step 15's count isn't this reporting month's photos"],
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
   [/data-jump-to="customer"\$\{rgaWait \|\| ownWait \? " disabled" : ""\}>Submit list →/, "step 57's \"Submit list →\" stays live while it waits"],
   [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
@@ -221,5 +294,13 @@ const cw = s57.clientWait || {};
 for (const k of ["head", "body", "foot"]) if (!cw[k] || !mock.includes(cw[k].replace(/'/g, "'"))) fail(`step 57's ${k} isn't the approved mockup's words (review_first_5_wait_v1) — a new wording needs a new approval`);
 if (!mock.includes("Waits on RGA")) fail("the approved mockup no longer names the pill");
 
+{
+  const rc = code("netlify/functions/portal-step-recheck.js");
+  if (!/"m2\.exec\.gbp_photos": async \(id\) => countProbe\(id, "client_photos", 5, "photo", \{ since: currentReportingMonth\(\)/.test(rc)
+    || !/\$\{since \? `&created_at=gte\.\$\{since\}T00:00:00Z` : ""\}/.test(rc)) fail("the nightly check of step 15 counts every photo ever, not this month's (month2_waits_v1, decision 3)");
+  const no = code("netlify/functions/notify-step-open.js");
+  if (!/const M1 = PLAYBOOKS\.month1 \|\| \[\];/.test(no)) fail("the step-open email reaches past Month 1 (approved: no step-open email for Month 2; the report email tells them)");
+}
+
 if (F.length) { console.error("🔴 a client can be asked to do a step that waits on RGA:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / client-held / kickoff / Month 2 left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA`);
+console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / kickoff left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA; Month 2 walked on its own list (${m2pairs} prerequisites), judged against this month's record, 14/15/16 never wait, the call says "Do step 14 first" then waits on RGA in the approved words, step 15 counts this month's photos`);

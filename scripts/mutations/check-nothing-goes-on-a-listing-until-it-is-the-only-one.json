@@ -163,7 +163,7 @@
  [
   "portal: a waiting step is the NEXT step",
   "portal",
-  "const theirs = (r) => !rowWaits(r.step, r.status, onboarding?.data?.tasks, rgaWaits) && (",
+  "const theirs = (r) => !rowWaits(r.step, r.status, waitTasks, rgaWaits) && (",
   "const theirs = (r) => (",
   1
  ],
