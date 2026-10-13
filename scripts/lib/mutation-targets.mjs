@@ -110,6 +110,11 @@ export const FILES = {
   walkclients: "scraper:scripts/acceptance/clients.mjs",
   steprecord: "netlify/functions/_step-record.js",
   probenumbering: "scraper:scripts/_probe-numbering.mjs",
+  listingremoval: "netlify/functions/_listing-removal.js",
+  listingflow: "netlify/functions/_listing-removal-flow.js",
+  dupownerinit: "netlify/functions/gbp-duplicate-owner-init.js",
+  dupremovefn: "netlify/functions/gbp-duplicate-remove.js",
+  listingsql: "docs/supabase/RGA_CLIENT_LISTING_REMOVALS_2026-10-13.sql",
   admindeliv: "netlify/functions/admin-deliverables.js",
   portaldeliv: "netlify/functions/portal-deliverables.js",
 

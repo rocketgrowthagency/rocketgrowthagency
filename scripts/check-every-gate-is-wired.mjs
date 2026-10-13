@@ -120,6 +120,7 @@ const NOT_PREFLIGHT = {
   'check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs': 'behavioural: one-listing rule + writers + step 7/39 locks; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-the-night-run-stops-before-morning.mjs': 'behavioural: the night run\'s real clock lines on 6 start times + every start point + the watchdog; runs in daily-health-check.sh',
   'check-a-step-that-opens-is-told-once.mjs': 'behavioural: the step-open email sweep (states, words, hours, guards, stamp order); runs in daily-health-check.sh — a client email gate cannot make a video unsafe',
+  'check-a-client-can-remove-their-own-duplicate.mjs': 'behavioural: the real removal flow against stub Google/Supabase/SerpApi + static safety rules; runs in daily-health-check.sh — a listing gate cannot make a video unsafe',
   'check-a-success-clears-the-failure-it-supersedes.mjs': 'static + both merge rules run: every stored failure field has a declared clear; runs in daily-health-check.sh — a record-hygiene gate cannot make a video unsafe',
   'check-every-mutation-still-applies.mjs': 'static: every mutation anchor matches its file exactly once (shared target map lib/mutation-targets.mjs); runs in daily-health-check.sh — a meta-gate cannot make a video unsafe',
   'check-month-2-lives-in-the-monthly-record.mjs': 'behavioural: the real client writers against a stub database + the UTC month key in server/admin/portal; runs in daily-health-check.sh — a portal record gate cannot make a video unsafe',
