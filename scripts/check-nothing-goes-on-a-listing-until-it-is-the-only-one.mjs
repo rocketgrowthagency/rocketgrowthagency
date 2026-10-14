@@ -208,7 +208,8 @@ if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow
     fail("a successful duplicate check keeps an older failed look on the record (it reads as current, forever)");
   // 🔒 (2026-10-13) a re-scan of the SAME duplicate keeps the client's answer, the owner we read and RGA's progress, and
   // the steps shown are built from the CURRENT answer (stored steps went stale: "We are checking who manages…").
-  if (!/for \(const k of \["client_answer", "owner_hint", "step_progress"\]\) if \(po\[k\] !== undefined && record\[k\] === undefined\) record\[k\] = po\[k\];/.test(scan))
+  // + "keep_decision" (RGA's choice when the second listing has more reviews, duplicate_listing_card_v3, 2026-10-14)
+  if (!/for \(const k of \["client_answer", "owner_hint", "step_progress", "keep_decision"\]\) if \(po\[k\] !== undefined && record\[k\] === undefined\) record\[k\] = po\[k\];/.test(scan))
     fail("the nightly re-scan erases the client's answer about the duplicate (they'd be asked again every morning)");
   const G = req("./_gbp-duplicate.js");
   if (typeof G.currentSteps !== "function") fail("there's no single place that builds the duplicate's steps from the current answer");

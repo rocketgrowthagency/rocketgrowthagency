@@ -26,7 +26,7 @@ const code = (r) => read(r).split("\n").filter((l) => !/^\s*\/\//.test(l)).join(
 const F = []; const fail = (m) => F.push(m);
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
 
-Object.assign(process.env, { SUPABASE_URL: "https://stub.supabase.invalid", SUPABASE_SERVICE_ROLE_KEY: "stub", INTERNAL_FN_SECRET: "gate-secret",
+Object.assign(process.env, { SUPABASE_URL: "https://stub.supabase.invalid", SUPABASE_SERVICE_ROLE_KEY: "stub", SUPABASE_ANON_KEY: "stub-anon", INTERNAL_FN_SECRET: "gate-secret",
   GOOGLE_OAUTH_CLIENT_ID: "cid", GOOGLE_OAUTH_CLIENT_SECRET: "csec", GOOGLE_OAUTH_REDIRECT_URI: "https://stub.site.invalid/cb", SERPAPI_KEY: "serp" });
 
 const R = req("./_listing-removal.js");
@@ -160,6 +160,117 @@ try {
     const out = await run(w, () => FLOW.removeNow(CID, "x"));
     if (w.deleted.length || out.code === 200) fail("a removal still happens after the client changed their answer");
   }
+  // 10 · WHICH LISTING TO KEEP (approved duplicate_listing_card_v3, 2026-10-14): the rule, run on every case.
+  //      More reviews first; the same (or none) → the connected account; never the phone. null = couldn't read, never 0.
+  {
+    const { keepChoice, reviewsFrom } = req("./_gbp-duplicate.js");
+    for (const [own, dup, dec, wantCase, wantKeep, wantMerge, wantWait, re] of [
+      [{ reviews: 0, in_connected_account: true }, { reviews: 0 }, null, "none", "own", false, false, /neither listing has reviews, so nothing is lost/],
+      [{ reviews: 23 }, { reviews: 0 }, null, "own_reviews", "own", false, false, /it has your 23 reviews/],
+      [{ reviews: 1 }, { reviews: 0 }, null, "own_reviews", "own", false, false, /your 1 review\./],
+      [{ reviews: 2 }, { reviews: 31 }, null, "flip", "other", false, true, /it has 31 of your reviews/],
+      [{ reviews: 2 }, { reviews: 31 }, "ours", "flip_ours", "own", true, false, /merge it in/],
+      [{ reviews: 23 }, { reviews: 4 }, null, "both", "own", true, false, /its 4 reviews move over/],
+      [{ reviews: 5 }, { reviews: 5 }, null, "both", "own", true, false, /both have 5 reviews/],
+      [{ reviews: null }, { reviews: 0 }, null, "unknown", "own", false, false, /couldn't read the review counts/],
+      [{ reviews: 0 }, { reviews: null }, null, "unknown", "own", false, false, /couldn't read the review counts/],
+      [null, null, null, "unknown", "own", false, false, /couldn't read the review counts/],
+    ]) {
+      const c = keepChoice(own, dup, dec);
+      const tag = `own ${own ? own.reviews : "none"} vs second ${dup ? dup.reviews : "none"}${dec ? ` (${dec})` : ""}`;
+      if (c.case !== wantCase || c.keep !== wantKeep || c.merge !== wantMerge || c.waits_on_rga !== wantWait) fail(`the keep rule is wrong for ${tag}: ${JSON.stringify({ case: c.case, keep: c.keep, merge: c.merge, waits: c.waits_on_rga })}`);
+      if (!re.test(c.reason)) fail(`the reason for ${tag} doesn't say why ("${c.reason}")`);
+      if (/phone/i.test(c.reason)) fail(`the reason for ${tag} mentions the phone number (never the deciding fact)`);
+    }
+    // the reason never claims a connected account it didn't measure
+    for (const acct of [null, false, undefined]) if (/Google account you connected/.test(keepChoice({ reviews: 0, in_connected_account: acct }, { reviews: 0 }).reason)) fail(`the reason says "the Google account you connected" when that wasn't measured true (${acct})`);
+    // Google's Maps data OMITS the count at zero: a row we read with no count = 0, no row = null (couldn't read)
+    if (reviewsFrom(null).reviews !== null || reviewsFrom({ title: "x" }).reviews !== 0 || reviewsFrom({ reviews: 412, rating: 4.9 }).reviews !== 412 || reviewsFrom({ reviews: 412, rating: 4.9 }).rating !== 4.9) fail("reviewsFrom confuses \"no count on a listing we read\" (0) with \"no listing read\" (null)");
+  }
+
+  // 11 · the nightly scan SAVES the facts the card compares: the real scan, against a stub Maps + Google account
+  for (const [oauth, ownRev, dupRev, want, googleFails] of [[true, 0, 31, { own: 0, dup: 31, ownAcct: true, dupAcct: false, kase: "flip" }],
+                                               [false, 0, 0, { own: 0, dup: 0, ownAcct: null, dupAcct: null, kase: "none" }],
+                                               // connected, but Google's account call fails → "not checked", NEVER "not in your account"
+                                               [true, 0, 0, { own: 0, dup: 0, ownAcct: null, dupAcct: null, kase: "none" }, true]]) {
+    const db = {
+      clients: [{ id: CID, business_name: "Rocket Growth Agency", google_place_id: "ChIJ-kept", primary_market: null, workspace_id: "w1",
+        gbp_url: "https://www.google.com/maps/place/x/@34.0,-118.4,14z/data=!3m1!4b1!4m6!3m5!1s0xccc:0xddd!8m2" }],
+      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: {} } }],
+      client_google_oauth: oauth ? [{ client_id: CID, refresh_token: "rt" }] : [],
+      profiles: [{ id: "u1", workspace_id: "w1" }],
+    };
+    const row = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+    const J = (b, st = 200) => new Response(b == null ? null : JSON.stringify(b), { status: st });
+    const fetchStub = async (url, init = {}) => {
+      const u = new URL(String(url)); const m = (init.method || "GET").toUpperCase();
+      if (u.hostname === "serpapi.com") return J({ local_results: [
+        // 🔑 like Google's real data (checked 2026-10-14): a listing with no reviews has NO reviews/rating fields
+        row({ title: "Rocket Growth Agency", data_id: "0xccc:0xddd", place_id: "ChIJ-kept", reviews: ownRev || undefined, rating: ownRev ? 5 : undefined }),
+        row({ title: "Rocket Growth Agency", data_id: "0xaaa:0xbbb", place_id: "ChIJ-dupe", phone: "(424) 396-8499", type: "Marketing agency",
+          reviews: dupRev || undefined, rating: dupRev ? 4.9 : undefined, gps_coordinates: { latitude: 34.05, longitude: -118.45 } }),
+      ] });
+      if (u.hostname === "oauth2.googleapis.com") return J({ access_token: "ya29.x", expires_in: 3600 });
+      if (u.hostname === "mybusinessaccountmanagement.googleapis.com") return googleFails ? J({ error: "quota" }, 429) : J({ accounts: [{ name: "accounts/A1" }] });
+      if (u.hostname === "mybusinessbusinessinformation.googleapis.com") return J({ locations: [{ name: "locations/K", metadata: { placeId: "ChIJ-kept" } }] });
+      if (u.hostname === "stub.supabase.invalid") {
+        if (u.pathname === "/auth/v1/user") return J({ id: "u1", email: "admin@rga.test" });
+        const table = u.pathname.split("/").pop(); const rows = db[table] || (db[table] = []);
+        const q = [...u.searchParams].filter(([, v]) => /^eq\./.test(v)); const match = (r) => q.every(([k, v]) => String(r[k]) === v.slice(3));
+        const list = rows.filter(match);
+        if (m === "GET") return J(list);
+        if (m === "PATCH") { const b = JSON.parse(init.body); list.forEach((r) => Object.assign(r, b)); return J(list); }
+        if (m === "POST") { const b = JSON.parse(init.body); rows.push(b); return J([b], 201); }
+      }
+      if (u.hostname === "stub.site.invalid") return J({ ok: true, finding: { verdict: "duplicate" } });
+      return J({ error: `unexpected ${u.hostname}` }, 599);
+    };
+    const real = globalThis.fetch; globalThis.fetch = fetchStub;
+    try {
+      const scan = req("./gbp-duplicate-scan.js");
+      const res = await scan.handler({ httpMethod: "POST", headers: { "x-internal-secret": "gate-secret" }, body: JSON.stringify({ client_id: CID }) });
+      const od = db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"]?.outcome_data || {};
+      const dup = (od.duplicates || [])[0] || {};
+      const tag = googleFails ? "when Google's account check fails" : oauth ? "with a connected account" : "with no Google connection";
+      if (res.statusCode !== 200 || od.verdict !== "duplicate") fail(`the scan didn't store a duplicate ${tag} (${res.statusCode} ${od.verdict})`);
+      if (od.own_listing?.reviews !== want.own || dup.reviews !== want.dup) fail(`the scan doesn't save both listings' reviews ${tag} (own ${od.own_listing?.reviews}, second ${dup.reviews}) — a listing with no count must read 0`);
+      if (od.own_listing?.in_connected_account !== want.ownAcct || dup.in_connected_account !== want.dupAcct) fail(`the scan's "in the connected account" is wrong ${tag} (own ${od.own_listing?.in_connected_account}, second ${dup.in_connected_account}; no connection must be null, never false)`);
+      if (od.keep?.case !== want.kase) fail(`the scan doesn't store the rule's choice ${tag} (${od.keep?.case})`);
+      if (oauth && !googleFails && (!dup.gps || dup.gps.lat !== 34.05)) fail("the scan doesn't keep the second listing's location (RGA can't make it the main listing)");
+
+      // 12 · RGA's choice (case 3): only when the second has more reviews; "ours" merges; "reviews" moves the client's listing
+      if (oauth && !googleFails) {
+        process.env.URL = "https://stub.site.invalid";
+        const keep = req("./gbp-duplicate-keep.js");
+        const call = (choice) => keep.handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, choice }) });
+        const r1 = await call("ours");
+        const od1 = db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].outcome_data;
+        if (r1.statusCode !== 200 || od1.keep_decision?.choice !== "ours" || od1.keep?.case !== "flip_ours" || od1.keep?.merge !== true) fail(`"Keep ours" doesn't record the choice and turn the second listing into a merge (${r1.statusCode} ${od1.keep?.case})`);
+        await call("clear");
+        if (db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].outcome_data.keep?.case !== "flip") fail("Undo doesn't put the card back to \"Waits on RGA\"");
+        const r2 = await call("reviews");
+        const c = db.clients[0];
+        if (r2.statusCode !== 200 || c.google_place_id !== "ChIJ-dupe" || !/!1s0xaaa:0xbbb/.test(c.gbp_url) || !/@34\.05/.test(c.gbp_url)) fail(`"Keep the one with the reviews" doesn't make it the client's main listing in a form the scan can read (${r2.statusCode} ${c.google_place_id} ${c.gbp_url})`);
+        const sw = db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].listing_switch;
+        if (!sw || sw.from?.place_id !== "ChIJ-kept" || sw.to?.place_id !== "ChIJ-dupe") fail("a switch isn't recorded with what it was (from / to)");
+      }
+    } finally { globalThis.fetch = real; }
+  }
+  // a case the rule already decides is refused: the endpoint can't move a client's listing on a whim
+  {
+    const db = { clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept" }], profiles: [{ id: "u1", workspace_id: "w1" }],
+      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", own_listing: { reviews: 9 }, duplicates: [{ place_id: "ChIJ-dupe", data_id: "0xa:0xb", reviews: 0, gps: { lat: 1, lng: 2 } }] } } } } }] };
+    const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
+    const real = globalThis.fetch;
+    globalThis.fetch = async (url, init = {}) => { const u = new URL(String(url)); if (u.pathname === "/auth/v1/user") return J({ id: "u1", email: "a@b" });
+      const t = u.pathname.split("/").pop(); const q = [...u.searchParams].filter(([, v]) => /^eq\./.test(v)); const rows = (db[t] || []).filter((r) => q.every(([k, v]) => String(r[k]) === v.slice(3)));
+      if ((init.method || "GET") === "PATCH") { rows.forEach((r) => Object.assign(r, JSON.parse(init.body))); } return J(rows); };
+    try {
+      const keep = req("./gbp-duplicate-keep.js");
+      const r = await keep.handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, choice: "reviews" }) });
+      if (r.statusCode !== 409 || db.clients[0].google_place_id !== "ChIJ-kept") fail(`"Keep the one with the reviews" works when OUR listing has more reviews (${r.statusCode} ${r.body}) — it must be refused`);
+    } finally { globalThis.fetch = real; }
+  }
 } catch (e) { console.error(`⚠️  INDETERMINATE — running the flow threw: ${e.stack || e.message}`); process.exit(2); }
 
 // ── 6 · the static rules ──
@@ -189,7 +300,8 @@ if (!dc) fail("dupCard is gone (re-read this gate)");
 if ((dc.match(/data-dup-remove/g) || []).length !== 1 || !/if \(r && r\.status === "found"\) \{[\s\S]{0,500}data-dup-remove/.test(dc)) fail("the Remove button can show in a state other than found");
 if (!/<p class="dl-q">Did you \(or someone at your business\) create the second one\?<\/p>/.test(dc)) fail("a client is never asked if the second listing is theirs");
 for (const [re, msg] of [
-  [/\$\{pair\(keepCard\(\), dropCard\(\)\)\}\s*<div class="dl-ask"/, "the question isn't preceded by Keep vs Remove side by side (the approved card)"],
+  // v3 (duplicate_listing_card_v3): Keep vs Remove WITH their facts, then the reason, then the question
+  [/\$\{pair\(keepCard\(undefined, factsOf\(own, true\)\), dropCard\(undefined, true, factsOf\(d, false\)\)\)\}\s*\$\{reason\}\s*<div class="dl-ask"/, "the question isn't preceded by Keep vs Remove (with their facts) and the reason why (the approved card)"],
   [/You sign in with the Google account that made it, then remove it here in one tap\./, "\"Yes, it's ours\" doesn't say what happens next"],
   [/We ask Google to remove it\. Nothing else is needed from you\./, "\"No, it isn't\" doesn't say what happens next"],
   [/\{ done: true, stateLabel: "Waits on Google" \}/, "a removed duplicate doesn't turn into the green done card"],
@@ -220,7 +332,83 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   const pd = code("netlify/functions/portal-deliverables.js");
   if (!/if \(answer === "clear"\) \{[\s\S]{0,200}status === "removed"\) return json\(409/.test(pd)) fail("\"Change my answer\" works even after the listing was removed");
   if (!/client_listing_removals\?client_id=eq\.\$\{clientId\}&status=eq\.found`, \{ method: "PATCH",\s*body: JSON\.stringify\(\{ status: "expired", token_enc: null/.test(pd)) fail("changing the answer leaves a pending removal (and its sign-in) usable");
-  if (!/body: extra\.done \? body : \(a\.answer \? body \+ back : body\)/.test(portal) || !/data-ap-clear=/.test(portal)) fail("the duplicate card has no way back once answered");
+  if (!/body: extra\.done \|\| extra\.rga \? body : \(a\.answer \? body \+ back : body\)/.test(portal) || !/data-ap-clear=/.test(portal)) fail("the duplicate card has no way back once answered");
+}
+
+// ── 13 · THE CARD IN A REAL BROWSER (approved duplicate_listing_card_v3): every case, rendered with portal.css, read back.
+// A regex on the source passes while the screen is wrong; this reads what the client would read.
+// → feedback_the_harness_i_wrote_to_check_my_work_can_lie
+{
+  let puppeteer = null;
+  try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
+  if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing, the card can't be rendered"); process.exit(2); }
+  const src = read("portal/portal.js");
+  const pick = (re) => { const m = re.exec(src); if (!m) { fail(`the card's code moved (${re.source.slice(0, 40)}): re-read this gate`); return ""; }
+    let i = m.index, d = 0; for (let k = src.indexOf("{", i); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(i, k + 1); } } return ""; };
+  const g = /const GOOGLE_G = `[^`]*`;/.exec(src);
+  const bundle = [g ? g[0] : "", pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m)].join("\n");
+  const { keepChoice } = req("./_gbp-duplicate.js");
+  const kept = { name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", maps_url: "https://maps.example/k" };
+  const mk = (own, dup, dec = null, extra = {}) => ({ key: "m1.audit.gbp_duplicate", kept, own_listing: own,
+    details: [{ name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0199", maps_url: "https://maps.example/d", ...dup }],
+    keep: keepChoice(own, dup, dec), answer: null, ...extra });
+  const CASES = {
+    none:    mk({ reviews: 0, rating: null, in_connected_account: true }, { reviews: 0, rating: null, in_connected_account: false }),
+    mine:    mk({ reviews: 23, rating: 4.8, in_connected_account: true }, { reviews: 0, rating: null, in_connected_account: false }),
+    flip:    mk({ reviews: 2, rating: 5, in_connected_account: true }, { reviews: 31, rating: 4.9, in_connected_account: false }),
+    both:    mk({ reviews: 23, rating: 4.8, in_connected_account: true }, { reviews: 4, rating: 4.5, in_connected_account: false }),
+    unknown: mk({ reviews: null, rating: null, in_connected_account: null }, { reviews: null, rating: null, in_connected_account: null }),
+  };
+  const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 900, height: 900 });
+    await page.setContent(`<html><head><style>${read("portal/portal.css")}</style></head><body><div id="host"></div></body></html>`);
+    await page.addScriptTag({ content: bundle });
+    // DUP_SHOTS=<dir> saves each case as a PNG, for the box-by-box diff against the mockup
+    if (process.env.DUP_SHOTS) for (const [name, a] of Object.entries(CASES)) {
+      await page.evaluate((a) => { const c = dupCard(a); document.getElementById("host").innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}" style="background:#fff;border:1px solid #e3e3e3;border-radius:14px;padding:18px;margin:12px;max-width:860px"><p style="margin:0 0 8px;font:600 15px Inter,system-ui">${c.title} · ${c.stateLabel || c.eyebrow}</p><div class="ap-body">${c.body}</div></div>`; }, a);
+      await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_${name}.png`, fullPage: true });
+    }
+    const R2 = await page.evaluate((cases) => {
+      const out = {};
+      for (const [name, a] of Object.entries(cases)) {
+        const c = dupCard(a);
+        const host = document.getElementById("host");
+        host.innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}"><div class="ap-body">${c.body}</div></div>`;
+        const facts = [...host.querySelectorAll(".dl-facts")].map((ul) => [...ul.querySelectorAll("li")].map((li) => `${li.className}:${li.innerText.trim()}`));
+        const reason = host.querySelector(".dl-reason p")?.innerText.trim() || "";
+        out[name] = { rga: !!c.rga, label: c.stateLabel || "", title: c.title, text: host.innerText, facts, reason,
+          heads: [...host.querySelectorAll(".dl-h")].map((x) => x.textContent.trim()), // textContent: the CSS uppercases the label
+          how: !!host.querySelector("details.dl-how") && !host.querySelector("details.dl-how").open,
+          ask: !!host.querySelector("[data-ap-answer=mine]"), reasonBg: host.querySelector(".dl-reason") ? getComputedStyle(host.querySelector(".dl-reason")).backgroundColor : "" };
+      }
+      return out;
+    }, CASES);
+    const has = (k, txt) => R2[k].text.includes(txt);
+    // every case: three facts under each listing, a reason that says why, "How we decide" closed, never the phone
+    for (const [k, v] of Object.entries(R2)) {
+      if (v.facts.length !== 2 || v.facts.some((f) => f.length !== 3)) fail(`case ${k}: each listing doesn't show its three facts (${JSON.stringify(v.facts)})`);
+      if (!/^Why we keep the (first|second) one:/.test(v.reason)) fail(`case ${k}: no "Why we keep…" line (${v.reason})`);
+      if (!v.how) fail(`case ${k}: "How we decide which one to keep" is missing, or open by default`);
+      if (!v.reasonBg || v.reasonBg === "rgba(0, 0, 0, 0)") fail(`case ${k}: the reason has no state colour (portal.css isn't styling .dl-reason)`);
+    }
+    if (!has("none", "No reviews yet") || !has("none", "In the Google account you connected") || !has("none", "Not in the account you connected") || !R2.none.ask) fail("case 1 (no reviews): the facts or the question are wrong");
+    if (!has("mine", "★ 4.8 · 23 reviews") || !/it has your 23 reviews/.test(R2.mine.reason)) fail("case 2: the main listing's reviews and rating aren't shown as the reason");
+    if (!R2.flip.rga || R2.flip.label !== "Waits on RGA" || R2.flip.ask || !has("flip", "31 reviews") || !/Keep · it has your reviews/.test(R2.flip.heads[0] || "")) fail(`case 3: the second listing having more reviews doesn't turn the card into "Waits on RGA" with nothing to answer (${JSON.stringify({ rga: R2.flip.rga, label: R2.flip.label, ask: R2.flip.ask, heads: R2.flip.heads })})`);
+    if (!R2.both.heads.some((h) => /Merge · into your main one/.test(h)) || /remove it here in one tap/.test(R2.both.text) || !/merge it into your main one/.test(R2.both.text)) fail("case 4: both with reviews still says remove (it must say merge, on the box AND under the answers)");
+    if (!has("unknown", "Couldn't read reviews tonight") || !has("unknown", "Couldn't check your Google account") || has("unknown", "No reviews yet") || has("unknown", "Not in the account you connected")) fail("case 5: a fact that wasn't measured reads as a value (it must say \"Couldn't\")");
+  } finally { await browser.close(); }
+}
+// the queue and the badge: a card that waits on RGA asks nothing of the client
+if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.keep && a\.keep\.waits_on_rga\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA");
+if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "Nothing needs you right now"/.test(portal)) fail("the queue heading says a card that waits on RGA \"needs you\"");
+// admin step 11 has RGA's two choices, and shows the facts the same way (not measured = "couldn't")
+{
+  const ad = code("admin/admin.js");
+  if (!/data-ol-keep="reviews">Keep the one with the reviews<\/button>/.test(ad) || !/data-ol-keep="ours">Keep ours and merge the other in<\/button>/.test(ad)) fail("admin step 11 has no choice when the second listing has more reviews");
+  if (!/"reviews couldn't be read"/.test(ad) || !/"account not checked"/.test(ad)) fail("admin step 11 shows an unmeasured fact as a value");
+  if (/Remove · not in the connected account/.test(ad)) fail("admin step 11 still claims the second listing isn't in the connected account without measuring it");
 }
 
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }

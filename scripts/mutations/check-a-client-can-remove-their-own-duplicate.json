@@ -114,8 +114,8 @@
  [
   "the question loses the Keep vs Remove pair",
   "portal",
-  "    ${pair(keepCard(), dropCard())}\n    <div class=\"dl-ask\"",
-  "    <div class=\"dl-ask\"",
+  "    ${pair(keepCard(undefined, factsOf(own, true)), dropCard(undefined, true, factsOf(d, false)))}\n    ${reason}\n    <div class=\"dl-ask\"",
+  "    ${reason}\n    <div class=\"dl-ask\"",
   1
  ],
  [
@@ -163,7 +163,7 @@
  [
   "the way back is gone",
   "portal",
-  "body: extra.done ? body : (a.answer ? body + back : body), ...extra });",
+  "body: extra.done || extra.rga ? body : (a.answer ? body + back : body), ...extra });",
   "body, ...extra });",
   1
  ],
@@ -193,6 +193,139 @@
   "portalcss",
   ".dl-google.is-busy .dl-g { display: none; }",
   ".dl-google.is-busy .dl-g { opacity: 1; }",
+  1
+ ],
+ [
+  "the second listing having more reviews never flips the choice",
+  "gbpdupmod",
+  "  if (d > o) {\n    if (decision === \"ours\") {",
+  "  if (false) {\n    if (decision === \"ours\") {",
+  1
+ ],
+ [
+  "a listing we read with no count reads as \"couldn't read\" (Google omits it at zero)",
+  "gbpdupmod",
+  "Number.isFinite(n) && n >= 0 ? Math.round(n) : 0,",
+  "Number.isFinite(n) && n >= 0 ? Math.round(n) : null,",
+  1
+ ],
+ [
+  "the reason claims the connected account without measuring it",
+  "gbpdupmod",
+  "  const inAccount = own && own.in_connected_account === true;",
+  "  const inAccount = true;",
+  1
+ ],
+ [
+  "both with reviews is no longer a merge",
+  "gbpdupmod",
+  "  return { case: \"both\", keep: \"own\", merge: true, waits_on_rga: false,\n    reason: `Why we keep the first one: it has more of your reviews",
+  "  return { case: \"both\", keep: \"own\", merge: false, waits_on_rga: false,\n    reason: `Why we keep the first one: it has more of your reviews",
+  1
+ ],
+ [
+  "the scan stops saving the client's own reviews",
+  "dupscan",
+  "    own: { ...reviewsFrom(ownRow), in_connected_account:",
+  "    own: { reviews: null, rating: null, in_connected_account:",
+  1
+ ],
+ [
+  "a failed Google account check reads as \"not in your account\"",
+  "dupscan",
+  "    return ids;\n  } catch { return null; }",
+  "    return ids;\n  } catch { return new Set(); }",
+  1
+ ],
+ [
+  "the scan stops keeping the second listing's location",
+  "dupscan",
+  "    gps: o.gps_coordinates && Number.isFinite(o.gps_coordinates.latitude) ?",
+  "    gps: false ?",
+  1
+ ],
+ [
+  "the scan stops storing the rule's choice",
+  "dupscan",
+  "    if (record.verdict === \"duplicate\") record.keep = keepChoice(",
+  "    if (false) record.keep = keepChoice(",
+  1
+ ],
+ [
+  "the keep endpoint moves a listing the rule already decided",
+  "dupkeepfn",
+  "    if (facts.case !== \"flip\") return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "a switch writes a Maps link the scan can't read",
+  "dupkeepfn",
+  "/@${dup.gps.lat.toFixed(7)},${dup.gps.lng.toFixed(7)},14z/data=!4m6!3m5!1s${dup.data_id}",
+  "/data=!4m6!3m5!1s${dup.data_id}",
+  1
+ ],
+ [
+  "a switch isn't recorded first",
+  "dupkeepfn",
+  "      tasks[DUP_STEP] = { ...t, listing_switch: { by, at: now,",
+  "      tasks[DUP_STEP] = { ...t, listing_switch_off: { by, at: now,",
+  1
+ ],
+ [
+  "\"couldn't read\" shows as \"No reviews yet\"",
+  "portal",
+  "!x || !Number.isFinite(x.reviews) ? fact(\"u\", \"Couldn't read reviews tonight\")",
+  "!x || !Number.isFinite(x.reviews) ? fact(\"n\", \"No reviews yet\")",
+  1
+ ],
+ [
+  "the waits-on-RGA card loses its state",
+  "portal",
+  "      { rga: true, stateLabel: \"Waits on RGA\" });",
+  "      { stateLabel: \"Waits on RGA\" });",
+  1
+ ],
+ [
+  "a merge still says \"remove it here in one tap\"",
+  "portal",
+  "<small>${merge ? \"You sign in with the Google account that made it, and we ask Google to merge it into your main one.\"",
+  "<small>${false ? \"You sign in with the Google account that made it, and we ask Google to merge it into your main one.\"",
+  1
+ ],
+ [
+  "the badge counts a card that waits on RGA",
+  "portal",
+  "actions.filter((a) => !(a.keep && a.keep.waits_on_rga)).length",
+  "actions.length",
+  1
+ ],
+ [
+  "\"How we decide\" opens by default",
+  "portal",
+  "      <details class=\"dl-how\"><summary>",
+  "      <details class=\"dl-how\" open><summary>",
+  1
+ ],
+ [
+  "the reason loses its state colour",
+  "portalcss",
+  ".dl-reason { display: grid; gap: 8px; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; background: var(--state-other-bg, #ebf3ff);",
+  ".dl-reason { display: grid; gap: 8px; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px;",
+  1
+ ],
+ [
+  "admin shows an unchecked account as \"not in the connected account\"",
+  "admin",
+  "typeof x.in_connected_account !== \"boolean\" ? \"account not checked\"",
+  "typeof x.in_connected_account !== \"boolean\" ? \"not in the connected account\"",
+  1
+ ],
+ [
+  "admin loses RGA's choice",
+  "admin",
+  "<button type=\"button\" class=\"admin-button\" data-ol-keep=\"reviews\">Keep the one with the reviews</button>",
+  "<button type=\"button\" class=\"admin-button\">Keep the one with the reviews</button>",
   1
  ]
 ]
