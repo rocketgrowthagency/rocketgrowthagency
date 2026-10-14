@@ -394,15 +394,15 @@
  [
   "step 2's title stops naming the listing",
   "portal",
-  "    return card(`Remove ${label}`, \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
+  "    return card(removeTitle, \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
   "    return card(\"Remove the second listing\", \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
   1
  ],
  [
   "the red button stops naming the listing",
   "portal",
-  "data-dup-remove-ask>${escapeHtml(`Remove ${dupId}`)}</button>",
-  "data-dup-remove-ask>Remove the second listing</button>",
+  "data-dup-remove-ask>${escapeHtml(`Remove this listing: ${dupId}`)}</button>",
+  "data-dup-remove-ask>Remove this listing</button>",
   1
  ],
  [
@@ -625,8 +625,8 @@
  [
   "v8: the signed-in account is masked again",
   "listingremoval",
-  "    account: row.account_email || null, title:",
-  "    account: masked(row.account_email), title:",
+  "    account: row.account_email || null,\n",
+  "    account: masked(row.account_email),\n",
   1
  ],
  [
@@ -702,8 +702,8 @@
  [
   "v9: Remove deletes straight away (no in-card confirmation)",
   "portal",
-  "<button type=\"button\" class=\"portal-button is-danger dl-go\" data-dup-remove-ask>",
-  "<button type=\"button\" class=\"portal-button is-danger dl-go\" data-dup-remove>",
+  "<button type=\"button\" class=\"portal-button is-danger dl-go dl-big-btn\" data-dup-remove-ask>",
+  "<button type=\"button\" class=\"portal-button is-danger dl-go dl-big-btn\" data-dup-remove>",
   1
  ],
  [
@@ -716,8 +716,8 @@
  [
   "v9: the confirmation is open before Remove is pressed",
   "portal",
-  "role=\"alertdialog\" aria-label=\"${escapeAttribute(`Remove ${dupId} from Google?`)}\" hidden>",
-  "role=\"alertdialog\" aria-label=\"${escapeAttribute(`Remove ${dupId} from Google?`)}\">",
+  "role=\"alertdialog\" aria-label=\"Permanently delete this listing from Google?\" hidden>",
+  "role=\"alertdialog\" aria-label=\"Permanently delete this listing from Google?\">",
   1
  ],
  [
@@ -730,7 +730,7 @@
  [
   "v9: step 4 says nothing about the right account",
   "portal",
-  "<span><b>Right account.</b> ${who} manages the ${escapeHtml(dupId)} listing.</span>",
+  "<span><b>Right account.</b> ${who} manages this listing.</span>",
   "<span>${who}</span>",
   1
  ],
@@ -774,6 +774,76 @@
   "portal",
   "  _apResolved = data.resolved || [];\n",
   "",
+  1
+ ],
+ [
+  "v10: the cards mark every row different",
+  "portal",
+  "      const differs = (f) => facts.rm[f] && facts.kp[f] && String(facts.rm[f]).toLowerCase() !== String(facts.kp[f]).toLowerCase();",
+  "      const differs = (f) => Boolean(facts.rm[f] || facts.kp[f]);",
+  1
+ ],
+ [
+  "v10: the cards mark nothing different",
+  "portal",
+  "      const differs = (f) => facts.rm[f] && facts.kp[f] && String(facts.rm[f]).toLowerCase() !== String(facts.kp[f]).toLowerCase();",
+  "      const differs = (f) => false;",
+  1
+ ],
+ [
+  "v10: an unread address on our listing reads as \"no address\"",
+  "portal",
+  "          address: ownHas(\"address\") ? (own.address || \"No address shown on Maps\") : null,",
+  "          address: own && own.address || \"No address shown on Maps\",",
+  1
+ ],
+ [
+  "v10: the Google ID is gone",
+  "portal",
+  "+ (rm ? row(\"#\", \"Google ID\", f.id, false) :",
+  "+ (rm ? \"\" :",
+  1
+ ],
+ [
+  "v10: the confirmation drops the account + Google ID",
+  "portal",
+  "        facts.rm.account || facts.rm.id ? `<span>",
+  "        false ? `<span>",
+  1
+ ],
+ [
+  "v10: the title only names the number again",
+  "portal",
+  "  const removeTitle = d.name ? `Remove the duplicate ${d.name} listing` : `Remove ${label}`;",
+  "  const removeTitle = `Remove ${label}`;",
+  1
+ ],
+ [
+  "v10: no \"same name, so check…\" line",
+  "portal",
+  "      const hint = tellApart.length ?",
+  "      const hint = false ?",
+  1
+ ],
+ [
+  "v10: the kept card disappears",
+  "portal",
+  "<div class=\"dl-lst2\">${lcard(\"rm\")}${lcard(\"kp\")}</div>",
+  "<div class=\"dl-lst2\">${lcard(\"rm\")}</div>",
+  1
+ ],
+ [
+  "v10: the scan stops reading our listing's facts",
+  "dupscan",
+  "      ...(ownRow && typeof ownRow === \"object\" ? { title:",
+  "      ...(false ? { title:",
+  1
+ ],
+ [
+  "v10: the location id isn't sent to the portal",
+  "listingremoval",
+  "    location_id: row.location_name ? String(row.location_name).split(\"/\").pop() : null, title:",
+  "    title:",
   1
  ]
 ]

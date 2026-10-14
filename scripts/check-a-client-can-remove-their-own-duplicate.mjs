@@ -95,6 +95,7 @@ try {
     // a token that doesn't decrypt is a token that isn't encrypted — a FAIL, not "can't tell"
     let back = null; try { back = row?.token_enc ? R.decrypt(row.token_enc, "gate-secret") : null; } catch { back = null; }
     if (row?.token_enc && back !== "ya29.SECRET-TOKEN") fail("the stored sign-in isn't the encrypted token (it doesn't decrypt back)");
+    if (summary(w)?.location_id !== "DUPE") fail(`step 11's summary doesn't carry Google's id for the listing (${summary(w)?.location_id})`);
     if (summary(w)?.status !== "found" || JSON.stringify(summary(w)).includes("token")) fail("step 11's summary isn't the token-free \"found\"");
     if (w.deleted.length) fail("something was deleted before the client's tap");
     const out = await run(w, () => FLOW.removeNow(CID, "owner@example.com"));
@@ -360,6 +361,8 @@ try {
       if (od.own_listing?.reviews !== want.own || dup.reviews !== want.dup) fail(`the scan doesn't save both listings' reviews ${tag} (own ${od.own_listing?.reviews}, second ${dup.reviews}) — a listing with no count must read 0`);
       if (od.own_listing?.in_connected_account !== want.ownAcct || dup.in_connected_account !== want.dupAcct) fail(`the scan's "in the connected account" is wrong ${tag} (own ${od.own_listing?.in_connected_account}, second ${dup.in_connected_account}; no connection must be null, never false)`);
       if (od.keep?.case !== want.kase) fail(`the scan doesn't store the rule's choice ${tag} (${od.keep?.case})`);
+      // v10: what Maps shows for OUR listing too (read off the same row; a field Maps doesn't show is null, still a fact)
+      if (od.own_listing?.title !== "Rocket Growth Agency" || !od.own_listing || !("address" in od.own_listing) || od.own_listing.address !== null || !("website" in od.own_listing)) fail(`the scan doesn't keep what Maps shows for our listing ${tag} (${JSON.stringify(od.own_listing)})`);
       if (oauth && !googleFails && (!dup.gps || dup.gps.lat !== 34.05)) fail("the scan doesn't keep the second listing's location (RGA can't make it the main listing)");
 
       // 12 · RGA's choice (case 3): only when the second has more reviews; "ours" merges; "reviews" moves the client's listing
@@ -449,7 +452,7 @@ const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
 if (!dc) fail("dupCard is gone (re-read this gate)");
 // v9: two buttons, "Remove …" (asks) and "Yes, remove it" (removes), and both only in the found state
 if ((dc.match(/data-dup-remove>/g) || []).length !== 1 || (dc.match(/data-dup-remove-ask>/g) || []).length !== 1
-  || !/if \(r && r\.status === "found"\) \{[\s\S]{0,3000}data-dup-remove-ask>[\s\S]{0,1500}data-dup-remove>Yes, remove it/.test(dc)) fail("the Remove button can show in a state other than found");
+  || !/if \(r && r\.status === "found"\) \{[\s\S]{0,8000}data-dup-remove-ask>[\s\S]{0,1500}data-dup-remove>Yes, delete this listing/.test(dc)) fail("the Remove button can show in a state other than found");
 // v5 (approved duplicate_listing_card_v5, 2026-10-14): one question per screen; the "who made it" answers are two
 if (!/data-dup-screen="choose"[\s\S]*data-dup-screen="who" hidden/.test(dc)) fail("the card isn't two screens (choose, then who made it)");
 if (!/data-ap-answer="mine">We did<\/button>/.test(dc) || !/data-ap-answer="unsure">Someone else, or I'm not sure<\/button>/.test(dc) || /data-ap-answer="not_mine"/.test(dc)) fail("\"Who made it?\" isn't the two approved answers (We did / Someone else, or I'm not sure)");
@@ -521,6 +524,10 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     replied:  mk(z, zd, null, { keep_request: { note: "x", at: "2026-10-14T16:20:00Z" }, keep_reply: { choice: "ours", note: "It's the one in your Google account.", at: "2026-10-14T18:00:00Z" } }),
     signin:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com" }),
     found:    mk(z, zd, null, { answer: "mine", owner_removal: { status: "found", account: "chriskapranos@gmail.com" } }),
+    // v10: every fact on both sides (RGA's real shape: same name, no address, same website, both no reviews)
+    found10:  mk({ ...z, title: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", address: null, website: "https://lonestar.test/" },
+      { ...zd, website: "https://lonestar.test/", address: null }, null,
+      { answer: "mine", kept: { ...kept, account: "hello@lonestar.test" }, owner_removal: { status: "found", account: "chriskapranos2@gmail.com", location_id: "3109515908223837152" } }),
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
     // v8: two look-alike Gmails (RGA's real case), a different-looking one, the box not ticked, Google not sending the list
     lookalike: mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "not_found", account: "chriskapranos@gmail.com" } }),
@@ -546,7 +553,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       await page.evaluate((a) => { const c = dupCard(a); document.getElementById("host").innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}" style="background:#fff;border:1px solid #e3e3e3;border-radius:14px;padding:18px;margin:12px;max-width:860px"><p style="margin:0 0 8px;font:600 15px Inter,system-ui">${c.title} · ${c.stateLabel || c.eyebrow}</p><div class="ap-body">${c.body}</div></div>`; }, a);
       await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_${name}.png`, fullPage: true });
       // v9: step 4 with its in-card confirmation open
-      if (name === "found") { await page.evaluate(() => document.querySelector("[data-dup-remove-ask]").click()); await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_found_confirm.png`, fullPage: true }); }
+      if (name === "found" || name === "found10") { await page.evaluate(() => document.querySelector("[data-dup-remove-ask]").click()); await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_${name}_confirm.png`, fullPage: true }); }
     }
     const R2 = await page.evaluate((cases) => {
       const out = {};
@@ -566,6 +573,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
           alert: host.querySelector(".dl-err") ? { warn: host.querySelector(".dl-err").classList.contains("warn"), head: host.querySelector(".dl-et > b")?.textContent.trim(), bg: getComputedStyle(host.querySelector(".dl-err")).backgroundColor, headPx: parseFloat(getComputedStyle(host.querySelector(".dl-et > b")).fontSize) } : null,
           ask: host.querySelector("[data-dup-remove-ask]")?.textContent.trim() || "", confirmHidden: host.querySelector("[data-dup-confirm]") ? host.querySelector("[data-dup-confirm]").hidden : null,
           tl: [...host.querySelectorAll(".dl-tl li b")].map((x) => x.textContent.trim()),
+          cards: [...host.querySelectorAll(".dl-lc")].map((c) => ({ side: c.classList.contains("rm") ? "rm" : "kp", head: c.querySelector(".dl-lh")?.textContent.trim(),
+            rows: [...c.querySelectorAll(".dl-rows li")].map((li) => `${li.querySelector(".dl-k")?.textContent.trim()}=${li.querySelector(".dl-v")?.childNodes[0]?.textContent.trim()}${li.classList.contains("diff") ? "*" : ""}`) })),
           red: host.querySelector("[data-dup-remove]")?.textContent.trim() || "", google: host.querySelector("[data-dup-owner-signin]")?.textContent.trim() || "",
           googleW: host.querySelector("[data-dup-owner-signin]") ? Math.round(host.querySelector("[data-dup-owner-signin]").getBoundingClientRect().width) : 0,
           bodyW: Math.round(host.querySelector(".ap-body").getBoundingClientRect().width),
@@ -594,7 +603,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (!/We checked your request/.test(R2.replied.text) || !/It's the one in your Google account\./.test(R2.replied.text)) fail("RGA's answer isn't shown above the choice");
     // 3 · 4 · sign in, remove — the listing named, the kept one in view, a way back
     // step 3 (v7) says it in a two-line box ("Keeping … · it isn't touched"); step 4 keeps the full box
-    for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== `Remove ${L}` || !/Keeping \(512\) 555-0142(\. It isn't touched\.| · it isn't touched)/.test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
+    // v10: the title names the business ("Remove the duplicate … listing"); step 4 shows the kept one as a full card
+    const T = "Remove the duplicate Lone Star Drain & Plumbing listing";
+    for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== T || !(k === "found" ? /✓ Keeping this one\s*Lone Star Drain & Plumbing[\s\S]*\(512\) 555-0142/ : /Keeping \(512\) 555-0142(\. It isn't touched\.| · it isn't touched)/).test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
     // v7 (approved duplicate_signin_step_v7): the owner as an account card, the hidden part as dots, one plain button,
     // and what happens next in three steps
     if (R2.signin.googleW && R2.signin.googleW > R2.signin.bodyW * 0.6) fail(`step 3's "Continue with Google" stretches across the card (${R2.signin.googleW}px of ${R2.signin.bodyW}) — a button keeps its label's width`);
@@ -603,15 +614,25 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     // v9 (approved duplicate_remove_confirm_v9): "Right account.", what Remove does, and ONE in-card confirmation
     {
       const f = R2.found;
-      if (f.eyebrow !== "Step 4 of 4" || f.ask !== "Remove (512) 555-0199" || !/Right account\. chriskapranos@gmail\.com manages the \(512\) 555-0199 listing\./.test(f.text)) fail(`found: step 4 doesn't say "Right account." with the account, or its red button doesn't name what it does (${f.ask})`);
-      if (!/Keeping\s*\(512\) 555-0142\s*· it isn't touched, nor its reviews/.test(f.text) || !/Removing\s*\(512\) 555-0199/.test(f.text)) fail("found: step 4 doesn't show what's removed and what's kept");
-      if (!/When you press Remove/.test(f.text) || !/Your listing, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");
-      if (f.confirmHidden !== true || f.red !== "Yes, remove it" || !/Remove \(512\) 555-0199 from Google\?/.test(f.text)) fail(`found: the confirmation isn't a hidden in-card "Remove … from Google?" with "Yes, remove it" (hidden=${f.confirmHidden}, ${f.red})`);
+      if (f.eyebrow !== "Step 4 of 4" || f.ask !== "Remove this listing: (512) 555-0199" || !/Right account\. chriskapranos@gmail\.com manages this listing\./.test(f.text)) fail(`found: step 4 doesn't say "Right account." with the account, or its red button doesn't name what it does (${f.ask})`);
+      if (f.cards.map((c) => `${c.side}:${c.head}`).join("|") !== "rm:✕ Removing this listing|kp:✓ Keeping this one") fail(`found: step 4 isn't the two listing cards, red removing + green keeping (${f.cards.map((c) => c.head).join("|")})`);
+      // only measured facts: the kept side has no address/website/account read here, so those rows are LEFT OUT (never "none")
+      if (f.cards[1] && f.cards[1].rows.join("|") !== "Phone=(512) 555-0142*|Reviews=No reviews|Our work=Your photos, posts and edits go here") fail(`found: the kept card shows a fact we didn't measure (${f.cards[1].rows.join("|")})`);
+      // v10 with every fact: the rows that tell the two apart are marked, nothing else
+      const t = R2.found10;
+      const want = { rm: "Phone=(512) 555-0199*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=chriskapranos2@gmail.com*|Google ID=3109515908223837152",
+        kp: "Phone=(512) 555-0142*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=hello@lonestar.test*|Our work=Your photos, posts and edits go here" };
+      for (const c of t.cards) if (c.rows.join("|") !== want[c.side]) fail(`found10: the ${c.side === "rm" ? "removing" : "keeping"} card's rows aren't every fact with the differences marked (${c.rows.join("|")})`);
+      if (!/Same name, so check the phone and the Google account: the rows marked different tell them apart\./.test(t.text)) fail("found10: no \"Same name, so check the phone and the Google account\" line");
+      if (!/In chriskapranos2@gmail\.com · Google ID 3109515908223837152/.test(t.text)) fail("found10: the confirmation doesn't repeat the account and Google's ID for the listing");
+      if (!/When you press Remove/.test(f.text) || !/Google permanently deletes the red listing, the one with \(512\) 555-0199, from chriskapranos@gmail\.com\./.test(f.text) || !/The green one, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");
+      if (f.confirmHidden !== true || f.red !== "Yes, delete this listing" || !/Permanently delete this listing from Google\?/.test(f.text)) fail(`found: the confirmation isn't a hidden in-card "Remove … from Google?" with "Yes, remove it" (hidden=${f.confirmHidden}, ${f.red})`);
       if (f.alert) fail("found: the right account shows an error alert");
       const rm = R2.removed;
       if (!rm.done || !/The \(512\) 555-0199 listing was removed/.test(rm.title) || rm.label !== "Nothing needed from you" || !/Removed from your Google account/.test(rm.text)
         || rm.tl.join("|") !== "Removed from your account|Google drops it from Maps|Your photos and profile edits start") fail(`removed: not the green "Removed from your Google account" with the 3-step timeline (${rm.label} · ${rm.tl.join("|")})`);
       const rf = R2.rmfail;
+      if (!/Keeping\s*\(512\) 555-0142/.test(rf.text) || !/Removing\s*\(512\) 555-0199/.test(rf.text)) fail("rmfail: the refused removal doesn't show what's removed and what's kept");
       if (!rf.alert || rf.alert.warn || rf.alert.head !== "Google didn't remove it" || !/is still there\. Nothing was changed\. RGA has been told/.test(rf.text) || rf.google !== "Sign in again and retry") fail(`rmfail: a removal Google refused isn't the red "Google didn't remove it" with a retry (${rf.alert && rf.alert.head})`);
     }
     // v8 (approved duplicate_wrong_account_v8): the wrong account is a RED alert that names BOTH accounts, the used one in full
