@@ -209,6 +209,12 @@ for (const [re, which] of [
 if (!/\.portal-button\.is-busy::before \{[^}]*animation: portal-spin/.test(read("portal/portal.css"))) fail("the busy button has no spinning ring");
 if (!/maps_url: c\.google_place_id \? `https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:/.test(code("netlify/functions/portal-deliverables.js"))) fail("the Keep listing's Maps link isn't by place id (the stored Maps URL opened a blank page)");
 
+// "Sign in with Google" is the mockup's white button with Google's mark (Chris 2026-10-13: "i like the sign in with
+// google from mockup"), not a blue primary; and its spinner replaces the mark, so the two never sit side by side
+if (!/<button type="button" class="portal-button dl-go dl-google" data-dup-owner-signin>\$\{GOOGLE_G\}/.test(dc)) fail("\"Sign in with Google\" isn't the approved white button with Google's mark");
+if (!/const GOOGLE_G = `<svg[^`]*fill="#EA4335"[^`]*fill="#4285F4"[^`]*fill="#FBBC05"[^`]*fill="#34A853"/.test(portal)) fail("Google's four-colour mark is gone from the sign-in button");
+if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal.css"))) fail("while signing in, the spinner and Google's mark show side by side");
+
 // the way back ("is there a way to go back"): Change my answer, until something is removed; it cancels a pending removal
 {
   const pd = code("netlify/functions/portal-deliverables.js");

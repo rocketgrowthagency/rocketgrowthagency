@@ -173,5 +173,26 @@
   "body: JSON.stringify({ status: \"expired\", token_enc: null, detail: \"The client changed their answer.\" }) });",
   "body: JSON.stringify({ detail: \"The client changed their answer.\" }) });",
   1
+ ],
+ [
+  "Sign in with Google goes back to a blue button",
+  "portal",
+  "<button type=\"button\" class=\"portal-button dl-go dl-google\" data-dup-owner-signin>${GOOGLE_G}",
+  "<button type=\"button\" class=\"portal-button is-primary dl-go\" data-dup-owner-signin>",
+  1
+ ],
+ [
+  "Google's mark loses its colours",
+  "portal",
+  "<path fill=\"#FBBC05\"",
+  "<path fill=\"#2457e6\"",
+  1
+ ],
+ [
+  "the spinner sits beside Google's mark",
+  "portalcss",
+  ".dl-google.is-busy .dl-g { display: none; }",
+  ".dl-google.is-busy .dl-g { opacity: 1; }",
+  1
  ]
 ]

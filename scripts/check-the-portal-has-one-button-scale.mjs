@@ -151,6 +151,7 @@ if (checked < FAMILIES.length - 2) {
 // header is a full-width row, not a button. Adding to this list is a decision, not a shortcut.
 const EXEMPT = {
   "fq-undo": "text link (padding:0)",
+  "dl-back": "text link (padding:0) — the duplicate card's \"Change my answer\" (2026-10-13)",
   "how-ask": "text link (padding:0)",
   "pm-link": "text link (padding:0)",
   "ap-head": "disclosure header — a full-width row, not a button",
