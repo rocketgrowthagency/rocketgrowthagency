@@ -77,13 +77,6 @@
   1
  ],
  [
-  "the countdown label splits into two flex items",
-  "loginjs",
-  "els.resend.innerHTML = `<span>Send a new link in <span class=\"si-num\">${Math.floor(left / 60)}:${String(left % 60).padStart(2, \"0\")}</span></span>`;",
-  "els.resend.innerHTML = `Send a new link in <span class=\"si-num\">${Math.floor(left / 60)}:${String(left % 60).padStart(2, \"0\")}</span>`;",
-  1
- ],
- [
   "the logo's rocket is redrawn",
   "loginhtml",
   "translate(17.5 17.5) scale(2.7)",
@@ -140,17 +133,52 @@
   1
  ],
  [
-  "the subject wraps again",
-  "portalcss",
-  ".si-what div { display: contents; }",
-  ".si-what div { display: grid; grid-template-columns: 66px 1fr; gap: 10px; }",
-  1
- ],
- [
   "the portal's no-access link drops &reason=no_access",
   "portal",
   "\"/client-login/?switch=1&reason=no_access\",",
   "\"/client-login/?switch=1\",",
+  1
+ ],
+ [
+  "a resend gives no confirmation",
+  "loginjs",
+  "  els.resent.hidden = !resent;",
+  "  els.resent.hidden = true;",
+  1
+ ],
+ [
+  "a long address breaks mid-word",
+  "loginjs",
+  "  els.sentTo.replaceChildren(email.slice(0, at + 1), document.createElement(\"wbr\"), email.slice(at + 1));",
+  "  els.sentTo.textContent = email;",
+  1
+ ],
+ [
+  "the resend link shows before the wait is over",
+  "loginjs",
+  "    if (left <= 0) {\n      stopCountdown();\n      els.resendLine",
+  "    if (true) {\n      stopCountdown();\n      els.resendLine",
+  1
+ ],
+ [
+  "the inbox row's preview stops matching the real email",
+  "loginhtml",
+  "<span>\u2014 Client Portal Your secure sign-in link</span>",
+  "<span>\u2014 Sign in to your portal</span>",
+  1
+ ],
+ [
+  "a second button comes back (a disabled resend)",
+  "loginhtml",
+  "        <p class=\"si-quiet\">Not there?",
+  "        <button class=\"si-btn\" type=\"button\" disabled>Send a new link</button>\n        <p class=\"si-quiet\">Not there?",
+  1
+ ],
+ [
+  "Change leaves the address",
+  "loginhtml",
+  "<div class=\"si-chip\"><b id=\"siSentTo\"></b><button type=\"button\" class=\"si-link\" id=\"siChangeEmail\">Change</button></div>",
+  "<div class=\"si-chip\"><b id=\"siSentTo\"></b></div><button type=\"button\" class=\"si-link\" id=\"siChangeEmail\">Change</button>",
   1
  ]
 ]

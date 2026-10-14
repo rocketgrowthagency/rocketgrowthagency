@@ -82,6 +82,10 @@ async function open(query = "", { otp = "ok", session = null, width = 1280, otpD
       if (req.method() === "OPTIONS") return req.respond({ status: 204, headers: cors() });
       calls.otp.push(JSON.parse(req.postData() || "{}"));
       if (otpDelay) await new Promise((r) => setTimeout(r, otpDelay));
+      // "waitonce:N" = Supabase's real per-address limit: the first request is refused for N seconds, the next one sends
+      if (otp.startsWith("waitonce:")) return calls.otp.length === 1
+        ? req.respond({ status: 429, headers: cors(), contentType: "application/json", body: JSON.stringify({ code: "over_email_send_rate_limit", msg: `For security purposes, you can only request this after ${otp.slice(9)} seconds.` }) })
+        : req.respond({ status: 200, headers: cors(), contentType: "application/json", body: "{}" });
       if (otp === "ok") return req.respond({ status: 200, headers: cors(), contentType: "application/json", body: "{}" });
       if (otp.startsWith("wait:")) return req.respond({ status: 429, headers: cors(), contentType: "application/json", body: JSON.stringify({ code: "over_email_send_rate_limit", msg: `For security purposes, you can only request this after ${otp.slice(5)} seconds.` }) });
       return req.respond({ status: 500, headers: cors(), contentType: "application/json", body: JSON.stringify({ code: "unexpected_failure", msg: "Error sending magic link email" }) });
@@ -183,12 +187,17 @@ try {
     ok(await visible(page, "#siSentView") && !(await visible(page, "#siFormView")), "the card is now \"Check your email\" (the form is gone)");
     await shot(page, "sent");
     ok(await text(page, "#siSentTo") === "owner@gmail.com", "it names the address");
-    const sent = await text(page, "#siSentView");
-    ok(await page.evaluate(() => { const d = [...document.querySelectorAll(".si-what dd")][1]; return d.getClientRects().length === 1 && d.getBoundingClientRect().height < 22; }), "the subject fits on one line");
-    ok(/^Send a new link in \d:\d\d$/.test((await text(page, "#siResend")).replace(/\s+/g, " ")) && await page.evaluate(() => document.querySelector("#siResend").childNodes.length === 1), "the countdown is one label (no flex gap before the time)");
+    const sent = (await text(page, "#siSentView")).replace(/\u00a0/g, " "); // a non-breaking space still reads as a space
+    // v4 (approved client_login_sent_v4, 2026-10-14): the email itself as an inbox row; one action; Change beside the address
+    ok(await page.evaluate(() => { const r = document.querySelector("#siSentView .si-row"); return !!r && r.querySelector(".si-row-who")?.textContent === "Rocket Growth Agency" && /^Your Rocket Growth Agency sign-in link/.test(r.querySelector(".si-row-subj")?.textContent || "") && /Client Portal Your secure sign-in link/.test(r.textContent); }), "the inbox row shows the email itself: our name, the real subject, the template's real opening");
+    ok(await page.evaluate(() => !document.querySelector("#siSentView .si-what, #siSentView .si-badge") && document.querySelectorAll("#siSentView .si-btn:not([hidden])").length === 1), "one action on the screen (no From/Subject box, no envelope tile, no second button)");
+    ok(await page.evaluate(() => !!document.querySelector(".si-chip #siSentTo") && document.querySelector(".si-chip #siChangeEmail")?.textContent.trim() === "Change"), "\"Change\" sits beside the address");
+    ok(await page.evaluate(() => { const t = document.querySelector("#siSentTo"); const w = t.querySelector("wbr"); return !!w && w.previousSibling?.textContent.endsWith("@") && getComputedStyle(t).overflowWrap !== "anywhere"; }), "a long address wraps after the \"@\", never mid-word");
+    ok(!(await visible(page, "#siResent")), "the first send shows no \"sent again\" note");
+    ok(/^You can send a new link in \d:\d\d$/.test((await text(page, "#siResendLine")).replace(/\s+/g, " ")) && !(await page.$("#siResend")), `resend waits as a quiet line with nothing to press (${await text(page, "#siResendLine")})`);
     ok(sent.includes("Your Rocket Growth Agency sign-in link") && sent.includes("1 hour") && sent.includes("Rocket Growth Agency") && /spam/i.test(sent), "it gives the subject, the sender, \"1 hour\" and the spam hint");
     ok(await visible(page, "#siOpenMail") && (await text(page, "#siOpenMail")) === "Open Gmail" && (await page.$eval("#siOpenMail", (a) => a.href)).startsWith("https://mail.google.com/"), "\"Open Gmail\" opens Gmail");
-    ok(await page.evaluate(() => { const b = document.querySelector("#siResend"); return b.disabled && /Send a new link in 0:5\d|1:00/.test(b.textContent); }), `resend waits, counting down (${await text(page, "#siResend")})`);
+    ok(/in (0:5\d|1:00)$/.test(await text(page, "#siResendLine")), `…counting down from 1:00 (${await text(page, "#siResendLine")})`);
     await page.click("#siChangeEmail"); await settle();
     ok(await visible(page, "#siFormView") && await page.$eval("#clientLoginEmail", (e) => e.value) === "", "\"Use a different email\" goes back to an empty field");
     await page.close();
@@ -204,15 +213,17 @@ try {
   // ── 4. a link already sent, and a real failure ────────────────────────────────────────────────────
   console.log("\n4 · 429 is a link already sent; any other failure stays and says what to do");
   await run(async () => {
-    const { page, calls } = await open("", { otp: "wait:2" });
+    const { page, calls } = await open("", { otp: "waitonce:2" });
     await typeEmail(page, "owner@lonestardrain.com");
     await page.click("#clientLoginButton"); await settle(400);
-    ok(await visible(page, "#siSentView") && /0:0[12]/.test(await text(page, "#siResend")), `429 "after 2 seconds" → "Check your email", counting from 0:02 (${await text(page, "#siResend")})`);
+    ok(await visible(page, "#siSentView") && /0:0[12]/.test(await text(page, "#siResendLine")), `429 "after 2 seconds" → "Check your email", counting from 0:02 (${await text(page, "#siResendLine")})`);
     await settle(2600);
-    ok(await page.evaluate(() => { const b = document.querySelector("#siResend"); return !b.disabled && b.textContent.trim() === "Send a new link"; }), "at zero, \"Send a new link\" opens");
+    ok(await page.evaluate(() => { const b = document.querySelector("#siResend"); return !!b && b.textContent.trim() === "Send a new link" && /^Still nothing\?/.test(document.querySelector("#siResendLine").textContent.trim()); }), "at zero, \"Still nothing? Send a new link\" appears");
     await page.click("#siResend"); await settle(400);
     ok(calls.otp.length === 2 && calls.otp[1].email === "owner@lonestardrain.com", "resend sends to the same address");
-    ok(await page.evaluate(() => document.querySelector("#siResend").disabled), "and the countdown starts again");
+    ok(await page.evaluate(() => !document.querySelector("#siResend")) && /You can send a new link in/.test(await text(page, "#siResendLine")), "and the countdown starts again");
+    await shot(page, "resent");
+    ok(await visible(page, "#siResent") && /^New link sent at \d{1,2}:\d\d\s?(AM|PM)?\. Use the newest email\.$/i.test(await text(page, "#siResent")), `a resend confirms itself with the time (${await text(page, "#siResent")})`);
     await page.close();
   });
   await run(async () => {
@@ -277,6 +288,15 @@ try {
 
   // ── 7. phone width ───────────────────────────────────────────────────────────────────────────────
   console.log("\n7 · phone width");
+  await run(async () => {
+    const { page } = await open("", { width: 375 });
+    await typeEmail(page, "frontdesk.scheduling@granitestatehomecleaning.com");
+    await page.click("#clientLoginButton"); await settle(500);
+    await shot(page, "phone-long");
+    const g = await page.evaluate(() => { const t = document.querySelector("#siSentTo"); const r = document.createRange(); r.selectNodeContents(t); const rows = [...new Set([...r.getClientRects()].map((x) => Math.round(x.top)))].length; return { sw: document.documentElement.scrollWidth, rows, first: t.firstChild.textContent }; });
+    ok(g.sw <= 375 && g.rows === 2 && g.first.endsWith("@"), `375px, a long business address: two lines split at the "@", no sideways scroll (rows ${g.rows}, scroll ${g.sw})`);
+    await page.close();
+  });
   for (const q of ["", "?expired=1"]) {
     const { page } = await open(q, { width: 375 });
     const g = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, card: (({ left, right }) => ({ left, right }))(document.querySelector(".si-card").getBoundingClientRect()) }));
