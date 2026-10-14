@@ -105,17 +105,31 @@
   1
  ],
  [
-  "the card shows only the second listing",
+  "the duplicate falls back to the generic card",
   "portal",
-  "    const rows = keptRow ? `<div class=\"ap-two\">${keptRow}${dupeRows}</div>` : dupeRows;",
-  "    const rows = dupeRows;",
+  "    if (a.key === \"m1.audit.gbp_duplicate\" && (a.details || []).length) return dupCard(a);\n",
+  "",
   1
  ],
  [
-  "the question is not counted as their step",
+  "the question loses the Keep vs Remove pair",
   "portal",
-  "      if (st.answerable && !a.answer) { n += 1; return \"\"; }",
-  "      if (st.answerable && !a.answer) return \"\";",
+  "    ${pair(keepCard(), dropCard())}\n    <div class=\"dl-ask\"",
+  "    <div class=\"dl-ask\"",
+  1
+ ],
+ [
+  "a removed duplicate stays amber",
+  "portal",
+  "      { done: true, stateLabel: \"Waits on Google\" });",
+  "      {});",
+  1
+ ],
+ [
+  "Remove shows before the listing is found",
+  "portal",
+  "    if (r && r.status === \"found\") {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
+  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
   1
  ]
 ]

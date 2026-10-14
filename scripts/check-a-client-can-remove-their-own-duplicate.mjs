@@ -174,14 +174,21 @@ if (!/enable row level security/i.test(sql) || /create policy/i.test(sql)) fail(
 const sum = R.summaryOf({ status: "found", account_email: "chris.owner@gmail.com", token_enc: "x", title: "t" });
 if ("token_enc" in sum || JSON.stringify(sum).includes("chris.owner@")) fail("the client-readable summary carries the token or the full email");
 const portal = code("portal/portal.js");
-if (!/data-dup-remove>Remove the second listing<\/button>/.test(portal)) fail("the portal has no Remove button for a found duplicate");
-if (!/r\.status === "found"\) \{[\s\S]{0,600}data-dup-remove/.test(portal)) fail("the Remove button can show in a state other than found");
-if (!/\(!a\.answer && \(a\.owner_hint \|\| \(a\.details \|\| \[\]\)\.length\)\)/.test(portal)) fail("a client whose duplicate's owner we couldn't read is never asked if it's theirs");
+// the card (approved duplicate_listing_card_v2): routed to dupCard; Remove only when found; the question asked without the masked owner
+if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(a\.details \|\| \[\]\)\.length\) return dupCard\(a\);/.test(portal)) fail("the duplicate isn't drawn by its own card (dupCard)");
+const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
+if (!dc) fail("dupCard is gone (re-read this gate)");
+if ((dc.match(/data-dup-remove/g) || []).length !== 1 || !/if \(r && r\.status === "found"\) \{[\s\S]{0,500}data-dup-remove/.test(dc)) fail("the Remove button can show in a state other than found");
+if (!/<p class="dl-q">Did you \(or someone at your business\) create the second one\?<\/p>/.test(dc)) fail("a client is never asked if the second listing is theirs");
+for (const [re, msg] of [
+  [/\$\{pair\(keepCard\(\), dropCard\(\)\)\}\s*<div class="dl-ask"/, "the question isn't preceded by Keep vs Remove side by side (the approved card)"],
+  [/You sign in with the Google account that made it, then remove it here in one tap\./, "\"Yes, it's ours\" doesn't say what happens next"],
+  [/We ask Google to remove it\. Nothing else is needed from you\./, "\"No, it isn't\" doesn't say what happens next"],
+  [/\{ done: true, stateLabel: "Waits on Google" \}/, "a removed duplicate doesn't turn into the green done card"],
+]) if (!re.test(dc)) fail(msg);
 
 // the card shows BOTH listings (the approved mockup), and the question counts as the client's step
-if (!/const rows = keptRow \? `<div class="ap-two">\$\{keptRow\}\$\{dupeRows\}<\/div>` : dupeRows;/.test(portal)) fail("the duplicate card doesn't show the listing we keep beside the second one (the approved mockup shows both)");
 if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
-if (!/if \(st\.answerable && !a\.answer\) \{ n \+= 1; return ""; \}/.test(portal)) fail("\"nothing needed from you\" can sit right above the question the client has to answer");
 
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");
