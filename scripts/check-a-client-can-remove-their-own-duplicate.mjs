@@ -209,7 +209,8 @@ try {
   {
     const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", workspace_id: "w1" }], client_portal_access: [{ portal_email: "owner@lonestar.test", client_id: CID }],
       client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", own_listing: { reviews: 0 }, duplicates: [{ place_id: "ChIJ-dupe", phone: "(424) 396-8499", reviews: 0 }], client_answer: { answer: "mine" } } } } } }],
-      client_listing_removals: [{ id: "r1", client_id: CID, status: "found", token_enc: "x" }] };
+      client_listing_removals: [{ id: "r1", client_id: CID, status: "found", token_enc: "x" }],
+      client_google_oauth: [{ client_id: CID, google_account_email: "hello@lonestar.test" }] };
     const told = [];
     const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
     const real = globalThis.fetch;
@@ -236,6 +237,7 @@ try {
       if (a1.statusCode !== 409) fail(`the question can still be answered while RGA decides (${a1.statusCode})`);
       const listed = JSON.parse((await call({})).body || "{}");
       const act = (listed.actions || []).find((x) => x.key === "m1.audit.gbp_duplicate") || {};
+      if (act.kept?.account !== "hello@lonestar.test") fail(`the portal isn't given the Google account the client connected ("Managed by", duplicate_listing_accounts_v6): ${act.kept?.account}`);
       if (act.waits !== true || act.keep_request?.note !== "That's the one with our real address" || (act.details || [])[0]?.label !== "the (424) 396-8499 listing") fail(`the portal isn't told the card waits on RGA, with the request and the listing's name (${JSON.stringify({ waits: act.waits, req: act.keep_request, label: (act.details || [])[0]?.label })})`);
       const c1 = await call({ action_keep_request: "cancel" });
       if (c1.statusCode !== 200 || db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].outcome_data.keep_request) fail("\"Cancel my request\" doesn't cancel it");
@@ -471,6 +473,11 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
     handled:  mk(z, zd, null, { answer: "unsure" }),
     removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
+    // v6 (approved duplicate_listing_accounts_v6): which Google account goes with each listing
+    accts:    mk(z, zd, null, { owner_hint: "ch…@gmail.com", kept: { ...kept, account: "hello@lonestar.test" } }),
+    acctsIn:  mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", kept: { ...kept, account: "hello@lonestar.test" } }),
+    noHint:   mk(z, zd, null, { answer: "mine", kept: { ...kept, account: "hello@lonestar.test" } }),
+    sameAcct: mk(z, { ...zd, in_connected_account: null }, null, { answer: "mine", kept: { ...kept, account: "hello@lonestar.test" } }),
   };
   const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
   try {
@@ -522,11 +529,17 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (!/We checked your request/.test(R2.replied.text) || !/It's the one in your Google account\./.test(R2.replied.text)) fail("RGA's answer isn't shown above the choice");
     // 3 · 4 · sign in, remove — the listing named, the kept one in view, a way back
     for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== `Remove ${L}` || !/Keeping \(512\) 555-0142\. It isn't touched\./.test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
-    if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Sign in as ch…@gmail.com" || !/Not sure which\?/.test(R2.signin.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
+    if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Sign in as ch…@gmail.com" || !/Use another account/.test(R2.signin.text) || !/Not sure which\?/.test(R2.noHint.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
     if (R2.found.eyebrow !== "Step 4 of 4" || R2.found.red !== "Remove (512) 555-0199" || !/Signed in as chriskapranos@gmail\.com\. It manages this listing\./.test(R2.found.text)) fail(`found: step 4's red button or signed-in line doesn't name what it does (${R2.found.red})`);
     if (!/That account doesn't manage the \(512\) 555-0199 listing\./.test(R2.notfound.text) || R2.notfound.google !== "Try another Google account" || /Not sure which\?/.test(R2.notfound.text)) fail("notfound: a wrong account doesn't say so with the listing's name");
     if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
     if (!R2.removed.done || !/The \(512\) 555-0199 listing was removed/.test(R2.removed.title)) fail("removed: the done card doesn't name the listing");
+    // v6: the accounts — ours in full, the second only as Google masks it, and never a claim we didn't measure
+    if (!/Managed by hello@lonestar\.test/.test(R2.accts.text) || !/Owner: ch…@gmail\.com \(Google shows part of it\)/.test(R2.accts.text)) fail("screen 1 doesn't show which account goes with each listing (Managed by … / Owner: ch…@gmail.com)");
+    if (/Managed by|Owner:/.test(R2.none.text)) fail("screen 1 shows an account it doesn't have (no connected email / no owner saved)");
+    if (!/Google shows the owner as ch…@gmail\.com\. It's probably not hello@lonestar\.test, the account you connected\./.test(R2.acctsIn.text) || R2.acctsIn.google !== "Sign in as ch…@gmail.com" || !/Use another account/.test(R2.acctsIn.text)) fail("screen 3 doesn't name the owner and the account it probably isn't");
+    if (/Google shows the owner/.test(R2.noHint.text) || !/It's probably not hello@lonestar\.test, the account you connected\./.test(R2.noHint.text)) fail("screen 3 without a saved owner either invents one or drops the \"probably not your connected account\" line");
+    if (/probably not/.test(R2.sameAcct.text)) fail("screen 3 says the owner probably isn't the connected account when that wasn't measured");
     // the clicks, through portal.js's own handlers: pick the other → the request; pick ours → Keep; Keep → screen 2; Back → screen 1
     const clicks = await page.evaluate(async (a) => {
       const host = document.getElementById("host");
@@ -558,6 +571,8 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   const ad = code("admin/admin.js");
   if (!/data-ol-keep="reviews">Keep the one with the reviews<\/button>/.test(ad) || !/data-ol-keep="ours">Keep ours and merge the other in<\/button>/.test(ad)) fail("admin step 11 has no choice when the second listing has more reviews");
   if (!/"reviews couldn't be read"/.test(ad) || !/"account not checked"/.test(ad)) fail("admin step 11 shows an unmeasured fact as a value");
+  // the row's code AND its place in step 11's card (a defined-but-unrendered row passed once)
+  if (!/data-ol-hint-save>Save<\/button>/.test(ad) || !/Open Google's owner page/.test(ad) || !/business\.google\.com\/arc\/p\//.test(ad) || !/\$\{decided\}\s*\$\{owner\}/.test(ad)) fail("admin step 11 has no \"who owns the second listing?\" row (link to Google's owner page + save)");
   if (/Remove · not in the connected account/.test(ad)) fail("admin step 11 still claims the second listing isn't in the connected account without measuring it");
 }
 

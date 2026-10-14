@@ -516,5 +516,40 @@
   "data-dup-request=\"${escapeAttribute(a.key)}\">${escapeHtml(`Ask RGA to keep ${dupId}`)}</button>",
   "data-dup-request=\"${escapeAttribute(a.key)}\">Send</button>",
   1
+ ],
+ [
+  "the card loses \"Managed by\"",
+  "portal",
+  "      ${value === \"ours\" && connected ? `<span class=\"dl-acct2\">",
+  "      ${false ? `<span class=\"dl-acct2\">",
+  1
+ ],
+ [
+  "the second listing shows an owner nobody saved",
+  "portal",
+  "      ${value === \"other\" && ownerHint ? `<span class=\"dl-acct2\">${person}Owner: <b>${escapeHtml(ownerHint)}</b>",
+  "      ${value === \"other\" ? `<span class=\"dl-acct2\">${person}Owner: <b>${escapeHtml(ownerHint || \"ch\u2026@gmail.com\")}</b>",
+  1
+ ],
+ [
+  "\"probably not your account\" without measuring it",
+  "portal",
+  "  const notConnected = Boolean(connected && d.in_connected_account === false);",
+  "  const notConnected = Boolean(connected);",
+  1
+ ],
+ [
+  "the portal isn't given the connected account",
+  "portaldeliv",
+  "        kept.account = em;",
+  "        kept.account = null;",
+  1
+ ],
+ [
+  "step 11 loses the owner row",
+  "admin",
+  "    ${why}${asked || decide}${answered}${decided}\n    ${owner}",
+  "    ${why}${asked || decide}${answered}${decided}",
+  1
  ]
 ]
