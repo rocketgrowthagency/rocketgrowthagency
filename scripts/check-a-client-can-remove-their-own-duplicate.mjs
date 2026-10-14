@@ -152,6 +152,14 @@ try {
     const out = await run(w, () => FLOW.removeNow(CID, "x"));
     if (out.code === 200 || w.db.client_listing_removals[0].status === "removed") fail("a removal Google didn't actually do reads as removed (it must be read back)");
   }
+  // 9 · the client changed their answer after the listing was found → the tap removes nothing
+  {
+    const w = world();
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    delete w.db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].outcome_data.client_answer;
+    const out = await run(w, () => FLOW.removeNow(CID, "x"));
+    if (w.deleted.length || out.code === 200) fail("a removal still happens after the client changed their answer");
+  }
 } catch (e) { console.error(`⚠️  INDETERMINATE — running the flow threw: ${e.stack || e.message}`); process.exit(2); }
 
 // ── 6 · the static rules ──
@@ -191,9 +199,23 @@ for (const [re, msg] of [
 if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
 
 // a pressed button that waits on the server shows a spinner (Chris: "a progress circle"), and the Keep link opens by place id
-if ((portal.match(/classList\.add\("is-busy"\)/g) || []).length < 3) fail("a pressed button on the duplicate card sits there with no sign it's working (answer, sign in, remove)");
+// each waiting button, by name (a count passed with one of them missing once a fourth was added)
+for (const [re, which] of [
+  [/box\.querySelectorAll\("button"\)\.forEach\(\(b\) => \{ b\.disabled = true; \}\);[\s\S]{0,200}btn\.classList\.add\("is-busy"\);/, "the answer buttons"],
+  [/closest\("\[data-dup-owner-signin\]"\);\s*if \(!b\) return;\s*b\.disabled = true; b\.classList\.add\("is-busy"\);/, "Sign in with Google"],
+  [/b\.textContent = "Removing…"; b\.classList\.add\("is-busy"\);/, "Remove the second listing"],
+  [/closest\("\[data-ap-clear\]"\);\s*if \(!b\) return;\s*b\.disabled = true; b\.classList\.add\("is-busy"\);/, "Change my answer"],
+]) if (!re.test(portal)) fail(`${which}: pressed, it sits there with no sign it's working (a spinner is required)`);
 if (!/\.portal-button\.is-busy::before \{[^}]*animation: portal-spin/.test(read("portal/portal.css"))) fail("the busy button has no spinning ring");
 if (!/maps_url: c\.google_place_id \? `https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:/.test(code("netlify/functions/portal-deliverables.js"))) fail("the Keep listing's Maps link isn't by place id (the stored Maps URL opened a blank page)");
+
+// the way back ("is there a way to go back"): Change my answer, until something is removed; it cancels a pending removal
+{
+  const pd = code("netlify/functions/portal-deliverables.js");
+  if (!/if \(answer === "clear"\) \{[\s\S]{0,200}status === "removed"\) return json\(409/.test(pd)) fail("\"Change my answer\" works even after the listing was removed");
+  if (!/client_listing_removals\?client_id=eq\.\$\{clientId\}&status=eq\.found`, \{ method: "PATCH",\s*body: JSON\.stringify\(\{ status: "expired", token_enc: null/.test(pd)) fail("changing the answer leaves a pending removal (and its sign-in) usable");
+  if (!/body: extra\.done \? body : \(a\.answer \? body \+ back : body\)/.test(portal) || !/data-ap-clear=/.test(portal)) fail("the duplicate card has no way back once answered");
+}
 
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");

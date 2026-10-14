@@ -142,8 +142,8 @@
  [
   "the busy ring is gone",
   "portalcss",
-  "  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: portal-spin .7s linear infinite; }",
-  "  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }",
+  ".portal-button.is-busy::before { content: \"\"; display: inline-block; width: 13px; height: 13px; margin-right: 8px; vertical-align: -2px;\n  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: portal-spin .7s linear infinite; }",
+  ".portal-button.is-busy::before { content: \"\"; display: inline-block; width: 13px; height: 13px; margin-right: 8px; vertical-align: -2px;\n  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }",
   1
  ],
  [
@@ -151,6 +151,27 @@
   "portaldeliv",
   "        maps_url: c.google_place_id ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(c.google_place_id)}`",
   "        maps_url: false ? ``",
+  1
+ ],
+ [
+  "the tap ignores a changed answer",
+  "listingflow",
+  "  if (ctx.tasks[R.DUP_STEP]?.outcome_data?.client_answer?.answer !== \"mine\")",
+  "  if (false)",
+  1
+ ],
+ [
+  "the way back is gone",
+  "portal",
+  "body: extra.done ? body : (a.answer ? body + back : body), ...extra });",
+  "body, ...extra });",
+  1
+ ],
+ [
+  "changing the answer keeps the pending removal",
+  "portaldeliv",
+  "body: JSON.stringify({ status: \"expired\", token_enc: null, detail: \"The client changed their answer.\" }) });",
+  "body: JSON.stringify({ detail: \"The client changed their answer.\" }) });",
   1
  ]
 ]
