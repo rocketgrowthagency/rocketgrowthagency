@@ -327,5 +327,19 @@
   "<button type=\"button\" class=\"admin-button\" data-ol-keep=\"reviews\">Keep the one with the reviews</button>",
   "<button type=\"button\" class=\"admin-button\">Keep the one with the reviews</button>",
   1
+ ],
+ [
+  "the re-check of a known duplicate drops its location",
+  "dupscan",
+  "        gps: alive.gps_coordinates && Number.isFinite(alive.gps_coordinates.latitude) ?",
+  "        gps: false ?",
+  1
+ ],
+ [
+  "the re-check of a known duplicate drops its reviews",
+  "dupscan",
+  "      if (alive && typeof alive === \"object\") stillThere.push({ ...d, ...reviewsFrom(alive),",
+  "      if (alive && typeof alive === \"object\") stillThere.push({ ...d,",
+  1
  ]
 ]

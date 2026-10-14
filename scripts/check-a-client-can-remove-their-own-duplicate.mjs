@@ -256,6 +256,29 @@ try {
       }
     } finally { globalThis.fetch = real; }
   }
+  // 11b · a KNOWN duplicate the name search no longer returns is re-checked by id: that path must save the same facts
+  {
+    const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", google_place_id: "ChIJ-kept", primary_market: null,
+        gbp_url: "https://www.google.com/maps/place/x/@34.0,-118.4,14z/data=!3m1!4b1!4m6!3m5!1s0xccc:0xddd!8m2" }],
+      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "ChIJ-dupe", data_id: "0xaaa:0xbbb", title: "Rocket Growth Agency" }] } } } } }],
+      client_google_oauth: [] };
+    const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
+    const real = globalThis.fetch;
+    globalThis.fetch = async (url, init = {}) => { const u = new URL(String(url));
+      if (u.hostname === "serpapi.com") return u.searchParams.get("type") === "place"
+        ? J({ place_results: { place_id: "ChIJ-dupe", title: "Rocket Growth Agency", reviews: 7, rating: 4.2, gps_coordinates: { latitude: 34.06, longitude: -118.46 } } })
+        : J({ local_results: [{ title: "Rocket Growth Agency", data_id: "0xccc:0xddd", place_id: "ChIJ-kept", reviews: 3, rating: 5 }] });
+      const t = u.pathname.split("/").pop(); const q = [...u.searchParams].filter(([, v]) => /^eq\./.test(v)); const rows = (db[t] || []).filter((r) => q.every(([k, v]) => String(r[k]) === v.slice(3)));
+      if ((init.method || "GET") === "PATCH") rows.forEach((r) => Object.assign(r, JSON.parse(init.body))); return J(rows); };
+    try {
+      const scan = req("./gbp-duplicate-scan.js");
+      await scan.handler({ httpMethod: "POST", headers: { "x-internal-secret": "gate-secret" }, body: JSON.stringify({ client_id: CID }) });
+      const od = db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].outcome_data;
+      const d = (od.duplicates || [])[0] || {};
+      if (od.verdict !== "duplicate" || d.reviews !== 7 || d.rating !== 4.2 || !d.gps || d.gps.lat !== 34.06 || od.own_listing?.reviews !== 3 || od.keep?.case !== "flip")
+        fail(`the re-check of a known duplicate doesn't save its reviews and location (${JSON.stringify({ v: od.verdict, r: d.reviews, gps: d.gps, own: od.own_listing?.reviews, k: od.keep?.case })})`);
+    } finally { globalThis.fetch = real; }
+  }
   // a case the rule already decides is refused: the endpoint can't move a client's listing on a whim
   {
     const db = { clients: [{ id: CID, workspace_id: "w1", google_place_id: "ChIJ-kept" }], profiles: [{ id: "u1", workspace_id: "w1" }],
