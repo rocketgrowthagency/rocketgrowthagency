@@ -254,8 +254,22 @@
  [
   "the loading screen goes back to the old words",
   "portalindex",
-  "<h2>Loading your portal</h2><p>Checking your sign-in…</p>",
-  "<h2>Loading portal</h2><p>Checking your secure session and access.</p>",
+  "<h2>Loading your portal</h2><p><span class=\"ps-when-out\">Checking your sign-in…</span>",
+  "<h2>Loading portal</h2><p><span class=\"ps-when-out\">Checking your secure session and access.</span>",
+  1
+ ],
+ [
+  "the signed-in loading panel shrinks back to a small card",
+  "portalcss",
+  "body[data-portal-auth=\"in\"] #portalLoadingPanel .ps-card { max-width: none; min-height: 360px;",
+  "body[data-portal-auth=\"in\"] #portalLoadingPanel .ps-card { max-width: 420px; min-height: 360px;",
+  1
+ ],
+ [
+  "the signed-in loading panel still says \"Checking your sign-in\"",
+  "portalcss",
+  "body[data-portal-auth=\"in\"] #portalLoadingPanel .ps-when-in { display: inline; }",
+  "body[data-portal-auth=\"in\"] #portalLoadingPanel .ps-when-in { display: none; }",
   1
  ]
 ]

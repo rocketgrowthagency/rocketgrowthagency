@@ -391,6 +391,17 @@ try {
     await shot(page2, "portal-loading");
     ok(r.h === "Loading your portal" && r.logo && r.card && r.side === "none", `loading: the sign-in card with the logo, no menu (${r.h})`);
     ok(!/Checking your secure session and access/.test(r.text), "…not the old \"Checking your secure session and access\"");
+    // once signed in (the menu shows): the same panel fills the space beside it (approved portal_loading_full_width_v1)
+    const inn = await page2.evaluate(() => {
+      document.body.dataset.portalAuth = "in";
+      const card = document.querySelector("#portalLoadingPanel .ps-card"), main = document.querySelector(".portal-main");
+      const vis = (el) => !!el && getComputedStyle(el).display !== "none";
+      return { cw: Math.round(card.getBoundingClientRect().width), mw: Math.round(main.getBoundingClientRect().width), logo: vis(document.querySelector("#portalLoadingPanel .ps-logo")),
+        text: document.querySelector("#portalLoadingPanel .ps-hd p").innerText.trim(), side: getComputedStyle(document.querySelector(".portal-side")).display };
+    });
+    await shot(page2, "portal-loading-in");
+    ok(inn.cw >= inn.mw - 4 && inn.side !== "none" && !inn.logo, `signed in, loading: the panel fills the space beside the menu (${inn.cw}px of ${inn.mw}), no second logo`);
+    ok(inn.text === "Getting your steps, rankings and reports…", `…and says what's loading ("${inn.text}")`);
     await page.close(); await page2.close();
   });
 
