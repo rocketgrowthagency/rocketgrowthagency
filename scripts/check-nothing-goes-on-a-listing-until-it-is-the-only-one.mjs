@@ -19,7 +19,7 @@
 //   6. Admin step 39: paused → the pause band and every Send disabled; open → Send enabled.
 //   7. The nightly re-check asks every client without a real answer, and tells a client "it's gone" ONLY when a
 //      duplicate it had checks clean.
-//   8. The portal never asks the client to do a waiting step: "Waits on your Google listing", the form disabled, never
+//   8. The portal never asks the client to do a waiting step: "Waits on your Business Profile", the form disabled, never
 //      the NEXT step; the projection carries `waitsOnListing`; both portal save endpoints refuse with a 409.
 // exit 0 = nothing goes on a listing until it is the only one · 1 = something can · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
@@ -115,7 +115,8 @@ const shape = P.buildShotList({ category: "Plumber", storefront: false });
 const shut = pctx.render({ clientForm: "photo_upload" }, { draft_shape: shape }, [], "c1", "", pctx.ls({ [DUP]: { outcome_data: { verdict: "duplicate", duplicates: [{}] } } }));
 const open = pctx.render({ clientForm: "photo_upload" }, { draft_shape: shape }, [], "c1", "", pctx.ls({ [DUP]: { outcome_data: { verdict: "clean" } } }));
 const inputs = (h) => (h.match(/<input[^>]*type="file"[^>]*>/g) || []);
-if (!/class="pm-lock"/.test(shut) || !/two Google listings/.test(shut)) fail("a locked step 7 doesn't say why");
+// v11 (approved duplicate_business_profile_wording_v11): the client reads "Business Profile", Google's own name
+if (!/class="pm-lock"/.test(shut) || !/two Google Business Profiles/.test(shut)) fail("a locked step 7 doesn't say why");
 if (!inputs(shut).length || inputs(shut).some((i) => !/\bdisabled\b/.test(i))) fail("a locked step 7 still lets the client pick a photo");
 if (!/<div class="pm-batch" hidden>/.test(shut)) fail("a locked step 7 still offers the batch upload");
 if (!/The meeting|data-slot="1"/.test(shut) || (shut.match(/data-slot="/g) || []).length !== 20) fail("a locked step 7 hides the shot list — it should stay visible to plan");
@@ -185,13 +186,13 @@ else {
   const hrs = { id: "m1.gbp.hours_attributes", waitsOnListing: true };
   if (!wctx.w(hrs, "pending", dupT) || !wctx.w(hrs, "pending", {})) fail("a portal listing step doesn't wait on a duplicate / an unchecked listing");
   if (wctx.w(hrs, "pending", cleanT) || wctx.w(hrs, "done", dupT) || wctx.w({ id: "x" }, "pending", dupT)) fail("a portal step waits when it shouldn't (one listing, already done, or not a listing step)");
-  if (!/two Google listings/.test(wctx.h(wctx.ls(dupT))) || !/data-photo-lock-approvals/.test(wctx.h(wctx.ls(dupT)))) fail("a waiting portal step doesn't say why or offer the way out");
+  if (!/two Google Business Profiles/.test(wctx.h(wctx.ls(dupT))) || !/data-photo-lock-approvals/.test(wctx.h(wctx.ls(dupT)))) fail("a waiting portal step doesn't say why or offer the way out");
 }
 const pcode = code("portal/portal.js");
 // 🔑 2026-10-12: the same lines now also carry the RGA wait (check-a-client-step-waits-on-what-it-needs); this pins the
 // listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
 if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
-if (!/: listingWait \? \{ text: "Waits on your Google listing", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Google listing\"");
+if (!/: listingWait \? \{ text: "Waits on your Business Profile", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\"");
 if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)
   || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return (?:!!rowOwnWaits\(step, status, tasks\) \|\| )?rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
 if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");

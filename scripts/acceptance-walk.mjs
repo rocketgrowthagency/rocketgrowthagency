@@ -430,7 +430,7 @@ async function portalPass() {
 //   ready / locked.
 // Portal: one pill per row (portal.js ~4290): .pm-pill.done "Done" · .you "Your turn" ·
 //   .rga "RGA is doing it" · .auto "Detected automatically" · .flag "You flagged this" ·
-//   .wait "Waits on your Google listing" (one_google_listing_first_v1, live 10-13);
+//   .wait "Waits on your Business Profile" (one_google_listing_first_v1; wording v11, 10-14);
 //   `.is-now` marks the client's next action.
 function adminDoneness(a) {
   if (!a) return null;

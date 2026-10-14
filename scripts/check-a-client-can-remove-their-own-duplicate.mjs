@@ -251,9 +251,11 @@ try {
   // 10c · the client's request, through the real portal endpoint: saved, RGA told, the question paused, a pending removal cancelled
   {
     const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", workspace_id: "w1" }], client_portal_access: [{ portal_email: "owner@lonestar.test", client_id: CID }],
-      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", own_listing: { reviews: 0 }, duplicates: [{ place_id: "ChIJ-dupe", phone: "(424) 396-8499", reviews: 0 }], client_answer: { answer: "mine" } } } } } }],
+      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", // 🔑 RGA's REAL shapes: our category is a LIST and our website carries tracking tags
+      own_listing: { reviews: 0, category: ["Internet marketing service", "Marketing agency"], website: "https://www.rocketgrowthagency.com/?utm_source=google&utm_medium=organic" },
+      duplicates: [{ place_id: "ChIJ-dupe", phone: "(424) 396-8499", reviews: 0, website: "https://rocketgrowthagency.com/?utm_source=x" }], client_answer: { answer: "mine" } } } } } }],
       client_listing_removals: [{ id: "r1", client_id: CID, status: "found", token_enc: "x" }],
-      client_google_oauth: [{ client_id: CID, google_account_email: "hello@lonestar.test" }] };
+      client_google_oauth: [{ client_id: CID, google_account_email: "hello@lonestar.test", gbp_location_id: "locations/3180931981562471861" }] };
     const told = [];
     const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
     const real = globalThis.fetch;
@@ -280,6 +282,9 @@ try {
       if (a1.statusCode !== 409) fail(`the question can still be answered while RGA decides (${a1.statusCode})`);
       const listed = JSON.parse((await call({})).body || "{}");
       const act = (listed.actions || []).find((x) => x.key === "m1.audit.gbp_duplicate") || {};
+      // v11: the kept profile's Google ID; and the client never receives our tracked URL or the raw category list
+      if (act.kept?.location_id !== "locations/3180931981562471861") fail(`the portal isn't given the kept profile's Google ID (${act.kept?.location_id})`);
+      if (act.own_listing?.website !== "rocketgrowthagency.com" || act.own_listing?.category !== "Internet marketing service" || (act.details || [])[0]?.website !== "rocketgrowthagency.com" || /utm_/.test(JSON.stringify(act))) fail(`the client is sent a website with our tracking tags, or a category list (${act.own_listing?.website} · ${JSON.stringify(act.own_listing?.category)})`);
       if (act.kept?.account !== "hello@lonestar.test") fail(`the portal isn't given the Google account the client connected ("Managed by", duplicate_listing_accounts_v6): ${act.kept?.account}`);
       if (act.waits !== true || act.keep_request?.note !== "That's the one with our real address" || (act.details || [])[0]?.label !== "the (424) 396-8499 listing") fail(`the portal isn't told the card waits on RGA, with the request and the listing's name (${JSON.stringify({ waits: act.waits, req: act.keep_request, label: (act.details || [])[0]?.label })})`);
       const c1 = await call({ action_keep_request: "cancel" });
@@ -452,7 +457,7 @@ const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
 if (!dc) fail("dupCard is gone (re-read this gate)");
 // v9: two buttons, "Remove …" (asks) and "Yes, remove it" (removes), and both only in the found state
 if ((dc.match(/data-dup-remove>/g) || []).length !== 1 || (dc.match(/data-dup-remove-ask>/g) || []).length !== 1
-  || !/if \(r && r\.status === "found"\) \{[\s\S]{0,8000}data-dup-remove-ask>[\s\S]{0,1500}data-dup-remove>Yes, delete this listing/.test(dc)) fail("the Remove button can show in a state other than found");
+  || !/if \(r && r\.status === "found"\) \{[\s\S]{0,8000}data-dup-remove-ask>[\s\S]{0,1500}data-dup-remove>Yes, delete it/.test(dc)) fail("the Remove button can show in a state other than found");
 // v5 (approved duplicate_listing_card_v5, 2026-10-14): one question per screen; the "who made it" answers are two
 if (!/data-dup-screen="choose"[\s\S]*data-dup-screen="who" hidden/.test(dc)) fail("the card isn't two screens (choose, then who made it)");
 if (!/data-ap-answer="mine">We did<\/button>/.test(dc) || !/data-ap-answer="unsure">Someone else, or I'm not sure<\/button>/.test(dc) || /data-ap-answer="not_mine"/.test(dc)) fail("\"Who made it?\" isn't the two approved answers (We did / Someone else, or I'm not sure)");
@@ -507,7 +512,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     /\n(document\.addEventListener\("click", async \(e\) => \{\n  const b = e\.target && e\.target\.closest && e\.target\.closest\("\[data-dup-remove\]"\);[\s\S]*?\n\}\);)/].map((re) => (re.exec(src) || [])[1] || "");
   if (v9.some((h) => !h)) fail("step 4's in-card confirmation handlers are gone (v9: Remove asks once, Cancel puts it back)");
   const stubs = `let _apClientId = "c", _apToken = "t"; window.__removeCalls = 0; const loadApprovals = async () => {}; const portalAlert = (m) => { window.__alert = m; };`;
-  const bundle = [g ? g[0] : "", stubs, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
+  const store = /const STORE_ICON = `[^`]*`;/.exec(src);
+  if (!store) fail("the removed screen's Business Profile icon (STORE_ICON) is gone");
+  const bundle = [g ? g[0] : "", store ? store[0] : "", stubs, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
   const { keepChoice, dupLabel } = req("./_gbp-duplicate.js");
   const kept = { name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", maps_url: "https://maps.example/k" };
   const mk = (own, dup, dec = null, extra = {}) => ({ key: "m1.audit.gbp_duplicate", kept, own_listing: own,
@@ -529,7 +536,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     found10:  mk({ ...z, title: "Lone Star Drain & Plumbing", category: ["Plumber", "Drainage service", "Water heater installation"], phone: "(512) 555-0142", address: null,
       website: "https://www.lonestar.test/?utm_source=google&utm_medium=organic&utm_campaign=gbp_listing" },
       { ...zd, website: "https://lonestar.test/", address: null }, null,
-      { answer: "mine", kept: { ...kept, account: "hello@lonestar.test" }, owner_removal: { status: "found", account: "chriskapranos2@gmail.com", location_id: "3109515908223837152" } }),
+      { answer: "mine", kept: { ...kept, account: "hello@lonestar.test", location_id: "locations/3180931981562471861" }, owner_removal: { status: "found", account: "chriskapranos2@gmail.com", location_id: "3109515908223837152" } }),
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
     // v8: two look-alike Gmails (RGA's real case), a different-looking one, the box not ticked, Google not sending the list
     lookalike: mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "not_found", account: "chriskapranos@gmail.com" } }),
@@ -606,7 +613,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     // 3 · 4 · sign in, remove — the listing named, the kept one in view, a way back
     // step 3 (v7) says it in a two-line box ("Keeping … · it isn't touched"); step 4 keeps the full box
     // v10: the title names the business ("Remove the duplicate … listing"); step 4 shows the kept one as a full card
-    const T = "Remove the duplicate Lone Star Drain & Plumbing listing";
+    // v11: the client reads "Business Profile" (Google's own name)
+    const T = "Remove your duplicate Business Profile";
     for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== T || !(k === "found" ? /✓ Keeping this one\s*Lone Star Drain & Plumbing[\s\S]*\(512\) 555-0142/ : /Keeping \(512\) 555-0142(\. It isn't touched\.| · it isn't touched)/).test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
     // v7 (approved duplicate_signin_step_v7): the owner as an account card, the hidden part as dots, one plain button,
     // and what happens next in three steps
@@ -616,24 +624,29 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     // v9 (approved duplicate_remove_confirm_v9): "Right account.", what Remove does, and ONE in-card confirmation
     {
       const f = R2.found;
-      if (f.eyebrow !== "Step 4 of 4" || f.ask !== "Remove this listing: (512) 555-0199" || !/Right account\. chriskapranos@gmail\.com manages this listing\./.test(f.text)) fail(`found: step 4 doesn't say "Right account." with the account, or its red button doesn't name what it does (${f.ask})`);
-      if (f.cards.map((c) => `${c.side}:${c.head}`).join("|") !== "rm:✕ Removing this listing|kp:✓ Keeping this one") fail(`found: step 4 isn't the two listing cards, red removing + green keeping (${f.cards.map((c) => c.head).join("|")})`);
+      if (f.eyebrow !== "Step 4 of 4" || f.ask !== "Remove this Business Profile: (512) 555-0199" || !/Right account\. chriskapranos@gmail\.com manages this Business Profile\./.test(f.text)) fail(`found: step 4 doesn't say "Right account." with the account, or its red button doesn't name what it does (${f.ask})`);
+      if (f.cards.map((c) => `${c.side}:${c.head}`).join("|") !== "rm:✕ Removing this Business Profile|kp:✓ Keeping this one") fail(`found: step 4 isn't the two listing cards, red removing + green keeping (${f.cards.map((c) => c.head).join("|")})`);
       // only measured facts: the kept side has no address/website/account read here, so those rows are LEFT OUT (never "none")
       if (f.cards[1] && f.cards[1].rows.join("|") !== "Phone=(512) 555-0142*|Reviews=No reviews|Our work=Your photos, posts and edits go here") fail(`found: the kept card shows a fact we didn't measure (${f.cards[1].rows.join("|")})`);
       // v10 with every fact: the rows that tell the two apart are marked, nothing else
       const t = R2.found10;
-      const want = { rm: "Phone=(512) 555-0199*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=chriskapranos2@gmail.com*|Google ID=3109515908223837152",
-        kp: "Phone=(512) 555-0142*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=hello@lonestar.test*|Our work=Your photos, posts and edits go here" };
+      const want = { rm: "Phone=(512) 555-0199*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=chriskapranos2@gmail.com*|Google ID=3109515908223837152*",
+        kp: "Phone=(512) 555-0142*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=hello@lonestar.test*|Google ID=3180931981562471861*|Our work=Your photos, posts and edits go here" };
       for (const c of t.cards) if (c.rows.join("|") !== want[c.side]) fail(`found10: the ${c.side === "rm" ? "removing" : "keeping"} card's rows aren't every fact with the differences marked (${c.rows.join("|")})`);
       if (/utm_|Drainage service/.test(t.text) || !/Keeping this one\s*Lone Star Drain & Plumbing\s*Plumber\s*☎/.test(t.text)) fail("found10: the kept card prints the whole category list or the website's tracking tags");
-      if (!/Same name, so check the phone and the Google account: the rows marked different tell them apart\./.test(t.text)) fail("found10: no \"Same name, so check the phone and the Google account\" line");
+      if (!/Same name, so check the phone, the Google account and the Google ID: the rows marked different tell them apart\./.test(t.text)) fail("found10: no \"Same name, so check the phone and the Google account\" line");
       if (!/In chriskapranos2@gmail\.com · Google ID 3109515908223837152/.test(t.text)) fail("found10: the confirmation doesn't repeat the account and Google's ID for the listing");
-      if (!/When you press Remove/.test(f.text) || !/Google permanently deletes the red listing, the one with \(512\) 555-0199, from chriskapranos@gmail\.com\./.test(f.text) || !/The green one, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");
-      if (f.confirmHidden !== true || f.red !== "Yes, delete this listing" || !/Permanently delete this listing from Google\?/.test(f.text)) fail(`found: the confirmation isn't a hidden in-card "Remove … from Google?" with "Yes, remove it" (hidden=${f.confirmHidden}, ${f.red})`);
+      if (!/When you press Remove/.test(f.text) || !/Google permanently deletes the red Business Profile, the one with \(512\) 555-0199, from chriskapranos@gmail\.com\./.test(f.text) || !/The green one, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");
+      if (f.confirmHidden !== true || f.red !== "Yes, delete it" || !/Permanently delete this Business Profile\?/.test(f.text)) fail(`found: the confirmation isn't a hidden in-card "Remove … from Google?" with "Yes, remove it" (hidden=${f.confirmHidden}, ${f.red})`);
       if (f.alert) fail("found: the right account shows an error alert");
       const rm = R2.removed;
-      if (!rm.done || !/The \(512\) 555-0199 listing was removed/.test(rm.title) || rm.label !== "Nothing needed from you" || !/Removed from your Google account/.test(rm.text)
-        || rm.tl.join("|") !== "Removed from your account|Google drops it from Maps|Your photos and profile edits start") fail(`removed: not the green "Removed from your Google account" with the 3-step timeline (${rm.label} · ${rm.tl.join("|")})`);
+      // v11 (approved duplicate_business_profile_wording_v11): each box LEADS WITH WHAT IT IS; phone + email are labelled details
+      if (!rm.done || rm.title !== "Duplicate Google Business Profile removed" || rm.label !== "Nothing needed from you" || !/Your duplicate Google Business Profile was removed/.test(rm.text)
+        || rm.tl.join("|") !== "Removed from the Google account chriskapranos@gmail.com|Google takes it off Maps and Search|Your photos and profile edits start") fail(`removed: not the green "Your duplicate Google Business Profile was removed" with the 3-step timeline (${rm.title} · ${rm.tl.join("|")})`);
+      if (!/✕ Removed\s*Google Business Profile\s*Business\s*Lone Star Drain & Plumbing\s*Phone on the profile\s*\(512\) 555-0199/.test(rm.text)) fail("removed: the red box doesn't lead with \"Google Business Profile\" and label its phone (\"Phone on the profile\")");
+      if (/Google ID/.test(rm.text.split("removed from")[0] || "")) fail("removed: a Google ID is shown that wasn't measured");
+      if (!/The owner\s*Google account\s*Signed in as\s*chriskapranos@gmail\.com\s*What it is\s*The Google login that owned this profile/.test(rm.text)) fail("removed: the Google account isn't its own box (\"The owner · Google account · Signed in as …\")");
+      if (!/Kept, untouched: your main Google Business Profile\s*Lone Star Drain & Plumbing · phone on the profile \(512\) 555-0142/.test(rm.text) || /in the Google account/.test(rm.text.split("Kept, untouched")[1] || "")) fail("removed: the kept line doesn't name your main Google Business Profile (or claims an account it wasn't given)");
       const rf = R2.rmfail;
       if (!/Keeping\s*\(512\) 555-0142/.test(rf.text) || !/Removing\s*\(512\) 555-0199/.test(rf.text)) fail("rmfail: the refused removal doesn't show what's removed and what's kept");
       if (!rf.alert || rf.alert.warn || rf.alert.head !== "Google didn't remove it" || !/is still there\. Nothing was changed\. RGA has been told/.test(rf.text) || rf.google !== "Sign in again and retry") fail(`rmfail: a removal Google refused isn't the red "Google didn't remove it" with a retry (${rf.alert && rf.alert.head})`);
@@ -642,7 +655,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     {
       const nf = R2.notfound, la = R2.lookalike;
       if (!nf.alert || nf.alert.warn || nf.alert.head !== "Wrong Google account" || nf.alert.bg !== "rgb(254, 233, 232)" || !(nf.alert.headPx >= 17)) fail(`notfound: the wrong account isn't the large red "Wrong Google account" alert (${JSON.stringify(nf.alert)})`);
-      if (!/You signed in as owner@lonestardrain\.com, but that account doesn't manage the \(512\) 555-0199 listing\. Nothing was removed\./.test(nf.text) || !/✕ Doesn't manage it/.test(nf.text)) fail("notfound: the alert doesn't name the account used, in full, and the listing");
+      if (!/You signed in as owner@lonestardrain\.com, but that account doesn't manage the Business Profile with \(512\) 555-0199\. Nothing was removed\./.test(nf.text) || !/✕ Doesn't manage it/.test(nf.text)) fail("notfound: the alert doesn't name the account used, in full, and the listing");
       if (!/The owner\s*Usually the Gmail you used back then/.test(nf.text)) fail("notfound with no saved owner: the right-hand box invents an owner instead of \"Usually the Gmail you used back then\"");
       if (!/Not sure which account it is\?/.test(nf.text) || !/businessprofile-noreply@google\.com/.test(nf.text)) fail("notfound: no \"how to find the owner\" tip (Google's performance report email)");
       if (nf.google !== "Try another Google account" || !/Pick a different account than owner@lonestardrain\.com/.test(nf.text) || !/Tick the box See, edit, create and delete your Google business listings/.test(nf.text)) fail("notfound: the retry steps don't name the account to avoid and the box to tick");
@@ -653,7 +666,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       if (!ns.alert || ns.alert.warn || ns.alert.head !== "The box wasn't ticked" || !/Pick chriskapranos2@gmail\.com again\./.test(ns.text) || !/tick See, edit, create and delete your Google business listings/.test(ns.text) || ns.google !== "Sign in again" || /Wrong Google account|Not sure which account/.test(ns.text)) fail(`noscope: the box-not-ticked case isn't its own red alert with "sign in again and tick it" (${ns.alert && ns.alert.head})`);
       if (!ur.alert || !ur.alert.warn || ur.alert.head !== "We couldn't check that account" || ur.google !== "Try again" || !/If it happens twice, RGA is told automatically/.test(ur.text) || /Wrong Google account|doesn't manage/.test(ur.text) || /bad:/.test(ur.pill)) fail(`unread: Google not sending the list isn't the amber "We couldn't check that account" with "Try again" (${ur.alert && ur.alert.head})`);
     }
-    if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
+    if (!R2.handled.rga || !/We're taking care of the Business Profile with \(512\) 555-0199/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
 
     // v6: the accounts — ours in full, the second only as Google masks it, and never a claim we didn't measure
     if (!/Managed by hello@lonestar\.test/.test(R2.accts.text) || !/Owner: ch…@gmail\.com \(Google shows part of it\)/.test(R2.accts.text)) fail("screen 1 doesn't show which account goes with each listing (Managed by … / Owner: ch…@gmail.com)");

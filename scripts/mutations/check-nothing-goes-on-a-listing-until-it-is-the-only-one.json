@@ -149,7 +149,7 @@
  [
   "portal: a waiting step says Your turn",
   "portal",
-  "      : listingWait ? { text: \"Waits on your Google listing\", cls: \"wait\" }\n",
+  "      : listingWait ? { text: \"Waits on your Business Profile\", cls: \"wait\" }\n",
   "",
   1
  ],

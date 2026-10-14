@@ -401,8 +401,8 @@
  [
   "the red button stops naming the listing",
   "portal",
-  "data-dup-remove-ask>${escapeHtml(`Remove this listing: ${dupId}`)}</button>",
-  "data-dup-remove-ask>Remove this listing</button>",
+  "${escapeHtml(`Remove this Business Profile: ${dupId}`)}",
+  "Remove this Business Profile",
   1
  ],
  [
@@ -716,8 +716,8 @@
  [
   "v9: the confirmation is open before Remove is pressed",
   "portal",
-  "role=\"alertdialog\" aria-label=\"Permanently delete this listing from Google?\" hidden>",
-  "role=\"alertdialog\" aria-label=\"Permanently delete this listing from Google?\">",
+  "role=\"alertdialog\" aria-label=\"Permanently delete this Business Profile?\" hidden>",
+  "role=\"alertdialog\" aria-label=\"Permanently delete this Business Profile?\">",
   1
  ],
  [
@@ -730,14 +730,14 @@
  [
   "v9: step 4 says nothing about the right account",
   "portal",
-  "<span><b>Right account.</b> ${who} manages this listing.</span>",
+  "<span><b>Right account.</b> ${who} manages this Business Profile.</span>",
   "<span>${who}</span>",
   1
  ],
  [
   "v9: the removed card has no timeline",
   "portal",
-  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Google drops it from Maps</b>",
+  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Google takes it off Maps and Search</b>",
   "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Waiting</b>",
   1
  ],
@@ -800,8 +800,8 @@
  [
   "v10: the Google ID is gone",
   "portal",
-  "+ (rm ? row(\"#\", \"Google ID\", f.id, false) :",
-  "+ (rm ? \"\" :",
+  ", [\"id\", \"#\", \"Google ID\"]];",
+  "];",
   1
  ],
  [
@@ -814,7 +814,7 @@
  [
   "v10: the title only names the number again",
   "portal",
-  "  const removeTitle = d.name ? `Remove the duplicate ${d.name} listing` : `Remove ${label}`;",
+  "  const removeTitle = \"Remove your duplicate Business Profile\";",
   "  const removeTitle = `Remove ${label}`;",
   1
  ],
@@ -907,6 +907,69 @@
   "portal",
   "${queue.some((e) => !e.done && !e.rga) ? `<span class=\"ap-of\">",
   "${true ? `<span class=\"ap-of\">",
+  1
+ ],
+ [
+  "v11: the removed screen says \"listing\" again",
+  "portal",
+  "return card(\"Duplicate Google Business Profile removed\", \"Waits on Google\", `",
+  "return card(`${Label} was removed`, \"Waits on Google\", `",
+  1
+ ],
+ [
+  "v11: the red box doesn't lead with what it is",
+  "portal",
+  "<small>✕ Removed</small><b>Google Business Profile</b>",
+  "<small>✕ Removed</small><b>${escapeHtml(d.phone || \"\")}</b>",
+  1
+ ],
+ [
+  "v11: the phone isn't labelled",
+  "portal",
+  "[\"Phone on the profile\", d.phone]",
+  "[\"\", d.phone]",
+  1
+ ],
+ [
+  "v11: the Google account isn't its own box",
+  "portal",
+  "<small>The owner</small><b>Google account</b>",
+  "<small>The owner</small><b>${escapeHtml(r.account || \"\")}</b>",
+  1
+ ],
+ [
+  "v11: the kept line is gone",
+  "portal",
+  "${keptBits.length ? `<div class=\"dl-kept\">",
+  "${false ? `<div class=\"dl-kept\">",
+  1
+ ],
+ [
+  "v11: the kept card has no Google ID",
+  "portal",
+  "          id: k && k.location_id ? String(k.location_id).split(\"/\").pop() : null },",
+  "          id: null },",
+  1
+ ],
+ [
+  "v11: the step-4 button says listing",
+  "portal",
+  "${escapeHtml(`Remove this Business Profile: ${dupId}`)}",
+  "${escapeHtml(`Remove this listing: ${dupId}`)}",
+  1
+ ],
+ [
+  "v11: the kept profile's id isn't sent",
+  "portaldeliv",
+  "        kept.location_id = o && o.gbp_location_id ? String(o.gbp_location_id) : null;\n",
+  "",
+  1
+ ],
+ [
+  "v11: the client is sent our tracked website",
+  "portaldeliv",
+  "      own_listing: key === \"m1.audit.gbp_duplicate\" ? clientFacts(t.outcome_data?.own_listing) : null,",
+  "      own_listing: key === \"m1.audit.gbp_duplicate\" ? (t.outcome_data?.own_listing || null) : null,",
   1
  ]
 ]
