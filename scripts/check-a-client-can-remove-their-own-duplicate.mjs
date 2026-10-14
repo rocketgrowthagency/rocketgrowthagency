@@ -37,7 +37,7 @@ const KEPT_LOC = "locations/KEPT";
 
 // ── a world: Supabase rows + a Google account + SerpApi ──
 // v8: `scope` = what Google granted (the client may leave the listings box unticked); `listFails` = Google errors on the list
-function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsError = false, deleteNoop = false,
+function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsError = false, deleteNoop = false, deleteFails = false,
   scope = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/business.manage", listFails = false } = {}) {
   const db = {
     client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "pending", outcome_data: { verdict: "duplicate", duplicates: [DUPE], client_answer: { answer: "mine" } } } } } }],
@@ -60,6 +60,7 @@ function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsErro
     if (u.hostname === "mybusinessbusinessinformation.googleapis.com") {
       if (/\/accounts\/A1\/locations$/.test(u.pathname)) return listFails ? J({ error: { code: 429, status: "RESOURCE_EXHAUSTED" } }, 429) : J({ locations: locs });
       const name = u.pathname.replace(/^\/v1\//, "");
+      if (m === "DELETE" && deleteFails) return J({ error: { code: 500, status: "INTERNAL" } }, 500);
       if (m === "DELETE") { deleted.push(name); if (!deleteNoop) googleGone.add(name); return J({}); }
       return googleGone.has(name) ? J({ error: "NOT_FOUND" }, 404) : J({ name });
     }
@@ -183,6 +184,15 @@ try {
     await run(w, () => FLOW.handleCallback("code", state, errorPage));
     const out = await run(w, () => FLOW.removeNow(CID, "x"));
     if (out.code === 200 || w.db.client_listing_removals[0].status === "removed") fail("a removal Google didn't actually do reads as removed (it must be read back)");
+    // v9: its own status, so the card says "Google didn't remove it" rather than asking for a sign-in
+    if (w.db.client_listing_removals[0].status !== "remove_failed" || summary(w)?.status !== "remove_failed") fail(`a removal Google didn't do reads "${w.db.client_listing_removals[0].status}", not "remove_failed"`);
+  }
+  // 8b · v9: Google refuses the DELETE → "remove_failed" (the card says "Google didn't remove it"), nothing removed
+  {
+    const w = world({ deleteFails: true });
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    const out = await run(w, () => FLOW.removeNow(CID, "x"));
+    if (out.code === 200 || w.deleted.length || w.db.client_listing_removals[0].status !== "remove_failed" || w.db.client_listing_removals[0].token_enc) fail(`a removal Google refused reads "${w.db.client_listing_removals[0].status}", not "remove_failed" with the sign-in dropped`);
   }
   // 9 · the client changed their answer after the listing was found → the tap removes nothing
   {
@@ -437,11 +447,13 @@ const portal = code("portal/portal.js");
 if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(a\.details \|\| \[\]\)\.length\) return dupCard\(a\);/.test(portal)) fail("the duplicate isn't drawn by its own card (dupCard)");
 const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
 if (!dc) fail("dupCard is gone (re-read this gate)");
-if ((dc.match(/data-dup-remove/g) || []).length !== 1 || !/if \(r && r\.status === "found"\) \{[\s\S]{0,500}data-dup-remove/.test(dc)) fail("the Remove button can show in a state other than found");
+// v9: two buttons, "Remove …" (asks) and "Yes, remove it" (removes), and both only in the found state
+if ((dc.match(/data-dup-remove>/g) || []).length !== 1 || (dc.match(/data-dup-remove-ask>/g) || []).length !== 1
+  || !/if \(r && r\.status === "found"\) \{[\s\S]{0,3000}data-dup-remove-ask>[\s\S]{0,1500}data-dup-remove>Yes, remove it/.test(dc)) fail("the Remove button can show in a state other than found");
 // v5 (approved duplicate_listing_card_v5, 2026-10-14): one question per screen; the "who made it" answers are two
 if (!/data-dup-screen="choose"[\s\S]*data-dup-screen="who" hidden/.test(dc)) fail("the card isn't two screens (choose, then who made it)");
 if (!/data-ap-answer="mine">We did<\/button>/.test(dc) || !/data-ap-answer="unsure">Someone else, or I'm not sure<\/button>/.test(dc) || /data-ap-answer="not_mine"/.test(dc)) fail("\"Who made it?\" isn't the two approved answers (We did / Someone else, or I'm not sure)");
-if (!/\{ done: true, stateLabel: "Waits on Google" \}/.test(dc)) fail("a removed duplicate doesn't turn into the green done card");
+if (!/\{ done: true, stateLabel: "Nothing needed from you" \}/.test(dc)) fail("a removed duplicate doesn't turn into the green done card");
 
 // the card shows BOTH listings (the approved mockup), and the question counts as the client's step
 if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
@@ -459,7 +471,8 @@ if (!/maps_url: c\.google_place_id \? `https:\/\/www\.google\.com\/maps\/place\/
 
 // "Sign in with Google" is the mockup's white button with Google's mark (Chris 2026-10-13: "i like the sign in with
 // google from mockup"), not a blue primary; and its spinner replaces the mark, so the two never sit side by side
-if (!/<button type="button" class="portal-button dl-go dl-google" data-dup-owner-signin>\$\{GOOGLE_G\}/.test(dc)) fail("\"Sign in with Google\" isn't the approved white button with Google's mark");
+// EVERY sign-in button (step 3, and v9's "Sign in again and retry") is the white one with Google's mark
+if ((dc.match(/data-dup-owner-signin>/g) || []).length < 2 || (dc.match(/data-dup-owner-signin>/g) || []).length !== (dc.match(/<button type="button" class="portal-button dl-go dl-google" data-dup-owner-signin>\$\{GOOGLE_G\}/g) || []).length) fail("\"Sign in with Google\" isn't the approved white button with Google's mark");
 if (!/const GOOGLE_G = `<svg[^`]*fill="#EA4335"[^`]*fill="#4285F4"[^`]*fill="#FBBC05"[^`]*fill="#34A853"/.test(portal)) fail("Google's four-colour mark is gone from the sign-in button");
 if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal.css"))) fail("while signing in, the spinner and Google's mark show side by side");
 
@@ -487,7 +500,11 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   const handlers = [/\/\/ the two radio cards:[^\n]*\n(document\.addEventListener\("change"[\s\S]*?\n\}\);)/, /\/\/ v5: "Keep …" moves to screen 2[^\n]*\n(document\.addEventListener\("click"[\s\S]*?\n\}\);)/]
     .map((re) => (re.exec(src) || [])[1] || "");
   if (handlers.some((h) => !h)) fail("the card's pick / next-screen handlers are gone (the choice can't be made)");
-  const bundle = [g ? g[0] : "", pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers].join("\n");
+  const v9 = [/(\/\/ v9 \(approved duplicate_remove_confirm_v9\): "Remove …" asks once[^\n]*\ndocument\.addEventListener\("click"[\s\S]*?\n\}\);)/,
+    /\n(document\.addEventListener\("click", async \(e\) => \{\n  const b = e\.target && e\.target\.closest && e\.target\.closest\("\[data-dup-remove\]"\);[\s\S]*?\n\}\);)/].map((re) => (re.exec(src) || [])[1] || "");
+  if (v9.some((h) => !h)) fail("step 4's in-card confirmation handlers are gone (v9: Remove asks once, Cancel puts it back)");
+  const stubs = `let _apClientId = "c", _apToken = "t"; window.__removeCalls = 0; const loadApprovals = async () => {}; const portalAlert = (m) => { window.__alert = m; };`;
+  const bundle = [g ? g[0] : "", stubs, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
   const { keepChoice, dupLabel } = req("./_gbp-duplicate.js");
   const kept = { name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", maps_url: "https://maps.example/k" };
   const mk = (own, dup, dec = null, extra = {}) => ({ key: "m1.audit.gbp_duplicate", kept, own_listing: own,
@@ -512,6 +529,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     unread:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "unreadable", account: "chriskapranos2@gmail.com" } }),
     handled:  mk(z, zd, null, { answer: "unsure" }),
     removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
+    rmfail:   mk(z, zd, null, { answer: "mine", owner_removal: { status: "remove_failed", account: "chriskapranos2@gmail.com", detail: "Google refused the removal (500)." } }),
     // v6 (approved duplicate_listing_accounts_v6): which Google account goes with each listing
     accts:    mk(z, zd, null, { owner_hint: "ch…@gmail.com", kept: { ...kept, account: "hello@lonestar.test" } }),
     acctsIn:  mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", kept: { ...kept, account: "hello@lonestar.test" } }),
@@ -527,6 +545,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (process.env.DUP_SHOTS) for (const [name, a] of Object.entries(CASES)) {
       await page.evaluate((a) => { const c = dupCard(a); document.getElementById("host").innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}" style="background:#fff;border:1px solid #e3e3e3;border-radius:14px;padding:18px;margin:12px;max-width:860px"><p style="margin:0 0 8px;font:600 15px Inter,system-ui">${c.title} · ${c.stateLabel || c.eyebrow}</p><div class="ap-body">${c.body}</div></div>`; }, a);
       await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_${name}.png`, fullPage: true });
+      // v9: step 4 with its in-card confirmation open
+      if (name === "found") { await page.evaluate(() => document.querySelector("[data-dup-remove-ask]").click()); await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_found_confirm.png`, fullPage: true }); }
     }
     const R2 = await page.evaluate((cases) => {
       const out = {};
@@ -544,6 +564,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
           captions: [...host.querySelectorAll(".dl-ans small")].map((x) => x.textContent.trim()),
           pill: [...host.querySelectorAll(".dl-steps span")].map((x) => `${x.className}:${x.textContent.trim()}`).join("|"),
           alert: host.querySelector(".dl-err") ? { warn: host.querySelector(".dl-err").classList.contains("warn"), head: host.querySelector(".dl-et > b")?.textContent.trim(), bg: getComputedStyle(host.querySelector(".dl-err")).backgroundColor, headPx: parseFloat(getComputedStyle(host.querySelector(".dl-et > b")).fontSize) } : null,
+          ask: host.querySelector("[data-dup-remove-ask]")?.textContent.trim() || "", confirmHidden: host.querySelector("[data-dup-confirm]") ? host.querySelector("[data-dup-confirm]").hidden : null,
+          tl: [...host.querySelectorAll(".dl-tl li b")].map((x) => x.textContent.trim()),
           red: host.querySelector("[data-dup-remove]")?.textContent.trim() || "", google: host.querySelector("[data-dup-owner-signin]")?.textContent.trim() || "",
           googleW: host.querySelector("[data-dup-owner-signin]") ? Math.round(host.querySelector("[data-dup-owner-signin]").getBoundingClientRect().width) : 0,
           bodyW: Math.round(host.querySelector(".ap-body").getBoundingClientRect().width),
@@ -578,7 +600,20 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (R2.signin.googleW && R2.signin.googleW > R2.signin.bodyW * 0.6) fail(`step 3's "Continue with Google" stretches across the card (${R2.signin.googleW}px of ${R2.signin.bodyW}) — a button keeps its label's width`);
     if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Continue with Google" || !/The owner, as Google shows it/.test(R2.signin.text) || !/ch•••••@gmail\.com/.test(R2.signin.text) || /ch…/.test(R2.signin.text)
       || !/pick the one that starts with ch and ends @gmail\.com, or "Use another account" if it isn't listed\./.test(R2.signin.text) || !/Tick the box See, edit, create and delete your Google business listings, then press Continue\./.test(R2.signin.text) || !/Nothing is removed until you do\./.test(R2.signin.text) || R2.signin.alert) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
-    if (R2.found.eyebrow !== "Step 4 of 4" || R2.found.red !== "Remove (512) 555-0199" || !/Signed in as chriskapranos@gmail\.com\. It manages this listing\./.test(R2.found.text)) fail(`found: step 4's red button or signed-in line doesn't name what it does (${R2.found.red})`);
+    // v9 (approved duplicate_remove_confirm_v9): "Right account.", what Remove does, and ONE in-card confirmation
+    {
+      const f = R2.found;
+      if (f.eyebrow !== "Step 4 of 4" || f.ask !== "Remove (512) 555-0199" || !/Right account\. chriskapranos@gmail\.com manages the \(512\) 555-0199 listing\./.test(f.text)) fail(`found: step 4 doesn't say "Right account." with the account, or its red button doesn't name what it does (${f.ask})`);
+      if (!/Keeping\s*\(512\) 555-0142\s*· it isn't touched, nor its reviews/.test(f.text) || !/Removing\s*\(512\) 555-0199/.test(f.text)) fail("found: step 4 doesn't show what's removed and what's kept");
+      if (!/When you press Remove/.test(f.text) || !/Your listing, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");
+      if (f.confirmHidden !== true || f.red !== "Yes, remove it" || !/Remove \(512\) 555-0199 from Google\?/.test(f.text)) fail(`found: the confirmation isn't a hidden in-card "Remove … from Google?" with "Yes, remove it" (hidden=${f.confirmHidden}, ${f.red})`);
+      if (f.alert) fail("found: the right account shows an error alert");
+      const rm = R2.removed;
+      if (!rm.done || !/The \(512\) 555-0199 listing was removed/.test(rm.title) || rm.label !== "Nothing needed from you" || !/Removed from your Google account/.test(rm.text)
+        || rm.tl.join("|") !== "Removed from your account|Google drops it from Maps|Your photos and profile edits start") fail(`removed: not the green "Removed from your Google account" with the 3-step timeline (${rm.label} · ${rm.tl.join("|")})`);
+      const rf = R2.rmfail;
+      if (!rf.alert || rf.alert.warn || rf.alert.head !== "Google didn't remove it" || !/is still there\. Nothing was changed\. RGA has been told/.test(rf.text) || rf.google !== "Sign in again and retry") fail(`rmfail: a removal Google refused isn't the red "Google didn't remove it" with a retry (${rf.alert && rf.alert.head})`);
+    }
     // v8 (approved duplicate_wrong_account_v8): the wrong account is a RED alert that names BOTH accounts, the used one in full
     {
       const nf = R2.notfound, la = R2.lookalike;
@@ -595,7 +630,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       if (!ur.alert || !ur.alert.warn || ur.alert.head !== "We couldn't check that account" || ur.google !== "Try again" || !/If it happens twice, RGA is told automatically/.test(ur.text) || /Wrong Google account|doesn't manage/.test(ur.text) || /bad:/.test(ur.pill)) fail(`unread: Google not sending the list isn't the amber "We couldn't check that account" with "Try again" (${ur.alert && ur.alert.head})`);
     }
     if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
-    if (!R2.removed.done || !/The \(512\) 555-0199 listing was removed/.test(R2.removed.title)) fail("removed: the done card doesn't name the listing");
+
     // v6: the accounts — ours in full, the second only as Google masks it, and never a claim we didn't measure
     if (!/Managed by hello@lonestar\.test/.test(R2.accts.text) || !/Owner: ch…@gmail\.com \(Google shows part of it\)/.test(R2.accts.text)) fail("screen 1 doesn't show which account goes with each listing (Managed by … / Owner: ch…@gmail.com)");
     if (/Managed by|Owner:/.test(R2.none.text)) fail("screen 1 shows an account it doesn't have (no connected email / no owner saved)");
@@ -619,6 +654,26 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       const backTo = { who: vis("[data-dup-screen=who]"), choose: vis("[data-dup-screen=choose]") };
       return { other, ours, next, backTo };
     }, CASES.none);
+    const confirmFlow = await page.evaluate(async (a) => {
+      const host = document.getElementById("host");
+      host.innerHTML = `<div class="ap-body">${dupCard(a).body}</div>`;
+      const wait = () => new Promise((r) => setTimeout(r, 30));
+      const shown = (sel) => { const el = host.querySelector(sel); return !!el && !el.closest("[hidden]") && !el.hidden; };
+      let calls = 0; const realFetch = window.fetch; window.fetch = () => { calls++; return new Promise(() => {}); };
+      host.querySelector("[data-dup-remove-ask]").click(); await wait();
+      const asked = { panel: shown("[data-dup-confirm]"), step4: shown("[data-dup-step4]"), calls };
+      host.querySelector("[data-dup-confirm-cancel]").click(); await wait();
+      const cancelled = { panel: shown("[data-dup-confirm]"), step4: shown("[data-dup-step4]"), calls };
+      host.querySelector("[data-dup-remove-ask]").click(); await wait();
+      host.querySelector("[data-dup-remove]").click(); await wait();
+      const yes = host.querySelector("[data-dup-remove]");
+      const removing = { calls, text: yes.textContent.trim(), busy: yes.classList.contains("is-busy") && yes.disabled, note: shown("[data-dup-removing]"), cancel: shown("[data-dup-confirm-cancel]") };
+      window.fetch = realFetch;
+      return { asked, cancelled, removing };
+    }, CASES.found);
+    if (!confirmFlow.asked.panel || confirmFlow.asked.step4 || confirmFlow.asked.calls) fail(`"Remove …" doesn't open the in-card confirmation (or it removes straight away) (${JSON.stringify(confirmFlow.asked)})`);
+    if (confirmFlow.cancelled.panel || !confirmFlow.cancelled.step4 || confirmFlow.cancelled.calls) fail(`Cancel doesn't put step 4 back (${JSON.stringify(confirmFlow.cancelled)})`);
+    if (confirmFlow.removing.calls !== 1 || confirmFlow.removing.text !== "Removing…" || !confirmFlow.removing.busy || !confirmFlow.removing.note || confirmFlow.removing.cancel) fail(`"Yes, remove it" doesn't remove once, spinning on "Removing…" with "don't close the page" (${JSON.stringify(confirmFlow.removing)})`);
     if (!clicks.other.req || clicks.other.keep || !clicks.other.sel || clicks.other.reqText !== "Ask RGA to keep (512) 555-0199") fail(`picking the other listing doesn't turn into "Ask RGA to keep (512) 555-0199" (${JSON.stringify(clicks.other)})`);
     if (clicks.ours.req || !clicks.ours.keep || !clicks.ours.sel) fail("picking ours again doesn't bring back \"Keep\"");
     if (!clicks.next.who || clicks.next.choose) fail("\"Keep …\" doesn't move to \"Who made it?\"");
@@ -626,7 +681,13 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   } finally { await browser.close(); }
 }
 // the queue and the badge: a card that waits on RGA asks nothing of the client
-if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\| \(a\.keep && a\.keep\.waits_on_rga\)\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA");
+if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\| \(a\.keep && a\.keep\.waits_on_rga\) \|\| \(a\.owner_removal && a\.owner_removal\.status === "removed"\)\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA, or a removed duplicate waiting for Maps");
+// v9: once the nightly check sees one listing after the client's removal, it's listed under "Already approved"
+{
+  const pd = code("netlify/functions/portal-deliverables.js");
+  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Done · Google shows one listing"/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
+  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/const settledHtml = settled\.length \|\| resolvedRows \?/.test(portal)) fail("the portal doesn't show the resolved duplicate under \"Already approved\"");
+}
 if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "Nothing needs you right now"/.test(portal)) fail("the queue heading says a card that waits on RGA \"needs you\"");
 // admin step 11 has RGA's two choices, and shows the facts the same way (not measured = "couldn't")
 {

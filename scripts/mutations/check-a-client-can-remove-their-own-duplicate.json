@@ -121,15 +121,15 @@
  [
   "a removed duplicate stays amber",
   "portal",
-  "      { done: true, stateLabel: \"Waits on Google\" });",
+  "      { done: true, stateLabel: \"Nothing needed from you\" });",
   "      {});",
   1
  ],
  [
   "Remove shows before the listing is found",
   "portal",
-  "    if (r && r.status === \"found\") {\n      return card(`Remove ${label}`, \"Step 4 of 4\"",
-  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(`Remove ${label}`, \"Step 4 of 4\"",
+  "    if (r && r.status === \"found\") {\n      const who",
+  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      const who",
   1
  ],
  [
@@ -177,8 +177,8 @@
  [
   "Sign in with Google goes back to a blue button",
   "portal",
-  "<button type=\"button\" class=\"portal-button dl-go dl-google\" data-dup-owner-signin>${GOOGLE_G}",
-  "<button type=\"button\" class=\"portal-button is-primary dl-go\" data-dup-owner-signin>",
+  "<button type=\"button\" class=\"portal-button dl-go dl-google\" data-dup-owner-signin>${GOOGLE_G}${escapeHtml(btn)}</button>",
+  "<button type=\"button\" class=\"portal-button is-primary dl-go\" data-dup-owner-signin>${escapeHtml(btn)}</button>",
   1
  ],
  [
@@ -296,7 +296,7 @@
  [
   "the badge counts a card that waits on RGA",
   "portal",
-  "actions.filter((a) => !(a.waits || (a.keep && a.keep.waits_on_rga))).length",
+  "actions.filter((a) => !(a.waits || (a.keep && a.keep.waits_on_rga) || (a.owner_removal && a.owner_removal.status === \"removed\"))).length",
   "actions.length",
   1
  ],
@@ -401,8 +401,8 @@
  [
   "the red button stops naming the listing",
   "portal",
-  "data-dup-remove>${escapeHtml(`Remove ${dupId}`)}</button>",
-  "data-dup-remove>Remove the second listing</button>",
+  "data-dup-remove-ask>${escapeHtml(`Remove ${dupId}`)}</button>",
+  "data-dup-remove-ask>Remove the second listing</button>",
   1
  ],
  [
@@ -415,8 +415,8 @@
  [
   "the kept listing drops out of view",
   "portal",
-  "<span class=\"dl-m\">${escapeHtml(d.category || \"\")}</span>${keepLine}</div>`;",
-  "<span class=\"dl-m\">${escapeHtml(d.category || \"\")}</span></div>`;",
+  "<div class=\"k\"><i aria-hidden=\"true\">✓</i><span><b>Keeping</b> ${escapeHtml(ourId)} <span class=\"dl-m\">· it isn't touched, nor its reviews</span></span></div></div>`;",
+  "</div>`;",
   1
  ],
  [
@@ -683,6 +683,97 @@
   "portal",
   "noScope = st === \"no_scope\"",
   "noScope = false",
+  1
+ ],
+ [
+  "v9: a refused removal reads as a sign-in error again",
+  "listingflow",
+  "    return done({ status: \"remove_failed\", detail: `Google refused",
+  "    return done({ status: \"failed\", detail: `Google refused",
+  1
+ ],
+ [
+  "v9: a removal Google didn't do (read back) reads as a sign-in error",
+  "listingflow",
+  "  if (back.ok) return done({ status: \"remove_failed\",",
+  "  if (back.ok) return done({ status: \"failed\",",
+  1
+ ],
+ [
+  "v9: Remove deletes straight away (no in-card confirmation)",
+  "portal",
+  "<button type=\"button\" class=\"portal-button is-danger dl-go\" data-dup-remove-ask>",
+  "<button type=\"button\" class=\"portal-button is-danger dl-go\" data-dup-remove>",
+  1
+ ],
+ [
+  "v9: Cancel doesn't put step 4 back",
+  "portal",
+  "  if (panel) panel.hidden = !asking;\n",
+  "",
+  1
+ ],
+ [
+  "v9: the confirmation is open before Remove is pressed",
+  "portal",
+  "role=\"alertdialog\" aria-label=\"${escapeAttribute(`Remove ${dupId} from Google?`)}\" hidden>",
+  "role=\"alertdialog\" aria-label=\"${escapeAttribute(`Remove ${dupId} from Google?`)}\">",
+  1
+ ],
+ [
+  "v9: \"Yes, remove it\" shows no \"don't close the page\"",
+  "portal",
+  "  panel?.querySelector(\"[data-dup-removing]\")?.removeAttribute(\"hidden\");\n  b.disabled = true;",
+  "  b.disabled = true;",
+  1
+ ],
+ [
+  "v9: step 4 says nothing about the right account",
+  "portal",
+  "<span><b>Right account.</b> ${who} manages the ${escapeHtml(dupId)} listing.</span>",
+  "<span>${who}</span>",
+  1
+ ],
+ [
+  "v9: the removed card has no timeline",
+  "portal",
+  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Google drops it from Maps</b>",
+  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Waiting</b>",
+  1
+ ],
+ [
+  "v9: the removed card says Waits on Google (asks nothing, but reads as a task)",
+  "portal",
+  "{ done: true, stateLabel: \"Nothing needed from you\" }",
+  "{ done: true, stateLabel: \"Waits on Google\" }",
+  1
+ ],
+ [
+  "v9: a refused removal falls back to the sign-in screen",
+  "portal",
+  "    if (r && r.status === \"remove_failed\") {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "v9: the badge counts a removed duplicate waiting for Maps",
+  "portal",
+  " || (a.owner_removal && a.owner_removal.status === \"removed\"))).length;",
+  "))).length;",
+  1
+ ],
+ [
+  "v9: the resolved duplicate is never listed under Already approved",
+  "portaldeliv",
+  "if (t && t.status === \"done\" && t.outcome_data?.verdict === \"clean\" && rm && rm.status === \"removed\")",
+  "if (false)",
+  1
+ ],
+ [
+  "v9: Already approved ignores the resolved rows",
+  "portal",
+  "  _apResolved = data.resolved || [];\n",
+  "",
   1
  ]
 ]
