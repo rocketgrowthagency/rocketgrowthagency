@@ -61,7 +61,9 @@ if (SABOTAGE) {
   const which = process.env.SABOTAGE_CASE || "1";
   if (which === "1") login = login.replace(/window\.location\.replace\("\/portal\/"\)/, 'setAlert("hi")');
   if (which === "2") login = login.replace(/params\.get\("switch"\)/g, "false");
-  if (which === "3") portal = portal.replace(/"\/client-login\/\?switch=1"/g, '"/client-login/"');
+  // any query that carries switch=1 (2026-10-13 the portal's link became ?switch=1&reason=no_access, and the
+  // old exact-string sabotage silently stopped applying — the case passed while testing nothing)
+  if (which === "3") portal = portal.replace(/"\/client-login\/\?switch=1[^"]*"/g, '"/client-login/"');
 }
 
 let fails = 0;

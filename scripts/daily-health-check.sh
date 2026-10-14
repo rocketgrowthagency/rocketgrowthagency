@@ -427,6 +427,7 @@ run check-nothing-is-rga-shaped.mjs "the product is client-shaped, not RGA-shape
 run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks first, and reaches the client's portal"
 run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
+run check-the-sign-in-page-behaves.mjs "the client sign-in page does every state of the approved Shopify-style mockup, in a real browser (network mocked, no email sent)"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"
 run check-charge-equals-the-contract.mjs "we charge exactly what the agreement schedules"
 run check-billing-history-is-derived.mjs "the payment step survives month 3, not just month 1"

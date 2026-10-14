@@ -342,6 +342,7 @@ const NOT_PREFLIGHT = {
   'check-price-excuses-are-still-true.mjs': 'billing-correctness gate; runs in daily-health-check.sh — a stale price excuse cannot make a video unsafe',
   'check-billing-history-is-derived.mjs': 'portal-UI gate; runs in daily-health-check.sh — how the payment step renders month 3 cannot make a video unsafe',
   'check-price-summary-is-derived.mjs': 'derives every client-facing price summary from data/plans.json and compares it to the real schedule — commercial correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
+  'check-the-sign-in-page-behaves.mjs': 'browser walk of the WEBSITE repo\'s /client-login/ (approved client_login_v3) against a stub Supabase — client sign-in, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-signed-in-user-never-sees-login-form.mjs': 'static scan of the WEBSITE repo\'s client-login.js + portal.js — client-onboarding correctness (a working magic link must not land on a login form), no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-stage-changes-notify-client.mjs': 'static scan of WEBSITE-repo functions that advance a client stage — client-communication correctness, no bearing on tonight\'s videos. Runs in daily-health-check.sh',
   'check-refusal-is-not-done.mjs': 'static scan of the WEBSITE repo\'s admin banner logic against flow-execute\'s outcomes — admin honesty for client delivery, no bearing on tonight\'s videos, and it must never abort a video build. Runs in daily-health-check.sh',

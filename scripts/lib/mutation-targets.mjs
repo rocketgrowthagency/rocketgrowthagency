@@ -2,6 +2,8 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  loginjs: "portal/client-login.js",
+  loginhtml: "client-login/index.html",
   admin: "admin/admin.js",
   exec: "netlify/functions/flow-execute.js",
   css: "admin/admin.css",

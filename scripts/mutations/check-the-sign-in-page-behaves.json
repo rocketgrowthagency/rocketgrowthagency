@@ -1,0 +1,156 @@
+[
+ [
+  "a live session stays on the sign-in page (the 2026-09-10 bug)",
+  "loginjs",
+  "      window.location.replace(\"/portal/\");\n      return;",
+  "      return;",
+  1
+ ],
+ [
+  "a typo'd common provider gets no suggestion",
+  "loginjs",
+  "  return best && bestDistance <= 2 ? email.slice(0, at + 1) + best : \"\";",
+  "  return \"\";",
+  1
+ ],
+ [
+  "a real provider (ymail.com) is \"corrected\" to gmail.com",
+  "loginjs",
+  "\"ymail.com\", \"mail.com\", ",
+  "\"mail.com\", ",
+  1
+ ],
+ [
+  "a link already sent (429) reads as a failure",
+  "loginjs",
+  "    if (wait) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "Supabase's raw message reaches the client",
+  "loginjs",
+  "      const msg = `We couldn't send",
+  "      const msg = error.message || `We couldn't send",
+  1
+ ],
+ [
+  "\"No portal on this email\" claimed without the portal saying so",
+  "loginjs",
+  "  if (noAccess) {",
+  "  if (true) {",
+  1
+ ],
+ [
+  "a bad address is sent anyway",
+  "loginjs",
+  "    if (!isEmail(email)) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "the resend never counts down",
+  "loginjs",
+  "  startCountdown(seconds);\n  els.sentTitle",
+  "  els.sentTitle",
+  1
+ ],
+ [
+  "Open Gmail shown for a business address",
+  "loginjs",
+  "  els.openMail.hidden = !mail;",
+  "  els.openMail.hidden = false;",
+  1
+ ],
+ [
+  "an old link explains nothing",
+  "loginjs",
+  "  if (params.get(\"expired\") === \"1\") {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "the field stays live while sending",
+  "loginjs",
+  "  if (button === els.button) els.email.disabled = true;\n",
+  "",
+  1
+ ],
+ [
+  "the countdown label splits into two flex items",
+  "loginjs",
+  "els.resend.innerHTML = `<span>Send a new link in <span class=\"si-num\">${Math.floor(left / 60)}:${String(left % 60).padStart(2, \"0\")}</span></span>`;",
+  "els.resend.innerHTML = `Send a new link in <span class=\"si-num\">${Math.floor(left / 60)}:${String(left % 60).padStart(2, \"0\")}</span>`;",
+  1
+ ],
+ [
+  "the logo's rocket is redrawn",
+  "loginhtml",
+  "translate(17.5 17.5) scale(2.7)",
+  "translate(17.5 17.5) scale(2.6)",
+  1
+ ],
+ [
+  "the logo's Growth loses brand blue",
+  "loginhtml",
+  "<tspan fill=\"#2457e6\">Growth</tspan>",
+  "<tspan fill=\"#0f1b3d\">Growth</tspan>",
+  1
+ ],
+ [
+  "the heading goes back to \"Client Portal Login\"",
+  "loginhtml",
+  "<h1 id=\"siTitle\">Sign in</h1>",
+  "<h1 id=\"siTitle\">Client Portal Login</h1>",
+  1
+ ],
+ [
+  "the field loses focus on arrival",
+  "loginhtml",
+  " autofocus required>",
+  " required>",
+  1
+ ],
+ [
+  "the Help link goes nowhere",
+  "loginhtml",
+  "<a href=\"/contact/\">Help</a>",
+  "<a href=\"/help/\">Help</a>",
+  1
+ ],
+ [
+  "the action stops spanning the card",
+  "portalcss",
+  ".si-btn { appearance: none; width: 100%;",
+  ".si-btn { appearance: none; width: auto; justify-self: start;",
+  1
+ ],
+ [
+  "the button height drifts from 40px",
+  "portalcss",
+  "width: 100%; min-height: 40px; border: 0; border-radius: 9px;",
+  "width: 100%; min-height: 44px; border: 0; border-radius: 9px;",
+  1
+ ],
+ [
+  "the phone gutters go",
+  "portalcss",
+  "padding: clamp(40px, 10vh, 112px) 16px 32px;",
+  "padding: clamp(40px, 10vh, 112px) 0 32px;",
+  1
+ ],
+ [
+  "the subject wraps again",
+  "portalcss",
+  ".si-what div { display: contents; }",
+  ".si-what div { display: grid; grid-template-columns: 66px 1fr; gap: 10px; }",
+  1
+ ],
+ [
+  "the portal's no-access link drops &reason=no_access",
+  "portal",
+  "\"/client-login/?switch=1&reason=no_access\",",
+  "\"/client-login/?switch=1\",",
+  1
+ ]
+]
