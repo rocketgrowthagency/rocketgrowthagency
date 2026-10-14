@@ -114,8 +114,8 @@
  [
   "the question loses the Keep vs Remove pair",
   "portal",
-  "    ${pair(keepCard(undefined, factsOf(own, true)), dropCard(undefined, true, factsOf(d, false)))}\n    ${reason}\n    ${replied ?",
-  "    ${reason}\n    ${replied ?",
+  "        ${opt(\"other\", false, false, dupId, d.category, dupLine, d.maps_url)}\n",
+  "",
   1
  ],
  [
@@ -128,8 +128,8 @@
  [
   "Remove shows before the listing is found",
   "portal",
-  "    if (r && r.status === \"found\") {\n      return card(`Remove ${label}`, \"Step 3 of 3\"",
-  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(`Remove ${label}`, \"Step 3 of 3\"",
+  "    if (r && r.status === \"found\") {\n      return card(`Remove ${label}`, \"Step 4 of 4\"",
+  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(`Remove ${label}`, \"Step 4 of 4\"",
   1
  ],
  [
@@ -163,8 +163,8 @@
  [
   "the way back is gone",
   "portal",
-  "body: extra.done || extra.rga ? body : (a.answer ? body + back : body), ...extra });",
-  "body, ...extra });",
+  "  const back = `<button type=\"button\" class=\"dl-back\" data-ap-clear=\"${escapeAttribute(a.key)}\">\u2190 Back</button>`;",
+  "  const back = \"\";",
   1
  ],
  [
@@ -275,22 +275,22 @@
  [
   "\"couldn't read\" shows as \"No reviews yet\"",
   "portal",
-  "!x || !Number.isFinite(x.reviews) ? fact(\"u\", \"Couldn't read reviews tonight\")",
-  "!x || !Number.isFinite(x.reviews) ? fact(\"n\", \"No reviews yet\")",
+  "  const revTxt = (x) => !x || !Number.isFinite(x.reviews) ? \"couldn't read reviews\" : x.reviews === 0 ? \"no reviews\"",
+  "  const revTxt = (x) => !x || !Number.isFinite(x.reviews) ? \"no reviews\" : x.reviews === 0 ? \"no reviews\"",
   1
  ],
  [
   "the waits-on-RGA card loses its state",
   "portal",
-  "merged in, not deleted.` : \"\"}</div>`,\n      { rga: true, stateLabel: \"Waits on RGA\" });",
-  "merged in, not deleted.` : \"\"}</div>`,\n      { stateLabel: \"Waits on RGA\" });",
+  "merged in, not deleted.</p>`,\n      { rga: true, stateLabel: \"Waits on RGA\" });",
+  "merged in, not deleted.</p>`,\n      { stateLabel: \"Waits on RGA\" });",
   1
  ],
  [
   "a merge still says \"remove it here in one tap\"",
   "portal",
-  "<small>${merge ? \"You sign in with the Google account that made it, and we ask Google to merge it into your main one.\"",
-  "<small>${false ? \"You sign in with the Google account that made it, and we ask Google to merge it into your main one.\"",
+  "<small>${merge ? \"Sign in with that Google account and we merge it into yours.\" : \"Sign in with that Google account and remove it here. About a minute.\"}</small>",
+  "<small>${false ? \"Sign in with that Google account and we merge it into yours.\" : \"Sign in with that Google account and remove it here. About a minute.\"}</small>",
   1
  ],
  [
@@ -303,15 +303,8 @@
  [
   "\"How we decide\" opens by default",
   "portal",
-  "      <details class=\"dl-how\"><summary>",
-  "      <details class=\"dl-how\" open><summary>",
-  1
- ],
- [
-  "the reason loses its state colour",
-  "portalcss",
-  ".dl-reason { display: grid; gap: 8px; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; background: var(--state-other-bg, #ebf3ff);",
-  ".dl-reason { display: grid; gap: 8px; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px;",
+  "  const how = `<details class=\"dl-how\"><summary>How we decide</summary>",
+  "  const how = `<details class=\"dl-how\" open><summary>How we decide</summary>",
   1
  ],
  [
@@ -401,29 +394,29 @@
  [
   "step 2's title stops naming the listing",
   "portal",
-  "    return card(`Remove ${label}`, \"Step 2 of 3\", `",
-  "    return card(\"Remove the second listing\", \"Step 2 of 3\", `",
+  "    return card(`Remove ${label}`, \"Step 3 of 4\", `",
+  "    return card(\"Remove the second listing\", \"Step 3 of 4\", `",
   1
  ],
  [
   "the red button stops naming the listing",
   "portal",
-  "data-dup-remove>${escapeHtml(`Remove ${label}`)}</button>",
+  "data-dup-remove>${escapeHtml(`Remove ${dupId}`)}</button>",
   "data-dup-remove>Remove the second listing</button>",
   1
  ],
  [
   "step 2 no longer shows what's being removed",
   "portal",
-  "      ${target(\"Removing this one\")}\n",
-  "",
+  "      ${err}\n      ${target()}\n",
+  "      ${err}\n",
   1
  ],
  [
   "the kept listing drops out of view",
   "portal",
-  "${maps(d.maps_url)}${keepLine}</div>`;",
-  "${maps(d.maps_url)}</div>`;",
+  "<span class=\"dl-m\">${escapeHtml(d.category || \"\")}</span>${keepLine}</div>`;",
+  "<span class=\"dl-m\">${escapeHtml(d.category || \"\")}</span></div>`;",
   1
  ],
  [
@@ -443,15 +436,15 @@
  [
   "the wrong-way-round panel starts open",
   "portal",
-  "<div class=\"dl-swap\" data-dup-swap hidden>",
-  "<div class=\"dl-swap\" data-dup-swap>",
+  "        <div class=\"dl-act\" data-dup-for=\"other\" hidden>",
+  "        <div class=\"dl-act\" data-dup-for=\"other\">",
   1
  ],
  [
   "the not-sure-which-account tip is gone",
   "portal",
-  "<p class=\"ap-foot\"><b>Not sure which account?</b>",
-  "<p class=\"ap-foot\"><b>Need help?</b>",
+  "<p class=\"ap-foot\">Not sure which? It's usually the Gmail you used back then",
+  "<p class=\"ap-foot\">Need help? It's usually the Gmail you used back then",
   1
  ],
  [
@@ -471,8 +464,57 @@
  [
   "the 2040 option is display-only again",
   "portal",
-  "<label class=\"dl-pk\"><input type=\"radio\" name=\"dl-keep\" value=\"ours\" data-dup-pick>",
-  "<label class=\"dl-pk\"><input type=\"hidden\" name=\"dl-keep\" value=\"ours\" data-dup-pick>",
+  "<input type=\"radio\" name=\"dl-keep\" value=\"${value}\" data-dup-pick${sel ? \" checked\" : \"\"}>",
+  "<input type=\"hidden\" name=\"dl-keep\" value=\"${value}\" data-dup-pick${sel ? \" checked\" : \"\"}>",
+  1
+ ],
+ [
+  "\"Who made it?\" goes back to three answers",
+  "portal",
+  "<div class=\"dl-ans\"><button class=\"portal-button\" data-ap-answer=\"unsure\">Someone else, or I'm not sure</button>",
+  "<div class=\"dl-ans\"><button class=\"portal-button\" data-ap-answer=\"not_mine\">No, it isn't</button></div><div class=\"dl-ans\"><button class=\"portal-button\" data-ap-answer=\"unsure\">Someone else, or I'm not sure</button>",
+  1
+ ],
+ [
+  "screen 2 shows at once (not one question per screen)",
+  "portal",
+  "    <div class=\"dl-screen\" data-dup-screen=\"who\" hidden>",
+  "    <div class=\"dl-screen\" data-dup-screen=\"who\">",
+  1
+ ],
+ [
+  "\"Keep \u2026\" doesn't move to screen 2",
+  "portal",
+  "  const go = t.hasAttribute(\"data-dup-next\") ? \"who\" : t.getAttribute(\"data-dup-screen-go\");",
+  "  const go = t.hasAttribute(\"data-dup-next\") ? \"choose\" : t.getAttribute(\"data-dup-screen-go\");",
+  1
+ ],
+ [
+  "ours isn't preselected",
+  "portal",
+  "        ${opt(\"ours\", true, true, ourId, k && k.category, ourLine, k && k.maps_url)}",
+  "        ${opt(\"ours\", false, true, ourId, k && k.category, ourLine, k && k.maps_url)}",
+  1
+ ],
+ [
+  "the Recommended tag lands on the other one",
+  "portal",
+  "        ${opt(\"ours\", true, true, ourId,",
+  "        ${opt(\"ours\", true, false, ourId,",
+  1
+ ],
+ [
+  "\"Someone else\" asks the client for nothing but doesn't wait on RGA",
+  "portal",
+  "      ${back}`, { rga: true, stateLabel: \"Waits on RGA\" });",
+  "      ${back}`, { stateLabel: \"Waits on RGA\" });",
+  1
+ ],
+ [
+  "picking the other one doesn't become the request",
+  "portal",
+  "data-dup-request=\"${escapeAttribute(a.key)}\">${escapeHtml(`Ask RGA to keep ${dupId}`)}</button>",
+  "data-dup-request=\"${escapeAttribute(a.key)}\">Send</button>",
   1
  ]
 ]

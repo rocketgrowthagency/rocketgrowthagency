@@ -402,14 +402,10 @@ if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(a\.details \|\| \[\]\)\.le
 const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
 if (!dc) fail("dupCard is gone (re-read this gate)");
 if ((dc.match(/data-dup-remove/g) || []).length !== 1 || !/if \(r && r\.status === "found"\) \{[\s\S]{0,500}data-dup-remove/.test(dc)) fail("the Remove button can show in a state other than found");
-if (!/<p class="dl-q">Did you \(or someone at your business\) create the second one\?<\/p>/.test(dc)) fail("a client is never asked if the second listing is theirs");
-for (const [re, msg] of [
-  // v3 (duplicate_listing_card_v3): Keep vs Remove WITH their facts, then the reason, then the question
-  [/\$\{pair\(keepCard\(undefined, factsOf\(own, true\)\), dropCard\(undefined, true, factsOf\(d, false\)\)\)\}\s*\$\{reason\}\s*\$\{replied \?[\s\S]{0,3000}?<div class="dl-ask"/, "the question isn't preceded by Keep vs Remove (with their facts) and the reason why (the approved card)"],
-  [/You sign in with the Google account that made it, then remove it here in one tap\./, "\"Yes, it's ours\" doesn't say what happens next"],
-  [/We ask Google to remove it\. Nothing else is needed from you\./, "\"No, it isn't\" doesn't say what happens next"],
-  [/\{ done: true, stateLabel: "Waits on Google" \}/, "a removed duplicate doesn't turn into the green done card"],
-]) if (!re.test(dc)) fail(msg);
+// v5 (approved duplicate_listing_card_v5, 2026-10-14): one question per screen; the "who made it" answers are two
+if (!/data-dup-screen="choose"[\s\S]*data-dup-screen="who" hidden/.test(dc)) fail("the card isn't two screens (choose, then who made it)");
+if (!/data-ap-answer="mine">We did<\/button>/.test(dc) || !/data-ap-answer="unsure">Someone else, or I'm not sure<\/button>/.test(dc) || /data-ap-answer="not_mine"/.test(dc)) fail("\"Who made it?\" isn't the two approved answers (We did / Someone else, or I'm not sure)");
+if (!/\{ done: true, stateLabel: "Waits on Google" \}/.test(dc)) fail("a removed duplicate doesn't turn into the green done card");
 
 // the card shows BOTH listings (the approved mockup), and the question counts as the client's step
 if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
@@ -438,11 +434,11 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   // scoped to the "clear" path: the client's keep-request has its own copy of this PATCH (2026-10-14), and a file-wide
   // match let a broken "Change my answer" pass on the other one's line
   if (!/if \(answer === "clear"\) \{[\s\S]{0,1600}?client_listing_removals\?client_id=eq\.\$\{clientId\}&status=eq\.found`, \{ method: "PATCH",\s*body: JSON\.stringify\(\{ status: "expired", token_enc: null, detail: "The client changed their answer\." \}\)/.test(pd)) fail("changing the answer leaves a pending removal (and its sign-in) usable");
-  if (!/body: extra\.done \|\| extra\.rga \? body : \(a\.answer \? body \+ back : body\)/.test(portal) || !/data-ap-clear=/.test(portal)) fail("the duplicate card has no way back once answered");
+  if (!/const back = `<button type="button" class="dl-back" data-ap-clear=/.test(dc)) fail("the duplicate card has no way back once answered");
 }
 
-// ── 13 · THE CARD IN A REAL BROWSER (approved duplicate_listing_card_v3): every case, rendered with portal.css, read back.
-// A regex on the source passes while the screen is wrong; this reads what the client would read.
+// ── 13 · THE CARD IN A REAL BROWSER (approved duplicate_listing_card_v5): every state, rendered with portal.css, and the
+// clicks run through portal.js's OWN handlers. A regex on the source passes while the screen is wrong.
 // → feedback_the_harness_i_wrote_to_check_my_work_can_lie
 {
   let puppeteer = null;
@@ -450,29 +446,31 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing, the card can't be rendered"); process.exit(2); }
   const src = read("portal/portal.js");
   const pick = (re) => { const m = re.exec(src); if (!m) { fail(`the card's code moved (${re.source.slice(0, 40)}): re-read this gate`); return ""; }
-    let i = m.index, d = 0; for (let k = src.indexOf("{", i); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(i, k + 1); } } return ""; };
+    let d = 0; for (let k = src.indexOf("{", m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
   const g = /const GOOGLE_G = `[^`]*`;/.exec(src);
-  const bundle = [g ? g[0] : "", pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m)].join("\n");
+  const handlers = [/\/\/ the two radio cards:[^\n]*\n(document\.addEventListener\("change"[\s\S]*?\n\}\);)/, /\/\/ v5: "Keep …" moves to screen 2[^\n]*\n(document\.addEventListener\("click"[\s\S]*?\n\}\);)/]
+    .map((re) => (re.exec(src) || [])[1] || "");
+  if (handlers.some((h) => !h)) fail("the card's pick / next-screen handlers are gone (the choice can't be made)");
+  const bundle = [g ? g[0] : "", pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers].join("\n");
   const { keepChoice, dupLabel } = req("./_gbp-duplicate.js");
   const kept = { name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", maps_url: "https://maps.example/k" };
   const mk = (own, dup, dec = null, extra = {}) => ({ key: "m1.audit.gbp_duplicate", kept, own_listing: own,
     details: [{ name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0199", maps_url: "https://maps.example/d", label: dupLabel({ phone: "(512) 555-0199" }), ...dup }],
     keep: keepChoice(own, dup, dec), answer: null, ...extra });
-  const CASES = {
-    none:    mk({ reviews: 0, rating: null, in_connected_account: true }, { reviews: 0, rating: null, in_connected_account: false }),
-    mine:    mk({ reviews: 23, rating: 4.8, in_connected_account: true }, { reviews: 0, rating: null, in_connected_account: false }),
-    flip:    mk({ reviews: 2, rating: 5, in_connected_account: true }, { reviews: 31, rating: 4.9, in_connected_account: false }),
-    both:    mk({ reviews: 23, rating: 4.8, in_connected_account: true }, { reviews: 4, rating: 4.5, in_connected_account: false }),
-    unknown: mk({ reviews: null, rating: null, in_connected_account: null }, { reviews: null, rating: null, in_connected_account: null }),
-  };
-  // v4 (approved duplicate_listing_removal_steps_v4): the request, RGA's reply, and steps 2/3 naming the listing
   const z = { reviews: 0, rating: null, in_connected_account: true }, zd = { reviews: 0, rating: null, in_connected_account: false };
-  const STEPS = {
+  const CASES = {
+    none:     mk(z, zd),
+    mine:     mk({ reviews: 23, rating: 4.8, in_connected_account: true }, zd),
+    flip:     mk({ reviews: 2, rating: 5, in_connected_account: true }, { reviews: 31, rating: 4.9, in_connected_account: false }),
+    both:     mk({ reviews: 23, rating: 4.8, in_connected_account: true }, { reviews: 4, rating: 4.5, in_connected_account: false }),
+    unknown:  mk({ reviews: null, rating: null, in_connected_account: null }, { reviews: null, rating: null, in_connected_account: null }),
     asked:    mk(z, zd, null, { keep_request: { note: "That's the one with our real address", at: "2026-10-14T16:20:00Z" }, keep_reply: null, waits: true }),
     replied:  mk(z, zd, null, { keep_request: { note: "x", at: "2026-10-14T16:20:00Z" }, keep_reply: { choice: "ours", note: "It's the one in your Google account.", at: "2026-10-14T18:00:00Z" } }),
-    step2:    mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com" }),
-    step3:    mk(z, zd, null, { answer: "mine", owner_removal: { status: "found", account: "chriskapranos@gmail.com" } }),
+    signin:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com" }),
+    found:    mk(z, zd, null, { answer: "mine", owner_removal: { status: "found", account: "chriskapranos@gmail.com" } }),
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
+    handled:  mk(z, zd, null, { answer: "unsure" }),
+    removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
   };
   const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
   try {
@@ -480,84 +478,76 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     await page.setViewport({ width: 900, height: 900 });
     await page.setContent(`<html><head><style>${read("portal/portal.css")}</style></head><body><div id="host"></div></body></html>`);
     await page.addScriptTag({ content: bundle });
-    // DUP_SHOTS=<dir> saves each case as a PNG, for the box-by-box diff against the mockup
-    if (process.env.DUP_SHOTS) for (const [name, a] of Object.entries({ ...CASES, ...STEPS })) {
+    if (process.env.DUP_SHOTS) for (const [name, a] of Object.entries(CASES)) {
       await page.evaluate((a) => { const c = dupCard(a); document.getElementById("host").innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}" style="background:#fff;border:1px solid #e3e3e3;border-radius:14px;padding:18px;margin:12px;max-width:860px"><p style="margin:0 0 8px;font:600 15px Inter,system-ui">${c.title} · ${c.stateLabel || c.eyebrow}</p><div class="ap-body">${c.body}</div></div>`; }, a);
       await page.screenshot({ path: `${process.env.DUP_SHOTS}/dupcard_${name}.png`, fullPage: true });
     }
     const R2 = await page.evaluate((cases) => {
       const out = {};
-      for (const [name, a] of Object.entries(cases)) {
-        const c = dupCard(a);
-        const host = document.getElementById("host");
-        host.innerHTML = `<div class="ap-item ap-action is-open${c.rga ? " is-rga" : ""}"><div class="ap-body">${c.body}</div></div>`;
-        const facts = [...host.querySelectorAll(".dl-facts")].map((ul) => [...ul.querySelectorAll("li")].map((li) => `${li.className}:${li.innerText.trim()}`));
-        const reason = host.querySelector(".dl-reason p")?.innerText.trim() || "";
-        out[name] = { rga: !!c.rga, label: c.stateLabel || "", title: c.title, text: host.innerText, facts, reason,
-          heads: [...host.querySelectorAll(".dl-h")].map((x) => x.textContent.trim()), // textContent: the CSS uppercases the label
-          how: !!host.querySelector("details.dl-how") && !host.querySelector("details.dl-how").open,
-          ask: !!host.querySelector("[data-ap-answer=mine]"), reasonBg: host.querySelector(".dl-reason") ? getComputedStyle(host.querySelector(".dl-reason")).backgroundColor : "" };
-      }
-      return out;
-    }, CASES);
-    const S2 = await page.evaluate((cases) => {
-      const out = {};
+      const vis = (el) => !!el && !el.closest("[hidden]");
       for (const [name, a] of Object.entries(cases)) {
         const c = dupCard(a);
         const host = document.getElementById("host");
         host.innerHTML = `<div class="ap-body">${c.body}</div>`;
-        out[name] = { title: c.title, rga: !!c.rga, label: c.stateLabel || "", text: host.textContent.replace(/\s+/g, " "),
+        const radios = [...host.querySelectorAll("input[type=radio][data-dup-pick]")];
+        out[name] = { title: c.title, eyebrow: c.eyebrow, rga: !!c.rga, done: !!c.done, label: c.stateLabel || "", text: host.textContent.replace(/\s+/g, " "),
+          radios: radios.map((r) => `${r.value}${r.checked ? "*" : ""}`), recOn: host.querySelector(".dl-choice .dl-rec")?.closest(".dl-choice")?.querySelector("input")?.value || "",
+          lines: [...host.querySelectorAll(".dl-line")].map((x) => x.textContent.trim()), summary: vis(host.querySelector("[data-dup-for=ours] .ap-foot")) ? host.querySelector("[data-dup-for=ours] .ap-foot").textContent.trim() : "",
+          howClosed: host.querySelector("details.dl-how") ? !host.querySelector("details.dl-how").open : null,
+          whoVisible: vis(host.querySelector("[data-dup-screen=who]")), answers: [...host.querySelectorAll("[data-ap-answer]")].map((b) => b.getAttribute("data-ap-answer")),
+          captions: [...host.querySelectorAll(".dl-ans small")].map((x) => x.textContent.trim()),
           red: host.querySelector("[data-dup-remove]")?.textContent.trim() || "", google: host.querySelector("[data-dup-owner-signin]")?.textContent.trim() || "",
-          ask: !!host.querySelector("[data-ap-answer=mine]"), cancel: !!host.querySelector("[data-dup-request-cancel]"),
-          panelHidden: host.querySelector("[data-dup-swap]") ? host.querySelector("[data-dup-swap]").hidden : null, wrong: !!host.querySelector(".dl-wrong[data-dup-wrong]") };
+          back: !!host.querySelector("[data-ap-clear]"), cancel: !!host.querySelector("[data-dup-request-cancel]"),
+          requestShown: vis(host.querySelector("[data-dup-request]")), keepShown: vis(host.querySelector("[data-dup-next]")) };
       }
       return out;
-    }, STEPS);
-    // the two keep options are a REAL choice, clicked in the browser with portal.js's own handler (Chris 2026-10-14:
-    // "i cant select the 4242422040 option"): ours → nothing to send; the other → the reason box and Send
-    const changeHandler = (/\/\/ the two radio cards:[^\n]*\n(document\.addEventListener\("change"[\s\S]*?\n\}\);)/.exec(src) || [])[1] || "";
-    if (!changeHandler) fail("the keep options have no change handler (they can't be picked)");
-    const pickRes = changeHandler ? await page.evaluate(async (a, h) => {
-      document.getElementById("host").innerHTML = `<div class="ap-body">${dupCard(a).body}</div>`;
-      if (!window.__pick) { (0, eval)(h); window.__pick = true; }
-      const panel = document.querySelector("[data-dup-swap]"); panel.hidden = false;
-      const vis = (v) => !panel.querySelector(`[data-dup-for="${v}"]`).hidden;
-      const labels = [...panel.querySelectorAll("label.dl-pk")];
-      const radios = labels.map((l) => l.querySelector("input[type=radio]")?.value || "");
-      const start = { other: vis("other"), ours: vis("ours") };
-      labels[0]?.click(); await new Promise((r) => setTimeout(r, 30));
-      const afterOurs = { other: vis("other"), ours: vis("ours"), on: labels[0]?.classList.contains("on"), send: !!panel.querySelector("[data-dup-for=ours] [data-dup-request]") };
-      labels[1]?.click(); await new Promise((r) => setTimeout(r, 30));
-      const afterOther = { other: vis("other"), ours: vis("ours"), on: labels[1]?.classList.contains("on") };
-      return { radios, start, afterOurs, afterOther };
-    }, STEPS.replied, changeHandler) : null;
-    if (pickRes) {
-      if (pickRes.radios.join() !== "ours,other") fail(`the two keep options aren't radio choices (${pickRes.radios.join()})`);
-      if (!pickRes.start.other || pickRes.start.ours) fail("the panel doesn't open on \"keep the other one\" with its reason box");
-      if (pickRes.afterOurs.other || !pickRes.afterOurs.ours || !pickRes.afterOurs.on || pickRes.afterOurs.send) fail(`picking the listing we already keep doesn't say "nothing to send" (${JSON.stringify(pickRes.afterOurs)})`);
-      if (!pickRes.afterOther.other || pickRes.afterOther.ours || !pickRes.afterOther.on) fail("picking the other listing again doesn't bring back the reason box and Send");
-    }
+    }, CASES);
     const L = "the (512) 555-0199 listing";
-    for (const k of ["step2", "step3", "notfound"]) if (S2[k].title !== `Remove ${L}` || !S2[k].text.includes("Keeping your main listing, (512) 555-0142. It isn't touched.")) fail(`${k}: the step doesn't name the listing being removed and the one kept (${S2[k].title})`);
-    if (!S2.step2.text.includes("Removing this one") || S2.step2.google !== "Sign in as ch…@gmail.com" || !S2.step2.text.includes("Not sure which account?") || !S2.step2.text.includes(`made ${L}`)) fail(`step 2 doesn't show what's removed, the owner's account and the "Not sure which account?" tip (${S2.step2.google})`);
-    if (S2.step3.red !== `Remove ${L}` || !S2.step3.text.includes("Signed in as chriskapranos@gmail.com. It manages this listing.") || !S2.step3.text.includes("Found it · this is the one we remove")) fail(`step 3's red button or signed-in line doesn't name what it does (${S2.step3.red})`);
-    if (!S2.notfound.text.includes(`That account doesn't manage ${L}.`) || !S2.notfound.text.includes("owner@lonestardrain.com") || S2.notfound.google !== "Try another Google account" || S2.notfound.text.includes("Not sure which account?")) fail("a wrong account doesn't say so with the listing's name (and nothing removed)");
-    if (!S2.asked.rga || S2.asked.label !== "Waits on RGA" || S2.asked.ask || !S2.asked.cancel || !S2.asked.text.includes(`You asked us to keep ${L} instead:`)) fail(`the client's request doesn't turn the card into "Waits on RGA" with their reason and a way to cancel (${JSON.stringify({ rga: S2.asked.rga, ask: S2.asked.ask, cancel: S2.asked.cancel })})`);
-    if (!S2.replied.ask || !S2.replied.text.includes("We checked your request") || !S2.replied.text.includes("It's the one in your Google account.")) fail("RGA's answer isn't shown on the client's card above the question");
-    if (S2.replied.panelHidden !== true || !S2.replied.wrong) fail("the question has no \"Think we've got these the wrong way round?\" (or its panel starts open)");
-    const has = (k, txt) => R2[k].text.includes(txt);
-    // every case: three facts under each listing, a reason that says why, "How we decide" closed, never the phone
-    for (const [k, v] of Object.entries(R2)) {
-      if (v.facts.length !== 2 || v.facts.some((f) => f.length !== 3)) fail(`case ${k}: each listing doesn't show its three facts (${JSON.stringify(v.facts)})`);
-      if (!/^Why we keep the (first|second) one:/.test(v.reason)) fail(`case ${k}: no "Why we keep…" line (${v.reason})`);
-      if (!v.how) fail(`case ${k}: "How we decide which one to keep" is missing, or open by default`);
-      if (!v.reasonBg || v.reasonBg === "rgba(0, 0, 0, 0)") fail(`case ${k}: the reason has no state colour (portal.css isn't styling .dl-reason)`);
+    // screen 1 · a radio choice, ours preselected and Recommended; screen 2 hidden behind it
+    for (const k of ["none", "mine", "both", "unknown", "replied"]) {
+      const v = R2[k];
+      if (v.radios.join() !== "ours*,other" || v.recOn !== "ours") fail(`case ${k}: screen 1 isn't a choice with ours preselected and Recommended (${v.radios.join()} rec=${v.recOn})`);
+      if (v.whoVisible || v.answers.join() !== "mine,unsure") fail(`case ${k}: "Who made it?" isn't the hidden second screen with two answers (${v.answers.join()})`);
+      if (v.howClosed !== true) fail(`case ${k}: "How we decide" is missing, or open by default`);
+      if (v.requestShown || !v.keepShown) fail(`case ${k}: screen 1 doesn't open on "Keep" alone (the request shows before the client picks the other one)`);
+      if (!/our work is here$/.test(v.lines[0] || "")) fail(`case ${k}: our listing's line doesn't say our work is there (${v.lines[0]})`);
+      if (/phone/i.test(v.summary)) fail(`case ${k}: the reason mentions the phone number`);
     }
-    if (!has("none", "No reviews yet") || !has("none", "In the Google account you connected") || !has("none", "Not in the account you connected") || !R2.none.ask) fail("case 1 (no reviews): the facts or the question are wrong");
-    if (!has("mine", "★ 4.8 · 23 reviews") || !/it has your 23 reviews/.test(R2.mine.reason)) fail("case 2: the main listing's reviews and rating aren't shown as the reason");
-    if (!R2.flip.rga || R2.flip.label !== "Waits on RGA" || R2.flip.ask || !has("flip", "31 reviews") || !/Keep · it has your reviews/.test(R2.flip.heads[0] || "")) fail(`case 3: the second listing having more reviews doesn't turn the card into "Waits on RGA" with nothing to answer (${JSON.stringify({ rga: R2.flip.rga, label: R2.flip.label, ask: R2.flip.ask, heads: R2.flip.heads })})`);
-    if (!R2.both.heads.some((h) => /Merge · into your main one/.test(h)) || /remove it here in one tap/.test(R2.both.text) || !/merge it into your main one/.test(R2.both.text)) fail("case 4: both with reviews still says remove (it must say merge, on the box AND under the answers)");
-    if (!has("unknown", "Couldn't read reviews tonight") || !has("unknown", "Couldn't check your Google account") || has("unknown", "No reviews yet") || has("unknown", "Not in the account you connected")) fail("case 5: a fact that wasn't measured reads as a value (it must say \"Couldn't\")");
+    if (R2.none.summary !== "Neither has reviews, so nothing is lost." || R2.none.lines.join(" | ") !== "✓ in your connected Google account · our work is here | no reviews · not in your connected account") fail(`case none: the lines or the reason are wrong (${R2.none.lines.join(" | ")} / ${R2.none.summary})`);
+    if (!/^✓ ★ 4\.8 · 23 reviews · in your connected Google account · our work is here$/.test(R2.mine.lines[0] || "") || !/deletes its reviews/.test(R2.mine.summary)) fail(`case mine: the reviews aren't the reason to keep ours (${R2.mine.lines[0]} / ${R2.mine.summary})`);
+    if (!/merge the other into it/.test(R2.both.text) || !/merge it in rather than delete it/.test(R2.both.summary) || R2.both.captions.some((x) => /remove it here/.test(x)) || !/★ 4\.5 · 4 reviews/.test(R2.both.lines[1] || "")) fail("case both: both with reviews still reads as a removal (it must say merge on screen 1 and under the answers)");
+    if (!/couldn't read reviews · couldn't check your Google account/.test(R2.unknown.lines[1] || "") || /no reviews|not in your connected/.test(R2.unknown.lines.join(" ")) || !/couldn't read the review counts/.test(R2.unknown.summary)) fail(`case unknown: a fact that wasn't measured reads as a value (${R2.unknown.lines.join(" | ")})`);
+    if (!R2.flip.rga || R2.flip.label !== "Waits on RGA" || R2.flip.radios.length || !/We'll keep \(512\) 555-0199: it has 31 of your reviews/.test(R2.flip.text) || !/merged in, not deleted/.test(R2.flip.text)) fail(`case flip: the second listing having more reviews isn't "Waits on RGA", keeping it and merging ours (${R2.flip.text.slice(0, 120)})`);
+    if (!R2.asked.rga || R2.asked.label !== "Waits on RGA" || R2.asked.radios.length || !R2.asked.cancel || !/You asked us to keep \(512\) 555-0199/.test(R2.asked.text)) fail("the client's request doesn't wait on RGA with their reason and a way to cancel");
+    if (!/We checked your request/.test(R2.replied.text) || !/It's the one in your Google account\./.test(R2.replied.text)) fail("RGA's answer isn't shown above the choice");
+    // 3 · 4 · sign in, remove — the listing named, the kept one in view, a way back
+    for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== `Remove ${L}` || !/Keeping \(512\) 555-0142\. It isn't touched\./.test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
+    if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Sign in as ch…@gmail.com" || !/Not sure which\?/.test(R2.signin.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
+    if (R2.found.eyebrow !== "Step 4 of 4" || R2.found.red !== "Remove (512) 555-0199" || !/Signed in as chriskapranos@gmail\.com\. It manages this listing\./.test(R2.found.text)) fail(`found: step 4's red button or signed-in line doesn't name what it does (${R2.found.red})`);
+    if (!/That account doesn't manage the \(512\) 555-0199 listing\./.test(R2.notfound.text) || R2.notfound.google !== "Try another Google account" || /Not sure which\?/.test(R2.notfound.text)) fail("notfound: a wrong account doesn't say so with the listing's name");
+    if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
+    if (!R2.removed.done || !/The \(512\) 555-0199 listing was removed/.test(R2.removed.title)) fail("removed: the done card doesn't name the listing");
+    // the clicks, through portal.js's own handlers: pick the other → the request; pick ours → Keep; Keep → screen 2; Back → screen 1
+    const clicks = await page.evaluate(async (a) => {
+      const host = document.getElementById("host");
+      host.innerHTML = `<div class="ap-body">${dupCard(a).body}</div>`;
+      const vis = (sel) => { const el = host.querySelector(sel); return !!el && !el.closest("[hidden]"); };
+      const wait = () => new Promise((r) => setTimeout(r, 30));
+      const labels = [...host.querySelectorAll("label.dl-choice")];
+      labels[1].click(); await wait();
+      const other = { req: vis("[data-dup-request]"), reqText: host.querySelector("[data-dup-request]")?.textContent.trim(), keep: vis("[data-dup-next]"), sel: labels[1].classList.contains("sel") };
+      labels[0].click(); await wait();
+      const ours = { req: vis("[data-dup-request]"), keep: vis("[data-dup-next]"), sel: labels[0].classList.contains("sel") };
+      host.querySelector("[data-dup-next]").click(); await wait();
+      const next = { who: vis("[data-dup-screen=who]"), choose: vis("[data-dup-screen=choose]") };
+      host.querySelector("[data-dup-screen-go=choose]").click(); await wait();
+      const backTo = { who: vis("[data-dup-screen=who]"), choose: vis("[data-dup-screen=choose]") };
+      return { other, ours, next, backTo };
+    }, CASES.none);
+    if (!clicks.other.req || clicks.other.keep || !clicks.other.sel || clicks.other.reqText !== "Ask RGA to keep (512) 555-0199") fail(`picking the other listing doesn't turn into "Ask RGA to keep (512) 555-0199" (${JSON.stringify(clicks.other)})`);
+    if (clicks.ours.req || !clicks.ours.keep || !clicks.ours.sel) fail("picking ours again doesn't bring back \"Keep\"");
+    if (!clicks.next.who || clicks.next.choose) fail("\"Keep …\" doesn't move to \"Who made it?\"");
+    if (clicks.backTo.who || !clicks.backTo.choose) fail("\"← Back\" doesn't return to the choice");
   } finally { await browser.close(); }
 }
 // the queue and the badge: a card that waits on RGA asks nothing of the client
