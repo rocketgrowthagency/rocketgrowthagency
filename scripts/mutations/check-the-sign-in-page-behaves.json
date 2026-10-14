@@ -121,22 +121,15 @@
  [
   "the button height drifts from 40px",
   "portalcss",
-  "width: 100%; min-height: 40px; border: 0; border-radius: 9px;",
-  "width: 100%; min-height: 44px; border: 0; border-radius: 9px;",
+  ".si-btn { appearance: none; width: 100%; min-height: 40px; border: 0; border-radius: 9px;",
+  ".si-btn { appearance: none; width: 100%; min-height: 44px; border: 0; border-radius: 9px;",
   1
  ],
  [
   "the phone gutters go",
   "portalcss",
-  "padding: clamp(40px, 10vh, 112px) 16px 32px;",
-  "padding: clamp(40px, 10vh, 112px) 0 32px;",
-  1
- ],
- [
-  "the portal's no-access link drops &reason=no_access",
-  "portal",
-  "\"/client-login/?switch=1&reason=no_access\",",
-  "\"/client-login/?switch=1\",",
+  ".si-ground { min-height: 100vh; display: grid; justify-items: center; align-content: start; gap: 18px;\n  padding: clamp(40px, 10vh, 112px) 16px 32px; }",
+  ".si-ground { min-height: 100vh; display: grid; justify-items: center; align-content: start; gap: 18px;\n  padding: clamp(40px, 10vh, 112px) 0 32px; }",
   1
  ],
  [
@@ -163,8 +156,8 @@
  [
   "the inbox row's preview stops matching the real email",
   "loginhtml",
-  "<span>\u2014 Client Portal Your secure sign-in link</span>",
-  "<span>\u2014 Sign in to your portal</span>",
+  "<span>— Client Portal Your secure sign-in link</span>",
+  "<span>— Sign in to your portal</span>",
   1
  ],
  [
@@ -179,6 +172,90 @@
   "loginhtml",
   "<div class=\"si-chip\"><b id=\"siSentTo\"></b><button type=\"button\" class=\"si-link\" id=\"siChangeEmail\">Change</button></div>",
   "<div class=\"si-chip\"><b id=\"siSentTo\"></b></div><button type=\"button\" class=\"si-link\" id=\"siChangeEmail\">Change</button>",
+  1
+ ],
+ [
+  "the signed-out portal says \"Login Required\" again",
+  "portal",
+  "  signed_out: { title: \"Sign in to see your portal\",",
+  "  signed_out: { title: \"Login Required\",",
+  1
+ ],
+ [
+  "the status screen shows the portal menu",
+  "portalcss",
+  "body[data-portal-status] .portal-side { display: none; }",
+  "body[data-portal-status] .portal-side { display: block; }",
+  1
+ ],
+ [
+  "back from Google forgets the removal step",
+  "portal",
+  "  if (r) { try { localStorage.setItem(\"rga_portal_resume\", r.getAttribute(\"data-ps-resume\")); } catch { /* best effort */ } }",
+  "  if (r) { /* forgotten */ }",
+  1
+ ],
+ [
+  "back from Google reads as a plain sign-out",
+  "portal",
+  "    showStatus(new URLSearchParams(window.location.search).get(\"dup_owner\") ? \"back_from_google\" : \"signed_out\", { href: \"/client-login/\" })",
+  "    showStatus(\"signed_out\", { href: \"/client-login/\" })",
+  1
+ ],
+ [
+  "no-portal loses the way out",
+  "portal",
+  "      showStatus(\"no_access\", { email: session.user.email || \"\", href: \"/client-login/?switch=1&reason=no_access\" })",
+  "      showStatus(\"no_access\", { email: session.user.email || \"\", href: \"/client-login/?switch=1\" })",
+  1
+ ],
+ [
+  "the status action stops spanning the card",
+  "portalcss",
+  ".ps-btn { appearance: none; width: 100%;",
+  ".ps-btn { appearance: none; width: auto; justify-self: start;",
+  1
+ ],
+ [
+  "the Google error page goes back to the red raw page",
+  "statuspage",
+  "title: dup ? \"We couldn't finish the Google sign‑in\" : \"We couldn't connect your Google account\",",
+  "title: \"Could not connect Google account\",",
+  1
+ ],
+ [
+  "a stopped sign-in reads as our failure",
+  "statuspage",
+  "  if (/access_denied/i.test(raw)) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "the raw message is lost",
+  "statuspage",
+  "  if (!page.detail && raw) page.detail = raw.slice(0, 240);\n",
+  "",
+  1
+ ],
+ [
+  "the raw message runs as HTML",
+  "statuspage",
+  "${p.detail ? `<p class=\"d\">Details for support: ${esc(p.detail)}</p>` : \"\"}",
+  "${p.detail ? `<p class=\"d\">Details for support: ${p.detail}</p>` : \"\"}",
+  1
+ ],
+ [
+  "the duplicate removal's error says Setup words",
+  "oauthcb",
+  "(m) => errorPage(m, { flow: \"dup\" })",
+  "errorPage",
+  1
+ ],
+ [
+  "the loading screen goes back to the old words",
+  "portalindex",
+  "<h2>Loading your portal</h2><p>Checking your sign-in…</p>",
+  "<h2>Loading portal</h2><p>Checking your secure session and access.</p>",
   1
  ]
 ]

@@ -3,6 +3,8 @@
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
   loginjs: "portal/client-login.js",
+  statuspage: "netlify/functions/_status-page.js",
+  portalindex: "portal/index.html",
   loginhtml: "client-login/index.html",
   admin: "admin/admin.js",
   exec: "netlify/functions/flow-execute.js",

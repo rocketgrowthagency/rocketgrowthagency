@@ -93,7 +93,7 @@
  [
   "the callback branch runs before the signature check",
   "oauthcb",
-  "  if (state.kind === \"dup_owner\") {\n    return await require(\"./_listing-removal-flow\").handleCallback(code, state, errorPage);\n  }",
+  "  if (state.kind === \"dup_owner\") {\n    return await require(\"./_listing-removal-flow\").handleCallback(code, state, (m) => errorPage(m, { flow: \"dup\" }));\n  }",
   "",
   1
  ],
@@ -163,7 +163,7 @@
  [
   "the way back is gone",
   "portal",
-  "  const back = `<button type=\"button\" class=\"dl-back\" data-ap-clear=\"${escapeAttribute(a.key)}\">\u2190 Back</button>`;",
+  "  const back = `<button type=\"button\" class=\"dl-back\" data-ap-clear=\"${escapeAttribute(a.key)}\">← Back</button>`;",
   "  const back = \"\";",
   1
  ],
@@ -366,8 +366,8 @@
  [
   "RGA isn't told about the client's request",
   "portaldeliv",
-  "message: `m1.audit.gbp_duplicate \u2014 the client asked to keep ${dupLabel(dup)} instead",
-  "message: `m1.audit.gbp_duplicate \u2014 a client request (${dupLabel(dup)})",
+  "message: `m1.audit.gbp_duplicate — the client asked to keep ${dupLabel(dup)} instead",
+  "message: `m1.audit.gbp_duplicate — a client request (${dupLabel(dup)})",
   1
  ],
  [
@@ -483,7 +483,7 @@
   1
  ],
  [
-  "\"Keep \u2026\" doesn't move to screen 2",
+  "\"Keep …\" doesn't move to screen 2",
   "portal",
   "  const go = t.hasAttribute(\"data-dup-next\") ? \"who\" : t.getAttribute(\"data-dup-screen-go\");",
   "  const go = t.hasAttribute(\"data-dup-next\") ? \"choose\" : t.getAttribute(\"data-dup-screen-go\");",
@@ -528,7 +528,7 @@
   "the second listing shows an owner nobody saved",
   "portal",
   "      ${value === \"other\" && ownerHint ? `<span class=\"dl-acct2\">${person}Owner: <b>${escapeHtml(ownerHint)}</b>",
-  "      ${value === \"other\" ? `<span class=\"dl-acct2\">${person}Owner: <b>${escapeHtml(ownerHint || \"ch\u2026@gmail.com\")}</b>",
+  "      ${value === \"other\" ? `<span class=\"dl-acct2\">${person}Owner: <b>${escapeHtml(ownerHint || \"ch…@gmail.com\")}</b>",
   1
  ],
  [

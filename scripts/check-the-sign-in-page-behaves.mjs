@@ -65,7 +65,7 @@ let fails = 0;
 const ok = (cond, msg) => { if (cond) console.log(`  ✅ ${msg}`); else { console.log(`  🔴 ${msg}`); fails++; } };
 
 // One page per scenario. otp: "ok" | "wait:<n>" | "error". session: null | email.
-async function open(query = "", { otp = "ok", session = null, width = 1280, otpDelay = 0 } = {}) {
+async function open(query = "", { otp = "ok", session = null, width = 1280, otpDelay = 0, realPortal = false } = {}) {
   // A fresh context each time: one scenario's session in localStorage must never leak into the next.
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
@@ -77,7 +77,7 @@ async function open(query = "", { otp = "ok", session = null, width = 1280, otpD
     const url = req.url();
     if (url.startsWith(`${ORIGIN}/.netlify/functions/admin-config`)) return req.respond({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, supabaseUrl: STUB, supabaseAnonKey: "stub-anon-key" }) });
     if (url.startsWith(`${ORIGIN}/.netlify/functions/portal-hint`)) return req.respond({ status: 200, contentType: "application/json", body: JSON.stringify({ portal_email_hint: "o•••@lonestardrain.com", business_name: "Lone Star Drain & Plumbing" }) });
-    if (url.startsWith(`${ORIGIN}/portal/`) && req.resourceType() === "document") { calls.portal++; return req.respond({ status: 200, contentType: "text/html", body: "<title>portal</title>portal" }); }
+    if (!realPortal && url.startsWith(`${ORIGIN}/portal/`) && req.resourceType() === "document") { calls.portal++; return req.respond({ status: 200, contentType: "text/html", body: "<title>portal</title>portal" }); }
     if (url.startsWith(`${STUB}/auth/v1/otp`)) {
       if (req.method() === "OPTIONS") return req.respond({ status: 204, headers: cors() });
       calls.otp.push(JSON.parse(req.postData() || "{}"));
@@ -91,7 +91,10 @@ async function open(query = "", { otp = "ok", session = null, width = 1280, otpD
       return req.respond({ status: 500, headers: cors(), contentType: "application/json", body: JSON.stringify({ code: "unexpected_failure", msg: "Error sending magic link email" }) });
     }
     if (url.startsWith(`${STUB}/auth/v1/logout`)) { if (req.method() !== "OPTIONS") calls.logout++; return req.respond({ status: 204, headers: cors() }); }
+    // the real portal's reads: a signed-in email with NO portal rows (empty lists), and every other function says ok
+    if (url.startsWith(`${STUB}/rest/v1/`)) return req.method() === "OPTIONS" ? req.respond({ status: 204, headers: cors() }) : req.respond({ status: 200, headers: cors(), contentType: "application/json", body: "[]" });
     if (url.startsWith(STUB)) return req.respond({ status: 200, headers: cors(), contentType: "application/json", body: "{}" });
+    if (url.startsWith(`${ORIGIN}/.netlify/functions/`)) return req.respond({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
     // Fonts are blocked (the page must work without them), except in screenshot mode, where the diff needs real Inter.
     if (!url.startsWith(ORIGIN)) return process.env.SIGNIN_SHOTS && /fonts\.(googleapis|gstatic)\.com/.test(url) ? req.continue() : req.abort();
     return req.continue();
@@ -303,6 +306,94 @@ try {
     ok(g.sw <= 375 && g.card.left >= 15 && g.card.right <= 360, `375px${q ? " " + q : ""}: no sideways scroll, 16px gutters (scroll ${g.sw}, card ${Math.round(g.card.left)}–${Math.round(g.card.right)})`);
     await page.close();
   }
+  // ── 8. THE PORTAL'S STATUS SCREENS, same design (approved portal_status_screens_v1, 2026-10-14) ─────────────────
+  console.log("\n8 · the portal's status screens");
+  const openPortal = async (query, session) => {
+    const { page } = await open("", { session, realPortal: true });
+    await page.goto(`${ORIGIN}/portal/${query}`, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => !!document.body.dataset.portalStatus || !document.getElementById("portalDashboard")?.hidden, { timeout: 8000 }).catch(() => {});
+    await settle(300);
+    return page;
+  };
+  await run(async () => {
+    const page = await openPortal("", null);
+    const r = await page.evaluate(() => ({ status: document.body.dataset.portalStatus, h: document.querySelector("#portalMessagePanel " + ".ps-hd h1")?.textContent, btn: document.querySelector("#portalMessagePanel " + ".ps-btn")?.textContent, href: document.querySelector("#portalMessagePanel " + ".ps-btn")?.getAttribute("href"),
+      side: getComputedStyle(document.querySelector(".portal-side")).display, logo: !!document.querySelector(".ps-logo text"), text: document.body.innerText,
+      bw: Math.round(document.querySelector("#portalMessagePanel " + ".ps-btn").getBoundingClientRect().width), cw: Math.round(document.querySelector("#portalMessagePanel " + ".ps-card").getBoundingClientRect().width), bh: Math.round(document.querySelector("#portalMessagePanel " + ".ps-btn").getBoundingClientRect().height) }));
+    await shot(page, "portal-signedout");
+    ok(r.status === "signed_out" && r.h === "Sign in to see your portal" && r.btn === "Sign in" && r.href === "/client-login/", `signed out: "Sign in to see your portal" → /client-login/ (${r.status} · ${r.h} · ${r.href})`);
+    ok(r.side === "none" && r.logo, "…with no portal menu and the real logo");
+    ok(!/magic link/i.test(r.text), "…and no \"magic link\" anywhere");
+    ok(r.bh === 40 && r.bw > 300 && r.bw > r.cw - 80, `…one full-width 40px action (${r.bw}×${r.bh} in a ${r.cw} card)`);
+    await page.close();
+  });
+  await run(async () => {
+    const page = await openPortal("?dup_owner=found", null);
+    const r = await page.evaluate(() => ({ status: document.body.dataset.portalStatus, h: document.querySelector("#portalMessagePanel " + ".ps-hd h1")?.textContent, text: document.querySelector("#portalMessagePanel " + ".ps-card")?.innerText || "" }));
+    ok(r.status === "back_from_google" && r.h === "Sign in to finish" && /Nothing was removed/.test(r.text), `back from Google, signed out: "Sign in to finish… Nothing was removed" (${r.status})`);
+    await page.evaluate(() => { document.querySelector("#portalMessagePanel " + "[data-ps-resume]").addEventListener("click", (e) => e.preventDefault(), { once: true }); });
+    await page.click("[data-ps-resume]");
+    const flag = await page.evaluate(() => { try { return localStorage.getItem("rga_portal_resume"); } catch { return "x"; } });
+    ok(flag === "approvals", `…"Sign in" remembers to reopen the removal step (${flag})`);
+    await page.close();
+  });
+  await run(async () => {
+    const page = await openPortal("", "someone.else@example.test");
+    const r = await page.evaluate(() => ({ status: document.body.dataset.portalStatus, h: document.querySelector("#portalMessagePanel " + ".ps-hd h1")?.textContent, text: document.querySelector("#portalMessagePanel " + ".ps-card")?.innerText || "", href: document.querySelector("#portalMessagePanel " + ".ps-btn")?.getAttribute("href") }));
+    await shot(page, "portal-noaccess");
+    ok(r.status === "no_access" && r.h === "This email doesn't have a portal" && r.text.includes("someone.else@example.test") && r.href === "/client-login/?switch=1&reason=no_access", `an email with no portal: says so, names it, and offers "Use a different email" (${r.status} · ${r.href})`);
+    await page.close();
+  });
+
+  // ── 9. THE GOOGLE SIGN-IN ERROR PAGE + "LOADING" (approved client_remaining_screens_v1, 2026-10-14) ─────────────
+  console.log("\n9 · the Google sign-in error page and the loading screen");
+  await run(async () => {
+    const { createRequire } = await import("node:module");
+    const req = createRequire(`${SITE}/netlify/functions/x.js`);
+    const { googleError, renderStatusPage } = req("./_status-page.js");
+    for (const [raw, title] of [
+      ["Google denied access: access_denied", "The Google sign-in was stopped"],
+      ["This connect link expired — please retry Connect Google from your dashboard.", "That sign-in took too long"],
+      ["Invalid or tampered state token", "That sign-in took too long"],
+      ["Missing code or state from Google", "That sign-in took too long"],
+      ["Google returned no refresh_token. Revoke the previous grant at myaccount.google.com/permissions, then reconnect.", "Google needs a fresh connection"],
+      ["Token exchange failed: invalid_grant — Bad Request", "We couldn't connect your Google account"],
+      ["Supabase upsert failed (500): boom", "We couldn't connect your Google account"],
+      ["Google denied access: invalid_scope", "We couldn't connect your Google account"],
+    ]) {
+      const pg = googleError(raw);
+      pg.title = pg.title.replace(/\u2011/g, "-");
+      ok(pg.title === title && pg.detail && (pg.detail === "no refresh_token" || raw.startsWith(pg.detail.slice(0, 20))), `"${raw.slice(0, 42)}…" → "${title}", with the raw message kept for support (${pg.title})`);
+    }
+    const d = googleError("Google sign-in failed: invalid_grant", { flow: "dup" }); d.title = d.title.replace(/\u2011/g, "-");
+    ok(d.title === "We couldn't finish the Google sign-in" && /Nothing was removed/.test(d.copy) && d.action.href === "/portal/?dup_owner=failed", `during the duplicate removal: "Nothing was removed" and back to the removal step (${d.action.href})`);
+    const s1 = googleError("Google denied access: access_denied");
+    ok(s1.action.href === "/portal/#step-m1.access.analytics" && /Nothing changed/.test(s1.copy), "in Setup: \"Nothing changed\" and Try again opens Connect Google");
+    const html = renderStatusPage(googleError(`Token exchange failed: <script>alert(1)</script>`));
+    ok(!html.includes("<script>alert") && html.includes("&lt;script&gt;"), "the raw message is escaped, never run");
+    ok(!/color:#c00|Could not connect Google account/.test(html) && /<a href="\/contact\/">Help<\/a>/.test(html) && /max-width:420px/.test(html), "the page is the sign-in card (no red heading), with Help · Privacy · Terms");
+    const cb = fs.readFileSync(`${SITE}/netlify/functions/oauth-google-callback.js`, "utf8");
+    ok(/body: renderStatusPage\(googleError\(msg, opts\)\)/.test(cb) && /handleCallback\(code, state, \(m\) => errorPage\(m, \{ flow: "dup" \}\)\)/.test(cb), "both Google flows render it (Setup's connection, and the duplicate removal with its own wording)");
+  });
+  await run(async () => {
+    // the portal before its script runs: what everyone sees for a second on every visit
+    const { page } = await open("", {});
+    await page.setRequestInterception(true);
+    page.on("request", (r) => (/\/portal\/portal\.js/.test(r.url()) ? r.abort() : null));
+    const page2 = await browser.newPage();
+    await page2.setViewport({ width: 1280, height: 900 });
+    await page2.setRequestInterception(true);
+    page2.on("request", (r) => (r.url().startsWith(ORIGIN) && !/\/portal\/portal\.js/.test(r.url()) ? r.continue() : r.abort()));
+    await page2.goto(`${ORIGIN}/portal/`, { waitUntil: "load" });
+    await settle(300);
+    const r = await page2.evaluate(() => ({ h: document.querySelector("#portalLoadingPanel h2")?.textContent, logo: !!document.querySelector("#portalLoadingPanel .ps-logo text"),
+      card: !!document.querySelector("#portalLoadingPanel .ps-card"), side: getComputedStyle(document.querySelector(".portal-side")).display, text: document.body.innerText }));
+    await shot(page2, "portal-loading");
+    ok(r.h === "Loading your portal" && r.logo && r.card && r.side === "none", `loading: the sign-in card with the logo, no menu (${r.h})`);
+    ok(!/Checking your secure session and access/.test(r.text), "…not the old \"Checking your secure session and access\"");
+    await page.close(); await page2.close();
+  });
+
 } catch (e) {
   console.log(`⚠️  INDETERMINATE — the walk threw: ${e.message}`);
   await browser.close(); server.close();
