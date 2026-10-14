@@ -331,7 +331,7 @@ try {
       const u = new URL(String(url)); const m = (init.method || "GET").toUpperCase();
       if (u.hostname === "serpapi.com") return J({ local_results: [
         // 🔑 like Google's real data (checked 2026-10-14): a listing with no reviews has NO reviews/rating fields
-        row({ title: "Rocket Growth Agency", data_id: "0xccc:0xddd", place_id: "ChIJ-kept", reviews: ownRev || undefined, rating: ownRev ? 5 : undefined }),
+        row({ title: "Rocket Growth Agency", data_id: "0xccc:0xddd", place_id: "ChIJ-kept", type: ["Marketing agency", "Website designer"], reviews: ownRev || undefined, rating: ownRev ? 5 : undefined }),
         row({ title: "Rocket Growth Agency", data_id: "0xaaa:0xbbb", place_id: "ChIJ-dupe", phone: "(424) 396-8499", type: "Marketing agency",
           reviews: dupRev || undefined, rating: dupRev ? 4.9 : undefined, gps_coordinates: { latitude: 34.05, longitude: -118.45 } }),
       ] });
@@ -362,7 +362,7 @@ try {
       if (od.own_listing?.in_connected_account !== want.ownAcct || dup.in_connected_account !== want.dupAcct) fail(`the scan's "in the connected account" is wrong ${tag} (own ${od.own_listing?.in_connected_account}, second ${dup.in_connected_account}; no connection must be null, never false)`);
       if (od.keep?.case !== want.kase) fail(`the scan doesn't store the rule's choice ${tag} (${od.keep?.case})`);
       // v10: what Maps shows for OUR listing too (read off the same row; a field Maps doesn't show is null, still a fact)
-      if (od.own_listing?.title !== "Rocket Growth Agency" || !od.own_listing || !("address" in od.own_listing) || od.own_listing.address !== null || !("website" in od.own_listing)) fail(`the scan doesn't keep what Maps shows for our listing ${tag} (${JSON.stringify(od.own_listing)})`);
+      if (od.own_listing?.title !== "Rocket Growth Agency" || !od.own_listing || !("address" in od.own_listing) || od.own_listing.address !== null || !("website" in od.own_listing) || od.own_listing.category !== "Marketing agency") fail(`the scan doesn't keep what Maps shows for our listing ${tag} (${JSON.stringify(od.own_listing)})`);
       if (oauth && !googleFails && (!dup.gps || dup.gps.lat !== 34.05)) fail("the scan doesn't keep the second listing's location (RGA can't make it the main listing)");
 
       // 12 · RGA's choice (case 3): only when the second has more reviews; "ours" merges; "reviews" moves the client's listing
@@ -525,7 +525,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     signin:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com" }),
     found:    mk(z, zd, null, { answer: "mine", owner_removal: { status: "found", account: "chriskapranos@gmail.com" } }),
     // v10: every fact on both sides (RGA's real shape: same name, no address, same website, both no reviews)
-    found10:  mk({ ...z, title: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", address: null, website: "https://lonestar.test/" },
+    // 🔑 RGA's REAL shapes (2026-10-14): our category comes as a LIST, our website with tracking tags
+    found10:  mk({ ...z, title: "Lone Star Drain & Plumbing", category: ["Plumber", "Drainage service", "Water heater installation"], phone: "(512) 555-0142", address: null,
+      website: "https://www.lonestar.test/?utm_source=google&utm_medium=organic&utm_campaign=gbp_listing" },
       { ...zd, website: "https://lonestar.test/", address: null }, null,
       { answer: "mine", kept: { ...kept, account: "hello@lonestar.test" }, owner_removal: { status: "found", account: "chriskapranos2@gmail.com", location_id: "3109515908223837152" } }),
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
@@ -623,6 +625,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       const want = { rm: "Phone=(512) 555-0199*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=chriskapranos2@gmail.com*|Google ID=3109515908223837152",
         kp: "Phone=(512) 555-0142*|Address=No address shown on Maps|Website=lonestar.test|Reviews=No reviews|Google account=hello@lonestar.test*|Our work=Your photos, posts and edits go here" };
       for (const c of t.cards) if (c.rows.join("|") !== want[c.side]) fail(`found10: the ${c.side === "rm" ? "removing" : "keeping"} card's rows aren't every fact with the differences marked (${c.rows.join("|")})`);
+      if (/utm_|Drainage service/.test(t.text) || !/Keeping this one\s*Lone Star Drain & Plumbing\s*Plumber\s*☎/.test(t.text)) fail("found10: the kept card prints the whole category list or the website's tracking tags");
       if (!/Same name, so check the phone and the Google account: the rows marked different tell them apart\./.test(t.text)) fail("found10: no \"Same name, so check the phone and the Google account\" line");
       if (!/In chriskapranos2@gmail\.com · Google ID 3109515908223837152/.test(t.text)) fail("found10: the confirmation doesn't repeat the account and Google's ID for the listing");
       if (!/When you press Remove/.test(f.text) || !/Google permanently deletes the red listing, the one with \(512\) 555-0199, from chriskapranos@gmail\.com\./.test(f.text) || !/The green one, \(512\) 555-0142, and its reviews stay exactly as they are\./.test(f.text) || !/This can't be undone\./.test(f.text)) fail("found: step 4 doesn't say what Remove does (your listing and its reviews stay)");

@@ -845,5 +845,26 @@
   "    location_id: row.location_name ? String(row.location_name).split(\"/\").pop() : null, title:",
   "    title:",
   1
+ ],
+ [
+  "v10: the kept card prints the whole category list",
+  "portal",
+  "      const one = (c) => (Array.isArray(c) ? c[0] : c) || null;",
+  "      const one = (c) => (Array.isArray(c) ? c.join(\", \") : c) || null;",
+  1
+ ],
+ [
+  "v10: the website keeps its tracking tags",
+  "portal",
+  "return (x.hostname.replace(/^www\\./i, \"\") + (x.pathname === \"/\" ? \"\" : x.pathname.replace(/\\/$/, \"\")));",
+  "return (x.hostname.replace(/^www\\./i, \"\") + x.search);",
+  1
+ ],
+ [
+  "v10: the scan stores our category as a list",
+  "dupscan",
+  "category: (Array.isArray(ownRow.type) ? ownRow.type[0] : ownRow.type) || null",
+  "category: ownRow.type || null",
+  1
  ]
 ]
