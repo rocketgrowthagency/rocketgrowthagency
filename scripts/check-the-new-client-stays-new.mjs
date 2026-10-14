@@ -21,6 +21,7 @@
  * (APPROVAL_ARCHIVE_SITE_DIR), and production (read-only).
  * Exit 0 = still day 0 and shielded · 1 = it moved or a job can reach it · 2 = can't tell.
  */
+import { cronSkipFails } from "./lib/crons-skip-test-clients.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -57,16 +58,11 @@ for (const k of ["main", "new"]) if (WALK_CLIENTS[k] && WALK_CLIENTS[k].portalRo
 if (!WALK_CLIENTS.new?.id) fails.push("WALK_CLIENTS.new has no id — the morning walk cannot sign in as it");
 if (WALK_CLIENTS.new?.email === WALK_CLIENTS.main?.email) fails.push("the two test clients sign in as the same email — the portal would show one of them twice");
 
-// ── 2. every client-wide query in the costly crons skips test:* ────────────────────────────────────────
-const SKIP = "source.not.like.test:*";
-for (const rel of ["netlify/functions/brain-weekly-dispatch.js", "netlify/functions/flow-cron-daily.js", "netlify/functions/flow-cron-weekly-digest.js"]) {
-  let src;
-  try { src = fs.readFileSync(path.join(SITE, rel), "utf8"); } catch { cantTell(`cannot read ${rel}`); }
-  // a client-WIDE read = a /clients? query not narrowed to one id
-  const wide = [...src.matchAll(/\/clients\?([^`"'\s]*)/g)].map((m) => m[1]).filter((q) => !/(^|&)id=eq\./.test(q));
-  if (!wide.length) { fails.push(`${rel}: no client-wide query found — the gate no longer understands it (re-read it)`); continue; }
-  for (const q of wide) if (!q.includes(`or=(source.is.null,${SKIP})`)) fails.push(`${rel}: /clients?${q.slice(0, 90)} does not skip test clients`);
-}
+// ── 2. every client-wide query in every scheduled job (and the costly ones named here) skips test:* ────────────────
+// → scripts/lib/crons-skip-test-clients.mjs (discovered from netlify.toml; one copy, shared by both fixture gates)
+const crons = cronSkipFails(SITE, ["netlify/functions/brain-weekly-dispatch.js", "netlify/functions/flow-cron-daily.js", "netlify/functions/flow-cron-weekly-digest.js"
+]);
+fails.push(...crons.fails);
 
 // ── 3. production: the fixture is still exactly day 0 ──────────────────────────────────────────────────
 const S = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -112,5 +108,5 @@ if (fails.length) {
   console.log("     Re-create with node scripts/create-new-test-client.mjs (it never edits; delete the drifted row first) or fix the job.");
   process.exit(1);
 }
-console.log(`  ✅ ${row.business_name} is day 0 (Month 1 open, nothing done, Google not connected); the 3 crons skip test clients`);
+console.log(`  ✅ ${row.business_name} is day 0 (Month 1 open, nothing done, Google not connected); every scheduled job skips test clients`);
 process.exit(0);

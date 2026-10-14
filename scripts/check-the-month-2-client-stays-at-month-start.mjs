@@ -15,6 +15,7 @@
  * (APPROVAL_ARCHIVE_SITE_DIR), and production (read-only).
  * Exit 0 = still at the start of a month and shielded · 1 = it moved or a job can reach it · 2 = can't tell.
  */
+import { cronSkipFails } from "./lib/crons-skip-test-clients.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -50,16 +51,11 @@ if (!W.id) fails.push("WALK_CLIENTS.month2 has no id — the morning walk cannot
 const emails = Object.values(WALK_CLIENTS).map((c) => c.email);
 if (new Set(emails).size !== emails.length) fails.push("two walk clients sign in as the same email");
 
-// ── 2. every client-wide query in the costly crons skips test:* ────────────────────────────────────────
-const SKIP = "source.not.like.test:*";
-for (const rel of ["netlify/functions/brain-weekly-dispatch.js", "netlify/functions/flow-cron-daily.js",
-  "netlify/functions/flow-cron-weekly-digest.js", "netlify/functions/send-monthly-report.js"]) {
-  let src;
-  try { src = fs.readFileSync(path.join(SITE, rel), "utf8"); } catch { cantTell(`cannot read ${rel}`); }
-  const wide = [...src.matchAll(/\/clients\?([^`"'\s]*)/g)].map((m) => m[1]).filter((q) => !/(^|&)id=eq\./.test(q));
-  if (!wide.length) { fails.push(`${rel}: no client-wide query found — the gate no longer understands it (re-read it)`); continue; }
-  for (const q of wide) if (!q.includes(`or=(source.is.null,${SKIP})`)) fails.push(`${rel}: /clients?${q.slice(0, 90)} does not skip test clients`);
-}
+// ── 2. every client-wide query in every scheduled job (and the costly ones named here) skips test:* ────────────────
+// → scripts/lib/crons-skip-test-clients.mjs (discovered from netlify.toml; one copy, shared by both fixture gates)
+const crons = cronSkipFails(SITE, ["netlify/functions/brain-weekly-dispatch.js", "netlify/functions/flow-cron-daily.js", "netlify/functions/flow-cron-weekly-digest.js", "netlify/functions/send-monthly-report.js"
+]);
+fails.push(...crons.fails);
 
 // ── 3. production: still the start of a month ─────────────────────────────────────────────────────────
 const S = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -118,5 +114,5 @@ if (fails.length) {
   console.log("     Fix the job, or reset with node scripts/create-new-test-client.mjs --as=month2 --sync (and delete what moved it).");
   process.exit(1);
 }
-console.log(`  ✅ ${row.business_name} is at the start of a month (Month 1 done, nothing sent, no monthly record); the 4 crons skip test clients`);
+console.log(`  ✅ ${row.business_name} is at the start of a month (Month 1 done, nothing sent, no monthly record); every scheduled job skips test clients`);
 process.exit(0);

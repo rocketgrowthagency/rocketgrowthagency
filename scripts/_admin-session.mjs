@@ -81,7 +81,7 @@ export async function nav(page, url, what) {
  * Poll until `selector`'s count is non-zero and has stopped moving. Returns the count, or 0 if it
  * never rendered — the CALLER decides whether that is a defect or an indeterminate.
  */
-export async function settle(page, selector = ".ob-step", { tries = 200, every = 150 } = {}) {
+export async function settle(page, selector = ".ob-step", { tries = 300, every = 150 } = {}) {
   let last = -1, stable = 0;
   for (let i = 0; i < tries; i++) {
     const n = await page.evaluate((s) => document.querySelectorAll(s).length, selector);
@@ -95,12 +95,14 @@ export async function settle(page, selector = ".ob-step", { tries = 200, every =
  * Sign in as the owner and open a client's admin tab, with every phase fold open. Returns the
  * settled row count. Collects page errors into `errs` if one is passed.
  */
-export async function openAdminClient(page, clientId, tab = "onboarding-v2", { errs, tries = 2 } = {}) {
+export async function openAdminClient(page, clientId, tab = "onboarding-v2", { errs, tries = 3 } = {}) {
   if (errs) page.on("pageerror", (e) => errs.push(String(e?.message || e).split("\n")[0].slice(0, 160)));
   // 🔑 ONE RETRY ON AN EMPTY RENDER, AND ONLY ON AN EMPTY ONE. A cold edge or a magic link that did
   // not take yields zero rows; a second attempt with a FRESH link costs 40 seconds and removes the
   // flake. A gate that renders production inside the mutation harness runs ten times in a row, and
   // one flake there kills the whole suite's verdict.
+  // 🔑 10-14: two empty loads in a row still happened 1 run in 3 (check-the-run-strip-matches-the-mockup, unmutated), so
+  // three attempts, each settling up to 45s. It costs time ONLY on an empty render.
   // 🔴 IT NEVER RETRIES A RENDER THAT PRODUCED ROWS — that would be retrying until the answer is
   // the one I wanted. If it renders empty twice, that is reported.
   // → feedback_a_flaky_gate_is_worse_than_a_failing_one

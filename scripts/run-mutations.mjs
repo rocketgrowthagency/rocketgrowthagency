@@ -17,7 +17,7 @@
 //
 //   node scripts/run-mutations.mjs                      # every suite
 //   node scripts/run-mutations.mjs check-a-done-step…   # one (or several names)
-//   --jobs=N     run N mutations at once, each in its own copy (default 4)
+//   --jobs=N     run N mutations at once, each in its own copy (default: cores − 1, at most 6)
 //   --fresh      ignore the cache and run every mutation
 //
 // 🔑 FAST BY DEFAULT (2026-10-14, Chris: "harden system… so it doesnt take so long"). One 116-mutation run took ~40
@@ -64,7 +64,9 @@ const SKIP_DIRS = /^(node_modules|\.git|\.claude|\.netlify|v|dist|coverage|repor
 const SKIP = /\.(mp4|mov|png|jpe?g|gif|webp|pdf|zip|ico|woff2?)$/i;
 
 const args = process.argv.slice(2);
-const JOBS = Math.max(1, Number((args.find((a) => a.startsWith("--jobs=")) || "--jobs=4").slice(7)) || 4);
+// default: as many as the machine can carry (cores − 1, at most 6) — browser gates mostly wait, so this is near-linear
+const DEFAULT_JOBS = Math.max(1, Math.min(6, os.cpus().length - 1));
+const JOBS = Math.max(1, Number((args.find((a) => a.startsWith("--jobs=")) || "").slice(7)) || DEFAULT_JOBS);
 const FRESH = args.includes("--fresh");
 const names = args.filter((a) => !a.startsWith("--")).map((a) => a.replace(/\.(mjs|json)$/, ""));
 
@@ -102,8 +104,21 @@ const seed = (tmp) => {
     fs.copyFileSync(`${path.dirname(HERE)}/${r}`, `${tmp}/__scraper/${r}`);
   }
 };
+// 🔑 THE SAME ENVIRONMENT THE DAILY RUN GIVES THE GATES (daily-health-check.sh loads .env). Without it, the live-render
+// gates exit 2 ("cannot sign in") on their UNMUTATED run and their suites are never judged — 4 of 81 on 10-14.
+// Loaded quietly, never printed; a value already set in the shell wins. → feedback_never_print_a_secret_value
+const DOTENV = (() => {
+  const out = {};
+  try {
+    for (const line of fs.readFileSync(path.join(path.dirname(HERE), ".env"), "utf8").split("\n")) {
+      const m = /^([A-Z_][A-Z0-9_]*)=(.*)$/.exec(line.trim());
+      if (m && process.env[m[1]] === undefined) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+  } catch { /* no .env: the gates that need it say so */ }
+  return out;
+})();
 const runGate = (gate, tmp) => new Promise((resolve) => {
-  execFile("node", [`${HERE}/${gate}`], { env: { ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp, SCRAPER_COPY_DIR: `${tmp}/__scraper` }, maxBuffer: 64 * 1024 * 1024 },
+  execFile("node", [`${HERE}/${gate}`], { env: { ...DOTENV, ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp, SCRAPER_COPY_DIR: `${tmp}/__scraper` }, maxBuffer: 64 * 1024 * 1024 },
     (err) => resolve(err ? (err.code ?? 99) : 0));
 });
 const targetPaths = (rel, tmp) => rel.startsWith("scraper:")
@@ -123,17 +138,28 @@ pool.forEach(seed);
 const cleanup = () => pool.forEach((t) => fs.rmSync(t, { recursive: true, force: true }));
 process.on("SIGINT", () => { cleanup(); process.exit(130); });
 
-let gatesOk = 0, gatesBad = 0, totalCaught = 0, totalRun = 0, totalCached = 0;
+let gatesOk = 0, gatesBad = 0, gatesUnk = 0, totalCaught = 0, totalRun = 0, totalCached = 0;
 const t0 = Date.now();
 for (const file of suites) {
   const gate = file.replace(/\.json$/, ".mjs");
   if (!fs.existsSync(`${HERE}/${gate}`)) { console.log(`⚠️  ${gate} — suite exists, gate does not`); gatesBad++; continue; }
   const muts = JSON.parse(fs.readFileSync(`${DIR}/${file}`, "utf8"));
-  // an unmutated run must exit 0 — always run, never cached (it IS the gate passing today)
+  // every file this suite targets, plus the gate and the suite itself: if any of them changes, every cached result
+  // for the suite is void
+  const suiteKey = sha([fileSha(`${HERE}/${gate}`), fileSha(`${DIR}/${file}`), ...[...new Set(muts.map((m) => FILES[m[1]]).filter(Boolean))].sort().map((rel) => `${rel}:${fileSha(targetPaths(rel, "").src)}`)].join("|"));
+  // 🔑 a whole suite that passed in full with exactly these files is skipped, base run included — so "run everything"
+  // after a one-file change costs only the suites that file touches
+  const done = cache[`suite:${file}`];
+  if (!FRESH && done && done.key === suiteKey && Date.now() - done.at < WEEK) {
+    console.log(`✅ ${gate.replace(/\.mjs$/, "")} — ${done.n}/${done.n} caught (unchanged since it last passed)`);
+    totalCaught += done.n; totalRun += done.n; totalCached += done.n; gatesOk++; continue;
+  }
+  // an unmutated run must exit 0 — always run when anything changed (it IS the gate passing today)
   const base = await runGate(gate, pool[0]);
-  if (base !== 0) { console.log(`⚠️  ${gate} — UNMUTATED run exits ${base}; cannot judge its mutations`); gatesBad++; continue; }
-  // every file this suite targets, plus the gate: if any of them changes, every cached result for the suite is void
-  const suiteKey = sha([fileSha(`${HERE}/${gate}`), ...[...new Set(muts.map((m) => FILES[m[1]]).filter(Boolean))].sort().map((rel) => `${rel}:${fileSha(targetPaths(rel, "").src)}`)].join("|"));
+  // exit 2 on the unmutated run = the gate honestly can't tell TODAY (e.g. no live example to measure): "can't judge",
+  // not "broken". Exit 1 = the gate fails on today's code, which is a real finding.
+  if (base === 2) { console.log(`⚠️  ${gate} — can't tell today (its unmutated run exits 2); its mutations weren't judged`); gatesUnk++; continue; }
+  if (base !== 0) { console.log(`🔴 ${gate} — UNMUTATED run exits ${base}: the gate fails on today's code, so its mutations can't be judged`); gatesBad++; continue; }
 
   let caught = 0, skipped = 0, cached = 0;
   const work = [];
@@ -150,9 +176,14 @@ for (const file of suites) {
     if (!FRESH && cache[key] && Date.now() - cache[key] < WEEK) { caught++; cached++; continue; }
     work.push({ m, rel, orig, key });
   }
-  // the workers: each takes its own copy, mutates ONE file, runs the gate, restores that file
+  // the workers: each takes its own copy, mutates ONE file, runs the gate, restores that file.
+  // 🔴 A GATE THAT SIGNS IN TO THE LIVE SITE RUNS ONE AT A TIME. Six live sign-ins at once tripped over each other on
+  // 10-14 and turned real catches into exit 2. The rule is by what the gate DOES (it uses the live-render helper, or
+  // says `mutation-runner: serial`), not a list somebody has to remember. → feedback_a_lift_list_is_a_promise_somebody_will_remember
+  const serial = /_mockup-diff|mutation-runner:\s*serial/.test(fs.readFileSync(`${HERE}/${gate}`, "utf8"));
   let next = 0;
-  await Promise.all(pool.map(async (tmp) => {
+  const retry = [];
+  await Promise.all((serial ? pool.slice(0, 1) : pool).map(async (tmp) => {
     while (next < work.length) {
       const { m: [name, , find, repl, expect], rel, orig, key } = work[next++];
       const { dst } = targetPaths(rel, tmp);
@@ -162,16 +193,27 @@ for (const file of suites) {
       const got = await runGate(gate, tmp);
       fs.writeFileSync(dst, orig);
       if (got === want) { caught++; cache[key] = Date.now(); }
+      // 🔑 "can't tell" UNDER LOAD IS RE-ASKED ALONE. Gates that read production can exit 2 when six run at once (a
+      // timeout, a busy API); on 10-14 that turned 6 real catches into misses. Re-run it by itself before calling it.
+      else if (got === 2 && want !== 2) retry.push({ name, rel, orig, key, find, repl, want });
       else console.log(`   🔴 NOT CAUGHT: ${name} (expected exit ${want}, got ${got})`);
     }
   }));
+  for (const { name, rel, orig, key, find, repl, want } of retry) {
+    const { dst } = targetPaths(rel, pool[0]);
+    fs.writeFileSync(dst, orig.replace(find, repl));
+    const got = await runGate(gate, pool[0]);
+    fs.writeFileSync(dst, orig);
+    if (got === want) { caught++; cache[key] = Date.now(); }
+    else console.log(`   🔴 NOT CAUGHT: ${name} (expected exit ${want}, got ${got}, re-run alone)`);
+  }
   totalCaught += caught; totalRun += muts.length - skipped; totalCached += cached;
   const ok = caught === muts.length - skipped && !skipped;
   console.log(`${ok ? "✅" : "🔴"} ${gate.replace(/\.mjs$/, "")} — ${caught}/${muts.length - skipped} caught${cached ? ` (${cached} unchanged since they last passed)` : ""}${skipped ? ` · ${skipped} SKIPPED` : ""}`);
-  if (ok) gatesOk++; else gatesBad++;
+  if (ok) { gatesOk++; cache[`suite:${file}`] = { key: suiteKey, at: Date.now(), n: caught }; } else { gatesBad++; delete cache[`suite:${file}`]; }
 }
 cleanup();
 try { fs.writeFileSync(CACHE_FILE, JSON.stringify(cache)); } catch { /* a cache that can't be written just means a full run next time */ }
 
-console.log(`\n${gatesBad ? "🔴" : "✅"} ${gatesOk}/${gatesOk + gatesBad} suite(s) prove their gate can fail · ${totalCaught}/${totalRun} mutations caught${totalCached ? ` · ${totalCached} from cache` : ""} · ${Math.round((Date.now() - t0) / 1000)}s with ${JOBS} at once`);
-process.exit(gatesBad ? 1 : 0);
+console.log(`\n${gatesBad ? "🔴" : gatesUnk ? "⚠️ " : "✅"} ${gatesOk}/${gatesOk + gatesBad + gatesUnk} suite(s) prove their gate can fail${gatesUnk ? ` · ${gatesUnk} can't tell today` : ""} · ${totalCaught}/${totalRun} mutations caught${totalCached ? ` · ${totalCached} from cache` : ""} · ${Math.round((Date.now() - t0) / 1000)}s with ${JOBS} at once`);
+process.exit(gatesBad ? 1 : gatesUnk ? 2 : 0);

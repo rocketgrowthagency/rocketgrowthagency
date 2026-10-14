@@ -3,6 +3,10 @@
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
   loginjs: "portal/client-login.js",
+  cronskiplib: "scraper:scripts/lib/crons-skip-test-clients.mjs",
+  scraper_metrics: "netlify/functions/metrics-daily-refresh.js",
+  notifystepopen: "netlify/functions/notify-step-open.js",
+  rankingsrefresh: "netlify/functions/rankings-refresh.js",
   statuspage: "netlify/functions/_status-page.js",
   portalindex: "portal/index.html",
   loginhtml: "client-login/index.html",

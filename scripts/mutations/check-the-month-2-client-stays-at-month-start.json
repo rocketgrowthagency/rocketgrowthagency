@@ -33,5 +33,33 @@
   "billing_status=eq.active&or=(source.is.null,source.not.like.test:*)",
   "billing_status=eq.active",
   1
+ ],
+ [
+  "the nightly step re-check reaches the test clients again",
+  "scraper_metrics",
+  "clients?select=id,business_name&status=neq.archived&or=(source.is.null,source.not.like.test:*)`",
+  "clients?select=id,business_name&status=neq.archived`",
+  1
+ ],
+ [
+  "the nightly duplicate scan spends SerpApi on test clients",
+  "duprecheck",
+  "`/clients?archived_at=is.null&or=(source.is.null,source.not.like.test:*)&select=id,business_name`",
+  "`/clients?archived_at=is.null&select=id,business_name`",
+  1
+ ],
+ [
+  "the next-step email goes to test clients",
+  "notifystepopen",
+  "and=(or(status.is.null,status.neq.archived),or(source.is.null,source.not.like.test:*))",
+  "or=(status.is.null,status.neq.archived)",
+  1
+ ],
+ [
+  "the ranking scans reach test clients",
+  "rankingsrefresh",
+  "&primary_market=not.is.null&or=(source.is.null,source.not.like.test:*)`",
+  "&primary_market=not.is.null`",
+  1
  ]
 ]
