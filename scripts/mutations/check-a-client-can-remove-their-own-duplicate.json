@@ -114,8 +114,8 @@
  [
   "the question loses the Keep vs Remove pair",
   "portal",
-  "    ${pair(keepCard(undefined, factsOf(own, true)), dropCard(undefined, true, factsOf(d, false)))}\n    ${reason}\n    <div class=\"dl-ask\"",
-  "    ${reason}\n    <div class=\"dl-ask\"",
+  "    ${pair(keepCard(undefined, factsOf(own, true)), dropCard(undefined, true, factsOf(d, false)))}\n    ${reason}\n    ${replied ?",
+  "    ${reason}\n    ${replied ?",
   1
  ],
  [
@@ -128,8 +128,8 @@
  [
   "Remove shows before the listing is found",
   "portal",
-  "    if (r && r.status === \"found\") {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
-  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
+  "    if (r && r.status === \"found\") {\n      return card(`Remove ${label}`, \"Step 3 of 3\"",
+  "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(`Remove ${label}`, \"Step 3 of 3\"",
   1
  ],
  [
@@ -254,7 +254,7 @@
  [
   "the keep endpoint moves a listing the rule already decided",
   "dupkeepfn",
-  "    if (facts.case !== \"flip\") return json(409,",
+  "    if (facts.case !== \"flip\" && !(choice === \"reviews\" && asked)) return json(409,",
   "    if (false) return json(409,",
   1
  ],
@@ -282,8 +282,8 @@
  [
   "the waits-on-RGA card loses its state",
   "portal",
-  "      { rga: true, stateLabel: \"Waits on RGA\" });",
-  "      { stateLabel: \"Waits on RGA\" });",
+  "merged in, not deleted.` : \"\"}</div>`,\n      { rga: true, stateLabel: \"Waits on RGA\" });",
+  "merged in, not deleted.` : \"\"}</div>`,\n      { stateLabel: \"Waits on RGA\" });",
   1
  ],
  [
@@ -296,7 +296,7 @@
  [
   "the badge counts a card that waits on RGA",
   "portal",
-  "actions.filter((a) => !(a.keep && a.keep.waits_on_rga)).length",
+  "actions.filter((a) => !(a.waits || (a.keep && a.keep.waits_on_rga))).length",
   "actions.length",
   1
  ],
@@ -340,6 +340,118 @@
   "dupscan",
   "      if (alive && typeof alive === \"object\") stillThere.push({ ...d, ...reviewsFrom(alive),",
   "      if (alive && typeof alive === \"object\") stillThere.push({ ...d,",
+  1
+ ],
+ [
+  "keepWaits ignores the client's request",
+  "gbpdupmod",
+  "  if (od.keep_request && !od.keep_reply) return true;\n",
+  "",
+  1
+ ],
+ [
+  "a step can't name a listing that has only an address",
+  "gbpdupmod",
+  "  if (d && d.address) return `the listing at ${d.address}`;\n",
+  "",
+  1
+ ],
+ [
+  "the removal goes ahead while the client's request is open",
+  "listingflow",
+  "  if (keepWaits(ctx.tasks[R.DUP_STEP]?.outcome_data))\n",
+  "  if (false)\n",
+  1
+ ],
+ [
+  "the sign-in starts while RGA decides",
+  "dupownerinit",
+  "  if (keepWaits(tasks[\"m1.audit.gbp_duplicate\"]?.outcome_data)) return json(409,",
+  "  if (false) return json(409,",
+  1
+ ],
+ [
+  "RGA isn't told about the client's request",
+  "portaldeliv",
+  "message: `m1.audit.gbp_duplicate \u2014 the client asked to keep ${dupLabel(dup)} instead",
+  "message: `m1.audit.gbp_duplicate \u2014 a client request (${dupLabel(dup)})",
+  1
+ ],
+ [
+  "a pending removal survives the client's request",
+  "portaldeliv",
+  "body: JSON.stringify({ status: \"expired\", token_enc: null, detail: \"The client asked RGA to keep the other listing.\" })",
+  "body: JSON.stringify({ detail: \"The client asked RGA to keep the other listing.\" })",
+  1
+ ],
+ [
+  "the question can be answered while RGA decides",
+  "portaldeliv",
+  "    if (answer !== \"clear\" && key === \"m1.audit.gbp_duplicate\" && keepWaits(t.outcome_data)) return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "RGA can answer a request nobody made",
+  "dupkeepfn",
+  "      if (!asked) return json(409, { error: \"The client hasn't asked",
+  "      if (false) return json(409, { error: \"The client hasn't asked",
+  1
+ ],
+ [
+  "step 2's title stops naming the listing",
+  "portal",
+  "    return card(`Remove ${label}`, \"Step 2 of 3\", `",
+  "    return card(\"Remove the second listing\", \"Step 2 of 3\", `",
+  1
+ ],
+ [
+  "the red button stops naming the listing",
+  "portal",
+  "data-dup-remove>${escapeHtml(`Remove ${label}`)}</button>",
+  "data-dup-remove>Remove the second listing</button>",
+  1
+ ],
+ [
+  "step 2 no longer shows what's being removed",
+  "portal",
+  "      ${target(\"Removing this one\")}\n",
+  "",
+  1
+ ],
+ [
+  "the kept listing drops out of view",
+  "portal",
+  "${maps(d.maps_url)}${keepLine}</div>`;",
+  "${maps(d.maps_url)}</div>`;",
+  1
+ ],
+ [
+  "the client's request doesn't wait on RGA",
+  "portal",
+  "      <button type=\"button\" class=\"dl-back\" data-dup-request-cancel=\"${escapeAttribute(a.key)}\">Cancel my request</button>`,\n      { rga: true, stateLabel: \"Waits on RGA\" });",
+  "      <button type=\"button\" class=\"dl-back\" data-dup-request-cancel=\"${escapeAttribute(a.key)}\">Cancel my request</button>`,\n      { stateLabel: \"Waits on RGA\" });",
+  1
+ ],
+ [
+  "RGA's answer isn't shown to the client",
+  "portal",
+  "${replied ? `<div class=\"ap-rm other\"><b>We checked your request",
+  "${false ? `<div class=\"ap-rm other\"><b>We checked your request",
+  1
+ ],
+ [
+  "the wrong-way-round panel starts open",
+  "portal",
+  "<div class=\"dl-swap\" data-dup-swap hidden>",
+  "<div class=\"dl-swap\" data-dup-swap>",
+  1
+ ],
+ [
+  "the not-sure-which-account tip is gone",
+  "portal",
+  "<p class=\"ap-foot\"><b>Not sure which account?</b>",
+  "<p class=\"ap-foot\"><b>Need help?</b>",
   1
  ]
 ]

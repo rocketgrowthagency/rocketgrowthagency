@@ -240,7 +240,7 @@
  [
   "the nightly re-scan erases the client's answer",
   "dupscan",
-  "      for (const k of [\"client_answer\", \"owner_hint\", \"step_progress\", \"keep_decision\"]) if (po[k] !== undefined && record[k] === undefined) record[k] = po[k];\n",
+  "      for (const k of [\"client_answer\", \"owner_hint\", \"step_progress\", \"keep_decision\", \"keep_request\", \"keep_reply\"]) if (po[k] !== undefined && record[k] === undefined) record[k] = po[k];\n",
   "",
   1
  ],
