@@ -866,5 +866,47 @@
   "category: (Array.isArray(ownRow.type) ? ownRow.type[0] : ownRow.type) || null",
   "category: ownRow.type || null",
   1
+ ],
+ [
+  "after: a lingering duplicate is never reported",
+  "duprecheck",
+  "      if (Number.isFinite(removedMs) && Date.now() - removedMs > LINGER_DAYS * 86400000 && !task?.removal_lingering_alerted_at) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "after: a lingering duplicate is reported every night",
+  "duprecheck",
+  "      if (Number.isFinite(removedMs) && Date.now() - removedMs > LINGER_DAYS * 86400000 && !task?.removal_lingering_alerted_at) {",
+  "      if (Number.isFinite(removedMs) && Date.now() - removedMs > LINGER_DAYS * 86400000) {",
+  1
+ ],
+ [
+  "after: RGA is told the day after the removal",
+  "duprecheck",
+  "const LINGER_DAYS = 14;",
+  "const LINGER_DAYS = 0;",
+  1
+ ],
+ [
+  "after: the stamp isn't saved",
+  "duprecheck",
+  "          if (now?.id) await supa(",
+  "          if (false) await supa(",
+  1
+ ],
+ [
+  "after: admin's band stays green when Google lingers",
+  "admin",
+  "lingering ? \"bad\" : rm.status === \"removed\" ? \"ok\" : \"lock\"",
+  "rm.status === \"removed\" ? \"ok\" : \"lock\"",
+  1
+ ],
+ [
+  "after: the counter shows beside \"Nothing needs you\"",
+  "portal",
+  "${queue.some((e) => !e.done && !e.rga) ? `<span class=\"ap-of\">",
+  "${true ? `<span class=\"ap-of\">",
+  1
  ]
 ]

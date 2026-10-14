@@ -723,5 +723,43 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   if (/Remove · not in the connected account/.test(ad)) fail("admin step 11 still claims the second listing isn't in the connected account without measuring it");
 }
 
+// ── AFTER THE REMOVAL (2026-10-14, the first real one): the nightly re-check finishes it, or tells RGA it's stuck ──
+// Still on Maps 14 days after the client removed it → RGA is told ONCE (stamped), and admin step 11's band turns red.
+{
+  const RECHECK = req("./gbp-duplicate-recheck.js");
+  const day = 86400000;
+  const runRecheck = async (removedDaysAgo, alreadyAlerted = false, verdict = "duplicate") => {
+    const rec = { id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "pending", outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "ChIJ-dupe" }] },
+      owner_removal: { status: "removed", account: "owner@example.com", at: new Date(Date.now() - removedDaysAgo * day).toISOString() },
+      ...(alreadyAlerted ? { removal_lingering_alerted_at: "2026-10-01T00:00:00Z" } : {}) } } } };
+    const notified = [], patched = [];
+    const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
+    const stub = async (url, init = {}) => {
+      const u = new URL(String(url)); const m = (init.method || "GET").toUpperCase();
+      if (/gbp-duplicate-scan$/.test(u.pathname)) return J({ ok: true, stored: true, finding: { verdict } });
+      if (/notify-rga$/.test(u.pathname)) { notified.push(JSON.parse(init.body)); return J({ ok: true, delivered: true }); }
+      if (u.hostname === "stub.supabase.invalid") {
+        if (/\/clients$/.test(u.pathname)) return J([{ id: CID, business_name: "Lone Star Drain & Plumbing" }]);
+        if (/client_onboarding_records$/.test(u.pathname) && m === "GET") return J([rec]);
+        if (/client_onboarding_records$/.test(u.pathname) && m === "PATCH") { patched.push(JSON.parse(init.body)); Object.assign(rec, JSON.parse(init.body)); return J([rec]); }
+        if (/client_activity$/.test(u.pathname)) return J([]);
+      }
+      return J({ error: `unexpected ${u.hostname}${u.pathname}` }, 599);
+    };
+    const real = globalThis.fetch; globalThis.fetch = stub;
+    try { await RECHECK.handler({}); } finally { globalThis.fetch = real; }
+    return { notified, patched, rec };
+  };
+  const late = await runRecheck(20);
+  if (late.notified.length !== 1 || !/still shows the duplicate 20 days after/.test(late.notified[0].message || "")) fail(`a duplicate Google still shows 20 days after the client removed it isn't reported to RGA (${late.notified.length} sent)`);
+  if (!late.rec.data.tasks["m1.audit.gbp_duplicate"].removal_lingering_alerted_at || !late.rec.data.tasks["m1.audit.gbp_duplicate"].owner_removal) fail("the lingering report isn't stamped (it would repeat nightly), or the stamp wiped the removal record");
+  if ((await runRecheck(20, true)).notified.length) fail("a lingering duplicate is reported to RGA again every night (it must be once)");
+  if ((await runRecheck(3)).notified.length) fail("RGA is told 3 days after a removal (Google usually takes days; the rule is 14)");
+  if ((await runRecheck(20, false, "clean")).notified.length) fail("RGA is told it's stuck when the check found it gone");
+  const ad = code("admin/admin.js");
+  if (!/const lingering = rmDays > 14;/.test(ad) || !/lingering \? "bad"/.test(ad) || !/gbp_duplicate_removed:\s*\{ cls: "g", label: "Client removed the duplicate listing" \}/.test(ad)) fail("admin step 11 doesn't turn red when Google still shows a removed duplicate, or the feed has no label for the client's removal");
+  if (!/\$\{queue\.some\(\(e\) => !e\.done && !e\.rga\) \? `<span class="ap-of">/.test(portal)) fail("\"Nothing needs you right now\" still sits beside an item count");
+}
+
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");
