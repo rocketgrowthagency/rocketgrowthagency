@@ -131,5 +131,26 @@
   "    if (r && r.status === \"found\") {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
   "    if (r && (r.status === \"found\" || r.status === \"not_found\")) {\n      return card(\"Remove the second listing\", \"Step 3 of 3\"",
   1
+ ],
+ [
+  "the answer button shows no progress",
+  "portal",
+  "  btn.classList.add(\"is-busy\");\n",
+  "",
+  1
+ ],
+ [
+  "the busy ring is gone",
+  "portalcss",
+  "  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: portal-spin .7s linear infinite; }",
+  "  border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; }",
+  1
+ ],
+ [
+  "the Keep link uses the stored Maps URL again",
+  "portaldeliv",
+  "        maps_url: c.google_place_id ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(c.google_place_id)}`",
+  "        maps_url: false ? ``",
+  1
  ]
 ]

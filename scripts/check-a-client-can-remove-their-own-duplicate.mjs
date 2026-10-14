@@ -190,5 +190,10 @@ for (const [re, msg] of [
 // the card shows BOTH listings (the approved mockup), and the question counts as the client's step
 if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
 
+// a pressed button that waits on the server shows a spinner (Chris: "a progress circle"), and the Keep link opens by place id
+if ((portal.match(/classList\.add\("is-busy"\)/g) || []).length < 3) fail("a pressed button on the duplicate card sits there with no sign it's working (answer, sign in, remove)");
+if (!/\.portal-button\.is-busy::before \{[^}]*animation: portal-spin/.test(read("portal/portal.css"))) fail("the busy button has no spinning ring");
+if (!/maps_url: c\.google_place_id \? `https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:/.test(code("netlify/functions/portal-deliverables.js"))) fail("the Keep listing's Maps link isn't by place id (the stored Maps URL opened a blank page)");
+
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");
