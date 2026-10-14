@@ -1,0 +1,51 @@
+[
+ [
+  "the portal's Continue with Google stays stuck after Back (no restore at all)",
+  "portal",
+  "  if (!e.persisted || !p || !p.el.isConnected || p.was || !_looksBusy(p.el)) return;",
+  "  return;",
+  1
+ ],
+ [
+  "the portal puts back the spinner but not the label (Loading payment… stays)",
+  "portal",
+  "  p.el.innerHTML = p.html; p.el.className = p.cls;",
+  "  p.el.className = p.cls;",
+  1
+ ],
+ [
+  "the portal leaves the link's inline style + aria-busy (Connect Google stays greyed)",
+  "portal",
+  "  for (const [k, v] of [[\"style\", p.style], [\"aria-busy\", p.busy]]) { if (v == null) p.el.removeAttribute(k); else p.el.setAttribute(k, v); }\n",
+  "",
+  1
+ ],
+ [
+  "the portal undoes a press that finished on this page",
+  "portal",
+  "  if (!e.persisted || !p || !p.el.isConnected || p.was || !_looksBusy(p.el)) return;",
+  "  if (!e.persisted || !p || !p.el.isConnected) return;",
+  1
+ ],
+ [
+  "the portal's button stays disabled after Back",
+  "portal",
+  "if (\"disabled\" in p.el) p.el.disabled = p.disabled;",
+  "",
+  1
+ ],
+ [
+  "admin's Google connects stay stuck after Back",
+  "admin",
+  "  if (!e.persisted || !p || !p.el.isConnected || p.was || !_looksBusy(p.el)) return;",
+  "  return;",
+  1
+ ],
+ [
+  "admin's fix is deleted",
+  "admin",
+  "// 🔑 BACK SHOWS THE PAGE AS IT WAS LEFT.",
+  "// gone.",
+  1
+ ]
+]
