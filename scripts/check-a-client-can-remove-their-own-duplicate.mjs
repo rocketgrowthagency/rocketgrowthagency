@@ -178,5 +178,10 @@ if (!/data-dup-remove>Remove the second listing<\/button>/.test(portal)) fail("t
 if (!/r\.status === "found"\) \{[\s\S]{0,600}data-dup-remove/.test(portal)) fail("the Remove button can show in a state other than found");
 if (!/\(!a\.answer && \(a\.owner_hint \|\| \(a\.details \|\| \[\]\)\.length\)\)/.test(portal)) fail("a client whose duplicate's owner we couldn't read is never asked if it's theirs");
 
+// the card shows BOTH listings (the approved mockup), and the question counts as the client's step
+if (!/const rows = keptRow \? `<div class="ap-two">\$\{keptRow\}\$\{dupeRows\}<\/div>` : dupeRows;/.test(portal)) fail("the duplicate card doesn't show the listing we keep beside the second one (the approved mockup shows both)");
+if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netlify/functions/portal-deliverables.js"))) fail("the duplicate card isn't given the listing we keep");
+if (!/if \(st\.answerable && !a\.answer\) \{ n \+= 1; return ""; \}/.test(portal)) fail("\"nothing needed from you\" can sit right above the question the client has to answer");
+
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");
