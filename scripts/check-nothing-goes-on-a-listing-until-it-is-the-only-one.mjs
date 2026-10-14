@@ -206,6 +206,21 @@ if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow
   const scan = read("netlify/functions/gbp-duplicate-scan.js");
   if (!/if \(record\.verdict === "clean" \|\| record\.verdict === "duplicate"\) delete tasks\["m1\.audit\.gbp_duplicate"\]\.last_failed_scan;/.test(scan))
     fail("a successful duplicate check keeps an older failed look on the record (it reads as current, forever)");
+  // 🔒 (2026-10-13) a re-scan of the SAME duplicate keeps the client's answer, the owner we read and RGA's progress, and
+  // the steps shown are built from the CURRENT answer (stored steps went stale: "We are checking who manages…").
+  if (!/for \(const k of \["client_answer", "owner_hint", "step_progress"\]\) if \(po\[k\] !== undefined && record\[k\] === undefined\) record\[k\] = po\[k\];/.test(scan))
+    fail("the nightly re-scan erases the client's answer about the duplicate (they'd be asked again every morning)");
+  const G = req("./_gbp-duplicate.js");
+  if (typeof G.currentSteps !== "function") fail("there's no single place that builds the duplicate's steps from the current answer");
+  else {
+    const dup = { place_id: "p", title: "X" };
+    const none = G.currentSteps({ verdict: "duplicate", duplicates: [dup], steps: [{ n: 1, title: "We are checking who manages the second listing" }] });
+    if (!none.length || !none[0].answerable || /We are checking who manages/.test(none[0].title)) fail("a duplicate with no answer shows stale stored steps, not the question the client can answer");
+    const mine = G.currentSteps({ verdict: "duplicate", duplicates: [dup], client_answer: { answer: "mine" } });
+    if (!/Sign in with the Google account that owns it/.test(mine[0]?.title || "")) fail("\"it's ours\" doesn't lead to the in-portal sign-in step");
+  }
+  for (const f of ["netlify/functions/portal-deliverables.js", "netlify/functions/admin-deliverables.js"])
+    if (!/steps: currentSteps\(t\.outcome_data\)\.map\(/.test(read(f))) fail(`${f.split("/").pop()} shows the stored steps (they go stale) instead of the current ones`);
 }
 
 if (F.length) { console.error("🔴 something can go on a Google listing that isn't confirmed to be the only one:"); for (const f of F) console.error("   · " + f); process.exit(1); }

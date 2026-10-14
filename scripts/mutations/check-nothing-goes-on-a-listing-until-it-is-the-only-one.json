@@ -236,5 +236,26 @@
   "    if (record.verdict === \"clean\" || record.verdict === \"duplicate\") delete tasks[\"m1.audit.gbp_duplicate\"].last_failed_scan;",
   "",
   1
+ ],
+ [
+  "the nightly re-scan erases the client's answer",
+  "dupscan",
+  "      for (const k of [\"client_answer\", \"owner_hint\", \"step_progress\"]) if (po[k] !== undefined && record[k] === undefined) record[k] = po[k];\n",
+  "",
+  1
+ ],
+ [
+  "the portal shows the stored (stale) steps",
+  "portaldeliv",
+  "      steps: currentSteps(t.outcome_data).map((st) => ({",
+  "      steps: (t.outcome_data?.steps || []).map((st) => ({",
+  1
+ ],
+ [
+  "stale stored steps win over the current answer",
+  "gbpdupmod",
+  "  if (!o || o.verdict !== \"duplicate\" || !(o.duplicates || []).length) return (o && o.steps) || [];",
+  "  if (!o || o.verdict !== \"duplicate\" || !(o.duplicates || []).length || (o.steps || []).length) return (o && o.steps) || [];",
+  1
  ]
 ]

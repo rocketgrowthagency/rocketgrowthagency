@@ -111,6 +111,7 @@ export const FILES = {
   steprecord: "netlify/functions/_step-record.js",
   probenumbering: "scraper:scripts/_probe-numbering.mjs",
   listingremoval: "netlify/functions/_listing-removal.js",
+  gbpdupmod: "netlify/functions/_gbp-duplicate.js",
   listingflow: "netlify/functions/_listing-removal-flow.js",
   dupownerinit: "netlify/functions/gbp-duplicate-owner-init.js",
   dupremovefn: "netlify/functions/gbp-duplicate-remove.js",
