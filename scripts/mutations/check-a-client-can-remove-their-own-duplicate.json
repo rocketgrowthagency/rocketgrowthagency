@@ -408,7 +408,7 @@
  [
   "step 2 no longer shows what's being removed",
   "portal",
-  "      ${err}\n      ${target()}\n",
+  "      ${err}\n      ${mini}\n",
   "      ${err}\n",
   1
  ],
@@ -443,8 +443,8 @@
  [
   "the not-sure-which-account tip is gone",
   "portal",
-  "<p class=\"ap-foot\">Not sure which? It's usually the Gmail you used back then",
-  "<p class=\"ap-foot\">Need help? It's usually the Gmail you used back then",
+  "<b class=\"soft\">Usually the Gmail you used back then</b>",
+  "<b class=\"soft\">Sign in</b>",
   1
  ],
  [
@@ -550,6 +550,41 @@
   "admin",
   "    ${why}${asked || decide}${answered}${decided}\n    ${owner}",
   "    ${why}${asked || decide}${answered}${decided}",
+  1
+ ],
+ [
+  "the owner shows as \"ch…\" again (reads as cut off)",
+  "portal",
+  "    const shown = ownerHint.replace(/[…]+|\\.{3}/g, \"•••••\");",
+  "    const shown = ownerHint;",
+  1
+ ],
+ [
+  "the masked owner loses its privacy reason",
+  "portal",
+  "<span>Google only shows the first letters, to protect the owner's privacy.",
+  "<span>",
+  1
+ ],
+ [
+  "the button squeezes the address back in",
+  "portal",
+  ": r ? \"Sign in again\" : \"Continue with Google\";",
+  ": r ? \"Sign in again\" : ownerHint ? `Sign in as ${ownerHint}` : \"Continue with Google\";",
+  1
+ ],
+ [
+  "what happens next stops saying nothing is removed yet",
+  "portal",
+  "You come back here to <b>confirm the removal</b>. Nothing is removed until you do.",
+  "You come back here to <b>confirm the removal</b>.",
+  1
+ ],
+ [
+  "step 3's button stretches across the card again",
+  "portalcss",
+  ".dl-sec > .dl-go { justify-self: start; margin: 0; }",
+  ".dl-sec > .dl-go { margin: 0; }",
   1
  ]
 ]

@@ -504,6 +504,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
           whoVisible: vis(host.querySelector("[data-dup-screen=who]")), answers: [...host.querySelectorAll("[data-ap-answer]")].map((b) => b.getAttribute("data-ap-answer")),
           captions: [...host.querySelectorAll(".dl-ans small")].map((x) => x.textContent.trim()),
           red: host.querySelector("[data-dup-remove]")?.textContent.trim() || "", google: host.querySelector("[data-dup-owner-signin]")?.textContent.trim() || "",
+          googleW: host.querySelector("[data-dup-owner-signin]") ? Math.round(host.querySelector("[data-dup-owner-signin]").getBoundingClientRect().width) : 0,
+          bodyW: Math.round(host.querySelector(".ap-body").getBoundingClientRect().width),
           back: !!host.querySelector("[data-ap-clear]"), cancel: !!host.querySelector("[data-dup-request-cancel]"),
           requestShown: vis(host.querySelector("[data-dup-request]")), keepShown: vis(host.querySelector("[data-dup-next]")) };
       }
@@ -528,8 +530,13 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (!R2.asked.rga || R2.asked.label !== "Waits on RGA" || R2.asked.radios.length || !R2.asked.cancel || !/You asked us to keep \(512\) 555-0199/.test(R2.asked.text)) fail("the client's request doesn't wait on RGA with their reason and a way to cancel");
     if (!/We checked your request/.test(R2.replied.text) || !/It's the one in your Google account\./.test(R2.replied.text)) fail("RGA's answer isn't shown above the choice");
     // 3 · 4 · sign in, remove — the listing named, the kept one in view, a way back
-    for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== `Remove ${L}` || !/Keeping \(512\) 555-0142\. It isn't touched\./.test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
-    if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Sign in as ch…@gmail.com" || !/Use another account/.test(R2.signin.text) || !/Not sure which\?/.test(R2.noHint.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
+    // step 3 (v7) says it in a two-line box ("Keeping … · it isn't touched"); step 4 keeps the full box
+    for (const k of ["signin", "found", "notfound"]) if (R2[k].title !== `Remove ${L}` || !/Keeping \(512\) 555-0142(\. It isn't touched\.| · it isn't touched)/.test(R2[k].text) || !R2[k].back) fail(`${k}: the step doesn't name the listing, show the one kept, or offer ← Back (${R2[k].title})`);
+    // v7 (approved duplicate_signin_step_v7): the owner as an account card, the hidden part as dots, one plain button,
+    // and what happens next in three steps
+    if (R2.signin.googleW && R2.signin.googleW > R2.signin.bodyW * 0.6) fail(`step 3's "Continue with Google" stretches across the card (${R2.signin.googleW}px of ${R2.signin.bodyW}) — a button keeps its label's width`);
+    if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Continue with Google" || !/The owner, as Google shows it/.test(R2.signin.text) || !/ch•••••@gmail\.com/.test(R2.signin.text) || /ch…/.test(R2.signin.text)
+      || !/Pick the one that starts with ch and ends @gmail\.com, or "Use another account" if it isn't listed\./.test(R2.signin.text) || !/Nothing is removed until you do\./.test(R2.signin.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
     if (R2.found.eyebrow !== "Step 4 of 4" || R2.found.red !== "Remove (512) 555-0199" || !/Signed in as chriskapranos@gmail\.com\. It manages this listing\./.test(R2.found.text)) fail(`found: step 4's red button or signed-in line doesn't name what it does (${R2.found.red})`);
     if (!/That account doesn't manage the \(512\) 555-0199 listing\./.test(R2.notfound.text) || R2.notfound.google !== "Try another Google account" || /Not sure which\?/.test(R2.notfound.text)) fail("notfound: a wrong account doesn't say so with the listing's name");
     if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
@@ -537,9 +544,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     // v6: the accounts — ours in full, the second only as Google masks it, and never a claim we didn't measure
     if (!/Managed by hello@lonestar\.test/.test(R2.accts.text) || !/Owner: ch…@gmail\.com \(Google shows part of it\)/.test(R2.accts.text)) fail("screen 1 doesn't show which account goes with each listing (Managed by … / Owner: ch…@gmail.com)");
     if (/Managed by|Owner:/.test(R2.none.text)) fail("screen 1 shows an account it doesn't have (no connected email / no owner saved)");
-    if (!/Google shows the owner as ch…@gmail\.com\. It's probably not hello@lonestar\.test, the account you connected\./.test(R2.acctsIn.text) || R2.acctsIn.google !== "Sign in as ch…@gmail.com" || !/Use another account/.test(R2.acctsIn.text)) fail("screen 3 doesn't name the owner and the account it probably isn't");
-    if (/Google shows the owner/.test(R2.noHint.text) || !/It's probably not hello@lonestar\.test, the account you connected\./.test(R2.noHint.text)) fail("screen 3 without a saved owner either invents one or drops the \"probably not your connected account\" line");
-    if (/probably not/.test(R2.sameAcct.text)) fail("screen 3 says the owner probably isn't the connected account when that wasn't measured");
+    if (!/Google only shows the first letters, to protect the owner's privacy\. It's not hello@lonestar\.test, the account you connected\./.test(R2.acctsIn.text) || R2.acctsIn.google !== "Continue with Google") fail("screen 3 doesn't say why the owner is masked, or which account it isn't");
+    if (/The owner, as Google shows it/.test(R2.noHint.text) || !/Usually the Gmail you used back then/.test(R2.noHint.text) || !/Probably not hello@lonestar\.test, the account you connected\./.test(R2.noHint.text)) fail("screen 3 without a saved owner either invents one or drops the \"probably not your connected account\" line");
+    if (/probably not|It's not hello/i.test(R2.sameAcct.text)) fail("screen 3 says the owner probably isn't the connected account when that wasn't measured");
     // the clicks, through portal.js's own handlers: pick the other → the request; pick ours → Keep; Keep → screen 2; Back → screen 1
     const clicks = await page.evaluate(async (a) => {
       const host = document.getElementById("host");
