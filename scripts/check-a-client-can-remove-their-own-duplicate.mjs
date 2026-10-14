@@ -36,14 +36,16 @@ const DUPE = { title: "Rocket Growth Agency", phone: "(424) 396-8499", place_id:
 const KEPT_LOC = "locations/KEPT";
 
 // ── a world: Supabase rows + a Google account + SerpApi ──
-function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsError = false, deleteNoop = false } = {}) {
+// v8: `scope` = what Google granted (the client may leave the listings box unticked); `listFails` = Google errors on the list
+function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsError = false, deleteNoop = false,
+  scope = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/business.manage", listFails = false } = {}) {
   const db = {
     client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "pending", outcome_data: { verdict: "duplicate", duplicates: [DUPE], client_answer: { answer: "mine" } } } } } }],
     clients: [{ id: CID, business_name: "Rocket Growth Agency", gbp_url: "https://www.google.com/maps/place/x/@34.0,-118.4,14z/data=!3m1!4b1!4m6!3m5!1s0xccc:0xddd!8m2" }],
     client_google_oauth: [{ client_id: CID, gbp_location_id: KEPT_LOC }],
     client_listing_removals: [],
   };
-  const deleted = [], googleGone = new Set();
+  const deleted = [], googleGone = new Set(), notified = [];
   const locs = accountHas === "dupe" ? [{ name: "locations/DUPE", title: DUPE.title, phoneNumbers: { primaryPhone: DUPE.phone }, metadata: { placeId: DUPE.place_id, canDelete, mapsUri: "https://maps.google.com/?cid=1" } }]
     : accountHas === "kept" ? [{ name: KEPT_LOC, title: "Main", metadata: { placeId: DUPE.place_id, mapsUri: "https://maps.google.com/?cid=2" } }]
     // "none": the account manages a DIFFERENT listing — matching must be by place id, never "the first one there"
@@ -51,11 +53,12 @@ function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsErro
   const J = (b, s = 200) => new Response(b == null ? null : JSON.stringify(b), { status: s });
   const fetchStub = async (url, init = {}) => {
     const u = new URL(String(url)); const m = (init.method || "GET").toUpperCase();
-    if (u.hostname === "oauth2.googleapis.com") return J({ access_token: "ya29.SECRET-TOKEN", expires_in: 3600 });
+    if (u.hostname === "oauth2.googleapis.com") return J({ access_token: "ya29.SECRET-TOKEN", expires_in: 3600, scope });
+    if (/\/\.netlify\/functions\/notify-rga$/.test(u.pathname)) { notified.push({ secret: (init.headers || {})["x-internal-secret"], body: JSON.parse(init.body || "{}") }); return J({ ok: true, delivered: true }); }
     if (u.hostname === "openidconnect.googleapis.com") return J({ email: "chris.owner@gmail.com" });
     if (u.hostname === "mybusinessaccountmanagement.googleapis.com") return J({ accounts: [{ name: "accounts/A1" }] });
     if (u.hostname === "mybusinessbusinessinformation.googleapis.com") {
-      if (/\/accounts\/A1\/locations$/.test(u.pathname)) return J({ locations: locs });
+      if (/\/accounts\/A1\/locations$/.test(u.pathname)) return listFails ? J({ error: { code: 429, status: "RESOURCE_EXHAUSTED" } }, 429) : J({ locations: locs });
       const name = u.pathname.replace(/^\/v1\//, "");
       if (m === "DELETE") { deleted.push(name); if (!deleteNoop) googleGone.add(name); return J({}); }
       return googleGone.has(name) ? J({ error: "NOT_FOUND" }, 404) : J({ name });
@@ -72,7 +75,7 @@ function world({ accountHas = "dupe", reviews = 0, canDelete = true, reviewsErro
     }
     return J({ error: `unexpected ${u.hostname}` }, 599);
   };
-  return { db, deleted, fetchStub };
+  return { db, deleted, notified, fetchStub };
 }
 const run = async (w, fn) => { const real = globalThis.fetch; globalThis.fetch = w.fetchStub; try { return await fn(); } finally { globalThis.fetch = real; } };
 const state = { kind: "dup_owner", client_id: CID, place_id: DUPE.place_id, ts: Date.now() };
@@ -108,6 +111,35 @@ try {
     if (row?.status !== "not_found" || row?.token_enc) fail(`an account that doesn't manage it isn't "not_found" with no token kept (${row?.status})`);
     const out = await run(w, () => FLOW.removeNow(CID, "x"));
     if (out.code === 200 || w.deleted.length) fail("a not-found attempt can still remove something");
+  }
+  // 2b · v8 (approved duplicate_wrong_account_v8): three outcomes that all used to read "doesn't manage it"
+  {
+    // the box on Google's page not ticked → "no_scope", whatever the account holds, and nothing read or kept
+    const w = world({ scope: "openid https://www.googleapis.com/auth/userinfo.email" });
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    const row = w.db.client_listing_removals[0];
+    if (row?.status !== "no_scope" || row?.token_enc) fail(`a sign-in without the listings box ticked isn't "no_scope" with no token kept (${row?.status})`);
+    if (summary(w)?.status !== "no_scope") fail("the portal isn't told the box wasn't ticked");
+    const out = await run(w, () => FLOW.removeNow(CID, "x"));
+    if (out.code === 200 || w.deleted.length) fail("a sign-in without the listings box can still remove something");
+  }
+  {
+    // Google errors on the list → "unreadable", never "not_found" (a hiccup must not send the client to another account)
+    const w = world({ listFails: true });
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    const row = w.db.client_listing_removals[0];
+    if (row?.status !== "unreadable" || row?.token_enc) fail(`Google failing to send the list reads "${row?.status}", not "unreadable" (it would tell the client the account is wrong)`);
+    if (w.notified.length) fail("RGA is told after ONE failed read (decision 5: after two in a row)");
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    if (w.notified.length !== 1 || w.notified[0].secret !== "gate-secret" || !/twice in a row/.test(w.notified[0].body.message || "")) fail(`RGA isn't told when Google fails to send the list twice in a row (${w.notified.length} sent)`);
+    if (w.deleted.length) fail("an unreadable account removed something");
+  }
+  {
+    // a sign-in that works after a failed read doesn't alert RGA, and a not_found after an unreadable doesn't either
+    const w = world({ accountHas: "none" });
+    w.db.client_listing_removals.push({ id: "r0", client_id: CID, status: "unreadable", created_at: "2026-10-14T00:00:00Z" });
+    await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    if (w.notified.length) fail("RGA is told about a failed read when the next sign-in was read fine");
   }
   // 3 · the listing we keep
   {
@@ -397,7 +429,9 @@ if (!/const gate = await requirePortalOwner\(event, clientId\);/.test(rm) || /re
 const sql = read("docs/supabase/RGA_CLIENT_LISTING_REMOVALS_2026-10-13.sql");
 if (!/enable row level security/i.test(sql) || /create policy/i.test(sql)) fail("the removals table isn't service-only (RLS on, no policies)");
 const sum = R.summaryOf({ status: "found", account_email: "chris.owner@gmail.com", token_enc: "x", title: "t" });
-if ("token_enc" in sum || JSON.stringify(sum).includes("chris.owner@")) fail("the client-readable summary carries the token or the full email");
+// v8 decision 2: the account the client JUST signed in with is shown in full (masking made chriskapranos@ and
+// chriskapranos2@ read the same); the token never is
+if ("token_enc" in sum || JSON.stringify(sum).includes("\"x\"") || sum.account !== "chris.owner@gmail.com") fail("the client-readable summary carries the token, or doesn't name the signed-in account in full");
 const portal = code("portal/portal.js");
 // the card (approved duplicate_listing_card_v2): routed to dupCard; Remove only when found; the question asked without the masked owner
 if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(a\.details \|\| \[\]\)\.length\) return dupCard\(a\);/.test(portal)) fail("the duplicate isn't drawn by its own card (dupCard)");
@@ -471,6 +505,11 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     signin:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com" }),
     found:    mk(z, zd, null, { answer: "mine", owner_removal: { status: "found", account: "chriskapranos@gmail.com" } }),
     notfound: mk(z, zd, null, { answer: "mine", owner_removal: { status: "not_found", account: "owner@lonestardrain.com" } }),
+    // v8: two look-alike Gmails (RGA's real case), a different-looking one, the box not ticked, Google not sending the list
+    lookalike: mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "not_found", account: "chriskapranos@gmail.com" } }),
+    unlike:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "not_found", account: "office@lonestar.test" } }),
+    noscope:  mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "no_scope", account: "chriskapranos2@gmail.com" } }),
+    unread:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "unreadable", account: "chriskapranos2@gmail.com" } }),
     handled:  mk(z, zd, null, { answer: "unsure" }),
     removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
     // v6 (approved duplicate_listing_accounts_v6): which Google account goes with each listing
@@ -503,6 +542,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
           howClosed: host.querySelector("details.dl-how") ? !host.querySelector("details.dl-how").open : null,
           whoVisible: vis(host.querySelector("[data-dup-screen=who]")), answers: [...host.querySelectorAll("[data-ap-answer]")].map((b) => b.getAttribute("data-ap-answer")),
           captions: [...host.querySelectorAll(".dl-ans small")].map((x) => x.textContent.trim()),
+          pill: [...host.querySelectorAll(".dl-steps span")].map((x) => `${x.className}:${x.textContent.trim()}`).join("|"),
+          alert: host.querySelector(".dl-err") ? { warn: host.querySelector(".dl-err").classList.contains("warn"), head: host.querySelector(".dl-et > b")?.textContent.trim(), bg: getComputedStyle(host.querySelector(".dl-err")).backgroundColor, headPx: parseFloat(getComputedStyle(host.querySelector(".dl-et > b")).fontSize) } : null,
           red: host.querySelector("[data-dup-remove]")?.textContent.trim() || "", google: host.querySelector("[data-dup-owner-signin]")?.textContent.trim() || "",
           googleW: host.querySelector("[data-dup-owner-signin]") ? Math.round(host.querySelector("[data-dup-owner-signin]").getBoundingClientRect().width) : 0,
           bodyW: Math.round(host.querySelector(".ap-body").getBoundingClientRect().width),
@@ -536,9 +577,23 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     // and what happens next in three steps
     if (R2.signin.googleW && R2.signin.googleW > R2.signin.bodyW * 0.6) fail(`step 3's "Continue with Google" stretches across the card (${R2.signin.googleW}px of ${R2.signin.bodyW}) — a button keeps its label's width`);
     if (R2.signin.eyebrow !== "Step 3 of 4" || R2.signin.google !== "Continue with Google" || !/The owner, as Google shows it/.test(R2.signin.text) || !/ch•••••@gmail\.com/.test(R2.signin.text) || /ch…/.test(R2.signin.text)
-      || !/Pick the one that starts with ch and ends @gmail\.com, or "Use another account" if it isn't listed\./.test(R2.signin.text) || !/Nothing is removed until you do\./.test(R2.signin.text)) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
+      || !/pick the one that starts with ch and ends @gmail\.com, or "Use another account" if it isn't listed\./.test(R2.signin.text) || !/Tick the box See, edit, create and delete your Google business listings, then press Continue\./.test(R2.signin.text) || !/Nothing is removed until you do\./.test(R2.signin.text) || R2.signin.alert) fail(`signin: step 3 isn't the sign-in with the owner's account and the tip (${R2.signin.google})`);
     if (R2.found.eyebrow !== "Step 4 of 4" || R2.found.red !== "Remove (512) 555-0199" || !/Signed in as chriskapranos@gmail\.com\. It manages this listing\./.test(R2.found.text)) fail(`found: step 4's red button or signed-in line doesn't name what it does (${R2.found.red})`);
-    if (!/That account doesn't manage the \(512\) 555-0199 listing\./.test(R2.notfound.text) || R2.notfound.google !== "Try another Google account" || /Not sure which\?/.test(R2.notfound.text)) fail("notfound: a wrong account doesn't say so with the listing's name");
+    // v8 (approved duplicate_wrong_account_v8): the wrong account is a RED alert that names BOTH accounts, the used one in full
+    {
+      const nf = R2.notfound, la = R2.lookalike;
+      if (!nf.alert || nf.alert.warn || nf.alert.head !== "Wrong Google account" || nf.alert.bg !== "rgb(254, 233, 232)" || !(nf.alert.headPx >= 17)) fail(`notfound: the wrong account isn't the large red "Wrong Google account" alert (${JSON.stringify(nf.alert)})`);
+      if (!/You signed in as owner@lonestardrain\.com, but that account doesn't manage the \(512\) 555-0199 listing\. Nothing was removed\./.test(nf.text) || !/✕ Doesn't manage it/.test(nf.text)) fail("notfound: the alert doesn't name the account used, in full, and the listing");
+      if (!/The owner\s*Usually the Gmail you used back then/.test(nf.text)) fail("notfound with no saved owner: the right-hand box invents an owner instead of \"Usually the Gmail you used back then\"");
+      if (!/Not sure which account it is\?/.test(nf.text) || !/businessprofile-noreply@google\.com/.test(nf.text)) fail("notfound: no \"how to find the owner\" tip (Google's performance report email)");
+      if (nf.google !== "Try another Google account" || !/Pick a different account than owner@lonestardrain\.com/.test(nf.text) || !/Tick the box See, edit, create and delete your Google business listings/.test(nf.text)) fail("notfound: the retry steps don't name the account to avoid and the box to tick");
+      if (!/(^|\|)bad:3 · Sign in again(\||$)/.test(nf.pill)) fail(`notfound: the step pill isn't red "3 · Sign in again" (${nf.pill})`);
+      if (!/You signed in as\s*chriskapranos@gmail\.com\s*✕ Doesn't manage it/.test(la.text) || !/The owner, as Google shows it\s*ch•••••@gmail\.com\s*Same first letters, a different account/.test(la.text)) fail("lookalike: two look-alike Gmails aren't shown side by side (the used one in full, the owner masked)");
+      if (/Same first letters/.test(R2.unlike.text) || !/The account to use/.test(R2.unlike.text)) fail("unlike: \"Same first letters\" is claimed for two addresses that don't share them");
+      const ns = R2.noscope, ur = R2.unread;
+      if (!ns.alert || ns.alert.warn || ns.alert.head !== "The box wasn't ticked" || !/Pick chriskapranos2@gmail\.com again\./.test(ns.text) || !/tick See, edit, create and delete your Google business listings/.test(ns.text) || ns.google !== "Sign in again" || /Wrong Google account|Not sure which account/.test(ns.text)) fail(`noscope: the box-not-ticked case isn't its own red alert with "sign in again and tick it" (${ns.alert && ns.alert.head})`);
+      if (!ur.alert || !ur.alert.warn || ur.alert.head !== "We couldn't check that account" || ur.google !== "Try again" || !/If it happens twice, RGA is told automatically/.test(ur.text) || /Wrong Google account|doesn't manage/.test(ur.text) || /bad:/.test(ur.pill)) fail(`unread: Google not sending the list isn't the amber "We couldn't check that account" with "Try again" (${ur.alert && ur.alert.head})`);
+    }
     if (!R2.handled.rga || !/We're taking care of the \(512\) 555-0199 listing/.test(R2.handled.text) || !R2.handled.back) fail("handled: \"Someone else, or I'm not sure\" doesn't turn into RGA taking care of it, with a way back");
     if (!R2.removed.done || !/The \(512\) 555-0199 listing was removed/.test(R2.removed.title)) fail("removed: the done card doesn't name the listing");
     // v6: the accounts — ours in full, the second only as Google masks it, and never a claim we didn't measure

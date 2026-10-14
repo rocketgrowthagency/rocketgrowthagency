@@ -394,8 +394,8 @@
  [
   "step 2's title stops naming the listing",
   "portal",
-  "    return card(`Remove ${label}`, \"Step 3 of 4\", `",
-  "    return card(\"Remove the second listing\", \"Step 3 of 4\", `",
+  "    return card(`Remove ${label}`, \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
+  "    return card(\"Remove the second listing\", \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
   1
  ],
  [
@@ -408,8 +408,8 @@
  [
   "step 2 no longer shows what's being removed",
   "portal",
-  "      ${err}\n      ${mini}\n",
-  "      ${err}\n",
+  "      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
+  "      ${err}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
   1
  ],
  [
@@ -443,8 +443,8 @@
  [
   "the not-sure-which-account tip is gone",
   "portal",
-  "<b class=\"soft\">Usually the Gmail you used back then</b>",
-  "<b class=\"soft\">Sign in</b>",
+  "<b class=\"soft\">Usually the Gmail you used back then</b>\n",
+  "<b class=\"soft\">Sign in</b>\n",
   1
  ],
  [
@@ -585,6 +585,104 @@
   "portalcss",
   ".dl-sec > .dl-go { justify-self: start; margin: 0; }",
   ".dl-sec > .dl-go { margin: 0; }",
+  1
+ ],
+ [
+  "v8: an unticked listings box is read as the wrong account",
+  "listingflow",
+  "  } else if (!R.grantedManage(tok.scope)) {",
+  "  } else if (false) {",
+  1
+ ],
+ [
+  "v8: a failed list read breaks into \"doesn't manage it\" again",
+  "listingremoval",
+  "      if (!page) return UNREAD;",
+  "      if (!page) break;",
+  1
+ ],
+ [
+  "v8: a failed accounts read reads as not found",
+  "listingflow",
+  "    if (!hit.found && hit.unreadable) Object.assign",
+  "    if (false) Object.assign",
+  1
+ ],
+ [
+  "v8: RGA is told after one failed read",
+  "listingflow",
+  "  if (row.status === \"unreadable\" && prev && prev.status === \"unreadable\") {",
+  "  if (row.status === \"unreadable\") {",
+  1
+ ],
+ [
+  "v8: RGA is never told about failed reads",
+  "listingflow",
+  "  if (row.status === \"unreadable\" && prev && prev.status === \"unreadable\") {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "v8: the signed-in account is masked again",
+  "listingremoval",
+  "    account: row.account_email || null, title:",
+  "    account: masked(row.account_email), title:",
+  1
+ ],
+ [
+  "v8: the wrong account is the old amber line",
+  "portal",
+  "alert(\"bad\", \"Wrong Google account\"",
+  "alert(\"warn\", \"Wrong Google account\"",
+  1
+ ],
+ [
+  "v8: the alert headline is body size",
+  "portalcss",
+  ".dl-et > b { font-size: 18px;",
+  ".dl-et > b { font-size: 14px;",
+  1
+ ],
+ [
+  "v8: \"Same first letters\" is claimed for any two addresses",
+  "portal",
+  "${lookAlike ? \"Same first letters, a different account\" : \"The account to use\"}",
+  "Same first letters, a different account",
+  1
+ ],
+ [
+  "v8: the owner-finding tip is gone",
+  "portal",
+  "const find = wrong ? `<div class=\"dl-find\">",
+  "const find = false ? `<div class=\"dl-find\">",
+  1
+ ],
+ [
+  "v8: the first sign-in doesn't say to tick the box",
+  "portal",
+  "<ol class=\"dl-next\"><li><span>${pick}</span></li>${tick}${confirm}</ol>",
+  "<ol class=\"dl-next\"><li><span>${pick}</span></li>${confirm}</ol>",
+  1
+ ],
+ [
+  "v8: the step pill stays amber on the wrong account",
+  "portal",
+  "      ${prog(2, true)}",
+  "      ${prog(2)}",
+  1
+ ],
+ [
+  "v8: Google not sending the list says \"wrong account\"",
+  "portal",
+  "const wrong = st === \"not_found\", noScope",
+  "const wrong = st === \"not_found\" || st === \"unreadable\", noScope",
+  1
+ ],
+ [
+  "v8: the box-not-ticked case falls back to the generic line",
+  "portal",
+  "noScope = st === \"no_scope\"",
+  "noScope = false",
   1
  ]
 ]
