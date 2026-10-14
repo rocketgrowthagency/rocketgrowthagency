@@ -117,9 +117,13 @@ const DOTENV = (() => {
   } catch { /* no .env: the gates that need it say so */ }
   return out;
 })();
+// every gate process this run started, so stopping the run stops them (and their browsers) too — on 10-14 a stopped run
+// left headless Chromes polling the live admin page against an already-throttled database
+const children = new Set();
 const runGate = (gate, tmp) => new Promise((resolve) => {
-  execFile("node", [`${HERE}/${gate}`], { env: { ...DOTENV, ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp, SCRAPER_COPY_DIR: `${tmp}/__scraper` }, maxBuffer: 64 * 1024 * 1024 },
-    (err) => resolve(err ? (err.code ?? 99) : 0));
+  const child = execFile("node", [`${HERE}/${gate}`], { env: { ...DOTENV, ...process.env, APPROVAL_ARCHIVE_SITE_DIR: tmp, SCRAPER_COPY_DIR: `${tmp}/__scraper` }, maxBuffer: 64 * 1024 * 1024 },
+    (err) => { children.delete(child); resolve(err ? (err.code ?? 99) : 0); });
+  children.add(child);
 });
 const targetPaths = (rel, tmp) => rel.startsWith("scraper:")
   ? { src: `${path.dirname(HERE)}/${rel.slice(8)}`, dst: `${tmp}/__scraper/${rel.slice(8)}` }
@@ -136,7 +140,9 @@ const fileSha = (p) => { try { return sha(fs.readFileSync(p)); } catch { return 
 const pool = Array.from({ length: JOBS }, () => fs.mkdtempSync(path.join(os.tmpdir(), "rga-mut-")));
 pool.forEach(seed);
 const cleanup = () => pool.forEach((t) => fs.rmSync(t, { recursive: true, force: true }));
-process.on("SIGINT", () => { cleanup(); process.exit(130); });
+const stop = (code) => () => { for (const c of children) { try { c.kill("SIGTERM"); } catch { /* gone */ } } cleanup(); process.exit(code); };
+process.on("SIGINT", stop(130));
+process.on("SIGTERM", stop(143));
 
 let gatesOk = 0, gatesBad = 0, gatesUnk = 0, totalCaught = 0, totalRun = 0, totalCached = 0;
 const t0 = Date.now();
@@ -180,7 +186,12 @@ for (const file of suites) {
   // 🔴 A GATE THAT SIGNS IN TO THE LIVE SITE RUNS ONE AT A TIME. Six live sign-ins at once tripped over each other on
   // 10-14 and turned real catches into exit 2. The rule is by what the gate DOES (it uses the live-render helper, or
   // says `mutation-runner: serial`), not a list somebody has to remember. → feedback_a_lift_list_is_a_promise_somebody_will_remember
-  const serial = /_mockup-diff|mutation-runner:\s*serial/.test(fs.readFileSync(`${HERE}/${gate}`, "utf8"));
+  // 🔴🔴 AND A GATE THAT READS THE LIVE DATABASE RUNS ONE AT A TIME. On 10-14 an hour of six-at-once runs (plus the live
+  // sign-ins) exhausted the burst budget of RGA's Supabase (the default, smallest instance): every request timed out
+  // for minutes and real clients' portals hung on "Loading". The tests share the clients' database — they are users.
+  // → feedback_an_audit_that_can_write_is_a_user · feedback_my_test_runs_share_the_clients_database
+  const gsrc = fs.readFileSync(`${HERE}/${gate}`, "utf8");
+  const serial = /_mockup-diff|mutation-runner:\s*serial|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_URL|_admin-session|https:\/\/www\.rocketgrowthagency\.com/.test(gsrc);
   let next = 0;
   const retry = [];
   await Promise.all((serial ? pool.slice(0, 1) : pool).map(async (tmp) => {
