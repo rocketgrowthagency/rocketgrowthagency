@@ -453,5 +453,26 @@
   "<p class=\"ap-foot\"><b>Not sure which account?</b>",
   "<p class=\"ap-foot\"><b>Need help?</b>",
   1
+ ],
+ [
+  "the keep options can't be picked (no handler)",
+  "portal",
+  "document.addEventListener(\"change\", (e) => {\n  const r = e.target && e.target.closest && e.target.closest(\"[data-dup-pick]\");",
+  "document.addEventListener(\"change_off\", (e) => {\n  const r = e.target && e.target.closest && e.target.closest(\"[data-dup-pick]\");",
+  1
+ ],
+ [
+  "picking ours still shows Send",
+  "portal",
+  "  panel.querySelectorAll(\"[data-dup-for]\").forEach((x) => { x.hidden = x.getAttribute(\"data-dup-for\") !== r.value; });",
+  "  panel.querySelectorAll(\"[data-dup-for]\").forEach((x) => { x.hidden = false; });",
+  1
+ ],
+ [
+  "the 2040 option is display-only again",
+  "portal",
+  "<label class=\"dl-pk\"><input type=\"radio\" name=\"dl-keep\" value=\"ours\" data-dup-pick>",
+  "<label class=\"dl-pk\"><input type=\"hidden\" name=\"dl-keep\" value=\"ours\" data-dup-pick>",
+  1
  ]
 ]

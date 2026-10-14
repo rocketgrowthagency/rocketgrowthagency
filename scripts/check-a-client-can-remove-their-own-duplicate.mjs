@@ -513,6 +513,30 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       }
       return out;
     }, STEPS);
+    // the two keep options are a REAL choice, clicked in the browser with portal.js's own handler (Chris 2026-10-14:
+    // "i cant select the 4242422040 option"): ours → nothing to send; the other → the reason box and Send
+    const changeHandler = (/\/\/ the two radio cards:[^\n]*\n(document\.addEventListener\("change"[\s\S]*?\n\}\);)/.exec(src) || [])[1] || "";
+    if (!changeHandler) fail("the keep options have no change handler (they can't be picked)");
+    const pickRes = changeHandler ? await page.evaluate(async (a, h) => {
+      document.getElementById("host").innerHTML = `<div class="ap-body">${dupCard(a).body}</div>`;
+      if (!window.__pick) { (0, eval)(h); window.__pick = true; }
+      const panel = document.querySelector("[data-dup-swap]"); panel.hidden = false;
+      const vis = (v) => !panel.querySelector(`[data-dup-for="${v}"]`).hidden;
+      const labels = [...panel.querySelectorAll("label.dl-pk")];
+      const radios = labels.map((l) => l.querySelector("input[type=radio]")?.value || "");
+      const start = { other: vis("other"), ours: vis("ours") };
+      labels[0]?.click(); await new Promise((r) => setTimeout(r, 30));
+      const afterOurs = { other: vis("other"), ours: vis("ours"), on: labels[0]?.classList.contains("on"), send: !!panel.querySelector("[data-dup-for=ours] [data-dup-request]") };
+      labels[1]?.click(); await new Promise((r) => setTimeout(r, 30));
+      const afterOther = { other: vis("other"), ours: vis("ours"), on: labels[1]?.classList.contains("on") };
+      return { radios, start, afterOurs, afterOther };
+    }, STEPS.replied, changeHandler) : null;
+    if (pickRes) {
+      if (pickRes.radios.join() !== "ours,other") fail(`the two keep options aren't radio choices (${pickRes.radios.join()})`);
+      if (!pickRes.start.other || pickRes.start.ours) fail("the panel doesn't open on \"keep the other one\" with its reason box");
+      if (pickRes.afterOurs.other || !pickRes.afterOurs.ours || !pickRes.afterOurs.on || pickRes.afterOurs.send) fail(`picking the listing we already keep doesn't say "nothing to send" (${JSON.stringify(pickRes.afterOurs)})`);
+      if (!pickRes.afterOther.other || pickRes.afterOther.ours || !pickRes.afterOther.on) fail("picking the other listing again doesn't bring back the reason box and Send");
+    }
     const L = "the (512) 555-0199 listing";
     for (const k of ["step2", "step3", "notfound"]) if (S2[k].title !== `Remove ${L}` || !S2[k].text.includes("Keeping your main listing, (512) 555-0142. It isn't touched.")) fail(`${k}: the step doesn't name the listing being removed and the one kept (${S2[k].title})`);
     if (!S2.step2.text.includes("Removing this one") || S2.step2.google !== "Sign in as ch…@gmail.com" || !S2.step2.text.includes("Not sure which account?") || !S2.step2.text.includes(`made ${L}`)) fail(`step 2 doesn't show what's removed, the owner's account and the "Not sure which account?" tip (${S2.step2.google})`);
