@@ -63,20 +63,6 @@
   1
  ],
  [
-  "the wrapped upload loses its divider",
-  "portalcss",
-  "@container (max-width:740px) { .pm-tool .pm-batch.pm-tool-up {",
-  "@container (max-width:740px) { .pm-tool-up {",
-  1
- ],
- [
-  "the unanswered toolbar wraps without its divider",
-  "portalcss",
-  "@container (max-width:860px) { .pm-tool.ask .pm-batch.pm-tool-up",
-  "@container (max-width:600px) { .pm-tool.ask .pm-batch.pm-tool-up",
-  1
- ],
- [
   "the bar is a different size from admin's",
   "portalcss",
   ".pm-sgrp .gh .acc-bar { width:104px;",

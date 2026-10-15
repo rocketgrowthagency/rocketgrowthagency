@@ -154,6 +154,7 @@ const EXEMPT = {
   "dl-back": "text link (padding:0) — the duplicate card's \"Change my answer\" (2026-10-13)",
   "how-ask": "text link (padding:0)",
   "pm-link": "text link (padding:0)",
+  "pm-linkbtn": "text link (padding:0) — step 7's \"Change · I'm ready now\" under \"We'll remind you on …\" (step7_later_and_upload_v1, 2026-10-15)",
   "ap-head": "disclosure header — a full-width row, not a button",
   "fq-head": "disclosure header — a full-width row, not a button",
   "ai-pointer": "an inline pointer banner, not a control in the scale",

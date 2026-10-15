@@ -65,8 +65,8 @@
  [
   "the already-on-Google fold drops back under the list",
   "portal",
-  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${panel}${toolbar}${beforeList}<div class=\"pm-slots",
-  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${toolbar}${beforeList}${panel}<div class=\"pm-slots",
+  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${laterUi}${panel}${toolbar}${beforeList}<div class=\"pm-slots",
+  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${laterUi}${toolbar}${beforeList}${panel}<div class=\"pm-slots",
   1
  ],
  [

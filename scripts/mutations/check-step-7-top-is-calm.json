@@ -9,8 +9,8 @@
  [
   "the plain line shows on every state",
   "portal",
-  "{ only: theirsToAct && h.only ? PHOTO_ONLY_LINE : \"\" }",
-  "{ only: PHOTO_ONLY_LINE }",
+  "only: theirsToAct && h.only ? PHOTO_ONLY_LINE : \"\",",
+  "only: PHOTO_ONLY_LINE,",
   1
  ],
  [
@@ -35,24 +35,10 @@
   1
  ],
  [
-  "the picker opens on Cover again",
-  "portal",
-  "for (const g of (splitPlace ? [...todayGroups, ...laterGroups] : groups)) {",
-  "for (const g of groups) {",
-  1
- ],
- [
   "the toolbar never asks",
   "portal",
-  "<div class=\"pm-tool${team && !ts ? \" ask\" : \"\"}\"",
-  "<div class=\"pm-tool\"",
-  1
- ],
- [
-  "the toolbar wraps at card width",
-  "portalcss",
-  ".pm-tool .pm-batch{padding:0;border:0;border-radius:0;background:none}",
-  "",
+  "<div class=\"pm-tool${!ts ? \" ask\" : \"\"}\">",
+  "<div class=\"pm-tool\">",
   1
  ],
  [
@@ -67,6 +53,34 @@
   "portal",
   "    ${h.why ? `<p class=\"pm-tipwhy\">${escapeHtml(h.why)}</p>` : \"\"}",
   "    ",
+  1
+ ],
+ [
+  "no kind offers its own batch",
+  "portal",
+  "const kindUp = emptyN.length >= 2 && !locked ?",
+  "const kindUp = emptyN.length >= 99 && !locked ?",
+  1
+ ],
+ [
+  "a full kind offers a batch",
+  "portal",
+  "const kindUp = emptyN.length >= 2 && !locked ?",
+  "const kindUp = emptyN.length >= 0 && !locked ?",
+  1
+ ],
+ [
+  "the batch skips the first empty slot",
+  "portal",
+  "data-empty=\"${emptyN.join(\",\")}\"",
+  "data-empty=\"${emptyN.slice(1).join(\",\")}\"",
+  1
+ ],
+ [
+  "'later' offered when it isn't their move",
+  "portal",
+  "canLater: !!LATER_STEPS[step.id] && theirsToAct }",
+  "canLater: !!LATER_STEPS[step.id] }",
   1
  ]
 ]

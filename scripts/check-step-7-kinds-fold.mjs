@@ -126,25 +126,17 @@ try {
       const r = await page.evaluate(() => {
         document.querySelectorAll("details").forEach((d) => { d.open = true; });
         const cut = [...document.querySelectorAll(".pm-slot .add, .pm-slot .st")].filter((a) => a.checkVisibility()).filter((a) => { const s = a.closest(".pm-slot").getBoundingClientRect(), b = a.getBoundingClientRect(); return b.right > s.right + 1 || b.right > innerWidth; }).map((a) => a.closest(".pm-slot").dataset.slot);
-        const t = document.querySelector(".pm-tool"), q = t.querySelector(".pm-tool-q").getBoundingClientRect(), u = t.querySelector(".pm-tool-up").getBoundingClientRect(), T = t.getBoundingClientRect();
-        const wrapped = u.top > q.top + 6;
-        // the row's natural width: each half's children + their gaps, plus the gap between the halves
-        const nat = (e) => { const k = [...e.children].filter((c) => c.checkVisibility()); const g = parseFloat(getComputedStyle(e).columnGap) || 0; return k.reduce((a, c) => a + c.getBoundingClientRect().width, 0) + g * Math.max(0, k.length - 1); };
-        const cs = getComputedStyle(t), inner = T.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
-        // it may wrap up to ~30px early (the CSS thresholds sit ~20px above the measured row so a wider font never wraps it without
-        // the divider); wrapping with more room than that is the bug
-        const fits = nat(t.querySelector(".pm-tool-q")) + (parseFloat(cs.columnGap) || 0) + nat(t.querySelector(".pm-tool-up")) <= inner - 30;
-        return { spill: document.documentElement.scrollWidth > innerWidth + 1, cut, wrapped, fits, inner: Math.round(inner), rightAligned: Math.abs(u.right - (T.right - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth))) < 4, divider: getComputedStyle(t.querySelector(".pm-tool-up")).borderTopStyle };
+        const ku = [...document.querySelectorAll(".pm-kind-up")].filter((e) => e.checkVisibility()).some((e) => e.getBoundingClientRect().right > e.closest("details").getBoundingClientRect().right + 1);
+        return { spill: document.documentElement.scrollWidth > innerWidth + 1, cut, kindUpCut: ku, toolHasUpload: !!document.querySelector(".pm-tool [data-batch]") };
       });
       if (r.spill) fail(`step 7 spills sideways at ${w}px (${label})`);
       if (r.cut.length) fail(`at ${w}px a slot's button is cut off (slots ${[...new Set(r.cut)].join(", ")})`);
-      // wraps only when the row can't fit (a little slack either side of the measured thresholds)
-      if (r.wrapped && r.fits && r.inner > 0) fail(`at ${w}px the toolbar wraps though its row fits (${label}, ${r.inner}px)`);
-      if (r.wrapped && (!r.rightAligned || r.divider !== "solid")) fail(`at ${w}px the wrapped upload isn't on its own right-aligned line under a divider (${label})`);
-      if (!r.wrapped && r.divider === "solid") fail(`at ${w}px the toolbar shows a divider without wrapping (${label})`);
+      if (r.kindUp) fail(`at ${w}px a kind's "upload several" row is cut off (${label})`);
+      if (r.kindUpCut) fail(`at ${w}px a kind's "upload several" row is cut off (${label})`);
+      if (r.toolHasUpload) fail(`the toolbar still carries an upload (${label})`);
     }
   }
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 step 7's kinds don't fold the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 7's kinds fold: closed by default, each with its own bar and \"x / n\" styled exactly like admin's Onboarding cards in all four states (closed, open, complete, open + complete), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; the toolbar wraps on purpose; at 390–976px nothing spills and no button is cut off");
+console.log("✅ step 7's kinds fold: closed by default, each with its own bar and \"x / n\" styled exactly like admin's Onboarding cards in all four states (closed, open, complete, open + complete), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; \"upload several\" sits in its kind and the toolbar carries none; at 390–976px nothing spills and no button is cut off");

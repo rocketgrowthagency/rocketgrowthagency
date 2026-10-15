@@ -1,0 +1,93 @@
+[
+ [
+  "any number of days",
+  "steplater",
+  "const DAYS = [7, 14];",
+  "const DAYS = [3, 7, 14];",
+  1
+ ],
+ [
+  "any step can be put off",
+  "steplater",
+  "if (!LATER_STEPS.includes(stepId)) return json(400",
+  "if (false) return json(400",
+  1
+ ],
+ [
+  "no read-back",
+  "steplater",
+  "if (action === \"set\" ? saved.later?.until !== task.later.until : !!saved.later) return json(500",
+  "if (false) return json(500",
+  1
+ ],
+ [
+  "a finished step can be put off",
+  "steplater",
+  "if (task.status === \"done\" || task.status === \"skipped\") return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "anyone can put it off",
+  "steplater",
+  "  if (gate.error) return gate.error;",
+  "",
+  1
+ ],
+ [
+  "the reminder goes twice",
+  "notifystepopen",
+  "if (!l || !l.until || l.reminded_at || isFinished(t)) return false;",
+  "if (!l || !l.until || isFinished(t)) return false;",
+  1
+ ],
+ [
+  "the reminder ignores a photo that came in",
+  "notifystepopen",
+  "        if (since.length) {",
+  "        if (false) {",
+  1
+ ],
+ [
+  "the reminder goes at night",
+  "notifystepopen",
+  "} else if (!inSendingHours(client)) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder",
+  "} else if (false) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder",
+  1
+ ],
+ [
+  "an upload doesn't end later (screen)",
+  "portal",
+  "if (Number.isFinite(set) && (photos || []).some((p) => Date.parse(p && p.created_at || \"\") > set)) return null;",
+  "",
+  1
+ ],
+ [
+  "a later step is still the now step",
+  "portal",
+  "isOpenRow(r) && theirs(r) && !r.later)",
+  "isOpenRow(r) && theirs(r))",
+  1
+ ],
+ [
+  "the banner doesn't move on",
+  "portal",
+  "      && !i.later\n",
+  "",
+  1
+ ],
+ [
+  "the pill says Your turn",
+  "portal",
+  "      : later ? { text: `Later · ${laterDay(later.until)}`, cls: \"wait\" }\n",
+  "",
+  1
+ ],
+ [
+  "admin doesn't see it",
+  "admin",
+  " + laterLine(task);",
+  ";",
+  1
+ ]
+]

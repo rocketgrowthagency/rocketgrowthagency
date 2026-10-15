@@ -102,12 +102,13 @@ for (const c of CASES) {
   if (/computer screen|monitor/i.test(txt) && c.type !== "Marketing agencies") fail(`${label}: a screen shot reached a ${c.type} client`);
   rendered++;
 }
-// 🔒 the batch picker opens on a kind with room — never a full one (2026-10-12: it opened on "Logo (0 empty)")
+// 🔄 step7_later_and_upload_v1 v2: no picker — each kind with 2+ empty slots offers its own batch; a full kind none
 { const s = (await runRunner({ category: "Plumber", storefront: false })).draft_shape;
   const html = pctx.render({ clientForm: "photo_upload" }, { draft_shape: s }, [{ id: "p1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "x" }], "c1");
-  const sel = (html.match(/<option[^>]*selected[^>]*>([^<]*)<\/option>/) || [])[1] || "";
-  if (!sel || /\(full\)|\(0 empty\)/.test(sel)) fail(`the batch picker opens on "${sel || "nothing"}" — a kind with no room`);
-  if (!/<option[^>]*disabled[^>]*>Logo \(full\)/.test(html)) fail("a full kind can still be picked for a batch"); }
+  const kinds = [...html.matchAll(/data-fold="(kind:[^"]+)"[^>]*>[\s\S]*?<\/summary>(<div class="pm-kind-up">)?/g)].map((m) => ({ key: m[1], up: !!m[2] }));
+  if (!kinds.length || !kinds.some((k) => k.up)) fail("no kind with room offers its own batch upload");
+  const logo = kinds.find((k) => k.key === "kind:logo");
+  if (!logo || logo.up) fail("a full kind can still take a batch"); }
 // RGA's pick overrides the category
 { const out = await runRunner({ category: "Plumber", storefront: false, record: { photo_list: { type: "Roofers", set_at: "2026-10-09T00:00:00Z" } } });
   if (out?.draft_shape?.type !== "Roofers") fail(`RGA picked Roofers for a "Plumber" profile, but the runner built ${out?.draft_shape?.type}`); }

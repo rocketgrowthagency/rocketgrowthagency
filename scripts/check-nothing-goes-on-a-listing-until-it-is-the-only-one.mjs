@@ -145,7 +145,8 @@ const inputs = (h) => (h.match(/<input[^>]*type="file"[^>]*>/g) || []);
 if (!/class="pm-lock"/.test(shut) || !/two Google Business Profiles/.test(shut)) fail("a locked step 7 doesn't say why");
 if (!inputs(shut).length || inputs(shut).some((i) => !/\bdisabled\b/.test(i))) fail("a locked step 7 still lets the client pick a photo");
 // 🔄 approved step7_streamlined_v1: the batch upload is the toolbar's right half — hidden, and the whole toolbar with it
-if (!/<div class="pm-batch pm-tool-up" hidden>/.test(shut) || !/<div class="pm-tool" hidden>/.test(shut) || /data-photo-team/.test(shut)) fail("a locked step 7 still offers the batch upload or the team question");
+// 🔄 step7_later_and_upload_v1 v2: the batch lives in each kind — a locked step 7 offers none, and no team question
+if (/class="pm-kind-up"/.test(shut) || /data-photo-team/.test(shut) || /class="pm-tool/.test(shut)) fail("a locked step 7 still offers the batch upload or the team question");
 if (!/The meeting|data-slot="1"/.test(shut) || (shut.match(/data-slot="/g) || []).length !== 20) fail("a locked step 7 hides the shot list — it should stay visible to plan");
 if (/class="pm-lock"/.test(open) || inputs(open).some((i) => /\bdisabled\b/.test(i))) fail("step 7 is locked even though step 11 found one listing");
 
@@ -221,7 +222,7 @@ const pcode = code("portal/portal.js");
 // listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
 if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?(?:!gbpWithRga && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
 // v13: "Waits on Google" once the client removed it (Google catching up); "Waits on your Business Profile" before
-if (!/: listingWait \? \{ text: portalListingStateOf\(waitTasks\)\.removed \? "Waits on Google" : "Waits on your Business Profile", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\" (or \"Waits on Google\" after the client's removal)");
+if (!/: listingWait \? \{ text: portalListingStateOf\(waitTasks\)\.removed \? "Waits on Google" : "Waits on your Business Profile", cls: "wait" \}\s*(?:: later \? \{[^\n]*\n\s*)?: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\" (or \"Waits on Google\" after the client's removal)");
 if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)
   || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return (?:!!rowOwnWaits\(step, status, tasks\) \|\| )?rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
 if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");
