@@ -45,6 +45,16 @@ const CASES = [
   ["never checked", undefined, false],
   ["duplicate + RGA's written override", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }] }, override: { reason: "A different business with the same name.", places: ["p2"] } }, true],
   ["an override with no reason", { outcome_data: { verdict: "duplicate", duplicates: [{}] }, override: { reason: "" } }, false],
+  // 🔒 Chris 10-14 ("if client is paying they dont want to pay to be waiting"): the client's removal, confirmed by Google's
+  // read-back, opens the listing steps at once — when it covers EVERY duplicate. Maps catching up only settles step 11.
+  ["removed by the client, the only duplicate", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }] }, owner_removal: { status: "removed", at: "2026-10-14T23:25:55Z" } }, true],
+  ["removed, naming the only duplicate", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }] }, owner_removal: { status: "removed", place_id: "p2" } }, true],
+  ["three profiles, one removed (no place id)", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }, { place_id: "p3" }] }, owner_removal: { status: "removed" } }, false],
+  ["three profiles, one removed (named)", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }, { place_id: "p3" }] }, owner_removal: { status: "removed", place_id: "p2" } }, false],
+  ["removed, but a DIFFERENT duplicate is found", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p9" }] }, owner_removal: { status: "removed", place_id: "p2" } }, false],
+  ["signed in, not removed yet", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }] }, owner_removal: { status: "found" } }, false],
+  ["Google refused the removal", { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "p2" }] }, owner_removal: { status: "remove_failed" } }, false],
+  ["removed, but never checked", { owner_removal: { status: "removed" } }, false],
 ];
 const tasksOf = (t) => (t === undefined ? {} : { [DUP]: t });
 for (const [name, t, open] of CASES) if (listingState(tasksOf(t)).open !== open) fail(`the rule says ${open ? "shut" : "open"} for "${name}" — expected ${open ? "open" : "shut"}`);

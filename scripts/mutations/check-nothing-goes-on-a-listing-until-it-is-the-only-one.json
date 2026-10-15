@@ -257,5 +257,40 @@
   "  if (!o || o.verdict !== \"duplicate\" || !(o.duplicates || []).length) return (o && o.steps) || [];",
   "  if (!o || o.verdict !== \"duplicate\" || !(o.duplicates || []).length || (o.steps || []).length) return (o && o.steps) || [];",
   1
+ ],
+ [
+  "server: one removal opens a business with three profiles",
+  "onelisting",
+  "  return duplicates.length === 1;\n}",
+  "  return true;\n}",
+  1
+ ],
+ [
+  "server: a removal that isn't confirmed opens it",
+  "onelisting",
+  "if (!rm || rm.status !== \"removed\" || !Array.isArray(duplicates) || !duplicates.length) return false;",
+  "if (!rm || !Array.isArray(duplicates) || !duplicates.length) return false;",
+  1
+ ],
+ [
+  "server: a different duplicate found later stays open",
+  "onelisting",
+  "if (rm.place_id) return duplicates.every((d) => d && d.place_id === rm.place_id);",
+  "if (rm.place_id) return true;",
+  1
+ ],
+ [
+  "portal: the removal doesn't open the steps",
+  "portal",
+  "  if (o.verdict === \"duplicate\" && rm && (rm.place_id ? duplicates.length > 0 && duplicates.every((d) => d && d.place_id === rm.place_id) : duplicates.length === 1)) {\n    return { open: true, state: \"removed\", duplicates, removed: rm };",
+  "  if (false) {\n    return { open: true, state: \"removed\", duplicates, removed: rm };",
+  1
+ ],
+ [
+  "admin: one removal opens three profiles",
+  "admin",
+  "  if (o.verdict === \"duplicate\" && rm && (rm.place_id ? duplicates.length > 0 && duplicates.every((d) => d && d.place_id === rm.place_id) : duplicates.length === 1)) {\n    return { open: true, state: \"removed\", duplicates, checked_at",
+  "  if (o.verdict === \"duplicate\" && rm) {\n    return { open: true, state: \"removed\", duplicates, checked_at",
+  1
  ]
 ]

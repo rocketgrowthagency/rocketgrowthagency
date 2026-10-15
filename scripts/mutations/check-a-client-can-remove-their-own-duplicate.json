@@ -737,8 +737,8 @@
  [
   "v9: the removed card has no timeline",
   "portal",
-  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Google takes it off Maps and Search</b>",
-  "<li class=\"n\"><i aria-hidden=\"true\">2</i><span><b>Waiting</b>",
+  "<li class=\"todo\"><i aria-hidden=\"true\">3</i><span><b>Google takes it off Maps and Search</b>",
+  "<li class=\"todo\"><i aria-hidden=\"true\">3</i><span><b>Waiting</b>",
   1
  ],
  [
@@ -1024,8 +1024,8 @@
  [
   "v13: the portal's rule forgets the removal",
   "portal",
-  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates, removed: rm };",
-  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates, removed: null };",
+  "    return { open: true, state: \"removed\", duplicates, removed: rm };",
+  "    return { open: true, state: \"removed\", duplicates, removed: null };",
   1
  ],
  [
@@ -1124,6 +1124,20 @@
   "portal",
   "      else window.history.pushState({ portalView: v }, \"\", window.location.pathname + window.location.search);",
   "      else void 0;",
+  1
+ ],
+ [
+  "the removed card says photos wait for Maps again",
+  "portal",
+  "<b>Your photos and profile edits can start now</b>",
+  "<b>Your photos and profile edits start once Google shows one</b>",
+  1
+ ],
+ [
+  "the client's removal doesn't open the listing steps",
+  "portal",
+  "    return { open: true, state: \"removed\", duplicates, removed: rm };",
+  "    return { open: false, state: \"duplicate\", duplicates, removed: rm };",
   1
  ]
 ]

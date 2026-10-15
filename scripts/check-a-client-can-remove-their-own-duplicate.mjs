@@ -524,7 +524,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   const stubs = `let _apClientId = "c", _apToken = "t"; window.__removeCalls = 0; const loadApprovals = async () => {}; const portalAlert = (m) => { window.__alert = m; };`;
   const store = /const STORE_ICON = `[^`]*`;/.exec(src);
   if (!store) fail("the removed screen's Business Profile icon (STORE_ICON) is gone");
-  const v13 = [pick(/^function portalListingStateOf\(/m), pick(/^function typeLinesHtml\(/m), (/^const removedOn = [^\n]*\n/m.exec(src) || [""])[0], pick(/^function listingRemovedHtml\(/m), pick(/^function listingWaitHtml\(/m), pick(/^function photoListingLockHtml\(/m)];
+  const v13 = [pick(/^function portalListingStateOf\(/m), pick(/^function typeLinesHtml\(/m), (/^const removedOn = [^\n]*\n/m.exec(src) || [""])[0], (/^const DUP_PHOTO_STEP = [^\n]*\n/m.exec(src) || [""])[0], pick(/^function listingRemovedHtml\(/m), pick(/^function listingWaitHtml\(/m), pick(/^function photoListingLockHtml\(/m)];
   if (v13.some((x) => !x)) fail("the v13 TYPE-line helpers (typeLinesHtml / listingRemovedHtml / the locks) are gone");
   const bundle = [g ? g[0] : "", store ? store[0] : "", stubs, ...v13, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
   const { keepChoice, dupLabel } = req("./_gbp-duplicate.js");
@@ -657,7 +657,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
       const rm = R2.removed;
       // v11 (approved duplicate_business_profile_wording_v11): each box LEADS WITH WHAT IT IS; phone + email are labelled details
       if (!rm.done || rm.title !== "Duplicate Google Business Profile removed" || rm.label !== "Nothing needed from you" || !/Your duplicate Google Business Profile was removed/.test(rm.text)
-        || rm.tl.join("|") !== "Removed from the Google account chriskapranos@gmail.com|Google takes it off Maps and Search|Your photos and profile edits start") fail(`removed: not the green "Your duplicate Google Business Profile was removed" with the 3-step timeline (${rm.title} · ${rm.tl.join("|")})`);
+        || rm.tl.join("|") !== "Removed from the Google account chriskapranos@gmail.com|Your photos and profile edits can start now|Google takes it off Maps and Search") fail(`removed: not the green "Your duplicate Google Business Profile was removed" with the 3-step timeline (${rm.title} · ${rm.tl.join("|")})`);
       if (!/✕ Removed\s*Google Business Profile\s*Business\s*Lone Star Drain & Plumbing\s*Phone on the profile\s*\(512\) 555-0199/.test(rm.text)) fail("removed: the red box doesn't lead with \"Google Business Profile\" and label its phone (\"Phone on the profile\")");
       if (/Google ID/.test(rm.text.split("removed from")[0] || "")) fail("removed: a Google ID is shown that wasn't measured");
       if (!/The owner\s*Google account\s*Signed in as\s*chriskapranos@gmail\.com\s*What it is\s*The Google login that owned this profile/.test(rm.text)) fail("removed: the Google account isn't its own box (\"The owner · Google account · Signed in as …\")");
@@ -739,7 +739,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
         const txt = (h) => { const d = document.createElement("div"); d.innerHTML = h; return { text: d.textContent.replace(/\s+/g, " "), remove: !!d.querySelector("[data-photo-lock-approvals]") }; };
         // 🔑 and the RULE itself carries the removal (the portal reads the record, not a hand-built listing)
         const viaRule = portalListingStateOf({ "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", duplicates: [{}] }, owner_removal: L.removed } });
-        return { photo: txt(photoListingLockHtml(L)), any: txt(listingWaitHtml(L)), before: txt(photoListingLockHtml({ ...L, removed: null })), rule: !!(viaRule && viaRule.removed && viaRule.removed.phone === "(424) 396-8499") };
+        return { photo: txt(photoListingLockHtml(L)), any: txt(listingWaitHtml(L)), before: txt(photoListingLockHtml({ ...L, removed: null })), rule: !!(viaRule && viaRule.removed && viaRule.removed.phone === "(424) 396-8499"), opens: !!(viaRule && viaRule.open && viaRule.state === "removed") };
       });
       for (const [k2, v] of [["photo", "Uploading opens"], ["any", "This step opens"]]) {
         const x = locks[k2];
@@ -747,6 +747,8 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
           fail(`Setup (${k2}): after the client's removal the lock still asks them to remove it, or doesn't say Google is catching up (${x.text.slice(0, 120)})`);
       }
       if (!locks.rule) fail("the portal's one-listing rule doesn't carry the client's removal, so Setup can't know about it");
+      // 🔒 Chris 10-14: the client's confirmed removal of the only duplicate opens the listing steps at once
+      if (!locks.opens) fail("the client removed the only duplicate (Google confirmed it), but the portal's rule keeps the listing steps waiting for Maps");
       if (!locks.before.remove || !/First: you have two Google Business Profiles/.test(locks.before.text)) fail("Setup: before any removal the lock no longer offers \"Remove your second Business Profile\"");
     }
     if (!clicks.other.req || clicks.other.keep || !clicks.other.sel || clicks.other.reqText !== "Ask RGA to keep (512) 555-0199") fail(`picking the other listing doesn't turn into "Ask RGA to keep (512) 555-0199" (${JSON.stringify(clicks.other)})`);
