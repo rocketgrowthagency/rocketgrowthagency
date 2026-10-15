@@ -153,6 +153,8 @@ const REGISTRY = [
   { file: "netlify/functions/portal-deliverables.js",  needle: "Decide in step 11",                   step: "m1.audit.gbp_duplicate" },
   // RGA's alert when Google refuses a photo after every try: admin step 39 is where photos are sent
   { file: "netlify/functions/_photo-publish.js",       needle: "Check it in step 39",                 step: "m1.gbp.photos" },
+  // RGA's 3-days-after-the-reminder notice sends them to the photo step (remind_me_later_flow_v1)
+  { file: "netlify/functions/notify-step-open.js",     needle: "from admin step 39",                  step: "m1.gbp.photos" },
   // 🔗 Step 22's citation audit and step 52's build step name each other, because Chris asked for
   // numbers in descriptions. Registered rather than dropped: the number now has to KEEP matching the
   // page, so a renumbering fails here instead of shipping a card that cites a step nobody can find.

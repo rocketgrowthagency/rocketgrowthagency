@@ -44,8 +44,8 @@
  [
   "the reminder ignores a photo that came in",
   "notifystepopen",
-  "        if (since.length) {",
-  "        if (false) {",
+  "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (since.length) {",
+  "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (false) {",
   1
  ],
  [
@@ -137,6 +137,41 @@
   "portalcss",
   ".pm-later-list > :not(summary) + :not(summary) { margin-top:14px; }",
   "",
+  1
+ ],
+ [
+  "the reminder email gets the green hero back",
+  "notifystepopen",
+  "    markup: `Hi ${first}, you asked us",
+  "    markup: `# Your photos are next\\n\\nHi ${first}, you asked us",
+  1
+ ],
+ [
+  "RGA is never told",
+  "notifystepopen",
+  "return now - Date.parse(l.reminded_at) >= FOLLOWUP_DAYS * 86400000;",
+  "return false;",
+  1
+ ],
+ [
+  "RGA is told twice",
+  "notifystepopen",
+  "if (!l || !l.reminded_at || l.followup_told_at || isFinished(t)) return false;",
+  "if (!l || !l.reminded_at || isFinished(t)) return false;",
+  1
+ ],
+ [
+  "admin calls it a nudge",
+  "admin",
+  "x.reason === \"later_reminder\" ? (x.emailed ? \"Reminder they asked for · by email\"",
+  "x.reason === \"never\" ? (x.emailed ? \"Reminder they asked for · by email\"",
+  1
+ ],
+ [
+  "admin never turns amber",
+  "admin",
+  "    if (l.followup_told_at) return `<p class=\"ob-chose is-warn\">",
+  "    if (false) return `<p class=\"ob-chose is-warn\">",
   1
  ]
 ]

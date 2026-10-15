@@ -66,8 +66,18 @@ if (N.laterDue(T({ until: new Date(now - 1000).toISOString(), reminded_at: new D
 if (N.laterDue(T({ until: new Date(now - 1000).toISOString() }, { status: "done" }))) fail("a finished step gets a reminder");
 const mail = N.buildLaterEmail({ primary_contact_name: "Chris K" });
 if (mail.subject !== "Your photo step is waiting" || !/Hi Chris, you asked us to remind you about your business photos today\./.test(mail.markup) || !/#step-m1\.gbp\.photos\)/.test(mail.markup)) fail("the reminder email doesn't say what it is and link to the step");
+// (approved remind_me_later_flow_v1) a plain letter — `# ` is the green ✓ "done" hero
+if (/^#\s/m.test(mail.markup)) fail("the reminder email opens with the green ✓ confirmation heading (it isn't a confirmation)");
+const sweepSrc = read("netlify/functions/notify-step-open.js").replace(/^[ \t]*\/\/.*$/gm, "");
+// 3 days after the reminder with still no photo → RGA is told once; nothing more to the client
+const R = (reminded, extra = {}) => ({ "m1.gbp.photos": { status: "pending", later: { until: new Date(now - 4 * day).toISOString(), reminded_at: reminded, ...extra } } });
+if (!N.laterFollowupDue(R(new Date(now - 3 * day - 1000).toISOString()))) fail("RGA isn't told 3 days after the reminder");
+if (N.laterFollowupDue(R(new Date(now - 2 * day).toISOString()))) fail("RGA is told before 3 days have passed");
+if (N.laterFollowupDue(R(new Date(now - 4 * day).toISOString(), { followup_told_at: new Date().toISOString() }))) fail("RGA is told twice");
+if (!/later: \{ \.\.\.l, followup_told_at: new Date\(\)\.toISOString\(\) \} \};\s*await writeTasks\(rec\.id, data, tasks\);[^\n]*\n\s*try \{ await notifyRgaFollowup\(client, l\);/.test(sweepSrc) || !/if \(j\.delivered === false\) throw new Error\(`notify-rga not delivered/.test(sweepSrc)) fail("the follow-up to RGA isn't stamped first, or a failed delivery counts as told");
+if (!/created_at=gt\.\$\{encodeURIComponent\(l\.reminded_at\)\}/.test(sweepSrc)) fail("a photo that arrives after the reminder doesn't end it (admin would stay amber)");
 const sweep = read("netlify/functions/notify-step-open.js").replace(/^[ \t]*\/\/.*$/gm, "");
-if (!/const since = await supa\(`\/client_photos\?client_id=eq\.\$\{client\.id\}&created_at=gt\./.test(sweep) || !/if \(since\.length\) \{\s*tasks\[PHOTO\.id\] = \{ \.\.\.tasks\[PHOTO\.id\], later_cleared_at: new Date\(\)\.toISOString\(\) \}; delete tasks\[PHOTO\.id\]\.later;/.test(sweep)) fail("a photo that came in after \"later\" doesn't cancel the reminder");
+if (!/const since = await supa\(`\/client_photos\?client_id=eq\.\$\{client\.id\}&created_at=gt\./.test(sweep) || !/encodeURIComponent\(l\.set_at \|\| l\.until\)\}&select=id&limit=1`\)\.catch\(\(\) => \[\]\);\s*if \(since\.length\) \{\s*tasks\[PHOTO\.id\] = \{ \.\.\.tasks\[PHOTO\.id\], later_cleared_at: new Date\(\)\.toISOString\(\) \}; delete tasks\[PHOTO\.id\]\.later;/.test(sweep)) fail("a photo that came in after \"later\" doesn't cancel the reminder");
 if (!/later: \{ \.\.\.l, reminded_at: new Date\(\)\.toISOString\(\) \} \};\s*await writeTasks\(rec\.id, data, tasks\);[^\n]*\n\s*try \{ out\.sent\.push\(\{ client: client\.id, steps: \[PHOTO\.id\], reason: "later_reminder", \.\.\.\(await sendLaterReminder\(client\)\)/.test(sweep)) fail("the reminder isn't stamped before it's sent (two runs could both send)");
 if (!/else if \(!inSendingHours\(client\)\) out\.held\.push\(\{ client: client\.id, due: \[PHOTO\.id\], why: "later reminder/.test(sweep)) fail("the reminder can go outside the client's sending hours");
 
@@ -136,7 +146,9 @@ if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \
 }
 // ── 4 · admin sees it ──
 const admin = read("admin/admin.js");
-if (!/Client chose later · reminder \$\{escapeHtml\(new Date\(until\)/.test(admin) || !/\+ laterLine\(task\);/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
+if (!/Client chose later · reminder \$\{escapeHtml\(day\(until\)\)\}/.test(admin) || !/\+ laterLine\(task\);/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
+if (!/if \(l\.reminded_at\) return `<p class="ob-chose">Reminder sent /.test(admin) || !/if \(l\.followup_told_at\) return `<p class="ob-chose is-warn">No photos 3 days after their reminder/.test(admin)) fail("admin doesn't say when the reminder went, or doesn't turn amber 3 days on");
+if (!/x\.reason === "later_reminder" \? \(x\.emailed \? "Reminder they asked for · by email"/.test(admin) || !/reason: r\.payload\?\.reason \|\| null/.test(admin)) fail("admin's nudge log calls the reminder the client asked for a nudge");
 
 if (F.length) { console.error("🔴 \"Remind me later\" doesn't work the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can choose later: 1 or 2 weeks on the photo step only, owner only, read back, cleared by \"I'm ready now\" or an upload; while later the pill and the folded row say when, the opened step is the band with the list folded, it's never the now step and the banner moves on; the pressed button spins; one reminder on the date (stamped first, in sending hours, cancelled by a photo); admin sees it");
