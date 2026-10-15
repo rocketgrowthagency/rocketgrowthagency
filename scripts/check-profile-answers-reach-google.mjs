@@ -132,6 +132,14 @@ const wires = [
 ];
 for (const [re, msg] of wires) if (!re.test(si)) fail(msg);
 
+// ── 4b · the admin: these are the client's, never "Your action", unless Google refused and RGA must fix it ──
+{
+  const admin = read("admin/admin.js").replace(/^[ \t]*\/\/.*$/gm, "");
+  if (!/if \(scope === "month1" && CLIENT_GBP_STEPS\[s\.obj\?\.flowId\] && state\.onboardingData\?\.tasks\?\.\[s\.obj\.flowId\]\?\.google_push\?\.state !== "with_rga"\) \{\s*s\.uiState = "queued"; s\.waitsOnClient = true; continue;/.test(admin)) fail("the admin can name the client's hours / details / booking link as RGA's next action");
+  if (!/\.concat\(Object\.entries\(CLIENT_GBP_STEPS\)/.test(admin)) fail("\"Also waiting on the client\" doesn't list the client's hours / details / booking link");
+  if (!/s\.waitsOnClient \? '<span class="ob-status active is-wait">Waiting on client<\/span>'/.test(admin)) fail("the admin row doesn't say it's waiting on the client");
+}
+
 // ── 5 · the portal ──
 const portal = read("portal/portal.js"), pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
 if (!/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && /.test(pc)) fail("a step RGA is finishing still says \"Your turn\"");

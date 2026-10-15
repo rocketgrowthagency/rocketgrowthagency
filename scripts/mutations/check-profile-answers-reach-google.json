@@ -103,5 +103,19 @@
   "<span>Google asked us to change something. RGA is finishing it; nothing needed from you.</span>",
   "<span>${escapeHtml(g.error || \"\")}</span>",
   1
+ ],
+ [
+  "admin: client's hours are Your action",
+  "admin",
+  "      s.uiState = \"queued\"; s.waitsOnClient = true; continue;\n    }",
+  "      s.uiState = s.uiState; \n    }",
+  1
+ ],
+ [
+  "admin: client column misses them",
+  "admin",
+  "      .concat(Object.entries(CLIENT_GBP_STEPS)",
+  "      .concat([].filter(Boolean)",
+  1
  ]
 ]
