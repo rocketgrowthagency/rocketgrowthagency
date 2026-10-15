@@ -96,5 +96,12 @@
   "return c ? { ...c, place: it.place } : it;",
   "return c ? c : it;",
   1
+ ],
+ [
+  "no spinner on the team choice",
+  "portal",
+  "  // 🔒 the pressed choice spins until the refit is saved (Chris 10-15: \"when i click 2 … theres no spinner\")\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
+  "",
+  1
  ]
 ]

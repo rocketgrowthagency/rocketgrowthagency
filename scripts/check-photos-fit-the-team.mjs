@@ -74,6 +74,8 @@ const flow = read("netlify/functions/flow-execute.js");
 if (!/buildShotList\(\{ category, typeOverride: override, storefront, teamSize: current\?\.team_size \|\| null \}\)/.test(flow)) fail("the nightly list rebuild ignores the client's team size");
 if (!/if \(held\.size\) L\.items = L\.items\.map\(\(it\) => \{ const c = held\.has\(Number\(it\.n\)\) && cur\.items\.find\(\(x\) => Number\(x\.n\) === Number\(it\.n\)\); return c \? \{ \.\.\.c, place: it\.place \} : it; \}\);/.test(flow)) fail("the nightly list rebuild rewrites a slot that holds a photo, or a held slot misses where it's taken (today vs premises)");
 const ep = read("netlify/functions/portal-photo-team.js").replace(/^[ \t]*\/\/.*$/gm, "");
+{ const pjs = read("portal/portal.js");
+  if (!/box\.querySelectorAll\("\[data-team-size\]"\)\.forEach\(\(x\) => \{ x\.disabled = true; \}\);[\s\S]{0,200}b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(pjs) || !/b\.classList\.remove\("is-busy"\); b\.removeAttribute\("aria-busy"\);\s*if \(msg\) \{ msg\.hidden = false; msg\.className = "pm-team-msg bad"/.test(pjs)) fail("a team-size choice shows nothing while it refits (the pressed chip must spin, and stop on an error)"); }
 if (!/const gate = await requirePortalOwner\(event, clientId\);/.test(ep) || !/if \(!TEAM_SIZES\.includes\(size\)\)/.test(ep) || !/after\?\.tasks\?\.\[STEP\]\?\.team_size !== size/.test(ep)) fail("the team size can be set by someone else, set to anything, or not read back");
 
 // ── 3 · the portal: the question, and what you can take today first ──

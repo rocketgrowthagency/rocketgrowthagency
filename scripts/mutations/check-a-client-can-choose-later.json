@@ -93,8 +93,8 @@
  [
   "no spinner on the pressed button",
   "portal",
-  "b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
-  "",
+  "until the save is confirmed — nothing else greys\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
+  "until the save is confirmed — nothing else greys\n",
   1
  ],
  [
@@ -130,6 +130,13 @@
   "portalcss",
   "color:transparent !important; transition:none; cursor:progress;",
   "color:transparent !important; cursor:progress;",
+  1
+ ],
+ [
+  "the folded list loses its spacing",
+  "portalcss",
+  ".pm-later-list > :not(summary) + :not(summary) { margin-top:14px; }",
+  "",
   1
  ]
 ]

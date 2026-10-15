@@ -110,7 +110,8 @@ if (!/: later \? \{ text: `Later · \$\{laterDay\(later\.until\)\}`, cls: "wait"
 if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && !r\.later\)/.test(pc)) fail("a step that's \"later\" can still be the client's now step");
 if (!/&& !i\.later\n\s*&& !\(i\.step\?\.clientForm === "kickoff_booking" && !kickoffOwed\)\);/.test(pc) || !/parts\.push\(`\$\{LATER_STEPS\[i\.step\.id\] \|\| "a step"\} later \(\$\{laterDay\(i\.later\.until\)\}\)`\)/.test(pc)) fail("the next-step banner doesn't move on, or doesn't say the photos come back later");
 if (!/later: status !== "done" && status !== "skipped" \? laterOf\(s, ts, photos\) : null/.test(pc)) fail("the step list doesn't know which step is \"later\"");
-if (!/b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(pc) || !/finally \{ delete host\.dataset\.busy; b\.classList\.remove\("is-busy"\);/.test(pc)) fail("a click on a later choice shows nothing while it saves (the pressed button must spin)");
+const laterHandler = (() => { const i = pc.indexOf('"[data-later-days],[data-later-clear],[data-later-change]"'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
+if (!/b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(laterHandler) || !/finally \{ delete host\.dataset\.busy; b\.classList\.remove\("is-busy"\);/.test(pc)) fail("a click on a later choice shows nothing while it saves (the pressed button must spin)");
 if (!/if \(days\) _openStep\.delete\(cid\); else _openStep\.set\(cid, host\.getAttribute\("data-later-step"\)\);/.test(pc)) fail("choosing later doesn't fold the step (or I'm ready now doesn't keep it open)");
 if (!/\$\{later \? `<span class="pm-step-sub">Reminder by email on \$\{escapeHtml\(laterDay\(later\.until\)\)\} · your other steps carry on<\/span>/.test(pc)) fail("the folded row doesn't say when the reminder comes");
 if (!/querySelector\("\[data-later-step\] \.pm-later-band"\)/.test(pc)) fail("an upload can't tell the step is \"later\" (so it never ends it)");
@@ -119,6 +120,7 @@ if (!/if \(lat\) fetch\("\/\.netlify\/functions\/portal-step-later", \{ method: 
 // the spinner keeps the button's size and shows at once (a colour fade on .pm-act hid it, 10-15)
 const pcss = read("portal/portal.css");
 if (!/\.pm-team-chip\.is-busy, \.pm-act\.is-busy \{ position:relative; color:transparent !important; transition:none; cursor:progress; \}/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
+if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \}/.test(pcss)) fail("inside the folded photo list the blocks lose the step's 14px spacing (they touched, 10-15)");
 // ── 4 · admin sees it ──
 const admin = read("admin/admin.js");
 if (!/Client chose later · reminder \$\{escapeHtml\(new Date\(until\)/.test(admin) || !/\+ laterLine\(task\);/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
