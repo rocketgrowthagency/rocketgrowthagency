@@ -1,0 +1,6 @@
+[
+ ["the list renders from a filtered list", "portal", "      ? numbered.map(rowHtml).join(\"\")\n      : `<div class=\"pm-empty\"", "      ? numbered.filter((r) => r.status !== \"done\").map(rowHtml).join(\"\")\n      : `<div class=\"pm-empty\"", 1],
+ ["a Done step shows ✓ again", "portal", "${num == null ? (isDone ? \"✓\" : \"·\") : num}</span>", "${isDone ? \"✓\" : (num == null ? \"·\" : num)}</span>", 1],
+ ["the tick is gone", "portalcss", ".pm-step-num.is-done::after { content: \"✓\";", ".pm-step-num.is-done::after { content: none;", 1],
+ ["Done looks like open", "portalcss", ".pm-step-num.is-done { position: relative; background: var(--state-ok-bg, #e3f1df);", ".pm-step-num.is-done { position: relative;", 1]
+]
