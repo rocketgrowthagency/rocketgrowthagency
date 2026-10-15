@@ -30,8 +30,8 @@
  [
   "no retake count on the line",
   "portal",
-  "${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}",
-  "",
+  "${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}<span class=\"acc-meta\">",
+  "<span class=\"acc-meta\">",
   1
  ],
  [
@@ -102,6 +102,13 @@
   "portalcss",
   ".pm-sgrp.done .gh .acc-n { color:var(--portal-muted); font-weight:400; }",
   "",
+  1
+ ],
+ [
+  "the retake chip pushes the bar out of line",
+  "portal",
+  "<b>${escapeHtml(g.name)}</b>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}<span class=\"acc-meta\"><span class=\"acc-bar${done ? \" done\" : \"\"}\" aria-hidden=\"true\"><i style=\"width:${pct}%\"></i></span><span class=\"acc-n\">${filled} / ${g.items.length}</span></span>",
+  "<b>${escapeHtml(g.name)}</b><span class=\"acc-meta\"><span class=\"acc-bar${done ? \" done\" : \"\"}\" aria-hidden=\"true\"><i style=\"width:${pct}%\"></i></span><span class=\"acc-n\">${filled} / ${g.items.length}</span>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}</span>",
   1
  ]
 ]

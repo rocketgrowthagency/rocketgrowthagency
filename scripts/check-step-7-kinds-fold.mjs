@@ -86,6 +86,23 @@ try {
   if (!up.closed || !up.opened) fail("a batch going into a folded kind doesn't open it");
   if (!/3 uploading/.test(up.note)) fail(`the "uploading" note isn't on the kind's line (${up.note})`);
   if (up.n !== "2 / 5" || up.w !== "40%") fail(`a photo going in doesn't move the kind's count and bar (${up.n}, ${up.w})`);
+  // ── every kind's bar and count line up; "2 to retake" sits beside the name (Chris 10-15: "retake should go on left side
+  // so all the 3/3 line up") ──
+  await draw(976, h);
+  const line = await page.evaluate(() => {
+    const r = (e) => e.getBoundingClientRect();
+    const out = [];
+    for (const box of document.querySelectorAll(".pm-slots, .pm-later")) {
+      const sums = [...box.querySelectorAll(":scope > details.pm-acc > summary, :scope > .pm-acc > summary")];
+      const bars = sums.map((x) => Math.round(r(x.querySelector(".acc-bar")).left)), ns = sums.map((x) => Math.round(r(x.querySelector(".acc-n")).right));
+      if (new Set(bars).size > 1 || new Set(ns).size > 1) out.push(`bars ${bars.join(",")} · counts ${ns.join(",")}`);
+    }
+    const re = document.querySelector(".acc-re");
+    const chipLeft = re ? r(re).right < r(re.closest("summary").querySelector(".acc-bar")).left && re.previousElementSibling?.tagName === "B" : false;
+    return { out, chipLeft };
+  });
+  if (line.out.length) fail(`the kinds' bars and counts don't line up: ${line.out.join(" | ")}`);
+  if (!line.chipLeft) fail("\"2 to retake\" isn't beside the kind's name, left of the bar");
   // ── the bar and count look exactly like admin's Onboarding card header, in every state ──
   const adminCss = read("admin/admin.css");
   const look = (bar, fill, cnt) => { const b = getComputedStyle(bar), f = getComputedStyle(fill), c = getComputedStyle(cnt); return { w: b.width, h: b.height, r: b.borderRadius, track: b.backgroundColor, fill: f.backgroundColor, size: c.fontSize, color: c.color, weight: c.fontWeight, nums: c.fontVariantNumeric }; };
