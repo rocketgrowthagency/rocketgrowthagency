@@ -1,0 +1,156 @@
+[
+ [
+  "step 12 says messages again",
+  "playbooksjson",
+  "\"head\": \"First: RGA is writing your review request message.\"",
+  "\"head\": \"First: RGA is writing your review request messages.\"",
+  1
+ ],
+ [
+  "the waiting band loses its TYPE line",
+  "portal",
+  "  if (w.thing && w.thing.title) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "how it works highlights nothing",
+  "portal",
+  "`<li${i === 0 ? ' class=\"now\"' : \"\"}>",
+  "`<li>",
+  1
+ ],
+ [
+  "the button doesn't say what it sends",
+  "portal",
+  "  if (btn) { btn.textContent = `Send ${n} customer${n === 1 ? \"\" : \"s\"} →`; btn.disabled = !full.length; }",
+  "  if (btn) { btn.disabled = !full.length; }",
+  1
+ ],
+ [
+  "an international number is refused",
+  "portal",
+  "const r5Complete = (card) => !!r5Val(card, \"first_name\") && r5Val(card, \"phone\").replace(/\\D/g, \"\").length >= 7;",
+  "const r5Complete = (card) => !!r5Val(card, \"first_name\") && /^\\(\\d{3}\\) \\d{3}-\\d{4}$/.test(r5Val(card, \"phone\"));",
+  1
+ ],
+ [
+  "a half-filled card is dropped without a word",
+  "portal",
+  "  const half = cards.find((c) => r5Started(c) && !r5Complete(c));",
+  "  const half = null;",
+  1
+ ],
+ [
+  "a marked request reads sent",
+  "portal",
+  "\"Customer · you marked it sent\"",
+  "\"Customer · sent\"",
+  1
+ ],
+ [
+  "a request with no message offers a send",
+  "portal",
+  "    if (!r.message) return typeLineHtml(\"wait\", PERSON_ICON, \"Customer · RGA is writing it\", r.name, detail, [\"wait\", \"Writing\"]);\n",
+  "",
+  1
+ ],
+ [
+  "no measured count reads as 0 new reviews",
+  "portal",
+  "  const rv = data.reviews;",
+  "  const rv = data.reviews || { since: \"\", count: 0, checked_at: \"\" };",
+  1
+ ],
+ [
+  "the request text becomes HTML",
+  "portal",
+  "<span>${escapeHtml(r.message)}</span></details>",
+  "<span>${r.message}</span></details>",
+  1
+ ],
+ [
+  "the open step loses its Ready line",
+  "portal",
+  "typeLineHtml(\"keep\", MSG_ICON, \"✓ Ready\", t.title || \"Review request message\",",
+  "typeLineHtml(\"keep\", MSG_ICON, \"Ready\", t.title || \"Review request message\",",
+  1
+ ],
+ [
+  "after sending, the step closes",
+  "portal",
+  "    _openStep.set(clientId, \"m1.review.first_5\");\n",
+  "",
+  1
+ ],
+ [
+  "the weekly card saves on its own path again",
+  "portal",
+  "    const lists = await saveCustomerList(clientId, weekLabel, customers);",
+  "    const lists = await _portalSupabase.from(\"client_customer_lists\").insert({}) && null;",
+  1
+ ],
+ [
+  "the thread can't draw the message line",
+  "portal",
+  "if ((m = /^::\\s*(gone|acct|keep|msg)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/.exec(l))) { flush();",
+  "if ((m = /^::\\s*(gone|acct|keep)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/.exec(l))) { flush();",
+  1
+ ],
+ [
+  "on a phone the customer fields don't stack",
+  "portalcss",
+  "@media (max-width: 700px) { .pm-r5-c { grid-template-columns: 34px 1fr; }",
+  "@media (max-width: 1px) { .pm-r5-c { grid-template-columns: 34px 1fr; }",
+  1
+ ],
+ [
+  "a stopped series reads as a count",
+  "reviewreqfn",
+  "  if (!base || !last || last.at <= t0) return null;",
+  "  if (!base || !last) return null;",
+  1
+ ],
+ [
+  "a drop reads as new reviews",
+  "reviewreqfn",
+  "  if (delta < 0) return null;\n",
+  "",
+  1
+ ],
+ [
+  "the admin can mark a request sent",
+  "reviewreqfn",
+  "  const gate = Array.isArray(body.sent) ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "the email claims a review link we don't hold",
+  "notifyopenfn",
+  "t.withReviewLink && reviewLinkFor(client) ? t.withReviewLink : \"\"",
+  "t.withReviewLink",
+  1
+ ],
+ [
+  "the email loses its letter blocks",
+  "notifyopenfn",
+  "    if (c.heading && c.thing) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "the email's message line isn't green",
+  "letter",
+  "msg: [\"#cfe6c8\", \"#0c5132\", \"#e3f1df\"] }[b.kind];",
+  "msg: [\"#dadce0\", \"#5f6368\", \"#f1f3f4\"] }[b.kind];",
+  1
+ ],
+ [
+  "step 12 counts every list ever",
+  "portal",
+  "    if (total >= REVIEW_GOAL) break;\n    mine.push(l);",
+  "    mine.push(l);",
+  1
+ ]
+]

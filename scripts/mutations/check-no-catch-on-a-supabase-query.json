@@ -9,8 +9,8 @@
  [
   "the customer-list activity insert gets its .catch back",
   "portal",
-  "      uploaded_by_email: _portalSession?.user?.email || null,\n    });\n    if (error) throw error;\n    // (the client_activity insert that was here never landed",
-  "      uploaded_by_email: _portalSession?.user?.email || null,\n    }).catch(() => ({}));\n    if (error) throw error;\n    // (the client_activity insert that was here never landed",
+  "    uploaded_by_email: _portalSession?.user?.email || null,\n  });\n  if (error) throw error;\n  // (the client_activity insert that was here never landed",
+  "    uploaded_by_email: _portalSession?.user?.email || null,\n  }).catch(() => ({}));\n  if (error) throw error;\n  // (the client_activity insert that was here never landed",
   1
  ],
  [

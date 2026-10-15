@@ -48,7 +48,9 @@ const custHandler = between('const form = ev.target.closest("form[data-customer-
 if (!custHandler) fail("the customer-list handler could not be found");
 if (/location\.reload/.test(custHandler)) fail("submitting the customer list reloads the whole portal again");
 if (/will start going out automatically/.test(js)) fail("the customer list promises review requests go out automatically — nothing sends them; the client does");
-if (!/card\.replaceWith\(fresh\)/.test(custHandler) || !/loadReviewRequests\(clientId\);/.test(custHandler)) fail("the customer card no longer rebuilds itself (and loads its review requests) after a submit");
+// 🔑 Since step12_review_requests_v1 (10-14) the rebuild is shared: refreshAfterCustomers redraws every card (and step 12's row).
+const refresher = between("function refreshAfterCustomers(clientId, lists) {", "\n}\n");
+if (!/refreshAfterCustomers\(clientId, lists\);/.test(custHandler) || !refresher || !/card\.replaceWith\(/.test(refresher) || !/loadReviewRequests\(clientId\);/.test(refresher)) fail("the customer card no longer rebuilds itself (and loads its review requests) after a submit");
 
 if (F.length) { console.error("🔴 an upload no longer confirms in its slot:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ an upload confirms in its own slot — preview, real progress, Sent to RGA, then With RGA for review — and nothing reloads");

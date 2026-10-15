@@ -44,8 +44,8 @@
  [
   "the customer list reloads again",
   "portal",
-  "    loadReviewRequests(clientId);\n    portalToast(",
-  "    location.reload();\n    portalToast(",
+  "    if (!lists) loadReviewRequests(clientId);\n",
+  "    if (!lists) loadReviewRequests(clientId);\n    location.reload();\n",
   1
  ],
  [

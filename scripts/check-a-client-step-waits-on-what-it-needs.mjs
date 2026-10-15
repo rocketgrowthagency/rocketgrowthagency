@@ -230,7 +230,7 @@ const portal = read("portal/portal.js");
 const lift = (src, start, end) => { const i = src.indexOf(start); const j = i < 0 ? -1 : src.indexOf(end, i); return i < 0 || j < 0 ? null : src.slice(i, j); };
 const fns = lift(portal, "function portalListingStateOf(tasks) {", "\nfunction photoListingLockHtml");
 if (!fns || !/function rowRgaWaits\(/.test(fns) || !/function rowWaits\(/.test(fns)) { console.error("⚠️  INDETERMINATE — could not lift the portal's wait helpers"); process.exit(2); }
-const ctx = { escapeAttribute: (x) => String(x).replace(/"/g, "&quot;"), escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") };
+const ctx = { MSG_ICON: "<svg></svg>", escapeAttribute: (x) => String(x).replace(/"/g, "&quot;"), escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") };
 vm.createContext(ctx);
 vm.runInContext(`${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
 {
@@ -276,7 +276,9 @@ const checks = [
   [/if \(s\.id === "m2\.exec\.gbp_photos" && photosThisMonth >= 5\) status = "done";/, "step 15 counts every photo ever, not this month's (month2_waits_v1, decision 3)"],
   [/const photosThisMonth = \(photos \|\| \[\]\)\.filter\(\(p\) => p && p\.created_at\s*&& sameReportingMonth\(portalReportingMonth\(new Date\(p\.created_at\)\), portalReportingMonth\(\)\)\)\.length;/, "step 15's count isn't this reporting month's photos"],
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
-  [/data-jump-to="customer"\$\{rgaWait \|\| ownWait \? " disabled" : ""\}>Submit list →/, "step 57's \"Submit list →\" stays live while it waits"],
+  // 🔒 step12_review_requests_v1 (10-14): while it waits, the only control is the disabled "Add your 5 customers →".
+  [/: step\.clientForm === "customer_list" \? \(rgaWait \|\| ownWait \|\| listingWait \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>`/, "step 57's \"Add your 5 customers →\" stays live while it waits"],
+  [/const completionCtlLive = reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(/, "step 57's customer cards show while it waits"],
   [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
 ];
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
@@ -289,9 +291,10 @@ if (!/\.pm-lock\.other \{[^}]*var\(--state-other-bg/.test(css)) fail("the RGA ba
 if (!/\.pm-act\.is-go:disabled \{[^}]*opacity/.test(css)) fail("a disabled action looks pressable");
 
 // ── 5 · step 57's words are the approved mockup's ──
-const mock = read("reports/mockups/review_first_5_wait_v1.html");
+// 🔒 The words moved to step12_review_requests_v1 (approved 10-14), which replaced review_first_5_wait_v1's band.
+const mock = read("reports/mockups/step12_review_requests_v1.html");
 const cw = s57.clientWait || {};
-for (const k of ["head", "body", "foot"]) if (!cw[k] || !mock.includes(cw[k].replace(/'/g, "'"))) fail(`step 57's ${k} isn't the approved mockup's words (review_first_5_wait_v1) — a new wording needs a new approval`);
+for (const k of ["head", "body", "foot"]) if (!cw[k] || !mock.includes(cw[k].replace(/'/g, "'"))) fail(`step 57's ${k} isn't the approved mockup's words (step12_review_requests_v1) — a new wording needs a new approval`);
 if (!mock.includes("Waits on RGA")) fail("the approved mockup no longer names the pill");
 
 {

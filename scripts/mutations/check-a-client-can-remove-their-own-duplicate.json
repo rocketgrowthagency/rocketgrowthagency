@@ -1087,7 +1087,7 @@
  [
   "v13: the letter drops the TYPE lines",
   "letter",
-  "    if ((m = l.match(/^::\\s*(gone|acct|keep)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/))) {",
+  "    if ((m = l.match(/^::\\s*(gone|acct|keep|msg)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/))) {",
   "    if (false) {",
   1
  ],

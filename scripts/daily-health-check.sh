@@ -428,6 +428,7 @@ run check-a-step-email-is-sent-and-seen.mjs "a step's email can be sent, asks fi
 run check-every-setting-can-be-changed.mjs "a step that decided something says so, and can be changed"
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-a-thread-email-reads-like-the-email.mjs "an email copy in a step's thread reads like the email (no ## or [link](url) on screen), and a test send says it's a test"
+run check-step-12-review-requests.mjs "step 12 is the approved design (waits · 5 labelled customer cards · each customer's status), says \"you marked it sent\" never \"sent\", and counts reviews only when measured"
 run check-back-restores-the-pressed-button.mjs "after Back, a button that left for Google or Stripe is the way it was before the press, in the portal and admin (real Chrome, real back/forward cache, local server)"
 run check-the-sign-in-page-behaves.mjs "the client sign-in page does every state of the approved Shopify-style mockup, in a real browser (network mocked, no email sent)"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"

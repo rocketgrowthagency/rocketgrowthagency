@@ -100,7 +100,9 @@ if (rr) {
 
 // ── 4. And the portal actually offers it ───────────────────────────────────────────────────────
 if (!/data-review-send/.test(portalSrc)) bad("the portal renders no tap-to-send control — the prepared requests would sit unused");
-if (!/href="sms:/.test(portalSrc)) bad("no sms: link — the client would have to retype the message we wrote");
+// 🔑 One helper builds the link since step12_review_requests_v1 (10-14): smsHref, used by the weekly card and step 12.
+const smsHelper = /const smsHref = \(phone, body\) => `sms:\$\{encodeURIComponent\(phone\)\}/.test(portalSrc);
+if (!/href="sms:/.test(portalSrc) && !(smsHelper && (portalSrc.match(/href="\$\{escapeAttribute\(smsHref\(r\.phone, r\.message\)\)\}"/g) || []).length >= 2)) bad("no sms: link — the client would have to retype the message we wrote");
 if (!/loadReviewRequests\(/.test(portalSrc)) bad("nothing loads the prepared requests");
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 // 🔴 A LOADER MUST NOT CAPTURE ITS HOSTS BEFORE THE SURFACE EXISTS. Hit twice in one week: the

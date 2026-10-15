@@ -79,8 +79,8 @@
  [
   "the email is reworded without approval",
   "playbooksjson",
-  "\"intro\": \"Your review request messages are ready, so step 12 in your portal is open now.\"",
-  "\"intro\": \"Good news! Step 12 is now unlocked.\"",
+  "\"need\": \"5 happy past customers: first name, phone number, and the job you did for them. About 2 minutes.\"",
+  "\"need\": \"Just send us some customers, it is quick!\"",
   1
  ],
  [
@@ -102,6 +102,13 @@
   "stepopentest",
   "    const r = await N.sendFor(client, [step], { test: true });",
   "    const r = await N.sendFor(client, [step], { test: true }); /* open_told_at */",
+  1
+ ],
+ [
+  "the email's heading is reworded without approval",
+  "playbooksjson",
+  "\"heading\": \"Your review request message is ready\"",
+  "\"heading\": \"Great news, step 12 is unlocked\"",
   1
  ]
 ]

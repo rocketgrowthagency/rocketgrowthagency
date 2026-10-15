@@ -126,10 +126,10 @@
   1
  ],
  [
-  "portal: Submit list stays live",
+  "portal: Add your 5 customers stays live",
   "portal",
-  "data-jump-to=\"customer\"${rgaWait || ownWait ? \" disabled\" : \"\"}>",
-  "data-jump-to=\"customer\">",
+  "(rgaWait || ownWait || listingWait ? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`",
+  "(rgaWait || ownWait || listingWait ? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",
   1
  ],
  [
@@ -142,7 +142,7 @@
  [
   "step 57's foot is reworded without approval",
   "playbooksjson",
-  "\"foot\": \"This opens when your review messages are ready.\"",
+  "\"foot\": \"Opens when your review request message is ready.\"",
   "\"foot\": \"This opens soon.\"",
   1
  ],
@@ -319,6 +319,13 @@
   "notifyopenfn",
   "const M1 = PLAYBOOKS.month1 || [];",
   "const M1 = [...(PLAYBOOKS.month1 || []), ...(PLAYBOOKS.month2plus || [])];",
+  1
+ ],
+ [
+  "portal: the customer cards show while it waits",
+  "portal",
+  "const completionCtlLive = reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",
+  "const completionCtlLive = reviewStep ? (false ? \"\" : reviewStepHtml(",
   1
  ]
 ]

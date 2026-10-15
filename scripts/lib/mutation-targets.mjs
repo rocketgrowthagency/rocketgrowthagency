@@ -127,5 +127,7 @@ export const FILES = {
   listingsql: "docs/supabase/RGA_CLIENT_LISTING_REMOVALS_2026-10-13.sql",
   admindeliv: "netlify/functions/admin-deliverables.js",
   portaldeliv: "netlify/functions/portal-deliverables.js",
+  reviewreqfn: "netlify/functions/portal-review-requests.js",
+  reviewlink: "netlify/functions/_review-link.js",
 
 };

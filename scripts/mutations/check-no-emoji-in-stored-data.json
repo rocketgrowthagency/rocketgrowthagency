@@ -9,8 +9,8 @@
  [
   "the dead portal insert comes back",
   "portal",
-  "    // (the client_activity insert that was here never landed — RLS; notify-rga below writes the durable row)",
-  "    await _portalSupabase.from(\"client_activity\").insert({ client_id: clientId, kind: \"customer_list_submitted\" });",
+  "  // (the client_activity insert that was here never landed — RLS; notify-rga below writes the durable row)",
+  "  await _portalSupabase.from(\"client_activity\").insert({ client_id: clientId, kind: \"customer_list_submitted\" });",
   1
  ]
 ]

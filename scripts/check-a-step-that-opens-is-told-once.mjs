@@ -55,24 +55,31 @@ for (const [name, tasks, stamped, due] of cases) {
 }
 
 // ── 2 · the approved words ──
+// 🔒 The subject is step_open_now_email_v1's; the body is step12_review_requests_v1's (approved 10-14: the letter blocks —
+// "# ✓ heading", the ":: msg" TYPE line, the ">>" button). Each block's words are compared, not its markup.
 const mock = read("reports/mockups/step_open_now_email_v1.html");
+const mock12 = read("reports/mockups/step12_review_requests_v1.html");
 const s57 = (N.CANDIDATES || []).find((s) => s.id === S57);
 if (s57) {
-  const e = N.buildEmail({ primary_contact_name: "Sam Rivera" }, [s57]);
+  const e = N.buildEmail({ primary_contact_name: "Chris Rivera" }, [s57]);
   if (!mock.includes(e.subject.replace(/'/g, "'"))) fail(`the subject isn't the approved one ("${e.subject}")`);
-  const lines = e.markup.split("\n").map((l) => l.replace(/^## /, "").trim()).filter(Boolean);
+  const lines = e.markup.split("\n").map((l) => l.trim()).filter(Boolean);
   for (const l of lines) {
-    const m = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(l);
-    const text = m ? m[1] : l;
-    if (!mock.includes(text)) fail(`"${text.slice(0, 60)}" isn't in the approved email (step_open_now_email_v1) — new words need a new approval`);
-    if (m && !/^https:\/\/www\.rocketgrowthagency\.com\/portal\/#step-m1\.review\.first_5$/.test(m[2])) fail(`the button goes somewhere else (${m[2]})`);
+    const btn = /^>> \[([^\]]+)\]\(([^)]+)\)$/.exec(l), type = /^:: \w+ \|([^|]*)\|([^|]*)\|(.*)$/.exec(l);
+    const texts = btn ? [btn[1]] : type ? [type[1], type[2], ...type[3].split(" · ")].map((x) => x.trim()) : [l.replace(/^#{1,2} (✓ )?/, "")];
+    for (const text of texts) if (!mock12.includes(text)) fail(`"${text.slice(0, 60)}" isn't in the approved email (step12_review_requests_v1) — new words need a new approval`);
+    if (btn && !/^https:\/\/www\.rocketgrowthagency\.com\/portal\/#step-m1\.review\.first_5$/.test(btn[2])) fail(`the button goes somewhere else (${btn[2]})`);
   }
-  if (!lines.some((l) => /^\[Send your 5 customers\]\(/.test(l))) fail("the link isn't written as words");
+  if (!lines.some((l) => /^>> \[Send your 5 customers\]\(/.test(l))) fail("the button isn't written as words");
+  // 🔑 A step with no heading of its own gets the plain letter: its link must be words too (step 12 no longer exercises it).
+  const plain = N.buildEmail({ primary_contact_name: "Sam" }, [{ ...s57, clientOpenEmail: {} }]).markup;
+  if (!/^\[Open step 12\]\(https:\/\/www\.rocketgrowthagency\.com\/portal\/#step-m1\.review\.first_5\)$/m.test(plain)) fail("a plain step-open email's link isn't written as words");
+  if (/(^|\s)https?:\/\/\S+(\s|$)/.test(plain.replace(/\]\([^)]+\)/g, "]"))) fail("a bare link shows in a plain step-open email");
   if (/(^|\s)https?:\/\/\S+(\s|$)/.test(e.markup.replace(/\]\([^)]+\)/g, "]"))) fail("a bare link shows in the email");
   const letter = req("./_letter.js").letter(e.markup);
   if ((letter.text.match(/Rocket Growth Agency · \(424\) 242-2040/g) || []).length !== 1) fail("the email isn't signed exactly once");
   const nobody = N.buildEmail({ primary_contact_name: "" }, [s57]);
-  if (!/^Hi there,/.test(nobody.markup)) fail("a contact with no name gets a broken greeting");
+  if (!/^Hi there,/m.test(nobody.markup)) fail("a contact with no name gets a broken greeting");
 }
 
 // ── 3 · sending hours ──
