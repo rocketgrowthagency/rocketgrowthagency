@@ -23,8 +23,8 @@
  [
   "the review reason is not read",
   "portal",
-  "shot_n, review_note, created_at",
-  "shot_n, created_at",
+  "shot_n, review_note, reviewed_by, created_at",
+  "shot_n, reviewed_by, created_at",
   1
  ],
  [

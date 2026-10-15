@@ -129,5 +129,6 @@ export const FILES = {
   portaldeliv: "netlify/functions/portal-deliverables.js",
   reviewreqfn: "netlify/functions/portal-review-requests.js",
   reviewlink: "netlify/functions/_review-link.js",
+  photorefusal: "netlify/functions/_photo-refusal.js",
 
 };

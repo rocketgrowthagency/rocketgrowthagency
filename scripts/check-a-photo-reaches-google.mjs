@@ -67,13 +67,14 @@ for (const v of offered) {
 
 // ── a fake world ────────────────────────────────────────────────────────────────────────────────
 function world({ oauth, photos, google = () => ({ status: 200, body: { name: "accounts/1/locations/2/media/m1", googleUrl: "https://lh3.example/x" } }), claimLost = false, listing = "clean" }) {
-  const w = { googleCalls: [], logRows: [], patches: [], queries: [], ledger: [], photos: photos.map((p) => ({ ...p })) };
+  const w = { googleCalls: [], logRows: [], patches: [], queries: [], ledger: [], told: [], photos: photos.map((p) => ({ ...p })) };
   w.deps = {
     now: () => Date.parse("2026-10-08T12:00:00Z"),
     signUrl: async (p) => `https://storage.example/${p}`,
     // 🔴 every side effect is faked — a gate that writes to the live ledger is a user
     recordChange: async (c) => { w.ledger.push(c); },
     accessToken: async () => "tok",
+    notifyRga: async (cid, message) => { w.told.push({ cid, message }); },
     fetch: async (url, init) => {
       w.googleCalls.push({ url, body: JSON.parse(init.body) });
       const g = google(url);
@@ -154,7 +155,9 @@ await scenario("rejected", async () => {
     const w = world({ oauth: CONNECTED, photos: [photo(bad)] });
     await publishClientPhotos({ clientId: "c1", trigger: "upload", deps: w.deps });
     if (w.googleCalls.length) F(`${why} was sent to Google, which refuses it`);
-    if (lastState(w).publish_state !== "rejected" || !lastState(w).publish_error) F(`${why} was not marked rejected with a reason`);
+    // 🔒 photo_google_said_no_v1: the client's to fix → the slot reopens with Google's reason AND how to fix it
+    const st = lastState(w);
+    if (st.publish_state !== "turned_down" || !st.publish_error || st.reviewed_by !== "Google" || !/\nHow to fix: \S/.test(st.review_note || "")) F(`${why} didn't go back to the client's slot with Google's reason and how to fix it (${st.publish_state} · ${JSON.stringify(st.review_note)})`);
   }
 });
 
@@ -168,6 +171,25 @@ await scenario("refused", async () => {
   if (st.publish_attempts !== 3) F(`a refusal on the 3rd try recorded publish_attempts=${st.publish_attempts}, expected 3 — the retry cap counts nothing`);
   if (!/Invalid value/.test(st.publish_error || "")) F("Google's own words were not kept on the photo");
   if (s.failed !== 1 || w.logRows[0]?.outcome !== "failed" || w.logRows[0]?.http_status !== 400) F("a refusal was not logged with its status");
+  // 🔒 photo_google_said_no_v1: an unknown reason is RGA's — the client isn't asked, RGA is told ONCE (the first refusal)
+  if (st.publish_state !== "failed" || st.review_note) F("a refusal RGA has to fix was handed to the client");
+  if (w.told.length !== 1 || !/Google said: Invalid value/.test(w.told[0].message) || !w.logRows.some((r) => r.outcome === "rga_told")) F(`RGA wasn't told the first time Google refused a photo (${w.told.length} alerts)`);
+  const again = world({ oauth: CONNECTED, photos: [photo({ publish_state: "failed", publish_attempts: 3 })], google: () => ({ status: 400, body: { error: { message: "Invalid value at 'category'" } } }) });
+  await publishClientPhotos({ clientId: "c1", trigger: "schedule", deps: again.deps });
+  if (again.told.length) F("RGA is told again on every hourly retry (once per photo)");
+});
+
+// ── 5a · Google refuses for a reason only the CLIENT can fix → the slot reopens with how to fix it ──
+await scenario("client's to fix", async () => {
+  const w = world({ oauth: CONNECTED, photos: [photo()], google: () => ({ status: 400, body: { error: { message: "Image too small: minimum dimensions not met" } } }) });
+  await publishClientPhotos({ clientId: "c1", trigger: "schedule", deps: w.deps });
+  const st = lastState(w);
+  if (st.publish_state !== "turned_down" || st.reviewed_by !== "Google") F(`a refusal the client must fix left the photo "${st.publish_state}" (expected back on their slot)`);
+  const [said, fix] = String(st.review_note || "").split("\nHow to fix: ");
+  if (!said || !fix || /minimum dimensions/.test(said)) F(`the client's note isn't plain words + how to fix (${JSON.stringify(st.review_note)})`);
+  if (!/Image too small/.test(st.publish_error || "")) F("Google's raw reason wasn't kept for RGA");
+  if (w.told.length) F("RGA was alerted about a refusal the client fixes");
+  if (w.logRows[0]?.outcome !== "returned_to_client") F("the attempt log doesn't say the photo went back to the client");
 });
 
 // ── 5b · a type the profile doesn't take → the real photo still goes up, as ADDITIONAL, once ─────

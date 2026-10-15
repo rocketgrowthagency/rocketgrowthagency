@@ -43,7 +43,8 @@ if (!/if \(p\.publish_state === "turned_down"\) \{ if \(!turnedByShot\.has/.test
 if (!/data-ex-toggle/.test(portal) || !/PHOTO_EXAMPLE_SPRITE/.test(portal)) fail("the client slots lost their example drawing");
 if (!/in_review: \{ cls: "other", label: "With RGA for review" \}/.test(portal)) fail("a photo in review is not shown as \"With RGA for review\"");
 if (!/turned_down: \{ cls: "you", label: "Please retake" \}/.test(portal)) fail("a turned-down photo is not shown as the client's move");
-if (!/From RGA:<\/b> \$\{escapeHtml\(turned\.review_note\)\}/.test(portal)) fail("RGA's reason is not shown on the slot it was given for");
+// 🔒 photo_google_said_no_v1 (10-15): the slot's note is photoBackNoteHtml — who said it ("From RGA" / "Google said") + How to fix
+if (!/after: turned \? photoBackNoteHtml\(turned\)/.test(portal) || !/\$\{fromGoogle \? "Google said:" : "From RGA:"\}<\/b> \$\{escapeHtml\(why\)\}/.test(portal)) fail("RGA's reason is not shown on the slot it was given for");
 if (!/review_note/.test((portal.match(/\.from\("client_photos"\)\s*\.select\("([^"]+)"/) || [])[1] || "")) fail("the portal's photo query does not read review_note — the reason could never render");
 // 3
 if (!/\$\{prvHtml\}\$\{waitHtml\}/.test(admin) || !/\$\{prvHtml\}\$\{bandHtml\}/.test(admin)) fail("step 39 no longer renders the review list in both of its states");

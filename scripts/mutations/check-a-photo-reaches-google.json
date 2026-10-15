@@ -44,8 +44,8 @@
  [
   "a refusal stops counting toward the cap",
   "photopublish",
-  "publish_state: \"failed\", publish_error: error, publish_attempts: (Number(photo.publish_attempts) || 0) + 1",
-  "publish_state: \"failed\", publish_error: error, publish_attempts: (Number(photo.publish_attempts) || 0)",
+  "      const attempts = (Number(photo.publish_attempts) || 0) + 1;",
+  "      const attempts = (Number(photo.publish_attempts) || 0);",
   1
  ],
  [
@@ -123,6 +123,41 @@
   "photopublish",
   "      if (!r.ok && category !== \"ADDITIONAL\" && /does not apply to this location/i.test(JSON.stringify(j))) {",
   "      if (!r.ok && category !== \"ADDITIONAL\") {",
+  1
+ ],
+ [
+  "a client-fixable refusal stays with RGA",
+  "photopublish",
+  "      if (c.who === \"client\") {\n        await setState({ publish_state: \"turned_down\", publish_error: error, publish_attempts: attempts,",
+  "      if (false) {\n        await setState({ publish_state: \"turned_down\", publish_error: error, publish_attempts: attempts,",
+  1
+ ],
+ [
+  "RGA is never told",
+  "photopublish",
+  "      if (photo.publish_state !== \"failed\") {\n        try {\n          await d.notifyRga(",
+  "      if (false) {\n        try {\n          await d.notifyRga(",
+  1
+ ],
+ [
+  "RGA is told every hour",
+  "photopublish",
+  "      if (photo.publish_state !== \"failed\") {\n        try {\n          await d.notifyRga(",
+  "      if (true) {\n        try {\n          await d.notifyRga(",
+  1
+ ],
+ [
+  "a rejected file goes back with no fix",
+  "photopublish",
+  "review_note: c.who === \"client\" ? clientNote(c) : `${reason}\\nHow to fix: send a new photo for this slot.` });",
+  "review_note: reason });",
+  1
+ ],
+ [
+  "the client reads Google's raw text",
+  "photorefusal",
+  "const clientNote = (c) => `${c.said}${FIX_MARK}${c.fix}`;",
+  "const clientNote = (c) => `${c.raw}`;",
   1
  ]
 ]

@@ -37,8 +37,8 @@
  [
   "a new failure field nobody declared",
   "photopublish",
-  "      await setState({ publish_state: \"rejected\", publish_error: reason });",
-  "      await setState({ publish_state: \"rejected\", publish_error: reason, review_failed_reason: reason });",
+  "      await setState({ publish_state: \"turned_down\", publish_error: reason, reviewed_by: \"Google\", reviewed_at: nowIso,",
+  "      await setState({ publish_state: \"turned_down\", publish_error: reason, review_failed_reason: reason, reviewed_by: \"Google\", reviewed_at: nowIso,",
   1
  ],
  [

@@ -1,0 +1,11 @@
+[
+ ["the portal prints Google's raw text again", "portal", "    const why = p.publish_state === \"failed\" ? `<span class=\"portal-photo-why\">${escapeHtml(PHOTO_RGA_ISSUE)}</span>`", "    const why = p.publish_state === \"failed\" ? `<span class=\"portal-photo-why\">${escapeHtml(p.publish_error)}</span>`", 1],
+ ["the fix line is dropped", "portal", "${fix ? `<span><b>How to fix:</b> ${escapeHtml(fix)}</span>` : \"\"}", "", 1],
+ ["Google's refusal reads as RGA's", "portal", "${fromGoogle ? \"Google said:\" : \"From RGA:\"}", "${\"From RGA:\"}", 1],
+ ["the note's text becomes HTML", "portal", "<b>${fromGoogle ? \"Google said:\" : \"From RGA:\"}</b> ${escapeHtml(why)}</span>", "<b>${fromGoogle ? \"Google said:\" : \"From RGA:\"}</b> ${why}</span>", 1],
+ ["the portal doesn't fetch who sent it back", "portal", "review_note, reviewed_by, created_at\")", "review_note, created_at\")", 1],
+ ["a turn-down can go without a fix", "admin", "    if (!fix) { setBanner(\"Say how to fix it", "    if (false) { setBanner(\"Say how to fix it", 1],
+ ["a preset loses its fix", "admin", "\"Take it again in daylight, near a window or outside, with the light behind you.\"]", "\"\"]", 1],
+ ["an unknown reason is handed to the client", "photorefusal", "  return r ? { who: r.who, said: r.said || null, fix: r.fix || null } : { who: \"rga\", said: null, fix: null };", "  return r ? { who: r.who, said: r.said || null, fix: r.fix || null } : { who: \"client\", said: \"Google said no.\", fix: \"Try again.\" };", 1],
+ ["a client reason has no fix", "photorefusal", "    fix: \"Take a new photo of your real business: no text or logos over it, no stock images, no screenshots.\" },", "    fix: null },", 1]
+]
