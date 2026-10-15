@@ -77,8 +77,10 @@ if (kindUp("kind:logo") || kindUp("kind:cover:later")) fail("a full kind, or a k
 const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null);
 if (!/<div class="pm-tool ask">/.test(ask) || !/How many people work in your business\?/.test(ask)) fail("before it's answered, the toolbar doesn't ask the whole question, outlined");
 // ── 4b · "Not ready yet? Remind me later" sits under the plain line, only on the client's move ──
-if (!(h.indexOf('<div class="pm-later"') > iLine && h.indexOf('<div class="pm-later"') < iPanel) || !/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(h)) fail("\"Remind me later\" isn't under the plain line");
+if (!(h.indexOf('<div class="pm-later-ctl"') > iLine && h.indexOf('<div class="pm-later-ctl"') < iPanel) || !/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(h)) fail("\"Remind me later\" isn't under the plain line");
 if (/Remind me later/.test(ctx.how(step, task, false, photos, "c1", null))) fail("\"Remind me later\" shows on a step that isn't the client's move");
+// the control's wrapper must not reuse the "When your space is ready" fold's class (it drew a dashed box, 10-15)
+if (/<div class="pm-later"[ >]/.test(h.slice(0, iPanel))) fail("\"Remind me later\" reuses the later-shots fold's class (a dashed box around it)");
 
 // ── 5 · drawn in Chrome with the shipped stylesheet: nothing spills, the toolbar is one row at card width ──
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
