@@ -44,7 +44,8 @@ try {
     }
     return out;
   });
-  const want = { one: ["New email from Rocket Growth Agency", "1"], two: ["2 new emails from Rocket Growth Agency", "2"], reply: ["Rocket Growth Agency replied about Step 3", "1"], replies: ["Rocket Growth Agency replied about Step 3 · 2 new", "2"], mix: ["Rocket Growth Agency replied, and sent 1 new email", "2"], test: ["", ""] };
+  // 🔄 "do recommendation" (10-15): an email copy never raises the banner or the badge; only a reply does
+  const want = { one: ["", ""], two: ["", ""], reply: ["Rocket Growth Agency replied about Step 3", "1"], replies: ["Rocket Growth Agency replied about Step 3 · 2 new", "2"], mix: ["Rocket Growth Agency replied about Step 3", "1"], test: ["", ""] };
   for (const [k, [text, badge]] of Object.entries(want)) {
     const got = said[k];
     if (!(text ? got.text.startsWith(text) && !got.text.slice(text.length).replace(/Read it →/, "").trim() : !got.text) || got.badge !== badge) fail(`the Setup banner says "${got.text}" (badge ${got.badge || "none"}) for ${k}; it should say "${text}"${badge ? ` (badge ${badge})` : " and nothing"}`);
@@ -87,4 +88,4 @@ try {
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 an email reads as a conversation, or the duplicate letter is on the wrong step:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ an email is not a conversation: on a step each email RGA sent is one closed row (subject · We emailed you / Test send · date · Read) that opens in place; the conversation heading and reply box only when there is one, after the emails; otherwise a quiet Ask line with the same box; the general thread unchanged; the duplicate-removal letter files under step 6; the Setup banner names what arrived (an email as an email, a reply as a reply, a mix as both; a test send never counts)");
+console.log("✅ an email is not a conversation: on a step each email RGA sent is one closed row (subject · We emailed you / Test send · date · Read) that opens in place; the conversation heading and reply box only when there is one, after the emails; otherwise a quiet Ask line with the same box; the general thread unchanged; the duplicate-removal letter files under step 6; the Setup banner and badge count only RGA's replies (an email copy or a test send never raises them)");

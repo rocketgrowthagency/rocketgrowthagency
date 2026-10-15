@@ -63,17 +63,10 @@
   1
  ],
  [
-  "the banner calls an email a reply again",
+  "an email copy raises the banner again",
   "portal",
-  "    const line = !replies ? (mails === 1 ?",
-  "    const line = false ? (mails === 1 ?",
-  1
- ],
- [
-  "a mix hides the email",
-  "portal",
-  "mails ? `, and sent ${emailWords(mails)}` : replies > 1 ? ` · ${replies} new` : \"\"}`;",
-  "replies > 1 ? ` · ${replies} new` : \"\"}`;",
+  "m.from === \"rga\" && !m.test && !m.letter && new Date(m.at)",
+  "m.from === \"rga\" && !m.test && new Date(m.at)",
   1
  ]
 ]
