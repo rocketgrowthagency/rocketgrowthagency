@@ -431,6 +431,7 @@ run check-step-12-review-requests.mjs "step 12 is the approved design (waits · 
 run check-setup-steps-read-in-order.mjs "the client's Setup list reads 1 to N in order, and a Done step keeps its number"
 run check-a-refused-photo-says-how-to-fix.mjs "a photo that comes back says why and how to fix it; Google's raw text never reaches the client"
 run check-profile-answers-reach-google.mjs "steps 8/10/11 put the answer on Google and are Done only when the read-back matches"
+run check-step-6-verifies-in-the-portal.mjs "step 6 leads with the profile and verifies by code in the portal, only the ways Google offers"
 run check-back-restores-the-pressed-button.mjs "after Back, a button that left for Google or Stripe is the way it was before the press, in the portal and admin (real Chrome, real back/forward cache, local server)"
 run check-the-sign-in-page-behaves.mjs "the client sign-in page does every state of the approved Shopify-style mockup, in a real browser (network mocked, no email sent)"
 run check-price-summary-is-derived.mjs "a price summary is derived from the schedule, never restated"

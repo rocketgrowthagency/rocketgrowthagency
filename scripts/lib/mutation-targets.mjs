@@ -131,6 +131,8 @@ export const FILES = {
   reviewlink: "netlify/functions/_review-link.js",
   photorefusal: "netlify/functions/_photo-refusal.js",
   gbpprofile: "netlify/functions/_gbp-profile.js",
+  gbpverify: "netlify/functions/_gbp-verify.js",
+  gbpverifyfn: "netlify/functions/portal-gbp-verify.js",
   stepinput: "netlify/functions/portal-step-input.js",
 
 };

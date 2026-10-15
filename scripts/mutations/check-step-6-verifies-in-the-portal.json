@@ -1,0 +1,86 @@
+[
+ [
+  "API off still offers ways",
+  "gbpverify",
+  "    if (apiOff(e)) return { available: false, reason: \"api_off\" };",
+  "    if (apiOff(e)) return { available: true, options: [{ method: \"SMS\", label: \"Text\", sub: \"\", code: true, rank: 1 }], pending: null };",
+  1
+ ],
+ [
+  "unknown methods shown",
+  "gbpverify",
+  "      if (!m) return null;",
+  "      if (!m) return { method: o.verificationMethod, label: o.verificationMethod, sub: \"\", code: true, rank: 9 };",
+  1
+ ],
+ [
+  "fastest not first",
+  "gbpverify",
+  "}).filter(Boolean).sort((a, b) => a.rank - b.rank);",
+  "}).filter(Boolean);",
+  1
+ ],
+ [
+  "the number isn't sent",
+  "gbpverify",
+  "  if ((method === \"SMS\" || method === \"PHONE_CALL\") && detail.phone) body.phoneNumber = detail.phone;\n",
+  "",
+  1
+ ],
+ [
+  "letters reach Google",
+  "gbpverify",
+  "  if (!/^\\d{4,8}$/.test(p)) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "a wrong code is RGA's",
+  "gbpverify",
+  "  if (/pin|code/i.test(s) && /invalid|incorrect|wrong|mismatch/i.test(s)) return",
+  "  if (false) return",
+  1
+ ],
+ [
+  "permission handed to the client",
+  "gbpverify",
+  "  if (apiOff(e) || e.status === 401 || e.status === 403) return",
+  "  if (apiOff(e)) return",
+  1
+ ],
+ [
+  "anyone can enter a code",
+  "gbpverifyfn",
+  "  const gate = action === \"status\" ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId);",
+  "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "verified doesn't settle the step",
+  "gbpverifyfn",
+  "        body: JSON.stringify({ client_id: clientId, step_id: \"m1.gbp.verify\" }),",
+  "        body: JSON.stringify({ client_id: clientId, step_id: \"m1.gbp.photos\" }),",
+  1
+ ],
+ [
+  "evidence line back",
+  "portal",
+  "mech === \"detected\" && evidence && step.id !== \"m1.gbp.verify\"",
+  "mech === \"detected\" && evidence",
+  1
+ ],
+ [
+  "Fastest on any first way",
+  "portal",
+  "${i === 0 && (o.method === \"SMS\" || o.method === \"PHONE_CALL\") ? '<em>Fastest</em>' : \"\"}",
+  "${i === 0 ? '<em>Fastest</em>' : \"\"}",
+  1
+ ],
+ [
+  "no Maps link",
+  "portal",
+  "${f.mapsUri ? `<a class=\"pm-gv-go\"",
+  "${false ? `<a class=\"pm-gv-go\"",
+  1
+ ]
+]

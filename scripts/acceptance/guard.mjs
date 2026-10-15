@@ -37,6 +37,9 @@ export const READ_ONLY_FN_POSTS = {
   // client's record. Its one side effect: an expired Google access token is refreshed and cached (_google-token.js),
   // which every Google call does and which changes nothing the client or RGA sees.
   "portal-gbp-profile": onlyKeys(["client_id", "step_id"]),
+  // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
+  // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
+  "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the
