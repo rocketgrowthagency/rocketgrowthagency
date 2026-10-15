@@ -292,5 +292,12 @@
   "  if (o.verdict === \"duplicate\" && rm && (rm.place_id ? duplicates.length > 0 && duplicates.every((d) => d && d.place_id === rm.place_id) : duplicates.length === 1)) {\n    return { open: true, state: \"removed\", duplicates, checked_at",
   "  if (o.verdict === \"duplicate\" && rm) {\n    return { open: true, state: \"removed\", duplicates, checked_at",
   1
+ ],
+ [
+  "admin: the profile steps stay Locked until step 11 is Done",
+  "admin",
+  "    if (scope === \"month1\" && listingStateOf(state.onboardingData?.tasks).open) doneIds.add(DUP_STEP);\n",
+  "",
+  1
  ]
 ]
