@@ -1,0 +1,65 @@
+[
+ [
+  "the duplicate letter stays on step 7",
+  "thread",
+  "step_id: r.payload?.reason === \"duplicate_confirmed_gone\" ? \"m1.gbp.verify\" : (r.payload?.step_id || null),",
+  "step_id: r.payload?.step_id || null,",
+  1
+ ],
+ [
+  "every letter files under step 6",
+  "thread",
+  "r.payload?.reason === \"duplicate_confirmed_gone\" ? \"m1.gbp.verify\"",
+  "r.payload?.reason !== \"nothing\" ? \"m1.gbp.verify\"",
+  1
+ ],
+ [
+  "emails count as a conversation",
+  "portal",
+  "const letters = msgs.filter((m) => m.letter), talk = msgs.filter((m) => !m.letter);",
+  "const letters = msgs.filter((m) => m.letter), talk = msgs;",
+  1
+ ],
+ [
+  "an email opens already expanded",
+  "portal",
+  "return `<details class=\"pm-mail\"><summary>",
+  "return `<details class=\"pm-mail\" open><summary>",
+  1
+ ],
+ [
+  "no Ask line without a conversation",
+  "portal",
+  "      : `<details class=\"pm-ask\"><summary>Questions about this step? <b>Ask Rocket Growth Agency</b></summary>${form}</details>`;",
+  "      : \"\";",
+  1
+ ],
+ [
+  "a test send isn't marked on its row",
+  "portal",
+  "${m.test ? \"Test send · \" : \"We emailed you · \"}",
+  "We emailed you · ",
+  1
+ ],
+ [
+  "the conversation comes before the emails",
+  "portal",
+  "return `<div class=\"pm-stepmsgs\" data-thread-for=\"${escapeAttribute(stepId)}\">${mails}${convo}</div>`;",
+  "return `<div class=\"pm-stepmsgs\" data-thread-for=\"${escapeAttribute(stepId)}\">${convo}${mails}</div>`;",
+  1
+ ],
+ [
+  "the Ask box can't report it was sent",
+  "portal",
+  "const box = form.closest(\".pm-thread, .pm-ask\");",
+  "const box = form.closest(\".pm-thread\");",
+  1
+ ],
+ [
+  "the row loses the email's subject",
+  "portal",
+  "      const [subj, ...rest] = String(m.message).split(\"\\n\\n\");\n      return `<details class=\"pm-mail\">",
+  "      const subj = \"An email from RGA\", rest = [String(m.message)];\n      return `<details class=\"pm-mail\">",
+  1
+ ]
+]
