@@ -107,7 +107,7 @@
  [
   "the duplicate falls back to the generic card",
   "portal",
-  "    if (a.key === \"m1.audit.gbp_duplicate\" && (a.details || []).length) return dupCard(a);\n",
+  "    if (a.key === \"m1.audit.gbp_duplicate\" && ((a.details || []).length || a.confirmed)) return dupCard(a);",
   "",
   1
  ],
@@ -296,7 +296,7 @@
  [
   "the badge counts a card that waits on RGA",
   "portal",
-  "actions.filter((a) => !(a.waits || (a.keep && a.keep.waits_on_rga) || (a.owner_removal && a.owner_removal.status === \"removed\"))).length",
+  "actions.filter((a) => !(a.waits || (a.keep && a.keep.waits_on_rga) || (a.owner_removal && a.owner_removal.status === \"removed\") || a.confirmed)).length",
   "actions.length",
   1
  ],
@@ -758,8 +758,8 @@
  [
   "v9: the badge counts a removed duplicate waiting for Maps",
   "portal",
-  " || (a.owner_removal && a.owner_removal.status === \"removed\"))).length;",
-  "))).length;",
+  " || (a.owner_removal && a.owner_removal.status === \"removed\") || a.confirmed)).length;",
+  " || a.confirmed)).length;",
   1
  ],
  [
@@ -970,6 +970,125 @@
   "portaldeliv",
   "      own_listing: key === \"m1.audit.gbp_duplicate\" ? clientFacts(t.outcome_data?.own_listing) : null,",
   "      own_listing: key === \"m1.audit.gbp_duplicate\" ? (t.outcome_data?.own_listing || null) : null,",
+  1
+ ],
+ [
+  "v13: the removal row is never stamped confirmed",
+  "duprecheck",
+  "          method: \"PATCH\", headers: { \"Content-Type\": \"application/json\" }, body: JSON.stringify({ confirmed_at: nowIso, confirmed_by: \"nightly-check\" }) });",
+  "          method: \"GET\" });",
+  1
+ ],
+ [
+  "v13: the notice carries no facts",
+  "duprecheck",
+  "            removed: rm ? { title: rm.title || null, phone: rm.phone || null, location_id: rm.location_id || null } : null,",
+  "            removed: null,",
+  1
+ ],
+ [
+  "v13: admin isn't told photos resumed",
+  "duprecheck",
+  "body: JSON.stringify({ client_id: client.id, kind: \"gbp_photo_sending_resumed\",",
+  "body: JSON.stringify({ client_id: client.id, kind: \"rga_note\",",
+  1
+ ],
+ [
+  "v13: the thread never draws the card",
+  "thread",
+  "card: r.kind === \"gbp_duplicate_resolved\" && r.payload?.removed ? {",
+  "card: false ? {",
+  1
+ ],
+ [
+  "v13: the portal ignores the notice card",
+  "portal",
+  "${m.card && m.card.kind === \"dup_confirmed\" ? `",
+  "${false ? `",
+  1
+ ],
+ [
+  "v13: Setup still asks to remove it after the removal",
+  "portal",
+  "  if (listing.removed) return listingRemovedHtml(listing, \"Uploading opens\");\n",
+  "",
+  1
+ ],
+ [
+  "v13: every waiting step still asks to remove it",
+  "portal",
+  "  if (listing.removed) return listingRemovedHtml(listing, \"This step opens\");\n",
+  "",
+  1
+ ],
+ [
+  "v13: the portal's rule forgets the removal",
+  "portal",
+  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates, removed: rm };",
+  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates, removed: null };",
+  1
+ ],
+ [
+  "v13: no confirmed card",
+  "portal",
+  "  if (a.confirmed) {\n    const rm = a.owner_removal || {};",
+  "  if (false) {\n    const rm = a.owner_removal || {};",
+  1
+ ],
+ [
+  "v13: never shown as confirmed",
+  "portaldeliv",
+  "      if (recent) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "v13: sign-in attempts aren't kept",
+  "listingflow",
+  "  tasks[R.DUP_STEP] = { ...prev, owner_removal: R.summaryOf(row), removal_attempts: attempts.slice(-20) };",
+  "  tasks[R.DUP_STEP] = { ...prev, owner_removal: R.summaryOf(row) };",
+  1
+ ],
+ [
+  "v13: admin step 11 forgets the removal once Done",
+  "admin",
+  "  if (L.state === \"one\") return removalRecordHtml(check);",
+  "  if (L.state === \"one\") return \"\";",
+  1
+ ],
+ [
+  "v13: the email can be sent twice",
+  "notifystepopen",
+  "  if (!rm || rm.status !== \"removed\" || t.cleared_told_at) return false;",
+  "  if (!rm || rm.status !== \"removed\") return false;",
+  1
+ ],
+ [
+  "v13: the email ignores a finished photo step",
+  "notifystepopen",
+  "  return !!PHOTO && !isFinished((tasks && tasks[PHOTO.id]) || {});",
+  "  return !!PHOTO;",
+  1
+ ],
+ [
+  "v13: a stale confirmation still emails",
+  "notifystepopen",
+  "  if (!Number.isFinite(at) || now - at > 7 * 86400000) return false;",
+  "  if (!Number.isFinite(at)) return false;",
+  1
+ ],
+ [
+  "v13: the email loses the Google account line",
+  "notifystepopen",
+  "    rm.account ? `:: acct | Removed from | Google account | Signed in as **${rm.account}**` : \"\",",
+  "    \"\",",
+  1
+ ],
+ [
+  "v13: the letter drops the TYPE lines",
+  "letter",
+  "    if ((m = l.match(/^::\\s*(gone|acct|keep)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/))) {",
+  "    if (false) {",
   1
  ]
 ]

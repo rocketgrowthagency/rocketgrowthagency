@@ -452,7 +452,7 @@ const sum = R.summaryOf({ status: "found", account_email: "chris.owner@gmail.com
 if ("token_enc" in sum || JSON.stringify(sum).includes("\"x\"") || sum.account !== "chris.owner@gmail.com") fail("the client-readable summary carries the token, or doesn't name the signed-in account in full");
 const portal = code("portal/portal.js");
 // the card (approved duplicate_listing_card_v2): routed to dupCard; Remove only when found; the question asked without the masked owner
-if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(a\.details \|\| \[\]\)\.length\) return dupCard\(a\);/.test(portal)) fail("the duplicate isn't drawn by its own card (dupCard)");
+if (!/if \(a\.key === "m1\.audit\.gbp_duplicate" && \(\(a\.details \|\| \[\]\)\.length \|\| a\.confirmed\)\) return dupCard\(a\);/.test(portal)) fail("the duplicate isn't drawn by its own card (dupCard)");
 const dc = (/function dupCard\(a\) \{[\s\S]*?\n\}\n/.exec(portal) || [""])[0];
 if (!dc) fail("dupCard is gone (re-read this gate)");
 // v9: two buttons, "Remove …" (asks) and "Yes, remove it" (removes), and both only in the found state
@@ -514,7 +514,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   const stubs = `let _apClientId = "c", _apToken = "t"; window.__removeCalls = 0; const loadApprovals = async () => {}; const portalAlert = (m) => { window.__alert = m; };`;
   const store = /const STORE_ICON = `[^`]*`;/.exec(src);
   if (!store) fail("the removed screen's Business Profile icon (STORE_ICON) is gone");
-  const bundle = [g ? g[0] : "", store ? store[0] : "", stubs, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
+  const v13 = [pick(/^function portalListingStateOf\(/m), pick(/^function typeLinesHtml\(/m), (/^const removedOn = [^\n]*\n/m.exec(src) || [""])[0], pick(/^function listingRemovedHtml\(/m), pick(/^function listingWaitHtml\(/m), pick(/^function photoListingLockHtml\(/m)];
+  if (v13.some((x) => !x)) fail("the v13 TYPE-line helpers (typeLinesHtml / listingRemovedHtml / the locks) are gone");
+  const bundle = [g ? g[0] : "", store ? store[0] : "", stubs, ...v13, pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateShort\(/m), pick(/^function dupCard\(/m), ...handlers, ...v9].join("\n");
   const { keepChoice, dupLabel } = req("./_gbp-duplicate.js");
   const kept = { name: "Lone Star Drain & Plumbing", category: "Plumber", phone: "(512) 555-0142", maps_url: "https://maps.example/k" };
   const mk = (own, dup, dec = null, extra = {}) => ({ key: "m1.audit.gbp_duplicate", kept, own_listing: own,
@@ -545,6 +547,9 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     unread:   mk(z, zd, null, { answer: "mine", owner_hint: "ch…@gmail.com", owner_removal: { status: "unreadable", account: "chriskapranos2@gmail.com" } }),
     handled:  mk(z, zd, null, { answer: "unsure" }),
     removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
+    // v13: Google confirmed it (the confirmed card, 7 days)
+    confirmed: { key: "m1.audit.gbp_duplicate", details: [], kept: { ...kept, account: "hello@lonestar.test" }, confirmed: { at: "2026-10-17T11:00:00Z", photo_step_id: "m1.gbp.photos" },
+      owner_removal: { status: "removed", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z", title: "Lone Star Drain & Plumbing", phone: "(512) 555-0199", location_id: "3109515908223837152" } },
     rmfail:   mk(z, zd, null, { answer: "mine", owner_removal: { status: "remove_failed", account: "chriskapranos2@gmail.com", detail: "Google refused the removal (500)." } }),
     // v6 (approved duplicate_listing_accounts_v6): which Google account goes with each listing
     accts:    mk(z, zd, null, { owner_hint: "ch…@gmail.com", kept: { ...kept, account: "hello@lonestar.test" } }),
@@ -711,6 +716,29 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     if (!confirmFlow.asked.panel || confirmFlow.asked.step4 || confirmFlow.asked.calls) fail(`"Remove …" doesn't open the in-card confirmation (or it removes straight away) (${JSON.stringify(confirmFlow.asked)})`);
     if (confirmFlow.cancelled.panel || !confirmFlow.cancelled.step4 || confirmFlow.cancelled.calls) fail(`Cancel doesn't put step 4 back (${JSON.stringify(confirmFlow.cancelled)})`);
     if (confirmFlow.removing.calls !== 1 || confirmFlow.removing.text !== "Removing…" || !confirmFlow.removing.busy || !confirmFlow.removing.note || confirmFlow.removing.cancel) fail(`"Yes, remove it" doesn't remove once, spinning on "Removing…" with "don't close the page" (${JSON.stringify(confirmFlow.removing)})`);
+    // v13: the confirmed card + Setup's lock once the client removed it (Google catching up)
+    {
+      const cf = R2.confirmed;
+      if (!cf.done || cf.title !== "Duplicate Google Business Profile removed" || cf.eyebrow !== "Confirmed" || !/Confirmed: Google shows one Business Profile/.test(cf.text)
+        || !/✕ Removed\s*Google Business Profile\s*Lone Star Drain & Plumbing · Phone on the profile \(512\) 555-0199/.test(cf.text)
+        || !/Removed from\s*Google account\s*Signed in as chriskapranos2@gmail\.com/.test(cf.text)
+        || !/✓ Kept, the only one now\s*Your main Google Business Profile\s*Lone Star Drain & Plumbing · Phone on the profile \(512\) 555-0142 · Google account hello@lonestar\.test/.test(cf.text)
+        || cf.tl.join("|") !== "Removed from the Google account chriskapranos2@gmail.com|Google took it off Maps and Search|Your photos and profile edits start") fail(`confirmed: not the v13 "Confirmed: Google shows one Business Profile" card with the TYPE lines (${cf.title} · ${cf.tl.join("|")})`);
+      const locks = await page.evaluate(() => {
+        const L = { open: false, state: "duplicate", duplicates: [{}], removed: { status: "removed", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z", title: "Rocket Growth Agency", phone: "(424) 396-8499" } };
+        const txt = (h) => { const d = document.createElement("div"); d.innerHTML = h; return { text: d.textContent.replace(/\s+/g, " "), remove: !!d.querySelector("[data-photo-lock-approvals]") }; };
+        // 🔑 and the RULE itself carries the removal (the portal reads the record, not a hand-built listing)
+        const viaRule = portalListingStateOf({ "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", duplicates: [{}] }, owner_removal: L.removed } });
+        return { photo: txt(photoListingLockHtml(L)), any: txt(listingWaitHtml(L)), before: txt(photoListingLockHtml({ ...L, removed: null })), rule: !!(viaRule && viaRule.removed && viaRule.removed.phone === "(424) 396-8499") };
+      });
+      for (const [k2, v] of [["photo", "Uploading opens"], ["any", "This step opens"]]) {
+        const x = locks[k2];
+        if (x.remove || !/You removed your duplicate Google Business Profile on Oct 14\./.test(x.text) || !new RegExp(`${v} on its own the morning it's gone`).test(x.text) || !/✕ Removed\s*Google Business Profile/.test(x.text) || !/Signed in as chriskapranos2@gmail\.com/.test(x.text))
+          fail(`Setup (${k2}): after the client's removal the lock still asks them to remove it, or doesn't say Google is catching up (${x.text.slice(0, 120)})`);
+      }
+      if (!locks.rule) fail("the portal's one-listing rule doesn't carry the client's removal, so Setup can't know about it");
+      if (!locks.before.remove || !/First: you have two Google Business Profiles/.test(locks.before.text)) fail("Setup: before any removal the lock no longer offers \"Remove your second Business Profile\"");
+    }
     if (!clicks.other.req || clicks.other.keep || !clicks.other.sel || clicks.other.reqText !== "Ask RGA to keep (512) 555-0199") fail(`picking the other listing doesn't turn into "Ask RGA to keep (512) 555-0199" (${JSON.stringify(clicks.other)})`);
     if (clicks.ours.req || !clicks.ours.keep || !clicks.ours.sel) fail("picking ours again doesn't bring back \"Keep\"");
     if (!clicks.next.who || clicks.next.choose) fail("\"Keep …\" doesn't move to \"Who made it?\"");
@@ -718,11 +746,11 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
   } finally { await browser.close(); }
 }
 // the queue and the badge: a card that waits on RGA asks nothing of the client
-if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\| \(a\.keep && a\.keep\.waits_on_rga\) \|\| \(a\.owner_removal && a\.owner_removal\.status === "removed"\)\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA, or a removed duplicate waiting for Maps");
+if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\| \(a\.keep && a\.keep\.waits_on_rga\) \|\| \(a\.owner_removal && a\.owner_removal\.status === "removed"\) \|\| a\.confirmed\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA, or a removed duplicate waiting for Maps");
 // v9: once the nightly check sees one listing after the client's removal, it's listed under "Already approved"
 {
   const pd = code("netlify/functions/portal-deliverables.js");
-  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Done · Google shows one listing"/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
+  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Confirmed · Google shows one Business Profile"/.test(pd) || !/confirmed: \{ at, photo_step_id: photo \}/.test(pd) || !/Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
   if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/const settledHtml = settled\.length \|\| resolvedRows \?/.test(portal)) fail("the portal doesn't show the resolved duplicate under \"Already approved\"");
 }
 if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "Nothing needs you right now"/.test(portal)) fail("the queue heading says a card that waits on RGA \"needs you\"");
@@ -772,6 +800,89 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   const ad = code("admin/admin.js");
   if (!/const lingering = rmDays > 14;/.test(ad) || !/lingering \? "bad"/.test(ad) || !/gbp_duplicate_removed:\s*\{ cls: "g", label: "Client removed the duplicate listing" \}/.test(ad)) fail("admin step 11 doesn't turn red when Google still shows a removed duplicate, or the feed has no label for the client's removal");
   if (!/\$\{queue\.some\(\(e\) => !e\.done && !e\.rga\) \? `<span class="ap-of">/.test(portal)) fail("\"Nothing needs you right now\" still sits beside an item count");
+}
+
+// ── v13 (approved duplicate_removal_confirmed_v13): the RECORD and the notices once Google confirms it ──
+{
+  // the nightly clear: the removal row is stamped confirmed (Chris: "record this in the database … important"), the
+  // notice carries the TYPE lines' facts, and admin is told photo sending resumed
+  const RECHECK = req("./gbp-duplicate-recheck.js");
+  const rec = { id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "pending", outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "ChIJ-dupe" }] },
+    owner_removal: { status: "removed", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z", title: "Rocket Growth Agency", phone: "(424) 396-8499", location_id: "3109515908223837152" } } } } };
+  const acts = [], stamped = [];
+  const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
+  const real = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    const u = new URL(String(url)); const m = (init.method || "GET").toUpperCase();
+    if (/gbp-duplicate-scan$/.test(u.pathname)) return J({ ok: true, stored: true, finding: { verdict: "clean" } });
+    if (/\/clients$/.test(u.pathname)) return J([{ id: CID, business_name: "Rocket Growth Agency", identity_phone: "4242422040" }]);
+    if (/client_google_oauth$/.test(u.pathname)) return J([{ google_account_email: "hello@rocketgrowthagency.com" }]);
+    if (/client_onboarding_records$/.test(u.pathname)) return J([rec]);
+    if (/client_listing_removals$/.test(u.pathname) && m === "PATCH") { stamped.push({ q: u.search, body: JSON.parse(init.body) }); return J([]); }
+    if (/client_activity$/.test(u.pathname)) { acts.push(JSON.parse(init.body)); return J([]); }
+    return J({ error: "unexpected" }, 599);
+  };
+  try { await RECHECK.handler({}); } finally { globalThis.fetch = real; }
+  if (stamped.length !== 1 || !stamped[0].body.confirmed_at || stamped[0].body.confirmed_by !== "nightly-check" || !/status=eq\.removed/.test(stamped[0].q) || !/confirmed_at=is\.null/.test(stamped[0].q))
+    fail(`the client's removal row isn't stamped with Google's confirmation (confirmed_at) the morning it clears (${JSON.stringify(stamped)})`);
+  const note = acts.find((a) => a.kind === "gbp_duplicate_resolved");
+  if (!note || note.payload.removed?.phone !== "(424) 396-8499" || note.payload.account !== "chriskapranos2@gmail.com" || note.payload.kept?.phone !== "(424) 242-2040" || note.payload.kept?.account !== "hello@rocketgrowthagency.com"
+    || !/^Confirmed: your duplicate Google Business Profile is gone$/.test(note.payload.title || "") || /listing|—/.test(note.payload.summary || "")) fail(`the confirmed-gone notice doesn't carry the TYPE lines' facts, or still says "listing" (${JSON.stringify(note && note.payload).slice(0, 200)})`);
+  if (!acts.some((a) => a.kind === "gbp_photo_sending_resumed")) fail("admin isn't told photo sending to Google resumed");
+  // the portal thread turns the notice into the card (title + facts only)
+  const pt = code("netlify/functions/portal-thread.js");
+  if (!/card: r\.kind === "gbp_duplicate_resolved" && r\.payload\?\.removed \?/.test(pt) || !/kind: "dup_confirmed"/.test(pt)) fail("the portal thread doesn't turn the confirmed-gone notice into its card");
+  if (!/m\.card && m\.card\.kind === "dup_confirmed" \?/.test(portal) || !/typeLinesHtml\(\{ \.\.\.m\.card\.removed, account: m\.card\.account \}, m\.card\.kept\)/.test(portal)) fail("the portal doesn't draw the confirmed-gone notice as the TYPE-line card");
+  // portal-deliverables: 7 days as the confirmed card, then a record under Already approved
+  const pdc = code("netlify/functions/portal-deliverables.js");
+  if (!/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed", kind: "ownership",\s*confirmed: \{ at, photo_step_id: photo \}/.test(pdc)) fail("for 7 days after the confirmation the card isn't shown as confirmed");
+  for (const [days, want] of [[1, "card"], [9, "record"]]) {
+    const at = new Date(Date.now() - days * 86400000).toISOString();
+    const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", workspace_id: "w1", identity_phone: "4242422040" }], client_portal_access: [{ portal_email: "owner@lonestar.test", client_id: CID }],
+      client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "done", completed_at: at, outcome_data: { verdict: "clean" },
+        owner_removal: { status: "removed", phone: "(424) 396-8499", title: "Rocket Growth Agency", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z" } } } } }],
+      client_google_oauth: [{ client_id: CID, google_account_email: "hello@rocketgrowthagency.com" }] };
+    const J2 = (b, st = 200) => new Response(JSON.stringify(b), { status: st });
+    const real2 = globalThis.fetch;
+    globalThis.fetch = async (url) => { const u = new URL(String(url));
+      if (u.pathname === "/auth/v1/user") return J2({ id: "u9", email: "owner@lonestar.test" });
+      const t = u.pathname.split("/").pop(); const rows = db[t] || [];
+      const q = [...u.searchParams].filter(([, v]) => /^eq\./.test(v)); return J2(rows.filter((r) => q.every(([k, v]) => String(r[k]) === v.slice(3)))); };
+    let body = {};
+    try { const pd = req("./portal-deliverables.js"); body = JSON.parse((await pd.handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID }) })).body || "{}"); }
+    finally { globalThis.fetch = real2; }
+    const card = (body.actions || []).find((x) => x.key === "m1.audit.gbp_duplicate" && x.confirmed);
+    const row = (body.resolved || []).find((x) => x.key === "m1.audit.gbp_duplicate");
+    if (want === "card" && (!card || card.confirmed.photo_step_id !== "m1.gbp.photos" || row)) fail(`the day after Google confirms it, the client doesn't see the confirmed card (with the way to the photo step) (${JSON.stringify(Object.keys(body))})`);
+    if (want === "record" && (card || !row || row.label !== "Confirmed · Google shows one Business Profile" || row.title !== "Duplicate Google Business Profile removed: (424) 396-8499")) fail("after 7 days the confirmed removal isn't a record under Already approved");
+  }
+  // every sign-in attempt is kept on step 11 (admin can't read the service-only table)
+  const fl = code("netlify/functions/_listing-removal-flow.js");
+  if (!/removal_attempts: attempts\.slice\(-20\)/.test(fl)) fail("step 11 doesn't keep each sign-in attempt (removal_attempts)");
+  // admin step 11 keeps the record once Done, TYPE-first
+  const adm = code("admin/admin.js");
+  if (!/if \(L\.state === "one"\) return removalRecordHtml\(check\);/.test(adm) || !/<b>Google Business Profile<\/b><\/span><\/div>\s*<dl>\$\{dl\(\[\["Business", rm\.title\], \["Phone on the profile", rm\.phone\], \["Google ID", rm\.location_id\]\]\)\}<\/dl>/.test(adm)
+    || !/<small>The owner<\/small><b>Google account<\/b>/.test(adm) || !/a\.status === "not_found" \? "Not the owner"/.test(adm) || !/gbp_photo_sending_resumed:\{ cls: "g", label: "Sending photos to Google resumed" \}/.test(adm)) fail("admin step 11 doesn't keep the removal record (TYPE-first boxes + sign-in attempts) once Done, or the feed has no label for photos resuming");
+  // the email: once, in hours, within 7 days, only after the client's own removal, not if photos are done
+  const NSO = req("./notify-step-open.js");
+  const now = Date.parse("2026-10-17T15:00:00Z");
+  const dupT = (x) => ({ "m1.audit.gbp_duplicate": { status: "done", completed_at: "2026-10-17T11:00:00Z", outcome_data: { verdict: "clean" },
+    owner_removal: { status: "removed", title: "Rocket Growth Agency", phone: "(424) 396-8499", account: "chriskapranos2@gmail.com" }, ...x } });
+  if (!NSO.dupClearedDue(dupT({}), now)) fail("the client isn't emailed that the photo step is open after their duplicate is confirmed gone");
+  if (NSO.dupClearedDue(dupT({ cleared_told_at: "x" }), now)) fail("the photo-step-open email can be sent twice");
+  if (NSO.dupClearedDue({ ...dupT({}), "m1.gbp.photos": { status: "done" } }, now)) fail("the email is sent though the photo step is done");
+  if (NSO.dupClearedDue(dupT({}), now + 8 * 86400000)) fail("a stale confirmation (8 days) still sends the email");
+  if (NSO.dupClearedDue(dupT({ owner_removal: { status: "not_found" } }), now)) fail("the email goes out though the client never removed it themselves");
+  const mail = NSO.buildDupClearedEmail({ primary_contact_name: "Chris K" }, dupT({})["m1.audit.gbp_duplicate"].owner_removal, { name: "Rocket Growth Agency", phone: "(424) 242-2040", account: "hello@rocketgrowthagency.com" });
+  if (mail.subject !== "Confirmed: your duplicate Google Business Profile is gone" || !/^# ✓ Your duplicate Google Business Profile is gone/.test(mail.markup)
+    || !/:: gone \| ✕ Removed \| Google Business Profile \| Rocket Growth Agency · Phone on the profile \*\*\(424\) 396-8499\*\*/.test(mail.markup)
+    || !/:: acct \| Removed from \| Google account \| Signed in as \*\*chriskapranos2@gmail\.com\*\*/.test(mail.markup)
+    || !/:: keep \| ✓ Kept, the only one now \| Your main Google Business Profile \|/.test(mail.markup) || !/>> \[Upload your photos\]\(https:\/\/www\.rocketgrowthagency\.com\/portal\/#step-m1\.gbp\.photos\)/.test(mail.markup) || /listing/i.test(mail.markup))
+    fail(`the photo-step-open email isn't the approved v13 letter (TYPE lines, the button) (${mail.subject})`);
+  // the letter renders the TYPE lines and the button (the one client-email format, extended)
+  const { letter } = req("./_letter.js");
+  const L = letter(mail.markup);
+  if (!/border-left:4px solid #8e0b21/.test(L.html) || !/Upload your photos<\/a>/.test(L.html) || !/✕ REMOVED: Google Business Profile/.test(L.text)) fail("the letter doesn't render the TYPE lines and the button (html + plain text)");
 }
 
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }

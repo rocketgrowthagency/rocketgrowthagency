@@ -192,7 +192,8 @@ const pcode = code("portal/portal.js");
 // 🔑 2026-10-12: the same lines now also carry the RGA wait (check-a-client-step-waits-on-what-it-needs); this pins the
 // listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
 if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
-if (!/: listingWait \? \{ text: "Waits on your Business Profile", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\"");
+// v13: "Waits on Google" once the client removed it (Google catching up); "Waits on your Business Profile" before
+if (!/: listingWait \? \{ text: portalListingStateOf\(waitTasks\)\.removed \? "Waits on Google" : "Waits on your Business Profile", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\" (or \"Waits on Google\" after the client's removal)");
 if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)
   || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return (?:!!rowOwnWaits\(step, status, tasks\) \|\| )?rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
 if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");

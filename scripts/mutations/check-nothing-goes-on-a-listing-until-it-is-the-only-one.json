@@ -16,8 +16,8 @@
  [
   "the portal's copy drifts",
   "portal",
-  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates };",
-  "  if (o.verdict === \"duplicate\") return { open: true, state: \"duplicate\", duplicates };",
+  "  if (o.verdict === \"duplicate\") return { open: false, state: \"duplicate\", duplicates, removed: rm };",
+  "  if (o.verdict === \"duplicate\") return { open: true, state: \"duplicate\", duplicates, removed: rm };",
   1
  ],
  [
@@ -149,7 +149,7 @@
  [
   "portal: a waiting step says Your turn",
   "portal",
-  "      : listingWait ? { text: \"Waits on your Business Profile\", cls: \"wait\" }\n",
+  "      : listingWait ? { text: portalListingStateOf(waitTasks).removed ? \"Waits on Google\" : \"Waits on your Business Profile\", cls: \"wait\" }\n",
   "",
   1
  ],
