@@ -480,6 +480,10 @@ function agree(r) {
     r.notes.push("kickoff: the admin's lock waits for this pick (the time picker is showing) — correct, exempt");
   else if (/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()) && (p === "client-turn" || r.portal.isNow))
     r.fail.push(`admin says "${r.admin.pill}" but the portal tells the client "${r.portal.pill}"${r.portal.isNow ? " (their next step)" : ""} — the client is asked to do a step that is waiting`);
+  // 🔒 "REMIND ME LATER" (step7_later_and_upload_v1, 10-15): a grey "Later · <date>" pill is the CLIENT'S OWN choice, not a
+  // hold — correct only while the admin row says the same ("Client chose later · reminder …"); otherwise it still fails below.
+  else if (/^Later · /.test(String(r.portal.pill || "").trim()) && /Client chose later · reminder /.test(r.admin.text || ""))
+    r.notes.push("the client chose later (reminder date on both sides) — correct");
   // …and the other way: the portal holds the client back on a step the admin has open to work.
   else if (p === "waiting" && !/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()))
     r.fail.push(`the portal says "${r.portal.pill}" but the admin shows "${r.admin.pill}" — the client is held back on a step that is open`);
