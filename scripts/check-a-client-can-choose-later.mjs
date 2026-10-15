@@ -121,6 +121,19 @@ if (!/if \(lat\) fetch\("\/\.netlify\/functions\/portal-step-later", \{ method: 
 const pcss = read("portal/portal.css");
 if (!/\.pm-team-chip\.is-busy, \.pm-act\.is-busy \{ position:relative; color:transparent !important; transition:none; cursor:progress; \}/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
 if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \}/.test(pcss)) fail("inside the folded photo list the blocks lose the step's 14px spacing (they touched, 10-15)");
+// drawn in Chrome with the shipped stylesheet: the opened fold keeps the 14px rhythm between its blocks
+{ let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
+  if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
+  const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 976, height: 900 });
+    await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row"><div style="padding:0 16px">${on}</div></div></div></body></html>`);
+    await page.addStyleTag({ content: pcss });
+    const gaps = await page.evaluate(() => { const f = document.querySelector(".pm-later-list"); f.open = true; const kids = [...f.children].filter((k) => k.tagName !== "SUMMARY" && k.checkVisibility()); const out = []; for (let i = 1; i < kids.length; i++) out.push(Math.round(kids[i].getBoundingClientRect().top - kids[i - 1].getBoundingClientRect().bottom)); return out; });
+    if (!gaps.length || gaps.some((g) => g < 13 || g > 15)) fail(`inside the opened photo list the blocks aren't 14px apart (${gaps.join(", ")})`);
+  } finally { await browser.close(); }
+}
 // ── 4 · admin sees it ──
 const admin = read("admin/admin.js");
 if (!/Client chose later · reminder \$\{escapeHtml\(new Date\(until\)/.test(admin) || !/\+ laterLine\(task\);/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
