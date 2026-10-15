@@ -50,6 +50,11 @@ for (const r of res.results || []) {
 }
 
 console.log("");
+// 🔴 10-15: a client we could not read (not a quota blip) FAILS the run. RGA's series stopped 09-16 on a Places 403 that
+// printed one ▫️ line a day and exited 0 for a month.
+const unread = (res.results || []).filter((r) => r.error && !r.indeterminate);
+if (unread.length) { for (const r of unread) console.error(`🔴 ${r.client}: review count not read — ${String(r.error).slice(0, 160)}`); }
 if (dropped) { console.error(`🔴 ${dropped} client(s) LOST reviews — investigate before any client report goes out`); process.exit(1); }
 if (indet && indet === (res.results || []).length) { console.error(`⚠️  all ${indet} blocked on Places quota — indeterminate, retries tomorrow`); process.exit(2); }
+if (unread.length) { console.error(`🔴 ${unread.length} client(s) have no review count today — the velocity series has a gap`); process.exit(1); }
 console.log(`✅ ${res.stored} client(s) refreshed${indet ? `, ${indet} indeterminate` : ""}`);

@@ -28,6 +28,10 @@ const F = []; const fail = (m) => F.push(m);
 // How each stored failure is cleared once something succeeds. `clear` must match the file's code; `why` says why a
 // field never persists (response-only, or replaced whole on every run).
 const DECLARED = {
+  "refresh-review-metrics.js": {
+    profile_error: { why: "response only (the run's result row), never stored — the snapshot holds only a measured count" },
+    cache_error: { why: "response only (the run's result row), never stored" },
+  },
   "gbp-duplicate-scan.js": {
     last_failed_scan: { clear: /if \(record\.verdict === "clean" \|\| record\.verdict === "duplicate"\) delete tasks\["m1\.audit\.gbp_duplicate"\]\.last_failed_scan;/ },
     store_error: { why: "response only (json), never stored" },

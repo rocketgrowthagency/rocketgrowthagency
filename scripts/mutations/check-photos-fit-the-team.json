@@ -30,7 +30,7 @@
  [
   "a held slot is refitted (endpoint)",
   "phototeam",
-  "  const items = L.items.map((it) => (held.has(Number(it.n)) ? ((cur.items || []).find((c) => Number(c.n) === Number(it.n)) || it) : it));",
+  "  const items = L.items.map((it) => { const c = held.has(Number(it.n)) && (cur.items || []).find((x) => Number(x.n) === Number(it.n)); return c ? { ...c, place: it.place } : it; });",
   "  const items = L.items;",
   1
  ],
@@ -51,7 +51,7 @@
  [
   "the nightly rewrites held slots",
   "exec",
-  "        if (held.size) L.items = L.items.map((it) => (held.has(Number(it.n)) ? (cur.items.find((c) => Number(c.n) === Number(it.n)) || it) : it));\n",
+  "        if (held.size) L.items = L.items.map((it) => { const c = held.has(Number(it.n)) && cur.items.find((x) => Number(x.n) === Number(it.n)); return c ? { ...c, place: it.place } : it; });\n",
   "",
   1
  ],
@@ -81,6 +81,20 @@
   "portal",
   "class=\"pm-team-chip${ts === v ? \" on\" : \"\"}\"",
   "class=\"pm-team-chip\"",
+  1
+ ],
+ [
+  "a held slot loses where it's taken (endpoint)",
+  "phototeam",
+  "return c ? { ...c, place: it.place } : it;",
+  "return c ? c : it;",
+  1
+ ],
+ [
+  "a held slot loses where it's taken (nightly)",
+  "exec",
+  "return c ? { ...c, place: it.place } : it;",
+  "return c ? c : it;",
   1
  ]
 ]

@@ -108,6 +108,8 @@ if (!/task: storedTask, cleared_recorded: clearedRecorded \}\);/.test(scan)) fai
 if (!/if \(wasDuplicate && record\.verdict === "clean"\) \{\s*try \{ await require\("\.\/_dup-cleared"\)\.recordCleared\(/.test(scan) || !/wasDuplicate = po\.verdict === "duplicate";/.test(scan)) fail("a duplicate cleared by a manual check settles step 11 with no notice to the client and no 'photo sending resumed'");
 const rc = (() => { try { return fs.readFileSync(`${SITE}/netlify/functions/gbp-duplicate-recheck.js`, "utf8"); } catch { return ""; } })();
 if (!/if \(!clearedRecorded\) await recordCleared\(/.test(rc)) fail("the nightly records a clear the check already recorded (two notices), or none");
+// Chris 10-15: "must be a universal fix" — a clear that was never recorded (any client, before the fix) is repaired nightly, once
+if (!/if \(open\.length && !told\.length\) \{ await recordCleared\(/.test(rc) || !/status=eq\.removed&confirmed_at=is\.null/.test(rc)) fail("a client whose duplicate cleared without a notice is never repaired, or is told twice");
 const ovFn = code("netlify/functions/gbp-listing-override.js");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(ovFn) || !/reason\.length < 10/.test(ovFn)) fail("the override is not staff-only with a written reason");
 

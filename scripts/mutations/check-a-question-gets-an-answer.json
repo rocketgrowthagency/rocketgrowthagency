@@ -1,0 +1,16 @@
+[
+ [
+  "the admin can mark a reply seen",
+  "thread",
+  "const gate = markAt ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "the admin showing the portal is refused the thread",
+  "thread",
+  "const gate = markAt ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "const gate = await requirePortalOwner(event, clientId);",
+  1
+ ]
+]

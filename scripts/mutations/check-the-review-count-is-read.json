@@ -1,0 +1,37 @@
+[
+ [
+  "Places asked first again",
+  "reviewmetrics",
+  "    if (source == null) try {",
+  "    if (true) try {",
+  1
+ ],
+ [
+  "a 403 reads as a quota blip",
+  "reviewmetrics",
+  "        row.indeterminate = /429|quota|rate|50\\d/.test(String(r.status))",
+  "        row.indeterminate = /403|429|quota|rate|50\\d/.test(String(r.status))",
+  1
+ ],
+ [
+  "zero reviews stored as missing",
+  "reviewmetrics",
+  "          count = j.totalReviewCount != null ? Number(j.totalReviewCount) : 0;",
+  "          count = j.totalReviewCount != null ? Number(j.totalReviewCount) : null;",
+  1
+ ],
+ [
+  "an unsaved snapshot counts as stored",
+  "reviewmetrics",
+  "      if (!snap.ok) { row.error",
+  "      if (false) { row.error",
+  1
+ ],
+ [
+  "the runner exits 0 on an unread client",
+  "reviewrunner",
+  "if (unread.length) { console.error(`🔴 ${unread.length} client(s) have no review count today — the velocity series has a gap`); process.exit(1); }",
+  "",
+  1
+ ]
+]

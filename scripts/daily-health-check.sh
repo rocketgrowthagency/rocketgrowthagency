@@ -517,6 +517,7 @@ run check-no-two-clients-share-a-google-property.mjs "no client reports another 
 run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
+run check-the-review-count-is-read.mjs "the review count is read from the client's own Google first, and an unread client fails"
 run refresh-review-metrics.mjs        "review counts observed daily (velocity needs a series)"
 run refresh-pagespeed.mjs             "PageSpeed refreshed (background; verified by snapshot)" status
 run check-report-matches-the-mockup.mjs "the client report has not drifted from its approved design"

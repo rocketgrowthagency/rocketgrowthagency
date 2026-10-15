@@ -327,5 +327,12 @@
   "if (!clearedRecorded) await recordCleared(",
   "if (true) await recordCleared(",
   1
+ ],
+ [
+  "an unrecorded clear is repaired every night",
+  "duprecheck",
+  "if (open.length && !told.length) { await recordCleared(",
+  "if (open.length) { await recordCleared(",
+  1
  ]
 ]

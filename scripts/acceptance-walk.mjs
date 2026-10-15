@@ -129,7 +129,10 @@ function evidenceTracker(side) {
   t.onResponse = (url, status) => {
     if (!url.includes("/.netlify/functions/")) return;
     const fn = url.split("/.netlify/functions/")[1].split(/[?#]/)[0];
-    if (status >= 500) t.b().fail5xx.push(`${status} ${fn}`);
+    // 🔴 10-15: a 401/403 is a GUARD REFUSING THE PAGE ITS OWN DATA — a bug, not a warning. portal-thread and
+    // portal-review-requests 403'd on every admin load from 10-14 and the walk only warned. (Writes never reach here:
+    // the guard answers them locally.)
+    if (status >= 500 || status === 401 || status === 403) t.b().fail5xx.push(`${status}${status < 500 ? " (refused)" : ""} ${fn}`);
     else if (status >= 400) t.b().warn4xx.push(`${status} ${fn}`);
   };
   const tracked = (url) => url.includes("/.netlify/functions/") || url.includes(SUPA_HOST);

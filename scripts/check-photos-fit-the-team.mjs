@@ -65,10 +65,14 @@ const T = req("./portal-photo-team.js");
   const out = T.refit(shape, "1", new Set([11]));
   const n11 = out.items.find((i) => i.n === 11), n12 = out.items.find((i) => i.n === 12);
   if (n11.do !== "The team planning at a whiteboard, faces to camera." || n12.do !== "You at your desk, relaxed.") fail(`a slot holding a photo was refitted, or an empty one wasn't (${n11.do} · ${n12.do})`);
+  // 10-15: a list stored before `place` existed — a held premises slot still lands under "When your space is ready"
+  const old = { ...cur, items: cur.items.map(({ place, ...it }) => it) };
+  const o3 = T.refit(old, "1", new Set([3])).items.find((i) => i.n === 3);
+  if (!o3.place || o3.do !== old.items.find((i) => i.n === 3).do) fail("a held slot from a list stored before `place` doesn't learn it's a premises shot (or lost its words)");
 }
 const flow = read("netlify/functions/flow-execute.js");
 if (!/buildShotList\(\{ category, typeOverride: override, storefront, teamSize: current\?\.team_size \|\| null \}\)/.test(flow)) fail("the nightly list rebuild ignores the client's team size");
-if (!/if \(held\.size\) L\.items = L\.items\.map\(\(it\) => \(held\.has\(Number\(it\.n\)\) \? \(cur\.items\.find/.test(flow)) fail("the nightly list rebuild rewrites a slot that holds a photo");
+if (!/if \(held\.size\) L\.items = L\.items\.map\(\(it\) => \{ const c = held\.has\(Number\(it\.n\)\) && cur\.items\.find\(\(x\) => Number\(x\.n\) === Number\(it\.n\)\); return c \? \{ \.\.\.c, place: it\.place \} : it; \}\);/.test(flow)) fail("the nightly list rebuild rewrites a slot that holds a photo, or a held slot misses where it's taken (today vs premises)");
 const ep = read("netlify/functions/portal-photo-team.js").replace(/^[ \t]*\/\/.*$/gm, "");
 if (!/const gate = await requirePortalOwner\(event, clientId\);/.test(ep) || !/if \(!TEAM_SIZES\.includes\(size\)\)/.test(ep) || !/after\?\.tasks\?\.\[STEP\]\?\.team_size !== size/.test(ep)) fail("the team size can be set by someone else, set to anything, or not read back");
 

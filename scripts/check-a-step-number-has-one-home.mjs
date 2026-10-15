@@ -145,6 +145,14 @@ const REGISTRY = [
   { file: "netlify/functions/cancel-kickoff-invite.js", needle: "open again",                          step: "m1.close.kickoff_invite" },
   { file: "netlify/functions/kickoff-rsvp-check.js",    needle: "kickoff invite",                      step: "m1.close.kickoff_invite" },
   { file: "netlify/functions/flow-execute.js",          needle: "deep assessment (step",               step: "m1.audit.deep_assess" },
+  // step 11 = the one-listing check; the admin's case-3 footnote and RGA's removal-flow alert both send you there
+  { file: "admin/admin.js",                            needle: "step 11 is checked again",            step: "m1.audit.gbp_duplicate" },
+  { file: "netlify/functions/_listing-removal-flow.js", needle: "Check it in step 11",                 step: "m1.audit.gbp_duplicate" },
+  { file: "netlify/functions/gbp-duplicate-keep.js",   needle: "Step 11 has no second",               step: "m1.audit.gbp_duplicate" },
+  { file: "netlify/functions/gbp-duplicate-recheck.js", needle: "support) from step 11",               step: "m1.audit.gbp_duplicate" },
+  { file: "netlify/functions/portal-deliverables.js",  needle: "Decide in step 11",                   step: "m1.audit.gbp_duplicate" },
+  // RGA's alert when Google refuses a photo after every try: admin step 39 is where photos are sent
+  { file: "netlify/functions/_photo-publish.js",       needle: "Check it in step 39",                 step: "m1.gbp.photos" },
   // 🔗 Step 22's citation audit and step 52's build step name each other, because Chris asked for
   // numbers in descriptions. Registered rather than dropped: the number now has to KEEP matching the
   // page, so a renumbering fails here instead of shipping a card that cites a step nobody can find.

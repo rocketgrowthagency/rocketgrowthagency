@@ -83,6 +83,8 @@ try { thread = code(read("netlify/functions/portal-thread.js")); }
 catch { bad("portal-thread.js is missing — the portal promises a reply it cannot show"); }
 if (thread) {
   if (!/requirePortalOwner\s*\(/.test(thread)) bad("portal-thread is not gated — a stranger could read a client's conversation");
+  // 🔒 10-15: the admin showing a client's portal READS the thread (the 10-14 walk's 403); only the client marks it read
+  if (!/const gate = markAt \? await requirePortalOwner\(event, clientId\) : await requirePortalOwnerOrWorkspace\(event, clientId\);/.test(thread)) bad("portal-thread refuses the admin showing the client's portal, or lets the admin mark a reply as seen");
   if (!/kind=in\.\(/.test(thread)) {
     bad("portal-thread does not restrict which activity KINDS it returns — client_activity holds every "
       + "robot event, admin action and Stripe webhook for that client");
