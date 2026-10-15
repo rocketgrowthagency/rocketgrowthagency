@@ -73,6 +73,10 @@ for (const [name, t, open] of CASES) {
 // 🔒 the admin unlocks what depends on step 11 by the SAME rule (else admin "Locked" vs portal "Your turn", walk 10-14)
 if (!/if \(scope === "month1" && listingStateOf\(state\.onboardingData\?\.tasks\)\.open\) doneIds\.add\(DUP_STEP\);/.test(admin)) fail("the admin keeps the profile steps Locked after the client's confirmed removal (it waits for step 11's Done, the portal doesn't)");
 
+// 🔒 10-15 (Chris's admin screenshot): step 11 waiting on Google is not RGA's next action — the top card and the chip skip it
+if (!/const dupWaitsOnGoogle = scope === "month1" && listingStateOf\(state\.onboardingData\?\.tasks\)\.state === "removed";/.test(admin)
+  || !/if \(dupWaitsOnGoogle && s\.obj\?\.flowId === DUP_STEP\) \{ s\.uiState = "queued"; s\.waitsOnGoogle = true; continue; \}/.test(admin)) fail("the admin can name step 11 as RGA's next action while it only waits on Google");
+
 // ── 2 · every writer asks first ──
 const pub = code("netlify/functions/gbp-publish.js");
 if (!/const listing = listingState\(rec\?\.data\?\.tasks\);\s*if \(!listing\.open\) return json\(409/.test(pub)) fail("gbp-publish can write to a listing step 11 hasn't confirmed");
