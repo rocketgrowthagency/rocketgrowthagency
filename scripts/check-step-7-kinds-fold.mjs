@@ -52,8 +52,9 @@ if (!interior || !/ open data-fold-held/.test(interior.attrs) || !/has-re/.test(
 if (folds.filter((f) => f !== interior).some((f) => / open/.test(f.attrs))) fail("a kind with nothing to retake opens by default");
 const sec = (key) => { const i = h.indexOf(`data-fold="${key}"`); return h.slice(i, h.indexOf("</summary>", i)); };
 if (!/<span class="acc-re">2 to retake<\/span>/.test(sec("kind:interior:later"))) fail("the retake kind's line doesn't say \"2 to retake\"");
-if (!/class="acc-bar done"[^>]*><i style="width:100%">/.test(sec("kind:logo")) || !/acc-n done"><span class="pm-tick"[^>]*>✓<\/span>1 of 1/.test(sec("kind:logo")) || !/ done/.test(logo?.cls || "")) fail("a finished kind doesn't show a full green bar and ✓ 1 of 1");
-if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 of 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 of 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
+// 🔄 10-15 (Chris: "make the 4/5 like how it is in admin so they match"): "x / n", the admin card's bar and count
+if (!/<i style="width:100%"><\/i><\/span><span class="acc-n">1 \/ 1<\/span>/.test(sec("kind:logo")) || !/ done/.test(logo?.cls || "")) fail("a finished kind doesn't show a full bar and \"1 / 1\"");
+if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 \/ 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 / 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
 if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("the folds dropped or duplicated a slot");
 // ── 2 · the opened tips are one short list ──
 const ti = h.indexOf('<details class="pm-tipline"'), tips = h.slice(ti, h.indexOf("</details>", ti));
@@ -84,7 +85,24 @@ try {
   });
   if (!up.closed || !up.opened) fail("a batch going into a folded kind doesn't open it");
   if (!/3 uploading/.test(up.note)) fail(`the "uploading" note isn't on the kind's line (${up.note})`);
-  if (up.n !== "2 of 5" || up.w !== "40%") fail(`a photo going in doesn't move the kind's count and bar (${up.n}, ${up.w})`);
+  if (up.n !== "2 / 5" || up.w !== "40%") fail(`a photo going in doesn't move the kind's count and bar (${up.n}, ${up.w})`);
+  // ── the bar and count look exactly like admin's Onboarding card header, in every state ──
+  const adminCss = read("admin/admin.css");
+  const look = (bar, fill, cnt) => { const b = getComputedStyle(bar), f = getComputedStyle(fill), c = getComputedStyle(cnt); return { w: b.width, h: b.height, r: b.borderRadius, track: b.backgroundColor, fill: f.backgroundColor, size: c.fontSize, color: c.color, weight: c.fontWeight, nums: c.fontVariantNumeric }; };
+  const adminLook = async (cls) => {
+    await page.setContent(`<html><body><div class="ob-phase ${cls}"><button class="ob-ph-h" type="button"><span class="ob-ph-state"></span><span class="ob-ph-name">Kind</span><span class="ob-ph-bar"><i style="width:40%"></i></span><span class="ob-ph-cnt">2 / 5</span></button></div></body></html>`);
+    await page.addStyleTag({ content: adminCss });
+    return page.evaluate(`(${look.toString()})(document.querySelector(".ob-ph-bar"), document.querySelector(".ob-ph-bar i"), document.querySelector(".ob-ph-cnt"))`);
+  };
+  const portalLook = async (key, open) => {
+    await draw(976, h);
+    return page.evaluate(`(() => { const d = document.querySelector('[data-fold="${key}"]'); d.open = ${open}; return (${look.toString()})(d.querySelector(".acc-bar"), d.querySelector(".acc-bar i"), d.querySelector(".acc-n")); })()`);
+  };
+  for (const [state, adminCls, key, open] of [["closed, in progress", "", "kind:team", false], ["open, in progress", "open", "kind:team", true], ["complete", "is-complete", "kind:logo", false], ["open, complete", "open is-complete", "kind:logo", true]]) {
+    const a = await adminLook(adminCls), p = await portalLook(key, open);
+    const diff = Object.keys(a).filter((k) => a[k] !== p[k]);
+    if (diff.length) fail(`the ${state} kind doesn't look like admin's card: ${diff.map((k) => `${k} ${p[k]} ≠ admin ${a[k]}`).join(" · ")}`);
+  }
   for (const w of [390, 430, 600, 768, 976]) {
     for (const [label, html] of [["answered", h], ["unanswered", ask]]) {
       await draw(w, html);
@@ -112,4 +130,4 @@ try {
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 step 7's kinds don't fold the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 7's kinds fold: closed by default, each with its own bar and \"x of n\" (green ✓ when on Google), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; the toolbar wraps on purpose; at 390–976px nothing spills and no button is cut off");
+console.log("✅ step 7's kinds fold: closed by default, each with its own bar and \"x / n\" styled exactly like admin's Onboarding cards in all four states (closed, open, complete, open + complete), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; the toolbar wraps on purpose; at 390–976px nothing spills and no button is cut off");

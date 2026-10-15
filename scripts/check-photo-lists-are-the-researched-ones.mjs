@@ -113,7 +113,8 @@ if (!/at_work: "AT_WORK"/.test(pub) || !/exterior: "EXTERIOR"/.test(pub)) fail("
 const portal = read("portal/portal.js").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 if (!/const existingByShot = new Map\(\)/.test(portal) || !/✓<\/span>Already on your Google profile<\/span>/.test(portal)) fail("a confirmed photo already on Google no longer fills its slot in the portal");
 // 🔄 approved step7_sections_fold_v1: each kind is a fold; a full one still shows done (green bar, ✓ count)
-if (!/class="pm-sgrp pm-acc\$\{done \? " done" : ""\}/.test(portal) || !/acc-n\$\{done \? " done" : ""\}/.test(portal)) fail("a full group no longer shows done");
+// 🔄 10-15: a full kind shows done the way admin's cards do — the fold marked done, a full bar, "x / n"
+if (!/class="pm-sgrp pm-acc\$\{done \? " done" : ""\}/.test(portal) || !/const pct = g\.items\.length \? Math\.round\(\(filled \/ g\.items\.length\) \* 100\) : 0;/.test(portal)) fail("a full group no longer shows done");
 if (!/const itemCategory = \(it\) => it\.category \|\|/.test(portal)) fail("the portal ignores the shot's own Google category");
 
 // 8 · the tips (approved photo_step_already_on_google_and_tips_v1): explained, research-true, rendered as a section

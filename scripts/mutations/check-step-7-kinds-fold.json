@@ -28,13 +28,6 @@
   1
  ],
  [
-  "a finished kind isn't green",
-  "portal",
-  "<span class=\"acc-bar${done ? \" done\" : \"\"}\"",
-  "<span class=\"acc-bar\"",
-  1
- ],
- [
   "no retake count on the line",
   "portal",
   "${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}",
@@ -81,6 +74,34 @@
   "portalcss",
   "@container (max-width:860px) { .pm-tool.ask .pm-batch.pm-tool-up",
   "@container (max-width:600px) { .pm-tool.ask .pm-batch.pm-tool-up",
+  1
+ ],
+ [
+  "the bar is a different size from admin's",
+  "portalcss",
+  ".pm-sgrp .gh .acc-bar { width:104px;",
+  ".pm-sgrp .gh .acc-bar { width:96px;",
+  1
+ ],
+ [
+  "an open kind isn't amber like admin's",
+  "portalcss",
+  ".pm-acc[open]:not(.done) > summary .acc-bar i { background:var(--state-you); }\n",
+  "",
+  1
+ ],
+ [
+  "the count says 'of' again",
+  "portal",
+  "<span class=\"acc-n\">${filled} / ${g.items.length}</span>",
+  "<span class=\"acc-n\">${filled} of ${g.items.length}</span>",
+  1
+ ],
+ [
+  "a finished count turns bold green",
+  "portalcss",
+  ".pm-sgrp.done .gh .acc-n { color:var(--portal-muted); font-weight:400; }",
+  "",
   1
  ]
 ]
