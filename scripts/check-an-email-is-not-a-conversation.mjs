@@ -16,7 +16,7 @@ const portal = read("portal/portal.js");
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf("{", m.index); k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function letterHtml\(/m),
-  pick(/^function threadHtml\(/m), line("MAIL_ICON"), pick(/^function threadBlock\(/m), pick(/^function typeLinesHtml\(/m), line("DUP_PHOTO_STEP"), line("STORE_ICON"), line("GOOGLE_G"), line("MSG_ICON")];
+  pick(/^function threadHtml\(/m), line("MAIL_ICON"), pick(/^function threadBlock\(/m), pick(/^function typeLinesHtml\(/m), line("DUP_PHOTO_STEP"), line("STORE_ICON"), line("GOOGLE_G"), line("MSG_ICON"), pick(/^function unreadReplies\(/m), pick(/^function renderReplyPointer\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a thread helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 
 // ── the server files the duplicate letter under step 6, and only that one ──
@@ -31,7 +31,24 @@ try {
   const page = await browser.newPage();
   await page.setContent("<html><body><div id=h></div></body></html>");
   await page.addStyleTag({ content: read("portal/portal.css") });
-  await page.addScriptTag({ content: `var _portalThread = [];\n${lifted.join("\n")}` });
+  await page.addScriptTag({ content: `var _portalThread = [];\nvar _portalThreadSeenAt = null;\n${lifted.join("\n")}` });
+  // ── the Setup banner says what arrived (Chris 10-15: an email RGA sent is not a reply) ──
+  const said = await page.evaluate(() => {
+    document.body.insertAdjacentHTML("beforeend", '<div data-reply-pointer></div><nav class="portal-nav"><a data-view="setup">Setup</a></nav>');
+    const L = (id, extra = {}) => ({ id, from: "rga", step_id: "m1.gbp.verify", message: "Subject\n\nBody", letter: true, at: "2026-10-15T18:40:00Z", ...extra });
+    const R = (id) => ({ id, from: "rga", step_id: "m1.tracking.call_setup", message: "Here's how.", where: "Step 3", at: "2026-10-15T19:00:00Z" });
+    const out = {};
+    for (const [k, list] of Object.entries({ one: [L("a")], two: [L("a"), L("b")], reply: [R("r")], replies: [R("r"), R("s")], mix: [R("r"), L("a")], test: [L("a", { test: true })] })) {
+      _portalThread = list; renderReplyPointer();
+      out[k] = { text: (document.querySelector("[data-reply-pointer]").innerText || "").replace(/\s+/g, " ").trim(), badge: document.querySelector(".pm-navdot")?.textContent || "" };
+    }
+    return out;
+  });
+  const want = { one: ["New email from Rocket Growth Agency", "1"], two: ["2 new emails from Rocket Growth Agency", "2"], reply: ["Rocket Growth Agency replied about Step 3", "1"], replies: ["Rocket Growth Agency replied about Step 3 · 2 new", "2"], mix: ["Rocket Growth Agency replied, and sent 1 new email", "2"], test: ["", ""] };
+  for (const [k, [text, badge]] of Object.entries(want)) {
+    const got = said[k];
+    if (!(text ? got.text.startsWith(text) && !got.text.slice(text.length).replace(/Read it →/, "").trim() : !got.text) || got.badge !== badge) fail(`the Setup banner says "${got.text}" (badge ${got.badge || "none"}) for ${k}; it should say "${text}"${badge ? ` (badge ${badge})` : " and nothing"}`);
+  }
   const r = await page.evaluate(() => {
     const letter = { id: "1", from: "rga", step_id: "m1.gbp.verify", message: "Confirmed: your duplicate Google Business Profile is gone\n\n# ✓ Your duplicate Google Business Profile is gone\n\nHi Chris, Google confirmed it.", letter: true, at: "2026-10-15T18:40:00Z" };
     const test = { ...letter, id: "2", step_id: "m1.review.first_5", message: "Step 12 is open\n\nHi Chris.", test: true };
@@ -70,4 +87,4 @@ try {
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 an email reads as a conversation, or the duplicate letter is on the wrong step:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ an email is not a conversation: on a step each email RGA sent is one closed row (subject · We emailed you / Test send · date · Read) that opens in place; the conversation heading and reply box only when there is one, after the emails; otherwise a quiet Ask line with the same box; the general thread unchanged; the duplicate-removal letter files under step 6");
+console.log("✅ an email is not a conversation: on a step each email RGA sent is one closed row (subject · We emailed you / Test send · date · Read) that opens in place; the conversation heading and reply box only when there is one, after the emails; otherwise a quiet Ask line with the same box; the general thread unchanged; the duplicate-removal letter files under step 6; the Setup banner names what arrived (an email as an email, a reply as a reply, a mix as both; a test send never counts)");

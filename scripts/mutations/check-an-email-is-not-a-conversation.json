@@ -61,5 +61,19 @@
   "      const [subj, ...rest] = String(m.message).split(\"\\n\\n\");\n      return `<details class=\"pm-mail\">",
   "      const subj = \"An email from RGA\", rest = [String(m.message)];\n      return `<details class=\"pm-mail\">",
   1
+ ],
+ [
+  "the banner calls an email a reply again",
+  "portal",
+  "    const line = !replies ? (mails === 1 ?",
+  "    const line = false ? (mails === 1 ?",
+  1
+ ],
+ [
+  "a mix hides the email",
+  "portal",
+  "mails ? `, and sent ${emailWords(mails)}` : replies > 1 ? ` · ${replies} new` : \"\"}`;",
+  "replies > 1 ? ` · ${replies} new` : \"\"}`;",
+  1
  ]
 ]
