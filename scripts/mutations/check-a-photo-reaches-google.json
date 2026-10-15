@@ -110,5 +110,19 @@
   "new.publish_state := 'in_review';",
   "null;",
   1
+ ],
+ [
+  "a type the profile doesn't take fails five times again",
+  "photopublish",
+  "      if (!r.ok && category !== \"ADDITIONAL\" && /does not apply to this location/i.test(JSON.stringify(j))) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "any refusal is retried as ADDITIONAL",
+  "photopublish",
+  "      if (!r.ok && category !== \"ADDITIONAL\" && /does not apply to this location/i.test(JSON.stringify(j))) {",
+  "      if (!r.ok && category !== \"ADDITIONAL\") {",
+  1
  ]
 ]

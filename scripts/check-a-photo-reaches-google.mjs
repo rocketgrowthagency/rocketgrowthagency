@@ -170,6 +170,24 @@ await scenario("refused", async () => {
   if (s.failed !== 1 || w.logRows[0]?.outcome !== "failed" || w.logRows[0]?.http_status !== 400) F("a refusal was not logged with its status");
 });
 
+// ── 5b · a type the profile doesn't take → the real photo still goes up, as ADDITIONAL, once ─────
+// 🔴 RGA 2026-10-15: "Photo tag 'interior' does not apply to this location", five hourly times. Retrying the same type
+// can never succeed; the photo goes up as Google's general type and the attempt records what was sent.
+await scenario("type doesn't apply", async () => {
+  const tagErr = { status: 400, body: { error: { message: "Request contains an invalid argument.", details: [{ errorDetails: [{ code: 3, message: "Photo tag 'interior' does not apply to this location", value: "interior" }] }] } } };
+  const w = world({ oauth: CONNECTED, photos: [photo({ category: "interior" })],
+    google: () => (w.googleCalls.length === 1 ? tagErr : { status: 200, body: { name: "accounts/1/locations/2/media/m9", googleUrl: "https://lh3.example/9" } }) });
+  const s = await publishClientPhotos({ clientId: "c1", trigger: "schedule", deps: w.deps });
+  const cats = w.googleCalls.map((c) => c.body.locationAssociation?.category).join(",");
+  if (cats !== "INTERIOR,ADDITIONAL") F(`a type the profile doesn't take was sent as ${cats || "nothing"}, expected INTERIOR then ADDITIONAL`);
+  if (lastState(w).publish_state !== "published" || s.published !== 1) F(`the real photo didn't go up after the type was refused (${lastState(w).publish_state})`);
+  if (w.logRows[0]?.category_sent !== "ADDITIONAL") F("the attempt didn't record the type actually sent (ADDITIONAL)");
+  // any OTHER refusal is not retried as ADDITIONAL
+  const w2 = world({ oauth: CONNECTED, photos: [photo({ category: "interior" })], google: () => ({ status: 400, body: { error: { message: "Invalid value at 'sourceUrl'" } } }) });
+  await publishClientPhotos({ clientId: "c1", trigger: "schedule", deps: w2.deps });
+  if (w2.googleCalls.length !== 1) F(`a refusal that isn't about the type was retried (${w2.googleCalls.length} calls)`);
+});
+
 // ── 6 · claimed elsewhere → never sent twice ────────────────────────────────────────────────────
 await scenario("claim lost", async () => {
   const w = world({ oauth: CONNECTED, photos: [photo()], claimLost: true });
