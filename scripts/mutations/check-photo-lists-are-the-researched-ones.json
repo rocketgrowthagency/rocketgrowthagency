@@ -16,7 +16,7 @@
  [
   "list A drops to 19 shots",
   "photolists",
-  "      s(\"TEAMS\", \"The whole crew together, in front of the vans or the shop.\", \"Google: show the personal side of your business.\", \"G\"),\n",
+  "      s(\"TEAMS\", \"The whole crew together, in front of the vans or the shop.\", \"Google: show the personal side of your business.\", \"G\", { fit: { 1: { do: \"You in front of your van or shop, in daylight.\" }, 2: { do: \"The two of you together, in front of the van or the shop.\" } } }),\n",
   "",
   1
  ],
@@ -51,8 +51,8 @@
  [
   "the runner asks an AI again",
   "exec",
-  "    const L = buildShotList({ category, typeOverride: override, storefront });",
-  "    const L = buildShotList({ category, typeOverride: override, storefront }); await aiDraft(\"x\", \"y\");",
+  "    const L = buildShotList({ category, typeOverride: override, storefront, teamSize: current?.team_size || null });",
+  "    const L = buildShotList({ category, typeOverride: override, storefront, teamSize: current?.team_size || null }); await aiDraft(\"x\", \"y\");",
   1
  ],
  [

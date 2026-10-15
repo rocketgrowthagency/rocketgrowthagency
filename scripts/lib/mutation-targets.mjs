@@ -68,6 +68,7 @@ export const FILES = {
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
   letter: "netlify/functions/_letter.js",
   photolists: "netlify/functions/_photo-lists.js",
+  phototeam: "netlify/functions/portal-photo-team.js",
   playbooksjson: "data/playbooks/playbooks.json",
   clientstepsjson: "data/playbooks/client-steps.json",
   photomatch: "netlify/functions/photo-match.js",

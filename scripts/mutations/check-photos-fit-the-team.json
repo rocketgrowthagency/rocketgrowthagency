@@ -1,0 +1,86 @@
+[
+ [
+  "just me changes nothing",
+  "photolists",
+  "  const size = teamSize === \"1\" || teamSize === \"2\" ? teamSize : null;",
+  "  const size = null;",
+  1
+ ],
+ [
+  "6+ also refits",
+  "photolists",
+  "  const size = teamSize === \"1\" || teamSize === \"2\" ? teamSize : null;",
+  "  const size = teamSize ? \"1\" : null;",
+  1
+ ],
+ [
+  "a fitted shot loses its own drawing",
+  "photolists",
+  "      fit: (tradeFit || listFit) ? size : undefined, place: sh.place || undefined };",
+  "      fit: undefined, place: sh.place || undefined };",
+  1
+ ],
+ [
+  "trade staff shots never fit",
+  "photolists",
+  "    const tradeFit = Number.isInteger(sh.trade) && size && t.teamFit && t.teamFit[sh.trade] ? t.teamFit[sh.trade][size] : null;",
+  "    const tradeFit = null;",
+  1
+ ],
+ [
+  "a held slot is refitted (endpoint)",
+  "phototeam",
+  "  const items = L.items.map((it) => (held.has(Number(it.n)) ? ((cur.items || []).find((c) => Number(c.n) === Number(it.n)) || it) : it));",
+  "  const items = L.items;",
+  1
+ ],
+ [
+  "anyone sets the team size",
+  "phototeam",
+  "  const gate = await requirePortalOwner(event, clientId);\n  if (gate.error) return gate.error;",
+  "  const gate = {};",
+  1
+ ],
+ [
+  "the nightly ignores team size",
+  "exec",
+  "buildShotList({ category, typeOverride: override, storefront, teamSize: current?.team_size || null })",
+  "buildShotList({ category, typeOverride: override, storefront })",
+  1
+ ],
+ [
+  "the nightly rewrites held slots",
+  "exec",
+  "        if (held.size) L.items = L.items.map((it) => (held.has(Number(it.n)) ? (cur.items.find((c) => Number(c.n) === Number(it.n)) || it) : it));\n",
+  "",
+  1
+ ],
+ [
+  "premises shots lead",
+  "portal",
+  "  const splitPlace = shape && shape.storefront === false && items.some((it) => it.place) && items.some((it) => !it.place);",
+  "  const splitPlace = false;",
+  1
+ ],
+ [
+  "storefronts folded too",
+  "portal",
+  "  const splitPlace = shape && shape.storefront === false && items.some((it) => it.place) && items.some((it) => !it.place);",
+  "  const splitPlace = shape && items.some((it) => it.place) && items.some((it) => !it.place);",
+  1
+ ],
+ [
+  "no team question",
+  "portal",
+  "    ${locked ? \"\" : teamAsk}",
+  "    ",
+  1
+ ],
+ [
+  "the saved answer isn't shown",
+  "portal",
+  "class=\"pm-team-chip${ts === v ? \" on\" : \"\"}\"",
+  "class=\"pm-team-chip\"",
+  1
+ ]
+]

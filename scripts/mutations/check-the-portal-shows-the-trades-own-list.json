@@ -44,8 +44,8 @@
  [
   "every trade gets the first trade's shots",
   "photolists",
-  "    const text = Number.isInteger(sh.trade) ? t.shots[sh.trade] : (alt ? alt.do : sh.do);",
-  "    const text = Number.isInteger(sh.trade) ? TYPES[0].shots[sh.trade] : (alt ? alt.do : sh.do);",
+  "    const text = tradeFit || (listFit && listFit.do) || (Number.isInteger(sh.trade) ? t.shots[sh.trade] : (alt ? alt.do : sh.do));",
+  "    const text = tradeFit || (listFit && listFit.do) || (Number.isInteger(sh.trade) ? TYPES[0].shots[sh.trade] : (alt ? alt.do : sh.do));",
   1
  ],
  [
