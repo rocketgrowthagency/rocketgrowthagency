@@ -1,0 +1,51 @@
+[
+ [
+  "links show as markup again",
+  "portal",
+  "    .replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g, (m0, w, u) => {",
+  "    .replace(/\\[NEVER\\]/g, (m0, w, u) => {",
+  1
+ ],
+ [
+  "labels show as ##",
+  "portal",
+  "    if ((m = /^##\\s+(.+)$/.exec(l))) { flush(); out.push(`<p class=\"pm-ml-k\">${inline(m[1])}</p>`); continue; }\n",
+  "",
+  1
+ ],
+ [
+  "a portal link leaves the portal",
+  "portal",
+  "      return local ? `<a href=\"${local[2] || \"#\"}\">${w}</a>` :",
+  "      return false ? `<a href=\"${local[2] || \"#\"}\">${w}</a>` :",
+  1
+ ],
+ [
+  "markup becomes HTML (no escaping)",
+  "portal",
+  "  const inline = (t) => escapeHtml(t)",
+  "  const inline = (t) => String(t)",
+  1
+ ],
+ [
+  "a test send isn't labelled",
+  "portal",
+  "            ${m.test ? `<p class=\"pm-m-test\">",
+  "            ${false ? `<p class=\"pm-m-test\">",
+  1
+ ],
+ [
+  "a test send counts as unread",
+  "portal",
+  "m.from === \"rga\" && !m.test && new Date(m.at)",
+  "m.from === \"rga\" && new Date(m.at)",
+  1
+ ],
+ [
+  "the thread doesn't mark test sends",
+  "thread",
+  "      test: r.payload?.test === true,",
+  "      test: false,",
+  1
+ ]
+]
