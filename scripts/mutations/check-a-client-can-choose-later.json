@@ -89,5 +89,47 @@
   " + laterLine(task);",
   ";",
   1
+ ],
+ [
+  "no spinner on the pressed button",
+  "portal",
+  "b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
+  "",
+  1
+ ],
+ [
+  "the list isn't minimised while later",
+  "portal",
+  "${laterUi}${top.later\n    ? `<details class=\"pm-later-list\"",
+  "${laterUi}${false\n    ? `<details class=\"pm-later-list\"",
+  1
+ ],
+ [
+  "choosing later leaves the step open",
+  "portal",
+  "if (days) _openStep.delete(cid); else _openStep.set(cid, host.getAttribute(\"data-later-step\"));",
+  "",
+  1
+ ],
+ [
+  "the folded row doesn't say when",
+  "portal",
+  "${later ? `<span class=\"pm-step-sub\">Reminder by email on",
+  "${false ? `<span class=\"pm-step-sub\">Reminder by email on",
+  1
+ ],
+ [
+  "an upload no longer finds the later state",
+  "portal",
+  "querySelector(\"[data-later-step] .pm-later-band\")",
+  "querySelector(\"[data-later-step] .pm-later-set\")",
+  1
+ ],
+ [
+  "the spinner fades in too late",
+  "portalcss",
+  "color:transparent !important; transition:none; cursor:progress;",
+  "color:transparent !important; cursor:progress;",
+  1
  ]
 ]
