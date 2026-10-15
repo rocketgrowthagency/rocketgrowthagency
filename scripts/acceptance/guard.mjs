@@ -33,6 +33,10 @@ export const READ_ONLY_FN_POSTS = {
   "portal-review-requests": onlyKeys(["client_id"]),
   // client-change-history.js → _change-ledger.historyFor: GET client_change_log only (recordChange is not reachable).
   "client-change-history": onlyKeys(["client_id", "limit", "surface"]),
+  // portal-gbp-profile.js (2026-10-15) — readForStep only GETs the Google profile; nothing is written to Google or to the
+  // client's record. Its one side effect: an expired Google access token is refreshed and cached (_google-token.js),
+  // which every Google call does and which changes nothing the client or RGA sees.
+  "portal-gbp-profile": onlyKeys(["client_id", "step_id"]),
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the
