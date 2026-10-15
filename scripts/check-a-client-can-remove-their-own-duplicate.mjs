@@ -188,6 +188,16 @@ try {
     // v9: its own status, so the card says "Google didn't remove it" rather than asking for a sign-in
     if (w.db.client_listing_removals[0].status !== "remove_failed" || summary(w)?.status !== "remove_failed") fail(`a removal Google didn't do reads "${w.db.client_listing_removals[0].status}", not "remove_failed"`);
   }
+  // 8c · 2026-10-14 (Chris pressed Back into Google's page after the removal): a sign-in AFTER the removal writes nothing
+  {
+    const w = world();
+    w.db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].owner_removal = { status: "removed", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z" };
+    const cb = await run(w, () => FLOW.handleCallback("code", state, errorPage));
+    if (cb.statusCode !== 302 || !/dup_owner=removed/.test(cb.headers?.Location || "") || w.db.client_listing_removals.length || w.db.client_onboarding_records[0].data.tasks["m1.audit.gbp_duplicate"].owner_removal.status !== "removed")
+      fail(`a Google sign-in after the removal writes a new attempt or overwrites "removed" (${cb.statusCode} ${cb.headers?.Location || cb.body})`);
+    const stale = await run(world(), () => FLOW.handleCallback("code", { ...state, ts: Date.now() - 2 * 3600e3 }, errorPage));
+    if (stale.statusCode !== 400 || !/expired/.test(stale.body || "")) fail(`a sign-in link from 2 hours ago is still accepted (${stale.statusCode})`);
+  }
   // 8b · v9: Google refuses the DELETE → "remove_failed" (the card says "Google didn't remove it"), nothing removed
   {
     const w = world({ deleteFails: true });
@@ -747,6 +757,10 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
 }
 // the queue and the badge: a card that waits on RGA asks nothing of the client
 if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\| \(a\.keep && a\.keep\.waits_on_rga\) \|\| \(a\.owner_removal && a\.owner_removal\.status === "removed"\) \|\| a\.confirmed\)\)\.length;/.test(portal)) fail("the For your approval badge counts a card that waits on RGA, or a removed duplicate waiting for Maps");
+// 2026-10-14: the Setup pointer counts what NEEDS the client (the badge's rule), and Back walks the portal's views
+if (!/renderSetupPointer\(open\.length, pending - open\.length\);/.test(portal)) fail("Setup's \"things need you to take action\" counts a removed duplicate that asks nothing");
+if (!/window\.history\.pushState\(\{ portalView: v \}/.test(portal) || !/window\.addEventListener\("popstate", \(e\) => \{\s*const v = e\.state && e\.state\.portalView;\s*if \(v\) setPortalView\(v, \{ fromHistory: true \}\);/.test(portal)) fail("Back leaves the portal (view switches aren't history entries)");
+if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's already removed\./.test(code("netlify/functions/gbp-duplicate-owner-init.js"))) fail("a second removal sign-in can start after the removal");
 // v9: once the nightly check sees one listing after the client's removal, it's listed under "Already approved"
 {
   const pd = code("netlify/functions/portal-deliverables.js");

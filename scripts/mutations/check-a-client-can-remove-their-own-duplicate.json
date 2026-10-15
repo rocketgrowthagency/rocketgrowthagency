@@ -1090,5 +1090,40 @@
   "    if ((m = l.match(/^::\\s*(gone|acct|keep)\\s*\\|([^|]*)\\|([^|]*)\\|(.*)$/))) {",
   "    if (false) {",
   1
+ ],
+ [
+  "after: a sign-in after the removal overwrites it",
+  "listingflow",
+  "  if (ctx.tasks[R.DUP_STEP]?.owner_removal?.status === \"removed\") return toPortal(\"removed\");\n",
+  "",
+  1
+ ],
+ [
+  "after: a stale sign-in link is accepted",
+  "listingflow",
+  "|| Date.now() - Number(state.ts) > 3600e3) return errorPage",
+  "|| false) return errorPage",
+  1
+ ],
+ [
+  "after: the init starts a second removal",
+  "dupownerinit",
+  "  if (tasks[\"m1.audit.gbp_duplicate\"]?.owner_removal?.status === \"removed\") return json(409,",
+  "  if (false) return json(409,",
+  1
+ ],
+ [
+  "after: the pointer counts every action",
+  "portal",
+  "  renderSetupPointer(open.length, pending - open.length);",
+  "  renderSetupPointer(open.length, actions.length);",
+  1
+ ],
+ [
+  "after: Back leaves the portal",
+  "portal",
+  "      else window.history.pushState({ portalView: v }, \"\", window.location.pathname + window.location.search);",
+  "      else void 0;",
+  1
  ]
 ]
