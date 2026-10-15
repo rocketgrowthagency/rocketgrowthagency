@@ -102,7 +102,12 @@ if (!/const noResults = d\.error && \/hasn't returned any results\/i/.test(scan)
 // 🔴 10-15: a removed duplicate's place id answers "hasn't returned any results" — that is GONE, not "couldn't look"
 if (!/if \(d\.error\) return \/not found\|no results\|hasn't returned any results\/i\.test\(String\(d\.error\)\) \? false : null;/.test(scan)) fail("a removed duplicate Google no longer knows reads as 'could not re-check', so step 11 never settles");
 if (!/if \(v\.verdict !== "duplicate"\) \{\s*const priorTask = await priorFinding\(clientId\);/.test(scan)) fail("a known duplicate is re-checked only when the name search looks clean — Google hiding both listings would read as 'could not tell'");
-if (!/task: storedTask \}\);/.test(scan)) fail("the scan no longer hands back what it saved");
+if (!/task: storedTask, cleared_recorded: clearedRecorded \}\);/.test(scan)) fail("the scan no longer hands back what it saved");
+// 🔴 10-15: a manual "Check again" that clears a duplicate records the clear (notice, confirmed stamp, sending resumed)
+// itself — before, only the nightly did, so RGA's own clear settled step 11 silently. The nightly doesn't record it twice.
+if (!/if \(wasDuplicate && record\.verdict === "clean"\) \{\s*try \{ await require\("\.\/_dup-cleared"\)\.recordCleared\(/.test(scan) || !/wasDuplicate = po\.verdict === "duplicate";/.test(scan)) fail("a duplicate cleared by a manual check settles step 11 with no notice to the client and no 'photo sending resumed'");
+const rc = (() => { try { return fs.readFileSync(`${SITE}/netlify/functions/gbp-duplicate-recheck.js`, "utf8"); } catch { return ""; } })();
+if (!/if \(!clearedRecorded\) await recordCleared\(/.test(rc)) fail("the nightly records a clear the check already recorded (two notices), or none");
 const ovFn = code("netlify/functions/gbp-listing-override.js");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(ovFn) || !/reason\.length < 10/.test(ovFn)) fail("the override is not staff-only with a written reason");
 

@@ -313,5 +313,19 @@
   "return /not found|no results|hasn't returned any results/i.test(String(d.error)) ? false : null;",
   "return /not found|no results/i.test(String(d.error)) ? false : null;",
   1
+ ],
+ [
+  "a manual check clears silently",
+  "dupscan",
+  "  if (wasDuplicate && record.verdict === \"clean\") {",
+  "  if (false && wasDuplicate && record.verdict === \"clean\") {",
+  1
+ ],
+ [
+  "the nightly records it twice",
+  "duprecheck",
+  "if (!clearedRecorded) await recordCleared(",
+  "if (true) await recordCleared(",
+  1
  ]
 ]
