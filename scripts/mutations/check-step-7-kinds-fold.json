@@ -1,0 +1,86 @@
+[
+ [
+  "kinds open by default again",
+  "portal",
+  "data-fold=\"${escapeAttribute(key)}\"${retake ? \" open data-fold-held\" : \"\"}>",
+  "data-fold=\"${escapeAttribute(key)}\" open>",
+  1
+ ],
+ [
+  "a retake kind folds away",
+  "portal",
+  "${retake ? \" open data-fold-held\" : \"\"}><summary class=\"gh\">",
+  "><summary class=\"gh\">",
+  1
+ ],
+ [
+  "today and later share a fold memory",
+  "portal",
+  "${where ? `:${where}` : \"\"}`;",
+  "`;",
+  1
+ ],
+ [
+  "the bar ignores photos going in",
+  "portal",
+  "const pct = g.items.length ? Math.round((filled / g.items.length) * 100) : 0;",
+  "const pct = done ? 100 : 0;",
+  1
+ ],
+ [
+  "a finished kind isn't green",
+  "portal",
+  "<span class=\"acc-bar${done ? \" done\" : \"\"}\"",
+  "<span class=\"acc-bar\"",
+  1
+ ],
+ [
+  "no retake count on the line",
+  "portal",
+  "${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "a batch leaves its kind folded",
+  "portal",
+  "  if (first && first.tagName === \"DETAILS\") first.open = true;\n",
+  "",
+  1
+ ],
+ [
+  "a photo going in doesn't move the bar",
+  "portal",
+  "  if (bar) bar.style.width = `${Math.round((have / Number(m[2])) * 100)}%`;\n",
+  "",
+  1
+ ],
+ [
+  "the tips go back to tall cards",
+  "portal",
+  "<div class=\"pm-tiplist\">${tipCards.map((t, i) => `<div class=\"tl-row\">",
+  "<div class=\"pm-tiplist\">${tipCards.map((t, i) => `<div class=\"pm-tip\"><div class=\"tl-row\">",
+  1
+ ],
+ [
+  "the phone button is cut off again",
+  "portalcss",
+  "@media (max-width:640px) { .pm-slot .sz { grid-column:2/-1; } }",
+  "",
+  1
+ ],
+ [
+  "the wrapped upload loses its divider",
+  "portalcss",
+  "@container (max-width:740px) { .pm-tool .pm-batch.pm-tool-up {",
+  "@container (max-width:740px) { .pm-tool-up {",
+  1
+ ],
+ [
+  "the unanswered toolbar wraps without its divider",
+  "portalcss",
+  "@container (max-width:860px) { .pm-tool.ask .pm-batch.pm-tool-up",
+  "@container (max-width:600px) { .pm-tool.ask .pm-batch.pm-tool-up",
+  1
+ ]
+]
