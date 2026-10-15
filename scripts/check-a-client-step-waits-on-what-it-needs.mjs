@@ -178,7 +178,9 @@ if (!/if \(!r\.ok \|\| !m\.ok\) return json\(5\d\d/.test(epc) || !/client_monthl
 // ── 3 · every writer of the status asks first ──
 // 🔑 The guard reads the STEP'S OWN record (`rec.tasks`, from _step-record.js: Month 2 = this month's monthly record).
 const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), rec\.tasks\);\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
-const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll(guardRe)) { const w = src.indexOf('status: "done"', m.index); out.push(w); } return out; };
+// 🔑 a "done" write is `status: "done"` or, since profile_answers_reach_google_v1, `status: settled ? "done" : …`
+const DONE_WRITE = /status: (?:settled \? )?"done"/g;
+const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll(guardRe)) { DONE_WRITE.lastIndex = m.index; const d = DONE_WRITE.exec(src); out.push(d ? d.index : -1); } return out; };
 {
   const src = code("netlify/functions/portal-step-input.js");
   if (!guardsBeforeDone(src).some((w) => w > 0)) fail("saving an answer in the portal can finish a step that waits on RGA (portal-step-input)");
@@ -263,7 +265,7 @@ const pcode = code("portal/portal.js");
 const checks = [
   [/const ownWait = !!ownFirstId;\s*const listingWait = !ownWait && rowListingWaits\(/, "the listing outranks the client's own earlier step (approved: their step first)"],
   [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
-  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && \(/, "a row that waits still counts as the client's turn (the orange edge)"],
+  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
   [/: ownWait \? \{ text: ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
   [/\$\{ownWait \? ownWaitHtml\(ownFirst\) : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],

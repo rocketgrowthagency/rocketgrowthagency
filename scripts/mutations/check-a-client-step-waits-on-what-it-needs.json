@@ -100,8 +100,8 @@
  [
   "portal: a waiting row is the client's turn",
   "portal",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !gbpWithRga && (",
   1
  ],
  [

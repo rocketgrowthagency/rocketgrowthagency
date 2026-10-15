@@ -35,15 +35,11 @@ const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket
 const SITE = process.env.SITE_DIR || `${__SITE}`;
 
 // Each entry: the approved mockup, and the file that must render its headings.
-const PAIRS = [
-  {
-    mockup: "reports/mockups/client_setup_steps_v2.html",
-    renders: "portal/portal.js",
-    what: "the client setup steps",
-    // Headings that are commentary ON the proposal rather than part of the design.
-    ignore: [/^Open questions/i, /^What changed/i],
-  },
-];
+// 🔒 2026-10-15: the only pair (client_setup_steps_v2 → portal.js) was SUPERSEDED BY APPROVAL — Chris chose option A of
+// setup_numbers_in_order_v1 (one list 1 to 13, no group headings). Its design is now held by
+// check-setup-steps-read-in-order. Add a pair here when another approved mockup's headings must render verbatim.
+const PAIRS = [];
+if (!PAIRS.length) { console.log("── live matches the approved mockup ──\n  (no pairs: client_setup_steps_v2 was superseded by setup_numbers_in_order_v1 → check-setup-steps-read-in-order)"); process.exit(0); }
 
 console.log("── live matches the approved mockup ──");
 

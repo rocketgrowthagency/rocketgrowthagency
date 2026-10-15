@@ -1,0 +1,107 @@
+[
+ [
+  "done before Google shows it",
+  "stepinput",
+  "  const settled = !push || push.state === \"on_google\" || push.state === \"not_sent\";",
+  "  const settled = true;",
+  1
+ ],
+ [
+  "a refusal stays with nobody",
+  "stepinput",
+  "    status: settled ? \"done\" : push.state === \"with_rga\" ? \"in_progress\" : \"pending\",",
+  "    status: settled ? \"done\" : \"pending\",",
+  1
+ ],
+ [
+  "RGA never told",
+  "stepinput",
+  "    rgaToldNow ? tellRga(",
+  "    false ? tellRga(",
+  1
+ ],
+ [
+  "step 11 accepts any key",
+  "stepinput",
+  "    parsed = validate({ ...spec, options: offered }, body.value);",
+  "    parsed = { value: Array.isArray(body.value) ? body.value : [] };",
+  1
+ ],
+ [
+  "the read-back isn't checked",
+  "gbpprofile",
+  "      if (want !== got) return { state: \"with_rga\", error: \"Google saved different hours than we sent.\", at };\n",
+  "",
+  1
+ ],
+ [
+  "special hours always overwritten",
+  "gbpprofile",
+  "      if (special.length) { body.specialHours = { specialHourPeriods: special }; mask.push(\"specialHours\"); }",
+  "      body.specialHours = { specialHourPeriods: special }; mask.push(\"specialHours\");",
+  1
+ ],
+ [
+  "a dead link goes to Google",
+  "gbpprofile",
+  "      if (!open.ok) return { state: \"needs_client\"",
+  "      if (false) return { state: \"needs_client\"",
+  1
+ ],
+ [
+  "no-booking still writes",
+  "gbpprofile",
+  "      if (value && value.none) return { state: \"not_sent\", reason: \"no_online_booking\", at };\n",
+  "",
+  1
+ ],
+ [
+  "unticked details stay",
+  "gbpprofile",
+  "      await api.patchAttrs(picked.map((k) => ({ name: `attributes/${k}`, valueType: \"BOOL\", values: [true] })), offered.map((k) => `attributes/${k}`));",
+  "      await api.patchAttrs(picked.map((k) => ({ name: `attributes/${k}`, valueType: \"BOOL\", values: [true] })), picked.map((k) => `attributes/${k}`));",
+  1
+ ],
+ [
+  "links offered as yes/no",
+  "gbpprofile",
+  "    .filter((a) => a.valueType === \"BOOL\" && !a.deprecated && a.parent)",
+  "    .filter((a) => !a.deprecated && a.parent)",
+  1
+ ],
+ [
+  "permission refusal handed to the client",
+  "gbpprofile",
+  "  if (status === 401 || status === 403 || /UNAUTHENTICATED|PERMISSION_DENIED|reconnect/i.test(s)) return { who: \"rga\" };",
+  "  if (status === 401) return { who: \"rga\" };",
+  1
+ ],
+ [
+  "overnight closes the same day",
+  "gbpprofile",
+  "closeDay: overnight ? DAYS[(i + 1) % 7][1] : g,",
+  "closeDay: g,",
+  1
+ ],
+ [
+  "RGA's turn still says Your turn",
+  "portal",
+  "!rgaWait && !gbpWithRga && (Boolean(step.clientInput)",
+  "!rgaWait && (Boolean(step.clientInput)",
+  1
+ ],
+ [
+  "the Google line is gone",
+  "portal",
+  "        ${gbpPushHtml(step, taskState)}\n",
+  "",
+  1
+ ],
+ [
+  "raw text on the RGA line",
+  "portal",
+  "<span>Google asked us to change something. RGA is finishing it; nothing needed from you.</span>",
+  "<span>${escapeHtml(g.error || \"\")}</span>",
+  1
+ ]
+]

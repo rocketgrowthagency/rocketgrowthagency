@@ -51,8 +51,8 @@
  [
   "portal save forgets to say which record",
   "stepinputfn",
-  "  return json(200, { ok: true, step_id: stepId, tasks, ...recordMeta(rec) });",
-  "  return json(200, { ok: true, step_id: stepId, tasks });",
+  "  return json(200, { ok: true, step_id: stepId, tasks, google_push: push, ...recordMeta(rec) });",
+  "  return json(200, { ok: true, step_id: stepId, tasks, google_push: push });",
   1
  ],
  [

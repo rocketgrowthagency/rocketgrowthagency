@@ -125,6 +125,10 @@ if (!/\breturn\s+r\s*;/.test(BODY)) {
 // 🔑 The child + timeout is not ceremony. A traversal written without a cycle guard spins forever
 // on a graph that loops, and a gate that hangs is a gate that gets killed and ignored.
 const HARNESS = `
+// The lock reads one outside fact since 10-14: one Google listing confirmed counts step 11 as satisfied for its
+// dependents (admin listingStateOf, project_one_google_listing_first). Not open here, so the graph decides alone.
+globalThis.scope = "month1"; globalThis.state = { onboardingData: { tasks: {} } };
+globalThis.DUP_STEP = "m1.audit.gbp_duplicate"; globalThis.listingStateOf = () => ({ open: false });
 const BODY = ${JSON.stringify(BODY)};
 const step = new Function("r", "_i", "allRows", "gates", BODY);
 const run = (rows, gates) => { rows.forEach((r, i) => step(r, i, rows, gates)); return rows; };

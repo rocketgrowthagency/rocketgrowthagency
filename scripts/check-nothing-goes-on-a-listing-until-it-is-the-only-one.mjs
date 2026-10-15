@@ -183,7 +183,8 @@ for (const [f, label] of [["netlify/functions/portal-step-input.js", "saving an 
   // 🔑 EVERY "done" write has its own guard in its own branch (2026-10-12: a guard added to a later branch kept this
   // green with the "I've done it" guard removed): the nearest guard before each write, with no other write between.
   const guards = [...src.matchAll(/if \(waitsOnListing\((?:step|s)\) && !listingState\(rec\.listingTasks\)\.open\) return json\(409/g)].map((m) => m.index);
-  const writes = [...src.matchAll(/status: "done"/g)].map((m) => m.index);
+  // 🔑 `status: "done"` or `status: settled ? "done" : …` (profile_answers_reach_google_v1: done only on Google's read-back)
+  const writes = [...src.matchAll(/status: (?:settled \? )?"done"/g)].map((m) => m.index);
   if (!writes.length) fail(`${label}: no status write found in ${f} — re-read this gate`);
   for (const w of writes) {
     const g = guards.filter((x) => x < w).pop();
@@ -204,7 +205,7 @@ else {
 const pcode = code("portal/portal.js");
 // 🔑 2026-10-12: the same lines now also carry the RGA wait (check-a-client-step-waits-on-what-it-needs); this pins the
 // listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
-if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
+if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?(?:!gbpWithRga && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
 // v13: "Waits on Google" once the client removed it (Google catching up); "Waits on your Business Profile" before
 if (!/: listingWait \? \{ text: portalListingStateOf\(waitTasks\)\.removed \? "Waits on Google" : "Waits on your Business Profile", cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Waits on your Business Profile\" (or \"Waits on Google\" after the client's removal)");
 if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)

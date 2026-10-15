@@ -130,5 +130,7 @@ export const FILES = {
   reviewreqfn: "netlify/functions/portal-review-requests.js",
   reviewlink: "netlify/functions/_review-link.js",
   photorefusal: "netlify/functions/_photo-refusal.js",
+  gbpprofile: "netlify/functions/_gbp-profile.js",
+  stepinput: "netlify/functions/portal-step-input.js",
 
 };

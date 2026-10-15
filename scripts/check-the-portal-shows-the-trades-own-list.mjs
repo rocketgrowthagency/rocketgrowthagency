@@ -54,15 +54,18 @@ const portal = read("portal/portal.js");
 const cut = (start, endMark) => { const i = portal.indexOf(start); if (i < 0) return null; const j = portal.indexOf(endMark, i); return j < 0 ? null : portal.slice(i, j); };
 const slotsSrc = cut("const SLOT_CATEGORY = {", "\n/** Fill the slot thumbnails");
 const stateSrc = cut("const PHOTO_STATE = {", "\n\n");
+// 🔑 the slot's returned-photo note (photo_google_said_no_v1) lives beside the states
+// (it sits in the same block as PHOTO_STATE, so the lift above carries it; this only checks it's there)
+const noteSrc = stateSrc && /function photoBackNoteHtml\(p\)/.test(stateSrc) ? "" : null;
 const bigSrc = cut("const photoExampleBigHtml = (ex, key = \"\") =>", "\n\n");
-if (!slotsSrc || !stateSrc || !bigSrc) { console.error("⚠️  INDETERMINATE — could not lift the portal slot renderer"); process.exit(2); }
+if (!slotsSrc || !stateSrc || !bigSrc || noteSrc === null) { console.error("⚠️  INDETERMINATE — could not lift the portal slot renderer"); process.exit(2); }
 process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
-try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
+try { vm.runInContext(`${stateSrc}\n${noteSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the portal renderer did not load: ${e.message}`); process.exit(2); }
 const render = (shape) => pctx.render({ clientForm: "photo_upload" }, { draft_shape: shape }, [], "c1");
 const textOf = (html) => html.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ");
