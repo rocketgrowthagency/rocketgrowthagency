@@ -41,7 +41,9 @@ if (!card || !handler) {
 
 // Render the card in node with the portal's own builder, for a client WITH a shot list (the case that broke).
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc };
+// the block also registers page-level click handlers (step 7's team size, step 6's verify) — they need a document to
+// attach to, not to run; the card build is what this checks
+const ctx = { escapeHtml: esc, escapeAttribute: esc, document: { addEventListener() {} } };
 vm.createContext(ctx);
 let html;
 try {

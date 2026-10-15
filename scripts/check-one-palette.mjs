@@ -61,10 +61,14 @@ for (const f of files) {
   // colours (#4285F4 #34A853 #FBBC04 #EA4335 #F9AB00 #E37400 #1A73E8). Tokenising those would mean
   // repainting someone else's logo in our brand — wrong, and it would break recognition of the
   // thing the icon exists to identify. They are allowed, and ONLY inside an svg fill/stroke.
-  const BRAND_MARKS = /#(4285F4|34A853|FBBC04|EA4335|F9AB00|E37400|1A73E8)\b/gi;
+  const BRAND_MARKS = /#(4285F4|34A853|FBBC04|FBBC05|EA4335|F9AB00|E37400|1A73E8)\b/gi;
   withoutFallbacks = withoutFallbacks.replace(
-    /(fill|stroke)=["']#(4285F4|34A853|FBBC04|EA4335|F9AB00|E37400|1A73E8)["']/gi, "$1=\"BRAND\"");
+    /(fill|stroke)=["']#(4285F4|34A853|FBBC04|FBBC05|EA4335|F9AB00|E37400|1A73E8)["']/gi, "$1=\"BRAND\"");
 
+  // 🔑 OUR OWN LOGO IS A BRAND MARK TOO (2026-10-15): the portal's status page (shown when the portal can't load, so
+  // possibly without its stylesheet) draws the Rocket Growth Agency logo in its fixed brand colours. Allowed ONLY inside
+  // that one constant's svg fill attributes — anywhere else they are palette colours and must be tokens.
+  withoutFallbacks = withoutFallbacks.replace(/const STATUS_LOGO = `[^`]*`/g, (m) => m.replace(/fill="#(2457e6|0f1b3d)"/gi, 'fill="BRAND"'));
   const bare = [...new Set(withoutFallbacks.match(/#[0-9a-fA-F]{6}\b/g) || [])];
   if (bare.length) {
     problems.push(`${name}: ${bare.length} bare hex colour(s) outside a token fallback — ${bare.slice(0, 6).join(", ")}${bare.length > 6 ? "…" : ""}`);

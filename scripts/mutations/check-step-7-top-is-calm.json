@@ -1,0 +1,72 @@
+[
+ [
+  "the orange box comes back",
+  "portal",
+  "  if (slots) return `<div class=\"pm-how2 pm-how-photo\">${slots}",
+  "  if (slots) return `<div class=\"pm-how2 pm-how-photo\"><div class=\"pm-how-only\">Only you can do this step.</div>${slots}",
+  1
+ ],
+ [
+  "the plain line shows on every state",
+  "portal",
+  "{ only: theirsToAct && h.only ? PHOTO_ONLY_LINE : \"\" }",
+  "{ only: PHOTO_ONLY_LINE }",
+  1
+ ],
+ [
+  "a retake hides in the fold",
+  "portal",
+  "${laterRetake ? \" open data-fold-held\" : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the device's memory folds a retake away",
+  "portal",
+  "    if (d.hasAttribute(\"data-fold-held\")) return;   // a fold holding a retake stays open (step7_streamlined_v1)\n",
+  "",
+  1
+ ],
+ [
+  "review counted as still to take",
+  "portal",
+  "still = Math.max(0, left - pc.review - pc.retake)",
+  "still = Math.max(0, left - pc.retake)",
+  1
+ ],
+ [
+  "the picker opens on Cover again",
+  "portal",
+  "for (const g of (splitPlace ? [...todayGroups, ...laterGroups] : groups)) {",
+  "for (const g of groups) {",
+  1
+ ],
+ [
+  "the toolbar never asks",
+  "portal",
+  "<div class=\"pm-tool${team && !ts ? \" ask\" : \"\"}\"",
+  "<div class=\"pm-tool\"",
+  1
+ ],
+ [
+  "the toolbar wraps at card width",
+  "portalcss",
+  ".pm-tool .pm-batch{padding:0;border:0;border-radius:0;background:none}",
+  "",
+  1
+ ],
+ [
+  "the unsourced claim is back",
+  "clientstepsjson",
+  "Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
+  "Listings with 20+ photos get noticeably more calls. Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
+  1
+ ],
+ [
+  "the tips lose why it matters",
+  "portal",
+  "    ${h.why ? `<p class=\"pm-tipwhy\">${escapeHtml(h.why)}</p>` : \"\"}",
+  "    ",
+  1
+ ]
+]

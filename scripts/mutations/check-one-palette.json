@@ -1,0 +1,23 @@
+[
+ [
+  "a bare brand colour outside the logo",
+  "portal",
+  "  const DL_PARTS = 4;",
+  "  const DL_PARTS = 4; const NAVY = \"#0f1b3d\";",
+  1
+ ],
+ [
+  "a non-brand colour inside the logo",
+  "portal",
+  "const STATUS_LOGO = `<svg class=\"ps-logo\"",
+  "const STATUS_LOGO = `<svg fill=\"#ff0000\" class=\"ps-logo\"",
+  1
+ ],
+ [
+  "Google's yellow outside an svg fill",
+  "portal",
+  "  const DL_PARTS = 4;",
+  "  const DL_PARTS = 4; const Y = \"#FBBC05\";",
+  1
+ ]
+]

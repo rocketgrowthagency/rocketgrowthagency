@@ -36,6 +36,12 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-ol-reply-open": "admin step 11 \"Keep ours…\": opens the reply box under the duplicate card and focuses it — the box visibly opens (2026-10-15)",
+  "data-ps-resume": "the portal status page's sign-in link: notes the view to reopen, then the link navigates — the new page is the result (2026-10-15)",
+  "data-gv-method": "step 6: picks how Google sends the code — the picked way visibly highlights (class sel, aria-checked) (2026-10-15)",
+  "data-dup-pick": "the duplicate card: picks which listing to keep — the choice highlights and its follow-up line shows (2026-10-15)",
+  "data-dup-wrong": "the duplicate card's \"wrong way round?\": opens the note box and focuses it — the box visibly opens (2026-10-15)",
+  "data-ps-reload": "the portal status page's \"Try again\": reloads the page — the reload is the result (2026-10-15)",
   "data-tab": "switches the client tab — the tab visibly changes",
   "data-v2tab": "switches a sub-tab — the pane visibly changes",
   "data-goto-tab": "navigates to another tab — the destination is the feedback",

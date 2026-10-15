@@ -29,10 +29,13 @@ if (!/const m = matches\[g\.name\];/.test(portal) || !/if \(n !== null && items\
 if (/items\.find\(\(it\) => it\.google === g\.category/.test(portal)) fail("the portal fills a slot from Google's CATEGORY again — that is how RGA's logo became \"your building\"");
 // 🔄 2026-10-09 (approved photo_step_already_on_google_and_tips_v1): its own section near the top, one tile per photo
 // 🔄 approved photo_step_compact_layout_v1: one line until opened, small rows inside
-if (!/<details class="pm-sec pm-already pm-fold" data-fold="already">/.test(portal) || !/already on your Google profile<\/b>/.test(portal) || !/RGA is sorting it<\/span>/.test(portal) || !/Extra · counts toward 20/.test(portal)) fail("photos already on Google no longer get their one-line section with a state per photo");
+// 🔄 approved step7_streamlined_v1 (2026-10-15): the photos already on Google fold INTO the progress panel — one line
+// ("1 of them was already on Google. RGA is filing it, nothing to do.") until opened, the same small rows inside, a state
+// per photo. Order: the plain line → the progress panel (with that fold) → the toolbar → the tips line → the list.
+if (!/<details class="pm-p2-also" data-fold="already">/.test(portal) || !/already on Google\./.test(portal) || !/RGA is sorting it<\/span>/.test(portal) || !/Extra · counts toward 20/.test(portal)) fail("photos already on Google no longer get their one-line fold with a state per photo");
 if (!/<div class="pm-arow"><span class="th"/.test(portal)) fail("an opened already-on-Google photo is no longer a small row");
-if (!/const body = `\$\{alreadySection\}\$\{beforeList\}<div class="pm-slots/.test(portal)) fail("the step's order changed — it is: already on your profile → the tips → the upload list");
-const alreadySrc = (portal.match(/const alreadySection = already\.length \?[\s\S]*?: "";/) || [""])[0];
+if (!/const body = `\$\{top\.only \? `<p class="pm-p2-sub">\$\{escapeHtml\(top\.only\)\}<\/p>` : ""\}\$\{panel\}\$\{toolbar\}\$\{beforeList\}<div class="pm-slots/.test(portal)) fail("the step's order changed — it is: the plain line → progress (with the already-on-Google fold) → toolbar → tips → the list");
+const alreadySrc = (portal.match(/const alsoRows = already\.map[\s\S]*?const alsoFold = [^\n]*/) || [""])[0];
 if (!alreadySrc) fail("the already-on-Google section could not be found");
 if (/class="pm-pill you"|pm-pill warn|pm-pill bad/.test(alreadySrc)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
 // 2

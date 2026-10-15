@@ -63,10 +63,10 @@
   1
  ],
  [
-  "the already section drops back under the list",
+  "the already-on-Google fold drops back under the list",
   "portal",
-  "  const body = `${alreadySection}${beforeList}<div class=\"pm-slots${locked ? \" is-locked\" : \"\"}\">${PHOTO_EXAMPLE_SPRITE}",
-  "  const body = `${beforeList}<div class=\"pm-slots${locked ? \" is-locked\" : \"\"}\">${PHOTO_EXAMPLE_SPRITE}${alreadySection}",
+  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${panel}${toolbar}${beforeList}<div class=\"pm-slots",
+  "const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${toolbar}${beforeList}${panel}<div class=\"pm-slots",
   1
  ],
  [

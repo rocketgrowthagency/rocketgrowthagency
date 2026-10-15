@@ -144,7 +144,8 @@ const inputs = (h) => (h.match(/<input[^>]*type="file"[^>]*>/g) || []);
 // v11 (approved duplicate_business_profile_wording_v11): the client reads "Business Profile", Google's own name
 if (!/class="pm-lock"/.test(shut) || !/two Google Business Profiles/.test(shut)) fail("a locked step 7 doesn't say why");
 if (!inputs(shut).length || inputs(shut).some((i) => !/\bdisabled\b/.test(i))) fail("a locked step 7 still lets the client pick a photo");
-if (!/<div class="pm-batch" hidden>/.test(shut)) fail("a locked step 7 still offers the batch upload");
+// 🔄 approved step7_streamlined_v1: the batch upload is the toolbar's right half — hidden, and the whole toolbar with it
+if (!/<div class="pm-batch pm-tool-up" hidden>/.test(shut) || !/<div class="pm-tool" hidden>/.test(shut) || /data-photo-team/.test(shut)) fail("a locked step 7 still offers the batch upload or the team question");
 if (!/The meeting|data-slot="1"/.test(shut) || (shut.match(/data-slot="/g) || []).length !== 20) fail("a locked step 7 hides the shot list — it should stay visible to plan");
 if (/class="pm-lock"/.test(open) || inputs(open).some((i) => /\bdisabled\b/.test(i))) fail("step 7 is locked even though step 11 found one listing");
 

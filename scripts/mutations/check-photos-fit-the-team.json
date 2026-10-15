@@ -72,8 +72,8 @@
  [
   "no team question",
   "portal",
-  "    ${locked ? \"\" : teamAsk}",
-  "    ",
+  "  const team = locked ? \"\" : teamAsk;",
+  "  const team = \"\";",
   1
  ],
  [
