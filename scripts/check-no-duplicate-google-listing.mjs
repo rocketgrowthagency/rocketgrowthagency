@@ -253,7 +253,8 @@ async function stillResolvesById(placeId, key) {
     const r = await fetch(u);
     if (!r.ok) return null;
     const d = await r.json();
-    if (d.error) return null;
+    // 🔑 "Google hasn't returned any results" for a place id = Google no longer knows it (gone), not "couldn't look" (10-15)
+    if (d.error) return /not found|no results|hasn't returned any results/i.test(String(d.error)) ? false : null;
     return !!(d.place_results && Object.keys(d.place_results).length);
   } catch { return null; }
 }

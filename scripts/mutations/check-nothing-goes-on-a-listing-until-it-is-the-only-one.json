@@ -306,5 +306,12 @@
   "    if (dupWaitsOnGoogle && s.obj?.flowId === DUP_STEP) { s.uiState = \"queued\"; s.waitsOnGoogle = true; continue; }\n",
   "",
   1
+ ],
+ [
+  "a gone duplicate reads as couldn't look",
+  "dupscan",
+  "return /not found|no results|hasn't returned any results/i.test(String(d.error)) ? false : null;",
+  "return /not found|no results/i.test(String(d.error)) ? false : null;",
+  1
  ]
 ]
