@@ -135,7 +135,7 @@ if (!slotsSrc || !stateSrc || !bigSrc) { console.error("⚠️  INDETERMINATE �
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const pctx = { secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
+const pctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
 vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml; this.ls = portalListingStateOf;`, pctx);
 const P = req("./_photo-lists.js");
@@ -159,7 +159,7 @@ if (!partA || !partB || !/function listingStateOf\(tasks\)/.test(partB)) { conso
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: "INTERIOR", do: `Shot ${i + 1}` }));
 const step39 = (verdict) => {
   const c = {
-    secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
+    secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
     photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: () => "E|g|1", formatDateTime: () => "Oct 9", obNumberOf: () => 11,
     state: { selectedClient: { id: "c1" }, photos: [{ id: "p8", client_id: "c1", shot_n: 8, category: "interior", publish_state: "in_review", storage_path: "x" }, { id: "p9", client_id: "c1", shot_n: 9, category: "interior", publish_state: "in_review", storage_path: "y" }],
       onboardingData: { tasks: { [DUP]: verdict ? { outcome_data: { verdict, duplicates: [{}] } } : undefined, "m1.gbp.photos": { draft_shape: { items }, photo_ai: { uploads: { p8: { matches: true }, p9: { matches: true } } } } } } },

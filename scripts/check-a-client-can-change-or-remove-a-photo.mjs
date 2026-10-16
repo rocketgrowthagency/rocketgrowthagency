@@ -164,7 +164,7 @@ process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const ctx = { secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
+const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -232,7 +232,6 @@ if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhot
 { const h = ctx.how(step, task(sab), true, [PUB(workN, "at_work")], "c1", null);
   if (!new RegExp(`data-slot="${workN}" data-on-google-slot`).test(h)) fail("a slot on Google isn't marked, so a Change in progress can't say the old photo stays"); }
 if (!/if \(row\.hasAttribute\("data-on-google-slot"\)\) \{ if \(!row\.querySelector\("\.pm-swap"\)\) row\.insertAdjacentHTML\("beforeend", PHOTO_SWAP_NOTE\); \}\s*else bumpGroupCount\(row\);/.test(pc)) fail("a Change just sent doesn't say the old photo stays on Google (or bumps the kind's count twice)");
-if (!/message: secondLogo \? "This second copy of your logo comes off your Google profile\. Your logo stays\."/.test(rmh)) fail("removing the second logo doesn't say the logo stays");
 const pcss = read("portal/portal.css");
 if (!/\.pm-photo-rm\.is-busy \{ position:relative; color:transparent !important;/.test(pcss) || !/\.pm-done-band \{/.test(pcss) || !/\.pm-turned\.pm-note \{/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
 

@@ -114,22 +114,8 @@
  [
   "keep doesn't redraw",
   "portal",
-  "    await settleStepResult(listEl, j);\n    portalToast(\"<b>Kept</b>",
-  "    portalToast(\"<b>Kept</b>",
-  1
- ],
- [
-  "admin counts it as to sort",
-  "admin",
-  "  const toSort = existing.filter((m) => !matches[m.name] && !asked.has(m.name));",
-  "  const toSort = existing.filter((m) => !matches[m.name]);",
-  1
- ],
- [
-  "admin doesn't say waiting",
-  "admin",
-  "    if (sl.open.length) out.push(`Waiting on the client:",
-  "    if (false) out.push(`Waiting on the client:",
+  "    await settleStepResult(listEl, j);\n    portalToast(\"<b>We'll keep it</b>",
+  "    portalToast(\"<b>We'll keep it</b>",
   1
  ],
  [
@@ -137,6 +123,76 @@
   "admin",
   "    if (!task || stepId !== PHOTO_REVIEW_STEP) return \"\";",
   "    if (!task || task !== state.onboardingData?.tasks?.[PHOTO_REVIEW_STEP]) return \"\";",
+  1
+ ],
+ [
+  "RGA can't remove (owner only)",
+  "photoremove",
+  "    gate: (event, clientId) => requirePortalOwnerOrWorkspace(event, clientId),",
+  "    gate: (event, clientId) => require(\"./_auth\").requirePortalOwner(event, clientId),",
+  1
+ ],
+ [
+  "a client can file RGA's cleanup",
+  "photoremove",
+  "  if (cleanup && (photoId || !rga)) return json(400",
+  "  if (cleanup && photoId) return json(400",
+  1
+ ],
+ [
+  "the cleanup isn't kept",
+  "photoremove",
+  "      task.photo_cleanup = { ...(task.photo_cleanup || {}), [name]:",
+  "      task.photo_cleanup_x = { ...(task.photo_cleanup || {}), [name]:",
+  1
+ ],
+ [
+  "the card goes amber again",
+  "portal",
+  "<div class=\"pm-notice is-info pm-second-logo\" data-second-logo>",
+  "<div class=\"pm-notice is-warn pm-second-logo\" data-second-logo>",
+  1
+ ],
+ [
+  "the client gets the remove button back",
+  "portal",
+  "<span class=\"pm-pill other\">RGA is doing it</span></div>`;",
+  "<button data-photo-remove=\"\"></button><span class=\"pm-pill other\">RGA is doing it</span></div>`;",
+  1
+ ],
+ [
+  "no Tidied by RGA",
+  "portal",
+  "  const tidied = tidiedByRga(taskState);",
+  "  const tidied = [];",
+  1
+ ],
+ [
+  "not RGA's Your action",
+  "admin",
+  "    if (slOpen.length) {\n      return {",
+  "    if (false) {\n      return {",
+  1
+ ],
+ [
+  "RGA's removal counted as the client's",
+  "admin",
+  "r.state === \"removed\" && !r.rga && recent(r.at)",
+  "r.state === \"removed\" && recent(r.at)",
+  1
+ ],
+ [
+  "RGA's remove doesn't ask",
+  "admin",
+  "  if (remove && !await rgaDialog(",
+  "  if (false && !await rgaDialog(",
+  1
+ ],
+ [
+  "admin doesn't say it's RGA's action",
+  "admin",
+  "    if (sl.open.length) out.push(`Your action: remove ",
+  "    if (false) out.push(`Your action: remove ",
   1
  ]
 ]

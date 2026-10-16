@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// check-a-second-logo-is-the-clients-call.mjs — a second copy of a client's logo on Google is found for every client,
-// shown to the client as a card + a "Your call" row (Remove from Google · Keep it), and admin knows.
+// check-rga-tidies-a-second-logo.mjs — a second copy of a client's logo on Google is found for every client; RGA
+// recommends removing it and removes it (admin Your action + step 39), the client is told why and keeps a veto.
+//
+// 🔄 (approved rga_manages_cleanup_v1, 2026-10-15) Chris on the live "Your call" card: "they hire us to do the work … RGA
+// needs more of a manager role to decide these things." → feedback_rga_is_the_manager_client_gets_a_veto
 //
 // 🔒 WHY (approved second_logo_cleanup_v1, 2026-10-15). RGA's Dec 2025 logo-with-name image sat on Google filed as
 // "Exterior": the AI check already called it "Your logo", admin showed "A second copy of slot 1" with no way to resolve
@@ -51,9 +54,9 @@ if (SL.FILED_AS.EXTERIOR !== "an outside photo") fail("Google's category isn't p
 
 // ── 2 · Keep it: owner only, a photo the step measured, saved and read back ──
 Object.assign(process.env, { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "k" });
-let owner = true, store = null, drop = false;
+let owner = true, ws = false, store = null, drop = false;
 req.cache[req.resolve("./_auth")] = { id: "auth", filename: req.resolve("./_auth"), loaded: true, exports: {
-  requirePortalOwner: async () => (owner ? { email: "c@x.test" } : { error: { statusCode: 403, body: "{}" } }) } };
+  requirePortalOwnerOrWorkspace: async () => (ws ? { email: "rga@x.test", viaWorkspace: true } : owner ? { email: "c@x.test" } : { error: { statusCode: 403, body: "{}" } }) } };
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url), m = init.method || "GET";
   const res = (status, body) => ({ ok: status < 300, status, text: async () => (body == null ? "" : JSON.stringify(body)), json: async () => body });
@@ -70,7 +73,31 @@ store = { tasks: { "m1.gbp.photos": { detected: { items: [{ name: NAME, category
 if ((await keep()) !== 200 || !store.tasks["m1.gbp.photos"].photo_kept?.[NAME]?.at) fail("\"Keep it\" isn't saved");
 if ((await keep(`${PARENT}/media/other`)) !== 404) fail("any photo name can be kept (only one the step measured)");
 drop = true; if ((await keep()) !== 500) fail("a keep that didn't stick reports success (no read-back)"); drop = false;
-owner = false; if ((await keep()) !== 403) fail("someone other than the client can answer for them"); owner = true;
+owner = false; if ((await keep()) !== 403) fail("someone other than the client (or RGA) can answer for them"); owner = true;
+ws = true; if ((await keep()) !== 200 || !/^rga:rga@x\.test \(client asked\)$/.test(store.tasks["m1.gbp.photos"].photo_kept[NAME].by)) fail("RGA can't record that the client asked to keep it (or it isn't marked as RGA's)"); ws = false;
+
+// ── 2b · RGA removes it: same read-back removal, signed as RGA, and what it tidied is kept on the step ──
+{
+  const RM = req("./portal-photo-remove.js").removePhoto;
+  const mk = (viaWs) => { const w = { calls: [], acts: [], ledger: [], rec: { id: "r1", tasks: { "m1.gbp.photos": { detected: { items: [{ name: NAME, category: "EXTERIOR", thumb: "t" }] } } } } };
+    const res = (status, body) => ({ ok: status < 300, status, json: async () => body, text: async () => JSON.stringify(body) });
+    w.d = { now: () => Date.parse("2026-10-16T18:00:00Z"), gate: async () => (viaWs ? { email: "rga@x.test", viaWorkspace: true } : { email: "c@x.test" }), accessToken: async () => "tok", recount: async () => {},
+      recordChange: async (c) => w.ledger.push(c), fetch: async (u, i = {}) => { w.calls.push(`${i.method || "GET"} ${u}`); return (i.method || "GET") === "DELETE" ? res(200, {}) : res(404, {}); },
+      readStepRecord: async () => ({ id: "r1", tasks: w.rec.tasks }), writeStepTasks: async (_s, _r, t) => { w.rec.tasks = t; return { tasks: t }; },
+      supa: async (p0, init = {}) => { if (p0.startsWith("/client_activity")) { w.acts.push(JSON.parse(init.body)); return null; } if (p0.startsWith("/clients?")) return [{ workspace_id: "w" }];
+        if (p0.startsWith("/client_google_oauth")) return [{ refresh_token: "r", gbp_account_id: "accounts/1", gbp_location_id: "locations/2" }];
+        if (p0.startsWith("/client_onboarding_records")) return [{ data: { tasks: w.rec.tasks } }]; if (p0.startsWith("/client_photos")) return []; return null; } };
+    return w; };
+  const w = mk(true);
+  const r = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: w.d });
+  const c = w.rec.tasks["m1.gbp.photos"].photo_cleanup?.[NAME];
+  if (r.statusCode !== 200 || !c || c.why !== "second_logo" || !/^rga:/.test(c.done_by) || c.category !== "EXTERIOR" || !c.done_at) fail(`RGA's removal isn't kept on the step as RGA's cleanup (${r.statusCode} ${JSON.stringify(c)})`);
+  if (w.calls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${NAME}` || w.calls[1] !== `GET https://mybusiness.googleapis.com/v4/${NAME}`) fail("RGA's removal isn't a Google delete + read-back");
+  if (!w.acts.some((a) => a.payload?.rga && /RGA removed a second copy of the logo/.test(a.payload.summary)) || w.ledger[0]?.changedBy !== "rga") fail("RGA's removal is logged as the client's");
+  if (!/gate: \(event, clientId\) => requirePortalOwnerOrWorkspace\(event, clientId\),/.test(nc(read("netlify/functions/portal-photo-remove.js")))) fail("RGA's workspace can't remove a photo (the endpoint is owner-only)");
+  const wc = mk(false);
+  if ((await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: wc.d })).statusCode !== 400) fail("a client request can be filed as RGA's cleanup");
+}
 
 // ── 3 · the check runs by itself when the profile is counted ──
 const pm = nc(read("netlify/functions/photo-match.js")), rc = nc(read("netlify/functions/portal-step-recheck.js"));
@@ -91,7 +118,7 @@ if (!slotsSrc || !stateSrc || !bigSrc || !howSrc) { console.error("⚠️  INDET
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, FILED_AS: SL.FILED_AS, console, Date };
+const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.card = secondLogoCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -103,34 +130,41 @@ const copy = g("copy", "EXTERIOR"), prof = g("profile", "PROFILE");
 const T = (extra = {}) => ({ draft_shape: shape, team_size: "1", detected: { n: 2, threshold: 20, source: "google_profile", items: [copy, prof] }, photo_ai: { google: { [copy.name]: { name: "Your logo", slot: logoN } } }, ...extra });
 {
   const h = ctx.how(step, T(), true, [], "c1", null);
-  if (!/<details class="pm-p2-also" data-fold="already" open data-fold-held>/.test(h)) fail("the photo's fold doesn't open by itself while it's the client's call");
-  if (!/It(?:'|&#39;)s a second copy of your logo: your call\./.test(h) || /RGA is filing it/.test(h)) fail("the fold still says RGA is filing it");
+  if (!/<details class="pm-p2-also" data-fold="already" open data-fold-held>/.test(h)) fail("the photo's fold doesn't open by itself while RGA is removing a copy (the card's link lands there)");
+  if (!/RGA is removing a second copy of your logo\./.test(h) || /your call|RGA is filing it/i.test(h)) fail("the fold doesn't say RGA is removing it (or still says it's their call)");
   const r0 = h.indexOf("data-second-logo-row"), r1 = h.indexOf('<div class="pm-arow">', r0);
   const row = r0 < 0 ? "" : h.slice(r0, r1 < 0 ? h.indexOf("</details>", r0) : r1);
-  if (!row || /RGA is sorting it/.test(row) || !/<span class="pm-pill you">Your call<\/span><\/div>$/.test(row)) fail("the second logo's row doesn't say it's the client's call (or still says RGA is sorting it)");
-  if (!/Google filed it as an outside photo/.test(row) || !/Google can show this copy at the top of your profile, as if it were a photo of your business\./.test(row)) fail("the row doesn't say what it is and why it matters");
-  if (!new RegExp(`class="pm-act is-go is-danger" data-photo-remove="" data-media-name="${PARENT.replace(/\//g, "\\/")}\\/media\\/copy" data-on-google`).test(row) || !/class="pm-act is-guide" data-photo-keep="/.test(row)) fail("the row has no Remove from Google / Keep it");
+  if (!/<b class="pm-rec">RGA recommends removing it\.<\/b>/.test(row) || !/Google can show this copy at the top of your profile as if it were a photo of your business\./.test(row) || !/We(?:'|&#39;)ll take it off for you\. Nothing needed from you\./.test(row)) fail("the row doesn't say RGA recommends it, why, and that nothing is needed");
+  if (!/<span class="pm-pill other">RGA is doing it<\/span><\/div>$/.test(row) || /data-photo-remove|pm-pill you/.test(row)) fail("the row still hands the client the decision (Remove button / Your call) instead of RGA is doing it");
+  if (!/class="pm-linkbtn" data-photo-keep="[^"]+" data-client-id="c1">Prefer to keep it\?<\/button>/.test(row)) fail("the client has no veto (Prefer to keep it?)");
   const k = ctx.how(step, T({ photo_kept: { [copy.name]: { at: "2026-10-16T12:00:00Z" } } }), true, [], "c1", null);
-  if (/data-photo-keep|data-fold-held/.test(k) || !/you kept it Oct 16/.test(k) || !/Extra · counts toward 20/.test(k)) fail("a kept copy still asks, or doesn't say they kept it");
+  if (/data-photo-keep|data-fold-held/.test(k) || !/you kept it Oct 16/.test(k) || !/Extra · counts toward 20/.test(k)) fail("a kept copy still shows RGA removing it, or doesn't say they kept it");
+  const done = ctx.how(step, { draft_shape: shape, team_size: "1", detected: { n: 1, threshold: 20, source: "google_profile", items: [prof] }, photo_cleanup: { [copy.name]: { why: "second_logo", category: "EXTERIOR", thumb: "t", done_at: new Date().toISOString(), done_by: "rga:x" } } }, true, [], "c1", null);
+  if (!/Removed from Google by RGA · /.test(done) || !/✓ Tidied by RGA<\/span>/.test(done)) fail("after RGA removes it, the client isn't told what changed and who did it (Tidied by RGA)");
   const card = ctx.card([copy]);
-  if (!/class="pm-notice is-warn pm-second-logo" data-second-logo/.test(card) || !/Tidy your Google profile/.test(card) || !/A second copy of your logo is on Google, filed as an outside photo/.test(card) || !/data-portal-goto="setup" data-portal-scroll="step-row-m1\.gbp\.photos">Review it in step 7/.test(card)) fail("the top card doesn't say what it is and take them to step 7");
+  if (!/class="pm-notice is-info pm-second-logo" data-second-logo/.test(card) || /is-warn|Your call/.test(card)) fail("the card isn't RGA's (blue) — it still reads as the client's homework");
+  if (!/RGA recommends · tidying your Google profile/.test(card) || !/We(?:'|&#39;)re removing a second copy of your logo from Google/.test(card) || !/<b>Why:<\/b> it(?:'|&#39;)s filed as an outside photo/.test(card) || !/Nothing needed from you\. <a class="pm-notice-go" href="#" data-portal-goto="setup" data-portal-scroll="step-row-m1\.gbp\.photos">Prefer to keep it\?/.test(card)) fail("the card doesn't say what RGA is doing, why, that nothing is needed, and how to say no");
 }
 const pc = nc(portal);
 const refresh = (() => { const i = pc.indexOf("function refreshNextStepCards()"); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n}\n", i)); })();
 if (!/const sl = photoTask \? secondLogos\(photoTask, _nextStepInputs\.photos \|\| \[\]\) : \{ open: \[\] \};/.test(refresh) || !/if \(next && next\.hasAttribute\("data-second-logo"\)\) next\.remove\(\);\s*if \(sl\.open\.length\) card\.insertAdjacentHTML\("afterend", secondLogoCardHtml\(sl\.open\)\);/.test(refresh)) fail("the card isn't placed under \"Your next step\", or never goes away once they've decided");
 if (!/rgaWaits, photos: photos \|\| \[\] \};/.test(pc)) fail("the banner doesn't get the client's photos (so it can't tell their logo is up)");
 const kh = (() => { const i = pc.indexOf('closest("[data-photo-keep]")'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
-if (!/fetch\("\/\.netlify\/functions\/portal-photo-keep"/.test(kh) || !/await settleStepResult\(listEl, j\);/.test(kh) || !/b\.classList\.add\("is-busy"\)/.test(kh)) fail("Keep it doesn't save, spin, or redraw");
+if (!/fetch\("\/\.netlify\/functions\/portal-photo-keep"/.test(kh) || !/await settleStepResult\(listEl, j\);/.test(kh) || !/b\.classList\.add\("is-busy"\)/.test(kh)) fail("the client's veto doesn't save, spin, or redraw");
 const pcss = read("portal/portal.css");
-if (!/\.pm-act\.is-go\.is-danger \{ background:var\(--portal-error\);/.test(pcss) || !/\.pm-second-logo \.k \{ color:var\(--state-you\); \}/.test(pcss)) fail("Remove from Google isn't red, or the card's label isn't amber");
+if (!/\.pm-second-logo \.k \{ color:var\(--state-other\); \}/.test(pcss) || !/\.pm-badge-rga \{/.test(pcss)) fail("the card's label / badge isn't RGA's blue");
 
-// ── 5 · admin knows ──
+// ── 5 · admin: RGA's action ──
 const admin = nc(read("admin/admin.js"));
-if (!/if \(sl\.open\.length\) out\.push\(`Waiting on the client: \$\{sl\.open\.length === 1 \? "a second copy of their logo is"/.test(admin) || !/out\.push\(`Client kept the second copy of their logo · /.test(admin)) fail("admin's step 39 doesn't say it's waiting on the client, or that they kept it");
-if (!/const toSort = existing\.filter\(\(m\) => !matches\[m\.name\] && !asked\.has\(m\.name\)\);/.test(admin) || !/const toSort = items\.length \? existing\.filter\(\(m\) => !matches\[m\.name\] && !asked\.has\(m\.name\)\)\.length : 0;/.test(admin)) fail("a second logo still counts as RGA's \"to sort\" (it's the client's call)");
-if (!/A second copy of their logo · \$\{withClient\.length\}/.test(admin)) fail("admin doesn't list the second logo as with the client");
-// 🔴 found live 10-15: photoLines compared the row's (merged copy of the) task to the stored one, so no line ever drew
-if (!/if \(!task \|\| stepId !== PHOTO_REVIEW_STEP\) return "";/.test(admin) || (admin.match(/\$\{clientChose\(s\.task, o\.flowId\)\}/g) || []).length < 4 || /\$\{clientChose\(s\.task\)\}/.test(admin)) fail("admin's step-39 lines don't know which step they're on (they never draw)");
+if (!/if \(slOpen\.length\) \{\s*return \{\s*title: `Remove \$\{slOpen\.length === 1 \? "a second copy of the logo"/.test(admin) || !/reveal: PHOTO_REVIEW_STEP, tab: "onboarding-v2", scroll: "panel-onboarding-v2", btn: "See the photo",/.test(admin)) fail("removing a second logo isn't RGA's Your action");
+if (!/if \(sl\.open\.length\) out\.push\(`Your action: remove /.test(admin) || !/out\.push\(`Client asked to keep the second copy of their logo · /.test(admin) || !/if \(tidied\.length\) out\.push\(`RGA removed /.test(admin)) fail("step 39 doesn't say it's RGA's action, that the client asked to keep it, or that RGA removed it");
+if (!/data-sl-remove="\$\{escapeAttribute\(m\.name\)\}">Remove from Google<\/button><button type="button" class="admin-button admin-button-secondary" data-sl-keep=/.test(admin)) fail("step 39 has no Remove from Google / Keep it (client asked) for RGA");
+const slh = (() => { const i = admin.indexOf('closest("[data-sl-remove],[data-sl-keep]")'); return i < 0 ? "" : admin.slice(i, admin.indexOf("\n});", i)); })();
+if (!/if \(remove && !await rgaDialog\(\{ kind: "confirm", danger: true, title: "Remove the second logo from Google\?"/.test(slh) || !/\{ client_id: c\.id, media_name: name, cleanup: "second_logo" \}/.test(slh)) fail("RGA's Remove doesn't ask first, or isn't filed as RGA's cleanup");
+if (!/const gone = \(state\.photoRemovals \|\| \[\]\)\.filter\(\(r\) => r\.state === "removed" && !r\.rga && recent\(r\.at\)\);/.test(admin)) fail("RGA's own removal is reported as the client's");
+const toSortOk = /const toSort = existing\.filter\(\(m\) => !matches\[m\.name\] && !asked\.has\(m\.name\)\);/.test(admin);
+if (!toSortOk) fail("a second logo shows twice in step 39 (also in \"to sort\")");
+if (!/if \(!task \|\| stepId !== PHOTO_REVIEW_STEP\) return "";/.test(admin) || (admin.match(/\$\{clientChose\(s\.task, o\.flowId\)\}/g) || []).length < 4) fail("admin's step-39 lines don't know which step they're on (they never draw)");
 
-if (F.length) { console.error("🔴 A second copy of the logo isn't handled the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ a second copy of the logo is the client's call: one rule (any trade, storefront or not; logo only; never the cover, ours, or with no logo on the profile), found when the profile is counted; a card under Your next step and a held-open \"Your call\" row with Remove from Google / Keep it (saved, read back, owner only); admin says it's waiting on the client and never counts it as RGA's");
+if (F.length) { console.error("🔴 A second copy of the logo isn't RGA's to tidy the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
+console.log("✅ RGA tidies a second copy of the logo: one rule (any trade, storefront or not; logo only; never the cover, ours, or with no logo on the profile), found when the profile is counted; the client sees a blue RGA-recommends card + why + nothing needed + a veto; RGA's Your action removes it (read back, signed as RGA, kept on the step) and the client sees Tidied by RGA");

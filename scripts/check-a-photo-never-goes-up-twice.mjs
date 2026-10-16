@@ -103,7 +103,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const H = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: i === 0 ? "PROFILE" : "INTERIOR", do: i === 6 ? "The meeting room, set for a client." : i === 7 ? "A wide shot of the workspace." : `Shot ${i + 1}` }));
 const ctx = {
-  secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
+  secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
   photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   state: { selectedClient: { id: "c1" }, photos: [
     { id: "p1", client_id: "c1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "c/l.png" },
@@ -136,7 +136,8 @@ if (!/What slot 7 asks for/.test(c7) || !/The meeting room, set for a client\./.
 // any other second copy on Google is still RGA's to sort and leads with Not a slot photo
 const ex = html.slice(html.indexOf('data-pm-row="m/office2"'));
 if (html.indexOf('data-pm-row="m/office2"') < 0 || !/second copy of slot 8/.test(ex) || !(ex.indexOf('data-pm-none="m/office2"') < ex.indexOf("data-pm-slot="))) fail("a second copy already on Google doesn't lead with Not a slot photo");
-if (/data-pm-row="m\/logo2"/.test(html) || !/data-second-logo-row="m\/logo2"[^]*?With the client/.test(html)) fail("a second copy of the logo is still RGA's to sort (it's the client's call: with the client)");
+// 🔄 rga_manages_cleanup_v1: RGA recommends removing it, with its own Remove / Keep (not the generic "to sort" card)
+if (/data-pm-row="m\/logo2"/.test(html) || !/data-second-logo-row="m\/logo2"[^]*?RGA recommends removing it[^]*?data-sl-remove="m\/logo2"/.test(html)) fail("a second copy of the logo is sorted like any photo instead of RGA's recommended removal");
 if (/class="pr-band/.test(html)) fail("the stacked amber bands are back");
 // 🔒 the turn-down panel (admin_photo_turn_down_v1): inside the card's info column, one reason picker, the client's preview
 const info7 = c7.slice(c7.indexOf('class="pr-info"'));
