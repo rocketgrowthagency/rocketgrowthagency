@@ -36,7 +36,7 @@ if (!X.stuffed("Joe's Plumbing - Best Plumber Nashville 24/7", "Joe's Plumbing")
 // ── 2 · what they told us, and the comparison (RGA's real record + Google, 10-16) ──
 const RGA_CLIENT = { business_name: "Rocket Growth Agency", identity_phone: "4242422040", primary_contact_phone: "(424) 242-2040", website_url: "https://www.rocketgrowthagency.com/", geography_model: "service_area" };
 const RGA_GOOGLE = { title: "Rocket Growth Agency", phoneNumbers: { primaryPhone: "(424) 242-2040" }, websiteUri: "https://www.rocketgrowthagency.com/?utm_source=google&utm_medium=organic",
-  serviceArea: { businessType: "CUSTOMER_LOCATION_ONLY", places: { placeInfos: [{ placeName: "El Segundo, CA, USA" }, { placeName: "Culver City, CA, USA" }] } } };
+  serviceArea: { businessType: "CUSTOMER_LOCATION_ONLY", regionCode: "US", places: { placeInfos: [{ placeName: "El Segundo, CA, USA" }, { placeName: "Culver City, CA, USA" }] } } };
 {
   const g = X.factsFromGoogle(RGA_GOOGLE), t = X.toldFacts(RGA_CLIENT, null), view = X.factsView(g, t);
   if (g.come !== false || g.address !== null || g.area.length !== 2) fail(`a service-area profile isn't read as "address hidden" with its places (${JSON.stringify(g)})`);
@@ -151,6 +151,9 @@ vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = 
   for (const k of ["name", "come", "phone", "website"]) if (!/✓ Matches/.test(row(k)) || new RegExp(`class="pm-fact is-open" data-fact="${k}"`).test(h)) fail(`RGA's ${k} (matches) isn't one green line`);
   if (!/Your turn/.test(row("area")) || !/El Segundo, CA, USA/.test(row("area")) || !/data-fact-pick="area" data-fact-val="ok">Yes, that(?:'|&#39;)s right/.test(row("area"))) fail("the service area (never asked) isn't the client's turn with Google's places");
   if (!/Google(?:'|&#39;)s link carries our tracking tags/.test(row("website"))) fail("a website with tracking tags doesn't say why it still matches");
+  if (!/You told us: \(424\) 242-2040/.test(row("phone"))) fail("a US number stored as bare digits isn't shown as (424) 242-2040");
+  const inMob = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, phoneNumbers: { primaryPhone: "98123 45678" }, serviceArea: { regionCode: "IN" } }), X.toldFacts({ ...RGA_CLIENT, identity_phone: "9812345678" }, null)));
+  if (!/You told us: 9812345678/.test(inMob) || /\(981\)/.test(inMob)) fail("a 10-digit number outside North America is reformatted as a US number");
   const diff = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, phoneNumbers: { primaryPhone: "(603) 555-0199" } }), X.toldFacts({ ...RGA_CLIENT, identity_phone: "(603) 555-0142" }, null)));
   if (!/These don(?:'|&#39;)t match\. Which number should customers call\?/.test(diff) || !/data-fact-val="\(603\) 555-0142">\(603\) 555-0142, mine/.test(diff) || !/data-fact-val="\(603\) 555-0199">\(603\) 555-0199, Google(?:'|&#39;)s/.test(diff)) fail("a phone that differs doesn't show both numbers and ask which is right");
   const st = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, title: "Joe's Plumbing - Best Plumber Nashville 24/7" }), X.toldFacts({ ...RGA_CLIENT, business_name: "Joe's Plumbing" }, null)));

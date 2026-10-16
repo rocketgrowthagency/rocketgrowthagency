@@ -194,5 +194,19 @@
   "\"clientStepNo\": 7,",
   "\"clientStepNo\": 8,",
   1
+ ],
+ [
+  "every 10-digit number is American",
+  "portal",
+  "const nanp = [\"US\", \"CA\", \"PR\"].includes(g.region);",
+  "const nanp = true;",
+  1
+ ],
+ [
+  "no US formatting",
+  "portal",
+  "return escapeHtml(nanp && d.length === 10",
+  "return escapeHtml(false && d.length === 10",
+  1
  ]
 ]
