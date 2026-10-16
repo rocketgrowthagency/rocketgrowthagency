@@ -194,5 +194,12 @@
   "    if (sl.open.length) out.push(`Your action: remove ",
   "    if (false) out.push(`Your action: remove ",
   1
+ ],
+ [
+  "the card squeezes",
+  "admincss",
+  ".pr-card.pr-sl { grid-template-columns:150px minmax(0,1fr); }",
+  ".pr-card.pr-sl { }",
+  1
  ]
 ]
