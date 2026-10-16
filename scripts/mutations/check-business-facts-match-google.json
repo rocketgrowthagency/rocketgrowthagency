@@ -261,7 +261,7 @@
  [
   "missing place recommended again",
   "gbpfacts",
-  "(targets || []).filter((name) => !hasPlace(missing, name))",
+  "(targets || []).filter((name) => !hasPlace(missing, name, google.state))",
   "(targets || [])",
   1
  ],
@@ -282,7 +282,7 @@
  [
   "area ticked before Google lists it",
   "gbpfacts",
-  "x.add.every((n) => hasPlace(now.area, n))",
+  "x.add.every((n) => hasPlace(now.area, n, now.state))",
   "true",
   1
  ],
@@ -408,7 +408,7 @@
  [
   "progress always waiting",
   "gbpfacts",
-  "items.push({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n) })",
+  "items.push({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n, now.state) })",
   "items.push({ kind: \"area\", name: n, on: false })",
   1
  ],
