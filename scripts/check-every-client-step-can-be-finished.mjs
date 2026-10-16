@@ -39,7 +39,7 @@ const SITE = process.env.CSF_SITE || `${__SITE}`;
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
 
 const MECHANISMS = new Set(["detected", "choice", "client", "rga", "approval"]);
-const INPUT_KINDS = new Set(["url", "numbers", "checklist", "hours", "text", "facts"]);   // facts: business_on_google_v1 (10-16)
+const INPUT_KINDS = new Set(["url", "numbers", "checklist", "hours", "text", "facts", "booking"]);   // facts: business_on_google_v1 (10-16) · booking: step10_booking_link_v1 (10-16)
 
 let fail = 0;
 const bad = (m) => { console.log(`  🔴 ${m}`); fail++; };

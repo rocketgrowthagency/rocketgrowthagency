@@ -26,7 +26,7 @@ const push = strip(pp(/^function gbpPushHtml\(/m)), hours = strip(pp(/^function 
 if (!push || !hours || !gv) { console.error("⚠️  INDETERMINATE — a Google card renderer moved"); process.exit(2); }
 if (/class="(?:tl2|pm-turned|pm-hc"|pm-gv-obj)/.test(push + hours + gv)) fail("a Google step still draws its own card (tl2 / pm-turned / pm-hc / pm-gv-obj) instead of the shared one");
 if ((push.match(/return googleCardHtml\(/g) || []).length < 4 || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv)) fail("steps 6 / 7 / 9 / 10 / 11 don't all draw the shared Google card");
-if (!/const gcardAct = isDone && GCARD_CHANGE\[step\.id\] && taskState\?\.google_push\?\.state === "on_google"/.test(portal) || !/act: gcardAct \}\)\}/.test(portal) || !/&& !hoursCard && !gcardAct\n/.test(portal)) fail("steps 10 / 11's Change isn't the card's own action (it sits under the card)");
+if (!/const gcardAct = isDone && GCARD_CHANGE\[step\.id\] && taskState\?\.google_push\?\.state === "on_google"/.test(portal) || !/act: gcardAct \}\)\}/.test(portal) || !/&& !ownGoogleCard && !gcardAct\n/.test(portal)) fail("steps 10 / 11's Change isn't the card's own action (it sits under the card)");
 if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
 if (!/e\.target\.closest\("\[data-gcard-how\]"\)/.test(portal) || !/e\.target\.closest\("\[data-gcard-fix\]"\)/.test(portal)) fail("the card's How verification works / Fix it do nothing");
 // never a tinted fill
@@ -42,7 +42,7 @@ if (!/if \(step\?\.flowId === "m1\.gbp\.verify" && task\?\.status === "done" && 
 
 // ── 2 · drawn for real, both sides, every state ──
 const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m), pl("GOOGLE_G"), pp(/^function googleCardHtml\(/m), pl("gcardMaps"), pl("GV_STORE"), pp(/^function gvProfileHtml\(/m),
-  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pp(/^function gbpPushHtml\(/m),
+  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
   pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay")];
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
@@ -65,7 +65,9 @@ try {
     const at = "2026-10-16T15:45:47Z", maps = "https://maps.google.com/?cid=1", f = { title: "Rocket Growth Agency", phone: "(424) 242-2040", mapsUri: maps };
     const cards = {
       "9 done": gbpPushHtml({ id: "m1.gbp.hours_attributes" }, { status: "done", client_input_at: at, google_push: { state: "on_google", at, after: days, special: { sent: [{ date: "2026-11-26", name: "Thanksgiving", yearly: true }] } } }, { maps }),
-      "10 done": gbpPushHtml({ id: "m1.gbp.booking_link" }, { status: "done", google_push: { state: "on_google", at, after: ["https://calendly.com/x"] } }, { maps, act: '<button class="pm-amend" data-step-reopen="m1.gbp.booking_link">Change link</button>' }),
+      // 🔑 10-16 (step10_booking_link_v1): step 10 draws its own Change link (Editing, no write); step 11's comes from the row
+      "10 done": gbpPushHtml({ id: "m1.gbp.booking_link" }, { status: "done", google_push: { state: "on_google", at, after: ["https://calendly.com/x?utm_source=gbp"], link: "https://calendly.com/x", platform: "Calendly", link_type: "url_appointment" } }, { maps }),
+      "11 done": gbpPushHtml({ id: "m1.gbp.attributes" }, { status: "done", google_push: { state: "on_google", at, after: ["a"], labels: { a: "Online appointments" } } }, { maps, act: '<button class="pm-amend" data-step-reopen="m1.gbp.attributes">Change details</button>' }),
       "7 with RGA": gbpPushHtml({ id: "m1.gbp.business_facts" }, { status: "in_progress", google_push: { state: "with_rga", at, rga: [{ fact: "area", add: ["Mar Vista, CA", "Palms, CA"] }], maps_uri: maps } }),
       "11 with RGA": gbpPushHtml({ id: "m1.gbp.attributes" }, { status: "in_progress", google_push: { state: "with_rga", error: "403" } }),
       "10 Google said": gbpPushHtml({ id: "m1.gbp.booking_link" }, { status: "pending", google_push: { state: "needs_client", said: "This link doesn't open.", fix: "Paste the public link." } }),
@@ -90,7 +92,7 @@ try {
   }, look.toString());
 } finally { await browser.close(); }
 
-const want = { "9 done": "ok", "10 done": "ok", "7 with RGA": "rga", "11 with RGA": "rga", "10 Google said": "you", "6 verified": "ok", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
+const want = { "9 done": "ok", "10 done": "ok", "11 done": "ok", "7 with RGA": "rga", "11 with RGA": "rga", "10 Google said": "you", "6 verified": "ok", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
 for (const [k, st] of Object.entries(want)) {
   const c = P[k];
   if (!c) { fail(`portal "${k}" isn't the shared Google card`); continue; }
@@ -101,7 +103,8 @@ for (const [k, st] of Object.entries(want)) {
   if ((st === "ok" || st === "you") && c.head !== EDGE[st]) fail(`portal "${k}" heading isn't the ${st} colour (${c.head})`);
 }
 if (P["9 done"] && (P["9 done"].act !== "Change hours" || !/See it on Google Maps ↗/.test(P["9 done"].meta))) fail("step 9's card lacks Change hours top-right or Maps in the bottom line");
-if (P["10 done"] && (P["10 done"].act !== "Change link" || !/Checked on Google Oct 16 · See it on Google Maps ↗/.test(P["10 done"].meta))) fail(`step 10's card lacks Change link top-right or "Checked on Google · Maps" (${P["10 done"].meta})`);
+if (P["10 done"] && (P["10 done"].act !== "Change link" || !/checked on Google Oct 16 · Try it ↗ · See it on Google Maps ↗/.test(P["10 done"].meta))) fail(`step 10's card lacks Change link top-right or "checked on Google · Try it · Maps" (${P["10 done"].meta})`);
+if (P["11 done"] && (P["11 done"].act !== "Change details" || !/Checked on Google Oct 16 · See it on Google Maps ↗/.test(P["11 done"].meta))) fail(`step 11's card lacks Change details top-right or "Checked on Google · Maps" (${P["11 done"].meta})`);
 if (P["6 verified"] && (P["6 verified"].act !== "Check again" || !/Checked Oct 16, 6:03 AM · See it on Google Maps ↗ · How verification works/.test(P["6 verified"].meta))) fail("step 6's card lacks Check again top-right or Checked · Maps · How verification works");
 if (P["10 Google said"] && P["10 Google said"].act !== "Fix it") fail("a refusal's card has no Fix it");
 for (const st of ["ok", "rga", "you", "wait"]) {

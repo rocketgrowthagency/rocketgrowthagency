@@ -1,0 +1,100 @@
+[
+ [
+  "every business gets the appointment link",
+  "gbpprofile",
+  "const type = types.find((t) => value && t.key === value.link_type) || types[0];",
+  "const type = { key: \"url_appointment\", label: \"Booking link\" };",
+  1
+ ],
+ [
+  "no link type offered still writes",
+  "gbpprofile",
+  "if (!types.length) return { state: \"not_sent\", reason: \"google_offers_no_link\", at };",
+  "",
+  1
+ ],
+ [
+  "no tracking tag",
+  "gbpprofile",
+  "const sent = B.withTag(url);",
+  "const sent = url;",
+  1
+ ],
+ [
+  "tag on top of their own",
+  "bookinglink",
+  "if ([...u.searchParams.keys()].some((k) => /^utm_/i.test(k))) return u.href;",
+  "",
+  1
+ ],
+ [
+  "a private address is fetched",
+  "bookinglink",
+  "if (!safeUrl(url)) return { ok: false, status: 0, unsafe: true };",
+  "",
+  1
+ ],
+ [
+  "contact page before a booking page",
+  "bookinglink",
+  "const score = { book: 3, quote: 2, contact: 1 }[kind];",
+  "const score = { book: 1, quote: 2, contact: 3 }[kind];",
+  1
+ ],
+ [
+  "read-back compares exactly",
+  "gbpprofile",
+  "if (!after.some((x) => B.sameLink(x, sent)))",
+  "if (!after.includes(sent))",
+  1
+ ],
+ [
+  "our tag reads as drift",
+  "gbpwatch",
+  "if (!url || g.some((x) => BL.sameLink(x, url, { tags: false }))) return null;",
+  "if (!url || g.includes(url)) return null;",
+  1
+ ],
+ [
+  "no website pages read",
+  "portalgbpprofile",
+  "now.pages = found.pages; now.tools = found.tools;",
+  "now.pages = []; now.tools = [];",
+  1
+ ],
+ [
+  "RGA recommends nothing in particular",
+  "portal",
+  "const rec = cur.length ? \"keep\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
+  "const rec = \"tool\";",
+  1
+ ],
+ [
+  "link type not sent",
+  "portal",
+  "value = { value: url.trim(), choice, ...(linkType ? { link_type: linkType } : {}) };",
+  "value = { value: url.trim(), choice };",
+  1
+ ],
+ [
+  "Change link writes",
+  "portal",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\"]);",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\"]);",
+  1
+ ],
+ [
+  "admin has no Try it",
+  "admin",
+  "spec.kind === \"booking\" && g.sent ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
+  "spec.kind === \"booking\" && false ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
+  1
+ ],
+ [
+  "page names become HTML",
+  "portal",
+  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}</button>`",
+  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}</button>`",
+  1
+ ]
+]

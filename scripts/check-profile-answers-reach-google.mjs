@@ -87,20 +87,20 @@ const OFFERED = [
   const w = fakeGoogle();
   const none = await G.applyForStep(STEP.BOOKING, { none: true }, w.deps);
   if (none.state !== "not_sent" || w.calls.length) fail("\"We don't take bookings online\" reached Google, or didn't settle");
-  const bad = fakeGoogle({ linkStatus: 404 });
+  const bad = fakeGoogle({ linkStatus: 404, offered: OFFERED });
   const b = await G.applyForStep(STEP.BOOKING, "https://example.com/gone", bad.deps);
   if (b.state !== "needs_client" || !b.said || !b.fix || bad.writes().length) fail(`a link that doesn't open was sent to Google, or came back without how to fix it (${JSON.stringify(b)})`);
-  const ok = fakeGoogle();
+  const ok = fakeGoogle({ offered: OFFERED });
   const o = await G.applyForStep(STEP.BOOKING, "https://www.rocketgrowthagency.com/contact/", ok.deps);
   const wr = ok.writes()[0];
-  if (o.state !== "on_google" || !/attributeMask=attributes%2Furl_appointment$/.test(wr?.url || "") || wr?.body.attributes[0]?.uriValues?.[0]?.uri !== "https://www.rocketgrowthagency.com/contact/") fail(`the booking link isn't written as Google's appointment link (${wr?.url})`);
-  const bot = fakeGoogle({ linkStatus: 403 });
+  if (o.state !== "on_google" || !/attributeMask=attributes%2Furl_appointment$/.test(wr?.url || "") || wr?.body.attributes[0]?.uriValues?.[0]?.uri !== "https://www.rocketgrowthagency.com/contact/?utm_source=gbp&utm_medium=booking&utm_campaign=local-seo") fail(`the booking link isn't written as Google's appointment link (${wr?.url})`);
+  const bot = fakeGoogle({ linkStatus: 403, offered: OFFERED });
   if ((await G.applyForStep(STEP.BOOKING, "https://example.com/book", bot.deps)).state !== "on_google") fail("a booking page that blocks robots (403) is refused");
   // a permission refusal is RGA's, even when Google's message mentions the link
-  const perm = fakeGoogle({ refuse: { status: 403, code: "PERMISSION_DENIED", message: "The caller does not have permission to update url_appointment" } });
+  const perm = fakeGoogle({ offered: OFFERED, refuse: { status: 403, code: "PERMISSION_DENIED", message: "The caller does not have permission to update url_appointment" } });
   const pr = await G.applyForStep(STEP.BOOKING, "https://example.com/book", perm.deps);
   if (pr.state !== "with_rga" || pr.said) fail("a permission refusal on the booking link is handed to the client (it's RGA's to fix)");
-  const ref = fakeGoogle({ refuse: { status: 400, code: "INVALID_ARGUMENT", message: "Invalid uri" } });
+  const ref = fakeGoogle({ offered: OFFERED, refuse: { status: 400, code: "INVALID_ARGUMENT", message: "Invalid uri" } });
   const r = await G.applyForStep(STEP.BOOKING, "https://example.com/book", ref.deps);
   if (r.state !== "needs_client" || !r.fix || /Invalid uri/.test(r.said)) fail("Google refusing the link doesn't come back to the client in plain words with how to fix it");
 }
@@ -149,7 +149,7 @@ if (/60%\+/.test(read("data/playbooks/client-steps.json"))) fail("step 11's unso
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 // 🔑 10-16: gbpPushHtml also draws step 7's progress and step 9's card, so their helpers ride along
-const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
+const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("EDIT_IN_PLACE"), line("BK_NOUN"), pick(/^function bookingCardHtml\(/m), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a portal helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }

@@ -33,7 +33,7 @@ export const ACTOR_MAP = {
   "m1.gbp.business_description":{ actor: "rga" },
   "m1.gbp.photos":           { actor: "both", clientLabel: "Provide 20+ business photos (logo, team, work, equipment)", clientHint: "Upload via the form. We push them to your GBP automatically. Better photos = better rankings.", clientForm: "photo_upload" },
   "m1.gbp.hours_attributes": { actor: "both", clientLabel: "Confirm your business hours + special attributes", clientHint: "Tell us your weekly hours, holiday closures, and which attributes apply (woman/veteran-owned, accessibility, payment methods, etc).", clientForm: "generic" },
-  "m1.gbp.booking_link":     { actor: "both", clientLabel: "Set up online booking (Calendly or website form)", clientHint: "Customers can book directly from Google search. RGA helps you pick a tool.", clientForm: "generic" },
+  "m1.gbp.booking_link":     { actor: "both", clientLabel: "Add your booking link", clientHint: "Customers book or request a job straight from your Google profile.", clientForm: "generic" },
   "m1.gbp.attributes":       { actor: "both", clientLabel: "Confirm GBP attributes (women/veteran-owned, accessibility, etc)", clientHint: "Walk through the checklist with us — most businesses miss 60%+ of attributes.", clientForm: "generic" },
   "m1.gbp.qa_seed":          { actor: "both", clientLabel: "Post 8 Q&A pairs to your GBP from your personal account", clientHint: "RGA drafts the questions + answers. You post the questions from your personal Google account, then we answer from the business profile.", clientForm: "generic" },
   "m1.web.homepage_meta":    { actor: "rga" },

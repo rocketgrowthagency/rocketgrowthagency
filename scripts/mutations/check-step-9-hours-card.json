@@ -30,7 +30,7 @@
  [
   "second copy back",
   "portal",
-  "clientDoneConfirm && !hoursCard && !editing",
+  "clientDoneConfirm && !ownGoogleCard && !editing",
   "clientDoneConfirm",
   1
  ],
@@ -44,8 +44,8 @@
  [
   "Change hours writes",
   "portal",
-  "    if (ed.hasAttribute(\"data-hours-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);",
-  "    await fetch(\"/x\"); if (ed.hasAttribute(\"data-hours-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);",
+  "    if (ed.hasAttribute(\"data-hours-edit\") || ed.hasAttribute(\"data-step-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);",
+  "    await fetch(\"/x\"); if (ed.hasAttribute(\"data-hours-edit\") || ed.hasAttribute(\"data-step-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);",
   1
  ],
  [
@@ -86,8 +86,8 @@
  [
   "editor stacks text again",
   "portal",
-  "    const head = s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
-  "    const head = s.kind === \"facts\" ? gnow :",
+  "    const head = s.kind === \"booking\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
+  "    const head = s.kind === \"booking\" ? \"\" : s.kind === \"facts\" ? gnow :",
   1
  ],
  [

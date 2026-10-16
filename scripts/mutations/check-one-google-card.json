@@ -23,7 +23,7 @@
  [
   "admin's note is back",
   "admin",
-  ": g.state === \"not_sent\" ? adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\", title: \"The client doesn't take bookings online\", meta: gWhen(g.at) })",
+  ": g.state === \"not_sent\" ? adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\", title: g.reason === \"google_offers_no_link\" ? \"Google offers this business no booking link\" : \"The client doesn't take bookings online\", meta: gWhen(g.at) })",
   ": g.state === \"not_sent\" ? `<div class=\"ob-in-note\">Nothing sent to Google</div>`",
   1
  ],

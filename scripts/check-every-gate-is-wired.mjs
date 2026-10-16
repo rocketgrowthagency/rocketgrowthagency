@@ -355,6 +355,7 @@ const NOT_PREFLIGHT = {
   'check-business-facts-match-google.mjs': 'the WEBSITE repo\'s Check your business on Google step (approved business_on_google_v1): compare, write + read back, RGA items, client record sync, admin, nightly — Google faked, a portal check, not video preflight',
   'check-step-7-works-in-any-state.mjs': 'the WEBSITE repo\'s step 7 end to end for a Texas and a New York business (Google read → portal → save → record → nightly → admin) — Google + DB faked, a portal check, not video preflight',
   'check-step-9-hours-card.mjs': 'the WEBSITE repo\'s step 9 hours card (approved step9_hours_card_v1) — a portal check, not video preflight',
+  'check-step-10-booking-link.mjs': 'the WEBSITE repo\'s step 10 booking link for any business (approved step10_booking_link_v1) — a portal/admin check, not video preflight',
   'check-one-google-card.mjs': 'the WEBSITE repo\'s one Google card on every Google step, portal + admin (approved one_google_card_v1) — a portal/admin check, not video preflight',
   'check-no-step-asks-for-a-retired-google-feature.mjs': 'the WEBSITE playbook never asks for a Google feature Google retired (approved retire_messaging_step_v1) — a playbook check, not video preflight',
   'check-every-control-spins.mjs': 'the WEBSITE repo\'s master busy state (Chris 10-15 "any button needs spinner"): shared/busy.js + the master CSS rule in portal and admin, clicked for real in Chrome — a portal check, not video preflight',

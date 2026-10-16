@@ -36,6 +36,9 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-bk-opt": "step 10's three choices (a page on my website / my booking tool / customers call us): the picked one gets the blue ring and its radio fills — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
+  "data-bk-type": "step 10's link-type chips (a restaurant: Reservations / Order ahead): redraws the choices for that type, the chip highlights — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
+  "data-bk-page": "step 10's website-page chips: picks which page of their site gets the Book button — the chip highlights with ✓; nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
   "data-gcard-how": "the Google card's \"How verification works\": opens step 6's how-to under the card and scrolls to it, the link reads \"Hide…\" — the panel visibly opens (one_google_card_v1, 2026-10-16)",
   "data-gcard-fix": "the Google card's \"Fix it\": scrolls to the field Google refused and focuses it — the focused field is the result (one_google_card_v1, 2026-10-16)",
   "data-ol-reply-open": "admin step 11 \"Keep ours…\": opens the reply box under the duplicate card and focuses it — the box visibly opens (2026-10-15)",
