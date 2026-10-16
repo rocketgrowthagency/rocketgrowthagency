@@ -558,7 +558,7 @@ if (!/\.dl-google\.is-busy \.dl-g \{ display: none; \}/.test(read("portal/portal
     handled:  mk(z, zd, null, { answer: "unsure" }),
     removed:  mk(z, zd, null, { answer: "mine", owner_removal: { status: "removed", account: "chriskapranos@gmail.com", at: "2026-10-14T18:00:00Z" } }),
     // v13: Google confirmed it (the confirmed card, 7 days)
-    confirmed: { key: "m1.audit.gbp_duplicate", details: [], kept: { ...kept, account: "hello@lonestar.test" }, confirmed: { at: "2026-10-17T11:00:00Z", photo_step_id: "m1.gbp.photos" },
+    confirmed: { key: "m1.audit.gbp_duplicate", details: [], kept: { ...kept, account: "hello@lonestar.test" }, confirmed: { at: "2026-10-17T11:00:00Z", photo_step: true },
       owner_removal: { status: "removed", account: "chriskapranos2@gmail.com", at: "2026-10-14T23:25:55Z", title: "Lone Star Drain & Plumbing", phone: "(512) 555-0199", location_id: "3109515908223837152" } },
     rmfail:   mk(z, zd, null, { answer: "mine", owner_removal: { status: "remove_failed", account: "chriskapranos2@gmail.com", detail: "Google refused the removal (500)." } }),
     // v6 (approved duplicate_listing_accounts_v6): which Google account goes with each listing
@@ -766,7 +766,7 @@ if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's 
 // v9: once the nightly check sees one listing after the client's removal, it's listed under "Already approved"
 {
   const pd = code("netlify/functions/portal-deliverables.js");
-  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Confirmed · Google shows one Business Profile"/.test(pd) || !/confirmed: \{ at, photo_step_id: photo \}/.test(pd) || !/Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
+  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Confirmed · Google shows one Business Profile"/.test(pd) || !/confirmed: \{ at, photo_step: !!photo \}/.test(pd) || !/Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
   if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/const settledHtml = settled\.length \|\| resolvedRows \?/.test(portal)) fail("the portal doesn't show the resolved duplicate under \"Already approved\"");
 }
 if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "Nothing needs you right now"/.test(portal)) fail("the queue heading says a card that waits on RGA \"needs you\"");
@@ -851,7 +851,7 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   if (!/m\.card && m\.card\.kind === "dup_confirmed" \?/.test(portal) || !/typeLinesHtml\(\{ \.\.\.m\.card\.removed, account: m\.card\.account \}, m\.card\.kept\)/.test(portal)) fail("the portal doesn't draw the confirmed-gone notice as the TYPE-line card");
   // portal-deliverables: 7 days as the confirmed card, then a record under Already approved
   const pdc = code("netlify/functions/portal-deliverables.js");
-  if (!/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed", kind: "ownership",\s*confirmed: \{ at, photo_step_id: photo \}/.test(pdc)) fail("for 7 days after the confirmation the card isn't shown as confirmed");
+  if (!/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed", kind: "ownership",\s*confirmed: \{ at, photo_step: !!photo \}/.test(pdc)) fail("for 7 days after the confirmation the card isn't shown as confirmed");
   for (const [days, want] of [[1, "card"], [9, "record"]]) {
     const at = new Date(Date.now() - days * 86400000).toISOString();
     const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", workspace_id: "w1", identity_phone: "4242422040" }], client_portal_access: [{ portal_email: "owner@lonestar.test", client_id: CID }],
@@ -869,7 +869,7 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
     finally { globalThis.fetch = real2; }
     const card = (body.actions || []).find((x) => x.key === "m1.audit.gbp_duplicate" && x.confirmed);
     const row = (body.resolved || []).find((x) => x.key === "m1.audit.gbp_duplicate");
-    if (want === "card" && (!card || card.confirmed.photo_step_id !== "m1.gbp.photos" || row)) fail(`the day after Google confirms it, the client doesn't see the confirmed card (with the way to the photo step) (${JSON.stringify(Object.keys(body))})`);
+    if (want === "card" && (!card || card.confirmed.photo_step !== true || row)) fail(`the day after Google confirms it, the client doesn't see the confirmed card (with the way to the photo step) (${JSON.stringify(Object.keys(body))})`);
     if (want === "record" && (card || !row || row.label !== "Confirmed · Google shows one Business Profile" || row.title !== "Duplicate Google Business Profile removed: (424) 396-8499")) fail("after 7 days the confirmed removal isn't a record under Already approved");
   }
   // every sign-in attempt is kept on step 11 (admin can't read the service-only table)
@@ -901,5 +901,7 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   if (!/border-left:4px solid #8e0b21/.test(L.html) || !/Upload your photos<\/a>/.test(L.html) || !/✕ REMOVED: Google Business Profile/.test(L.text)) fail("the letter doesn't render the TYPE lines and the button (html + plain text)");
 }
 
+// the removal cards keep naming what is being removed (one title, "Remove your duplicate Business Profile", on every step card)
+{ const pj = read("portal/portal.js"); if (!/const removeTitle = "Remove your duplicate Business Profile";/.test(pj) || !/return card\(removeTitle, dlPart\(3\), `\s*\$\{prog\(2\)\}/.test(pj) || (pj.match(/return card\(removeTitle, /g) || []).length < 6) fail("a removal step's card no longer names the listing being removed"); }
 if (F.length) { console.error("🔴 removing a duplicate listing can break a safety rule:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ a client can remove their own duplicate and nothing else: run end to end (found → tap → DELETE exactly it → read back → token cleared); not-in-account, the kept listing, reviews, unknown reviews, an expired sign-in and Google's refusal all delete nothing; token only ever encrypted; service-only table; branch after the signature check; only the client presses Remove");

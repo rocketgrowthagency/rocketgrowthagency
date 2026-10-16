@@ -1,0 +1,114 @@
+[
+ [
+  "the owner's special days are wiped",
+  "gbpprofile",
+  "      const keepPeriods = ((before.specialHours && before.specialHours.specialHourPeriods) || [])",
+  "      const keepPeriods = [] || ((before.specialHours && before.specialHours.specialHourPeriods) || [])",
+  1
+ ],
+ [
+  "closed days not read back",
+  "gbpprofile",
+  "      if (missing.length) return { state: \"with_rga\"",
+  "      if (false) return { state: \"with_rga\"",
+  1
+ ],
+ [
+  "closed days not recorded",
+  "gbpprofile",
+  "        special: { sent: plan,",
+  "        special: { sent: [],",
+  1
+ ],
+ [
+  "our old days duplicated",
+  "gbpprofile",
+  "!oursBefore.has(dstr(p.startDate)) && ",
+  "",
+  1
+ ],
+ [
+  "read has no closed days",
+  "gbpprofile",
+  "return { ...hoursFromGoogle(j.regularHours), closed: closedOnGoogle(j.specialHours),",
+  "return { ...hoursFromGoogle(j.regularHours),",
+  1
+ ],
+ [
+  "a Saturday change unnoticed",
+  "gbpwatch",
+  "    const daysDiffer = JSON.stringify(want) !== JSON.stringify(now.days);",
+  "    const daysDiffer = false;",
+  1
+ ],
+ [
+  "RGA told twice",
+  "gbpwatch",
+  "      if (!task.google_drift) {",
+  "      if (true) {",
+  1
+ ],
+ [
+  "a gone change stays",
+  "gbpwatch",
+  "    if (task.google_drift) {\n      const t2 = { ...task }; delete t2.google_drift;",
+  "    if (false) {\n      const t2 = { ...task }; delete t2.google_drift;",
+  1
+ ],
+ [
+  "renewed every night",
+  "gbpwatch",
+  "  return Date.parse(`${g.renewed_to}T00:00:00Z`) - nowMs < RENEW_BEFORE_DAYS * 86400000;",
+  "  return true;",
+  1
+ ],
+ [
+  "the save forgets what we sent",
+  "stepinput",
+  "loc: conn.loc, prev: prev.google_push || null });",
+  "loc: conn.loc });",
+  1
+ ],
+ [
+  "no nightly schedule",
+  "toml",
+  "[functions.\"gbp-profile-watch\"]\n  schedule = \"30 10 * * *\"",
+  "[functions.\"gbp-profile-watch\"]",
+  1
+ ],
+ [
+  "anyone can restore",
+  "gbpdrift",
+  "  const gate = await requireWorkspaceForClient(event, clientId); if (gate.error) return gate.error;",
+  "",
+  1
+ ],
+ [
+  "card hides closed days",
+  "portal",
+  "<span class=\"gbp-closed\">Closed on Google: ${escapeHtml(g.special.sent.map(",
+  "<span class=\"gbp-closed\">${escapeHtml(g.special.sent.map(",
+  1
+ ],
+ [
+  "admin says their word again",
+  "admin",
+  "      const attestation = byClient && gp && gp.state === \"on_google\"",
+  "      const attestation = false",
+  1
+ ],
+ [
+  "the stale AI draft is back",
+  "admin",
+  "  if (o && o.clientInput && task && task.client_input !== undefined) return stepRunHistoryHtml(o.flowId);",
+  "",
+  1
+ ],
+ [
+  "drift isn't a Your action",
+  "admin",
+  "    if (driftStep) {\n      return {",
+  "    if (false) {\n      return {",
+  1
+ ]
+]

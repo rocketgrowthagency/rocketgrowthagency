@@ -394,8 +394,8 @@
  [
   "step 2's title stops naming the listing",
   "portal",
-  "    return card(removeTitle, \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
-  "    return card(\"Remove the second listing\", \"Step 3 of 4\", `\n      ${prog(2)}\n      ${err}\n      ${mini}\n      <div class=\"dl-sec\">\n        <p class=\"dl-big\">Sign in with",
+  "      return card(removeTitle, dlPart(3), `\n      ${prog(2)}",
+  "      return card(\"Remove the second listing\", dlPart(3), `\n      ${prog(2)}",
   1
  ],
  [
@@ -974,21 +974,21 @@
  ],
  [
   "v13: the removal row is never stamped confirmed",
-  "duprecheck",
-  "          method: \"PATCH\", headers: { \"Content-Type\": \"application/json\" }, body: JSON.stringify({ confirmed_at: nowIso, confirmed_by: \"nightly-check\" }) });",
+  "dupcleared",
+  "          method: \"PATCH\", headers: { \"Content-Type\": \"application/json\" }, body: JSON.stringify({ confirmed_at: nowIso, confirmed_by: by }) });",
   "          method: \"GET\" });",
   1
  ],
  [
   "v13: the notice carries no facts",
-  "duprecheck",
+  "dupcleared",
   "            removed: rm ? { title: rm.title || null, phone: rm.phone || null, location_id: rm.location_id || null } : null,",
   "            removed: null,",
   1
  ],
  [
   "v13: admin isn't told photos resumed",
-  "duprecheck",
+  "dupcleared",
   "body: JSON.stringify({ client_id: client.id, kind: \"gbp_photo_sending_resumed\",",
   "body: JSON.stringify({ client_id: client.id, kind: \"rga_note\",",
   1
