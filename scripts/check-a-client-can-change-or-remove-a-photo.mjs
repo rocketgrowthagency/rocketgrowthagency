@@ -235,7 +235,7 @@ if (!/\.pm-photo-rm\.is-busy \{ position:relative; color:transparent !important;
 const admin = nc(read("admin/admin.js"));
 if (!/out\.push\("Logo saved on Google · hidden: the profile shows no street address"\)/.test(admin)) fail("admin's step 39 doesn't say Google hides the logo");
 if (!/changed by the client · \$\{md\(changed\[0\]\.retired_at\)\}/.test(admin) || !/Client removed \$\{gone\.length === 1 \? "1 photo" : `\$\{gone\.length\} photos`\} from Google · \$\{md\(gone\[0\]\.at\)\}/.test(admin)) fail("admin's step 39 doesn't say what the client changed or removed");
-if (!/\.in\("kind", \["step_nudge_sent", "gbp_photo_removed"\]\)/.test(admin) || !/\+ laterLine\(task\) \+ photoLines\(task\);/.test(admin)) fail("admin doesn't read the client's removals, or doesn't show the photo lines");
+if (!/\.in\("kind", \["step_nudge_sent", "gbp_photo_removed"\]\)/.test(admin) || !/\+ laterLine\(task\) \+ photoLines\(task, stepId\);/.test(admin)) fail("admin doesn't read the client's removals, or doesn't show the photo lines");
 if (!/Replaces the one on Google since/.test(admin) || !/\$\{replacesHtml\(p\)\}/.test(admin)) fail("a change in RGA's review doesn't say which photo on Google it replaces");
 
 if (F.length) { console.error("🔴 Change / Remove / the honest logo / the done step don't work the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }

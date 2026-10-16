@@ -86,8 +86,8 @@
  [
   "admin doesn't see it",
   "admin",
-  " + laterLine(task) + photoLines(task);",
-  " + photoLines(task);",
+  " + laterLine(task) + photoLines(task, stepId);",
+  " + photoLines(task, stepId);",
   1
  ],
  [

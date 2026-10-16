@@ -131,5 +131,12 @@
   "    if (sl.open.length) out.push(`Waiting on the client:",
   "    if (false) out.push(`Waiting on the client:",
   1
+ ],
+ [
+  "the lines compare objects again",
+  "admin",
+  "    if (!task || stepId !== PHOTO_REVIEW_STEP) return \"\";",
+  "    if (!task || task !== state.onboardingData?.tasks?.[PHOTO_REVIEW_STEP]) return \"\";",
+  1
  ]
 ]

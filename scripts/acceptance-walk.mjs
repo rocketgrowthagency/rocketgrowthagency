@@ -156,6 +156,8 @@ const R = (id) => {
   return results.get(id);
 };
 const pageChecks = [];       // { side, name, fail[], warn[] , shot }
+// 🔒 second_logo_cleanup_v1: did the client's portal show the "Tidy your Google profile" card (a second copy of the logo)?
+let portalSecondLogoCard = null;
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 // ADMIN PASS
@@ -376,6 +378,7 @@ async function portalPass() {
         try { await page.screenshot({ path: path.join(OUT, "portal", `view-${v}.png`), fullPage: true }); pc.shot = `portal/view-${v}.png`; }
         catch (e) { pc.warn.push(`screenshot failed: ${String(e.message).split("\n")[0]}`); }
       }
+      if (v === ROW_VIEW) portalSecondLogoCard = await page.evaluate(() => !!document.querySelector("[data-second-logo]")).catch(() => null);
       pageChecks.push(pc);
     }
     const loadB = t.b("page load");
@@ -487,6 +490,14 @@ function agree(r) {
   // …and the other way: the portal holds the client back on a step the admin has open to work.
   else if (p === "waiting" && !/^(🔒\s*)?(Locked|Waits on)\b/i.test(String(r.admin.pill || "").trim()))
     r.fail.push(`the portal says "${r.portal.pill}" but the admin shows "${r.admin.pill}" — the client is held back on a step that is open`);
+  // 🔒 SYNCED WITH ADMIN (second_logo_cleanup_v1, Chris: "sync with admin so admin knows too"): the client's portal asks
+  // about a second copy of their logo ⇔ admin step 39 says it's waiting on them. Found live 10-15: the admin line never drew.
+  if (r.id === "m1.gbp.photos" && portalSecondLogoCard !== null) {
+    const adminSays = /Waiting on the client: (?:a second copy of their logo|\d+ extra copies of their logo)/.test(r.admin.text || "");
+    if (portalSecondLogoCard && !adminSays) r.fail.push("the client's portal asks about a second copy of their logo, but admin step 39 doesn't say it's waiting on them");
+    else if (!portalSecondLogoCard && adminSays) r.fail.push("admin says it's waiting on the client about a second logo, but their portal shows no card");
+    else if (portalSecondLogoCard) r.notes.push("second logo: the portal card and admin's \"Waiting on the client\" agree");
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
