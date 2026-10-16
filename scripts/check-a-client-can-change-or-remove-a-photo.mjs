@@ -233,7 +233,7 @@ if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhot
   if (!new RegExp(`data-slot="${workN}" data-on-google-slot`).test(h)) fail("a slot on Google isn't marked, so a Change in progress can't say the old photo stays"); }
 if (!/if \(row\.hasAttribute\("data-on-google-slot"\)\) \{ if \(!row\.querySelector\("\.pm-swap"\)\) row\.insertAdjacentHTML\("beforeend", PHOTO_SWAP_NOTE\); \}\s*else bumpGroupCount\(row\);/.test(pc)) fail("a Change just sent doesn't say the old photo stays on Google (or bumps the kind's count twice)");
 const pcss = read("portal/portal.css");
-if (!/\.pm-photo-rm\.is-busy \{ position:relative; color:transparent !important;/.test(pcss) || !/\.pm-done-band \{/.test(pcss) || !/\.pm-turned\.pm-note \{/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
+if (!/\.pm-linkbtn\.pm-photo-rm\.is-busy::after \{ border-color:var\(--portal-error\);/.test(pcss) || !/\.pm-done-band \{/.test(pcss) || !/\.pm-turned\.pm-note \{/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
 
 // ── 6 · admin sees it ──
 const admin = nc(read("admin/admin.js"));

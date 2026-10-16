@@ -128,8 +128,8 @@
  [
   "the spinner fades in too late",
   "portalcss",
-  "color:transparent !important; transition:none; cursor:progress;",
-  "color:transparent !important; cursor:progress;",
+  "cursor:progress; pointer-events:none; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn):not(.portal-button, .dl-back, .si-btn, .si-link).is-busy > *",
+  "cursor:progress; pointer-events:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn):not(.portal-button, .dl-back, .si-btn, .si-link).is-busy > *",
   1
  ],
  [

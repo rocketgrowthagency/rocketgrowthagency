@@ -95,6 +95,11 @@ ws = true; if ((await keep()) !== 200 || !/^rga:rga@x\.test \(client asked\)$/.t
   if (w.calls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${NAME}` || w.calls[1] !== `GET https://mybusiness.googleapis.com/v4/${NAME}`) fail("RGA's removal isn't a Google delete + read-back");
   if (!w.acts.some((a) => a.payload?.rga && /RGA removed a second copy of the logo/.test(a.payload.summary)) || w.ledger[0]?.changedBy !== "rga") fail("RGA's removal is logged as the client's");
   if (!/gate: \(event, clientId\) => requirePortalOwnerOrWorkspace\(event, clientId\),/.test(nc(read("netlify/functions/portal-photo-remove.js")))) fail("RGA's workspace can't remove a photo (the endpoint is owner-only)");
+  // 🔴 the client's no is ENFORCED: an admin screen older than their answer can't remove what they kept (found live 10-15)
+  const wk = mk(true); wk.rec.tasks["m1.gbp.photos"].photo_kept = { [NAME]: { at: "2026-10-16T01:58:45Z" } };
+  const rk = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: wk.d });
+  if (rk.statusCode !== 409 || wk.calls.length) fail("RGA can remove a photo the client asked to keep (a stale admin screen still offers it)");
+  if (!/catch \(e\) \{\s*b\.disabled = false; b\.textContent = label;[^}]*\}[^]*?const fresh = await state\.adapter\.getOnboardingRecord\(c\.id\);/.test(nc(read("admin/admin.js")))) fail("after a refusal, admin doesn't re-read the record (it keeps offering Remove)");
   const wc = mk(false);
   if ((await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: wc.d })).statusCode !== 400) fail("a client request can be filed as RGA's cleanup");
 }

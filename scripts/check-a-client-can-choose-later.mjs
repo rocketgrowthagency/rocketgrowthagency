@@ -131,7 +131,8 @@ if (!/action: days \? "set" : "clear"/.test(pc) || !/await settleStepResult\(hos
 if (!/if \(lat\) fetch\("\/\.netlify\/functions\/portal-step-later", \{ method: "POST"[\s\S]{0,400}?action: "clear" \}\) \}\)/.test(pc)) fail("an upload doesn't end \"later\" in the record");
 // the spinner keeps the button's size and shows at once (a colour fade on .pm-act hid it, 10-15)
 const pcss = read("portal/portal.css");
-if (!/\.pm-team-chip\.is-busy, \.pm-act\.is-busy \{ position:relative; color:transparent !important; transition:none; cursor:progress; \}/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
+// 🔄 10-15: the spinner is the MASTER rule now (check-every-control-spins) — same size, label hidden, no fade
+if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\([^)]*\)\.is-busy \{ position:relative; color:transparent !important; cursor:progress; pointer-events:none; transition:none; \}/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
 if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \}/.test(pcss)) fail("inside the folded photo list the blocks lose the step's 14px spacing (they touched, 10-15)");
 // drawn in Chrome with the shipped stylesheet: the opened fold keeps the 14px rhythm between its blocks
 { let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }

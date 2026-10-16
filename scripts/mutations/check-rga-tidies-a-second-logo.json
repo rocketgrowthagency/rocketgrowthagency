@@ -201,5 +201,12 @@
   ".pr-card.pr-sl { grid-template-columns:150px minmax(0,1fr); }",
   ".pr-card.pr-sl { }",
   1
+ ],
+ [
+  "the client's no isn't enforced",
+  "photoremove",
+  "    if (cleanup && rec?.data?.tasks?.[STEP]?.photo_kept?.[name]) return json(409",
+  "    if (false) return json(409",
+  1
  ]
 ]

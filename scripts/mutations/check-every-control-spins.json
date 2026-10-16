@@ -1,0 +1,79 @@
+[
+ [
+  "nothing marks busy",
+  "busyjs",
+  "    if (at && at.el && at.el.isConnected && now() - at.at < PRESS_MS) markBusy(at.el, p);",
+  "",
+  1
+ ],
+ [
+  "busy never clears",
+  "busyjs",
+  "    if (left <= 0) { el.classList.remove(\"is-busy\"); el.removeAttribute(\"aria-busy\"); }",
+  "",
+  1
+ ],
+ [
+  "clears after the first of two",
+  "busyjs",
+  "    const left = (pending.get(el) || 1) - 1;",
+  "    const left = 0;",
+  1
+ ],
+ [
+  "a dialog's confirm isn't credited",
+  "busyjs",
+  "  if (inDialog && opener && opener.isConnected) { press = { el: opener, at: now() }; return; }",
+  "",
+  1
+ ],
+ [
+  "any later request spins",
+  "busyjs",
+  "now() - at.at < PRESS_MS",
+  "true",
+  1
+ ],
+ [
+  "label stays visible",
+  "portalcss",
+  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy { position:relative; color:transparent !important;",
+  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy { position:relative;",
+  1
+ ],
+ [
+  "can be pressed twice",
+  "portalcss",
+  "cursor:progress; pointer-events:none; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  "cursor:progress; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  1
+ ],
+ [
+  "no ring in the portal",
+  "portalcss",
+  ".is-busy::after { content:\"\"; position:absolute; left:50%; top:50%; inline-size:13px; block-size:13px; margin:-7px 0 0 -7px; border-radius:50%; border:2px solid var(--portal-accent);",
+  ".is-busy::after { position:absolute; left:50%; top:50%; inline-size:13px; block-size:13px; margin:-7px 0 0 -7px; border-radius:50%; border:2px solid var(--portal-accent);",
+  1
+ ],
+ [
+  "no master rule in admin",
+  "admincss",
+  ":not(.admin-button, .rga-call-refresh).is-busy { position:relative; color:transparent !important;",
+  ":not(.admin-button, .rga-call-refresh).is-busy-x { position:relative; color:transparent !important;",
+  1
+ ],
+ [
+  "busy.js loads after Supabase",
+  "portal",
+  "import \"/shared/busy.js?v=20261015a\";\nimport { createClient } from \"/vendor/supabase-js-2.52.1.js\";",
+  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";\nimport \"/shared/busy.js?v=20261015a\";",
+  1
+ ],
+ [
+  "admin doesn't load busy.js",
+  "admin",
+  "import \"/shared/busy.js?v=20261015a\";\n",
+  "",
+  1
+ ]
+]

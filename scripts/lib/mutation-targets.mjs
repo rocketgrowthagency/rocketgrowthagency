@@ -93,6 +93,7 @@ export const FILES = {
   photoremove: "netlify/functions/portal-photo-remove.js",
   secondlogo: "shared/photo-second-logo.js",
   photokeep: "netlify/functions/portal-photo-keep.js",
+  busyjs: "shared/busy.js",
   changeremovesql: "docs/supabase/RGA_CLIENT_PHOTO_CHANGE_REMOVE_2026-10-15.sql",
   dupoverride: "netlify/functions/gbp-listing-override.js",
   notifyrga: "netlify/functions/notify-rga.js",
