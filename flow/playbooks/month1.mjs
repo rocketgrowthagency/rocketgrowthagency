@@ -678,7 +678,8 @@ If unverified: trigger postcard or video verification from inside GBP. Block on 
     type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     instructions: `The client confirms five facts in the portal against what Google shows (read live): business name, whether customers come to them (address shown or hidden), service area, phone, website.
 Phone + website differences are written to Google and read back automatically.
-Name, address and service-area differences are RGA's: change them in Google Business Profile (Google can ask to verify again). The nightly check finishes the step once Google shows the name / address; mark a service-area change Done here.`,
+Name and address differences are RGA's: change them in Google Business Profile (Google can ask to verify again).
+Service area: add / drop the places on the checklist in Google Business Profile (its own place picker). The nightly check ticks each place Google lists and finishes the step; if Google has no such place, press "Google doesn't list it" and the client picks a nearby area.`,
   },
   {
     id: "m1.gbp.optimize_categories", title: "Lock primary + secondary categories",

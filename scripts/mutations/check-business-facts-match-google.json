@@ -390,5 +390,12 @@
   "        <div class=\"ob-body\">${askNote}${",
   "        <div class=\"ob-body\">${askNote}${\"\" && ",
   1
+ ],
+ [
+  "admin says as on Google",
+  "admin",
+  "[\"Service area\", \"area\", v.area?.keep || v.area?.add ?",
+  "[\"Service area\", \"area\", false ?",
+  1
  ]
 ]
