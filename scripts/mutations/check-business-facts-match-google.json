@@ -226,8 +226,15 @@
  [
   "the last line doesn't save",
   "portal",
-  "if (allAnswered && !caution) { submitStepInput(pick); return; }",
-  "if (false) { submitStepInput(pick); return; }",
+  "const save = allAnswered && !caution && wrap.querySelector(\"[data-in-submit]\");",
+  "const save = false;",
+  1
+ ],
+ [
+  "the save doesn't spin",
+  "portal",
+  "      save.classList.add(\"is-busy\", \"is-busy-say\");",
+  "      save.classList.add(\"x\");",
   1
  ]
 ]
