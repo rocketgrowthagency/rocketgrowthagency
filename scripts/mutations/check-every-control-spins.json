@@ -2,14 +2,14 @@
  [
   "nothing marks busy",
   "busyjs",
-  "    if (at && at.el && at.el.isConnected && now() - at.at < PRESS_MS) markBusy(at.el, p);",
+  "    if (at && at.el && at.el.isConnected && now() - at.at < PRESS_MS) markBusy(at.el, p, at.label);",
   "",
   1
  ],
  [
   "busy never clears",
   "busyjs",
-  "    if (left <= 0) { el.classList.remove(\"is-busy\"); el.removeAttribute(\"aria-busy\"); }",
+  "    if (left <= 0) { el.classList.remove(\"is-busy\", \"is-busy-say\"); el.removeAttribute(\"aria-busy\"); }",
   "",
   1
  ],
@@ -23,7 +23,7 @@
  [
   "a dialog's confirm isn't credited",
   "busyjs",
-  "  if (inDialog && opener && opener.isConnected) { press = { el: opener, at: now() }; return; }",
+  "  if (inDialog && opener && opener.isConnected) { press = { el: opener, at: now(), label: opener.__busyLabel ?? opener.textContent }; return; }",
   "",
   1
  ],
@@ -37,15 +37,15 @@
  [
   "label stays visible",
   "portalcss",
-  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy { position:relative; color:transparent !important;",
-  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy { position:relative;",
+  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy:not(.is-busy-say) { color:transparent !important; }",
+  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy:not(.is-busy-say) { }",
   1
  ],
  [
   "can be pressed twice",
   "portalcss",
-  "cursor:progress; pointer-events:none; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
-  "cursor:progress; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  ".is-busy { position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  ".is-busy { position:relative; cursor:progress; transition:none; opacity:1 !important; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
   1
  ],
  [
@@ -58,22 +58,36 @@
  [
   "no master rule in admin",
   "admincss",
-  ":not(.admin-button, .rga-call-refresh).is-busy { position:relative; color:transparent !important;",
-  ":not(.admin-button, .rga-call-refresh).is-busy-x { position:relative; color:transparent !important;",
+  ":not(.admin-button, .rga-call-refresh).is-busy { position:relative; cursor:progress;",
+  ":not(.admin-button, .rga-call-refresh).is-busy-x { position:relative; cursor:progress;",
   1
  ],
  [
   "busy.js loads after Supabase",
   "portal",
-  "import \"/shared/busy.js?v=20261015a\";\nimport { createClient } from \"/vendor/supabase-js-2.52.1.js\";",
-  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";\nimport \"/shared/busy.js?v=20261015a\";",
+  "import \"/shared/busy.js?v=20261015b\";\nimport { createClient } from \"/vendor/supabase-js-2.52.1.js\";",
+  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";\nimport \"/shared/busy.js?v=20261015b\";",
   1
  ],
  [
   "admin doesn't load busy.js",
   "admin",
-  "import \"/shared/busy.js?v=20261015a\";\n",
+  "import \"/shared/busy.js?v=20261015b\";\n",
   "",
+  1
+ ],
+ [
+  "handler words hidden",
+  "busyjs",
+  "  if (typeof label === \"string\" && el.textContent.trim() && el.textContent !== label) el.classList.add(\"is-busy-say\");",
+  "",
+  1
+ ],
+ [
+  "a working button fades",
+  "portalcss",
+  "pointer-events:none; transition:none; opacity:1 !important; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  "pointer-events:none; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
   1
  ]
 ]

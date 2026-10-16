@@ -22,8 +22,8 @@ for (const [name, src] of [["portal", portal], ["admin", admin]]) {
 }
 
 // ── 2 · one rule each, no second ring ──
-if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\(\.portal-button, \.dl-back, \.si-btn, \.si-link\)\.is-busy \{ position:relative; color:transparent !important; cursor:progress; pointer-events:none; transition:none; \}/.test(pcss)) fail("portal.css has no master busy rule (label hidden, same size, can't be pressed twice)");
-if (!/:is\(button, \[role="button"\], label, a\):not\(\.admin-button, \.rga-call-refresh\)\.is-busy \{ position:relative; color:transparent !important; cursor:progress; pointer-events:none; transition:none; \}/.test(acss)) fail("admin.css has no master busy rule");
+if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\(\.portal-button, \.dl-back, \.si-btn, \.si-link\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(pcss)) fail("portal.css has no master busy rule (same size, can't be pressed twice, never faded)");
+if (!/:is\(button, \[role="button"\], label, a\):not\(\.admin-button, \.rga-call-refresh\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(acss)) fail("admin.css has no master busy rule");
 if (/\.pm-act\.is-busy::before|\.pm-team-chip\.is-busy::before|\.pm-photo-rm\.is-busy::before/.test(pcss)) fail("an old per-button spinner is still there (it would draw a second ring beside the master one)");
 
 // ── 3 · in Chrome: press → ring in place, same size → request back → label back ──
@@ -49,6 +49,7 @@ try {
       <button id="open" type="button">Remove</button>
       <button id="late" type="button">Later</button>
       <button id="two" type="button">Save both</button>
+      <button id="say" class="${side === "portal" ? "pm-commit" : "rga-plain"}" type="button" style="${side === "portal" ? "" : "background:#2457e6;color:#fff;border:0;padding:8px 14px"}">Save my hours</button>
       <div id="host"></div>
       <script>${moduleSrc}
         document.getElementById("b").addEventListener("click", async () => { await fetch("https://slow.test/a"); });
@@ -59,6 +60,7 @@ try {
           d.querySelector("#ok").addEventListener("click", async () => { d.remove(); await fetch("https://slow.test/c"); });
         });
         document.getElementById("late").addEventListener("click", () => { setTimeout(() => fetch("https://slow.test/d"), 1800); });
+        document.getElementById("say").addEventListener("click", async (e) => { const b = e.currentTarget; b.textContent = "Sending to Google…"; b.disabled = true; await fetch("https://slow.test/f"); b.textContent = "Save my hours"; b.disabled = false; });
         document.getElementById("two").addEventListener("click", async () => { await Promise.all([fetch("https://slow.test/e"), fetch("https://slow.test/slow2")]); });
       </script></body></html>`, { waitUntil: "load" });
     const state = (sel) => page.evaluate((sel) => { const e = document.querySelector(sel); const cs = getComputedStyle(e), af = getComputedStyle(e, "::after");
@@ -84,6 +86,19 @@ try {
     await page.click("#ok"); await new Promise((r) => setTimeout(r, 150));
     if (!(await state("#open")).busy) fail(`${side}: after a confirm dialog, the control that opened it doesn't spin`);
     await new Promise((r) => setTimeout(r, 900));
+    // 🔴 10-15 (step 8 "Save my hours"): a handler that writes its own words keeps them, the ring beside them, never faded
+    await page.click("#say"); await new Promise((r) => setTimeout(r, 150));
+    { const st = await page.evaluate(() => { const e = document.getElementById("say"), cs = getComputedStyle(e), af = getComputedStyle(e, "::after");
+        return { busy: e.classList.contains("is-busy"), say: e.classList.contains("is-busy-say"), text: e.textContent, color: cs.color, opacity: cs.opacity, ring: af.content !== "none" ? af.borderTopColor : null, pos: af.position }; });
+      if (!st.busy || !st.say) fail(`${side}: a control whose handler wrote "Sending…" isn't marked as saying its own words`);
+      else {
+        if (/rgba\(0, 0, 0, 0\)|transparent/.test(st.color)) fail(`${side}: the handler's own progress words are hidden (the button went blank)`);
+        if (st.opacity !== "1") fail(`${side}: a working (disabled) button is faded (${st.opacity})`);
+        if (!st.ring || st.pos !== "static" || st.ring === st.color.replace(/, 1\)$/, ")") && false) fail(`${side}: no ring beside the words`);
+        if (st.ring && /rgba\(0, 0, 0, 0\)/.test(st.ring)) fail(`${side}: the ring beside the words is invisible`);
+      } }
+    await new Promise((r) => setTimeout(r, 900));
+    if (await page.evaluate(() => document.getElementById("say").className.includes("is-busy"))) fail(`${side}: "say" busy state doesn't clear`);
     // two requests: busy until BOTH are back
     await page.click("#two"); await new Promise((r) => setTimeout(r, 1100));
     if (!(await state("#two")).busy) fail(`${side}: a control that started two requests stops spinning when the first is back`);
