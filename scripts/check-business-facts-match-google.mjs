@@ -175,7 +175,7 @@ const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/stepId === STEP\.FACTS && push\.state === "with_rga"/.test(drift) || !/stepId === STEP\.FACTS \? \{ name: now\.name, come: now\.come \? "yes" : "no"/.test(drift)) fail("admin's put back / keep Google's doesn't handle the facts");
 const admin = nc(read("admin/admin.js"));
 if (!/const CLIENT_GBP_STEPS = \{ "m1\.gbp\.business_facts":/.test(admin) || !/const GBP_DRIFT_STEPS = \{ "m1\.gbp\.business_facts": "Business details"/.test(admin)) fail("admin doesn't count the step as the client's, or doesn't show a change on Google for it");
-if (!/<table class="ob-facts"><thead><tr><th>Fact<\/th><th>Client confirmed<\/th><th>Google before<\/th><th>Google now<\/th>/.test(admin)) fail("admin's step card doesn't show confirmed · before · now for each fact");
+if (!/<table class="ob-gbpfacts"><thead><tr><th>Fact<\/th><th>Client confirmed<\/th><th>Google before<\/th><th>Google now<\/th>/.test(admin)) fail("admin's step card doesn't show confirmed · before · now for each fact");
 if (!/if \(factsTodo\.length\) \{\s*return \{\s*title: `Change on Google: \$\{factsTodo\.map/.test(admin)) fail("a name / address / area to change isn't RGA's Your action");
 
 // ── 6 · the portal draws the rows: matches green, a difference both values, a gap asks, a stuffed name is RGA's ──
@@ -280,5 +280,8 @@ if (!/<span class="pm-fx-pls">\$\{items\.map\(chip\)\.join\(""\)\}<\/span>/.test
 }
 if (/send-email|sendEmail|send-step-email/.test(js.slice(js.indexOf("function factsNoteHtml"), js.indexOf("function factsNoteHtml") + 1800))) fail("the done note sends an email (not approved)");
 
+// 🔴 10-16: the table first used ".ob-facts", a class an older admin component already styles as a flex column, so the
+// headings fell out of line with the columns. Its class is defined once, as a table.
+{ const acss = read("admin/admin.css"); if ((acss.match(/^\.ob-gbpfacts\s*\{/gm) || []).length !== 1 || !/\.ob-gbpfacts \{ width:100%; border-collapse:collapse;/.test(acss)) fail("the admin facts table's class is styled by another rule too (or isn't a table)"); }
 if (F.length) { console.error("🔴 \"Check your business on Google\" isn't the approved build:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ business facts match Google: read first, compared universally (names, phones with country codes, sites with tags), a difference shows both, phone + website written and read back, name / address / area RGA's (Your action, nightly finishes it), the client record follows the answer (read back, recorded), admin shows confirmed · before · now, the nightly check watches it; step 7 after verify, numbers 1…N");

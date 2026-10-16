@@ -156,8 +156,8 @@
  [
   "admin no facts table",
   "admin",
-  "<table class=\"ob-facts\"><thead><tr><th>Fact</th>",
-  "<table class=\"ob-facts\"><thead><tr><th>What</th>",
+  "<table class=\"ob-gbpfacts\"><thead><tr><th>Fact</th>",
+  "<table class=\"ob-gbpfacts\"><thead><tr><th>What</th>",
   1
  ],
  [
@@ -452,6 +452,13 @@
   "portal",
   "  if (t.status !== \"done\" && missing.length) {",
   "  if (false) {",
+  1
+ ],
+ [
+  "class collides again",
+  "admincss",
+  ".ob-gbpfacts { width:100%; border-collapse:collapse;",
+  ".ob-gbpfacts { display:flex; }\n.ob-gbpfacts { width:100%; border-collapse:collapse;",
   1
  ]
 ]
