@@ -397,5 +397,61 @@
   "[\"Service area\", \"area\", v.area?.keep || v.area?.add ?",
   "[\"Service area\", \"area\", false ?",
   1
+ ],
+ [
+  "no Maps link read",
+  "gbpfacts",
+  "const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea,metadata\";",
+  "const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea\";",
+  1
+ ],
+ [
+  "progress always waiting",
+  "gbpfacts",
+  "items.push({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n) })",
+  "items.push({ kind: \"area\", name: n, on: false })",
+  1
+ ],
+ [
+  "progress claims on Google with no read",
+  "gbpfacts",
+  "on: !!now && sameName(v.name, now.name)",
+  "on: !now || sameName(v.name, now.name)",
+  1
+ ],
+ [
+  "nightly stores no progress",
+  "gbpwatch",
+  "area_now_at: atNow, progress: prog,",
+  "area_now_at: atNow,",
+  1
+ ],
+ [
+  "no done note",
+  "gbpwatch",
+  "done_note_until: new Date(nowMs + 86400000).toISOString().slice(0, 10), ",
+  "",
+  1
+ ],
+ [
+  "client sees no chips",
+  "portal",
+  "<span class=\"pm-fx-pls\">${items.map(chip).join(\"\")}</span>",
+  "",
+  1
+ ],
+ [
+  "done note never shows",
+  "portal",
+  "  if (t.status === \"done\" && g.done_note_until && today <= g.done_note_until) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "missing never told",
+  "portal",
+  "  if (t.status !== \"done\" && missing.length) {",
+  "  if (false) {",
+  1
  ]
 ]

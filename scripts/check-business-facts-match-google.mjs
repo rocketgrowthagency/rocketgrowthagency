@@ -249,5 +249,36 @@ if (!/const anchor = b\.closest\("\.pm-fx-sub, \.pm-row-actions"\);\s*if \(detai
 if (!/<div class="ob-body">\$\{askNote\}\$\{\/\*[\s\S]{0,400}?\*\/\s*clientInputHtml\(o, s\.task\)\}/.test(read("admin/admin.js")) || !/<div class="ob-body">\$\{clientInputHtml\(o, s\.task\)\}\$\{outHtml\}/.test(admin)) fail("admin shows the client's answer only once the step is done (not while RGA is finishing it)");
 
 if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\.area\.keep \|\| \[\]\)\.length \+ \(v\.area\.add \|\| \[\]\)\.length\} places/.test(admin)) fail("admin's facts table says the service area is \"as on Google\" after the client picked a list");
+// ── 9 · THE CLIENT SEES EACH CHANGE REACH GOOGLE (approved step7_client_progress_v1) ──
+{
+  const task = { client_input: ANS({ name: "Joe's Plumbing", come: "yes" }), google_push: { state: "with_rga", rga: [{ fact: "area", add: ["Mar Vista", "Palms"], remove: ["Culver City, CA, USA"] }, { fact: "name" }, { fact: "come" }] } };
+  const now = X.factsFromGoogle({ title: "Joes Plumbing", storefrontAddress: { addressLines: ["1 Main"] }, metadata: { mapsUri: "https://maps.google.com/?cid=1" },
+    serviceArea: { places: { placeInfos: [{ placeName: "Mar Vista, Los Angeles, CA, USA" }, { placeName: "El Segundo, CA, USA" }] } } });
+  if (now.mapsUri !== "https://maps.google.com/?cid=1" || !/metadata/.test(X.READ_MASK)) fail("the listing's own Google Maps link isn't read");
+  const pr = X.progressOf(task, now, "2026-10-17T10:30:00Z");
+  const st = Object.fromEntries(pr.items.map((x) => [`${x.kind}:${x.name}`, x.on]));
+  if (st["area:Mar Vista"] !== true || st["area:Palms"] !== false || st["drop:Culver City, CA, USA"] !== true || st["name:Joe's Plumbing"] !== true || st["come:Address shown"] !== true || pr.at !== "2026-10-17T10:30:00Z" || pr.maps_uri !== "https://maps.google.com/?cid=1")
+    fail(`each change isn't marked waiting / on Google from Google's own read (${JSON.stringify(pr)})`);
+  if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
+}
+if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
+if (!/const chip = \(x\) => `<span class="pm-fx-pl \$\{x\.on \? "on" : "wait"\}">/.test(js) || !/See it on Google Maps ↗<\/a>` : ""\}<\/span><\/div>`;\n  \}/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
+if (!/<span class="pm-fx-pls">\$\{items\.map\(chip\)\.join\(""\)\}<\/span>/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
+{
+  // the note, run for real
+  const ni = portal.indexOf("function factsNoteHtml(t) {"), nj = portal.indexOf("\n}\n", ni);
+  const nctx = { escapeHtml: esc, Date };
+  vm.createContext(nctx);
+  vm.runInContext(`${portal.slice(ni, nj + 2)}\nthis.note = factsNoteHtml;`, nctx);
+  const miss = nctx.note({ status: "pending", google_push: { area_missing: ["Palms, CA"] } });
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10), yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const done = nctx.note({ status: "done", client_input: { area: { add: ["Mar Vista", "Palms", "Playa Vista"] } }, google_push: { done_note_until: tomorrow } });
+  if (!/Your turn/.test(miss) || !/Google doesn(?:'|&#39;)t list &quot;Palms&quot;: pick a nearby area/.test(miss)) fail("a place Google can't find isn't told at the top of the portal");
+  if (!/Your 3 new service areas are on Google/.test(done) || !/Mar Vista, Palms, Playa Vista now show on your profile/.test(done)) fail("the top of the portal doesn't say step 7 is done on Google");
+  if (nctx.note({ status: "done", google_push: { done_note_until: yesterday } })) fail("the done note stays after its day");
+}
+if (/send-email|sendEmail|send-step-email/.test(js.slice(js.indexOf("function factsNoteHtml"), js.indexOf("function factsNoteHtml") + 1800))) fail("the done note sends an email (not approved)");
+
 if (F.length) { console.error("🔴 \"Check your business on Google\" isn't the approved build:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ business facts match Google: read first, compared universally (names, phones with country codes, sites with tags), a difference shows both, phone + website written and read back, name / address / area RGA's (Your action, nightly finishes it), the client record follows the answer (read back, recorded), admin shows confirmed · before · now, the nightly check watches it; step 7 after verify, numbers 1…N");
