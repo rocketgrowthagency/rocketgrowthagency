@@ -96,6 +96,8 @@ export const FILES = {
   busyjs: "shared/busy.js",
   gbpwatch: "netlify/functions/_gbp-watch.js",
   gbpdrift: "netlify/functions/admin-gbp-drift.js",
+  recordfn: "netlify/functions/_record.js",
+  gbpprofilewatch: "netlify/functions/gbp-profile-watch.js",
   dupcleared: "netlify/functions/_dup-cleared.js",
   changeremovesql: "docs/supabase/RGA_CLIENT_PHOTO_CHANGE_REMOVE_2026-10-15.sql",
   dupoverride: "netlify/functions/gbp-listing-override.js",
