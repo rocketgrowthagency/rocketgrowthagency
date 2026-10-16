@@ -36,7 +36,8 @@ export const READ_ONLY_FN_POSTS = {
   // portal-gbp-profile.js (2026-10-15) — readForStep only GETs the Google profile; nothing is written to Google or to the
   // client's record. Its one side effect: an expired Google access token is refreshed and cached (_google-token.js),
   // which every Google call does and which changes nothing the client or RGA sees.
-  "portal-gbp-profile": onlyKeys(["client_id", "step_id"]),
+  // + check_link (step10_booking_link_v1, 10-16): "does this link open?" fetches that public page and stores nothing
+  "portal-gbp-profile": onlyKeys(["client_id", "step_id", "check_link"]),
   // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
   // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
   "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",
