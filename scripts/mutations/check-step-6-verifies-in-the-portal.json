@@ -79,8 +79,8 @@
  [
   "no Maps link",
   "portal",
-  "${f.mapsUri ? `<a class=\"pm-gv-go\"",
-  "${false ? `<a class=\"pm-gv-go\"",
+  "const maps = f.mapsUri ? `<a class=\"gcard-maps\"",
+  "const maps = false ? `<a class=\"gcard-maps\"",
   1
  ]
 ]

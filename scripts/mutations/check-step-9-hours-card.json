@@ -16,8 +16,8 @@
  [
   "no Maps link",
   "portal",
-  "${maps ? ` <a class=\"pm-fx-maps\" href=\"${escapeAttribute(maps)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\"}",
-  "",
+  "${maps ? ` · ${gcardMaps(maps)}` : \"\"}`,\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
+  "`,\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
   1
  ],
  [

@@ -149,7 +149,7 @@ if (/60%\+/.test(read("data/playbooks/client-steps.json"))) fail("step 11's unso
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 // 🔑 10-16: gbpPushHtml also draws step 7's progress and step 9's card, so their helpers ride along
-const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
+const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a portal helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -173,9 +173,10 @@ try {
   });
   if (r.sum !== "Mon–Fri 9 AM–6 PM · Sat–Sun closed") fail(`the hours summary reads "${r.sum}"`);
   // (the small label is uppercase by CSS, so the match ignores case)
-  if (!/^✓ On your Google Business Profile Your hours Mon–Fri 9 AM–6 PM · Sat–Sun closed · checked Oct 15$/i.test(r.on)) fail(`a verified step doesn't say it's on Google (${r.on})`);
+  // 🔒 one_google_card_v1: the summary, then "Checked on Google <date>" in the card's bottom line
+  if (!/^✓ On your Google Business Profile Your hours Mon–Fri 9 AM–6 PM · Sat–Sun closed Checked on Google Oct 15$/i.test(r.on)) fail(`a verified step doesn't say it's on Google (${r.on})`);
   if (!/^Going on your Google profile Your booking link .*nothing needed from you\.$/i.test(r.rga) || /403/.test(r.rga)) fail(`RGA's fix doesn't read "Going on your Google profile", or shows Google's raw text (${r.rga})`);
-  if (r.fix !== "Google said: This link doesn't open. How to fix: Paste the public link.") fail(`a refusal the client fixes doesn't read Google said + How to fix (${r.fix})`);
+  if (!/^Google said This link doesn't open\. How to fix: Paste the public link\. Fix it$/i.test(r.fix)) fail(`a refusal the client fixes doesn't read Google said + How to fix (${r.fix})`);
   if (!/Identifies as women-owned/.test(r.attrs)) fail("step 11's verified details aren't named");
   if (r.other) fail("a step that doesn't go on Google draws a Google line");
 } finally { await browser.close(); }

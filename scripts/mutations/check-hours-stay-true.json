@@ -86,8 +86,8 @@
  [
   "card hides closed days",
   "portal",
-  "<span class=\"gbp-closed\">Closed on Google: ${escapeHtml(g.special.sent.map(",
-  "<span class=\"gbp-closed\">${escapeHtml(g.special.sent.map(",
+  "<span class=\"gcard-says\">Closed on Google: ${escapeHtml(g.special.sent.map(",
+  "<span class=\"gcard-says\">${escapeHtml(g.special.sent.map(",
   1
  ],
  [

@@ -1,0 +1,72 @@
+[
+ [
+  "the card gets a tinted fill",
+  "portalcss",
+  "background:var(--portal-card,#fff); border:1px solid var(--portal-line,#e3e3e3); border-left:4px solid var(--state-ok);",
+  "background:var(--state-ok-bg); border:1px solid var(--portal-line,#e3e3e3); border-left:4px solid var(--state-ok);",
+  1
+ ],
+ [
+  "step 9 draws blue",
+  "portal",
+  "return googleCardHtml({ state: \"ok\", small: \"✓ On your Google Business Profile\", title: \"Your hours\",",
+  "return googleCardHtml({ state: \"rga\", small: \"✓ On your Google Business Profile\", title: \"Your hours\",",
+  1
+ ],
+ [
+  "admin's blue isn't the portal's",
+  "css",
+  ".ob-gcard.rga { border-left-color:var(--state-other-edge); }",
+  ".ob-gcard.rga { border-left-color:var(--state-other); }",
+  1
+ ],
+ [
+  "admin's note is back",
+  "admin",
+  ": g.state === \"not_sent\" ? adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\", title: \"The client doesn't take bookings online\", meta: gWhen(g.at) })",
+  ": g.state === \"not_sent\" ? `<div class=\"ob-in-note\">Nothing sent to Google</div>`",
+  1
+ ],
+ [
+  "step 6 loses Check again",
+  "portal",
+  "act: kind === \"yes\" ? `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` : \"\"",
+  "act: \"\"",
+  1
+ ],
+ [
+  "step 6's buttons back under the card",
+  "portal",
+  "<div class=\"pm-row-actions\"${step.id === \"m1.gbp.verify\" && isDone && !month2Only ? \" hidden\" : \"\"}>",
+  "<div class=\"pm-row-actions\">",
+  1
+ ],
+ [
+  "no Google logo",
+  "portal",
+  "<span class=\"gcard-i\" aria-hidden=\"true\">${GOOGLE_G}</span>",
+  "<span class=\"gcard-i\" aria-hidden=\"true\"></span>",
+  1
+ ],
+ [
+  "green tiles inside",
+  "portalcss",
+  ".pm-hc-day { border:1px solid var(--portal-line);",
+  ".pm-hc-day { border:1px solid var(--state-ok-line);",
+  1
+ ],
+ [
+  "a code to type reads grey",
+  "portal",
+  "(opts.code ? \"you\" : \"wait\")",
+  "\"wait\"",
+  1
+ ],
+ [
+  "admin step 6 without the card",
+  "admin",
+  "if (step?.flowId === \"m1.gbp.verify\" && task?.status === \"done\" && task?.detected?.verdict) {",
+  "if (false) {",
+  1
+ ]
+]
