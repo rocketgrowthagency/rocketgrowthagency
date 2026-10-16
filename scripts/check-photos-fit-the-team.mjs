@@ -7,7 +7,8 @@
 // office isn't ready. Now: the team size is asked once ("Just me" · 2 · 3 to 5 · 6 or more) and refits the EMPTY shots
 // that need the client's own staff (never a shot with a customer in it); every fitted shot has its own drawing with the
 // right number of people; a slot holding a photo keeps its wording; and a business that goes to its customers sees
-// "You can take these today" first, the premises shots folded under "When your space is ready".
+// 🔄 one list for every business (photo_kinds_equal_v1); premises shots tagged "Needs your space" for a business that goes
+// to its customers.
 // Files only (the real runner and the real portal renderer, faked I/O).
 import fs from "node:fs";
 import vm from "node:vm";
@@ -67,7 +68,7 @@ const T = req("./portal-photo-team.js");
   const out = T.refit(shape, "1", new Set([11]));
   const n11 = out.items.find((i) => i.n === 11), n12 = out.items.find((i) => i.n === 12);
   if (n11.do !== "The team planning at a whiteboard, faces to camera." || n12.do !== "You at your desk, relaxed.") fail(`a slot holding a photo was refitted, or an empty one wasn't (${n11.do} · ${n12.do})`);
-  // 10-15: a list stored before `place` existed — a held premises slot still lands under "When your space is ready"
+  // 10-15: a list stored before `place` existed — a held premises slot still learns it's a premises shot (its tag)
   const old = { ...cur, items: cur.items.map(({ place, ...it }) => it) };
   const o3 = T.refit(old, "1", new Set([3])).items.find((i) => i.n === 3);
   if (!o3.place || o3.do !== old.items.find((i) => i.n === 3).do) fail("a held slot from a list stored before `place` doesn't learn it's a premises shot (or lost its words)");
@@ -80,7 +81,7 @@ const ep = read("netlify/functions/portal-photo-team.js").replace(/^[ \t]*\/\/.*
   if (!/box\.querySelectorAll\("\[data-team-size\]"\)\.forEach\(\(x\) => \{ x\.disabled = true; \}\);[\s\S]{0,200}b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(pjs) || !/b\.classList\.remove\("is-busy"\); b\.removeAttribute\("aria-busy"\);\s*if \(msg\) \{ msg\.hidden = false; msg\.className = "pm-team-msg bad"/.test(pjs)) fail("a team-size choice shows nothing while it refits (the pressed chip must spin, and stop on an error)"); }
 if (!/const gate = await requirePortalOwner\(event, clientId\);/.test(ep) || !/if \(!TEAM_SIZES\.includes\(size\)\)/.test(ep) || !/after\?\.tasks\?\.\[STEP\]\?\.team_size !== size/.test(ep)) fail("the team size can be set by someone else, set to anything, or not read back");
 
-// ── 3 · the portal: the question, and what you can take today first ──
+// ── 3 · the portal: the question, and one equal list ──
 const portal = read("portal/portal.js");
 const cut = (start, endMark) => { const i = portal.indexOf(start); if (i < 0) return null; const j = portal.indexOf(endMark, i); return j < 0 ? null : portal.slice(i, j); };
 const slotsSrc = cut("const SLOT_CATEGORY = {", "\n/** Fill the slot thumbnails"), stateSrc = cut("const PHOTO_STATE = {", "\n\n"), bigSrc = cut("const photoExampleBigHtml = (ex, key = \"\") =>", "\n\n");
@@ -97,19 +98,25 @@ const text = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/\
 {
   const sab = P.buildShotList({ typeOverride: "Marketing agencies", storefront: false, teamSize: "1" });
   const h = pctx.render({ clientForm: "photo_upload" }, { draft_shape: sab, team_size: "1" }, [], "c1");
-  const iToday = h.indexOf("You can take these today"), iLater = h.indexOf("When your space is ready");
-  if (iToday < 0 || iLater < 0 || iToday > iLater) fail("a business that goes to its customers doesn't see \"You can take these today\" first and the premises shots after");
-  const later = h.slice(iLater);
-  for (const n of [2, 3, 4, 5, 6, 7, 8, 18]) if (!later.includes(`data-slot="${n}"`)) fail(`premises shot ${n} isn't under "When your space is ready"`);
-  if (h.slice(iToday, iLater).includes('data-slot="3"')) fail("a premises shot is in \"You can take these today\"");
-  if (!/<details class="pm-later pm-fold" data-fold="later">/.test(h) || !/files these as "Additional" photos/.test(h)) fail("the premises shots aren't folded with the one-line reason");
+  // 🔄 ONE LIST, EVERY KIND EQUAL (approved photo_kinds_equal_v1, 10-15; replaced "You can take these today" / "When your
+  // space is ready"): the shot list's own order for every business; premises shots carry a tag instead of moving
+  if (/You can take these today|When your space is ready|data-fold="kind:[a-z-]+:later"/.test(h)) fail("the photos are still split into two lists (one drawn as less important)");
+  const order = [...h.matchAll(/class="pm-slot[^"]*" data-slot="(\d+)"/g)].map((m) => Number(m[1]));
+  if (order.join(",") !== [...order].sort((x, y) => x - y).join(",")) fail(`the shots aren't in the list's own order (${order.join(",")})`);
+  if (new Set(h.match(/data-fold="kind:[a-z-]+"/g) || []).size !== (h.match(/data-fold="kind:[a-z-]+"/g) || []).length) fail("a kind appears twice (\"At work\" was split in two)");
+  const slotHtml = (n) => { const i = h.indexOf(`data-slot="${n}"`); return i < 0 ? "" : h.slice(i, h.indexOf('<div class="pm-ex-big"', i)); };
+  for (const n of [2, 3, 4, 5, 6, 7, 8, 18]) if (!/<span class="pm-space-tag">Needs your space<\/span>/.test(slotHtml(n))) fail(`premises shot ${n} has no "Needs your space" tag`);
+  for (const n of [9, 12, 14]) if (/pm-space-tag/.test(slotHtml(n))) fail(`shot ${n} doesn't need the business's space but is tagged`);
+  const kindSec = (k) => { const i = h.indexOf(`data-fold="kind:${k}"`); return i < 0 ? "" : h.slice(i, h.indexOf("</summary>", i) + 400); };
+  for (const k of ["cover", "exterior", "interior"]) if (!/<p class="pm-kind-note"><b>Needs your space\.<\/b> Google lists you as a business that goes to its customers, so it files these as "Additional"\. They still count toward your 20\.<\/p>/.test(kindSec(k))) fail(`the all-premises kind "${k}" doesn't say why Google files it as Additional`);
+  for (const k of ["team", "at-work"]) if (/pm-kind-note/.test(kindSec(k))) fail(`the kind "${k}" carries the premises note but isn't all premises`);
   if (!/data-team-size="1"[^>]*>Just me/.test(h) || !/class="pm-team-chip on"[^>]*data-team-size="1"/.test(h)) fail("the team-size question isn't there, or doesn't show the saved answer");
   if (!/data-ex-art="E\|s\|11~1"/.test(h)) fail("a fitted shot doesn't carry its own drawing");
   if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("the split dropped or duplicated a slot");
   if (!/You planning at a whiteboard, face to camera\./.test(text(h))) fail("the portal doesn't show the fitted wording");
   const shop = P.buildShotList({ typeOverride: "Law firms", storefront: true });
   const hs = pctx.render({ clientForm: "photo_upload" }, { draft_shape: shop }, [], "c1");
-  if (/When your space is ready/.test(hs)) fail("a storefront business has its premises shots folded away");
+  if (/When your space is ready|pm-space-tag|pm-kind-note/.test(hs)) fail("a storefront business gets the premises tag / note (or its shots folded away)");
 }
 
 if (F.length) { console.error("🔴 step 7's shots don't fit the team, or lead with the wrong ones:"); for (const f of F) console.error("   · " + f); process.exit(1); }

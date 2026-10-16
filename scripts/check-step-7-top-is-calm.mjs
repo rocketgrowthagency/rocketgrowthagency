@@ -64,18 +64,19 @@ if (!/<i class="ok" style="width:10%"><\/i><i class="re" style="width:10%"><\/i>
 if (/noticeably more calls/.test(JSON.stringify(STEP)) || /noticeably more calls/.test(read("data/playbooks/playbooks.json"))) fail("the unsourced \"20+ photos get noticeably more calls\" is back in step 7");
 if (!h.slice(iTips, iList).includes(esc(STEP.clientHow.why))) fail("the tips' Why no longer holds why it matters");
 // ── 3 · a retake is never folded out of sight ──
-if (!/<details class="pm-later pm-fold" data-fold="later" open data-fold-held>/.test(h)) fail("\"When your space is ready\" stays folded while it holds a retake");
-if (/data-fold-held/.test(ctx.how(step, task, true, photos.filter((p) => p.publish_state !== "turned_down"), "c1", null))) fail("\"When your space is ready\" is held open with nothing to retake");
+// 🔄 one list (photo_kinds_equal_v1): the KIND holding the retake opens itself
+if (!/<details class="pm-sgrp pm-acc[^"]*has-re" data-fold="kind:interior" open data-fold-held>/.test(h)) fail("the kind holding a retake stays folded");
+if (/data-fold-held/.test(ctx.how(step, task, true, photos.filter((p) => p.publish_state !== "turned_down"), "c1", null))) fail("a kind is held open with nothing to retake");
 if (!/if \(d\.hasAttribute\("data-fold-held"\)\) return;/.test(portal)) fail("what this device remembered can fold a retake away again");
 // ── 4 · the toolbar holds the team question; "upload several" lives in each kind (step7_later_and_upload_v1 v2) ──
 const tool = h.slice(iTool, iTips);
 if (!/data-photo-team/.test(tool) || !/How many people are in your business\?/.test(tool) || /data-batch|<select/.test(tool)) fail("the toolbar isn't just the team question (the batch upload moved into each kind)");
 const kindUp = (key) => { const a = h.indexOf(`data-fold="${key}"`); if (a < 0) return null; const b = h.indexOf("</details>", a); const m = /<div class="pm-kind-up">.*?Upload up to (\d+) at once<input[^>]*data-batch[^>]*data-cat="([^"]+)" data-empty="([^"]*)"/s.exec(h.slice(a, b)); return m ? { n: m[1], cat: m[2], empty: m[3] } : null; };
-const team = kindUp("kind:team"), work = kindUp("kind:at-work"), interior = kindUp("kind:interior:later");
+const team = kindUp("kind:team"), work = kindUp("kind:at-work"), interior = kindUp("kind:interior");
 if (!team || team.n !== "5" || team.empty !== "9,10,11,12,13" || team.cat !== "team") fail(`Team doesn't offer its own "Upload up to 5 at once" into its empty slots (${JSON.stringify(team)})`);
-if (!work || work.n !== "6") fail(`At work (today) doesn't offer its own batch for its 6 empty slots (${JSON.stringify(work)})`);
+if (!work || work.n !== "7" || work.empty !== "14,15,16,17,18,19,20") fail(`At work (one kind now) doesn't offer its own batch for all 7 empty slots (${JSON.stringify(work)})`);
 if (!interior || interior.empty !== "6,7,8") fail(`a kind with retakes doesn't count the retake slots as room (${JSON.stringify(interior)})`);
-if (kindUp("kind:logo") || kindUp("kind:cover:later")) fail("a full kind, or a kind with one slot, offers a batch");
+if (kindUp("kind:logo") || kindUp("kind:cover")) fail("a full kind, or a kind with one slot, offers a batch");
 const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null);
 if (!/<div class="pm-tool ask">/.test(ask) || !/How many people are in your business\?/.test(ask)) fail("before it's answered, the toolbar doesn't ask the whole question, outlined");
 // ── 4b · "Not ready yet? Remind me later" sits under the plain line, only on the client's move ──
@@ -95,7 +96,7 @@ try {
     await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row is-now"><div id=h style="padding:0 16px">${h}</div></div></div></body></html>`);
     await page.addStyleTag({ content: read("portal/portal.css") });
     const r = await page.evaluate(() => {
-      const later = document.querySelector(".pm-later");
+      const later = document.querySelector('[data-fold="kind:interior"]');
       const retake = [...document.querySelectorAll('.pm-slot.turned')].filter((e) => e.checkVisibility()).length;
       return { spill: document.documentElement.scrollWidth > innerWidth + 1, retake, laterOpen: later?.open,
         bar: getComputedStyle(document.querySelector(".pm-p2-bar i.re")).backgroundColor, ok: getComputedStyle(document.querySelector(".pm-p2-bar i.ok")).backgroundColor };

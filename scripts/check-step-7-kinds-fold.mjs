@@ -46,14 +46,15 @@ const h = ctx.how(step, task, true, photos, "c1", null);
 
 // ── 1 · every kind is a fold; closed unless it holds a retake ──
 const folds = [...h.matchAll(/<details class="pm-sgrp pm-acc([^"]*)" data-fold="([^"]+)"([^>]*)>/g)].map((m) => ({ cls: m[1], key: m[2], attrs: m[3] }));
-if (folds.length !== 7) fail(`expected 7 kind folds (Logo, Team, At work · Cover, Exterior, Interior, At work), found ${folds.length}`);
+// 🔄 one list (photo_kinds_equal_v1): six kinds, each once — Logo, Cover, Exterior, Interior, Team, At work
+if (folds.length !== 6) fail(`expected 6 kind folds (Logo, Cover, Exterior, Interior, Team, At work), found ${folds.length}`);
 if (/<div class="pm-sgrp/.test(h)) fail("a kind is still an always-open block");
 if (new Set(folds.map((f) => f.key)).size !== folds.length) fail(`two folds share a remembered state (${folds.map((f) => f.key).join(", ")})`);
-const interior = folds.find((f) => f.key === "kind:interior:later"), team = folds.find((f) => f.key === "kind:team"), logo = folds.find((f) => f.key === "kind:logo");
+const interior = folds.find((f) => f.key === "kind:interior"), team = folds.find((f) => f.key === "kind:team"), logo = folds.find((f) => f.key === "kind:logo");
 if (!interior || !/ open data-fold-held/.test(interior.attrs) || !/has-re/.test(interior.cls)) fail("the kind holding two retakes isn't held open");
 if (folds.filter((f) => f !== interior).some((f) => / open/.test(f.attrs))) fail("a kind with nothing to retake opens by default");
 const sec = (key) => { const i = h.indexOf(`data-fold="${key}"`); return h.slice(i, h.indexOf("</summary>", i)); };
-if (!/<span class="acc-re">2 to retake<\/span>/.test(sec("kind:interior:later"))) fail("the retake kind's line doesn't say \"2 to retake\"");
+if (!/<span class="acc-re">2 to retake<\/span>/.test(sec("kind:interior"))) fail("the retake kind's line doesn't say \"2 to retake\"");
 // 🔄 10-15 (Chris: "make the 4/5 like how it is in admin so they match"): "x / n", the admin card's bar and count
 if (!/<i style="width:100%"><\/i><\/span><span class="acc-n">1 \/ 1<\/span>/.test(sec("kind:logo")) || !/ done/.test(logo?.cls || "")) fail("a finished kind doesn't show a full bar and \"1 / 1\"");
 if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 \/ 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 / 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);

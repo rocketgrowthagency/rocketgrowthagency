@@ -14,10 +14,10 @@
   1
  ],
  [
-  "a retake hides in the fold",
+  "a retake hides in its folded kind",
   "portal",
-  "${laterRetake ? \" open data-fold-held\" : \"\"}",
-  "",
+  "data-fold=\"${escapeAttribute(key)}\"${retake ? \" open data-fold-held\" : \"\"}>",
+  "data-fold=\"${escapeAttribute(key)}\">",
   1
  ],
  [

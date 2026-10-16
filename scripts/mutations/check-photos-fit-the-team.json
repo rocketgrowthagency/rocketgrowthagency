@@ -56,20 +56,6 @@
   1
  ],
  [
-  "premises shots lead",
-  "portal",
-  "  const splitPlace = shape && shape.storefront === false && items.some((it) => it.place) && items.some((it) => !it.place);",
-  "  const splitPlace = false;",
-  1
- ],
- [
-  "storefronts folded too",
-  "portal",
-  "  const splitPlace = shape && shape.storefront === false && items.some((it) => it.place) && items.some((it) => !it.place);",
-  "  const splitPlace = shape && items.some((it) => it.place) && items.some((it) => !it.place);",
-  1
- ],
- [
   "no team question",
   "portal",
   "  const team = locked ? \"\" : teamAsk;",
@@ -102,6 +88,34 @@
   "portal",
   "  // 🔒 the pressed choice spins until the refit is saved (Chris 10-15: \"when i click 2 … theres no spinner\")\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
   "",
+  1
+ ],
+ [
+  "no premises tag",
+  "portal",
+  "  const spaceTag = (it) => (goesToCustomers && it.place ? `<span class=\"pm-space-tag\">Needs your space</span>` : \"\");",
+  "  const spaceTag = (it) => \"\";",
+  1
+ ],
+ [
+  "storefronts tagged too",
+  "portal",
+  "  const goesToCustomers = !!shape && shape.storefront === false;",
+  "  const goesToCustomers = !!shape;",
+  1
+ ],
+ [
+  "the note on every kind",
+  "portal",
+  "goesToCustomers && g.items.every((it) => it.place) ?",
+  "goesToCustomers ?",
+  1
+ ],
+ [
+  "the split comes back",
+  "portal",
+  "  const groupHtml = groups.map((g) => oneGroup(g)).join(\"\");",
+  "  const groupHtml = groups.map((g) => oneGroup(g)).join(\"\").replace(\"<details\", \"<div class=\\\"pm-today-h\\\">You can take these today</div><details\");",
   1
  ]
 ]

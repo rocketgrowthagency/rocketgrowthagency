@@ -14,10 +14,10 @@
   1
  ],
  [
-  "today and later share a fold memory",
+  "every kind shares one fold memory",
   "portal",
-  "${where ? `:${where}` : \"\"}`;",
-  "`;",
+  "const key = `kind:${String(g.name).toLowerCase().replace(/[^a-z0-9]+/g, \"-\")}`;",
+  "const key = `kind:all`;",
   1
  ],
  [
