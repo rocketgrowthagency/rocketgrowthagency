@@ -203,12 +203,15 @@ vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = 
   if (!/Should Google show your address\?/.test(hid) || !/<b>Before you say yes:<\/b> show an address only if customers can walk in during your hours/.test(hid)) fail("customers-come that differs doesn't ask, with the re-verification caution");
 }
 const js = nc(portal);
-// 🔒 the line above the rows says what's left to check, never the help sentence again (Chris 10-16 screenshot)
-if (!/host\.innerHTML = left\.length \? `<span class="pm-gnow-k">\$\{left\.length\} to check:<\/span> \$\{escapeHtml\(left\.map\(\(k\) => LEFT\[k\]\)\.join\(", "\)\)\}\.`/.test(js) || /What Google shows now, next to what you told us\./.test(portal)) fail("the line above the facts repeats the help text instead of saying what's left to check");
+// 🔒 step7_card_hardened_v1: the head is a progress bar counted from the lines themselves ("2 to check" once counted the
+// matching name because ANOTHER line had a recommendation); no section label, no help line, no repeated sentence
+if (!/function factsProgress\(wrap\) \{/.test(js) || !/const st = rows\.map\(\(r\) => \(r\.classList\.contains\("is-answered"\) \? "a" : r\.classList\.contains\("is-open"\) \? "o" : "m"\)\);/.test(js) || /What Google shows now, next to what you told us\./.test(portal)) fail("the head isn't a progress bar counted from the lines (or repeats the help text)");
+if (!/const head = s\.kind === "facts" \? gnow :/.test(js)) fail("the facts form still stacks a section label and help line above the rows");
+if (!/step\.id === "m1\.gbp\.business_facts" && !isDone && !gbpWithRga && !ownWait && !listingWait \? `<div class="pm-fx-sub"><p class="pm-ask">\$\{escapeHtml\(step\.clientHint \|\| ""\)\}<\/p>\$\{actionBtn\}<\/div>`/.test(js)) fail("the top isn't one line with Show me how on its right");
 if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*if \(msg\) \{[^\n]*Answer \$\{missing\.join\(", "\)\} first\.[^\n]*\}\s*return;\s*\}/.test(js)) fail("a save with an unanswered line isn't stopped in the browser");
 // 🔒 a pick SHOWS its answer at once, and the last open line SAVES (the pressed button spins) — Chris 10-16: "clicking it now
 // and doing nothing"; a caution (showing an address) waits for Save
-if (!/ans\.innerHTML = `✓ Your answer: <b>\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/b> <button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
+if (!/ans\.innerHTML = `<span class="ck" aria-hidden="true">✓<\/span><span class="l">\$\{escapeHtml\(row\.getAttribute\("data-fact-name"\) \|\| ""\)\}<\/span><span class="v">\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/span><button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
 if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.rga\.length/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
@@ -217,7 +220,10 @@ if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.r
 {
   const view = X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), ["Mar Vista", "Palms", "Culver City"]);
   const h = ctx.rows(view);
-  if (!/RGA recommends<\/span>/.test(h) || !/Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h)) fail("the service area doesn't lead with RGA's recommendation");
+  if (!/<small>Where you work · RGA recommends<\/small><b>Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h) || !/class="pm-fact is-open pm-fx-cardonly" data-fact="area"/.test(h)) fail("the service area doesn't lead with RGA's recommendation as one card");
+  // To check first, matches folded under their own heading
+  const tc = h.indexOf("To check · 1"), mg = h.indexOf("Matches Google · 4");
+  if (tc < 0 || mg < tc || !/<div class="pm-fx-oklist">/.test(h.slice(mg))) fail("open lines don't come first with matches folded under \"Matches Google\"");
   if (!/>Mar Vista<em class="">Not on Google<\/em>/.test(h) || !/>Culver City<em class="ok">On Google<\/em>/.test(h)) fail("the targets aren't drawn beside their Google status");
   if (!/data-area-chip="add" data-area-name="Mar Vista" aria-pressed="true">\+ Mar Vista/.test(h) || !/placeholder="Add another area in CA"/.test(h) || !/<b data-area-count>4 \/ 20<\/b>/.test(h)) fail("the card lacks the add chips, the state in the input, or the 20-place meter");
 

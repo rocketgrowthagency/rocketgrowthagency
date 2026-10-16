@@ -210,16 +210,9 @@
   1
  ],
  [
-  "the line repeats the help",
-  "portal",
-  "host.innerHTML = left.length ? `<span class=\"pm-gnow-k\">${left.length} to check:</span>",
-  "host.innerHTML = left.length ? `<span class=\"pm-gnow-k\">What Google shows now, next to what you told us.</span> ${left.length} to check:</span>",
-  1
- ],
- [
   "a pick shows nothing",
   "portal",
-  "    ans.innerHTML = `✓ Your answer: <b>${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</b> <button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">✓</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
   "    ans.innerHTML = \"\";",
   1
  ],
@@ -326,6 +319,34 @@
   "gbpwatch",
   "area_now: now.area,",
   "area_now: null,",
+  1
+ ],
+ [
+  "count from a recommendation again",
+  "portal",
+  "  const st = rows.map((r) => (r.classList.contains(\"is-answered\") ? \"a\" : r.classList.contains(\"is-open\") ? \"o\" : \"m\"));",
+  "  const st = rows.map(() => \"o\");",
+  1
+ ],
+ [
+  "matches not folded",
+  "portal",
+  "const open = rows.filter((r) => /class=\"pm-fact is-open/.test(r)), ok = rows.filter((r) => !/class=\"pm-fact is-open/.test(r));",
+  "const open = rows, ok = [];",
+  1
+ ],
+ [
+  "top stacks again",
+  "portal",
+  "    const head = s.kind === \"facts\" ? gnow :",
+  "    const head = false ? gnow :",
+  1
+ ],
+ [
+  "card-only row has a pill again",
+  "portal",
+  "  if (state === \"recommend\") return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
+  "  if (false) return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
   1
  ]
 ]
