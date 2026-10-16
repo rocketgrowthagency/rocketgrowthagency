@@ -348,5 +348,47 @@
   "  if (state === \"recommend\") return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
   "  if (false) return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
   1
+ ],
+ [
+  "the card collapses while saving",
+  "portal",
+  "    if (lastOne) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
+  "    if (false) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
+  1
+ ],
+ [
+  "after saving the ask repeats",
+  "portal",
+  "          : step.id === \"m1.gbp.business_facts\" && (isDone || gbpWithRga) ? \"\"\n",
+  "",
+  1
+ ],
+ [
+  "summary says as on Google",
+  "portal",
+  "const area = ar.keep || ar.add ? `Service area: ${nPl} place",
+  "const area = false ? `Service area: ${nPl} place",
+  1
+ ],
+ [
+  "RGA's step stays now",
+  "portal",
+  "!r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "!r.withRga)",
+  1
+ ],
+ [
+  "how-to off screen again",
+  "portal",
+  "if (detail.hidden && anchor && anchor.nextElementSibling !== detail) anchor.after(detail);",
+  "",
+  1
+ ],
+ [
+  "admin hides the answer while active",
+  "admin",
+  "        <div class=\"ob-body\">${askNote}${",
+  "        <div class=\"ob-body\">${askNote}${\"\" && ",
+  1
  ]
 ]

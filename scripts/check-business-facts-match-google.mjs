@@ -237,5 +237,16 @@ if (!/\.pm-sa-ico \{[^}]*width:40px; height:40px;[^}]*align-items:center; justif
 if (!/function areaChecklistHtml\(g\)/.test(admin) || !/data-area-missing=/.test(admin) || !/const now = Array\.isArray\(g\.area_now\) \? g\.area_now : null;/.test(admin)) fail("admin's service-area checklist isn't ticked from Google (or has no \"Google doesn't list it\")");
 if (!/area_now: now\.area/.test(watch)) fail("the nightly check doesn't record which places Google lists (admin can't tick)");
 
+// ── 8 · Chris 10-16, after his real save: the last answer saves IN PLACE (no collapse, the pressed button spins); after saving
+// the row is RGA's (blue edge, not "now", no ask / why / Show me how) with a summary that says what he chose; the how-to opens
+// under its button; admin shows the answer on an ACTIVE row ──
+if (!/if \(lastOne\) \{\s*pick\.classList\.add\("is-busy", "is-busy-say"\);/.test(js) || !/submitStepInput\(pick\)\.finally/.test(js)) fail("the last answer collapses the card while it saves (the screen jumps)");
+if (!/: step\.id === "m1\.gbp\.business_facts" && \(isDone \|\| gbpWithRga\) \? ""/.test(js)) fail("after saving, step 7 still repeats the ask and the why");
+if (!/const area = ar\.keep \|\| ar\.add \? `Service area: \$\{nPl\} place/.test(js)) fail("the summary says \"as on Google\" after the client picked a list");
+if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && !r\.later && !r\.withRga && r\.taskState\?\.google_push\?\.state !== "with_rga"\)/.test(js) || !/&& i\.taskState\?\.google_push\?\.state !== "with_rga"/.test(js)) fail("a step RGA is finishing is still the client's \"now\" / next step");
+if (!/\$\{!isDone && gbpWithRga \? " is-rga-turn" : ""\}/.test(js)) fail("a step RGA is finishing keeps the client's amber edge");
+if (!/const anchor = b\.closest\("\.pm-fx-sub, \.pm-row-actions"\);\s*if \(detail\.hidden && anchor && anchor\.nextElementSibling !== detail\) anchor\.after\(detail\);/.test(js)) fail("Show me how opens its panel off screen, below the form");
+if (!/<div class="ob-body">\$\{askNote\}\$\{\/\*[\s\S]{0,400}?\*\/\s*clientInputHtml\(o, s\.task\)\}/.test(read("admin/admin.js")) || !/<div class="ob-body">\$\{clientInputHtml\(o, s\.task\)\}\$\{outHtml\}/.test(admin)) fail("admin shows the client's answer only once the step is done (not while RGA is finishing it)");
+
 if (F.length) { console.error("🔴 \"Check your business on Google\" isn't the approved build:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ business facts match Google: read first, compared universally (names, phones with country codes, sites with tags), a difference shows both, phone + website written and read back, name / address / area RGA's (Your action, nightly finishes it), the client record follows the answer (read back, recorded), admin shows confirmed · before · now, the nightly check watches it; step 7 after verify, numbers 1…N");

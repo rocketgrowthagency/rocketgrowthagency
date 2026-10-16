@@ -126,7 +126,7 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
 // 🔑 The card has treated a `booked` hold as settled since 09-28. The open-actions list must use the
 // SAME fact, or the headline and the card can always disagree.
 {
-  const filter = code.match(/const mine = open\.filter\([\s\S]{0,700}?\);/);
+  const filter = code.match(/const mine = open\.filter\([\s\S]{0,1400}?\);/);
   if (!filter) fail.push("portal/portal.js — the open-actions filter is gone; the headline cannot name the next thing.");
   else if (!/kickoff_booking/.test(filter[0]))
     fail.push("portal/portal.js — the open-actions list does not exclude a settled kickoff, so the headline can tell a client to book a call they have already had.");
