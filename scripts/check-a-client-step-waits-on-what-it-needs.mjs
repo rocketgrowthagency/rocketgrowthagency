@@ -273,7 +273,7 @@ const checks = [
   [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
   [/const waitTasks = \{ \.\.\.m1Tasks, \.\.\.m2Tasks \};/, "a Month-2 row's wait isn't read from this month's record"],
   [/const ownFirstId = rowOwnWaits\(step, status, waitTasks\);/, "a Month-2 row's \"Do step 14 first\" isn't read from this month's record"],
-  [/tasks: waitTasks, rgaWaits \};/, "the \"your next step\" headline reads Month-2 waits from the onboarding record"],
+  [/tasks: waitTasks, rgaWaits(?:, photos: photos \|\| \[\])? \};/, "the \"your next step\" headline reads Month-2 waits from the onboarding record"],
   [/const ownFirst = ownFirstId \? \(\[\.\.\.\(playbook\.month1 \|\| \[\]\), \.\.\.\(playbook\.month2plus \|\| \[\]\)\]\.find/, "a Month-2 \"Do step N first\" can't find its step (no number)"],
   [/if \(s\.id === "m2\.exec\.gbp_photos" && photosThisMonth >= 5\) status = "done";/, "step 15 counts every photo ever, not this month's (month2_waits_v1, decision 3)"],
   [/const photosThisMonth = \(photos \|\| \[\]\)\.filter\(\(p\) => p && p\.created_at\s*&& sameReportingMonth\(portalReportingMonth\(new Date\(p\.created_at\)\), portalReportingMonth\(\)\)\)\.length;/, "step 15's count isn't this reporting month's photos"],

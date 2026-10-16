@@ -49,17 +49,10 @@
   1
  ],
  [
-  "the batch picker opens on a full kind",
+  "a full kind offers to upload several",
   "portal",
-  "    const sel = empty.length && firstOpen ? (firstOpen = false, \" selected\") : \"\";",
-  "    const sel = firstOpen ? (firstOpen = false, \" selected\") : \"\";",
-  1
- ],
- [
-  "a full kind can be picked for a batch",
-  "portal",
-  "${empty.length ? sel : \" disabled\"}",
-  "${sel}",
+  "const kindUp = emptyN.length >= 2 && !locked ?",
+  "const kindUp = !locked ?",
   1
  ]
 ]

@@ -21,6 +21,8 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
+const SECOND_LOGO = await import((await import("node:url")).pathToFileURL(`${SITE}/shared/photo-second-logo.js`).href);
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
 const req = createRequire(`${SITE}/netlify/functions/flow-execute.js`);
@@ -63,7 +65,7 @@ process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const pctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
+const pctx = { secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
 try { vm.runInContext(`${stateSrc}\n${noteSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the portal renderer did not load: ${e.message}`); process.exit(2); }

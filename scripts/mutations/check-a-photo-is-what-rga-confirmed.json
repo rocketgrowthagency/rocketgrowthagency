@@ -30,7 +30,7 @@
  [
   "photo-match open to anyone",
   "photomatch",
-  "  const g = await requireWorkspaceForClient(event, client_id);\n  if (g.error) return g.error;",
+  "  const g = await requireWorkspaceForClientOrInternal(event, client_id);\n  if (g.error) return g.error;",
   "  const g = {};",
   1
  ],
@@ -79,8 +79,8 @@
  [
   "the section opens as postcards again",
   "portal",
-  "<div class=\"pm-arow\"><span class=\"th\"",
-  "<div class=\"pm-tile\"><span class=\"img\"",
+  "const th = (a) => `<span class=\"th\"",
+  "const th = (a) => `<span class=\"img\"",
   1
  ]
 ]

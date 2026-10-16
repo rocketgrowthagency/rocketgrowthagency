@@ -23,6 +23,8 @@ import crypto from "node:crypto";
 import { createRequire } from "node:module";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+// the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
+const SECOND_LOGO = await import((await import("node:url")).pathToFileURL(`${SITE}/shared/photo-second-logo.js`).href);
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
 
@@ -101,7 +103,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const H = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: i === 0 ? "PROFILE" : "INTERIOR", do: i === 6 ? "The meeting room, set for a client." : i === 7 ? "A wide shot of the workspace." : `Shot ${i + 1}` }));
 const ctx = {
-  escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
+  secondLogos: SECOND_LOGO.secondLogos, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
   photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   state: { selectedClient: { id: "c1" }, photos: [
     { id: "p1", client_id: "c1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "c/l.png" },
@@ -109,10 +111,10 @@ const ctx = {
     { id: "p8", client_id: "c1", shot_n: 8, category: "interior", publish_state: "in_review", storage_path: "c/a.jpg", created_at: "2026-10-09T18:22" },
     { id: "p9", client_id: "c1", shot_n: 9, category: "interior", publish_state: "in_review", storage_path: "c/n.jpg", created_at: "2026-10-09T18:30" },
   ], onboardingData: { tasks: { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "clean" } }, "m1.gbp.photos": { draft_shape: { items }, photo_matches: {},
-    detected: { items: [{ name: "m/logo2", category: "EXTERIOR", thumb: "t" }] },
+    detected: { items: [{ name: "m/logo2", category: "EXTERIOR", thumb: "t" }, { name: "m/office2", category: "ADDITIONAL", thumb: "t" }] },
     photo_ai: { hashes: { p1: H("LOGO"), p7: H("OFFICE"), p8: H("OFFICE") },
       uploads: { p7: { matches: false, what: "an office lounge" }, p8: { matches: true, what: "an open office" }, p9: { matches: false, what: "a car" } },
-      google: { "m/logo2": { name: "Your logo", what: "a logo", slot: 1 } } } } } } },
+      google: { "m/logo2": { name: "Your logo", what: "a logo", slot: 1 }, "m/office2": { name: "Your office", what: "an open office", slot: 8 } } } } } } },
 };
 vm.createContext(ctx);
 try { vm.runInContext(`${partA}\n${partB}\nthis.render = photoReviewHtml;`, ctx); } catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -130,8 +132,11 @@ if (/pr-verdict bad/.test(c9)) fail("a photo with no fingerprint was called a du
 if (!/data-photo-approve-all="p8">Send the 1 that fits</.test(html)) fail("the bulk button doesn't send only the photo that fits");
 if (/Send both|Send all \d/.test(html)) fail("a bulk send of every photo is back");
 if (!/What slot 7 asks for/.test(c7) || !/The meeting room, set for a client\./.test(c7)) fail("a card no longer shows what its slot asks for beside the photo");
-const ex = html.slice(html.indexOf('data-pm-row="m/logo2"'));
-if (!/second copy of slot 1/.test(ex) || !(ex.indexOf('data-pm-none="m/logo2"') < ex.indexOf("data-pm-slot="))) fail("a second copy already on Google doesn't lead with Not a slot photo");
+// 🔄 second_logo_cleanup_v1: a second copy of the LOGO is the client's call (their portal card), listed as "with the client";
+// any other second copy on Google is still RGA's to sort and leads with Not a slot photo
+const ex = html.slice(html.indexOf('data-pm-row="m/office2"'));
+if (html.indexOf('data-pm-row="m/office2"') < 0 || !/second copy of slot 8/.test(ex) || !(ex.indexOf('data-pm-none="m/office2"') < ex.indexOf("data-pm-slot="))) fail("a second copy already on Google doesn't lead with Not a slot photo");
+if (/data-pm-row="m\/logo2"/.test(html) || !/data-second-logo-row="m\/logo2"[^]*?With the client/.test(html)) fail("a second copy of the logo is still RGA's to sort (it's the client's call: with the client)");
 if (/class="pr-band/.test(html)) fail("the stacked amber bands are back");
 // 🔒 the turn-down panel (admin_photo_turn_down_v1): inside the card's info column, one reason picker, the client's preview
 const info7 = c7.slice(c7.indexOf('class="pr-info"'));

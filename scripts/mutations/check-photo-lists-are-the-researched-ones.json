@@ -86,8 +86,8 @@
  [
   "existing Google photos stop filling slots",
   "portal",
-  "Already on your Google profile</span>${g.at ? `",
-  "On Google</span>${g.at ? `",
+  "Already on your Google profile</span>${ctl([",
+  "On Google</span>${ctl([",
   1
  ],
  [

@@ -1,0 +1,135 @@
+[
+ [
+  "flagged with no logo on the profile",
+  "secondlogo",
+  "  if (!hasLogo) return out;",
+  "",
+  1
+ ],
+ [
+  "any photo is a second logo",
+  "secondlogo",
+  "    if (!a || a.error || Number(a.slot) !== logoN) continue;",
+  "    if (!a || a.error) continue;",
+  1
+ ],
+ [
+  "the cover is asked about",
+  "secondlogo",
+  "g.category === \"PROFILE\" || g.category === \"COVER\" || ours.has(g.name)",
+  "g.category === \"PROFILE\" || ours.has(g.name)",
+  1
+ ],
+ [
+  "our own upload is asked about",
+  "secondlogo",
+  " || ours.has(g.name)) continue;",
+  ") continue;",
+  1
+ ],
+ [
+  "kept still asks",
+  "secondlogo",
+  "(kept[g.name] ? out.kept : out.open)",
+  "(out.open)",
+  1
+ ],
+ [
+  "a failed AI look flags",
+  "secondlogo",
+  "if (!a || a.error || Number",
+  "if (!a || Number",
+  1
+ ],
+ [
+  "keep without owner",
+  "photokeep",
+  "  if (gate.error) return gate.error;",
+  "",
+  1
+ ],
+ [
+  "keep any name",
+  "photokeep",
+  "  if (!(task.detected?.items || []).some((g) => g && g.name === name)) return json(404",
+  "  if (false) return json(404",
+  1
+ ],
+ [
+  "keep without read-back",
+  "photokeep",
+  "  if (!after?.tasks?.[STEP]?.photo_kept?.[name]) return json(500",
+  "  if (false) return json(500",
+  1
+ ],
+ [
+  "internal may confirm",
+  "photomatch",
+  "  if (g.internal && action !== \"check\") return json(403",
+  "  if (false) return json(403",
+  1
+ ],
+ [
+  "the count never asks the AI",
+  "recheck",
+  "      if (unseen.length && Array.isArray(tasks[stepId].draft_shape?.items)",
+  "      if (false && Array.isArray(tasks[stepId].draft_shape?.items)",
+  1
+ ],
+ [
+  "the count re-looks at seen photos",
+  "recheck",
+  " && !ours.has(m.name) && !seen[m.name]);",
+  " && !ours.has(m.name));",
+  1
+ ],
+ [
+  "the row says RGA is sorting it",
+  "portal",
+  "  for (const a of already) if (askN.has(a.g.name)) a.kind = \"ask\"; else if (keptBy.has(a.g.name)) a.kind = \"extra\";",
+  "",
+  1
+ ],
+ [
+  "the fold doesn't hold open",
+  "portal",
+  "data-fold=\"already\"${askN.size ? \" open data-fold-held\" : \"\"}",
+  "data-fold=\"already\"",
+  1
+ ],
+ [
+  "no card",
+  "portal",
+  "      if (sl.open.length) card.insertAdjacentHTML(\"afterend\", secondLogoCardHtml(sl.open));",
+  "",
+  1
+ ],
+ [
+  "the card never goes",
+  "portal",
+  "      if (next && next.hasAttribute(\"data-second-logo\")) next.remove();\n",
+  "",
+  1
+ ],
+ [
+  "keep doesn't redraw",
+  "portal",
+  "    await settleStepResult(listEl, j);\n    portalToast(\"<b>Kept</b>",
+  "    portalToast(\"<b>Kept</b>",
+  1
+ ],
+ [
+  "admin counts it as to sort",
+  "admin",
+  "  const toSort = existing.filter((m) => !matches[m.name] && !asked.has(m.name));",
+  "  const toSort = existing.filter((m) => !matches[m.name]);",
+  1
+ ],
+ [
+  "admin doesn't say waiting",
+  "admin",
+  "    if (sl.open.length) out.push(`Waiting on the client:",
+  "    if (false) out.push(`Waiting on the client:",
+  1
+ ]
+]

@@ -32,15 +32,16 @@ if (/items\.find\(\(it\) => it\.google === g\.category/.test(portal)) fail("the 
 // 🔄 approved step7_streamlined_v1 (2026-10-15): the photos already on Google fold INTO the progress panel — one line
 // ("1 of them was already on Google. RGA is filing it, nothing to do.") until opened, the same small rows inside, a state
 // per photo. Order: the plain line → the progress panel (with that fold) → the toolbar → the tips line → the list.
-if (!/<details class="pm-p2-also" data-fold="already">/.test(portal) || !/already on Google\./.test(portal) || !/RGA is sorting it<\/span>/.test(portal) || !/Extra · counts toward 20/.test(portal)) fail("photos already on Google no longer get their one-line fold with a state per photo");
-if (!/<div class="pm-arow"><span class="th"/.test(portal)) fail("an opened already-on-Google photo is no longer a small row");
+if (!/<details class="pm-p2-also" data-fold="already"(?:\$\{askN\.size \? " open data-fold-held" : ""\})?>/.test(portal) || !/already on Google\./.test(portal) || !/RGA is sorting it<\/span>/.test(portal) || !/Extra · counts toward 20/.test(portal)) fail("photos already on Google no longer get their one-line fold with a state per photo");
+if (!/<div class="pm-arow">(?:<span class="th"|\$\{th\(a\)\})/.test(portal) || !/const th = \(a\) => `<span class="th"/.test(portal)) fail("an opened already-on-Google photo is no longer a small row");
 // 🔄 step7_later_state_v1 v2: the list (progress → toolbar → tips → slots) is one block, folded behind one line while "later"
 if (!/const listHtml = `\$\{panel\}\$\{toolbar\}\$\{beforeList\}<div class="pm-slots/.test(portal) || !/const body = `\$\{top\.only \? `<p class="pm-p2-sub">\$\{escapeHtml\(top\.only\)\}<\/p>` : ""\}\$\{laterUi\}\$\{top\.later/.test(portal)) fail("the step's order changed — it is: the plain line → progress (with the already-on-Google fold) → toolbar → tips → the list");
 const alreadySrc = (portal.match(/const alsoRows = already\.map[\s\S]*?const alsoFold = [^\n]*/) || [""])[0];
 if (!alreadySrc) fail("the already-on-Google section could not be found");
 if (/class="pm-pill you"|pm-pill warn|pm-pill bad/.test(alreadySrc)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
 // 2
-if (!/const g = await requireWorkspaceForClient\(event, client_id\);\s*if \(g\.error\) return g\.error;/.test(fn)) fail("photo-match is not workspace-only");
+// 🔄 second_logo_cleanup_v1: the step's own count may ask too (internal secret), but only to CHECK — never confirm
+if (!/const g = await requireWorkspaceForClientOrInternal\(event, client_id\);\s*if \(g\.error\) return g\.error;\s*if \(g\.internal && action !== "check"\) return json\(403/.test(fn)) fail("photo-match is not workspace-only (an internal caller may only check)");
 if (!/That slot is not on this client's list/.test(fn)) fail("confirm accepts a slot that is not on the client's list");
 if (!/if \(v && v\.slot === slot && k !== name\) matches\[k\] = \{ \.\.\.v, slot: null, freed_by: name \}/.test(fn)) fail("two Google photos can be confirmed into one slot");
 if (!/return \{ error: /.test(fn) || !/AI gave no answer/.test(fn)) fail("an AI that could not look is no longer kept as an error");
