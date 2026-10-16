@@ -46,13 +46,16 @@ if (!/_editingSteps\.delete\(stepId\);\s*\/\/ 🔑 Back into the record/.test(po
 if (!/if \(step\.id === "m1\.gbp\.hours_attributes" && _editingSteps\.has\(step\.id\)\) return "";/.test(js)) fail("the editor still repeats the old green Google line above it");
 
 // ── 3 · the editor itself ──
-if (!/class="pm-in-closed pm-sw\$\{[^}]*\}" data-in-closed aria-pressed=/.test(js) || !/function setDaySwitch\(b, off\) \{/.test(js) || !/setDaySwitch\(closed, off\);/.test(js)) fail("a day's Open / Closed isn't a switch");
+if (!/class="pm-in-closed pm-dsw\$\{[^}]*\}" data-in-closed aria-pressed=/.test(js) || !/function setDaySwitch\(b, off\) \{/.test(js) || !/setDaySwitch\(closed, off\);/.test(js)) fail("a day's Open / Closed isn't a switch");
 if (!/data-in-copy-mon>Copy Monday's hours to Tue–Fri<\/button>/.test(js) || !/for \(const k of \["tue", "wed", "thu", "fri"\]\)/.test(js)) fail("there's no \"Copy Monday's hours to Tue–Fri\"");
 if (!/data-in-hol="\$\{escapeAttribute\(h\.key\)\}">\$\{escapeHtml\(h\.label\)\} <i data-hol-date><\/i>/.test(js) || !/now\.holidayDates\[hb\.getAttribute\("data-in-hol"\)\]/.test(js)) fail("holiday chips don't show the next date");
 if (!/now\.holidayDates = Object\.fromEntries\(H\.holidayOptions\(\)\.map\(\(o\) => \[o\.key, H\.nextOccurrence\(o\.key\)\]\)/.test(prof)) fail("the next holiday dates aren't computed on the server (one source, never stale)");
 if (!/✓ matches what you saved/.test(js)) fail("the editor doesn't say whether Google matches what they saved");
 if (!/const head = s\.kind === "facts" \|\| s\.kind === "hours" \? gnow :/.test(js)) fail("the editor still stacks a label + help above the days");
-if (!/\.pm-sw\.on \.tg \{ background:var\(--state-ok(?:,#0c5132)?\); \}/.test(css) || !/\.pm-hc-week \{ display:grid; grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/.test(css)) fail("the switch / week tiles aren't styled");
+if (!/\.pm-dsw\.on \.tg \{ background:var\(--state-ok(?:,#0c5132)?\); \}/.test(css) || !/\.pm-hc-week \{ display:grid; grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/.test(css)) fail("the switch / week tiles aren't styled");
 
+// 🔴 10-16: the switch first used ".pm-sw" — already the legend's 12px swatch — and shrank to 12px, its label over the time box.
+// Its class is its own: defined in one place only.
+if ((css.match(/^\.pm-dsw\s*\{/gm) || []).length !== 1 || /^\.pm-sw \{ display:inline-flex/m.test(css)) fail("the day switch's class is styled by another rule too (it shrinks)");
 if (F.length) { console.error("🔴 Step 9 isn't the approved hours card:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ step 9 is the approved card: done = one green card (week tiles, holidays with dates, saved / checked, Maps, Change hours), no second copy; Change hours = \"Editing\" without a write, Cancel / Save; a switch per day, Copy Monday to Tue–Fri, holiday chips with the server's next dates");
