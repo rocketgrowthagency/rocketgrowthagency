@@ -187,5 +187,26 @@
   "      out.push(\"Logo saved on Google · hidden: the profile shows no street address\");",
   "",
   1
+ ],
+ [
+  "no on-Google marker",
+  "portal",
+  "${onGoogle ? \" data-on-google-slot\" : \"\"}",
+  "",
+  1
+ ],
+ [
+  "a Change in progress bumps the count",
+  "portal",
+  "        if (row.hasAttribute(\"data-on-google-slot\")) { if (!row.querySelector(\".pm-swap\")) row.insertAdjacentHTML(\"beforeend\", PHOTO_SWAP_NOTE); }\n        else bumpGroupCount(row);",
+  "        bumpGroupCount(row);",
+  1
+ ],
+ [
+  "the second-logo box forgets the logo stays",
+  "portal",
+  "message: secondLogo ? \"This second copy of your logo comes off your Google profile. Your logo stays.\"",
+  "message: secondLogo ? \"It comes off your Google profile.\"",
+  1
  ]
 ]
