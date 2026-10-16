@@ -76,8 +76,9 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
   if (!m.body.startsWith("Hi Dana,")) F("the nudge does not greet the contact by first name");
   if (!m.body.includes("1 of the 20 photos")) F("the nudge does not carry the measurement's own numbers");
   if (!m.body.includes("/portal/#step-m1.gbp.photos")) F("the nudge does not link to the step itself");
-  const u = ctx.draft({ flowId: "m1.gbp.messaging", clientLabel: "Turn on GBP messaging" }, {});
-  if (u.subject !== "Your next step: Turn on Google profile messaging") F(`an unmeasured step's subject was "${u.subject}"`);
+  // (was m1.gbp.messaging — retired 10-16, Google ended GBP chat; any unmeasured client step serves)
+  const u = ctx.draft({ flowId: "m1.gbp.booking_link", clientLabel: "Add your GBP booking link" }, {});
+  if (u.subject !== "Your next step: Add your Google profile booking link") F(`an unmeasured step's subject was "${u.subject}"`);
   if (/\d+ of \d+|to go/.test(u.body + u.text)) F("an unmeasured step's nudge contains a count — an invented number");
   ctx.state.selectedClient = {};
   if (!ctx.draft(o, {}).body.startsWith("Hi there,")) F("with no contact name the nudge must say \"Hi there\", not \"Hi undefined\"");

@@ -143,11 +143,13 @@ for (const [re, msg] of wires) if (!re.test(si)) fail(msg);
 // ── 5 · the portal ──
 const portal = read("portal/portal.js"), pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
 if (!/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && /.test(pc)) fail("a step RGA is finishing still says \"Your turn\"");
-if (!/\$\{gbpPushHtml\(step, taskState\)\}/.test(pc) || !/loadGbpNow\(clientId\);/.test(pc)) fail("the row doesn't show where the answer stands on Google, or doesn't read Google first");
+if (!/\$\{gbpPushHtml\(step, taskState(?:, \{ maps: [^}]*\})?\)\}/.test(pc) || !/loadGbpNow\(clientId\);/.test(pc)) fail("the row doesn't show where the answer stands on Google, or doesn't read Google first");
 if (/60%\+/.test(read("data/playbooks/client-steps.json"))) fail("step 11's unsourced \"60%+\" claim is back");
-const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf("{", m.index); k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
+// 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own (10-16)
+const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
+// 🔑 10-16: gbpPushHtml also draws step 7's progress and step 9's card, so their helpers ride along
+const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a portal helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }

@@ -1,0 +1,15 @@
+[
+ ["week not drawn", "portal", "<span class=\"pm-hc-week\">${GBP_DAY.map(tile).join(\"\")}</span>", "", 1],
+ ["holidays without dates", "portal", "${escapeHtml(x.name || \"Closed\")} <i>${escapeHtml(monthDay(x.date + \"T12:00:00Z\"))}", "${escapeHtml(x.name || \"Closed\")} <i>", 1],
+ ["no Maps link", "portal", "${maps ? ` <a class=\"pm-fx-maps\" href=\"${escapeAttribute(maps)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\"}", "", 1],
+ ["no Change hours", "portal", "<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change hours</button>", "", 1],
+ ["second copy back", "portal", "clientDoneConfirm && !hoursCard && !editing", "clientDoneConfirm", 1],
+ ["editing says Your turn", "portal", "      : editing ? { text: \"Editing\", cls: \"edit\" }\n", "", 1],
+ ["Change hours writes", "portal", "    if (ed.hasAttribute(\"data-hours-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);", "    await fetch(\"/x\"); if (ed.hasAttribute(\"data-hours-edit\")) _editingSteps.add(id); else _editingSteps.delete(id);", 1],
+ ["no Cancel", "portal", "<button type=\"button\" class=\"pm-amend\" data-in-cancel=\"${id}\">Cancel</button>", "", 1],
+ ["save leaves the editor open", "portal", "    _editingSteps.delete(stepId);\n    // 🔑 Back into the record", "    // 🔑 Back into the record", 1],
+ ["no switch", "portal", "    setDaySwitch(closed, off);", "    closed.textContent = off ? \"Closed ✓\" : \"Closed\";", 1],
+ ["no copy Monday", "portal", "data-in-copy-mon>Copy Monday's hours to Tue–Fri</button>", "data-in-copy-mon></button>", 1],
+ ["dates not from the server", "portalgbpprofile", "      now.holidayDates = Object.fromEntries(H.holidayOptions().map((o) => [o.key, H.nextOccurrence(o.key)]).filter(([, d]) => d));", "", 1],
+ ["editor stacks text again", "portal", "    const head = s.kind === \"facts\" || s.kind === \"hours\" ? gnow :", "    const head = s.kind === \"facts\" ? gnow :", 1]
+]

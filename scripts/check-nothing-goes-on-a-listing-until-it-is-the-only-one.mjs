@@ -116,7 +116,7 @@ const ovFn = code("netlify/functions/gbp-listing-override.js");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(ovFn) || !/reason\.length < 10/.test(ovFn)) fail("the override is not staff-only with a written reason");
 
 // ── 4 · the 8 listing-writing steps wait on step 11, in both SOP copies ──
-const WRITERS = ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.messaging", "m1.gbp.booking_link", "m1.gbp.qa_seed"];
+const WRITERS = ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.qa_seed", "m1.gbp.business_facts"];
 const pj = JSON.parse(read("data/playbooks/playbooks.json"));
 const byId = new Map(); (function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (o.id && o.dependsOn) byId.set(o.id, o); Object.values(o).forEach(walk); } })(pj);
 const m1 = await import(pathToFileURL(`${SCRAPER}/flow/playbooks/month1.mjs`).href);
@@ -186,7 +186,7 @@ if (!/if \(!\(before\?\.verdict === "duplicate" && finding\?\.verdict === "clean
 //        Done with nothing able to reach Google). Approved one_google_listing_first_v1, decisions 2 + 3.
 const { waitsOnListing } = req("./_one-listing.js");
 const allSteps = [...(pj.month1 || []), ...(pj.month2plus || [])];
-for (const id of ["m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.messaging", "m1.gbp.photos"]) {
+for (const id of ["m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.business_facts", "m1.gbp.photos"]) {
   if (!waitsOnListing(allSteps.find((x) => x.id === id))) fail(`${id} does not wait on one Google listing (waitsOnListing)`);
 }
 if (waitsOnListing(allSteps.find((x) => x.id === "m1.gbp.verify"))) fail("waitsOnListing is true for a step that doesn't touch the listing (m1.gbp.verify)");

@@ -338,7 +338,7 @@
  [
   "top stacks again",
   "portal",
-  "    const head = s.kind === \"facts\" ? gnow :",
+  "    const head = s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
   "    const head = false ? gnow :",
   1
  ],

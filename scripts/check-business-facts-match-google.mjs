@@ -85,7 +85,8 @@ const ANS = (o = {}) => ({ name: "Rocket Growth Agency", come: "no", area: { ok:
   const w5 = fakeGoogle({ ...RGA_GOOGLE, title: "Rocket Growth Agency - Best SEO Los Angeles" });
   const r5 = await G.applyForStep(STEP, ANS({ come: "yes", area: { text: "Venice, Santa Monica" } }), w5.deps);
   if (r5.state !== "with_rga" || w5.patches.length || JSON.stringify(r5.rga.map((x) => x.fact).sort()) !== JSON.stringify(["area", "come", "name"])) fail(`a name / address / area change isn't RGA's (or was written by the machine) (${JSON.stringify(r5)})`);
-  if (!/RGA to change on Google: business name, whether customers come to you, service area/.test(r5.error || "")) fail("RGA's to-do doesn't name what to change");
+  if (r5.error) fail("RGA's to-do is stored as an \"error\" (reads as an untold failure)");
+  if (!/RGA to change on Google: business name, whether customers come to you, service area/.test(r5.rga_note || "")) fail("RGA's to-do doesn't name what to change");
 }
 {
   // answers that can't be saved
@@ -206,8 +207,8 @@ const js = nc(portal);
 // 🔒 step7_card_hardened_v1: the head is a progress bar counted from the lines themselves ("2 to check" once counted the
 // matching name because ANOTHER line had a recommendation); no section label, no help line, no repeated sentence
 if (!/function factsProgress\(wrap\) \{/.test(js) || !/const st = rows\.map\(\(r\) => \(r\.classList\.contains\("is-answered"\) \? "a" : r\.classList\.contains\("is-open"\) \? "o" : "m"\)\);/.test(js) || /What Google shows now, next to what you told us\./.test(portal)) fail("the head isn't a progress bar counted from the lines (or repeats the help text)");
-if (!/const head = s\.kind === "facts" \? gnow :/.test(js)) fail("the facts form still stacks a section label and help line above the rows");
-if (!/step\.id === "m1\.gbp\.business_facts" && !isDone && !gbpWithRga && !ownWait && !listingWait \? `<div class="pm-fx-sub"><p class="pm-ask">\$\{escapeHtml\(step\.clientHint \|\| ""\)\}<\/p>\$\{actionBtn\}<\/div>`/.test(js)) fail("the top isn't one line with Show me how on its right");
+if (!/const head = s\.kind === "facts"(?: \|\| s\.kind === "hours")? \? gnow :/.test(js)) fail("the facts form still stacks a section label and help line above the rows");
+if (!/\(?step\.id === "m1\.gbp\.business_facts"(?: \|\| step\.id === "m1\.gbp\.hours_attributes"\))? && !isDone && !gbpWithRga && !ownWait && !listingWait \? `<div class="pm-fx-sub"><p class="pm-ask">\$\{escapeHtml\(step\.clientHint \|\| ""\)\}<\/p>\$\{actionBtn\}<\/div>`/.test(js)) fail("the top isn't one line with Show me how on its right");
 if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*if \(msg\) \{[^\n]*Answer \$\{missing\.join\(", "\)\} first\.[^\n]*\}\s*return;\s*\}/.test(js)) fail("a save with an unanswered line isn't stopped in the browser");
 // 🔒 a pick SHOWS its answer at once, and the last open line SAVES (the pressed button spins) — Chris 10-16: "clicking it now
 // and doing nothing"; a caution (showing an address) waits for Save

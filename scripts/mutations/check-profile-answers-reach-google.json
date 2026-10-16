@@ -93,7 +93,7 @@
  [
   "the Google line is gone",
   "portal",
-  "        ${gbpPushHtml(step, taskState)}\n",
+  "        ${gbpPushHtml(step, taskState, { maps: onboarding?.data?.tasks?.[\"m1.gbp.business_facts\"]?.google_push?.maps_uri || null })}\n",
   "",
   1
  ],

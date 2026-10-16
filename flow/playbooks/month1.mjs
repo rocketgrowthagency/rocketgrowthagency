@@ -752,21 +752,7 @@ Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MOND
 Check ALL that apply: women/veteran/LGBTQ+/family-owned, online estimates, on-site, same-day, emergency hours, payment methods, accessibility, crowd, health & safety.
 Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
   },
-  {
-    id: "m1.gbp.messaging", title: "Enable GBP messaging + set response SLA",
-    type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
-    actionLabel: "⚡ Draft this for me",
-    async run({ client }) {
-      const draft = await aiSuggest(
-        `You write GBP messaging welcome messages. Output 2 versions: (1) short business-hours greeting, (2) after-hours auto-reply. Each: warm, specific to the service, sets expectation on response time, ends with a question to keep them engaged. NO emojis. Plain prose, 1-2 sentences each.`,
-        `Business: ${client.business_name}\nService: ${client.primary_service}\nMarket: ${client.primary_market}`,
-        { maxTokens: 250 },
-      );
-      return { summary: `AI welcome message drafts:\n\n${draft}` };
-    },
-    instructions: `GBP → Edit Profile → Messaging → Turn ON. Paste the business-hours version as your welcome.
-Set notifications to push to phone/email — Google rewards <30 min response during 8a-8p.`,
-  },
+  // m1.gbp.messaging retired 2026-10-16 (approved retire_messaging_step_v1): Google ended Business Profile chat on 2024-07-31.
   {
     id: "m1.gbp.booking_link", title: "Add appointment booking URL",
     type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],

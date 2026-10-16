@@ -1,0 +1,4 @@
+[
+ ["a client step asks for GBP messaging again", "clientstepsjson", "\"clientLabel\": \"Add your booking link\",", "\"clientLabel\": \"Turn on GBP messaging\",", 1],
+ ["an admin step points at the Messaging screen", "playbooksjson", "\"clientLabel\": \"Add your booking link\",", "\"clientLabel\": \"Add your booking link\", \"note\": \"GBP → Edit Profile → Messaging → Turn ON\",", 1]
+]

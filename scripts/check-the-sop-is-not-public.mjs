@@ -123,7 +123,10 @@ if (pb && cs) {
       + (ih >= 0 ? portalSrc.slice(ih, ih + 4000) : "");
     const wanted = new Set([...scope.matchAll(/step\.(client[A-Za-z]+)\b/g)].map((m) => m[1]));
     const projected = new Set([...(cs.month1 || []), ...(cs.month2plus || [])].flatMap(Object.keys));
-    const declared = new Set([...(pb.month1 || []), ...(pb.month2plus || [])].flatMap(Object.keys));
+    // 🔑 only fields a CLIENT-VISIBLE step declares: an admin-only step (e.g. the duplicate check's clientDoneCta) is never
+    // projected, so its fields can't be "dropped" (10-16: the last projected clientDoneCta left with the retired messaging step)
+    const csIds = new Set([...(cs.month1 || []), ...(cs.month2plus || [])].map((s) => s.id));
+    const declared = new Set([...(pb.month1 || []), ...(pb.month2plus || [])].filter((s) => csIds.has(s.id)).flatMap(Object.keys));
     for (const f of wanted) {
       if (!declared.has(f)) continue;           // the renderer reads it, no step sets it yet — fine
       if (!projected.has(f)) {
