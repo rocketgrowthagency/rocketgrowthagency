@@ -162,7 +162,14 @@ vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = 
   if (!/Should Google show your address\?/.test(hid) || !/<b>Before you say yes:<\/b> show an address only if customers can walk in during your hours/.test(hid)) fail("customers-come that differs doesn't ask, with the re-verification caution");
 }
 const js = nc(portal);
+// 🔒 the line above the rows says what's left to check, never the help sentence again (Chris 10-16 screenshot)
+if (!/host\.innerHTML = left\.length \? `<span class="pm-gnow-k">\$\{left\.length\} to check:<\/span> \$\{escapeHtml\(left\.map\(\(k\) => LEFT\[k\]\)\.join\(", "\)\)\}\.`/.test(js) || /What Google shows now, next to what you told us\./.test(portal)) fail("the line above the facts repeats the help text instead of saying what's left to check");
 if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*if \(msg\) \{[^\n]*Answer \$\{missing\.join\(", "\)\} first\.[^\n]*\}\s*return;\s*\}/.test(js)) fail("a save with an unanswered line isn't stopped in the browser");
+// 🔒 a pick SHOWS its answer at once, and the last open line SAVES (the pressed button spins) — Chris 10-16: "clicking it now
+// and doing nothing"; a caution (showing an address) waits for Save
+if (!/ans\.innerHTML = `✓ Your answer: <b>\$\{escapeHtml\(pick\.textContent\.trim\(\)\)\}<\/b> <button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
+if (!/if \(allAnswered && !caution\) \{ submitStepInput\(pick\); return; \}/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
+if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.rga\.length/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
 
 if (F.length) { console.error("🔴 \"Check your business on Google\" isn't the approved build:"); for (const f of F) console.error("   · " + f); process.exit(1); }

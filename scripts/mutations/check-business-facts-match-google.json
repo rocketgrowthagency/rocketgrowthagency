@@ -208,5 +208,26 @@
   "return escapeHtml(nanp && d.length === 10",
   "return escapeHtml(false && d.length === 10",
   1
+ ],
+ [
+  "the line repeats the help",
+  "portal",
+  "host.innerHTML = left.length ? `<span class=\"pm-gnow-k\">${left.length} to check:</span>",
+  "host.innerHTML = left.length ? `<span class=\"pm-gnow-k\">What Google shows now, next to what you told us.</span> ${left.length} to check:</span>",
+  1
+ ],
+ [
+  "a pick shows nothing",
+  "portal",
+  "    ans.innerHTML = `✓ Your answer: <b>${escapeHtml(pick.textContent.trim())}</b> <button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+  "    ans.innerHTML = \"\";",
+  1
+ ],
+ [
+  "the last line doesn't save",
+  "portal",
+  "if (allAnswered && !caution) { submitStepInput(pick); return; }",
+  "if (false) { submitStepInput(pick); return; }",
+  1
  ]
 ]

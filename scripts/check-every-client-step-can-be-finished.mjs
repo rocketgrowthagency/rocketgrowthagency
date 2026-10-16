@@ -241,7 +241,11 @@ if (!/step\.clientInput \? inputHtml\(/.test(rowSrc)) {
   if (sub < 0) bad("nothing listens for the input submit button");
   else {
     const end = portal.indexOf("\n});", sub);
-    const b = portal.slice(sub, end > sub ? end : sub + 4000);
+    let b = portal.slice(sub, end > sub ? end : sub + 4000);
+    // 🔑 the listener may hand the press to submitStepInput (business_on_google_v1: a pick that answers the last line saves
+    // through the same code) — judge that function, and only if the listener really calls it
+    const fi = portal.indexOf("async function submitStepInput(btn) {");
+    if (/await submitStepInput\(btn\);/.test(b) && fi > 0) b = portal.slice(fi, portal.indexOf("\n}\n", fi));
     if (!/portal-step-input/.test(b)) bad("the input submit does not call portal-step-input");
     // 🔑 settleStepResult re-renders the record the server says it wrote (Month 2 = this month's monthly record);
     // check-month-2-lives-in-the-monthly-record runs it.

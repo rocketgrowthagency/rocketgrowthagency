@@ -111,6 +111,7 @@ const UI_ONLY = {
   // 🔒 business_on_google_v1 (10-16): picking an answer on one fact line — the pressed choice is ringed; "Save and check Google" reports
   "data-fact-pick": "picks the answer to one business fact — the pressed choice is visibly ringed; nothing is written until Save",
   "data-fact-other-go": "opens a box for the client's own words on one fact — the box visibly appears, focused",
+  "data-fact-redo": "reopens an answered fact line — the question visibly comes back, amber",
 };
 
 // The legitimate ways an action can report. The global banner is the main one, but a dedicated
