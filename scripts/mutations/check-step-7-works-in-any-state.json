@@ -1,0 +1,13 @@
+[
+ ["state ignored when both have one", "gbpfacts", "  if (sa && sb && sa !== sb) return false;", "", 1],
+ ["no home state for a bare name", "gbpfacts", "const sa = stateTok(a) || home, sb = stateTok(b) || home;", "const sa = stateTok(a), sb = stateTok(b);", 1],
+ ["progress ignores the home state", "gbpfacts", "on: !!now && hasPlace(now.area, n, now.state) });", "on: !!now && hasPlace(now.area, n) });", 1],
+ ["state not read from a place name", "gbpfacts", "const m = /^([A-Z]{2})(?:\\s+\\d{5})?$/.exec(parts[i]); if (m) return m[1];", "", 1],
+ ["storefront state not read", "gbpfacts", "  if (a && a.administrativeArea) return String(a.administrativeArea).toUpperCase().slice(0, 3);", "", 1],
+ ["ZIP not matched", "gbpfacts", "  if (/^\\d{5}$/.test(x)) return x === y || x === zipOf(b);", "  if (false) return x === y || x === zipOf(b);", 1],
+ ["phone not written", "gbpfacts", "  if (!samePhone(value.phone, before.phone)) {", "  if (false) {", 1],
+ ["no service_area for customers-don't-come", "gbpfacts", "  if (value.come === \"no\" && g !== \"service_area\") patch.geography_model = \"service_area\";", "", 1],
+ ["missing recommended again", "gbpfacts", "(targets || []).filter((name) => !hasPlace(missing, name, google.state))", "(targets || [])", 1],
+ ["recommended chip without its state", "portal", "data-area-name=\"${escapeAttribute(st && !/,/.test(a) && !/^\\d{5}$/.test(a.trim()) ? `${a}, ${st}` : a)}\"", "data-area-name=\"${escapeAttribute(a)}\"", 1],
+ ["admin ticks by name only", "admin", "  const on = (n) => !!now && now.some((p) => head(p) === head(n) || (/^\\d{5}$/.test(head(n)) && String(p).includes(head(n))));", "  const on = (n) => !!now;", 1]
+]

@@ -17,4 +17,7 @@ export const EXPECTATIONS = {
   "m1.review.system": { admin: [/review/i], allowText: [/\{\{(first_name|review_link)\}\}/g] },
   "m1.strategy.keywords_locations": { admin: [/keyword/i], portal: [/keyword|search/i] },
   "m1.gbp.verify": { admin: [/verif/i], portal: [/verif|Google/i] },
+  // 🔒 step 7 "Check your business on Google" (business_on_google_v1): true in every state it can be in — open (Google beside what
+  // they told us), with RGA ("RGA is changing this on Google"), done ("On your Google Business Profile"), or waiting on Google access
+  "m1.gbp.business_facts": { admin: [/Match business facts to Google/i], portal: [/Check your business on Google/i, /What Google shows customers|RGA is changing this on Google|On your Google Business Profile|Google|verif/i] },
 };

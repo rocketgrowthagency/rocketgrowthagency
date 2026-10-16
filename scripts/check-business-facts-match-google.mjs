@@ -225,7 +225,7 @@ if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.r
   const tc = h.indexOf("To check · 1"), mg = h.indexOf("Matches Google · 4");
   if (tc < 0 || mg < tc || !/<div class="pm-fx-oklist">/.test(h.slice(mg))) fail("open lines don't come first with matches folded under \"Matches Google\"");
   if (!/>Mar Vista<em class="">Not on Google<\/em>/.test(h) || !/>Culver City<em class="ok">On Google<\/em>/.test(h)) fail("the targets aren't drawn beside their Google status");
-  if (!/data-area-chip="add" data-area-name="Mar Vista" aria-pressed="true">\+ Mar Vista/.test(h) || !/placeholder="Add another area in CA"/.test(h) || !/<b data-area-count>4 \/ 20<\/b>/.test(h)) fail("the card lacks the add chips, the state in the input, or the 20-place meter");
+  if (!/data-area-chip="add" data-area-name="Mar Vista, CA" aria-pressed="true">\+ Mar Vista/.test(h) || !/placeholder="Add another area in CA"/.test(h) || !/<b data-area-count>4 \/ 20<\/b>/.test(h)) fail("the card lacks the add chips, the state in the input, or the 20-place meter");
 
   const none = ctx.rows(X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), []));
   if (!/data-fact-val="ok">Yes, that(?:'|&#39;)s right/.test(none) || !/data-area-edit>Change the list/.test(none)) fail("with no targets, the line isn't Yes / Change the list (opening the card)");
