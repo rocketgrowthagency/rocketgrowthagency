@@ -143,8 +143,11 @@ console.log("\n── no parser depends on the model choosing one key name ─�
   if (stepAccepts) { pass.push("step accepts synonyms"); console.log("  ✅ the step's term extraction accepts term/phrase/keyword"); }
   else { fail.push("the step's term extraction pins a single key name"); console.log("  🔴 the step pins one key name — a synonym empties the verification"); }
 
-  const lockIdx = code.indexOf("function readLockedPlan");
-  const lockBody = lockIdx >= 0 ? code.slice(lockIdx, lockIdx + 2500) : "";
+  // 🔑 since 10-16 the parser lives in _locked-plan.js (shared with the service-area recommendation)
+  let lockSrc = code;
+  if (code.indexOf("function readLockedPlan") < 0) { try { lockSrc = fs.readFileSync(`${SITE}/netlify/functions/_locked-plan.js`, "utf8"); } catch { lockSrc = ""; } }
+  const lockIdx = lockSrc.indexOf("function readLockedPlan");
+  const lockBody = lockIdx >= 0 ? lockSrc.slice(lockIdx, lockIdx + 2500) : "";
   if (/term\|phrase\|keyword/.test(lockBody)) { pass.push("readLockedPlan accepts synonyms"); console.log("  ✅ readLockedPlan accepts term/phrase/keyword"); }
   else { fail.push("readLockedPlan pins a single key name"); console.log("  🔴 readLockedPlan pins one key name — it would hand the grid a key as a keyword"); }
 }

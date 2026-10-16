@@ -112,6 +112,47 @@ const ANS = (o = {}) => ({ name: "Rocket Growth Agency", come: "no", area: { ok:
   if (X.rgaDone({ client_input: ANS({ name: "Joe's Plumbing" }), google_push: { state: "with_rga", rga: [{ fact: "name" }] } }, X.factsFromGoogle({ title: "Joe's Plumbing - Best Plumber Nashville" }))) fail("a name change is called done while Google still shows the old name");
 }
 
+// ── 4b · SERVICE AREA, ANY US LOCATION (approved service_area_recommend_v2): the client's OWN targets, their state, places by
+// their own name or ZIP, a picked list goes to RGA, only Google ticks a place, a place Google lacks goes back ──
+{
+  for (const [a, b, want] of [["Mar Vista", "Mar Vista, Los Angeles, CA, USA", true], ["37215", "Nashville, TN 37215", true], ["Marina Del Rey", "Marina Del Rey, CA 90292, USA", true],
+    ["Franklin", "Franklin, TN, USA", true], ["Palms", "Palm Springs, CA, USA", false], ["Allen", "Allentown, PA, USA", false], ["78701", "Austin, TX 78702", false]])
+    if (X.samePlace(a, b) !== want) fail(`place "${a}" vs "${b}" should ${want ? "match" : "differ"}`);
+  const TN = { title: "Joe's Plumbing", serviceArea: { regionCode: "US", places: { placeInfos: [{ placeName: "Nashville, TN, USA" }, { placeName: "Brentwood, TN, USA" }, { placeName: "Green Hills, Nashville, TN, USA" }, { placeName: "Nashville, TN 37215, USA" }] } } };
+  const tn = X.factsFromGoogle(TN);
+  if (tn.state !== "TN") fail(`the state isn't read from the business's own Google listing (${tn.state})`);
+  if (X.factsFromGoogle({ storefrontAddress: { addressLines: ["1 Main"], administrativeArea: "TX" } }).state !== "TX") fail("a storefront's state isn't read from its address");
+  const v = X.factsView(tn, X.toldFacts({}, null), ["Brentwood", "Green Hills", "Franklin"]);
+  if (JSON.stringify(v.recommend?.area?.add) !== '["Franklin"]' || v.recommend.area.state !== "TN" || v.recommend.area.targets.filter((t) => t.on).length !== 2) fail(`RGA's recommendation isn't the client's own targets missing from Google (${JSON.stringify(v.recommend)})`);
+  if (X.factsView(tn, X.toldFacts({}, null), []).recommend?.area) fail("a client with no target areas is shown a recommendation");
+  if (X.factsView(tn, X.toldFacts({}, null), ["Franklin"], ["Franklin, TN"]).recommend?.area?.add?.length) fail("a place Google said it doesn't have is recommended again (a loop)");
+  // the targets are read from the client's OWN step 5 (rank scan list, else the plan's locations)
+  if (JSON.stringify(X.targetsOf({ "m1.strategy.keywords_locations": { outcome_data: { sub_locations: [{ name: "Franklin" }] } } })) !== '["Franklin"]') fail("targets aren't read from step 5's scan list");
+  if (JSON.stringify(X.targetsOf({ "m1.strategy.keywords_locations": { outcome_data: { draft: "keywords:\n  - term: plumber\nlocations:\n  - Franklin (south)\n  - name: Brentwood\n" } } })) !== '["Franklin","Brentwood"]') fail("targets aren't read from step 5's plan");
+  // a picked list → RGA's add / drop list; 20 max; nothing to change → no RGA item
+  const ok = X.validateFacts({ ...ANS(), area: { keep: ["Nashville, TN, USA", "Brentwood, TN, USA"], add: ["Franklin, TN", "Brentwood"] } });
+  if (ok.error || JSON.stringify(ok.value.area.add) !== '["Franklin, TN"]') fail(`a picked list isn't accepted (or a kept place is added twice) (${JSON.stringify(ok)})`);
+  if (!X.validateFacts({ ...ANS(), area: { keep: Array.from({ length: 21 }, (_, i) => `Town ${i}`) } }).error) fail("more than Google's 20 areas is accepted");
+  if (!X.validateFacts({ ...ANS(), area: { keep: [], add: [] } }).error) fail("an empty service area is accepted");
+  const items = X.rgaItems({ ...ANS(), area: ok.value.area }, tn);
+  const ai = items.find((x) => x.fact === "area");
+  if (!ai || JSON.stringify(ai.add) !== '["Franklin, TN"]' || JSON.stringify(ai.remove) !== '["Green Hills, Nashville, TN, USA","Nashville, TN 37215, USA"]') fail(`a picked list isn't turned into RGA's add / drop list (${JSON.stringify(ai)})`);
+  if (X.rgaItems({ ...ANS(), area: { keep: tn.area, add: [] } }, tn).some((x) => x.fact === "area")) fail("keeping Google's list makes work for RGA");
+  // only Google ticks it
+  const pend = { client_input: ANS(), google_push: { state: "with_rga", rga: [ai] } };
+  if (X.rgaDone(pend, tn)) fail("a service-area change is done before Google lists the new place");
+  if (X.rgaDone({ client_input: ANS(), google_push: { state: "with_rga", rga: [{ fact: "area", add: ["Franklin, TN"], remove: [] }] } }, tn)) fail("adding a place is done before Google lists it");
+  if (!X.rgaDone(pend, X.factsFromGoogle({ serviceArea: { places: { placeInfos: [{ placeName: "Nashville, TN, USA" }, { placeName: "Brentwood, TN, USA" }, { placeName: "Franklin, TN, USA" }] } } }))) fail("a service-area change isn't finished once Google lists it");
+  // RGA: Google doesn't list it → back to the client, recorded
+  let M;
+  try { M = req("./admin-gbp-facts-area.js").markMissing; } catch (e) { console.error(`⚠️  INDETERMINATE — admin-gbp-facts-area didn't load: ${e.message}`); process.exit(2); }
+  const mm = M({ client_input: { area: { keep: [], add: ["Franklin, TN"] } }, status: "in_progress", google_push: { state: "with_rga", rga: [{ fact: "area", add: ["Franklin, TN"], remove: [] }] } }, "Franklin", "rga@x", "2026-10-16T00:00:00Z");
+  if (!mm.task || mm.task.status !== "pending" || JSON.stringify(mm.task.google_push.area_missing) !== '["Franklin, TN"]' || mm.task.google_push.rga.length || mm.task.client_input.area.add.length) fail(`"Google doesn't list it" doesn't send the step back to the client with the place named (${JSON.stringify(mm)})`);
+  if (!M({ google_push: { rga: [] } }, "Franklin", "x", "t").error) fail("RGA can mark a place missing that isn't on its list");
+  const aMiss = nc(read("netlify/functions/admin-gbp-facts-area.js"));
+  if (!/const gate = await requireWorkspaceForClient\(event, clientId\); if \(gate\.error\) return gate\.error;/.test(aMiss) || !/kind: "gbp_area_not_on_google"/.test(aMiss)) fail("the missing-place action isn't RGA-only, or isn't recorded");
+}
+
 // ── 5 · wiring: the step, the save, the database, admin, the nightly check ──
 const pb = JSON.parse(read("data/playbooks/playbooks.json")), cs = JSON.parse(read("data/playbooks/client-steps.json"));
 const m1 = pb.month1.map((s) => s.id), step = pb.month1.find((s) => s.id === STEP), cstep = cs.month1.find((s) => s.id === STEP);
@@ -127,7 +168,7 @@ if (!/via: "portal_gbp_check"/.test(sin)) fail("where the work happens is writte
 if (!/google: push && \(push\.state === "on_google" \|\| \(stepId === GSTEP\.FACTS && \(push\.written \|\| \[\]\)\.length\)\)/.test(sin)) fail("a phone / website written to Google isn't in the Google change log");
 if (!/client_record: toldSync/.test(sin)) fail("the activity row doesn't say what changed on the client record");
 if (!/change on Google: \$\{push\.rga\.map/.test(sin)) fail("RGA isn't told what to change on Google");
-if (!/if \(stepId === "m1\.gbp\.business_facts"\) \{[\s\S]{0,700}F\.factsView\(google, F\.toldFacts\(client \|\| \{\}, rec && rec\.data && rec\.data\.tasks && rec\.data\.tasks\[stepId\]\)\)/.test(nc(read("netlify/functions/portal-gbp-profile.js")))) fail("the portal isn't sent Google beside what they told us");
+if (!/if \(stepId === "m1\.gbp\.business_facts"\) \{[\s\S]{0,700}F\.factsView\(google, F\.toldFacts\(client \|\| \{\}, tasks\[stepId\]\), F\.targetsOf\(tasks\), \(tasks\[stepId\] && tasks\[stepId\]\.google_push && tasks\[stepId\]\.google_push\.area_missing\) \|\| \[\]\)/.test(nc(read("netlify/functions/portal-gbp-profile.js")))) fail("the portal isn't sent Google beside what they told us");
 const watch = nc(read("netlify/functions/_gbp-watch.js"));
 if (!/if \(stepId === STEP\.FACTS\) return require\("\.\/_gbp-facts"\)\.factsDrift\(task, now\);/.test(watch) || !/if \(F\.rgaDone\(task, now\)\)/.test(watch) || !/kind: "gbp_facts_matched"/.test(watch)) fail("the nightly check doesn't watch the facts / finish RGA's change (recorded)");
 const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
@@ -167,10 +208,28 @@ if (!/host\.innerHTML = left\.length \? `<span class="pm-gnow-k">\$\{left\.lengt
 if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*if \(msg\) \{[^\n]*Answer \$\{missing\.join\(", "\)\} first\.[^\n]*\}\s*return;\s*\}/.test(js)) fail("a save with an unanswered line isn't stopped in the browser");
 // 🔒 a pick SHOWS its answer at once, and the last open line SAVES (the pressed button spins) — Chris 10-16: "clicking it now
 // and doing nothing"; a caution (showing an address) waits for Save
-if (!/ans\.innerHTML = `✓ Your answer: <b>\$\{escapeHtml\(pick\.textContent\.trim\(\)\)\}<\/b> <button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
+if (!/ans\.innerHTML = `✓ Your answer: <b>\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/b> <button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
 if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.rga\.length/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
+
+// ── 7 · the card: RGA's recommendation drawn side by side; no text box; the state in the input; admin ticks only from Google ──
+{
+  const view = X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), ["Mar Vista", "Palms", "Culver City"]);
+  const h = ctx.rows(view);
+  if (!/RGA recommends<\/span>/.test(h) || !/Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h)) fail("the service area doesn't lead with RGA's recommendation");
+  if (!/>Mar Vista<em class="">Not on Google<\/em>/.test(h) || !/>Culver City<em class="ok">On Google<\/em>/.test(h)) fail("the targets aren't drawn beside their Google status");
+  if (!/data-area-chip="add" data-area-name="Mar Vista" aria-pressed="true">\+ Mar Vista/.test(h) || !/placeholder="Add another area in CA"/.test(h) || !/<b data-area-count>4 \/ 20<\/b>/.test(h)) fail("the card lacks the add chips, the state in the input, or the 20-place meter");
+
+  const none = ctx.rows(X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), []));
+  if (!/data-fact-val="ok">Yes, that(?:'|&#39;)s right/.test(none) || !/data-area-edit>Change the list/.test(none)) fail("with no targets, the line isn't Yes / Change the list (opening the card)");
+  if (/<textarea[^>]*data-fact-other="area"/.test(h + none) || !/data-area-card hidden/.test(none)) fail("the service area still asks for a text box (\"Change the list\" must open the card)");
+  const miss = ctx.rows({ ...X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), []), missing: ["Palms, CA"] });
+  if (!/Google doesn(?:'|&#39;)t list Palms, CA\.<\/b> Pick a nearby area, or keep your list without it\./.test(miss)) fail("a place Google doesn't list isn't told to the client");
+}
+if (!/\.pm-sa-ico \{[^}]*width:40px; height:40px;[^}]*align-items:center; justify-content:center;/.test(read("portal/portal.css")) || !/\.pm-sa-ico svg \{ width:22px; height:22px;/.test(read("portal/portal.css"))) fail("the card's icon isn't a centred 22px icon in a 40px tile (Chris 10-16: the icon looked lost)");
+if (!/function areaChecklistHtml\(g\)/.test(admin) || !/data-area-missing=/.test(admin) || !/const now = Array\.isArray\(g\.area_now\) \? g\.area_now : null;/.test(admin)) fail("admin's service-area checklist isn't ticked from Google (or has no \"Google doesn't list it\")");
+if (!/area_now: now\.area/.test(watch)) fail("the nightly check doesn't record which places Google lists (admin can't tick)");
 
 if (F.length) { console.error("🔴 \"Check your business on Google\" isn't the approved build:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ business facts match Google: read first, compared universally (names, phones with country codes, sites with tags), a difference shows both, phone + website written and read back, name / address / area RGA's (Your action, nightly finishes it), the client record follows the answer (read back, recorded), admin shows confirmed · before · now, the nightly check watches it; step 7 after verify, numbers 1…N");

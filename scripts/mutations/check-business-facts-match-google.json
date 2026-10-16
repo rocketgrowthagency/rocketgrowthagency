@@ -107,8 +107,8 @@
  [
   "area matched by machine",
   "gbpfacts",
-  ": x.fact === \"come\" ? (v.come === \"yes\") === now.come : false));",
-  ": x.fact === \"come\" ? (v.come === \"yes\") === now.come : true));",
+  "String(n).trim())) : false));",
+  "String(n).trim())) : true));",
   1
  ],
  [
@@ -142,8 +142,8 @@
  [
   "portal not sent what they told us",
   "portalgbpprofile",
-  "F.factsView(google, F.toldFacts(client || {}, rec && rec.data && rec.data.tasks && rec.data.tasks[stepId]))",
-  "F.factsView(google, F.toldFacts({}, null))",
+  "F.factsView(google, F.toldFacts(client || {}, tasks[stepId]), F.targetsOf(tasks),",
+  "F.factsView(google, F.toldFacts({}, null), [],",
   1
  ],
  [
@@ -219,7 +219,7 @@
  [
   "a pick shows nothing",
   "portal",
-  "    ans.innerHTML = `✓ Your answer: <b>${escapeHtml(pick.textContent.trim())}</b> <button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+  "    ans.innerHTML = `✓ Your answer: <b>${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</b> <button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
   "    ans.innerHTML = \"\";",
   1
  ],
@@ -235,6 +235,97 @@
   "portal",
   "      save.classList.add(\"is-busy\", \"is-busy-say\");",
   "      save.classList.add(\"x\");",
+  1
+ ],
+ [
+  "places matched by full string",
+  "gbpfacts",
+  "  return !!x && x === y;\n}",
+  "  return String(a) === String(b);\n}",
+  1
+ ],
+ [
+  "ZIPs not matched",
+  "gbpfacts",
+  "  if (/^\\d{5}$/.test(x)) return x === y || x === zipOf(b);",
+  "  if (false) return x === y || x === zipOf(b);",
+  1
+ ],
+ [
+  "state not read",
+  "gbpfacts",
+  "function factsFromGoogle(j) { const f = factsFromGoogle0(j); f.state = stateOf(j, f); return f; }",
+  "function factsFromGoogle(j) { const f = factsFromGoogle0(j); return f; }",
+  1
+ ],
+ [
+  "RGA's own areas recommended",
+  "gbpfacts",
+  "  if (tg.length) recommend.area = { targets: tg, add, state: google.state };",
+  "  if (tg.length || true) recommend.area = { targets: tg, add: tg.length ? add : [\"Mar Vista\"], state: google.state };",
+  1
+ ],
+ [
+  "missing place recommended again",
+  "gbpfacts",
+  "(targets || []).filter((name) => !hasPlace(missing, name))",
+  "(targets || [])",
+  1
+ ],
+ [
+  "no 20 limit",
+  "gbpfacts",
+  "    if (keep.length + add.length > 20) return",
+  "    if (false) return",
+  1
+ ],
+ [
+  "kept place dropped",
+  "gbpfacts",
+  "!kept.has(String(p).trim()) && ",
+  "",
+  1
+ ],
+ [
+  "area ticked before Google lists it",
+  "gbpfacts",
+  "x.add.every((n) => hasPlace(now.area, n))",
+  "true",
+  1
+ ],
+ [
+  "text box back",
+  "portal",
+  "<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div></div>${areaCardHtml({ g, ra, open: false })}",
+  "<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div><textarea class=\"pm-in-field pm-fact-other\" data-fact-other=\"area\" rows=\"2\"></textarea></div>",
+  1
+ ],
+ [
+  "no targets drawn",
+  "portal",
+  "<em class=\"${t.on ? \"ok\" : \"\"}\">${t.on ? \"On Google\" : \"Not on Google\"}</em>",
+  "",
+  1
+ ],
+ [
+  "icon tile small again",
+  "portalcss",
+  ".pm-sa-ico svg { width:22px; height:22px; display:block; }",
+  ".pm-sa-ico svg { width:14px; height:14px; display:block; }",
+  1
+ ],
+ [
+  "admin ticks by hand",
+  "admin",
+  "  const now = Array.isArray(g.area_now) ? g.area_now : null;",
+  "  const now = item.add;",
+  1
+ ],
+ [
+  "nightly doesn't record places",
+  "gbpwatch",
+  "area_now: now.area,",
+  "area_now: null,",
   1
  ]
 ]

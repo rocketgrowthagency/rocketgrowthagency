@@ -190,7 +190,8 @@ if (!/anchor: anchorKind/.test(flow) || !/centred_on:/.test(flow)) {
 // five were never measured. And the default 5×5 @ 0.5mi reaches only 1.61 km, while RGA's locked
 // sub-locations sit at 1.4 / 2.7 / 4.6 km — TWO WERE OUTSIDE THE GRID and would still have been
 // reported "not found". An absence we did not look for is the worst number this system can produce.
-if (!/function readLockedPlan\(/.test(flow)) fail.push("readLockedPlan is gone — the scan would measure a placeholder term again");
+// 🔑 readLockedPlan lives in _locked-plan.js since 10-16 (shared with the service-area recommendation), required by flow-execute
+if (!/function readLockedPlan\(/.test(flow) && !(/const \{ readLockedPlan \} = require\("\.\/_locked-plan"\);/.test(flow) && /function readLockedPlan\(/.test(fs.readFileSync(`${__SITE}/netlify/functions/_locked-plan.js`, "utf8")))) fail.push("readLockedPlan is gone — the scan would measure a placeholder term again");
 // 🔴 PIN THE PROPERTY, NOT THE LINE. This matched the literal `const plan = readLockedPlan(recs);`
 // and failed when the read legitimately MOVED EARLIER in the function — it now has to happen before
 // the stored-scan freshness check, so that check can ask about the plan rather than the placeholder.

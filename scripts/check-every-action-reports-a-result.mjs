@@ -112,6 +112,11 @@ const UI_ONLY = {
   "data-fact-pick": "picks the answer to one business fact — the pressed choice is visibly ringed; nothing is written until Save",
   "data-fact-other-go": "opens a box for the client's own words on one fact — the box visibly appears, focused",
   "data-fact-redo": "reopens an answered fact line — the question visibly comes back, amber",
+  // 🔒 service_area_recommend_v2 (10-16): the service-area card's own taps — each visibly changes the card; "Use this list" saves
+  "data-area-edit": "opens the service-area card — the card visibly appears with the input focused",
+  "data-area-chip": "drops / restores one place — the chip visibly strikes through and the 20-place meter moves",
+  "data-area-add": "adds a typed place as a chip — the chip visibly appears and the meter moves (or a line says why not)",
+  "data-area-use": "carries the picked list into the line's answer — the answer visibly shows and the last open line saves (spins)",
 };
 
 // The legitimate ways an action can report. The global banner is the main one, but a dedicated

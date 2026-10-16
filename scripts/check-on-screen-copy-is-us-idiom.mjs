@@ -72,6 +72,9 @@ const MUST_NOT_FLAG = ["analysis", "analyses", "analyst", "analytics", "analyze"
 const ALLOWED = [
   { needle: "Centred on    ", why: "step 26's card copy, approved by Chris in the mockup and locked; changing it needs a new mockup" },
   { needle: "centred on", why: "the same approved card wording, rendered on the admin's grid summary line" },
+  // 10-16: moving readLockedPlan to _locked-plan.js changed the file's backtick parity, and this REGEX (it strips both
+  // spellings from a keyword before de-duping) read as template text. Code, never shown to anyone.
+  { needle: "[/\\b(optimisation|optimization|engine)\\b/g", why: "a regex in flow-execute's keyword de-dupe that strips both spellings — code, not copy" },
 ];
 
 // 🔑 THE DICTIONARY IS NOT PROSE. `_us-idiom.js` has to NAME every British word in order to convert
