@@ -181,8 +181,10 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
 {
   const h = ctx.how(step, task(sab), true, [PUB(logoN, "logo"), PUB(workN, "at_work")], "c1", null);
   const lg = slotOf(h, logoN), wk = slotOf(h, workN);
-  if (!/Saved on Google<\/span>/.test(lg) || !/Customers won(?:'|&#39;)t see it yet\.<\/b> Google shows a logo only on profiles that show a street address/.test(lg) || /On your Google profile/.test(lg)) fail("the logo on a profile with no street address still says \"On your Google profile\" (Google hides it)");
+  if (!/Saved on Google<\/span>/.test(lg) || !/Customers won(?:'|&#39;)t see it yet:<\/b> Google only shows logos on profiles with a street address\. Nothing to do\./.test(lg) || /On your Google profile/.test(lg)) fail("the logo on a profile with no street address still says \"On your Google profile\" (Google hides it)");
   if (!/<label class="add">Change<input[^>]*data-slot-file[^>]*data-shot-n="\d+"/.test(lg) || /data-photo-remove/.test(lg)) fail("the logo isn't changeable, or can be removed");
+  // 🔴 10-15: the note borrowed .pm-note (the message shape, max 62ch) and stopped at 60% of the row — its own class only
+  if (!/<div class="pm-turned pm-care"><span><b>Customers won/.test(lg) || /class="[^"]*\bpm-note\b/.test(lg)) fail("the logo note isn't the full-width caution note (or borrows .pm-note, capped at 62ch)");
   if (!/On your Google profile<\/span><small class="pm-ctl">Published Oct 9 · <label class="add">Change<input/.test(wk) || !/data-photo-remove="p\d+" data-on-google/.test(wk)) fail("a photo on Google has no Change · Remove under its date");
   const hs = ctx.how(step, task(shop), true, [PUB(logoN, "logo")], "c1", null);
   if (!/On your Google profile<\/span>/.test(slotOf(hs, logoN)) || /Customers won/.test(hs)) fail("a storefront's logo is called hidden (only a profile with no street address is)");
@@ -233,7 +235,7 @@ if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhot
   if (!new RegExp(`data-slot="${workN}" data-on-google-slot`).test(h)) fail("a slot on Google isn't marked, so a Change in progress can't say the old photo stays"); }
 if (!/if \(row\.hasAttribute\("data-on-google-slot"\)\) \{ if \(!row\.querySelector\("\.pm-swap"\)\) row\.insertAdjacentHTML\("beforeend", PHOTO_SWAP_NOTE\); \}\s*else bumpGroupCount\(row\);/.test(pc)) fail("a Change just sent doesn't say the old photo stays on Google (or bumps the kind's count twice)");
 const pcss = read("portal/portal.css");
-if (!/\.pm-linkbtn\.pm-photo-rm\.is-busy::after \{ border-color:var\(--portal-error\);/.test(pcss) || !/\.pm-done-band \{/.test(pcss) || !/\.pm-turned\.pm-note \{/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
+if (!/\.pm-linkbtn\.pm-photo-rm\.is-busy::after \{ border-color:var\(--portal-error\);/.test(pcss) || !/\.pm-done-band \{/.test(pcss) || !/\.pm-turned\.pm-care \{ grid-column:1\/-1; color:var\(--state-care\); background:var\(--state-care-bg\); border-color:var\(--state-care-line\);/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
 
 // ── 6 · admin sees it ──
 const admin = nc(read("admin/admin.js"));

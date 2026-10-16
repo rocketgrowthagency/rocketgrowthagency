@@ -201,5 +201,19 @@
   "        if (row.hasAttribute(\"data-on-google-slot\")) { if (!row.querySelector(\".pm-swap\")) row.insertAdjacentHTML(\"beforeend\", PHOTO_SWAP_NOTE); }\n        else bumpGroupCount(row);",
   "        bumpGroupCount(row);",
   1
+ ],
+ [
+  "the logo note borrows .pm-note",
+  "portal",
+  "hiddenLogo ? `<div class=\"pm-turned pm-care\">",
+  "hiddenLogo ? `<div class=\"pm-turned pm-note\">",
+  1
+ ],
+ [
+  "the logo note isn't the caution colour",
+  "portalcss",
+  ".pm-turned.pm-care { grid-column:1/-1; color:var(--state-care);",
+  ".pm-turned.pm-care { grid-column:1/-1; color:var(--portal-muted);",
+  1
  ]
 ]
