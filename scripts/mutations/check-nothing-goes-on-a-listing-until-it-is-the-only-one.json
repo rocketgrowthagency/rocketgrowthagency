@@ -156,8 +156,8 @@
  [
   "portal: a waiting step is the client's turn (orange edge)",
   "portal",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && (",
-  "const theirsToAct = !kickoffPending && !ownWait && !rgaWait && !gbpWithRga && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && !withRga && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !rgaWait && !gbpWithRga && !withRga && (",
   1
  ],
  [

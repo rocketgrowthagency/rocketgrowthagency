@@ -65,8 +65,8 @@
  [
   "a later step is still the now step",
   "portal",
-  "isOpenRow(r) && theirs(r) && !r.later)",
-  "isOpenRow(r) && theirs(r))",
+  "isOpenRow(r) && theirs(r) && !r.later && !r.withRga)",
+  "isOpenRow(r) && theirs(r) && !r.withRga)",
   1
  ],
  [
@@ -86,8 +86,8 @@
  [
   "admin doesn't see it",
   "admin",
-  " + laterLine(task);",
-  ";",
+  " + laterLine(task) + photoLines(task);",
+  " + photoLines(task);",
   1
  ],
  [

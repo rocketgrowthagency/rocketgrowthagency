@@ -116,10 +116,10 @@ if (/pm-later-list/.test(ctx.how(step, task, true, [], "c1", null))) fail("the p
 const off = ctx.how(step, task, true, [], "c1", null);
 if (!/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(off) || !/data-later-days="7">In 1 week</.test(off) || !/data-later-days="14">In 2 weeks</.test(off)) fail("the step doesn't offer \"Remind me later\" with 1 or 2 weeks");
 const pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
-if (!/: later \? \{ text: `Later · \$\{laterDay\(later\.until\)\}`, cls: "wait" \}\s*: theirsToAct \? \{ text: "Your turn"/.test(pc)) fail("a step that's \"later\" doesn't say so in its pill (or says Your turn)");
-if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && !r\.later\)/.test(pc)) fail("a step that's \"later\" can still be the client's now step");
-if (!/&& !i\.later\n\s*&& !\(i\.step\?\.clientForm === "kickoff_booking" && !kickoffOwed\)\);/.test(pc) || !/parts\.push\(`\$\{LATER_STEPS\[i\.step\.id\] \|\| "a step"\} later \(\$\{laterDay\(i\.later\.until\)\}\)`\)/.test(pc)) fail("the next-step banner doesn't move on, or doesn't say the photos come back later");
-if (!/later: status !== "done" && status !== "skipped" \? laterOf\(s, ts, photos\) : null/.test(pc)) fail("the step list doesn't know which step is \"later\"");
+if (!/: later \? \{ text: `Later · \$\{laterDay\(later\.until\)\}`, cls: "wait" \}\s*(?:: withRga \? \{ text: "With RGA", cls: "rga" \}\s*)?: theirsToAct \? \{ text: "Your turn"/.test(pc)) fail("a step that's \"later\" doesn't say so in its pill (or says Your turn)");
+if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && !r\.later[ )]/.test(pc)) fail("a step that's \"later\" can still be the client's now step");
+if (!/&& !i\.later\n(?:\s*&& !i\.withRga\n)?\s*&& !\(i\.step\?\.clientForm === "kickoff_booking" && !kickoffOwed\)\);/.test(pc) || !/parts\.push\(`\$\{LATER_STEPS\[i\.step\.id\] \|\| "a step"\} later \(\$\{laterDay\(i\.later\.until\)\}\)`\)/.test(pc)) fail("the next-step banner doesn't move on, or doesn't say the photos come back later");
+if (!/const open = status !== "done" && status !== "skipped";\s*return \{ step: s, status, taskState: ts, evidence, later: open \? laterOf\(s, ts, photos\) : null/.test(pc)) fail("the step list doesn't know which step is \"later\"");
 const laterHandler = (() => { const i = pc.indexOf('"[data-later-days],[data-later-clear],[data-later-change]"'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
 if (!/b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(laterHandler) || !/finally \{ delete host\.dataset\.busy; b\.classList\.remove\("is-busy"\);/.test(pc)) fail("a click on a later choice shows nothing while it saves (the pressed button must spin)");
 if (!/if \(days\) _openStep\.delete\(cid\); else _openStep\.set\(cid, host\.getAttribute\("data-later-step"\)\);/.test(pc)) fail("choosing later doesn't fold the step (or I'm ready now doesn't keep it open)");
@@ -146,7 +146,7 @@ if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \
 }
 // ── 4 · admin sees it ──
 const admin = read("admin/admin.js");
-if (!/Client chose later · reminder \$\{escapeHtml\(day\(until\)\)\}/.test(admin) || !/\+ laterLine\(task\);/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
+if (!/Client chose later · reminder \$\{escapeHtml\(day\(until\)\)\}/.test(admin) || !/\+ laterLine\(task\)(?: \+ photoLines\(task\))?;/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
 if (!/if \(l\.reminded_at\) return `<p class="ob-chose">Reminder sent /.test(admin) || !/if \(l\.followup_told_at\) return `<p class="ob-chose is-warn">No photos 3 days after their reminder/.test(admin)) fail("admin doesn't say when the reminder went, or doesn't turn amber 3 days on");
 if (!/x\.reason === "later_reminder" \? \(x\.emailed \? "Reminder they asked for · by email"/.test(admin) || !/reason: r\.payload\?\.reason \|\| null/.test(admin)) fail("admin's nudge log calls the reminder the client asked for a nudge");
 

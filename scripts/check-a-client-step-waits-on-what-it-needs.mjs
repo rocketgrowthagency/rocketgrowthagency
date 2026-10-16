@@ -265,7 +265,7 @@ const pcode = code("portal/portal.js");
 const checks = [
   [/const ownWait = !!ownFirstId;\s*const listingWait = !ownWait && rowListingWaits\(/, "the listing outranks the client's own earlier step (approved: their step first)"],
   [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
-  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
+  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?(?:!withRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
   [/: ownWait \? \{ text: ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
   [/\$\{ownWait \? ownWaitHtml\(ownFirst\) : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],

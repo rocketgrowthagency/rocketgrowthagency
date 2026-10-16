@@ -52,6 +52,9 @@ const DECLARED = {
   },
   "_photo-publish.js": {
     publish_error: { clear: /publish_state: "published", publish_error: null,/ },
+    // photo_change_remove_v1: a count in the run's summary (the function's return), never stored; the failure itself is
+    // a `remove_failed` row in the append-only publish log, and the old photo stays `published` (it IS still on Google)
+    replace_failed: { why: "response only (the run's summary), never stored" },
   },
   "gbp-apply-change.js": {
     write_error: { why: "response only (json), never stored" },
