@@ -108,6 +108,9 @@ const UI_ONLY = {
   "data-in-closed": "marks a day closed and disables its time fields — both visibly change",
   "data-in-oneoff-add": "appends an empty closure row and focuses it — the row visibly appears",
   "data-oneoff-remove": "removes a closure row — the row visibly disappears; a blank one is kept so the field never vanishes entirely",
+  // 🔒 business_on_google_v1 (10-16): picking an answer on one fact line — the pressed choice is ringed; "Save and check Google" reports
+  "data-fact-pick": "picks the answer to one business fact — the pressed choice is visibly ringed; nothing is written until Save",
+  "data-fact-other-go": "opens a box for the client's own words on one fact — the box visibly appears, focused",
 };
 
 // The legitimate ways an action can report. The global banner is the main one, but a dedicated

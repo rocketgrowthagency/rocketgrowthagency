@@ -632,8 +632,8 @@
  [
   "v8: the wrong account is the old amber line",
   "portal",
-  "alert(\"bad\", \"Wrong Google account\"",
-  "alert(\"warn\", \"Wrong Google account\"",
+  "errBox(\"bad\", \"Wrong Google account\"",
+  "errBox(\"warn\", \"Wrong Google account\"",
   1
  ],
  [

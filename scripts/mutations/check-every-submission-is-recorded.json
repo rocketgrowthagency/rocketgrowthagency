@@ -1,18 +1,114 @@
 [
- ["the answer is dropped from the row", "recordfn", "...(answer !== undefined ? { answer: secret ? SECRET : answer } : {})", "", 1],
- ["a secret is stored", "recordfn", "answer: secret ? SECRET : answer", "answer: answer", 1],
- ["no change-log row for Google", "recordfn", "  if (o.google) {", "  if (false) {", 1],
- ["a failed write reported as recorded", "recordfn", "    out.activity = Array.isArray(rows) ? rows.length > 0 : rows !== null;", "    out.activity = true;", 1],
- ["a recording failure throws", "recordfn", "  } catch (e) { out.errors.push(`activity: ${String(e.message || e).slice(0, 160)}`); }", "  } catch (e) { throw e; }", 1],
- ["who isn't in the change log", "recordfn", "actorEmail: by && /@/.test(by) ? by : null", "actorEmail: null", 1],
- ["portal answer not recorded", "stepinputfn", "      answer: parsed.value, secret: spec.kind === \"secret\" || spec.echo === false,", "      secret: spec.kind === \"secret\" || spec.echo === false,", 1],
- ["portal secret flag dropped", "stepinputfn", "secret: spec.kind === \"secret\" || spec.echo === false,", "secret: false,", 1],
- ["Google save not in the change log", "stepinputfn", "google: push && push.state === \"on_google\" ? {", "google: false ? {", 1],
- ["later not recorded", "steplater", "  await recordSubmission({ supa, clientId, kind: \"client_step_later\"", "  if (0) await recordSubmission({ supa, clientId, kind: \"client_step_later\"", 1],
- ["team size not recorded", "phototeam", "recordSubmission({ supa, clientId, kind: \"client_team_size\"", "noop({ supa, clientId, kind: \"client_team_size\"", 1],
- ["keep-it not recorded", "photokeep", "recordSubmission({ supa, clientId, kind: \"gbp_photo_kept\"", "noop({ supa, clientId, kind: \"gbp_photo_kept\"", 1],
- ["put-back not in the change log", "gbpdrift", "google: action === \"restore\" ? {", "google: false ? {", 1],
- ["drift notice not recorded", "gbpwatch", "kind: \"gbp_changed_on_google\"", "kind: \"x\"", 1],
- ["nightly not given the recorder", "gbpprofilewatch", "record: (o) => recordSubmission({ supa, ...o })", "record: null", 1],
- ["admin by = admin override", "admin", "by: (await supabase.auth.getSession())?.data?.session?.user?.email || \"admin\", actor: \"rga\"", "by: \"admin override\", actor: \"rga\"", 1]
+ [
+  "the answer is dropped from the row",
+  "recordfn",
+  "...(answer !== undefined ? { answer: secret ? SECRET : answer } : {})",
+  "",
+  1
+ ],
+ [
+  "a secret is stored",
+  "recordfn",
+  "answer: secret ? SECRET : answer",
+  "answer: answer",
+  1
+ ],
+ [
+  "no change-log row for Google",
+  "recordfn",
+  "  if (o.google) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "a failed write reported as recorded",
+  "recordfn",
+  "    out.activity = Array.isArray(rows) ? rows.length > 0 : rows !== null;",
+  "    out.activity = true;",
+  1
+ ],
+ [
+  "a recording failure throws",
+  "recordfn",
+  "  } catch (e) { out.errors.push(`activity: ${String(e.message || e).slice(0, 160)}`); }",
+  "  } catch (e) { throw e; }",
+  1
+ ],
+ [
+  "who isn't in the change log",
+  "recordfn",
+  "actorEmail: by && /@/.test(by) ? by : null",
+  "actorEmail: null",
+  1
+ ],
+ [
+  "portal answer not recorded",
+  "stepinputfn",
+  "      answer: parsed.value, secret: spec.kind === \"secret\" || spec.echo === false,",
+  "      secret: spec.kind === \"secret\" || spec.echo === false,",
+  1
+ ],
+ [
+  "portal secret flag dropped",
+  "stepinputfn",
+  "secret: spec.kind === \"secret\" || spec.echo === false,",
+  "secret: false,",
+  1
+ ],
+ [
+  "Google save not in the change log",
+  "stepinputfn",
+  "google: push && (push.state === \"on_google\" || (stepId === GSTEP.FACTS && (push.written || []).length)) ? {",
+  "google: false ? {",
+  1
+ ],
+ [
+  "later not recorded",
+  "steplater",
+  "  await recordSubmission({ supa, clientId, kind: \"client_step_later\"",
+  "  if (0) await recordSubmission({ supa, clientId, kind: \"client_step_later\"",
+  1
+ ],
+ [
+  "team size not recorded",
+  "phototeam",
+  "recordSubmission({ supa, clientId, kind: \"client_team_size\"",
+  "noop({ supa, clientId, kind: \"client_team_size\"",
+  1
+ ],
+ [
+  "keep-it not recorded",
+  "photokeep",
+  "recordSubmission({ supa, clientId, kind: \"gbp_photo_kept\"",
+  "noop({ supa, clientId, kind: \"gbp_photo_kept\"",
+  1
+ ],
+ [
+  "put-back not in the change log",
+  "gbpdrift",
+  "google: action === \"restore\" ? {",
+  "google: false ? {",
+  1
+ ],
+ [
+  "drift notice not recorded",
+  "gbpwatch",
+  "kind: \"gbp_changed_on_google\"",
+  "kind: \"x\"",
+  1
+ ],
+ [
+  "nightly not given the recorder",
+  "gbpprofilewatch",
+  "record: (o) => recordSubmission({ supa, ...o })",
+  "record: null",
+  1
+ ],
+ [
+  "admin by = admin override",
+  "admin",
+  "by: (await supabase.auth.getSession())?.data?.session?.user?.email || \"admin\", actor: \"rga\"",
+  "by: \"admin override\", actor: \"rga\"",
+  1
+ ]
 ]

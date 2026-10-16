@@ -1,0 +1,198 @@
+[
+ [
+  "apostrophes split names",
+  "gbpfacts",
+  ".replace(/['’`]/g, \"\")",
+  "",
+  1
+ ],
+ [
+  "a short number matches a full one",
+  "gbpfacts",
+  "return hasCountry && s.length >= 7",
+  "return s.length >= 7",
+  1
+ ],
+ [
+  "tracking tags break a website match",
+  "gbpfacts",
+  "return `${x.hostname.toLowerCase().replace(/^www\\./, \"\")}${x.pathname.replace(/\\/+$/, \"\")}`;",
+  "return x.href;",
+  1
+ ],
+ [
+  "stuffed names not caught",
+  "gbpfacts",
+  "normName(google).startsWith(`${normName(told)} `)",
+  "false",
+  1
+ ],
+ [
+  "geography not read",
+  "gbpfacts",
+  "come: g === \"single_location\" || g === \"multi_location\" ? true : g === \"service_area\" ? false : null,",
+  "come: null,",
+  1
+ ],
+ [
+  "matching profile written anyway",
+  "gbpfacts",
+  "  if (!samePhone(value.phone, before.phone)) {",
+  "  if (true) {",
+  1
+ ],
+ [
+  "other phone numbers dropped",
+  "gbpfacts",
+  "...(raw.phoneNumbers && raw.phoneNumbers.additionalPhones ? { additionalPhones: raw.phoneNumbers.additionalPhones } : {})",
+  "",
+  1
+ ],
+ [
+  "no read-back",
+  "gbpfacts",
+  "    if (missed.length) return",
+  "    if (false) return",
+  1
+ ],
+ [
+  "Google refusal not the client's",
+  "gbpfacts",
+  "if (/phone/i.test(s) && /INVALID_ARGUMENT/.test(s)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "name changed by the machine",
+  "gbpfacts",
+  "  if (!sameName(value.name, g.name)) out.push(",
+  "  if (false) out.push(",
+  1
+ ],
+ [
+  "empty name accepted",
+  "gbpfacts",
+  "  if (!name || name.length > 120) return",
+  "  if (name.length > 120) return",
+  1
+ ],
+ [
+  "record rewritten on every save",
+  "gbpfacts",
+  "  if (!told.phone || !samePhone(value.phone, told.phone)) patch.identity_phone = value.phone;",
+  "  patch.identity_phone = value.phone;",
+  1
+ ],
+ [
+  "multi-location flattened",
+  "gbpfacts",
+  "if (value.come === \"yes\" && g !== \"single_location\" && g !== \"multi_location\")",
+  "if (value.come === \"yes\" && g !== \"single_location\")",
+  1
+ ],
+ [
+  "phone change unnoticed nightly",
+  "gbpfacts",
+  "  if (c.phone && !samePhone(c.phone, now.phone)) diffs.push(",
+  "  if (false) diffs.push(",
+  1
+ ],
+ [
+  "RGA change finished early",
+  "gbpfacts",
+  "x.fact === \"name\" ? sameName(v.name, now.name)",
+  "x.fact === \"name\" ? true",
+  1
+ ],
+ [
+  "area matched by machine",
+  "gbpfacts",
+  ": x.fact === \"come\" ? (v.come === \"yes\") === now.come : false));",
+  ": x.fact === \"come\" ? (v.come === \"yes\") === now.come : true));",
+  1
+ ],
+ [
+  "not a Google step",
+  "gbpprofile",
+  ", FACTS: \"m1.gbp.business_facts\" };",
+  " };",
+  1
+ ],
+ [
+  "record not updated",
+  "stepinputfn",
+  "      const patch = F.clientsPatch(parsed.value, client || {});",
+  "      const patch = {};",
+  1
+ ],
+ [
+  "record not read back",
+  "stepinputfn",
+  "        const ok = back && Object.entries(patch)",
+  "        const ok = true || Object.entries(patch)",
+  1
+ ],
+ [
+  "written phone not in change log",
+  "stepinputfn",
+  "(stepId === GSTEP.FACTS && (push.written || []).length)",
+  "false",
+  1
+ ],
+ [
+  "portal not sent what they told us",
+  "portalgbpprofile",
+  "F.factsView(google, F.toldFacts(client || {}, rec && rec.data && rec.data.tasks && rec.data.tasks[stepId]))",
+  "F.factsView(google, F.toldFacts({}, null))",
+  1
+ ],
+ [
+  "nightly doesn't finish RGA's change",
+  "gbpwatch",
+  "      if (F.rgaDone(task, now)) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "admin no facts table",
+  "admin",
+  "<table class=\"ob-facts\"><thead><tr><th>Fact</th>",
+  "<table class=\"ob-facts\"><thead><tr><th>What</th>",
+  1
+ ],
+ [
+  "no Your action",
+  "admin",
+  "    if (factsTodo.length) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "difference shows one value",
+  "portal",
+  "opts: [...(tv ? [{ v: tv, l: `${show(tv)}, mine` }] : []), ...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
+  "opts: [...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
+  1
+ ],
+ [
+  "no stuffed-name recommendation",
+  "portal",
+  "  if (now.recommend && now.recommend.name) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "unanswered line saves",
+  "portal",
+  "    if (missing.length) {\n      if (msg)",
+  "    if (false) {\n      if (msg)",
+  1
+ ],
+ [
+  "step numbers out of order",
+  "clientstepsjson",
+  "\"clientStepNo\": 7,",
+  "\"clientStepNo\": 8,",
+  1
+ ]
+]

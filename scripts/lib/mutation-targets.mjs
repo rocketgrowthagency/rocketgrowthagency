@@ -28,7 +28,7 @@ export const FILES = {
   mockupdlv: "reports/mockups/admin_shot_list_deliverable_v2.html",
   draftshape: "netlify/functions/_draft-shape.js",
   gbpparent: "netlify/functions/_gbp-parent.js",
-  gbpprofile: "netlify/functions/v2-gbp-profile.js",
+  v2gbpprofile: "netlify/functions/v2-gbp-profile.js",   // was a second "gbpprofile" key, silently overridden by _gbp-profile.js below
   recheckfn: "netlify/functions/portal-step-recheck.js",
   detsql: "docs/supabase/RGA_CLIENT_STEP_DETECTIONS_2026-10-07.sql",
   usidiom: "netlify/functions/_us-idiom.js",
@@ -97,6 +97,8 @@ export const FILES = {
   gbpwatch: "netlify/functions/_gbp-watch.js",
   gbpdrift: "netlify/functions/admin-gbp-drift.js",
   recordfn: "netlify/functions/_record.js",
+  gbpfacts: "netlify/functions/_gbp-facts.js",
+  portalgbpprofile: "netlify/functions/portal-gbp-profile.js",
   gbpprofilewatch: "netlify/functions/gbp-profile-watch.js",
   dupcleared: "netlify/functions/_dup-cleared.js",
   changeremovesql: "docs/supabase/RGA_CLIENT_PHOTO_CHANGE_REMOVE_2026-10-15.sql",

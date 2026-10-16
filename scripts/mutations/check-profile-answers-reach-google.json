@@ -16,8 +16,8 @@
  [
   "RGA never told",
   "stepinput",
-  "    rgaToldNow ? tellRga(",
-  "    false ? tellRga(",
+  "    : rgaToldNow ? tellRga(",
+  "    : false ? tellRga(",
   1
  ],
  [
@@ -37,8 +37,8 @@
  [
   "special hours always overwritten",
   "gbpprofile",
-  "      if (special.length) { body.specialHours = { specialHourPeriods: special }; mask.push(\"specialHours\"); }",
-  "      body.specialHours = { specialHourPeriods: special }; mask.push(\"specialHours\");",
+  "      const writeSpecial = plan.length > 0 || oursBefore.size > 0;",
+  "      const writeSpecial = false;",
   1
  ],
  [
@@ -86,8 +86,8 @@
  [
   "RGA's turn still says Your turn",
   "portal",
-  "!rgaWait && !gbpWithRga && (Boolean(step.clientInput)",
-  "!rgaWait && (Boolean(step.clientInput)",
+  "!rgaWait && !gbpWithRga && !withRga && (Boolean(step.clientInput)",
+  "!rgaWait && !withRga && (Boolean(step.clientInput)",
   1
  ],
  [

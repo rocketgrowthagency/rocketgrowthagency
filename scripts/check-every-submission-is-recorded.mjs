@@ -54,7 +54,7 @@ for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "_s
 // ── 3 · the writers say what was sent, who, and touch the change log when Google changed ──
 const sin = nc(read("netlify/functions/portal-step-input.js"));
 if (!/recordSubmission\(\{ supa, clientId, kind: "client_step_input", stepId, by: gate\.email \|\| null, actor: "client",\s*answer: parsed\.value, secret: spec\.kind === "secret" \|\| spec\.echo === false,/.test(sin)) fail("a portal answer is recorded without the answer (or a one-time secret would be stored)");
-if (!/google: push && push\.state === "on_google" \? \{/.test(sin) || !/verified: true, source: "portal-step-input" \} : null \}\)/.test(sin)) fail("a step 8/10/11 save that reached Google isn't in the Google change log");
+if (!/google: push && \(push\.state === "on_google" \|\| \(stepId === GSTEP\.FACTS && \(push\.written \|\| \[\]\)\.length\)\) \? \{/.test(sin) || !/verified: true, source: "portal-step-input" \} : null \}\)/.test(sin)) fail("a step 8/10/11 save that reached Google isn't in the Google change log");
 const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/kind: "gbp_drift_resolved", stepId, by: gate\.email \|\| null, actor: "rga"/.test(drift) || !/google: action === "restore" \? \{/.test(drift)) fail("admin's put-back / keep isn't recorded (or a put-back isn't in the change log)");
 const watch = nc(read("netlify/functions/_gbp-watch.js"));

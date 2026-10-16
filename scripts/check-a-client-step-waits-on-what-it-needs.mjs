@@ -117,7 +117,7 @@ for (const id of ["m2.snap.business_outcomes", "m2.exec.gbp_photos", "m2.exec.re
 {
   const call = byId2.get("m2.call.monthly");
   const w0 = call && W.waitNow(pb, call, {});
-  if (!w0 || w0.on !== "you" || w0.id !== "m2.snap.business_outcomes" || !/^Do step 14 first\. Nothing was saved\.$/.test(w0.message)) fail(`Month 2: the monthly call doesn't say "Do step 14 first" before their numbers are in (${JSON.stringify(w0)})`);
+  if (!w0 || w0.on !== "you" || w0.id !== "m2.snap.business_outcomes" || w0.message !== `Do step ${JSON.parse(read("data/playbooks/client-steps.json")).month2plus.find((x) => x.id === "m2.snap.business_outcomes").clientStepNo} first. Nothing was saved.`) fail(`Month 2: the monthly call doesn't say "Do step <business outcomes' own number> first" before their numbers are in (${JSON.stringify(w0)})`);
   const w1 = call && W.waitNow(pb, call, { "m2.snap.business_outcomes": done });
   if (!w1 || w1.on !== "rga") fail("Month 2: the monthly call doesn't wait on RGA once their numbers are in (the report isn't sent)");
   const mock2 = read("reports/mockups/month2_waits_v1.html");

@@ -673,6 +673,14 @@ Only "found" plus a GSC tag counts as verified.`,
 If unverified: trigger postcard or video verification from inside GBP. Block on this until done — nothing else GBP-related works without verification.`,
   },
   {
+    // 🔒 approved business_on_google_v1 (2026-10-16): the client confirms five facts against Google in the portal
+    id: "m1.gbp.business_facts", title: "Match business facts to Google (name, address, service area, phone, website)",
+    type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
+    instructions: `The client confirms five facts in the portal against what Google shows (read live): business name, whether customers come to them (address shown or hidden), service area, phone, website.
+Phone + website differences are written to Google and read back automatically.
+Name, address and service-area differences are RGA's: change them in Google Business Profile (Google can ask to verify again). The nightly check finishes the step once Google shows the name / address; mark a service-area change Done here.`,
+  },
+  {
     id: "m1.gbp.optimize_categories", title: "Lock primary + secondary categories",
     type: "hybrid", dependsOn: ["m1.gbp.verify", "m1.strategy.keywords_locations", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",

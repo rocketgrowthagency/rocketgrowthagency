@@ -31,7 +31,10 @@ if (!sop || !step) { console.error(`⚠️  INDETERMINATE — ${S} is not in the
 // 🔴 The portal reads the PROJECTION; the words are written in the SOP. A projection not rebuilt is a second copy.
 if (JSON.stringify(step.clientWait) !== JSON.stringify(sop.clientWait)) fail("client-steps.json's step 12 isn't the SOP's (rebuild it: node scripts/build-client-steps.mjs)");
 // ── 1 · the words are the approved mockup's (a new wording needs a new approval) ──
-const inMock = (t) => mock.includes(String(t).replace(/'/g, "'"));
+// 🔑 a step NUMBER is computed (review requests moved 12 → 13 when "Check your business on Google" joined, 10-16): the approved
+// words are compared with the number as N
+const numless = (x) => String(x).replace(/\b(step|Step) \d+\b/g, "$1 N");
+const inMock = (t) => numless(mock).includes(numless(String(t).replace(/'/g, "'")));
 const w = step.clientWait || {}, th = w.thing || {}, how = w.how || [];
 for (const [k, v] of [["head", w.head], ["body", w.body], ["foot", w.foot], ["thing.small", th.small], ["thing.title", th.title], ["thing.detail", th.detail], ["thing.tag", th.tag]]) {
   if (!v || !inMock(v)) fail(`step 12's waiting ${k} isn't the approved words ("${v}")`);

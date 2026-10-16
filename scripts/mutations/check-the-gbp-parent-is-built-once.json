@@ -22,7 +22,7 @@
  ],
  [
   "v2-gbp-profile goes back to building the URL from the location alone",
-  "gbpprofile",
+  "v2gbpprofile",
   "const locationName = gbpParent(oauth);",
   "const locationName = oauth.gbp_location_id;",
   1

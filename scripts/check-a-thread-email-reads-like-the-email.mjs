@@ -17,7 +17,8 @@ const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for
 const fn = pick(/^function letterHtml\(/m), esc = pick(/^function escapeHtml\(/m);
 if (!fn) fail("portal.js has no letterHtml: email copies in the thread would show their markup raw");
 if (!/letter: \["step_open_sent", "step_email_sent", "step_nudge_sent"\]\.includes\(r\.kind\),/.test(thread) || !/test: r\.payload\?\.test === true,/.test(thread)) fail("portal-thread doesn't mark email copies (letter) and test sends (test)");
-if (!/\$\{m\.test \? `<p class="pm-m-test"><b>Test send<\/b>/.test(src)) fail("a test send isn't labelled as a test in the thread");
+// 🔑 BOTH places a message is drawn (the email row and the thread bubble) label a test send — one alone let the other go unlabelled
+if ((src.match(/\$\{m\.test \? `<p class="pm-m-test"><b>Test send<\/b>/g) || []).length < 2) fail("a test send isn't labelled as a test in the thread");
 if (!/m\.from === "rga" && !m\.test && (?:!m\.letter && )?new Date\(m\.at\)/.test(src)) fail("a test send still counts as unread (the Setup badge)");
 if (!/: m\.letter \? \(\(\) => \{/.test(src)) fail("the thread doesn't draw email copies with letterHtml");
 

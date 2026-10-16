@@ -37,8 +37,8 @@
  [
   "Your action stops naming the photos",
   "admin",
-  "reveal: PHOTO_REVIEW_STEP, tab:",
-  "tab:",
+  "reveal: PHOTO_REVIEW_STEP, tab: \"onboarding-v2\", scroll: \"panel-onboarding-v2\", btn: \"Review photos\"",
+  "tab: \"onboarding-v2\", scroll: \"panel-onboarding-v2\", btn: \"Review photos\"",
   1
  ],
  [
