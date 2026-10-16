@@ -31,7 +31,9 @@ if (!/\nHow to fix: /.test(clientNote({ said: "a", fix: "b" }))) fail("the clien
 if (!/review_note, reviewed_by, created_at"\)/.test(portal)) fail("the portal doesn't fetch reviewed_by, so it can't say whether Google or RGA sent the photo back");
 if (/escapeHtml\(p\.publish_error\)/.test(pc)) fail("the portal prints Google's raw refusal text again");
 if (!/failed: \{ cls: "other", label: "With RGA · a Google issue" \}/.test(pc)) fail("a refusal RGA fixes doesn't read \"With RGA · a Google issue\"");
-if (!/after: turned \? photoBackNoteHtml\(turned\)/.test(pc)) fail("a returned slot doesn't use the reason + how-to-fix note");
+// 🔄 clear_a_retake_v1 v2 (10-16): a retake slot is one thin line (photoRetakeLineHtml, check-a-retake-can-be-cleared); the
+// two-line note stays for a turned-down CHANGE (the old photo still up)
+if (!/after: turned \? photoRetakeLineHtml\(turned, /.test(pc) || !/: turnedNewer \? photoBackNoteHtml\(turnedNewer\)/.test(pc)) fail("a returned slot doesn't use the reason + how-to-fix note");
 const noteFn = pick(portal, /^function photoBackNoteHtml\(/m), esc = pick(portal, /^function escapeHtml\(/m);
 if (!noteFn || !esc) { console.error("⚠️  INDETERMINATE — photoBackNoteHtml / escapeHtml moved"); process.exit(2); }
 

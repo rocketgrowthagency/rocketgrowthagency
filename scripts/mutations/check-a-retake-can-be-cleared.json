@@ -1,0 +1,17 @@
+[
+ ["clear not kept on the step", "photoremove", "row.publish_state === \"turned_down\" ? { at: nowIso, by, photo_id: row.id } : null);", "null);", 1],
+ ["old cleared date never dropped", "photoremove", "    if (entry) rc[k] = entry; else delete rc[k];", "    if (entry) rc[k] = entry;", 1],
+ ["remove from Google keeps the note", "photoremove", "  if (row) await slotCleared(d, clientId, row.shot_n, null);\n", "", 1],
+ ["activity doesn't mark the clear", "photoremove", "...(row.publish_state === \"turned_down\" ? { cleared_retake: true } : {})", "", 1],
+ ["no Clear it button", "portal", "data-photo-clear data-client-id=", "data-client-id=", 1],
+ ["Clear it asks the Google question", "portal", "data-photo-clear data-client-id=", "data-photo-clear data-on-google data-client-id=", 1],
+ ["Please retake chip back in status", "portal", "        ? `<label class=\"add\">+ Replace photo${addInput}</label>`", "        ? `<span class=\"st you\">${escapeHtml(PHOTO_STATE.turned_down.label)}</span><label class=\"add\">+ Replace photo${addInput}</label>`", 1],
+ ["Google no longer named", "portal", "${fromGoogle ? \"Google said: \" : \"\"}${why.trim()}", "${why.trim()}", 1],
+ ["fix dropped from the line", "portal", "fix ? fix.trim() : \"\"].filter(Boolean)", "\"\"].filter(Boolean)", 1],
+ ["facts split again", "portal", "${!p ? facts(it) : \"\"}", "${!p ? spaceTag(it) : \"\"}", 1],
+ ["no cleared note", "portal", "${!p && !turned && clearedOf(it) ?", "${false ?", 1],
+ ["cleared note always about space", "portal", "${goesToCustomers && it.place ? \"your space is\" : \"you're\"} ready", "your space is ready", 1],
+ ["facts amber again", "portalcss", "background:var(--portal-bg); color:var(--portal-muted); border:1px solid var(--portal-line); width:max-content; }", "background:var(--state-care-bg); color:var(--state-care); border:1px solid var(--state-care-line); width:max-content; }", 1],
+ ["retake line tall again", "portalcss", ".pm-turned.pm-retake-line { display:flex; align-items:baseline; gap:12px; padding:5px 10px;", ".pm-turned.pm-retake-line { display:grid; align-items:baseline; gap:12px; padding:8px 11px;", 1],
+ ["no Cleared toast", "portal", "portalToast(b.hasAttribute(\"data-photo-clear\") ? \"<b>Cleared</b> · add a photo here whenever you're ready\"", "portalToast(false ? \"\"", 1]
+]
