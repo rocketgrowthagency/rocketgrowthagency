@@ -487,6 +487,7 @@ run check-business-facts-match-google.mjs "step 7 reads Google first, shows each
 run check-step-9-hours-card.mjs "step 9 hours: one card, Change hours opens Editing without a write, a switch per day, holidays with their dates"
 run check-step-10-booking-link.mjs "step 10 booking link works for any business: Google's own link type, our tag, public pages only, website page finder"
 run check-step-11-details.mjs "step 11 details for any business: Google's own groups, identity details only the owner's, RGA recommends only what step 10 proves"
+run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite with whose move, Month 1's end from the kickoff, admin row 60 lists them"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
 run check-every-submission-is-recorded.mjs "every client submission is recorded (activity row with the answer, change-log row when it reached Google)"

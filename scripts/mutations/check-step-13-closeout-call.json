@@ -1,0 +1,44 @@
+[
+ [
+  "back to one Do step N first",
+  "portal",
+  "${ownWait ? (step.id === \"m1.call.close\" ? closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook) : ownWaitHtml(ownFirst)) : \"\"}",
+  "${ownWait ? ownWaitHtml(ownFirst) : \"\"}",
+  1
+ ],
+ [
+  "the What to do box is back",
+  "portal",
+  "const completionCtlLive = step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
+  "const completionCtlLive = step.id === \"m1.call.close\" ? closeCallHtml(step, taskState, clientId, waitTasks)",
+  1
+ ],
+ [
+  "Month 1 ends on a guess",
+  "portal",
+  "const t = k && (k.status === \"done\") ? Date.parse(k.completed_at || \"\") : NaN;",
+  "const t = Date.now();",
+  1
+ ],
+ [
+  "a step waiting on RGA is offered as theirs",
+  "portal",
+  "if (!goTo && !rgaFirst) goTo = s;",
+  "if (!goTo) goTo = s;",
+  1
+ ],
+ [
+  "the reminder date is lost",
+  "portal",
+  "const who = rgaFirst ? \"RGA first, then yours\" : later ? `yours · reminder ${laterDay(later.until)}` : \"yours\";",
+  "const who = rgaFirst ? \"RGA first, then yours\" : \"yours\";",
+  1
+ ],
+ [
+  "admin row 60 says nothing",
+  "admin",
+  "title: \"The close-out call opens when these are done\", body: rows",
+  "title: \"Locked\", body: \"\"",
+  1
+ ]
+]

@@ -324,8 +324,8 @@
  [
   "portal: the customer cards show while it waits",
   "portal",
-  "const completionCtlLive = reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",
-  "const completionCtlLive = reviewStep ? (false ? \"\" : reviewStepHtml(",
+  ": reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",
+  ": reviewStep ? (false ? \"\" : reviewStepHtml(",
   1
  ]
 ]

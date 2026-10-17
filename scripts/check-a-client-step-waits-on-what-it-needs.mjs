@@ -274,7 +274,8 @@ const checks = [
   [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
   [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?(?:!withRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
   [/: ownWait \? \{ text: ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
-  [/\$\{ownWait \? ownWaitHtml\(ownFirst\) : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
+  // 🔑 10-16 (step13_closeout_call_v1): step 13 lists every prerequisite instead; every other row keeps the one band
+  [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? closeWaitHtml\([^)]*\) : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
   [/: rgaWait \? \{ text: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved pill)"],
   [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
@@ -287,7 +288,7 @@ const checks = [
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
   // 🔒 step12_review_requests_v1 (10-14): while it waits, the only control is the disabled "Add your 5 customers →".
   [/: step\.clientForm === "customer_list" \? \(ownWait \|\| listingWait \|\| \(rgaWait && !\(step\.clientWait && step\.clientWait\.how\)\) \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "step 57's \"Add your 5 customers →\" stays live while it waits"],
-  [/const completionCtlLive = reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(/, "step 57's customer cards show while it waits"],
+  [/(?:const completionCtlLive = |: )reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(/, "step 57's customer cards show while it waits"],
   [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
 ];
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
