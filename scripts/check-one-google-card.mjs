@@ -97,7 +97,16 @@ try {
     const h = document.getElementById("h");
     h.innerHTML = ["ok", "rga", "you", "wait"].map((st) => `<section data-k="${st}">${adminGoogleCardHtml({ state: st, small: "Heading", title: "Title", proof: adminGcardMaps(), act: "<button class=\"admin-button\">Act</button>" })}</section>`).join("");
     const L = eval(`(${lookSrc})`);
-    return Object.fromEntries(["ok", "rga", "you", "wait"].map((k) => [k, L.call(null, `section[data-k="${k}"] > .ob-gcard`)[0] || null]));
+    const cards = Object.fromEntries(["ok", "rga", "you", "wait"].map((k) => [k, L.call(null, `section[data-k="${k}"] > .ob-gcard`)[0] || null]));
+    // 🔑 10-16: drawn INSIDE admin's own row markup — admin's .ob-step.queued / .active.is-wait marker rules and the input box's
+    // link colour beat the first build (an orange ↻ marker, a pale ! marker, a blue button with invisible text)
+    const rows = document.createElement("div");
+    rows.innerHTML = [["queued", "you"], ["active", "rga"], ["active is-wait", "rga"], ["done", "ok"]].map(([cls, g]) => `<div class="ob-step ${cls}" data-g="${g}"><div class="ob-row"><span class="ob-num g-${g}">${G_ICON[g]}</span></div></div>`).join("")
+      + `<div class="ob-in"><div class="ob-gcard-act"><a class="admin-button ob-gcard-go" href="#">Open Google Business Profile ↗</a></div></div>`;
+    document.body.appendChild(rows);
+    const mk = [...rows.querySelectorAll(".ob-num")].map((n) => getComputedStyle(n).backgroundColor);
+    const go = rows.querySelector(".ob-gcard-go"), gs = getComputedStyle(go);
+    return { ...cards, _rows: { markers: mk, goText: gs.color, goBg: gs.backgroundColor } };
   }, look.toString());
 } finally { await browser.close(); }
 
@@ -117,6 +126,11 @@ if (P["10 done"] && (P["10 done"].act !== "Change link" || !/^On Google · check
 if (P["11 done"] && (P["11 done"].act !== "Change details" || !/^On Google · checked Oct 16 \| See it on Google Maps ↗$/i.test(P["11 done"].meta))) fail(`step 11's card lacks Change details under it, or "On Google · checked" + Maps (${P["11 done"]?.meta})`);
 if (P["6 verified"] && (P["6 verified"].act !== "Check again" || !/^Verified by Google · checked Oct 16, 6:03 AM \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's card lacks Check again under it, or "Verified by Google · checked" + Maps + How (${P["6 verified"]?.meta})`);
 if (P["10 Google said"] && (P["10 Google said"].act !== "Fix it" || !P["10 Google said"].primary)) fail("a refusal's card has no blue Fix it under it");
+if (A._rows) {
+  const want4 = [EDGE.you, EDGE.rga, EDGE.rga, EDGE.ok];
+  if (JSON.stringify(A._rows.markers) !== JSON.stringify(want4)) fail(`admin's Google row markers don't take their card's colour inside real rows (${A._rows.markers.join(" | ")})`);
+  if (A._rows.goText === A._rows.goBg) fail(`the blue "Open Google Business Profile" button's text is the same colour as the button (${A._rows.goText})`);
+}
 for (const st of ["ok", "rga", "you", "wait"]) {
   const a = A[st];
   if (!a) { fail(`admin's ${st} card doesn't draw`); continue; }

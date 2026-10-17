@@ -96,5 +96,19 @@
   "data.admin.gstate === k",
   "false",
   1
+ ],
+ [
+  "admin's old row markers win again",
+  "css",
+  ".ob-step[data-g] .ob-num.g-ok { background:var(--state-ok,#0c5132); } .ob-step[data-g] .ob-num.g-rga {",
+  ".ob-num.g-ok { background:var(--state-ok,#0c5132); } .ob-num.g-rga {",
+  1
+ ],
+ [
+  "the blue button's text vanishes again",
+  "css",
+  ".ob-gcard-act a.admin-button { color:#fff; text-decoration:none; }",
+  ".ob-gcard-act a.admin-button { text-decoration:none; }",
+  1
  ]
 ]
