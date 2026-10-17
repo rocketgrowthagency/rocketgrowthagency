@@ -1,0 +1,79 @@
+[
+ [
+  "an identity detail reads as how you work",
+  "gbpprofile",
+  "return /^is_owned_by|_owned$|^is_.*_owned|lgbtq|transgender|veteran|women_led/i.test(o.key || \"\") || /^identifies as|lgbtq|transgender|owned\\b|-led\\b/i.test(o.label || \"\");",
+  "return /lgbtq/i.test(o.key || \"\");",
+  1
+ ],
+ [
+  "RGA recommends without proof",
+  "gbpprofile",
+  "{ key: /^offers_online_appointments$/, when: linkOn === \"url_appointment\",",
+  "{ key: /^offers_online_appointments$/, when: true,",
+  1
+ ],
+ [
+  "an about-you detail can be recommended",
+  "gbpprofile",
+  "return (options || []).filter((o) => !o.about).flatMap(",
+  "return (options || []).flatMap(",
+  1
+ ],
+ [
+  "the record forgets RGA's recommendation",
+  "stepinput",
+  "if (push && stepId === GSTEP.ATTRS && Array.isArray(offeredForRec)) push.recommended",
+  "if (false) push.recommended",
+  1
+ ],
+ [
+  "the read carries no recommendation",
+  "portalgbpprofile",
+  "now.recommend = require(\"./_gbp-profile\").recommendDetails(now.options,",
+  "now.recommend = [] || require(\"./_gbp-profile\").recommendDetails(now.options,",
+  1
+ ],
+ [
+  "the recommendation isn't preselected",
+  "portal",
+  "const picked = new Set(Array.isArray(had) ? had : [...onG, ...recKeys]);",
+  "const picked = new Set(Array.isArray(had) ? had : [...onG]);",
+  1
+ ],
+ [
+  "the button always says Put it on Google",
+  "portal",
+  "b.textContent = wrap.querySelector(\".pm-at [data-in-tick].on\") ? \"Put it on Google\" : \"None of these apply\";",
+  "b.textContent = \"Put it on Google\";",
+  1
+ ],
+ [
+  "a long list never folds",
+  "portal",
+  "const many = options.length > 12;",
+  "const many = false;",
+  1
+ ],
+ [
+  "the done card loses Change details",
+  "portal",
+  "proof: gcardMaps(maps), act: `<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change details</button>` });",
+  "proof: gcardMaps(maps) });",
+  1
+ ],
+ [
+  "a label becomes HTML",
+  "portal",
+  "aria-pressed=\"${picked.has(o.key)}\">${escapeHtml(o.label)}",
+  "aria-pressed=\"${picked.has(o.key)}\">${o.label}",
+  1
+ ],
+ [
+  "admin forgets what RGA recommended",
+  "admin",
+  "why: choseWhy || attrWhy,",
+  "why: choseWhy,",
+  1
+ ]
+]

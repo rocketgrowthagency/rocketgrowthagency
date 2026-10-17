@@ -338,8 +338,8 @@
  [
   "top stacks again",
   "portal",
-  "    const head = s.kind === \"booking\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
-  "    const head = s.kind === \"booking\" ? \"\" : false ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : false ? gnow :",
   1
  ],
  [

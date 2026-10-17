@@ -79,8 +79,8 @@
  [
   "Change link writes",
   "portal",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\"]);",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\"]);",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\", \"m1.gbp.attributes\"]);",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.attributes\"]);",
   1
  ],
  [
