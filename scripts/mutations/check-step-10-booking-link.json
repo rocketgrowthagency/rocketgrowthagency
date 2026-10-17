@@ -96,5 +96,12 @@
   "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}</button>`",
   "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}</button>`",
   1
+ ],
+ [
+  "the save stops storing the platform",
+  "gbpprofile",
+  "link: B.withoutTag(sent), sent, choice, platform: B.platformOf(url) };",
+  "link: B.withoutTag(sent), sent, choice };",
+  1
  ]
 ]

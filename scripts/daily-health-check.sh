@@ -479,6 +479,17 @@ run check-a-step-that-opens-is-told-once.mjs "a step that opens after waiting on
 run check-a-client-can-remove-their-own-duplicate.mjs "a client can remove their own duplicate Google listing in the portal, and nothing else (run end to end against stubs)"
 run check-a-success-clears-the-failure-it-supersedes.mjs "no stored failure outlives the success that supersedes it (every failure field declared with its clear)"
 run check-every-mutation-still-applies.mjs "every mutation in every suite still applies to today's code (an anchor that stopped matching proves nothing)"
+# 🔒 10-16 — the Google steps' gates run DAILY too (Chris: "never forget, or regress"). Static + headless renders, no production
+# reads: a regression in the Google card or steps 6/7/9/10 shows up in this morning's report, not in Chris's screenshot.
+run check-one-google-card.mjs "every Google step draws the one approved card, portal and admin alike (tint, drawn icons, buttons under, admin rows take its state)"
+run check-step-7-works-in-any-state.mjs "step 7 (business on Google) works for a business in any US state (TX/NY places match only in their own state)"
+run check-business-facts-match-google.mjs "step 7 reads Google first, shows each fact beside what the client said, and RGA's changes reach Google"
+run check-step-9-hours-card.mjs "step 9 hours: one card, Change hours opens Editing without a write, a switch per day, holidays with their dates"
+run check-step-10-booking-link.mjs "step 10 booking link works for any business: Google's own link type, our tag, public pages only, website page finder"
+run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
+run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
+run check-every-submission-is-recorded.mjs "every client submission is recorded (activity row with the answer, change-log row when it reached Google)"
+run check-a-retake-can-be-cleared.mjs "a photo Google asked to retake can be cleared by the client"
 run check-month-2-lives-in-the-monthly-record.mjs "a client's Month-2 answer lands in this month's monthly record, the one the admin and their portal read"
 run check-the-night-run-stops-before-morning.mjs "the nightly video run starts nothing after 04:00 and stops at 06:30, recording what it stopped"
 run check-netlify-credits-will-last.mjs "Netlify credits last until the cycle resets at the current deploy pace (5 outages from running out)"

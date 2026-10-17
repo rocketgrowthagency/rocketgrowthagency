@@ -145,6 +145,17 @@ if (!/if \(spec\.kind === "booking"\) \{[\s\S]{0,400}BK_CHOICE/.test(admin) || !
 if (pb.hasRunner || pb.actionLabel || /"m1\.gbp\.booking_link": async/.test(flow)) fail("admin still has a Generate runner for a step that goes to Google by itself");
 if (cs.clientInput.kind !== "booking" || /set either one up|a sentence telling us/i.test(cs.clientInstructions) || !/PICK WHERE IT GOES/.test(cs.clientInstructions)) fail("\"Show me how\" still promises what the form can't do");
 
+// ── 4b · WIRED: every field the save stores in the database is read by the client portal and by admin (Chris 10-16: "make sure
+// all is wired to both client, admin and database"). A field written and read by nobody is a promise nobody sees.
+{
+  const gp = read("netlify/functions/_gbp-profile.js");
+  const writer = (gp.match(/return \{ state: "on_google", before, after, at, link_type: type\.key, link_label: type\.label, link: B\.withoutTag\(sent\), sent, choice, platform: B\.platformOf\(url\) \};/) || [""])[0];
+  if (!writer) fail("the step-10 save no longer stores { link, sent, link_type, link_label, choice, platform } on google_push");
+  const READ = { "g.link": [js, admin], "g.sent": [admin], "g.link_type": [js], "g.link_label": [admin], "g.choice": [js], "g.platform": [js, admin], "v.choice": [admin] };
+  for (const [f, srcs] of Object.entries(READ)) for (const src of srcs) if (!new RegExp(f.replace(".", "\\.") + "\\b").test(src)) fail(`${f} is stored but ${src === admin ? "admin" : "the client portal"} never reads it`);
+  if (!/recordSubmission\(\{ supa, clientId, kind: "client_step_input"/.test(inp) || !/\[GSTEP\.BOOKING\]: `booking link \(\$\{\(push && push\.link_type\) \|\| "url_appointment"\}\)`/.test(inp)) fail("a step-10 save isn't recorded (activity row + change-log row naming the link type)");
+}
+
 // ── 5 · drawn for real ──
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
