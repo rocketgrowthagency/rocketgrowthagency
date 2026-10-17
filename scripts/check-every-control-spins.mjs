@@ -109,6 +109,28 @@ try {
     if ((await state("#late")).busy) fail(`${side}: a request started long after a press makes that control spin`);
     await page.close();
   }
+  // ── 4 · 10-16 (Chris: "made sure all buttons have spinners when loading?"): the controls steps 10–13 added, with their REAL
+  // classes — Text <name> is a LINK (it opens the messages app and records the send), the rest are buttons
+  {
+    const page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on("request", (r) => { if (/slow\.test/.test(r.url())) setTimeout(() => r.respond({ status: 200, contentType: "application/json", body: "{}" }), 700); else if (/^data:|^about:/.test(r.url())) r.continue(); else r.respond({ status: 200, body: "" }); });
+    await page.setContent(`<!doctype html><html><head><style>${pcss}</style></head><body style="padding:40px">
+      <a id="text" class="pm-act is-go" href="#" data-review-send="0">Text Maria</a>
+      <button id="sent" type="button" class="pm-amend" data-review-mark="0">I sent it</button>
+      <button id="put" type="button" class="pm-commit" data-in-submit>Put it on Google</button>
+      <button id="five" type="submit" class="pm-act is-go" data-r5-send>Send 5 customers →</button>
+      <script>${moduleSrc}
+        for (const id of ["text", "sent", "five"]) document.getElementById(id).addEventListener("click", async (e) => { e.preventDefault(); await fetch("https://slow.test/" + id); });
+        document.getElementById("put").addEventListener("click", async (e) => { const b = e.currentTarget; b.textContent = "Putting it on Google…"; b.disabled = true; await fetch("https://slow.test/put"); b.textContent = "Put it on Google"; b.disabled = false; });
+      </script></body></html>`, { waitUntil: "load" });
+    for (const sel of ["#text", "#sent", "#put", "#five"]) {
+      await page.click(sel); await new Promise((r) => setTimeout(r, 150));
+      const st = await page.evaluate((sel) => { const e = document.querySelector(sel), af = getComputedStyle(e, "::after"); return { busy: e.classList.contains("is-busy"), ring: af.content !== "none" && af.content !== "normal" }; }, sel);
+      if (!st.busy || !st.ring) fail(`portal: ${sel} (a step 10–13 control) doesn't spin while it works (${JSON.stringify(st)})`);
+      await new Promise((r) => setTimeout(r, 900));
+    }
+  }
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 A control can wait on the server with nothing on screen:"); for (const f of F) console.error("   · " + f); process.exit(1); }

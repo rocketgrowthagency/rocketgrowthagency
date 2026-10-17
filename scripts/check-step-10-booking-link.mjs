@@ -156,6 +156,9 @@ if (cs.clientInput.kind !== "booking" || /set either one up|a sentence telling u
   if (!/recordSubmission\(\{ supa, clientId, kind: "client_step_input"/.test(inp) || !/\[GSTEP\.BOOKING\]: `booking link \(\$\{\(push && push\.link_type\) \|\| "url_appointment"\}\)`/.test(inp)) fail("a step-10 save isn't recorded (activity row + change-log row naming the link type)");
 }
 
+// 🔒 10-16 (brand-new client walk): a WAITING Google step never reads Google, so it can't say "couldn't read it… you can still save"
+if (!/if \(host\.closest\("\.pm-waits"\)\) \{ host\.innerHTML = `<span class="pm-in-help">This fills in from your Google profile once the step opens\.<\/span>`; continue; \}/.test(portal)) fail("a waiting Google step reads Google and shows a read failure");
+
 // ── 5 · drawn for real ──
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];

@@ -63,17 +63,17 @@
   1
  ],
  [
-  "busy.js loads after Supabase",
+  "busy.js isn't loaded first in the portal (version-free anchor)",
   "portal",
-  "import \"/shared/busy.js?v=20261015b\";\nimport { createClient } from \"/vendor/supabase-js-2.52.1.js\";",
-  "import { createClient } from \"/vendor/supabase-js-2.52.1.js\";\nimport \"/shared/busy.js?v=20261015b\";",
+  "import \"/shared/busy.js?v=",
+  "// import \"/shared/busy.js?v=",
   1
  ],
  [
   "admin doesn't load busy.js",
   "admin",
-  "import \"/shared/busy.js?v=20261015b\";\n",
-  "",
+  "import \"/shared/busy.js?v=",
+  "// import \"/shared/busy.js?v=",
   1
  ],
  [
@@ -88,6 +88,13 @@
   "portalcss",
   "pointer-events:none; transition:none; opacity:1 !important; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
   "pointer-events:none; transition:none; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn)",
+  1
+ ],
+ [
+  "step 12's Text link never spins",
+  "busyjs",
+  ", a[data-review-send]';",
+  "';",
   1
  ]
 ]

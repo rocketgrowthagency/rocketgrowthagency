@@ -103,5 +103,12 @@
   "link: B.withoutTag(sent), sent, choice, platform: B.platformOf(url) };",
   "link: B.withoutTag(sent), sent, choice };",
   1
+ ],
+ [
+  "a waiting step reads Google",
+  "portal",
+  "    if (host.closest(\".pm-waits\")) { host.innerHTML = `<span class=\"pm-in-help\">This fills in from your Google profile once the step opens.</span>`; continue; }\n",
+  "",
+  1
  ]
 ]
