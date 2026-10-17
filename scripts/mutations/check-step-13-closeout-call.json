@@ -40,5 +40,12 @@
   "title: \"The close-out call opens when these are done\", body: rows",
   "title: \"Locked\", body: \"\"",
   1
+ ],
+ [
+  "row 60 calls RGA's steps the client's move",
+  "admin",
+  "state: rgaN ? \"rga\" : \"you\", small: rgaN ? \"Your move\" : \"Client's move\"",
+  "state: \"you\", small: \"Client's move\"",
+  1
  ]
 ]

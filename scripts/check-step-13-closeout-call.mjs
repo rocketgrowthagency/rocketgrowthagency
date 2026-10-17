@@ -22,7 +22,7 @@ if (!step || !Array.isArray(step.needsFirst) || step.needsFirst.length < 2) { co
 // ── 1 · wired ──
 if (!/\$\{ownWait \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook\) : ownWaitHtml\(ownFirst\)\) : ""\}/.test(portal)) fail("step 13's wait isn't the full list (it's back to one \"Do step N first\")");
 if (!/const completionCtlLive = step\.id === "m1\.call\.close" \? \(ownWait \|\| isDone \? "" : closeCallHtml\(/.test(portal)) fail("step 13 shows a \"What to do\" box under the card while it waits");
-if (!/o\.flowId === "m1\.call\.close" \? \(\(\) => \{[\s\S]{0,2000}title: "The close-out call opens when these are done"/.test(admin) || !/r\?\.obj\?\.clientFacing \? "client's move" : "RGA's move"/.test(admin)) fail("admin row 60 doesn't list what the call waits on with whose move");
+if (!/o\.flowId === "m1\.call\.close" \? \(\(\) => \{[\s\S]{0,2000}title: "The close-out call opens when these are done"/.test(admin) || !/r\?\.obj\?\.clientFacing \? "client's move" : "RGA's move"/.test(admin) || !/state: rgaN \? "rga" : "you", small: rgaN \? "Your move" : "Client's move", side: `\$\{rgaN\} yours · \$\{clientN\} the client's`/.test(admin)) fail("admin row 60 doesn't list what the call waits on with whose move");
 if ((css.match(/^\.pm-cw \{/gm) || []).length !== 1) fail("the waiting list isn't styled once");
 
 // ── 2 · drawn for real ──
