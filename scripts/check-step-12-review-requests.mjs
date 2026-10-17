@@ -50,7 +50,8 @@ if (/review (request )?messages/i.test(words)) fail("step 12 says \"messages\" a
 
 // ── 2 · the row is wired the approved way ──
 const wires = [
-  [/: step\.clientForm === "customer_list" \? \(rgaWait \|\| ownWait \|\| listingWait \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "the waiting row's button isn't the disabled \"Add your 5 customers →\" (or it shows while the step is open)"],
+  // 🔒 v2: while RGA writes the message, the blue card says it all — no disabled button (still disabled while it waits on its own step / the listing)
+  [/: step\.clientForm === "customer_list" \? \(ownWait \|\| listingWait \|\| \(rgaWait && !\(step\.clientWait && step\.clientWait\.how\)\) \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "the waiting row's button isn't the disabled \"Add your 5 customers →\" (or it shows while the step is open)"],
   [/const reviewStep = !month2Only && step\.clientForm === "customer_list";\s*const completionCtlLive = reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(step, clientId, customerLists \|\| \[\], isDone\)\)/, "step 12 doesn't take its customers in the row (reviewStepHtml)"],
   [/month2Only && step\.clientForm === "customer_list" \? buildCustomerListHtml\(clientId, customerLists \|\| \[\]\)/, "Month 2's weekly list lost its paste card"],
   [/_openStep\.set\(clientId, "m1\.review\.first_5"\);/, "after sending, step 12 closes (the requests they now send appear in it)"],
@@ -103,8 +104,10 @@ else {
 // ── 5 · drawn in Chrome: the three states, and the form ──
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
+// 🔑 start at the BODY's brace (") {"): googleCardHtml's destructured parameter has braces of its own
+const pickBody = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = src.indexOf(") {", m.index) + 2; k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
 const lifted = [
-  pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function typeLineHtml\(/m), pick(/^function rgaWaitHtml\(/m),
+  pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function typeLineHtml\(/m), pick(/^function rgaWaitHtml\(/m), line("GOOGLE_G"), line("GC_ICON"), pickBody(/^function googleCardHtml\(/m),
   pick(/^function reviewStepHtml\(/m), pick(/^function reviewStepLinesHtml\(/m), pick(/^function reviewBandNote\(/m), pick(/^function reviewFiveTally\(/m), pick(/^function letterHtml\(/m),
   line("MSG_ICON"), line("PERSON_ICON"), line("STAR_ICON"), line("STORE_ICON"), line("REVIEW_GOAL"), line("monthDay"), line("smsHref"), line("r5Val"), line("r5Complete"), line("r5Started"),
 ];
@@ -129,29 +132,29 @@ try {
   const shot = async (n) => { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await (await page.$("#h")).screenshot({ path: path.join(SHOTS, `${n}.png`) }); } };
   const overflow = async () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
 
-  // A · waits on RGA
+  // A · waits on RGA — 🔒 step12_review_requests_v2: ONE blue card, the path inside (RGA's part current)
   const a = await page.evaluate((st) => { const h = document.getElementById("h"); h.innerHTML = rgaWaitHtml(st);
-    const band = h.querySelector(".pm-lock.other.has-thing"); const tl = band && band.querySelector(".tl2.rga");
-    return { band: !!band, head: band ? band.querySelector("b").textContent : "", small: tl ? tl.querySelector("small").textContent : "", title: tl ? tl.querySelector(".tl2-t b").textContent : "",
-      tag: tl ? (tl.querySelector(".tl2-tag") || {}).textContent : "", how: [...h.querySelectorAll(".pm-how li")].map((li) => [li.className, li.querySelector("b").textContent]) };
+    const card = h.querySelector(".gcard.rga");
+    return { card: !!card, st: card ? card.querySelector(".gcard-st").innerText.replace(/\s+/g, " ").trim() : "", title: card ? card.querySelector(".gcard-t").textContent : "",
+      meta: card ? (card.querySelector(".gcard-meta") || {}).textContent : "", how: [...h.querySelectorAll(".pm-how li")].map((li) => [li.className, li.querySelector("b").textContent]), btn: !!h.querySelector("button") };
   }, step);
-  if (!a.band || a.head !== w.head) fail(`A: the waiting band doesn't lead with "${w.head}"`);
-  if (a.small !== "RGA is writing it" || a.title !== "Review request message" || a.tag !== "In progress") fail(`A: the band's TYPE line isn't "RGA is writing it · Review request message · In progress" (${a.small} · ${a.title} · ${a.tag})`);
+  if (!a.card || !/^RGA is on it · nothing needed from you yet$/i.test(a.st) || a.title !== "Writing your review request message") fail(`A: the wait isn't the blue card "RGA is on it · Writing your review request message" (${a.st} · ${a.title})`);
+  if (a.meta !== w.body) fail(`A: the card doesn't say when it opens ("${w.body}" → "${a.meta}")`);
   if (a.how.length !== 4 || a.how[0][0] !== "now" || a.how.slice(1).some((x) => x[0])) fail(`A: "how it works" isn't 4 parts with the first (RGA's) highlighted (${JSON.stringify(a.how)})`);
   await shot("A-waiting");
 
-  // B · open: the form
+  // B · open: the form, in the amber card
   const b = await page.evaluate((st) => { const h = document.getElementById("h"); h.innerHTML = reviewStepHtml(st, "c1", [], false);
     const btn = h.querySelector("[data-r5-send]");
-    return { ready: (h.querySelector(".tl2.keep small") || {}).textContent, title: (h.querySelector(".tl2.keep .tl2-t b") || {}).textContent, note: !!h.querySelector("[data-review-link-note]"),
+    return { card: (h.querySelector(".gcard") || {}).className, ready: ((h.querySelector(".pm-fx-pl.on") || {}).textContent || "").trim(), note: !!h.querySelector("[data-review-link-note]"),
       cards: h.querySelectorAll("[data-r5-card]").length, labels: [...h.querySelectorAll("[data-r5-card]")[0].querySelectorAll(".pm-r5-f > span")].map((x) => x.textContent),
       count: h.querySelector("[data-r5-count]").textContent, btn: btn.textContent, dis: btn.disabled, list: !!h.querySelector("[data-review-step]"),
-      noteText: h.querySelector(".pm-r5-note").textContent };
+      under: !!btn.closest(".gcard-act") && !btn.closest(".gcard"), why: ((h.querySelector(".gcard-why") || {}).innerText || "").replace(/\s+/g, " ").trim() };
   }, step);
-  if (b.ready !== "✓ Ready" || b.title !== "Review request message" || !b.note) fail(`B: the open step doesn't lead with "✓ Ready · Review request message" (${b.ready} · ${b.title})`);
+  if (b.card !== "gcard you" || b.ready !== "✓ Your review request message is ready · written by RGA" || !b.note) fail(`B: the open step isn't the amber card leading with "✓ Your review request message is ready" (${b.card} · ${b.ready})`);
   if (b.cards !== 5 || b.labels.join("|") !== "Customer 1 · First name|Phone|The job you did") fail(`B: not 5 labelled customer cards (${b.cards} · ${b.labels.join("|")})`);
-  if (b.count !== "0 of 5" || b.btn !== "Send 5 customers →" || !b.dis || b.list) fail(`B: an empty form reads "${b.count}" / "${b.btn}" (disabled ${b.dis}), or shows customers it doesn't have`);
-  if (b.noteText !== "Pick happy customers. We never message them ourselves: you send each request from your own phone.") fail(`B: the note isn't the approved words (${b.noteText})`);
+  if (b.count !== "0 of 5" || b.btn !== "Send 5 customers →" || !b.dis || b.list || !b.under) fail(`B: an empty form reads "${b.count}" / "${b.btn}" (disabled ${b.dis}, under the card ${b.under}), or shows customers it doesn't have`);
+  if (!/^RGA recommends Happy, recent customers you spoke to yourself\. We never message them ourselves: you send each request from your own phone\.$/i.test(b.why)) fail(`B: the advice isn't the approved words (${b.why})`);
   const type = async (i, name, phone, job) => {
     const card = (await page.$$("[data-r5-card]"))[i];
     if (name) await (await card.$('[name="first_name"]')).type(name);
@@ -190,29 +193,29 @@ try {
     { index: 1, list_id: "L1", name: "James", phone: "(310) 555-0199", job: "Google Ads setup", already_marked: true, marked_at: "2026-10-21T18:00:00Z", message: "Hi James" },
     { index: 2, list_id: "L1", name: "Ana", phone: "(818) 555-0110", job: "", already_marked: false, message: null },
   ], reviews: { since: "2026-10-20T15:00:00Z", count: 2, checked_at: "2026-10-22T09:00:00Z" } };
+  // 🔒 step12_review_requests_v2: the requests card (a row per customer) + the reviews card, drawn from the endpoint's first 5
   const c = await page.evaluate((st, lists, data) => { const h = document.getElementById("h"); h.innerHTML = reviewStepHtml(st, "c1", lists, true);
-    const got = h.querySelector(".pm-r5-got").textContent.trim(); const form = !!h.querySelector("form"), ready = !!h.querySelector(".tl2.keep small");
-    h.querySelector("[data-review-step]").innerHTML = reviewStepLinesHtml(data);
-    const L = [...h.querySelectorAll("[data-review-step] .tl2")].map((x) => ({ k: x.className, small: x.querySelector("small").textContent, b: x.querySelector(".tl2-t b").textContent,
-      d: (x.querySelector(".tl2-t > span") || {}).textContent, tag: (x.querySelector(".tl2-tag") || {}).textContent || "", act: (x.querySelector(".tl2-tag-act a") || {}).getAttribute?.("href") || "",
-      mark: !!x.querySelector("[data-review-mark]"), bolds: x.querySelectorAll(".pm-r5-read b").length }));
-    return { got, form, ready, L, text: h.textContent };
+    const form = !!h.querySelector("form"), ready = !!h.querySelector(".pm-fx-pl.on");
+    h.querySelector("[data-review-step]").innerHTML = reviewStepLinesHtml({ ...data, since: "2026-10-20T15:00:00Z" });
+    const R = [...h.querySelectorAll(".pm-r5-rq")].map((x) => ({ who: x.querySelector(".pm-r5-who").innerText.replace(/\s+/g, " ").trim(), chip: ((x.querySelector(".pm-fx-pl") || {}).textContent || "").trim(),
+      act: (x.querySelector("a[data-review-send]") || {}).getAttribute?.("href") || "", mark: !!x.querySelector("[data-review-mark]"), bolds: x.querySelectorAll(".pm-r5-read b").length }));
+    const cards = [...h.querySelectorAll(".gcard")].map((x) => ({ cls: x.className, st: x.querySelector(".gcard-st").innerText.replace(/\s+/g, " ").trim(), t: x.querySelector(".gcard-t").textContent }));
+    return { form, ready, R, cards, text: h.textContent };
   }, step, lists, data);
-  if (!/^5 customers received, Oct 20\./.test(c.got) || c.form || c.ready) fail(`C: a done step reads "${c.got}" (form ${c.form}, ready line ${c.ready})`);
-  // 🔑 Month 3: 30 more customers came in from the weekly card. Step 12 is still about the first 5.
-  const later = await page.evaluate((st) => { const h = document.createElement("div");
-    h.innerHTML = reviewStepHtml(st, "c1", [{ customer_count: 30, created_at: "2026-12-01T15:00:00Z" }, { customer_count: 3, created_at: "2026-10-20T15:00:00Z" }, { customer_count: 2, created_at: "2026-10-27T15:00:00Z" }], true);
-    return h.querySelector(".pm-r5-got").textContent.trim(); }, step);
-  if (!/^5 customers received, Oct 20\./.test(later)) fail(`C: step 12 counts every list ever, not its own first 5 ("${later}")`);
-  const [m, j, an, rv] = c.L;
-  if (!m || m.small !== "Customer · request ready" || m.b !== "Maria" || m.d !== "Phone (424) 555-0142 · Job Website redesign" || !/^sms:/.test(m.act) || !m.mark || m.bolds) fail(`C: a ready request isn't "Customer · request ready · Maria" with Send from your phone + I sent this, or its text became HTML (${JSON.stringify(m)})`);
-  if (!j || j.small !== "Customer · you marked it sent" || j.tag !== "Marked sent Oct 21" || j.mark) fail(`C: a request they marked doesn't say "you marked it sent" with the date (${JSON.stringify(j)})`);
-  if (!an || an.small !== "Customer · RGA is writing it" || an.tag !== "Writing" || an.act || an.d !== "Phone (818) 555-0110") fail(`C: a request with no message yet offers a send, or isn't "RGA is writing it" (${JSON.stringify(an)})`);
-  if (!rv || rv.small !== "✓ On your Google Business Profile" || rv.d !== "2 new reviews since Oct 20 · checked Oct 22" || rv.tag !== "2 of 5") fail(`C: the reviews line isn't the measured count (${JSON.stringify(rv)})`);
+  if (c.form || c.ready) fail(`C: a done step still shows the form or the ready line`);
+  // 🔑 Month 3: 30 more customers came in from the weekly card. Step 12 is still about the FIRST 5 — the endpoint stops at 5.
+  if (!/for \(const l of Array\.isArray\(all\) \? all : \[\]\) \{ if \(n >= 5\) break;/.test(read("netlify/functions/portal-review-requests.js"))) fail("C: step 12 counts every list ever, not its own first 5");
+  const [m, j, an] = c.R;
+  if (!m || m.who !== "Maria · Website redesign (424) 555-0142" || !/^sms:/.test(m.act) || !m.mark || m.bolds) fail(`C: a ready request isn't Maria's row with Text Maria + I sent it, or its text became HTML (${JSON.stringify(m)})`);
+  if (!j || j.chip !== "You marked it sent Oct 21" || j.mark || j.act) fail(`C: a request they marked doesn't say "You marked it sent" with the date (${JSON.stringify(j)})`);
+  if (!an || an.chip !== "RGA is writing it" || an.act) fail(`C: a request with no message yet offers a send, or isn't "RGA is writing it" (${JSON.stringify(an)})`);
+  const [rq, rv] = c.cards;
+  if (!rq || rq.cls !== "gcard you" || !/^Your move · 1 of 3 marked sent$/i.test(rq.st)) fail(`C: the requests card isn't "Your move · 1 of 3 marked sent" (${JSON.stringify(rq)})`);
+  if (!rv || rv.cls !== "gcard ok" || !/^On Google · checked Oct 22$/i.test(rv.st) || rv.t !== "2 new reviews since Oct 20") fail(`C: the reviews card isn't the measured count (${JSON.stringify(rv)})`);
   if (/\bSent\b(?! from)/.test(c.text.replace(/Marked sent/g, ""))) fail("C: a request reads \"Sent\" (we can't see a text go out)");
   await shot("C-after");
   const c2 = await page.evaluate((data) => { const h = document.getElementById("h"); h.innerHTML = `<div>${reviewStepLinesHtml({ ...data, reviews: null })}</div>`;
-    return { stars: h.textContent.includes("Google Business Profile"),
+    return { stars: /new review/.test(h.textContent),
       notes: [reviewBandNote(data), reviewBandNote({ requests: [{ already_marked: true }] }), reviewBandNote({ requests: [{}], blocked: "We need your Google review link to finish these." }), reviewBandNote({ requests: [] })] };
   }, data);
   if (c2.stars) fail("C: with no measured count, a reviews line still shows (absence must not read as 0)");
@@ -233,5 +236,24 @@ try {
   }
 } finally { await browser.close(); }
 
+// E · 🔒 step12_review_requests_v2: the request text is RGA's approved message; test sends stay out of a client's step; admin
+// says when a client step waits on RGA (only when RGA's row is the real blocker), and row 57 reads the client's progress live.
+{
+  const { createRequire } = await import("node:module");
+  const RR = createRequire(`${SITE}/netlify/functions/x.js`)("./portal-review-requests.js");
+  const sum = "GOOGLE REVIEW LINK:\n  x\n\n## SMS\\_1 — Under 160 characters\n\n```\nHi {{first_name}}, thanks for choosing Acme Plumbing!\nA quick review helps: {{review_link}}\n```\n\n## SMS\\_2\n```\nlater\n```";
+  const tpl = RR.smsOneOf(sum);
+  if (tpl !== "Hi {{first_name}}, thanks for choosing Acme Plumbing! A quick review helps: {{review_link}}") fail(`E: RGA's approved message (step 56's SMS_1) isn't read (${tpl})`);
+  if (RR.fillRgaMessage(tpl, { name: "Maria", service: "drain", business: "Acme", reviewUrl: "https://g.page/r" }) !== "Hi Maria, thanks for choosing Acme Plumbing! A quick review helps: https://g.page/r") fail("E: a request isn't RGA's message with the name and link filled in");
+  if (RR.fillRgaMessage("Hi {{first_name}}, about {{weird}}", { name: "M", reviewUrl: "u" }) !== null || RR.fillRgaMessage(null, { name: "M", reviewUrl: "u" }) !== null) fail("E: a message with a placeholder left over could be sent");
+  const rr = read("netlify/functions/portal-review-requests.js");
+  if (!/if \(!t \|\| t\.status !== "done"\) return null;/.test(rr) || !/message_source: reviewUrl && fillRgaMessage\(/.test(rr)) fail("E: an unapproved step 56 draft is sent, or the record doesn't say whose text it is");
+  if (!/const letters = msgs\.filter\(\(m\) => m\.letter && !m\.test\)/.test(src)) fail("E: a test send can appear in a client's step");
+  const adm = read("admin/admin.js");
+  if (!/const clientsWaitingOn = \(flowId\) => \(steps\.find\(\(x\) => x\.obj && x\.obj\.flowId === flowId\)\?\.uiState === "locked"\) \? \[\] :/.test(adm) || !/\(r\.dependsOn \|\| \[\]\)\.every\(\(id\) => id === flowId \|\| obSettled\(id\)\)/.test(adm)) fail("E: admin's \"the client waits on this\" isn't limited to the real blocker");
+  if (!/small: "Your move", side: "the client waits on this"/.test(adm) || !/title: `\$\{waitedOn\.obj\.t\}: the client waits on it`/.test(adm)) fail("E: an RGA row a client waits on doesn't say so (row card + Your action)");
+  if ((adm.match(/o\.flowId === "m1\.review\.first_5" \? r5AdminHtml\(\) : ""/g) || []).length !== 2 || !/RGA's approved review message, personalized per customer/.test(adm)) fail("E: admin's step-12 row doesn't read the client's customers live, or hides whose text it is");
+}
+
 if (F.length) { console.error("🔴 step 12 isn't the approved design, or isn't honest:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 12 is step12_review_requests_v1: waits with \"RGA is writing it · Review request message\" and the 4-part path; opens with \"✓ Ready\", 5 labelled customer cards, a live \"N of 5\" and a button that says what it sends (an international number counts, a half card is named); one save path; after, each customer reads request ready / you marked it sent / RGA is writing it, never \"sent\"; new reviews only when measured after the customers came in; the email has the letter blocks and claims the review link only when we hold it; no sideways scroll on a phone");
+console.log("✅ step 12 is step12_review_requests_v2 (the v1 rules in the Google card): waits with \"RGA is writing it · Review request message\" and the 4-part path; opens with \"✓ Ready\", 5 labelled customer cards, a live \"N of 5\" and a button that says what it sends (an international number counts, a half card is named); one save path; after, each customer reads request ready / you marked it sent / RGA is writing it, never \"sent\"; new reviews only when measured after the customers came in; the email has the letter blocks and claims the review link only when we hold it; no sideways scroll on a phone");

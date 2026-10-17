@@ -9,15 +9,15 @@
  [
   "the waiting band loses its TYPE line",
   "portal",
-  "  if (w.thing && w.thing.title) {",
-  "  if (false) {",
+  "small: \"RGA is on it\", side: \"nothing needed from you yet\", title: escapeHtml(`Writing your ${String(t.title).toLowerCase()}`),",
+  "small: \"RGA is on it\", side: \"nothing needed from you yet\", title: escapeHtml(t.title),",
   1
  ],
  [
   "how it works highlights nothing",
   "portal",
-  "`<li${i === 0 ? ' class=\"now\"' : \"\"}>",
-  "`<li>",
+  "body: `<ol class=\"pm-how pm-how-in\">${w.how.map((h, i) => `<li${i === 0 ? ' class=\"now\"' : \"\"}>",
+  "body: `<ol class=\"pm-how pm-how-in\">${w.how.map((h, i) => `<li>",
   1
  ],
  [
@@ -44,14 +44,14 @@
  [
   "a marked request reads sent",
   "portal",
-  "\"Customer · you marked it sent\"",
-  "\"Customer · sent\"",
+  "</span>You marked it sent${r.marked_at ?",
+  "</span>Sent${r.marked_at ?",
   1
  ],
  [
   "a request with no message offers a send",
   "portal",
-  "    if (!r.message) return typeLineHtml(\"wait\", PERSON_ICON, \"Customer · RGA is writing it\", r.name, detail, [\"wait\", \"Writing\"]);\n",
+  "    if (!r.message) return `<div class=\"pm-r5-rq\"><span class=\"pm-r5-who\">${who}</span><span class=\"pm-fx-pl wait\"><span class=\"d\" aria-hidden=\"true\"></span>RGA is writing it</span></div>`;\n",
   "",
   1
  ],
@@ -72,8 +72,8 @@
  [
   "the open step loses its Ready line",
   "portal",
-  "typeLineHtml(\"keep\", MSG_ICON, \"✓ Ready\", t.title || \"Review request message\",",
-  "typeLineHtml(\"keep\", MSG_ICON, \"Ready\", t.title || \"Review request message\",",
+  "body: `${readyChip}${got}<div class=\"pm-r5-cards\">",
+  "body: `${got}<div class=\"pm-r5-cards\">",
   1
  ],
  [
@@ -100,8 +100,8 @@
  [
   "on a phone the customer fields don't stack",
   "portalcss",
-  "@media (max-width: 700px) { .pm-r5-c { grid-template-columns: 34px 1fr; }",
-  "@media (max-width: 1px) { .pm-r5-c { grid-template-columns: 34px 1fr; }",
+  ".gcard .pm-r5-c { grid-template-columns:minmax(0,1fr); padding:10px; }",
+  ".gcard .pm-r5-c { padding:10px; }",
   1
  ],
  [
@@ -148,9 +148,51 @@
  ],
  [
   "step 12 counts every list ever",
+  "reviewreqfn",
+  "for (const l of Array.isArray(all) ? all : []) { if (n >= 5) break;",
+  "for (const l of Array.isArray(all) ? all : []) {",
+  1
+ ],
+ [
+  "an unapproved step 56 draft is sent",
+  "reviewreqfn",
+  "if (!t || t.status !== \"done\") return null;",
+  "if (!t) return null;",
+  1
+ ],
+ [
+  "a leftover placeholder can be sent",
+  "reviewreqfn",
+  "return /\\{\\{|\\}\\}/.test(out) ? null : out;",
+  "return out;",
+  1
+ ],
+ [
+  "a test send shows to the client",
   "portal",
-  "    if (total >= REVIEW_GOAL) break;\n    mine.push(l);",
-  "    mine.push(l);",
+  "const letters = msgs.filter((m) => m.letter && !m.test)",
+  "const letters = msgs.filter((m) => m.letter)",
+  1
+ ],
+ [
+  "every RGA dependency reads as the blocker",
+  "admin",
+  "&& (r.dependsOn || []).includes(flowId) && (r.dependsOn || []).every((id) => id === flowId || obSettled(id)));",
+  "&& (r.dependsOn || []).includes(flowId));",
+  1
+ ],
+ [
+  "the waiting card is back to a band + disabled button",
+  "portal",
+  "      : step.clientForm === \"customer_list\" ? (ownWait || listingWait || (rgaWait && !(step.clientWait && step.clientWait.how)) ?",
+  "      : step.clientForm === \"customer_list\" ? (ownWait || listingWait || rgaWait ?",
+  1
+ ],
+ [
+  "admin row 57 reads nothing live",
+  "admin",
+  "${o.flowId === \"m1.review.first_5\" ? r5AdminHtml() : \"\"}${gsQ === \"you\"",
+  "${gsQ === \"you\"",
   1
  ]
 ]

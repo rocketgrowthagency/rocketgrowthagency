@@ -234,7 +234,11 @@ const fns = lift(portal, "function portalListingStateOf(tasks) {", "\nfunction p
 if (!fns || !/function rowRgaWaits\(/.test(fns) || !/function rowWaits\(/.test(fns)) { console.error("⚠️  INDETERMINATE — could not lift the portal's wait helpers"); process.exit(2); }
 const ctx = { MSG_ICON: "<svg></svg>", escapeAttribute: (x) => String(x).replace(/"/g, "&quot;"), escapeHtml: (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") };
 vm.createContext(ctx);
-vm.runInContext(`${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
+// 🔑 10-16: rgaWaitHtml draws step 12's wait as the Google card (step12_review_requests_v2), so the card rides along
+const lineOf = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
+const gcOf = (() => { const i = portal.indexOf("function googleCardHtml("); const j = portal.indexOf("\nconst gcardMaps", i); return i < 0 || j < 0 ? "" : portal.slice(i, j); })();
+if (!gcOf || !lineOf("GC_ICON")) { console.error("⚠️  INDETERMINATE — could not lift the Google card"); process.exit(2); }
+vm.runInContext(`${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
 {
   const cs1 = new Map((cs.month1 || []).map((x) => [x.id, x]));
   const hrsRow = cs1.get("m1.gbp.hours_attributes");
@@ -259,7 +263,10 @@ if (ctx.r(row, "done", null) || ctx.r(row, "skipped", new Set([S57]))) fail("a f
 if (ctx.r({ id: "x" }, "pending", null)) fail("a row that can't wait reads as waiting");
 if (!ctx.w(row, "pending", {}, new Set([S57]))) fail("rowWaits (the marker's + the headline's question) ignores the RGA wait");
 const band = ctx.h(row);
-if (!band.includes("pm-lock other") || !band.includes(ctx.escapeHtml(s57.clientWait?.head || "\u0000"))) fail("step 57's blue band doesn't say what RGA is doing first");
+// 🔒 step12_review_requests_v2: a wait that declares its path is ONE blue card ("RGA is on it · Writing your …", the path inside)
+if (Array.isArray(s57.clientWait?.how) && s57.clientWait.how.length
+  ? !(band.includes('class="gcard rga"') && /Writing your review request message/.test(band) && band.includes("pm-how-in"))
+  : !(band.includes("pm-lock other") && band.includes(ctx.escapeHtml(s57.clientWait?.head || "\u0000")))) fail("step 57's blue band doesn't say what RGA is doing first");
 if (ctx.h({ id: "x" }) !== "") fail("a row with no wait copy draws an empty band");
 const pcode = code("portal/portal.js");
 const checks = [
@@ -279,7 +286,7 @@ const checks = [
   [/const photosThisMonth = \(photos \|\| \[\]\)\.filter\(\(p\) => p && p\.created_at\s*&& sameReportingMonth\(portalReportingMonth\(new Date\(p\.created_at\)\), portalReportingMonth\(\)\)\)\.length;/, "step 15's count isn't this reporting month's photos"],
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
   // 🔒 step12_review_requests_v1 (10-14): while it waits, the only control is the disabled "Add your 5 customers →".
-  [/: step\.clientForm === "customer_list" \? \(rgaWait \|\| ownWait \|\| listingWait \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>`/, "step 57's \"Add your 5 customers →\" stays live while it waits"],
+  [/: step\.clientForm === "customer_list" \? \(ownWait \|\| listingWait \|\| \(rgaWait && !\(step\.clientWait && step\.clientWait\.how\)\) \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "step 57's \"Add your 5 customers →\" stays live while it waits"],
   [/const completionCtlLive = reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(/, "step 57's customer cards show while it waits"],
   [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
 ];

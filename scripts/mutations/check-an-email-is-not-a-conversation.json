@@ -16,8 +16,8 @@
  [
   "emails count as a conversation",
   "portal",
-  "const letters = msgs.filter((m) => m.letter), talk = msgs.filter((m) => !m.letter);",
-  "const letters = msgs.filter((m) => m.letter), talk = msgs;",
+  "const letters = msgs.filter((m) => m.letter && !m.test), talk = msgs.filter((m) => !m.letter);",
+  "const letters = msgs.filter((m) => m.letter && !m.test), talk = msgs;",
   1
  ],
  [
@@ -37,8 +37,8 @@
  [
   "a test send isn't marked on its row",
   "portal",
-  "${m.test ? \"Test send · \" : \"We emailed you · \"}",
-  "We emailed you · ",
+  "const letters = msgs.filter((m) => m.letter && !m.test), talk",
+  "const letters = msgs.filter((m) => m.letter), talk",
   1
  ],
  [

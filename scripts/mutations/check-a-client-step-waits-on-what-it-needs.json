@@ -128,8 +128,8 @@
  [
   "portal: Add your 5 customers stays live",
   "portal",
-  "(rgaWait || ownWait || listingWait ? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`",
-  "(rgaWait || ownWait || listingWait ? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",
+  "? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`",
+  "? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",
   1
  ],
  [

@@ -44,8 +44,8 @@
  [
   "no Google logo",
   "portal",
-  "<span class=\"gcard-i\" aria-hidden=\"true\">${GOOGLE_G}</span>",
-  "<span class=\"gcard-i\" aria-hidden=\"true\"></span>",
+  "<span class=\"gcard-i\" aria-hidden=\"true\">${tile || GOOGLE_G}</span>",
+  "<span class=\"gcard-i\" aria-hidden=\"true\">${tile || \"\"}</span>",
   1
  ],
  [

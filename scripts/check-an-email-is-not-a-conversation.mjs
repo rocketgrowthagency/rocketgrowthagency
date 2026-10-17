@@ -82,7 +82,8 @@ try {
   if (o.wrap !== "m1.gbp.verify") fail("the step's messages lost their step marker");
   const b = r.bothR;
   if (b.order !== "pm-mails,pm-thread" || b.bubbles !== 2 || b.heading !== "Your conversation about this step" || !b.form || b.ask || b.rows !== 1) fail(`a step with emails and a conversation isn't: emails first, then the conversation with its reply box (${JSON.stringify(b)})`);
-  if (!/^Step 12 is open Test send · /.test(r.tst)) fail(`a test send isn't marked on its row (${r.tst})`);
+  // 🔒 step12_review_requests_v2 (10-16): a TEST send (RGA checking how an email looks) never appears in a client's step
+  if (r.tst) fail(`a test send shows in the client's step (${r.tst})`);
   if (r.genR.heading !== "Your messages with RGA" || r.genR.rows || !r.genR.form) fail("the general thread (no step) changed");
   if (r.none !== "") fail("a step with no messages shows something");
 } finally { await browser.close(); }
