@@ -16,8 +16,8 @@
  [
   "no Maps link",
   "portal",
-  "${maps ? ` · ${gcardMaps(maps)}` : \"\"}`,\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
-  "`,\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
+  "    proof: gcardMaps(maps),\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
+  "    proof: \"\",\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
   1
  ],
  [

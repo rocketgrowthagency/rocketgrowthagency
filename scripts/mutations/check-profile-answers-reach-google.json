@@ -93,15 +93,15 @@
  [
   "the Google line is gone",
   "portal",
-  "    return googleCardHtml({ state: \"ok\", small: \"✓ On your Google Business Profile\", title: escapeHtml(thing),",
-  "    return \"\"; googleCardHtml({ state: \"ok\", small: \"✓ On your Google Business Profile\", title: escapeHtml(thing),",
+  "    return googleCardHtml({ state: \"ok\", small: \"On Google\", side: on ? `checked ${escapeHtml(on)}` : \"\", title: escapeHtml(thing),",
+  "    return \"\"; googleCardHtml({ state: \"ok\", small: \"On Google\", side: on ? `checked ${escapeHtml(on)}` : \"\", title: escapeHtml(thing),",
   1
  ],
  [
   "raw text on the RGA line",
   "portal",
-  "meta: \"Google asked us to change something. RGA is finishing it; nothing needed from you.\" });",
-  "meta: escapeHtml(g.error || \"\") });",
+  "    return googleCardHtml({ state: \"rga\", small: \"RGA is on it\", side: \"nothing needed from you\", title: escapeHtml(thing), meta: \"Google asked us to change something. RGA is finishing it.\" });",
+  "    return googleCardHtml({ state: \"rga\", small: \"RGA is on it\", side: \"nothing needed from you\", title: escapeHtml(thing), meta: escapeHtml(g.error || \"\") });",
   1
  ],
  [

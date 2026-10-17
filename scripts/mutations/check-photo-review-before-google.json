@@ -30,8 +30,8 @@
  [
   "step 39 loses its status",
   "admin",
-  "${prvN ? `Review ${prvN}` : waiting",
-  "${waiting",
+  "${gsA ? gPillText(gsA, s.task) : prvN ? `Review ${prvN}` : waiting",
+  "${gsA ? gPillText(gsA, s.task) : waiting",
   1
  ],
  [

@@ -77,7 +77,7 @@ if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m)];
+const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-6 helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -91,7 +91,7 @@ try {
     const h = document.getElementById("h");
     const f = { title: "Rocket Growth Agency", phone: "(424) 242-2040", mapsUri: "https://maps.google.com/maps?cid=1" };
     h.innerHTML = gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 15, 9:40 AM"]]);
-    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".gcard-maps")?.getAttribute("href"), recheck: !!h.querySelector('.gcard-act [data-step-recheck="m1.gbp.verify"]'), how: !!h.querySelector('.gcard-meta [data-gcard-how="m1.gbp.verify"]'), card: h.firstElementChild?.className };
+    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".gcard-maps")?.getAttribute("href"), recheck: !!h.querySelector('.gcard + .gcard-act [data-step-recheck="m1.gbp.verify"]'), how: !!h.querySelector('.gcard-proof [data-gcard-how="m1.gbp.verify"]'), card: h.firstElementChild?.className };
     h.innerHTML = gvOptionsHtml([{ method: "EMAIL", label: "Email a code to x@y.com", sub: "s", code: true }, { method: "SMS", label: "Text", sub: "s", code: true }]);
     const emailFirst = { fastest: !!h.querySelector("em"), sel: h.querySelector(".pm-gv-m.sel")?.getAttribute("data-gv-method"), google: h.querySelector('a[href="https://business.google.com/"]') ? 1 : 0, codeHidden: h.querySelector("[data-gv-code]")?.hidden };
     h.innerHTML = gvOptionsHtml([{ method: "SMS", label: "Text a code to (424) 242-2040", sub: "s", code: true }]);
@@ -100,7 +100,8 @@ try {
     return { yes, emailFirst, smsFirst, x: window.__x || 0 };
   });
   // 🔒 one_google_card_v1: the one Google card, green; Checked + Maps + "How verification works" in its bottom line, "Check again" top-right
-  if (!/^✓ Verified by Google Google Business Profile Business Rocket Growth Agency Phone on the profile \(424\) 242-2040 Checked Oct 15, 9:40 AM · See it on Google Maps ↗ · How verification works Check again$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
+  // 🔒 google_card_best_v1: one status line (Verified by Google · checked …), the profile, proof (Maps · How), Check again under the card
+  if (!/^Verified by Google · checked Oct 15, 9:40 AM Google Business Profile Business Rocket Growth Agency Phone on the profile \(424\) 242-2040 See it on Google Maps ↗ How verification works Check again$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
   if (r.yes.card !== "gcard ok" || !r.yes.recheck || !r.yes.how) fail(`the verified card isn't the one green Google card with Check again + How verification works (${JSON.stringify(r.yes)})`);
   if (r.emailFirst.fastest || r.emailFirst.sel !== "EMAIL" || !r.emailFirst.google || r.emailFirst.codeHidden !== true) fail(`the ways to verify are drawn wrong (${JSON.stringify(r.emailFirst)})`);
   if (!r.smsFirst) fail("a text code isn't marked Fastest");

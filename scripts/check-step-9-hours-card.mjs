@@ -30,7 +30,8 @@ vm.runInContext(`${portal.slice(i0, i1)}\nthis.card = hoursCardHtml;`, ctx);
   const h = ctx.card({ id: "m1.gbp.hours_attributes" }, { status: "done", client_input_at: "2026-10-16T02:48:09Z" }, g, "https://maps.google.com/?cid=1");
   if ((h.match(/class="pm-hc-day"/g) || []).length !== 5 || (h.match(/class="pm-hc-day off"/g) || []).length !== 2 || !/<b>Mon<\/b>9 AM–6 PM/.test(h)) fail("the done card doesn't show the week as 7 tiles (5 open, 2 closed, 12-hour times)");
   if (!/Closed every year<\/span><span class="pm-hc-hol">Thanksgiving <i>Nov 26<\/i>/.test(h) || !/One-off<\/span><span class="pm-hc-hol">Team trip <i>Mar 2–Mar 4<\/i>/.test(h)) fail("the done card doesn't list the holidays with their dates (and one-offs apart)");
-  if (!/Saved Oct 16 · checked on Google Oct 16 · we renew the holidays every year/.test(h) || !/href="https:\/\/maps\.google\.com\/\?cid=1"[^>]*>See it on Google Maps ↗/.test(h)) fail("the done card doesn't say when it was saved / checked, or lacks the Google Maps link");
+  // 🔑 google_card_best_v1 (10-16): "checked" is the status line's side; Saved + the holiday renewal stay as text; Maps is the proof
+  if (!/<span class="gcard-side">· checked Oct 16<\/span>/.test(h) || !/Saved Oct 16 · We renew the holidays every year\./.test(h) || !/<span class="gcard-proof"><a class="gcard-maps"/.test(h) || !/href="https:\/\/maps\.google\.com\/\?cid=1"[^>]*>See it on Google Maps ↗/.test(h)) fail("the done card doesn't say when it was saved / checked, or lacks the Google Maps link");
   if (!/<button type="button" class="pm-amend pm-hc-change" data-hours-edit="m1\.gbp\.hours_attributes">Change hours<\/button>/.test(h)) fail("the done card has no \"Change hours\"");
 }
 if (!/if \(g\.state === "on_google" && step\.id === "m1\.gbp\.hours_attributes" && taskState && taskState\.status === "done"\) return hoursCardHtml\(/.test(js)) fail("done hours don't draw the one green card");

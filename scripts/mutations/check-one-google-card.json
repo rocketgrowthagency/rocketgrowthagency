@@ -1,30 +1,37 @@
 [
  [
-  "the card gets a tinted fill",
+  "the card goes white again",
   "portalcss",
-  "background:var(--portal-card,#fff); border:1px solid var(--portal-line,#e3e3e3); border-left:4px solid var(--state-ok);",
-  "background:var(--state-ok-bg); border:1px solid var(--portal-line,#e3e3e3); border-left:4px solid var(--state-ok);",
+  "background:var(--state-ok-bg); border:1px solid var(--state-ok-line); border-radius:12px; padding:12px 14px; margin:0 0 12px; }",
+  "background:var(--portal-card,#fff); border:1px solid var(--state-ok-line); border-radius:12px; padding:12px 14px; margin:0 0 12px; }",
   1
  ],
  [
-  "step 9 draws blue",
+  "a thick edge inside the step again",
+  "portalcss",
+  "background:var(--state-ok-bg); border:1px solid var(--state-ok-line); border-radius:12px; padding:12px 14px; margin:0 0 12px; }",
+  "background:var(--state-ok-bg); border:1px solid var(--state-ok-line); border-left:4px solid var(--state-ok); border-radius:12px; padding:12px 14px; margin:0 0 12px; }",
+  1
+ ],
+ [
+  "a state icon is a text glyph",
   "portal",
-  "return googleCardHtml({ state: \"ok\", small: \"✓ On your Google Business Profile\", title: \"Your hours\",",
-  "return googleCardHtml({ state: \"rga\", small: \"✓ On your Google Business Profile\", title: \"Your hours\",",
+  "const GC_ICON = { ok: `<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>`,",
+  "const GC_ICON = { ok: `✓`,",
   1
  ],
  [
-  "admin's blue isn't the portal's",
-  "css",
-  ".ob-gcard.rga { border-left-color:var(--state-other-edge); }",
-  ".ob-gcard.rga { border-left-color:var(--state-other); }",
+  "buttons back inside the card",
+  "portal",
+  "${proof ? `<span class=\"gcard-proof\">${proof}</span>` : \"\"}</span></div>${act ? `<div class=\"gcard-act\">${act}</div>` : \"\"}`;",
+  "${proof ? `<span class=\"gcard-proof\">${proof}</span>` : \"\"}</span>${act ? `<div class=\"gcard-act\">${act}</div>` : \"\"}</div>`;",
   1
  ],
  [
-  "admin's note is back",
-  "admin",
-  ": g.state === \"not_sent\" ? adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\", title: g.reason === \"google_offers_no_link\" ? \"Google offers this business no booking link\" : \"The client doesn't take bookings online\", meta: gWhen(g.at) })",
-  ": g.state === \"not_sent\" ? `<div class=\"ob-in-note\">Nothing sent to Google</div>`",
+  "Fix it isn't the blue move",
+  "portal",
+  "class=\"pm-commit\" data-gcard-fix>Fix it",
+  "class=\"pm-amend\" data-gcard-fix>Fix it",
   1
  ],
  [
@@ -35,13 +42,6 @@
   1
  ],
  [
-  "step 6's buttons back under the card",
-  "portal",
-  "<div class=\"pm-row-actions\"${step.id === \"m1.gbp.verify\" && isDone && !month2Only ? \" hidden\" : \"\"}>",
-  "<div class=\"pm-row-actions\">",
-  1
- ],
- [
   "no Google logo",
   "portal",
   "<span class=\"gcard-i\" aria-hidden=\"true\">${GOOGLE_G}</span>",
@@ -49,24 +49,52 @@
   1
  ],
  [
-  "green tiles inside",
-  "portalcss",
-  ".pm-hc-day { border:1px solid var(--portal-line);",
-  ".pm-hc-day { border:1px solid var(--state-ok-line);",
+  "admin's blue isn't the portal's",
+  "css",
+  ".ob-gcard.rga { background:var(--state-other-bg);",
+  ".ob-gcard.rga { background:var(--state-you-bg);",
   1
  ],
  [
-  "a code to type reads grey",
-  "portal",
-  "(opts.code ? \"you\" : \"wait\")",
-  "\"wait\"",
+  "admin's grey border isn't the portal's",
+  "css",
+  ".ob-gcard.wait { background:var(--state-over-bg); border-color:var(--admin-border,#e3e3e3); }",
+  ".ob-gcard.wait { background:var(--state-over-bg); border-color:var(--state-over-edge); }",
   1
  ],
  [
-  "admin step 6 without the card",
+  "admin's note is back",
   "admin",
-  "if (step?.flowId === \"m1.gbp.verify\" && task?.status === \"done\" && task?.detected?.verdict) {",
-  "if (false) {",
+  ": g.state === \"not_sent\" ? adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\",",
+  ": g.state === \"not_sent\" ? `<div class=\"ob-in-note\">Nothing sent</div>` : adminGoogleCardHtml({ state: \"ok\", small: \"Nothing to put on Google\",",
+  1
+ ],
+ [
+  "admin rows keep the old marker",
+  "admin",
+  "const obMarker = (num, kind, gs) => gs\n",
+  "const obMarker = (num, kind, gs) => false\n",
+  1
+ ],
+ [
+  "admin row outline ignores the state",
+  "css",
+  ".ob-step[data-g=\"rga\"]",
+  ".ob-step[data-g=\"rgx\"]",
+  1
+ ],
+ [
+  "a change on Google isn't the card",
+  "admin",
+  "return adminGoogleCardHtml({ state: \"you\", small: \"Changed on Google\"",
+  "return adminGoogleCardHtml({ state: \"you\", small: \"Changed\"",
+  1
+ ],
+ [
+  "Your action ignores the Google state",
+  "admin",
+  "data.admin.gstate === k",
+  "false",
   1
  ]
 ]

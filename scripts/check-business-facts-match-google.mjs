@@ -265,7 +265,7 @@ if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\
   if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
 }
 if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
-if (!/const chip = \(x\) => `<span class="pm-fx-pl \$\{x\.on \? "on" : "wait"\}">/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: `RGA is changing this on Google[\s\S]{0,900}\$\{maps \? ` · \$\{gcardMaps\(maps\)\}` : ""\}` \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+if (!/const chip = \(x\) => `<span class="pm-fx-pl \$\{x\.on \? "on" : "wait"\}">/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: "RGA is on it", side: on \? `\$\{on\} of \$\{items\.length\} on Google` : "nothing needed from you"[\s\S]{0,1100}proof: gcardMaps\(maps\) \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
 if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
 if (!/<span class="pm-fx-pls">\$\{items\.map\(chip\)\.join\(""\)\}<\/span>/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
 {
