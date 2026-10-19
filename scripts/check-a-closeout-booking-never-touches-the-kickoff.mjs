@@ -205,7 +205,7 @@ if (!/const CLOSE_PURPOSE = "m1_close";/.test(portal)) fail("J · the portal's c
 if (!/kickoff-availability\?client_id=\$\{encodeURIComponent\(clientId\)\}&purpose=\$\{CLOSE_PURPOSE\}/.test(portal)) fail("J · the portal's close-out card reads the kickoff's availability answer");
 if (!/client_id: clientId, start: startIso, purpose: CLOSE_PURPOSE/.test(portal)) fail("J · the portal's close-out pick is sent as a kickoff pick");
 if (!/kickoff-requests\?client_id=\$\{encodeURIComponent\(cid\)\}&purpose=m1_close/.test(admin)) fail("J · admin row 60 reads the kickoff's requests");
-if (!/o\.flowId === "m1\.call\.close" \? closeoutAdminHtml\(\) : ""/.test(admin)) fail("J · admin row 60 no longer shows the close-out booking");
+if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.call\.close" \? closeoutAdminHtml\(\)/.test(admin))) fail("J · admin row 60 no longer shows the close-out booking");
 const sqlFile = fs.readdirSync(`${__SITE}/docs/supabase`).find((f) => /SLOT_HOLD_PURPOSE/.test(f));
 const sql = sqlFile ? read(`docs/supabase/${sqlFile}`) : "";
 const allowed = (sql.match(/check \(purpose in \(([^)]*)\)\)/) || [])[1];

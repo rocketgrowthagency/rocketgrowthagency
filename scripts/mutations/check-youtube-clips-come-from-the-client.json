@@ -1,0 +1,65 @@
+[
+ [
+  "an upload is recorded without checking storage",
+  "videoclipfn",
+  "        if (!head.ok) return jsonRes(409, { error: \"We can't see that upload yet \u2014 please try again.\" });",
+  "",
+  1
+ ],
+ [
+  "a clip in another client's folder is accepted",
+  "videoclipfn",
+  "        if (!path.startsWith(`${clientId}/`) || path.includes(\"..\")) return",
+  "        if (path.includes(\"..\")) return",
+  1
+ ],
+ [
+  "a clip over 50 MB is accepted",
+  "videoclipfn",
+  "        if (Number(b.size) > yt.MAX_BYTES) return jsonRes(400,",
+  "        if (false) return jsonRes(400,",
+  1
+ ],
+ [
+  "RGA isn't told when both clips are in",
+  "videoclipfn",
+  "    if (added && saved.length === yt.NEEDED) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "recording a clip overwrites the record",
+  "videoclipfn",
+  "body: JSON.stringify({ data: { ...rec.data, tasks } })",
+  "body: JSON.stringify({ data: { tasks: { [yt.STEP]: task } } })",
+  1
+ ],
+ [
+  "one script is accepted as two",
+  "ytclips",
+  "  if (vids.length !== NEEDED) problems.push(`${vids.length} scripts, not ${NEEDED}`);",
+  "",
+  1
+ ],
+ [
+  "a non-https link is accepted",
+  "ytclips",
+  "  return u.protocol === \"https:\" && u.hostname.includes(\".\") ? u.toString() : null;",
+  "  return u.toString();",
+  1
+ ],
+ [
+  "the portal uploads without the size check",
+  "portal",
+  "  if (file.size > VC_MAX) return videoPaint(",
+  "  if (false) return videoPaint(",
+  1
+ ],
+ [
+  "step 55 Done is unguarded",
+  "admin",
+  "    proof: (d) => (d?.tasks?.[\"m1.brand.youtube_setup\"]?.clips || []).filter((c) => c && (c.path || c.url)).length >= 2,",
+  "    proof: (d) => true,",
+  1
+ ]
+]

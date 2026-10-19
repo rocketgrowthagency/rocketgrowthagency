@@ -259,7 +259,7 @@ try {
   const adm = read("admin/admin.js");
   if (!/const clientsWaitingOn = \(flowId\) => \(steps\.find\(\(x\) => x\.obj && x\.obj\.flowId === flowId\)\?\.uiState === "locked"\) \? \[\] :/.test(adm) || !/\(r\.dependsOn \|\| \[\]\)\.every\(\(id\) => id === flowId \|\| obSettled\(id\)\)/.test(adm)) fail("E: admin's \"the client waits on this\" isn't limited to the real blocker");
   if (!/small: "Your move", side: "the client waits on this"/.test(adm) || !/title: `\$\{waitedOn\.obj\.t\}: the client waits on it`/.test(adm)) fail("E: an RGA row a client waits on doesn't say so (row card + Your action)");
-  if ((adm.match(/o\.flowId === "m1\.review\.first_5" \? r5AdminHtml\(\) : ""/g) || []).length !== 2 || !/RGA's approved review message, personalized per customer/.test(adm)) fail("E: admin's step-12 row doesn't read the client's customers live, or hides whose text it is");
+  if (!((adm.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.review\.first_5" \? r5AdminHtml\(\)/.test(adm)) || !/RGA's approved review message, personalized per customer/.test(adm)) fail("E: admin's step-12 row doesn't read the client's customers live, or hides whose text it is");
 }
 
 if (F.length) { console.error("🔴 step 12 isn't the approved design, or isn't honest:"); for (const f of F) console.error("   · " + f); process.exit(1); }
