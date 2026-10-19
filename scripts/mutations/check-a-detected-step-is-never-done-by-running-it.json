@@ -77,5 +77,29 @@
   "exec",
   "return { summary: \"No GBP location linked\", outcome: \"indeterminate\" }",
   "return { summary: \"No GBP location linked\" }"
+ ],
+ [
+  "a draft completes the step again",
+  "exec",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
+  "if (result && DRAFT_CALLS > 99) {}"
+ ],
+ [
+  "a measured run that also drafted stays open",
+  "exec",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true && result.outcome !== \"verified\") { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }",
+  "if (result && DRAFT_CALLS > 0 && result.completed !== true) { result.completed = false; if (!result.outcome) result.outcome = \"draft_ready\"; }"
+ ],
+ [
+  "aiDraft stops counting",
+  "exec",
+  "  DRAFT_CALLS++;\n",
+  "\n"
+ ],
+ [
+  "the counter is never reset",
+  "exec",
+  "    DRAFT_CALLS = 0;\n    const result = await executor(",
+  "    const result = await executor("
  ]
 ]

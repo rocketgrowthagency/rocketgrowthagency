@@ -63,10 +63,13 @@ const parts = ["isHybrid", "isDetected", "runnerCompleted", "isDone"].map((n) =>
 // verbatim too; without it the decision below would be tested without the line that changes its answer.
 const vetoM = /^\s*(if \(result && \(result\.outcome[^\n]*result\.completed = false;)$/m.exec(exec);
 if (!vetoM) { console.error("⚠️  INDETERMINATE — the measured-nothing veto (`if (result && (result.outcome === \"indeterminate\" …) result.completed = false;`) is not in flow-execute.js; re-read the decision."); process.exit(2); }
-const body = vetoM[1] + "\n" + parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
+// 🔒 10-19: and the DRAFT line — a run that only drafted (aiDraft called, nothing finished or measured) stays open.
+const draftM = /^\s*(if \(result && DRAFT_CALLS[^\n]*)$/m.exec(exec);
+if (!draftM) { console.error("⚠️  INDETERMINATE — the draft-never-completes line (`if (result && DRAFT_CALLS > 0 …`) is not in flow-execute.js; re-read the decision."); process.exit(2); }
+const body = vetoM[1] + "\n" + draftM[1] + "\n" + parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
 
 let decide;
-try { decide = new Function("stepDef", "result", body); }
+try { const _d = new Function("stepDef", "result", "DRAFT_CALLS", body); decide = (sd, r, n = 0) => _d(sd, r, n); }
 catch (e) {
   console.error(`⚠️  INDETERMINATE — the lifted decision does not compile: ${e.message}`);
   process.exit(2);
@@ -133,6 +136,17 @@ for (const s of plain.slice(0, 1)) {
   const bare = exec.split("\n").map((l, i) => [l, i + 1]).filter(([l]) => /return \{ summary: "No [^"]*" \}/.test(l));
   for (const [l, n] of bare) F(`flow-execute.js:${n} — a runner that couldn't run returns no outcome, so it's recorded DONE: ${l.trim().slice(0, 90)}`);
 }
+
+// 6 — A DRAFT NEVER COMPLETES A STEP (10-19, approved build all): drafted + nothing finished or measured → open, "draft_ready".
+for (const s of plain.slice(0, 1)) {
+  const r = { ok: true, summary: "a GBP description draft" };
+  if (decide(s, r, 1) !== false || r.outcome !== "draft_ready") F(`${s.id}: a run that only DRAFTED is recorded done (or not marked draft_ready) — drafting a description isn't publishing it`);
+  if (decide(s, { ok: true, outcome: "verified", summary: "measured + drafted" }, 1) !== true) F(`${s.id}: a run that MEASURED and drafted no longer finishes`);
+  if (decide(s, { ok: true, completed: true }, 2) !== true) F(`${s.id}: a runner's own completed:true no longer wins over a draft`);
+  if (decide(s, { ok: true, summary: "measured, no AI" }, 0) !== true) F(`${s.id}: a plain run with no draft no longer finishes`);
+}
+if (!/\n\s*DRAFT_CALLS = 0;\n\s*const result = await executor\(/.test(exec)) F("the draft counter isn't reset right before the executor runs — one run's drafts would leak into the next");
+if (!/async function aiDraft\([^)]*\) \{\n\s*DRAFT_CALLS\+\+;/.test(exec)) F("aiDraft doesn't count itself — the draft rule can't fire");
 
 console.log(`  decision: isDone = ${decision}`);
 console.log(`  evaluated against ${steps.length} real step definitions · ${detected.length} detected `

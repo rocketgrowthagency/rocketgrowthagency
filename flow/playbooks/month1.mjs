@@ -1071,7 +1071,8 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
       }));
       return { summary: `Generated Service schema for ${snippets.length} services. Paste each into corresponding service page <head>.\n\n${JSON.stringify(snippets, null, 2)}` };
     },
-    instructions: `Also add: FAQPage schema (5+ Q&A per service page → rich snippets), BreadcrumbList schema, AggregateRating (if reviews exist).
+    instructions: `Per service page: Service + BreadcrumbList schema, and a short visible FAQ with its FAQPage markup (publish both or neither; since 2023 Google shows FAQ rich results only for government and health sites, so the markup describes the page, it isn't a snippet promise).
+No AggregateRating: Google doesn't show stars for a business's own reviews marked up on its own site.
 Test all at https://search.google.com/test/rich-results`,
   },
   {
