@@ -155,6 +155,9 @@ export const FILES = {
   callpurpose: "netlify/functions/_call-purpose.js",   // batch 3 close-out booking (10-19)
   gbpposts: "netlify/functions/_gbp-posts.js",   // batch 4 Monthly posts (10-19)
   ytclips: "netlify/functions/_youtube-clips.js",   // batch 4 YouTube clips (10-19)
+  maturefn: "netlify/functions/_mature.js",   // batch 5 Mature (10-19)
+  adminmature: "netlify/functions/admin-mature.js",
+  portalmature: "netlify/functions/portal-mature.js",
   videoclipfn: "netlify/functions/portal-video-clip.js",
   clientvideossql: "docs/supabase/RGA_CLIENT_VIDEOS_BUCKET_2026-10-19.sql",
   v2push: "netlify/functions/v2-push-gbp-content.js",

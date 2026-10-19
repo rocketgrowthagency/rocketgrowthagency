@@ -1,0 +1,128 @@
+[
+ [
+  "the review opens with fewer than 3 months",
+  "maturefn",
+  "  if (months.length < 3 && !qr) put(\"m6.strategy.quarterly_review\"",
+  "  if (false) put(\"m6.strategy.quarterly_review\"",
+  1
+ ],
+ [
+  "a review is marked sent when the email failed",
+  "maturefn",
+  "      if (!sent || !sent.ok) return { ok: false, error: `The email didn't send",
+  "      if (false) return { ok: false, error: `The email didn't send",
+  1
+ ],
+ [
+  "Send twice emails twice",
+  "maturefn",
+  "      if (r.status === \"sent\") return { ok: true, message: \"Already sent.\" };",
+  "",
+  1
+ ],
+ [
+  "a tracked keyword is proposed again",
+  "maturefn",
+  ".filter((k) => k && !tracked.includes(k)))].slice(0, 3);",
+  ".filter((k) => k))].slice(0, 3);",
+  1
+ ],
+ [
+  "the 2-keyword cap is gone",
+  "maturefn",
+  "        if (extra.length > 2) return",
+  "        if (false) return",
+  1
+ ],
+ [
+  "storefronts get a service area",
+  "maturefn",
+  "  const byArea = [\"service_area\", \"multi_location\"].includes(String(ctx.client?.geography_model || \"\"));",
+  "  const byArea = true;",
+  1
+ ],
+ [
+  "one bad month is an alert",
+  "maturefn",
+  "    if (breaches(t, m0[m.col], m1[m.col]) === true && breaches(t, m1[m.col], m2[m.col]) === true) {",
+  "    if (breaches(t, m0[m.col], m1[m.col]) === true) {",
+  1
+ ],
+ [
+  "a missing value reads as no breach",
+  "maturefn",
+  "  if (a === null || b === null || !t) return null;",
+  "  if (a === null || b === null || !t) return false;",
+  1
+ ],
+ [
+  "telling the client emails them",
+  "maturefn",
+  "        await deps.activity(\"rga_note_to_client\", { summary: note, visible_to_client: true, about: found.map((b) => b.key) });",
+  "        await deps.sendEmail({ to: c.primary_contact_email, subject: note });",
+  1
+ ],
+ [
+  "a page that doesn't load is live",
+  "maturefn",
+  "      if (!(await deps.urlLive(u.toString()))) return",
+  "      if (false) return",
+  1
+ ],
+ [
+  "a case study without permission",
+  "maturefn",
+  "      if (cs.data?.permission !== \"yes\") return { ok: false, error: \"Not without the client's permission.\" };",
+  "",
+  1
+ ],
+ [
+  "upsell without 3 straight months",
+  "maturefn",
+  "  const top3 = months.length >= 3 && months.slice(0, 3).every(",
+  "  const top3 = months.length >= 3 && months.slice(0, 3).some(",
+  1
+ ],
+ [
+  "one churn signal raises the flag",
+  "maturefn",
+  "  else if (signals.length < 2) {",
+  "  else if (signals.length < 1) {",
+  1
+ ],
+ [
+  "admin acts for a non-Mature client",
+  "adminmature",
+  "    if (!mature) return json(409, { ok: false, error: \"This client isn't at the Mature stage.\" });",
+  "",
+  1
+ ],
+ [
+  "the portal shows draft reviews",
+  "portalmature",
+  "&kind=eq.quarterly_review&status=eq.sent&select=",
+  "&kind=eq.quarterly_review&select=",
+  1
+ ],
+ [
+  "the admin shows Mature to every client",
+  "admin",
+  "  if (c.client_portal_stage !== \"stage_6_mature\") { host.innerHTML = \"\"; return; }",
+  "  if (false) { host.innerHTML = \"\"; return; }",
+  1
+ ],
+ [
+  "an unrecorded login reads as recent visits",
+  "maturefn",
+  "Number.isFinite(ll) ? (now.getTime() - ll > 21 * DAY ? null : `Portal visited ${fmtDay(ctx.lastLoginAt)}`) : \"Portal visits not recorded\",",
+  "\"Recent portal visits\",",
+  1
+ ],
+ [
+  "an area is proposed with no grid data",
+  "maturefn",
+  "  else if (months.length < 3) put(\"m6.strategy.service_area_expansion\",",
+  "  else if (false) put(\"m6.strategy.service_area_expansion\",",
+  1
+ ]
+]
