@@ -56,7 +56,7 @@ export const ACTOR_MAP = {
   "m1.web.https_sitemap":    { actor: "rga" },
   "m1.brand.youtube_setup":  { actor: "rga" },
   "m1.review.system":        { actor: "rga" },
-  "m1.review.first_5":       { actor: "both", clientLabel: "Send personalized review requests to 5 past customers", clientHint: "RGA drafts a personal text from you. You send it to 5 happy past customers. Goal: 5 4★+ reviews live by week 3.", clientForm: "generic" },
+  "m1.review.first_5":       { actor: "both", clientLabel: "Send personalized review requests to 5 past customers", clientHint: "RGA drafts a personal text from you. You send it to 5 recent past customers. Goal: 5 new reviews live by week 3.", clientForm: "generic" },
   "m1.review.response":      { actor: "rga" },
   "m1.report.month1":        { actor: "rga" },
   "m1.call.close":           { actor: "both", clientLabel: "Attend Month 1 close-out call", clientHint: "30-min Zoom — RGA walks through your Month 1 report + plan for Month 2.", clientForm: null },

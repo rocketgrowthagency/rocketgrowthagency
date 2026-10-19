@@ -71,5 +71,11 @@
   "exec",
   "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
   "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "a runner with no Google location returns no outcome again (recorded done)",
+  "exec",
+  "return { summary: \"No GBP location linked\", outcome: \"indeterminate\" }",
+  "return { summary: \"No GBP location linked\" }"
  ]
 ]

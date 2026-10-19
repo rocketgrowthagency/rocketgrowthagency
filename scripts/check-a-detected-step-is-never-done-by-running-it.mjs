@@ -127,6 +127,13 @@ for (const s of plain.slice(0, 1)) {
   if (decide(s, { ok: true, outcome: "ok" }) !== true) F(`${s.id}: a measured run no longer finishes a plain step`);
 }
 
+// 5 — a runner that couldn't START (no website, no Google location linked) says so with an outcome, so §4 keeps it open.
+//     10-19: eight `return { summary: "No website_url" }` returns had none, and read DONE on Monthly steps 20/21 etc.
+{
+  const bare = exec.split("\n").map((l, i) => [l, i + 1]).filter(([l]) => /return \{ summary: "No [^"]*" \}/.test(l));
+  for (const [l, n] of bare) F(`flow-execute.js:${n} — a runner that couldn't run returns no outcome, so it's recorded DONE: ${l.trim().slice(0, 90)}`);
+}
+
 console.log(`  decision: isDone = ${decision}`);
 console.log(`  evaluated against ${steps.length} real step definitions · ${detected.length} detected `
   + `· ${exposed.length} detected WITH a Run button · ${plain.length} plain automated`);

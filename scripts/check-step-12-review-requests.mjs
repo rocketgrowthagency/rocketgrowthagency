@@ -154,7 +154,7 @@ try {
   if (b.card !== "gcard you" || b.ready !== "✓ Your review request message is ready · written by RGA" || !b.note) fail(`B: the open step isn't the amber card leading with "✓ Your review request message is ready" (${b.card} · ${b.ready})`);
   if (b.cards !== 5 || b.labels.join("|") !== "Customer 1 · First name|Phone|The job you did") fail(`B: not 5 labelled customer cards (${b.cards} · ${b.labels.join("|")})`);
   if (b.count !== "0 of 5" || b.btn !== "Send 5 customers →" || !b.dis || b.list || !b.under) fail(`B: an empty form reads "${b.count}" / "${b.btn}" (disabled ${b.dis}, under the card ${b.under}), or shows customers it doesn't have`);
-  if (!/^RGA recommends Happy, recent customers you spoke to yourself\. We never message them ourselves: you send each request from your own phone\.$/i.test(b.why)) fail(`B: the advice isn't the approved words (${b.why})`);
+  if (!/^RGA recommends Recent customers you spoke to yourself, not only the ones you expect to rate you highest \(Google doesn't allow that\)\. We never message them ourselves: you send each request from your own phone\.$/i.test(b.why)) fail(`B: the advice isn't the approved words (${b.why})`);
   const type = async (i, name, phone, job) => {
     const card = (await page.$$("[data-r5-card]"))[i];
     if (name) await (await card.$('[name="first_name"]')).type(name);

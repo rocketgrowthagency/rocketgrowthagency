@@ -1,0 +1,6 @@
+[
+ ["Monthly step 12's prompt asks for a negative filter again","exec","THANK-YOU MESSAGE (after any review) / UNHAPPY-CUSTOMER PLAN","5★ FOLLOW-UP MESSAGE / NEGATIVE FILTER (intercept 1-3★ before they post) / UNHAPPY-CUSTOMER PLAN"],
+ ["step 57's prompt targets 4★+ again","exec","First-5 reviews push (week 3 goal: 5 new reviews).","First-5 reviews push (week 3 goal: 5 reviews 4★+)."],
+ ["the client's step 12 asks for happy customers again","portal","recent past customer${need === 1 ? \"\" : \"s\"}","happy past customer${need === 1 ? \"\" : \"s\"}"],
+ ["the step-open email subject asks for happy customers again","playbooksjson","\"subject\": \"send us 5 recent customers\"","\"subject\": \"send us 5 happy customers\""]
+]

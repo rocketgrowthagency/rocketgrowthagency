@@ -489,6 +489,7 @@ run check-step-10-booking-link.mjs "step 10 booking link works for any business:
 run check-step-11-details.mjs "step 11 details for any business: Google's own groups, identity details only the owner's, RGA recommends only what step 10 proves"
 run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite with whose move, Month 1's end from the kickoff, admin row 60 lists them"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
+run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
 run check-every-submission-is-recorded.mjs "every client submission is recorded (activity row with the answer, change-log row when it reached Google)"

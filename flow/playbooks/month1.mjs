@@ -1234,7 +1234,7 @@ EMAIL_2_BODY:
   <2 short paragraphs — gentle nudge, mention helping local search, easy out>
 
 PHONE_SCRIPT:
-  <30-second talk track for Chris/team to use when calling a happy customer>
+  <30-second talk track for Chris/team to use when calling a past customer>
 
 NOTE: include {{review_link}} where the URL goes — don't hardcode the URL.`,
         `Business: ${client.business_name}\nService: ${client.primary_service}\nMarket: ${client.primary_market}`,
@@ -1260,7 +1260,7 @@ Goal: 30%+ of asked customers leave a review.`,
     type: "manual", dependsOn: ["m1.review.system"],
     actionLabel: "⚡ Draft this for me",
     instructions: `Push hard for 5 reviews from past customers (last 6 months).
-Send personalized requests. Goal: 5 in week 3, all 4★+, in Google.`,
+Send personalized requests. Goal: 5 new reviews in Google by week 3.`,
   },
   {
     id: "m1.review.response", title: "Respond to all existing reviews",

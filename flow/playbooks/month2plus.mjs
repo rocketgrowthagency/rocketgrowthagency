@@ -169,7 +169,7 @@ Once a photo library exists at /data/clients/<slug>/photos/: gbp.uploadPhoto(sou
   {
     id: "m2.exec.review_push", title: "Run review acquisition campaign",
     type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
-    instructions: `Send review requests to all jobs completed in last 30 days. Target: 5+ new 4★+ reviews.
+    instructions: `Send review requests to all jobs completed in last 30 days. Target: 5+ new reviews.
 
 OUTCOME: track exact \`reviews_earned\` count. Mark via: node flow.mjs <client_id> done m2.exec.review_push --monthly --outcome reviews_earned --data <count>`,
   },
