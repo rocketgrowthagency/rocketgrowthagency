@@ -358,6 +358,7 @@ const NOT_PREFLIGHT = {
   'check-step-10-booking-link.mjs': 'the WEBSITE repo\'s step 10 booking link for any business (approved step10_booking_link_v1) — a portal/admin check, not video preflight',
   'check-step-11-details.mjs': 'the WEBSITE repo\'s step 11 details for any business (approved step11_details_v1) — a portal/admin check, not video preflight',
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',
+  'check-every-service-key-function-checks-its-caller.mjs': 'the WEBSITE repo\'s function auth classification (security) — not video preflight; daily-health-check.sh',
   'check-the-mature-stage-reads-what-is-measured.mjs': 'the WEBSITE repo\'s Mature stage engine (batch 5) — not video preflight; daily-health-check.sh',
   'check-legacy-runners-retired-and-reports-built-here.mjs': 'the WEBSITE repo\'s retired legacy runners + server-side reports (batch 4) — not video preflight; daily-health-check.sh',
   'check-youtube-clips-come-from-the-client.mjs': 'the WEBSITE repo\'s YouTube clips client step (batch 4) — not video preflight; daily-health-check.sh',

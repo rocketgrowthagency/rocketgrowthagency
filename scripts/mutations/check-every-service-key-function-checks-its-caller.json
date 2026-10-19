@@ -1,0 +1,30 @@
+[
+ [
+  "the benchmark lookup loses its gate",
+  "benchfn",
+  "  const gate = await require(\"./_auth\").requireWorkspaceUser(event);\n  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "form intake fails open again",
+  "formintake",
+  "  if (!requiredSecret) return jsonResponse(503, { ok: false, error: \"webhook_secret_not_configured\" });\n",
+  "",
+  1
+ ],
+ [
+  "fga intake fails open again",
+  "fgaintake",
+  "  if (!requiredSecret) return jsonResponse(503, { ok: false, error: \"webhook_secret_not_configured\" });\n",
+  "",
+  1
+ ],
+ [
+  "the heavy runner stops checking its caller",
+  "heavy",
+  "  if (!process.env.INTERNAL_FN_SECRET || inbound !== process.env.INTERNAL_FN_SECRET) {",
+  "  if (false) {",
+  1
+ ]
+]

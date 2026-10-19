@@ -156,6 +156,9 @@ export const FILES = {
   gbpposts: "netlify/functions/_gbp-posts.js",   // batch 4 Monthly posts (10-19)
   ytclips: "netlify/functions/_youtube-clips.js",   // batch 4 YouTube clips (10-19)
   maturefn: "netlify/functions/_mature.js",   // batch 5 Mature (10-19)
+  benchfn: "netlify/functions/vertical-benchmark-lookup.js",
+  formintake: "netlify/functions/form-intake.js",
+  fgaintake: "netlify/functions/fga-intake.js",
   adminmature: "netlify/functions/admin-mature.js",
   portalmature: "netlify/functions/portal-mature.js",
   videoclipfn: "netlify/functions/portal-video-clip.js",
