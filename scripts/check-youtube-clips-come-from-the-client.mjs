@@ -67,10 +67,11 @@ const pb = JSON.parse(src("data/playbooks/playbooks.json")), cs = JSON.parse(src
 const step = (pb.month1 || []).find((x) => x.id === "m1.brand.youtube_setup");
 if (!step || step.clientForm !== "video_upload" || step.clientBucket !== "act" || step.clientDone !== "rga" || !step.clientLabel) fail("step 55 no longer asks the client for their clips (playbook)");
 if (!(cs.month1 || []).some((x) => x.id === "m1.brand.youtube_setup" && x.clientForm === "video_upload")) fail("client-steps.json wasn't rebuilt — the portal doesn't know the client step");
-// 🔑 client numbers run across Month 1 AND Monthly and are STABLE (never renumbered) — 14–18 are Monthly's, so this is 19
+// 🔑 client numbers run across Month 1 AND Monthly, 1..N with the Setup list reading 1..14 in order (check-setup-steps-read-in-order),
+// so the new Month 1 step is 14 and Monthly moved to 15–19 (10-19; only test clients had seen Monthly numbers)
 const nums = [...(pb.month1 || []), ...(pb.month2plus || [])].map((x) => x.clientStepNo).filter((n) => n != null);
 if (new Set(nums).size !== nums.length) fail("two client steps share a number (Month 1 + Monthly are one sequence)");
-if (step && step.clientStepNo !== 19) fail(`step 55's client number moved (${step && step.clientStepNo}) — numbers are stable once a client has seen them`);
+if (step && step.clientStepNo !== 14) fail(`step 55's client number moved (${step && step.clientStepNo}) — the Setup list must read 1..14 in order`);
 const portal = src("portal/portal.js"), admin = src("admin/admin.js"), fe = src("netlify/functions/flow-execute.js");
 if (!/step\.clientForm === "video_upload" \? \(ownWait \|\| isDone \? "" : videoClipsHtml\(step, taskState, clientId\)\)/.test(portal)) fail("the portal step doesn't render the scripts + clips");
 if (!/file\.size > VC_MAX/.test(portal) || !/storage\/v1\/object\/client-videos\//.test(portal)) fail("the portal doesn't check the size before uploading to client-videos");

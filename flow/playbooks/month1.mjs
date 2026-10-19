@@ -1203,7 +1203,7 @@ VIDEO 2 — "Educational tip about a common problem"
       );
       return { summary: `AI YouTube channel kickoff:\n\n${draft}` };
     },
-    instructions: "1. youtube.com → top-right avatar → \"Create a channel\" → use CHANNEL_NAME\n2. Customization → Branding → upload brand logo + create banner (1546 × 423 with phone + website + tagline)\n3. Customization → Basic info → paste CHANNEL_DESCRIPTION + CHANNEL_KEYWORDS + LINKS\n4. Record both videos using the AI scripts (phone vertical OK for vid 2 / horizontal recommended for vid 1)\n5. Title/description/tags exactly as drafted.\n6. Embed both videos on website homepage + service page",
+    instructions: "1. ⚡ Draft this for me → channel name, description, keywords and two short video scripts (the client sees the scripts on their step 14 and films them).\n2. youtube.com → top-right avatar → \"Create a channel\" → use the channel name.\n3. Customization → Branding → upload the logo + a banner (1546 × 423 with phone + website + tagline); Basic info → description + keywords + links.\n4. The client uploads their 2 clips (or share links) on this row. Download each, upload to the channel with the drafted title / description / tags.\n5. Embed both videos on the website homepage + the main service page, then mark Done.",
   },
   // === Reviews (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
