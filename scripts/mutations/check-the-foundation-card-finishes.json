@@ -1,0 +1,5 @@
+[
+ ["the call site stops passing the stage (the card never finishes)","portal","buildOnboardingProgressHtml(onboarding, stage);","buildOnboardingProgressHtml(onboarding);"],
+ ["Mature drops out of the finished stages","portal","new Set([\"stage_5_monthly\", \"stage_6_mature\"])","new Set([\"stage_5_monthly\"])"],
+ ["the finished card goes back to saying in progress","portal","<h4>Foundation complete</h4>","<h4>Foundation work in progress</h4>"]
+]
