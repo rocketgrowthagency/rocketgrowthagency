@@ -360,6 +360,8 @@ const NOT_PREFLIGHT = {
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',
   'check-the-foundation-card-finishes.mjs': 'the WEBSITE repo\'s portal Foundation card says Done past onboarding — a portal check, not video preflight',
   'check-no-review-gating.mjs': 'the WEBSITE repo\'s prompts + step copy never ask for reviews by rating (Google policy, FTC 16 CFR 465) — a portal/admin check, not video preflight',
+  'check-step-54-knowledge-panel.mjs': 'the WEBSITE repo\'s step 54 runner measures before it drafts — a portal/admin check, not video preflight',
+  'check-step-49-schema.mjs': 'the WEBSITE repo\'s step 49 schema set — a portal/admin check, not video preflight',
   'check-one-google-card.mjs': 'the WEBSITE repo\'s one Google card on every Google step, portal + admin (approved one_google_card_v1) — a portal/admin check, not video preflight',
   'check-no-step-asks-for-a-retired-google-feature.mjs': 'the WEBSITE playbook never asks for a Google feature Google retired (approved retire_messaging_step_v1) — a playbook check, not video preflight',
   'check-every-control-spins.mjs': 'the WEBSITE repo\'s master busy state (Chris 10-15 "any button needs spinner"): shared/busy.js + the master CSS rule in portal and admin, clicked for real in Chrome — a portal check, not video preflight',

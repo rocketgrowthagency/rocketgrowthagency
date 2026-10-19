@@ -1,0 +1,14 @@
+[
+ [
+  "Monthly 'Send report' drops out of the proof registry",
+  "admin",
+  "  \"m2.report.deliver\": {\n",
+  "  \"m2_report_deliver_off\": {\n"
+ ],
+ [
+  "the guard stops passing the Monthly record",
+  "admin",
+  "need.proof(state.onboardingData, state.flowM2State)",
+  "need.proof(state.onboardingData)"
+ ]
+]

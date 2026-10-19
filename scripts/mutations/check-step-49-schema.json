@@ -1,0 +1,38 @@
+[
+ [
+  "breadcrumbs dropped",
+  "exec",
+  "      pages.push({ svc, service, crumbs, faq, qa });",
+  "      pages.push({ svc, service, crumbs: {}, faq, qa });"
+ ],
+ [
+  "the breadcrumb guesses a URL",
+  "exec",
+  "name: svc, item: \"{{PAGE_URL}}\" }",
+  "name: svc, item: `${site}/services/${svc}` }"
+ ],
+ [
+  "FAQ markup from any draft",
+  "exec",
+  "if (qa.length >= 2) faq =",
+  "if (true) faq ="
+ ],
+ [
+  "AggregateRating comes back",
+  "exec",
+  "      if (client.primary_market) service.areaServed = client.primary_market;",
+  "      if (client.primary_market) service.areaServed = client.primary_market;\n      service.aggregateRating = { \"@type\": \"AggregateRating\", ratingValue: 5, reviewCount: 10 };"
+ ],
+ [
+  "areaServed published with no market",
+  "exec",
+  "      if (client.primary_market) service.areaServed = client.primary_market;",
+  "      service.areaServed = client.primary_market || \"\";"
+ ],
+ [
+  "step 49 leaves the background runner",
+  "exec",
+  "    \"m1.web.expanded_schema\",\n",
+  "    \"m1.web.expanded_schema_off\",\n"
+ ]
+]

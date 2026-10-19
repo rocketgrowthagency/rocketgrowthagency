@@ -490,6 +490,8 @@ run check-step-11-details.mjs "step 11 details for any business: Google's own gr
 run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite with whose move, Month 1's end from the kickoff, admin row 60 lists them"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
+run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"
+run check-step-49-schema.mjs "step 49: Service + BreadcrumbList + visible FAQ with FAQPage per page, never AggregateRating, never a guessed URL"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
 run check-every-submission-is-recorded.mjs "every client submission is recorded (activity row with the answer, change-log row when it reached Google)"

@@ -63,8 +63,9 @@ if (!reg) {
 } else {
   // The two Phase-0 steps are the ones that reach a real client in their first hour. If either
   // drops out of the registry the defect is back for the step it was found on.
-  for (const id of ["m1.close.confirm", "m1.close.kickoff_invite"]) {
-    if (!new RegExp(`["']${id.replace(/\./g, "\\.")}["']`).test(reg[0])) {
+  // 10-19: Monthly's "Send report" and "Run monthly call" too (atlas review, approved build all) — read from this month's record.
+  for (const id of ["m1.close.confirm", "m1.close.kickoff_invite", "m2.report.deliver", "m2.call.monthly"]) {
+    if (!new RegExp(`["']${id.replace(/\./g, "\\.")}["']\\s*:\\s*\\{`).test(reg[0])) {  // the registry KEY, not the id quoted inside a proof reader
       problems.push(`${id} is not in STEP_ARTIFACTS. It produces a real artifact (an email or a `
         + `calendar event) and can be marked done without one.`);
     }
@@ -122,6 +123,9 @@ if (!guard) {
     + `function, every other path that writes a status is unguarded by default — which is exactly `
     + `how the checklist's "Mark step complete" bypassed the first version of this fix.`);
 } else {
+  if (!/need\.proof\(state\.onboardingData, state\.flowM2State\)/.test(guard[0])) {
+    problems.push("guardUnsubstantiatedDone doesn't hand the proof reader this month's Monthly record — a Monthly step's proof could never be found, so it would always warn even once the record exists.");
+  }
   if (!/STEP_ARTIFACTS/.test(guard[0])) {
     problems.push(`guardUnsubstantiatedDone does not consult STEP_ARTIFACTS — a check that cannot fire.`);
   }
