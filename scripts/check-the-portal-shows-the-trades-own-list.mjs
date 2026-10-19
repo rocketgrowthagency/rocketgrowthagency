@@ -30,7 +30,7 @@ const P = req("./_photo-lists.js");
 
 // ── the real runner ──
 const flow = read("netlify/functions/flow-execute.js");
-const a = flow.indexOf('  "m1.gbp.photos": async ({ client }) => {'), b = flow.indexOf('  "m1.gbp.hours_attributes": async');
+const a = flow.indexOf('  "m1.gbp.photos": async ({ client }) => {'), b = flow.indexOf('\n  "m', flow.indexOf('  "m1.gbp.photos": async ({ client }) => {') + 10);   // the NEXT runner, whatever it is (10-19: 34's was retired)
 if (a < 0 || b < 0) { console.error("⚠️  INDETERMINATE — could not lift the m1.gbp.photos runner"); process.exit(2); }
 const runnerSrc = flow.slice(a, b);
 async function runRunner({ category, storefront, businessType, record = {}, photosInSlots = 0, googleDown = false }) {

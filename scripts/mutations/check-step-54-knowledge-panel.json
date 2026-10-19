@@ -1,7 +1,32 @@
 [
- ["no panel is recorded Done again (completed:false dropped)","exec","outcome: \"not_applicable_yet\", completed: false,","outcome: \"not_applicable_yet\","],
- ["any knowledge panel counts as this business's","exec","(norm(j.knowledge_graph.title).includes(norm(name)) || norm(name).includes(norm(j.knowledge_graph.title)))","true"],
- ["'&' and 'and' stop matching","exec","replace(/&/g, \" and \").replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg","replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg"],
- ["a failed search reads as no panel","exec","return { summary: `Couldn't check Google for a knowledge panel: ${String(e.message).slice(0, 140)}`, outcome: \"indeterminate\" };","j = {};"],
- ["the brand search drops the city","exec","[`\"${name}\"`, locality, region]","[`\"${name}\"`]"]
+ [
+  "no panel is recorded Done again (completed:false dropped)",
+  "exec",
+  "          + \"Consistent listings, the Google profile and linked social profiles are what earn one; RGA checks again next quarter.\",\n        outcome: \"not_applicable_yet\", completed: false,",
+  "          + \"Consistent listings, the Google profile and linked social profiles are what earn one; RGA checks again next quarter.\",\n        outcome: \"not_applicable_yet\","
+ ],
+ [
+  "any knowledge panel counts as this business's",
+  "exec",
+  "(norm(j.knowledge_graph.title).includes(norm(name)) || norm(name).includes(norm(j.knowledge_graph.title)))",
+  "true"
+ ],
+ [
+  "'&' and 'and' stop matching",
+  "exec",
+  "replace(/&/g, \" and \").replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg",
+  "replace(/[^a-z0-9]+/g, \" \").trim();\n    const kg"
+ ],
+ [
+  "a failed search reads as no panel",
+  "exec",
+  "return { summary: `Couldn't check Google for a knowledge panel: ${String(e.message).slice(0, 140)}`, outcome: \"indeterminate\" };",
+  "j = {};"
+ ],
+ [
+  "the brand search drops the city",
+  "exec",
+  "[`\"${name}\"`, locality, region]",
+  "[`\"${name}\"`]"
+ ]
 ]

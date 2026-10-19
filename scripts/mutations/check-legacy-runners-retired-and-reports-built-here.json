@@ -1,0 +1,51 @@
+[
+ [
+  "row 29 reads 'not verified' as Done",
+  "exec",
+  "      return f.verified\n        ? markDone(",
+  "      return true\n        ? markDone(",
+  1
+ ],
+ [
+  "row 29 reads no connection as an answer",
+  "exec",
+  "    if (!oauth || !loc) return { summary: \"The client's Google Business Profile isn't connected, so verification can't be read.\", outcome: \"indeterminate\" };",
+  "    if (!oauth || !loc) return markDone({ summary: \"x\", outcome: \"verified\" });",
+  1
+ ],
+ [
+  "a month with no metrics still reports",
+  "exec",
+  "  if (!built) return { summary: `No measured metrics on the",
+  "  if (false) return { summary: `No measured metrics on the",
+  1
+ ],
+ [
+  "Month 1 is Done when built",
+  "exec",
+  "    return r.outcome === \"verified\" ? { ...r, completed: false, outcome: \"draft_ready\",",
+  "    return r.outcome === \"verified\" ? { ...r, completed: true, outcome: \"draft_ready\",",
+  1
+ ],
+ [
+  "Monthly 24 points at report.mjs again",
+  "exec",
+  "  \"m2.report.generate\": async ({ client, clientId }) => buildServerReport(client, clientId, { label: \"monthly\" }),",
+  "  \"m2.report.generate\": async ({ client, clientId }) => ({ summary: `Run: node report.mjs ${clientId}`, outcome: \"manual_required\" }),",
+  1
+ ],
+ [
+  "the send stops stamping Monthly 25",
+  "monthlyreport",
+  "      tasks[\"m2.report.deliver\"] = { ...t, status: \"done\",",
+  "      tasks[\"m2.report.deliver_x\"] = { ...t, status: \"done\",",
+  1
+ ],
+ [
+  "the builder isn't shared",
+  "monthlyreport",
+  "exports.buildReport = buildReport;",
+  "// exports.buildReport = buildReport;",
+  1
+ ]
+]

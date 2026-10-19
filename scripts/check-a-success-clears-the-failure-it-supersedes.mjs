@@ -40,6 +40,10 @@ const DECLARED = {
     gbp_manager_auto_add_error: { clear: /else if \(result\.success\) delete data\.gbp_manager_auto_add_error;/ },
     last_error: { clear: /last_error: null,/ },
   },
+  // batch 4 (10-19): a queue item's last_error is deleted the moment that post goes to Google
+  "_gbp-posts.js": {
+    last_error: { clear: /delete next\.last_error;/ },
+  },
   "send-kickoff-invite.js": {
     last_error: { clear: /\.\.\.\(cred\.last_error \? \{ last_error: null \} : \{\}\),/ },
   },
