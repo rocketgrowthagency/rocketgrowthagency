@@ -23,8 +23,8 @@
  [
   "Month 1 is Done when built",
   "exec",
-  "    return r.outcome === \"verified\" ? { ...r, completed: false, outcome: \"draft_ready\",",
-  "    return r.outcome === \"verified\" ? { ...r, completed: true, outcome: \"draft_ready\",",
+  "    return { summary: r.text, completed: false, outcome: \"draft_ready\",",
+  "    return { summary: r.text, completed: true, outcome: \"draft_ready\",",
   1
  ],
  [

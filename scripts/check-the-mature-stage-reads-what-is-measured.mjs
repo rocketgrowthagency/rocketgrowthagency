@@ -87,6 +87,58 @@ if (M.breaches({ drop: 20 }, null, 10) !== null) fail("5 · a missing value is r
 { const s14 = st({ lastLoginAt: null }, "m6.account.churn_risk_signal");
   if ((s14.body || []).some((b) => /recent portal visits|Portal visited/i.test(b)) || !(s14.body || []).some((b) => /not recorded/.test(b))) fail("14 · an unrecorded portal login is reported as recent visits");
   if (st({ months: [] }, "m6.strategy.service_area_expansion").state !== "locked") fail("3 · an area is proposed before any grid data exists"); }
+// ── research §2 · service areas: rank comes from the pin; propose only a measured frontier ──
+const gridOf = (rankAt) => { const pts = []; for (let r = 0; r < 5; r++) for (let c2 = 0; c2 < 5; c2++) pts.push({ lat: 30 + (2 - r) * 0.02, lng: -97 + (c2 - 2) * 0.02, rank: rankAt(r, c2) }); return { keyword: "plumber", points: pts }; };
+const inner = (r, c2) => Math.abs(r - 2) <= 1 && Math.abs(c2 - 2) <= 1;
+const STRONG_EAST = gridOf((r, c2) => (inner(r, c2) ? 2 : c2 === 4 ? 6 : null));
+{ if (st({ grid: null }, "m6.strategy.service_area_expansion").state !== "locked") fail("3 · an area is proposed with no grid scan");
+  { const g = st({ grid: gridOf((r, c2) => (c2 === 4 ? 6 : null)) }, "m6.strategy.service_area_expansion");   // an edge exists, but the home ring is weak
+    if (g.state !== "wait" || !/Home area first/.test(g.small)) fail("3 · expansion is offered while the home area isn't top 3 (research rule 2.5)"); }
+  { const g = st({ grid: gridOf(() => 1) }, "m6.strategy.service_area_expansion"); if (g.state !== "wait" || !/whole grid/.test(g.small)) fail("3 · an all-green grid isn't told to widen the scan (no visible edge — rule 2.6)"); }
+  const s3 = st({ grid: STRONG_EAST, areasNow: ["Austin, TX, USA"] }, "m6.strategy.service_area_expansion");
+  if (s3.state !== "you" || !/east/.test(s3.small)) fail(`3 · a measured edge (rank 4–10 next to the top-3 home) isn't offered (${s3.state} ${s3.small})`);
+  if (st({ grid: STRONG_EAST, areasNow: Array.from({ length: 20 }, (_, i) => `Town ${i}`) }, "m6.strategy.service_area_expansion").state !== "wait") fail("3 · a 21st service area is proposed (Google allows 20)");
+  { const w0 = world(); const r0 = await w0.act("propose_area", null, "Bastrop", { grid: null }); if (r0.ok || w0.records.length) fail("3 · an area is proposed with no measured edge behind it"); }
+  const w = world(); const r = await w.act("propose_area", null, "Bastrop", { grid: STRONG_EAST, areasNow: [] });
+  const p = w.records.find((x) => x.kind === "area_proposal");
+  if (!r.ok || !p || p.data.striking < 2 || !p.data.sector) fail("3 · a proposal doesn't carry its measured evidence (sector, points at 4–10)");
+  const all = M.stepStates({ now, client, months: GOOD, records: w.records, grid: STRONG_EAST, areasNow: [] }).find((x) => x.n === 3);
+  const words = [all.head, ...(all.body || [])].join(" ");
+  if (/service area[^.]*\b(rank|ranking)s? (higher|better|up)|boost(s)? (your )?rank/i.test(words) || !/doesn't rank on that setting/.test(words)) fail("3 · the copy implies adding a service area improves rank (it doesn't — rule 2.1)"); }
+// ── research §3 · city pages: proof first, never an office, checked live ──
+{ const w = world([{ kind: "area_proposal", period: "2026-Q4", status: "approved", data: { place: "Bastrop" } }]);
+  let r = await w.act("page_draft", "area:Bastrop"); if (r.ok) fail("7 · a city page is drafted with no local proof (rule 3.5)");
+  await w.act("page_proof", "area:Bastrop", "Fixed a burst pipe on Main St, Bastrop, in September");
+  r = await w.act("page_draft", "area:Bastrop"); if (!r.ok) fail(`7 · a city page with proof isn't drafted (${r.error})`);
+  w.live.add("https://acme.test/bastrop");
+  w.deps.pageHtml = async () => "<h1>Plumbing in Bastrop</h1><p>Visit our office in Bastrop.</p>";
+  r = await w.act("page_live", "area:Bastrop", "https://acme.test/bastrop"); if (r.ok) fail("7 · a live page that implies an office in the city is accepted (rule 3.8)");
+  w.deps.pageHtml = async () => '<h1>Plumbing in Bastrop</h1><script type="application/ld+json">{"@type":"AggregateRating"}</script>';
+  r = await w.act("page_live", "area:Bastrop", "https://acme.test/bastrop"); if (r.ok) fail("7 · a live page marking up its own review stars is accepted (rule 3.14)");
+  w.deps.pageHtml = async () => "<h1>Plumbing in Bastrop</h1><p>We serve Bastrop from our Austin base. Call us.</p>";
+  r = await w.act("page_live", "area:Bastrop", "https://acme.test/bastrop"); if (!r.ok) fail(`7 · an honest live city page isn't accepted (${r.error})`); }
+{ const many = Array.from({ length: 7 }, (_, i) => ({ kind: "area_proposal", period: `2026-Q${i}`, status: "approved", data: { place: `Town${i}` } }));
+  const s7 = M.stepStates({ now, client, months: GOOD, records: many }).find((x) => x.n === 7);
+  if ((s7.actions || []).length > 5 || !/more wait/.test((s7.body || []).join(" "))) fail("7 · more than 5 pages are put in flight at once (rule 3.13)"); }
+// ── research §1 · the Month 1 report ──
+{ let R; try { R = req("./_month1-report.js"); } catch (e) { fail(`month 1 · the report builder won't load (${e.message})`); }
+  if (R) { const t = { "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T00:00:00Z" }, "m1.gbp.hours_attributes": { status: "done", completed_at: "2026-10-16T00:00:00Z" }, "m1.access.gbp": { status: "done", completed_at: "2026-10-01T00:00:00Z" } };
+    const pb = [{ id: "m1.gbp.hours_attributes", title: "Confirm hours" }, { id: "m1.access.gbp", title: "Get GBP manager access" }];
+    const mk = (ym, o) => ({ reporting_month: `${ym}-01`, ...o });
+    const rep = R.buildMonth1Report({ client: { business_name: "Acme", geography_model: "service_area" }, tasks: t, playbook: pb, months: [mk("2026-10", { gbp_calls: 9 }), mk("2026-09", { gbp_calls: 4 })], baseline: { reviews: 3, captured_at: "2026-09-15T00:00:00Z" }, kickoffAt: "2026-10-09T00:00:00Z", now: new Date("2026-10-20T00:00:00Z") });
+    const txt = rep.text;
+    if (rep.sections.map((x) => x.key).join(",") !== "summary,work,baseline,compare,next,defs") fail("month 1 · the six sections aren't all there, in order (rule 1.1)");
+    if (rep.comparisons.some((x) => x.toYm === "2026-10")) fail("month 1 · a PART month (October, in progress) is compared (rule 1.3)");
+    if (!/period incomplete|next report/.test(txt)) fail("month 1 · an incomplete period isn't called out");
+    if (/Get GBP manager access/.test(txt)) fail("month 1 · access logistics are listed as work done");
+    if (!/Call-button taps/.test(txt) || /\bleads?\b[^.]*website clicks|website clicks[^.]*are leads/i.test(txt)) fail("month 1 · calls aren't labelled as taps / clicks read as leads (rule 1.5)");
+    if (/Direction requests/.test(txt)) fail("month 1 · directions are shown for a hidden-address business (rule 1.7)");
+    if (R.FORBIDDEN.test(txt) || !R.FORBIDDEN.test("we improved your calls")) fail("month 1 · credit-taking / promise language isn't caught (rules 1.14–1.15)");
+    const rep2 = R.buildMonth1Report({ client: { business_name: "Acme" }, tasks: t, playbook: pb, months: [mk("2026-11", { gbp_calls: 9 }), mk("2026-10", { gbp_calls: 4 }), mk("2026-09", { gbp_calls: 2 })], baseline: {}, kickoffAt: "2026-10-09T00:00:00Z", now: new Date("2026-12-02T00:00:00Z") });
+    if (!rep2.comparisons.some((x) => x.fromYm === "2026-09" && x.toYm === "2026-11")) fail("month 1 · two COMPLETE months (before the work → latest full month) aren't compared");
+    if (!rep2.comparisons.some((x) => /^Call-button taps/.test(x.label))) fail("month 1 · a compared calls figure isn't labelled as call-button taps (rule 1.5)");
+    const rep3 = R.buildMonth1Report({ client: { business_name: "Acme", geography_model: "service_area" }, tasks: t, playbook: pb, months: [mk("2026-11", { gbp_directions: 3 }), mk("2026-09", { gbp_directions: 1 })], baseline: {}, kickoffAt: "2026-10-09T00:00:00Z", now: new Date("2026-12-02T00:00:00Z") });
+    if (rep3.comparisons.some((x) => /Direction/.test(x.label))) fail("month 1 · directions are compared for a hidden-address business (rule 1.7)"); } }
 // ── every step is present and none is "done" without a state that says so ──
 { const all = M.stepStates({ now, client, months: [], records: [] });
   if (all.length !== 14 || all.some((s) => !s || !s.state)) fail("every one of the 14 steps must have a computed state");

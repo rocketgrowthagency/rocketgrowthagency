@@ -119,10 +119,101 @@
   1
  ],
  [
-  "an area is proposed with no grid data",
+  "expansion is offered with a weak home area",
   "maturefn",
-  "  else if (months.length < 3) put(\"m6.strategy.service_area_expansion\",",
-  "  else if (false) put(\"m6.strategy.service_area_expansion\",",
+  "  else if (fr.homeSolv < HOME_SOLV_MIN * 100) put(ID3,",
+  "  else if (false) put(ID3,",
+  1
+ ],
+ [
+  "an all-green grid proposes an area",
+  "maturefn",
+  "  else if (fr.allGreen) put(ID3,",
+  "  else if (false) put(ID3,",
+  1
+ ],
+ [
+  "a 21st service area is proposed",
+  "maturefn",
+  "  else if (areasNow && areasNow.length >= 20) put(ID3,",
+  "  else if (false) put(ID3,",
+  1
+ ],
+ [
+  "the service-area copy claims a rank effect",
+  "maturefn",
+  "Google doesn't rank on that setting; the verified location sets rank.",
+  "it will help you rank higher there.",
+  1
+ ],
+ [
+  "a proposal drops its evidence",
+  "maturefn",
+  "      if (!fr || !fr.best) return { ok: false, error: \"There's no measured edge to propose from \u2014 run a grid scan first.\" };",
+  "",
+  1
+ ],
+ [
+  "a city page is drafted without proof",
+  "maturefn",
+  "      if (kind === \"area\" && !proof.length) return { ok: false, error: \"A city page needs one real job, review or photo from there first.\" };",
+  "",
+  1
+ ],
+ [
+  "an office claim passes the checks",
+  "maturefn",
+  "    if (new RegExp(`(office|located|based|headquartered|visit us|our location|our shop|our store)[^.]{0,40}\\\\b${esc}\\\\b`, \"i\").test(t)) problems.push(`it implies an office in ${place}`);",
+  "",
+  1
+ ],
+ [
+  "review-star markup passes the live check",
+  "maturefn",
+  "  if (opt.html && /\"@type\"\\s*:\\s*\"(AggregateRating|Review)\"/.test(opt.html)) problems.push(\"it marks up its own reviews as stars (Google doesn't allow that)\");",
+  "",
+  1
+ ],
+ [
+  "more than 5 pages in flight",
+  "maturefn",
+  "    for (const x of todo.slice(0, 5)) {",
+  "    for (const x of todo) {",
+  1
+ ],
+ [
+  "the report compares a part month",
+  "month1report",
+  "const complete = (ym, now) => ym < ymOf(now.toISOString());",
+  "const complete = (ym, now) => true;",
+  1
+ ],
+ [
+  "access logistics count as work",
+  "month1report",
+  "const NOT_WORK = /^m1\\.(close|kickoff|handoff|audit|report|call|access)\\./;",
+  "const NOT_WORK = /^m1\\.(close|kickoff|handoff|audit|report|call)\\./;",
+  1
+ ],
+ [
+  "calls are not labelled as taps",
+  "month1report",
+  "[\"gbp_calls\", \"Call-button taps on your Google profile\"]",
+  "[\"gbp_calls\", \"Calls from your Google profile\"]",
+  1
+ ],
+ [
+  "directions shown for a hidden-address business",
+  "month1report",
+  "    ...(sab ? [] : [[\"gbp_directions\", \"Direction requests\"]]),",
+  "    [\"gbp_directions\", \"Direction requests\"],",
+  1
+ ],
+ [
+  "credit-taking language passes",
+  "month1report",
+  "const FORBIDDEN = /\\b(we (increased|improved|boosted|grew|doubled|drove)|",
+  "const FORBIDDEN = /\\b(we (zzz)|",
   1
  ]
 ]

@@ -49,9 +49,11 @@ async function build({ recs = [{ reporting_month: "2026-10-01", gbp_calls: 4 }],
 { const r = await build({ recs: [{ reporting_month: "2026-10-01" }] }); if (r.outcome !== "indeterminate" || r.completed === true) fail("a month with no measured metric produces a report"); }
 { const r = await build({ recs: [] }); if (r.outcome !== "indeterminate") fail("no monthly record produces a report"); }
 { const r = await build({ throws: true }); if (r.outcome !== "indeterminate") fail("an unreadable record produces a report"); }
-{ const ctx = vm.createContext({ buildServerReport: async () => ({ outcome: "verified", completed: true, summary: "REPORT TEXT" }) });
+{ // Month 1 (research §1): built by _month1-report from the client's records; a DRAFT until RGA sends it from row 59
+  const ctx = vm.createContext({ encodeURIComponent, Date, supa: async () => [{ data: { tasks: {} } }],
+    require: (m) => m === "./_month1-report" ? { buildMonth1Report: () => ({ text: "SUMMARY\nok", subject: "s", sections: [] }), FORBIDDEN: /never/ } : m === "../../data/playbooks/playbooks.json" ? { month1: [] } : null });
   const r = await vm.runInContext(`(${m1Src})`, ctx)({ client: {}, clientId: "c" });
-  if (r.completed !== false || r.outcome !== "draft_ready" || !/RGA'S PART/.test(r.summary)) fail("the Month 1 report is Done when built (a built report is not a delivered one)"); }
+  if (r.completed !== false || r.outcome !== "draft_ready" || !r.outcome_data?.report) fail("the Month 1 report is Done when built, or isn't stored for review (a built report is not a delivered one)"); }
 if (/node report\.mjs/.test(flow.replace(/^\s*\/\/.*$/mg, ""))) fail("a step still sends RGA to run node report.mjs locally");
 if (!/"m2\.report\.generate": async \(\{ client, clientId \}\) => buildServerReport\(client, clientId,/.test(flow)) fail("Monthly 24 doesn't build its report server-side");
 if (!/^exports\.buildReport = buildReport;/m.test(smr)) fail("send-monthly-report no longer exports its builder (the steps would build a different report)");
