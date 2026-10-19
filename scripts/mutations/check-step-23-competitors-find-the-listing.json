@@ -1,0 +1,44 @@
+[
+ [
+  "the client's own listing is no longer excluded by Place ID",
+  "exec",
+  "      (ownPlaceId ? String(r.place_id || \"\") !== ownPlaceId : true) &&\n",
+  "",
+  1
+ ],
+ [
+  "a short link no longer falls back to the connected profile",
+  "exec",
+  "    if (!ll) {\n      try {\n        const oauth = await loadOauth(clientId);",
+  "    if (false) {\n      try {\n        const oauth = await loadOauth(clientId);",
+  1
+ ],
+ [
+  "a profile without a pin no longer tries the Place ID lookup",
+  "exec",
+  "    if (!ll && ownPlaceId) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "the indeterminate stops saying what was tried",
+  "exec",
+  "        } else tried.push(\"no Google Business Profile is connected\");",
+  "        }",
+  1
+ ],
+ [
+  "the profile's Place ID is not used to exclude the client",
+  "exec",
+  "          if (loc.metadata?.placeId) ownPlaceId = ownPlaceId || loc.metadata.placeId;\n",
+  "",
+  1
+ ],
+ [
+  "the snapshot forgets where its coordinates came from",
+  "exec",
+  "competitors: snap, coords_from: coordsFrom },",
+  "competitors: snap },",
+  1
+ ]
+]

@@ -1,0 +1,58 @@
+[
+ [
+  "the search alone finishes step 18 again",
+  "exec",
+  "      completed: searched && toConfirm.length === 0,",
+  "      completed: searched,",
+  1
+ ],
+ [
+  "a confirmation on another URL counts",
+  "exec",
+  "napConfirm[r.source].ok === true && napConfirm[r.source].url === r.url;",
+  "napConfirm[r.source].ok === true;",
+  1
+ ],
+ [
+  "an unreadable record counts as all confirmed",
+  "exec",
+  "    } catch { napConfirm = {}; }",
+  "    } catch { return { summary, completed: searched, outcome: \"verified\", outcome_data: {} }; }",
+  1
+ ],
+ [
+  "a 'doesn't match' counts as confirmed",
+  "exec",
+  "!!napConfirm[r.source] && napConfirm[r.source].ok === true &&",
+  "!!napConfirm[r.source] &&",
+  1
+ ],
+ [
+  "admin's proof ignores the URL",
+  "admin",
+  "return c && c.url === x.url ? c : null;",
+  "return c || null;",
+  1
+ ],
+ [
+  "Done on step 18 is unguarded",
+  "admin",
+  "    proof: (d) => citNapState(d?.tasks?.[\"m1.audit.citations\"]).done,",
+  "    proof: (d) => true,",
+  1
+ ],
+ [
+  "the nap_review outcome loses its banner",
+  "admin",
+  "      nap_review: { type: \"info\",",
+  "      nap_review_x: { type: \"info\",",
+  1
+ ],
+ [
+  "a never-searched step counts as confirmed",
+  "admin",
+  "done: !!od && Array.isArray(od.directories) && confirmed === found.length",
+  "done: confirmed === found.length",
+  1
+ ]
+]
