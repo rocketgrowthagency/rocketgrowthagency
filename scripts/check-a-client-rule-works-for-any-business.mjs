@@ -175,14 +175,25 @@ for (const [raw, want, why] of URLS) {
   if (sab.url !== "https://acme.com") F(`the published url is ${JSON.stringify(sab.url)} — a site stored without a scheme must still publish as a real URL`);
 
   const shop = await of({ business_name: "Katz's Deli", primary_market: "New York, NY",
-    website_url: "https://katzs.com", primary_contact_phone: "(212) 254-2246", geography_model: "national_one_office" });
+    website_url: "https://katzs.com", primary_contact_phone: "(212) 254-2246", geography_model: "single_location" });
   if (!shop.address) F("a storefront with a city and state publishes no address at all");
   if (shop.address && shop.address.addressLocality !== "New York") F(`addressLocality is ${JSON.stringify(shop.address?.addressLocality)}, expected "New York"`);
   if (shop.address && shop.address.addressRegion !== "NY") F(`addressRegion is ${JSON.stringify(shop.address?.addressRegion)} — the spec expects a two-letter state`);
 
   const vague = await of({ business_name: "Boston Legal Group", primary_market: "Greater Boston",
-    website_url: "https://blg.com", primary_contact_phone: "(617) 555-0100", geography_model: "national_one_office" });
+    website_url: "https://blg.com", primary_contact_phone: "(617) 555-0100", geography_model: "single_location" });
   if (vague.address) F(`"Greater Boston" produced ${JSON.stringify(vague.address)} — a metro area is not a city, and publishing it as addressLocality contradicts the client's Google profile`);
+  // 🔴 10-19: the storefront test above used to be labelled national_one_office — the gate held the product's own inversion
+  // (only RGA's model published an address). Every model is pinned now.
+  const multi = await of({ business_name: "Bright Smile Dental", primary_market: "Denver, CO", website_url: "https://bsd.com",
+    primary_contact_phone: "(303) 555-0100", geography_model: "multi_location" });
+  if (!multi.address) F("a multi-location business (customers come to its addresses) publishes no address");
+  const nat = await of({ business_name: "Summit Tax Advisors", primary_market: "Phoenix, AZ", website_url: "https://sta.com",
+    primary_contact_phone: "(602) 555-0100", geography_model: "national_one_office" });
+  if (nat.address) F(`a national one-office business publishes a street address (${JSON.stringify(nat.address)}) — it serves the country, customers don't come to it`);
+  const unk = await of({ business_name: "Oak Street Bakery", primary_market: "Portland, OR", website_url: "https://osb.com",
+    primary_contact_phone: "(503) 555-0100" });
+  if (unk.address) F("a client with no location model publishes a street address — absent is the safe answer, a guessed address contradicts the profile");
 }
 
 // ═══ 2 — THE CLIENT'S NAME, AS REAL BUSINESSES ARE NAMED ═════════════════════════════════════
@@ -223,10 +234,20 @@ const NAMES_REJECT = [
 for (const [n, u, t, why] of NAMES_MATCH) if (!namesFn(u, t, n)) F(`"${n}" (${why}) would have its REAL listing reported as missing — step 52 then builds a duplicate`);
 for (const [n, u, t, why] of NAMES_REJECT) if (namesFn(u, t, n)) F(`"${u}" was accepted as "${n}"'s listing (${why})`);
 
+// 🔴 10-19 — STEP 38's PHOTO KINDS ARE ONES EVERY BUSINESS HAS. Its prompt split 12 examples into "… truck (2) …" for every
+// client: a salon, a dentist and a restaurant were asked for truck photos. A trade's own object never goes in a universal prompt.
+{
+  const at = flow.indexOf('"m1.web.image_seo": async');
+  const seg = at < 0 ? "" : flow.slice(at, flow.indexOf("\n  },", at));
+  if (!seg) { console.error("⚠️  INDETERMINATE — step 38's runner (m1.web.image_seo) is not in flow-execute.js"); process.exit(2); }
+  const trade = seg.match(/\b(truck|van|ladder|wrench|dental|menu|kitchen)\b/i);
+  if (trade) F(`step 38's photo-naming prompt names "${trade[0]}" for every client — a trade's own object in a universal prompt`);
+}
+
 if (fails.length) {
   console.error("🔴 a rule about a client only works for the client we happen to have:");
   for (const f of fails) console.error("   · " + f);
   process.exit(1);
 }
-console.log(`✅ client rules hold for businesses we do not have — ${URLS.length} website shapes, 9 market shapes, 3 published-schema shapes, `
+console.log(`✅ client rules hold for businesses we do not have — ${URLS.length} website shapes, 9 market shapes, 6 published-schema shapes, `
   + `${NAMES_MATCH.length} names that must match, ${NAMES_REJECT.length} that must not`);

@@ -133,6 +133,27 @@ for (const rel of FILES) {
   });
 }
 
+// 🔴 THE STEP COPY LIVES IN JSON, AND THIS GATE ONLY READ JS (found 10-19). Month 2's "business numbers" step told every
+// client their report turns traffic into "pounds and pence", asked for "enquiries" and "anything you never get round to
+// sending" — client-facing, in data/playbooks/*.json, which no scan read. Every string VALUE there is on screen (titles,
+// instructions, the client's label/hint/how-to, form labels); a field's `key` is a stored data key and is skipped.
+// 🔑 Plus the British IDIOMS the spelling pattern can't see (correctly spelled words, British usage).
+const IDIOM = /\benquir(?:y|ies|ing|e|ed)\b|\bpounds and pence\b|\bget round to\b|\bfortnight(?:ly)?\b|\bpost ?code\b/gi;
+for (const w of ["enquiries", "pounds and pence", "get round to", "fortnightly", "postcode"]) { IDIOM.lastIndex = 0; if (!IDIOM.test(w)) { console.error(`⚠️  INDETERMINATE — the idiom pattern misses "${w}"`); process.exit(2); } }
+for (const w of ["inquiries", "get around to", "zip code", "two weeks"]) { IDIOM.lastIndex = 0; if (IDIOM.test(w)) { console.error(`⚠️  INDETERMINATE — the idiom pattern flags correct US "${w}"`); process.exit(2); } }
+for (const rel of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.json"]) {
+  let data;
+  try { data = JSON.parse(fs.readFileSync(path.join(SITE, rel), "utf8")); } catch { console.error(`⚠️  INDETERMINATE — ${rel} does not read as JSON`); process.exit(2); }
+  scanned++;
+  const walk = (v, where) => {
+    if (typeof v === "string") {
+      for (const re of [BRITISH, IDIOM]) { re.lastIndex = 0; for (const m of v.matchAll(re)) { strings++; F(`${rel} ${where} — "${m[0]}" is British, in step copy a reader sees`); } }
+    } else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${where}[${i}]`));
+    else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) { if (k === "key" || k === "id") continue; walk(x, where ? `${where}.${k}` : k); }
+  };
+  for (const [scope, steps] of Object.entries(data)) (Array.isArray(steps) ? steps : []).forEach((s) => walk(s, `${scope}:${s.id}`));
+}
+
 if (!scanned) { console.error("⚠️  INDETERMINATE — no source files were read"); process.exit(2); }
 
 // a stale exception is its own drift

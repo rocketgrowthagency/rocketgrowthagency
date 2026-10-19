@@ -71,7 +71,10 @@ if (!link) { console.log("  ⚠️  no sign-in link."); process.exit(2); }
 const SPEC = [
   { name: "step disc",            live: ".ob-step.done .ob-num",  mock: "#after .ob-step.done .ob-num",
     props: ["width","height","borderRadius","fontSize","fontWeight","display","alignItems","justifyContent","backgroundColor","color"] },
-  { name: "step disc (queued)",   live: ".ob-step.queued .ob-num", mock: "#after .ob-step.queued .ob-num",
+  // 🔑 :not([class*="g-"]) — a Google row takes its CARD's state (admin_google_card_v1, approved 10-16): obMarker gives its
+  // disc a g-<state> class and the card's colour, not the plain queued grey. (Every row carries data-g, often empty, so
+  // the attribute can't tell them apart.) The plain queued disc is still pinned here.
+  { name: "step disc (queued)",   live: ".ob-step.queued .ob-num:not([class*=\"g-\"])", mock: "#after .ob-step.queued .ob-num",
     props: ["width","height","borderRadius","backgroundColor","color"] },
   { name: "step identifier",      live: ".ob-step.done .ob-sid",  mock: "#after .ob-step.done .ob-sid",
     props: ["fontFamily","fontSize","fontWeight","color","fontVariantNumeric","letterSpacing","flexGrow","flexShrink"] },

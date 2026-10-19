@@ -58,5 +58,35 @@
   "colour: \"color\", colours: \"colors\",",
   "colours: \"colors\",",
   1
+ ],
+ [
+  "Month 2's numbers step says 'pounds and pence' again (client-facing, in step JSON the gate never read)",
+  "playbooksjson",
+  "into dollars and cents",
+  "into pounds and pence"
+ ],
+ [
+  "the numbers form asks for 'New enquiries' again",
+  "playbooksjson",
+  "\"label\": \"New inquiries\"",
+  "\"label\": \"New enquiries\""
+ ],
+ [
+  "the client's how-to says 'get round to' again",
+  "playbooksjson",
+  "never get around to sending",
+  "never get round to sending"
+ ],
+ [
+  "step 20's title goes back to 'prioritised'",
+  "playbooksjson",
+  "Build the prioritized fix plan",
+  "Build the prioritised fix plan"
+ ],
+ [
+  "the projection the portal actually loads carries 'enquiry' again",
+  "clientstepsjson",
+  "test inquiry ourselves",
+  "test enquiry ourselves"
  ]
 ]

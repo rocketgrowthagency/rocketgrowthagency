@@ -59,7 +59,11 @@ const lift = (name) => {
   return m[1].replace(/\s+/g, " ").trim();
 };
 const parts = ["isHybrid", "isDetected", "runnerCompleted", "isDone"].map((n) => [n, lift(n)]);
-const body = parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
+// 🔴 10-19: the VETO line before the decision — a run that measured nothing (indeterminate / error) is not done. Lifted
+// verbatim too; without it the decision below would be tested without the line that changes its answer.
+const vetoM = /^\s*(if \(result && \(result\.outcome[^\n]*result\.completed = false;)$/m.exec(exec);
+if (!vetoM) { console.error("⚠️  INDETERMINATE — the measured-nothing veto (`if (result && (result.outcome === \"indeterminate\" …) result.completed = false;`) is not in flow-execute.js; re-read the decision."); process.exit(2); }
+const body = vetoM[1] + "\n" + parts.map(([n, e]) => `const ${n} = ${e};`).join("\n") + "\nreturn isDone;";
 
 let decide;
 try { decide = new Function("stepDef", "result", body); }
@@ -110,6 +114,17 @@ for (const s of plain.slice(0, 1)) {
     F(`${s.id} ("${s.title}") is a plain automated step and no longer finishes when its runner `
       + "succeeds — the rule has over-corrected and now nothing completes");
   }
+}
+
+// 4 — a run that MEASURED NOTHING is not done (10-19: steps 10, 12, 13, 17 read finished on a failed run).
+for (const s of plain.slice(0, 1)) {
+  for (const outcome of ["indeterminate", "error", "manual_required"]) {
+    if (decide(s, { ok: true, summary: "Nothing was measured; this step is NOT complete.", outcome }) !== false) {
+      F(`${s.id}: a run that returned \`outcome: "${outcome}"\` is recorded DONE — a failed measurement reads as finished work`);
+    }
+  }
+  if (decide(s, { ok: true, outcome: "indeterminate", completed: true }) !== true) F(`${s.id}: a runner's own \`completed: true\` no longer wins over an indeterminate outcome`);
+  if (decide(s, { ok: true, outcome: "ok" }) !== true) F(`${s.id}: a measured run no longer finishes a plain step`);
 }
 
 console.log(`  decision: isDone = ${decision}`);

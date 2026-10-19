@@ -1,6 +1,6 @@
 [
  [
-  "the detected clause is dropped from the decision — the original defect",
+  "the detected clause is dropped from the decision \u2014 the original defect",
   "exec",
   "(!isHybrid && !isDetected)",
   "(!isHybrid)",
@@ -47,5 +47,29 @@
   "const isDetected = stepDef",
   "const isDetectedStep = stepDef",
   2
+ ],
+ [
+  "a failed measurement (indeterminate) is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "an error outcome is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;"
+ ],
+ [
+  "the veto overrides a runner's own completed:true",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\")) result.completed = false;"
+ ],
+ [
+  "Google-not-connected (manual_required) is recorded done again",
+  "exec",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\" || result.outcome === \"manual_required\") && result.completed !== true) result.completed = false;",
+  "if (result && (result.outcome === \"indeterminate\" || result.outcome === \"error\") && result.completed !== true) result.completed = false;"
  ]
 ]

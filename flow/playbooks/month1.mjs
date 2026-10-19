@@ -72,7 +72,7 @@ If it errors: the client row is missing, and every later step will fail on it. F
         ["business_name",         "everything — the title of every audit, video and report"],
         ["website_url",           "the website audit, AI-readiness, social and citation audits"],
         ["primary_contact_email", "the confirmation email and the portal invite"],
-        ["primary_market",        "the geo-grid centre — a wrong market measures the wrong city"],
+        ["primary_market",        "the geo-grid center — a wrong market measures the wrong city"],
         ["primary_service",       "the TRACKED KEYWORD. Wrong here = a uniform not-found grid"],
       ];
       const missing = needs.filter(([f]) => !String(client[f] || "").trim());
@@ -310,7 +310,7 @@ changes them, and every later audit then measures the wrong business.`,
     id: "m1.audit.gbp_duplicate", title: "Check for a duplicate Google listing",
     type: "auto", dependsOn: [],
     actionLabel: "⚡ Check for duplicates",
-    instructions: `Searches Google Maps for the business name from its own map centre and compares every same-name result against the listing we hold.
+    instructions: `Searches Google Maps for the business name from its own map center and compares every same-name result against the listing we hold.
 
 The Business Profile API cannot answer this — it reports how many locations we OWN, and a duplicate claimed under a different Google account is invisible to it. Counting the listings is the only way to see one.
 
@@ -503,7 +503,7 @@ Duplicate-listing detection is not buildable without a paid aggregator and is ou
     async run({ client }) { return await callFn("citation-audit", client.id); },
   },
   {
-    id: "m1.audit.recommendations", title: "Build the prioritised fix plan from every audit",
+    id: "m1.audit.recommendations", title: "Build the prioritized fix plan from every audit",
     type: "auto",
     dependsOn: ["m1.audit.ai_readiness", "m1.audit.nap_reviews", "m1.audit.social", "m1.audit.citations_nap", "m1.audit.deep_assess", "m1.web.core_web_vitals"],
     actionLabel: "⚡ Run (needs the local scraper)",
@@ -625,7 +625,7 @@ If NO: record the decision so nobody re-litigates it monthly. Declining is a val
     instructions: `Confirm the contact form actually submits AND that the submission is recorded.
 
 🔴 "A <form> tag exists" is not "the form works" — the on-page audit can only see the tag.
-Submit a real test enquiry and confirm it arrives. An unmonitored form is a lead leak that looks
+Submit a real test inquiry and confirm it arrives. An unmonitored form is a lead leak that looks
 like poor conversion.`,
   },
   {

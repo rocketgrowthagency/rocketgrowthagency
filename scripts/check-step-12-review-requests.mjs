@@ -244,6 +244,13 @@ try {
   const sum = "GOOGLE REVIEW LINK:\n  x\n\n## SMS\\_1 — Under 160 characters\n\n```\nHi {{first_name}}, thanks for choosing Acme Plumbing!\nA quick review helps: {{review_link}}\n```\n\n## SMS\\_2\n```\nlater\n```";
   const tpl = RR.smsOneOf(sum);
   if (tpl !== "Hi {{first_name}}, thanks for choosing Acme Plumbing! A quick review helps: {{review_link}}") fail(`E: RGA's approved message (step 56's SMS_1) isn't read (${tpl})`);
+  // 🔴 10-19: the prompt never asks for a fence — every shape a model writes SMS_1 in is read, and SMS_2's text never is.
+  const SHAPES = {
+    "SMS_1: label then the text": ["SMS_1: Hi {{first_name}}, thanks for trusting Bella Salon! {{review_link}}\nSMS_2: later", "Hi {{first_name}}, thanks for trusting Bella Salon! {{review_link}}"],
+    "**SMS_1** heading, unfenced": ["**SMS_1** (under 160ch)\nHi {{first_name}}, thank you for dining with us. {{review_link}}\n\n**SMS_2** (day 2)\nlater", "Hi {{first_name}}, thank you for dining with us. {{review_link}}"],
+    "SMS_1 unfenced, SMS_2 fenced": ["SMS_1 (under 160ch)\nHi {{first_name}}, thanks! {{review_link}}\n\nSMS_2\n```\nWRONG\n```", "Hi {{first_name}}, thanks! {{review_link}}"],
+  };
+  for (const [k, [inp, want]] of Object.entries(SHAPES)) { const got = RR.smsOneOf(inp); if (got !== want) fail(`E: SMS_1 written as "${k}" reads as ${JSON.stringify(got)} — the client's approved wording falls back to the generic text`); }
   if (RR.fillRgaMessage(tpl, { name: "Maria", service: "drain", business: "Acme", reviewUrl: "https://g.page/r" }) !== "Hi Maria, thanks for choosing Acme Plumbing! A quick review helps: https://g.page/r") fail("E: a request isn't RGA's message with the name and link filled in");
   if (RR.fillRgaMessage("Hi {{first_name}}, about {{weird}}", { name: "M", reviewUrl: "u" }) !== null || RR.fillRgaMessage(null, { name: "M", reviewUrl: "u" }) !== null) fail("E: a message with a placeholder left over could be sent");
   const rr = read("netlify/functions/portal-review-requests.js");

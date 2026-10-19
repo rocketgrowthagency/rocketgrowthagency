@@ -23,7 +23,7 @@
  [
   "the button doesn't say what it sends",
   "portal",
-  "  if (btn) { btn.textContent = `Send ${n} customer${n === 1 ? \"\" : \"s\"} →`; btn.disabled = !full.length; }",
+  "  if (btn) { btn.textContent = `Send ${n} customer${n === 1 ? \"\" : \"s\"} \u2192`; btn.disabled = !full.length; }",
   "  if (btn) { btn.disabled = !full.length; }",
   1
  ],
@@ -194,5 +194,17 @@
   "${o.flowId === \"m1.review.first_5\" ? r5AdminHtml() : \"\"}${gsQ === \"you\"",
   "${gsQ === \"you\"",
   1
+ ],
+ [
+  "smsOneOf goes back to 'the first fence after SMS_1' (an unfenced SMS_1 reads SMS_2's fence, or nothing)",
+  "reviewreqfn",
+  "  const fence = /```[a-z]*\\n([\\s\\S]*?)```/i.exec(sec);",
+  "  const fence = /```[a-z]*\\n([\\s\\S]*?)```/i.exec(rest);"
+ ],
+ [
+  "smsOneOf only reads a fenced SMS_1",
+  "reviewreqfn",
+  "  let body = fence ? fence[1] :",
+  "  let body = fence ? fence[1] : \"\"; void"
  ]
 ]
