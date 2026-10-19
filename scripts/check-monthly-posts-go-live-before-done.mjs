@@ -9,11 +9,14 @@ import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = `${SITE}/netlify/functions`;
 const req = createRequire(`${FNS}/x.js`);
+// 🔑 require.cache is keyed by the REAL path: a copy under /var/… is /private/var/… there, so compare real paths or the
+// cache is never cleared and one case leaks module state into the next (found 10-19 by the mutation runner).
+const FNS_REAL = fs.realpathSync(FNS);
 const F = [], fail = (m) => F.push(m);
 process.env.GOOGLE_OAUTH_CLIENT_ID = "id"; process.env.GOOGLE_OAUTH_CLIENT_SECRET = "s";
 globalThis.__rgaFetchDeadlineInstalled = true;
 let gp;
-try { for (const k of Object.keys(req.cache)) if (k.startsWith(FNS)) delete req.cache[k]; gp = req("./_gbp-posts.js"); }
+try { for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k]; gp = req("./_gbp-posts.js"); }
 catch (e) { console.error(`harness: cannot load _gbp-posts.js — ${e.message}`); process.exit(2); }
 const ledgerPath = req.resolve("./_change-ledger.js");
 const ledger = [];

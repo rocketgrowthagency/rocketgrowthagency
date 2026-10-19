@@ -17,6 +17,9 @@ import { createRequire } from "node:module";
 const __SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = `${__SITE}/netlify/functions`;
 const req = createRequire(`${FNS}/x.js`);
+// 🔑 require.cache is keyed by the REAL path: a copy under /var/… is /private/var/… there, so compare real paths or the
+// cache is never cleared and one case leaks module state into the next (found 10-19 by the mutation runner).
+const FNS_REAL = fs.realpathSync(FNS);
 const F = [];
 const fail = (m) => F.push(m);
 
@@ -55,6 +58,9 @@ globalThis.fetch = async (input, init = {}) => {
     return ok([{ id: "rec1", data: world.record }]);
   }
   if (path.startsWith("/kickoff_slot_holds")) {
+    // the column probe (_call-purpose.ledgerReady): 400 = the SQL hasn't been applied yet
+    if (/select=purpose&limit=1$/.test(path)) return world.noColumn ? ok({ message: "column kickoff_slot_holds.purpose does not exist" }, 400) : ok([]);
+    if (world.noColumn && /purpose/.test(path)) return ok({ message: "column kickoff_slot_holds.purpose does not exist" }, 400);
     if (method === "DELETE") return ok([{ slot_start: world.holdStart || "2026-01-01T00:00:00.000Z" }]);
     if (method === "POST") return ok([{ ...(body || {}) }], 201);
     if (method === "PATCH") return ok(null, 204);
@@ -68,7 +74,7 @@ globalThis.fetch = async (input, init = {}) => {
 
 // ── load the real handlers, with a stub _auth (the gates are on what the handler sends, not on who may call it) ──
 function load(name) {
-  for (const k of Object.keys(req.cache)) if (k.startsWith(FNS)) delete req.cache[k];
+  for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k];
   const authPath = req.resolve("./_auth.js");
   req.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: {
     jsonRes: (s, b) => ({ statusCode: s, body: JSON.stringify(b) }),
@@ -197,6 +203,21 @@ r = await run("cancel-kickoff-invite.js", { httpMethod: "POST", headers: {}, bod
 if (JSON.stringify(world.record.kickoff_invite) !== JSON.stringify(KICKOFF_STAMP())) fail("I · cancelling the close-out removed or changed the kickoff's record");
 if (world.record.closeout_invite) fail("I · the cancelled close-out is still on the record");
 if (world.record.tasks?.["m1.close.kickoff_invite"]?.status !== "done") fail("I · cancelling the close-out reopened the kickoff invite step");
+
+// ── K · BEFORE THE SQL: the kickoff works exactly as before, and the close-out is refused (never mis-scoped) ──
+world = { noColumn: true, record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP() }, ledger: [] };
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START }) });
+if (r.status !== 200) fail(`K · with no purpose column a KICKOFF pick fails (${r.status} ${r.body.error || ""}) — deploying before the SQL would break every booking`);
+if (holdCalls().some((c) => c.method !== "GET" && (/purpose/.test(c.url) || (c.body && "purpose" in c.body)))) fail("K · with no purpose column the kickoff pick still sends `purpose`");
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, purpose: "m1_close" }) });
+if (r.status !== 409 || holdCalls().some((c) => c.method !== "GET")) fail("K · with no purpose column a close-out pick is written (it would read as the kickoff)");
+r = await run("kickoff-availability.js", { httpMethod: "GET", headers: {}, queryStringParameters: { client_id: "c1", purpose: "m1_close" } });
+if (r.body.unavailable !== true) fail("K · with no purpose column the close-out card would show the kickoff's request as its own");
+r = await run("kickoff-requests.js", { httpMethod: "GET", headers: {}, queryStringParameters: { client_id: "c1", purpose: "m1_close" } });
+if (r.body.unavailable !== true || (r.body.requested || []).length) fail("K · with no purpose column row 60 would list the kickoff's holds as close-out requests");
+world = { noColumn: true, record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP() }, ledger: [] };
+r = await run("send-kickoff-invite.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, force: 1 }) });
+if (r.status !== 200) fail(`K · with no purpose column moving the kickoff fails (${r.status} ${r.body.error || ""})`);
 
 // ── J · the surfaces ask for the close-out, and the database allows exactly these calls ─────────
 const read = (p) => { try { return fs.readFileSync(`${__SITE}/${p}`, "utf8"); } catch { return ""; } };

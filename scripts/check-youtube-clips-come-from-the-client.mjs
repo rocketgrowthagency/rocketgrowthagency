@@ -9,6 +9,9 @@ import { createRequire } from "node:module";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = `${SITE}/netlify/functions`;
 const req = createRequire(`${FNS}/x.js`);
+// 🔑 require.cache is keyed by the REAL path: a copy under /var/… is /private/var/… there, so compare real paths or the
+// cache is never cleared and one case leaks module state into the next (found 10-19 by the mutation runner).
+const FNS_REAL = fs.realpathSync(FNS);
 const F = [], fail = (m) => F.push(m);
 process.env.SUPABASE_URL = "https://db.test"; process.env.SUPABASE_SERVICE_ROLE_KEY = "k"; process.env.URL = "https://site.test";
 globalThis.__rgaFetchDeadlineInstalled = true;
@@ -37,7 +40,7 @@ globalThis.fetch = async (u, init = {}) => {
   return j({}, 404);
 };
 function load() {
-  for (const k of Object.keys(req.cache)) if (k.startsWith(FNS)) delete req.cache[k];
+  for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k];
   const ap = req.resolve("./_auth.js");
   req.cache[ap] = { id: ap, filename: ap, loaded: true, exports: { jsonRes: (s, b) => ({ statusCode: s, body: JSON.stringify(b) }), requirePortalOwner: async () => ({ email: "owner@acme.test" }) } };
   return req("./portal-video-clip.js").handler;

@@ -9,7 +9,7 @@
  [
   "the request row is written without its purpose (reads as the kickoff)",
   "bookkickfn",
-  "        purpose: purpose.id,\n        requested_at: nowIso,",
+  "        ...purposeField(purpose),\n        requested_at: nowIso,",
   "        requested_at: nowIso,",
   1
  ],
@@ -51,7 +51,7 @@
  [
   "the close-out's ledger rows are written as kickoff",
   "kickinvite",
-  "status: \"booked\", event_id: eventId, purpose: purposeId,",
+  "status: \"booked\", event_id: eventId, ...purposeField({ id: purposeId }),",
   "status: \"booked\", event_id: eventId,",
   1
  ],
@@ -116,6 +116,34 @@
   "admin",
   "kickoff-requests?client_id=${encodeURIComponent(cid)}&purpose=m1_close`",
   "kickoff-requests?client_id=${encodeURIComponent(cid)}`",
+  1
+ ],
+ [
+  "writes always carry purpose, even before the column exists",
+  "callpurpose",
+  "const purposeField = (p) => (live() ? { purpose: p.id } : {});",
+  "const purposeField = (p) => ({ purpose: p.id });",
+  1
+ ],
+ [
+  "filters always name purpose, even before the column exists",
+  "callpurpose",
+  "  return live() ? `&purpose=eq.${encodeURIComponent(p.id)}` : \"\";",
+  "  return `&purpose=eq.${encodeURIComponent(p.id)}`;",
+  1
+ ],
+ [
+  "a close-out is allowed before the column exists",
+  "callpurpose",
+  "const closeoutUnavailable = (p) => p.id !== \"kickoff\" && !live();",
+  "const closeoutUnavailable = (p) => false;",
+  1
+ ],
+ [
+  "the pick doesn't wait for the column check",
+  "bookkickfn",
+  "  await ledgerReady();\n  if (closeoutUnavailable(purpose)) return jsonRes(409,",
+  "  if (closeoutUnavailable(purpose)) return jsonRes(409,",
   1
  ]
 ]
