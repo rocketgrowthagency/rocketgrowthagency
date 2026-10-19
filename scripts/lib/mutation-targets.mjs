@@ -153,6 +153,8 @@ export const FILES = {
   stepinput: "netlify/functions/portal-step-input.js",
   bookinglink: "netlify/functions/_booking-link.js",   // step10_booking_link_v1 (10-16)
   callpurpose: "netlify/functions/_call-purpose.js",   // batch 3 close-out booking (10-19)
+  gbpposts: "netlify/functions/_gbp-posts.js",   // batch 4 Monthly posts (10-19)
+  v2push: "netlify/functions/v2-push-gbp-content.js",
   bookkickfn: "netlify/functions/portal-book-kickoff.js",
   kickavail: "netlify/functions/kickoff-availability.js",
 

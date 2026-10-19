@@ -1,0 +1,100 @@
+[
+ [
+  "the step is done when the first post goes up",
+  "gbpposts",
+  "  if (q.length && live === q.length) {",
+  "  if (q.length && live >= 1) {",
+  1
+ ],
+ [
+  "every due post goes in one run (no weekly cadence)",
+  "gbpposts",
+  "(deps.force || Date.parse(q.due) <= now.getTime())",
+  "true",
+  1
+ ],
+ [
+  "the button goes to RGA's site again",
+  "gbpposts",
+  "  const url = siteUrlOf(client);",
+  "  const url = \"https://www.rocketgrowthagency.com\";",
+  1
+ ],
+ [
+  "a post already on Google is published again",
+  "gbpposts",
+  "      const same = (lj.localPosts || []).find((p) => String(p.summary || \"\").trim() === body.summary.trim());",
+  "      const same = null;",
+  1
+ ],
+ [
+  "it posts blind when Google won't list existing posts",
+  "gbpposts",
+  "      const lj = lr.ok ? await lr.json().catch(() => ({})) : null;\n      if (!lr.ok) throw new Error(`Google didn't list the existing posts (${lr.status}) \u2014 not posting blind`);",
+  "      const lj = lr.ok ? await lr.json().catch(() => ({})) : {};",
+  1
+ ],
+ [
+  "a refused post is retried forever",
+  "gbpposts",
+  "if (r.status === 400 || next.attempts >= MAX_ATTEMPTS) next.status = \"failed\";",
+  "",
+  1
+ ],
+ [
+  "an unapproved month posts",
+  "gbpposts",
+  "  if (!task || task.approval?.decision !== \"approved\" || !Array.isArray(task.post_queue) || !task.post_queue.length) return",
+  "  if (!task || !Array.isArray(task.post_queue) || !task.post_queue.length) return",
+  1
+ ],
+ [
+  "saving the step overwrites the rest of the record",
+  "gbpposts",
+  "{ data: { ...fresh.data, tasks: { ...(fresh.data?.tasks || {}), [STEP]: nextTask } } }",
+  "{ data: { tasks: { [STEP]: nextTask } } }",
+  1
+ ],
+ [
+  "a week is due before the client approved",
+  "gbpposts",
+  "Math.max(m + (p.week - 1) * 7 * DAY, Number.isFinite(ap) ? ap : 0)",
+  "m + (p.week - 1) * 7 * DAY",
+  1
+ ],
+ [
+  "prose is accepted as posts",
+  "gbpposts",
+  "  if (posts.length !== 4) problems.push(`the draft has ${posts.length} posts, not 4`);",
+  "",
+  1
+ ],
+ [
+  "approval doesn't check the posts match what the client saw",
+  "portaldeliv",
+  "if (posts && posts.length && gp.renderPosts(posts) === draftFrom(tasks[key])) {",
+  "if (posts && posts.length) {",
+  1
+ ],
+ [
+  "the runner redrafts under an approval",
+  "exec",
+  "      if (t?.approval?.decision === \"approved\" && Array.isArray(t.post_queue) && t.post_queue.length) {",
+  "      if (false) {",
+  1
+ ],
+ [
+  "Done on Monthly posts is unguarded",
+  "admin",
+  "    proof: (d, m2) => { const q = m2?.tasks?.[\"m2.exec.gbp_posts\"]?.post_queue; return Array.isArray(q) && q.length > 0 && q.every((x) => x.status === \"live\"); },",
+  "    proof: (d, m2) => true,",
+  1
+ ],
+ [
+  "the legacy push can publish posts again",
+  "v2push",
+  "  if (type === \"posts\") return { statusCode: 410,",
+  "  if (false) return { statusCode: 410,",
+  1
+ ]
+]

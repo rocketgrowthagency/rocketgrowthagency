@@ -491,6 +491,7 @@ run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite 
 run check-a-closeout-booking-never-touches-the-kickoff.mjs "step 13 close-out booking: pick, confirm, list, read, withdraw, cancel each scoped to ONE call (kickoff_slot_holds.purpose); the kickoff path unchanged"
 run check-step-23-competitors-find-the-listing.mjs "step 23 competitors: a short Maps link falls back to the connected profile pin, then its Place ID; own listing excluded by Place ID; nothing measurable → indeterminate"
 run check-step-18-nap-is-confirmed-per-listing.mjs "step 18 citations: Done only when RGA confirmed the NAP of every listing found, on its own URL"
+run check-monthly-posts-go-live-before-done.mjs "Monthly Google posts: approval freezes the posts, one goes live per week, read back, Done only when all are LIVE; never doubled; client's own site on the button"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"

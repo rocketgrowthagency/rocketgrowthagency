@@ -358,6 +358,7 @@ const NOT_PREFLIGHT = {
   'check-step-10-booking-link.mjs': 'the WEBSITE repo\'s step 10 booking link for any business (approved step10_booking_link_v1) — a portal/admin check, not video preflight',
   'check-step-11-details.mjs': 'the WEBSITE repo\'s step 11 details for any business (approved step11_details_v1) — a portal/admin check, not video preflight',
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',
+  'check-monthly-posts-go-live-before-done.mjs': 'the WEBSITE repo\'s Monthly Google posts publish + read back (batch 4) — not video preflight; daily-health-check.sh',
   'check-step-18-nap-is-confirmed-per-listing.mjs': 'the WEBSITE repo\'s step 18 NAP confirmation (batch 4) — a runner/admin check, not video preflight; daily-health-check.sh',
   'check-step-23-competitors-find-the-listing.mjs': 'the WEBSITE repo\'s step 23 runner finds the client\'s listing without a full Maps link (batch 4) — a runner check, not video preflight; daily-health-check.sh',
   'check-a-closeout-booking-never-touches-the-kickoff.mjs': 'the WEBSITE repo\'s close-out booking is scoped to its own call (kickoff_slot_holds.purpose, batch 3) — a portal/admin check, not video preflight; run daily by daily-health-check.sh',
