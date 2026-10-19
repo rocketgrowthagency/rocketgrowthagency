@@ -58,6 +58,8 @@ const S = {
   invoice: read("netlify/functions/send-invoice-email.js"),
   report: read("netlify/functions/send-monthly-report.js"),
   invite: read("netlify/functions/send-kickoff-invite.js"),
+  // batch 3 (10-19): each call's invite title lives in _call-purpose.js (kickoff + Month 1 close-out)
+  callpurpose: read("netlify/functions/_call-purpose.js"),
 };
 const C = Object.fromEntries(Object.entries(S).map(([k, v]) => [k, noComments(v)]));
 if (!/markup != null\) \{ const l = require\("\.\/_letter"\)\.letter\(markup/.test(C.gmail) || !/toRaw\(\{[^}]*\bhtml\b/.test(C.gmail)) fail("_gmail.sendAsRga no longer renders markup through the letter and sends the HTML");
@@ -110,7 +112,7 @@ if (/label: "Pay in your portal"/.test(C.invoice)) fail("the invoice twin says \
 if (!/subject: `Receipt for invoice \$\{ref\} — \$\{amount\}`/.test(C.invoice)) fail("the receipt subject is not \"Receipt for invoice <ref> — <amount>\"");
 if (/geo-grid/.test(C.report)) fail("the monthly report email says \"geo-grid\" — say \"map coverage\"");
 if (/Hi \$\{esc\(first\)\}, \$\{intro\}/.test(C.report) && /const intro = `Here's/.test(C.report)) fail("the monthly report reads \"Hi Pat, Here's\" — lower-case after the comma");
-if (/summary: `Kickoff call — [^`]*×/.test(C.invite)) fail("the calendar invite title uses \"×\" — say \"and\"");
+if (/summary: `Kickoff call — [^`]*×/.test(C.invite) || /title: \(biz\) => `[^`]*×/.test(C.callpurpose)) fail("the calendar invite title uses \"×\" — say \"and\"");
 if (/\\n\$\{clientShareLink\(clientId\)\}/.test(C.invite)) fail("the calendar invite shows the report ADDRESS — link the words");
 
 // 7. our shorthand never reaches a client: the welcome email's step list is written for them

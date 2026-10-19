@@ -108,7 +108,8 @@ if (!fs.existsSync(CANCEL)) {
   }
 
   // Removed, not emptied: a truthy husk reads as a booking to `if (data.kickoff_invite)`.
-  if (!/kickoff_invite:\s*_?\w*\s*,\s*\.\.\./.test(cancel) && !/delete\s+\w+\.kickoff_invite/.test(cancel)) {
+  // 🔑 batch 3 (10-19): the key is the purpose's own stamp — `[purpose.stamp]: _removed, ...rest` removes kickoff_invite for the kickoff
+if (!/(?:kickoff_invite|\[purpose\.stamp\]):\s*_?\w*\s*,\s*\.\.\./.test(cancel) && !/delete\s+\w+\.kickoff_invite/.test(cancel)) {
     problems.push(`cancel-kickoff-invite.js does not REMOVE the kickoff_invite key (rest-destructure `
       + `or delete). Setting it to {} leaves a truthy husk that later readers report as a booking.`);
   }

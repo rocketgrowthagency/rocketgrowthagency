@@ -191,8 +191,8 @@
  [
   "admin row 57 reads nothing live",
   "admin",
-  "${o.flowId === \"m1.review.first_5\" ? r5AdminHtml() : \"\"}${gsQ === \"you\"",
-  "${gsQ === \"you\"",
+  "${o.flowId === \"m1.review.first_5\" ? r5AdminHtml() : \"\"}${o.flowId === \"m1.call.close\" ? closeoutAdminHtml() : \"\"}${gsQ === \"you\"",
+  "${o.flowId === \"m1.call.close\" ? closeoutAdminHtml() : \"\"}${gsQ === \"you\"",
   1
  ],
  [

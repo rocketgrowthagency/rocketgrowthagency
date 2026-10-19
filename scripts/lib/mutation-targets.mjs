@@ -152,5 +152,8 @@ export const FILES = {
   gbpverifyfn: "netlify/functions/portal-gbp-verify.js",
   stepinput: "netlify/functions/portal-step-input.js",
   bookinglink: "netlify/functions/_booking-link.js",   // step10_booking_link_v1 (10-16)
+  callpurpose: "netlify/functions/_call-purpose.js",   // batch 3 close-out booking (10-19)
+  bookkickfn: "netlify/functions/portal-book-kickoff.js",
+  kickavail: "netlify/functions/kickoff-availability.js",
 
 };

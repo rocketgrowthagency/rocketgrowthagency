@@ -68,8 +68,11 @@ else {
   } else {
     let link, code;
     try {
-      link = new Function("mine", "onb", `return ${srcLink};`);
-      code = srcCode ? new Function("mine", "onb", `return ${srcCode};`) : () => null;
+      // 🔑 `purpose` (batch 3, 10-19): the link is read from THIS call's stamp; the kickoff's is kickoff_invite.
+      const KICK = { id: "kickoff", stamp: "kickoff_invite" };
+      const l0 = new Function("mine", "onb", "purpose", `return ${srcLink};`), c0 = srcCode ? new Function("mine", "onb", "purpose", `return ${srcCode};`) : null;
+      link = (m, o) => l0(m, o, KICK);
+      code = c0 ? (m, o) => c0(m, o, KICK) : () => null;
     } catch (e) { fail.push(`kickoff-availability.js — meetLink/meetCode will not execute: ${e.message}`); }
     if (link) {
       const onb = [{ data: { kickoff_invite: { meet_link: "https://meet.google.com/abc-defg-hij", attendee: "owner@acme.com" } } }];

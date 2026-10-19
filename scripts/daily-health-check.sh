@@ -488,6 +488,7 @@ run check-step-9-hours-card.mjs "step 9 hours: one card, Change hours opens Edit
 run check-step-10-booking-link.mjs "step 10 booking link works for any business: Google's own link type, our tag, public pages only, website page finder"
 run check-step-11-details.mjs "step 11 details for any business: Google's own groups, identity details only the owner's, RGA recommends only what step 10 proves"
 run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite with whose move, Month 1's end from the kickoff, admin row 60 lists them"
+run check-a-closeout-booking-never-touches-the-kickoff.mjs "step 13 close-out booking: pick, confirm, list, read, withdraw, cancel each scoped to ONE call (kickoff_slot_holds.purpose); the kickoff path unchanged"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"

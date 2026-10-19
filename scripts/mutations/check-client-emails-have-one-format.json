@@ -58,7 +58,7 @@
  [
   "the document twin loses its sign-off",
   "emaildoc",
-  "  parts.push(\"\", \"Chris\", \"Rocket Growth Agency · (424) 242-2040\");",
+  "  parts.push(\"\", \"Chris\", \"Rocket Growth Agency \u00b7 (424) 242-2040\");",
   "",
   1
  ],
@@ -77,10 +77,10 @@
   1
  ],
  [
-  "the invite title goes back to ×",
-  "kickinvite",
-  "${client.business_name} and Rocket Growth Agency`",
-  "${client.business_name} × Rocket Growth Agency`",
+  "the invite title goes back to \u00d7",
+  "callpurpose",
+  "`Kickoff call \u2014 ${biz} and Rocket Growth Agency`",
+  "`Kickoff call \u2014 ${biz} \u00d7 Rocket Growth Agency`",
   1
  ],
  [

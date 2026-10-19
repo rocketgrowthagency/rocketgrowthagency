@@ -27,24 +27,24 @@ const inv = read("netlify/functions/send-kickoff-invite.js"), bg = read("netlify
 const F = []; const fail = (m) => F.push(m);
 
 // 1
-if (!/\$\{clientShareLink\(clientId\)\}/.test(inv)) fail.push("the kickoff invite no longer carries their report link");
-if (!/startBuild\(\{ record: recordFromClient\(full\), clientId, exp: null \}\)/.test(inv)) fail.push("booking no longer builds their report");
-if (!/const exp = clientId \? null :/.test(bg)) fail.push("a client's report can expire again");
-if (!/"\/client_audit_snapshots", \{ method: "POST"/.test(bg)) fail.push("a built client report is not recorded on the client");
-if (!/from = "\/report\/:token"/.test(toml)) fail.push("the /report/ link that never changes has no route");
+if (!/\$\{clientShareLink\(clientId\)\}/.test(inv)) fail("the kickoff invite no longer carries their report link");
+if (!/startBuild\(\{ record: recordFromClient\(full\), clientId, exp: null \}\)/.test(inv)) fail("booking no longer builds their report");
+if (!/const exp = clientId \? null :/.test(bg)) fail("a client's report can expire again");
+if (!/"\/client_audit_snapshots", \{ method: "POST"/.test(bg)) fail("a built client report is not recorded on the client");
+if (!/from = "\/report\/:token"/.test(toml)) fail("the /report/ link that never changes has no route");
 // 2
-if (!/Date\.now\(\) - Date\.parse\(last\.builtAt\) > 14 \* 86400000\) && !\(await clientBuildRunning\(clientId\)\)/.test(inv)) fail.push("💸 booking builds a report without the 14-day / running guard");
-if (!/Date\.now\(\) - Date\.parse\(last\.builtAt\) < DAY\) return jsonRes\(409/.test(car) || !/if \(running\) return jsonRes\(409/.test(car)) fail.push("💸 the admin rebuild is not limited to once a day / one at a time");
-if (!/created_at=gte\.\$\{encodeURIComponent\(since\)\}/.test(refresh) || !/30 \* DAY/.test(refresh)) fail.push("💸 a lead can rebuild more than once per 30 days");
-if (!/await supa\("\/fga_report_cache", \{\s*method: "POST"/.test(helper) || helper.indexOf('"/fga_report_cache"') > helper.indexOf("report-build-background")) fail.push("💸 the build starts before its placeholder is recorded — a double click could start two");
+if (!/Date\.now\(\) - Date\.parse\(last\.builtAt\) > 14 \* 86400000\) && !\(await clientBuildRunning\(clientId\)\)/.test(inv)) fail("💸 booking builds a report without the 14-day / running guard");
+if (!/Date\.now\(\) - Date\.parse\(last\.builtAt\) < DAY\) return jsonRes\(409/.test(car) || !/if \(running\) return jsonRes\(409/.test(car)) fail("💸 the admin rebuild is not limited to once a day / one at a time");
+if (!/created_at=gte\.\$\{encodeURIComponent\(since\)\}/.test(refresh) || !/30 \* DAY/.test(refresh)) fail("💸 a lead can rebuild more than once per 30 days");
+if (!/await supa\("\/fga_report_cache", \{\s*method: "POST"/.test(helper) || helper.indexOf('"/fga_report_cache"') > helper.indexOf("report-build-background")) fail("💸 the build starts before its placeholder is recorded — a double click could start two");
 // 3
-if (/method: "DELETE"/.test(view)) fail.push("an expired report row is deleted — the refresh then has nothing to rebuild from");
-if (!/fga-report-refresh\?id=/.test(view) || !/fga-report-refresh\?t=/.test(view)) fail.push("the expired page no longer offers Refresh my report");
-if ((view.match(/if \(!fromRga\) logReEngagement/g) || []).length < 2)   /* both the ?id and the ?t path */ fail.push("RGA opening a report fires the lead re-engaged alert again");
-if (!/"\?"\) \? "&" : "\?"\) \+ "rga=1"/.test(admin)) fail.push("the console opens the report without rga=1");
+if (/method: "DELETE"/.test(view)) fail("an expired report row is deleted — the refresh then has nothing to rebuild from");
+if (!/fga-report-refresh\?id=/.test(view) || !/fga-report-refresh\?t=/.test(view)) fail("the expired page no longer offers Refresh my report");
+if ((view.match(/if \(!fromRga\) logReEngagement/g) || []).length < 2)   /* both the ?id and the ?t path */ fail("RGA opening a report fires the lead re-engaged alert again");
+if (!/"\?"\) \? "&" : "\?"\) \+ "rga=1"/.test(admin)) fail("the console opens the report without rga=1");
 // 4
-if (!/reportLink: await/.test(avail) || !/Open your audit report<\/a>/.test(portal)) fail.push("the client's kickoff card lost its report link");
-if (!/data-kc-copy-report/.test(admin) || !/data-kc-report-build=/.test(admin)) fail.push("the console lost Copy-for-Meet-chat or Build their report");
+if (!/reportLink: await/.test(avail) || !/Open your audit report<\/a>/.test(portal)) fail("the client's kickoff card lost its report link");
+if (!/data-kc-copy-report/.test(admin) || !/data-kc-report-build=/.test(admin)) fail("the console lost Copy-for-Meet-chat or Build their report");
 
 if (F.length) { console.error("🔴 the audit report is not fresh and in their hands:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ the audit report: built at booking, never expires for a client, in the invite + portal + Meet chat, bounded, refreshable");

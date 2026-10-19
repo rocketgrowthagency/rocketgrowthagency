@@ -50,8 +50,8 @@
  [
   "server: the start stamp moves after the work",
   "exec",
-  "  const startedAt = new Date().toISOString();\n  try {\n    const result = await executor({ client, clientId: client_id });",
-  "  try {\n    const result = await executor({ client, clientId: client_id });\n    const startedAt = new Date().toISOString();"
+  "  const startedAt = new Date().toISOString();\n  try {\n    DRAFT_CALLS = 0;\n    const result = await executor({ client, clientId: client_id });",
+  "  try {\n    DRAFT_CALLS = 0;\n    const result = await executor({ client, clientId: client_id });\n    const startedAt = new Date().toISOString();"
  ],
  [
   "server: the one-key ternary for the two stamps returns",

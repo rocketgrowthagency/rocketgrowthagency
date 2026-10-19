@@ -125,7 +125,7 @@ const PASSED = [
   ["step 4 says ONE line, with the step number from the page", /function kickoffStep4WaitsHtml\([\s\S]{0,300}?obNumberOf\(KICKOFF_INVITE_STEP_ID, "month1"\)[\s\S]{0,700}?data-ob-jump=/, admin],
   ["the server never books a passed time", /Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, inviteFn],
   ["the server never confirms a passed request", /if \(Date\.parse\(startIso\) <= Date\.now\(\)\) \{\s*return jsonRes\(409/, reqFn],
-  ["a booking clears the client's other open requests", /status=eq\.requested&slot_start=neq\./, inviteFn],
+  ["a booking clears the client's other open requests", /status=eq\.requested(?:\$\{purposeFilter\(purpose\)\})?&slot_start=neq\./, inviteFn],
   ["the client banner: Pick a new kickoff time", /if \(requested && phase\.requestPassed && !phase\.bookingStands\) \{[\s\S]{0,700}?title: "Pick a new kickoff time"/, portal],
   ["the client card: Your turn + Passed + Pick a new time", /if \(!confirmed && ph\.requestPassed\) \{[\s\S]{0,300}?>Passed<\/span>[\s\S]{0,500}?>Pick a new time<\/button>/, portal],
   ["the client pill flips to Your turn", /: reqPassed \? \{ cls: "you", text: "Your turn" \}/, portal],
@@ -140,7 +140,7 @@ const PASSED = [
   ["the withdraw handler calls the request path", /closest\("\[data-kickoff-withdraw\]"\)[\s\S]{0,2500}?what: "request"/, portal],
   ["the passed line carries a Cancel that closes the picker", /const closeBtn = `[^`]*data-kickoff-keep=[^`]*>Cancel<\/button>`;/, portal],
   ["sending a time closes the picker (the lede follows)", /_kickoffWhen\.delete\(clientId\);[\s\S]{0,400}?_kickoffPicking\.delete\(clientId\);\s*markKickoffWaitingOnRga\(clientId\);/, portal],
-  ["the server withdraws only the owner's requested holds", /if \(body\.what === "request"\) \{\s*if \(!byClient\) return jsonRes\(403[\s\S]{0,400}?&status=eq\.requested`/, cancelFn],
+  ["the server withdraws only the owner's requested holds", /if \(body\.what === "request"\) \{\s*if \(!byClient\) return jsonRes\(403[\s\S]{0,400}?&status=eq\.requested(?:\$\{purposeFilter\(purpose\)\})?`/, cancelFn],
   ["the server reads the withdrawal back", /const left = await fetch\(`\$\{holdsUrl\}&select=slot_start`[\s\S]{0,200}?if \(!Array\.isArray\(left\) \|\| left\.length\) return jsonRes\(500/, cancelFn],
   ["the picker lede over a passed time", /pickingPassed\s*\?\s*"Pick any open time below\. We'll confirm it and email you the calendar invite\."/, portal],
 ];

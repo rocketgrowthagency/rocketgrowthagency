@@ -19,7 +19,11 @@ if(SAB) email=email.replace(/const kickoff = existing\?\.data\?\.kickoff_invite 
 console.log("── the reader must read the container the writer writes ──");
 const fails=[];
 // Where does the invite persist its record?
-const writesTo=[...invite.matchAll(/(\w+):\s*record,/g)].map(m=>m[1]);
+// 🔑 Since batch 3 (10-19) the writer stamps `[purpose.stamp]: record` — one ledger, two calls. The kickoff's stamp is
+// read from _call-purpose.js itself, never assumed, so renaming it there is caught here.
+const { createRequire } = await import("node:module");
+const PURPOSES = createRequire(import.meta.url)(`${FNS}/_call-purpose.js`).PURPOSES;
+const writesTo=[...invite.matchAll(/(\w+|\[purpose\.stamp\]):\s*record,/g)].map(m=>m[1]==="[purpose.stamp]"?PURPOSES.kickoff.stamp:m[1]);
 if(!writesTo.length){console.error("  ✗ cannot see where send-kickoff-invite persists — probe wrong");process.exit(2);}
 console.log(`  writer persists under: ${writesTo.join(", ")}`);
 for(const key of writesTo){

@@ -1,0 +1,121 @@
+[
+ [
+  "a close-out pick deletes every requested hold of the client (the kickoff's too)",
+  "bookkickfn",
+  "&status=eq.requested${purposeFilter(purpose)}`,",
+  "&status=eq.requested`,",
+  1
+ ],
+ [
+  "the request row is written without its purpose (reads as the kickoff)",
+  "bookkickfn",
+  "        purpose: purpose.id,\n        requested_at: nowIso,",
+  "        requested_at: nowIso,",
+  1
+ ],
+ [
+  "a close-out can be requested before the kickoff is held",
+  "bookkickfn",
+  "if (purpose.id === \"m1_close\") {\n      const recs",
+  "if (false) {\n      const recs",
+  1
+ ],
+ [
+  "the sender reads the KICKOFF's stamp for a close-out (would move the kickoff)",
+  "kickinvite",
+  "const already = existing?.[0]?.data?.[purpose.stamp];",
+  "const already = existing?.[0]?.data?.kickoff_invite;",
+  1
+ ],
+ [
+  "confirming clears every requested hold, not just this call's",
+  "kickinvite",
+  "&status=eq.requested${purposeFilter(purpose)}&slot_start=neq.",
+  "&status=eq.requested&slot_start=neq.",
+  1
+ ],
+ [
+  "booking the close-out marks step 13 done",
+  "kickinvite",
+  "              ...(curTasks[purpose.task] || {}),\n              auto_result: {",
+  "              ...(curTasks[purpose.task] || {}),\n              status: \"done\",\n              auto_result: {",
+  1
+ ],
+ [
+  "a close-out is booked with no picked time",
+  "kickinvite",
+  "if (!isKickoff && !startIso) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the close-out's ledger rows are written as kickoff",
+  "kickinvite",
+  "status: \"booked\", event_id: eventId, purpose: purposeId,",
+  "status: \"booked\", event_id: eventId,",
+  1
+ ],
+ [
+  "confirm asks the sender for the kickoff whatever was requested",
+  "kickreqs",
+  "force: 1, purpose: req[0].purpose || \"kickoff\" }",
+  "force: 1 }",
+  1
+ ],
+ [
+  "the per-client list is every call (close-out shows on the kickoff card)",
+  "kickreqs",
+  "`&client_id=eq.${encodeURIComponent(clientId)}${purposeFilter(purpose)}`",
+  "`&client_id=eq.${encodeURIComponent(clientId)}`",
+  1
+ ],
+ [
+  "the close-out card reads the kickoff's request",
+  "kickavail",
+  "&status=in.(requested,booked)${purposeFilter(purpose)}`",
+  "&status=in.(requested,booked)`",
+  1
+ ],
+ [
+  "the close-out Join link is the kickoff's",
+  "kickavail",
+  "const raw = (mine.some((h) => h.status === \"booked\") && onb[0]?.data?.[purpose.stamp]?.meet_link) || null;",
+  "const raw = (mine.some((h) => h.status === \"booked\") && onb[0]?.data?.kickoff_invite?.meet_link) || null;",
+  1
+ ],
+ [
+  "cancelling the close-out cancels the kickoff's event",
+  "cancelinvite",
+  "const invite = rec?.data?.[purpose.stamp] || null;",
+  "const invite = rec?.data?.kickoff_invite || null;",
+  1
+ ],
+ [
+  "withdrawing a close-out request withdraws the kickoff's",
+  "cancelinvite",
+  "&status=eq.requested${purposeFilter(purpose)}`;",
+  "&status=eq.requested`;",
+  1
+ ],
+ [
+  "the close-out shares the kickoff's stamp",
+  "callpurpose",
+  "stamp: \"closeout_invite\",",
+  "stamp: \"kickoff_invite\",",
+  1
+ ],
+ [
+  "the portal sends a close-out pick as a kickoff pick",
+  "portal",
+  "client_id: clientId, start: startIso, purpose: CLOSE_PURPOSE,",
+  "client_id: clientId, start: startIso,",
+  1
+ ],
+ [
+  "admin row 60 reads the kickoff's requests",
+  "admin",
+  "kickoff-requests?client_id=${encodeURIComponent(cid)}&purpose=m1_close`",
+  "kickoff-requests?client_id=${encodeURIComponent(cid)}`",
+  1
+ ]
+]

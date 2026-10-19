@@ -114,8 +114,8 @@
  [
   "a booking leaves the client's old request standing",
   "kickinvite",
-  "&status=eq.requested&slot_start=neq.",
-  "&status=eq.requested&slot_start=eq.",
+  "&status=eq.requested${purposeFilter(purpose)}&slot_start=neq.",
+  "&status=eq.requested${purposeFilter(purpose)}&slot_start=eq.",
   1
  ],
  [
