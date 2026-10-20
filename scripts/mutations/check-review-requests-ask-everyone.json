@@ -1,0 +1,44 @@
+[
+ [
+  "gating passes the policy",
+  "reviewpolicy",
+  "  if (GATING.test(t)) p.push(\"it asks only customers who had a good experience (review gating \u2014 Google forbids it)\");",
+  "",
+  1
+ ],
+ [
+  "drafting notes pass the policy",
+  "reviewpolicy",
+  "  if (META.test(t)) p.push(\"it contains drafting notes or a [placeholder]\");",
+  "",
+  1
+ ],
+ [
+  "incentives pass the policy",
+  "reviewpolicy",
+  "  if (INCENTIVE.test(t)) p.push(\"it offers something in return for a review (Google forbids incentives)\");",
+  "",
+  1
+ ],
+ [
+  "step 12 texts a failing message",
+  "reviewreqfn",
+  "    if (bad.length) { console.error(`[review-requests] RGA's message refused for ${clientId}: ${bad.join(\"; \")}`); return null; }",
+  "",
+  1
+ ],
+ [
+  "step 56 saves a gated draft",
+  "exec",
+  "    if (problems.length) return { summary: `The draft broke the review rules, so it wasn't saved:",
+  "    if (false) return { summary: `The draft broke the review rules, so it wasn't saved:",
+  1
+ ],
+ [
+  "Monthly's campaign isn't checked",
+  "exec",
+  "    if (GATING.test(draft) || INCENTIVE.test(draft)) return { summary: \"The draft asked only happy customers",
+  "    if (false) return { summary: \"The draft asked only happy customers",
+  1
+ ]
+]

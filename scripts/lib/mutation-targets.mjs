@@ -157,6 +157,7 @@ export const FILES = {
   ytclips: "netlify/functions/_youtube-clips.js",   // batch 4 YouTube clips (10-19)
   maturefn: "netlify/functions/_mature.js",   // batch 5 Mature (10-19)
   month1report: "netlify/functions/_month1-report.js",   // research-backed Month 1 report (10-19)
+  reviewpolicy: "netlify/functions/_review-policy.js",   // review gating policy (10-20)
   benchfn: "netlify/functions/vertical-benchmark-lookup.js",
   formintake: "netlify/functions/form-intake.js",
   fgaintake: "netlify/functions/fga-intake.js",

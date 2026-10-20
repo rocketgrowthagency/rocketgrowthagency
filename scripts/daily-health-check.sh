@@ -496,6 +496,7 @@ run check-youtube-clips-come-from-the-client.mjs "YouTube clips: 2 validated scr
 run check-legacy-runners-retired-and-reports-built-here.mjs "row 29 reads Google; rows 34/35 worksheets retired; Monthly 24 + Month 1 reports built server-side; the send stamps Monthly 25"
 run check-the-mature-stage-reads-what-is-measured.mjs "Mature stage: 14 computed states, nothing done without its record; alerts need 2 months; no auto client email; stage-6 only"
 run check-every-service-key-function-checks-its-caller.mjs "security: every function holding the service key checks its caller (auth helper, session, signed token, internal or fail-closed secret, schedule) or is public on the record"
+run check-review-requests-ask-everyone.mjs "review requests ask EVERYONE: no gating, no incentives, no drafting notes reach a customer (Google review policy)"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"
