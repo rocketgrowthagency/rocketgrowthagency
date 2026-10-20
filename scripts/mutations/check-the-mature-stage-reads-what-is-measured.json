@@ -215,5 +215,19 @@
   "const FORBIDDEN = /\\b(we (increased|improved|boosted|grew|doubled|drove)|",
   "const FORBIDDEN = /\\b(we (zzz)|",
   1
+ ],
+ [
+  "portal-mature owner-only again (admin 403)",
+  "portalmature",
+  "  const auth = await requirePortalOwnerOrWorkspace(event, clientId);",
+  "  const auth = await requirePortalOwner(event, clientId);",
+  1
+ ],
+ [
+  "portal-mature ungated",
+  "portalmature",
+  "  if (auth.error) return auth.error;\n",
+  "",
+  1
  ]
 ]
