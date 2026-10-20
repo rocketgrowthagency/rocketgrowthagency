@@ -17,7 +17,7 @@
   "a state icon is a text glyph",
   "portal",
   "const GC_ICON = { ok: `<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>`,",
-  "const GC_ICON = { ok: `✓`,",
+  "const GC_ICON = { ok: `\u2713`,",
   1
  ],
  [
@@ -32,13 +32,6 @@
   "portal",
   "class=\"pm-commit\" data-gcard-fix>Fix it",
   "class=\"pm-amend\" data-gcard-fix>Fix it",
-  1
- ],
- [
-  "step 6 loses Check again",
-  "portal",
-  "act: kind === \"yes\" ? `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` : \"\"",
-  "act: \"\"",
   1
  ],
  [
@@ -109,6 +102,34 @@
   "css",
   ".ob-gcard-act a.admin-button { color:#fff; text-decoration:none; }",
   ".ob-gcard-act a.admin-button { text-decoration:none; }",
+  1
+ ],
+ [
+  "step 6 Check again comes back",
+  "portal",
+  "    meta: kind === \"yes\" ? \"We check this every night.",
+  "    act: kind === \"yes\" ? `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` : \"\", meta: kind === \"yes\" ? \"We check this every night.",
+  1
+ ],
+ [
+  "the time goes back on the status line",
+  "portal",
+  "<span class=\"gcard-sw\">${small}</span></span><span class=\"gcard-m\"><span class=\"gcard-th\"><b class=\"gcard-t\">${title}</b>${side ? `<span class=\"gcard-when\">${gcardWhen(side)}</span>` : \"\"}</span>",
+  "<span class=\"gcard-sw\">${small}</span>${side ? `<span class=\"gcard-side\">\u00b7 ${side}</span>` : \"\"}</span><span class=\"gcard-m\"><span class=\"gcard-th\"><b class=\"gcard-t\">${title}</b></span>",
+  1
+ ],
+ [
+  "admin time back on the status line",
+  "admin",
+  "<span>${small}</span></span><span class=\"ob-gcard-m\"><span class=\"ob-gcard-th\"><b class=\"ob-gcard-t\">${title}</b>${side ? `<span class=\"ob-gcard-when\">${sideLine(side)}</span>` : \"\"}</span>",
+  "<span>${small}</span>${side ? ` \u00b7 ${side}` : \"\"}</span><span class=\"ob-gcard-m\"><span class=\"ob-gcard-th\"><b class=\"ob-gcard-t\">${title}</b></span>",
+  1
+ ],
+ [
+  "checked is not Last checked",
+  "portal",
+  "const gcardWhen = (x) => String(x || \"\").replace(/^checked\\b/i, \"Last checked\")",
+  "const gcardWhen = (x) => String(x || \"\")",
   1
  ]
 ]

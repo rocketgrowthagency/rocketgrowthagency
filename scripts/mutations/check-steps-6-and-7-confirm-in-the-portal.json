@@ -21,13 +21,6 @@
   1
  ],
  [
-  "step 6 body drops the card",
-  "portal",
-  "dupConfirmedHtml(onboarding?.data?.tasks, oauth) +",
-  "\"\" +",
-  1
- ],
- [
   "the thread row is back",
   "thread",
   ".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\")",
@@ -116,6 +109,62 @@
   "portal",
   "title: \"Your business on Google matches what you told us\",",
   "title: \"RGA is checking your business on Google\",",
+  1
+ ],
+ [
+  "step 6 body drops the card",
+  "portal",
+  "Reading your Google Business Profile\u2026</span></div>${dupConfirmedHtml(onboarding?.data?.tasks, oauth)}` : \"\"}",
+  "Reading your Google Business Profile\u2026</span></div>` : \"\"}",
+  1
+ ],
+ [
+  "the duplicate goes back above verified",
+  "portal",
+  "step.id === \"m1.gbp.verify\" && !month2Only ? `<div class=\"pm-gv\" data-gbp-verify",
+  "step.id === \"m1.gbp.verify\" && !month2Only ? dupConfirmedHtml(onboarding?.data?.tasks, oauth) + `<div class=\"pm-gv\" data-gbp-verify",
+  1
+ ],
+ [
+  "the accordion starts open",
+  "portal",
+  "return `<details class=\"gcard-acc\" data-dup-acc>",
+  "return `<details class=\"gcard-acc\" data-dup-acc open>",
+  1
+ ],
+ [
+  "One profile on Google is back",
+  "portal",
+  "<span class=\"gcard-sw\">Duplicate removed</span>",
+  "<span class=\"gcard-sw\">One profile on Google</span>",
+  1
+ ],
+ [
+  "the date rides the status line",
+  "portal",
+  "<span class=\"gcard-sw\">Duplicate removed</span></span>",
+  "<span class=\"gcard-sw\">Duplicate removed</span><span class=\"gcard-side\">\u00b7 confirmed</span></span>",
+  1
+ ],
+ [
+  "the jump doesn't open it",
+  "portal",
+  "    if (openSel) { const acc = el.querySelector(openSel); if (acc && !acc.open) acc.open = true; }\n",
+  "",
+  1
+ ],
+ [
+  "the note points without opening",
+  "portal",
+  " data-portal-open=\"[data-dup-acc]\">See step 6 \u2192",
+  " >See step 6 \u2192",
+  1
+ ],
+ [
+  "the top note's status line has the date",
+  "portal",
+  "<p class=\"k\">\u2713 Duplicate removed</p>",
+  "<p class=\"k\">\u2713 Confirmed by Google \u00b7 ${escapeHtml(monthDay(c.at))}</p>",
   1
  ]
 ]

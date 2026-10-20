@@ -25,7 +25,7 @@ const fnSrc = (name) => {
 const ctx = vm.createContext({
   escapeHtml: (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""),
   siteShow: (x) => String(x || "").replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""), gcardMaps: () => "",
-  fmtDateTimeDot: (x) => String(x), monthDay: (x) => String(x).slice(0, 10), STORE_ICON: "", GOOGLE_G: "", Date, JSON, Array, String,
+  fmtDateTimeDot: (x) => String(x), monthDay: (x) => String(x).slice(0, 10), STORE_ICON: "", GOOGLE_G: "", GC_ICON: { ok: "" }, Date, JSON, Array, String,
   googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.proof, o.act].filter(Boolean).join(" ¦ ")}</card>`,
   FACT_WORDS: {}, placeName: (n) => String(n || "").split(",")[0].trim(),
 });
@@ -37,13 +37,25 @@ const now = new Date().toISOString(), old = new Date(Date.now() - 9 * 86400000).
 const tasks = (at, verdict = "clean", status = "removed") => ({ "m1.audit.gbp_duplicate": { owner_removal: { status, title: "Acme Plumbing", phone: "(555) 010-0000", account: "a@x.com", at }, outcome_data: { verdict }, completed_at: at } });
 ctx.T = tasks(now); ctx.T2 = tasks(now, "duplicate"); ctx.T3 = tasks(old); ctx.T4 = tasks(now, "clean", "found");
 const card = run("dupConfirmedHtml(T, { google_account_email: 'o@x.com' })");
-if (!/Your duplicate Google Business Profile is gone/.test(card) || !/state="ok"/.test(card)) fail("step 6 doesn't show the confirmed card once Google confirms the removal");
+if (!/Your duplicate Google Business Profile is gone/.test(card) || !/<summary class="gcard ok">/.test(card)) fail("step 6 doesn't show the confirmed card once Google confirms the removal");
 if (/photo|next step/i.test(card)) fail(`step 6's confirmation points at photos / "next step": ${card.slice(0, 160)}`);
+// v2.1 (approved 10-20): a CLOSED accordion; "Duplicate removed" on the status line, the date on its own line, Show details
+if (!/^<details class="gcard-acc" data-dup-acc>/.test(card)) fail("step 6's duplicate confirmation isn't an accordion that starts closed");
+if (!/<span class="gcard-sw">Duplicate removed<\/span><\/span>/.test(card) || /One profile on Google/.test(card)) fail('the duplicate\'s status line isn\'t just "Duplicate removed"');
+if (!/<b class="gcard-t">Your duplicate Google Business Profile is gone<\/b><span class="gcard-when">Google confirmed it [^<]+<\/span>/.test(card)) fail("the confirmation date isn't on its own line under the title");
+if (!/Show details/.test(card) || !/Hide details/.test(card) || !/<div class="gcard-acc-in">/.test(card)) fail("the accordion has no Show / Hide details or no folded lines");
+// order: the verified card first, the duplicate under it
+if (!/<div class="pm-gv" data-gbp-verify[^`]*Reading your Google Business Profile…<\/span><\/div>\$\{dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)\}/.test(P)) fail("step 6 doesn't draw the verified card first and the duplicate under it");
+if ((P.match(/dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)/g) || []).length !== 1) fail("step 6 draws the duplicate confirmation more than once (or above the verified card)");
+// the verified card: no Check again, the every-night note instead
+const gv = P.slice(P.indexOf("function gvProfileHtml("), P.indexOf("function gvGoogleRouteHtml("));
+if (/data-step-recheck="m1\.gbp\.verify">Check again/.test(gv) || !/meta: kind === "yes" \? "We check this every night\./.test(gv)) fail("the verified card has Check again again, or lost the every-night note");
+// the jump opens the accordion
+if (!/data-portal-scroll="step-row-m1\.gbp\.verify" data-portal-open="\[data-dup-acc\]"/.test(P) || !/const openSel = t\.getAttribute\("data-portal-open"\);\s*if \(openSel\) \{ const acc = el\.querySelector\(openSel\); if \(acc && !acc\.open\) acc\.open = true; \}/.test(P)) fail('"See step 6 →" doesn\'t open the accordion it lands on');
 if (run("dupConfirmedHtml(T2, null)") || run("dupConfirmedHtml(T4, null)")) fail("step 6 says the duplicate is gone before Google confirms it (verdict not clean, or not removed)");
 const note = run("dupNoteHtml(T)");
-if (!/data-dup-note/.test(note) || !/See step/.test(note) || /photo/i.test(note)) fail("the 7-day top note is missing, doesn't point at step 6, or mentions photos");
+if (!/data-dup-note/.test(note) || !/See step/.test(note) || /photo/i.test(note) || !/<p class="k">✓ Duplicate removed<\/p>/.test(note)) fail("the 7-day top note is missing, doesn't point at step 6, or mentions photos");
 if (run("dupNoteHtml(T3)")) fail("the top note still shows after 7 days");
-if (!/dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)\s*\+/.test(P)) fail("step 6's body doesn't render the confirmed card");
 if (!/\.filter\(\(r\) => r\.payload\?\.reason !== "duplicate_confirmed_gone"\)/.test(TH)) fail('portal-thread shows the duplicate confirmation as an "Emails about this step" row');
 if (/if \(dupClearedDue\(tasks\)\)/.test(NO)) fail("notify-step-open still emails the client when the duplicate is confirmed gone");
 if (!/data-ol-told>[^<]*no email/.test(A)) fail("admin's step 11 record doesn't say the client is told in the portal, not by email");

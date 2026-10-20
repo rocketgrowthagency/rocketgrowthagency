@@ -29,7 +29,8 @@ if (!push || !hours || !gv) { console.error("⚠️  INDETERMINATE — a Google 
 if (/class="(?:tl2|pm-turned|pm-hc"|pm-gv-obj)/.test(push + hours + gv) || !/^const GC_ICON = \{ ok: `<svg[^`]*`, you: `<svg[^`]*`, rga: `<svg[^`]*`, wait: `<svg[^`]*` \};$/m.test(portal) || !/^const G_ICON = \{ ok: `<svg[^`]*`, you: `<svg[^`]*`, rga: `<svg[^`]*`, wait: `<svg[^`]*` \};$/m.test(admin)) fail("a state icon isn't drawn (a text glyph renders as an emoji / off-centre), or a Google step draws its own card");
 if (!/<\/div>\$\{act \? `<div class="gcard-act">\$\{act\}<\/div>` : ""\}`;/.test(portal) || !/<\/div>\$\{act \? `<div class="ob-gcard-act">\$\{act\}<\/div>` : ""\}`;/.test(admin)) fail("the card's buttons aren't UNDER the card");
 if (false) fail("a Google step still draws its own card (tl2 / pm-turned / pm-hc / pm-gv-obj) instead of the shared one");
-if ((push.match(/return googleCardHtml\(/g) || []).length < 4 || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv)) fail("steps 6 / 7 / 9 / 10 / 11 don't all draw the shared Google card");
+const facts2 = strip(pp(/^function factsCardV2\(/m) || "");
+if (((push + facts2).match(/return googleCardHtml\(/g) || []).length < 4 || !/return factsCardV2\(step, taskState, g\);/.test(push) || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv)) fail("steps 6 / 7 / 9 / 10 / 11 don't all draw the shared Google card");
 // 🔑 10-16 (step11_details_v1): 10 and 11 draw their own cards; their Change opens Editing (data-step-edit), never a write
 if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/act: `<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change details<\/button>`/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
 if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
@@ -50,7 +51,7 @@ if (!/if \(step\?\.flowId === "m1\.gbp\.verify" && task\?\.status === "done" && 
 
 // ── 2 · drawn for real, both sides, every state ──
 const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m), pl("GOOGLE_G"), pl("GC_ICON"), pp(/^function googleCardHtml\(/m), pl("gcardMaps"), pl("GV_STORE"), pp(/^function gvProfileHtml\(/m),
-  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
+  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
   pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay")];
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), al("G_ICON"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
@@ -62,7 +63,7 @@ const TINT = { ok: "rgb(227, 241, 223)", rga: "rgb(235, 243, 255)", you: "rgb(25
 const look = (sel) => [...document.querySelectorAll(sel)].map((c) => { const s = getComputedStyle(c), sm = c.querySelector(".gcard-st, .ob-gcard-st"), tiles = [...c.querySelectorAll(".pm-hc-day:not(.off), .pm-hc-hol")];
   return { cls: c.className, bg: s.backgroundColor, edge: s.borderLeftColor, edgeW: s.borderLeftWidth, head: sm ? getComputedStyle(sm).color : null, logo: !!c.querySelector("svg path[fill='#4285F4']"),
     tinted: tiles.filter((t) => { const b = getComputedStyle(t); return b.backgroundColor !== "rgb(255, 255, 255)" || /12, 81, 50|207, 230, 200/.test(b.borderColor); }).length,
-    act: c.nextElementSibling && /(ob-)?gcard-act/.test(c.nextElementSibling.className) ? c.nextElementSibling.innerText.trim() : "", primary: !!(c.nextElementSibling && c.nextElementSibling.querySelector(".pm-commit")), icon: (() => { const ic = c.querySelector(".gcard-ic, .ob-gcard-ic"); return ic ? { bg: getComputedStyle(ic).backgroundColor, svg: !!ic.querySelector("svg path, svg circle"), text: ic.textContent.trim() } : null; })(), border: s.borderTopColor + " " + s.borderTopWidth + " " + s.borderLeftWidth, meta: [...c.querySelectorAll(".gcard-st, .ob-gcard-st, .gcard-meta, .ob-gcard-meta, .gcard-proof, .ob-gcard-proof")].map((x) => x.innerText).join(" | ").replace(/\s+/g, " ").trim() }; });
+    act: c.nextElementSibling && /(ob-)?gcard-act/.test(c.nextElementSibling.className) ? c.nextElementSibling.innerText.trim() : "", primary: !!(c.nextElementSibling && c.nextElementSibling.querySelector(".pm-commit")), icon: (() => { const ic = c.querySelector(".gcard-ic, .ob-gcard-ic"); return ic ? { bg: getComputedStyle(ic).backgroundColor, svg: !!ic.querySelector("svg path, svg circle"), text: ic.textContent.trim() } : null; })(), border: s.borderTopColor + " " + s.borderTopWidth + " " + s.borderLeftWidth, st: sm ? sm.innerText.replace(/\s+/g, " ").trim() : "", when: (c.querySelector(".gcard-when, .ob-gcard-when") || {}).innerText || "", whenUnderTitle: !!c.querySelector(".gcard-th > .gcard-t + .gcard-when, .ob-gcard-th > .ob-gcard-t + .ob-gcard-when"), meta: [...c.querySelectorAll(".gcard-st, .ob-gcard-st, .gcard-meta, .ob-gcard-meta, .gcard-proof, .ob-gcard-proof")].map((x) => x.innerText).join(" | ").replace(/\s+/g, " ").trim() }; });
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 let P, A;
 try {
@@ -96,7 +97,7 @@ try {
   await apage.addScriptTag({ content: `var state = { onboardingData: { tasks: { "m1.gbp.business_facts": { google_push: { maps_uri: "https://maps.google.com/?cid=1" } } } } };\n${aLift.join("\n")}` });
   A = await apage.evaluate((lookSrc) => {
     const h = document.getElementById("h");
-    h.innerHTML = ["ok", "rga", "you", "wait"].map((st) => `<section data-k="${st}">${adminGoogleCardHtml({ state: st, small: "Heading", title: "Title", proof: adminGcardMaps(), act: "<button class=\"admin-button\">Act</button>" })}</section>`).join("");
+    h.innerHTML = ["ok", "rga", "you", "wait"].map((st) => `<section data-k="${st}">${adminGoogleCardHtml({ state: st, small: "Heading", side: "checked Oct 16", title: "Title", proof: adminGcardMaps(), act: "<button class=\"admin-button\">Act</button>" })}</section>`).join("");
     const L = eval(`(${lookSrc})`);
     const cards = Object.fromEntries(["ok", "rga", "you", "wait"].map((k) => [k, L.call(null, `section[data-k="${k}"] > .ob-gcard`)[0] || null]));
     // 🔑 10-16: drawn INSIDE admin's own row markup — admin's .ob-step.queued / .active.is-wait marker rules and the input box's
@@ -122,16 +123,22 @@ for (const [k, st] of Object.entries(want)) {
   if (c.tinted) fail(`portal "${k}" has ${c.tinted} tinted tile(s) inside (what you read or pick stays white)`);
   if (c.head !== EDGE[st] && !(st === "rga" && c.head === "rgb(28, 68, 189)") && !(st === "wait" && c.head === "rgb(95, 99, 104)")) fail(`portal "${k}" status line isn't the ${st} colour (${c.head})`);
 }
-if (P["9 done"] && (P["9 done"].act !== "Change hours" || !/^On Google · checked Oct 16 \| .*See it on Google Maps ↗$/i.test(P["9 done"].meta))) fail(`step 9's card lacks Change hours under it, or its status line / proof (${P["9 done"]?.meta})`);
-if (P["10 done"] && (P["10 done"].act !== "Change link" || !/^On Google · checked Oct 16 \| Try it ↗ See it on Google Maps ↗$/i.test(P["10 done"].meta))) fail(`step 10's card lacks Change link under it, or "On Google · checked" + Try it + Maps (${P["10 done"]?.meta})`);
-if (P["11 done"] && (P["11 done"].act !== "Change details" || !/^On Google · checked Oct 16 \| See it on Google Maps ↗$/i.test(P["11 done"].meta))) fail(`step 11's card lacks Change details under it, or "On Google · checked" + Maps (${P["11 done"]?.meta})`);
-if (P["6 verified"] && (P["6 verified"].act !== "Check again" || !/^Verified by Google · checked Oct 16, 6:03 AM \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's card lacks Check again under it, or "Verified by Google · checked" + Maps + How (${P["6 verified"]?.meta})`);
+// 🔒 10-20 (Chris, step 6 v2.1 → every card): the status line says only WHAT IT IS; the time is its own line under the title
+const MONTH = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d/;
+for (const [k, c] of Object.entries(P)) if (c && (MONTH.test(c.st) || /·\s*(?:checked|confirmed|last|saved|sent|built)\b/i.test(c.st))) fail(`portal "${k}" puts a time on its status line ("${c.st}") — it goes under the title`);
+for (const k of ["9 done", "10 done", "11 done", "6 verified"]) if (P[k] && (!/^Last checked Oct 16\b/.test(P[k].when) || !P[k].whenUnderTitle)) fail(`portal "${k}" doesn't say "Last checked …" on its own line under the title ("${P[k].when}")`);
+if (P["9 done"] && (P["9 done"].act !== "Change hours" || !/^On Google \| .*See it on Google Maps ↗$/i.test(P["9 done"].meta))) fail(`step 9's card lacks Change hours under it, or its status line / proof (${P["9 done"]?.meta})`);
+if (P["10 done"] && (P["10 done"].act !== "Change link" || !/^On Google \| Try it ↗ See it on Google Maps ↗$/i.test(P["10 done"].meta))) fail(`step 10's card lacks Change link under it, or "On Google" + Try it + Maps (${P["10 done"]?.meta})`);
+if (P["11 done"] && (P["11 done"].act !== "Change details" || !/^On Google \| See it on Google Maps ↗$/i.test(P["11 done"].meta))) fail(`step 11's card lacks Change details under it, or "On Google" + Maps (${P["11 done"]?.meta})`);
+// step 6 v2.1: no Check again on a verified profile — a note says RGA checks every night
+if (P["6 verified"] && (P["6 verified"].act !== "" || !/^Verified by Google \| We check this every night\. [^|]*this step reopens[^|]* \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's verified card has a Check again, or lacks "Verified by Google" + the every-night note + Maps + How (${P["6 verified"]?.meta} / act "${P["6 verified"]?.act}")`);
 if (P["10 Google said"] && (P["10 Google said"].act !== "Fix it" || !P["10 Google said"].primary)) fail("a refusal's card has no blue Fix it under it");
 if (A._rows) {
   const want4 = [EDGE.you, EDGE.rga, EDGE.rga, EDGE.ok];
   if (JSON.stringify(A._rows.markers) !== JSON.stringify(want4)) fail(`admin's Google row markers don't take their card's colour inside real rows (${A._rows.markers.join(" | ")})`);
   if (A._rows.goText === A._rows.goBg) fail(`the blue "Open Google Business Profile" button's text is the same colour as the button (${A._rows.goText})`);
 }
+for (const st of ["ok", "rga", "you", "wait"]) if (A[st] && (MONTH.test(A[st].st) || A[st].when !== "Last checked Oct 16" || !A[st].whenUnderTitle)) fail(`admin "${st}" card puts the time on its status line, or not on its own line under the title ("${A[st].st}" / "${A[st].when}")`);
 for (const st of ["ok", "rga", "you", "wait"]) {
   const a = A[st];
   if (!a) { fail(`admin's ${st} card doesn't draw`); continue; }

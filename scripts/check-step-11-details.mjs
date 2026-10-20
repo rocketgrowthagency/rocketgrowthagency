@@ -91,8 +91,8 @@ if (R.none.on.length || R.none.btn !== "None of these apply" || R.rga.btn !== "P
 if (R.many.folds !== 3 || !/Google shows 1 of 30/i.test(R.many.text)) fail(`a long list doesn't fold after the first two groups, or the count is wrong (${R.many.folds}; ${R.many.text.slice(0, 80)})`);
 if (R.editing.cls !== "gcard ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");
-if (!/^On Google · checked Oct 17 Details about your business Online appointments ✓ Not shown: Appointment required\. See it on Google Maps ↗ Change details$/i.test(R.done.text.trim()) || !R.done.edit) fail(`the done card isn't each detail ✓ + not shown + Maps + Change details (${R.done.text})`);
-if (!/None of these apply Google shows none of these details on your profile\./.test(R.doneNone)) fail("a done step with nothing ticked doesn't say none apply");
+if (!/^On Google Details about your business Last checked Oct 17 Online appointments ✓ Not shown: Appointment required\. See it on Google Maps ↗ Change details$/i.test(R.done.text.trim()) || !R.done.edit) fail(`the done card isn't each detail ✓ + not shown + Maps + Change details (${R.done.text})`);
+if (!/None of these apply (?:Last checked [^G]* )?Google shows none of these details on your profile\./.test(R.doneNone)) fail(`a done step with nothing ticked doesn't say none apply (${R.doneNone})`);
 if (R.x) fail("a detail's label became HTML");
 
 if (F.length) { console.error("🔴 Step 11 isn't the approved details step:"); for (const f of F) console.error("   · " + f); process.exit(1); }

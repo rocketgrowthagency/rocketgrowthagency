@@ -101,8 +101,9 @@ try {
   });
   // 🔒 one_google_card_v1: the one Google card, green; Checked + Maps + "How verification works" in its bottom line, "Check again" top-right
   // 🔒 google_card_best_v1: one status line (Verified by Google · checked …), the profile, proof (Maps · How), Check again under the card
-  if (!/^Verified by Google · checked Oct 15, 9:40 AM Google Business Profile Business Rocket Growth Agency Phone on the profile \(424\) 242-2040 See it on Google Maps ↗ How verification works Check again$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
-  if (r.yes.card !== "gcard ok" || !r.yes.recheck || !r.yes.how) fail(`the verified card isn't the one green Google card with Check again + How verification works (${JSON.stringify(r.yes)})`);
+  // v2.1 (10-20): the time on its own line under the title; no Check again — the every-night note instead
+  if (!/^Verified by Google Google Business Profile Last checked Oct 15, 9:40 AM Business Rocket Growth Agency Phone on the profile \(424\) 242-2040 We check this every night\. .*this step reopens and we'll tell you what to do\. See it on Google Maps ↗ How verification works$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
+  if (r.yes.card !== "gcard ok" || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the one green Google card with How verification works and NO Check again (${JSON.stringify(r.yes)})`);
   if (r.emailFirst.fastest || r.emailFirst.sel !== "EMAIL" || !r.emailFirst.google || r.emailFirst.codeHidden !== true) fail(`the ways to verify are drawn wrong (${JSON.stringify(r.emailFirst)})`);
   if (!r.smsFirst) fail("a text code isn't marked Fastest");
   if (r.x) fail("the profile's name became HTML");

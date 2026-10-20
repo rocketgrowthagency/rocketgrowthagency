@@ -138,7 +138,7 @@ try {
     return { card: !!card, st: card ? card.querySelector(".gcard-st").innerText.replace(/\s+/g, " ").trim() : "", title: card ? card.querySelector(".gcard-t").textContent : "",
       meta: card ? (card.querySelector(".gcard-meta") || {}).textContent : "", how: [...h.querySelectorAll(".pm-how li")].map((li) => [li.className, li.querySelector("b").textContent]), btn: !!h.querySelector("button") };
   }, step);
-  if (!a.card || !/^RGA is on it · nothing needed from you yet$/i.test(a.st) || a.title !== "Writing your review request message") fail(`A: the wait isn't the blue card "RGA is on it · Writing your review request message" (${a.st} · ${a.title})`);
+  if (!a.card || !/^RGA is on it$/i.test(a.st) || a.title !== "Writing your review request message") fail(`A: the wait isn't the blue card "RGA is on it · Writing your review request message" (${a.st} · ${a.title})`);
   if (a.meta !== w.body) fail(`A: the card doesn't say when it opens ("${w.body}" → "${a.meta}")`);
   if (a.how.length !== 4 || a.how[0][0] !== "now" || a.how.slice(1).some((x) => x[0])) fail(`A: "how it works" isn't 4 parts with the first (RGA's) highlighted (${JSON.stringify(a.how)})`);
   await shot("A-waiting");
@@ -210,8 +210,8 @@ try {
   if (!j || j.chip !== "You marked it sent Oct 21" || j.mark || j.act) fail(`C: a request they marked doesn't say "You marked it sent" with the date (${JSON.stringify(j)})`);
   if (!an || an.chip !== "RGA is writing it" || an.act) fail(`C: a request with no message yet offers a send, or isn't "RGA is writing it" (${JSON.stringify(an)})`);
   const [rq, rv] = c.cards;
-  if (!rq || rq.cls !== "gcard you" || !/^Your move · 1 of 3 marked sent$/i.test(rq.st)) fail(`C: the requests card isn't "Your move · 1 of 3 marked sent" (${JSON.stringify(rq)})`);
-  if (!rv || rv.cls !== "gcard ok" || !/^On Google · checked Oct 22$/i.test(rv.st) || rv.t !== "2 new reviews since Oct 20") fail(`C: the reviews card isn't the measured count (${JSON.stringify(rv)})`);
+  if (!rq || rq.cls !== "gcard you" || !/^Your move$/i.test(rq.st)) fail(`C: the requests card isn't "Your move · 1 of 3 marked sent" (${JSON.stringify(rq)})`);
+  if (!rv || rv.cls !== "gcard ok" || !/^On Google$/i.test(rv.st) || rv.t !== "2 new reviews since Oct 20") fail(`C: the reviews card isn't the measured count (${JSON.stringify(rv)})`);
   if (/\bSent\b(?! from)/.test(c.text.replace(/Marked sent/g, ""))) fail("C: a request reads \"Sent\" (we can't see a text go out)");
   await shot("C-after");
   const c2 = await page.evaluate((data) => { const h = document.getElementById("h"); h.innerHTML = `<div>${reviewStepLinesHtml({ ...data, reviews: null })}</div>`;

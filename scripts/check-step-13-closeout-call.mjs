@@ -56,7 +56,7 @@ try {
   }, cs);
 } finally { await browser.close(); }
 if (R.rga.rows !== R.n || R.rga.ticks !== R.n - 2) fail(`the wait doesn't list every prerequisite with ✓ on the done ones (${R.rga.rows} rows, ${R.rga.ticks} ✓ of ${R.n})`);
-if (!/^2 steps left · Month 1 ends about Nov 8 We book this call when these are done/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
+if (!/^2 steps left We book this call when these are done Month 1 ends about Nov 8/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
 if (!/8 · Provide 20\+ business photos yours · reminder /.test(R.rga.text) || !/12 · Send personalized review requests to 5 past customers RGA first, then yours/.test(R.rga.text)) fail("each open prerequisite doesn't say whose move it is (yours · reminder / RGA first, then yours)");
 if (R.rga.go !== "Go to step 8") fail(`"Go to" doesn't point at the first step the client can do now (${R.rga.go})`);
 if (R.rgaOnly.go) fail("a step that waits on RGA is offered as the client's next move");
