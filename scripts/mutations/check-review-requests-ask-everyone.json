@@ -37,8 +37,8 @@
  [
   "Monthly's campaign isn't checked",
   "exec",
-  "    if (GATING.test(draft) || INCENTIVE.test(draft)) return { summary: \"The draft asked only happy customers",
-  "    if (false) return { summary: \"The draft asked only happy customers",
+  "    if (GATING.test(draft) || INCENTIVE.test(draft)) return { summary: \"The draft picked who gets asked",
+  "    if (false) return { summary: \"The draft picked who gets asked",
   1
  ]
 ]

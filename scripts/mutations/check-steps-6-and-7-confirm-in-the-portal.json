@@ -1,0 +1,121 @@
+[
+ [
+  "the confirmed card mentions photos",
+  "portal",
+  "<span class=\"gcard-says\">Only your main Business Profile shows on Maps and Search now.</span>",
+  "<span class=\"gcard-says\">Your next step is open: upload your business photos.</span>",
+  1
+ ],
+ [
+  "confirmed before Google confirms",
+  "portal",
+  "if (!rm || !(t.outcome_data && t.outcome_data.verdict === \"clean\")) return null;",
+  "if (!rm) return null;",
+  1
+ ],
+ [
+  "the top note never expires",
+  "portal",
+  "if (!c || !c.at || Date.now() - Date.parse(c.at) > 7 * 86400000) return \"\";",
+  "if (!c || !c.at) return \"\";",
+  1
+ ],
+ [
+  "step 6 body drops the card",
+  "portal",
+  "dupConfirmedHtml(onboarding?.data?.tasks, oauth) +",
+  "\"\" +",
+  1
+ ],
+ [
+  "the thread row is back",
+  "thread",
+  ".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\")",
+  ".filter(Boolean)",
+  1
+ ],
+ [
+  "the email is sent again",
+  "notifystepopen",
+  "if (false && dupClearedDue(tasks)) {",
+  "if (dupClearedDue(tasks)) {",
+  1
+ ],
+ [
+  "admin forgets how the client is told",
+  "admin",
+  "<p class=\"ol-foot\" data-ol-told>",
+  "<p class=\"ol-foot\">",
+  1
+ ],
+ [
+  "step 7 drops the 48-hour line",
+  "portal",
+  " Google can take up to 48 hours to show a change; we check every night.",
+  " We check every night.",
+  1
+ ],
+ [
+  "step 7 drops done-when",
+  "portal",
+  "<b>Done when:</b> Google shows",
+  "<b>Next:</b> Google shows",
+  1
+ ],
+ [
+  "step 7 drops the website row",
+  "portal",
+  "    row(\"Website\", escapeHtml(siteShow(a.website || ci.website || \"\")), ok),\n",
+  "",
+  1
+ ],
+ [
+  "a place chip shows twice",
+  "portal",
+  "...adds.filter((x) => !nowOn.includes(placeName(x.name))).map(",
+  "...adds.map(",
+  1
+ ],
+ [
+  "step 7 back on the old card",
+  "portal",
+  "return factsCardV2(step, taskState, g);",
+  "return \"\";",
+  1
+ ],
+ [
+  "the label column is fixed again",
+  "portalcss",
+  ".pm-fxt-r { display: grid; grid-template-columns: minmax(0, 1fr) auto;",
+  ".pm-fxt-r { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) auto;",
+  1
+ ],
+ [
+  "the value squeezes beside the label",
+  "portalcss",
+  ".pm-fxt-v { grid-column: 1 / -1; ",
+  ".pm-fxt-v { ",
+  1
+ ],
+ [
+  "a chip breaks mid-word",
+  "portalcss",
+  ".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;",
+  ".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px;",
+  1
+ ],
+ [
+  "the row order is value before state",
+  "portal",
+  "<span class=\"pm-fxt-k\">${escapeHtml(k)}</span>${st}<span class=\"pm-fxt-v\">${v}</span></div>",
+  "<span class=\"pm-fxt-k\">${escapeHtml(k)}</span><span class=\"pm-fxt-v\">${v}</span>${st}</div>",
+  1
+ ],
+ [
+  "on Google says RGA is working",
+  "portal",
+  "title: \"Your business on Google matches what you told us\",",
+  "title: \"RGA is checking your business on Google\",",
+  1
+ ]
+]

@@ -217,7 +217,8 @@ if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*i
 if (!/ans\.innerHTML = `<span class="ck" aria-hidden="true">✓<\/span><span class="l">\$\{escapeHtml\(row\.getAttribute\("data-fact-name"\) \|\| ""\)\}<\/span><span class="v">\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/span><button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
 if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
-if (!/step\.id === "m1\.gbp\.business_facts" && Array\.isArray\(g\.rga\) && g\.rga\.length/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
+// 🔒 superseded 10-20 by the approved step7_check_business_v2 card (factsCardV2) — the full card is RUN in check-steps-6-and-7-confirm-in-the-portal
+if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g\);/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
 
 // ── 7 · the card: RGA's recommendation drawn side by side; no text box; the state in the input; admin ticks only from Google ──
 {
@@ -265,9 +266,9 @@ if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\
   if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
 }
 if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
-if (!/const chip = \(x\) => `<span class="pm-fx-pl \$\{x\.on \? "on" : "wait"\}">/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: "RGA is on it", side: on \? `\$\{on\} of \$\{items\.length\} on Google` : "nothing needed from you"[\s\S]{0,1100}proof: gcardMaps\(maps\) \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+if (!/x\.on \? "on" : "", x\.on \? "✓ on Google" : "adding"/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: "RGA is on it", side: `nothing needed from you · \$\{items\.length - pending\.length\} of \$\{items\.length\} on Google`[\s\S]{0,1800}proof: maps, act: change \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
 if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
-if (!/<span class="pm-fx-pls">\$\{items\.map\(chip\)\.join\(""\)\}<\/span>/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
+if (!/\$\{areaChips \? `<span class="pm-fxt-pls">\$\{areaChips\}<\/span>` : ""\}/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
 {
   // the note, run for real
   const ni = portal.indexOf("function factsNoteHtml(t) {"), nj = portal.indexOf("\n}\n", ni);

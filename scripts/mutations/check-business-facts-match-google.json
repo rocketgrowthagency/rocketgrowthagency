@@ -2,7 +2,7 @@
  [
   "apostrophes split names",
   "gbpfacts",
-  ".replace(/['’`]/g, \"\")",
+  ".replace(/['\u2019`]/g, \"\")",
   "",
   1
  ],
@@ -212,7 +212,7 @@
  [
   "a pick shows nothing",
   "portal",
-  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">✓</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">\u2713</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
   "    ans.innerHTML = \"\";",
   1
  ],
@@ -436,7 +436,7 @@
  [
   "client sees no chips",
   "portal",
-  "<span class=\"pm-fx-pls\">${items.map(chip).join(\"\")}</span>",
+  "${areaChips ? `<span class=\"pm-fxt-pls\">${areaChips}</span>` : \"\"}",
   "",
   1
  ],
