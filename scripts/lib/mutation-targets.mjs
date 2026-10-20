@@ -151,7 +151,11 @@ export const FILES = {
   gbpverify: "netlify/functions/_gbp-verify.js",
   gbpverifyfn: "netlify/functions/portal-gbp-verify.js",
   stepinput: "netlify/functions/portal-step-input.js",
-  bookinglink: "netlify/functions/_booking-link.js",   // step10_booking_link_v1 (10-16)
+  bookinglink: "netlify/functions/_booking-link.js",
+  recordcheck: "scripts/record-loss.mjs",
+  siteplatform: "netlify/functions/_site-platform.js",   // step 2 builder detection (10-20)
+  accessconfirm: "netlify/functions/admin-access-confirm.js",
+  formtest: "netlify/functions/portal-form-test.js",   // the record check's own analysis (10-20)   // step10_booking_link_v1 (10-16)
   callpurpose: "netlify/functions/_call-purpose.js",   // batch 3 close-out booking (10-19)
   gbpposts: "netlify/functions/_gbp-posts.js",   // batch 4 Monthly posts (10-19)
   ytclips: "netlify/functions/_youtube-clips.js",   // batch 4 YouTube clips (10-19)

@@ -453,6 +453,9 @@ run check-memory-has-no-orphans.mjs "a memory nothing links to is a memory nobod
 # every new mockup to be cited by its system's memory; and run the memory audit STRICT (broken
 # links, orphans, files not mirrored to git) so drift fails instead of being logged and ignored.
 node scripts/build-mockup-registry.mjs >/dev/null 2>&1 || echo "  ⚠️  build-mockup-registry did not run — the next gate will say what is stale"
+# 🔒 the CLIENT STEP LEDGER is generated from the code (Chris 10-20 "harden memory"): memory can't call a step built when the
+# portal draws nothing for it. It FAILS (reported) while any client step has no done record.
+run build-client-step-ledger.mjs "every client step draws a DONE RECORD in the portal (generated ledger → memory reference_client_step_ledger)"
 run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
 run check-colours-come-from-the-system.mjs "every state colour comes from the one approved system, in both portals"
@@ -498,6 +501,9 @@ run check-the-mature-stage-reads-what-is-measured.mjs "Mature stage: 14 computed
 run check-every-service-key-function-checks-its-caller.mjs "security: every function holding the service key checks its caller (auth helper, session, signed token, internal or fail-closed secret, schedule) or is public on the record"
 run check-review-requests-ask-everyone.mjs "review requests ask EVERYONE: no gating, no incentives, no drafting notes reach a customer (Google review policy)"
 run check-steps-6-and-7-confirm-in-the-portal.mjs "step 6 confirms the duplicate is gone IN THE PORTAL (no email, no photos line); step 7 shows the facts table + 48 h + done-when, stacked on a phone"
+run check-client-steps-2-3-4-show-their-record.mjs "client steps 2 · 3 · 4 show their record: an invite never a password · an honest call-tracking decision · real form leads only (approved 10-20)"
+run check-client-step-5-shows-the-plan.mjs "client step 5 shows the locked keyword plan for any business (approved 10-20)"
+run check-done-records-steps-13-19.mjs "client steps 13–19 draw a done record (approved 10-20)"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"
@@ -542,6 +548,7 @@ run check-absent-rank-is-never-a-position.mjs "a business absent from the grid n
 run check-almanac-accruing.mjs         "the local-search almanac still reflects its corpus"
 run check-no-two-clients-share-a-google-property.mjs "no client reports another business's Google data"
 run_args check-no-duplicate-google-listing.mjs --all "no client has a SECOND Google listing splitting its ranking signals"
+run check-no-client-record-was-lost.mjs "NO CLIENT RECORD WAS LOST: every recorded answer, choice and done mark is still on its step; nothing vanished since yesterday's snapshot (Chris 10-20)"
 run check-client-dedupe-gate.mjs       "an archived client cannot be silently re-created"
 run retry-place-id-backfill.mjs        "every client has a Google place id (strongest dedupe key)"
 run check-the-review-count-is-read.mjs "the review count is read from the client's own Google first, and an unread client fails"

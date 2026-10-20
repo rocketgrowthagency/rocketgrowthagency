@@ -93,7 +93,7 @@ const OFFERED = [
   const ok = fakeGoogle({ offered: OFFERED });
   const o = await G.applyForStep(STEP.BOOKING, "https://www.rocketgrowthagency.com/contact/", ok.deps);
   const wr = ok.writes()[0];
-  if (o.state !== "on_google" || !/attributeMask=attributes%2Furl_appointment$/.test(wr?.url || "") || wr?.body.attributes[0]?.uriValues?.[0]?.uri !== "https://www.rocketgrowthagency.com/contact/?utm_source=gbp&utm_medium=booking&utm_campaign=local-seo") fail(`the booking link isn't written as Google's appointment link (${wr?.url})`);
+  if (o.state !== "on_google" || !/attributeMask=attributes%2Furl_appointment$/.test(wr?.url || "") || wr?.body.attributes[0]?.uriValues?.[0]?.uri !== "https://www.rocketgrowthagency.com/contact/?utm_source=google&utm_medium=organic&utm_campaign=gbp-booking") fail(`the booking link isn't written as Google's appointment link (${wr?.url})`);
   const bot = fakeGoogle({ linkStatus: 403, offered: OFFERED });
   if ((await G.applyForStep(STEP.BOOKING, "https://example.com/book", bot.deps)).state !== "on_google") fail("a booking page that blocks robots (403) is refused");
   // a permission refusal is RGA's, even when Google's message mentions the link
@@ -123,8 +123,8 @@ const OFFERED = [
 // ── 4 · saving settles by the read-back (portal-step-input) ──
 const si = read("netlify/functions/portal-step-input.js").replace(/^[ \t]*\/\/.*$/gm, "");
 const wires = [
-  [/const settled = !push \|\| push\.state === "on_google" \|\| push\.state === "not_sent";/, "the step is Done before Google shows it"],
-  [/status: settled \? "done" : push\.state === "with_rga" \? "in_progress" : "pending",/, "a refusal doesn't reopen the step (client) or move it to RGA"],
+  [/const settled = !waitsOnRga && \(!push \|\| push\.state === "on_google" \|\| push\.state === "not_sent"\);/, "the step is Done before Google shows it"],
+  [/status: settled \? "done" : waitsOnRga \|\| push\.state === "with_rga" \? "in_progress" : "pending",/, "a refusal doesn't reopen the step (client) or move it to RGA"],
   [/\.\.\.\(push \? \{ google_push: push \} : \{\}\),/, "where the answer stands on Google isn't recorded on the step"],
   [/rgaToldNow \? tellRga\(/, "RGA isn't told when an answer doesn't reach Google"],
   [/parsed = validate\(\{ \.\.\.spec, options: offered \}, body\.value\);/, "step 11's ticks aren't checked against Google's own list"],
@@ -174,8 +174,8 @@ try {
   if (r.sum !== "Mon–Fri 9 AM–6 PM · Sat–Sun closed") fail(`the hours summary reads "${r.sum}"`);
   // (the small label is uppercase by CSS, so the match ignores case)
   // 🔒 one_google_card_v1: the summary, then "Checked on Google <date>" in the card's bottom line
-  if (!/^On Google · checked Oct 15 Your hours Mon–Fri 9 AM–6 PM · Sat–Sun closed$/i.test(r.on)) fail(`a verified step doesn't say it's on Google (${r.on})`);
-  if (!/^RGA is on it · nothing needed from you Your booking link Google asked us to change something\. RGA is finishing it\.$/i.test(r.rga) || /403/.test(r.rga)) fail(`RGA's fix doesn't read "Going on your Google profile", or shows Google's raw text (${r.rga})`);
+  if (!/^On Google Your hours Last checked Oct 15 Mon–Fri 9 AM–6 PM · Sat–Sun closed$/i.test(r.on)) fail(`a verified step doesn't say it's on Google (${r.on})`);
+  if (!/^RGA is on it Your booking link Nothing needed from you Google asked us to change something\. RGA is finishing it\.$/i.test(r.rga) || /403/.test(r.rga)) fail(`RGA's fix doesn't read "Going on your Google profile", or shows Google's raw text (${r.rga})`);
   if (!/^Google said no This link doesn't open\. How to fix: Paste the public link\. Fix it$/i.test(r.fix)) fail(`a refusal the client fixes doesn't read Google said + How to fix (${r.fix})`);
   if (!/Identifies as women-owned/.test(r.attrs)) fail("step 11's verified details aren't named");
   if (r.other) fail("a step that doesn't go on Google draws a Google line");

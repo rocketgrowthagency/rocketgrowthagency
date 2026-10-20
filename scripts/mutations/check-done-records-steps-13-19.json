@@ -1,0 +1,51 @@
+[
+ [
+  "calls invent notes",
+  "portal",
+  "const notes = `<span class=\"gcard-says pm-at-note\">Notes from the call show here when RGA records them.</span>`;",
+  "const notes = `<span class=\"gcard-says\">We covered your report and agreed next steps.</span>`;",
+  1
+ ],
+ [
+  "no report link",
+  "portal",
+  "const dcReport = (label) => `<button type=\"button\" class=\"pm-linkbtn\" data-portal-goto=\"reports\">${escapeHtml(label)} \u2192</button>`;",
+  "const dcReport = (label) => escapeHtml(label);",
+  1
+ ],
+ [
+  "clips not listed",
+  "portal",
+  "${clips.map((c, i) => dcRow(`Video ${i + 1}`,",
+  "${[].map((c, i) => dcRow(`Video ${i + 1}`,",
+  1
+ ],
+ [
+  "empty numbers shown",
+  "portal",
+  ".filter((f) => v[f.key] != null && v[f.key] !== \"\")",
+  ".filter((f) => true)",
+  1
+ ],
+ [
+  "no count reads as 0",
+  "portal",
+  "const n = Number.isFinite(ctx.photosThisMonth) ? ctx.photosThisMonth : null;",
+  "const n = Number(ctx.photosThisMonth) || 0;",
+  1
+ ],
+ [
+  "the oldest list is shown",
+  "portal",
+  ".sort((a, b) => String(b.created_at || \"\").localeCompare(String(a.created_at || \"\")));",
+  ".sort((a, b) => String(a.created_at || \"\").localeCompare(String(b.created_at || \"\")));",
+  1
+ ],
+ [
+  "the done card is never drawn",
+  "portal",
+  "const completionCtlLive = DONE_CARD.has(step.id) && isDone ? doneCardHtml(",
+  "const completionCtlLive = false ? doneCardHtml(",
+  1
+ ]
+]

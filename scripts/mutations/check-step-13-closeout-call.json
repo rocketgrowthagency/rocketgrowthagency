@@ -9,8 +9,8 @@
  [
   "the What to do box is back",
   "portal",
-  "const completionCtlLive = step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
-  "const completionCtlLive = step.id === \"m1.call.close\" ? closeCallHtml(step, taskState, clientId, waitTasks)",
+  "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
+  "      : step.id === \"m1.call.close\" ? closeCallHtml(step, taskState, clientId, waitTasks)",
   1
  ],
  [
@@ -30,7 +30,7 @@
  [
   "the reminder date is lost",
   "portal",
-  "const who = rgaFirst ? \"RGA first, then yours\" : later ? `yours · reminder ${laterDay(later.until)}` : \"yours\";",
+  "const who = rgaFirst ? \"RGA first, then yours\" : later ? `yours \u00b7 reminder ${laterDay(later.until)}` : \"yours\";",
   "const who = rgaFirst ? \"RGA first, then yours\" : \"yours\";",
   1
  ],

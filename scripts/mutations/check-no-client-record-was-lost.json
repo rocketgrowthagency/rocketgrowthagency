@@ -1,0 +1,37 @@
+[
+ [
+  "lost answers pass",
+  "recordcheck",
+  "    if (!t || t.client_input == null) loss(",
+  "    if (false) loss(",
+  1
+ ],
+ [
+  "lost choices pass",
+  "recordcheck",
+  "    if (!t || !t.client_choice) loss(",
+  "    if (false) loss(",
+  1
+ ],
+ [
+  "vanished fields pass",
+  "recordcheck",
+  "    if (gone.length) changed.push(",
+  "    if (false) changed.push(",
+  1
+ ],
+ [
+  "done \u2192 pending passes",
+  "recordcheck",
+  "    if ((p.status === \"done\" || p.status === \"skipped\") && c.status !== p.status) changed.push(",
+  "    if (false) changed.push(",
+  1
+ ],
+ [
+  "acknowledged hides the loss",
+  "recordcheck",
+  "(ack ? acked.push(",
+  "(ack ? null && acked.push(",
+  1
+ ]
+]

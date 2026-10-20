@@ -77,7 +77,10 @@ for (const s of steps) {
     // ═══════════════════════════════════════════════════════════════════════════════════════
     const inp = s.clientInput;
     if (inp) {
-      if (!INPUT_KINDS.has(inp.kind)) bad(`${s.id} declares clientInput.kind="${inp.kind}", which the portal cannot render`);
+      // 🔒 step2_website_access_v2 (10-20): "access" is drawn by the step's OWN record card (RECORD_CARD → accessCardHtml), not
+      // the generic inputHtml — accepted only when that card is really there for this step
+      const ownCard = inp.kind === "access" && new RegExp(`const RECORD_CARD = new Set\\(\\[[^\\]]*"${s.id.replace(/\./g, "\\.")}"`).test(read("portal/portal.js")) && /function accessCardHtml\(/.test(read("portal/portal.js"));
+      if (!INPUT_KINDS.has(inp.kind) && !ownCard) bad(`${s.id} declares clientInput.kind="${inp.kind}", which the portal cannot render`);
       if (!inp.cta) bad(`${s.id} takes an input but its submit button has no label`);
       // 🔑 A PROMPT, OR A PLATFORM QUESTION THAT LABELS THE SAME BLOCK. 2026-09-25: the CMS-login
       // step's prompt repeated its own ask word for word — "Create a one-time secure link at
@@ -86,7 +89,7 @@ for (const s of steps) {
       // once and labels the block with the platform question instead.
       // 🔴 The rule still holds: SOMETHING visible must say what is being asked. It just does not
       // have to be `prompt` when `platform.prompt` heads the same control block.
-      if (!inp.prompt && !inp.platform?.prompt) {
+      if (!inp.prompt && !inp.platform?.prompt && !ownCard) {
         bad(`${s.id} takes an input and nothing labels it — no prompt and no platform question`);
       }
       if (s.clientDoneCta) bad(`${s.id} has BOTH an input and an attestation button — two controls for one act`);

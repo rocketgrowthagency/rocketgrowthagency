@@ -50,7 +50,11 @@ const rows = fs.readdirSync(DIR).filter((f) => f.endsWith(".html")).sort().map((
     }
     return "";
   })();
-  return { f, base, title, date, subject, cited, art };
+  // 🔒 STATUS from the mockup's OWN tag (Chris 10-20: "make sure you're saving all final approved mockups") — the page says
+  // whether it was approved, built, pending or superseded; the registry repeats it so the FINAL approved one is findable
+  const tag = ((html.slice(0, 20000).match(/<span class="tag[^"]*">([^<]*)<\/span>/i) || [])[1] || "").trim();
+  const status = /SUPERSEDED/i.test(tag) ? "superseded" : /APPROVED|LIVE|BUILT/i.test(tag) ? "✅ approved" : /PENDING|Proposed/i.test(tag) ? "⏳ pending" : "—";
+  return { f, base, title, date, subject, cited, art, status };
 });
 
 const cell = (s) => String(s || "").replace(/\|/g, "/").replace(/\n/g, " ");
@@ -70,10 +74,10 @@ const lines = [
   "the only record — open the file to see what it proposed.",
   "Artifact links: https://claude.ai/artifact/<id>. Related: [[feedback_how_design_work_gets_done_first_time]]",
   "",
-  "| mockup | title | added | commit | artifact | cited by |",
-  "|---|---|---|---|---|---|",
+  "| mockup | status (its own tag) | title | added | commit | artifact | cited by |",
+  "|---|---|---|---|---|---|---|",
   ...rows.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.f.localeCompare(b.f)).map((r) =>
-    `| \`${r.base}\` | ${cell(r.title)} | ${r.date} | ${cell(r.subject).slice(0, 90)} | ${r.art || ""} | ${r.cited.length ? r.cited.map((c) => `[[${c}]]`).join(" ") : "**legacy · uncited**"} |`),
+    `| \`${r.base}\` | ${r.status} | ${cell(r.title)} | ${r.date} | ${cell(r.subject).slice(0, 90)} | ${r.art || ""} | ${r.cited.length ? r.cited.map((c) => `[[${c}]]`).join(" ") : "**legacy · uncited**"} |`),
   "",
 ];
 const out = lines.join("\n");

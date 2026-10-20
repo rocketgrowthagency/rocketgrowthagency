@@ -1,0 +1,93 @@
+[
+ [
+  "one sign is stated",
+  "siteplatform",
+  "confidence: best[1] >= 2 ? \"stated\" : \"ask\"",
+  "confidence: \"stated\"",
+  1
+ ],
+ [
+  "Facebook is a website",
+  "siteplatform",
+  "  if (NOT_A_SITE.test(u.hostname.replace(/^www\\./i, \"\"))) return { status: \"no_site\", platform: null, confidence: \"none\", signs: 0 };\n",
+  "",
+  1
+ ],
+ [
+  "an unreachable site is guessed",
+  "siteplatform",
+  "  } catch { return { status: \"couldnt_check\", platform: null, confidence: \"none\", signs: 0 }; }\n  finally",
+  "  } catch { return { status: \"ok\", platform: \"godaddy\", confidence: \"ask\", signs: 1 }; }\n  finally",
+  1
+ ],
+ [
+  "an invite finishes the step",
+  "stepinput",
+  "  const settled = !waitsOnRga && (",
+  "  const settled = (",
+  1
+ ],
+ [
+  "Confirm access isn't RGA-only",
+  "accessconfirm",
+  "  const gate = await requireWorkspaceForClient(event, clientId);",
+  "  const gate = { email: null };",
+  1
+ ],
+ [
+  "form starts count again",
+  "recheck",
+  "const LEAD_EVENTS = [\"generate_lead\", \"contact_submit\"];",
+  "const LEAD_EVENTS = [\"generate_lead\", \"contact_submit\", \"form_start\", \"form_submit\"];",
+  1
+ ],
+ [
+  "the client can log a test",
+  "formtest",
+  "const gate = action === \"log\" ? await requireWorkspaceForClient(event, clientId) : await requirePortalOwner(event, clientId);",
+  "const gate = await requirePortalOwner(event, clientId);",
+  1
+ ],
+ [
+  "the done card drops the role",
+  "portal",
+  "rcRow(\"Role\", [\"ok\", \"\u2713\"], escapeHtml(acc.role || \"\")), ",
+  "",
+  1
+ ],
+ [
+  "skip says Calls",
+  "portal",
+  "Your reports show <b>call-button clicks</b> from Google",
+  "Your reports show <b>Calls</b> from Google",
+  1
+ ],
+ [
+  "no revisit date",
+  "portal",
+  "${back ? ` \u00b7 we'll raise it again ${escapeHtml(monthDay(back))}` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the inbox test isn't asked",
+  "portal",
+  "  if (test && test.at && test.inbox == null) {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "zero reads as broken",
+  "portal",
+  "title: \"No submissions yet\",",
+  "title: \"Form tracking is broken\",",
+  1
+ ],
+ [
+  "the done body is blank again",
+  "portal",
+  "      : RECORD_CARD.has(step.id) && !month2Only ? (ownWait ? \"\" : recordCardHtml(step, taskState, clientId, onboarding?.data?.tasks))",
+  "      : false ? \"\"",
+  1
+ ]
+]

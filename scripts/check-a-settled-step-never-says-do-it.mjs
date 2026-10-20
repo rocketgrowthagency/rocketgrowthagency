@@ -50,7 +50,7 @@ const code = src.replace(/^[ \t]*\/\/.*$/gm, "");
   // through half the bundle, flagging the words "send that" from unrelated copy. Nth time a check
   // here anchored on a name's first occurrence.
   // → feedback_an_inventory_is_a_claim_about_what_i_thought_to_grep
-  const at = code.indexOf("const head = step.clientForm ===");
+  const at = code.search(/const head = \(*step\.clientForm ===/);
   if (at < 0) { fail.push("portal/portal.js — the control heading is gone."); }
   else {
     const semi = code.indexOf(";", code.indexOf('"What to do"', at));

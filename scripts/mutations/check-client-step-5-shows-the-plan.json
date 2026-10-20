@@ -1,0 +1,65 @@
+[
+ [
+  "the floor reads as a number",
+  "portal",
+  "const vol = Number.isFinite(d.volume) && d.volume > 10 ?",
+  "const vol = Number.isFinite(d.volume) ?",
+  1
+ ],
+ [
+  "no map tag",
+  "portal",
+  "${d.pack ? '<span class=\"pm-fxt-s rga\">Shows a map</span>' : \"\"}",
+  "",
+  1
+ ],
+ [
+  "only RGA's city counts",
+  "portal",
+  "const mkt = od.market || (((tasks[\"m1.audit.grid_baseline\"] || {}).outcome_data) || {}).market || \"\";",
+  "const mkt = \"Culver City\";",
+  1
+ ],
+ [
+  "unverified areas show",
+  "portal",
+  ".filter((l) => l && l.ok !== false && l.place);",
+  ".filter((l) => l && l.place);",
+  1
+ ],
+ [
+  "the starting line counts one keyword",
+  "portal",
+  "const pts = per.length ? per.reduce((n, x) => n + (Number(x.points) || 0), 0) : (g && Number(g.points)) || 0;",
+  "const pts = (g && Number(g.points)) || 0;",
+  1
+ ],
+ [
+  "no veto",
+  "portal",
+  "const tell = `<button type=\"button\" class=\"pm-amend\" data-step-wrong=\"${escapeAttribute(step.id)}\">Something's not right? Tell us</button>`;",
+  "const tell = \"\";",
+  1
+ ],
+ [
+  "a veto is ignored",
+  "portal",
+  "  if (flagged) {\n",
+  "  if (false) {\n",
+  1
+ ],
+ [
+  "step 5 isn't a record card",
+  "portal",
+  "\"m1.tracking.form_setup\", \"m1.strategy.keywords_locations\"]);",
+  "\"m1.tracking.form_setup\"]);",
+  1
+ ],
+ [
+  "the note never expires",
+  "portal",
+  "if (!t || t.status !== \"done\" || !t.completed_at || Date.now() - Date.parse(t.completed_at) > 7 * 86400000) return \"\";",
+  "if (!t || t.status !== \"done\") return \"\";",
+  1
+ ]
+]

@@ -380,6 +380,22 @@ async function portalPass() {
       }
       if (v === ROW_VIEW) portalSecondLogoCard = await page.evaluate(() => !!document.querySelector("[data-second-logo]")).catch(() => null);
       pageChecks.push(pc);
+      // 🔒 EVERY DONE STEP SHOWS ITS RECORD (Chris 10-20: "where did these steps go, why are they blank… we must harden the
+      // system so we never lose work"). Steps 2-5 were Done with an EMPTY body for weeks — the approved done cards were never
+      // built and nothing looked. A done row's body, minus buttons, the conversation, emails and the how-to, must SAY
+      // something: what was decided, provided or measured. → project_done_steps_show_nothing
+      if (v === ROW_VIEW) {
+        const blank = await page.evaluate(() => [...document.querySelectorAll(".pm-step-row")].filter((row) => /^Done$/i.test((row.querySelector(".pm-step-pills .pm-pill") || {}).textContent?.trim() || "")).map((row) => {
+          const c = row.cloneNode(true);
+          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, input, textarea, select, .pm-msg").forEach((x) => x.remove());
+          const said = (c.textContent || "").replace(/\s+/g, " ").trim();
+          return said.length < 25 ? (row.querySelector(".pm-step-title")?.textContent || row.id).trim() : null;
+        }).filter(Boolean)).catch(() => null);
+        const dc = { side: "portal", name: "Every done step shows its record", fail: [], warn: [] };
+        if (blank === null) dc.warn.push("couldn't read the step rows");
+        else if (blank.length) dc.fail.push(`${blank.length} done step(s) show nothing about what was done: ${blank.map((x) => `"${x}"`).join(", ")}`);
+        pageChecks.push(dc);
+      }
     }
     const loadB = t.b("page load");
     pageChecks.unshift({ side: "portal", name: "Portal loads (signed in as the client)", fail: [

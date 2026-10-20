@@ -2,15 +2,15 @@
  [
   "done before Google shows it",
   "stepinput",
-  "  const settled = !push || push.state === \"on_google\" || push.state === \"not_sent\";",
-  "  const settled = true;",
+  "  const settled = !waitsOnRga && (!push || push.state === \"on_google\" || push.state === \"not_sent\");",
+  "  const settled = !waitsOnRga;",
   1
  ],
  [
   "a refusal stays with nobody",
   "stepinput",
-  "    status: settled ? \"done\" : push.state === \"with_rga\" ? \"in_progress\" : \"pending\",",
-  "    status: settled ? \"done\" : \"pending\",",
+  "    status: settled ? \"done\" : waitsOnRga || push.state === \"with_rga\" ? \"in_progress\" : \"pending\",",
+  "    status: settled ? \"done\" : waitsOnRga ? \"in_progress\" : \"pending\",",
   1
  ],
  [

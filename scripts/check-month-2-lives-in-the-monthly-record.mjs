@@ -39,7 +39,9 @@ const NUMBERS = M2.find((s) => s.clientInput?.kind === "numbers");
 const URLSTEP = M2.find((s) => s.clientInput?.kind === "url" && s.clientDone === "client");
 const M2PROBE = M2.find((s) => s.clientDone === "detected");
 const M1INPUT = (pb.month1 || []).find((s) => s.clientInput?.kind === "text" && !(s.dependsOn || []).length)
-  || (pb.month1 || []).find((s) => s.clientInput?.kind === "url" && !(s.dependsOn || []).length);
+  || (pb.month1 || []).find((s) => s.clientInput?.kind === "url" && !(s.dependsOn || []).length)
+  // step2_website_access_v2 (10-20): step 2's answer is "access" (an invite, never a password link)
+  || (pb.month1 || []).find((s) => s.clientInput?.kind === "access" && !(s.dependsOn || []).length);
 if (!NUMBERS || !URLSTEP || !M2PROBE || !M1INPUT) { console.error("⚠️  INDETERMINATE — the Month-2 numbers / url / detected step or a Month-1 input step with no prerequisite is gone; re-read this gate"); process.exit(2); }
 for (const s of [NUMBERS, URLSTEP]) if ((s.dependsOn || []).length && pb.month2plus.some((x) => (s.dependsOn || []).includes(x.id) && x.clientLabel)) {
   console.error(`⚠️  INDETERMINATE — ${s.id} now needs a client step first; the fixture below must finish it`); process.exit(2);
@@ -120,7 +122,7 @@ try {
 
   // a Month-1 answer → the onboarding record, and no monthly record appears
   db = fresh();
-  r = await call(input, { step_id: M1INPUT.id, value: M1INPUT.clientInput.kind === "url" ? "https://example.com" : "An answer." });
+  r = await call(input, { step_id: M1INPUT.id, value: M1INPUT.clientInput.kind === "url" ? "https://example.com" : M1INPUT.clientInput.kind === "access" ? { via: "none" } : "An answer." });
   if (r.code !== 200) fail(`a Month-1 answer (${M1INPUT.id}) was refused: ${r.code} ${r.j.error || ""}`);
   if (!db.client_onboarding_records[0].data.tasks[M1INPUT.id]?.client_input) fail("a Month-1 answer didn't land in the onboarding record");
   if (db.client_monthly_records.length) fail("a Month-1 answer created a monthly record");
