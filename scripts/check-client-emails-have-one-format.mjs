@@ -122,5 +122,15 @@ if (!/function clientWords\(label\)[\s\S]{0,200}\\bGBP\\b\/g, "Google profile"/.
 for (const [where, re] of [["the nudge", /const short = clientWords\(label\);/], ["the setting-changed note", /const stepName = clientWords\(/]])
   if (!re.test(C.admin)) fail(`${where} names the step without clientWords() — "Turn on GBP messaging" reaches the client`);
 
+// 🔒 approved client_emails_tinted_cards_v1 (10-20): an email card is the portal's tinted card — the state's light fill + a thin
+// border, NO thick left edge — and its label line never carries a date (moved to the detail line, never dropped)
+{ const k = L.letter(":: keep | ✓ Kept | Your main Google Business Profile | Phone (555) 010-0000\n\n:: gone | ✕ Removed | Old profile | x").html;
+  if (/border-left:\s*[2-9]px/.test(k)) fail("an email card has a thick left edge again (the old style)");
+  if (!/border:1px solid #cfe6c8;[^"]*background:#e3f1df/.test(k) || !/border:1px solid #f3cdc9;[^"]*background:#fee9e8/.test(k)) fail("an email card isn't the tinted fill + thin border of its state");
+  for (const [mk, want] of [[":: keep | ✓ Kept · confirmed Oct 15, 2026 | T | D", "Confirmed Oct 15, 2026 · D"], [":: msg | Sent Oct 19 | T | ", "Oct 19"], [":: acct | Removed from | Google account | Signed in as a@b.co", "Signed in as a@b.co"]]) {
+    const b = L.blocks(mk)[0];
+    if (/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d/.test(b.small) || !b.small || b.detail !== want) fail(`an email card's label line keeps a date, or the date is lost ("${mk}" → label "${b.small}", detail "${b.detail}")`);
+  }
+}
 if (F.length) { console.error("🔴 a client email left the one format:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ every client email has the one format: letter markup, links as words, one sign-off, American copy, documents signed");

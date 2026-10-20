@@ -898,7 +898,7 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   // the letter renders the TYPE lines and the button (the one client-email format, extended)
   const { letter } = req("./_letter.js");
   const L = letter(mail.markup);
-  if (!/border-left:4px solid #8e0b21/.test(L.html) || !/Upload your photos<\/a>/.test(L.html) || !/✕ REMOVED: Google Business Profile/.test(L.text)) fail("the letter doesn't render the TYPE lines and the button (html + plain text)");
+  if (!/border:1px solid #f3cdc9;[^"]*background:#fee9e8/.test(L.html) || !/Upload your photos<\/a>/.test(L.html) || !/✕ REMOVED: Google Business Profile/.test(L.text)) fail("the letter doesn't render the TYPE lines and the button (html + plain text)");
 }
 
 // the removal cards keep naming what is being removed (one title, "Remove your duplicate Business Profile", on every step card)

@@ -110,5 +110,40 @@
   "  const short = clientWords(label);",
   "  const short = String(label);",
   1
+ ],
+ [
+  "the thick left edge is back",
+  "letter",
+  "<tr><td style=\"padding:11px 14px;border-radius:10px;background:${C[2]}\">",
+  "<tr><td style=\"padding:10px 14px;border-left:4px solid ${C[1]};border-radius:10px;background:${C[2]}\">",
+  1
+ ],
+ [
+  "the card loses its tint",
+  "letter",
+  "border:1px solid ${C[0]};border-radius:10px;background:${C[2]}\"><tr>",
+  "border:1.5px solid ${C[0]};border-radius:10px\"><tr>",
+  1
+ ],
+ [
+  "a dated label is left alone",
+  "letter",
+  "      if (dated) {\n",
+  "      if (false && dated) {\n",
+  1
+ ],
+ [
+  "the moved date is dropped",
+  "letter",
+  "        detail = [date.replace(/^[a-z]/, (c) => c.toUpperCase()), detail].filter(Boolean).join(\" \u00b7 \");",
+  "        detail = detail;",
+  1
+ ],
+ [
+  "an all-date label goes blank",
+  "letter",
+  "        if (!small) { const v",
+  "        if (false) { const v",
+  1
  ]
 ]

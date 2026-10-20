@@ -97,7 +97,7 @@ else {
   if (!inMock(`Hi Chris, step ${s57.clientStepNo} in your portal is open now.`)) fail("the email's opening line isn't the approved one");
   if (/review link/.test(noLink)) fail("a client we hold no review link for is told the message has one");
   const L = req("./_letter.js").letter(withLink);
-  if (!/border-left:4px solid #0c5132/.test(L.html) || !/>Review request message</.test(L.html)) fail("the email's Review request message line isn't the green TYPE line");
+  if (!/border:1px solid #cfe6c8;[^"]*background:#e3f1df/.test(L.html) || /border-left:4px/.test(L.html) || !/>Review request message</.test(L.html)) fail("the email's Review request message line isn't the green TYPE line");
   if (/::|>>|^#/m.test(L.text)) fail("the email's plain text shows letter markup");
 }
 
