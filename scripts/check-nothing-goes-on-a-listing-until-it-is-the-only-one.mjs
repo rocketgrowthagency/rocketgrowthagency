@@ -116,7 +116,7 @@ const ovFn = code("netlify/functions/gbp-listing-override.js");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(ovFn) || !/reason\.length < 10/.test(ovFn)) fail("the override is not staff-only with a written reason");
 
 // ── 4 · the 8 listing-writing steps wait on step 11, in both SOP copies ──
-const WRITERS = ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.qa_seed", "m1.gbp.business_facts"];
+const WRITERS = ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.business_facts"]  // qa_seed retired 10-20 (Google ended Q&A);
 const pj = JSON.parse(read("data/playbooks/playbooks.json"));
 const byId = new Map(); (function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (o.id && o.dependsOn) byId.set(o.id, o); Object.values(o).forEach(walk); } })(pj);
 const m1 = await import(pathToFileURL(`${SCRAPER}/flow/playbooks/month1.mjs`).href);

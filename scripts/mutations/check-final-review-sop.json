@@ -1,0 +1,58 @@
+[
+ [
+  "Q&A seed runner comes back",
+  "exec",
+  "  \"m1.web.h1_cta\": async ({ client }) => {",
+  "  \"m1.gbp.qa_seed\": async ({ client }) => ({ summary: \"x\" }),\n  \"m1.web.h1_cta\": async ({ client }) => {",
+  1
+ ],
+ [
+  "keyword plan waits on Search Console again",
+  "playbooksjson",
+  "\"id\": \"m1.strategy.keywords_locations\",\n      \"title\": \"Lock 3-5 primary keywords + 3 sub-locations\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": []",
+  "\"id\": \"m1.strategy.keywords_locations\",\n      \"title\": \"Lock 3-5 primary keywords + 3 sub-locations\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m1.access.search_console\"]",
+  1
+ ],
+ [
+  "website NAP built from the snapshot again",
+  "playbooksjson",
+  "\"id\": \"m1.web.nap_consistency\",\n      \"title\": \"Match NAP across header/footer/contact\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\n        \"m1.audit.gbp_baseline\",\n        \"m1.gbp.business_facts\"\n      ]",
+  "\"id\": \"m1.web.nap_consistency\",\n      \"title\": \"Match NAP across header/footer/contact\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\n        \"m1.audit.gbp_baseline\"\n      ]",
+  1
+ ],
+ [
+  "canonical website NAP built from the snapshot",
+  "sopm1",
+  "id: \"m1.web.nap_consistency\", title: \"Match NAP across header/footer/contact\",\n    type: \"manual\", dependsOn: [\"m1.audit.gbp_baseline\", \"m1.gbp.business_facts\"]",
+  "id: \"m1.web.nap_consistency\", title: \"Match NAP across header/footer/contact\",\n    type: \"manual\", dependsOn: [\"m1.audit.gbp_baseline\"]",
+  1
+ ],
+ [
+  "customer lists don't wait on one listing",
+  "onelisting",
+  "\n    || step.clientForm === \"customer_list\";",
+  ";",
+  1
+ ],
+ [
+  "review link handed out before the listing check",
+  "reviewreqfn",
+  "  if (!listing.open) return json(200,",
+  "  if (false) return json(200,",
+  1
+ ],
+ [
+  "details copy suggests Online appointments",
+  "playbooksjson",
+  "like Free estimates or Identifies as women-owned",
+  "like Online appointments or Identifies as women-owned",
+  1
+ ],
+ [
+  "access copy asks for the login again",
+  "playbooksjson",
+  "\"head\": \"First: invite RGA to your website\"",
+  "\"head\": \"First: send us your website login\"",
+  1
+ ]
+]

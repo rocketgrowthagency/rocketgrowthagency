@@ -493,7 +493,7 @@ DONE = every listing the audit found has been opened and its NAP confirmed again
   },
   {
     id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
-    type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.citations"],
+    type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.citations", "m1.gbp.business_facts"],
     actionLabel: "⚡ Run (needs the local scraper)",
     instructions: `Checks the citation URLs WE ALREADY HOLD for NAP accuracy against the client record.
 
@@ -519,7 +519,7 @@ plan stays silent on it rather than guessing.`,
   // === Decide (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
     id: "m1.strategy.keywords_locations", title: "Lock 3-5 primary keywords + 3 sub-locations",
-    type: "hybrid", dependsOn: ["m1.access.search_console"],
+    type: "hybrid", dependsOn: [],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -761,27 +761,8 @@ Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
 Google refuses the link or it doesn't open: back with the client (Google said + How to fix). Anything else is RGA's, emailed to hello@.
 Nightly: if the link on Google changes, this row shows Put back / Keep Google's.`,
   },
-  {
-    id: "m1.gbp.qa_seed", title: "Seed Q&A with top-ask questions",
-    type: "hybrid", dependsOn: ["m1.gbp.services_products", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.audit.gbp_duplicate"],
-    actionLabel: "⚡ Draft this for me",
-    async run({ client }) {
-      const draft = await aiSuggest(
-        `You generate Google Business Profile Q&A pairs. Output 8 question + answer pairs that real customers of this business commonly ask. Format strictly:
-Q: <question>
-A: <2-3 sentence answer with phone/website CTA where natural>
-
-Vary the questions: pricing, service area, response time, qualifications, what to expect, emergency availability, payment methods, what's included. NO emojis. Concrete + helpful.`,
-        `Business: ${client.business_name}\nService: ${client.primary_service}\nMarket: ${client.primary_market}\nPhone: ${client.primary_contact_phone || "(your phone)"}`,
-        { maxTokens: 900 },
-      );
-      return { summary: `AI Q&A pairs (post each from your own account, then answer immediately):\n\n${draft}` };
-    },
-    instructions: `Open GBP → Q&A tab. For each Q above:
-1. Click "Ask a question" (post it from YOUR personal account)
-2. Immediately answer it from the business profile
-3. Repeat for all 8`,
-  },
+  // m1.gbp.qa_seed RETIRED 2026-10-20 (client_portal_final_review_v1): Google ended Business Profile Q&A (Nov 2025 → Jan 2026).
+  // The questions belong on the website FAQ (m1.web.expanded_schema, FAQPage). Old task records stay in the JSON, unread.
   {
     id: "m1.web.image_seo", title: "Image SEO: filenames + alt text",
     type: "hybrid", dependsOn: [],
@@ -836,7 +817,7 @@ discover pages. Without one they cannot run at all, so fix this before them, not
   },
   {
     id: "m1.web.nap_consistency", title: "Match NAP across header/footer/contact",
-    type: "manual", dependsOn: ["m1.audit.gbp_baseline"],
+    type: "manual", dependsOn: ["m1.audit.gbp_baseline", "m1.gbp.business_facts"],
     actionLabel: "⚡ Run the check",
     instructions: `Header + footer + contact page = identical Name, Address, Phone.
 Use the canonical NAP from GBP. Critical for citation consistency — if these don't match, citation cleanup later won't help.`,
@@ -1090,7 +1071,7 @@ Use descriptive anchor text (NOT "click here"). Anchor = keyword.`,
 
   {
     id: "m1.cit.priority_top10", title: "Build top-10 priority citations",
-    type: "hybrid", dependsOn: ["m1.audit.citations", "m1.web.nap_consistency", "m1.gbp.optimize_categories", "m1.gbp.hours_attributes"],
+    type: "hybrid", dependsOn: ["m1.audit.citations", "m1.web.nap_consistency", "m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -1138,7 +1119,7 @@ Aim for 1-2 citations per day for 5-7 days. Consistent NAP across all = the enti
   },
   {
     id: "m1.cit.industry_specific", title: "Build industry-specific citations",
-    type: "hybrid", dependsOn: ["m1.audit.citations"],
+    type: "hybrid", dependsOn: ["m1.audit.citations", "m1.gbp.business_facts"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -1160,7 +1141,7 @@ Order by impact (highest first). Include any state/regional industry boards rele
   },
   {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business Connect",
-    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes"],
+    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
     actionLabel: "⚡ Generate",
     instructions: `Bing Places (https://www.bingplaces.com/): Create account → Import from Google → verify by phone.
 Apple Business Connect (https://businessconnect.apple.com/): Claim listing → verify → add hours, photos, services.

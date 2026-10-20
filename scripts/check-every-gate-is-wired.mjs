@@ -360,6 +360,7 @@ const NOT_PREFLIGHT = {
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',
   'check-review-requests-ask-everyone.mjs': 'the WEBSITE repo\'s review-request policy (step 56/12, Monthly) — not video preflight; daily-health-check.sh',
   'check-no-client-record-was-lost.mjs': 'reads PRODUCTION records + activity (read-only, one at a time) — daily-health-check.sh, not preflight',
+  'check-final-review-sop.mjs': 'the WEBSITE repo\'s SOP (playbooks.json + the canonical flow/playbooks) after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-done-records-steps-13-19.mjs': 'the WEBSITE repo\'s client steps 13-19 done cards (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-client-step-5-shows-the-plan.mjs': 'the WEBSITE repo\'s client step 5 card (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-client-steps-2-3-4-show-their-record.mjs': 'the WEBSITE repo\'s client steps 2-4 (approved 10-20) — not video preflight; daily-health-check.sh',

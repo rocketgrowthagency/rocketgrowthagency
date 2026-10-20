@@ -107,7 +107,7 @@ if (SELF_TEST) {
     ['THE BUG: slow step runs synchronously', mk([], [['m1.gbp.attributes', 1200]]), 1],
     ['a fast step need not be heavy', mk([], [['m1.web.schema', 300]]), 0],
     ['HEAVY naming a step that does not exist', mk(['m1.gone.away'], [['m1.web.schema', 300]]), 1],
-    ['exactly at the threshold counts', mk([], [['m1.gbp.qa_seed', 900]]), 1],
+    ['exactly at the threshold counts', mk([], [['m1.web.blog_seed', 900]]), 1],
   ];
   let bad = 0;
   for (const [label, src, want] of cases) {

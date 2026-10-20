@@ -77,10 +77,10 @@
   1
  ],
  [
-  "Q&A (a profile step) stops waiting",
+  "the booking link (a profile step) stops waiting",
   "playbooksjson",
-  "        \"m1.gbp.attributes\",\n        \"m1.audit.gbp_duplicate\"\n      ],",
-  "        \"m1.gbp.attributes\"\n      ],",
+  "\"id\": \"m1.gbp.booking_link\",\n      \"title\": \"Add appointment booking URL\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\n        \"m1.gbp.verify\",\n        \"m1.audit.gbp_duplicate\"\n      ]",
+  "\"id\": \"m1.gbp.booking_link\",\n      \"title\": \"Add appointment booking URL\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\n        \"m1.gbp.verify\"\n      ]",
   1
  ],
  [
@@ -198,8 +198,8 @@
  [
   "the photo step stops waiting",
   "onelisting",
-  "|| step.clientForm === \"photo_upload\";",
-  ";",
+  "|| step.clientForm === \"photo_upload\"\n    || step.clientForm === \"customer_list\";",
+  "|| step.clientForm === \"customer_list\";",
   1
  ],
  [

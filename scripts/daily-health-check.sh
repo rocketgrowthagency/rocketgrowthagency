@@ -504,6 +504,7 @@ run check-steps-6-and-7-confirm-in-the-portal.mjs "step 6 confirms the duplicate
 run check-client-steps-2-3-4-show-their-record.mjs "client steps 2 · 3 · 4 show their record: an invite never a password · an honest call-tracking decision · real form leads only (approved 10-20)"
 run check-client-step-5-shows-the-plan.mjs "client step 5 shows the locked keyword plan for any business (approved 10-20)"
 run check-done-records-steps-13-19.mjs "client steps 13–19 draw a done record (approved 10-20)"
+run check-final-review-sop.mjs "final review R1: the SOP keeps the research-backed order in both sources (approved 10-20)"
 run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done for Monthly + Mature clients (10-19: it read in progress forever)"
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"

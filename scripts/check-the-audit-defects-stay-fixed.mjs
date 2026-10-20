@@ -28,7 +28,7 @@ const fails = []; const F = (m) => fails.push(m);
 const block = (id) => { const a = FE.indexOf(`"${id}": async`); if (a < 0) return ""; const b = FE.indexOf("\n  },\n", a); return FE.slice(a, b < 0 ? a + 4000 : b); };
 
 // #2 + #3
-for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description", "m1.gbp.qa_seed",
+for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description",  // qa_seed retired 10-20
   "m1.web.homepage_meta", "m1.web.h1_cta", "m1.web.priority_pages", "m1.web.blog_seed", "m1.web.location_pages", "m1.web.service_location_matrix"]) {
   const b = block(id);
   if (!b) { F(`#3 runner ${id} not found`); continue; }

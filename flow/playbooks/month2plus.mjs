@@ -175,7 +175,7 @@ OUTCOME: track exact \`reviews_earned\` count. Mark via: node flow.mjs <client_i
   },
   {
     id: "m2.exec.review_responses", title: "Respond to all new reviews",
-    type: "auto", dependsOn: ["m2.exec.review_push"],
+    type: "auto", dependsOn: [],
     async run({ getGbp, clientId }) {
       try {
         const gbp = await getGbp();
@@ -269,13 +269,8 @@ THEN suggest 3 sponsorship targets relevant to this business:
 For each competitor backlink: directory? add us. Guest post? pitch same site. Sponsorship? consider next year. Press? pitch journalist.
 Goal: replicate 5+ per quarter.`,
   },
-  {
-    id: "m2.exec.haro_pitches", title: "Pitch HARO/Connectively requests",
-    type: "manual", dependsOn: [],
-    instructions: `Sign up for Connectively (free).
-Filter: industry-relevant queries needing expert sources.
-Pitch 3-5/month. Goal: 1 published mention/month with backlink.`,
-  },
+  // m2.exec.haro_pitches RETIRED 2026-10-20 (client_portal_final_review_v1): Connectively shut Dec 2024; journalist requests
+  // fold into m2.exec.local_pr (quarterly local press + best-of lists).
   {
     id: "m2.exec.youtube_video", title: "Publish 1-2 YouTube videos",
     type: "hybrid", dependsOn: [],

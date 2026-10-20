@@ -2,6 +2,8 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  sopm1: "scraper:flow/playbooks/month1.mjs",   // canonical Month-1 SOP (final review R1, 10-20)
+  sopm2: "scraper:flow/playbooks/month2plus.mjs",
   loginjs: "portal/client-login.js",
   cronskiplib: "scraper:scripts/lib/crons-skip-test-clients.mjs",
   scraper_metrics: "netlify/functions/metrics-daily-refresh.js",
