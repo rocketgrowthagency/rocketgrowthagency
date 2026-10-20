@@ -60,8 +60,11 @@ const OFFERED = [
 {
   const r0 = G.hoursFromGoogle(RGA_HOURS);
   if (r0.days.mon.open !== "09:00" || r0.days.mon.close !== "18:00" || !r0.days.sat.closed) fail(`Google's hours don't read into the form (${JSON.stringify(r0.days.mon)})`);
-  const split = G.hoursFromGoogle({ periods: [P("MONDAY", { hours: 9 }, { hours: 12 }), P("MONDAY", { hours: 13 }, { hours: 17 })] });
-  if (!split.split.includes("mon")) fail("a day with two openings on Google isn't flagged (saving would silently merge it)");
+  // 🔄 10-20 (phase2_set_up_v1): the form holds TWO openings a day (split hours) — a third is what it can't hold, so that is flagged
+  const two = G.hoursFromGoogle({ periods: [P("MONDAY", { hours: 9 }, { hours: 12 }), P("MONDAY", { hours: 13 }, { hours: 17 })] });
+  if (two.split.includes("mon") || two.days.mon.open2 !== "13:00") fail("a day with two openings on Google isn't read as a split day (the second opening is lost)");
+  const split = G.hoursFromGoogle({ periods: [P("MONDAY", { hours: 9 }, { hours: 12 }), P("MONDAY", { hours: 13 }, { hours: 17 }), P("MONDAY", { hours: 18 }, { hours: 20 })] });
+  if (!split.split.includes("mon")) fail("a day with three openings on Google isn't flagged (saving would silently drop one)");
   const night = G.periodsFromDays({ fri: { open: "18:00", close: "02:00" } });
   if (night[0]?.closeDay !== "SATURDAY") fail("hours past midnight don't close on the next day");
   const w = fakeGoogle({ hours: RGA_HOURS });

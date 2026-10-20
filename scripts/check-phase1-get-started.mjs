@@ -24,8 +24,8 @@ const F = [], fail = (m) => F.push(m);
 const A = Object.fromEntries([...PB.month1, ...PB.month2plus].map((s) => [s.id, s]));
 
 // ── 1 · kickoff
-if (!/booked && held \? \{ cls: "done", text: "Done" \}/.test(P) || !/: booked \? \{ cls: "rga", text: "Booked" \}/.test(P)) fail("step 1: a confirmed call reads Done before it's held (want Booked until the outcome or recap)");
-if (!/kickoffBooked && !isDone \? \{ text: "Booked", cls: "rga" \}/.test(P)) fail("step 1: the row's own pill doesn't say Booked for a confirmed call");
+if (!/booked && held \? \{ cls: "done", text: "Done" \}/.test(P) || !/: booked \? \{ cls: "rga booked", text: "Booked" \}/.test(P)) fail("step 1: a confirmed call reads Done before it's held (want Booked until the outcome or recap)");
+if (!/kickoffBooked && !isDone \? \{ text: "Booked", cls: "rga booked" \}/.test(P)) fail("step 1: the row's own pill doesn't say Booked for a confirmed call");
 const N = load("notify-step-open.js");
 const NOW = Date.parse("2026-10-20T15:00:00Z"), at = (h) => new Date(NOW + h * 3600000).toISOString();
 const on = { KICKOFF_AGENDA_EMAIL: "on" };

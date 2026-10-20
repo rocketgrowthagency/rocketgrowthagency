@@ -109,7 +109,8 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
           + "would be shown as fact while the live answer is unreadable.");
       } else pass.push("unknown outranks a stale status");
 
-      if (r.booked.cls !== "done" || r.asked.cls !== "rga") {
+      // 🔄 10-20 (approved phase1_get_started_v1): a CONFIRMED call reads "Booked" (its own class) until it's held; requested stays rga
+      if (r.booked.cls !== "rga booked" || r.asked.cls !== "rga") {
         fail.push(`portal/portal.js — the settled states changed: booked→${r.booked.cls}, requested→${r.asked.cls}.`);
       } else pass.push("booked and requested still read as done and with-RGA");
       // 🔒 a pick whose start passed unconfirmed is the client's move again — and still a choice

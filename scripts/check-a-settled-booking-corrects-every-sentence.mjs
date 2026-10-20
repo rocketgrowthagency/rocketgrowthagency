@@ -128,7 +128,8 @@ catch (e) {
 }
 
 const SURFACES = [
-  ["the pill", () => booked.pill.textContent === "Done", () => `pill reads "${booked.pill.textContent}"`],
+  // 🔄 10-20 (approved phase1_get_started_v1): Booked ≠ Done — a confirmed call reads "Booked" until RGA records it held
+  ["the pill", () => booked.pill.textContent === "Booked", () => `pill reads "${booked.pill.textContent}"`],
   ["the lede", () => /booked/i.test(booked.lede.textContent), () => `lede reads "${booked.lede.textContent}"`],
   ["the control heading", () => !/choose a date/i.test(booked.doitH.textContent),
     () => `heading still reads "${booked.doitH.textContent}" — it is telling them to pick a time they have picked`],

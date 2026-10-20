@@ -36,6 +36,8 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-in-notsure": "step 17's \"Not sure\" on a number: ticks the box and clears + disables that field (visible) — nothing is saved until \"Send my numbers\" (monthly_asks_v1, 2026-10-20)",
+  "data-step-input": "step 7's hours listeners (input / change inside the form): show or hide the 24-hour tick and the long-closure note as they type — nothing is saved until Save (phase2_set_up_v1, 2026-10-20)",
   "data-bk-opt": "step 10's three choices (a page on my website / my booking tool / customers call us): the picked one gets the blue ring and its radio fills — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
   "data-bk-type": "step 10's link-type chips (a restaurant: Reservations / Order ahead): redraws the choices for that type, the chip highlights — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
   "data-bk-page": "step 10's website-page chips: picks which page of their site gets the Book button — the chip highlights with ✓; nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",

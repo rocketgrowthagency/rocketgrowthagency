@@ -180,7 +180,8 @@ pass.push("the lapsed-hold wording is checked against the branch, not a spelling
       fail.push("portal/portal.js — the lede's wording does not branch on whether the call has ended, so it will say the call \"is booked\" after it has happened.");
     else pass.push("the lede's wording branches on whether the call has ended");
     // 🔴 The same evidence rule as the card: only a recap may say it happened.
-    const done = fnLede[0].match(/recapSentAt[\s\S]{0,160}/);
+    // 🔄 10-20: the pill now reads recapSentAt too (Booked until held) — pin the LEDE's own branch, not the first mention
+    const done = fnLede[0].match(/: w\.recapSentAt\s*\?\s*"[^"]*"/);
     if (!done || !/is done/.test(done[0]))
       fail.push("portal/portal.js — the lede's \"done\" wording is not gated on a recap, so it can claim the call happened from the clock alone.");
     else pass.push("only a recap lets the lede say the call is done");

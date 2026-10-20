@@ -93,7 +93,8 @@ for (const s of steps) {
         bad(`${s.id} takes an input and nothing labels it — no prompt and no platform question`);
       }
       if (s.clientDoneCta) bad(`${s.id} has BOTH an input and an attestation button — two controls for one act`);
-      if (inp.kind === "checklist" && !(inp.options || []).length) bad(`${s.id} is a checklist with nothing to tick`);
+      // a checklist whose options are read LIVE from Google (step 6's services, phase1_get_started_v1) declares it: liveOptions
+      if (inp.kind === "checklist" && !(inp.options || []).length && !inp.liveOptions) bad(`${s.id} is a checklist with nothing to tick`);
       if (inp.kind === "numbers" && !(inp.fields || []).length) bad(`${s.id} asks for numbers but names no figures`);
     // 🔴 An hours step must offer REAL upcoming holidays. Free text cannot be published to Google
     // `specialHours`; a ticked date can. And the window is rolling — a list computed at a past

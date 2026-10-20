@@ -12,7 +12,7 @@ const P = read("portal/portal.js"), PB = read("data/playbooks/playbooks.json");
 const F = [], fail = (m) => F.push(m);
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10),
-  googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.act].filter(Boolean).join(" ¦ ")}</card>`, Number, String, Array, Date, KW_ICON: "" });
+  googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.act].filter(Boolean).join(" ¦ ")}</card>`, Number, String, Array, Date, KW_ICON: "", seeStepText: () => "See step 5 →" });   // the number comes from the playbook in the browser
 vm.runInContext(lift("keywordPlanCardHtml"), ctx); vm.runInContext(lift("kwNoteHtml"), ctx);
 const plan = { status: "done", completed_at: new Date().toISOString(), outcome_data: {
   draft: "keywords:\n  - term: emergency plumber denver\n    why: >\n      Implicit-local buyer phrase optimised for the map pack.\n",

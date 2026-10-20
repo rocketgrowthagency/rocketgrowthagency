@@ -50,7 +50,8 @@ async function build({ recs = [{ reporting_month: "2026-10-01", gbp_calls: 4 }],
 { const r = await build({ recs: [] }); if (r.outcome !== "indeterminate") fail("no monthly record produces a report"); }
 { const r = await build({ throws: true }); if (r.outcome !== "indeterminate") fail("an unreadable record produces a report"); }
 { // Month 1 (research §1): built by _month1-report from the client's records; a DRAFT until RGA sends it from row 59
-  const ctx = vm.createContext({ encodeURIComponent, Date, supa: async () => [{ data: { tasks: {} } }],
+  // 🔄 10-20 (phase3_4_reviews_close_v1): the report opens at kickoff + 27 — the fixture's kickoff was held 40 days ago
+  const ctx = vm.createContext({ encodeURIComponent, Date, supa: async () => [{ data: { tasks: { "m1.kickoff.call": { status: "done", completed_at: new Date(Date.now() - 40 * 86400000).toISOString() } } } }],
     require: (m) => m === "./_month1-report" ? { buildMonth1Report: () => ({ text: "SUMMARY\nok", subject: "s", sections: [] }), FORBIDDEN: /never/ } : m === "../../data/playbooks/playbooks.json" ? { month1: [] } : null });
   const r = await vm.runInContext(`(${m1Src})`, ctx)({ client: {}, clientId: "c" });
   if (r.completed !== false || r.outcome !== "draft_ready" || !r.outcome_data?.report) fail("the Month 1 report is Done when built, or isn't stored for review (a built report is not a delivered one)"); }

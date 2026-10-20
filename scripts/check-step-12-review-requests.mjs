@@ -168,7 +168,7 @@ try {
   // 🔒 step12_review_requests_v3 (approved 10-20): recency + real customers only, a cell number OR an email, "N of 5 asked", send as you go
   if (b.cards !== 5 || b.labels.join("|") !== "Customer 1 · First name|Cell number or email|The job you did") fail(`B: not 5 labelled customer cards (${b.cards} · ${b.labels.join("|")})`);
   if (b.title !== "Ask your 5 most recent customers for a review" || b.count !== "0 of 5 asked" || b.btn !== "Write 1 request" || !b.dis || b.list || !b.under) fail(`B: an empty form reads "${b.title}" / "${b.count}" / "${b.btn}" (disabled ${b.dis}, under the card ${b.under}), or shows customers it doesn't have`);
-  if (!/^Who to ask Your 5 most recently finished jobs, whoever they are\. Real customers only: not family, friends or anyone who works with you\. Google doesn't allow picking only the ones you expect to be happy, or offering anything for a review\.$/i.test(b.why)) fail(`B: "who to ask" isn't the approved words (${b.why})`);
+  if (!/^Who to ask Your 5 most recently finished jobs, whoever they are\. Real customers only: not family, friends or anyone who works with you\. Google doesn't allow picking only the ones you expect to be happy, (?:or offering anything for a review|offering anything for a review, or asking them to name a staff member)\.$/i.test(b.why))   /* + the staff rule, phase3_4_reviews_close_v1 10-20 */ fail(`B: "who to ask" isn't the approved words (${b.why})`);
   const type = async (i, name, phone, job) => {
     const card = (await page.$$("[data-r5-card]"))[i];
     if (name) await (await card.$('[name="first_name"]')).type(name);

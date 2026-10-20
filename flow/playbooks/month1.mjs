@@ -719,8 +719,7 @@ Or set manually in GBP dashboard → Edit profile → Business category.`,
       );
       return { summary: `AI-drafted services:\n${draft}` };
     },
-    instructions: `Review/edit the draft services. Add via GBP dashboard → Edit profile → Services, OR via API:
-  gbp.updateServices([{ displayName: "...", description: "..." }, ...])`,
+    instructions: "Client step 6 (approved phase1_get_started_v1, 10-20). Run ⚡ to draft extra services from the locked plan; the client sees Google's own service types for the categories on Google (step 31) plus this draft, unticks what they don't offer, and the save writes serviceItems to Google and reads them back (_gbp-services.js). The client's ticks ARE the approval. If Google refuses, the row says so and the client sees 'RGA is doing it'.",
   },
   {
     id: "m1.gbp.business_description", title: "Write compelling description",

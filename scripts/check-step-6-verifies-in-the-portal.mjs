@@ -77,7 +77,9 @@ if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m)];
+const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m),
+  // 10-20 (phase1_get_started_v1): the code goes on Google's screen — its block, the fold, the filming guide
+  (() => { const a = portal.indexOf("const GV_ON_GOOGLE = `"); return a < 0 ? "" : portal.slice(a, portal.indexOf("`;", a + 22) + 2); })(), pick(/^function gvCodeFallbackHtml\(/m), pick(/^function gvFilmGuideHtml\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-6 helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }

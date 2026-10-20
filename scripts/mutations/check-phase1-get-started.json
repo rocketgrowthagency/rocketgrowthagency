@@ -2,7 +2,7 @@
  [
   "a confirmed kickoff reads Done before it's held",
   "portal",
-  "    : booked && held ? { cls: \"done\", text: \"Done\" }\n    : booked ? { cls: \"rga\", text: \"Booked\" }",
+  "    : booked && held ? { cls: \"done\", text: \"Done\" }\n    : booked ? { cls: \"rga booked\", text: \"Booked\" }",
   "    : booked ? { cls: \"done\", text: \"Done\" }",
   1
  ],
