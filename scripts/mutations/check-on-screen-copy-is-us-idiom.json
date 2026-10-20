@@ -2,8 +2,8 @@
  [
   "client-facing portal copy goes back to British (the violation that shipped)",
   "portal",
-  "in a thread they recognize",
-  "in a thread they recognise"
+  "Ask every customer from the period, not only the happy ones.",
+  "Ask every customer from the period, not only the happy ones you recognise."
  ],
  [
   "a step card tells the reader we cannot 'recognise' a listing",
@@ -62,20 +62,20 @@
  [
   "Month 2's numbers step says 'pounds and pence' again (client-facing, in step JSON the gate never read)",
   "playbooksjson",
-  "into dollars and cents",
+  "into jobs and dollars",
   "into pounds and pence"
  ],
  [
-  "the numbers form asks for 'New enquiries' again",
+  "client copy says 'enquiries' again",
   "playbooksjson",
-  "\"label\": \"New inquiries\"",
-  "\"label\": \"New enquiries\""
+  "so inquiries show up in your report",
+  "so enquiries show up in your report"
  ],
  [
   "the client's how-to says 'get round to' again",
   "playbooksjson",
-  "never get around to sending",
-  "never get round to sending"
+  "We're looking for the trend, not your accounts. Not sure? Tick it.",
+  "We're looking for the trend; get round to it when you can. Not sure? Tick it."
  ],
  [
   "step 20's title goes back to 'prioritised'",

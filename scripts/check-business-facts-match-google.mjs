@@ -158,7 +158,7 @@ const ANS = (o = {}) => ({ name: "Rocket Growth Agency", come: "no", area: { ok:
 const pb = JSON.parse(read("data/playbooks/playbooks.json")), cs = JSON.parse(read("data/playbooks/client-steps.json"));
 const m1 = pb.month1.map((s) => s.id), step = pb.month1.find((s) => s.id === STEP), cstep = cs.month1.find((s) => s.id === STEP);
 if (!step || m1.indexOf(STEP) !== m1.indexOf("m1.gbp.verify") + 1 || step.clientInput?.kind !== "facts" || !(step.dependsOn || []).includes("m1.gbp.verify")) fail("the step isn't in the playbook right after verify, taking a facts answer");
-if (!cstep || cstep.clientStepNo !== 7 || !cstep.waitsOnListing || cstep.clientInput?.kind !== "facts") fail("the client portal doesn't carry the step as 7, waiting on one listing");
+if (!cstep || cstep.clientStepNo !== 4 ||   /* renumbered 10-20 (client_portal_phases_v1): Check your business is step 4 */ !cstep.waitsOnListing || cstep.clientInput?.kind !== "facts") fail("the client portal doesn't carry the step as 4, waiting on one listing");
 const nos = cs.month1.filter((s) => s.clientStepNo != null).map((s) => s.clientStepNo);
 if (new Set(nos).size !== nos.length || Math.max(...nos) !== nos.length) fail(`client step numbers aren't 1…N, each once (${nos.join(",")})`);
 if (!G.GOOGLE_STEPS.has(STEP)) fail("the step isn't one of the Google steps (read, write, read back, nightly)");
@@ -171,7 +171,7 @@ if (!/client_record: toldSync/.test(sin)) fail("the activity row doesn't say wha
 if (!/change on Google: \$\{push\.rga\.map/.test(sin)) fail("RGA isn't told what to change on Google");
 if (!/if \(stepId === "m1\.gbp\.business_facts"\) \{[\s\S]{0,700}F\.factsView\(google, F\.toldFacts\(client \|\| \{\}, tasks\[stepId\]\), F\.targetsOf\(tasks\), \(tasks\[stepId\] && tasks\[stepId\]\.google_push && tasks\[stepId\]\.google_push\.area_missing\) \|\| \[\]\)/.test(nc(read("netlify/functions/portal-gbp-profile.js")))) fail("the portal isn't sent Google beside what they told us");
 const watch = nc(read("netlify/functions/_gbp-watch.js"));
-if (!/if \(stepId === STEP\.FACTS\) return require\("\.\/_gbp-facts"\)\.factsDrift\(task, now\);/.test(watch) || !/if \(F\.rgaDone\(task, now\)\)/.test(watch) || !/kind: "gbp_facts_matched"/.test(watch)) fail("the nightly check doesn't watch the facts / finish RGA's change (recorded)");
+if (!/if \(stepId === STEP\.FACTS\) return require\("\.\/_gbp-facts"\)\.factsDrift\(task, now\);/.test(watch) || !/if \(F\.rgaDone\(task, now\)/.test(watch) || !/kind: "gbp_facts_matched"/.test(watch)) fail("the nightly check doesn't watch the facts / finish RGA's change (recorded)");
 const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/stepId === STEP\.FACTS && push\.state === "with_rga"/.test(drift) || !/stepId === STEP\.FACTS \? \{ name: now\.name, come: now\.come \? "yes" : "no"/.test(drift)) fail("admin's put back / keep Google's doesn't handle the facts");
 const admin = nc(read("admin/admin.js"));
@@ -184,7 +184,8 @@ const portal = read("portal/portal.js");
 const i0 = portal.indexOf("const FACT_WORDS = {"), i1 = portal.indexOf("async function loadGbpNow(clientId) {");
 if (i0 < 0 || i1 < i0) { console.error("⚠️  INDETERMINATE — could not lift the facts renderer"); process.exit(2); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc };
+// portalStepNo (10-20): client numbers are read from the playbook; the lift has none, so a fixed one
+const ctx = { escapeHtml: esc, escapeAttribute: esc, portalStepNo: () => 5 };
 vm.createContext(ctx);
 vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = factsSummary;`, ctx);
 {
@@ -207,7 +208,7 @@ const js = nc(portal);
 // 🔒 step7_card_hardened_v1: the head is a progress bar counted from the lines themselves ("2 to check" once counted the
 // matching name because ANOTHER line had a recommendation); no section label, no help line, no repeated sentence
 if (!/function factsProgress\(wrap\) \{/.test(js) || !/const st = rows\.map\(\(r\) => \(r\.classList\.contains\("is-answered"\) \? "a" : r\.classList\.contains\("is-open"\) \? "o" : "m"\)\);/.test(js) || /What Google shows now, next to what you told us\./.test(portal)) fail("the head isn't a progress bar counted from the lines (or repeats the help text)");
-if (!/const head = (?:s\.kind === "booking"(?: \|\| step\.id === "m1\.gbp\.attributes")? \? "" : )?s\.kind === "facts"(?: \|\| s\.kind === "hours")? \? gnow :/.test(js)) fail("the facts form still stacks a section label and help line above the rows");
+if (!/const head = (?:s\.kind === "booking"(?: \|\| step\.id === "m1\.gbp\.attributes")?(?: \|\| step\.id === "m1\.gbp\.services_products")? \? "" : )?s\.kind === "facts"(?: \|\| s\.kind === "hours")? \? gnow :/.test(js)) fail("the facts form still stacks a section label and help line above the rows");
 // 🔑 10-16 (step10_booking_link_v1): the one-line steps are a set, ONE_LINE_ASK, and it must hold step 7
 if (!/^const ONE_LINE_ASK = new Set\(\[[^\]]*"m1\.gbp\.business_facts"/m.test(portal)) fail("step 7 isn't in the one-line-ask steps");
 if (!/(?:\(?step\.id === "m1\.gbp\.business_facts"(?: \|\| step\.id === "m1\.gbp\.hours_attributes"\))?|ONE_LINE_ASK\.has\(step\.id\)) && !isDone && !gbpWithRga && !ownWait && !listingWait \? `<div class="pm-fx-sub"><p class="pm-ask">\$\{escapeHtml\(step\.clientHint \|\| ""\)\}<\/p>\$\{actionBtn\}<\/div>`/.test(js)) fail("the top isn't one line with Show me how on its right");
@@ -247,7 +248,7 @@ if (!/area_now: now\.area/.test(watch)) fail("the nightly check doesn't record w
 if (!/if \(lastOne\) \{\s*pick\.classList\.add\("is-busy", "is-busy-say"\);/.test(js) || !/submitStepInput\(pick\)\.finally/.test(js)) fail("the last answer collapses the card while it saves (the screen jumps)");
 if (!/: step\.id === "m1\.gbp\.business_facts" && \(isDone \|\| gbpWithRga\) \? ""/.test(js)) fail("after saving, step 7 still repeats the ask and the why");
 if (!/const area = ar\.keep \|\| ar\.add \? `Service area: \$\{nPl\} place/.test(js)) fail("the summary says \"as on Google\" after the client picked a list");
-if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && !r\.later && !r\.withRga && r\.taskState\?\.google_push\?\.state !== "with_rga"\)/.test(js) || !/&& i\.taskState\?\.google_push\?\.state !== "with_rga"/.test(js)) fail("a step RGA is finishing is still the client's \"now\" / next step");
+if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && (?:!r\.step\.clientOptional && )?!r\.later && !r\.withRga && r\.taskState\?\.google_push\?\.state !== "with_rga"\)/.test(js) || !/&& i\.taskState\?\.google_push\?\.state !== "with_rga"/.test(js)) fail("a step RGA is finishing is still the client's \"now\" / next step");
 if (!/\$\{!isDone && gbpWithRga \? " is-rga-turn" : ""\}/.test(js)) fail("a step RGA is finishing keeps the client's amber edge");
 if (!/const anchor = b\.closest\("\.pm-fx-sub, \.pm-row-actions"\);\s*if \(detail\.hidden && anchor && anchor\.nextElementSibling !== detail\) anchor\.after\(detail\);/.test(js)) fail("Show me how opens its panel off screen, below the form");
 if (!/<div class="ob-body">\$\{askNote\}\$\{\/\*[\s\S]{0,400}?\*\/\s*clientInputHtml\(o, s\.task\)\}/.test(read("admin/admin.js")) || !/<div class="ob-body">\$\{clientInputHtml\(o, s\.task\)\}\$\{outHtml\}/.test(admin)) fail("admin shows the client's answer only once the step is done (not while RGA is finishing it)");
@@ -266,13 +267,13 @@ if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\
   if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
 }
 if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
-if (!/x\.on \? "on" : "", x\.on \? "✓ on Google" : "adding"/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: "RGA is on it", side: `nothing needed from you · \$\{items\.length - pending\.length\} of \$\{items\.length\} on Google`[\s\S]{0,1800}proof: maps, act: change \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+if (!/x\.on \? "on" : "", x\.on \? "✓ on Google" : "adding"/.test(js) || !/return googleCardHtml\(\{ state: "rga", small: "RGA is on it", side: `nothing needed from you · \$\{items\.length - pending\.length\} of \$\{items\.length(?: \+ queue\.length)?\} on Google`[\s\S]{0,1800}proof: maps, act: change \}\);/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
 if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
 if (!/\$\{areaChips \? `<span class="pm-fxt-pls">\$\{areaChips\}<\/span>` : ""\}/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
 {
   // the note, run for real
   const ni = portal.indexOf("function factsNoteHtml(t) {"), nj = portal.indexOf("\n}\n", ni);
-  const nctx = { escapeHtml: esc, Date };
+  const nctx = { escapeHtml: esc, Date, seeStepText: () => "See step 4 →" };   // the number comes from the playbook in the browser
   vm.createContext(nctx);
   vm.runInContext(`${portal.slice(ni, nj + 2)}\nthis.note = factsNoteHtml;`, nctx);
   const miss = nctx.note({ status: "pending", google_push: { area_missing: ["Palms, CA"] } });

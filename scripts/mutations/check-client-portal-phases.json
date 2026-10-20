@@ -1,0 +1,58 @@
+[
+ [
+  "Monthly cards draw out of number order",
+  "portal",
+  "const ONGOING_ORDER = [\"m2.exec.review_push\", \"m2.snap.business_outcomes\", \"m2.exec.gbp_photos\",",
+  "const ONGOING_ORDER = [\"m2.exec.review_push\", \"m2.exec.gbp_photos\", \"m2.snap.business_outcomes\",",
+  1
+ ],
+ [
+  "phase header counts written, not counted",
+  "portal",
+  "const done = rows.filter((r) => r.status === \"done\" || r.status === \"skipped\").length;",
+  "const done = rows.length;",
+  1
+ ],
+ [
+  "a wait reads its bare reason as the status",
+  "portal",
+  "      : rgaWait ? { text: CANT_START, why: \"Waits on RGA\", cls: \"wait\" }",
+  "      : rgaWait ? { text: \"Waits on RGA\", cls: \"wait\" }",
+  1
+ ],
+ [
+  "a literal step number comes back",
+  "portal",
+  "data-portal-open=\"[data-dup-acc]\">${escapeHtml(seeStepText(\"m1.gbp.verify\"))}</a>",
+  "data-portal-open=\"[data-dup-acc]\">See step 6 →</a>",
+  1
+ ],
+ [
+  "the feed shows a step with no clientFeed line",
+  "clientfeed",
+  "    const line = FEED_LINE.get(id);\n    if (!line) continue;",
+  "    const line = FEED_LINE.get(id) || (p.summary || id);",
+  1
+ ],
+ [
+  "the feed leaks RGA's payload summary",
+  "clientfeed",
+  "    out.push({ at: new Date(at).toISOString(), step_id: id, line });",
+  "    out.push({ at: new Date(at).toISOString(), step_id: id, line: p.summary || line });",
+  1
+ ],
+ [
+  "a reopened step still shows in the feed",
+  "clientfeed",
+  "    if (!id || decided.has(id)) continue;\n    decided.add(id);",
+  "    if (!id) continue;",
+  1
+ ],
+ [
+  "What to expect promises a ranking",
+  "portal",
+  "[\"We never promise\", \"A #1 spot, a number of leads or revenue. Google decides rankings.\"],",
+  "[\"We guarantee\", \"Top 3 in your area within 90 days.\"],",
+  1
+ ]
+]

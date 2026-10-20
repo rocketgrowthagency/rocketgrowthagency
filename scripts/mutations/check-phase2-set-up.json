@@ -1,0 +1,58 @@
+[
+ [
+  "split day writes one opening",
+  "gbpprofile",
+  "    if (v.open2 && v.close2) out.push({ openDay: g, openTime: fromHm(v.open2), closeDay: g, closeTime: fromHm(v.close2) });\n",
+  "\n",
+  1
+ ],
+ [
+  "appointment-only sends empty hours",
+  "gbpprofile",
+  "      const body = periods.length ? { regularHours: { periods } } : {}, mask = [\"regularHours\"];",
+  "      const body = { regularHours: { periods } }, mask = [\"regularHours\"];",
+  1
+ ],
+ [
+  "24 hours saves without the tick",
+  "stepinputfn",
+  "    if (any24 && v.confirm24 !== true) return { error:",
+  "    if (false) return { error:",
+  1
+ ],
+ [
+  "photos counted as uploads",
+  "portal",
+  "  const hasPhotosThreshold = photosOnGoogle >= 20;",
+  "  const hasPhotosThreshold = photoCount >= 20;",
+  1
+ ],
+ [
+  "unreachable Google confirms photos",
+  "recheck",
+  "  return { verdict: n >= threshold ? \"indeterminate\" : \"not_done\", ...counts,",
+  "  return { verdict: n >= threshold ? \"confirmed\" : \"not_done\", ...counts,",
+  1
+ ],
+ [
+  "Set one up for me reads done on choice",
+  "stepchoicefn",
+  "      ? { status: \"in_progress\", completed_at: null }",
+  "      ? { status: \"done\", completed_at: new Date().toISOString() }",
+  1
+ ],
+ [
+  "the test call is open to the client",
+  "calltestfn",
+  "  const gate = await requireWorkspaceForClient(event, clientId);",
+  "  const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "form test arriving doesn't finish",
+  "formtest",
+  "    if (body.arrived === true) Object.assign(task, { status: \"done\",",
+  "    if (false) Object.assign(task, { status: \"done\",",
+  1
+ ]
+]

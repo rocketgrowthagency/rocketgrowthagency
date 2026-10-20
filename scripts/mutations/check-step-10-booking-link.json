@@ -79,8 +79,8 @@
  [
   "Change link writes",
   "portal",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\", \"m1.gbp.attributes\"]);",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.attributes\"]);",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
+  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
   1
  ],
  [
@@ -93,8 +93,8 @@
  [
   "page names become HTML",
   "portal",
-  "}\">${pg.url === pageNow ? \"\u2713 \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
-  "}\">${pg.url === pageNow ? \"\u2713 \" : \"\"}${pg.label}${KIND[pg.kind]",
+  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
+  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}${KIND[pg.kind]",
   1
  ],
  [
@@ -191,8 +191,8 @@
  [
   "RGA isn't told of a removal",
   "gbpwatch",
-  "        try { await d.notifyRga(clientId, `${stepId} \u2014 Google took the booking link down",
-  "        if (false) try { await d.notifyRga(clientId, `${stepId} \u2014 Google took the booking link down",
+  "        try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
+  "        if (false) try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
   1
  ],
  [

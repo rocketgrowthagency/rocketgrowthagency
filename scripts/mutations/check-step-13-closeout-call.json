@@ -2,7 +2,7 @@
  [
   "back to one Do step N first",
   "portal",
-  "${ownWait ? (step.id === \"m1.call.close\" ? closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook) : ownWaitHtml(ownFirst)) : \"\"}",
+  "${ownWait ? (step.id === \"m1.call.close\" ? closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook) : gaByRga ? `<div class=\"pm-lock\"><span class=\"ic\" aria-hidden=\"true\">·</span><span><b>RGA is setting up your Google Analytics.</b> Your Google is connected, but your website has no Analytics yet, so we create it and share it with you. Nothing for you to do.</span></div>` : ownWaitHtml(ownFirst)) : \"\"}",
   "${ownWait ? ownWaitHtml(ownFirst) : \"\"}",
   1
  ],
@@ -23,15 +23,8 @@
  [
   "a step waiting on RGA is offered as theirs",
   "portal",
-  "if (!goTo && !rgaFirst) goTo = s;",
+  "if (!goTo && !rgaFirst && !rgaOwn) goTo = s;",
   "if (!goTo) goTo = s;",
-  1
- ],
- [
-  "the reminder date is lost",
-  "portal",
-  "const who = rgaFirst ? \"RGA first, then yours\" : later ? `yours \u00b7 reminder ${laterDay(later.until)}` : \"yours\";",
-  "const who = rgaFirst ? \"RGA first, then yours\" : \"yours\";",
   1
  ],
  [

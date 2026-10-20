@@ -2,6 +2,12 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  clientfeed: "netlify/functions/_client-feed.js",   // final review 10-20
+  portalfeedfn: "netlify/functions/portal-feed.js",   // final review 10-20
+  gbpservices: "netlify/functions/_gbp-services.js",   // final review 10-20
+  planokfn: "netlify/functions/portal-plan-ok.js",   // final review 10-20
+  calltestfn: "netlify/functions/admin-call-test.js",   // final review 10-20
+  cadencefn: "netlify/functions/portal-review-cadence.js",   // final review 10-20
   sopm1: "scraper:flow/playbooks/month1.mjs",   // canonical Month-1 SOP (final review R1, 10-20)
   sopm2: "scraper:flow/playbooks/month2plus.mjs",
   loginjs: "portal/client-login.js",

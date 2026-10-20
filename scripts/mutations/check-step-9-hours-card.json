@@ -86,8 +86,8 @@
  [
   "editor stacks text again",
   "portal",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : s.kind === \"facts\" ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : s.kind === \"facts\" ? gnow :",
   1
  ],
  [

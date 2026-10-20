@@ -65,8 +65,8 @@
  [
   "the save forgets what we sent",
   "stepinput",
-  "loc: conn.loc, prev: prev.google_push || null });",
-  "loc: conn.loc });",
+  "loc: conn.loc, prev: prev.google_push || null, draft: servicesDraft });",
+  "loc: conn.loc, draft: servicesDraft });",
   1
  ],
  [

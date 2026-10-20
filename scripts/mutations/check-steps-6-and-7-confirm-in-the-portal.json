@@ -58,7 +58,7 @@
  [
   "step 7 drops the website row",
   "portal",
-  "    row(\"Website\", escapeHtml(siteShow(a.website || ci.website || \"\")), ok),\n",
+  "    row(\"Website\", escapeHtml(siteShow(qOf(\"website\") ? qOf(\"website\").value : a.website || ci.website || \"\")), qOf(\"website\") ? qSt(qOf(\"website\")) : ok),\n",
   "",
   1
  ],
@@ -114,8 +114,8 @@
  [
   "step 6 body drops the card",
   "portal",
-  "Reading your Google Business Profile\u2026</span></div>${dupConfirmedHtml(onboarding?.data?.tasks, oauth)}` : \"\"}",
-  "Reading your Google Business Profile\u2026</span></div>` : \"\"}",
+  "Reading your Google Business Profile…</span></div>${dupConfirmedHtml(onboarding?.data?.tasks, oauth)}` : \"\"}",
+  "Reading your Google Business Profile…</span></div>` : \"\"}",
   1
  ],
  [
@@ -143,7 +143,7 @@
   "the date rides the status line",
   "portal",
   "<span class=\"gcard-sw\">Duplicate removed</span></span>",
-  "<span class=\"gcard-sw\">Duplicate removed</span><span class=\"gcard-side\">\u00b7 confirmed</span></span>",
+  "<span class=\"gcard-sw\">Duplicate removed</span><span class=\"gcard-side\">· confirmed</span></span>",
   1
  ],
  [
@@ -156,15 +156,15 @@
  [
   "the note points without opening",
   "portal",
-  " data-portal-open=\"[data-dup-acc]\">See step 6 \u2192",
-  " >See step 6 \u2192",
+  " data-portal-open=\"[data-dup-acc]\">${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
+  " >${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
   1
  ],
  [
   "the top note's status line has the date",
   "portal",
-  "<p class=\"k\">\u2713 Duplicate removed</p>",
-  "<p class=\"k\">\u2713 Confirmed by Google \u00b7 ${escapeHtml(monthDay(c.at))}</p>",
+  "<p class=\"k\">✓ Duplicate removed</p>",
+  "<p class=\"k\">✓ Confirmed by Google · ${escapeHtml(monthDay(c.at))}</p>",
   1
  ]
 ]

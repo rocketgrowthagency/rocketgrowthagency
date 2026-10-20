@@ -9,7 +9,7 @@
  [
   "no report link",
   "portal",
-  "const dcReport = (label) => `<button type=\"button\" class=\"pm-linkbtn\" data-portal-goto=\"reports\">${escapeHtml(label)} \u2192</button>`;",
+  "const dcReport = (label) => `<button type=\"button\" class=\"pm-linkbtn\" data-portal-goto=\"reports\">${escapeHtml(label)} →</button>`;",
   "const dcReport = (label) => escapeHtml(label);",
   1
  ],
@@ -23,8 +23,8 @@
  [
   "empty numbers shown",
   "portal",
-  ".filter((f) => v[f.key] != null && v[f.key] !== \"\")",
-  ".filter((f) => true)",
+  "all.filter((f) => ns.includes(f.key) || (v[f.key] != null && v[f.key] !== \"\"))",
+  "all.filter((f) => true)",
   1
  ],
  [
@@ -44,8 +44,8 @@
  [
   "the done card is never drawn",
   "portal",
-  "const completionCtlLive = DONE_CARD.has(step.id) && isDone ? doneCardHtml(",
-  "const completionCtlLive = false ? doneCardHtml(",
+  "      : DONE_CARD.has(step.id) && isDone ? doneCardHtml(",
+  "      : false ? doneCardHtml(",
   1
  ]
 ]

@@ -620,15 +620,6 @@ the tracking number as an additional number — never the reverse.
 If NO: record the decision so nobody re-litigates it monthly. Declining is a valid outcome.`,
   },
   {
-    id: "m1.tracking.form_setup", title: "Set up form tracking",
-    type: "manual", dependsOn: ["m1.access.website", "m1.access.analytics"],
-    instructions: `Confirm the contact form actually submits AND that the submission is recorded.
-
-🔴 "A <form> tag exists" is not "the form works" — the on-page audit can only see the tag.
-Submit a real test inquiry and confirm it arrives. An unmonitored form is a lead leak that looks
-like poor conversion.`,
-  },
-  {
     id: "m1.web.tracking", title: "Verify GA4 + GSC + tag tracking",
     type: "auto", dependsOn: ["m1.access.analytics", "m1.access.search_console"],
     actionLabel: "⚡ Generate",
@@ -665,6 +656,15 @@ Only "found" plus a GSC tag counts as verified.`,
   },
   // === Google Business Profile (order approved 2026-10-08, onboarding_order_audit_v1) ===
 
+  {
+    id: "m1.tracking.form_setup", title: "Set up form tracking",
+    type: "manual", dependsOn: ["m1.access.website", "m1.access.analytics", "m1.web.tracking"],
+    instructions: `Confirm the contact form actually submits AND that the submission is recorded.
+
+🔴 "A <form> tag exists" is not "the form works" — the on-page audit can only see the tag.
+Submit a real test inquiry and confirm it arrives. An unmonitored form is a lead leak that looks
+like poor conversion.`,
+  },
   {
     id: "m1.gbp.verify", title: "Ensure GBP is claimed + verified",
     type: "manual", dependsOn: ["m1.access.gbp"],
@@ -1157,7 +1157,7 @@ Ensure: logo, founded date, website, social links, services all populated.`,
   },
   {
     id: "m1.brand.youtube_setup", title: "Create YouTube channel for video SEO",
-    type: "hybrid", dependsOn: ["m1.access.website"],
+    type: "hybrid", dependsOn: [],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -1266,7 +1266,7 @@ SLA going forward: 24-hr response. Use \`node gbp.mjs <client_id> reply <reviewI
 
   {
     id: "m1.report.month1", title: "Build + deliver Month 1 report",
-    type: "hybrid", dependsOn: ["m1.audit.kpi_baseline", "m1.gbp.photos", "m1.review.first_5", "m1.cit.priority_top10", "m1.web.internal_linking"],
+    type: "hybrid", dependsOn: ["m1.audit.kpi_baseline"],
     actionLabel: "⚡ Generate",
     async run({ clientId }) {
       const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");

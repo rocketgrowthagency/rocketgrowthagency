@@ -27,6 +27,8 @@ const ctx = vm.createContext({
   siteShow: (x) => String(x || "").replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""), gcardMaps: () => "",
   fmtDateTimeDot: (x) => String(x), monthDay: (x) => String(x).slice(0, 10), STORE_ICON: "", GOOGLE_G: "", GC_ICON: { ok: "" }, Date, JSON, Array, String,
   googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.proof, o.act].filter(Boolean).join(" ¦ ")}</card>`,
+  // seeStepText / portalStepNo (10-20): the number comes from the playbook in the browser; here a fixed one
+  seeStepText: () => "See step 2 →", portalStepNo: () => 2,
   FACT_WORDS: {}, placeName: (n) => String(n || "").split(",")[0].trim(),
 });
 for (const n of ["dupConfirmedOf", "keptProfileOf", "dupConfirmedHtml", "dupNoteHtml", "typeLinesHtml", "factsCardV2"]) vm.runInContext(fnSrc(n), ctx);

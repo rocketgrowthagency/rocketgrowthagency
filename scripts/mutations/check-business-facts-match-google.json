@@ -2,7 +2,7 @@
  [
   "apostrophes split names",
   "gbpfacts",
-  ".replace(/['\u2019`]/g, \"\")",
+  ".replace(/['’`]/g, \"\")",
   "",
   1
  ],
@@ -37,8 +37,8 @@
  [
   "matching profile written anyway",
   "gbpfacts",
-  "  if (!samePhone(value.phone, before.phone)) {",
-  "  if (true) {",
+  "  const wantPhone = !samePhone(value.phone, before.phone), wantSite",
+  "  const wantPhone = true, wantSite",
   1
  ],
  [
@@ -114,8 +114,8 @@
  [
   "not a Google step",
   "gbpprofile",
-  ", FACTS: \"m1.gbp.business_facts\" };",
-  " };",
+  ", FACTS: \"m1.gbp.business_facts\", SERVICES:",
+  ", SERVICES:",
   1
  ],
  [
@@ -149,7 +149,7 @@
  [
   "nightly doesn't finish RGA's change",
   "gbpwatch",
-  "      if (F.rgaDone(task, now)) {",
+  "      if (F.rgaDone(task, now) && !((task.google_push.queue || []).length)) {",
   "      if (false) {",
   1
  ],
@@ -212,7 +212,7 @@
  [
   "a pick shows nothing",
   "portal",
-  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">\u2713</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">✓</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
   "    ans.innerHTML = \"\";",
   1
  ],
@@ -338,8 +338,8 @@
  [
   "top stacks again",
   "portal",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" ? \"\" : false ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
+  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : false ? gnow :",
   1
  ],
  [

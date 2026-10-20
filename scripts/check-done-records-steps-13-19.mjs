@@ -35,7 +35,8 @@ for (const id of ["m1.call.close", "m2.call.monthly"]) {
   if (!/Week of October 19/.test(h) || !/3 of 5/.test(h)) fail("step 17's done card doesn't show THIS week's list and how many were asked"); }
 { const h = run({ id: "m2.exec.youtube_video" }, { status: "done", client_input: { value: "https://youtu.be/abc" }, client_input_at: "2026-10-27T10:00:00Z" });
   if (!/✓ Received/.test(h) || !/youtu\.be\/abc/.test(h) || !/you sent it 10-27/.test(h)) fail("step 18's done card doesn't show the video link"); }
-if (!/const completionCtlLive = DONE_CARD\.has\(step\.id\) && isDone \? doneCardHtml\(step, taskState \|\| \{\},/.test(P)) fail("the row doesn't draw the done card for a done step (13–19 would be blank again)");
+// 10-20: quarterly "not due" and a skipped optional step come first in the chain; the done card still draws for every done step
+if (!/const completionCtlLive = [\s\S]{0,900}?: DONE_CARD\.has\(step\.id\) && isDone \? doneCardHtml\(step, taskState \|\| \{\},|const completionCtlLive = DONE_CARD\.has\(step\.id\) && isDone \? doneCardHtml\(step, taskState \|\| \{\},/.test(P)) fail("the row doesn't draw the done card for a done step (13–19 would be blank again)");
 for (const id of ["m1.call.close", "m1.brand.youtube_setup", "m2.snap.business_outcomes", "m2.exec.gbp_photos", "m2.exec.review_push", "m2.exec.youtube_video", "m2.call.monthly"])
   if (!new RegExp(`const DONE_CARD = new Set\\(\\[[^\\]]*"${id.replace(/\./g, "\\.")}"`).test(P)) fail(`${id} isn't in DONE_CARD`);
 if (F.length) { console.error("🔴 steps 13–19 done records regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }

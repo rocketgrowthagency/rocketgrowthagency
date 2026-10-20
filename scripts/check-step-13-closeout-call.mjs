@@ -20,7 +20,7 @@ const step = (cs.month1 || []).find((s) => s.id === "m1.call.close");
 if (!step || !Array.isArray(step.needsFirst) || step.needsFirst.length < 2) { console.error("⚠️  INDETERMINATE — step 13 or its prerequisites aren't in the projection"); process.exit(2); }
 
 // ── 1 · wired ──
-if (!/\$\{ownWait \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook\) : ownWaitHtml\(ownFirst\)\) : ""\}/.test(portal)) fail("step 13's wait isn't the full list (it's back to one \"Do step N first\")");
+if (!/\$\{ownWait \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook\) : (?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\) : ""\}/.test(portal)) fail("step 13's wait isn't the full list (it's back to one \"Do step N first\")");
 if (!/: step\.id === "m1\.call\.close" \? \(ownWait \|\| isDone \? "" : closeCallHtml\(/.test(portal)) fail("step 13 shows a \"What to do\" box under the card while it waits");
 if (!/o\.flowId === "m1\.call\.close" \? \(\(\) => \{[\s\S]{0,2000}title: "The close-out call opens when these are done"/.test(admin) || !/r\?\.obj\?\.clientFacing \? "client's move" : "RGA's move"/.test(admin) || !/state: rgaN \? "rga" : "you", small: rgaN \? "Your move" : "Client's move", side: `\$\{rgaN\} yours · \$\{clientN\} the client's`/.test(admin)) fail("admin row 60 doesn't list what the call waits on with whose move");
 if ((css.match(/^\.pm-cw \{/gm) || []).length !== 1) fail("the waiting list isn't styled once");
@@ -48,17 +48,20 @@ try {
       return { text: h.innerText.replace(/\s+/g, " ").trim(), cls: h.querySelector(".gcard")?.className, rows: h.querySelectorAll(".pm-cw-r").length, ticks: h.querySelectorAll(".pm-cw-s.on").length, go: (h.querySelector(".pm-cw-go") || {}).textContent || "" }; };
     const far = Date.now() + 5 * 86400000;
     return {
-      rga: draw({ ...base, "m1.gbp.photos": { status: "pending", later: { until: new Date(far).toISOString(), set_at: new Date().toISOString() } }, "m1.review.first_5": { status: "pending" }, "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T16:11:50Z" } }, new Set(["m1.review.first_5"])),
-      rgaOnly: draw({ ...base, "m1.review.first_5": { status: "pending" } }, new Set(["m1.review.first_5"])),
-      noKick: draw({ ...base, "m1.gbp.photos": { status: "pending" } }, new Set()),
+      // 🔄 10-20 (approved phase3_4_reviews_close_v1): the call waits only on what the REPORT needs — Google access + the keyword plan
+      rga: draw({ ...base, "m1.access.analytics": { status: "pending" }, "m1.strategy.keywords_locations": { status: "pending" }, "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T16:11:50Z" } }, new Set(["m1.strategy.keywords_locations"])),
+      yours: draw({ ...base, "m1.strategy.keywords_locations": { status: "pending" } }, new Set()),
+      rgaOnly: draw({ ...base, "m1.strategy.keywords_locations": { status: "pending" } }, new Set(["m1.strategy.keywords_locations"])),
+      noKick: draw({ ...base, "m1.access.analytics": { status: "pending" } }, new Set()),
       n: step.needsFirst.length,
     };
   }, cs);
 } finally { await browser.close(); }
 if (R.rga.rows !== R.n || R.rga.ticks !== R.n - 2) fail(`the wait doesn't list every prerequisite with ✓ on the done ones (${R.rga.rows} rows, ${R.rga.ticks} ✓ of ${R.n})`);
-if (!/^2 steps left We book this call when these are done Month 1 ends about Nov 8/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
-if (!/8 · Provide 20\+ business photos yours · reminder /.test(R.rga.text) || !/12 · Ask your 5 most recent customers for a review RGA first, then yours/.test(R.rga.text)) fail("each open prerequisite doesn't say whose move it is (yours · reminder / RGA first, then yours)");
-if (R.rga.go !== "Go to step 8") fail(`"Go to" doesn't point at the first step the client can do now (${R.rga.go})`);
+if (!/^2 steps left Your close-out call opens about Nov 5 Month 1 ends about Nov 8/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left, when it opens and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
+if (!/Anything still open carries into Month 2; nothing waits for it/.test(R.rga.text)) fail("the card doesn't say open steps carry into Month 2 (Month 1 closes on a date)");
+if (!/Grant RGA access to Google Analytics[^·]*yours/.test(R.rga.text) || !/5 · Your keyword plan: 5 searches \+ 3 areas RGA's move/.test(R.rga.text)) fail(`each open prerequisite doesn't say whose move it is (yours / RGA's move for a step RGA finishes) (${R.rga.text.slice(0, 300)})`);
+if (/Go to step 5/.test(R.yours.go)) fail("a step RGA finishes (the keyword plan) is offered as the client's next move");
 if (R.rgaOnly.go) fail("a step that waits on RGA is offered as the client's next move");
 if (/Month 1 ends/.test(R.noKick.text)) fail("Month 1's end date shows before the kickoff (a guess)");
 

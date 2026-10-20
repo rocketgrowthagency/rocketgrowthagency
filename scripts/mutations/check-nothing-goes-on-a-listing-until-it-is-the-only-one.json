@@ -149,7 +149,7 @@
  [
   "portal: a waiting step says Your turn",
   "portal",
-  "      : listingWait ? { text: portalListingStateOf(waitTasks).removed ? \"Waits on Google\" : \"Waits on your Business Profile\", cls: \"wait\" }\n",
+  "      : listingWait ? { text: CANT_START, why: portalListingStateOf(waitTasks).removed ? \"Waits on Google\" : \"Waits on your Business Profile\", cls: \"wait\" }\n",
   "",
   1
  ],
@@ -205,8 +205,8 @@
  [
   "the projection loses a flag",
   "clientstepsjson",
-  "\"clientStepNo\": 8,\n      \"waitsOnListing\": true",
-  "\"clientStepNo\": 8",
+  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
   1
  ],
  [

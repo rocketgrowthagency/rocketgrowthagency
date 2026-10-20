@@ -44,8 +44,8 @@
  [
   "the projection publishes the graph",
   "clientstepsjson",
-  "\"clientStepNo\": 13,\n      \"waitsOnRga\": true",
-  "\"clientStepNo\": 13,\n      \"waitsOnRga\": [\"m1.report.month1\"]",
+  "\"clientStepNo\": 15,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
+  "\"clientStepNo\": 15,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
   1
  ],
  [
@@ -93,7 +93,7 @@
  [
   "portal: the pill says Your turn",
   "portal",
-  "      : rgaWait ? { text: \"Waits on RGA\", cls: \"wait\" }\n",
+  "      : rgaWait ? { text: CANT_START, why: \"Waits on RGA\", cls: \"wait\" }\n",
   "",
   1
  ],
@@ -198,8 +198,8 @@
  [
   "own: the projection drops needsFirst",
   "clientstepsjson",
-  "\"clientStepNo\": 9,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
-  "\"clientStepNo\": 9,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  "\"clientStepNo\": 7,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
+  "\"clientStepNo\": 7,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
   1
  ],
  [
@@ -219,7 +219,7 @@
  [
   "own: the pill says Your turn",
   "portal",
-  "      : ownWait ? { text: ownFirstPill(ownFirst), cls: \"wait\" }\n",
+  "      : ownWait ? { text: CANT_START, why: gaByRga ? \"RGA is setting up your Google Analytics\" : ownFirstPill(ownFirst), cls: \"wait\" }\n",
   "",
   1
  ],
@@ -282,15 +282,15 @@
  [
   "step 18's band says something unapproved",
   "playbookjson",
-  "\"head\": \"First: we're writing your monthly report.\"",
+  "\"head\": \"First: your monthly report.\"",
   "\"head\": \"First: we're busy.\"",
   1
  ],
  [
   "step 15 counts every photo again",
   "portal",
-  "if (s.id === \"m2.exec.gbp_photos\" && photosThisMonth >= 5) status = \"done\";",
-  "if (s.id === \"m2.exec.gbp_photos\" && photoCount >= 5) status = \"done\";",
+  "if (s.id === \"m2.exec.gbp_photos\" && photosOnGoogleThisMonth >= 1) status = \"done\";",
+  "if (s.id === \"m2.exec.gbp_photos\" && photoCount >= 1) status = \"done\";",
   1
  ],
  [

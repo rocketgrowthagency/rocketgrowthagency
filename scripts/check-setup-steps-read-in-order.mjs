@@ -18,7 +18,8 @@ const code = js.replace(/^[ \t]*\/\/.*$/gm, "");
 // ── 1 · one list, in the projection's order (which is client number order) ──
 if (/function groupedRows\s*\(/.test(code) || /class="pm-group-h"/.test(code)) fail("the Setup list is grouped again (steps jump out of number order)");
 // (anchored on "${numbered.length" — the Month-1 list; Month 2's own branch is "(numbered.length ? …")
-if (!/\$\{numbered\.length\s*\?\s*numbered\.map\(rowHtml\)\.join\(""\)\s*:\s*`<div class="pm-empty"/.test(code)) fail("the Month-1 list doesn't render every step from one list, in order");
+// 10-20 (client_portal_phases_v1): the one list draws through phasedRowsHtml — every row, in order, with a header per phase
+if (!/\$\{numbered\.length\s*\?\s*(?:numbered\.map\(rowHtml\)\.join\(""\)|phasedRowsHtml\(numbered, rowHtml, [^)]*\)\))\s*:\s*`<div class="pm-empty"/.test(code)) fail("the Month-1 list doesn't render every step from one list, in order");
 const proj = JSON.parse(read("data/playbooks/client-steps.json"));
 const nums = (proj.month1 || []).map((s) => s.clientStepNo).filter((n) => n != null);
 for (let i = 1; i < nums.length; i++) if (nums[i] <= nums[i - 1]) { fail(`the client's steps aren't in number order in the projection (${nums.join(", ")})`); break; }

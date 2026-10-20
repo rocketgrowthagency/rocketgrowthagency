@@ -103,7 +103,8 @@ if (R.none.on.length || R.none.btn !== "Save what's true" || R.rga.btn !== "Save
 const pjs = read("portal/portal.js"), wjs = read("netlify/functions/_gbp-watch.js");
 if (!/if \(on\) none\.closest\("\.pm-at"\)\.querySelectorAll\("\[data-in-tick\]\.on"\)\.forEach/.test(pjs) || !/if \(t\.classList\.contains\("on"\)\) \{ const n = t\.closest\("\.pm-at"\)\?\.querySelector\("\[data-at-none\]"\)/.test(pjs)) fail('"None of these apply" doesn\'t clear the others (or a tick doesn\'t clear it)');
 if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");
-if (!/else if \(stepId === STEP\.ATTRS && task\.google_push\.state === "on_google" && !task\.google_push\.confirmed_at\)[\s\S]{0,400}confirmed_at: new Date\(nowMs\)\.toISOString\(\)/.test(wjs)) fail("the nightly check doesn't confirm a details save (it stays \"Sent to Google\")");
+// 10-20: the same stamp confirms step 6's services (phase1_get_started_v1), so the condition may name both
+if (!/else if \(\(?stepId === STEP\.ATTRS(?: \|\| stepId === STEP\.SERVICES\))? && task\.google_push\.state === "on_google" && !task\.google_push\.confirmed_at\)[\s\S]{0,400}confirmed_at: new Date\(nowMs\)\.toISOString\(\)/.test(wjs)) fail("the nightly check doesn't confirm a details save (it stays \"Sent to Google\")");
 if (R.many.folds !== 3 || !/Google shows 1 of 30/i.test(R.many.text)) fail(`a long list doesn't fold after the first two groups, or the count is wrong (${R.many.folds}; ${R.many.text.slice(0, 80)})`);
 if (R.editing.cls !== "gcard ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");

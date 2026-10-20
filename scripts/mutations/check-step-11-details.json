@@ -65,8 +65,8 @@
  [
   "a label becomes HTML",
   "portal",
-  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b>",
-  "<span class=\"pm-at-txt\"><b>${o.label}</b>",
+  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b><small>${does(o)}</small>",
+  "<span class=\"pm-at-txt\"><b>${o.label}</b><small>${does(o)}</small>",
   1
  ],
  [
@@ -142,7 +142,7 @@
  [
   "the nightly never confirms",
   "gbpwatch",
-  "    else if (stepId === STEP.ATTRS && task.google_push.state === \"on_google\" && !task.google_push.confirmed_at) {",
+  "    else if ((stepId === STEP.ATTRS || stepId === STEP.SERVICES) && task.google_push.state === \"on_google\" && !task.google_push.confirmed_at) {",
   "    else if (false) {",
   1
  ],

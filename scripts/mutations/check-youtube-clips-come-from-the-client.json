@@ -2,7 +2,7 @@
  [
   "an upload is recorded without checking storage",
   "videoclipfn",
-  "        if (!head.ok) return jsonRes(409, { error: \"We can't see that upload yet \u2014 please try again.\" });",
+  "        if (!head.ok) return jsonRes(409, { error: \"We can't see that upload yet — please try again.\" });",
   "",
   1
  ],
@@ -30,8 +30,8 @@
  [
   "recording a clip overwrites the record",
   "videoclipfn",
-  "body: JSON.stringify({ data: { ...rec.data, tasks } })",
-  "body: JSON.stringify({ data: { tasks: { [yt.STEP]: task } } })",
+  "body: JSON.stringify({ data: { ...rec.data, tasks } }) });\n    const back = ",
+  "body: JSON.stringify({ data: { tasks: { [yt.STEP]: task } } }) });\n    const back = ",
   1
  ],
  [

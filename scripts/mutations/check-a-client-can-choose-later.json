@@ -65,8 +65,8 @@
  [
   "a later step is still the now step",
   "portal",
-  "isOpenRow(r) && theirs(r) && !r.later && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
-  "isOpenRow(r) && theirs(r) && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "isOpenRow(r) && theirs(r) && !r.step.clientOptional && !r.later && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "isOpenRow(r) && theirs(r) && !r.step.clientOptional && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
   1
  ],
  [
@@ -114,8 +114,8 @@
  [
   "the folded row doesn't say when",
   "portal",
-  "${later ? `<span class=\"pm-step-sub\">Reminder by email on",
-  "${false ? `<span class=\"pm-step-sub\">Reminder by email on",
+  ": later ? `<span class=\"pm-step-sub\">Reminder by email on",
+  ": false ? `<span class=\"pm-step-sub\">Reminder by email on",
   1
  ],
  [

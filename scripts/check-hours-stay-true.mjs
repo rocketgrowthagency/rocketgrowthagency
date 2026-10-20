@@ -92,7 +92,7 @@ const OWNER = { startDate: { year: 2027, month: 3, day: 9 }, closed: true };   /
 
 // ── 3 · wiring: the save passes what we sent before; the nightly runs; admin decides ──
 const sin = nc(read("netlify/functions/portal-step-input.js"));
-if (!/applyForStep\(stepId, parsed\.value, \{ fetch, token: conn\.token, loc: conn\.loc, prev: prev\.google_push \|\| null \}\)/.test(sin)) fail("the save doesn't pass what we sent last time (the owner's own closed days would be wiped)");
+if (!/applyForStep\(stepId, parsed\.value, \{ fetch, token: conn\.token, loc: conn\.loc, prev: prev\.google_push \|\| null(?:, draft: servicesDraft)? \}\)/.test(sin)) fail("the save doesn't pass what we sent last time (the owner's own closed days would be wiped)");
 if (!/\[functions\."gbp-profile-watch"\]\s*\n\s*schedule = "30 10 \* \* \*"/.test(read("netlify.toml"))) fail("the nightly check has no schedule");
 const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/const gate = await requireWorkspaceForClient\(event, clientId\); if \(gate\.error\) return gate\.error;/.test(drift) || !/if \(!task \|\| !task\.google_drift\) return json\(409/.test(drift)) fail("admin's restore/accept isn't RGA-only, or acts with nothing changed");

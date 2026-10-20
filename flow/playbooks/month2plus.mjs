@@ -416,7 +416,7 @@ Lead-handling kills conversion more than rankings do.`,
   // === Phase 4 — Report & Deliver ===
   {
     id: "m2.report.generate", title: "Generate monthly report",
-    type: "auto", dependsOn: ["m2.snap.business_outcomes", "m2.exec.focus_area_work"],
+    type: "auto", dependsOn: ["m2.exec.focus_area_work"],
     async run({ clientId }) {
       const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");
       const result = await saveAndPublishReport(clientId, { publish: true });
@@ -445,7 +445,7 @@ OUTCOME: track retained / at_risk / churned.`,
   },
   {
     id: "m2.handoff.next_month", title: "Transition to next month",
-    type: "auto", dependsOn: ["m2.report.deliver", "m2.call.monthly"],
+    type: "auto", dependsOn: ["m2.report.deliver"],
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");
       const next = new Date(); next.setMonth(next.getMonth() + 1); next.setDate(1);

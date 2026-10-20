@@ -82,7 +82,9 @@ if (ownPairs < 5) { console.error(`⚠️  INDETERMINATE — only ${ownPairs} cl
 {
   const v = byId.get("m1.gbp.hours_attributes");
   const m = W.waitNow(pb, v, { "m1.access.gbp": done })?.message || "";
-  if (!/^Do step 6 first\. Nothing was saved\.$/.test(m)) fail(`a refused save of step 8 doesn't say "Do step 6 first" (says: ${m})`);
+  // 🔄 renumbered 10-20 (client_portal_phases_v1): verify's number is READ from the playbook, never assumed
+  const vn = byId.get("m1.gbp.verify").clientStepNo;
+  if (m !== `Do step ${vn} first. Nothing was saved.`) fail(`a refused save of the hours step doesn't say "Do step ${vn} first" (says: ${m})`);
   const g = W.waitNow(pb, v, {})?.message || "";
   if (!/^Connect Google first\. Nothing was saved\.$/.test(g)) fail(`a refused save waiting on Google doesn't say "Connect Google first" (says: ${g})`);
 }
@@ -117,12 +119,13 @@ for (const id of ["m2.snap.business_outcomes", "m2.exec.gbp_photos", "m2.exec.re
 {
   const call = byId2.get("m2.call.monthly");
   const w0 = call && W.waitNow(pb, call, {});
-  if (!w0 || w0.on !== "you" || w0.id !== "m2.snap.business_outcomes" || w0.message !== `Do step ${JSON.parse(read("data/playbooks/client-steps.json")).month2plus.find((x) => x.id === "m2.snap.business_outcomes").clientStepNo} first. Nothing was saved.`) fail(`Month 2: the monthly call doesn't say "Do step <business outcomes' own number> first" before their numbers are in (${JSON.stringify(w0)})`);
-  const w1 = call && W.waitNow(pb, call, { "m2.snap.business_outcomes": done });
-  if (!w1 || w1.on !== "rga") fail("Month 2: the monthly call doesn't wait on RGA once their numbers are in (the report isn't sent)");
+  // 🔄 approved monthly_asks_v1 (10-20) supersedes month2_waits_v1 decision 2: the call waits on RGA's REPORT only — never on the
+  // client's quarterly numbers — and the band says the report comes first, then RGA emails times
+  if (!w0 || w0.on !== "rga") fail(`Month 2: the monthly call doesn't wait on RGA's report (${JSON.stringify(w0)})`);
+  if (w0 && w0.id === "m2.snap.business_outcomes") fail("Month 2: the monthly call waits on the client's numbers again");
   const mock2 = read("reports/mockups/month2_waits_v1.html");
   const cw2 = call?.clientWait || {};
-  for (const k of ["head", "body", "foot"]) if (!cw2[k] || !mock2.includes(cw2[k])) fail(`Month 2: step 18's ${k} isn't the approved mockup's words (month2_waits_v1)`);
+  if (!/report/i.test(cw2.head || "") || !/email you times/i.test(cw2.body || "") || !cw2.foot) fail("Month 2: the monthly call's band doesn't say report first, then RGA emails times (monthly_asks_v1)");
   const cf = byId2.get("m2.snap.business_outcomes")?.clientFirst || {};
   if (!cf.head || !mock2.includes(cf.head) || !cf.body || !mock2.includes(cf.body)) fail("Month 2: step 14's \"first\" band isn't the approved mockup's words (month2_waits_v1)");
 }
@@ -250,9 +253,10 @@ vm.runInContext(`${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nt
   if (ctx.o(hrsRow, "done", {})) fail("a finished row reads as waiting on an earlier step");
   if (!ctx.w(hrsRow, "pending", { [DUP]: { outcome_data: { verdict: "clean" } }, ...g }, new Set())) fail("rowWaits (the marker's + the headline's question) ignores the client's own earlier step");
   const v6 = cs1.get("m1.gbp.verify"), gb = cs1.get("m1.access.gbp");
-  if (ctx.op(v6) !== "Do step 6 first" || ctx.op(gb) !== "Connect Google first") fail(`the pill isn't the approved wording ("${ctx.op(v6)}" / "${ctx.op(gb)}")`);
+  const vn2 = v6 && v6.clientStepNo;
+  if (ctx.op(v6) !== `Do step ${vn2} first` || ctx.op(gb) !== "Connect Google first") fail(`the reason isn't the approved wording ("${ctx.op(v6)}" / "${ctx.op(gb)}")`);
   const b6 = ctx.oh(v6), bg = ctx.oh(gb);
-  if (!/First: verify your Google profile \(step 6\)\./.test(b6) || !/href="#step-m1\.gbp\.verify">Go to step 6 →/.test(b6)) fail("the band for step 6 doesn't say what to do first or take them there");
+  if (!new RegExp(`First: verify your Google profile \\(step ${vn2}\\)\\.`).test(b6) || !b6.includes(`href="#step-m1.gbp.verify">Go to step ${vn2} →`)) fail("the band for the verify step doesn't say what to do first or take them there");
   if (!/First: connect Google\./.test(bg) || !/data-jump-google>Connect Google →/.test(bg)) fail("the band for Google access doesn't say what to do first or take them there");
 }
 const row = { id: S57, waitsOnRga: true, clientWait: s57.clientWait };
@@ -273,17 +277,20 @@ const checks = [
   [/const ownWait = !!ownFirstId;\s*const listingWait = !ownWait && rowListingWaits\(/, "the listing outranks the client's own earlier step (approved: their step first)"],
   [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
   [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?(?:!withRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
-  [/: ownWait \? \{ text: ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
+  // 🔄 10-20: the pill is "Can't start yet"; the reason ("Do step N first") sits under the title (client_portal_phases_v1)
+  [/: ownWait \? \{ text: CANT_START, why: (?:gaByRga \? "RGA is setting up your Google Analytics" : )?ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
   // 🔑 10-16 (step13_closeout_call_v1): step 13 lists every prerequisite instead; every other row keeps the one band
-  [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? closeWaitHtml\([^)]*\) : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
+  // 🔄 10-20: the Analytics case (Google connected, no GA4 yet) names RGA instead — every other own wait still says what to do first
+  [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? closeWaitHtml\([^)]*\) : )?(?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
-  [/: rgaWait \? \{ text: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved pill)"],
+  [/: rgaWait \? \{ text: CANT_START, why: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved reason under \"Can't start yet\")"],
   [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
   [/const waitTasks = \{ \.\.\.m1Tasks, \.\.\.m2Tasks \};/, "a Month-2 row's wait isn't read from this month's record"],
   [/const ownFirstId = rowOwnWaits\(step, status, waitTasks\);/, "a Month-2 row's \"Do step 14 first\" isn't read from this month's record"],
   [/tasks: waitTasks, rgaWaits(?:, photos: photos \|\| \[\])? \};/, "the \"your next step\" headline reads Month-2 waits from the onboarding record"],
   [/const ownFirst = ownFirstId \? \(\[\.\.\.\(playbook\.month1 \|\| \[\]\), \.\.\.\(playbook\.month2plus \|\| \[\]\)\]\.find/, "a Month-2 \"Do step N first\" can't find its step (no number)"],
-  [/if \(s\.id === "m2\.exec\.gbp_photos" && photosThisMonth >= 5\) status = "done";/, "step 15 counts every photo ever, not this month's (month2_waits_v1, decision 3)"],
+  // 🔄 monthly_asks_v1 (10-20): this month's photos ON GOOGLE, no 5-a-month quota
+  [/if \(s\.id === "m2\.exec\.gbp_photos" && photosOnGoogleThisMonth >= 1\) status = "done";/, "the monthly photo step counts every photo ever, not this month's on Google (month2_waits_v1 decision 3 + monthly_asks_v1)"],
   [/const photosThisMonth = \(photos \|\| \[\]\)\.filter\(\(p\) => p && p\.created_at\s*&& sameReportingMonth\(portalReportingMonth\(new Date\(p\.created_at\)\), portalReportingMonth\(\)\)\)\.length;/, "step 15's count isn't this reporting month's photos"],
   [/&& !rowWaits\(i\.step, i\.status, _nextStepInputs\?\.tasks, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row that waits"],
   // 🔒 step12_review_requests_v1 (10-14): while it waits, the only control is the disabled "Add your 5 customers →".
@@ -316,4 +323,4 @@ if (!mock.includes("Waits on RGA")) fail("the approved mockup no longer names th
 }
 
 if (F.length) { console.error("🔴 a client can be asked to do a step that waits on RGA:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / kickoff left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA; Month 2 walked on its own list (${m2pairs} prerequisites), judged against this month's record, 14/15/16 never wait, the call says "Do step 14 first" then waits on RGA in the approved words, step 15 counts this month's photos`);
+console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / kickoff left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA; Month 2 walked on its own list (${m2pairs} prerequisites), judged against this month's record, 14/15/16 never wait, the call waits on RGA's report only (never the client's numbers), the photo step counts this month's on Google`);

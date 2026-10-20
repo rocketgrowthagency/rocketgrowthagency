@@ -36,7 +36,10 @@ try { N = req("./notify-step-open.js"); } catch (e) { console.error(`⚠️  IND
 const ids = (N.CANDIDATES || []).map((s) => s.id);
 if (!ids.includes(S57)) fail("step 12 (5 customers) can't trigger the email");
 if (ids.includes("m1.call.close")) fail("the close-out call triggers the email, but it asks the client for nothing");
-const own = { "m1.access.gbp": done, "m1.gbp.verify": done };
+// 🔒 10-20 (final review R1): step 12 waits on ONE Google listing too, so the fixtures carry a clean duplicate check;
+// the case below without it proves a live duplicate holds the email back.
+const one = { "m1.audit.gbp_duplicate": { outcome_data: { verdict: "clean", duplicates: [] } } };
+const own = { "m1.access.gbp": done, "m1.gbp.verify": done, ...one };
 const seen = { waited_on_rga_at: "2026-10-13T00:00:00Z" };
 const cases = [
   ["waiting on RGA, not seen yet → seen (stamped), nothing sent", { ...own }, [S57], []],
@@ -46,6 +49,7 @@ const cases = [
   ["already told → nothing", { ...own, [S56]: done, [S57]: { ...seen, open_told_at: "x" } }, [], []],
   ["already done → nothing", { ...own, [S56]: done, [S57]: { ...seen, status: "done" } }, [], []],
   ["RGA's part done but the client's own step 6 still open → nothing yet", { "m1.access.gbp": done, [S56]: done, [S57]: seen }, [], []],
+  ["opened after being seen, but a duplicate listing is live → nothing yet", { "m1.access.gbp": done, "m1.gbp.verify": done, "m1.audit.gbp_duplicate": { outcome_data: { verdict: "duplicate", duplicates: [{ place_id: "x" }] } }, [S56]: done, [S57]: seen }, [], []],
 ];
 for (const [name, tasks, stamped, due] of cases) {
   const r = N.passFor(tasks);

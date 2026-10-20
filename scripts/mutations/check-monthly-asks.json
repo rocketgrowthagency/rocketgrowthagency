@@ -1,0 +1,58 @@
+[
+ [
+  "a list arriving counts as done",
+  "portal",
+  "  return cs.length > 0 && cs.every((c) => c && (c.marked_sent_by_client || c.stopped));",
+  "  return cs.length > 0;",
+  1
+ ],
+ [
+  "cadence ignored (always 7 days)",
+  "portal",
+  "  const days = (CADENCE[cadence] || CADENCE.weekly).days;",
+  "  const days = 7;",
+  1
+ ],
+ [
+  "cadence settable by an admin",
+  "cadencefn",
+  "  const gate = await requirePortalOwner(event, clientId);",
+  "  const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "Not sure stored as a number",
+  "stepinputfn",
+  "      if (f.allowNotSure && notSure.includes(f.key)) { out.not_sure = [...(out.not_sure || []), f.key]; continue; }",
+  "      if (f.allowNotSure && notSure.includes(f.key)) { out[f.key] = 0; continue; }",
+  1
+ ],
+ [
+  "quarterly step due every month",
+  "portal",
+  "![0, 3, 6, 9].includes(new Date().getUTCMonth())",
+  "![0,1,2,3,4,5,6,7,8,9,10,11].includes(new Date().getUTCMonth())",
+  1
+ ],
+ [
+  "old numbers dropped",
+  "portal",
+  "    const all = [...fields, ...LEGACY.filter((l) => !fields.some((f) => f.key === l.key))];",
+  "    const all = [...fields];",
+  1
+ ],
+ [
+  "monthly photos back to a 5 quota",
+  "portal",
+  "    if (s.id === \"m2.exec.gbp_photos\" && photosOnGoogleThisMonth >= 1) status = \"done\";",
+  "    if (s.id === \"m2.exec.gbp_photos\" && photosThisMonth >= 5) status = \"done\";",
+  1
+ ],
+ [
+  "script read from DESCRIPTION",
+  "portal",
+  "(?:^|\\\\n)[\\\\s*#-]*${k}\\\\b",
+  "${k}",
+  1
+ ]
+]

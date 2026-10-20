@@ -1,0 +1,65 @@
+[
+ [
+  "a confirmed kickoff reads Done before it's held",
+  "portal",
+  "    : booked && held ? { cls: \"done\", text: \"Done\" }\n    : booked ? { cls: \"rga\", text: \"Booked\" }",
+  "    : booked ? { cls: \"done\", text: \"Done\" }",
+  1
+ ],
+ [
+  "the agenda email sends without Chris's switch",
+  "notifystepopen",
+  "  if (env.KICKOFF_AGENDA_EMAIL !== \"on\") return false;",
+  "  if (false) return false;",
+  1
+ ],
+ [
+  "categories publish during verification",
+  "gbppublishfn",
+  "  if (stepId === \"m1.gbp.optimize_categories\" && rec?.data?.tasks?.[\"m1.gbp.verify\"]?.status !== \"done\") {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "two core facts go to Google in one save",
+  "gbpfacts",
+  "  const phoneNow = wantPhone && windowOpen, siteNow = wantSite && windowOpen && !phoneNow;",
+  "  const phoneNow = wantPhone, siteNow = wantSite;",
+  1
+ ],
+ [
+  "RGA's name change ignores the week",
+  "gbpfacts",
+  "  const rga = rgaItems(value, after).map((x) => (rgaAfter ? { ...x, not_before: rgaAfter } : x));",
+  "  const rga = rgaItems(value, after);",
+  1
+ ],
+ [
+  "Looks right answerable by an admin",
+  "planokfn",
+  "  const gate = await requirePortalOwner(event, clientId);",
+  "  const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "services: a shared service shows twice",
+  "gbpservices",
+  "if (t.serviceTypeId && !types.has(t.serviceTypeId)) types.set(",
+  "if (t.serviceTypeId) types.set(`${c.name}|${t.serviceTypeId}`, null) || types.set(",
+  1
+ ],
+ [
+  "services: free-form not under the main category",
+  "gbpservices",
+  "    : { freeFormServiceItem: { category: primary, label:",
+  "    : { freeFormServiceItem: { label:",
+  1
+ ],
+ [
+  "services: Google's other types pre-ticked",
+  "portal",
+  "  const picked = new Set(Array.isArray(had) ? had : [...onG, ...sug]);",
+  "  const picked = new Set(Array.isArray(had) ? had : options.map((o) => o.key));",
+  1
+ ]
+]
