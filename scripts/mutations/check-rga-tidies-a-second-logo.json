@@ -107,7 +107,7 @@
  [
   "the card never goes",
   "portal",
-  "      for (let next = card.nextElementSibling; next && (next.hasAttribute(\"data-second-logo\") || next.hasAttribute(\"data-facts-note\") || next.hasAttribute(\"data-dup-note\")); next = card.nextElementSibling) next.remove();\n",
+  "      for (let next = card.nextElementSibling; next && (next.hasAttribute(\"data-second-logo\") || next.hasAttribute(\"data-facts-note\") || next.hasAttribute(\"data-dup-note\") || next.hasAttribute(\"data-bk-gone-note\")); next = card.nextElementSibling) next.remove();\n",
   "",
   1
  ],

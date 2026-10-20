@@ -32,9 +32,11 @@ const r1 = G.recommendDetails(opts, { "m1.gbp.booking_link": { google_push: { st
 const r2 = G.recommendDetails(opts, { "m1.gbp.booking_link": { google_push: { state: "on_google", link_type: "url_reservations" } } });
 const r3 = G.recommendDetails(opts, { "m1.gbp.booking_link": { google_push: { state: "needs_client" } } });
 if (r0.length || r3.length) fail("RGA recommends a detail no other step proves");
-if (JSON.stringify(r1.map((x) => x.key)) !== '["offers_online_appointments"]' || !r1[0].why) fail(`step 10's appointment link doesn't recommend Online appointments with a reason (${JSON.stringify(r1)})`);
+// 🔒 step11_details_v2 (10-20): "Online appointments" is NEVER recommended — it can replace a review snippet in the map pack
+if (r1.some((x) => /online_appointments|onsite/i.test(x.key))) fail(`RGA recommends "Online appointments" / "Onsite services" (they can replace a review snippet in the map pack) (${JSON.stringify(r1)})`);
 if (JSON.stringify(r2.map((x) => x.key)) !== '["accepts_reservations"]') fail(`a restaurant's reservations link doesn't recommend Accepts reservations (${JSON.stringify(r2)})`);
-if (G.recommendDetails(opts.map((o) => ({ ...o, about: true })), { "m1.gbp.booking_link": { google_push: { state: "on_google", link_type: "url_appointment" } } }).length) fail("an \"about you\" detail can be recommended");
+if (G.recommendDetails(opts.map((o) => ({ ...o, about: true })), { "m1.gbp.booking_link": { google_push: { state: "on_google", link_type: "url_reservations" } } }).length) fail("an \"about you\" detail can be recommended");
+if (!/"Leave \\"Online appointments\\" off: Google can show it in place of a review quote in map results \(their booking link shows either way\)\."/.test(read("admin/admin.js"))) fail("admin still recommends \"Online appointments\"");
 
 // ── 2 · wired: read → recommend → save → stored → admin ──
 const prof = read("netlify/functions/portal-gbp-profile.js"), inp = read("netlify/functions/portal-step-input.js"), admin = read("admin/admin.js");
@@ -51,7 +53,7 @@ if ((css.match(/^\.pm-at \{/gm) || []).length !== 1) fail("the step 11 card isn'
 // ── 3 · drawn for real ──
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function attrsFormHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
+const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function fmtDateTimeDot\(/m), pick(/^function attrsFormHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-11 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -66,10 +68,10 @@ try {
     const h = document.getElementById("h");
     const rga = { options: [{ key: "is_owned_by_women", label: "Identifies as women-owned", group: "From the business", about: true }, { key: "offers_online_appointments", label: "Online appointments", group: "Planning", about: false },
       { key: "welcomes_lgbtq", label: "LGBTQ+ friendly", group: "Crowd", about: true }, { key: "requires_appointments", label: "Appointment required", group: "Planning", about: false }],
-      ticked: [], recommend: [{ key: "offers_online_appointments", why: "your booking link lets people book online" }, { key: "is_owned_by_women", why: "should never show" }] };
+      ticked: [], recommend: [{ key: "requires_appointments", why: "test reason" }, { key: "is_owned_by_women", why: "should never show" }] };
     const draw = (html) => { h.innerHTML = `<div data-step-input="m1.gbp.attributes"><div class="pm-at">${html}</div><div class="pm-in-foot"><button data-in-submit>Put it on Google</button></div></div>`; atSubmitLabel(h.firstElementChild);
       return { cls: h.querySelector(".gcard")?.className, on: [...h.querySelectorAll("[data-in-tick].on")].map((b) => b.getAttribute("data-in-tick")), why: ((h.querySelector(".gcard-why") || {}).innerText || "").replace(/\s+/g, " ").trim(), text: h.innerText.replace(/\s+/g, " "),
-        btn: h.querySelector("[data-in-submit]").textContent, folds: h.querySelectorAll("details.pm-at-more").length, groups: [...h.querySelectorAll(".pm-at-grp")].map((x) => x.textContent) }; };
+        btn: h.querySelector("[data-in-submit]").textContent, noneOn: !!h.querySelector("[data-at-none].on"), noneLast: h.querySelector(".pm-at .gcard-m")?.querySelector("[data-at-none]") === [...h.querySelectorAll(".pm-at-cb")].pop(), rows: h.querySelectorAll(".pm-at-cb[data-in-tick]").length, folds: h.querySelectorAll("details.pm-at-more").length, groups: [...h.querySelectorAll(".pm-at-grp")].map((x) => x.textContent) }; };
     const many = { options: Array.from({ length: 30 }, (_, i) => ({ key: `k${i}`, label: `Detail ${i}`, group: `Group ${Math.floor(i / 6)}`, about: false })), ticked: ["k1"], recommend: [] };
     const out = {
       rga: draw(attrsFormHtml(rga, null)), saved: draw(attrsFormHtml(rga, ["welcomes_lgbtq"])), none: draw(attrsFormHtml(rga, [])), many: draw(attrsFormHtml(many, null)),
@@ -80,14 +82,28 @@ try {
     out.done = { text: h.innerText.replace(/\s+/g, " "), edit: !!h.querySelector('[data-step-edit="m1.gbp.attributes"]'), cls: h.querySelector(".gcard")?.className };
     h.innerHTML = attrsCardHtml({ id: "m1.gbp.attributes" }, {}, { state: "on_google", at: "2026-10-17T16:00:00Z", after: [], labels: { a: "A" } }, null);
     out.doneNone = h.innerText.replace(/\s+/g, " ");
+    h.innerHTML = attrsCardHtml({ id: "m1.gbp.attributes" }, {}, { state: "on_google", at: new Date().toISOString(), after: ["requires_appointments"], labels: { requires_appointments: "Appointment required" } }, null);
+    out.sent = { text: h.innerText.replace(/\s+/g, " "), cls: h.querySelector(".gcard")?.className };
+    h.innerHTML = attrsCardHtml({ id: "m1.gbp.attributes" }, {}, { state: "on_google", at: new Date().toISOString(), confirmed_at: new Date().toISOString(), after: ["requires_appointments"], labels: { requires_appointments: "Appointment required" } }, null);
+    out.confirmed = { cls: h.querySelector(".gcard")?.className };
     out.x = await new Promise((r) => setTimeout(() => r(window.__x || 0), 300));
     return out;
   });
 } finally { await browser.close(); }
-if (R.rga.cls !== "gcard you" || JSON.stringify(R.rga.on) !== '["offers_online_appointments"]' || !/^RGA recommends Online appointments: your booking link lets people book online\.$/i.test(R.rga.why) || /should never show/.test(R.rga.why)) fail(`RGA's recommendation isn't preselected with its reason, or an identity detail is recommended (${JSON.stringify(R.rga)})`);
-if (!R.rga.groups.some((g) => /^About you · only you can say$/i.test(g)) || !/RGA never ticks these for you/.test(R.rga.text)) fail("the identity details aren't their own group with the owner-only note");
+if (R.rga.cls !== "gcard you" || JSON.stringify(R.rga.on) !== '["requires_appointments"]' || !/^RGA recommends Appointment required: test reason\. Leave "Online appointments" off: Google can show it in place of a review quote in map results\.$/i.test(R.rga.why) || /should never show/.test(R.rga.why)) fail(`RGA's recommendation isn't preselected with its reason, or an identity detail is recommended (${JSON.stringify(R.rga)})`);
+if (!R.rga.groups.some((g) => /^About you · only you can say$/i.test(g)) || !/Always your choice: RGA never ticks these, and you can take one off anytime\. If someone leaves a hostile review because of one, you can report it to Google\./.test(R.rga.text)) fail("the identity details aren't their own group with the owner-only note (optional, removable, report a hostile review)");
+if (!/Online appointments Shows on your profile\. Google can show this under your name in map results in place of a review quote\. RGA recommends leaving it off\. On Google: not set/.test(R.rga.text)) fail("the Online appointments row doesn't say what it does, the map-pack trade-off and what Google shows now");
+if (!/Identifies as women-owned Shows on your profile\. People can filter Maps for it\./.test(R.rga.text) || R.rga.rows !== 4) fail("a row doesn't say what the detail does (identity labels are Maps filters), or details aren't one checkbox row each");
+if (R.rga.noneOn || !R.none.noneOn || !R.rga.noneLast) fail(`"None of these apply" isn't the last checkbox (on only when they saved none)`);
+if (!/Tick only what's true today: Google now asks visitors to confirm these\./.test(R.rga.text)) fail("no line that Google asks visitors to confirm these");
+if (R.sent.cls !== "gcard rga" || !/Sent to Google/i.test(R.sent.text) || !/up to 30 days/.test(R.sent.text) || R.confirmed.cls !== "gcard ok") fail(`a fresh save isn't "Sent to Google" until the nightly check confirms it (${R.sent.cls} · ${R.confirmed.cls})`);
 if (JSON.stringify(R.saved.on) !== '["welcomes_lgbtq"]') fail("a saved answer doesn't come back exactly as the client left it");
-if (R.none.on.length || R.none.btn !== "None of these apply" || R.rga.btn !== "Put it on Google") fail(`the save button doesn't say what it saves (${R.none.btn} / ${R.rga.btn})`);
+// step11_details_v2: ONE primary button, always "Save what's true"; "None of these apply" is a checkbox
+if (R.none.on.length || R.none.btn !== "Save what's true" || R.rga.btn !== "Save what's true") fail(`the save button isn't always "Save what's true" (${R.none.btn} / ${R.rga.btn})`);
+const pjs = read("portal/portal.js"), wjs = read("netlify/functions/_gbp-watch.js");
+if (!/if \(on\) none\.closest\("\.pm-at"\)\.querySelectorAll\("\[data-in-tick\]\.on"\)\.forEach/.test(pjs) || !/if \(t\.classList\.contains\("on"\)\) \{ const n = t\.closest\("\.pm-at"\)\?\.querySelector\("\[data-at-none\]"\)/.test(pjs)) fail('"None of these apply" doesn\'t clear the others (or a tick doesn\'t clear it)');
+if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");
+if (!/else if \(stepId === STEP\.ATTRS && task\.google_push\.state === "on_google" && !task\.google_push\.confirmed_at\)[\s\S]{0,400}confirmed_at: new Date\(nowMs\)\.toISOString\(\)/.test(wjs)) fail("the nightly check doesn't confirm a details save (it stays \"Sent to Google\")");
 if (R.many.folds !== 3 || !/Google shows 1 of 30/i.test(R.many.text)) fail(`a long list doesn't fold after the first two groups, or the count is wrong (${R.many.folds}; ${R.many.text.slice(0, 80)})`);
 if (R.editing.cls !== "gcard ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");

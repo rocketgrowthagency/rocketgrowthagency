@@ -24,7 +24,7 @@ let G, B, W;
 try { G = req("./_gbp-profile.js"); B = req("./_booking-link.js"); W = req("./_gbp-watch.js"); } catch (e) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
 const F = []; const fail = (m) => F.push(m);
 const STEP = "m1.gbp.booking_link";
-const TAGGED = (u) => `${u}${u.includes("?") ? "&" : "?"}utm_source=gbp&utm_medium=booking&utm_campaign=local-seo`;
+const TAGGED = (u) => `${u}${u.includes("?") ? "&" : "?"}utm_source=google&utm_medium=organic&utm_campaign=gbp-booking`;
 
 // ── a fake Google (+ the pages the link check / the website read fetch) ──
 const URLT = (k) => ({ parent: `attributes/${k}`, valueType: "URL", displayName: k });
@@ -77,16 +77,16 @@ const APPT = ["url_appointment", "url_facebook"], REST = ["url_reservations", "u
 }
 {
   const w = fakeGoogle({ offered: APPT });
-  await G.applyForStep(STEP, { value: "https://x.com/book?utm_source=newsletter", choice: "tool" }, w.deps);
-  if (w.writes()[0]?.body.attributes[0].uriValues[0].uri !== "https://x.com/book?utm_source=newsletter") fail("a link with its own utm_ tags got ours on top");
+  await G.applyForStep(STEP, { value: "https://joes-plumbing.com/book?utm_source=newsletter", choice: "tool" }, w.deps);
+  if (w.writes()[0]?.body.attributes[0].uriValues[0].uri !== "https://joes-plumbing.com/book?utm_source=newsletter") fail("a link with its own utm_ tags got ours on top");
   const w2 = fakeGoogle({ offered: APPT });
   const o2 = await G.applyForStep(STEP, { value: "http://localhost:8080/book", choice: "tool" }, w2.deps);
   if (o2.state !== "needs_client" || w2.pages().length || w2.writes().length) fail("a link to a private address was fetched or sent to Google");
   const w3 = fakeGoogle({ offered: APPT, linkStatus: 404 });
-  const o3 = await G.applyForStep(STEP, { value: "https://x.com/gone", choice: "tool" }, w3.deps);
+  const o3 = await G.applyForStep(STEP, { value: "https://joes-plumbing.com/gone", choice: "tool" }, w3.deps);
   if (o3.state !== "needs_client" || !o3.fix || w3.writes().length) fail("a link that doesn't open was sent to Google");
   const w4 = fakeGoogle({ offered: APPT, normalize: true });
-  const o4 = await G.applyForStep(STEP, { value: "https://www.x.com/contact/", choice: "website" }, w4.deps);
+  const o4 = await G.applyForStep(STEP, { value: "https://www.joes-plumbing.com/contact/", choice: "website" }, w4.deps);
   if (o4.state !== "on_google") fail(`Google writing the host in capitals / dropping a slash reads as a failed save (${o4.state})`);
   const none = fakeGoogle({ offered: APPT });
   const n = await G.applyForStep(STEP, { none: true }, none.deps);
@@ -116,25 +116,68 @@ const site = (html, url) => async () => ({ ok: true, url, text: async () => html
 }
 // who runs a link; the tag; the same link with or without it
 if (B.platformOf("https://acme.as.me/x") !== "Acuity" || B.platformOf("https://calendly.com/a") !== "Calendly" || B.platformOf("https://example.com") !== null) fail("a booking tool isn't recognized by its host");
-if (B.withTag("https://x.com/a#top") !== "https://x.com/a?utm_source=gbp&utm_medium=booking&utm_campaign=local-seo#top") fail("our tag doesn't go before the #anchor");
+if (B.withTag("https://joes-plumbing.com/a#top") !== "https://joes-plumbing.com/a?utm_source=google&utm_medium=organic&utm_campaign=gbp-booking#top") fail("our tag doesn't go before the #anchor");
 if (B.safeUrl("http://10.0.0.5/") || B.safeUrl("https://192.168.1.1/x") || B.safeUrl("https://[::1]/") || !B.safeUrl("https://book.squareup.com/x")) fail("a private address counts as a public page (or a public one doesn't)");
 
 // ── 3 · the nightly check: our tag isn't a change ──
 {
-  const task = { client_input: { value: "https://x.com/contact/", choice: "website" }, google_push: { state: "on_google", link_type: "url_reservations" } };
+  const task = { client_input: { value: "https://joes-plumbing.com/contact/", choice: "website" }, google_push: { state: "on_google", link_type: "url_reservations" } };
   const now = (u) => ({ types: [{ key: "url_reservations", links: [u] }], links: [] });
-  if (W.driftOf(STEP, task, now("https://www.x.com/contact?utm_source=gbp&utm_medium=booking&utm_campaign=local-seo"))) fail("the nightly check reads our tagged link on Google as a change");
+  if (W.driftOf(STEP, task, now("https://www.joes-plumbing.com/contact?utm_source=google&utm_medium=organic&utm_campaign=gbp-booking"))) fail("the nightly check reads our tagged link on Google as a change");
   if (!W.driftOf(STEP, task, now("https://other.com/book"))) fail("the nightly check misses a different link on Google");
+}
+
+// ── 3b · step10_booking_link_v2 (approved 10-20): links Google refuses, partners, login walls, "Google took it down" ──
+for (const [u, code] of [["https://www.facebook.com/joesplumbing", "social"], ["https://instagram.com/joes", "social"], ["https://bit.ly/joes", "short"], ["https://linktr.ee/joes", "short"],
+  ["https://www.yelp.com/biz/joes", "marketplace"], ["https://www.thumbtack.com/ca/joes", "marketplace"], ["https://wa.me/15550100", "messaging"], ["https://apps.apple.com/app/x", "store"], ["https://joes-plumbing.com/", "home"], ["https://www.joes-plumbing.com", "home"]]) {
+  const r = B.refuseReason(u); if (!r || r.code !== code || !r.said || !r.fix) fail(`a link Google refuses isn't refused with its fix (${u} → ${JSON.stringify(r)})`);
+}
+for (const u of ["https://joes-plumbing.com/book", "https://joes.setmore.com/", "https://book.joes-plumbing.com/", "https://calendly.com/joe/30min", "https://joes-plumbing.com/?service=drain"]) if (B.refuseReason(u)) fail(`a page people can book on is refused (${u})`);
+{
+  const w = fakeGoogle({ offered: APPT });
+  const o = await G.applyForStep(STEP, { value: "https://www.facebook.com/joesplumbing", choice: "tool" }, w.deps);
+  if (o.state !== "needs_client" || !/social media/.test(o.said || "") || w.writes().length || w.pages().length) fail(`a social link reaches Google or the link check (${JSON.stringify(o)})`);
+  const w2 = fakeGoogle({ offered: APPT });
+  const o2 = await G.applyForStep(STEP, { value: "https://book.squareup.com/appointments/joe", choice: "partner", platform: "Square" }, w2.deps);
+  if (o2.state !== "not_sent" || o2.reason !== "partner" || o2.platform !== "Square" || w2.writes().length) fail(`a booking partner isn't settled with nothing written (${JSON.stringify(o2)})`);
+  const w3 = fakeGoogle({ offered: APPT });
+  const loginFetch = async (url, init) => (/googleapis/.test(url) ? w3.fetch(url, init) : { ok: true, status: 200, url: "https://app.joes-tool.com/users/sign_in", json: async () => ({}) });
+  const o3 = await G.applyForStep(STEP, { value: "https://app.joes-tool.com/bookings/admin", choice: "tool" }, { ...w3.deps, fetch: loginFetch });
+  if (o3.state !== "needs_client" || !/sign in/.test(o3.said || "") || w3.writes().length) fail(`a page behind a sign-in is saved (${JSON.stringify(o3)})`);
+  if (B.TAG.map((x) => x.join("=")).join("&") !== "utm_source=google&utm_medium=organic&utm_campaign=gbp-booking") fail("the tag isn't google / organic / gbp-booking (Google Analytics files it under Organic Search)");
+  if (!B.isPartner("Square") || !B.isPartner("Housecall Pro") || B.isPartner("Calendly")) fail("the booking-partner list is wrong (Square / Housecall Pro are; Calendly isn't)");
+  const site = await B.findBookingPages("https://joes-plumbing.com", async () => ({ ok: true, url: "https://joes-plumbing.com/", text: async () => '<a href="https://book.squareup.com/appointments/joe">Book now</a><a href="https://calendly.com/joe/30">Call</a>' }));
+  const sq = (site.tools || []).find((t) => t.platform === "Square"), cal = (site.tools || []).find((t) => t.platform === "Calendly");
+  if (!sq || sq.partner !== true || !cal || cal.partner !== false) fail(`reading their website doesn't flag a Google booking partner (${JSON.stringify(site.tools)})`);
+}
+{
+  const task = { client_input: { value: "https://joes-plumbing.com/book", choice: "website" }, google_push: { state: "on_google", link_type: "url_appointment", link: "https://joes-plumbing.com/book" } };
+  const gone = W.driftOf(STEP, task, { types: [{ key: "url_appointment", links: [] }], links: [] });
+  const other = W.driftOf(STEP, task, { types: [{ key: "url_appointment", links: ["https://other.com/book"] }], links: [] });
+  if (!gone || gone.removed !== true || !other || other.removed) fail("the nightly check doesn't tell \"Google took it down\" (no link) from \"someone changed it\" (a different link)");
+  // run the watch: the step reopens, the state is removed, recorded, RGA told once
+  const recs = [], told = [];
+  let stored = { tasks: { [STEP]: { ...task, status: "done", completed_at: "2026-10-16T00:00:00Z" } } };
+  const d = { supa: null, connect: async () => ({ token: "t", loc: "locations/1" }), fetch: fakeGoogle({ offered: APPT, attrs: [] }).fetch,
+    readStepRecord: async () => stored, readRecord: async () => stored, writeStepTasks: async (_s, _r, tasks) => { stored = { ...stored, tasks }; return stored; },
+    record: async (x) => recs.push(x), notifyRga: async (_c, t) => told.push(t) };
+  let out; try { out = await W.watchClient("c1", d); } catch (e) { out = { error: e.message }; }
+  const t2 = stored.tasks[STEP];
+  if (!t2 || t2.status !== "pending" || !t2.google_push || t2.google_push.state !== "removed" || !t2.google_push.removed_at || t2.google_push.removed_link !== "https://joes-plumbing.com/book" || t2.completed_at)
+    fail(`"Google took it down" doesn't reopen the step as the client's move (${JSON.stringify(out).slice(0, 160)} · ${JSON.stringify(t2 && t2.google_push)})`);
+  else if (!recs.some((x) => x.kind === "gbp_booking_removed") || told.length !== 1) fail(`"Google took it down" isn't recorded, or RGA isn't told exactly once (${recs.length} recs, ${told.length} told)`);
+  else { await W.watchClient("c1", d); if (told.length !== 1) fail("a second night tells RGA again about the same removed link"); }
 }
 
 // ── 4 · the portal, the admin, the words ──
 const portal = read("portal/portal.js"), js = portal.replace(/^[ \t]*\/\/.*$/gm, ""), css = read("portal/portal.css"), admin = read("admin/admin.js");
 const prof = read("netlify/functions/portal-gbp-profile.js"), inp = read("netlify/functions/portal-step-input.js"), flow = read("netlify/functions/flow-execute.js");
 const pb = JSON.parse(read("data/playbooks/playbooks.json")).month1.find((s) => s.id === STEP), cs = JSON.parse(read("data/playbooks/client-steps.json")).month1.find((s) => s.id === STEP);
-if (!/if \(stepId === "m1\.gbp\.booking_link" && body\.check_link != null\) \{[\s\S]{0,400}if \(!B\.safeUrl\(u\.href\)\)[\s\S]{0,200}B\.linkOpens\(/.test(prof) || prof.indexOf("body.check_link != null") > prof.indexOf("await connectFor(")) fail("\"does it open?\" isn't checked as they type (public pages only, before any Google call)");
+if (!/if \(stepId === "m1\.gbp\.booking_link" && body\.check_link != null\) \{[\s\S]{0,400}if \(!B\.safeUrl\(u\.href\)\)[\s\S]{0,700}B\.linkOpens\(/.test(prof) || prof.indexOf("body.check_link != null") > prof.indexOf("await connectFor(")) fail("\"does it open?\" isn't checked as they type (public pages only, before any Google call)");
 if (!/now\.pages = found\.pages; now\.tools = found\.tools;/.test(prof)) fail("the step doesn't read the client's website for a page to recommend");
 if (!/if \(spec\.kind === "booking"\) \{[\s\S]{0,700}safeUrl\(u\.value\)[\s\S]{0,300}\["website", "tool", "keep"\]/.test(inp)) fail("the save doesn't check the booking answer's shape (public link, choice, link type)");
-if (!/const rec = cur\.length \? "keep" : tools\.length \? "tool" : pages\.length \? "website" : "tool";/.test(js)) fail("RGA's recommendation isn't keep → the tool their site links to → a page on their site");
+// step10_booking_link_v2: a Google booking partner their site uses comes before a pasted tool link
+if (!/const rec = cur\.length \? "keep" : partner \? "partner" : tools\.length \? "tool" : pages\.length \? "website" : "tool";/.test(js)) fail("RGA's recommendation isn't keep → a booking partner → the tool their site links to → a page on their site");
 if (!/data-bk-had=/.test(js) || !/host\.innerHTML = bookingFormHtml\(now, bkHad,/.test(js)) fail("the form isn't drawn from Google + their website");
 if (!/value = \{ value: url\.trim\(\), choice, \.\.\.\(linkType \? \{ link_type: linkType \} : \{\}\) \};/.test(js)) fail("the save doesn't send the choice and the link type");
 const inH = js.slice(js.indexOf('document.addEventListener("input", (e) => {\n  const inp = e.target && e.target.closest && e.target.closest("[data-bk-url]")'), js.indexOf('document.addEventListener("input", (e) => {\n  const inp = e.target && e.target.closest && e.target.closest("[data-bk-url]")') + 1800);
@@ -201,7 +244,7 @@ try {
 } finally { await browser.close(); }
 // 🔒 google_card_best_v1: the amber TINT is the state; RGA's recommendation is the "why" line, and it is the preselected choice
 const TINT_YOU = "rgb(255, 241, 227)";
-if (R.site.cls !== "gcard you" || R.site.bg !== TINT_YOU || R.site.sel !== "website" || !/^RGA recommends A page on your website, rocketgrowthagency\.com\/free-growth-audit\./i.test(R.site.rec) || R.site.page !== "https://www.rocketgrowthagency.com/free-growth-audit/" || !/Your move Where should Google's Book button go\? Google shows no booking link/i.test(R.site.text) || !/Where should Google's Book button go\?/.test(R.site.text)) fail(`with a page on their website, it isn't recommended and preselected in the amber Google card (${JSON.stringify(R.site)})`);
+if (R.site.cls !== "gcard you" || R.site.bg !== TINT_YOU || R.site.sel !== "website" || !/^RGA recommends Your request form, rocketgrowthagency\.com\/free-growth-audit\. People can ask for a time without phoning, and Google keeps links that let people do that\./i.test(R.site.rec) || R.site.page !== "https://www.rocketgrowthagency.com/free-growth-audit/" || !/Your move Where should Google send people who want to book\? Google shows no booking link/i.test(R.site.text) || !/Where should Google send people who want to book\?/.test(R.site.text)) fail(`with a page on their website, it isn't recommended and preselected in the amber Google card (${JSON.stringify(R.site)})`);
 if (R.tool.sel !== "tool" || !/^RGA recommends Your booking tool\. Your website already links to Housecall Pro\./i.test(R.tool.rec) || R.tool.tool !== "https://book.housecallpro.com/book/joe/1" || !/Your website links to Housecall Pro/.test(R.tool.text)) fail(`the booking tool their website links to isn't recommended and filled in (${JSON.stringify(R.tool)})`);
 if (R.keep.sel !== "keep" || !/^RGA recommends Keep the link Google shows/i.test(R.keep.rec) || R.keep.keep !== "https://square.site/book/glow?utm_source=gbp" || !/Keep the link Google shows/.test(R.keep.text)) fail(`a link Google already shows isn't "Keep the link Google shows", recommended (${JSON.stringify(R.keep)})`);
 if (R.saved.sel !== "website" || R.saved.page !== "https://www.rocketgrowthagency.com/contact/") fail("a saved answer doesn't come back as they left it");
@@ -214,5 +257,13 @@ if (!/Your reservations link Last checked Oct 16 (?:www\.)?opentable\.com\/r\/bi
 if (R.call.act !== "Add a link" || !/Customers call you/.test(R.call.text)) fail("\"Customers call us\" isn't a settled card with Add a link");
 if (R.x) fail("a page name from the client's website became HTML");
 
+// step10_booking_link_v2 in the portal / admin
+if (!/if \(step\.id === "m1\.gbp\.booking_link" && g\.state === "removed"\) \{[\s\S]{0,260}title: "Google took your booking link down"/.test(js)) fail("the portal doesn't say Google took the booking link down");
+if (!/function bkGoneNoteHtml\(tasks\)[\s\S]{0,200}g\.state !== "removed"[\s\S]{0,120}7 \* 86400000/.test(js) || !/if \(bNote\) card\.insertAdjacentHTML\("afterend", bNote\);/.test(js)) fail("no 7-day top note when Google takes the link down");
+if (!/partner \? opt\("partner", `Connect \$\{escapeHtml\(partner\.platform\)\} to Google`/.test(js) || !/else if \(choice === "partner"\) value = \{ choice, platform:/.test(js)) fail("a booking partner their site uses isn't offered as \"Connect it to Google\"");
+if (!/pages\.some\(\(pg\) => pg\.kind === "contact"\) \? `<span class="pm-bk-warn" data-bk-warn>Google sometimes removes contact pages/.test(js) || !/KIND\[pg\.kind\] \? ` <i>· \$\{KIND\[pg\.kind\]\}<\/i>` : ""/.test(js)) fail("the pages don't say what they are, or a contact page has no warning");
+if (/Book button go|Book button\b/.test(js.slice(js.indexOf("function bookingFormHtml("), js.indexOf("function bookingFormHtml(") + 9000))) fail("step 10 promises a \"Book button\" (Google decides the label)");
+if (!/Google's own report doesn't count clicks on this link, so we add a small tag to count every visit it sends you\./.test(js)) fail("the footer doesn't say why we tag the link");
+if (!/g\.state === "removed" \? adminGoogleCardHtml\(\{ state: "you", small: "Google took it down"/.test(admin) || !/g\.state === "needs_client" \|\| g\.state === "removed"\)\) return "you"/.test(admin)) fail("admin doesn't show \"Google took it down\" as the client's move");
 if (F.length) { console.error("🔴 Step 10 isn't the approved booking-link step:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ step 10 works for any business: the link type Google offers it (restaurants: reservations / order ahead; none → settled), our tag once, public pages only, opens-checked; RGA finds a booking / quote / contact page or the tool their site links to and recommends keep → tool → page; the nightly check ignores our tag; three choices in the one Google card, Change link without a write, admin shows choice + type + Try it; no Generate runner");

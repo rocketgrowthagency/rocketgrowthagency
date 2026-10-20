@@ -9,8 +9,8 @@
  [
   "RGA recommends without proof",
   "gbpprofile",
-  "{ key: /^offers_online_appointments$/, when: linkOn === \"url_appointment\",",
-  "{ key: /^offers_online_appointments$/, when: true,",
+  "{ key: /^accepts_reservations$/, when: linkOn === \"url_reservations\",",
+  "{ key: /^accepts_reservations$/, when: true,",
   1
  ],
  [
@@ -42,10 +42,10 @@
   1
  ],
  [
-  "the button always says Put it on Google",
+  "the button says something else",
   "portal",
-  "b.textContent = wrap.querySelector(\".pm-at [data-in-tick].on\") ? \"Put it on Google\" : \"None of these apply\";",
-  "b.textContent = \"Put it on Google\";",
+  "  if (b && !b.disabled) b.textContent = \"Save what's true\";",
+  "  if (b && !b.disabled) b.textContent = \"Put it on Google\";",
   1
  ],
  [
@@ -65,8 +65,8 @@
  [
   "a label becomes HTML",
   "portal",
-  "aria-pressed=\"${picked.has(o.key)}\">${escapeHtml(o.label)}",
-  "aria-pressed=\"${picked.has(o.key)}\">${o.label}",
+  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b>",
+  "<span class=\"pm-at-txt\"><b>${o.label}</b>",
   1
  ],
  [
@@ -74,6 +74,83 @@
   "admin",
   "why: choseWhy || attrWhy,",
   "why: choseWhy,",
+  1
+ ],
+ [
+  "Online appointments recommended again",
+  "gbpprofile",
+  "  const PROOF = [\n    { key: /^accepts_reservations$/",
+  "  const PROOF = [\n    { key: /^offers_online_appointments$/, when: linkOn === \"url_appointment\", why: \"your booking link lets people book online\" },\n    { key: /^accepts_reservations$/",
+  1
+ ],
+ [
+  "no trade-off line",
+  "portal",
+  "${TRADE.test(o.key) ? `<small class=\"pm-at-trade\">",
+  "${false ? `<small class=\"pm-at-trade\">",
+  1
+ ],
+ [
+  "rows don't say what they do",
+  "portal",
+  "<small>${does(o)}</small>",
+  "",
+  1
+ ],
+ [
+  "no On Google now",
+  "portal",
+  "<span class=\"pm-at-now\">On Google: ${onG.has(o.key) ? \"yes\" : \"not set\"}</span>",
+  "",
+  1
+ ],
+ [
+  "None doesn't clear the others",
+  "portal",
+  "    if (on) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
+  "    if (false) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
+  1
+ ],
+ [
+  "an empty save passes",
+  "portal",
+  "    if (wrap.querySelector(\".pm-at\") && !value.length && !wrap.querySelector(\".pm-at [data-at-none].on\")) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "no None checkbox",
+  "portal",
+  "<button type=\"button\" class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none",
+  "<button type=\"button\" hidden class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none-x",
+  1
+ ],
+ [
+  "identity note loses the abuse line",
+  "portal",
+  " If someone leaves a hostile review because of one, you can report it to Google.</span>",
+  "</span>",
+  1
+ ],
+ [
+  "Sent to Google is skipped",
+  "portal",
+  "  if (!seen) {\n    return googleCardHtml({ state: \"rga\", small: \"Sent to Google\"",
+  "  if (false) {\n    return googleCardHtml({ state: \"rga\", small: \"Sent to Google\"",
+  1
+ ],
+ [
+  "the nightly never confirms",
+  "gbpwatch",
+  "    else if (stepId === STEP.ATTRS && task.google_push.state === \"on_google\" && !task.google_push.confirmed_at) {",
+  "    else if (false) {",
+  1
+ ],
+ [
+  "admin recommends Online appointments",
+  "admin",
+  "\"Leave \\\"Online appointments\\\" off: Google can show it in place of a review quote in map results (their booking link shows either way).\"",
+  "\"Online appointments (their booking link is on Google).\"",
   1
  ]
 ]

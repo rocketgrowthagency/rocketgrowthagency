@@ -23,15 +23,15 @@
  [
   "the button doesn't say what it sends",
   "portal",
-  "  if (btn) { btn.textContent = `Send ${n} customer${n === 1 ? \"\" : \"s\"} \u2192`; btn.disabled = !full.length; }",
+  "  if (btn) { btn.textContent = `Write ${n} request${n === 1 ? \"\" : \"s\"}`; btn.disabled = !full.length; }",
   "  if (btn) { btn.disabled = !full.length; }",
   1
  ],
  [
   "an international number is refused",
   "portal",
-  "const r5Complete = (card) => !!r5Val(card, \"first_name\") && r5Val(card, \"phone\").replace(/\\D/g, \"\").length >= 7;",
-  "const r5Complete = (card) => !!r5Val(card, \"first_name\") && /^\\(\\d{3}\\) \\d{3}-\\d{4}$/.test(r5Val(card, \"phone\"));",
+  "(!/@/.test(r5Val(card, \"phone\")) && r5Val(card, \"phone\").replace(/\\D/g, \"\").length >= 7)",
+  "(!/@/.test(r5Val(card, \"phone\")) && /^\\(\\d{3}\\) \\d{3}-\\d{4}$/.test(r5Val(card, \"phone\")))",
   1
  ],
  [
@@ -44,14 +44,14 @@
  [
   "a marked request reads sent",
   "portal",
-  "</span>You marked it sent${r.marked_at ?",
-  "</span>Sent${r.marked_at ?",
+  "const tag = pill(\"on\", `Asked${r.marked_at ?",
+  "const tag = pill(\"on\", `Sent${r.marked_at ?",
   1
  ],
  [
   "a request with no message offers a send",
   "portal",
-  "    if (!r.message) return `<div class=\"pm-r5-rq\"><span class=\"pm-r5-who\">${who}</span><span class=\"pm-fx-pl wait\"><span class=\"d\" aria-hidden=\"true\"></span>RGA is writing it</span></div>`;\n",
+  "    if (!r.message) return `<div class=\"pm-r5-rq\"><span class=\"pm-r5-who\">${who}</span>${pill(\"wait\", \"RGA is writing it\")}</div>`;\n",
   "",
   1
  ],
@@ -121,7 +121,7 @@
  [
   "the admin can mark a request sent",
   "reviewreqfn",
-  "  const gate = Array.isArray(body.sent) ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "  const gate = MARK ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
   "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
   1
  ],
@@ -206,5 +206,110 @@
   "reviewreqfn",
   "  let body = fence ? fence[1] :",
   "  let body = fence ? fence[1] : \"\"; void"
+ ],
+ [
+  "a reminder before day 3",
+  "reviewreqfn",
+  "&& Date.now() - Date.parse(c.marked_sent_at || 0) >= 3 * 86400000",
+  "",
+  1
+ ],
+ [
+  "a second reminder",
+  "reviewreqfn",
+  "c.marked_sent_by_client && !c.reminded_at && !c.stopped",
+  "c.marked_sent_by_client && !c.stopped",
+  1
+ ],
+ [
+  "stop isn't final",
+  "reviewreqfn",
+  "const ok = (c) => MARK === \"sent\" ? !c.stopped",
+  "const ok = (c) => MARK === \"sent\" ? true",
+  1
+ ],
+ [
+  "refusals pass",
+  "reviewreqfn",
+  "    if (refused.length) return json(409,",
+  "    if (false) return json(409,",
+  1
+ ],
+ [
+  "the request isn't honest wording",
+  "reviewreqfn",
+  "Would you leave an honest review on Google? It takes a minute and really helps: ${reviewUrl}",
+  "If you have a minute, a quick Google review really helps us out: ${reviewUrl}",
+  1
+ ],
+ [
+  "the reminder skips the policy",
+  "reviewreqfn",
+  "reviewMessageProblems(msg, { needsLink: false }).length ? null : msg;",
+  "reviewMessageProblems(\"\").length ? msg : msg;",
+  1
+ ],
+ [
+  "email customers dropped",
+  "reviewreqfn",
+  ".filter((r) => r.name && (r.phone || r.email));",
+  ".filter((r) => r.name && r.phone);",
+  1
+ ],
+ [
+  "done at 5 added",
+  "recheck",
+  "const n = all.filter((c) => c && c.marked_sent_by_client).length, added",
+  "const n = all.length, added",
+  1
+ ],
+ [
+  "portal done at 5 added",
+  "portal",
+  "if (s.id === \"m1.review.first_5\" && customersAsked >= 5) status = \"done\";",
+  "if (s.id === \"m1.review.first_5\" && totalCustomersEverSubmitted >= 5) status = \"done\";",
+  1
+ ],
+ [
+  "remind link shown early",
+  "portal",
+  "? (due && Date.now() >= due\n",
+  "? (true\n",
+  1
+ ],
+ [
+  "no Email option",
+  "portal",
+  "const hrefFor = (r, body) => (r.phone ? smsHref(r.phone, body) : mailHref(r.email, body));",
+  "const hrefFor = (r, body) => smsHref(r.phone, body);",
+  1
+ ],
+ [
+  "a stopped row keeps actions",
+  "portal",
+  "    if (r.stopped) return `<div class=\"pm-r5-rq is-sent\">",
+  "    if (false) return `<div class=\"pm-r5-rq is-sent\">",
+  1
+ ],
+ [
+  "done means all rows",
+  "portal",
+  "const askedN = Math.min(marked, REVIEW_GOAL), done = marked >= REVIEW_GOAL;",
+  "const askedN = Math.min(marked, REVIEW_GOAL), done = false;",
+  1
+ ],
+ [
+  "who to ask loses real customers only",
+  "portal",
+  " Real customers only: not family, friends or anyone who works with you. Google doesn't allow picking only",
+  " Google doesn't allow picking only",
+  1
+ ],
+ [
+  "email saved as a phone",
+  "portal",
+  "return { first_name: r5Val(c, \"first_name\"), phone: mail ? \"\" : v,",
+  "return { first_name: r5Val(c, \"first_name\"), phone: v,",
+  1
  ]
 ]

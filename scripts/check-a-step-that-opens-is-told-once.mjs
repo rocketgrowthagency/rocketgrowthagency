@@ -58,7 +58,8 @@ for (const [name, tasks, stamped, due] of cases) {
 // 🔒 The subject is step_open_now_email_v1's; the body is step12_review_requests_v1's (approved 10-14: the letter blocks —
 // "# ✓ heading", the ":: msg" TYPE line, the ">>" button). Each block's words are compared, not its markup.
 const mock = read("reports/mockups/step_open_now_email_v1.html");
-const mock12 = read("reports/mockups/step12_review_requests_v1.html");
+// step12_review_requests_v3 (approved 10-20) changed the ask line ("your 5 most recent customers", cell number or email)
+const mock12 = read("reports/mockups/step12_review_requests_v1.html") + read("reports/mockups/step12_review_requests_v3.html");
 const numless = (x) => String(x).replace(/\b(step|Step) \d+\b/g, "$1 N");
 const s57 = (N.CANDIDATES || []).find((s) => s.id === S57);
 if (s57) {
@@ -70,7 +71,7 @@ if (s57) {
     const texts = btn ? [btn[1]] : type ? [type[1], type[2], ...type[3].split(" · ")].map((x) => x.trim()) : [l.replace(/^#{1,2} (✓ )?/, "")];
     // 🔑 a step's NUMBER is computed (it moved 12 → 13 when "Check your business on Google" joined, 10-16): the approved words
     // are compared with the number as N, so a renumbering isn't "new words"
-    for (const text of texts) if (!numless(mock12).includes(numless(text))) fail(`"${text.slice(0, 60)}" isn't in the approved email (step12_review_requests_v1) — new words need a new approval`);
+    for (const text of texts) if (!numless(mock12).includes(numless(text))) fail(`"${text.slice(0, 60)}" isn't in the approved email (step12_review_requests_v1 / v3) — new words need a new approval`);
     if (btn && !/^https:\/\/www\.rocketgrowthagency\.com\/portal\/#step-m1\.review\.first_5$/.test(btn[2])) fail(`the button goes somewhere else (${btn[2]})`);
   }
   if (!lines.some((l) => /^>> \[Send your 5 customers\]\(/.test(l))) fail("the button isn't written as words");

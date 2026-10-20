@@ -364,6 +364,8 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
       near: /showMessage\(/ },
     { why: "emails the client's OWN primary contact, not RGA — not a help link",
       near: /supportHref|primary_contact_email/ },
+    { why: "the client emails THEIR OWN customer a review request from their own mail app (step12_review_requests_v3 — RGA never sends)",
+      near: /const mailHref = \(to, body\) =>/ },
   ];
   for (const m of code.matchAll(/mailto:[^"'`)]+/g)) {
     const ctx = code.slice(Math.max(0, m.index - 320), m.index + 60);
@@ -497,7 +499,8 @@ if (!taBody || !/step\.clientInput/.test(taBody) || !/clientChoices|clientForm|c
   }
   // The first-five rule must exist in the renderer, or step 15 can never complete.
   const portalAll = read("portal/portal.js");
-  if (!/m1\.review\.first_5" && totalCustomersEverSubmitted >= 5/.test(portalAll)) {
+  // step12_review_requests_v3 (10-20): done at 5 ASKED (the client's "I sent it"), not 5 added
+  if (!/m1\.review\.first_5" && customersAsked >= 5/.test(portalAll)) {
     bad("step 15 has no detection rule — submitting customers would never finish it");
   }
   // 🔑 Scoped to the STATUS OVERRIDE, not the file. The loose form matched the evidence line

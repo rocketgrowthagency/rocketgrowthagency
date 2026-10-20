@@ -20,7 +20,7 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const req = createRequire(`${SITE}/netlify/functions/`);
 const F = []; const fail = (m) => F.push(m);
-const src = read("portal/portal.js"), css = read("portal/portal.css"), mock = read("reports/mockups/step12_review_requests_v1.html");
+const src = read("portal/portal.js"), css = read("portal/portal.css"), mock = read("reports/mockups/step12_review_requests_v1.html") + read("reports/mockups/step12_review_requests_v3.html");   // v3 approved 10-20
 const pb = JSON.parse(read("data/playbooks/playbooks.json")), proj = JSON.parse(read("data/playbooks/client-steps.json"));
 const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = src.indexOf("{", m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
 const line = (name) => (new RegExp(`^const ${name} = .*;$`, "m").exec(src) || [""])[0];
@@ -44,6 +44,19 @@ for (const h of how) if (!inMock(h.title) || !inMock(h.sub)) fail(`"how it works
 const oe = sop.clientOpenEmail || {};
 for (const k of ["heading", "need", "cta", "next"]) if (!oe[k] || !inMock(oe[k])) fail(`the step-open email's ${k} isn't the approved words ("${oe[k]}")`);
 if (oe.intro) fail("the step-open email's intro is written in the SOP again (it hardcoded \"step 12\"; numbers are computed)");
+// 🔒 step12_review_requests_v3 (approved 10-20) on the server and in the done rule
+{
+  const ep = read("netlify/functions/portal-review-requests.js"), rc = read("netlify/functions/portal-step-recheck.js");
+  if (!/: MARK === "reminded" \? c\.marked_sent_by_client && !c\.reminded_at && !c\.stopped && !c\.reviewed_mark && Date\.now\(\) - Date\.parse\(c\.marked_sent_at \|\| 0\) >= 3 \* 86400000/.test(ep)) fail("the server allows a reminder before day 3, a second reminder, or one after \"stop\" / \"reviewed\"");
+  if (!/const ok = \(c\) => MARK === "sent" \? !c\.stopped/.test(ep)) fail("a customer who asked to stop can still be marked sent");
+  if (!/if \(refused\.length\) return json\(409,/.test(ep)) fail("a refused mark isn't refused (409)");
+  if (!/Would you leave an honest review on Google\? It takes a minute and really helps: \$\{reviewUrl\}/.test(ep)) fail("the plain request doesn't ask for an honest review");
+  if (!/return require\("\.\/_review-policy"\)\.reviewMessageProblems\(msg, \{ needsLink: false \}\)\.length \? null : msg;/.test(ep)) fail("the reminder isn't checked against the review policy");
+  if (!/\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from step 12");
+  if (!/const n = all\.filter\(\(c\) => c && c\.marked_sent_by_client\)\.length/.test(rc) || !/return n >= 5/.test(rc.slice(rc.indexOf('"m1.review.first_5": async (clientId)')))) fail("the server's step 12 check counts customers added, not customers asked");
+  if (!/if \(s\.id === "m1\.review\.first_5" && customersAsked >= 5\) status = "done";/.test(src)) fail("the portal calls step 12 done before 5 are asked");
+  if (/"clientLabel": "Send personalized review requests to 5 past customers"/.test(read("data/playbooks/playbooks.json")) || !/"clientLabel": "Ask your 5 most recent customers for a review"/.test(read("data/playbooks/playbooks.json"))) fail("step 12's title isn't \"Ask your 5 most recent customers for a review\"");
+}
 // decision 6: ONE review request message
 const words = JSON.stringify({ w, oe, label: sop.clientLabel, hint: sop.clientHint });
 if (/review (request )?messages/i.test(words)) fail("step 12 says \"messages\" again (approved: RGA writes ONE review request message)");
@@ -81,7 +94,7 @@ for (const [name, rows, want] of cases) {
   const got = r ? r.count : null;
   if (got !== want) fail(`reviews since: ${name} — got ${JSON.stringify(r)}`);
 }
-if (!/const gate = Array\.isArray\(body\.sent\) \? await requirePortalOwner\(event, clientId\) : await requirePortalOwnerOrWorkspace\(event, clientId\);/.test(epSrc)) fail("the admin can't read the requests (the 403), or the admin can mark a request sent (that's the client's word)");
+if (!/const MARK = \["sent", "reminded", "reviewed", "stopped"\]\.find\(\(k\) => Array\.isArray\(body\[k\]\)\) \|\| null;\s*const gate = MARK \? await requirePortalOwner\(event, clientId\) : await requirePortalOwnerOrWorkspace\(event, clientId\);/.test(epSrc)) fail("the admin can't read the requests (the 403), or the admin can mark a request sent (that's the client's word)");
 if (!/require\("\.\/_review-link"\)/.test(epSrc) || /function reviewLinkFor/.test(epSrc)) fail("the requests carry their own copy of the review link (one copy: _review-link.js)");
 
 // ── 4 · the email: the letter blocks, and the link claimed only when we hold it ──
@@ -109,7 +122,7 @@ const pickBody = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0;
 const lifted = [
   pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function typeLineHtml\(/m), pick(/^function rgaWaitHtml\(/m), line("GOOGLE_G"), line("GC_ICON"), pickBody(/^function googleCardHtml\(/m),
   pick(/^function reviewStepHtml\(/m), pick(/^function reviewStepLinesHtml\(/m), pick(/^function reviewBandNote\(/m), pick(/^function reviewFiveTally\(/m), pick(/^function letterHtml\(/m),
-  line("MSG_ICON"), line("PERSON_ICON"), line("STAR_ICON"), line("STORE_ICON"), line("REVIEW_GOAL"), line("monthDay"), line("smsHref"), line("r5Val"), line("r5Complete"), line("r5Started"),
+  line("MSG_ICON"), line("PERSON_ICON"), line("STAR_ICON"), line("STORE_ICON"), line("REVIEW_GOAL"), line("monthDay"), line("smsHref"), line("r5Val"), line("r5IsEmail"), line("r5Complete"), line("r5Started"),
 ];
 const listeners = [pick(/^document\.addEventListener\("input", \(ev\) => \{\s*const form = ev\.target && ev\.target\.closest && ev\.target\.closest\("form\[data-review-five\]"\);/m),
   pick(/^document\.addEventListener\("submit", async \(ev\) => \{\s*const form = ev\.target && ev\.target\.closest && ev\.target\.closest\("form\[data-review-five\]"\);/m)];
@@ -148,13 +161,14 @@ try {
     const btn = h.querySelector("[data-r5-send]");
     return { card: (h.querySelector(".gcard") || {}).className, ready: ((h.querySelector(".pm-fx-pl.on") || {}).textContent || "").trim(), note: !!h.querySelector("[data-review-link-note]"),
       cards: h.querySelectorAll("[data-r5-card]").length, labels: [...h.querySelectorAll("[data-r5-card]")[0].querySelectorAll(".pm-r5-f > span")].map((x) => x.textContent),
-      count: h.querySelector("[data-r5-count]").textContent, btn: btn.textContent, dis: btn.disabled, list: !!h.querySelector("[data-review-step]"),
+      count: ((h.querySelector(".gcard-when") || {}).textContent || ""), title: ((h.querySelector(".gcard-t") || {}).textContent || ""), btn: btn.textContent, dis: btn.disabled, list: !!h.querySelector("[data-review-step]"),
       under: !!btn.closest(".gcard-act") && !btn.closest(".gcard"), why: ((h.querySelector(".gcard-why") || {}).innerText || "").replace(/\s+/g, " ").trim() };
   }, step);
   if (b.card !== "gcard you" || b.ready !== "✓ Your review request message is ready · written by RGA" || !b.note) fail(`B: the open step isn't the amber card leading with "✓ Your review request message is ready" (${b.card} · ${b.ready})`);
-  if (b.cards !== 5 || b.labels.join("|") !== "Customer 1 · First name|Phone|The job you did") fail(`B: not 5 labelled customer cards (${b.cards} · ${b.labels.join("|")})`);
-  if (b.count !== "0 of 5" || b.btn !== "Send 5 customers →" || !b.dis || b.list || !b.under) fail(`B: an empty form reads "${b.count}" / "${b.btn}" (disabled ${b.dis}, under the card ${b.under}), or shows customers it doesn't have`);
-  if (!/^RGA recommends Recent customers you spoke to yourself, not only the ones you expect to rate you highest \(Google doesn't allow that\)\. We never message them ourselves: you send each request from your own phone\.$/i.test(b.why)) fail(`B: the advice isn't the approved words (${b.why})`);
+  // 🔒 step12_review_requests_v3 (approved 10-20): recency + real customers only, a cell number OR an email, "N of 5 asked", send as you go
+  if (b.cards !== 5 || b.labels.join("|") !== "Customer 1 · First name|Cell number or email|The job you did") fail(`B: not 5 labelled customer cards (${b.cards} · ${b.labels.join("|")})`);
+  if (b.title !== "Ask your 5 most recent customers for a review" || b.count !== "0 of 5 asked" || b.btn !== "Write 1 request" || !b.dis || b.list || !b.under) fail(`B: an empty form reads "${b.title}" / "${b.count}" / "${b.btn}" (disabled ${b.dis}, under the card ${b.under}), or shows customers it doesn't have`);
+  if (!/^Who to ask Your 5 most recently finished jobs, whoever they are\. Real customers only: not family, friends or anyone who works with you\. Google doesn't allow picking only the ones you expect to be happy, or offering anything for a review\.$/i.test(b.why)) fail(`B: "who to ask" isn't the approved words (${b.why})`);
   const type = async (i, name, phone, job) => {
     const card = (await page.$$("[data-r5-card]"))[i];
     if (name) await (await card.$('[name="first_name"]')).type(name);
@@ -163,21 +177,22 @@ try {
   };
   await type(0, "Maria", "(424) 555-0142", "Website redesign");
   await type(1, "Søren", "+44 7700 900123", "");
-  const b2 = await page.evaluate(() => ({ count: document.querySelector("[data-r5-count]").textContent, btn: document.querySelector("[data-r5-send]").textContent,
-    dis: document.querySelector("[data-r5-send]").disabled, done: document.querySelectorAll("[data-r5-card].done").length, bar: document.querySelector("[data-r5-bar]").style.width }));
-  if (b2.count !== "2 of 5" || b2.btn !== "Send 2 customers →" || b2.dis || b2.done !== 2 || b2.bar !== "40%") fail(`B: two customers in read "${b2.count}" / "${b2.btn}" (disabled ${b2.dis}, ${b2.done} done, bar ${b2.bar}) — an international number or no job must count`);
+  const b2 = await page.evaluate(() => ({ btn: document.querySelector("[data-r5-send]").textContent, dis: document.querySelector("[data-r5-send]").disabled, done: document.querySelectorAll("[data-r5-card].done").length }));
+  if (b2.btn !== "Write 2 requests" || b2.dis || b2.done !== 2) fail(`B: two customers in read "${b2.btn}" (disabled ${b2.dis}, ${b2.done} done) — an international number or no job must count`);
   await shot("B-open-2-of-5");
   await type(2, "Ana", "", "");
   await page.click("[data-r5-send]");
   await new Promise((r) => setTimeout(r, 150));
   const b3 = await page.evaluate(() => ({ st: document.querySelector("[data-r5-status]").textContent, saved: window.__saved }));
-  if (b3.saved || !/^Customer 3 needs a first name and a full phone number\.$/.test(b3.st)) fail(`B: a half-filled card is sent or dropped without a word (${b3.st} · saved ${!!b3.saved})`);
+  if (b3.saved || !/^Customer 3 needs a first name and a full cell number or email\.$/.test(b3.st)) fail(`B: a half-filled card is sent or dropped without a word (${b3.st} · saved ${!!b3.saved})`);
   await (await (await page.$$("[data-r5-card]"))[2].$('[name="phone"]')).type("818 555 0110");
+  await type(3, "Lee", "lee@example.com", "Logo refresh");
   await page.click("[data-r5-send]");
   await new Promise((r) => setTimeout(r, 150));
   const b4 = await page.evaluate(() => ({ saved: window.__saved, refreshed: window.__refreshed, open: _openStep.get("c1") }));
   const sent = b4.saved && b4.saved.customers;
-  if (!sent || sent.length !== 3 || sent[1].first_name !== "Søren" || sent[1].phone !== "+44 7700 900123" || sent[0].service_done !== "Website redesign" || b4.saved.wk !== "Week of October 19") fail(`B: the save didn't get the 3 customers as typed (${JSON.stringify(b4.saved)})`);
+  if (!sent || sent.length !== 4 || sent[1].first_name !== "Søren" || sent[1].phone !== "+44 7700 900123" || sent[0].service_done !== "Website redesign" || b4.saved.wk !== "Week of October 19") fail(`B: the save didn't get the 4 customers as typed (${JSON.stringify(b4.saved)})`);
+  if (!sent || !sent[3] || sent[3].email !== "lee@example.com" || sent[3].phone !== "") fail(`B: an email instead of a cell number isn't saved as the email (${JSON.stringify(sent && sent[3])})`);
   if (!b4.refreshed || b4.open !== "m1.review.first_5") fail("B: after sending, the step isn't redrawn or doesn't stay open");
   await page.setViewport({ width: 375, height: 800 });
   if (await overflow()) fail("B: the form scrolls sideways on a phone");
@@ -190,32 +205,48 @@ try {
   const lists = [{ customer_count: 5, created_at: "2026-10-20T15:00:00Z" }];
   const data = { requests: [
     { index: 0, list_id: "L1", name: "Maria", phone: "(424) 555-0142", job: "Website redesign", already_marked: false, message: "Hi Maria, it's Acme. Thanks again <b>x</b>: https://search.google.com/local/writereview?placeid=1" },
-    { index: 1, list_id: "L1", name: "James", phone: "(310) 555-0199", job: "Google Ads setup", already_marked: true, marked_at: "2026-10-21T18:00:00Z", message: "Hi James" },
+    { index: 1, list_id: "L1", name: "James", phone: "(310) 555-0199", job: "Google Ads setup", already_marked: true, marked_at: new Date(Date.now() - 5 * 864e5).toISOString(), message: "Hi James", reminder: "Hi James, just a quick nudge in case you have a minute for that Google review: https://g.page/r/x/review. Thanks either way!" },
     { index: 2, list_id: "L1", name: "Ana", phone: "(818) 555-0110", job: "", already_marked: false, message: null },
+    { index: 3, list_id: "L1", name: "Tom", phone: "(213) 555-0123", job: "", already_marked: true, marked_at: new Date(Date.now() - 1 * 864e5).toISOString(), message: "Hi Tom", reminder: "Hi Tom, nudge https://g.page/r/x/review" },
+    { index: 4, list_id: "L1", name: "Lee", phone: "", email: "lee@example.com", job: "", already_marked: false, message: "Hi Lee, thanks https://g.page/r/x/review" },
+    { index: 5, list_id: "L1", name: "Kim", phone: "(213) 555-0144", job: "", already_marked: true, marked_at: new Date(Date.now() - 2 * 864e5).toISOString(), stopped: true, message: "Hi Kim" },
+    { index: 6, list_id: "L1", name: "Pat", phone: "(213) 555-0155", job: "", already_marked: true, marked_at: new Date(Date.now() - 6 * 864e5).toISOString(), reviewed_mark: true, message: "Hi Pat", reminder: "x" },
   ], reviews: { since: "2026-10-20T15:00:00Z", count: 2, checked_at: "2026-10-22T09:00:00Z" } };
   // 🔒 step12_review_requests_v2: the requests card (a row per customer) + the reviews card, drawn from the endpoint's first 5
   const c = await page.evaluate((st, lists, data) => { const h = document.getElementById("h"); h.innerHTML = reviewStepHtml(st, "c1", lists, true);
     const form = !!h.querySelector("form"), ready = !!h.querySelector(".pm-fx-pl.on");
     h.querySelector("[data-review-step]").innerHTML = reviewStepLinesHtml({ ...data, since: "2026-10-20T15:00:00Z" });
     const R = [...h.querySelectorAll(".pm-r5-rq")].map((x) => ({ who: x.querySelector(".pm-r5-who").innerText.replace(/\s+/g, " ").trim(), chip: ((x.querySelector(".pm-fx-pl") || {}).textContent || "").trim(),
-      act: (x.querySelector("a[data-review-send]") || {}).getAttribute?.("href") || "", mark: !!x.querySelector("[data-review-mark]"), bolds: x.querySelectorAll(".pm-r5-read b").length }));
-    const cards = [...h.querySelectorAll(".gcard")].map((x) => ({ cls: x.className, st: x.querySelector(".gcard-st").innerText.replace(/\s+/g, " ").trim(), t: x.querySelector(".gcard-t").textContent }));
+      act: (x.querySelector("a[data-review-send]") || {}).getAttribute?.("href") || "", mark: !!x.querySelector("[data-review-mark]"), bolds: x.querySelectorAll(".pm-r5-read b").length,
+      remind: (x.querySelector("a[data-review-remind]") || {}).getAttribute?.("href") || "", remindText: (x.querySelector("a[data-review-remind]") || {}).textContent || "", when: ((x.querySelector(".pm-r5-when") || {}).textContent || ""),
+      reviewed: !!x.querySelector("[data-review-reviewed]"), stop: !!x.querySelector("[data-review-stop]"), sendText: (x.querySelector("a[data-review-send]") || {}).textContent || "" }));
+    const cards = [...h.querySelectorAll(".gcard")].map((x) => ({ cls: x.className, st: x.querySelector(".gcard-st").innerText.replace(/\s+/g, " ").trim(), t: x.querySelector(".gcard-t").textContent, when: ((x.querySelector(".gcard-when") || {}).textContent || "") }));
     return { form, ready, R, cards, text: h.textContent };
   }, step, lists, data);
   if (c.form || c.ready) fail(`C: a done step still shows the form or the ready line`);
   // 🔑 Month 3: 30 more customers came in from the weekly card. Step 12 is still about the FIRST 5 — the endpoint stops at 5.
   if (!/for \(const l of Array\.isArray\(all\) \? all : \[\]\) \{ if \(n >= 5\) break;/.test(read("netlify/functions/portal-review-requests.js"))) fail("C: step 12 counts every list ever, not its own first 5");
-  const [m, j, an] = c.R;
+  const [m, j, an, tom, lee, kim, pat] = c.R;
   if (!m || m.who !== "Maria · Website redesign (424) 555-0142" || !/^sms:/.test(m.act) || !m.mark || m.bolds) fail(`C: a ready request isn't Maria's row with Text Maria + I sent it, or its text became HTML (${JSON.stringify(m)})`);
-  if (!j || j.chip !== "You marked it sent Oct 21" || j.mark || j.act) fail(`C: a request they marked doesn't say "You marked it sent" with the date (${JSON.stringify(j)})`);
+  // 🔒 step12_review_requests_v3: asked → ONE reminder from day 3 (never sooner, never a second) · they reviewed · asked to stop (final)
+  if (!j || !/^Asked [A-Z][a-z]{2} \d{1,2}$/.test(j.chip) || j.mark || j.act || !/^sms:/.test(j.remind) || j.remindText !== "Remind James once" || !j.reviewed || !j.stop) fail(`C: a request asked 5 days ago isn't "Asked <date>" with Remind James once + They reviewed + They asked me to stop (${JSON.stringify(j)})`);
+  if (!tom || tom.remind || !/^Remind once from [A-Z][a-z]{2} \d{1,2}$/.test(tom.when)) fail(`C: a reminder is offered before day 3 (${JSON.stringify(tom)})`);
+  if (!lee || !/^mailto:lee%40example\.com\?subject=/.test(lee.act) || lee.sendText !== "Email Lee") fail(`C: an email-only customer isn't "Email Lee" with a mailto (${JSON.stringify(lee)})`);
+  if (!kim || kim.remind || kim.reviewed || kim.stop || !/Asked not to be contacted/.test(kim.chip)) fail(`C: a customer who asked to stop still has actions (${JSON.stringify(kim)})`);
+  if (!pat || pat.remind || pat.reviewed || !/They reviewed/.test(pat.chip)) fail(`C: a customer marked reviewed still gets a reminder (${JSON.stringify(pat)})`);
   if (!an || an.chip !== "RGA is writing it" || an.act) fail(`C: a request with no message yet offers a send, or isn't "RGA is writing it" (${JSON.stringify(an)})`);
   const [rq, rv] = c.cards;
-  if (!rq || rq.cls !== "gcard you" || !/^Your move$/i.test(rq.st)) fail(`C: the requests card isn't "Your move · 1 of 3 marked sent" (${JSON.stringify(rq)})`);
-  if (!rv || rv.cls !== "gcard ok" || !/^On Google$/i.test(rv.st) || rv.t !== "2 new reviews since Oct 20") fail(`C: the reviews card isn't the measured count (${JSON.stringify(rv)})`);
+  if (!rq || rq.cls !== "gcard you" || !/^Your move$/i.test(rq.st) || rq.when !== "4 of 5 asked") fail(`C: the requests card isn't "Your move · 4 of 5 asked" (${JSON.stringify(rq)})`);
+  if (!rv || rv.cls !== "gcard ok" || !/^On Google$/i.test(rv.st) || rv.t !== "2 new Google reviews since you started") fail(`C: the reviews card isn't the measured count (${JSON.stringify(rv)})`);
+  const dn = await page.evaluate((data) => { const h = document.getElementById("h");
+    h.innerHTML = `<div>${reviewStepLinesHtml({ ...data, review_link: "https://g.page/r/x/review", requests: data.requests.map((x) => ({ ...x, already_marked: true, marked_at: x.marked_at || "2026-10-21T18:00:00Z" })) })}</div>`;
+    const c0 = h.querySelector(".gcard"); return { cls: c0.className, t: c0.querySelector(".gcard-t").textContent, st: c0.querySelector(".gcard-st").innerText.trim(), copy: (h.querySelector("[data-copy-review-link]") || {}).getAttribute?.("data-copy-review-link") || "", text: h.innerText };
+  }, data);
+  if (dn.cls !== "gcard ok" || dn.t !== "5 customers asked" || !/^Done$/i.test(dn.st) || dn.copy !== "https://g.page/r/x/review" || !/ask every customer when a job is finished/.test(dn.text)) fail(`C: 5 asked isn't the Done card pointing to the habit with Copy your review link (${JSON.stringify(dn).slice(0, 200)})`);
   if (/\bSent\b(?! from)/.test(c.text.replace(/Marked sent/g, ""))) fail("C: a request reads \"Sent\" (we can't see a text go out)");
   await shot("C-after");
   const c2 = await page.evaluate((data) => { const h = document.getElementById("h"); h.innerHTML = `<div>${reviewStepLinesHtml({ ...data, reviews: null })}</div>`;
-    return { stars: /new review/.test(h.textContent),
+    return { stars: /new (Google )?review/.test(h.textContent),
       notes: [reviewBandNote(data), reviewBandNote({ requests: [{ already_marked: true }] }), reviewBandNote({ requests: [{}], blocked: "We need your Google review link to finish these." }), reviewBandNote({ requests: [] })] };
   }, data);
   if (c2.stars) fail("C: with no measured count, a reviews line still shows (absence must not read as 0)");

@@ -65,7 +65,7 @@
  [
   "RGA recommends nothing in particular",
   "portal",
-  "const rec = cur.length ? \"keep\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
+  "const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
   "const rec = \"tool\";",
   1
  ],
@@ -93,8 +93,8 @@
  [
   "page names become HTML",
   "portal",
-  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}</button>`",
-  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}</button>`",
+  "}\">${pg.url === pageNow ? \"\u2713 \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
+  "}\">${pg.url === pageNow ? \"\u2713 \" : \"\"}${pg.label}${KIND[pg.kind]",
   1
  ],
  [
@@ -109,6 +109,132 @@
   "portal",
   "    if (host.closest(\".pm-waits\")) { host.innerHTML = `<span class=\"pm-in-help\">This fills in from your Google profile once the step opens.</span>`; continue; }\n",
   "",
+  1
+ ],
+ [
+  "social links pass",
+  "bookinglink",
+  "  if (hit) return { code: hit[1], said: hit[2], fix: \"Paste the page customers book on, or pick a page on your website.\" };\n",
+  "",
+  1
+ ],
+ [
+  "the home page passes",
+  "bookinglink",
+  "  if (/^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
+  "  if (false && /^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
+  1
+ ],
+ [
+  "a booking tool's root page is refused",
+  "bookinglink",
+  " && !platformOf(u.href) && !/book|schedul|appoint|reserv/i.test(h)) {",
+  ") {",
+  1
+ ],
+ [
+  "the old tag is back",
+  "bookinglink",
+  "const TAG = [[\"utm_source\", \"google\"], [\"utm_medium\", \"organic\"], [\"utm_campaign\", \"gbp-booking\"]];",
+  "const TAG = [[\"utm_source\", \"gbp\"], [\"utm_medium\", \"booking\"], [\"utm_campaign\", \"local-seo\"]];",
+  1
+ ],
+ [
+  "a sign-in page passes",
+  "bookinglink",
+  "    if (r.ok && LOGIN.test(landed)) return { ok: false, status: r.status, login: true };\n",
+  "",
+  1
+ ],
+ [
+  "no partner flag on tools",
+  "bookinglink",
+  ".map((t) => ({ ...t, partner: isPartner(t.platform) }))",
+  "",
+  1
+ ],
+ [
+  "the save skips the refusal",
+  "gbpprofile",
+  "      if (no) return { state: \"needs_client\", said: no.said, fix: no.fix, error: `refused: ${no.code}`, at };\n",
+  "",
+  1
+ ],
+ [
+  "a partner writes a link",
+  "gbpprofile",
+  "      if (choice === \"partner\") return {",
+  "      if (false && choice === \"partner\") return {",
+  1
+ ],
+ [
+  "the save ignores a sign-in wall",
+  "gbpprofile",
+  "      if (open.login) return { state: \"needs_client\",",
+  "      if (false && open.login) return { state: \"needs_client\",",
+  1
+ ],
+ [
+  "no removed marker on a gone link",
+  "gbpwatch",
+  "...(g.length ? {} : { removed: true })",
+  "",
+  1
+ ],
+ [
+  "a removed link stays Done",
+  "gbpwatch",
+  "      const t2 = { ...task, status: \"pending\", google_push: gp };",
+  "      const t2 = { ...task, google_push: gp };",
+  1
+ ],
+ [
+  "RGA isn't told of a removal",
+  "gbpwatch",
+  "        try { await d.notifyRga(clientId, `${stepId} \u2014 Google took the booking link down",
+  "        if (false) try { await d.notifyRga(clientId, `${stepId} \u2014 Google took the booking link down",
+  1
+ ],
+ [
+  "no removed card",
+  "portal",
+  "  if (step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
+  "  if (false && step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
+  1
+ ],
+ [
+  "no top note",
+  "portal",
+  "      if (bNote) card.insertAdjacentHTML(\"afterend\", bNote);\n",
+  "",
+  1
+ ],
+ [
+  "partner not recommended",
+  "portal",
+  "const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length",
+  "const rec = cur.length ? \"keep\" : tools.length",
+  1
+ ],
+ [
+  "contact warning gone",
+  "portal",
+  "Google sometimes removes contact pages: they don't let people book or ask for a time.</span>` : \"\")",
+  "</span>` : \"\")",
+  1
+ ],
+ [
+  "the Book button promise is back",
+  "portal",
+  "`Where should Google send people who want to ${({ url_appointment: \"book\", url_reservations: \"reserve\", url_order_ahead: \"order ahead\" })[type.key] || \"book\"}?`",
+  "`Where should Google's ${type.button} button go?`",
+  1
+ ],
+ [
+  "admin forgets the removal",
+  "admin",
+  "g.state === \"needs_client\" || g.state === \"removed\")) return \"you\";",
+  "g.state === \"needs_client\")) return \"you\";",
   1
  ]
 ]
