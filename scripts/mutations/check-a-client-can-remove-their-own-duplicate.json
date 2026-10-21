@@ -763,14 +763,14 @@
   1
  ],
  [
-  "v9: the resolved duplicate is never listed under Already approved",
+  "v9: the resolved duplicate is never listed under Done",
   "portaldeliv",
   "if (t && t.status === \"done\" && t.outcome_data?.verdict === \"clean\" && rm && rm.status === \"removed\")",
   "if (false)",
   1
  ],
  [
-  "v9: Already approved ignores the resolved rows",
+  "v9: Done ignores the resolved rows",
   "portal",
   "  _apResolved = data.resolved || [];\n",
   "",
@@ -903,10 +903,10 @@
   1
  ],
  [
-  "after: the counter shows beside \"Nothing needs you\"",
+  "after: an item count shows with nothing to do",
   "portal",
-  "${queue.some((e) => !e.done && !e.rga) ? `<span class=\"ap-of\">",
-  "${true ? `<span class=\"ap-of\">",
+  "  const queueHtml = needs.length\n    ? `<div class=\"ap-qhead\">",
+  "  const queueHtml = true\n    ? `<div class=\"ap-qhead\">",
   1
  ],
  [
@@ -1036,10 +1036,10 @@
   1
  ],
  [
-  "v13: never shown as confirmed",
+  "the confirmation is an action at the top again",
   "portaldeliv",
-  "      if (recent) {",
-  "      if (false) {",
+  "resolved.push({ key: \"m1.audit.gbp_duplicate\"",
+  "actions.push({ key: \"m1.audit.gbp_duplicate\", confirmed: { at, photo_step: true }",
   1
  ],
  [

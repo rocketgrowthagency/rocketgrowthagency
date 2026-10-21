@@ -763,13 +763,14 @@ if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\|
 if (!/renderSetupPointer\(open\.length, pending - open\.length\);/.test(portal)) fail("Setup's \"things need you to take action\" counts a removed duplicate that asks nothing");
 if (!/window\.history\.pushState\(\{ portalView: v \}/.test(portal) || !/window\.addEventListener\("popstate", \(e\) => \{\s*const v = e\.state && e\.state\.portalView;\s*if \(v\) setPortalView\(v, \{ fromHistory: true \}\);/.test(portal)) fail("Back leaves the portal (view switches aren't history entries)");
 if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's already removed\./.test(code("netlify/functions/gbp-duplicate-owner-init.js"))) fail("a second removal sign-in can start after the removal");
-// v9: once the nightly check sees one listing after the client's removal, it's listed under "Already approved"
+// v9: once the nightly check sees one listing after the client's removal, it's listed under Done (approvals_page_v1)
 {
   const pd = code("netlify/functions/portal-deliverables.js");
-  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "Confirmed · Google shows one Business Profile"/.test(pd) || !/confirmed: \{ at, photo_step: !!photo \}/.test(pd) || !/Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under \"Already approved\" once Google shows one listing");
-  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/const settledHtml = settled\.length \|\| resolvedRows \?/.test(portal)) fail("the portal doesn't show the resolved duplicate under \"Already approved\"");
+  // 🔒 approvals_page_v1 (10-20): a confirmation is ONE Done row straight away (no 7-day card at the top; its card lives on step 2)
+  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "You removed it · Google confirmed it"/.test(pd) || /Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under Done once Google shows one listing");
+  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, html: `<div class="ap-row">/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
 }
-if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "Nothing needs you right now"/.test(portal)) fail("the queue heading says a card that waits on RGA \"needs you\"");
+if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(portal)) fail("the queue counts a card that waits on RGA as one that \"needs you\"");
 // admin step 11 has RGA's two choices, and shows the facts the same way (not measured = "couldn't")
 {
   const ad = code("admin/admin.js");
@@ -815,7 +816,7 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   if ((await runRecheck(20, false, "clean")).notified.length) fail("RGA is told it's stuck when the check found it gone");
   const ad = code("admin/admin.js");
   if (!/const lingering = rmDays > 14;/.test(ad) || !/lingering \? "bad"/.test(ad) || !/gbp_duplicate_removed:\s*\{ cls: "g", label: "Client removed the duplicate listing" \}/.test(ad)) fail("admin step 11 doesn't turn red when Google still shows a removed duplicate, or the feed has no label for the client's removal");
-  if (!/\$\{queue\.some\(\(e\) => !e\.done && !e\.rga\) \? `<span class="ap-of">/.test(portal)) fail("\"Nothing needs you right now\" still sits beside an item count");
+  if (!/const queueHtml = needs\.length\s*\?\s*`<div class="ap-qhead"><h3>/.test(portal)) fail("an item count shows when nothing needs them (approvals_page_v1: a small empty line)");
 }
 
 // ── v13 (approved duplicate_removal_confirmed_v13): the RECORD and the notices once Google confirms it ──
@@ -849,10 +850,10 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
   const pt = code("netlify/functions/portal-thread.js");
   if (!/card: r\.kind === "gbp_duplicate_resolved" && r\.payload\?\.removed \?/.test(pt) || !/kind: "dup_confirmed"/.test(pt)) fail("the portal thread doesn't turn the confirmed-gone notice into its card");
   if (!/m\.card && m\.card\.kind === "dup_confirmed" \?/.test(portal) || !/typeLinesHtml\(\{ \.\.\.m\.card\.removed, account: m\.card\.account \}, m\.card\.kept\)/.test(portal)) fail("the portal doesn't draw the confirmed-gone notice as the TYPE-line card");
-  // portal-deliverables: 7 days as the confirmed card, then a record under Already approved
+  // portal-deliverables: a Done row from day 1 (approvals_page_v1, 10-20 — the 7-day card at the top is retired)
   const pdc = code("netlify/functions/portal-deliverables.js");
-  if (!/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed", kind: "ownership",\s*confirmed: \{ at, photo_step: !!photo \}/.test(pdc)) fail("for 7 days after the confirmation the card isn't shown as confirmed");
-  for (const [days, want] of [[1, "card"], [9, "record"]]) {
+  if (/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed", kind: "ownership"/.test(pdc)) fail("the confirmation is a card at the top of For your approval again (approvals_page_v1: one Done row; the card is on step 2)");
+  for (const days of [1, 9]) {
     const at = new Date(Date.now() - days * 86400000).toISOString();
     const db = { clients: [{ id: CID, business_name: "Rocket Growth Agency", workspace_id: "w1", identity_phone: "4242422040" }], client_portal_access: [{ portal_email: "owner@lonestar.test", client_id: CID }],
       client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: { "m1.audit.gbp_duplicate": { status: "done", completed_at: at, outcome_data: { verdict: "clean" },
@@ -869,8 +870,8 @@ if (!/queue\.filter\(\(e\) => !e\.done && !e\.rga\)\.length; return n === 0 \? "
     finally { globalThis.fetch = real2; }
     const card = (body.actions || []).find((x) => x.key === "m1.audit.gbp_duplicate" && x.confirmed);
     const row = (body.resolved || []).find((x) => x.key === "m1.audit.gbp_duplicate");
-    if (want === "card" && (!card || card.confirmed.photo_step !== true || row)) fail(`the day after Google confirms it, the client doesn't see the confirmed card (with the way to the photo step) (${JSON.stringify(Object.keys(body))})`);
-    if (want === "record" && (card || !row || row.label !== "Confirmed · Google shows one Business Profile" || row.title !== "Duplicate Google Business Profile removed: (424) 396-8499")) fail("after 7 days the confirmed removal isn't a record under Already approved");
+    if (card) fail(`${days} day(s) after Google confirms it, the confirmation is an action at the top of For your approval (it is one Done row; its card is on step 2)`);
+    if (!row || row.label !== "You removed it · Google confirmed it" || row.title !== "Duplicate Google Business Profile removed: (424) 396-8499") fail(`${days} day(s) after Google confirms it, the removal isn't a Done row (${JSON.stringify(row)})`);
   }
   // every sign-in attempt is kept on step 11 (admin can't read the service-only table)
   const fl = code("netlify/functions/_listing-removal-flow.js");

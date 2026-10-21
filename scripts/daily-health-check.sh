@@ -500,6 +500,8 @@ run check-legacy-runners-retired-and-reports-built-here.mjs "row 29 reads Google
 run check-the-mature-stage-reads-what-is-measured.mjs "Mature stage: 14 computed states, nothing done without its record; alerts need 2 months; no auto client email; stage-6 only"
 run check-every-service-key-function-checks-its-caller.mjs "security: every function holding the service key checks its caller (auth helper, session, signed token, internal or fail-closed secret, schedule) or is public on the record"
 run check-review-requests-ask-everyone.mjs "review requests ask EVERYONE: no gating, no incentives, no drafting notes reach a customer (Google review policy)"
+run check-step3-website-access.mjs "step 3 website access: one audited 22-builder source, detector ties (Square>Weebly, Showit>WordPress), done never asks, tiles + Change, conversation at the bottom"
+run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
 run check-steps-6-and-7-confirm-in-the-portal.mjs "step 6 confirms the duplicate is gone IN THE PORTAL (no email, no photos line); step 7 shows the facts table + 48 h + done-when, stacked on a phone"
 run check-client-steps-2-3-4-show-their-record.mjs "client steps 2 · 3 · 4 show their record: an invite never a password · an honest call-tracking decision · real form leads only (approved 10-20)"
 run check-client-step-5-shows-the-plan.mjs "client step 5 shows the locked keyword plan for any business (approved 10-20)"

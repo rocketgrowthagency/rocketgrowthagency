@@ -1,0 +1,122 @@
+[
+ [
+  "Square Online stops beating Weebly (the live bug)",
+  "siteplatform",
+  "  for (const [own, base] of OVERRIDES) if (hits[own]) delete hits[base];",
+  "  for (const [own, base] of []) if (hits[own]) delete hits[base];"
+ ],
+ [
+  "Showit reads as WordPress again",
+  "siteplatform",
+  "[\"showit\", \"wordpress\"], ",
+  ""
+ ],
+ [
+  "an untested sign is stated",
+  "siteplatform",
+  "    const maybe = ASK_ONLY.find(([, re]) => re.test(hay));",
+  "    const maybe = null;"
+ ],
+ [
+  "RGA's notes reach the client",
+  "siteplatfn",
+  "Object.entries(ALL).map(([k, { rga, ...pub }]) => [k, pub])",
+  "Object.entries(ALL).map(([k, pub]) => [k, pub])"
+ ],
+ [
+  "Square Online asks for an invite (no safe one exists)",
+  "siteplatdata",
+  "\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"workaround\",",
+  "\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"invite\","
+ ],
+ [
+  "Shopify stops taking the code",
+  "siteplatdata",
+  "\"name\": \"Shopify\",\n      \"kind\": \"code\",",
+  "\"name\": \"Shopify\",\n      \"kind\": \"invite\","
+ ],
+ [
+  "a done row with no record falls through to the ask",
+  "portal",
+  "if (t.status === \"done\" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {",
+  "if (false) {"
+ ],
+ [
+  "done-without-record stops saying Not recorded",
+  "portal",
+  "rcRow(\"Builder\", [\"wait\", \"Not recorded\"]",
+  "rcRow(\"Builder\", [\"wait\", \"Unknown\"]"
+ ],
+ [
+  "the Change button goes (can't X out)",
+  "portal",
+  "<button type=\"button\" class=\"pm-amend\" data-acc-change>Change</button>",
+  ""
+ ],
+ [
+  "the hidden pick-another link comes back",
+  "portal",
+  "<button type=\"button\" class=\"pm-amend\" data-acc-change>Change</button>",
+  "<a href=\"#\" data-acc-other>Not right? Pick another</a>"
+ ],
+ [
+  "the setup loses its direct link",
+  "portal",
+  "<a class=\"pm-ax-go\" href=\"${escapeAttribute(link)}\"",
+  "<a class=\"pm-ax-link\" href=\"${escapeAttribute(link)}\""
+ ],
+ [
+  "the setup button wraps mid-sentence again",
+  "portalcss",
+  ".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;",
+  ".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px;"
+ ],
+ [
+  "a checklist path finishes without RGA",
+  "stepinput",
+  "[\"invite\", \"designer\", \"request\", \"workaround\"].includes(parsed.value.via)",
+  "[\"invite\", \"designer\"].includes(parsed.value.via)"
+ ],
+ [
+  "the Shopify code isn't checked",
+  "stepinput",
+  "      if (!/^\\d{4}$/.test(code)) return",
+  "      if (false) return"
+ ],
+ [
+  "the Shopify code is kept after confirm",
+  "accessconfirm",
+  "shopify: { store: task.client_input.shopify.store }",
+  "shopify: task.client_input.shopify"
+ ],
+ [
+  "admin row 8 loses RGA's move",
+  "admin",
+  "<b>RGA's move:</b>",
+  "<b>Next:</b>"
+ ],
+ [
+  "admin stops reading the one source",
+  "admin",
+  "fetch(\"/data/site-platforms.json\")",
+  "fetch(\"/data/admin-platforms.json\")"
+ ],
+ [
+  "the conversation sits above the card again",
+  "portal",
+  "        <div class=\"pm-detail\" data-action-detail=\"${escapeAttribute(step.id)}\" hidden>",
+  "        ${threadHtml(step.id)}<div class=\"pm-detail\" data-action-detail=\"${escapeAttribute(step.id)}\" hidden>"
+ ],
+ [
+  "the conversation is always open",
+  "portal",
+  "<details class=\"pm-mail pm-convo\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
+  "<details class=\"pm-mail pm-convo\" open>"
+ ],
+ [
+  "the old password link loses its switch-to-invite (caught 10-20)",
+  "portal",
+  "if (t.status === \"done\" && !oldLink && !(ci && ci.via)",
+  "if (t.status === \"done\" && !(ci && ci.via)"
+ ]
+]

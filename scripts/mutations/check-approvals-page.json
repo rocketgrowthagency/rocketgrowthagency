@@ -1,0 +1,38 @@
+[
+ [
+  "a done action sits in Needs you",
+  "portal",
+  "    ...actionCards.filter((e) => !e.done && !e.rga),",
+  "    ...actionCards,"
+ ],
+ [
+  "the empty state goes back to the big heading",
+  "portal",
+  "<b>Nothing needs your approval right now</b>",
+  "<b>Nothing needs you right now</b>"
+ ],
+ [
+  "a change asked for drops out of With RGA",
+  "portal",
+  "settled.filter((d) => d.approval.decision !== \"approved\")",
+  "settled.filter(() => false)"
+ ],
+ [
+  "Done is always open",
+  "portal",
+  "<details class=\"ap-done\"${needs.length ? \"\" : \" open\"}>",
+  "<details class=\"ap-done\" open>"
+ ],
+ [
+  "Done isn't newest first",
+  "portal",
+  "].sort((x, y) => String(y.at || \"\").localeCompare(String(x.at || \"\")));",
+  "];"
+ ],
+ [
+  "the duplicate confirmation stops being a Done row",
+  "portaldeliv",
+  "resolved.push({ key: \"m1.audit.gbp_duplicate\"",
+  "resolved.concat({ key: \"m1.audit.gbp_duplicate\""
+ ]
+]

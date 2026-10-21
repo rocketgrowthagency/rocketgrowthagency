@@ -25,10 +25,10 @@ if (d0.platform !== null || d0.confidence !== "none") fail("a page with no build
 if (S.detectFromHtml('<img src="https://img1.wsimg.com/x.png">').confidence === "stated") fail("one GoDaddy sign is stated as fact");
 { const r = await S.detectPlatform("https://www.facebook.com/joesplumbing", async () => { throw new Error("no fetch"); }); if (r.status !== "no_site") fail("a Facebook page counts as a website"); }
 { const r = await S.detectPlatform("https://joes-plumbing.com", async () => { throw new Error("dns"); }); if (r.status !== "couldnt_check" || r.platform) fail("a site we couldn't reach is guessed instead of \"couldn't check\""); }
-for (const k of Object.keys(S.PLATFORMS)) { const p = S.PLATFORMS[k]; if (!p.name || !p.role || !(p.steps || []).length) fail(`builder ${k} has no name / role / steps`); if (JSON.stringify(p).match(/password|passcode|2fa|code you get/i)) fail(`builder ${k}'s steps ask for a password or code`); }
+for (const k of Object.keys(S.PLATFORMS)) { const p = S.PLATFORMS[k]; if (!p.name || !p.role || !(p.steps || []).length) fail(`builder ${k} has no name / role / steps`); const { rga, ...pub } = p; /* rga = RGA's own note, never sent to the client (step3_website_access_v3) */ if (JSON.stringify(pub).replace(/never (take|need) your password|Never your password|we never take your password/gi, "").match(/password|passcode|2fa|code you get/i)) fail(`builder ${k}'s steps ask for a password or code`); }
 if (/onetimesecret|"kind": "url",\s*"placeholder": "https:\/\/onetimesecret/.test(PB)) fail("step 2 still asks for a one-time password link");
-if (!/if \(spec\.kind === "access"\) \{[\s\S]{0,700}\["invite", "designer", "none"\]\.includes\(o\.via\)/.test(IN)) fail("step 2's answer isn't the access kind (invite · designer · none)");
-if (!/const waitsOnRga = stepId === "m1\.access\.website" && parsed\.value && typeof parsed\.value === "object" && \["invite", "designer"\]\.includes\(parsed\.value\.via\);/.test(IN) || !/const settled = !waitsOnRga && /.test(IN)) fail("an invite finishes step 2 before RGA has signed in");
+if (!/if \(spec\.kind === "access"\) \{[\s\S]{0,700}\["invite", "designer", "none", "request", "workaround"\]\.includes\(o\.via\)/.test(IN)) fail("step 2's answer isn't the access kind (invite · designer · none · request · workaround — step3_website_access_v3)");
+if (!/const waitsOnRga = stepId === "m1\.access\.website" && parsed\.value && typeof parsed\.value === "object" && \["invite", "designer", "request", "workaround"\]\.includes\(parsed\.value\.via\);/.test(IN) || !/const settled = !waitsOnRga && /.test(IN)) fail("an invite finishes step 2 before RGA has signed in");
 if (!/const gate = await requireWorkspaceForClient\(event, clientId\);/.test(AC) || !/access: \{ role, account, confirmed_at: now, confirmed_by:/.test(AC) || !/status: "done"/.test(AC)) fail("RGA's Confirm access doesn't record the grant and finish the step (or isn't RGA-only)");
 // ── step 3: honest words, the client's own number ──
 if (/Calls from Google|under our account/.test(PB)) fail("step 3 says \"Calls from Google\" or puts the number under RGA's account");
@@ -43,7 +43,7 @@ const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if
 const line = (n) => ((P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")) || [""])[0]).replace(/^const /, "var ");
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
   googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.why ? `${o.why.label} ${o.why.text}` : "", o.act].filter(Boolean).join(" ¦ ")}</card>`, Date, JSON, Number, Set, Array, String });
-for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_PROVIDERS"]) vm.runInContext(line(n), ctx);
+for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_PROVIDERS", "_accNames"]) vm.runInContext(line(n), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext("var RC_LOCK='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };

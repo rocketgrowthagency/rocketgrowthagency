@@ -91,7 +91,8 @@ const run = async (name, event) => {
   return { status: res.statusCode, body };
 };
 const holdCalls = () => calls.filter((c) => c.url.includes("/kickoff_slot_holds"));
-const KICKOFF_DONE = { "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T17:00:00.000Z" } };
+// + the Month 1 report done: the close-out opens only once the report is ready (phase3_4_reviews_close_v1, 10-20)
+const KICKOFF_DONE = { "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T17:00:00.000Z" }, "m1.report.month1": { status: "done", completed_at: "2026-11-08T17:00:00.000Z" } };
 const KICKOFF_STAMP = () => ({ event_id: KICK_EVENT, start: "2026-10-09T17:00:00.000Z", meet_link: "https://meet.google.com/kic-koff-lnk", attendee: "owner@acme.test" });
 
 let PURPOSES, freeSlots;
@@ -124,6 +125,11 @@ for (const c of holdCalls().filter((c) => c.method === "DELETE")) if (!/purpose=
 if (!world.record.closeout_invite || !world.record.closeout_invite.requested_start) fail("A · the close-out request was not stamped on closeout_invite");
 if (JSON.stringify(world.record.kickoff_invite) !== JSON.stringify(KICKOFF_STAMP())) fail("A · a close-out pick changed the kickoff's record");
 { const n = calls.find((c) => c.url.includes("notify-rga")); if (!n || n.body.kind !== "closeout_time_requested") fail("A · RGA was not told a close-out time was asked for"); }
+
+// ── A2 · no close-out before the Month 1 report is ready ────────────────────────────────────────
+world = { record: { tasks: { "m1.kickoff.call": KICKOFF_DONE["m1.kickoff.call"] }, kickoff_invite: KICKOFF_STAMP() }, ledger: [] };
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, purpose: "m1_close" }) });
+if (r.status !== 409 || !/Month 1 report is ready/.test(r.body.error || "") || holdCalls().some((c) => c.method === "POST")) fail(`A2 · a close-out was booked before the Month 1 report was ready (${r.status})`);
 
 // ── B · no close-out before the kickoff ─────────────────────────────────────────────────────────
 world = { record: { tasks: {} }, ledger: [] };

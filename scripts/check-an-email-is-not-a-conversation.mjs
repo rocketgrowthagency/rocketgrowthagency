@@ -68,7 +68,7 @@ try {
     onlyR.opened = !!only.querySelector(".pm-mail[open] .pm-m-letter") && only.querySelector(".pm-mail .pm-m-letter").checkVisibility();
     onlyR.closedHidden = (() => { at("m1.gbp.verify"); return !h.querySelector(".pm-m-letter").checkVisibility(); })();
     const both = at("m1.tracking.call_setup");
-    const bothR = { order: [...both.querySelector(".pm-stepmsgs").children].map((c) => c.className.split(" ")[0]).join(","), bubbles: both.querySelectorAll(".pm-thread .pm-m").length, heading: both.querySelector(".pm-thread .pm-thread-k")?.textContent.trim(), form: !!both.querySelector(".pm-thread form[data-thread-reply='m1.tracking.call_setup']"), ask: !!both.querySelector(".pm-ask"), rows: both.querySelectorAll(".pm-mail").length };
+    const bothR = { order: [...both.querySelector(".pm-stepmsgs").children].map((c) => c.className.split(" ")[0]).join(","), bubbles: both.querySelectorAll(".pm-thread .pm-m").length, heading: both.querySelector(".pm-thread .pm-thread-k")?.textContent.trim(), convo: t(both.querySelector(".pm-convo > summary")), convoOpen: both.querySelector(".pm-convo")?.open, convoLast: both.querySelector(".pm-stepmsgs").lastElementChild?.classList.contains("pm-convo"), form: !!both.querySelector(".pm-thread form[data-thread-reply='m1.tracking.call_setup']"), ask: !!both.querySelector(".pm-ask"), rows: both.querySelectorAll(".pm-mail").length };
     const tst = t(at("m1.review.first_5").querySelector(".pm-mail summary"));
     const gen = at(null);
     const genR = { heading: gen.querySelector(".pm-thread-k")?.textContent.trim(), rows: gen.querySelectorAll(".pm-mail").length, form: !!gen.querySelector("form[data-thread-reply='']") };
@@ -81,7 +81,8 @@ try {
   if (!o.ask || !o.askMsg || o.askOpen) fail("a step with only an email doesn't offer the quiet Ask line (closed, opening the same reply box)");
   if (o.wrap !== "m1.gbp.verify") fail("the step's messages lost their step marker");
   const b = r.bothR;
-  if (b.order !== "pm-mails,pm-thread" || b.bubbles !== 2 || b.heading !== "Your conversation about this step" || !b.form || b.ask || b.rows !== 1) fail(`a step with emails and a conversation isn't: emails first, then the conversation with its reply box (${JSON.stringify(b)})`);
+  // 🔒 step3_website_access_v3 (10-20): the conversation is the LAST row — "Your conversation · N messages" + date, closed unless RGA's reply is unread
+  if (b.order !== "pm-mails,pm-mail" || !b.convoLast || !/^Your conversation · 2 messages Sep 18, 2026/.test(b.convo || "") || b.convoOpen !== true || b.bubbles !== 2 || !b.form || b.ask || b.rows !== 2) fail(`a step with emails and a conversation isn't: emails first, then the conversation row (count + date, open for an unread reply) with its reply box (${JSON.stringify(b)})`);
   // 🔒 step12_review_requests_v2 (10-16): a TEST send (RGA checking how an email looks) never appears in a client's step
   if (r.tst) fail(`a test send shows in the client's step (${r.tst})`);
   if (r.genR.heading !== "Your messages with RGA" || r.genR.rows || !r.genR.form) fail("the general thread (no step) changed");
