@@ -60,6 +60,8 @@ if (!/RGA writes your script first/.test(run("m2VideoScriptHtml(__t)", { __t: {}
 if ((A["m2.handoff.next_month"]?.dependsOn || []).includes("m2.call.monthly") || /id: "m2\.handoff\.next_month"[^\n]*\n\s*type: "[a-z]+", dependsOn: \[[^\]]*"m2\.call\.monthly"/.test(M2)) fail("step 20: next month waits on the call again");
 if (/We'll book this with you each month/.test(JSON.stringify(A["m2.call.monthly"] || {}))) fail("step 20: the card promises a booking that nothing does");
 if (!fs.existsSync(`${SITE}/docs/supabase/RGA_SLOT_HOLD_PURPOSE_M2_2026-10-20.sql`) || !/'m2_monthly'/.test(read("docs/supabase/RGA_SLOT_HOLD_PURPOSE_M2_2026-10-20.sql"))) fail("step 20: the SQL file for the monthly booking is gone");
-if (!/Email the client 2–3 times for a 20-minute call/.test(ADM)) fail("step 20: admin row 26 doesn't say RGA's move");
+// 🔒 ready_to_sell_plan_v1 D5 (10-21): the client picks the time in the portal once the report is out; row 26 shows "report
+// first" until then, and the client's request (Confirm / Decline) after — never "email times" by hand
+if (!/title: "The client picks a call time once this month's report is out"/.test(ADM) || !/: closeoutAdminHtml\("m2_monthly"\)/.test(ADM)) fail("step 20: admin row 26 doesn't say report first, then the client's request");
 if (F.length) { console.error("🔴 Monthly (steps 16–20) regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ Monthly holds: list cadence (client's, read back) + done = everyone asked + cell or email · numbers quarterly, Not sure stored, never block the report, old numbers kept · photos a suggestion counted on Google · video optional + quarterly with RGA's script · call = report first, RGA emails times, next month never waits, SQL file ready");

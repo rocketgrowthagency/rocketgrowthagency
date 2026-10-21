@@ -70,9 +70,12 @@ else {
     try {
       // 🔑 `purpose` (batch 3, 10-19): the link is read from THIS call's stamp; the kickoff's is kickoff_invite.
       const KICK = { id: "kickoff", stamp: "kickoff_invite" };
-      const l0 = new Function("mine", "onb", "purpose", `return ${srcLink};`), c0 = srcCode ? new Function("mine", "onb", "purpose", `return ${srcCode};`) : null;
-      link = (m, o) => l0(m, o, KICK);
-      code = c0 ? (m, o) => c0(m, o, KICK) : () => null;
+      // 🔑 `pstamp` (10-21): the handler reads THIS call's stamp once (stampOf — a per-month call ignores an earlier month's);
+      // for the kickoff that is data.kickoff_invite, exactly as before
+      const l0 = new Function("mine", "onb", "purpose", "pstamp", `return ${srcLink};`), c0 = srcCode ? new Function("mine", "onb", "purpose", "pstamp", `return ${srcCode};`) : null;
+      const ps = (o) => (o && o[0] && o[0].data && o[0].data[KICK.stamp]) || {};
+      link = (m, o) => l0(m, o, KICK, ps(o));
+      code = c0 ? (m, o) => c0(m, o, KICK, ps(o)) : () => null;
     } catch (e) { fail.push(`kickoff-availability.js — meetLink/meetCode will not execute: ${e.message}`); }
     if (link) {
       const onb = [{ data: { kickoff_invite: { meet_link: "https://meet.google.com/abc-defg-hij", attendee: "owner@acme.com" } } }];

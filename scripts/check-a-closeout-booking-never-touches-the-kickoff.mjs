@@ -53,6 +53,10 @@ globalThis.fetch = async (input, init = {}) => {
   if (path.startsWith("/client_contracts")) return ok([{ status: "signed", monthly_price: 0 }]);
   if (path.startsWith("/client_invoices")) return ok([]);
   if (path.startsWith("/client_activity")) return ok(null, 201);
+  if (path.startsWith("/client_monthly_records")) {
+    if (method === "PATCH") { if (body && body.data) world.monthly = { ...(world.monthly || {}), data: body.data }; return ok(null, 204); }
+    return ok(world.monthly ? [{ id: "mr1", ...world.monthly }] : []);
+  }
   if (path.startsWith("/client_onboarding_records")) {
     if (method === "PATCH") { if (body && body.data) world.record = body.data; return ok(null, 204); }
     return ok([{ id: "rec1", data: world.record }]);
@@ -62,7 +66,9 @@ globalThis.fetch = async (input, init = {}) => {
     if (/select=purpose&limit=1$/.test(path)) return world.noColumn ? ok({ message: "column kickoff_slot_holds.purpose does not exist" }, 400) : ok([]);
     if (world.noColumn && /purpose/.test(path)) return ok({ message: "column kickoff_slot_holds.purpose does not exist" }, 400);
     if (method === "DELETE") return ok([{ slot_start: world.holdStart || "2026-01-01T00:00:00.000Z" }]);
-    if (method === "POST") return ok([{ ...(body || {}) }], 201);
+    if (method === "POST") return world.constraint && body && body.purpose === "m2_monthly"
+      ? ok({ code: "23514", message: 'new row for relation "kickoff_slot_holds" violates check constraint "kickoff_slot_holds_purpose_check"' }, 400)
+      : ok([{ ...(body || {}) }], 201);
     if (method === "PATCH") return ok(null, 204);
     if (/status=eq\.requested/.test(path) && /select=slot_start,purpose/.test(path)) return ok(world.requestRow ? [world.requestRow] : []);
     if (/status=in\.\(requested,booked\)/.test(path)) return ok(world.mine || []);
@@ -225,15 +231,51 @@ world = { noColumn: true, record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: 
 r = await run("send-kickoff-invite.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, force: 1 }) });
 if (r.status !== 200) fail(`K · with no purpose column moving the kickoff fails (${r.status} ${r.body.error || ""})`);
 
+// ── M · THE MONTHLY CHECK-IN (step 20, ready_to_sell_plan_v1 D5): report first; its own stamp with the month; never a task
+const MONTH = (() => { const n = new Date(); return `${n.getUTCFullYear()}-${String(n.getUTCMonth() + 1).padStart(2, "0")}-01`; })();
+if (!PURPOSES.m2_monthly || PURPOSES.m2_monthly.stamp === PURPOSES.kickoff.stamp || PURPOSES.m2_monthly.stamp === PURPOSES.m1_close.stamp || PURPOSES.m2_monthly.task) fail("M · the monthly call shares another call's stamp, or writes an onboarding task");
+world = { record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP() }, ledger: [], monthly: { reporting_month: MONTH, data: { tasks: {} } } };
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, purpose: "m2_monthly" }) });
+if (r.status !== 409 || !/report is out/.test(r.body.error || "") || holdCalls().some((c) => c.method === "POST")) fail(`M · a monthly call can be booked before this month's report is out (${r.status})`);
+world = { record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP(), monthly_invite: { event_id: "LAST_MONTH_EVENT", month: "2001-01-01", start: "2001-01-20T17:00:00.000Z" } }, ledger: [],
+  monthly: { reporting_month: MONTH, data: { tasks: { "m2.report.deliver": { status: "done" } } } } };
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, purpose: "m2_monthly" }) });
+if (r.status !== 200) fail(`M · with the report out, a monthly pick fails (${r.status} ${r.body.error || ""})`);
+{ const ins = holdCalls().find((c) => c.method === "POST");
+  if (!ins || ins.body.purpose !== "m2_monthly") fail(`M · the monthly request isn't held as purpose m2_monthly (${JSON.stringify(ins && ins.body && ins.body.purpose)})`); }
+for (const c of holdCalls().filter((c) => c.method === "DELETE")) if (!/purpose=eq\.m2_monthly/.test(c.url)) fail("M · a monthly pick deletes another call's request");
+if (!world.record.monthly_invite || world.record.monthly_invite.month !== MONTH || world.record.monthly_invite.event_id) fail(`M · the monthly request isn't a fresh stamp for this month (${JSON.stringify(world.record.monthly_invite)})`);
+if (JSON.stringify(world.record.kickoff_invite) !== JSON.stringify(KICKOFF_STAMP()) || world.record.closeout_invite) fail("M · a monthly pick touched the kickoff's or the close-out's record");
+world = { ...world, constraint: true };
+r = await run("portal-book-kickoff.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, purpose: "m2_monthly" }) });
+if (r.status !== 409 || !/isn't switched on yet/.test(r.body.error || "")) fail(`M · before the monthly SQL, a pick isn't refused with a clear message (${r.status} ${r.body.error || ""})`);
+world = { record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP(), monthly_invite: { event_id: "LAST_MONTH_EVENT", month: "2001-01-01", start: "2001-01-20T17:00:00.000Z" } }, ledger: [], requestRow: { slot_start: START, purpose: "m2_monthly" },
+  monthly: { reporting_month: MONTH, data: { tasks: { "m2.report.deliver": { status: "done" } } } } };
+r = await run("send-kickoff-invite.js", { httpMethod: "POST", headers: {}, body: JSON.stringify({ client_id: "c1", start: START, force: 1, purpose: "m2_monthly" }) });
+{ const g = calls.filter((c) => c.url.includes("googleapis.com/calendar") && c.method !== "GET");
+  if (r.status !== 200) fail(`M · confirming a monthly request fails (${r.status} ${r.body.error || ""})`);
+  if (g.some((c) => c.url.includes("LAST_MONTH_EVENT") || c.url.includes(KICK_EVENT))) fail("M · confirming this month's call MOVED last month's event or the kickoff (it must create its own)");
+  if (!world.record.monthly_invite || world.record.monthly_invite.month !== MONTH || world.record.monthly_invite.event_id !== "NEW_EVENT_ID") fail(`M · the confirmed monthly call isn't stamped for this month (${JSON.stringify(world.record.monthly_invite)})`);
+  if (world.record.tasks && ("null" in world.record.tasks || "undefined" in world.record.tasks)) fail("M · confirming the monthly call wrote a task under a null key");
+  if (JSON.stringify(world.record.kickoff_invite) !== JSON.stringify(KICKOFF_STAMP())) fail("M · confirming the monthly call changed the kickoff's record"); }
+world = { record: { tasks: { ...KICKOFF_DONE }, kickoff_invite: KICKOFF_STAMP(), monthly_invite: { meet_link: "https://meet.google.com/las-tmon-thh", month: "2001-01-01" } }, ledger: [],
+  mine: [{ slot_start: "2001-01-20T17:00:00.000Z", status: "booked" }] };
+r = await run("kickoff-availability.js", { httpMethod: "GET", headers: {}, queryStringParameters: { client_id: "c1", purpose: "m2_monthly" } });
+if (r.status !== 200 || r.body.yourRequest || r.body.meetLink) fail(`M · last month's booking reads as this month's call (${JSON.stringify({ s: r.status, y: r.body.yourRequest, m: r.body.meetLink })})`);
+
 // ── J · the surfaces ask for the close-out, and the database allows exactly these calls ─────────
 const read = (p) => { try { return fs.readFileSync(`${__SITE}/${p}`, "utf8"); } catch { return ""; } };
 const portal = read("portal/portal.js"), admin = read("admin/admin.js");
 if (!/const CLOSE_PURPOSE = "m1_close";/.test(portal)) fail("J · the portal's close-out card does not name its call");
-if (!/kickoff-availability\?client_id=\$\{encodeURIComponent\(clientId\)\}&purpose=\$\{CLOSE_PURPOSE\}/.test(portal)) fail("J · the portal's close-out card reads the kickoff's availability answer");
-if (!/client_id: clientId, start: startIso, purpose: CLOSE_PURPOSE/.test(portal)) fail("J · the portal's close-out pick is sent as a kickoff pick");
-if (!/kickoff-requests\?client_id=\$\{encodeURIComponent\(cid\)\}&purpose=m1_close/.test(admin)) fail("J · admin row 60 reads the kickoff's requests");
+// 🔒 one picker, two calls (ready_to_sell_plan_v1 D5): the key is "<id>" for the close-out, "<id>~m2" for the monthly call
+if (!/kickoff-availability\?client_id=\$\{encodeURIComponent\(ccClient\(clientId\)\)\}&purpose=\$\{ccPurpose\(clientId\)\}/.test(portal)) fail("J · the portal's call card reads the kickoff's availability answer");
+if (!/client_id: ccClient\(clientId\), start: startIso, purpose: ccPurpose\(clientId\)/.test(portal)) fail("J · the portal's call pick is sent as a kickoff pick");
+if (!/const ccPurpose = \(k\) => \(String\(k\)\.endsWith\("~m2"\) \? "m2_monthly" : CLOSE_PURPOSE\);/.test(portal) || !/const key = purpose === "m2_monthly" \? `\$\{clientId\}~m2` : clientId;/.test(portal)) fail("J · the portal can't tell the close-out from the monthly call (one key would serve both)");
+if (!/kickoff-requests\?client_id=\$\{encodeURIComponent\(cid\)\}&purpose=\$\{purpose\}/.test(admin) || !/const purpose = host\.getAttribute\("data-purpose"\) \|\| "m1_close"/.test(admin)) fail("J · admin row 60 / monthly row 26 read the kickoff's requests");
+if (!/: closeoutAdminHtml\("m2_monthly"\)/.test(admin)) fail("J · admin's monthly row doesn't show the client's monthly call request");
 if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.call\.close" \? closeoutAdminHtml\(\)/.test(admin))) fail("J · admin row 60 no longer shows the close-out booking");
-const sqlFile = fs.readdirSync(`${__SITE}/docs/supabase`).find((f) => /SLOT_HOLD_PURPOSE/.test(f));
+// the NEWEST purpose SQL is the one that says what the database allows (10-19 added the column; 10-20 the monthly call)
+const sqlFile = fs.readdirSync(`${__SITE}/docs/supabase`).filter((f) => /SLOT_HOLD_PURPOSE/.test(f)).sort((a, b) => (a.match(/20\d\d-\d\d-\d\d/) || [""])[0].localeCompare((b.match(/20\d\d-\d\d-\d\d/) || [""])[0])).pop();
 const sql = sqlFile ? read(`docs/supabase/${sqlFile}`) : "";
 const allowed = (sql.match(/check \(purpose in \(([^)]*)\)\)/) || [])[1];
 if (!allowed) fail("J · the purpose column's SQL (with its check constraint) is missing");

@@ -23,7 +23,7 @@
  [
   "the sender reads the KICKOFF's stamp for a close-out (would move the kickoff)",
   "kickinvite",
-  "const already = existing?.[0]?.data?.[purpose.stamp];",
+  "const already = require(\"./_call-purpose.js\").stampOf(purpose, existing?.[0]?.data);",
   "const already = existing?.[0]?.data?.kickoff_invite;",
   1
  ],
@@ -79,14 +79,14 @@
  [
   "the close-out Join link is the kickoff's",
   "kickavail",
-  "const raw = (mine.some((h) => h.status === \"booked\") && onb[0]?.data?.[purpose.stamp]?.meet_link) || null;",
-  "const raw = (mine.some((h) => h.status === \"booked\") && onb[0]?.data?.kickoff_invite?.meet_link) || null;",
+  "const pstamp = stampOf(purpose, onb[0]?.data) || {};",
+  "const pstamp = onb[0]?.data?.kickoff_invite || {};",
   1
  ],
  [
   "cancelling the close-out cancels the kickoff's event",
   "cancelinvite",
-  "const invite = rec?.data?.[purpose.stamp] || null;",
+  "const invite = require(\"./_call-purpose.js\").stampOf(purpose, rec?.data);",
   "const invite = rec?.data?.kickoff_invite || null;",
   1
  ],
@@ -107,14 +107,14 @@
  [
   "the portal sends a close-out pick as a kickoff pick",
   "portal",
-  "client_id: clientId, start: startIso, purpose: CLOSE_PURPOSE,",
-  "client_id: clientId, start: startIso,",
+  "client_id: ccClient(clientId), start: startIso, purpose: ccPurpose(clientId),",
+  "client_id: ccClient(clientId), start: startIso,",
   1
  ],
  [
   "admin row 60 reads the kickoff's requests",
   "admin",
-  "kickoff-requests?client_id=${encodeURIComponent(cid)}&purpose=m1_close`",
+  "kickoff-requests?client_id=${encodeURIComponent(cid)}&purpose=${purpose}`",
   "kickoff-requests?client_id=${encodeURIComponent(cid)}`",
   1
  ],
@@ -145,5 +145,53 @@
   "  await ledgerReady();\n  if (closeoutUnavailable(purpose)) return jsonRes(409,",
   "  if (closeoutUnavailable(purpose)) return jsonRes(409,",
   1
+ ],
+ [
+  "M: last month's stamp counts as this month's",
+  "callpurpose",
+  "return s && p.perMonth && s.month !== monthKey() ? null : (s || null);",
+  "return s || null;"
+ ],
+ [
+  "M: monthly booking before the report",
+  "bookkickfn",
+  "if (!mt[\"m2.report.deliver\"] || mt[\"m2.report.deliver\"].status !== \"done\") return jsonRes(409",
+  "if (false) return jsonRes(409"
+ ],
+ [
+  "M: the constraint refusal is swallowed",
+  "bookkickfn",
+  "if (!reserve.ok && /kickoff_slot_holds_purpose_check/.test(JSON.stringify(saved || \"\"))) {",
+  "if (false) {"
+ ],
+ [
+  "M: the monthly stamp loses its month",
+  "bookkickfn",
+  ", ...(purpose.perMonth ? { month: monthKey() } : {}) } };",
+  " } };"
+ ],
+ [
+  "M: confirming writes a null task",
+  "kickinvite",
+  "          tasks: !isKickoff && !purpose.task ? curTasks : !isKickoff ? {\n            ...curTasks,\n            // 🔒 BOOKED IS NOT HELD.",
+  "          tasks: !isKickoff ? {\n            ...curTasks,\n            // 🔒 BOOKED IS NOT HELD."
+ ],
+ [
+  "M: last month's holds read as this month's",
+  "kickavail",
+  "const mine = purpose.perMonth ? (mine0 || []).filter((h) => String(h.slot_start) >= monthKey()) : mine0;",
+  "const mine = mine0;"
+ ],
+ [
+  "M: the portal sends every call as the close-out",
+  "portal",
+  "const ccPurpose = (k) => (String(k).endsWith(\"~m2\") ? \"m2_monthly\" : CLOSE_PURPOSE);",
+  "const ccPurpose = (k) => CLOSE_PURPOSE;"
+ ],
+ [
+  "M: admin monthly row reads the close-out",
+  "admin",
+  "const purpose = host.getAttribute(\"data-purpose\") || \"m1_close\"",
+  "const purpose = \"m1_close\""
  ]
 ]
