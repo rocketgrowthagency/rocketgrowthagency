@@ -1,0 +1,38 @@
+[
+ [
+  "a held kickoff can be reopened again (the original bug)",
+  "stepchoicefn",
+  "if (body.reopen === true && stepId === \"m1.kickoff.call\" && kInv &&",
+  "if (false && body.reopen === true && stepId === \"m1.kickoff.call\" && kInv &&"
+ ],
+ [
+  "a past call with no recap can be reopened",
+  "stepchoicefn",
+  "(kInv.recap_sent_at || (kInv.start && Date.parse(kInv.start) < Date.now()))",
+  "(kInv.recap_sent_at)"
+ ],
+ [
+  "every kickoff reopen is refused (a future one locks)",
+  "stepchoicefn",
+  "(kInv.recap_sent_at || (kInv.start && Date.parse(kInv.start) < Date.now()))",
+  "(true)"
+ ],
+ [
+  "the refusal stops saying nothing changed",
+  "stepchoicefn",
+  "Use \\\"Not right?\\\" or message RGA in Support. Nothing was changed.",
+  "Use \\\"Not right?\\\" or message RGA in Support."
+ ],
+ [
+  "the portal offers Change on a held kickoff",
+  "portal",
+  "mech === \"rga\" || (step.id === \"m1.kickoff.call\" && kickoffHeld(onboarding?.data?.kickoff_invite))",
+  "mech === \"rga\""
+ ],
+ [
+  "the portal treats a future kickoff as held",
+  "portal",
+  "const kickoffHeld = (k) => !!(k && (k.recap_sent_at || (k.start && Date.parse(k.start) < Date.now())));",
+  "const kickoffHeld = (k) => !!(k && (k.recap_sent_at || k.start));"
+ ]
+]
