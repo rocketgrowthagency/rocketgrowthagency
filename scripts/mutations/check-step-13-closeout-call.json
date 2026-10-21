@@ -9,7 +9,7 @@
  [
   "the What to do box is back",
   "portal",
-  "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
+  "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
   "      : step.id === \"m1.call.close\" ? closeCallHtml(step, taskState, clientId, waitTasks)",
   1
  ],
@@ -39,6 +39,13 @@
   "admin",
   "state: rgaN ? \"rga\" : \"you\", small: rgaN ? \"Your move\" : \"Client's move\"",
   "state: \"you\", small: \"Client's move\"",
+  1
+ ],
+ [
+  "the picker opens while RGA's report is open",
+  "portal",
+  "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
+  "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
   1
  ]
 ]

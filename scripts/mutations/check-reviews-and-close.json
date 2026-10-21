@@ -54,5 +54,12 @@
   "  fillBlankDoneRows(listEl, numbered);\n",
   "\n",
   1
+ ],
+ [
+  "a close-out booked before the report",
+  "bookkickofffn",
+  "      if (!rp || rp.status !== \"done\") {",
+  "      if (false) {",
+  1
  ]
 ]
