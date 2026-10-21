@@ -57,7 +57,7 @@ const code = raw.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     const ladder = code.slice(at, end + 1);
     // 🔄 + `|| reqPassed` (2026-10-08, kickoff_request_time_passed_v1): a pick whose time passed is
     // also a choice the client made — the card names it ("Passed") rather than asking them to start.
-    const hasChosen = /const clientHasChosen = state\.cls === "done" \|\| state\.cls === "rga"( \|\| reqPassed)?;/.test(code);
+    const hasChosen = /const clientHasChosen = state\.cls === "done" \|\| state\.cls === "rga"(?: \|\| state\.cls === "rga booked")?( \|\| reqPassed)?;/.test(code);
     const settled = /const settledOrUnknown = clientHasChosen \|\| unknown;/.test(code);
     if (!hasChosen) fail.push("portal/portal.js — `clientHasChosen` is gone or changed shape.");
     if (!settled) {
