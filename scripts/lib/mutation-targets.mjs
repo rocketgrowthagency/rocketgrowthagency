@@ -181,6 +181,8 @@ export const FILES = {
   v2push: "netlify/functions/v2-push-gbp-content.js",
   bookkickfn: "netlify/functions/portal-book-kickoff.js",
   kickavail: "netlify/functions/kickoff-availability.js",
+  steplock: "shared/step-lock.js",   // step_lock_after_rga_confirms_v1 (10-21)
+  adminunlock: "netlify/functions/admin-step-unlock.js",
   siteplatfn: "netlify/functions/portal-site-platform.js",   // step3_website_access_v3 (10-20)
   siteplatdata: "data/site-platforms.json",   // the 22-builder audit, one source (10-20)
 

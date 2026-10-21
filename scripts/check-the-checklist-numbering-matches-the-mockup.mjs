@@ -124,7 +124,10 @@ try {
   await navOrIndeterminate(page, link);
   await new Promise((r) => setTimeout(r, 6000));
   await navOrIndeterminate(page, `${SITE}/admin/?view=client&id=${clientId}&tab=onboarding-v2`);
-  await new Promise((r) => setTimeout(r, 14000));
+  // 🔑 WAIT FOR THE ROWS, not a fixed 14 s: inside the long sequential suite the machine is slower and the fixed wait ran out
+  // before the checklist drew (0 rows → COULD-NOT-RUN, 10-20). 45 s ceiling; still COULD-NOT-RUN if it never draws.
+  await page.waitForFunction(() => document.querySelectorAll("#onboardingChecklistHost .ob-step").length > 0, { timeout: 45000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 2000));
 
   if (errs.length) bad(`the page threw: ${errs.slice(0, 2).join(" | ")}`);
 

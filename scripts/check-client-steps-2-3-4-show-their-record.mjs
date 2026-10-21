@@ -41,8 +41,9 @@ if (!/const gate = action === "log" \? await requireWorkspaceForClient\(event, c
 // ── the portal cards, RUN ──
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
 const line = (n) => ((P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")) || [""])[0]).replace(/^const /, "var ");
+const STEP_LOCK = createRequire(import.meta.url)(`${SITE}/shared/step-lock.js`);   // the real lock rule (step_lock_after_rga_confirms_v1)
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
-  googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.why ? `${o.why.label} ${o.why.text}` : "", o.act].filter(Boolean).join(" ¦ ")}</card>`, Date, JSON, Number, Set, Array, String });
+  stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}), googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.why ? `${o.why.label} ${o.why.text}` : "", o.act].filter(Boolean).join(" ¦ ")}</card>`, Date, JSON, Number, Set, Array, String });
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_PROVIDERS", "_accNames"]) vm.runInContext(line(n), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext("var RC_LOCK='', RC_PHONE='', RC_FORM='';", ctx);

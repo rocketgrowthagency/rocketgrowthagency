@@ -1,0 +1,128 @@
+[
+ [
+  "confirmed access no longer locks",
+  "steplock",
+  "if (t.access && t.access.confirmed_at) why = \"RGA signed in and confirmed access\";",
+  "if (false) why = \"RGA signed in and confirmed access\";"
+ ],
+ [
+  "a Google fact locks before it's on Google",
+  "steplock",
+  "if (done && (g.state === \"on_google\" || g.confirmed_at || g.rga_done_at)) why = \"it's on Google\";",
+  "if (done) why = \"it's on Google\";"
+ ],
+ [
+  "an unlock never opens the step",
+  "steplock",
+  "if (t.unlocked && t.unlocked.at && !(t.completed_at && Date.parse(t.completed_at) > Date.parse(t.unlocked.at))) return null;",
+  ""
+ ],
+ [
+  "the lock never returns after an unlock",
+  "steplock",
+  "!(t.completed_at && Date.parse(t.completed_at) > Date.parse(t.unlocked.at))",
+  "true"
+ ],
+ [
+  "hours edited in place are refused",
+  "steplock",
+  "return { why, edit: IN_PLACE.has(stepId) ? \"in_place\" : REQUEST.has(stepId) ? \"request\" : null };",
+  "return { why, edit: REQUEST.has(stepId) ? \"request\" : null };"
+ ],
+ [
+  "a locked step can be reopened",
+  "stepchoicefn",
+  "if (body.reopen === true && stepLock(stepId, prev, rec.data)) return json(409, { error: LOCK_REFUSAL, locked: true });",
+  ""
+ ],
+ [
+  "a detected step can be reopened by a direct post",
+  "stepchoicefn",
+  "if (body.reopen === true && (s.clientDone || \"rga\") !== \"client\" && s.clientDone !== \"choice\")",
+  "if (false)"
+ ],
+ [
+  "a change request is accepted on an unlocked step",
+  "stepchoicefn",
+  "if (!lk || lk.edit !== \"request\") return json(400, { error: \"That step can be changed directly. Nothing was sent.\" });",
+  ""
+ ],
+ [
+  "a live tracking choice can be changed",
+  "stepchoicefn",
+  "  if (stepLock(stepId, rec.tasks[stepId], rec.data)) return json(409, { error: LOCK_REFUSAL, locked: true });\n",
+  ""
+ ],
+ [
+  "a locked answer can be overwritten",
+  "stepinput",
+  "if (lk && lk.edit !== \"in_place\") return json(409, { error: LOCK_REFUSAL, locked: true });",
+  ""
+ ],
+ [
+  "a finished videos step can be skipped",
+  "videoclipfn",
+  "if (stepLock(yt.STEP, tasks[yt.STEP], rec.data)) return jsonRes(409, { error: LOCK_REFUSAL, locked: true });",
+  ""
+ ],
+ [
+  "admin unlocks without a reason",
+  "adminunlock",
+  "if (action === \"unlock\" && reason.length < 3) return json(400",
+  "if (false) return json(400"
+ ],
+ [
+  "admin unlocks a step that isn't locked",
+  "adminunlock",
+  "if (!stepLock(stepId, prev, rec.data)) return json(409",
+  "if (false) return json(409"
+ ],
+ [
+  "a locked row draws Change again",
+  "portal",
+  "const amendBtn = stepLk ? \"\"\n      : flagged",
+  "const amendBtn = flagged"
+ ],
+ [
+  "the lock footer loses Not right?",
+  "portal",
+  "<button class=\"pm-amend\" data-step-wrong=\"${escapeAttribute(stepId)}\" title=\"Tell us this is not right\">Not right?</button>${req}",
+  "${req}"
+ ],
+ [
+  "the lock footer isn't drawn",
+  "portal",
+  "        ${lockFootHtml(step.id, taskState, stepLk)}",
+  "        "
+ ],
+ [
+  "admin rows stop drawing the lock card",
+  "admin",
+  "return rowStepCardsHtml(o, s) + adminLockHtml(o && o.flowId, s && s.task);",
+  "return rowStepCardsHtml(o, s);"
+ ],
+ [
+  "step 17 never locks after Used in the report",
+  "steplock",
+  "else if (RGA_USES[stepId]) { if (t.rga_confirmed && t.rga_confirmed.at) why = RGA_USES[stepId]; }",
+  "else if (RGA_USES[stepId]) { }"
+ ],
+ [
+  "admin confirm stops writing the mark",
+  "adminunlock",
+  "    prev.rga_confirmed = { at: new Date().toISOString(), by: gate.email || null };\n",
+  ""
+ ],
+ [
+  "an unlock keeps RGA's old used mark",
+  "adminunlock",
+  "    delete prev.rga_confirmed;\n  } else if (action === \"confirm\") {",
+  "  } else if (action === \"confirm\") {"
+ ],
+ [
+  "confirm works on any step",
+  "adminunlock",
+  "  if (action === \"confirm\" && !RGA_USES[stepId]) return json(400",
+  "  if (false) return json(400"
+ ]
+]
