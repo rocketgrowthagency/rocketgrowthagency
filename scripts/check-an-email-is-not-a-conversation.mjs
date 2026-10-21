@@ -88,5 +88,10 @@ try {
   if (r.none !== "") fail("a step with no messages shows something");
 } finally { await browser.close(); }
 
+// 🔒 10-20 (Chris on the Support card: "is this a message or not?"): "Your messages with RGA" is only what was SAID — no email copy,
+// no confirmation card — and the confirmed-gone notice never leaves step 2's card for the general thread
+if (!/filter\(\(m\) => \(stepId \? m\.step_id === stepId : !m\.step_id && !m\.letter && !m\.card\)\)/.test(portal)) fail("the Support card (\"Your messages with RGA\") shows email copies or confirmation cards as messages");
+if (!/&& !\(r\.kind === "gbp_duplicate_resolved" && r\.payload\?\.removed\)\)/.test(fn)) fail("the duplicate-gone confirmation is said twice (step 2's card AND the general thread)");
+if (!/m\.from === "rga" && !m\.test && !m\.letter && !m\.card &&/.test(portal)) fail("a confirmation card counts as \"RGA replied\"");
 if (F.length) { console.error("🔴 an email reads as a conversation, or the duplicate letter is on the wrong step:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ an email is not a conversation: on a step each email RGA sent is one closed row (subject · We emailed you / Test send · date · Read) that opens in place; the conversation heading and reply box only when there is one, after the emails; otherwise a quiet Ask line with the same box; the general thread unchanged; the duplicate-removal letter files under step 6; the Setup banner and badge count only RGA's replies (an email copy or a test send never raises them)");

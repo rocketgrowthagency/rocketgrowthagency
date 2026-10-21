@@ -23,8 +23,8 @@
  [
   "the thread row is back",
   "thread",
-  ".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\")",
-  ".filter(Boolean)",
+  ".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\"\n",
+  ".filter((r) => true\n",
   1
  ],
  [

@@ -37,8 +37,8 @@
  [
   "a test send counts as unread",
   "portal",
-  "m.from === \"rga\" && !m.test && !m.letter && new Date(m.at)",
-  "m.from === \"rga\" && !m.letter && new Date(m.at)",
+  "m.from === \"rga\" && !m.test && !m.letter && !m.card && new Date(m.at)",
+  "m.from === \"rga\" && !m.letter && !m.card && new Date(m.at)",
   1
  ],
  [

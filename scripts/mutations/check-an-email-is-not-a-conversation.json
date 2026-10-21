@@ -65,8 +65,29 @@
  [
   "an email copy raises the banner again",
   "portal",
-  "m.from === \"rga\" && !m.test && !m.letter && new Date(m.at)",
-  "m.from === \"rga\" && !m.test && new Date(m.at)",
+  "m.from === \"rga\" && !m.test && !m.letter && !m.card && new Date(m.at)",
+  "m.from === \"rga\" && !m.test && !m.card && new Date(m.at)",
+  1
+ ],
+ [
+  "Support shows email copies as messages",
+  "portal",
+  "!m.step_id && !m.letter && !m.card));",
+  "!m.step_id));",
+  1
+ ],
+ [
+  "the confirmation is said twice",
+  "thread",
+  "\n      && !(r.kind === \"gbp_duplicate_resolved\" && r.payload?.removed)).map((r) => ({",
+  "\n      && true).map((r) => ({",
+  1
+ ],
+ [
+  "a card counts as RGA replied",
+  "portal",
+  "m.from === \"rga\" && !m.test && !m.letter && !m.card &&",
+  "m.from === \"rga\" && !m.test && !m.letter &&",
   1
  ]
 ]

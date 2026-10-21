@@ -58,7 +58,7 @@ if (run("dupConfirmedHtml(T2, null)") || run("dupConfirmedHtml(T4, null)")) fail
 const note = run("dupNoteHtml(T)");
 if (!/data-dup-note/.test(note) || !/See step/.test(note) || /photo/i.test(note) || !/<p class="k">✓ Duplicate removed<\/p>/.test(note)) fail("the 7-day top note is missing, doesn't point at step 6, or mentions photos");
 if (run("dupNoteHtml(T3)")) fail("the top note still shows after 7 days");
-if (!/\.filter\(\(r\) => r\.payload\?\.reason !== "duplicate_confirmed_gone"\)/.test(TH)) fail('portal-thread shows the duplicate confirmation as an "Emails about this step" row');
+if (!/\.filter\(\(r\) => r\.payload\?\.reason !== "duplicate_confirmed_gone"[\s\S]{0,120}?\)\.map/.test(TH)) fail('portal-thread shows the duplicate confirmation as an "Emails about this step" row');
 if (/if \(dupClearedDue\(tasks\)\)/.test(NO)) fail("notify-step-open still emails the client when the duplicate is confirmed gone");
 if (!/data-ol-told>[^<]*no email/.test(A)) fail("admin's step 11 record doesn't say the client is told in the portal, not by email");
 
