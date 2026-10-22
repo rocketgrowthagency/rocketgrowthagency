@@ -20,7 +20,7 @@ const SC = {
   down: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "joesplumbing.com" },
 };
 let cur = "wp", saved = null;
-await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...SC[cur], platforms: PL }) }));
+if (!process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...SC[cur], platforms: PL }) }));
 await ctx.route("**/.netlify/functions/portal-step-input", (r) => { saved = JSON.parse(r.request().postData() || "{}"); r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: false, error: "caught by the harness (not saved)" }) }); });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));

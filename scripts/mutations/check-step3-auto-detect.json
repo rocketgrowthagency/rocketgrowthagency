@@ -88,5 +88,41 @@
   "portal",
   "  if (!ci || ci.platform_source !== \"designer_credit\") return null;",
   "  return null;"
+ ],
+ [
+  "a saved copy is stated as fact",
+  "siteplatform",
+  "confidence: d.platform ? \"ask\" : \"none\", reason, source: \"archive\"",
+  "confidence: d.confidence, reason, source: \"archive\""
+ ],
+ [
+  "a blocked site gets no saved copy",
+  "siteplatform",
+  "    const copy = await archivedCopy(u, fetchFn, left());",
+  "    const copy = null;"
+ ],
+ [
+  "a challenge page is read as the site",
+  "siteplatform",
+  "    if (isChallenge(r.status, headers, html)) reason = \"blocked\";",
+  "    if (false) reason = \"blocked\";"
+ ],
+ [
+  "a stale saved copy is used",
+  "siteplatform",
+  "    if (Date.now() - Date.parse(at) > 730 * 86400000) return null;",
+  ""
+ ],
+ [
+  "the saved copy isn't named on the card",
+  "portal",
+  "  const head = j.source === \"archive\" ? `What a saved copy of",
+  "  const head = false ? `What a saved copy of"
+ ],
+ [
+  "admin hides that it's a saved copy",
+  "admin",
+  "${d.source === \"archive\" ? ` · from a saved copy",
+  "${false ? ` · from a saved copy"
  ]
 ]

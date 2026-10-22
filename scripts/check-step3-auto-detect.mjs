@@ -49,11 +49,29 @@ if (one.confidence !== "ask" || one.evidence.some((e) => /sign-in/.test(e))) fai
 const fake = await D.detectPlatform("joes.com", site(`<img src="/wp-content/a.png">`, `<h1>Welcome</h1>`));
 if (fake.confidence !== "ask") fail("any page at /wp-login.php counts as a sign (only a real sign-in form may)");
 
+// a BLOCKED site (Cloudflare challenge, the live 10-22 case) → a reason, then the latest saved copy, capped at "ask"
+const Hd = (o) => ({ forEach: (f) => Object.entries(o).forEach(([k, v]) => f(v, k)) });
+const arch = (home, ts = "20250909124800") => async (u) => {
+  if (/archive\.org\/wayback/.test(u)) return { ok: true, json: async () => ({ archived_snapshots: { closest: { available: true, timestamp: ts, url: `http://web.archive.org/web/${ts}/https://joes.com/` } } }) };
+  if (/web\.archive\.org/.test(u)) return { ok: true, status: 200, headers: Hd({}), text: async () => `<link href="/wp-content/a.css"><meta name="generator" content="WordPress 6.8">` };
+  return home(u); };
+const blocked = await D.detectPlatform("joes.com", arch(async () => ({ ok: false, status: 403, headers: Hd({ "cf-mitigated": "challenge" }), text: async () => "<title>Just a moment...</title>" })));
+if (blocked.reason !== "blocked") fail(`a Cloudflare challenge isn't named "blocked" (${blocked.reason})`);
+if (blocked.source !== "archive" || blocked.platform !== "wordpress") fail("a blocked site doesn't fall back to its saved copy");
+if (blocked.confidence !== "ask") fail(`a saved copy is stated as fact (${blocked.confidence}) — the site may have moved since`);
+const challenge200 = await D.detectPlatform("joes.com", arch(async () => ({ ok: false, status: 503, headers: Hd({}), text: async () => "<div id=challenge-platform>" })));
+if (challenge200.reason !== "blocked") fail("a challenge page without Cloudflare's header isn't recognised");
+const stale = await D.detectPlatform("joes.com", arch(async () => ({ ok: false, status: 403, headers: Hd({ "cf-mitigated": "challenge" }), text: async () => "" }), "20200101000000"));
+if (stale.platform) fail("a saved copy older than 2 years is used");
+const nocopy = await D.detectPlatform("joes.com", async (u) => (/archive\.org/.test(u) ? { ok: true, json: async () => ({ archived_snapshots: {} }) } : { ok: false, status: 403, headers: Hd({ "cf-mitigated": "challenge" }), text: async () => "" }));
+if (nocopy.status !== "couldnt_check" || nocopy.reason !== "blocked" || nocopy.platform) fail("a blocked site with no saved copy is guessed (it must be couldn't-check + the reason)");
+if (/"User-Agent": "Mozilla\/5\.0 \(RGA site check\)"/.test(SRC)) fail("the check announces itself as a bot again (Cloudflare blocks it)");
+
 // ── 2 · the portal's Step 1, RUN
 const P = read("portal/portal.js");
 const pctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {}, drew: [] });
 vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, pctx);
-for (const n of ["accPart", "accMono", "accProofHtml", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
+for (const n of ["accPart", "accMono", "accMonYear", "accProofHtml", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
 vm.runInContext(`function accDrawPlatform(host, key, source) { drew.push([key, source]); }`, pctx);
 const step1 = (j) => { pctx.drew = []; const box = { innerHTML: "" }; const host = { _acc: { platforms: PUB, site: "joes.com", ...j }, querySelector: (s) => (s === "[data-acc-plat]" ? box : null), setAttribute() {} };
   vm.runInContext(`accDrawFound(h)`, Object.assign(pctx, { h: host })); return { html: box.innerHTML, drew: pctx.drew }; };
@@ -64,6 +82,8 @@ const s2 = step1({ platform: "wix", confidence: "ask", signs: 1, evidence: ["Ima
 if (/is on Wix/.test(s2.html) || !/It looks like Wix/.test(s2.html)) fail("one sign says \"is on\" (it must say \"It looks like… please check\")");
 const s3 = step1({ platform: null, confidence: "none", signs: 0, evidence: [], designer: { name: "Exposure" } });
 if (!/A web designer may manage your site/.test(s3.html) || !/data-acc-dyes/.test(s3.html) || !/Site by Exposure/.test(s3.html)) fail("a footer credit doesn't ask about the web designer");
+const s5 = step1({ platform: "wordpress", confidence: "ask", signs: 2, evidence: ["WordPress files on your pages (/wp-content/)"], source: "archive", archived_at: "2025-09-09", reason: "blocked" });
+if (!/What a saved copy of joes\.com shows \(Sep 2025\)/.test(s5.html) || /is on WordPress/.test(s5.html) || !/blocks automatic checks, so we read a saved copy/.test(s5.html)) fail("a saved-copy result doesn't say it's a saved copy (with its date) or says \"is on\"");
 const s4 = step1({ platform: null, confidence: "none", signs: 0, evidence: [] });
 if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found doesn't go straight to the tiles");
 if (/accDrawPlatform\(host, j\.confidence === "stated"/.test(P) || !/accDrawFound\(host\);/.test(fnSrc(P, "loadAccessPlatform"))) fail("the detector picks the builder SILENTLY again (it must ask first)");
@@ -134,6 +154,8 @@ const no = row(ci2);
 if (!/Our site check:<\/b> Wix · 1 sign/.test(no) || !/is-check/.test(no) || !/<b>Check first:<\/b> the client said no and picked Squarespace/.test(no)) fail("admin row 8 doesn't flag a \"No\" (our check vs the client's pick)");
 const yes = row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 3, answer: "yes" } });
 if (!/<b>Client:<\/b> confirmed WordPress/.test(yes) || /is-check/.test(yes)) fail("admin row 8 doesn't show a confirmed builder plainly");
+const ar = row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 2, answer: "yes", source: "archive", archived_at: "2025-09-09", reason: "blocked" } });
+if (!/from a saved copy \(2025-09-09\), their site blocks automatic checks/.test(ar)) fail("admin row 8 doesn't say the result came from a saved copy (and why)");
 const dz = row({ via: "designer", platform: "other", platform_source: "designer_credit", detected: { status: "ok", platform: null, signs: 0, designer: "Exposure", designer_answer: "yes" } });
 if (!/footer credits <b>Exposure<\/b> \(client: they manage it\)/.test(dz)) fail("admin row 8 doesn't show the designer credit the client confirmed");
 const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || ""), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
@@ -144,4 +166,4 @@ const sentCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${
 if (!/Exposure manages your site/.test(sentCard) || /Another \/ not sure/.test(sentCard)) fail("the sent card's Step 1 says \"Another / not sure\" instead of naming the designer");
 
 if (F.length) { console.error("🔴 step 3 auto-detect regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 3 auto-detect holds: proof line per sign (no absence claims) · store address read + counted · linked footer credits only · real WordPress sign-in = 2nd sign · Step 1 asks with proof (one sign = \"looks like\") · designer ask · nothing found → tiles · yes/no/chosen/designer saved with the record · server cleans it · admin row 8 flags a \"No\" · sent card names the designer");
+console.log("✅ step 3 auto-detect holds: proof line per sign (no absence claims) · store address read + counted · linked footer credits only · real WordPress sign-in = 2nd sign · a blocked site → reason + saved copy (≤2 yrs, \"looks like\" only) · Step 1 asks with proof (one sign = \"looks like\") · designer ask · nothing found → tiles · yes/no/chosen/designer saved with the record · server cleans it · admin row 8 flags a \"No\" · sent card names the designer");
