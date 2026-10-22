@@ -181,7 +181,10 @@ export const FILES = {
   v2push: "netlify/functions/v2-push-gbp-content.js",
   bookkickfn: "netlify/functions/portal-book-kickoff.js",
   kickavail: "netlify/functions/kickoff-availability.js",
-  callproviders: "netlify/functions/_call-providers.js",   // call tracking works anywhere (10-22)
+  callproviders: "netlify/functions/_call-providers.js",
+  calltestfn: "netlify/functions/admin-call-test.js",
+  ctsync: "netlify/functions/call-tracking-sync.js",
+  reportjs: "portal/report/report.js",   // call tracking works anywhere (10-22)
   ctprovision: "netlify/functions/call-tracking-provision.js",
   steplock: "shared/step-lock.js",   // step_lock_after_rga_confirms_v1 (10-21)
   adminunlock: "netlify/functions/admin-step-unlock.js",

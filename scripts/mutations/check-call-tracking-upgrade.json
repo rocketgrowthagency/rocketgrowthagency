@@ -1,0 +1,62 @@
+[
+ [
+  "the recommendation is always Skip again",
+  "portal",
+  "  return a.calls === \"yes\" && (a.unanswered !== \"no\" || a.ads === \"yes\") ? \"rga_sets_up\" : \"skip\";",
+  "  return \"skip\";"
+ ],
+ [
+  "the card ignores the recommendation",
+  "portal",
+  "? ch : (rec || \"skip\");",
+  "? ch : \"skip\";"
+ ],
+ [
+  "answers stored unchecked",
+  "stepchoicefn",
+  ".filter(([k, ok]) => ok.includes(body.answers[k]))",
+  ".filter(([k]) => k in body.answers)"
+ ],
+ [
+  "the GBP number is a website pool again",
+  "callproviders",
+  "          type: \"source\",\n          source: { type: \"google_my_business\" },",
+  "          type: \"session\","
+ ],
+ [
+  "no recording notice",
+  "callproviders",
+  "recording_enabled: true, destination_number: `+1${destinationNumber}`, greeting_text: \"This call may be recorded.\" },",
+  "recording_enabled: true, destination_number: `+1${destinationNumber}` },"
+ ],
+ [
+  "the number can text",
+  "callproviders",
+  "          sms_enabled: false,\n",
+  ""
+ ],
+ [
+  "a test call alone finishes the step",
+  "calltestfn",
+  "...(settled(tr1) ? { status: \"done\", completed_at: t.completed_at || now, completed_by: \"rga\", done_by: \"test_call\" } : { status: \"in_progress\" })",
+  "status: \"done\", completed_at: t.completed_at || now, completed_by: \"rga\", done_by: \"test_call\""
+ ],
+ [
+  "four checks finish the step",
+  "calltestfn",
+  "const SETUP_CHECKS = [\"greeting\", \"gbp_swap\", \"live_google\", \"sync_off\", \"site_real\"];",
+  "const SETUP_CHECKS = [\"greeting\", \"gbp_swap\", \"live_google\", \"sync_off\"];"
+ ],
+ [
+  "first-time callers aren't counted",
+  "callproviders",
+  "firstTime: calls.filter((c) => c.first_call === true).length,",
+  "firstTime: null,"
+ ],
+ [
+  "the report calls taps Calls again",
+  "reportjs",
+  "[\"Call-button taps\", current.gbp_calls],",
+  "[\"Calls\", current.gbp_calls],"
+ ]
+]

@@ -32,7 +32,8 @@ if (!/const waitsOnRga = stepId === "m1\.access\.website" && parsed\.value && ty
 if (!/const gate = await requireWorkspaceForClient\(event, clientId\);/.test(AC) || !/access: \{ role, account, confirmed_at: now, confirmed_by:/.test(AC) || !/status: "done"/.test(AC)) fail("RGA's Confirm access doesn't record the grant and finish the step (or isn't RGA-only)");
 // ── step 3: honest words, the client's own number ──
 if (/Calls from Google|under our account/.test(PB)) fail("step 3 says \"Calls from Google\" or puts the number under RGA's account");
-if (!/client_choice_provider: \["CallRail", "WhatConverts", "CallTrackingMetrics", "Other"\]\.includes\(String\(body\.provider/.test(CH)) fail("the call-tracking provider isn't allow-listed");
+// 🔒 call_tracking_upgrade_v1 (10-22): one allow-list of the two provider groups
+if (!/client_choice_provider: CT_PROVIDER_LIST\.includes\(String\(body\.provider/.test(CH) || !/const CT_PROVIDER_LIST = \["CallRail", "CallTrackingMetrics", "WhatConverts", "ServiceTitan", "Quo \(OpenPhone\)", "RingCentral", "Housecall Pro", "Other"\];/.test(CH)) fail("the call-tracking provider isn't allow-listed");
 // ── step 4: only the installed lead event; key event; counts ──
 if (/form_start\|submit/.test(RC) || !/const LEAD_EVENTS = \["generate_lead", "contact_submit"\];/.test(RC) || !/inListFilter: \{ values: installed \}/.test(RC)) fail("step 4 counts form starts or any \"submit\"-like event as submissions");
 if (!/analyticsadmin\.googleapis\.com\/v1beta\/\$\{t\.ga4_property_id\}\/keyEvents/.test(RC) || !/n30: probe\.n30, n90: probe\.n90, last_at: probe\.last_at, gbp30: probe\.gbp30/.test(RC)) fail("step 4 doesn't check the key event, or doesn't keep its counts");
@@ -44,7 +45,15 @@ const line = (n) => ((P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")) || [""])
 const STEP_LOCK = createRequire(import.meta.url)(`${SITE}/shared/step-lock.js`);   // the real lock rule (step_lock_after_rga_confirms_v1)
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
   stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}), googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.why ? `${o.why.label} ${o.why.text}` : "", o.act].filter(Boolean).join(" ¦ ")}</card>`, Date, JSON, Number, Set, Array, String });
-for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_PROVIDERS", "_accNames"]) vm.runInContext(line(n), ctx);
+// a whole top-level `const X = …;` even across lines (step 11's question table, 10-22) — bracket depth, ignoring quotes
+const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); }
+  let d = 0, q = null; for (let i = P.indexOf("=", at) + 1; i < P.length; i++) { const c = P[i];
+    if (q) { if (c === "\\") { i++; continue; } if (c === q) q = null; continue; }
+    if (c === '"' || c === "'" || c === "`") { q = c; continue; }
+    if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; else if (c === ";" && d === 0) return P.slice(at + 1, i + 1).replace(/^const /, "var "); }
+  return ""; };
+for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames"]) vm.runInContext(block(n), ctx);
+for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext("var RC_LOCK='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };
@@ -62,7 +71,7 @@ if (!/Call tracking: skipped for now/.test(skip3) || !/call-button clicks/.test(
 const live3 = run("m1.tracking.call_setup", { status: "done", client_choice: "rga_sets_up", client_choice_at: "2026-10-20T12:00:00Z", tracking: { number: "(213) 555-0188", rings: "(424) 242-2040", live_at: "2026-10-23T12:00:00Z", provider: "CallRail" } });
 if (!/Your tracking number/.test(live3) || !/in your name/.test(live3) || !/Directories/.test(live3) || !/additional phone/.test(live3)) fail("a live tracking number doesn't show where it is and that the client owns it");
 const ask3 = run("m1.tracking.call_setup", {});
-if (!/Do you want call tracking\?/.test(ask3) || !/RGA recommends/.test(ask3) || !/data-ct-save/.test(ask3) || !/account in your name/.test(ask3)) fail("step 3's ask isn't the one card with RGA's recommendation and Save");
+if (!/Do you want call tracking\?/.test(ask3) || !/RGA recommends/.test(ask3) || !/data-ct-save/.test(ask3) || !/yours to keep if you ever leave/.test(ask3) || /account in your name/.test(ask3) || !/data-ct-q="calls"/.test(ask3)) fail("step 3's ask isn't the one card with the three questions, RGA's recommendation and Save (and the true ownership line)");
 const ok4 = run("m1.tracking.form_setup", { status: "done", detected: { verdict: "confirmed", at: "2026-10-22T03:30:00Z", n30: 3, n90: 3, last_at: "2026-10-19", gbp30: 1, events: ["generate_lead"], key_event: true }, test: { at: "2026-10-21T10:00:00Z", inbox: true, inbox_at: "2026-10-21T11:00:00Z" } });
 if (!/Form tracking on your website/.test(ok4) || !/3 submissions · 1 from your Google Business Profile/.test(ok4) || !/Counted as a lead/.test(ok4) || !/finished submissions only/.test(ok4) || !/Arrived in your inbox/.test(ok4)) fail(`step 4's done card doesn't show what's tracked (${ok4.slice(0, 200)})`);
 const test4 = run("m1.tracking.form_setup", { test: { at: "2026-10-21T10:00:00Z", inbox: null } });
