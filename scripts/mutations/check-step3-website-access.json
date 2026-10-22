@@ -118,5 +118,41 @@
   "portal",
   "if (t.status === \"done\" && !oldLink && !(ci && ci.via)",
   "if (t.status === \"done\" && !(ci && ci.via)"
+ ],
+ [
+  "the padlock is back on step 3",
+  "portal",
+  "tile: RC_WEB, small: \"✓ Access confirmed\"",
+  "tile: RC_LOCK, small: \"✓ Access confirmed\""
+ ],
+ [
+  "Done shows over Your move while updating",
+  "portal",
+  "      : isDone && _rcEditing.has(step.id) ? { text: \"Updating\", cls: \"edit\" }\n",
+  ""
+ ],
+ [
+  "the builder wall is back",
+  "portal",
+  "const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\"];",
+  "const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\", \"duda\", \"weebly\"];"
+ ],
+ [
+  "no Cancel while updating",
+  "portal",
+  "if (tgt.closest(\"[data-acc-cancel]\")) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");",
+  "if (false) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");"
+ ],
+ [
+  "a screen-only redraw goes to the server",
+  "portal",
+  "  if (!opts.local || !_rgaWaitsCache.has(clientId)) await loadPortalThread(clientId);",
+  "  await loadPortalThread(clientId);"
+ ],
+ [
+  "failed detection hides the builders",
+  "portal",
+  "    if (!j.platforms || !Object.keys(j.platforms).length) {",
+  "    if (false) {"
  ]
 ]

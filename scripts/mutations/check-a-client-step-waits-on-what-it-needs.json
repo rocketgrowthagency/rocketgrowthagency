@@ -135,7 +135,7 @@
  [
   "portal: rows render before the answer",
   "portal",
-  "  const rgaWaits = await loadRgaWaits(clientId);",
+  "  const rgaWaits = opts.local && _rgaWaitsCache.has(clientId) ? _rgaWaitsCache.get(clientId) : await loadRgaWaits(clientId);",
   "  const rgaWaits = null; loadRgaWaits(clientId);",
   1
  ],

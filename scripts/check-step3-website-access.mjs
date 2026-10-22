@@ -61,6 +61,17 @@ if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not r
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
 if (!/class="pm-ax-go" href=/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");
 if (!/\.pm-ax-go \{[^}]*white-space:nowrap/.test(read("portal/portal.css")) || !/\.pm-ax-setup li \{ display:grid;/.test(read("portal/portal.css"))) fail("a setup button can wrap mid-sentence again (Chris's screenshot)");
+// ── Chris's walk-through 10-22 (all fixed, all pinned)
+const CSS = read("portal/portal.css");
+if (/tile: RC_LOCK/.test(P) || !/const RC_WEB = /.test(P)) fail("step 3 shows a padlock again (since 10-21 the padlock means Locked) — it's a website icon");
+if (!/: isDone && _rcEditing\.has\(step\.id\) \? \{ text: "Updating", cls: "edit" \}/.test(P)) fail("a done step being changed says \"Done\" above \"Your move\" (it says Updating)");
+if (!/redo\.textContent = "Checking your site…";/.test(P)) fail("\"Update how we access your site\" spins with no words");
+if (!/const ACC_COMMON = \["wordpress", "wix", "squarespace", "godaddy", "shopify", "webflow", "custom", "other"\];/.test(P) || !/>Show all \$\{all\.length\} builders<\/button>/.test(P)) fail("the builder list is a wall again (8 common + Show all)");
+if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web designer…\" / \"I don't have a website\" are underlined links again (they're choices: secondary buttons)");
+if (!/data-acc-send disabled>Pick your builder first<\/button>/.test(P) || !/send\.textContent = "Pick your builder first";/.test(P)) fail("the faded send button doesn't say why it can't be pressed");
+if (!/data-acc-cancel>Cancel<\/button>/.test(P) || !/if \(tgt\.closest\("\[data-acc-cancel\]"\)\) \{ e\.preventDefault\(\); _rcEditing\.delete\("m1\.access\.website"\);/.test(P)) fail("there's no way out of Updating without reloading (Cancel)");
+if (!/if \(!j\.platforms \|\| !Object\.keys\(j\.platforms\)\.length\) \{/.test(P)) fail("a failed builder detection hides the builder list (it falls back to the file, minus RGA's notes)");
+if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortalThread\(clientId\);/.test(P) || (P.match(/listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\);/g) || []).length < 3) fail("a screen-only redraw (Update / Cancel / call tracking Change) makes server trips again (it took 2.8–4.7 s)");
 // ── the save
 if (!/\["invite", "designer", "none", "request", "workaround"\]\.includes\(o\.via\)/.test(INP) || !/\["invite", "designer", "request", "workaround"\]\.includes\(parsed\.value\.via\)/.test(INP)) fail("the save doesn't take the request / checklist paths (or finishes them without RGA)");
 if (!/\^\[a-z0-9\]\[a-z0-9-\]\*\\\.myshopify\\\.com\$/.test(INP) || !/\^\\d\{4\}\$/.test(INP)) fail("the Shopify store / 4-digit code isn't checked");

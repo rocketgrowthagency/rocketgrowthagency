@@ -299,7 +299,8 @@ const checks = [
   [/: \(rgaWait \|\| ownWait\) && \/<\(button\|input\|select\|textarea\)\\b\/\.test\(completionCtlLive\)\s*\? `<fieldset class="pm-waits" disabled>/, "a waiting row's form stays live"],
 ];
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
-const lr = pcode.indexOf("const rgaWaits = await loadRgaWaits(clientId);"), rh = pcode.indexOf("const rowHtml = ({");
+// 10-22: a screen-only redraw reuses the last answer; a real render still awaits it before any row draws
+const lr = pcode.indexOf("const rgaWaits = opts.local && _rgaWaitsCache.has(clientId) ? _rgaWaitsCache.get(clientId) : await loadRgaWaits(clientId);"), rh = pcode.indexOf("const rowHtml = ({");
 if (lr < 0 || rh < 0 || lr > rh) fail("the rows render before the server's answer arrives (a waiting row flashes \"Your turn\")");
 const loader = lift(portal, "async function loadRgaWaits(clientId) {", "\n}\n") || "";
 if (!/if \(!r\.ok\) return null;/.test(loader) || /return new Set\(\)/.test(loader)) fail("a failed answer reads as \"nothing waits\" (it must be null: not known)");
