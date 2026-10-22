@@ -125,7 +125,7 @@ for (const id of ["m2.snap.business_outcomes", "m2.exec.gbp_photos", "m2.exec.re
   if (w0 && w0.id === "m2.snap.business_outcomes") fail("Month 2: the monthly call waits on the client's numbers again");
   const mock2 = read("reports/mockups/month2_waits_v1.html");
   const cw2 = call?.clientWait || {};
-  if (!/report/i.test(cw2.head || "") || !/email you times/i.test(cw2.body || "") || !cw2.foot) fail("Month 2: the monthly call's band doesn't say report first, then RGA emails times (monthly_asks_v1)");
+  if (!/report/i.test(cw2.head || "") || !/pick a time/i.test(cw2.body || "") || !cw2.foot) fail("Month 2: the monthly call's band doesn't say report first, then you pick a time here (ready_to_sell_plan_v1 D5, the monthly picker)");
   const cf = byId2.get("m2.snap.business_outcomes")?.clientFirst || {};
   if (!cf.head || !mock2.includes(cf.head) || !cf.body || !mock2.includes(cf.body)) fail("Month 2: step 14's \"first\" band isn't the approved mockup's words (month2_waits_v1)");
 }

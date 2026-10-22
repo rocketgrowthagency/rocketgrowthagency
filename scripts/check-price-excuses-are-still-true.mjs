@@ -55,6 +55,7 @@ const ALLOWED = {
   "shared/busy.js":                           ["= 1500"],   // the master busy state: "= 1500" is PRESS_MS (1.5 s), not a price
   "docs/sales-rep-offer.html":                ["$1,250","$1,500","$1,875","$2,500","$3,750","$625","$750"],
   "docs/sales-rep-compensation.html":         ["$1,250","$1,750","$1,875","$2,500","$5,000","$625","$750"],
+  "research_notes/Call tracking for local businesses/providers.md": ["$1,250"],
   "docs/owner-annual-both-prices.html":       ["$1,250","$2,500","$625"],
   "docs/owner-annual-by-close-rate.html":     ["$1,250","$2,500","$625"],
   "docs/owner-annual-full-price.html":        ["$1,250","$2,500"],

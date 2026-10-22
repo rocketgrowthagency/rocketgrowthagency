@@ -72,6 +72,7 @@ const SURFACES = {
   // EXCLUDED — deliberately NOT forced to match the offer. Each reason is load-bearing.
   "docs/sales-rep-offer.html":                  ["EXCLUDED", "REP earnings model (1/2/3 clients) — $3,750 is 3 × $1,250, not our price"],
   "docs/sales-rep-compensation.html":           ["EXCLUDED", "rep commission model, not the offer"],
+  "research_notes/Call tracking for local businesses/providers.md": ["EXCLUDED", "research notes quoting VENDOR prices (CallRail, WhatConverts, Quo), not RGA's offer (10-22 call tracking research)"],
   "docs/owner-annual-both-prices.html":         ["EXCLUDED", "owner-economics projection"],
   "docs/owner-annual-by-close-rate.html":       ["EXCLUDED", "owner-economics projection"],
   "docs/owner-annual-full-price.html":          ["EXCLUDED", "owner-economics projection"],
