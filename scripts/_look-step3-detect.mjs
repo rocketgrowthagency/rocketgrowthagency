@@ -20,10 +20,13 @@ const SC = {
   down: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "joesplumbing.com" },
 };
 let cur = "wp", saved = null;
+// REAL=1: the live site check goes through (it only READS the client's public homepage; portal-site-platform writes nothing)
+if (process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.continue());
 if (!process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...SC[cur], platforms: PL }) }));
 await ctx.route("**/.netlify/functions/portal-step-input", (r) => { saved = JSON.parse(r.request().postData() || "{}"); r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: false, error: "caught by the harness (not saved)" }) }); });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
+page.on("response", async (r) => { if (/portal-site-platform/.test(r.url())) { try { const j = await r.json(); console.log("SITE CHECK", JSON.stringify({ archive_why: j.archive_why, status: j.status, platform: j.platform, confidence: j.confidence, signs: j.signs, reason: j.reason, source: j.source, archived_at: j.archived_at, evidence: j.evidence, site: j.site })); } catch {} } });
 await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
 const open = async () => {
   await page.waitForSelector('.portal-nav a[data-view="setup"]', { timeout: 45000 }); await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
@@ -37,6 +40,7 @@ const open = async () => {
 const txt = async (row) => (await row.locator("[data-acc-plat]").innerText()).replace(/\s+/g, " ").slice(0, 420);
 const shot = async (row, n) => { await row.screenshot({ path: `${out}/${n}.png` }); console.log(`[${n}]`, await txt(row)); };
 const run = async (name, fn) => { cur = name; saved = null; await page.reload({ waitUntil: "domcontentloaded" }); const row = await open(); await shot(row, `${name}-1`); await fn(row); };
+if (process.env.REAL) { cur = "real"; const row = await open(); await page.waitForTimeout(1500); await shot(row, "real-1"); await b.close(); process.exit(0); }
 await run("wp", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "wp-2-yes"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED wp", JSON.stringify(saved && saved.value)); });
 await run("wix1", async (row) => { await row.locator("[data-acc-no]").click(); await page.waitForTimeout(300); await shot(row, "wix1-2-no"); await row.locator('[data-acc-pick="squarespace"]').click(); await page.waitForTimeout(300); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED wix1", JSON.stringify(saved && saved.value)); });
 await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); await page.waitForTimeout(300); await shot(row, "des-2-yes"); console.log("NOTE", (await row.locator("[data-acc-mail]").innerText()).slice(0, 200)); await row.locator("[data-acc-designer-done]").click(); await page.waitForTimeout(800); console.log("SAVED des", JSON.stringify(saved && saved.value)); });

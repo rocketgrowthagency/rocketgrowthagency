@@ -16,8 +16,8 @@
  [
   "an unreachable site is guessed",
   "siteplatform",
-  "    if (!copy) return nil(\"couldnt_check\", reason);",
-  "    if (!copy) return { status: \"ok\", platform: \"godaddy\", confidence: \"ask\", signs: 1, evidence: [] };",
+  "    if (!copy.html) return { ...nil(\"couldnt_check\", reason), archive_why: copy.why };",
+  "    if (!copy.html) return { status: \"ok\", platform: \"godaddy\", confidence: \"ask\", signs: 1, evidence: [] };",
   1
  ],
  [

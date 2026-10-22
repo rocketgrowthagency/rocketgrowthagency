@@ -99,7 +99,7 @@
   "a blocked site gets no saved copy",
   "siteplatform",
   "    const copy = await archivedCopy(u, fetchFn, left());",
-  "    const copy = null;"
+  "    const copy = { why: \"x\" };"
  ],
  [
   "a challenge page is read as the site",
@@ -110,7 +110,7 @@
  [
   "a stale saved copy is used",
   "siteplatform",
-  "    if (Date.now() - Date.parse(at) > 730 * 86400000) return null;",
+  "    if (Date.now() - Date.parse(at) > 730 * 86400000) return { why: \"copy_too_old\" };",
   ""
  ],
  [
