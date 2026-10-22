@@ -2,22 +2,22 @@
  [
   "one sign is stated",
   "siteplatform",
-  "confidence: best[1] >= 2 ? \"stated\" : \"ask\"",
+  "confidence: signs >= 2 ? \"stated\" : \"ask\"",
   "confidence: \"stated\"",
   1
  ],
  [
   "Facebook is a website",
   "siteplatform",
-  "  if (NOT_A_SITE.test(u.hostname.replace(/^www\\./i, \"\"))) return { status: \"no_site\", platform: null, confidence: \"none\", signs: 0 };\n",
+  "  if (NOT_A_SITE.test(u.hostname.replace(/^www\\./i, \"\"))) return nil(\"no_site\");\n",
   "",
   1
  ],
  [
   "an unreachable site is guessed",
   "siteplatform",
-  "  } catch { return { status: \"couldnt_check\", platform: null, confidence: \"none\", signs: 0 }; }\n  finally",
-  "  } catch { return { status: \"ok\", platform: \"godaddy\", confidence: \"ask\", signs: 1 }; }\n  finally",
+  "  } catch { return nil(\"couldnt_check\"); }\n  finally",
+  "  } catch { return { status: \"ok\", platform: \"godaddy\", confidence: \"ask\", signs: 1, evidence: [] }; }\n  finally",
   1
  ],
  [

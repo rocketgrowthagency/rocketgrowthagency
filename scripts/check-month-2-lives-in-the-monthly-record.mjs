@@ -197,7 +197,7 @@ const settleAt = pcode.indexOf("async function settleStepResult(");
 const handBuilt = [...pcode.matchAll(/tasks: j\.tasks/g)].filter((m) => m.index < settleAt || m.index > settleAt + 1200);
 if (handBuilt.length) fail(`${handBuilt.length} handler(s) re-render the onboarding record from a writer's answer by hand (a Month-2 answer would land there) — use settleStepResult`);
 if ((pcode.match(/await settleStepResult\(/g) || []).length < 5) fail("not every step writer's answer (input, choice, I've done it, reopen / flag, recheck) settles through settleStepResult");
-if (!/listEl\._rerender = \(freshOnboarding, freshMonthly(, freshLists)?(, freshPhotos)?\) => renderActionItemsLive\(\s*domId, realClientId, freshOnboarding, freshMonthly \|\| monthlyRecords,/.test(pcode)) fail("the list can't re-render a fresh monthly record");
+if (!/listEl\._rerender = \(freshOnboarding, freshMonthly(, freshLists)?(, freshPhotos)?(, local = false)?\) => renderActionItemsLive\(\s*domId, realClientId, freshOnboarding, freshMonthly \|\| monthlyRecords,/.test(pcode)) fail("the list can't re-render a fresh monthly record");
 
 // ── 6 · the deliverables endpoints read this month's record ──
 const ad = code("netlify/functions/admin-deliverables.js");

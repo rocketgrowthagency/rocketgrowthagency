@@ -509,6 +509,7 @@ run check-a-done-step-is-never-the-ask.mjs "every Month 1 client step marked don
 run check-call-tracking-works-anywhere.mjs "call tracking works for a client in any US state: their time zone and area code, every page of calls read"
 run check-call-tracking-upgrade.mjs "call tracking upgrade: recommendation from 3 answers, one GBP source number (recording notice, no texting), Done = test call + safe-setup checks, report keeps 3 call numbers apart"
 run check-step3-loop.mjs "step 3 end to end: client invite → admin row 8 → Confirm access → locked → request/unlock, on a fake database"
+run check-step3-auto-detect.mjs "step 3 auto-detect: proof per sign, linked footer credits only, Step 1 asks Yes/No with proof, yes/no saved + cleaned, admin row 8 flags a No"
 run check-steps-6-and-7-confirm-in-the-portal.mjs "step 6 confirms the duplicate is gone IN THE PORTAL (no email, no photos line); step 7 shows the facts table + 48 h + done-when, stacked on a phone"
 run check-client-steps-2-3-4-show-their-record.mjs "client steps 2 · 3 · 4 show their record: an invite never a password · an honest call-tracking decision · real form leads only (approved 10-20)"
 run check-client-step-5-shows-the-plan.mjs "client step 5 shows the locked keyword plan for any business (approved 10-20)"

@@ -1,0 +1,92 @@
+[
+ [
+  "the ask is gone: found builders are picked silently again",
+  "portal",
+  "    if (j.designer || (j.platform && (j.confidence === \"stated\" || j.confidence === \"ask\"))) accDrawFound(host);\n    else accDrawPlatform(host, null, null);",
+  "    accDrawPlatform(host, j.confidence === \"stated\" || j.confidence === \"ask\" ? j.platform : null, j.confidence === \"stated\" || j.confidence === \"ask\" ? \"detected\" : null);"
+ ],
+ [
+  "one sign says \"is on\"",
+  "portal",
+  "    const sure = j.confidence === \"stated\";",
+  "    const sure = true;"
+ ],
+ [
+  "no proof lines on the ask",
+  "portal",
+  "      + accProofHtml(j.site, (j.evidence && j.evidence.length) ? j.evidence : [",
+  "      + accProofHtml(j.site, []) + String(["
+ ],
+ [
+  "no No button",
+  "portal",
+  "<button type=\"button\" class=\"pm-amend\" data-acc-no>No, it's something else</button>",
+  ""
+ ],
+ [
+  "the designer credit is never asked",
+  "portal",
+  "  if (j.designer && !host._accDesigner) {",
+  "  if (false) {"
+ ],
+ [
+  "a Yes saves as declined",
+  "portal",
+  "ans === \"yes\" && key === det ? \"detected_confirmed\"",
+  "ans === \"yes\" && key === det ? \"detected_declined\""
+ ],
+ [
+  "the found record isn't saved",
+  "portal",
+  "  if (j.status) value.detected = {",
+  "  if (false) value.detected = {"
+ ],
+ [
+  "the server keeps any source",
+  "stepinput",
+  ".includes(o.platform_source) ? o.platform_source : \"chosen\";",
+  "? o.platform_source || \"chosen\" : \"chosen\";"
+ ],
+ [
+  "the server drops the found record",
+  "stepinput",
+  "    if (d) {\n      const str =",
+  "    if (false) {\n      const str ="
+ ],
+ [
+  "proof lines aren't capped",
+  "stepinput",
+  ".slice(0, 8).map((x) => str(x, 120))",
+  ".map((x) => String(x))"
+ ],
+ [
+  "admin row 8 hides a No",
+  "admin",
+  "ci.platform_source === \"detected_declined\" ? \" is-check\" : \"\"",
+  " \"\""
+ ],
+ [
+  "marketing copy reads as a designer",
+  "siteplatform",
+  "\\bby\\s*:?\\s*<a\\b[^>]*href=[\"']https?:\\/\\/[^\"']+[\"'][^>]*>\\s*([^<]{2,60}?)\\s*<\\/a>/i);",
+  "\\bby\\b|\\bto\\b)\\s*:?\\s*(?:<a\\b[^>]*>)?\\s*([^<.]{2,60}?)\\s*(?:<\\/a>|[.<]|$)/i);"
+ ],
+ [
+  "any page at /wp-login.php is a sign",
+  "siteplatform",
+  "if (r2.ok && /id=[\"']user_login[\"']|name=[\"']log[\"']/i.test(String(await r2.text()).slice(0, 200000))) {",
+  "if (r2.ok) {"
+ ],
+ [
+  "the store address isn't counted",
+  "siteplatform",
+  "  const signs = best[1] + (store ? 1 : 0);",
+  "  const signs = best[1];"
+ ],
+ [
+  "the sent card says Another / not sure",
+  "portal",
+  "  if (!ci || ci.platform_source !== \"designer_credit\") return null;",
+  "  return null;"
+ ]
+]

@@ -229,7 +229,7 @@ if (!/\(!isDone \|\| \(status === "done" && step\.clientForm === "photo_upload" 
 const rmh = (() => { const i = pc.indexOf('closest("[data-photo-remove]")'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
 if (!/if \(onGoogle\) \{\s*const ok = await portalConfirm\(\{ tone: "danger", pill: "TAKES IT OFF GOOGLE", title: "Remove this photo from Google\?"/.test(rmh) || !/if \(!ok\) return;/.test(rmh)) fail("removing a photo on Google doesn't ask first (the red permanent dialog)");
 if (!/b\.classList\.add\("is-busy"\)/.test(rmh) || !/fetch\("\/\.netlify\/functions\/portal-photo-remove"/.test(rmh) || !/await settleStepResult\(listEl, j, fresh\);/.test(rmh)) fail("Remove doesn't spin, call the endpoint, or redraw with the fresh photos");
-if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhotos\) => renderActionItemsLive\([^)]*freshPhotos \|\| photos/.test(pc) || !/tasks: j\.tasks \} \}, undefined, undefined, freshPhotos\);/.test(pc)) fail("the step can't redraw with fresh photos");
+if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhotos(, local = false)?\) => renderActionItemsLive\([^)]*freshPhotos \|\| photos/.test(pc) || !/tasks: j\.tasks \} \}, undefined, undefined, freshPhotos\);/.test(pc)) fail("the step can't redraw with fresh photos");
 // the moment a Change is sent (before any reload) the slot says the old photo stays, and its kind's count doesn't move
 { const h = ctx.how(step, task(sab), true, [PUB(workN, "at_work")], "c1", null);
   if (!new RegExp(`data-slot="${workN}" data-on-google-slot`).test(h)) fail("a slot on Google isn't marked, so a Change in progress can't say the old photo stays"); }
