@@ -51,8 +51,8 @@
  [
   "the done card drops the role",
   "portal",
-  "rcRow(\"Role\", [\"ok\", \"\u2713\"], escapeHtml(acc.role || \"\")), ",
-  "",
+  "<span class=\"pm-ax-did\">Role ${escapeHtml(acc.role || \"\")} · account ${escapeHtml(acc.account || \"\")}</span>",
+  "<span class=\"pm-ax-did\">account ${escapeHtml(acc.account || \"\")}</span>",
   1
  ],
  [
@@ -65,7 +65,7 @@
  [
   "no revisit date",
   "portal",
-  "${back ? ` \u00b7 we'll raise it again ${escapeHtml(monthDay(back))}` : \"\"}",
+  "${back ? ` · we'll raise it again ${escapeHtml(monthDay(back))}` : \"\"}",
   "",
   1
  ],

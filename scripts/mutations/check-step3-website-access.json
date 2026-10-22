@@ -168,10 +168,10 @@
   ""
  ],
  [
-  "no last step",
+  "the send button leaves Step 3",
   "portal",
-  "    : send ? row(steps.length + 1, `<span>Come back and tap “${escapeHtml(send)}” below.</span>`, true) : \"\";",
-  "    : \"\";"
+  "<button type=\"button\" class=\"pm-commit\" data-acc-send>${escapeHtml(lbl)}</button>",
+  "<span></span>"
  ],
  [
   "plan notes lose Before you start",
@@ -196,5 +196,17 @@
   "siteplatdata",
   "\"key\": \"wix\",\n      \"color\": \"#111111\"",
   "\"key\": \"wix\""
+ ],
+ [
+  "Steps 2–3 don't show as Not yet before a pick",
+  "portal",
+  "${accPart(2, \"Instructions: do this\", \"next\", \"\", \"Shows once you pick your builder\")}${accPart(3, \"Tell RGA you've sent it\", \"next\")}",
+  "${accPart(2, \"Instructions: do this\", \"you\")}"
+ ],
+ [
+  "the done part loses its colour",
+  "portalcss",
+  ".pm-ax-part.st-done { border-color:var(--state-ok-line,#cfe6c8);",
+  ".pm-ax-part.st-done-x { border-color:var(--state-ok-line,#cfe6c8);"
  ]
 ]

@@ -52,20 +52,21 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
     if (c === '"' || c === "'" || c === "`") { q = c; continue; }
     if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; else if (c === ";" && d === 0) return P.slice(at + 1, i + 1).replace(/^const /, "var "); }
   return ""; };
-for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames"]) vm.runInContext(block(n), ctx);
+for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
+for (const n of ["accPart", "accDidLine"]) vm.runInContext(lift(n), ctx);
 for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };
 const ok2 = run("m1.access.website", { status: "done", client_input: { via: "invite", platform: "wordpress", platform_source: "detected", at: "2026-10-20T21:14:00Z" }, access: { role: "Administrator", account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-20T23:02:00Z", confirmed_by: "chris" } });
-if (!/state="ok"/.test(ok2) || !/RGA can edit your website/.test(ok2) || !/Administrator/.test(ok2) || !/hello@rocketgrowthagency\.com/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
+if (!/state="ok"/.test(ok2) || !/RGA can edit your website/.test(ok2) || !/Role Administrator · account hello@rocketgrowthagency\.com/.test(ok2) || !/hello@rocketgrowthagency\.com/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
 if (/password/i.test(ok2.replace(/never send us your password/i, ""))) fail("step 2's done card mentions a password");
 const wait2 = run("m1.access.website", { status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-10-20T21:14:00Z" } });
 if (!/state="rga"/.test(wait2) || !/Checking we can sign in/.test(wait2)) fail("an invite sent isn't \"RGA is checking we can sign in\"");
 const old2 = run("m1.access.website", { status: "done", client_input: "https://onetimesecret.com/secret/abc", client_input_at: "2026-09-21T16:20:00Z" });
 if (!/Switch to an invite \(safer\)/.test(old2) || /onetimesecret/.test(old2)) fail("an old password link isn't offered the switch to an invite, or its link is shown");
 const ask2 = run("m1.access.website", {});
-if (!/data-acc-host/.test(ask2) || !/Pick your builder first/.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
+if (!/data-acc-host/.test(ask2) || !/Takes 2–5 minutes · you never share a password/.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
 const skip3 = run("m1.tracking.call_setup", { status: "done", client_choice: "skip", client_choice_at: "2026-10-20T12:00:00Z" });
 if (!/Call tracking: skipped for now/.test(skip3) || !/call-button clicks/.test(skip3) || !/raise it again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);
 const live3 = run("m1.tracking.call_setup", { status: "done", client_choice: "rga_sets_up", client_choice_at: "2026-10-20T12:00:00Z", tracking: { number: "(213) 555-0188", rings: "(424) 242-2040", live_at: "2026-10-23T12:00:00Z", provider: "CallRail" } });

@@ -69,7 +69,14 @@ if (!/: isDone && _rcEditing\.has\(step\.id\) \? \{ text: "Updating", cls: "edit
 if (!/\.pm-msg\.busy \.dot\{[^}]*animation:pm-later-spin/.test(CSS)) fail("a waiting message (\"Checking which builder your website uses…\") shows a still dot, not the spinner");
 if (!/const ACC_COMMON = \["wordpress", "wix", "squarespace", "godaddy", "shopify", "webflow", "custom", "other"\];/.test(P) || !/>Show all \$\{all\.length\} builders<\/button>/.test(P)) fail("the builder list is a wall again (8 common + Show all)");
 if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web designer…\" / \"I don't have a website\" are underlined links again (they're choices: secondary buttons)");
-if (!/data-acc-send disabled>Pick your builder first<\/button>/.test(P) || !/send\.textContent = "Pick your builder first";/.test(P)) fail("the faded send button doesn't say why it can't be pressed");
+// 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
+// the send button lives in Step 3 ("Then"), never as a faded button with no reason
+if (!/\$\{accPart\(2, "Instructions: do this", "next", "", "Shows once you pick your builder"\)\}\$\{accPart\(3, "Tell RGA you've sent it", "next"\)\}/.test(P)) fail("before a builder is picked, Steps 2 and 3 don't show as Not yet");
+if (!/\$\{accPart\(1, "Your website builder", "done", picked\)\}\$\{accPart\(2, "Instructions: do this", "you", accSetupHtml\(p, j\.site\)\)\}\$\{accPart\(3, "Tell RGA you've sent it", "then", tell\)\}/.test(P) || !/<button type="button" class="pm-commit" data-acc-send>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
+if (!/const ACC_TAG = \{ you: "Your move", then: "Then", done: "Done", rga: "With RGA", next: "Not yet" \};/.test(P)) fail("the parts' state tags changed (Your move · Then · Done · With RGA · Not yet)");
+for (const st of ["st-you", "st-done", "st-rga", "st-next"]) if (!new RegExp(`\\.pm-ax-part\\.${st} \\{`).test(CSS)) fail(`the ${st} part has no colour (it takes the state's token)`);
+if (/the builder below says how long|data-acc-send disabled>Pick your builder first/.test(P)) fail("the old confusing wording is back");
+if (!/const ini = key === "custom" \? "<\/>" : key === "other" \? "\?" : \(words\[0\] \|\| "\?"\)\[0\]\.toUpperCase\(\);/.test(P)) fail("the builder tile shows two letters again (\"WO\" read like a word)");
 if (!/data-acc-cancel>Cancel<\/button>/.test(P) || !/if \(tgt\.closest\("\[data-acc-cancel\]"\)\) \{ e\.preventDefault\(\); _rcEditing\.delete\("m1\.access\.website"\);/.test(P)) fail("there's no way out of Updating without reloading (Cancel)");
 if (!/if \(!j\.platforms \|\| !Object\.keys\(j\.platforms\)\.length\) \{/.test(P)) fail("a failed builder detection hides the builder list (it falls back to the file, minus RGA's notes)");
 if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortalThread\(clientId\);/.test(P) || (P.match(/listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\);/g) || []).length < 3) fail("a screen-only redraw (Update / Cancel / call tracking Change) makes server trips again (it took 2.8–4.7 s)");
@@ -86,7 +93,8 @@ if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortal
     let h = ""; try { h = R.accSetupHtml(p, "example.com") + R.accMono(k, p); } catch (e) { fail(`${k}: the card throws (${e.message})`); continue; }
     const rows = (h.match(/class="pm-ax-st/g) || []).length;
     if (!/class="pm-ax-give"/.test(h) || rows < (p.steps || []).length) fail(`${k}: the card lacks "what to give us" or numbered steps (${rows} rows for ${(p.steps || []).length} steps)`);
-    if (p.kind !== "designer" && !/class="pm-ax-st last"/.test(h)) fail(`${k}: no last step saying what to tap next`);
+    if (/Come back and tap/.test(h)) fail(`${k}: the instructions repeat Step 3 ("Come back and tap…")`);
+    if (p.kind === "code" && !/class="pm-ax-st last"/.test(h)) fail(`${k}: the code builder lost its store + code row`);
     if (p.kind === "code" && (!/data-acc-store/.test(h) || !/data-acc-code/.test(h) || /Invite this email/.test(h))) fail(`${k}: the code builder asks for an email invite, or lacks the store + code fields`);
     if (p.kind === "workaround" && /Invite this email/.test(h)) fail(`${k}: a no-invite builder asks for an invite`);
     if (["invite", "designer"].includes(p.kind) && !/Invite this email/.test(h)) fail(`${k}: an invite builder doesn't show the email to invite first`);

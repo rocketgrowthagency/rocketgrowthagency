@@ -85,7 +85,8 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
     googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
-  vm.runInContext(lift("accessCardHtml"), ctx);
+  vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, ctx);
+  for (const n of ["accPart", "accDidLine", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
   if (!/Access confirmed/.test(card) || !/hello@rocketgrowthagency\.com/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
   if (/data-acc-redo/.test(card)) fail("the client's confirmed card offers a way to change it while it's locked");
