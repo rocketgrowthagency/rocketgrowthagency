@@ -56,6 +56,7 @@ const LEAVES = [
   // Meet itself) and, while live, the quiet ">Meet ↗</a>" link beside End the call.
   { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },  // 🔄 2026-10-09: the Overview card's "Join the call ↗" is gone — the call console owns joining (kickoff_every_surface_every_state_v1).
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
+  { needle: '<a class="admin-button ob-acc-open" href=', why: "admin row 8 \"check their site\": opens the client's OWN website in a new tab (target=_blank) so RGA can see its builder (step3_blocked_sites_v1)" },
   { needle: ">Search it ↗</a>", why: "admin row 26 monthly leak check: a Google search for the tracking number, target=_blank (call_tracking_upgrade_v1)" },
   // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
   { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },

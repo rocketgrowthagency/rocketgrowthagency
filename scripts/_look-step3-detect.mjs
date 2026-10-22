@@ -17,6 +17,8 @@ const SC = {
   des: { status: "ok", platform: null, confidence: "none", signs: 0, evidence: [], designer: { name: "Exposure" }, shopify_store: null, site: "bertdorrroofing.com" },
   shop: { status: "ok", platform: "shopify", confidence: "stated", signs: 3, evidence: ["Files stored on Shopify (cdn.shopify.com)", "A Shopify theme in your page code", "Your store address: joes-store.myshopify.com"], designer: null, shopify_store: "joes-store.myshopify.com", site: "joesstore.com" },
   none: { status: "ok", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "rocketgrowthagency.com" },
+  blocked: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "dallyhaarroofing.com", reason: "blocked" },
+  dev: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"], designer: null, shopify_store: null, site: "ohhrats.com" },
   down: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "joesplumbing.com" },
 };
 let cur = "wp", saved = null;
@@ -45,6 +47,8 @@ await run("wp", async (row) => { await row.locator("[data-acc-yes]").click(); aw
 await run("wix1", async (row) => { await row.locator("[data-acc-no]").click(); await page.waitForTimeout(300); await shot(row, "wix1-2-no"); await row.locator('[data-acc-pick="squarespace"]').click(); await page.waitForTimeout(300); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED wix1", JSON.stringify(saved && saved.value)); });
 await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); await page.waitForTimeout(300); await shot(row, "des-2-yes"); console.log("NOTE", (await row.locator("[data-acc-mail]").innerText()).slice(0, 200)); await row.locator("[data-acc-designer-done]").click(); await page.waitForTimeout(800); console.log("SAVED des", JSON.stringify(saved && saved.value)); });
 await run("shop", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); console.log("STORE FIELD =", await row.locator("[data-acc-store]").inputValue()); await shot(row, "shop-2-yes"); });
+await run("blocked", async (row) => { await row.locator("[data-acc-check]").click(); await page.waitForTimeout(800); console.log("SAVED blocked", JSON.stringify(saved && saved.value)); });
+await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); });
 await run("none", async () => {});
 await run("down", async () => {});
 await b.close();

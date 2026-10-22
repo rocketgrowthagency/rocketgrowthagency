@@ -65,8 +65,8 @@
  [
   "portal save: an answer finishes a step that waits",
   "stepinputfn",
-  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  const now",
-  "  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  const now",
+  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
+  "",
   1
  ],
  [

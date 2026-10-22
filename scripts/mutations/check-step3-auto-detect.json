@@ -32,8 +32,8 @@
  [
   "a Yes saves as declined",
   "portal",
-  "ans === \"yes\" && key === det ? \"detected_confirmed\"",
-  "ans === \"yes\" && key === det ? \"detected_declined\""
+  "ans === \"yes\" && key === det ? `${pre}_confirmed`",
+  "ans === \"yes\" && key === det ? `${pre}_declined`"
  ],
  [
   "the found record isn't saved",
@@ -62,8 +62,8 @@
  [
   "admin row 8 hides a No",
   "admin",
-  "ci.platform_source === \"detected_declined\" ? \" is-check\" : \"\"",
-  " \"\""
+  "/_declined$/.test(ci.platform_source || \"\") ? \" is-check\" : \"\"",
+  "\"\""
  ],
  [
   "marketing copy reads as a designer",
@@ -116,13 +116,109 @@
  [
   "the saved copy isn't named on the card",
   "portal",
-  "  const head = j.source === \"archive\" ? `What a saved copy of",
-  "  const head = false ? `What a saved copy of"
+  ": j.source === \"archive\" ? `What a saved copy of",
+  ": false ? `What a saved copy of"
  ],
  [
   "admin hides that it's a saved copy",
   "admin",
   "${d.source === \"archive\" ? ` · from a saved copy",
   "${false ? ` · from a saved copy"
+ ],
+ [
+  "custom-coded is stated as fact",
+  "siteplatform",
+  "return dev.length ? { platform: \"custom\", signs: dev.length, confidence: \"ask\"",
+  "return dev.length ? { platform: \"custom\", signs: dev.length, confidence: \"stated\""
+ ],
+ [
+  "developer signs aren't read",
+  "siteplatform",
+  "    const dev = CUSTOM_SIGNS.map(",
+  "    const dev = [].map("
+ ],
+ [
+  "a developer sign beats a builder",
+  "siteplatform",
+  "    if (maybe) return { platform: maybe[0], signs: 1, confidence: \"ask\", evidence: [maybe[2]], designer, shopify_store: null };",
+  "    if (maybe) return { platform: maybe[0], signs: 1, confidence: \"ask\", evidence: [maybe[2]], designer, shopify_store: null };\n    if (/\\/_next\\//.test(hay)) return { platform: \"custom\", signs: 1, confidence: \"ask\", evidence: [\"x\"], designer, shopify_store: null };"
+ ],
+ [
+  "the developer ask uses builder words",
+  "portal",
+  "      : dev ? \"It looks like a developer built your site\" : sure",
+  "      : sure"
+ ],
+ [
+  "RGA's check isn't named on the ask",
+  "portal",
+  "    const title = byRga ? (dev ?",
+  "    const title = false ? (dev ?"
+ ],
+ [
+  "a blocked site has no Check it for me",
+  "portal",
+  "    const couldnt = j.status === \"couldnt_check\" && source !== \"detected_declined\";",
+  "    const couldnt = false;"
+ ],
+ [
+  "Check it for me shows everywhere",
+  "portal",
+  "    const couldnt = j.status === \"couldnt_check\" && source !== \"detected_declined\";",
+  "    const couldnt = true;"
+ ],
+ [
+  "a Yes to RGA's check saves as detected",
+  "portal",
+  "  const pre = j.source === \"rga\" ? \"rga_checked\" : \"detected\";",
+  "  const pre = \"detected\";"
+ ],
+ [
+  "the request reopens a done step",
+  "stepinput",
+  "      ...(p0.status === \"done\" ? {} : { status: \"in_progress\" }) };",
+  "      status: \"in_progress\" };"
+ ],
+ [
+  "the request overwrites the answer",
+  "stepinput",
+  "    tasks[stepId] = { ...p0, check_request: { asked_at: at,",
+  "    tasks[stepId] = { ...p0, client_input: { via: \"check\" }, check_request: { asked_at: at,"
+ ],
+ [
+  "RGA's check takes any builder",
+  "accessconfirm",
+  "    const platform = Object.keys(PL).includes(body.platform) ? body.platform : null;",
+  "    const platform = String(body.platform || \"\") || null;"
+ ],
+ [
+  "RGA's check isn't saved",
+  "accessconfirm",
+  "    const t0 = { ...p0, rga_check: { platform, by: g.email || \"RGA\", at },",
+  "    const t0 = { ...p0,"
+ ],
+ [
+  "admin row 8 hides the check request",
+  "admin",
+  "  if (t && t.check_request && !(ci && [\"invite\", \"designer\", \"request\", \"workaround\"].includes(ci.via))) {",
+  "  if (false) {"
+ ],
+ [
+  "the email isn't a draft",
+  "admin",
+  "        + stepEmailBar(mail, t, { flowId: \"m1.access.website\" }) })}</div>`;",
+  "        + \"\" })}</div>`;"
+ ],
+ [
+  "the client's card ignores the request",
+  "portal",
+  "  if (t.check_request && !t.rga_check && !(ci && ci.via) && !_accPickSelf.has(step.id)",
+  "  if (false && !_accPickSelf.has(step.id)"
+ ],
+ [
+  "RGA's check never reaches the client",
+  "portal",
+  "  const rgaChk = t.rga_check && t.rga_check.platform && !_accPickSelf.has(step.id) ?",
+  "  const rgaChk = false ?"
  ]
 ]

@@ -49,6 +49,15 @@ if (one.confidence !== "ask" || one.evidence.some((e) => /sign-in/.test(e))) fai
 const fake = await D.detectPlatform("joes.com", site(`<img src="/wp-content/a.png">`, `<h1>Welcome</h1>`));
 if (fake.confidence !== "ask") fail("any page at /wp-login.php counts as a sign (only a real sign-in form may)");
 
+// a DEVELOPER-BUILT site (ohhrats.com, 10-22): build files / developer hosts are positive signs — asked, never stated; a builder wins
+const vite = det(`<link rel="stylesheet" href="/assets/styles-CNMhkxsr.css">`);
+if (vite.platform !== "custom" || vite.confidence !== "ask" || !vite.evidence.includes("Your pages load developer build files (/assets/styles-CNMhkxsr.css)")) fail(`a Vite build (ohhrats.com) isn't asked as custom-coded with its file (${vite.platform} ${vite.confidence})`);
+const next = det(`<script src="/_next/static/chunks/main.js"></script>`, { "x-vercel-id": "sfo1::abc" });
+if (next.platform !== "custom" || next.confidence !== "ask" || next.signs !== 2) fail("a Next.js site on Vercel isn't asked as custom-coded (two signs, still asked)");
+const wfNext = det(`<html data-wf-site="x"><script src="/_next/static/x.js"></script><link href="https://assets.website-files.com/a.css">`);
+if (wfNext.platform !== "webflow") fail(`a builder sign doesn't beat a developer sign (${wfNext.platform})`);
+if (/return dev\.length \? \{ platform: "custom", signs: dev\.length, confidence: "stated"/.test(SRC)) fail("custom-coded is stated as fact");
+
 // a BLOCKED site (Cloudflare challenge, the live 10-22 case) → a reason, then the latest saved copy, capped at "ask"
 const Hd = (o) => ({ forEach: (f) => Object.entries(o).forEach(([k, v]) => f(v, k)) });
 const arch = (home, ts = "20250909124800") => async (u) => {
@@ -84,8 +93,22 @@ const s3 = step1({ platform: null, confidence: "none", signs: 0, evidence: [], d
 if (!/A web designer may manage your site/.test(s3.html) || !/data-acc-dyes/.test(s3.html) || !/Site by Exposure/.test(s3.html)) fail("a footer credit doesn't ask about the web designer");
 const s5 = step1({ platform: "wordpress", confidence: "ask", signs: 2, evidence: ["WordPress files on your pages (/wp-content/)"], source: "archive", archived_at: "2025-09-09", reason: "blocked" });
 if (!/What a saved copy of joes\.com shows \(Sep 2025\)/.test(s5.html) || /is on WordPress/.test(s5.html) || !/blocks automatic checks, so we read a saved copy/.test(s5.html)) fail("a saved-copy result doesn't say it's a saved copy (with its date) or says \"is on\"");
+const s6 = step1({ platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"] });
+if (!/It looks like a developer built your site/.test(s6.html) || !/Yes, a developer built it/.test(s6.html)) fail("a developer-built site isn't asked in plain words");
+const s7 = step1({ platform: "wordpress", confidence: "stated", signs: 1, source: "rga", evidence: ["Checked by hand by RGA on 10-22 (your site blocks automatic checks)"] });
+if (!/RGA checked: your website is on WordPress/.test(s7.html) || !/How we know/.test(s7.html) || !/data-acc-yes/.test(s7.html) || !/data-acc-no/.test(s7.html)) fail("RGA's hand check isn't asked as \"RGA checked: … Is that right?\" with Yes / No");
 const s4 = step1({ platform: null, confidence: "none", signs: 0, evidence: [] });
 if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found doesn't go straight to the tiles");
+// the blocked path, RUN (accDrawPlatform with no builder): why + 3 ways to tell + Check it for me
+{
+  const bctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {} });
+  vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} function accSetupHtml() { return ""; }`, bctx);
+  for (const n of ["accPart", "accMono", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
+  const draw = (j, src = null) => { const box = { innerHTML: "", querySelector: () => null }; const host = { _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, null, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
+  const bl = draw({ status: "couldnt_check", reason: "blocked", site: "joes.com" });
+  if (!/joes\.com has a security setting that blocks automatic checks/.test(bl) || !/3 ways to tell/.test(bl) || !/data-acc-check/.test(bl) || !/data-acc-pick="wordpress"/.test(bl)) fail("a blocked site doesn't get its way forward (why · 3 ways to tell · Check it for me · the tiles)");
+  if (/data-acc-check/.test(draw({ status: "ok", site: "joes.com" }))) fail("\"Check it for me\" shows on a site we could read");
+}
 if (/accDrawPlatform\(host, j\.confidence === "stated"/.test(P) || !/accDrawFound\(host\);/.test(fnSrc(P, "loadAccessPlatform"))) fail("the detector picks the builder SILENTLY again (it must ask first)");
 if (/We found this on your site|Looks like it from your site, right\?/.test(P)) fail("the old silent-pick wording is back");
 
@@ -104,6 +127,10 @@ const v2 = await save(WP, "squarespace", "no");
 if (v2.platform_source !== "detected_declined" || v2.detected?.answer !== "no") fail(`"No" + another builder doesn't save detected_declined (${v2.platform_source})`);
 const v3 = await save({ platform: null, confidence: "none", signs: 0, evidence: [] }, "wix", null);
 if (v3.platform_source !== "chosen") fail(`a builder picked with nothing found isn't "chosen" (${v3.platform_source})`);
+const vr = await save({ platform: "wordpress", confidence: "stated", signs: 1, evidence: ["x"], source: "rga" }, "wordpress", "yes");
+if (vr.platform_source !== "rga_checked_confirmed") fail(`"Yes" to RGA's hand check isn't saved as rga_checked_confirmed (${vr.platform_source})`);
+const vr2 = await save({ platform: "wordpress", confidence: "stated", signs: 1, evidence: ["x"], source: "rga" }, "wix", "no");
+if (vr2.platform_source !== "rga_checked_declined") fail(`"No" to RGA's hand check isn't saved as rga_checked_declined (${vr2.platform_source})`);
 const v4 = await save({ platform: null, confidence: "none", signs: 0, evidence: [], designer: { name: "Exposure" } }, "other", null, "designer_credit");
 if (v4.platform_source !== "designer_credit" || v4.detected?.designer !== "Exposure") fail("the designer path doesn't save designer_credit + the designer's name");
 
@@ -111,12 +138,12 @@ if (v4.platform_source !== "designer_credit" || v4.detected?.designer !== "Expos
 process.env.SUPABASE_URL = "https://db.test"; process.env.SUPABASE_SERVICE_ROLE_KEY = "k"; process.env.SUPABASE_ANON_KEY = "a";
 globalThis.__rgaFetchDeadlineInstalled = true;
 const CID = "11111111-2222-4333-8444-555555555555";
-let db = {};
+let db = {}, who = "client";
 const J = (b, st = 200) => new Response(JSON.stringify(b), { status: st, headers: { "content-type": "application/json" } });
 globalThis.fetch = async (input, init = {}) => {
   const url = String(input), method = (init.method || "GET").toUpperCase();
   let body = null; try { body = init.body ? JSON.parse(init.body) : null; } catch { body = init.body; }
-  if (url.includes("/auth/v1/user")) return J({ id: "client-u", email: "owner@acme.test" });
+  if (url.includes("/auth/v1/user")) return J(who === "rga" ? { id: "rga-u", email: "chris@rocketgrowthagency.com" } : { id: "client-u", email: "owner@acme.test" });
   if (url.includes("notify-rga")) return J({ ok: true, delivered: true });
   if (/googleapis|openai|anthropic/.test(url)) return J({}, 404);
   const u = new URL(url); const t = u.pathname.split("/").pop(); const rows = db[t] || (db[t] = []);
@@ -126,7 +153,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (method === "POST") { const row = { id: `n${rows.length}`, ...(body || {}) }; rows.push(row); return J([row]); }
   return J(hit);
 };
-db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [], clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing", website_url: "https://acme.example" }],
+db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID }], profiles: [{ id: "rga-u", workspace_id: "w1" }], clients: [{ id: CID, workspace_id: "w1", business_name: "Acme Plumbing", website_url: "https://acme.example" }],
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: {} } }], client_activity: [] };
 for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k];
 const r = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
@@ -144,11 +171,32 @@ const ok2 = await req("./portal-step-input").handler({ httpMethod: "POST", heade
 const ci2 = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.client_input || {};
 if (ok2.statusCode !== 200 || ci2.platform_source !== "detected_declined" || ci2.detected?.platform !== "wix" || ci2.detected?.answer !== "no") fail("a real \"No\" isn't kept as detected_declined with what we found");
 
+// "Check it for me" → a request on the step (never an answer), RGA told; then RGA's hand check (admin-access-confirm rga_check)
+{
+  const T = () => db.client_onboarding_records[0].data.tasks["m1.access.website"] || {};
+  db.client_onboarding_records[0].data.tasks["m1.access.website"] = { status: "pending" };
+  const step = (value) => req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value }) });
+  who = "client";
+  const rq = await step({ via: "check", reason: "blocked", site: "acme.example" });
+  if (rq.statusCode !== 200 || !T().check_request || T().check_request.reason !== "blocked" || T().status !== "in_progress" || T().client_input) fail(`"Check it for me" isn't saved as a request that waits on RGA (${rq.statusCode} ${JSON.stringify(T()).slice(0, 160)})`);
+  const conf = (b) => { for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k]; return req("./admin-access-confirm").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, ...b }) }); };
+  who = "rga";
+  const bad = await conf({ action: "rga_check", platform: "notabuilder" });
+  if (bad.statusCode !== 400) fail("RGA's hand check takes an unknown builder");
+  const ok = await conf({ action: "rga_check", platform: "wordpress" });
+  if (ok.statusCode !== 200 || T().rga_check?.platform !== "wordpress" || T().status !== "pending") fail(`"Tell the client" doesn't save RGA's check and hand the step back (${ok.statusCode} ${JSON.stringify(T()).slice(0, 160)})`);
+  who = "client";
+  db.client_onboarding_records[0].data.tasks["m1.access.website"] = { status: "done", completed_at: "2026-10-01" };
+  await step({ via: "check", reason: "blocked", site: "acme.example" });
+  if (T().status !== "done") fail("a request on a DONE step reopens it");
+}
+
 // ── 5 · admin row 8 + the client's sent card
 const A = read("admin/admin.js");
 const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10),
   adminGoogleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
-for (const n of ["accDetectAdminHtml", "accessAdminHtml"]) vm.runInContext(fnSrc(A, n), actx);
+vm.runInContext(`${(A.match(/^const STEP_EMAIL_IDS = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} var mailWhen = (x) => String(x || "");`, actx);
+for (const n of ["accDetectAdminHtml", "accessAdminHtml", "stepEmailBar"]) vm.runInContext(fnSrc(A, n), actx);
 const row = (c) => vm.runInContext(`accessAdminHtml(${JSON.stringify({ status: "in_progress", client_input: c })})`, actx);
 const no = row(ci2);
 if (!/Our site check:<\/b> Wix · 1 sign/.test(no) || !/is-check/.test(no) || !/<b>Check first:<\/b> the client said no and picked Squarespace/.test(no)) fail("admin row 8 doesn't flag a \"No\" (our check vs the client's pick)");
@@ -156,14 +204,23 @@ const yes = row({ via: "invite", platform: "wordpress", platform_source: "detect
 if (!/<b>Client:<\/b> confirmed WordPress/.test(yes) || /is-check/.test(yes)) fail("admin row 8 doesn't show a confirmed builder plainly");
 const ar = row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 2, answer: "yes", source: "archive", archived_at: "2025-09-09", reason: "blocked" } });
 if (!/from a saved copy \(2025-09-09\), their site blocks automatic checks/.test(ar)) fail("admin row 8 doesn't say the result came from a saved copy (and why)");
+const rowT = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
+const ask8 = rowT({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" } });
+if (!/Your move · check their site/.test(ask8) || !/data-ob-acc-plat/.test(ask8) || !/data-ob-acc-rgacheck/.test(ask8) || !/acme\.example blocks automatic checks/.test(ask8)) fail("admin row 8 doesn't give RGA the check (why · Open · builder picker · Tell the client)");
+const told8 = rowT({ status: "pending", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" }, rga_check: { platform: "wordpress", by: "chris@rocketgrowthagency.com", at: "2026-10-22T23:30:00Z" } });
+if (!/Client's move/.test(told8) || !/We checked your website: it's on WordPress/.test(told8) || !/Draft — not sent/.test(told8)) fail("after Tell the client, row 8 doesn't show the client's move + the email as a DRAFT (never auto-sent)");
 const dz = row({ via: "designer", platform: "other", platform_source: "designer_credit", detected: { status: "ok", platform: null, signs: 0, designer: "Exposure", designer_answer: "yes" } });
 if (!/footer credits <b>Exposure<\/b> \(client: they manage it\)/.test(dz)) fail("admin row 8 doesn't show the designer credit the client confirmed");
-const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || ""), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
+const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? "").replace(/"/g, "&quot;"), monthDay: (x) => String(x || ""), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
   googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: () => null, _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "" });
-vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | "; var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, cctx);
+vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | "; var _accRoles = {}; var _accPickSelf = new Set(); ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, cctx);
 for (const n of ["accPart", "accDidLine", "accStep1Name", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
 const sentCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", client_input: { via: "designer", platform: "other", platform_source: "designer_credit", detected: { designer: "Exposure" }, at: "2026-10-22" } })}, "c1")`, cctx);
+const waitCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", site: "acme.example", reason: "blocked" } })}, "c1")`, cctx);
+if (!/RGA is checking which builder your site uses/.test(waitCard) || !/data-acc-pickself/.test(waitCard) || !/With RGA/.test(waitCard)) fail("while RGA checks, the client's card isn't With RGA (with Pick it yourself)");
+const rgaCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "pending", check_request: { asked_at: "x", site: "acme.example", reason: "blocked" }, rga_check: { platform: "wordpress", at: "2026-10-22T23:30:00Z" } })}, "c1")`, cctx);
+if (!/data-acc-rga="[^"]*&quot;wordpress&quot;/.test(rgaCard)) fail("RGA's hand check doesn't reach the client's ask");
 if (!/Exposure manages your site/.test(sentCard) || /Another \/ not sure/.test(sentCard)) fail("the sent card's Step 1 says \"Another / not sure\" instead of naming the designer");
 
 if (F.length) { console.error("🔴 step 3 auto-detect regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 3 auto-detect holds: proof line per sign (no absence claims) · store address read + counted · linked footer credits only · real WordPress sign-in = 2nd sign · a blocked site → reason + saved copy (≤2 yrs, \"looks like\" only) · Step 1 asks with proof (one sign = \"looks like\") · designer ask · nothing found → tiles · yes/no/chosen/designer saved with the record · server cleans it · admin row 8 flags a \"No\" · sent card names the designer");
+console.log("✅ step 3 auto-detect holds: proof line per sign (no absence claims) · store address read + counted · linked footer credits only · real WordPress sign-in = 2nd sign · a blocked site → reason + saved copy (≤2 yrs, \"looks like\" only) · Step 1 asks with proof (one sign = \"looks like\") · designer ask · nothing found → tiles · yes/no/chosen/designer saved with the record · server cleans it · admin row 8 flags a \"No\" · sent card names the designer · developer-built asked · blocked → why + 3 ways + Check it for me → RGA's hand check (admin) → the same Yes / No · email stays a draft");
