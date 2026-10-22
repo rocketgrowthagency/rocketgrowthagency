@@ -505,6 +505,7 @@ run check-approvals-page.mjs "For your approval: Needs you (open only) · With R
 run check-a-held-kickoff-cannot-be-reopened.mjs "a kickoff call that happened (recap sent or time passed) can't be reopened from the portal: \"Not right?\" instead of Change; the server refuses"
 run check-a-confirmed-step-is-locked.mjs "a step RGA confirmed is locked for the client: no reopen/overwrite, Not right? always, Request a change, admin Unlock with a reason; every portal writer goes through shared/step-lock.js"
 run check-a-toggle-names-what-it-opens.mjs "every step toggle names what it opens (How to do this / How this step works / What RGA does here), and RGA's email in instructions is a copy chip"
+run check-a-done-step-is-never-the-ask.mjs "every Month 1 client step marked done with nothing recorded shows a record, never the ask (live portal, page-only simulation, writes blocked)"
 run check-steps-6-and-7-confirm-in-the-portal.mjs "step 6 confirms the duplicate is gone IN THE PORTAL (no email, no photos line); step 7 shows the facts table + 48 h + done-when, stacked on a phone"
 run check-client-steps-2-3-4-show-their-record.mjs "client steps 2 · 3 · 4 show their record: an invite never a password · an honest call-tracking decision · real form leads only (approved 10-20)"
 run check-client-step-5-shows-the-plan.mjs "client step 5 shows the locked keyword plan for any business (approved 10-20)"

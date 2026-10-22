@@ -387,7 +387,8 @@ async function portalPass() {
       if (v === ROW_VIEW) {
         const blank = await page.evaluate(() => [...document.querySelectorAll(".pm-step-row")].filter((row) => /^Done$/i.test((row.querySelector(".pm-step-pills .pm-pill") || {}).textContent?.trim() || "")).map((row) => {
           const c = row.cloneNode(true);
-          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, input, textarea, select, .pm-msg").forEach((x) => x.remove());
+          // 🔒 10-22: the step lock's footer ("Locked · the call happened") is not a record — it let an empty kickoff card pass
+          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot, input, textarea, select, .pm-msg").forEach((x) => x.remove());
           const said = (c.textContent || "").replace(/\s+/g, " ").trim();
           return said.length < 25 ? (row.querySelector(".pm-step-title")?.textContent || row.id).trim() : null;
         }).filter(Boolean)).catch(() => null);
