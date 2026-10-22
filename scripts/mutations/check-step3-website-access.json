@@ -160,5 +160,41 @@
   "portalcss",
   ".pm-msg.busy .dot{width:12px;height:12px;box-sizing:border-box;background:none;border:2px solid var(--portal-accent,#2457e6);border-right-color:transparent;animation:pm-later-spin .7s linear infinite}",
   ".pm-msg.busy .dot{background:var(--portal-muted,#616161)}"
+ ],
+ [
+  "Shopify asks for an email invite again",
+  "portal",
+  "    : p.kind === \"code\"\n    ? `<div class=\"pm-ax-give\"><span><small>How this one works</small><b>You give us a 4-digit code; we send the request</b></span><span><small>Role we ask for</small><b>${escapeHtml(p.role || \"\")}</b></span></div>`\n",
+  ""
+ ],
+ [
+  "no last step",
+  "portal",
+  "    : send ? row(steps.length + 1, `<span>Come back and tap “${escapeHtml(send)}” below.</span>`, true) : \"\";",
+  "    : \"\";"
+ ],
+ [
+  "plan notes lose Before you start",
+  "portal",
+  "<p class=\"pm-ax-plan\"><b>Before you start</b>",
+  "<p class=\"pm-ax-plan\"><b>Note</b>"
+ ],
+ [
+  "a step ends at a colon without a site",
+  "portal",
+  "${path ? `<span class=\"pm-ax-pair\"><span class=\"pm-ax-lbl\">On your site</span>${chip(path)}</span>` : \"\"}",
+  ""
+ ],
+ [
+  "the email chip overflows again",
+  "portalcss",
+  ".pm-ax-give .pm-ax-copy { max-width:100%; min-width:0; }",
+  ".pm-ax-give .pm-ax-copy { }"
+ ],
+ [
+  "a builder loses its colour",
+  "siteplatdata",
+  "\"key\": \"wix\",\n      \"color\": \"#111111\"",
+  "\"key\": \"wix\""
  ]
 ]

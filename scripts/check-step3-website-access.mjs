@@ -73,6 +73,30 @@ if (!/data-acc-send disabled>Pick your builder first<\/button>/.test(P) || !/sen
 if (!/data-acc-cancel>Cancel<\/button>/.test(P) || !/if \(tgt\.closest\("\[data-acc-cancel\]"\)\) \{ e\.preventDefault\(\); _rcEditing\.delete\("m1\.access\.website"\);/.test(P)) fail("there's no way out of Updating without reloading (Cancel)");
 if (!/if \(!j\.platforms \|\| !Object\.keys\(j\.platforms\)\.length\) \{/.test(P)) fail("a failed builder detection hides the builder list (it falls back to the file, minus RGA's notes)");
 if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortalThread\(clientId\);/.test(P) || (P.match(/listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\);/g) || []).length < 3) fail("a screen-only redraw (Update / Cancel / call tracking Change) makes server trips again (it took 2.8–4.7 s)");
+// ── the builder cards (approved step3_builder_cards_v1, 10-22) — RUN for every builder in the file
+{
+  const grab = (re, what) => { const m = P.match(re); if (!m) { console.error(`⚠️  ${what} moved`); process.exit(2); } return m[0]; };
+  const fnSrc = (name) => { const at = P.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = P.indexOf("{", at); for (; i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}" && --d === 0) break; } return P.slice(at, i + 1); };
+  const env = `const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;"); const escapeAttribute = escapeHtml;
+    ${grab(/^const ACC_SEND = \{[^\n]*\};$/m, "ACC_SEND")}
+    ${fnSrc("accSetupHtml")} ${fnSrc("accMono")} return { accSetupHtml, accMono };`;
+  let R; try { R = new Function(env)(); } catch (e) { console.error(`⚠️  the card code won't run: ${e.message}`); process.exit(2); }
+  for (const [k, p] of Object.entries(PL)) {
+    if (!/^#[0-9a-f]{6}$/i.test(p.color || "")) fail(`${k}: no tile colour in site-platforms.json`);
+    let h = ""; try { h = R.accSetupHtml(p, "example.com") + R.accMono(k, p); } catch (e) { fail(`${k}: the card throws (${e.message})`); continue; }
+    const rows = (h.match(/class="pm-ax-st/g) || []).length;
+    if (!/class="pm-ax-give"/.test(h) || rows < (p.steps || []).length) fail(`${k}: the card lacks "what to give us" or numbered steps (${rows} rows for ${(p.steps || []).length} steps)`);
+    if (p.kind !== "designer" && !/class="pm-ax-st last"/.test(h)) fail(`${k}: no last step saying what to tap next`);
+    if (p.kind === "code" && (!/data-acc-store/.test(h) || !/data-acc-code/.test(h) || /Invite this email/.test(h))) fail(`${k}: the code builder asks for an email invite, or lacks the store + code fields`);
+    if (p.kind === "workaround" && /Invite this email/.test(h)) fail(`${k}: a no-invite builder asks for an invite`);
+    if (["invite", "designer"].includes(p.kind) && !/Invite this email/.test(h)) fail(`${k}: an invite builder doesn't show the email to invite first`);
+    if (p.plan && !/<b>Before you start<\/b>/.test(h)) fail(`${k}: a plan requirement isn't "Before you start"`);
+    if (/\{site\}/.test(JSON.stringify(p.steps)) && !/On your site/.test(R.accSetupHtml(p, ""))) fail(`${k}: with no web address on file a step ends without its page path`);
+  }
+  if ((PL.shopify?.steps || []).some((x) => /^Type it below/.test(x.t))) fail("Shopify repeats its last step (\"Type it below…\")");
+  if (!/\.pm-ax-give \.pm-ax-copy \{ max-width:100%; min-width:0; \}/.test(CSS)) fail("the email chip can overflow its box again (Chris 10-22)");
+  if (!/\.pm-ax-sel \.pm-ax-mono \{ color:#fff; \}/.test(CSS)) fail("the builder's initials are greyed out again");
+}
 // ── the save
 if (!/\["invite", "designer", "none", "request", "workaround"\]\.includes\(o\.via\)/.test(INP) || !/\["invite", "designer", "request", "workaround"\]\.includes\(parsed\.value\.via\)/.test(INP)) fail("the save doesn't take the request / checklist paths (or finishes them without RGA)");
 if (!/\^\[a-z0-9\]\[a-z0-9-\]\*\\\.myshopify\\\.com\$/.test(INP) || !/\^\\d\{4\}\$/.test(INP)) fail("the Shopify store / 4-digit code isn't checked");

@@ -7,9 +7,9 @@ const SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_K
 const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: WALK_CLIENTS.main.email, options: { redirect_to: PORTAL } }) })).json();
 const { chromium } = await import("playwright");
 const b = await chromium.launch({ headless: true }); const ctx = await b.newContext({ viewport: { width: 1100, height: 1000 } });
-await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow && !/portal-site-platform/.test(q.url())) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
-const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/shared/step-lock.js": "shared/step-lock.js" };
-await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && local[u.pathname], (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : "text/javascript", body: fs.readFileSync(path.join(SITE_DIR, local[p]), "utf8") }); });
+await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
+const local = { "/data/site-platforms.json": "data/site-platforms.json", "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/shared/step-lock.js": "shared/step-lock.js" };
+await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && local[u.pathname], (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".json") ? "application/json" : "text/javascript", body: fs.readFileSync(path.join(SITE_DIR, local[p]), "utf8") }); });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
 page.on("console", (m) => { if (m.type() === "error") console.log("CONSOLE", m.text().slice(0, 200)); });
@@ -22,6 +22,6 @@ const snap = async (n) => { await row.screenshot({ path: `${out}/${n}.png` }); c
 await snap("1-done");
 let tc = Date.now(); await row.locator("[data-acc-redo]").click(); for (const ms of [30, 300, 900]) { await page.waitForTimeout(ms); await row.screenshot({ path: `${out}/2a-after-${ms}.png` }); console.log("at", ms, (await row.innerText()).replace(/\s+/g, " ").slice(150, 330)); } await page.waitForFunction(() => /UPDATING/i.test(document.querySelector('[id="step-row-m1.access.website"] .pm-pill')?.textContent || ""), { timeout: 30000 }); console.log("UPDATE took", Date.now() - tc, "ms"); await page.waitForTimeout(1500); await snap("2-picker");
 const more = row.locator("[data-acc-more]"); if (await more.count()) { await more.click(); await page.waitForTimeout(300); await snap("3-all"); }
-await row.locator('[data-acc-pick="custom"]').click(); await page.waitForTimeout(500); await snap("4-custom");
+for (const k of ["wordpress", "squarespace", "shopify", "custom"]) { const t = row.locator(`[data-acc-pick="${k}"]`); if (!(await t.isVisible())) { const c = row.locator("[data-acc-change]"); if (await c.count()) await c.click(); await page.waitForTimeout(200); const m = row.locator("[data-acc-more]"); if (await m.count() && await m.isVisible()) await m.click(); } await t.click(); await page.waitForTimeout(400); await snap(`4-${k}`); }
 tc = Date.now(); await row.locator("[data-acc-cancel]").click(); await page.waitForFunction(() => /^DONE$/i.test((document.querySelector('[id="step-row-m1.access.website"] .pm-pill')?.textContent || "").trim()), { timeout: 30000 }); console.log("CANCEL took", Date.now() - tc, "ms"); await snap("5-cancelled");
 await b.close();
