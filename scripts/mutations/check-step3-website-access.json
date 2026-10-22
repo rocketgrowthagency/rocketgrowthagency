@@ -154,5 +154,11 @@
   "portal",
   "    if (!j.platforms || !Object.keys(j.platforms).length) {",
   "    if (false) {"
+ ],
+ [
+  "a waiting message is a still dot again",
+  "portalcss",
+  ".pm-msg.busy .dot{width:12px;height:12px;box-sizing:border-box;background:none;border:2px solid var(--portal-accent,#2457e6);border-right-color:transparent;animation:pm-later-spin .7s linear infinite}",
+  ".pm-msg.busy .dot{background:var(--portal-muted,#616161)}"
  ]
 ]

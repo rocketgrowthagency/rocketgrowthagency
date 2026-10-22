@@ -65,7 +65,8 @@ if (!/\.pm-ax-go \{[^}]*white-space:nowrap/.test(read("portal/portal.css")) || !
 const CSS = read("portal/portal.css");
 if (/tile: RC_LOCK/.test(P) || !/const RC_WEB = /.test(P)) fail("step 3 shows a padlock again (since 10-21 the padlock means Locked) — it's a website icon");
 if (!/: isDone && _rcEditing\.has\(step\.id\) \? \{ text: "Updating", cls: "edit" \}/.test(P)) fail("a done step being changed says \"Done\" above \"Your move\" (it says Updating)");
-if (!/redo\.textContent = "Checking your site…";/.test(P)) fail("\"Update how we access your site\" spins with no words");
+// 10-22 (Chris: "no spinner or anything"): the redraw is instant, so the wait is the card's "Checking which builder…" line — it SPINS
+if (!/\.pm-msg\.busy \.dot\{[^}]*animation:pm-later-spin/.test(CSS)) fail("a waiting message (\"Checking which builder your website uses…\") shows a still dot, not the spinner");
 if (!/const ACC_COMMON = \["wordpress", "wix", "squarespace", "godaddy", "shopify", "webflow", "custom", "other"\];/.test(P) || !/>Show all \$\{all\.length\} builders<\/button>/.test(P)) fail("the builder list is a wall again (8 common + Show all)");
 if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web designer…\" / \"I don't have a website\" are underlined links again (they're choices: secondary buttons)");
 if (!/data-acc-send disabled>Pick your builder first<\/button>/.test(P) || !/send\.textContent = "Pick your builder first";/.test(P)) fail("the faded send button doesn't say why it can't be pressed");
