@@ -1,0 +1,32 @@
+[
+ [
+  "the invite marks the step Done before RGA signs in",
+  "stepinput",
+  "[\"invite\", \"designer\", \"request\", \"workaround\"].includes(parsed.value.via)",
+  "[\"designer\", \"request\", \"workaround\"].includes(parsed.value.via)"
+ ],
+ [
+  "Confirm access doesn't finish the step",
+  "accessconfirm",
+  "confirmed_by: gate.email || \"RGA\" }, status: \"done\",",
+  "confirmed_by: gate.email || \"RGA\" }, status: \"in_progress\","
+ ],
+ [
+  "admin row 8 loses Confirm access",
+  "admin",
+  "<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm data-role=\"${escapeAttribute(role)}\">Confirm access</button>",
+  "<span></span>"
+ ],
+ [
+  "confirmed access isn't locked",
+  "steplock",
+  "if (t.access && t.access.confirmed_at) why = \"RGA signed in and confirmed access\";",
+  "if (false) why = \"RGA signed in and confirmed access\";"
+ ],
+ [
+  "the confirmation leaves no permanent record",
+  "accessconfirm",
+  "  await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\",",
+  "  if (false) await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\","
+ ]
+]
