@@ -1,0 +1,44 @@
+[
+ [
+  "every client runs on LA time again",
+  "callproviders",
+  "time_zone: timeZone || \"America/New_York\"",
+  "time_zone: \"America/Los_Angeles\""
+ ],
+ [
+  "the area code keeps the country code (151)",
+  "ctprovision",
+  ".replace(/\\D/g, \"\").replace(/^1(?=\\d{10}$)/, \"\");",
+  ".replace(/\\D/g, \"\");"
+ ],
+ [
+  "the provision ignores the client's zone",
+  "ctprovision",
+  "const timeZone = require(\"./_timezone.js\").resolveTimezone(client).tz;",
+  "const timeZone = null;"
+ ],
+ [
+  "a sold-out area code fails without saying so",
+  "callproviders",
+  "reason: /number|available|inventory|area/i.test(why)",
+  "reason: false"
+ ],
+ [
+  "only the first page is read",
+  "callproviders",
+  "if (Number.isFinite(total) && total > 0) { if (page >= total) return { ok: true, list: out }; continue; }",
+  "return { ok: true, list: out };"
+ ],
+ [
+  "a full unpaged page counts as the month",
+  "callproviders",
+  "    return { ok: false, status: \"unpaged\", partial: out.length };   // a full page and no page count: can't know it's all",
+  "    return { ok: true, list: out };"
+ ],
+ [
+  "Quo reads one page of conversations",
+  "callproviders",
+  "          if (!j.nextPageToken) return { ok: true, list: out };",
+  "          return { ok: true, list: out };"
+ ]
+]

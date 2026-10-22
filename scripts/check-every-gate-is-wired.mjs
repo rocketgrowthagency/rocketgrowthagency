@@ -359,6 +359,7 @@ const NOT_PREFLIGHT = {
   'check-step-11-details.mjs': 'the WEBSITE repo\'s step 11 details for any business (approved step11_details_v1) — a portal/admin check, not video preflight',
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',
   'check-step3-website-access.mjs': 'the WEBSITE repo\'s step 3 card, builder data + detector (step3_website_access_v3) — files only, no bearing on tonight\'s videos; daily-health-check.sh',
+  'check-call-tracking-works-anywhere.mjs': 'the WEBSITE repo\'s call-tracking provisioning + provider adapters on a fake network — files only; daily-health-check.sh',
   'check-a-done-step-is-never-the-ask.mjs': 'the WEBSITE repo\'s portal done cards, run in a browser against the live test client with the page\'s record emptied (writes blocked) — daily-health-check.sh',
   'check-a-toggle-names-what-it-opens.mjs': 'the WEBSITE repo\'s portal row toggles + instruction email chips (step_toggle_labels_v1) — files only; daily-health-check.sh',
   'check-a-confirmed-step-is-locked.mjs': 'the WEBSITE repo\'s step lock (shared/step-lock.js + every portal writer + admin unlock, fake DB) — files only; daily-health-check.sh',

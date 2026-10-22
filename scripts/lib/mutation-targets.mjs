@@ -181,6 +181,8 @@ export const FILES = {
   v2push: "netlify/functions/v2-push-gbp-content.js",
   bookkickfn: "netlify/functions/portal-book-kickoff.js",
   kickavail: "netlify/functions/kickoff-availability.js",
+  callproviders: "netlify/functions/_call-providers.js",   // call tracking works anywhere (10-22)
+  ctprovision: "netlify/functions/call-tracking-provision.js",
   steplock: "shared/step-lock.js",   // step_lock_after_rga_confirms_v1 (10-21)
   adminunlock: "netlify/functions/admin-step-unlock.js",
   siteplatfn: "netlify/functions/portal-site-platform.js",   // step3_website_access_v3 (10-20)
