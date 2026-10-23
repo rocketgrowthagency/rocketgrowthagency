@@ -238,5 +238,11 @@
   "portal",
   "  const t = j.source === \"rga\" ? `Checked by RGA",
   "  const t = false ? `Checked by RGA"
+ ],
+ [
+  "a No is a dead end",
+  "portal",
+  "    const back = source === \"detected_declined\" && (j.designer",
+  "    const back = false && (j.designer"
  ]
 ]

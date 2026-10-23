@@ -114,6 +114,8 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   const bl = draw({ status: "couldnt_check", reason: "blocked", site: "joes.com" });
   if (!/joes\.com has a security setting that blocks automatic checks/.test(bl) || !/3 ways to tell/.test(bl) || !/data-acc-check/.test(bl) || !/data-acc-pick="wordpress"/.test(bl)) fail("a blocked site doesn't get its way forward (why · 3 ways to tell · Check it for me · the tiles)");
   if (/data-acc-check/.test(draw({ status: "ok", site: "joes.com" }))) fail("\"Check it for me\" shows on a site we could read");
+  if (!/data-acc-back/.test(draw({ status: "ok", site: "joes.com", platform: "wix", confidence: "ask" }, "detected_declined"))) fail("after \"No\" there's no way back to what we found");
+  if (/data-acc-back/.test(draw({ status: "ok", site: "joes.com" }))) fail("\"Back to what we found\" shows when we found nothing");
 }
 if (/accDrawPlatform\(host, j\.confidence === "stated"/.test(P) || !/accDrawFound\(host\);/.test(fnSrc(P, "loadAccessPlatform"))) fail("the detector picks the builder SILENTLY again (it must ask first)");
 if (/We found this on your site|Looks like it from your site, right\?/.test(P)) fail("the old silent-pick wording is back");
