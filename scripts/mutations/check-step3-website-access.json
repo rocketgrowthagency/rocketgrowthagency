@@ -224,7 +224,43 @@
  [
   "the done card asks the client to fill in records again",
   "portal",
-  "data-acc-redo>My website changed</button>",
+  "data-acc-redo>Edit access</button>",
   "data-acc-redo>Add the details</button>"
+ ],
+ [
+  "the promise leaves the card",
+  "portal",
+  "    body: accPromiseHtml(clientId) + `<div class=\"pm-acc-plat\" data-acc-plat>",
+  "    body: `<div class=\"pm-acc-plat\" data-acc-plat>"
+ ],
+ [
+  "the promise says OK",
+  "portal",
+  "[\"Publish without your approval\", \"Anything visitors see waits for you\"]",
+  "[\"Publish without your OK\", \"Anything visitors see waits for you\"]"
+ ],
+ [
+  "the approval step leaves the flow",
+  "portal",
+  "<b>You approve</b><small>In For your approval. Nothing goes live before this</small>",
+  "<b>You check</b><small>If you like</small>"
+ ],
+ [
+  "the promise opens by default",
+  "portal",
+  "<details class=\"pm-ax-promise\"><summary>",
+  "<div class=\"pm-ax-promise\"><summary>"
+ ],
+ [
+  "admin loses the promise",
+  "admin",
+  "<b>Our promise (on their card):</b> visible changes only after they approve",
+  "<b>Note:</b> visible changes only after they approve"
+ ],
+ [
+  "the agreement link loses §5",
+  "portal",
+  "Backed by your Service Agreement (§5, website access)",
+  "Backed by our terms"
  ]
 ]

@@ -56,6 +56,7 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
 for (const n of ["accPart", "accDidLine", "accStep1Name"]) vm.runInContext(lift(n), ctx);
 for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
+vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, ctx); vm.runInContext(lift("accPromiseHtml"), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };

@@ -57,7 +57,7 @@ if (!/Object\.entries\(ALL\)\.map\(\(\[k, \{ rga, \.\.\.pub \}\]\) => \[k, pub\]
 const ia = P.indexOf('if (t.status === "done" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {'), ib = P.indexOf('  // the ask (and, for a client who sent the old password link');
 if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall through to the ask (\"Done\" but \"Your move\")");
 // 🔒 done with nothing on record = CALM (approved step3_three_screens_v1): plain words, "Nothing for you to do", optional "Add the details"
-if (!/<b>Builder not on record<\/b>/.test(P) || !/<small>Nothing for you to do<\/small>/.test(P) || !/data-acc-redo>My website changed<\/button>/.test(P) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the calm card (Builder not on record · Nothing for you to do · only \"My website changed\" — never asks the client to fill in RGA's records)");
+if (!/<b>Builder not on record<\/b>/.test(P) || !/<small>Nothing for you to do<\/small>/.test(P) || !/data-acc-redo>Edit access<\/button>/.test(P) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the calm card (Builder not on record · Nothing for you to do · only \"My website changed\" — never asks the client to fill in RGA's records)");
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
 if (!/<a class="pm-ax-go" href="\$\{escapeAttribute\(link\)\}"/.test(P) || !/<a class="pm-ax-go" href="\$\{escapeAttribute\(F\.link\)\}"/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");
@@ -121,5 +121,20 @@ const rh = P.slice(P.indexOf("  const rowHtml = ("), P.indexOf("  // 🔴 SETUP 
 const iDetail = rh.indexOf('<div class="pm-detail" data-action-detail='), iThread = rh.indexOf("threadHtml(step.id)"), iCtl = rh.indexOf("${completionCtl ? (() => {");
 if (iThread < 0 || iDetail < 0 || iThread < iDetail || iThread < iCtl) fail("the step conversation isn't at the bottom of the row (it sits above the card again)");
 if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(m\.id\)\) \? " open" : ""\}>/.test(P)) fail("the conversation isn't a closed row that opens for an unread reply");
+// 🔒 THE PROMISE (approved step3_access_promise_v1 option D, Chris 10-23): on the card, in How this step works, on admin row 8 — the same words
+{
+  if (!/body: accPromiseHtml\(clientId\) \+ `<div class="pm-acc-plat" data-acc-plat>/.test(P)) fail("step 3's card lost \"Our promise about your website\"");
+  for (const t of ["<b>We draft it</b>", "<b>You approve</b><small>In For your approval. Nothing goes live before this</small>", "<b>It goes live</b>", "Publish without your approval", "Delete pages or change your design", "Change prices or contact details", "Touch billing, domain or email", "Keep access after we stop", "Backed by your Service Agreement (§5, website access)"])
+    if (!P.includes(t)) fail(`the promise lost "${t}"`);
+  if (/without your OK\b/i.test(P)) fail("the promise says \"OK\" (Chris 10-23: it's \"approval\")");
+  if (!/<details class="pm-ax-promise"><summary>/.test(P)) fail("the promise isn't folded by default (three promises, then What we'll do with access)");
+  const PB = [read("data/playbooks/client-steps.json"), read("data/playbooks/playbooks.json")].map((x) => { const D = JSON.parse(x); let hit = null; (function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (o.id === "m1.access.website" && o.clientInstructions) hit = o.clientInstructions; Object.values(o).forEach(walk); } })(D); return hit; });
+  if (PB[0] !== PB[1]) fail("the two playbook files say different things in step 3's How this step works");
+  for (const h of ["WHY WE NEED IT", "HOW IT WORKS", "YOUR WEBSITE STAYS YOURS", "NEVER SEND A PASSWORD", "1. We check which website builder", "You approve anything visitors see before it goes live"])
+    if (!String(PB[0] || "").includes(h)) fail(`How this step works lost "${h}"`);
+  if (/the role the card shows/.test(PB[0] || "")) fail("How this step works is back to the old jargon (\"the role the card shows\")");
+  if (!/<b>Our promise \(on their card\):<\/b> visible changes only after they approve/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
+  if (!/data-acc-redo>Edit access<\/button>/.test(P)) fail("the done card's button isn't \"Edit access\" (Chris 10-23)");
+}
 if (F.length) { console.error("🔴 step 3 website access regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ step 3 holds: ${Object.keys(PL).length} builders from one audited source (no admin copy), checklist where no safe invite, Shopify code, Webflow request, Custom-coded · detector (Square>Weebly, Showit>WordPress, Framer>Shopify, hand-coded none, untested only asks) · no RGA notes to the client · done never asks · tiles + Change · setup links + chips that don't wrap · new paths + Shopify checked, code dropped · conversation at the bottom, closed unless unread`);
