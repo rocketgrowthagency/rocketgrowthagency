@@ -20,6 +20,9 @@ const SC = {
   blocked: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "dallyhaarroofing.com", reason: "blocked" },
   dev: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"], designer: null, shopify_store: null, site: "ohhrats.com" },
   devN: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your site is hosted on Netlify"], designer: null, shopify_store: null, site: "joesplumbing.com", host: "netlify" },
+  devV: { status: "ok", platform: "custom", confidence: "ask", signs: 2, evidence: ["Your pages are built with Next.js (/_next/static/)", "Your site is hosted on Vercel"], designer: null, shopify_store: null, site: "joesplumbing.com", host: "vercel" },
+  devG: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your site is hosted on GitHub Pages"], designer: null, shopify_store: null, site: "joesplumbing.com", host: "githubpages" },
+  devU: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages are built with Astro (/_astro/)"], designer: null, shopify_store: null, site: "joesplumbing.com", host: null },
   down: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "joesplumbing.com" },
 };
 let cur = "wp", saved = null;
@@ -57,6 +60,20 @@ if (process.env.CONSENT) { cur = "none"; const row = await open();
   await row.locator("[data-acc-part='3']").screenshot({ path: `${out}/consent.png` });
   await btn.click(); await page.waitForTimeout(800); console.log("[consent] saved:", JSON.stringify((saved && saved.value && saved.value.consent) || null));
   await b.close(); process.exit(0); }
+// HOSTS=1: the developer-built Step 2 for every host the check can name (Netlify · Vercel · GitHub Pages) and one it can't (hidden by a CDN)
+if (process.env.HOSTS) {
+  for (const k of ["devN", "devV", "devG", "devU"]) {
+    cur = k; await page.reload({ waitUntil: "domcontentloaded" }); const row = await open();
+    await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(350);
+    const p2 = row.locator("[data-acc-part='2']"); await p2.screenshot({ path: `${out}/host-${k}.png` }); console.log(`[${k}]`, (await p2.innerText()).replace(/\s+/g, " ").slice(0, 360));
+    if (k === "devN" || k === "devU") {
+      await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(300); await p2.screenshot({ path: `${out}/host-${k}-self.png` }); console.log(`[${k} self]`, (await p2.innerText()).replace(/\s+/g, " ").slice(0, 300));
+      await row.locator('[data-acc-files="gitlab"]').click(); await page.waitForTimeout(300); await p2.screenshot({ path: `${out}/host-${k}-gitlab.png` });
+      await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(300); await p2.screenshot({ path: `${out}/host-${k}-dev.png` }); console.log(`[${k} dev]`, (await p2.innerText()).replace(/\s+/g, " ").slice(0, 900));
+    }
+  }
+  await b.close(); process.exit(0);
+}
 if (process.env.PROMISE) { cur = "wp"; const row = await open();
   await row.screenshot({ path: `${out}/promise-folded.png` }); console.log("[folded]", (await row.locator(".pm-ax-promise > summary").innerText()).replace(/\s+/g, " "));
   await row.locator(".pm-ax-promise > summary").click(); await page.waitForTimeout(250); await row.locator(".pm-ax-promise").screenshot({ path: `${out}/promise-open.png` });

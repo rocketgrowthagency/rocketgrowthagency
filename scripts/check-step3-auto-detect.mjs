@@ -129,14 +129,22 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
   const net = drawKey(N, "custom", "detected_confirmed");
   if (!/Hosted on Netlify/.test(net) || !/Where your website lives/.test(net) || !/Give RGA access to your website's files/.test(net)) fail("a developer-built site on Netlify doesn't say where it lives / what Step 2 is");
-  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/This is where changes are made\./.test(net) || !/<b>GitHub<\/b>/.test(net) || !/Most developers use GitHub\. Yours might use GitLab or Bitbucket/.test(net)) fail("Step 2 doesn't explain host vs files before asking, both tiles named by the company (step3_dev_built_headers_v1)");
+  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/This is where changes are made\./.test(net) || !/<b>Your code service<\/b><small>Usually GitHub, GitLab or Bitbucket<\/small>/.test(net) || !/Not sure which one you use\? That's normal\./.test(net)) fail("Step 2 doesn't explain host vs files before asking, with the files place unnamed until they pick (step3_files_service_unknown_v1)");
+  // 🔒 we can't see the code service from outside: it is never named before the client picks it (Chris 10-23: "how do we know its git?")
+  if (/<b>GitHub<\/b>|Most developers use GitHub|most common/.test(net)) fail("Step 2 names a code service (or calls one most common) before the client picked it — only the host is visible from outside");
   // 🔒 two places, one arrow (step3_dev_built_step2_design_v1 option A): the files service is where we need access; the host isn't
-  if (!/class="pm-ax-hf-p us">[\s\S]*?<b>GitHub<\/b>[\s\S]*?We need access here/.test(net) || !/<b>Netlify<\/b>[\s\S]*?No need to add us here/.test(net) || !/updates itself<br>in a minute or two/.test(net)) fail("Step 2 doesn't say which place we need access to (files: We need access here · host: No need to add us here · the arrow)");
+  if (!/class="pm-ax-hf-p us">[\s\S]*?Your code service[\s\S]*?We need access here/.test(net) || !/<b>Netlify<\/b>[\s\S]*?No need to add us here/.test(net) || !/updates itself<br>in a minute or two/.test(net)) fail("Step 2 doesn't say which place we need access to (files: We need access here · host: No need to add us here · the arrow)");
   if (!/About 3 minutes/.test(net) || !/Easiest if someone built it for you/.test(net)) fail("the two choices lost their time / easiest chips");
   if (/Your website's files<\/b>/.test(net)) fail("the files tile is back to a description for a header (\"Your website's files\") beside a company name");
   if (!/data-acc-who="self"/.test(net) || !/data-acc-who="dev"/.test(net) || /data-acc-send/.test(net)) fail("before choosing, Step 2 isn't \"Who will do this?\" (or Step 3's button shows already)");
-  const self = drawKey(N, "custom", "detected_confirmed", { _accWho: "self" });
-  if (!/data-acc-files="gitlab"/.test(self) || !/rocketgrowthagency/.test(self) || !/No need to add us on Netlify/.test(self) || !/I added RGA on GitHub/.test(self)) fail("\"I'll do it myself\" isn't: where are the files · GitHub steps · no need for Netlify · \"I added RGA on GitHub\"");
+  const self0 = drawKey(N, "custom", "detected_confirmed", { _accWho: "self" });
+  if (!/Which code service holds your website's files\?/.test(self0) || !/data-acc-files="gitlab"/.test(self0) || /pm-ax-segb on/.test(self0) || /most common/.test(self0)
+    || /rocketgrowthagency/.test(self0) || /data-acc-send/.test(self0) || !/Pick one and its steps show here/.test(self0)) fail("\"I'll do it myself\" pre-picks a code service (or shows its steps / the send button) before the client picks one");
+  const self = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "github" });
+  if (!/data-acc-files="gitlab"/.test(self) || !/rocketgrowthagency/.test(self) || !/No need to add us on Netlify/.test(self) || !/I added RGA on GitHub/.test(self)) fail("\"I'll do it myself\" + GitHub isn't: where are the files · GitHub steps · no need for Netlify · \"I added RGA on GitHub\"");
+  // GitHub Pages: the host IS the files service, so it's named on both sides and nothing is asked
+  const ghp2 = drawKey({ ...N, host: "githubpages" }, "custom", "detected_confirmed");
+  if (!/<b>GitHub<\/b>/.test(ghp2) || !/Comes with the GitHub access/.test(ghp2) || /Your code service/.test(ghp2)) fail("a GitHub Pages site doesn't say GitHub (the one host we KNOW holds the files)");
   const gl = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "gitlab" });
   if (!/Manage<\/b>, then <b>Members/.test(gl) || !/Maintainer/.test(gl) || !/I added RGA on GitLab/.test(gl)) fail("GitLab's steps aren't GitLab's (Manage → Members → Invite, Maintainer)");
   const bb = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "bitbucket" });
@@ -150,6 +158,7 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   if (!/Whoever built your website will know/.test(uns) || /data-acc-send/.test(uns)) fail("\"I'm not sure\" where the files are doesn't point to the developer");
   const dv = drawKey(N, "custom", "detected_confirmed", { _accWho: "dev" });
   if (!/Copy the email<\/button>/.test(dv) || /Copy the note/.test(P)) fail("the copy button says \"note\" (it's an email they send)");
+  if (!/If the files aren&#39;t in GitHub, GitLab or Bitbucket|If the files aren't in GitHub, GitLab or Bitbucket/.test(dv)) fail("the developer email has no line for a site with no code service");
   if (!/Send this to your developer/.test(dv) || !/data-acc-note-copy/.test(dv) || !/mailto:\?subject=/.test(dv) || !/data-via="designer"/.test(dv) || !/I sent it to my developer/.test(dv)) fail("\"My developer will\" doesn't show the note IN Step 2 (Copy · Open in email · I sent it to my developer)");
   if (!/There&#39;s no need to add them on Netlify|There's no need to add them on Netlify/.test(dv)) fail("the developer note doesn't say to skip the paid-seat host");
   const ghp = drawKey({ ...N, host: "githubpages" }, "custom", "detected_confirmed", { _accWho: "self" });
@@ -262,6 +271,10 @@ const ci2 = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.cli
     value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "designer", platform: "custom", platform_source: "chosen", who: "hacker", files: "ftp" } }) });
   const wj = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
   if (wj.who || wj.files) fail("the server keeps a junk who / files value");
+  // 🔒 never a guessed code service (step3_files_service_unknown_v1): "I added RGA" myself on a developer-built site must name GitHub / GitLab / Bitbucket
+  const nf = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
+    value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "custom", platform_source: "chosen", who: "self" } }) });
+  if (nf.statusCode !== 400 || !/code service/.test(nf.body)) fail("the server saves \"I added RGA\" on a developer-built site with no code service named (it would be a guess)");
   const nc = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "invite", platform: "wix", platform_source: "chosen" } }) });
   if (nc.statusCode !== 400) fail("the server takes an access answer WITHOUT the consent tick");
   const wc = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "wix", platform_source: "chosen" } }) });

@@ -314,8 +314,8 @@
  [
   "not sure still shows steps",
   "portal",
-  "    if (files === \"unsure\") body = seg +",
-  "    if (false) body = seg +"
+  "    else if (files === \"unsure\") body = seg +",
+  "    else if (false) body = seg +"
  ],
  [
   "a seat host isn't skipped",
@@ -482,8 +482,8 @@
  [
   "the files tile is a description again, not a company",
   "portal",
-  "<b>${escapeHtml(F0.name)}</b><small>Where your website's files are kept</small>",
-  "<b>Your website's files</b><small>Where your website's files are kept</small>"
+  "<b>${F0 ? escapeHtml(F0.name) : \"Your code service\"}</b>",
+  "<b>${F0 ? \"Your website's files\" : \"Your code service\"}</b>"
  ],
  [
   "the files place doesn't say we need access there",
@@ -508,5 +508,35 @@
   "portal",
   "`<span class=\"pm-ax-wchip best\">${ACC_TICK}Easiest if someone built it for you</span>`",
   "\"\""
+ ],
+ [
+  "the files service is named before they pick",
+  "portal",
+  "<small>${F0 ? \"Where your website's files are kept\" : \"Usually GitHub, GitLab or Bitbucket\"}</small>",
+  "<small>${F0 ? \"Where your website's files are kept\" : \"Most developers use GitHub\"}</small>"
+ ],
+ [
+  "GitHub is pre-picked again",
+  "portal",
+  "(host && ACC_FILES[host._accFiles] || (host && host._accFiles === \"unsure\")) ? host._accFiles : null;",
+  "(host && ACC_FILES[host._accFiles] || (host && host._accFiles === \"unsure\")) ? host._accFiles : \"github\";"
+ ],
+ [
+  "the server saves a guessed code service",
+  "stepinputfn",
+  "if (platform === \"custom\" && out.who === \"self\" && via === \"invite\" && !out.files) return",
+  "if (false) return"
+ ],
+ [
+  "no line for a site with no code service",
+  "portal",
+  "    after: `If the files aren't in GitHub, GitLab or Bitbucket${hk && hk.seat ? ` (for example, you upload them to ${hk.name} yourself)` : \"\"}, just reply and we'll find the simplest way together.`,",
+  "    after: \"\","
+ ],
+ [
+  "GitHub Pages loses its GitHub name",
+  "portal",
+  "const fk = filesFixed ? \"github\" : host && ACC_FILES[host._accFiles] ? host._accFiles : null,",
+  "const fk = host && ACC_FILES[host._accFiles] ? host._accFiles : null,"
  ]
 ]
