@@ -264,42 +264,6 @@
   "      : dev"
  ],
  [
-  "Step 1 doesn't say where it lives",
-  "portal",
-  "  const selName = dev ? (hk ? `Your website is hosted on ${hk.name}`",
-  "  const selName = dev ? (false ? `Your website is hosted on ${hk.name}`"
- ],
- [
-  "no Who does this",
-  "portal",
-  "  return `<div class=\"pm-ax-how\">${who}${task}${skip}</div>`;",
-  "  return `<div class=\"pm-ax-how\">${task}${skip}</div>`;"
- ],
- [
-  "a seat host isn't skipped",
-  "portal",
-  "  const skip = hk && hk.seat ?",
-  "  const skip = false ?"
- ],
- [
-  "the generic email-and-role pair is back",
-  "portal",
-  "  const steps = accSetupHtml({ ...p, plan: \"\", note: \"\" }, \"\", true);",
-  "  const steps = accSetupHtml({ ...p, plan: \"\", note: \"\" }, \"\", false);"
- ],
- [
-  "no host seen still leads with the code steps",
-  "portal",
-  "  const who = hk\n",
-  "  const who = true\n"
- ],
- [
-  "Step 3 doesn't say what happens next",
-  "portal",
-  "    ? `<div class=\"pm-ax-tell\">${tl}<button",
-  "    ? `<div class=\"pm-ax-tell\"><button"
- ],
- [
   "the server keeps any host",
   "stepinput",
   "        host: one(d.host, [\"netlify\", \"vercel\", \"githubpages\"]),",
@@ -316,5 +280,83 @@
   "portal",
   "    + (dev && source === \"detected_confirmed\" ? accFoundPill(j, host._accCheckedAt) : \"\")",
   "    + (dev ? accFoundPill(j, host._accCheckedAt) : \"\")"
+ ],
+ [
+  "Step 1 doesn't say where it lives",
+  "portal",
+  "  const selName = dev ? (hk ? `Hosted on ${hk.name}`",
+  "  const selName = dev ? (false ? `Hosted on ${hk.name}`"
+ ],
+ [
+  "no explainer before choosing",
+  "portal",
+  "  const explain = who ? \"\" : hk\n",
+  "  const explain = true ? \"\" : hk\n"
+ ],
+ [
+  "no Who will do this",
+  "portal",
+  "  return `<div class=\"pm-ax-how\">${explain}${opts}${body}</div>`;",
+  "  return `<div class=\"pm-ax-how\">${explain}${body}</div>`;"
+ ],
+ [
+  "the note opens off screen again",
+  "portal",
+  "  } else if (who === \"dev\") {",
+  "  } else if (false) {"
+ ],
+ [
+  "GitLab gets GitHub's steps",
+  "portal",
+  "      const F = ACC_FILES[files];",
+  "      const F = ACC_FILES.github;"
+ ],
+ [
+  "not sure still shows steps",
+  "portal",
+  "    if (files === \"unsure\") body = seg +",
+  "    if (false) body = seg +"
+ ],
+ [
+  "a seat host isn't skipped",
+  "portal",
+  "        + (hk && hk.seat ? `<p class=\"pm-ax-note\"><b>No need to add us on",
+  "        + (false ? `<p class=\"pm-ax-note\"><b>No need to add us on"
+ ],
+ [
+  "GitHub Pages asks where the files are",
+  "portal",
+  "  const filesFixed = hk && hk.key === \"githubpages\";",
+  "  const filesFixed = false;"
+ ],
+ [
+  "no host seen isn't the developer path",
+  "portal",
+  "function accWhoOf(host, hk) { return (host && host._accWho) || (hk ? null : \"dev\"); }",
+  "function accWhoOf(host, hk) { return (host && host._accWho) || null; }"
+ ],
+ [
+  "the developer path saves as an invite",
+  "portal",
+  "data-acc-send data-via=\"designer\">I sent it to my developer",
+  "data-acc-send data-via=\"invite\">I sent it to my developer"
+ ],
+ [
+  "Step 3 isn't a progress line",
+  "portal",
+  "    tell = lbl ? `<div class=\"pm-ax-tell\">${accProgHtml(\"You do Step 2\", mid[0], mid[1])}",
+  "    tell = lbl ? `<div class=\"pm-ax-tell\">"
+ ],
+ [
+  "the server drops who / files",
+  "stepinput",
+  "    if (platform === \"custom\" && [\"self\", \"developer\"].includes(o.who)) out.who = o.who;",
+  ""
+ ],
+ [
+  "the server keeps any who",
+  "stepinput",
+  "[\"self\", \"developer\"].includes(o.who)) out.who = o.who;",
+  "o.who) out.who = o.who;"
  ]
 ]

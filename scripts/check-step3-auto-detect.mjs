@@ -91,7 +91,7 @@ if (/"User-Agent": "Mozilla\/5\.0 \(RGA site check\)"/.test(SRC)) fail("the chec
 const P = read("portal/portal.js");
 const pctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), _accNames: {}, drew: [] });
 vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")}`, pctx);
-for (const n of ["accPart", "accMono", "accFoundPill", "accHostOf", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
+for (const n of ["accPart", "accMono", "accFoundPill", "accHostOf", "accHostMono", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
 vm.runInContext(`function accDrawPlatform(host, key, source) { drew.push([key, source]); }`, pctx);
 const step1 = (j) => { pctx.drew = []; const box = { innerHTML: "" }; const host = { _acc: { platforms: PUB, site: "joes.com", ...j }, querySelector: (s) => (s === "[data-acc-plat]" ? box : null), setAttribute() {} };
   vm.runInContext(`accDrawFound(h)`, Object.assign(pctx, { h: host })); return { html: box.innerHTML, drew: pctx.drew }; };
@@ -109,7 +109,7 @@ if (!/We checked a saved copy of your site/.test(s5.html) || /is on WordPress/.t
 const s6 = step1({ platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"] });
 if (!/It looks like a developer built your site/.test(s6.html) || !/Yes, a developer built it/.test(s6.html)) fail("a developer-built site isn't asked in plain words");
 const s8 = step1({ platform: "custom", confidence: "ask", signs: 1, host: "netlify", evidence: ["Your site is hosted on Netlify"] });
-if (!/Your website is hosted on Netlify/.test(s8.html) || !/Yes, that's right/.test(s8.html)) fail("a found developer-built site with a known host isn't asked by its host");
+if (!/Your website is hosted on Netlify/.test(s8.html) || !/Yes, that's right/.test(s8.html) || !/pm-ax-mono[^>]*>N</.test(s8.html)) fail("a found developer-built site with a known host isn't asked by its host");
 const s7 = step1({ platform: "wordpress", confidence: "stated", signs: 1, source: "rga", evidence: ["Checked by hand by RGA on 10-22 (your site blocks automatic checks)"] });
 if (!/RGA checked: your website is on WordPress/.test(s7.html) || !/pm-ax-fpill is-rga[^>]*>[\s\S]*Checked by RGA/.test(s7.html) || !/data-acc-yes/.test(s7.html) || !/data-acc-no/.test(s7.html)) fail("RGA's hand check isn't asked as \"RGA checked: … Is that right?\" with Yes / No");
 for (const [label, x] of [["WordPress", s1], ["one sign", s2], ["designer", s3], ["saved copy", s5], ["developer", s6], ["RGA", s7]]) {
@@ -121,24 +121,37 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
 // the blocked path, RUN (accDrawPlatform with no builder): why + 3 ways to tell + Check it for me
 {
   const bctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {} });
-  vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")} var monthDay = (x) => String(x || "");`, bctx);
-  for (const n of ["accPart", "accMono", "accSetupHtml", "accHostOf", "accCustomSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
-  const drawKey = (j, key, src) => { const box = { innerHTML: "", querySelector: () => null }; const host = { _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, ${JSON.stringify(key)}, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
-  const net = drawKey({ status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" }, "custom", "detected_confirmed");
-  if (!/Your website is hosted on Netlify/.test(net) || !/Where your website lives/.test(net)) fail("a developer-built site on Netlify doesn't say where it lives");
-  if (!/Send these steps to my developer/.test(net) || !/Skip Netlify/.test(net) || !/rocketgrowthagency/.test(net)) fail("Netlify's Step 2 isn't: who does this · the code steps · Skip Netlify");
-  if (/Or on Netlify, Vercel or your host|Invite this email/.test(net)) fail("the developer-built Step 2 still shows the generic host menu / the email-and-role pair");
-  if (/\$\s?\d/.test(net.replace(/\$\{[^}]*\}/g, ""))) fail("a price shows on the client's card");
-  const ghp = drawKey({ status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "githubpages" }, "custom", "detected_confirmed");
-  if (/Skip GitHub Pages/.test(ghp)) fail("GitHub Pages is told to skip (it's where the code lives)");
-  const unk = drawKey({ status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: null }, "custom", "detected_confirmed");
-  if (!/A developer built your website/.test(unk) || !/Write the note for my developer/.test(unk) || !/I've added RGA \(or sent the note\)/.test(unk)) fail("a developer-built site with no host seen doesn't lead with the note to the developer");
+  vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")} var monthDay = (x) => String(x || ""); ${(P.match(/^const ACC_FILES = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_ICON = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")}`, bctx);
+  for (const n of ["accPart", "accMono", "accSetupHtml", "accHostOf", "accHostMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accCustomSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
+  const drawKey = (j, key, src, st = {}) => { const box = { innerHTML: "", querySelector: () => null }; const host = { ...st, _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, ${JSON.stringify(key)}, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
+  // 🔒 AS IF THE CLIENT HAS NO CLUE (approved step3_simple_access_v1 + v2): explainer → Who will do this? → files service → steps / note
+  const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
+  const net = drawKey(N, "custom", "detected_confirmed");
+  if (!/Hosted on Netlify/.test(net) || !/Where your website lives/.test(net) || !/Give RGA access to your website's files/.test(net)) fail("a developer-built site on Netlify doesn't say where it lives / what Step 2 is");
+  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/Kept in a code service, usually GitHub/.test(net)) fail("Step 2 doesn't explain host vs files before asking");
+  if (!/data-acc-who="self"/.test(net) || !/data-acc-who="dev"/.test(net) || /data-acc-send/.test(net)) fail("before choosing, Step 2 isn't \"Who will do this?\" (or Step 3's button shows already)");
+  const self = drawKey(N, "custom", "detected_confirmed", { _accWho: "self" });
+  if (!/data-acc-files="gitlab"/.test(self) || !/rocketgrowthagency/.test(self) || !/No need to add us on Netlify/.test(self) || !/I added RGA on GitHub/.test(self)) fail("\"I'll do it myself\" isn't: where are the files · GitHub steps · no need for Netlify · \"I added RGA on GitHub\"");
+  const gl = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "gitlab" });
+  if (!/Manage<\/b>, then <b>Members/.test(gl) || !/Maintainer/.test(gl) || !/I added RGA on GitLab/.test(gl)) fail("GitLab's steps aren't GitLab's (Manage → Members → Invite, Maintainer)");
+  const bb = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "bitbucket" });
+  if (!/Repository permissions/.test(bb) || !/<b>Write<\/b>/.test(bb)) fail("Bitbucket's steps aren't Bitbucket's (Repository settings → Repository permissions, Write)");
+  const uns = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "unsure" });
+  if (!/Whoever built your website will know/.test(uns) || /data-acc-send/.test(uns)) fail("\"I'm not sure\" where the files are doesn't point to the developer");
+  const dv = drawKey(N, "custom", "detected_confirmed", { _accWho: "dev" });
+  if (!/Send this to your developer/.test(dv) || !/data-acc-note-copy/.test(dv) || !/mailto:\?subject=/.test(dv) || !/data-via="designer"/.test(dv) || !/I sent it to my developer/.test(dv)) fail("\"My developer will\" doesn't show the note IN Step 2 (Copy · Open in email · I sent it to my developer)");
+  if (!/There&#39;s no need to add them on Netlify|There's no need to add them on Netlify/.test(dv)) fail("the developer note doesn't say to skip the paid-seat host");
+  const ghp = drawKey({ ...N, host: "githubpages" }, "custom", "detected_confirmed", { _accWho: "self" });
+  if (/data-acc-files=/.test(ghp) || /No need to add us on GitHub Pages/.test(ghp)) fail("GitHub Pages asks where the files are (they're on GitHub) or says to skip it");
+  const unk = drawKey({ ...N, host: null }, "custom", "detected_confirmed");
+  if (!/A developer built your website/.test(unk) || !/pm-ax-opt on" data-acc-who="dev"/.test(unk) || !/I sent it to my developer/.test(unk)) fail("with no host seen, \"My developer will\" isn't pre-selected");
+  for (const [l, h] of [["Netlify", net], ["self", self], ["developer", dv], ["unknown", unk]]) if (/\brepository collaborator|collaborator role|\$\s?\d/i.test(h.replace(/\$\{[^}]*\}/g, ""))) fail(`the ${l} card uses jargon or a price`);
   const picked = drawKey({ status: "ok", site: "joes.com" }, "custom", "chosen");
-  if (/We couldn't see where it's hosted/.test(picked) || /pm-ax-fpill/.test(picked)) fail("a client who PICKED Custom-coded is told what our check saw");
+  if (/Your developer will know where it's hosted/.test(picked) || /pm-ax-fpill/.test(picked)) fail("a client who PICKED Custom-coded is told what our check saw");
   const wpT = drawKey({ status: "ok", site: "joes.com" }, "wordpress", "chosen");
-  if (!/<b>1 · You<\/b>/.test(wpT) || !/<b>2 · RGA<\/b>We accept the invite/.test(wpT) || !/<b>3 · Done<\/b>/.test(wpT)) fail("Step 3 doesn't say what happens next (You · RGA · Done) for every builder");
+  if (!/class="pm-ax-prog"/.test(wpT) || !/<b>You do Step 2<\/b>/.test(wpT) || !/<b>RGA accepts the invite and checks<\/b>/.test(wpT) || !/<b>Access confirmed<\/b>/.test(wpT)) fail("Step 3 isn't the progress line (You · RGA · Access confirmed) for every builder");
   const wfT = drawKey({ status: "ok", site: "joes.com" }, "webflow", "chosen");
-  if (!/<b>2 · RGA<\/b>We send the request/.test(wfT)) fail("a request builder's Step 3 says the wrong next step");
+  if (!/<b>RGA sends the request, you click Accept<\/b>/.test(wfT)) fail("a request builder's Step 3 says the wrong next step");
   const draw = (j, src = null) => { const box = { innerHTML: "", querySelector: () => null }; const host = { _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, null, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
   const bl = draw({ status: "couldnt_check", reason: "blocked", site: "joes.com" });
   if (!/joes\.com has a security setting that blocks automatic checks/.test(bl) || !/3 ways to tell/.test(bl) || !/data-acc-check/.test(bl) || !/data-acc-pick="wordpress"/.test(bl)) fail("a blocked site doesn't get its way forward (why · 3 ways to tell · Check it for me · the tiles)");
@@ -211,6 +224,14 @@ const ci2 = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.cli
   const h2 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
     value: { via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", host: "evilhost" } } }) });
   if (h1.statusCode !== 200 || h2.statusCode !== 200 || db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.detected.host !== null) fail("the server keeps an unknown host value");
+  const w1 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
+    value: { via: "invite", platform: "custom", platform_source: "chosen", who: "self", files: "gitlab" } }) });
+  const wci = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
+  if (w1.statusCode !== 200 || wci.who !== "self" || wci.files !== "gitlab") fail("the server drops who does it / which code service");
+  await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
+    value: { via: "designer", platform: "custom", platform_source: "chosen", who: "hacker", files: "ftp" } }) });
+  const wj = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
+  if (wj.who || wj.files) fail("the server keeps a junk who / files value");
 }
 await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
   value: { via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });

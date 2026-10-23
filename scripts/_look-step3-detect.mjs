@@ -50,7 +50,15 @@ await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); 
 await run("shop", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); console.log("STORE FIELD =", await row.locator("[data-acc-store]").inputValue()); await shot(row, "shop-2-yes"); });
 await run("blocked", async (row) => { await row.locator("[data-acc-check]").click(); await page.waitForTimeout(800); console.log("SAVED blocked", JSON.stringify(saved && saved.value)); });
 await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED dev", JSON.stringify(saved && saved.value).slice(0, 200)); });
-await run("devN", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "devN-2-yes"); await row.locator("[data-acc-designer]").first().click(); await page.waitForTimeout(300); console.log("NOTE devN", (await row.locator("[data-acc-mail]").innerText()).slice(0, 400)); });
+await run("devN", async (row) => {
+  await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "devN-2-choose");
+  await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(300); await shot(row, "devN-3-dev");
+  await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED devN dev", JSON.stringify(saved && saved.value).slice(0, 160));
+  await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(300); await shot(row, "devN-4-self");
+  await row.locator('[data-acc-files="gitlab"]').click(); await page.waitForTimeout(300); console.log("GITLAB", (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(0, 360));
+  await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED devN self", JSON.stringify(saved && saved.value).slice(0, 160));
+  await row.locator('[data-acc-files="unsure"]').click(); await page.waitForTimeout(300); console.log("UNSURE", (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(-160), "| step3:", (await row.locator("[data-acc-part='3']").innerText()).replace(/\s+/g, " "));
+});
 await run("none", async (row) => {
   const vis = () => row.evaluate((r) => [...r.querySelectorAll(".pm-ax-tile")].filter((t) => t.offsetParent).map((t) => Math.round(t.getBoundingClientRect().height)));
   console.log("TILES closed", JSON.stringify(await vis())); await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200);

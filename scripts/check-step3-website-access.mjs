@@ -59,7 +59,7 @@ if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall
 if (!/rcRow\("Builder", \["wait", "Not recorded"\]/.test(P)) fail("done-without-record doesn't say \"Not recorded\"");
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
-if (!/class="pm-ax-go" href=/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");
+if (!/<a class="pm-ax-go" href="\$\{escapeAttribute\(link\)\}"/.test(P) || !/<a class="pm-ax-go" href="\$\{escapeAttribute\(F\.link\)\}"/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");
 if (!/\.pm-ax-go \{[^}]*white-space:nowrap/.test(read("portal/portal.css")) || !/\.pm-ax-setup li \{ display:grid;/.test(read("portal/portal.css"))) fail("a setup button can wrap mid-sentence again (Chris's screenshot)");
 // ── Chris's walk-through 10-22 (all fixed, all pinned)
 const CSS = read("portal/portal.css");
@@ -73,7 +73,7 @@ if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web design
 // 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
 // the send button lives in Step 3 ("Then"), never as a faded button with no reason
 if (!/\$\{accPart\(2, "Instructions: do this", "next", "", "Shows once you pick your builder"\)\}\$\{accPart\(3, "Tell RGA you've sent it", "next"\)\}/.test(P)) fail("before a builder is picked, Steps 2 and 3 don't show as Not yet");
-if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, "Instructions: do this", "you", dev \? accCustomSetupHtml\(p, hk\) : accSetupHtml\(p, j\.site\)\)\}\$\{accPart\(3, "Tell RGA you've sent it", "then", tell\)\}/.test(P) || !/<button type="button" class="pm-commit" data-acc-send>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
+if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Instructions: do this", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accSetupHtml\(p, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
 if (!/const ACC_TAG = \{ you: "Your move", then: "Then", done: "Done", rga: "With RGA", next: "Not yet" \};/.test(P)) fail("the parts' state tags changed (Your move · Then · Done · With RGA · Not yet)");
 for (const st of ["st-you", "st-done", "st-rga", "st-next"]) if (!new RegExp(`\\.pm-ax-part\\.${st} \\{`).test(CSS)) fail(`the ${st} part has no colour (it takes the state's token)`);
 if (/the builder below says how long|data-acc-send disabled>Pick your builder first/.test(P)) fail("the old confusing wording is back");
