@@ -123,7 +123,7 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
 {
   const bctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {} });
   vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")} var monthDay = (x) => String(x || ""); ${(P.match(/^const ACC_FILES = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_ICON = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")}`, bctx);
-  for (const n of ["accPart", "accMono", "accSetupHtml", "accHostOf", "accHostMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accCustomSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
+  for (const n of ["accPart", "accMono", "accSetupHtml", "accHostOf", "accHostMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
   const drawKey = (j, key, src, st = {}) => { const box = { innerHTML: "", querySelector: () => null }; const host = { ...st, _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, ${JSON.stringify(key)}, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
   // 🔒 AS IF THE CLIENT HAS NO CLUE (approved step3_simple_access_v1 + v2): explainer → Who will do this? → files service → steps / note
   const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
@@ -151,6 +151,21 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   if (/Your developer will know where it's hosted/.test(picked) || /pm-ax-fpill/.test(picked)) fail("a client who PICKED Custom-coded is told what our check saw");
   const wpT = drawKey({ status: "ok", site: "joes.com" }, "wordpress", "chosen");
   if (!/class="pm-ax-prog"/.test(wpT) || !/<b>You do Step 2<\/b>/.test(wpT) || !/<b>RGA accepts the invite and checks<\/b>/.test(wpT) || !/<b>Access confirmed<\/b>/.test(wpT)) fail("Step 3 isn't the progress line (You · RGA · Access confirmed) for every builder");
+  // 🔒 EVERY BUILDER IN THE STEP 3 STANDARD (approved step3_all_builders_v1): What this does · Who will do this? · steps with where ·
+  // Before you start · Good to know · designer note inline · no safe 2nd user → checklist / screen-share — from the researched file
+  const wix = drawKey({ status: "ok", site: "joes.com" }, "wix", "chosen");
+  if (!/What this does/.test(wix) || !/a Website Manager/.test(wix) || !/data-acc-who="dev"/.test(wix) || !/top of the Roles &amp; Permissions page|top of the Roles & Permissions page/.test(wix)) fail("Wix's Step 2 isn't What this does · Who will do this? · steps with where to look");
+  if (!/Before you start/.test(wix) || !/Good to know/.test(wix) || !/Your website is on Wix/.test(wix)) fail("Wix's Step 2 lost Before you start / Good to know, or Step 1 isn't \"Your website is on Wix\"");
+  const wixDev = drawKey({ status: "ok", site: "joes.com" }, "wix", "chosen", { _accWho: "dev" });
+  if (!/Send this to your web designer/.test(wixDev) || !/data-acc-note-copy/.test(wixDev) || !/data-via="designer"/.test(wixDev)) fail("\"My web designer will\" on a builder doesn't show the note in Step 2");
+  const sqo = drawKey({ status: "ok", site: "joes.com" }, "squareonline", "chosen", { _accWk: "share" });
+  if (!/no safe way to add a second person/.test(sqo) || !/data-acc-wk="checklist"/.test(sqo) || !/Book the screen-share/.test(sqo) || !/data-via="workaround"/.test(sqo)) fail("a builder with no safe second user doesn't offer checklist / screen-share");
+  const duda = drawKey({ status: "ok", site: "joes.com" }, "duda", "chosen", { _accWho: "self" });
+  if (!/Send this to your web designer/.test(duda) || /data-acc-who="self"/.test(duda)) fail("Duda isn't the designer's job (only they can add us)");
+  for (const k of Object.keys(PUB)) if (!["jimdo", "yola", "squareonline", "other"].includes(k) && !PUB[k].role_short) fail(`${k} has no short plain role name for the card`);
+  for (const k of Object.keys(PUB)) if (k !== "other" && !(PUB[k].sources || []).length) fail(`${k}'s steps have no official source`);
+  if (/Collaborators/.test(JSON.stringify(PUB.strikingly?.steps || [])) || /Collaborators/.test(JSON.stringify(PUB.carrd?.steps || []))) fail("Strikingly / Carrd steps say Collaborators again (their menus are Team / Sharing)");
+  if (!PUB.wordpresscom) fail("WordPress.com isn't its own builder");
   const wfT = drawKey({ status: "ok", site: "joes.com" }, "webflow", "chosen");
   if (!/<b>RGA sends the request, you click Accept<\/b>/.test(wfT)) fail("a request builder's Step 3 says the wrong next step");
   const draw = (j, src = null) => { const box = { innerHTML: "", querySelector: () => null }; const host = { _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, null, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
@@ -167,6 +182,7 @@ if (/We found this on your site|Looks like it from your site, right\?/.test(P)) 
 let sent = null;
 const sctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), clientError: (e) => String(e), _rcEditing: new Set(), portalToken: async () => "jwt", settleStepResult: async () => {},
   fetch: async (u, init) => { sent = JSON.parse(init.body); return { ok: true, json: async () => ({ ok: true }) }; } });
+for (const n of ["accHostOf", "accWhoOf", "accBuilderWho"]) vm.runInContext(fnSrc(P, n), sctx);
 vm.runInContext(`async ${fnSrc(P, "accSave")}`, sctx);
 const save = async (j, key, answer, attrSource = "") => { sent = null; const host = { _acc: { platforms: PUB, site: "joes.com", status: "ok", ...j }, _accAnswer: answer, _accCheckedAt: "2026-10-22T20:00:00Z",
   getAttribute: (a) => (a === "data-acc-key" ? key : a === "data-acc-source" ? attrSource : a === "data-client-id" ? "c1" : null), querySelector: () => null, closest: () => null };
@@ -233,6 +249,10 @@ const ci2 = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.cli
     value: { via: "designer", platform: "custom", platform_source: "chosen", who: "hacker", files: "ftp" } }) });
   const wj = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
   if (wj.who || wj.files) fail("the server keeps a junk who / files value");
+  const wk1 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "workaround", platform: "squareonline", platform_source: "chosen", workaround: "share" } }) });
+  if (wk1.statusCode !== 200 || db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.workaround !== "share") fail("the server drops the checklist / screen-share choice");
+  await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "workaround", platform: "squareonline", platform_source: "chosen", workaround: "send me your password" } }) });
+  if (db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.workaround) fail("the server keeps a junk workaround value");
 }
 await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
   value: { via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });

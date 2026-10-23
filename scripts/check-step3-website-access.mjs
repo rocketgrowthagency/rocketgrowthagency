@@ -26,7 +26,7 @@ if (Object.keys(PL).length < 20) fail(`only ${Object.keys(PL).length} builders i
 for (const [k, p] of Object.entries(PL)) {
   if (!p.name || !p.kind || !Array.isArray(p.steps) || !p.steps.length || p.steps.some((x) => !x || typeof x.t !== "string" || !x.t.trim())) fail(`${k}: missing name / kind / real steps`);
   for (const x of p.steps) { if (x.link && !/^(https:\/\/|\{site\}\/)/.test(x.link)) fail(`${k}: a step link isn't https or {site}`); }
-  if (/password/i.test(JSON.stringify(p.steps)) && !/never (take|need) your password|Never your password|we never take your password/i.test(JSON.stringify(p.steps))) fail(`${k}: the steps mention a password without saying we never take it`);
+  if (/password/i.test(JSON.stringify(p.steps)) && !/never (take|need|ask for) (a |your )?password|Never your password|we never take your password|don't share a password/i.test(JSON.stringify(p.steps))) fail(`${k}: the steps mention a password without saying we never take it`);
   if (!p.rga) fail(`${k}: no "RGA's move" for admin row 8`);
 }
 for (const k of ["squareonline", "jimdo", "yola"]) if (PL[k]?.kind !== "workaround") fail(`${k} isn't a checklist/screen-share (no safe invite exists)`);
@@ -74,7 +74,7 @@ if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web design
 // 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
 // the send button lives in Step 3 ("Then"), never as a faded button with no reason
 if (!/\$\{accPart\(2, "Instructions: do this", "next", "", "Shows once you pick your builder"\)\}\$\{accPart\(3, "Tell RGA you've sent it", "next"\)\}/.test(P)) fail("before a builder is picked, Steps 2 and 3 don't show as Not yet");
-if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Instructions: do this", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accSetupHtml\(p, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
+if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Give RGA access to your website", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accBuilderSetupHtml\(p, key, host, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send data-via="\$\{via\}">/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
 if (!/const ACC_TAG = \{ you: "Your move", then: "Then", work: "Working", done: "Done", rga: "With RGA", next: "Not yet" \};/.test(P)) fail("the parts' state tags changed (Your move · Then · Working · Done · With RGA · Not yet)");
 // 🔒 CHECKING = the three parts from the first second (step3_three_screens_v1), never a lone pill
 if (!/accPart\(1, "Checking your website", "work",/.test(P) || /Checking which builder your website uses…<\/span><\/div>`/.test(P)) fail("while checking, step 3 is a lone pill again (the three parts must show from the first second)");

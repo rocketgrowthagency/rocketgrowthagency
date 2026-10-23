@@ -64,10 +64,20 @@ await run("devN", async (row) => {
   await row.locator('[data-acc-files="unsure"]').click(); await page.waitForTimeout(300); console.log("UNSURE", (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(-160), "| step3:", (await row.locator("[data-acc-part='3']").innerText()).replace(/\s+/g, " "));
 });
 await run("none", async (row) => {
+
+
   const vis = () => row.evaluate((r) => [...r.querySelectorAll(".pm-ax-tile")].filter((t) => t.offsetParent).map((t) => Math.round(t.getBoundingClientRect().height)));
   console.log("TILES closed", JSON.stringify(await vis())); await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200);
   console.log("TILES open", JSON.stringify(await vis()), "button:", await row.locator("[data-acc-more]").innerText()); await shot(row, "none-2-open");
   await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200); console.log("TILES closed again", (await vis()).length, "button:", await row.locator("[data-acc-more]").innerText());
+  for (const k of ["wix", "squarespace", "godaddy", "shopify", "webflow", "wordpresscom", "squareonline", "duda", "other", "hubspot"]) {
+    const ch = row.locator("[data-acc-change]"); if (await ch.count()) { await ch.click(); await page.waitForTimeout(200); }
+    const more = row.locator("[data-acc-more]"); if (await more.count() && (await more.getAttribute("aria-expanded")) !== "true" && !(await row.locator(`[data-acc-pick="${k}"]`).isVisible())) { await more.click(); await page.waitForTimeout(150); }
+    await row.locator(`[data-acc-pick="${k}"]`).click(); await page.waitForTimeout(250);
+    console.log(`B ${k} ::`, (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(0, 210), "|| S3:", (await row.locator("[data-acc-part='3']").innerText()).replace(/\s+/g, " ").slice(-60));
+    if (k === "wix") { await shot(row, "b-wix"); await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(200); await shot(row, "b-wix-dev"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(700); console.log("SAVED wix dev", JSON.stringify(saved && saved.value).slice(0, 120)); await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(200); }
+    if (k === "squareonline") { await shot(row, "b-sqo"); await row.locator('[data-acc-wk="share"]').click(); await page.waitForTimeout(200); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(700); console.log("SAVED sqo", JSON.stringify(saved && saved.value).slice(0, 120)); }
+  }
 });
 await run("down", async () => {});
 await b.close();

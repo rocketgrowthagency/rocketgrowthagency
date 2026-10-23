@@ -170,14 +170,8 @@
  [
   "the send button leaves Step 3",
   "portal",
-  "<button type=\"button\" class=\"pm-commit\" data-acc-send>${escapeHtml(lbl)}</button>",
-  "<span></span>"
- ],
- [
-  "plan notes lose Before you start",
-  "portal",
-  "<p class=\"pm-ax-plan\"><b>Before you start</b>",
-  "<p class=\"pm-ax-plan\"><b>Note</b>"
+  "<button type=\"button\" class=\"pm-commit\" data-acc-send data-via=\"${via}\">",
+  "<button type=\"button\" class=\"pm-commit\" data-acc-sendx data-via=\"${via}\">"
  ],
  [
   "a step ends at a colon without a site",

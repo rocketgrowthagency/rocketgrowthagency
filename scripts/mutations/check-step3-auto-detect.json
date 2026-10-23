@@ -344,13 +344,13 @@
  [
   "Step 3 isn't a progress line",
   "portal",
-  "    tell = lbl ? `<div class=\"pm-ax-tell\">${accProgHtml(\"You do Step 2\", mid[0], mid[1])}",
-  "    tell = lbl ? `<div class=\"pm-ax-tell\">"
+  "    tell = lbl ? `<div class=\"pm-ax-tell\">${p.kind === \"workaround\" ? \"\" : accProgHtml(",
+  "    tell = lbl ? `<div class=\"pm-ax-tell\">${true ? \"\" : accProgHtml("
  ],
  [
   "the server drops who / files",
   "stepinput",
-  "    if (platform === \"custom\" && [\"self\", \"developer\"].includes(o.who)) out.who = o.who;",
+  "    if (platform && [\"self\", \"developer\"].includes(o.who)) out.who = o.who;",
   ""
  ],
  [
@@ -370,5 +370,59 @@
   "portal",
   "  const ask = (q, yes, no, hint) => `<div class=\"pm-ax-ask\"><b class=\"pm-ax-q\">${escapeHtml(q)}</b>",
   "  const ask = (q, yes, no, hint) => `<div class=\"pm-ax-ask\">"
+ ],
+ [
+  "builders lose What this does",
+  "portal",
+  "    : `<div class=\"pm-ax-what\"><b>What this does</b>",
+  "    : `<div class=\"pm-ax-what\"><b>Instructions</b>"
+ ],
+ [
+  "builders lose Who will do this",
+  "portal",
+  "  const opts = p.kind === \"designer\" ? \"\" : `<b class=\"pm-ax-q\">Who will do this?</b>",
+  "  const opts = true ? \"\" : `<b class=\"pm-ax-q\">Who will do this?</b>"
+ ],
+ [
+  "builders lose Good to know",
+  "portal",
+  "      + ((p.gotchas || []).length ?",
+  "      + (false ?"
+ ],
+ [
+  "the builder note opens off screen again",
+  "portal",
+  "  if (who === \"dev\") {\n    const txt = accBuilderNote(p)",
+  "  if (false) {\n    const txt = accBuilderNote(p)"
+ ],
+ [
+  "no checklist / screen-share choice",
+  "portal",
+  "  if (p.kind === \"workaround\") {\n    const wk =",
+  "  if (false) {\n    const wk ="
+ ],
+ [
+  "Duda offers do-it-yourself",
+  "portal",
+  "function accBuilderWho(host, p) { return p.kind === \"designer\" ? \"dev\" : (host && host._accWho) || \"self\"; }",
+  "function accBuilderWho(host, p) { return (host && host._accWho) || \"self\"; }"
+ ],
+ [
+  "the long role shows on the card",
+  "portal",
+  "Adds RGA as <span class=\"pm-ax-role\">${escapeHtml(p.role_short || p.role || \"an editor\")}</span>",
+  "Adds RGA as <span class=\"pm-ax-role\">${escapeHtml(p.role || \"an editor\")}</span>"
+ ],
+ [
+  "the server keeps any workaround",
+  "stepinput",
+  "[\"checklist\", \"share\"].includes(o.workaround)) out.workaround = o.workaround;",
+  "o.workaround) out.workaround = o.workaround;"
+ ],
+ [
+  "plan notes lose Before you start",
+  "portal",
+  "      + (p.plan ? `<p class=\"pm-ax-plan\"><b>Before you start</b>",
+  "      + (p.plan ? `<p class=\"pm-ax-plan\"><b>Note</b>"
  ]
 ]
