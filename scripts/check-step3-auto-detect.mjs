@@ -129,7 +129,10 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
   const net = drawKey(N, "custom", "detected_confirmed");
   if (!/Hosted on Netlify/.test(net) || !/Where your website lives/.test(net) || !/Give RGA access to your website's files/.test(net)) fail("a developer-built site on Netlify doesn't say where it lives / what Step 2 is");
-  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/Keeps your website's files\. This is where changes are made\./.test(net) || !/<b>GitHub<\/b>/.test(net) || !/Most developers use GitHub\. Some use GitLab or Bitbucket/.test(net)) fail("Step 2 doesn't explain host vs files before asking, both tiles named by the company (step3_dev_built_headers_v1)");
+  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/This is where changes are made\./.test(net) || !/<b>GitHub<\/b>/.test(net) || !/Most developers use GitHub\. Yours might use GitLab or Bitbucket/.test(net)) fail("Step 2 doesn't explain host vs files before asking, both tiles named by the company (step3_dev_built_headers_v1)");
+  // 🔒 two places, one arrow (step3_dev_built_step2_design_v1 option A): the files service is where we need access; the host isn't
+  if (!/class="pm-ax-hf-p us">[\s\S]*?<b>GitHub<\/b>[\s\S]*?We need access here/.test(net) || !/<b>Netlify<\/b>[\s\S]*?No need to add us here/.test(net) || !/updates itself<br>in a minute or two/.test(net)) fail("Step 2 doesn't say which place we need access to (files: We need access here · host: No need to add us here · the arrow)");
+  if (!/About 3 minutes/.test(net) || !/Easiest if someone built it for you/.test(net)) fail("the two choices lost their time / easiest chips");
   if (/Your website's files<\/b>/.test(net)) fail("the files tile is back to a description for a header (\"Your website's files\") beside a company name");
   if (!/data-acc-who="self"/.test(net) || !/data-acc-who="dev"/.test(net) || /data-acc-send/.test(net)) fail("before choosing, Step 2 isn't \"Who will do this?\" (or Step 3's button shows already)");
   const self = drawKey(N, "custom", "detected_confirmed", { _accWho: "self" });

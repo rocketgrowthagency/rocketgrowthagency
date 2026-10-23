@@ -456,16 +456,10 @@
   "(false ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by"
  ],
  [
-  "the files tile is a description again, not a company",
-  "portal",
-  "<b>${escapeHtml(F0.name)}</b>Keeps your website's files.",
-  "<b>Your website's files</b>Keeps your website's files."
- ],
- [
   "\"My developer will\" says we write the note",
   "portal",
-  "opt(\"dev\", ACC_ICON.dev, \"My developer will\", \"Send them a short email\")",
-  "opt(\"dev\", ACC_ICON.dev, \"My developer will\", \"We write a short note for you to send them\")"
+  "\"My developer will\", \"Send them a short email\", `<span class=\"pm-ax-wchip best\">",
+  "\"My developer will\", \"We write a short note for you to send them\", `<span class=\"pm-ax-wchip best\">"
  ],
  [
   "GitLab / Bitbucket lose the 5-seat line",
@@ -484,5 +478,35 @@
   "portal",
   "${ACC_ICON.copy}Copy the email</button><a class=\"pm-amend\" href=\"mailto:?subject=${encodeURIComponent(n.subject)}",
   "${ACC_ICON.copy}Copy the note</button><a class=\"pm-amend\" href=\"mailto:?subject=${encodeURIComponent(n.subject)}"
+ ],
+ [
+  "the files tile is a description again, not a company",
+  "portal",
+  "<b>${escapeHtml(F0.name)}</b><small>Where your website's files are kept</small>",
+  "<b>Your website's files</b><small>Where your website's files are kept</small>"
+ ],
+ [
+  "the files place doesn't say we need access there",
+  "portal",
+  "${ACC_TICK}We need access here</span>",
+  "</span>"
+ ],
+ [
+  "the host place doesn't say no need to add us",
+  "portal",
+  "<path d=\"M18 6 6 18M6 6l12 12\"/></svg>No need to add us here`}",
+  "<path d=\"M18 6 6 18M6 6l12 12\"/></svg>`}"
+ ],
+ [
+  "the arrow loses its words",
+  "portal",
+  "<span>updates itself<br>in a minute or two</span>",
+  "<span></span>"
+ ],
+ [
+  "the choices lose their chips",
+  "portal",
+  "`<span class=\"pm-ax-wchip best\">${ACC_TICK}Easiest if someone built it for you</span>`",
+  "\"\""
  ]
 ]
