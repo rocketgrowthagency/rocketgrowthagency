@@ -49,6 +49,11 @@ await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); 
 await run("shop", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); console.log("STORE FIELD =", await row.locator("[data-acc-store]").inputValue()); await shot(row, "shop-2-yes"); });
 await run("blocked", async (row) => { await row.locator("[data-acc-check]").click(); await page.waitForTimeout(800); console.log("SAVED blocked", JSON.stringify(saved && saved.value)); });
 await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); });
-await run("none", async () => {});
+await run("none", async (row) => {
+  const vis = () => row.evaluate((r) => [...r.querySelectorAll(".pm-ax-tile")].filter((t) => t.offsetParent).map((t) => Math.round(t.getBoundingClientRect().height)));
+  console.log("TILES closed", JSON.stringify(await vis())); await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200);
+  console.log("TILES open", JSON.stringify(await vis()), "button:", await row.locator("[data-acc-more]").innerText()); await shot(row, "none-2-open");
+  await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200); console.log("TILES closed again", (await vis()).length, "button:", await row.locator("[data-acc-more]").innerText());
+});
 await run("down", async () => {});
 await b.close();

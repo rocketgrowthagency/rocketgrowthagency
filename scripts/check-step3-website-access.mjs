@@ -67,7 +67,8 @@ if (/tile: RC_LOCK/.test(P) || !/const RC_WEB = /.test(P)) fail("step 3 shows a 
 if (!/: isDone && _rcEditing\.has\(step\.id\) \? \{ text: "Updating", cls: "edit" \}/.test(P)) fail("a done step being changed says \"Done\" above \"Your move\" (it says Updating)");
 // 10-22 (Chris: "no spinner or anything"): the redraw is instant, so the wait is the card's "Checking which builder…" line — it SPINS
 if (!/\.pm-msg\.busy \.dot\{[^}]*animation:pm-later-spin/.test(CSS)) fail("a waiting message (\"Checking which builder your website uses…\") shows a still dot, not the spinner");
-if (!/const ACC_COMMON = \["wordpress", "wix", "squarespace", "godaddy", "shopify", "webflow", "custom", "other"\];/.test(P) || !/>Show all \$\{all\.length\} builders<\/button>/.test(P)) fail("the builder list is a wall again (8 common + Show all)");
+if (!/const ACC_COMMON = \["wordpress", "wix", "squarespace", "godaddy", "shopify", "webflow", "custom", "other"\];/.test(P) || !/\$\{restOpen \? "Show fewer builders" : `Show all \$\{all\.length\} builders`\}<\/button>/.test(P)) fail("the builder list is a wall again (8 common + Show all ↔ Show fewer)");
+if (!/\.pm-ax-tiles \{ grid-auto-rows:1fr; \}/.test(read("portal/portal.css"))) fail("the builder tiles aren't one size (one grid, equal rows)");
 if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web designer…\" / \"I don't have a website\" are underlined links again (they're choices: secondary buttons)");
 // 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
 // the send button lives in Step 3 ("Then"), never as a faded button with no reason

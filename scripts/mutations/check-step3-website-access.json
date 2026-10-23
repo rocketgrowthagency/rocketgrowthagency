@@ -208,5 +208,17 @@
   "portalcss",
   ".pm-ax-part.st-done { border-color:var(--state-ok-line,#cfe6c8);",
   ".pm-ax-part.st-done-x { border-color:var(--state-ok-line,#cfe6c8);"
+ ],
+ [
+  "builder tiles stop being one size",
+  "portalcss",
+  ".pm-ax-tiles { grid-auto-rows:1fr; }",
+  ".pm-ax-tiles { }"
+ ],
+ [
+  "the extra builders can't hide again",
+  "portal",
+  "${restOpen ? \"Show fewer builders\" : `Show all ${all.length} builders`}</button>",
+  "Show all ${all.length} builders</button>"
  ]
 ]
