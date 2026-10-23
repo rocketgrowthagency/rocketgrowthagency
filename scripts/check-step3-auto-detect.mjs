@@ -109,6 +109,7 @@ if (!/We checked a saved copy of your site/.test(s5.html) || /is on WordPress/.t
 const s6 = step1({ platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"] });
 if (!/It looks like a developer built your site/.test(s6.html) || !/Yes, a developer built it/.test(s6.html)) fail("a developer-built site isn't asked in plain words");
 const s8 = step1({ platform: "custom", confidence: "ask", signs: 1, host: "netlify", evidence: ["Your site is hosted on Netlify"] });
+if (!/class="pm-ax-result"/.test(s8.html) || !/<b class="pm-ax-q">Is that right\?<\/b>/.test(s8.html) || !/Not sure\? Tap Yes/.test(s8.html)) fail("the found answer isn't in order (result box · separate Is that right? · hint for the unsure)");
 if (!/Your website is hosted on Netlify/.test(s8.html) || !/Yes, that's right/.test(s8.html) || !/pm-ax-mono[^>]*>N</.test(s8.html)) fail("a found developer-built site with a known host isn't asked by its host");
 const s7 = step1({ platform: "wordpress", confidence: "stated", signs: 1, source: "rga", evidence: ["Checked by hand by RGA on 10-22 (your site blocks automatic checks)"] });
 if (!/RGA checked: your website is on WordPress/.test(s7.html) || !/pm-ax-fpill is-rga[^>]*>[\s\S]*Checked by RGA/.test(s7.html) || !/data-acc-yes/.test(s7.html) || !/data-acc-no/.test(s7.html)) fail("RGA's hand check isn't asked as \"RGA checked: … Is that right?\" with Yes / No");

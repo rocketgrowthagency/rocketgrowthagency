@@ -25,7 +25,8 @@ const SC = {
 let cur = "wp", saved = null;
 // REAL=1: the live site check goes through (it only READS the client's public homepage; portal-site-platform writes nothing)
 if (process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.continue());
-if (!process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...SC[cur], platforms: PL }) }));
+let slow = 0;
+if (!process.env.REAL) await ctx.route("**/.netlify/functions/portal-site-platform", async (r) => { if (slow) await new Promise((z) => setTimeout(z, slow)); return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...SC[cur], platforms: PL }) }); });
 await ctx.route("**/.netlify/functions/portal-step-input", (r) => { saved = JSON.parse(r.request().postData() || "{}"); r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: false, error: "caught by the harness (not saved)" }) }); });
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 300)));
@@ -36,7 +37,10 @@ const open = async () => {
   await page.evaluate(() => document.querySelector('.portal-nav a[data-view="setup"]')?.click()); await page.waitForTimeout(3000);
   const row = page.locator('[id="step-row-m1.access.website"]');
   if (await row.evaluate((e) => e.classList.contains("is-collapsed"))) { await row.evaluate((e) => e.querySelector(":scope > [data-step-toggle]")?.click()); await page.waitForTimeout(400); }
+  if (cur === "wp" && !globalThis.__doneShot) { globalThis.__doneShot = 1; await row.screenshot({ path: `${out}/done-card.png` }); console.log("[done-card]", (await row.innerText()).replace(/\s+/g, " ").slice(0, 420)); }
+  if (cur === "wp") slow = 3500;
   if (await row.locator("[data-acc-redo]").count()) await row.locator("[data-acc-redo]").first().click();
+  if (cur === "wp") { await page.waitForTimeout(900); await row.screenshot({ path: `${out}/checking.png` }); console.log("[checking]", (await row.innerText()).replace(/\s+/g, " ").slice(0, 300)); slow = 0; }
   await page.waitForSelector('[id="step-row-m1.access.website"] [data-acc-part="1"]', { timeout: 30000 }); await page.waitForTimeout(400);
   return row;
 };

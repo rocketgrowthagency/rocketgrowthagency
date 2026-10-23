@@ -42,10 +42,10 @@
   "if (false) {"
  ],
  [
-  "done-without-record stops saying Not recorded",
+  "done-without-record loses its calm words",
   "portal",
-  "rcRow(\"Builder\", [\"wait\", \"Not recorded\"]",
-  "rcRow(\"Builder\", [\"wait\", \"Unknown\"]"
+  "<small>Nothing for you to do</small>",
+  "<small>Not recorded</small>"
  ],
  [
   "the Change button goes (can't X out)",
@@ -220,5 +220,11 @@
   "portal",
   "${restOpen ? \"Show fewer builders\" : `Show all ${all.length} builders`}</button>",
   "Show all ${all.length} builders</button>"
+ ],
+ [
+  "checking is a lone pill again",
+  "portal",
+  "accPart(1, \"Checking your website\", \"work\",",
+  "accPart(1, \"Checking which builder your website uses\", \"you\","
  ]
 ]

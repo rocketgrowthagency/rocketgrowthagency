@@ -146,8 +146,8 @@
  [
   "the developer ask uses builder words",
   "portal",
-  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : dev ? \"It looks like a developer built your site\" : sure",
-  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : sure"
+  "      : dev && hk ? `Your website is hosted on ${hk.name}` : dev ? \"It looks like a developer built your site\" : sure",
+  "      : dev && hk ? `Your website is hosted on ${hk.name}` : sure"
  ],
  [
   "RGA's check isn't named on the ask",
@@ -224,8 +224,8 @@
  [
   "the proof shows on the client card again",
   "portal",
-  "      + accFoundPill(j, host._accCheckedAt)\n      + `<div class=\"pm-ax-yn\"><button type=\"button\" class=\"pm-commit\" data-acc-yes>",
-  "      + accFoundPill(j, host._accCheckedAt) + (j.evidence || []).join(\" \")\n      + `<div class=\"pm-ax-yn\"><button type=\"button\" class=\"pm-commit\" data-acc-yes>"
+  "    body = accFoundPill(j, host._accCheckedAt)\n      + result(dev && hk ? accHostMono(hk) : accMono(j.platform, bp), title, sub)",
+  "    body = accFoundPill(j, host._accCheckedAt) + (j.evidence || []).join(\" \")\n      + result(dev && hk ? accHostMono(hk) : accMono(j.platform, bp), title, sub)"
  ],
  [
   "admin hides what our check saw",
@@ -260,7 +260,7 @@
  [
   "the found ask doesn't name the host",
   "portal",
-  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : dev",
+  "      : dev && hk ? `Your website is hosted on ${hk.name}` : dev",
   "      : dev"
  ],
  [
@@ -358,5 +358,17 @@
   "stepinput",
   "[\"self\", \"developer\"].includes(o.who)) out.who = o.who;",
   "o.who) out.who = o.who;"
+ ],
+ [
+  "the finding isn't in its result box",
+  "portal",
+  "  const result = (mono, title, sub) => `<div class=\"pm-ax-result\">",
+  "  const result = (mono, title, sub) => `<div class=\"pm-ax-plain\">"
+ ],
+ [
+  "no separate Is that right question",
+  "portal",
+  "  const ask = (q, yes, no, hint) => `<div class=\"pm-ax-ask\"><b class=\"pm-ax-q\">${escapeHtml(q)}</b>",
+  "  const ask = (q, yes, no, hint) => `<div class=\"pm-ax-ask\">"
  ]
 ]
