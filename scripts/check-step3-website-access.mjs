@@ -57,7 +57,7 @@ if (!/Object\.entries\(ALL\)\.map\(\(\[k, \{ rga, \.\.\.pub \}\]\) => \[k, pub\]
 const ia = P.indexOf('if (t.status === "done" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {'), ib = P.indexOf('  // the ask (and, for a client who sent the old password link');
 if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall through to the ask (\"Done\" but \"Your move\")");
 // 🔒 done with nothing on record = CALM (approved step3_three_screens_v1): plain words, "Nothing for you to do", optional "Add the details"
-if (!/<b>Builder not on record<\/b>/.test(P) || !/<small>Nothing for you to do<\/small>/.test(P) || !/data-acc-redo>Add the details<\/button>/.test(P)) fail("done-without-record isn't the calm card (Builder not on record · Nothing for you to do · Add the details)");
+if (!/<b>Builder not on record<\/b>/.test(P) || !/<small>Nothing for you to do<\/small>/.test(P) || !/data-acc-redo>My website changed<\/button>/.test(P) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the calm card (Builder not on record · Nothing for you to do · only \"My website changed\" — never asks the client to fill in RGA's records)");
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
 if (!/<a class="pm-ax-go" href="\$\{escapeAttribute\(link\)\}"/.test(P) || !/<a class="pm-ax-go" href="\$\{escapeAttribute\(F\.link\)\}"/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");

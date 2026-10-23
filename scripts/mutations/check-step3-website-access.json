@@ -226,5 +226,11 @@
   "portal",
   "accPart(1, \"Checking your website\", \"work\",",
   "accPart(1, \"Checking which builder your website uses\", \"you\","
+ ],
+ [
+  "the done card asks the client to fill in records again",
+  "portal",
+  "data-acc-redo>My website changed</button>",
+  "data-acc-redo>Add the details</button>"
  ]
 ]
