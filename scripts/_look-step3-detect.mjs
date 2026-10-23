@@ -48,6 +48,13 @@ const txt = async (row) => (await row.locator("[data-acc-plat]").innerText()).re
 const shot = async (row, n) => { await row.screenshot({ path: `${out}/${n}.png` }); console.log(`[${n}]`, await txt(row)); };
 const run = async (name, fn) => { cur = name; saved = null; await page.reload({ waitUntil: "domcontentloaded" }); const row = await open(); await shot(row, `${name}-1`); await fn(row); };
 if (process.env.REAL) { cur = "real"; const row = await open(); await page.waitForTimeout(1500); await shot(row, "real-1"); await b.close(); process.exit(0); }
+if (process.env.CONSENT) { cur = "none"; const row = await open();
+  const more = row.locator("[data-acc-more]"); await row.locator('[data-acc-pick="wix"]').click(); await page.waitForTimeout(250);
+  const btn = row.locator("[data-acc-send]"); console.log("[consent] button disabled before tick:", await btn.isDisabled());
+  await row.locator("[data-acc-consent]").first().check(); await page.waitForTimeout(150); console.log("[consent] disabled after tick:", await btn.isDisabled());
+  await row.locator("[data-acc-part='3']").screenshot({ path: `${out}/consent.png` });
+  await btn.click(); await page.waitForTimeout(800); console.log("[consent] saved:", JSON.stringify((saved && saved.value && saved.value.consent) || null));
+  await b.close(); process.exit(0); }
 if (process.env.PROMISE) { cur = "wp"; const row = await open();
   await row.screenshot({ path: `${out}/promise-folded.png` }); console.log("[folded]", (await row.locator(".pm-ax-promise > summary").innerText()).replace(/\s+/g, " "));
   await row.locator(".pm-ax-promise > summary").click(); await page.waitForTimeout(250); await row.locator(".pm-ax-promise").screenshot({ path: `${out}/promise-open.png` });

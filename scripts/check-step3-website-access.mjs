@@ -74,7 +74,7 @@ if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web design
 // 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
 // the send button lives in Step 3 ("Then"), never as a faded button with no reason
 if (!/\$\{accPart\(2, "Instructions: do this", "next", "", "Shows once you pick your builder"\)\}\$\{accPart\(3, "Tell RGA you've sent it", "next"\)\}/.test(P)) fail("before a builder is picked, Steps 2 and 3 don't show as Not yet");
-if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Give RGA access to your website", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accBuilderSetupHtml\(p, key, host, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send data-via="\$\{via\}">/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
+if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Give RGA access to your website", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accBuilderSetupHtml\(p, key, host, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send data-via="\$\{via\}"\$\{via === "workaround" \|\| host\._accConsent \? "" : " disabled"\}>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
 if (!/const ACC_TAG = \{ you: "Your move", then: "Then", work: "Working", done: "Done", rga: "With RGA", next: "Not yet" \};/.test(P)) fail("the parts' state tags changed (Your move · Then · Working · Done · With RGA · Not yet)");
 // 🔒 CHECKING = the three parts from the first second (step3_three_screens_v1), never a lone pill
 if (!/accPart\(1, "Checking your website", "work",/.test(P) || /Checking which builder your website uses…<\/span><\/div>`/.test(P)) fail("while checking, step 3 is a lone pill again (the three parts must show from the first second)");
@@ -124,16 +124,17 @@ if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(
 // 🔒 THE PROMISE (approved step3_access_promise_v1 option D, Chris 10-23): on the card, in How this step works, on admin row 8 — the same words
 {
   if (!/body: accPromiseHtml\(clientId\) \+ `<div class="pm-acc-plat" data-acc-plat>/.test(P)) fail("step 3's card lost \"Our promise about your website\"");
-  for (const t of ["<b>We draft it</b>", "<b>You approve</b><small>In For your approval. Nothing goes live before this</small>", "<b>It goes live</b>", "Publish without your approval", "Delete pages or change your design", "Change prices or contact details", "Touch billing, domain or email", "Keep access after we stop", "Backed by your Service Agreement (§5, website access)"])
+  for (const t of ["<b>We draft it</b>", "<b>You approve</b><small>In For your approval. Nothing changes before this</small>", "<b>It goes live</b>", "Change anything without your approval", "Delete pages or change your design", "Change prices or contact details", "Touch billing, domain or email", "Keep access after we stop", "Backed by your Service Agreement (§5, website access)"])
     if (!P.includes(t)) fail(`the promise lost "${t}"`);
+  if (/Changes visitors can see go live only after|You approve anything visitors see/.test(P)) fail("the promise only covers what visitors SEE (Chris 10-23: ANY change needs approval first)");
   if (/without your OK\b/i.test(P)) fail("the promise says \"OK\" (Chris 10-23: it's \"approval\")");
   if (!/<details class="pm-ax-promise"><summary>/.test(P)) fail("the promise isn't folded by default (three promises, then What we'll do with access)");
   const PB = [read("data/playbooks/client-steps.json"), read("data/playbooks/playbooks.json")].map((x) => { const D = JSON.parse(x); let hit = null; (function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (o.id === "m1.access.website" && o.clientInstructions) hit = o.clientInstructions; Object.values(o).forEach(walk); } })(D); return hit; });
   if (PB[0] !== PB[1]) fail("the two playbook files say different things in step 3's How this step works");
-  for (const h of ["WHY WE NEED IT", "HOW IT WORKS", "YOUR WEBSITE STAYS YOURS", "NEVER SEND A PASSWORD", "1. We check which website builder", "You approve anything visitors see before it goes live"])
+  for (const h of ["WHY WE NEED IT", "HOW IT WORKS", "YOUR WEBSITE STAYS YOURS", "NEVER SEND A PASSWORD", "1. We check which website builder", "Nothing changes until you approve it: page text, new pages and the code behind them"])
     if (!String(PB[0] || "").includes(h)) fail(`How this step works lost "${h}"`);
   if (/the role the card shows/.test(PB[0] || "")) fail("How this step works is back to the old jargon (\"the role the card shows\")");
-  if (!/<b>Our promise \(on their card\):<\/b> visible changes only after they approve/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
+  if (!/<b>Our promise \(on their card\):<\/b> NO change \(page text, new pages, schema, tracking code\) goes live until they approve it/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
   if (!/data-acc-redo>Edit access<\/button>/.test(P)) fail("the done card's button isn't \"Edit access\" (Chris 10-23)");
 }
 if (F.length) { console.error("🔴 step 3 website access regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }

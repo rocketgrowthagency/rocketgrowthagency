@@ -53,7 +53,7 @@ const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`,
 for (const [label, start] of [["a new client", null], ["a step ticked done earlier with nothing recorded", { status: "done", completed_at: "2026-10-01T17:00:00Z", completed_by: "rga" }]]) {
   world(start);
   // 1 · client: Custom-coded → I sent the invite
-  let r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { via: "invite", platform: "custom", platform_source: "chosen" } });
+  let r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "custom", platform_source: "chosen" } });
   const t1 = T();
   if (r.status !== 200 || t1.client_input?.via !== "invite" || t1.client_input?.platform !== "custom") { fail(`${label}: "I sent the invite" didn't save the answer (${r.status} ${r.body.error || ""} ${JSON.stringify(t1.client_input)})`); continue; }
   if (t1.status === "done" && !t1.access) fail(`${label}: after "I sent the invite" the step still reads Done before RGA has signed in (status ${t1.status})`);
@@ -70,13 +70,13 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   if (!stepLock("m1.access.website", t3, {})) fail(`${label}: the confirmed step isn't locked`);
   r = await call("portal-step-choice.js", { step_id: "m1.access.website", reopen: true });
   if (r.status !== 409 || T().status !== "done") fail(`${label}: the client can reopen confirmed access (${r.status})`);
-  r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { via: "designer", platform: "wix" } });
+  r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "designer", platform: "wix" } });
   if (r.status !== 409 || T().client_input?.platform !== "custom") fail(`${label}: the client can overwrite confirmed access (${r.status})`);
   r = await call("portal-step-choice.js", { step_id: "m1.access.website", change_request: "We moved the site to Squarespace" });
   if (r.status !== 200 || T().change_request?.note !== "We moved the site to Squarespace") fail(`${label}: "Request a change" isn't stored (${r.status} ${r.body.error || ""})`);
   r = await call("admin-step-unlock.js", { step_id: "m1.access.website", action: "unlock", reason: "They moved to Squarespace" }, "chris@rga.test");
   if (r.status !== 200 || stepLock("m1.access.website", T(), {}) || T().change_request) fail(`${label}: admin's unlock doesn't reopen it for the client (${r.status} ${r.body.error || ""})`);
-  r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { via: "invite", platform: "squarespace", platform_source: "chosen" } });
+  r = await call("portal-step-input.js", { step_id: "m1.access.website", value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "squarespace", platform_source: "chosen" } });
   if (r.status !== 200 || T().client_input?.platform !== "squarespace") fail(`${label}: after the unlock the client can't save the new builder (${r.status} ${r.body.error || ""})`);
 }
 // 5 · the client's confirmed card

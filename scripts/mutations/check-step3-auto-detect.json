@@ -338,8 +338,8 @@
  [
   "the developer path saves as an invite",
   "portal",
-  "data-acc-send data-via=\"designer\">I sent it to my developer",
-  "data-acc-send data-via=\"invite\">I sent it to my developer"
+  "data-acc-send data-via=\"designer\"${host._accConsent ? \"\" : \" disabled\"}>I sent it to my developer",
+  "data-acc-send data-via=\"invite\"${host._accConsent ? \"\" : \" disabled\"}>I sent it to my developer"
  ],
  [
   "Step 3 isn't a progress line",
@@ -424,5 +424,35 @@
   "portal",
   "      + (p.plan ? `<p class=\"pm-ax-plan\"><b>Before you start</b>",
   "      + (p.plan ? `<p class=\"pm-ax-plan\"><b>Note</b>"
+ ],
+ [
+  "the server takes access without consent",
+  "stepinput",
+  "      if (!c || !/^\\d{4}-\\d{2}-\\d{2}[a-z]?$/.test(String(c.promise || \"\")) || !String(c.text || \"\").trim()) return { error: \"Please tick the box to agree to our promise first.\" };",
+  ""
+ ],
+ [
+  "consent isn't stamped with who",
+  "stepinput",
+  "  if (parsed.value && parsed.value.consent) parsed.value.consent.by = gate.email || null;",
+  ""
+ ],
+ [
+  "the send button works without the tick",
+  "portal",
+  "data-acc-send data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>",
+  "data-acc-send data-via=\"${via}\">"
+ ],
+ [
+  "no consent tick on builders",
+  "portal",
+  "${via === \"workaround\" ? \"\" : accConsentHtml(host)}<div class=\"pm-ax-s3row\">",
+  "<div class=\"pm-ax-s3row\">"
+ ],
+ [
+  "admin hides the consent",
+  "admin",
+  "(ci.consent && ci.consent.at ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by",
+  "(false ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by"
  ]
 ]

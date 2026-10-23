@@ -122,8 +122,8 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
 // the blocked path, RUN (accDrawPlatform with no builder): why + 3 ways to tell + Check it for me
 {
   const bctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {} });
-  vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")} var monthDay = (x) => String(x || ""); ${(P.match(/^const ACC_FILES = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_ICON = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")}`, bctx);
-  for (const n of ["accPart", "accMono", "accSetupHtml", "accHostOf", "accHostMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
+  vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_COMMON = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_SEND = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CONSENT_TEXT = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_PROMISE_VERSION = "[^"]*";/m) || [""])[0].replace(/^const /, "var ")} var monthDay = (x) => String(x || ""); ${(P.match(/^const ACC_FILES = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_ICON = \{[\s\S]*?^\};$/m) || [""])[0].replace(/^const /, "var ")}`, bctx);
+  for (const n of ["accPart", "accMono", "accSetupHtml", "accConsentHtml", "accHostOf", "accHostMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawPlatform"]) vm.runInContext(fnSrc(P, n), bctx);
   const drawKey = (j, key, src, st = {}) => { const box = { innerHTML: "", querySelector: () => null }; const host = { ...st, _acc: { platforms: PUB, ...j }, querySelector: (q) => (q === "[data-acc-plat]" ? box : null), setAttribute() {} }; bctx.h = host; vm.runInContext(`accDrawPlatform(h, ${JSON.stringify(key)}, ${JSON.stringify(src)})`, bctx); return box.innerHTML; };
   // 🔒 AS IF THE CLIENT HAS NO CLUE (approved step3_simple_access_v1 + v2): explainer → Who will do this? → files service → steps / note
   const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
@@ -154,6 +154,9 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   // 🔒 EVERY BUILDER IN THE STEP 3 STANDARD (approved step3_all_builders_v1): What this does · Who will do this? · steps with where ·
   // Before you start · Good to know · designer note inline · no safe 2nd user → checklist / screen-share — from the researched file
   const wix = drawKey({ status: "ok", site: "joes.com" }, "wix", "chosen");
+  if (!/data-acc-consent/.test(wix) || !/data-acc-send data-via="invite" disabled/.test(wix)) fail("the consent tick is missing, or the send button works before it's ticked");
+  if (!/data-acc-send data-via="invite">/.test(drawKey({ status: "ok", site: "joes.com" }, "wix", "chosen", { _accConsent: true }))) fail("ticking consent doesn't enable the send button");
+  if (/data-acc-consent/.test(drawKey({ status: "ok", site: "joes.com" }, "squareonline", "chosen"))) fail("the checklist / screen-share path asks for access consent (no access is granted)");
   if (!/What this does/.test(wix) || !/a Website Manager/.test(wix) || !/data-acc-who="dev"/.test(wix) || !/top of the Roles &amp; Permissions page|top of the Roles & Permissions page/.test(wix)) fail("Wix's Step 2 isn't What this does · Who will do this? · steps with where to look");
   if (!/Before you start/.test(wix) || !/Good to know/.test(wix) || !/Your website is on Wix/.test(wix)) fail("Wix's Step 2 lost Before you start / Good to know, or Step 1 isn't \"Your website is on Wix\"");
   const wixDev = drawKey({ status: "ok", site: "joes.com" }, "wix", "chosen", { _accWho: "dev" });
@@ -224,7 +227,7 @@ db = { client_portal_access: [{ portal_email: "owner@acme.test", client_id: CID 
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: {} } }], client_activity: [] };
 for (const k of Object.keys(req.cache)) if (k.startsWith(FNS_REAL)) delete req.cache[k];
 const r = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-  value: { via: "invite", platform: "wordpress", platform_source: "hacked", detected: { status: "ok", platform: "notabuilder", confidence: "certain", signs: 999, evidence: ["x".repeat(500), 7, "", "a", "b", "c", "d", "e", "f", "g"], designer: "D".repeat(300), answer: "maybe", shopify_store: "evil.com", site: "acme.example", checked_at: "not a date" } } }) });
+  value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "wordpress", platform_source: "hacked", detected: { status: "ok", platform: "notabuilder", confidence: "certain", signs: 999, evidence: ["x".repeat(500), 7, "", "a", "b", "c", "d", "e", "f", "g"], designer: "D".repeat(300), answer: "maybe", shopify_store: "evil.com", site: "acme.example", checked_at: "not a date" } } }) });
 const ci = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.client_input;
 if (r.statusCode !== 200 || !ci) fail(`the server didn't save the answer (${r.statusCode} ${r.body})`);
 else {
@@ -234,28 +237,33 @@ else {
   if (!Array.isArray(d.evidence) || d.evidence.length > 8 || d.evidence.some((x) => x.length > 120) || (d.designer || "").length > 80) fail("the proof lines / designer name aren't capped");
 }
 const ok2 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-  value: { via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });
+  value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });
 const ci2 = db.client_onboarding_records[0].data.tasks["m1.access.website"]?.client_input || {};
 { const h1 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-    value: { via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["x"], answer: "yes", host: "netlify" } } }) });
+    value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["x"], answer: "yes", host: "netlify" } } }) });
   const h2 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-    value: { via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", host: "evilhost" } } }) });
+    value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", host: "evilhost" } } }) });
   if (h1.statusCode !== 200 || h2.statusCode !== 200 || db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.detected.host !== null) fail("the server keeps an unknown host value");
   const w1 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-    value: { via: "invite", platform: "custom", platform_source: "chosen", who: "self", files: "gitlab" } }) });
+    value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "custom", platform_source: "chosen", who: "self", files: "gitlab" } }) });
   const wci = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
   if (w1.statusCode !== 200 || wci.who !== "self" || wci.files !== "gitlab") fail("the server drops who does it / which code service");
   await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-    value: { via: "designer", platform: "custom", platform_source: "chosen", who: "hacker", files: "ftp" } }) });
+    value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "designer", platform: "custom", platform_source: "chosen", who: "hacker", files: "ftp" } }) });
   const wj = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input;
   if (wj.who || wj.files) fail("the server keeps a junk who / files value");
+  const nc = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "invite", platform: "wix", platform_source: "chosen" } }) });
+  if (nc.statusCode !== 400) fail("the server takes an access answer WITHOUT the consent tick");
+  const wc = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "wix", platform_source: "chosen" } }) });
+  const wcc = db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.consent || {};
+  if (wc.statusCode !== 200 || wcc.by !== "owner@acme.test" || !wcc.at || wcc.promise !== "2026-10-23b") fail("the server doesn't stamp who / when / which promise on the consent");
   const wk1 = await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "workaround", platform: "squareonline", platform_source: "chosen", workaround: "share" } }) });
   if (wk1.statusCode !== 200 || db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.workaround !== "share") fail("the server drops the checklist / screen-share choice");
   await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website", value: { via: "workaround", platform: "squareonline", platform_source: "chosen", workaround: "send me your password" } }) });
   if (db.client_onboarding_records[0].data.tasks["m1.access.website"].client_input.workaround) fail("the server keeps a junk workaround value");
 }
 await req("./portal-step-input").handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: CID, step_id: "m1.access.website",
-  value: { via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });
+  value: { consent: { promise: "2026-10-23b", text: "I allow Rocket Growth Agency to access my website…" }, via: "invite", platform: "squarespace", platform_source: "detected_declined", detected: { status: "ok", platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"], answer: "no", site: "acme.example", checked_at: "2026-10-22T20:00:00Z" } } }) });
 if (ok2.statusCode !== 200 || ci2.platform_source !== "detected_declined" || ci2.detected?.platform !== "wix" || ci2.detected?.answer !== "no") fail("a real \"No\" isn't kept as detected_declined with what we found");
 
 // "Check it for me" → a request on the step (never an answer), RGA told; then RGA's hand check (admin-access-confirm rga_check)
@@ -297,6 +305,7 @@ const ask8 = rowT({ status: "in_progress", check_request: { asked_at: "2026-10-2
 if (!/Your move · check their site/.test(ask8) || !/data-ob-acc-plat/.test(ask8) || !/data-ob-acc-rgacheck/.test(ask8) || !/acme\.example blocks automatic checks/.test(ask8)) fail("admin row 8 doesn't give RGA the check (why · Open · builder picker · Tell the client)");
 const told8 = rowT({ status: "pending", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" }, rga_check: { platform: "wordpress", by: "chris@rocketgrowthagency.com", at: "2026-10-22T23:30:00Z" } });
 if (!/Client's move/.test(told8) || !/We checked your website: it's on WordPress/.test(told8) || !/Draft — not sent/.test(told8)) fail("after Tell the client, row 8 doesn't show the client's move + the email as a DRAFT (never auto-sent)");
+if (!/<b>Consent:<\/b> ✓ given by owner@acme\.test/.test(row({ via: "invite", platform: "wix", platform_source: "chosen", consent: { by: "owner@acme.test", at: "2026-10-23T16:42:10Z", promise: "2026-10-23b" } }))) fail("admin row 8 doesn't show the client's consent (who · when · promise)");
 if (!/Custom-coded · hosted on Netlify/.test(row({ via: "invite", platform: "custom", platform_source: "detected_confirmed", detected: { status: "ok", platform: "custom", signs: 1, host: "netlify", answer: "yes" } }))) fail("admin row 8 doesn't say where a developer-built site is hosted");
 const dz = row({ via: "designer", platform: "other", platform_source: "designer_credit", detected: { status: "ok", platform: null, signs: 0, designer: "Exposure", designer_answer: "yes" } });
 if (!/footer credits <b>Exposure<\/b> \(client: they manage it\)/.test(dz)) fail("admin row 8 doesn't show the designer credit the client confirmed");

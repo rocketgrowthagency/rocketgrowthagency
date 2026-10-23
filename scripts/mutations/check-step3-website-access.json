@@ -170,8 +170,8 @@
  [
   "the send button leaves Step 3",
   "portal",
-  "<button type=\"button\" class=\"pm-commit\" data-acc-send data-via=\"${via}\">",
-  "<button type=\"button\" class=\"pm-commit\" data-acc-sendx data-via=\"${via}\">"
+  "<button type=\"button\" class=\"pm-commit\" data-acc-send data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>",
+  "<button type=\"button\" class=\"pm-commit\" data-acc-sendx data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>"
  ],
  [
   "a step ends at a colon without a site",
@@ -236,13 +236,13 @@
  [
   "the promise says OK",
   "portal",
-  "[\"Publish without your approval\", \"Anything visitors see waits for you\"]",
-  "[\"Publish without your OK\", \"Anything visitors see waits for you\"]"
+  "[[\"Change anything without your approval\", \"Every change waits for you, even code\"]",
+  "[[\"Change anything without your OK\", \"Every change waits for you, even code\"]"
  ],
  [
   "the approval step leaves the flow",
   "portal",
-  "<b>You approve</b><small>In For your approval. Nothing goes live before this</small>",
+  "<b>You approve</b><small>In For your approval. Nothing changes before this</small>",
   "<b>You check</b><small>If you like</small>"
  ],
  [
@@ -254,13 +254,19 @@
  [
   "admin loses the promise",
   "admin",
-  "<b>Our promise (on their card):</b> visible changes only after they approve",
-  "<b>Note:</b> visible changes only after they approve"
+  "<b>Our promise (on their card):</b> NO change (page text, new pages, schema, tracking code)",
+  "<b>Note:</b> NO change (page text, new pages, schema, tracking code)"
  ],
  [
   "the agreement link loses §5",
   "portal",
   "Backed by your Service Agreement (§5, website access)",
   "Backed by our terms"
+ ],
+ [
+  "the promise shrinks to visible changes",
+  "portal",
+  "<span class=\"pm-ax-pr-ok\">✓ You approve every change</span>",
+  "<span class=\"pm-ax-pr-ok\">✓ You approve anything visitors see</span>"
  ]
 ]
