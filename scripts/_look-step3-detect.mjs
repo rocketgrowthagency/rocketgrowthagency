@@ -44,6 +44,8 @@ const open = async () => {
   await page.waitForSelector('[id="step-row-m1.access.website"] [data-acc-part="1"]', { timeout: 30000 }); await page.waitForTimeout(400);
   return row;
 };
+// the consent tick (step3_access_consent_v1) comes before every send
+const tickAndSend = async (row) => { const c = row.locator("[data-acc-consent]"); if (await c.count()) await c.first().check(); await page.waitForTimeout(120); await row.locator("[data-acc-send]").click(); };
 const txt = async (row) => (await row.locator("[data-acc-plat]").innerText()).replace(/\s+/g, " ").slice(0, 420);
 const shot = async (row, n) => { await row.screenshot({ path: `${out}/${n}.png` }); console.log(`[${n}]`, await txt(row)); };
 const run = async (name, fn) => { cur = name; saved = null; await page.reload({ waitUntil: "domcontentloaded" }); const row = await open(); await shot(row, `${name}-1`); await fn(row); };
@@ -62,19 +64,19 @@ if (process.env.PROMISE) { cur = "wp"; const row = await open();
   await row.getByRole("button", { name: /How this step works/ }).first().click({ timeout: 8000 }).catch((e) => console.log("how-btn", String(e).slice(0, 80))); await page.waitForTimeout(400);
   const hb = row.locator(".how-body").first(); if (await hb.count()) { await hb.screenshot({ path: `${out}/how.png` }); console.log("[how]", (await hb.innerText()).replace(/\s+/g, " ").slice(0, 400)); }
   await b.close(); process.exit(0); }
-await run("wp", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "wp-2-yes"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED wp", JSON.stringify(saved && saved.value)); });
-await run("wix1", async (row) => { await row.locator("[data-acc-no]").click(); await page.waitForTimeout(300); await shot(row, "wix1-2-no"); await row.locator("[data-acc-back]").click(); await page.waitForTimeout(200); await shot(row, "wix1-3-back"); await row.locator("[data-acc-no]").click(); await page.waitForTimeout(200); await row.locator('[data-acc-pick="squarespace"]').click(); await page.waitForTimeout(300); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED wix1", JSON.stringify(saved && saved.value)); });
-await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); await page.waitForTimeout(300); await shot(row, "des-2-yes"); console.log("NOTE", (await row.locator("[data-acc-mail]").innerText()).slice(0, 200)); await row.locator("[data-acc-designer-done]").click(); await page.waitForTimeout(800); console.log("SAVED des", JSON.stringify(saved && saved.value)); });
+await run("wp", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "wp-2-yes"); await tickAndSend(row); await page.waitForTimeout(800); console.log("SAVED wp", JSON.stringify(saved && saved.value)); });
+await run("wix1", async (row) => { await row.locator("[data-acc-no]").click(); await page.waitForTimeout(300); await shot(row, "wix1-2-no"); await row.locator("[data-acc-back]").click(); await page.waitForTimeout(200); await shot(row, "wix1-3-back"); await row.locator("[data-acc-no]").click(); await page.waitForTimeout(200); await row.locator('[data-acc-pick="squarespace"]').click(); await page.waitForTimeout(300); await tickAndSend(row); await page.waitForTimeout(800); console.log("SAVED wix1", JSON.stringify(saved && saved.value)); });
+await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); await page.waitForTimeout(300); await shot(row, "des-2-yes"); console.log("NOTE", (await row.locator("[data-acc-mail]").innerText()).slice(0, 200)); { const c = row.locator("[data-acc-consent]"); if (await c.count()) await c.first().check(); } await row.locator("[data-acc-designer-done]").click(); await page.waitForTimeout(800); console.log("SAVED des", JSON.stringify(saved && saved.value)); });
 await run("shop", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); console.log("STORE FIELD =", await row.locator("[data-acc-store]").inputValue()); await shot(row, "shop-2-yes"); });
 await run("blocked", async (row) => { await row.locator("[data-acc-check]").click(); await page.waitForTimeout(800); console.log("SAVED blocked", JSON.stringify(saved && saved.value)); });
-await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED dev", JSON.stringify(saved && saved.value).slice(0, 200)); });
+await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); await tickAndSend(row); await page.waitForTimeout(800); console.log("SAVED dev", JSON.stringify(saved && saved.value).slice(0, 200)); });
 await run("devN", async (row) => {
   await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "devN-2-choose");
   await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(300); await shot(row, "devN-3-dev");
-  await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED devN dev", JSON.stringify(saved && saved.value).slice(0, 160));
+  await tickAndSend(row); await page.waitForTimeout(800); console.log("SAVED devN dev", JSON.stringify(saved && saved.value).slice(0, 160));
   await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(300); await shot(row, "devN-4-self");
   await row.locator('[data-acc-files="gitlab"]').click(); await page.waitForTimeout(300); console.log("GITLAB", (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(0, 360));
-  await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED devN self", JSON.stringify(saved && saved.value).slice(0, 160));
+  await tickAndSend(row); await page.waitForTimeout(800); console.log("SAVED devN self", JSON.stringify(saved && saved.value).slice(0, 160));
   await row.locator('[data-acc-files="unsure"]').click(); await page.waitForTimeout(300); console.log("UNSURE", (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(-160), "| step3:", (await row.locator("[data-acc-part='3']").innerText()).replace(/\s+/g, " "));
 });
 await run("none", async (row) => {
@@ -89,8 +91,8 @@ await run("none", async (row) => {
     const more = row.locator("[data-acc-more]"); if (await more.count() && (await more.getAttribute("aria-expanded")) !== "true" && !(await row.locator(`[data-acc-pick="${k}"]`).isVisible())) { await more.click(); await page.waitForTimeout(150); }
     await row.locator(`[data-acc-pick="${k}"]`).click(); await page.waitForTimeout(250);
     console.log(`B ${k} ::`, (await row.locator("[data-acc-part='2']").innerText()).replace(/\s+/g, " ").slice(0, 210), "|| S3:", (await row.locator("[data-acc-part='3']").innerText()).replace(/\s+/g, " ").slice(-60));
-    if (k === "wix") { await shot(row, "b-wix"); await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(200); await shot(row, "b-wix-dev"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(700); console.log("SAVED wix dev", JSON.stringify(saved && saved.value).slice(0, 120)); await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(200); }
-    if (k === "squareonline") { await shot(row, "b-sqo"); await row.locator('[data-acc-wk="share"]').click(); await page.waitForTimeout(200); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(700); console.log("SAVED sqo", JSON.stringify(saved && saved.value).slice(0, 120)); }
+    if (k === "wix") { await shot(row, "b-wix"); await row.locator('[data-acc-who="dev"]').click(); await page.waitForTimeout(200); await shot(row, "b-wix-dev"); await tickAndSend(row); await page.waitForTimeout(700); console.log("SAVED wix dev", JSON.stringify(saved && saved.value).slice(0, 120)); await row.locator('[data-acc-who="self"]').click(); await page.waitForTimeout(200); }
+    if (k === "squareonline") { await shot(row, "b-sqo"); await row.locator('[data-acc-wk="share"]').click(); await page.waitForTimeout(200); await tickAndSend(row); await page.waitForTimeout(700); console.log("SAVED sqo", JSON.stringify(saved && saved.value).slice(0, 120)); }
   }
 });
 await run("down", async () => {});

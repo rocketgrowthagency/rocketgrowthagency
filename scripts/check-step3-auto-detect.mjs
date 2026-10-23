@@ -129,7 +129,8 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   const N = { status: "ok", site: "joes.com", platform: "custom", confidence: "ask", host: "netlify" };
   const net = drawKey(N, "custom", "detected_confirmed");
   if (!/Hosted on Netlify/.test(net) || !/Where your website lives/.test(net) || !/Give RGA access to your website's files/.test(net)) fail("a developer-built site on Netlify doesn't say where it lives / what Step 2 is");
-  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/Kept in a code service, usually GitHub/.test(net)) fail("Step 2 doesn't explain host vs files before asking");
+  if (!/How your website works/.test(net) || !/Shows your website to visitors/.test(net) || !/Keeps your website's files\. This is where changes are made\./.test(net) || !/<b>GitHub<\/b>/.test(net) || !/Most developers use GitHub\. Some use GitLab or Bitbucket/.test(net)) fail("Step 2 doesn't explain host vs files before asking, both tiles named by the company (step3_dev_built_headers_v1)");
+  if (/Your website's files<\/b>/.test(net)) fail("the files tile is back to a description for a header (\"Your website's files\") beside a company name");
   if (!/data-acc-who="self"/.test(net) || !/data-acc-who="dev"/.test(net) || /data-acc-send/.test(net)) fail("before choosing, Step 2 isn't \"Who will do this?\" (or Step 3's button shows already)");
   const self = drawKey(N, "custom", "detected_confirmed", { _accWho: "self" });
   if (!/data-acc-files="gitlab"/.test(self) || !/rocketgrowthagency/.test(self) || !/No need to add us on Netlify/.test(self) || !/I added RGA on GitHub/.test(self)) fail("\"I'll do it myself\" isn't: where are the files · GitHub steps · no need for Netlify · \"I added RGA on GitHub\"");
@@ -137,9 +138,15 @@ if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found do
   if (!/Manage<\/b>, then <b>Members/.test(gl) || !/Maintainer/.test(gl) || !/I added RGA on GitLab/.test(gl)) fail("GitLab's steps aren't GitLab's (Manage → Members → Invite, Maintainer)");
   const bb = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "bitbucket" });
   if (!/Repository permissions/.test(bb) || !/<b>Write<\/b>/.test(bb)) fail("Bitbucket's steps aren't Bitbucket's (Repository settings → Repository permissions, Write)");
+  // 🔒 step3_dev_built_headers_v1 (10-23): the client sends the email (not "we write a note"); GitLab / Bitbucket's free plans have 5 seats
+  if (!/My developer will<\/b><small>Send them a short email<\/small>/.test(net) || /We write a short note/.test(P)) fail("\"My developer will\" doesn't say \"Send them a short email\" (or the old \"We write a short note\" is back)");
+  if (!/Free if you have fewer than 5 people on your free GitLab plan/.test(gl) || !/Free if you have fewer than 5 people on your free Bitbucket plan/.test(bb)) fail("GitLab / Bitbucket say adding us is free without the 5-seat limit (over it their private projects go read-only)");
+  if (/fewer than 5 people/.test(self) || !/Adding us is free/.test(self)) fail("GitHub (no collaborator limit) got the 5-seat line, or lost \"Adding us is free\"");
+  if (!/User and group access/.test(bb)) fail("Bitbucket's step 2 doesn't name the other menu label (User and group access)");
   const uns = drawKey(N, "custom", "detected_confirmed", { _accWho: "self", _accFiles: "unsure" });
   if (!/Whoever built your website will know/.test(uns) || /data-acc-send/.test(uns)) fail("\"I'm not sure\" where the files are doesn't point to the developer");
   const dv = drawKey(N, "custom", "detected_confirmed", { _accWho: "dev" });
+  if (!/Copy the email<\/button>/.test(dv) || /Copy the note/.test(P)) fail("the copy button says \"note\" (it's an email they send)");
   if (!/Send this to your developer/.test(dv) || !/data-acc-note-copy/.test(dv) || !/mailto:\?subject=/.test(dv) || !/data-via="designer"/.test(dv) || !/I sent it to my developer/.test(dv)) fail("\"My developer will\" doesn't show the note IN Step 2 (Copy · Open in email · I sent it to my developer)");
   if (!/There&#39;s no need to add them on Netlify|There's no need to add them on Netlify/.test(dv)) fail("the developer note doesn't say to skip the paid-seat host");
   const ghp = drawKey({ ...N, host: "githubpages" }, "custom", "detected_confirmed", { _accWho: "self" });

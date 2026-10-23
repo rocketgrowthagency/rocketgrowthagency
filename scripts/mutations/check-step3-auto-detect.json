@@ -454,5 +454,35 @@
   "admin",
   "(ci.consent && ci.consent.at ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by",
   "(false ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by"
+ ],
+ [
+  "the files tile is a description again, not a company",
+  "portal",
+  "<b>${escapeHtml(F0.name)}</b>Keeps your website's files.",
+  "<b>Your website's files</b>Keeps your website's files."
+ ],
+ [
+  "\"My developer will\" says we write the note",
+  "portal",
+  "opt(\"dev\", ACC_ICON.dev, \"My developer will\", \"Send them a short email\")",
+  "opt(\"dev\", ACC_ICON.dev, \"My developer will\", \"We write a short note for you to send them\")"
+ ],
+ [
+  "GitLab / Bitbucket lose the 5-seat line",
+  "portal",
+  "${F.seats ? `Free if you have fewer than",
+  "${0 ? `Free if you have fewer than"
+ ],
+ [
+  "Bitbucket loses its other menu name",
+  "portal",
+  " Some accounts call it User and group access.\"]",
+  "\"]"
+ ],
+ [
+  "the copy button says note",
+  "portal",
+  "${ACC_ICON.copy}Copy the email</button><a class=\"pm-amend\" href=\"mailto:?subject=${encodeURIComponent(n.subject)}",
+  "${ACC_ICON.copy}Copy the note</button><a class=\"pm-amend\" href=\"mailto:?subject=${encodeURIComponent(n.subject)}"
  ]
 ]
