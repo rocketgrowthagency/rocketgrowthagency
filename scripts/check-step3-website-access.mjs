@@ -57,14 +57,14 @@ if (!/Object\.entries\(ALL\)\.map\(\(\[k, \{ rga, \.\.\.pub \}\]\) => \[k, pub\]
 const ia = P.indexOf('if (t.status === "done" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {'), ib = P.indexOf('  // the ask (and, for a client who sent the old password link');
 if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall through to the ask (\"Done\" but \"Your move\")");
 // 🔒 done with nothing on record = CALM (approved step3_three_screens_v1): plain words, "Nothing for you to do", optional "Add the details"
-if (!/<b>Builder not on record<\/b>/.test(P) || !/<small>Nothing for you to do<\/small>/.test(P) || !/data-acc-redo>Edit access<\/button>/.test(P) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the calm card (Builder not on record · Nothing for you to do · only \"My website changed\" — never asks the client to fill in RGA's records)");
+if (!/<b>Your website builder<\/b> · not on record/.test(P) || !/"You marked it done"\}\. Nothing for you to do\.`\)/.test(P) || !/data-acc-redo>Edit access<\/button>/.test(P) || /Want it on record\?|>Add the details<|>Add your builder</.test(P)) fail("done-without-record isn't the calm card (builder not on record · Nothing for you to do · only Edit access — never asks the client to fill in RGA's records)");
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
 if (!/<a class="pm-ax-go" href="\$\{escapeAttribute\(link\)\}"/.test(P) || !/<a class="pm-ax-go" href="\$\{escapeAttribute\(F\.link\)\}"/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");
 if (!/\.pm-ax-go \{[^}]*white-space:nowrap/.test(read("portal/portal.css")) || !/\.pm-ax-setup li \{ display:grid;/.test(read("portal/portal.css"))) fail("a setup button can wrap mid-sentence again (Chris's screenshot)");
 // ── Chris's walk-through 10-22 (all fixed, all pinned)
 const CSS = read("portal/portal.css");
-if (/tile: RC_LOCK/.test(P) || !/const RC_WEB = /.test(P)) fail("step 3 shows a padlock again (since 10-21 the padlock means Locked) — it's a website icon");
+if (/tile: RC_LOCK|icon: RC_LOCK/.test(P) || !/const RC_WEB = /.test(P)) fail("step 3 shows a padlock again (since 10-21 the padlock means Locked) — it's a website icon");
 if (!/: isDone && _rcEditing\.has\(step\.id\) \? \{ text: "Updating", cls: "edit" \}/.test(P)) fail("a done step being changed says \"Done\" above \"Your move\" (it says Updating)");
 // 10-22 (Chris: "no spinner or anything"): the redraw is instant, so the wait is the card's "Checking which builder…" line — it SPINS
 if (!/\.pm-msg\.busy \.dot\{[^}]*animation:pm-later-spin/.test(CSS)) fail("a waiting message (\"Checking which builder your website uses…\") shows a still dot, not the spinner");

@@ -44,7 +44,7 @@ if (!/const gate = action === "log" \? await requireWorkspaceForClient\(event, c
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
 const line = (n) => ((P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")) || [""])[0]).replace(/^const /, "var ");
 const STEP_LOCK = createRequire(import.meta.url)(`${SITE}/shared/step-lock.js`);   // the real lock rule (step_lock_after_rga_confirms_v1)
-const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
+const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateShort: (x) => String(x || "").slice(0, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
   stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}), googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.why ? `${o.why.label} ${o.why.text}` : "", o.act].filter(Boolean).join(" ¦ ")}</card>`, Date, JSON, Number, Set, Array, String });
 // a whole top-level `const X = …;` even across lines (step 11's question table, 10-22) — bracket depth, ignoring quotes
 const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); }
@@ -54,6 +54,7 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
     if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; else if (c === ";" && d === 0) return P.slice(at + 1, i + 1).replace(/^const /, "var "); }
   return ""; };
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
 for (const n of ["accPart", "accDidLine", "accStep1Name"]) vm.runInContext(lift(n), ctx);
 for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, ctx); vm.runInContext(lift("accPromiseHtml"), ctx);
@@ -61,7 +62,7 @@ for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "fo
 vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };
 const ok2 = run("m1.access.website", { status: "done", client_input: { via: "invite", platform: "wordpress", platform_source: "detected", at: "2026-10-20T21:14:00Z" }, access: { role: "Administrator", account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-20T23:02:00Z", confirmed_by: "chris" } });
-if (!/state="ok"/.test(ok2) || !/RGA can edit your website/.test(ok2) || !/Role Administrator · account hello@rocketgrowthagency\.com/.test(ok2) || !/hello@rocketgrowthagency\.com/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
+if (!/pm-k5-plan ok/.test(ok2) || !/<b>RGA has access<\/b>/.test(ok2) || !/ · Administrator/.test(ok2) || !/RGA signed in<\/b> as hello@rocketgrowthagency\.com/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
 if (/password/i.test(ok2.replace(/never send us your password/i, ""))) fail("step 2's done card mentions a password");
 const wait2 = run("m1.access.website", { status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-10-20T21:14:00Z" } });
 if (!/state="rga"/.test(wait2) || !/Checking we can sign in/.test(wait2)) fail("an invite sent isn't \"RGA is checking we can sign in\"");

@@ -31,6 +31,7 @@ const ctx = vm.createContext({
   seeStepText: () => "See step 2 →", portalStepNo: () => 2,
   FACT_WORDS: {}, placeName: (n) => String(n || "").split(",")[0].trim(),
 });
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b) + "\n" + (P.match(/^const KW_SPIN = `[^`]*`;$/m) || [""])[0], ctx); }   // the plan card (steps_1_4_clean_v1)
 for (const n of ["dupConfirmedOf", "keptProfileOf", "dupConfirmedHtml", "dupNoteHtml", "typeLinesHtml", "factsCardV2"]) vm.runInContext(fnSrc(n), ctx);
 const run = (src) => vm.runInContext(src, ctx);
 
@@ -39,13 +40,14 @@ const now = new Date().toISOString(), old = new Date(Date.now() - 9 * 86400000).
 const tasks = (at, verdict = "clean", status = "removed") => ({ "m1.audit.gbp_duplicate": { owner_removal: { status, title: "Acme Plumbing", phone: "(555) 010-0000", account: "a@x.com", at }, outcome_data: { verdict }, completed_at: at } });
 ctx.T = tasks(now); ctx.T2 = tasks(now, "duplicate"); ctx.T3 = tasks(old); ctx.T4 = tasks(now, "clean", "found");
 const card = run("dupConfirmedHtml(T, { google_account_email: 'o@x.com' })");
-if (!/Your duplicate Google Business Profile is gone/.test(card) || !/<summary class="gcard ok">/.test(card)) fail("step 6 doesn't show the confirmed card once Google confirms the removal");
+// 🔄 10-23 (approved steps_1_4_clean_v1): the duplicate is the verified card's last row — "Duplicate profile · Removed", the date on
+// its own line, Show / Hide details folding the removed / kept lines; still a closed accordion the top note can open
+if (!/<span class="l">Duplicate profile<\/span><span class="v">Removed/.test(card)) fail("step 6 doesn't show the duplicate as removed once Google confirms it");
 if (/photo|next step/i.test(card)) fail(`step 6's confirmation points at photos / "next step": ${card.slice(0, 160)}`);
-// v2.1 (approved 10-20): a CLOSED accordion; "Duplicate removed" on the status line, the date on its own line, Show details
-if (!/^<details class="gcard-acc" data-dup-acc>/.test(card)) fail("step 6's duplicate confirmation isn't an accordion that starts closed");
-if (!/<span class="gcard-sw">Duplicate removed<\/span><\/span>/.test(card) || /One profile on Google/.test(card)) fail('the duplicate\'s status line isn\'t just "Duplicate removed"');
-if (!/<b class="gcard-t">Your duplicate Google Business Profile is gone<\/b><span class="gcard-when">Google confirmed it [^<]+<\/span>/.test(card)) fail("the confirmation date isn't on its own line under the title");
-if (!/Show details/.test(card) || !/Hide details/.test(card) || !/<div class="gcard-acc-in">/.test(card)) fail("the accordion has no Show / Hide details or no folded lines");
+if (!/^<details class="pm-k5-plan ok pm-k5-join" data-dup-acc>/.test(card) || /<details[^>]* open/.test(card)) fail("step 6's duplicate confirmation isn't a closed accordion joined under the verified card");
+if (/One profile on Google/.test(card)) fail('the duplicate row says more than "Removed"');
+if (!/Removed<small>Google confirmed it [^<]+<\/small>/.test(card)) fail("the confirmation date isn't on its own line under Removed");
+if (!/Show details/.test(card) || !/Hide details/.test(card) || !/<div class="pm-k5-why">/.test(card)) fail("the accordion has no Show / Hide details or no folded lines");
 // order: the verified card first, the duplicate under it
 if (!/<div class="pm-gv" data-gbp-verify[^`]*Reading your Google Business Profile…<\/span><\/div>\$\{dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)\}/.test(P)) fail("step 6 doesn't draw the verified card first and the duplicate under it");
 if ((P.match(/dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)/g) || []).length !== 1) fail("step 6 draws the duplicate confirmation more than once (or above the verified card)");
@@ -70,22 +72,23 @@ ctx.G1 = { state: "with_rga", after: { name: "Acme Plumbing", phone: "+1 555-010
   progress: { at: now, items: [{ kind: "area", name: "Capital City, IL, USA", on: true }, { kind: "area", name: "Ogdenville, IL, USA", on: false }] } };
 ctx.G2 = { state: "on_google", after: ctx.G1.after, area_now: ["Springfield, IL, USA", "Capital City, IL, USA"], area_now_at: now };
 const w = run("factsCardV2(S, CI, G1)"), o = run("factsCardV2(S, CI, G2)");
-if ((w.match(/class="pm-fxt-r"/g) || []).length !== 5) fail("step 7's facts table doesn't have its 5 rows (name, phone, website, how customers reach you, service area)");
-for (const [re, what] of [[/nothing needed from you/, "nothing needed from you"], [/We compared what Google shows/, "what was compared"], [/What RGA is doing:/, "what RGA is doing"],
-  [/48 hours/, "Google's 48-hour wait"], [/Done when:/, "done when"], [/data-step-edit/, "Change something"], [/1 of 2 on Google/, "the progress count"]])
+if ((w.match(/class="pm-pc-f"/g) || []).length !== 5) fail("step 7's facts table doesn't have its 5 rows (name, phone, website, how customers reach you, service area)");
+for (const [re, what] of [[/Nothing needed from you/, "nothing needed from you"], [/We compared what Google shows/, "what was compared"], [/What RGA is doing:/, "what RGA is doing"],
+  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/1 of 2 on Google/, "the progress count"]])
   if (!re.test(w)) fail(`step 7 (RGA working) lost "${what}"`);
 for (const n of ["Springfield", "Shelbyville", "Capital City", "Ogdenville"]) {
   const k = (w.match(new RegExp(`pm-fxt-pl[^"]*"><span class="d"[^>]*></span>${n}\\b`, "g")) || []).length;
   if (k !== 1) fail(`step 7 shows the place chip "${n}" ${k} times (want exactly 1)`);
 }
-if (!/state="ok"/.test(o) || !/matches what you told us/.test(o) || /RGA is/.test(o)) fail("step 7 on Google doesn't say it matches (or still says RGA is working)");
+if (!/pm-k5-plan ok/.test(o) || !/All 5 match Google/.test(o) || /RGA is/.test(o)) fail("step 7 on Google doesn't say it matches (or still says RGA is working)");
 if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g\);/.test(P)) fail("step 7 doesn't route to the v2 card");
 // the mobile layout (Chris 10-20): stacked at every width, chips never break mid-word
 const rule = (sel) => (CSS.match(new RegExp(`\\n${sel.replace(/\./g, "\\.")} \\{([^}]*)\\}`)) || [])[1] || "";
 if (!/grid-template-columns:\s*minmax\(0,\s*1fr\) auto/.test(rule(".pm-fxt-r"))) fail("a facts row has a fixed label column again (it squeezes the value on a phone)");
 if (!/grid-column:\s*1 \/ -1/.test(rule(".pm-fxt-v"))) fail("the fact's value isn't full-width under its label (squeezed on a phone)");
 if (!/white-space:\s*nowrap/.test(rule(".pm-fxt-pl"))) fail("a place chip can break mid-word");
-if (!/<span class="pm-fxt-k">\$\{escapeHtml\(k\)\}<\/span>\$\{st\}<span class="pm-fxt-v">/.test(P)) fail("a facts row's order isn't label · state · value (the stacked layout needs it)");
+// 🔄 10-23 (steps_1_4_clean_v1): step 7's rows are the plan card's fact rows — label · value · a drawn mark (or its honest status words)
+if (!/const pcFact = \(label, value, sub = "", mark = "ok"\) => `<div class="pm-pc-f"><span class="l">\$\{escapeHtml\(label\)\}<\/span><span class="v">/.test(P) || !/const row = \(k, v, st, sub = ""\) => pcFact\(k, v, sub, st\);/.test(P)) fail("a facts row isn't label · value · mark (the plan card's row)");
 if (/@media[^{]*\{[^}]*\.pm-fxt/.test(CSS)) fail("the facts table has a width-only media rule; it must stack at every width");
 
 if (F.length) { console.error("🔴 step 6 / step 7 drifted from the approved mockups:"); for (const f of F) console.error("   · " + f); process.exit(1); }

@@ -107,8 +107,8 @@
  [
   "step 6 Check again comes back",
   "portal",
-  "    meta: kind === \"yes\" ? \"We check this every night.",
-  "    act: kind === \"yes\" ? `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` : \"\", meta: kind === \"yes\" ? \"We check this every night.",
+  "        + (maps ? `<div class=\"pm-pc-lnks\">${maps}</div>` : \"\") });",
+  "        + (maps ? `<div class=\"pm-pc-lnks\">${maps}</div>` : \"\") + `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` });",
   1
  ],
  [

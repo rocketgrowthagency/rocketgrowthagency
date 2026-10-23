@@ -30,7 +30,9 @@ if (/class="(?:tl2|pm-turned|pm-hc"|pm-gv-obj)/.test(push + hours + gv) || !/^co
 if (!/<\/div>\$\{act \? `<div class="gcard-act">\$\{act\}<\/div>` : ""\}`;/.test(portal) || !/<\/div>\$\{act \? `<div class="ob-gcard-act">\$\{act\}<\/div>` : ""\}`;/.test(admin)) fail("the card's buttons aren't UNDER the card");
 if (false) fail("a Google step still draws its own card (tl2 / pm-turned / pm-hc / pm-gv-obj) instead of the shared one");
 const facts2 = strip(pp(/^function factsCardV2\(/m) || "");
-if (((push + facts2).match(/return googleCardHtml\(/g) || []).length < 4 || !/return factsCardV2\(step, taskState, g\);/.test(push) || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv)) fail("steps 6 / 7 / 9 / 10 / 11 don't all draw the shared Google card");
+// 🔄 10-23 (approved steps_1_4_clean_v1): client step 4 (business on Google, factsCardV2) moved to THE PLAN CARD (pcCard — one band,
+// rows with drawn marks, actions under); the other Google steps keep the shared Google card until their own redesign is approved
+if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "rga"/.test(facts2) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok"/.test(facts2) || !/return factsCardV2\(step, taskState, g\);/.test(push) || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv) || !/if \(kind === "yes"\) \{[\s\S]{0,600}return pcCard\(\{ tone: "ok", icon: GV_SHIELD, head: "Verified by Google"/.test(gv)) fail("steps 6 / 9 / 10 / 11 don't all draw the shared Google card, or client steps 2 (verified) / 4 aren't the plan card");
 // 🔑 10-16 (step11_details_v1): 10 and 11 draw their own cards; their Change opens Editing (data-step-edit), never a write
 if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/act: `<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change details<\/button>`/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
 if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
@@ -52,7 +54,8 @@ if (!/if \(step\?\.flowId === "m1\.gbp\.verify" && task\?\.status === "done" && 
 // ── 2 · drawn for real, both sides, every state ──
 const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m), pl("GOOGLE_G"), pl("GC_ICON"), pp(/^function googleCardHtml\(/m), pl("gcardMaps"), pl("GV_STORE"), pp(/^function gvProfileHtml\(/m),
   pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
-  pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay")];
+  pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay"),
+  portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), pl("KW_SPIN"), pl("GV_SHIELD")];
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), al("G_ICON"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
@@ -89,7 +92,14 @@ try {
     };
     const h = document.getElementById("h"); h.innerHTML = Object.entries(cards).map(([k, v]) => `<section data-k="${k}">${v}</section>`).join("");
     const L = eval(`(${lookSrc})`);
-    return Object.fromEntries([...h.querySelectorAll("section")].map((s) => [s.dataset.k, L.call(null, `section[data-k="${s.dataset.k}"] > .gcard`)[0] || null]));
+    const out = Object.fromEntries([...h.querySelectorAll("section")].map((s) => [s.dataset.k, L.call(null, `section[data-k="${s.dataset.k}"] > .gcard`)[0] || null]));
+    // the plan card (client step 4): a thin border, the band in the rga tint, drawn marks (no typed glyph), the buttons under it
+    const pc = h.querySelector('section[data-k="7 with RGA"] .pm-k5-plan'), band = pc && pc.querySelector(".pm-k5-h");
+    out.__plan = pc ? { edgeW: getComputedStyle(pc).borderLeftWidth, band: getComputedStyle(band).backgroundColor, marks: pc.querySelectorAll(".pm-pc-f .c svg").length,
+      typed: /[✓✔]/.test([...pc.querySelectorAll(".pm-pc-f .c")].map((c) => c.textContent).join("")), actsUnder: !!h.querySelector('section[data-k="7 with RGA"] .pm-k5-plan + .pm-k5-acts .pm-amend') } : null;
+    const v6 = h.querySelector('section[data-k="6 verified"] .pm-k5-plan'), b6 = v6 && v6.querySelector(".pm-k5-h");
+    out.__v6 = v6 ? { edgeW: getComputedStyle(v6).borderLeftWidth, band: getComputedStyle(b6).backgroundColor, marks: v6.querySelectorAll(".pm-pc-f .c svg").length, typed: /[✓✔]/.test(b6.textContent), recheck: !!h.querySelector('section[data-k="6 verified"] [data-step-recheck]') } : null;
+    return out;
   }, look.toString());
   const apage = await browser.newPage();
   await apage.setContent("<html><body><div id=h></div></body></html>");
@@ -112,7 +122,12 @@ try {
   }, look.toString());
 } finally { await browser.close(); }
 
-const want = { "9 done": "ok", "10 done": "ok", "11 done": "ok", "7 with RGA": "rga", "11 with RGA": "rga", "10 Google said": "you", "6 verified": "ok", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
+const want = { "9 done": "ok", "10 done": "ok", "11 done": "ok", "11 with RGA": "rga", "10 Google said": "you", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
+{ const v6 = P.__v6;
+  if (!v6 || v6.edgeW !== "1px" || v6.band !== TINT.ok || v6.marks < 2 || v6.typed || v6.recheck) fail(`client step 2 verified isn't the plan card (thin border, the ok band, drawn marks): ${JSON.stringify(v6)}`); }
+{ const pc = P.__plan;
+  if (!pc) fail("client step 4 (7 with RGA) isn't drawn as the plan card");
+  else if (pc.edgeW !== "1px" || pc.band !== TINT.rga || pc.marks < 3 || pc.typed || !pc.actsUnder) fail(`client step 4's plan card isn't right: thin border, the rga band, drawn marks, actions under (${JSON.stringify(pc)})`); }
 for (const [k, st] of Object.entries(want)) {
   const c = P[k];
   if (!c) { fail(`portal "${k}" isn't the shared Google card`); continue; }

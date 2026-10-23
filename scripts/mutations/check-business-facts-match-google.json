@@ -436,8 +436,8 @@
  [
   "client sees no chips",
   "portal",
-  "${areaChips ? `<span class=\"pm-fxt-pls\">${areaChips}</span>` : \"\"}",
-  "",
+  "(areaChips ? `<div class=\"pm-pc-chips\">${areaChips}</div>` : \"\")",
+  "(\"\")",
   1
  ],
  [

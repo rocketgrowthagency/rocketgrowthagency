@@ -79,8 +79,8 @@
  [
   "no Maps link",
   "portal",
-  "const maps = f.mapsUri ? `<a class=\"gcard-maps\"",
-  "const maps = false ? `<a class=\"gcard-maps\"",
+  "    const maps = f.mapsUri ? `<a class=\"gcard-maps\" href=\"${escapeAttribute(f.mapsUri)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\";\n    return pcCard(",
+  "    const maps = false ? `<a class=\"gcard-maps\" href=\"${escapeAttribute(f.mapsUri)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\";\n    return pcCard(",
   1
  ]
 ]

@@ -15,7 +15,8 @@ page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 
 await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
 await page.waitForSelector('.portal-nav a[data-view="setup"]', { timeout: 45000 }); await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
 await page.evaluate(() => document.querySelector('.portal-nav a[data-view="setup"]')?.click()); await page.waitForTimeout(3000);
-const row = page.locator('[id="step-row-m1.strategy.keywords_locations"]');
+const row = page.locator(`[id="step-row-${process.env.STEP || "m1.strategy.keywords_locations"}"]`);
 if (await row.evaluate((e) => e.classList.contains("is-collapsed"))) { await row.evaluate((e) => e.querySelector(":scope > [data-step-toggle]")?.click()); await page.waitForTimeout(500); }
-await row.screenshot({ path: `${out}/step5.png` }); console.log("[step5]", (await row.innerText()).replace(/\s+/g, " ").slice(0, 1400));
+if (process.env.WAIT) await page.waitForSelector(process.env.WAIT, { timeout: 30000 }).catch(() => {}); await page.waitForTimeout(500);
+await row.screenshot({ path: `${out}/${process.env.STEP || "step5"}.png` }); console.log(`[${process.env.STEP || "step5"}]`, (await row.innerText()).replace(/\s+/g, " ").slice(0, 1400));
 await b.close();

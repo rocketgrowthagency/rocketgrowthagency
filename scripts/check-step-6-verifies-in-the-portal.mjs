@@ -77,7 +77,7 @@ if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m),
+const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), line("GV_SHIELD"), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m),
   // 10-20 (phase1_get_started_v1): the code goes on Google's screen — its block, the fold, the filming guide
   (() => { const a = portal.indexOf("const GV_ON_GOOGLE = `"); return a < 0 ? "" : portal.slice(a, portal.indexOf("`;", a + 22) + 2); })(), pick(/^function gvCodeFallbackHtml\(/m), pick(/^function gvFilmGuideHtml\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-6 helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
@@ -93,7 +93,8 @@ try {
     const h = document.getElementById("h");
     const f = { title: "Rocket Growth Agency", phone: "(424) 242-2040", mapsUri: "https://maps.google.com/maps?cid=1" };
     h.innerHTML = gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 15, 9:40 AM"]]);
-    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".gcard-maps")?.getAttribute("href"), recheck: !!h.querySelector('.gcard + .gcard-act [data-step-recheck="m1.gbp.verify"]'), how: !!h.querySelector('.gcard-proof [data-gcard-how="m1.gbp.verify"]'), card: h.firstElementChild?.className };
+    h.querySelector("details.pm-k5-fold")?.setAttribute("open", "");
+    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".gcard-maps")?.getAttribute("href"), recheck: !!h.querySelector('[data-step-recheck="m1.gbp.verify"]'), how: !!h.querySelector('.pm-k5-fold [data-gcard-how="m1.gbp.verify"]'), card: h.firstElementChild?.className };
     h.innerHTML = gvOptionsHtml([{ method: "EMAIL", label: "Email a code to x@y.com", sub: "s", code: true }, { method: "SMS", label: "Text", sub: "s", code: true }]);
     const emailFirst = { fastest: !!h.querySelector("em"), sel: h.querySelector(".pm-gv-m.sel")?.getAttribute("data-gv-method"), google: h.querySelector('a[href="https://business.google.com/"]') ? 1 : 0, codeHidden: h.querySelector("[data-gv-code]")?.hidden };
     h.innerHTML = gvOptionsHtml([{ method: "SMS", label: "Text a code to (424) 242-2040", sub: "s", code: true }]);
@@ -104,8 +105,9 @@ try {
   // 🔒 one_google_card_v1: the one Google card, green; Checked + Maps + "How verification works" in its bottom line, "Check again" top-right
   // 🔒 google_card_best_v1: one status line (Verified by Google · checked …), the profile, proof (Maps · How), Check again under the card
   // v2.1 (10-20): the time on its own line under the title; no Check again — the every-night note instead
-  if (!/^Verified by Google Google Business Profile Last checked Oct 15, 9:40 AM Business Rocket Growth Agency Phone on the profile \(424\) 242-2040 We check this every night\. .*this step reopens and we'll tell you what to do\. See it on Google Maps ↗ How verification works$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
-  if (r.yes.card !== "gcard ok" || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the one green Google card with How verification works and NO Check again (${JSON.stringify(r.yes)})`);
+  // 🔄 10-23 (steps_1_4_clean_v1): the plan card — "Verified by Google · checked", Business + Phone rows, how verification works folded, Maps
+  if (!/^Verified by Google checked Oct 15, 9:40 AM Business Rocket Growth Agency Phone \(424\) 242-2040 How verification works, and when it can come back We check this every night\. .*this step reopens and we'll tell you what to do\. How verification works See it on Google Maps ↗$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
+  if (r.yes.card !== "pm-k5-plan ok" || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the green plan card with How verification works and NO Check again (${JSON.stringify(r.yes)})`);
   if (r.emailFirst.fastest || r.emailFirst.sel !== "EMAIL" || !r.emailFirst.google || r.emailFirst.codeHidden !== true) fail(`the ways to verify are drawn wrong (${JSON.stringify(r.emailFirst)})`);
   if (!r.smsFirst) fail("a text code isn't marked Fastest");
   if (r.x) fail("the profile's name became HTML");

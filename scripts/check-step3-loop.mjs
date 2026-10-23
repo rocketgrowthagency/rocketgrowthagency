@@ -93,9 +93,10 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
     googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, ctx);
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
-  if (!/Access confirmed/.test(card) || !/hello@rocketgrowthagency\.com/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
+  if (!/RGA has access/.test(card) || !/hello@rocketgrowthagency\.com/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
   if (/data-acc-redo/.test(card)) fail("the client's confirmed card offers a way to change it while it's locked");
 }
 if (F.length) { console.error("🔴 step 3's loop is broken:"); for (const f of F) console.error("   · " + f); process.exit(1); }

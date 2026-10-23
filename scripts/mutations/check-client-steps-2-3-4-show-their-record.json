@@ -51,8 +51,8 @@
  [
   "the done card drops the role",
   "portal",
-  "<span class=\"pm-ax-did\">Role ${escapeHtml(acc.role || \"\")} · account ${escapeHtml(acc.account || \"\")}</span>",
-  "<span class=\"pm-ax-did\">account ${escapeHtml(acc.account || \"\")}</span>",
+  "+ pcTl(`<b>${who}</b>${acc.role ? ` · ${escapeHtml(acc.role)}` : \"\"}`,",
+  "+ pcTl(`<b>${who}</b>`,",
   1
  ],
  [

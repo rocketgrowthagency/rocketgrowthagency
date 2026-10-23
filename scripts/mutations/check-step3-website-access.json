@@ -44,8 +44,8 @@
  [
   "done-without-record loses its calm words",
   "portal",
-  "<small>Nothing for you to do</small>",
-  "<small>Not recorded</small>"
+  "+ pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`)",
+  "+ pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Not recorded.`)"
  ],
  [
   "the Change button goes (can't X out)",
@@ -122,8 +122,8 @@
  [
   "the padlock is back on step 3",
   "portal",
-  "tile: RC_WEB, small: \"✓ Access confirmed\"",
-  "tile: RC_LOCK, small: \"✓ Access confirmed\""
+  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_WEB, head: \"RGA has access\", side: `confirmed",
+  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_LOCK, head: \"RGA has access\", side: `confirmed"
  ],
  [
   "Done shows over Your move while updating",
@@ -224,8 +224,8 @@
  [
   "the done card asks the client to fill in records again",
   "portal",
-  "data-acc-redo>Edit access</button>",
-  "data-acc-redo>Add the details</button>"
+  "        + pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`) })}`\n      + pcActs(`<button type=\"button\" class=\"pm-amend\" data-acc-redo>Edit access</button>`)",
+  "        + pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`) })}`\n      + pcActs(`<button type=\"button\" class=\"pm-amend\" data-acc-redo>Add the details</button>`)"
  ],
  [
   "the promise leaves the card",

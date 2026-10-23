@@ -2,8 +2,8 @@
  [
   "the confirmed card mentions photos",
   "portal",
-  "<span class=\"gcard-says\">Only your main Business Profile shows on Maps and Search now.</span>",
-  "<span class=\"gcard-says\">Your next step is open: upload your business photos.</span>",
+  "<div>Only your main Business Profile shows on Maps and Search now.</div>${typeLinesHtml",
+  "<div>Your next step is open: upload your business photos.</div>${typeLinesHtml",
   1
  ],
  [
@@ -44,15 +44,15 @@
  [
   "step 7 drops the 48-hour line",
   "portal",
-  " Google can take up to 48 hours to show a change; we check every night.",
-  " We check every night.",
+  " Google can take up to 48 hours; we check every night. Nothing needed from you.",
+  " We check every night. Nothing needed from you.",
   1
  ],
  [
   "step 7 drops done-when",
   "portal",
-  "<b>Done when:</b> Google shows",
-  "<b>Next:</b> Google shows",
+  "body: rows.join(\"\") + pcFoot(`Done when Google shows",
+  "body: rows.join(\"\") + pcFoot(`Next: Google shows",
   1
  ],
  [
@@ -100,15 +100,15 @@
  [
   "the row order is value before state",
   "portal",
-  "<span class=\"pm-fxt-k\">${escapeHtml(k)}</span>${st}<span class=\"pm-fxt-v\">${v}</span></div>",
-  "<span class=\"pm-fxt-k\">${escapeHtml(k)}</span><span class=\"pm-fxt-v\">${v}</span>${st}</div>",
+  "const row = (k, v, st, sub = \"\") => pcFact(k, v, sub, st);",
+  "const row = (k, v, st, sub = \"\") => pcFact(k, st, sub, v);",
   1
  ],
  [
   "on Google says RGA is working",
   "portal",
-  "title: \"Your business on Google matches what you told us\",",
-  "title: \"RGA is checking your business on Google\",",
+  "head: `All ${rows.length} match Google`",
+  "head: `RGA is checking ${rows.length} facts`",
   1
  ],
  [
@@ -128,22 +128,22 @@
  [
   "the accordion starts open",
   "portal",
-  "return `<details class=\"gcard-acc\" data-dup-acc>",
-  "return `<details class=\"gcard-acc\" data-dup-acc open>",
+  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc>",
+  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc open>",
   1
  ],
  [
   "One profile on Google is back",
   "portal",
-  "<span class=\"gcard-sw\">Duplicate removed</span>",
-  "<span class=\"gcard-sw\">One profile on Google</span>",
+  "<span class=\"l\">Duplicate profile</span><span class=\"v\">Removed",
+  "<span class=\"l\">Duplicate profile</span><span class=\"v\">Removed · One profile on Google",
   1
  ],
  [
   "the date rides the status line",
   "portal",
-  "<span class=\"gcard-sw\">Duplicate removed</span></span>",
-  "<span class=\"gcard-sw\">Duplicate removed</span><span class=\"gcard-side\">· confirmed</span></span>",
+  "Removed${c.at ? `<small>Google confirmed it ${escapeHtml(monthDay(c.at))}</small>` : \"\"}",
+  "Removed${c.at ? ` · Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\"}",
   1
  ],
  [
