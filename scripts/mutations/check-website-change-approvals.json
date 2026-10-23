@@ -1,0 +1,176 @@
+[
+ [
+  "a website step drops out of the approve bucket",
+  "playbook",
+  "\"clientLabel\": \"Your homepage in Google\"",
+  "\"clientLabel\": null"
+ ],
+ [
+  "a website step isn't a website change",
+  "sitechange",
+  "    \"m1.web.tracking\": { kind: \"code\",",
+  "    \"m1.web.trackingX\": { kind: \"code\","
+ ],
+ [
+  "an edited draft still counts as sent",
+  "sitechange",
+  "    if (ir && ir.decision === \"approved\" && ir.change_v === c.v) return \"sent\";",
+  "    if (ir && ir.decision === \"approved\") return \"sent\";"
+ ],
+ [
+  "an old approval covers a new version",
+  "sitechange",
+  "    if (a && a.change_v === c.v && a.decision === \"approved\") return \"approved\";",
+  "    if (a && a.decision === \"approved\") return \"approved\";"
+ ],
+ [
+  "approved counts as done",
+  "sitechange",
+  "const stepMayBeDone = (t) => changeState(t) === \"live\" ||",
+  "const stepMayBeDone = (t) => changeState(t) === \"live\" || changeState(t) === \"approved\" ||"
+ ],
+ [
+  "no-change needs no note",
+  "sitechange",
+  "!!(t && t.no_change_needed && t.no_change_needed.note)",
+  "!!(t && t.no_change_needed)"
+ ],
+ [
+  "a visible change with no new text",
+  "sitechange",
+  "    if (kind !== \"code\" && !items.some((i) => i.after)) return { error: \"Write the new text for at least one change.\" };",
+  ""
+ ],
+ [
+  "emoji allowed",
+  "sitechange",
+  "    if (EMOJI.test(words)) return",
+  "    if (false) return"
+ ],
+ [
+  "entities not decoded in the read-back",
+  "sitechange",
+  "      .replace(/&([a-z]+);/gi, (m, n) => (ENT[n.toLowerCase()] != null ? ENT[n.toLowerCase()] : m))",
+  ""
+ ],
+ [
+  "the read-back always passes",
+  "sitechange",
+  "    return want.filter((w) => { const n = norm(w.s); return !(raw.includes(n) || text.includes(n)); }).map((w) => w.label);",
+  "    return [];"
+ ],
+ [
+  "the internal gate ignores the version",
+  "deliv",
+  "  if (task.site_change) return !!task.site_change.v && task.internal_review.change_v === task.site_change.v;",
+  ""
+ ],
+ [
+  "sending doesn't record the version",
+  "admindeliv",
+  "      ...(t.site_change && t.site_change.v ? { change_v: t.site_change.v } : {}) };",
+  " };"
+ ],
+ [
+  "publish before approval",
+  "admindeliv",
+  "      if (st !== \"approved\") return json(409,",
+  "      if (st === \"live\") return json(409,"
+ ],
+ [
+  "Mark live ignores the missing text",
+  "admindeliv",
+  "          if (missing.length && !String(body.unchecked_reason || \"\").trim()) {",
+  "          if (false) {"
+ ],
+ [
+  "publish doesn't finish the step",
+  "admindeliv",
+  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };\n      t.status = \"done\"; t.completed_at = now;",
+  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };"
+ ],
+ [
+  "no ledger row on publish",
+  "admindeliv",
+  "        await recordChange({ clientId, surface: \"website\", field: `site_change:${key}`,",
+  "        if (0) await recordChange({ clientId, surface: \"website\", field: `site_change:${key}`,"
+ ],
+ [
+  "a new change doesn't keep the live one",
+  "admindeliv",
+  "        t.site_change_log = [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null }].slice(-20);",
+  ""
+ ],
+ [
+  "no-change without a reason",
+  "admindeliv",
+  "      if (note.length < 3) return json(400,",
+  "      if (false) return json(400,"
+ ],
+ [
+  "the client's answer isn't version-locked",
+  "portaldeliv",
+  "      if (String(body.change_v || \"\") !== site.v) return json(409,",
+  "      if (false) return json(409,"
+ ],
+ [
+  "the approval doesn't freeze the change",
+  "portaldeliv",
+  "      tasks[key].approval.approved_change = JSON.parse(JSON.stringify(site));",
+  ""
+ ],
+ [
+  "the client gets text blocks, not the change",
+  "portaldeliv",
+  "        change: { v: c.v, kind: c.kind,",
+  "        _change: { v: c.v, kind: c.kind,"
+ ],
+ [
+  "Ask to undo without a live change",
+  "portaldeliv",
+  "    if (!SC.isSiteChangeStep(key) || !t || SC.changeState(t) !== \"live\") return json(409,",
+  "    if (!SC.isSiteChangeStep(key) || !t) return json(409,"
+ ],
+ [
+  "RGA isn't told about an undo",
+  "portaldeliv",
+  "notify-rga`, {\n          method: \"POST\", headers: { \"Content-Type\": \"application/json\", Authorization: event.headers.authorization || \"\" },\n          body: JSON.stringify({ client_id: clientId, kind: \"client_step_update\",\n            message: `${key} — the client asked to undo",
+  "notify-nobody`, {\n          method: \"POST\", headers: { \"Content-Type\": \"application/json\", Authorization: event.headers.authorization || \"\" },\n          body: JSON.stringify({ client_id: clientId, kind: \"client_step_update\",\n            message: `${key} — the client asked to undo"
+ ],
+ [
+  "a run marks a website step done",
+  "exec",
+  "      else result.completed = false;",
+  "      else void 0;"
+ ],
+ [
+  "admin Mark done skips the approval",
+  "admin",
+  "    if (SCg.isSiteChangeStep(stepId) ? !SCg.stepMayBeDone(t) : !SCg.copyMayBeDone(t)) {",
+  "    if (false) {"
+ ],
+ [
+  "done website rows lose the card",
+  "admin",
+  "          globalThis.rgaSiteChange && globalThis.rgaSiteChange.isSiteChangeStep(o.flowId) ? siteChangeAdminHtml(o.flowId, s.task) : \"\"}</div>",
+  "          \"\"}</div>"
+ ],
+ [
+  "the inbox doesn't send the version",
+  "portal",
+  "change_v: box.getAttribute(\"data-ib-v\") || undefined,",
+  "change_v: undefined,"
+ ],
+ [
+  "no Google preview switch",
+  "portal",
+  "<button type=\"button\" data-ib-gp=\"now\" aria-pressed=\"false\">Now</button>",
+  ""
+ ],
+ [
+  "no inline diff",
+  "portal",
+  "function ibDiff(before, after) {",
+  "function ibDiffX(before, after) {"
+ ]
+]

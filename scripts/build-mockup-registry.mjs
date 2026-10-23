@@ -52,7 +52,10 @@ const rows = fs.readdirSync(DIR).filter((f) => f.endsWith(".html")).sort().map((
   })();
   // 🔒 STATUS from the mockup's OWN tag (Chris 10-20: "make sure you're saving all final approved mockups") — the page says
   // whether it was approved, built, pending or superseded; the registry repeats it so the FINAL approved one is findable
-  const tag = ((html.slice(0, 20000).match(/<span class="tag[^"]*">([^<]*)<\/span>/i) || [])[1] || "").trim();
+  // the page's kicker line ("Mockup · step 3 · APPROVED + BUILT 10-23") wins; else its first tag. Status words in the kicker were
+  // missed before 10-23, so approved mockups read "—" and the final approved one wasn't findable.
+  const kick = ((html.slice(0, 60000).match(/class="kicker"[^>]*>([^<]*)</i) || [])[1] || "").trim();
+  const tag = (/APPROVED|LIVE|BUILT|SUPERSEDED|PENDING|Proposed/i.test(kick) ? kick : ((html.slice(0, 60000).match(/<span class="tag[^"]*">([^<]*)<\/span>/i) || [])[1] || "")).trim();
   const status = /SUPERSEDED/i.test(tag) ? "superseded" : /APPROVED|LIVE|BUILT/i.test(tag) ? "✅ approved" : /PENDING|Proposed/i.test(tag) ? "⏳ pending" : "—";
   return { f, base, title, date, subject, cited, art, status };
 });

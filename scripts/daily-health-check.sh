@@ -502,6 +502,7 @@ run check-every-service-key-function-checks-its-caller.mjs "security: every func
 run check-review-requests-ask-everyone.mjs "review requests ask EVERYONE: no gating, no incentives, no drafting notes reach a customer (Google review policy)"
 run check-step3-website-access.mjs "step 3 website access: one audited 22-builder source, detector ties (Square>Weebly, Showit>WordPress), done never asks, tiles + Change, conversation at the bottom"
 run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
+run check-website-change-approvals.mjs "every website change goes through For your approval: all Month 1 website steps; draft → send → the client approves THAT version → Mark live reads the page back → done; no run or Mark done skips it; the inbox"
 run check-a-held-kickoff-cannot-be-reopened.mjs "a kickoff call that happened (recap sent or time passed) can't be reopened from the portal: \"Not right?\" instead of Change; the server refuses"
 run check-a-confirmed-step-is-locked.mjs "a step RGA confirmed is locked for the client: no reopen/overwrite, Not right? always, Request a change, admin Unlock with a reason; every portal writer goes through shared/step-lock.js"
 run check-a-toggle-names-what-it-opens.mjs "every step toggle names what it opens (How to do this / How this step works / What RGA does here), and RGA's email in instructions is a copy chip"

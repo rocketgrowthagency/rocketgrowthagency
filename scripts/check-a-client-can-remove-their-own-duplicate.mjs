@@ -479,7 +479,7 @@ if (!/kept: key === "m1\.audit\.gbp_duplicate" \? kept : null,/.test(code("netli
 // a pressed button that waits on the server shows a spinner (Chris: "a progress circle"), and the Keep link opens by place id
 // each waiting button, by name (a count passed with one of them missing once a fourth was added)
 for (const [re, which] of [
-  [/box\.querySelectorAll\("button"\)\.forEach\(\(b\) => \{ b\.disabled = true; \}\);[\s\S]{0,200}btn\.classList\.add\("is-busy"\);/, "the answer buttons"],
+  [/closest\("\[data-ap-answer\]"\);[\s\S]{0,300}box\.querySelectorAll\("button"\)\.forEach\(\(b\) => \{ b\.disabled = true; \}\);[\s\S]{0,200}btn\.classList\.add\("is-busy"\);/, "the answer buttons"],   // anchored to THAT handler (10-23: the inbox's own handler matched the bare pattern)
   [/closest\("\[data-dup-owner-signin\]"\);\s*if \(!b\) return;\s*b\.disabled = true; b\.classList\.add\("is-busy"\);/, "Sign in with Google"],
   [/b\.textContent = "Removing…"; b\.classList\.add\("is-busy"\);/, "Remove the second listing"],
   [/closest\("\[data-ap-clear\]"\);\s*if \(!b\) return;\s*b\.disabled = true; b\.classList\.add\("is-busy"\);/, "Change my answer"],
@@ -768,7 +768,7 @@ if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's 
   const pd = code("netlify/functions/portal-deliverables.js");
   // 🔒 approvals_page_v1 (10-20): a confirmation is ONE Done row straight away (no 7-day card at the top; its card lives on step 2)
   if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "You removed it · Google confirmed it"/.test(pd) || /Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under Done once Google shows one listing");
-  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, html: `<div class="ap-row">/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
+  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, e: \{ type: "resolved", title: x\.title, sub: `\$\{x\.label\}/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
 }
 if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(portal)) fail("the queue counts a card that waits on RGA as one that \"needs you\"");
 // admin step 11 has RGA's two choices, and shows the facts the same way (not measured = "couldn't")

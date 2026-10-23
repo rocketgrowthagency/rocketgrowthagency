@@ -368,6 +368,7 @@ const NOT_PREFLIGHT = {
   'check-a-confirmed-step-is-locked.mjs': 'the WEBSITE repo\'s step lock (shared/step-lock.js + every portal writer + admin unlock, fake DB) — files only; daily-health-check.sh',
   'check-a-held-kickoff-cannot-be-reopened.mjs': 'the WEBSITE repo\'s portal-step-choice + portal kickoff row (fake DB) — files only; daily-health-check.sh',
   'check-approvals-page.mjs': 'the WEBSITE repo\'s For your approval page (approvals_page_v1) — files only; daily-health-check.sh',
+  'check-website-change-approvals.mjs': 'the WEBSITE repo\'s website-change loop (shared/site-change.js + admin/portal-deliverables run against a fake DB + the inbox) — files only; daily-health-check.sh',
   'check-review-requests-ask-everyone.mjs': 'the WEBSITE repo\'s review-request policy (step 56/12, Monthly) — not video preflight; daily-health-check.sh',
   'check-no-client-record-was-lost.mjs': 'reads PRODUCTION records + activity (read-only, one at a time) — daily-health-check.sh, not preflight',
   'check-client-portal-phases.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
