@@ -25,9 +25,10 @@ const FAKE = {
 await ctx.route("**/rest/v1/client_onboarding_records*", async (r) => {
   if (r.request().method() !== "GET") return r.fulfill({ status: 204, body: "" });
   const res = await r.fetch(); let body = await res.text();
-  try { const j = JSON.parse(body); const rows = Array.isArray(j) ? j : [j]; if (r.request().url().includes(WALK_CLIENTS.main.id)) for (const row of rows) if (row && row.data) { row.data.tasks = { ...(row.data.tasks || {}), ...FAKE }; } body = JSON.stringify(j); } catch {}
+  try { const j = JSON.parse(body); const rows = Array.isArray(j) ? j : [j]; if (r.request().url().includes(WALK_CLIENTS.main.id)) for (const row of rows) if (row && row.data) { row.data.tasks = { ...(row.data.tasks || {}), ...FAKE }; if (process.env.ACCESS) { row.data.tasks["m1.access.website"] = { status: "done", completed_at: "2026-10-23T18:00:00Z", client_input: { via: "invite", platform: "custom", who: "self", files: "github", at: "2026-10-23T17:00:00Z" }, access: { role: "Write", account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-23T18:00:00Z", confirmed_by: "hello@rocketgrowthagency.com" } }; row.data.site_snapshot = globalThis.__SNAP; } } body = JSON.stringify(j); } catch {}
   r.fulfill({ status: res.status(), headers: res.headers(), body });
 });
+if (process.env.ACCESS) { const { createRequire } = await import("node:module"); const rq = createRequire(`${SITE_DIR}/netlify/functions/x.js`); const S = rq(`${SITE_DIR}/netlify/functions/_site-snapshot.js`); globalThis.__SNAP = { ...(await S.takeSnapshot("rocketgrowthagency.com", fetch, {})), at: "2026-10-23T18:01:00Z", by: "hello@rocketgrowthagency.com" }; }
 const writes = [];
 await ctx.route("**/.netlify/functions/admin-deliverables", (r) => { const j = JSON.parse(r.request().postData() || "{}"); if (j.site_action === "prefill") return r.fallback(); writes.push(j); r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: false, error: "(harness: not written)" }) }); });
 const page = await ctx.newPage();
@@ -37,6 +38,11 @@ await page.goto(`${SITE}/admin/?view=client&id=${WALK_CLIENTS.main.id}&tab=onboa
 await page.waitForSelector(".ob-step", { state: "attached", timeout: 60000 }); await page.waitForTimeout(4000);
 await page.evaluate(() => { document.querySelectorAll(".ob-phase:not(.open) [data-ob-phase-toggle]").forEach((x) => x.click()); document.querySelectorAll("[data-ob-rollup-toggle][aria-expanded='false']").forEach((x) => x.click()); });
 await page.waitForTimeout(800);
+if (process.env.ACCESS) { const row = page.locator('.ob-step[data-ob-step="m1.access.website"]').first();
+  await row.evaluate((e) => { e.classList.remove("ob-folded"); e.querySelectorAll("[hidden]").forEach((h) => { if (!h.closest("details")) h.removeAttribute("hidden"); }); let p = e; while (p) { if (p.hasAttribute && p.hasAttribute("hidden")) p.removeAttribute("hidden"); p = p.parentElement; } });
+  await row.locator(".ob-led-d > summary").first().click().catch(() => {}); await page.waitForTimeout(300);
+  await row.screenshot({ path: `${out}/admin-row8-ledger.png` }); console.log("[row8]", (await row.innerText()).replace(/\s+/g, " ").slice(0, 700));
+  console.log("[overflow px]", await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)); await b.close(); process.exit(0); }
 for (const id of ["m1.web.homepage_meta", ...Object.keys(FAKE)]) {
   const row = page.locator(`.ob-step[data-ob-step="${id}"]`).first();
   if (!(await row.count())) { console.log(`[${id}] NO ROW`); continue; }

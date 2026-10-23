@@ -48,6 +48,8 @@ const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
 vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
+// the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)
+vm.runInContext(`${(A.match(/^const ACC_REMOVED_HOW = \{[^\n]*\};$/m) || ["var ACC_REMOVED_HOW = {};"])[0].replace(/^const /, "var ")} ${fnSrc(A, "accessLedgerHtml")} ${fnSrc(A, "snapshotAdminHtml")}`, actx);
 const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
 
 for (const [label, start] of [["a new client", null], ["a step ticked done earlier with nothing recorded", { status: "done", completed_at: "2026-10-01T17:00:00Z", completed_by: "rga" }]]) {
@@ -66,6 +68,10 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   if (r.status !== 200 || !t3.access?.confirmed_at || t3.status !== "done" || t3.completed_by !== "rga" || t3.client_input?.platform !== "custom") fail(`${label}: Confirm access didn't record the grant, finish the step, or kept the client's answer (${r.status} ${r.body.error || ""})`);
   if (!(db.client_activity || []).some((a) => a.kind === "website_access_confirmed")) fail(`${label}: the confirmation leaves no permanent record`);
   if (!/Access confirmed/.test(adminRow(t3))) fail(`${label}: admin row 8 doesn't show "Access confirmed" afterwards`);
+  { const r8 = adminRow(t3);
+    if (!/Access ledger/.test(r8) || !/data-ob-acc-remove/.test(r8) || !/Before-snapshot/.test(r8) || !/data-ob-snap=/.test(r8)) fail(`${label}: admin row 8 has no access ledger (with Remove access) or before-snapshot under a confirmed access`);
+    const rm = adminRow({ ...t3, access: { ...t3.access, removed_at: "2026-11-03T17:00:00Z", removed_by: "hello@", removed_how: "removed_by_rga" } });
+    if (!/Access removed/.test(rm) || /data-ob-acc-remove/.test(rm) || !/Removed 2026-11-03/.test(rm)) fail(`${label}: a removed access doesn't read "Access removed" with its date in the card and the ledger (or still offers Remove)`); }
   // 4 · locked: no reopen, Request a change works, admin unlock reopens
   if (!stepLock("m1.access.website", t3, {})) fail(`${label}: the confirmed step isn't locked`);
   r = await call("portal-step-choice.js", { step_id: "m1.access.website", reopen: true });

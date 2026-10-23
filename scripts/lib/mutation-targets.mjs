@@ -191,6 +191,9 @@ export const FILES = {
   siteplatfn: "netlify/functions/portal-site-platform.js",   // step3_website_access_v3 (10-20)
   siteplatdata: "data/site-platforms.json",   // the 22-builder audit, one source (10-20)
   sitechange: "shared/site-change.js",   // website_change_approvals_v1 (10-23)
+  snapshot: "netlify/functions/_site-snapshot.js",   // rga_client_access_and_work_v1 (10-23)
+  snapshotfn: "netlify/functions/admin-site-snapshot.js",
+  accessconfirmfn: "netlify/functions/admin-access-confirm.js",
   deliv: "netlify/functions/_deliverables.js",
 
 };

@@ -152,8 +152,8 @@
  [
   "done website rows lose the card",
   "admin",
-  "          globalThis.rgaSiteChange && globalThis.rgaSiteChange.isSiteChangeStep(o.flowId) ? siteChangeAdminHtml(o.flowId, s.task) : \"\"}</div>",
-  "          \"\"}</div>"
+  "          globalThis.rgaSiteChange && globalThis.rgaSiteChange.isSiteChangeStep(o.flowId) ? siteChangeAdminHtml(o.flowId, s.task)\n",
+  "          false ? siteChangeAdminHtml(o.flowId, s.task)\n"
  ],
  [
   "the inbox doesn't send the version",

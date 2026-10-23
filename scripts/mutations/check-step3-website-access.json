@@ -260,7 +260,7 @@
  [
   "the agreement link loses §5",
   "portal",
-  "Backed by your Service Agreement (§5, website access)",
+  "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
   "Backed by our terms"
  ],
  [
@@ -268,5 +268,11 @@
   "portal",
   "<span class=\"pm-ax-pr-ok\">✓ You approve every change</span>",
   "<span class=\"pm-ax-pr-ok\">✓ You approve anything visitors see</span>"
+ ],
+ [
+  "the seal claims the contract backs the promise again",
+  "portal",
+  "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
+  "Backed by your Service Agreement (§5, website access)"
  ]
 ]
