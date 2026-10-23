@@ -78,25 +78,31 @@ if (/"User-Agent": "Mozilla\/5\.0 \(RGA site check\)"/.test(SRC)) fail("the chec
 
 // ── 2 · the portal's Step 1, RUN
 const P = read("portal/portal.js");
-const pctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), _accNames: {}, drew: [] });
-vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, pctx);
-for (const n of ["accPart", "accMono", "accMonYear", "accProofHtml", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
+const pctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), _accNames: {}, drew: [] });
+vm.runInContext(`${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const ACC_CHECK_ICON = `[^`]*`;$/m) || [""])[0].replace(/^const /, "var ")}`, pctx);
+for (const n of ["accPart", "accMono", "accFoundPill", "accDrawFound"]) vm.runInContext(fnSrc(P, n), pctx);
 vm.runInContext(`function accDrawPlatform(host, key, source) { drew.push([key, source]); }`, pctx);
 const step1 = (j) => { pctx.drew = []; const box = { innerHTML: "" }; const host = { _acc: { platforms: PUB, site: "joes.com", ...j }, querySelector: (s) => (s === "[data-acc-plat]" ? box : null), setAttribute() {} };
   vm.runInContext(`accDrawFound(h)`, Object.assign(pctx, { h: host })); return { html: box.innerHTML, drew: pctx.drew }; };
 const s1 = step1({ platform: "wordpress", confidence: "stated", signs: 2, evidence: ["WordPress files on your pages (/wp-content/)", "A WordPress tag in your page code"] });
 if (!/Check what we found/.test(s1.html) || !/Your website is on WordPress/.test(s1.html) || !/data-acc-yes/.test(s1.html) || !/data-acc-no/.test(s1.html)) fail("a found builder isn't asked (\"Check what we found\" + Yes / No)");
-if (!/What we found on joes\.com/.test(s1.html) || !/A WordPress tag in your page code/.test(s1.html)) fail("the ask doesn't show its proof lines");
+// 🔒 ONE PILL, NO TECHNICAL PROOF (step3_found_pill_v1): the client sees who checked, never a file, a path or a "sign"
+if (!/class="pm-ax-fpill"[^>]*>[\s\S]*We checked joes\.com/.test(s1.html)) fail("the ask doesn't show the \"We checked joes.com\" pill");
+const TECH = /\/wp-|\/assets\/|\/_next|cdn\.|\.css|\.js\b|\bsigns?\b|build files|page code|wixstatic|api\.w\.org/i;
 const s2 = step1({ platform: "wix", confidence: "ask", signs: 1, evidence: ["Images stored on Wix (static.wixstatic.com)"] });
 if (/is on Wix/.test(s2.html) || !/It looks like Wix/.test(s2.html)) fail("one sign says \"is on\" (it must say \"It looks like… please check\")");
 const s3 = step1({ platform: null, confidence: "none", signs: 0, evidence: [], designer: { name: "Exposure" } });
-if (!/A web designer may manage your site/.test(s3.html) || !/data-acc-dyes/.test(s3.html) || !/Site by Exposure/.test(s3.html)) fail("a footer credit doesn't ask about the web designer");
+if (!/A web designer may manage your site/.test(s3.html) || !/data-acc-dyes/.test(s3.html) || !/Your site credits Exposure/.test(s3.html)) fail("a footer credit doesn't ask about the web designer");
 const s5 = step1({ platform: "wordpress", confidence: "ask", signs: 2, evidence: ["WordPress files on your pages (/wp-content/)"], source: "archive", archived_at: "2025-09-09", reason: "blocked" });
-if (!/What a saved copy of joes\.com shows \(Sep 2025\)/.test(s5.html) || /is on WordPress/.test(s5.html) || !/blocks automatic checks, so we read a saved copy/.test(s5.html)) fail("a saved-copy result doesn't say it's a saved copy (with its date) or says \"is on\"");
+if (!/We checked a saved copy of your site/.test(s5.html) || /is on WordPress/.test(s5.html)) fail("a saved-copy result doesn't say it's a saved copy (with its date) or says \"is on\"");
 const s6 = step1({ platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"] });
 if (!/It looks like a developer built your site/.test(s6.html) || !/Yes, a developer built it/.test(s6.html)) fail("a developer-built site isn't asked in plain words");
 const s7 = step1({ platform: "wordpress", confidence: "stated", signs: 1, source: "rga", evidence: ["Checked by hand by RGA on 10-22 (your site blocks automatic checks)"] });
-if (!/RGA checked: your website is on WordPress/.test(s7.html) || !/How we know/.test(s7.html) || !/data-acc-yes/.test(s7.html) || !/data-acc-no/.test(s7.html)) fail("RGA's hand check isn't asked as \"RGA checked: … Is that right?\" with Yes / No");
+if (!/RGA checked: your website is on WordPress/.test(s7.html) || !/pm-ax-fpill is-rga[^>]*>[\s\S]*Checked by RGA/.test(s7.html) || !/data-acc-yes/.test(s7.html) || !/data-acc-no/.test(s7.html)) fail("RGA's hand check isn't asked as \"RGA checked: … Is that right?\" with Yes / No");
+for (const [label, x] of [["WordPress", s1], ["one sign", s2], ["designer", s3], ["saved copy", s5], ["developer", s6], ["RGA", s7]]) {
+  const shown = x.html.replace(/<[^>]+>/g, " ");
+  if (TECH.test(shown)) fail(`the ${label} ask shows technical proof to the client ("${(shown.match(TECH) || [""])[0]}") — one pill only`);
+}
 const s4 = step1({ platform: null, confidence: "none", signs: 0, evidence: [] });
 if (s4.html || !s4.drew.length || s4.drew[0][0] !== null) fail("nothing found doesn't go straight to the tiles");
 // the blocked path, RUN (accDrawPlatform with no builder): why + 3 ways to tell + Check it for me
@@ -203,6 +209,7 @@ if (!/Our site check:<\/b> Wix · 1 sign/.test(no) || !/is-check/.test(no) || !/
 const yes = row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 3, answer: "yes" } });
 if (!/<b>Client:<\/b> confirmed WordPress/.test(yes) || /is-check/.test(yes)) fail("admin row 8 doesn't show a confirmed builder plainly");
 const ar = row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 2, answer: "yes", source: "archive", archived_at: "2025-09-09", reason: "blocked" } });
+if (!/What our check saw<\/b> \(RGA only\)/.test(row({ via: "invite", platform: "wordpress", platform_source: "detected_confirmed", detected: { status: "ok", platform: "wordpress", signs: 2, answer: "yes", evidence: ["WordPress files on your pages (/wp-content/)"] } }))) fail("admin row 8 no longer lists what our check saw (the proof lives only there)");
 if (!/from a saved copy \(2025-09-09\), their site blocks automatic checks/.test(ar)) fail("admin row 8 doesn't say the result came from a saved copy (and why)");
 const rowT = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
 const ask8 = rowT({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", reason: "blocked", site: "acme.example" } });

@@ -12,10 +12,10 @@
   "    const sure = true;"
  ],
  [
-  "no proof lines on the ask",
+  "the pill doesn't say we checked their site",
   "portal",
-  "      + accProofHtml(j.site, (j.evidence && j.evidence.length) ? j.evidence : [",
-  "      + accProofHtml(j.site, []) + String(["
+  ": `We checked ${j.site || \"your website\"}`;",
+  ": \"\";"
  ],
  [
   "no No button",
@@ -116,8 +116,8 @@
  [
   "the saved copy isn't named on the card",
   "portal",
-  ": j.source === \"archive\" ? `What a saved copy of",
-  ": false ? `What a saved copy of"
+  "j.source === \"archive\" ? \"We checked a saved copy of your site\"",
+  "false ? \"We checked a saved copy of your site\""
  ],
  [
   "admin hides that it's a saved copy",
@@ -220,5 +220,23 @@
   "portal",
   "  const rgaChk = t.rga_check && t.rga_check.platform && !_accPickSelf.has(step.id) ?",
   "  const rgaChk = false ?"
+ ],
+ [
+  "the proof shows on the client card again",
+  "portal",
+  "      + accFoundPill(j, host._accCheckedAt)\n      + `<div class=\"pm-ax-yn\"><button type=\"button\" class=\"pm-commit\" data-acc-yes>",
+  "      + accFoundPill(j, host._accCheckedAt) + (j.evidence || []).join(\" \")\n      + `<div class=\"pm-ax-yn\"><button type=\"button\" class=\"pm-commit\" data-acc-yes>"
+ ],
+ [
+  "admin hides what our check saw",
+  "admin",
+  "  const saw = (d.evidence || []).length ?",
+  "  const saw = false ?"
+ ],
+ [
+  "RGA's check looks like our automatic one",
+  "portal",
+  "  const t = j.source === \"rga\" ? `Checked by RGA",
+  "  const t = false ? `Checked by RGA"
  ]
 ]
