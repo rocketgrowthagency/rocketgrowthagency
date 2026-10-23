@@ -9,8 +9,8 @@
  [
   "no map tag",
   "portal",
-  "${d.pack ? '<span class=\"pm-fxt-s rga\">Shows a map</span>' : \"\"}",
-  "",
+  "${x.d.pack ? ' title=\"Shows Google\\'s map\"' : \"\"}",
+  "\"\"",
   1
  ],
  [
@@ -37,8 +37,8 @@
  [
   "no veto",
   "portal",
-  "const tell = `<button type=\"button\" class=\"pm-amend\" data-step-wrong=\"${escapeAttribute(step.id)}\">Something's not right? Tell us</button>`;",
-  "const tell = \"\";",
+  "const tell = (lbl = \"Something's not right? Tell us\") => `<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"${escapeAttribute(step.id)}\">${lbl}</button>`;",
+  "const tell = () => \"\";",
   1
  ],
  [
@@ -61,5 +61,35 @@
   "if (!t || t.status !== \"done\" || !t.completed_at || Date.now() - Date.parse(t.completed_at) > 7 * 86400000) return \"\";",
   "if (!t || t.status !== \"done\") return \"\";",
   1
+ ],
+ [
+  "the approved why lines are gone",
+  "portal",
+  "    const why = nearMe ? \"Someone ready to hire,",
+  "    const why = false ? \"Someone ready to hire,"
+ ],
+ [
+  "the fold is gone",
+  "portal",
+  "const fold = `<details class=\"pm-k5-fold\">",
+  "const fold = \"\" && `<details class=\"pm-k5-fold\">"
+ ],
+ [
+  "the start isn't summed",
+  "portal",
+  "const pts = per.length ? per.reduce((n, x) => n + (Number(x.points) || 0), 0) : (g && Number(g.points)) || 0;",
+  "const pts = (g && Number(g.points)) || 0;"
+ ],
+ [
+  "looks right doesn't fold",
+  "portal",
+  "const rest = items.slice(2);",
+  "const rest = [];"
+ ],
+ [
+  "the intro repeats above the card",
+  "portal",
+  "&& !CARD_OWNS_INTRO.has(step.id) ? splitAskWhy",
+  "? splitAskWhy"
  ]
 ]

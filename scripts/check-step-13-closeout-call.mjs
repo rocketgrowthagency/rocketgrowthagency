@@ -61,7 +61,7 @@ try {
 if (R.rga.rows !== R.n || R.rga.ticks !== R.n - 2) fail(`the wait doesn't list every prerequisite with ✓ on the done ones (${R.rga.rows} rows, ${R.rga.ticks} ✓ of ${R.n})`);
 if (!/^2 steps left Your close-out call opens about Nov 5 Month 1 ends about Nov 8/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left, when it opens and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
 if (!/Anything still open carries into Month 2; nothing waits for it/.test(R.rga.text)) fail("the card doesn't say open steps carry into Month 2 (Month 1 closes on a date)");
-if (!/Grant RGA access to Google Analytics[^·]*yours/.test(R.rga.text) || !/5 · Your keyword plan: 5 searches \+ 3 areas RGA's move/.test(R.rga.text)) fail(`each open prerequisite doesn't say whose move it is (yours / RGA's move for a step RGA finishes) (${R.rga.text.slice(0, 300)})`);
+if (!/Grant RGA access to Google Analytics[^·]*yours/.test(R.rga.text) || !/5 · Your keyword plan RGA's move/.test(R.rga.text)) fail(`each open prerequisite doesn't say whose move it is (yours / RGA's move for a step RGA finishes) (${R.rga.text.slice(0, 300)})`);
 if (/Go to step 5/.test(R.yours.go)) fail("a step RGA finishes (the keyword plan) is offered as the client's next move");
 if (R.rgaOnly.go) fail("a step that waits on RGA is offered as the client's next move");
 if (/Month 1 ends/.test(R.noKick.text)) fail("Month 1's end date shows before the kickoff (a guess)");
