@@ -19,6 +19,7 @@ const SC = {
   none: { status: "ok", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "rocketgrowthagency.com" },
   blocked: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "dallyhaarroofing.com", reason: "blocked" },
   dev: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your pages load developer build files (/assets/styles-CNMhkxsr.css)"], designer: null, shopify_store: null, site: "ohhrats.com" },
+  devN: { status: "ok", platform: "custom", confidence: "ask", signs: 1, evidence: ["Your site is hosted on Netlify"], designer: null, shopify_store: null, site: "joesplumbing.com", host: "netlify" },
   down: { status: "couldnt_check", platform: null, confidence: "none", signs: 0, evidence: [], designer: null, shopify_store: null, site: "joesplumbing.com" },
 };
 let cur = "wp", saved = null;
@@ -48,7 +49,8 @@ await run("wix1", async (row) => { await row.locator("[data-acc-no]").click(); a
 await run("des", async (row) => { await row.locator("[data-acc-dyes]").click(); await page.waitForTimeout(300); await shot(row, "des-2-yes"); console.log("NOTE", (await row.locator("[data-acc-mail]").innerText()).slice(0, 200)); await row.locator("[data-acc-designer-done]").click(); await page.waitForTimeout(800); console.log("SAVED des", JSON.stringify(saved && saved.value)); });
 await run("shop", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); console.log("STORE FIELD =", await row.locator("[data-acc-store]").inputValue()); await shot(row, "shop-2-yes"); });
 await run("blocked", async (row) => { await row.locator("[data-acc-check]").click(); await page.waitForTimeout(800); console.log("SAVED blocked", JSON.stringify(saved && saved.value)); });
-await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); });
+await run("dev", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "dev-2-yes"); await row.locator("[data-acc-send]").click(); await page.waitForTimeout(800); console.log("SAVED dev", JSON.stringify(saved && saved.value).slice(0, 200)); });
+await run("devN", async (row) => { await row.locator("[data-acc-yes]").click(); await page.waitForTimeout(300); await shot(row, "devN-2-yes"); await row.locator("[data-acc-designer]").first().click(); await page.waitForTimeout(300); console.log("NOTE devN", (await row.locator("[data-acc-mail]").innerText()).slice(0, 400)); });
 await run("none", async (row) => {
   const vis = () => row.evaluate((r) => [...r.querySelectorAll(".pm-ax-tile")].filter((t) => t.offsetParent).map((t) => Math.round(t.getBoundingClientRect().height)));
   console.log("TILES closed", JSON.stringify(await vis())); await row.locator("[data-acc-more]").click(); await page.waitForTimeout(200);

@@ -146,8 +146,8 @@
  [
   "the developer ask uses builder words",
   "portal",
-  "      : dev ? \"It looks like a developer built your site\" : sure",
-  "      : sure"
+  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : dev ? \"It looks like a developer built your site\" : sure",
+  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : sure"
  ],
  [
   "RGA's check isn't named on the ask",
@@ -244,5 +244,77 @@
   "portal",
   "    const back = source === \"detected_declined\" && (j.designer",
   "    const back = false && (j.designer"
+ ],
+ [
+  "the host isn't read from the site",
+  "siteplatform",
+  "  const host = /^server: Netlify|^x-nf-request-id:/im.test(hay) ? \"netlify\"",
+  "  const host = false ? \"netlify\""
+ ],
+ [
+  "Cloudflare reads as a host",
+  "siteplatform",
+  "    : /^x-github-request-id:|^server: GitHub\\.com/im.test(hay) ? \"githubpages\" : null;",
+  "    : /^x-github-request-id:|^server: GitHub\\.com/im.test(hay) ? \"githubpages\" : /cloudflare/i.test(hay) ? \"netlify\" : null;"
+ ],
+ [
+  "the found ask doesn't name the host",
+  "portal",
+  "      : dev && accHostOf(j) ? `Your website is hosted on ${accHostOf(j).name}` : dev",
+  "      : dev"
+ ],
+ [
+  "Step 1 doesn't say where it lives",
+  "portal",
+  "  const selName = dev ? (hk ? `Your website is hosted on ${hk.name}`",
+  "  const selName = dev ? (false ? `Your website is hosted on ${hk.name}`"
+ ],
+ [
+  "no Who does this",
+  "portal",
+  "  return `<div class=\"pm-ax-how\">${who}${task}${skip}</div>`;",
+  "  return `<div class=\"pm-ax-how\">${task}${skip}</div>`;"
+ ],
+ [
+  "a seat host isn't skipped",
+  "portal",
+  "  const skip = hk && hk.seat ?",
+  "  const skip = false ?"
+ ],
+ [
+  "the generic email-and-role pair is back",
+  "portal",
+  "  const steps = accSetupHtml({ ...p, plan: \"\", note: \"\" }, \"\", true);",
+  "  const steps = accSetupHtml({ ...p, plan: \"\", note: \"\" }, \"\", false);"
+ ],
+ [
+  "no host seen still leads with the code steps",
+  "portal",
+  "  const who = hk\n",
+  "  const who = true\n"
+ ],
+ [
+  "Step 3 doesn't say what happens next",
+  "portal",
+  "    ? `<div class=\"pm-ax-tell\">${tl}<button",
+  "    ? `<div class=\"pm-ax-tell\"><button"
+ ],
+ [
+  "the server keeps any host",
+  "stepinput",
+  "        host: one(d.host, [\"netlify\", \"vercel\", \"githubpages\"]),",
+  "        host: d.host || null,"
+ ],
+ [
+  "admin doesn't name the host",
+  "admin",
+  "    : d.platform === \"custom\" && d.host ?",
+  "    : false ?"
+ ],
+ [
+  "a picked Custom-coded shows our check",
+  "portal",
+  "    + (dev && source === \"detected_confirmed\" ? accFoundPill(j, host._accCheckedAt) : \"\")",
+  "    + (dev ? accFoundPill(j, host._accCheckedAt) : \"\")"
  ]
 ]
