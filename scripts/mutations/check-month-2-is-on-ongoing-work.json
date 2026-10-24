@@ -44,7 +44,7 @@
  [
   "after setup Ongoing work drops the Month-2 list",
   "portal",
-  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${month2StepsHtml}</div>`;",
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${month2StepsHtml}</div>`;",
   "",
   1
  ],

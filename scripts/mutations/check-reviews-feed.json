@@ -1,0 +1,206 @@
+[
+ [
+  "two customers with the same name → asked anyway",
+  "reviewsfeed",
+  "    if (same.length !== 1) continue;",
+  "    if (!same.length) continue;"
+ ],
+ [
+  "a review from before the ask is asked about",
+  "reviewsfeed",
+  "if (!Number.isFinite(a.at) || vAt < a.at || vAt > a.at + MATCH_WINDOW_DAYS * DAY) continue;",
+  "if (!Number.isFinite(a.at) || vAt > a.at + MATCH_WINDOW_DAYS * DAY) continue;"
+ ],
+ [
+  "no 60-day window",
+  "reviewsfeed",
+  "if (!Number.isFinite(a.at) || vAt < a.at || vAt > a.at + MATCH_WINDOW_DAYS * DAY) continue;",
+  "if (!Number.isFinite(a.at) || vAt < a.at) continue;"
+ ],
+ [
+  "\"Not her\" is forgotten",
+  "reviewsfeed",
+  " || (Array.isArray(a.c.not_review_ids) && a.c.not_review_ids.includes(v.id))) continue;",
+  ") continue;"
+ ],
+ [
+  "a customer who asked to stop is asked about",
+  "reviewsfeed",
+  "if (a.c.reviewed_mark || a.c.stopped ||",
+  "if (a.c.reviewed_mark ||"
+ ],
+ [
+  "anonymous reviews are asked about",
+  "reviewsfeed",
+  "    if (!v || !v.id || v.anonymous || linked.has(v.id)) continue;",
+  "    if (!v || !v.id || linked.has(v.id)) continue;"
+ ],
+ [
+  "an initial is a first name",
+  "reviewsfeed",
+  "  return w && (w.length >= 2 || !/\\p{Script=Latin}/u.test(w)) ? w : \"\";",
+  "  return w || \"\";"
+ ],
+ [
+  "a title is a first name",
+  "reviewsfeed",
+  "!(k === 0 && all.length > 1 && /^(dr|mr|mrs|ms|miss|mx|sr|sra|srta)$/.test(w))",
+  "true"
+ ],
+ [
+  "accents make two names",
+  "reviewsfeed",
+  ".normalize(\"NFD\").replace(/\\p{M}+/gu, \"\")",
+  ""
+ ],
+ [
+  "a reading without the list makes a feed of nothing",
+  "reviewsfeed",
+  "  if (!last) return null;",
+  "  if (!last) return { checked_at: null, stale: false, count: 0, rating: null, newer_reading_without_list: false, new_30d: 0, gap_days: null, reviews: [] };"
+ ],
+ [
+  "an old reading isn't stale",
+  "reviewsfeed",
+  "    stale: now - last.at > STALE_DAYS * DAY,",
+  "    stale: false,"
+ ],
+ [
+  "any id is a review id",
+  "reviewsfeed",
+  "/^[A-Za-z0-9_\\-/]+$/.test(id)",
+  "true"
+ ],
+ [
+  "the morning read keeps one review",
+  "reviewmetrics",
+  "reviews?pageSize=50`",
+  "reviews?pageSize=1`"
+ ],
+ [
+  "the reviews never reach the reading",
+  "reviewmetrics",
+  ", ...(reviews ? { reviews } : {}) },",
+  " },"
+ ],
+ [
+  "a review with no id is kept",
+  "reviewmetrics",
+  "    if (!id || !Number.isFinite(at)) return null;",
+  "    if (!Number.isFinite(at)) return null;"
+ ],
+ [
+  "anonymous isn't kept as anonymous",
+  "reviewmetrics",
+  "anonymous: !!(v.reviewer && v.reviewer.isAnonymous) || !String(who).trim(),",
+  "anonymous: false,"
+ ],
+ [
+  "long words are kept whole",
+  "reviewmetrics",
+  "text: v.comment ? String(v.comment).slice(0, 600) : \"\",",
+  "text: v.comment ? String(v.comment) : \"\","
+ ],
+ [
+  "\"Not her\" stores no id",
+  "reviewreqfn",
+  "    if (MARK === \"not_match\" && !validReviewId(rid)) return json(400, { error: \"Missing or invalid review_id\" });\n",
+  ""
+ ],
+ [
+  "a bad review id is stored",
+  "reviewreqfn",
+  "    if (MARK === \"reviewed\" && rid != null && !validReviewId(rid)) return json(400, { error: \"Invalid review_id\" });\n",
+  ""
+ ],
+ [
+  "Yes forgets which review",
+  "reviewreqfn",
+  "reviewed_mark_at: when, ...(rid ? { reviewed_review_id: rid } : {}) }),",
+  "reviewed_mark_at: when }),"
+ ],
+ [
+  "\"Not Tom\" for a customer never asked",
+  "reviewreqfn",
+  "      : MARK === \"not_match\" ? !!c.marked_sent_by_client\n",
+  ""
+ ],
+ [
+  "the admin can answer for the client",
+  "reviewreqfn",
+  "  const gate = MARK ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);"
+ ],
+ [
+  "a failed read reads as no reviews",
+  "reviewreqfn",
+  "    return json(200, { ok: true, scope: \"reviews\", feed, read_failed: rows == null,",
+  "    return json(200, { ok: true, scope: \"reviews\", feed, read_failed: false,"
+ ],
+ [
+  "the card loses its question",
+  "portal",
+  "    const ask = m ? `<div class=\"pm-rv-q\">",
+  "    const ask = false ? `<div class=\"pm-rv-q\">"
+ ],
+ [
+  "the review's words become HTML",
+  "portal",
+  "(v.text ? `<q>${escapeHtml(v.text)}</q>`",
+  "(v.text ? `<q>${v.text}</q>`"
+ ],
+ [
+  "no reading reads as 0 reviews",
+  "portal",
+  "  if (!f) return pcCard({ tone: \"rga\", icon: STAR_ICON, head: \"We can't read your reviews yet\"",
+  "  if (!f) return pcCard({ tone: \"rga\", icon: STAR_ICON, head: \"0 reviews on Google\""
+ ],
+ [
+  "a failed load says nothing",
+  "portal",
+  "body: pcFoot(\"We couldn't load your reviews just now. Reload the page to try again.\") });",
+  "body: \"\" });"
+ ],
+ [
+  "the card isn't on Ongoing work after setup",
+  "portal",
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${month2StepsHtml}</div>`;",
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${month2StepsHtml}</div>`;"
+ ],
+ [
+  "the card never loads",
+  "portal",
+  "    loadReviewsFeed(row.client_id);\n",
+  ""
+ ],
+ [
+  "stale isn't said",
+  "portal",
+  "${f.stale ? \" · not read since\" : \"\"}`;",
+  "`;"
+ ],
+ [
+  "an anonymous reviewer's name shows",
+  "portal",
+  "escapeHtml(v.anonymous || !v.name ? \"A Google user\" : v.name)",
+  "escapeHtml(v.name || \"\")"
+ ],
+ [
+  "admin gets the Mark Sent button back",
+  "admin",
+  "          <button class=\"admin-button admin-button-secondary\" data-list-action=\"copy\" data-id=\"${escapeAttribute(l.id)}\" style=\"font-size:var(--fs-xs);padding:5px 12px;\">Copy as TSV</button>\n",
+  "          <button class=\"admin-button admin-button-secondary\" data-list-action=\"copy\" data-id=\"${escapeAttribute(l.id)}\" style=\"font-size:var(--fs-xs);padding:5px 12px;\">Copy as TSV</button>\n          <button class=\"admin-button admin-button-secondary\" data-list-action=\"mark-sent\" data-id=\"${escapeAttribute(l.id)}\">Mark Sent</button>\n"
+ ],
+ [
+  "admin credits a list with reviews",
+  "admin",
+  " • Asked ${askedN}/${customers.length} · they reviewed ${revN} (the client's word)</p>",
+  " • Sent ${l.sent_count}/${l.customer_count} • Reviews earned ${l.reviews_earned || 0}</p>"
+ ],
+ [
+  "admin row 57 loses the reviews",
+  "admin",
+  "              + `<span class=\"ob-gcard-says\" data-ob-rv-feed=",
+  "              + `<span class=\"ob-gcard-says\" data-x="
+ ]
+]

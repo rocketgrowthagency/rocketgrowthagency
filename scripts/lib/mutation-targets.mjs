@@ -155,6 +155,7 @@ export const FILES = {
   portaldeliv: "netlify/functions/portal-deliverables.js",
   reviewreqfn: "netlify/functions/portal-review-requests.js",
   reviewlink: "netlify/functions/_review-link.js",
+  reviewsfeed: "netlify/functions/_reviews-feed.js",
   photorefusal: "netlify/functions/_photo-refusal.js",
   gbpprofile: "netlify/functions/_gbp-profile.js",
   gbpverify: "netlify/functions/_gbp-verify.js",

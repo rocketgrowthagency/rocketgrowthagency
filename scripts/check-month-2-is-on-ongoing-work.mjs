@@ -62,10 +62,11 @@ else {
 
 // ── 1 · Ongoing work is the Month-2 list after setup ──
 const ow = lift("function buildOngoingWorkHtml(", "\nfunction buildCustomerListHtml") || "";
-if (!/if \(!isSetupPhase && month2StepsHtml\) return `<div class="pm-og">\$\{month2StepsHtml\}<\/div>`;/.test(ow)) fail("after setup, Ongoing work isn't the Month-2 list (it drops 3 of the 4 monthly jobs)");
+if (!/if \(!isSetupPhase && month2StepsHtml\) return `<div class="pm-og">\$\{feed\}\$\{month2StepsHtml\}<\/div>`;/.test(ow))   // + the reviews card on top (reviews_ongoing_live_v1, 10-23)
+  fail("after setup, Ongoing work isn't the Month-2 list (it drops 3 of the 4 monthly jobs)");
 if (!/later\("Every month", "Your business numbers"/.test(ow)) fail("during setup, Ongoing work no longer previews the monthly jobs (\"Starts after setup\")");
 if (!/buildActionItemsHtml\(client\.id \|\| row\.client_id, onboarding, monthlyRecords, oauth, contracts, photos, customerLists, \{ month2Only: true \}\)/.test(pcode)) fail("nothing builds the Month-2 list for Ongoing work");
-if (!/buildOngoingWorkHtml\(\{ isSetupPhase, customerListHtml, photoUploadHtml, customerLists, month2StepsHtml \}\)/.test(pcode)) fail("Ongoing work isn't handed the Month-2 list");
+if (!/buildOngoingWorkHtml\(\{ isSetupPhase, customerListHtml, photoUploadHtml, customerLists, month2StepsHtml(, clientId: client\.id \|\| row\.client_id)? \}\)/.test(pcode)) fail("Ongoing work isn't handed the Month-2 list");
 
 // ── 2 · Setup is Month 1, and its stage 5 / 6 layouts don't repeat the two forms ──
 if (!/const actionItemsHtml = buildActionItemsHtml\([^)]*\{ month1Only: true, domSuffix: "-setup" \}\);/.test(pcode)) fail("Setup still lists Month-2 steps at stage 6 (each step must have one home)");

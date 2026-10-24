@@ -21,9 +21,9 @@
   1
  ],
  [
-  "the button doesn't say what it sends",
+  "the button doesn't say what it writes (or for whom)",
   "portal",
-  "  if (btn) { btn.textContent = `Write ${n} request${n === 1 ? \"\" : \"s\"}`; btn.disabled = !full.length; }",
+  "  if (btn) { btn.textContent = full.length > 1 ? `Write ${full.length} requests` : one ? `Write ${one}'s request` : \"Write the request\"; btn.disabled = !full.length; }",
   "  if (btn) { btn.disabled = !full.length; }",
   1
  ],
@@ -44,14 +44,14 @@
  [
   "a marked request reads sent",
   "portal",
-  "const tag = pill(\"on\", `Asked${r.marked_at ?",
-  "const tag = pill(\"on\", `Sent${r.marked_at ?",
+  ": st(\"ok\", r.reminded_at ? \"Asked · reminded\" : \"Asked\");",
+  ": st(\"ok\", r.reminded_at ? \"Sent · reminded\" : \"Sent\");",
   1
  ],
  [
   "a request with no message offers a send",
   "portal",
-  "    if (!r.message) return `<div class=\"pm-r5-rq\"><span class=\"pm-r5-who\">${who}</span>${pill(\"wait\", \"RGA is writing it\")}</div>`;\n",
+  "    if (!r.message) return row(contact, st(\"wait\", \"RGA is writing it\"));\n",
   "",
   1
  ],
@@ -65,15 +65,15 @@
  [
   "the request text becomes HTML",
   "portal",
-  "<span>${escapeHtml(r.message)}</span></details>",
-  "<span>${r.message}</span></details>",
+  "        + `<div class=\"pm-rv-bub\">${escapeHtml(r.message)}</div>",
+  "        + `<div class=\"pm-rv-bub\">${r.message}</div>",
   1
  ],
  [
-  "the open step loses its Ready line",
+  "the next request loses its text (option B shows it as the message it is)",
   "portal",
-  "body: `${readyChip}${got}<div class=\"pm-r5-cards\">",
-  "body: `${got}<div class=\"pm-r5-cards\">",
+  "        + `<div class=\"pm-rv-bub\">${escapeHtml(r.message)}</div>",
+  "        + `<div class=\"pm-rv-bub\"></div>",
   1
  ],
  [
@@ -100,8 +100,8 @@
  [
   "on a phone the customer fields don't stack",
   "portalcss",
-  ".gcard .pm-r5-c { grid-template-columns:minmax(0,1fr); padding:10px; }",
-  ".gcard .pm-r5-c { padding:10px; }",
+  ".pm-rv-next .pm-r5-c { grid-template-columns:minmax(0,1fr); padding:10px; }",
+  ".pm-rv-next .pm-r5-c { grid-template-columns:34px repeat(3,minmax(0,1fr)); padding:10px; }",
   1
  ],
  [
@@ -250,10 +250,10 @@
   1
  ],
  [
-  "email customers dropped",
+  "email customers dropped from step 13",
   "reviewreqfn",
-  ".filter((r) => r.name && (r.phone || r.email));",
-  ".filter((r) => r.name && r.phone);",
+  "requestFor(c, i, l.id)))\n      .filter((r) => r.name && (r.phone || r.email));",
+  "requestFor(c, i, l.id)))\n      .filter((r) => r.name && r.phone);",
   1
  ],
  [
@@ -273,8 +273,8 @@
  [
   "remind link shown early",
   "portal",
-  "? (due && Date.now() >= due\n",
-  "? (true\n",
+  "const canRemind = !r.reminded_at && r.reminder && due && Date.now() >= due;",
+  "const canRemind = !r.reminded_at && r.reminder && due && true;",
   1
  ],
  [
@@ -287,15 +287,15 @@
  [
   "a stopped row keeps actions",
   "portal",
-  "    if (r.stopped) return `<div class=\"pm-r5-rq is-sent\">",
-  "    if (false) return `<div class=\"pm-r5-rq is-sent\">",
+  "    if (r.stopped) return row(contact, st(\"wait\", \"Asked not to be contacted · nothing more goes to them\"));",
+  "    if (false) return row(contact, st(\"wait\", \"Asked not to be contacted · nothing more goes to them\"));",
   1
  ],
  [
-  "done means all rows",
+  "done never comes at 5 asked",
   "portal",
-  "const askedN = Math.min(marked, REVIEW_GOAL), done = marked >= REVIEW_GOAL;",
-  "const askedN = Math.min(marked, REVIEW_GOAL), done = false;",
+  "  const done = asked >= REVIEW_GOAL;\n  const lastAt",
+  "  const done = false;\n  const lastAt",
   1
  ],
  [
@@ -310,6 +310,76 @@
   "portal",
   "return { first_name: r5Val(c, \"first_name\"), phone: mail ? \"\" : v,",
   "return { first_name: r5Val(c, \"first_name\"), phone: v,",
+  1
+ ],
+ [
+  "the circles ignore the client's \"reviewed\"",
+  "portal",
+  "const st = c && c.reviewed_mark ? \"rev\" : c && c.marked_sent_by_client ? \"sent\"",
+  "const st = c && c.marked_sent_by_client ? \"sent\"",
+  1
+ ],
+ [
+  "all five forms show at once (not one at a time)",
+  "portal",
+  "data-r5-no=\"${n}\"${k ? \" hidden\" : \"\"}>",
+  "data-r5-no=\"${n}\">",
+  1
+ ],
+ [
+  "\"Add all at once\" does nothing",
+  "portal",
+  "  form.querySelectorAll(\"[data-r5-card][hidden]\").forEach((c) => { c.hidden = false; });\n",
+  "",
+  1
+ ],
+ [
+  "Copy your review link never shows at 5 asked",
+  "portal",
+  "  const allAsked = (data.requests || []).filter((r) => r.already_marked).length >= REVIEW_GOAL;",
+  "  const allAsked = false;",
+  1
+ ],
+ [
+  "Done claims a count it never measured",
+  "portal",
+  ": `<span><b>…</b><small>new Google reviews: we count them every night",
+  ": `<span><b>0 ★</b><small>new Google reviews: we count them every night",
+  1
+ ],
+ [
+  "the question shows on every asked row",
+  "portal",
+  "  const matchOf = (r) => (data.matches || []).find((m) => m.list_id === r.list_id && m.index === r.index);",
+  "  const matchOf = (r) => (data.matches || [])[0];",
+  1
+ ],
+ [
+  "Yes doesn't name the review",
+  "portal",
+  "data-review-reviewed=\"${r.index}\" data-review-id=\"${escapeAttribute(m.review_id)}\" ${ids}>Yes, it's",
+  "data-review-reviewed=\"${r.index}\" ${ids}>Yes, it's",
+  1
+ ],
+ [
+  "the card loses Google's rules",
+  "portal",
+  "Real customers only: not family, friends or anyone who works with you. Google doesn't allow picking only the ones you expect to be happy, offering anything for a review, or asking them to name a staff member.`",
+  "Ask the customers you think liked you.`",
+  1
+ ],
+ [
+  "a folded request becomes HTML",
+  "portal",
+  "`<details class=\"pm-r5-read\"><summary>Read the request</summary><span>${escapeHtml(r.message)}</span></details>`",
+  "`<details class=\"pm-r5-read\"><summary>Read the request</summary><span>${r.message}</span></details>`",
+  1
+ ],
+ [
+  "email customers dropped from the weekly list",
+  "reviewreqfn",
+  "requestFor(c, i, list.id))\n    .filter((r) => r.name && (r.phone || r.email));",
+  "requestFor(c, i, list.id))\n    .filter((r) => r.name && r.phone);",
   1
  ]
 ]

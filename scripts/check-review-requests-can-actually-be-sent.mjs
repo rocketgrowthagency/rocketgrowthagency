@@ -104,7 +104,8 @@ if (!/data-review-send/.test(portalSrc)) bad("the portal renders no tap-to-send 
 const smsHelper = /const smsHref = \(phone, body\) => `sms:\$\{encodeURIComponent\(phone\)\}/.test(portalSrc);
 // step12_review_requests_v3 (10-20): step 12 sends by text OR email — hrefFor = smsHref for a phone, mailto for an email
 const viaHrefFor = /const hrefFor = \(r, body\) => \(r\.phone \? smsHref\(r\.phone, body\) : mailHref\(r\.email, body\)\);/.test(portalSrc) && /href="\$\{escapeAttribute\(hrefFor\(r, r\.message\)\)\}"/.test(portalSrc);
-if (!/href="sms:/.test(portalSrc) && !(smsHelper && /href="\$\{escapeAttribute\(smsHref\(r\.phone, r\.message\)\)\}"/.test(portalSrc) && viaHrefFor)) bad("no sms: link — the client would have to retype the message we wrote");
+// reviews_card_option_b_v1 (10-23): the weekly list and step 13 share ONE row renderer, so both send through hrefFor
+if (!/href="sms:/.test(portalSrc) && !(smsHelper && viaHrefFor)) bad("no sms: link — the client would have to retype the message we wrote");
 if (!/loadReviewRequests\(/.test(portalSrc)) bad("nothing loads the prepared requests");
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 // 🔴 A LOADER MUST NOT CAPTURE ITS HOSTS BEFORE THE SURFACE EXISTS. Hit twice in one week: the

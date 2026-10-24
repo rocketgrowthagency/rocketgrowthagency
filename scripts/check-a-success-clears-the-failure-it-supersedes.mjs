@@ -32,6 +32,10 @@ const DECLARED = {
     profile_error: { why: "response only (the run's result row), never stored — the snapshot holds only a measured count" },
     cache_error: { why: "response only (the run's result row), never stored" },
   },
+  // reviews_ongoing_live_v1 (10-23): the reviews read says when the series couldn't be read — in the answer only
+  "portal-review-requests.js": {
+    read_failed: { why: "response only (the scope \"reviews\" answer), never stored — the next read answers afresh" },
+  },
   "gbp-duplicate-scan.js": {
     last_failed_scan: { clear: /if \(record\.verdict === "clean" \|\| record\.verdict === "duplicate"\) delete tasks\["m1\.audit\.gbp_duplicate"\]\.last_failed_scan;/ },
     store_error: { why: "response only (json), never stored" },
