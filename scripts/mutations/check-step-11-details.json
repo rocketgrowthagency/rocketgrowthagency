@@ -65,8 +65,8 @@
  [
   "a label becomes HTML",
   "portal",
-  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b><small>${does(o)}</small>",
-  "<span class=\"pm-at-txt\"><b>${o.label}</b><small>${does(o)}</small>",
+  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b>${does(o) !== \"Shows on your profile.\"",
+  "<span class=\"pm-at-txt\"><b>${o.label}</b>${does(o) !== \"Shows on your profile.\"",
   1
  ],
  [
@@ -98,10 +98,10 @@
   1
  ],
  [
-  "no On Google now",
+  "a detail Google shows no longer says On Google",
   "portal",
-  "<span class=\"pm-at-now\">On Google: ${onG.has(o.key) ? \"yes\" : \"not set\"}</span>",
-  "",
+  "RGA recommends leaving it off.</small>` : \"\"}</span>${onG.has(o.key) ? `<span class=\"pm-at-now\">On Google</span>` : \"\"}",
+  "RGA recommends leaving it off.</small>` : \"\"}</span>",
   1
  ],
  [

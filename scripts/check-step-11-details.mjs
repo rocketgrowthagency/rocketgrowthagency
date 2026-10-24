@@ -112,6 +112,7 @@ if (!/if \(on\) none\.closest\("\.pm-at"\)\.querySelectorAll\("\[data-in-tick\]\
 if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");
 // 10-20: the same stamp confirms step 6's services (phase1_get_started_v1), so the condition may name both
 if (!/else if \(\(?stepId === STEP\.ATTRS(?: \|\| stepId === STEP\.SERVICES\))? && task\.google_push\.state === "on_google" && !task\.google_push\.confirmed_at\)[\s\S]{0,400}confirmed_at: new Date\(nowMs\)\.toISOString\(\)/.test(wjs)) fail("the nightly check doesn't confirm a details save (it stays \"Sent to Google\")");
+if (!/Detail 1 On Google/.test(R.many.text) || /Detail 0 On Google/.test(R.many.text)) fail("a detail Google already shows doesn't say \"On Google\" (or one it doesn't show does)");
 if (R.many.folds !== 3 || !/^Tick what's true Google shows these on your profile/i.test(R.many.text.trim())) fail(`a long list doesn't fold after the first two groups, or the count is wrong (${R.many.folds}; ${R.many.text.slice(0, 80)})`);
 if (R.editing.cls !== "pm-k5-plan ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");
