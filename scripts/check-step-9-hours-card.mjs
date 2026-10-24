@@ -9,6 +9,7 @@
 // anything changed, with no way back; a long form with six stacked lines of text above it.
 import fs from "node:fs";
 import vm from "node:vm";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -22,17 +23,18 @@ const i0 = portal.indexOf("const GBP_DAY = ["), i1 = portal.indexOf("function gb
 if (i0 < 0 || i1 < i0) { console.error("⚠️  INDETERMINATE — could not lift the hours card"); process.exit(2); }
 const ctx = { escapeHtml: esc, escapeAttribute: esc, GOOGLE_G: "", monthDay: (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) };
 vm.createContext(ctx);
-vm.runInContext(`${portal.slice(i0, i1)}\nthis.card = hoursCardHtml;`, ctx);
+vm.runInContext(`${planCardKit(portal, portal.slice(i0, i1))}\n${portal.slice(i0, i1)}\nthis.card = hoursCardHtml;`, ctx);   // 10-23: + the plan card's shared pieces
 {
   const o = { open: "09:00", close: "18:00" };
   const g = { state: "on_google", at: "2026-10-16T02:48:09Z", after: { mon: o, tue: o, wed: o, thu: o, fri: o, sat: { closed: true }, sun: { closed: true } },
     special: { sent: [{ date: "2026-11-26", name: "Thanksgiving", yearly: true }, { date: "2026-12-24", name: "Christmas Eve", yearly: true }, { date: "2026-12-25", name: "Christmas Day", yearly: true }, { date: "2027-03-02", end: "2027-03-04", name: "Team trip" }] } };
   const h = ctx.card({ id: "m1.gbp.hours_attributes" }, { status: "done", client_input_at: "2026-10-16T02:48:09Z" }, g, "https://maps.google.com/?cid=1");
-  if ((h.match(/class="pm-hc-day"/g) || []).length !== 5 || (h.match(/class="pm-hc-day off"/g) || []).length !== 2 || !/<b>Mon<\/b>9 AM–6 PM/.test(h)) fail("the done card doesn't show the week as 7 tiles (5 open, 2 closed, 12-hour times)");
-  if (!/Closed every year<\/span><span class="pm-hc-hol">Thanksgiving <i>Nov 26<\/i>/.test(h) || !/One-off<\/span><span class="pm-hc-hol">Team trip <i>Mar 2–Mar 4<\/i>/.test(h)) fail("the done card doesn't list the holidays with their dates (and one-offs apart)");
-  // 🔑 google_card_best_v1 (10-16): "checked" is the status line's side; Saved + the holiday renewal stay as text; Maps is the proof
-  // 10-20: the time is its own line under the title, never on the status line
-  if (!/<b class="gcard-t">Your hours<\/b><span class="gcard-when">Last checked Oct 16<\/span>/.test(h) || !/Saved Oct 16 · We renew the holidays every year\./.test(h) || !/<span class="gcard-proof"><a class="gcard-maps"/.test(h) || !/href="https:\/\/maps\.google\.com\/\?cid=1"[^>]*>See it on Google Maps ↗/.test(h)) fail("the done card doesn't say when it was saved / checked, or lacks the Google Maps link");
+  // 🔄 10-23 night (approved steps_6_20_clean_v1, step 7 done): "Your hours are on Google · checked", seven small tiles ("9–6"),
+  // the holidays as ONE row (how many + their names), one-offs apart with their dates, "How holidays renew" folded, Maps last
+  if ((h.match(/class="pm-pc-day"/g) || []).length !== 5 || (h.match(/class="pm-pc-day off"/g) || []).length !== 2 || !/<b>MON<\/b>9–6/.test(h)) fail("the done card doesn't show the week as 7 tiles (5 open \"9–6\", 2 closed)");
+  if (!/<span class="l">Holidays<\/span><span class="v">3 closed every year<small>Thanksgiving · Christmas Eve · Christmas Day<\/small>/.test(h) || !/<span class="l">One-off<\/span><span class="v">1 closure<small>Team trip Mar 2<\/small>/.test(h)) fail("the done card doesn't show the yearly holidays as one row, and one-offs apart with their dates");
+  if (!/<b>Your hours are on Google<\/b><span>checked Oct 16<\/span>/.test(h) || !/<summary>[\s\S]*?How holidays renew<\/summary>/.test(h) || !/<div class="pm-pc-lnks"><a class="gcard-maps" href="https:\/\/maps\.google\.com\/\?cid=1"[^>]*>See it on Google Maps ↗/.test(h)) fail("the done card isn't the band \"Your hours are on Google · checked\" with the holidays fold and Maps");
+  if (!/data-step-wrong="m1\.gbp\.hours_attributes">Something's not right\?<\/button>/.test(h)) fail("the done card has no quiet \"Something's not right?\"");
   if (!/<button type="button" class="pm-amend pm-hc-change" data-hours-edit="m1\.gbp\.hours_attributes">Change hours<\/button>/.test(h)) fail("the done card has no \"Change hours\"");
 }
 if (!/if \(g\.state === "on_google" && step\.id === "m1\.gbp\.hours_attributes" && taskState && taskState\.status === "done"\) return hoursCardHtml\(/.test(js)) fail("done hours don't draw the one green card");
@@ -56,7 +58,7 @@ if (!/data-in-hol="\$\{escapeAttribute\(h\.key\)\}">\$\{escapeHtml\(h\.label\)\}
 if (!/now\.holidayDates = Object\.fromEntries\(H\.holidayOptions\(\)\.map\(\(o\) => \[o\.key, H\.nextOccurrence\(o\.key\)\]\)/.test(prof)) fail("the next holiday dates aren't computed on the server (one source, never stale)");
 if (!/✓ matches what you saved/.test(js)) fail("the editor doesn't say whether Google matches what they saved");
 if (!/const head = (?:s\.kind === "booking"(?: \|\| step\.id === "m1\.gbp\.attributes")?(?: \|\| step\.id === "m1\.gbp\.services_products")? \? "" : )?s\.kind === "facts" \|\| s\.kind === "hours" \? gnow :/.test(js)) fail("the editor still stacks a label + help above the days");
-if (!/\.pm-dsw\.on \.tg \{ background:var\(--state-ok(?:,#0c5132)?\); \}/.test(css) || !/\.pm-hc-week \{ display:grid; grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/.test(css)) fail("the switch / week tiles aren't styled");
+if (!/\.pm-dsw\.on \.tg \{ background:var\(--state-ok(?:,#0c5132)?\); \}/.test(css) || !/\.pm-pc-week \{ display:grid; grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/.test(css)) fail("the switch / week tiles aren't styled");
 
 // 🔴 10-16: the switch first used ".pm-sw" — already the legend's 12px swatch — and shrank to 12px, its label over the time box.
 // Its class is its own: defined in one place only.

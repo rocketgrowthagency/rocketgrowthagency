@@ -11,6 +11,7 @@
 // off-centre arrow), and "whats this white circle" (the admin row marker said nothing about its card).
 // (Before 10-16 this gate enforced one_google_card_v1: white inside, never tinted. That format was replaced.)
 import fs from "node:fs";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -32,9 +33,9 @@ if (false) fail("a Google step still draws its own card (tl2 / pm-turned / pm-hc
 const facts2 = strip(pp(/^function factsCardV2\(/m) || "");
 // 🔄 10-23 (approved steps_1_4_clean_v1): client step 4 (business on Google, factsCardV2) moved to THE PLAN CARD (pcCard — one band,
 // rows with drawn marks, actions under); the other Google steps keep the shared Google card until their own redesign is approved
-if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "rga"/.test(facts2) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok"/.test(facts2) || !/return factsCardV2\(step, taskState, g\);/.test(push) || !/return googleCardHtml\(/.test(hours) || !/return googleCardHtml\(/.test(gv) || !/if \(kind === "yes"\) \{[\s\S]{0,600}return pcCard\(\{ tone: "ok", icon: GV_SHIELD, head: "Verified by Google"/.test(gv)) fail("steps 6 / 9 / 10 / 11 don't all draw the shared Google card, or client steps 2 (verified) / 4 aren't the plan card");
+if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "rga"/.test(facts2) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok"/.test(facts2) || !/return factsCardV2\(step, taskState, g\);/.test(push) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok", icon: CLOSE_CAL_ICON, head: appt \? "By appointment only, on Google" : "Your hours are on Google"/.test(hours) || !/return googleCardHtml\(/.test(gv) || !/if \(kind === "yes"\) \{[\s\S]{0,600}return pcCard\(\{ tone: "ok", icon: GV_SHIELD, head: "Verified by Google"/.test(gv)) fail("steps 6 / 9 / 10 / 11 don't all draw the shared Google card, or client steps 2 (verified) / 4 aren't the plan card");
 // 🔑 10-16 (step11_details_v1): 10 and 11 draw their own cards; their Change opens Editing (data-step-edit), never a write
-if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/act: `<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change details<\/button>`/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
+if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/const act = pcActs\(`<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change details<\/button>`\);/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
 if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
 if (!/e\.target\.closest\("\[data-gcard-how\]"\)/.test(portal) || !/e\.target\.closest\("\[data-gcard-fix\]"\)/.test(portal)) fail("the card's How verification works / Fix it do nothing");
 // the state is the TINT + a thin border, never a thick edge inside the step (two stripes)
@@ -56,6 +57,7 @@ const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m)
   pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
   pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay"),
   portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), pl("KW_SPIN"), pl("GV_SHIELD")];
+pLift.push(planCardKit(portal, pLift.join("\n")), pp(/^function svcCardHtml\(/m));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), al("G_ICON"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
@@ -99,6 +101,11 @@ try {
       typed: /[✓✔]/.test([...pc.querySelectorAll(".pm-pc-f .c")].map((c) => c.textContent).join("")), actsUnder: !!h.querySelector('section[data-k="7 with RGA"] .pm-k5-plan + .pm-k5-acts .pm-amend') } : null;
     const v6 = h.querySelector('section[data-k="6 verified"] .pm-k5-plan'), b6 = v6 && v6.querySelector(".pm-k5-h");
     out.__v6 = v6 ? { edgeW: getComputedStyle(v6).borderLeftWidth, band: getComputedStyle(b6).backgroundColor, marks: v6.querySelectorAll(".pm-pc-f .c svg").length, typed: /[✓✔]/.test(b6.textContent), recheck: !!h.querySelector('section[data-k="6 verified"] [data-step-recheck]') } : null;
+    // 🔄 10-23 night (approved steps_6_20_clean_v1): steps 7 / 9 / 8 done (old 9 / 10 / 11) are PLAN CARDS now — "No Google tile,
+    // status line and title stack; one band 'On Google · checked'": a thin border, the ok band, the date on the band, the action under
+    out.__done = Object.fromEntries(["9 done", "10 done", "11 done"].map((k) => { const pc = h.querySelector(`section[data-k="${k}"] .pm-k5-plan`), b = pc && pc.querySelector(".pm-k5-h");
+      return [k, pc ? { edgeW: getComputedStyle(pc).borderLeftWidth, band: getComputedStyle(b).backgroundColor, head: b.innerText.replace(/\s+/g, " ").trim(), logo: !!pc.querySelector(".gcard-logo, .gcard-g"),
+        act: ((h.querySelector(`section[data-k="${k}"] .pm-k5-plan + .pm-k5-acts`) || {}).innerText || "").replace(/\s+/g, " ").trim(), maps: !!h.querySelector(`section[data-k="${k}"] a.gcard-maps[href="https://maps.google.com/?cid=1"]`) } : null]; }));
     return out;
   }, look.toString());
   const apage = await browser.newPage();
@@ -122,7 +129,7 @@ try {
   }, look.toString());
 } finally { await browser.close(); }
 
-const want = { "9 done": "ok", "10 done": "ok", "11 done": "ok", "11 with RGA": "rga", "10 Google said": "you", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
+const want = { "11 with RGA": "rga", "10 Google said": "you", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
 { const v6 = P.__v6;
   if (!v6 || v6.edgeW !== "1px" || v6.band !== TINT.ok || v6.marks < 2 || v6.typed || v6.recheck) fail(`client step 2 verified isn't the plan card (thin border, the ok band, drawn marks): ${JSON.stringify(v6)}`); }
 { const pc = P.__plan;
@@ -141,10 +148,14 @@ for (const [k, st] of Object.entries(want)) {
 // 🔒 10-20 (Chris, step 6 v2.1 → every card): the status line says only WHAT IT IS; the time is its own line under the title
 const MONTH = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d/;
 for (const [k, c] of Object.entries(P)) if (c && (MONTH.test(c.st) || /·\s*(?:checked|confirmed|last|saved|sent|built)\b/i.test(c.st))) fail(`portal "${k}" puts a time on its status line ("${c.st}") — it goes under the title`);
-for (const k of ["9 done", "10 done", "11 done", "6 verified"]) if (P[k] && (!/^Last checked Oct 16\b/.test(P[k].when) || !P[k].whenUnderTitle)) fail(`portal "${k}" doesn't say "Last checked …" on its own line under the title ("${P[k].when}")`);
-if (P["9 done"] && (P["9 done"].act !== "Change hours" || !/^On Google \| .*See it on Google Maps ↗$/i.test(P["9 done"].meta))) fail(`step 9's card lacks Change hours under it, or its status line / proof (${P["9 done"]?.meta})`);
-if (P["10 done"] && (P["10 done"].act !== "Change link" || !/^On Google \| Try it ↗ See it on Google Maps ↗$/i.test(P["10 done"].meta))) fail(`step 10's card lacks Change link under it, or "On Google" + Try it + Maps (${P["10 done"]?.meta})`);
-if (P["11 done"] && (P["11 done"].act !== "Change details" || !/^On Google \| See it on Google Maps ↗$/i.test(P["11 done"].meta))) fail(`step 11's card lacks Change details under it, or "On Google" + Maps (${P["11 done"]?.meta})`);
+// 🔄 10-23 night (steps_6_20_clean_v1): the three done steps are plan cards — the date on the band, the change action under the card
+const DONE_WANT = { "9 done": [/^Your hours are on Google checked Oct 1[56]$/, /^Change hours Something's not right\?$/, true], "10 done": [/^Your booking link is on Google checked Oct 1[56]$/, /^Change link See it on Google Maps ↗$/, true],
+  "11 done": [/^1 detail on Google checked Oct 1[56]$/, /^Change details$/, false] };
+for (const [k, [head, act, maps]] of Object.entries(DONE_WANT)) { const c = P.__done && P.__done[k];
+  if (!c) { fail(`portal "${k}" isn't the plan card`); continue; }
+  if (c.edgeW !== "1px" || c.band !== TINT.ok || c.logo) fail(`portal "${k}" isn't the plan card (thin border, the ok band, no Google tile): ${JSON.stringify(c)}`);
+  if (!head.test(c.head) || !act.test(c.act) || (maps && !c.maps)) fail(`portal "${k}" isn't "<what> · checked <date>" with its action under the card${maps ? " and Maps" : ""} (${c.head} | ${c.act})`); }
+if (P["6 verified"] && P["6 verified"].when && !/^Last checked Oct 16\b/.test(P["6 verified"].when)) fail(`portal "6 verified" doesn't say when it was checked ("${P["6 verified"].when}")`);
 // step 6 v2.1: no Check again on a verified profile — a note says RGA checks every night
 if (P["6 verified"] && (P["6 verified"].act !== "" || !/^Verified by Google \| We check this every night\. [^|]*this step reopens[^|]* \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's verified card has a Check again, or lacks "Verified by Google" + the every-night note + Maps + How (${P["6 verified"]?.meta} / act "${P["6 verified"]?.act}")`);
 if (P["10 Google said"] && (P["10 Google said"].act !== "Fix it" || !P["10 Google said"].primary)) fail("a refusal's card has no blue Fix it under it");

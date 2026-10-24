@@ -120,7 +120,8 @@ if (/const ACC_ROLE = \{/.test(ADM) || !/fetch\("\/data\/site-platforms\.json"\)
 if (!/<b>RGA's move:<\/b>/.test(ADM) || !/<b>Collaborator code:<\/b>/.test(ADM)) fail("admin row 8 doesn't say RGA's move per builder (or the Shopify code)");
 // ── the conversation at the bottom
 const rh = P.slice(P.indexOf("  const rowHtml = ("), P.indexOf("  // 🔴 SETUP POINTS, IT DOES NOT DUPLICATE."));
-const iDetail = rh.indexOf('<div class="pm-detail" data-action-detail='), iThread = rh.indexOf("threadHtml(step.id)"), iCtl = rh.indexOf("${completionCtl ? (() => {");
+// 🔄 10-23 night: iDetail = the how-to fold line (how_this_step_works_fold_v1)
+const iDetail = rh.indexOf('data-how-fold="${escapeAttribute(step.id)}"'), iThread = rh.indexOf("threadHtml(step.id)"), iCtl = rh.indexOf("${completionCtl ? (() => {");
 if (iThread < 0 || iDetail < 0 || iThread < iDetail || iThread < iCtl) fail("the step conversation isn't at the bottom of the row (it sits above the card again)");
 if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(m\.id\)\) \? " open" : ""\}>/.test(P)) fail("the conversation isn't a closed row that opens for an unread reply");
 // 🔒 THE PROMISE (approved step3_access_promise_v1 option D, Chris 10-23): on the card, in How this step works, on admin row 8 — the same words

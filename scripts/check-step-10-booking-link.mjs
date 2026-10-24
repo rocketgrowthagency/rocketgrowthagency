@@ -16,6 +16,7 @@
 // marked the step not-done before anything changed.
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -206,6 +207,7 @@ if (!/if \(host\.closest\("\.pm-waits"\)\) \{ host\.innerHTML = `<span class="pm
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("siteShow"), line("monthDay"), line("BK_NOUN"), pick(/^function bookingCardHtml\(/m), pick(/^function bookingFormHtml\(/m)];
+lift.push(planCardKit(portal));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-10 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -220,9 +222,11 @@ try {
     const A = { key: "url_appointment", label: "Booking link", button: "Book", none: "Customers call us" };
     const h = document.getElementById("h");
     const draw = (html) => { h.innerHTML = html; const c = h.firstElementChild; const sel = h.querySelector("[data-bk-opt].sel");
-      return { cls: c && c.className, bg: c && getComputedStyle(c).backgroundColor, sel: sel && sel.getAttribute("data-bk-opt"), rec: ((h.querySelector(".gcard-why") || {}).innerText || "").replace(/\s+/g, " "),
+      // 🔄 10-23 night (steps_6_20_clean_v1): the plan card — its BAND carries the state tint, RGA's recommendation is the card's foot
+      const band = h.querySelector(".pm-k5-h");
+      return { cls: c && c.className, bg: band && getComputedStyle(band).backgroundColor, sel: sel && sel.getAttribute("data-bk-opt"), rec: ([...h.querySelectorAll(".pm-pc-foot")].map((x) => x.innerText).find((x) => /^RGA recommends/.test(x)) || "").replace(/\s+/g, " "),
         text: h.innerText.replace(/\s+/g, " ").trim(), page: (h.querySelector("[data-bk-page].on") || {}).getAttribute?.("data-bk-page") || null, tool: (h.querySelector('[data-bk-url="tool"]') || {}).value || "",
-        types: [...h.querySelectorAll("[data-bk-type]")].map((b) => b.getAttribute("data-bk-type")), act: (h.querySelector(".gcard-act") || {}).innerText || "", edit: !!h.querySelector('[data-step-edit="m1.gbp.booking_link"]'), keep: (h.querySelector('[data-bk-opt="keep"]') || {}).getAttribute?.("data-bk-keep") || null }; };
+        types: [...h.querySelectorAll("[data-bk-type]")].map((b) => b.getAttribute("data-bk-type")), act: ((h.querySelector(".pm-k5-acts") || {}).innerText || "").replace(/\s+/g, " ").trim(), edit: !!h.querySelector('[data-step-edit="m1.gbp.booking_link"]'), keep: (h.querySelector('[data-bk-opt="keep"]') || {}).getAttribute?.("data-bk-keep") || null }; };
     const site = { site: "rocketgrowthagency.com", types: [{ ...A, links: [] }], pages: [{ url: "https://www.rocketgrowthagency.com/free-growth-audit/", label: "rocketgrowthagency.com/free-growth-audit" }, { url: "https://www.rocketgrowthagency.com/contact/", label: "rocketgrowthagency.com/contact" }], tools: [] };
     return {
       site: draw(bookingFormHtml(site, null)),
@@ -244,16 +248,18 @@ try {
 } finally { await browser.close(); }
 // 🔒 google_card_best_v1: the amber TINT is the state; RGA's recommendation is the "why" line, and it is the preselected choice
 const TINT_YOU = "rgb(255, 241, 227)";
-if (R.site.cls !== "gcard you" || R.site.bg !== TINT_YOU || R.site.sel !== "website" || !/^RGA recommends Your request form, rocketgrowthagency\.com\/free-growth-audit\. People can ask for a time without phoning, and Google keeps links that let people do that\./i.test(R.site.rec) || R.site.page !== "https://www.rocketgrowthagency.com/free-growth-audit/" || !/Your move Where should Google send people who want to book\? Google shows no booking link/i.test(R.site.text) || !/Where should Google send people who want to book\?/.test(R.site.text)) fail(`with a page on their website, it isn't recommended and preselected in the amber Google card (${JSON.stringify(R.site)})`);
+if (R.site.cls !== "pm-k5-plan you" || R.site.bg !== TINT_YOU || R.site.sel !== "website" || !/^RGA recommends Your request form, rocketgrowthagency\.com\/free-growth-audit\. People can ask for a time without phoning, and Google keeps links that let people do that\./i.test(R.site.rec) || R.site.page !== "https://www.rocketgrowthagency.com/free-growth-audit/" || !/^Where should Google send people who want to book\? Google shows no booking link/i.test(R.site.text) || !/Where should Google send people who want to book\?/.test(R.site.text)) fail(`with a page on their website, it isn't recommended and preselected in the amber Google card (${JSON.stringify(R.site)})`);
 if (R.tool.sel !== "tool" || !/^RGA recommends Your booking tool\. Your website already links to Housecall Pro\./i.test(R.tool.rec) || R.tool.tool !== "https://book.housecallpro.com/book/joe/1" || !/Your website links to Housecall Pro/.test(R.tool.text)) fail(`the booking tool their website links to isn't recommended and filled in (${JSON.stringify(R.tool)})`);
 if (R.keep.sel !== "keep" || !/^RGA recommends Keep the link Google shows/i.test(R.keep.rec) || R.keep.keep !== "https://square.site/book/glow?utm_source=gbp" || !/Keep the link Google shows/.test(R.keep.text)) fail(`a link Google already shows isn't "Keep the link Google shows", recommended (${JSON.stringify(R.keep)})`);
 if (R.saved.sel !== "website" || R.saved.page !== "https://www.rocketgrowthagency.com/contact/") fail("a saved answer doesn't come back as they left it");
 if (R.old.sel !== "tool" || R.old.tool !== "https://calendar.app.google/x") fail("an answer saved in the old shape (a bare link) doesn't come back in the booking-tool box");
 if (JSON.stringify(R.rest.types) !== JSON.stringify(["url_reservations", "url_order_ahead"]) || !/We don't take reservations online/.test(R.rest.text) || /Book button|Customers call us/.test(R.rest.text)) fail(`a restaurant isn't asked for the links Google offers it (${JSON.stringify(R.rest)})`);
 if (R.noType.sel !== "none" || !/Google doesn't offer your kind of business a booking link/.test(R.noType.text)) fail("a business Google offers no booking link can't finish the step");
-if (R.editing.cls !== "gcard ok" || !/^On Google now (?!·)/i.test(R.editing.text) || R.editing.rec) fail("editing a done step doesn't show what's on Google now in a green card");
-if (R.done.cls !== "gcard ok" || R.done.act !== "Change link" || !R.done.edit || !/Your booking link Last checked Oct 16 rocketgrowthagency\.com\/contact Your website/i.test(R.done.text) || !/Try it ↗ See it on Google Maps ↗ Change link$/.test(R.done.text)) fail(`the done card isn't the link + who runs it + Try it + Maps + Change link (${R.done.text})`);
-if (!/Your reservations link Last checked Oct 16 (?:www\.)?opentable\.com\/r\/bistro OpenTable/i.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
+if (R.editing.cls !== "pm-k5-plan ok" || !/On Google now: /.test(R.editing.text) || R.editing.rec) fail("editing a done step doesn't show what's on Google now in a green card");
+// 🔄 10-23 night (steps_6_20_clean_v1 v2): "Your booking link is on Google · checked", the profile picture with its booking button, what it
+// opens, Change link + See it on Google Maps. 🔴 Google picks its button's words — the card never promises "Book online"
+if (!/^pm-k5$/.test(R.done.cls || "") || R.done.act !== "Change link See it on Google Maps ↗" || !R.done.edit || !/^Your booking link is on Google checked Oct 16 /i.test(R.done.text) || !/The book button opens rocketgrowthagency\.com\/contact, your page\. Google picks the button's exact words\./.test(R.done.text) || /Book online|Book button/.test(R.done.text)) fail(`the done card isn't the booking link on Google + the picture + what it opens + Change link + Maps, or it promises a button label (${R.done.text})`);
+if (!/^Your reservations link is on Google checked Oct 16 .*The reserve button opens (?:www\.)?opentable\.com\/r\/bistro, your OpenTable page\./i.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
 if (R.call.act !== "Add a link" || !/Customers call you/.test(R.call.text)) fail("\"Customers call us\" isn't a settled card with Add a link");
 if (R.x) fail("a page name from the client's website became HTML");
 

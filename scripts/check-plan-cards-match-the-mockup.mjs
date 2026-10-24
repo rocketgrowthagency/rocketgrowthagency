@@ -29,7 +29,9 @@ if (/How this step works/.test(mock)) { console.error("⚠️  INDETERMINATE —
 
 // ── 2 · the row: a done step whose plan card is the record draws no toggle, and no hairline above the card ──
 if (!/const PLAN_CARD_DONE = new Set\(\["m1\.kickoff\.call", "m1\.gbp\.verify", "m1\.access\.website", "m1\.gbp\.business_facts", "m1\.strategy\.keywords_locations"\]\);/.test(src)) fail("the five plan-card steps aren't one named set (PLAN_CARD_DONE)");
-if (!/\? \(hasDetail && !PLAN_CARD_DONE\.has\(step\.id\) \? `<button class="pm-act" data-toggle-detail=/.test(src)) fail("a done plan-card step draws \"How this step works ▾\" again (the mockup draws the card alone)");
+// 🔄 10-23 night (approved how_this_step_works_fold_v1): no top toggle on ANY row; the how-to is the card's last fold line
+if (/<button class="pm-act[^"]*" data-toggle-detail=/.test(src.replace(/^\s*\/\/.*$/gm, ""))) fail("a row draws \"How this step works ▾\" as a button at the top again (the mockup draws the card alone)");
+if (!/card\.insertBefore\(f, card\.querySelector\(":scope > \.pm-pc-lnks"\) \|\| null\);/.test(src) || !/const own = \[\.\.\.card\.querySelectorAll\(":scope > \.pm-k5-fold:not\(\[data-how-fold\]\)"\)\]\.pop\(\);/.test(src)) fail("the how-to fold isn't seated as the card's last line (or merged into the card's own fold)");
 if (!/\.pm-doit:has\(> \.pm-k5\) \{ border-top: 0; padding-top: 0; \}/.test(css)) fail("a hairline sits between the title and the plan card again");
 
 // ── 3 · drawn in Chrome ──

@@ -99,7 +99,7 @@ if (items.length !== 2 || !items[0].structuredServiceItem || items[1].freeFormSe
 const empty = S.servicesView({ categories: {} }, { categories: [] }, "");
 if (empty.categories.primary || empty.options.length) fail("step 6: a profile with no categories invents options");
 const s6 = A["m1.gbp.services_products"] || {};
-if (s6.clientStepNo !== 6 || s6.clientPhase !== 1 || s6.clientBucket !== "supply" || s6.approvalSurface || s6.clientInput?.kind !== "checklist" || s6.clientInput?.cta !== "These are right") fail("step 6: the playbook doesn't make admin 32 client step 6 (number, phase, supply, checklist, no separate approval)");
+if (s6.clientStepNo !== 6 || s6.clientPhase !== 1 || s6.clientBucket !== "supply" || s6.approvalSurface || s6.clientInput?.kind !== "checklist" || s6.clientInput?.cta !== "Put it on Google") fail("step 6: the playbook doesn't make admin 32 client step 6 (number, phase, supply, checklist, no separate approval)");
 if (!/SERVICES: "m1\.gbp\.services_products"/.test(read("netlify/functions/_gbp-profile.js")) || !/stepId === STEP\.SERVICES\) return (await )?require\("\.\/_gbp-services"\)\.applyServices/.test(read("netlify/functions/_gbp-profile.js"))) fail("step 6: the save doesn't route to Google's services");
 if (!/stepId === GSTEP\.ATTRS \|\| stepId === GSTEP\.SERVICES/.test(INP) || !/draft: servicesDraft/.test(INP)) fail("step 6: the save doesn't validate against the live options (with RGA's draft)");
 if (!/if \(stepId === STEP\.SERVICES\) \{[\s\S]{0,200}now\.on/.test(WATCH) || !/stepId === STEP\.SERVICES \? now\.on \|\| \[\]/.test(DRIFT)) fail("step 6: the nightly drift check or admin's keep-Google's doesn't read the services");
