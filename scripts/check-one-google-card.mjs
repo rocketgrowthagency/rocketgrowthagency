@@ -85,6 +85,8 @@ try {
       "10 done": gbpPushHtml({ id: "m1.gbp.booking_link" }, { status: "done", google_push: { state: "on_google", at, after: ["https://calendly.com/x?utm_source=gbp"], link: "https://calendly.com/x", platform: "Calendly", link_type: "url_appointment" } }, { maps }),
       "11 done": gbpPushHtml({ id: "m1.gbp.attributes" }, { status: "done", google_push: { state: "on_google", at, after: ["a"], labels: { a: "Online appointments", b: "Appointment required" } } }, { maps }),
       "7 with RGA": gbpPushHtml({ id: "m1.gbp.business_facts" }, { status: "in_progress", google_push: { state: "with_rga", at, rga: [{ fact: "area", add: ["Mar Vista, CA", "Palms, CA"] }], maps_uri: maps } }),
+      // 🔄 10-23 night: steps 7–9 done are plan cards now, so a plain Google card WITH a time keeps the "time under the title" rule tested
+      "card with a time": googleCardHtml({ state: "ok", small: "On Google", side: "checked Oct 16", title: "A Google fact" }),
       "11 with RGA": gbpPushHtml({ id: "m1.gbp.attributes" }, { status: "in_progress", google_push: { state: "with_rga", error: "403" } }),
       "10 Google said": gbpPushHtml({ id: "m1.gbp.booking_link" }, { status: "pending", google_push: { state: "needs_client", said: "This link doesn't open.", fix: "Paste the public link." } }),
       "6 verified": gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 16, 6:03 AM"]]),
@@ -155,6 +157,7 @@ for (const [k, [head, act, maps]] of Object.entries(DONE_WANT)) { const c = P.__
   if (!c) { fail(`portal "${k}" isn't the plan card`); continue; }
   if (c.edgeW !== "1px" || c.band !== TINT.ok || c.logo) fail(`portal "${k}" isn't the plan card (thin border, the ok band, no Google tile): ${JSON.stringify(c)}`);
   if (!head.test(c.head) || !act.test(c.act) || (maps && !c.maps)) fail(`portal "${k}" isn't "<what> · checked <date>" with its action under the card${maps ? " and Maps" : ""} (${c.head} | ${c.act})`); }
+if (!P["card with a time"] || !/^Last checked Oct 16\b/.test(P["card with a time"].when) || !P["card with a time"].whenUnderTitle) fail(`a Google card doesn't say "Last checked …" on its own line under the title ("${P["card with a time"]?.when}")`);
 if (P["6 verified"] && P["6 verified"].when && !/^Last checked Oct 16\b/.test(P["6 verified"].when)) fail(`portal "6 verified" doesn't say when it was checked ("${P["6 verified"].when}")`);
 // step 6 v2.1: no Check again on a verified profile — a note says RGA checks every night
 if (P["6 verified"] && (P["6 verified"].act !== "" || !/^Verified by Google \| We check this every night\. [^|]*this step reopens[^|]* \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's verified card has a Check again, or lacks "Verified by Google" + the every-night note + Maps + How (${P["6 verified"]?.meta} / act "${P["6 verified"]?.act}")`);

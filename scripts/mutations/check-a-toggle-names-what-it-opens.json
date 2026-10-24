@@ -1,9 +1,9 @@
 [
  [
-  "done rows say View again",
+  "the fold line says View again",
   "portal",
-  "${DETAIL_LABEL[detailKind][0]} ▾</button>` : \"\")",
-  "View →</button>` : \"\")"
+  "<summary>${PC_DOWN}${escapeHtml(DETAIL_LABEL[detailKind][0])}</summary>",
+  "<summary>${PC_DOWN}View →</summary>"
  ],
  [
   "open toggle says Hide only",
@@ -12,10 +12,10 @@
   "b.textContent = detail.hidden ? `${L[0]} ▾` : \"Hide ↑\";"
  ],
  [
-  "the strip always says How to do this",
+  "the fold line always says How to do this",
   "portal",
-  "<span>${escapeHtml(heading)}</span></div>",
-  "<span>How to do this</span></div>"
+  "<summary>${PC_DOWN}${escapeHtml(DETAIL_LABEL[detailKind][0])}</summary>",
+  "<summary>${PC_DOWN}How to do this</summary>"
  ],
  [
   "the done label hides something else",

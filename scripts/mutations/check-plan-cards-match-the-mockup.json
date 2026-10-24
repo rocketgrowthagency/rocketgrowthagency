@@ -1,15 +1,15 @@
 [
  [
-  "the toggle is back on done plan cards",
+  "the how-to fold isn't seated in the card",
   "portal",
-  "? (hasDetail && !PLAN_CARD_DONE.has(step.id) ? `",
-  "? (hasDetail ? `"
+  "      card.insertBefore(f, card.querySelector(\":scope > .pm-pc-lnks\") || null);",
+  "      row.appendChild(f);"
  ],
  [
   "the hairline is back above the plan card",
   "portalcss",
-  ".pm-doit:has(> .pm-k5) { border-top: 0; padding-top: 0; }",
-  ".pm-doit:has(> .pm-k5) { padding-top: 0; }"
+  ".pm-doit:has(> .pm-k5), .pm-doit:has(.pm-input .pm-k5-plan), .pm-doit:has(.pm-input .pm-hc-confirm) { border-top: 0; padding-top: 0; }",
+  ".pm-doit:has(> .pm-k5), .pm-doit:has(.pm-input .pm-k5-plan), .pm-doit:has(.pm-input .pm-hc-confirm) { padding-top: 0; }"
  ],
  [
   "step 1 back to the long date",
@@ -34,5 +34,11 @@
   "portal",
   "const PLAN_CARD_DONE = new Set([\"m1.kickoff.call\", \"m1.gbp.verify\", \"m1.access.website\",",
   "const PLAN_CARD_DONE = new Set([\"m1.gbp.verify\", \"m1.access.website\","
+ ],
+ [
+  "two folds in one card",
+  "portal",
+  "    const own = [...card.querySelectorAll(\":scope > .pm-k5-fold:not([data-how-fold])\")].pop();",
+  "    const own = null;"
  ]
 ]

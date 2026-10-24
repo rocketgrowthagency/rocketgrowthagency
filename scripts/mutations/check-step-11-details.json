@@ -44,8 +44,8 @@
  [
   "the button says something else",
   "portal",
-  "  if (b && !b.disabled) b.textContent = \"Save what's true\";",
   "  if (b && !b.disabled) b.textContent = \"Put it on Google\";",
+  "  if (b && !b.disabled) b.textContent = \"Save\";",
   1
  ],
  [
@@ -58,8 +58,8 @@
  [
   "the done card loses Change details",
   "portal",
-  "proof: gcardMaps(maps), act: `<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change details</button>` });",
-  "proof: gcardMaps(maps) });",
+  "  const act = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change details</button>`);",
+  "  const act = \"\";",
   1
  ],
  [
@@ -135,8 +135,8 @@
  [
   "Sent to Google is skipped",
   "portal",
-  "  if (!seen) {\n    return googleCardHtml({ state: \"rga\", small: \"Sent to Google\"",
-  "  if (false) {\n    return googleCardHtml({ state: \"rga\", small: \"Sent to Google\"",
+  "  if (!seen) return `<div class=\"pm-k5\">${pcCard({ tone: \"rga\", icon: KW_SPIN, head: on.length ? `Sent to Google",
+  "  if (false) return `<div class=\"pm-k5\">${pcCard({ tone: \"rga\", icon: KW_SPIN, head: on.length ? `Sent to Google",
   1
  ],
  [

@@ -2,22 +2,22 @@
  [
   "week not drawn",
   "portal",
-  "<span class=\"pm-hc-week\">${GBP_DAY.map(tile).join(\"\")}</span>",
-  "",
+  "`<div class=\"pm-pc-week\">${GBP_DAY.map(tile).join(\"\")}</div>`)\n    + (yearly.length",
+  "\"\")\n    + (yearly.length",
   1
  ],
  [
-  "holidays without dates",
+  "one-off closures without dates",
   "portal",
-  "${escapeHtml(x.name || \"Closed\")} <i>${escapeHtml(monthDay(x.date + \"T12:00:00Z\"))}",
-  "${escapeHtml(x.name || \"Closed\")} <i>",
+  "once.map((x) => `${escapeHtml(x.name || \"Closed\")} ${escapeHtml(monthDay(x.date + \"T12:00:00Z\"))}`)",
+  "once.map((x) => `${escapeHtml(x.name || \"Closed\")}`)",
   1
  ],
  [
   "no Maps link",
   "portal",
-  "    proof: gcardMaps(maps),\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
-  "    proof: \"\",\n    act: `<button type=\"button\" class=\"pm-amend pm-hc-change\"",
+  "  const links = maps ? `<div class=\"pm-pc-lnks\">${gcardMaps(maps)}</div>` : \"\";",
+  "  const links = \"\";",
   1
  ],
  [
