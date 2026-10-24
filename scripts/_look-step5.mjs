@@ -18,5 +18,6 @@ await page.evaluate(() => document.querySelector('.portal-nav a[data-view="setup
 const row = page.locator(`[id="step-row-${process.env.STEP || "m1.strategy.keywords_locations"}"]`);
 if (await row.evaluate((e) => e.classList.contains("is-collapsed"))) { await row.evaluate((e) => e.querySelector(":scope > [data-step-toggle]")?.click()); await page.waitForTimeout(500); }
 if (process.env.WAIT) await page.waitForSelector(process.env.WAIT, { timeout: 30000 }).catch(() => {}); await page.waitForTimeout(500);
+if (process.env.DUMP) console.log(await row.evaluate((r) => [...r.children].map((c) => { const cs = getComputedStyle(c); return `${c.tagName.toLowerCase()}.${[...c.classList].join(".")} h=${Math.round(c.getBoundingClientRect().height)} bt=${cs.borderTopWidth} bb=${cs.borderBottomWidth} hidden=${c.hidden}`; }).join("\n")));
 await row.screenshot({ path: `${out}/${process.env.STEP || "step5"}.png` }); console.log(`[${process.env.STEP || "step5"}]`, (await row.innerText()).replace(/\s+/g, " ").slice(0, 1400));
 await b.close();

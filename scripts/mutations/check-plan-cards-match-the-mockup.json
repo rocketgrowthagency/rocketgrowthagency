@@ -1,0 +1,38 @@
+[
+ [
+  "the toggle is back on done plan cards",
+  "portal",
+  "? (hasDetail && !PLAN_CARD_DONE.has(step.id) ? `",
+  "? (hasDetail ? `"
+ ],
+ [
+  "the hairline is back above the plan card",
+  "portalcss",
+  ".pm-doit:has(> .pm-k5) { border-top: 0; padding-top: 0; }",
+  ".pm-doit:has(> .pm-k5) { padding-top: 0; }"
+ ],
+ [
+  "step 1 back to the long date",
+  "portal",
+  "head: `Call held · ${escapeHtml(ccDay(k.start, { tz: k.client_tz }))}`, side: escapeHtml(ccTime(k.start, { tz: k.client_tz })),",
+  "head: `Call held · ${escapeHtml(ccWhen(k.start, { tz: k.client_tz }, { long: true }))}`,"
+ ],
+ [
+  "the time ignores the client's zone",
+  "portal",
+  "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { timeZone: clientReadingZone(j && j.tz), hour: \"numeric\", minute: \"2-digit\" });",
+  "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { hour: \"numeric\", minute: \"2-digit\" });"
+ ],
+ [
+  "\"Something's not right?\" is a boxed button again",
+  "portalcss",
+  ".pm-k5-acts .pm-k5-tell, .pm-k5-acts .pm-amend.pm-k5-tell { border:0; background:none;",
+  ".pm-k5-acts .pm-k5-tell, .pm-k5-acts .pm-amend.pm-k5-tell { background:none;"
+ ],
+ [
+  "a plan-card step drops out of the set",
+  "portal",
+  "const PLAN_CARD_DONE = new Set([\"m1.kickoff.call\", \"m1.gbp.verify\", \"m1.access.website\",",
+  "const PLAN_CARD_DONE = new Set([\"m1.gbp.verify\", \"m1.access.website\","
+ ]
+]

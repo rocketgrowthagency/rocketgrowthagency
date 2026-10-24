@@ -44,10 +44,13 @@ const card = run("dupConfirmedHtml(T, { google_account_email: 'o@x.com' })");
 // its own line, Show / Hide details folding the removed / kept lines; still a closed accordion the top note can open
 if (!/<span class="l">Duplicate profile<\/span><span class="v">Removed/.test(card)) fail("step 6 doesn't show the duplicate as removed once Google confirms it");
 if (/photo|next step/i.test(card)) fail(`step 6's confirmation points at photos / "next step": ${card.slice(0, 160)}`);
-if (!/^<details class="pm-k5-plan ok pm-k5-join" data-dup-acc>/.test(card) || /<details[^>]* open/.test(card)) fail("step 6's duplicate confirmation isn't a closed accordion joined under the verified card");
+// 🔄 10-23 night (Chris: "match the mockup exactly" — steps_1_4_clean_v1 draws ONE plain row, no Show details): a row joined into the
+// verified card, right under Phone (before the fold); a closed accordion again would be the drift Chris screenshotted
+if (!/^<div class="pm-k5-plan ok pm-k5-join" data-dup-acc><div class="pm-pc-f">/.test(card) || /<details/.test(card)) fail("step 6's duplicate confirmation isn't the plain row joined into the verified card");
+if (!/card\.insertBefore\(dup, card\.querySelector\(":scope > \.pm-k5-fold"\) \|\| null\)/.test(P)) fail("the duplicate row isn't placed under Phone, before the fold and Maps");
 if (/One profile on Google/.test(card)) fail('the duplicate row says more than "Removed"');
 if (!/Removed<small>Google confirmed it [^<]+<\/small>/.test(card)) fail("the confirmation date isn't on its own line under Removed");
-if (!/Show details/.test(card) || !/Hide details/.test(card) || !/<div class="pm-k5-why">/.test(card)) fail("the accordion has no Show / Hide details or no folded lines");
+if (/Show details|Hide details/.test(card)) fail("the duplicate row grew a Show / Hide details again (the mockup has none)");
 // order: the verified card first, the duplicate under it
 if (!/<div class="pm-gv" data-gbp-verify[^`]*Reading your Google Business Profile…<\/span><\/div>\$\{dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)\}/.test(P)) fail("step 6 doesn't draw the verified card first and the duplicate under it");
 if ((P.match(/dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)/g) || []).length !== 1) fail("step 6 draws the duplicate confirmation more than once (or above the verified card)");
@@ -74,7 +77,7 @@ ctx.G2 = { state: "on_google", after: ctx.G1.after, area_now: ["Springfield, IL,
 const w = run("factsCardV2(S, CI, G1)"), o = run("factsCardV2(S, CI, G2)");
 if ((w.match(/class="pm-pc-f"/g) || []).length !== 5) fail("step 7's facts table doesn't have its 5 rows (name, phone, website, how customers reach you, service area)");
 for (const [re, what] of [[/Nothing needed from you/, "nothing needed from you"], [/We compared what Google shows/, "what was compared"], [/What RGA is doing:/, "what RGA is doing"],
-  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/1 of 2 on Google/, "the progress count"]])
+  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/✓ on Google|adding/, "each area's own state (the mockup's chips; no N of M count)"]])
   if (!re.test(w)) fail(`step 7 (RGA working) lost "${what}"`);
 for (const n of ["Springfield", "Shelbyville", "Capital City", "Ogdenville"]) {
   const k = (w.match(new RegExp(`pm-fxt-pl[^"]*"><span class="d"[^>]*></span>${n}\\b`, "g")) || []).length;

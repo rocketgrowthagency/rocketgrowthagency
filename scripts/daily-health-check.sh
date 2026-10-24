@@ -429,6 +429,7 @@ run check-signed-in-user-never-sees-login-form.mjs "a working magic link never e
 run check-a-thread-email-reads-like-the-email.mjs "an email copy in a step's thread reads like the email (no ## or [link](url) on screen), and a test send says it's a test"
 run check-step-12-review-requests.mjs "step 13 is option B (approved 10-23): one customer at a time in the plan card, the request shown as its text, one reminder from day 3, \"Is it James?\" only as the client's question, Done = 5 asked + Google's own count or nothing; never \"sent\""
 run check-reviews-feed.mjs "live Google reviews on Ongoing work (approved 10-23): the morning read keeps the reviews, \"Is this Maria?\" only when one asked customer fits and only the client answers, no reading is never 0, admin claims no sends"
+run check-plan-cards-match-the-mockup.mjs "the done plan cards of steps 1–5 are the approved mockup (no toggle or hairline above the card, \"Call held · Fri, Oct 9\" + time, quiet links)"
 run check-setup-steps-read-in-order.mjs "the client's Setup list reads 1 to N in order, and a Done step keeps its number"
 run check-a-refused-photo-says-how-to-fix.mjs "a photo that comes back says why and how to fix it; Google's raw text never reaches the client"
 run check-profile-answers-reach-google.mjs "steps 8/10/11 put the answer on Google and are Done only when the read-back matches"

@@ -42,10 +42,10 @@
   "if (false) {"
  ],
  [
-  "done-without-record loses its calm words",
+  "the done-before-details card grows a footer again (the mockup has none)",
   "portal",
-  "+ pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`)",
-  "+ pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Not recorded.`)"
+  "+ pcTl(`<b>Your website builder</b> · not on record`, \"\", false) })}`",
+  "+ pcTl(`<b>Your website builder</b> · not on record`, \"\", false) + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
  ],
  [
   "the Change button goes (can't X out)",
@@ -224,8 +224,8 @@
  [
   "the done card asks the client to fill in records again",
   "portal",
-  "        + pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`) })}`\n      + pcActs(`<button type=\"button\" class=\"pm-amend\" data-acc-redo>Edit access</button>`)",
-  "        + pcFoot(`${by === \"RGA\" ? \"RGA confirmed it\" : \"You marked it done\"}. Nothing for you to do.`) })}`\n      + pcActs(`<button type=\"button\" class=\"pm-amend\" data-acc-redo>Add the details</button>`)"
+  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo>Add your builder</button>",
+  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo>Want it on record? Add the details</button>"
  ],
  [
   "the promise leaves the card",

@@ -2,8 +2,8 @@
  [
   "the confirmed card mentions photos",
   "portal",
-  "<div>Only your main Business Profile shows on Maps and Search now.</div>${typeLinesHtml",
-  "<div>Your next step is open: upload your business photos.</div>${typeLinesHtml",
+  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+  "pcFact(\"Duplicate profile\", \"Removed · your next step is photos\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
   1
  ],
  [
@@ -44,8 +44,8 @@
  [
   "step 7 drops the 48-hour line",
   "portal",
-  " Google can take up to 48 hours; we check every night. Nothing needed from you.",
-  " We check every night. Nothing needed from you.",
+  "`all ${n}`}. Google can take up to 48 hours.`)",
+  "`all ${n}`}.`)",
   1
  ],
  [
@@ -126,24 +126,24 @@
   1
  ],
  [
-  "the accordion starts open",
+  "the duplicate row turns back into an accordion",
   "portal",
-  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc>",
-  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc open>",
+  "return `<div class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc>${pcFact(",
+  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc><summary>Show details</summary>${pcFact(",
   1
  ],
  [
   "One profile on Google is back",
   "portal",
-  "<span class=\"l\">Duplicate profile</span><span class=\"v\">Removed",
-  "<span class=\"l\">Duplicate profile</span><span class=\"v\">Removed · One profile on Google",
+  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+  "pcFact(\"Duplicate profile\", \"Removed · One profile on Google\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
   1
  ],
  [
   "the date rides the status line",
   "portal",
-  "Removed${c.at ? `<small>Google confirmed it ${escapeHtml(monthDay(c.at))}</small>` : \"\"}",
-  "Removed${c.at ? ` · Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\"}",
+  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+  "pcFact(\"Duplicate profile\", c.at ? `Removed · Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"Removed\", \"\")",
   1
  ],
  [

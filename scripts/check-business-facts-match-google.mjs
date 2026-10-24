@@ -267,7 +267,7 @@ if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\
   if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
 }
 if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
-if (!/x\.on \? "on" : "", x\.on \? "✓ on Google" : "adding"/.test(js) || !/pcCard\(\{ tone: "rga"[\s\S]{0,300}side: `\$\{items\.length - pending\.length\} of \$\{items\.length \+ queue\.length\} on Google[\s\S]{0,1800}pcActs\(change \+ mapsLink\)/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+if (!/x\.on \? "on" : "", x\.on \? "✓ on Google" : "adding"/.test(js) || !/pcCard\(\{ tone: "rga"[\s\S]{0,300}side: atIso \? `checked \$\{escapeHtml\(pcDate\(atIso\)\)\}` : ""[\s\S]{0,1800}pcActs\(change \+ mapsLink\)/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
 if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
 if (!/\(areaChips \? `<div class="pm-pc-chips">\$\{areaChips\}<\/div>` : ""\)/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
 {
