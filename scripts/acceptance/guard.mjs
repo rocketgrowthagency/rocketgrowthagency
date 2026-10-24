@@ -29,8 +29,9 @@ export const READ_ONLY_FN_POSTS = {
   "portal-get-audit-snapshot": onlyKeys(["client_ids"]),
   // portal-deliverables.js — writes (saveRecord/logActivity) only when action_answer or decision is present.
   "portal-deliverables": onlyKeys(["client_id", "monthly"]),
-  // portal-review-requests.js — writes only when `sent` is present.
-  "portal-review-requests": onlyKeys(["client_id"]),
+  // portal-review-requests.js — writes only when a mark is present (sent · reminded · reviewed · stopped · not_match); `scope`
+  // ("first_5" = step 13's customers, "reviews" = Ongoing work's reviews card, 10-23) only picks what it reads.
+  "portal-review-requests": onlyKeys(["client_id", "scope"]),
   // client-change-history.js → _change-ledger.historyFor: GET client_change_log only (recordChange is not reachable).
   "client-change-history": onlyKeys(["client_id", "limit", "surface"]),
   // portal-gbp-profile.js (2026-10-15) — readForStep only GETs the Google profile; nothing is written to Google or to the

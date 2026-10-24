@@ -202,5 +202,11 @@
   "admin",
   "              + `<span class=\"ob-gcard-says\" data-ob-rv-feed=",
   "              + `<span class=\"ob-gcard-says\" data-x="
+ ],
+ [
+  "zero reviews is a green card again",
+  "portal",
+  "  if (!f.reviews.length && !f.count) return pcCard({ tone: \"you\", icon: STAR_ICON, head: \"No reviews on Google yet\"",
+  "  if (false) return pcCard({ tone: \"you\", icon: STAR_ICON, head: \"No reviews on Google yet\""
  ]
 ]

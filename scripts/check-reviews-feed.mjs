@@ -200,7 +200,8 @@ try {
   const quiet = await draw({ ...live, matches: [], feed: { ...live.feed, reviews: live.feed.reviews.slice(2), new_30d: 1 } });
   if (quiet.head !== "41 reviews on Google") fail(`B: a quiet week doesn't say the total (${quiet.head})`);
   const none = await draw({ feed: { ...live.feed, count: 0, rating: null, new_30d: 0, gap_days: null, reviews: [] }, matches: [], profile_url: "https://x" });
-  if (none.head !== "0 reviews on Google" || !/No reviews on your Google profile yet/.test(none.text) || none.all || !/^No rating average, 0 reviews\|\+0 new in the last 30 days\|– between the last two$/.test(none.k.join("|"))) fail(`C: a profile with no reviews (measured) isn't said plainly (${none.head} · ${none.k.join("|")} · ${none.all})`);
+  // 🔒 10-23 (live check on RGA): 0 reviews read as a GREEN card with "No rating · +0 · –" — zero is the client's move, not "good"
+  if (none.cls !== "pm-k5-plan you" || none.head !== "No reviews on Google yet" || !/Your review requests are how the first ones come in/.test(none.text) || none.all || none.k.length) fail(`C: a profile with no reviews (measured) isn't the amber "No reviews on Google yet" with no empty numbers (${none.cls} · ${none.head} · ${none.k.join("|")} · ${none.all})`);
   const stale = await draw({ ...live, matches: [], feed: { ...live.feed, stale: true } });
   if (!/not read since$/.test(stale.side || "")) fail(`D: an old reading doesn't say it wasn't read since (${stale.side})`);
   const cant = await draw({ feed: null, matches: [], read_failed: false });
