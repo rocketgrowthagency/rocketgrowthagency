@@ -54,7 +54,9 @@ if (!/\.pm-doit:has\(\.pm-k5-plan\), \.pm-doit:has\(\.pm-hc-confirm\) \{ border-
   if (!/<div class="pm-m18-up">\$\{buildPhotoUploadHtml\([^}]*\{ compact: true \}\)\}<\/div>/.test(src) || !/opts\.compact \? `<details class="pm-m18-d"><summary class="pm-commit">Upload photos<\/summary>`/.test(src)) fail("step 18's upload isn't the mockup's \"Upload photos\" button under the card");
   if (!/opts\.compact \? "" : `<div class="portal-card-head">/.test(src) || !/compact: !!card\.closest\("\.pm-m18-up"\)/.test(src)) fail("step 18 shows the old upload card's head and copy again (or loses the button after an upload)");
   if (!/\.pm-pc-also \.pm-p2-also > summary \{ padding:10px 0; \}/.test(S)) fail("step 10's \"already on Google\" line sits squeezed against the rows above it");
-  if (!/\.pm-pc-body > \.pm-rc-rows \{[^}]*margin:0;/.test(S)) fail("a gap sits under step 16's band"); }
+  if (!/\.pm-pc-body > \.pm-rc-rows \{[^}]*margin:0;/.test(S)) fail("a gap sits under step 16's band");
+  // Chris 10-26 (screenshot of step 7): "See it on Google Maps" sat at the top of a 30px box, so its row read lopsided
+  if (!/\.pm-pc-lnks a, \.pm-pc-lnks button \{[^}]*display:inline-flex; align-items:center;/.test(S)) fail("a card's link row (\"See it on Google Maps\") isn't centered in its row"); }
 
 // ── 3 · drawn in Chrome ──
 const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("monthDay"), line("CLOSE_CAL_ICON"), pcSlice,
