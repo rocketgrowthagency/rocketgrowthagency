@@ -10,6 +10,7 @@
 // and all are synced"). The step said "Do step 8 first" while it also needed step 12 (which waited on RGA), gave no date
 // ("at the end of month 1"), and showed an amber band and a blue "What to do" box on one step.
 import fs from "node:fs";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -40,13 +41,14 @@ try {
   const page = await browser.newPage();
   await page.setContent("<html><body><div id=h></div></body></html>");
   await page.addStyleTag({ content: css });
-  await page.addScriptTag({ content: [...lift, "const LATER_STEPS = { 'm1.gbp.photos': 'photos' }; function laterDay(u) { return new Date(u).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }); }"].join("\n") });
+  await page.addScriptTag({ content: [...lift, planCardKit(portal, lift.join("\n")), "const LATER_STEPS = { 'm1.gbp.photos': 'photos' }; function laterDay(u) { return new Date(u).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }); }"].join("\n") });
   R = await page.evaluate((cs) => {
     const step = cs.month1.find((s) => s.id === "m1.call.close");
     const done = { status: "done" }, h = document.getElementById("h");
     const base = Object.fromEntries(step.needsFirst.map((id) => [id, done]));
     const draw = (tasks, rga) => { h.innerHTML = closeWaitHtml(step, tasks, rga, [], cs);
-      return { text: h.innerText.replace(/\s+/g, " ").trim(), cls: h.querySelector(".gcard")?.className, rows: h.querySelectorAll(".pm-cw-r").length, ticks: h.querySelectorAll(".pm-cw-s.on").length, go: (h.querySelector(".pm-cw-go") || {}).textContent || "" }; };
+      // 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the plan card — a timeline row per prerequisite (drawn ✓ when done)
+      return { text: h.innerText.replace(/\s+/g, " ").trim(), cls: h.querySelector(".pm-k5-plan")?.className, rows: h.querySelectorAll(".pm-pc-tl").length, ticks: h.querySelectorAll(".pm-pc-tl:not(.wait)").length, go: (h.querySelector(".pm-cw-go") || {}).textContent || "" }; };
     const far = Date.now() + 5 * 86400000;
     return {
       // 🔄 10-20 (approved phase3_4_reviews_close_v1): the call waits only on what the REPORT needs — Google access + the keyword plan
@@ -59,10 +61,10 @@ try {
   }, cs);
 } finally { await browser.close(); }
 if (R.rga.rows !== R.n || R.rga.ticks !== R.n - 2) fail(`the wait doesn't list every prerequisite with ✓ on the done ones (${R.rga.rows} rows, ${R.rga.ticks} ✓ of ${R.n})`);
-if (!/^2 steps left Your close-out call opens about Nov 5 Month 1 ends about Nov 8/i.test(R.rga.text) || R.rga.cls !== "gcard you") fail(`the card doesn't say how many are left, when it opens and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
+if (!/^Opens about Nov 5 2 steps left /i.test(R.rga.text) || !/Month 1 ends about Nov 8\./.test(R.rga.text) || R.rga.cls !== "pm-k5-plan wait") fail(`the card doesn't say how many are left, when it opens and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
 if (!/Anything still open carries into Month 2; nothing waits for it/.test(R.rga.text)) fail("the card doesn't say open steps carry into Month 2 (Month 1 closes on a date)");
-if (!/Grant RGA access to Google Analytics[^·]*yours/.test(R.rga.text) || !/5 · Your keyword plan RGA's move/.test(R.rga.text)) fail(`each open prerequisite doesn't say whose move it is (yours / RGA's move for a step RGA finishes) (${R.rga.text.slice(0, 300)})`);
-if (/Go to step 5/.test(R.yours.go)) fail("a step RGA finishes (the keyword plan) is offered as the client's next move");
+if (!/Grant RGA access to Google Analytics[^·]*· yours/.test(R.rga.text) || !/Your keyword plan · RGA's/.test(R.rga.text)) fail(`each open prerequisite doesn't say whose move it is (yours / RGA's move for a step RGA finishes) (${R.rga.text.slice(0, 300)})`);
+if (/keyword plan/i.test(R.yours.go)) fail("a step RGA finishes (the keyword plan) is offered as the client's next move");
 if (R.rgaOnly.go) fail("a step that waits on RGA is offered as the client's next move");
 if (/Month 1 ends/.test(R.noKick.text)) fail("Month 1's end date shows before the kickoff (a guess)");
 

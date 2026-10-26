@@ -32,7 +32,7 @@ if (!/const PLAN_CARD_DONE = new Set\(\["m1\.kickoff\.call", "m1\.gbp\.verify", 
 // 🔄 10-23 night (approved how_this_step_works_fold_v1): no top toggle on ANY row; the how-to is the card's last fold line
 if (/<button class="pm-act[^"]*" data-toggle-detail=/.test(src.replace(/^\s*\/\/.*$/gm, ""))) fail("a row draws \"How this step works ▾\" as a button at the top again (the mockup draws the card alone)");
 if (!/card\.insertBefore\(f, card\.querySelector\(":scope > \.pm-pc-lnks"\) \|\| null\);/.test(src) || !/const own = \[\.\.\.card\.querySelectorAll\("\.pm-k5-fold:not\(\[data-how-fold\]\)"\)\]\.filter\(\(x\) => x\.closest\("\.pm-k5-plan"\) === card && !x\.closest\("\.pm-sgrp"\)\)\.pop\(\);/.test(src)) fail("the how-to fold isn't seated as the card's last line (or merged into the card's own fold)");
-if (!/\.pm-doit:has\(> \.pm-k5\), \.pm-doit:has\(\.pm-input \.pm-k5-plan\)[^{]*\{ border-top: 0; padding-top: 0; \}/.test(css)) fail("a hairline sits between the title and the plan card again");
+if (!/\.pm-doit:has\(\.pm-k5-plan\), \.pm-doit:has\(\.pm-hc-confirm\) \{ border-top: 0; padding-top: 0; \}/.test(css)) fail("a hairline sits between the title and the plan card again");
 
 // ── 2b · step 12's consent (steps_6_20_clean_v1, 10-26): the client ALLOWS the tag before RGA adds it — the card, the save, the server,
 // admin — and allowing never finishes the step (its own nightly count does)

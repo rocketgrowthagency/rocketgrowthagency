@@ -36,6 +36,8 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-photo-addmore": "step 10 done's \"Add more\" (steps_6_20_clean_v1): opens the photo list under the card and scrolls to it (visible) — each slot keeps its own Upload (2026-10-26)",
+  "data-rc-add": "step 16's \"+ add another\" (steps_6_20_clean_v1): adds one more empty customer row and focuses it (visible) — nothing is saved until \"Send my list\" (2026-10-26)",
   "data-hc-change": "step 7's \"Change a day\" (steps_6_20_clean_v1): opens the hours editor already holding Google's hours and drops the button (visible) — nothing is saved until \"Save my hours\" (2026-10-23)",
   "data-r5-all": "step 13's \"Add all N at once\": shows the held-back customer forms and drops the button (visible) — nothing is saved until \"Write … request(s)\" (reviews_card_option_b_v1, 2026-10-23)",
   "data-in-notsure": "step 17's \"Not sure\" on a number: ticks the box and clears + disables that field (visible) — nothing is saved until \"Send my numbers\" (monthly_asks_v1, 2026-10-20)",

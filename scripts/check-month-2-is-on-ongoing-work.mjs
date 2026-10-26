@@ -84,7 +84,8 @@ if (!/const expanded = month2Only \|\| step\.id === openStepId;/.test(pcode)) fa
 if (!/\$\{month2Only \? `<span class="pm-step-period">\$\{escapeHtml\(ongoingPeriod\(step\)\)\}<\/span>` : ""\}/.test(pcode)) fail("a Month-2 card doesn't show its period");
 if (!/: month2Only && \(step\.clientForm === "photo_upload" \|\| step\.clientForm === "customer_list"\) \? ""/.test(pcode)) fail("a Month-2 card still jumps elsewhere for its photo upload / customer list");
 // 10-20 (monthly_asks_v1): a suggestion now — the count on Google this month, no quota bar — still above the upload
-if (!/: month2Only && step\.clientForm === "photo_upload"\s*\? `(?:\$\{monthPhotosProgressHtml\(photosThisMonth\)\}|<p class="pm-in-help"><b>\$\{photosOnGoogleThisMonth\} on Google this month\.<\/b>[^`$]*)\$\{buildPhotoUploadHtml\(/.test(pcode)) fail("step 15's card doesn't hold the photo upload and its counted progress");
+// 🔄 10-26 (steps_6_20_clean_v1, step 18): the plan card ("5 new photos this month", the count this month), then the upload
+if (!/: month2Only && step\.clientForm === "photo_upload"\s*\? `\$\{pcCard\(\{ tone: "you", icon: DC_ICON\.pho, head: "5 new photos this month"[\s\S]{0,300}\$\{photosOnGoogleThisMonth\} on Google this month[\s\S]{0,200}\$\{buildPhotoUploadHtml\(/.test(pcode)) fail("step 15's card doesn't hold the photo upload and its counted progress");
 if (!/: month2Only && step\.clientForm === "customer_list" \? buildCustomerListHtml\(clientId, customerLists \|\| \[\]\)/.test(pcode)) fail("step 16's card doesn't hold the customer list");
 if (!/listEl\.innerHTML = month2Only\s*\? \(numbered\.length \? numbered\.map\(rowHtml\)\.join\(""\)/.test(pcode)) fail("the Month-2 list isn't bare (no pointers, legend or group titles on Ongoing work)");
 

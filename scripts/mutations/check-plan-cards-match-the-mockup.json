@@ -8,8 +8,8 @@
  [
   "the hairline is back above the plan card",
   "portalcss",
-  ".pm-doit:has(> .pm-k5), .pm-doit:has(.pm-input .pm-k5-plan), .pm-doit:has(.pm-input .pm-hc-confirm) { border-top: 0; padding-top: 0; }",
-  ".pm-doit:has(> .pm-k5), .pm-doit:has(.pm-input .pm-k5-plan), .pm-doit:has(.pm-input .pm-hc-confirm) { padding-top: 0; }"
+  ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { border-top: 0; padding-top: 0; }",
+  ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { padding-top: 0; }"
  ],
  [
   "step 1 back to the long date",
