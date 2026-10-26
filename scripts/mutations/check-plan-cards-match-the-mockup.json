@@ -64,5 +64,47 @@
   "portal",
   "      && !(step.id === \"m1.tracking.form_setup\" && (taskState?.client_choice || taskState?.detected?.n90 > 0));",
   "      ;"
+ ],
+ [
+  "step 15 RGA wait back to the old line",
+  "portal",
+  "closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook, true) : rgaWaitHtml(step)",
+  "rgaWaitHtml(step) : rgaWaitHtml(step)"
+ ],
+ [
+  "step 15 without RGA's row",
+  "portal",
+  "if (rgaPart) rows.push(",
+  "if (false) rows.push("
+ ],
+ [
+  "step 18 old upload card",
+  "portal",
+  "{ compact: true })}</div>",
+  "{})}</div>"
+ ],
+ [
+  "step 18 summary as the old link",
+  "portal",
+  "<summary class=\"pm-commit\">Upload photos</summary>",
+  "<summary>+ Upload photos</summary>"
+ ],
+ [
+  "step 18 loses compact after upload",
+  "portal",
+  "{ compact: !!card.closest(\".pm-m18-up\") }",
+  "{}"
+ ],
+ [
+  "step 10 also line squeezed",
+  "portalcss",
+  ".pm-pc-also .pm-p2-also > summary { padding:10px 0; }",
+  ""
+ ],
+ [
+  "step 16 gap under band",
+  "portalcss",
+  "padding:12px 14px; margin:0; border-top:1px solid var(--portal-line,#e3e3e3); }",
+  "padding:12px 14px; border-top:1px solid var(--portal-line,#e3e3e3); }"
  ]
 ]

@@ -45,6 +45,17 @@ if (!/\.pm-doit:has\(\.pm-k5-plan\), \.pm-doit:has\(\.pm-hc-confirm\) \{ border-
   if (!/<b>Client allowed the tag<\/b>/.test(adm) || !/Don't add it before they do\./.test(adm)) fail("admin doesn't show whether the client allowed the tag");
   if (!/&& !\(step\.id === "m1\.tracking\.form_setup" && \(taskState\?\.client_choice \|\| taskState\?\.detected\?\.n90 > 0\)\);/.test(src)) fail("step 12 still says Your turn after the client allowed it"); }
 
+// ── 2c · the last drift Chris's side-by-side caught (10-26): step 15 waiting on RGA's part draws the "Opens about" card too;
+// step 18's upload is the mockup's "Upload photos" button under the card (the old card's head and copy gone); the photo
+// card's "already on Google" line and step 16's rows sit flush in the card like its other rows
+{ const S = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  if (!/\$\{rgaWait \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook, true\) : rgaWaitHtml\(step\)\) : ""\}/.test(src)) fail("step 15 waiting on RGA's part shows the old line, not the \"Opens about\" card");
+  if (!/if \(rgaPart\) rows\.push\(pcTl\("<b>Your Month 1 report<\/b> · RGA's", "", false\)\);/.test(src)) fail("step 15's waiting card doesn't name RGA's own part (the Month 1 report)");
+  if (!/<div class="pm-m18-up">\$\{buildPhotoUploadHtml\([^}]*\{ compact: true \}\)\}<\/div>/.test(src) || !/opts\.compact \? `<details class="pm-m18-d"><summary class="pm-commit">Upload photos<\/summary>`/.test(src)) fail("step 18's upload isn't the mockup's \"Upload photos\" button under the card");
+  if (!/opts\.compact \? "" : `<div class="portal-card-head">/.test(src) || !/compact: !!card\.closest\("\.pm-m18-up"\)/.test(src)) fail("step 18 shows the old upload card's head and copy again (or loses the button after an upload)");
+  if (!/\.pm-pc-also \.pm-p2-also > summary \{ padding:10px 0; \}/.test(S)) fail("step 10's \"already on Google\" line sits squeezed against the rows above it");
+  if (!/\.pm-pc-body > \.pm-rc-rows \{[^}]*margin:0;/.test(S)) fail("a gap sits under step 16's band"); }
+
 // ── 3 · drawn in Chrome ──
 const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("monthDay"), line("CLOSE_CAL_ICON"), pcSlice,
   line("ccDay"), line("ccTime"), pick(/^function kickoffDoneHtml\(/m)];
