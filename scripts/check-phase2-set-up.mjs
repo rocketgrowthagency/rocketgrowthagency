@@ -49,7 +49,7 @@ if (/materially more calls/.test(JSON.stringify(A["m1.gbp.photos"] || {}))) fail
 if (!/don't change your rank/.test(A["m1.gbp.photos"]?.clientWhy || "")) fail("step 10: the photo copy no longer says photos win customers, not rank");
 // ── 11 · call tracking
 if (!/stepId === "m1\.tracking\.call_setup" && choice\.key === "rga_sets_up" && !\(prev\.tracking && prev\.tracking\.live_at\)\s*\? \{ status: "in_progress", completed_at: null \}/.test(CHO)) fail("step 11: \"Set one up for me\" reads Done the moment it's chosen");
-if (!/requireWorkspaceForClient\(event, clientId\)/.test(CT) || !/tracking\.live_at !== now\) return json\(500/.test(CT) || !/t\.client_choice !== "rga_sets_up"\) return json\(409/.test(CT)) fail("step 11: the test-call record isn't RGA-only, read back, or tied to the client's choice");
+if ((CT.match(/await requireWorkspaceForClient\(event, clientId\)/g) || []).length < 2 || /requirePortalOwner/.test(CT) || !/tracking\.live_at !== now\) return json\(500/.test(CT) || !/t\.client_choice !== "rga_sets_up"\) return json\(409/.test(CT)) fail("step 11: the test-call record isn't RGA-only, read back, or tied to the client's choice");
 if (!/data-ob-ct-live/.test(ADM) || !/number on Google not before/.test(ADM)) fail("step 11: admin row 26 lost the test-call form or the one-change-a-week date");
 if (!/rcRow\("Needs", ready/.test(P) || !/rcRow\("Done when", \["rga", "Test call"\]/.test(P)) fail("step 11: the client's card doesn't say what it needs and what makes it done");
 // ── 12 · form tracking
