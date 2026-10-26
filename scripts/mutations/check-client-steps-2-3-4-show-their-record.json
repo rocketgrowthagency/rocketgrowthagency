@@ -58,14 +58,14 @@
  [
   "skip says Calls",
   "portal",
-  "Your reports show <b>call-button clicks</b> from Google",
-  "Your reports show <b>Calls</b> from Google",
+  "rcRow(\"Your reports show\", [\"ok\", \"✓\"], `Google's call-button clicks${back",
+  "rcRow(\"Your reports show\", [\"ok\", \"✓\"], `Google's Calls${back",
   1
  ],
  [
   "no revisit date",
   "portal",
-  "${back ? ` · we'll raise it again ${escapeHtml(monthDay(back))}` : \"\"}",
+  "${back ? `<small>we'll ask again ${escapeHtml(monthDay(back))}</small>` : \"\"}",
   "",
   1
  ],

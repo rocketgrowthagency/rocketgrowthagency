@@ -65,8 +65,8 @@
  [
   "the already-on-Google fold drops back under the list",
   "portal",
-  "const listHtml = `${panel}${toolbar}${beforeList}<div class=\"pm-slots",
-  "const listHtml = `${toolbar}${beforeList}${panel}<div class=\"pm-slots",
+  "${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}${tipsFold}",
+  "${tipsFold}${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}",
   1
  ],
  [

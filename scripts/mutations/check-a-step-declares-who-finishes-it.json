@@ -18,10 +18,10 @@
   "\"clientDone\": \"owner\",\n      \"clientDoneCta\": \"The duplicate is merged\""
  ],
  [
-  "the portal stops requiring a control for \"Your turn\" \u2192 the gate must say it cannot tell, not accuse",
+  "the portal stops requiring a control for \"Your turn\" → the gate must say it cannot tell, not accuse",
   "portal",
-  "      || (mech === \"client\" && step.clientDoneCta));",
-  "      || mech === \"client\");",
+  "      || (mech === \"client\" && step.clientDoneCta))",
+  "      || mech === \"client\")",
   2
  ]
 ]

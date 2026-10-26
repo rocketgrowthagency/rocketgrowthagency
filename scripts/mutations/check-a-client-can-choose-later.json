@@ -100,8 +100,8 @@
  [
   "the list isn't minimised while later",
   "portal",
-  "${laterUi}${top.later\n    ? `<details class=\"pm-later-list\"",
-  "${laterUi}${false\n    ? `<details class=\"pm-later-list\"",
+  "${top.later ? laterUi : \"\"}${top.later\n    ? `<details class=\"pm-later-list\"",
+  "${top.later ? laterUi : \"\"}${false\n    ? `<details class=\"pm-later-list\"",
   1
  ],
  [

@@ -56,7 +56,7 @@ if (KNOWN.size < 2) { console.error("⚠️  INDETERMINATE — cannot read the p
 // re-read rather than accusing whatever uses it.
 // → feedback_a_gate_written_from_a_slogan_defends_the_misreading · feedback_a_chosen_property_list_is_a_claim_about_what_i_looked_at
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-const theirs = portal.match(/const theirsToAct = [\s\S]{0,400}?\);/);
+const theirs = portal.match(/const theirsToAct = [\s\S]{0,900}?\);/);   // 10-26: + step 12's consent clause (an && after the 4 branches)
 if (!theirs) { console.error("⚠️  INDETERMINATE — cannot read the portal's theirsToAct condition"); process.exit(2); }
 // 🔴 COUNT THE BRANCH-LEADING `||`, not every `||`. `(step.clientChoices || [])` is a DEFAULT inside
 // a branch, and counting it made this report 5 branches and refuse to run.

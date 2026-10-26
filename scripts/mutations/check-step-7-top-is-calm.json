@@ -7,10 +7,10 @@
   1
  ],
  [
-  "the plain line shows on every state",
+  "a line comes back above the card",
   "portal",
-  "only: theirsToAct && h.only ? PHOTO_ONLY_LINE : \"\",",
-  "only: PHOTO_ONLY_LINE,",
+  "  const body = `${top.later ? laterUi : \"\"}${top.later",
+  "  const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${top.later ? laterUi : \"\"}${top.later",
   1
  ],
  [

@@ -93,8 +93,8 @@
  [
   "the retake chip pushes the bar out of line",
   "portal",
-  "<b>${escapeHtml(g.name)}</b>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}<span class=\"acc-meta\"><span class=\"acc-bar${done ? \" done\" : \"\"}\" aria-hidden=\"true\"><i style=\"width:${pct}%\"></i></span><span class=\"acc-n\">${filled} / ${g.items.length}</span></span>",
-  "<b>${escapeHtml(g.name)}</b><span class=\"acc-meta\"><span class=\"acc-bar${done ? \" done\" : \"\"}\" aria-hidden=\"true\"><i style=\"width:${pct}%\"></i></span><span class=\"acc-n\">${filled} / ${g.items.length}</span>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}</span>",
+  "<b>${escapeHtml(g.name)}</b>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}<span class=\"acc-meta\">",
+  "<b>${escapeHtml(g.name)}</b><span class=\"acc-meta\">${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}",
   1
  ]
 ]

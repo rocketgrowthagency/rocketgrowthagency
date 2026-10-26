@@ -40,5 +40,29 @@
   "portal",
   "    const own = [...card.querySelectorAll(\".pm-k5-fold:not([data-how-fold])\")].filter((x) => x.closest(\".pm-k5-plan\") === card && !x.closest(\".pm-sgrp\")).pop();",
   "    const own = null;"
+ ],
+ [
+  "step 12 skips the client's consent",
+  "portal",
+  "  if (!allowed) {\n    // your move: the client allows the tag",
+  "  if (false) {\n    // your move: the client allows the tag"
+ ],
+ [
+  "allowing finishes step 12",
+  "stepchoicefn",
+  "      || (step.clientChoiceIsConsent && prev.status !== \"done\")\n",
+  "      || false\n"
+ ],
+ [
+  "admin can't see the consent",
+  "admin",
+  "  const lines = [allowed ? `<b>Client allowed the tag</b>",
+  "  const lines = [allowed ? `<b>Client OK</b>"
+ ],
+ [
+  "step 12 stays Your turn after allowing",
+  "portal",
+  "      && !(step.id === \"m1.tracking.form_setup\" && (taskState?.client_choice || taskState?.detected?.n90 > 0));",
+  "      ;"
  ]
 ]
