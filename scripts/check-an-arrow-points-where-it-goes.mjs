@@ -50,6 +50,7 @@ if (/\? "Open full [^"]*" : "Open full [^"]*"/.test(src)) fail.push("the expand 
 // ═══ PART 2 — EVERY REMAINING ↗ IS ON SOMETHING THAT LEAVES ══════════════════════════════════
 // 🔑 Registered by what the control IS. An unregistered ↗ fails rather than being assumed correct.
 const LEAVES = [
+  { needle: 'href="https://business.google.com/" target="_blank" rel="noopener">Open Business Profile ↗</a>', why: "To do (todo_redesign_v1, 10-26): Google Business Profile, where RGA makes a by-hand change; target=_blank" },
   { needle: 'open.textContent = "Open ↗"', why: "a cs-linkopen anchor with target=_blank" },
   { needle: ">View as client ↗</a>", why: "an anchor to the client report" },
   // 🔄 2026-10-09 (kickoff_call_script_v1): "Join the call ↗" became "Join and start the call" (a button that opens

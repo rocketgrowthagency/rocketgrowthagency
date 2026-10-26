@@ -36,6 +36,7 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-mv-filter": "admin To do's header chips (todo_redesign_v1, 2026-10-26): filter the list on screen to late / due today / on track / waiting on clients and mark the chip pressed (visible) — nothing is saved",
   "data-photo-addmore": "step 10 done's \"Add more\" (steps_6_20_clean_v1): opens the photo list under the card and scrolls to it (visible) — each slot keeps its own Upload (2026-10-26)",
   "data-rc-add": "step 16's \"+ add another\" (steps_6_20_clean_v1): adds one more empty customer row and focuses it (visible) — nothing is saved until \"Send my list\" (2026-10-26)",
   "data-hc-change": "step 7's \"Change a day\" (steps_6_20_clean_v1): opens the hours editor already holding Google's hours and drops the button (visible) — nothing is saved until \"Save my hours\" (2026-10-23)",

@@ -1,0 +1,44 @@
+[
+ [
+  "the wait spinners are never installed",
+  "busyjs",
+  "\ninstallWaitSpinners();",
+  "\n"
+ ],
+ [
+  "a wait whose text changes keeps its spinner",
+  "busyjs",
+  "if (on !== el.classList.contains(\"rga-wait\")) el.classList.toggle(\"rga-wait\", on);",
+  "if (on) el.classList.add(\"rga-wait\");"
+ ],
+ [
+  "buttons get a second spinner",
+  "busyjs",
+  "const SKIP = \"button, [role=button], input, textarea, select, option, script, style, .pm-msg.busy, .is-busy\";",
+  "const SKIP = \"script, style\";"
+ ],
+ [
+  "a line with its own ring gets a second one",
+  "busyjs",
+  "(dot|spin|spinner|ring|loader)",
+  "(zzz)"
+ ],
+ [
+  "the portal draws no wait ring",
+  "portalcss",
+  ".rga-wait::before { content:\"\";",
+  ".rga-wait-off::before { content:\"\";"
+ ],
+ [
+  "admin draws no wait ring",
+  "css",
+  ".rga-wait::before { content:\"\";",
+  ".rga-wait-off::before { content:\"\";"
+ ],
+ [
+  "a verb list again (misses Booking…)",
+  "busyjs",
+  "(?:[A-Z][a-z]+ )?[A-Z][a-z]+ing\\b.*…\\s*$/;",
+  "(?:[A-Z][a-z]+ )?(Loading|Reading)\\b.*…\\s*$/;"
+ ]
+]

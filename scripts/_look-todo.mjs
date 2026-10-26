@@ -5,7 +5,12 @@ import { adminLink, SITE } from "./_admin-session.mjs";
 const out = process.argv[2] || "/tmp", SUPA = process.env.SUPABASE_URL, KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const { chromium } = await import("playwright");
 const b = await chromium.launch({ headless: true });
-const guard = (ctx) => ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
+// LOCAL=1 serves THIS repo's admin / portal files (the functions stay live) — a look before a deploy
+import fs from "node:fs"; import path from "node:path";
+const SITE_DIR = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const LOCAL = { "/admin/admin.js": "admin/admin.js", "/admin/admin.css": "admin/admin.css", "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json", "/data/playbooks/playbooks.json": "data/playbooks/playbooks.json" };
+const local = async (ctx) => { if (!process.env.LOCAL) return; await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && LOCAL[u.pathname], (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".json") ? "application/json" : "text/javascript", body: fs.readFileSync(path.join(SITE_DIR, LOCAL[p]), "utf8") }); }); };
+const guard = async (ctx) => { await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); }); await local(ctx); };
 // admin
 { const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } }); await guard(ctx);
   const page = await ctx.newPage(); page.on("pageerror", (e) => console.log("PAGEERROR", String(e.message).slice(0, 200)));

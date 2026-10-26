@@ -150,6 +150,23 @@ if (!/if \(e\.type === "step"\) \{/.test(POR) || !/href="#step-\$\{escapeAttribu
 if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ \(_todoApprovalsN \|\| 0\);/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");
 if (!/RGA is doing it\$\{gbpWithRga \? moveSince\(openMv && openMv\.get\(step\.id\)\) : ""\}/.test(POR)) fail("the row pill lost its \"· since\" on RGA's by-hand move");
 if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Google<\/b>\$\{moveSince\(byHand\)\}`/.test(POR)) fail("step 4 no longer shows RGA's part (since) before Google's 48 hours");
+// ── todo_redesign_v1 (approved 10-26): the redesign's moving parts
+{
+  const CS = JSON.parse(read("data/playbooks/client-steps.json")), BCS = read("scripts/build-client-steps.mjs"), SSE = read("netlify/functions/send-step-email.js");
+  if (!/"clientMinutes",/.test(BCS) || !(CS.month1 || []).some((x) => x.clientMinutes)) fail("a step's minutes don't reach the client (clientMinutes in the projection)");
+  if (!/e === firstStep \? `<span class="ib-next">Start here<\/span>` : ""/.test(POR) || !/st\.clientMinutes \? `<span class="ib-tm">/.test(POR)) fail("the client's To do cards lost \"Start here\" or the minutes");
+  if (!/Month 1 · \$\{m1Done\} of \$\{m1Steps\.length\} done/.test(POR) || !/stepNeeds\.every\(\(m\) => mvStep\(m\.step_id\)\.clientMinutes\)/.test(POR)) fail("the To do header isn't the Month 1 progress line / sums minutes it doesn't have");
+  if (!/function ibOpenStep\(id\)/.test(POR) || !/t\.hasAttribute\("data-ib-step"\) && window\.matchMedia/.test(POR)) fail("a To do step doesn't open the step itself (phone tap / a second tap)");
+  if (!/band\("late", "Late · do these first", "late"/.test(ADM) || !/data-mv-filter/.test(ADM) || !/state\.todoFilter = state\.todoFilter === k \? "all" : k/.test(ADM)) fail("the admin queue isn't in urgency bands with chips that filter");
+  if (!/m\.kind === "google_by_hand"\s*\? `<a class="admin-button mv-main" href="https:\/\/business\.google\.com\/"/.test(ADM)) fail("a by-hand Google change's main button isn't Open Business Profile");
+  if (!/\(m\.reminders \|\| 0\) === 0 \? m\.age_days >= 3/.test(ADM) || !/m\.reminders === 1 && m\.age_days >= 7/.test(ADM)) fail("the reminder rule isn't 3 days, then 7 days, at most 2");
+  if (!/okLabel: "Send reminder"/.test(ADM) || !/kind: "nudge", clientId: cid, stepId: ids\[0\], also_step_ids: ids\.slice\(1\)/.test(ADM)) fail("Draft reminder doesn't go through the nudge dialog + send path");
+  if (!/const badAlso = alsoSteps\.find\(\(x\) => !NUDGE_STEPS\.has\(x\)\);/.test(SSE) || !/for \(const id of \[stepId, \.\.\.alsoSteps\]\) \{/.test(SSE) || !/step_ids: \[stepId, \.\.\.alsoSteps\]/.test(SSE)) fail("a reminder's extra steps skip the nudge checks, or aren't recorded");
+  if (!/kind=eq\.step_nudge_sent/.test(AOM) || !/reminders: rs\.length, reminded_at:/.test(AOM)) fail("the admin list doesn't know each step's reminders");
+  if (!/#adminNextActionDesc\.mv-folded \{ display:none; \}/.test(read("admin/admin.css")) || !/els\.adminNextActionDesc\.classList\.toggle\("mv-folded", mineByHand\)/.test(ADM)) fail("the client card's long before / after sentence doesn't fold (the card's own See the details opens the step)");
+  if (!/const month1 = \{ total: m1\.length, done:/.test(POM) || !/_openMovesMonth1\.set\(clientId, j\.month1\)/.test(POR)) fail("the To do header's Month 1 progress isn't read from the server with the moves");
+  if (/class="ib-tl/.test(POR.slice(POR.indexOf("const stepRow = (e) =>"), POR.indexOf("const row = (e) =>")))) fail("a To do task reuses .ib-tl (the website timeline's class)");
+}
 // no surface carries its own copy of the promise rule
 for (const [name, src] of [["admin.js", ADM], ["portal.js", POR]]) if (/addBusinessDays|RGA_DAYS|CLIENT_DAYS/.test(src)) fail(`${name} carries its own copy of the promise rule`);
 // the morning email, built from the list

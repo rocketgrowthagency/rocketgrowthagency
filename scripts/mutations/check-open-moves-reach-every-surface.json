@@ -100,5 +100,47 @@
   "portal",
   "${total && !stepNeeds.length && !stepRga.length ? `<span class=\"ib-prog\">",
   "${total ? `<span class=\"ib-prog\">"
+ ],
+ [
+  "the minutes don't reach the client",
+  "buildcs",
+  "  \"clientMinutes\",\n",
+  "\n"
+ ],
+ [
+  "Start here goes",
+  "portal",
+  "${e === firstStep ? `<span class=\"ib-next\">Start here</span>` : \"\"}",
+  "${\"\"}"
+ ],
+ [
+  "the header sums minutes it doesn't have",
+  "portal",
+  "stepNeeds.length && stepNeeds.every((m) => mvStep(m.step_id).clientMinutes) ?",
+  "stepNeeds.length ?"
+ ],
+ [
+  "a by-hand change's button is just Open step",
+  "admin",
+  "    ? `<a class=\"admin-button mv-main\" href=\"https://business.google.com/\"",
+  "    ? `<a class=\"admin-button mv-main\" href=\"#\""
+ ],
+ [
+  "reminders every day",
+  "admin",
+  "((m.reminders || 0) === 0 ? m.age_days >= 3",
+  "((m.reminders || 0) >= 0 ? m.age_days >= 0"
+ ],
+ [
+  "a reminder's extra steps skip the checks",
+  "stepemailfn",
+  "    for (const id of [stepId, ...alsoSteps]) {",
+  "    for (const id of [stepId]) {"
+ ],
+ [
+  "the chips don't filter",
+  "admin",
+  "state.todoFilter = state.todoFilter === k ? \"all\" : k;",
+  "state.todoFilter = \"all\";"
  ]
 ]

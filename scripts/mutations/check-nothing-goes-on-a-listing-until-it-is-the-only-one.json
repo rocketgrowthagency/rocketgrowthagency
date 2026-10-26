@@ -205,8 +205,8 @@
  [
   "the projection loses a flag",
   "clientstepsjson",
-  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
-  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"clientMinutes\": 15,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  "\"clientStepNo\": 10,\n      \"clientPhase\": 2,\n      \"clientMinutes\": 15,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
   1
  ],
  [

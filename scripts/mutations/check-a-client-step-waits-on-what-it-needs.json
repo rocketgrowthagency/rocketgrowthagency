@@ -310,8 +310,8 @@
  [
   "the nudge looks steps up in Month 1 only",
   "stepemailfn",
-  "const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === stepId);",
-  "const sop = (PB.month1 || []).find((s) => s.id === stepId);",
+  "      const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === id);",
+  "      const sop = (PB.month1 || []).find((s) => s.id === id);",
   1
  ],
  [
