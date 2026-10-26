@@ -52,11 +52,15 @@ try {
   await page.waitForSelector("#portalLoadingPanel", { state: "hidden", timeout: 45000 });
   await page.evaluate(() => document.querySelector('.portal-nav a[data-view="setup"]')?.click());
   await page.waitForFunction(() => document.querySelectorAll('[id^="step-row-m1."]').length > 0, { timeout: 45000 }).catch(() => {});
+  // which rows show "How this step works" at first paint — a live read that lands later must not take it away
+  const howAtFirst = await page.evaluate(() => [...document.querySelectorAll('[id^="step-row-m1."]')].filter((r) => r.querySelector("details[data-how-fold]")).map((r) => r.id.replace(/^step-row-/, "")));
   await new Promise((r) => setTimeout(r, 4000));
   const rows = await page.evaluate((ids) => ids.map((id) => {
     const row = document.getElementById(`step-row-${id}`);
     if (!row) return { id, missing: true };
     const pill = (row.querySelector(".pm-step-pills .pm-pill") || {}).textContent?.trim() || "";
+    // 🔴 10-26 (Chris's screenshot): step 6's live read replaced its card and threw away the seated "How this step works"
+    const how = !!row.querySelector("details[data-how-fold]");
     const c = row.cloneNode(true);
     // 🔄 10-26: the how-to is an in-card fold now (details.pm-k5-fold) — counted as "something said", it hid an empty card
     c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold").forEach((x) => x.remove());
@@ -65,12 +69,14 @@ try {
     const you = c.querySelector(".pm-k5-plan.you, .gcard.you");
     // the step 5 "building" tracker (Real search data → RGA locks it) is "RGA is on it", whatever its words
     const building = !!c.querySelector(".pm-k5-prog");
-    return { id, pill, said: (c.textContent || "").replace(/\s+/g, " ").trim(), you: you ? (you.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60) : "", building };
+    return { id, pill, said: (c.textContent || "").replace(/\s+/g, " ").trim(), you: you ? (you.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60) : "", building, how };
   }), IDS);
   const seen = rows.filter((r) => !r.missing);
   if (!seen.length) { console.log("⚠️  INDETERMINATE — no Month 1 rows rendered"); await browser.close(); process.exit(2); }
+  const HAS_HOW = new Set(howAtFirst);
   for (const r of seen) {
     if (!/^Done$/i.test(r.pill)) continue;
+    if (HAS_HOW.has(r.id) && !r.how) fails.push(`${r.id}: done, and its "How this step works" was there at first paint, then gone (a card drawn after a live read replaced it)`);
     const m = r.said.match(ASK);
     if (r.you) fails.push(`${r.id}: done, but it shows a "your move" card ("${r.you}")`);
     else if (r.building) fails.push(`${r.id}: done, but it shows the "building" tracker (RGA is on it)`);

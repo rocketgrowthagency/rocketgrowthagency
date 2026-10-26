@@ -46,5 +46,11 @@
   "portal",
   "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` })}`",
   "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + pcTl(`<b>Your website builder</b> · not on record`, \"\", false) + `<div data-acc-done-plat hidden></div>` })}`"
+ ],
+ [
+  "step 6's live read throws away the seated how-to again",
+  "portal",
+  "      if (how && card) card.insertBefore(how, card.querySelector(\":scope > .pm-pc-lnks\"));\n",
+  "\n"
  ]
 ]
