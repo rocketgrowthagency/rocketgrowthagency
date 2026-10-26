@@ -51,8 +51,8 @@
  [
   "the photo card loses its counted progress",
   "portal",
-  "? `<p class=\"pm-in-help\"><b>${photosOnGoogleThisMonth} on Google this month.</b>",
-  "? `<p class=\"pm-in-help\"><b>Photos.</b>",
+  "`${photosOnGoogleThisMonth} on Google this month · suggested, no deadline`",
+  "`suggested, no deadline`",
   1
  ],
  [
