@@ -53,6 +53,9 @@ const lift = (n) => {
 // dependencies are absent is skipped rather than fatal.
 const consts = (src.match(/^const [A-Za-z_$][A-Za-z0-9_$]* = .*;$/gm) || [])
   .filter((l) => !/=>\s*{\s*$/.test(l))
+  // 🔴 10-26: a const whose body runs onto the next lines ends its FIRST line with ";" too (hmSpan, gbpProfileBits) — wrapped
+  // in try { } it left an unclosed brace, and the whole lift failed. Only lines whose braces balance are one-line consts.
+  .filter((l) => (l.match(/{/g) || []).length === (l.match(/}/g) || []).length)
   .map((l) => `try { ${l.replace(/^const /, "var ")} } catch (e) {}`)
   .join("\n");
 

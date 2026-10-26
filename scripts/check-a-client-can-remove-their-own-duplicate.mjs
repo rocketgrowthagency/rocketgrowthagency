@@ -816,7 +816,7 @@ if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(portal)) f
   if ((await runRecheck(20, false, "clean")).notified.length) fail("RGA is told it's stuck when the check found it gone");
   const ad = code("admin/admin.js");
   if (!/const lingering = rmDays > 14;/.test(ad) || !/lingering \? "bad"/.test(ad) || !/gbp_duplicate_removed:\s*\{ cls: "g", label: "Client removed the duplicate listing" \}/.test(ad)) fail("admin step 11 doesn't turn red when Google still shows a removed duplicate, or the feed has no label for the client's removal");
-  if (!/const queueHtml = needs\.length\s*\?\s*`<div class="ap-qhead"><h3>/.test(portal)) fail("an item count shows when nothing needs them (approvals_page_v1: a small empty line)");
+  if (!/const queueHtml = needN\s*\?\s*`<div class="ap-qhead"><h3>/.test(portal)) fail("an item count shows when nothing needs them (approvals_page_v1: a small empty line)");
 }
 
 // ── v13 (approved duplicate_removal_confirmed_v13): the RECORD and the notices once Google confirms it ──

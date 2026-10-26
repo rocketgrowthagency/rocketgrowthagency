@@ -219,7 +219,7 @@ if (!/ans\.innerHTML = `<span class="ck" aria-hidden="true">✓<\/span><span cla
 if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 // 🔒 superseded 10-20 by the approved step7_check_business_v2 card (factsCardV2) — the full card is RUN in check-steps-6-and-7-confirm-in-the-portal
-if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g\);/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
+if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
 
 // ── 7 · the card: RGA's recommendation drawn side by side; no text box; the state in the input; admin ticks only from Google ──
 {

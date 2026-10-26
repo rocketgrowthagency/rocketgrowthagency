@@ -64,5 +64,35 @@
   "portalopenmovesfn",
   "moves: clientMoves(openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} }), PLAYBOOKS)",
   "moves: openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} })"
+ ],
+ [
+  "the To do number leaves out the client's steps",
+  "portal",
+  "const n = pending + stepNeeds.length; badge.textContent = String(n)",
+  "const n = pending; badge.textContent = String(n)"
+ ],
+ [
+  "steps don't join the client inbox",
+  "portal",
+  "  stepNeeds.forEach((m) => add(\"needs\", { type: \"step\"",
+  "  [].forEach((m) => add(\"needs\", { type: \"step\""
+ ],
+ [
+  "the yellow card doesn't count approvals",
+  "portal",
+  "      const n = n0 + (_todoApprovalsN || 0);",
+  "      const n = n0;"
+ ],
+ [
+  "Next up is a second panel again",
+  "adminhtml",
+  "              <div id=\"adminNextActionMoves\" class=\"mv-na\" hidden></div>",
+  "              <div id=\"adminNextActionMoves\" class=\"mv-na\" hidden></div><div id=\"clientNextUp\"></div>"
+ ],
+ [
+  "the card's client list is the old guess again",
+  "admin",
+  "    const rows = listMoves ? listMoves.filter(",
+  "    const rows = false ? listMoves.filter("
  ]
 ]

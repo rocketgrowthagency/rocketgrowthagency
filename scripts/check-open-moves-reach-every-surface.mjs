@@ -131,10 +131,22 @@ if (!/require\("\.\/admin-open-moves"\)/.test(MORN) || !/movesForWorkspace\(/.te
 if (!/\[functions\."rga-todo-morning"\]\s*\n\s*schedule = "30 14 \* \* 1-5"/.test(TOML)) fail("the morning email isn't scheduled weekdays 7:30 Pacific");
 if (!/fetch\("\/\.netlify\/functions\/admin-open-moves"/.test(ADM)) fail("admin doesn't read admin-open-moves");
 if (!/setTodoBadge\(j\.count\.rga_late \|\| 0\)/.test(ADM)) fail("the To do nav number isn't RGA's LATE moves");
-if (!/data-nav="openTodoButton"/.test(IDX) || !/id="todoNavBadge"/.test(IDX) || !/id="todoView"/.test(IDX) || !/id="clientNextUp"/.test(IDX)) fail("the admin To do link / number / view / Next up panel is missing");
+if (!/data-nav="openTodoButton"/.test(IDX) || !/id="todoNavBadge"/.test(IDX) || !/id="todoView"/.test(IDX) || !/id="adminNextActionMoves"/.test(IDX) || /id="clientNextUp"/.test(IDX)) fail("the admin To do link / number / view is missing, or Next up is a second panel again (it lives IN the next-action card)");
+// Next up = the next-action card (Chris 10-26: the panel showed the same moves twice above the card)
+if (!/const listMoves = movesForSelected\(\);/.test(ADM) || !/listMoves \? listMoves\.filter\(\(m\) => m\.owner === "client" && m\.step_id !== activeFlowId\)/.test(ADM)) fail("the card's \"Also waiting on the client\" isn't the client's moves from the one list");
+if (!/na\.innerHTML = h; na\.hidden = !h;/.test(ADM) || !/Your move \$\{tag\(mine\)\}/.test(ADM)) fail("the next-action card lost \"Your move since … · late\" / RGA's other moves");
 for (const [k, re] of [["view flag", /todo: name === "todo"/], ["nav highlight", /todo: "openTodoButton"/], ["URL in", /rawView === "todo"\) return "todo"/], ["URL out", /view === "todo"\) \{\s*url\.searchParams\.set\("view", "todo"\)/], ["reload opener", /todo: handleOpenTodo/], ["nav click", /nav === "openTodoButton"\) \{ handleOpenTodo\(\)/], ["boot count", /refreshTodoCount\(\)\.catch/], ["client load", /renderClientNextUp\(state\.selectedClient\.id\)/]])
   if (!re.test(ADM)) fail(`admin To do isn't wired: ${k}`);
 if (!/fetch\(`\/\.netlify\/functions\/portal-open-moves\?client_id=/.test(POR)) fail("the portal doesn't read portal-open-moves");
+// the client's To do tab: next to Dashboard, its number = approvals + their own steps, steps in the inbox, the yellow card agrees
+const PIDX = read("portal/index.html");
+const navs = [...PIDX.matchAll(/<a [^>]*data-view="([a-z]+)"/g)].map((m) => m[1]);
+if (navs[0] !== "dashboard" || navs[1] !== "approvals" || !/data-view="approvals"[^\n]*>To do<span class="portal-nav-badge" id="approvalsBadge"/.test(PIDX)) fail(`the client tab isn't "To do" next to Dashboard (order: ${navs.join(", ")})`);
+if (!/const n = pending \+ stepNeeds\.length; badge\.textContent = String\(n\)/.test(POR)) fail("the To do number doesn't count the client's own open steps");
+if (!/stepNeeds\.forEach\(\(m\) => add\("needs", \{ type: "step"/.test(POR) || !/stepRga\.forEach\(\(m\) => add\("rga", \{ type: "step"/.test(POR)) fail("steps don't join the To do inbox (Needs you / RGA is working on)");
+if (!/taking longer than we promised/.test(POR)) fail("a late RGA step doesn't tell the client it's taking longer than promised");
+if (!/if \(e\.type === "step"\) \{/.test(POR) || !/href="#step-\$\{escapeAttribute\(e\.step_id\)\}"/.test(POR)) fail("a To do step doesn't open the step itself");
+if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ \(_todoApprovalsN \|\| 0\);/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");
 if (!/RGA is doing it\$\{gbpWithRga \? moveSince\(openMv && openMv\.get\(step\.id\)\) : ""\}/.test(POR)) fail("the row pill lost its \"· since\" on RGA's by-hand move");
 if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Google<\/b>\$\{moveSince\(byHand\)\}`/.test(POR)) fail("step 4 no longer shows RGA's part (since) before Google's 48 hours");
 // no surface carries its own copy of the promise rule

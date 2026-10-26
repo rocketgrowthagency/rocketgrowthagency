@@ -132,7 +132,7 @@ if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(
 // 🔒 THE PROMISE (approved step3_access_promise_v1 option D, Chris 10-23): on the card, in How this step works, on admin row 8 — the same words
 {
   if (!/body: accPromiseHtml\(clientId\) \+ `<div class="pm-acc-plat" data-acc-plat>/.test(P)) fail("step 3's card lost \"Our promise about your website\"");
-  for (const t of ["<b>We draft it</b>", "<b>You approve</b><small>In For your approval. Nothing changes before this</small>", "<b>It goes live</b>", "Change anything without your approval", "Delete pages or change your design", "Change prices or contact details", "Touch billing, domain or email", "Keep access after we stop", "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)"])
+  for (const t of ["<b>We draft it</b>", "<b>You approve</b><small>In your To do tab. Nothing changes before this</small>", "<b>It goes live</b>", "Change anything without your approval", "Delete pages or change your design", "Change prices or contact details", "Touch billing, domain or email", "Keep access after we stop", "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)"])
     if (!P.includes(t)) fail(`the promise lost "${t}"`);
   if (/Changes visitors can see go live only after|You approve anything visitors see/.test(P)) fail("the promise only covers what visitors SEE (Chris 10-23: ANY change needs approval first)");
   if (/without your OK\b/i.test(P)) fail("the promise says \"OK\" (Chris 10-23: it's \"approval\")");

@@ -8,8 +8,8 @@
  [
   "the empty state goes back to the big heading",
   "portal",
-  "<b>Nothing needs your approval right now</b>",
-  "<b>Nothing needs you right now</b>"
+  "<b>Nothing is waiting on you</b><small>",
+  "<b>Nothing needs you right now</b><small>"
  ],
  [
   "a change asked for drops out of With RGA",

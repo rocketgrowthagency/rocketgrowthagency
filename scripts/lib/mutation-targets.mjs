@@ -146,7 +146,8 @@ export const FILES = {
   openmoves: "netlify/functions/_open-moves.js",   // todo_inbox_v1 (10-26): the one list of open moves
   adminopenmovesfn: "netlify/functions/admin-open-moves.js",
   portalopenmovesfn: "netlify/functions/portal-open-moves.js",
-  morningfn: "netlify/functions/rga-todo-morning.js",   // done_without_record_v2 (10-26): its done-row measure
+  morningfn: "netlify/functions/rga-todo-morning.js",
+  adminhtml: "admin/index.html",   // todo_inbox_v1: the admin shell (nav + views)   // done_without_record_v2 (10-26): its done-row measure
   donegate: "scraper:scripts/check-a-done-step-is-never-the-ask.mjs",   // its done-row measure
   steprecord: "netlify/functions/_step-record.js",
   probenumbering: "scraper:scripts/_probe-numbering.mjs",
