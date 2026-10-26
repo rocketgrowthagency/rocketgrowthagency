@@ -31,8 +31,19 @@ if (/How this step works/.test(mock)) { console.error("⚠️  INDETERMINATE —
 if (!/const PLAN_CARD_DONE = new Set\(\["m1\.kickoff\.call", "m1\.gbp\.verify", "m1\.access\.website", "m1\.gbp\.business_facts", "m1\.strategy\.keywords_locations"\]\);/.test(src)) fail("the five plan-card steps aren't one named set (PLAN_CARD_DONE)");
 // 🔄 10-23 night (approved how_this_step_works_fold_v1): no top toggle on ANY row; the how-to is the card's last fold line
 if (/<button class="pm-act[^"]*" data-toggle-detail=/.test(src.replace(/^\s*\/\/.*$/gm, ""))) fail("a row draws \"How this step works ▾\" as a button at the top again (the mockup draws the card alone)");
-if (!/card\.insertBefore\(f, card\.querySelector\(":scope > \.pm-pc-lnks"\) \|\| null\);/.test(src) || !/const own = \[\.\.\.card\.querySelectorAll\(":scope > \.pm-k5-fold:not\(\[data-how-fold\]\)"\)\]\.pop\(\);/.test(src)) fail("the how-to fold isn't seated as the card's last line (or merged into the card's own fold)");
+if (!/card\.insertBefore\(f, card\.querySelector\(":scope > \.pm-pc-lnks"\) \|\| null\);/.test(src) || !/const own = \[\.\.\.card\.querySelectorAll\("\.pm-k5-fold:not\(\[data-how-fold\]\)"\)\]\.filter\(\(x\) => x\.closest\("\.pm-k5-plan"\) === card && !x\.closest\("\.pm-sgrp"\)\)\.pop\(\);/.test(src)) fail("the how-to fold isn't seated as the card's last line (or merged into the card's own fold)");
 if (!/\.pm-doit:has\(> \.pm-k5\), \.pm-doit:has\(\.pm-input \.pm-k5-plan\)[^{]*\{ border-top: 0; padding-top: 0; \}/.test(css)) fail("a hairline sits between the title and the plan card again");
+
+// ── 2b · step 12's consent (steps_6_20_clean_v1, 10-26): the client ALLOWS the tag before RGA adds it — the card, the save, the server,
+// admin — and allowing never finishes the step (its own nightly count does)
+{ const adm = read("admin/admin.js"), cho = read("netlify/functions/portal-step-choice.js"), pb = JSON.parse(read("data/playbooks/playbooks.json"));
+  const s12 = (pb.month1 || []).find((x) => x.id === "m1.tracking.form_setup") || {};
+  if (!/if \(!allowed\) \{[\s\S]{0,200}title: "One tag on your website"[\s\S]{0,700}data-ft-allow>Allow it<\/button>/.test(src)) fail("step 12 doesn't ask the client to allow the tag (\"One tag on your website\" · Allow it)");
+  if (!/body: JSON\.stringify\(\{ client_id: clientId, step_id: "m1\.tracking\.form_setup", choice: "allow" \}\)/.test(src)) fail("step 12's Allow it doesn't save the client's choice");
+  if (!s12.clientChoiceIsConsent || !(s12.clientChoices || []).some((c) => c.key === "allow" && c.notifyRga)) fail("step 12's Allow it isn't a consent choice that tells RGA");
+  if (!/\|\| \(step\.clientChoiceIsConsent && prev\.status !== "done"\)\s*\? \{ status: "in_progress", completed_at: null \}/.test(cho)) fail("allowing the tag finishes step 12 (its nightly count must)");
+  if (!/<b>Client allowed the tag<\/b>/.test(adm) || !/Don't add it before they do\./.test(adm)) fail("admin doesn't show whether the client allowed the tag");
+  if (!/&& !\(step\.id === "m1\.tracking\.form_setup" && \(taskState\?\.client_choice \|\| taskState\?\.detected\?\.n90 > 0\)\);/.test(src)) fail("step 12 still says Your turn after the client allowed it"); }
 
 // ── 3 · drawn in Chrome ──
 const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("monthDay"), line("CLOSE_CAL_ICON"), pcSlice,

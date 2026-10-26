@@ -63,7 +63,8 @@ for (const s of steps) {
 
   const hasChoices = Array.isArray(s.clientChoices) && s.clientChoices.length > 0;
   if (m === "choice" && !hasChoices) bad(`${s.id} is clientDone="choice" but offers no clientChoices`);
-  if (m !== "choice" && hasChoices) bad(`${s.id} offers choices but is clientDone="${m}" — answering would not finish it`);
+  // a CONSENT choice (clientChoiceIsConsent, 10-26: step 12's "Allow it") hands the work to RGA; the step's own check finishes it
+  if (m !== "choice" && hasChoices && !s.clientChoiceIsConsent) bad(`${s.id} offers choices but is clientDone="${m}" — answering would not finish it`);
 
   if (m === "client") {
     // ═══════════════════════════════════════════════════════════════════════════════════════

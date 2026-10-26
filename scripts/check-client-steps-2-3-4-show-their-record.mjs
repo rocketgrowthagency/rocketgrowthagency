@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
@@ -56,6 +57,7 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
 for (const n of ["accPart", "accDidLine", "accStep1Name"]) vm.runInContext(lift(n), ctx);
+vm.runInContext(planCardKit(P, "const RC_PHONE =\nconst RC_FORM =\nconst RC_WEB =\n" + P.slice(P.indexOf("const PC_TICK = "), P.indexOf("\n", P.indexOf("const pcActs = ")))), ctx);   // 10-26: planFromGcard + icons (steps_6_20_clean_v1)
 for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, ctx); vm.runInContext(lift("accPromiseHtml"), ctx);
 for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(lift(n), ctx);
@@ -71,13 +73,15 @@ if (!/Switch to an invite \(safer\)/.test(old2) || /onetimesecret/.test(old2)) f
 const ask2 = run("m1.access.website", {});
 if (!/data-acc-host/.test(ask2) || !/Takes 2–5 minutes · you never share a password/.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
 const skip3 = run("m1.tracking.call_setup", { status: "done", client_choice: "skip", client_choice_at: "2026-10-20T12:00:00Z" });
-if (!/Call tracking: skipped for now/.test(skip3) || !/call-button clicks/.test(skip3) || !/raise it again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);
+// 🔄 10-26 (steps_6_20_clean_v1, step 11 done): "Skipped for now · decided", the one row, when we ask again
+if (!/<b>Skipped for now<\/b>/.test(skip3) || !/call-button clicks/.test(skip3) || !/we'll ask again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);
 const live3 = run("m1.tracking.call_setup", { status: "done", client_choice: "rga_sets_up", client_choice_at: "2026-10-20T12:00:00Z", tracking: { number: "(213) 555-0188", rings: "(424) 242-2040", live_at: "2026-10-23T12:00:00Z", provider: "CallRail" } });
 if (!/Your tracking number/.test(live3) || !/in your name/.test(live3) || !/Directories/.test(live3) || !/additional phone/.test(live3)) fail("a live tracking number doesn't show where it is and that the client owns it");
 const ask3 = run("m1.tracking.call_setup", {});
-if (!/Do you want call tracking\?/.test(ask3) || !/RGA recommends/.test(ask3) || !/data-ct-save/.test(ask3) || !/yours to keep if you ever leave/.test(ask3) || /account in your name/.test(ask3) || !/data-ct-q="calls"/.test(ask3)) fail("step 3's ask isn't the one card with the three questions, RGA's recommendation and Save (and the true ownership line)");
+if (!/How should we count your calls\?/.test(ask3) || !/RGA recommends/.test(ask3) || !/data-ct-save/.test(ask3) || !/yours to keep if you ever leave/.test(ask3) || /account in your name/.test(ask3) || !/data-ct-q="calls"/.test(ask3)) fail("step 3's ask isn't the one card with the three questions, RGA's recommendation and Save (and the true ownership line)");
 const ok4 = run("m1.tracking.form_setup", { status: "done", detected: { verdict: "confirmed", at: "2026-10-22T03:30:00Z", n30: 3, n90: 3, last_at: "2026-10-19", gbp30: 1, events: ["generate_lead"], key_event: true }, test: { at: "2026-10-21T10:00:00Z", inbox: true, inbox_at: "2026-10-21T11:00:00Z" } });
-if (!/Form tracking on your website/.test(ok4) || !/3 submissions · 1 from your Google Business Profile/.test(ok4) || !/Counted as a lead/.test(ok4) || !/finished submissions only/.test(ok4) || !/Arrived in your inbox/.test(ok4)) fail(`step 4's done card doesn't show what's tracked (${ok4.slice(0, 200)})`);
+// 🔄 10-26 (steps_6_20_clean_v1, step 12 done): "Tracking your forms", the counts as rows, what we count folded
+if (!/<b>Tracking your forms<\/b>/.test(ok4) || !/3 submissions<small>1 from your Google Business Profile<\/small>/.test(ok4) || !/Counted as a lead/.test(ok4) || !/finished submissions only/i.test(ok4) || !/Arrived in your inbox/.test(ok4)) fail(`step 4's done card doesn't show what's tracked (${ok4.slice(0, 200)})`);
 const test4 = run("m1.tracking.form_setup", { test: { at: "2026-10-21T10:00:00Z", inbox: null } });
 if (!/Did our test arrive in your inbox\?/.test(test4) || !/data-ft-inbox="yes"/.test(test4)) fail("the inbox test question isn't asked");
 const quiet4 = run("m1.tracking.form_setup", { status: "done", detected: { verdict: "indeterminate", at: "2026-10-22T03:30:00Z", n30: 0, n90: 0 } });

@@ -10,6 +10,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -30,7 +31,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console };
 vm.createContext(ctx);
-try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml;`, ctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));
@@ -60,7 +61,8 @@ if (!/<i style="width:100%"><\/i><\/span><span class="acc-n">1 \/ 1<\/span>/.tes
 if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 \/ 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 / 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
 if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("the folds dropped or duplicated a slot");
 // ── 2 · the opened tips are one short list ──
-const ti = h.indexOf('<details class="pm-tipline"'), tips = h.slice(ti, h.indexOf("</details>", ti));
+const ti = h.indexOf('<details class="pm-k5-fold pm-tipline"'),   // 🔄 10-26: the tips are the plan card's fold (steps_6_20_clean_v1)
+     _ti0 = 0, tips = h.slice(ti, h.indexOf("</details>", ti));
 if ((tips.match(/class="tl-row"/g) || []).length !== 3 || /class="pm-tip"/.test(tips) || !/<em>How: /.test(tips)) fail("the opened tips aren't one short list of three with their How");
 
 // ── 3 · in Chrome: the upload helpers, the toolbar, phone widths ──
@@ -101,7 +103,8 @@ try {
       if (new Set(bars).size > 1 || new Set(ns).size > 1) out.push(`bars ${bars.join(",")} · counts ${ns.join(",")}`);
     }
     const re = document.querySelector(".acc-re");
-    const chipLeft = re ? r(re).right < r(re.closest("summary").querySelector(".acc-bar")).left && re.previousElementSibling?.tagName === "B" : false;
+    // 🔄 10-26 (steps_6_20_clean_v1): the row shows the count, not the bar — the chip sits beside the name, left of the count
+    const chipLeft = re ? r(re).right < r(re.closest("summary").querySelector(".acc-n")).left && re.previousElementSibling?.tagName === "B" : false;
     return { out, chipLeft };
   });
   if (line.out.length) fail(`the kinds' bars and counts don't line up: ${line.out.join(" | ")}`);

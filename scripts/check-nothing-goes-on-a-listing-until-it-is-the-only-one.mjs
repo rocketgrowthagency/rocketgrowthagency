@@ -27,6 +27,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -137,7 +138,7 @@ const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
-vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml; this.ls = portalListingStateOf;`, pctx);
+vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml; this.ls = portalListingStateOf;`, pctx);
 const P = req("./_photo-lists.js");
 const shape = P.buildShotList({ category: "Plumber", storefront: false });
 const shut = pctx.render({ clientForm: "photo_upload" }, { draft_shape: shape }, [], "c1", "", pctx.ls({ [DUP]: { outcome_data: { verdict: "duplicate", duplicates: [{}] } } }));

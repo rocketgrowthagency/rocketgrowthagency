@@ -11,6 +11,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -95,7 +96,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
-try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.laterOf = laterOf;`, ctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.laterOf = laterOf;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 const P = req("./_photo-lists.js");
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));
@@ -113,7 +114,8 @@ const on = ctx.how(step, { ...task, later }, true, [], "c1", null);
 // 🔄 approved step7_later_state_v1 v2: a calm band with two real buttons; the rest of the step folds behind one line
 if (!/<div class="pm-later-band">[\s\S]*?Set for later · we'll email you a reminder on [A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}<\/b>/.test(on) || !/class="pm-act is-guide" data-later-change>Change date</.test(on) || !/class="pm-act is-guide" data-later-clear>I(?:'|&#39;)m ready now</.test(on) || /Not ready to take photos yet/.test(on)) fail("a step that's \"later\" doesn't show the band (when, Change date, I'm ready now)");
 const fold = /<details class="pm-later-list" data-fold="later-list"><summary>Show your photo list <span class="m">2 of 20 on Google · 18 to go<\/span>/.exec(on);
-if (!fold || on.indexOf('class="pm-p2"') < fold.index || on.indexOf('class="pm-slots') < fold.index) fail("while it's \"later\" the progress, toolbar and list aren't folded behind \"Show your photo list\"");
+// 🔄 10-26 (steps_6_20_clean_v1): the progress lives in the photo step's plan card now
+if (!fold || on.indexOf('class="pm-k5-plan') < fold.index || on.indexOf('class="pm-slots') < fold.index) fail("while it's \"later\" the progress, toolbar and list aren't folded behind \"Show your photo list\"");
 if (/pm-later-list/.test(ctx.how(step, task, true, [], "c1", null))) fail("the photo list is folded away when nothing is \"later\"");
 const off = ctx.how(step, task, true, [], "c1", null);
 if (!/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(off) || !/data-later-days="7">In 1 week</.test(off) || !/data-later-days="14">In 2 weeks</.test(off)) fail("the step doesn't offer \"Remind me later\" with 1 or 2 weeks");

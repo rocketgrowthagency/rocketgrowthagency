@@ -7,7 +7,9 @@ export function planCardKit(src, already = "") {
   const block = (startRe, endName) => { const m = startRe.exec(src); if (!m) return ""; const b = src.indexOf(`const ${endName} =`, m.index); return b < 0 ? "" : src.slice(m.index, src.indexOf("\n", b)); };
   const multi = (name) => { const m = new RegExp(`^const ${name} = `, "m").exec(src); if (!m) return ""; let d = 0, k = m.index, seen = false;
     for (; k < src.length; k++) { const ch = src[k]; if (ch === "{" || ch === "(") { d++; seen = true; } else if (ch === "}" || ch === ")") d--; else if (ch === ";" && seen && d === 0) return src.slice(m.index, k + 1); } return ""; };
-  const parts = [block(/^const PC_TICK =/m, "pcActs"), line("KW_SPIN"), line("CLOSE_CAL_ICON"), line("STAR_ICON"), multi("hmSpan"), line("placeName"), multi("gbpProfileBits"), line("PLAN_CARD_DONE")];
-  const declared = (part) => { const m = /^const (\w+) =/.exec(part); return m && new RegExp(`(^|\\n)\\s*const ${m[1]} =`).test(already); };
+  const fn = (name) => { const m = new RegExp(`^function ${name}\\(`, "m").exec(src); if (!m) return ""; let d = 0; for (let i = src.indexOf(") {", m.index) + 2; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}") { d--; if (!d) return src.slice(m.index, i + 1); } } return ""; };
+  const parts = [line("monthDay"), block(/^const PC_TICK =/m, "pcActs"), fn("planFromGcard"), multi("DC_ICON"), line("RC_PHONE"), line("RC_FORM"), line("KW_SPIN"), line("CLOSE_CAL_ICON"), line("STAR_ICON"), multi("hmSpan"), line("placeName"), multi("gbpProfileBits"), line("PLAN_CARD_DONE")];
+  const declared = (part) => { const f = /^function (\w+)\(/.exec(part); if (f) return new RegExp(`(^|\\n)function ${f[1]}\\(`).test(already);
+    const m = /^const (\w+) =/.exec(part); return m && new RegExp(`(^|\\n)\\s*const ${m[1]} =`).test(already); };
   return parts.filter(Boolean).filter((x) => !declared(x)).join("\n");
 }

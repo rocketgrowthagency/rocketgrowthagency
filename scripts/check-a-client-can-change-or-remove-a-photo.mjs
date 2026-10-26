@@ -12,6 +12,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { planCardKit } from "./lib/plan-card-kit.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -166,7 +167,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
-try { vm.runInContext(`${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 const P = req("./_photo-lists.js");
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));
@@ -208,8 +209,10 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
 }
 {
   const done = ctx.how(step, task(sab, { status: "done", completed_at: "2026-10-30T12:00:00Z", detected: { n: 20, threshold: 20, source: "google_profile", verdict: "confirmed" } }), false, [PUB(workN, "at_work")], "c1", null);
-  const band = done.indexOf('class="pm-done-band"'), fold = done.indexOf('<details class="pm-later-list" data-fold="done-list"><summary>Show your photos');
-  if (band < 0 || !/All 20 photos are on your Google profile · Done Oct 30/.test(done) || !/From Month 2, fresh photos go in <b>Ongoing work<\/b> each month\./.test(done)) fail("a done photo step doesn't open to one green line (all on Google, Ongoing work next)");
+  // 🔄 10-26 (approved steps_6_20_clean_v1 v2, step 10 done): the plan card — "20 photos on Google", a tile per kind with one of their
+  // photos, "Add more any time" — then the photos one click away (each keeps Change / Remove)
+  const band = done.indexOf('class="pm-k5-plan ok"'), fold = done.indexOf('<details class="pm-later-list pm-pc-more" data-fold="done-list"><summary>Show your photos');
+  if (band < 0 || !/<b>20 photos on Google<\/b><span>done Oct 30<\/span>/.test(done) || !/class="pm-pc-ptile">/.test(done) || !/Add more any time; new photos go to Google the same way\./.test(done) || !/data-photo-addmore>Add more<\/button>/.test(done)) fail("a done photo step isn't the plan card (N photos on Google · a tile per kind · Add more)");
   if (fold < band || done.indexOf('class="pm-slots') < fold) fail("a done photo step doesn't fold its photos behind \"Show your photos\"");
   if (/Remind me later|data-later-days/.test(done)) fail("a done photo step still offers \"Remind me later\"");
   if (/data-fold="done-list"/.test(ctx.how(step, task(sab), true, [], "c1", null))) fail("an open photo step is folded as if done");

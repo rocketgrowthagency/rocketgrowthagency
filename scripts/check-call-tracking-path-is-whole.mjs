@@ -43,7 +43,8 @@ const fail = [];
 console.log("── opting in to call tracking leads somewhere ──");
 
 const steps = [...(PB.month1 || []), ...(PB.month2plus || [])];
-const decisionSteps = steps.filter((s) => Array.isArray(s.clientChoices) && s.clientChoices.length);
+// a CONSENT choice (clientChoiceIsConsent, 10-26: step 12's "Allow it") switches no flag — it hands the work to RGA, who tells the client
+const decisionSteps = steps.filter((s) => Array.isArray(s.clientChoices) && s.clientChoices.length && !s.clientChoiceIsConsent);
 
 // 1 ─ a choice must declare what it switches
 for (const s of decisionSteps) {

@@ -38,7 +38,7 @@
  [
   "two folds in one card",
   "portal",
-  "    const own = [...card.querySelectorAll(\":scope > .pm-k5-fold:not([data-how-fold])\")].pop();",
+  "    const own = [...card.querySelectorAll(\".pm-k5-fold:not([data-how-fold])\")].filter((x) => x.closest(\".pm-k5-plan\") === card && !x.closest(\".pm-sgrp\")).pop();",
   "    const own = null;"
  ]
 ]
