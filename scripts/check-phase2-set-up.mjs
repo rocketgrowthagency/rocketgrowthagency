@@ -40,7 +40,7 @@ if (!/if \(any24 && v\.confirm24 !== true\) return \{ error:/.test(INP)) fail("s
 if (!/open2 < close \|\| close2 <= open2/.test(INP)) fail("step 7: a second opening that overlaps the first is accepted");
 const hi = A["m1.gbp.hours_attributes"]?.clientInstructions || "";
 if (!/GOOGLE'S RULES/.test(hi) || !/24 hours/.test(hi) || !/appointment/i.test(hi) || !/temporarily closed/.test(hi)) fail("step 7: the copy doesn't name Google's hours rules");
-if (!/data-in-appt/.test(P) || !/data-in-second-add/.test(P) || !/data-in-24/.test(P) || !/title: appt \? "By appointment only" : "Your hours"/.test(P)) fail("step 7: the portal form / done card lost appointment-only, the second opening or the 24-hour tick");
+if (!/data-in-appt/.test(P) || !/data-in-second-add/.test(P) || !/data-in-24/.test(P) || !/head: appt \? "By appointment only, on Google" : "Your hours are on Google"/.test(P)) fail("step 7: the portal form / done card lost appointment-only, the second opening or the 24-hour tick");
 if (!/v\.by_appointment \? `<span class="ob-in-chip">By appointment only/.test(ADM)) fail("step 7: admin doesn't show appointment-only / split hours");
 // ── 10 · photos
 if (!/const photosOnGoogle = \(photos \|\| \[\]\)\.filter\(\(p\) => p && photoOnGoogle\(p\)\)\.length;\s*const hasPhotosThreshold = photosOnGoogle >= 20;/.test(P)) fail("step 10: the portal counts uploads, not photos on Google");
