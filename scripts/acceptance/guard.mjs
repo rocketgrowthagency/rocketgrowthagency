@@ -45,6 +45,8 @@ export const READ_ONLY_FN_POSTS = {
   // portal-site-platform.js (step 3's builder detector) — reads the client's website_url and fetches their own public site; writes
   // nothing (done_without_record_v2, 10-26: step 3's done card reads it, so the walk must let it through to test it)
   "portal-site-platform": onlyKeys(["client_id"]),
+  // admin-open-moves.js (todo_inbox_v1, 10-26) — reads every client's open moves (or one, by client_id); writes nothing
+  "admin-open-moves": onlyKeys(["client_id"]),
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the
