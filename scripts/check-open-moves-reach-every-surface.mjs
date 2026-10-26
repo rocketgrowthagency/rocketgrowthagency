@@ -144,6 +144,7 @@ const navs = [...PIDX.matchAll(/<a [^>]*data-view="([a-z]+)"/g)].map((m) => m[1]
 if (navs[0] !== "dashboard" || navs[1] !== "approvals" || !/data-view="approvals"[^\n]*>To do<span class="portal-nav-badge" id="approvalsBadge"/.test(PIDX)) fail(`the client tab isn't "To do" next to Dashboard (order: ${navs.join(", ")})`);
 if (!/const n = pending \+ stepNeeds\.length; badge\.textContent = String\(n\)/.test(POR)) fail("the To do number doesn't count the client's own open steps");
 if (!/stepNeeds\.forEach\(\(m\) => add\("needs", \{ type: "step"/.test(POR) || !/stepRga\.forEach\(\(m\) => add\("rga", \{ type: "step"/.test(POR)) fail("steps don't join the To do inbox (Needs you / RGA is working on)");
+if (!/\$\{total && !stepNeeds\.length && !stepRga\.length \? `<span class="ib-prog">/.test(POR)) fail("the To do header shows approvals-only progress beside open steps (\"4 things need you · 1 of 1 done\")");
 if (!/taking longer than we promised/.test(POR)) fail("a late RGA step doesn't tell the client it's taking longer than promised");
 if (!/if \(e\.type === "step"\) \{/.test(POR) || !/href="#step-\$\{escapeAttribute\(e\.step_id\)\}"/.test(POR)) fail("a To do step doesn't open the step itself");
 if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ \(_todoApprovalsN \|\| 0\);/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");

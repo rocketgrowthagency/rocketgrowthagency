@@ -94,5 +94,11 @@
   "admin",
   "    const rows = listMoves ? listMoves.filter(",
   "    const rows = false ? listMoves.filter("
+ ],
+ [
+  "the header shows approvals-only progress beside steps",
+  "portal",
+  "${total && !stepNeeds.length && !stepRga.length ? `<span class=\"ib-prog\">",
+  "${total ? `<span class=\"ib-prog\">"
  ]
 ]
