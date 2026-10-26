@@ -59,7 +59,12 @@ if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall
 // 🔒 done with nothing on record = CALM (approved step3_three_screens_v1): plain words, "Nothing for you to do", optional "Add the details"
 // 🔄 10-23 night (Chris: "match the mockup exactly" — steps_1_4_clean_v1, approved 10-23): no footer; Edit access + the QUIET link
 // "Add your builder" (optional, never a "Your move", never a question asking them to fill in RGA's records)
-if (!/<b>Your website builder<\/b> · not on record/.test(P) || /Nothing for you to do/.test(P.slice(P.indexOf("before this page tracked it"), P.indexOf("before this page tracked it") + 600)) || !/data-acc-redo>Edit access<\/button><button type="button" class="pm-k5-tell" data-acc-redo>Add your builder<\/button>/.test(P) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the mockup's calm card (builder not on record · Edit access + the quiet \"Add your builder\" link · no footer · never a question)");
+// 🔄 done_without_record_v2 (approved 10-26): no bookkeeping words ("before this page tracked it", "not on record"); step 3's own
+// detector reads the site and adds "Your website · <builder>" only when the site STATES it, then the quiet "Add your builder" goes
+{ const d = P.slice(ia, ib);
+  if (/not on record|before this page|Not recorded|Marked done/.test(d) || /Nothing for you to do/.test(d) || !/data-acc-redo>Edit access<\/button><button type="button" class="pm-k5-tell" data-acc-redo data-acc-addb>Add your builder<\/button>/.test(d) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the mockup's calm card (no bookkeeping words · Edit access + the quiet \"Add your builder\" link · no footer · never a question)");
+  const ld = P.slice(P.indexOf("async function loadAccessDoneSite()"), P.indexOf("async function loadAccessPlatform()"));
+  if (!/data-acc-done-site/.test(d) || !/j\.confidence === "stated" && !j\.designer/.test(ld) || !/\[data-acc-addb\]"\)\?\.remove\(\)/.test(ld) || !/loadAccessDoneSite\(\);/.test(P)) fail("step 3 done-without-record doesn't read the site with step 3's detector (a STATED builder only), or keeps \"Add your builder\" beside a found one"); }
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
 if (!/data-acc-change>Change<\/button>/.test(P) || !/class="pm-ax-tile\$\{k === key \? " sel" : ""\}" role="radio"/.test(P)) fail("the builder picker isn't tiles + a Change button");
 if (!/<a class="pm-ax-go" href="\$\{escapeAttribute\(link\)\}"/.test(P) || !/<a class="pm-ax-go" href="\$\{escapeAttribute\(F\.link\)\}"/.test(P) || !/data-acc-copy=/.test(P)) fail("the setup lost its direct link or copy chips");

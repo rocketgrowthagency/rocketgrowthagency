@@ -5,7 +5,8 @@
 // 🔑 RUN, IN A BROWSER: signs in to the portal as the walk's test client, every WRITE blocked (acceptance/guard.mjs), rewrites ONLY
 // the page's copy of the step record so every client step reads {status: done, completed_by: rga}, and serves THIS repo's
 // portal.js / portal.css / shared / client-steps.json (pointable at a copy → APPROVAL_ARCHIVE_SITE_DIR, so the suite can fail it).
-// Each done row, minus its toggle, buttons, how-to, conversation and the lock footer, must SAY something, and never the ask.
+// Each done row, minus its toggle, buttons, how-to, conversation and the lock footer, must SAY something, never the ask, and never
+// our bookkeeping ("Marked done", "not on record", "before this page", "Not recorded" — done_without_record_v2, 10-26).
 //   exit 0 holds · 1 a done step shows the ask / nothing · 2 couldn't run (no creds, sign-in failed, no rows)
 import fs from "node:fs";
 import path from "node:path";
@@ -19,6 +20,8 @@ const WHO = WALK_CLIENTS.main;
 const CS = JSON.parse(fs.readFileSync(`${SITE_DIR}/data/playbooks/client-steps.json`, "utf8"));
 const IDS = CS.month1.filter((x) => x.clientStepNo != null).map((x) => x.id);
 const ASK = /Your move|RGA is on it|Only you can do this step|Do you want call tracking\?|Building your keyword plan|Setting up form tracking/;
+// 🔄 done_without_record_v2 (approved 10-26): a done card shows the RESULT, never our bookkeeping
+const BOOKKEEPING = /Marked done|not on record|before this page|Not recorded/i;
 let link;
 try { const g = await (await fetch(`${SUPA}/auth/v1/admin/generate_link`, { method: "POST", headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ type: "magiclink", email: WHO.email, options: { redirect_to: PORTAL } }) })).json(); link = g.action_link || g.properties?.action_link; } catch { /* below */ }
 if (!link) { console.log("⚠️  INDETERMINATE — no sign-in link"); process.exit(2); }
@@ -55,15 +58,24 @@ try {
     if (!row) return { id, missing: true };
     const pill = (row.querySelector(".pm-step-pills .pm-pill") || {}).textContent?.trim() || "";
     const c = row.cloneNode(true);
-    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo").forEach((x) => x.remove());
-    return { id, pill, said: (c.textContent || "").replace(/\s+/g, " ").trim() };
+    // 🔄 10-26: the how-to is an in-card fold now (details.pm-k5-fold) — counted as "something said", it hid an empty card
+    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold").forEach((x) => x.remove());
+    // 🔑 THE ASK BY ITS STATE, NOT ITS WORDS: a "your move" card (.pm-k5-plan.you / .gcard.you) on a done row is the ask, whatever it
+    // says — the word list went blind when the cards were reworded (10-26: "How should we count your calls?", "One tag on your website")
+    const you = c.querySelector(".pm-k5-plan.you, .gcard.you");
+    // the step 5 "building" tracker (Real search data → RGA locks it) is "RGA is on it", whatever its words
+    const building = !!c.querySelector(".pm-k5-prog");
+    return { id, pill, said: (c.textContent || "").replace(/\s+/g, " ").trim(), you: you ? (you.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60) : "", building };
   }), IDS);
   const seen = rows.filter((r) => !r.missing);
   if (!seen.length) { console.log("⚠️  INDETERMINATE — no Month 1 rows rendered"); await browser.close(); process.exit(2); }
   for (const r of seen) {
     if (!/^Done$/i.test(r.pill)) continue;
     const m = r.said.match(ASK);
-    if (m) fails.push(`${r.id}: done, but it shows "${m[0]}"`);
+    if (r.you) fails.push(`${r.id}: done, but it shows a "your move" card ("${r.you}")`);
+    else if (r.building) fails.push(`${r.id}: done, but it shows the "building" tracker (RGA is on it)`);
+    else if (m) fails.push(`${r.id}: done, but it shows "${m[0]}"`);
+    else if (BOOKKEEPING.test(r.said)) fails.push(`${r.id}: done, but it shows our bookkeeping ("${r.said.match(BOOKKEEPING)[0]}")`);
     else if (r.said.length < 25) fails.push(`${r.id}: done, and the card says nothing ("${r.said}")`);
   }
   if (seen.filter((r) => /^Done$/i.test(r.pill)).length < Math.min(10, seen.length - 3)) fails.push(`only ${seen.filter((r) => /^Done$/i.test(r.pill)).length} of ${seen.length} rows read Done — the simulation didn't take`);

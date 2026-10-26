@@ -42,6 +42,9 @@ export const READ_ONLY_FN_POSTS = {
   // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
   // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
   "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",
+  // portal-site-platform.js (step 3's builder detector) — reads the client's website_url and fetches their own public site; writes
+  // nothing (done_without_record_v2, 10-26: step 3's done card reads it, so the walk must let it through to test it)
+  "portal-site-platform": onlyKeys(["client_id"]),
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the

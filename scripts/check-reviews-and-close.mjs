@@ -7,7 +7,7 @@
 //                  website access
 //   15 close-out — the Month 1 report waits only on the KPI baseline, runs from kickoff + 27 on what's done, and lists what's
 //                  still open; admin says skip the call after day 35 so Month 2 starts
-//   every step   — a done row that would say nothing gets who + when, and "Not recorded" for an answer we don't have
+//   every step   — a done row that would say nothing gets who finished it + when, in plain words (never "Not recorded", 10-26)
 //   exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import path from "node:path";
@@ -60,16 +60,23 @@ if (!/const rp = recs\[0\]\?\.data\?\.tasks\?\.\["m1\.report\.month1"\];\s*if \(
 if (!/No close-out call yet: skip this row to start Month 2/.test(ADM)) fail("step 15: admin doesn't say to skip the call after day 35");
 // ── the done-record fallback, RUN
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
-const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), monthDay: (v) => String(v).slice(5, 10), fmtDateShort: (v) => String(v).slice(0, 10),
-  googleCardHtml: (o) => `<card ${o.state}>${o.small} ¦ ${o.side} ¦ ${o.title} ¦ ${o.body}</card>`, rcRow: (k, st, v) => `[${k}|${st[1]}|${v}]` });
-vm.runInContext((P.match(/^const doneWho = [^\n]*/m) || [""])[0].replace(/^const /, "var ") + "\n" + lift("doneFallbackHtml"), ctx);
-const fb = (s, t) => { ctx.__s = s; ctx.__t = t; return vm.runInContext("doneFallbackHtml(__s, __t)", ctx); };
+// 🔄 done_without_record_v2 (approved 10-26): the fallback IS the no-record done card (doneNoRecordHtml), run for real with the
+// card helpers lifted from portal.js: the band + "Finished with RGA" / "Finished by you" + when — never "Marked done" / "Not recorded"
+const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), monthDay: (v) => String(v).slice(5, 10), fmtDateShort: (v) => String(v).slice(0, 10) });
+const consts = ["PC_TICK", "PC_OPEN", "PC_PLUS", "pcCard", "pcFact", "pcTl", "pcDate", "pcActs", "doneWho", "doneByTl"].map((n) => { const m = P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")); if (!m) { console.error(`⚠️  ${n} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); });
+vm.runInContext(consts.join("\n") + "\n" + lift("doneNoRecordHtml") + "\n" + lift("doneFallbackHtml"), ctx);
+const fb = (s, t) => { ctx.__s = s; ctx.__t = t; return vm.runInContext("doneFallbackHtml(__s, __t)", ctx).replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/<[^>]+>/g, "|").replace(/\|+/g, "|"); };
 const h1 = fb({ clientLabel: "Confirm your business hours", clientDoneConfirm: "Your hours are on Google" }, { status: "done", completed_at: "2026-09-22T10:00:00Z", completed_by: "rga" });
-if (!/\[Marked done by\|RGA\|2026-09-22\]/.test(h1) || !/\[Your answer\|Not recorded\|/.test(h1) || !/Your hours are on Google/.test(h1)) fail("fallback: a done step with no answer doesn't say who + when + Not recorded");
+if (!/\|Your hours are on Google\|finished 09-22\|/.test(h1) || !/\|Finished with RGA\|09-22\|/.test(h1) || /Marked done|not recorded|not on record/i.test(h1)) fail(`fallback: a done step with no answer doesn't say who + when in plain words, or shows our bookkeeping (${h1})`);
 const h2 = fb({ clientLabel: "X" }, { status: "done", completed_at: "2026-09-22T10:00:00Z", completed_by: "client", client_input: { a: 1 } });
-if (/Not recorded/.test(h2) || !/\|You\|/.test(h2)) fail("fallback: an answer we have reads Not recorded, or the client isn't named as who did it");
+if (/not recorded/i.test(h2) || !/\|Finished by you\|/.test(h2)) fail(`fallback: an answer we have reads Not recorded, or the client isn't named as who did it (${h2})`);
 const h3 = fb({ clientLabel: "X" }, { status: "done" });
-if (!/Date not recorded/.test(h3) || /undefined|NaN|Invalid/.test(h3)) fail("fallback: a missing date is invented");
+// a done line that says the CLIENT did it is never the band of a step RGA finished (it read "You gave us your hours" over "Finished with RGA")
+const h4 = fb({ clientLabel: "Confirm your business hours", clientDoneConfirm: "You gave us your hours" }, { status: "done", completed_at: "2026-09-22T10:00:00Z", completed_by: "rga" });
+if (/You gave us/.test(h4) || !/\|This step is done\|finished 09-22\|/.test(h4) || !/\|Finished with RGA\|09-22\|/.test(h4)) fail(`fallback: a step RGA finished says the client did it (${h4})`);
+const h5 = fb({ clientLabel: "Confirm your business hours", clientDoneConfirm: "You gave us your hours" }, { status: "done", completed_at: "2026-09-22T10:00:00Z", completed_by: "client" });
+if (!/\|You gave us your hours\|/.test(h5) || !/\|Finished by you\|/.test(h5)) fail(`fallback: a step the client finished lost its own done line (${h5})`);
+if (!/\|Finished with RGA\|/.test(h3) || /finished \||not recorded|undefined|NaN|Invalid/i.test(h3)) fail(`fallback: a missing date is invented, or reads "not recorded" (${h3})`);
 if (!/fillBlankDoneRows\(listEl, numbered\);/.test(P) || !/if \(\(c\.textContent \|\| ""\)\.replace\(\/\\s\+\/g, " "\)\.trim\(\)\.length >= 25\) continue;/.test(P)) fail("fallback: the list no longer fills blank done rows (measured like the walk)");
 if (F.length) { console.error("🔴 reviews + the Month 1 close regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ reviews + close hold: no staff-name asks, pace told past 10 · videos optional, skippable, never next · report waits on the baseline only, opens at kickoff + 27, lists what's still open (not optional, not done) · day-35 skip · blank done rows say who + when + Not recorded");
+console.log("✅ reviews + close hold: no staff-name asks, pace told past 10 · videos optional, skippable, never next · report waits on the baseline only, opens at kickoff + 27, lists what's still open (not optional, not done) · day-35 skip · blank done rows say who finished it + when, in plain words");

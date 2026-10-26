@@ -44,8 +44,8 @@
  [
   "the done-before-details card grows a footer again (the mockup has none)",
   "portal",
-  "+ pcTl(`<b>Your website builder</b> · not on record`, \"\", false) })}`",
-  "+ pcTl(`<b>Your website builder</b> · not on record`, \"\", false) + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
+  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` })}`",
+  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
  ],
  [
   "the Change button goes (can't X out)",
@@ -224,8 +224,8 @@
  [
   "the done card asks the client to fill in records again",
   "portal",
-  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo>Add your builder</button>",
-  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo>Want it on record? Add the details</button>"
+  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Add your builder</button>",
+  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Want it on record? Add the details</button>"
  ],
  [
   "the promise leaves the card",
@@ -274,5 +274,23 @@
   "portal",
   "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
   "Backed by your Service Agreement (§5, website access)"
+ ],
+ [
+  "step 3 done says \"before this page tracked it\" again",
+  "portal",
+  "body: pcTl(`<b>Access given</b>`, when ?",
+  "body: pcTl(`<b>Access given</b> · before this page tracked it`, when ?"
+ ],
+ [
+  "step 3 done reads a GUESSED builder as fact",
+  "portal",
+  "const p = j.platform && j.confidence === \"stated\" && !j.designer",
+  "const p = j.platform && !j.designer"
+ ],
+ [
+  "step 3 done keeps Add your builder beside a found one",
+  "portal",
+  "    host.querySelector(\"[data-acc-addb]\")?.remove();\n",
+  "\n"
  ]
 ]

@@ -42,10 +42,10 @@
   1
  ],
  [
-  "fallback invents an answer",
+  "fallback shows our bookkeeping again",
   "portal",
-  "${has ? \"\" : rcRow(\"Your answer\", [\"wait\", \"Not recorded\"],",
-  "${has ? \"\" : rcRow(\"Your answer\", [\"ok\", \"Confirmed\"],",
+  "  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title });",
+  "  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title, rows: [[\"Your answer\", \"Not recorded\"]] });",
   1
  ],
  [
@@ -61,5 +61,23 @@
   "      if (!rp || rp.status !== \"done\") {",
   "      if (false) {",
   1
+ ],
+ [
+  "fallback names RGA when the client did it",
+  "portal",
+  "const byYou = doneWho(t.completed_by) === \"You\",",
+  "const byYou = false,"
+ ],
+ [
+  "fallback: RGA's finish reads \"You gave us…\" again",
+  "portal",
+  "const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);",
+  "const title = !line ? \"This step is done\" : escapeHtml(line);"
+ ],
+ [
+  "fallback: the client's own done line is dropped",
+  "portal",
+  "const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);",
+  "const title = \"This step is done\";"
  ]
 ]
