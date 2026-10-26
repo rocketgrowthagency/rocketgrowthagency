@@ -23,7 +23,7 @@ const i0 = portal.indexOf("const GBP_DAY = ["), i1 = portal.indexOf("function gb
 if (i0 < 0 || i1 < i0) { console.error("⚠️  INDETERMINATE — could not lift the hours card"); process.exit(2); }
 const ctx = { escapeHtml: esc, escapeAttribute: esc, GOOGLE_G: "", monthDay: (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) };
 vm.createContext(ctx);
-vm.runInContext(`${planCardKit(portal, portal.slice(i0, i1))}\n${portal.slice(i0, i1)}\nthis.card = hoursCardHtml;`, ctx);   // 10-23: + the plan card's shared pieces
+vm.runInContext(`${planCardKit(portal, "const monthDay =\n" + portal.slice(i0, i1))}\n${portal.slice(i0, i1)}\nthis.card = hoursCardHtml;`, ctx);   // 10-23: + the plan card's shared pieces
 {
   const o = { open: "09:00", close: "18:00" };
   const g = { state: "on_google", at: "2026-10-16T02:48:09Z", after: { mon: o, tue: o, wed: o, thu: o, fri: o, sat: { closed: true }, sun: { closed: true } },

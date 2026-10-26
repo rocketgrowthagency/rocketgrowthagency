@@ -55,7 +55,7 @@ if ((css.match(/^\.pm-at \{/gm) || []).length !== 1) fail("the step 11 card isn'
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function fmtDateTimeDot\(/m), pick(/^function attrsFormHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
-lift.push(planCardKit(portal));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
+lift.push(planCardKit(portal, lift.join("\n")));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-11 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
