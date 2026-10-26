@@ -283,7 +283,7 @@ const checks = [
   // 🔄 10-20: the Analytics case (Google connected, no GA4 yet) names RGA instead — every other own wait still says what to do first
   [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? closeWaitHtml\([^)]*\) : )?(?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
-  [/: rgaWait \? \{ text: CANT_START, why: "Waits on RGA", cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved reason under \"Can't start yet\")"],
+  [/: rgaWait \? \{ text: CANT_START, why: `Waits on RGA\$\{moveSince\(openMv && openMv\.get\(step\.id\)\)\}`, cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved reason under \"Can't start yet\")"],
   [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
   [/const waitTasks = \{ \.\.\.m1Tasks, \.\.\.m2Tasks \};/, "a Month-2 row's wait isn't read from this month's record"],
   [/const ownFirstId = rowOwnWaits\(step, status, waitTasks\);/, "a Month-2 row's \"Do step 14 first\" isn't read from this month's record"],
@@ -300,7 +300,8 @@ const checks = [
 ];
 for (const [re, msg] of checks) if (!re.test(pcode)) fail(msg);
 // 10-22: a screen-only redraw reuses the last answer; a real render still awaits it before any row draws
-const lr = pcode.indexOf("const rgaWaits = opts.local && _rgaWaitsCache.has(clientId) ? _rgaWaitsCache.get(clientId) : await loadRgaWaits(clientId);"), rh = pcode.indexOf("const rowHtml = ({");
+// 🔄 todo_inbox_v1 (10-26): the waits load BESIDE the open moves (one Promise.all), still awaited before any row draws
+const lr = pcode.search(/const \[rgaWaits, openMv\] = opts\.local && _rgaWaitsCache\.has\(clientId\) \? \[_rgaWaitsCache\.get\(clientId\), [^\]]+\]\s*: await Promise\.all\(\[loadRgaWaits\(clientId\), loadOpenMoves\(clientId\)\]\);/), rh = pcode.indexOf("const rowHtml = ({");
 if (lr < 0 || rh < 0 || lr > rh) fail("the rows render before the server's answer arrives (a waiting row flashes \"Your turn\")");
 const loader = lift(portal, "async function loadRgaWaits(clientId) {", "\n}\n") || "";
 if (!/if \(!r\.ok\) return null;/.test(loader) || /return new Set\(\)/.test(loader)) fail("a failed answer reads as \"nothing waits\" (it must be null: not known)");

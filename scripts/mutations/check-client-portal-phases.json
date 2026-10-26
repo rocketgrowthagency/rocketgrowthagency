@@ -16,8 +16,8 @@
  [
   "a wait reads its bare reason as the status",
   "portal",
-  "      : rgaWait ? { text: CANT_START, why: \"Waits on RGA\", cls: \"wait\" }",
-  "      : rgaWait ? { text: \"Waits on RGA\", cls: \"wait\" }",
+  "      : rgaWait ? { text: CANT_START, why: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }",
+  "      : rgaWait ? { text: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }",
   1
  ],
  [

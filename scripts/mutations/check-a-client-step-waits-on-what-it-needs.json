@@ -93,7 +93,7 @@
  [
   "portal: the pill says Your turn",
   "portal",
-  "      : rgaWait ? { text: CANT_START, why: \"Waits on RGA\", cls: \"wait\" }\n",
+  "      : rgaWait ? { text: CANT_START, why: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }\n",
   "",
   1
  ],
@@ -135,8 +135,8 @@
  [
   "portal: rows render before the answer",
   "portal",
-  "  const rgaWaits = opts.local && _rgaWaitsCache.has(clientId) ? _rgaWaitsCache.get(clientId) : await loadRgaWaits(clientId);",
-  "  const rgaWaits = null; loadRgaWaits(clientId);",
+  "    : await Promise.all([loadRgaWaits(clientId), loadOpenMoves(clientId)]);",
+  "    : [null, null]; loadRgaWaits(clientId);",
   1
  ],
  [

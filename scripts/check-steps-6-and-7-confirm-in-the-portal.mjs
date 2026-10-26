@@ -84,7 +84,7 @@ for (const n of ["Springfield", "Shelbyville", "Capital City", "Ogdenville"]) {
   if (k !== 1) fail(`step 7 shows the place chip "${n}" ${k} times (want exactly 1)`);
 }
 if (!/pm-k5-plan ok/.test(o) || !/All 5 match Google/.test(o) || /RGA is/.test(o)) fail("step 7 on Google doesn't say it matches (or still says RGA is working)");
-if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g\);/.test(P)) fail("step 7 doesn't route to the v2 card");
+if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(P)) fail("step 7 doesn't route to the v2 card");
 // the mobile layout (Chris 10-20): stacked at every width, chips never break mid-word
 const rule = (sel) => (CSS.match(new RegExp(`\\n${sel.replace(/\./g, "\\.")} \\{([^}]*)\\}`)) || [])[1] || "";
 if (!/grid-template-columns:\s*minmax\(0,\s*1fr\) auto/.test(rule(".pm-fxt-r"))) fail("a facts row has a fixed label column again (it squeezes the value on a phone)");

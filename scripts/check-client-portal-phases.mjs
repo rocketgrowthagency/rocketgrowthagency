@@ -59,7 +59,7 @@ if (!/phasedRowsHtml\(numbered, rowHtml, month1EndOf\(waitTasks\)\)/.test(P)) fa
 // ── 3. Can't start yet
 if (vm.runInContext("CANT_START", ctx) !== "Can't start yet") fail("the wait status isn't \"Can't start yet\"");
 // (R4, 10-20: the own-step wait names RGA when Google is connected but Analytics doesn't exist yet — still "Can't start yet")
-for (const [k, re] of [["ownWait", /ownWait \? \{ text: CANT_START, why: (gaByRga \? "RGA is setting up your Google Analytics" : )?ownFirstPill\(ownFirst\)/], ["rgaWait", /rgaWait \? \{ text: CANT_START, why: "Waits on RGA"/], ["listingWait", /listingWait \? \{ text: CANT_START, why:/]])
+for (const [k, re] of [["ownWait", /ownWait \? \{ text: CANT_START, why: (gaByRga \? "RGA is setting up your Google Analytics" : )?ownFirstPill\(ownFirst\)/], ["rgaWait", /rgaWait \? \{ text: CANT_START, why: `Waits on RGA/], ["listingWait", /listingWait \? \{ text: CANT_START, why:/]])
   if (!re.test(P)) fail(`a wait no longer reads "Can't start yet" with its reason (${k})`);
 if (!/\$\{ownerPill\.why \? `<span class="pm-step-sub">\$\{escapeHtml\(ownerPill\.why\)\}<\/span>`/.test(P)) fail("the wait's reason isn't drawn under the title");
 // ── 4. no literal step numbers in client copy

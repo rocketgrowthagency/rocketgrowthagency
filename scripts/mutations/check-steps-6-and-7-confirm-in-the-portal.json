@@ -51,8 +51,8 @@
  [
   "step 7 drops done-when",
   "portal",
-  "body: rows.join(\"\") + pcFoot(`Done when Google shows",
-  "body: rows.join(\"\") + pcFoot(`Next: Google shows",
+  ": pcFoot(`Done when Google shows",
+  ": pcFoot(`Next: Google shows",
   1
  ],
  [
@@ -72,7 +72,7 @@
  [
   "step 7 back on the old card",
   "portal",
-  "return factsCardV2(step, taskState, g);",
+  "return factsCardV2(step, taskState, g, opts.move || null);",
   "return \"\";",
   1
  ],

@@ -21,7 +21,7 @@
   1
  ],
  [
-  "done \u2192 pending passes",
+  "done → pending passes",
   "recordcheck",
   "    if ((p.status === \"done\" || p.status === \"skipped\") && c.status !== p.status) changed.push(",
   "    if (false) changed.push(",
@@ -33,5 +33,17 @@
   "(ack ? acked.push(",
   "(ack ? null && acked.push(",
   1
+ ],
+ [
+  "an answer kept in a customer list reads as lost again",
+  "recordcheck",
+  "  if (kind === \"client_step_input\" && a.payload && a.payload.list_id && lists) {",
+  "  if (false) {"
+ ],
+ [
+  "a vanished customer list isn't caught",
+  "recordcheck",
+  "    if (!lists.has(a.payload.list_id)) loss(",
+  "    if (false) loss("
  ]
 ]

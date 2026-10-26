@@ -34,6 +34,10 @@ const env = (k) => { if (process.env[k]) return process.env[k]; try { return exe
   const b4 = base(); b4.prev = { at: T0, tasks: { [`${C}|m1|m1.a`]: { status: "done", keys: ["client_input", "completed_at", "status", "access"] } } }; if (!analyze(b4).changed.length) fails.push("a field that vanished since the last snapshot isn't caught");
   const b5 = base(); b5.prev = { at: T0, tasks: { [`${C}|m1|m1.z`]: { status: "done", keys: ["status"] } } }; if (!analyze(b5).changed.length) fails.push("a task that vanished isn't caught");
   const b6 = base(); b6.prev = { at: T0, tasks: { [`${C}|m1|m1.d`]: { status: "done", keys: Object.keys(b6.ob[0].data.tasks["m1.d"]) } } }; if (!analyze(b6).changed.length) fails.push("done → pending since the last snapshot isn't caught");
+  // 10-26: an answer kept in a customer list (payload.list_id) is kept while the list exists, lost when it doesn't
+  { const b8 = base(); b8.acts = [...b8.acts, { client_id: C, kind: "client_step_input", payload: { step_id: "m1.l", list_id: "L1" }, created_at: T0 }]; b8.lists = new Set(["L1"]);
+    if (analyze(b8).lost.length) fails.push("an answer kept in its customer list reads as lost");
+    b8.lists = new Set(); if (!analyze(b8).lost.length) fails.push("a customer list that vanished isn't caught"); }
   const b7 = base(); delete b7.ob[0].data.tasks["m1.a"].client_input; b7.ackFor = () => ({ at: "2026-10-20", reason: "test" }); const a7 = analyze(b7); if (a7.lost.length || !a7.acked.length) fails.push("an acknowledged loss still fails the run (or vanishes from the report)");
   if (fails.length) { console.error("🔴 the record check can't catch:\n   · " + fails.join("\n   · ")); process.exit(1); }
   console.log("✅ self-test: the record check catches a lost answer, a lost choice, an unexplained reopen, a vanished field, a vanished task and done → pending; detected reopens and acknowledged losses are reported, not failed");
@@ -52,13 +56,14 @@ async function all(p) {
   }
 }
 
-let clients, ob, mr, acts;
+let clients, ob, mr, acts, cl;
 try {
-  [clients, ob, mr, acts] = await Promise.all([
+  [clients, ob, mr, acts, cl] = await Promise.all([
     all("/clients?select=id,business_name,archived_at"),
     all("/client_onboarding_records?select=id,client_id,data"),
     all("/client_monthly_records?select=id,client_id,reporting_month,data"),
     all("/client_activity?kind=in.(client_step_input,client_step_choice,client_step_marked_done)&select=client_id,kind,payload,created_at&order=created_at.asc"),
+    all("/client_customer_lists?select=id"),   // step 13's answers live here, not on the step (10-26)
   ]);
 } catch (e) { console.error(`⚠️  INDETERMINATE — couldn't read production (${e.message})`); process.exit(2); }
 
@@ -73,7 +78,7 @@ const ackFor = (cid, step) => ACK.find((a) => a.client_id === cid && a.step_id =
 const dir = path.join(SITE, "reports", "records", "snapshots"); fs.mkdirSync(dir, { recursive: true });
 const latestFile = path.join(dir, "latest.json");
 let prev = null; try { prev = JSON.parse(fs.readFileSync(latestFile, "utf8")); } catch { prev = null; }
-const { lost, notes, acked, changed, snap } = analyze({ ob, mr, acts, name, DETECTED, ackFor, prev });
+const { lost, notes, acked, changed, snap } = analyze({ ob, mr, acts, name, DETECTED, ackFor, prev, lists: new Set(cl.map((x) => x.id)) });
 const day = new Date().toISOString().slice(0, 10);
 const out = { at: new Date().toISOString(), tasks: snap };
 fs.writeFileSync(path.join(dir, `${day}.json`), JSON.stringify(out));
