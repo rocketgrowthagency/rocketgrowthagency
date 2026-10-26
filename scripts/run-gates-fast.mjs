@@ -10,7 +10,7 @@
 // without faking it, opens the live site, or uses the walk/admin session helpers. A wrong "live" only costs time; a wrong
 // "file-only" could put two production gates side by side — so FORCE_LIVE below overrides anything the heuristic misses.
 //
-// usage: node scripts/run-gates-fast.mjs [--jobs=N] [--changed]   (--changed: only gates that read a file changed since HEAD~1,
+// usage: node scripts/run-gates-fast.mjs [--jobs=N] [--changed] [--force: skip the 60-min live cool-down]   (--changed: only gates that read a file changed since HEAD~1,
 //        plus every live gate; the full run still happens daily at 07:30 in daily-health-check.sh)
 // output: one FAIL line per failing gate, then "---ran N · failing F · Xs", and the 15 slowest gates with their time.
 import fs from "node:fs";
@@ -72,11 +72,43 @@ await new Promise((done) => {
   };
   next();
 });
-// production gates: one at a time
-for (const g of live) results.push(await run1(g));
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// 🔴🔴 THE LIVE GATES SHARE THE CLIENTS' DATABASE (10-26: four full runs in one afternoon; the last one's live phase hit it with
+// ~600 data requests + 160 sign-ins a minute at 4:24–4:31 PM, and the database, sign-in and data API all went UNHEALTHY —
+// every client portal sat on "Loading" until it was restarted). Two guards, so a test run can never be what takes clients down:
+//   1 · COOL-DOWN: the live phase won't start within 60 min of the last one (--force overrides, on purpose only)
+//   2 · HEALTH BEFORE EACH LIVE GATE: one cheap read; slow (> 4 s) or failing → wait 30 s and look once more; still bad → STOP
+//       every remaining live gate and say so. Never pile on a struggling database. → feedback_my_test_runs_share_the_clients_database
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+const STAMP = path.join(os.tmpdir(), "rga-gates-last-live-run");
+const FORCE = process.argv.includes("--force");
+async function dbOk() {
+  const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!U || !K) return { ok: true, why: "no database env (live gates will report INDETERMINATE themselves)" };
+  const t = Date.now();
+  try {
+    const r = await fetch(`${U}/rest/v1/clients?select=id&limit=1`, { headers: { apikey: K, Authorization: `Bearer ${K}` }, signal: AbortSignal.timeout(8000) });
+    const ms = Date.now() - t;
+    return r.ok && ms <= 4000 ? { ok: true, ms } : { ok: false, why: r.ok ? `slow (${ms} ms)` : `HTTP ${r.status}` };
+  } catch (e) { return { ok: false, why: e.name === "TimeoutError" ? "no answer in 8 s" : e.message }; }
+}
+let stopped = null;
+const last = (() => { try { return Number(fs.readFileSync(STAMP, "utf8")) || 0; } catch { return 0; } })();
+if (live.length && !FORCE && Date.now() - last < 60 * 60000) {
+  stopped = `the last live run ended ${Math.round((Date.now() - last) / 60000)} min ago (cool-down 60 min; --force to override)`;
+} else {
+  for (let k = 0; k < live.length; k++) {
+    let h = await dbOk();
+    if (!h.ok) { console.log(`⏸  the clients' database is struggling (${h.why}); waiting 30 s before the next live gate…`); await new Promise((r) => setTimeout(r, 30000)); h = await dbOk(); }
+    if (!h.ok) { stopped = `the clients' database is struggling (${h.why}) — ${live.length - k} live gate(s) NOT run, so nothing piles on`; break; }
+    results.push(await run1(live[k]));
+  }
+  if (live.length) try { fs.writeFileSync(STAMP, String(Date.now())); } catch { /* the cool-down is best-effort */ }
+}
+if (stopped) console.log(`🛑 LIVE GATES STOPPED: ${stopped}`);
 const fails = results.filter((r) => r.rc !== 0).sort((a, b) => a.g.localeCompare(b.g));
 for (const r of fails) console.log(`FAIL ${r.rc} ${r.g} :: ${r.tail}`);
 console.log(`---ran ${results.length} (${files.length} file-only × ${JOBS} at once · ${live.length} live, one at a time) · failing ${fails.length} · ${Math.round((Date.now() - t0) / 1000)}s`);
 console.log("slowest:");
 for (const r of [...results].sort((a, b) => b.ms - a.ms).slice(0, 15)) console.log(`  ${String(Math.round(r.ms / 1000)).padStart(4)}s ${isLive(r.g) ? "live" : "file"} ${r.g}`);
-process.exit(0);
+process.exit(stopped ? 3 : 0);
