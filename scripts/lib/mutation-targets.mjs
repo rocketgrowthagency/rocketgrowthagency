@@ -142,6 +142,8 @@ export const FILES = {
   flowcrondaily: "netlify/functions/flow-cron-daily.js",
   flowcrondigest: "netlify/functions/flow-cron-weekly-digest.js",
   walkclients: "scraper:scripts/acceptance/clients.mjs",
+  walk: "scraper:scripts/acceptance-walk.mjs",   // done_without_record_v2 (10-26): its done-row measure
+  donegate: "scraper:scripts/check-a-done-step-is-never-the-ask.mjs",   // its done-row measure
   steprecord: "netlify/functions/_step-record.js",
   probenumbering: "scraper:scripts/_probe-numbering.mjs",
   listingremoval: "netlify/functions/_listing-removal.js",

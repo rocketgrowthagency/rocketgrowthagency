@@ -388,13 +388,18 @@ async function portalPass() {
         const blank = await page.evaluate(() => [...document.querySelectorAll(".pm-step-row")].filter((row) => /^Done$/i.test((row.querySelector(".pm-step-pills .pm-pill") || {}).textContent?.trim() || "")).map((row) => {
           const c = row.cloneNode(true);
           // 🔒 10-22: the step lock's footer ("Locked · the call happened") is not a record — it let an empty kickoff card pass
-          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot, input, textarea, select, .pm-msg").forEach((x) => x.remove());
+          // 🔒 10-26: the in-card how-to (details.pm-k5-fold) is not a record either — counted as one, steps 7–10 done with nothing saved
+          // showed ONLY "How this step works" and this check stayed green (project_done_without_record_all_steps)
+          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-k5-fold, details.pm-convo").forEach((x) => x.remove());
           const said = (c.textContent || "").replace(/\s+/g, " ").trim();
-          return said.length < 25 ? (row.querySelector(".pm-step-title")?.textContent || row.id).trim() : null;
+          const name = (row.querySelector(".pm-step-title")?.textContent || row.id).trim();
+          // 🔒 done_without_record_v2 (approved 10-26): a done card shows the RESULT, never our bookkeeping
+          const bk = said.match(/Marked done|not on record|before this page|Not recorded/i);
+          return said.length < 25 ? name : bk ? `${name} (says "${bk[0]}")` : null;
         }).filter(Boolean)).catch(() => null);
         const dc = { side: "portal", name: "Every done step shows its record", fail: [], warn: [] };
         if (blank === null) dc.warn.push("couldn't read the step rows");
-        else if (blank.length) dc.fail.push(`${blank.length} done step(s) show nothing about what was done: ${blank.map((x) => `"${x}"`).join(", ")}`);
+        else if (blank.length) dc.fail.push(`${blank.length} done step(s) show nothing about what was done, or show our bookkeeping instead of the result: ${blank.map((x) => `"${x}"`).join(", ")}`);
         pageChecks.push(dc);
       }
     }

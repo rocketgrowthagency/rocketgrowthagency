@@ -1,0 +1,50 @@
+[
+ [
+  "the portal's fallback counts the in-card how-to again",
+  "portal",
+  ", .pm-msg, details.pm-k5-fold\";",
+  ", .pm-msg\";"
+ ],
+ [
+  "the walk counts the in-card how-to again",
+  "walk",
+  ", .pm-msg, details.pm-k5-fold, details.pm-convo\").forEach",
+  ", .pm-msg, details.pm-convo\").forEach"
+ ],
+ [
+  "the gate counts the in-card how-to again",
+  "donegate",
+  ", details.pm-convo, details.pm-k5-fold\").forEach",
+  ", details.pm-convo\").forEach"
+ ],
+ [
+  "the how-to is renamed and nobody's list follows",
+  "portal",
+  "<details class=\"pm-k5-fold\"${attrs}>",
+  "<details class=\"pm-k5-howto\"${attrs}>"
+ ],
+ [
+  "the walk stops stripping the conversation the portal strips",
+  "walk",
+  ".pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot,",
+  ".pm-row-actions, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot,"
+ ],
+ [
+  "the walk lets our bookkeeping through",
+  "walk",
+  "const bk = said.match(/Marked done|not on record|before this page|Not recorded/i);",
+  "const bk = null;"
+ ],
+ [
+  "the gate lets our bookkeeping through",
+  "donegate",
+  "const BOOKKEEPING = /Marked done|not on record|before this page|Not recorded/i;",
+  "const BOOKKEEPING = /(?!)/;"
+ ],
+ [
+  "the gate goes back to matching the ask by its words",
+  "donegate",
+  "const you = c.querySelector(\".pm-k5-plan.you, .gcard.you\");",
+  "const you = null;"
+ ]
+]
