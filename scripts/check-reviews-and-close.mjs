@@ -53,7 +53,8 @@ if (!open.some((l) => /customers/i.test(l))) fail("step 15: \"Still open\" misse
 if (open.some((l) => /video/i.test(l))) fail("step 15: an optional step (videos) is listed as still open");
 if (open.some((l) => /hours/i.test(l))) fail("step 15: a done step is listed as still open");
 if (/still open/i.test(rep.text) && !/carries into month 2/i.test(rep.text)) fail("step 15: \"Still open\" doesn't say it carries into Month 2");
-if (!/Your close-out call opens about/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
+// 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the band says "Opens about <date>"
+if (!/title: end \? `Opens about \$\{/.test(P) || !/Anything still open carries into Month 2; nothing waits for it/.test(P)) fail("step 15: the portal still says the call waits until everything is done");
 const BK = read("netlify/functions/portal-book-kickoff.js");
 if (!/const rp = recs\[0\]\?\.data\?\.tasks\?\.\["m1\.report\.month1"\];\s*if \(!rp \|\| rp\.status !== "done"\) \{\s*return jsonRes\(409,/.test(BK)) fail("step 15: a close-out time can be booked before the Month 1 report is ready (report first)");
 if (!/No close-out call yet: skip this row to start Month 2/.test(ADM)) fail("step 15: admin doesn't say to skip the call after day 35");
