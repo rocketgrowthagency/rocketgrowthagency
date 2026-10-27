@@ -1,0 +1,37 @@
+[
+ [
+  "the panel's box is required again (browser popup)",
+  "portal",
+  "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" placeholder",
+  "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" required placeholder",
+  1
+ ],
+ [
+  "the second we're-looking-into-it band returns on a locked step",
+  "portal",
+  "          flagged && !stepLk\n",
+  "          flagged\n",
+  1
+ ],
+ [
+  "a flag on a finished step never reaches To do",
+  "openmoves",
+  "    if (ask && isClientVisible(s)) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "the band drops what they wrote",
+  "portal",
+  "+ `${rec.note ? `<q>${escapeHtml(rec.note)}</q>` : \"\"}",
+  "+ ``",
+  1
+ ],
+ [
+  "a step that can't change offers I want to change something",
+  "portal",
+  "(canChange ? `<div class=\"pm-chg-ch\"",
+  "(true ? `<div class=\"pm-chg-ch\"",
+  1
+ ]
+]

@@ -527,6 +527,7 @@ run check-step3-admin-identity.mjs "step 3 RGA Admin identity: clients invite ac
 run check-step3-github-accept.mjs "step 3 GitHub accept from admin: runs only as rocketgrowthagency-admin, accept → Write + their domain (strict) → grant; admin row 8 states + access@ invite links"
 run check-step3-admin-accept-buttons.mjs "step 3 admin row 8 GitHub card: every button clicked in Chrome, readable, sends the right request; Ask the client sends only after Send"
 run check-step9-keeps-access-safe.mjs "step 9 keeps access safe: settles itself with step 8, asks RGA only to save a new builder login once, never the store-a-password draft"
+run check-a-change-request-is-one-flow.mjs "ask for a change on a finished step: one Need a change?, our own inline error, one band, With RGA, RGA's same-day move in To do"
 run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
 run check-website-change-approvals.mjs "every website change goes through For your approval: all Month 1 website steps; draft → send → the client approves THAT version → Mark live reads the page back → done; no run or Mark done skips it; the inbox"
 run check-site-snapshot.mjs "before-snapshot + access ledger: read-only snapshot of the client's public pages (sitemap, top pages first, capped, blocked pages with a reason), re-read before write, removal recorded with when + how"

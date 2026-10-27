@@ -84,16 +84,16 @@
   "const amendBtn = flagged"
  ],
  [
-  "the lock footer loses Not right?",
+  "the lock footer loses the way to say it's wrong",
   "portal",
-  "<button class=\"pm-amend\" data-step-wrong=\"${escapeAttribute(stepId)}\" title=\"Tell us this is not right\">Not right?</button>${req}",
-  "${req}"
+  "{ flag_wrong: true, note }",
+  "{ note }"
  ],
  [
   "the lock footer isn't drawn",
   "portal",
-  "        ${lockFootHtml(step.id, taskState, stepLk)}",
-  "        "
+  "${lockFootHtml(step.id, taskState, stepLk, \"bottom\")}",
+  ""
  ],
  [
   "admin rows stop drawing the lock card",

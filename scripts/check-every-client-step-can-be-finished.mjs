@@ -597,7 +597,7 @@ else {
       // passed on a pill that had no flag branch at all. Assert the RESULT: a flag-classed pill.
       if (!/cls:\s*"flag"/.test(pill[1])) {
         bad('a flagged row shows nothing about the flag — the client\'s "this isn\'t right" would leave no mark on the row');
-      } else if (!/^\s*flagged \?/.test(pill[1])) {
+      } else if (!/^\s*(askLk \?[^\n]*\n\s*:\s*)?flagged \?/.test(pill[1])) {   // a LOCKED step asked about reads "With RGA" first (client_ask_for_a_change_v1), still the client's word first
         bad("the flag is not the first branch of the pill — Done or \"Your turn\" would outrank the client's own word about their business");
       }
     }

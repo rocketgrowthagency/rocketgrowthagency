@@ -145,8 +145,9 @@ for (const f of fs.readdirSync(`${SITE}/netlify/functions`).filter((x) => /^(por
 const P = read("portal/portal.js"), A = read("admin/admin.js");
 if (!/import "\/shared\/step-lock\.js\?v=/.test(P) || !/import "\/shared\/step-lock\.js\?v=/.test(A)) fail("the portal or admin doesn't load the shared lock rule");
 if (!/const amendBtn = stepLk \? ""/.test(P)) fail("a locked step can still draw Change / reopen in its row");
-if (!/\$\{lockFootHtml\(step\.id, taskState, stepLk\)\}/.test(P)) fail("the row doesn't draw the lock footer");
-if (!/data-step-wrong="\$\{escapeAttribute\(stepId\)\}" title="Tell us this is not right">Not right\?<\/button>\$\{req\}/.test(P)) fail("the lock footer lost \"Not right?\" (the client must always be able to say it's wrong)");
+// client_ask_for_a_change_v1 (10-27): the band at the top while RGA has it, the lock line + "Need a change?" at the bottom
+if (!/\$\{lockFootHtml\(step\.id, taskState, stepLk, "top"\)\}/.test(P) || !/\$\{lockFootHtml\(step\.id, taskState, stepLk, "bottom"\)\}/.test(P)) fail("the row doesn't draw the lock footer");
+if (!/Need a change\? ›/.test(P) || !/name="kind" value="wrong"/.test(P) || !/\{ flag_wrong: true, note \}/.test(P)) fail("the lock footer lost the way to say it's wrong (Need a change? → Something here is wrong → the flag)");
 if (!/const change = stepLockOf\(step\.id, t\) \? "" :/.test(P)) fail("a live tracking number's card still offers Change");
 if (!/return rowStepCardsHtml\(o, s\) \+ adminLockHtml\(o && o\.flowId, s && s\.task\);/.test(A)) fail("admin rows don't draw the lock card");
 if (!/data-ob-unlock="/.test(A) || !/"\/\.netlify\/functions\/admin-step-unlock"/.test(A)) fail("admin lost \"Unlock for the client…\"");
