@@ -142,5 +142,11 @@
   "admin",
   "state.todoFilter = state.todoFilter === k ? \"all\" : k;",
   "state.todoFilter = \"all\";"
+ ],
+ [
+  "the card flashes its old guess while loading",
+  "admin",
+  "    if (countEl && listEl && movesLoading) {",
+  "    if (false) {"
  ]
 ]

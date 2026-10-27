@@ -167,6 +167,8 @@ if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Goog
   if (!/const month1 = \{ total: m1\.length, done:/.test(POM) || !/_openMovesMonth1\.set\(clientId, j\.month1\)/.test(POR)) fail("the To do header's Month 1 progress isn't read from the server with the moves");
   if (/class="ib-tl/.test(POR.slice(POR.indexOf("const stepRow = (e) =>"), POR.indexOf("const row = (e) =>")))) fail("a To do task reuses .ib-tl (the website timeline's class)");
 }
+// 10-26: while the list loads, the card's client side says "Checking…" — never the card's old guess ("11 items" before the real 4)
+if (!/state\.openMoves = undefined;/.test(ADM) || !/if \(countEl && listEl && movesLoading\) \{/.test(ADM)) fail("the admin card flashes its old guess of the client's list while the real one loads");
 // no surface carries its own copy of the promise rule
 for (const [name, src] of [["admin.js", ADM], ["portal.js", POR]]) if (/addBusinessDays|RGA_DAYS|CLIENT_DAYS/.test(src)) fail(`${name} carries its own copy of the promise rule`);
 // the morning email, built from the list
