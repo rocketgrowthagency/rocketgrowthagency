@@ -58,8 +58,8 @@
  [
   "the phase header counts step 2/4 done over an open request",
   "admin",
-  "      && !kickoffReopened(steps[i].obj?.flowId, kst)).length;",
-  "      ).length;",
+  "      && !kickoffReopened(steps[i].obj?.flowId, kst) && !(admAskOf",
+  "      && !(admAskOf",
   1
  ],
  [

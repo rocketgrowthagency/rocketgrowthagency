@@ -180,5 +180,26 @@
   ".ob-ac-mini > .ob-gq > .ob-ac > .ob-ac-h { display:none; }\n",
   "",
   1
+ ],
+ [
+  "revealStep leaves a folded phase folded",
+  "admin",
+  "      const ph = el.closest(\".ob-phase:not(.open)\"); if (ph) ph.querySelector(\"[data-ob-phase-toggle]\")?.click();\n",
+  "",
+  1
+ ],
+ [
+  "a phase with an unanswered ask stays folded",
+  "admin",
+  " || idx.some((i) => { const a = admAskOf(steps[i].task); return a && !a.replied; });",
+  ";",
+  1
+ ],
+ [
+  "the phase counts an asked row as done",
+  "admin",
+  " && !(admAskOf(steps[i].task) && !admAskOf(steps[i].task).replied)).length;",
+  ").length;",
+  1
  ]
 ]

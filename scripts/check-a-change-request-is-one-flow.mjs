@@ -89,6 +89,11 @@ if (!/isDone && !askLk \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step
   { const AC = read("admin/admin.css");
     if (!/\.ob-unlock:not\(\[open\]\) \{ gap:0; \}/.test(AC)) fail("a closed \"Unlock for the client…\" is taller than the buttons beside it (it sits out of line)");
     if (!/\.ob-ac-mini > \.ob-gq \{ margin:0; padding:0; \}/.test(AC) || !/\.ob-ac-mini > \.ob-gq > \.ob-ac > \.ob-ac-h \{ display:none; \}/.test(AC)) fail("opening row 8's one line draws the card again inside it (title twice, a box in a box)"); }
+  // Chris 10-27 "reply button doesnt work": Reply jumped to a step inside a FOLDED (finished) phase — nothing to land on
+  { const rv = afn("revealStep");
+    if (!/const ph = el\.closest\("\.ob-phase:not\(\.open\)"\); if \(ph\) ph\.querySelector\("\[data-ob-phase-toggle\]"\)\?\.click\(\);/.test(rv)) fail("revealStep doesn't unfold a folded phase (Reply / Open step land on nothing)");
+    if (!/holdsLiveConsole\(idx\) \|\| idx\.some\(\(i\) => \{ const a = admAskOf\(steps\[i\]\.task\); return a && !a\.replied; \}\)/.test(A)) fail("a phase holding an unanswered client ask stays folded");
+    if (!/&& !\(admAskOf\(steps\[i\]\.task\) && !admAskOf\(steps\[i\]\.task\)\.replied\)\)\.length;/.test(A)) fail("a phase counts a row the client asked about (unanswered) as done (\"2/2 ✓\" over \"Reply today\")"); }
   const RPl = read("netlify/functions/portal-reply.js"), UN = read("netlify/functions/admin-step-unlock.js"), CH = read("netlify/functions/portal-step-choice.js");
   if (!/\[key\]: \{ \.\.\.t0\[key\], replied_at: at, replied_by: gate\.email \|\| null, reply: message\.slice\(0, 280\) \}/.test(RPl)) fail("a reply on the step doesn't stamp the ask (admin can't show \"You replied\"; To do keeps nagging)");
   if (!/if \(!prev\.change_request && !prev\.client_flagged\) return json\(409/.test(UN) || !/if \(action !== "confirm"\) delete prev\.client_flagged;/.test(UN)) fail("RGA's Close only clears a change request — a \"something's wrong\" flag can never close");

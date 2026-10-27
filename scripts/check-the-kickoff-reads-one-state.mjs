@@ -99,7 +99,7 @@ const WIRED = [
   ["the request loader's in-place patch", /kickoffAlertFor\(kickoffState\(clientId\), null\)/],
   ["the booking card", /const fromPassed = Date\.now\(\) >= new Date\(from\.slot_start\)/],
   ["the footer status line", /if \(kickoffStep2Open\(kickoffState\(clientId\)\)\) \{ say\(""\); return; \}/],
-  ["the phase count", /&& !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kst\)\)\.length;/],
+  ["the phase count", /&& !kickoffReopened\(steps\[i\]\.obj\?\.flowId, kst\)(?: && !\(admAskOf[^\n]*?\))?\)\.length;/],
   ["the checklist head", /s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstHead\)/],
   ["\"Month 1 is complete\" only when there is no next step", /\} else if \(!next && !blocked\.length && !unverified\.length\) \{\s*(\/\/[^\n]*\n\s*)*alerts\.push\(\{ k: "i", t: "Month 1 is complete"/],
   ["the header's Onboarding N% pill", /seq\.filter\(\(s\) => s\.uiState === "done" && !kickoffReopened\(s\.obj\?\.flowId, kstPill\)\)/],
