@@ -166,5 +166,26 @@
   "<p class=\"k\">✓ Duplicate removed</p>",
   "<p class=\"k\">✓ Confirmed by Google · ${escapeHtml(monthDay(c.at))}</p>",
   1
+ ],
+ [
+  "the add chip loses its dashed blue",
+  "portalcss",
+  ".pm-fxt-pl.add { background: var(--portal-card); color: var(--state-other); border: 1px dashed var(--state-other-line); }",
+  ".pm-fxt-pl.add { background: var(--portal-card); }",
+  1
+ ],
+ [
+  "the on-Google chip goes green-tinted again",
+  "portalcss",
+  ".pm-fxt-pl.on { background: var(--portal-tray); color: var(--portal-ink); border-color: var(--portal-line); }",
+  ".pm-fxt-pl.on { background: var(--state-ok-bg, #e3f1df); color: var(--state-ok, #0c5132); border-color: transparent; }",
+  1
+ ],
+ [
+  "the adding word comes back",
+  "portal",
+  "chip(placeName(x.name), x.on ? \"on\" : \"add\")",
+  "chip(placeName(x.name), x.on ? \"on\" : \"add\", x.on ? \"\" : \"adding\")",
+  1
  ]
 ]

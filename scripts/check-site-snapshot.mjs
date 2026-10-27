@@ -67,10 +67,12 @@ const fake = (routes) => { const seen = []; const fn = async (url, init = {}) =>
   const AC = read("netlify/functions/admin-access-confirm.js");
   if (!/body\.action === "removed"/.test(AC) || !/removed_at: at, removed_by/.test(AC) || !/There's no confirmed access to remove/.test(AC) || !/website_access_removed/.test(AC)) fail("the access ledger can't record a removal (when · by · how), or records one with no confirmed access");
   const A = read("admin/admin.js");
-  // admin_row8_done_v1 (10-27): the done card is the row's foldable body below its line; ledger + snapshot are IN the card
-  if (!/o\.flowId === "m1\.access\.website" \? `<div class="ob-done-card">\$\{accessAdminHtml\(s\.task\)\}<\/div>`/.test(A)
-    || !/body: `<div class="ob-ac-in">\$\{accessLedgerCardHtml\(t\)\}<\/div>`, acts: snap\.btn, right: accessRemoveHtml\(t\)/.test(A)
-    || !/facts\.push\(\["Snapshot", snap\.fact\]\);/.test(A)) fail("a done admin row 8 doesn't show the grant, the ledger and the snapshot (done rows draw no step cards)");
+  // admin_row8_done_v1 → v2 (10-27, "too wordy"): the done card is the row's foldable body below its line — four checks (the snapshot
+  // one of them), the ledger folded to "Where RGA can sign in", Take the snapshot again + Remove access in the footer
+  if (!/\+ \(o\.flowId === "m1\.access\.website" \? `<div class="ob-done-card">\$\{accessDoneMiniHtml\(s\.task, ask\)\}<\/div>`/.test(A)
+    || !/if \(!ask && !recent \|\| !acc\.confirmed_at\) return full;/.test(A)
+    || !/<summary>Where RGA can sign in <small>· 2<\/small><\/summary>\$\{accessLedgerCardHtml\(t, true\)\}/.test(A) || !/acts: snap\.btn, right: accessRemoveHtml\(t\) \}\)\);/.test(A)
+    || !/rows\.push\(sn \? \["Before-snapshot saved", snap\.fact/.test(A)) fail("a done admin row 8 doesn't show the grant, the ledger and the snapshot (done rows draw no step cards)");
   if (!/if \(isAcc\) snapshotTake\(cid, null\)/.test(A)) fail("confirming access doesn't take the before-snapshot");
   if (!/const RGA_ACCESS_ACCOUNT = "/.test(A) || /account: "hello@rocketgrowthagency\.com"/.test(A)) fail("RGA's login on Confirm access isn't the one constant (the RGA Admin switch would miss it)");
 }

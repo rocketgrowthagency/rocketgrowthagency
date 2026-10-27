@@ -74,21 +74,28 @@
  [
   "a done row 8 hides the ledger",
   "admin",
-  "body: `<div class=\"ob-ac-in\">${accessLedgerCardHtml(t)}</div>`, acts: snap.btn, right: accessRemoveHtml(t) }));",
-  "acts: snap.btn, right: accessRemoveHtml(t) }));"
+  "<summary>Where RGA can sign in <small>· 2</small></summary>${accessLedgerCardHtml(t, true)}",
+  "<summary>Where RGA can sign in <small>· 2</small></summary>"
  ],
  [
   "the done row 8 card is gone",
   "admin",
-  "o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessAdminHtml(s.task)}</div>`\n",
-  "false ? \"\"\n",
+  "+ (o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessDoneMiniHtml(s.task, ask)}</div>`",
+  "+ (false ? \"\"",
   1
  ],
  [
   "the done card drops the snapshot fact",
   "admin",
-  "    facts.push([\"Snapshot\", snap.fact]);\n",
-  "",
+  "rows.push(sn ? [\"Before-snapshot saved\", snap.fact",
+  "rows.push(sn ? [\"Before-snapshot saved\", \"\"",
+  1
+ ],
+ [
+  "the mini line hides the card with nothing asked",
+  "admin",
+  "if (!ask && !recent || !acc.confirmed_at) return full;",
+  "if (!acc.confirmed_at) return full;",
   1
  ]
 ]

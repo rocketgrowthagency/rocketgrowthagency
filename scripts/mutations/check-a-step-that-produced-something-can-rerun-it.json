@@ -2,8 +2,8 @@
  [
   "the done row stops rendering its re-run button",
   "admin",
-  "<span class=\"ob-actions-inline\">${rerunBtn}${callOn ? \"\" : undoBtn}</span>",
-  "<span class=\"ob-actions-inline\">${callOn ? \"\" : undoBtn}</span>",
+  "<span class=\"ob-actions-inline\">${rerunBtn}${callOn || ask ? \"\" : undoBtn}</span>",
+  "<span class=\"ob-actions-inline\">${callOn || ask ? \"\" : undoBtn}</span>",
   1
  ]
 ]

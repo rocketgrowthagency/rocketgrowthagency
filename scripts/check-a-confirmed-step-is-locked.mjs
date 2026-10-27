@@ -130,6 +130,7 @@ const EXCUSED = {
   "portal-form-test.js": "form tracking (detected — never locks): the inbox answer", "portal-step-recheck.js": "detected steps only — re-derives, never a client edit",
   "portal-deliverables.js": "approvals + the duplicate answer — not a step the lock covers", "portal-book-kickoff.js": "writes the booking stamps, not tasks; a held call refuses elsewhere",
   "portal-review-cadence.js": "writes data.review_cadence (a record setting), not a step",
+  "portal-reply.js": "RGA's reply stamps replied_at on the client's OWN ask (flag / change request) — never the step's answer (admin_row8_done_v2)",
   "portal-review-requests.js": "writes client_customer_lists; only reads the record",
   "portal-thread.js": "writes data.messages_seen_at (read receipts), not a step",
 };

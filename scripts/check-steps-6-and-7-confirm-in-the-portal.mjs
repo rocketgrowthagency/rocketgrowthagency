@@ -77,7 +77,7 @@ ctx.G2 = { state: "on_google", after: ctx.G1.after, area_now: ["Springfield, IL,
 const w = run("factsCardV2(S, CI, G1)"), o = run("factsCardV2(S, CI, G2)");
 if ((w.match(/class="pm-pc-f"/g) || []).length !== 5) fail("step 7's facts table doesn't have its 5 rows (name, phone, website, how customers reach you, service area)");
 for (const [re, what] of [[/Nothing needed from you/, "nothing needed from you"], [/We compared what Google shows/, "what was compared"], [/What RGA is doing:/, "what RGA is doing"],
-  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/✓ on Google|adding/, "each area's own state (the mockup's chips; no N of M count)"]])
+  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/class="pm-fxt-pl add"/, "each area's own state (steps_1_4_clean_v1: a dashed blue chip for one being added, no word)"]])
   if (!re.test(w)) fail(`step 7 (RGA working) lost "${what}"`);
 for (const n of ["Springfield", "Shelbyville", "Capital City", "Ogdenville"]) {
   const k = (w.match(new RegExp(`pm-fxt-pl[^"]*"><span class="d"[^>]*></span>${n}\\b`, "g")) || []).length;
@@ -90,6 +90,11 @@ const rule = (sel) => (CSS.match(new RegExp(`\\n${sel.replace(/\./g, "\\.")} \\{
 if (!/grid-template-columns:\s*minmax\(0,\s*1fr\) auto/.test(rule(".pm-fxt-r"))) fail("a facts row has a fixed label column again (it squeezes the value on a phone)");
 if (!/grid-column:\s*1 \/ -1/.test(rule(".pm-fxt-v"))) fail("the fact's value isn't full-width under its label (squeezed on a phone)");
 if (!/white-space:\s*nowrap/.test(rule(".pm-fxt-pl"))) fail("a place chip can break mid-word");
+// steps_1_4_clean_v1 exactly (Chris 10-27: "you must be sure you're doing the live just like approved mockup"): soft grey + green dot on
+// Google; dashed blue + blue dot being added, with no "adding" word (live had drifted to green-tinted chips and grey "adding" ones)
+if (!/border: 1px dashed var\(--state-other-line\)/.test(rule(".pm-fxt-pl.add")) || !/background: var\(--state-other-edge\)/.test(rule(".pm-fxt-pl.add .d"))) fail("an area being added isn't the mockup's dashed blue chip");
+if (!/background: var\(--portal-tray\)/.test(rule(".pm-fxt-pl.on")) || !/background: var\(--state-ok-fill\)/.test(rule(".pm-fxt-pl.on .d"))) fail("an area on Google isn't the mockup's soft grey chip with a green dot");
+if (/<i>adding<\/i>/.test(w)) fail("an area being added carries the word \"adding\" again (the mockup has none)");
 // 🔄 10-23 (steps_1_4_clean_v1): step 7's rows are the plan card's fact rows — label · value · a drawn mark (or its honest status words)
 if (!/const pcFact = \(label, value, sub = "", mark = "ok"\) => `<div class="pm-pc-f"><span class="l">\$\{escapeHtml\(label\)\}<\/span><span class="v">/.test(P) || !/const row = \(k, v, st, sub = ""\) => pcFact\(k, v, sub, st\);/.test(P)) fail("a facts row isn't label · value · mark (the plan card's row)");
 if (/@media[^{]*\{[^}]*\.pm-fxt/.test(CSS)) fail("the facts table has a width-only media rule; it must stack at every width");

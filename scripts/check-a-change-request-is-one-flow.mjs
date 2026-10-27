@@ -61,7 +61,34 @@ if (!/isDone && !askLk \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step
 // admin "Open step" on the client already open opens the step in place — it used to re-load the client and repaint every card
 // (Chris 10-27: "open step button doesnt work and everything glitches")
 { const A = read("admin/admin.js");
-  if (!/if \(here\) \{ if \(state\.activeTab !== "onboarding-v2"\) setActiveTab\("onboarding-v2"\); revealStep\(step\); return; \}/.test(A)) fail("admin Open step re-loads the client it's already on (the whole page repaints)"); }
+  if (!/if \(here\) \{ if \(state\.activeTab !== "onboarding-v2"\) setActiveTab\("onboarding-v2"\); revealStep\(step\); (?:focusAskReply\(step\); )?return; \}/.test(A)) fail("admin Open step re-loads the client it's already on (the whole page repaints)"); }
+// ── ADMIN: a FINISHED step the client asked about (approved admin_row8_done_v2, Chris 10-27 "?": row 8 opened with nothing to reply to)
+{ const A = read("admin/admin.js");
+  const afn = (n) => { const at = A.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — admin ${n} moved`); process.exit(2); } return A.slice(at, A.indexOf("\n}\n", at) + 2); };
+  const aline = (n) => { const m = A.match(new RegExp(`^const ${n} = [^\\n]*;$`, "m")); if (!m) { console.error(`⚠️  INDETERMINATE — admin ${n} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
+  const ax = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: () => "Oct 27, 2:55 PM",
+    state: { selectedClient: { id: "c1", business_name: "Acme Plumbing" }, onboardingData: {} }, globalThis: { rgaStepLock: { stepLock: () => ({ why: "x", edit: "request" }) } }, Date });
+  vm.runInContext(`${afn("acCardHtml")}\n${afn("admAskOf")}\n${afn("adminAskHtml")}\n${aline("ASK_TILE")}`, ax);
+  const ask = (t) => vm.runInContext(`admAskOf(${JSON.stringify(t)})`, ax), card = (t) => vm.runInContext(`adminAskHtml("m1.access.website", ${JSON.stringify(t)}, admAskOf(${JSON.stringify(t)}))`, ax);
+  const FL = { status: "done", client_flagged: { at: "2026-10-27T21:55:00Z", note: "Checking TEST" } };
+  if (!ask(FL) || ask(FL).kind !== "wrong" || ask({ status: "done" }) !== null) fail("admin can't tell a finished step has an open ask (flag / change request)");
+  const c1 = card(FL);
+  if (!/The client says something's wrong/.test(c1) || !/Checking TEST/.test(c1) || !/<form class="ob-ask-f" id="obAsk-m1-access-website" data-ob-ask-reply="m1\.access\.website"/.test(c1) || !/form="obAsk-m1-access-website">Send reply<\/button>/.test(c1)
+    || !/data-ob-chreq-dismiss="m1\.access\.website"[^>]*data-ob-ask-unanswered>Close without replying/.test(c1) || !/Unlock for the client…/.test(c1) || /\brequired\b[^>]*name="message"|name="message"[^>]*\brequired\b/.test(c1)) fail("a flag on a finished step isn't one card with their words, a reply box (our own error), Send reply, Unlock… and Close without replying (which asks first)");
+  if (!/The client asked for a change/.test(card({ change_request: { at: "2026-10-27T21:55:00Z", note: "Add my office manager" } }))) fail("a change request on a finished step doesn't say \"The client asked for a change\"");
+  const RP = { status: "done", client_flagged: { ...FL.client_flagged, replied_at: "2026-10-27T22:10:00Z", reply: "All good on our side." } }, c2 = card(RP);
+  if (!ask(RP).replied || !/You replied/.test(c2) || !/Waiting for them to say it's sorted/.test(c2) || !/All good on our side/.test(c2) || !/>Close it<\/button>/.test(c2) || /data-ob-ask-unanswered/.test(c2)) fail("after RGA replies the card isn't \"You replied · waiting for them to say it's sorted\" with Close it");
+  // the done row wears it: orange number + Reply today, no Undo; replied → Client reads it; row 8's card shrinks to one line
+  if (!/const ask = !declined && !kick2 && !callOn && !kick4Req \? admAskOf\(s\.task\) : null;/.test(A) || !/\$\{callOn \|\| ask \? "" : undoBtn\}/.test(A)
+    || !/if \(ask\) return ask\.replied \? `<span class="ob-status queued is-reads">Client reads it<\/span>` : `<span class="ob-status active is-ask">Reply today<\/span>`;/.test(A)
+    || !/\(ask \? `<div class="ob-done-card ob-ask-wrap">\$\{adminAskHtml\(o\.flowId, s\.task, ask\)\}<\/div>` : ""\)/.test(A)) fail("a done row the client asked about still reads Done with Undo, or draws no ask card");
+  if (!/client_request: "Reply" \}/.test(A) || !/focusAskReply\(step\);/.test(A)) fail("To do's button for a client ask isn't \"Reply\" landing in the reply box");
+  if (!/fetch\("\/\.netlify\/functions\/portal-reply"/.test(A) || !/if \(!await rgaConfirm\(`Send this reply to \$\{to\}\?/.test(A)) fail("Send reply doesn't go through portal-reply, or sends without asking first");
+  const RPl = read("netlify/functions/portal-reply.js"), UN = read("netlify/functions/admin-step-unlock.js"), CH = read("netlify/functions/portal-step-choice.js");
+  if (!/\[key\]: \{ \.\.\.t0\[key\], replied_at: at, replied_by: gate\.email \|\| null, reply: message\.slice\(0, 280\) \}/.test(RPl)) fail("a reply on the step doesn't stamp the ask (admin can't show \"You replied\"; To do keeps nagging)");
+  if (!/if \(!prev\.change_request && !prev\.client_flagged\) return json\(409/.test(UN) || !/if \(action !== "confirm"\) delete prev\.client_flagged;/.test(UN)) fail("RGA's Close only clears a change request — a \"something's wrong\" flag can never close");
+  if (!/kind: "change", note: prev\.change_request\.note/.test(CH) || !/kind: "wrong", note: f0\.note/.test(CH)) fail("the client's That's sorted / Cancel leaves no ask_closed note for admin's row history");
+}
 // the To do list, RUN
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
 let OM; try { OM = req(`${SITE}/netlify/functions/_open-moves.js`); } catch (e) { console.error(`⚠️  _open-moves won't load: ${e.message}`); process.exit(2); }
@@ -71,5 +98,7 @@ const mk = (t3) => OM.openMoves({ playbooks: PB, data: { tasks: { "m1.access.web
   if (!m || m.owner !== "rga" || m.kind !== "client_request" || !/wrong/.test(m.what)) fail("a flag on a FINISHED step never reaches the To do list as RGA's move"); }
 { const m = mk({ status: "done", access: { confirmed_at: "x" }, change_request: { at: "2026-10-27T19:00:00Z", note: "Add my office manager" } }).find((x) => x.step_id === "m1.access.website");
   if (!m || m.owner !== "rga" || !/change request/.test(m.what) || m.days !== OM.CONFIRM_DAYS) fail("a change request isn't RGA's same-day move in the To do list"); }
+{ const m = mk({ status: "done", access: { confirmed_at: "x" }, client_flagged: { at: "2026-10-27T19:00:00Z", note: "Not our site", replied_at: "2026-10-27T19:30:00Z" } }).find((x) => x.step_id === "m1.access.website");
+  if (m) fail("an ask RGA already replied to stays on RGA's To do list"); }
 if (F.length) { console.error(`❌ a change request is one flow — ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ a change request is one flow: one Need a change? on the lock line, a panel with its own inline error (no browser popup), both choices only where a change is allowed, ONE band with their words + Cancel, no second band, \"With RGA · since\", and RGA's same-day move in the To do list even on a finished step");

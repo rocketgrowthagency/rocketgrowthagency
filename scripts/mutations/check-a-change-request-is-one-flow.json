@@ -93,7 +93,77 @@
  [
   "admin Open step re-loads the client it's already on",
   "admin",
-  "    if (here) { if (state.activeTab !== \"onboarding-v2\") setActiveTab(\"onboarding-v2\"); revealStep(step); return; }\n",
+  "    if (here) { if (state.activeTab !== \"onboarding-v2\") setActiveTab(\"onboarding-v2\"); revealStep(step); focusAskReply(step); return; }\n",
+  "",
+  1
+ ],
+ [
+  "a done row ignores the client's ask",
+  "admin",
+  "const ask = !declined && !kick2 && !callOn && !kick4Req ? admAskOf(s.task) : null;",
+  "const ask = null;",
+  1
+ ],
+ [
+  "the ask card loses Send reply",
+  "admin",
+  "acts: `<button type=\"submit\" class=\"admin-button\" form=\"${fid}\">Send reply</button>${",
+  "acts: `${",
+  1
+ ],
+ [
+  "Close without replying stops asking first",
+  "admin",
+  "close(\"Close without replying\", true)",
+  "close(\"Close without replying\")",
+  1
+ ],
+ [
+  "a replied ask still reads as unanswered",
+  "admin",
+  "const replied = Boolean(a.replied_at && Date.parse(a.replied_at) >= Date.parse(a.at || 0));",
+  "const replied = false;",
+  1
+ ],
+ [
+  "Undo shows while the client has asked",
+  "admin",
+  "${callOn || ask ? \"\" : undoBtn}",
+  "${callOn ? \"\" : undoBtn}",
+  1
+ ],
+ [
+  "To do says Open step for a client ask",
+  "admin",
+  "confirm_call: \"Confirm the time\", client_request: \"Reply\" };",
+  "confirm_call: \"Confirm the time\" };",
+  1
+ ],
+ [
+  "Send reply sends without asking",
+  "admin",
+  "if (!await rgaConfirm(`Send this reply to ${to}?",
+  "if (false && await rgaConfirm(`Send this reply to ${to}?",
+  1
+ ],
+ [
+  "the reply doesn't stamp the ask",
+  "replyfn",
+  "[key]: { ...t0[key], replied_at: at, replied_by: gate.email || null, reply: message.slice(0, 280) }",
+  "[key]: { ...t0[key] }",
+  1
+ ],
+ [
+  "RGA's Close can't close a flag",
+  "adminunlock",
+  "  if (action !== \"confirm\") delete prev.client_flagged;\n",
+  "",
+  1
+ ],
+ [
+  "a replied ask stays on To do",
+  "openmoves",
+  "    if (ask && ask.replied_at && Date.parse(ask.replied_at) >= Date.parse(ask.at || 0)) continue;\n",
   "",
   1
  ]
