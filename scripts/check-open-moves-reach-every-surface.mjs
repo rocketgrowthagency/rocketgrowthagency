@@ -169,6 +169,16 @@ if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Goog
 }
 // 10-26: while the list loads, the card's client side says "Checking…" — never the card's old guess ("11 items" before the real 4)
 if (!/state\.openMoves = undefined;/.test(ADM) || !/if \(countEl && listEl && movesLoading\) \{/.test(ADM)) fail("the admin card flashes its old guess of the client's list while the real one loads");
+// 10-26 (Chris: "doesnt look like mockup"): the pane's numbered lines come only from the step's OWN copy; Done folds while anything
+// is open; the Done list carries only the client's numbered steps; RGA's step is a blue card
+{
+  const CS2 = JSON.parse(read("data/playbooks/client-steps.json")), BCS2 = read("scripts/build-client-steps.mjs");
+  if (!/"clientTodoLine", "clientTodoSteps", "clientTodoWhy",/.test(BCS2) || !(CS2.month1 || []).some((x) => Array.isArray(x.clientTodoSteps) && x.clientTodoSteps.length)) fail("the To do copy (clientTodoLine / Steps / Why) doesn't reach the client");
+  if (!/Array\.isArray\(st\.clientTodoSteps\) && st\.clientTodoSteps\.length \? `<ol class="ib-todo">/.test(POR) || !/hint = st\.clientTodoLine \|\| /.test(POR)) fail("the To do card / pane doesn't use the step's own To do copy");
+  if (!/<details class="ap-done"\$\{needN \|\| rgaN \? "" : " open"\}>/.test(POR)) fail("Done doesn't fold while something is open");
+  if (!/const doneSteps = m1\.filter\(/.test(POM) || !/const m1 = \(PLAYBOOKS\.month1 \|\| \[\]\)\.filter\(\(s\) => s\.clientStepNo != null\);/.test(POM)) fail("the Done list could carry steps the client doesn't have (only numbered client steps)");
+  if (!/\.ib-qi\.ib-task\.rga \{ background:var\(--state-other-bg\)/.test(read("portal/portal.css"))) fail("RGA's step isn't the blue card");
+}
 // no surface carries its own copy of the promise rule
 for (const [name, src] of [["admin.js", ADM], ["portal.js", POR]]) if (/addBusinessDays|RGA_DAYS|CLIENT_DAYS/.test(src)) fail(`${name} carries its own copy of the promise rule`);
 // the morning email, built from the list

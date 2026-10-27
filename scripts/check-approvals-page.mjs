@@ -21,7 +21,8 @@ if (!/<div class="ap-empty"><span class="ap-empty-i" aria-hidden="true">✓<\/sp
 if (/Nothing needs you right now/.test(R)) fail("the old \"Nothing needs you right now\" heading is back over a list");
 // 🔄 todo_inbox_v1 (10-26): "With RGA" became "RGA is working on", counting RGA's step moves too
 if (!/RGA is working on · \$\{rgaN\}/.test(R) || !/const needN = needs\.length \+ stepNeeds\.length, rgaN = withRgaActions\.length \+ changingItems\.length \+ stepRga\.length;/.test(R) || !/settled\.filter\(\(d\) => d\.approval\.decision !== "approved"\)/.test(R)) fail("a change they asked for isn't in With RGA");
-if (!/<details class="ap-done"\$\{needs\.length \? "" : " open"\}>/.test(R)) fail("Done isn't collapsed while something needs them / open when nothing does");
+// 🔄 todo_redesign_v1 (10-26): Done folds while ANYTHING is open — what needs them OR what RGA is working on
+if (!/<details class="ap-done"\$\{needN \|\| rgaN \? "" : " open"\}>/.test(R)) fail("Done isn't collapsed while something is open / open when nothing is");
 if (!/\.sort\(\(x, y\) => String\(y\.at \|\| ""\)\.localeCompare\(String\(x\.at \|\| ""\)\)\)/.test(R)) fail("Done isn't newest first");
 if (/actions\.push\(\{ key: "m1\.audit\.gbp_duplicate", title: "Duplicate Google Business Profile removed"/.test(DL)) fail("the duplicate confirmation is an action at the top of the page again (it's a Done row)");
 if (!/resolved\.push\(\{ key: "m1\.audit\.gbp_duplicate"/.test(DL)) fail("the duplicate confirmation isn't a Done row");

@@ -22,6 +22,7 @@ if (!/^installWaitSpinners\(\);$/m.test(BUSY)) F.push("busy.js no longer install
 if (!/characterData: true/.test(BUSY) || !/el\.classList\.toggle\("rga-wait", on\)/.test(BUSY)) F.push("a wait that changes its text keeps (or never gets) the spinner — busy.js must re-check on text changes and unmark");
 if (!/const SKIP = "button, \[role=button\], input, textarea, select, option, script, style, \.pm-msg\.busy, \.is-busy";/.test(BUSY)) F.push("the wait spinner no longer skips buttons / fields / text that already spins");
 if (!/\(dot\|spin\|spinner\|ring\|loader\)/.test(BUSY)) F.push("a line that draws its own ring (a .dot, a .mv-spin) can get a second one");
+if (!/for \(let p = el\.parentElement, d = 0; p && d < 4; p = p\.parentElement, d\+\+\)/.test(BUSY) || !/\(spinner\|spin\|loader\|ring\)/.test(BUSY)) F.push("a line beside a spinner already drawn nearby (the portal's loading screen) gets a second one — Chris 10-26: \"only the one on top\"");
 for (const f of ["portal/portal.js", "admin/admin.js"]) {
   const src = read(f);
   if (!/^import "\/shared\/busy\.js\?v=\d+[a-z]?";$/m.test(src.split("\n").slice(0, 4).join("\n"))) F.push(`${f} doesn't import shared/busy.js first`);

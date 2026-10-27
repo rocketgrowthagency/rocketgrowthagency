@@ -20,7 +20,7 @@
  [
   "Done is always open",
   "portal",
-  "<details class=\"ap-done\"${needs.length ? \"\" : \" open\"}>",
+  "<details class=\"ap-done\"${needN || rgaN ? \"\" : \" open\"}>",
   "<details class=\"ap-done\" open>"
  ],
  [

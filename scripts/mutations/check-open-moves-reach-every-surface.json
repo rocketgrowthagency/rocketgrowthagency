@@ -148,5 +148,17 @@
   "admin",
   "    if (countEl && listEl && movesLoading) {",
   "    if (false) {"
+ ],
+ [
+  "Done stays open while things are open",
+  "portal",
+  "<details class=\"ap-done\"${needN || rgaN ? \"\" : \" open\"}>",
+  "<details class=\"ap-done\" open>"
+ ],
+ [
+  "the pane invents no lines but shows none either",
+  "portal",
+  "const todo = Array.isArray(st.clientTodoSteps) && st.clientTodoSteps.length ?",
+  "const todo = false ?"
  ]
 ]

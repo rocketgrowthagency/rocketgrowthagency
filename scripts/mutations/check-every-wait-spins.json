@@ -40,5 +40,11 @@
   "busyjs",
   "(?:[A-Z][a-z]+ )?[A-Z][a-z]+ing\\b.*…\\s*$/;",
   "(?:[A-Z][a-z]+ )?(Loading|Reading)\\b.*…\\s*$/;"
+ ],
+ [
+  "the loading screen shows two spinners again",
+  "busyjs",
+  "  for (let p = el.parentElement, d = 0; p && d < 4; p = p.parentElement, d++) {",
+  "  for (let p = null, d = 0; p && d < 4; p = p.parentElement, d++) {"
  ]
 ]
