@@ -1,0 +1,44 @@
+[
+ [
+  "the white link-button words are white again (unreadable)",
+  "css",
+  ".ob-gcard-act a.admin-button.admin-button-secondary, .ob-gq a.admin-button.admin-button-secondary { color:var(--admin-ink,#303030); }",
+  "",
+  1
+ ],
+ [
+  "Accept sends no invitation id",
+  "admin",
+  "{ client_id: cid, action: \"github_accept\", invitation_id: accept }",
+  "{ client_id: cid, action: \"github_accept\" }",
+  1
+ ],
+ [
+  "Not yet still sends",
+  "admin",
+  "    if (edited == null || edited === RGA_DIALOG_ALT) return;\n    b.classList.add(\"is-busy\");",
+  "    b.classList.add(\"is-busy\");",
+  1
+ ],
+ [
+  "a confirmed accept skips the before-snapshot",
+  "admin",
+  "      snapshotTake(cid, null).then((ok) => { if (ok) setBanner(\"Access confirmed, and the before-snapshot of their site is saved.\", \"success\"); });\n      return;\n    }\n    ghState[cid]",
+  "      return;\n    }\n    ghState[cid]",
+  1
+ ],
+ [
+  "Check again doesn't re-read",
+  "admin",
+  "if (b.hasAttribute(\"data-ob-gh-check\")) { delete ghState[cid]; b.classList.add(\"is-busy\"); await ghLoad(cid); return; }",
+  "if (b.hasAttribute(\"data-ob-gh-check\")) { b.classList.add(\"is-busy\"); return; }",
+  1
+ ],
+ [
+  "without the key the manual path is gone",
+  "admin",
+  "act: `${check}${openGh(null)}${manual}` }));",
+  "act: `${check}${openGh(null)}` }));",
+  1
+ ]
+]
