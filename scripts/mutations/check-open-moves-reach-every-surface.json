@@ -160,5 +160,12 @@
   "portal",
   "const todo = Array.isArray(st.clientTodoSteps) && st.clientTodoSteps.length ?",
   "const todo = false ?"
+ ],
+ [
+  "the card's Your move since reads the checklist row, not the card's own step",
+  "admin",
+  "const h = mvNaHtml(cardFlowId); na.innerHTML = h;",
+  "const h = mvNaHtml(activeFlowId); na.innerHTML = h;",
+  1
  ]
 ]

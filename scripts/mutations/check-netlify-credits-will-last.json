@@ -2,7 +2,7 @@
  [
   "the run-out check is gone",
   "netlifyforecast",
-  "  if (atReset < 0) problems.push(",
+  "  if (atReset < 0 && !stale) problems.push(",
   "  if (false) problems.push(",
   1
  ],
