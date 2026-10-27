@@ -166,5 +166,19 @@
   "    if (ask && ask.replied_at && Date.parse(ask.replied_at) >= Date.parse(ask.at || 0)) continue;\n",
   "",
   1
+ ],
+ [
+  "a closed Unlock keeps its form's gap",
+  "admincss",
+  ".ob-unlock:not([open]) { gap:0; }\n",
+  "",
+  1
+ ],
+ [
+  "the opened mini line repeats the card header",
+  "admincss",
+  ".ob-ac-mini > .ob-gq > .ob-ac > .ob-ac-h { display:none; }\n",
+  "",
+  1
  ]
 ]

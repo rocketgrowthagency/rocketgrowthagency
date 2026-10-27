@@ -84,6 +84,11 @@ if (!/isDone && !askLk \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step
     || !/\(ask \? `<div class="ob-done-card ob-ask-wrap">\$\{adminAskHtml\(o\.flowId, s\.task, ask\)\}<\/div>` : ""\)/.test(A)) fail("a done row the client asked about still reads Done with Undo, or draws no ask card");
   if (!/client_request: "Reply" \}/.test(A) || !/focusAskReply\(step\);/.test(A)) fail("To do's button for a client ask isn't \"Reply\" landing in the reply box");
   if (!/fetch\("\/\.netlify\/functions\/portal-reply"/.test(A) || !/if \(!await rgaConfirm\(`Send this reply to \$\{to\}\?/.test(A)) fail("Send reply doesn't go through portal-reply, or sends without asking first");
+  // Chris 10-27 "?" screenshots: a closed Unlock… sat above Send reply (its hidden form's grid gap), and the opened row 8 line drew the
+  // whole card again inside itself (title twice, a box in a box)
+  { const AC = read("admin/admin.css");
+    if (!/\.ob-unlock:not\(\[open\]\) \{ gap:0; \}/.test(AC)) fail("a closed \"Unlock for the client…\" is taller than the buttons beside it (it sits out of line)");
+    if (!/\.ob-ac-mini > \.ob-gq \{ margin:0; padding:0; \}/.test(AC) || !/\.ob-ac-mini > \.ob-gq > \.ob-ac > \.ob-ac-h \{ display:none; \}/.test(AC)) fail("opening row 8's one line draws the card again inside it (title twice, a box in a box)"); }
   const RPl = read("netlify/functions/portal-reply.js"), UN = read("netlify/functions/admin-step-unlock.js"), CH = read("netlify/functions/portal-step-choice.js");
   if (!/\[key\]: \{ \.\.\.t0\[key\], replied_at: at, replied_by: gate\.email \|\| null, reply: message\.slice\(0, 280\) \}/.test(RPl)) fail("a reply on the step doesn't stamp the ask (admin can't show \"You replied\"; To do keeps nagging)");
   if (!/if \(!prev\.change_request && !prev\.client_flagged\) return json\(409/.test(UN) || !/if \(action !== "confirm"\) delete prev\.client_flagged;/.test(UN)) fail("RGA's Close only clears a change request — a \"something's wrong\" flag can never close");
