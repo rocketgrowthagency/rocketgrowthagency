@@ -463,6 +463,8 @@ async function portalPass() {
 function adminDoneness(a) {
   if (!a) return null;
   const cls = ` ${a.cls} `;
+  // admin_row8_done_v2 (10-27): a finished step the client asked about is RGA's move ("Reply today" / "Client reads it")
+  if (/ is-ask /.test(cls)) return "asked";
   if (/ (done|declined|skipped) /.test(cls) || /^(Done|Declined|Skipped)$/i.test(a.pill)) return "finished";
   if (/ (active|waits|queued|ready|locked) /.test(cls)) return "open";
   return null;
@@ -488,6 +490,8 @@ function agree(r) {
   const a = adminDoneness(r.admin), p = portalDoneness(r.portal);
   if (!a || !p) { r.unknown.push(`cannot tell done-ness (admin "${r.admin.pill}", portal "${r.portal.pill}")`); return; }
   if (p === "flagged") { r.unknown.push("client flagged this step — done-ness not compared"); return; }
+  // the client asked about a finished step: admin shows their ask, the portal must say it's with RGA (never Done, never their turn)
+  if (a === "asked") { if (p !== "open") r.fail.push(`admin shows the client's ask ("${r.admin.pill}") but the portal shows "${r.portal.pill}" (want "With RGA")`); return; }
   if (a === "finished" && (p === "client-turn" || r.portal.isNow)) r.fail.push(`admin says "${r.admin.pill}" but the portal asks the client to act ("${r.portal.pill}"${r.portal.isNow ? ", marked as their next step" : ""})`);
   else if (p === "finished" && a !== "finished") r.fail.push(`portal says Done but the admin shows "${r.admin.pill}"`);
   else if (a === "finished" && p !== "finished") r.fail.push(`admin says "${r.admin.pill}" but the portal shows "${r.portal.pill}"`);
