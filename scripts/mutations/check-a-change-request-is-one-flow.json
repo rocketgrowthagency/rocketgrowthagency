@@ -33,5 +33,19 @@
   "(canChange ? `<div class=\"pm-chg-ch\"",
   "(true ? `<div class=\"pm-chg-ch\"",
   1
+ ],
+ [
+  "the lock line stays below the card",
+  "portal",
+  "requestAnimationFrame(() => { _seatQueued = false; seatHowFolds(); seatLockFoots(); })",
+  "requestAnimationFrame(() => { _seatQueued = false; seatHowFolds(); })",
+  1
+ ],
+ [
+  "a step with RGA shows its done tick again",
+  "portal",
+  "isDone && !askLk ? \" is-done\" : askLk ? \" is-rga\" : \"\"",
+  "isDone ? \" is-done\" : \"\"",
+  1
  ]
 ]
