@@ -42,10 +42,24 @@
   1
  ],
  [
-  "the done card stops showing the logins list",
+  "the done card stops showing the vault line",
   "admin",
-  "    body: vaultLoginsHtml(v.saved_list) }));",
-  "    body: \"\" }));",
+  "[\"Google needs no password\", \"Connected in Setup\", \"\"]]) + vaultLine(v.saved_list),",
+  "[\"Google needs no password\", \"Connected in Setup\", \"\"]]),",
+  1
+ ],
+ [
+  "a self-settling step offers Undo again",
+  "admin",
+  "const undoBtn = o.selfSettles ? \"\"",
+  "const undoBtn = false ? \"\"",
+  1
+ ],
+ [
+  "the done card shows raw ISO dates",
+  "admin",
+  "escapeHtml(day(sv.at))]",
+  "escapeHtml(String(sv.at || \"\"))]",
   1
  ]
 ]
