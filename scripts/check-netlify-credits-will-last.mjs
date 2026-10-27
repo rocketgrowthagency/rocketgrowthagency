@@ -63,6 +63,9 @@ const { forecast } = await import(LIB);
   if (!runOut(B) || perFix(B)) bad.push("a pace that runs out before the reset is not flagged (alone)");
   if (C.problems.length) bad.push(`a calm pace is flagged: ${C.problems[0]}`);
   if (Math.round(C.left) !== 4000 - 6 * 15) bad.push(`deploys since the anchor are not charged (left ${Math.round(C.left)}, expected ${4000 - 6 * 15})`);
+  // D · 10-27: an anchor from the LAST cycle (packs bought then, never expire) → "stale, re-anchor", never a false "run out in 1 day"
+  const D = forecast({ ...base, anchorLeft: 6000, anchorAt: "2026-09-01T00:00:00Z", deploys: Array.from({ length: 8 }, (_, i) => at(i * 6)) });
+  if (!D.stale || runOut(D) || !D.problems.some((x) => /older than this cycle/.test(x))) bad.push("an anchor older than the cycle reads as the plan's 1,000 and cries run-out (purchased packs dropped)");
   if (bad.length) { console.error("🔴 the credit forecast is wrong on a fixed scenario:"); for (const x of bad) console.error("   · " + x); process.exit(1); }
 }
 const f = forecast({ deploys, bandwidthBytes: bw.used, periodStart: bw.period_start_date, periodEnd: bw.period_end_date, now: new Date().toISOString(),

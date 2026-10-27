@@ -5,7 +5,11 @@ export function forecast({ deploys, bandwidthBytes, periodStart, periodEnd, now,
   const day = 86400000;
   const start = new Date(periodStart), end = new Date(periodEnd), at = new Date(anchorAt), t = new Date(now);
   const from = at > start ? at : start;
-  const left0 = at > start ? Number(anchorLeft) : included;
+  // 🔴 10-27: an anchor from an EARLIER cycle can't be carried over (we don't have last cycle's spend), so the cycle's own
+  // plan credits are the only number we know — and purchased packs never expire, so that number can be far too LOW
+  // (it printed "≈150 left, run out in 1 day" while Usage & billing showed 6,368.9). Say it's stale instead of alarming.
+  const stale = !(at > start);
+  const left0 = stale ? included : Number(anchorLeft);
   const prod = deploys.filter((d) => d.context === "production" && new Date(d.created_at) >= start);
   const ago = (d) => t - new Date(d.created_at);
   const last24 = prod.filter((d) => ago(d) < day).length;
@@ -19,7 +23,8 @@ export function forecast({ deploys, bandwidthBytes, periodStart, periodEnd, now,
   const daysLeft = Math.max(0, (end - t) / day);
   const atReset = left - rate * daysLeft;
   const problems = [];
-  if (atReset < 0) problems.push(`at the last 2 days' pace the credits run out in about ${Math.max(0, Math.floor(left / Math.max(rate, 1e-9)))} day(s), before the reset on ${end.toISOString().slice(0, 10)} — batch deploys (one per finished task)`);
+  if (stale) problems.push(`the balance anchor (${String(anchorAt).slice(0, 10)}) is older than this cycle (${start.toISOString().slice(0, 10)}), so purchased credit packs aren't counted and this estimate is too low — copy "Credits available" from Netlify → Usage & billing into NETLIFY_CREDIT_ANCHOR as <credits>@<ISO time>`);
+  if (atReset < 0 && !stale) problems.push(`at the last 2 days' pace the credits run out in about ${Math.max(0, Math.floor(left / Math.max(rate, 1e-9)))} day(s), before the reset on ${end.toISOString().slice(0, 10)} — batch deploys (one per finished task)`);
   if (last24 > dailyMax) problems.push(`${last24} production deploys in the last 24h (max ${dailyMax}) — that is per-fix deploying again`);
-  return { left, left0, from, sinceAnchor, last24, last48, last7, gbPerDay, atReset, end, problems };
+  return { left, left0, stale, from, sinceAnchor, last24, last48, last7, gbPerDay, atReset, end, problems };
 }
