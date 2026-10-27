@@ -1,0 +1,58 @@
+[
+ [
+  "admin's Confirm access records RGA's own hello@ again",
+  "admin",
+  "const RGA_ACCESS_ACCOUNT = \"access@rocketgrowthagency.com\";",
+  "const RGA_ACCESS_ACCOUNT = \"hello@rocketgrowthagency.com\";",
+  1
+ ],
+ [
+  "the WordPress email step tells the client to invite hello@",
+  "siteplatdata",
+  "\"t\": \"Type our email address.\",\n          \"where\": \"second box\",\n          \"copy\": [\n            [\n              \"Email\",\n              \"access@rocketgrowthagency.com\"",
+  "\"t\": \"Type our email address.\",\n          \"where\": \"second box\",\n          \"copy\": [\n            [\n              \"Email\",\n              \"hello@rocketgrowthagency.com\"",
+  1
+ ],
+ [
+  "the client's GitHub step adds the bare rocketgrowthagency user",
+  "portal",
+  "[\"Paste our name and tap <b>Add</b>:\", \"\", \"\", RGA_ADMIN_GITHUB]] },",
+  "[\"Paste our name and tap <b>Add</b>:\", \"\", \"\", \"rocketgrowthagency\"]] },",
+  1
+ ],
+ [
+  "the developer note drops the GitHub name",
+  "portal",
+  "Add people → add\", RGA_ADMIN_GITHUB],",
+  "Add people → add\", \"someone\"],",
+  1
+ ],
+ [
+  "the portal's GitHub identity is RGA's own account",
+  "portal",
+  "const RGA_ADMIN_GITHUB = \"rocketgrowthagency-admin\";",
+  "const RGA_ADMIN_GITHUB = \"rocketgrowthagency\";",
+  1
+ ],
+ [
+  "the portal identity drifts from the data",
+  "portal",
+  "const RGA_ADMIN_EMAIL = \"access@rocketgrowthagency.com\";",
+  "const RGA_ADMIN_EMAIL = \"rga@rocketgrowthagency.com\";",
+  1
+ ],
+ [
+  "the designer email goes back to a literal hello@",
+  "portal",
+  "The email to add is ${RGA_ADMIN_EMAIL}. They're doing our local SEO. Thanks!`",
+  "The email to add is hello@rocketgrowthagency.com. They're doing our local SEO. Thanks!`",
+  1
+ ],
+ [
+  "the constant is renamed (the premise moved → ask, don't accuse)",
+  "portal",
+  "const RGA_ADMIN_EMAIL = ",
+  "const RGA_ADMIN_MAIL = ",
+  2
+ ]
+]

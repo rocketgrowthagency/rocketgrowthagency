@@ -33,7 +33,7 @@ for (const k of ["squareonline", "jimdo", "yola"]) if (PL[k]?.kind !== "workarou
 if (PL.shopify?.kind !== "code") fail("Shopify doesn't take the 4-digit collaborator code");
 if (PL.webflow?.kind !== "request") fail("Webflow isn't a request RGA sends");
 if (!PL.custom) fail("there is no Custom-coded option (GitHub / Netlify / Vercel)");
-if (!/hello@rocketgrowthagency\.com/.test(JSON.stringify(PL.wordpress?.steps || []))) fail("WordPress's steps don't carry the email to copy");
+if (!DATA.email || !JSON.stringify(PL.wordpress?.steps || []).includes(DATA.email)) fail("WordPress's steps don't carry the email to copy");
 // ── the detector, RUN
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
 let D; try { D = req(`${SITE}/netlify/functions/_site-platform.js`); } catch (e) { console.error(`⚠️  _site-platform won't load: ${e.message}`); process.exit(2); }
@@ -97,6 +97,7 @@ if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortal
   const fnSrc = (name) => { const at = P.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = P.indexOf("{", at); for (; i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}" && --d === 0) break; } return P.slice(at, i + 1); };
   const env = `const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;"); const escapeAttribute = escapeHtml;
     ${grab(/^const ACC_SEND = \{[^\n]*\};$/m, "ACC_SEND")}
+    ${grab(/^const RGA_ADMIN_EMAIL = "[^"]*";$/m, "RGA_ADMIN_EMAIL")} ${grab(/^const RGA_ADMIN_GITHUB = "[^"]*";$/m, "RGA_ADMIN_GITHUB")}
     ${fnSrc("accSetupHtml")} ${fnSrc("accMono")} return { accSetupHtml, accMono };`;
   let R; try { R = new Function(env)(); } catch (e) { console.error(`⚠️  the card code won't run: ${e.message}`); process.exit(2); }
   for (const [k, p] of Object.entries(PL)) {

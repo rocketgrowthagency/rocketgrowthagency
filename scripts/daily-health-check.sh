@@ -523,6 +523,7 @@ run check-the-mature-stage-reads-what-is-measured.mjs "Mature stage: 14 computed
 run check-every-service-key-function-checks-its-caller.mjs "security: every function holding the service key checks its caller (auth helper, session, signed token, internal or fail-closed secret, schedule) or is public on the record"
 run check-review-requests-ask-everyone.mjs "review requests ask EVERYONE: no gating, no incentives, no drafting notes reach a customer (Google review policy)"
 run check-step3-website-access.mjs "step 3 website access: one audited 22-builder source, detector ties (Square>Weebly, Showit>WordPress), done never asks, tiles + Change, conversation at the bottom"
+run check-step3-admin-identity.mjs "step 3 RGA Admin identity: clients invite access@ / GitHub rocketgrowthagency-admin, never hello@; data = portal = admin"
 run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
 run check-website-change-approvals.mjs "every website change goes through For your approval: all Month 1 website steps; draft → send → the client approves THAT version → Mark live reads the page back → done; no run or Mark done skips it; the inbox"
 run check-site-snapshot.mjs "before-snapshot + access ledger: read-only snapshot of the client's public pages (sitemap, top pages first, capped, blocked pages with a reason), re-read before write, removal recorded with when + how"

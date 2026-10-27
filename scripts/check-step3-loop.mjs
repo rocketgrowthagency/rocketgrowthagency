@@ -40,7 +40,8 @@ const world = (task) => { db = { client_portal_access: [{ portal_email: "owner@a
   client_onboarding_records: [{ id: "ob1", client_id: CID, data: { tasks: task ? { "m1.access.website": task } : {} } }], client_activity: [] }; };
 const T = () => db.client_onboarding_records[0].data.tasks["m1.access.website"] || {};
 const { stepLock } = req(`${SITE}/shared/step-lock.js`);
-const PL = JSON.parse(read("data/site-platforms.json")).platforms;
+const PLD = JSON.parse(read("data/site-platforms.json")), PL = PLD.platforms;
+const RGA_EMAIL = PLD.email;   // the RGA Admin identity (access@, 10-26) — read from the data, never quoted (a gate that quotes the product fails when it improves)
 // admin row 8, lifted
 const A = read("admin/admin.js");
 const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("{", at); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
@@ -63,7 +64,7 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   const row8 = adminRow(t1);
   if (!/Custom-coded/.test(row8) || !new RegExp(PL.custom.role.replace(/[()]/g, ".")).test(row8) || !/Confirm access/.test(row8) || !/RGA's move/.test(row8)) fail(`${label}: admin row 8 doesn't show the builder, its role, RGA's move and Confirm access`);
   // 3 · admin: Confirm access
-  r = await call("admin-access-confirm.js", { role: PL.custom.role, account: "hello@rocketgrowthagency.com" }, "chris@rga.test");
+  r = await call("admin-access-confirm.js", { role: PL.custom.role, account: RGA_EMAIL }, "chris@rga.test");
   const t3 = T();
   if (r.status !== 200 || !t3.access?.confirmed_at || t3.status !== "done" || t3.completed_by !== "rga" || t3.client_input?.platform !== "custom") fail(`${label}: Confirm access didn't record the grant, finish the step, or kept the client's answer (${r.status} ${r.body.error || ""})`);
   if (!(db.client_activity || []).some((a) => a.kind === "website_access_confirmed")) fail(`${label}: the confirmation leaves no permanent record`);
@@ -92,11 +93,11 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
     googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
-  vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")}`, ctx);
+  vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
-  const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
-  if (!/RGA has access/.test(card) || !/hello@rocketgrowthagency\.com/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
+  const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: RGA_EMAIL, confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
+  if (!/RGA has access/.test(card) || !card.includes(RGA_EMAIL) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
   if (/data-acc-redo/.test(card)) fail("the client's confirmed card offers a way to change it while it's locked");
 }
 if (F.length) { console.error("🔴 step 3's loop is broken:"); for (const f of F) console.error("   · " + f); process.exit(1); }
