@@ -40,5 +40,19 @@
   "acts: `${manual}${openGh(null)}`, right: check }));",
   "acts: `${openGh(null)}`, right: check }));",
   1
+ ],
+ [
+  "a step write reaches only one in-memory copy (the checklist keeps the old card)",
+  "admin",
+  "for (const rec of new Set([state.onboardingData, state.flowM1State]))",
+  "for (const rec of new Set([state.onboardingData]))",
+  1
+ ],
+ [
+  "\"already confirmed\" shows as Couldn't reach GitHub",
+  "admin",
+  "    if (r.status === 409 && /already confirmed/i.test(j.error || \"\")) { delete ghState[cid]; await reloadScopeAndRerender(\"month1\"); return; }   // our copy was stale\n",
+  "",
+  1
  ]
 ]

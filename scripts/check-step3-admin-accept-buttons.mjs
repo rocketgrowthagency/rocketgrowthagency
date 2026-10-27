@@ -27,7 +27,7 @@ const code = [line(/^const G_ICON = [^\n]*;$/m, "G_ICON"), line(/^const OB_WEB_T
   line(/^const GH_MONO = [^\n]*;$/m, "GH_MONO"), line(/^const GH_PERM = [^\n]*;$/m, "GH_PERM"), "const ghState = {};",
   fn("adminGoogleCardHtml"), fn("acCardHtml"), fn("acDueChip"), line(/^const acConsent = [^\n]*;$/m, "acConsent"), line(/^const acSite = [^\n]*;$/m, "acSite"), line(/^const GH_DOMAIN = [^\n]*;$/m, "GH_DOMAIN"),
   line(/^const mvDay = [^\n]*;$/m, "mvDay"), line(/^const mvDueDays = [^\n]*;$/m, "mvDueDays"),
-  fn("accInviteLinkHtml"), fn("ghLoad"), fn("ghAccessCardHtml"), objBlock("const GH_ASK = {", "GH_ASK"), handler].join("\n");
+  fn("mergeStepTasks"), fn("accInviteLinkHtml"), fn("ghLoad"), fn("ghAccessCardHtml"), objBlock("const GH_ASK = {", "GH_ASK"), handler].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -42,6 +42,7 @@ const SCEN = {
   wrongrepo: { check: { ok: true, state: "none", invites: [], accepted: { repo: "johndev/site-2024", role: "Write", can_change: true, domain: "acme.com", domain_found_in: [], accepted_at: "2026-10-27T17:00:00Z" }, now: { role: "Write", can_change: true }, checked_at: "2026-10-27T17:20:00Z" } },
   readonly: { check: { ok: true, state: "none", invites: [], accepted: { repo: "acme/site", role: "Read", can_change: false, domain: "acme.com", domain_found_in: ["CNAME"], accepted_at: "2026-10-27T17:00:00Z" }, now: { role: "Read", can_change: false }, checked_at: "2026-10-27T17:20:00Z" } },
   nokey: { check: { ok: true, state: "no_key", checked_at: "2026-10-27T17:20:00Z" } },
+  stale: { status: 409, check: { error: "Access is already confirmed." } },
 };
 async function open(name) {
   const page = await browser.newPage();
@@ -52,18 +53,21 @@ async function open(name) {
     const adminGcardWhen = (x) => String(x || "").slice(0, 16).replace("T", " ");
     const admPlatforms = () => ({ custom: { hosts: { netlify: { name: "Netlify" } } } });
     const movesForSelected = () => [{ owner: "rga", step_id: "m1.access.website", kind: "accept_access", due: new Date().toISOString(), due_today: true, late: false }];
+    window.RELOAD = 0; const reloadScopeAndRerender = async () => { window.RELOAD++; }; const renderClientNextUp = () => {};
     const state = { selectedClient: { id: ${JSON.stringify(CID)}, business_name: "Rocket Growth Agency", primary_contact_name: "Chris K", primary_contact_email: "rocketgrowthagencyadmin@gmail.com" },
       onboardingData: { tasks: { "m1.access.website": ${JSON.stringify({ status: "in_progress", client_input: CI })} } } };
+    state.flowM1State = { tasks: { "m1.access.website": ${JSON.stringify({ status: "in_progress", client_input: CI })} } };   // the checklist's OWN copy (10-27)
     const authHeaders = async () => ({ "Content-Type": "application/json" });
     const setBanner = (m, kind) => window.BANNERS.push([typeof m === "string" ? m : m.title, kind]);
     const snapshotTake = async () => { window.SNAP++; return true; };
     const loadStepNudges = async () => {};
     const rgaDialog = async (o) => { window.DIALOG = o; return window.NEXT_DIALOG; };
-    const SCEN = ${JSON.stringify(SCEN[name])};
+    const SCEN = ${JSON.stringify(SCEN[name])}; const SCEN_CI = ${JSON.stringify(CI)};   // the real server returns the WHOLE task
     window.fetch = async (url, init) => { const body = JSON.parse(init && init.body || "{}"); window.REQ.push({ url, body });
       const ans = url.includes("send-step-email") ? { ok: true, to: "rocketgrowthagencyadmin@gmail.com" }
-        : body.action === "github_check" ? SCEN.check : body.action === "github_accept" ? { ok: true, state: "confirmed", tasks: {} } : body.action === "github_confirm" ? { ok: true, state: "confirmed", tasks: {} } : { ok: false, error: "unexpected" };
-      return { ok: true, status: 200, json: async () => ans }; };
+        : body.action === "github_check" ? SCEN.check : body.action === "github_accept" ? { ok: true, state: "confirmed", tasks: { "m1.access.website": { status: "done", client_input: SCEN_CI, access: { confirmed_at: "2026-10-27T18:46:00Z", github: "rocketgrowthagency-admin" } } } } : body.action === "github_confirm" ? { ok: true, state: "confirmed", tasks: {} } : { ok: false, error: "unexpected" };
+      const st = body.action === "github_check" && SCEN.status ? SCEN.status : 200;
+      return { ok: st < 300, status: st, json: async () => ans }; };
     function renderOnboardingChecklist() { document.getElementById("host").innerHTML = ghAccessCardHtml(state.onboardingData.tasks["m1.access.website"], state.onboardingData.tasks["m1.access.website"].client_input)
       + '<div id="other" class="ob-gq"><div class="ob-gcard-act">' + accInviteLinkHtml({ via: "invite", platform: "wix" }, { name: "Wix" }, "Wix") + '</div></div>'; }
     ${code}
@@ -88,6 +92,7 @@ try {
     await clickText(p, "Accept and confirm access");
     const r = (await reqs(p)).find((x) => x.body.action === "github_accept"); if (!r || String(r.body.invitation_id) !== "991" || r.body.client_id !== CID) fail(`Accept and confirm access doesn't send github_accept with the invite's id (${JSON.stringify(r)})`);
     if (await p.evaluate(() => window.SNAP) !== 1) fail("a confirmed accept doesn't take the before-snapshot");
+    if (!(await p.evaluate(() => !!(state.flowM1State.tasks["m1.access.website"].access || {}).confirmed_at))) fail("the confirmed record never reaches the checklist's own copy (flowM1State) — the card keeps showing the invite");
     await p.close(); }
   // none → Check again + Ask the client (Send) + (Not yet)
   { const p = await open("none"); await readable(p, "no invite yet");
@@ -117,6 +122,11 @@ try {
   { const p = await open("nokey"); const els = await readable(p, "key not set up");
     if (!els.some((e) => e.t === "Confirm access by hand")) fail("without the key there's no Confirm access by hand");
     await clickText(p, "Check again");
+    await p.close(); }
+  // a stale copy: GitHub says "already confirmed" → re-read the record, never a red "Couldn't reach GitHub"
+  { const p = await open("stale"); await new Promise((r) => setTimeout(r, 300));
+    if ((await p.evaluate(() => window.RELOAD)) < 1) fail("\"Access is already confirmed\" doesn't re-read the record");
+    if (await p.evaluate(() => /Couldn't reach GitHub/.test(document.getElementById("host").textContent))) fail("\"already confirmed\" shows as Couldn't reach GitHub");
     await p.close(); }
 } finally { await browser.close(); }
 if (F.length) { console.error(`❌ step 3 admin accept buttons — ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
