@@ -66,5 +66,43 @@ const noteS = JSON.stringify(note);
 if (!noteS.includes(GH) || !noteS.includes(EMAIL)) fail("the developer note doesn't name the GitHub user AND the email");
 if (OWN_EMAIL.test(noteS) || OWN_GH.test(noteS.replace(/rocketgrowthagency\.com/gi, ""))) fail("the developer note names RGA's own login");
 
+// ── "step 3 waits on RGA" is ONE rule in three places (10-26 live test: the client row said "Your turn", admin said "Waiting on
+//    client" + Nudge, the To do called it the client's move — while every card said RGA's move). RUN all three on the same cases.
+{
+  const lift = (src, name, what) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${what} ${name} moved`); process.exit(2); } const end = src.indexOf("\n}\n", at); return src.slice(at, end + 2); };
+  const c = vm.createContext({});
+  vm.runInContext(`${lift(P, "accWaitsOnRga", "portal")}\n${lift(ADM, "admStepThreeWaitsOnRga", "admin")}`, c);
+  const OM = read("netlify/functions/_open-moves.js");
+  vm.runInContext(lift(OM, "stepThreeWaitsOnRga", "_open-moves.js"), c);
+  const CASES = [
+    [{ status: "in_progress", client_input: { via: "invite", platform: "custom", files: "github" } }, true, "invite sent"],
+    [{ status: "in_progress", client_input: { via: "designer" } }, true, "designer asked"],
+    [{ status: "in_progress", client_input: { via: "request" } }, true, "request to send"],
+    [{ status: "in_progress", client_input: { via: "workaround" } }, true, "checklist"],
+    [{ status: "in_progress", check_request: { asked_at: "x" } }, true, "check it for me"],
+    [{ status: "in_progress", check_request: { asked_at: "x" }, rga_check: { platform: "wix" } }, false, "RGA checked, the client answers"],
+    [{ status: "in_progress", client_input: { via: "invite" }, access: { confirmed_at: "x" } }, false, "access confirmed"],
+    [{ status: "done", client_input: { via: "invite" } }, false, "done"],
+    [{ status: "pending", client_input: { via: "none" } }, false, "no website"],
+    [{ status: "pending" }, false, "nothing saved"],
+  ];
+  for (const [t, want, label] of CASES) {
+    const got = ["accWaitsOnRga", "admStepThreeWaitsOnRga", "stepThreeWaitsOnRga"].map((n) => vm.runInContext(`${n}(${JSON.stringify(t)})`, c));
+    if (got.some((g) => g !== want)) fail(`"${label}": portal / admin / To do say ${got.join(" / ")} (want ${want}) — the three surfaces disagree whose move step 3 is`);
+  }
+  if (!/withRga: open \? photosAllSent\(s, ts, photos\) \|\| \(s\.id === "m1\.access\.website" && accWaitsOnRga\(ts\)\)/.test(P)) fail("the client row's pill no longer asks accWaitsOnRga (it would say \"Your turn\" over a With RGA card)");
+  if (!/if \(flowId === "m1\.access\.website"\) return admStepThreeWaitsOnRga\(task\) \? "rga" : null;/.test(ADM)) fail("admin row 8's pill no longer asks admStepThreeWaitsOnRga");
+  if (!/&& !\(o\.flowId === "m1\.access\.website" && admStepThreeWaitsOnRga\(s\.task\)\);/.test(ADM)) fail("admin row 8 shows \"The client does this step · Nudge\" while it waits on RGA");
+  if (!/if \(s\.id === "m1\.access\.website" && stepThreeWaitsOnRga\(t\)\) \{/.test(OM)) fail("the To do list no longer gives step 3 to RGA while it waits on RGA");
+}
+// ── the step's own admin how-to never asks for a login or hosting credentials
+{
+  let PB; try { PB = JSON.parse(read("data/playbooks/playbooks.json")); } catch { console.error("⚠️  INDETERMINATE — playbooks.json"); process.exit(2); }
+  const find = (x) => { if (!x || typeof x !== "object") return null; if (x.id === "m1.access.website" && typeof x.instructions === "string") return x; for (const v of Object.values(x)) { const r = find(v); if (r) return r; } return null; };
+  const st = find(PB), ins = st ? st.instructions : null;
+  if (ins == null) { console.error("⚠️  INDETERMINATE — m1.access.website moved in playbooks.json"); process.exit(2); }
+  if (/SFTP|\b(get|ask for|obtain)\b[^.\n]*\b(admin )?login\b|hosting credentials if|save all in the password manager/i.test(ins)) fail("step 3's admin how-to asks for a login / SFTP credentials — the promise is never a password");
+  if (!ins.includes(EMAIL) || !ins.includes(GH)) fail("step 3's admin how-to doesn't name the RGA Admin email + GitHub user");
+}
 if (F.length) { console.error(`❌ step 3 RGA Admin identity — ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
-console.log(`✅ step 3 RGA Admin identity holds: ${EMAIL} · GitHub ${GH} · data = portal = admin · ${Object.keys(DATA.platforms || {}).length} builders free of hello@ · GitHub/GitLab/Bitbucket steps + the developer note render it`);
+console.log(`✅ step 3 RGA Admin identity holds: ${EMAIL} · GitHub ${GH} · data = portal = admin · ${Object.keys(DATA.platforms || {}).length} builders free of hello@ · GitHub/GitLab/Bitbucket steps + the developer note render it · portal = admin = To do on whose move step 3 is (10 cases) · admin how-to asks for no password`);

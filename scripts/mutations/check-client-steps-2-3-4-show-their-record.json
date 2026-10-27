@@ -51,8 +51,8 @@
  [
   "the done card drops the role",
   "portal",
-  "+ pcTl(`<b>${who}</b>${acc.role ? ` · ${escapeHtml(acc.role)}` : \"\"}`,",
-  "+ pcTl(`<b>${who}</b>`,",
+  "` on ${escapeHtml(ACC_FILES[ci.files].name)}` : acc.role ? ` · ${escapeHtml(acc.role)}` : \"\"}`",
+  "` on ${escapeHtml(ACC_FILES[ci.files].name)}` : \"\"}`",
   1
  ],
  [

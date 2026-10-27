@@ -311,7 +311,7 @@ if (ok2.statusCode !== 200 || ci2.platform_source !== "detected_declined" || ci2
 
 // ── 5 · admin row 8 + the client's sent card
 const A = read("admin/admin.js");
-const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10),
+const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10), OB_WEB_TILE: "",
   adminGoogleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(`${(A.match(/^const STEP_EMAIL_IDS = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} var mailWhen = (x) => String(x || "");`, actx);
 for (const n of ["accDetectAdminHtml", "accessAdminHtml", "stepEmailBar"]) vm.runInContext(fnSrc(A, n), actx);
@@ -333,10 +333,10 @@ if (!/Custom-coded · hosted on Netlify/.test(row({ via: "invite", platform: "cu
 const dz = row({ via: "designer", platform: "other", platform_source: "designer_credit", detected: { status: "ok", platform: null, signs: 0, designer: "Exposure", designer_answer: "yes" } });
 if (!/footer credits <b>Exposure<\/b> \(client: they manage it\)/.test(dz)) fail("admin row 8 doesn't show the designer credit the client confirmed");
 const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? "").replace(/"/g, "&quot;"), monthDay: (x) => String(x || ""), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
-  googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: () => null, _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "" });
+  googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: () => null, _rcEditing: new Set(), _accHosts: {}, ACC_FILES: {}, _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "" });
 vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | "; var _accRoles = {}; var _accPickSelf = new Set(); ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, cctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, cctx); vm.runInContext(fnSrc(P, "accPromiseHtml"), cctx);
-for (const n of ["accPart", "accDidLine", "accStep1Name", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
+for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
 const sentCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", client_input: { via: "designer", platform: "other", platform_source: "designer_credit", detected: { designer: "Exposure" }, at: "2026-10-22" } })}, "c1")`, cctx);
 const waitCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", site: "acme.example", reason: "blocked" } })}, "c1")`, cctx);
 if (!/RGA is checking which builder your site uses/.test(waitCard) || !/data-acc-pickself/.test(waitCard) || !/With RGA/.test(waitCard)) fail("while RGA checks, the client's card isn't With RGA (with Pick it yourself)");

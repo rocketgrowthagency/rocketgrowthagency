@@ -45,7 +45,7 @@ const RGA_EMAIL = PLD.email;   // the RGA Admin identity (access@, 10-26) — re
 // admin row 8, lifted
 const A = read("admin/admin.js");
 const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("{", at); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
-const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10),
+const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10), OB_WEB_TILE: "",
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
 vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
@@ -91,11 +91,11 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   const P = read("portal/portal.js");
   const lift = (n) => fnSrc(P, n);
   const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateTimeDot: (x) => String(x || ""), fmtDateShort: (x) => String(x || ""),
-    googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
+    googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accHosts: {}, ACC_FILES: {}, _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
-  for (const n of ["accPart", "accDidLine", "accStep1Name", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
+  for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: RGA_EMAIL, confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
   if (!/RGA has access/.test(card) || !card.includes(RGA_EMAIL) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
   if (/data-acc-redo/.test(card)) fail("the client's confirmed card offers a way to change it while it's locked");

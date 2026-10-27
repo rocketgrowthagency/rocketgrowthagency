@@ -54,5 +54,33 @@
   "const RGA_ADMIN_EMAIL = ",
   "const RGA_ADMIN_MAIL = ",
   2
+ ],
+ [
+  "step 3's admin how-to asks for an admin login + SFTP again",
+  "playbook",
+  "\"instructions\": \"The client invites RGA Admin, never a password:",
+  "\"instructions\": \"Get WordPress / Wix / Shopify admin login (preferred). Confirm SFTP / hosting credentials if needed. The client invites RGA Admin, never a password:",
+  1
+ ],
+ [
+  "admin row 8 says Waiting on client + Nudge while it waits on RGA",
+  "admin",
+  "&& !(o.flowId === \"m1.access.website\" && admStepThreeWaitsOnRga(s.task));",
+  ";",
+  1
+ ],
+ [
+  "the client row says Your turn over a With RGA card",
+  "portal",
+  "|| (s.id === \"m1.access.website\" && accWaitsOnRga(ts))",
+  "",
+  1
+ ],
+ [
+  "the To do list calls a sent invite the client's move",
+  "openmoves",
+  "if (s.id === \"m1.access.website\" && stepThreeWaitsOnRga(t)) {",
+  "if (false && stepThreeWaitsOnRga(t)) {",
+  1
  ]
 ]

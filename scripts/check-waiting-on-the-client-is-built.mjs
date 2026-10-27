@@ -85,7 +85,7 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
 }
 
 // 1 · waiting only when our part is done; the pill says so
-if (!/const waiting = stepKind\(o\) === "client" && !band && \(!runnable \|\| !!result\);/.test(admin)) {
+if (!/const waiting = stepKind\(o\) === "client" && !band && \(!runnable \|\| !!result\)(?: && !\(o\.flowId === "m1\.access\.website" && admStepThreeWaitsOnRga\(s\.task\)\))?;/.test(admin)) {   // step 3 waiting on RGA is RGA's move (check-step3-admin-identity)
   F("the card can say \"Waiting on client\" while our own draft is still undone — the waiting test lost its our-part-done clause");
 }
 // 🔑 step 39 puts "Review N" in front when photos wait for RGA (2026-10-09) — the property is still: waiting → this label

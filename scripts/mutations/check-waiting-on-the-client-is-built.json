@@ -2,8 +2,8 @@
  [
   "the card says waiting on the client while our draft is still undone",
   "admin",
-  "const waiting = stepKind(o) === \"client\" && !band && (!runnable || !!result);",
-  "const waiting = stepKind(o) === \"client\" && !band;",
+  "const waiting = stepKind(o) === \"client\" && !band && (!runnable || !!result) && !(o.flowId",
+  "const waiting = stepKind(o) === \"client\" && !band && !(o.flowId",
   1
  ],
  [

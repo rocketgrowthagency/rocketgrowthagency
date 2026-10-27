@@ -56,7 +56,8 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
   return ""; };
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
-for (const n of ["accPart", "accDidLine", "accStep1Name"]) vm.runInContext(lift(n), ctx);
+for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName"]) vm.runInContext(lift(n), ctx);
+vm.runInContext(`var _accHosts = {}; var ACC_FILES = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 vm.runInContext(planCardKit(P, "const RC_PHONE =\nconst RC_FORM =\nconst RC_WEB =\n" + P.slice(P.indexOf("const PC_TICK = "), P.indexOf("\n", P.indexOf("const pcActs = ")))), ctx);   // 10-26: planFromGcard + icons (steps_6_20_clean_v1)
 for (const n of ["ctRecommend", "doneNoRecordHtml"]) vm.runInContext(lift(n), ctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, ctx); vm.runInContext(lift("accPromiseHtml"), ctx);
