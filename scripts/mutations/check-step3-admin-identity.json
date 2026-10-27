@@ -89,5 +89,12 @@
   "\"title\": \"Get website access\",",
   "\"title\": \"Get website access\",\n      \"actionLabel\": \"⚡ Generate\",",
   1
+ ],
+ [
+  "the client's How this step works says add hello@ again",
+  "playbookjson",
+  "add access@rocketgrowthagency.com (on GitHub: rocketgrowthagency-admin), our team's own login.",
+  "add hello@rocketgrowthagency.com.",
+  1
  ]
 ]

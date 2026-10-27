@@ -116,5 +116,16 @@ if (OWN_EMAIL.test(noteS) || OWN_GH.test(noteS.replace(/rocketgrowthagency\.com/
   const SE = read("netlify/functions/send-step-email.js"), set = (SE.match(/const EMAIL_STEPS = new Set\(\[([\s\S]*?)\]\);/) || [])[1] || "";
   if (/^\s*"m1\.access\.website",/m.test(set)) fail("step 8 is on the step-email allow-list again (its runner is gone)");
 }
+// ── the CLIENT's own words for step 3 (How this step works, the hint) name RGA Admin, never hello@ — both the playbook source and the
+//    client-safe projection the portal reads (10-27: "You, or whoever built your site, add hello@…" survived the identity switch)
+for (const f of ["data/playbooks/playbooks.json", "data/playbooks/client-steps.json"]) {
+  let J; try { J = JSON.parse(read(f)); } catch { console.error(`⚠️  INDETERMINATE — ${f} won't parse`); process.exit(2); }
+  const find = (x) => { if (!x || typeof x !== "object") return null; if (x.id === "m1.access.website" && (x.clientInstructions || x.clientHint)) return x; for (const v of Object.values(x)) { const r = find(v); if (r) return r; } return null; };
+  const st = find(J);
+  if (!st) { console.error(`⚠️  INDETERMINATE — step 3's client copy moved in ${f}`); process.exit(2); }
+  const words = `${st.clientInstructions || ""} ${st.clientHint || ""} ${st.clientTodoLine || ""} ${(st.clientTodoSteps || []).join(" ")}`;
+  if (OWN_EMAIL.test(words)) fail(`${f}: step 3's client how-to tells them to add hello@ — clients invite RGA Admin`);
+  if (!words.includes(EMAIL)) fail(`${f}: step 3's client how-to doesn't name ${EMAIL}`);
+}
 if (F.length) { console.error(`❌ step 3 RGA Admin identity — ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log(`✅ step 3 RGA Admin identity holds: ${EMAIL} · GitHub ${GH} · data = portal = admin · ${Object.keys(DATA.platforms || {}).length} builders free of hello@ · GitHub/GitLab/Bitbucket steps + the developer note render it · portal = admin = To do on whose move step 3 is (10 cases) · admin how-to asks for no password`);
