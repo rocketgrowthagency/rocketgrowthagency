@@ -122,7 +122,7 @@ if (!/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(off) || !/dat
 const pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
 // 10-20 (final review): Booked / Every 3 months / Optional states may sit between "later" and "Your turn" — later still comes first
 if (!/: later \? \{ text: `Later · \$\{laterDay\(later\.until\)\}`, cls: "wait" \}(?:\s*: (?!theirsToAct \? \{ text: "Your turn")[^\n]*)*\s*: theirsToAct \? \{ text: "Your turn"/.test(pc)) fail("a step that's \"later\" doesn't say so in its pill (or says Your turn)");
-if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && theirs\(r\) && (?:!r\.step\.clientOptional && )?!r\.later[ )]/.test(pc)) fail("a step that's \"later\" can still be the client's now step");
+if (!/nowStepId = \(numbered\.find\(\(r\) => isOpenRow\(r\) && (?:r\.status !== "flagged" && )?theirs\(r\) && (?:!r\.step\.clientOptional && )?!r\.later[ )]/.test(pc)) fail("a step that's \"later\" can still be the client's now step");
 if (!/&& !i\.later\n(?:\s*\/\/[^\n]*\n)*(?:\s*&& !i\.withRga\n)?(?:\s*\/\/[^\n]*\n)*(?:\s*&& i\.taskState\?\.google_push\?\.state !== "with_rga"\n)?\s*&& !\(i\.step\?\.clientForm === "kickoff_booking" && !kickoffOwed\)\);/.test(pc) || !/parts\.push\(`\$\{LATER_STEPS\[i\.step\.id\] \|\| "a step"\} later \(\$\{laterDay\(i\.later\.until\)\}\)`\)/.test(pc)) fail("the next-step banner doesn't move on, or doesn't say the photos come back later");
 if (!/const open = status !== "done" && status !== "skipped";\s*(?:const notDue = [^\n]*\n\s*)?return \{ step: s, status, taskState: ts, evidence, later: open \? laterOf\(s, ts, photos\) : null/.test(pc)) fail("the step list doesn't know which step is \"later\"");
 const laterHandler = (() => { const i = pc.indexOf('"[data-later-days],[data-later-clear],[data-later-change]"'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
@@ -134,8 +134,8 @@ if (!/action: days \? "set" : "clear"/.test(pc) || !/await settleStepResult\(hos
 if (!/if \(lat\) fetch\("\/\.netlify\/functions\/portal-step-later", \{ method: "POST"[\s\S]{0,400}?action: "clear" \}\) \}\)/.test(pc)) fail("an upload doesn't end \"later\" in the record");
 // the spinner keeps the button's size and shows at once (a colour fade on .pm-act hid it, 10-15)
 const pcss = read("portal/portal.css");
-// 🔄 10-15: the spinner is the MASTER rule now (check-every-control-spins) — same size, label hidden, no fade
-if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\([^)]*\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(pcss) || !/\.is-busy:not\(\.is-busy-say\) \{ color:transparent !important; \}/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
+// 🔄 10-15: the spinner is the MASTER rule now (check-every-control-spins) — same size, no fade; 10-27: the words stay, the ring right of them
+if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\([^)]*\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(pcss) || !/\.is-busy::after \{ position:static; display:inline-block; box-sizing:border-box; inline-size:12px; block-size:12px; margin:0 0 0 6px;/.test(pcss) || /\.pm-act\.is-busy \{[^}]*padding/.test(pcss)) fail("the pressed button's spinner resizes it, or fades in too late to be seen");
 if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \}/.test(pcss)) fail("inside the folded photo list the blocks lose the step's 14px spacing (they touched, 10-15)");
 // drawn in Chrome with the shipped stylesheet: the opened fold keeps the 14px rhythm between its blocks
 { let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }

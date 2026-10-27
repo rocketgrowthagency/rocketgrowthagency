@@ -2,8 +2,8 @@
  [
   "confirmed access no longer locks",
   "steplock",
-  "if (t.access && t.access.confirmed_at) why = \"RGA signed in and confirmed access\";",
-  "if (false) why = \"RGA signed in and confirmed access\";"
+  "if (t.access && t.access.confirmed_at) why = \"RGA confirmed it, so it can't be edited here\";",
+  "if (false) why = \"RGA confirmed it, so it can't be edited here\";"
  ],
  [
   "a Google fact locks before it's on Google",

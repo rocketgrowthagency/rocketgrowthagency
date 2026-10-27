@@ -65,8 +65,8 @@
  [
   "a later step is still the now step",
   "portal",
-  "isOpenRow(r) && theirs(r) && !r.step.clientOptional && !r.later && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
-  "isOpenRow(r) && theirs(r) && !r.step.clientOptional && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
   1
  ],
  [

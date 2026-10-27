@@ -16,8 +16,8 @@
  [
   "an optional step can be the next step",
   "portal",
-  "isOpenRow(r) && theirs(r) && !r.step.clientOptional && !r.later",
-  "isOpenRow(r) && theirs(r) && !r.later",
+  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later",
+  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.later",
   1
  ],
  [

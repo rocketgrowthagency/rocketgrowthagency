@@ -37,7 +37,7 @@ const y = A["m1.brand.youtube_setup"] || {};
 if (!y.clientOptional || (y.dependsOn || []).includes("m1.access.website")) fail("step 14: videos aren't optional, or still wait on website access");
 if (/id: "m1\.brand\.youtube_setup"[^\n]*\n\s*type: "[a-z]+", dependsOn: \[[^\]]*"m1\.access\.website"/.test(M1)) fail("step 14: the canonical SOP still makes videos wait on website access");
 if (!/if \(b\.kind === "skip" \|\| b\.kind === "unskip"\)/.test(VC) || !/b\.kind === "skip" \? st0 !== "skipped" : st0 === "skipped"\) return jsonRes\(500/.test(VC)) fail("step 14: Skip videos isn't saved as skipped (read back) or can't be undone");
-if (!/isOpenRow\(r\) && theirs\(r\) && !r\.step\.clientOptional/.test(P) || !/theirsToAct && step\.clientOptional \? \{ text: "Optional"/.test(P)) fail("step 14: an optional step can be \"your next step\" or reads \"Your turn\"");
+if (!/isOpenRow\(r\) && (?:r\.status !== "flagged" && )?theirs\(r\) && !r\.step\.clientOptional/.test(P) || !/theirsToAct && step\.clientOptional \? \{ text: "Optional"/.test(P)) fail("step 14: an optional step can be \"your next step\" or reads \"Your turn\"");
 if (!/data-video-skip=/.test(P) || !/Google doesn't rank you on them/.test(P)) fail("step 14: the card lost Skip or the honest why");
 // ── 15 · close-out, RUN the report
 if (JSON.stringify(A["m1.report.month1"]?.dependsOn) !== JSON.stringify(["m1.audit.kpi_baseline"])) fail("step 15: the Month 1 report waits on more than the KPI baseline (photos / reviews / the build hold Month 1 again)");

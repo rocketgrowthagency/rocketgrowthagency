@@ -17,9 +17,9 @@ const P = read("portal/portal.js");
 const fnSrc = (n) => { const at = P.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } return P.slice(at, P.indexOf("\n}\n", at) + 2); };
 const line = (re, w) => { const m = P.match(re); if (!m) { console.error(`⚠️  INDETERMINATE — ${w} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => (x ? "Oct 27" : "") });
-vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
+vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const ASK_WORDS = [^\n]*;$/m, "ASK_WORDS")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
 const lf = (task, lk, where) => vm.runInContext(`lockFootHtml("m1.access.website", ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
-const LK = { why: "RGA signed in and confirmed access", edit: "request" }, LK0 = { why: "RGA confirmed it", edit: "none" };
+const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request" }, LK0 = { why: "RGA confirmed it", edit: "none" };
 { const top = lf({}, LK, "top"), bot = lf({}, LK, "bottom");
   if (top) fail("a locked step with nothing asked draws a band at the top");
   if ((bot.match(/Need a change\? ›/g) || []).length !== 1) fail("the closed lock line doesn't carry exactly one \"Need a change? ›\"");
@@ -48,8 +48,20 @@ if (!/flagged && !stepLk\n\s*\? `<p class="pm-flagged">/.test(P)) fail("the row'
 if (!/const ownerPill = askLk \? \{ text: `With RGA\$\{askAt \? ` · since \$\{monthDay\(askAt\)\}` : ""\}`, cls: "rga" \}/.test(P)) fail("a locked step asked about doesn't read \"With RGA · since\"");
 // the lock line is the card's LAST line (Chris 10-27: "match mockup"): marked bottom, seated by the same pass that seats the how-to
 if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFrame\(\(\) => \{ _seatQueued = false; seatHowFolds\(\); seatLockFoots\(\); \}\)/.test(P) || !/card\.appendChild\(f\); f\.classList\.add\("in-card"\);/.test(P)) fail("the lock line isn't seated inside the card as its footer");
+// mockup section 2 EXACTLY (Chris 10-27: "lock still doesnt match mockup"): a quiet grey line with the padlock glyph, never the green bold
+// one; section 3: open, the panel takes the line's place, flat inside the card; a flagged step is never the client's orange "next step"
+{ const C = read("portal/portal.css"), bot = lf({}, LK, "bottom");
+  if (!/<span class="pm-lock-g" aria-hidden="true">🔒<\/span><span>Locked · RGA confirmed it, so it can't be edited here<\/span>/.test(bot)) fail("the closed lock line isn't the mockup's \"🔒 Locked · RGA confirmed it, so it can't be edited here\"");
+  if (!/\.pm-lockfoot \.pm-lockline \{ font-size:13\.5px; font-weight:400; color:var\(--portal-muted/.test(C)) fail("the lock line isn't the mockup's quiet grey (13.5px, normal weight, muted)");
+  if (!/\.pm-lockfoot\.is-asking \.pm-lockline \{ display:none; \}/.test(C) || !/foot\.classList\.toggle\("is-asking", show\)/.test(P)) fail("opening the panel leaves the lock line above it (the mockup's panel takes its place)");
+  if (!/\.pm-lockfoot\.in-card \.pm-chg \{ margin:0; padding:0; border:0;/.test(C)) fail("the panel is a box inside the grey footer again (the mockup's is flat)");
+  if (!/isOpenRow\(r\) && r\.status !== "flagged" && theirs\(r\)/.test(P)) fail("a flagged step can be the client's orange \"next step\" again (it's RGA's move)"); }
 if (!/const DONE_STRIP = "[^"]*\.pm-lockfoot/.test(P)) fail("the lock line inside the card counts as a done card's record (DONE_STRIP)");
 if (!/isDone && !askLk \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step with RGA still shows its done tick");
+// admin "Open step" on the client already open opens the step in place — it used to re-load the client and repaint every card
+// (Chris 10-27: "open step button doesnt work and everything glitches")
+{ const A = read("admin/admin.js");
+  if (!/if \(here\) \{ if \(state\.activeTab !== "onboarding-v2"\) setActiveTab\("onboarding-v2"\); revealStep\(step\); return; \}/.test(A)) fail("admin Open step re-loads the client it's already on (the whole page repaints)"); }
 // the To do list, RUN
 const req = createRequire(`${SITE}/netlify/functions/x.js`);
 let OM; try { OM = req(`${SITE}/netlify/functions/_open-moves.js`); } catch (e) { console.error(`⚠️  _open-moves won't load: ${e.message}`); process.exit(2); }
