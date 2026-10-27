@@ -17,7 +17,7 @@ const P = read("portal/portal.js");
 const fnSrc = (n) => { const at = P.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } return P.slice(at, P.indexOf("\n}\n", at) + 2); };
 const line = (re, w) => { const m = P.match(re); if (!m) { console.error(`⚠️  INDETERMINATE — ${w} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => (x ? "Oct 27" : "") });
-vm.runInContext(`${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${fnSrc("lockFootHtml")}`, ctx);
+vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
 const lf = (task, lk, where) => vm.runInContext(`lockFootHtml("m1.access.website", ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
 const LK = { why: "RGA signed in and confirmed access", edit: "request" }, LK0 = { why: "RGA confirmed it", edit: "none" };
 { const top = lf({}, LK, "top"), bot = lf({}, LK, "bottom");
@@ -32,7 +32,18 @@ for (const [task, label, kw] of [[{ client_flagged: { at: "x", note: "That's not
   const top = lf(task, LK, "top"), bot = lf(task, LK, "bottom");
   if ((top.match(/class="pm-chg-band"/g) || []).length !== 1 || !/<q>/.test(top) || !kw.test(top) || !/Cancel my request/.test(top)) fail(`${label}: not ONE band with what they wrote + Cancel my request`);
   if (/Need a change\?/.test(bot)) fail(`${label}: the bottom still offers Need a change? while one is open`);
+  if (!/Locked · nothing changes until we've talked/.test(bot)) fail(`${label}: the lock line doesn't say "nothing changes until we've talked" while RGA has it`);
+  if (/Nothing changes until/.test(top)) fail(`${label}: the band repeats "Nothing changes until we've talked" (the lock line says it once)`);
 }
+// RGA replied after the request → the band IS the reply (mockup §4 right): Open the conversation + That's sorted; the lock line reads "Locked"
+{ ctx._portalThread = [{ id: 1, step_id: "m1.access.website", from: "rga", at: "2026-10-27T21:10:00Z", message: "Done: we've added her as a second contact." },
+    { id: 0, step_id: "m1.access.website", from: "rga", at: "2026-10-20T10:00:00Z", message: "older" }];
+  vm.runInContext("_portalThread = this._portalThread", ctx);
+  const t = { change_request: { at: "2026-10-27T19:00:00Z", note: "Add my office manager" } };
+  const top = lf(t, LK, "top"), bot = lf(t, LK, "bottom");
+  if (!/class="pm-chg-band y"/.test(top) || !/RGA replied · /.test(top) || !/added her as a second contact/.test(top) || !/data-chg-convo/.test(top) || !/data-chg-sorted data-chreq-cancel/.test(top) || /older/.test(top)) fail("RGA's reply after the request doesn't turn the band into the reply (Open the conversation + That's sorted)");
+  if (!/<span>Locked<\/span>/.test(bot)) fail("after RGA's reply the lock line isn't just \"Locked\"");
+  ctx._portalThread = []; vm.runInContext("_portalThread = []", ctx); }
 if (!/flagged && !stepLk\n\s*\? `<p class="pm-flagged">/.test(P)) fail("the row's second \"we're looking into it\" band shows on a locked step again");
 if (!/const ownerPill = askLk \? \{ text: `With RGA\$\{askAt \? ` · since \$\{monthDay\(askAt\)\}` : ""\}`, cls: "rga" \}/.test(P)) fail("a locked step asked about doesn't read \"With RGA · since\"");
 // the lock line is the card's LAST line (Chris 10-27: "match mockup"): marked bottom, seated by the same pass that seats the how-to

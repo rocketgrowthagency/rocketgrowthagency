@@ -47,5 +47,19 @@
   "isDone && !askLk ? \" is-done\" : askLk ? \" is-rga\" : \"\"",
   "isDone ? \" is-done\" : \"\"",
   1
+ ],
+ [
+  "RGA's reply never shows on the band",
+  "portal",
+  "    if (reply) return `<div class=\"pm-chg-band y\"",
+  "    if (false) return `<div class=\"pm-chg-band y\"",
+  1
+ ],
+ [
+  "the band repeats nothing-changes again",
+  "portal",
+  "<span class=\"pm-chg-hint\">RGA replies here, usually the same day.</span>",
+  "<span class=\"pm-chg-hint\">RGA replies here, usually the same day. Nothing changes until we've talked.</span>",
+  1
  ]
 ]
