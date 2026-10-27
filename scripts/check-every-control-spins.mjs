@@ -4,7 +4,7 @@
 // 🔒 WHY (Chris, 2026-10-15, pressing "Prefer to keep it?"): "has delay needs a spinner. any button needs spinner make this
 // master css note". 62 click handlers (20 portal, 42 admin) waited on the server with nothing on screen. One fix for all:
 // shared/busy.js (imported FIRST by portal.js and admin.js) marks the pressed control `.is-busy` while the requests it
-// started are out; one master rule per stylesheet draws a same-size ring in place of the label. Clicked for real in Chrome
+// started are out; one master rule per stylesheet draws a ring BESIDE the words (10-27; it was a ring in place of the label). Clicked for real in Chrome
 // with the shipped stylesheets and a slow fake request. → feedback_every_control_spins
 import fs from "node:fs";
 
@@ -26,7 +26,7 @@ if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\(\.portal-but
 if (!/:is\(button, \[role="button"\], label, a\):not\(\.admin-button, \.rga-call-refresh\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(acss)) fail("admin.css has no master busy rule");
 if (/\.pm-act\.is-busy::before|\.pm-team-chip\.is-busy::before|\.pm-photo-rm\.is-busy::before/.test(pcss)) fail("an old per-button spinner is still there (it would draw a second ring beside the master one)");
 
-// ── 3 · in Chrome: press → ring in place, same size → request back → label back ──
+// ── 3 · in Chrome: press → words stay + ring beside, same height → request back → ring gone ──
 let puppeteer = null;
 try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -73,8 +73,9 @@ try {
       if (!during.busy || during.aria !== "true") fail(`${side}: ${sel} doesn't turn busy while its request is out`);
       else {
         if (!during.ring) fail(`${side}: ${sel} is busy but no ring is drawn`);
-        if (!/rgba\(0, 0, 0, 0\)|transparent/.test(during.color)) fail(`${side}: ${sel}'s label stays visible over the ring`);
-        if (Math.abs(during.w - before.w) > 1 || Math.abs(during.h - before.h) > 1) fail(`${side}: ${sel} changes size while busy (${before.w}×${before.h} → ${during.w}×${during.h})`);
+        // 🔒 10-27 (Chris: "spinner inside blue button should still show text right?"): the words STAY, the ring sits beside them
+        if (/rgba\(0, 0, 0, 0\)|transparent/.test(during.color)) fail(`${side}: ${sel}'s words disappear while it works (the button goes blank)`);
+        if (Math.abs(during.h - before.h) > 1 || during.w < before.w - 1 || during.w - before.w > 24) fail(`${side}: ${sel} jumps while busy (${before.w}×${before.h} → ${during.w}×${during.h}); the ring may widen it by its own width only`);
         if (during.pe !== "none") fail(`${side}: ${sel} can be pressed twice while busy`);
       }
       await new Promise((r) => setTimeout(r, 900));
@@ -134,4 +135,4 @@ try {
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 A control can wait on the server with nothing on screen:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ every control spins: shared/busy.js loads first in portal and admin; a press that starts a request turns busy (ring in place of the label, same size, can't be pressed twice) until every request it started is back — a dialog's confirm credits the control that opened it; one master rule per stylesheet, no second ring");
+console.log("✅ every control spins: shared/busy.js loads first in portal and admin; a press that starts a request turns busy (words stay, the ring beside them, same height, can't be pressed twice) until every request it started is back — a dialog's confirm credits the control that opened it; one master rule per stylesheet, no second ring");

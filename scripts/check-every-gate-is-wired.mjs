@@ -361,6 +361,7 @@ const NOT_PREFLIGHT = {
   'check-done-row-measures-agree.mjs': 'the WEBSITE repo\'s done-row measures (portal fallback · browser gate · daily walk) strip the same chrome — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-open-moves-reach-every-surface.mjs': 'the WEBSITE repo\'s one open-moves list reaching every To do surface — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-every-wait-spins.mjs': 'the WEBSITE repo\'s waiting lines spin via shared/busy.js — files only, no bearing on tonight\'s videos; daily-health-check.sh',
+  'check-step3-github-accept.mjs': 'the WEBSITE repo\'s step 3 GitHub accept from admin (step3_admin_accept_v1), run against fake GitHub replies — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-step3-admin-identity.mjs': 'the WEBSITE repo\'s step 3 RGA Admin identity (access@ / GitHub rocketgrowthagency-admin) held equal across site-platforms.json, portal and admin — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-step3-website-access.mjs': 'the WEBSITE repo\'s step 3 card, builder data + detector (step3_website_access_v3) — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-step3-loop.mjs': 'the WEBSITE repo\'s step 3 loop (portal-step-input → admin row 8 → admin-access-confirm → lock/unlock) on a fake database — files only; daily-health-check.sh',

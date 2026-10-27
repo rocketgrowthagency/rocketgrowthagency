@@ -49,6 +49,7 @@ const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
 vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
+vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x"; ${fnSrc(A, "accInviteLinkHtml")}`, actx);   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
 // the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)
 vm.runInContext(`${(A.match(/^const ACC_REMOVED_HOW = \{[^\n]*\};$/m) || ["var ACC_REMOVED_HOW = {};"])[0].replace(/^const /, "var ")} ${fnSrc(A, "accessLedgerHtml")} ${fnSrc(A, "snapshotAdminHtml")}`, actx);
 const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);

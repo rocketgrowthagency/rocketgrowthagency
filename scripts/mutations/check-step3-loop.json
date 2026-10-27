@@ -26,7 +26,7 @@
  [
   "the confirmation leaves no permanent record",
   "accessconfirm",
-  "  await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\",",
-  "  if (false) await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\","
+  "  await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\", stepId: STEP, by: gate.email || null, actor: \"rga\",",
+  "  if (false) await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\", stepId: STEP, by: gate.email || null, actor: \"rga\","
  ]
 ]

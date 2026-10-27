@@ -35,10 +35,10 @@
   1
  ],
  [
-  "label stays visible",
+  "the words vanish while it works (the blank button is back)",
   "portalcss",
-  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy:not(.is-busy-say) { color:transparent !important; }",
-  ":not(.portal-button, .dl-back, .si-btn, .si-link).is-busy:not(.is-busy-say) { }",
+  ":is(button, [role=\"button\"], label, a, .pm-linkbtn):not(.portal-button, .dl-back, .si-btn, .si-link).is-busy::after { position:static;",
+  ":is(button, [role=\"button\"], label, a, .pm-linkbtn):not(.portal-button, .dl-back, .si-btn, .si-link).is-busy { color:transparent !important; }\n:is(button, [role=\"button\"], label, a, .pm-linkbtn):not(.portal-button, .dl-back, .si-btn, .si-link).is-busy::after { position:static;",
   1
  ],
  [

@@ -314,7 +314,8 @@ const A = read("admin/admin.js");
 const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10), OB_WEB_TILE: "",
   adminGoogleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(`${(A.match(/^const STEP_EMAIL_IDS = [^\n]*;$/m) || [""])[0].replace(/^const /, "var ")} var mailWhen = (x) => String(x || "");`, actx);
-for (const n of ["accDetectAdminHtml", "accessAdminHtml", "stepEmailBar"]) vm.runInContext(fnSrc(A, n), actx);
+for (const n of ["accDetectAdminHtml", "accessAdminHtml", "stepEmailBar", "accInviteLinkHtml"]) vm.runInContext(fnSrc(A, n), actx);
+vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x";`, actx);
 const row = (c) => vm.runInContext(`accessAdminHtml(${JSON.stringify({ status: "in_progress", client_input: c })})`, actx);
 const no = row(ci2);
 if (!/Our site check:<\/b> Wix · 1 sign/.test(no) || !/is-check/.test(no) || !/<b>Check first:<\/b> the client said no and picked Squarespace/.test(no)) fail("admin row 8 doesn't flag a \"No\" (our check vs the client's pick)");

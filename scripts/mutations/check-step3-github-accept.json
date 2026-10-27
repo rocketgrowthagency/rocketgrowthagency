@@ -1,0 +1,65 @@
+[
+ [
+  "any key passes the identity check (the accept could run as rocketgrowthagency)",
+  "githubaccess",
+  "if (!u || String(u.login || \"\").toLowerCase() !== String(ADMIN_LOGIN).toLowerCase()) return { ok: false, state: \"wrong_account\", login: u && u.login };",
+  "",
+  1
+ ],
+ [
+  "the domain check passes without finding the domain",
+  "githubaccess",
+  "theirSite: found.length > 0 };",
+  "theirSite: true };",
+  1
+ ],
+ [
+  "Read counts as able to make changes",
+  "githubaccess",
+  "const canChange = !!(repo.permissions && (repo.permissions.push || repo.permissions.maintain || repo.permissions.admin));",
+  "const canChange = !!(repo.permissions);",
+  1
+ ],
+ [
+  "an expired invite is accepted",
+  "githubaccess",
+  "  if (inv.expired) return { ok: false, state: \"expired\", invite: inv };\n",
+  "",
+  1
+ ],
+ [
+  "one click confirms without the domain check",
+  "accessconfirm",
+  "if (res.canChange && res.theirSite) return record(gha, \"github_one_click\");",
+  "if (res.canChange) return record(gha, \"github_one_click\");",
+  1
+ ],
+ [
+  "confirm trusts the role stored at accept time",
+  "accessconfirm",
+  "if (!live.canChange) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "admin row 8 loses the GitHub card",
+  "admin",
+  "if (ci.platform === \"custom\" && ci.files === \"github\" && ci.via === \"invite\") return ghAccessCardHtml(t, ci);",
+  "",
+  1
+ ],
+ [
+  "other builders lose the access@ invite link",
+  "admin",
+  "act: `${accInviteLinkHtml(ci, p, name)}<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
+  "act: `<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
+  1
+ ],
+ [
+  "the invite link opens hello@'s inbox",
+  "admin",
+  "authuser=${encodeURIComponent(RGA_ACCESS_ACCOUNT)}#search/",
+  "authuser=hello@rocketgrowthagency.com#search/",
+  1
+ ]
+]
