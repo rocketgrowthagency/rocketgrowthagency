@@ -80,8 +80,8 @@
  [
   "the done row 8 card is gone",
   "admin",
-  "o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessAdminHtml(s.task)}</div>` : \"\"",
-  "\"\"",
+  "o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessAdminHtml(s.task)}</div>`\n",
+  "false ? \"\"\n",
   1
  ],
  [

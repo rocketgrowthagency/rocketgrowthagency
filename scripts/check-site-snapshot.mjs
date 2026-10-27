@@ -68,7 +68,7 @@ const fake = (routes) => { const seen = []; const fn = async (url, init = {}) =>
   if (!/body\.action === "removed"/.test(AC) || !/removed_at: at, removed_by/.test(AC) || !/There's no confirmed access to remove/.test(AC) || !/website_access_removed/.test(AC)) fail("the access ledger can't record a removal (when · by · how), or records one with no confirmed access");
   const A = read("admin/admin.js");
   // admin_row8_done_v1 (10-27): the done card is the row's foldable body below its line; ledger + snapshot are IN the card
-  if (!/o\.flowId === "m1\.access\.website" \? `<div class="ob-done-card">\$\{accessAdminHtml\(s\.task\)\}<\/div>` : ""/.test(A)
+  if (!/o\.flowId === "m1\.access\.website" \? `<div class="ob-done-card">\$\{accessAdminHtml\(s\.task\)\}<\/div>`/.test(A)
     || !/body: `<div class="ob-ac-in">\$\{accessLedgerCardHtml\(t\)\}<\/div>`, acts: snap\.btn, right: accessRemoveHtml\(t\)/.test(A)
     || !/facts\.push\(\["Snapshot", snap\.fact\]\);/.test(A)) fail("a done admin row 8 doesn't show the grant, the ledger and the snapshot (done rows draw no step cards)");
   if (!/if \(isAcc\) snapshotTake\(cid, null\)/.test(A)) fail("confirming access doesn't take the before-snapshot");

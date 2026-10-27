@@ -1,0 +1,51 @@
+[
+ [
+  "a new platform counts as saved (step 9 done without the login in Bitwarden)",
+  "rgalogins",
+  "  if (saved.has(platform)) return {",
+  "  if (true) return {",
+  1
+ ],
+ [
+  "step 9 settles before step 8 confirms",
+  "rgalogins",
+  "  if (!acc.confirmed_at) return { ...p9, vault: { state: \"waits\", at: now } };\n",
+  "",
+  1
+ ],
+ [
+  "Confirm access by hand stops settling step 9",
+  "accessconfirm",
+  "const after = await writeStepTasks(supa, rec, await withStep9(supa, gate.workspaceId, { ...rec.tasks, [STEP]: task }, now));",
+  "const after = await writeStepTasks(supa, rec, { ...rec.tasks, [STEP]: task });",
+  1
+ ],
+ [
+  "Saved in Bitwarden for any platform",
+  "accessconfirm",
+  "if (!platform || platform !== String(body.platform || \"\")) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "a done step 9 shows its retired draft again",
+  "admin",
+  ": o.flowId === \"m1.access.password_manager\" ? \"\"   // 🔒 its old draft",
+  ": false ? \"\"   // 🔒 its old draft",
+  1
+ ],
+ [
+  "step 9 reads You, not Runs itself",
+  "admin",
+  ": o.sopType === \"auto\" || o.selfSettles ? \"auto\" : \"you\");",
+  ": o.sopType === \"auto\" ? \"auto\" : \"you\");",
+  1
+ ],
+ [
+  "the done card stops showing the logins list",
+  "admin",
+  "    body: vaultLoginsHtml(v.saved_list) }));",
+  "    body: \"\" }));",
+  1
+ ]
+]

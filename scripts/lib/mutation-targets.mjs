@@ -204,6 +204,7 @@ export const FILES = {
   snapshotfn: "netlify/functions/admin-site-snapshot.js",
   accessconfirmfn: "netlify/functions/admin-access-confirm.js",
   deliv: "netlify/functions/_deliverables.js",
-  githubaccess: "netlify/functions/_github-access.js",   // step3_admin_accept_v1 (10-27): accept the client's GitHub invite from admin
+  githubaccess: "netlify/functions/_github-access.js",
+  rgalogins: "netlify/functions/_rga-logins.js",   // admin_row9_vault_v2 (10-27): step 9 settles itself with step 8   // step3_admin_accept_v1 (10-27): accept the client's GitHub invite from admin
 
 };

@@ -218,54 +218,14 @@ Accept the invite in the access@ Chrome profile, open a page the role should rea
 Every RGA Admin login and its 2-step codes live in Bitwarden, collection RGA Admin. Never accept a client password or hosting credentials.`,
   },
   {
-    id: "m1.access.password_manager", title: "Set up secure access vault",
-    type: "manual", dependsOn: ["m1.access.website"],
-    actionLabel: "⚡ Generate",
-    instructions: `SOP step 5 — AUDITED AND RESOLVED FOR RGA 2026-09-08. Do the work, then record it.
-
-WHAT THIS STEP IS ACTUALLY FOR
-  Credentials should not live in exactly one place. Audit the two kinds separately —
-  they have different answers:
-
-  1. CLIENT ACCESS — prefer DELEGATION over storing a password.
-     • Google Business Profile → add hello@rocketgrowthagency.com as Manager
-     • Google Analytics 4      → add as Admin
-     • Search Console          → add as Owner
-     Nothing to store, and access ends when the client removes us. A stored password
-     does not. Only store what has NO delegated equivalent — a website/CMS login is
-     the usual one.
-
-  2. RGA's OWN INFRASTRUCTURE KEYS — a continuity risk, not a confidentiality one.
-     SUPABASE_SERVICE_ROLE_KEY is full database access that bypasses every RLS policy.
-     If the machine holding it dies, RGA cannot operate its own systems.
-
-WHAT WE DID FOR RGA (and what to repeat per client)
-  Client passwords held: ZERO. All three Google surfaces are delegated, so there was
-  nothing to vault. That is the target state, not a gap — confirm the same per client.
-
-  RGA's 13 own keys are now backed up encrypted and offline:
-      bash scripts/backup-secrets.sh "/Volumes/<your drive>"
-  AES-256 via gpg, passphrase never stored or logged, verified by decrypting and
-  listing the archive before it reports success.
-
-WHEN A PAID VAULT BECOMES NECESSARY
-  The day we hold a client's website/CMS login, or the day a second person needs access.
-  Then: Bitwarden Teams, $4 per user per month billed annually (checked live 2026-09-08;
-  1Password Teams Starter is $24.95/mo flat for 10 seats — they cross around 6 people).
-  🔴 Bitwarden Teams has NO account recovery — that is Enterprise-only, and a sole owner
-  who loses the master password has no way back. Keep a printed emergency kit.
-
-VAULT OPTIONS, DECIDED 2026-09-09 (Chris asked whether we can avoid the subscription):
-  · Write our own            NO. Rolling our own credential crypto is how every credential is lost
-                             at once. Never worth $4/user/month.
-  · Vaultwarden (self-host)  FREE and legitimate — open-source, Bitwarden-compatible server, runs in
-                             Docker, works with the official Bitwarden apps and extensions. This is
-                             running their protocol, not inventing crypto.
-  · Bitwarden Teams          $4/user/month. Note Teams has NO account recovery (Enterprise only).
-  · Nothing yet              CURRENT STATE, and correct: RGA holds 0 client passwords.
-
-TRIGGER TO REVISIT: the day we hold a credential with no delegated equivalent (a WordPress/CMS
-login), or the day a second person needs access. Not before.`,
+    id: "m1.access.password_manager", title: "Keep access safe",
+    type: "manual", dependsOn: ["m1.access.website"], selfSettles: true,
+    // 🔒 no actionLabel / runner (10-27, approved admin_row9_vault_v2): it settles itself with step 8; its old draft told RGA to
+    // store client website logins and receive credentials — against the never-a-password promise.
+    instructions: `Runs itself (approved admin_row9_vault_v2, 10-27). RGA never holds a client's password: it signs in with its own RGA Admin login (access@rocketgrowthagency.com, GitHub rocketgrowthagency-admin), saved ONCE per platform in Bitwarden, org Rocket Growth Agency, collection RGA Admin.
+When step 8 confirms access this step checks two facts: the login is an RGA Admin login, and that platform's login is marked saved. Both → done by itself.
+The first client on a new builder (e.g. the first Wix client): save the new login in Bitwarden (item "<Builder> · access@", owner Rocket Growth Agency, collection RGA Admin, 2-step backup codes in Notes), then press Saved in Bitwarden. Every later client on it settles by itself.
+When a client leaves: remove access from step 8's ledger. Nothing to delete from the vault. Never store, receive or forward a client password.`,
   },
   // === The audit (order approved 2026-10-08, onboarding_order_audit_v1) ===
 
