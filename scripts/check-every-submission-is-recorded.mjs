@@ -42,6 +42,7 @@ const ALLOW = {
   "portal-step-choice.js": "records the choice itself (client_step_choice: key + label + who)",
   "portal-step-recheck.js": "a measurement — kept append-only in client_step_detections",
   "portal-photo-remove.js": "records the removal itself: activity + publish log + Google change log",
+  "portal-reply.js": "the reply IS the permanent record (client_activity rga_reply, written first); the step write only stamps replied_at on the ask",
 };
 const dir = `${SITE}/netlify/functions`;
 for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "_step-record.js" && x !== "_record.js")) {

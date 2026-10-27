@@ -43,7 +43,7 @@ if (run(allDone()).length) fail(`a client with every step finished still has ope
   else {
     if (m.since !== "2026-10-16T18:38:57.122Z") fail(`RGA's by-hand move is dated ${m.since}, not when it became RGA's (google_push.at)`);
     if (!m.late || m.age_days !== 9) fail(`a by-hand move 9.9 days old is not late / not 9 whole days (late ${m.late}, age ${m.age_days})`);
-    if (!/Mar Vista, Palms, Playa Vista/.test(m.what)) fail(`RGA's move doesn't say what to do ("${m.what}")`);
+    if (!/Mar Vista, Palms and Playa Vista/.test(m.what)) fail(`RGA's move doesn't say what to do ("${m.what}")`);
   }
   // 2 business days: Fri 10:00 → due Tue 10:00 → on Mon 17:00 it's on track, not late
   t["m1.gbp.business_facts"].google_push.at = "2026-10-23T17:00:00.000Z";
@@ -193,5 +193,14 @@ for (const [name, src] of [["admin.js", ADM], ["portal.js", POR]]) if (/addBusin
   const e = morningEmail([mk({ late: true }), mk({ due_today: true }), mk({ owner: "client", late: true })]);
   if (!e || e.to !== "hello@rocketgrowthagency.com" || !/1 late, 1 due today/.test(e.subject) || !/Late\n- Client A/.test(e.body) || !/1 step across 1 client/.test(e.body)) fail(`the morning email doesn't say late + due today + who's waiting (${JSON.stringify(e)})`);
 }
+// 🔒 admin_next_action_card_v2 (Chris 10-27, approved): the Overview card numbers by the checklist's own rows, says late once,
+// plain words, "Open row N", "waiting N days", what the reminder covers; a client's ask says "New message" — never their words
+{ const OMS = read("netlify/functions/_open-moves.js");
+  if (!/const mvRowNo = \(m\) => \{ const n = typeof obNumberOf === "function" \? obNumberOf\(m\.step_id/.test(ADM) || !/<span class="mv3-no">\$\{escapeHtml\(mvRowNo\(m\)\)\}/.test(ADM) || !/<span class="mv3-no c">\$\{escapeHtml\(mvRowNo\(m\)\)\}/.test(ADM)) fail("the card numbers steps the client's way again (not the checklist's rows)");
+  if (!/m\.late \? `<span class="mv-pill late">\$\{d >= 1 \? `\$\{d\} day\$\{d === 1 \? "" : "s"\} late`/.test(ADM) || !/`promised \$\{mvDay\(m\.due\)\}` : "", m\.since \? `open since \$\{mvDay\(m\.since\)\}`/.test(ADM)) fail("the card's top line says late twice again (want \"7 days late\" + \"promised · open since\")");
+  if (/Google ticks it on the nightly check/.test(ADM) || !/ticks itself the night Google shows/.test(ADM) || !/els\.adminNextActionBtn\.textContent = `Open row \$\{rowN\}`/.test(ADM)) fail("the card's line is back in our own terms, or its button says \"See the details\"");
+  if (!/`waiting \$\{escapeHtml\(mvAge\(m\)\)\}`/.test(ADM) || !/`one email for \$\{remN === 1 \? "this step" : `all \$\{remN\}`\}`/.test(ADM)) fail("the waiting column doesn't say \"waiting N days\" or what the reminder covers");
+  if (!/\$\{m\.kind === "client_request" \? "New message · " : ""\}/.test(ADM) || /ask\.note \? ` \("/.test(OMS) || !/what: t\.client_flagged \? "Reply: they say something's wrong" : "Reply to their change request" \}\);/.test(OMS)) fail("a client's ask carries their words onto the card / To do (a long message breaks it) — say \"New message\"");
+  if (!/const andList = /.test(OMS)) fail("RGA's move lists places as \"A, B, C\" instead of \"A, B and C\""); }
 if (F.length) { console.log("🔴 the open moves don't reach every surface:"); for (const f of F) console.log("   · " + f); process.exit(1); }
 console.log("✅ one list of open moves reaches every surface: RGA's by-hand / confirm / blocking moves with since · 2 business days · late; the client's turn since it really opened; the report not before kickoff + 27; no age without a date; the client sees only their own steps; admin queue + late number + Next up, portal pill + step 4, and the morning email all read it");

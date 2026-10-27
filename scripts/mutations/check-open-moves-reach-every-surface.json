@@ -181,5 +181,47 @@
   "${btn(m)}</div>`).join(\"\")}</div>`",
   "</div>`).join(\"\")}</div>`",
   1
+ ],
+ [
+  "the card numbers the client's way",
+  "admin",
+  "<span class=\"mv3-no\">${escapeHtml(mvRowNo(m))}</span>",
+  "<span class=\"mv3-no\">${escapeHtml(mvStepNo(m))}</span>",
+  1
+ ],
+ [
+  "the card says late twice again",
+  "admin",
+  "m.since ? `open since ${mvDay(m.since)}`",
+  "m.since ? `since ${mvDay(m.since)}`",
+  1
+ ],
+ [
+  "the button says See the details again",
+  "admin",
+  "      if (mineByHand && els.adminNextActionBtn && rowN) els.adminNextActionBtn.textContent = `Open row ${rowN}`;   // was \"See the details\"\n",
+  "",
+  1
+ ],
+ [
+  "the waiting rows drop waiting",
+  "admin",
+  "`waiting ${escapeHtml(mvAge(m))}`",
+  "`${escapeHtml(mvAge(m))}`",
+  1
+ ],
+ [
+  "the client's words come back onto the card",
+  "openmoves",
+  "what: t.client_flagged ? \"Reply: they say something's wrong\" : \"Reply to their change request\" });",
+  "what: (t.client_flagged ? \"Reply: they say something's wrong\" : \"Reply to their change request\") + (ask.note ? ` (\"${String(ask.note).slice(0, 80)}\")` : \"\") });",
+  1
+ ],
+ [
+  "New message goes",
+  "admin",
+  "${m.kind === \"client_request\" ? \"New message · \" : \"\"}",
+  "",
+  1
  ]
 ]

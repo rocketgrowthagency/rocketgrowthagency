@@ -209,6 +209,15 @@ async function adminPass() {
       ...loadB.errors.map((e) => `page error on load: ${e}`), ...loadB.fail5xx.map((e) => `function failed on load: ${e}`)],
       warn: loadB.warn4xx.map((e) => `function ${e} on load`) });
 
+    // the Overview "your move" card (admin_next_action_card_v2, 10-27) — read-only photo, once its open moves have drawn
+    if (OPT.shots) {
+      try {
+        await page.waitForFunction(() => { const c = document.querySelector("#adminNextActionCard"); return c && c.style.display !== "none" && document.querySelector("#clientActionCol")?.dataset.live !== undefined; }, { timeout: 10000 }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 800));
+        const na = await page.$("#adminNextActionCard");
+        if (na) await na.screenshot({ path: path.join(OUT, "admin", "next-action-card.png") });
+      } catch (e) { console.warn(`   (no next-action card photo: ${e.message})`); }
+    }
     const order = CARDS.filter((c) => !OPT.card || c.n === OPT.card).flatMap((c) => c.ids.map((id) => ({ id, card: c })));
     const todo = order.filter((o) => !OPT.step || o.id === OPT.step);
     if (OPT.step && !todo.length) { const r = R(OPT.step); if (!r.fail.length) r.fail.push("step not found on the admin page"); }
