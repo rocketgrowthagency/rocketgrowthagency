@@ -49,7 +49,8 @@ const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
 vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
-vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x"; ${fnSrc(A, "accInviteLinkHtml")}`, actx);   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
+vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x"; ${fnSrc(A, "accInviteLinkHtml")}`, actx);
+vm.runInContext(`${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
 // the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)
 vm.runInContext(`${(A.match(/^const ACC_REMOVED_HOW = \{[^\n]*\};$/m) || ["var ACC_REMOVED_HOW = {};"])[0].replace(/^const /, "var ")} ${fnSrc(A, "accessLedgerHtml")} ${fnSrc(A, "snapshotAdminHtml")}`, actx);
 const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
@@ -63,7 +64,7 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   if (t1.status === "done" && !t1.access) fail(`${label}: after "I sent the invite" the step still reads Done before RGA has signed in (status ${t1.status})`);
   // 2 · admin row 8
   const row8 = adminRow(t1);
-  if (!/Custom-coded/.test(row8) || !new RegExp(PL.custom.role.replace(/[()]/g, ".")).test(row8) || !/Confirm access/.test(row8) || !/RGA's move/.test(row8)) fail(`${label}: admin row 8 doesn't show the builder, its role, RGA's move and Confirm access`);
+  if (!/Custom-coded/.test(row8) || !new RegExp(PL.custom.role.replace(/[()]/g, ".")).test(row8) || !/data-ob-acc-confirm[^>]*>Confirm access<\/button>/.test(row8) || !/<b>Then<\/b>/.test(row8) || !row8.includes(String(PL.custom.rga).slice(0, 24))) fail(`${label}: admin row 8 doesn't show the builder, its role, RGA's move and Confirm access`);
   // 3 · admin: Confirm access
   r = await call("admin-access-confirm.js", { role: PL.custom.role, account: RGA_EMAIL }, "chris@rga.test");
   const t3 = T();

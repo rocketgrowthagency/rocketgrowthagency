@@ -96,5 +96,12 @@
   ", a[data-review-send]';",
   "';",
   1
+ ],
+ [
+  "admin's button draws its ring on the LEFT again",
+  "css",
+  ".admin-button.is-busy::after { content: \"\"; display: inline-block; width: 12px; height: 12px; margin-left: 7px;",
+  ".admin-button.is-busy::before { content: \"\"; display: inline-block; width: 12px; height: 12px; margin-right: 7px;",
+  1
  ]
 ]

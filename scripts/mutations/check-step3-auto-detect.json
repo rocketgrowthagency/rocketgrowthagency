@@ -206,8 +206,8 @@
  [
   "the email isn't a draft",
   "admin",
-  "        + stepEmailBar(mail, t, { flowId: \"m1.access.website\" }) })}</div>`;",
-  "        + \"\" })}</div>`;"
+  "body: `<div class=\"ob-ac-in\">${stepEmailBar(mail, t, { flowId: \"m1.access.website\" })}</div>` }));",
+  "body: \"\" }));"
  ],
  [
   "the client's card ignores the request",
@@ -452,8 +452,8 @@
  [
   "admin hides the consent",
   "admin",
-  "(ci.consent && ci.consent.at ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by",
-  "(false ? `<span class=\"ob-gcard-says\"><b>Consent:</b> ✓ given by"
+  "const acConsent = (ci) => ci && ci.consent && ci.consent.at ?",
+  "const acConsent = (ci) => false ?"
  ],
  [
   "\"My developer will\" says we write the note",

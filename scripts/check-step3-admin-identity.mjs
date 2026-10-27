@@ -104,5 +104,17 @@ if (OWN_EMAIL.test(noteS) || OWN_GH.test(noteS.replace(/rocketgrowthagency\.com/
   if (/SFTP|\b(get|ask for|obtain)\b[^.\n]*\b(admin )?login\b|hosting credentials if|save all in the password manager/i.test(ins)) fail("step 3's admin how-to asks for a login / SFTP credentials — the promise is never a password");
   if (!ins.includes(EMAIL) || !ins.includes(GH)) fail("step 3's admin how-to doesn't name the RGA Admin email + GitHub user");
 }
+// ── step 8 has NO Generate (10-27, admin_action_card_and_row8_v1): its runner drafted "I need a login to your website" + "invite
+//    hello@ as Administrator". A NEVER line → the producer is deleted; this keeps it deleted, in both SOP copies and flow-execute.
+{
+  const FX = read("netlify/functions/flow-execute.js");
+  if (/"m1\.access\.website": async/.test(FX)) fail("step 8's Generate runner is back in flow-execute (it asked the client for a login)");
+  if (/I need a login to your website/i.test(FX)) fail("a runner still drafts \"I need a login to your website\"");
+  const PBS = read("data/playbooks/playbooks.json"), i = PBS.indexOf('"id": "m1.access.website"'), blk = i < 0 ? "" : PBS.slice(i, (PBS.indexOf('"id": "', i + 10) + 1 || PBS.length + 1) - 1);   // to the NEXT step (the entry nests clientFirst {…})
+  if (!blk) { console.error("⚠️  INDETERMINATE — m1.access.website moved in playbooks.json"); process.exit(2); }
+  if (/"hasRunner": true|"actionLabel"/.test(blk)) fail("step 8 offers Generate again (hasRunner / actionLabel in playbooks.json)");
+  const SE = read("netlify/functions/send-step-email.js"), set = (SE.match(/const EMAIL_STEPS = new Set\(\[([\s\S]*?)\]\);/) || [])[1] || "";
+  if (/^\s*"m1\.access\.website",/m.test(set)) fail("step 8 is on the step-email allow-list again (its runner is gone)");
+}
 if (F.length) { console.error(`❌ step 3 RGA Admin identity — ${F.length} regression(s):\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log(`✅ step 3 RGA Admin identity holds: ${EMAIL} · GitHub ${GH} · data = portal = admin · ${Object.keys(DATA.platforms || {}).length} builders free of hello@ · GitHub/GitLab/Bitbucket steps + the developer note render it · portal = admin = To do on whose move step 3 is (10 cases) · admin how-to asks for no password`);

@@ -82,5 +82,12 @@
   "if (s.id === \"m1.access.website\" && stepThreeWaitsOnRga(t)) {",
   "if (false && stepThreeWaitsOnRga(t)) {",
   1
+ ],
+ [
+  "step 8 offers Generate again",
+  "playbook",
+  "\"title\": \"Get website access\",",
+  "\"title\": \"Get website access\",\n      \"actionLabel\": \"⚡ Generate\",",
+  1
  ]
 ]

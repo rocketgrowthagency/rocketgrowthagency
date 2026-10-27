@@ -210,12 +210,12 @@ After: send the recap — action items, dates, and exactly what you are still wa
   },
   // === Website access (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
-    id: "m1.access.website", title: "Get CMS / hosting access",
+    id: "m1.access.website", title: "Get website access",
     type: "manual", dependsOn: [],
-    actionLabel: "⚡ Generate",
-    instructions: `Get WordPress / Wix / Shopify admin login (preferred) OR a contributor/editor account.
-Confirm SFTP / hosting credentials if you'll be making file changes.
-Save all in the password manager vault.`,
+    // 🔒 no actionLabel / runner (10-27, approved admin_action_card_and_row8_v1): its Generate drafted "I need a login" + hello@
+    instructions: `The client invites RGA Admin, never a password: access@rocketgrowthagency.com on their builder, or GitHub rocketgrowthagency-admin on their code (their card shows the exact steps for their builder).
+Accept the invite in the access@ Chrome profile, open a page the role should reach, then press Confirm access: it records the grant and takes the before-snapshot.
+Every RGA Admin login and its 2-step codes live in Bitwarden, collection RGA Admin. Never accept a client password or hosting credentials.`,
   },
   {
     id: "m1.access.password_manager", title: "Set up secure access vault",

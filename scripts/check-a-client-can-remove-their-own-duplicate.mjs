@@ -484,7 +484,7 @@ for (const [re, which] of [
   [/b\.textContent = "Removing…"; b\.classList\.add\("is-busy"\);/, "Remove the second listing"],
   [/closest\("\[data-ap-clear\]"\);\s*if \(!b\) return;\s*b\.disabled = true; b\.classList\.add\("is-busy"\);/, "Change my answer"],
 ]) if (!re.test(portal)) fail(`${which}: pressed, it sits there with no sign it's working (a spinner is required)`);
-if (!/\.portal-button\.is-busy::before \{[^}]*animation: portal-spin/.test(read("portal/portal.css"))) fail("the busy button has no spinning ring");
+if (!/\.portal-button\.is-busy::after \{[^}]*animation: portal-spin/.test(read("portal/portal.css"))) fail("the busy button has no spinning ring");
 if (!/maps_url: c\.google_place_id \? `https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:/.test(code("netlify/functions/portal-deliverables.js"))) fail("the Keep listing's Maps link isn't by place id (the stored Maps URL opened a blank page)");
 
 // "Sign in with Google" is the mockup's white button with Google's mark (Chris 2026-10-13: "i like the sign in with

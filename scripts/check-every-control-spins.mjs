@@ -24,6 +24,8 @@ for (const [name, src] of [["portal", portal], ["admin", admin]]) {
 // ── 2 · one rule each, no second ring ──
 if (!/:is\(button, \[role="button"\], label, a, \.pm-linkbtn\):not\(\.portal-button, \.dl-back, \.si-btn, \.si-link\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(pcss)) fail("portal.css has no master busy rule (same size, can't be pressed twice, never faded)");
 if (!/:is\(button, \[role="button"\], label, a\):not\(\.admin-button, \.rga-call-refresh\)\.is-busy \{ position:relative; cursor:progress; pointer-events:none; transition:none; opacity:1 !important; \}/.test(acss)) fail("admin.css has no master busy rule");
+// 🔒 10-27 (Chris: "should spinner circle always be on one side of button. Lets say right side"): no ring is drawn BEFORE the words
+{ const left = [...(pcss + acss).matchAll(/([^{}\n]*\.is-busy::before)\s*\{[^}]*content/g)].map((m) => m[1].trim()); if (left.length) fail(`a ring drawn on the LEFT of the words: ${left.join(" · ")}`); }
 if (/\.pm-act\.is-busy::before|\.pm-team-chip\.is-busy::before|\.pm-photo-rm\.is-busy::before/.test(pcss)) fail("an old per-button spinner is still there (it would draw a second ring beside the master one)");
 
 // ── 3 · in Chrome: press → words stay + ring beside, same height → request back → ring gone ──

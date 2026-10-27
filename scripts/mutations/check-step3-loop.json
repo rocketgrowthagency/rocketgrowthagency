@@ -14,7 +14,7 @@
  [
   "admin row 8 loses Confirm access",
   "admin",
-  "<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm data-role=\"${escapeAttribute(role)}\">Confirm access</button>",
+  "<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm data-role=\"${escapeAttribute(role)}\">${isChk ? \"Confirm how we work\" : \"Confirm access\"}</button>",
   "<span></span>"
  ],
  [

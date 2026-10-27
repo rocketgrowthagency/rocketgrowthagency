@@ -51,8 +51,8 @@
  [
   "other builders lose the access@ invite link",
   "admin",
-  "act: `${accInviteLinkHtml(ci, p, name)}<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
-  "act: `<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
+  "acts: `${accInviteLinkHtml(ci, p, name)}<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
+  "acts: `<button type=\"button\" class=\"admin-button\" data-ob-acc-confirm",
   1
  ],
  [

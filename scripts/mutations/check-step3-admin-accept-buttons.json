@@ -37,8 +37,8 @@
  [
   "without the key the manual path is gone",
   "admin",
-  "act: `${check}${openGh(null)}${manual}` }));",
-  "act: `${check}${openGh(null)}` }));",
+  "acts: `${manual}${openGh(null)}`, right: check }));",
+  "acts: `${openGh(null)}`, right: check }));",
   1
  ]
 ]

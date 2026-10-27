@@ -92,8 +92,8 @@
  [
   "admin row 8 loses RGA's move",
   "admin",
-  "<b>RGA's move:</b>",
-  "<b>Next:</b>"
+  "      escapeHtml(rgaMove), isChk ?",
+  "      \"Sign in\", isChk ?"
  ],
  [
   "admin stops reading the one source",
@@ -254,8 +254,8 @@
  [
   "admin loses the promise",
   "admin",
-  "<b>Our promise (on their card):</b> NO change (page text, new pages, schema, tracking code)",
-  "<b>Note:</b> NO change (page text, new pages, schema, tracking code)"
+  "Our promise on their card: nothing goes live until they approve it; every change is logged",
+  "Note: nothing goes live until they approve it; every change is logged"
  ],
  [
   "the agreement link loses §5",

@@ -167,5 +167,19 @@
   "const h = mvNaHtml(cardFlowId); na.innerHTML = h;",
   "const h = mvNaHtml(activeFlowId); na.innerHTML = h;",
   1
+ ],
+ [
+  "the live client column is greyed out again",
+  "admin",
+  "colClient.classList.toggle(\"is-waiting\", youActive && !clientLive);",
+  "colClient.classList.toggle(\"is-waiting\", youActive);",
+  1
+ ],
+ [
+  "Also yours rows lose their own button",
+  "admin",
+  "${btn(m)}</div>`).join(\"\")}</div>`",
+  "</div>`).join(\"\")}</div>`",
+  1
  ]
 ]

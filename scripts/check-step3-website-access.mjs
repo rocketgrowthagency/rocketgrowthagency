@@ -123,7 +123,7 @@ if (!/\^\[a-z0-9\]\[a-z0-9-\]\*\\\.myshopify\\\.com\$/.test(INP) || !/\^\\d\{4\}
 if (!/shopify: \{ store: task\.client_input\.shopify\.store \}/.test(CONF)) fail("the Shopify code is kept after access is confirmed");
 // ── admin
 if (/const ACC_ROLE = \{/.test(ADM) || !/fetch\("\/data\/site-platforms\.json"\)/.test(ADM)) fail("admin keeps its own copy of the roles instead of reading site-platforms.json");
-if (!/<b>RGA's move:<\/b>/.test(ADM) || !/<b>Collaborator code:<\/b>/.test(ADM)) fail("admin row 8 doesn't say RGA's move per builder (or the Shopify code)");
+if (!/const rgaMove = p\.rga \|\|/.test(ADM) || !/escapeHtml\(rgaMove\)/.test(ADM) || !/facts\.push\(\["Store", `\$\{escapeHtml\(ci\.shopify\.store\)\} · collaborator code/.test(ADM)) fail("admin row 8 doesn't say RGA's move per builder (or the Shopify code)");   // admin_action_card_and_row8_v1: in the card's "Then" list
 // ── the conversation at the bottom
 const rh = P.slice(P.indexOf("  const rowHtml = ("), P.indexOf("  // 🔴 SETUP POINTS, IT DOES NOT DUPLICATE."));
 // 🔄 10-23 night: iDetail = the how-to fold line (how_this_step_works_fold_v1)
@@ -143,7 +143,7 @@ if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(
   for (const h of ["WHY WE NEED IT", "HOW IT WORKS", "YOUR WEBSITE STAYS YOURS", "NEVER SEND A PASSWORD", "1. We check which website builder", "Nothing changes until you approve it: page text, new pages and the code behind them"])
     if (!String(PB[0] || "").includes(h)) fail(`How this step works lost "${h}"`);
   if (/the role the card shows/.test(PB[0] || "")) fail("How this step works is back to the old jargon (\"the role the card shows\")");
-  if (!/<b>Our promise \(on their card\):<\/b> NO change \(page text, new pages, schema, tracking code\) goes live until they approve it/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
+  if (!/Our promise on their card: nothing goes live until they approve it; every change is logged/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
   if (!/data-acc-redo>Edit access<\/button>/.test(P)) fail("the done card's button isn't \"Edit access\" (Chris 10-23)");
 }
 // 🔴 THE CARD MAY NOT CLAIM MORE THAN THE CONTRACT SAYS (rga_admin_identity_and_contract_v1, 10-23): "Backed by your Service Agreement"

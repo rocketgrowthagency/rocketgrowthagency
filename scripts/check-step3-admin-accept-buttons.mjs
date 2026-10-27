@@ -25,7 +25,9 @@ if (hStart < 0) { console.error("⚠️  INDETERMINATE — the GitHub card's cli
 const handler = A.slice(hStart, A.indexOf("\n});\n", hStart) + 4);
 const code = [line(/^const G_ICON = [^\n]*;$/m, "G_ICON"), line(/^const OB_WEB_TILE = [^\n]*;/m, "OB_WEB_TILE"), line(/^const RGA_ACCESS_GITHUB = "[^"]+";/m, "RGA_ACCESS_GITHUB"),
   line(/^const GH_MONO = [^\n]*;$/m, "GH_MONO"), line(/^const GH_PERM = [^\n]*;$/m, "GH_PERM"), "const ghState = {};",
-  fn("adminGoogleCardHtml"), fn("accInviteLinkHtml"), fn("ghLoad"), fn("ghAccessCardHtml"), objBlock("const GH_ASK = {", "GH_ASK"), handler].join("\n");
+  fn("adminGoogleCardHtml"), fn("acCardHtml"), fn("acDueChip"), line(/^const acConsent = [^\n]*;$/m, "acConsent"), line(/^const acSite = [^\n]*;$/m, "acSite"), line(/^const GH_DOMAIN = [^\n]*;$/m, "GH_DOMAIN"),
+  line(/^const mvDay = [^\n]*;$/m, "mvDay"), line(/^const mvDueDays = [^\n]*;$/m, "mvDueDays"),
+  fn("accInviteLinkHtml"), fn("ghLoad"), fn("ghAccessCardHtml"), objBlock("const GH_ASK = {", "GH_ASK"), handler].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -49,6 +51,7 @@ async function open(name) {
     const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); const escapeAttribute = escapeHtml;
     const adminGcardWhen = (x) => String(x || "").slice(0, 16).replace("T", " ");
     const admPlatforms = () => ({ custom: { hosts: { netlify: { name: "Netlify" } } } });
+    const movesForSelected = () => [{ owner: "rga", step_id: "m1.access.website", kind: "accept_access", due: new Date().toISOString(), due_today: true, late: false }];
     const state = { selectedClient: { id: ${JSON.stringify(CID)}, business_name: "Rocket Growth Agency", primary_contact_name: "Chris K", primary_contact_email: "rocketgrowthagencyadmin@gmail.com" },
       onboardingData: { tasks: { "m1.access.website": ${JSON.stringify({ status: "in_progress", client_input: CI })} } } };
     const authHeaders = async () => ({ "Content-Type": "application/json" });
@@ -80,6 +83,8 @@ try {
   { const p = await open("found"); const els = await readable(p, "invite found");
     const gh = els.find((e) => e.t === "Open on GitHub ↗"); if (!gh || gh.href !== "https://github.com/rocketgrowthagency/rga-website/invitations" || gh.target !== "_blank") fail(`Open on GitHub doesn't open the repo's invitations in a new tab (${gh && gh.href})`);
     const wix = els.find((e) => /invite in access@/.test(e.t)); if (!wix || !/authuser=access%40rocketgrowthagency\.com#search\/wix\+newer_than%3A14d/.test(wix.href)) fail(`the other builders' link isn't access@'s Gmail searched for the builder (${wix && wix.href})`);
+    if (!(await p.evaluate(() => /Due today/.test(document.getElementById("host").textContent)))) fail("row 8's card doesn't show the move's promise (Due today) from the open-moves list");
+    if (!(await p.evaluate(() => [...document.querySelectorAll("#host .ob-ac-foot button, #host .ob-ac-foot a")].some((e) => e.textContent.trim() === "Accept and confirm access")))) fail("Accept and confirm access isn't inside the card's own footer");
     await clickText(p, "Accept and confirm access");
     const r = (await reqs(p)).find((x) => x.body.action === "github_accept"); if (!r || String(r.body.invitation_id) !== "991" || r.body.client_id !== CID) fail(`Accept and confirm access doesn't send github_accept with the invite's id (${JSON.stringify(r)})`);
     if (await p.evaluate(() => window.SNAP) !== 1) fail("a confirmed accept doesn't take the before-snapshot");
@@ -98,7 +103,7 @@ try {
     await p.close(); }
   // accepted, not their repo → confirm
   { const p = await open("wrongrepo"); const els = await readable(p, "not their repo");
-    const repo = els.find((e) => e.t === "Open the repo ↗"); if (!repo || repo.href !== "https://github.com/johndev/site-2024") fail("Open the repo doesn't open the accepted repo");
+    const repo = els.find((e) => e.t === "johndev/site-2024 ↗"); if (!repo || repo.href !== "https://github.com/johndev/site-2024" || repo.target !== "_blank") fail("the accepted repo isn't a link to it (new tab) on the card");
     await clickText(p, "It's the right repo: confirm");
     if (!(await reqs(p)).some((x) => x.body.action === "github_confirm")) fail("It's the right repo: confirm doesn't send github_confirm");
     await p.close(); }
