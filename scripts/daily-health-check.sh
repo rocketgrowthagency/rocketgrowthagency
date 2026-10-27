@@ -123,6 +123,26 @@ run() {
   # finding. 🔴 `timeout` is not on macOS by default, so the bound is a background child and a kill.
   # → feedback_a_request_without_a_deadline_hangs_the_whole_run · feedback_a_gate_that_throws_is_not_a_gate_that_fails
   # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  # 🔴🔴 A LIVE GATE NEVER PILES ON A STRUGGLING DATABASE (10-26: four full runs in an afternoon spent the clients' Supabase
+  # disk-IO budget; database, sign-in and data API went UNHEALTHY and every portal sat on "Loading" until Chris restarted it).
+  # Before any gate that touches the live site or the database: one cheap health read (scripts/lib/db-health.mjs). Slow or
+  # failing → wait 30 s, look once more; still bad → this and every later live gate is skipped (INDETERMINATE), never run.
+  # ═══════════════════════════════════════════════════════════════════════════════════════════════
+  if grep -qE "SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|_admin-session|rocketgrowthagency\.com" "scripts/$script" 2>/dev/null; then
+    if [ -n "$DB_STOPPED" ]; then
+      printf "  ⚠️  %-38s SKIPPED — the clients' database is struggling (%s); not adding load\n" "$script" "$DB_STOPPED"; INDET=$((INDET+1)); return
+    fi
+    local h
+    if ! h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
+      echo "  ⏸  the clients' database is struggling ($h) — waiting 30 s before $script"; sleep 30
+      if ! h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
+        DB_STOPPED="$h"
+        printf "  🛑 LIVE GATES STOPPED: the clients' database is struggling (%s); every later live gate is skipped\n" "$h"
+        printf "  ⚠️  %-38s SKIPPED — not adding load\n" "$script"; INDET=$((INDET+1)); return
+      fi
+    fi
+  fi
   local limit="${GATE_TIMEOUT_SECONDS:-300}" tmp
   tmp=$(mktemp)
   node "scripts/$script" >"$tmp" 2>&1 &
