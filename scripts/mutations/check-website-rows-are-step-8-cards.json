@@ -145,5 +145,12 @@
   "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for them</button>",
   "<a class=\"admin-button\" href=\"${escapeAttribute(pr.url)}\">Open #${escapeHtml(pr.number)} on GitHub ↗</a>",
   1
+ ],
+ [
+  "the Proof box ticks what isn't proven",
+  "admin",
+  "    [!!m.branch_deleted_at, \"The branch tidied\",",
+  "    [true, \"The branch tidied\",",
+  1
  ]
 ]

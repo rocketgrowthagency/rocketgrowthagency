@@ -87,6 +87,36 @@ if (!PS.prHoldsOnly([{ path: "rga-access-test/index.html", action: "add" }], bui
   if ((await GA.mergePullRequest("t", f409, { repo: "acme/site", number: 2, sha: "abc123" })).state !== "head_moved") fail("GitHub's 'head moved' refusal isn't recognised");
   if (PS.mergerState({ merged: true, merged_by: GA.ADMIN_LOGIN }, "acme/site", null).ok !== true) fail("RGA Admin merging for them (after their approval) is flagged as unexpected"); }
 
+// ── auto_live_and_proof_v1: fingerprint · the GitHub connection · our branch only · the watcher · late after a day ─────────
+{ const crypto = await import("node:crypto");
+  if (PS.fingerprintOf("<html>x</html>") !== crypto.createHash("sha256").update("<html>x</html>").digest("hex")) fail("the page fingerprint isn't the sha256 the build uses");
+  const acc = { repo: "acme/site", github: "rocketgrowthagency-admin", confirmed_at: "2026-10-26T00:00:00Z" }, me = { ok: true, login: "rocketgrowthagency-admin" }, access = { ok: true, role: "Write", canChange: true };
+  if (PS.connectionCheck({ acc, me, access, repoIsSite: true }).match !== true) fail("the right account, role, repo and record isn't a VERIFIED match");
+  if (PS.connectionCheck({ acc, me: { ok: false, state: "wrong_account", login: "rocketgrowthagency" }, access, repoIsSite: true }).match !== false) fail("our key belonging to RGA's own business account isn't NOT A MATCH");
+  if (PS.connectionCheck({ acc: { ...acc, github: "someone-else" }, me, access, repoIsSite: true }).match !== false) fail("posting as an account other than the one they invited is called a match");
+  if (PS.connectionCheck({ acc, me, access: { ok: true, role: "Read", canChange: false }, repoIsSite: true }).match !== false) fail("a Read-only role (can't post) is called a match");
+  if (PS.connectionCheck({ acc, me, access, repoIsSite: null }).match !== null) fail("a repository we couldn't check is called a match (it must be couldn't check)");
+  if (PS.connectionCheck({ acc, me: { ok: false, state: "no_key" }, access: { ok: false }, repoIsSite: null }).match !== null) fail("GitHub not answering is called a match or a mismatch (it must be couldn't check)");
+  const GA = req(`${SITE}/netlify/functions/_github-access.js`), del = []; const f = async (u, i = {}) => { del.push(`${i.method || "GET"} ${u}`); return new Response(null, { status: 204 }); };
+  if ((await GA.deleteBranch("t", f, { repo: "acme/site", branch: "main" })).ok || del.length) fail("RGA would delete a branch it didn't make (main)");
+  if (!(await GA.deleteBranch("t", f, { repo: "acme/site", branch: "rga/add-page-x1" })).ok || !del.some((x) => /DELETE .*\/git\/refs\/heads\/rga\/add-page-x1$/.test(x))) fail("RGA doesn't delete its own branch after the merge");
+  let W; try { W = req(`${SITE}/netlify/functions/site-publish-watch.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — the watcher won't load: ${e.message}`); process.exit(2); }
+  const SCx = req(`${SITE}/shared/site-change.js`), T2 = "m1.access.publish_test", chg = { v: "v1", kind: "visible", new_page: true, label: "add_page", items: [{ label: "Main headline", after: "x" }] };
+  const base2 = { site_change: chg, internal_review: { decision: "approved", change_v: "v1", at: AT }, approval: { decision: "approved", change_v: "v1", at: AT } };
+  if (W.waitingKeys({ [T2]: { ...base2, publish_pr: { v: "v1", number: 2, merged: { at: AT } } } }).join() !== T2) fail("the watcher doesn't pick up a merged change that isn't live yet");
+  if (W.waitingKeys({ [T2]: { ...base2, publish_pr: { v: "v1", number: 2 } } }).length) fail("the watcher would mark live a change that isn't merged");
+  if (W.waitingKeys({ [T2]: { ...base2, status: "done", publish_pr: { v: "v1", number: 2, merged: { at: AT } }, published: { v: "v1", at: AT } } }).length || SCx.changeState({ ...base2, published: { v: "v1", at: AT } }) !== "live") fail("the watcher would mark live a change that's already live");
+  const WS = read("netlify/functions/site-publish-watch.js");
+  if (!/"x-internal-secret": process\.env\.INTERNAL_FN_SECRET/.test(WS) || !/await call\(row\.client_id, key, "publish"\)/.test(WS) || !/if \(live\.ok\) \{ const rest = await call\(row\.client_id, key, "rest_check"\)/.test(WS) || /\/rest\/v1\/client_onboarding_records\?id=eq\.[^`]*PATCH|method: "PATCH"/.test(WS)) fail("the watcher writes the record itself, or doesn't go through admin-deliverables (Mark live, then the after-check)");
+  if (!/\[functions\."site-publish-watch"\]\s*schedule = "\*\/5 \* \* \* \*"/.test(read("netlify.toml"))) fail("the watcher isn't scheduled every 5 minutes");
+  const OM2 = req(`${SITE}/netlify/functions/_open-moves.js`), PB = JSON.parse(read("data/playbooks/playbooks.json"));
+  const tk = { "m1.access.website": { access: { repo: "acme/site", confirmed_at: AT } }, [T2]: { ...base2, publish_pr: { v: "v1", number: 2, merged: { at: "2026-10-28T20:00:00Z" } } } };
+  const mv = OM2.openMoves({ playbooks: { month1: PB.month1 || [] }, data: { tasks: tk }, now: "2026-10-30T20:00:00Z" }).find((m) => m.kind === "publish_change");
+  if (!mv || mv.since !== "2026-10-28T20:00:00Z" || !mv.late || !/not on their site yet/.test(mv.what)) fail(`merged but not live for 2 days isn't RGA's LATE move from the merge (${JSON.stringify(mv)})`); }
+{ const ADy = read("netlify/functions/admin-deliverables.js");
+  if (!/if \(want1\) fingerprint = \{ match: PS\.fingerprintOf\(servedHtml\) === want1/.test(ADy) || !/\.\.\.\(fingerprint \? \{ fingerprint \} : \{\}\)/.test(ADy)) fail("Mark live doesn't record whether the live page IS the approved file (fingerprint)");
+  if (!/const del = await GA\.deleteBranch\(token, fetch, \{ repo, branch: pr\.branch \}\)/.test(ADy)) fail("RGA's merge doesn't tidy its own branch"); }
+
 // ── after live ─────────────────────────────────────────────────────────────────────────────────
 const P = (url, title, h1 = "H") => ({ url, read: true, title, h1, description: "d", canonical: null });
 const before = { pages: [P("https://www.acme.test/", "Home"), P("https://www.acme.test/about/", "About"), P("https://www.acme.test/plumbing/", "Plumbing")] };

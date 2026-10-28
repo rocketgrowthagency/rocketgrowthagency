@@ -146,7 +146,7 @@ if (g < 0 || !/SCg\.isSiteChangeStep\(stepId\) \? !SCg\.stepMayBeDone\(t\) : !SC
 if (!/: globalThis\.rgaSiteChange && globalThis\.rgaSiteChange\.isSiteChangeStep\(id\) \? siteChangeAdminHtml\(id, t\)/.test(A)) fail("the website rows lost their change card (rowStepCardsHtml)");
 if ((A.match(/isSiteChangeStep\(o\.flowId\)[^\n]{0,120}siteChangeAdminHtml\(o\.flowId, s\.task\)/g) || []).length < 2) fail("done or locked website rows don't show the change card (an approval or an undo request would be invisible to RGA)");
 if (!/data-ob-wc-live>Mark live</.test(A) || !/Publish exactly what they approved, then Mark live/.test(A)) fail("admin's Publish → Mark live step is gone");
-if (!/import "\/shared\/site-change\.js\?v=/.test(A) || !/SC\.missingOnPage\(c, await r\.text\(\)\)/.test(AD)) fail("admin doesn't load the shared rules, or Mark live no longer reads the page back");
+if (!/import "\/shared\/site-change\.js\?v=/.test(A) || !/const servedHtml = await r\.text\(\);[\s\S]{0,900}SC\.missingOnPage\(c, servedHtml\)/.test(AD)) fail("admin doesn't load the shared rules, or Mark live no longer reads the page back");
 if (!/String\(body\.change_v \|\| ""\) !== site\.v/.test(PD)) fail("the client's answer isn't tied to the version they saw");
 
 // ── 5. the client's inbox ──

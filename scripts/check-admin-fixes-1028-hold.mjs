@@ -32,7 +32,7 @@ if (m1.length !== 1 || m1[0].owner !== "rga" || m1[0].step_id !== "m1.access.web
   fail(`an approved website change isn't RGA's move under step 8 ("Open the pull request · Adding a page: …", since the approval, with a due date): ${JSON.stringify(m1)}`);
 const withPr = { ...approved, [T]: { ...approved[T], publish_pr: { v: "v1", number: 14, url: "u", at: AT } } };
 const m2 = OM.openMoves({ playbooks, data: { tasks: withPr }, now }).filter((m) => m.kind === "publish_change");
-if (m2.length !== 1 || !/^Merge #14 on GitHub, then Mark live/.test(m2[0].what || "")) fail(`an open pull request isn't "Merge #14 on GitHub, then Mark live" (${JSON.stringify(m2.map((m) => m.what))})`);
+if (m2.length !== 1 || !/^Merge #14, then Mark live/.test(m2[0].what || "")) fail(`an open pull request isn't "Merge #14, then Mark live" (${JSON.stringify(m2.map((m) => m.what))})`);
 const live = { ...approved, [T]: { ...approved[T], status: "done", published: { v: "v1", at: AT, checked: true } } };
 if (OM.openMoves({ playbooks, data: { tasks: live }, now }).some((m) => m.kind === "publish_change")) fail("a live change is still RGA's move");
 if (OM.clientMoves(OM.openMoves({ playbooks, data: { tasks: approved }, now }), playbooks).some((m) => m.kind === "publish_change")) fail("the client's To do lists the approved change too (it's in their For your approval — one place each)");

@@ -16,14 +16,14 @@
  [
   "the move is never late (no promise)",
   "openmoves",
-  "since: a.at || null, days: RGA_DAYS,",
-  "since: null, days: RGA_DAYS,",
+  "since: merged ? pr.merged.at : a.at || null,",
+  "since: merged ? pr.merged.at : null,",
   1
  ],
  [
   "an open pull request still says Open the pull request",
   "openmoves",
-  "(pr ? `Merge #${pr.number} on GitHub, then Mark live` : \"Open the pull request\")",
+  "pr ? `Merge #${pr.number}, then Mark live` : \"Open the pull request\"",
   "\"Open the pull request\"",
   1
  ],

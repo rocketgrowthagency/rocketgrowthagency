@@ -49,6 +49,8 @@ const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
 vm.runInContext(fnSrc(A, "accessAdminHtml"), actx);
+// auto_live_and_proof_v1 (10-28): the VERIFIED badge + GitHub connection fetch from the server — stubbed here (their own gate runs them)
+vm.runInContext(`var ghBadgeHtml = () => ""; var ghPanelHtml = () => "";`, actx);
 vm.runInContext(`var RGA_ACCESS_ACCOUNT = "access@x"; ${fnSrc(A, "accInviteLinkHtml")}`, actx);
 vm.runInContext(`${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n", A.indexOf("function acCardHtml(")) + 2)} ${fnSrc(A, "acDueChip")} ${["acMono", "acConsent", "acSite", "GH_MONO", "mvDay", "mvDueDays", "acDay", "acCk"].map((n) => { const at = A.search(new RegExp(`^const ${n} = `, "m")); if (at < 0) return ""; const eol = A.indexOf("\n", at); const first = A.slice(at, eol); return (first.trimEnd().endsWith("{") ? A.slice(at, A.indexOf("\n};", at) + 3) : first).replace(/^const /, "var "); }).join("\n")} var movesForSelected = () => null;`, actx);   // row 8's one card (admin_action_card_and_row8_v1)   // other builders' "Open the invite in access@" link (step3_admin_accept_v1)
 // the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)

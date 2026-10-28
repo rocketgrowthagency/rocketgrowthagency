@@ -27,7 +27,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
-  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -61,6 +61,14 @@ const S = {
   ghPr: { id: T, gh: true, task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: tchange }, publish_pr: { v: "v1", number: 14, url: "https://github.com/acme/site/pull/14", at: NOW } } },
   ghPrClient: { id: T, gh: true, mergeBy: "client", task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: tchange }, publish_pr: { v: "v1", number: 14, url: "https://github.com/acme/site/pull/14", at: NOW, head: "abc" } } },
   ghMerged: { id: T, gh: true, task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: tchange }, publish_pr: { v: "v1", number: 14, url: "https://github.com/acme/site/pull/14", at: NOW, head: "abc", merged: { at: NOW, by: "rocketgrowthagency-admin", via: "rga", base: "main" } } } },
+  ghLiveProven: { id: T, gh: true, task: { status: "done", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild,
+    approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_build: [{ path: "rga-access-test/index.html", action: "add", sha: "201cd46c0f0e0d0c" }] },
+    publish_safety: { checks: [{ id: "website", ok: true, detail: "The page goes on acme.test." }, { id: "repo_is_site", ok: true, detail: "acme/site: their address is written in its CNAME." }], pr_files: [{ path: "rga-access-test/index.html", action: "add" }], repo: "acme/site", site: "acme.test" },
+    publish_pr: { v: "v1", number: 2, branch: "rga/add-page-x", at: NOW, merged: { at: NOW, by: "rocketgrowthagency-admin", via: "rga", by_person: "hello@", base: "main", sha: "d907d73abc", branch_deleted_at: NOW } },
+    publish_before: { pages: [{ url: "https://acme.test/", read: true }] }, publish_after: { at: NOW, ok: true, read: 25, of: 25, changed: [], unread: [] },
+    published: { v: "v1", at: NOW, by: "RGA (automatic)", url: "https://www.acme.test/rga-access-test/", checked: true, fingerprint: { match: true, want: "201cd46c", got: "201cd46c" } } } },
+  ghLivePartial: { id: T, gh: true, task: { status: "done", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW },
+    publish_pr: { v: "v1", number: 2, at: NOW, merged: { at: NOW, by: "rocketgrowthagency-admin", via: "rga", base: "main" } }, published: { v: "v1", at: NOW, checked: true } } },
   right: { task: { status: "done", no_change_needed: { note: "One phone number on every page", at: NOW, by: "RGA" } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
@@ -88,6 +96,7 @@ try {
         loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
         loopOneRow: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; const t = [...l.children].map((x) => Math.round(x.getBoundingClientRect().top)); return new Set(t).size === 1; })(),
         // 10-28 (Chris, 10:09): every stop's name sits on one line across the trip, whatever the length of its note
+        proofUnk: el.querySelectorAll(".ob-proof-r.unk").length,
         loopLevel: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; return new Set([...l.querySelectorAll("li > b")].map((b) => Math.round(b.getBoundingClientRect().top))).size === 1; })() };
     }, { SCJS, code, sc, H, name });
     if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); }
@@ -124,7 +133,11 @@ loopIs("ghPrClient", ["done", "done", "done", "done", "now", ""], "the client ch
 loopIs("ghMerged", ["done", "done", "done", "done", "done", "you"], "merged → Mark live is RGA's move"); has("ghMerged", /Merged #14/, "a merged pull request isn't said"); has("ghMerged", /for them, after their approval/, "RGA's merge isn't recorded as for them, after their approval"); if (!out.ghMerged.buttons.includes("Mark live")) fail("ghMerged: no Mark live");
 has("changes", /The client asked for a change/, "the client's ask isn't shown"); has("changes", /Keep the button as See Where You Rank Free/, "their words are missing"); if (!out.changes.buttons.includes("Edit and send again")) fail("the client's ask has no Edit and send again");
 has("approved", /Publish exactly what they approved, then Mark live/, "approved isn't \"publish\""); loopIs("approved", ["done", "done", "done", "you", ""], "approved → publishing is RGA's move (amber)"); if (!out.approved.buttons.includes("Mark live")) fail("approved: no Mark live"); if (out.approved.pill !== "Publish") fail("approved: chip isn't \"Publish\"");
-has("live", /Live · read back from the site/, "live doesn't say it was read back"); loopIs("live", ["done", "done", "done", "done", "done"], "live and read back → every stop ticked"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
+has("live", /Live · read back from the site/, "live doesn't say it was read back");
+// auto_live_and_proof_v1: the Proof box — 9 of 9 only from the record; a line not proven is grey, never a tick
+has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
+has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");
+if (out.ghLivePartial.proofUnk !== 6 || /9 of 9/.test(out.ghLivePartial.text) || !/not recorded \(merged before this was built, or not deleted\)/.test(out.ghLivePartial.text) || !/not fingerprinted/.test(out.ghLivePartial.text)) fail("a change with missing proof still shows 9 of 9 / ticks (a line not proven must be grey with why)"); loopIs("live", ["done", "done", "done", "done", "done"], "live and read back → every stop ticked"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
 has("right", /Already right · nothing needed changing/, "already right isn't said"); if (out.right.pill !== "Already right") fail("already right: chip isn't \"Already right\"");
 // the prefill reads a run's field in EITHER shape a run writes it ("H1: words" or "**H1**" + the words on the next line)
 { const AD = read("netlify/functions/admin-deliverables.js"), i = AD.indexOf("  const line = (re) => {"), j = AD.indexOf("  let html = \"\";", i);

@@ -86,8 +86,8 @@
  [
   "publish doesn't finish the step",
   "admindeliv",
-  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };\n      t.status = \"done\"; t.completed_at = now;",
-  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };"
+  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}) };\n      t.status = \"done\"; t.completed_at = now;",
+  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}) };"
  ],
  [
   "no ledger row on publish",

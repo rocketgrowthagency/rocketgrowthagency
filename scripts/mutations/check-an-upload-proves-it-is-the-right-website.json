@@ -187,5 +187,61 @@
   "  const gate = await requirePortalOwner(event, clientId);\n  if (gate.error) return gate.error;\n",
   "  const gate = {};\n",
   1
+ ],
+ [
+  "the connection calls a stranger's key a match",
+  "pubsafety",
+  "add(\"account\", me.ok ? !!invited && invited.toLowerCase() === String(me.login).toLowerCase() :",
+  "add(\"account\", me.ok ? true :",
+  1
+ ],
+ [
+  "a read-only role passes the connection",
+  "pubsafety",
+  "add(\"role\", ra.ok ? !!ra.canChange : null,",
+  "add(\"role\", ra.ok ? true : null,",
+  1
+ ],
+ [
+  "couldn't-check counts as a match",
+  "pubsafety",
+  "const match = rows.some((r) => r.ok === false) ? false : rows.every((r) => r.ok === true) ? true : null;",
+  "const match = rows.some((r) => r.ok === false) ? false : true;",
+  1
+ ],
+ [
+  "RGA could delete any branch",
+  "ghaccess",
+  "  if (!/^rga\\/[a-z0-9-]+$/i.test(String(branch || \"\"))) return { ok: false, state: \"not_ours\" };\n",
+  "",
+  1
+ ],
+ [
+  "the watcher marks unmerged changes live",
+  "publishwatch",
+  "    return !!(pr && pr.v === c.v && pr.merged && pr.merged.at);",
+  "    return !!(pr && pr.v === c.v);",
+  1
+ ],
+ [
+  "the watcher skips the after-check",
+  "publishwatch",
+  "      if (live.ok) { const rest = await call(row.client_id, key, \"rest_check\");",
+  "      if (false) { const rest = await call(row.client_id, key, \"rest_check\");",
+  1
+ ],
+ [
+  "merged-not-live is never late",
+  "openmoves",
+  "since: merged ? pr.merged.at : a.at || null, days: merged ? 1 : RGA_DAYS,",
+  "since: a.at || null, days: 30,",
+  1
+ ],
+ [
+  "the fingerprint isn't recorded",
+  "admindeliv",
+  "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}) };",
+  "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };",
+  1
  ]
 ]
