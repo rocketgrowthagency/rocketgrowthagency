@@ -36,7 +36,8 @@ for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.
   if (!/planBlock\(_plan\)/.test(b)) F(`#3 ${id} no longer writes from the locked plan`);
 }
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");
-if (!/_plan\.locations\.join\("; "\)/.test(block("m1.web.location_pages"))) F("#2 the location pages do not name the plan's sub-locations");
+// 10-27 (rga_first_site_change_v1): the city page takes the plan's sub-locations as its areas (planLocations), with planBlock in the prompt
+if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.location_pages")) || !/planBlock\(_plan\)/.test(block("m1.web.location_pages"))) F("#2 the location pages do not name the plan's sub-locations");
 if (!/_plan\.locations\.join\("; "\)/.test(block("m1.web.service_location_matrix"))) F("#2 the matrix does not name the plan's sub-locations");
 // universal: the category shortlist never pins one trade's categories first
 if (/marketing\|advertis/.test(block("m1.gbp.optimize_categories"))) F("the category shortlist pins marketing categories first again — RGA's trade, not the client's");

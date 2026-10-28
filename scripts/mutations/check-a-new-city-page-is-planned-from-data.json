@@ -1,0 +1,114 @@
+[
+ [
+  "the links come from a model, not the sitemap",
+  "citypage",
+  "  const cityPages = pagesInCity(urls, c);\n",
+  "  const cityPages = [];\n",
+  1
+ ],
+ [
+  "the areas drop the Business Profile's",
+  "citypage",
+  "areas: areaNames([c.city], gbpAreas, planLocations)",
+  "areas: areaNames([c.city], planLocations)",
+  1
+ ],
+ [
+  "the searches ignore the city",
+  "citypage",
+  "  const named = c ? k.filter((x) => x.toLowerCase().includes(c.city.toLowerCase())) : [];\n",
+  "  const named = [];\n",
+  1
+ ],
+ [
+  "the sitemap line is no longer approved",
+  "citypage",
+  "  if (sitemapUrl && urls.length) files.push",
+  "  if (false) files.push",
+  1
+ ],
+ [
+  "an existing page is drafted again",
+  "citypage",
+  "  if (urls.some((u) => norm(u) === norm(url))) return { exists: url };\n",
+  "",
+  1
+ ],
+ [
+  "invented numbers pass",
+  "citypage",
+  "  if (STAT.test(all)) p.push(",
+  "  if (false) p.push(",
+  1
+ ],
+ [
+  "the title needn't name the city",
+  "citypage",
+  "  if (city && !page.title.toLowerCase().includes(city)) p.push(\"the title doesn't name the city\");\n",
+  "",
+  1
+ ],
+ [
+  "row 45 is a copy step again",
+  "sitechange",
+  "  const COPY_STEPS = [\"m1.web.priority_pages\", \"m1.web.service_location_matrix\", \"m1.web.blog_seed\"];",
+  "  const COPY_STEPS = [\"m1.web.priority_pages\", \"m1.web.location_pages\", \"m1.web.service_location_matrix\", \"m1.web.blog_seed\"];",
+  1
+ ],
+ [
+  "a new page saves without its file",
+  "sitechange",
+  "    if (def.newPage && !files.some((f) => f.action === \"add\")) return",
+  "    if (false) return",
+  1
+ ],
+ [
+  "a ../ path is kept",
+  "sitechange",
+  ".filter((f) => f.path && !/\\.\\.|^[a-z]+:/i.test(f.path));",
+  ".filter((f) => f.path);",
+  1
+ ],
+ [
+  "links are read back word for word",
+  "sitechange",
+  "(c.items || []).filter((i) => i.after && i.check !== false)",
+  "(c.items || []).filter((i) => i.after)",
+  1
+ ],
+ [
+  "the client card drops the files",
+  "portaldeliv",
+  "          ...(c.new_page ? { new_page: true, page_url: c.page_url || null, files: c.files || [], searches: c.searches || [] } : {}),\n",
+  "",
+  1
+ ],
+ [
+  "the client card hides every file",
+  "portal",
+  "<span>Every file that changes</span>",
+  "<span>Files</span>",
+  1
+ ],
+ [
+  "prefill drops the files",
+  "admindeliv",
+  "c.page_url = d.url || null; c.files = d.files || []; c.searches = d.searches || [];",
+  "c.page_url = d.url || null;",
+  1
+ ],
+ [
+  "admin save drops the files",
+  "admin",
+  "  return { ...extra,",
+  "  return {",
+  1
+ ],
+ [
+  "the drafter keeps a draft that broke the rules",
+  "exec",
+  "    if (w.problems) return { summary: `The draft broke the page rules, so nothing was saved:",
+  "    if (false) return { summary: `The draft broke the page rules, so nothing was saved:",
+  1
+ ]
+]

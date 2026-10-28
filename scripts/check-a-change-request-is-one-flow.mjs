@@ -41,6 +41,7 @@ for (const [task, label, kw] of [[{ client_flagged: { at: "x", note: "That's not
   vm.runInContext("_portalThread = this._portalThread", ctx);
   const t = { change_request: { at: "2026-10-27T19:00:00Z", note: "Add my office manager" } };
   const top = lf(t, LK, "top"), bot = lf(t, LK, "bottom");
+  if (!/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.access\.website">That's sorted ✓<\/button><button type="button" class="pm-chg-lnk" data-chg-convo=/.test(top)) fail("\"That's sorted\" isn't the small button that leads (it closes the request; the conversation is the link)");
   if (!/class="pm-chg-band y"/.test(top) || !/RGA replied · /.test(top) || !/added her as a second contact/.test(top) || !/data-chg-convo/.test(top) || !/data-chg-sorted data-chreq-cancel/.test(top) || /older/.test(top)) fail("RGA's reply after the request doesn't turn the band into the reply (Open the conversation + That's sorted)");
   if (!/<span>Locked<\/span>/.test(bot)) fail("after RGA's reply the lock line isn't just \"Locked\"");
   ctx._portalThread = []; vm.runInContext("_portalThread = []", ctx); }

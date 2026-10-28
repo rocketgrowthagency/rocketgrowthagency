@@ -139,6 +139,14 @@ if (/let seenActive = false;\s*\n\s*steps\.forEach/.test(src)) {
 // 🔴 An unregistered occurrence FAILS. Registering one is a decision someone makes on purpose.
 const REGISTRY = [
   // file match-substring → the step whose number it claims
+  // admin rows 8 (website access) + 9 (keep access safe), 10-27: the vault card and its banner name them by their row numbers
+  { file: "admin/admin.js",                            needle: "Check this against step 8's access",  step: "m1.access.website" },
+  { file: "admin/admin.js",                            needle: "remove our access on step 8",         step: "m1.access.website" },
+  { file: "admin/admin.js",                            needle: "step 8's ledger has the record",      step: "m1.access.website" },
+  { file: "admin/admin.js",                            needle: "finishes step 9 by itself",           step: "m1.access.password_manager" },
+  { file: "netlify/functions/admin-access-confirm.js", needle: "Step 8 hasn't confirmed access",      step: "m1.access.website" },
+  { file: "netlify/functions/_rga-logins.js",          needle: "step9:data",                          step: "m1.access.password_manager" },
+  { file: "netlify/functions/_rga-logins.js",          needle: "r.step9",                             step: "m1.access.password_manager" },
   { file: "admin/admin.js",                            needle: "Step 2 reopens",                      step: "m1.close.kickoff_invite" },
   { file: "admin/admin.js",                            needle: "Step 2 already put it on",            step: "m1.close.kickoff_invite" },
   { file: "admin/admin.js",                            needle: "ob-context warn",                     step: "m1.close.kickoff_invite" },

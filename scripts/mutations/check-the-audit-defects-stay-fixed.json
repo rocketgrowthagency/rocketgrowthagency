@@ -2,8 +2,8 @@
  [
   "location pages invent sub-locations",
   "exec",
-  "`Draft a UNIQUE location page outline for EACH of these sub-locations, exactly as named (the ones the map grid measures): ${_plan.locations.join(\"; \")}.",
-  "`Suggest 3 sub-locations within the market + draft a UNIQUE location page outline for each.",
+  "gbpAreas, planLocations: _plan.locations || [], keywords: _plan.keywords",
+  "gbpAreas, planLocations: [], keywords: _plan.keywords",
   1
  ],
  [

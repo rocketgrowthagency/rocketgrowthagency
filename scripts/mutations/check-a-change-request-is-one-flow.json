@@ -201,5 +201,12 @@
   " && !(admAskOf(steps[i].task) && !admAskOf(steps[i].task).replied)).length;",
   ").length;",
   1
+ ],
+ [
+  "That's sorted goes back to a link",
+  "portal",
+  "<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>",
+  "<button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>",
+  1
  ]
 ]

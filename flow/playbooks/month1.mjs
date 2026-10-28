@@ -890,38 +890,20 @@ INTERNAL_LINKS: <suggest 3 anchor texts pointing to homepage / location pages / 
 6. Publish, save URL`,
   },
   {
-    id: "m1.web.location_pages", title: "Build location-targeted pages",
+    id: "m1.web.location_pages", title: "Build a new page for their city",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website"],
     actionLabel: "⚡ Draft this for me",
-    async run({ client }) {
-      const draft = await aiSuggest(
-        `You write SEO location pages. The PRIMARY market is provided. Suggest 3 sub-locations within the market AND draft a unique location page outline for each. Each outline must avoid template-feel — reference real neighborhood landmarks, ZIPs, demographic context.
-
-Format per location:
-=== <Sub-location> ===
-H1: <Service in Sub-location>
-META_TITLE / META_DESC
-LOCAL_INTRO: <2 paragraphs that ONLY make sense for this neighborhood — landmarks, demographic context, neighborhood quirks>
-ZIPS_SERVED: <list>
-LOCAL_LANDMARKS_TO_MENTION: <3-5>
-LOCAL_TESTIMONIAL_PROMPT: <fake-but-believable customer quote that sounds local>
-SERVICE_FIT: <how the primary service applies to THIS area's specific issues>
-LOCAL_FAQ: <3 Q&A specific to this neighborhood>
-INTERNAL_LINKS: <3 anchor + target page suggestions>
-
-Generate for 3 distinct sub-locations.`,
-        `Business: ${client.business_name}\nPrimary service: ${client.primary_service}\nPrimary market: ${client.primary_market}`,
-        { maxTokens: 1500 },
-      );
-      return { summary: draft };
+    // 🔒 10-27: the live drafter is the website's flow-execute (planned by _city-page.js, words checked). The old prompt here asked
+    // the model to make up a customer quote — an invented testimonial — and is gone.
+    async run() {
+      return { summary: "This step drafts in the admin (flow-execute + _city-page.js): one new page for the client's city, planned from data.", outcome: "indeterminate" };
     },
-    instructions: `For each location page outline:
-1. Build page in CMS at slug /<service>-<sub-location>
-2. Use the LOCAL_INTRO verbatim, then add 2-3 paragraphs of REAL detail (actual jobs done in the area, photos)
-3. Embed Google Maps iframe centered on that neighborhood
-4. Replace the LOCAL_TESTIMONIAL_PROMPT with a real customer testimonial from that area (or similar)
-5. Add internal links per suggestions
-NEVER copy-paste the same content across location pages — Google penalizes.`,
+    instructions: `ONE new page for the client's city, through For your approval (approved rga_first_site_change_v1):
+1. Run it: the address, the links (the site's own pages for that city, from its sitemap), the areas (the Business Profile's + the plan's) and the files are worked out from data; only the words are drafted, and checked (lengths, the city named, no numbers or promises we can't show).
+2. Fill from the site + the run, read every line, edit what isn't true, then Save and send for approval.
+3. The client approves THAT version in For your approval (any edit needs a new approval).
+4. Publish exactly the approved files (on GitHub: a pull request from rocketgrowthagency-admin), then Mark live: it reads the new page back and refuses if the approved lines aren't there.
+Never invent a testimonial, a result or a number. Never copy another page with the city swapped.`,
   },
   {
     id: "m1.web.service_location_matrix", title: "Build service × location matrix pages",
