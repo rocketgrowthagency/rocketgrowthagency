@@ -1,0 +1,10 @@
+[
+ ["the old pale pill comes back", "portalcss", ".portal-nav-badge{background:var(--state-you,#b45309);color:#fff;", ".portal-nav-badge{background:var(--state-you-bg,#fff1e3);color:var(--state-you,#b45309);", 1],
+ ["the To do badge shrinks to 18px", "portalcss", "display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;\n  border-radius:999px;font-size:11.5px;", "display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 6px;box-sizing:border-box;\n  border-radius:999px;font-size:11.5px;", 1],
+ ["the To do badge is a rounded square", "portalcss", "  border-radius:999px;font-size:11.5px;font-weight:700;line-height:1;margin-left:auto;", "  border-radius:4px;font-size:11.5px;font-weight:700;line-height:1;margin-left:auto;", 1],
+ ["the To do badge sits after the word", "portalcss", "line-height:1;margin-left:auto;\n  flex:0 0 auto;font-variant-numeric:tabular-nums}\n.portal-nav-badge[hidden]", "line-height:1;margin-left:6px;\n  flex:0 0 auto;font-variant-numeric:tabular-nums}\n.portal-nav-badge[hidden]", 1],
+ ["Setup's dot goes back to 18px after the word", "portalcss", ".pm-navdot{display:inline-grid;place-items:center;min-width:20px;height:20px;box-sizing:border-box;\n  margin-left:auto;", ".pm-navdot{display:inline-grid;place-items:center;min-width:18px;height:18px;box-sizing:border-box;\n  margin-left:6px;", 1],
+ ["Setup's number gets smaller type", "portalcss", "  font-size:11.5px;font-weight:700;line-height:1;flex:0 0 auto;font-variant-numeric:tabular-nums}", "  font-size:10px;font-weight:700;line-height:1;flex:0 0 auto;font-variant-numeric:tabular-nums}", 1],
+ ["the sidebar gets too narrow for its labels", "portalcss", "  grid-template-columns: 248px minmax(0, 1fr);", "  grid-template-columns: 150px minmax(0, 1fr);", 1],
+ ["menu labels may wrap", "portalcss", "  font-size:var(--fs-lg);\n  white-space: nowrap;\n  min-width: 0;\n}", "  font-size:var(--fs-lg);\n  white-space: normal;\n  min-width: 0;\n  max-width: 120px;\n}", 1]
+]
