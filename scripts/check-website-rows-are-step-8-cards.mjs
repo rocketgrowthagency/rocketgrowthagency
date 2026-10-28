@@ -137,6 +137,8 @@ has("live", /Live · read back from the site/, "live doesn't say it was read bac
 // auto_live_and_proof_v1: the Proof box — 9 of 9 only from the record; a line not proven is grey, never a tick
 has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
 has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");
+has("ghLiveProven", /Live · proven/, "a fully proven change isn't labelled \"Live · proven\" (mockup C)"); has("ghLiveProven", /acme\.test = their record = their approval/, "the Proof's website line isn't the mockup's \"= their record = their approval\"");
+if (/Live · proven/.test(out.ghLivePartial.text)) fail("a change with missing proof is labelled \"Live · proven\"");
 if (out.ghLivePartial.proofUnk !== 6 || /9 of 9/.test(out.ghLivePartial.text) || !/not recorded \(merged before this was built, or not deleted\)/.test(out.ghLivePartial.text) || !/not fingerprinted/.test(out.ghLivePartial.text)) fail("a change with missing proof still shows 9 of 9 / ticks (a line not proven must be grey with why)"); loopIs("live", ["done", "done", "done", "done", "done"], "live and read back → every stop ticked"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
 has("right", /Already right · nothing needed changing/, "already right isn't said"); if (out.right.pill !== "Already right") fail("already right: chip isn't \"Already right\"");
 // the prefill reads a run's field in EITHER shape a run writes it ("H1: words" or "**H1**" + the words on the next line)

@@ -152,5 +152,12 @@
   "    [!!m.branch_deleted_at, \"The branch tidied\",",
   "    [true, \"The branch tidied\",",
   1
+ ],
+ [
+  "'Live · proven' without all nine",
+  "admin",
+  "proven ? \"Live · proven\" : p.checked === true",
+  "true ? \"Live · proven\" : p.checked === true",
+  1
  ]
 ]
