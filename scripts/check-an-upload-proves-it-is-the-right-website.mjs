@@ -100,9 +100,25 @@ if (!PS.prHoldsOnly([{ path: "rga-access-test/index.html", action: "add" }], bui
   const GA = req(`${SITE}/netlify/functions/_github-access.js`), del = []; const f = async (u, i = {}) => { del.push(`${i.method || "GET"} ${u}`); return new Response(null, { status: 204 }); };
   if ((await GA.deleteBranch("t", f, { repo: "acme/site", branch: "main" })).ok || del.length) fail("RGA would delete a branch it didn't make (main)");
   if (!(await GA.deleteBranch("t", f, { repo: "acme/site", branch: "rga/add-page-x1" })).ok || !del.some((x) => /DELETE .*\/git\/refs\/heads\/rga\/add-page-x1$/.test(x))) fail("RGA doesn't delete its own branch after the merge");
+  // the branch tidy says HOW (Chris 10-28 "why is this step not green"): 204 deleted now · 422 GitHub has none (already gone) · else not tidied
+  { const st = (code) => async () => new Response(null, { status: code });
+    const d204 = await GA.deleteBranch("t", st(204), { repo: "acme/site", branch: "rga/x1" }), d422 = await GA.deleteBranch("t", st(422), { repo: "acme/site", branch: "rga/x1" }), d403 = await GA.deleteBranch("t", st(403), { repo: "acme/site", branch: "rga/x1" });
+    if (d204.how !== "deleted" || !d204.ok) fail("a deleted branch isn't recorded as deleted");
+    if (d422.how !== "already_gone" || !d422.ok) fail("a branch GitHub no longer has isn't recorded as already gone");
+    if (d403.ok || d403.how) fail("a branch GitHub refused to delete is counted as tidied"); }
   let W; try { W = req(`${SITE}/netlify/functions/site-publish-watch.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — the watcher won't load: ${e.message}`); process.exit(2); }
   const SCx = req(`${SITE}/shared/site-change.js`), T2 = "m1.access.publish_test", chg = { v: "v1", kind: "visible", new_page: true, label: "add_page", items: [{ label: "Main headline", after: "x" }] };
   const base2 = { site_change: chg, internal_review: { decision: "approved", change_v: "v1", at: AT }, approval: { decision: "approved", change_v: "v1", at: AT } };
+  // the watcher tidies a merged change's rga/ branch, live or not; never one already tidied, never a branch RGA didn't open, never before the merge
+  { const live = { ...base2, status: "done", published: { v: "v1", at: AT } };
+    if (W.untidyKeys({ [T2]: { ...live, publish_pr: { v: "v1", number: 2, branch: "rga/add-x", merged: { at: AT } } } }).join() !== T2) fail("the watcher doesn't tidy a merged change's branch (live already)");
+    if (W.untidyKeys({ [T2]: { ...live, publish_pr: { v: "v1", number: 2, branch: "rga/add-x", merged: { at: AT, branch_deleted_at: AT } } } }).length) fail("the watcher tidies a branch already recorded as tidied");
+    if (W.untidyKeys({ [T2]: { ...live, publish_pr: { v: "v1", number: 2, branch: "main", merged: { at: AT } } } }).length) fail("the watcher would touch a branch RGA didn't open");
+    if (W.untidyKeys({ [T2]: { ...base2, publish_pr: { v: "v1", number: 2, branch: "rga/add-x" } } }).length) fail("the watcher would tidy a branch before the merge"); }
+  if (!/for \(const key of untidyKeys\(\(row\.data \|\| \{\}\)\.tasks\)\) \{\s*const tidy = await call\(row\.client_id, key, "tidy_branch"\)/.test(read("netlify/functions/site-publish-watch.js"))) fail("the watcher never asks for the branch to be tidied");
+  { const AD = read("netlify/functions/admin-deliverables.js");
+    if (!/if \(act === "tidy_branch"\) \{[\s\S]{0,900}?if \(!\/\^rga\\\/\[a-z0-9-\]\+\$\/i\.test\(String\(pr\.branch/.test(AD)) fail("tidy_branch doesn't refuse a branch RGA didn't open");
+    if (!/: act === "tidy_branch" \? saved\?\.publish_pr\?\.merged\?\.branch_deleted_at === t\.publish_pr\.merged\.branch_deleted_at/.test(AD)) fail("tidy_branch isn't read back"); }
   if (W.waitingKeys({ [T2]: { ...base2, publish_pr: { v: "v1", number: 2, merged: { at: AT } } } }).join() !== T2) fail("the watcher doesn't pick up a merged change that isn't live yet");
   if (W.waitingKeys({ [T2]: { ...base2, publish_pr: { v: "v1", number: 2 } } }).length) fail("the watcher would mark live a change that isn't merged");
   if (W.waitingKeys({ [T2]: { ...base2, status: "done", publish_pr: { v: "v1", number: 2, merged: { at: AT } }, published: { v: "v1", at: AT } } }).length || SCx.changeState({ ...base2, published: { v: "v1", at: AT } }) !== "live") fail("the watcher would mark live a change that's already live");

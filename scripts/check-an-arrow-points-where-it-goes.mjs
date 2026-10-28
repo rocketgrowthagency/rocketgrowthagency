@@ -63,7 +63,6 @@ const LEAVES = [
   { needle: 'google_by_hand: "Open Business Profile ↗"', why: "the To do verb for a by-hand Google change: drawn only as the mvNaHtml / To do anchor to business.google.com, target=_blank" },
   { needle: '<a id="adminNextActionGbp" class="admin-button" href="https://business.google.com/" target="_blank"', why: "Your action's Open Business Profile, target=_blank" },
   { needle: 'target="_blank" rel="noopener">View on GitHub ↗</a>', why: "admin step 8 website change: the pull request on GitHub, target=_blank (merge_without_the_browser_v1)" },
-  { needle: 'target="_blank" rel="noopener">Open the page ↗</a>', why: "admin step 8 live change: the page on the client's site, target=_blank (auto_live_and_proof_v1)" },
   { needle: 'title="Click it in the access@ Chrome profile">Open ${escapeHtml(nm)} invite in access@ ↗</a>', why: "admin step 8: the builder's invite, opened in the access@ profile, target=_blank" },
   { needle: 'target="_blank" rel="noopener">Open on GitHub ↗</a>', why: "admin step 8: the repository's invitations on GitHub, target=_blank" },
   { needle: '<a href="https://github.com/${escapeAttribute(acc.repo)}" target="_blank" rel="noopener">${escapeHtml(acc.repo)} ↗</a>', why: "admin step 8: the client's repository on GitHub, target=_blank" },

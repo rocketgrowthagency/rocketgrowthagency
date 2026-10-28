@@ -243,5 +243,40 @@
   "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}), ...(noindexSeen !== null ? { noindex: noindexSeen } : {}) };",
   "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };",
   1
+ ],
+ [
+  "the watcher never tidies the branch",
+  "publishwatch",
+  "const tidy = await call(row.client_id, key, \"tidy_branch\");",
+  "const tidy = { ok: true };",
+  1
+ ],
+ [
+  "an already-gone branch reads as deleted",
+  "ghaccess",
+  "how: r.status === 422 ? \"already_gone\"",
+  "how: r.status === 422 ? \"deleted\"",
+  1
+ ],
+ [
+  "the watcher re-tidies a tidied branch",
+  "publishwatch",
+  "return !!(m && m.at && !m.branch_deleted_at && /^rga",
+  "return !!(m && m.at && /^rga",
+  1
+ ],
+ [
+  "tidy_branch would delete a branch RGA didn't open",
+  "admindeliv",
+  "      if (!/^rga\\/[a-z0-9-]+$/i.test(String(pr.branch || \"\"))) return json(409, { error: \"That branch isn't one RGA opened, so RGA leaves it alone.\" });\n",
+  "",
+  1
+ ],
+ [
+  "tidy_branch isn't read back",
+  "admindeliv",
+  ": act === \"tidy_branch\" ? saved?.publish_pr?.merged?.branch_deleted_at === t.publish_pr.merged.branch_deleted_at",
+  ": act === \"tidy_branch\" ? true",
+  1
  ]
 ]

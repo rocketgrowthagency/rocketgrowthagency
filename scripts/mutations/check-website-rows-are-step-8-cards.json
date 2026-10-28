@@ -257,5 +257,26 @@
   "border-radius:10px; padding:16px 18px; display:grid; gap:0; align-content:start; }",
   "border-radius:10px; padding:10px 12px; display:grid; gap:0; align-content:start; }",
   1
+ ],
+ [
+  "the live card's link loses its eye (back to Open the page ↗)",
+  "admin",
+  "class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>",
+  "class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>",
+  1
+ ],
+ [
+  "the Checking badge draws a second circle",
+  "admin",
+  "if (v.loading) return `<span class=\"ob-ghv unk\"><span><span class=\"vt\">Checking GitHub…</span>",
+  "if (v.loading) return `<span class=\"ob-ghv unk\"><span class=\"vi\" aria-hidden=\"true\"></span><span><span class=\"vt\">Checking GitHub…</span>",
+  1
+ ],
+ [
+  "an untidied branch claims it was tidied",
+  "admin",
+  ": m.at ? \"not yet: checked again within 5 minutes\" : \"not merged\"],",
+  ": m.at ? \"tidied\" : \"not merged\"],",
+  1
  ]
 ]
