@@ -24,7 +24,7 @@ const lift = (name) => {
   for (const l of lines) { out.push(l); for (const ch of l) { if (ch === "{") depth++; else if (ch === "}") depth--; } if (depth <= 0 && /[;}]\s*$/.test(l)) break; }
   return out.join("\n");
 };
-const code = ["IB_SVG", "IB_ICON", "IB_LABELS", "ibLabelHtml", "FYA_SURF", "fyaSurf", "ibIcon", "ibTitle", "ibSub", "fyaReceiptHtml", "fyaHtml"].map(lift).join("\n");
+const code = ["IB_SVG", "IB_ICON", "IB_LABELS", "ibLabelHtml", "FYA_SURF", "fyaSurf", "ibIcon", "ibTitle", "ibSub", "fyaSafetyHtml", "fyaReceiptHtml", "fyaHtml"].map(lift).join("\n");
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
 
 const AT = "2026-10-28T16:01:29Z", T = "m1.access.publish_test";

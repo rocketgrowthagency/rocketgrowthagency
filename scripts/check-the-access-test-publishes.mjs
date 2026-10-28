@@ -65,6 +65,7 @@ if (!/if \(act === "open_pr"\) \{\s*if \(st !== "approved"\) return json\(409/.t
 if (!/if \(!acc\.repo\) return json\(409/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409/.test(AD)) fail("open_pr runs without GitHub access, or not as RGA Admin");
 if (!/noindex: true \}\);/.test(AD)) fail("the test page isn't hidden from Google");
 if (!/\$\{accessDoneMiniHtml\(s\.task, ask\)\}\$\{accessTestHtml\(s\.task\)\}/.test(A) || !/Prove we can publish/.test(A)) fail("admin row 8 doesn't show \"Prove we can publish\"");
-if (!/data-ob-wc-pr>Open the pull request</.test(A) || !/data-ob-wc-prstate>Check the merge</.test(A)) fail("the approved test card has no Open the pull request / Check the merge");
+// 🔄 publish_safety_checks_v1 (10-28): the button is OFF until the six safety checks pass
+if (!/data-ob-wc-pr\$\{sf && sf\.ready \? "" : " disabled"\}>Open the pull request</.test(A) || !/data-ob-wc-prstate>Check the merge</.test(A)) fail("the approved test card has no Open the pull request / Check the merge");
 if (F.length) { console.error(`❌ the access test can't prove publishing — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ the access test proves publishing: the page builds on the real homepage (new title, canonical, noindex; the homepage's own words gone); a pull request is branch → exactly the approved file → PR, never merged by itself; no write / existing file → nothing written; only after the client approved, on GitHub access, as RGA Admin; row 8 shows it");

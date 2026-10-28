@@ -1,0 +1,149 @@
+[
+ [
+  "the repo check passes anything",
+  "pubsafety",
+  "      if (rt && lt) { repoIsSite = rt === lt;",
+  "      if (rt && lt) { repoIsSite = true;",
+  1
+ ],
+ [
+  "a repo we can't check counts as checked",
+  "pubsafety",
+  "  if (repoIsSite === null && conf) { repoIsSite = true; how = `confirmed by ${conf.by}`; }",
+  "  if (repoIsSite === null) { repoIsSite = true; how = \"assumed\"; }",
+  1
+ ],
+ [
+  "a confirmation for any repo counts",
+  "pubsafety",
+  "const conf = t.repo_confirmed && t.repo_confirmed.repo === acc.repo ? t.repo_confirmed : null;",
+  "const conf = t.repo_confirmed || null;",
+  1
+ ],
+ [
+  "the website check ignores the address",
+  "pubsafety",
+  "const sameSite = !!site && !!pageHost && site === pageHost;",
+  "const sameSite = !!site;",
+  1
+ ],
+ [
+  "an older version's approval passes",
+  "pubsafety",
+  "const appr = !!(a && a.decision === \"approved\" && a.change_v === c.v);",
+  "const appr = !!(a && a.decision === \"approved\");",
+  1
+ ],
+ [
+  "any GitHub account passes",
+  "pubsafety",
+  "add(\"admin\", !!me.ok,",
+  "add(\"admin\", true,",
+  1
+ ],
+ [
+  "fingerprints aren't compared",
+  "pubsafety",
+  "bld.files.every((f) => okd.some((o) => o.path === f.path && o.action === f.action && o.sha === f.sha)))",
+  "bld.files.every((f) => okd.some((o) => o.path === f.path)))",
+  1
+ ],
+ [
+  "allOk counts a 'couldn't check' as a pass",
+  "pubsafety",
+  "checks.every((x) => x.ok === true)",
+  "checks.every((x) => x.ok !== false)",
+  1
+ ],
+ [
+  "an extra file in the PR passes",
+  "pubsafety",
+  "return { ok: !extra.length && !missing.length, extra, missing };",
+  "return { ok: !missing.length, extra, missing };",
+  1
+ ],
+ [
+  "any merger is expected",
+  "pubsafety",
+  "const ok = !!by && (by.toLowerCase() === owner.toLowerCase() ||",
+  "const ok = !!by && (true ||",
+  1
+ ],
+ [
+  "the after-check crawls afresh",
+  "pubsafety",
+  "const urls = ((before && before.pages) || []).filter((p) => p.read).map((p) => p.url);",
+  "const urls = [...((before && before.pages) || []).filter((p) => p.read).map((p) => p.url), \"https://www.acme.test/sitemap.xml\"];",
+  1
+ ],
+ [
+  "a page that 404s is just unread",
+  "pubsafety",
+  "if (!p.read) { if (/^http_(404|410)$/.test(p.why || \"\"))",
+  "if (!p.read) { if (false)",
+  1
+ ],
+ [
+  "nothing readable counts as nothing changed",
+  "pubsafety",
+  "return { ok: changed.length ? false : read ? true : null, changed, unread, read };",
+  "return { ok: changed.length ? false : true, changed, unread, read };",
+  1
+ ],
+ [
+  "only the title is compared",
+  "pubsafety",
+  "const what = [\"title\", \"h1\", \"description\", \"canonical\"].filter(",
+  "const what = [\"h1\"].filter(",
+  1
+ ],
+ [
+  "the PR opens without the six checks",
+  "admindeliv",
+  "      if (!PS.allOk(checks)) { const f0",
+  "      if (false) { const f0",
+  1
+ ],
+ [
+  "the PR opens without a before-snapshot",
+  "admindeliv",
+  "if (!snap0 || !(snap0.read > 0) || !snap0.at || Date.now() - Date.parse(snap0.at) > 864e5) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "a PR with extra files stays open",
+  "admindeliv",
+  "      if (!held || !held.ok) {\n        await GA.closePullRequest",
+  "      if (false) {\n        await GA.closePullRequest",
+  1
+ ],
+ [
+  "Mark live without the merge",
+  "admindeliv",
+  "        if (!s1.merged) return json(409,",
+  "        if (false) return json(409,",
+  1
+ ],
+ [
+  "the client is told 'rest unchanged' before it's checked",
+  "portaldeliv",
+  "rest: t.publish_after ? (t.publish_after.ok === true ? true :",
+  "rest: true ? (true ? true :",
+  1
+ ],
+ [
+  "the portal shows the rest line without a pass",
+  "portal",
+  "  if (s.rest === true) rows.push(",
+  "  if (s.rest !== false) rows.push(",
+  1
+ ],
+ [
+  "admin's button is never off",
+  "admin",
+  "data-ob-wc-pr${sf && sf.ready ? \"\" : \" disabled\"}>Open the pull request",
+  "data-ob-wc-pr>Open the pull request",
+  1
+ ]
+]

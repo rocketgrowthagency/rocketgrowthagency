@@ -25,7 +25,9 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
   line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
-  line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
+  // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
+  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }

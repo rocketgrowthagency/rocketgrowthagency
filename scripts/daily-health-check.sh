@@ -535,6 +535,7 @@ run check-every-website-change-is-built-labelled-approved.mjs "the hard rule: ev
 run check-the-nav-badge-matches-the-mockup.mjs "the client menu's number badges = the mockup's solid circle (approval_tab_and_sent_card_v1), and no menu label ever wraps (\"For your approval\" split once)"
 run check-an-approval-shows-its-receipt.mjs "after Approve the client sees the receipt (approval_confirmed_v1): what, who, the exact version, what happens next; never \"Nothing is waiting\" or \"You asked for a change\""
 run check-admin-fixes-1028-hold.mjs "admin_fixes_1028_v1: an approved website change is RGA's move; Check Google now never writes to Google; the plain file list; no \"row\" in admin text"
+run check-an-upload-proves-it-is-the-right-website.mjs "publish_safety_checks_v1: six checks before any pull request, its files read back, who merged, the rest of their site re-read after live"
 run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
 run check-website-change-approvals.mjs "every website change goes through For your approval: all Month 1 website steps; draft → send → the client approves THAT version → Mark live reads the page back → done; no run or Mark done skips it; the inbox"
 run check-site-snapshot.mjs "before-snapshot + access ledger: read-only snapshot of the client's public pages (sitemap, top pages first, capped, blocked pages with a reason), re-read before write, removal recorded with when + how"
