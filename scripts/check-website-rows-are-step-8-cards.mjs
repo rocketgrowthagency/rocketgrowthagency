@@ -39,6 +39,7 @@ const S = {
   ready: { task: { status: "in_progress", ...ran }, pre: change },
   failed: { task: { status: "in_progress", auto_result: { summary: "The draft broke the page rules, so nothing was saved:\n- not JSON", ran_at: NOW, outcome_data: { problems: ["the answer wasn't the page's words (not JSON)"] } } }, pre: { items: [] } },
   editing: { task: { status: "in_progress", ...ran }, pre: change, edit: true },
+  unread: { task: { status: "in_progress", ...ran }, pre: { items: [], read_failed: true } },
   drafted: { task: { status: "in_progress", site_change: change } },
   sent: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW } } },
   changes: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "changes_requested", change_v: "v1", at: NOW, note: "Keep the button as See Where You Rank Free" } } },
@@ -81,7 +82,7 @@ if (out.ready.buttons.filter((b) => b === "Send for approval").length !== 1 || !
 if (out.ready.textareas || out.ready.inputs) fail("draft ready: shows form boxes before you press Edit");
 if (!/Rank Higher on Google Maps[\s\S]*→[\s\S]*Local SEO That Puts Your Business on the Map/.test(out.ready.text)) fail("draft ready: the lines aren't Now → After");
 has("ready", /says “Guarantee”: a guarantee we can't back/, "\"60-Day Guarantee\" isn't flagged before sending"); if (out.ready.pill !== "Draft ready") fail("draft ready: the row's chip isn't \"Draft ready\"");
-has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"); if (!out.failed.buttons.includes("⚡ Draft again")) fail("a failed draft has no Draft again");
+has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"); has("unread", /Couldn't read the draft/, "a draft we couldn't LOAD is called a bad draft"); if (!out.unread.buttons.includes("Try again") || /didn't come out right/.test(out.unread.text)) fail("couldn't read: no Try again, or it says the draft is bad"); if (!out.failed.buttons.includes("⚡ Draft again")) fail("a failed draft has no Draft again");
 if (out.editing.inputs) fail(`editing: shows ${out.editing.inputs} Kind / Where / address input(s) (the step sets them)`);
 if (out.editing.textareas !== 3 || !/Now: “Rank Higher on Google Maps/.test(out.editing.text) || !out.editing.buttons.includes("Save and send for approval") || !out.editing.buttons.includes("Cancel")) fail("editing: not one box per line with today's words above it, Save and send + Cancel");
 has("drafted", /Your move · send it/, "a saved draft isn't \"send it\"");
@@ -90,6 +91,13 @@ has("changes", /The client asked for a change/, "the client's ask isn't shown");
 has("approved", /Publish exactly what they approved, then Mark live/, "approved isn't \"publish\""); if (!out.approved.buttons.includes("Mark live")) fail("approved: no Mark live"); if (out.approved.pill !== "Publish") fail("approved: chip isn't \"Publish\"");
 has("live", /They approved it[\s\S]*Published[\s\S]*Read back from the live page/, "live doesn't show its checks"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
 has("right", /Already right · nothing needed changing/, "already right isn't said"); if (out.right.pill !== "Already right") fail("already right: chip isn't \"Already right\"");
+// the prefill reads a run's field in EITHER shape a run writes it ("H1: words" or "**H1**" + the words on the next line)
+{ const AD = read("netlify/functions/admin-deliverables.js"), i = AD.indexOf("  const line = (re) => {"), j = AD.indexOf("  let html = \"\";", i);
+  if (i < 0 || j < 0) { console.error("⚠️  INDETERMINATE — the prefill reader moved"); process.exit(2); }
+  const f = new Function("draft", `${AD.slice(i, j)}; return [line(/H1:\\s*(.+)/i), line(/PRIMARY_CTA:\\s*(.+)/i), line(/TITLE:\\s*(.+)/i)];`);
+  const a1 = f("Here is the hero:\n---\n**H1**\nLocal SEO That Puts Your Business on the Map\n**PRIMARY_CTA**\nGet Your Free Audit"), a2 = f("TITLE: SEO Company in Culver City | RGA");
+  if (a1[0] !== "Local SEO That Puts Your Business on the Map" || a1[1] !== "Get Your Free Audit") fail("a \"**H1**\" + next-line draft fills nothing (row 43's September draft read as \"didn't come out right\")");
+  if (a2[2] !== "SEO Company in Culver City | RGA") fail("a \"TITLE: words\" draft no longer fills"); }
 // the wiring the browser can't see
 if (!/if \(t\.hasAttribute\("data-ob-wc-savesend"\)\) \{/.test(A) || !/site_action: "save", change: pre \}\);[\s\S]{0,200}internal_decision: "approved"/.test(A)) fail("Send for approval on a draft doesn't save it and send it");
 if (!/\$\{gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");

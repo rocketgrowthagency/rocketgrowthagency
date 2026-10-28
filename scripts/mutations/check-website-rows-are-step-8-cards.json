@@ -68,5 +68,19 @@
   ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 14px 12px 62px; }\n",
   "",
   1
+ ],
+ [
+  "couldn't read reads as a bad draft",
+  "admin",
+  "    if (pre.read_failed) return wrap(",
+  "    if (false) return wrap(",
+  1
+ ],
+ [
+  "the prefill reads only the colon shape",
+  "admindeliv",
+  "    const key = String(re.source).match(/^([A-Z_0-9]+)/); if (!key) return \"\";",
+  "    const key = null; if (!key) return \"\";",
+  1
  ]
 ]
