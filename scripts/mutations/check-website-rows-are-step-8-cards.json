@@ -131,5 +131,12 @@
   "  const prev = bd && bd.preview_url ?",
   "  const prev = false ?",
   1
+ ],
+ [
+  "the trip's names stop sitting level",
+  "admincss",
+  "justify-items:center; align-content:start; text-align:center;",
+  "justify-items:center; text-align:center;",
+  1
  ]
 ]

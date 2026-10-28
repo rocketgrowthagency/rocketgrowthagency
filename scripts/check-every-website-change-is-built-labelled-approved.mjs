@@ -66,6 +66,15 @@ const fake = (exists) => { const calls = []; const J = (b, s = 200) => new Respo
   const sig2 = crypto.createHmac("sha256", "gate-secret").update(`${C}|${V}`).digest("hex").slice(0, 32);
   const nok = await H({ queryStringParameters: { c: C, v: V, s: sig2 } });
   if (nok.statusCode !== 200 || !/It goes live only after you approve it\./.test(nok.body)) fail(`a preview link without the step id doesn't open (${nok.statusCode})`);
+  // 10-28 (Chris, from admin): the bar speaks to whoever is looking — RGA (a=1) or the client once they've approved
+  const adm = await H({ queryStringParameters: { c: C, v: V, s: sig2, a: "1" } });
+  if (!/RGA preview · the exact file that uploads/.test(adm.body) || !/<a href="https:\/\/[^"]+\/admin\/\?view=client&id=[^"]+&tab=onboarding-v2" target="_top"[^>]*>Back to admin<\/a>/.test(adm.body) || /Back to approve/.test(adm.body)) fail("RGA's preview tells RGA to approve it (it must say the exact file that uploads + Back to admin)");
+  { const prevFetch = globalThis.fetch;
+    globalThis.fetch = async (u) => { u = String(u); if (u.includes("client_onboarding_records")) return new Response(JSON.stringify([{ data: { tasks: { [T]: { site_change: { v: "cv1" }, approval: { decision: "approved", change_v: "cv1", at: "2026-10-28T16:01:29Z" }, site_build: { v: V, files: [{ path: "a/index.html", html: "<html><head><title>T</title></head><body><main>x</main></body></html>" }] } } } } }]), { status: 200 });
+      if (u.includes("/clients?")) return new Response(JSON.stringify([{ website_url: "https://www.acme.test/" }]), { status: 200 }); return new Response("[]", { status: 200 }); };
+    const apd = await H({ queryStringParameters: { c: C, v: V, s: sig2 } });
+    if (!/you approved this page on Oct 28\. RGA is putting it on your website\./.test(apd.body) || /Back to approve</.test(apd.body)) fail("after the client approved, the preview still asks them to approve it");
+    globalThis.fetch = prevFetch; }
   const nbad = await H({ queryStringParameters: { c: C, v: V, s: sig } });
   if (nbad.statusCode !== 403) fail("a step-less preview link opens with the OLD signature (it must be signed over client|version)"); }
 const PDX = read("netlify/functions/portal-deliverables.js");

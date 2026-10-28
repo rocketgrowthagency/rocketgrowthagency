@@ -73,6 +73,9 @@ if ((A.match(/\+ wcChgHtml\(c\)/g) || []).length < 2 || /function wcNewPageHtml[
 // step 28 (Chris 10-28 "does step 28 match mockup?"): the count once — on the place list, not again under the card's title
 if (!/side: \(g\.rga \|\| \[\]\)\.every\(\(x\) => x\.fact === "area"\) \? "" :/.test(A)) fail("step 28 says \"0 of 3 on Google\" twice (under the card title and above the list)");
 
+// 10-28 10:09 spacing: a done step's card never touches the step's header band
+if (!/\.ob-done-card \{ padding:12px 16px 14px 16px; \}/.test(read("admin/admin.css"))) fail("a done step's card touches the step's header band again (no top padding)");
+
 // ── D · no "row" in admin text ─────────────────────────────────────────────────────────────────
 const bad = A.split("\n").map((l, i) => [i + 1, l]).filter(([, l]) => !/^\s*(\/\/|\*|\/\*)/.test(l)).map(([n, l]) => [n, l.replace(/\s\/\/\s.*$/, "")])
   .filter(([, l]) => /[`"'>][^`"'<]*(?<![\w-])(?:[Rr]ow (?:\d+|\$\{)|Open row\b|(?:on|until) this row\b)/.test(l));   // "mv-row ${…}" is a class name

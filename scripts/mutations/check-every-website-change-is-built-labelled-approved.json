@@ -93,7 +93,7 @@
  [
   "Back to approve becomes a relative link (lands on their site)",
   "sitepreview",
-  "  const portal = `${String(process.env.URL || \"https://www.rocketgrowthagency.com\").replace(/\\/+$/, \"\")}/portal/#for-your-approval`;",
+  "  const portal = `${ORIGIN}/portal/#for-your-approval`;",
   "  const portal = `/portal/#for-your-approval`;",
   1
  ],
@@ -123,6 +123,20 @@
   "sitepreview",
   ".update(k ? `${c}|${k}|${v}` : `${c}|${v}`)",
   ".update(`${c}|${k}|${v}`)",
+  1
+ ],
+ [
+  "RGA's preview asks RGA to approve it",
+  "sitepreview",
+  "  const [say, go, label] = q.a === \"1\"",
+  "  const [say, go, label] = false",
+  1
+ ],
+ [
+  "an approved page's preview still says approve it",
+  "sitepreview",
+  "    : ap ? [`Preview · you approved this page on ${day(ap.at)}.",
+  "    : false ? [`Preview · you approved this page on ${day(ap.at)}.",
   1
  ]
 ]

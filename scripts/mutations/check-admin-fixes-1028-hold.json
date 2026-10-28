@@ -89,5 +89,12 @@
   "side: (g.rga || []).every((x) => x.fact === \"area\") ? \"\" : allN",
   "side: false ? \"\" : allN",
   1
+ ],
+ [
+  "the done card touches the header again",
+  "admincss",
+  ".ob-done-card { padding:12px 16px 14px 16px; }",
+  ".ob-done-card { padding:0 16px 14px 16px; }",
+  1
  ]
 ]
