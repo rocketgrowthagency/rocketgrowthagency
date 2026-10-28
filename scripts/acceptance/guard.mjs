@@ -49,7 +49,10 @@ export const READ_ONLY_FN_POSTS = {
   "admin-open-moves": onlyKeys(["client_id"]),
   // admin-deliverables.js site_action "prefill" (admin_website_steps_v1, 10-27) — reads the live page + the step's run and RETURNS
   // the draft lines; it returns before any write (save / publish / no_change stay blocked). The website row reads it on its own.
-  "admin-deliverables": (b) => onlyKeys(["client_id", "key", "site_action"])(b) && b.site_action === "prefill",
+  // site_action "safety" (publish_safety_checks_v1, 10-28) — six read-only checks against GitHub + the live site; returns before any write
+  "admin-deliverables": (b) => onlyKeys(["client_id", "key", "site_action"])(b) && (b.site_action === "prefill" || b.site_action === "safety"),
+  // admin-github-connection.js (auto_live_and_proof_v1, 10-28) — the VERIFIED badge: whoAmI + our role + the repo's own files; writes nothing
+  "admin-github-connection": onlyKeys(["client_id"]),
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the
