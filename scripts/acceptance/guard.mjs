@@ -47,6 +47,9 @@ export const READ_ONLY_FN_POSTS = {
   "portal-site-platform": onlyKeys(["client_id"]),
   // admin-open-moves.js (todo_inbox_v1, 10-26) — reads every client's open moves (or one, by client_id); writes nothing
   "admin-open-moves": onlyKeys(["client_id"]),
+  // admin-deliverables.js site_action "prefill" (admin_website_steps_v1, 10-27) — reads the live page + the step's run and RETURNS
+  // the draft lines; it returns before any write (save / publish / no_change stay blocked). The website row reads it on its own.
+  "admin-deliverables": (b) => onlyKeys(["client_id", "key", "site_action"])(b) && b.site_action === "prefill",
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the
