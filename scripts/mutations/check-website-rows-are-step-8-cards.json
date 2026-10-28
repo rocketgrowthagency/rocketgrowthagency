@@ -16,8 +16,8 @@
  [
   "the guarantee isn't flagged",
   "admin",
-  "      body: wcDiffHtml(pre) + wcRiskHtml(pre) +",
-  "      body: wcDiffHtml(pre) +",
+  "wcDiffHtml(pre) + wcRiskHtml(pre) +",
+  "wcDiffHtml(pre) +",
   1
  ],
  [

@@ -58,7 +58,7 @@
  [
   "a new page saves without its file",
   "sitechange",
-  "    if (def.newPage && !files.some((f) => f.action === \"add\")) return",
+  "    if (def.newPage && !c.removes_page && !files.some((f) => f.action === \"add\")) return",
   "    if (false) return",
   1
  ],
@@ -86,7 +86,7 @@
  [
   "the client card hides every file",
   "portal",
-  "<span>Every file that changes</span>",
+  "<span>What changes on your website</span>",
   "<span>Files</span>",
   1
  ],

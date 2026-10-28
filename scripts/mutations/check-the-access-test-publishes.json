@@ -37,8 +37,8 @@
  [
   "an existing file is overwritten",
   "ghaccess",
-  "    if (ex.ok) return { ok: false, state: \"file_exists\"",
-  "    if (false) return { ok: false, state: \"file_exists\"",
+  "    else if (ex.ok) return { ok: false, state: \"file_exists\"",
+  "    else if (false) return { ok: false, state: \"file_exists\"",
   1
  ],
  [

@@ -1,0 +1,86 @@
+[
+ [
+  "a code change is labelled as editing a page",
+  "sitechange",
+  "    if (c.kind === \"code\") return \"code\";\n",
+  "",
+  1
+ ],
+ [
+  "a removal is labelled as an edit",
+  "sitechange",
+  "    if (c.removes_page || f.some((x) => x.action === \"remove\" && page(x))) return \"remove_page\";\n",
+  "",
+  1
+ ],
+ [
+  "Send doesn't build",
+  "admindeliv",
+  "      if (b && b.error) return json(409, { error: `The page couldn't be built, so nothing was sent",
+  "      if (false) return json(409, { error: `The page couldn't be built, so nothing was sent",
+  1
+ ],
+ [
+  "approval forgets the build",
+  "portaldeliv",
+  "      if (bd) tasks[key].approval.approved_build = bd.files.map((f) => ({ path: f.path, action: f.action, sha: f.sha }));",
+  "      if (false) tasks[key].approval.approved_build = [];",
+  1
+ ],
+ [
+  "uploads a build nobody approved",
+  "admindeliv",
+  "      if (!same) return json(409, { error: \"What's built isn't what the client approved",
+  "      if (false) return json(409, { error: \"What's built isn't what the client approved",
+  1
+ ],
+ [
+  "a removal is never proven gone",
+  "admindeliv",
+  "          if (stillThere && !String(body.unchecked_reason || \"\").trim()) return json(409,",
+  "          if (false) return json(409,",
+  1
+ ],
+ [
+  "the preview opens without the signature",
+  "sitepreview",
+  "  if (!process.env.INTERNAL_FN_SECRET || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(s))) return page(403,",
+  "  if (false) return page(403,",
+  1
+ ],
+ [
+  "the preview is indexed",
+  "sitepreview",
+  "\"Content-Type\": \"text/html; charset=utf-8\", \"X-Robots-Tag\": \"noindex, nofollow\", \"Cache-Control\": \"no-store\", \"Referrer-Policy\": \"no-referrer\" }, body: html };",
+  "\"Content-Type\": \"text/html; charset=utf-8\", \"Cache-Control\": \"no-store\", \"Referrer-Policy\": \"no-referrer\" }, body: html };",
+  1
+ ],
+ [
+  "the Approve button loses its verb",
+  "portal",
+  "c && IB_LABELS[c.label] ? `Approve ${IB_LABELS[c.label].verb}` : ",
+  "",
+  1
+ ],
+ [
+  "To do drops For your approval",
+  "portal",
+  "(apprN.length ? `<h3 class=\"ap-grp-head ib-fya\" id=\"for-your-approval\">For your approval · ${apprN.length}</h3>${apprN.map(row).join(\"\")}` : \"\")",
+  "(apprN.length ? apprN.map(row).join(\"\") : \"\")",
+  1
+ ],
+ [
+  "§5A leaves the agreement",
+  "contractgen",
+  "<h2>5A. Website Access and Changes</h2>",
+  "<h2>Website</h2>",
+  1
+ ],
+ [
+  "deleting a file isn't in the PR",
+  "ghaccess",
+  "      ? await gh(`/repos/${repo}/contents/${enc(f.path)}`, { method: \"DELETE\"",
+  "      ? await gh(`/repos/${repo}/contents/${enc(f.path)}`, { method: \"GET\"",
+  1
+ ]
+]
