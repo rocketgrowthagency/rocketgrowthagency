@@ -89,5 +89,19 @@
   "`<div class=\"ob-area-acts\"><button type=\"button\" class=\"admin-button admin-button-secondary\" data-area-check>↻ Check Google now</button>`",
   "`<div class=\"ob-area-acts\">`",
   1
+ ],
+ [
+  "a place's first-seen day moves with every check",
+  "gbpfacts",
+  "items.push({ ...it, on_at: it.on ? (p && p.on && p.on_at) || at || null : null });",
+  "items.push({ ...it, on_at: it.on ? at || null : null });",
+  1
+ ],
+ [
+  "ticked places lose their day",
+  "admin",
+  "`${r.verb === \"Drop\" ? \"off Google\" : \"on Google\"}${escapeHtml(since(r))}`",
+  "`${r.verb === \"Drop\" ? \"off Google\" : \"on Google\"}`",
+  1
  ]
 ]

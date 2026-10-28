@@ -71,10 +71,14 @@ const plan = (...locs) => ({ "m1.strategy.keywords_locations": { outcome_data: {
   const g2 = X.factsFromGoogle({ ...google, serviceArea: { ...google.serviceArea, places: places("Austin, TX, USA", "Round Rock, TX, USA", "Austin, TX 78704, USA", "Cedar Park, TX, USA", "Pflugerville, TX, USA") } });
   const half = X.progressOf(task, g2, "2026-10-17T10:30:00Z");
   if (half.items.filter((x) => x.on).length !== 2 || X.rgaDone(task, g2)) fail(`TX: 2 of 3 on Google isn't 2 of 3 (or is called done) (${JSON.stringify(half.items)})`);
-  const chk = ctx.check({ ...push, area_now: g2.area, area_now_at: "2026-10-17T10:30:00Z" });
+  const chk = ctx.check({ ...push, area_now: g2.area, area_now_at: "2026-10-17T10:30:00Z", progress: half });
+  // admin_fixes_1028_v1 (mockup: "on Google · Oct 29"): a place keeps the day the check FIRST saw it — a later check doesn't move it
+  const later = X.progressOf({ ...task, google_push: { ...push, progress: half } }, g2, "2026-10-20T10:30:00Z");
+  if (later.items.filter((x) => x.on).some((x) => x.on_at !== "2026-10-17T10:30:00Z") || later.items.filter((x) => !x.on).some((x) => x.on_at)) fail(`TX: a place's "on Google since" moves with every check, or a place not on Google has one (${JSON.stringify(later.items)})`);
+  if ((chk.match(/on Google · Oct 17</g) || []).length !== 2) fail("TX: admin's ticked places don't say the day Google first listed them (\"on Google · Oct 17\")");
   // 🔄 admin_fixes_1028_v1 (Chris 10-28 "the check boxes are not clickable"): STATUS rows, never a checkbox look; the count; Check Google now
   if ((chk.match(/class="is-done"/g) || []).length !== 2 || !/>Georgetown<\/span><span class="ob-area-w">not on Google yet</.test(chk) || !/data-area-missing="Georgetown, TX">Georgetown</.test(chk)) fail("TX: admin's checklist doesn't tick the 2 Google lists and offer \"Google doesn't list it\" for the third");
-  if (!/<b>Service area<\/b><small>Google last checked Oct 17, 10:30 AM<\/small>/.test(chk) || /ob-area-box|type="checkbox"/.test(chk) || !/data-area-check>↻ Check Google now</.test(chk)) fail("TX: admin's places aren't status rows under \"Service area\" (the card header counts them), a readable check time and Check Google now (or still look like checkboxes)");
+  if (!/<b>2 of 3 on Google<\/b><small>Google last checked Oct 17, 10:30 AM<\/small>/.test(chk) || /ob-area-box|type="checkbox"/.test(chk) || !/data-area-check>↻ Check Google now</.test(chk)) fail("TX: admin's places aren't status rows with \"2 of 3 on Google\", a readable check time and Check Google now (or still look like checkboxes)");
   const g3 = X.factsFromGoogle({ ...google, serviceArea: { ...google.serviceArea, places: places("Austin, TX, USA", "Round Rock, TX, USA", "Austin, TX 78704, USA", "Cedar Park, TX, USA", "Pflugerville, TX, USA", "Georgetown, TX, USA") } });
   if (!X.rgaDone(task, g3)) fail("TX: all 3 on Google doesn't finish the step");
 }

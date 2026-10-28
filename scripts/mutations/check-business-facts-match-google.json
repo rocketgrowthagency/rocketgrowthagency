@@ -408,8 +408,8 @@
  [
   "progress always waiting",
   "gbpfacts",
-  "items.push({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n, now.state) })",
-  "items.push({ kind: \"area\", name: n, on: false })",
+  "keep({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n, now.state) })",
+  "keep({ kind: \"area\", name: n, on: false })",
   1
  ],
  [

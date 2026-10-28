@@ -70,6 +70,9 @@ if (!/A new page<span class="ob-chg-x">Written for 2 searches/.test(h) || !/<spa
   fail("admin's file list isn't the client's plain list (A new page / Their page list for Google / A page they have, the address unbroken, the path)");
 if ((A.match(/\+ wcChgHtml\(c\)/g) || []).length < 2 || /function wcNewPageHtml[\s\S]{0,900}ob-wc-files/.test(A)) fail("a website card still lists its files as the old code log");
 
+// step 28 (Chris 10-28 "does step 28 match mockup?"): the count once — on the place list, not again under the card's title
+if (!/side: \(g\.rga \|\| \[\]\)\.every\(\(x\) => x\.fact === "area"\) \? "" :/.test(A)) fail("step 28 says \"0 of 3 on Google\" twice (under the card title and above the list)");
+
 // ── D · no "row" in admin text ─────────────────────────────────────────────────────────────────
 const bad = A.split("\n").map((l, i) => [i + 1, l]).filter(([, l]) => !/^\s*(\/\/|\*|\/\*)/.test(l)).map(([n, l]) => [n, l.replace(/\s\/\/\s.*$/, "")])
   .filter(([, l]) => /[`"'>][^`"'<]*(?<![\w-])(?:[Rr]ow (?:\d+|\$\{)|Open row\b|(?:on|until) this row\b)/.test(l));   // "mv-row ${…}" is a class name

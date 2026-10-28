@@ -82,5 +82,12 @@
   "els.adminNextActionBtn.textContent = `Open step ${rowN}`",
   "els.adminNextActionBtn.textContent = `Open row ${rowN}`",
   1
+ ],
+ [
+  "step 28's title repeats the count",
+  "admin",
+  "side: (g.rga || []).every((x) => x.fact === \"area\") ? \"\" : allN",
+  "side: false ? \"\" : allN",
+  1
  ]
 ]
