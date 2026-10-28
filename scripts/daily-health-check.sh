@@ -530,6 +530,7 @@ run check-step9-keeps-access-safe.mjs "step 9 keeps access safe: settles itself 
 run check-a-change-request-is-one-flow.mjs "ask for a change on a finished step: one Need a change?, our own inline error, one band, With RGA, RGA's same-day move in To do"
 run check-a-new-city-page-is-planned-from-data.mjs "row 45 plans one city page from data (sitemap · Business Profile · plan), refuses invented numbers, a website change with every file on the client's card"
 run check-website-rows-are-step-8-cards.mjs "the admin website rows are the approved step 8 cards (11 states rendered in Chrome): draft ready, a guarantee flagged, editing without Kind/Where boxes, with the client, publish, live"
+run check-the-access-test-publishes.mjs "the access test page: built in the site's own template (no sibling words), published as a pull request from RGA Admin with exactly the approved file, only after the client approved"
 run check-approvals-page.mjs "For your approval: Needs you (open only) · With RGA · Done (collapsed while something needs them); the duplicate confirmation is a Done row"
 run check-website-change-approvals.mjs "every website change goes through For your approval: all Month 1 website steps; draft → send → the client approves THAT version → Mark live reads the page back → done; no run or Mark done skips it; the inbox"
 run check-site-snapshot.mjs "before-snapshot + access ledger: read-only snapshot of the client's public pages (sitemap, top pages first, capped, blocked pages with a reason), re-read before write, removal recorded with when + how"

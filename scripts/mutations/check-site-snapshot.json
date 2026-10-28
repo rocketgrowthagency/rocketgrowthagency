@@ -80,7 +80,7 @@
  [
   "the done row 8 card is gone",
   "admin",
-  "+ (o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessDoneMiniHtml(s.task, ask)}</div>`",
+  "+ (o.flowId === \"m1.access.website\" ? `<div class=\"ob-done-card\">${accessDoneMiniHtml(s.task, ask)}${accessTestHtml(s.task)}</div>`",
   "+ (false ? \"\"",
   1
  ],

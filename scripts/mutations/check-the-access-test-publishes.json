@@ -1,0 +1,72 @@
+[
+ [
+  "the shell's words may survive",
+  "pagefile",
+  "  if (left.length) return { error:",
+  "  if (false) return { error:",
+  1
+ ],
+ [
+  "no <main> builds anyway",
+  "pagefile",
+  "  else return { error: \"The template page has no <main> area",
+  "  else if (false) return { error: \"The template page has no <main> area",
+  1
+ ],
+ [
+  "the shell's structured data stays",
+  "pagefile",
+  "  h = h.replace(/<script[^>]+application\\/ld\\+json[^>]*>[\\s\\S]*?<\\/script>/gi, \"\");\n",
+  "",
+  1
+ ],
+ [
+  "the test page is indexed",
+  "admindeliv",
+  "noindex: true });",
+  "noindex: false });",
+  1
+ ],
+ [
+  "publishing without write permission",
+  "ghaccess",
+  "  if (!(info.permissions && (info.permissions.push || info.permissions.maintain || info.permissions.admin))) return { ok: false, state: \"no_write\"",
+  "  if (false) return { ok: false, state: \"no_write\"",
+  1
+ ],
+ [
+  "an existing file is overwritten",
+  "ghaccess",
+  "    if (ex.ok) return { ok: false, state: \"file_exists\"",
+  "    if (false) return { ok: false, state: \"file_exists\"",
+  1
+ ],
+ [
+  "a PR before the client approved",
+  "admindeliv",
+  "      if (st !== \"approved\") return json(409, { error: \"A pull request opens only after",
+  "      if (false) return json(409, { error: \"A pull request opens only after",
+  1
+ ],
+ [
+  "open_pr not as RGA Admin",
+  "admindeliv",
+  "      if (!me.ok) return json(409,",
+  "      if (false) return json(409,",
+  1
+ ],
+ [
+  "row 8 hides the test",
+  "admin",
+  "${accessDoneMiniHtml(s.task, ask)}${accessTestHtml(s.task)}",
+  "${accessDoneMiniHtml(s.task, ask)}",
+  1
+ ],
+ [
+  "the test leaves For your approval",
+  "deliverables",
+  "CLIENT_APPROVABLE[\"m1.access.publish_test\"] = {",
+  "const _gone = {",
+  1
+ ]
+]

@@ -74,8 +74,8 @@
  [
   "publish before approval",
   "admindeliv",
-  "      if (st !== \"approved\") return json(409,",
-  "      if (st === \"live\") return json(409,"
+  "      if (st !== \"approved\") return json(409, { error: st === \"live\"",
+  "      if (st === \"live\") return json(409, { error: st === \"live\""
  ],
  [
   "Mark live ignores the missing text",

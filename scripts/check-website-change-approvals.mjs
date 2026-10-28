@@ -61,7 +61,8 @@ for (const s of webSteps) {
   if (!s.clientLabel || !s.clientHint) fail(`${s.id} has no client wording (clientLabel / clientHint = "Why this helps")`);
   if (!DLV.CLIENT_APPROVABLE[s.id]) fail(`${s.id} isn't client-approvable (_deliverables dropped it)`);
 }
-for (const id of Object.keys(SC.STEPS)) if (!webSteps.some((s) => s.id === id)) fail(`site-change step ${id} is not a Month 1 playbook step`);
+// a TEST change (the access test page, 10-28) is deliberately not a playbook step
+for (const id of Object.keys(SC.STEPS)) if (!SC.STEPS[id].test && !webSteps.some((s) => s.id === id)) fail(`site-change step ${id} is not a Month 1 playbook step`);
 
 // ── 2. the rules, as functions ──
 {
