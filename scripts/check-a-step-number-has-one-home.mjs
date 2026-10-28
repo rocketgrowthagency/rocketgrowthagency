@@ -138,6 +138,8 @@ if (/let seenActive = false;\s*\n\s*steps\.forEach/.test(src)) {
 // ═══ PART 3 — EVERY HARDCODED "step N" IN A USER-FACING STRING ═══════════════════════════════
 // 🔴 An unregistered occurrence FAILS. Registering one is a decision someone makes on purpose.
 const REGISTRY = [
+  // admin_fixes_1028_v1 (10-28): "row N" became "step N" in admin text (Chris: say step, not row) — each registered so the number is checked
+  { file: "admin/admin.js",                            needle: "the categories (step 31) until",      step: "m1.gbp.optimize_categories" },
   // file match-substring → the step whose number it claims
   // admin rows 8 (website access) + 9 (keep access safe), 10-27: the vault card and its banner name them by their row numbers
   { file: "admin/admin.js",                            needle: "Check this against step 8's access",  step: "m1.access.website" },

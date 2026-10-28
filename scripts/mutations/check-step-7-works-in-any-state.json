@@ -75,5 +75,19 @@
   "  const on = (n) => !!now && now.some((p) => head(p) === head(n) || (/^\\d{5}$/.test(head(n)) && String(p).includes(head(n))));",
   "  const on = (n) => !!now;",
   1
+ ],
+ [
+  "the places look like checkboxes again",
+  "admin",
+  "<span class=\"ob-area-st\" aria-hidden=\"true\">",
+  "<span class=\"ob-area-box\" aria-hidden=\"true\">",
+  1
+ ],
+ [
+  "Check Google now disappears",
+  "admin",
+  "`<div class=\"ob-area-acts\"><button type=\"button\" class=\"admin-button admin-button-secondary\" data-area-check>↻ Check Google now</button>`",
+  "`<div class=\"ob-area-acts\">`",
+  1
  ]
 ]

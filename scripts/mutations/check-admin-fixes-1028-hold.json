@@ -1,0 +1,86 @@
+[
+ [
+  "an approved change is nobody's move again",
+  "openmoves",
+  "  out.push(...publishMoves(playbooks, tasks));\n",
+  "",
+  1
+ ],
+ [
+  "the test page's move isn't filed under step 8",
+  "openmoves",
+  "const home = key === \"m1.access.publish_test\" ? \"m1.access.website\" : key",
+  "const home = key",
+  1
+ ],
+ [
+  "the move is never late (no promise)",
+  "openmoves",
+  "since: a.at || null, days: RGA_DAYS,",
+  "since: null, days: RGA_DAYS,",
+  1
+ ],
+ [
+  "an open pull request still says Open the pull request",
+  "openmoves",
+  "(pr ? `Merge #${pr.number} on GitHub, then Mark live` : \"Open the pull request\")",
+  "\"Open the pull request\"",
+  1
+ ],
+ [
+  "the client's To do lists the approved change too",
+  "openmoves",
+  "    else if (m.kind === \"publish_change\") continue;\n",
+  "",
+  1
+ ],
+ [
+  "Check Google now reads every step",
+  "gbpwatch",
+  "    if (d.factsOnly && stepId !== STEP.FACTS) continue;\n",
+  "",
+  1
+ ],
+ [
+  "Check Google now sends a queued change to Google",
+  "gbpwatch",
+  "    if (!d.factsOnly && task && stepId === STEP.FACTS && task.google_push",
+  "    if (task && stepId === STEP.FACTS && task.google_push",
+  1
+ ],
+ [
+  "the endpoint forgets factsOnly",
+  "googlecheck",
+  "now: () => Date.now(), factsOnly: true,",
+  "now: () => Date.now(),",
+  1
+ ],
+ [
+  "admin's file list goes back to the code log",
+  "admin",
+  "  if (c.removes_page) return `<span class=\"ob-gcard-says\"><b>Stops working:</b> <del>${escapeHtml(c.page_url || \"\")}</del></span>` + wcChgHtml(c);",
+  "  if (c.removes_page) return `<span class=\"ob-gcard-says\"><b>Stops working:</b> <del>${escapeHtml(c.page_url || \"\")}</del></span>` + `<ul class=\"ob-wc-files\"></ul>`;",
+  1
+ ],
+ [
+  "the sitemap reads as 'A file they have'",
+  "admin",
+  "(sm ? \"Their page list for Google\" : path === \"/\"",
+  "(false ? \"Their page list for Google\" : path === \"/\"",
+  1
+ ],
+ [
+  "the address loses the site",
+  "admin",
+  "${html && site ? `<span class=\"ob-chg-u\">",
+  "${false ? `<span class=\"ob-chg-u\">",
+  1
+ ],
+ [
+  "'Open row' comes back",
+  "admin",
+  "els.adminNextActionBtn.textContent = `Open step ${rowN}`",
+  "els.adminNextActionBtn.textContent = `Open row ${rowN}`",
+  1
+ ]
+]

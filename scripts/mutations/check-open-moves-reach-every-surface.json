@@ -199,7 +199,7 @@
  [
   "the button says See the details again",
   "admin",
-  "      if (mineByHand && els.adminNextActionBtn && rowN) els.adminNextActionBtn.textContent = `Open row ${rowN}`;   // was \"See the details\"\n",
+  "      if (mineByHand && els.adminNextActionBtn && rowN) els.adminNextActionBtn.textContent = `Open step ${rowN}`;   // was \"See the details\"\n",
   "",
   1
  ],

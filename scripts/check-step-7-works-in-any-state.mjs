@@ -26,7 +26,7 @@ const n0 = portal.indexOf("function factsNoteHtml(t) {"), n1 = portal.indexOf("\
 const a0 = admin.indexOf("function areaChecklistHtml(g) {"), a1 = admin.indexOf("\n}\n", a0);
 if (p0 < 0 || p1 < p0 || n0 < 0 || a0 < 0) { console.error("⚠️  INDETERMINATE — could not lift the renderers"); process.exit(2); }
 // portalStepNo (10-20): client numbers come from the playbook; the lift has none, so a fixed one
-const ctx = { escapeHtml: esc, escapeAttribute: esc, Date, portalStepNo: () => 5, seeStepText: () => "See step 4 →" };
+const ctx = { escapeHtml: esc, escapeAttribute: esc, Date, portalStepNo: () => 5, seeStepText: () => "See step 4 →", adminGcardWhen: () => "Oct 17, 10:30 AM" };
 vm.createContext(ctx);
 vm.runInContext(`${portal.slice(p0, p1)}\n${portal.slice(n0, n1 + 2)}\n${admin.slice(a0, a1 + 2)}\nthis.rows = factsRowsHtml; this.note = factsNoteHtml; this.check = areaChecklistHtml;`, ctx);
 
@@ -72,7 +72,9 @@ const plan = (...locs) => ({ "m1.strategy.keywords_locations": { outcome_data: {
   const half = X.progressOf(task, g2, "2026-10-17T10:30:00Z");
   if (half.items.filter((x) => x.on).length !== 2 || X.rgaDone(task, g2)) fail(`TX: 2 of 3 on Google isn't 2 of 3 (or is called done) (${JSON.stringify(half.items)})`);
   const chk = ctx.check({ ...push, area_now: g2.area, area_now_at: "2026-10-17T10:30:00Z" });
-  if ((chk.match(/is-done/g) || []).length !== 2 || !/Add Georgetown, TX <button[^>]*data-area-missing="Georgetown, TX"/.test(chk)) fail("TX: admin's checklist doesn't tick the 2 Google lists and offer \"Google doesn't list it\" for the third");
+  // 🔄 admin_fixes_1028_v1 (Chris 10-28 "the check boxes are not clickable"): STATUS rows, never a checkbox look; the count; Check Google now
+  if ((chk.match(/class="is-done"/g) || []).length !== 2 || !/>Georgetown<\/span><span class="ob-area-w">not on Google yet</.test(chk) || !/data-area-missing="Georgetown, TX">Georgetown</.test(chk)) fail("TX: admin's checklist doesn't tick the 2 Google lists and offer \"Google doesn't list it\" for the third");
+  if (!/<b>2 of 3 on Google<\/b><small>Google last checked Oct 17, 10:30 AM<\/small>/.test(chk) || /ob-area-box|type="checkbox"/.test(chk) || !/data-area-check>↻ Check Google now</.test(chk)) fail("TX: admin's places aren't status rows with \"2 of 3 on Google\", a readable check time and Check Google now (or still look like checkboxes)");
   const g3 = X.factsFromGoogle({ ...google, serviceArea: { ...google.serviceArea, places: places("Austin, TX, USA", "Round Rock, TX, USA", "Austin, TX 78704, USA", "Cedar Park, TX, USA", "Pflugerville, TX, USA", "Georgetown, TX, USA") } });
   if (!X.rgaDone(task, g3)) fail("TX: all 3 on Google doesn't finish the step");
 }

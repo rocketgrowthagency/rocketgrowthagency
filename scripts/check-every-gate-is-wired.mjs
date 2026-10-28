@@ -361,6 +361,7 @@ const NOT_PREFLIGHT = {
   'check-done-row-measures-agree.mjs': 'the WEBSITE repo\'s done-row measures (portal fallback · browser gate · daily walk) strip the same chrome — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-open-moves-reach-every-surface.mjs': 'the WEBSITE repo\'s one open-moves list reaching every To do surface — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-every-wait-spins.mjs': 'the WEBSITE repo\'s waiting lines spin via shared/busy.js — files only, no bearing on tonight\'s videos; daily-health-check.sh',
+  'check-admin-fixes-1028-hold.mjs': 'the WEBSITE repo\'s admin fixes (open moves, the read-only Google check, the file list, wording) run offline with fakes — no bearing on tonight\'s run',
   'check-an-approval-shows-its-receipt.mjs': 'the WEBSITE repo\'s For your approval receipt, rendered offline in Chrome from portal.js + portal.css — no bearing on tonight\'s run',
   'check-the-nav-badge-matches-the-mockup.mjs': 'the WEBSITE repo\'s client portal menu (badge shape vs the approved mockup, labels on one line), rendered offline in Chrome — no bearing on tonight\'s run',
   'check-every-website-change-is-built-labelled-approved.mjs': 'the WEBSITE repo\'s built → labelled → approved → uploaded rule (for_your_approval_v2): shared rules, the PR remover on a fake GitHub, the preview handler — files only, no bearing on tonight\'s videos; daily-health-check.sh',

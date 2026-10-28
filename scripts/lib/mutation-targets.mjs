@@ -143,6 +143,7 @@ export const FILES = {
   flowcrondigest: "netlify/functions/flow-cron-weekly-digest.js",
   walkclients: "scraper:scripts/acceptance/clients.mjs",
   walk: "scraper:scripts/acceptance-walk.mjs",
+  googlecheck: "netlify/functions/admin-google-check.js",   // admin_fixes_1028_v1: Check Google now (read only)
   openmoves: "netlify/functions/_open-moves.js",   // todo_inbox_v1 (10-26): the one list of open moves
   adminopenmovesfn: "netlify/functions/admin-open-moves.js",
   portalopenmovesfn: "netlify/functions/portal-open-moves.js",
