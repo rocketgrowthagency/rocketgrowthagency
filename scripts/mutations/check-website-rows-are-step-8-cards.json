@@ -82,5 +82,12 @@
   "    const key = String(re.source).match(/^([A-Z_0-9]+)/); if (!key) return \"\";",
   "    const key = null; if (!key) return \"\";",
   1
+ ],
+ [
+  "a stale reading outlives the new run",
+  "admin",
+  "    if (pre && pre._run !== runSig) { wcDraftCache.delete(key); wcPrefilling.delete(key); return siteChangeAdminHtml(id, t); }\n",
+  "",
+  1
  ]
 ]

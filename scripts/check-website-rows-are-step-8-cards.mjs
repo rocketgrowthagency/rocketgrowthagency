@@ -40,6 +40,7 @@ const S = {
   failed: { task: { status: "in_progress", auto_result: { summary: "The draft broke the page rules, so nothing was saved:\n- not JSON", ran_at: NOW, outcome_data: { problems: ["the answer wasn't the page's words (not JSON)"] } } }, pre: { items: [] } },
   editing: { task: { status: "in_progress", ...ran }, pre: change, edit: true },
   unread: { task: { status: "in_progress", ...ran }, pre: { items: [], read_failed: true } },
+  stale: { task: { status: "in_progress", ...ran }, pre: { items: [] }, stale: true },
   drafted: { task: { status: "in_progress", site_change: change } },
   sent: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW } } },
   changes: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "changes_requested", change_v: "v1", at: NOW, note: "Keep the button as See Where You Rank Free" } } },
@@ -61,7 +62,8 @@ try {
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
       const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill }; })()`);
-      if (sc.pre) api.wcDraftCache.set(`c1:${H}`, sc.pre);
+      const sig = `${sc.task.ran_at || (sc.task.auto_result && sc.task.auto_result.ran_at) || sc.task.completed_at || ""}|${String((sc.task.auto_result && sc.task.auto_result.summary) || "").length}`;
+      if (sc.pre) api.wcDraftCache.set(`c1:${H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
       const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(H, sc.task);
       const vis = (q) => [...el.querySelectorAll(q)].filter((x) => x.offsetParent !== null);
@@ -82,7 +84,7 @@ if (out.ready.buttons.filter((b) => b === "Send for approval").length !== 1 || !
 if (out.ready.textareas || out.ready.inputs) fail("draft ready: shows form boxes before you press Edit");
 if (!/Rank Higher on Google Maps[\s\S]*→[\s\S]*Local SEO That Puts Your Business on the Map/.test(out.ready.text)) fail("draft ready: the lines aren't Now → After");
 has("ready", /says “Guarantee”: a guarantee we can't back/, "\"60-Day Guarantee\" isn't flagged before sending"); if (out.ready.pill !== "Draft ready") fail("draft ready: the row's chip isn't \"Draft ready\"");
-has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"); has("unread", /Couldn't read the draft/, "a draft we couldn't LOAD is called a bad draft"); if (!out.unread.buttons.includes("Try again") || /didn't come out right/.test(out.unread.text)) fail("couldn't read: no Try again, or it says the draft is bad"); if (!out.failed.buttons.includes("⚡ Draft again")) fail("a failed draft has no Draft again");
+has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"); has("stale", /Reading the draft…/, "a reading of an OLDER run is shown over the new draft (10-28: \"didn't come out right\" over a good draft)"); has("unread", /Couldn't read the draft/, "a draft we couldn't LOAD is called a bad draft"); if (!out.unread.buttons.includes("Try again") || /didn't come out right/.test(out.unread.text)) fail("couldn't read: no Try again, or it says the draft is bad"); if (!out.failed.buttons.includes("⚡ Draft again")) fail("a failed draft has no Draft again");
 if (out.editing.inputs) fail(`editing: shows ${out.editing.inputs} Kind / Where / address input(s) (the step sets them)`);
 if (out.editing.textareas !== 3 || !/Now: “Rank Higher on Google Maps/.test(out.editing.text) || !out.editing.buttons.includes("Save and send for approval") || !out.editing.buttons.includes("Cancel")) fail("editing: not one box per line with today's words above it, Save and send + Cancel");
 has("drafted", /Your move · send it/, "a saved draft isn't \"send it\"");
