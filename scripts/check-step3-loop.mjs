@@ -101,7 +101,9 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: RGA_EMAIL, confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
-  if (!/RGA has access/.test(card) || !card.includes(RGA_EMAIL) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (role, account, builder)");
+  if (!/Rocket Growth Agency has access/.test(card) || !/We signed in/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (who has access, that we signed in, the builder)");
+  // names_not_addresses_v1 (Chris 10-28): the portal TELLS in names — our sign-in address never appears on the done card
+  if (card.includes(RGA_EMAIL) || /rocketgrowthagency-admin/.test(card)) fail("the client's confirmed card names our account address again (names_not_addresses_v1: names, not addresses)");
   if (/data-acc-redo/.test(card)) fail("the client's confirmed card offers a way to change it while it's locked");
 }
 if (F.length) { console.error("🔴 step 3's loop is broken:"); for (const f of F) console.error("   · " + f); process.exit(1); }

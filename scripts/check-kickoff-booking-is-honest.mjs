@@ -456,7 +456,10 @@ if (!/data-kickoff-hours/.test(src.admin) || !/openKickoffHoursDialog/.test(src.
 
   // 1 ─ every step id the admin names must be a step that exists.
   const named = new Set([...src.admin.matchAll(/["'`](m[12]\.[a-z0-9_]+\.[a-z0-9_]+)["'`]/g)].map((m) => m[1]));
-  const ghosts = [...named].filter((id) => !ids.has(id)).sort();
+  // a TEST change key (shared/site-change.js STEPS[id].test — the access test page, filed under step 8) is declared there, not a ghost
+  let testKeys = new Set();
+  try { const SC = (await import("node:module")).createRequire(path.join(SITE, "package.json"))("./shared/site-change.js"); testKeys = new Set(Object.keys(SC.STEPS || {}).filter((k) => SC.STEPS[k] && SC.STEPS[k].test)); } catch { /* none: every unknown id stays a ghost */ }
+  const ghosts = [...named].filter((id) => !ids.has(id) && !testKeys.has(id)).sort();
   if (ghosts.length) {
     problems.push(`admin.js names ${ghosts.length} step id(s) that do not exist in playbooks.json — ${ghosts.join(" · ")}. `
       + "Any comparison against one of these is permanently false, so whatever it guards never fires.");

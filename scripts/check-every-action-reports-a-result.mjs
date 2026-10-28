@@ -36,6 +36,9 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-chg-convo": "the change-request band's conversation link (2026-10-27): opens the step's conversation and scrolls to it (visible) — nothing is saved",
+  "data-fya-f": "For your approval's filter chips (approval_tab_and_sent_card_v1, 2026-10-28): show only one place's rows and mark the chip pressed (visible) — nothing is saved",
+  "data-goto-approve": "the To do tab's \"N changes wait for your approval\" strip and the pointer banner (approval_tab_and_sent_card_v1, 2026-10-28): switches to the For your approval tab (visible) — nothing is saved",
   "data-mv-filter": "admin To do's header chips (todo_redesign_v1, 2026-10-26): filter the list on screen to late / due today / on track / waiting on clients and mark the chip pressed (visible) — nothing is saved",
   "data-photo-addmore": "step 10 done's \"Add more\" (steps_6_20_clean_v1): opens the photo list under the card and scrolls to it (visible) — each slot keeps its own Upload (2026-10-26)",
   "data-rc-add": "step 16's \"+ add another\" (steps_6_20_clean_v1): adds one more empty customer row and focuses it (visible) — nothing is saved until \"Send my list\" (2026-10-26)",

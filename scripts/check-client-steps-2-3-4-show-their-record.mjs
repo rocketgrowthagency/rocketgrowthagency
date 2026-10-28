@@ -65,7 +65,9 @@ for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "fo
 vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };
 const ok2 = run("m1.access.website", { status: "done", client_input: { via: "invite", platform: "wordpress", platform_source: "detected", at: "2026-10-20T21:14:00Z" }, access: { role: "Administrator", account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-20T23:02:00Z", confirmed_by: "chris" } });
-if (!/pm-k5-plan ok/.test(ok2) || !/<b>RGA has access<\/b>/.test(ok2) || !/ · Administrator/.test(ok2) || !/RGA signed in<\/b> as hello@rocketgrowthagency\.com/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
+if (!/pm-k5-plan ok/.test(ok2) || !/<b>Rocket Growth Agency has access<\/b>/.test(ok2) || !/ · Administrator/.test(ok2) || !/We signed in<\/b> and checked our access/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
+// names_not_addresses_v1 (Chris 10-28): names, not addresses — our sign-in address never on the client's done card; "remove us" names their builder
+if (/hello@rocketgrowthagency\.com|rocketgrowthagency-admin/.test(ok2)) fail("step 2's done card names our account address again (names_not_addresses_v1)");
 if (/password/i.test(ok2.replace(/never send us your password/i, ""))) fail("step 2's done card mentions a password");
 const wait2 = run("m1.access.website", { status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-10-20T21:14:00Z" } });
 if (!/state="rga"/.test(wait2) || !/Checking we can sign in/.test(wait2)) fail("an invite sent isn't \"RGA is checking we can sign in\"");

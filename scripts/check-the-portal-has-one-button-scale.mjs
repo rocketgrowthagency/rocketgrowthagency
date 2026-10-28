@@ -158,6 +158,8 @@ const EXEMPT = {
   "ap-head": "disclosure header — a full-width row, not a button",
   "fq-head": "disclosure header — a full-width row, not a button",
   "ai-pointer": "an inline pointer banner, not a control in the scale",
+  "pm-chg-lnk": "text link (no horizontal padding, link colour, no border) — the change-request band's quiet links beside That's sorted: \"Cancel my request\" and the conversation link",
+  "pm-merge-b": "a two-line CHOICE TILE (title + why), the option is the card — step 3's \"Who puts approved changes on your website\" (merge_without_the_browser_v1, 2026-10-28)",
   "pm-ex": "the example drawing beside a photo slot — the 64×48 picture IS the control (padding:0), not a text button (2026-10-09)",
 };
 {

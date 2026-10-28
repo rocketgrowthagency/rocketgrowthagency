@@ -142,7 +142,7 @@
  [
   "the merge goes back to the browser's GitHub",
   "admin",
-  "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for them</button>",
+  "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for the client</button>",
   "<a class=\"admin-button\" href=\"${escapeAttribute(pr.url)}\">Open #${escapeHtml(pr.number)} on GitHub ↗</a>",
   1
  ],
@@ -158,6 +158,62 @@
   "admin",
   "proven ? \"Live · proven\" : p.checked === true",
   "true ? \"Live · proven\" : p.checked === true",
+  1
+ ],
+ [
+  "a GitHub login loses its pill (names_not_addresses_v1)",
+  "admin",
+  "return id ? `<span class=\"ob-ghid\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"",
+  "return id ? `<span class=\"ob-ghx\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"",
+  1
+ ],
+ [
+  "the sentence around a pill isn't escaped",
+  "admin",
+  "out += escapeHtml(s.slice(i, m.index)) + ghIdHtml(",
+  "out += s.slice(i, m.index) + ghIdHtml(",
+  1
+ ],
+ [
+  "a short name splits a longer one (no longest-first)",
+  "admin",
+  ".filter((x) => x && x[0]).sort((a, b) => b[0].length - a[0].length);",
+  ".filter((x) => x && x[0]);",
+  1
+ ],
+ [
+  "the Proof box's Merged line drops its pill",
+  "admin",
+  "<span>${v && v.html !== undefined ? v.html : escapeHtml(v)}</span>",
+  "<span>${escapeHtml(v && v.html !== undefined ? v.html : v)}</span>",
+  1
+ ],
+ [
+  "the merged card's repository isn't a pill",
+  "admin",
+  "of ${ghIdHtml(repo, \"repo\")}` : \"Merged by an account we don't know\"",
+  "of ${escapeHtml(repo)}` : \"Merged by an account we don't know\"",
+  1
+ ],
+ [
+  "the panel's box is headed by the repository again, not the client's name",
+  "admin",
+  "<b>${escapeHtml(ghClientName())}</b><span>${ghIdHtml(v.repo, \"repo\")}</span>",
+  "<b>${escapeHtml(v.repo)}</b><span></span>",
+  1
+ ],
+ [
+  "the panel footer's merger loses its pill",
+  "admin",
+  "by ${ghIdHtml(m.by || \"unknown\", \"login\")} · ${escapeHtml(wcTime(m.at))}",
+  "by ${escapeHtml(m.by || \"\")} · ${escapeHtml(wcTime(m.at))}",
+  1
+ ],
+ [
+  "the check rows print logins as plain text",
+  "admin",
+  "<small>${ghPillText(r.detail, [[v.login, \"login\"], [acc.github, \"login\"], [v.repo, \"repo\"]])}</small>",
+  "<small>${escapeHtml(r.detail)}</small>",
   1
  ]
 ]

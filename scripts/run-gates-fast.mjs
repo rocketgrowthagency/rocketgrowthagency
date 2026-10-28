@@ -87,7 +87,8 @@ async function dbOk() {
   if (!U || !K) return { ok: true, why: "no database env (live gates will report INDETERMINATE themselves)" };
   const t = Date.now();
   try {
-    const r = await fetch(`${U}/rest/v1/clients?select=id&limit=1`, { headers: { apikey: K, Authorization: `Bearer ${K}` }, signal: AbortSignal.timeout(8000) });
+    // a HEALTH PING, not a client pick: it reads one NAMED row (RGA's own record) and only times the answer
+    const r = await fetch(`${U}/rest/v1/clients?select=id&id=eq.ae817a9c-60a2-4cc9-a196-0582b7b7e7c3`, { headers: { apikey: K, Authorization: `Bearer ${K}` }, signal: AbortSignal.timeout(8000) });
     const ms = Date.now() - t;
     return r.ok && ms <= 4000 ? { ok: true, ms } : { ok: false, why: r.ok ? `slow (${ms} ms)` : `HTTP ${r.status}` };
   } catch (e) { return { ok: false, why: e.name === "TimeoutError" ? "no answer in 8 s" : e.message }; }

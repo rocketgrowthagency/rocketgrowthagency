@@ -27,7 +27,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
-  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -78,20 +78,28 @@ try {
     const page = await browser.newPage(); await page.setViewport({ width: 1000, height: 900 });
     await page.setContent(`<style>${CSS}</style><div class="ob-step" style="max-width:940px;margin:16px"><div id="h"></div></div>`);
     out[name] = await page.evaluate(({ SCJS, code, sc, H, name }) => {
-      const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"), escapeAttribute = escapeHtml;
+      const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"), escapeAttribute = escapeHtml;   // = admin.js escapeHtml
       const adminGcardWhen = () => "Oct 27, 11:00 AM", renderOnboardingChecklist = () => {}, movesForSelected = () => [], mvDueDays = () => 0, mvDay = () => "Oct 27";
       const wcAction = async () => null, GH_MONO = "", OB_WEB_TILE = "";
+      // the GitHub connection panel (names_not_addresses_v1) from a fixed read-only check — never a fetch
+      const ghConnOf = () => ({ ok: true, match: true, checked_at: "2026-10-28T20:00:00Z", login: "rocketgrowthagency-admin", repo: "acme/site", owner: "acme", site: "acme.test",
+        rows: [{ id: "account", ok: true, title: "The account they invited is the one we post as", detail: "The client invited rocketgrowthagency-admin on Oct 26. Our key is the same account today.", ev: "Oct 26 → today" }] });
       const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) } } } : undefined, selectedClient: { id: "c1", business_name: "Acme" }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
-      const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill }; })()`);
+      const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml }; })()`);
       const sig = `${sc.task.ran_at || (sc.task.auto_result && sc.task.auto_result.ran_at) || sc.task.completed_at || ""}|${String((sc.task.auto_result && sc.task.auto_result.summary) || "").length}`;
       if (sc.pre) api.wcDraftCache.set(`c1:${H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
       const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(sc.id || H, sc.task);
       const vis = (q) => [...el.querySelectorAll(q)].filter((x) => x.offsetParent !== null);
       const nested = [...el.querySelectorAll(".ob-ac form, .ob-ac .ob-wc-line")].some((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && s.backgroundColor !== "rgba(0, 0, 0, 0)"; });
-      return { text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
+      // the pill helper on a hostile sentence: the text around it is escaped, a name inside another name never splits it
+      const pillT = api.ghPillText("<img src=x> by acme into acme/site", [["acme", "login"], ["acme/site", "repo"]]);
+      if (state.onboardingData && sc.task.publish_pr) state.onboardingData.tasks["m1.access.publish_test"] = sc.task;   // the footer's "Last merged here"
+      const ghp = document.createElement("div"); ghp.innerHTML = api.ghPanelHtml({ github: "rocketgrowthagency-admin", repo: "acme/site" }, true);
+      const panel = { text: ghp.textContent.replace(/\s+/g, " "), html: ghp.innerHTML };
+      return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
         textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
         loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
         loopOneRow: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; const t = [...l.children].map((x) => Math.round(x.getBoundingClientRect().top)); return new Set(t).size === 1; })(),
@@ -128,13 +136,24 @@ has("ghSent", /Built from\s*their live homepage's design · fingerprint 201cd46c
 if (!out.ghSent.buttons.includes("Preview page")) fail("ghSent: no Preview page"); has("ghSent", /See their card, word for word/, "their card isn't one click away");
 loopIs("ghApproved", ["done", "done", "done", "you", "", ""], "approved → the pull request is RGA's move (amber)"); has("ghApproved", /Your move · open the pull request/, "approved on GitHub isn't \"Your move · open the pull request\""); if (!out.ghApproved.buttons.includes("Open the pull request")) fail("ghApproved: no Open the pull request");
 // 🔄 merge_without_the_browser_v1 (10-28): RGA merges on the server by default — never the browser's GitHub account
-loopIs("ghPr", ["done", "done", "done", "done", "you", ""], "the pull request is open → RGA merges it for them (amber)"); has("ghPr", /Your move · merge it for them/, "an open pull request isn't \"Your move · merge it for them\""); if (!out.ghPr.buttons.includes("Merge #14 for them") || !out.ghPr.buttons.includes("View on GitHub ↗")) fail("ghPr: no Merge #14 for them / View on GitHub");
-loopIs("ghPrClient", ["done", "done", "done", "done", "now", ""], "the client chose to merge → theirs on GitHub (blue)"); has("ghPrClient", /With the client · merge #14 on GitHub/, "the client-merges path isn't \"With the client · merge #14 on GitHub\""); if (out.ghPrClient.buttons.some((b) => /for them/.test(b))) fail("ghPrClient: RGA offers to merge although the client chose to");
-loopIs("ghMerged", ["done", "done", "done", "done", "done", "you"], "merged → Mark live is RGA's move"); has("ghMerged", /Merged #14/, "a merged pull request isn't said"); has("ghMerged", /for them, after their approval/, "RGA's merge isn't recorded as for them, after their approval"); if (!out.ghMerged.buttons.includes("Mark live")) fail("ghMerged: no Mark live");
+loopIs("ghPr", ["done", "done", "done", "done", "you", ""], "the pull request is open → RGA merges it for the client (amber)"); has("ghPr", /Your move · merge it for the client/, "an open pull request isn't \"Your move · merge it for the client\""); if (!out.ghPr.buttons.includes("Merge #14 for the client") || !out.ghPr.buttons.includes("View on GitHub ↗")) fail("ghPr: no Merge #14 for the client / View on GitHub");
+loopIs("ghPrClient", ["done", "done", "done", "done", "now", ""], "the client chose to merge → theirs on GitHub (blue)"); has("ghPrClient", /With the client · merge #14 on GitHub/, "the client-merges path isn't \"With the client · merge #14 on GitHub\""); if (out.ghPrClient.buttons.some((b) => /for the client|for them/.test(b))) fail("ghPrClient: RGA offers to merge although the client chose to");
+loopIs("ghMerged", ["done", "done", "done", "done", "done", "you"], "merged → Mark live is RGA's move"); has("ghMerged", /Merged #14/, "a merged pull request isn't said"); has("ghMerged", /for the client, after their approval/, "RGA's merge isn't recorded as for the client, after their approval"); if (!out.ghMerged.buttons.includes("Mark live")) fail("ghMerged: no Mark live");
 has("changes", /The client asked for a change/, "the client's ask isn't shown"); has("changes", /Keep the button as See Where You Rank Free/, "their words are missing"); if (!out.changes.buttons.includes("Edit and send again")) fail("the client's ask has no Edit and send again");
 has("approved", /Publish exactly what they approved, then Mark live/, "approved isn't \"publish\""); loopIs("approved", ["done", "done", "done", "you", ""], "approved → publishing is RGA's move (amber)"); if (!out.approved.buttons.includes("Mark live")) fail("approved: no Mark live"); if (out.approved.pill !== "Publish") fail("approved: chip isn't \"Publish\"");
 has("live", /Live · read back from the site/, "live doesn't say it was read back");
 // auto_live_and_proof_v1: the Proof box — 9 of 9 only from the record; a line not proven is grey, never a tick
+// 🔒 names_not_addresses_v1 (Chris 10-28 "make these rocketgrowthagency-admin more like a pill"): a GitHub login / repository in admin is a pill
+if (!/<span class="ob-ghid"><span class="a r" aria-hidden="true">R<\/span>rocketgrowthagency-admin<\/span>/.test(out.ghMerged.html)) fail("ghMerged: the merging account isn't in its pill (ob-ghid)");
+if (!/<span class="ob-ghid"><span class="a g" aria-hidden="true">G<\/span>acme\/site<\/span>/.test(out.ghMerged.html)) fail("ghMerged: the repository isn't in its pill (ob-ghid, G)");
+{ const pt = out.ghMerged.pillT || "";
+  if (/<img/.test(pt) || !/^&lt;img src=x&gt; by /.test(pt)) fail(`ghPillText doesn't escape the sentence around the pills: ${pt.slice(0, 80)}`);
+  if (!/<span class="ob-ghid"><span class="a g" aria-hidden="true">G<\/span>acme\/site<\/span>$/.test(pt) || (pt.match(/ob-ghid/g) || []).length !== 2) fail(`ghPillText splits one name inside another (want 2 pills, the repo whole): ${pt.slice(-140)}`); }
+{ const P = out.ghMerged.panel;
+  if (!/RGA posts as\s*RGA Admin/.test(P.text) || !/Into the client's website code\s*Acme/.test(P.text) || !/Goes live on acme\.test/.test(P.text)) fail(`the GitHub panel's boxes aren't name-first (RGA Admin → the client's name · Goes live on): ${P.text.slice(0, 200)}`);
+  if ((P.html.match(/class="ob-ghid"/g) || []).length < 4) fail(`the GitHub panel doesn't pill every login / repository (boxes, the check row, the footer): ${(P.html.match(/class="ob-ghid"/g) || []).length} pills`);
+  if (/Into their repository|it publishes|Owner: /.test(P.text)) fail("the GitHub panel still says the old addresses-first wording"); }
+if (!/Merged<\/b><span>by <span class="ob-ghid">/.test(out.ghLiveProven.html)) fail("the Proof box's Merged line doesn't put the account in its pill");
 has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
 has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");
 has("ghLiveProven", /Live · proven/, "a fully proven change isn't labelled \"Live · proven\" (mockup C)"); has("ghLiveProven", /acme\.test = their record = their approval/, "the Proof's website line isn't the mockup's \"= their record = their approval\"");

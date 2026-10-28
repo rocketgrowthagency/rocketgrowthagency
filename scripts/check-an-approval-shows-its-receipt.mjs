@@ -33,6 +33,9 @@ const item = (key, change, approval, extra = {}) => ({ key, title: "A test page,
 const CASES = {
   justApproved: { focus: T, items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }), item("m1.web.h1_cta", { label: "edit_page", where: "Your homepage", items: [] }, null, { title: "Your homepage headline" })] },
   uploading: { items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true })] },
+  // names_not_addresses_v1 (10-28): the "Checked before and after" box says the business's NAME, never its address or a fingerprint
+  checked: { focus: T, biz: "Smiths Plumbing", items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true, safety: { site: "acme.test", files: true, rest: true } })] },
+  checkedNoName: { focus: T, biz: "", items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true, safety: { site: "acme.test", files: true, rest: true } })] },
   removing: { focus: T, items: [item(T, { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null }, { decision: "approved", at: AT, by: "owner@acme.test", version: null })] },
 };
 const F = [], fail = (m) => F.push(m);
@@ -44,7 +47,7 @@ try {
     await page.setContent(`<style>${CSS}</style><div class="pv-fya-host" id="h"></div>`);
     out[name] = await page.evaluate(({ code, sc }) => {
       const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), escapeAttribute = escapeHtml;
-      const ibPaneHtml = (e) => `<p class="stub-pane">${escapeHtml(e.d.title)}</p>`, _portalBusinessName = "Acme";
+      const ibPaneHtml = (e) => `<p class="stub-pane">${escapeHtml(e.d.title)}</p>`, _portalBusinessName = sc.biz === undefined ? "Acme" : sc.biz;
       let _fyaFocus = sc.focus || null;
       const when = (iso) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "");
       // eslint-disable-next-line no-eval
@@ -54,7 +57,7 @@ try {
       const rc = open && open.querySelector(".fya-rc");
       return { open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
         steps: rc ? [...rc.querySelectorAll(".fya-nx li")].map((li) => li.className) : [], up: rc ? rc.classList.contains("up") : null,
-        head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
+        safe: open && open.querySelector(".fya-safe") ? open.querySelector(".fya-safe").textContent.replace(/\s+/g, " ") : "", head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
     }, { code, sc });
     await page.close();
   }
@@ -71,5 +74,10 @@ if (J.rows.some((r) => /You asked for a change/.test(r) && /A test page/.test(r)
 if (!J.rows.some((r) => /You approved it Oct 28, \d+:\d\d (AM|PM) · RGA is putting it up/.test(r))) fail(`the row under Approved · going up doesn't say "You approved it … · RGA is putting it up" (${J.rows.join(" | ")})`);
 if (!U.up || !/RGA is uploading it/.test(U.open) || U.steps.join(",") !== "done,done,now," || U.head !== "rgb(235, 243, 255)") fail(`once RGA opens the upload the receipt isn't blue "RGA is uploading it" with step 3 current (${U.steps.join(",")} · ${U.head})`);
 if (!/You approved removing this page/.test(R.open) || !/Exactly what you approved/.test(R.open)) fail("the receipt's words don't follow the label (removing a page), or a change with no built file claims a version");
+{ const C = out.checked.safe, N = out.checkedNoName.safe;
+  if (!/It went to the Smiths Plumbing website, nowhere else\./.test(C) || /acme\.test/.test(C)) fail(`the safety box doesn't name the business (or still shows its address): ${C.slice(0, 160)}`);
+  if (!/Exactly the version you approved\./.test(C) || /201cd46c/.test(C)) fail(`the safety box still shows the fingerprint, not "Exactly the version you approved": ${C.slice(0, 160)}`);
+  if (/Plumbing's/.test(C)) fail("the safety box uses a possessive on the business name");
+  if (!/It went to your website, nowhere else\./.test(N)) fail(`with no business name on record the safety box doesn't say "your website": ${N.slice(0, 120)}`); }
 if (F.length) { console.error(`❌ an approval doesn't show its receipt — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ an approval shows its receipt: the approved item stays open as a green \"Approved · recorded\" card (what, who, the exact version, what happens next with RGA's move current, Preview what you approved) — even with another change waiting; its row says \"You approved it … · RGA is putting it up\"; blue \"RGA is uploading it\" once the upload opens; the words follow the label");

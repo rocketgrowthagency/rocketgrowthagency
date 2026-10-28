@@ -89,5 +89,12 @@
   "      : RECORD_CARD.has(step.id) && !month2Only ? (ownWait ? \"\" : recordCardHtml(step, taskState, clientId, onboarding?.data?.tasks))",
   "      : false ? \"\"",
   1
+ ],
+ [
+  "our sign-in address comes back on the client's done card (names_not_addresses_v1)",
+  "portal",
+  "+ pcTl(`<b>We signed in</b> and checked our access`,",
+  "+ pcTl(`<b>We signed in</b> as ${escapeHtml(acc.account || \"\")} and checked our access`,",
+  1
  ]
 ]

@@ -58,7 +58,17 @@ const LEAVES = [
   { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },  // 🔄 2026-10-09: the Overview card's "Join the call ↗" is gone — the call console owns joining (kickoff_every_surface_every_state_v1).
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
   { needle: '" target="_blank" rel="noopener">page ↗</a>', why: "the page a website change edits, target=_blank (website_change_approvals_v1, 10-23)" },
-  { needle: '<a class="admin-button ob-acc-open" href=', why: "admin row 8 \"check their site\": opens the client's OWN website in a new tab (target=_blank) so RGA can see its builder (step3_blocked_sites_v1)" },
+  { needle: '<a class="admin-button admin-button-secondary ob-acc-open" href=', why: "admin step 8 \"check their site\": opens the client's OWN website in a new tab (target=_blank) so RGA can see its builder (step3_blocked_sites_v1)" },
+  // 10-28 (check-before-confirming found them): the website-change loop, step 8's access card and the To do verb, every one an anchor with target=_blank
+  { needle: 'google_by_hand: "Open Business Profile ↗"', why: "the To do verb for a by-hand Google change: drawn only as the mvNaHtml / To do anchor to business.google.com, target=_blank" },
+  { needle: '<a id="adminNextActionGbp" class="admin-button" href="https://business.google.com/" target="_blank"', why: "Your action's Open Business Profile, target=_blank" },
+  { needle: 'target="_blank" rel="noopener">View on GitHub ↗</a>', why: "admin step 8 website change: the pull request on GitHub, target=_blank (merge_without_the_browser_v1)" },
+  { needle: 'target="_blank" rel="noopener">Open the page ↗</a>', why: "admin step 8 live change: the page on the client's site, target=_blank (auto_live_and_proof_v1)" },
+  { needle: 'title="Click it in the access@ Chrome profile">Open ${escapeHtml(nm)} invite in access@ ↗</a>', why: "admin step 8: the builder's invite, opened in the access@ profile, target=_blank" },
+  { needle: 'target="_blank" rel="noopener">Open on GitHub ↗</a>', why: "admin step 8: the repository's invitations on GitHub, target=_blank" },
+  { needle: '<a href="https://github.com/${escapeAttribute(acc.repo)}" target="_blank" rel="noopener">${escapeHtml(acc.repo)} ↗</a>', why: "admin step 8: the client's repository on GitHub, target=_blank" },
+  { needle: '<a href="https://github.com/${escapeAttribute(i.repo)}" target="_blank" rel="noopener">${escapeHtml(i.repo)} ↗</a>', why: "admin step 8 invite facts: the repository on GitHub, target=_blank" },
+  { needle: 'href="https://vault.bitwarden.com" target="_blank" rel="noopener">Open Bitwarden ↗</a>', why: "admin step 9: the Bitwarden vault, target=_blank" },
   { needle: ">Search it ↗</a>", why: "admin row 26 monthly leak check: a Google search for the tracking number, target=_blank (call_tracking_upgrade_v1)" },
   // 🔄 2026-10-08: ">Join Meet ↗</a>" left with the old T-15 console (v2 uses "Join the call ↗").
   { needle: ">Their audit report ↗</a>", why: "the FGA report, target=_blank" },

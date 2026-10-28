@@ -43,7 +43,10 @@ for (const dead of ["ob-ph-idx"]) {
 }
 
 // ── 2. no row builder may put the NUMBER back inside the disc ─────────────────────────────
-const inDisc = [...js.matchAll(/<span class="ob-num">\$\{(?!OB_GLYPH)/g)].length;
+// obMarker's own "ask" kind (admin_row8_done_v2, approved 10-27: a done step the client asked about wears its number in the orange
+// disc) is the one sanctioned number-in-disc, and only inside the producer; every BUILDER interpolating into the disc still fails
+const jsNoProducer = js.replace(/const obMarker = \(num, kind, gs\) => kind === "ask"\s*\?\s*`<span class="ob-num">\$\{num\}<\/span>/, "");
+const inDisc = [...jsNoProducer.matchAll(/<span class="ob-num">\$\{(?!OB_GLYPH)/g)].length;
 if (inDisc) F(`${inDisc} row builder(s) interpolate into the disc directly — the disc carries STATE, the number lives in .ob-sid`);
 const markerCalls = (js.match(/\$\{obMarker\(n, /g) || []).length;
 // 🔴 A DECLINED STEP MUST NOT WEAR THE DONE TICK. Pin the PROPERTY — that the kind VARIES with

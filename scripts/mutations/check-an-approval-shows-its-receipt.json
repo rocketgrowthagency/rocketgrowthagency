@@ -75,5 +75,26 @@
   "  if (e.group === \"going\") return `You approved it",
   "  if (e.group === \"going\") return `You asked for a change",
   1
+ ],
+ [
+  "the safety box shows the website's address again",
+  "portal",
+  "It went to ${biz ? `the ${escapeHtml(biz)} website` : \"your website\"}, nowhere else.",
+  "It went to ${escapeHtml(s.site)}, nowhere else.",
+  1
+ ],
+ [
+  "the safety box uses a possessive on the name",
+  "portal",
+  "It went to ${biz ? `the ${escapeHtml(biz)} website` : \"your website\"}, nowhere else.",
+  "It went to ${biz ? `${escapeHtml(biz)}'s website` : \"your website\"}, nowhere else.",
+  1
+ ],
+ [
+  "the fingerprint comes back on the safety box",
+  "portal",
+  "</b> Exactly the version you approved.`);",
+  "</b> ${d.approval && d.approval.version ? `The file you approved (${escapeHtml(d.approval.version)}).` : \"Exactly the version you approved.\"}`);",
+  1
  ]
 ]
