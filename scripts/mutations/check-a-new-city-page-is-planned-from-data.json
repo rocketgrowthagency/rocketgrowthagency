@@ -110,5 +110,12 @@
   "    if (w.problems) return { summary: `The draft broke the page rules, so nothing was saved:",
   "    if (false) return { summary: `The draft broke the page rules, so nothing was saved:",
   1
+ ],
+ [
+  "the card can't draft a queued row",
+  "admin",
+  "    const runB = def && def.hasRunner !== false && !ran ? `<button type=\"button\" class=\"admin-button\" data-onboard-run=\"${escapeAttribute(id)}\">⚡ Draft this for me</button>` : \"\";",
+  "    const runB = \"\";",
+  1
  ]
 ]
