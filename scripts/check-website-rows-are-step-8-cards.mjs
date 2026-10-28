@@ -98,7 +98,10 @@ try {
       const pillT = api.ghPillText("<img src=x> by acme into acme/site", [["acme", "login"], ["acme/site", "repo"]]);
       if (state.onboardingData && sc.task.publish_pr) state.onboardingData.tasks["m1.access.publish_test"] = sc.task;   // the footer's "Last merged here"
       const ghp = document.createElement("div"); ghp.innerHTML = api.ghPanelHtml({ github: "rocketgrowthagency-admin", repo: "acme/site" }, true);
-      const panel = { text: ghp.textContent.replace(/\s+/g, " "), html: ghp.innerHTML };
+      document.body.appendChild(ghp);   // measured with admin.css (Chris 10-28 3:16 PM: "too close together")
+      const box = ghp.querySelector(".ob-ghp-g > div"), rowSmall = ghp.querySelector(".ob-safe-l small");
+      const panel = { text: ghp.textContent.replace(/\s+/g, " "), html: ghp.innerHTML,
+        gap: box ? getComputedStyle(box).rowGap : "", pad: box ? getComputedStyle(box).paddingTop : "", lh: rowSmall ? parseFloat(getComputedStyle(rowSmall).lineHeight) / parseFloat(getComputedStyle(rowSmall).fontSize) : 0 };
       return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
         textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
         loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
@@ -152,7 +155,9 @@ if (!/<span class="ob-ghid"><span class="a g" aria-hidden="true">G<\/span>acme\/
 { const P = out.ghMerged.panel;
   if (!/RGA posts as\s*RGA Admin/.test(P.text) || !/Into the client's website code\s*Acme/.test(P.text) || !/Goes live on acme\.test/.test(P.text)) fail(`the GitHub panel's boxes aren't name-first (RGA Admin → the client's name · Goes live on): ${P.text.slice(0, 200)}`);
   if ((P.html.match(/class="ob-ghid"/g) || []).length < 4) fail(`the GitHub panel doesn't pill every login / repository (boxes, the check row, the footer): ${(P.html.match(/class="ob-ghid"/g) || []).length} pills`);
-  if (/Into their repository|it publishes|Owner: /.test(P.text)) fail("the GitHub panel still says the old addresses-first wording"); }
+  if (/Into their repository|it publishes|Owner: /.test(P.text)) fail("the GitHub panel still says the old addresses-first wording");
+  if (P.gap !== "6px" || P.pad !== "12px") fail(`the GitHub panel's boxes are packed again (gap ${P.gap}, padding ${P.pad}; the mockup is 6px / 12px)`);
+  if (!(P.lh >= 1.65)) fail(`a check row with a pill sits on a tight line (${P.lh.toFixed(2)}; the mockup is 1.7)`); }
 if (!/Merged<\/b><span>by <span class="ob-ghid">/.test(out.ghLiveProven.html)) fail("the Proof box's Merged line doesn't put the account in its pill");
 has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
 has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");

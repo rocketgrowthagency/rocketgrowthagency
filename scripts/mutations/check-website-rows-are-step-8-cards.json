@@ -215,5 +215,19 @@
   "<small>${ghPillText(r.detail, [[v.login, \"login\"], [acc.github, \"login\"], [v.repo, \"repo\"]])}</small>",
   "<small>${escapeHtml(r.detail)}</small>",
   1
+ ],
+ [
+  "the panel boxes are packed again (3px)",
+  "admincss",
+  "padding:12px 14px; display:grid; gap:6px; align-content:start; }",
+  "padding:10px 12px; display:grid; gap:3px; align-content:start; }",
+  1
+ ],
+ [
+  "a pill row's line goes tight again",
+  "admincss",
+  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.7; }",
+  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.3; }",
+  1
  ]
 ]
