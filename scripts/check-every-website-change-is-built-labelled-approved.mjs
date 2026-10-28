@@ -32,6 +32,23 @@ const rm = SC.cleanChange(T, { removes_page: true, page_url: "https://x.test/rga
 if (!rm.change || rm.change.label !== "remove_page" || rm.change.removed_title !== "Website access check") fail(`a removal isn't labelled "Removing a page" or loses the page's title (${rm.error || rm.change.label})`);
 if (!SC.cleanChange(T, { removes_page: true, page_url: "https://x.test/a/", items: [{ label: "x", after: "y" }], files: [] }).error) fail("a removal saves without the file it removes");
 if (!/^Removing a page: /.test(SC.changeText(rm.change, "A test page")) || !/Removing: rga-access-test\/index\.html/.test(SC.changeText(rm.change, "x"))) fail("the frozen approval text doesn't say \"Removing a page\" and \"Removing: <file>\"");
+// 🔒 removal_card_clean_v2 (approved 10-28, Chris "is this the cleanest way"): a removal's lines are MADE by the cleaner from its
+// address — one row, said once; a test page says so; NEVER a guess about where visitors go (RGA's site shows its homepage, not "not found")
+{ const typed = SC.cleanChange(T, { removes_page: true, page_url: "https://www.x.test/rga-access-test/", removed_title: "t", files: [{ path: "rga-access-test/index.html", action: "remove" }],
+    items: [{ label: "What stops working", before: "https://www.x.test/rga-access-test/", after: "" }, { label: "Where visitors go instead", after: "Your “page not found” page. Nothing links to it." }] });
+  const it = (typed.change || {}).items || [];
+  if (typed.error || it.length !== 1 || it[0].label !== "What stops working") fail(`a removal keeps typed lines (want ONE row "What stops working"): ${typed.error || JSON.stringify(it)}`);
+  if (it.some((i) => /visitors go|not found/i.test(`${i.label} ${i.after}`))) fail("a removal guesses where visitors go");
+  if (!it[0] || it[0].before !== "x.test/rga-access-test/" || it[0].note !== "A test page: hidden from Google, and nothing links to it.") fail(`a test page's removal row isn't the address + "A test page: hidden from Google…" (${JSON.stringify(it[0])})`);
+  const realKey = Object.keys(SC.STEPS).find((k) => SC.STEPS[k].newPage && !SC.STEPS[k].test);
+  if (realKey) { const real = SC.cleanChange(realKey, { removes_page: true, page_url: "https://x.test/old/", files: [{ path: "old/index.html", action: "remove" }], items: [] });
+    if (real.error || (real.change.items[0] || {}).note) fail(`a REAL page's removal claims it's a test page (or won't save): ${real.error || JSON.stringify(real.change.items)}`); }
+  const AD = read("netlify/functions/admin-deliverables.js");
+  if (!/if \(v\.change\.removes_page\) t\.site_change = \{ \.\.\.t\.site_change, items: v\.change\.items \};/.test(AD)) fail("Send doesn't apply the cleaned removal lines (an older draft's typed lines would reach the client)");
+  const AJ = read("admin/admin.js"), PJ = read("portal/portal.js");
+  if (/Where visitors go instead/.test(AJ) || /<b>Stops working:<\/b>/.test(AJ) || /`Visitors: \$\{/.test(AJ)) fail("admin still types a visitors line, says Stops working twice, or shows the Visitors chip");
+  if (/Visitors go to your homepage|`Visitors see: \$\{/.test(PJ)) fail("the portal still shows the Visitors chip on a removal");
+  if (!/\$\{stop\.note \? `<small class="ib-diff-n">/.test(PJ) || !/\$\{i\.note \? `<small class="ob-wc-dn">/.test(AJ)) fail("the test page's note isn't shown on the removal (portal + admin)"); }
 if (SC.changeLabel({ kind: "unknown" }) !== null) fail("a change that does nothing nameable still gets a label");
 if (SC.LABELS.add_page.verb !== "adding this page" || SC.LABELS.remove_page.done !== "Removed a page") fail("the labels' words changed (Approve adding this page · Removed a page)");
 

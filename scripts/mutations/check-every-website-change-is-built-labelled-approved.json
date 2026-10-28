@@ -138,5 +138,40 @@
   "    : ap ? [`Preview · you approved this page on ${day(ap.at)}.",
   "    : false ? [`Preview · you approved this page on ${day(ap.at)}.",
   1
+ ],
+ [
+  "a removal keeps its typed lines (the cleaner stops making them)",
+  "sitechange",
+  "    if (c.removes_page && c.page_url) c.items = removalItems(stepId, c.page_url);\n",
+  "",
+  1
+ ],
+ [
+  "every removal claims to be a test page",
+  "sitechange",
+  "...(STEPS[stepId] && STEPS[stepId].test ? { note: TEST_REMOVAL_NOTE } : {})",
+  "note: TEST_REMOVAL_NOTE",
+  1
+ ],
+ [
+  "Send lets an older draft's typed lines through",
+  "admindeliv",
+  "      if (v.change.removes_page) t.site_change = { ...t.site_change, items: v.change.items };\n",
+  "",
+  1
+ ],
+ [
+  "the portal shows the Visitors chip again",
+  "portal",
+  "    const fact = f.action === \"remove\" ? \"\"   // removal_card_clean_v2",
+  "    const fact = f.action === \"remove\" ? `Visitors see: ${f.note}`   // removal_card_clean_v2",
+  1
+ ],
+ [
+  "admin drops the test page's note",
+  "admin",
+  "${i.note ? `<small class=\"ob-wc-dn\">${escapeHtml(i.note)}</small>` : \"\"}",
+  "",
+  1
  ]
 ]
