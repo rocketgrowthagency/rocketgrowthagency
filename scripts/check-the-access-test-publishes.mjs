@@ -62,7 +62,7 @@ if (!D.CLIENT_APPROVABLE[T] || D.CLIENT_APPROVABLE[T].surface !== "website") fai
 const AD = read("netlify/functions/admin-deliverables.js"), A = read("admin/admin.js");
 if (!/key === "m1\.access\.publish_test"/.test(AD) || !/\/rga-access-test\//.test(AD) || !/note: "a test page, hidden from Google"/.test(AD)) fail("the test page doesn't draft itself (address + its one file)");
 if (!/if \(act === "open_pr"\) \{\s*if \(st !== "approved"\) return json\(409/.test(AD)) fail("a pull request can open before the client approved this version");
-if (!/if \(!acc\.repo\) return json\(409/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409/.test(AD)) fail("open_pr runs without GitHub access, or not as RGA Admin");
+if (!/if \(!acc\.repo\) return json\(409/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409, \{ error: me\.state === "no_key"/.test(AD) || !/const me = await GA\.whoAmI\(token, fetch\);\s*if \(!me\.ok\) return json\(409, \{ error: "Not signed in as RGA Admin on the server\. Nothing was merged\." \}\);/.test(AD)) fail("open_pr (or RGA's merge) runs without GitHub access, or not as RGA Admin");
 if (!/noindex: true \}\);/.test(AD)) fail("the test page isn't hidden from Google");
 if (!/\$\{accessDoneMiniHtml\(s\.task, ask\)\}\$\{accessTestHtml\(s\.task\)\}/.test(A) || !/Prove we can publish/.test(A)) fail("admin row 8 doesn't show \"Prove we can publish\"");
 // 🔄 publish_safety_checks_v1 (10-28): the button is OFF until the six safety checks pass

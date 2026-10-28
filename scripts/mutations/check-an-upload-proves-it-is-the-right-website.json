@@ -145,5 +145,47 @@
   "data-ob-wc-pr${sf && sf.ready ? \"\" : \" disabled\"}>Open the pull request",
   "data-ob-wc-pr>Open the pull request",
   1
+ ],
+ [
+  "a PR pushed to after opening still merges",
+  "pubsafety",
+  "  if (state.head !== pr.head) return { ok: false,",
+  "  if (false) return { ok: false,",
+  1
+ ],
+ [
+  "we merge without the opened commit on record",
+  "pubsafety",
+  "  if (!pr || !pr.head) return { ok: false,",
+  "  if (!pr) return { ok: false,",
+  1
+ ],
+ [
+  "the merge doesn't pin the commit",
+  "ghaccess",
+  "body: JSON.stringify({ sha, merge_method: \"merge\", commit_title: title || undefined }) });",
+  "body: JSON.stringify({ merge_method: \"merge\", commit_title: title || undefined }) });",
+  1
+ ],
+ [
+  "RGA merges even when the client chose to",
+  "admindeliv",
+  ".merge_by || {}).by === \"client\") return json(409,",
+  ".merge_by || {}).by === \"never\") return json(409,",
+  1
+ ],
+ [
+  "RGA Admin merging is flagged as a stranger",
+  "pubsafety",
+  " || by.toLowerCase() === String(GA.ADMIN_LOGIN || \"\").toLowerCase()",
+  "",
+  1
+ ],
+ [
+  "the client's choice is open to anyone",
+  "portalmergechoice",
+  "  const gate = await requirePortalOwner(event, clientId);\n  if (gate.error) return gate.error;\n",
+  "  const gate = {};\n",
+  1
  ]
 ]

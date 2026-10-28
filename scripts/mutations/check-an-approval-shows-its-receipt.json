@@ -1,13 +1,79 @@
 [
- ["after Approve the screen goes back to 'Nothing is waiting'", "portal", "  const pick = focus || W[0] || G[0] || null;", "  const pick = W[0] || null;", 1],
- ["the approved item opens its old pane, not the receipt", "portal", "${e.group === \"going\" ? fyaReceiptHtml(e.d, when) : ibPaneHtml(e, when)}", "${ibPaneHtml(e, when)}", 1],
- ["approved items go back into the 'asked for a change' group", "portal", "G = going.map((d) => mk(\"going\", d))", "G = going.map((d) => mk(\"rga\", d))", 1],
- ["the receipt forgets who approved it", "portal", "${a.by ? ` · by ${escapeHtml(a.by)}` : \"\"}", "", 1],
- ["the receipt drops the exact version", "portal", "a.version ? `<code>${escapeHtml(a.version)}</code> · this file uploads", "false ? `<code>${escapeHtml(a.version)}</code> · this file uploads", 1],
- ["uploading never shows", "portal", "  const up = !!d.uploading;", "  const up = false;", 1],
- ["the receipt says 'this change' for every label", "portal", "`You approved ${escapeHtml(L ? L.verb : \"this change\")}`", "`You approved this change`", 1],
- ["What happens next starts with RGA's step done", "portal", "[up ? \"done\" : \"now\", up ? \"RGA is uploading it\"", "[\"done\", up ? \"RGA is uploading it\"", 1],
- ["the receipt loses Preview what you approved", "portal", "${c.preview_url ? `<a class=\"portal-button fya-rc-see\"", "${false ? `<a class=\"portal-button fya-rc-see\"", 1],
- ["the receipt header isn't done green", "portalcss", "padding:20px; background:var(--state-ok-bg,#e3f1df);", "padding:20px; background:var(--state-over-bg,#eceded);", 1],
- ["the going-up row reads like a change request again", "portal", "  if (e.group === \"going\") return `You approved it", "  if (e.group === \"going\") return `You asked for a change", 1]
+ [
+  "after Approve the screen goes back to 'Nothing is waiting'",
+  "portal",
+  "  const pick = focus || W[0] || G[0] || null;",
+  "  const pick = W[0] || null;",
+  1
+ ],
+ [
+  "the approved item opens its old pane, not the receipt",
+  "portal",
+  "${e.group === \"going\" ? fyaReceiptHtml(e.d, when) : ibPaneHtml(e, when)}",
+  "${ibPaneHtml(e, when)}",
+  1
+ ],
+ [
+  "approved items go back into the 'asked for a change' group",
+  "portal",
+  "G = going.map((d) => mk(\"going\", d))",
+  "G = going.map((d) => mk(\"rga\", d))",
+  1
+ ],
+ [
+  "the receipt forgets who approved it",
+  "portal",
+  "${a.by ? ` · by ${escapeHtml(a.by)}` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the receipt drops the exact version",
+  "portal",
+  "a.version ? `<code>${escapeHtml(a.version)}</code> · this file uploads",
+  "false ? `<code>${escapeHtml(a.version)}</code> · this file uploads",
+  1
+ ],
+ [
+  "uploading never shows",
+  "portal",
+  "  const up = !!d.uploading, pr = d.pr || null,",
+  "  const up = false, pr = d.pr || null,",
+  1
+ ],
+ [
+  "the receipt says 'this change' for every label",
+  "portal",
+  "`You approved ${escapeHtml(L ? L.verb : \"this change\")}`",
+  "`You approved this change`",
+  1
+ ],
+ [
+  "What happens next starts with RGA's step done",
+  "portal",
+  "[up ? \"done\" : \"now\", up ? \"RGA is uploading it\"",
+  "[\"done\", up ? \"RGA is uploading it\"",
+  1
+ ],
+ [
+  "the receipt loses Preview what you approved",
+  "portal",
+  "${c.preview_url ? `<a class=\"portal-button fya-rc-see\"",
+  "${false ? `<a class=\"portal-button fya-rc-see\"",
+  1
+ ],
+ [
+  "the receipt header isn't done green",
+  "portalcss",
+  "padding:20px; background:var(--state-ok-bg,#e3f1df);",
+  "padding:20px; background:var(--state-over-bg,#eceded);",
+  1
+ ],
+ [
+  "the going-up row reads like a change request again",
+  "portal",
+  "  if (e.group === \"going\") return `You approved it",
+  "  if (e.group === \"going\") return `You asked for a change",
+  1
+ ]
 ]

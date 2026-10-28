@@ -144,7 +144,8 @@ export const FILES = {
   walkclients: "scraper:scripts/acceptance/clients.mjs",
   walk: "scraper:scripts/acceptance-walk.mjs",
   googlecheck: "netlify/functions/admin-google-check.js",
-  pubsafety: "netlify/functions/_publish-safety.js",   // publish_safety_checks_v1: an upload proves it's the right website   // admin_fixes_1028_v1: Check Google now (read only)
+  pubsafety: "netlify/functions/_publish-safety.js",
+  portalmergechoice: "netlify/functions/portal-merge-choice.js",   // merge_without_the_browser_v1: who presses Merge (client)   // publish_safety_checks_v1: an upload proves it's the right website   // admin_fixes_1028_v1: Check Google now (read only)
   openmoves: "netlify/functions/_open-moves.js",   // todo_inbox_v1 (10-26): the one list of open moves
   adminopenmovesfn: "netlify/functions/admin-open-moves.js",
   portalopenmovesfn: "netlify/functions/portal-open-moves.js",

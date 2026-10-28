@@ -71,6 +71,22 @@ if (!PS.prHoldsOnly([{ path: "rga-access-test/index.html", action: "add" }], bui
 { const m = PS.mergerState({ merged: true, merged_by: "someone-else" }, "acme/site", null); if (m.ok !== null || m.by !== "someone-else") fail("a merge by an account we don't know isn't flagged"); }
 { const m = PS.mergerState({ merged: true, merged_by: "someone-else" }, "acme/site", { login: "someone-else" }); if (m.ok !== true) fail("RGA's \"That's them\" doesn't clear the flag"); }
 
+// ── merge_without_the_browser_v1: RGA merges on the server — only the commit it opened ───────────
+{ const GA = req(`${SITE}/netlify/functions/_github-access.js`), pr = { head: "abc123", base: "main" }, files = [{ path: "rga-access-test/index.html", action: "add" }];
+  const st = (o) => ({ ok: true, merged: false, state: "open", head: "abc123", base: "main", ...o });
+  if (!PS.mergeReady(st(), files, build.files, pr).ok) fail("a pull request that's still exactly what we opened isn't ready to merge");
+  if (PS.mergeReady(st({ head: "zzz999" }), files, build.files, pr).ok) fail("a pull request someone pushed to after we opened it would still merge");
+  if (PS.mergeReady(st({ state: "closed" }), files, build.files, pr).ok) fail("a closed pull request would merge");
+  if (PS.mergeReady(st({ base: "dev" }), files, build.files, pr).ok) fail("a pull request retargeted to another branch would merge");
+  if (PS.mergeReady(st(), [...files, { path: "index.html", action: "edit" }], build.files, pr).ok) fail("a pull request holding an extra file would merge");
+  { const r = PS.mergeReady(st(), files, build.files, { base: "main" }); if (r.ok || !/no record of the commit we opened/.test(r.why)) fail("we'd merge without a record of the commit we opened (blind)"); }
+  const calls = []; const f = async (u, init = {}) => { calls.push({ u: String(u), m: init.method || "GET", b: init.body ? JSON.parse(init.body) : null }); return String(u).endsWith("/merge") ? new Response(JSON.stringify({ merged: true, sha: "m1" }), { status: 200 }) : new Response("{}", { status: 404 }); };
+  const mg = await GA.mergePullRequest("t", f, { repo: "acme/site", number: 2, sha: "abc123", title: "x" });
+  if (!mg.ok || calls[0].m !== "PUT" || !calls[0].u.endsWith("/repos/acme/site/pulls/2/merge") || calls[0].b.sha !== "abc123") fail("the merge doesn't pin the commit we opened (GitHub must refuse if the head moved)");
+  const f409 = async () => new Response("{}", { status: 409 });
+  if ((await GA.mergePullRequest("t", f409, { repo: "acme/site", number: 2, sha: "abc123" })).state !== "head_moved") fail("GitHub's 'head moved' refusal isn't recognised");
+  if (PS.mergerState({ merged: true, merged_by: GA.ADMIN_LOGIN }, "acme/site", null).ok !== true) fail("RGA Admin merging for them (after their approval) is flagged as unexpected"); }
+
 // ── after live ─────────────────────────────────────────────────────────────────────────────────
 const P = (url, title, h1 = "H") => ({ url, read: true, title, h1, description: "d", canonical: null });
 const before = { pages: [P("https://www.acme.test/", "Home"), P("https://www.acme.test/about/", "About"), P("https://www.acme.test/plumbing/", "Plumbing")] };
@@ -100,5 +116,9 @@ if (!/t\.publish_before = \{ at: snap0\.at/.test(AD) || !/const after = await PS
 if (!/safety: t\.publish_safety && t\.publish_pr && t\.publish_pr\.v === c\.v \?/.test(PD) || !/rest: t\.publish_after \? \(t\.publish_after\.ok === true \? true/.test(PD)) fail("the client is told it was checked before it really was");
 if (!/if \(s\.rest === true\) rows\.push/.test(P0)) fail("the client's \"rest of your site\" line shows without the after-check passing");
 if (!/data-ob-wc-pr\$\{sf && sf\.ready \? "" : " disabled"\}>Open the pull request/.test(A)) fail("admin's Open the pull request isn't off until the checks pass");
+{ const ADX = read("netlify/functions/admin-deliverables.js"), PMC = read("netlify/functions/portal-merge-choice.js");
+  if (!/\.merge_by \|\| \{\}\)\.by === "client"\) return json\(409/.test(ADX) || !/const ready = PS\.mergeReady\(s2, f2\.ok \? f2\.files : null, bld2 \? bld2\.files : \[\], pr\);\s*if \(!ready\.ok\) return json\(409/.test(ADX) || !/GA\.mergePullRequest\(token, fetch, \{ repo, number: pr\.number, sha: pr\.head,/.test(ADX)) fail("RGA's merge doesn't respect the client's choice, skip the re-check, or merge without pinning the commit");
+  if (!/requirePortalOwner\(event, clientId\)/.test(PMC) || !/\["rga", "client"\]\.includes\(by\)/.test(PMC) || !/saved\.at !== at \|\| saved\.by !== by/.test(PMC)) fail("the client's merge choice isn't owner-only, allow-listed and read back");
+  if (!/url: \(\(\(tasks\["m1\.access\.website"\] \|\| \{\}\)\.merge_by\) \|\| \{\}\)\.by === "client" \? t\.publish_pr\.url : null/.test(PD)) fail("the client gets the GitHub link even when RGA merges (only when they chose to merge themselves)"); }
 if (F.length) { console.error(`❌ an upload can reach the wrong website (or change more than approved) — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ an upload proves it's the right website: six checks before (business · website · the repo IS the site, or \"couldn't check\" until a person confirms · the repo on record · RGA Admin · only the approved files) + a fresh before-snapshot gate the pull request; its files are read back (extra → closed); who merged is recorded (unknown → flagged); after live exactly the before pages are re-read (changed / gone → red, unreadable → never a pass); the client sees only what passed");

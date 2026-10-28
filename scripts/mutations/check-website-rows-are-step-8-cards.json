@@ -121,8 +121,8 @@
  [
   "an open pull request still marks the client's approval current",
   "admin",
-  "  else if (st === \"approved\") { cur = gh && pr ? 4 : 3;",
-  "  else if (st === \"approved\") { cur = gh && pr ? 2 : 3;",
+  "cur = gh && pr ? (mg ? 5 : 4) : 3;",
+  "cur = gh && pr ? (mg ? 5 : 2) : 3;",
   1
  ],
  [
@@ -137,6 +137,13 @@
   "admincss",
   "justify-items:center; align-content:start; text-align:center;",
   "justify-items:center; text-align:center;",
+  1
+ ],
+ [
+  "the merge goes back to the browser's GitHub",
+  "admin",
+  "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for them</button>",
+  "<a class=\"admin-button\" href=\"${escapeAttribute(pr.url)}\">Open #${escapeHtml(pr.number)} on GitHub ↗</a>",
   1
  ]
 ]

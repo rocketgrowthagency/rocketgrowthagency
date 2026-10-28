@@ -51,8 +51,8 @@
  [
   "open_pr not as RGA Admin",
   "admindeliv",
-  "      if (!me.ok) return json(409,",
-  "      if (false) return json(409,",
+  "      if (!me.ok) return json(409, { error: me.state === \"no_key\"",
+  "      if (false) return json(409, { error: me.state === \"no_key\"",
   1
  ],
  [
@@ -67,6 +67,13 @@
   "deliverables",
   "CLIENT_APPROVABLE[\"m1.access.publish_test\"] = {",
   "const _gone = {",
+  1
+ ],
+ [
+  "RGA's merge runs not as RGA Admin",
+  "admindeliv",
+  "      if (!me.ok) return json(409, { error: \"Not signed in as RGA Admin on the server. Nothing was merged.\" });\n",
+  "",
   1
  ]
 ]
