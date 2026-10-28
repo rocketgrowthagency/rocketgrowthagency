@@ -11,7 +11,7 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const P = read("portal/portal.js"), DL = read("netlify/functions/portal-deliverables.js");
 const F = [], fail = (m) => F.push(m);
-const a = P.indexOf("  const needs = [\n"), b = P.indexOf("  host.innerHTML = `<div class=\"ib\">${top}<div class=\"ib-body\"><div class=\"ib-q\">${queueHtml}${settledHtml}</div>", a);   // the inbox (website_change_approvals_v1 option B, 10-23)
+const a = P.indexOf("  const needs = [\n"), b = P.indexOf("<div class=\"ib\">${top}<div class=\"ib-body\"><div class=\"ib-q\">${queueHtml}${settledHtml}</div>", a);   // the inbox (website_change_approvals_v1 option B, 10-23)
 if (a < 0 || b < 0) { console.error("⚠️  the approvals renderer moved"); process.exit(2); }
 const R = P.slice(a, b);
 if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(R)) fail("Needs you can hold a done or RGA-turn action (\"Nothing needs you\" above a card)");

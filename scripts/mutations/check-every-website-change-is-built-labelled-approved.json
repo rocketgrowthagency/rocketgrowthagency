@@ -103,5 +103,12 @@
   "data-goto-approve>Open For your approval</button>",
   ">Open For your approval</button>",
   1
+ ],
+ [
+  "the strip goes back into the narrow queue column",
+  "portal",
+  "  host.innerHTML = `${strip}<div class=\"ib\">${top}",
+  "  host.innerHTML = `<div class=\"ib\">${top}",
+  1
  ]
 ]

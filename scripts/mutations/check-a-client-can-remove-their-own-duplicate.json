@@ -905,8 +905,8 @@
  [
   "after: an item count shows with nothing to do",
   "portal",
-  "  const queueHtml = strip + (needN\n",
-  "  const queueHtml = strip + (true\n",
+  "  const queueHtml = (needN\n",
+  "  const queueHtml = (true\n",
   1
  ],
  [
