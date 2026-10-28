@@ -74,7 +74,7 @@ const plan = (...locs) => ({ "m1.strategy.keywords_locations": { outcome_data: {
   const chk = ctx.check({ ...push, area_now: g2.area, area_now_at: "2026-10-17T10:30:00Z" });
   // 🔄 admin_fixes_1028_v1 (Chris 10-28 "the check boxes are not clickable"): STATUS rows, never a checkbox look; the count; Check Google now
   if ((chk.match(/class="is-done"/g) || []).length !== 2 || !/>Georgetown<\/span><span class="ob-area-w">not on Google yet</.test(chk) || !/data-area-missing="Georgetown, TX">Georgetown</.test(chk)) fail("TX: admin's checklist doesn't tick the 2 Google lists and offer \"Google doesn't list it\" for the third");
-  if (!/<b>2 of 3 on Google<\/b><small>Google last checked Oct 17, 10:30 AM<\/small>/.test(chk) || /ob-area-box|type="checkbox"/.test(chk) || !/data-area-check>↻ Check Google now</.test(chk)) fail("TX: admin's places aren't status rows with \"2 of 3 on Google\", a readable check time and Check Google now (or still look like checkboxes)");
+  if (!/<b>Service area<\/b><small>Google last checked Oct 17, 10:30 AM<\/small>/.test(chk) || /ob-area-box|type="checkbox"/.test(chk) || !/data-area-check>↻ Check Google now</.test(chk)) fail("TX: admin's places aren't status rows under \"Service area\" (the card header counts them), a readable check time and Check Google now (or still look like checkboxes)");
   const g3 = X.factsFromGoogle({ ...google, serviceArea: { ...google.serviceArea, places: places("Austin, TX, USA", "Round Rock, TX, USA", "Austin, TX 78704, USA", "Cedar Park, TX, USA", "Pflugerville, TX, USA", "Georgetown, TX, USA") } });
   if (!X.rgaDone(task, g3)) fail("TX: all 3 on Google doesn't finish the step");
 }
