@@ -217,17 +217,45 @@
   1
  ],
  [
-  "the panel boxes are packed again (3px)",
+  "a pill row's line goes tight again",
   "admincss",
-  "padding:12px 14px; display:grid; gap:6px; align-content:start; }",
-  "padding:10px 12px; display:grid; gap:3px; align-content:start; }",
+  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.8; }",
+  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.3; }",
   1
  ],
  [
-  "a pill row's line goes tight again",
+  "the verified band is grey even when it matches",
   "admincss",
-  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.7; }",
-  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.3; }",
+  ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:var(--state-ok-bg,#e3f1df); }",
+  ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:#f7f8fa; }",
+  1
+ ],
+ [
+  "the mismatch band doesn't say what failed",
+  "admin",
+  "${escapeHtml((f && f.title) || \"A check doesn't match\")} · nothing opens or merges until it does",
+  "A check doesn't match · nothing opens or merges until it does",
+  1
+ ],
+ [
+  "the boxes' label sits on the name again",
+  "admincss",
+  ".ob-ghp-g .lbl { margin-bottom:8px; }",
+  ".ob-ghp-g .lbl { margin-bottom:0; }",
+  1
+ ],
+ [
+  "the check rows are packed again",
+  "admincss",
+  ".ob-ghp > .ob-safe-l li { padding:14px 18px; }",
+  ".ob-ghp > .ob-safe-l li { padding:9px 14px; }",
+  1
+ ],
+ [
+  "the panel boxes are packed again (10px padding)",
+  "admincss",
+  "border-radius:10px; padding:16px 18px; display:grid; gap:0; align-content:start; }",
+  "border-radius:10px; padding:10px 12px; display:grid; gap:0; align-content:start; }",
   1
  ]
 ]

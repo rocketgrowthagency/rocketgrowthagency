@@ -56,6 +56,19 @@ vm.runInContext(`${A.slice(A.indexOf("function acCardHtml("), A.indexOf("\n}\n",
 // the access ledger + before-snapshot under a confirmed access (rga_client_access_and_work_v1, 10-23)
 vm.runInContext(`${(A.match(/^const ACC_REMOVED_HOW = \{[^\n]*\};$/m) || ["var ACC_REMOVED_HOW = {};"])[0].replace(/^const /, "var ")} ${fnSrc(A, "accessLedgerHtml")} ${fnSrc(A, "snapshotAdminHtml")} ${fnSrc(A, "accessRemoveHtml")} ${fnSrc(A, "accessLedgerCardHtml")} ${fnSrc(A, "snapshotFactHtml")} ${fnSrc(A, "accessDoneTitle")}`, actx);   // admin_row8_done_v1 → v2
 const adminRow = (t) => vm.runInContext(`accessAdminHtml(${JSON.stringify(t)})`, actx);
+// 🔒 step8_spacing_v1 (approved 10-28, Chris "do we need this?"): step 8's folded row on GitHub = the repository pill + "<role> access";
+// a CLOSED ask stays inside the card (off the row), an OPEN ask keeps its line
+{
+  vm.runInContext(`var OB_WEB_TILE = ""; ${fnSrc(A, "ghIdHtml")} ${fnSrc(A, "accessDoneTitle")} ${fnSrc(A, "accessDoneMiniHtml")}`, actx);
+  const t8 = { status: "done", client_input: { platform: "custom", files: "github", via: "invite", at: "2026-10-26T17:00:00Z" },
+    access: { confirmed_at: "2026-10-27T17:00:00Z", repo: "acme/site", github: "rocketgrowthagency-admin", role: "Write on GitHub" },
+    ask_closed: { at: new Date(Date.now() - 864e5).toISOString(), by: "client", kind: "change", note: "x" } };
+  const closed = vm.runInContext(`accessDoneMiniHtml(${JSON.stringify(t8)}, null)`, actx);
+  if (!/<span class="sub"><span class="ob-ghid"><span class="a g" aria-hidden="true">G<\/span>acme\/site<\/span><span>Write access<\/span><\/span>/.test(closed)) fail(`step 8's row subline isn't the repository pill + "Write access" (${closed.slice(0, 200)})`);
+  if (/That's sorted|You closed it/.test(closed.split("</summary>")[0])) fail("step 8's row still carries the closed ask (bookkeeping) — it belongs inside the card");
+  const open = vm.runInContext(`accessDoneMiniHtml(${JSON.stringify(t8)}, { at: "2026-10-28T17:00:00Z", note: "please fix" })`, actx);
+  if (!/confirmed .* · \d checks/.test(open.split("</summary>")[0])) fail("with an OPEN ask, step 8's row lost its line");
+}
 
 for (const [label, start] of [["a new client", null], ["a step ticked done earlier with nothing recorded", { status: "done", completed_at: "2026-10-01T17:00:00Z", completed_by: "rga" }]]) {
   world(start);

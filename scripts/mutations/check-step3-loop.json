@@ -28,5 +28,19 @@
   "accessconfirm",
   "  await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\", stepId: STEP, by: gate.email || null, actor: \"rga\",",
   "  if (false) await recordSubmission({ supa, clientId, kind: \"website_access_confirmed\", stepId: STEP, by: gate.email || null, actor: \"rga\","
+ ],
+ [
+  "the closed ask comes back onto step 8's row",
+  "admin",
+  "${ask ? `<span>${right}</span>` : \"\"}</span>`",
+  "<span>${right}</span></span>`",
+  1
+ ],
+ [
+  "step 8's row drops the role",
+  "admin",
+  "${role ? `<span>${escapeHtml(/access/i.test(role) ? role : `${role} access`)}</span>` : \"\"}",
+  "",
+  1
  ]
 ]

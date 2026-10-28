@@ -27,7 +27,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
-  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const wcSafetyCache = [^\n]*$/m, "wcSafetyCache"), line(/^const wcRestAsked = [^\n]*$/m, "wcRestAsked"), line(/^const WC_DAY = [^\n]*;$/m, "WC_DAY"), fn("ghIdHtml"), fn("ghPillText"), fn("ghClientName"), fn("ghBandHtml"), fn("ghPanelHtml"), fn("wcSafetyPanel"), fn("wcMergedHtml"), fn("wcRestHtml"), fn("wcProofHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -87,7 +87,7 @@ try {
       const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" }, ...(sc.mergeBy ? { merge_by: { by: sc.mergeBy } } : {}) } } } : undefined, selectedClient: { id: "c1", business_name: "Acme" }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
-      const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml }; })()`);
+      const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml, ghBandHtml }; })()`);
       const sig = `${sc.task.ran_at || (sc.task.auto_result && sc.task.auto_result.ran_at) || sc.task.completed_at || ""}|${String((sc.task.auto_result && sc.task.auto_result.summary) || "").length}`;
       if (sc.pre) api.wcDraftCache.set(`c1:${H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
@@ -101,7 +101,11 @@ try {
       document.body.appendChild(ghp);   // measured with admin.css (Chris 10-28 3:16 PM: "too close together")
       const box = ghp.querySelector(".ob-ghp-g > div"), rowSmall = ghp.querySelector(".ob-safe-l small");
       const panel = { text: ghp.textContent.replace(/\s+/g, " "), html: ghp.innerHTML,
-        gap: box ? getComputedStyle(box).rowGap : "", pad: box ? getComputedStyle(box).paddingTop : "", lh: rowSmall ? parseFloat(getComputedStyle(rowSmall).lineHeight) / parseFloat(getComputedStyle(rowSmall).fontSize) : 0 };
+        pad: box ? getComputedStyle(box).paddingTop : "", lblMb: box ? getComputedStyle(box.querySelector(".lbl")).marginBottom : "", nameMb: box ? getComputedStyle(box.querySelector("b")).marginBottom : "",
+        rowPad: ghp.querySelector(".ob-safe-l li") ? getComputedStyle(ghp.querySelector(".ob-safe-l li")).paddingTop : "",
+        band: ghp.querySelector(".ob-ghcv") ? { cls: ghp.querySelector(".ob-ghcv").className, text: ghp.querySelector(".ob-ghcv").textContent.replace(/\s+/g, " "), bg: getComputedStyle(ghp.querySelector(".ob-ghcv")).backgroundColor } : null,
+        bad: (() => { const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ match: false, checked_at: "2026-10-28T20:00:00Z", rows: [{ ok: true, title: "a" }, { ok: false, title: "Our key isn't the account the client invited" }] }); return d.textContent.replace(/\s+/g, " "); })(),
+        err: (() => { const d = document.createElement("div"); d.innerHTML = api.ghBandHtml({ error: true }); return d.textContent.replace(/\s+/g, " "); })(), lh: rowSmall ? parseFloat(getComputedStyle(rowSmall).lineHeight) / parseFloat(getComputedStyle(rowSmall).fontSize) : 0 };
       return { panel, pillT, text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
         textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
         loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
@@ -156,8 +160,14 @@ if (!/<span class="ob-ghid"><span class="a g" aria-hidden="true">G<\/span>acme\/
   if (!/RGA posts as\s*RGA Admin/.test(P.text) || !/Into the client's website code\s*Acme/.test(P.text) || !/Goes live on acme\.test/.test(P.text)) fail(`the GitHub panel's boxes aren't name-first (RGA Admin → the client's name · Goes live on): ${P.text.slice(0, 200)}`);
   if ((P.html.match(/class="ob-ghid"/g) || []).length < 4) fail(`the GitHub panel doesn't pill every login / repository (boxes, the check row, the footer): ${(P.html.match(/class="ob-ghid"/g) || []).length} pills`);
   if (/Into their repository|it publishes|Owner: /.test(P.text)) fail("the GitHub panel still says the old addresses-first wording");
-  if (P.gap !== "6px" || P.pad !== "12px") fail(`the GitHub panel's boxes are packed again (gap ${P.gap}, padding ${P.pad}; the mockup is 6px / 12px)`);
-  if (!(P.lh >= 1.65)) fail(`a check row with a pill sits on a tight line (${P.lh.toFixed(2)}; the mockup is 1.7)`); }
+  // 🔒 step8_spacing_v1 (approved 10-28, Chris "too crampt"): box 16px · label → name 8px · name → pill 10px · rows 14px · a pill row on 1.8
+  if (P.pad !== "16px" || P.lblMb !== "8px" || P.nameMb !== "10px") fail(`the GitHub panel's boxes are packed again (padding ${P.pad}, label ${P.lblMb}, name ${P.nameMb}; the mockup is 16px / 8px / 10px)`);
+  if (P.rowPad !== "14px") fail(`the GitHub panel's check rows are packed again (${P.rowPad}; the mockup is 14px)`);
+  if (!(P.lh >= 1.75)) fail(`a check row with a pill sits on a tight line (${P.lh.toFixed(2)}; the mockup is 1.8)`);
+  // the CONNECTION VERIFIED band, in the state colours (green · red · grey), always saying what it checked
+  if (!P.band || !/Connection verified/.test(P.band.text) || !/RGA Admin can post to the Acme website code · (\d+) of \1 checks match/.test(P.band.text) || P.band.bg !== "rgb(227, 241, 223)") fail(`the panel doesn't open on a green "Connection verified" band naming the client and the checks (${P.band && P.band.text} · ${P.band && P.band.bg})`);
+  if (!/Connection not verified/.test(P.bad) || !/Our key isn't the account the client invited · nothing opens or merges/.test(P.bad)) fail(`a mismatch isn't a "Connection not verified" band naming what failed (${P.bad})`);
+  if (!/Couldn't check the connection/.test(P.err) || !/Check the connection now/.test(P.err)) fail(`GitHub not answering isn't the grey "Couldn't check the connection" band with its button (${P.err})`); }
 if (!/Merged<\/b><span>by <span class="ob-ghid">/.test(out.ghLiveProven.html)) fail("the Proof box's Merged line doesn't put the account in its pill");
 has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
 has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");
