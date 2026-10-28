@@ -47,6 +47,8 @@ if (!/already happened/.test(r.body.error || "") || !/Nothing was changed/.test(
 world({ start: new Date(Date.now() - HOUR).toISOString(), event_id: "e1" });
 r = await call({ reopen: true });
 if (r.status !== 409 || patches) fail(`a kickoff whose time has passed (no recap yet) can be reopened (${r.status})`);
+// the step lock refuses a reopen too (10-27) — so pin THIS rule by its reason: a past call says it already happened, not "locked"
+if (!/already happened/.test(r.body.error || "")) fail(`a past call is refused for another reason, not because it already happened (${r.body.error}) — the time rule may be gone`);
 // not held: a future call is still the client's to change
 world({ start: new Date(Date.now() + 3 * 24 * HOUR).toISOString(), event_id: "e1" });
 r = await call({ reopen: true });

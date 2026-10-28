@@ -34,7 +34,7 @@ if (!/URL\.createObjectURL\(file\)/.test(js)) fail("the photo no longer appears 
 if (!/x\.upload\.onprogress = \(e\) => \{ if \(e\.lengthComputable\) onPct\(Math\.round\(\(e\.loaded \/ e\.total\) \* 100\)\); \};/.test(js)) fail("upload progress is no longer the real one (XHR upload.onprogress)");
 // 4
 for (const [w, re] of [["Preparing", /Preparing your photo…/], ["Uploading %", /`Uploading… \$\{pct\}%`/], ["Sent to RGA", /<\/span>Sent to RGA<\/span><small>We review it before it goes on Google\.<\/small>/],
-  ["settles on With RGA for review", /\$\{escapeHtml\(PHOTO_STATE\.in_review\.label\)\}<\/span><small>Sent just now<\/small>/], ["after 2 seconds", /\}, 2000\);/]])
+  ["settles on With RGA for review", /\$\{escapeHtml\(PHOTO_STATE\.in_review\.label\)\}<\/span><small>Sent just now<\/small>/], ["after 2 seconds", /Sent just now<\/small>`;[\s\S]{0,600}?\}, 2000\);\s*\},\s*refused\(reason\)/]])
   if (!re.test(js)) fail(`the Status column lost "${w}"`);
 // 5
 if (!/<span class="pm-pill bad">Didn't upload<\/span>/.test(js) || !/addAgain\("Try again"\)/.test(js)) fail("a failed upload no longer says so with Try again");

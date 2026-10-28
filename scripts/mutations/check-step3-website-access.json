@@ -122,8 +122,8 @@
  [
   "the padlock is back on step 3",
   "portal",
-  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_WEB, head: \"RGA has access\", side: `confirmed",
-  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_LOCK, head: \"RGA has access\", side: `confirmed"
+  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_WEB, head: \"Rocket Growth Agency has access\", side: `confirmed ",
+  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_LOCK, head: \"Rocket Growth Agency has access\", side: `confirmed "
  ],
  [
   "Done shows over Your move while updating",

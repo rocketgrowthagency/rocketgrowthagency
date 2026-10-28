@@ -1,0 +1,23 @@
+[
+ [
+  "the ask row puts its number in the disc itself again, outside obMarker",
+  "admin",
+  "${obMarker(n, ask ? \"ask\" : kick2 || callOn ? \"active\" : kick4Req ? \"queued\" : declined ? \"declined\" : \"done\", ask ? null : gsD)}",
+  "${ask ? `<span class=\"ob-num\">${n}</span><span class=\"ob-sid\">${n}</span>` : obMarker(n, kick2 || callOn ? \"active\" : kick4Req ? \"queued\" : declined ? \"declined\" : \"done\", gsD)}",
+  1
+ ],
+ [
+  "a declined step wears the done tick",
+  "admin",
+  "${obMarker(n, ask ? \"ask\" : kick2 || callOn ? \"active\" : kick4Req ? \"queued\" : declined ? \"declined\" : \"done\", ask ? null : gsD)}",
+  "${obMarker(n, ask ? \"ask\" : kick2 || callOn ? \"active\" : kick4Req ? \"queued\" : \"done\", ask ? null : gsD)}",
+  1
+ ],
+ [
+  "the queued row stops calling obMarker",
+  "admin",
+  "${obMarker(n, \"queued\", gsQ",
+  "${obMarkerX(n, \"queued\", gsQ",
+  1
+ ]
+]
