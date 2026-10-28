@@ -54,6 +54,12 @@ for (const [what, patch] of [["an invented client count", { intro: "We have 200+
   ["a title without the city", { title: "Local SEO Agency | Rocket Growth Agency" }], ["a 70-character title", { title: "Local SEO Agency in Culver City, CA, Los Angeles County | Rocket Growth" }], ["3 questions", { faq: good.faq.slice(0, 3) }]])
   if (!CP.checkWords({ ...good, ...patch }, C).problems) fail(`the words are kept with ${what}`);
 
+// the model's answer as it really arrives (10-27: RGA's first run failed "not JSON" — paragraphs with real line breaks)
+{ const j = CP.parseJsonLoose('Sure:\n```json\n{"title":"A","intro":"One.\n\nTwo.","faq":[{"q":"x","a":"say \\"hi\\""}]}\n```');
+  if (!j || j.intro !== "One.\n\nTwo." || j.faq[0].a !== 'say "hi"') fail("a fenced answer with line breaks inside a paragraph isn't read (the first real run failed so)");
+  if (CP.parseJsonLoose("no json here") !== null) fail("prose is read as a page");
+  if (!/outcome_data: \{ problems: w\.problems, raw_head: String\(raw \|\| ""\)\.slice\(0, 600\)/.test(read("netlify/functions/flow-execute.js"))) fail("an unusable answer is thrown away whole again (keep its start + end to read the cause)"); }
+
 // ── 4 · the shared rules ─────────────────────────────────────────────────────────────────────
 if (SC.COPY_STEPS.includes("m1.web.location_pages") || !SC.isSiteChangeStep("m1.web.location_pages") || !SC.STEPS["m1.web.location_pages"].newPage) fail("row 45 is still a copy step (done on approval, never read back live)");
 const base = { page_url: "https://x.test/local-seo/culver-city-ca/", items: [{ label: "Page title", role: "title", after: "Local SEO Agency in Culver City" }, { label: "Links on the page", after: "A → /a/\nB → /b/", check: false }], files: [{ path: "local-seo/culver-city-ca/index.html", action: "add" }], searches: ["local seo agency culver city"] };

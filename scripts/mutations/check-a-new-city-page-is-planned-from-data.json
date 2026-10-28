@@ -117,5 +117,19 @@
   "    const runB = def && def.hasRunner !== false && !ran ? `<button type=\"button\" class=\"admin-button\" data-onboard-run=\"${escapeAttribute(id)}\">⚡ Draft this for me</button>` : \"\";",
   "    const runB = \"\";",
   1
+ ],
+ [
+  "line breaks inside a string break the read",
+  "citypage",
+  "      if (ch === \"\\n\") { out += \"\\\\n\"; continue; }\n",
+  "",
+  1
+ ],
+ [
+  "an unusable answer is thrown away whole",
+  "exec",
+  "      outcome_data: { problems: w.problems, raw_head: String(raw || \"\").slice(0, 600), raw_tail: String(raw || \"\").slice(-300), raw_length: String(raw || \"\").length } };",
+  "      outcome_data: { problems: w.problems } };",
+  1
  ]
 ]
