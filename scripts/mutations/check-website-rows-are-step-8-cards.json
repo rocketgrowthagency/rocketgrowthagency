@@ -30,8 +30,8 @@
  [
   "sent loses its checks",
   "admin",
-  "      body: acCk([[\"Drafted\", `${n} line",
-  "      body: ([[\"Drafted\", `${n} line",
+  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),",
+  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcWhatHtml(task, c, false),",
   1
  ],
  [
@@ -88,6 +88,48 @@
   "admin",
   "    if (pre && pre._run !== runSig) { wcDraftCache.delete(key); wcPrefilling.delete(key); return siteChangeAdminHtml(id, t); }\n",
   "",
+  1
+ ],
+ [
+  "sent goes grey again (the 'over' colour)",
+  "admin",
+  "    return wrap(acCardHtml({ tone: \"rga\", tile, label: \"With the client · in their For your approval\"",
+  "    return wrap(acCardHtml({ tone: \"wait\", tile, label: \"With the client · in their For your approval\"",
+  1
+ ],
+ [
+  "the trip loses the pull request and merge stops",
+  "admin",
+  "    ...(gh ? [[\"Pull request\", \"RGA\",",
+  "    ...(false ? [[\"Pull request\", \"RGA\",",
+  1
+ ],
+ [
+  "\"1 files\" comes back",
+  "admin",
+  "bd ? `${wcDay(bd.built_at)} · ${nf} file${nf === 1 ? \"\" : \"s\"}`",
+  "bd ? `${wcDay(bd.built_at)} · ${nf} files`",
+  1
+ ],
+ [
+  "the facts drop the fingerprint",
+  "admin",
+  "  if (f0 && f0.size) facts.push([\"Built from\"",
+  "  if (false) facts.push([\"Built from\"",
+  1
+ ],
+ [
+  "an open pull request still marks the client's approval current",
+  "admin",
+  "  else if (st === \"approved\") { cur = gh && pr ? 4 : 3;",
+  "  else if (st === \"approved\") { cur = gh && pr ? 2 : 3;",
+  1
+ ],
+ [
+  "the sent card hides Preview page",
+  "admin",
+  "  const prev = bd && bd.preview_url ?",
+  "  const prev = false ?",
   1
  ]
 ]

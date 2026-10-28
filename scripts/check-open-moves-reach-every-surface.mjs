@@ -145,13 +145,14 @@ if (!/fetch\(`\/\.netlify\/functions\/portal-open-moves\?client_id=/.test(POR)) 
 // the client's To do tab: next to Dashboard, its number = approvals + their own steps, steps in the inbox, the yellow card agrees
 const PIDX = read("portal/index.html");
 const navs = [...PIDX.matchAll(/<a [^>]*data-view="([a-z]+)"/g)].map((m) => m[1]);
-if (navs[0] !== "dashboard" || navs[1] !== "approvals" || !/data-view="approvals"[^\n]*>To do<span class="portal-nav-badge" id="approvalsBadge"/.test(PIDX)) fail(`the client tab isn't "To do" next to Dashboard (order: ${navs.join(", ")})`);
-if (!/const n = pending \+ stepNeeds\.length; badge\.textContent = String\(n\)/.test(POR)) fail("the To do number doesn't count the client's own open steps");
+// 🔄 approval_tab_and_sent_card_v1 (10-28): For your approval is its own tab again, right under Dashboard; To do follows it
+if (navs[0] !== "dashboard" || navs[1] !== "approve" || navs[2] !== "approvals" || !/data-view="approvals"[^\n]*>To do<span class="portal-nav-badge" id="approvalsBadge"/.test(PIDX) || !/data-view="approve"[^\n]*>For your approval<span class="portal-nav-badge" id="fyaBadge"/.test(PIDX)) fail(`the client tabs aren't Dashboard · For your approval · To do (order: ${navs.join(", ")})`);
+if (!/const n = \(pending - open\.length\) \+ stepNeeds\.length; badge\.textContent = String\(n\)/.test(POR) || !/fyaBadge\.textContent = String\(open\.length\)/.test(POR)) fail("the To do number doesn't count the client's own open steps (or For your approval doesn't count the changes waiting)");
 if (!/stepNeeds\.forEach\(\(m\) => add\("needs", \{ type: "step"/.test(POR) || !/stepRga\.forEach\(\(m\) => add\("rga", \{ type: "step"/.test(POR)) fail("steps don't join the To do inbox (Needs you / RGA is working on)");
 if (!/\$\{total && !stepNeeds\.length && !stepRga\.length \? `<span class="ib-prog">/.test(POR)) fail("the To do header shows approvals-only progress beside open steps (\"4 things need you · 1 of 1 done\")");
 if (!/taking longer than we promised/.test(POR)) fail("a late RGA step doesn't tell the client it's taking longer than promised");
 if (!/if \(e\.type === "step"\) \{/.test(POR) || !/href="#step-\$\{escapeAttribute\(e\.step_id\)\}"/.test(POR)) fail("a To do step doesn't open the step itself");
-if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ \(_todoApprovalsN \|\| 0\);/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");
+if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ Math\.max\(0, \(_todoApprovalsN \|\| 0\) - \(_fyaN \|\| 0\)\);/.test(POR) || !/if \(_fyaN > 0\) parts\.push\(`\$\{_fyaN\} change/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");
 if (!/RGA is doing it\$\{gbpWithRga \? moveSince\(openMv && openMv\.get\(step\.id\)\) : ""\}/.test(POR)) fail("the row pill lost its \"· since\" on RGA's by-hand move");
 if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Google<\/b>\$\{moveSince\(byHand\)\}`/.test(POR)) fail("step 4 no longer shows RGA's part (since) before Google's 48 hours");
 // ── todo_redesign_v1 (approved 10-26): the redesign's moving parts

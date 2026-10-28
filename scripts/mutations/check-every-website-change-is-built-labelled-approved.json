@@ -65,8 +65,8 @@
  [
   "To do drops For your approval",
   "portal",
-  "(apprN.length ? `<h3 class=\"ap-grp-head ib-fya\" id=\"for-your-approval\">For your approval · ${apprN.length}</h3>${apprN.map(row).join(\"\")}` : \"\")",
-  "(apprN.length ? apprN.map(row).join(\"\") : \"\")",
+  "  if (fyaHost) fyaHost.innerHTML = fyaHtml(_apItems, when, \"\");\n",
+  "",
   1
  ],
  [
@@ -81,6 +81,27 @@
   "ghaccess",
   "      ? await gh(`/repos/${repo}/contents/${enc(f.path)}`, { method: \"DELETE\"",
   "      ? await gh(`/repos/${repo}/contents/${enc(f.path)}`, { method: \"GET\"",
+  1
+ ],
+ [
+  "the preview button gets its long words back",
+  "portal",
+  "<span class=\"pvw-go\">${IB_ICON.eye}Preview page</span>",
+  "<span class=\"pvw-go\">${IB_ICON.eye}See the page as it will look</span>",
+  1
+ ],
+ [
+  "Back to approve becomes a relative link (lands on their site)",
+  "sitepreview",
+  "  const portal = `${String(process.env.URL || \"https://www.rocketgrowthagency.com\").replace(/\\/+$/, \"\")}/portal/#for-your-approval`;",
+  "  const portal = `/portal/#for-your-approval`;",
+  1
+ ],
+ [
+  "To do's strip stops opening the tab",
+  "portal",
+  "data-goto-approve>Open For your approval</button>",
+  ">Open For your approval</button>",
   1
  ]
 ]

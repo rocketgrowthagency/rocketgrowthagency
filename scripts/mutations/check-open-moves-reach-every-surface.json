@@ -68,8 +68,8 @@
  [
   "the To do number leaves out the client's steps",
   "portal",
-  "const n = pending + stepNeeds.length; badge.textContent = String(n)",
-  "const n = pending; badge.textContent = String(n)"
+  "const n = (pending - open.length) + stepNeeds.length; badge.textContent = String(n)",
+  "const n = (pending - open.length); badge.textContent = String(n)"
  ],
  [
   "steps don't join the client inbox",
@@ -80,8 +80,8 @@
  [
   "the yellow card doesn't count approvals",
   "portal",
-  "      const n = n0 + (_todoApprovalsN || 0);",
-  "      const n = n0;"
+  "      if (_fyaN > 0) parts.push(`${_fyaN} change",
+  "      if (false) parts.push(`${_fyaN} change"
  ],
  [
   "Next up is a second panel again",
@@ -222,6 +222,20 @@
   "admin",
   "${m.kind === \"client_request\" ? \"New message · \" : \"\"}",
   "",
+  1
+ ],
+ [
+  "For your approval's badge never counts",
+  "portal",
+  "  if (fyaBadge) { fyaBadge.textContent = String(open.length); fyaBadge.hidden = open.length === 0; }",
+  "  if (fyaBadge) { fyaBadge.textContent = \"0\"; fyaBadge.hidden = true; }",
+  1
+ ],
+ [
+  "For your approval drops out of the menu",
+  "portalindex",
+  "For your approval<span class=\"portal-nav-badge\" id=\"fyaBadge\" hidden>0</span></a>",
+  "For your approval</a>",
   1
  ]
 ]

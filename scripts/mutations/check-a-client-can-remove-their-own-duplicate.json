@@ -905,8 +905,8 @@
  [
   "after: an item count shows with nothing to do",
   "portal",
-  "  const queueHtml = needN\n    ? `<div class=\"ap-qhead\">",
-  "  const queueHtml = true\n    ? `<div class=\"ap-qhead\">",
+  "  const queueHtml = strip + (needN\n",
+  "  const queueHtml = strip + (true\n",
   1
  ],
  [

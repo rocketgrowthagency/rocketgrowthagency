@@ -59,7 +59,7 @@ const fake = (exists) => { const calls = []; const J = (b, s = 200) => new Respo
   const bad = await H({ queryStringParameters: { c: C, k: T, v: V, s: "0".repeat(32) } });
   if (bad.statusCode !== 403) fail("the preview opens without a valid signature");
   const ok = await H({ queryStringParameters: { c: C, k: T, v: V, s: sig } });
-  if (ok.statusCode !== 200 || !/noindex/.test(ok.headers["X-Robots-Tag"] || "") || !/<base href="https:\/\/www\.acme\.test\/">/.test(ok.body) || !/isn't on your website yet/.test(ok.body)) fail("the preview isn't private (noindex), on their styles (<base>), or doesn't say it's a preview");
+  if (ok.statusCode !== 200 || !/noindex/.test(ok.headers["X-Robots-Tag"] || "") || !/<base href="https:\/\/www\.acme\.test\/">/.test(ok.body) || !/It goes live only after you approve it\./.test(ok.body) || !/<a href="https:\/\/[^"]+\/portal\/#for-your-approval" target="_top"[^>]*>Back to approve<\/a>/.test(ok.body)) fail("the preview isn't private (noindex), on their styles (<base>), doesn't say it's a preview, or has no absolute \"Back to approve\" link");
   const stale = await H({ queryStringParameters: { c: C, k: T, v: "older", s: crypto.createHmac("sha256", "gate-secret").update(`${C}|${T}|older`).digest("hex").slice(0, 32) } });
   if (stale.statusCode !== 404) fail("an older version's preview still opens (it must say it's no longer current)"); }
 
@@ -70,8 +70,9 @@ if (!/tasks\[key\]\.approval\.approved_build = bd\.files\.map\(\(f\) => \(\{ pat
 if (!/if \(!same\) return json\(409, \{ error: "What's built isn't what the client approved/.test(AD) || !/if \(!bld \|\| !okd\) return json\(409/.test(AD)) fail("the upload doesn't refuse a build the client didn't approve");
 if (!/if \(c\.removes_page && url\) \{/.test(AD) || !/if \(stillThere && !String\(body\.unchecked_reason/.test(AD)) fail("Mark live on a removal doesn't prove the page is gone");
 if (!/\$\{ibLabelHtml\(e\.d && e\.d\.change\)\}<b>\$\{escapeHtml\(ibTitle\(e\)\)\}/.test(P) || !/let h = ibLabelHtml\(c\);/.test(P) || !/`Approve \$\{IB_LABELS\[c\.label\]\.verb\}`/.test(P) || !/\$\{ibLabelHtml\(d\.change\)\}<b>/.test(P)) fail("the client doesn't see the label on the queue row, the card, the Approve button and What RGA did");
-if (!/<h3 class="ap-grp-head ib-fya" id="for-your-approval">For your approval · \$\{apprN\.length\}<\/h3>/.test(P)) fail("To do doesn't lead with \"For your approval\"");
-if (!/<b>Nothing is uploaded until you approve\.<\/b>/.test(P) || !/See the page as it will look ↗/.test(P)) fail("the card lost its promise or See the page");
+// 🔄 approval_tab_and_sent_card_v1 (10-28): For your approval is its own tab; To do carries one strip that opens it
+if (!/grp\(" y", "Waiting for you", W, /.test(P) || !/class="ib-fstrip"[\s\S]{0,600}data-goto-approve>Open For your approval</.test(P) || !/if \(fyaHost\) fyaHost\.innerHTML = fyaHtml\(_apItems, when, ""\);/.test(P)) fail("For your approval isn't its own tab (Waiting for you first), or To do doesn't link to it");
+if (!/<b>Nothing is uploaded until you approve\.<\/b>/.test(P) || !/<span class="pvw-go">\$\{IB_ICON\.eye\}Preview page<\/span>/.test(P)) fail("the card lost its promise or its Preview page picture");
 if (!/label: c\.label \|\| SC\.changeLabel\(c\)/.test(PD) || !/preview_url: t\.site_build && t\.site_build\.v === c\.v/.test(PD)) fail("the client's card isn't sent the label / the preview");
 if (!/function wcLabelHtml\(c\)/.test(A) || (A.match(/\$\{wcLabelHtml\(/g) || []).length < 5 || !/data-ob-wc-remove>Remove this page…/.test(A)) fail("admin's cards don't carry the label in every state, or can't draft a removal");
 if (!/<h2>5A\. Website Access and Changes<\/h2>/.test(CG) || !/identified as adding a page, editing a page, removing a page, or changing code/.test(CG) || !/publishes only the version Client approved/.test(CG) || !/including a copy of any page it removes/.test(CG)) fail("the agreement doesn't carry §5A with the labelled / built-first / approved-version lines");

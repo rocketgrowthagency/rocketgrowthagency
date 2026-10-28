@@ -2,8 +2,8 @@
  [
   "the done row stops rendering its re-run button",
   "admin",
-  "<span class=\"ob-actions-inline\">${rerunBtn}${callOn || ask ? \"\" : undoBtn}</span>",
-  "<span class=\"ob-actions-inline\">${callOn || ask ? \"\" : undoBtn}</span>",
+  "${o.flowId === \"m1.access.website\" ? accessTestPillHtml(s.task) : \"\"}${rerunBtn}${callOn || ask ? \"\" : undoBtn}</span>",
+  "${o.flowId === \"m1.access.website\" ? accessTestPillHtml(s.task) : \"\"}${callOn || ask ? \"\" : undoBtn}</span>",
   1
  ]
 ]

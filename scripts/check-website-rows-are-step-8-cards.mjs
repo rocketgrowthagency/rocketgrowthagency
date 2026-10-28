@@ -23,7 +23,9 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const wcEditing = new Set\(\);[^\n]*$/m, "wcEditing"), line(/^const wcPrefilling = new Set\(\);[^\n]*$/m, "wcPrefilling"),
   line(/^const wcStepDef = [^\n]*;$/m, "wcStepDef"), line(/^const wcTitleOf = [^\n]*;$/m, "wcTitleOf"), line(/^const wcDay = [^\n]*;$/m, "wcDay"),
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
-  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"), fn("siteChangeAdminHtml")].join("\n");
+  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
+  // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
+  line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"), line(/^const WC_EYE = [^\n]*;$/m, "WC_EYE"), line(/^const wcPathOf = [^\n]*;$/m, "wcPathOf"), fn("wcWhatHtml"), fn("siteChangeAdminHtml")].join("\n");
 
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
@@ -32,6 +34,11 @@ const H = "m1.web.h1_cta", NOW = "2026-10-27T18:00:00Z";
 const items = [{ label: "Main headline", before: "Rank Higher on Google Maps and Build a Predictable Pipeline", after: "Local SEO That Puts Your Business on the Map" },
   { label: "Line under the headline", before: "", after: "Honest reporting, 60-Day Guarantee" }, { label: "Main button", before: "See Where You Rank Free", after: "Get Your Free Google Listing Audit" }];
 const change = { v: "v1", kind: "visible", where: "Your homepage", items, drafted_at: NOW };
+const T = "m1.access.publish_test";
+const tchange = { v: "v1", kind: "visible", new_page: true, label: "add_page", where: "A test page on your website, hidden from Google", page_url: "https://www.acme.test/rga-access-test/", drafted_at: NOW,
+  items: [{ label: "Page title", after: "Website access check | Acme" }, { label: "Main headline", after: "This page checks that approved changes reach your website" }, { label: "What the page says", after: "Acme's agency published this page after you approved it." }],
+  files: [{ path: "rga-access-test/index.html", action: "add", note: "a test page, hidden from Google" }] };
+const tbuild = { v: "v1", built_at: NOW, preview_url: "/.netlify/functions/site-preview?x", files: [{ path: "rga-access-test/index.html", action: "add", sha: "201cd46c0f0e0d0c", size: 27780, html: "<html></html>" }] };
 const ran = { auto_result: { summary: "H1: …", ran_at: NOW, outcome_data: {} } };
 const S = {
   draftit: { task: { status: "pending" } },
@@ -46,6 +53,10 @@ const S = {
   changes: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "changes_requested", change_v: "v1", at: NOW, note: "Keep the button as See Where You Rank Free" } } },
   approved: { task: { status: "in_progress", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: change } } },
   live: { task: { status: "done", site_change: change, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test" }, published: { v: "v1", at: NOW, by: "hello@", url: "https://x.test/", checked: true, check_note: "Read back from https://x.test/" } } },
+  // the access test on GitHub access (approval_tab_and_sent_card_v1): 6 stops — built · sent · approves · pull request · merge · live
+  ghSent: { id: T, gh: true, task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild } },
+  ghApproved: { id: T, gh: true, task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: tchange } } },
+  ghPr: { id: T, gh: true, task: { status: "in_progress", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_change: tchange }, publish_pr: { v: "v1", number: 14, url: "https://github.com/acme/site/pull/14", at: NOW } } },
   right: { task: { status: "done", no_change_needed: { note: "One phone number on every page", at: NOW, by: "RGA" } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
@@ -58,18 +69,20 @@ try {
       const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"), escapeAttribute = escapeHtml;
       const adminGcardWhen = () => "Oct 27, 11:00 AM", renderOnboardingChecklist = () => {}, movesForSelected = () => [], mvDueDays = () => 0, mvDay = () => "Oct 27";
       const wcAction = async () => null, GH_MONO = "", OB_WEB_TILE = "";
-      const state = { selectedClient: { id: "c1", business_name: "Acme" }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
+      const state = { onboardingData: sc.gh ? { tasks: { "m1.access.website": { access: { repo: "acme/site" } } } } : undefined, selectedClient: { id: "c1", business_name: "Acme" }, flowM1Playbook: [{ id: H, title: "Fix H1 + primary CTA", clientLabel: "Homepage headline + main button", hasRunner: true }] };
       eval(SCJS);   // globalThis.rgaSiteChange
       // eslint-disable-next-line no-eval
       const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill }; })()`);
       const sig = `${sc.task.ran_at || (sc.task.auto_result && sc.task.auto_result.ran_at) || sc.task.completed_at || ""}|${String((sc.task.auto_result && sc.task.auto_result.summary) || "").length}`;
       if (sc.pre) api.wcDraftCache.set(`c1:${H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
-      const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(H, sc.task);
+      const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(sc.id || H, sc.task);
       const vis = (q) => [...el.querySelectorAll(q)].filter((x) => x.offsetParent !== null);
       const nested = [...el.querySelectorAll(".ob-ac form, .ob-ac .ob-wc-line")].some((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && s.backgroundColor !== "rgba(0, 0, 0, 0)"; });
       return { text: el.textContent.replace(/\s+/g, " "), html: el.innerHTML, buttons: vis("button, a.admin-button").map((b) => b.textContent.trim()), inputs: vis("input:not([type=hidden]), select").length,
-        textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length };
+        textareas: vis("textarea").length, label: (el.querySelector(".ob-ac-st") || {}).textContent || "", pill: (api.wcRowPill(H, sc.task) || {}).text || "", nested, cards: el.querySelectorAll(".ob-ac").length, checks: el.querySelectorAll(".ob-ac-ck li").length,
+        loop: [...el.querySelectorAll(".ob-wc-loop li")].map((li) => li.className), tone: (el.querySelector(".ob-ac") || {}).className || "",
+        loopOneRow: (() => { const l = el.querySelector(".ob-wc-loop"); if (!l) return null; const t = [...l.children].map((x) => Math.round(x.getBoundingClientRect().top)); return new Set(t).size === 1; })() };
     }, { SCJS, code, sc, H, name });
     if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); }
     await page.close();
@@ -88,10 +101,21 @@ has("failed", /The draft didn't come out right/, "a failed draft doesn't say so"
 if (out.editing.inputs) fail(`editing: shows ${out.editing.inputs} Kind / Where / address input(s) (the step sets them)`);
 if (out.editing.textareas !== 3 || !/Now: “Rank Higher on Google Maps/.test(out.editing.text) || !out.editing.buttons.includes("Save and send for approval") || !out.editing.buttons.includes("Cancel")) fail("editing: not one box per line with today's words above it, Save and send + Cancel");
 has("drafted", /Your move · send it/, "a saved draft isn't \"send it\"");
-has("sent", /In their For your approval/, "sent isn't \"In their For your approval\""); has("sent", /Drafted[\s\S]*Sent for approval[\s\S]*They approve it/, "sent doesn't show the checks"); if (out.sent.checks !== 3) fail(`sent: not 3 check rows (${out.sent.checks})`); if (out.live.checks !== 3) fail(`live: not 3 check rows (${out.live.checks})`); if (out.sent.pill !== "With the client") fail("sent: chip isn't \"With the client\"");
+// 🔄 approval_tab_and_sent_card_v1 (10-28): the checks became the whole trip — every state shows every stop, the current one marked
+const loopIs = (name, want, why) => { const got = (out[name].loop || []).join(","); if (got !== want.join(",")) fail(`${name}: the trip reads [${got}], should be [${want.join(",")}] — ${why}`); if (out[name].loopOneRow === false) fail(`${name}: the trip wraps onto two rows at 1000px`); };
+has("sent", /With the client · in their For your approval/, "sent isn't \"With the client · in their For your approval\""); loopIs("sent", ["done", "done", "now", "", ""], "drafted · sent ticked, the client's approval current (blue)");
+if (/\bwait\b/.test(out.sent.tone) || /\byou\b/.test(out.sent.tone)) fail(`sent: the card is "${out.sent.tone}" — with the client is BLUE (state system decision 1), never the grey "over"`);
+if (!out.sent.buttons.includes("Take it back to edit")) fail("sent: no Take it back to edit"); if (out.sent.pill !== "With the client") fail("sent: chip isn't \"With the client\"");
+for (const k of Object.keys(out)) if (/\b1 (files|lines|pages)\b/.test(out[k].text)) fail(`${k}: says "1 files/lines/pages"`);
+has("ghSent", /Adding a page/, "the sent card loses its label"); loopIs("ghSent", ["done", "done", "now", "", "", ""], "built · sent ticked, approves current, then pull request · merge · live");
+has("ghSent", /Built[\s\S]*1 file[\s\S]*Sent[\s\S]*Approves it[\s\S]*Pull request[\s\S]*Merge[\s\S]*Live, read back/, "the six stops aren't named in order");
+has("ghSent", /Built from\s*their live homepage's design · fingerprint 201cd46c \(27\.8 KB\), frozen when they approve/, "the facts don't show the fingerprint and size");
+if (!out.ghSent.buttons.includes("Preview page")) fail("ghSent: no Preview page"); has("ghSent", /See their card, word for word/, "their card isn't one click away");
+loopIs("ghApproved", ["done", "done", "done", "you", "", ""], "approved → the pull request is RGA's move (amber)"); has("ghApproved", /Your move · open the pull request/, "approved on GitHub isn't \"Your move · open the pull request\""); if (!out.ghApproved.buttons.includes("Open the pull request")) fail("ghApproved: no Open the pull request");
+loopIs("ghPr", ["done", "done", "done", "done", "now", ""], "the pull request is open → GitHub has the merge (blue)"); has("ghPr", /With GitHub · merge #14/, "an open pull request isn't \"With GitHub · merge #14\""); if (!out.ghPr.buttons.includes("Open #14 on GitHub ↗") || !out.ghPr.buttons.includes("Mark live")) fail("ghPr: no Open #14 on GitHub / Mark live");
 has("changes", /The client asked for a change/, "the client's ask isn't shown"); has("changes", /Keep the button as See Where You Rank Free/, "their words are missing"); if (!out.changes.buttons.includes("Edit and send again")) fail("the client's ask has no Edit and send again");
-has("approved", /Publish exactly what they approved, then Mark live/, "approved isn't \"publish\""); if (!out.approved.buttons.includes("Mark live")) fail("approved: no Mark live"); if (out.approved.pill !== "Publish") fail("approved: chip isn't \"Publish\"");
-has("live", /They approved it[\s\S]*Published[\s\S]*Read back from the live page/, "live doesn't show its checks"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
+has("approved", /Publish exactly what they approved, then Mark live/, "approved isn't \"publish\""); loopIs("approved", ["done", "done", "done", "you", ""], "approved → publishing is RGA's move (amber)"); if (!out.approved.buttons.includes("Mark live")) fail("approved: no Mark live"); if (out.approved.pill !== "Publish") fail("approved: chip isn't \"Publish\"");
+has("live", /Live · read back from the site/, "live doesn't say it was read back"); loopIs("live", ["done", "done", "done", "done", "done"], "live and read back → every stop ticked"); if (out.live.pill !== "Live") fail("live: chip isn't \"Live\"");
 has("right", /Already right · nothing needed changing/, "already right isn't said"); if (out.right.pill !== "Already right") fail("already right: chip isn't \"Already right\"");
 // the prefill reads a run's field in EITHER shape a run writes it ("H1: words" or "**H1**" + the words on the next line)
 { const AD = read("netlify/functions/admin-deliverables.js"), i = AD.indexOf("  const line = (re) => {"), j = AD.indexOf("  let html = \"\";", i);

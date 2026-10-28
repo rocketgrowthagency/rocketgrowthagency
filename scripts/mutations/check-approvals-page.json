@@ -12,10 +12,10 @@
   "<b>Nothing needs you right now</b><small>"
  ],
  [
-  "a change asked for drops out of With RGA",
+  "a change asked for drops out of For your approval",
   "portal",
-  "settled.filter((d) => d.approval.decision !== \"approved\")",
-  "settled.filter(() => false)"
+  "  const changing = items.filter((d) => d.approval && d.approval.decision !== \"approved\");",
+  "  const changing = items.filter(() => false);"
  ],
  [
   "Done is always open",
