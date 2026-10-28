@@ -1,0 +1,72 @@
+[
+ [
+  "the old always-open form comes back for draft it",
+  "admin",
+  "    if (!ran) return wrap(acCardHtml({ tone: \"rga\", tile, label: \"Your move · draft it\", title, say: \"Nothing on their website changes until they approve it in For your approval.\", acts: runB, right: nochange }));",
+  "    if (!ran) return wrap(acCardHtml({ tone: \"rga\", tile, label: \"Your move · draft it\", title, body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
+  1
+ ],
+ [
+  "a September tick reads Done again",
+  "admin",
+  "    if (task.status === \"done\") return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"",
+  "    if (false) return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"",
+  1
+ ],
+ [
+  "the guarantee isn't flagged",
+  "admin",
+  "      body: wcDiffHtml(pre) + wcRiskHtml(pre) +",
+  "      body: wcDiffHtml(pre) +",
+  1
+ ],
+ [
+  "editing shows the Kind / Where boxes again",
+  "admin",
+  "<div class=\"ob-wc-row\" hidden><input data-f=\"kind\"",
+  "<div class=\"ob-wc-row\"><input data-f=\"kind\"",
+  1
+ ],
+ [
+  "sent loses its checks",
+  "admin",
+  "      body: acCk([[\"Drafted\", `${n} line",
+  "      body: ([[\"Drafted\", `${n} line",
+  1
+ ],
+ [
+  "the queued chip ignores the website state",
+  "admin",
+  "${gsQ ? gPill(gsQ, s.task) : wcRowPill(o.flowId, s.task) ? wcRowPillHtml(o.flowId, s.task) :",
+  "${gsQ ? gPill(gsQ, s.task) : false ? \"\" :",
+  1
+ ],
+ [
+  "a done row says Done over not proven",
+  "admin",
+  "          if (!declined && wcRowPill(o.flowId, s.task)) return wcRowPillHtml(o.flowId, s.task);   // admin_website_steps_v1: Live · Already right · Not proven\n",
+  "",
+  1
+ ],
+ [
+  "Send for approval saves but doesn't send",
+  "admin",
+  "    const k = await wcAction(t, stepId, { internal_decision: \"approved\" });\n    wcApply(stepId, k ? k.task : j.task);\n    if (k) setBanner(\"Sent. It's in the client's For your approval now.\", \"success\");",
+  "    wcApply(stepId, j.task);",
+  1
+ ],
+ [
+  "the risky rule loses the guarantee",
+  "sitechange",
+  "[/\\bguarantee(d|s)?\\b/i, \"a guarantee\"], ",
+  "",
+  1
+ ],
+ [
+  "the edit form is a box again",
+  "admincss",
+  ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 14px 12px 62px; }\n",
+  "",
+  1
+ ]
+]
