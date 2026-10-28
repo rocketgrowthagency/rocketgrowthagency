@@ -61,7 +61,15 @@ const fake = (exists) => { const calls = []; const J = (b, s = 200) => new Respo
   const ok = await H({ queryStringParameters: { c: C, k: T, v: V, s: sig } });
   if (ok.statusCode !== 200 || !/noindex/.test(ok.headers["X-Robots-Tag"] || "") || !/<base href="https:\/\/www\.acme\.test\/">/.test(ok.body) || !/It goes live only after you approve it\./.test(ok.body) || !/<a href="https:\/\/[^"]+\/portal\/#for-your-approval" target="_top"[^>]*>Back to approve<\/a>/.test(ok.body)) fail("the preview isn't private (noindex), on their styles (<base>), doesn't say it's a preview, or has no absolute \"Back to approve\" link");
   const stale = await H({ queryStringParameters: { c: C, k: T, v: "older", s: crypto.createHmac("sha256", "gate-secret").update(`${C}|${T}|older`).digest("hex").slice(0, 32) } });
-  if (stale.statusCode !== 404) fail("an older version's preview still opens (it must say it's no longer current)"); }
+  if (stale.statusCode !== 404) fail("an older version's preview still opens (it must say it's no longer current)");
+  // 10-28: the client's link carries NO step id — found by its version, signed over client|version (check-client-never-sees-our-internals)
+  const sig2 = crypto.createHmac("sha256", "gate-secret").update(`${C}|${V}`).digest("hex").slice(0, 32);
+  const nok = await H({ queryStringParameters: { c: C, v: V, s: sig2 } });
+  if (nok.statusCode !== 200 || !/It goes live only after you approve it\./.test(nok.body)) fail(`a preview link without the step id doesn't open (${nok.statusCode})`);
+  const nbad = await H({ queryStringParameters: { c: C, v: V, s: sig } });
+  if (nbad.statusCode !== 403) fail("a step-less preview link opens with the OLD signature (it must be signed over client|version)"); }
+const PDX = read("netlify/functions/portal-deliverables.js");
+if (/preview_url: t\.site_build && t\.site_build\.v === c\.v && t\.site_build\.preview_url \? t\.site_build\.preview_url/.test(PDX) || !/site-preview\?c=\$\{encodeURIComponent\(clientId\)\}&v=/.test(PDX)) fail("the client's preview link is the stored one (it names our step id) instead of the client|version link");
 
 // ── 4 · the wiring ─────────────────────────────────────────────────────────────────────────────
 const AD = read("netlify/functions/admin-deliverables.js"), PD = read("netlify/functions/portal-deliverables.js"), P = read("portal/portal.js"), A = read("admin/admin.js"), CG = read("netlify/functions/contract-generate.js");

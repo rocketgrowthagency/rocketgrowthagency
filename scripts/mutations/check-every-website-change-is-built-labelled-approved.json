@@ -110,5 +110,19 @@
   "  host.innerHTML = `${strip}<div class=\"ib\">${top}",
   "  host.innerHTML = `<div class=\"ib\">${top}",
   1
+ ],
+ [
+  "the client gets the stored link with our step id",
+  "portaldeliv",
+  "? `/.netlify/functions/site-preview?c=${encodeURIComponent(clientId)}&v=${encodeURIComponent(c.v)}&s=${require(\"crypto\").createHmac(\"sha256\", process.env.INTERNAL_FN_SECRET || \"\").update(`${clientId}|${c.v}`).digest(\"hex\").slice(0, 32)}` : null,",
+  "? t.site_build.preview_url : null,",
+  1
+ ],
+ [
+  "a step-less link is signed like the old one",
+  "sitepreview",
+  ".update(k ? `${c}|${k}|${v}` : `${c}|${v}`)",
+  ".update(`${c}|${k}|${v}`)",
+  1
  ]
 ]

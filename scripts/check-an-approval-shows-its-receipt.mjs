@@ -1,0 +1,75 @@
+#!/usr/bin/env node
+// check-an-approval-shows-its-receipt.mjs — 2026-10-28, approved approval_confirmed_v1. Chris (9:01, after pressing Approve on the
+// test page): "after clicking approve we need some card showing approved confirmed or something as it just lands here. with such a big
+// change i think it needs to be more clear that the approval was confirmed" — the screen read "Nothing is waiting for your approval"
+// and the approved row said "You asked for a change · RGA is revising it" (approved items shared the "rga" group).
+// RENDERS For your approval in Chrome with portal.css and the tab's own code lifted from portal.js, as the client sees it the moment
+// after Approve, and checks:
+//   · the item they approved is OPEN (never "Nothing is waiting"), even when another change still waits
+//   · its card is the receipt: green "Approved · recorded", "You approved <the label's verb>", when + who, the exact version, What
+//     happens next (approved ✓ · RGA uploads = current, blue), Preview what you approved
+//   · the row under "Approved · going up" says "You approved it … · RGA is putting it up" — never "You asked for a change"
+//   · once RGA opens the upload the card turns blue "RGA is uploading it" (step 2 ✓, step 3 current)
+//   · the words follow the label (removing a page) and a change with no built file says "Exactly what you approved"
+// Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 can't tell
+import fs from "node:fs";
+const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
+const P = read("portal/portal.js"), CSS = read("portal/portal.css");
+// lift a top-level `function X(` / `const X =` from portal.js: whole lines until its braces close
+const lift = (name) => {
+  const m = new RegExp(`^(?:async )?function ${name}\\(|^const ${name} = `, "m").exec(P);
+  if (!m) { console.error(`⚠️  INDETERMINATE — ${name} moved`); process.exit(2); }
+  const lines = P.slice(m.index).split("\n"); let depth = 0, out = [];
+  for (const l of lines) { out.push(l); for (const ch of l) { if (ch === "{") depth++; else if (ch === "}") depth--; } if (depth <= 0 && /[;}]\s*$/.test(l)) break; }
+  return out.join("\n");
+};
+const code = ["IB_SVG", "IB_ICON", "IB_LABELS", "ibLabelHtml", "FYA_SURF", "fyaSurf", "ibIcon", "ibTitle", "ibSub", "fyaReceiptHtml", "fyaHtml"].map(lift).join("\n");
+let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
+
+const AT = "2026-10-28T16:01:29Z", T = "m1.access.publish_test";
+const add = { label: "add_page", new_page: true, where: "A test page on your website, hidden from Google", page_url: "https://www.acme.test/rga-access-test/", preview_url: "/.netlify/functions/site-preview?x", files: [{ path: "rga-access-test/index.html", action: "add" }] };
+const item = (key, change, approval, extra = {}) => ({ key, title: "A test page, to check we can publish", surface: "website", change, approval, ...extra });
+const CASES = {
+  justApproved: { focus: T, items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }), item("m1.web.h1_cta", { label: "edit_page", where: "Your homepage", items: [] }, null, { title: "Your homepage headline" })] },
+  uploading: { items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true })] },
+  removing: { focus: T, items: [item(T, { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null }, { decision: "approved", at: AT, by: "owner@acme.test", version: null })] },
+};
+const F = [], fail = (m) => F.push(m);
+const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
+const out = {};
+try {
+  for (const [name, sc] of Object.entries(CASES)) {
+    const page = await b.newPage(); await page.setViewport({ width: 1280, height: 1000 });
+    await page.setContent(`<style>${CSS}</style><div class="pv-fya-host" id="h"></div>`);
+    out[name] = await page.evaluate(({ code, sc }) => {
+      const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), escapeAttribute = escapeHtml;
+      const ibPaneHtml = (e) => `<p class="stub-pane">${escapeHtml(e.d.title)}</p>`, _portalBusinessName = "Acme";
+      let _fyaFocus = sc.focus || null;
+      const when = (iso) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "");
+      // eslint-disable-next-line no-eval
+      const api = eval(`(() => { ${code}; return { fyaHtml }; })()`);
+      const el = document.getElementById("h"); el.innerHTML = api.fyaHtml(sc.items, when, "");
+      const open = [...el.querySelectorAll("[data-ib-pane]")].find((p) => !p.hidden);
+      const rc = open && open.querySelector(".fya-rc");
+      return { open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
+        steps: rc ? [...rc.querySelectorAll(".fya-nx li")].map((li) => li.className) : [], up: rc ? rc.classList.contains("up") : null,
+        head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
+    }, { code, sc });
+    await page.close();
+  }
+} catch (e) { console.error(`⚠️  INDETERMINATE — the tab's code didn't run: ${String(e.message).split("\n")[0]}`); process.exit(2); } finally { await b.close(); }
+
+const J = out.justApproved, U = out.uploading, R = out.removing;
+if (/Nothing is waiting for your approval\. Tap/.test(J.open) || !/Approved · recorded/.test(J.open)) fail("after Approve the item they approved isn't open as its receipt (the screen says \"Nothing is waiting\" — Chris, 9:01)");
+if (!/You approved adding this page/.test(J.open) || !/by owner@acme\.test/.test(J.open) || !/201cd46c · this file uploads, nothing else/.test(J.open)) fail("the receipt doesn't say what they approved, who approved it, and the exact version");
+if (!/acme\.test\/rga-access-test\/ · hidden from Google/.test(J.open)) fail("the receipt doesn't name the page (and that it's hidden from Google)");
+if (J.steps.join(",") !== "done,now,," || !/What happens next/.test(J.open)) fail(`What happens next isn't [approved ✓ · RGA uploads = current · …] (${J.steps.join(",")})`);
+if (!J.see) fail("the receipt has no Preview what you approved");
+if (J.head !== "rgb(227, 241, 223)") fail(`the receipt's header isn't the state system's done green (${J.head})`);
+if (J.rows.some((r) => /You asked for a change/.test(r) && /A test page/.test(r))) fail("an approved change reads \"You asked for a change\" (the 9:01 bug)");
+if (!J.rows.some((r) => /You approved it Oct 28, \d+:\d\d (AM|PM) · RGA is putting it up/.test(r))) fail(`the row under Approved · going up doesn't say "You approved it … · RGA is putting it up" (${J.rows.join(" | ")})`);
+if (!U.up || !/RGA is uploading it/.test(U.open) || U.steps.join(",") !== "done,done,now," || U.head !== "rgb(235, 243, 255)") fail(`once RGA opens the upload the receipt isn't blue "RGA is uploading it" with step 3 current (${U.steps.join(",")} · ${U.head})`);
+if (!/You approved removing this page/.test(R.open) || !/Exactly what you approved/.test(R.open)) fail("the receipt's words don't follow the label (removing a page), or a change with no built file claims a version");
+if (F.length) { console.error(`❌ an approval doesn't show its receipt — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
+console.log("✅ an approval shows its receipt: the approved item stays open as a green \"Approved · recorded\" card (what, who, the exact version, what happens next with RGA's move current, Preview what you approved) — even with another change waiting; its row says \"You approved it … · RGA is putting it up\"; blue \"RGA is uploading it\" once the upload opens; the words follow the label");
