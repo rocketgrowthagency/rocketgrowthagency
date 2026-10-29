@@ -82,5 +82,33 @@
   "row(\"Service area\", escapeHtml(areaLine), areaSt, escapeHtml(coveredSub))",
   "row(\"Service area\", escapeHtml(areaLine), areaSt, coveredSub)",
   1
+ ],
+ [
+  "a client's Google step gets Done again",
+  "admin",
+  "const inner = (rowHasDone || ZC_NO_HAND_DONE.has(o.flowId) ? \"\" : btn(\"done\", \"Done\"))",
+  "const inner = (rowHasDone ? \"\" : btn(\"done\", \"Done\"))",
+  1
+ ],
+ [
+  "remind sends without confirming",
+  "admin",
+  "<span class=\"ob-zc-note\">Shows you the message first. Nothing is sent until you confirm.</span>",
+  "",
+  1
+ ],
+ [
+  "step 33 stale paragraph returns",
+  "admin",
+  "if (step && step.obj && step.obj.flowId === \"m1.gbp.business_description\" && descriptionOnGoogle(step.task)) return \"\";",
+  "",
+  1
+ ],
+ [
+  "step 35/36 keep the old card",
+  "admin",
+  "if (ZC_CLIENT_ASK[flowId]) {",
+  "if (false) {",
+  1
  ]
 ]

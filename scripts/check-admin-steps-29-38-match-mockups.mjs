@@ -53,6 +53,21 @@ if (!/: descriptionOnGoogle\(s\.task\) \? `<div class="ob-done-card">\$\{descrip
 if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChange\.isSiteChangeStep\(o\.flowId\)\);\s*const runBtn = runnable && !siteStep/.test(AJS)) fail("step 37: a website step's row still has its own Draft button (the card has one)");
 if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
 
+// ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
+if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
+{ const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml"].map((n) => lift(AJS, n));
+  if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
+  const c2 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", CLIENT_GBP_STEPS: { "m1.gbp.attributes": "What's true of the business (Google details)", "m1.gbp.booking_link": "Booking link" } };
+  vm.createContext(c2); vm.runInContext(p2.join("\n") + "\nthis.ask = zcClientAskHtml;", c2);
+  const a = c2.ask("m1.gbp.attributes", "c1"), b = c2.ask("m1.gbp.booking_link", "c1");
+  if (!/Client's move/.test(a) || !/Waiting for the client to tick what's true/.test(a) || !/On Google · read back/.test(a)) fail("step 35: the card doesn't say whose move, what they do, and the path");
+  if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a) || !/Nothing is sent until you confirm/.test(a)) fail("step 35: Remind the client… isn't the confirm-first nudge");
+  if (/data-task-status="done"|<button[^>]*>Done</.test(a + b)) fail("steps 35/36: a Done button is in the card");
+  if (!/data-ob-bk-rec="c1"/.test(b) || !/What the client sees first/.test(b)) fail("step 36: RGA's pick isn't shown as the client sees it");
+}
+if (!/function gNotSavedHtml\(flowId\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
+if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");
+
 // ── client step 4's done card ──────────────────────────────────────────────────────────────────
 if (!/const lead = adds\.length \|\| drops\.length \? \[0, 4\] : \[0, 1\]/.test(PJS)) fail("client step 4: the done card doesn't lead with the service area when places were added/covered");
 if (!/\+ \$\{rest\.length\} more · \$\{rest\.map\(\(i\) => names\[i\]\)\.join\(", "\)\}/.test(PJS)) fail("client step 4: the fold doesn't name what's inside it");
