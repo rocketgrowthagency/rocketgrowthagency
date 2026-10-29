@@ -65,6 +65,13 @@ const S = {
   ghRemoveSent: { id: T, gh: true, task: { status: "in_progress", site_change: { ...tchange, v: "v2", label: "remove_page", removes_page: true, new_page: false, page_url: "https://acme.test/rga-access-test/" },
     internal_review: { decision: "approved", change_v: "v2", at: NOW }, site_build: { ...tbuild, v: "v2", files: [{ path: "rga-access-test/index.html", action: "remove", sha: "0612e019" }] },
     approval: { decision: "approved", change_v: "v1", at: "2026-10-28T16:01:29Z" }, published: { v: "v1", at: NOW } } },
+  // a REMOVAL that went live: proven by "gone" (removal_proof_v1, 10-28) — 9 of 9, and no View page for a page that's gone
+  ghRemoveLive: { id: T, gh: true, task: { status: "done", site_change: { ...tchange, v: "v2", label: "remove_page", removes_page: true, new_page: false, page_url: "https://acme.test/rga-access-test/" },
+    internal_review: { decision: "approved", change_v: "v2", at: NOW }, site_build: { ...tbuild, v: "v2", files: [{ path: "rga-access-test/index.html", action: "remove", sha: "0612e019" }] },
+    approval: { decision: "approved", change_v: "v2", at: NOW, by: "owner@x.test", approved_build: [{ path: "rga-access-test/index.html", action: "remove", sha: "0612e019" }] },
+    publish_safety: { checks: [{ id: "website", ok: true, detail: "x" }, { id: "repo_is_site", ok: true, detail: "acme/site: x." }, { id: "recorded", ok: true }], pr_files: [{ path: "rga-access-test/index.html", action: "remove" }], repo: "acme/site", site: "acme.test" },
+    publish_pr: { v: "v2", number: 3, url: "https://github.com/acme/site/pull/3", at: NOW, head: "abc", branch: "rga/remove-page-x", merged: { at: NOW, by: "rocketgrowthagency-admin", via: "rga", base: "main", sha: "b644560", branch_deleted_at: NOW, branch_how: "deleted" } },
+    published: { v: "v2", at: NOW, checked: true, check_note: "Read back: gone" }, publish_after: { ok: true, read: 25, of: 25, at: NOW } } },
   ghLiveProven: { id: T, gh: true, task: { status: "done", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild,
     approval: { decision: "approved", change_v: "v1", at: NOW, by: "owner@x.test", approved_build: [{ path: "rga-access-test/index.html", action: "add", sha: "201cd46c0f0e0d0c" }] },
     publish_safety: { checks: [{ id: "website", ok: true, detail: "The page goes on acme.test." }, { id: "repo_is_site", ok: true, detail: "acme/site: their address is written in its CNAME." }], pr_files: [{ path: "rga-access-test/index.html", action: "add" }], repo: "acme/site", site: "acme.test" },
@@ -181,6 +188,8 @@ if (!/<a class="admin-button admin-button-secondary ob-wc-view" href="https:\/\/
 // while GitHub is checked, ONE icon: the master wait spinner — no dashed circle beside it (Chris 10-28 4:00 PM)
 if (!/if \(v\.loading\) return `<span class="ob-ghv unk"><span><span class="vt">Checking GitHub…<\/span>/.test(fs.readFileSync(`${SITE}/admin/admin.js`, "utf8"))) fail("the Checking GitHub… badge draws its own circle beside the wait spinner again");
 if (!/Approves it\s*nothing goes up before this/.test(out.ghRemoveSent.text) || /Approves it\s*Oct/.test(out.ghRemoveSent.text)) fail("a sent removal ticks \"Approves it\" with the ADD's old approval");
+if (!/Gone from their site\s*acme\.test\/rga-access-test\/ no longer shows the page · read back/.test(out.ghRemoveLive.text) || !/Proof · every step, on record\s*9 of 9/.test(out.ghRemoveLive.text) || /On their site, exactly/.test(out.ghRemoveLive.text)) fail(`a live removal isn't proven by "Gone from their site" (9 of 9): ${out.ghRemoveLive.text.slice(out.ghRemoveLive.text.indexOf("Proof"), out.ghRemoveLive.text.indexOf("Proof") + 160)}`);
+if (out.ghRemoveLive.buttons.some((b) => /View page/.test(b))) fail("a removed page still offers View page");
 has("ghLiveProven", /Proof · every step, on record\s*9 of 9/, "a fully proven change doesn't show Proof 9 of 9");
 has("ghLiveProven", /the live page's fingerprint = 201cd46c, the approved file/, "the Proof box doesn't say the live page IS the approved file");
 has("ghLiveProven", /Live · proven/, "a fully proven change isn't labelled \"Live · proven\" (mockup C)"); has("ghLiveProven", /acme\.test = their record = their approval/, "the Proof's website line isn't the mockup's \"= their record = their approval\"");

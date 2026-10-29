@@ -292,5 +292,19 @@
   "const a = task.approval && task.approval.change_v === c.v ? task.approval : null,",
   "const a = task.approval || null,",
   1
+ ],
+ [
+  "a removal is judged by a fingerprint again",
+  "admin",
+  "    (task.site_change || {}).removes_page\n      ? [p.checked === true, \"Gone from their site\",",
+  "    false\n      ? [p.checked === true, \"Gone from their site\",",
+  1
+ ],
+ [
+  "a removed page offers View page again",
+  "admin",
+  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
+  "right: url ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
+  1
  ]
 ]
