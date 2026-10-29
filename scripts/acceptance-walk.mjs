@@ -370,7 +370,8 @@ async function portalPass() {
 
     // Views
     // the step rows are read in the LAST view opened, so it is the one they live in
-    for (const v of ["dashboard", "approvals", ...(ROW_VIEW === "setup" ? [] : ["setup"]), ROW_VIEW]) {
+    // "approve" = For your approval (10-28: the walk never opened it, so the v5 tab was only ever seen in a harness)
+    for (const v of ["dashboard", "approve", "approvals", ...(ROW_VIEW === "setup" ? [] : ["setup"]), ROW_VIEW]) {
       t.current = `view:${v}`;
       await page.evaluate((v) => document.querySelector(`.portal-nav a[data-view="${v}"]`)?.click(), v);
       await sleep(1200); await t.quiet(800, 12000);
