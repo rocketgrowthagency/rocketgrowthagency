@@ -176,7 +176,11 @@ const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/stepId === STEP\.FACTS && push\.state === "with_rga"/.test(drift) || !/stepId === STEP\.FACTS \? \{ name: now\.name, come: now\.come \? "yes" : "no"/.test(drift)) fail("admin's put back / keep Google's doesn't handle the facts");
 const admin = nc(read("admin/admin.js"));
 if (!/const CLIENT_GBP_STEPS = \{ "m1\.gbp\.business_facts":/.test(admin) || !/const GBP_DRIFT_STEPS = \{ "m1\.gbp\.business_facts": "Business details"/.test(admin)) fail("admin doesn't count the step as the client's, or doesn't show a change on Google for it");
-if (!/<table class="ob-gbpfacts"><thead><tr><th>Fact<\/th><th>Client confirmed<\/th><th>Google before<\/th><th>Google now<\/th>/.test(admin)) fail("admin's step card doesn't show confirmed · before · now for each fact");
+// 🔄 10-29 (approved step28_facts_fold_v1): the table folds into one counted line above the card; opened it shows confirmed · on
+// Google now · a status per fact; a fact that doesn't match keeps it OPEN (never hidden)
+if (!/<table class="ob-gbpfacts"><thead><tr><th>Fact<\/th><th>Client confirmed<\/th><th>On Google now<\/th><th><\/th>/.test(admin)) fail("admin's step 28 facts don't show confirmed · on Google now · a status for each fact");
+if (!/body = `<details class="ob-ff"\$\{nBad \? " open" : ""\}>/.test(admin)) fail("admin's step 28 facts fold doesn't stay open when a fact doesn't match");
+if (!/\$\{facts\.length\} facts compared with Google/.test(admin)) fail("admin's step 28 fold line doesn't count the facts");
 if (!/if \(factsTodo\.length\) \{\s*return \{\s*title: `Change on Google: \$\{factsTodo\.map/.test(admin)) fail("a name / address / area to change isn't RGA's Your action");
 
 // ── 6 · the portal draws the rows: matches green, a difference both values, a gap asks, a stuffed name is RGA's ──

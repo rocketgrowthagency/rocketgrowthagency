@@ -460,5 +460,19 @@
   ".ob-gbpfacts { width:100%; border-collapse:collapse;",
   ".ob-gbpfacts { display:flex; }\n.ob-gbpfacts { width:100%; border-collapse:collapse;",
   1
+ ],
+ [
+  "a mismatched fact is hidden in the closed fold",
+  "admin",
+  "body = `<details class=\"ob-ff\"${nBad ? \" open\" : \"\"}>",
+  "body = `<details class=\"ob-ff\">",
+  1
+ ],
+ [
+  "the fold line stops counting",
+  "admin",
+  "<b>${facts.length} facts compared with Google</b>",
+  "<b>Facts</b>",
+  1
  ]
 ]
