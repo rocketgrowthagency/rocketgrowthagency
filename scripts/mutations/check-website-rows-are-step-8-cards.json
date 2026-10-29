@@ -285,5 +285,12 @@
   "  if (askRec) return `<div class=\"ob-ghcv unk\">",
   "  if (false) return `<div class=\"ob-ghcv unk\">",
   1
+ ],
+ [
+  "the trip line counts an older version's approval",
+  "admin",
+  "const a = task.approval && task.approval.change_v === c.v ? task.approval : null,",
+  "const a = task.approval || null,",
+  1
  ]
 ]
