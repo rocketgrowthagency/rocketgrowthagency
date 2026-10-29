@@ -38,7 +38,7 @@
  [
   "a visible change with no new text",
   "sitechange",
-  "    if (kind !== \"code\" && !items.some((i) => i.after)) return { error: \"Write the new text for at least one change.\" };",
+  "    if (kind !== \"code\" && !c.removes_page && !items.some((i) => i.after)) return { error: \"Write the new text for at least one change.\" };",
   ""
  ],
  [
@@ -98,8 +98,8 @@
  [
   "a new change doesn't keep the live one",
   "admindeliv",
-  "        t.site_change_log = [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null }].slice(-20);",
-  ""
+  "        t.site_change_log = [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null,",
+  "        void [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null,"
  ],
  [
   "no-change without a reason",
