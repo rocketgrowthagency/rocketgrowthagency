@@ -110,5 +110,33 @@
   "if (ZC_CLIENT_ASK[flowId]) {",
   "if (false) {",
   1
+ ],
+ [
+  "29: directories called missing",
+  "admin",
+  "<i>no link on file</i></span>`).join(\"\")}",
+  "<i>missing</i></span>`).join(\"\")}",
+  1
+ ],
+ [
+  "30: unknowns unfolded/no reasons",
+  "admin",
+  "<b>${unk.length} we can't measure yet</b> · ${escapeHtml(reasons.join(\" · \"))}",
+  "<b>${unk.length} unknown</b>",
+  1
+ ],
+ [
+  "31: missing categories hidden",
+  "admin",
+  "${missing.map((c) => `<span class=\"ob-zc-chip you\">${escapeHtml(c)} <i>not on Google</i></span>`).join(\"\")}",
+  "",
+  1
+ ],
+ [
+  "29-31: the header paragraph returns",
+  "admin",
+  "if (step && step.obj && ZC_CARD_STEPS.has(step.obj.flowId) && step.task && (step.task.outcome_data || step.task.published)) return \"\";",
+  "",
+  1
  ]
 ]

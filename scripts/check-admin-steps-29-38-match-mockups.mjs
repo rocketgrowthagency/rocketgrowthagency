@@ -53,6 +53,35 @@ if (!/: descriptionOnGoogle\(s\.task\) \? `<div class="ob-done-card">\$\{descrip
 if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChange\.isSiteChangeStep\(o\.flowId\)\);\s*const runBtn = runnable && !siteStep/.test(AJS)) fail("step 37: a website step's row still has its own Draft button (the card has one)");
 if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
 
+// ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
+{ const p3 = ["ZC_LIST", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
+  if (p3.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 29/30/31 card moved (${p3.findIndex((x) => !x)})`); process.exit(2); }
+  const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : "") };
+  vm.createContext(c3); vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
+  const DIRS = ["Yelp", "Better Business Bureau", "Facebook", "Angi", "Thumbtack", "Nextdoor", "Apple Maps", "Bing Places"];
+  const cit = { outcome_data: { citations_held: 0, fixes: [{ id: "cit.linked_from_site", fix: "Site links to its own directory profiles", why: "links to NONE of the 8 tracked directories. Linking your own profiles corroborates them." }],
+    checks: [...DIRS.map((d, i) => ({ id: `cit.d${i}`, label: `${d} citation`, pass: null })), { id: "cit.linked_from_site", label: "Site links to its own directory profiles", pass: false }] } };
+  const h29 = c3.cit(cit, '<div data-stale></div>');
+  if (!/Directory listings: 1 fix found/.test(h29) || !/Site links to its own directory profiles/.test(h29)) fail("step 29: the fix isn't said in words");
+  if ((h29.match(/no link on file/g) || []).length !== 8 || /missing<\/i>|>Missing/.test(h29) || !/It is not proof the listing is missing/.test(h29)) fail("step 29: the 8 directories aren't 'no link on file' (never 'missing')");
+  if (/Produced|fix\(es\)/.test(h29) || !/data-stale/.test(h29)) fail("step 29: bookkeeping wording, or the re-check line isn't inside the card");
+  const plan = { outcome_data: { recommendations: [{ title: "No Facebook profile linked from the site", surface: "social" }, { title: "Site links to its own directory profiles", surface: "citations" }, { title: "No Yelp profile linked from the site", surface: "social" }],
+    unknowns: [{ label: "Review count vs the vertical's top-3 median", why_unknown: "no publishable benchmark yet" }, ...DIRS.map((d) => ({ label: `${d} citation`, why_unknown: "no Yelp URL held — we link to it from neither the site nor schema" }))] } };
+  const h30 = c3.plan(plan, "");
+  if (!/The fix plan: 3 fixes, in order/.test(h30) || (h30.match(/class="ob-zc-place you"/g) || []).length !== 3) fail("step 30: the 3 fixes aren't listed in order");
+  if (!/9 we can't measure yet<\/b> · no benchmark yet · no directory link on file/.test(h30)) fail("step 30: the 9 unknowns don't fold into one line with their reasons");
+  if (/Produced|recommendation\(s\)/.test(h30)) fail("step 30: bookkeeping wording is back");
+  const cat = { outcome_data: { draft: 'primary: "Internet marketing service"\nadditional:\n  - "Marketing agency"\n  - "Marketing consultant"\n  - "Website designer"\n  - "Computer consultant"\n  - "Business management consultant"' },
+    approval: { by: "Chris Kapranos", at: "2026-09-14T22:11:15Z" }, published: { at: "2026-09-15T02:53:12Z", after: { primary_category: "Internet marketing service", additional_categories: ["Marketing agency", "Website designer", "Marketing consultant"] } } };
+  const h31 = c3.cat(cat);
+  if (!/2 approved categories aren't on Google/.test(h31) || !/Computer consultant <i>not on Google<\/i>/.test(h31) || !/Business management consultant <i>not on Google<\/i>/.test(h31)) fail("step 31: the 2 approved-but-not-on-Google categories aren't shown");
+  if (!/Additional · 3 of 5 on Google/.test(h31) || !/Primary · Internet marketing service/.test(h31) || !/the other 2 never went on/.test(h31)) fail("step 31: what's on Google isn't counted against the plan");
+  if (/NOW SET TO|Draft copy/i.test(h31)) fail("step 31: 'Now set to … Draft copy' is back");
+  const okCat = c3.cat({ ...cat, published: { ...cat.published, after: { ...cat.published.after, additional_categories: ["Marketing agency", "Marketing consultant", "Website designer", "Computer consultant", "Business management consultant"] } } });
+  if (!/Categories match the plan/.test(okCat) || /not on Google/.test(okCat)) fail("step 31: a matching profile isn't a green 'match' card");
+}
+if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJS)) fail("steps 29/30/31: the out-of-date paragraph still shows in the row header");
+
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
 if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml"].map((n) => lift(AJS, n));
