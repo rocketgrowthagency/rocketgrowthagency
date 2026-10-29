@@ -15,7 +15,7 @@ import vm from "node:vm";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = [], fail = (m) => F.push(m);
-const AJS = read("admin/admin.js"), PJS = read("portal/portal.js");
+const AJS = read("admin/admin.js"), PJS = read("portal/portal.js"), ACSS = read("admin/admin.css");
 const lift = (src, name) => { const m = new RegExp(`^(?:const ${name} = |function ${name}\\()`, "m").exec(src); if (!m) return null;
   const lines = src.slice(m.index).split("\n"); let d = 0, o = []; for (const l of lines) { o.push(l); for (const c of l) { if (c === "{" || c === "(" || c === "[") d++; else if (c === "}" || c === ")" || c === "]") d--; } if (d <= 0 && /[;}`\]]\s*$/.test(l)) break; } return o.join("\n"); };
 const esc = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -167,6 +167,11 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
   if (/data-task-status="done"|<button[^>]*>Done</.test(a + b)) fail("steps 35/36: a Done button is in the card");
   if (!/data-ob-bk-rec="c1"/.test(b) || !/What the client sees first/.test(b)) fail("step 36: RGA's pick isn't shown as the client sees it");
 }
+// step 36's tiles (admin_step36_booking_v1): RGA's pick blue-dashed, every other option a PLAIN WHITE tile saying "Also found", and the label
+// says "found on their homepage" when every option was read off their homepage
+if (!/<div class="ob-zc-place \$\{i \? "opt" : "add"\}">/.test(AJS) || !/\.ob-zc-place\.opt \{ border:1px solid var\(--admin-border\); background:var\(--admin-surface\); \}/.test(ACSS)) fail("step 36: the other option isn't the plain white tile");
+if (!/\/\^\(Found on their homepage\|Their contact page\)\$\/\.test\(x\.why\) \? "Also found"/.test(AJS)) fail("step 36: the other option doesn't say \"Also found\"");
+if (!/lab\.textContent = "What the client sees first · found on their homepage"/.test(AJS)) fail("step 36: the label never says \"found on their homepage\"");
 if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
 if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");
 

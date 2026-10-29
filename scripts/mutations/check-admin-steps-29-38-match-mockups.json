@@ -229,5 +229,33 @@
   "if (el.querySelector(\".ob-zc-photos\")) return;",
   "",
   1
+ ],
+ [
+  "step 36: the other option goes blue-dashed again",
+  "admin",
+  "<div class=\"ob-zc-place ${i ? \"opt\" : \"add\"}\">",
+  "<div class=\"ob-zc-place ${i ? \"\" : \"add\"}\">",
+  1
+ ],
+ [
+  "step 36: the plain white tile style is lost",
+  "css",
+  ".ob-zc-place.opt { border:1px solid var(--admin-border); background:var(--admin-surface); }",
+  "",
+  1
+ ],
+ [
+  "step 36: a contact page says its kind, not \"Also found\"",
+  "admin",
+  "/^(Found on their homepage|Their contact page)$/.test(x.why) ? \"Also found\"",
+  "x.why === \"Found on their homepage\" ? \"Also found\"",
+  1
+ ],
+ [
+  "step 36: the homepage label never set",
+  "admin",
+  "lab.textContent = \"What the client sees first · found on their homepage\"",
+  "lab.title = \"\"",
+  1
  ]
 ]

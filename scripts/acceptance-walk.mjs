@@ -168,6 +168,7 @@ async function adminPass() {
   const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
   try {
     const page = await browser.newPage();
+    await page.evaluateOnNewDocument(() => { window.__rej = []; window.addEventListener("unhandledrejection", (e) => { try { window.__rej.push(String((e.reason && (e.reason.stack || e.reason.message)) || e.reason).slice(0, 300)); } catch (_) {} }); });
     await page.setViewport({ width: 1280, height: 900 });
     page.setDefaultTimeout(30000);
     const t = evidenceTracker("admin");
@@ -208,6 +209,11 @@ async function adminPass() {
     pageChecks.push({ side: "admin", name: `Admin ${ADMIN_TAB_NAME} tab loads`, fail: [
       ...loadB.errors.map((e) => `page error on load: ${e}`), ...loadB.fail5xx.map((e) => `function failed on load: ${e}`)],
       warn: loadB.warn4xx.map((e) => `function ${e} on load`) });
+    // 🔴 an UNHANDLED PROMISE REJECTION is a page error: puppeteer's pageerror never sees one, and the admin's own handler used to blank
+    // the client page on one (10-29). Load-time ones count against the page; the rest against the step that was open.
+    const REJ = () => page.evaluate(() => (window.__rej || []).splice(0)).catch(() => []);
+    const rejLines = (xs) => xs.map((x) => `unhandled rejection${/pptr:/.test(x) ? " (from the walk's own call)" : ""}: ${x.split("\n")[0]}`);
+    { const xs = await REJ(); if (xs.length) pageChecks[pageChecks.length - 1].fail.push(...rejLines(xs)); }
 
     // the Overview "your move" card (admin_next_action_card_v2, 10-27) — read-only photo, once its open moves have drawn
     if (OPT.shots) {
@@ -288,11 +294,27 @@ async function adminPass() {
       if (OPT.shots) {
         const file = `${pad(Number(info.num) || 0)}-${fileSafe(id)}.png`;
         try {
-          const h = await page.$(sel);
-          await h.screenshot({ path: path.join(OUT, "admin", file) });
+          // a card that reads Google on open (steps 31 · 32 · 36 · card B) — photograph what RGA sees once the read is back, not the spinner
+          await page.waitForFunction((sel) => !/Reading (their|what Google)|reading Google…|Reading Google…|Checking before anything is sent/.test(document.querySelector(sel)?.innerText || ""), { timeout: 15000 }, sel).catch(() => {});
+          // a poll can re-render and fold the list while we waited: unfold again, then photograph the VISIBLE copy of the row
+          // 🔑 open ONLY what is shut (the phase's body is hidden, the rollup says aria-expanded=false, the row is folded) — a toggle
+          // clicked on an open section CLOSES it, and every row inside goes invisible ("Node is either not visible", 10-29)
+          await page.evaluate((sel) => { const el = document.querySelector(sel); if (!el) return;
+            const ph = el.closest(".ob-phase"); if (ph && ph.querySelector(".ob-ph-b")?.hidden) ph.querySelector("[data-ob-phase-toggle]")?.click();
+            const ru = el.closest("[data-ob-rollup]"); const rb = ru?.querySelector("[data-ob-rollup-toggle]"); if (rb && rb.getAttribute("aria-expanded") === "false") rb.click();
+            if (el.classList.contains("ob-folded")) el.querySelector(":scope > .ob-row")?.click(); }, sel);
+          await sleep(400);
+          const h = await page.evaluateHandle((sel) => [...document.querySelectorAll(sel)].find((e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden") || document.querySelector(sel), sel);
+          const el = h.asElement(); if (!el) throw new Error("no visible row");
+          await el.evaluate((e) => e.scrollIntoView({ block: "center" }));
+          await el.screenshot({ path: path.join(OUT, "admin", file) });
           r.adminShot = `admin/${file}`;
-        } catch (e) { r.warn.push(`admin screenshot failed: ${String(e.message).split("\n")[0]}`); }
+        } catch (e) { const why = await page.evaluate((sel) => { const el = document.querySelector(sel); let p = el, by = "";
+            while (p && p !== document.body) { if (p.hidden || getComputedStyle(p).display === "none") { by = p.id || String(p.className).slice(0, 40); break; } p = p.parentElement; }
+            return `view=${document.body.dataset.adminView}${by ? ` hidden by ${by}` : ""}`; }, sel).catch(() => "");
+          r.warn.push(`admin screenshot failed: ${String(e.message).split("\n")[0]}${why ? ` (${why})` : ""}`); }
       }
+      for (const x of rejLines(await REJ())) r.fail.push(`admin ${x}`);
       t.current = "between steps";
       process.stdout.write(`   admin ${pad(Number(info.num) || 0)} ${id} — ${info.pill}\n`);
     }

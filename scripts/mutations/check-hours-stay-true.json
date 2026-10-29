@@ -93,8 +93,8 @@
  [
   "admin says their word again",
   "admin",
-  "      const attestation = byClient && gp && gp.state === \"on_google\"",
-  "      const attestation = false",
+  "        : byClient && gp && gp.state === \"on_google\"\n",
+  "        : false\n",
   1
  ],
  [

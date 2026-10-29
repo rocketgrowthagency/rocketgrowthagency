@@ -1,0 +1,5 @@
+[
+ ["the boot-failed line moves back outside the boot check", "admin", "      if (document.body) document.body.dataset.adminView = \"boot-failed\";\n    }\n", "    }\n    if (document.body) document.body.dataset.adminView = \"boot-failed\";\n", 1],
+ ["a failed boot no longer marks boot-failed", "admin", "      if (document.body) document.body.dataset.adminView = \"boot-failed\";\n    }\n", "    }\n", 1],
+ ["every rejection counts as a failed boot", "admin", "if (booting || neverBooted) {", "if (true) {", 1]
+]
