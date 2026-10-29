@@ -306,5 +306,12 @@
   "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
   "right: url ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
   1
+ ],
+ [
+  "the footer only reads the current pull request again",
+  "admin",
+  "return [t0.publish_pr, ...(t0.site_change_log || []).map((h) => h && h.pr)];",
+  "return [t0.publish_pr];",
+  1
  ]
 ]

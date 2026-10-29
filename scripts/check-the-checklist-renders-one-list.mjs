@@ -60,7 +60,9 @@ catch (e) { console.log(`  ⚠️  playbooks.json unreadable: ${e.message}`); pr
 // → feedback_a_gate_must_pin_the_property_not_the_spelling
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 const clientFacing = (s) => !s.ongoing && (s.clientBucket === "supply" || s.clientBucket === "act") && !!s.clientLabel;
-const kindOf = (s) => (clientFacing(s) ? (s.actor === "both" ? "both" : "client") : s.type === "auto" ? "auto" : "you");
+// 🔒 a step the server settles by itself (`selfSettles`, admin_row9_vault_v2 approved 10-27: step 9 Keep access safe) reads
+// "Runs itself" exactly like an auto step — the product's own stepKind rule; this gate lagged it until 10-28
+const kindOf = (s) => (clientFacing(s) ? (s.actor === "both" ? "both" : "client") : s.type === "auto" || s.selfSettles ? "auto" : "you");
 const EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
 m1.forEach((s) => { EXPECT[kindOf(s)]++; });
 // A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.
