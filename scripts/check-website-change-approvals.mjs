@@ -159,7 +159,7 @@ for (const [re, what] of [
   [/<b>Why this helps<\/b>/, "Why this helps"], [/data-ib-do="approved">\$\{IB_ICON\.check\}/, "Approve this change"],
   [/data-ib-ask>\$\{IB_ICON\.msg\}Ask for a change/, "Ask for a change (note in place)"],
   [/change_v: box\.getAttribute\("data-ib-v"\)/, "the version sent back with the answer"],
-  [/What RGA did on your website/, "What RGA did on your website (the timeline)"], [/Ask to undo/, "Ask to undo"],
+  [/grp\("", "What RGA did", D,/, "What RGA did (the list; v5 dropped the separate timeline, 10-28)"], [/Ask to undo/, "Ask to undo"],
   [/Nothing changes on your site until you approve\./, "the promise line under the decision"],
 ]) if (!re.test(P)) fail(`the client's inbox lost: ${what}`);
 

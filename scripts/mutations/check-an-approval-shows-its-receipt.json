@@ -145,5 +145,12 @@
   "  if (ibIsPage(c)) return c.removes_page ? \"Coming down\" : \"New page\";",
   "",
   1
+ ],
+ [
+  "page rows lose their +/- tile",
+  "portal",
+  "return ibIsPage(c0) ? `<span class=\"fya-g ${c0.removes_page ? \"rm\" : \"add\"}\">${c0.removes_page ? \"−\" : \"+\"}</span>`",
+  "return false ? ``",
+  1
  ]
 ]

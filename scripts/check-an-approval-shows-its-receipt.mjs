@@ -59,8 +59,9 @@ try {
       const el = document.getElementById("h"); el.innerHTML = api.fyaHtml(sc.items, when, "");
       const open = [...el.querySelectorAll("[data-ib-pane]")].find((p) => !p.hidden);
       const rc = open && open.querySelector(".fya-rc");
+      const tiles = [...el.querySelectorAll(".ib-qi .fya-g")].map((x) => x.textContent);
       const did = [...el.querySelectorAll(".ib-qi.done")].length, undos = [...el.querySelectorAll("[data-ib-pane]")].map((p) => !!p.querySelector("[data-ib-undo-show]"));
-      return { did, undos, open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
+      return { tiles, did, undos, open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
         steps: rc ? [...rc.querySelectorAll(".fya-nx li")].map((li) => li.className) : [], up: rc ? rc.classList.contains("up") : null,
         safe: open && open.querySelector(".fya-safe") ? open.querySelector(".fya-safe").textContent.replace(/\s+/g, " ") : "", head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
     }, { code, sc });
@@ -103,6 +104,7 @@ if (!/You approved removing this page/.test(R.open) || !/Exactly what you approv
   if (/Plumbing's/.test(C)) fail("the safety box uses a possessive on the business name");
   if (!/It went to your website, nowhere else\./.test(N)) fail(`with no business name on record the safety box doesn't say "your website": ${N.slice(0, 120)}`); }
 { const H = out.history;
+  if (H.tiles.join("") !== "++") fail(`a page change's row doesn't carry its + tile (v5): ${JSON.stringify(H.tiles)}`);
   if (H.did !== 2) fail(`a finished change from the step's history isn't in What RGA did (${H.did} of 2 done rows)`);
   // the pane is stubbed in this harness: the rule that a history item never offers Ask to undo is pinned in the source
   if (!/const undo = d\.site_live && !d\.history \? \(d\.undo_request/.test(fs.readFileSync(`${SITE}/portal/portal.js`, "utf8"))) fail("a change from the step's history offers Ask to undo (it must be the latest change only)");
