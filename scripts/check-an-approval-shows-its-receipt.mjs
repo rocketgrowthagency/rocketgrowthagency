@@ -88,16 +88,18 @@ try {
 } catch (e) { console.error(`⚠️  INDETERMINATE — the tab's code didn't run: ${String(e.message).split("\n")[0]}`); process.exit(2); } finally { await b.close(); }
 
 const J = out.justApproved, U = out.uploading, R = out.removing;
-if (/Nothing is waiting for your approval\. Tap/.test(J.open) || !/Approved · recorded/.test(J.open)) fail("after Approve the item they approved isn't open as its receipt (the screen says \"Nothing is waiting\" — Chris, 9:01)");
-if (!/You approved adding this page/.test(J.open) || !/by owner@acme\.test/.test(J.open) || !/201cd46c · this file uploads, nothing else/.test(J.open)) fail("the receipt doesn't say what they approved, who approved it, and the exact version");
-if (!/acme\.test\/rga-access-test\/ · hidden from Google/.test(J.open)) fail("the receipt doesn't name the page (and that it's hidden from Google)");
-if (J.steps.join(",") !== "done,now,," || !/What happens next/.test(J.open)) fail(`What happens next isn't [approved ✓ · RGA uploads = current · …] (${J.steps.join(",")})`);
+// 🔒 approval_receipt_simple_v1 (approved 10-28): the receipt = "Approved" · what they approved · when · the page · three plain steps.
+// Their sign-in and the exact version stay in OUR record, never on their screen; no dead "Back to For your approval" link.
+if (/Nothing is waiting for your approval\. Tap/.test(J.open) || !/Approved/.test(J.open)) fail("after Approve the item they approved isn't open as its receipt (the screen says \"Nothing is waiting\" — Chris, 9:01)");
+if (!/You approved this page/.test(J.open) || !/acme\.test\/rga-access-test\//.test(J.open)) fail("the receipt doesn't say what they approved and which page");
+if (/by owner@acme\.test|201cd46c|The exact version|this file uploads|saved with the date|Back to For your approval/.test(J.open)) fail("the receipt shows our record's detail (their sign-in, the version, the saved-note) or the dead Back link again");
+if (J.steps.join(",") !== "done,now," || !/We put it on your website/.test(J.open) || !/We check it's live/.test(J.open)) fail(`What happens next isn't [approved ✓ · we put it on = current · we check it's live] (${J.steps.join(",")})`);
 if (!J.see) fail("the receipt has no Preview what you approved");
 if (J.head !== "rgb(227, 241, 223)") fail(`the receipt's header isn't the state system's done green (${J.head})`);
 if (J.rows.some((r) => /You asked for a change/.test(r) && /A test page/.test(r))) fail("an approved change reads \"You asked for a change\" (the 9:01 bug)");
-if (!J.rows.some((r) => /You approved it Oct 28, \d+:\d\d (AM|PM) · RGA is putting it up/.test(r))) fail(`the row under Approved · going up doesn't say "You approved it … · RGA is putting it up" (${J.rows.join(" | ")})`);
-if (!U.up || !/RGA is uploading it/.test(U.open) || U.steps.join(",") !== "done,done,now," || U.head !== "rgb(235, 243, 255)") fail(`once RGA opens the upload the receipt isn't blue "RGA is uploading it" with step 3 current (${U.steps.join(",")} · ${U.head})`);
-if (!/You approved removing this page/.test(R.open) || !/Exactly what you approved/.test(R.open)) fail("the receipt's words don't follow the label (removing a page), or a change with no built file claims a version");
+if (!J.rows.some((r) => /New page · you approved it \d+:\d\d (AM|PM)/.test(r))) fail(`the row under Approved · going up doesn't say "New page · you approved it <time>" (${J.rows.join(" | ")})`);
+if (U.steps.join(",") !== "done,now," || U.head !== "rgb(227, 241, 223)" || /uploading/i.test(U.open)) fail(`once RGA opens the upload the receipt changes its look or words (it stays: approved ✓ · we put it on = current) (${U.steps.join(",")} · ${U.head})`);
+if (!/You approved taking this page off/.test(R.open) || !/We take it off your website/.test(R.open) || !/We check it's gone/.test(R.open)) fail("the receipt's words don't follow a removal (taking it off · we check it's gone)");
 { const C = out.checked.safe, N = out.checkedNoName.safe;
   if (!/It went to the Smiths Plumbing website, nowhere else\./.test(C) || /acme\.test/.test(C)) fail(`the safety box doesn't name the business (or still shows its address): ${C.slice(0, 160)}`);
   if (!/Exactly the version you approved\./.test(C) || /201cd46c/.test(C)) fail(`the safety box still shows the fingerprint, not "Exactly the version you approved": ${C.slice(0, 160)}`);
