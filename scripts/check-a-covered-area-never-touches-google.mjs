@@ -161,7 +161,7 @@ for (const f of ["netlify/functions/admin-google-check.js", "netlify/functions/g
   if (!/data-zc-checks/.test(hb) || !/data-zc-add disabled>Add it on Google/.test(hb) || !/Do it in Google Business Profile instead ↗/.test(hb)) fail("card B: the checks, the disabled-until-checked Add button, or the escape hatch is missing");
   if (/Mark step complete|Done by hand on purpose/.test(hb)) fail("card B still has the old hand-tick / 'done by hand' wording");
   if (!/g\.state === "with_rga" && \(g\.rga \|\| \[\]\)\.length && g\.rga\.every\(\(x\) => x\.fact === "area" && Array\.isArray\(x\.add\)\) \? areaAddCardHtml\(g\)/.test(AJS)) fail("step 28 still draws the old 'change it in Google Business Profile' card for an area-only change (card B)");
-  if (!/const doneBtn = zcWaits \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
+  if (!/const doneBtn = zcWaits(?: \|\| siteStep)? \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
   if (!/body: JSON\.stringify\(\{ client_id: c\.id, dry: true \}\)/.test(AJS) || !/if \(add\) add\.disabled = !all;/.test(AJS)) fail("card B doesn't fill its checks from the dry run, or enables Add without all five");
 }
 

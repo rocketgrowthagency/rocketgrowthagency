@@ -1,0 +1,86 @@
+[
+ [
+  "hours: 24-hour clock comes back",
+  "admin",
+  "return `${h % 12 || 12}${mm === \"00\" ? \"\" : `:${mm}`} ${h < 12 || h === 24 ? \"AM\" : \"PM\"}`;",
+  "return `${m[1]}:${mm}`;",
+  1
+ ],
+ [
+  "hours: a changed day hides what Google had",
+  "admin",
+  "${was !== now ? `<small>was ${escapeHtml(was)}</small>` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "hours: closed days lose their dates",
+  "admin",
+  "${escapeHtml(x.name || \"Closed\")} · ${escapeHtml(md(x.date))}",
+  "${escapeHtml(x.name || \"Closed\")}",
+  1
+ ],
+ [
+  "hours: the old grey box comes back",
+  "admin",
+  "if (spec.kind === \"hours\" && g && g.state === \"on_google\" && !(v && v.by_appointment)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "hours: the email line comes back",
+  "admin",
+  "const attestation = o.flowId === \"m1.gbp.hours_attributes\" && gp && gp.state === \"on_google\" && !(s.task?.client_input?.by_appointment) ? \"\"",
+  "const attestation = false ? \"\"",
+  1
+ ],
+ [
+  "description: a draft counts as on Google",
+  "admin",
+  "const descriptionOnGoogle = (t) => !!(t && t.published && t.published.field === \"profile.description\" && t.published.at);",
+  "const descriptionOnGoogle = (t) => !!(t && t.outcome_data);",
+  1
+ ],
+ [
+  "description: the meter goes",
+  "admin",
+  "+ `<div class=\"ob-zc-meter\"><span>${n} / 750 characters</span>",
+  "+ `<div class=\"ob-zc-meter\"><span>",
+  1
+ ],
+ [
+  "description: ready to paste comes back",
+  "admin",
+  ": descriptionOnGoogle(s.task) ? `<div class=\"ob-done-card\">${descriptionDoneCardHtml(s.task)}</div>`",
+  ": false ? `<div class=\"ob-done-card\">${descriptionDoneCardHtml(s.task)}</div>`",
+  1
+ ],
+ [
+  "website step: second Draft button",
+  "admin",
+  "const runBtn = runnable && !siteStep",
+  "const runBtn = runnable",
+  1
+ ],
+ [
+  "client 4: leads with the phone again",
+  "portal",
+  "const lead = adds.length || drops.length ? [0, 4] : [0, 1]",
+  "const lead = [0, 1]",
+  1
+ ],
+ [
+  "client 4: the second button comes back",
+  "portal",
+  "${CARD_ASKS_CHANGE.has(stepId) ? \" hidden\" : \"\"}>Need a change? ›",
+  ">Need a change? ›",
+  1
+ ],
+ [
+  "client 4: the covered sentence is unescaped",
+  "portal",
+  "row(\"Service area\", escapeHtml(areaLine), areaSt, escapeHtml(coveredSub))",
+  "row(\"Service area\", escapeHtml(areaLine), areaSt, coveredSub)",
+  1
+ ]
+]
