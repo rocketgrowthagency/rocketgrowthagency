@@ -60,6 +60,8 @@ if (st.Inglewood.state !== "to_add") fail(`Inglewood (its own city, not on the l
 if (st.Shopsville.state !== "unknown") fail(`a business that happens to match ("Shopsville", a restaurant) was taken as a place (${st.Shopsville.state})`);
 if (st["Culver City"].state !== "on_google") fail("a place Google already lists isn't on_google");
 if (st.Nowhere.state !== "unknown") fail("a place Google can't find isn't unknown (fail closed)");
+if (!st.Nowhere.why) fail("a place Google can't find doesn't say why (Google's reason must be kept on it)");
+if (/key=k\b|"k"/.test(JSON.stringify(cov))) fail("the Places key leaked into what's saved on the step");
 const tx = await C.areaCover(["Austin Heights"], now, { fetch: placesFetch, key: "k" });
 if (tx.items[0].state === "covered") fail("a place in Los Angeles, TEXAS was counted as covered by Los Angeles, CA");
 const nokey = await C.areaCover(["Mar Vista"], now, { fetch: placesFetch, key: "" });
@@ -119,6 +121,40 @@ if (!/\.pm-fxt-pl\.cov \{[^}]*var\(--state-ok-bg\)/.test(read("portal/portal.css
 // both callers give the watch the Places key (the nightly AND Check Google now)
 for (const f of ["netlify/functions/admin-google-check.js", "netlify/functions/gbp-profile-watch.js"])
   if (!/places: process\.env\.GOOGLE_PLACES_API_KEY \? \{ key: process\.env\.GOOGLE_PLACES_API_KEY \} : null/.test(read(f))) fail(`${f} doesn't give the watch the Places key (covered places would never be decided)`);
+
+// ── 5 · card B + the five checks (admin-gbp-area-add) ─────────────────────────────────────────────
+{ let AD; try { AD = req(`${SITE}/netlify/functions/admin-gbp-area-add.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
+  const task = { google_push: { area_cover: { items: [{ name: "Inglewood", state: "to_add", place_id: "p-in", google: "Inglewood, CA, USA" }, { name: "Mar Vista", state: "covered", by: "Los Angeles, CA, USA" }, { name: "Nowhere", state: "unknown" }] } } };
+  const raw = { metadata: { hasVoiceOfMerchant: true }, serviceArea: { businessType: "CUSTOMER_LOCATION_ONLY", places: { placeInfos: AREA.map((n, i) => ({ placeName: n, placeId: `id${i}` })) } } };
+  const NOW = Date.parse("2026-10-29T15:00:00Z");
+  const ok = AD.checksFor(task, raw, NOW, { ok: true });
+  if (!ok.checks.every((c) => c.ok) || ok.checks.length !== 5) fail(`five clean checks didn't all pass (${ok.checks.map((c) => `${c.key}:${c.ok}`).join(" ")})`);
+  const sent = ok.body.serviceArea.places.placeInfos;
+  if (sent.length !== AREA.length + 1 || !AREA.every((n, i) => sent[i].placeId === `id${i}` && sent[i].placeName === n)) fail("the change doesn't keep every place already on Google exactly (name + place id)");
+  if (!sent.some((x) => x.placeId === "p-in") || sent.some((x) => /Mar Vista|Nowhere/.test(x.placeName))) fail("the change sends a covered or unknown place, or drops the one to add");
+  const bad = (t, r, test, key) => { const c = AD.checksFor(t, r, NOW, test).checks.find((x) => x.key === key); return c && !c.ok; };
+  if (!bad(task, { ...raw, metadata: { hasVoiceOfMerchant: false } }, { ok: true }, "verified")) fail("an unverified profile passes the verified check");
+  if (!bad(task, { ...raw, metadata: { hasVoiceOfMerchant: true, hasPendingEdits: true } }, { ok: true }, "verified")) fail("Google's own pending edits pass the verified check");
+  if (!bad({ google_push: { ...task.google_push, last_core_at: "2026-10-26T15:00:00Z" } }, raw, { ok: true }, "week")) fail("a core change 3 days ago passes the one-change-a-week check");
+  if (!bad(task, raw, { ok: false, why: "x" }, "test")) fail("a refused test run passes");
+  const many = { google_push: { area_cover: { items: Array.from({ length: 16 }, (_, i) => ({ name: `P${i}`, state: "to_add", place_id: `q${i}` })) } } };
+  if (AD.checksFor(many, raw, NOW, { ok: true }).add.length > 3) fail("more than 3 places go in one change");
+  const AD_SRC = read("netlify/functions/admin-gbp-area-add.js");
+  if (!/if \(dry\) return json\(200/.test(AD_SRC) || !/if \(passed !== checks\.length\) return json\(409/.test(AD_SRC)) fail("the add runs without all five checks (or the dry run can write)");
+  if (!/updateMask=serviceArea&validateOnly=true/.test(AD_SRC) || [...AD_SRC.matchAll(/\$\{conn\.loc\}\?updateMask=([A-Za-z,]+)/g)].map((m) => m[1]).join("|") !== "serviceArea|serviceArea") fail("the test run isn't validateOnly, or another field can change");
+  if (!/rv && rv\.state === "lost"/.test(AD_SRC)) fail("the add doesn't wait while Google wants the business verified again");
+  const partsB = ["areaAddCardHtml"].map((n) => lift(AJS, n));   // ZC_PIN is already in the context (card A)
+  if (partsB.some((x) => !x)) { console.error("⚠️  INDETERMINATE — card B moved"); process.exit(2); }
+  vm.runInContext(partsB.join("\n") + "\nthis.cardB = areaAddCardHtml;", ctx);
+  const hb = ctx.cardB({ rga: [{ fact: "area", add: ["Inglewood", "Nowhere"] }], area_now: AREA, area_cover: task.google_push.area_cover });
+  if (!/Add 1 area to their Google service area/.test(hb) || !/<b>6 → 7<\/b> places/.test(hb) || !/Google knows it as <em>Inglewood, CA, USA<\/em>/.test(hb) || !/\+ New/.test(hb)) fail("card B doesn't show the place to add (title, 6 → 7, Google's name, + New)");
+  if (!/Couldn't look it up in Google's place list/.test(hb) || !/Not looked up/.test(hb)) fail("card B hides a place it couldn't look up");
+  if (!/data-zc-checks/.test(hb) || !/data-zc-add disabled>Add it on Google/.test(hb) || !/Do it in Google Business Profile instead ↗/.test(hb)) fail("card B: the checks, the disabled-until-checked Add button, or the escape hatch is missing");
+  if (/Mark step complete|Done by hand on purpose/.test(hb)) fail("card B still has the old hand-tick / 'done by hand' wording");
+  if (!/g\.state === "with_rga" && \(g\.rga \|\| \[\]\)\.length && g\.rga\.every\(\(x\) => x\.fact === "area" && Array\.isArray\(x\.add\)\) \? areaAddCardHtml\(g\)/.test(AJS)) fail("step 28 still draws the old 'change it in Google Business Profile' card for an area-only change (card B)");
+  if (!/const doneBtn = zcWaits \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
+  if (!/body: JSON\.stringify\(\{ client_id: c\.id, dry: true \}\)/.test(AJS) || !/if \(add\) add\.disabled = !all;/.test(AJS)) fail("card B doesn't fill its checks from the dry run, or enables Add without all five");
+}
 
 if (F.length) { console.error(`🔴 a covered area could touch Google, or the step can't tell:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ a covered area never touches Google: Los Angeles neighborhoods + a ZIP are covered, Inglewood is to add, a shop and a Texas namesake aren't, no key = unknown; the step finishes from the read with no write; admin card A + the client's covered chip");

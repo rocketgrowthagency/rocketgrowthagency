@@ -16,14 +16,14 @@
  [
   "a business is taken as a place",
   "areacover",
-  "(x.types || []).some((t) => AREA_TYPES.has(t)) && placeHead",
-  "placeHead",
+  "p = (j.places || []).find((x) => (x.types || []).some((y) => AREA_TYPES.has(y)) && placeHead",
+  "p = (j.places || []).find((x) => placeHead",
   1
  ],
  [
   "no answer is taken as covered (fail open)",
   "areacover",
-  "if (!p) { items.push({ name: n, state: \"unknown\" }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}) }); continue; }",
   "if (!p) { items.push({ name: n, state: \"covered\", by: area[0] }); continue; }",
   1
  ],
@@ -102,6 +102,97 @@
   "portalcss",
   ".pm-fxt-pl.cov { background: var(--state-ok-bg);",
   ".pm-fxt-pl.cov { background: var(--portal-tray);",
+  1
+ ],
+ [
+  "a failed lookup forgets Google's reason",
+  "areacover",
+  "if (!p) { items.push({ name: n, state: \"unknown\", ...(why ? { why } : {}) }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"unknown\" }); continue; }",
+  1
+ ],
+ [
+  "unverified passes",
+  "areaadd",
+  "ok: md.hasVoiceOfMerchant === true && md.hasPendingEdits !== true,",
+  "ok: true,",
+  1
+ ],
+ [
+  "one change a week ignored",
+  "areaadd",
+  "ok: !lastCore || nowMs - lastCore >= WEEK,",
+  "ok: true,",
+  1
+ ],
+ [
+  "a refused test run passes",
+  "areaadd",
+  "{ key: \"test\", ok: !!(test && test.ok),",
+  "{ key: \"test\", ok: true,",
+  1
+ ],
+ [
+  "more than 3 at a time",
+  "areaadd",
+  ".slice(0, AT_A_TIME);",
+  ".slice(0, 99);",
+  1
+ ],
+ [
+  "existing places dropped",
+  "areaadd",
+  "placeInfos: [...have.map((p) => ({ placeName: p.placeName, placeId: p.placeId })), ...add",
+  "placeInfos: [...add",
+  1
+ ],
+ [
+  "the add skips the checks",
+  "areaadd",
+  "if (passed !== checks.length) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "the test run saves",
+  "areaadd",
+  "?updateMask=serviceArea&validateOnly=true`",
+  "?updateMask=serviceArea`",
+  1
+ ],
+ [
+  "the add ignores verify-again",
+  "areaadd",
+  "if (rv && rv.state === \"lost\") return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "card B enables Add without the checks",
+  "admin",
+  "if (add) add.disabled = !all;",
+  "if (add) add.disabled = false;",
+  1
+ ],
+ [
+  "Mark step complete comes back while places wait",
+  "admin",
+  "const doneBtn = zcWaits ? \"\" :",
+  "const doneBtn = false ? \"\" :",
+  1
+ ],
+ [
+  "card B hides an unknown place",
+  "admin",
+  "`<span class=\"ob-zc-unk\">Not looked up</span>`",
+  "``",
+  1
+ ],
+ [
+  "step 28 keeps the old card for an area-only change",
+  "admin",
+  "g.rga.every((x) => x.fact === \"area\" && Array.isArray(x.add)) ? areaAddCardHtml(g)",
+  "false ? areaAddCardHtml(g)",
   1
  ]
 ]

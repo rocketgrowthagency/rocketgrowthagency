@@ -107,7 +107,8 @@ export const FILES = {
   gbpdrift: "netlify/functions/admin-gbp-drift.js",
   recordfn: "netlify/functions/_record.js",
   gbpfacts: "netlify/functions/_gbp-facts.js",
-  areacover: "netlify/functions/_gbp-area-cover.js",   // step4_done_in_portal_v2 (10-29): a covered area never touches Google
+  areacover: "netlify/functions/_gbp-area-cover.js",
+  areaadd: "netlify/functions/admin-gbp-area-add.js",   // step4_done_in_portal_v2 card B: five checks, then the change   // step4_done_in_portal_v2 (10-29): a covered area never touches Google
   portalgbpprofile: "netlify/functions/portal-gbp-profile.js",
   gbpprofilewatch: "netlify/functions/gbp-profile-watch.js",
   dupcleared: "netlify/functions/_dup-cleared.js",
