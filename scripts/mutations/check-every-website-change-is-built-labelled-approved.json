@@ -44,8 +44,8 @@
  [
   "the preview opens without the signature",
   "sitepreview",
-  "  if (!process.env.INTERNAL_FN_SECRET || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(s))) return page(403,",
-  "  if (false) return page(403,",
+  "  if (!process.env.INTERNAL_FN_SECRET || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(s))) return page(",
+  "  if (false) return page(",
   1
  ],
  [
@@ -172,6 +172,41 @@
   "admin",
   "${i.note ? `<small class=\"ob-wc-dn\">${escapeHtml(i.note)}</small>` : \"\"}",
   "",
+  1
+ ],
+ [
+  "an old preview link is a bare line again (preview_not_current_v1)",
+  "sitepreview",
+  "+ `<body><main class=\"pv-card\">",
+  "+ `<body><p class=\"pv-card\">",
+  1
+ ],
+ [
+  "the card loses its one way back",
+  "sitepreview",
+  "+ `<a class=\"pv-btn\" href=\"${ORIGIN0()}/portal/\" target=\"_top\">Open your portal</a></main></body></html>` });",
+  "+ `</main></body></html>` });",
+  1
+ ],
+ [
+  "the out-of-date card goes back to the old wording",
+  "sitepreview",
+  "return page(404, \"This preview is out of date\",",
+  "return page(404, \"This preview is no longer current\",",
+  1
+ ],
+ [
+  "the card is no longer kept out of Google",
+  "sitepreview",
+  "const page = (code, head, msg) => ({ statusCode: code, headers: { \"Content-Type\": \"text/html; charset=utf-8\", \"X-Robots-Tag\": \"noindex, nofollow\",",
+  "const page = (code, head, msg) => ({ statusCode: code, headers: { \"Content-Type\": \"text/html; charset=utf-8\", \"X-Robots-Tag\": \"all\",",
+  1
+ ],
+ [
+  "the card has no dark theme",
+  "sitepreview",
+  "+ `@media (prefers-color-scheme:dark)",
+  "+ `@media (min-width:99999px)",
   1
  ]
 ]

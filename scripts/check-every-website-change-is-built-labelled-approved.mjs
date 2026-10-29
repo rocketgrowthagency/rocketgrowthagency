@@ -79,6 +79,16 @@ const fake = (exists) => { const calls = []; const J = (b, s = 200) => new Respo
   if (ok.statusCode !== 200 || !/noindex/.test(ok.headers["X-Robots-Tag"] || "") || !/<base href="https:\/\/www\.acme\.test\/">/.test(ok.body) || !/It goes live only after you approve it\./.test(ok.body) || !/<a href="https:\/\/[^"]+\/portal\/#for-your-approval" target="_top"[^>]*>Back to approve<\/a>/.test(ok.body)) fail("the preview isn't private (noindex), on their styles (<base>), doesn't say it's a preview, or has no absolute \"Back to approve\" link");
   const stale = await H({ queryStringParameters: { c: C, k: T, v: "older", s: crypto.createHmac("sha256", "gate-secret").update(`${C}|${T}|older`).digest("hex").slice(0, 32) } });
   if (stale.statusCode !== 404) fail("an older version's preview still opens (it must say it's no longer current)");
+  // 🔒 preview_not_current_v1 (approved Chris 10-29): a link that can't open = a small RGA card + ONE way back, never a bare line
+  { const card = (r) => /<main class="pv-card">/.test(r.body) && /class="pv-logo"><svg[^>]*>[\s\S]*?<\/svg>Rocket Growth Agency</.test(r.body)
+      && /<a class="pv-btn" href="https:\/\/[^"]+\/portal\/" target="_top">Open your portal<\/a>/.test(r.body)
+      && /noindex/.test(r.headers["X-Robots-Tag"] || "") && /<meta name="viewport"/.test(r.body) && /prefers-color-scheme:dark/.test(r.body);
+    if (!card(stale) || !/<h1>This preview is out of date<\/h1>/.test(stale.body) || !/The change was edited or has gone live since this link was made\. The newest version is in your portal\./.test(stale.body))
+      fail("an out-of-date preview link isn't the approved card (preview_not_current_v1: RGA card, 'This preview is out of date', Open your portal)");
+    if (!card(bad) || !/<h1>This preview link isn't valid\.<\/h1>/.test(bad.body)) fail("a tampered preview link isn't the approved card ('This preview link isn't valid.' + Open your portal)");
+    const inc = await H({ queryStringParameters: { c: C, v: V, s: "short" } });
+    if (inc.statusCode !== 400 || !card(inc)) fail("a broken preview link isn't the approved card");
+    if (/a\/index\.html|<base /.test(stale.body + bad.body + inc.body)) fail("an old or bad preview link reveals something about the change"); }
   // 10-28: the client's link carries NO step id — found by its version, signed over client|version (check-client-never-sees-our-internals)
   const sig2 = crypto.createHmac("sha256", "gate-secret").update(`${C}|${V}`).digest("hex").slice(0, 32);
   const nok = await H({ queryStringParameters: { c: C, v: V, s: sig2 } });
