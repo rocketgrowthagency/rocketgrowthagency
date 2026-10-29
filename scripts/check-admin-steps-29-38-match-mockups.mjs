@@ -44,7 +44,7 @@ const t33 = { approval: { by: "Chris Kapranos", at: "2026-09-14T23:20:34Z", appr
 if (!ctx.descOn(t33) || ctx.descOn({ ...t33, published: null }) || ctx.descOn({ ...t33, published: { ...t33.published, field: "categories" } })) fail("step 33: 'on Google' is decided wrong (it must be published with field profile.description)");
 const d = ctx.desc(t33);
 if (!d.includes(esc(D)) || !/<b>592<\/b> characters/.test(d) || !/592 \/ 750 characters/.test(d)) fail("step 33: the text isn't whole, or the 750 meter is missing");
-if (!/Approved by Chris Oct 29 · published Oct 29/.test(d.replace(/Sep 1[45]/g, "Oct 29")) || !/On Google · published/.test(d)) fail("step 33: who approved / when published is missing");
+if (!/Approved by Chris Oct 29 · published Oct 29/.test(d.replace(/Sep 1[45]/g, "Oct 29")) || !/On Google · read back/.test(d)) fail("step 33: who approved / when published is missing");
 if (/ready to paste|push via API|each night/.test(d)) fail("step 33: says 'ready to paste' (it's live) or claims a nightly re-read that doesn't exist");
 if ((d.match(/<button/g) || []).length !== 1 || !/>Draft a new one</.test(d)) fail("step 33: not ONE action (Draft a new one)");
 if (!/: descriptionOnGoogle\(s\.task\) \? `<div class="ob-done-card">\$\{descriptionDoneCardHtml\(s\.task\)\}<\/div>`/.test(AJS)) fail("step 33's done row doesn't use the description card");
@@ -54,7 +54,7 @@ if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChang
 if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
-{ const p3 = ["ZC_LIST", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
+{ const p3 = ["ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
   if (p3.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 29/30/31 card moved (${p3.findIndex((x) => !x)})`); process.exit(2); }
   const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : "") };
   vm.createContext(c3); vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
@@ -62,14 +62,17 @@ if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a
   const cit = { outcome_data: { citations_held: 0, fixes: [{ id: "cit.linked_from_site", fix: "Site links to its own directory profiles", why: "links to NONE of the 8 tracked directories. Linking your own profiles corroborates them." }],
     checks: [...DIRS.map((d, i) => ({ id: `cit.d${i}`, label: `${d} citation`, pass: null })), { id: "cit.linked_from_site", label: "Site links to its own directory profiles", pass: false }] } };
   const h29 = c3.cit(cit, '<div data-stale></div>');
-  if (!/Directory listings: 1 fix found/.test(h29) || !/Site links to its own directory profiles/.test(h29)) fail("step 29: the fix isn't said in words");
+  if (!/Directory listings: 1 fix found/.test(h29) || !/Their website links to none of their directory profiles/.test(h29) || !/Linking their own profiles tells Google \(and AI answers\) the listings are theirs\. Fixed in step 30's plan\./.test(h29)) fail("step 29: the fix isn't said in the mockup's plain words");
+  if (!/data-onboard-run="m1\.audit\.citations_nap">⚡ Run again/.test(h29) || !/Runs on RGA's server, no laptop needed\./.test(h29) || !/data-zc-goto="m1\.audit\.recommendations">Open the fix plan \(step 30\) ›/.test(h29)) fail("step 29: the footer (Run again · server · Open the fix plan) is missing");
   if ((h29.match(/no link on file/g) || []).length !== 8 || /missing<\/i>|>Missing/.test(h29) || !/It is not proof the listing is missing/.test(h29)) fail("step 29: the 8 directories aren't 'no link on file' (never 'missing')");
   if (/Produced|fix\(es\)/.test(h29) || !/data-stale/.test(h29)) fail("step 29: bookkeeping wording, or the re-check line isn't inside the card");
   const plan = { outcome_data: { recommendations: [{ title: "No Facebook profile linked from the site", surface: "social" }, { title: "Site links to its own directory profiles", surface: "citations" }, { title: "No Yelp profile linked from the site", surface: "social" }],
     unknowns: [{ label: "Review count vs the vertical's top-3 median", why_unknown: "no publishable benchmark yet" }, ...DIRS.map((d) => ({ label: `${d} citation`, why_unknown: "no Yelp URL held — we link to it from neither the site nor schema" }))] } };
   const h30 = c3.plan(plan, "");
   if (!/The fix plan: 3 fixes, in order/.test(h30) || (h30.match(/class="ob-zc-place you"/g) || []).length !== 3) fail("step 30: the 3 fixes aren't listed in order");
-  if (!/9 we can't measure yet<\/b> · no benchmark yet · no directory link on file/.test(h30)) fail("step 30: the 9 unknowns don't fold into one line with their reasons");
+  if (!/9 we can't measure yet<\/b> · review count vs the top 3 \(no benchmark yet\) · 8 directory listings \(no link on file\)/.test(h30)) fail("step 30: the 9 unknowns don't fold into one line naming each reason");
+  if (!/No Facebook profile linked from their site/.test(h30) || !/Add the link on their website \(a website change → For your approval\)/.test(h30) || !/Their website links to none of their directory profiles/.test(h30)) fail("step 30: the fixes aren't in the mockup's plain words");
+  if (!/data-onboard-run="m1\.audit\.recommendations">⚡ Run again/.test(h30)) fail("step 30: Run again isn't in the card footer");
   if (/Produced|recommendation\(s\)/.test(h30)) fail("step 30: bookkeeping wording is back");
   const cat = { outcome_data: { draft: 'primary: "Internet marketing service"\nadditional:\n  - "Marketing agency"\n  - "Marketing consultant"\n  - "Website designer"\n  - "Computer consultant"\n  - "Business management consultant"' },
     approval: { by: "Chris Kapranos", at: "2026-09-14T22:11:15Z" }, published: { at: "2026-09-15T02:53:12Z", after: { primary_category: "Internet marketing service", additional_categories: ["Marketing agency", "Website designer", "Marketing consultant"] } } };
@@ -77,6 +80,9 @@ if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a
   if (!/2 approved categories aren't on Google/.test(h31) || !/Computer consultant <i>not on Google<\/i>/.test(h31) || !/Business management consultant <i>not on Google<\/i>/.test(h31)) fail("step 31: the 2 approved-but-not-on-Google categories aren't shown");
   if (!/Additional · 3 of 5 on Google/.test(h31) || !/Primary · Internet marketing service/.test(h31) || !/the other 2 never went on/.test(h31)) fail("step 31: what's on Google isn't counted against the plan");
   if (/NOW SET TO|Draft copy/i.test(h31)) fail("step 31: 'Now set to … Draft copy' is back");
+  if (!/data-zc-cat-add disabled>Add them on Google/.test(h31) || !/data-zc-cat-check>↻ Check Google now/.test(h31) || !/data-zc-cat-drop>Drop them from the plan instead/.test(h31) || !/Same 5 checks as step 28 first \(a category is a core change\)\./.test(h31)) fail("step 31: Add them on Google / Check Google now / Drop them from the plan instead is missing");
+  if (!/unchanged \(it was already right\)/.test(c3.cat({ ...cat, published: { ...cat.published, before: { primary_category: "Internet marketing service" } } }))) fail("step 31: the primary doesn't say it was already right");
+  if (/Computer consultant/.test(c3.cat({ ...cat, categories_dropped: ["Computer consultant", "Business management consultant"] })) ) fail("step 31: a dropped category still shows");
   const okCat = c3.cat({ ...cat, published: { ...cat.published, after: { ...cat.published.after, additional_categories: ["Marketing agency", "Marketing consultant", "Website designer", "Computer consultant", "Business management consultant"] } } });
   if (!/Categories match the plan/.test(okCat) || /not on Google/.test(okCat)) fail("step 31: a matching profile isn't a green 'match' card");
 }
@@ -105,19 +111,58 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
   if (/NOW SET TO|Draft copy|Drafted services list/i.test(h32)) fail("step 32: the old draft bookkeeping is back");
 }
 
+{ const req2 = (await import("node:module")).createRequire(`${SITE}/netlify/functions/x.js`);
+  let CG; try { CG = req2(`${SITE}/netlify/functions/admin-gbp-categories.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
+  const task = { outcome_data: { draft: '- "A"\n- "B"\n- "C"\n- "D"\n- "E"\n- "F"' }, categories_dropped: ["F"] };
+  if (CG.planOf(task).includes("F") || CG.planOf(task).length !== 5) fail("step 31: a dropped category is still in the plan");
+  const loc = { categories: { primaryCategory: { name: "categories/gcid:p", displayName: "P" }, additionalCategories: [{ name: "categories/gcid:a", displayName: "A" }] }, metadata: { hasVoiceOfMerchant: true } };
+  const found = { b: { name: "categories/gcid:b", displayName: "B" }, c: { name: "categories/gcid:c", displayName: "C" }, d: { name: "categories/gcid:d", displayName: "D" }, e: { name: "categories/gcid:e", displayName: "E" } };
+  const r = CG.checksFor(CG.planOf(task), loc, found, 0, Date.parse("2026-10-29T15:00:00Z"), { ok: true });
+  if (r.body.categories.primaryCategory.name !== "categories/gcid:p" || !r.body.categories.additionalCategories.some((x) => x.name === "categories/gcid:a")) fail("step 31: the change would drop the primary or a category already on Google");
+  if (r.add.length > 3) fail("step 31: more than 3 categories in one change");
+  if (CG.checksFor(["B"], { ...loc, metadata: { hasVoiceOfMerchant: false } }, found, 0, Date.now(), { ok: true }).checks.find((k) => k.key === "verified").ok) fail("step 31: an unverified profile passes");
+  if (CG.checksFor(["B"], loc, found, Date.now() - 86400000, Date.now(), { ok: true }).checks.find((k) => k.key === "week").ok) fail("step 31: a core change yesterday passes the one-change-a-week check");
+  const SRC = read("netlify/functions/admin-gbp-categories.js");
+  if (!/if \(action === "check"\) return json\(200, view\);/.test(SRC) || SRC.indexOf('if (action === "check") return') > SRC.indexOf("updateMask=categories`, { method")) fail("step 31: Check Google now can write");
+  if (!/if \(passed !== r\.checks\.length\) return json\(409/.test(SRC) || !/updateMask=categories&validateOnly=true/.test(SRC)) fail("step 31: Add can skip the checks or the test run");
+}
+
+// ── admin: step 38 — photo progress at a glance ─────────────────────────────────────────────────
+{ const p5 = ["ZC_CAM", "photosWaitState", "photosWaitCardHtml"].map((n) => lift(AJS, n));
+  if (p5.some((x) => !x)) { console.error("⚠️  INDETERMINATE — step 38's card moved"); process.exit(2); }
+  const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
+  vm.createContext(c5); vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);
+  const G = [["Logo", 1, "PROFILE"], ["Cover", 1, "COVER"], ["Exterior", 3, "EXTERIOR"], ["Interior", 3, "INTERIOR"], ["Team", 5, "TEAMS"], ["At work", 7, "AT_WORK"]];
+  const items = G.flatMap(([g, n, k]) => Array.from({ length: n }, () => ({ group: g, google: k })));
+  const task = { status: "pending", draft_shape: { items, storefront: false }, detected: { have: { PROFILE: 1 } }, later: { reminded_at: "2026-10-23T21:40:18Z", followup_told_at: "2026-10-26T21:40:37Z" },
+    photo_kept: { x: { at: "2026-10-16T01:58:45Z" } } };
+  const h = c5.ph(task, { clientStepNo: 10, clientLabel: "Provide 20+ business photos" });
+  if (!/Their photos: 1 of 20/.test(h) || !/<b>1<\/b> \/ 20/.test(h) || !/Client's move · late/.test(h)) fail("step 38: the progress header (1 of 20 · late) is wrong");
+  if (!/1 of 20 photos · no new photos since their reminder \(Oct 23\)/.test(h) || !/Client portal step 10, Provide 20\+ business photos/.test(h)) fail("step 38: the waiting line or the client's step is wrong");
+  if (!/Logo <i>1\/1<\/i>/.test(h) || !/At work <i>0\/7<\/i>/.test(h) || (h.match(/class="ob-zc-slot(?: on)?"/g) || []).length !== 20 || (h.match(/class="ob-zc-slot on"/g) || []).length !== 1) fail("step 38: the shot list by group, or the 20 slots, are wrong");
+  if (!/Google hides it because the profile shows no street address/.test(h) || !/chose to keep the second copy of their logo \(Oct 15\)|chose to keep the second copy of their logo \(Oct 16\)/.test(h)) fail("step 38: the two notes are missing");
+  if (!/data-step-nudge="m1\.gbp\.photos">Remind the client…/.test(h) || !/href="tel:4242422040">Call them · \(424\) 242-2040/.test(h)) fail("step 38: Remind the client… / Call them is missing");
+  if (/>Done<|Run again|Mark step complete/.test(h)) fail("step 38: Done / Run again is on the card");
+  if (c5.ws({ ...task, detected: { have: { PROFILE: 1, COVER: 1, EXTERIOR: 3, INTERIOR: 3, TEAMS: 5, AT_WORK: 7 } } })) fail("step 38: a complete set still shows as waiting");
+  if ((AJS.match(/if \(o\.flowId === PHOTO_REVIEW_STEP && photosWaitState\(s\.task\)\) return zcPhotosRowHtml\(/g) || []).length !== 2) fail("step 38: the queued/active row doesn't use the photos card");
+}
+
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
+if (!/\(ZC_CLIENT_ASK\[o\.flowId\] && task\?\.client_input == null && st !== "skipped" \? "" : btn\("skipped", "Skip"\)\)/.test(AJS)) fail("steps 35/36: Skip is still a header button (the mockup puts it in the card as a quiet link)");
 if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml"].map((n) => lift(AJS, n));
   if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
   const c2 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", CLIENT_GBP_STEPS: { "m1.gbp.attributes": "What's true of the business (Google details)", "m1.gbp.booking_link": "Booking link" } };
   vm.createContext(c2); vm.runInContext(p2.join("\n") + "\nthis.ask = zcClientAskHtml;", c2);
-  const a = c2.ask("m1.gbp.attributes", "c1"), b = c2.ask("m1.gbp.booking_link", "c1");
+  const a = c2.ask("m1.gbp.attributes", "c1", { clientStepNo: 8, clientLabel: "Confirm what's true of your business" }), b = c2.ask("m1.gbp.booking_link", "c1", { clientStepNo: 9, clientLabel: "Add your booking link" });
+  if (!/Client portal step 8, "Confirm what&#39;s true of your business"|Client portal step 8, "Confirm what's true of your business"/.test(a) || !/Client portal step 9, "Add your booking link"/.test(b)) fail("steps 35/36: the client's step isn't named by its playbook number and title");
+  if (!/data-task-set="m1\.gbp\.attributes" data-task-status="skipped">Skip this step…/.test(a)) fail("steps 35/36: Skip isn't the quiet link in the card");
   if (!/Client's move/.test(a) || !/Waiting for the client to tick what's true/.test(a) || !/On Google · read back/.test(a)) fail("step 35: the card doesn't say whose move, what they do, and the path");
   if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a) || !/Nothing is sent until you confirm/.test(a)) fail("step 35: Remind the client… isn't the confirm-first nudge");
   if (/data-task-status="done"|<button[^>]*>Done</.test(a + b)) fail("steps 35/36: a Done button is in the card");
   if (!/data-ob-bk-rec="c1"/.test(b) || !/What the client sees first/.test(b)) fail("step 36: RGA's pick isn't shown as the client sees it");
 }
-if (!/function gNotSavedHtml\(flowId\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
+if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
 if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");
 
 // ── client step 4's done card ──────────────────────────────────────────────────────────────────

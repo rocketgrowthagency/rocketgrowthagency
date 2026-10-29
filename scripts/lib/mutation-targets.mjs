@@ -109,7 +109,8 @@ export const FILES = {
   gbpfacts: "netlify/functions/_gbp-facts.js",
   areacover: "netlify/functions/_gbp-area-cover.js",
   areaadd: "netlify/functions/admin-gbp-area-add.js",
-  svcpush: "netlify/functions/admin-gbp-services-push.js",   // admin_step32_services_v1: the client's approved services on Google   // step4_done_in_portal_v2 card B: five checks, then the change   // step4_done_in_portal_v2 (10-29): a covered area never touches Google
+  svcpush: "netlify/functions/admin-gbp-services-push.js",
+  catpush: "netlify/functions/admin-gbp-categories.js",   // admin_step31_categories_v1: add / check / drop   // admin_step32_services_v1: the client's approved services on Google   // step4_done_in_portal_v2 card B: five checks, then the change   // step4_done_in_portal_v2 (10-29): a covered area never touches Google
   portalgbpprofile: "netlify/functions/portal-gbp-profile.js",
   gbpprofilewatch: "netlify/functions/gbp-profile-watch.js",
   dupcleared: "netlify/functions/_dup-cleared.js",

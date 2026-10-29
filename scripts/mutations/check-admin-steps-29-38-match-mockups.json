@@ -166,5 +166,61 @@
   "data-zc-svc-push disabled>Put them on Google",
   "data-zc-svc-push>Put them on Google",
   1
+ ],
+ [
+  "31: the change drops categories already on Google",
+  "catpush",
+  "additionalCategories: [...(cats.additionalCategories || []).map((c) => ({ name: c.name })), ...add.map((c) => ({ name: c.name }))]",
+  "additionalCategories: [...add.map((c) => ({ name: c.name }))]",
+  1
+ ],
+ [
+  "31: dropped stays in the plan",
+  "catpush",
+  ".filter((n) => !dropped.has(low(n)));",
+  ".filter(Boolean);",
+  1
+ ],
+ [
+  "31: add skips the checks",
+  "catpush",
+  "if (passed !== r.checks.length) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "29: raw audit wording returns",
+  "admin",
+  "const zcPlainTitle = (x) =>",
+  "const zcPlainTitle = (x) => String(x.title || x.fix || x.label || \"A fix\"); const zcPlainUnused = (x) =>",
+  1
+ ],
+ [
+  "35/36: Skip back in the header",
+  "admin",
+  "(ZC_CLIENT_ASK[o.flowId] && task?.client_input == null && st !== \"skipped\" ? \"\" : btn(\"skipped\", \"Skip\"))",
+  "btn(\"skipped\", \"Skip\")",
+  1
+ ],
+ [
+  "38: slots unnamed",
+  "admin",
+  "slots.push(i < g.done ? `<div class=\"ob-zc-slot on\">${escapeHtml(g.name)} ✓</div>` : `<div class=\"ob-zc-slot\">${escapeHtml(g.name)}</div>`);",
+  "slots.push(`<div class=\"ob-zc-slot\">empty</div>`);",
+  1
+ ],
+ [
+  "38: the old row comes back",
+  "admin",
+  "if (o.flowId === PHOTO_REVIEW_STEP && photosWaitState(s.task)) return zcPhotosRowHtml(o, s, obMarker(n, \"active\", \"you\"), badge, resultBlock);\n      const prvHtml",
+  "const prvHtml",
+  1
+ ],
+ [
+  "38: call button gone",
+  "admin",
+  "${tel ? `<a class=\"admin-button admin-button-secondary\" href=\"tel:${escapeAttribute(tel)}\">Call them · ${escapeHtml(phone)}</a>` : \"\"}",
+  "",
+  1
  ]
 ]

@@ -42,6 +42,9 @@ export const READ_ONLY_FN_POSTS = {
   // admin-gbp-services-push.js (admin_step32_services_v1, 10-29) — with dry:true it only READS the Google services (readServices GETs)
   // and returns before applyServices; without dry it writes to Google, so that stays blocked.
   "admin-gbp-services-push": (b) => onlyKeys(["client_id", "dry"])(b) && b.dry === true,
+  // admin-gbp-categories.js (admin_step31_categories_v1) — action "check" READS the categories and asks Google for a validateOnly test
+  // (Google saves nothing); "add" and "drop" write and stay blocked.
+  "admin-gbp-categories": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "check",
   // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
   // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
   "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",
