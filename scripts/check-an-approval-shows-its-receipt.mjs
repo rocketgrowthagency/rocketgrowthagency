@@ -36,6 +36,9 @@ const CASES = {
   // names_not_addresses_v1 (10-28): the "Checked before and after" box says the business's NAME, never its address or a fingerprint
   checked: { focus: T, biz: "Smiths Plumbing", items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true, safety: { site: "acme.test", files: true, rest: true } })] },
   checkedNoName: { focus: T, biz: "", items: [item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { uploading: true, safety: { site: "acme.test", files: true, rest: true } })] },
+  // 🔒 step3_finish_v1 D (Chris 10-28 5:01 PM): a finished change from the step's HISTORY stays in What RGA did — read-only, no Ask to undo
+  history: { focus: `${T}~0`, items: [item(`${T}~0`, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { history: true, site_state: "live", site_live: { at: "2026-10-28T20:25:17Z" } }),
+    item(T, add, { decision: "approved", at: AT, by: "owner@acme.test", version: "201cd46c" }, { site_state: "live", site_live: { at: "2026-10-28T21:00:00Z" } })] },
   removing: { focus: T, items: [item(T, { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null }, { decision: "approved", at: AT, by: "owner@acme.test", version: null })] },
 };
 const F = [], fail = (m) => F.push(m);
@@ -55,7 +58,8 @@ try {
       const el = document.getElementById("h"); el.innerHTML = api.fyaHtml(sc.items, when, "");
       const open = [...el.querySelectorAll("[data-ib-pane]")].find((p) => !p.hidden);
       const rc = open && open.querySelector(".fya-rc");
-      return { open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
+      const did = [...el.querySelectorAll(".ib-qi.done")].length, undos = [...el.querySelectorAll("[data-ib-pane]")].map((p) => !!p.querySelector("[data-ib-undo-show]"));
+      return { did, undos, open: open ? open.textContent.replace(/\s+/g, " ") : "", rows: [...el.querySelectorAll(".ib-qi")].map((r) => r.textContent.replace(/\s+/g, " ").trim()),
         steps: rc ? [...rc.querySelectorAll(".fya-nx li")].map((li) => li.className) : [], up: rc ? rc.classList.contains("up") : null,
         safe: open && open.querySelector(".fya-safe") ? open.querySelector(".fya-safe").textContent.replace(/\s+/g, " ") : "", head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
     }, { code, sc });
@@ -79,5 +83,14 @@ if (!/You approved removing this page/.test(R.open) || !/Exactly what you approv
   if (!/Exactly the version you approved\./.test(C) || /201cd46c/.test(C)) fail(`the safety box still shows the fingerprint, not "Exactly the version you approved": ${C.slice(0, 160)}`);
   if (/Plumbing's/.test(C)) fail("the safety box uses a possessive on the business name");
   if (!/It went to your website, nowhere else\./.test(N)) fail(`with no business name on record the safety box doesn't say "your website": ${N.slice(0, 120)}`); }
+{ const H = out.history;
+  if (H.did !== 2) fail(`a finished change from the step's history isn't in What RGA did (${H.did} of 2 done rows)`);
+  // the pane is stubbed in this harness: the rule that a history item never offers Ask to undo is pinned in the source
+  if (!/const undo = d\.site_live && !d\.history \? \(d\.undo_request/.test(fs.readFileSync(`${SITE}/portal/portal.js`, "utf8"))) fail("a change from the step's history offers Ask to undo (it must be the latest change only)");
+  // and the server sends the history: every finished change in site_change_log, as a read-only item, with its proof kept on save
+  const PD = fs.readFileSync(`${SITE}/netlify/functions/portal-deliverables.js`, "utf8"), ADx = fs.readFileSync(`${SITE}/netlify/functions/admin-deliverables.js`, "utf8");
+  if (!/\(t\.site_change_log \|\| \[\]\)\.forEach\(\(h, i\) => \{/.test(PD) || !/key: `\$\{key\}~\$\{i\}`, history: true/.test(PD)) fail("the portal isn't sent the step's earlier finished changes (What RGA did loses them on the next draft)");
+  if (!/if \(t && SC\.isSiteChangeStep\(key\)\) \{\s*\(t\.site_change_log/.test(PD)) fail("the history is behind the current change's internal gate (a new draft would hide it again)");
+  if (!/pr: t\.publish_pr && t\.publish_pr\.v === t\.site_change\.v \? t\.publish_pr : null, safety:/.test(ADx)) fail("a finished change moves to the history without its proof (pull request · checks · after-check)"); }
 if (F.length) { console.error(`❌ an approval doesn't show its receipt — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ an approval shows its receipt: the approved item stays open as a green \"Approved · recorded\" card (what, who, the exact version, what happens next with RGA's move current, Preview what you approved) — even with another change waiting; its row says \"You approved it … · RGA is putting it up\"; blue \"RGA is uploading it\" once the upload opens; the words follow the label");

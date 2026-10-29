@@ -278,5 +278,19 @@
   ": act === \"tidy_branch\" ? saved?.publish_pr?.merged?.branch_deleted_at === t.publish_pr.merged.branch_deleted_at",
   ": act === \"tidy_branch\" ? true",
   1
+ ],
+ [
+  "a pull request opens while their access is being changed",
+  "admindeliv",
+  "    if ((act === \"open_pr\" || act === \"merge_pr\") && accessBeingChanged(tasks)) return json(409",
+  "    if (false && (act === \"open_pr\" || act === \"merge_pr\") && accessBeingChanged(tasks)) return json(409",
+  1
+ ],
+ [
+  "an open 'something's wrong' doesn't count as a change",
+  "admindeliv",
+  "return !!(a.change_request || a.client_flagged); }",
+  "return !!(a.change_request); }",
+  1
  ]
 ]

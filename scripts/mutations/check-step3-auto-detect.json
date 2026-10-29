@@ -538,5 +538,19 @@
   "portal",
   "const fk = filesFixed ? \"github\" : host && ACC_FILES[host._accFiles] ? host._accFiles : null,",
   "const fk = host && ACC_FILES[host._accFiles] ? host._accFiles : null,"
+ ],
+ [
+  "a lovable.app site isn't recognised",
+  "siteplatform",
+  "[\"lovable\", /^x-rga-site-host: [^\\n]*\\.lovable\\.app$/im,",
+  "[\"lovable\", /^x-rga-site-host: [^\\n]*\\.lovable\\.dev$/im,",
+  1
+ ],
+ [
+  "the builder's own address is never read",
+  "siteplatform",
+  "    try { headers[\"x-rga-site-host\"] = new URL(r.url || u.href).hostname.toLowerCase(); } catch (_) { /* no address */ }",
+  "    try { } catch (_) { /* no address */ }",
+  1
  ]
 ]

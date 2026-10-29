@@ -42,5 +42,19 @@
   "${role ? `<span>${escapeHtml(/access/i.test(role) ? role : `${role} access`)}</span>` : \"\"}",
   "",
   1
+ ],
+ [
+  "the merge choice is two big tiles again (no plain line)",
+  "portal",
+  "<span>${line}</span><button type=\"button\" class=\"pm-linkbtn\" data-merge-open>Change ›</button>",
+  "<span>${line}</span>",
+  1
+ ],
+ [
+  "the choice opens with nothing checked",
+  "portal",
+  "${by === v ? \" checked\" : \"\"}><span><b>${b}</b>",
+  "><span><b>${b}</b>",
+  1
  ]
 ]

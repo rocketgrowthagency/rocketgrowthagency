@@ -17,7 +17,7 @@ const P = read("portal/portal.js");
 const fnSrc = (n) => { const at = P.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } return P.slice(at, P.indexOf("\n}\n", at) + 2); };
 const line = (re, w) => { const m = P.match(re); if (!m) { console.error(`⚠️  INDETERMINATE — ${w} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => (x ? "Oct 27" : "") });
-vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const ASK_WORDS = [^\n]*;$/m, "ASK_WORDS")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
+vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const ASK_CHOICES = [^\n]*;$/m, "ASK_CHOICES")}\n${line(/^const ASK_WORDS = [^\n]*;$/m, "ASK_WORDS")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
 const lf = (task, lk, where) => vm.runInContext(`lockFootHtml("m1.access.website", ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
 const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request" }, LK0 = { why: "RGA confirmed it", edit: "none" };
 { const top = lf({}, LK, "top"), bot = lf({}, LK, "bottom");
@@ -25,8 +25,13 @@ const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request
   if ((bot.match(/Need a change\? ›/g) || []).length !== 1) fail("the closed lock line doesn't carry exactly one \"Need a change? ›\"");
   if (/Not right\?|<summary>Request a change<\/summary>/.test(bot)) fail("the old Not right? / Request a change pair is back");
   if (/\brequired\b/.test(bot)) fail("the panel's box is `required` again — the browser's grey popup instead of our own line");
-  if (!/value="wrong"/.test(bot) || !/value="change"/.test(bot) || !/class="pm-chg-err" hidden/.test(bot)) fail("the panel lost a choice or its own inline error");
-  if (!/that's not our website, or we didn't add you/.test(bot)) fail("step 3's examples are gone from the choices"); }
+  // 🔒 step3_finish_v1 C (approved 10-28): the website access step says what a change is FOR — four choices, the first checked
+  for (const [v, w] of [["moved", "We moved our website to a different place"], ["address", "We have a new website address"], ["remove", "Remove Rocket Growth Agency's access"], ["other", "Something else"]])
+    if (!new RegExp(`value="${v}"`).test(bot) || !bot.includes(w)) fail(`step 3's Need a change? lost "${w}"`);
+  if (!/<b class="pm-chg-h">What changed\?<\/b>/.test(bot) || !/value="moved" checked/.test(bot) || !/class="pm-chg-err" hidden/.test(bot)) fail("step 3's panel doesn't ask \"What changed?\" with the first choice ready, or lost its own inline error");
+  // every OTHER step keeps the general two choices
+  const gen = vm.runInContext(`lockFootHtml("m1.tracking.call_setup", {}, ${JSON.stringify(LK)}, "bottom")`, ctx);
+  if (!/value="wrong"/.test(gen) || !/value="change"/.test(gen)) fail("another step lost the general choices (something's wrong · I want to change something)"); }
 { const bot = lf({}, LK0, "bottom"); if (/value="change"/.test(bot) || !/name="kind" value="wrong"/.test(bot)) fail("a step that can't be changed offers \"I want to change something\" (only \"something's wrong\" fits)"); }
 for (const [task, label, kw] of [[{ client_flagged: { at: "x", note: "That's not our site" } }, "a flag", /data-step-unflag/], [{ change_request: { at: "x", note: "Add my office manager" } }, "a change request", /data-chreq-cancel/]]) {
   const top = lf(task, LK, "top"), bot = lf(task, LK, "bottom");

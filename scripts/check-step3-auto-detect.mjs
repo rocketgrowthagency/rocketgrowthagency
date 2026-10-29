@@ -25,6 +25,18 @@ const PUB = Object.fromEntries(Object.entries(PL).map(([k, { rga, ...p }]) => [k
 // ── 1 · the detector, RUN
 const D = req(`${FNS}/_site-platform.js`);
 const det = (h, hd) => D.detectFromHtml(h, hd || {});
+// 🔒 step3_finish_v1 E (10-28): the AI site builders, by the markers confirmed on live sites + their own addresses (x-rga-site-host)
+{ const PLs = JSON.parse(fs.readFileSync(`${SITE}/data/site-platforms.json`, "utf8")).platforms;
+  for (const k of ["lovable", "bolt", "replit", "base44", "v0"]) { const p = PLs[k];
+    if (!p || p.kind !== "invite" || !(p.steps || []).some((x) => (x.copy || []).some((c) => c[1] === "access@rocketgrowthagency.com")) || !/Publish|Republish/.test(p.rga || "") || !(p.sources || []).length) fail(`${k} isn't on the builder list with an access@ invite, its sources, and how it goes live (Publish in the builder)`); }
+  const want = [["lovable", "", { "x-rga-site-host": "acme.lovable.app" }], ["replit", "", { "x-rga-site-host": "acme.replit.app" }], ["bolt", "", { "x-powered-by": "Bolt.new", "x-rga-site-host": "acme.bolt.host" }],
+    ["base44", "<script>window.Base44={}</script>", { "x-rga-site-host": "acme.base44.app" }], ["v0", '<meta name="generator" content="v0.app"/>', { "x-vercel-id": "1" }]];
+  for (const [k, h, hd] of want) { const r = det(h, hd); if (r.platform !== k) fail(`a ${k} site isn't recognised (${r.platform})`); }
+  if (det("<html></html>", { server: "Netlify", "x-rga-site-host": "rocketgrowthagency.com" }).platform === "lovable") fail("a plain site is read as an AI builder"); }
+// …and detectPlatform itself reads where the page was really served from (a custom domain that redirects to acme.lovable.app counts)
+{ const fake = async () => ({ status: 200, ok: true, url: "https://acme.lovable.app/", headers: new Map([["content-type", "text/html"]]), text: async () => "<html><body>hi</body></html>" });
+  const r = await D.detectPlatform("https://www.acme-plumbing.test", fake, { timeoutMs: 2000, budgetMs: 4000 });
+  if (r.platform !== "lovable") fail(`a site served from lovable.app isn't recognised by its address (${r.platform || r.status})`); }
 const wp = det(`<link href="/wp-content/x.css"><meta name="generator" content="WordPress 6.8">`);
 if (wp.platform !== "wordpress" || wp.confidence !== "stated" || wp.evidence.length !== wp.signs) fail(`a WordPress page's proof lines don't match its signs (${wp.signs} signs, ${wp.evidence?.length} lines)`);
 if (!(wp.evidence || []).includes("WordPress files on your pages (/wp-content/)")) fail("the WordPress proof doesn't say what we saw in plain words");

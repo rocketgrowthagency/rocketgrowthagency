@@ -96,5 +96,26 @@
   "</b> Exactly the version you approved.`);",
   "</b> ${d.approval && d.approval.version ? `The file you approved (${escapeHtml(d.approval.version)}).` : \"Exactly the version you approved.\"}`);",
   1
+ ],
+ [
+  "a history change offers Ask to undo",
+  "portal",
+  "const undo = d.site_live && !d.history ? (d.undo_request",
+  "const undo = d.site_live ? (d.undo_request",
+  1
+ ],
+ [
+  "the step's earlier changes aren't sent to the portal",
+  "portaldeliv",
+  "      (t.site_change_log || []).forEach((h, i) => {",
+  "      ([]).forEach((h, i) => {",
+  1
+ ],
+ [
+  "a finished change loses its proof when it moves to the history",
+  "admindeliv",
+  "pr: t.publish_pr && t.publish_pr.v === t.site_change.v ? t.publish_pr : null, safety:",
+  "pr: null, safety:",
+  1
  ]
 ]

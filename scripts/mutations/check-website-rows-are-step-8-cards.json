@@ -278,5 +278,12 @@
   ": m.at ? \"not yet: checked again within 5 minutes\" : \"not merged\"],",
   ": m.at ? \"tidied\" : \"not merged\"],",
   1
+ ],
+ [
+  "an open ask still reads Connection verified",
+  "admin",
+  "  if (askRec) return `<div class=\"ob-ghcv unk\">",
+  "  if (false) return `<div class=\"ob-ghcv unk\">",
+  1
  ]
 ]

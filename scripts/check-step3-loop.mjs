@@ -113,6 +113,13 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
+  // 🔒 step3_finish_v1 B (Chris 10-28 "this is confusing"): ONE plain line + "Change ›"; the choice opens in place with Save / Cancel
+  { vm.runInContext(lift("accMergeChoiceHtml"), ctx);
+    const rga = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "rga" } }, "c1")`, ctx), me = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "client" } }, "c1")`, ctx);
+    if (!/When you approve a change, we put it on your website for you\./.test(rga) || !/data-merge-open>Change ›<\/button>/.test(rga)) fail("the merge choice isn't one plain line + Change ›");
+    if (!/<div class="pm-merge-f" hidden>/.test(rga) || (rga.match(/type="radio"/g) || []).length !== 2 || !/value="rga" checked/.test(rga) || !/data-merge-save>Save<\/button>/.test(rga) || !/data-merge-cancel>Cancel<\/button>/.test(rga)) fail("the merge choice doesn't open in place with the saved option checked, Save and Cancel");
+    if (!/you press Merge yourself on GitHub/.test(me) || !/value="client" checked/.test(me)) fail("a client who merges themselves isn't told so on the line");
+    if (/data-merge-by=/.test(rga)) fail("the old two big tiles (save on tap) are back"); }
   const card = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "done", client_input: { via: "invite", platform: "custom", platform_source: "chosen" }, access: { role: PL.custom.role, account: RGA_EMAIL, confirmed_at: "2026-10-22T20:00:00Z" } })}, "${CID}")`, ctx);
   if (!/Rocket Growth Agency has access/.test(card) || !/We signed in/.test(card) || !/Custom-coded/.test(card)) fail("the client's confirmed card doesn't show the grant (who has access, that we signed in, the builder)");
   // names_not_addresses_v1 (Chris 10-28): the portal TELLS in names — our sign-in address never appears on the done card

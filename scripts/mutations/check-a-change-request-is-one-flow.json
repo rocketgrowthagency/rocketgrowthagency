@@ -30,8 +30,8 @@
  [
   "a step that can't change offers I want to change something",
   "portal",
-  "(canChange ? `<div class=\"pm-chg-ch\"",
-  "(true ? `<div class=\"pm-chg-ch\"",
+  ": canChange ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">",
+  ": true ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">",
   1
  ],
  [
@@ -207,6 +207,20 @@
   "portal",
   "<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>",
   "<button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>",
+  1
+ ],
+ [
+  "step 3's Need a change? loses 'We moved our website'",
+  "portal",
+  "[\"moved\", \"change\", \"We moved our website to a different place\",",
+  "[\"moved\", \"change\", \"Something moved\",",
+  1
+ ],
+ [
+  "every step gets step 3's choices",
+  "portal",
+  "(canChange && ASK_CHOICES[stepId] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[stepId]",
+  "(canChange && ASK_CHOICES[\"m1.access.website\"] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[\"m1.access.website\"]",
   1
  ]
 ]

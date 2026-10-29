@@ -129,6 +129,11 @@ if (!PS.prHoldsOnly([{ path: "rga-access-test/index.html", action: "add" }], bui
   const tk = { "m1.access.website": { access: { repo: "acme/site", confirmed_at: AT } }, [T2]: { ...base2, publish_pr: { v: "v1", number: 2, merged: { at: "2026-10-28T20:00:00Z" } } } };
   const mv = OM2.openMoves({ playbooks: { month1: PB.month1 || [] }, data: { tasks: tk }, now: "2026-10-30T20:00:00Z" }).find((m) => m.kind === "publish_change");
   if (!mv || mv.since !== "2026-10-28T20:00:00Z" || !mv.late || !/not on their site yet/.test(mv.what)) fail(`merged but not live for 2 days isn't RGA's LATE move from the merge (${JSON.stringify(mv)})`); }
+// 🔒 step3_finish_v1 C: while the client's ask to change their website access is open, NOTHING opens or merges (checked before any action)
+{ const AD0 = read("netlify/functions/admin-deliverables.js");
+  if (!/function accessBeingChanged\(tasks\) \{ const a = \(tasks && tasks\["m1\.access\.website"\]\) \|\| \{\}; return !!\(a\.change_request \|\| a\.client_flagged\); \}/.test(AD0)) fail("RGA can't tell the client asked to change their website access");
+  const g = AD0.indexOf('if ((act === "open_pr" || act === "merge_pr") && accessBeingChanged(tasks)) return json(409'), o = AD0.indexOf('if (act === "open_pr") {'), m = AD0.indexOf('} else if (act === "merge_pr") {');
+  if (g < 0 || g > o || g > m) fail("a pull request can open or merge while the client is changing their website access (the refusal must come before both actions)"); }
 { const ADy = read("netlify/functions/admin-deliverables.js");
   if (!/if \(want1\) fingerprint = \{ match: PS\.fingerprintOf\(servedHtml\) === want1/.test(ADy) || !/\.\.\.\(fingerprint \? \{ fingerprint \} : \{\}\)/.test(ADy)) fail("Mark live doesn't record whether the live page IS the approved file (fingerprint)");
   if (!/const del = await GA\.deleteBranch\(token, fetch, \{ repo, branch: pr\.branch \}\)/.test(ADy)) fail("RGA's merge doesn't tidy its own branch"); }
