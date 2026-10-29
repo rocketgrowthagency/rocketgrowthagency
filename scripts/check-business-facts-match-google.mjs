@@ -181,6 +181,7 @@ if (!/const CLIENT_GBP_STEPS = \{ "m1\.gbp\.business_facts":/.test(admin) || !/c
 if (!/<table class="ob-gbpfacts"><thead><tr><th>Fact<\/th><th>Client confirmed<\/th><th>On Google now<\/th><th><\/th>/.test(admin)) fail("admin's step 28 facts don't show confirmed · on Google now · a status for each fact");
 if (!/body = `<details class="ob-ff"\$\{nBad \? " open" : ""\}>/.test(admin)) fail("admin's step 28 facts fold doesn't stay open when a fact doesn't match");
 if (!/\$\{facts\.length\} facts compared with Google/.test(admin)) fail("admin's step 28 fold line doesn't count the facts");
+if (!/const stOf = \(k\) => rgaOf\.has\(k\) && gp\.state !== "on_google" \? "rga"/.test(admin)) fail("a DONE step 28 still says '1 RGA is changing' (mockup: all 5 match once done)");
 if (!/if \(factsTodo\.length\) \{\s*return \{\s*title: `Change on Google: \$\{factsTodo\.map/.test(admin)) fail("a name / address / area to change isn't RGA's Your action");
 
 // ── 6 · the portal draws the rows: matches green, a difference both values, a gap asks, a stuffed name is RGA's ──

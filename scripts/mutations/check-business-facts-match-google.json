@@ -474,5 +474,12 @@
   "<b>${facts.length} facts compared with Google</b>",
   "<b>Facts</b>",
   1
+ ],
+ [
+  "a done step still says RGA is changing",
+  "admin",
+  "const stOf = (k) => rgaOf.has(k) && gp.state !== \"on_google\" ? \"rga\"",
+  "const stOf = (k) => rgaOf.has(k) ? \"rga\"",
+  1
  ]
 ]
