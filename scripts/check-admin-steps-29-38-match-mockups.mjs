@@ -163,7 +163,9 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
   if (!/Client portal step 8, "Confirm what&#39;s true of your business"|Client portal step 8, "Confirm what's true of your business"/.test(a) || !/Client portal step 9, "Add your booking link"/.test(b)) fail("steps 35/36: the client's step isn't named by its playbook number and title");
   if (!/data-task-set="m1\.gbp\.attributes" data-task-status="skipped">Skip this step…/.test(a)) fail("steps 35/36: Skip isn't the quiet link in the card");
   if (!/Client's move/.test(a) || !/Waiting for the client to tick what's true/.test(a) || !/On Google · read back/.test(a)) fail("step 35: the card doesn't say whose move, what they do, and the path");
-  if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a) || !/Nothing is sent until you confirm/.test(a)) fail("step 35: Remind the client… isn't the confirm-first nudge");
+  if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a) || !/data-step-nudge="m1\.gbp\.booking_link">Remind the client…/.test(b)) fail("steps 35/36: Remind the client… isn't the confirm-first nudge");
+  if (/Shows you the message first/.test(a + b)) fail("steps 35/36: the footer carries a note the approved mockups don't have");
+  if (!/class="ob-zc-prog"/.test(a) || /class="ob-zc-prog"/.test(b)) fail("steps 35/36: the 1-2-3 path is on 35's mockup only (36 goes straight to the options)");
   if (/data-task-status="done"|<button[^>]*>Done</.test(a + b)) fail("steps 35/36: a Done button is in the card");
   if (!/data-ob-bk-rec="c1"/.test(b) || !/What the client sees first/.test(b)) fail("step 36: RGA's pick isn't shown as the client sees it");
 }
@@ -172,6 +174,12 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
 if (!/<div class="ob-zc-place \$\{i \? "opt" : "add"\}">/.test(AJS) || !/\.ob-zc-place\.opt \{ border:1px solid var\(--admin-border\); background:var\(--admin-surface\); \}/.test(ACSS)) fail("step 36: the other option isn't the plain white tile");
 if (!/\/\^\(Found on their homepage\|Their contact page\)\$\/\.test\(x\.why\) \? "Also found"/.test(AJS)) fail("step 36: the other option doesn't say \"Also found\"");
 if (!/lab\.textContent = "What the client sees first · found on their homepage"/.test(AJS)) fail("step 36: the label never says \"found on their homepage\"");
+// 🔴 Remind the client… on a QUEUED row (35 · 36 · 38 aren't the active step) did NOTHING: the nudge handler reads state.waitCtx, which only
+// the active branch filled (found 10-29 by clicking it in a write-blocked browser). Every branch that can draw the card registers it, and
+// the handler never returns silently.
+if (!/const qActions = `\$\{qRerun\}\$\{clientOverride\(o, s\.task\)\}`;[\s\S]{0,400}?\(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("Remind the client… on a queued row does nothing (the queued branch doesn't register the step)");
+if (!/function zcPhotosRowHtml\(o, s, marker, badge, resultBlock\) \{\n  \(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("step 38: the photos card doesn't register itself for Remind the client…");
+if (/if \(!ctx \|\| !c\) return;/.test(AJS)) fail("the Remind handler returns silently when it can't find the step: the button looks like it did something");
 if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
 if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");
 

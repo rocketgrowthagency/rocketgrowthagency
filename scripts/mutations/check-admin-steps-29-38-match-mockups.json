@@ -91,13 +91,6 @@
   1
  ],
  [
-  "remind sends without confirming",
-  "admin",
-  "<span class=\"ob-zc-note\">Shows you the message first. Nothing is sent until you confirm.</span>",
-  "",
-  1
- ],
- [
   "step 33 stale paragraph returns",
   "admin",
   "if (step && step.obj && step.obj.flowId === \"m1.gbp.business_description\" && descriptionOnGoogle(step.task)) return \"\";",
@@ -256,6 +249,48 @@
   "admin",
   "lab.textContent = \"What the client sees first · found on their homepage\"",
   "lab.title = \"\"",
+  1
+ ],
+ [
+  "remind sends without confirming (the card skips the draft dialog)",
+  "admin",
+  "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button>`",
+  "data-step-send=\"${escapeAttribute(flowId)}\">Remind the client…</button>`",
+  1
+ ],
+ [
+  "the footer note comes back",
+  "admin",
+  "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button>`",
+  "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button><span class=\"ob-zc-note\">Shows you the message first. Nothing is sent until you confirm.</span>`",
+  1
+ ],
+ [
+  "step 36 gets the 1-2-3 path back",
+  "admin",
+  "const path = flowId === \"m1.gbp.booking_link\" ? \"\" : `<div class=\"ob-zc-prog\">",
+  "const path = `<div class=\"ob-zc-prog\">",
+  1
+ ],
+ [
+  "a queued row doesn't register for Remind (the button does nothing)",
+  "admin",
+  "      (state.waitCtx = state.waitCtx || {})[o.flowId] = { o, task: s.task };\n      const gsQ",
+  "      const gsQ",
+  1
+ ],
+ [
+  "the photos card doesn't register for Remind",
+  "admin",
+  "  (state.waitCtx = state.waitCtx || {})[o.flowId] = { o, task: s.task };   // its Remind the client… reads this\n",
+  "",
+  1
+ ],
+ [
+  "the Remind handler returns silently again",
+  "admin",
+  "  if (!ctx || !c) { setBanner({ title: \"Couldn't open the reminder\"",
+  "  if (!ctx || !c) return; if (0) { setBanner({ title: \"Couldn't open the reminder\"",
   1
  ]
 ]
