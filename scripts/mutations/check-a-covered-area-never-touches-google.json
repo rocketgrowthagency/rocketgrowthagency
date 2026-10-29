@@ -194,5 +194,19 @@
   "g.rga.every((x) => x.fact === \"area\" && Array.isArray(x.add)) ? areaAddCardHtml(g)",
   "false ? areaAddCardHtml(g)",
   1
+ ],
+ [
+  "a failed lookup is retried every night",
+  "areacover",
+  "(manual && cover.items.some((x) => x.state === \"unknown\"))",
+  "cover.items.some((x) => x.state === \"unknown\")",
+  1
+ ],
+ [
+  "Check Google now never retries",
+  "gbpwatch",
+  "C.coverStale(task.google_push.area_cover, areaItem.add, nowMs, !!d.factsOnly)",
+  "C.coverStale(task.google_push.area_cover, areaItem.add, nowMs, false)",
+  1
  ]
 ]

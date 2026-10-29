@@ -122,6 +122,15 @@ if (!/\.pm-fxt-pl\.cov \{[^}]*var\(--state-ok-bg\)/.test(read("portal/portal.css
 for (const f of ["netlify/functions/admin-google-check.js", "netlify/functions/gbp-profile-watch.js"])
   if (!/places: process\.env\.GOOGLE_PLACES_API_KEY \? \{ key: process\.env\.GOOGLE_PLACES_API_KEY \} : null/.test(read(f))) fail(`${f} doesn't give the watch the Places key (covered places would never be decided)`);
 
+// ── 4b · billing safety: a FAILED lookup isn't retried every night (feedback_google_cloud_billing_safety) ──
+{ const NOW = Date.parse("2026-10-29T15:00:00Z"), fresh = { at: "2026-10-29T10:00:00Z", items: [{ name: "Mar Vista", state: "unknown", why: "places 403 PERMISSION_DENIED" }] };
+  if (C.coverStale(fresh, ["Mar Vista"], NOW, false)) fail("the NIGHTLY re-looks up a place that failed today (a failed lookup retried every night is how both Google bills happened)");
+  if (!C.coverStale(fresh, ["Mar Vista"], NOW, true)) fail("Check Google now doesn't retry a place that failed");
+  if (!C.coverStale({ ...fresh, at: "2026-10-20T10:00:00Z" }, ["Mar Vista"], NOW, false)) fail("a lookup over a week old is never refreshed");
+  if (!/C\.coverStale\(task\.google_push\.area_cover, areaItem\.add, nowMs, !!d\.factsOnly\)/.test(read("netlify/functions/_gbp-watch.js"))) fail("the watch doesn't tell the lookup whether a person pressed Check Google now");
+  if (C.whyPlain("places 403 PERMISSION_DENIED x · geocode 200 REQUEST_DENIED This API is not activated") !== "RGA's Google key isn't allowed to use Places (New) · Geocoding is switched off in RGA's Google Cloud project") fail("Google's reason isn't put in one plain line");
+}
+
 // ── 5 · card B + the five checks (admin-gbp-area-add) ─────────────────────────────────────────────
 { let AD; try { AD = req(`${SITE}/netlify/functions/admin-gbp-area-add.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
   const task = { google_push: { area_cover: { items: [{ name: "Inglewood", state: "to_add", place_id: "p-in", google: "Inglewood, CA, USA" }, { name: "Mar Vista", state: "covered", by: "Los Angeles, CA, USA" }, { name: "Nowhere", state: "unknown" }] } } };
