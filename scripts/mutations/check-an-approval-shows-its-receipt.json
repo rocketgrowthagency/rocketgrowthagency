@@ -117,5 +117,33 @@
   "pr: t.publish_pr && t.publish_pr.v === t.site_change.v ? t.publish_pr : null, safety:",
   "pr: null, safety:",
   1
+ ],
+ [
+  "the page is named by our step name again",
+  "portal",
+  "  return parts[0] || d.title;\n}",
+  "  return d.title;\n}",
+  1
+ ],
+ [
+  "the add card loses its plain heading",
+  "portal",
+  "\"We made a new page for your website\"}</h4>`",
+  "\"A new page on your website\"}</h4>`",
+  1
+ ],
+ [
+  "a page change falls back to the long old card",
+  "portal",
+  "  if (e.group === \"needs\" && ibIsPage(c)) {",
+  "  if (false && e.group === \"needs\" && ibIsPage(c)) {",
+  1
+ ],
+ [
+  "the list row loses New page / Coming down",
+  "portal",
+  "  if (ibIsPage(c)) return c.removes_page ? \"Coming down\" : \"New page\";",
+  "",
+  1
  ]
 ]

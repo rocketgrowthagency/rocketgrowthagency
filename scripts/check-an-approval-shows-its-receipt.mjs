@@ -24,7 +24,7 @@ const lift = (name) => {
   for (const l of lines) { out.push(l); for (const ch of l) { if (ch === "{") depth++; else if (ch === "}") depth--; } if (depth <= 0 && /[;}]\s*$/.test(l)) break; }
   return out.join("\n");
 };
-const code = ["IB_SVG", "IB_ICON", "IB_LABELS", "ibLabelHtml", "FYA_SURF", "fyaSurf", "ibIcon", "ibTitle", "ibSub", "fyaSafetyHtml", "fyaReceiptHtml", "fyaHtml"].map(lift).join("\n");
+const code = ["IB_SVG", "IB_ICON", "IB_LABELS", "ibLabelHtml", "FYA_SURF", "fyaSurf", "ibIcon", "ibIsPage", "ibPageName", "ibTitle", "ibSub", "fyaSafetyHtml", "fyaReceiptHtml", "fyaHtml"].map(lift).join("\n");
 let puppeteer; try { ({ default: puppeteer } = await import("puppeteer")); } catch { console.error("⚠️  INDETERMINATE — puppeteer isn't installed"); process.exit(2); }
 
 const AT = "2026-10-28T16:01:29Z", T = "m1.access.publish_test";
@@ -42,6 +42,7 @@ const CASES = {
   removing: { focus: T, items: [item(T, { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null }, { decision: "approved", at: AT, by: "owner@acme.test", version: null })] },
 };
 const F = [], fail = (m) => F.push(m);
+const SHOTS = (process.argv.find((x) => x.startsWith("--shots=")) || "").slice(8);
 const b = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 const out = {};
 try {
@@ -63,6 +64,24 @@ try {
         steps: rc ? [...rc.querySelectorAll(".fya-nx li")].map((li) => li.className) : [], up: rc ? rc.classList.contains("up") : null,
         safe: open && open.querySelector(".fya-safe") ? open.querySelector(".fya-safe").textContent.replace(/\s+/g, " ") : "", head: rc ? getComputedStyle(rc.querySelector(".fya-rc-h")).backgroundColor : "", see: !!(open && open.querySelector("a.fya-rc-see")) };
     }, { code, sc });
+    await page.close();
+  }
+  // 🔒 for_your_approval_add_remove_v5 (approved 10-28): the REAL card for a page to add / take off, in Chrome with portal.css
+  const pcode = code + "\n" + ["ibDiff", "ibChgHtml", "ibPreviewHtml", "ibChangeHtml", "ibCrumb", "ibReadTime", "ibPaneHtml"].map(lift).join("\n");   // the old long card too, so a fall-back is SEEN (fails), not a crash
+  for (const [name, change] of [["addCard", { ...add, items: [{ label: "Page title", role: "title", after: "Website access check | Rocket Growth Agency" }] }],
+    ["rmCard", { ...add, label: "remove_page", removes_page: true, new_page: false, preview_url: null, removed_title: "Website access check | Rocket Growth Agency", items: [{ label: "What stops working", before: "acme.test/rga-access-test/", after: "", note: "x" }] }]]) {
+    const page = await b.newPage(); await page.setViewport({ width: 900, height: 900 });
+    await page.setContent(`<style>${CSS}</style><div class="pv-fya-host"><div class="ib-d" id="h"></div></div>`);
+    out[name] = await page.evaluate(({ pcode, change }) => {
+      const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"), escapeAttribute = escapeHtml, _portalBusinessName = "Acme";
+      const when = (iso) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "");
+      // eslint-disable-next-line no-eval
+      const api = eval(`(() => { ${pcode}; return { ibPaneHtml, ibTitle, ibSub }; })()`);
+      const d = { key: "m1.access.publish_test", title: "A test page, to check we can publish", surface: "website", blurb: "Why this helps text", change, approval: null, prepared_at: "2026-10-28T16:00:00Z" };
+      const el = document.getElementById("h"); el.innerHTML = api.ibPaneHtml({ group: "needs", type: "item", d }, when);
+      return { text: el.textContent.replace(/\s+/g, " ").trim(), html: el.innerHTML, row: api.ibTitle({ d }) + " | " + api.ibSub({ group: "needs", d }, when) };
+    }, { pcode, change });
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
     await page.close();
   }
 } catch (e) { console.error(`⚠️  INDETERMINATE — the tab's code didn't run: ${String(e.message).split("\n")[0]}`); process.exit(2); } finally { await b.close(); }
@@ -92,5 +111,10 @@ if (!/You approved removing this page/.test(R.open) || !/Exactly what you approv
   if (!/\(t\.site_change_log \|\| \[\]\)\.forEach\(\(h, i\) => \{/.test(PD) || !/key: `\$\{key\}~\$\{i\}`, history: true/.test(PD)) fail("the portal isn't sent the step's earlier finished changes (What RGA did loses them on the next draft)");
   if (!/if \(t && SC\.isSiteChangeStep\(key\)\) \{\s*\(t\.site_change_log/.test(PD)) fail("the history is behind the current change's internal gate (a new draft would hide it again)");
   if (!/pr: t\.publish_pr && t\.publish_pr\.v === t\.site_change\.v \? t\.publish_pr : null, safety:/.test(ADx)) fail("a finished change moves to the history without its proof (pull request · checks · after-check)"); }
+{ const A = out.addCard, R = out.rmCard;
+  if (!/We made a new page for your website/.test(A.text) || !/Website access check/.test(A.text) || /Rocket Growth Agency$|\| Rocket/.test(A.text.split("acme.test")[0]) || !/acme\.test\/rga-access-test\//.test(A.text) || !/Preview page/.test(A.text) || !/Nothing goes on your website until you approve\./.test(A.text) || !/Approve this page/.test(A.text) || !/Ask for a change/.test(A.text)) fail(`the add-a-page card isn't v5 (what happened · the page by its own title · Preview · one line · Approve this page): ${A.text.slice(0, 220)}`);
+  if (!/We'd like to take a page off your website/.test(R.text) || !/Website access check/.test(R.text) || !/View this page/.test(R.text) || !/Nothing comes down until you approve\. We keep a copy, so it can be put back\./.test(R.text) || !/Approve removing it/.test(R.text)) fail(`the remove-a-page card isn't v5: ${R.text.slice(0, 220)}`);
+  for (const [n, X] of [["add", A], ["remove", R]]) if (/test page, to check we can publish|What stops working|Why this helps|What changes on your website|ib-crumb|Sent by RGA/.test(X.html + X.text)) fail(`the ${n} card still carries the old detail (step name / What stops working / Why this helps / file box / breadcrumb)`);
+  if (A.row !== "Website access check | New page" || R.row !== "Website access check | Coming down") fail(`the list rows aren't the page's name + New page / Coming down (${A.row} · ${R.row})`); }
 if (F.length) { console.error(`❌ an approval doesn't show its receipt — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log("✅ an approval shows its receipt: the approved item stays open as a green \"Approved · recorded\" card (what, who, the exact version, what happens next with RGA's move current, Preview what you approved) — even with another change waiting; its row says \"You approved it … · RGA is putting it up\"; blue \"RGA is uploading it\" once the upload opens; the words follow the label");
