@@ -82,6 +82,29 @@ if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a
 }
 if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJS)) fail("steps 29/30/31: the out-of-date paragraph still shows in the row header");
 
+// ── admin: step 32 — the client's approved services, on Google ──────────────────────────────────
+{ const req = (await import("node:module")).createRequire(`${SITE}/netlify/functions/x.js`);
+  let SP; try { SP = req(`${SITE}/netlify/functions/admin-gbp-services-push.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — ${e.message}`); process.exit(2); }
+  const view = { on: ["g:job_type_id:seo", "f:their-own"], options: [{ key: "g:job_type_id:seo", label: "SEO" }, { key: "f:their-own", label: "Their Own Service" }, { key: "f:local-seo-audit", label: "Local SEO Audit" }, { key: "f:google-maps-local-seo", label: "Google Maps Local SEO" }, { key: "f:not-approved", label: "Not Approved" }] };
+  const pl = SP.plan(["Local SEO Audit", "Google Maps Local SEO", "SEO"], view);
+  if (!pl.keys.includes("g:job_type_id:seo") || !pl.keys.includes("f:their-own")) fail("step 32: the write would WIPE services already on Google (a serviceItems write replaces the whole list)");
+  if (pl.keys.includes("f:not-approved")) fail("step 32: the write adds a service the client didn't approve");
+  if (!pl.keys.includes("f:local-seo-audit") || !pl.keys.includes("f:google-maps-local-seo") || pl.adding !== 2) fail("step 32: the approved services aren't the ones added");
+  if (!pl.rows.find((r) => r.name === "SEO").on || pl.rows.find((r) => r.name === "Local SEO Audit").on) fail("step 32: 'on Google' per service is decided wrong");
+  const SRC = read("netlify/functions/admin-gbp-services-push.js");
+  if (!/if \(dry\) return json\(200, \{ ok: true, rows: p\.rows/.test(SRC) || SRC.indexOf("if (dry) return") > SRC.indexOf("S.applyServices(")) fail("step 32: the dry read can write to Google");
+  if (!/task\.approval && task\.approval\.decision === "approved" \? String\(task\.approval\.approved_content/.test(SRC)) fail("step 32: the services come from somewhere other than the client's approval");
+  if (!/if \(!dry && rv && rv\.state === "lost"\) return json\(409/.test(SRC)) fail("step 32: the write doesn't wait while Google wants the business verified again");
+  const p4 = ["zcSvcNames", "servicesCardHtml"].map((n) => lift(AJS, n));
+  if (p4.some((x) => !x)) { console.error("⚠️  INDETERMINATE — step 32's card moved"); process.exit(2); }
+  const c4 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: () => "Sep 15, 10:15 AM" };
+  vm.createContext(c4); vm.runInContext(p4.join("\n") + "\nthis.svc = servicesCardHtml;", c4);
+  const h32 = c4.svc({ approval: { decision: "approved", at: "2026-09-15T17:15:46Z", approved_content: "services:\n  - displayName: Google Business Profile Optimization\n  - displayName: Local SEO Audit\n" } });
+  if (!/Approved by the client Sep 15 · 2 services/.test(h32) || (h32.match(/data-zc-svc-name=/g) || []).length !== 2) fail("step 32: the approved list isn't shown whole");
+  if (!/data-zc-svc-push disabled>Put them on Google/.test(h32) || !/Keeps every service already on Google/.test(h32) || !/Do it in Google Business Profile instead/.test(h32)) fail("step 32: Put them on Google (disabled until Google is read), the keep-their-own line or the escape hatch is missing");
+  if (/NOW SET TO|Draft copy|Drafted services list/i.test(h32)) fail("step 32: the old draft bookkeeping is back");
+}
+
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
 if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
 { const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml"].map((n) => lift(AJS, n));

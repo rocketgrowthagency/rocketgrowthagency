@@ -138,5 +138,33 @@
   "if (step && step.obj && ZC_CARD_STEPS.has(step.obj.flowId) && step.task && (step.task.outcome_data || step.task.published)) return \"\";",
   "",
   1
+ ],
+ [
+  "32: the write wipes their own services",
+  "svcpush",
+  "return { rows, keys: [...new Set([...view.on, ...addKeys])], adding: addKeys.length };",
+  "return { rows, keys: [...new Set([...addKeys])], adding: addKeys.length };",
+  1
+ ],
+ [
+  "32: services from the draft, not the approval",
+  "svcpush",
+  "task && task.approval && task.approval.decision === \"approved\" ? String(task.approval.approved_content || \"\") : \"\"",
+  "task && task.outcome_data ? String(task.outcome_data.draft || \"\") : \"\"",
+  1
+ ],
+ [
+  "32: ignores verify-again",
+  "svcpush",
+  "if (!dry && rv && rv.state === \"lost\") return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "32: Put them on Google enabled before Google is read",
+  "admin",
+  "data-zc-svc-push disabled>Put them on Google",
+  "data-zc-svc-push>Put them on Google",
+  1
  ]
 ]
