@@ -68,7 +68,9 @@ vm.runInContext(`${grab(/^const wcPathOf = [^\n]*;$/m, "wcPathOf")}\n${grab(/^co
 const h = ctx.chg({ page_url: "https://www.acme.test/local-seo/culver-city-ca/", searches: ["a", "b"], files: [{ path: "local-seo/culver-city-ca/index.html", action: "add" }, { path: "sitemap.xml", action: "edit", note: "adds the new page's address" }, { path: "local-seo/index.html", action: "edit", note: "adds one link to the new page" }] });
 if (!/A new page<span class="ob-chg-x">Written for 2 searches/.test(h) || !/<span>acme\.test<\/span><span><b>\/local-seo\/culver-city-ca\/<\/b>/.test(h) || !/Their page list for Google<span class="ob-chg-x">adds the new page's address/.test(h) || !/A page they have/.test(h) || !/<code class="ob-chg-p">sitemap\.xml<\/code>/.test(h) || !/3 files/.test(h))
   fail("admin's file list isn't the client's plain list (A new page / Their page list for Google / A page they have, the address unbroken, the path)");
-if ((A.match(/\+ wcChgHtml\(c\)/g) || []).length < 2 || /function wcNewPageHtml[\s\S]{0,900}ob-wc-files/.test(A)) fail("a website card still lists its files as the old code log");
+// removal_card_clean_v2 (10-28): the removal branch is just `return wcChgHtml(c)` now — count the calls in wcNewPageHtml, not the "+" form
+{ const nf = (A.match(/function wcNewPageHtml\(c\) \{[\s\S]*?\n\}/) || [""])[0];
+  if ((nf.match(/wcChgHtml\(c\)/g) || []).length < 2 || /ob-wc-files/.test(nf)) fail("a website card still lists its files as the old code log"); }
 
 // step 28 (Chris 10-28 "does step 28 match mockup?"): the count once — on the place list, not again under the card's title
 if (!/side: \(g\.rga \|\| \[\]\)\.every\(\(x\) => x\.fact === "area"\) \? "" :/.test(A)) fail("step 28 says \"0 of 3 on Google\" twice (under the card title and above the list)");
