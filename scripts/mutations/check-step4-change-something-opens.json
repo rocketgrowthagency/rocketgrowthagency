@@ -1,0 +1,58 @@
+[
+ [
+  "Change something is dead again (editor never opens)",
+  "portal",
+  "if (_editingSteps.has(step.id) && !factsLocked(step, taskState)) return factsEditorHtml(step, taskState, g);",
+  "",
+  1
+ ],
+ [
+  "the editor opens on a locked step",
+  "portal",
+  "&& !factsLocked(step, taskState)) return factsEditorHtml",
+  "&& true) return factsEditorHtml",
+  1
+ ],
+ [
+  "a locked step's button opens nothing",
+  "portal",
+  "const change = factsLocked(step, taskState) ? `<button type=\"button\" class=\"pm-amend\" data-facts-ask=",
+  "const change = false ? `<button type=\"button\" class=\"pm-amend\" data-facts-ask=",
+  1
+ ],
+ [
+  "the editor loses the phone line",
+  "portal",
+  "+ val(\"name\", \"Business name\", name, (x) => x) + val(\"phone\", \"Phone\", phone, (x) => x)",
+  "+ val(\"name\", \"Business name\", name, (x) => x)",
+  1
+ ],
+ [
+  "the editor forgets the places being added",
+  "portal",
+  "${keep.map((n) => chip(n, \"keep\")).join(\"\")}${add.map((n) => chip(n, \"add\")).join(\"\")}",
+  "${keep.map((n) => chip(n, \"keep\")).join(\"\")}",
+  1
+ ],
+ [
+  "Save drops the area",
+  "portal",
+  "const value = { name: v(\"name\"), phone: v(\"phone\"), website: v(\"website\"), come, area: { keep, add } };",
+  "const value = { name: v(\"name\"), phone: v(\"phone\"), website: v(\"website\"), come };",
+  1
+ ],
+ [
+  "Save goes somewhere else",
+  "portal",
+  "const r = await fetch(\"/.netlify/functions/portal-step-input\", { method: \"POST\", headers: { \"Content-Type\": \"application/json\", Authorization: `Bearer ${await portalToken()}` },\n      body: JSON.stringify({ client_id: listEl && listEl._clientId, step_id: stepId, value }) });",
+  "const r = await fetch(\"/.netlify/functions/portal-step-save\", { method: \"POST\", headers: { \"Content-Type\": \"application/json\", Authorization: `Bearer ${await portalToken()}` },\n      body: JSON.stringify({ client_id: listEl && listEl._clientId, step_id: stepId, value }) });",
+  1
+ ],
+ [
+  "the editing flag clears before the save",
+  "portal",
+  "    if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);\n    _editingSteps.delete(stepId);\n    await settleStepResult(listEl, j);",
+  "    _editingSteps.delete(stepId);\n    if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);\n    await settleStepResult(listEl, j);",
+  1
+ ]
+]

@@ -1,0 +1,107 @@
+[
+ [
+  "a neighborhood counts as its own city (nothing is ever covered)",
+  "areacover",
+  "const isCity = (p.types || []).some((t) => CITY_TYPES.includes(t)) && normName(p.city || \"\") === placeHead(n);",
+  "const isCity = true;",
+  1
+ ],
+ [
+  "the state isn't compared (a Texas Los Angeles covers)",
+  "areacover",
+  "(!stateTok(e) || !p.state || stateTok(e) === p.state)",
+  "true",
+  1
+ ],
+ [
+  "a business is taken as a place",
+  "areacover",
+  "(x.types || []).some((t) => AREA_TYPES.has(t)) && placeHead",
+  "placeHead",
+  1
+ ],
+ [
+  "no answer is taken as covered (fail open)",
+  "areacover",
+  "if (!p) { items.push({ name: n, state: \"unknown\" }); continue; }",
+  "if (!p) { items.push({ name: n, state: \"covered\", by: area[0] }); continue; }",
+  1
+ ],
+ [
+  "covered no longer counts as done",
+  "gbpfacts",
+  "x.add.every((n) => hasPlace(now.area, n, now.state) || coveredIn(g, n))",
+  "x.add.every((n) => hasPlace(now.area, n, now.state))",
+  1
+ ],
+ [
+  "an unknown place counts as covered",
+  "gbpfacts",
+  ".find((y) => y.state === \"covered\" && String(y.name) === String(n));\n  return x ? x.by || null : null;",
+  ".find((y) => String(y.name) === String(n));\n  return x ? x.by || \"anywhere\" : null;",
+  1
+ ],
+ [
+  "the watch never looks places up",
+  "gbpwatch",
+  "if (areaItem && d.places && d.places.key) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the record stops saying nothing was sent",
+  "gbpwatch",
+  "Nothing was sent to Google. The step is done.",
+  "The step is done.",
+  1
+ ],
+ [
+  "Check Google now loses the Places key",
+  "googlecheck",
+  "places: process.env.GOOGLE_PLACES_API_KEY ? { key: process.env.GOOGLE_PLACES_API_KEY } : null,",
+  "",
+  1
+ ],
+ [
+  "the nightly loses the Places key",
+  "gbpprofilewatch",
+  "places: process.env.GOOGLE_PLACES_API_KEY ? { key: process.env.GOOGLE_PLACES_API_KEY } : null,",
+  "",
+  1
+ ],
+ [
+  "admin's done card ignores covered places",
+  "admin",
+  "g.state === \"on_google\" && areaCoveredItems(g).length ? areaCoveredCardHtml(g)",
+  "false ? areaCoveredCardHtml(g)",
+  1
+ ],
+ [
+  "admin card A sends RGA to Google again",
+  "admin",
+  "+ `<div class=\"ob-zc-f\"><button type=\"button\" class=\"admin-button admin-button-secondary\" data-area-check>↻ Check Google now</button></div></div>`;",
+  "+ `<div class=\"ob-zc-f\"><a href=\"https://business.google.com/\">Open Google Business Profile ↗</a></div></div>`;",
+  1
+ ],
+ [
+  "admin card A stops saying where",
+  "admin",
+  "`Inside <em>${escapeHtml(head(x.covered_by))}</em>, which is already on their Google profile.`",
+  "\"Covered.\"",
+  1
+ ],
+ [
+  "the client's covered chip is a plain dashed add chip",
+  "portal",
+  "x.covered_by ? `<span class=\"pm-fxt-pl cov\">",
+  "false ? `<span class=\"pm-fxt-pl cov\">",
+  1
+ ],
+ [
+  "the covered chip isn't green",
+  "portalcss",
+  ".pm-fxt-pl.cov { background: var(--state-ok-bg);",
+  ".pm-fxt-pl.cov { background: var(--portal-tray);",
+  1
+ ]
+]
