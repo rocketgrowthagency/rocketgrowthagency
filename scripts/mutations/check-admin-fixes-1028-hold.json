@@ -58,8 +58,8 @@
  [
   "admin's file list goes back to the code log",
   "admin",
-  "  if (c.removes_page) return `<span class=\"ob-gcard-says\"><b>Stops working:</b> <del>${escapeHtml(c.page_url || \"\")}</del></span>` + wcChgHtml(c);",
-  "  if (c.removes_page) return `<span class=\"ob-gcard-says\"><b>Stops working:</b> <del>${escapeHtml(c.page_url || \"\")}</del></span>` + `<ul class=\"ob-wc-files\"></ul>`;",
+  "  if (c.removes_page) return wcChgHtml(c);   // removal_card_clean_v2: the address is said once, in the lines above",
+  "  if (c.removes_page) return `<ul class=\"ob-wc-files\"></ul>`;   // removal_card_clean_v2: the address is said once, in the lines above",
   1
  ],
  [
