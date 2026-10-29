@@ -236,5 +236,40 @@
   "g.state === \"needs_client\" || g.state === \"removed\")) return \"you\";",
   "g.state === \"needs_client\")) return \"you\";",
   1
+ ],
+ [
+  "an unnamed booking tool behind a Book button is ignored again",
+  "bookinglink",
+  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+  "null",
+  1
+ ],
+ [
+  "a yelp / social / home page with a Book button counts as their tool",
+  "bookinglink",
+  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+  "(BOOK.test(text) ? bare(u.hostname) : null)",
+  1
+ ],
+ [
+  "any outside link counts as a tool, whatever its button says",
+  "bookinglink",
+  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+  "(!refused ? bare(u.hostname) : null)",
+  1
+ ],
+ [
+  "Boulevard isn't named",
+  "bookinglink",
+  "[/(^|\\.)joinblvd\\.com$|(^|\\.)blvd\\.app$/, \"Boulevard\"], ",
+  "",
+  1
+ ],
+ [
+  "&amp; in a link reaches Google",
+  "bookinglink",
+  ".replace(/&amp;|&#0*38;|&#x0*26;/gi, \"&\")",
+  "",
+  1
  ]
 ]

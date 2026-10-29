@@ -114,6 +114,15 @@ const site = (html, url) => async () => ({ ok: true, url, text: async () => html
   const dead = await B.findBookingPages("gone.com", async () => ({ ok: false, status: 404 }));
   let hit = false; const local = await B.findBookingPages("http://localhost:3000", async () => { hit = true; return { ok: true, text: async () => "" }; });
   if (dead.pages.length || local.pages.length || hit) fail("an unreadable or private website produces pages (or was fetched)");
+  // 🔒 10-29, tested on 40 real businesses in 10 trades: a booking tool we don't know by name is still theirs when the BUTTON says so
+  // (a chiropractor's scheduler on a second domain); Boulevard + Modento by name (med spas, a dentist); an href is HTML, so "&amp;"
+  // becomes "&" (Mindbody's link reached Google broken); never a social / marketplace page or a bare home page.
+  const u = await B.findBookingPages("spine.com", site(`<a href="https://drmina.com/?selected_agent=any&#038;latepoint=instant">Book Appointment</a><a href="https://partner-site.com/about">Our partners</a><a href="https://www.yelp.com/biz/spine">Book on Yelp</a><a href="https://otherdomain.com/">Book now</a>`, "https://spine.com/"));
+  if (u.tools.length !== 1 || u.tools[0].platform !== "drmina.com" || u.tools[0].url !== "https://drmina.com/?selected_agent=any&latepoint=instant") fail(`a "Book Appointment" button to a tool we don't know by name isn't found as theirs, or a yelp / home / non-booking link is (${JSON.stringify(u.tools)})`);
+  const bv = await B.findBookingPages("luxe.com", site(`<a href="https://www.joinblvd.com/b/luxe/widget">Reserve</a><a href="https://book.modento.io/c/1/Relate">Schedule</a>`, "https://luxe.com/"));
+  if (bv.tools.map((t) => t.platform).join() !== "Boulevard,Modento") fail(`Boulevard / Modento aren't named (${JSON.stringify(bv.tools)})`);
+  const mb = await B.findBookingPages("hot8.com", site(`<a href="https://clients.mindbodyonline.com/classic/ws?studioid=8179&amp;stype=-2">Sign up</a>`, "https://hot8.com/"));
+  if (mb.tools[0]?.url !== "https://clients.mindbodyonline.com/classic/ws?studioid=8179&stype=-2") fail(`"&amp;" in a link isn't decoded — Google would get a broken link (${mb.tools[0]?.url})`);
 }
 // who runs a link; the tag; the same link with or without it
 if (B.platformOf("https://acme.as.me/x") !== "Acuity" || B.platformOf("https://calendly.com/a") !== "Calendly" || B.platformOf("https://example.com") !== null) fail("a booking tool isn't recognized by its host");
