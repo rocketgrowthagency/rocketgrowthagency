@@ -54,7 +54,7 @@ if (!/if \(step\?\.flowId === "m1\.gbp\.verify" && task\?\.status === "done" && 
 
 // ── 2 · drawn for real, both sides, every state ──
 const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m), pl("GOOGLE_G"), pl("GC_ICON"), pp(/^function googleCardHtml\(/m), pl("gcardMaps"), pl("GV_STORE"), pp(/^function gvProfileHtml\(/m),
-  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
+  pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsLocked\(/m), pp(/^function factsEditorHtml\(/m), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
   pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay"),
   portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), pl("KW_SPIN"), pl("GV_SHIELD")];
 pLift.push(planCardKit(portal, pLift.join("\n")), pp(/^function svcCardHtml\(/m));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)

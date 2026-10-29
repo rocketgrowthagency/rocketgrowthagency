@@ -282,7 +282,7 @@
  [
   "area ticked before Google lists it",
   "gbpfacts",
-  "x.add.every((n) => hasPlace(now.area, n, now.state))",
+  "x.add.every((n) => hasPlace(now.area, n, now.state) || coveredIn(g, n))",
   "true",
   1
  ],
@@ -408,8 +408,8 @@
  [
   "progress always waiting",
   "gbpfacts",
-  "keep({ kind: \"area\", name: n, on: !!now && hasPlace(now.area, n, now.state) })",
-  "keep({ kind: \"area\", name: n, on: false })",
+  "on: !!now && (hasPlace(now.area, n, now.state) || !!by)",
+  "on: false",
   1
  ],
  [

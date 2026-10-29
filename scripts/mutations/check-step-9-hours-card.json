@@ -51,8 +51,8 @@
  [
   "no Cancel",
   "portal",
-  "<button type=\"button\" class=\"pm-amend\" data-in-cancel=\"${id}\">Cancel</button>",
-  "",
+  "_editingSteps.has(step.id) ? `<button type=\"button\" class=\"pm-amend\" data-in-cancel=\"${id}\">Cancel</button>` : \"\"}",
+  "_editingSteps.has(step.id) ? `` : \"\"}",
   1
  ],
  [

@@ -49,6 +49,7 @@ const SURFACES = {
   "shared/invoice-doc.js":                      ["DERIVED", "client invoice — every line derived from data/plans.json + _addons"],
   "shared/busy.js":                             ["EXCLUDED", "the master busy state (every control that waits on the server spins) — wraps fetch, renders no text, quotes no price; matched only because it loads in every portal/admin page"],
   "netlify/functions/_publish-safety.js":       ["EXCLUDED", "the website-change safety checks (publish_safety_checks_v1) — `perPageMs = 3500` is a page-read timeout in milliseconds, not a price; the file quotes no price or plan"],
+  "netlify/functions/site-preview.js":          ["EXCLUDED", "the private preview of a built page + the out-of-date card (preview_not_current_v1, 10-29) — the numbers are the RGA logo's SVG drawing (viewBox 1046, path points), not a price; it quotes no price or plan"],
   "netlify/functions/_site-platform.js":        ["EXCLUDED", "website builder detection (step 3) — `= 5000` is a fetch timeout in milliseconds, not a price; the file quotes no price or plan"],
   "shared/email-doc.js":                        ["EXCLUDED", "branded email SHELL — header/footer/KPI rows only. Verified 2026-09-10: not one price token in the file. Listed so nobody has to re-check."],
   "netlify/functions/send-invoice-email.js":    ["DERIVED", "receipt + invoice-due emails → invoice-doc, which derives from plans.json"],

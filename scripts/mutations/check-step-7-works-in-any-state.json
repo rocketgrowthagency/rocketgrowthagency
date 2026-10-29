@@ -16,8 +16,8 @@
  [
   "progress ignores the home state",
   "gbpfacts",
-  "on: !!now && hasPlace(now.area, n, now.state) });",
-  "on: !!now && hasPlace(now.area, n) });",
+  "on: !!now && (hasPlace(now.area, n, now.state) || !!by)",
+  "on: !!now && (hasPlace(now.area, n) || !!by)",
   1
  ],
  [

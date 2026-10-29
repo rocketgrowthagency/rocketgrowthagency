@@ -30,9 +30,11 @@ const ctx = vm.createContext({
   // seeStepText / portalStepNo (10-20): the number comes from the playbook in the browser; here a fixed one
   seeStepText: () => "See step 2 →", portalStepNo: () => 2,
   FACT_WORDS: {}, placeName: (n) => String(n || "").split(",")[0].trim(),
+  // step4_done_in_portal_v2 (10-29): step 4's card opens its editor while editing — none here
+  _editingSteps: new Set(),
 });
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b) + "\n" + (P.match(/^const KW_SPIN = `[^`]*`;$/m) || [""])[0], ctx); }   // the plan card (steps_1_4_clean_v1)
-for (const n of ["dupConfirmedOf", "keptProfileOf", "dupConfirmedHtml", "dupNoteHtml", "typeLinesHtml", "factsCardV2"]) vm.runInContext(fnSrc(n), ctx);
+for (const n of ["dupConfirmedOf", "keptProfileOf", "dupConfirmedHtml", "dupNoteHtml", "typeLinesHtml", "factsLocked", "factsEditorHtml", "factsCardV2"]) vm.runInContext(fnSrc(n), ctx);
 const run = (src) => vm.runInContext(src, ctx);
 
 // ── step 6 ──
