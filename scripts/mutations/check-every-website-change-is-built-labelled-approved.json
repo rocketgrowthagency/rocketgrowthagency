@@ -203,10 +203,17 @@
   1
  ],
  [
-  "the card has no dark theme",
+  "the logo is an emoji again (Chris 10-29: never)",
   "sitepreview",
-  "+ `@media (prefers-color-scheme:dark)",
-  "+ `@media (min-width:99999px)",
+  "<span class=\"pv-logo\">${LOGO}</span>",
+  "<span class=\"pv-logo\">🚀 Rocket Growth Agency</span>",
+  1
+ ],
+ [
+  "the logo is re-drawn, not the portal's",
+  "sitepreview",
+  "<tspan fill=\"#2457e6\">Growth</tspan>",
+  "<tspan fill=\"#1d4ed8\">Growth</tspan>",
   1
  ]
 ]
