@@ -79,8 +79,14 @@ try {
     try {
       // 🔑 a fresh tab per case: puppeteer's next goto after a cache restore can wait forever for a "load" it missed
       for (const [sel, want] of [["#g", "Continue with Google"], ["#pay", "Pay invoice"], ["#conn", "Connect Google"]]) {
-        const tab = await browser.newPage();
-        await tab.goto(`${base}/portal/?n=${Math.random()}`, { waitUntil: "load" });
+        // 🔑 10-28: headless Chrome sometimes never fires "load" for this local page (passed 6 of 8 runs; the code under test unchanged).
+        // A stalled load is retried once on a fresh tab; stalled again = can't tell (never a crash that reads as a regression).
+        let tab = await browser.newPage(), opened = false;
+        for (let tries = 0; tries < 2 && !opened; tries++) {
+          try { await tab.goto(`${base}/portal/?n=${Math.random()}`, { waitUntil: "load", timeout: 15000 }); opened = true; }
+          catch (e) { if (!/Timeout/i.test(String(e && e.name || e))) throw e; await tab.close().catch(() => {}); tab = await browser.newPage(); }
+        }
+        if (!opened) { await tab.close().catch(() => {}); cantTell++; continue; }
         const before = await tab.evaluate(state, sel);
         await Promise.all([tab.waitForNavigation({ waitUntil: "load" }), tab.click(sel)]);
         await back(tab);
