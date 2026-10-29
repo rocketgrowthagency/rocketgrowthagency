@@ -39,6 +39,9 @@ export const READ_ONLY_FN_POSTS = {
   // which every Google call does and which changes nothing the client or RGA sees.
   // + check_link (step10_booking_link_v1, 10-16): "does this link open?" fetches that public page and stores nothing
   "portal-gbp-profile": onlyKeys(["client_id", "step_id", "check_link"]),
+  // admin-gbp-services-push.js (admin_step32_services_v1, 10-29) — with dry:true it only READS the Google services (readServices GETs)
+  // and returns before applyServices; without dry it writes to Google, so that stays blocked.
+  "admin-gbp-services-push": (b) => onlyKeys(["client_id", "dry"])(b) && b.dry === true,
   // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
   // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
   "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",
