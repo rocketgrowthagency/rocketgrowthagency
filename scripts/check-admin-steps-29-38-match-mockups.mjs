@@ -143,6 +143,11 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
   if (!/Google hides it because the profile shows no street address/.test(h) || !/chose to keep the second copy of their logo \(Oct 15\)|chose to keep the second copy of their logo \(Oct 16\)/.test(h)) fail("step 38: the two notes are missing");
   if (!/data-step-nudge="m1\.gbp\.photos">Remind the client…/.test(h) || !/href="tel:4242422040">Call them · \(424\) 242-2040/.test(h)) fail("step 38: Remind the client… / Call them is missing");
   if (/>Done<|Run again|Mark step complete/.test(h)) fail("step 38: Done / Run again is on the card");
+  c5.state.stepRuns = { "m1.gbp.photos": [["2026-10-08T00:06:48Z", "# 20-Photo"], ["2026-10-08T14:07:54Z", "# 20-Photo"], ["2026-10-09T23:04:53Z", "20-photo shot list"], ["2026-10-10T00:54:28Z", "20-photo shot list"]].map(([ran_at, summary_head]) => ({ ran_at, summary_head })) };
+  const hh = c5.ph(task, null);
+  if (!/4 runs since Oct 7 · shot list unchanged since Oct 9/.test(hh)) fail("step 38: the history line isn't 'N runs since … · shot list unchanged since …'");
+  if (!/Call them · \(424\) 242-2040/.test(c5.ph(task, null).replace("4242422040", "x"))) fail("step 38: the phone isn't formatted");
+  if (!/if \(el\.querySelector\("\.ob-zc-photos"\)\) return;/.test(AJS)) fail("step 38: the old photo section is still injected above the card");
   if (c5.ws({ ...task, detected: { have: { PROFILE: 1, COVER: 1, EXTERIOR: 3, INTERIOR: 3, TEAMS: 5, AT_WORK: 7 } } })) fail("step 38: a complete set still shows as waiting");
   if ((AJS.match(/if \(o\.flowId === PHOTO_REVIEW_STEP && photosWaitState\(s\.task\)\) return zcPhotosRowHtml\(/g) || []).length !== 2) fail("step 38: the queued/active row doesn't use the photos card");
 }

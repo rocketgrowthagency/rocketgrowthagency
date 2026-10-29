@@ -222,5 +222,12 @@
   "${tel ? `<a class=\"admin-button admin-button-secondary\" href=\"tel:${escapeAttribute(tel)}\">Call them · ${escapeHtml(phone)}</a>` : \"\"}",
   "",
   1
+ ],
+ [
+  "38: old section injected again",
+  "admin",
+  "if (el.querySelector(\".ob-zc-photos\")) return;",
+  "",
+  1
  ]
 ]
