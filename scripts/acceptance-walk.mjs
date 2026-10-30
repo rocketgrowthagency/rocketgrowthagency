@@ -422,7 +422,7 @@ async function portalPass() {
           // 🔒 10-22: the step lock's footer ("Locked · the call happened") is not a record — it let an empty kickoff card pass
           // 🔒 10-26: the in-card how-to (details.pm-k5-fold) is not a record either — counted as one, steps 7–10 done with nothing saved
           // showed ONLY "How this step works" and this check stayed green (project_done_without_record_all_steps)
-          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-k5-fold, details.pm-convo").forEach((x) => x.remove());
+          c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-lockfoot, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, input, textarea, select, .pm-msg, details.pm-k5-fold, details.pm-convo").forEach((x) => x.remove());   // 10-30: + the card system's chrome (Messages · Ask RGA · the foot line), as the portal's DONE_STRIP
           const said = (c.textContent || "").replace(/\s+/g, " ").trim();
           const name = (row.querySelector(".pm-step-title")?.textContent || row.id).trim();
           // 🔒 done_without_record_v2 (approved 10-26): a done card shows the RESULT, never our bookkeeping

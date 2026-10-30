@@ -65,7 +65,7 @@ try {
     const how = !!row.querySelector("details[data-how-fold]");
     const c = row.cloneNode(true);
     // 🔄 10-26: the how-to is an in-card fold now (details.pm-k5-fold) — counted as "something said", it hid an empty card
-    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold").forEach((x) => x.remove());
+    c.querySelectorAll(".pm-step-row-head, button, a.pm-act, .pm-row-actions, .pm-thread, .pm-mails, .pm-m, .pm-detail, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, .pm-lockfoot, input, textarea, select, .pm-msg, details.pm-convo, details.pm-k5-fold").forEach((x) => x.remove());
     // 🔑 THE ASK BY ITS STATE, NOT ITS WORDS: a "your move" card (.pm-k5-plan.you / .gcard.you) on a done row is the ask, whatever it
     // says — the word list went blind when the cards were reworded (10-26: "How should we count your calls?", "One tag on your website")
     const you = c.querySelector(".pm-k5-plan.you, .gcard.you");
