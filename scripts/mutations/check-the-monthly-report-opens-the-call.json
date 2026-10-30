@@ -1,0 +1,37 @@
+[
+ [
+  "the send doesn't stamp this month",
+  "monthlyreport",
+  "try { await stampThisMonth(supa, clientId, current.reporting_month, artifact, outcome.id, to); }",
+  "try { }",
+  1
+ ],
+ [
+  "a resend of an older month opens the call",
+  "monthlyreport",
+  "  if (!month) {\n    try { await stampThisMonth",
+  "  if (true) {\n    try { await stampThisMonth",
+  1
+ ],
+ [
+  "the normal case writes twice",
+  "monthlyreport",
+  "  if (String(reportMonth).slice(0, 7) === currentReportingMonth(now).slice(0, 7)) return false;\n",
+  "",
+  1
+ ],
+ [
+  "an already-done month is overwritten",
+  "monthlyreport",
+  "  if (t.status === \"done\") return false;\n",
+  "",
+  1
+ ],
+ [
+  "never marked done",
+  "monthlyreport",
+  "\"m2.report.deliver\": { ...t, status: \"done\", completed_at: artifact.sent_at",
+  "\"m2.report.deliver\": { ...t, status: \"in_progress\", completed_at: artifact.sent_at",
+  1
+ ]
+]
