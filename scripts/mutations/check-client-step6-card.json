@@ -30,8 +30,8 @@
  [
   "the blue row says nothing about safety",
   "portal",
-  " Nothing you already have on Google is removed; each is checked on Google after it goes on.",
-  "",
+  "\"Nothing on Google gets removed.\"",
+  "\"\"",
   1
  ],
  [
@@ -109,6 +109,20 @@
   "portal",
   "\"m1.gbp.business_facts\", \"m1.strategy.keywords_locations\", \"m1.gbp.services_products\", \"m1.gbp.hours_attributes\"",
   "\"m1.gbp.business_facts\", \"m1.strategy.keywords_locations\", \"m1.gbp.hours_attributes\"",
+  1
+ ],
+ [
+  "the names go back in the sentence, no dashed chips",
+  "portal",
+  "const pendChips = pend.cats.map((n) => ch(escapeHtml(n), \"rga\")).join(\"\");",
+  "const pendChips = \"\";",
+  1
+ ],
+ [
+  "the pill gets wordy again",
+  "portal",
+  "return `<span class=\"pm-pill rga\">RGA is adding more</span>`;",
+  "return `<span class=\"pm-pill rga\">RGA is adding ${cat} + your services</span>`;",
   1
  ]
 ]

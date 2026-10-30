@@ -73,6 +73,10 @@ if (!/closest\("\[data-step-toggle\]"\)/.test(code)) {
     return "";
   })();
   if (!fn) fail.push("toggleStepRow is gone — this check is not reading anything");
+  // 🔒 steps_open_in_place_v2 (approved 10-30): the clicked title stays where it was (it jumped up by the height of an open step above it)
+  else if (!/const heldTop = head\.getBoundingClientRect\(\)\.top;/.test(fn) || !/const drift = head\.getBoundingClientRect\(\)\.top - heldTop;\s*if \(Math\.abs\(drift\) > 0\.5\) window\.scrollBy\(\{ top: drift, behavior: "instant" \}\);/.test(fn)) fail.push("the clicked step no longer stays put when another closes (it jumps up by that step's height)");
+  else if (!/page\.style\.overflowAnchor = "none";/.test(fn)) fail.push("scroll anchoring is left on while the title is held, so the browser corrects it twice");
+  else if (!/const glide = Math\.min\(under, rr\.top - 16\);\s*if \(glide > 0\) window\.scrollBy\(\{ top: glide, behavior: "smooth" \}\);/.test(fn)) fail.push("a step opening off the bottom of the screen no longer glides into view");
   else if (!/querySelectorAll\(["'`]\.pm-step-row["'`]\)[\s\S]{0,200}?add\(["'`]is-collapsed["'`]\)/.test(fn)) {
     fail.push("opening a row no longer collapses the others — two rows could be open at once, which is the wall this replaced");
   }

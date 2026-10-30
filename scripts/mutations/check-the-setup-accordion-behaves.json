@@ -12,5 +12,26 @@
   "${!isDone && gbpWithRga ? \" is-rga-turn\" : \"\"}${expanded",
   "${!isDone && gbpWithRga ? \" is-rga-turn\" : \"\"}${isOpenRow({ step }) ? \" is-now\" : \"\"}${expanded",
   1
+ ],
+ [
+  "the clicked step isn't held",
+  "portal",
+  "if (Math.abs(drift) > 0.5) window.scrollBy({ top: drift, behavior: \"instant\" });",
+  "",
+  1
+ ],
+ [
+  "anchoring left on",
+  "portal",
+  "page.style.overflowAnchor = \"none\";",
+  "",
+  1
+ ],
+ [
+  "no glide into view",
+  "portal",
+  "if (glide > 0) window.scrollBy({ top: glide, behavior: \"smooth\" });",
+  "",
+  1
  ]
 ]
