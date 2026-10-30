@@ -1,0 +1,79 @@
+[
+ [
+  "dropped categories still count",
+  "portal",
+  ".filter((n) => !dropped.has(low(n)));\n  const on = new Set(",
+  ";\n  const on = new Set(",
+  1
+ ],
+ [
+  "services RGA already put on still show pending",
+  "portal",
+  " && !(sv.google_push && Array.isArray(sv.google_push.approved_names)) ? { n: names.length",
+  " ? { n: names.length",
+  1
+ ],
+ [
+  "names compared case-sensitively",
+  "portal",
+  "  const low = (x) => String(x || \"\").toLowerCase().trim();\n  const dropped",
+  "  const low = (x) => String(x || \"\");\n  const dropped",
+  1
+ ],
+ [
+  "the header pill goes",
+  "portal",
+  "${step.id === \"m1.gbp.services_products\" && isDone ? stepSixPill(onboarding?.data?.tasks) : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the blue row says nothing about safety",
+  "portal",
+  " Nothing you already have on Google is removed; each is checked on Google after it goes on.",
+  "",
+  1
+ ],
+ [
+  "How doesn't seat in the links line",
+  "portal",
+  "    } else if (card.hasAttribute(\"data-how-inline\") && card.querySelector(\":scope > .pm-pc-lnks\")) {",
+  "    } else if (false) {",
+  1
+ ],
+ [
+  "+N more opens nothing",
+  "portal",
+  "  b.parentElement.querySelectorAll(\"[data-s6-rest]\").forEach((x) => { x.hidden = false; });\n",
+  "",
+  1
+ ],
+ [
+  "the card ignores Google's own category read",
+  "portal",
+  "  const on = new Set((onCats || ((c.published",
+  "  const on = new Set((((c.published",
+  1
+ ],
+ [
+  "the read-Google path seats How above the links",
+  "portal",
+  "if (card.hasAttribute(\"data-how-inline\") && ln) { ln.appendChild(how); how.classList.add(\"pm-how-inline\"); } else card.insertBefore(how, ln);",
+  "card.insertBefore(how, ln);",
+  1
+ ],
+ [
+  "the spinner fills the blue row",
+  "portalcss",
+  ".pm-s6-rga > svg { flex:0 0 auto; width:18px; height:18px;",
+  ".pm-s6-rga > svg { flex:0 0 auto;",
+  1
+ ],
+ [
+  "step 13's fields get a second inset",
+  "portalcss",
+  "border:0; border-radius:0; padding:0; background:none; }   /* .pm-rv-next is the section",
+  "border:0; border-top:1px solid #e3e3e3; border-radius:0; padding:12px 14px; background:none; }   /* .pm-rv-next is the section",
+  1
+ ]
+]

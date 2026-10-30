@@ -50,7 +50,7 @@
  [
   "step 6's live read throws away the seated how-to again",
   "portal",
-  "      if (how && card) card.insertBefore(how, card.querySelector(\":scope > .pm-pc-lnks\"));\n",
+  "      if (how && card) { const ln = card.querySelector(\":scope > .pm-pc-lnks\"); if (card.hasAttribute(\"data-how-inline\") && ln) { ln.appendChild(how); how.classList.add(\"pm-how-inline\"); } else card.insertBefore(how, ln); }\n",
   "\n"
  ]
 ]

@@ -168,6 +168,7 @@ try {
       slots: [...h.querySelectorAll(".pm-rv-s")].map((x) => x.className.replace("pm-rv-s", "").trim() || "-"),
       cards: h.querySelectorAll("[data-r5-card]").length, shown: [...h.querySelectorAll("[data-r5-card]")].filter((c) => !c.hidden).length,
       labels: [...h.querySelectorAll("[data-r5-card]")[0].querySelectorAll(".pm-r5-f > span")].map((x) => x.textContent),
+      icon: !!h.querySelector("[data-r5-card] .pm-r5-ic"), nShown: [...h.querySelectorAll("[data-r5-card] .pm-r5-n")].some((x) => x.getClientRects().length > 0),
       btn: btn.textContent, dis: btn.disabled, list: !!h.querySelector("[data-review-step]"), all: ((h.querySelector("[data-r5-all]") || {}).textContent || ""),
       under: !!btn.closest(".pm-k5-acts") && !btn.closest(".pm-k5-plan"), fold: ((h.querySelector(".pm-k5-fold summary") || {}).textContent || ""),
       why: ((h.querySelector(".pm-k5-fold .pm-k5-why") || {}).textContent || "").replace(/\s+/g, " ").trim() };
@@ -175,7 +176,8 @@ try {
   if (b.card !== "pm-k5-plan you" || b.head !== "Who was your last job?" || b.side !== "0 of 5 asked") fail(`B: the open step isn't the amber plan card "Who was your last job? · 0 of 5 asked" (${b.card} · ${b.head} · ${b.side})`);
   if (b.slots.join(",") !== "on,-,-,-,-") fail(`B: the five circles aren't "the next one, then 4 to ask" (${b.slots})`);
   // 🔒 step12_review_requests_v3 (approved 10-20): recency + real customers only, a cell number OR an email; option B: one at a time
-  if (b.cards !== 5 || b.shown !== 1 || b.labels.join("|") !== "Customer 1 · First name|Cell number or email|The job you did") fail(`B: not one labelled customer form with 4 more held back (${b.cards} cards, ${b.shown} shown · ${b.labels.join("|")})`);
+  // 🔒 reviews_card_option_b_v1 EXACTLY (10-29: the fields had stayed step 12 v1's boxed row): First name · Cell or email · The job, in a few words
+  if (b.cards !== 5 || b.shown !== 1 || b.labels.join("|") !== "First name|Cell or email|The job, in a few words" || b.icon || b.nShown) fail(`B: not one labelled customer form with 4 more held back (${b.cards} cards, ${b.shown} shown · ${b.labels.join("|")})`);
   if (b.btn !== "Write the request" || !b.dis || b.list || !b.under || b.all !== "Add all 5 at once") fail(`B: an empty form reads "${b.btn}" (disabled ${b.dis}, under the card ${b.under}, "${b.all}")`);
   if (b.fold !== "Who to ask (Google's rules)" || !/^Your 5 most recently finished jobs, whoever they are\. Real customers only: not family, friends or anyone who works with you\. Google doesn't allow picking only the ones you expect to be happy, offering anything for a review/.test(b.why)) fail(`B: "Who to ask" isn't Google's rules, folded (${b.fold} · ${b.why.slice(0, 120)})`);
   const type = async (i, name, phone, job) => {
@@ -191,6 +193,8 @@ try {
   await page.click("[data-r5-all]");
   const shownAll = await page.evaluate(() => [...document.querySelectorAll("[data-r5-card]")].filter((c) => !c.hidden).length);
   if (shownAll !== 5) fail(`B: "Add all 5 at once" shows ${shownAll} forms, not 5`);
+  const nVis = await page.evaluate(() => [...document.querySelectorAll("[data-r5-card] .pm-r5-n")].filter((x) => x.getClientRects().length > 0).map((x) => x.textContent).join("|"));
+  if (nVis !== "Customer 1|Customer 2|Customer 3|Customer 4|Customer 5") fail(`B: after Add all 5 at once, each form isn't named "Customer N" (${nVis})`);
   await type(1, "Søren", "+44 7700 900123", "");
   const b2 = await page.evaluate(() => ({ btn: document.querySelector("[data-r5-send]").textContent, dis: document.querySelector("[data-r5-send]").disabled, done: document.querySelectorAll("[data-r5-card].done").length }));
   if (b2.btn !== "Write 2 requests" || b2.dis || b2.done !== 2) fail(`B: two customers in read "${b2.btn}" (disabled ${b2.dis}, ${b2.done} done) — an international number or no job must count`);

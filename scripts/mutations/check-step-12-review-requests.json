@@ -100,8 +100,8 @@
  [
   "on a phone the customer fields don't stack",
   "portalcss",
-  ".pm-rv-next .pm-r5-c { grid-template-columns:minmax(0,1fr); padding:10px; }",
-  ".pm-rv-next .pm-r5-c { grid-template-columns:34px repeat(3,minmax(0,1fr)); padding:10px; }",
+  "@media (max-width:560px) { .pm-r5-two { grid-template-columns:minmax(0,1fr); } }",
+  "",
   1
  ],
  [
@@ -380,6 +380,27 @@
   "reviewreqfn",
   "requestFor(c, i, list.id))\n    .filter((r) => r.name && (r.phone || r.email));",
   "requestFor(c, i, list.id))\n    .filter((r) => r.name && r.phone);",
+  1
+ ],
+ [
+  "step 13's fields go back to the old boxed labels",
+  "portal",
+  "<span>First name</span><input class=\"pm-in-field\" name=\"first_name\"",
+  "<span>Customer ${n} · First name</span><input class=\"pm-in-field\" name=\"first_name\"",
+  1
+ ],
+ [
+  "Cell or email reads the old label",
+  "portal",
+  "<span>Cell or email</span>",
+  "<span>Cell number or email</span>",
+  1
+ ],
+ [
+  "Add all 5 no longer names each customer",
+  "portal",
+  "  form.querySelector(\".pm-r5-cards\")?.classList.add(\"all\");   // now there's more than one: each says \"Customer N\"\n",
+  "",
   1
  ]
 ]
