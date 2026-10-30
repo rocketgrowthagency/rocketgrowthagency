@@ -16,7 +16,7 @@
  [
   "Google's working link doesn't finish the step",
   "admin",
-  "  if (gl && gl.opens) return { sc: \"keep\", link: gl.clean || gl.url };\n",
+  "  if (gl && gl.opens && !change) return { sc: \"keep\", link: gl.clean || gl.url };\n",
   "",
   1
  ],
@@ -60,20 +60,6 @@
   "admin",
   "data-bk36-put disabled>Put it on Google",
   "data-bk36-put>Put it on Google",
-  1
- ],
- [
-  "the done card promises a Book button",
-  "admin",
-  "<b>Google's booking button opens it</b>",
-  "<b>Shows as a Book button on their Google profile</b>",
-  1
- ],
- [
-  "RGA's put shows What the client sent",
-  "admin",
-  "if (step?.flowId === \"m1.gbp.booking_link\" && task?.google_push && task.google_push.by === \"rga\" && task.google_push.state === \"on_google\") return bk36DoneCardHtml(task);",
-  "",
   1
  ],
  [
@@ -228,6 +214,83 @@
   "bookinglink",
   "    if (!r.ok) return empty({ ok: false, status: r.status || 0, why: \"http\" });",
   "    if (!r.ok) return empty({ ok: true });",
+  1
+ ],
+ [
+  "a link on Google shows What the client sent in the row",
+  "admin",
+  "if (step?.flowId === \"m1.gbp.booking_link\" && task?.google_push && task.google_push.state === \"on_google\") return \"\";",
+  "",
+  1
+ ],
+ [
+  "the done card is the old What this produced again",
+  "admin",
+  "            : o.flowId === \"m1.gbp.booking_link\" && s.task?.google_push?.state === \"on_google\" ? `<div class=\"ob-done-card\">${bk36DoneCardHtml(s.task, state.selectedClient && state.selectedClient.id)}</div>`\n",
+  "",
+  1
+ ],
+ [
+  "Undo comes back on the done row",
+  "admin",
+  "    || (id === \"m1.gbp.booking_link\" && !!(t && t.google_push && t.google_push.state === \"on_google\"));   // step36_done_card_v2: no Undo",
+  "    || false;",
+  1
+ ],
+ [
+  "the client's wait shows green",
+  "admin",
+  "step(false, \"Client keeps or changes it\", \"in their To do · waiting\")",
+  "step(true, \"Client keeps or changes it\", \"in their To do · waiting\")",
+  1
+ ],
+ [
+  "the link isn't the title",
+  "admin",
+  "<b class=\"ob-dc-l\">${escapeHtml(bk36Clean(link))}</b>",
+  "<b class=\"ob-dc-l\">Their booking link</b>",
+  1
+ ],
+ [
+  "Try the link goes",
+  "admin",
+  "${tryUrl ? `<a class=\"admin-button admin-button-secondary\" href=\"${escapeAttribute(tryUrl)}\" target=\"_blank\" rel=\"noopener noreferrer\">Try the link ↗</a>` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "Change the link auto-settles on Google's own link",
+  "admin",
+  "  if (gl && gl.opens && !change) return { sc: \"keep\"",
+  "  if (gl && gl.opens) return { sc: \"keep\"",
+  1
+ ],
+ [
+  "Change the link offers the link already on Google",
+  "admin",
+  "const o2 = [...tools, ...pages, ...contact].filter((x) => bk36Clean(x.url) !== cur);",
+  "const o2 = [...tools, ...pages, ...contact];",
+  1
+ ],
+ [
+  "the old write-up isn't cleared on put",
+  "bookingfn",
+  "  delete t.auto_result;\n  const saved = await writeStepTasks(supa, rec, { ...rec.tasks, [STEP]: t });\n  if (!saved || !saved.tasks || !saved.tasks[STEP] || !saved.tasks[STEP].rga_put)",
+  "  const saved = await writeStepTasks(supa, rec, { ...rec.tasks, [STEP]: t });\n  if (!saved || !saved.tasks || !saved.tasks[STEP] || !saved.tasks[STEP].rga_put)",
+  1
+ ],
+ [
+  "the done card names Google's button",
+  "admin",
+  "const note = already ? \"Google already had this link and it opens, so nothing was sent.\" : \"Visits from Google are counted (our tracking tag).\";",
+  "const note = already ? \"Google already had this link and it opens, so nothing was sent.\" : \"Google's Book button opens it. Visits from Google are counted (our tracking tag).\";",
+  1
+ ],
+ [
+  "Change the link calls a tile RGA's pick",
+  "admin",
+  "${i === 0 && !change ? `<span class=\"ob-zc-new\">RGA's pick</span>`",
+  "${i === 0 ? `<span class=\"ob-zc-new\">RGA's pick</span>`",
   1
  ]
 ]

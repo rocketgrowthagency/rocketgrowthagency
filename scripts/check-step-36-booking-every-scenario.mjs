@@ -28,7 +28,7 @@ const esc = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const a0 = AJS.indexOf("const BK36_CHECK = "), a1 = AJS.indexOf("async function bk36Check(");
 const d0 = AJS.indexOf("function bk36DoneCardHtml("), d1 = AJS.indexOf("\n}\n", d0);
 if (a0 < 0 || a1 < a0 || d0 < 0 || d1 < 0) { console.error("⚠️  INDETERMINATE — admin step 36's block moved"); process.exit(2); }
-const ctx = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg data-g></svg>", OB_WEB_TILE: "<svg data-web></svg>", G_ICON: { ok: "✓", rga: "↻", you: "!" },
+const ctx = { Date, escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg data-g></svg>", OB_WEB_TILE: "<svg data-web></svg>", G_ICON: { ok: "✓", rga: "↻", you: "!" },
   adminGcardWhen: () => "Oct 29, 4:20 PM" };
 vm.createContext(ctx);
 try { vm.runInContext(`${AJS.slice(a0, a1)}\n${AJS.slice(d0, d1 + 2)}\nthis.view = bk36View; this.card = bk36CardFor; this.done = bk36DoneCardHtml;`, ctx); }
@@ -76,15 +76,34 @@ const saidH = ctx.card(said, "c1", said.opts[1].url);
 if (!/Google said no/.test(saidH) || !/Google didn't accept this link\./.test(saidH) || !/data-bk36-other>Use the other option/.test(saidH)) fail("step 36: Google saying no doesn't show Google's words + Use the other option");
 const verH = html(cases[0][1], {}, true);
 if (!/Waiting on verification/.test(verH) || !/Put it on Google is paused/.test(verH) || /data-bk36-put/.test(verH)) fail("step 36: verify-again doesn't pause the button");
-// the done card (part 1 "after")
-const doneH = ctx.done({ google_push: { state: "on_google", by: "rga", link: "https://joes.com/book", at: "2026-10-29T20:00:00Z" }, rga_put: { at: "2026-10-29T20:00:00Z", url: "joes.com/book", ack: null } });
-if (!/On Google · read back/.test(doneH) || !/joes\.com\/book/.test(doneH) || !/tracking tag added, so visits from Google count in their reports/.test(doneH) || !/The client has a To do to keep it or change it/.test(doneH)) fail("step 36: the done card isn't the mockup's (link, read back, tag, the client's To do)");
-const keptH = ctx.done({ google_push: { state: "on_google", by: "rga", link: "https://joes.com/book" }, rga_put: { url: "joes.com/book", ack: { decision: "keep", at: "2026-10-30T10:00:00Z" } } });
-if (!/The client kept it/.test(keptH)) fail("step 36: the done card doesn't say the client kept it");
+// the done card (approved step36_done_card_v2): the result on top, the loop in one line, Try the link ↗ · Change the link…, a history line
+const G1 = { state: "on_google", by: "rga", link: "https://joes.com/book", sent: "https://joes.com/book?utm_source=google", at: "2026-10-30T00:41:58Z" };
+const doneH = ctx.done({ google_push: G1, rga_put: { at: "2026-10-30T00:41:58Z", url: "https://joes.com/book", ack: null } }, "c1");
+if (!/On Google · read back/.test(doneH) || !/class="ob-dc-l">joes\.com\/book</.test(doneH)) fail("step 36 done: the header isn't ✓ On Google · read back + the link as the title");
+if (!/ob-dc-loop n3/.test(doneH) || !/RGA's pick/.test(doneH) || !/read back 5:41 PM/.test(doneH) || !/ob-dc-st wait.*Client keeps or changes it.*in their To do · waiting/s.test(doneH)) fail("step 36 done: the loop isn't RGA's pick ✓ · On Google ✓ · the client's answer (waiting)");
+if (!/Visits from Google are counted \(our tracking tag\)\./.test(doneH) || !/href="https:\/\/joes\.com\/book\?utm_source=google" target="_blank" rel="noopener noreferrer">Try the link ↗<\/a>/.test(doneH) || !/data-bk36-change="c1">Change the link…/.test(doneH)) fail("step 36 done: the note / Try the link ↗ / Change the link… aren't the mockup's");
+if (!/History ▸/.test(doneH) || !/Put on Google by RGA · Oct 29, 5:41 PM · read back/.test(doneH)) fail("step 36 done: the history line isn't the latest event, folded");
+if (/The client has a To do|tracking tag added|Undo/.test(doneH)) fail("step 36 done: v1's words (or an Undo) are back");
+const keptH = ctx.done({ google_push: G1, rga_put: { url: "https://joes.com/book", at: "2026-10-30T00:41:58Z", ack: { decision: "keep", at: "2026-10-30T18:00:00Z" } } }, "c1");
+if (/ob-dc-st wait/.test(keptH) || !/Client kept it/.test(keptH)) fail("step 36 done: the client's Keep it doesn't turn the third step green");
+const ownH = ctx.done({ google_push: { state: "on_google", link: "https://joes.com/mine", at: "2026-10-30T18:00:00Z" }, client_input_at: "2026-10-30T18:00:00Z" }, "c1");
+if (!/Their own link/.test(ownH) || !/ob-dc-loop n2/.test(ownH)) fail("step 36 done: the client's own link isn't the same card (Their own link ✓ · On Google ✓)");
+const alrH = ctx.done({ google_push: { state: "on_google", by: "rga", reason: "already_on_google", link: "https://joes.com/book", at: "2026-10-30T18:00:00Z" } }, "c1");
+if (!/Google already had it/.test(alrH) || !/nothing was sent/.test(alrH)) fail("step 36 done: Google's own link isn't the same card (Google already had it)");
+// the card sits below the row, replacing "What this produced"; no Undo on the row; the old write-up is cleared on put
+if (!/: o\.flowId === "m1\.gbp\.booking_link" && s\.task\?\.google_push\?\.state === "on_google" \? `<div class="ob-done-card">\$\{bk36DoneCardHtml\(s\.task, state\.selectedClient && state\.selectedClient\.id\)\}<\/div>`/.test(AJS)) fail("step 36 done: the card isn't the row's done card (the old \"What this produced\" shows)");
+if (!/\(id === "m1\.gbp\.booking_link" && !!\(t && t\.google_push && t\.google_push\.state === "on_google"\)\);   \/\/ step36_done_card_v2: no Undo/.test(AJS)) fail("step 36 done: the row still has Undo / re-run");
+if ((FN.match(/delete t\.auto_result;/g) || []).length !== 3) fail("step 36: put / settle don't clear the old write-up");
+// Change the link…: the pick card again, the link on Google now named, never auto-settled
+const chg = ctx.view({ ...T("https://joes.com/book", true), read: { ok: true }, pages: [page("/book", "book"), page("/estimate", "quote")], tools: [] }, {}, false, true);
+if (chg.sc !== "pick" || !chg.change || chg.opts.some((o) => /\/book$/.test(o.url)) || chg.cur !== "joes.com/book") fail(`step 36 Change the link: not the pick card without the current link (${JSON.stringify(chg)})`);
+const chgH = ctx.card(chg, "c1", chg.opts[0].url);
+if (/RGA's pick/.test(chgH)) fail("step 36 Change the link: a tile is called RGA's pick (RGA chooses here; a contact page is never RGA's pick)");
+if (!/Change the link/.test(chgH) || !/On Google now: joes\.com\/book/.test(chgH) || !/data-bk36-cancel>Keep the link on Google/.test(chgH) || /Remind the client instead/.test(chgH)) fail("step 36 Change the link: the card doesn't name the link on Google now / offer Keep the link on Google");
 // 🔴 never a "Book button" promise anywhere in step 36 or the To do (Google picks the button's words — step10_booking_link_v2)
 const bkBlock = AJS.slice(a0, a1) + AJS.slice(d0, d1);
 if (/Shows as a Book button|a Book button|Book button opens|tap Book\b|tap <b>Book/i.test(bkBlock + doneH)) fail("step 36 promises a \"Book button\" (Google picks the button's words)");
-if (!/if \(step\?\.flowId === "m1\.gbp\.booking_link" && task\?\.google_push && task\.google_push\.by === "rga" && task\.google_push\.state === "on_google"\) return bk36DoneCardHtml\(task\);/.test(AJS)) fail("step 36: RGA's put shows \"What the client sent\" instead of the done card");
+if (!/if \(step\?\.flowId === "m1\.gbp\.booking_link" && task\?\.google_push && task\.google_push\.state === "on_google"\) return "";/.test(AJS)) fail("step 36: a link on Google shows \"What the client sent\" inside the row (its card is below the row)");
 for (const c of [".ob-zc.bad {", ".ob-zc.care {", ".ob-zc-place.r.pick {", ".ob-zc-checks {", ".ob-zc-radio {"]) if (!ACSS.includes(c)) fail(`step 36: the style ${c} is gone`);
 
 // ── the server ───────────────────────────────────────────────────────────────────────────────────
