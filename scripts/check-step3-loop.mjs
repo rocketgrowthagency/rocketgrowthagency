@@ -7,10 +7,12 @@
 //   4 the step is LOCKED (shared/step-lock.js): reopen refused · Request a change stored · admin unlock reopens it
 //   5 the client's card (accessCardHtml, lifted) shows "Access confirmed" with the role, account and builder
 // Covers a client starting from scratch AND one whose step was ticked done earlier with nothing recorded (RGA's own test record).
+// 2026-10-30 night fixer: the client's card (5) lifts the card system too (csBlock) — accessCardHtml draws csCard since client_step03_access_v1
 //   exit 0 holds · 1 broken · 2 harness
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = `${SITE}/netlify/functions`, FNS_REAL = fs.realpathSync(FNS), req = createRequire(`${FNS}/x.js`);
 const read = (r) => fs.readFileSync(`${SITE}/${r}`, "utf8");
@@ -111,7 +113,7 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
     googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: (id, t) => stepLock(id, t, {}), _rcEditing: new Set(), _accHosts: {}, ACC_FILES: {}, _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "", RC_LOCK: "" });
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
-{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // the shared plan card (steps_1_4_clean_v1) + the client card system (10-29)
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   // 🔒 step3_finish_v1 B (Chris 10-28 "this is confusing"): ONE plain line + "Change ›"; the choice opens in place with Save / Cancel
   { vm.runInContext(lift("accMergeChoiceHtml"), ctx);

@@ -19,7 +19,9 @@ const SITE = "https://www.rocketgrowthagency.com", PORTAL = `${SITE}/portal/`;
 const WHO = WALK_CLIENTS.main;
 const CS = JSON.parse(fs.readFileSync(`${SITE_DIR}/data/playbooks/client-steps.json`, "utf8"));
 const IDS = CS.month1.filter((x) => x.clientStepNo != null).map((x) => x.id);
-const ASK = /Your move|RGA is on it|Only you can do this step|Do you want call tracking\?|Building your keyword plan|Setting up form tracking/;
+// 🔄 2026-10-30 night fixer: client_step05_keyword_plan_v1 says "RGA is building your keyword plan" (lower-case b) — the word list
+// went blind to it, so it matches either case now (and the building card is caught by its STATE below as well)
+const ASK = /Your move|RGA is on it|Only you can do this step|Do you want call tracking\?|[Bb]uilding your keyword plan|Setting up form tracking/;
 // 🔄 done_without_record_v2 (approved 10-26): a done card shows the RESULT, never our bookkeeping
 const BOOKKEEPING = /Marked done|not on record|before this page|Not recorded/i;
 let link;
@@ -68,7 +70,8 @@ try {
     // says — the word list went blind when the cards were reworded (10-26: "How should we count your calls?", "One tag on your website")
     const you = c.querySelector(".pm-k5-plan.you, .gcard.you");
     // the step 5 "building" tracker (Real search data → RGA locks it) is "RGA is on it", whatever its words
-    const building = !!c.querySelector(".pm-k5-prog");
+    // 🔄 2026-10-30: on the card system "RGA is on it" is the blue card (csCard tone "rga" → .pm-cs-card.rga), the old tracker is gone
+    const building = !!c.querySelector(".pm-k5-prog, .pm-cs-card.rga");
     return { id, pill, said: (c.textContent || "").replace(/\s+/g, " ").trim(), you: you ? (you.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60) : "", building, how };
   }), IDS);
   const seen = rows.filter((r) => !r.missing);

@@ -79,6 +79,14 @@ const tagged = (code.match(/<div class="ob-step[^`]*?data-ob-step=/g) || []).len
 if (tagged < states.length) {
   F(`only ${tagged} of the ${states.length} card states carry data-ob-step — a state without it can never be scrolled back to`);
 }
+// 🔴 A COUNT GOES BLIND WHEN A TEMPLATE IS ADDED (2026-10-30 night fixer): admin steps 29–38 added a 6th card template, so the done
+// card could drop its id and the count still reached 5. Each Month 1 card template must carry its own id; the mature-stage
+// checklist (`mat-row`) is not a Month 1 card and no writer reveals it.
+for (const m of code.matchAll(/<div class="ob-step[ "]/g)) {
+  const open = code.slice(m.index, code.indexOf("><div", m.index) + 1);
+  if (/mat-row/.test(open)) continue;
+  if (!/data-ob-step=/.test(open)) F(`admin.js:${code.slice(0, m.index).split("\n").length} draws a step card with no data-ob-step — that card can never be scrolled back to (${open.slice(0, 70)})`);
+}
 
 // ═══ 3 — EVERY PATH THAT CHANGES A STEP REVEALS IT ══════════════════════════════════════════
 // 🔑 The list is derived from the product, not typed: every function that re-renders the scope

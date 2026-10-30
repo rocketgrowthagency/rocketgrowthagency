@@ -131,5 +131,26 @@
   "const gcardWhen = (x) => String(x || \"\").replace(/^checked\\b/i, \"Last checked\")",
   "const gcardWhen = (x) => String(x || \"\")",
   1
+ ],
+ [
+  "a system card's wait band goes back to the old grey",
+  "portalcss",
+  ".pm-cs .pm-k5-h.wait { background:var(--cs-wait-bg); color:var(--cs-wait); }",
+  ".pm-cs .pm-k5-h.wait { background:var(--portal-bg,#f1f2f4); color:var(--portal-muted,#616161); }",
+  1
+ ],
+ [
+  "a system card's band carries a topic icon (the Google logo)",
+  "portal",
+  "${CS_ICON[tone] || CS_ICON.ok}<b>${head}</b>",
+  "${GOOGLE_G}<b>${head}</b>",
+  1
+ ],
+ [
+  "hours done: Maps leaves the card's foot for under the card",
+  "portal",
+  "body, foot: csFoot({ maps: maps || \"\" }) })}`\n    + pcActs(`<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change something</button>`)",
+  "body, foot: csFoot() })}`\n    + pcActs(`<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change something</button>${gcardMaps(maps)}`)",
+  1
  ]
 ]

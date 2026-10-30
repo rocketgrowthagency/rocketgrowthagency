@@ -15,6 +15,8 @@
 //   4. a misfit offers Turn down first (filled) with "Send to Google anyway" beside it; the turn-down box opens
 //      with the reason that fits already picked
 //   5. a photo already on Google that is a second copy of a filled slot leads with "Not a slot photo"
+// 🔄 2026-10-30 night fixer: the lifted admin slice now holds the steps 29–38 MutationObservers + click binds — the vm
+//   gets inert MutationObserver / document / window stubs (harness lag only; no assertion changed)
 // exit 0 = a photo can't go up twice · 1 = it can · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 import fs from "node:fs";
@@ -103,6 +105,8 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const H = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: i === 0 ? "PROFILE" : "INTERIOR", do: i === 6 ? "The meeting room, set for a client." : i === 7 ? "A wide shot of the workspace." : `Shot ${i + 1}` }));
 const ctx = {
+  // the lifted slice now seats admin steps 31/32/36 by top-level MutationObservers (steps 29–38 redesign) — inert here
+  MutationObserver: class { observe() {} disconnect() {} }, document: { documentElement: {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }, window: {},
   secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
   photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   state: { selectedClient: { id: "c1" }, photos: [

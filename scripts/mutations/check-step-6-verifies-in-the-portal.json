@@ -79,8 +79,43 @@
  [
   "no Maps link",
   "portal",
-  "    const maps = f.mapsUri ? `<a class=\"gcard-maps\" href=\"${escapeAttribute(f.mapsUri)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\";\n    // 🔒 10-23 (mockup exactly)",
-  "    const maps = false ? `<a class=\"gcard-maps\" href=\"${escapeAttribute(f.mapsUri)}\" target=\"_blank\" rel=\"noopener\">See it on Google Maps ↗</a>` : \"\";\n    // 🔒 10-23 (mockup exactly)",
+  "return csCard({ tone: \"ok\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  "return csCard({ tone: \"ok\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: \"\" }) });",
+  1
+ ],
+ [
+  "the verified card isn't green",
+  "portal",
+  "return csCard({ tone: \"ok\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  "return csCard({ tone: \"wait\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  1
+ ],
+ [
+  "the verified card offers Check again",
+  "portal",
+  "return csCard({ tone: \"ok\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  "return csCard({ tone: \"ok\", head: \"Verified by Google\", side: day ? `checked ${escapeHtml(day)}` : \"\", attrs: \" data-gv-card\", body: facts + `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>`, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  1
+ ],
+ [
+  "How verification works never joins the card's foot",
+  "portal",
+  "    ft.querySelector(\":scope > .how\")?.remove(); ft.appendChild(b);",
+  "    ft.querySelector(\":scope > .how\")?.remove();",
+  1
+ ],
+ [
+  "the how-to opens outside the card",
+  "portal",
+  "    f.classList.add(\"pm-cs-howb\"); ft.after(f); f.setAttribute(\"data-seated\", \"1\");",
+  "    f.classList.add(\"pm-cs-howb\"); f.setAttribute(\"data-seated\", \"1\");",
+  1
+ ],
+ [
+  "a system row's how-to skips the system seat",
+  "portal",
+  "if (row && row.classList.contains(\"pm-cs\") && csCardOf(row)) { seatCsFoot(row, f); continue; }",
+  "if (false) { seatCsFoot(row, f); continue; }",
   1
  ]
 ]

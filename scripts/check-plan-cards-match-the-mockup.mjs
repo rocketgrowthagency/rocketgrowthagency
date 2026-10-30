@@ -7,6 +7,8 @@
 // - "Call held · Friday, October 9 at 9:00 AM" instead of "Call held · Fri, Oct 9" with the time on the right;
 // - "Something's not right?" as a boxed button instead of the mockup's quiet link.
 // This gate draws the shipped functions with the shipped CSS in real Chrome and reads what a client SEES.
+// 🔄 2026-10-30 night fixer: step 1 held's quiet link is now kickoff_after_call_v1's (APPROVED Chris 10-29 6:35 PM, shipped in batch 1):
+// "Questions about the call? Ask RGA ›" opens a question, never a change request — same quiet-link test (no border, no fill, under the card).
 // Reads files only (no Supabase, no network). SHOTS=<dir> saves the card.
 import fs from "node:fs";
 import path from "node:path";
@@ -14,17 +16,18 @@ import path from "node:path";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = []; const fail = (m) => F.push(m);
-const src = read("portal/portal.js"), css = read("portal/portal.css"), mock = read("reports/mockups/steps_1_4_clean_v1.html");
+const src = read("portal/portal.js"), css = read("portal/portal.css"), mock = read("reports/mockups/steps_1_4_clean_v1.html"), after = read("reports/mockups/kickoff_after_call_v1.html");
 const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = src.indexOf("{", m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
 const line = (name) => (new RegExp(`^const ${name} = .*;$`, "m").exec(src) || [""])[0];
 const pcSlice = (() => { const a = src.indexOf("const PC_TICK ="), b = src.indexOf("const pcActs ="); return a < 0 || b < 0 ? "" : src.slice(a, src.indexOf("\n", b)); })();
 
 // ── 1 · the mockup still draws what this gate holds the product to ──
 for (const [re, what] of [[/<b>Call held · Fri, Oct 9<\/b><span>9:00 AM<\/span>/, "step 1 held: \"Call held · Fri, Oct 9\" with 9:00 AM on the right"],
-  [/<span class="lnk">Something's not right\?<\/span>/, "step 1 held: \"Something's not right?\" as a quiet link"],
   [/<span class="b">Edit access<\/span><span class="lnk">Add your builder<\/span>/, "step 3: Edit access + the quiet \"Add your builder\""]]) {
   if (!re.test(mock)) { console.error(`⚠️  INDETERMINATE — the approved mockup no longer draws ${what}; re-read it before changing this gate`); process.exit(2); }
 }
+// step 1 held's link: superseded for step 1 by kickoff_after_call_v1 (a held call can't be changed — a question, not a change)
+if (!/<!-- STATUS: APPROVED/.test(after) || !/<span class="q">Questions about the call\? <a>Ask RGA ›<\/a><\/span>/.test(after)) { console.error("⚠️  INDETERMINATE — kickoff_after_call_v1 is no longer APPROVED with \"Questions about the call? Ask RGA ›\" under the held card; re-read it before changing this gate"); process.exit(2); }
 if (/How this step works/.test(mock)) { console.error("⚠️  INDETERMINATE — the mockup now draws a \"How this step works\" toggle; re-read it"); process.exit(2); }
 
 // ── 2 · the row: a done step whose plan card is the record draws no toggle, and no hairline above the card ──
@@ -76,14 +79,16 @@ try {
   const r = await page.evaluate(() => {
     const h = document.getElementById("h");
     h.innerHTML = kickoffDoneHtml({}, { start: "2026-10-09T15:00:00Z", client_tz: "America/Denver", recap_sent_at: "2026-10-09T18:00:00Z" });
-    const tell = h.querySelector(".pm-k5-tell"), cs = tell ? getComputedStyle(tell) : null, doit = getComputedStyle(h);
+    const tell = h.querySelector(".pm-k5-askq"), ask = tell && tell.querySelector("button.pm-k5-asklink[data-ask]"), cs = ask ? getComputedStyle(ask) : null, doit = getComputedStyle(h);
     return { head: (h.querySelector(".pm-k5-h b") || {}).textContent, side: (h.querySelector(".pm-k5-h span") || {}).textContent,
-      tl: (h.querySelector(".pm-pc-tl") || {}).innerText, tell: tell && tell.textContent, tellBorder: cs && cs.borderTopWidth, tellBg: cs && cs.backgroundColor,
+      tl: (h.querySelector(".pm-pc-tl") || {}).innerText, tell: tell && tell.textContent, askStep: ask && ask.getAttribute("data-ask-step"), wrong: !!h.querySelector("[data-step-wrong], [data-step-edit]"),
+      tellBorder: cs && cs.borderTopWidth, tellBg: cs && cs.backgroundColor, tellLine: cs && cs.textDecorationLine,
       doitBorder: doit.borderTopWidth, under: !!(tell && tell.closest(".pm-k5-acts") && !tell.closest(".pm-k5-plan")) };
   });
   if (r.head !== "Call held · Fri, Oct 9" || r.side !== "9:00 AM") fail(`step 1 held isn't "Call held · Fri, Oct 9" with 9:00 AM on the right (${r.head} · ${r.side})`);
   if (!/^Recap in your inbox\s+Oct 9$/.test(String(r.tl || "").trim())) fail(`step 1 held lost "Recap in your inbox · Oct 9" (${r.tl})`);
-  if (r.tell !== "Something's not right?" || r.tellBorder !== "0px" || !/rgba\(0, 0, 0, 0\)|transparent/.test(r.tellBg || "") || !r.under) fail(`"Something's not right?" isn't the mockup's quiet link under the card (border ${r.tellBorder} · bg ${r.tellBg})`);
+  if (r.tell !== "Questions about the call? Ask RGA ›" || r.askStep !== "m1.kickoff.call" || r.tellBorder !== "0px" || !/rgba\(0, 0, 0, 0\)|transparent/.test(r.tellBg || "") || r.tellLine !== "underline" || !r.under) fail(`"Questions about the call? Ask RGA ›" isn't kickoff_after_call_v1's quiet link under the card (${r.tell} · border ${r.tellBorder} · bg ${r.tellBg} · ${r.tellLine})`);
+  if (r.wrong) fail("a held kickoff call offers a change request again (kickoff_after_call_v1: a question, not a change)");
   if (r.doitBorder !== "0px") fail(`a hairline (${r.doitBorder}) sits above the plan card`);
   if (process.env.SHOTS) { fs.mkdirSync(process.env.SHOTS, { recursive: true }); await (await page.$("#h")).screenshot({ path: path.join(process.env.SHOTS, "step1-held.png") }); }
   // the date speaks the CLIENT's zone, never the viewer's: 9:00 AM in Denver is 11:00 AM in New York
@@ -92,4 +97,4 @@ try {
 } finally { await browser.close(); }
 
 if (F.length) { console.error("🔴 the plan cards drifted from the approved mockup:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ the done plan cards are steps_1_4_clean_v1: no \"How this step works\" toggle and no hairline above a plan card (5 steps), \"Call held · Fri, Oct 9\" with the time (client's zone) on the right, \"Something's not right?\" / \"Add your builder\" as quiet links under the card");
+console.log("✅ the done plan cards are steps_1_4_clean_v1: no \"How this step works\" toggle and no hairline above a plan card (5 steps), \"Call held · Fri, Oct 9\" with the time (client's zone) on the right, \"Questions about the call? Ask RGA ›\" / \"Add your builder\" as quiet links under the card");

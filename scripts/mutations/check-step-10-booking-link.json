@@ -271,5 +271,47 @@
   ".replace(/&amp;|&#0*38;|&#x0*26;/gi, \"&\")",
   "",
   1
+ ],
+ [
+  "the done card loses its Counted row",
+  "portal",
+  ": pcFact(\"Counted\", \"Each visit from Google, in your monthly report\")), foot })}${change}</div>`;",
+  ": \"\"), foot })}${change}</div>`;",
+  1
+ ],
+ [
+  "the done card's Link row promises nothing about the button any more",
+  "portal",
+  "body: pcFact(\"Link\", escapeHtml(siteShow(link)), put ? \"Put on by RGA · the page people book on\" : \"Google picks the button's words\")",
+  "body: pcFact(\"Link\", escapeHtml(siteShow(link)), put ? \"Put on by RGA · the page people book on\" : \"\")",
+  1
+ ],
+ [
+  "Change link is back on the booking card",
+  "portal",
+  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change link</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+  1
+ ],
+ [
+  "See it on Google Maps drops out of the booking card's foot",
+  "portal",
+  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: \"\" });",
+  1
+ ],
+ [
+  "Customers call you loses Add a link any time",
+  "portal",
+  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+  1
+ ],
+ [
+  "Customers call you has no Change something",
+  "portal",
+  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}</div>`;",
+  1
  ]
 ]

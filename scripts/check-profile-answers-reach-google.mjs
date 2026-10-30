@@ -10,8 +10,12 @@
 // url_appointment as a URL attribute).
 //
 // Google is FAKED (deps): nothing here reaches a real profile. The status line is drawn in Chrome with portal.css.
+// 2026-10-30 night fixer: gbpPushHtml draws client steps 7 / 8 / 9 (hours · details · booking link) as the system card since
+// client_card_system_v1 — the lift adds csBlock + pcDate + pcActs, and the drawn words are held to the approved
+// client_step07_hours_v1 / client_step08_attributes_v1 / client_step09_booking_link_v1 + the card system's "RGA is on it".
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -152,7 +156,7 @@ if (/60%\+/.test(read("data/playbooks/client-steps.json"))) fail("step 11's unso
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 // 🔑 10-16: gbpPushHtml also draws step 7's progress and step 9's card, so their helpers ride along
-const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("EDIT_IN_PLACE"), line("BK_NOUN"), pick(/^function bookingCardHtml\(/m), pick(/^function attrsCardHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G")];
+const lifted = [line("_editingSteps"), line("FACT_WORDS"), line("siteShow"), pick(/^function factsSummary\(/m), pick(/^function fmtDateTimeDot\(/m), pick(/^function hoursCardHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function escapeHtml\(/m), pick(/^function hoursSummary\(/m), pick(/^function gbpPushHtml\(/m), line("EDIT_IN_PLACE"), line("BK_NOUN"), pick(/^function bookingCardHtml\(/m), pick(/^function attrsCardHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("GBP_STEPS"), line("GBP_THING"), line("GBP_DAY"), line("hm12"), line("monthDay"), line("GOOGLE_G"), line("pcDate"), line("pcActs")];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a portal helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -161,9 +165,14 @@ try {
   const page = await browser.newPage();
   await page.setContent("<html><body><div id=h></div></body></html>");
   await page.addStyleTag({ content: read("portal/portal.css") });
-  await page.addScriptTag({ content: lifted.join("\n") });
+  await page.addScriptTag({ content: `${lifted.join("\n")}\n${csBlock(portal, lifted.join("\n"))}` });
   const r = await page.evaluate(() => {
-    const draw = (id, g) => { const h = document.getElementById("h"); h.innerHTML = gbpPushHtml({ id }, { google_push: g }); return h.innerText.replace(/\s+/g, " ").trim(); };
+    const h = document.getElementById("h");
+    const t = (e) => (e ? e.innerText.replace(/\s+/g, " ").trim() : "");
+    // what the client sees: the whole text, the card's tone, its band, its status row (kind + words) and the buttons under the card
+    const draw = (id, g) => { h.innerHTML = gbpPushHtml({ id }, { google_push: g }); const card = h.querySelector(".pm-cs-card"), st = card?.querySelector(".pm-cs-st");
+      return { text: t(h), tone: card ? [...card.classList].filter((c) => !/^pm-/.test(c)).join(" ") : "", band: t(card?.querySelector(".pm-k5-h")), st: st ? { kind: [...st.classList].filter((c) => c !== "pm-cs-st").join(" "), b: t(st.querySelector("b")), small: t(st.querySelector("small")) } : null,
+        under: [...h.querySelectorAll(".pm-k5 > .pm-k5-acts button")].map(t).join("|"), inCard: card ? [...card.querySelectorAll("button")].map(t).join("|") : "" }; };
     const days = { mon: { open: "09:00", close: "18:00" }, tue: { open: "09:00", close: "18:00" }, wed: { open: "09:00", close: "18:00" }, thu: { open: "09:00", close: "18:00" }, fri: { open: "09:00", close: "18:00" }, sat: { closed: true }, sun: { closed: true } };
     return {
       sum: hoursSummary(days),
@@ -171,16 +180,17 @@ try {
       rga: draw("m1.gbp.booking_link", { state: "with_rga", error: "403" }),
       fix: draw("m1.gbp.booking_link", { state: "needs_client", said: "This link doesn't open.", fix: "Paste the public link." }),
       attrs: draw("m1.gbp.attributes", { state: "on_google", after: ["is_owned_by_women"], labels: { is_owned_by_women: "Identifies as women-owned" }, at: "2026-10-15T16:00:00Z" }),
-      other: draw("m1.kickoff.call", { state: "on_google" }),
+      other: draw("m1.kickoff.call", { state: "on_google" }).text,
     };
   });
   if (r.sum !== "Mon–Fri 9 AM–6 PM · Sat–Sun closed") fail(`the hours summary reads "${r.sum}"`);
-  // (the small label is uppercase by CSS, so the match ignores case)
-  // 🔒 one_google_card_v1: the summary, then "Checked on Google <date>" in the card's bottom line
-  if (!/^On Google Your hours Last checked Oct 15 Mon–Fri 9 AM–6 PM · Sat–Sun closed$/i.test(r.on)) fail(`a verified step doesn't say it's on Google (${r.on})`);
-  if (!/^RGA is on it Your booking link Nothing needed from you Google asked us to change something\. RGA is finishing it\.$/i.test(r.rga) || /403/.test(r.rga)) fail(`RGA's fix doesn't read "Going on your Google profile", or shows Google's raw text (${r.rga})`);
-  if (!/^Google said no This link doesn't open\. How to fix: Paste the public link\. Fix it$/i.test(r.fix)) fail(`a refusal the client fixes doesn't read Google said + How to fix (${r.fix})`);
-  if (!/Identifies as women-owned/.test(r.attrs)) fail("step 11's verified details aren't named");
+  // 🔒 client_step07_hours_v1 "Done · on Google" (approved 10-29): the green system card, its band says the hours ARE on Google + "checked <date>", the hours in the card
+  if (r.on.tone !== "ok" || !/on Google/i.test(r.on.band) || !/checked Oct 15$/.test(r.on.band) || !/Mon–Fri 9 AM–6 PM · Sat–Sun closed/.test(r.on.text)) fail(`a verified step doesn't say it's on Google (${r.on.tone} · band "${r.on.band}" · ${r.on.text})`);
+  // 🔒 client_card_system_v1 "RGA is on it": the blue card, one blue status row — RGA is finishing it, nothing needed from you — never Google's raw text, nothing for the client to press
+  if (r.rga.tone !== "rga" || !/booking link/i.test(r.rga.band) || r.rga.st?.kind !== "rga" || !/RGA is finishing it/.test(r.rga.text) || !/Nothing needed from you/.test(r.rga.text) || /403/.test(r.rga.text) || r.rga.under || r.rga.inCard) fail(`RGA's fix doesn't read as RGA's (blue card, "RGA is finishing it. Nothing needed from you."), or shows Google's raw text (${r.rga.tone} · ${r.rga.text})`);
+  // 🔒 client_step07/08 "Google said no" + the card system's "A problem": the red card, Google's reason in plain words and the one fix in a red status row, ONE "Fix it" under the card
+  if (r.fix.tone !== "bad" || !/^Google didn't accept/.test(r.fix.band) || r.fix.st?.kind !== "bad" || r.fix.st.b !== "This link doesn't open." || r.fix.st.small !== "Paste the public link." || r.fix.under !== "Fix it" || r.fix.inCard) fail(`a refusal the client fixes doesn't read Google said + how to fix, with one Fix it under the card (${r.fix.tone} · band "${r.fix.band}" · ${JSON.stringify(r.fix.st)} · under "${r.fix.under}")`);
+  if (!/Identifies as women-owned/.test(r.attrs.text)) fail("step 11's verified details aren't named");
   if (r.other) fail("a step that doesn't go on Google draws a Google line");
 } finally { await browser.close(); }
 

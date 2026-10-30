@@ -89,5 +89,47 @@
   "m.from === \"rga\" && !m.test && !m.letter && !m.card &&",
   "m.from === \"rga\" && !m.test && !m.letter &&",
   1
+ ],
+ [
+  "a system step's Messages opens by itself",
+  "portal",
+  "<details class=\"pm-cs-msgs\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
+  "<details class=\"pm-cs-msgs\" open>",
+  1
+ ],
+ [
+  "a system step loses Questions about this step? Ask RGA",
+  "portal",
+  "${row}<details class=\"pm-ask pm-cs-ask\"><summary>Questions about this step? <b>Ask RGA ›</b></summary>${form}</details></div>`;",
+  "${row}</div>`;",
+  1
+ ],
+ [
+  "a system step draws the old email + conversation rows",
+  "portal",
+  "    if (CS_STEPS.has(stepId)) {\n      // the same messages the rows below draw",
+  "    if (false) {\n      // the same messages the rows below draw",
+  1
+ ],
+ [
+  "a system step's conversation keeps its own reply box",
+  "portal",
+  "${talk.length ? threadBlock(stepId, talk, \"\", \"\") : \"\"}",
+  "${talk.length ? threadBlock(stepId, talk, \"\", form) : \"\"}",
+  1
+ ],
+ [
+  "a TEST send counts and shows in a system step's Messages row again (found 10-30: step 3 'Messages · 1 — Step 3 is open')",
+  "portal",
+  "const all = [...letters, ...talk].sort(",
+  "const all = msgs.slice().sort(",
+  1
+ ],
+ [
+  "an open Messages row turns every email row inside it to Hide (found 10-30: the toggle rule wasn't scoped to its own summary)",
+  "portalcss",
+  ".pm-cs-msgs[open] > summary .tog .o { display:none; } .pm-cs-msgs[open] > summary .tog .c { display:inline; }",
+  ".pm-cs-msgs[open] .tog .o { display:none; } .pm-cs-msgs[open] .tog .c { display:inline; }",
+  1
  ]
 ]

@@ -7,6 +7,9 @@
 // and then we match against their GBP", "find discrepancies saying you listed you are this but your GBP shows that", and
 // "make sure its tied to database" + "synced to admin". Found first: no step asked the client their address or whether
 // customers come to them — the portal only READ Google. Google is FAKED here; nothing reaches a real profile.
+// 🔄 2026-10-30 night fixer: section 6 / 9's quotes of the old pcCard (Good to know fold, mapsLink under the card) re-aimed to batch 1's
+// csCard (client_step04_business_facts_v1): rows say "RGA is changing it", areaItems dot / rga chips, Maps in csFoot. The "verify again"
+// line has no home in the approved mockup — left failing for Chris.
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -224,7 +227,14 @@ if (!/ans\.innerHTML = `<span class="ck" aria-hidden="true">✓<\/span><span cla
 if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 // 🔒 superseded 10-20 by the approved step7_check_business_v2 card (factsCardV2) — the full card is RUN in check-steps-6-and-7-confirm-in-the-portal
-if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(js) || !/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told RGA is changing their name / address on Google");
+if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(js)
+  // 🔄 10-30 (client_step04_business_facts_v1): the fact RGA is changing keeps its own status words on its row — name, and how customers reach you
+  || !/const busy = '<span class="pm-fxt-s rga">RGA is changing it<\/span>';/.test(js) || !/row\("Business name", escapeHtml\(a\.name \|\| ci\.name \|\| ""\), changing\("name"\) \? busy : ok\)/.test(js)
+  || !/const comeRow = row\("How customers reach you", come \? "You go to them" : "Customers come to you", changing\("come"\) \? busy : ok,/.test(js)
+  || !/const body = \(changing\("name"\) \? rows\[0\] : ""\)[^\n]*\(changing\("come"\) \? comeRow : ""\)/.test(js)) fail("the client isn't told RGA is changing their name / address on Google");
+// 🔴 NEEDS CHRIS (10-30): the old card's "Good to know" fold said "Google may ask you to verify the business again; we'll tell you if it does."
+// while RGA changes a name / address; client_step04_business_facts_v1 draws no name / address change state and batch 1 dropped the fold
+if (!/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told Google may ask them to verify again while RGA changes their name / address (the old card's line is gone; client_step04_business_facts_v1 is silent)");
 
 // ── 7 · the card: RGA's recommendation drawn side by side; no text box; the state in the input; admin ticks only from Google ──
 {
@@ -272,7 +282,11 @@ if (!/\["Service area", "area", v\.area\?\.keep \|\| v\.area\?\.add \? `\$\{\(v\
   if (X.progressOf(task, null, null).items.some((x) => x.on)) fail("with no read of Google yet, something is called \"on Google\"");
 }
 if (!/const prog = F\.progressOf\(task, now, atNow\);/.test(watch) || !/progress: prog/.test(watch) || !/done_note_until: new Date\(nowMs \+ 86400000\)/.test(watch) || !/let task = rec && rec\.tasks && rec\.tasks\[stepId\];/.test(watch)) fail("the nightly check doesn't store the client's progress / the one-day done note");
-if (!/chip\(placeName\(x\.name\), x\.on \? "on" : "add"\)/.test(js) || !/pcCard\(\{ tone: "rga"[\s\S]{0,300}side: atIso \? `checked \$\{escapeHtml\(pcDate\(atIso\)\)\}` : ""[\s\S]{0,1800}pcActs\(change \+ mapsLink\)/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
+// 🔄 10-30 (client_step04_business_facts_v1, "RGA is adding places"): each place is a chip — on Google = a plain dot, still waiting = RGA's
+// dashed chip — in ONE rga card "checked <date>", See it on Google Maps (the nightly read's own link) in the card's foot, Change something under
+if (!/chip\(placeName\(x\.name\), x\.on \? "on" : "add"\)/.test(js) || !/: \[escapeHtml\(placeName\(x\.name\)\), x\.on \? "dot" : "rga"\]\)/.test(js) || !/\+ \(changing\("area"\) \? csChips\("Service area", areaItems\) : ""\)/.test(js)
+  || !/const mapsUrl = g\.maps_uri \|\| \(g\.progress && g\.progress\.maps_uri\)/.test(js) || !/const foot = csFoot\(\{ maps: mapsUrl \}\);/.test(js)
+  || !/csCard\(\{ tone: "rga", head: `\$\{matching\}[\s\S]{0,400}side: atIso \? `checked \$\{escapeHtml\(pcDate\(atIso\)\)\}` : "", body, foot \}\)\}`\s*\+ pcActs\(change\)/.test(js)) fail("the client's step 7 doesn't show each change (waiting / on Google) with their Google Maps link");
 if (!/function factsNoteHtml\(t\) \{/.test(js) || !/Google doesn't list \$\{/.test(js) || !/today <= g\.done_note_until/.test(js) || !/const fNote = factsNoteHtml\(factsTask\);/.test(js)) fail("the portal's top doesn't say when step 7 is done on Google, or that a place can't be found");
 if (!/\(areaChips \? `<div class="pm-pc-chips">\$\{areaChips\}<\/div>` : ""\)/.test(js)) fail("the client's step 7 doesn't draw the per-change chips");
 {

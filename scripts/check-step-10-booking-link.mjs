@@ -14,6 +14,9 @@
 // url_appointment, so step 10 told every restaurant "Google didn't accept this link". The form also stacked a label + help
 // above a bare box, "Show me how" promised a setup the form couldn't take, the link went on Google untagged, and Change
 // marked the step not-done before anything changed.
+// 🔄 2026-10-30 night fixer: the done / restaurant / "Customers call you" cards are held to client_step09_booking_link_v1 (one green
+// card: Link + Counted rows, Maps in the foot, "Change something"; no mini profile). g.choice is still demanded of the portal —
+// since batch 1 nothing reads it (the "your page" line went with the old card): left failing for Chris, not loosened.
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
@@ -237,7 +240,8 @@ try {
       const band = h.querySelector(".pm-k5-h");
       return { cls: c && c.className, bg: band && getComputedStyle(band).backgroundColor, sel: sel && sel.getAttribute("data-bk-opt"), rec: ([...h.querySelectorAll(".pm-pc-foot")].map((x) => x.innerText).find((x) => /^RGA recommends/.test(x)) || "").replace(/\s+/g, " "),
         text: h.innerText.replace(/\s+/g, " ").trim(), page: (h.querySelector("[data-bk-page].on") || {}).getAttribute?.("data-bk-page") || null, tool: (h.querySelector('[data-bk-url="tool"]') || {}).value || "",
-        types: [...h.querySelectorAll("[data-bk-type]")].map((b) => b.getAttribute("data-bk-type")), act: ((h.querySelector(".pm-k5-acts") || {}).innerText || "").replace(/\s+/g, " ").trim(), edit: !!h.querySelector('[data-step-edit="m1.gbp.booking_link"]'), keep: (h.querySelector('[data-bk-opt="keep"]') || {}).getAttribute?.("data-bk-keep") || null }; };
+        types: [...h.querySelectorAll("[data-bk-type]")].map((b) => b.getAttribute("data-bk-type")), act: ((h.querySelector(".pm-k5-acts") || {}).innerText || "").replace(/\s+/g, " ").trim(), edit: !!h.querySelector('[data-step-edit="m1.gbp.booking_link"]'), editLabel: ((h.querySelector('[data-step-edit="m1.gbp.booking_link"]') || {}).textContent || "").trim(),
+        maps: (h.querySelector(".pm-cs-foot a.lk") || {}).getAttribute?.("href") || null, gprev: !!h.querySelector(".pm-pc-gprev"), csCard: !!h.querySelector(".pm-k5-plan.pm-cs-card.ok"), keep: (h.querySelector('[data-bk-opt="keep"]') || {}).getAttribute?.("data-bk-keep") || null }; };
     const site = { site: "rocketgrowthagency.com", types: [{ ...A, links: [] }], pages: [{ url: "https://www.rocketgrowthagency.com/free-growth-audit/", label: "rocketgrowthagency.com/free-growth-audit" }, { url: "https://www.rocketgrowthagency.com/contact/", label: "rocketgrowthagency.com/contact" }], tools: [] };
     return {
       site: draw(bookingFormHtml(site, null)),
@@ -269,9 +273,15 @@ if (R.noType.sel !== "none" || !/Google doesn't offer your kind of business a bo
 if (R.editing.cls !== "pm-k5-plan ok" || !/On Google now: /.test(R.editing.text) || R.editing.rec) fail("editing a done step doesn't show what's on Google now in a green card");
 // 🔄 10-23 night (steps_6_20_clean_v1 v2): "Your booking link is on Google · checked", the profile picture with its booking button, what it
 // opens, Change link + See it on Google Maps. 🔴 Google picks its button's words — the card never promises "Book online"
-if (!/^pm-k5$/.test(R.done.cls || "") || R.done.act !== "Change link See it on Google Maps ↗" || !R.done.edit || !/^Your booking link is on Google checked Oct 16 /i.test(R.done.text) || !/The book button opens rocketgrowthagency\.com\/contact, your page\. Google picks the button's exact words\./.test(R.done.text) || /Book online|Book button/.test(R.done.text)) fail(`the done card isn't the booking link on Google + the picture + what it opens + Change link + Maps, or it promises a button label (${R.done.text})`);
-if (!/^Your reservations link is on Google checked Oct 16 .*The reserve button opens (?:www\.)?opentable\.com\/r\/bistro, your OpenTable page\./i.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
-if (R.call.act !== "Add a link" || !/Customers call you/.test(R.call.text)) fail("\"Customers call us\" isn't a settled card with Add a link");
+// 🔄 10-30 (approved client_step09_booking_link_v1, "Done · on Google"): one green card — band "Your booking link is on Google · checked",
+// a Link row (the clean link · "Google picks the button's words") + a Counted row, See it on Google Maps in the card's foot, then
+// "Change something" under it. The mini profile with a "Book" button is DROPPED (never promise a Book button).
+if (!/^pm-k5$/.test(R.done.cls || "") || !R.done.csCard || R.done.act !== "Change something" || !R.done.edit || R.done.maps !== "https://maps.google.com/?cid=1" || R.done.gprev
+  || !/^Your booking link is on Google checked Oct 16 Link rocketgrowthagency\.com\/contact Google picks the button's words Counted Each visit from Google, in your monthly report See it on Google Maps ↗ Change something$/.test(R.done.text) || /Book online|Book button/.test(R.done.text)) fail(`the done card isn't the booking link on Google + Link (what it opens) + Counted + Maps in the foot + Change something, or it shows the mini profile / promises a button label (${R.done.text})`);
+if (!/^Your reservations link is on Google checked Oct 16 Link (?:www\.)?opentable\.com\/r\/bistro Google picks the button's words Counted /i.test(R.resDone.text) || R.resDone.act !== "Change something" || /Book online|Book button|booking link/.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
+// 🔄 10-30 (client_step09_booking_link_v1, "Customers call you"): a settled green card, the Call button kept, "Add a link any time.",
+// and the step's one control "Change something" (the mockup: "Change link" / "Add a link" become Change something)
+if (R.call.act !== "Change something" || !R.call.edit || !R.call.csCard || !/^Customers call you Google keeps your Call button\. Add a link any time\. Change something$/.test(R.call.text)) fail(`"Customers call us" isn't a settled card with Add a link any time + Change something (${R.call.text})`);
 if (R.x) fail("a page name from the client's website became HTML");
 
 // step10_booking_link_v2 in the portal / admin

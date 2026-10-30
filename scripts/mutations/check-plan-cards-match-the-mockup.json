@@ -24,10 +24,10 @@
   "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { hour: \"numeric\", minute: \"2-digit\" });"
  ],
  [
-  "\"Something's not right?\" is a boxed button again",
+  "step 1 held's \"Ask RGA ›\" is a boxed button again (was \"Something's not right?\")",
   "portalcss",
-  ".pm-k5-acts .pm-k5-tell, .pm-k5-acts .pm-amend.pm-k5-tell { border:0; background:none;",
-  ".pm-k5-acts .pm-k5-tell, .pm-k5-acts .pm-amend.pm-k5-tell { background:none;"
+  ".pm-k5-asklink { border:0; background:none; padding:0;",
+  ".pm-k5-asklink { padding:0;"
  ],
  [
   "a plan-card step drops out of the set",
@@ -112,5 +112,11 @@
   "portalcss",
   "cursor:pointer; display:inline-flex; align-items:center; min-height:var(--pm-h-sm,30px); }",
   "cursor:pointer; min-height:var(--pm-h-sm,30px); }"
+ ],
+ [
+  "a held kickoff call files a change request again",
+  "portal",
+  "+ pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>`) + `</div>`;",
+  "+ pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span><button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>`) + `</div>`;"
  ]
 ]

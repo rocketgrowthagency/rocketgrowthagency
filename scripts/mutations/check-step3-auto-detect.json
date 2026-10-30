@@ -552,5 +552,19 @@
   "    try { headers[\"x-rga-site-host\"] = new URL(r.url || u.href).hostname.toLowerCase(); } catch (_) { /* no address */ }",
   "    try { } catch (_) { /* no address */ }",
   1
+ ],
+ [
+  "while RGA checks the builder the card isn't RGA's (blue)",
+  "portal",
+  "csCard({ tone: \"rga\", head: \"RGA is checking which builder your site uses\"",
+  "csCard({ tone: \"you\", head: \"RGA is checking which builder your site uses\"",
+  1
+ ],
+ [
+  "while RGA checks the builder, Pick it yourself is gone",
+  "portal",
+  "`<button type=\"button\" data-acc-pickself>Pick it yourself</button>`), foot: csFoot() })}",
+  "\"\"), foot: csFoot() })}",
+  1
  ]
 ]

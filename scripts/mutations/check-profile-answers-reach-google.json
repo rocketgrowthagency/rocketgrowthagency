@@ -93,15 +93,15 @@
  [
   "the Google line is gone",
   "portal",
-  "    return googleCardHtml({ state: \"ok\", small: \"On Google\", side: on ? `checked ${escapeHtml(on)}` : \"\", title: escapeHtml(thing),",
-  "    return \"\"; googleCardHtml({ state: \"ok\", small: \"On Google\", side: on ? `checked ${escapeHtml(on)}` : \"\", title: escapeHtml(thing),",
+  "if (CS_STEPS.has(step.id)) return `<div class=\"pm-k5\">${csCard({ tone: \"ok\", head: ",
+  "if (CS_STEPS.has(step.id)) return \"\" && `<div class=\"pm-k5\">${csCard({ tone: \"ok\", head: ",
   1
  ],
  [
   "raw text on the RGA line",
   "portal",
-  "    return googleCardHtml({ state: \"rga\", small: \"RGA is on it\", side: \"nothing needed from you\", title: escapeHtml(thing), meta: \"Google asked us to change something. RGA is finishing it.\" });",
-  "    return googleCardHtml({ state: \"rga\", small: \"RGA is on it\", side: \"nothing needed from you\", title: escapeHtml(thing), meta: escapeHtml(g.error || \"\") });",
+  "body: csSt(\"rga\", \"Google asked us to change something\", \"RGA is finishing it. Nothing needed from you.\"), foot: csFoot() })}",
+  "body: csSt(\"rga\", \"Google asked us to change something\", escapeHtml(g.error || \"\")), foot: csFoot() })}",
   1
  ],
  [
@@ -116,6 +116,13 @@
   "admin",
   "      .concat(Object.entries(CLIENT_GBP_STEPS)",
   "      .concat([].filter(Boolean)",
+  1
+ ],
+ [
+  "a Google no on a system step isn't the red card",
+  "portal",
+  "return `<div class=\"pm-k5\">${csCard({ tone: \"bad\", head: `Google didn't accept ${escapeHtml(thing.toLowerCase())}`",
+  "return `<div class=\"pm-k5\">${csCard({ tone: \"you\", head: `Google didn't accept ${escapeHtml(thing.toLowerCase())}`",
   1
  ]
 ]

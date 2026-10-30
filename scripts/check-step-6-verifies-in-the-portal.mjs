@@ -6,8 +6,11 @@
 // 🔒 WHY (approved step6_verify_profile_v1, 2026-10-15). Chris: "I'd like a way to click and link or have verify more
 // easier to do." Before: a long how-to sending the client to business.google.com, and the step found out the next
 // night. Google is FAKED (deps); the card is drawn in Chrome with the shipped portal.css.
+// 2026-10-30 night fixer: lifts the card system (csBlock) + its seat (seatCsFoot); the verified card = client_step02_verify_v1 "Done · verified"
+// (green system card, Maps in the foot, the how-to seated into the foot by the product's own seat; the old in-card fold is not on the mockup).
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -74,12 +77,19 @@ if (!/portal-step-recheck[\s\S]{0,200}step_id: "m1\.gbp\.verify"/.test(ep)) fail
 const portal = read("portal/portal.js"), pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
 if (!/loadGbpVerify\(clientId\);/.test(pc) || !/step\.id === "m1\.gbp\.verify" && !month2Only \? `<div class="pm-gv" data-gbp-verify/.test(pc)) fail("step 6 doesn't lead with the profile card");
 if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc)) fail("step 6 still prints the grey evidence line beside the card");
+// 🔄 client_step02_verify_v1 (card system, 10-29): the how-to is the row's fold, seated into the system card's foot — the row must be a
+// system row and the seat must hand it to seatCsFoot (else How verification works sits loose under the card, or nowhere)
+if (!/<div class="pm-step-row\$\{CS_STEPS\.has\(step\.id\) && !month2Only \? ` pm-cs cs-\$\{csTone\}` : ""\}/.test(pc) || !/const detailKind = step\.id === "m1\.gbp\.verify" && isDone \? "verify" :/.test(pc)
+  || !/if \(row && row\.classList\.contains\("pm-cs"\) && csCardOf\(row\)\) \{ seatCsFoot\(row, f\); continue; \}/.test(pc)) fail("step 6's verified row isn't a system row, or its how-to isn't handed to the card's foot (seatCsFoot)");
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), line("GV_SHIELD"), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m),
+const PCK = portal.indexOf("const PC_TICK = ") < 0 || portal.indexOf("const pcActs = ") < 0 ? "" : portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = ")));
+const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), PCK, PCK && csBlock(portal, PCK), line("GV_SHIELD"), line("GV_STORE"), pick(/^function gvProfileHtml\(/m), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("GOOGLE_G"), pick(/^function gvGoogleRouteHtml\(/m), pick(/^function gvOptionsHtml\(/m),
   // 10-20 (phase1_get_started_v1): the code goes on Google's screen — its block, the fold, the filming guide
-  (() => { const a = portal.indexOf("const GV_ON_GOOGLE = `"); return a < 0 ? "" : portal.slice(a, portal.indexOf("`;", a + 22) + 2); })(), pick(/^function gvCodeFallbackHtml\(/m), pick(/^function gvFilmGuideHtml\(/m)];
+  (() => { const a = portal.indexOf("const GV_ON_GOOGLE = `"); return a < 0 ? "" : portal.slice(a, portal.indexOf("`;", a + 22) + 2); })(), pick(/^function gvCodeFallbackHtml\(/m), pick(/^function gvFilmGuideHtml\(/m),
+  // 10-30: the card system's seat — How this step works joins a system card's foot (seatCsFoot), named by DETAIL_LABEL
+  (() => { const a = portal.indexOf("const DETAIL_LABEL = {"); return a < 0 ? "" : portal.slice(a, portal.indexOf("};", a) + 2); })(), line("csCardOf"), line("csFootOf"), pick(/^function seatCsFoot\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-6 helper moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -93,8 +103,12 @@ try {
     const h = document.getElementById("h");
     const f = { title: "Rocket Growth Agency", phone: "(424) 242-2040", mapsUri: "https://maps.google.com/maps?cid=1" };
     h.innerHTML = gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 15, 9:40 AM"]]);
-    h.querySelector("details.pm-k5-fold")?.setAttribute("open", "");
-    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".gcard-maps")?.getAttribute("href"), recheck: !!h.querySelector('[data-step-recheck="m1.gbp.verify"]'), how: !!h.querySelector('.pm-k5-fold [data-gcard-how="m1.gbp.verify"]'), card: h.firstElementChild?.className };
+    const yes = { text: h.innerText.replace(/\s+/g, " ").trim(), maps: h.querySelector(".pm-cs-card > .pm-cs-foot > a.lk")?.getAttribute("href"), recheck: !!h.querySelector('[data-step-recheck="m1.gbp.verify"]') || /Check again/.test(h.innerText), card: h.firstElementChild?.className, sys: CS_STEPS.has("m1.gbp.verify") };
+    // the row as the portal draws it: the verified card, then the step's how-to fold (DETAIL_LABEL.verify) — seated by the product's seat
+    h.innerHTML = `<div class="pm-step-row pm-cs cs-ok"><div class="pm-gv">${gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 15, 9:40 AM"]])}</div><details class="pm-k5-fold pm-how-fold" data-how-fold="m1.gbp.verify"><summary>${PC_DOWN}${DETAIL_LABEL.verify[0]}</summary><div class="pm-k5-why pm-how-body">the how-to</div></details></div>`;
+    const seated = seatCsFoot(h.querySelector(".pm-step-row"), h.querySelector("details[data-how-fold]"));
+    const ft = h.querySelector(".pm-cs-card > .pm-cs-foot");
+    yes.how = !!seated && !!ft?.querySelector(":scope > a.lk") && (ft?.querySelector(":scope > button.how[data-cs-how]")?.textContent || "").trim() === "How verification works" && ft?.nextElementSibling?.matches('details.pm-cs-howb[data-how-fold="m1.gbp.verify"]') === true;
     h.innerHTML = gvOptionsHtml([{ method: "EMAIL", label: "Email a code to x@y.com", sub: "s", code: true }, { method: "SMS", label: "Text", sub: "s", code: true }]);
     const emailFirst = { fastest: !!h.querySelector("em"), sel: h.querySelector(".pm-gv-m.sel")?.getAttribute("data-gv-method"), google: h.querySelector('a[href="https://business.google.com/"]') ? 1 : 0, codeHidden: h.querySelector("[data-gv-code]")?.hidden };
     h.innerHTML = gvOptionsHtml([{ method: "SMS", label: "Text a code to (424) 242-2040", sub: "s", code: true }]);
@@ -107,8 +121,11 @@ try {
   // v2.1 (10-20): the time on its own line under the title; no Check again — the every-night note instead
   // 🔄 10-23 (steps_1_4_clean_v1): the plan card — "Verified by Google · checked", Business + Phone rows, how verification works folded, Maps
   // 🔄 10-23 night (mockup exactly: "checked Oct 15", the date only)
-  if (!/^Verified by Google checked Oct 15 Business Rocket Growth Agency Phone \(424\) 242-2040 How verification works, and when it can come back We check this every night\. .*this step reopens and we'll tell you what to do\. How verification works See it on Google Maps ↗$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
-  if (r.yes.card !== "pm-k5-plan ok" || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the green plan card with How verification works and NO Check again (${JSON.stringify(r.yes)})`);
+  // 🔄 10-29 (client_step02_verify_v1 "Done · verified", the card system): band "Verified by Google · checked Oct 15", Business + Phone
+  // rows, the foot = See it on Google Maps ↗ + the how-to (seated). The old in-card fold ("How verification works, and when it can come
+  // back · We check this every night…") is not on the mockup's card.
+  if (!/^Verified by Google checked Oct 15 Business Rocket Growth Agency Phone \(424\) 242-2040 See it on Google Maps ↗$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
+  if (r.yes.card !== "pm-k5-plan pm-cs-card ok" || !r.yes.sys || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the green system card with How verification works in its foot and NO Check again (${JSON.stringify(r.yes)})`);
   if (r.emailFirst.fastest || r.emailFirst.sel !== "EMAIL" || !r.emailFirst.google || r.emailFirst.codeHidden !== true) fail(`the ways to verify are drawn wrong (${JSON.stringify(r.emailFirst)})`);
   if (!r.smsFirst) fail("a text code isn't marked Fastest");
   if (r.x) fail("the profile's name became HTML");

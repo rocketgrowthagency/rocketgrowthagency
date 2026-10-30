@@ -71,6 +71,7 @@ const ALLOWED = {
   // that any FURTHER price token appearing in this file still fails the gate.
   "netlify/functions/flow-execute.js":        [": 1500",": 3500",": 750","commit_3mo"],
   "netlify/functions/v2-rank-grid-background.js": [": 1500"],
+  "netlify/functions/site-preview.js":        [":750"],   // the out-of-date preview card's CSS: "h1{font-weight:750}" is a font weight, not a price (recorded 10-30 night fixer)
 };
 
 // What counts as reading a source rather than owning one.

@@ -17,6 +17,8 @@ import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 const SCRAPER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// the side-by-side reads the walk's photos by the day the run STARTED as well as today (a night run crosses midnight)
+const RUN_START = Date.now(), START_DAY = new Date(RUN_START).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const arg = (k) => { const a = process.argv.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : null; };
 const since = arg("since"), sSince = arg("scraper-since"), steps = (arg("steps") || "").split(",").filter(Boolean), compares = process.argv.filter((x) => x.startsWith("--compare=")).map((x) => x.slice(10));
@@ -75,8 +77,13 @@ if (compares.length) {
       await p.goto(`file://${path.resolve(SITE, file)}`, { waitUntil: "networkidle0", timeout: 45000 }).catch(() => null);
       const el = await p.$(sel);
       if (el) await el.screenshot({ path: `${dir}/${name}-MOCKUP.png` });
-      const live = `${SITE}/reports/acceptance/${day}/${side}/${fs.existsSync(`${SITE}/reports/acceptance/${day}/${side}`) ? (fs.readdirSync(`${SITE}/reports/acceptance/${day}/${side}`).find((f) => f.includes(st)) || "") : ""}`;
-      if (fs.existsSync(live) && fs.statSync(live).isFile()) fs.copyFileSync(live, `${dir}/${name}-LIVE.png`);
+      // 🔴 THE WALK CAN CROSS MIDNIGHT (night of 10-29: business_facts was walked into 10-29/, then looked up in 10-30/ → "no live
+      // screenshot"). Look in the day this run STARTED and today, and take only a photo taken during THIS run — a stale one from an
+      // earlier run (or an earlier copy in compare/) never stands in for tonight's.
+      const shots = [...new Set([START_DAY, day])].flatMap((d) => { const sd = `${SITE}/reports/acceptance/${d}/${side}`; return fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.includes(st)).map((f) => `${sd}/${f}`) : []; })
+        .filter((f) => fs.statSync(f).isFile() && fs.statSync(f).mtimeMs >= RUN_START).sort((x, y) => fs.statSync(y).mtimeMs - fs.statSync(x).mtimeMs);
+      fs.rmSync(`${dir}/${name}-LIVE.png`, { force: true });
+      if (shots.length) fs.copyFileSync(shots[0], `${dir}/${name}-LIVE.png`);
       const ok = !!el && fs.existsSync(`${dir}/${name}-LIVE.png`);
       results.push({ label: `side by side ${name}`, ok, why: ok ? "" : !el ? `no ${sel} in the mockup` : `no live screenshot for ${st} (walk it with --steps)` });
       console.log(`${ok ? "📸" : "❌"} ${name}: ${dir}/${name}-MOCKUP.png  +  ${name}-LIVE.png${ok ? "  ← LOOK at both, list every difference" : ""}`);

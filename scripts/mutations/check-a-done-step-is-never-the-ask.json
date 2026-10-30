@@ -30,10 +30,10 @@
   "  if (false) return doneNoRecordHtml(t, { title: \"Form tracking on your website\", tile: RC_FORM,"
  ],
  [
-  "step 13: a done review step is empty",
+  "step 13: a done review step loses its done card and falls through to the ask (an emptied card is caught by the fallback since 10-30)",
   "portal",
   "  if (isDone && !total) return doneNoRecordHtml(task || {}, { title: \"Review requests\", tile: PERSON_ICON,",
-  "  if (isDone && !total) return \"\"; if (false) return doneNoRecordHtml(task || {}, { title: \"Review requests\", tile: PERSON_ICON,"
+  "  if (false) return doneNoRecordHtml(task || {}, { title: \"Review requests\", tile: PERSON_ICON,"
  ],
  [
   "every no-record done card says \"Marked done\" again",
@@ -52,5 +52,11 @@
   "portal",
   "if (how && card && card.classList.contains(\"pm-cs-card\")) { how.removeAttribute(\"data-seated\"); how.classList.remove(\"pm-cs-howb\"); card.after(how); }",
   "if (how && card && card.classList.contains(\"pm-cs-card\")) { }"
+ ],
+ [
+  "the card system's Messages + Ask RGA chrome counts as a record (steps 4, 7, 8, 9 done with nothing saved draw no card, found 10-30)",
+  "portal",
+  ".pm-lockfoot, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, input,",
+  ".pm-lockfoot, input,"
  ]
 ]

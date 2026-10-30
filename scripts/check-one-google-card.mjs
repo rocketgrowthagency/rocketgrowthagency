@@ -10,6 +10,9 @@
 // all", then the admin version, then: "the blue and grey icons need work" (⏱ and ↻ were text glyphs: an emoji and an
 // off-centre arrow), and "whats this white circle" (the admin row marker said nothing about its card).
 // (Before 10-16 this gate enforced one_google_card_v1: white inside, never tinted. That format was replaced.)
+// 2026-10-30 night fixer: every portal Google step drawn here is a client card system step (old 6/7/9/10/11 = client 2/4/7/9/8), so the
+// portal side is measured as the SYSTEM card inside a .pm-cs row (its CSS is row-scoped) after the seat passes: tone, thin border in the
+// tone's line, the band's tint + ink + drawn state icon (client_card_system_v1 tokens), rows white, Maps in the foot, buttons under.
 import fs from "node:fs";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
 import { csBlock } from "./lib/portal-cs.mjs";
@@ -65,6 +68,7 @@ const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m)
   portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), pl("KW_SPIN"), pl("GV_SHIELD")];
 pLift.push(planCardKit(portal, pLift.join("\n")), pp(/^function svcCardHtml\(/m));
 pLift.push(csBlock(portal, pLift.join("\n")));   // 10-29: the client card system (steps 2–9 draw csCard)   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
+pLift.push(pl("csCardOf"), pl("csFootOf"), pp(/^function upgradeCsCards\(/m), pp(/^function seatCsSt\(/m));   // 10-30: the seat passes the portal's observer runs
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), al("G_ICON"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
@@ -101,20 +105,26 @@ try {
       "6 reviewing": gvProfileHtml(f, "wait", "Google is reviewing it", [["Way", "Video"]]),
       "6 not verified": gvProfileHtml(f, "no", "Not verified yet", [["On Maps", "Hidden until it's verified"]]),
     };
-    const h = document.getElementById("h"); h.innerHTML = Object.entries(cards).map(([k, v]) => `<section data-k="${k}">${v}</section>`).join("");
+    // 🔑 2026-10-30: a system step's styles are scoped to its row (.pm-cs) — draw each card inside one, as the client sees it, then run the
+    // seat passes the portal's observer runs (upgradeCsCards · seatCsSt). "card with a time" is the old shared card (non-system steps).
+    const h = document.getElementById("h"); h.innerHTML = Object.entries(cards).map(([k, v]) => k === "card with a time" ? `<section data-k="${k}">${v}</section>` : `<section data-k="${k}"><div class="pm-step-row pm-cs">${v}</div></section>`).join("");
+    upgradeCsCards(h); seatCsSt(h);
     const L = eval(`(${lookSrc})`);
     const out = Object.fromEntries([...h.querySelectorAll("section")].map((s) => [s.dataset.k, L.call(null, `section[data-k="${s.dataset.k}"] > .gcard`)[0] || null]));
-    // the plan card (client step 4): a thin border, the band in the rga tint, drawn marks (no typed glyph), the buttons under it
-    const pc = h.querySelector('section[data-k="7 with RGA"] .pm-k5-plan'), band = pc && pc.querySelector(".pm-k5-h");
-    out.__plan = pc ? { edgeW: getComputedStyle(pc).borderLeftWidth, band: getComputedStyle(band).backgroundColor, marks: pc.querySelectorAll(".pm-pc-f .c svg").length,
-      typed: /[✓✔]/.test([...pc.querySelectorAll(".pm-pc-f .c")].map((c) => c.textContent).join("")), actsUnder: !!h.querySelector('section[data-k="7 with RGA"] .pm-k5-plan + .pm-k5-acts .pm-amend') } : null;
-    const v6 = h.querySelector('section[data-k="6 verified"] .pm-k5-plan'), b6 = v6 && v6.querySelector(".pm-k5-h");
-    out.__v6 = v6 ? { edgeW: getComputedStyle(v6).borderLeftWidth, band: getComputedStyle(b6).backgroundColor, marks: v6.querySelectorAll(".pm-pc-f .c svg").length, typed: /[✓✔]/.test(b6.textContent), recheck: !!h.querySelector('section[data-k="6 verified"] [data-step-recheck]') } : null;
-    // 🔄 10-23 night (approved steps_6_20_clean_v1): steps 7 / 9 / 8 done (old 9 / 10 / 11) are PLAN CARDS now — "No Google tile,
-    // status line and title stack; one band 'On Google · checked'": a thin border, the ok band, the date on the band, the action under
-    out.__done = Object.fromEntries(["9 done", "10 done", "11 done"].map((k) => { const pc = h.querySelector(`section[data-k="${k}"] .pm-k5-plan`), b = pc && pc.querySelector(".pm-k5-h");
-      return [k, pc ? { edgeW: getComputedStyle(pc).borderLeftWidth, band: getComputedStyle(b).backgroundColor, head: b.innerText.replace(/\s+/g, " ").trim(), logo: !!pc.querySelector(".gcard-logo, .gcard-g"),
-        act: ((h.querySelector(`section[data-k="${k}"] .pm-k5-plan + .pm-k5-acts`) || {}).innerText || "").replace(/\s+/g, " ").trim(), maps: !!h.querySelector(`section[data-k="${k}"] a.gcard-maps[href="https://maps.google.com/?cid=1"]`) } : null]; }));
+    // the SYSTEM card (client_card_system_v1): the tone class, a white card with a thin border in the tone's line, the band in the tone's
+    // tint + ink with a DRAWN state icon (never a topic icon / Google logo), rows that stay white, the status row, the foot, what's under it
+    const t = (e) => (e ? e.innerText.replace(/\s+/g, " ").trim() : "");
+    const csl = (k) => { const sec = h.querySelector(`section[data-k="${k}"]`), c = sec && sec.querySelector(".pm-cs-card"); if (!c) return null;
+      const cs = getComputedStyle(c), b = c.querySelector(":scope > .pm-k5-h"), bs = b ? getComputedStyle(b) : null, ic = b && b.querySelector(":scope > svg"), st = c.querySelector(":scope > .pm-cs-st"), acts = c.nextElementSibling && c.nextElementSibling.matches(".pm-k5-acts") ? c.nextElementSibling : null;
+      return { tone: ["ok", "rga", "you", "wait", "bad", "off"].filter((x) => c.classList.contains(x)).join(" "), bg: cs.backgroundColor, line: cs.borderTopColor, edgeW: cs.borderLeftWidth, topW: cs.borderTopWidth,
+        band: bs && bs.backgroundColor, ink: bs && bs.color, icon: ic ? { svg: !!ic.querySelector("path, circle"), color: getComputedStyle(ic).color } : null, head: t(b && b.querySelector(":scope > b")), side: t(b && b.querySelector(":scope > span")),
+        logo: !!c.querySelector("svg path[fill='#4285F4'], .gcard-logo, .gcard-g, .gcard-i"), typed: /[✓✔⏱↻]/.test(c.textContent),
+        tinted: [...c.querySelectorAll(":scope > .pm-pc-f, :scope > .pm-cs-ev, :scope > .pm-cs-chips, :scope > .pm-cs-note")].filter((r) => !/^(rgba\(0, 0, 0, 0\)|rgb\(255, 255, 255\))$/.test(getComputedStyle(r).backgroundColor)).length,
+        st: st ? { kind: ["rga", "you", "bad", "wait", "ok"].find((x) => st.classList.contains(x)) || "", b: t(st.querySelector("b")), svg: !!st.querySelector(":scope > svg path, :scope > svg circle") } : null,
+        maps: [...c.querySelectorAll(":scope > .pm-cs-foot a.lk")].map((a) => a.getAttribute("href")).join("|"), mapsUnder: !!(acts && /Google Maps/.test(acts.textContent)),
+        under: t(acts), primary: !!(acts && acts.querySelector(".pm-commit")), inCard: [...c.querySelectorAll("button")].map(t).filter((x) => !/^How this step works/.test(x)).join("|"),
+        rgaChips: [...c.querySelectorAll(".pm-cs-chip.rga")].map(t), recheck: !!sec.querySelector("[data-step-recheck]") }; };
+    out.__cs = Object.fromEntries(Object.keys(cards).filter((k) => k !== "card with a time").map((k) => [k, csl(k)]));
     return out;
   }, look.toString());
   const apage = await browser.newPage();
@@ -138,37 +148,46 @@ try {
   }, look.toString());
 } finally { await browser.close(); }
 
-const want = { "11 with RGA": "rga", "10 Google said": "you", "6 code": "you", "6 reviewing": "wait", "6 not verified": "you" };
-{ const v6 = P.__v6;
-  if (!v6 || v6.edgeW !== "1px" || v6.band !== TINT.ok || v6.marks < 2 || v6.typed || v6.recheck) fail(`client step 2 verified isn't the plan card (thin border, the ok band, drawn marks): ${JSON.stringify(v6)}`); }
-{ const pc = P.__plan;
-  if (!pc) fail("client step 4 (7 with RGA) isn't drawn as the plan card");
-  else if (pc.edgeW !== "1px" || pc.band !== TINT.rga || pc.marks < 3 || pc.typed || !pc.actsUnder) fail(`client step 4's plan card isn't right: thin border, the rga band, drawn marks, actions under (${JSON.stringify(pc)})`); }
-for (const [k, st] of Object.entries(want)) {
-  const c = P[k];
-  if (!c) { fail(`portal "${k}" isn't the shared Google card`); continue; }
-  if (c.bg !== TINT[st]) fail(`portal "${k}" isn't the ${st} tint (${c.bg})`);
-  if (c.edgeW !== "1px") fail(`portal "${k}" has a thick edge (${c.edgeW}), not a thin border`);
-  if (!c.logo) fail(`portal "${k}" has no Google logo`);
-  if (!c.icon || c.icon.bg !== EDGE[st] || !c.icon.svg || c.icon.text) fail(`portal "${k}" status icon isn't the drawn ${st} icon (${JSON.stringify(c.icon)})`);
-  if (c.tinted) fail(`portal "${k}" has ${c.tinted} tinted tile(s) inside (what you read or pick stays white)`);
-  if (c.head !== EDGE[st] && !(st === "rga" && c.head === "rgb(28, 68, 189)") && !(st === "wait" && c.head === "rgb(95, 99, 104)")) fail(`portal "${k}" status line isn't the ${st} colour (${c.head})`);
-}
-// 🔒 10-20 (Chris, step 6 v2.1 → every card): the status line says only WHAT IT IS; the time is its own line under the title
+// 🔄 2026-10-30 night fixer (client_card_system_v1 + client_step02/04/07/08/09, approved 10-29): every portal Google step in this gate is a
+// SYSTEM step now (old 6 = client step 2 verify · old 7 = client step 4 facts · old 9 = client step 7 hours · old 10 = client step 9
+// booking link · old 11 = client step 8 details), so "the shared Google card" on the portal is the system card. Same intent: the state is
+// the tint + a thin border, a DRAWN state icon in the state's colour, rows stay white, buttons under the card. The tokens are the mockup's.
+const CS_BAND = { ok: "rgb(227, 241, 223)", rga: "rgb(235, 243, 255)", you: "rgb(255, 241, 227)", wait: "rgb(238, 241, 246)", bad: "rgb(254, 233, 232)" };
+const CS_INK = { ok: "rgb(12, 81, 50)", rga: "rgb(28, 68, 189)", you: "rgb(180, 83, 9)", wait: "rgb(91, 107, 138)", bad: "rgb(142, 11, 33)" };
+const CS_LINE = { ok: "rgb(207, 230, 200)", rga: "rgb(207, 220, 251)", you: "rgb(240, 220, 196)", wait: "rgb(217, 223, 234)", bad: "rgb(243, 205, 201)" };
+// mockup states: step 8 "RGA is on it" = rga · step 9 Google said no = bad ("A problem") · step 2 code / reviewing = wait · not verified = you
+const want = { "11 with RGA": "rga", "10 Google said": "bad", "6 code": "wait", "6 reviewing": "wait", "6 not verified": "you" };
 const MONTH = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d/;
-for (const [k, c] of Object.entries(P)) if (c && (MONTH.test(c.st) || /·\s*(?:checked|confirmed|last|saved|sent|built)\b/i.test(c.st))) fail(`portal "${k}" puts a time on its status line ("${c.st}") — it goes under the title`);
-// 🔄 10-23 night (steps_6_20_clean_v1): the three done steps are plan cards — the date on the band, the change action under the card
-const DONE_WANT = { "9 done": [/^Your hours are on Google checked Oct 1[56]$/, /^Change hours Something's not right\?$/, true], "10 done": [/^Your booking link is on Google checked Oct 1[56]$/, /^Change link See it on Google Maps ↗$/, true],
-  "11 done": [/^1 detail on Google checked Oct 1[56]$/, /^Change details$/, false] };
-for (const [k, [head, act, maps]] of Object.entries(DONE_WANT)) { const c = P.__done && P.__done[k];
-  if (!c) { fail(`portal "${k}" isn't the plan card`); continue; }
-  if (c.edgeW !== "1px" || c.band !== TINT.ok || c.logo) fail(`portal "${k}" isn't the plan card (thin border, the ok band, no Google tile): ${JSON.stringify(c)}`);
-  if (!head.test(c.head) || !act.test(c.act) || (maps && !c.maps)) fail(`portal "${k}" isn't "<what> · checked <date>" with its action under the card${maps ? " and Maps" : ""} (${c.head} | ${c.act})`); }
+const csCardOk = (k, c, st) => {
+  if (!c) { fail(`portal "${k}" isn't the system card`); return false; }
+  if (c.tone !== st) fail(`portal "${k}" isn't the ${st} card (${c.tone})`);
+  if (c.bg !== "rgb(255, 255, 255)" || c.band !== CS_BAND[st]) fail(`portal "${k}" isn't the ${st} tint in its band on a white card (card ${c.bg}, band ${c.band})`);
+  if (c.edgeW !== "1px" || c.topW !== "1px" || c.line !== CS_LINE[st]) fail(`portal "${k}" has a thick edge or a border not in the ${st} line (${c.edgeW} / ${c.topW} ${c.line}), not a thin border`);
+  if (c.logo) fail(`portal "${k}" draws a Google logo / topic icon (the band carries the STATE icon only)`);
+  if (!c.icon || !c.icon.svg || c.icon.color !== CS_INK[st] || c.typed) fail(`portal "${k}" state icon isn't the drawn ${st} icon (${JSON.stringify(c.icon)}${c.typed ? ", a typed glyph" : ""})`);
+  if (c.ink !== CS_INK[st]) fail(`portal "${k}" band isn't the ${st} colour (${c.ink})`);
+  if (c.tinted) fail(`portal "${k}" has ${c.tinted} tinted row(s) inside (what you read or pick stays white)`);
+  // 🔒 10-20 (Chris, step 6 v2.1 → every card): the band's words say only WHAT IT IS; the time sits on its own (the band's right)
+  if (MONTH.test(c.head) || /·\s*(?:checked|confirmed|last|saved|sent|built)\b/i.test(c.head)) fail(`portal "${k}" puts a time in its band's words ("${c.head}") — it goes on the band's right`);
+  return true; };
+{ const v6 = P.__cs["6 verified"];
+  if (csCardOk("6 verified", v6, "ok") && (v6.head !== "Verified by Google" || !/^checked Oct 16\b/.test(v6.side) || v6.maps !== "https://maps.google.com/?cid=1" || v6.under || v6.inCard || v6.recheck)) fail(`client step 2 verified isn't "Verified by Google · checked <date>" with Maps in the foot and no Check again (RGA re-checks every night): ${JSON.stringify(v6)}`); }
+{ const pc = P.__cs["7 with RGA"];
+  // client_step04 "RGA is adding places": the blue card, RGA's adds as blue chips, one blue status row, Maps in the foot, Change something under
+  if (csCardOk("7 with RGA", pc, "rga") && (pc.rgaChips.join("|") !== "Mar Vista|Palms" || pc.st?.kind !== "rga" || !pc.st.svg || pc.maps !== "https://maps.google.com/?cid=1" || pc.under !== "Change something" || pc.inCard)) fail(`client step 4's RGA card isn't right: RGA's adds as blue chips, a drawn blue status row, Maps in the foot, Change something under (${JSON.stringify(pc)})`); }
+for (const [k, st] of Object.entries(want)) csCardOk(k, P.__cs[k], st);
+// a time on the OLD shared card's status line (non-system steps keep that card)
+for (const [k, c] of Object.entries(P)) if (c && c.st !== undefined && (MONTH.test(c.st) || /·\s*(?:checked|confirmed|last|saved|sent|built)\b/i.test(c.st))) fail(`portal "${k}" puts a time on its status line ("${c.st}") — it goes under the title`);
+// client_step07 / 09 / 08 "Done · on Google": the green card, "<what> on Google · checked <date>", Maps in the foot, ONE "Change something" under the card
+const DONE_WANT = { "9 done": /^Your hours are on Google$/, "10 done": /^Your booking link is on Google$/, "11 done": /^1 detail on Google$/ };
+for (const [k, head] of Object.entries(DONE_WANT)) { const c = P.__cs[k];
+  if (!csCardOk(k, c, "ok")) continue;
+  if (!head.test(c.head) || !/^checked Oct 1[56]$/.test(c.side) || c.under !== "Change something" || c.inCard || c.maps !== "https://maps.google.com/?cid=1" || c.mapsUnder) fail(`portal "${k}" isn't "<what> · checked <date>" with Change something under the card and Maps in its foot (${c.head} · ${c.side} | ${c.under} | maps ${c.maps || "none"})`); }
+// the shared Google card still draws on the steps not on the system: its Google logo stays
+if (P["card with a time"] && !P["card with a time"].logo) fail("the shared Google card (steps not on the card system) has no Google logo");
 if (!P["card with a time"] || !/^Last checked Oct 16\b/.test(P["card with a time"].when) || !P["card with a time"].whenUnderTitle) fail(`a Google card doesn't say "Last checked …" on its own line under the title ("${P["card with a time"]?.when}")`);
-if (P["6 verified"] && P["6 verified"].when && !/^Last checked Oct 16\b/.test(P["6 verified"].when)) fail(`portal "6 verified" doesn't say when it was checked ("${P["6 verified"].when}")`);
-// step 6 v2.1: no Check again on a verified profile — a note says RGA checks every night
-if (P["6 verified"] && (P["6 verified"].act !== "" || !/^Verified by Google \| We check this every night\. [^|]*this step reopens[^|]* \| See it on Google Maps ↗ How verification works$/i.test(P["6 verified"].meta))) fail(`step 6's verified card has a Check again, or lacks "Verified by Google" + the every-night note + Maps + How (${P["6 verified"]?.meta} / act "${P["6 verified"]?.act}")`);
-if (P["10 Google said"] && (P["10 Google said"].act !== "Fix it" || !P["10 Google said"].primary)) fail("a refusal's card has no blue Fix it under it");
+// a refusal: the blue Fix it, UNDER the card, and nothing else
+{ const g = P.__cs["10 Google said"]; if (g && (g.under !== "Fix it" || !g.primary || g.inCard || g.st?.kind !== "bad")) fail(`a refusal's card has no blue Fix it under it, or no red status row (${g.under} · ${JSON.stringify(g.st)})`); }
 if (A._rows) {
   const want4 = [EDGE.you, EDGE.rga, EDGE.rga, EDGE.ok];
   if (JSON.stringify(A._rows.markers) !== JSON.stringify(want4)) fail(`admin's Google row markers don't take their card's colour inside real rows (${A._rows.markers.join(" | ")})`);
@@ -178,11 +197,13 @@ for (const st of ["ok", "rga", "you", "wait"]) if (A[st] && (MONTH.test(A[st].st
 for (const st of ["ok", "rga", "you", "wait"]) {
   const a = A[st];
   if (!a) { fail(`admin's ${st} card doesn't draw`); continue; }
-  const p = Object.entries(want).find(([, s]) => s === st); const pc = p && P[p[0]];
+  const p = Object.entries(want).find(([, s]) => s === st); const pc = p && P.__cs[p[0]];
   if (a.bg !== TINT[st] || a.edgeW !== "1px" || !a.logo || !a.icon || a.icon.bg !== EDGE[st] || !a.icon.svg || a.icon.text) fail(`admin's ${st} card isn't the portal's (bg ${a.bg}, edge ${a.edgeW}, icon ${JSON.stringify(a.icon)})`);
-  if (pc && (a.head !== pc.head || a.border.split(" ").slice(0, 3).join(" ") !== pc.border.split(" ").slice(0, 3).join(" "))) fail(`admin's ${st} card differs from the portal's (status ${a.head} vs ${pc.head}; border ${a.border} vs ${pc.border})`);
+  // 🔄 10-30: the portal's card of the same state is the system card — the same state reads in the same colours on both sides:
+  // admin's tint = the portal band's tint, admin's status colour = the portal band's ink, admin's border = the portal card's line
+  if (pc && (a.bg !== pc.band || a.head !== pc.ink || a.border.split(" ").slice(0, 3).join(" ") !== pc.line)) fail(`admin's ${st} card differs from the portal's (tint ${a.bg} vs ${pc.band}; status ${a.head} vs ${pc.ink}; border ${a.border} vs ${pc.line})`);
   if (!/See it on Google Maps ↗/.test(a.meta) || a.act !== "Act") fail(`admin's ${st} card has no Maps proof, or its buttons aren't under it`);
 }
 
 if (F.length) { console.error("🔴 The Google steps aren't one card:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ one Google card on every Google step, portal and admin alike (google_card_best_v1): the state is the tint + a thin border (green · blue · amber · grey), one status line with a drawn icon, proof last, buttons under the card (Check again / Change hours / Change link / blue Fix it); admin rows take their card's state (marker, pill, outline), drift and Your action too");
+console.log("✅ one Google card on every Google step, portal and admin alike: the portal's system steps are the client_card_system_v1 card (tone, thin border, the band's tint + ink + drawn state icon, rows white, Maps in the foot, Change something / blue Fix it under the card), the other steps the shared Google card (google_card_best_v1); admin's card computes the same colours per state; admin rows take their card's state (marker, pill, outline), drift and Your action too");

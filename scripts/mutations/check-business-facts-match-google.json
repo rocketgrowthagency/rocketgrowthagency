@@ -481,5 +481,47 @@
   "const stOf = (k) => rgaOf.has(k) && gp.state !== \"on_google\" ? \"rga\"",
   "const stOf = (k) => rgaOf.has(k) ? \"rga\"",
   1
+ ],
+ [
+  "a name RGA is changing reads as matching",
+  "portal",
+  "    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), changing(\"name\") ? busy : ok),",
+  "    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), ok),",
+  1
+ ],
+ [
+  "an address RGA is changing reads as matching",
+  "portal",
+  "changing(\"come\") ? busy : ok, come ? \"Your address stays hidden on Google\"",
+  "ok, come ? \"Your address stays hidden on Google\"",
+  1
+ ],
+ [
+  "a waiting place looks already on Google",
+  "portal",
+  "x.on ? \"dot\" : \"rga\"]),",
+  "\"dot\"]),",
+  1
+ ],
+ [
+  "RGA's card hides the places it is adding",
+  "portal",
+  "    + (changing(\"area\") ? csChips(\"Service area\", areaItems) : \"\")",
+  "    + \"\"",
+  1
+ ],
+ [
+  "the nightly read's Maps link is ignored",
+  "portal",
+  "  const mapsUrl = g.maps_uri || (g.progress && g.progress.maps_uri) || (a && a.mapsUri) || null;",
+  "  const mapsUrl = g.maps_uri || (a && a.mapsUri) || null;",
+  1
+ ],
+ [
+  "step 4's card drops See it on Google Maps",
+  "portal",
+  "  const foot = csFoot({ maps: mapsUrl });",
+  "  const foot = csFoot({});",
+  1
  ]
 ]

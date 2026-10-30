@@ -173,6 +173,16 @@ const REGISTRY = [
   { file: "netlify/functions/flow-execute.js",          needle: "so step 52 cannot read them",          step: "m1.cit.priority_top10" },
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows — it", step: "m1.cit.priority_top10" },
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows.",     step: "m1.cit.priority_top10" },
+  // admin steps 29–38 (approved admin_step29_citations_v1 / admin_step31_categories_v1, 10-29): each card names the step it leans on
+  { file: "admin/admin.js",                            needle: "Fixed in step 30's plan",             step: "m1.audit.recommendations" },
+  { file: "admin/admin.js",                            needle: "Open the fix plan (step 30)",         step: "m1.audit.recommendations" },
+  { file: "admin/admin.js",                            needle: "Same 5 checks as step 28 first",      step: "m1.gbp.business_facts" },
+  // step 36's settled-with-nothing-sent records (approved step36_booking_rga_does_it_v1, 10-29)
+  { file: "netlify/functions/admin-gbp-booking.js",    needle: "so step 36 settled",                  step: "m1.gbp.booking_link" },
+  { file: "netlify/functions/admin-gbp-booking.js",    needle: "so step 36 finished",                 step: "m1.gbp.booking_link" },
+  // 🔑 client: true = the number is the CLIENT portal's (the step's declared clientStepNo), not the admin page's. Admin step 36's
+  // "no other booking page" row sends RGA to the client's own step 9 (step36_booking_rga_does_it_v1: "client portal step 9").
+  { file: "admin/admin.js",                            needle: "in their portal (step 9)",            step: "m1.gbp.booking_link", client: true },
 ];
 // 🔑 The client portal has its OWN sequence on purpose — `clientStepNo` / SETUP_STEP_COPY. A client
 // sees eight steps, not sixty-one, and must never be told "step 26 of 61".
@@ -196,7 +206,7 @@ for (const f of files) {
         fail.push(`${f}:${i + 1} names "step ${m[1]}" and is not registered — register it against a step id or drop the number: ${l.trim().slice(0, 70)}`);
         return;
       }
-      const want = byId.get(hits[0].step);
+      const want = hits[0].client ? (m1.find((s) => s.id === hits[0].step) || {}).clientStepNo : byId.get(hits[0].step);
       checked++;
       if (want == null) fail.push(`${f}:${i + 1} is registered against ${hits[0].step}, which is not in month1 any more`);
       else if (Number(m[1]) !== want) {

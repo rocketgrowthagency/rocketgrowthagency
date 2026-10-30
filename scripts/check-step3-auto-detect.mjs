@@ -10,10 +10,12 @@
 //   3 the save: yes → detected_confirmed · no → detected_declined · nothing found → chosen · designer → designer_credit, with the record
 //   4 the server keeps the record cleaned to its shape (no junk source, no unknown builder, short proof lines)
 //   5 admin row 8 shows our check + the client's answer and flags a "no"; the sent card names the designer, never "Another / not sure"
+//   2026-10-30 night fixer: the client's card lifts the card system (csBlock) + the plan-card pieces; "With RGA" = the blue system card + ONE blue status row (client_step03_access_v1)
 //   exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const FNS = `${SITE}/netlify/functions`, FNS_REAL = fs.realpathSync(FNS), req = createRequire(`${FNS}/x.js`);
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -350,10 +352,13 @@ const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
   googleCardHtml: (o) => `<card>${o.small} ¦ ${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, stepLockOf: () => null, _rcEditing: new Set(), _accHosts: {}, ACC_FILES: {}, _accNames: Object.fromEntries(Object.entries(PL).map(([k, p]) => [k, p.name])), RC_WEB: "" });
 vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | "; var _accRoles = {}; var _accPickSelf = new Set(); ${(P.match(/^const ACC_TAG = \{[^\n]*\};$/m) || [""])[0].replace(/^const /, "var ")} ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, cctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, cctx); vm.runInContext(fnSrc(P, "accPromiseHtml"), cctx);
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  INDETERMINATE — the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), cctx); vm.runInContext(csBlock(P, P.slice(a, b)), cctx); }   // the plan card + the client card system (client_step03_access_v1, 10-29)
 for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
 const sentCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", client_input: { via: "designer", platform: "other", platform_source: "designer_credit", detected: { designer: "Exposure" }, at: "2026-10-22" } })}, "c1")`, cctx);
 const waitCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", site: "acme.example", reason: "blocked" } })}, "c1")`, cctx);
-if (!/RGA is checking which builder your site uses/.test(waitCard) || !/data-acc-pickself/.test(waitCard) || !/With RGA/.test(waitCard)) fail("while RGA checks, the client's card isn't With RGA (with Pick it yourself)");
+// 🔄 client_step03_access_v1 "RGA checks the builder" (the card system, 10-29): "With RGA" is the card's blue tone now (the old
+// googleCardHtml small label) — the blue band names what RGA checks, ONE blue status row says by when, "Pick it yourself" is its link
+if (!/<div class="pm-k5-plan pm-cs-card rga"><div class="pm-k5-h rga">[^]*?<b>RGA is checking which builder your site uses<\/b><span>you asked /.test(waitCard) || !/<div class="pm-cs-st rga">[^]*?<b>Done by [^<]+<\/b>[^]*?<span class="a"><button type="button" data-acc-pickself>Pick it yourself<\/button><\/span><\/div>/.test(waitCard) || (waitCard.match(/class="pm-cs-st /g) || []).length !== 1) fail("while RGA checks, the client's card isn't With RGA (the blue system card + ONE blue status row with Pick it yourself)");
 const rgaCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "pending", check_request: { asked_at: "x", site: "acme.example", reason: "blocked" }, rga_check: { platform: "wordpress", at: "2026-10-22T23:30:00Z" } })}, "c1")`, cctx);
 if (!/data-acc-rga="[^"]*&quot;wordpress&quot;/.test(rgaCard)) fail("RGA's hand check doesn't reach the client's ask");
 if (!/Exposure manages your site/.test(sentCard) || /Another \/ not sure/.test(sentCard)) fail("the sent card's Step 1 says \"Another / not sure\" instead of naming the designer");

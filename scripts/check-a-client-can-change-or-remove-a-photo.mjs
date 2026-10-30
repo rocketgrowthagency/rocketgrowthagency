@@ -8,6 +8,8 @@
 // has all photos listed". The remove endpoint and the replace step run for real against a faked database and a faked
 // Google (delete → read back); the portal's own renderer is lifted and drawn; every reader of client_photos must leave a
 // retired photo out.
+// 🔄 2026-10-30 night fixer: the fake deps gain readStepRecord / writeStepTasks (the remove endpoint clears a slot's retake
+// since 10-16); the folded row's quote takes batch 1's `withRga && withRga.n != null` guard (the "All undefined sent" fix)
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -33,7 +35,7 @@ const R = req("./_photo-retire.js");
 const PARENT = "accounts/1/locations/2";
 const CID = "ae817a9c-60a2-4cc9-a196-0582b7b7e7c3";
 function world({ rows = [], detected = [], googleGone = true, googleRefuses = false, owner = true } = {}) {
-  const w = { rows: rows.map((r) => ({ ...r })), calls: [], logs: [], acts: [], ledger: [], recounts: 0 };
+  const w = { rows: rows.map((r) => ({ ...r })), calls: [], logs: [], acts: [], ledger: [], recounts: 0, tasks: { "m1.gbp.photos": { detected: { items: detected } } } };
   const res = (status, body) => ({ ok: status < 300, status, text: async () => (body == null ? "" : JSON.stringify(body)), json: async () => body });
   w.d = {
     now: () => Date.parse("2026-10-16T18:00:00Z"),
@@ -41,6 +43,9 @@ function world({ rows = [], detected = [], googleGone = true, googleRefuses = fa
     accessToken: async () => "tok",
     recount: async () => { w.recounts++; },
     recordChange: async (c) => { w.ledger.push(c); },
+    // the step record (clear_a_retake_v1 · rga_manages_cleanup_v1): a withdraw / remove drops the slot's retake_cleared, read back
+    readStepRecord: async () => ({ tasks: w.tasks }),
+    writeStepTasks: async (_s, _r, tasks) => { w.tasks = tasks; return { tasks }; },
     fetch: async (url, init = {}) => {
       const m = init.method || "GET"; w.calls.push(`${m} ${url}`);
       if (m === "DELETE") return googleRefuses ? res(403, { error: { message: "nope" } }) : res(200, {});
@@ -227,7 +232,7 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
 const pc = nc(portal);
 if (!/: withRga \? \{ text: "With RGA", cls: "rga" \}/.test(pc) || !/&& !gbpWithRga && !withRga && \(Boolean\(step\.clientInput\)/.test(pc)) fail("all photos sent still says Your turn");
 if (!/&& !r\.later && !r\.withRga(?: && r\.taskState\?\.google_push\?\.state !== "with_rga")?\)/.test(pc) || !/&& !i\.withRga/.test(pc)) fail("all photos sent can still be the client's next step / the banner's headline");
-if (!/withRga \? `<span class="pm-step-sub">All \$\{withRga\.n\} sent\$\{withRga\.review \? ` · \$\{withRga\.review\} with RGA for review` : ""\} · nothing needed from you<\/span>`/.test(pc)) fail("the folded row doesn't say all photos are sent and nothing is needed");
+if (!/withRga && withRga\.n != null \? `<span class="pm-step-sub">All \$\{withRga\.n\} sent\$\{withRga\.review \? ` · \$\{withRga\.review\} with RGA for review` : ""\} · nothing needed from you<\/span>`/.test(pc)) fail("the folded row doesn't say all photos are sent and nothing is needed");
 if (!/\(!isDone \|\| \(status === "done" && step\.clientForm === "photo_upload" && !month2Only\)\) && step\.clientHow/.test(pc)) fail("a done photo step can't be opened to its photos");
 const rmh = (() => { const i = pc.indexOf('closest("[data-photo-remove]")'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();
 if (!/if \(onGoogle\) \{\s*const ok = await portalConfirm\(\{ tone: "danger", pill: "TAKES IT OFF GOOGLE", title: "Remove this photo from Google\?"/.test(rmh) || !/if \(!ok\) return;/.test(rmh)) fail("removing a photo on Google doesn't ask first (the red permanent dialog)");
