@@ -60,7 +60,8 @@ if (!/if \(EDIT_IN_PLACE\.has\(step\.id\) && _editingSteps\.has\(step\.id\)\) re
 
 // ── 3 · the editor itself ──
 if (!/class="pm-in-closed pm-dsw\$\{[^}]*\}" data-in-closed aria-pressed=/.test(js) || !/function setDaySwitch\(b, off\) \{/.test(js) || !/setDaySwitch\(closed, off\);/.test(js)) fail("a day's Open / Closed isn't a switch");
-if (!/data-in-copy-mon>Copy Monday's hours to Tue–Fri<\/button>/.test(js) || !/for \(const k of \["tue", "wed", "thu", "fri"\]\)/.test(js)) fail("there's no \"Copy Monday's hours to Tue–Fri\"");
+// client_step07_hours_editor_v2 (approved 10-30): on the card system the link reads "Copy Monday to Tue–Fri"; off it, the old words
+if (!/data-in-copy-mon>\$\{csh \? "Copy Monday to Tue–Fri" : "Copy Monday's hours to Tue–Fri"\}<\/button>|data-in-copy-mon>Copy Monday's hours to Tue–Fri<\/button>/.test(js) || !/for \(const k of \["tue", "wed", "thu", "fri"\]\)/.test(js)) fail("there's no \"Copy Monday's hours to Tue–Fri\"");
 if (!/data-in-hol="\$\{escapeAttribute\(h\.key\)\}">\$\{escapeHtml\(h\.label\)\} <i data-hol-date><\/i>/.test(js) || !/now\.holidayDates\[hb\.getAttribute\("data-in-hol"\)\]/.test(js)) fail("holiday chips don't show the next date");
 if (!/now\.holidayDates = Object\.fromEntries\(H\.holidayOptions\(\)\.map\(\(o\) => \[o\.key, H\.nextOccurrence\(o\.key\)\]\)/.test(prof)) fail("the next holiday dates aren't computed on the server (one source, never stale)");
 if (!/✓ matches what you saved/.test(js)) fail("the editor doesn't say whether Google matches what they saved");

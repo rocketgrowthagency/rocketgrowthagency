@@ -72,7 +72,7 @@
  [
   "no copy Monday",
   "portal",
-  "data-in-copy-mon>Copy Monday's hours to Tue–Fri</button>",
+  "data-in-copy-mon>${csh ? \"Copy Monday to Tue–Fri\" : \"Copy Monday's hours to Tue–Fri\"}</button>",
   "data-in-copy-mon></button>",
   1
  ],
