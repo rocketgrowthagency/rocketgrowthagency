@@ -54,7 +54,7 @@ if (!/const siteStep = !!\(globalThis\.rgaSiteChange && globalThis\.rgaSiteChang
 if (!/const doneBtn = zcWaits \|\| siteStep \? "" :/.test(AJS)) fail("step 37: a website step's row still offers Mark step complete");
 
 // ── admin: steps 29 · 30 · 31 — the result first ──────────────────────────────────────────────────
-{ const p3 = ["ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
+{ const p3 = ["ZC_FOLD_T", "ZC_LIST", "ZC_PLAIN", "zcPlainTitle", "zcFixAct", "zcCatPlan", "citationsCardHtml", "fixPlanCardHtml", "categoriesCardHtml"].map((n) => lift(AJS, n));
   if (p3.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step 29/30/31 card moved (${p3.findIndex((x) => !x)})`); process.exit(2); }
   const c3 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", adminGcardWhen: (iso) => (iso ? "Sep 14, 7:52 PM" : "") };
   vm.createContext(c3); vm.runInContext(p3.join("\n") + "\nthis.cit = citationsCardHtml; this.plan = fixPlanCardHtml; this.cat = categoriesCardHtml;", c3);
@@ -128,7 +128,7 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
 }
 
 // ── admin: step 38 — photo progress at a glance ─────────────────────────────────────────────────
-{ const p5 = ["ZC_CAM", "photosWaitState", "photosWaitCardHtml"].map((n) => lift(AJS, n));
+{ const p5 = ["ZC_FOLD_T", "ZC_CAM", "photosWaitState", "photosWaitCardHtml"].map((n) => lift(AJS, n));
   if (p5.some((x) => !x)) { console.error("⚠️  INDETERMINATE — step 38's card moved"); process.exit(2); }
   const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
   vm.createContext(c5); vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);

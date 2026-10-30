@@ -292,5 +292,33 @@
   "${i === 0 && !change ? `<span class=\"ob-zc-new\">RGA's pick</span>`",
   "${i === 0 ? `<span class=\"ob-zc-new\">RGA's pick</span>`",
   1
+ ],
+ [
+  "an open fold hides its control again",
+  "css",
+  ".ob-zc-more[open] > summary .c { display:none; } .ob-zc-more[open] > summary .o { display:inline; }",
+  ".ob-zc-more[open] > summary .t { visibility:hidden; }",
+  1
+ ],
+ [
+  "step 30's fold has no Hide",
+  "admin",
+  "${escapeHtml(reasons.join(\" · \"))}${ZC_FOLD_T(\"Show ▸\")}</summary>",
+  "${escapeHtml(reasons.join(\" · \"))}<span class=\"t\">Show ▸</span></summary>",
+  1
+ ],
+ [
+  "the fold control says nothing when open",
+  "admin",
+  "<span class=\"o\">Hide ▴</span></span>`;",
+  "<span class=\"o\"></span></span>`;",
+  1
+ ],
+ [
+  "step 36's open history repeats its line",
+  "admin",
+  "<span class=\"o\"><b>History</b> · ${ev.length} event${ev.length === 1 ? \"\" : \"s\"}</span>",
+  "",
+  1
  ]
 ]

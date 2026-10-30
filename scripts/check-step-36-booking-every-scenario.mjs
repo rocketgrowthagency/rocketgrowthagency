@@ -31,7 +31,9 @@ if (a0 < 0 || a1 < a0 || d0 < 0 || d1 < 0) { console.error("⚠️  INDETERMINAT
 const ctx = { Date, escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg data-g></svg>", OB_WEB_TILE: "<svg data-web></svg>", G_ICON: { ok: "✓", rga: "↻", you: "!" },
   adminGcardWhen: () => "Oct 29, 4:20 PM" };
 vm.createContext(ctx);
-try { vm.runInContext(`${AJS.slice(a0, a1)}\n${AJS.slice(d0, d1 + 2)}\nthis.view = bk36View; this.card = bk36CardFor; this.done = bk36DoneCardHtml;`, ctx); }
+const zf = /^const ZC_FOLD_T = [^\n]*;$/m.exec(AJS);
+if (!zf) { console.error("⚠️  INDETERMINATE — the fold control (ZC_FOLD_T) moved"); process.exit(2); }
+try { vm.runInContext(`${zf[0]}\n${AJS.slice(a0, a1)}\n${AJS.slice(d0, d1 + 2)}\nthis.view = bk36View; this.card = bk36CardFor; this.done = bk36DoneCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — admin step 36's block didn't run: ${e.message}`); process.exit(2); }
 const T = (url, opens) => ({ types: [{ key: "url_appointment", label: "Appointment links", links: url ? [{ url, clean: url.replace(/^https?:\/\//, ""), opens }] : [] }] });
 const page = (p, kind) => ({ url: `https://joes.com${p}`, label: `joes.com${p}`, kind });
@@ -90,6 +92,13 @@ const ownH = ctx.done({ google_push: { state: "on_google", link: "https://joes.c
 if (!/Their own link/.test(ownH) || !/ob-dc-loop n2/.test(ownH)) fail("step 36 done: the client's own link isn't the same card (Their own link ✓ · On Google ✓)");
 const alrH = ctx.done({ google_push: { state: "on_google", by: "rga", reason: "already_on_google", link: "https://joes.com/book", at: "2026-10-30T18:00:00Z" } }, "c1");
 if (!/Google already had it/.test(alrH) || !/nothing was sent/.test(alrH)) fail("step 36 done: Google's own link isn't the same card (Google already had it)");
+// 🔒 fold_hide_control_v1 (approved Chris 10-29: "theres no link to close the expand. like hide?"): every ob-zc-more fold (steps 30 · 36 ·
+// 38) says Hide ▴ when open, in the same spot; a history fold's open line is "History · N", never the latest line twice
+if (!/<span class="c">History ▸<\/span><span class="o">Hide ▴<\/span>/.test(doneH) || !/<span class="o"><b>History<\/b> · 1 event<\/span>/.test(doneH)) fail("folds: step 36's history can't be closed (no Hide ▴) or repeats its line when open");
+const folds = AJS.match(/<details class="ob-zc-more[^"]*"[^>]*><summary>[^\n]*/g) || [];
+if (folds.length < 3 || folds.some((f) => !/\$\{ZC_FOLD_T\("(History|Show) ▸"\)\}/.test(f))) fail(`folds: a fold has no Hide ▴ (every ob-zc-more fold uses ZC_FOLD_T) — ${folds.length} found`);
+if (!/\.ob-zc-more\[open\] > summary \.c \{ display:none; \} \.ob-zc-more\[open\] > summary \.o \{ display:inline; \}/.test(ACSS) || /\.ob-zc-more\[open\] > summary \.t \{ visibility:hidden; \}/.test(ACSS)) fail("folds: the open fold hides its control again (no way to close it)");
+if (!/<span class="o"><b>History<\/b> · \$\{runs\.length \?/.test(AJS)) fail("folds: step 38's open history repeats its line instead of \"History · N runs\"");
 // the card sits below the row, replacing "What this produced"; no Undo on the row; the old write-up is cleared on put
 if (!/: o\.flowId === "m1\.gbp\.booking_link" && s\.task\?\.google_push\?\.state === "on_google" \? `<div class="ob-done-card">\$\{bk36DoneCardHtml\(s\.task, state\.selectedClient && state\.selectedClient\.id\)\}<\/div>`/.test(AJS)) fail("step 36 done: the card isn't the row's done card (the old \"What this produced\" shows)");
 if (!/\(id === "m1\.gbp\.booking_link" && !!\(t && t\.google_push && t\.google_push\.state === "on_google"\)\);   \/\/ step36_done_card_v2: no Undo/.test(AJS)) fail("step 36 done: the row still has Undo / re-run");
