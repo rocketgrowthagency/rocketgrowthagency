@@ -74,8 +74,22 @@ for (const [f, sel, re, why] of NEED) {
 }
 if (/#portalStatusPill[^{]*\{[^}]*(background|color)\s*:(?!\s*currentColor)/.test(strip(files.portal))) F("portal.css: #portalStatusPill sets its own colour again — the state class must decide (it was forced green)");
 
+// 4b · the card system's own wait/off tokens (approved client_card_system_v1, Chris 10-29) — declared ONCE in portal.css :root with
+// the mockup's values; the two colours it ADDED (#5b6b8a, #d9dfea) used ONLY through the token (a literal one in a rule is picked)
+const CS_TOK = { "--cs-wait": "#5b6b8a", "--cs-wait-bg": "#eef1f6", "--cs-wait-line": "#d9dfea", "--cs-off": "#9099a8" };
+for (const [k, v] of Object.entries(CS_TOK)) {
+  const p = D.portal.get(k) || [];
+  if (p.length !== 1 || p[0] !== v) F(`portal.css declares ${k} ${p.length} time(s)${p[0] ? ` as ${p[0]}` : ""} — the card system's token, exactly once, ${v} (client_card_system_v1)`);
+  // the two values the system ADDED (the other two were already in use elsewhere, before the tokens existed)
+  if (!["--cs-wait", "--cs-wait-line"].includes(k)) continue;
+  const lit = (strip(files.portal).match(new RegExp(v, "gi")) || []).length;
+  if (lit > 1) F(`portal.css writes ${v} (${k}) ${lit - 1} more time(s) as a literal — use var(${k})`);
+}
+
 // 5 · ratchet
-const BASELINE = { admin: 236, portal: 107 };   // 2026-10-08 after the merge (was 257 / 119)
+// 2026-10-08 after the merge (was 257 / 119). portal 107 → 109 on 2026-10-29: EXACTLY the card system's approved --cs-wait #5b6b8a
+// and --cs-wait-line #d9dfea (the other two tokens' values were already in use) — bounded by 4b, which holds them to one declaration.
+const BASELINE = { admin: 236, portal: 109 };
 const norm = (c) => { c = c.toLowerCase(); return c.length === 4 ? "#" + [...c.slice(1)].map((x) => x + x).join("") : c; };
 for (const [name, css] of Object.entries(files)) {
   const n = new Set((strip(css).match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || []).map(norm)).size;

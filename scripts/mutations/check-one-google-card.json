@@ -30,8 +30,8 @@
  [
   "Fix it isn't the blue move",
   "portal",
-  "class=\"pm-commit\" data-gcard-fix>Fix it",
-  "class=\"pm-amend\" data-gcard-fix>Fix it",
+  "foot: csFoot() })}${pcActs(`<button type=\"button\" class=\"pm-commit\" data-gcard-fix>Fix it</button>`)}",
+  "foot: csFoot() })}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-gcard-fix>Fix it</button>`)}",
   1
  ],
  [
@@ -107,8 +107,8 @@
  [
   "step 6 Check again comes back",
   "portal",
-  "        + (maps ? `<div class=\"pm-pc-lnks\">${maps}</div>` : \"\") });",
-  "        + (maps ? `<div class=\"pm-pc-lnks\">${maps}</div>` : \"\") + `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>` });",
+  "attrs: \" data-gv-card\", body: facts, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
+  "attrs: \" data-gv-card\", body: facts + `<button type=\"button\" class=\"pm-amend\" data-step-recheck=\"m1.gbp.verify\">Check again</button>`, foot: csFoot({ maps: f.mapsUri || \"\" }) });",
   1
  ],
  [

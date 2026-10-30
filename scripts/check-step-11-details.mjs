@@ -4,7 +4,7 @@
 //   · two kinds: "about you" (owned-by, LGBTQ+ friendly, transgender safe space, veteran…) is NEVER pre-ticked or recommended;
 //     "how you work" is recommended (and preselected) only when ANOTHER STEP PROVES it (step 10's link on Google), with why
 //   · the save button says what it saves ("None of these apply" when nothing is ticked); unticked details come off Google
-//   · done = the one Google card with each detail ✓, the ones not shown, Maps, "Change details" (Editing, no write)
+//   · done = the one Google card with each detail ✓, the ones not shown, Maps, "Change something" (Editing, no write) — client_step08_attributes_v1, 10-29
 //   · the record carries what RGA recommended, so admin can say "client chose N of M · RGA recommended X"
 //
 // 🔒 WHY (approved step11_details_v1, 2026-10-16; Chris: "all approved. be sure as always they tie to admin, and databse and
@@ -13,6 +13,7 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -56,6 +57,7 @@ const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; 
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function fmtDateTimeDot\(/m), pick(/^function attrsFormHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
 lift.push(planCardKit(portal, lift.join("\n")));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
+lift.push(csBlock(portal, lift.join("\n")));   // 10-29: the client card system — step 8's done / sent cards (client_step08_attributes_v1)
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-11 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
@@ -102,7 +104,8 @@ if (!/Online appointments Google can show this under your name in map results in
 if (!/Identifies as women-owned Shows on your profile\. People can filter Maps for it\./.test(R.rga.text) || R.rga.rows !== 4) fail("a row doesn't say what the detail does (identity labels are Maps filters), or details aren't one checkbox row each");
 if (R.rga.noneOn || !R.none.noneOn || !R.rga.noneLast) fail(`"None of these apply" isn't the last checkbox (on only when they saved none)`);
 if (!/Tick only what's true today: Google now asks visitors to confirm these\./.test(R.rga.text)) fail("no line that Google asks visitors to confirm these");
-if (R.sent.cls !== "pm-k5-plan rga" || !/Sent to Google/i.test(R.sent.text) || !/up to 30 days/.test(R.sent.text) || R.confirmed.cls !== "pm-k5-plan ok") fail(`a fresh save isn't "Sent to Google" until the nightly check confirms it (${R.sent.cls} · ${R.confirmed.cls})`);
+// 🔄 client_step08_attributes_v1 (the card system, 10-29): "Sent to Google" is the GREY system card (Google's turn), then the green one
+if (R.sent.cls !== "pm-k5-plan pm-cs-card wait" || !/Sent to Google/i.test(R.sent.text) || !/up to 30 days/.test(R.sent.text) || R.confirmed.cls !== "pm-k5-plan pm-cs-card ok") fail(`a fresh save isn't "Sent to Google" until the nightly check confirms it (${R.sent.cls} · ${R.confirmed.cls})`);
 if (JSON.stringify(R.saved.on) !== '["welcomes_lgbtq"]') fail("a saved answer doesn't come back exactly as the client left it");
 // step11_details_v2: ONE primary button, always "Save what's true"; "None of these apply" is a checkbox
 // 🔄 10-23 night (steps_6_20_clean_v1): ONE primary button, always the mockup's "Put it on Google"
@@ -117,7 +120,8 @@ if (R.many.folds !== 3 || !/^Tick what's true Google shows these on your profile
 if (R.editing.cls !== "pm-k5-plan ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");
 // 🔄 10-23 night (steps_6_20_clean_v1, step 8 done): "N details on Google · checked", each detail a chip, Change details
-if (!/^1 detail on Google checked Oct 17 Online appointments Change details$/i.test(R.done.text.trim()) || !R.done.edit || R.done.cls !== "pm-k5-plan ok") fail(`the done card isn't "1 detail on Google · checked" + each detail + Change details (${R.done.text})`);
+// 🔄 client_step08_attributes_v1 (10-29): the details as "On your profile" chips, Maps in the foot, ONE "Change something" (was "Change details")
+if (!/^1 detail on Google checked Oct 17 On your profile Online appointments See it on Google Maps ↗ Change something$/i.test(R.done.text.trim()) || !R.done.edit || R.done.cls !== "pm-k5-plan pm-cs-card ok") fail(`the done card isn't "1 detail on Google · checked" + each detail as a chip + Maps + Change something (${R.done.text})`);
 if (!/None of these apply (?:(?:Last )?checked [^G]* )?Google shows none of these details on your profile\./.test(R.doneNone)) fail(`a done step with nothing ticked doesn't say none apply (${R.doneNone})`);
 if (R.x) fail("a detail's label became HTML");
 

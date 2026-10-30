@@ -154,7 +154,9 @@ if (!/taking longer than we promised/.test(POR)) fail("a late RGA step doesn't t
 if (!/if \(e\.type === "step"\) \{/.test(POR) || !/href="#step-\$\{escapeAttribute\(e\.step_id\)\}"/.test(POR)) fail("a To do step doesn't open the step itself");
 if (!/data-nextstep-owed hidden href="#" data-portal-goto="approvals"/.test(POR) || !/const n = n0 \+ Math\.max\(0, \(_todoApprovalsN \|\| 0\) - \(_fyaN \|\| 0\)\);/.test(POR) || !/if \(_fyaN > 0\) parts\.push\(`\$\{_fyaN\} change/.test(POR)) fail("the yellow card's \"N other things\" doesn't count what To do counts / doesn't open To do");
 if (!/RGA is doing it\$\{gbpWithRga \? moveSince\(openMv && openMv\.get\(step\.id\)\) : ""\}/.test(POR)) fail("the row pill lost its \"· since\" on RGA's by-hand move");
-if (!/pcTlNow\(`<b>RGA \$\{addingN \? "adds them" : "makes the change"\} on Google<\/b>\$\{moveSince\(byHand\)\}`/.test(POR)) fail("step 4 no longer shows RGA's part (since) before Google's 48 hours");
+// 🔄 client_step04_business_facts_v1 (the card system, 10-29): the "since" lives on the row's pill (above); the card's ONE status row
+// carries RGA's promise — "· by <due>", or "· taking longer than promised" once late — then Google's 48 hours
+if (!/csSt\("rga", `RGA \$\{addingN \? "adds them" : "makes the change"\} on Google\$\{byHand\.late \? " · taking longer than promised" : byHand\.due \? ` · by \$\{escapeHtml\(monthDay\(byHand\.due\)\)\}` : ""\}`, `Then Google shows \$\{n === 1 \? "it" : "them"\}, usually within 48 hours\.`\)/.test(POR)) fail("step 4 no longer shows RGA's part (by when · or late) before Google's 48 hours");
 // ── todo_redesign_v1 (approved 10-26): the redesign's moving parts
 {
   const CS = JSON.parse(read("data/playbooks/client-steps.json")), BCS = read("scripts/build-client-steps.mjs"), SSE = read("netlify/functions/send-step-email.js");

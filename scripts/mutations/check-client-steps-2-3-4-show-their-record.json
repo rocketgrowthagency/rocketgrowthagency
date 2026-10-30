@@ -93,8 +93,22 @@
  [
   "our sign-in address comes back on the client's done card (names_not_addresses_v1)",
   "portal",
-  "+ pcTl(`<b>We signed in</b> and checked our access`,",
-  "+ pcTl(`<b>We signed in</b> as ${escapeHtml(acc.account || \"\")} and checked our access`,",
+  "+ csEv(`<b>We signed in</b> and checked our access`,",
+  "+ csEv(`<b>We signed in</b> as ${escapeHtml(acc.account || \"\")} and checked our access`,",
+  1
+ ],
+ [
+  "step 3 done leaves the card system",
+  "portal",
+  "return `<div class=\"pm-k5\">${csCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
+  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", head: \"Rocket Growth Agency has access\", side: `confirmed ",
+  1
+ ],
+ [
+  "an invite sent stops saying RGA signs in",
+  "portal",
+  "+ csEv(ci.via === \"invite\" ? `<b>We sign in</b> and check our access` : line, \"\", \"rga\")",
+  "+ csEv(line, \"\", \"rga\")",
   1
  ]
 ]

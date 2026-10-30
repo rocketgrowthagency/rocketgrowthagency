@@ -36,6 +36,10 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-cs-how": "the client card system's foot \"How this step works ▾\" / \"Why these 5 ▾\" (client_card_system_v1, 2026-10-29): opens or folds the how-to inside the card and flips aria-expanded + the chevron (visible) — nothing is saved",
+  "data-cs-ask": "the client card system's \"Change something\" under a locked card (client_card_system_v1, 2026-10-29): opens the lock's Need a change? panel under the card and scrolls to it (visible) — nothing is saved until \"Send to RGA\", which IS audited",
+  "data-zc-goto": "admin step 29's \"Open the fix plan (step 30) ›\" (admin_steps_29_38, 2026-10-29): scrolls to that step's row (visible) — nothing is saved",
+  "data-zc-svc-check": "admin step 32's \"↻ Check Google now\" (admin_steps_29_38, 2026-10-29): a READ (dry: true) — spins while busy, then repaints the box from Google's answer, or writes \"Couldn't read Google\" + the reason in the box's pill and note (both visible) — nothing is written",
   "data-chg-convo": "the change-request band's conversation link (2026-10-27): opens the step's conversation and scrolls to it (visible) — nothing is saved",
   "data-fya-f": "For your approval's filter chips (approval_tab_and_sent_card_v1, 2026-10-28): show only one place's rows and mark the chip pressed (visible) — nothing is saved",
   "data-goto-approve": "the To do tab's \"N changes wait for your approval\" strip and the pointer banner (approval_tab_and_sent_card_v1, 2026-10-28): switches to the For your approval tab (visible) — nothing is saved",

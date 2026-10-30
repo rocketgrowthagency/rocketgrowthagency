@@ -63,24 +63,10 @@
   1
  ],
  [
-  "client 4: leads with the phone again",
-  "portal",
-  "const lead = adds.length || drops.length ? [0, 4] : [0, 1]",
-  "const lead = [0, 1]",
-  1
- ],
- [
   "client 4: the second button comes back",
   "portal",
   "${CARD_ASKS_CHANGE.has(stepId) ? \" hidden\" : \"\"}>Need a change? ›",
   ">Need a change? ›",
-  1
- ],
- [
-  "client 4: the covered sentence is unescaped",
-  "portal",
-  "row(\"Service area\", escapeHtml(areaLine), areaSt, escapeHtml(coveredSub))",
-  "row(\"Service area\", escapeHtml(areaLine), areaSt, coveredSub)",
   1
  ],
  [
@@ -256,6 +242,34 @@
   "admin",
   "  if (!ctx || !c) { setBanner({ title: \"Couldn't open the reminder\"",
   "  if (!ctx || !c) return; if (0) { setBanner({ title: \"Couldn't open the reminder\"",
+  1
+ ],
+ [
+  "client 4: the service area drops to the end again",
+  "portal",
+  "body: rows[0] + (areaItems.length ? csChips(`Service area · ${areaItems.length} place${areaItems.length === 1 ? \"\" : \"s\"} on Google`, areaItems) : rows[4]) + rows[1] + rows[2] + comeRow",
+  "body: rows[0] + rows[1] + rows[2] + comeRow + (areaItems.length ? csChips(`Service area · ${areaItems.length} place${areaItems.length === 1 ? \"\" : \"s\"} on Google`, areaItems) : rows[4])",
+  1
+ ],
+ [
+  "client 4: a covered place stops saying where",
+  "portal",
+  "x.covered_by ? [`${escapeHtml(placeName(x.name))} <em>in ${escapeHtml(placeName(x.covered_by))}</em>`, \"dot\"]",
+  "x.covered_by ? [escapeHtml(placeName(x.name)), \"dot\"]",
+  1
+ ],
+ [
+  "client 4: the done card shows only two facts",
+  "portal",
+  "head: `All ${rows.length} match Google`",
+  "head: `All ${rows.length} match Google · + 3 more`",
+  1
+ ],
+ [
+  "client 4: the covered sentence is unescaped",
+  "portal",
+  "row(\"Service area\", escapeHtml(areaLine), areaSt, escapeHtml(coveredSub))",
+  "row(\"Service area\", escapeHtml(areaLine), areaSt, coveredSub)",
   1
  ]
 ]

@@ -35,10 +35,10 @@
   1
  ],
  [
-  "How doesn't seat in the links line",
+  "How doesn't seat in the system card's foot",
   "portal",
-  "    } else if (card.hasAttribute(\"data-how-inline\") && card.querySelector(\":scope > .pm-pc-lnks\")) {",
-  "    } else if (false) {",
+  "    if (row && row.classList.contains(\"pm-cs\") && csCardOf(row)) { seatCsFoot(row, f); continue; }\n",
+  "",
   1
  ],
  [
@@ -56,17 +56,17 @@
   1
  ],
  [
-  "the read-Google path seats How above the links",
+  "the read-Google path drops How back above the foot",
   "portal",
-  "if (card.hasAttribute(\"data-how-inline\") && ln) { ln.appendChild(how); how.classList.add(\"pm-how-inline\"); } else card.insertBefore(how, ln);",
-  "card.insertBefore(how, ln);",
+  "if (how && card && card.classList.contains(\"pm-cs-card\")) { how.removeAttribute(\"data-seated\"); how.classList.remove(\"pm-cs-howb\"); card.after(how); }",
+  "if (false) { }",
   1
  ],
  [
-  "the spinner fills the blue row",
+  "the blue row's icon has no size",
   "portalcss",
-  ".pm-s6-rga > svg { flex:0 0 auto; width:18px; height:18px;",
-  ".pm-s6-rga > svg { flex:0 0 auto;",
+  ".pm-cs-st > svg { width:18px; height:18px;",
+  ".pm-cs-st > svg {",
   1
  ],
  [
@@ -74,6 +74,41 @@
   "portalcss",
   "border:0; border-radius:0; padding:0; background:none; }   /* .pm-rv-next is the section",
   "border:0; border-top:1px solid #e3e3e3; border-radius:0; padding:12px 14px; background:none; }   /* .pm-rv-next is the section",
+  1
+ ],
+ [
+  "the main category loses its mark",
+  "portal",
+  "ch(`${escapeHtml(cats.primary.label)} <em>main</em>`, \"main\")",
+  "ch(escapeHtml(cats.primary.label))",
+  1
+ ],
+ [
+  "Maps leaves the foot",
+  "portal",
+  "body, foot: csFoot({ maps: maps || \"\" }) })}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`)}</div>`;",
+  "body, foot: csFoot() })}${gcardMaps(maps)}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`)}</div>`;",
+  1
+ ],
+ [
+  "Change something goes back to Change",
+  "portal",
+  "body, foot: csFoot({ maps: maps || \"\" }) })}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`)}</div>`;",
+  "body, foot: csFoot({ maps: maps || \"\" }) })}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change</button>`)}</div>`;",
+  1
+ ],
+ [
+  "all services show at once",
+  "portal",
+  "names.slice(2).map((n) => `<span class=\"pm-cs-chip\" data-s6-rest hidden>${escapeHtml(n)}</span>`)",
+  "names.slice(2).map((n) => `<span class=\"pm-cs-chip\">${escapeHtml(n)}</span>`)",
+  1
+ ],
+ [
+  "step 6 leaves the card system",
+  "portal",
+  "\"m1.gbp.business_facts\", \"m1.strategy.keywords_locations\", \"m1.gbp.services_products\", \"m1.gbp.hours_attributes\"",
+  "\"m1.gbp.business_facts\", \"m1.strategy.keywords_locations\", \"m1.gbp.hours_attributes\"",
   1
  ]
 ]

@@ -51,8 +51,8 @@
  [
   "step 7 drops done-when",
   "portal",
-  ": pcFoot(`Done when Google shows",
-  ": pcFoot(`Next: Google shows",
+  ": \"RGA is finishing it on Google\", `Done when Google shows",
+  ": \"RGA is finishing it on Google\", `Next: Google shows",
   1
  ],
  [
@@ -65,8 +65,8 @@
  [
   "a place chip shows twice",
   "portal",
-  "...adds.filter((x) => !nowOn.includes(placeName(x.name))).map(",
-  "...adds.map(",
+  "...adds.filter((x) => !nowOn.includes(placeName(x.name))).map((x) => x.covered_by ? [",
+  "...adds.map((x) => x.covered_by ? [",
   1
  ],
  [
@@ -184,8 +184,36 @@
  [
   "the adding word comes back",
   "portal",
-  "chip(placeName(x.name), x.on ? \"on\" : \"add\")",
-  "chip(placeName(x.name), x.on ? \"on\" : \"add\", x.on ? \"\" : \"adding\")",
+  "[escapeHtml(placeName(x.name)), x.on ? \"dot\" : \"rga\"]",
+  "[`${escapeHtml(placeName(x.name))} <i>adding</i>`, x.on ? \"dot\" : \"rga\"]",
+  1
+ ],
+ [
+  "a card-system add chip loses its dashed blue",
+  "portalcss",
+  ".pm-cs-chip.rga { border:1px dashed var(--portal-accent,#2457e6);",
+  ".pm-cs-chip.rga { border:1px solid var(--portal-accent,#2457e6);",
+  1
+ ],
+ [
+  "the duplicate row lands after the foot",
+  "portal",
+  "card.insertBefore(dup, card.querySelector(\":scope > .pm-k5-fold, :scope > .pm-cs-foot\") || null)",
+  "card.insertBefore(dup, null)",
+  1
+ ],
+ [
+  "step 4 RGA working draws every fact again",
+  "portal",
+  "const body = (changing(\"name\") ? rows[0] : \"\")",
+  "const body = rows.join(\"\") + (changing(\"name\") ? rows[0] : \"\")",
+  1
+ ],
+ [
+  "step 4 RGA working loses its status row",
+  "portal",
+  "      : csSt(\"rga\", queue.length && !pending.length ?",
+  "      : \"\" && csSt(\"rga\", queue.length && !pending.length ?",
   1
  ]
 ]

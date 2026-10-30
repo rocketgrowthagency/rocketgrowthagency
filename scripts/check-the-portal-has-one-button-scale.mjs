@@ -160,6 +160,11 @@ const EXEMPT = {
   "ai-pointer": "an inline pointer banner, not a control in the scale",
   "pm-chg-lnk": "text link (no horizontal padding, link colour, no border) — the change-request band's quiet links beside That's sorted: \"Cancel my request\" and the conversation link",
   "pm-merge-b": "a two-line CHOICE TILE (title + why), the option is the card — step 3's \"Who puts approved changes on your website\" (merge_without_the_browser_v1, 2026-10-28)",
+  "how": "text link (padding:0, link colour, no border) — the client card system's foot \"How this step works ▾\" / \"Why these 5 ▾\" on the foot's right (client_card_system_v1, 2026-10-29)",
+  "pm-cs-chip": "a CHIP in a chip row, not a button rung — the card system draws \"+N more ›\" as one more chip beside the names it reveals (client_step06_categories_services_v1, 2026-10-29); it takes the chips' height",
+  "pm-k5-asklink": "text link (padding:0, link colour, underlined) — a card's inline \"ask RGA\" link inside a sentence",
+  "pm-r5-lnk": "text link (padding:0, no border, muted) — step 13's quiet per-customer links",
+  "pm-modal-x": "a square ICON button with its size DECLARED (36×36, padding:0) — the popup's ✕ (\"an X on every popup\", step36 batch A, 2026-10-29), not a text control on the scale",
   "pm-ex": "the example drawing beside a photo slot — the 64×48 picture IS the control (padding:0), not a text button (2026-10-09)",
 };
 {

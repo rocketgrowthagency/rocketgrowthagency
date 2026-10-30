@@ -2,28 +2,28 @@
  [
   "week not drawn",
   "portal",
-  "`<div class=\"pm-pc-week\">${GBP_DAY.map(tile).join(\"\")}</div>`)\n    + (yearly.length",
-  "\"\")\n    + (yearly.length",
+  "`<div class=\"pm-cs-week\">${GBP_DAY.map(tile).join(\"\")}</div>`)",
+  "\"\")",
   1
  ],
  [
   "one-off closures without dates",
   "portal",
-  "once.map((x) => `${escapeHtml(x.name || \"Closed\")} ${escapeHtml(monthDay(x.date + \"T12:00:00Z\"))}`)",
-  "once.map((x) => `${escapeHtml(x.name || \"Closed\")}`)",
+  "once.map((x) => [`${escapeHtml(x.name || \"Closed\")}${when(x)}`, \"\"])",
+  "once.map((x) => [`${escapeHtml(x.name || \"Closed\")}`, \"\"])",
   1
  ],
  [
   "no Maps link",
   "portal",
-  "  const links = maps ? `<div class=\"pm-pc-lnks\">${gcardMaps(maps)}</div>` : \"\";",
-  "  const links = \"\";",
+  "body, foot: csFoot({ maps: maps || \"\" }) })}`\n    + pcActs(`<button type=\"button\" class=\"pm-amend pm-hc-change\"",
+  "body, foot: csFoot() })}`\n    + pcActs(`<button type=\"button\" class=\"pm-amend pm-hc-change\"",
   1
  ],
  [
-  "no Change hours",
+  "no Change something",
   "portal",
-  "<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change hours</button>",
+  "<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change something</button>",
   "",
   1
  ],
@@ -95,6 +95,20 @@
   "portalcss",
   ".pm-dsw { display:inline-flex; align-items:center; gap:8px; }",
   ".pm-dsw { display:inline-flex; align-items:center; gap:8px; }\n.pm-dsw { width:12px; }",
+  1
+ ],
+ [
+  "holidays lose their next date",
+  "portal",
+  "yearly.map((x) => [`${escapeHtml(x.name || \"Closed\")}${when(x)}`, \"\"])",
+  "yearly.map((x) => [`${escapeHtml(x.name || \"Closed\")}`, \"\"])",
+  1
+ ],
+ [
+  "the old Something's not right comes back",
+  "portal",
+  "<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change something</button>",
+  "<button type=\"button\" class=\"pm-amend pm-hc-change\" data-hours-edit=\"${escapeAttribute(step.id)}\">Change something</button><button type=\"button\" class=\"pm-k5-tell\" data-step-wrong=\"${escapeAttribute(step.id)}\">Something's not right?</button>",
   1
  ]
 ]

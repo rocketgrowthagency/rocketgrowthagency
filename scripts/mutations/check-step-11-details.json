@@ -56,10 +56,10 @@
   1
  ],
  [
-  "the done card loses Change details",
+  "the done card loses Change something",
   "portal",
-  "  const act = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change details</button>`);",
-  "  const act = \"\";",
+  "  const act = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const head = on.length",
+  "  const act = \"\";\n  const head = on.length",
   1
  ],
  [
@@ -135,8 +135,8 @@
  [
   "Sent to Google is skipped",
   "portal",
-  "  if (!seen) return `<div class=\"pm-k5\">${pcCard({ tone: \"rga\", icon: KW_SPIN, head: on.length ? `Sent to Google",
-  "  if (false) return `<div class=\"pm-k5\">${pcCard({ tone: \"rga\", icon: KW_SPIN, head: on.length ? `Sent to Google",
+  "  if (!seen) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
+  "  if (false) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
   1
  ],
  [

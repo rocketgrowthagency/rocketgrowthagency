@@ -44,13 +44,13 @@
  [
   "step 3 done says \"not on record\" again",
   "portal",
-  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` })}`",
-  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + pcTl(`<b>Your website builder</b> · not on record`, \"\", false) + `<div data-acc-done-plat hidden></div>` })}`"
+  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`",
+  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + csEv(`<b>Your website builder</b> · not on record`, \"\", \"off\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`"
  ],
  [
   "step 6's live read throws away the seated how-to again",
   "portal",
-  "      if (how && card) { const ln = card.querySelector(\":scope > .pm-pc-lnks\"); if (card.hasAttribute(\"data-how-inline\") && ln) { ln.appendChild(how); how.classList.add(\"pm-how-inline\"); } else card.insertBefore(how, ln); }\n",
-  "\n"
+  "if (how && card && card.classList.contains(\"pm-cs-card\")) { how.removeAttribute(\"data-seated\"); how.classList.remove(\"pm-cs-howb\"); card.after(how); }",
+  "if (how && card && card.classList.contains(\"pm-cs-card\")) { }"
  ]
 ]

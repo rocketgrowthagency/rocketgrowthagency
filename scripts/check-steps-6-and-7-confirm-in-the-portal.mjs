@@ -6,10 +6,13 @@
 //   step7_check_business_v2 — "Check your business on Google" says what was compared, shows a facts table, what RGA is
 //     doing, the 48-hour wait and when it's done; on a phone the table STACKS (label + state, value full-width under it)
 //     and a place chip never breaks mid-word (Chris's 7:08 screenshot).
+//   🔄 2026-10-29 client_step02_verify_v1 + client_step04_business_facts_v1 (the card system): the same promises on the system card —
+//     the duplicate row before the foot, step 4 while RGA works = the band (what was compared) + only what's changing + ONE status row.
 // RUNS the real card builders on fakes, plus the wiring around them.
 //   exit 0 holds · 1 a confirmation reverts to email / the step 7 card loses a part / squeezes on mobile · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
+import { csBlock } from "./lib/portal-cs.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const rd = (p) => fs.readFileSync(`${SITE}/${p}`, "utf8");
 const P = rd("portal/portal.js"), CSS = rd("portal/portal.css"), A = rd("admin/admin.js");
@@ -33,7 +36,7 @@ const ctx = vm.createContext({
   // step4_done_in_portal_v2 (10-29): step 4's card opens its editor while editing — none here
   _editingSteps: new Set(),
 });
-{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b) + "\n" + (P.match(/^const KW_SPIN = `[^`]*`;$/m) || [""])[0], ctx); }   // the plan card (steps_1_4_clean_v1)
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b) + "\n" + (P.match(/^const KW_SPIN = `[^`]*`;$/m) || [""])[0], ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // 10-29: + the client card system   // the plan card (steps_1_4_clean_v1)
 for (const n of ["dupConfirmedOf", "keptProfileOf", "dupConfirmedHtml", "dupNoteHtml", "typeLinesHtml", "factsLocked", "factsEditorHtml", "factsCardV2"]) vm.runInContext(fnSrc(n), ctx);
 const run = (src) => vm.runInContext(src, ctx);
 
@@ -49,7 +52,8 @@ if (/photo|next step/i.test(card)) fail(`step 6's confirmation points at photos 
 // 🔄 10-23 night (Chris: "match the mockup exactly" — steps_1_4_clean_v1 draws ONE plain row, no Show details): a row joined into the
 // verified card, right under Phone (before the fold); a closed accordion again would be the drift Chris screenshotted
 if (!/^<div class="pm-k5-plan ok pm-k5-join" data-dup-acc><div class="pm-pc-f">/.test(card) || /<details/.test(card)) fail("step 6's duplicate confirmation isn't the plain row joined into the verified card");
-if (!/card\.insertBefore\(dup, card\.querySelector\(":scope > \.pm-k5-fold"\) \|\| null\)/.test(P)) fail("the duplicate row isn't placed under Phone, before the fold and Maps");
+// 🔄 client_step02_verify_v1 (the card system, 10-29): the row goes before the card's own fold OR its foot (Maps · How), never after
+if (!/card\.insertBefore\(dup, card\.querySelector\(":scope > \.pm-k5-fold, :scope > \.pm-cs-foot"\) \|\| null\)/.test(P)) fail("the duplicate row isn't placed under Phone, before the fold and Maps");
 if (/One profile on Google/.test(card)) fail('the duplicate row says more than "Removed"');
 if (!/Removed<small>Google confirmed it [^<]+<\/small>/.test(card)) fail("the confirmation date isn't on its own line under Removed");
 if (/Show details|Hide details/.test(card)) fail("the duplicate row grew a Show / Hide details again (the mockup has none)");
@@ -59,6 +63,9 @@ if ((P.match(/dupConfirmedHtml\(onboarding\?\.data\?\.tasks, oauth\)/g) || []).l
 // the verified card: no Check again, the every-night note instead
 const gv = P.slice(P.indexOf("function gvProfileHtml("), P.indexOf("function gvGoogleRouteHtml("));
 if (/data-step-recheck="m1\.gbp\.verify">Check again/.test(gv) || !/meta: kind === "yes" \? "We check this every night\./.test(gv)) fail("the verified card has Check again again, or lost the every-night note");
+// the card-system verified card (client_step02_verify_v1 "Done · verified"): the facts + Maps · How in the foot — still no Check again
+{ const y = gv.slice(gv.indexOf('if (kind === "yes") {'), gv.indexOf("if (CS_STEPS.has(\"m1.gbp.verify\"))"));
+  if (!y || !/return csCard\(\{ tone: "ok", head: "Verified by Google"/.test(y) || /recheck|Check again/.test(y)) fail("the system's verified card isn't the green \"Verified by Google\" card, or offers Check again"); }
 // the jump opens the accordion
 if (!/data-portal-scroll="step-row-m1\.gbp\.verify" data-portal-open="\[data-dup-acc\]"/.test(P) || !/const openSel = t\.getAttribute\("data-portal-open"\);\s*if \(openSel\) \{ const acc = el\.querySelector\(openSel\); if \(acc && !acc\.open\) acc\.open = true; \}/.test(P)) fail('"See step 6 →" doesn\'t open the accordion it lands on');
 if (run("dupConfirmedHtml(T2, null)") || run("dupConfirmedHtml(T4, null)")) fail("step 6 says the duplicate is gone before Google confirms it (verdict not clean, or not removed)");
@@ -77,15 +84,20 @@ ctx.G1 = { state: "with_rga", after: { name: "Acme Plumbing", phone: "+1 555-010
   progress: { at: now, items: [{ kind: "area", name: "Capital City, IL, USA", on: true }, { kind: "area", name: "Ogdenville, IL, USA", on: false }] } };
 ctx.G2 = { state: "on_google", after: ctx.G1.after, area_now: ["Springfield, IL, USA", "Capital City, IL, USA"], area_now_at: now };
 const w = run("factsCardV2(S, CI, G1)"), o = run("factsCardV2(S, CI, G2)");
-if ((w.match(/class="pm-pc-f"/g) || []).length !== 5) fail("step 7's facts table doesn't have its 5 rows (name, phone, website, how customers reach you, service area)");
-for (const [re, what] of [[/Nothing needed from you/, "nothing needed from you"], [/We compared what Google shows/, "what was compared"], [/What RGA is doing:/, "what RGA is doing"],
-  [/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit/, "Change something"], [/class="pm-fxt-pl add"/, "each area's own state (steps_1_4_clean_v1: a dashed blue chip for one being added, no word)"]])
+// 🔄 client_step04_business_facts_v1 (the card system, 10-29) "RGA is adding places": the band says what was compared ("4 facts
+// match · adding 1 area · checked"), ONLY what's changing is drawn (the area, as chips — dashed blue for one being added, no word),
+// ONE blue status row says what RGA is doing, the 48 hours and when it's done; nothing for the client to press but Change something
+if (!/<div class="pm-k5-plan pm-cs-card rga">/.test(w) || !/<b>4 facts match · adding 1 area<\/b><span>checked /.test(w)) fail("step 7 (RGA working) lost \"what was compared\" (the blue band: N facts match · adding N areas · checked)");
+if ((w.match(/class="pm-pc-f"/g) || []).length !== 0 || (w.match(/<div class="pm-cs-chips"><span class="k">Service area<\/span>/g) || []).length !== 1) fail("step 7 (RGA working) draws facts that aren't changing, or not the service area as ONE chip row");
+if ((w.match(/class="pm-cs-st /g) || []).length !== 1 || !/<div class="pm-cs-st rga">/.test(w) || !/<b>RGA is finishing it on Google<\/b>/.test(w)) fail("step 7 (RGA working) lost \"what RGA is doing\" (ONE blue status row)");
+for (const [re, what] of [[/48 hours/, "Google's 48-hour wait"], [/Done when Google shows/, "done when"], [/data-step-edit="m1\.gbp\.business_facts">Change something<\/button>/, "Change something"], [/<span class="pm-cs-chip rga">Ogdenville<\/span>/, "each area's own state (a dashed blue chip for one being added, no word)"]])
   if (!re.test(w)) fail(`step 7 (RGA working) lost "${what}"`);
+if (/class="pm-commit"/.test(w)) fail("step 7 (RGA working) asks the client to do something (nothing is needed from them)");
 for (const n of ["Springfield", "Shelbyville", "Capital City", "Ogdenville"]) {
-  const k = (w.match(new RegExp(`pm-fxt-pl[^"]*"><span class="d"[^>]*></span>${n}\\b`, "g")) || []).length;
+  const k = (w.match(new RegExp(`<span class="pm-cs-chip(?: \\w+)?">${n}\\b`, "g")) || []).length;
   if (k !== 1) fail(`step 7 shows the place chip "${n}" ${k} times (want exactly 1)`);
 }
-if (!/pm-k5-plan ok/.test(o) || !/All 5 match Google/.test(o) || /RGA is/.test(o)) fail("step 7 on Google doesn't say it matches (or still says RGA is working)");
+if (!/pm-k5-plan pm-cs-card ok/.test(o) || !/All 5 match Google/.test(o) || /RGA is/.test(o)) fail("step 7 on Google doesn't say it matches (or still says RGA is working)");
 if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(P)) fail("step 7 doesn't route to the v2 card");
 // the mobile layout (Chris 10-20): stacked at every width, chips never break mid-word
 const rule = (sel) => (CSS.match(new RegExp(`\\n${sel.replace(/\./g, "\\.")} \\{([^}]*)\\}`)) || [])[1] || "";
@@ -96,7 +108,13 @@ if (!/white-space:\s*nowrap/.test(rule(".pm-fxt-pl"))) fail("a place chip can br
 // Google; dashed blue + blue dot being added, with no "adding" word (live had drifted to green-tinted chips and grey "adding" ones)
 if (!/border: 1px dashed var\(--state-other-line\)/.test(rule(".pm-fxt-pl.add")) || !/background: var\(--state-other-edge\)/.test(rule(".pm-fxt-pl.add .d"))) fail("an area being added isn't the mockup's dashed blue chip");
 if (!/background: var\(--portal-tray\)/.test(rule(".pm-fxt-pl.on")) || !/background: var\(--state-ok-fill\)/.test(rule(".pm-fxt-pl.on .d"))) fail("an area on Google isn't the mockup's soft grey chip with a green dot");
-if (/<i>adding<\/i>/.test(w)) fail("an area being added carries the word \"adding\" again (the mockup has none)");
+if (/<i>adding<\/i>|>adding</.test(w)) fail("an area being added carries the word \"adding\" again (the mockup has none)");
+// the same promises in the card system's own styles: a chip being added is dashed blue, one on Google has the green dot, a chip
+// never breaks across two lines (Chris's 7:08 screenshot, 10-20), and on a phone a fact's label sits on its own line over the value
+{ const crule = (sel) => (CSS.match(new RegExp(`(?:^|\\n)${sel.replace(/[.:]/g, (c) => `\\${c}`)} \\{([^}]*)\\}`)) || [])[1] || "";
+  if (!/border:1px dashed var\(--portal-accent/.test(crule(".pm-cs-chip.rga")) || !/background:var\(--state-ok-fill/.test(crule(".pm-cs-chip.dot::before"))) fail("a card-system area chip isn't dashed blue while being added, or green-dotted on Google");
+  if (!/white-space:\s*nowrap/.test(crule(".pm-cs-chip"))) fail("a card-system chip (.pm-cs-chip) can break across two lines — a place name splits on a phone (Chris's 7:08 screenshot, 10-20)");
+  if (!/@media \(max-width:700px\) \{ \.pm-cs \.pm-cs-card \.pm-pc-f \{ grid-template-columns:minmax\(0,1fr\) 22px; \} \.pm-cs \.pm-cs-card \.pm-pc-f \.l \{ grid-column:1\/-1; \} \}/.test(CSS)) fail("on a phone a card-system fact row keeps its label column (it squeezes the value)"); }
 // 🔄 10-23 (steps_1_4_clean_v1): step 7's rows are the plan card's fact rows — label · value · a drawn mark (or its honest status words)
 if (!/const pcFact = \(label, value, sub = "", mark = "ok"\) => `<div class="pm-pc-f"><span class="l">\$\{escapeHtml\(label\)\}<\/span><span class="v">/.test(P) || !/const row = \(k, v, st, sub = ""\) => pcFact\(k, v, sub, st\);/.test(P)) fail("a facts row isn't label · value · mark (the plan card's row)");
 if (/@media[^{]*\{[^}]*\.pm-fxt/.test(CSS)) fail("the facts table has a width-only media rule; it must stack at every width");

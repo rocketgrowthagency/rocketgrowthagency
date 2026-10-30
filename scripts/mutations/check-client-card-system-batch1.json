@@ -1,0 +1,100 @@
+[
+ [
+  "a step ON HOLD joins the card system",
+  "portal",
+  "const CS_STEPS = new Set([\"m1.gbp.verify\",",
+  "const CS_STEPS = new Set([\"m1.gbp.photos\", \"m1.gbp.verify\",",
+  1
+ ],
+ [
+  "the band wears a topic icon instead of its state",
+  "portal",
+  "${CS_ICON[tone] || CS_ICON.ok}<b>${head}</b>",
+  "${KW_ICON}<b>${head}</b>",
+  1
+ ],
+ [
+  "step 4 done folds facts away again",
+  "portal",
+  ": rows[4]) + rows[1] + rows[2] + comeRow, foot })}",
+  ": rows[4]) + `<details class=\"pm-k5-more\"><summary>+ 3 more</summary>` + rows[1] + rows[2] + comeRow + `</details>`, foot })}",
+  1
+ ],
+ [
+  "step 5's map pin comes back",
+  "portal",
+  "const line = (x, i) => `<div class=\"pm-cs-rank\"><span class=\"n\">${i + 1}</span>",
+  "const line = (x, i) => `<div class=\"pm-cs-rank\"><span class=\"n\"${x.d.pack ? ' title=\"Shows Google\\'s map\"' : \"\"}>${i + 1}</span>",
+  1
+ ],
+ [
+  "step 5's floor stops saying what it means",
+  "portal",
+  ": \"too specific to count\";",
+  ": \"too specific\";",
+  1
+ ],
+ [
+  "step 9's Keep it goes back to the form option's attribute",
+  "portal",
+  "<button type=\"button\" data-bk-putkeep>Keep it</button>",
+  "<button type=\"button\" data-bk-keep>Keep it</button>",
+  1
+ ],
+ [
+  "the Keep handler listens on the form option again",
+  "portal",
+  "const b = e.target.closest?.(\"[data-bk-putkeep]\"); if (!b || b.disabled) return;",
+  "const b = e.target.closest?.(\"[data-bk-keep]\"); if (!b || b.disabled) return;",
+  1
+ ],
+ [
+  "step 9 done previews a Book button again",
+  "portal",
+  "+ (put ? csSt(\"you\", \"We put this on Google for you\"",
+  "+ `<div class=\"pm-pc-gprev\"><span class=\"gp-btns\">Book</span></div>` + (put ? csSt(\"you\", \"We put this on Google for you\"",
+  1
+ ],
+ [
+  "step 8 says Change details again",
+  "portal",
+  "Change something</button>`);\n  const head",
+  "Change details</button>`);\n  const head",
+  1
+ ],
+ [
+  "the system thread loses Ask RGA",
+  "portal",
+  "<details class=\"pm-ask pm-cs-ask\"><summary>Questions about this step? <b>Ask RGA ›</b>",
+  "<details class=\"pm-ask pm-cs-ask\"><summary>Questions about this step? <b>Ask Rocket Growth Agency</b>",
+  1
+ ],
+ [
+  "RGA's own town leaks into another business's plan",
+  "portal",
+  "const town0 = mkt0 ? String(mkt0).split(\",\")[0].trim() : \"\";",
+  "const town0 = \"Culver City\";",
+  1
+ ],
+ [
+  "a Canadian phone stops being formatted",
+  "portal",
+  "const phone = [\"US\", \"CA\", \"PR\"].includes(reg) && pd.length === 10 ? `(${pd.slice(0, 3)}) ${pd.slice(3, 6)}-${pd.slice(6)}` : (a.phone || ci.phone || \"\");",
+  "const phone = [\"US\", \"PR\"].includes(reg) && pd.length === 10 ? `(${pd.slice(0, 3)}) ${pd.slice(3, 6)}-${pd.slice(6)}` : (a.phone || ci.phone || \"\");",
+  1
+ ],
+ [
+  "a card-system rule leaks to every card",
+  "portalcss",
+  ".pm-cs-foot:empty { display:none; }",
+  ".pm-cs-foot:empty { display:none; } .pm-k5-acts { gap:4px; }",
+  1
+ ],
+ [
+  "a card-system font shorthand leans on inherit",
+  "portalcss",
+  "padding:0; font:inherit; cursor:pointer; }",
+  "padding:0; font:600 13.5px var(--portal-font, inherit); cursor:pointer; }",
+  1
+ ]
+]

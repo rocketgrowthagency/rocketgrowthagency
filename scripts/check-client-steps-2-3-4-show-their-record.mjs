@@ -6,6 +6,7 @@
 //   exit 0 holds · 1 a step regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
+import { csBlock } from "./lib/portal-cs.mjs";
 import { createRequire } from "node:module";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -55,7 +56,7 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
     if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; else if (c === ";" && d === 0) return P.slice(at + 1, i + 1).replace(/^const /, "var "); }
   return ""; };
 for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
-{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); }   // the shared plan card (steps_1_4_clean_v1)
+{ const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // the shared plan card (steps_1_4_clean_v1) + the client card system (10-29)
 for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName"]) vm.runInContext(lift(n), ctx);
 vm.runInContext(`var _accHosts = {}; var ACC_FILES = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 vm.runInContext(planCardKit(P, "const RC_PHONE =\nconst RC_FORM =\nconst RC_WEB =\n" + P.slice(P.indexOf("const PC_TICK = "), P.indexOf("\n", P.indexOf("const pcActs = ")))), ctx);   // 10-26: planFromGcard + icons (steps_6_20_clean_v1)
@@ -65,16 +66,17 @@ for (const n of ["recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "fo
 vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", ctx);
 const run = (id, ts) => { ctx.__ts = ts; return vm.runInContext(`recordCardHtml({ id: "${id}" }, __ts, "c1")`, ctx); };
 const ok2 = run("m1.access.website", { status: "done", client_input: { via: "invite", platform: "wordpress", platform_source: "detected", at: "2026-10-20T21:14:00Z" }, access: { role: "Administrator", account: "hello@rocketgrowthagency.com", confirmed_at: "2026-10-20T23:02:00Z", confirmed_by: "chris" } });
-if (!/pm-k5-plan ok/.test(ok2) || !/<b>Rocket Growth Agency has access<\/b>/.test(ok2) || !/ · Administrator/.test(ok2) || !/We signed in<\/b> and checked our access/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
+// 🔄 client_step03_access_v1 (the card system, 10-29): the same grant, drawn as the green system card with event rows
+if (!/pm-k5-plan pm-cs-card ok/.test(ok2) || !/class="pm-cs-ev"/.test(ok2) || !/<b>Rocket Growth Agency has access<\/b>/.test(ok2) || !/ · Administrator/.test(ok2) || !/We signed in<\/b> and checked our access/.test(ok2) || !/wordpress/.test(ok2)) fail(`step 2's done card doesn't show the grant (${ok2.slice(0, 160)})`);
 // names_not_addresses_v1 (Chris 10-28): names, not addresses — our sign-in address never on the client's done card; "remove us" names their builder
 if (/hello@rocketgrowthagency\.com|rocketgrowthagency-admin/.test(ok2)) fail("step 2's done card names our account address again (names_not_addresses_v1)");
 if (/password/i.test(ok2.replace(/never send us your password/i, ""))) fail("step 2's done card mentions a password");
 const wait2 = run("m1.access.website", { status: "in_progress", client_input: { via: "invite", platform: "wix", at: "2026-10-20T21:14:00Z" } });
-if (!/state="rga"/.test(wait2) || !/Checking we can sign in/.test(wait2)) fail("an invite sent isn't \"RGA is checking we can sign in\"");
+if (!/pm-k5-plan pm-cs-card rga/.test(wait2) || !/<b>Checking we can sign in<\/b>/.test(wait2) || !/<b>We sign in<\/b> and check our access/.test(wait2)) fail("an invite sent isn't \"RGA is checking we can sign in\"");
 const old2 = run("m1.access.website", { status: "done", client_input: "https://onetimesecret.com/secret/abc", client_input_at: "2026-09-21T16:20:00Z" });
 if (!/Switch to an invite \(safer\)/.test(old2) || /onetimesecret/.test(old2)) fail("an old password link isn't offered the switch to an invite, or its link is shown");
 const ask2 = run("m1.access.website", {});
-if (!/data-acc-host/.test(ask2) || !/Takes 2–5 minutes · you never share a password/.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
+if (!/data-acc-host/.test(ask2) || !/pm-k5-plan pm-cs-card you/.test(ask2) || !/<span>takes 2–5 min<\/span>/.test(ask2) || !/Never send us your password\./.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
 const skip3 = run("m1.tracking.call_setup", { status: "done", client_choice: "skip", client_choice_at: "2026-10-20T12:00:00Z" });
 // 🔄 10-26 (steps_6_20_clean_v1, step 11 done): "Skipped for now · decided", the one row, when we ask again
 if (!/<b>Skipped for now<\/b>/.test(skip3) || !/call-button clicks/.test(skip3) || !/we'll ask again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);

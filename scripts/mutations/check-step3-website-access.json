@@ -44,8 +44,8 @@
  [
   "the done-before-details card grows a footer again (the mockup has none)",
   "portal",
-  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` })}`",
-  "body: pcTl(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>` + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
+  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`",
+  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
  ],
  [
   "the Change button goes (can't X out)",
@@ -122,8 +122,8 @@
  [
   "the padlock is back on step 3",
   "portal",
-  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_WEB, head: \"Rocket Growth Agency has access\", side: `confirmed ",
-  "return `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: RC_LOCK, head: \"Rocket Growth Agency has access\", side: `confirmed "
+  "${csGcard({ state: \"you\", tile: RC_WEB,",
+  "${csGcard({ state: \"you\", tile: RC_LOCK,"
  ],
  [
   "Done shows over Your move while updating",
@@ -278,8 +278,8 @@
  [
   "step 3 done says \"before this page tracked it\" again",
   "portal",
-  "body: pcTl(`<b>Access given</b>`, when ?",
-  "body: pcTl(`<b>Access given</b> · before this page tracked it`, when ?"
+  "body: csEv(`<b>Access given</b>`, when ?",
+  "body: csEv(`<b>Access given</b> · before this page tracked it`, when ?"
  ],
  [
   "step 3 done reads a GUESSED builder as fact",
@@ -292,5 +292,12 @@
   "portal",
   "    host.querySelector(\"[data-acc-addb]\")?.remove();\n",
   "\n"
+ ],
+ [
+  "step 3 done goes back to Edit access",
+  "portal",
+  "pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Change something</button>`)",
+  "pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Edit access</button>`)",
+  1
  ]
 ]

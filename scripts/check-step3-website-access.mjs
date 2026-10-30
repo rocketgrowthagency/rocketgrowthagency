@@ -62,7 +62,9 @@ if (ia < 0 || ib < 0 || ia > ib) fail("a done row with no answer stored can fall
 // 🔄 done_without_record_v2 (approved 10-26): no bookkeeping words ("before this page tracked it", "not on record"); step 3's own
 // detector reads the site and adds "Your website · <builder>" only when the site STATES it, then the quiet "Add your builder" goes
 { const d = P.slice(ia, ib);
-  if (/not on record|before this page|Not recorded|Marked done/.test(d) || /Nothing for you to do/.test(d) || !/data-acc-redo>Edit access<\/button><button type="button" class="pm-k5-tell" data-acc-redo data-acc-addb>Add your builder<\/button>/.test(d) || /Want it on record\?|>Add the details</.test(P)) fail("done-without-record isn't the mockup's calm card (no bookkeeping words · Edit access + the quiet \"Add your builder\" link · no footer · never a question)");
+  if (/not on record|before this page|Not recorded|Marked done/.test(d) || /Nothing for you to do/.test(d) || !/data-acc-redo>Change something<\/button><button type="button" class="pm-k5-tell" data-acc-redo data-acc-addb>Add your builder<\/button>/.test(d) || /Want it on record\?|>Add the details</.test(P)
+    // client_step03_access_v1 (the card system, 10-29): the foot is the system's empty foot (lock · Maps · How join it) — never words of ours
+    || !/, foot: csFoot\(\) \}\)\}`/.test(d) || /pcFoot\(/.test(d)) fail("done-without-record isn't the mockup's calm card (no bookkeeping words · Change something + the quiet \"Add your builder\" link · no footer words · never a question)");
   const ld = P.slice(P.indexOf("async function loadAccessDoneSite()"), P.indexOf("async function loadAccessPlatform()"));
   if (!/data-acc-done-site/.test(d) || !/j\.confidence === "stated" && !j\.designer/.test(ld) || !/\[data-acc-addb\]"\)\?\.remove\(\)/.test(ld) || !/loadAccessDoneSite\(\);/.test(P)) fail("step 3 done-without-record doesn't read the site with step 3's detector (a STATED builder only), or keeps \"Add your builder\" beside a found one"); }
 if (/data-acc-other|>Not right\? Pick another/.test(P)) fail("the hidden \"Not right? Pick another\" link is back");
@@ -144,7 +146,9 @@ if (!/<details class="pm-mail pm-convo"\$\{talk\.some\(\(m\) => unreadIds\.has\(
     if (!String(PB[0] || "").includes(h)) fail(`How this step works lost "${h}"`);
   if (/the role the card shows/.test(PB[0] || "")) fail("How this step works is back to the old jargon (\"the role the card shows\")");
   if (!/Our promise on their card: nothing goes live until they approve it; every change is logged/.test(ADM)) fail("admin row 8 doesn't show RGA the promise the client read");
-  if (!/data-acc-redo>Edit access<\/button>/.test(P)) fail("the done card's button isn't \"Edit access\" (Chris 10-23)");
+  // 🔄 client_step03_access_v1 (10-29): every change button on steps 2–9 is ONE "Change something" — step 3 done / invite sent / no
+  // record on data-acc-redo; "I have a website now" stays for no website
+  if ((P.match(/data-acc-redo>Change something<\/button>/g) || []).length < 3 || /data-acc-redo>Edit access</.test(P) || !/data-acc-redo>I have a website now<\/button>/.test(P)) fail("step 3's change buttons aren't ONE \"Change something\" on data-acc-redo (done · invite sent · no record), or \"I have a website now\" is gone for no website");
 }
 // 🔴 THE CARD MAY NOT CLAIM MORE THAN THE CONTRACT SAYS (rga_admin_identity_and_contract_v1, 10-23): "Backed by your Service Agreement"
 // only once the agreement actually holds the website promise (§5A "Website Access and Changes", after Chris's attorney approves it)

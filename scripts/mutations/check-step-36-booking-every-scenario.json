@@ -320,5 +320,19 @@
   "<span class=\"o\"><b>History</b> · ${ev.length} event${ev.length === 1 ? \"\" : \"s\"}</span>",
   "",
   1
+ ],
+ [
+  "the Keep it handler listens on the form option's attribute again",
+  "portal",
+  "const b = e.target.closest?.(\"[data-bk-putkeep]\"); if (!b || b.disabled) return;",
+  "const b = e.target.closest?.(\"[data-bk-keep]\"); if (!b || b.disabled) return;",
+  1
+ ],
+ [
+  "the To do Keep it button wears the form option's attribute",
+  "portal",
+  "<button type=\"button\" class=\"portal-button is-primary\" data-bk-putkeep>Keep it</button>",
+  "<button type=\"button\" class=\"portal-button is-primary\" data-bk-keep>Keep it</button>",
+  1
  ]
 ]

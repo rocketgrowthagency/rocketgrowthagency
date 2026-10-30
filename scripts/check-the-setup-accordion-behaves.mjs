@@ -110,9 +110,12 @@ if (/is-collapsed[\s\S]{0,200}(pointer-events:\s*none|cursor:\s*not-allowed)/.te
 //      is wallpaper, not emphasis.
 //      🔑 "Now" is the NEXT step, not the OPEN one — expanding a later row must not move the marker.
 {
-  const m = code.match(/class="pm-step-row\$\{([^}]*)\}/);
+  // 🔑 the WHOLE class attribute, not its first `${…}` — since the card system (10-29) the row's first class expression is
+  // `pm-cs cs-<tone>`, and a match that stopped at the first `}` read that one and reported the marker missing.
+  // is-now must come from ONE comparison with the single next-step id, and from nothing else in the attribute.
+  const m = code.match(/class="pm-step-row((?:\$\{(?:[^{}]|\{[^{}]*\})*\})+)" id=/);
   if (!m) fail.push("the row no longer computes its own classes — this check is not reading anything");
-  else if (!/\bnowStepId\b/.test(m[1])) {
+  else if (!/\$\{step\.id === nowStepId \? " is-now" : ""\}/.test(m[1]) || (m[1].match(/is-now/g) || []).length !== 1) {
     fail.push('the "now" marker is not driven by a single next-step id — every actionable row would carry the orange edge at once, which is wallpaper rather than emphasis');
   }
   if (/nowStepId\s*=\s*openStepId/.test(code)) {

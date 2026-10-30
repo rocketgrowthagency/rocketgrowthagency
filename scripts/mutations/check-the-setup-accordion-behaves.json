@@ -1,0 +1,16 @@
+[
+ [
+  "every open row carries the orange now edge",
+  "portal",
+  "${step.id === nowStepId ? \" is-now\" : \"\"}",
+  "${isOpenRow({ step, status: taskState?.status }) ? \" is-now\" : \"\"}",
+  1
+ ],
+ [
+  "a second is-now source joins the row's classes",
+  "portal",
+  "${!isDone && gbpWithRga ? \" is-rga-turn\" : \"\"}${expanded",
+  "${!isDone && gbpWithRga ? \" is-rga-turn\" : \"\"}${isOpenRow({ step }) ? \" is-now\" : \"\"}${expanded",
+  1
+ ]
+]

@@ -12,6 +12,7 @@
 // (Before 10-16 this gate enforced one_google_card_v1: white inside, never tinted. That format was replaced.)
 import fs from "node:fs";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -33,9 +34,14 @@ if (false) fail("a Google step still draws its own card (tl2 / pm-turned / pm-hc
 const facts2 = strip(pp(/^function factsCardV2\(/m) || "");
 // 🔄 10-23 (approved steps_1_4_clean_v1): client step 4 (business on Google, factsCardV2) moved to THE PLAN CARD (pcCard — one band,
 // rows with drawn marks, actions under); the other Google steps keep the shared Google card until their own redesign is approved
-if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "rga"/.test(facts2) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok"/.test(facts2) || !/return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(push) || !/return `<div class="pm-k5">\$\{pcCard\(\{ tone: "ok", icon: CLOSE_CAL_ICON, head: appt \? "By appointment only, on Google" : "Your hours are on Google"/.test(hours) || !/return googleCardHtml\(/.test(gv) || !/if \(kind === "yes"\) \{[\s\S]{0,600}return pcCard\(\{ tone: "ok", icon: GV_SHIELD, head: "Verified by Google"/.test(gv)) fail("steps 6 / 9 / 10 / 11 don't all draw the shared Google card, or client steps 2 (verified) / 4 aren't the plan card");
+if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div class="pm-k5">\$\{csCard\(\{ tone: "rga"/.test(facts2) || !/return `<div class="pm-k5">\$\{csCard\(\{ tone: "ok"/.test(facts2) || !/return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(push) || !/return `<div class="pm-k5">\$\{csCard\(\{ tone: "ok", head: appt \? "By appointment only, on Google" : "Your hours are on Google"/.test(hours) || !/return googleCardHtml\(/.test(gv) || !/if \(kind === "yes"\) \{[\s\S]{0,1200}return csCard\(\{ tone: "ok", head: "Verified by Google"/.test(gv)) fail("steps 6 / 9 / 10 / 11 don't all draw the shared Google card, or client steps 2 (verified) / 4 / 7 aren't the system card");
+// 🔄 2026-10-29 (client_card_system_v1): client steps 2–9 draw the SYSTEM card (csCard) — the verified one never offers Check again,
+// a Google "no" on a system step is the red card with the blue "Fix it" under it
+{ const y = gv.slice(gv.indexOf('if (kind === "yes") {'), gv.indexOf('if (CS_STEPS.has("m1.gbp.verify"))'));
+  if (!y || /data-step-recheck|Check again/.test(y)) fail("client step 2's verified card offers Check again (RGA re-checks every night)");
+  if (!/if \(g\.state === "needs_client" && CS_STEPS\.has\(step\.id\)\) \{\s*return `<div class="pm-k5">\$\{csCard\(\{ tone: "bad",[^\n]*\n[^\n]*foot: csFoot\(\) \}\)\}\$\{pcActs\(`<button type="button" class="pm-commit" data-gcard-fix>Fix it<\/button>`\)\}<\/div>`;/.test(push)) fail("a Google \"no\" on a system step isn't the red card with the blue Fix it under it"); }
 // 🔑 10-16 (step11_details_v1): 10 and 11 draw their own cards; their Change opens Editing (data-step-edit), never a write
-if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/const act = pcActs\(`<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change details<\/button>`\);/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
+if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/const act = pcActs\(`<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change something<\/button>`\);/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
 if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
 if (!/e\.target\.closest\("\[data-gcard-how\]"\)/.test(portal) || !/e\.target\.closest\("\[data-gcard-fix\]"\)/.test(portal)) fail("the card's How verification works / Fix it do nothing");
 // the state is the TINT + a thin border, never a thick edge inside the step (two stripes)
@@ -57,7 +63,8 @@ const pLift = [pp(/^function escapeHtml\(/m), pp(/^function escapeAttribute\(/m)
   pl("_editingSteps"), pl("FACT_WORDS"), pl("siteShow"), pp(/^function factsSummary\(/m), pp(/^function fmtDateTimeDot\(/m), pp(/^function hoursCardHtml\(/m), pp(/^function hoursSummary\(/m), pl("placeName"), pp(/^function factsLocked\(/m), pp(/^function factsEditorHtml\(/m), pp(/^function factsCardV2\(/m), pp(/^function gbpPushHtml\(/m), pl("EDIT_IN_PLACE"), pl("BK_NOUN"), pp(/^function bookingCardHtml\(/m), pp(/^function attrsCardHtml\(/m), pp(/^function bookingFormHtml\(/m),
   pl("GBP_STEPS"), pl("GBP_THING"), pl("GBP_DAY"), pl("hm12"), pl("monthDay"),
   portal.slice(portal.indexOf("const PC_TICK = "), portal.indexOf("\n", portal.indexOf("const pcActs = "))), pl("KW_SPIN"), pl("GV_SHIELD")];
-pLift.push(planCardKit(portal, pLift.join("\n")), pp(/^function svcCardHtml\(/m));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
+pLift.push(planCardKit(portal, pLift.join("\n")), pp(/^function svcCardHtml\(/m));
+pLift.push(csBlock(portal, pLift.join("\n")));   // 10-29: the client card system (steps 2–9 draw csCard)   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
 const aLift = [ap(/^function escapeHtml\(/m), ap(/^function escapeAttribute\(/m), al("OL_G"), al("G_ICON"), ap(/^function adminGoogleCardHtml\(/m), ap(/^function adminGcardWhen\(/m), ap(/^function adminGcardMaps\(/m)];
 if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a helper moved (portal ${pLift.findIndex((x) => !x)}, admin ${aLift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }

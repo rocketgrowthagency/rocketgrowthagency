@@ -37,8 +37,8 @@
  [
   "the lock line stays below the card",
   "portal",
-  "requestAnimationFrame(() => { _seatQueued = false; seatHowFolds(); seatLockFoots(); })",
-  "requestAnimationFrame(() => { _seatQueued = false; seatHowFolds(); })",
+  "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatLockFoots(); seatCsSt(); })",
+  "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatCsSt(); })",
   1
  ],
  [
@@ -205,8 +205,8 @@
  [
   "That's sorted goes back to a link",
   "portal",
-  "<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>",
-  "<button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>",
+  "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>",
+  "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>",
   1
  ],
  [
@@ -221,6 +221,34 @@
   "portal",
   "(canChange && ASK_CHOICES[stepId] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[stepId]",
   "(canChange && ASK_CHOICES[\"m1.access.website\"] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[\"m1.access.website\"]",
+  1
+ ],
+ [
+  "a system step's request goes back to a band above the card",
+  "portal",
+  "    if (CS_STEPS.has(stepId)) return `<div class=\"pm-cs-seat\"",
+  "    if (false) return `<div class=\"pm-cs-seat\"",
+  1
+ ],
+ [
+  "the system step's row drops their words",
+  "portal",
+  "rec.note ? `You asked: “${escapeHtml(rec.note)}”`",
+  "rec.note ? `You asked for a change`",
+  1
+ ],
+ [
+  "the system step's row loses Cancel",
+  "portal",
+  "RGA answers here and by email, today. Nothing changes until we've talked.`, `<button type=\"button\" ${close}>Cancel</button>`)",
+  "RGA answers here and by email, today. Nothing changes until we've talked.`, ``)",
+  1
+ ],
+ [
+  "the system step's reply row loses That's sorted",
+  "portal",
+  "`<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button><button type=\"button\" data-chg-convo=\"${id}\">",
+  "`<button type=\"button\" data-chg-convo=\"${id}\">",
   1
  ]
 ]

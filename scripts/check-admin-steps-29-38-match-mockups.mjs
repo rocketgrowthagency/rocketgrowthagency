@@ -7,8 +7,9 @@
 //   · step 33 (admin_step33_description_v1): the published description whole, the 750 meter, approved + published dates, ONE action
 //     (Draft a new one), never "ready to paste"
 //   · step 37 (admin_step37_image_seo_v1) — every website-change step: no second Draft button and no Mark step complete on the row
-//   · client step 4 (client_step4_done_card_v1): the done card leads with the service area when places were added/covered, says why the
-//     covered ones count, folds the rest by name; the lock line's own "Need a change? ›" is hidden (Change something opens it)
+//   · client step 4 (client_step4_done_card_v1 → client_step04_business_facts_v1, the card system 10-29): the done card shows ALL five
+//     facts, the service area as one chip row right after the name, a covered place says where ("Mar Vista in Los Angeles"); the
+//     lock line's own "Need a change? ›" is hidden (Change something opens it)
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
@@ -181,9 +182,16 @@ if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]
 if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");
 
 // ── client step 4's done card ──────────────────────────────────────────────────────────────────
-if (!/const lead = adds\.length \|\| drops\.length \? \[0, 4\] : \[0, 1\]/.test(PJS)) fail("client step 4: the done card doesn't lead with the service area when places were added/covered");
-if (!/\+ \$\{rest\.length\} more · \$\{rest\.map\(\(i\) => names\[i\]\)\.join\(", "\)\}/.test(PJS)) fail("client step 4: the fold doesn't name what's inside it");
-if (!/so Google already shows you there\./.test(PJS) || !/row\("Service area", escapeHtml\(areaLine\), areaSt, escapeHtml\(coveredSub\)\)/.test(PJS)) fail("client step 4: the covered areas don't say why they count (or the sentence isn't escaped)");
+// 🔒 since client_step04_business_facts_v1 (the card system, Chris 10-29) the done card is ALL FIVE facts as rows (the "+ 3 more" fold
+// is gone), the service area as ONE chip row right after the name ("Service area · N places on Google"), and a covered place says
+// where it is covered ("Mar Vista <em>in Los Angeles</em>") — the same three promises (area first, nothing hidden, covered explained)
+// in the new design. The runtime check is check-client-card-system-batch1.mjs; this pins the source.
+{ const at = PJS.indexOf("function factsCardV2("), fc = at < 0 ? "" : PJS.slice(at, PJS.indexOf("\n}\n", at));
+  if (!fc) { console.error("⚠️  INDETERMINATE — factsCardV2 moved"); process.exit(2); }
+  if (!/body: rows\[0\] \+ \(areaItems\.length \? csChips\(`Service area · \$\{areaItems\.length\} place\$\{areaItems\.length === 1 \? "" : "s"\} on Google`, areaItems\) : rows\[4\]\) \+ rows\[1\] \+ rows\[2\] \+ comeRow/.test(fc)) fail("client step 4: the done card doesn't put the service area (one chip row) right after the name, then phone · website · how customers reach you");
+  if (/pm-k5-more|more · \$\{|pcFold\(/.test(fc) || !/head: `All \$\{rows\.length\} match Google`/.test(fc)) fail("client step 4: the done card hides facts behind a fold again (all five show — client_step04_business_facts_v1)");
+  if (!/x\.covered_by \? \[`\$\{escapeHtml\(placeName\(x\.name\)\)\} <em>in \$\{escapeHtml\(placeName\(x\.covered_by\)\)\}<\/em>`, "dot"\]/.test(fc)) fail("client step 4: a covered place doesn't say where it's covered (\"Mar Vista in Los Angeles\"), or the names aren't escaped");
+  if (!/row\("Service area", escapeHtml\(areaLine\), areaSt, escapeHtml\(coveredSub\)\)/.test(fc)) fail("client step 4: the covered sentence (no-chips fallback) isn't escaped"); }
 if (!/const CARD_ASKS_CHANGE = new Set\(\["m1\.gbp\.business_facts"\]\)/.test(PJS) || !/data-ask-open aria-expanded="false"\$\{CARD_ASKS_CHANGE\.has\(stepId\) \? " hidden" : ""\}>Need a change\? ›/.test(PJS)) fail("client step 4: the lock line still shows a second 'Need a change? ›' button");
 
 if (F.length) { console.error(`🔴 admin steps 29–38 / client step 4 drifted from the approved mockups:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }

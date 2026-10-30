@@ -47,5 +47,26 @@
   ".admin-pill.k {",
   ".zz-new { color:#123456; background:#654321; } .admin-pill.k {",
   1
+ ],
+ [
+  "a card-system wait colour is written as a literal",
+  "portalcss",
+  ".pm-cs .pm-k5-plan.wait { border-color:var(--cs-wait-line); }",
+  ".pm-cs .pm-k5-plan.wait { border-color:#d9dfea; }",
+  1
+ ],
+ [
+  "the card-system wait token is declared twice",
+  "portalcss",
+  ":root { --cs-wait:#5b6b8a;",
+  ":root { --cs-wait:#5b6b8b; } :root { --cs-wait:#5b6b8a;",
+  1
+ ],
+ [
+  "the card-system wait token drifts from the mockup",
+  "portalcss",
+  "--cs-wait:#5b6b8a;",
+  "--cs-wait:#5b6b8b;",
+  1
  ]
 ]

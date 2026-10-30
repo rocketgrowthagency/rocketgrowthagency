@@ -7,17 +7,17 @@
   1
  ],
  [
-  "no map tag",
+  "the map pin comes back on a row",
   "portal",
-  "${x.d.pack ? ' title=\"Shows Google\\'s map\"' : \"\"}",
-  "\"\"",
+  "const line = (x, i) => `<div class=\"pm-cs-rank\"><span class=\"n\">${i + 1}</span>",
+  "const line = (x, i) => `<div class=\"pm-cs-rank\"><span class=\"n\"${x.d.pack ? ' title=\"Shows Google\\'s map\"' : \"\"}>${i + 1}</span>",
   1
  ],
  [
   "only RGA's city counts",
   "portal",
-  "const mkt = od.market || (((tasks[\"m1.audit.grid_baseline\"] || {}).outcome_data) || {}).market || \"\";",
-  "const mkt = \"Culver City\";",
+  "const mkt0 = od.market || (((tasks[\"m1.audit.grid_baseline\"] || {}).outcome_data) || {}).market || \"\";",
+  "const mkt0 = \"Culver City\";",
   1
  ],
  [
@@ -35,10 +35,10 @@
   1
  ],
  [
-  "no veto",
+  "no Change something",
   "portal",
-  "const tell = (lbl = \"Something's not right? Tell us\") => `<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"${escapeAttribute(step.id)}\">${lbl}</button>`;",
-  "const tell = () => \"\";",
+  "const change = `<button type=\"button\" class=\"pm-amend\" data-step-wrong=\"${escapeAttribute(step.id)}\">Change something</button>`;",
+  "const change = \"\";",
   1
  ],
  [
@@ -69,10 +69,11 @@
   "    const why = false ? \"Someone ready to hire,"
  ],
  [
-  "the fold is gone",
+  "the Why these 5 fold is gone",
   "portal",
-  "const fold = `<details class=\"pm-k5-fold\">",
-  "const fold = \"\" && `<details class=\"pm-k5-fold\">"
+  "const why = { label: `Why these ${items.length}`,",
+  "const why = null && { label: `Why these ${items.length}`,",
+  1
  ],
  [
   "the start isn't summed",
@@ -91,5 +92,26 @@
   "portal",
   "&& !CARD_OWNS_INTRO.has(step.id) ? splitAskWhy",
   "? splitAskWhy"
+ ],
+ [
+  "too specific loses its meaning",
+  "portal",
+  ": \"too specific to count\";",
+  ": \"too specific\";",
+  1
+ ],
+ [
+  "the draft offers buttons",
+  "portal",
+  "body: items.map(line).join(\"\") + areas, foot: csFoot() })}</div>`;",
+  "body: items.map(line).join(\"\") + areas, foot: csFoot() })}${pcActs(change)}</div>`;",
+  1
+ ],
+ [
+  "a change request shows twice",
+  "portal",
+  "foot: csFoot({ lock: \"Locked by RGA\" }) })}</div>`;\n  }\n  if (!done) {",
+  "foot: csFoot({ lock: \"Locked by RGA\" }) })}<p class=\"pm-flagged\">You told us something's not right</p>${csSt(\"rga\", \"again\")}</div>`;\n  }\n  if (!done) {",
+  1
  ]
 ]

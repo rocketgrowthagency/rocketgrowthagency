@@ -6,10 +6,14 @@
 //   · asked: ONE band at the top (what they wrote + Cancel my request), the bottom line drops "Need a change?", and the row's old
 //     "we're looking into it" band is gone on a locked step; the pill reads "With RGA · since"
 //   · the To do list: a flag or a change request — even on a FINISHED step — is RGA's move with a same-day promise
+//   · 🔒 client_card_system_v1 (4), Chris 10-29: on a SYSTEM step (CS_STEPS, steps 2–9) the request is ONE status row inside the card
+//     (.pm-cs-seat → csSt rga "You asked: “…”" · when · Cancel; RGA's reply = the same row with That's sorted ✓), and the foot's lock reads
+//     just "Locked" (client_step03_access_v1) — "Nothing changes until we've talked" is said ONCE, by the row. Other steps keep the band.
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = [], fail = (m) => F.push(m);
@@ -17,7 +21,7 @@ const P = read("portal/portal.js");
 const fnSrc = (n) => { const at = P.indexOf(`function ${n}(`); if (at < 0) { console.error(`⚠️  INDETERMINATE — ${n} moved`); process.exit(2); } return P.slice(at, P.indexOf("\n}\n", at) + 2); };
 const line = (re, w) => { const m = P.match(re); if (!m) { console.error(`⚠️  INDETERMINATE — ${w} moved`); process.exit(2); } return m[0].replace(/^const /, "var "); };
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => (x ? "Oct 27" : "") });
-vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const CARD_ASKS_CHANGE = [^\n]*;$/m, "CARD_ASKS_CHANGE")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const ASK_CHOICES = [^\n]*;$/m, "ASK_CHOICES")}\n${line(/^const ASK_WORDS = [^\n]*;$/m, "ASK_WORDS")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
+vm.runInContext(`var _portalThread = [];\n${line(/^const LOCK_ICON = [^\n]*;$/m, "LOCK_ICON")}\n${line(/^const CARD_OWNS_LOCK = [^\n]*;$/m, "CARD_OWNS_LOCK")}\n${line(/^const CARD_ASKS_CHANGE = [^\n]*;$/m, "CARD_ASKS_CHANGE")}\n${line(/^const ASK_EXAMPLES = [^\n]*;$/m, "ASK_EXAMPLES")}\n${line(/^const ASK_CHOICES = [^\n]*;$/m, "ASK_CHOICES")}\n${line(/^const ASK_WORDS = [^\n]*;$/m, "ASK_WORDS")}\n${line(/^const askWhen = [^\n]*;$/m, "askWhen")}\n${csBlock(P)}\n${fnSrc("askReplyOf")}\n${fnSrc("lockFootHtml")}`, ctx);
 const lf = (task, lk, where) => vm.runInContext(`lockFootHtml("m1.access.website", ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
 const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request" }, LK0 = { why: "RGA confirmed it", edit: "none" };
 { const top = lf({}, LK, "top"), bot = lf({}, LK, "bottom");
@@ -33,27 +37,44 @@ const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request
   const gen = vm.runInContext(`lockFootHtml("m1.tracking.call_setup", {}, ${JSON.stringify(LK)}, "bottom")`, ctx);
   if (!/value="wrong"/.test(gen) || !/value="change"/.test(gen)) fail("another step lost the general choices (something's wrong · I want to change something)"); }
 { const bot = lf({}, LK0, "bottom"); if (/value="change"/.test(bot) || !/name="kind" value="wrong"/.test(bot)) fail("a step that can't be changed offers \"I want to change something\" (only \"something's wrong\" fits)"); }
-for (const [task, label, kw] of [[{ client_flagged: { at: "x", note: "That's not our site" } }, "a flag", /data-step-unflag/], [{ change_request: { at: "x", note: "Add my office manager" } }, "a change request", /data-chreq-cancel/]]) {
-  const top = lf(task, LK, "top"), bot = lf(task, LK, "bottom");
-  if ((top.match(/class="pm-chg-band"/g) || []).length !== 1 || !/<q>/.test(top) || !kw.test(top) || !/Cancel my request/.test(top)) fail(`${label}: not ONE band with what they wrote + Cancel my request`);
-  if (/Need a change\?/.test(bot)) fail(`${label}: the bottom still offers Need a change? while one is open`);
-  if (!/Locked · nothing changes until we've talked/.test(bot)) fail(`${label}: the lock line doesn't say "nothing changes until we've talked" while RGA has it`);
-  if (/Nothing changes until/.test(top)) fail(`${label}: the band repeats "Nothing changes until we've talked" (the lock line says it once)`);
+const lfAt = (step, task, lk, where) => vm.runInContext(`lockFootHtml(${JSON.stringify(step)}, ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
+if (!vm.runInContext(`CS_STEPS.has("m1.access.website") && !CS_STEPS.has("m1.tracking.call_setup")`, ctx)) { console.error("⚠️  INDETERMINATE — step 3 is no longer a system step (or call setup became one): re-read which steps draw the CS row"); process.exit(2); }
+for (const [task, label, kw, said] of [[{ client_flagged: { at: "x", note: "That's not our site" } }, "a flag", /data-step-unflag/, "That's not our site"], [{ change_request: { at: "x", note: "Add my office manager" } }, "a change request", /data-chreq-cancel/, "Add my office manager"]]) {
+  // a step outside the card system (call setup): ONE band with their words + Cancel my request; the lock line says "nothing changes" once
+  { const top = lfAt("m1.tracking.call_setup", task, LK, "top"), bot = lfAt("m1.tracking.call_setup", task, LK, "bottom");
+    if ((top.match(/class="pm-chg-band"/g) || []).length !== 1 || !/<q>/.test(top) || !kw.test(top) || !/Cancel my request/.test(top)) fail(`${label}: not ONE band with what they wrote + Cancel my request`);
+    if (/Need a change\?/.test(bot)) fail(`${label}: the bottom still offers Need a change? while one is open`);
+    if (!/Locked · nothing changes until we've talked/.test(bot)) fail(`${label}: the lock line doesn't say "nothing changes until we've talked" while RGA has it`);
+    if (/Nothing changes until/.test(top)) fail(`${label}: the band repeats "Nothing changes until we've talked" (the lock line says it once)`); }
+  // a SYSTEM step (step 3): ONE blue status row, seated into the card — never a band above it
+  { const top = lf(task, LK, "top"), bot = lf(task, LK, "bottom");
+    if (!/^<div class="pm-cs-seat" data-step-lock="m1\.access\.website"><div class="pm-cs-st rga">/.test(top) || (top.match(/class="pm-cs-st /g) || []).length !== 1 || /pm-chg-band/.test(top)) fail(`${label} on a system step: not ONE blue status row in a .pm-cs-seat (or the old band is back above the card)`);
+    if (!top.includes(`You asked: “${said}”`) || !kw.test(top) || !/>Cancel<\/button>/.test(top)) fail(`${label} on a system step: the row isn't "You asked: “their words”" with its own Cancel`);
+    if (!/RGA answers here and by email, today\./.test(top)) fail(`${label} on a system step: the row lost its same-day promise ("RGA answers here and by email, today.")`);
+    if (/Need a change\?/.test(bot)) fail(`${label} on a system step: the bottom still offers Need a change? while one is open`);
+    // client_step03_access_v1: the row says "Nothing changes until we've talked"; the foot's lock says just "Locked" — once, not twice
+    const says = ((top + bot).match(/[Nn]othing changes until we've talked/g) || []).length;
+    if (says !== 1 || !/<span>Locked<\/span>/.test(bot)) fail(`${label} on a system step: "Nothing changes until we've talked" appears ${says}× (the row says it; the foot's lock should read just "Locked" — client_step03_access_v1)`); }
 }
 // RGA replied after the request → the band IS the reply (mockup §4 right): Open the conversation + That's sorted; the lock line reads "Locked"
 { ctx._portalThread = [{ id: 1, step_id: "m1.access.website", from: "rga", at: "2026-10-27T21:10:00Z", message: "Done: we've added her as a second contact." },
     { id: 0, step_id: "m1.access.website", from: "rga", at: "2026-10-20T10:00:00Z", message: "older" }];
   vm.runInContext("_portalThread = this._portalThread", ctx);
   const t = { change_request: { at: "2026-10-27T19:00:00Z", note: "Add my office manager" } };
-  const top = lf(t, LK, "top"), bot = lf(t, LK, "bottom");
-  if (!/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.access\.website">That's sorted ✓<\/button><button type="button" class="pm-chg-lnk" data-chg-convo=/.test(top)) fail("\"That's sorted\" isn't the small button that leads (it closes the request; the conversation is the link)");
+  // a SYSTEM step: the same status row carries the reply — That's sorted ✓ (it changes something) + Open the conversation
+  { const cs = lf(t, LK, "top");
+    if (!/<div class="pm-cs-st rga">/.test(cs) || !/RGA replied · /.test(cs) || !/added her as a second contact/.test(cs) || /older/.test(cs) || /pm-chg-band/.test(cs)
+      || !/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.access\.website">That's sorted ✓<\/button><button type="button" data-chg-convo=/.test(cs)) fail("on a system step RGA's reply doesn't turn the status row into the reply (That's sorted ✓ leads, Open the conversation)"); }
+  ctx._portalThread = ctx._portalThread.map((m) => ({ ...m, step_id: "m1.tracking.call_setup" })); vm.runInContext("_portalThread = this._portalThread", ctx);
+  const top = lfAt("m1.tracking.call_setup", t, LK, "top"), bot = lfAt("m1.tracking.call_setup", t, LK, "bottom");
+  if (!/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.tracking\.call_setup">That's sorted ✓<\/button><button type="button" class="pm-chg-lnk" data-chg-convo=/.test(top)) fail("\"That's sorted\" isn't the small button that leads (it closes the request; the conversation is the link)");
   if (!/class="pm-chg-band y"/.test(top) || !/RGA replied · /.test(top) || !/added her as a second contact/.test(top) || !/data-chg-convo/.test(top) || !/data-chg-sorted data-chreq-cancel/.test(top) || /older/.test(top)) fail("RGA's reply after the request doesn't turn the band into the reply (Open the conversation + That's sorted)");
   if (!/<span>Locked<\/span>/.test(bot)) fail("after RGA's reply the lock line isn't just \"Locked\"");
   ctx._portalThread = []; vm.runInContext("_portalThread = []", ctx); }
 if (!/flagged && !stepLk\n\s*\? `<p class="pm-flagged">/.test(P)) fail("the row's second \"we're looking into it\" band shows on a locked step again");
 if (!/const ownerPill = askLk \? \{ text: `With RGA\$\{askAt \? ` · since \$\{monthDay\(askAt\)\}` : ""\}`, cls: "rga" \}/.test(P)) fail("a locked step asked about doesn't read \"With RGA · since\"");
 // the lock line is the card's LAST line (Chris 10-27: "match mockup"): marked bottom, seated by the same pass that seats the how-to
-if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFrame\(\(\) => \{ _seatQueued = false; seatHowFolds\(\); seatLockFoots\(\); \}\)/.test(P) || !/card\.appendChild\(f\); f\.classList\.add\("in-card"\);/.test(P)) fail("the lock line isn't seated inside the card as its footer");
+if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFrame\(\(\) => \{ _seatQueued = false; (?:upgradeCsCards\(\); )?seatHowFolds\(\); seatLockFoots\(\);(?: seatCsSt\(\);)? \}\)/.test(P) || !/card\.appendChild\(f\); f\.classList\.add\("in-card"\);/.test(P)) fail("the lock line isn't seated inside the card as its footer");
 // mockup section 2 EXACTLY (Chris 10-27: "lock still doesnt match mockup"): a quiet grey line with the padlock glyph, never the green bold
 // one; section 3: open, the panel takes the line's place, flat inside the card; a flagged step is never the client's orange "next step"
 { const C = read("portal/portal.css"), bot = lf({}, LK, "bottom");

@@ -237,5 +237,12 @@
   "For your approval<span class=\"portal-nav-badge\" id=\"fyaBadge\" hidden>0</span></a>",
   "For your approval</a>",
   1
+ ],
+ [
+  "step 4 drops RGA's promise date",
+  "portal",
+  "${byHand.late ? \" · taking longer than promised\" : byHand.due ? ` · by ${escapeHtml(monthDay(byHand.due))}` : \"\"}",
+  "",
+  1
  ]
 ]

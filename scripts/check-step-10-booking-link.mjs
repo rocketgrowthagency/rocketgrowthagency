@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -217,6 +218,7 @@ const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; 
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("siteShow"), line("monthDay"), line("BK_NOUN"), pick(/^function bookingCardHtml\(/m), pick(/^function bookingFormHtml\(/m)];
 lift.push(planCardKit(portal, lift.join("\n")));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
+lift.push(csBlock(portal, lift.join("\n")));   // 10-29: the client card system (client_card_system_v1) — step 9 draws csCard / csSt / csFoot
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-10 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
