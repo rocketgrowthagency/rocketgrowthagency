@@ -222,7 +222,8 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
   // 🔄 10-26 (approved steps_6_20_clean_v1 v2, step 10 done): the plan card — "20 photos on Google", a tile per kind with one of their
   // photos, "Add more any time" — then the photos one click away (each keeps Change / Remove)
   const band = done.indexOf('class="pm-k5-plan ok"'), fold = done.indexOf('<details class="pm-later-list pm-pc-more" data-fold="done-list"><summary>Show your photos');
-  if (band < 0 || !/<b>20 photos on Google<\/b><span>done Oct 30<\/span>/.test(done) || !/class="pm-pc-ptile">/.test(done) || !/Add more any time; new photos go to Google the same way\./.test(done) || !/data-photo-addmore>Add more<\/button>/.test(done)) fail("a done photo step isn't the plan card (N photos on Google · a tile per kind · Add more)");
+  // 🔄 10-30 (client_step10_photos_v4 "Done · on Google"): a tile per shot, "On your profile" by kind, "Add more any time; fresh photos help."
+  if (band < 0 || !/<b>20 photos on Google<\/b><span>done Oct 30<\/span>/.test(done) || !/<div class="pm-p10 is-done">/.test(done) || !/<span class="k">On your profile<\/span>/.test(done) || !/Add more any time; fresh photos help\./.test(done) || !/data-photo-addmore>Add more<\/button>/.test(done)) fail("a done photo step isn't the plan card (N photos on Google · a tile per shot · On your profile · Add more)");
   if (fold < band || done.indexOf('class="pm-slots') < fold) fail("a done photo step doesn't fold its photos behind \"Show your photos\"");
   if (/Remind me later|data-later-days/.test(done)) fail("a done photo step still offers \"Remind me later\"");
   if (/data-fold="done-list"/.test(ctx.how(step, task(sab), true, [], "c1", null))) fail("an open photo step is folded as if done");

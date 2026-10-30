@@ -98,10 +98,10 @@
   1
  ],
  [
-  "the list isn't minimised while later",
+  "later loses its two choices",
   "portal",
-  "${top.later ? laterUi : \"\"}${top.later\n    ? `<details class=\"pm-later-list\"",
-  "${top.later ? laterUi : \"\"}${false\n    ? `<details class=\"pm-later-list\"",
+  "p10Later ? `${listHtml}<div class=\"pm-k5-acts pm-later-under\">${laterUi}</div>`",
+  "p10Later ? `${listHtml}`",
   1
  ],
  [
@@ -121,7 +121,7 @@
  [
   "an upload no longer finds the later state",
   "portal",
-  "querySelector(\"[data-later-step] .pm-later-band\")",
+  "querySelector(\"[data-later-step] [data-later-acts]\")",
   "querySelector(\"[data-later-step] .pm-later-set\")",
   1
  ],

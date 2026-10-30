@@ -63,7 +63,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   if (!/\$\{og && !csAsk \? og\.pills\.map/.test(P)) fail("the pills aren't the card's own");
   if (!/rgaWait && !og \?/.test(P) || !/const rgaFoot = !og &&/.test(P)) fail("a row with a card still draws the old wait band or foot under it");
   if (!/const stepLk = og && og\.noLock \? null : stepLockOf/.test(P)) fail("a held call's page draws a lock line it doesn't have");
-  if (!/\(\["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close"\]\.includes\(step\.id\) \|\| !!OG_CARD\[step\.id\]\) && !flagged;/.test(P)) fail("Check again / Change sit beside an Ongoing card again");
+  if (!/\(\["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close", "m1\.gbp\.photos"\]\.includes\(step\.id\) \|\| !!OG_CARD\[step\.id\]\) && !flagged;/.test(P)) fail("Check again / Change sit beside an Ongoing card again");
   if (!/list\.classList\.contains\("pm-ongoing-ground"\) \? \[row\]/.test(P)) fail("closing one Ongoing card closes all the others");
 }
 

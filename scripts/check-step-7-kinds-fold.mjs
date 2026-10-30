@@ -47,10 +47,12 @@ const shape = P.buildShotList({ typeOverride: "Marketing agencies", storefront: 
 const turned = (n) => ({ id: `t${n}`, shot_n: n, publish_state: "turned_down", review_note: "Not a real photo of your office.\nHow to fix: Upload a real photo of your own space.", reviewed_by: "RGA" });
 const photos = [turned(7), turned(8), { id: "p1", shot_n: 1, publish_state: "published", pushed_to_gbp: true, pushed_at: "2026-10-09T00:00:00Z", storage_path: "x" }, { id: "p9", shot_n: 9, publish_state: "in_review", storage_path: "y" }];
 const task = { draft_shape: shape, team_size: "1", detected: { n: 2, threshold: 20, source: "google_profile" } };
-// 🔄 10-30 (approved client_step10_photos_v3, card system batch 2): the OPEN step is 20 tiles + ONE shot (part B below); the kinds
-// are folds only while the listing waits (photoListingLockHtml) — part A holds the folds there, with the same rules as before
+// 🔄 10-30 (approved client_step10_photos_v3, card system batch 2): the OPEN step is 20 tiles + ONE shot (part B below).
+// 🔄 10-30 (client_step10_photos_v4, the remaining states): the waiting step is the tiles too (check-client-card-system-batch2). The kinds are folds
+// only for a photo step OFF the card system — part A holds the folds there, with the same rules as before.
 const LOCKED = { open: false, duplicates: [{ name: "locations/2" }] };
-const h = ctx.how(step, task, true, photos, "c1", LOCKED);
+const OFF_SYSTEM = { ...step, id: "off.the.system" };
+const h = ctx.how(OFF_SYSTEM, task, true, photos, "c1", LOCKED);
 const open = ctx.how(step, task, true, photos, "c1", null);
 
 // ── A1 · (waiting) every kind is a fold; closed unless it holds a retake ──
@@ -94,7 +96,7 @@ if (!/<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this 
 // ── 3 · in Chrome: the upload helpers, the toolbar, phone widths ──
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
-const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null), askWait = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", LOCKED);
+const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null), askWait = ctx.how(OFF_SYSTEM, { ...task, team_size: null }, true, photos, "c1", LOCKED);
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await browser.newPage();

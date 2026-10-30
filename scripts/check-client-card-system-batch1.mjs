@@ -169,7 +169,7 @@ for (const b of BIZ) {
 { if (!/e\.target\.closest\?\.\("\[data-bk-putkeep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P) || /closest\?\.\("\[data-bk-keep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P)) fail("the Keep it handler listens on [data-bk-keep] (step 9's form option) instead of [data-bk-putkeep]");
   if (!/data-bk-putkeep>Keep it<\/button><a class="portal-button" href="#step-/.test(P)) fail("the To do's Keep it isn't on data-bk-putkeep"); }
 { // 🔄 10-30: the close-out (step 15) draws its own grey "Opens about <date>" card (client_step15_closeout_call_v1), so it's left out here
-  if (!/const csWaitHtml = csRow && !isDone && \(ownWait \|\| listingWait\)(?: && step\.id !== "m1\.call\.close")? \? `<div class="pm-k5">\$\{csCard\(\{ tone: "off",/.test(P) || !/const i = _rowStr\.indexOf\("<!--cs-body-->"\), j = _rowStr\.indexOf\("<!--cs-thread-->"\);/.test(P)) fail("a system step that isn't open yet no longer draws ONE grey card in place of its body");
+  if (!/const csWaitHtml = csRow && !isDone && \(ownWait \|\| listingWait\)(?: && !csPhotoWait)?(?: && step\.id !== "m1\.call\.close")? \? `<div class="pm-k5">\$\{csCard\(\{ tone: "off",/.test(P) || !/const i = _rowStr\.indexOf\("<!--cs-body-->"\), j = _rowStr\.indexOf\("<!--cs-thread-->"\);/.test(P)) fail("a system step that isn't open yet no longer draws ONE grey card in place of its body");
   if (!/const btn = `<button type="button" class="pm-amend" data-cs-ask>Change something<\/button>`;/.test(P)) fail("a LOCKED system card no longer gets its ONE \"Change something\" from the lock's ask (seatCsFoot)"); }
 
 // ── static: portal.css's card-system block ───────────────────────────────────────────────────────────

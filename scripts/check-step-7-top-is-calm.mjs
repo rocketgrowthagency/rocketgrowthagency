@@ -81,9 +81,13 @@ if (shown.join() !== "7" || !/class="pm-p10-t is-re is-sel" data-p10-t="7" aria-
   const sh = [...calm.matchAll(/<div class="pm-p10-shot" data-p10-shot="(\d+)"( hidden)?>/g)].filter((m) => !m[2]).map((m) => m[1]);
   if (sh.join() !== "2" || /is-re/.test(calm)) fail(`with nothing to retake the shot open isn't the first empty one (${sh.join(", ")})`); }
 if (!/if \(d\.hasAttribute\("data-fold-held"\)\) return;/.test(portal)) fail("what this device remembered can fold a retake away again");
-// while the listing waits the step is still the folds — the kind holding a retake opens itself there
-{ const wait = ctx.how(step, task, true, photos, "c1", { open: false, duplicates: [{ name: "locations/2" }] });
-  if (!/<details class="pm-sgrp pm-acc[^"]*has-re" data-fold="kind:interior" open data-fold-held>/.test(wait)) fail("while the listing waits, the kind holding a retake stays folded"); }
+// 🔄 10-30 (client_step10_photos_v4 "Not open yet"): the waiting step is the tiles too, its retake an amber tile. The folds are only a photo step off the card
+// system's now — the kind holding a retake opens itself there
+{ const LOCK = { open: false, duplicates: [{ name: "locations/2" }] };
+  const wait = ctx.how({ ...step, id: "off.the.system" }, task, true, photos, "c1", LOCK);
+  if (!/<details class="pm-sgrp pm-acc[^"]*has-re" data-fold="kind:interior" open data-fold-held>/.test(wait)) fail("off the card system, the kind holding a retake stays folded");
+  const tiles = ctx.how(step, task, true, photos, "c1", LOCK);
+  if (!/<button type="button" class="pm-p10-t is-re"/.test(tiles)) fail("while the listing waits, a photo to retake isn't the amber tile"); }
 // ── 4 · the toolbar holds the team question; "Add N at once" lives in each kind's empty shots ──
 const tool = h.slice(iTool, iTiles);
 if (!/data-photo-team/.test(tool) || !/How many people are in your business\?/.test(tool) || /data-batch|<select/.test(tool)) fail("the toolbar isn't just the team question (the batch upload lives in each kind's shot)");

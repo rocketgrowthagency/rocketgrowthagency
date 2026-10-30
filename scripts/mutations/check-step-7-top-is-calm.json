@@ -9,8 +9,8 @@
  [
   "a line comes back above the card",
   "portal",
-  "  const body = `${top.later ? laterUi : \"\"}${top.later",
-  "  const body = `${top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : \"\"}${top.later ? laterUi : \"\"}${top.later",
+  "  const body = p10 && locked && !p10Done ? listHtml",
+  "  const body = top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : p10 && locked && !p10Done ? listHtml",
   1
  ],
  [
@@ -114,8 +114,8 @@
  [
   "the folds come back on the open step",
   "portal",
-  "const p10 = CS_STEPS.has(step.id) && !locked ?",
-  "const p10 = false ?",
+  "const p10 = CS_STEPS.has(step.id) ? (() => {",
+  "const p10 = false ? (() => {",
   1
  ],
  [

@@ -268,8 +268,8 @@
  [
   "step 10's empty tile loses its drawing",
   "portal",
-  ": exArt(it, photoExampleOf(cat));\n      return `<button type=\"button\" class=\"pm-p10-t",
-  ": \"\";\n      return `<button type=\"button\" class=\"pm-p10-t",
+  ": exArt(it, photoExampleOf(itemCategory(it))); };",
+  ": \"\"; };",
   1
  ],
  [
@@ -277,13 +277,6 @@
   "portal",
   "const many = emptyN.length >= 2 ?",
   "const many = emptyN.length >= 1 ?",
-  1
- ],
- [
-  "step 10 draws the tiles while the listing waits",
-  "portal",
-  "const p10 = CS_STEPS.has(step.id) && !locked ?",
-  "const p10 = CS_STEPS.has(step.id) ?",
   1
  ],
  [
@@ -359,7 +352,7 @@
  [
   "no minutes pill",
   "portal",
-  "Number(step.clientMinutes) > 0 ? `<span class=\"pm-pill wait off\" data-min-pill>",
+  "Number(step.clientMinutes) > 0 && !later ? `<span class=\"pm-pill wait off\" data-min-pill>",
   "false ? `<span class=\"pm-pill wait off\" data-min-pill>",
   1
  ],
@@ -375,6 +368,160 @@
   "portal",
   "body: p10 ? `${toolbar}${p10}${alsoFold",
   "body: p10 ? `${p10}${toolbar}${alsoFold",
+  1
+ ],
+ [
+  "step 10 waits under the general card again",
+  "portal",
+  "const csPhotoWait = csRow && !isDone && listingWait && step.clientForm === \"photo_upload\";",
+  "const csPhotoWait = false;",
+  1
+ ],
+ [
+  "the waiting step loses its tiles",
+  "portal",
+  "const p10 = CS_STEPS.has(step.id) ? (() => {",
+  "const p10 = CS_STEPS.has(step.id) && !locked ? (() => {",
+  1
+ ],
+ [
+  "a waiting step offers Add N at once",
+  "portal",
+  "${stOf(n) || locked ? \"\" : many}",
+  "${stOf(n) ? \"\" : many}",
+  1
+ ],
+ [
+  "a waiting step opens a shot by itself",
+  "portal",
+  "? want : locked || p10Later ? null : (order.find",
+  "? want : (order.find",
+  1
+ ],
+ [
+  "a duplicate loses its way out",
+  "portal",
+  "const p10LockRow = !p10 || ",
+  "const p10LockRow = true || !p10 || ",
+  1
+ ],
+ [
+  "the waiting step drops Plan your photos",
+  "portal",
+  "${csNote(\"Plan your photos now. Uploading opens the moment your listing is down to one.\")}",
+  "",
+  1
+ ],
+ [
+  "a waiting shot shows + Add photo",
+  "portalcss",
+  ".pm-cs .pm-p10.is-locked .pm-slot .add { display:none; }",
+  "",
+  1
+ ],
+ [
+  "done turns every tile green, shot or no shot",
+  "portal",
+  "const st = stOf(Number(it.n)); return `<div class=\"pm-p10-t",
+  "const st = \"on\"; return `<div class=\"pm-p10-t",
+  1
+ ],
+ [
+  "done loses Other N",
+  "portal",
+  "...(p10Other > 0 ? [[`Other <em>${p10Other}</em>`, \"\"]] : [])",
+  "",
+  1
+ ],
+ [
+  "done loses On your profile",
+  "portal",
+  "(p10Chips.length ? csChips(\"On your profile\", p10Chips) : \"\")",
+  "\"\"",
+  1
+ ],
+ [
+  "done loses its note",
+  "portal",
+  "csNote(\"Add more any time; fresh photos help.\")",
+  "\"\"",
+  1
+ ],
+ [
+  "done loses Add more",
+  "portal",
+  "pcActs(`<button type=\"button\" class=\"pm-amend\" data-photo-addmore>Add more</button>`));\n  const doneCard",
+  "\"\");\n  const doneCard",
+  1
+ ],
+ [
+  "done draws the old photo tiles",
+  "portal",
+  "const doneCard = p10DoneCard ? `<div class=\"pm-k5\">${p10DoneCard}</div>` : `",
+  "const doneCard = `",
+  1
+ ],
+ [
+  "Add more's list shows before it's opened",
+  "portalcss",
+  ".pm-cs details.pm-pc-more:not([open]) { display:none; }",
+  "",
+  1
+ ],
+ [
+  "done's tiles look pressable",
+  "portalcss",
+  ".pm-cs div.pm-p10-t { cursor:default; }",
+  "",
+  1
+ ],
+ [
+  "later isn't Your turn",
+  "portal",
+  "ownerPill.text.startsWith(\"Later · \")",
+  "false",
+  1
+ ],
+ [
+  "later loses its reminder pill",
+  "portal",
+  "${csOptPill}${csLaterPill}",
+  "${csOptPill}",
+  1
+ ],
+ [
+  "later still says about N min",
+  "portal",
+  "Number(step.clientMinutes) > 0 && !later ?",
+  "Number(step.clientMinutes) > 0 ?",
+  1
+ ],
+ [
+  "later opens the shot list",
+  "portal",
+  "const kinds = p10Later ? \"\" : csChips(",
+  "const kinds = csChips(",
+  1
+ ],
+ [
+  "done repeats the received line",
+  "portal",
+  " && !(csRow && step.clientForm === \"photo_upload\")\n            ? `<p class=\"pm-evidence\">",
+  "\n            ? `<p class=\"pm-evidence\">",
+  1
+ ],
+ [
+  "a lock seats inside the closed list",
+  "portal",
+  " && !c.closest(\".pm-pc-more\")",
+  "",
+  1
+ ],
+ [
+  "step 10 Check again comes back",
+  "portal",
+  "\"m1.call.close\", \"m1.gbp.photos\"].includes(step.id)",
+  "\"m1.call.close\"].includes(step.id)",
   1
  ]
 ]

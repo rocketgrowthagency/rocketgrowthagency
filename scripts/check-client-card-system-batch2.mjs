@@ -150,7 +150,7 @@ const AT = "2026-10-20T15:00:00Z";
     || !/const csOptPill = csRow && step\.clientOptional && \(!isDone \|\| status === "skipped"\) \? `<span class="pm-pill wait off" data-opt-pill>Optional<\/span>` : "";/.test(P)
     || !/<span class="pm-pill \$\{ownerPill\.cls\}">\$\{escapeHtml\(ownerPill\.text\)\}<\/span>`\}\$\{og \? \(csAsk \? `<span class="pm-pill rga">\$\{csAsk\}<\/span>` : ""\) : `\$\{csEditPill\}\$\{csMinPill\}\$\{csOptPill\}/.test(P)) fail("step 14's row on the system isn't \"Your turn\" + its own second \"Optional\" pill (data-opt-pill)");
   if (!/else if \(step\.id === "m1\.call\.close" && !isDone && \(ownWait \|\| rgaWait\)\) \{ const e = month1EndOf\(waitTasks\); Object\.assign\(ownerPill, \{ text: e \? `Opens about \$\{monthDay\(new Date\(e\.getTime\(\) - 3 \* 86400000\)\.toISOString\(\)\)\}` : "Opens near the end of Month 1"/.test(P)) fail("step 15 waiting isn't the \"Opens about <date>\" pill (like its card)");
-  if (!/const csQuiet = CS_STEPS\.has\(step\.id\) && \(\["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close"\]\.includes\(step\.id\) \|\| !!OG_CARD\[step\.id\]\) && !flagged;/.test(P) || !/const amendBtn = stepLk \|\| csQuiet \? ""\n\s*: flagged/.test(P)) fail("steps 13–15 draw Check again / Not right? beside a settled card again (or a raised flag loses its \"It's fine after all\")"); }
+  if (!/const csQuiet = CS_STEPS\.has\(step\.id\) && \(\["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close", "m1\.gbp\.photos"\]\.includes\(step\.id\) \|\| !!OG_CARD\[step\.id\]\) && !flagged;/.test(P) || !/const amendBtn = stepLk \|\| csQuiet \? ""\n\s*: flagged/.test(P)) fail("steps 13–15 draw Check again / Not right? beside a settled card again (or a raised flag loses its \"It's fine after all\")"); }
 
 // ── 3 · step 14 (videos), run ────────────────────────────────────────────────────────────────────────
 const vc = vm.createContext({ escapeHtml: esc, escapeAttribute: esc, Date, JSON, Number, Set, Map, Array, String, Object, Math });
@@ -234,6 +234,7 @@ try {
   const done = vm.runInContext(`kickoffDoneHtml({}, { start: "2026-10-09T15:00:00Z", client_tz: "America/Denver", recap_sent_at: "2026-10-09T18:00:00Z" })`, kc);
   if (/pm-k5-askq|data-ask/.test(done) || !/Call held · /.test(done)) fail("step 1's held done card draws its own ask line on the card system"); }
 
+const P10S = {};   // the remaining states, drawn in Chrome below
 // ── 6 · step 10 (the tiles + one shot), run ─────────────────────────────────────────────────────────
 { const SECOND_LOGO = await import(pathToFileURL(`${SITE}/shared/photo-second-logo.js`).href);
   process.removeAllListeners("warning");
@@ -288,9 +289,37 @@ try {
     if (!new RegExp(`<div class="pm-p10-shot" data-p10-shot="${n4}">`).test(r4)) fail(`step 10 (${biz}): the shot they opened isn't kept across a redraw (_p10Sel)`);
     pc.sel.set("c1", n1); const r1 = pc.render(STEP, task, photos, "c1", TIPS);
     if (!new RegExp(`<div class="pm-p10-shot" data-p10-shot="${n3}">`).test(r1)) fail(`step 10 (${biz}): a redraw re-opens a finished shot instead of the next one to do`);
-    // waiting on one listing: the folds, locked — never the tiles
-    const lk = pc.render(STEP, task, photos, "c1", "", { open: false, duplicates: [{ name: "locations/2" }] });
-    if (/pm-p10/.test(lk) || !/<div class="pm-slots is-locked">/.test(lk)) fail(`step 10 (${biz}): while the listing waits it draws the tiles (uploading isn't open)`);
+    // ── client_step10_photos_v4, the remaining states ──
+    // Not open yet (waiting on one listing): the grey card, the tiles to plan from, nothing can upload, nothing opens by itself
+    pc.sel.clear();
+    const WAIT = { open: false, state: "unknown", duplicates: [] }, DUP = { open: false, state: "duplicate", duplicates: [{ name: "locations/2" }] };
+    const lk = pc.render(STEP, task, photos, "c1", TIPS, WAIT), dup = pc.render(STEP, task, photos, "c1", TIPS, DUP);
+    if (!new RegExp(`<div class="pm-k5-plan pm-cs-card off"><div class="pm-k5-h off">[^]*?<b>Your ${ns.length} shots · uploading opens soon</b>`).test(lk)) fail(`step 10 (${biz}): the waiting step isn't the grey card "Your ${ns.length} shots · uploading opens soon"`);
+    if ((lk.match(/<button type="button" class="pm-p10-t/g) || []).length !== ns.length || !/<div class="pm-p10 is-locked" data-p10="c1">/.test(lk) || !/<div class="pm-p10-panel" hidden>/.test(lk)) fail(`step 10 (${biz}): the waiting step doesn't draw every tile (read-only, no shot open)`);
+    if (!/The shot list · tap a kind to jump to it/.test(lk) || !/<div class="pm-cs-note">Plan your photos now\. Uploading opens the moment your listing is down to one\.<\/div>/.test(lk)) fail(`step 10 (${biz}): the waiting step lost its shot list or "Plan your photos now"`);
+    if (/<input type="file"/.test(lk) || /data-batch/.test(lk) || /data-team-size/.test(lk) || /pm-cs-foot/.test(lk) || /class="pm-lock"/.test(lk)) fail(`step 10 (${biz}): the waiting step can upload, or still shows the people question, a foot or the old lock band`);
+    if (!/data-photo-lock-approvals/.test(dup) || dup.indexOf("data-photo-lock-approvals") < dup.indexOf("pm-p10-tiles") || dup.indexOf("data-photo-lock-approvals") > dup.indexOf("Plan your photos now")) fail(`step 10 (${biz}): a real duplicate lost its way out ("Remove your second Business Profile"), or it isn't inside the card`);
+    // Reminder later: below (a run of the whole step, check-a-client-can-choose-later) · Done: all green + On your profile by kind + Add more
+    pc.sel.clear();
+    const allOn = ns.map((x) => ({ id: `a${x}`, shot_n: x, publish_state: "published", pushed_to_gbp: true, pushed_at: "2026-10-09T00:00:00Z", storage_path: `${x}.jpg` }));
+    const dn = pc.render(STEP, { ...task, status: "done", completed_at: "2026-10-30T12:00:00Z", detected: { n: ns.length, threshold: 20, source: "google_profile", at: "2026-10-29T12:00:00Z" } }, allOn, "c1", TIPS);
+    const dcard = dn.slice(0, dn.indexOf('data-fold="done-list"'));
+    if ((dcard.match(/<div class="pm-p10-t is-on"><span class="im"><span class="ok" aria-hidden="true">✓<\/span>/g) || []).length !== ns.length) fail(`step 10 (${biz}): done isn't every tile green ✓`);
+    if (/data-p10-t=/.test(dcard)) fail(`step 10 (${biz}): done's tiles are buttons (nothing happens when they're pressed)`);
+    if (!/<span class="k">On your profile<\/span>/.test(dcard) || !/Add more any time; fresh photos help\.<\/div><div class="pm-cs-foot">/.test(dcard)) fail(`step 10 (${biz}): done lost "On your profile", its note or its foot`);
+    const chipN = [...dcard.matchAll(/<span class="pm-cs-chip">[^<]*<em>(\d+)<\/em>/g)].reduce((a, m) => a + Number(m[1]), 0);
+    if (chipN !== ns.length) fail(`step 10 (${biz}): "On your profile" doesn't add up to the photos on Google (${chipN} of ${ns.length})`);
+    if (!/data-photo-addmore>Add more<\/button>/.test(dcard) || !/<details class="pm-later-list pm-pc-more" data-fold="done-list">/.test(dn) || !/<input type="file"[^>]*data-slot-file|data-photo-remove=/.test(dn.slice(dn.indexOf('data-fold="done-list"')))) fail(`step 10 (${biz}): done's Add more lost the list under the card (each photo's Change / Remove)`);
+    // Reminder later (client_step10_photos_v4): the whole card; the rest of its rules run in check-a-client-can-choose-later
+    pc.sel.clear();
+    const lt = pc.render(STEP, task, photos, "c1", TIPS, null, { later: { until: "2030-11-04T12:00:00Z" }, canLater: true });
+    if (!/<b>Set for later · we'll email you a reminder on Nov 4/.test(lt) || !/<div class="pm-p10-panel" hidden>/.test(lt) || /The shot list · tap a kind/.test(lt) || !/class="pm-k5-acts pm-later-under"/.test(lt) || !/Your other steps carry on\./.test(lt)) fail(`step 10 (${biz}): the later state isn't the card with its tiles and the two choices under it`);
+    Object.assign(P10S, { wait: lk, dup, done: dn, later: lt });
+    // a count reached with photos RGA hasn't matched to a shot: that shot's tile is NOT green, the rest is "Other N"
+    pc.sel.clear();
+    const dn2 = pc.render(STEP, { ...task, status: "done", completed_at: "2026-10-30T12:00:00Z", detected: { n: 27, threshold: 20, source: "google_profile" } }, [allOn[0]], "c1", TIPS);
+    const d2 = dn2.slice(0, dn2.indexOf('data-fold="done-list"'));
+    if ((d2.match(/<div class="pm-p10-t is-on">/g) || []).length !== 1 || !/Other <em>26<\/em>/.test(d2)) fail(`step 10 (${biz}): a done count made of unmatched photos turns tiles green for shots that aren't there (or loses "Other 26")`);
   }
   // Needs your space · the hidden logo — a business that goes to its customers
   const sab = PL.buildShotList({ typeOverride: "Marketing agencies", storefront: false, teamSize: "1" });
@@ -310,6 +339,12 @@ try {
   if (!/content:"Your photo goes here"/.test(CSS10)) fail("the empty photo box doesn't say what goes there");
   if (!/const csMinPill = csRow && ownerPill\.cls === "you" && ownerPill\.text === "Your turn" && Number\(step\.clientMinutes\) > 0/.test(P)) fail("a step on the client's turn lost its \"about N min\" pill (from clientMinutes)");
   if (!/const csEditPill = csRow && editing/.test(P)) fail("changing a done step isn't \"Done\" + an amber \"Editing\"");
+  // ── 10-30: client_step10_photos_v4, the row around the remaining states ──
+  if (!/const csPhotoWait = csRow && !isDone && listingWait && step\.clientForm === "photo_upload";/.test(P) || !/\(ownWait \|\| listingWait\) && !csPhotoWait &&/.test(P) || !/if \(\(csWaitHtml && listingWait\) \|\| csPhotoWait\) Object\.assign\(ownerPill, \{ text: "Opens when you have one Google profile"/.test(P)) fail("step 10 waiting on one listing isn't its own grey card under \"Opens when you have one Google profile\" (the row swaps it for the general wait card)");
+  if (!/ownerPill\.cls === "wait" && later && ownerPill\.text\.startsWith\("Later · "\)\) Object\.assign\(ownerPill, \{ text: "Your turn", cls: "you" \}\)/.test(P) || !/const csLaterPill = csRow && later && ownerPill\.text === "Your turn" \? `<span class="pm-pill wait off" data-later-pill>Reminder \$\{escapeHtml\(monthDay\(later\.until\)\)\}/.test(P) || !/\$\{csOptPill\}\$\{csLaterPill\}/.test(P)) fail("step 10 later isn't the pills \"Your turn\" + \"Reminder <date>\"");
+  if (!/Number\(step\.clientMinutes\) > 0 && !later \?/.test(P)) fail("a step that's later still says how many minutes it takes");
+  if (!/!\(csRow && step\.clientForm === "photo_upload"\)\s*\? `<p class="pm-evidence">/.test(P)) fail("step 10 done repeats \"20 photos received\" under its card");
+  if (!/const csCardOf = [^\n]*!c\.closest\("\.pm-pc-more"\)/.test(P)) fail("a done step's lock or How seats on the card inside the closed Add more list, where nobody sees it");
   // the tile handler: the file's LAST listener, and it handles a tile, a kind and ‹ Shot ›
   const last = P.lastIndexOf('document.addEventListener("click"'), tail = P.slice(last);
   if (!/closest\("\[data-p10-t\], \[data-p10-kind\]"\)/.test(tail) || !/_p10Sel\.set\(/.test(tail) || P.trimEnd().slice(-4) !== "\n});") fail("step 10's tile / kind handler isn't the last listener in portal.js");
@@ -427,6 +462,25 @@ try {
   });
   const vwant = { "cs:open": ["pm-pill you|Your turn", "pm-pill wait off|Optional|opt"], "cs:writing": ["pm-pill rga|RGA is on it", "pm-pill wait off|Optional|opt"], "cs:skipped": ["pm-pill done|Skipped", "pm-pill wait off|Optional|opt"], "old:open": ["pm-pill auto|Optional"], "old:writing": ["pm-pill rga|RGA is doing it"], "old:skipped": ["pm-pill done|Skipped"] };
   for (const [k, w] of Object.entries(vwant)) if ((vp[k] || []).join(" · ") !== w.join(" · ")) fail(`step 14's pills (${k}) are ${JSON.stringify(vp[k])}; want ${JSON.stringify(w)}`);
+  // ── client_step10_photos_v4: the remaining states at a phone's width, in Chrome with the shipped stylesheet ──
+  { const pg = await browser.newPage();
+    for (const [name, html] of Object.entries(P10S)) {
+      await pg.setViewport({ width: 400, height: 900 });
+      await pg.setContent(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><div class="pm-step-row pm-cs" id="r" style="padding:0 16px">${html}</div></body></html>`);
+      await pg.addStyleTag({ content: C });
+      const m = await pg.evaluate(() => { const s = document.querySelector(".pm-p10.is-locked [data-p10-shot][hidden]"); if (s) { s.hidden = false; s.parentElement.hidden = false; }
+        const add = [...document.querySelectorAll(".pm-p10.is-locked .pm-slot .add")].filter((a) => a.checkVisibility());
+        const more = document.querySelector("details.pm-pc-more"), closed = more ? getComputedStyle(more).display : "", was = more ? (more.open = true, getComputedStyle(more).display) : "";
+        if (more) more.open = false;
+        const dt = document.querySelector("div.pm-p10-t");
+        return { sw: document.documentElement.scrollWidth, add: add.length, closed, was, cur: dt ? getComputedStyle(dt).cursor : "" }; });
+      if (m.sw > 400) fail(`step 10 (${name}): the page is ${m.sw}px wide on a 400px phone`);
+      if (m.add) fail(`step 10 (${name}): a waiting shot still shows + Add photo (${m.add})`);
+      if (name === "done" && (m.closed !== "none" || m.was === "none")) fail(`step 10 (done): Add more's list isn't hidden until it's opened (closed: ${m.closed}, open: ${m.was})`);
+      if (name === "done" && m.cur !== "default") fail(`step 10 (done): a tile that does nothing looks pressable (${m.cur})`);
+    }
+    await pg.close(); }
+
 } finally { await browser.close(); }
 
 if (F.length) { console.error(`🔴 the client card system (batch 2: steps 1, 10–15) drifted — ${F.length} problem(s):\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }

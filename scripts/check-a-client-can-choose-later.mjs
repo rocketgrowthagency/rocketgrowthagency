@@ -112,12 +112,16 @@ if (ctx.laterOf(step, { later: { ...later, until: new Date(now - 1000).toISOStri
 if (ctx.laterOf({ id: "m1.gbp.hours_attributes" }, { later }, [])) fail("\"later\" applies to a step that can't be put off");
 const task = { draft_shape: shape, team_size: "1", detected: { n: 2, threshold: 20, source: "google_profile" } };
 const on = ctx.how(step, { ...task, later }, true, [], "c1", null);
-// 🔄 approved step7_later_state_v1 v2: a calm band with two real buttons; the rest of the step folds behind one line
-if (!/<div class="pm-later-band">[\s\S]*?Set for later · we'll email you a reminder on [A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}<\/b>/.test(on) || !/class="pm-act is-guide" data-later-change>Change date</.test(on) || !/class="pm-act is-guide" data-later-clear>I(?:'|&#39;)m ready now</.test(on) || /Not ready to take photos yet/.test(on)) fail("a step that's \"later\" doesn't show the band (when, Change date, I'm ready now)");
-const fold = /<details class="pm-later-list" data-fold="later-list"><summary>Show your photo list <span class="m">2 of 20 on Google · 18 to go<\/span>/.exec(on);
-// 🔄 10-26 (steps_6_20_clean_v1): the progress lives in the photo step's plan card now
-if (!fold || on.indexOf('class="pm-k5-plan') < fold.index || on.indexOf('class="pm-slots') < fold.index) fail("while it's \"later\" the progress, toolbar and list aren't folded behind \"Show your photo list\"");
-if (/pm-later-list/.test(ctx.how(step, task, true, [], "c1", null))) fail("the photo list is folded away when nothing is \"later\"");
+// 🔄 10-30 (client_step10_photos_v4 "Reminder later", replaces step7_later_state_v1's band and folded list): the card's band says when, the tiles stay with no
+// shot open, the shot list and the people question wait, "Your other steps carry on." and the foot; I'm ready now + Change date under the card
+if (!/<div class="pm-k5-h you">[^]*?<b>Set for later · we'll email you a reminder on [A-Z][a-z]{2} \d{1,2}<\/b><span>2 of 20<\/span>/.test(on) || !/class="pm-commit" data-later-clear>I(?:'|&#39;)m ready now</.test(on) || !/class="pm-amend" data-later-change>Change date</.test(on) || /Not ready to take photos yet/.test(on)) fail("a step that's \"later\" isn't the card (when, 2 of 20) with I'm ready now + Change date under it");
+if (!/<div class="pm-p10-tiles">/.test(on) || !/<div class="pm-p10-panel" hidden>/.test(on) || /data-p10-shot="\d+">/.test(on)) fail("while it's \"later\" the tiles aren't there, or a shot opens by itself");
+if (/The shot list · tap a kind|data-team-size/.test(on)) fail("while it's \"later\" the shot list or the people question still shows");
+if (!/<div class="pm-cs-note">Your other steps carry on\.<\/div><div class="pm-cs-foot">/.test(on)) fail("while it's \"later\" the card lost \"Your other steps carry on.\" or its foot");
+if (on.indexOf("data-later-acts") < on.indexOf("pm-cs-foot")) fail("I'm ready now + Change date aren't under the card");
+if (!/data-slot-file data-client-id="c1" data-shot-n=/.test(on) || /<input disabled type="file"/.test(on)) fail("while it's \"later\" a photo can't be added (an upload still ends the reminder)");
+if (!/data-later-opts hidden>[^]*?data-later-days="7"[^]*?data-later-days="14"[^]*?data-later-change>Keep /.test(on)) fail("Change date doesn't offer 1 week, 2 weeks or keeping the date");
+if (/pm-later-band/.test(on)) fail("the old later band came back");
 const off = ctx.how(step, task, true, [], "c1", null);
 if (!/Not ready to take photos yet\? <b>Remind me later<\/b>/.test(off) || !/data-later-days="7">In 1 week</.test(off) || !/data-later-days="14">In 2 weeks</.test(off)) fail("the step doesn't offer \"Remind me later\" with 1 or 2 weeks");
 const pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
@@ -130,7 +134,7 @@ const laterHandler = (() => { const i = pc.indexOf('"[data-later-days],[data-lat
 if (!/b\.classList\.add\("is-busy"\); b\.setAttribute\("aria-busy", "true"\);/.test(laterHandler) || !/finally \{ delete host\.dataset\.busy; b\.classList\.remove\("is-busy"\);/.test(pc)) fail("a click on a later choice shows nothing while it saves (the pressed button must spin)");
 if (!/if \(days\) _openStep\.delete\(cid\); else _openStep\.set\(cid, host\.getAttribute\("data-later-step"\)\);/.test(pc)) fail("choosing later doesn't fold the step (or I'm ready now doesn't keep it open)");
 if (!/(?:\$\{|: )later \? `<span class="pm-step-sub">Reminder by email on \$\{escapeHtml\(laterDay\(later\.until\)\)\} · your other steps carry on<\/span>/.test(pc)) fail("the folded row doesn't say when the reminder comes");
-if (!/querySelector\("\[data-later-step\] \.pm-later-band"\)/.test(pc)) fail("an upload can't tell the step is \"later\" (so it never ends it)");
+if (!/querySelector\("\[data-later-step\] \[data-later-acts\]"\)/.test(pc)) fail("an upload can't tell the step is \"later\" (so it never ends it)");
 if (!/action: days \? "set" : "clear"/.test(pc) || !/await settleStepResult\(host\.closest\("\[id\^='action-items-list-'\]"\), j\);/.test(pc)) fail("the later controls don't save and redraw");
 if (!/if \(lat\) fetch\("\/\.netlify\/functions\/portal-step-later", \{ method: "POST"[\s\S]{0,400}?action: "clear" \}\) \}\)/.test(pc)) fail("an upload doesn't end \"later\" in the record");
 // the spinner keeps the button's size and shows at once (a colour fade on .pm-act hid it, 10-15)
@@ -145,7 +149,9 @@ if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 976, height: 900 });
-    await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row"><div style="padding:0 16px">${on}</div></div></div></body></html>`);
+    // 🔄 10-30: the done step's list ("Add more") is the fold with this rhythm now; "later" no longer folds
+    const doneList = ctx.how(step, { ...task, status: "done", completed_at: "2026-10-30T12:00:00Z" }, false, [], "c1", null);
+    await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row"><div style="padding:0 16px">${doneList}</div></div></div></body></html>`);
     await page.addStyleTag({ content: pcss });
     const gaps = await page.evaluate(() => { const f = document.querySelector(".pm-later-list"); f.open = true; const kids = [...f.children].filter((k) => k.tagName !== "SUMMARY" && k.checkVisibility()); const out = []; for (let i = 1; i < kids.length; i++) out.push(Math.round(kids[i].getBoundingClientRect().top - kids[i - 1].getBoundingClientRect().bottom)); return out; });
     if (!gaps.length || gaps.some((g) => g < 13 || g > 15)) fail(`inside the opened photo list the blocks aren't 14px apart (${gaps.join(", ")})`);
@@ -158,4 +164,4 @@ if (!/if \(l\.reminded_at\) return `<p class="ob-chose">Reminder sent /.test(adm
 if (!/x\.reason === "later_reminder" \? \(x\.emailed \? "Reminder they asked for · by email"/.test(admin) || !/reason: r\.payload\?\.reason \|\| null/.test(admin)) fail("admin's nudge log calls the reminder the client asked for a nudge");
 
 if (F.length) { console.error("🔴 \"Remind me later\" doesn't work the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ a client can choose later: 1 or 2 weeks on the photo step only, owner only, read back, cleared by \"I'm ready now\" or an upload; while later the pill and the folded row say when, the opened step is the band with the list folded, it's never the now step and the banner moves on; the pressed button spins; one reminder on the date (stamped first, in sending hours, cancelled by a photo); admin sees it");
+console.log("✅ a client can choose later: 1 or 2 weeks on the photo step only, owner only, read back, cleared by \"I'm ready now\" or an upload; while later the pill and the folded row say when, the opened step is the card with the tiles and the two choices under it, it's never the now step and the banner moves on; the pressed button spins; one reminder on the date (stamped first, in sending hours, cancelled by a photo); admin sees it");
