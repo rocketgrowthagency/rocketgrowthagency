@@ -25,6 +25,7 @@ export AIRTABLE_GET_CACHE=1
 # 🔑 Exit 2 (indeterminate) is NOT treated as healthy. A gate that cannot reach Airtable must never
 # report green — that is how a dead check reads as a pass.
 set -uo pipefail
+DB_STOPPED=""   # 🔴 under set -u an unset variable KILLS the script: without this line every morning since 10-27 died at the first live gate (reviews, RSVPs, PageSpeed never ran)
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot enter scraper repo"; exit 2; }
 
 # 🔑 LOAD .env SO THE GATES CAN ACTUALLY CHECK. Several gates verify against LIVE Supabase — the

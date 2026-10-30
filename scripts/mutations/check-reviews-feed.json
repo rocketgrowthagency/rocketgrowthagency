@@ -176,8 +176,8 @@
  [
   "stale isn't said",
   "portal",
-  "${f.stale ? \" · not read since\" : \"\"}`;",
-  "`;"
+  "const side = `${f.stale ? \"last checked\" : \"checked\"} ${escapeHtml(monthDay(f.checked_at))}`;",
+  "const side = `checked ${escapeHtml(monthDay(f.checked_at))}`;"
  ],
  [
   "an anonymous reviewer's name shows",

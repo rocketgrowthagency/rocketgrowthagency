@@ -141,6 +141,7 @@ export const FILES = {
   rebuild: "scraper:scripts/rebuild-broken-videos.sh",
   netlifyforecast: "scraper:scripts/lib/netlify-credit-forecast.mjs",
   overnightlocal: "scraper:scripts/overnight-local.sh",
+  dailyhealth: "scraper:scripts/daily-health-check.sh",
   reviewrunner: "scraper:scripts/refresh-review-metrics.mjs",
   braindispatch: "netlify/functions/brain-weekly-dispatch.js",
   flowcrondaily: "netlify/functions/flow-cron-daily.js",

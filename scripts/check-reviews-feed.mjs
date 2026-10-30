@@ -191,7 +191,7 @@ try {
     reviews: [R("g1", "Maria G.", "2026-10-24T18:00:00Z", 5, "On time, clean work. <b>Fair</b> price."), R("g2", null, "2026-10-12T18:00:00Z", 4, "", "2026-10-13T10:00:00Z", true), R("g3", "Dev R.", "2026-09-30T18:00:00Z", 5, "Great"), R("g4", "Old", "2026-08-01T18:00:00Z", 3, "Old one")] },
     matches: [{ review_id: "g1", list_id: "L1", index: 0, name: "Maria", job: "water heater", asked_at: "2026-10-20T18:00:00Z", reviewer: "Maria G.", stars: 5, at: "2026-10-24T18:00:00Z" }], profile_url: "https://www.google.com/maps/place/?q=place_id:pl1" };
   const a = await draw(live);
-  if (a.cls !== "pm-k5-plan pm-cs-card ok" || a.head !== "1 new review this week" || !/^read from Google Oct 25$/.test(a.side || "")) fail(`A: a new review with a question isn't the green band (the question is its own amber row, client_ongoing_reviews_v1) "1 new review this week · read from Google <date>" (${a.cls} · ${a.head} · ${a.side})`);
+  if (a.cls !== "pm-k5-plan pm-cs-card ok" || a.head !== "1 new review this week" || !/^checked Oct 25$/.test(a.side || "")) fail(`A: a new review with a question isn't the green band (the question is its own amber row, client_ongoing_reviews_v1) "1 new review this week · read from Google <date>" (${a.cls} · ${a.head} · ${a.side})`);
   if (a.k.join("|") !== "4.8 ★ average · 41 reviews|+3 new in the last 30 days|12 days between the last two") fail(`A: the three numbers aren't Google's own (${a.k.join("|")})`);
   if (a.r.length !== 3 || !/^Maria G\. ★★★★★ Oct 24 On time, clean work\. <b>Fair<\/b> price\. No reply yet · RGA drafts one for your approval$/.test(a.r[0]) || !/Is this Maria \(water heater, asked Oct 20\)\? So we count it toward your asks\. Yes, it's Maria Not Maria/.test(a.text) || a.bolds) fail(`A: the newest review isn't shown as Google has it with "Is this Maria?" (its words never HTML) (${a.r[0]})`);
   if (!/^A Google user ★★★★☆ Oct 12 No words, just stars\. Replied Oct 13$/.test(a.r[1] || "")) fail(`A: an anonymous review with a reply isn't "A Google user … Replied" (${a.r[1]})`);
@@ -206,7 +206,7 @@ try {
   // 🔒 10-23 (live check on RGA): 0 reviews read as a GREEN card with "No rating · +0 · –" — zero is the client's move, not "good"
   if (none.cls !== "pm-k5-plan pm-cs-card you" || none.head !== "No reviews on Google yet" || !/Your review requests are how the first ones come in/.test(none.text) || none.all || none.k.length) fail(`C: a profile with no reviews (measured) isn't the amber "No reviews on Google yet" with no empty numbers (${none.cls} · ${none.head} · ${none.k.join("|")} · ${none.all})`);
   const stale = await draw({ ...live, matches: [], feed: { ...live.feed, stale: true } });
-  if (!/not read since$/.test(stale.side || "")) fail(`D: an old reading doesn't say it wasn't read since (${stale.side})`);
+  if (!/^last checked /.test(stale.side || "")) fail(`D: an old reading doesn't say "last checked" (${stale.side})`);
   const cant = await draw({ feed: null, matches: [], read_failed: false });
   if (cant.cls !== "pm-k5-plan pm-cs-card off" || cant.head !== "We can't read your reviews yet" || /\d+ (new )?reviews?/.test(cant.text) || cant.all) fail(`E: no reading isn't "We can't read your reviews yet" with no number (${cant.head} · ${cant.text})`);
   await shot("E-cant-read");

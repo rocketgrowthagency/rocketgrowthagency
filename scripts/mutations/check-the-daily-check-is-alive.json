@@ -1,0 +1,16 @@
+[
+ [
+  "the variable loses its starting value (the 10-27 bug)",
+  "dailyhealth",
+  "DB_STOPPED=\"\"   #",
+  "#",
+  1
+ ],
+ [
+  "run() reads a new unset variable",
+  "dailyhealth",
+  "    if [ -n \"$DB_STOPPED\" ]; then",
+  "    if [ -n \"$DB_STOPPED$NEW_UNSET_FLAG\" ]; then",
+  1
+ ]
+]
