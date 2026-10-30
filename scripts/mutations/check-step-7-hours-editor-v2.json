@@ -1,0 +1,9 @@
+[
+ ["set hours option gone", "portal", "<b>Set hours</b><small>Google shows Open / Closed", "<b>Hours</b><small>Google shows Open / Closed", 1],
+ ["cost note gone", "portal", "<span><b>Google will show no opening hours.</b>", "<span><b>Saved.</b>", 1],
+ ["set hours can turn appt on", "portal", "if (a && a.classList.contains(\"on\")) { a.classList.remove(\"on\");", "if (a) { a.classList.toggle(\"on\");", 1],
+ ["no sync after toggle", "portal", "toggle(\"is-appt\", on); hoursApptSync(wrap); return; }", "toggle(\"is-appt\", on); return; }", 1],
+ ["holiday count not updated", "portal", "if (hc) hc.textContent = String(", "if (false) hc.textContent = String(", 1],
+ ["copy link shows by appointment", "portalcss", ".pm-in-hours.is-appt ~ .pm-in-copy { display:none; }", ".pm-in-hours.is-appt + .pm-in-copy { display:none; }", 1],
+ ["phone rows don't stack", "portalcss", "  .pm-cs .pm-in-day { grid-template-columns:40px minmax(0,1fr); }", "  .pm-cs .pm-in-day { grid-template-columns:40px auto 14px auto minmax(0,1fr); }", 1]
+]
