@@ -79,6 +79,11 @@ if (!/side: \(g\.rga \|\| \[\]\)\.every\(\(x\) => x\.fact === "area"\) \? "" :/.
 if (!/\.ob-done-card \{ padding:12px 16px 14px 16px; \}/.test(read("admin/admin.css"))) fail("a done step's card touches the step's header band again (no top padding)");
 // 10-29 6:26 PM (Chris: "needs to be some padding between green bar and the kickoff call grey box"): the kickoff console on a done row too
 if (!/\.ob-step\.done\.has-console \.kc \{ margin-top:12px; \}/.test(read("admin/admin.css"))) fail("the kickoff call's box touches the done step's green bar again (no top gap)");
+// 10-29 6:30 PM (Chris: "fix padding here too"): a step's conversation — the messages never touch the header line
+if (!/\.pm-convo > \.pm-thread \{ margin:12px 14px 12px; \}/.test(read("portal/portal.css"))) fail("the client's conversation touches its header line again (no top gap)");
+// kickoff_after_call_v1 (approved 10-29): after the call is held, client step 1 asks a question (Ask RGA ›), never files a change request
+{ const P = read("portal/portal.js"), i = P.indexOf("function kickoffDoneHtml("), k = P.slice(i, P.indexOf("\n}\n", i));
+  if (i < 0 || /data-step-wrong/.test(k) || !/Questions about the call\? <button type="button" class="pm-k5-asklink" data-ask data-ask-step="m1\.kickoff\.call" data-ask-where="About your kickoff call">Ask RGA ›<\/button>/.test(k)) fail("client step 1 after the call can file a change request again (or Ask RGA › is gone)"); }
 
 // ── D · no "row" in admin text ─────────────────────────────────────────────────────────────────
 const bad = A.split("\n").map((l, i) => [i + 1, l]).filter(([, l]) => !/^\s*(\/\/|\*|\/\*)/.test(l)).map(([n, l]) => [n, l.replace(/\s\/\/\s.*$/, "")])

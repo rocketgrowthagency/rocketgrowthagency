@@ -103,5 +103,19 @@
   ".ob-step.done.has-console .kc { margin-top:12px; }",
   ".ob-step.done.has-console .kc { margin-top:0; }",
   1
+ ],
+ [
+  "the conversation touches its header again",
+  "portalcss",
+  ".pm-convo > .pm-thread { margin:12px 14px 12px; }",
+  ".pm-convo > .pm-thread { margin:0 14px 12px; }",
+  1
+ ],
+ [
+  "a held call files a change request again",
+  "portal",
+  "<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>",
+  "<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>",
+  1
  ]
 ]
