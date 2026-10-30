@@ -16,6 +16,7 @@
 //   · nothing wider than a 400px phone, in any state
 // exit 0 = holds · 1 = regressed · 2 = can't tell
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
 import { csBlock } from "./lib/portal-cs.mjs";
 
@@ -79,7 +80,7 @@ const lifted = [
   line("_rcEditing"), line("_editingSteps"), line("GBP_STEPS"),
   line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), line("ACC_COMMON"), line("ACC_SEND"), line("ACC_CHECK_ICON"), line("ACC_PROMISE_VERSION"), line("ACC_CONSENT_TEXT"),
   multi("ACC_FILES", "\n};"), multi("ACC_PROMISE_ICON", "\n};"), multi("ACC_PROMISE_DO", "];"), multi("ACC_PROMISE_NEVER", "];"),
-  ...["accPart", "accSetWhen", "accSetSend", "accConsentHtml", "accPromiseHtml", "accessCardHtml", "accHostOf", "accHostMono", "accMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accSetupHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawFound", "accDrawDesigner", "accDrawPlatform", "accSave", "accRequestCheck", "accOpenDesigner"].map(fn),
+  ...["accPart", "accSetWhen", "accSetSend", "accConsentHtml", "accPromiseHtml", "accessCardHtml", "accSiteName", "accStep1Name", "accHostOf", "accHostMono", "accMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accSetupHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawFound", "accDrawDesigner", "accDrawPlatform", "accSave", "accRequestCheck", "accOpenDesigner"].map(fn),
   ...["factRowHtml", "factPick", "areaCardHtml", "factsRowsHtml", "factsProgress", "areaListOf", "areaRecount", "atCardHtml", "atDraw", "attrsFormHtml", "atSubmitLabel", "submitStepInput"].map(fn),
   line("siteShow"),
   `function factsForm(id, s, head, fields) { ${factsTpl} }`,
@@ -141,6 +142,9 @@ try {
 
     // a developer-built site on Netlify: the picture, who, GitHub's steps, the email word for word
     open3({ status: "ok", platform: "custom", confidence: "stated", signs: 2, evidence: ["x"], host: "netlify", site: "dev.example" });
+    out.devFoundWhen = whenTxt();
+    const waitSide = (who) => { const d = document.createElement("div"); d.innerHTML = accessCardHtml({ id: "m1.access.website" }, { status: "in_progress", client_input: { via: "designer", who, platform: "custom", at: "2026-10-30T12:00:00Z" } }, "c1"); return d.querySelector(".pm-cs-card")?.textContent.replace(/\s+/g, " ") || ""; };
+    out.waitDev = waitSide("developer"); out.waitDesigner = waitSide("self");
     await tap("[data-acc-yes]"); wide("3 who");
     out.who = { when: whenTxt(), one: q('[data-acc-part="1"]').textContent.replace(/\s+/g, " "), two: q('[data-acc-part="2"]').textContent.replace(/\s+/g, " "), send: sendInfo(), three: q('[data-acc-part="3"]').textContent.replace(/\s+/g, " ") };
     await tap('[data-acc-who="self"]'); await tap('[data-acc-files="github"]'); wide("3 github");
@@ -260,7 +264,7 @@ const sameFacts = (post, want) => post.length === 1 && post[0].step_id === "m1.g
 // step 3
 if (!R.found.pwd || R.found.cards !== 1 || R.found.nested || R.found.parts !== 3) fail(`step 3 isn't ONE card with three rows and "Never send us your password" on it (${JSON.stringify(R.found)})`);
 if (R.found.when !== "takes about 2 min" || R.builder.when !== "takes about 2 min") fail(`the builder's own time isn't on the band (${R.found.when} · ${R.builder.when})`);
-if (R.who.when !== "takes about 5 min" || R.jimdo.when !== "takes a few min" || R.tilesWhen !== "takes 2–5 min" || R.noSiteWhen !== "takes 2–5 min") fail(`the band's time doesn't follow the builder (custom ${R.who.when} · no invite ${R.jimdo.when} · not known ${R.tilesWhen} · no site ${R.noSiteWhen})`);
+if (R.devFoundWhen !== "takes 2–5 min" || R.who.when !== "takes 2–5 min" || R.jimdo.when !== "takes a few min" || R.tilesWhen !== "takes 2–5 min" || R.noSiteWhen !== "takes 2–5 min") fail(`the band's time doesn't follow the builder (custom ${R.devFoundWhen} · ${R.who.when} · no invite ${R.jimdo.when} · not known ${R.tilesWhen} · no site ${R.noSiteWhen})`);
 if (R.oldLinkWhen !== null) fail("the time would write over the old-link card's own side");
 if (!/Your website is on Squarespace/.test(R.builder.one) || !R.builder.change) fail(`a finished Step 1 isn't one line with Change (${R.builder.one})`);
 if (!offUnder(R.builder.send) || !R.builder.consentInPart) fail(`the send button isn't under the card and off until the consent is ticked (${JSON.stringify(R.builder.send)})`);
@@ -322,6 +326,21 @@ if (R.many.folds !== 3 || R.many.hows !== 1) fail(`a long list doesn't fold afte
 if (R.edit.cards !== 1 || !/^Change what's true/.test(R.edit.text) || !/The step stays Done until you save\. Anything left unticked comes off Google\./.test(R.edit.text)) fail(`changing a done step isn't the green "Change what's true" (${R.edit.text.slice(0, 120)})`);
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.offers.text) || !/Save to finish this step\./.test(R.offers.text) || !eq(body(R.offersPost), [])) fail(`"Google offers none" can't finish the step: it says Save and the button must do it (${JSON.stringify(R.offersPost)})`);
 if (R.readingSave.posts.length || R.noreadSave.posts.length) fail(`while Google is being read, or couldn't be, the button posted: an empty answer takes every detail off Google (${JSON.stringify([R.readingSave, R.noreadSave])})`);
+
+if (!/developer asked/.test(R.waitDev) || !/designer asked/.test(R.waitDesigner)) fail(`step 3's wait card names the wrong person (${R.waitDev.slice(0, 120)} · ${R.waitDesigner.slice(0, 120)})`);
+// Step 8's words: the button always says "Put it on Google" (approved V2), so the How can't say it changes.
+if (/the button says so/.test(JSON.stringify(JSON.parse(read("data/playbooks/client-steps.json"))))) fail("step 8's How still says the button changes when none apply");
+// "Google offers none" saves `[]`: nothing to write, so nothing may reach Google. When Google does offer details, the write still goes.
+{
+  const { applyForStep } = createRequire(import.meta.url)(`${SITE}/netlify/functions/_gbp-profile.js`);
+  const fakeGoogle = (meta) => { const calls = []; return { calls, deps: { token: "fake", loc: "locations/1", fetch: async (u, init = {}) => { calls.push(init.method || "GET"); const j = /attributes\?parent=/.test(u) ? { attributeMetadata: meta } : { attributes: [] }; return { ok: true, status: 200, json: async () => j }; } } }; };
+  const none = fakeGoogle([]), noneOut = await applyForStep("m1.gbp.attributes", [], none.deps);
+  if (none.calls.includes("PATCH")) fail("Google offers none, and an empty write still went to Google");
+  if (noneOut.state !== "on_google") fail(`Google offers none doesn't finish the step (${noneOut.state})`);
+  const some = fakeGoogle([{ parent: "attributes/x", valueType: "BOOL", displayName: "X", groupDisplayName: "G" }]);
+  await applyForStep("m1.gbp.attributes", [], some.deps);
+  if (!some.calls.includes("PATCH")) fail("Google offers details, and an unticked one no longer comes off Google");
+}
 
 if (R.gone.length) fail(`a control the approved form has is gone: ${[...new Set(R.gone)].join(" · ")}`);
 // every state, a phone

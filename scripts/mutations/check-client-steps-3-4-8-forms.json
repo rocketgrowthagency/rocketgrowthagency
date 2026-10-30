@@ -72,14 +72,14 @@
 [
 "the builder's time stops reaching the band",
 "portal",
-"accSetWhen(host, p.minutes); accSetSend(host, sendBtn);",
+"accSetWhen(host, dev ? undefined : p.minutes); accSetSend(host, sendBtn);",
 "accSetSend(host, sendBtn);",
 1
 ],
 [
 "the found builder's time stops reaching the band",
 "portal",
-"    accSetWhen(host, bp.minutes);\n",
+"    accSetWhen(host, dev ? undefined : bp.minutes);\n",
 "",
 1
 ],
@@ -235,6 +235,48 @@
 "portal",
 "`<span class=\"mk ok\" role=\"img\" aria-label=\"Matches Google\">${CS_ICON.ok}</span>`",
 "\"\"",
+1
+],
+[
+"a developer's site shows the builder file's time, not the card's",
+"portal",
+"accSetWhen(host, dev ? undefined : p.minutes); accSetSend(host, sendBtn);",
+"accSetWhen(host, p.minutes); accSetSend(host, sendBtn);",
+1
+],
+[
+"the found card's band shows the builder file's time on a developer's site",
+"portal",
+"accSetWhen(host, dev ? undefined : bp.minutes);",
+"accSetWhen(host, bp.minutes);",
+1
+],
+[
+"an empty write reaches Google when it offers none",
+"gbpprofile",
+"if (!offered.length) return { state: \"on_google\", before: [], after: [], labels: {}, at };",
+"",
+1
+],
+[
+"the empty guard fires when Google does offer details",
+"gbpprofile",
+"if (!offered.length) return { state: \"on_google\", before: [], after: [], labels: {}, at };",
+"return { state: \"on_google\", before: [], after: [], labels: {}, at };",
+1
+],
+[
+"a client whose developer is adding us reads \"designer asked\"",
+"portal",
+"(ci.who === \"developer\" ? \"developer asked\" : \"designer asked\")",
+"\"designer asked\"",
+1
+],
+[
+"a client with a web designer reads \"developer asked\"",
+"portal",
+"(ci.who === \"developer\" ? \"developer asked\" : \"designer asked\")",
+"\"developer asked\"",
 1
 ]
 ]
