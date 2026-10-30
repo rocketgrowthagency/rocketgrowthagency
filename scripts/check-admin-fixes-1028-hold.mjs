@@ -77,6 +77,8 @@ if (!/side: \(g\.rga \|\| \[\]\)\.every\(\(x\) => x\.fact === "area"\) \? "" :/.
 
 // 10-28 10:09 spacing: a done step's card never touches the step's header band
 if (!/\.ob-done-card \{ padding:12px 16px 14px 16px; \}/.test(read("admin/admin.css"))) fail("a done step's card touches the step's header band again (no top padding)");
+// 10-29 6:26 PM (Chris: "needs to be some padding between green bar and the kickoff call grey box"): the kickoff console on a done row too
+if (!/\.ob-step\.done\.has-console \.kc \{ margin-top:12px; \}/.test(read("admin/admin.css"))) fail("the kickoff call's box touches the done step's green bar again (no top gap)");
 
 // ── D · no "row" in admin text ─────────────────────────────────────────────────────────────────
 const bad = A.split("\n").map((l, i) => [i + 1, l]).filter(([, l]) => !/^\s*(\/\/|\*|\/\*)/.test(l)).map(([n, l]) => [n, l.replace(/\s\/\/\s.*$/, "")])

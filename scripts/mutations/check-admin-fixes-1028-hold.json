@@ -96,5 +96,12 @@
   ".ob-done-card { padding:12px 16px 14px 16px; }",
   ".ob-done-card { padding:0 16px 14px 16px; }",
   1
+ ],
+ [
+  "the kickoff console touches the green bar again",
+  "css",
+  ".ob-step.done.has-console .kc { margin-top:12px; }",
+  ".ob-step.done.has-console .kc { margin-top:0; }",
+  1
  ]
 ]
