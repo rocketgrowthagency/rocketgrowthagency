@@ -15,6 +15,7 @@ import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";   // 10-30: step 10 joined the card system (batch 2) — photoSlotsHtml asks CS_STEPS / csNote / csChips
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -93,7 +94,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console };
 vm.createContext(pctx);
-try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the portal renderer did not load: ${e.message}`); process.exit(2); }
 const text = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/\s+/g, " ");
 {
@@ -118,6 +119,21 @@ const text = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(/\
   const shop = P.buildShotList({ typeOverride: "Law firms", storefront: true });
   const hs = pctx.render({ clientForm: "photo_upload" }, { draft_shape: shop }, [], "c1");
   if (/When your space is ready|pm-space-tag|pm-kind-note/.test(hs)) fail("a storefront business gets the premises tag / note (or its shots folded away)");
+  // 🔄 10-30 (approved client_step10_photos_v3, card system batch 2): the REAL step 10 (m1.gbp.photos, on the card system) draws 20
+  // tiles + one shot at a time; the same rows carry the same tags, and each shot of an all-premises kind carries the same note
+  const STEP10 = { id: "m1.gbp.photos", clientForm: "photo_upload" };
+  if (!vm.runInContext(`CS_STEPS.has("m1.gbp.photos")`, pctx)) { console.error("⚠️  INDETERMINATE — step 10 isn't on the card system; re-read which card it draws"); process.exit(2); }
+  const o = pctx.render(STEP10, { draft_shape: sab, team_size: "1" }, [], "c1");
+  const shot = (n) => { const i = o.indexOf(`<div class="pm-p10-shot" data-p10-shot="${n}"`); if (i < 0) return ""; const j = o.indexOf('<div class="pm-p10-shot"', i + 10); return o.slice(i, j < 0 ? o.indexOf('<div class="pm-tool', i) : j); };
+  if (!/<div class="pm-p10"/.test(o) || (o.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20 || (o.match(/data-p10-shot="/g) || []).length !== 20) fail("step 10 (open) isn't the tiles + the 20 shots' rows");
+  const order10 = [...o.matchAll(/data-p10-t="(\d+)" aria-pressed/g)].map((m) => Number(m[1]));
+  if (order10.join(",") !== [...order10].sort((x, y) => x - y).join(",") || order10.length !== 20) fail(`step 10's tiles aren't the list's own order (${order10.join(",")})`);
+  for (const n of [2, 3, 4, 5, 6, 7, 8, 18]) if (!/<span class="pm-space-tag">Needs your space<\/span>/.test(shot(n))) fail(`step 10: premises shot ${n} has no "Needs your space" tag`);
+  for (const n of [9, 12, 14]) if (/pm-space-tag/.test(shot(n))) fail(`step 10: shot ${n} doesn't need the business's space but is tagged`);
+  for (const n of [2, 3, 6, 8]) if (!/<div class="pm-cs-note"><b>Needs your space:<\/b> Google lists you as a business that goes to its customers, so it files these as "Additional"\. They still count toward your 20\.<\/div>/.test(shot(n))) fail(`step 10: shot ${n} (an all-premises kind) doesn't say why Google files it as Additional`);
+  for (const n of [9, 14, 18]) if (/Needs your space:/.test(shot(n))) fail(`step 10: shot ${n} carries the premises note but its kind isn't all premises`);
+  if (!/class="pm-team-chip on"[^>]*data-team-size="1"/.test(o) || !/data-ex-art="E\|s\|11~1"/.test(o) || !/You planning at a whiteboard, face to camera\./.test(text(o))) fail("step 10 lost the team answer, a fitted shot's own drawing or its fitted wording");
+  if (/pm-space-tag|Needs your space/.test(pctx.render(STEP10, { draft_shape: shop }, [], "c1"))) fail("step 10: a storefront business gets the premises tag / note");
 }
 
 if (F.length) { console.error("🔴 step 7's shots don't fit the team, or lead with the wrong ones:"); for (const f of F) console.error("   · " + f); process.exit(1); }

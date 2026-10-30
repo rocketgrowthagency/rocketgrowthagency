@@ -105,10 +105,17 @@
   1
  ],
  [
-  "the note on every kind",
+  "the note on every kind (the waiting folds)",
   "portal",
-  "goesToCustomers && g.items.every((it) => it.place) ?",
-  "goesToCustomers ?",
+  "const spaceNote = goesToCustomers && g.items.every((it) => it.place) ?",
+  "const spaceNote = goesToCustomers ?",
+  1
+ ],
+ [
+  "the note on every kind (step 10's shots)",
+  "portal",
+  "const space = goesToCustomers && g.items.every((it) => it.place) ? csNote(",
+  "const space = goesToCustomers ? csNote(",
   1
  ],
  [

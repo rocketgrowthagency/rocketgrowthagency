@@ -38,10 +38,14 @@ const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request
   if (!/value="wrong"/.test(gen) || !/value="change"/.test(gen)) fail("another step lost the general choices (something's wrong · I want to change something)"); }
 { const bot = lf({}, LK0, "bottom"); if (/value="change"/.test(bot) || !/name="kind" value="wrong"/.test(bot)) fail("a step that can't be changed offers \"I want to change something\" (only \"something's wrong\" fits)"); }
 const lfAt = (step, task, lk, where) => vm.runInContext(`lockFootHtml(${JSON.stringify(step)}, ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
-if (!vm.runInContext(`CS_STEPS.has("m1.access.website") && !CS_STEPS.has("m1.tracking.call_setup")`, ctx)) { console.error("⚠️  INDETERMINATE — step 3 is no longer a system step (or call setup became one): re-read which steps draw the CS row"); process.exit(2); }
+// 🔄 10-30 (client card system batch 2): call setup (step 11) joined the system with every other Month 1 step, so "a step outside
+// the card system" is now the first numbered client step NOT in CS_STEPS (today a Month 2 step) — read from the SOP, never named here
+const OUT = (() => { const ids = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null) ids.push([o.clientStepNo, o.id]); Object.values(o).forEach(walk); } };
+  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return (ids.sort((a, b) => a[0] - b[0]).find(([, id]) => !vm.runInContext(`CS_STEPS.has(${JSON.stringify(id)})`, ctx)) || [])[1]; })();
+if (!vm.runInContext(`CS_STEPS.has("m1.access.website")`, ctx) || !OUT) { console.error("⚠️  INDETERMINATE — step 3 is no longer a system step (or every client step is one): re-read which steps draw the CS row"); process.exit(2); }
 for (const [task, label, kw, said] of [[{ client_flagged: { at: "x", note: "That's not our site" } }, "a flag", /data-step-unflag/, "That's not our site"], [{ change_request: { at: "x", note: "Add my office manager" } }, "a change request", /data-chreq-cancel/, "Add my office manager"]]) {
   // a step outside the card system (call setup): ONE band with their words + Cancel my request; the lock line says "nothing changes" once
-  { const top = lfAt("m1.tracking.call_setup", task, LK, "top"), bot = lfAt("m1.tracking.call_setup", task, LK, "bottom");
+  { const top = lfAt(OUT, task, LK, "top"), bot = lfAt(OUT, task, LK, "bottom");
     if ((top.match(/class="pm-chg-band"/g) || []).length !== 1 || !/<q>/.test(top) || !kw.test(top) || !/Cancel my request/.test(top)) fail(`${label}: not ONE band with what they wrote + Cancel my request`);
     if (/Need a change\?/.test(bot)) fail(`${label}: the bottom still offers Need a change? while one is open`);
     if (!/Locked · nothing changes until we've talked/.test(bot)) fail(`${label}: the lock line doesn't say "nothing changes until we've talked" while RGA has it`);
@@ -65,9 +69,9 @@ for (const [task, label, kw, said] of [[{ client_flagged: { at: "x", note: "That
   { const cs = lf(t, LK, "top");
     if (!/<div class="pm-cs-st rga">/.test(cs) || !/RGA replied · /.test(cs) || !/added her as a second contact/.test(cs) || /older/.test(cs) || /pm-chg-band/.test(cs)
       || !/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.access\.website">That's sorted ✓<\/button><button type="button" data-chg-convo=/.test(cs)) fail("on a system step RGA's reply doesn't turn the status row into the reply (That's sorted ✓ leads, Open the conversation)"); }
-  ctx._portalThread = ctx._portalThread.map((m) => ({ ...m, step_id: "m1.tracking.call_setup" })); vm.runInContext("_portalThread = this._portalThread", ctx);
-  const top = lfAt("m1.tracking.call_setup", t, LK, "top"), bot = lfAt("m1.tracking.call_setup", t, LK, "bottom");
-  if (!/<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="m1\.tracking\.call_setup">That's sorted ✓<\/button><button type="button" class="pm-chg-lnk" data-chg-convo=/.test(top)) fail("\"That's sorted\" isn't the small button that leads (it closes the request; the conversation is the link)");
+  ctx._portalThread = ctx._portalThread.map((m) => ({ ...m, step_id: OUT })); vm.runInContext("_portalThread = this._portalThread", ctx);
+  const top = lfAt(OUT, t, LK, "top"), bot = lfAt(OUT, t, LK, "bottom");
+  if (!top.includes(`<button type="button" class="pm-commit pm-chg-sorted" data-chg-sorted data-chreq-cancel="${OUT}">That's sorted ✓</button><button type="button" class="pm-chg-lnk" data-chg-convo=`)) fail("\"That's sorted\" isn't the small button that leads (it closes the request; the conversation is the link)");
   if (!/class="pm-chg-band y"/.test(top) || !/RGA replied · /.test(top) || !/added her as a second contact/.test(top) || !/data-chg-convo/.test(top) || !/data-chg-sorted data-chreq-cancel/.test(top) || /older/.test(top)) fail("RGA's reply after the request doesn't turn the band into the reply (Open the conversation + That's sorted)");
   if (!/<span>Locked<\/span>/.test(bot)) fail("after RGA's reply the lock line isn't just \"Locked\"");
   ctx._portalThread = []; vm.runInContext("_portalThread = []", ctx); }

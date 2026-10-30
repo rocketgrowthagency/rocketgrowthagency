@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-client-card-system-batch1.mjs — 2026-10-29. Chris approved client_card_system_v1 + one page per step (reports/mockups/
 // client_step0[2-9]_*_v1.html): every client step draws ONE card design. Batch 1 = client steps 2–9 (CS_STEPS in portal.js);
-// steps 1 (kickoff) and 10 (photos) are ON HOLD, so they must NOT join the set yet. The photo-tile rule belongs to a later batch
+// steps 1 (kickoff) and 10 (photos) were ON HOLD — they joined with batch 2 on 10-30 (check-client-card-system-batch2 owns the set). The photo-tile rule belongs to a later batch
 // and is NOT checked here. → project_client_card_system
 //
 // RUNS the real renderers (vm, no browser) for businesses that are NOT RGA — a plumber in Denver, a dentist in Toronto (a Canadian
@@ -13,7 +13,7 @@
 //   · step 9 done never previews a "Book" button (pm-pc-gprev); RGA's unacknowledged pick says "We put this on Google for you" with
 //     Keep it on data-bk-putkeep (data-bk-keep is step 9's FORM option — a handler on it fired from the form, 10-29)
 //   · nothing of RGA's own (Culver City, Los Angeles, RGA's phone) leaks into another business's card
-// Plus static checks on portal.js (CS_STEPS is exactly the 8 batch-1 ids · threadHtml's system branch · the Keep handler's
+// Plus static checks on portal.js (CS_STEPS still holds all 8 batch-1 ids — batch 2 owns the exact set · threadHtml's system branch · the Keep handler's
 // attribute · the not-open grey card) and portal.css (every rule in the card-system block is scoped to .pm-cs · no `font` shorthand
 // that leans on `inherit` — `font:800 13px/1 var(--x, inherit)` is INVALID when --x is undeclared, so the whole font drops).
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 indeterminate (code moved)
@@ -149,8 +149,10 @@ for (const b of BIZ) {
   if (!m) moved("CS_STEPS");
   const ids = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
   const want = ["m1.access.website", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.business_facts", "m1.gbp.hours_attributes", "m1.gbp.services_products", "m1.gbp.verify", "m1.strategy.keywords_locations"];
-  if (ids.join("|") !== want.join("|")) fail(`CS_STEPS isn't exactly batch 1's 8 steps (${ids.join(", ")})`);
-  if (ids.includes("m1.kickoff.call") || ids.includes("m1.gbp.photos")) fail("a step ON HOLD (1 kickoff · 10 photos) joined the card system before its approval"); }
+  // 🔄 10-30: batch 2 (steps 1 + 10–15, approved 10-30 — steps 1 and 10 came off hold) joined the set; its exact membership is
+  // check-client-card-system-batch2's. Here: every batch-1 step is still on the system.
+  const lost = want.filter((id) => !ids.includes(id));
+  if (lost.length) fail(`batch 1's steps left the card system (${lost.join(", ")})`); }
 { const t = fn("threadHtml");
   if (!/if \(!msgs\.length && !CS_STEPS\.has\(stepId\)\) return "";/.test(t) || !/if \(CS_STEPS\.has\(stepId\)\) \{/.test(t) || !/<b>Messages · \$\{all\.length\}<\/b>/.test(t) || !/<details class="pm-ask pm-cs-ask"><summary>Questions about this step\? <b>Ask RGA ›<\/b><\/summary>/.test(t)) fail("threadHtml's system branch lost \"Messages · N\" or the always-there \"Questions about this step? Ask RGA ›\"");
   const none = run(`threadHtml("m1.gbp.hours_attributes")`);
@@ -159,11 +161,15 @@ for (const b of BIZ) {
   vm.runInContext("_portalThread = this._portalThread", ctx);
   const two = run(`threadHtml("m1.gbp.hours_attributes")`);
   if ((two.match(/<details class="pm-cs-msgs"/g) || []).length !== 1 || !/<b>Messages · 2<\/b>/.test(two) || !/Ask RGA ›/.test(two)) fail("a system step's conversation isn't ONE \"Messages · 2\" row + Ask RGA ›");
-  if (run(`threadHtml("m1.tracking.call_setup")`)) fail("a step OUTSIDE the system draws the system's thread with nothing to show");
+  // 🔄 10-30: call setup joined the system (batch 2) — "outside" is now a Month 2 step (m2.* never sits in CS_STEPS)
+  { const out = run(`[...CS_STEPS].some((id) => /^m2\\./.test(id))`) ? null : "m2.exec.review_push";
+    if (!out) fail("a Month 2 step joined the card system (its rows are drawn month2Only, outside the system)");
+    else if (run(`threadHtml("${out}")`)) fail("a step OUTSIDE the system draws the system's thread with nothing to show"); }
   vm.runInContext("_portalThread = []", ctx); }
 { if (!/e\.target\.closest\?\.\("\[data-bk-putkeep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P) || /closest\?\.\("\[data-bk-keep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P)) fail("the Keep it handler listens on [data-bk-keep] (step 9's form option) instead of [data-bk-putkeep]");
   if (!/data-bk-putkeep>Keep it<\/button><a class="portal-button" href="#step-/.test(P)) fail("the To do's Keep it isn't on data-bk-putkeep"); }
-{ if (!/const csWaitHtml = csRow && !isDone && \(ownWait \|\| listingWait\) \? `<div class="pm-k5">\$\{csCard\(\{ tone: "off",/.test(P) || !/const i = _rowStr\.indexOf\("<!--cs-body-->"\), j = _rowStr\.indexOf\("<!--cs-thread-->"\);/.test(P)) fail("a system step that isn't open yet no longer draws ONE grey card in place of its body");
+{ // 🔄 10-30: the close-out (step 15) draws its own grey "Opens about <date>" card (client_step15_closeout_call_v1), so it's left out here
+  if (!/const csWaitHtml = csRow && !isDone && \(ownWait \|\| listingWait\)(?: && step\.id !== "m1\.call\.close")? \? `<div class="pm-k5">\$\{csCard\(\{ tone: "off",/.test(P) || !/const i = _rowStr\.indexOf\("<!--cs-body-->"\), j = _rowStr\.indexOf\("<!--cs-thread-->"\);/.test(P)) fail("a system step that isn't open yet no longer draws ONE grey card in place of its body");
   if (!/const btn = `<button type="button" class="pm-amend" data-cs-ask>Change something<\/button>`;/.test(P)) fail("a LOCKED system card no longer gets its ONE \"Change something\" from the lock's ask (seatCsFoot)"); }
 
 // ── static: portal.css's card-system block ───────────────────────────────────────────────────────────
@@ -183,4 +189,4 @@ for (const b of BIZ) {
   if (rules < 40) { console.error(`⚠️  INDETERMINATE — only ${rules} rules found in portal.css's card-system block; it was restructured`); process.exit(2); } }
 
 if (F.length) { console.error(`🔴 the client card system (batch 1, steps 2–9) drifted — ${F.length} problem(s):\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log("✅ client card system, batch 1 (steps 2–9) holds for a Denver plumber, a Toronto dentist and a London cleaner: one system card per step with its STATE icon, the foot, ONE Change something under it; step 4 all five facts; step 5 too specific to count, no map pin; step 9 no Book preview, RGA's pick with Keep it on data-bk-putkeep; the set is exactly batch 1; Messages · N + Ask RGA ›; every card-system rule scoped, no font shorthand on inherit");
+console.log("✅ client card system, batch 1 (steps 2–9) holds for a Denver plumber, a Toronto dentist and a London cleaner: one system card per step with its STATE icon, the foot, ONE Change something under it; step 4 all five facts; step 5 too specific to count, no map pin; step 9 no Book preview, RGA's pick with Keep it on data-bk-putkeep; every batch-1 step is still on the system; Messages · N + Ask RGA ›; every card-system rule scoped, no font shorthand on inherit");

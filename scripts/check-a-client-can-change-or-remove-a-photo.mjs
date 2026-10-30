@@ -15,6 +15,7 @@ import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";   // 10-30: step 10 joined the card system (batch 2) — photoSlotsHtml asks CS_STEPS / csNote / csChips
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -172,7 +173,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
-try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 const P = req("./_photo-lists.js");
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));
@@ -205,7 +206,11 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
   // the logo kind has one slot: with a new logo in review it must still read done (the old logo is still on Google)
   const nuLogo = { id: "n2", shot_n: logoN, category: "logo", publish_state: "in_review", created_at: "2026-10-16T10:00:00Z", storage_path: "z.jpg" };
   const lk = ctx.how(step, task(sab), true, [nuLogo, PUB(logoN, "logo")], "c1", null);
-  if (!/<details class="pm-sgrp pm-acc done[^"]*" data-fold="kind:logo"/.test(lk)) fail("a change in review makes its kind look unfinished (the old photo is still on Google)");
+  // 🔄 10-30 (client_step10_photos_v3, step 10 on the card system): the kinds are TILES + the shot list's chips, not folds — the logo's
+  // tile stays done (✓, is-on) and its kind chip reads 1/1 (marked main), never "with RGA" or empty
+  const logoTile = (new RegExp(`<button type="button" class="pm-p10-t([^"]*)" data-p10-t="${logoN}"`).exec(lk) || [])[1];
+  const logoChip = /<span class="pm-cs-chip ?([^"]*)"><button type="button" class="pm-p10-k" data-p10-kind="[^"]*">Logo <em>(\d+)\/(\d+)<\/em>/.exec(lk);
+  if (logoTile == null || !/\bis-on\b/.test(logoTile) || !logoChip || logoChip[2] !== logoChip[3] || !/\bmain\b/.test(logoChip[1])) fail(`a change in review makes its kind look unfinished (the old photo is still on Google) — tile "${logoTile}", chip ${logoChip ? logoChip[0].slice(-40) : "missing"}`);
 }
 {
   const g = { name: `${PARENT}/media/g1`, category: "EXTERIOR", thumb: "t.jpg", at: "2025-12-02T00:00:00Z" };

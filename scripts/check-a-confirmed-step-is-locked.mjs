@@ -147,7 +147,8 @@ for (const f of fs.readdirSync(`${SITE}/netlify/functions`).filter((x) => /^(por
 // ── the portal and admin draw it
 const P = read("portal/portal.js"), A = read("admin/admin.js");
 if (!/import "\/shared\/step-lock\.js\?v=/.test(P) || !/import "\/shared\/step-lock\.js\?v=/.test(A)) fail("the portal or admin doesn't load the shared lock rule");
-if (!/const amendBtn = stepLk \? ""/.test(P)) fail("a locked step can still draw Change / reopen in its row");
+// 🔄 10-30 (client card system batch 2): steps 13–15 also draw no amend once settled (csQuiet) — the lock still comes FIRST
+if (!/const amendBtn = stepLk(?: \|\| csQuiet)? \? ""/.test(P)) fail("a locked step can still draw Change / reopen in its row");
 // client_ask_for_a_change_v1 (10-27): the band at the top while RGA has it, the lock line + "Need a change?" at the bottom
 if (!/\$\{lockFootHtml\(step\.id, taskState, stepLk, "top"\)\}/.test(P) || !/\$\{lockFootHtml\(step\.id, taskState, stepLk, "bottom"\)\}/.test(P)) fail("the row doesn't draw the lock footer");
 if (!/Need a change\? ›/.test(P) || !/name="kind" value="wrong"/.test(P) || !/\{ flag_wrong: true, note \}/.test(P)) fail("the lock footer lost the way to say it's wrong (Need a change? → Something here is wrong → the flag)");

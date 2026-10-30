@@ -80,8 +80,8 @@
  [
   "a locked row draws Change again",
   "portal",
-  "const amendBtn = stepLk ? \"\"\n      : flagged",
-  "const amendBtn = flagged"
+  "const amendBtn = stepLk || csQuiet ? \"\"\n      : flagged",
+  "const amendBtn = csQuiet ? \"\"\n      : flagged"
  ],
  [
   "the lock footer loses the way to say it's wrong",

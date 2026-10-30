@@ -11,6 +11,7 @@
 // ("at the end of month 1"), and showed an amber band and a blue "What to do" box on one step.
 import fs from "node:fs";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -41,25 +42,50 @@ try {
   const page = await browser.newPage();
   await page.setContent("<html><body><div id=h></div></body></html>");
   await page.addStyleTag({ content: css });
-  await page.addScriptTag({ content: [...lift, planCardKit(portal, lift.join("\n")), "const LATER_STEPS = { 'm1.gbp.photos': 'photos' }; function laterDay(u) { return new Date(u).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }); }"].join("\n") });
+  // 🔄 10-30 (client_step15_closeout_call_v1, card system batch 2): closeWaitHtml asks CS_STEPS — lift the CS block; draw the system card
+  // (what the client sees) AND the old plan card (CS_STEPS emptied)
+  const kit = planCardKit(portal, lift.join("\n"));
+  await page.addScriptTag({ content: [...lift, kit, csBlock(portal, `${lift.join("\n")}\n${kit}`), "var __CS_ALL = [...CS_STEPS];", "const LATER_STEPS = { 'm1.gbp.photos': 'photos' }; function laterDay(u) { return new Date(u).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }); }"].join("\n") });
   R = await page.evaluate((cs) => {
+    if (!CS_STEPS.has("m1.call.close")) return null;
     const step = cs.month1.find((s) => s.id === "m1.call.close");
     const done = { status: "done" }, h = document.getElementById("h");
     const base = Object.fromEntries(step.needsFirst.map((id) => [id, done]));
     const draw = (tasks, rga) => { h.innerHTML = closeWaitHtml(step, tasks, rga, [], cs);
       // 🔄 10-26 (steps_6_20_clean_v1, step 15 waiting): the plan card — a timeline row per prerequisite (drawn ✓ when done)
-      return { text: h.innerText.replace(/\s+/g, " ").trim(), cls: h.querySelector(".pm-k5-plan")?.className, rows: h.querySelectorAll(".pm-pc-tl").length, ticks: h.querySelectorAll(".pm-pc-tl:not(.wait)").length, go: (h.querySelector(".pm-cw-go") || {}).textContent || "" }; };
+      return { text: h.innerText.replace(/\s+/g, " ").trim(), cls: h.querySelector(".pm-k5-plan")?.className, rows: h.querySelectorAll(".pm-pc-tl").length, ticks: h.querySelectorAll(".pm-pc-tl:not(.wait)").length, go: (h.querySelector(".pm-cw-go") || {}).textContent || "",
+        cards: h.querySelectorAll(".pm-k5-plan").length, evs: [...h.querySelectorAll(".pm-cs-ev")].map((e) => `${e.querySelector(".mk")?.className.replace(/^mk /, "")}|${e.innerText.replace(/\s+/g, " ").trim()}`) }; };
     const far = Date.now() + 5 * 86400000;
-    return {
+    const all = () => ({
       // 🔄 10-20 (approved phase3_4_reviews_close_v1): the call waits only on what the REPORT needs — Google access + the keyword plan
       rga: draw({ ...base, "m1.access.analytics": { status: "pending" }, "m1.strategy.keywords_locations": { status: "pending" }, "m1.kickoff.call": { status: "done", completed_at: "2026-10-09T16:11:50Z" } }, new Set(["m1.strategy.keywords_locations"])),
       yours: draw({ ...base, "m1.strategy.keywords_locations": { status: "pending" } }, new Set()),
       rgaOnly: draw({ ...base, "m1.strategy.keywords_locations": { status: "pending" } }, new Set(["m1.strategy.keywords_locations"])),
       noKick: draw({ ...base, "m1.access.analytics": { status: "pending" } }, new Set()),
       n: step.needsFirst.length,
-    };
+    });
+    const sys = all();
+    CS_STEPS.clear();
+    const old = all();
+    for (const id of __CS_ALL) CS_STEPS.add(id);
+    return { sys, old };
   }, cs);
 } finally { await browser.close(); }
+if (!R) { console.error("⚠️  INDETERMINATE — the close-out isn't on the card system; re-read which card it draws"); process.exit(2); }
+// ── the system card (approved client_step15_closeout_call_v1): ONE grey card "Opens about <date> · N steps left", then ONLY what's
+// left — each marked whose it is (you amber · RGA blue), never the done ones, never a second card
+{ const S = R.sys;
+  if (S.rga.cards !== 1 || S.rga.cls !== "pm-k5-plan pm-cs-card off") fail(`the waiting close-out isn't ONE grey system card (${S.rga.cards} cards · ${S.rga.cls})`);
+  if (!/^Opens about Nov 5 · 2 steps left/.test(S.rga.text)) fail(`the system card's band isn't "Opens about <date> · N steps left" (${S.rga.text.slice(0, 80)})`);
+  const want = [/^you\|Grant RGA access to Google Analytics[^·]*· yours$/, /^rga\|Your keyword plan · RGA's$/];
+  if (S.rga.evs.length !== 2 || want.some((w) => !S.rga.evs.some((e) => w.test(e)))) fail(`the system card doesn't list ONLY what's left, each marked whose (${JSON.stringify(S.rga.evs)})`);
+  if (S.rga.rows || /\bdone\b|✓/i.test(S.rga.evs.join(" "))) fail("the system card lists the done prerequisites too (only what's LEFT)");
+  // a step RGA finishes (the keyword plan) is RGA's row even when nothing waits on RGA — never the client's
+  if (S.yours.evs.length !== 1 || !/^rga\|Your keyword plan · RGA's$/.test(S.yours.evs[0])) fail(`a step RGA finishes (the keyword plan) isn't one blue "RGA's" row (${JSON.stringify(S.yours.evs)})`);
+  if (S.rgaOnly.evs.length !== 1 || !/^rga\|/.test(S.rgaOnly.evs[0]) || S.rgaOnly.go) fail(`a step waiting on RGA isn't marked RGA's (or is offered as their move) (${JSON.stringify(S.rgaOnly.evs)})`);
+  if (!/^Opens near the end of Month 1/.test(S.noKick.text) || /Opens about/.test(S.noKick.text)) fail(`before the kickoff the system card guesses a date (${S.noKick.text.slice(0, 60)})`); }
+// ── the old plan card (CS_STEPS emptied) keeps steps_6_20_clean_v1 ──
+R = R.old;
 if (R.rga.rows !== R.n || R.rga.ticks !== R.n - 2) fail(`the wait doesn't list every prerequisite with ✓ on the done ones (${R.rga.rows} rows, ${R.rga.ticks} ✓ of ${R.n})`);
 if (!/^Opens about Nov 5 2 steps left /i.test(R.rga.text) || !/Month 1 ends about Nov 8\./.test(R.rga.text) || R.rga.cls !== "pm-k5-plan wait") fail(`the card doesn't say how many are left, when it opens and Month 1's end (kickoff + 30 days) (${R.rga.text.slice(0, 120)})`);
 if (!/Anything still open carries into Month 2; nothing waits for it/.test(R.rga.text)) fail("the card doesn't say open steps carry into Month 2 (Month 1 closes on a date)");

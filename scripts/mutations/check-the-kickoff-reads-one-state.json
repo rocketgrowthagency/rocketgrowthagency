@@ -182,10 +182,10 @@
   1
  ],
  [
-  "the requested card loses Cancel this request",
+  "the requested card loses Cancel this request (the old card)",
   "portal",
-  ">Cancel this request</button>",
-  ">Withdraw</button>",
+  "data-kickoff-withdraw=\"${escapeAttribute(clientId || \"\")}\" data-when=\"${escapeAttribute(startIso || \"\")}\" data-moving-from=\"${escapeAttribute(movingFrom || \"\")}\">Cancel this request</button>",
+  "data-kickoff-withdraw=\"${escapeAttribute(clientId || \"\")}\" data-when=\"${escapeAttribute(startIso || \"\")}\" data-moving-from=\"${escapeAttribute(movingFrom || \"\")}\">Withdraw</button>",
   1
  ],
  [

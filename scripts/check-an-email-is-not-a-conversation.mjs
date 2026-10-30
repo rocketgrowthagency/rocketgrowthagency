@@ -8,7 +8,7 @@
 // about this step" with a reply box, and the duplicate letter showed on step 7 because it was also the step-7-open email.
 // The portal's own threadHtml (lifted) is drawn in Chrome with the shipped portal.css.
 // 2026-10-30 night fixer: threadHtml asks CS_STEPS since the client card system (client_card_system_v1, part 6) — the lift adds
-// csBlock + monthDay. The old shapes are held on a step NOT on the system (step 10, on hold); a system step (client step 2) is held
+// csBlock + monthDay. The old shapes are held on a step NOT on the system (10-30: the Month 2 steps, read from the SOP); a system step (client step 2) is held
 // to the approved shape: ONE closed "Messages · N" row (date · newest line) holding the same email rows, then "Questions about this
 // step? Ask RGA ›" always — no "Your conversation" row, no second reply box, a test send never shown.
 import fs from "node:fs";
@@ -29,6 +29,13 @@ const fn = read("netlify/functions/portal-thread.js").replace(/^[ \t]*\/\/.*$/gm
 if (!/step_id: r\.payload\?\.reason === "duplicate_confirmed_gone" \? "m1\.gbp\.verify" : \(r\.payload\?\.step_id \|\| null\),/.test(fn)) fail("the duplicate-removal letter isn't filed under step 6 (or every letter is)");
 if (!/const box = form\.closest\("\.pm-thread, \.pm-ask"\);/.test(portal)) fail("a question sent from the quiet Ask line has nowhere to say it was sent");
 
+// 🔄 10-30 (client card system batch 2): every Month 1 step joined the system (step 10 photos, 11 call setup, 15 close-out too), so
+// the OLD shapes are held on numbered client steps NOT in CS_STEPS (today the Month 2 steps), read from the SOP — never named here
+const OUTS = await (async () => { const vm = await import("node:vm"); const c = vm.createContext({}); vm.runInContext(`${csBlock(portal)}\nthis.ids = [...CS_STEPS];`, c);
+  const sys = new Set(c.ids), ids = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null) ids.push([o.clientStepNo, o.id]); Object.values(o).forEach(walk); } };
+  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return ids.sort((a, b) => a[0] - b[0]).map(([, id]) => id).filter((id) => !sys.has(id)); })();
+if (OUTS.length < 4) { console.error(`⚠️  INDETERMINATE — only ${OUTS.length} client step(s) are off the card system; the old shapes need 4 to be held (re-read this gate)`); process.exit(2); }
+const [ONLY, BOTH, NONE, TEST] = OUTS;
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
@@ -55,15 +62,15 @@ try {
     const got = said[k];
     if (!(text ? got.text.startsWith(text) && !got.text.slice(text.length).replace(/Read it →/, "").trim() : !got.text) || got.badge !== badge) fail(`the Setup banner says "${got.text}" (badge ${got.badge || "none"}) for ${k}; it should say "${text}"${badge ? ` (badge ${badge})` : " and nothing"}`);
   }
-  const r = await page.evaluate(() => {
+  const r = await page.evaluate((ONLY, BOTH, NONE, TEST) => {
     const letter = { id: "1", from: "rga", step_id: "m1.gbp.verify", message: "Confirmed: your duplicate Google Business Profile is gone\n\n# ✓ Your duplicate Google Business Profile is gone\n\nHi Chris, Google confirmed it.", letter: true, at: "2026-10-15T18:40:00Z" };
-    const test = { ...letter, id: "2", step_id: "m1.review.first_5", message: "Step 12 is open\n\nHi Chris.", test: true };
-    const ask = { id: "3", from: "you", step_id: "m1.tracking.call_setup", message: "Help. Step #", at: "2026-09-18T20:08:00Z" };
-    const reply = { id: "4", from: "rga", step_id: "m1.tracking.call_setup", message: "Here's how.", at: "2026-09-18T21:00:00Z" };
-    const nudge = { ...letter, id: "5", step_id: "m1.tracking.call_setup", message: "A reminder about call tracking\n\nHi Chris." };
+    const test = { ...letter, id: "2", step_id: TEST, message: "Step 12 is open\n\nHi Chris.", test: true };
+    const ask = { id: "3", from: "you", step_id: BOTH, message: "Help. Step #", at: "2026-09-18T20:08:00Z" };
+    const reply = { id: "4", from: "rga", step_id: BOTH, message: "Here's how.", at: "2026-09-18T21:00:00Z" };
+    const nudge = { ...letter, id: "5", step_id: BOTH, message: "A reminder about call tracking\n\nHi Chris." };
     const general = { id: "6", from: "you", step_id: null, message: "Hello", at: "2026-09-18T20:08:00Z" };
-    // step 10 (photos) is ON HOLD — not on the card system, so its old shape is still the right one
-    const open10 = { ...letter, id: "7", step_id: "m1.gbp.photos", message: "Step 10 is open\n\n# Add your photos\n\nHi Chris, step 10 is open.", at: "2026-10-16T17:00:00Z" };
+    // a step NOT on the card system keeps the old shape
+    const open10 = { ...letter, id: "7", step_id: ONLY, message: "Step 10 is open\n\n# Add your photos\n\nHi Chris, step 10 is open.", at: "2026-10-16T17:00:00Z" };
     // client step 4 (a system step): an email, the client's question and RGA's unread reply
     const f1 = { ...letter, id: "8", step_id: "m1.gbp.business_facts", message: "Step 4 is open\n\nHi Chris.", at: "2026-10-20T16:00:00Z" };
     const f2 = { id: "9", from: "you", step_id: "m1.gbp.business_facts", message: "Is the phone right?", at: "2026-10-21T16:00:00Z" };
@@ -74,12 +81,12 @@ try {
     const h = document.getElementById("h");
     const at = (stepId) => { h.innerHTML = threadHtml(stepId); return h; };
     const t = (e) => (e ? e.innerText.replace(/\s+/g, " ").trim() : "");
-    const only = at("m1.gbp.photos");
+    const only = at(ONLY);
     const onlyR = { rows: only.querySelectorAll(".pm-mails details.pm-mail").length, open: only.querySelector(".pm-mail")?.open, summary: t(only.querySelector(".pm-mail summary")), convo: !!only.querySelector(".pm-thread"), heading: /Your conversation about this step/.test(only.innerHTML),
-      ask: !!only.querySelector("details.pm-ask form[data-thread-reply='m1.gbp.photos'] [data-thread-input]"), askMsg: !!only.querySelector("details.pm-ask [data-thread-msg]"), askOpen: only.querySelector("details.pm-ask")?.open, wrap: only.querySelector(".pm-stepmsgs")?.getAttribute("data-thread-for") };
+      ask: !!only.querySelector(`details.pm-ask form[data-thread-reply='${ONLY}'] [data-thread-input]`), askMsg: !!only.querySelector("details.pm-ask [data-thread-msg]"), askOpen: only.querySelector("details.pm-ask")?.open, wrap: only.querySelector(".pm-stepmsgs")?.getAttribute("data-thread-for") };
     only.querySelector(".pm-mail summary").click();
     onlyR.opened = !!only.querySelector(".pm-mail[open] .pm-m-letter") && only.querySelector(".pm-mail .pm-m-letter").checkVisibility();
-    onlyR.closedHidden = (() => { at("m1.gbp.photos"); return !h.querySelector(".pm-m-letter").checkVisibility(); })();
+    onlyR.closedHidden = (() => { at(ONLY); return !h.querySelector(".pm-m-letter").checkVisibility(); })();
     // ── a system step (client_card_system_v1 part 6): ONE "Messages · N" row, then "Questions about this step? Ask RGA ›" ──
     const cs = at("m1.gbp.verify"), wrapC = cs.querySelector(".pm-stepmsgs");
     const csR = { kids: wrapC ? [...wrapC.children].map((c) => c.className).join(",") : "", msgsRows: cs.querySelectorAll("details.pm-cs-msgs").length, msgsOpen: cs.querySelector("details.pm-cs-msgs")?.open, msgsSum: t(cs.querySelector("details.pm-cs-msgs > summary")),
@@ -98,19 +105,19 @@ try {
     const t3R = { text: t(t3), msgs: !!t3.querySelector(".pm-cs-msgs, .pm-mail"), ask: !!t3.querySelector("details.pm-ask form[data-thread-reply='m1.access.website']") };
     const quiet = at("m1.gbp.attributes");
     const quietR = { kids: [...(quiet.querySelector(".pm-stepmsgs")?.children || [])].map((c) => c.className).join(","), askSum: t(quiet.querySelector("details.pm-ask > summary")), form: !!quiet.querySelector("form[data-thread-reply='m1.gbp.attributes']") };
-    const both = at("m1.tracking.call_setup");
-    const bothR = { order: [...both.querySelector(".pm-stepmsgs").children].map((c) => c.className.split(" ")[0]).join(","), bubbles: both.querySelectorAll(".pm-thread .pm-m").length, heading: both.querySelector(".pm-thread .pm-thread-k")?.textContent.trim(), convo: t(both.querySelector(".pm-convo > summary")), convoOpen: both.querySelector(".pm-convo")?.open, convoLast: both.querySelector(".pm-stepmsgs").lastElementChild?.classList.contains("pm-convo"), form: !!both.querySelector(".pm-thread form[data-thread-reply='m1.tracking.call_setup']"), ask: !!both.querySelector(".pm-ask"), rows: both.querySelectorAll(".pm-mail").length };
-    const tst = t(at("m1.review.first_5").querySelector(".pm-mail summary"));
+    const both = at(BOTH);
+    const bothR = { order: [...both.querySelector(".pm-stepmsgs").children].map((c) => c.className.split(" ")[0]).join(","), bubbles: both.querySelectorAll(".pm-thread .pm-m").length, heading: both.querySelector(".pm-thread .pm-thread-k")?.textContent.trim(), convo: t(both.querySelector(".pm-convo > summary")), convoOpen: both.querySelector(".pm-convo")?.open, convoLast: both.querySelector(".pm-stepmsgs").lastElementChild?.classList.contains("pm-convo"), form: !!both.querySelector(`.pm-thread form[data-thread-reply='${BOTH}']`), ask: !!both.querySelector(".pm-ask"), rows: both.querySelectorAll(".pm-mail").length };
+    const tst = t(at(TEST).querySelector(".pm-mail summary"));
     const gen = at(null);
     const genR = { heading: gen.querySelector(".pm-thread-k")?.textContent.trim(), rows: gen.querySelectorAll(".pm-mail").length, form: !!gen.querySelector("form[data-thread-reply='']") };
-    return { onlyR, csR, cvR, t3R, quietR, bothR, tst, genR, none: threadHtml("m1.call.close") };
-  });
+    return { onlyR, csR, cvR, t3R, quietR, bothR, tst, genR, none: threadHtml(NONE) };
+  }, ONLY, BOTH, NONE, TEST);
   const o = r.onlyR;
   if (o.rows !== 1 || o.open || !/^Step 10 is open We emailed you · Oct 16, 2026/.test(o.summary) || !/Read$/.test(o.summary)) fail(`an email isn't one closed row with its subject, "We emailed you · date" and Read (${o.summary})`);
   if (!o.opened || !o.closedHidden) fail("Read doesn't open the letter in place, or a closed row shows it");
   if (o.convo || o.heading) fail("a step with only an email still shows \"Your conversation about this step\"");
   if (!o.ask || !o.askMsg || o.askOpen) fail("a step with only an email doesn't offer the quiet Ask line (closed, opening the same reply box)");
-  if (o.wrap !== "m1.gbp.photos") fail("the step's messages lost their step marker");
+  if (o.wrap !== ONLY) fail("the step's messages lost their step marker");
   // 🔒 client_card_system_v1 part 6 (approved 10-29): under a system card, ONE closed "Messages · N" row (date · newest line · Open)
   // holding the email rows, then "Questions about this step? Ask RGA ›" — the email is still one closed row that opens in place
   const c = r.csR;

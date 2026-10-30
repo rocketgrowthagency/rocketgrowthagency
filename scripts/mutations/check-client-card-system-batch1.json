@@ -1,9 +1,9 @@
 [
  [
-  "a step ON HOLD joins the card system",
+  "a batch-1 step leaves the card system",
   "portal",
-  "const CS_STEPS = new Set([\"m1.gbp.verify\",",
-  "const CS_STEPS = new Set([\"m1.gbp.photos\", \"m1.gbp.verify\",",
+  "const CS_STEPS = new Set([\"m1.gbp.verify\", ",
+  "const CS_STEPS = new Set([",
   1
  ],
  [

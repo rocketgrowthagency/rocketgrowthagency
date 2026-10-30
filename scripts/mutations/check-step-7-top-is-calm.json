@@ -30,8 +30,8 @@
  [
   "review counted as still to take",
   "portal",
-  "still = Math.max(0, left - pc.review - pc.retake)",
-  "still = Math.max(0, left - pc.retake)",
+  "${p10 && pc.review ? ` · ${pc.review} with RGA for review` : \"\"}",
+  "",
   1
  ],
  [
@@ -58,22 +58,22 @@
  [
   "no kind offers its own batch",
   "portal",
-  "const kindUp = emptyN.length >= 2 && !locked ?",
-  "const kindUp = emptyN.length >= 99 && !locked ?",
+  "const many = emptyN.length >= 2 ?",
+  "const many = emptyN.length >= 99 ?",
   1
  ],
  [
   "a full kind offers a batch",
   "portal",
-  "const kindUp = emptyN.length >= 2 && !locked ?",
-  "const kindUp = emptyN.length >= 0 && !locked ?",
+  "const many = emptyN.length >= 2 ?",
+  "const many = emptyN.length >= 0 ?",
   1
  ],
  [
   "the batch skips the first empty slot",
   "portal",
-  "data-empty=\"${emptyN.join(\",\")}\"",
-  "data-empty=\"${emptyN.slice(1).join(\",\")}\"",
+  "data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.join(\",\")}\"",
+  "data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.slice(1).join(\",\")}\"",
   1
  ],
  [
@@ -81,6 +81,48 @@
   "portal",
   "canLater: !!LATER_STEPS[step.id] && theirsToAct }",
   "canLater: !!LATER_STEPS[step.id] }",
+  1
+ ],
+ [
+  "the shot open skips the retake",
+  "portal",
+  "(order.find((n) => stOf(n) === \"re\") ?? order.find((n) => !stOf(n)) ?? null)",
+  "(order.find((n) => !stOf(n)) ?? null)",
+  1
+ ],
+ [
+  "every shot is open at once",
+  "portal",
+  "data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
+  "data-p10-shot=\"${n}\">",
+  1
+ ],
+ [
+  "a retake tile reads like an empty one",
+  "portal",
+  "escapeHtml(st === \"rga\" ? \"With RGA\" : st === \"re\" ? \"Retake\" : short(g.name))",
+  "escapeHtml(st === \"rga\" ? \"With RGA\" : short(g.name))",
+  1
+ ],
+ [
+  "the band drops the retakes",
+  "portal",
+  "${p10 && pc.retake ? ` · ${pc.retake} to retake` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the folds come back on the open step",
+  "portal",
+  "const p10 = CS_STEPS.has(step.id) && !locked ?",
+  "const p10 = false ?",
+  1
+ ],
+ [
+  "the retake tile loses its colour",
+  "portalcss",
+  ".pm-cs .pm-p10-t.is-re .im { border:0; box-shadow:inset 0 0 0 2px var(--state-you,#b45309); }",
+  ".pm-cs .pm-p10-t.is-re .im { }",
   1
  ]
 ]

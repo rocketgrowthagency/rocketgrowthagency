@@ -36,7 +36,12 @@ if (!/<details class="pm-p2-also" data-fold="already"(?:\$\{askN\.size \? " open
 if (!/<div class="pm-arow">(?:<span class="th"|\$\{th\(a\)\})/.test(portal) || !/const th = \(a\) => `<span class="th"/.test(portal)) fail("an opened already-on-Google photo is no longer a small row");
 // 🔄 step7_later_state_v1 v2: the list (progress → toolbar → tips → slots) is one block, folded behind one line while "later"
 // 🔄 10-26 (approved steps_6_20_clean_v1, step 10): ONE plan card — band → bar → team question → the kinds → already on Google → tips
-if (!/body: `\$\{barRow \? `<div class="pm-pc-pbar">\$\{barRow\}<\/div>` : ""\}\$\{toolbar\}<div class="pm-slots\$\{locked \? " is-locked" : ""\}">\$\{PHOTO_EXAMPLE_SPRITE\}\$\{groupHtml\}<\/div>\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{tipsFold\}`/.test(portal)) fail("the photo card's order changed — it is: band → bar → team question → the kinds → already on Google → tips");
+// 🔄 10-30 (approved client_step10_photos_v3, card system batch 2): while the listing waits it's still the folds (band → bar → team
+// question → the kinds → already on Google → tips); once open it's band → the 20 tiles → the one shot → team question → the shot
+// list → already on Google → the hidden-logo note → "How this step works"
+if (!/: `\$\{barRow \? `<div class="pm-pc-pbar">\$\{barRow\}<\/div>` : ""\}\$\{toolbar\}<div class="pm-slots\$\{locked \? " is-locked" : ""\}">\$\{PHOTO_EXAMPLE_SPRITE\}\$\{groupHtml\}<\/div>\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{tipsFold\}`/.test(portal)) fail("the photo card's order changed — it is: band → bar → team question → the kinds → already on Google → tips");
+if (!/body: p10 \? `\$\{p10\.replace\("<!--p10-team-->", toolbar\)\}\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{p10LogoHidden \? csNote\([^)]*\) : ""\}\$\{tipsFold\.replace\(/.test(portal)
+  || !/<div class="pm-p10-tiles">\$\{tiles\}<\/div><div class="pm-p10-panel"\$\{sel == null \? " hidden" : ""\}>\$\{shots\}<\/div><\/div><!--p10-team-->\$\{kinds\}`/.test(portal)) fail("step 10's open card isn't in the approved order — band → tiles → the shot → team question → the shot list → already on Google → logo note → How this step works");
 const alreadySrc = (portal.match(/const alsoRows = already\.map[\s\S]*?const alsoFold = [^\n]*/) || [""])[0];
 if (!alreadySrc) fail("the already-on-Google section could not be found");
 if (/class="pm-pill you"|pm-pill warn|pm-pill bad/.test(alreadySrc)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");

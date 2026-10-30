@@ -47,5 +47,33 @@
   "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
   "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : closeCallHtml(step, taskState, clientId, waitTasks))",
   1
+ ],
+ [
+  "the system close-out lists the done steps too",
+  "portal",
+  "      if (settled(t)) return \"\";\n      const rgaOwn = s.clientDone === \"rga\", rgaFirst",
+  "      const rgaOwn = s.clientDone === \"rga\", rgaFirst",
+  1
+ ],
+ [
+  "the system close-out marks RGA's rows as the client's",
+  "portal",
+  "\"\", rgaOwn || rgaFirst ? \"rga\" : \"you\");",
+  "\"\", \"you\");",
+  1
+ ],
+ [
+  "the system close-out guesses a date before the kickoff",
+  "portal",
+  ": \"Opens near the end of Month 1\";\n    return `<div class=\"pm-k5\">${csCard({ tone: \"off\",",
+  ": \"Opens about Nov 5\";\n    return `<div class=\"pm-k5\">${csCard({ tone: \"off\",",
+  1
+ ],
+ [
+  "the system close-out card goes amber",
+  "portal",
+  "return `<div class=\"pm-k5\">${csCard({ tone: \"off\", head: `${opens} · ${left}",
+  "return `<div class=\"pm-k5\">${csCard({ tone: \"you\", head: `${opens} · ${left}",
+  1
  ]
 ]

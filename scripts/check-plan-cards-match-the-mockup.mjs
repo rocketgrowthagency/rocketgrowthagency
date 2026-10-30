@@ -12,6 +12,7 @@
 // Reads files only (no Supabase, no network). SHOTS=<dir> saves the card.
 import fs from "node:fs";
 import path from "node:path";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -74,8 +75,26 @@ try {
   await page.setContent(`<html><body style="background:#f1f2f4;margin:0"><div class="pm-step-row" style="max-width:820px;margin:16px;padding:16px;background:#fff"><div class="pm-doit" id="h"></div></div></body></html>`);
   const errs = []; page.on("pageerror", (e) => errs.push(String(e.message || e)));
   await page.addStyleTag({ content: css });
-  await page.addScriptTag({ content: `function clientReadingZone(tz) { return tz || "America/Denver"; } function doneNoRecordHtml() { return "NO RECORD"; }\n${lifted.join("\n")}` });
+  // 🔄 10-30 (client_step01_kickoff_v3, card system batch 2): kickoffDoneHtml asks CS_STEPS — lift the CS block too. On the system the
+  // card drops its own ask line (the row's "Questions about the call? Ask RGA ›" under every card says it once); the old card keeps it
+  await page.addScriptTag({ content: `function clientReadingZone(tz) { return tz || "America/Denver"; } function doneNoRecordHtml() { return "NO RECORD"; }\n${lifted.join("\n")}\n${csBlock(src, lifted.join("\n"))}\nvar __CS_ALL = [...CS_STEPS];` });
   if (errs.length) { console.error(`⚠️  INDETERMINATE — the lifted code doesn't run: ${errs[0]}`); process.exit(2); }
+  const sys = await page.evaluate(() => {
+    if (!CS_STEPS.has("m1.kickoff.call")) return null;
+    const h = document.getElementById("h");
+    h.innerHTML = kickoffDoneHtml({}, { start: "2026-10-09T15:00:00Z", client_tz: "America/Denver", recap_sent_at: "2026-10-09T18:00:00Z" });
+    return { head: (h.querySelector(".pm-k5-h b") || {}).textContent, side: (h.querySelector(".pm-k5-h span") || {}).textContent, tl: (h.querySelector(".pm-pc-tl") || {}).innerText,
+      own: !!h.querySelector(".pm-k5-askq, [data-ask]"), wrong: !!h.querySelector("[data-step-wrong], [data-step-edit], [data-kickoff-change]"), doitBorder: getComputedStyle(h).borderTopWidth };
+  });
+  if (!sys) { console.error("⚠️  INDETERMINATE — the kickoff is not on the card system; re-read which card it draws"); process.exit(2); }
+  if (sys.head !== "Call held · Fri, Oct 9" || sys.side !== "9:00 AM" || !/^Recap in your inbox\s+Oct 9$/.test(String(sys.tl || "").trim())) fail(`on the card system step 1 held isn't "Call held · Fri, Oct 9" · 9:00 AM with "Recap in your inbox · Oct 9" (${sys.head} · ${sys.side} · ${sys.tl})`);
+  if (sys.own) fail("on the card system the held kickoff card draws its own ask line again (the row's \"Questions about the call? Ask RGA ›\" says it once)");
+  if (sys.wrong) fail("on the card system a held kickoff call offers a change again (kickoff_after_call_v1: a question, not a change)");
+  if (sys.doitBorder !== "0px") fail(`on the card system a hairline (${sys.doitBorder}) sits above the plan card`);
+  // the row's ask line under the card (threadHtml's system line) reads "Questions about the call?" once the call is done
+  if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(src)) fail("a done kickoff (or close-out) row's ask line doesn't read \"Questions about the call?\" (client_step01_kickoff_v3 · client_step15)");
+  // the old card (CS_STEPS emptied) keeps kickoff_after_call_v1's quiet link
+  await page.evaluate(() => CS_STEPS.clear());
   const r = await page.evaluate(() => {
     const h = document.getElementById("h");
     h.innerHTML = kickoffDoneHtml({}, { start: "2026-10-09T15:00:00Z", client_tz: "America/Denver", recap_sent_at: "2026-10-09T18:00:00Z" });

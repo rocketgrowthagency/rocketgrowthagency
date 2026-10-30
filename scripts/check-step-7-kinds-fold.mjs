@@ -11,6 +11,7 @@ import vm from "node:vm";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { planCardKit } from "./lib/plan-card-kit.mjs";
+import { csBlock } from "./lib/portal-cs.mjs";   // 10-30: step 10 joined the card system (batch 2) — photoSlotsHtml asks CS_STEPS / csNote / csChips
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 // the step 7 renderer reads the shared second-logo rule (second_logo_cleanup_v1), imported by the portal itself
@@ -24,6 +25,9 @@ const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; 
 const slotsSrc = cut("const SLOT_CATEGORY = {", "\n/** Fill the slot thumbnails"), stateSrc = cut("const PHOTO_STATE = {", "\n\n"), bigSrc = cut("const photoExampleBigHtml = (ex, key = \"\") =>", "\n\n");
 const howSrc = cut("function photoReviewTail(step, photos) {", "\n// ============== PHOTO UPLOAD");
 const helpers = [pick(/^function groupUploading\(/m), pick(/^function bumpGroupCount\(/m)];
+// 🔄 10-30: step 10's tiles switch the open shot with the document click handler at the end of portal.js (client_step10_photos_v3)
+const p10Click = (() => { const i = portal.indexOf("// client_step10_photos_v3: a tile, ‹ Shot / Shot ›, or a kind in the shot list opens that shot"); if (i < 0) return ""; const j = portal.indexOf("\n});", i); return j < 0 ? "" : portal.slice(i, j + 4); })();
+if (!p10Click || !/data-p10-t\], \[data-p10-kind\]/.test(p10Click)) { console.error("⚠️  INDETERMINATE — step 10's tile click handler moved"); process.exit(2); }
 if (!slotsSrc || !stateSrc || !bigSrc || !howSrc || helpers.some((h) => !h)) { console.error("⚠️  INDETERMINATE — could not lift step 7's renderer or its upload helpers"); process.exit(2); }
 process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
@@ -31,7 +35,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console };
 vm.createContext(ctx);
-try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml;`, ctx); }
+try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));
@@ -43,9 +47,14 @@ const shape = P.buildShotList({ typeOverride: "Marketing agencies", storefront: 
 const turned = (n) => ({ id: `t${n}`, shot_n: n, publish_state: "turned_down", review_note: "Not a real photo of your office.\nHow to fix: Upload a real photo of your own space.", reviewed_by: "RGA" });
 const photos = [turned(7), turned(8), { id: "p1", shot_n: 1, publish_state: "published", pushed_to_gbp: true, pushed_at: "2026-10-09T00:00:00Z", storage_path: "x" }, { id: "p9", shot_n: 9, publish_state: "in_review", storage_path: "y" }];
 const task = { draft_shape: shape, team_size: "1", detected: { n: 2, threshold: 20, source: "google_profile" } };
-const h = ctx.how(step, task, true, photos, "c1", null);
+// 🔄 10-30 (approved client_step10_photos_v3, card system batch 2): the OPEN step is 20 tiles + ONE shot (part B below); the kinds
+// are folds only while the listing waits (photoListingLockHtml) — part A holds the folds there, with the same rules as before
+const LOCKED = { open: false, duplicates: [{ name: "locations/2" }] };
+const h = ctx.how(step, task, true, photos, "c1", LOCKED);
+const open = ctx.how(step, task, true, photos, "c1", null);
 
-// ── 1 · every kind is a fold; closed unless it holds a retake ──
+// ── A1 · (waiting) every kind is a fold; closed unless it holds a retake ──
+
 const folds = [...h.matchAll(/<details class="pm-sgrp pm-acc([^"]*)" data-fold="([^"]+)"([^>]*)>/g)].map((m) => ({ cls: m[1], key: m[2], attrs: m[3] }));
 // 🔄 one list (photo_kinds_equal_v1): six kinds, each once — Logo, Cover, Exterior, Interior, Team, At work
 if (folds.length !== 6) fail(`expected 6 kind folds (Logo, Cover, Exterior, Interior, Team, At work), found ${folds.length}`);
@@ -60,21 +69,39 @@ if (!/<span class="acc-re">2 to retake<\/span>/.test(sec("kind:interior"))) fail
 if (!/<i style="width:100%"><\/i><\/span><span class="acc-n">1 \/ 1<\/span>/.test(sec("kind:logo")) || !/ done/.test(logo?.cls || "")) fail("a finished kind doesn't show a full bar and \"1 / 1\"");
 if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 \/ 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 / 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
 if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("the folds dropped or duplicated a slot");
-// ── 2 · the opened tips are one short list ──
-const ti = h.indexOf('<details class="pm-k5-fold pm-tipline"'),   // 🔄 10-26: the tips are the plan card's fold (steps_6_20_clean_v1)
-     _ti0 = 0, tips = h.slice(ti, h.indexOf("</details>", ti));
-if ((tips.match(/class="tl-row"/g) || []).length !== 3 || /class="pm-tip"/.test(tips) || !/<em>How: /.test(tips)) fail("the opened tips aren't one short list of three with their How");
+// ── B1 · (open) the 20 shots are tiles, each once; ONE shot open — the first retake; the kinds are the shot list's chips ──
+{ const tiles = [...open.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)"[^>]*>[^]*?<span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1], n: Number(m[2]), lab: m[3] }));
+  if (tiles.length !== 20 || new Set(tiles.map((t) => t.n)).size !== 20) fail(`the open step isn't 20 tiles, each shot once (${tiles.length})`);
+  if ((open.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20 || (open.match(/data-p10-shot="/g) || []).length !== 20) fail("the shot panel dropped or duplicated a shot's row");
+  if (/<details class="pm-sgrp/.test(open)) fail("the open step still draws the folded kinds");
+  const shown = [...open.matchAll(/<div class="pm-p10-shot" data-p10-shot="(\d+)"( hidden)?>/g)].filter((m) => !m[2]).map((m) => m[1]);
+  if (shown.join() !== "7") fail(`the one shot open isn't the first retake (shown: ${shown.join(", ") || "none"})`);
+  const t = (n) => tiles.find((x) => x.n === n) || {};
+  if (!/is-re/.test(t(7).cls) || !/is-re/.test(t(8).cls) || t(7).lab !== "Retake" || !/is-rga/.test(t(9).cls) || t(9).lab !== "With RGA" || !/is-on/.test(t(1).cls)) fail(`the tiles don't say what's true (1 ${t(1).cls} · 7 ${t(7).cls} ${t(7).lab} · 9 ${t(9).cls} ${t(9).lab})`);
+  if (!/<b>2 of 20 on Google · 1 with RGA for review · 2 to retake<\/b>/.test(open)) fail("the band doesn't say \"· 1 with RGA for review · 2 to retake\"");
+  const kinds = [...open.matchAll(/<span class="pm-cs-chip ?([^"]*)"><button type="button" class="pm-p10-k" data-p10-kind="([^"]+)">([^<]+) <em>(\d+)\/(\d+)<\/em>/g)].map((m) => ({ main: /main/.test(m[1]), shots: m[2], name: m[3], f: +m[4], n: +m[5] }));
+  if (kinds.map((k) => k.name).join("|") !== "Logo|Cover|Exterior|Interior|Team|At work") fail(`the shot list isn't the six kinds, each once (${kinds.map((k) => k.name).join(", ")})`);
+  const k = (nm) => kinds.find((x) => x.name === nm) || {};
+  // client_step10_photos_v3 ("Sent · with RGA for review": Cover 0/1 while shot 2 is with RGA): a kind counts what's on Google
+  if (!k("Logo").main || k("Logo").f !== 1 || k("Logo").n !== 1 || k("Team").f !== 0 || k("Team").n !== 5 || k("Team").shots !== "9,10,11,12,13") fail(`a kind's chip doesn't count what's on Google (Logo ${k("Logo").f}/${k("Logo").n}${k("Logo").main ? " main" : ""} · Team ${k("Team").f}/${k("Team").n} ${k("Team").shots})`); }
+// ── B2 · the opened tips are one short list, in "How this step works" ──
+for (const [label, html] of [["open", open], ["waiting", h]]) {
+  const ti = html.indexOf('<details class="pm-k5-fold pm-tipline"'), tips = html.slice(ti, html.indexOf("</details>", ti));
+  if (ti < 0 || (tips.match(/class="tl-row"/g) || []).length !== 3 || /class="pm-tip"/.test(tips) || !/<em>How: /.test(tips)) fail(`the opened tips aren't one short list of three with their How (${label})`);
+}
+if (!/<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this step works<\/summary>/.test(open)) fail("the open step's tips fold isn't \"How this step works\"");
 
 // ── 3 · in Chrome: the upload helpers, the toolbar, phone widths ──
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
-const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null);
+const ask = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", null), askWait = ctx.how(step, { ...task, team_size: null }, true, photos, "c1", LOCKED);
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
 try {
   const page = await browser.newPage();
-  const draw = async (w, html) => {
+  // a card-system row carries .pm-cs (every step-10 tile / panel rule is scoped to it)
+  const draw = async (w, html, cs = false) => {
     await page.setViewport({ width: w, height: 900 });
-    await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row is-now"><div id=h style="padding:0 16px">${html}</div></div></div></body></html>`);
+    await page.setContent(`<html><body style="margin:0"><div class="pm-step-ground"><div class="pm-step-row${cs ? " pm-cs" : ""} is-now"><div id=h style="padding:0 16px">${html}</div></div></div></body></html>`);
     await page.addStyleTag({ content: read("portal/portal.css") });
   };
   await draw(976, h);
@@ -126,23 +153,59 @@ try {
     const diff = Object.keys(a).filter((k) => a[k] !== p[k]);
     if (diff.length) fail(`the ${state} kind doesn't look like admin's card: ${diff.map((k) => `${k} ${p[k]} ≠ admin ${a[k]}`).join(" · ")}`);
   }
+  // ── B3 · (open) a tile, a kind in the shot list, or ‹ Shot / Shot › opens that shot — and only that one (the real handler) ──
+  await draw(976, open, true);
+  await page.addScriptTag({ content: `var _p10Sel = new Map();\n${helpers.join("\n")}\n${p10Click}` });
+  const nav = await page.evaluate(() => {
+    const shown = () => [...document.querySelectorAll(".pm-p10-shot")].filter((e) => e.checkVisibility()).map((e) => e.dataset.p10Shot).join();
+    const sel = () => [...document.querySelectorAll(".pm-p10-t.is-sel")].map((e) => `${e.dataset.p10T}:${e.getAttribute("aria-pressed")}`).join();
+    const out = { start: shown() };
+    document.querySelector('.pm-p10-t[data-p10-t="3"]').click(); out.tile = shown(); out.tileSel = sel();
+    [...document.querySelectorAll(".pm-p10-k")].find((k) => /^Team/.test(k.textContent)).click(); out.kind = shown(); out.cur = [...document.querySelectorAll(".pm-cs-chip.cur")].map((c) => c.textContent.trim()).join("|");
+    [...document.querySelectorAll('.pm-p10-shot[data-p10-shot="9"] .pm-p10-hd .pm-linkbtn')].find((b) => /Shot 10/.test(b.textContent)).click(); out.next = shown();
+    return out;
+  });
+  if (nav.start !== "7" || nav.tile !== "3" || nav.tileSel !== "3:true") fail(`tapping a tile doesn't open that one shot (${JSON.stringify(nav)})`);
+  if (nav.kind !== "9" || !/^Team/.test(nav.cur)) fail(`tapping "Team" in the shot list doesn't open its first shot not on Google (shot 9) — it stays on ${nav.kind}, marked "${nav.cur}" (the chips sit outside [data-p10], and the handler looks for its host with t.closest("[data-p10]"))`);
+  if (nav.next !== "10") fail(`"Shot 10 ›" in a shot's header doesn't open shot 10 (${nav.next})`);
+  // ── B4 · (open) a batch going into the shots says so on the card (the folds' rule: "a batch fills a folded kind: open it, so the
+  // photos can be watched going in" — step7_sections_fold_v1). Run with the upload handler's OWN scope (its `const list = …`,
+  // read from portal.js) and its groupUploading(list, n), exactly as a real batch does.
+  await draw(976, open, true);
+  await page.addScriptTag({ content: helpers.join("\n") });
+  const scope = (/const list = (input\.closest\([^;\n]*\) \|\| document);/.exec(portal) || [])[1];
+  if (!scope) { console.error("⚠️  INDETERMINATE — the upload handler's list scope (const list = input.closest(…) || document) moved"); process.exit(2); }
+  const upOpen = await page.evaluate((scope) => {
+    const input = document.querySelector('.pm-p10-shot[data-p10-shot="10"] input[data-batch]'); if (!input) return { input: false };
+    const list = new Function("input", `return ${scope};`)(input), slots = String(input.getAttribute("data-empty")).split(",").map(Number);
+    for (const n of slots) list.querySelector(`.pm-slot[data-slot="${n}"]`)?.insertAdjacentHTML("beforeend", '<span class="pm-up"></span>');
+    groupUploading(list, slots.length);
+    const card = document.querySelector(".pm-p10")?.closest(".pm-k5-plan");
+    const said = [...(card || document).querySelectorAll("*")].filter((e) => e.checkVisibility() && /\b\d+ uploading\b/.test(e.textContent) && ![...e.children].some((c) => /\b\d+ uploading\b/.test(c.textContent))).map((e) => e.textContent.trim());
+    return { input: true, n: slots.length, said };
+  }, scope);
+  if (!upOpen.input) fail("step 10's Team shot lost its \"Add N at once\" (data-batch)");
+  else if (!upOpen.said.some((t) => t.includes(`${upOpen.n} uploading`))) fail(`a batch going into step 10's shots shows no progress on the card — the "${upOpen.n} uploading" line never appears (groupUploading / bumpGroupCount only know the folds' .pm-sgrp, and the upload scopes to .pm-slots, which the open card no longer has)`);
+  // ── phone widths: nothing spills and no button is cut off — the open card (tiles + the shot) and the waiting folds ──
   for (const w of [390, 430, 600, 768, 976]) {
-    for (const [label, html] of [["answered", h], ["unanswered", ask]]) {
-      await draw(w, html);
+    for (const [label, html, cs] of [["answered", open, true], ["unanswered", ask, true], ["waiting", h, false], ["waiting, unanswered", askWait, false]]) {
+      await draw(w, html, cs);
       const r = await page.evaluate(() => {
         document.querySelectorAll("details").forEach((d) => { d.open = true; });
-        const cut = [...document.querySelectorAll(".pm-slot .add, .pm-slot .st")].filter((a) => a.checkVisibility()).filter((a) => { const s = a.closest(".pm-slot").getBoundingClientRect(), b = a.getBoundingClientRect(); return b.right > s.right + 1 || b.right > innerWidth; }).map((a) => a.closest(".pm-slot").dataset.slot);
-        const ku = [...document.querySelectorAll(".pm-kind-up")].filter((e) => e.checkVisibility()).some((e) => e.getBoundingClientRect().right > e.closest("details").getBoundingClientRect().right + 1);
-        return { spill: document.documentElement.scrollWidth > innerWidth + 1, cut, kindUpCut: ku, toolHasUpload: !!document.querySelector(".pm-tool [data-batch]") };
+        // in the open card the shot's row is display:contents — measure against the shot it sits in
+        const box = (a) => (a.closest(".pm-p10-shot") || a.closest(".pm-slot")).getBoundingClientRect();
+        const cut = [...document.querySelectorAll(".pm-slot .add, .pm-slot .st")].filter((a) => a.checkVisibility()).filter((a) => { const s = box(a), b = a.getBoundingClientRect(); return b.right > s.right + 1 || b.right > innerWidth; }).map((a) => a.closest(".pm-slot").dataset.slot);
+        const ku = [...document.querySelectorAll(".pm-kind-up")].filter((e) => e.checkVisibility()).some((e) => e.getBoundingClientRect().right > (e.closest(".pm-p10-shot") || e.closest("details")).getBoundingClientRect().right + 1);
+        const tiles = document.querySelector(".pm-p10-tiles");
+        return { spill: document.documentElement.scrollWidth > innerWidth + 1, cut, kindUpCut: ku, toolHasUpload: !!document.querySelector(".pm-tool [data-batch]"), tilesCut: !!tiles && tiles.getBoundingClientRect().right > innerWidth + 1 };
       });
-      if (r.spill) fail(`step 7 spills sideways at ${w}px (${label})`);
-      if (r.cut.length) fail(`at ${w}px a slot's button is cut off (slots ${[...new Set(r.cut)].join(", ")})`);
-      if (r.kindUp) fail(`at ${w}px a kind's "upload several" row is cut off (${label})`);
-      if (r.kindUpCut) fail(`at ${w}px a kind's "upload several" row is cut off (${label})`);
+      if (r.spill || r.tilesCut) fail(`step 10 spills sideways at ${w}px (${label})`);
+      if (r.cut.length) fail(`at ${w}px a slot's button is cut off (slots ${[...new Set(r.cut)].join(", ")}, ${label})`);
+      if (r.kindUpCut) fail(`at ${w}px a kind's "Add N at once" row is cut off (${label})`);
       if (r.toolHasUpload) fail(`the toolbar still carries an upload (${label})`);
     }
   }
 } finally { await browser.close(); }
 
-if (F.length) { console.error("🔴 step 7's kinds don't fold the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log("✅ step 7's kinds fold: closed by default, each with its own bar and \"x / n\" styled exactly like admin's Onboarding cards in all four states (closed, open, complete, open + complete), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; \"upload several\" sits in its kind and the toolbar carries none; at 390–976px nothing spills and no button is cut off");
+if (F.length) { console.error("🔴 step 10's kinds (the open tiles · the waiting folds) aren't the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }
+console.log("✅ step 10's kinds: open, 20 tiles that say what's true with ONE shot open (the first retake), a tile / kind / Shot › opens that shot alone, the shot list counts what's on Google, a batch says it's uploading on the card; waiting, the folds are closed by default, each with its own bar and \"x / n\" styled exactly like admin's Onboarding cards in all four states (closed, open, complete, open + complete), a retake kind held open and saying so, one remembered state per fold, all 20 slots kept; the opened tips are one short list; a batch opens its kind and moves its count and bar; \"upload several\" sits in its kind and the toolbar carries none; at 390–976px nothing spills and no button is cut off");

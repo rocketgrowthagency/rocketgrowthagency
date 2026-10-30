@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const JS = path.join(SITE, "portal", "portal.js");
@@ -43,7 +44,12 @@ vm.createContext(box);
 // gate reports the structural fix as a crash.
 const phaseFn = code.match(/function kickoffPhase\(\{[\s\S]*?\n\}/);
 if (!phaseFn) { console.error("🔴 FAIL — kickoffPhase() is gone; every surface derives the kickoff's state for itself again."); process.exit(1); }
-try { vm.runInContext(`${phaseFn[0]}\n${fn[0]}\nglobalThis.__r = kickoffRequestedHtml;`, box, { timeout: 4000 }); }
+// 🔄 10-30 (client_step01_kickoff_v3, card system batch 2): on the card system kickoffRequestedHtml hands every state to
+// kickoffCsHtml — lift it with the CS helpers (csBlock), pcActs and monthDay, and run BOTH drawings: the system card (what the
+// client sees today) and the old card (CS_STEPS emptied), each against its own words. The rule is the same for both.
+const csFn = code.match(/function kickoffCsHtml\(\{[\s\S]*?\n\}/), pcActsL = code.match(/^const pcActs = [^\n]*;$/m), monthDayL = code.match(/^const monthDay = [^\n]*;$/m);
+if (!csFn || !pcActsL || !monthDayL) { console.error("⚠️  INDETERMINATE — kickoffCsHtml / pcActs / monthDay moved; re-read the kickoff card"); process.exit(2); }
+try { vm.runInContext(`${csBlock(code)}\n${pcActsL[0].replace(/^const /, "var ")}\n${monthDayL[0].replace(/^const /, "var ")}\n${csFn[0]}\n${phaseFn[0]}\n${fn[0]}\nglobalThis.__r = kickoffRequestedHtml; globalThis.__CS = CS_STEPS;`, box, { timeout: 4000 }); }
 catch (e) { console.error(`⚠️  INDETERMINATE — could not execute the renderer: ${e.message}`); process.exit(2); }
 
 const MIN = 60000;
@@ -51,54 +57,67 @@ const MIN = 60000;
 const render = (mins, recap) =>
   box.__r(new Date(Date.now() - mins * MIN).toISOString(), "America/Los_Angeles", "booked", "c1",
           "https://meet.google.com/abc-defg-hij", recap || null, 30);
+const SYSTEM = new Set(box.__CS);
+for (const V of [
+  // the card system (client_step01_kickoff_v3): a booked call is the GREEN card "In your calendar"; Join is the "Join the video call"
+  // button; a passed time reads "<time> · time passed"; only a recap says "Call held"
+  { tag: "", on: true, join: /Join the video call|pm-join/, booked: /class="pm-k5-plan pm-cs-card ok"[\s\S]*In your calendar/, passed: /time passed/i, done: /Call held/ },
+  // the old card (CS_STEPS emptied) keeps its own words
+  { tag: "[old card] ", on: false, join: /pm-join/, booked: /Booked/, passed: /Time passed/, done: /Done/ },
+]) {
+  box.__CS.clear(); if (V.on) for (const id of SYSTEM) box.__CS.add(id);
+  if (V.on && !box.__CS.has("m1.kickoff.call")) { console.error("⚠️  INDETERMINATE — the kickoff is not on the card system; re-read which card it draws"); process.exit(2); }
 
 // ── 1. AHEAD OF TIME — unchanged, and Join only when it is near ────────────────────────────────
 const early = render(-120);            // two hours before
-if (/pm-join/.test(early)) fail.push("portal/portal.js — the Join link shows two hours early; it leads to an empty room.");
-else pass.push("two hours ahead there is no Join link");
+if (V.join.test(early)) fail.push(V.tag + "portal/portal.js — the Join link shows two hours early; it leads to an empty room.");
+else pass.push(V.tag + "two hours ahead there is no Join link");
 // 🔄 2026-10-09 (kickoff_booking_card_v3): one word per state on both portals — a confirmed call reads "Booked".
-if (!/Booked/.test(early)) fail.push("portal/portal.js — an upcoming confirmed call no longer reads Booked.");
-else pass.push("ahead of time it reads Booked");
+if (!V.booked.test(early)) fail.push(V.tag + "portal/portal.js — an upcoming confirmed call no longer reads Booked.");
+else pass.push(V.tag + "ahead of time it reads Booked");
 
 // 🔒 CHANGED BY CHRIS 2026-09-29: "dont put join the call until its time." The join used to appear
 // 15 minutes early; a way in offered before there is anything to join is an invitation to sit alone
 // in a room. The countdown owns everything up to the start.
 const near = render(-5);               // five minutes before
-if (/pm-join/.test(near)) fail.push("portal/portal.js — the Join link appears five minutes before the call; it may only appear once it is time.");
-else pass.push("before the start there is no Join link — the countdown owns that time");
+if (V.join.test(near)) fail.push(V.tag + "portal/portal.js — the Join link appears five minutes before the call; it may only appear once it is time.");
+else pass.push(V.tag + "before the start there is no Join link — the countdown owns that time");
 
 const during = render(10);
-if (!/pm-join/.test(during)) fail.push("portal/portal.js — during the call there is no Join link.");
-else pass.push("during the call the Join link is there");
+if (!V.join.test(during)) fail.push(V.tag + "portal/portal.js — during the call there is no Join link.");
+else pass.push(V.tag + "during the call the Join link is there");
 
 // ── 2. ONCE IT HAS ENDED, WITH NO RECAP — STATE THE FACT AND NOTHING MORE ──────────────────────
 const after = render(90);              // an hour after a 30-minute call
-if (/pm-join/.test(after)) fail.push("portal/portal.js — the Join link survives the end of the call; it points at a room nobody is in.");
-else pass.push("after the call, the Join link is gone");
-if (/data-kickoff-release/.test(after)) fail.push('portal/portal.js — "Can\'t make it" is still offered for a call that already happened.');
-else pass.push("a finished call cannot be declined");
+if (V.join.test(after)) fail.push(V.tag + "portal/portal.js — the Join link survives the end of the call; it points at a room nobody is in.");
+else pass.push(V.tag + "after the call, the Join link is gone");
+if (/data-kickoff-release/.test(after)) fail.push(V.tag + 'portal/portal.js — "Can\'t make it" is still offered for a call that already happened.');
+else pass.push(V.tag + "a finished call cannot be declined");
 for (const claim of ["Done", "finished", "Thanks for your time"]) {
   if (new RegExp(claim, "i").test(after))
-    fail.push(`portal/portal.js — with no recap sent, the card says "${claim}" — a claim that the call happened, which nothing observed.`);
+    fail.push(V.tag + `portal/portal.js — with no recap sent, the card says "${claim}" — a claim that the call happened, which nothing observed.`);
 }
-if (!/Time passed/.test(after)) fail.push("portal/portal.js — after the end time the card does not say Time passed.");
-else pass.push("it states the one thing we can prove: the time has passed");
+if (!V.passed.test(after)) fail.push(V.tag + "portal/portal.js — after the end time the card does not say Time passed.");
+else pass.push(V.tag + "it states the one thing we can prove: the time has passed");
 // 🔴 They may well have attended. Telling them they missed it is a claim too.
 if (/you missed it/i.test(after) && !/If you missed it/i.test(after))
-  fail.push("portal/portal.js — the card asserts they missed the call, which nothing observed.");
-else pass.push("it never asserts they missed it");
-if (!/data-kickoff-change/.test(after)) fail.push("portal/portal.js — after a missed call there is no way to book another time.");
-else pass.push("there is one control, and it is the useful one");
+  fail.push(V.tag + "portal/portal.js — the card asserts they missed the call, which nothing observed.");
+else pass.push(V.tag + "it never asserts they missed it");
+if (!/data-kickoff-change/.test(after)) fail.push(V.tag + "portal/portal.js — after a missed call there is no way to book another time.");
+else pass.push(V.tag + "there is one control, and it is the useful one");
 
 // ── 3. WITH A RECAP — AND ONLY THEN — IT MAY SAY THE CALL HAPPENED ─────────────────────────────
 const held = render(90, new Date().toISOString());
-if (!/Done/.test(held)) fail.push("portal/portal.js — with a recap sent, the card still does not report the call as done.");
-else pass.push("a recap makes the card report the call as done");
-if (!/recap/i.test(held)) fail.push("portal/portal.js — the done state does not mention the recap, which is the evidence for it.");
-else pass.push("the done state names its own evidence");
-if (/data-kickoff-change|data-kickoff-release|pm-join/.test(held))
-  fail.push("portal/portal.js — the done state still carries controls; there is nothing left to do on a finished call.");
-else pass.push("a finished call carries no controls");
+if (!V.done.test(held)) fail.push(V.tag + "portal/portal.js — with a recap sent, the card still does not report the call as done.");
+else pass.push(V.tag + "a recap makes the card report the call as done");
+if (!/recap/i.test(held)) fail.push(V.tag + "portal/portal.js — the done state does not mention the recap, which is the evidence for it.");
+else pass.push(V.tag + "the done state names its own evidence");
+if (/data-kickoff-change|data-kickoff-release/.test(held) || V.join.test(held))
+  fail.push(V.tag + "portal/portal.js — the done state still carries controls; there is nothing left to do on a finished call.");
+else pass.push(V.tag + "a finished call carries no controls");
+
+}
+box.__CS.clear(); for (const id of SYSTEM) box.__CS.add(id);
 
 // ── 4. THE BANNER STOPS CALLING A PAST CALL "NEXT UP" ──────────────────────────────────────────
 // 🔴 PINNED A SPELLING, AND THE CONDITION CORRECTLY GREW. It was `booked && !callOver`; it is now

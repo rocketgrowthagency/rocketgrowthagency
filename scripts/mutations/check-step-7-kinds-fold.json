@@ -96,5 +96,33 @@
   "<b>${escapeHtml(g.name)}</b>${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}<span class=\"acc-meta\">",
   "<b>${escapeHtml(g.name)}</b><span class=\"acc-meta\">${retake ? `<span class=\"acc-re\">${retake} to retake</span>` : \"\"}",
   1
+ ],
+ [
+  "a tile opens nothing",
+  "portal",
+  "  host.querySelectorAll(\"[data-p10-shot]\").forEach((s) => { s.hidden = Number(s.getAttribute(\"data-p10-shot\")) !== n; });\n",
+  "\n",
+  1
+ ],
+ [
+  "the shot list counts photos still with RGA",
+  "portal",
+  "const f = g.items.filter((it) => slotDone(Number(it.n))).length;",
+  "const f = g.items.filter((it) => slotDone(Number(it.n)) || byShot.has(Number(it.n))).length;",
+  1
+ ],
+ [
+  "a photo with RGA reads as an empty tile",
+  "portal",
+  "const stOf = (n) => slotDone(n) ? \"on\" : byShot.has(n) ? \"rga\" : turnedByShot.has(n) ? \"re\" : \"\";",
+  "const stOf = (n) => slotDone(n) ? \"on\" : turnedByShot.has(n) ? \"re\" : \"\";",
+  1
+ ],
+ [
+  "the open step draws a second shot",
+  "portal",
+  "data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
+  "data-p10-shot=\"${n}\"${n === sel || n === order[0] ? \"\" : \" hidden\"}>",
+  1
  ]
 ]

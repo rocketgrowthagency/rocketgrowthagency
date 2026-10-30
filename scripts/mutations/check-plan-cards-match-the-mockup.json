@@ -114,9 +114,30 @@
   "cursor:pointer; min-height:var(--pm-h-sm,30px); }"
  ],
  [
-  "a held kickoff call files a change request again",
+  "a held kickoff call files a change request again (the old card)",
   "portal",
-  "+ pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>`) + `</div>`;",
-  "+ pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span><button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>`) + `</div>`;"
+  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>`)) + `</div>`;",
+  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span><button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>`)) + `</div>`;"
+ ],
+ [
+  "a held kickoff call files a change request again (the card system)",
+  "portal",
+  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(",
+  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? `<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>` : pcActs(",
+  1
+ ],
+ [
+  "a done call's ask line says \"this step\" again",
+  "portal",
+  "threadHtml(step.id).replace(\"Questions about this step?\", \"Questions about the call?\")",
+  "threadHtml(step.id)",
+  1
+ ],
+ [
+  "the held kickoff card draws its own ask line again on the card system",
+  "portal",
+  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(",
+  "+ (false ? \"\" : pcActs(",
+  1
  ]
 ]

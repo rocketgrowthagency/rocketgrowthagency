@@ -79,8 +79,15 @@
  [
   "zero reads as broken",
   "portal",
-  "title: \"No submissions yet\",",
-  "title: \"Form tracking is broken\",",
+  "rcRow(\"Last submission\", [\"ok\", \"✓\"], \"None yet<small>a quiet month is normal · we check every night</small>\")",
+  "rcRow(\"Last submission\", [\"bad\", \"!\"], \"Tracking looks broken<small>nothing arrived</small>\")",
+  1
+ ],
+ [
+  "zero sends goes back to RGA's blue card on a system step",
+  "portal",
+  "    if (CS_STEPS.has(step.id)) return planFromGcard({ state: \"ok\", tile: RC_FORM, side: d.at ? `checked ${escapeHtml(pcDate(d.at))}` : \"\", title: \"Tracking your forms\",",
+  "    if (false) return planFromGcard({ state: \"ok\", tile: RC_FORM, side: d.at ? `checked ${escapeHtml(pcDate(d.at))}` : \"\", title: \"Tracking your forms\",",
   1
  ],
  [
