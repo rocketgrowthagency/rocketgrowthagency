@@ -1,0 +1,240 @@
+[
+[
+"the consent says less than was agreed",
+"portal",
+"for the work in our promise. No change goes live until I approve it.\";",
+"for the work in our promise.\";",
+1
+],
+[
+"the promise version moves without a new promise",
+"portal",
+"const ACC_PROMISE_VERSION = \"2026-10-23b\";",
+"const ACC_PROMISE_VERSION = \"2026-10-30\";",
+1
+],
+[
+"the consent is recorded without its words",
+"portal",
+"value.consent = host._accConsent ? { promise: ACC_PROMISE_VERSION, text: ACC_CONSENT_TEXT } : null;",
+"value.consent = host._accConsent ? { promise: ACC_PROMISE_VERSION } : null;",
+1
+],
+[
+"the promise fold loses the agreement's sections",
+"portal",
+"Our Service Agreement covers website access (§5, §8)",
+"Our Service Agreement covers website access",
+1
+],
+[
+"the password line goes",
+"portal",
+"<b>Never send us your password.</b> An invite gives us exactly what we need, and you can take it back anytime.",
+"An invite gives us exactly what we need, and you can take it back anytime.",
+1
+],
+[
+"the developer's email changes a word",
+"portal",
+"just reply and we'll find the simplest way together.",
+"reply and we'll sort it out.",
+1
+],
+[
+"the send button comes on before the consent",
+"portal",
+"data-via=\"invite\"${host._accConsent ? \"\" : \" disabled\"}>I added RGA on ${escapeHtml(fn)}</button>",
+"data-via=\"invite\">I added RGA on ${escapeHtml(fn)}</button>",
+1
+],
+[
+"a builder's send button comes on before the consent",
+"portal",
+"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>${escapeHtml(lbl)}</button>",
+">${escapeHtml(lbl)}</button>",
+1
+],
+[
+"ticking the consent no longer turns the button on",
+"portal",
+"host.querySelectorAll('[data-acc-send]:not([data-via=\"workaround\"]), [data-acc-designer-done]').forEach((b) => { b.disabled = !cb.checked; });",
+"",
+1
+],
+[
+"the send button goes back inside the card",
+"portal",
+"foot: csFoot() })}${pcActs(`<div class=\"pm-ax-s3row\" data-acc-sendrow hidden></div><button type=\"button\" class=\"pm-amend\" data-acc-designer>",
+"foot: `<div class=\"pm-cs-foot\"><div class=\"pm-ax-s3row\" data-acc-sendrow hidden></div></div>` })}${pcActs(`<button type=\"button\" class=\"pm-amend\" data-acc-designer>",
+1
+],
+[
+"the builder's time stops reaching the band",
+"portal",
+"accSetWhen(host, p.minutes); accSetSend(host, sendBtn);",
+"accSetSend(host, sendBtn);",
+1
+],
+[
+"the found builder's time stops reaching the band",
+"portal",
+"    accSetWhen(host, bp.minutes);\n",
+"",
+1
+],
+[
+"the band's time writes to a class the card doesn't have",
+"portal",
+"const w = host.querySelector(\"[data-acc-when]\");",
+"const w = host.querySelector(\".gcard-when\");",
+1
+],
+[
+"the time writes over the old link's side",
+"portal",
+"side: oldLink ? `you sent a one-time login link ${escapeHtml(monthDay(t.client_input_at))}` : `<span data-acc-when>takes 2–5 min</span>`,",
+"side: `<span data-acc-when>takes 2–5 min</span>`,",
+1
+],
+[
+"a finished Step 1 loses its Change",
+"portal",
+"`<button type=\"button\" class=\"pm-ax-chg\" data-acc-change>Change</button>`)}${accPart(2,",
+"\"\")}${accPart(2,",
+1
+],
+[
+"the checklist builder asks a consent",
+"portal",
+": p.kind === \"workaround\" ? \"\" : `<div class=\"pm-ax-tell\">",
+": `<div class=\"pm-ax-tell\">",
+1
+],
+[
+"the save says a different step",
+"portal",
+"body: JSON.stringify({ client_id: clientId, step_id: \"m1.access.website\", value }) });",
+"body: JSON.stringify({ client_id: clientId, step: \"m1.access.website\", value }) });",
+1
+],
+[
+"the plan goes back to a line with no count",
+"portal",
+"· ${targets.filter((t) => t.on).length} of ${targets.length} on Google</span>",
+"· ${targets.length} on Google</span>",
+1
+],
+[
+"a plan place is saved without its state",
+"portal",
+"data-area-name=\"${escapeAttribute(st && !/,/.test(a) && !/^\\d{5}$/.test(a.trim()) ? `${a}, ${st}` : a)}\"",
+"data-area-name=\"${escapeAttribute(a)}\"",
+1
+],
+[
+"yes, customers come here saves by itself",
+"portal",
+"    if (caution0) {\n      if (care0) care0.hidden = false;",
+"    if (false) {\n      if (care0) care0.hidden = false;",
+1
+],
+[
+"the warning stays after changing to no",
+"portal",
+"    if (care0) care0.hidden = true;\n    const lastOne",
+"    const lastOne",
+1
+],
+[
+"the band's count goes",
+"portal",
+"if (side) side.textContent = o ?",
+"if (false) side.textContent = o ?",
+1
+],
+[
+"a place Google doesn't list asks the old question again",
+"portal",
+"open: !!missing.length, missing })",
+"open: false, missing })",
+1
+],
+[
+"step 4 grows a Cancel",
+"portal",
+"<div class=\"pm-in-foot\"><button type=\"button\" class=\"pm-commit\" data-in-submit>${escapeHtml(s.cta || \"Send this\")}</button><span class=\"pm-msg\" data-in-msg hidden></span></div>\n    </div>`;\n    return `<div class=\"pm-input\" data-step-input",
+"<div class=\"pm-in-foot\"><button type=\"button\" class=\"pm-amend\" data-in-cancel=\"${id}\">Cancel</button><button type=\"button\" class=\"pm-commit\" data-in-submit>${escapeHtml(s.cta || \"Send this\")}</button><span class=\"pm-msg\" data-in-msg hidden></span></div>\n    </div>`;\n    return `<div class=\"pm-input\" data-step-input",
+1
+],
+[
+"step 8's recommendation leaves its row",
+"portal",
+"RGA recommends leaving it off.</small>` : \"\"}${recWhy(o.key)}</span>",
+"RGA recommends leaving it off.</small>` : \"\"}</span>",
+1
+],
+[
+"an About you detail can be recommended",
+"portal",
+"(now.recommend || []).filter((r) => options.some((o) => o.key === r.key && !o.about));",
+"(now.recommend || []);",
+1
+],
+[
+"the empty answer is sent while Google is unread",
+"portal",
+"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\")) {",
+"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && wrap.querySelector(\"[data-in-tick]\")) {",
+1
+],
+[
+"Google offers none can't finish again",
+"portal",
+"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\")) {",
+"&& !wrap.querySelector(\".pm-at [data-at-none].on\")) {",
+1
+],
+[
+"the foot's words go back to How to do this",
+"portal",
+"escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])",
+"escapeHtml(DETAIL_LABEL[detailKind][0])",
+1
+],
+[
+"step 4 and step 8 drop out of the foot's words",
+"portal",
+"const HOW_WORKS_FOOT = new Set([\"m1.access.website\", \"m1.gbp.business_facts\", \"m1.gbp.attributes\"]);",
+"const HOW_WORKS_FOOT = new Set([\"m1.access.website\"]);",
+1
+],
+[
+"a phone width breaks: the two places won't stack",
+"portalcss",
+".pm-cs-acc .pm-ax-hf, .pm-cs-acc .pm-ax-opts, .pm-cs-acc .pm-ax-prog { grid-template-columns:minmax(0,1fr); }",
+".pm-cs-acc .pm-ax-hf { min-width:520px; }",
+1
+],
+[
+"an open fact is wider than a phone",
+"portalcss",
+".pm-cs [data-gbp-facts] .pm-fact.is-open { grid-template-columns:minmax(0,1fr); }",
+".pm-cs [data-gbp-facts] .pm-fact.is-open { grid-template-columns:minmax(620px,1fr); }",
+1
+],
+[
+"a font shorthand with inherit creeps in",
+"portalcss",
+".pm-ax-rt { align-self:center; font-weight:600;",
+".pm-ax-rt { align-self:center; font:600 14px/1.4 inherit;",
+1
+],
+[
+"a match row loses its mark",
+"portal",
+"`<span class=\"mk ok\" role=\"img\" aria-label=\"Matches Google\">${CS_ICON.ok}</span>`",
+"\"\"",
+1
+]
+]

@@ -17,7 +17,7 @@ let L; try { L = new Function(`${lab[0]}; return DETAIL_LABEL;`)(); } catch (e) 
 for (const k of ["do", "done", "rga", "verify"]) if (!L[k] || !L[k][0] || !/^Hide /.test(L[k][1] || "") || L[k][1].slice(5).toLowerCase() !== L[k][0].toLowerCase()) fail(`the "${k}" toggle's open label doesn't name what it hides ("${L[k] && L[k][1]}")`);
 // 🔄 10-23 night (approved how_this_step_works_fold_v1): the toggle is now the card's last FOLD LINE — its words still come from
 // DETAIL_LABEL (the state names what it opens), and no row draws a top toggle button any more
-if (!/<details class="pm-k5-fold pm-how-fold" data-how-fold="\$\{escapeAttribute\(step\.id\)\}"><summary>\$\{PC_DOWN\}\$\{escapeHtml\(DETAIL_LABEL\[detailKind\]\[0\]\)\}<\/summary>/.test(P)) fail("the how-to fold line doesn't take its words from DETAIL_LABEL");
+if (!/<details class="pm-k5-fold pm-how-fold" data-how-fold="\$\{escapeAttribute\(step\.id\)\}"><summary>\$\{PC_DOWN\}\$\{escapeHtml\(HOW_WORKS_FOOT\.has\(step\.id\) \? DETAIL_LABEL\.done\[0\] : DETAIL_LABEL\[detailKind\]\[0\]\)\}<\/summary>/.test(P)) fail("the how-to fold line doesn't take its words from DETAIL_LABEL");
 if (/<button class="pm-act[^"]*" data-toggle-detail=/.test(code)) fail("a row draws the old top toggle button again (the how-to is the card's last fold line)");
 if (!/howHtml\(step\.clientInstructions, step\.id, step\.clientLabel, DETAIL_LABEL\[detailKind\]\[0\]\)/.test(P)) fail("the fold doesn't open the step's own instructions");
 const ec = P.match(/^const emailChips = [\s\S]*?\);$/m);

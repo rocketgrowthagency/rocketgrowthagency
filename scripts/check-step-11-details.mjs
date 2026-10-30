@@ -55,7 +55,7 @@ if ((css.match(/^\.pm-at \{/gm) || []).length !== 1) fail("the step 11 card isn'
 // ── 3 · drawn for real ──
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };
 const line = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
-const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function fmtDateTimeDot\(/m), pick(/^function attrsFormHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
+const lift = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("GOOGLE_G"), line("GC_ICON"), pick(/^function googleCardHtml\(/m), line("gcardMaps"), line("monthDay"), pick(/^function fmtDateTimeDot\(/m), pick(/^function attrsFormHtml\(/m), pick(/^function atCardHtml\(/m), pick(/^function atSubmitLabel\(/m), pick(/^function attrsCardHtml\(/m)];
 lift.push(planCardKit(portal, lift.join("\n")));   // 10-23: the plan card's shared pieces (steps_6_20_clean_v1)
 lift.push(csBlock(portal, lift.join("\n")));   // 10-29: the client card system — step 8's done / sent cards (client_step08_attributes_v1)
 if (lift.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-11 helper moved (${lift.findIndex((x) => !x)})`); process.exit(2); }
@@ -75,8 +75,8 @@ try {
       ticked: [], recommend: [{ key: "requires_appointments", why: "test reason" }, { key: "is_owned_by_women", why: "should never show" }] };
     const draw = (html) => { h.innerHTML = `<div data-step-input="m1.gbp.attributes"><div class="pm-at">${html}</div><div class="pm-in-foot"><button data-in-submit>Put it on Google</button></div></div>`; atSubmitLabel(h.firstElementChild);
       // 🔄 10-23 night (steps_6_20_clean_v1): the plan card; its folds (how to do this · RGA's recommendation) open before reading
-      h.querySelectorAll("details.pm-k5-fold").forEach((d) => { d.open = true; });
-      return { cls: h.querySelector(".pm-k5-plan")?.className, on: [...h.querySelectorAll("[data-in-tick].on")].map((b) => b.getAttribute("data-in-tick")), why: ([...h.querySelectorAll(".pm-k5-why div")].map((x) => x.innerText).find((x) => /^RGA recommends/.test(x)) || "").replace(/\s+/g, " ").trim(), text: h.innerText.replace(/\s+/g, " "),
+      h.querySelectorAll("details.pm-k5-fold, details.pm-cs-own").forEach((d) => { d.open = true; });
+      return { cls: h.querySelector(".pm-k5-plan")?.className, on: [...h.querySelectorAll("[data-in-tick].on")].map((b) => b.getAttribute("data-in-tick")), why: [...h.querySelectorAll(".pm-at-rec")].map((x) => x.innerText).join(" ").replace(/\s+/g, " ").trim(), text: h.innerText.replace(/\s+/g, " "),
         btn: h.querySelector("[data-in-submit]").textContent, noneOn: !!h.querySelector("[data-at-none].on"), noneLast: h.querySelector(".pm-at .pm-k5-plan")?.querySelector("[data-at-none]") === [...h.querySelectorAll(".pm-at-cb")].pop(), rows: h.querySelectorAll(".pm-at-cb[data-in-tick]").length, folds: h.querySelectorAll("details.pm-at-more").length, groups: [...h.querySelectorAll(".pm-at-grp")].map((x) => x.textContent) }; };
     const many = { options: Array.from({ length: 30 }, (_, i) => ({ key: `k${i}`, label: `Detail ${i}`, group: `Group ${Math.floor(i / 6)}`, about: false })), ticked: ["k1"], recommend: [] };
     const out = {
@@ -96,12 +96,12 @@ try {
     return out;
   });
 } finally { await browser.close(); }
-if (R.rga.cls !== "pm-k5-plan you" || JSON.stringify(R.rga.on) !== '["requires_appointments"]' || !/^RGA recommends Appointment required: test reason\. Leave "Online appointments" off: Google can show it in place of a review quote in map results\.$/i.test(R.rga.why) || /should never show/.test(R.rga.why)) fail(`RGA's recommendation isn't preselected with its reason, or an identity detail is recommended (${JSON.stringify(R.rga)})`);
+if (R.rga.cls !== "pm-k5-plan pm-cs-card you" || JSON.stringify(R.rga.on) !== '["requires_appointments"]' || !/^RGA recommends: test reason\.$/i.test(R.rga.why) || /should never show/.test(R.rga.why)) fail(`RGA's recommendation isn't preselected with its reason, or an identity detail is recommended (${JSON.stringify(R.rga)})`);
 if (!R.rga.groups.some((g) => /^About you · only you can say$/i.test(g)) || !/Always your choice: RGA never ticks these, and you can take one off anytime\. If someone leaves a hostile review because of one, you can report it to Google\./.test(R.rga.text)) fail("the identity details aren't their own group with the owner-only note (optional, removable, report a hostile review)");
 // 🔄 10-23 night (steps_6_20_clean_v1): rows are the mockup's plain ticks — the trade-off still shows under Online appointments, and a
 // detail Google already shows says "On Google" (a row that only repeats "Shows on your profile" no longer says it)
-if (!/Online appointments Google can show this under your name in map results in place of a review quote\. RGA recommends leaving it off\./.test(R.rga.text) || /Shows on your profile\. Google can show/.test(R.rga.text)) fail("the Online appointments row doesn't carry the map-pack trade-off (or repeats the generic line)");
-if (!/Identifies as women-owned Shows on your profile\. People can filter Maps for it\./.test(R.rga.text) || R.rga.rows !== 4) fail("a row doesn't say what the detail does (identity labels are Maps filters), or details aren't one checkbox row each");
+if (!/Online appointments Can replace a review quote in map results\. RGA recommends leaving it off\./.test(R.rga.text) || /Shows on your profile/.test(R.rga.text)) fail("the Online appointments row doesn't carry the map-pack trade-off (or repeats the generic line)");
+if (!/Identifies as women-owned People can filter Maps for it\./.test(R.rga.text) || R.rga.rows !== 4) fail("a row doesn't say what the detail does (identity labels are Maps filters), or details aren't one checkbox row each");
 if (R.rga.noneOn || !R.none.noneOn || !R.rga.noneLast) fail(`"None of these apply" isn't the last checkbox (on only when they saved none)`);
 if (!/Tick only what's true today: Google now asks visitors to confirm these\./.test(R.rga.text)) fail("no line that Google asks visitors to confirm these");
 // 🔄 client_step08_attributes_v1 (the card system, 10-29): "Sent to Google" is the GREY system card (Google's turn), then the green one
@@ -112,12 +112,12 @@ if (JSON.stringify(R.saved.on) !== '["welcomes_lgbtq"]') fail("a saved answer do
 if (R.none.on.length || R.none.btn !== "Put it on Google" || R.rga.btn !== "Put it on Google") fail(`the save button isn't always "Put it on Google" (${R.none.btn} / ${R.rga.btn})`);
 const pjs = read("portal/portal.js"), wjs = read("netlify/functions/_gbp-watch.js");
 if (!/if \(on\) none\.closest\("\.pm-at"\)\.querySelectorAll\("\[data-in-tick\]\.on"\)\.forEach/.test(pjs) || !/if \(t\.classList\.contains\("on"\)\) \{ const n = t\.closest\("\.pm-at"\)\?\.querySelector\("\[data-at-none\]"\)/.test(pjs)) fail('"None of these apply" doesn\'t clear the others (or a tick doesn\'t clear it)');
-if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");
+if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\) && !wrap\.querySelector\("\[data-at-nohow\]"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");
 // 10-20: the same stamp confirms step 6's services (phase1_get_started_v1), so the condition may name both
 if (!/else if \(\(?stepId === STEP\.ATTRS(?: \|\| stepId === STEP\.SERVICES\))? && task\.google_push\.state === "on_google" && !task\.google_push\.confirmed_at\)[\s\S]{0,400}confirmed_at: new Date\(nowMs\)\.toISOString\(\)/.test(wjs)) fail("the nightly check doesn't confirm a details save (it stays \"Sent to Google\")");
 if (!/Detail 1 On Google/.test(R.many.text) || /Detail 0 On Google/.test(R.many.text)) fail("a detail Google already shows doesn't say \"On Google\" (or one it doesn't show does)");
 if (R.many.folds !== 3 || !/^Tick what's true Google shows these on your profile/i.test(R.many.text.trim())) fail(`a long list doesn't fold after the first two groups, or the count is wrong (${R.many.folds}; ${R.many.text.slice(0, 80)})`);
-if (R.editing.cls !== "pm-k5-plan ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
+if (R.editing.cls !== "pm-k5-plan pm-cs-card ok" || R.editing.why) fail("editing a done step isn't the green card (or still recommends)");
 if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.empty.text)) fail("a business Google offers no details can't finish the step");
 // 🔄 10-23 night (steps_6_20_clean_v1, step 8 done): "N details on Google · checked", each detail a chip, Change details
 // 🔄 client_step08_attributes_v1 (10-29): the details as "On your profile" chips, Maps in the foot, ONE "Change something" (was "Change details")

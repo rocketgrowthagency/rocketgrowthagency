@@ -76,7 +76,7 @@ const BATCH2 = ["m1.brand.youtube_setup", "m1.call.close", "m1.gbp.photos", "m1.
 const rc = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10), fmtDateShort: (x) => String(x || "").slice(0, 10), fmtDateTimeDot: (x) => String(x || "").slice(0, 16),
   stepLockOf: (id, t) => STEP_LOCK.stepLock(id, t, {}), googleCardHtml: () => "<old-google-card>", Date, JSON, Number, Set, Map, Array, String, Object, Math });
 try {
-  for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), rc);
+  for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles"]) vm.runInContext(block(n), rc);
   const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) moved("the plan-card pieces (PC_TICK … pcActs)");
   vm.runInContext(P.slice(a, b), rc); vm.runInContext(csBlock(P, P.slice(a, b)), rc);
   for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName"]) vm.runInContext(fn(n), rc);

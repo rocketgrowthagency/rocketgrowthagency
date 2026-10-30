@@ -1,303 +1,303 @@
 [
- [
-  "Square Online stops beating Weebly (the live bug)",
-  "siteplatform",
-  "  for (const [own, base] of OVERRIDES) if (hits[own]) delete hits[base];",
-  "  for (const [own, base] of []) if (hits[own]) delete hits[base];"
- ],
- [
-  "Showit reads as WordPress again",
-  "siteplatform",
-  "[\"showit\", \"wordpress\"], ",
-  ""
- ],
- [
-  "an untested sign is stated",
-  "siteplatform",
-  "    const maybe = ASK_ONLY.find(([, re]) => re.test(hay));",
-  "    const maybe = null;"
- ],
- [
-  "RGA's notes reach the client",
-  "siteplatfn",
-  "Object.entries(ALL).map(([k, { rga, ...pub }]) => [k, pub])",
-  "Object.entries(ALL).map(([k, pub]) => [k, pub])"
- ],
- [
-  "Square Online asks for an invite (no safe one exists)",
-  "siteplatdata",
-  "\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"workaround\",",
-  "\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"invite\","
- ],
- [
-  "Shopify stops taking the code",
-  "siteplatdata",
-  "\"name\": \"Shopify\",\n      \"kind\": \"code\",",
-  "\"name\": \"Shopify\",\n      \"kind\": \"invite\","
- ],
- [
-  "a done row with no record falls through to the ask",
-  "portal",
-  "if (t.status === \"done\" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {",
-  "if (false) {"
- ],
- [
-  "the done-before-details card grows a footer again (the mockup has none)",
-  "portal",
-  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`",
-  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
- ],
- [
-  "the Change button goes (can't X out)",
-  "portal",
-  "<button type=\"button\" class=\"pm-amend\" data-acc-change>Change</button>",
-  ""
- ],
- [
-  "the hidden pick-another link comes back",
-  "portal",
-  "<button type=\"button\" class=\"pm-amend\" data-acc-change>Change</button>",
-  "<a href=\"#\" data-acc-other>Not right? Pick another</a>"
- ],
- [
-  "the setup loses its direct link",
-  "portal",
-  "<a class=\"pm-ax-go\" href=\"${escapeAttribute(link)}\"",
-  "<a class=\"pm-ax-link\" href=\"${escapeAttribute(link)}\""
- ],
- [
-  "the setup button wraps mid-sentence again",
-  "portalcss",
-  ".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;",
-  ".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px;"
- ],
- [
-  "a checklist path finishes without RGA",
-  "stepinput",
-  "[\"invite\", \"designer\", \"request\", \"workaround\"].includes(parsed.value.via)",
-  "[\"invite\", \"designer\"].includes(parsed.value.via)"
- ],
- [
-  "the Shopify code isn't checked",
-  "stepinput",
-  "      if (!/^\\d{4}$/.test(code)) return",
-  "      if (false) return"
- ],
- [
-  "the Shopify code is kept after confirm",
-  "accessconfirm",
-  "shopify: { store: task.client_input.shopify.store }",
-  "shopify: task.client_input.shopify"
- ],
- [
-  "admin row 8 loses RGA's move",
-  "admin",
-  "      escapeHtml(rgaMove), isChk ?",
-  "      \"Sign in\", isChk ?"
- ],
- [
-  "admin stops reading the one source",
-  "admin",
-  "fetch(\"/data/site-platforms.json\")",
-  "fetch(\"/data/admin-platforms.json\")"
- ],
- [
-  "the conversation sits above the card again",
-  "portal",
-  "          step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold=",
-  "          threadHtml(step.id) + step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold="
- ],
- [
-  "the conversation is always open",
-  "portal",
-  "<details class=\"pm-mail pm-convo\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
-  "<details class=\"pm-mail pm-convo\" open>"
- ],
- [
-  "the old password link loses its switch-to-invite (caught 10-20)",
-  "portal",
-  "if (t.status === \"done\" && !oldLink && !(ci && ci.via)",
-  "if (t.status === \"done\" && !(ci && ci.via)"
- ],
- [
-  "the padlock is back on step 3",
-  "portal",
-  "${csGcard({ state: \"you\", tile: RC_WEB,",
-  "${csGcard({ state: \"you\", tile: RC_LOCK,"
- ],
- [
-  "Done shows over Your move while updating",
-  "portal",
-  "      : isDone && _rcEditing.has(step.id) ? { text: \"Updating\", cls: \"edit\" }\n",
-  ""
- ],
- [
-  "the builder wall is back",
-  "portal",
-  "const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\"];",
-  "const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\", \"duda\", \"weebly\"];"
- ],
- [
-  "no Cancel while updating",
-  "portal",
-  "if (tgt.closest(\"[data-acc-cancel]\")) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");",
-  "if (false) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");"
- ],
- [
-  "a screen-only redraw goes to the server",
-  "portal",
-  "  if (!opts.local || !_rgaWaitsCache.has(clientId)) await loadPortalThread(clientId);",
-  "  await loadPortalThread(clientId);"
- ],
- [
-  "failed detection hides the builders",
-  "portal",
-  "    if (!j.platforms || !Object.keys(j.platforms).length) {",
-  "    if (false) {"
- ],
- [
-  "a waiting message is a still dot again",
-  "portalcss",
-  ".pm-msg.busy .dot{width:12px;height:12px;box-sizing:border-box;background:none;border:2px solid var(--portal-accent,#2457e6);border-right-color:transparent;animation:pm-later-spin .7s linear infinite}",
-  ".pm-msg.busy .dot{background:var(--portal-muted,#616161)}"
- ],
- [
-  "Shopify asks for an email invite again",
-  "portal",
-  "    : p.kind === \"code\"\n    ? `<div class=\"pm-ax-give\"><span><small>How this one works</small><b>You give us a 4-digit code; we send the request</b></span><span><small>Role we ask for</small><b>${escapeHtml(p.role || \"\")}</b></span></div>`\n",
-  ""
- ],
- [
-  "the send button leaves Step 3",
-  "portal",
-  "<button type=\"button\" class=\"pm-commit\" data-acc-send data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>",
-  "<button type=\"button\" class=\"pm-commit\" data-acc-sendx data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>"
- ],
- [
-  "a step ends at a colon without a site",
-  "portal",
-  "${path ? `<span class=\"pm-ax-pair\"><span class=\"pm-ax-lbl\">On your site</span>${chip(path)}</span>` : \"\"}",
-  ""
- ],
- [
-  "the email chip overflows again",
-  "portalcss",
-  ".pm-ax-give .pm-ax-copy { max-width:100%; min-width:0; }",
-  ".pm-ax-give .pm-ax-copy { }"
- ],
- [
-  "a builder loses its colour",
-  "siteplatdata",
-  "\"key\": \"wix\",\n      \"color\": \"#111111\"",
-  "\"key\": \"wix\""
- ],
- [
-  "Steps 2–3 don't show as Not yet before a pick",
-  "portal",
-  "${accPart(2, \"Instructions: do this\", \"next\", \"\", \"Shows once you pick your builder\")}${accPart(3, \"Tell RGA you've sent it\", \"next\")}",
-  "${accPart(2, \"Instructions: do this\", \"you\")}"
- ],
- [
-  "the done part loses its colour",
-  "portalcss",
-  ".pm-ax-part.st-done { border-color:var(--state-ok-line,#cfe6c8);",
-  ".pm-ax-part.st-done-x { border-color:var(--state-ok-line,#cfe6c8);"
- ],
- [
-  "builder tiles stop being one size",
-  "portalcss",
-  ".pm-ax-tiles { grid-auto-rows:1fr; }",
-  ".pm-ax-tiles { }"
- ],
- [
-  "the extra builders can't hide again",
-  "portal",
-  "${restOpen ? \"Show fewer builders\" : `Show all ${all.length} builders`}</button>",
-  "Show all ${all.length} builders</button>"
- ],
- [
-  "checking is a lone pill again",
-  "portal",
-  "accPart(1, \"Checking your website\", \"work\",",
-  "accPart(1, \"Checking which builder your website uses\", \"you\","
- ],
- [
-  "the done card asks the client to fill in records again",
-  "portal",
-  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Add your builder</button>",
-  "<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Want it on record? Add the details</button>"
- ],
- [
-  "the promise leaves the card",
-  "portal",
-  "    body: accPromiseHtml(clientId) + `<div class=\"pm-acc-plat\" data-acc-plat>",
-  "    body: `<div class=\"pm-acc-plat\" data-acc-plat>"
- ],
- [
-  "the promise says OK",
-  "portal",
-  "[[\"Change anything without your approval\", \"Every change waits for you, even code\"]",
-  "[[\"Change anything without your OK\", \"Every change waits for you, even code\"]"
- ],
- [
-  "the approval step leaves the flow",
-  "portal",
-  "<b>You approve</b><small>In your To do tab. Nothing changes before this</small>",
-  "<b>You check</b><small>If you like</small>"
- ],
- [
-  "the promise opens by default",
-  "portal",
-  "<details class=\"pm-ax-promise\"><summary>",
-  "<div class=\"pm-ax-promise\"><summary>"
- ],
- [
-  "admin loses the promise",
-  "admin",
-  "Our promise on their card: nothing goes live until they approve it; every change is logged",
-  "Note: nothing goes live until they approve it; every change is logged"
- ],
- [
-  "the agreement link loses §5",
-  "portal",
-  "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
-  "Backed by our terms"
- ],
- [
-  "the promise shrinks to visible changes",
-  "portal",
-  "<span class=\"pm-ax-pr-ok\">✓ You approve every change</span>",
-  "<span class=\"pm-ax-pr-ok\">✓ You approve anything visitors see</span>"
- ],
- [
-  "the seal claims the contract backs the promise again",
-  "portal",
-  "Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
-  "Backed by your Service Agreement (§5, website access)"
- ],
- [
-  "step 3 done says \"before this page tracked it\" again",
-  "portal",
-  "body: csEv(`<b>Access given</b>`, when ?",
-  "body: csEv(`<b>Access given</b> · before this page tracked it`, when ?"
- ],
- [
-  "step 3 done reads a GUESSED builder as fact",
-  "portal",
-  "const p = j.platform && j.confidence === \"stated\" && !j.designer",
-  "const p = j.platform && !j.designer"
- ],
- [
-  "step 3 done keeps Add your builder beside a found one",
-  "portal",
-  "    host.querySelector(\"[data-acc-addb]\")?.remove();\n",
-  "\n"
- ],
- [
-  "step 3 done goes back to Edit access",
-  "portal",
-  "pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Change something</button>`)",
-  "pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Edit access</button>`)",
-  1
- ]
+[
+"Square Online stops beating Weebly (the live bug)",
+"siteplatform",
+"  for (const [own, base] of OVERRIDES) if (hits[own]) delete hits[base];",
+"  for (const [own, base] of []) if (hits[own]) delete hits[base];"
+],
+[
+"Showit reads as WordPress again",
+"siteplatform",
+"[\"showit\", \"wordpress\"], ",
+""
+],
+[
+"an untested sign is stated",
+"siteplatform",
+"    const maybe = ASK_ONLY.find(([, re]) => re.test(hay));",
+"    const maybe = null;"
+],
+[
+"RGA's notes reach the client",
+"siteplatfn",
+"Object.entries(ALL).map(([k, { rga, ...pub }]) => [k, pub])",
+"Object.entries(ALL).map(([k, pub]) => [k, pub])"
+],
+[
+"Square Online asks for an invite (no safe one exists)",
+"siteplatdata",
+"\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"workaround\",",
+"\"squareonline\": {\n      \"name\": \"Square Online\",\n      \"kind\": \"invite\","
+],
+[
+"Shopify stops taking the code",
+"siteplatdata",
+"\"name\": \"Shopify\",\n      \"kind\": \"code\",",
+"\"name\": \"Shopify\",\n      \"kind\": \"invite\","
+],
+[
+"a done row with no record falls through to the ask",
+"portal",
+"if (t.status === \"done\" && !oldLink && !(ci && ci.via) && !acc && !_rcEditing.has(step.id)) {",
+"if (false) {"
+],
+[
+"the done-before-details card grows a footer again (the mockup has none)",
+"portal",
+"body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`",
+"body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() + pcFoot(\"RGA confirmed it. Nothing for you to do.\") })}`"
+],
+[
+"the Change button goes (can't X out)",
+"portal",
+"`<button type=\"button\" class=\"pm-ax-chg\" data-acc-change>Change</button>`",
+"\"\""
+],
+[
+"the hidden pick-another link comes back",
+"portal",
+"`<button type=\"button\" class=\"pm-ax-chg\" data-acc-change>Change</button>`",
+"`<a href=\"#\" data-acc-other>Not right? Pick another</a>`"
+],
+[
+"the setup loses its direct link",
+"portal",
+"<a class=\"pm-ax-go\" href=\"${escapeAttribute(link)}\"",
+"<a class=\"pm-ax-link\" href=\"${escapeAttribute(link)}\""
+],
+[
+"the setup button wraps mid-sentence again",
+"portalcss",
+".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;",
+".pm-ax-go { min-height:var(--pm-h-sm); box-sizing:border-box; display:inline-flex; align-items:center; gap:6px;"
+],
+[
+"a checklist path finishes without RGA",
+"stepinput",
+"[\"invite\", \"designer\", \"request\", \"workaround\"].includes(parsed.value.via)",
+"[\"invite\", \"designer\"].includes(parsed.value.via)"
+],
+[
+"the Shopify code isn't checked",
+"stepinput",
+"      if (!/^\\d{4}$/.test(code)) return",
+"      if (false) return"
+],
+[
+"the Shopify code is kept after confirm",
+"accessconfirm",
+"shopify: { store: task.client_input.shopify.store }",
+"shopify: task.client_input.shopify"
+],
+[
+"admin row 8 loses RGA's move",
+"admin",
+"      escapeHtml(rgaMove), isChk ?",
+"      \"Sign in\", isChk ?"
+],
+[
+"admin stops reading the one source",
+"admin",
+"fetch(\"/data/site-platforms.json\")",
+"fetch(\"/data/admin-platforms.json\")"
+],
+[
+"the conversation sits above the card again",
+"portal",
+"          step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold=",
+"          threadHtml(step.id) + step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold="
+],
+[
+"the conversation is always open",
+"portal",
+"<details class=\"pm-mail pm-convo\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
+"<details class=\"pm-mail pm-convo\" open>"
+],
+[
+"the old password link loses its switch-to-invite (caught 10-20)",
+"portal",
+"if (t.status === \"done\" && !oldLink && !(ci && ci.via)",
+"if (t.status === \"done\" && !(ci && ci.via)"
+],
+[
+"the padlock is back on step 3",
+"portal",
+"head: oldLink ? \"Switch to an invite (safer)\"",
+"icon: RC_LOCK, head: oldLink ? \"Switch to an invite (safer)\""
+],
+[
+"Done shows over Your move while updating",
+"portal",
+"      : isDone && _rcEditing.has(step.id) ? { text: \"Updating\", cls: \"edit\" }\n",
+""
+],
+[
+"the builder wall is back",
+"portal",
+"const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\"];",
+"const ACC_COMMON = [\"wordpress\", \"wix\", \"squarespace\", \"godaddy\", \"shopify\", \"webflow\", \"custom\", \"other\", \"duda\", \"weebly\"];"
+],
+[
+"no Cancel while updating",
+"portal",
+"if (tgt.closest(\"[data-acc-cancel]\")) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");",
+"if (false) { e.preventDefault(); _rcEditing.delete(\"m1.access.website\");"
+],
+[
+"a screen-only redraw goes to the server",
+"portal",
+"  if (!opts.local || !_rgaWaitsCache.has(clientId)) await loadPortalThread(clientId);",
+"  await loadPortalThread(clientId);"
+],
+[
+"failed detection hides the builders",
+"portal",
+"    if (!j.platforms || !Object.keys(j.platforms).length) {",
+"    if (false) {"
+],
+[
+"a waiting message is a still dot again",
+"portalcss",
+".pm-msg.busy .dot{width:12px;height:12px;box-sizing:border-box;background:none;border:2px solid var(--portal-accent,#2457e6);border-right-color:transparent;animation:pm-later-spin .7s linear infinite}",
+".pm-msg.busy .dot{background:var(--portal-muted,#616161)}"
+],
+[
+"Shopify asks for an email invite again",
+"portal",
+"    : p.kind === \"code\"\n    ? `<div class=\"pm-ax-give\"><span><small>How this one works</small><b>You give us a 4-digit code; we send the request</b></span><span><small>Role we ask for</small><b>${escapeHtml(p.role || \"\")}</b></span></div>`\n",
+""
+],
+[
+"the send button leaves Step 3",
+"portal",
+"<button type=\"button\" class=\"pm-commit\" data-acc-send data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>",
+"<button type=\"button\" class=\"pm-commit\" data-acc-sendx data-via=\"${via}\"${via === \"workaround\" || host._accConsent ? \"\" : \" disabled\"}>"
+],
+[
+"a step ends at a colon without a site",
+"portal",
+"${path ? `<span class=\"pm-ax-pair\"><span class=\"pm-ax-lbl\">On your site</span>${chip(path)}</span>` : \"\"}",
+""
+],
+[
+"the email chip overflows again",
+"portalcss",
+".pm-ax-give .pm-ax-copy { max-width:100%; min-width:0; }",
+".pm-ax-give .pm-ax-copy { }"
+],
+[
+"a builder loses its colour",
+"siteplatdata",
+"\"key\": \"wix\",\n      \"color\": \"#111111\"",
+"\"key\": \"wix\""
+],
+[
+"Steps 2–3 don't show as Not yet before a pick",
+"portal",
+"${accPart(2, \"Instructions: do this\", \"next\", \"\", \"Shows once you pick your builder\")}${accPart(3, \"Tell RGA you've sent it\", \"next\")}",
+"${accPart(2, \"Instructions: do this\", \"you\")}"
+],
+[
+"the done part loses its colour",
+"portalcss",
+".pm-ax-row.st-done > .pm-ax-disc {",
+".pm-ax-row.st-done-x > .pm-ax-disc {"
+],
+[
+"builder tiles stop being one size",
+"portalcss",
+".pm-ax-tiles { grid-auto-rows:1fr; }",
+".pm-ax-tiles { }"
+],
+[
+"the extra builders can't hide again",
+"portal",
+"${restOpen ? \"Show fewer builders\" : `Show all ${all.length} builders`}</button>",
+"Show all ${all.length} builders</button>"
+],
+[
+"checking is a lone pill again",
+"portal",
+"accPart(1, \"Checking your website\", \"work\",",
+"accPart(1, \"Checking which builder your website uses\", \"you\","
+],
+[
+"the done card asks the client to fill in records again",
+"portal",
+"<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Add your builder</button>",
+"<button type=\"button\" class=\"pm-k5-tell\" data-acc-redo data-acc-addb>Want it on record? Add the details</button>"
+],
+[
+"the promise leaves the card",
+"portal",
+"    body: accPromiseHtml(clientId) + `<div class=\"pm-acc-plat\" data-acc-plat>",
+"    body: `<div class=\"pm-acc-plat\" data-acc-plat>"
+],
+[
+"the promise says OK",
+"portal",
+"[[\"Change anything without your approval\", \"Every change waits for you, even code\"]",
+"[[\"Change anything without your OK\", \"Every change waits for you, even code\"]"
+],
+[
+"the approval step leaves the flow",
+"portal",
+"<b>You approve</b><small>In your To do tab. Nothing changes before this</small>",
+"<b>You check</b><small>If you like</small>"
+],
+[
+"the promise opens by default",
+"portal",
+"<details class=\"pm-ax-promise\"><summary>",
+"<div class=\"pm-ax-promise\"><summary>"
+],
+[
+"admin loses the promise",
+"admin",
+"Our promise on their card: nothing goes live until they approve it; every change is logged",
+"Note: nothing goes live until they approve it; every change is logged"
+],
+[
+"the agreement link loses §5",
+"portal",
+"Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
+"Backed by our terms"
+],
+[
+"the promise shrinks to visible changes",
+"portal",
+"<span class=\"pm-ax-pr-ok\">✓ You approve every change</span>",
+"<span class=\"pm-ax-pr-ok\">✓ You approve anything visitors see</span>"
+],
+[
+"the seal claims the contract backs the promise again",
+"portal",
+"Your consent below is our written record. Our Service Agreement covers website access (§5, §8)",
+"Backed by your Service Agreement (§5, website access)"
+],
+[
+"step 3 done says \"before this page tracked it\" again",
+"portal",
+"body: csEv(`<b>Access given</b>`, when ?",
+"body: csEv(`<b>Access given</b> · before this page tracked it`, when ?"
+],
+[
+"step 3 done reads a GUESSED builder as fact",
+"portal",
+"const p = j.platform && j.confidence === \"stated\" && !j.designer",
+"const p = j.platform && !j.designer"
+],
+[
+"step 3 done keeps Add your builder beside a found one",
+"portal",
+"    host.querySelector(\"[data-acc-addb]\")?.remove();\n",
+"\n"
+],
+[
+"step 3 done goes back to Edit access",
+"portal",
+"pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Change something</button>`)",
+"pcActs(stepLockOf(step.id, t) ? \"\" : `<button type=\"button\" class=\"pm-amend\" data-acc-redo>Edit access</button>`)",
+1
+]
 ]

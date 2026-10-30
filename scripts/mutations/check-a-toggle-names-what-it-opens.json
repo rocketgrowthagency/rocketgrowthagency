@@ -1,44 +1,44 @@
 [
- [
-  "the fold line says View again",
-  "portal",
-  "<summary>${PC_DOWN}${escapeHtml(DETAIL_LABEL[detailKind][0])}</summary>",
-  "<summary>${PC_DOWN}View →</summary>"
- ],
- [
-  "open toggle says Hide only",
-  "portal",
-  "b.textContent = detail.hidden ? `${L[0]} ▾` : `${L[1]} ▴`;",
-  "b.textContent = detail.hidden ? `${L[0]} ▾` : \"Hide ↑\";"
- ],
- [
-  "the fold line always says How to do this",
-  "portal",
-  "<summary>${PC_DOWN}${escapeHtml(DETAIL_LABEL[detailKind][0])}</summary>",
-  "<summary>${PC_DOWN}How to do this</summary>"
- ],
- [
-  "the done label hides something else",
-  "portal",
-  "done: [\"How this step works\", \"Hide how this step works\"]",
-  "done: [\"How this step works\", \"Hide\"]"
- ],
- [
-  "emails stay plain text",
-  "portal",
-  "<div class=\"how-body\">${lede ? `<p class=\"how-lede\">${emailChips(escapeHtml(lede))}</p>` : \"\"}${emailChips(body)}",
-  "<div class=\"how-body\">${lede ? `<p class=\"how-lede\">${emailChips(escapeHtml(lede))}</p>` : \"\"}${body}"
- ],
- [
-  "emailChips rewrites inside tags",
-  "portal",
-  "String(html).replace(/(^|>)([^<]*)/g, (m, a, txt) => a + txt.replace(",
-  "String(html).replace(/()([\\s\\S]*)/g, (m, a, txt) => a + txt.replace("
- ],
- [
-  "the email chip isn't bold",
-  "portalcss",
-  ".pm-em-chip { font-weight:700;",
-  ".pm-em-chip {"
- ]
+[
+"the fold line says View again",
+"portal",
+"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
+"<summary>${PC_DOWN}View →</summary>"
+],
+[
+"open toggle says Hide only",
+"portal",
+"b.textContent = detail.hidden ? `${L[0]} ▾` : `${L[1]} ▴`;",
+"b.textContent = detail.hidden ? `${L[0]} ▾` : \"Hide ↑\";"
+],
+[
+"the fold line always says How to do this",
+"portal",
+"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
+"<summary>${PC_DOWN}How to do this</summary>"
+],
+[
+"the done label hides something else",
+"portal",
+"done: [\"How this step works\", \"Hide how this step works\"]",
+"done: [\"How this step works\", \"Hide\"]"
+],
+[
+"emails stay plain text",
+"portal",
+"<div class=\"how-body\">${lede ? `<p class=\"how-lede\">${emailChips(escapeHtml(lede))}</p>` : \"\"}${emailChips(body)}",
+"<div class=\"how-body\">${lede ? `<p class=\"how-lede\">${emailChips(escapeHtml(lede))}</p>` : \"\"}${body}"
+],
+[
+"emailChips rewrites inside tags",
+"portal",
+"String(html).replace(/(^|>)([^<]*)/g, (m, a, txt) => a + txt.replace(",
+"String(html).replace(/()([\\s\\S]*)/g, (m, a, txt) => a + txt.replace("
+],
+[
+"the email chip isn't bold",
+"portalcss",
+".pm-em-chip { font-weight:700;",
+".pm-em-chip {"
+]
 ]

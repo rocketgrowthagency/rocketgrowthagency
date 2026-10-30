@@ -26,7 +26,7 @@ const n0 = portal.indexOf("function factsNoteHtml(t) {"), n1 = portal.indexOf("\
 const a0 = admin.indexOf("function areaChecklistHtml(g) {"), a1 = admin.indexOf("\n}\n", a0);
 if (p0 < 0 || p1 < p0 || n0 < 0 || a0 < 0) { console.error("⚠️  INDETERMINATE — could not lift the renderers"); process.exit(2); }
 // portalStepNo (10-20): client numbers come from the playbook; the lift has none, so a fixed one
-const ctx = { escapeHtml: esc, escapeAttribute: esc, Date, portalStepNo: () => 5, seeStepText: () => "See step 4 →", adminGcardWhen: () => "Oct 17, 10:30 AM" };
+const ctx = { CS_ICON: { ok: "<svg/>" }, escapeHtml: esc, escapeAttribute: esc, Date, portalStepNo: () => 5, seeStepText: () => "See step 4 →", adminGcardWhen: () => "Oct 17, 10:30 AM" };
 vm.createContext(ctx);
 vm.runInContext(`${portal.slice(p0, p1)}\n${portal.slice(n0, n1 + 2)}\n${admin.slice(a0, a1 + 2)}\nthis.rows = factsRowsHtml; this.note = factsNoteHtml; this.check = areaChecklistHtml;`, ctx);
 
@@ -57,7 +57,7 @@ const plan = (...locs) => ({ "m1.strategy.keywords_locations": { outcome_data: {
   if (JSON.stringify(view.same) !== JSON.stringify({ name: true, come: true, area: null, phone: true, website: true })) fail(`TX: what they told us doesn't compare right (${JSON.stringify(view.same)})`);
   if (JSON.stringify(view.recommend?.area?.add) !== '["Cedar Park","Pflugerville"]' || !view.recommend.area.targets.find((t) => t.name === "78704" && t.on)) fail(`TX: RGA's recommendation is wrong — a ZIP already on Google must count (${JSON.stringify(view.recommend)})`);
   const h = ctx.rows(view);
-  if (!/placeholder="Add another area in TX"/.test(h) || !/>78704<em class="ok">On Google<\/em>/.test(h) || !/Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h)) fail("TX: the portal card isn't drawn for Texas");
+  if (!/placeholder="Add another area in TX"/.test(h) || !/From your plan \(step 5\) · 1 of 3 on Google/.test(h) || /\+ 78704/.test(h) || !/Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h)) fail("TX: the portal card isn't drawn for Texas");
   // the client keeps Google's list, adds both recommendations and types Georgetown (the portal adds ", TX")
   const v = X.validateFacts({ name: "Lone Star Roofing", come: "yes", phone: "512-555-0147", website: "lonestarroofing.com",
     area: { keep: g.area, add: ["Cedar Park", "Pflugerville", "Georgetown, TX"] } });

@@ -193,14 +193,14 @@ const i0 = portal.indexOf("const FACT_WORDS = {"), i1 = portal.indexOf("async fu
 if (i0 < 0 || i1 < i0) { console.error("⚠️  INDETERMINATE — could not lift the facts renderer"); process.exit(2); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // portalStepNo (10-20): client numbers are read from the playbook; the lift has none, so a fixed one
-const ctx = { escapeHtml: esc, escapeAttribute: esc, portalStepNo: () => 5 };
+const ctx = { CS_ICON: { ok: "<svg/>" }, escapeHtml: esc, escapeAttribute: esc, portalStepNo: () => 5 };
 vm.createContext(ctx);
 vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = factsSummary;`, ctx);
 {
   const h = ctx.rows(X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null)));
   const row = (k) => { const a = h.indexOf(`data-fact="${k}"`); const b = h.indexOf('data-fact="', a + 12); return h.slice(a, b < 0 ? undefined : b); };
-  for (const k of ["name", "come", "phone", "website"]) if (!/✓ Matches/.test(row(k)) || new RegExp(`class="pm-fact is-open" data-fact="${k}"`).test(h)) fail(`RGA's ${k} (matches) isn't one green line`);
-  if (!/Your turn/.test(row("area")) || !/El Segundo, CA, USA/.test(row("area")) || !/data-fact-pick="area" data-fact-val="ok">Yes, that(?:'|&#39;)s right/.test(row("area"))) fail("the service area (never asked) isn't the client's turn with Google's places");
+  for (const k of ["name", "come", "phone", "website"]) if (!/aria-label="Matches Google"/.test(row(k)) || new RegExp(`class="pm-fact is-open" data-fact="${k}"`).test(h)) fail(`RGA's ${k} (matches) isn't one green line`);
+  if (!/class="pm-fact is-open"/.test(h.slice(h.lastIndexOf("<div", h.indexOf('data-fact="area"')), h.indexOf('data-fact="area"'))) || !/<span>El Segundo<\/span>/.test(row("area")) || !/data-fact-pick="area" data-fact-val="ok">Yes, that(?:'|&#39;)s right/.test(row("area"))) fail("the service area (never asked) isn't the client's turn with Google's places");
   if (!/Google(?:'|&#39;)s link carries our tracking tags/.test(row("website"))) fail("a website with tracking tags doesn't say why it still matches");
   if (!/You told us: \(424\) 242-2040/.test(row("phone"))) fail("a US number stored as bare digits isn't shown as (424) 242-2040");
   const inMob = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, phoneNumbers: { primaryPhone: "98123 45678" }, serviceArea: { regionCode: "IN" } }), X.toldFacts({ ...RGA_CLIENT, identity_phone: "9812345678" }, null)));
@@ -208,7 +208,7 @@ vm.runInContext(`${portal.slice(i0, i1)}\nthis.rows = factsRowsHtml; this.sum = 
   const diff = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, phoneNumbers: { primaryPhone: "(603) 555-0199" } }), X.toldFacts({ ...RGA_CLIENT, identity_phone: "(603) 555-0142" }, null)));
   if (!/These don(?:'|&#39;)t match\. Which number should customers call\?/.test(diff) || !/data-fact-val="\(603\) 555-0142">\(603\) 555-0142, mine/.test(diff) || !/data-fact-val="\(603\) 555-0199">\(603\) 555-0199, Google(?:'|&#39;)s/.test(diff)) fail("a phone that differs doesn't show both numbers and ask which is right");
   const st = ctx.rows(X.factsView(X.factsFromGoogle({ ...RGA_GOOGLE, title: "Joe's Plumbing - Best Plumber Nashville 24/7" }), X.toldFacts({ ...RGA_CLIENT, business_name: "Joe's Plumbing" }, null)));
-  if (!/With RGA/.test(st) || !/RGA recommends "Joe(?:'|&#39;)s Plumbing"\.<\/b> Google can suspend a profile that adds extra words to its name/.test(st) || !/>Keep the long name</.test(st)) fail("a keyword-stuffed name isn't RGA's recommendation with a veto");
+  if (!/With RGA/.test(st) || !/RGA recommends “Joe(?:'|&#39;)s Plumbing”\.<\/b> Google can suspend a profile that adds extra words to its name/.test(st) || !/>Keep the long name</.test(st)) fail("a keyword-stuffed name isn't RGA's recommendation with a veto");
   const hid = ctx.rows(X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts({ ...RGA_CLIENT, geography_model: "single_location" }, null)));
   if (!/Should Google show your address\?/.test(hid) || !/<b>Before you say yes:<\/b> show an address only if customers can walk in during your hours/.test(hid)) fail("customers-come that differs doesn't ask, with the re-verification caution");
 }
@@ -223,8 +223,10 @@ if (!/(?:\(?step\.id === "m1\.gbp\.business_facts"(?: \|\| step\.id === "m1\.gbp
 if (!/else if \(kind === "facts"\) \{[\s\S]{0,1600}if \(missing\.length\) \{\s*if \(msg\) \{[^\n]*Answer \$\{missing\.join\(", "\)\} first\.[^\n]*\}\s*return;\s*\}/.test(js)) fail("a save with an unanswered line isn't stopped in the browser");
 // 🔒 a pick SHOWS its answer at once, and the last open line SAVES (the pressed button spins) — Chris 10-16: "clicking it now
 // and doing nothing"; a caution (showing an address) waits for Save
-if (!/ans\.innerHTML = `<span class="ck" aria-hidden="true">✓<\/span><span class="l">\$\{escapeHtml\(row\.getAttribute\("data-fact-name"\) \|\| ""\)\}<\/span><span class="v">\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/span><button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
-if (!/const save = allAnswered && !caution && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
+if (!/ans\.innerHTML = `<span class="mk ok" aria-hidden="true">\$\{CS_ICON\.ok\}<\/span><span><b>\$\{escapeHtml\(row\.getAttribute\("data-fact-name"\) \|\| ""\)\}<\/b><small>\$\{escapeHtml\(pick\.getAttribute\("data-fact-label"\) \|\| pick\.textContent\.trim\(\)\)\}<\/small><\/span><button type="button" class="pm-linkbtn" data-fact-redo>Change<\/button>`;/.test(js)) fail("a pick doesn't show the client's answer (the button looks dead)");
+// client_step04_fact_check_v2: the caution returns BEFORE the answer collapses: its warning shows, the question stays open, the button saves
+if (!/if \(caution0\) \{\s*if \(care0\) care0\.hidden = false;[\s\S]{0,200}?return;\s*\}/.test(js)) fail("saying customers come to you doesn't show the warning first, or saves by itself");
+if (!/const save = allAnswered && wrap\.querySelector\("\[data-in-submit\]"\);\s*if \(save\) \{\s*save\.classList\.add\("is-busy", "is-busy-say"\);[^\n]*\n\s*submitStepInput\(save\)/.test(js) || !/async function submitStepInput\(btn\) \{/.test(js)) fail("answering the last open line doesn't save the step");
 if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered line can't be changed");
 // 🔒 superseded 10-20 by the approved step7_check_business_v2 card (factsCardV2) — the full card is RUN in check-steps-6-and-7-confirm-in-the-portal
 if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(js)
@@ -240,11 +242,11 @@ if (!/Google may ask you to verify the business again; we(?:'|’)ll tell you if
 {
   const view = X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), ["Mar Vista", "Palms", "Culver City"]);
   const h = ctx.rows(view);
-  if (!/<small>Where you work · RGA recommends<\/small><b>Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h) || !/class="pm-fact is-open pm-fx-cardonly" data-fact="area"/.test(h)) fail("the service area doesn't lead with RGA's recommendation as one card");
-  // To check first, matches folded under their own heading
-  const tc = h.indexOf("To check · 1"), mg = h.indexOf("Matches Google · 4");
-  if (tc < 0 || mg < tc || !/<div class="pm-fx-oklist">/.test(h.slice(mg))) fail("open lines don't come first with matches folded under \"Matches Google\"");
-  if (!/>Mar Vista<em class="">Not on Google<\/em>/.test(h) || !/>Culver City<em class="ok">On Google<\/em>/.test(h)) fail("the targets aren't drawn beside their Google status");
+  if (!/<span class="pm-sa-k">Where you work · RGA recommends<\/span><b class="pm-sa-t">Add the 2 areas we(?:'|&#39;)re targeting for you/.test(h) || !/class="pm-fact is-open pm-fx-cardonly" data-fact="area"/.test(h)) fail("the service area doesn't lead with RGA's recommendation as one card");
+  // client_step04_fact_check_v2: what's left comes first; a match is one row under it (the bar and the band say the counts, so no section labels)
+  const tc = h.indexOf('data-fact="area"'), mg = h.indexOf('data-fact="name"');
+  if (tc < 0 || mg < tc || /To check ·|Matches Google ·/.test(h)) fail("open lines don't come first with matches one row each under them");
+  if (!/From your plan \(step 5\) · 1 of 3 on Google/.test(h) || /\+ Culver City/.test(h) || /Not on Google|We target/.test(h)) fail("the targets aren't one line (From your plan · N of M on Google), with a + chip only for the missing ones");
   if (!/data-area-chip="add" data-area-name="Mar Vista, CA" aria-pressed="true">\+ Mar Vista/.test(h) || !/placeholder="Add another area in CA"/.test(h) || !/<b data-area-count>4 \/ 20<\/b>/.test(h)) fail("the card lacks the add chips, the state in the input, or the 20-place meter");
 
   const none = ctx.rows(X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), []));
@@ -253,7 +255,8 @@ if (!/Google may ask you to verify the business again; we(?:'|’)ll tell you if
   const miss = ctx.rows({ ...X.factsView(X.factsFromGoogle(RGA_GOOGLE), X.toldFacts(RGA_CLIENT, null), []), missing: ["Palms, CA"] });
   if (!/Google doesn(?:'|&#39;)t list Palms, CA\.<\/b> Pick a nearby area, or keep your list without it\./.test(miss)) fail("a place Google doesn't list isn't told to the client");
 }
-if (!/\.pm-sa-ico \{[^}]*width:40px; height:40px;[^}]*align-items:center; justify-content:center;/.test(read("portal/portal.css")) || !/\.pm-sa-ico svg \{ width:22px; height:22px;/.test(read("portal/portal.css"))) fail("the card's icon isn't a centred 22px icon in a 40px tile (Chris 10-16: the icon looked lost)");
+// 🔄 client_step04_fact_check_v2 (approved 10-30): the box-in-a-box went, and its icon tile with it: the service area is rows of the one card
+if (!/\.pm-cs \.pm-sa \{[^}]*border:0;[^}]*background:none;/.test(read("portal/portal.css")) || /pm-sa-ico/.test(portal)) fail("the service area is a card inside the card again");
 if (!/function areaChecklistHtml\(g\)/.test(admin) || !/data-area-missing=/.test(admin) || !/const now = Array\.isArray\(g\.area_now\) \? g\.area_now : null;/.test(admin)) fail("admin's service-area checklist isn't ticked from Google (or has no \"Google doesn't list it\")");
 if (!/area_now: now\.area/.test(watch)) fail("the nightly check doesn't record which places Google lists (admin can't tick)");
 

@@ -1,527 +1,527 @@
 [
- [
-  "apostrophes split names",
-  "gbpfacts",
-  ".replace(/['’`]/g, \"\")",
-  "",
-  1
- ],
- [
-  "a short number matches a full one",
-  "gbpfacts",
-  "return hasCountry && s.length >= 7",
-  "return s.length >= 7",
-  1
- ],
- [
-  "tracking tags break a website match",
-  "gbpfacts",
-  "return `${x.hostname.toLowerCase().replace(/^www\\./, \"\")}${x.pathname.replace(/\\/+$/, \"\")}`;",
-  "return x.href;",
-  1
- ],
- [
-  "stuffed names not caught",
-  "gbpfacts",
-  "normName(google).startsWith(`${normName(told)} `)",
-  "false",
-  1
- ],
- [
-  "geography not read",
-  "gbpfacts",
-  "come: g === \"single_location\" || g === \"multi_location\" ? true : g === \"service_area\" ? false : null,",
-  "come: null,",
-  1
- ],
- [
-  "matching profile written anyway",
-  "gbpfacts",
-  "  const wantPhone = !samePhone(value.phone, before.phone), wantSite",
-  "  const wantPhone = true, wantSite",
-  1
- ],
- [
-  "other phone numbers dropped",
-  "gbpfacts",
-  "...(raw.phoneNumbers && raw.phoneNumbers.additionalPhones ? { additionalPhones: raw.phoneNumbers.additionalPhones } : {})",
-  "",
-  1
- ],
- [
-  "no read-back",
-  "gbpfacts",
-  "    if (missed.length) return",
-  "    if (false) return",
-  1
- ],
- [
-  "Google refusal not the client's",
-  "gbpfacts",
-  "if (/phone/i.test(s) && /INVALID_ARGUMENT/.test(s)) return",
-  "if (false) return",
-  1
- ],
- [
-  "name changed by the machine",
-  "gbpfacts",
-  "  if (!sameName(value.name, g.name)) out.push(",
-  "  if (false) out.push(",
-  1
- ],
- [
-  "empty name accepted",
-  "gbpfacts",
-  "  if (!name || name.length > 120) return",
-  "  if (name.length > 120) return",
-  1
- ],
- [
-  "record rewritten on every save",
-  "gbpfacts",
-  "  if (!told.phone || !samePhone(value.phone, told.phone)) patch.identity_phone = value.phone;",
-  "  patch.identity_phone = value.phone;",
-  1
- ],
- [
-  "multi-location flattened",
-  "gbpfacts",
-  "if (value.come === \"yes\" && g !== \"single_location\" && g !== \"multi_location\")",
-  "if (value.come === \"yes\" && g !== \"single_location\")",
-  1
- ],
- [
-  "phone change unnoticed nightly",
-  "gbpfacts",
-  "  if (c.phone && !samePhone(c.phone, now.phone)) diffs.push(",
-  "  if (false) diffs.push(",
-  1
- ],
- [
-  "RGA change finished early",
-  "gbpfacts",
-  "x.fact === \"name\" ? sameName(v.name, now.name)",
-  "x.fact === \"name\" ? true",
-  1
- ],
- [
-  "area matched by machine",
-  "gbpfacts",
-  "String(n).trim())) : false));",
-  "String(n).trim())) : true));",
-  1
- ],
- [
-  "not a Google step",
-  "gbpprofile",
-  ", FACTS: \"m1.gbp.business_facts\", SERVICES:",
-  ", SERVICES:",
-  1
- ],
- [
-  "record not updated",
-  "stepinputfn",
-  "      const patch = F.clientsPatch(parsed.value, client || {});",
-  "      const patch = {};",
-  1
- ],
- [
-  "record not read back",
-  "stepinputfn",
-  "        const ok = back && Object.entries(patch)",
-  "        const ok = true || Object.entries(patch)",
-  1
- ],
- [
-  "written phone not in change log",
-  "stepinputfn",
-  "(stepId === GSTEP.FACTS && (push.written || []).length)",
-  "false",
-  1
- ],
- [
-  "portal not sent what they told us",
-  "portalgbpprofile",
-  "F.factsView(google, F.toldFacts(client || {}, tasks[stepId]), F.targetsOf(tasks),",
-  "F.factsView(google, F.toldFacts({}, null), [],",
-  1
- ],
- [
-  "nightly doesn't finish RGA's change",
-  "gbpwatch",
-  "      if (F.rgaDone(task, now) && !((task.google_push.queue || []).length)) {",
-  "      if (false) {",
-  1
- ],
- [
-  "admin no facts table",
-  "admin",
-  "<table class=\"ob-gbpfacts\"><thead><tr><th>Fact</th>",
-  "<table class=\"ob-gbpfacts\"><thead><tr><th>What</th>",
-  1
- ],
- [
-  "no Your action",
-  "admin",
-  "    if (factsTodo.length) {",
-  "    if (false) {",
-  1
- ],
- [
-  "difference shows one value",
-  "portal",
-  "opts: [...(tv ? [{ v: tv, l: `${show(tv)}, mine` }] : []), ...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
-  "opts: [...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
-  1
- ],
- [
-  "no stuffed-name recommendation",
-  "portal",
-  "  if (now.recommend && now.recommend.name) {",
-  "  if (false) {",
-  1
- ],
- [
-  "unanswered line saves",
-  "portal",
-  "    if (missing.length) {\n      if (msg)",
-  "    if (false) {\n      if (msg)",
-  1
- ],
- [
-  "step numbers out of order",
-  "clientstepsjson",
-  "\"clientStepNo\": 7,",
-  "\"clientStepNo\": 8,",
-  1
- ],
- [
-  "every 10-digit number is American",
-  "portal",
-  "const nanp = [\"US\", \"CA\", \"PR\"].includes(g.region);",
-  "const nanp = true;",
-  1
- ],
- [
-  "no US formatting",
-  "portal",
-  "return escapeHtml(nanp && d.length === 10",
-  "return escapeHtml(false && d.length === 10",
-  1
- ],
- [
-  "a pick shows nothing",
-  "portal",
-  "    ans.innerHTML = `<span class=\"ck\" aria-hidden=\"true\">✓</span><span class=\"l\">${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</span><span class=\"v\">${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
-  "    ans.innerHTML = \"\";",
-  1
- ],
- [
-  "the last line doesn't save",
-  "portal",
-  "const save = allAnswered && !caution && wrap.querySelector(\"[data-in-submit]\");",
-  "const save = false;",
-  1
- ],
- [
-  "the save doesn't spin",
-  "portal",
-  "      save.classList.add(\"is-busy\", \"is-busy-say\");",
-  "      save.classList.add(\"x\");",
-  1
- ],
- [
-  "places matched by full string",
-  "gbpfacts",
-  "  return !!x && x === y;\n}",
-  "  return String(a) === String(b);\n}",
-  1
- ],
- [
-  "ZIPs not matched",
-  "gbpfacts",
-  "  if (/^\\d{5}$/.test(x)) return x === y || x === zipOf(b);",
-  "  if (false) return x === y || x === zipOf(b);",
-  1
- ],
- [
-  "state not read",
-  "gbpfacts",
-  "function factsFromGoogle(j) { const f = factsFromGoogle0(j); f.state = stateOf(j, f); return f; }",
-  "function factsFromGoogle(j) { const f = factsFromGoogle0(j); return f; }",
-  1
- ],
- [
-  "RGA's own areas recommended",
-  "gbpfacts",
-  "  if (tg.length) recommend.area = { targets: tg, add, state: google.state };",
-  "  if (tg.length || true) recommend.area = { targets: tg, add: tg.length ? add : [\"Mar Vista\"], state: google.state };",
-  1
- ],
- [
-  "missing place recommended again",
-  "gbpfacts",
-  "(targets || []).filter((name) => !hasPlace(missing, name, google.state))",
-  "(targets || [])",
-  1
- ],
- [
-  "no 20 limit",
-  "gbpfacts",
-  "    if (keep.length + add.length > 20) return",
-  "    if (false) return",
-  1
- ],
- [
-  "kept place dropped",
-  "gbpfacts",
-  "!kept.has(String(p).trim()) && ",
-  "",
-  1
- ],
- [
-  "area ticked before Google lists it",
-  "gbpfacts",
-  "x.add.every((n) => hasPlace(now.area, n, now.state) || coveredIn(g, n))",
-  "true",
-  1
- ],
- [
-  "text box back",
-  "portal",
-  "<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div></div>${areaCardHtml({ g, ra, open: false })}",
-  "<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div><textarea class=\"pm-in-field pm-fact-other\" data-fact-other=\"area\" rows=\"2\"></textarea></div>",
-  1
- ],
- [
-  "no targets drawn",
-  "portal",
-  "<em class=\"${t.on ? \"ok\" : \"\"}\">${t.on ? \"On Google\" : \"Not on Google\"}</em>",
-  "",
-  1
- ],
- [
-  "icon tile small again",
-  "portalcss",
-  ".pm-sa-ico svg { width:22px; height:22px; display:block; }",
-  ".pm-sa-ico svg { width:14px; height:14px; display:block; }",
-  1
- ],
- [
-  "admin ticks by hand",
-  "admin",
-  "  const now = Array.isArray(g.area_now) ? g.area_now : null;",
-  "  const now = item.add;",
-  1
- ],
- [
-  "nightly doesn't record places",
-  "gbpwatch",
-  "area_now: now.area,",
-  "area_now: null,",
-  1
- ],
- [
-  "count from a recommendation again",
-  "portal",
-  "  const st = rows.map((r) => (r.classList.contains(\"is-answered\") ? \"a\" : r.classList.contains(\"is-open\") ? \"o\" : \"m\"));",
-  "  const st = rows.map(() => \"o\");",
-  1
- ],
- [
-  "matches not folded",
-  "portal",
-  "const open = rows.filter((r) => /class=\"pm-fact is-open/.test(r)), ok = rows.filter((r) => !/class=\"pm-fact is-open/.test(r));",
-  "const open = rows, ok = [];",
-  1
- ],
- [
-  "top stacks again",
-  "portal",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
-  "    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : false ? gnow :",
-  1
- ],
- [
-  "card-only row has a pill again",
-  "portal",
-  "  if (state === \"recommend\") return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
-  "  if (false) return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
-  1
- ],
- [
-  "the card collapses while saving",
-  "portal",
-  "    if (lastOne) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
-  "    if (false) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
-  1
- ],
- [
-  "after saving the ask repeats",
-  "portal",
-  "          : step.id === \"m1.gbp.business_facts\" && (isDone || gbpWithRga) ? \"\"\n",
-  "",
-  1
- ],
- [
-  "summary says as on Google",
-  "portal",
-  "const area = ar.keep || ar.add ? `Service area: ${nPl} place",
-  "const area = false ? `Service area: ${nPl} place",
-  1
- ],
- [
-  "RGA's step stays now",
-  "portal",
-  "!r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
-  "!r.withRga && !r.notDue)",
-  1
- ],
- [
-  "how-to off screen again",
-  "portal",
-  "if (detail.hidden && anchor && anchor.nextElementSibling !== detail) anchor.after(detail);",
-  "",
-  1
- ],
- [
-  "admin hides the answer while active",
-  "admin",
-  "        <div class=\"ob-body\">${askNote}${",
-  "        <div class=\"ob-body\">${askNote}${\"\" && ",
-  1
- ],
- [
-  "admin says as on Google",
-  "admin",
-  "[\"Service area\", \"area\", v.area?.keep || v.area?.add ?",
-  "[\"Service area\", \"area\", false ?",
-  1
- ],
- [
-  "no Maps link read",
-  "gbpfacts",
-  "const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea,metadata\";",
-  "const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea\";",
-  1
- ],
- [
-  "progress always waiting",
-  "gbpfacts",
-  "on: !!now && (hasPlace(now.area, n, now.state) || !!by)",
-  "on: false",
-  1
- ],
- [
-  "progress claims on Google with no read",
-  "gbpfacts",
-  "on: !!now && sameName(v.name, now.name)",
-  "on: !now || sameName(v.name, now.name)",
-  1
- ],
- [
-  "nightly stores no progress",
-  "gbpwatch",
-  "area_now_at: atNow, progress: prog,",
-  "area_now_at: atNow,",
-  1
- ],
- [
-  "no done note",
-  "gbpwatch",
-  "done_note_until: new Date(nowMs + 86400000).toISOString().slice(0, 10), ",
-  "",
-  1
- ],
- [
-  "client sees no chips",
-  "portal",
-  "(areaChips ? `<div class=\"pm-pc-chips\">${areaChips}</div>` : \"\")",
-  "(\"\")",
-  1
- ],
- [
-  "done note never shows",
-  "portal",
-  "  if (t.status === \"done\" && g.done_note_until && today <= g.done_note_until) {",
-  "  if (false) {",
-  1
- ],
- [
-  "missing never told",
-  "portal",
-  "  if (t.status !== \"done\" && missing.length) {",
-  "  if (false) {",
-  1
- ],
- [
-  "class collides again",
-  "admincss",
-  ".ob-gbpfacts { width:100%; border-collapse:collapse;",
-  ".ob-gbpfacts { display:flex; }\n.ob-gbpfacts { width:100%; border-collapse:collapse;",
-  1
- ],
- [
-  "a mismatched fact is hidden in the closed fold",
-  "admin",
-  "body = `<details class=\"ob-ff\"${nBad ? \" open\" : \"\"}>",
-  "body = `<details class=\"ob-ff\">",
-  1
- ],
- [
-  "the fold line stops counting",
-  "admin",
-  "<b>${facts.length} facts compared with Google</b>",
-  "<b>Facts</b>",
-  1
- ],
- [
-  "a done step still says RGA is changing",
-  "admin",
-  "const stOf = (k) => rgaOf.has(k) && gp.state !== \"on_google\" ? \"rga\"",
-  "const stOf = (k) => rgaOf.has(k) ? \"rga\"",
-  1
- ],
- [
-  "a name RGA is changing reads as matching",
-  "portal",
-  "    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), changing(\"name\") ? busy : ok),",
-  "    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), ok),",
-  1
- ],
- [
-  "an address RGA is changing reads as matching",
-  "portal",
-  "changing(\"come\") ? busy : ok, come ? \"Your address stays hidden on Google\"",
-  "ok, come ? \"Your address stays hidden on Google\"",
-  1
- ],
- [
-  "a waiting place looks already on Google",
-  "portal",
-  "x.on ? \"dot\" : \"rga\"]),",
-  "\"dot\"]),",
-  1
- ],
- [
-  "RGA's card hides the places it is adding",
-  "portal",
-  "    + (changing(\"area\") ? csChips(\"Service area\", areaItems) : \"\")",
-  "    + \"\"",
-  1
- ],
- [
-  "the nightly read's Maps link is ignored",
-  "portal",
-  "  const mapsUrl = g.maps_uri || (g.progress && g.progress.maps_uri) || (a && a.mapsUri) || null;",
-  "  const mapsUrl = g.maps_uri || (a && a.mapsUri) || null;",
-  1
- ],
- [
-  "step 4's card drops See it on Google Maps",
-  "portal",
-  "  const foot = csFoot({ maps: mapsUrl });",
-  "  const foot = csFoot({});",
-  1
- ]
+[
+"apostrophes split names",
+"gbpfacts",
+".replace(/['’`]/g, \"\")",
+"",
+1
+],
+[
+"a short number matches a full one",
+"gbpfacts",
+"return hasCountry && s.length >= 7",
+"return s.length >= 7",
+1
+],
+[
+"tracking tags break a website match",
+"gbpfacts",
+"return `${x.hostname.toLowerCase().replace(/^www\\./, \"\")}${x.pathname.replace(/\\/+$/, \"\")}`;",
+"return x.href;",
+1
+],
+[
+"stuffed names not caught",
+"gbpfacts",
+"normName(google).startsWith(`${normName(told)} `)",
+"false",
+1
+],
+[
+"geography not read",
+"gbpfacts",
+"come: g === \"single_location\" || g === \"multi_location\" ? true : g === \"service_area\" ? false : null,",
+"come: null,",
+1
+],
+[
+"matching profile written anyway",
+"gbpfacts",
+"  const wantPhone = !samePhone(value.phone, before.phone), wantSite",
+"  const wantPhone = true, wantSite",
+1
+],
+[
+"other phone numbers dropped",
+"gbpfacts",
+"...(raw.phoneNumbers && raw.phoneNumbers.additionalPhones ? { additionalPhones: raw.phoneNumbers.additionalPhones } : {})",
+"",
+1
+],
+[
+"no read-back",
+"gbpfacts",
+"    if (missed.length) return",
+"    if (false) return",
+1
+],
+[
+"Google refusal not the client's",
+"gbpfacts",
+"if (/phone/i.test(s) && /INVALID_ARGUMENT/.test(s)) return",
+"if (false) return",
+1
+],
+[
+"name changed by the machine",
+"gbpfacts",
+"  if (!sameName(value.name, g.name)) out.push(",
+"  if (false) out.push(",
+1
+],
+[
+"empty name accepted",
+"gbpfacts",
+"  if (!name || name.length > 120) return",
+"  if (name.length > 120) return",
+1
+],
+[
+"record rewritten on every save",
+"gbpfacts",
+"  if (!told.phone || !samePhone(value.phone, told.phone)) patch.identity_phone = value.phone;",
+"  patch.identity_phone = value.phone;",
+1
+],
+[
+"multi-location flattened",
+"gbpfacts",
+"if (value.come === \"yes\" && g !== \"single_location\" && g !== \"multi_location\")",
+"if (value.come === \"yes\" && g !== \"single_location\")",
+1
+],
+[
+"phone change unnoticed nightly",
+"gbpfacts",
+"  if (c.phone && !samePhone(c.phone, now.phone)) diffs.push(",
+"  if (false) diffs.push(",
+1
+],
+[
+"RGA change finished early",
+"gbpfacts",
+"x.fact === \"name\" ? sameName(v.name, now.name)",
+"x.fact === \"name\" ? true",
+1
+],
+[
+"area matched by machine",
+"gbpfacts",
+"String(n).trim())) : false));",
+"String(n).trim())) : true));",
+1
+],
+[
+"not a Google step",
+"gbpprofile",
+", FACTS: \"m1.gbp.business_facts\", SERVICES:",
+", SERVICES:",
+1
+],
+[
+"record not updated",
+"stepinputfn",
+"      const patch = F.clientsPatch(parsed.value, client || {});",
+"      const patch = {};",
+1
+],
+[
+"record not read back",
+"stepinputfn",
+"        const ok = back && Object.entries(patch)",
+"        const ok = true || Object.entries(patch)",
+1
+],
+[
+"written phone not in change log",
+"stepinputfn",
+"(stepId === GSTEP.FACTS && (push.written || []).length)",
+"false",
+1
+],
+[
+"portal not sent what they told us",
+"portalgbpprofile",
+"F.factsView(google, F.toldFacts(client || {}, tasks[stepId]), F.targetsOf(tasks),",
+"F.factsView(google, F.toldFacts({}, null), [],",
+1
+],
+[
+"nightly doesn't finish RGA's change",
+"gbpwatch",
+"      if (F.rgaDone(task, now) && !((task.google_push.queue || []).length)) {",
+"      if (false) {",
+1
+],
+[
+"admin no facts table",
+"admin",
+"<table class=\"ob-gbpfacts\"><thead><tr><th>Fact</th>",
+"<table class=\"ob-gbpfacts\"><thead><tr><th>What</th>",
+1
+],
+[
+"no Your action",
+"admin",
+"    if (factsTodo.length) {",
+"    if (false) {",
+1
+],
+[
+"difference shows one value",
+"portal",
+"opts: [...(tv ? [{ v: tv, l: `${show(tv)}, mine` }] : []), ...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
+"opts: [...(gv ? [{ v: gv, l: `${show(gv)}, Google's` }] : [])]",
+1
+],
+[
+"no stuffed-name recommendation",
+"portal",
+"  if (now.recommend && now.recommend.name) {",
+"  if (false) {",
+1
+],
+[
+"unanswered line saves",
+"portal",
+"    if (missing.length) {\n      if (msg)",
+"    if (false) {\n      if (msg)",
+1
+],
+[
+"step numbers out of order",
+"clientstepsjson",
+"\"clientStepNo\": 7,",
+"\"clientStepNo\": 8,",
+1
+],
+[
+"every 10-digit number is American",
+"portal",
+"const nanp = [\"US\", \"CA\", \"PR\"].includes(g.region);",
+"const nanp = true;",
+1
+],
+[
+"no US formatting",
+"portal",
+"return escapeHtml(nanp && d.length === 10",
+"return escapeHtml(false && d.length === 10",
+1
+],
+[
+"a pick shows nothing",
+"portal",
+"    ans.innerHTML = `<span class=\"mk ok\" aria-hidden=\"true\">${CS_ICON.ok}</span><span><b>${escapeHtml(row.getAttribute(\"data-fact-name\") || \"\")}</b><small>${escapeHtml(pick.getAttribute(\"data-fact-label\") || pick.textContent.trim())}</small></span><button type=\"button\" class=\"pm-linkbtn\" data-fact-redo>Change</button>`;",
+"    ans.innerHTML = \"\";",
+1
+],
+[
+"the last line doesn't save",
+"portal",
+"const save = allAnswered && wrap.querySelector(\"[data-in-submit]\");",
+"const save = false;",
+1
+],
+[
+"the save doesn't spin",
+"portal",
+"      save.classList.add(\"is-busy\", \"is-busy-say\");",
+"      save.classList.add(\"x\");",
+1
+],
+[
+"places matched by full string",
+"gbpfacts",
+"  return !!x && x === y;\n}",
+"  return String(a) === String(b);\n}",
+1
+],
+[
+"ZIPs not matched",
+"gbpfacts",
+"  if (/^\\d{5}$/.test(x)) return x === y || x === zipOf(b);",
+"  if (false) return x === y || x === zipOf(b);",
+1
+],
+[
+"state not read",
+"gbpfacts",
+"function factsFromGoogle(j) { const f = factsFromGoogle0(j); f.state = stateOf(j, f); return f; }",
+"function factsFromGoogle(j) { const f = factsFromGoogle0(j); return f; }",
+1
+],
+[
+"RGA's own areas recommended",
+"gbpfacts",
+"  if (tg.length) recommend.area = { targets: tg, add, state: google.state };",
+"  if (tg.length || true) recommend.area = { targets: tg, add: tg.length ? add : [\"Mar Vista\"], state: google.state };",
+1
+],
+[
+"missing place recommended again",
+"gbpfacts",
+"(targets || []).filter((name) => !hasPlace(missing, name, google.state))",
+"(targets || [])",
+1
+],
+[
+"no 20 limit",
+"gbpfacts",
+"    if (keep.length + add.length > 20) return",
+"    if (false) return",
+1
+],
+[
+"kept place dropped",
+"gbpfacts",
+"!kept.has(String(p).trim()) && ",
+"",
+1
+],
+[
+"area ticked before Google lists it",
+"gbpfacts",
+"x.add.every((n) => hasPlace(now.area, n, now.state) || coveredIn(g, n))",
+"true",
+1
+],
+[
+"text box back",
+"portal",
+"<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div></div>`) + areaCardHtml({ g, ra, open: !!missing.length, missing })",
+"<button type=\"button\" class=\"pm-amend\" data-area-edit>Change the list</button></div><textarea class=\"pm-in-field pm-fact-other\" data-fact-other=\"area\" rows=\"2\"></textarea></div>`)",
+1
+],
+[
+"no targets drawn",
+"portal",
+"const plan = targets.length ? `",
+"const plan = false ? `",
+1
+],
+[
+"the service area is a box inside the card again",
+"portalcss",
+".pm-cs .pm-sa { grid-column:auto; display:grid; gap:8px; min-width:0; border:0;",
+".pm-cs .pm-sa { grid-column:auto; display:grid; gap:8px; min-width:0; border:1px solid var(--portal-line);",
+1
+],
+[
+"admin ticks by hand",
+"admin",
+"  const now = Array.isArray(g.area_now) ? g.area_now : null;",
+"  const now = item.add;",
+1
+],
+[
+"nightly doesn't record places",
+"gbpwatch",
+"area_now: now.area,",
+"area_now: null,",
+1
+],
+[
+"count from a recommendation again",
+"portal",
+"  const st = rows.map((r) => (r.classList.contains(\"is-answered\") ? \"a\" : r.classList.contains(\"is-open\") ? \"o\" : \"m\"));",
+"  const st = rows.map(() => \"o\");",
+1
+],
+[
+"matches not folded",
+"portal",
+"const open = rows.filter((r) => /class=\"pm-fact is-open/.test(r)), ok = rows.filter((r) => !/class=\"pm-fact is-open/.test(r));",
+"const open = rows, ok = [];",
+1
+],
+[
+"top stacks again",
+"portal",
+"    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : s.kind === \"facts\" || s.kind === \"hours\" ? gnow :",
+"    const head = s.kind === \"booking\" || step.id === \"m1.gbp.attributes\" || step.id === \"m1.gbp.services_products\" ? \"\" : false ? gnow :",
+1
+],
+[
+"card-only row has a pill again",
+"portal",
+"  if (state === \"recommend\") return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
+"  if (false) return `<div class=\"pm-fact is-open pm-fx-cardonly\"",
+1
+],
+[
+"the card collapses while saving",
+"portal",
+"    if (lastOne) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
+"    if (false) {\n      pick.classList.add(\"is-busy\", \"is-busy-say\");",
+1
+],
+[
+"after saving the ask repeats",
+"portal",
+"          : step.id === \"m1.gbp.business_facts\" && (isDone || gbpWithRga) ? \"\"\n",
+"",
+1
+],
+[
+"summary says as on Google",
+"portal",
+"const area = ar.keep || ar.add ? `Service area: ${nPl} place",
+"const area = false ? `Service area: ${nPl} place",
+1
+],
+[
+"RGA's step stays now",
+"portal",
+"!r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
+"!r.withRga && !r.notDue)",
+1
+],
+[
+"how-to off screen again",
+"portal",
+"if (detail.hidden && anchor && anchor.nextElementSibling !== detail) anchor.after(detail);",
+"",
+1
+],
+[
+"admin hides the answer while active",
+"admin",
+"        <div class=\"ob-body\">${askNote}${",
+"        <div class=\"ob-body\">${askNote}${\"\" && ",
+1
+],
+[
+"admin says as on Google",
+"admin",
+"[\"Service area\", \"area\", v.area?.keep || v.area?.add ?",
+"[\"Service area\", \"area\", false ?",
+1
+],
+[
+"no Maps link read",
+"gbpfacts",
+"const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea,metadata\";",
+"const READ_MASK = \"title,phoneNumbers,websiteUri,storefrontAddress,serviceArea\";",
+1
+],
+[
+"progress always waiting",
+"gbpfacts",
+"on: !!now && (hasPlace(now.area, n, now.state) || !!by)",
+"on: false",
+1
+],
+[
+"progress claims on Google with no read",
+"gbpfacts",
+"on: !!now && sameName(v.name, now.name)",
+"on: !now || sameName(v.name, now.name)",
+1
+],
+[
+"nightly stores no progress",
+"gbpwatch",
+"area_now_at: atNow, progress: prog,",
+"area_now_at: atNow,",
+1
+],
+[
+"no done note",
+"gbpwatch",
+"done_note_until: new Date(nowMs + 86400000).toISOString().slice(0, 10), ",
+"",
+1
+],
+[
+"client sees no chips",
+"portal",
+"(areaChips ? `<div class=\"pm-pc-chips\">${areaChips}</div>` : \"\")",
+"(\"\")",
+1
+],
+[
+"done note never shows",
+"portal",
+"  if (t.status === \"done\" && g.done_note_until && today <= g.done_note_until) {",
+"  if (false) {",
+1
+],
+[
+"missing never told",
+"portal",
+"  if (t.status !== \"done\" && missing.length) {",
+"  if (false) {",
+1
+],
+[
+"class collides again",
+"admincss",
+".ob-gbpfacts { width:100%; border-collapse:collapse;",
+".ob-gbpfacts { display:flex; }\n.ob-gbpfacts { width:100%; border-collapse:collapse;",
+1
+],
+[
+"a mismatched fact is hidden in the closed fold",
+"admin",
+"body = `<details class=\"ob-ff\"${nBad ? \" open\" : \"\"}>",
+"body = `<details class=\"ob-ff\">",
+1
+],
+[
+"the fold line stops counting",
+"admin",
+"<b>${facts.length} facts compared with Google</b>",
+"<b>Facts</b>",
+1
+],
+[
+"a done step still says RGA is changing",
+"admin",
+"const stOf = (k) => rgaOf.has(k) && gp.state !== \"on_google\" ? \"rga\"",
+"const stOf = (k) => rgaOf.has(k) ? \"rga\"",
+1
+],
+[
+"a name RGA is changing reads as matching",
+"portal",
+"    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), changing(\"name\") ? busy : ok),",
+"    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), ok),",
+1
+],
+[
+"an address RGA is changing reads as matching",
+"portal",
+"changing(\"come\") ? busy : ok, come ? \"Your address stays hidden on Google\"",
+"ok, come ? \"Your address stays hidden on Google\"",
+1
+],
+[
+"a waiting place looks already on Google",
+"portal",
+"x.on ? \"dot\" : \"rga\"]),",
+"\"dot\"]),",
+1
+],
+[
+"RGA's card hides the places it is adding",
+"portal",
+"    + (changing(\"area\") ? csChips(\"Service area\", areaItems) : \"\")",
+"    + \"\"",
+1
+],
+[
+"the nightly read's Maps link is ignored",
+"portal",
+"  const mapsUrl = g.maps_uri || (g.progress && g.progress.maps_uri) || (a && a.mapsUri) || null;",
+"  const mapsUrl = g.maps_uri || (a && a.mapsUri) || null;",
+1
+],
+[
+"step 4's card drops See it on Google Maps",
+"portal",
+"  const foot = csFoot({ maps: mapsUrl });",
+"  const foot = csFoot({});",
+1
+]
 ]

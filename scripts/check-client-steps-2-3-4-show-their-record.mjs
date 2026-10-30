@@ -55,7 +55,7 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
     if (c === '"' || c === "'" || c === "`") { q = c; continue; }
     if ("([{".includes(c)) d++; else if (")]}".includes(c)) d--; else if (c === ";" && d === 0) return P.slice(at + 1, i + 1).replace(/^const /, "var "); }
   return ""; };
-for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles", "ACC_TAG"]) vm.runInContext(block(n), ctx);
+for (const n of ["RECORD_CARD", "rcRow", "_rcEditing", "CT_ATTRIB", "CT_COUNT", "CT_PROVIDERS", "CT_QS", "CT_YN", "ctWhy", "_ctAnswers", "_accNames", "_accRoles"]) vm.runInContext(block(n), ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // the shared plan card (steps_1_4_clean_v1) + the client card system (10-29)
 for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName"]) vm.runInContext(lift(n), ctx);
 vm.runInContext(`var _accHosts = {}; var ACC_FILES = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
@@ -76,7 +76,7 @@ if (!/pm-k5-plan pm-cs-card rga/.test(wait2) || !/<b>Checking we can sign in<\/b
 const old2 = run("m1.access.website", { status: "done", client_input: "https://onetimesecret.com/secret/abc", client_input_at: "2026-09-21T16:20:00Z" });
 if (!/Switch to an invite \(safer\)/.test(old2) || /onetimesecret/.test(old2)) fail("an old password link isn't offered the switch to an invite, or its link is shown");
 const ask2 = run("m1.access.website", {});
-if (!/data-acc-host/.test(ask2) || !/pm-k5-plan pm-cs-card you/.test(ask2) || !/<span>takes 2–5 min<\/span>/.test(ask2) || !/Never send us your password\./.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
+if (!/data-acc-host/.test(ask2) || !/pm-k5-plan pm-cs-card you/.test(ask2) || !/<span data-acc-when>takes 2–5 min<\/span>/.test(ask2) || !/Never send us your password\./.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
 const skip3 = run("m1.tracking.call_setup", { status: "done", client_choice: "skip", client_choice_at: "2026-10-20T12:00:00Z" });
 // 🔄 10-26 (steps_6_20_clean_v1, step 11 done): "Skipped for now · decided", the one row, when we ask again
 if (!/<b>Skipped for now<\/b>/.test(skip3) || !/call-button clicks/.test(skip3) || !/we'll ask again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);

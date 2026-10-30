@@ -83,11 +83,12 @@ if (/class="pm-linkbtn" data-acc-(designer|none)/.test(P)) fail("\"My web design
 // 🔒 step3_parts_v1 + step3_part_colours_v1 (10-22): three labelled parts coloured by state; before a pick Steps 2–3 read "Not yet";
 // the send button lives in Step 3 ("Then"), never as a faded button with no reason
 if (!/\$\{accPart\(2, "Instructions: do this", "next", "", "Shows once you pick your builder"\)\}\$\{accPart\(3, "Tell RGA you've sent it", "next"\)\}/.test(P)) fail("before a builder is picked, Steps 2 and 3 don't show as Not yet");
-if (!/\$\{accPart\(1, dev \? "Where your website lives" : "Your website builder", "done", picked\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Give RGA access to your website", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accBuilderSetupHtml\(p, key, host, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send data-via="\$\{via\}"\$\{via === "workaround" \|\| host\._accConsent \? "" : " disabled"\}>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
-if (!/const ACC_TAG = \{ you: "Your move", then: "Then", work: "Working", done: "Done", rga: "With RGA", next: "Not yet" \};/.test(P)) fail("the parts' state tags changed (Your move · Then · Working · Done · With RGA · Not yet)");
+if (!/\$\{accPart\(1, selName, "done", picked, \[selSub, checked\]\.filter\(Boolean\)\.join\(" · "\), `<button type="button" class="pm-ax-chg" data-acc-change>Change<\/button>`\)\}\$\{accPart\(2, dev \? "Give RGA access to your website\'s files" : "Give RGA access to your website", "you", dev \? accCustomSetupHtml\(p, hk, host\) : accBuilderSetupHtml\(p, key, host, j\.site\)\)\}\$\{accPart\(3, "Tell RGA when it\'s done", s3state, tell/.test(P) || !/<button type="button" class="pm-commit" data-acc-send data-via="\$\{via\}"\$\{via === "workaround" \|\| host\._accConsent \? "" : " disabled"\}>/.test(P)) fail("after a pick, the three parts (done · your move · then, with the send button in Step 3) aren't drawn");
+// client_step03_builder_v2: the panel tags went; the disc says the state (a tick when done, the number otherwise) + the row's class
+if (!/<span class="pm-ax-disc" aria-hidden="true">\$\{state === "done" \? PC_TICK : n\}<\/span>/.test(P) || !/const st = state === "then" \|\| state === "work" \? "you" : state;/.test(P)) fail("the parts' state isn't on the disc (a tick when done, the number otherwise)");
 // 🔒 CHECKING = the three parts from the first second (step3_three_screens_v1), never a lone pill
 if (!/accPart\(1, "Checking your website", "work",/.test(P) || /Checking which builder your website uses…<\/span><\/div>`/.test(P)) fail("while checking, step 3 is a lone pill again (the three parts must show from the first second)");
-for (const st of ["st-you", "st-done", "st-rga", "st-next"]) if (!new RegExp(`\\.pm-ax-part\\.${st} \\{`).test(CSS)) fail(`the ${st} part has no colour (it takes the state's token)`);
+for (const st of ["st-you", "st-done", "st-next"]) if (!new RegExp(`\\.pm-ax-row\\.${st} > `).test(CSS)) fail(`the ${st} part has no colour (it takes the state's token)`);
 if (/the builder below says how long|data-acc-send disabled>Pick your builder first/.test(P)) fail("the old confusing wording is back");
 if (!/const ini = key === "custom" \? "<\/>" : key === "other" \? "\?" : \(words\[0\] \|\| "\?"\)\[0\]\.toUpperCase\(\);/.test(P)) fail("the builder tile shows two letters again (\"WO\" read like a word)");
 if (!/data-acc-cancel>Cancel<\/button>/.test(P) || !/if \(tgt\.closest\("\[data-acc-cancel\]"\)\) \{ e\.preventDefault\(\); _rcEditing\.delete\("m1\.access\.website"\);/.test(P)) fail("there's no way out of Updating without reloading (Cancel)");
@@ -117,7 +118,7 @@ if (!/if \(!opts\.local \|\| !_rgaWaitsCache\.has\(clientId\)\) await loadPortal
   }
   if ((PL.shopify?.steps || []).some((x) => /^Type it below/.test(x.t))) fail("Shopify repeats its last step (\"Type it below…\")");
   if (!/\.pm-ax-give \.pm-ax-copy \{ max-width:100%; min-width:0; \}/.test(CSS)) fail("the email chip can overflow its box again (Chris 10-22)");
-  if (!/\.pm-ax-sel \.pm-ax-mono \{ color:#fff; \}/.test(CSS)) fail("the builder's initials are greyed out again");
+  if (!/\.pm-cs-acc \.pm-ax-mono \{ color:#fff;/.test(CSS)) fail("the builder's initials are greyed out again");
 }
 // ── the save
 if (!/\["invite", "designer", "none", "request", "workaround"\]\.includes\(o\.via\)/.test(INP) || !/\["invite", "designer", "request", "workaround"\]\.includes\(parsed\.value\.via\)/.test(INP)) fail("the save doesn't take the request / checklist paths (or finishes them without RGA)");
