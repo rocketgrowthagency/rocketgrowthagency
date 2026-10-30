@@ -56,7 +56,7 @@ const task = { draft_shape: shape, team_size: "1", detected };
 const h = ctx.how(step, task, true, photos, "c1", null);
 const at = (s) => h.indexOf(s);
 const iLine = at('<div class="pm-k5-plan you">'), iTiles = at('<div class="pm-p10-tiles">'), iPanel = at('<div class="pm-p10-panel"'), iTool = at('<div class="pm-tool'), iList = at('<span class="k">The shot list'), iAlso = at('<div class="pm-pc-also">'), iTips = at('<details class="pm-k5-fold pm-tipline"');
-if ([iLine, iTiles, iPanel, iTool, iList, iAlso, iTips].some((x) => x < 0) || !(iLine < iTiles && iTiles < iPanel && iPanel < iTool && iTool < iList && iList < iAlso && iAlso < iTips)) fail(`the card isn't: band → tiles → the shot → team question → the shot list → already on Google → tips (${[iLine, iTiles, iPanel, iTool, iList, iAlso, iTips]})`);
+if ([iLine, iTiles, iPanel, iTool, iList, iAlso, iTips].some((x) => x < 0) || !(iLine < iTool && iTool < iTiles && iTiles < iPanel && iPanel < iList && iList < iAlso && iAlso < iTips)) fail(`the card isn't (client_step10_photos_v4): band → team question → tiles → the shot → the shot list → already on Google → tips (${[iLine, iTiles, iPanel, iTool, iList, iAlso, iTips]})`);
 if (/<div class="pm-slots[" ]|<details class="pm-sgrp/.test(h)) fail("the open step still draws the folded kinds (client_step10_photos_v3: tiles + one shot)");
 if (/pm-how-only|Only you can do this step|pm-how-why|Why it matters:|pm-sec pm-already|Have a batch already/.test(h)) fail("an old block is back above the list (the orange box, \"Why it matters\", the already-on-Google box or the batch bar)");
 if (/Only you can take these/.test(text(h))) fail("a line sits above the card again (the band says it)");
@@ -68,7 +68,7 @@ const tiles = [...h.matchAll(/data-p10-t="(\d+)" aria-pressed/g)].map((m) => Num
 if (tiles.length !== 20 || new Set(tiles).size !== 20) fail(`the tiles aren't the 20 shots, each once (${tiles.length})`);
 { const [c1] = tileOf(h, 1), [c7, l7] = tileOf(h, 7), [c8, l8] = tileOf(h, 8), [c2] = tileOf(h, 2);
   if (!/\bis-on\b/.test(c1 || "") || !/\bis-re\b/.test(c7 || "") || !/\bis-re\b/.test(c8 || "") || l7 !== "Retake" || l8 !== "Retake" || /\bis-(on|re|rga)\b/.test(c2 || "x")) fail(`the tiles don't say what's true (on Google ✓ · Retake · empty): 1 "${c1}" · 7 "${c7}" ${l7} · 8 "${c8}" ${l8} · 2 "${c2}"`); }
-if (!text(h.slice(iAlso, iTips)).includes("1 of them was already on Google.")) fail("the card doesn't say \"1 of them was already on Google.\"");
+if (!text(h.slice(iAlso, iTips)).includes("1 photo was already on your Google profile.")) fail("the card doesn't say \"1 photo was already on your Google profile.\"");
 { const soloH = ctx.how(step, { ...task, detected: { ...detected, n: 3 } }, true, [{ id: "r", shot_n: 9, publish_state: "in_review" }], "c1", null), solo = text(soloH);
   const [c9, l9] = tileOf(soloH, 9);
   if (!/<b>3 of 20 on Google · 1 with RGA for review<\/b><span>17 to go<\/span>/.test(soloH) || /to retake/.test(solo) || !/\bis-rga\b/.test(c9 || "") || l9 !== "With RGA") fail(`a photo with RGA for review isn't counted apart (band "· 1 with RGA for review", its tile "With RGA") (${(/<b>[^<]*of 20[^<]*<\/b>/.exec(soloH) || [""])[0]} · ${c9} ${l9})`); }
@@ -85,7 +85,7 @@ if (!/if \(d\.hasAttribute\("data-fold-held"\)\) return;/.test(portal)) fail("wh
 { const wait = ctx.how(step, task, true, photos, "c1", { open: false, duplicates: [{ name: "locations/2" }] });
   if (!/<details class="pm-sgrp pm-acc[^"]*has-re" data-fold="kind:interior" open data-fold-held>/.test(wait)) fail("while the listing waits, the kind holding a retake stays folded"); }
 // ── 4 · the toolbar holds the team question; "Add N at once" lives in each kind's empty shots ──
-const tool = h.slice(iTool, iList);
+const tool = h.slice(iTool, iTiles);
 if (!/data-photo-team/.test(tool) || !/How many people are in your business\?/.test(tool) || /data-batch|<select/.test(tool)) fail("the toolbar isn't just the team question (the batch upload lives in each kind's shot)");
 const many = (n) => { const a = h.indexOf(`data-p10-shot="${n}"`); if (a < 0) return null; const b = h.indexOf('<div class="pm-p10-shot"', a + 10); const m = /<div class="pm-kind-up pm-p10-many">.*?Add (\d+) at once<input[^>]*data-batch[^>]*data-cat="([^"]+)" data-empty="([^"]*)"/s.exec(h.slice(a, b < 0 ? undefined : b)); return m ? { n: m[1], cat: m[2], empty: m[3] } : null; };
 const team = many(9), work = many(14), interior = many(6);

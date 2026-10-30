@@ -100,8 +100,8 @@
  [
   "step 14's Optional pill goes",
   "portal",
-  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>${csOptPill}",
-  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>",
+  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>${csEditPill}${csMinPill}${csOptPill}",
+  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>${csEditPill}${csMinPill}",
   1
  ],
  [
@@ -305,6 +305,76 @@
   "portalcss",
   ".pm-cs .pm-p10-shot[hidden] { display:none; }",
   "",
+  1
+ ],
+ [
+  "step 10 foot loses Maps",
+  "portal",
+  "${p10Foot}${tipsFold.replace(",
+  "${tipsFold.replace(",
+  1
+ ],
+ [
+  "closed How leaves a strip",
+  "portalcss",
+  ".pm-cs .pm-cs-card > details.pm-cs-howb:not([open]) { display:none; }",
+  "",
+  1
+ ],
+ [
+  "open How draws a box",
+  "portalcss",
+  ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0; border:0;",
+  ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0;",
+  1
+ ],
+ [
+  "click leaves a blue box",
+  "portalcss",
+  ".pm-cs .pm-cs-foot .how:focus:not(:focus-visible), ",
+  "",
+  1
+ ],
+ [
+  "step 3 button flush",
+  "portalcss",
+  ".pm-cs .pm-doit > .pm-k5 + .pm-k5-acts, ",
+  "",
+  1
+ ],
+ [
+  "tick not sized to the tile",
+  "portalcss",
+  ".pm-cs .pm-p10-t.is-on .ok { font-size:clamp(14px, 26cqw, 40px); line-height:1; }",
+  "",
+  1
+ ],
+ [
+  "empty box says nothing",
+  "portalcss",
+  "content:\"Your photo goes here\";",
+  "content:\"\";",
+  1
+ ],
+ [
+  "no minutes pill",
+  "portal",
+  "Number(step.clientMinutes) > 0 ? `<span class=\"pm-pill wait off\" data-min-pill>",
+  "false ? `<span class=\"pm-pill wait off\" data-min-pill>",
+  1
+ ],
+ [
+  "no Done + Editing",
+  "portal",
+  "const csEditPill = csRow && editing && ownerPill.cls === \"edit\" ?",
+  "const csEditPill = false ?",
+  1
+ ],
+ [
+  "people question after the tiles",
+  "portal",
+  "body: p10 ? `${toolbar}${p10}${alsoFold",
+  "body: p10 ? `${p10}${toolbar}${alsoFold",
   1
  ]
 ]

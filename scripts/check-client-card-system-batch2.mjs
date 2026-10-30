@@ -147,7 +147,7 @@ const AT = "2026-10-20T15:00:00Z";
   if (allow12 < 0 || allow12 > det) fail("step 12 allowed isn't \"RGA is on it\" ahead of \"Detected automatically\"");
   if (!/else if \(step\.clientOptional && ownerPill\.text === "Optional"\) Object\.assign\(ownerPill, \{ text: "Your turn", cls: "you" \}\);/.test(P)
     || !/const csOptPill = csRow && step\.clientOptional && \(!isDone \|\| status === "skipped"\) \? `<span class="pm-pill wait off" data-opt-pill>Optional<\/span>` : "";/.test(P)
-    || !/<span class="pm-pill \$\{ownerPill\.cls\}">\$\{escapeHtml\(ownerPill\.text\)\}<\/span>\$\{csOptPill\}/.test(P)) fail("step 14's row on the system isn't \"Your turn\" + its own second \"Optional\" pill (data-opt-pill)");
+    || !/<span class="pm-pill \$\{ownerPill\.cls\}">\$\{escapeHtml\(ownerPill\.text\)\}<\/span>\$\{csEditPill\}\$\{csMinPill\}\$\{csOptPill\}/.test(P)) fail("step 14's row on the system isn't \"Your turn\" + its own second \"Optional\" pill (data-opt-pill)");
   if (!/else if \(step\.id === "m1\.call\.close" && !isDone && \(ownWait \|\| rgaWait\)\) \{ const e = month1EndOf\(waitTasks\); Object\.assign\(ownerPill, \{ text: e \? `Opens about \$\{monthDay\(new Date\(e\.getTime\(\) - 3 \* 86400000\)\.toISOString\(\)\)\}` : "Opens near the end of Month 1"/.test(P)) fail("step 15 waiting isn't the \"Opens about <date>\" pill (like its card)");
   if (!/const csQuiet = CS_STEPS\.has\(step\.id\) && !month2Only && \["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close"\]\.includes\(step\.id\) && !flagged;/.test(P) || !/const amendBtn = stepLk \|\| csQuiet \? ""\n\s*: flagged/.test(P)) fail("steps 13–15 draw Check again / Not right? beside a settled card again (or a raised flag loses its \"It's fine after all\")"); }
 
@@ -274,14 +274,14 @@ try {
     for (const [hook, n] of [[/data-slot-file data-client-id="c1" data-shot-n="\d+"/, n4], [/data-photo-remove="r2"/, n2], [/data-photo-remove="t" data-photo-clear/, n3], [/data-photo-remove="p1" data-on-google/, n1]]) if (!hook.test(rowOf(h, n))) fail(`step 10 (${biz}): shot ${n}'s row lost ${hook.source}`);
     // the band, the order of the card, the shot list, the batch
     if (!/<b>1 of 20 on Google · 1 with RGA for review · 1 to retake<\/b><span>19 to go<\/span>/.test(h)) fail(`step 10 (${biz}): the band doesn't add "· 1 with RGA for review · 1 to retake" (${(/<b>[^<]*of 20[^<]*<\/b>/.exec(h) || [""])[0]})`);
-    const at = (s) => h.indexOf(s), order = [at('<div class="pm-p10-tiles">'), at('<div class="pm-p10-panel"'), at('<div class="pm-tool'), at('<span class="k">The shot list · tap a kind to jump to it</span>'), at('<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this step works</summary>')];
-    if (order.some((x) => x < 0) || order.some((x, i) => i && x < order[i - 1])) fail(`step 10 (${biz}): the card isn't tiles → the shot → team question → the shot list → How this step works (${order})`);
+    const at = (s) => h.indexOf(s), order = [at('<div class="pm-tool'), at('<div class="pm-p10-tiles">'), at('<div class="pm-p10-panel"'), at('<span class="k">The shot list · tap a kind to jump to it</span>'), at('<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this step works</summary>')];
+    if (order.some((x) => x < 0) || order.some((x, i) => i && x < order[i - 1])) fail(`step 10 (${biz}): the card isn't (v4) team question → tiles → the shot → the shot list → How this step works (${order})`);
     if (/<div class="pm-slots[" ]|<details class="pm-sgrp/.test(h)) fail(`step 10 (${biz}): the open step still draws the folds`);
     const kinds = [...h.matchAll(/<button type="button" class="pm-p10-k" data-p10-kind="([\d,]+)">/g)].map((m) => m[1].split(",").map(Number));
     if (!kinds.length || kinds.flat().sort((a, b) => a - b).join() !== [...ns].sort((a, b) => a - b).join()) fail(`step 10 (${biz}): the shot list's kinds don't cover every shot once`);
     const many = [...h.matchAll(/<div class="pm-kind-up pm-p10-many"><span>[^<]*<\/span><label class="pm-act is-guide">Add (\d+) at once<input type="file" multiple [^>]*data-slot-file data-batch data-cat="[^"]+" data-empty="([\d,]+)" data-client-id="c1" hidden><\/label>/g)];
     if (!many.length || many.some((m) => Number(m[1]) !== Math.min(10, m[2].split(",").length) || m[2].split(",").length < 2)) fail(`step 10 (${biz}): "Add N at once" (data-batch + data-empty) isn't on a kind with 2+ empty shots`);
-    if (/<div class="pm-tool[^"]*">[^]*?data-batch[^]*?<span class="k">The shot list/.test(h)) fail(`step 10 (${biz}): the team question carries an upload`);
+    if (/<div class="pm-tool[^"]*">[^]*?data-batch[^]*?<div class="pm-p10-tiles">/.test(h)) fail(`step 10 (${biz}): the team question carries an upload`);
     // the open shot is remembered, but never a finished one
     pc.sel.set("c1", n4); const r4 = pc.render(STEP, task, photos, "c1", TIPS);
     if (!new RegExp(`<div class="pm-p10-shot" data-p10-shot="${n4}">`).test(r4)) fail(`step 10 (${biz}): the shot they opened isn't kept across a redraw (_p10Sel)`);
@@ -297,7 +297,18 @@ try {
   pc.sel.clear();
   const s = pc.render(STEP, { draft_shape: sab, team_size: "1", detected: { n: 1, threshold: 20, source: "google_profile" } }, [{ id: "lg", shot_n: logoN, category: "logo", publish_state: "published", pushed_at: "2026-10-09T00:00:00Z", storage_path: "l.jpg" }], "c1", '<details class="pm-tipline" data-fold="tips"><summary>Photo tips</summary></details>');
   if (!/<div class="pm-cs-note"><b>Needs your space:<\/b> Google lists you as a business that goes to its customers/.test(s)) fail("step 10: an all-premises kind's shot lost \"Needs your space\" for a business that goes to its customers");
-  if (!/<div class="pm-cs-note">Your logo is saved on Google, but Google hides it until your profile shows a street address\.<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
+  if (!/<div class="pm-cs-note">Your logo is saved on Google, but Google hides it until your profile shows a street address\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
+  // ── 10-30: how_this_step_works_v2 + step 10 v4 ──
+  if (!/const p10Foot = p10 \? csFoot\(\{ maps:/.test(P) || !/\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(P)) fail("step 10's foot lost See it on Google Maps (How must share one line with it)");
+  const CSS10 = read("portal/portal.css");
+  if (!/\.pm-cs \.pm-cs-card > details\.pm-cs-howb:not\(\[open\]\) \{ display:none; \}/.test(CSS10)) fail("a closed How leaves a strip under the foot (the card shows two bottoms)");
+  if (!/details\.pm-tipline \.pm-tiplist \{ margin:0; border:0;/.test(CSS10)) fail("an open How draws a box inside the card");
+  if (!/\.pm-cs \.pm-cs-foot \.how:focus:not\(:focus-visible\)/.test(CSS10)) fail("clicking How leaves a blue box round it");
+  if (!/\.pm-cs \.pm-doit > \.pm-k5 \+ \.pm-k5-acts/.test(CSS10)) fail("step 3's Change something sits flush under its card (it must be 12px, like every step)");
+  if (!/\.pm-cs \.pm-p10-t\.is-on \.ok \{ font-size:clamp\(/.test(CSS10)) fail("a done tile's tick isn't sized to the tile");
+  if (!/content:"Your photo goes here"/.test(CSS10)) fail("the empty photo box doesn't say what goes there");
+  if (!/const csMinPill = csRow && ownerPill\.cls === "you" && ownerPill\.text === "Your turn" && Number\(step\.clientMinutes\) > 0/.test(P)) fail("a step on the client's turn lost its \"about N min\" pill (from clientMinutes)");
+  if (!/const csEditPill = csRow && editing/.test(P)) fail("changing a done step isn't \"Done\" + an amber \"Editing\"");
   // the tile handler: the file's LAST listener, and it handles a tile, a kind and ‹ Shot ›
   const last = P.lastIndexOf('document.addEventListener("click"'), tail = P.slice(last);
   if (!/closest\("\[data-p10-t\], \[data-p10-kind\]"\)/.test(tail) || !/_p10Sel\.set\(/.test(tail) || P.trimEnd().slice(-4) !== "\n});") fail("step 10's tile / kind handler isn't the last listener in portal.js");

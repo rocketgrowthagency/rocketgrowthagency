@@ -26,5 +26,6 @@ if (!/if \(hc\) hc\.textContent = String\(tick\.closest\("\.pm-in-ticks"\)\.quer
 if (!/\.pm-in-hours\.is-appt ~ \.pm-in-copy \{ display:none; \}/.test(css)) fail.push("By appointment leaves \"Copy Monday to Tue–Fri\" showing (the old + selector never matched)");
 if (!/\.pm-cs \.pm-in-day\.is-closed > \[data-in-open\], \.pm-cs \.pm-in-day\.is-closed > \[data-in-close\]/.test(css)) fail.push("a closed day shows its empty time boxes again");
 if (!/@media \(max-width:560px\) \{\s*\/\*[^*]*\*\/\s*\.pm-cs \.pm-in-how2 \{ grid-template-columns:minmax\(0,1fr\); \}\s*\.pm-cs \.pm-in-day \{ grid-template-columns:40px minmax\(0,1fr\); \}/.test(css)) fail.push("on a phone the day rows don't stack (the time boxes get cut to \"09:\")");
+if (!/\.pm-cs \.pm-in-day > \.pm-in-second-add \{ grid-column:6; justify-self:start; \}/.test(css)) fail.push("\"+ 2nd time\" drifts across the row instead of sitting after the times");
 if (fail.length) { console.log(`🔴 step 7's hours editor isn't the approved V2 — ${fail.length} problem(s):\n${fail.map((f) => `   · ${f}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 7's hours editor is the approved V2: Set hours (RGA recommends) / By appointment first, the cost said before saving, the week + copy link hidden by appointment, holidays counted live, closed days say —, phone rows stack");

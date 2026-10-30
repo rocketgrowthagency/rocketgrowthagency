@@ -86,15 +86,15 @@
  [
   "step 10's already-on-Google jumps above the tiles",
   "portal",
-  "body: p10 ? `${p10.replace(\"<!--p10-team-->\", toolbar)}${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}",
-  "body: p10 ? `${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}${p10.replace(\"<!--p10-team-->\", toolbar)}",
+  "body: p10 ? `${toolbar}${p10}${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}",
+  "body: p10 ? `${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}${toolbar}${p10}",
   1
  ],
  [
   "step 10's shot list moves above the tiles",
   "portal",
-  "<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div><!--p10-team-->${kinds}`",
-  "${kinds}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div><!--p10-team-->`",
+  "<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>${kinds}`",
+  "${kinds}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>`",
   1
  ]
 ]
