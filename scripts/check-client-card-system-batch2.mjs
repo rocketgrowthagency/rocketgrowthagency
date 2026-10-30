@@ -328,6 +328,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   const s = pc.render(STEP, { draft_shape: sab, team_size: "1", detected: { n: 1, threshold: 20, source: "google_profile" } }, [{ id: "lg", shot_n: logoN, category: "logo", publish_state: "published", pushed_at: "2026-10-09T00:00:00Z", storage_path: "l.jpg" }], "c1", '<details class="pm-tipline" data-fold="tips"><summary>Photo tips</summary></details>');
   if (!/<div class="pm-cs-note"><b>Needs your space:<\/b> Google lists you as a business that goes to its customers/.test(s)) fail("step 10: an all-premises kind's shot lost \"Needs your space\" for a business that goes to its customers");
   if (!/<div class="pm-cs-note">Your logo is saved on Google, but Google hides it until your profile shows a street address\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
+  if (!/csListingOut \? listingWaitHtml\(csListing\) : csNote\(/.test(P)) fail("a client with a duplicate listing lost \"Remove your second Business Profile\" on the grey wait card: it's their only way forward");
   // ── 10-30: how_this_step_works_v2 + step 10 v4 ──
   if (!/const p10Foot = p10 \? csFoot\(\{ maps:/.test(P) || !/\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(P)) fail("step 10's foot lost See it on Google Maps (How must share one line with it)");
   const CSS10 = read("portal/portal.css");
