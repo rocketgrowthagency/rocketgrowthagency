@@ -1,0 +1,233 @@
+[
+ [
+  "a contact page alone becomes RGA's pick",
+  "admin",
+  "  if (tools.length + pages.length) return { sc: err ? \"said_no\" : \"pick\", opts, err };",
+  "  if (opts.length) return { sc: err ? \"said_no\" : \"pick\", opts, err };",
+  1
+ ],
+ [
+  "couldn't read the site reads as nothing found",
+  "admin",
+  "  if (n.read && n.read.ok === false && !opts.length) return { sc: \"unread\", status: n.read.status || 0, why: n.read.why || \"\" };\n",
+  "",
+  1
+ ],
+ [
+  "Google's working link doesn't finish the step",
+  "admin",
+  "  if (gl && gl.opens) return { sc: \"keep\", link: gl.clean || gl.url };\n",
+  "",
+  1
+ ],
+ [
+  "verify-again doesn't pause the button",
+  "admin",
+  "  if (reverify) return { sc: \"verify\" };\n",
+  "",
+  1
+ ],
+ [
+  "Google offering none isn't said",
+  "admin",
+  "  if (Array.isArray(n.types) && !n.types.length) return { sc: \"notoffered\" };\n",
+  "",
+  1
+ ],
+ [
+  "a partner isn't RGA's pick first",
+  "admin",
+  ".sort((a, b) => (b.partner ? 1 : 0) - (a.partner ? 1 : 0))",
+  "",
+  1
+ ],
+ [
+  "Google saying no isn't its own state",
+  "admin",
+  "return { sc: err ? \"said_no\" : \"pick\", opts, err };",
+  "return { sc: \"pick\", opts, err };",
+  1
+ ],
+ [
+  "the pick card loses its checks",
+  "admin",
+  "lab + bk36Tiles(cid, v.opts, sel) + bk36ChecksHtml(null), BK36_PUT_FOOT);\n  if (v.sc === \"broken\")",
+  "lab + bk36Tiles(cid, v.opts, sel), BK36_PUT_FOOT);\n  if (v.sc === \"broken\")",
+  1
+ ],
+ [
+  "Put it on Google starts enabled",
+  "admin",
+  "data-bk36-put disabled>Put it on Google",
+  "data-bk36-put>Put it on Google",
+  1
+ ],
+ [
+  "the done card promises a Book button",
+  "admin",
+  "<b>Google's booking button opens it</b>",
+  "<b>Shows as a Book button on their Google profile</b>",
+  1
+ ],
+ [
+  "RGA's put shows What the client sent",
+  "admin",
+  "if (step?.flowId === \"m1.gbp.booking_link\" && task?.google_push && task.google_push.by === \"rga\" && task.google_push.state === \"on_google\") return bk36DoneCardHtml(task);",
+  "",
+  1
+ ],
+ [
+  "the Remind title names the contact again",
+  "admin",
+  "title: `Remind ${c.business_name || \"the client\"} to ${remindWhat(ctx.o)}`,",
+  "title: `Remind ${c.primary_contact_name || \"the client\"} to ${remindWhat(ctx.o)}`,",
+  1
+ ],
+ [
+  "Open in Gmail instead comes back",
+  "admin",
+  "    okLabel: \"Send reminder\",\n    cancelLabel: \"Not yet\",",
+  "    okLabel: \"Send reminder\",\n    altLabel: \"Open in Gmail instead\",\n    cancelLabel: \"Not yet\",",
+  1
+ ],
+ [
+  "the email shows as markup again",
+  "admin",
+  "    preview: (text) => globalThis.rgaLetter.letter(text).html,\n",
+  "",
+  1
+ ],
+ [
+  "admin dialogs lose their X",
+  "admin",
+  "        <button type=\"button\" class=\"rga-modal-x\" data-act=\"x\" aria-label=\"Close\">${RGA_MODAL_X}</button>\n",
+  "",
+  1
+ ],
+ [
+  "the X sends instead of closing",
+  "admin",
+  "wrap.querySelector('[data-act=\"x\"]').addEventListener(\"click\", () => done(cancelVal));",
+  "wrap.querySelector('[data-act=\"x\"]').addEventListener(\"click\", () => done(isPrompt ? input.value : true));",
+  1
+ ],
+ [
+  "the hours popup loses its X",
+  "admin",
+  "  wrap.querySelector(\"#kfX\").addEventListener(\"click\", close);",
+  "",
+  1
+ ],
+ [
+  "the portal popup loses its X",
+  "portal",
+  "    card.querySelector(\"[data-pm-x]\").addEventListener(\"click\", () => close(alertOnly ? true : false));",
+  "",
+  1
+ ],
+ [
+  "the booking email loses its why",
+  "admin",
+  "\"Your Google profile doesn't have a booking link yet, so people who find you on Google can't book with you from there.\"",
+  "\"Your booking link is waiting.\"",
+  1
+ ],
+ [
+  "put skips the checks",
+  "bookingfn",
+  "  if (!passed) { const f = checks.find((c) => !c.ok); return json(409, { error: `Not sent: ${f.detail || f.label}.`, checks }); }\n",
+  "",
+  1
+ ],
+ [
+  "put runs during verify-again",
+  "bookingfn",
+  "  if (action !== \"check\" && rv && rv.state === \"lost\") return json(409,",
+  "  if (false && rv && rv.state === \"lost\") return json(409,",
+  1
+ ],
+ [
+  "Google's own pending edits are ignored",
+  "bookingfn",
+  "md.hasVoiceOfMerchant === true && md.hasPendingEdits !== true",
+  "md.hasVoiceOfMerchant === true",
+  1
+ ],
+ [
+  "a link that doesn't open passes",
+  "bookingfn",
+  "const linkOk = !refused && !!(open && open.ok) && typeOk;",
+  "const linkOk = !refused && typeOk;",
+  1
+ ],
+ [
+  "put doesn't open the client's veto",
+  "bookingfn",
+  "    rga_put: { at, url: push.link, by: gate.email || \"rga\", ack: null } };",
+  "  };",
+  1
+ ],
+ [
+  "settle keep doesn't check the link opens",
+  "bookingfn",
+  "      if (!open.ok) return json(409, { error: \"Google's link doesn't open, so it isn't kept.\" });\n",
+  "",
+  1
+ ],
+ [
+  "the veto never appears",
+  "openmoves",
+  "  if (bk && bkStep && bk.rga_put && !bk.rga_put.ack && bk.status === \"done\") {",
+  "  if (false) {",
+  1
+ ],
+ [
+  "the veto turns late",
+  "openmoves",
+  "  const due = m.since && m.days != null ? (m.owner",
+  "  const due = m.since ? (m.owner",
+  1
+ ],
+ [
+  "the veto stays after Keep it",
+  "openmoves",
+  "bk.rga_put && !bk.rga_put.ack && bk.status",
+  "bk.rga_put && bk.status",
+  1
+ ],
+ [
+  "admin chases the veto",
+  "adminopenmovesfn",
+  "    if (m.kind === \"rga_put\") continue;\n",
+  "",
+  1
+ ],
+ [
+  "Keep it doesn't record",
+  "bookingkeep",
+  "rga_put: { ...task.rga_put, ack: { decision: \"keep\", at, by: gate.email || null } } };",
+  "rga_put: { ...task.rga_put } };",
+  1
+ ],
+ [
+  "Change it doesn't answer the veto",
+  "stepinputfn",
+  "  if (stepId === GSTEP.BOOKING && prev.rga_put && !prev.rga_put.ack) tasks[stepId].rga_put = { ...prev.rga_put, ack: { decision: \"changed\", at: now, by: gate.email || null } };\n",
+  "",
+  1
+ ],
+ [
+  "the To do pane is the old step pane",
+  "portal",
+  "    if (e.kind === \"rga_put\" && e.mv) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "couldn't read returns read ok",
+  "bookinglink",
+  "    if (!r.ok) return empty({ ok: false, status: r.status || 0, why: \"http\" });",
+  "    if (!r.ok) return empty({ ok: true });",
+  1
+ ]
+]

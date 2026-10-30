@@ -45,6 +45,9 @@ export const READ_ONLY_FN_POSTS = {
   // admin-gbp-categories.js (admin_step31_categories_v1) — action "check" READS the categories and asks Google for a validateOnly test
   // (Google saves nothing); "add" and "drop" write and stay blocked.
   "admin-gbp-categories": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "check",
+  // admin-gbp-booking.js (step36_booking_rga_does_it_v1, 10-29) — action "check" only READS (Google's metadata + attributes, the link's own
+  // page); "put" writes to Google and "settle" writes the record, so both stay blocked
+  "admin-gbp-booking": (b) => onlyKeys(["client_id", "action", "url"])(b) && b.action === "check",
   // portal-gbp-verify.js (2026-10-15) — action "status" only READS the profile and Google's offered ways (start / complete
   // ask Google to send or check a code, and stay blocked). Token cache refresh as above.
   "portal-gbp-verify": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "status",

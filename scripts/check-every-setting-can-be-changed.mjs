@@ -82,7 +82,8 @@ for (const [v, bad] of [["```yaml\nprimary: SEO Agency", "```yaml"], ["---\n# Ti
 }
 
 // ── the strip, the editor, and what the save writes ────────────────────────────────────────────
-if (!/\$\{stepSettingHtml\(s\.task, o\)\}/.test(code)) F("the done card no longer renders the setting strip");
+// (10-29: steps 31 · 32 · 33 show their result in their own approved card, so their strip is left out — every other done row keeps it)
+if (!/\$\{stepSettingHtml\(s\.task, o\)\}|\? "" : stepSettingHtml\(s\.task, o\)\}<\/div>`;/.test(code)) F("the done card no longer renders the setting strip");
 if (!/data-setting-change/.test(code)) F("there is no Change control");
 if (!/data-setting-save/.test(code)) F("there is no Save control on the editor");
 if (!/data-onboard-undo|↩ Undo/.test(code)) F("Undo is gone — Change replaced it, but they mean different things and both must stay");

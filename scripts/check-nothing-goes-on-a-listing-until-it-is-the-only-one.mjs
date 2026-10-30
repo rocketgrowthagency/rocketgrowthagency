@@ -162,6 +162,8 @@ const step39 = (verdict) => {
   const c = {
     secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
     photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: () => "E|g|1", formatDateTime: () => "Oct 9", obNumberOf: () => 11,
+    // the lifted stretch now carries the step 31 / 32 cards' page-level observers (10-29) — inert here
+    MutationObserver: class { observe() {} }, document: { documentElement: {}, querySelectorAll: () => [], addEventListener() {} }, window: {},
     state: { selectedClient: { id: "c1" }, photos: [{ id: "p8", client_id: "c1", shot_n: 8, category: "interior", publish_state: "in_review", storage_path: "x" }, { id: "p9", client_id: "c1", shot_n: 9, category: "interior", publish_state: "in_review", storage_path: "y" }],
       onboardingData: { tasks: { [DUP]: verdict ? { outcome_data: { verdict, duplicates: [{}] } } : undefined, "m1.gbp.photos": { draft_shape: { items }, photo_ai: { uploads: { p8: { matches: true }, p9: { matches: true } } } } } } },
   };

@@ -77,8 +77,9 @@ vm.runInContext(`${srcSince}\n${srcDraft}\nthis.since = stepWaitingSince; this.d
   if (!m.body.includes("1 of the 20 photos")) F("the nudge does not carry the measurement's own numbers");
   if (!m.body.includes("/portal/#step-m1.gbp.photos")) F("the nudge does not link to the step itself");
   // (was m1.gbp.messaging — retired 10-16, Google ended GBP chat; any unmeasured client step serves)
-  const u = ctx.draft({ flowId: "m1.gbp.booking_link", clientLabel: "Add your GBP booking link" }, {});
-  if (u.subject !== "Your next step: Add your Google profile booking link") F(`an unmeasured step's subject was "${u.subject}"`);
+  // (10-29: step 36's booking link has its own approved reminder — step36_booking_rga_does_it_v1 — so the plain case is step 35's)
+  const u = ctx.draft({ flowId: "m1.gbp.attributes", clientLabel: "Confirm what's true of your GBP" }, {});
+  if (u.subject !== "Your next step: Confirm what's true of your Google profile") F(`an unmeasured step's subject was "${u.subject}"`);
   if (/\d+ of \d+|to go/.test(u.body + u.text)) F("an unmeasured step's nudge contains a count — an invented number");
   ctx.state.selectedClient = {};
   if (!ctx.draft(o, {}).body.startsWith("Hi there,")) F("with no contact name the nudge must say \"Hi there\", not \"Hi undefined\"");

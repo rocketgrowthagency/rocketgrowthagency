@@ -155,25 +155,22 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
 // ── admin: steps 35 + 36 — the client's move ───────────────────────────────────────────────────
 if (!/\(ZC_CLIENT_ASK\[o\.flowId\] && task\?\.client_input == null && st !== "skipped" \? "" : btn\("skipped", "Skip"\)\)/.test(AJS)) fail("steps 35/36: Skip is still a header button (the mockup puts it in the card as a quiet link)");
 if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.booking_link", "m1\.gbp\.photos"\]\)/.test(AJS) || !/const inner = \(rowHasDone \|\| ZC_NO_HAND_DONE\.has\(o\.flowId\) \? "" : btn\("done", "Done"\)\)/.test(AJS)) fail("steps 35/36/38: RGA can still tick a client's Google step Done");
-{ const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml"].map((n) => lift(AJS, n));
+{ const p2 = ["ZC_CLIENT_ASK", "zcClientAskHtml", "bk36Card"].map((n) => lift(AJS, n));
   if (p2.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the client's-move card moved"); process.exit(2); }
   const c2 = { escapeHtml: esc, escapeAttribute: esc, OL_G: "<svg></svg>", CLIENT_GBP_STEPS: { "m1.gbp.attributes": "What's true of the business (Google details)", "m1.gbp.booking_link": "Booking link" } };
   vm.createContext(c2); vm.runInContext(p2.join("\n") + "\nthis.ask = zcClientAskHtml;", c2);
   const a = c2.ask("m1.gbp.attributes", "c1", { clientStepNo: 8, clientLabel: "Confirm what's true of your business" }), b = c2.ask("m1.gbp.booking_link", "c1", { clientStepNo: 9, clientLabel: "Add your booking link" });
-  if (!/Client portal step 8, "Confirm what&#39;s true of your business"|Client portal step 8, "Confirm what's true of your business"/.test(a) || !/Client portal step 9, "Add your booking link"/.test(b)) fail("steps 35/36: the client's step isn't named by its playbook number and title");
+  if (!/Client portal step 8, "Confirm what&#39;s true of your business"|Client portal step 8, "Confirm what's true of your business"/.test(a)) fail("step 35: the client's step isn't named by its playbook number and title");
   if (!/data-task-set="m1\.gbp\.attributes" data-task-status="skipped">Skip this step…/.test(a)) fail("steps 35/36: Skip isn't the quiet link in the card");
   if (!/Client's move/.test(a) || !/Waiting for the client to tick what's true/.test(a) || !/On Google · read back/.test(a)) fail("step 35: the card doesn't say whose move, what they do, and the path");
-  if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a) || !/data-step-nudge="m1\.gbp\.booking_link">Remind the client…/.test(b)) fail("steps 35/36: Remind the client… isn't the confirm-first nudge");
+  if (!/data-step-nudge="m1\.gbp\.attributes">Remind the client…/.test(a)) fail("step 35: Remind the client… isn't the confirm-first nudge");
   if (/Shows you the message first/.test(a + b)) fail("steps 35/36: the footer carries a note the approved mockups don't have");
-  if (!/class="ob-zc-prog"/.test(a) || /class="ob-zc-prog"/.test(b)) fail("steps 35/36: the 1-2-3 path is on 35's mockup only (36 goes straight to the options)");
+  if (!/class="ob-zc-prog"/.test(a)) fail("step 35: the 1-2-3 path is gone");
   if (/data-task-status="done"|<button[^>]*>Done</.test(a + b)) fail("steps 35/36: a Done button is in the card");
-  if (!/data-ob-bk-rec="c1"/.test(b) || !/What the client sees first/.test(b)) fail("step 36: RGA's pick isn't shown as the client sees it");
+  // 🔒 step 36 is now step36_booking_rga_does_it_v1 (approved Chris 10-29, SUPERSEDES admin_step36_booking_v1): its card is drawn once Google
+  // and their website are read — every scenario is pinned by check-step-36-booking-every-scenario.mjs
+  if (!/data-ob-bk36="c1"/.test(b) || !/Reading their Google profile and website…/.test(b)) fail("step 36: the card isn't drawn from what Google and their website say (step36_booking_rga_does_it_v1)");
 }
-// step 36's tiles (admin_step36_booking_v1): RGA's pick blue-dashed, every other option a PLAIN WHITE tile saying "Also found", and the label
-// says "found on their homepage" when every option was read off their homepage
-if (!/<div class="ob-zc-place \$\{i \? "opt" : "add"\}">/.test(AJS) || !/\.ob-zc-place\.opt \{ border:1px solid var\(--admin-border\); background:var\(--admin-surface\); \}/.test(ACSS)) fail("step 36: the other option isn't the plain white tile");
-if (!/\/\^\(Found on their homepage\|Their contact page\)\$\/\.test\(x\.why\) \? "Also found"/.test(AJS)) fail("step 36: the other option doesn't say \"Also found\"");
-if (!/lab\.textContent = "What the client sees first · found on their homepage"/.test(AJS)) fail("step 36: the label never says \"found on their homepage\"");
 // 🔴 Remind the client… on a QUEUED row (35 · 36 · 38 aren't the active step) did NOTHING: the nudge handler reads state.waitCtx, which only
 // the active branch filled (found 10-29 by clicking it in a write-blocked browser). Every branch that can draw the card registers it, and
 // the handler never returns silently.

@@ -133,6 +133,7 @@ const EXCUSED = {
   "portal-reply.js": "RGA's reply stamps replied_at on the client's OWN ask (flag / change request) — never the step's answer (admin_row8_done_v2)",
   "portal-review-requests.js": "writes client_customer_lists; only reads the record",
   "portal-thread.js": "writes data.messages_seen_at (read receipts), not a step",
+  "portal-booking-keep.js": "writes only rga_put.ack — the client's Keep it on the booking link RGA put on Google (their veto, step36_booking_rga_does_it_v1), never the step's answer; Change it goes through portal-step-input (locked)",
   "portal-merge-choice.js": "writes merge_by (who presses Merge: RGA or the client) on the CONFIRMED access step: a setting the client may change any time after it locks, never the grant (merge_without_the_browser_v1)",
 };
 for (const f of fs.readdirSync(`${SITE}/netlify/functions`).filter((x) => /^(portal-|cancel-kickoff)/.test(x) && x.endsWith(".js"))) {

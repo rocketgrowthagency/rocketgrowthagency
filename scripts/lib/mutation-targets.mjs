@@ -77,7 +77,7 @@ export const FILES = {
   reportview: "netlify/functions/fga-report-view.js",
   outcomefn: "netlify/functions/kickoff-call-outcome.js",
   reviewsql: "docs/supabase/RGA_CLIENT_PHOTO_REVIEW_2026-10-09.sql",
-  letter: "netlify/functions/_letter.js",
+  letter: "shared/letter.js",   // 10-29: the code moved here (_letter.js re-exports it; admin previews with it)
   photolists: "netlify/functions/_photo-lists.js",
   phototeam: "netlify/functions/portal-photo-team.js",
   playbooksjson: "data/playbooks/playbooks.json",
@@ -219,6 +219,9 @@ export const FILES = {
   accessconfirmfn: "netlify/functions/admin-access-confirm.js",
   deliv: "netlify/functions/_deliverables.js",
   githubaccess: "netlify/functions/_github-access.js",
+  bookingfn: "netlify/functions/admin-gbp-booking.js",   // step36_booking_rga_does_it_v1 (10-29): admin step 36 Put it on Google
+  bookingkeep: "netlify/functions/portal-booking-keep.js",   // the client's Keep it on the booking-link To do
+  profilefn: "netlify/functions/portal-gbp-profile.js",
   rgalogins: "netlify/functions/_rga-logins.js",   // admin_row9_vault_v2 (10-27): step 9 settles itself with step 8   // step3_admin_accept_v1 (10-27): accept the client's GitHub invite from admin
 
 };

@@ -224,34 +224,6 @@
   1
  ],
  [
-  "step 36: the other option goes blue-dashed again",
-  "admin",
-  "<div class=\"ob-zc-place ${i ? \"opt\" : \"add\"}\">",
-  "<div class=\"ob-zc-place ${i ? \"\" : \"add\"}\">",
-  1
- ],
- [
-  "step 36: the plain white tile style is lost",
-  "css",
-  ".ob-zc-place.opt { border:1px solid var(--admin-border); background:var(--admin-surface); }",
-  "",
-  1
- ],
- [
-  "step 36: a contact page says its kind, not \"Also found\"",
-  "admin",
-  "/^(Found on their homepage|Their contact page)$/.test(x.why) ? \"Also found\"",
-  "x.why === \"Found on their homepage\" ? \"Also found\"",
-  1
- ],
- [
-  "step 36: the homepage label never set",
-  "admin",
-  "lab.textContent = \"What the client sees first · found on their homepage\"",
-  "lab.title = \"\"",
-  1
- ],
- [
   "remind sends without confirming (the card skips the draft dialog)",
   "admin",
   "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button>`",
@@ -263,13 +235,6 @@
   "admin",
   "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button>`",
   "data-step-nudge=\"${escapeAttribute(flowId)}\">Remind the client…</button><span class=\"ob-zc-note\">Shows you the message first. Nothing is sent until you confirm.</span>`",
-  1
- ],
- [
-  "step 36 gets the 1-2-3 path back",
-  "admin",
-  "const path = flowId === \"m1.gbp.booking_link\" ? \"\" : `<div class=\"ob-zc-prog\">",
-  "const path = `<div class=\"ob-zc-prog\">",
   1
  ],
  [
