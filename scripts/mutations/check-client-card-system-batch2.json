@@ -2,8 +2,8 @@
  [
   "step 10 leaves the card system",
   "portal",
-  "\"m1.kickoff.call\", \"m1.gbp.photos\"]);",
-  "\"m1.kickoff.call\"]);",
+  "\"m1.kickoff.call\", \"m1.gbp.photos\",\n  \"m2.exec.review_push\"",
+  "\"m1.kickoff.call\",\n  \"m2.exec.review_push\"",
   1
  ],
  [
@@ -100,8 +100,8 @@
  [
   "step 14's Optional pill goes",
   "portal",
-  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>${csEditPill}${csMinPill}${csOptPill}",
-  "<span class=\"pm-pill ${ownerPill.cls}\">${escapeHtml(ownerPill.text)}</span>${csEditPill}${csMinPill}",
+  "`${csEditPill}${csMinPill}${csOptPill}",
+  "`${csEditPill}${csMinPill}",
   1
  ],
  [

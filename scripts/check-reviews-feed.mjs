@@ -13,6 +13,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { csBlock } from "./lib/portal-cs.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -159,9 +160,11 @@ const src = read("portal/portal.js"), css = read("portal/portal.css");
 const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = src.indexOf("{", m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
 const line = (name) => (new RegExp(`^const ${name} = .*;$`, "m").exec(src) || [""])[0];
 const pcSlice = (() => { const a = src.indexOf("const PC_TICK ="), b = src.indexOf("const pcActs ="); return a < 0 || b < 0 ? "" : src.slice(a, src.indexOf("\n", b)); })();
-const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("STAR_ICON"), line("monthDay"), pcSlice, pick(/^function reviewsFeedHtml\(/m)];
+// 🔄 10-30 client_ongoing_reviews_v1 (card system batch 3): the card is a system row (ogRowHtml) with a system card (csCard, csSt)
+const ogRow = (() => { const a = src.indexOf("const ogRowHtml ="), b = src.indexOf("\nconst _ogData", a); return a < 0 || b < 0 ? "" : src.slice(a, b); })();
+const lifted = [pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), line("STAR_ICON"), line("monthDay"), pcSlice, csBlock(src, pcSlice), line("ogK5"), ogRow, pick(/^function reviewsFeedHtml\(/m)];
 if (lifted.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a reviews-card function moved (${lifted.findIndex((x) => !x)})`); process.exit(2); }
-if (!/const feed = clientId \? `<div class="pm-k5 pm-rv-feed" data-reviews-feed data-client-id=/.test(src) || !/return `<div class="pm-og">\$\{feed\}\$\{month2StepsHtml\}<\/div>`;/.test(src) || !/return `<div class="pm-og">\$\{feed\}/.test(src)) fail("the reviews card doesn't lead Ongoing work, in setup and after");
+if (!/const feed = clientId \? `<div class="pm-rv-feed" data-reviews-feed data-client-id=/.test(src) || !/return `<div class="pm-og">\$\{feed\}\$\{ogHost\("replies"\)\}\$\{month2StepsHtml\}\$\{ogHost\("posts"\)\}<\/div>`;/.test(src) || !/return `<div class="pm-og">\$\{feed\}/.test(src)) fail("the reviews card doesn't lead Ongoing work, in setup and after");
 if (!/loadReviewsFeed\(row\.client_id\);/.test(src)) fail("the reviews card never loads (it would say \"Reading your Google reviews…\" forever)");
 if (!/await Promise\.all\(\[loadReviewRequests\(clientId\), loadReviewStep\(clientId\), loadReviewsFeed\(clientId\)\]\);/.test(src)) fail("after a Yes / Not her, the cards don't redraw from the server");
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
@@ -182,30 +185,30 @@ try {
     return { cls: p && p.className, head: (h.querySelector(".pm-k5-h b") || {}).textContent, side: (h.querySelector(".pm-k5-h span") || {}).textContent, text: h.innerText.replace(/\s+/g, " "),
       k: [...h.querySelectorAll(".pm-rv-k3 > span")].map((x) => x.innerText.replace(/\s+/g, " ").trim()), r: [...h.querySelectorAll(".pm-rv-r")].map((x) => x.innerText.replace(/\s+/g, " ").trim()),
       bolds: h.querySelectorAll(".pm-rv-r q b").length, yes: [...h.querySelectorAll("[data-review-reviewed]")].map((b) => [b.textContent, b.getAttribute("data-review-reviewed"), b.getAttribute("data-list-id"), b.getAttribute("data-review-id")]),
-      no: [...h.querySelectorAll("[data-review-notmatch]")].map((b) => b.getAttribute("data-review-id")), all: (h.querySelector("a.gcard-maps") || {}).textContent || "", href: (h.querySelector("a.gcard-maps") || {}).href || "" }; }, d);
+      no: [...h.querySelectorAll("[data-review-notmatch]")].map((b) => b.getAttribute("data-review-id")), all: (h.querySelector(".pm-cs-foot a.lk") || {}).textContent || "", href: (h.querySelector(".pm-cs-foot a.lk") || {}).href || "" }; }, d);
   const R = (id, name, at, stars, text, rep = null, anonymous = false) => ({ id, name, at, stars, text, replied_at: rep, anonymous });
   const live = { feed: { checked_at: "2026-10-25T14:00:00Z", stale: false, count: 41, rating: 4.8, new_30d: 3, gap_days: 12,
     reviews: [R("g1", "Maria G.", "2026-10-24T18:00:00Z", 5, "On time, clean work. <b>Fair</b> price."), R("g2", null, "2026-10-12T18:00:00Z", 4, "", "2026-10-13T10:00:00Z", true), R("g3", "Dev R.", "2026-09-30T18:00:00Z", 5, "Great"), R("g4", "Old", "2026-08-01T18:00:00Z", 3, "Old one")] },
     matches: [{ review_id: "g1", list_id: "L1", index: 0, name: "Maria", job: "water heater", asked_at: "2026-10-20T18:00:00Z", reviewer: "Maria G.", stars: 5, at: "2026-10-24T18:00:00Z" }], profile_url: "https://www.google.com/maps/place/?q=place_id:pl1" };
   const a = await draw(live);
-  if (a.cls !== "pm-k5-plan you" || a.head !== "1 new review this week" || !/^read from Google Oct 25$/.test(a.side || "")) fail(`A: a new review with a question isn't the amber "1 new review this week · read from Google <date>" (${a.cls} · ${a.head} · ${a.side})`);
-  if (a.k.join("|") !== "4.8 ★ average, 41 reviews|+3 new in the last 30 days|12 days between the last two") fail(`A: the three numbers aren't Google's own (${a.k.join("|")})`);
-  if (a.r.length !== 3 || !/^Maria G\. ★★★★★ Oct 24 On time, clean work\. <b>Fair<\/b> price\. No reply yet Is this Maria \(water heater, asked Oct 20\)\? Yes, it's Maria Not Maria$/.test(a.r[0]) || a.bolds) fail(`A: the newest review isn't shown as Google has it with "Is this Maria?" (its words never HTML) (${a.r[0]})`);
+  if (a.cls !== "pm-k5-plan pm-cs-card ok" || a.head !== "1 new review this week" || !/^read from Google Oct 25$/.test(a.side || "")) fail(`A: a new review with a question isn't the green band (the question is its own amber row, client_ongoing_reviews_v1) "1 new review this week · read from Google <date>" (${a.cls} · ${a.head} · ${a.side})`);
+  if (a.k.join("|") !== "4.8 ★ average · 41 reviews|+3 new in the last 30 days|12 days between the last two") fail(`A: the three numbers aren't Google's own (${a.k.join("|")})`);
+  if (a.r.length !== 3 || !/^Maria G\. ★★★★★ Oct 24 On time, clean work\. <b>Fair<\/b> price\. No reply yet · RGA drafts one for your approval$/.test(a.r[0]) || !/Is this Maria \(water heater, asked Oct 20\)\? So we count it toward your asks\. Yes, it's Maria Not Maria/.test(a.text) || a.bolds) fail(`A: the newest review isn't shown as Google has it with "Is this Maria?" (its words never HTML) (${a.r[0]})`);
   if (!/^A Google user ★★★★☆ Oct 12 No words, just stars\. Replied Oct 13$/.test(a.r[1] || "")) fail(`A: an anonymous review with a reply isn't "A Google user … Replied" (${a.r[1]})`);
   if (JSON.stringify(a.yes) !== JSON.stringify([["Yes, it's Maria", "0", "L1", "g1"]]) || JSON.stringify(a.no) !== '["g1"]') fail(`A: the answers don't name the customer and the review (${JSON.stringify(a.yes)} · ${a.no})`);
-  if (a.all !== "See all 41 on Google" || a.href !== "https://www.google.com/maps/place/?q=place_id:pl1") fail(`A: "See all on Google" is missing or points elsewhere (${a.all} · ${a.href})`);
+  if (a.all !== "See all 41 on Google ↗" || a.href !== "https://www.google.com/maps/place/?q=place_id:pl1") fail(`A: "See all on Google" is missing or points elsewhere (${a.all} · ${a.href})`);
   await shot("A-new-review-question");
   const b = await draw({ ...live, matches: [] });
-  if (b.cls !== "pm-k5-plan ok" || /Is this/.test(b.text) || b.yes.length) fail(`B: with nothing to ask, the card isn't green or still asks (${b.cls})`);
+  if (b.cls !== "pm-k5-plan pm-cs-card ok" || /Is this/.test(b.text) || b.yes.length) fail(`B: with nothing to ask, the card isn't green or still asks (${b.cls})`);
   const quiet = await draw({ ...live, matches: [], feed: { ...live.feed, reviews: live.feed.reviews.slice(2), new_30d: 1 } });
   if (quiet.head !== "41 reviews on Google") fail(`B: a quiet week doesn't say the total (${quiet.head})`);
   const none = await draw({ feed: { ...live.feed, count: 0, rating: null, new_30d: 0, gap_days: null, reviews: [] }, matches: [], profile_url: "https://x" });
   // 🔒 10-23 (live check on RGA): 0 reviews read as a GREEN card with "No rating · +0 · –" — zero is the client's move, not "good"
-  if (none.cls !== "pm-k5-plan you" || none.head !== "No reviews on Google yet" || !/Your review requests are how the first ones come in/.test(none.text) || none.all || none.k.length) fail(`C: a profile with no reviews (measured) isn't the amber "No reviews on Google yet" with no empty numbers (${none.cls} · ${none.head} · ${none.k.join("|")} · ${none.all})`);
+  if (none.cls !== "pm-k5-plan pm-cs-card you" || none.head !== "No reviews on Google yet" || !/Your review requests are how the first ones come in/.test(none.text) || none.all || none.k.length) fail(`C: a profile with no reviews (measured) isn't the amber "No reviews on Google yet" with no empty numbers (${none.cls} · ${none.head} · ${none.k.join("|")} · ${none.all})`);
   const stale = await draw({ ...live, matches: [], feed: { ...live.feed, stale: true } });
   if (!/not read since$/.test(stale.side || "")) fail(`D: an old reading doesn't say it wasn't read since (${stale.side})`);
   const cant = await draw({ feed: null, matches: [], read_failed: false });
-  if (cant.cls !== "pm-k5-plan rga" || cant.head !== "We can't read your reviews yet" || /\d+ (new )?reviews?/.test(cant.text) || cant.all) fail(`E: no reading isn't "We can't read your reviews yet" with no number (${cant.head} · ${cant.text})`);
+  if (cant.cls !== "pm-k5-plan pm-cs-card off" || cant.head !== "We can't read your reviews yet" || /\d+ (new )?reviews?/.test(cant.text) || cant.all) fail(`E: no reading isn't "We can't read your reviews yet" with no number (${cant.head} · ${cant.text})`);
   await shot("E-cant-read");
   const failed = await draw({ read_failed: true });
   if (!/We couldn't load your reviews just now/.test(failed.text) || /\d+ reviews?/.test(failed.text)) fail(`F: a failed load isn't said as failed (${failed.text})`);

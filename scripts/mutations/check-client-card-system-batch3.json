@@ -1,0 +1,401 @@
+[
+ [
+  "a Month 2 row leaves the system",
+  "portal",
+  "\"m2.call.monthly\", \"m2.win_story.capture\"]);",
+  "\"m2.win_story.capture\"]);",
+  1
+ ],
+ [
+  "Month 2 rows stay off the system",
+  "portal",
+  "const csRow = CS_STEPS.has(step.id);",
+  "const csRow = CS_STEPS.has(step.id) && !month2Only;",
+  1
+ ],
+ [
+  "16: the period says Week of again",
+  "portal",
+  "const period = [`${C.label} · ${monthDay(new Date(cy.start).toISOString())} – ${monthDay(new Date(cy.due - 86400000).toISOString())}`, \"wait off\"];",
+  "const period = [currentWeekLabel(), \"wait off\"];",
+  1
+ ],
+ [
+  "16: done says Monday",
+  "portal",
+  "csNote(`Next list due <b>${escapeHtml(dueW(cy.due))}</b>.`)",
+  "csNote(`Next list due <b>Monday</b>.`)",
+  1
+ ],
+ [
+  "16: done loses its controls",
+  "portal",
+  "<button type=\"button\" class=\"pm-og-ln\" data-review-reviewed=\"${r.index}\" ${ids}>They reviewed</button><button type=\"button\" class=\"pm-og-ln\" data-review-stop=\"${r.index}\" ${ids}>They asked me to stop</button>",
+  "",
+  1
+ ],
+ [
+  "16: done loses Remind once",
+  "portal",
+  "<span class=\"pm-og-evmv\">${remind}<button",
+  "<span class=\"pm-og-evmv\"><button",
+  1
+ ],
+ [
+  "16: no missed state",
+  "portal",
+  "if (cy.lastDue != null) return { tone: \"you\", noHow: true, pills: [[\"Your turn · missed last list\", \"you\"]],",
+  "if (false) return { tone: \"you\", noHow: true, pills: [[\"Your turn · missed last list\", \"you\"]],",
+  1
+ ],
+ [
+  "16: a list with someone to ask drops off",
+  "portal",
+  "if (start != null && custs.length && (now < start + days * DAY || open)) return",
+  "if (start != null && custs.length && now < start + days * DAY) return",
+  1
+ ],
+ [
+  "16: a second list hides the first",
+  "portal",
+  "if (start == null || at >= start + days * DAY) { start = at; cur = [l]; } else cur.push(l);",
+  "start = at; cur = [l];",
+  1
+ ],
+ [
+  "16: a clock change moves the due date",
+  "portal",
+  "new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);",
+  "new Date(s + days * DAY);",
+  1
+ ],
+ [
+  "16: stopped counts as asked in the band",
+  "portal",
+  "const n = cy.custs.filter((x) => x && x.marked_sent_by_client).length;",
+  "const n = cy.custs.length;",
+  1
+ ],
+ [
+  "16: circles fixed at five on a short list",
+  "portal",
+  "`${reviewSlotsHtml(cy.custs, cy.custs.length)}<div data-review-requests",
+  "`${reviewSlotsHtml(cy.custs)}<div data-review-requests",
+  1
+ ],
+ [
+  "16: done card's host doesn't draw events",
+  "portal",
+  "h.hasAttribute(\"data-rv-ev\") ? reviewEvRowsHtml(data) : html",
+  "html",
+  1
+ ],
+ [
+  "16: a redraw leaves the rows empty",
+  "portal",
+  "if (listEl.querySelector(\"[data-review-requests]\")) loadReviewRequests(clientId);",
+  "",
+  1
+ ],
+ [
+  "16: saving sets step 13 open",
+  "portal",
+  "if (!weekly) _openStep.set(clientId, \"m1.review.first_5\");",
+  "_openStep.set(clientId, \"m1.review.first_5\");",
+  1
+ ],
+ [
+  "17: used claimed at once",
+  "portal",
+  "head: \"You sent your numbers\"",
+  "head: \"Used in your report\"",
+  1
+ ],
+ [
+  "17: not due counts as to do",
+  "portal",
+  "i.status !== \"skipped\" && !i.notDue).length;",
+  "i.status !== \"skipped\").length;",
+  1
+ ],
+ [
+  "17: not due can be the next step",
+  "portal",
+  "!r.withRga && !r.notDue &&",
+  "!r.withRga &&",
+  1
+ ],
+ [
+  "17: the note field dropped",
+  "portal",
+  "${note}</div>${csNote(\"Estimates are fine.\")}",
+  "</div>${csNote(\"Estimates are fine.\")}",
+  1
+ ],
+ [
+  "17: Not sure box not sent",
+  "portal",
+  "wrap.querySelector(\"[data-in-notsure-all]\")?.checked",
+  "false",
+  1
+ ],
+ [
+  "17: the lock says the long words",
+  "portal",
+  "stepId === \"m2.snap.business_outcomes\" ? \"in your report\" : lk.why",
+  "lk.why",
+  1
+ ],
+ [
+  "17: \"of 20\" refused by the server",
+  "stepinput",
+  "const n = loose ? loose[1].replace(/,/g, \"\") : typed.replace(/[$,]/g, \"\");",
+  "const n = typed.replace(/[$,]/g, \"\");",
+  1
+ ],
+ [
+  "17: of taken on any field",
+  "stepinput",
+  "if (loose && loose[2] != null && !f.allowOf) return { error: `\"${f.label}\" needs to be a number.` };",
+  "",
+  1
+ ],
+ [
+  "17: admin drops of 20",
+  "admin",
+  "${v[`${f.key}_of`] != null ? ` of ${escapeHtml(String(v[`${f.key}_of`]))}` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "18: quota wording back",
+  "portal",
+  "head: \"New photos keep your profile fresh\"",
+  "head: \"5 new photos this month\"",
+  1
+ ],
+ [
+  "18: done counts what was sent",
+  "portal",
+  "head: k ? `${k} added this month` : \"New photos added\"",
+  "head: `${mine.length} added this month`",
+  1
+ ],
+ [
+  "18: no With RGA state",
+  "portal",
+  "if (n) return { tone: \"rga\", noHow: true, pills: [[`With RGA · ${n} to review`, \"rga\"]],",
+  "if (false) return { tone: \"rga\", noHow: true, pills: [[`With RGA · ${n} to review`, \"rga\"]],",
+  1
+ ],
+ [
+  "18: next month shows the day before in the Americas",
+  "portal",
+  "new Date().getUTCMonth() + 1, 1, 12)).toISOString();\n      return { tone: \"ok\", noHow: true, pills: [[\"Done\", \"done\"], ...(n",
+  "new Date().getUTCMonth() + 1, 1)).toISOString();\n      return { tone: \"ok\", noHow: true, pills: [[\"Done\", \"done\"], ...(n",
+  1
+ ],
+ [
+  "18: a turned-down photo says nothing",
+  "portal",
+  "const backRow = back.length ?",
+  "const backRow = false ?",
+  1
+ ],
+ [
+  "18: promises a reminder email",
+  "portal",
+  "<span>This comes back here on that day.</span>",
+  "<span>We'll email you a reminder.</span>",
+  1
+ ],
+ [
+  "18: server refuses later",
+  "steplater",
+  "const LATER_STEPS = [\"m1.gbp.photos\", \"m2.exec.gbp_photos\"];",
+  "const LATER_STEPS = [\"m1.gbp.photos\"];",
+  1
+ ],
+ [
+  "18: tiles squeeze",
+  "portalcss",
+  ".pm-cs .pm-og-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr));",
+  ".pm-cs .pm-og-tiles { display:grid; grid-template-columns:repeat(10,minmax(0,1fr));",
+  1
+ ],
+ [
+  "19: no skip",
+  "portal",
+  "${ogSkip(step.id, \"Skip this quarter\")}",
+  "",
+  1
+ ],
+ [
+  "19: your choice over RGA's skip",
+  "portal",
+  "head: `No video this quarter${t.skipped_by === \"client\" ? \" · your choice\" : \"\"}`",
+  "head: \"No video this quarter · your choice\"",
+  1
+ ],
+ [
+  "19: received before RGA has it",
+  "portal",
+  "head: \"You sent your video\"",
+  "head: \"RGA received your video\"",
+  1
+ ],
+ [
+  "19: skipped shows the done card",
+  "portal",
+  "if (c.isDone && c.status === \"skipped\") {\n      const when = t.skipped_at || t.completed_at;\n      return { tone: \"ok\", noHow: true, pills: [[\"Skipped\", \"done\"]], html: ogK5(csCard({ tone: \"off\", head: `No video",
+  "if (false) {\n      const when = t.skipped_at || t.completed_at;\n      return { tone: \"ok\", noHow: true, pills: [[\"Skipped\", \"done\"]], html: ogK5(csCard({ tone: \"off\", head: `No video",
+  1
+ ],
+ [
+  "19: the skip has no allow-list",
+  "stepchoicefn",
+  "if (!sk || !SKIP_PERIOD.has(stepId)) return",
+  "if (!sk) return",
+  1
+ ],
+ [
+  "19: a locked step can be skipped",
+  "stepchoicefn",
+  "if (stepLock(stepId, prev, rec.data)) return json(409, { error: LOCK_REFUSAL, locked: true });\n    if (prev.status === \"done\") return json(409, { error: \"You already sent",
+  "if (prev.status === \"done\") return json(409, { error: \"You already sent",
+  1
+ ],
+ [
+  "20: the wait says Month 1",
+  "portal",
+  "body: csNote(\"It comes once the month is complete. Then you pick a time for the call here.\")",
+  "body: csNote(\"It comes once Month 1 is complete.\")",
+  1
+ ],
+ [
+  "20: picker reason says Month 1",
+  "portal",
+  "const why = rec && ccPurpose(clientId) !== \"m2_monthly\" ?",
+  "const why = rec ?",
+  1
+ ],
+ [
+  "20: held shows a lock",
+  "portal",
+  "return { tone: \"ok\", noLock: true, pills: [[\"Done\", \"done\"]], html: ogK5(csCard({ tone: \"ok\", head: \"Call held\"",
+  "return { tone: \"ok\", pills: [[\"Done\", \"done\"]], html: ogK5(csCard({ tone: \"ok\", head: \"Call held\"",
+  1
+ ],
+ [
+  "20: a report link with no report",
+  "portal",
+  "body: (out ? pcFact(\"Your report\",",
+  "body: (true ? pcFact(\"Your report\",",
+  1
+ ],
+ [
+  "20: recommend isn't the day after",
+  "kickavail",
+  "const from = sent + 86400000, pick",
+  "const from = sent - 864000000, pick",
+  1
+ ],
+ [
+  "posts: ready without RGA's clearance",
+  "portal",
+  "if (del) { const n = Array.isArray(",
+  "if (del || t.outcome_data) { const n = Array.isArray(",
+  1
+ ],
+ [
+  "posts: every post reads live once approved",
+  "portal",
+  "if (x.status === \"live\") return csEv(`${n} · live on Google`",
+  "if (true) return csEv(`${n} · live on Google`",
+  1
+ ],
+ [
+  "posts: the band counts them all live",
+  "portal",
+  "const live = q.filter((x) => x.status === \"live\").length;",
+  "const live = q.length;",
+  1
+ ],
+ [
+  "posts: crumb says Live early",
+  "portal",
+  "const at = d.site_live ? 4 : c || goesUpLater ? 2 : 4;",
+  "const at = d.site_live ? 4 : c ? 2 : 4;",
+  1
+ ],
+ [
+  "replies: names a review it can't tie to the draft",
+  "portal",
+  "const rows = Number.isFinite(n) && n === open.length ?",
+  "const rows = Number.isFinite(n) ?",
+  1
+ ],
+ [
+  "replies: posted includes older months",
+  "portal",
+  "v.replied_at && sameReportingMonth(portalReportingMonth(new Date(v.replied_at)), month))",
+  "v.replied_at)",
+  1
+ ],
+ [
+  "replies: approved reads as posted",
+  "portal",
+  "if (dec === \"approved\") return row([[\"RGA is on it\", \"rga\"]], \"rga\", ogK5(csCard({ tone: \"rga\", head: \"RGA is posting your approved replies\"",
+  "if (dec === \"approved\") return row([[\"Posted\", \"done\"]], \"ok\", ogK5(csCard({ tone: \"ok\", head: \"2 replies posted on Google\"",
+  1
+ ],
+ [
+  "reviews: No reply yet says nothing",
+  "portal",
+  "\"No reply yet · RGA drafts one for your approval\"",
+  "\"No reply yet\"",
+  1
+ ],
+ [
+  "win story: no skip",
+  "portal",
+  "${ogSkip(step.id, \"Skip this month\")}",
+  "",
+  1
+ ],
+ [
+  "win story: server takes a blank story",
+  "stepinput",
+  "if (!what) return { error: \"Tell us what happened, in a sentence or two.\" };",
+  "",
+  1
+ ],
+ [
+  "win story: a stray value ticks the consent",
+  "stepinput",
+  "ok_first_name: v.ok_first_name === true",
+  "ok_first_name: !!v.ok_first_name",
+  1
+ ],
+ [
+  "win story: admin can't read it",
+  "admin",
+  "} else if (spec.kind === \"story\") {",
+  "} else if (spec.kind === \"story_gone\") {",
+  1
+ ],
+ [
+  "win story: not in the card order",
+  "portal",
+  "\"m2.call.monthly\", \"m2.win_story.capture\"];",
+  "\"m2.call.monthly\"];",
+  1
+ ],
+ [
+  "one card closes them all",
+  "portal",
+  "(list.classList.contains(\"pm-ongoing-ground\") ? [row] : list.querySelectorAll(\".pm-step-row\"))",
+  "list.querySelectorAll(\".pm-step-row\")",
+  1
+ ]
+]

@@ -44,7 +44,7 @@
  [
   "a step with RGA shows its done tick again",
   "portal",
-  "isDone && !askLk ? \" is-done\" : askLk ? \" is-rga\" : \"\"",
+  "isDone && !askLk && (!og || og.tone === \"ok\") ? \" is-done\" : askLk ? \" is-rga\" : \"\"",
   "isDone ? \" is-done\" : \"\"",
   1
  ],

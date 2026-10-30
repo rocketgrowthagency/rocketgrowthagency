@@ -27,7 +27,7 @@ if (nums.length && (nums[0] !== 1 || nums[nums.length - 1] !== nums.length)) fai
 
 // ── 2 · a Done step keeps its number ──
 // 10-27 (client_ask_for_a_change_v1): a locked step with RGA shows its number in RGA blue, no done tick — still the NUMBER
-if (!/<span class="pm-step-num\$\{isDone && !askLk \? " is-done" : askLk \? " is-rga" : ""\}">\$\{num == null \? \(isDone && !askLk \? "✓" : "·"\) : num\}<\/span>/.test(code)) fail("a Done step shows ✓ instead of its number again");
+if (!/<span class="pm-step-num\$\{isDone && !askLk && \(!og \|\| og\.tone === "ok"\) \? " is-done" : askLk \? " is-rga" : ""\}">\$\{num == null \? \(isDone && !askLk && !og \? "✓" : "·"\) : num\}<\/span>/.test(code)) fail("a Done step shows ✓ instead of its number again");
 if (/\.pm-group-h\b/.test(css)) fail("the group heading style is still shipped with nothing drawing it");
 
 // ── 3 · the tick, drawn ──

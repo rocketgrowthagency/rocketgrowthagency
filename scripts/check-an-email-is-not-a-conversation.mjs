@@ -29,11 +29,11 @@ const fn = read("netlify/functions/portal-thread.js").replace(/^[ \t]*\/\/.*$/gm
 if (!/step_id: r\.payload\?\.reason === "duplicate_confirmed_gone" \? "m1\.gbp\.verify" : \(r\.payload\?\.step_id \|\| null\),/.test(fn)) fail("the duplicate-removal letter isn't filed under step 6 (or every letter is)");
 if (!/const box = form\.closest\("\.pm-thread, \.pm-ask"\);/.test(portal)) fail("a question sent from the quiet Ask line has nowhere to say it was sent");
 
-// 🔄 10-30 (client card system batch 2): every Month 1 step joined the system (step 10 photos, 11 call setup, 15 close-out too), so
-// the OLD shapes are held on numbered client steps NOT in CS_STEPS (today the Month 2 steps), read from the SOP — never named here
+// 🔄 10-30 (client card system batch 3): every numbered client step joined the system, so the OLD shapes are held on ids that aren't in
+// CS_STEPS (the general thread and any step that ever leaves the set still draw them); real ones first when there are any
 const OUTS = await (async () => { const vm = await import("node:vm"); const c = vm.createContext({}); vm.runInContext(`${csBlock(portal)}\nthis.ids = [...CS_STEPS];`, c);
   const sys = new Set(c.ids), ids = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null) ids.push([o.clientStepNo, o.id]); Object.values(o).forEach(walk); } };
-  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return ids.sort((a, b) => a[0] - b[0]).map(([, id]) => id).filter((id) => !sys.has(id)); })();
+  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return ids.sort((a, b) => a[0] - b[0]).map(([, id]) => id).filter((id) => !sys.has(id)).concat(["x.outside.1", "x.outside.2", "x.outside.3", "x.outside.4"]); })();
 if (OUTS.length < 4) { console.error(`⚠️  INDETERMINATE — only ${OUTS.length} client step(s) are off the card system; the old shapes need 4 to be held (re-read this gate)`); process.exit(2); }
 const [ONLY, BOTH, NONE, TEST] = OUTS;
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }

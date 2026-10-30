@@ -79,7 +79,7 @@
  [
   "after sending, the step closes",
   "portal",
-  "    _openStep.set(clientId, \"m1.review.first_5\");\n",
+  "    if (!weekly) _openStep.set(clientId, \"m1.review.first_5\");\n",
   "",
   1
  ],
@@ -273,8 +273,8 @@
  [
   "remind link shown early",
   "portal",
-  "const canRemind = !r.reminded_at && r.reminder && due && Date.now() >= due;",
-  "const canRemind = !r.reminded_at && r.reminder && due && true;",
+  "const canRemind = !r.reminded_at && r.reminder && due && Date.now() >= due;\n      const sub =",
+  "const canRemind = !r.reminded_at && r.reminder && due && true;\n      const sub =",
   1
  ],
  [
@@ -322,7 +322,7 @@
  [
   "all five forms show at once (not one at a time)",
   "portal",
-  "data-r5-no=\"${n}\"${k ? \" hidden\" : \"\"}>",
+  "data-r5-no=\"${n}\"${hidden ? \" hidden\" : \"\"}>",
   "data-r5-no=\"${n}\">",
   1
  ],
@@ -357,8 +357,8 @@
  [
   "Yes doesn't name the review",
   "portal",
-  "data-review-reviewed=\"${r.index}\" data-review-id=\"${escapeAttribute(m.review_id)}\" ${ids}>Yes, it's",
-  "data-review-reviewed=\"${r.index}\" ${ids}>Yes, it's",
+  "class=\"pm-act is-go\" data-review-reviewed=\"${r.index}\" data-review-id=\"${escapeAttribute(m.review_id)}\" ${ids}>Yes, it's",
+  "class=\"pm-act is-go\" data-review-reviewed=\"${r.index}\" ${ids}>Yes, it's",
   1
  ],
  [
@@ -378,8 +378,8 @@
  [
   "email customers dropped from the weekly list",
   "reviewreqfn",
-  "requestFor(c, i, list.id))\n    .filter((r) => r.name && (r.phone || r.email));",
-  "requestFor(c, i, list.id))\n    .filter((r) => r.name && r.phone);",
+  "const requests = lists.flatMap((l) => (Array.isArray(l.customers) ? l.customers : []).map((c, i) => requestFor(c, i, l.id)))\n    .filter((r) => r.name && (r.phone || r.email));",
+  "const requests = lists.flatMap((l) => (Array.isArray(l.customers) ? l.customers : []).map((c, i) => requestFor(c, i, l.id)))\n    .filter((r) => r.name && r.phone);",
   1
  ],
  [

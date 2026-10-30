@@ -53,7 +53,7 @@ if (!/\.pm-doit:has\(\.pm-k5-plan\), \.pm-doit:has\(\.pm-hc-confirm\) \{ border-
 // step 18's upload is the mockup's "Upload photos" button under the card (the old card's head and copy gone); the photo
 // card's "already on Google" line and step 16's rows sit flush in the card like its other rows
 { const S = css.replace(/\/\*[\s\S]*?\*\//g, "");
-  if (!/\$\{rgaWait \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook, true\) : rgaWaitHtml\(step\)\) : ""\}/.test(src)) fail("step 15 waiting on RGA's part shows the old line, not the \"Opens about\" card");
+  if (!/\$\{rgaWait(?: && !og)? \? \(step\.id === "m1\.call\.close" \? closeWaitHtml\(step, waitTasks, rgaWaits, photos, playbook, true\) : rgaWaitHtml\(step\)\) : ""\}/.test(src)) fail("step 15 waiting on RGA's part shows the old line, not the \"Opens about\" card");
   if (!/if \(rgaPart\) rows\.push\(pcTl\("<b>Your Month 1 report<\/b> · RGA's", "", false\)\);/.test(src)) fail("step 15's waiting card doesn't name RGA's own part (the Month 1 report)");
   if (!/<div class="pm-m18-up">\$\{buildPhotoUploadHtml\([^}]*\{ compact: true \}\)\}<\/div>/.test(src) || !/opts\.compact \? `<details class="pm-m18-d"><summary class="pm-commit">Upload photos<\/summary>`/.test(src)) fail("step 18's upload isn't the mockup's \"Upload photos\" button under the card");
   if (!/opts\.compact \? "" : `<div class="portal-card-head">/.test(src) || !/compact: !!card\.closest\("\.pm-m18-up"\)/.test(src)) fail("step 18 shows the old upload card's head and copy again (or loses the button after an upload)");
@@ -92,7 +92,7 @@ try {
   if (sys.wrong) fail("on the card system a held kickoff call offers a change again (kickoff_after_call_v1: a question, not a change)");
   if (sys.doitBorder !== "0px") fail(`on the card system a hairline (${sys.doitBorder}) sits above the plan card`);
   // the row's ask line under the card (threadHtml's system line) reads "Questions about the call?" once the call is done
-  if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(src)) fail("a done kickoff (or close-out) row's ask line doesn't read \"Questions about the call?\" (client_step01_kickoff_v3 · client_step15)");
+  if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close" \|\| step\.id === "m2\.call\.monthly"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(src)) fail("a done kickoff (or close-out) row's ask line doesn't read \"Questions about the call?\" (client_step01_kickoff_v3 · client_step15)");
   // the old card (CS_STEPS emptied) keeps kickoff_after_call_v1's quiet link
   await page.evaluate(() => CS_STEPS.clear());
   const r = await page.evaluate(() => {

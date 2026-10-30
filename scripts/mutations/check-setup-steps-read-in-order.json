@@ -9,7 +9,7 @@
  [
   "a Done step shows ✓ again",
   "portal",
-  "${num == null ? (isDone && !askLk ? \"✓\" : \"·\") : num}</span>",
+  "${num == null ? (isDone && !askLk && !og ? \"✓\" : \"·\") : num}</span>",
   "${isDone ? \"✓\" : (num == null ? \"·\" : num)}</span>",
   1
  ],

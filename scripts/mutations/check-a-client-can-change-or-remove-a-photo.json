@@ -156,7 +156,7 @@
  [
   "all sent is the next step",
   "portal",
-  "&& !r.later && !r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
+  "&& !r.later && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
   "&& !r.later && r.taskState?.google_push?.state !== \"with_rga\")",
   1
  ],

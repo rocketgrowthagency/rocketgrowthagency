@@ -58,13 +58,14 @@ const block = (n) => { const at = P.search(new RegExp(`\\nconst ${n} = `)); if (
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const STEP_LOCK = createRequire(import.meta.url)(`${SITE}/shared/step-lock.js`);
 const BATCH1 = ["m1.access.website", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.gbp.business_facts", "m1.gbp.hours_attributes", "m1.gbp.services_products", "m1.gbp.verify", "m1.strategy.keywords_locations"];
+const BATCH3 = ["m2.call.monthly", "m2.exec.gbp_photos", "m2.exec.review_push", "m2.exec.youtube_video", "m2.snap.business_outcomes", "m2.win_story.capture"];
 const BATCH2 = ["m1.brand.youtube_setup", "m1.call.close", "m1.gbp.photos", "m1.kickoff.call", "m1.review.first_5", "m1.tracking.call_setup", "m1.tracking.form_setup"];
 
 // ── 0 · the set ──────────────────────────────────────────────────────────────────────────────────────
 { const m = /^const CS_STEPS = new Set\(\[([^\]]*)\]\);$/m.exec(P);
   if (!m) moved("CS_STEPS");
-  const ids = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort(), want = [...BATCH1, ...BATCH2].sort();
-  if (ids.join("|") !== want.join("|")) fail(`CS_STEPS isn't exactly the 15 Month 1 client steps (batch 1 + batch 2): ${ids.join(", ")}`);
+  const ids = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort(), want = [...BATCH1, ...BATCH2, ...BATCH3].sort();   // 🔄 batch 3 (Ongoing work) is check-client-card-system-batch3
+  if (ids.join("|") !== want.join("|")) fail(`CS_STEPS isn't exactly the 21 client steps (batches 1, 2 + 3): ${ids.join(", ")}`);
   // every numbered Month 1 client step in the SOP is on the system — one that's added later must join it (or this gate is re-read)
   const sop = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null && /^m1\./.test(o.id)) sop.push(o.id); Object.values(o).forEach(walk); } };
   walk(JSON.parse(read("data/playbooks/client-steps.json")));
@@ -147,9 +148,9 @@ const AT = "2026-10-20T15:00:00Z";
   if (allow12 < 0 || allow12 > det) fail("step 12 allowed isn't \"RGA is on it\" ahead of \"Detected automatically\"");
   if (!/else if \(step\.clientOptional && ownerPill\.text === "Optional"\) Object\.assign\(ownerPill, \{ text: "Your turn", cls: "you" \}\);/.test(P)
     || !/const csOptPill = csRow && step\.clientOptional && \(!isDone \|\| status === "skipped"\) \? `<span class="pm-pill wait off" data-opt-pill>Optional<\/span>` : "";/.test(P)
-    || !/<span class="pm-pill \$\{ownerPill\.cls\}">\$\{escapeHtml\(ownerPill\.text\)\}<\/span>\$\{csEditPill\}\$\{csMinPill\}\$\{csOptPill\}/.test(P)) fail("step 14's row on the system isn't \"Your turn\" + its own second \"Optional\" pill (data-opt-pill)");
+    || !/<span class="pm-pill \$\{ownerPill\.cls\}">\$\{escapeHtml\(ownerPill\.text\)\}<\/span>`\}\$\{og \? \(csAsk \? `<span class="pm-pill rga">\$\{csAsk\}<\/span>` : ""\) : `\$\{csEditPill\}\$\{csMinPill\}\$\{csOptPill\}/.test(P)) fail("step 14's row on the system isn't \"Your turn\" + its own second \"Optional\" pill (data-opt-pill)");
   if (!/else if \(step\.id === "m1\.call\.close" && !isDone && \(ownWait \|\| rgaWait\)\) \{ const e = month1EndOf\(waitTasks\); Object\.assign\(ownerPill, \{ text: e \? `Opens about \$\{monthDay\(new Date\(e\.getTime\(\) - 3 \* 86400000\)\.toISOString\(\)\)\}` : "Opens near the end of Month 1"/.test(P)) fail("step 15 waiting isn't the \"Opens about <date>\" pill (like its card)");
-  if (!/const csQuiet = CS_STEPS\.has\(step\.id\) && !month2Only && \["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close"\]\.includes\(step\.id\) && !flagged;/.test(P) || !/const amendBtn = stepLk \|\| csQuiet \? ""\n\s*: flagged/.test(P)) fail("steps 13–15 draw Check again / Not right? beside a settled card again (or a raised flag loses its \"It's fine after all\")"); }
+  if (!/const csQuiet = CS_STEPS\.has\(step\.id\) && \(\["m1\.review\.first_5", "m1\.brand\.youtube_setup", "m1\.call\.close"\]\.includes\(step\.id\) \|\| !!OG_CARD\[step\.id\]\) && !flagged;/.test(P) || !/const amendBtn = stepLk \|\| csQuiet \? ""\n\s*: flagged/.test(P)) fail("steps 13–15 draw Check again / Not right? beside a settled card again (or a raised flag loses its \"It's fine after all\")"); }
 
 // ── 3 · step 14 (videos), run ────────────────────────────────────────────────────────────────────────
 const vc = vm.createContext({ escapeHtml: esc, escapeAttribute: esc, Date, JSON, Number, Set, Map, Array, String, Object, Math });
@@ -193,7 +194,7 @@ try {
   if (!/if \(csRow && !\/pm-k5-plan\|pm-cs-card\|<fieldset class="pm-waits"\|data-closeout-call\|data-kickoff-slots\/\.test\(completionCtl\)\)/.test(P)) fail("the close-out picker (or the kickoff calendar) is wrapped in a second system card");
   if (!/return `<div class="pm-doit">\$\{head && !csRow \? `<p class="pm-doit-h">/.test(P)) fail("a system card gets a \"What to do\" heading over it again");
   if (!/\.pm-cs \.pm-pc-body > \.pm-cc-opts \{ display:grid; grid-template-columns:repeat\(auto-fill,minmax\(min\(100%,180px\),1fr\)\); \}/.test(C) || !/\.pm-cs \.pm-pc-body \.pm-cc-opt \{ display:grid; grid-template-columns:minmax\(0,1fr\);/.test(C)) fail("step 15's times aren't boxes in a grid on the system (each was squeezed into the hidden radio's 22px column)");
-  if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(P)) fail("a done call's ask line doesn't read \"Questions about the call?\""); }
+  if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close" \|\| step\.id === "m2\.call\.monthly"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(P)) fail("a done call's ask line doesn't read \"Questions about the call?\""); }
 
 // ── 5 · step 1 (the kickoff cards), run ──────────────────────────────────────────────────────────────
 const kc = vm.createContext({ escapeHtml: esc, escapeAttribute: esc, clientReadingZone: (tz) => tz || "America/Denver", kickoffCountdown: (ms) => ({ text: ms > 0 ? `In ${Math.round(ms / 3600000)}h` : "now", tone: ms > 0 ? "far" : "live" }), Date, JSON, Number, Set, Map, Array, String, Object, Math, Boolean, console });

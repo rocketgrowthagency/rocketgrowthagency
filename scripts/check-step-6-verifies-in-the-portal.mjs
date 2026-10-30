@@ -79,7 +79,7 @@ if (!/loadGbpVerify\(clientId\);/.test(pc) || !/step\.id === "m1\.gbp\.verify" &
 if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc)) fail("step 6 still prints the grey evidence line beside the card");
 // 🔄 client_step02_verify_v1 (card system, 10-29): the how-to is the row's fold, seated into the system card's foot — the row must be a
 // system row and the seat must hand it to seatCsFoot (else How verification works sits loose under the card, or nowhere)
-if (!/<div class="pm-step-row\$\{CS_STEPS\.has\(step\.id\) && !month2Only \? ` pm-cs cs-\$\{csTone\}` : ""\}/.test(pc) || !/const detailKind = step\.id === "m1\.gbp\.verify" && isDone \? "verify" :/.test(pc)
+if (!/<div class="pm-step-row\$\{csRow \? ` pm-cs cs-\$\{csTone\}` : ""\}/.test(pc) || !/const detailKind = step\.id === "m1\.gbp\.verify" && isDone \? "verify" :/.test(pc)
   || !/if \(row && row\.classList\.contains\("pm-cs"\) && csCardOf\(row\)\) \{ seatCsFoot\(row, f\); continue; \}/.test(pc)) fail("step 6's verified row isn't a system row, or its how-to isn't handed to the card's foot (seatCsFoot)");
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
 const pick = (re) => { const m = re.exec(portal); if (!m) return ""; let d = 0; for (let k = portal.indexOf(") {", m.index) + 2; k < portal.length; k++) { if (portal[k] === "{") d++; else if (portal[k] === "}") { d--; if (!d) return portal.slice(m.index, k + 1); } } return ""; };

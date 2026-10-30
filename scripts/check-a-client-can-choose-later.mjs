@@ -7,6 +7,7 @@
 // 🔒 WHY (approved step7_later_and_upload_v1 v2, 2026-10-15). Chris: "i dont have images yet to load so is there an option
 // to skip?" Nothing is skipped — the step stays on the list. The endpoint runs for real against a faked database (the real
 // _step-record read → write → read back); the portal's own laterOf / photoSlotsHtml are lifted; the sweep's helpers run.
+import { csBlock } from "./lib/portal-cs.mjs";
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -96,7 +97,7 @@ const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
-try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.laterOf = laterOf;`, ctx); }
+try { const kit = planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")); vm.runInContext(`${kit}\n${csBlock(portal, kit).replace(/^var /gm, "var ")}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.laterOf = laterOf;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
 const P = req("./_photo-lists.js");
 const steps = JSON.parse(read("data/playbooks/client-steps.json"));

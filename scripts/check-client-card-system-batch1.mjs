@@ -161,9 +161,9 @@ for (const b of BIZ) {
   vm.runInContext("_portalThread = this._portalThread", ctx);
   const two = run(`threadHtml("m1.gbp.hours_attributes")`);
   if ((two.match(/<details class="pm-cs-msgs"/g) || []).length !== 1 || !/<b>Messages · 2<\/b>/.test(two) || !/Ask RGA ›/.test(two)) fail("a system step's conversation isn't ONE \"Messages · 2\" row + Ask RGA ›");
-  // 🔄 10-30: call setup joined the system (batch 2) — "outside" is now a Month 2 step (m2.* never sits in CS_STEPS)
-  { const out = run(`[...CS_STEPS].some((id) => /^m2\\./.test(id))`) ? null : "m2.exec.review_push";
-    if (!out) fail("a Month 2 step joined the card system (its rows are drawn month2Only, outside the system)");
+  // 🔄 10-30: every client step is on the system since batch 3 (Ongoing work), so "outside" is an id that isn't in CS_STEPS
+  { const out = "x.outside.the.system";
+    if (run(`CS_STEPS.has("${out}")`)) fail("the test id is in CS_STEPS");
     else if (run(`threadHtml("${out}")`)) fail("a step OUTSIDE the system draws the system's thread with nothing to show"); }
   vm.runInContext("_portalThread = []", ctx); }
 { if (!/e\.target\.closest\?\.\("\[data-bk-putkeep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P) || /closest\?\.\("\[data-bk-keep\]"\); if \(!b \|\| b\.disabled\) return;/.test(P)) fail("the Keep it handler listens on [data-bk-keep] (step 9's form option) instead of [data-bk-putkeep]");

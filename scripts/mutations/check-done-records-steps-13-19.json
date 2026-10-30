@@ -23,8 +23,8 @@
  [
   "empty numbers shown",
   "portal",
-  "all.filter((f) => ns.includes(f.key) || (v[f.key] != null && v[f.key] !== \"\"))",
-  "all.filter((f) => true)",
+  "const rows = all.filter((f) => ns.includes(f.key) || (v[f.key] != null && v[f.key] !== \"\"))",
+  "const rows = all.filter((f) => true)",
   1
  ],
  [

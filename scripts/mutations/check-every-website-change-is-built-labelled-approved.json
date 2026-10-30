@@ -100,8 +100,8 @@
  [
   "To do's strip stops opening the tab",
   "portal",
-  "data-goto-approve>Open For your approval</button>",
-  ">Open For your approval</button>",
+  "class=\"portal-button is-primary ib-fstrip-go\" data-goto-approve>Open For your approval</button>",
+  "class=\"portal-button is-primary ib-fstrip-go\">Open For your approval</button>",
   1
  ],
  [

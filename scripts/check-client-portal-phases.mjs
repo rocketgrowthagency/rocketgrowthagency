@@ -35,10 +35,12 @@ for (const s of m1s) {
 }
 const want = { "m1.kickoff.call": 1, "m1.gbp.verify": 2, "m1.access.website": 3, "m1.gbp.business_facts": 4, "m1.strategy.keywords_locations": 5, "m1.review.first_5": 13, "m1.call.close": 15 };
 for (const [id, n] of Object.entries(want)) if (PB.month1.find((s) => s.id === id)?.clientStepNo !== n) fail(`${id} isn't step ${n} (the approved order: verify + facts before the rest, reviews 13, close-out last)`);
+// the win story has no number (client_ongoing_win_story_v1): it draws "·", after the numbered cards
+const MNUMLESS = (PB.month2plus || []).filter((s) => s.clientNumberless && (s.clientBucket === "supply" || s.clientBucket === "act")).map((s) => s.id);
 if (m2.some((s) => s.clientStepNo < 16 || s.clientStepNo > 20)) fail("Monthly client steps are not 16–20");
 const ong = (P.match(/const ONGOING_ORDER = (\[[^\]]*\]);/) || [])[1];
 if (!ong) fail("ONGOING_ORDER moved"); else {
-  const order = JSON.parse(ong), byNo = [...m2].sort((a, b) => a.clientStepNo - b.clientStepNo).map((s) => s.id);
+  const order = JSON.parse(ong), byNo = [...m2].sort((a, b) => a.clientStepNo - b.clientStepNo).map((s) => s.id).concat(MNUMLESS);
   if (JSON.stringify(order) !== JSON.stringify(byNo)) fail(`the Ongoing cards don't draw in number order (${order.join(" → ")} vs ${byNo.join(" → ")})`);
 }
 // ── 2. the phase headers, RUN
@@ -61,7 +63,7 @@ if (vm.runInContext("CANT_START", ctx) !== "Can't start yet") fail("the wait sta
 // (R4, 10-20: the own-step wait names RGA when Google is connected but Analytics doesn't exist yet — still "Can't start yet")
 for (const [k, re] of [["ownWait", /ownWait \? \{ text: CANT_START, why: (gaByRga \? "RGA is setting up your Google Analytics" : )?ownFirstPill\(ownFirst\)/], ["rgaWait", /rgaWait \? \{ text: CANT_START, why: `Waits on RGA/], ["listingWait", /listingWait \? \{ text: CANT_START, why:/]])
   if (!re.test(P)) fail(`a wait no longer reads "Can't start yet" with its reason (${k})`);
-if (!/\$\{ownerPill\.why \? `<span class="pm-step-sub">\$\{escapeHtml\(ownerPill\.why\)\}<\/span>`/.test(P)) fail("the wait's reason isn't drawn under the title");
+if (!/\$\{(?:og \? "" : )?ownerPill\.why \? `<span class="pm-step-sub">\$\{escapeHtml\(ownerPill\.why\)\}<\/span>`/.test(P)) fail("the wait's reason isn't drawn under the title");
 // ── 4. no literal step numbers in client copy
 const code = P.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
 const lit = code.match(/>See step \d+ →<|\(step \d+\)<\/span>|"See step \d+/g);

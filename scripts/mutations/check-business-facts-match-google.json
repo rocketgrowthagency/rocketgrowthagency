@@ -373,8 +373,8 @@
  [
   "RGA's step stays now",
   "portal",
-  "!r.withRga && r.taskState?.google_push?.state !== \"with_rga\")",
-  "!r.withRga)",
+  "!r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
+  "!r.withRga && !r.notDue)",
   1
  ],
  [

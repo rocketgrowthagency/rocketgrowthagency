@@ -39,7 +39,7 @@ const SITE = process.env.CSF_SITE || `${__SITE}`;
 const read = (p) => fs.readFileSync(path.join(SITE, p), "utf8");
 
 const MECHANISMS = new Set(["detected", "choice", "client", "rga", "approval"]);
-const INPUT_KINDS = new Set(["url", "numbers", "checklist", "hours", "text", "facts", "booking"]);   // facts: business_on_google_v1 (10-16) · booking: step10_booking_link_v1 (10-16)
+const INPUT_KINDS = new Set(["url", "numbers", "checklist", "hours", "text", "facts", "booking", "story"]);   // facts: business_on_google_v1 (10-16) · booking: step10_booking_link_v1 (10-16)
 
 let fail = 0;
 const bad = (m) => { console.log(`  🔴 ${m}`); fail++; };
@@ -331,7 +331,8 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
   if (!/clientStepNo/.test(rowSrc) && !/it\.step\.clientStepNo/.test(portal)) {
     bad("the checklist numbers rows by array index again — filtering the list would renumber every row after the change");
   }
-  const rendered = steps.filter((s) => !["m1.access.gbp", "m1.access.analytics", "m1.access.search_console"].includes(s.id));
+  // a step may declare it has no number (the win story draws "·", client_ongoing_win_story_v1); it can't drift, it has none to drift from
+  const rendered = steps.filter((s) => !["m1.access.gbp", "m1.access.analytics", "m1.access.search_console"].includes(s.id) && !s.clientNumberless);
   const missing = rendered.filter((s) => typeof s.clientStepNo !== "number");
   if (missing.length) bad(`${missing.length} rendered step(s) declare no clientStepNo, so they fall back to the index: ${missing.slice(0, 3).map((s) => s.id).join(", ")}`);
   const nums = rendered.map((s) => s.clientStepNo).filter((n) => typeof n === "number");
@@ -344,7 +345,7 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
   // 🔴 And it has to survive the projection, or the portal silently falls back to the index.
   const csn = JSON.parse(read("data/playbooks/client-steps.json"));
   const projMissing = [...(csn.month1 || []), ...(csn.month2plus || [])]
-    .filter((x) => !["m1.access.gbp", "m1.access.analytics", "m1.access.search_console"].includes(x.id))
+    .filter((x) => !["m1.access.gbp", "m1.access.analytics", "m1.access.search_console"].includes(x.id) && !x.clientNumberless)
     .filter((x) => typeof x.clientStepNo !== "number");
   if (projMissing.length) bad(`the projection drops clientStepNo on ${projMissing.length} step(s) — the portal would renumber by index`);
 }

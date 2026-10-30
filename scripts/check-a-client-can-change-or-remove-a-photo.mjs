@@ -236,7 +236,7 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
 }
 const pc = nc(portal);
 if (!/: withRga \? \{ text: "With RGA", cls: "rga" \}/.test(pc) || !/&& !gbpWithRga && !withRga && \(Boolean\(step\.clientInput\)/.test(pc)) fail("all photos sent still says Your turn");
-if (!/&& !r\.later && !r\.withRga(?: && r\.taskState\?\.google_push\?\.state !== "with_rga")?\)/.test(pc) || !/&& !i\.withRga/.test(pc)) fail("all photos sent can still be the client's next step / the banner's headline");
+if (!/&& !r\.later && !r\.withRga(?: && !r\.notDue)?(?: && r\.taskState\?\.google_push\?\.state !== "with_rga")?\)/.test(pc) || !/&& !i\.withRga/.test(pc)) fail("all photos sent can still be the client's next step / the banner's headline");
 if (!/withRga && withRga\.n != null \? `<span class="pm-step-sub">All \$\{withRga\.n\} sent\$\{withRga\.review \? ` · \$\{withRga\.review\} with RGA for review` : ""\} · nothing needed from you<\/span>`/.test(pc)) fail("the folded row doesn't say all photos are sent and nothing is needed");
 if (!/\(!isDone \|\| \(status === "done" && step\.clientForm === "photo_upload" && !month2Only\)\) && step\.clientHow/.test(pc)) fail("a done photo step can't be opened to its photos");
 const rmh = (() => { const i = pc.indexOf('closest("[data-photo-remove]")'); return i < 0 ? "" : pc.slice(i, pc.indexOf("\n});", i)); })();

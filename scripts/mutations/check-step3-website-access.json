@@ -104,8 +104,8 @@
  [
   "the conversation sits above the card again",
   "portal",
-  "          step.clientInstructions ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold=",
-  "          threadHtml(step.id) + step.clientInstructions ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold="
+  "          step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold=",
+  "          threadHtml(step.id) + step.clientInstructions && !(og && og.noHow) ? `<details class=\"pm-k5-fold pm-how-fold\" data-how-fold="
  ],
  [
   "the conversation is always open",

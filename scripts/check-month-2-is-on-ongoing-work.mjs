@@ -62,7 +62,7 @@ else {
 
 // ── 1 · Ongoing work is the Month-2 list after setup ──
 const ow = lift("function buildOngoingWorkHtml(", "\nfunction buildCustomerListHtml") || "";
-if (!/if \(!isSetupPhase && month2StepsHtml\) return `<div class="pm-og">\$\{feed\}\$\{month2StepsHtml\}<\/div>`;/.test(ow))   // + the reviews card on top (reviews_ongoing_live_v1, 10-23)
+if (!/if \(!isSetupPhase && month2StepsHtml\) return `<div class="pm-og">\$\{feed\}\$\{ogHost\("replies"\)\}\$\{month2StepsHtml\}\$\{ogHost\("posts"\)\}<\/div>`;/.test(ow))   // + the reviews card on top (reviews_ongoing_live_v1, 10-23)
   fail("after setup, Ongoing work isn't the Month-2 list (it drops 3 of the 4 monthly jobs)");
 if (!/later\("Every month", "Your business numbers"/.test(ow)) fail("during setup, Ongoing work no longer previews the monthly jobs (\"Starts after setup\")");
 if (!/buildActionItemsHtml\(client\.id \|\| row\.client_id, onboarding, monthlyRecords, oauth, contracts, photos, customerLists, \{ month2Only: true \}\)/.test(pcode)) fail("nothing builds the Month-2 list for Ongoing work");
@@ -81,7 +81,8 @@ if (!/\.sort\(\(a, b\) => ongoingRank\(a\.id\) - ongoingRank\(b\.id\)\)/.test(pc
 
 // ── 3 · each card is open, shows its period, holds its form ──
 if (!/const expanded = month2Only \|\| step\.id === openStepId;/.test(pcode)) fail("Month-2 cards collapse like Setup's accordion (approved: each card open)");
-if (!/\$\{month2Only \? `<span class="pm-step-period">\$\{escapeHtml\(ongoingPeriod\(step\)\)\}<\/span>` : ""\}/.test(pcode)) fail("a Month-2 card doesn't show its period");
+// 🔄 batch 3 (client_card_system_v1): the period is a pill the card's own state picks (OG_CARD); only a row off the system keeps the old line
+if (!/\$\{month2Only && !csRow \? `<span class="pm-step-period">\$\{escapeHtml\(ongoingPeriod\(step\)\)\}<\/span>` : ""\}/.test(pcode) || !/\[ogMonth\(\), "wait off"\]/.test(pcode) || !/\[ogQuarter\(\), "wait off"\]/.test(pcode)) fail("a Month-2 card doesn't show its period");
 if (!/: month2Only && \(step\.clientForm === "photo_upload" \|\| step\.clientForm === "customer_list"\) \? ""/.test(pcode)) fail("a Month-2 card still jumps elsewhere for its photo upload / customer list");
 // 10-20 (monthly_asks_v1): a suggestion now — the count on Google this month, no quota bar — still above the upload
 // 🔄 10-26 (steps_6_20_clean_v1, step 18): the plan card ("5 new photos this month", the count this month), then the upload

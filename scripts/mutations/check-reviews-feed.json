@@ -140,8 +140,8 @@
  [
   "the card loses its question",
   "portal",
-  "    const ask = m ? `<div class=\"pm-rv-q\">",
-  "    const ask = false ? `<div class=\"pm-rv-q\">"
+  "const ask = m ? csSt(\"you\",",
+  "const ask = false ? csSt(\"you\","
  ],
  [
   "the review's words become HTML",
@@ -152,20 +152,20 @@
  [
   "no reading reads as 0 reviews",
   "portal",
-  "  if (!f) return pcCard({ tone: \"rga\", icon: STAR_ICON, head: \"We can't read your reviews yet\"",
-  "  if (!f) return pcCard({ tone: \"rga\", icon: STAR_ICON, head: \"0 reviews on Google\""
+  "if (!f) return row(notRead, \"wait\", ogK5(csCard({ tone: \"off\", head: \"We can't read your reviews yet\"",
+  "if (!f) return row(notRead, \"wait\", ogK5(csCard({ tone: \"off\", head: \"0 reviews on Google\""
  ],
  [
   "a failed load says nothing",
   "portal",
-  "body: pcFoot(\"We couldn't load your reviews just now. Reload the page to try again.\") });",
-  "body: \"\" });"
+  "head: \"We couldn't load your reviews just now\", body: csNote(\"Reload the page to try again.\")",
+  "head: \"Your Google reviews\", body: \"\""
  ],
  [
   "the card isn't on Ongoing work after setup",
   "portal",
-  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${month2StepsHtml}</div>`;",
-  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${month2StepsHtml}</div>`;"
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${feed}${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}</div>`;",
+  "  if (!isSetupPhase && month2StepsHtml) return `<div class=\"pm-og\">${ogHost(\"replies\")}${month2StepsHtml}${ogHost(\"posts\")}</div>`;"
  ],
  [
   "the card never loads",
@@ -206,7 +206,7 @@
  [
   "zero reviews is a green card again",
   "portal",
-  "  if (!f.reviews.length && !f.count) return pcCard({ tone: \"you\", icon: STAR_ICON, head: \"No reviews on Google yet\"",
-  "  if (false) return pcCard({ tone: \"you\", icon: STAR_ICON, head: \"No reviews on Google yet\""
+  "if (!f.reviews.length && !f.count) return row(pills, f.stale ? \"wait\" : \"you\", ogK5(csCard({ tone: \"you\", head: \"No reviews on Google yet\"",
+  "if (false) return row(pills, f.stale ? \"wait\" : \"you\", ogK5(csCard({ tone: \"you\", head: \"No reviews on Google yet\""
  ]
 ]

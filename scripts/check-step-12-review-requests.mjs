@@ -53,8 +53,8 @@ if (oe.intro) fail("the step-open email's intro is written in the SOP again (it 
   if (!/if \(refused\.length\) return json\(409,/.test(ep)) fail("a refused mark isn't refused (409)");
   if (!/Would you leave an honest review on Google\? It takes a minute and really helps: \$\{reviewUrl\}/.test(ep)) fail("the plain request doesn't ask for an honest review");
   if (!/return require\("\.\/_review-policy"\)\.reviewMessageProblems\(msg, \{ needsLink: false \}\)\.length \? null : msg;/.test(ep)) fail("the reminder isn't checked against the review policy");
-  if (!/requestFor\(c, i, l\.id\)\)\)\s*\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from step 13");
-  if (!/requestFor\(c, i, list\.id\)\)\s*\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from the weekly list (reviews_card_option_b_v1: the same rows)");
+  if (!/requestFor\(c, i, l\.id\)\)\)\n {6}\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from step 13");
+  if (!/requestFor\(c, i, l\.id\)\)\)\n {4}\.filter\(\(r\) => r\.name && \(r\.phone \|\| r\.email\)\)/.test(ep)) fail("an email-only customer is dropped from the weekly list (reviews_card_option_b_v1: the same rows)");
   if (!/const n = all\.filter\(\(c\) => c && c\.marked_sent_by_client\)\.length/.test(rc) || !/return n >= 5/.test(rc.slice(rc.indexOf('"m1.review.first_5": async (clientId)')))) fail("the server's step 12 check counts customers added, not customers asked");
   if (!/if \(s\.id === "m1\.review\.first_5" && customersAsked >= 5\) status = "done";/.test(src)) fail("the portal calls step 12 done before 5 are asked");
   if (/"clientLabel": "Send personalized review requests to 5 past customers"/.test(read("data/playbooks/playbooks.json")) || !/"clientLabel": "Ask your 5 most recent customers for a review"/.test(read("data/playbooks/playbooks.json"))) fail("step 12's title isn't \"Ask your 5 most recent customers for a review\"");
@@ -125,7 +125,7 @@ const pickBody = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0;
 const pcSlice = (() => { const a = src.indexOf("const PC_TICK ="), b = src.indexOf("const pcActs ="); return a < 0 || b < 0 ? "" : src.slice(a, src.indexOf("\n", b)); })();
 const lifted = [
   pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function typeLineHtml\(/m), pick(/^function rgaWaitHtml\(/m), line("GOOGLE_G"), line("GC_ICON"), pickBody(/^function googleCardHtml\(/m),
-  pick(/^function reviewStepHtml\(/m), pick(/^function reviewSlotsHtml\(/m), pick(/^function reviewRowsHtml\(/m), pick(/^function reviewStepLinesHtml\(/m), pick(/^function reviewStepDoneHtml\(/m), pick(/^async function loadReviewStep\(/m), line("_reviewStepAnswer"), pcSlice, pick(/^function reviewBandNote\(/m), pick(/^function reviewFiveTally\(/m), pick(/^function letterHtml\(/m),
+  (() => { const m = /^const r5CardHtml = [\s\S]*?<\/div>`;$/m.exec(src); return m ? m[0] : ""; })(), pick(/^function reviewStepHtml\(/m), pick(/^function reviewSlotsHtml\(/m), pick(/^function reviewRowsHtml\(/m), pick(/^function reviewStepLinesHtml\(/m), pick(/^function reviewStepDoneHtml\(/m), pick(/^async function loadReviewStep\(/m), line("_reviewStepAnswer"), pcSlice, pick(/^function reviewBandNote\(/m), pick(/^function reviewFiveTally\(/m), pick(/^function letterHtml\(/m),
   line("MSG_ICON"), line("PERSON_ICON"), line("STAR_ICON"), line("STORE_ICON"), line("REVIEW_GOAL"), line("monthDay"), line("smsHref"), line("r5Val"), line("r5IsEmail"), line("r5Complete"), line("r5Started"),
 ];
 const listeners = [pick(/^document\.addEventListener\("input", \(ev\) => \{\s*const form = ev\.target && ev\.target\.closest && ev\.target\.closest\("form\[data-review-five\]"\);/m),

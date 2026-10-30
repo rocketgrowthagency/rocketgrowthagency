@@ -38,10 +38,10 @@ const LK = { why: "RGA confirmed it, so it can't be edited here", edit: "request
   if (!/value="wrong"/.test(gen) || !/value="change"/.test(gen)) fail("another step lost the general choices (something's wrong · I want to change something)"); }
 { const bot = lf({}, LK0, "bottom"); if (/value="change"/.test(bot) || !/name="kind" value="wrong"/.test(bot)) fail("a step that can't be changed offers \"I want to change something\" (only \"something's wrong\" fits)"); }
 const lfAt = (step, task, lk, where) => vm.runInContext(`lockFootHtml(${JSON.stringify(step)}, ${JSON.stringify(task)}, ${JSON.stringify(lk)}, "${where}")`, ctx);
-// 🔄 10-30 (client card system batch 2): call setup (step 11) joined the system with every other Month 1 step, so "a step outside
-// the card system" is now the first numbered client step NOT in CS_STEPS (today a Month 2 step) — read from the SOP, never named here
+// 🔄 10-30 (client card system batch 3): every numbered client step is on the system, so "a step outside the card system" is the first
+// one NOT in CS_STEPS, or an id that isn't in it (the old band stays for anything that ever leaves the set)
 const OUT = (() => { const ids = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null) ids.push([o.clientStepNo, o.id]); Object.values(o).forEach(walk); } };
-  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return (ids.sort((a, b) => a[0] - b[0]).find(([, id]) => !vm.runInContext(`CS_STEPS.has(${JSON.stringify(id)})`, ctx)) || [])[1]; })();
+  walk(JSON.parse(read("data/playbooks/client-steps.json"))); return (ids.sort((a, b) => a[0] - b[0]).find(([, id]) => !vm.runInContext(`CS_STEPS.has(${JSON.stringify(id)})`, ctx)) || [])[1] || "x.outside.the.system"; })();
 if (!vm.runInContext(`CS_STEPS.has("m1.access.website")`, ctx) || !OUT) { console.error("⚠️  INDETERMINATE — step 3 is no longer a system step (or every client step is one): re-read which steps draw the CS row"); process.exit(2); }
 for (const [task, label, kw, said] of [[{ client_flagged: { at: "x", note: "That's not our site" } }, "a flag", /data-step-unflag/, "That's not our site"], [{ change_request: { at: "x", note: "Add my office manager" } }, "a change request", /data-chreq-cancel/, "Add my office manager"]]) {
   // a step outside the card system (call setup): ONE band with their words + Cancel my request; the lock line says "nothing changes" once
@@ -88,7 +88,7 @@ if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFr
   if (!/\.pm-lockfoot\.in-card \.pm-chg \{ margin:0; padding:0; border:0;/.test(C)) fail("the panel is a box inside the grey footer again (the mockup's is flat)");
   if (!/isOpenRow\(r\) && r\.status !== "flagged" && theirs\(r\)/.test(P)) fail("a flagged step can be the client's orange \"next step\" again (it's RGA's move)"); }
 if (!/const DONE_STRIP = "[^"]*\.pm-lockfoot/.test(P)) fail("the lock line inside the card counts as a done card's record (DONE_STRIP)");
-if (!/isDone && !askLk \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step with RGA still shows its done tick");
+if (!/isDone && !askLk(?: && \(!og \|\| og\.tone === "ok"\))? \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step with RGA still shows its done tick");
 // admin "Open step" on the client already open opens the step in place — it used to re-load the client and repaint every card
 // (Chris 10-27: "open step button doesnt work and everything glitches")
 { const A = read("admin/admin.js");
