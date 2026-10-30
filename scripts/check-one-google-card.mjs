@@ -74,8 +74,8 @@ if (pLift.some((x) => !x) || aLift.some((x) => !x)) { console.error(`⚠️  IND
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
 // the icon disc's colour (the state) and the card's tint (the state's -bg token)
-const EDGE = { ok: "rgb(12, 81, 50)", rga: "rgb(36, 87, 230)", you: "rgb(180, 83, 9)", wait: "rgb(144, 153, 168)" };
-const TINT = { ok: "rgb(227, 241, 223)", rga: "rgb(235, 243, 255)", you: "rgb(255, 241, 227)", wait: "rgb(236, 237, 237)" };
+const EDGE = { ok: "rgb(12, 81, 50)", rga: "rgb(36, 87, 230)", you: "rgb(180, 83, 9)", wait: "rgb(91, 107, 138)" };   // Chris 10-30: the waiting card is the client system's blue-grey in both portals
+const TINT = { ok: "rgb(227, 241, 223)", rga: "rgb(235, 243, 255)", you: "rgb(255, 241, 227)", wait: "rgb(238, 241, 246)" };
 const look = (sel) => [...document.querySelectorAll(sel)].map((c) => { const s = getComputedStyle(c), sm = c.querySelector(".gcard-st, .ob-gcard-st"), tiles = [...c.querySelectorAll(".pm-hc-day:not(.off), .pm-hc-hol")];
   return { cls: c.className, bg: s.backgroundColor, edge: s.borderLeftColor, edgeW: s.borderLeftWidth, head: sm ? getComputedStyle(sm).color : null, logo: !!c.querySelector("svg path[fill='#4285F4']"),
     tinted: tiles.filter((t) => { const b = getComputedStyle(t); return b.backgroundColor !== "rgb(255, 255, 255)" || /12, 81, 50|207, 230, 200/.test(b.borderColor); }).length,

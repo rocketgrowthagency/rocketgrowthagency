@@ -51,8 +51,8 @@
  [
   "admin's grey border isn't the portal's",
   "css",
-  ".ob-gcard.wait { background:var(--state-over-bg); border-color:var(--admin-border,#e3e3e3); }",
-  ".ob-gcard.wait { background:var(--state-over-bg); border-color:var(--state-over-edge); }",
+  ".ob-gcard.wait { background:var(--cs-wait-bg); border-color:var(--cs-wait-line); }",
+  ".ob-gcard.wait { background:var(--cs-wait-bg); border-color:var(--state-over-edge); }",
   1
  ],
  [
