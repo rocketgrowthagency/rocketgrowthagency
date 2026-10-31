@@ -1,0 +1,121 @@
+[
+ [
+  "a mirror removes files that left storage",
+  "backupdata",
+  "if (fs.existsSync(dest)) {\n      if (!f.size",
+  "if (false) {\n      if (!f.size",
+  1
+ ],
+ [
+  "keys reach the drive",
+  "backupdata",
+  "if (SECRET_NAME.test(k) && x !== null && x !== \"\")",
+  "if (false)",
+  1
+ ],
+ [
+  "a key-shaped value reaches the drive",
+  "backupdata",
+  "if (typeof v === \"string\" && SECRET_VALUE.test(v))",
+  "if (false)",
+  1
+ ],
+ [
+  "nested keys reach the drive",
+  "backupdata",
+  "else out[k] = scrub(x, counts);",
+  "else out[k] = x;",
+  1
+ ],
+ [
+  "the filter is greedy again",
+  "backupdata",
+  "export const SECRET_NAME = /(?:^|[_.-])(?:access_token|",
+  "export const SECRET_NAME = /credential|refresh|password|token|(?:^|[_.-])(?:access_token|",
+  1
+ ],
+ [
+  "only the first page is copied",
+  "backupdata",
+  "if (rows.length < PAGE) break;",
+  "break;",
+  1
+ ],
+ [
+  "a short copy passes",
+  "backupdata",
+  "if (Number.isFinite(count) && n < count) throw",
+  "if (false) throw",
+  1
+ ],
+ [
+  "a failed table isn't reported",
+  "backupdata",
+  "catch (e) { problems.push(`table ${t}: ${e.message}`);",
+  "catch (e) { ",
+  1
+ ],
+ [
+  "old copies go after a failure",
+  "backupdata",
+  "if (problems.length) { tellChris(problems[0]);",
+  "if (false) { tellChris(problems[0]);",
+  1
+ ],
+ [
+  "old copies never go",
+  "backupdata",
+  "if (/^\\d{4}-\\d{2}-\\d{2}$/.test(n) && !keep.has(n)) fs.rmSync",
+  "if (false) fs.rmSync",
+  1
+ ],
+ [
+  "a changed file overwrites the old one",
+  "backupdata",
+  "dest = `${dest}.${String(f.updated || TODAY)",
+  "dest = `${dest}${String(\"\")",
+  1
+ ],
+ [
+  "storage is skipped",
+  "backupdata",
+  "for (const { name } of b.ok ? await b.json() : [])",
+  "for (const { name } of [])",
+  1
+ ],
+ [
+  "a wrong-size file passes",
+  "backupdata",
+  "if (f.size && buf.length !== f.size) throw",
+  "if (false) throw",
+  1
+ ],
+ [
+  "a missing drive goes quiet",
+  "backupdata",
+  "record({ ok: false, problem: m }); tellChris(m); process.exit(2); }\n  const t0",
+  "process.exit(0); }\n  const t0",
+  1
+ ],
+ [
+  "a slow database is ignored",
+  "backupdata",
+  "Date.now() - t0 > SLOW_MS * 2)",
+  "false)",
+  1
+ ],
+ [
+  "the folder is open to others",
+  "backupdata",
+  "fs.chmodSync(DIR, 0o700);",
+  "",
+  1
+ ],
+ [
+  "retention is wrong",
+  "backupdata",
+  "recent.has(n) || n.endsWith(\"-01\")",
+  "recent.has(n)",
+  1
+ ]
+]
