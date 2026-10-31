@@ -716,7 +716,7 @@ Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
     id: "m1.gbp.booking_link", title: "Add appointment booking URL",
     type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     // 🔒 step10_booking_link_v1 (2026-10-16): the client's portal puts it on Google and reads it back; no Generate runner
-    instructions: `The client picks where Google's Book button goes: a page on their website (RGA finds it on their homepage), their booking tool, or "customers call us". The portal checks the link opens, puts it on Google with our tracking tag (utm_source=gbp, utm_medium=booking, utm_campaign=local-seo) in the link type Google offers this business (appointment, or a restaurant's reservations / order-ahead) and reads it back. Done only on a match.
+    instructions: `The client picks where Google's booking link goes: a page on their website (RGA finds it on their homepage), their booking tool, or "customers call us". The portal checks the link opens, puts it on Google with our tracking tag (utm_source=gbp, utm_medium=booking, utm_campaign=local-seo) in the link type Google offers this business (appointment, or a restaurant's reservations / order-ahead) and reads it back. Done only on a match.
 Google refuses the link or it doesn't open: back with the client (Google said + How to fix). Anything else is RGA's, emailed to hello@.
 Nightly: if the link on Google changes, this row shows Put back / Keep Google's.`,
   },

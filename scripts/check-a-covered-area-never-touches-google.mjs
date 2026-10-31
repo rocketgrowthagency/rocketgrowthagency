@@ -9,6 +9,7 @@
 //   · _gbp-facts.rgaDone: true only when every place is on Google or covered; one unknown keeps the step open
 //   · the nightly watch (factsOnly, as "Check Google now" runs it): looks the places up, finishes the step, records "Nothing was
 //     sent to Google", and makes NO write to Google (no PATCH, no POST to the profile)
+//   · _gbp-facts.factsDrift: a covered place isn't "changed on Google"; a real change still is, and the card shows it (admin driftHtml)
 //   · admin step 28 draws card A (approved): "All 3 areas are already covered", "Inside Los Angeles", "Nothing was sent to Google",
 //     no "Open Google Business Profile"; the client portal draws the covered chip ("Mar Vista · in Los Angeles")
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
@@ -163,6 +164,31 @@ for (const f of ["netlify/functions/admin-google-check.js", "netlify/functions/g
   if (!/g\.state === "with_rga" && \(g\.rga \|\| \[\]\)\.length && g\.rga\.every\(\(x\) => x\.fact === "area" && Array\.isArray\(x\.add\)\) \? areaAddCardHtml\(g\)/.test(AJS)) fail("step 28 still draws the old 'change it in Google Business Profile' card for an area-only change (card B)");
   if (!/const doneBtn = zcWaits(?: \|\| siteStep)? \? "" :/.test(AJS)) fail("step 28 still offers Mark step complete while places wait on Google");
   if (!/body: JSON\.stringify\(\{ client_id: c\.id, dry: true \}\)/.test(AJS) || !/if \(add\) add\.disabled = !all;/.test(AJS)) fail("card B doesn't fill its checks from the dry run, or enables Add without all five");
+}
+
+// ── after the step is done: a covered place isn't a change on Google (night of 10-30: RGA's own step 28 finished with "Nothing was sent to
+//    Google", and the next nightly said "The service area on Google isn't what the client saved" and offered to put it back) ──
+for (const [area, place, by] of [[["Los Angeles, CA, USA", "Culver City, CA, USA"], "Mar Vista", "Los Angeles, CA, USA"], [["London, UK", "Croydon, UK"], "Camden", "London, UK"]]) {
+  const push = (st) => ({ google_push: { state: "on_google", confirmed: { area: [...area, place] }, area_cover: { items: [{ name: place, state: st, ...(st === "covered" ? { by } : {}) }] } } });
+  if (GF.factsDrift(push("covered"), { area })) fail(`a covered place (${place}) reads as a change on Google`);
+  for (const st of ["to_add", "unknown"]) if (!GF.factsDrift(push(st), { area })) fail(`a place that's ${st} (${place}) and not on Google isn't noticed`);
+  const gone = GF.factsDrift(push("covered"), { area: area.slice(1) });
+  if (!gone || gone.what !== "service area") fail(`a city dropped from Google (${area[0]}) isn't noticed because a place inside it is covered`);
+  else if (gone.saved["service area"] !== area.join(", ")) fail(`the card offers to put back a place that was never on Google (${gone.saved["service area"]})`);
+}
+// the amber card: what the client saved and what Google shows are on it, and it closes every box it opens (one </div> too many threw the row's Undo and pill out of the row)
+{
+  const parts3 = ["G_ICON", "adminGoogleCardHtml", "GBP_DRIFT_STEPS", "driftHtml"].map((n) => lift(AJS, n));
+  if (parts3.some((x) => !x)) { console.error("⚠️  INDETERMINATE — the changed-on-Google card moved"); process.exit(2); }
+  const cd = { ...ctx, escapeAttribute: ctx.escapeHtml, state: { onboardingData: { tasks: {} } } };
+  vm.createContext(cd); vm.runInContext(parts3.join("\n") + "\nthis.drift = driftHtml;", cd);
+  const dr = (saved, google) => cd.drift({ google_drift: { what: "x", at: "2026-10-30T10:30:00Z", saved, google } }, {});
+  const one = dr({ "service area": "Los Angeles, Culver City" }, { "service area": "Culver City" });
+  if (!/<b>Saved by the client:<\/b> Los Angeles, Culver City</.test(one) || !/<b>Google shows now:<\/b> Culver City</.test(one)) fail("the changed-on-Google card doesn't show the business fact the client saved, or what Google shows");
+  const two = dr({ phone: "(424) 555-0100", website: "https://a.test/" }, { phone: null, website: "https://b.test/" });
+  if (!/phone: \(424\) 555-0100 · website: https:\/\/a\.test\//.test(two) || !/phone: nothing · website: https:\/\/b\.test\//.test(two)) fail("with several facts changed, the card doesn't name each one (or a fact Google no longer shows isn't \"nothing\")");
+  if (!/Mon closed/.test(dr({ days: { mon: { closed: true } } }, { days: {} })) || !/<b>Saved by the client:<\/b> https:\/\/x\.test</.test(dr("https://x.test", null))) fail("the card stopped showing hours or a booking link");
+  if ((one.match(/<div\b/g) || []).length !== (one.match(/<\/div>/g) || []).length) fail("the changed-on-Google card doesn't close every <div> it opens, so the row's pill and Undo fall out of the row");
 }
 
 if (F.length) { console.error(`🔴 a covered area could touch Google, or the step can't tell:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }

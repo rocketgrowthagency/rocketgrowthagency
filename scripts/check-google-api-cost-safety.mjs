@@ -123,6 +123,19 @@ const DECLARED = {
     scheduled: "on demand (a human opens the picker, or an invite is confirmed)",
     stamps: "kickoff_slot_holds — every slot handed out or taken is a row, so nothing is decided from a Google answer alone",
   },
+  // ── step 4 / admin step 28 place lookup (2026-10-29, step4_done_in_portal_v2). Declared 10-30 by the night fixer; the bookkeeping
+  //    went in with commit 72851b2e: a FAILED look is stamped like any other, so it is not retried every night.
+  "_gbp-area-cover.js": {
+    perRun: "≤1 SearchText + ≤1 Geocoding per place on the client's to-add list that Google doesn't list yet",
+    // 🔴 The one to watch: SearchText shares the 32/day cap with the geo-grid. A person pressing Check Google now looks again at once, while a place is unknown.
+    scheduled: "weekly per waiting step, from the nightly gbp-profile-watch (coverStale) · on demand (Check Google now, only while a place is unknown)",
+    stamps: "google_push.area_cover.at + one item per place, failures included (state unknown + why), so no look repeats inside the week",
+  },
+  "_gbp-watch.js": {
+    perRun: "0 of its own: the only Google lookup that counts here is _gbp-area-cover, and only while coverStale says so",
+    scheduled: "daily via gbp-profile-watch · on demand via admin-google-check (a person presses Check Google now)",
+    stamps: "google_push.area_cover, written with writeStepTasks in the same pass as the look",
+  },
   // ── 🔴 FOUND 2026-10-02 WHEN THIS GATE LEARNED TO FOLLOW A `require`. All three reach Google
   //    through a helper module, so for as long as this gate matched endpoint URLs in a file's own
   //    source, none of them had ever been declared — the review step they were supposed to pass.

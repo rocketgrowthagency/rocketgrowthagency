@@ -46,7 +46,9 @@ if (!/if \(f\.allowNotSure && notSure\.includes\(f\.key\)\) \{ out\.not_sure = /
 for (const [iso, want] of [["2026-10-20T12:00:00Z", "2027-01-01"], ["2026-12-31T12:00:00Z", "2027-01-01"], ["2026-01-15T12:00:00Z", "2026-04-01"], ["2026-03-31T12:00:00Z", "2026-04-01"]])
   if (run("nextQuarterStart(new Date(__d))", { __d: iso }).slice(0, 10) !== want) fail(`step 17: the next quarter after ${iso.slice(0, 10)} isn't ${want}`);
 if (!/s\.clientQuarterly && status !== "done" && !\[0, 3, 6, 9\]\.includes\(new Date\(\)\.getUTCMonth\(\)\)/.test(P) || !/notDue && !isDone \? \{ text: "Every 3 months"/.test(P)) fail("step 17: a quarterly step reads due outside a quarter's first month");
-if (!/const LEGACY = \[\{ key: "enquiries"/.test(P) || !/const all = \[\.\.\.fields, \.\.\.LEGACY\.filter\(/.test(P)) fail("step 17: numbers a client saved in the old monthly fields stop showing");
+// 🔒 EVERY place that draws the numbers keeps them (10-30: the Ongoing card became a second one; "appears somewhere" passed with either dropped)
+const legacyOf = (re) => (P.match(re) || []).length;
+if (!legacyOf(/const LEGACY = \[\{ key: "enquiries"/g) || legacyOf(/const all = \[\.\.\.fields, \.\.\.LEGACY\.filter\(/g) !== legacyOf(/const LEGACY = \[\{ key: "enquiries"/g)) fail("step 17: numbers a client saved in the old monthly fields stop showing");
 // ── 18
 const g = A["m2.exec.gbp_photos"] || {};
 if (!g.clientOptional || !/photosOnGoogleThisMonth >= 1\) status = "done"/.test(P) || /photosThisMonth >= 5\) status = "done"/.test(P)) fail("step 18: monthly photos are a 5-a-month quota again, or count uploads");

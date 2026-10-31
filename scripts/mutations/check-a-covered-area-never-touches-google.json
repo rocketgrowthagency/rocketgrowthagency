@@ -208,5 +208,40 @@
   "C.coverStale(task.google_push.area_cover, areaItem.add, nowMs, !!d.factsOnly)",
   "C.coverStale(task.google_push.area_cover, areaItem.add, nowMs, false)",
   1
+ ],
+ [
+  "the nightly calls a covered place a change on Google",
+  "gbpfacts",
+  "c.area.filter((n) => !coveredIn(task.google_push, n))",
+  "c.area",
+  1
+ ],
+ [
+  "a place still to add counts as covered in the nightly",
+  "gbpfacts",
+  "c.area.filter((n) => !coveredIn(task.google_push, n))",
+  "c.area.filter((n) => hasPlace(now.area, n))",
+  1
+ ],
+ [
+  "a real change to the service area goes unnoticed",
+  "gbpfacts",
+  "if (wantArea && !sameArea(wantArea, now.area)) diffs.push",
+  "if (false) diffs.push",
+  1
+ ],
+ [
+  "the changed-on-Google card shows business facts blank",
+  "admin",
+  "v && typeof v === \"object\" ? Object.entries(v)",
+  "false ? Object.entries(v)",
+  1
+ ],
+ [
+  "the changed-on-Google card closes one div too many",
+  "admin",
+  "Keep Google's (update the record)</button>`",
+  "Keep Google's (update the record)</button></div>`",
+  1
  ]
 ]

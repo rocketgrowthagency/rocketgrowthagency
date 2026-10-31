@@ -35,10 +35,17 @@
   1
  ],
  [
-  "old numbers dropped",
+  "old numbers dropped from the done card",
   "portal",
   "    const all = [...fields, ...LEGACY.filter((l) => !fields.some((f) => f.key === l.key))];",
   "    const all = [...fields];",
+  1
+ ],
+ [
+  "old numbers dropped from the Ongoing card",
+  "portal",
+  "\n  const all = [...fields, ...LEGACY.filter((l) => !fields.some((f) => f.key === l.key))];",
+  "\n  const all = [...fields];",
   1
  ],
  [
