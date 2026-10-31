@@ -5,7 +5,7 @@
 //   1 · Ongoing during setup says what the REAL steps say: numbers + video every 3 months, video optional, no photo quota; posts, replies, win story and report are named. Read against the playbook, so it can't drift again
 //   2 · Rankings · Reports · Reviews during setup: one card each, no "campaign goes live", no "once service begins". A check row only when there was a check; "not in the top 20" only when nothing ranked
 //   3 · Dashboard: one count, To do's; the button says To do and goes there; the empty results box is gone
-//   4 · Setup: "Four quick steps" and "Step N of 4" go ONLY when signed, paid and connected; before that, and when Google is disconnected, the gates stay. The agreement stays reachable
+//   4 · Setup: the Step 1–4 cards NEVER leave the page (Chris 10-30 reversed call 4)
 //   5 · Rankings + Reports after setup: the zeros aren't repeated in a sentence
 // exit 0 = holds · 1 = regressed · 2 = can't tell
 import fs from "node:fs";
@@ -33,11 +33,10 @@ for (const w of ["once your campaign goes live", "Once service begins we track",
 if (!/data-portal-goto="\$\{\/To do\/\.test\(action\.btn\) \? "approvals" : "setup"\}"/.test(P)) fail("Go to To do doesn't open To do");
 if (!/const n = _todoTotalN != null \? Math\.max\(0, _todoTotalN - \(mine\.length - n0\)\)/.test(P)) fail("the next-step card doesn't use To do's number");
 if (!/if \(_todoTotalN !== todoN\) \{ _todoTotalN = todoN;/.test(P)) fail("To do's number doesn't reach the next-step card");
+// 🔒 Chris 10-30: "client portal now lost all steps 1-4 … should be in memory to never be lost". The four stay on the page, always.
+if (!/const stackedStagesHtml = progressBarHtml \+ buildStackedStagesHtml\(stage, ctx\);/.test(P) || /buildSetupLeanHtml|pm-setup-lean/.test(P + CSS)) fail("the Setup tab's Step 1–4 cards can leave the page");
+if (!/quick steps to launch your Google Maps campaign/.test(P)) fail("the Setup tab's heading about its steps is gone");
 if (!/<span><i class="pm-sw rga"><\/i> RGA is on it<\/span>/.test(P)) fail("the key's words don't match the pills");
-if (!/const setupLean = stage === "stage_4_onboarding" && !!ctx\.oauth;/.test(P)) fail("the Setup tab shrinks at the wrong time (signed, paid and connected are real gates)");
-if (!/const _setupLeanHeader = single\.client\?\.client_portal_stage === "stage_4_onboarding" && !!oauthByClient\[/.test(P)) fail("the Setup tab's header doesn't follow the same test as its body");
-if (!/cfg\.c = `\$\{m\.done\} of \$\{m\.total\} done\. RGA handles the technical work\.`;/.test(P)) fail("the Setup tab's count isn't To do's");
-if (!/\.pm-setup-lean \.pm-bare > \.portal-card-head, \.pm-setup-lean \.pm-bare > \.portal-copy, \.pm-setup-lean \.pm-linked \{ display:none; \}/.test(CSS)) fail("the old heading stays above the steps");
 if (!/\.pm-rv-tab \.pm-og-row > \.pm-step-row-head \{ display:none; \}/.test(CSS)) fail("the Reviews tab draws a step row around its card");
 
 // ── drawn ──
@@ -96,4 +95,4 @@ if (!R.rev.feed) fail("Reviews during setup doesn't read the live reviews");
 for (const [k, o] of Object.entries(R)) if (o.wider) fail(`${k} is wider than a 400px phone`);
 
 if (F.length) { console.error(`🔴 client_portal_tabs_v1 isn't what Chris approved:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log("✅ client_portal_tabs_v1 holds: Ongoing during setup says what the real steps say; Rankings, Reports and Reviews say what's true; one count, To do's; the Setup tab shrinks only when signed, paid and connected; no old words");
+console.log("✅ client_portal_tabs_v1 holds: Ongoing during setup says what the real steps say; Rankings, Reports and Reviews say what's true; one count, To do's; the Setup tab keeps its Step 1–4; no old words");

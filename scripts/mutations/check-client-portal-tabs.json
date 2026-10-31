@@ -154,41 +154,6 @@
   1
  ],
  [
-  "Setup shrinks before they've connected",
-  "portal",
-  "const setupLean = stage === \"stage_4_onboarding\" && !!ctx.oauth;",
-  "const setupLean = stage === \"stage_4_onboarding\";",
-  1
- ],
- [
-  "Setup shrinks at every stage",
-  "portal",
-  "const setupLean = stage === \"stage_4_onboarding\" && !!ctx.oauth;",
-  "const setupLean = !!ctx.oauth;",
-  1
- ],
- [
-  "the header disagrees with the body",
-  "portal",
-  "const _setupLeanHeader = single.client?.client_portal_stage === \"stage_4_onboarding\" && !!oauthByClient[single.client?.id || single.client_id];",
-  "const _setupLeanHeader = true;",
-  1
- ],
- [
-  "the count isn't To do's",
-  "portal",
-  "cfg.c = `${m.done} of ${m.total} done. RGA handles the technical work.`;",
-  "cfg.c = `5 to do. RGA handles the technical work.`;",
-  1
- ],
- [
-  "the old heading stays",
-  "portalcss",
-  ".pm-setup-lean .pm-bare > .portal-card-head, .pm-setup-lean .pm-bare > .portal-copy, .pm-setup-lean .pm-linked { display:none; }",
-  "",
-  1
- ],
- [
   "the reviews tab draws a row",
   "portalcss",
   ".pm-rv-tab .pm-og-row > .pm-step-row-head { display:none; }",
@@ -200,6 +165,20 @@
   "playbook",
   "One short video a quarter. Your phone is fine",
   "One short video a month. Your phone is fine",
+  1
+ ],
+ [
+  "the Step 1-4 cards can leave the page",
+  "portal",
+  "const stackedStagesHtml = progressBarHtml + buildStackedStagesHtml(stage, ctx);",
+  "const stackedStagesHtml = buildStageContent(stage, ctx);",
+  1
+ ],
+ [
+  "the heading about the steps is gone",
+  "portal",
+  "quick steps to launch your Google Maps campaign",
+  "steps to go",
   1
  ]
 ]
