@@ -264,5 +264,12 @@
   "reason: value.not_offered ? \"google_offers_no_link\" : \"no_online_booking\"",
   "reason: \"no_online_booking\"",
   1
+ ],
+ [
+  "the old done card stays under the form",
+  "portal",
+  "isDone && !taskState?.google_push?.state && !_editingSteps.has(step.id) ? svcNoRecordHtml(",
+  "isDone && !taskState?.google_push?.state ? svcNoRecordHtml(",
+  1
  ]
 ]
