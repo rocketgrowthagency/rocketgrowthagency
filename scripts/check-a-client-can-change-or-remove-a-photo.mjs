@@ -249,7 +249,7 @@ if (!/listEl\._rerender = \(freshOnboarding, freshMonthly, freshLists, freshPhot
   if (!new RegExp(`data-slot="${workN}" data-on-google-slot`).test(h)) fail("a slot on Google isn't marked, so a Change in progress can't say the old photo stays"); }
 if (!/if \(row\.hasAttribute\("data-on-google-slot"\)\) \{ if \(!row\.querySelector\("\.pm-swap"\)\) row\.insertAdjacentHTML\("beforeend", PHOTO_SWAP_NOTE\); \}\s*else bumpGroupCount\(row\);/.test(pc)) fail("a Change just sent doesn't say the old photo stays on Google (or bumps the kind's count twice)");
 const pcss = read("portal/portal.css");
-if (!/\.pm-linkbtn\.pm-photo-rm\.is-busy::after \{ border-color:var\(--portal-error\);/.test(pcss) || !/\.pm-pc-ptile \{/.test(pcss) ||   /* 10-26: the done band became the plan card's photo tiles (steps_6_20_clean_v1) */ !/\.pm-turned\.pm-care \{ grid-column:1\/-1; color:var\(--state-care\); background:var\(--state-care-bg\); border-color:var\(--state-care-line\);/.test(pcss)) fail("the Remove spinner, the done band or the grey logo note has no style");
+if (!/\.pm-linkbtn\.pm-photo-rm\.is-busy::after \{ border-color:var\(--portal-error\);/.test(pcss) || !/\.pm-pc-ptile \{/.test(pcss)) fail("the Remove spinner or the done band has no style");   /* 10-26: the done band became the plan card's photo tiles (steps_6_20_clean_v1); 10-30: the logo note became the card's own note (check-step10-photo-truth) */
 
 // ── 6 · admin sees it ──
 const admin = nc(read("admin/admin.js"));
