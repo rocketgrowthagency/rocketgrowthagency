@@ -54,5 +54,19 @@
   "We'll write a review request for each — you send ${n === 1 ? \"it\" : \"them\"} from your phone.",
   "Review requests will start going out automatically.",
   1
+ ],
+ [
+  "a just-uploaded photo paints over its status again",
+  "portalcss",
+  " padding:8px; position:relative; z-index:1; }   /* above",
+  " padding:8px; }   /* above",
+  1
+ ],
+ [
+  "Remove waits for a reload again",
+  "portal",
+  "if (stage === \"saved\") u.sent(d.id);",
+  "if (stage === \"saved\") u.sent();",
+  1
  ]
 ]

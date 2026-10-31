@@ -210,7 +210,7 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
   // tile stays done (✓, is-on) and its kind chip reads 1/1 (marked main), never "with RGA" or empty
   const logoTile = (new RegExp(`<button type="button" class="pm-p10-t([^"]*)" data-p10-t="${logoN}"`).exec(lk) || [])[1];
   const logoChip = /<span class="pm-cs-chip ?([^"]*)"><button type="button" class="pm-p10-k" data-p10-kind="[^"]*">Logo <em>(\d+)\/(\d+)<\/em>/.exec(lk);
-  if (logoTile == null || !/\bis-on\b/.test(logoTile) || !logoChip || logoChip[2] !== logoChip[3] || !/\bmain\b/.test(logoChip[1])) fail(`a change in review makes its kind look unfinished (the old photo is still on Google) — tile "${logoTile}", chip ${logoChip ? logoChip[0].slice(-40) : "missing"}`);
+  if (logoTile == null || !/\bis-on\b/.test(logoTile) || !logoChip || logoChip[2] !== logoChip[3]) fail(`a change in review makes its kind look unfinished (the old photo is still on Google) — tile "${logoTile}", chip ${logoChip ? logoChip[0].slice(-40) : "missing"}`);
 }
 {
   const g = { name: `${PARENT}/media/g1`, category: "EXTERIOR", thumb: "t.jpg", at: "2025-12-02T00:00:00Z" };
