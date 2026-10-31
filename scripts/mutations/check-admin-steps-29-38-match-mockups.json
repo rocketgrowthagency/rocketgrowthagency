@@ -182,24 +182,10 @@
   1
  ],
  [
-  "38: slots unnamed",
-  "admin",
-  "slots.push(i < g.done ? `<div class=\"ob-zc-slot on\">${escapeHtml(g.name)} ✓</div>` : `<div class=\"ob-zc-slot\">${escapeHtml(g.name)}</div>`);",
-  "slots.push(`<div class=\"ob-zc-slot\">empty</div>`);",
-  1
- ],
- [
   "38: the old row comes back",
   "admin",
-  "if (o.flowId === PHOTO_REVIEW_STEP && photosWaitState(s.task)) return zcPhotosRowHtml(o, s, obMarker(n, \"active\", \"you\"), badge, resultBlock);\n      const prvHtml",
+  "if (o.flowId === PHOTO_REVIEW_STEP && photosWaitState(s.task)) return zcPhotosRowHtml(o, s, obMarker(n, \"active\", \"you\"), badge, resultBlock, { rerun: runBtn });\n      const prvHtml",
   "const prvHtml",
-  1
- ],
- [
-  "38: call button gone",
-  "admin",
-  "${tel ? `<a class=\"admin-button admin-button-secondary\" href=\"tel:${escapeAttribute(tel)}\">Call them · ${escapeHtml(phone)}</a>` : \"\"}",
-  "",
   1
  ],
  [
@@ -270,6 +256,48 @@
   "portal",
   "row(\"Service area\", escapeHtml(areaLine), areaSt, escapeHtml(coveredSub))",
   "row(\"Service area\", escapeHtml(areaLine), areaSt, coveredSub)",
+  1
+ ],
+ [
+  "38: Call them is back",
+  "admin",
+  "Remind the client…</button><button type=\"button\" class=\"ob-zc-alt ob-zc-lnk\" data-task-set=\"${escapeAttribute(PHOTO_REVIEW_STEP)}\"",
+  "Remind the client…</button><a href=\"tel:1\">Call them</a><button type=\"button\" class=\"ob-zc-alt ob-zc-lnk\" data-task-set=\"${escapeAttribute(PHOTO_REVIEW_STEP)}\"",
+  1
+ ],
+ [
+  "38: no Sent line",
+  "admin",
+  "+ `<div class=\"ob-zc-b\">${parts ? parts.html : \"\"}${sentRows.join(\"\")}",
+  "+ `<div class=\"ob-zc-b\">${parts ? parts.html : \"\"}",
+  1
+ ],
+ [
+  "38: chips green again",
+  "admin",
+  "`<span class=\"ob-zc-chip\">${escapeHtml(g.name)} <i>${addedBy.get(g.name) || 0}/${g.n}</i></span>`",
+  "`<span class=\"ob-zc-chip ok\">${escapeHtml(g.name)} <i>${addedBy.get(g.name) || 0}/${g.n}</i></span>`",
+  1
+ ],
+ [
+  "38: tiles lose the photo",
+  "admin",
+  "slots.push(p ? `<button type=\"button\" class=\"ob-zc-slot pic\" data-photo-zoom-src data-review-thumb=\"${escapeAttribute(p.storage_path || \"\")}\"><span>${escapeHtml(labelOf(p))}</span></button>`",
+  "slots.push(p ? `<div class=\"ob-zc-slot\">${escapeHtml(labelOf(p))}</div>`",
+  1
+ ],
+ [
+  "38: a square crops to a rectangle again",
+  "admincss",
+  ".pr-ph.photo { background-size:contain;",
+  ".pr-ph.photo { background-size:cover;",
+  1
+ ],
+ [
+  "38: View larger goes",
+  "admin",
+  "<button type=\"button\" class=\"pr-zoom-link\" data-photo-zoom>View larger</button>",
+  "",
   1
  ]
 ]

@@ -99,5 +99,13 @@ if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(?:if \(isM1\)
 if (!/_obLastActed = flowId;[^\n]*\n\s*obOpenStep\(el\);/.test(code)) F("revealStep no longer opens the step you acted on");
 if (!/if \(typeof obOpenStep === "function"\) obOpenStep\(target\);/.test(code)) F("a jump no longer opens its target");
 
+// 🔒 steps_open_in_place_v2, the client portal's rule (Chris 10-31): the clicked title stays where it is, on a step and on a card. Measured on the live record in a browser when built.
+const AJS_HOLD = fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code"}/admin/admin.js`, "utf8");
+if (!/function obHoldInPlace\(anchor, change, opened\) \{[\s\S]{0,400}overflowAnchor = "none"[\s\S]{0,120}change\(\);[\s\S]{0,160}window\.scrollBy\(\{ top: drift, behavior: "instant" \}\)/.test(AJS_HOLD)) fails.push("a step's title no longer stays put when another closes");
+if (!/obHoldInPlace\(row, \(\) => \{/.test(AJS_HOLD)) fails.push("a step row opens without holding its place");
+if (!/obHoldInPlace\(b, \(\) => \{ body\.hidden = !nowOpen;/.test(AJS_HOLD)) fails.push("a card opens without holding its place");
+// 🔒 Chris 10-31, step 34: what the client answered is the step's body, below its top bar, or it can't fold
+if (/<p class="ob-title">\$\{escapeHtml\(o\.t\)\} \$\{badge\}<\/p>[^\n]*\$\{clientInputHtml\(o, s\.task\)\}/.test(AJS_HOLD)) fails.push("a done step puts the client's answer inside its top bar: it can't fold, and its number floats mid-card");
+if (!/const said = `\$\{attestation\}\$\{clientInputHtml\(o, s\.task\)\}/.test(AJS_HOLD)) fails.push("a done step's answer isn't its own body");
 if (fails.length) { console.error("🔴 the admin step accordion does not behave:"); for (const f of fails) console.error("   · " + f); process.exit(1); }
 console.log("✅ the admin step accordion: one open per card, the live call never folds, jumps and the acted-on step open, ⌘F reaches folded text");

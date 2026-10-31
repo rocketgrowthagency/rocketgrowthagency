@@ -67,7 +67,7 @@ process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const pctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
+const pctx = { secondLogos: SECOND_LOGO.secondLogos, photoListedName: SECOND_LOGO.photoListedName, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, noteSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, noteSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${noteSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml;`, pctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the portal renderer did not load: ${e.message}`); process.exit(2); }

@@ -44,8 +44,36 @@
  [
   "a jump stops opening its target",
   "admin",
-  "  if (typeof obOpenStep === \"function\") obOpenStep(target);   // \ud83d\udd12 a jump opens what it points at\n",
+  "  if (typeof obOpenStep === \"function\") obOpenStep(target);   // 🔒 a jump opens what it points at\n",
   "",
+  1
+ ],
+ [
+  "the title isn't put back",
+  "admin",
+  "  if (Math.abs(drift) > 0.5) window.scrollBy({ top: drift, behavior: \"instant\" });\n  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)",
+  "  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)",
+  1
+ ],
+ [
+  "a step row doesn't hold its place",
+  "admin",
+  "  obHoldInPlace(row, () => {",
+  "  ((_a, f) => f())(row, () => {",
+  1
+ ],
+ [
+  "a card doesn't hold its place",
+  "admin",
+  "obHoldInPlace(b, () => { body.hidden = !nowOpen;",
+  "((_a, f) => f())(b, () => { body.hidden = !nowOpen;",
+  1
+ ],
+ [
+  "the client's answer goes back in the top bar",
+  "admin",
+  "${obStaleNoteHtml(s, steps)}${obStalledNoteHtml(s.task)}</div>\n        <span class=\"ob-actions-inline\">${o.flowId === \"m1.access.website\"",
+  "${obStaleNoteHtml(s, steps)}${obStalledNoteHtml(s.task)}${attestation}${clientInputHtml(o, s.task)}</div>\n        <span class=\"ob-actions-inline\">${o.flowId === \"m1.access.website\"",
   1
  ]
 ]

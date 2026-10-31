@@ -129,25 +129,36 @@ if (!/if \(step && step\.obj && ZC_CARD_STEPS\.has\(step\.obj\.flowId\)/.test(AJ
 }
 
 // ── admin: step 38 — photo progress at a glance ─────────────────────────────────────────────────
+const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code"}/admin/admin.css`, "utf8");
 { const p5 = ["ZC_FOLD_T", "ZC_CAM", "photosWaitState", "photosWaitCardHtml"].map((n) => lift(AJS, n));
   if (p5.some((x) => !x)) { console.error("⚠️  INDETERMINATE — step 38's card moved"); process.exit(2); }
-  const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
+  const NOW5 = new Date().toISOString();
+  const photos5 = [{ id: "a", shot_n: 1, category: "logo", publish_state: "published", storage_path: "l", pushed_at: "2026-10-09T16:20:00Z", gbp_media_name: "media/profile" },
+    { id: "b", shot_n: 2, category: "cover", publish_state: "published", storage_path: "c", pushed_at: NOW5, gbp_media_name: "upload-name" }];
+  const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, PHOTO_KIND_LABEL: { cover: "Cover", logo: "Logo" }, photosOfClient: () => photos5, photoReviewHtml: () => ({ reviewN: c5.rv || 0, html: c5.rv ? "<div class=pr-card>BLOCK</div>" : "", existingHtml: "<div>OLDCOPY</div>" }), photoCountable: () => 1, photoListedName: (p, items) => ((items || []).some((g) => g.name === p.gbp_media_name) ? p.gbp_media_name : null), state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
   vm.createContext(c5); vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);
   const G = [["Logo", 1, "PROFILE"], ["Cover", 1, "COVER"], ["Exterior", 3, "EXTERIOR"], ["Interior", 3, "INTERIOR"], ["Team", 5, "TEAMS"], ["At work", 7, "AT_WORK"]];
   const items = G.flatMap(([g, n, k]) => Array.from({ length: n }, () => ({ group: g, google: k })));
-  const task = { status: "pending", draft_shape: { items, storefront: false }, detected: { have: { PROFILE: 1 } }, later: { reminded_at: "2026-10-23T21:40:18Z", followup_told_at: "2026-10-26T21:40:37Z" },
+  const task = { status: "pending", draft_shape: { items: items.map((x, i) => ({ ...x, n: i + 1 })), storefront: false }, detected: { n: 1, have: { PROFILE: 1 }, items: [] }, later: { reminded_at: "2026-10-23T21:40:18Z", followup_told_at: "2026-10-26T21:40:37Z" },
     photo_kept: { x: { at: "2026-10-16T01:58:45Z" } } };
   const h = c5.ph(task, { clientStepNo: 10, clientLabel: "Provide 20+ business photos" });
-  if (!/Their photos: 1 of 20/.test(h) || !/<b>1<\/b> \/ 20/.test(h) || !/Client's move · late/.test(h)) fail("step 38: the progress header (1 of 20 · late) is wrong");
-  if (!/1 of 20 photos · no new photos since their reminder \(Oct 23\)/.test(h) || !/Client portal step 10, Provide 20\+ business photos/.test(h)) fail("step 38: the waiting line or the client's step is wrong");
-  if (!/Logo <i>1\/1<\/i>/.test(h) || !/At work <i>0\/7<\/i>/.test(h) || (h.match(/class="ob-zc-slot(?: on)?"/g) || []).length !== 20 || (h.match(/class="ob-zc-slot on"/g) || []).length !== 1) fail("step 38: the shot list by group, or the 20 slots, are wrong");
-  if (!/Google hides it because the profile shows no street address/.test(h) || !/chose to keep the second copy of their logo \(Oct 15\)|chose to keep the second copy of their logo \(Oct 16\)/.test(h)) fail("step 38: the two notes are missing");
-  if (!/data-step-nudge="m1\.gbp\.photos">Remind the client…/.test(h) || !/href="tel:4242422040">Call them · \(424\) 242-2040/.test(h)) fail("step 38: Remind the client… / Call them is missing");
+  // 🔒 admin_step38_review_v2 (approved Chris 10-31): real photos, a Sent line, one count, no Call them, no green
+  if (!/2 of 20 photos added · 1 sent today/.test(h) || !/<b>1<\/b> \/ 20 on Google/.test(h) || !/Client's move · late/.test(h)) fail("step 38: the header (photos added · sent today · on Google) is wrong");
+  if (!/Client portal step 10, Provide 20\+ business photos/.test(h)) fail("step 38: the client's step is missing");
+  if (!/Logo <i>1\/1<\/i>/.test(h) || !/Cover <i>1\/1<\/i>/.test(h) || !/At work <i>0\/7<\/i>/.test(h) || (h.match(/class="ob-zc-slot( pic)?"/g) || []).length !== 20 || (h.match(/class="ob-zc-slot pic"/g) || []).length !== 2) fail("step 38: the shot list by group, or the 20 slots with real photos, are wrong");
+  if (/ob-zc-chip ok|ob-zc-slot on/.test(h)) fail("step 38: a chip or tile goes green or blue-with-a-tick, not the real photo");
+  if (!/data-review-thumb="c"><span>Sent · up to 48 hours/.test(h) || !/data-review-thumb="l"><span>Hidden by Google/.test(h)) fail("step 38: a tile doesn't say where its photo stands");
+  if (!/Cover · sent to Google/.test(h) || !/Google took the upload/.test(h)) fail("step 38: no Sent confirmation after a send");
+  if (!/Logo · saved, not showing/.test(h) || !/OLDCOPY/.test(h)) fail("step 38: the hidden logo or the old copy line is missing");
+  if (!/data-step-nudge="m1\.gbp\.photos">Remind the client…/.test(h) || /Call them|href="tel:/.test(h) || !/data-task-status="skipped">Skip this step…/.test(h)) fail("step 38: the foot isn't Remind the client… + Skip");
+  c5.rv = 1; const hr = c5.ph(task, { clientStepNo: 10 }); c5.rv = 0;
+  if (!/Review 1 photo before it goes on Google/.test(hr) || !/>Your move</.test(hr) || !/BLOCK/.test(hr)) fail("step 38: a photo to review doesn't lead the card");
+  if (!/\.pr-ph\.photo \{ background-size:contain;/.test(ACSS5())) fail("step 38: a square photo is cropped to a rectangle");
+  if (!/function openPhotoZoom\(url\)/.test(AJS) || !/\.ob-zc-photos \[data-photo-zoom\]/.test(AJS) || !/class="pr-zoom-link" data-photo-zoom>View larger/.test(AJS)) fail("step 38: no way to see a photo larger");
   if (/>Done<|Run again|Mark step complete/.test(h)) fail("step 38: Done / Run again is on the card");
   c5.state.stepRuns = { "m1.gbp.photos": [["2026-10-08T00:06:48Z", "# 20-Photo"], ["2026-10-08T14:07:54Z", "# 20-Photo"], ["2026-10-09T23:04:53Z", "20-photo shot list"], ["2026-10-10T00:54:28Z", "20-photo shot list"]].map(([ran_at, summary_head]) => ({ ran_at, summary_head })) };
   const hh = c5.ph(task, null);
   if (!/4 runs since Oct 7 · shot list unchanged since Oct 9/.test(hh)) fail("step 38: the history line isn't 'N runs since … · shot list unchanged since …'");
-  if (!/Call them · \(424\) 242-2040/.test(c5.ph(task, null).replace("4242422040", "x"))) fail("step 38: the phone isn't formatted");
   if (!/if \(el\.querySelector\("\.ob-zc-photos"\)\) return;/.test(AJS)) fail("step 38: the old photo section is still injected above the card");
   if (c5.ws({ ...task, detected: { have: { PROFILE: 1, COVER: 1, EXTERIOR: 3, INTERIOR: 3, TEAMS: 5, AT_WORK: 7 } } })) fail("step 38: a complete set still shows as waiting");
   if ((AJS.match(/if \(o\.flowId === PHOTO_REVIEW_STEP && photosWaitState\(s\.task\)\) return zcPhotosRowHtml\(/g) || []).length !== 2) fail("step 38: the queued/active row doesn't use the photos card");
@@ -176,7 +187,7 @@ if (!/const ZC_NO_HAND_DONE = new Set\(\["m1\.gbp\.attributes", "m1\.gbp\.bookin
 // the active branch filled (found 10-29 by clicking it in a write-blocked browser). Every branch that can draw the card registers it, and
 // the handler never returns silently.
 if (!/const qActions = `\$\{qRerun\}\$\{clientOverride\(o, s\.task\)\}`;[\s\S]{0,400}?\(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("Remind the client… on a queued row does nothing (the queued branch doesn't register the step)");
-if (!/function zcPhotosRowHtml\(o, s, marker, badge, resultBlock\) \{\n  \(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("step 38: the photos card doesn't register itself for Remind the client…");
+if (!/function zcPhotosRowHtml\(o, s, marker, badge, resultBlock, extra = \{\}\) \{\n  \(state\.waitCtx = state\.waitCtx \|\| \{\}\)\[o\.flowId\] = \{ o, task: s\.task \};/.test(AJS)) fail("step 38: the photos card doesn't register itself for Remind the client…");
 if (/if \(!ctx \|\| !c\) return;/.test(AJS)) fail("the Remind handler returns silently when it can't find the step: the button looks like it did something");
 if (!/function gNotSavedHtml\(flowId(?:, o)?\) \{\s*if \(ZC_CLIENT_ASK\[flowId\]\) \{/.test(AJS)) fail("steps 35/36 still draw the old 'Not saved yet' card");
 if (!/if \(step && step\.obj && step\.obj\.flowId === "m1\.gbp\.business_description" && descriptionOnGoogle\(step\.task\)\) return "";/.test(AJS)) fail("step 33: the out-of-date paragraph still shows above a description that's on Google");

@@ -24,7 +24,6 @@ if (/On your Google profile"/.test(P.slice(P.indexOf("const PHOTO_STATE = {"), P
 if (!/const GS_LABEL = \{ hide: "Saved, not showing", sent: "Sent · up to 48 hours", list: "On Google's list", missing: "Not on Google's list yet" \};/.test(P)) fail("the states aren't the approved words");
 if (/st === "on" \? `<span class="ok"/.test(P)) fail("a tile draws a tick again");
 if (/\.pm-p10-t\.is-on \.im \{[^}]*state-ok/.test(CSS)) fail("a tile is green again");
-if (!/ph\.gbp_media_name && listedNames\.has\(ph\.gbp_media_name\)\) return "list";/.test(P)) fail("On Google's list isn't read from Google's list");
 if (!/Date\.now\(\) - at > 3 \* 86400000 \? "missing" : "sent"/.test(P)) fail("a photo missing after 3 days isn't said");
 if (!/photoCountable\(taskState, photos\)/.test(P)) fail("the portal doesn't use the count");
 for (const w of ["Use your own photos.", "Get a yes from anyone whose face is in a photo.", "Don't add location tags.", "a few a day.", "up to 48 hours"]) if (!P.slice(P.indexOf("const P10_RULES")).slice(0, 700).includes(w)) fail(`How this step works lost: ${w}`);
@@ -140,5 +139,15 @@ const clickFn = P10J.slice(P10J.indexOf('e.target.closest("[data-p10-t], [data-p
 if (!/\[data-p10-shot="\$\{n\}"\]`\)\?\.scrollIntoView\(\{ block: "center"/.test(clickFn)) F.push("tapping a tile doesn't bring its shot to the middle of the screen");
 if (/if \(t\.hasAttribute\("data-p10-kind"\)[^\n]*scrollIntoView/.test(clickFn)) F.push("only some ways of picking a shot scroll to it");
 if (/data-p10-kind="\$\{g\.items[^\n]*\n[^\n]*"main"/.test(P10J) || /<\/em><\/button>`, f === g\.items\.length \? "main"/.test(P10J)) F.push("a full kind's chip goes green before anyone has seen the photo on Google");
+// 🔴 10-31: the upload's answer named the cover one thing, Google's list another, 4 seconds apart
+{ const when = "2026-10-31T22:23:39Z", lst = [{ name: "list-name", category: "COVER", at: "2026-10-31T22:23:43Z" }, { name: "old", category: "EXTERIOR", at: "2025-12-02T16:41:12Z" }];
+  if (SL.photoListedName({ category: "cover", gbp_media_name: "upload-name", pushed_at: when }, lst) !== "list-name") fail("a photo Google lists under another name isn't recognized as ours");
+  if (SL.photoListedName({ category: "cover", gbp_media_name: "old", pushed_at: when }, lst) !== "old") fail("the name itself no longer matches");
+  if (SL.photoListedName({ category: "cover", gbp_media_name: "x", pushed_at: "2026-10-25T00:00:00Z" }, lst) !== null) fail("a photo sent days apart is matched to another");
+  if (SL.photoListedName({ category: "team", gbp_media_name: "x", pushed_at: when }, lst) !== null) fail("a photo of another kind is matched to it");
+  if (SL.photoListedName({ category: "team", gbp_media_name: "x", pushed_at: when }, [{ name: "add", category: "ADDITIONAL", at: when }]) !== "add") fail("a photo Google refused the kind for, sent as Additional, isn't recognized");
+  if (!/!photoOnList\(p, probe\.items\) && !told\[p\.id\]/.test(read("netlify/functions/portal-step-recheck.js"))) fail("the nightly still checks the upload's name only, so a listed photo reads missing after 3 days");
+  if (!/if \(photoListedName\(ph, taskState\?\.detected\?\.items\)\) return "list";/.test(P)) fail("the client's tile still checks the upload's name only");
+}
 if (F.length) { console.error(`🔴 step 10 says more than Google tells us:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 10 says only what Google tells us: no green or tick until a test proves it; Sent, On Google's list, missing after 3 days (RGA told once), Saved not showing; the count leaves out a hidden logo and second copies in the portal and the nightly; Keep can be undone; the only visible photo isn't removed unasked; up to 5 a day");
