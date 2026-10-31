@@ -25,7 +25,7 @@ const clients = Array.from({ length: 450 }, (_, i) => ({ id: i + 1, name: `Clien
 const keys = [{ id: 1, email: "owner@example.com", access_token: SECRET, refresh_token: "abc", access_token_expires_at: "2026-11-01", last_refreshed_at: "2026-11-02", metrics_refreshed_at: "2026-11-03", credentials: "Licensed and insured", clientSecret: "abc2", data: { tasks: { "m1.access.password_manager": { status: "done", password: "abc3" } } } }];
 const TABLES = { clients, client_google_oauth: keys, empty_table: [] };
 const FILES = { "client-photos": { "c1/a.jpg": Buffer.from("photo-a"), "c1/deep/b.jpg": Buffer.from("photo-bb") }, "admin-docs": { "x.pdf": Buffer.from("pdf") } };
-let breakTable = null, slowRoot = 0, breakFile = false;
+let breakTable = null, slowRoot = 0, breakFile = false, shortBy = 0;
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x");
   const send = (code, body, headers = {}) => { res.writeHead(code, { "Content-Type": "application/json", ...headers }); res.end(Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
   if (t) {
     if (t[1] === breakTable) return send(500, {});
     const rows = TABLES[t[1]] || [];
-    if (req.method === "HEAD") return send(200, "", { "content-range": `0-0/${rows.length}` });
+    if (req.method === "HEAD") return send(200, "", { "content-range": `0-0/${rows.length + shortBy}` });
     const off = Number(u.searchParams.get("offset") || 0), lim = Number(u.searchParams.get("limit") || 10);
     return send(200, rows.slice(off, off + lim));
   }
@@ -54,7 +54,7 @@ const server = http.createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const URL0 = `http://127.0.0.1:${server.address().port}`;
-const DIR = `${T}/drive/RGA-Data-Backups`; fs.mkdirSync(`${T}/drive`);
+const DIR = `${T}/drive/RGA-Data-Backups`; fs.mkdirSync(DIR, { recursive: true, mode: 0o755 }); fs.chmodSync(DIR, 0o755);   // a folder that starts open must end closed
 const st = () => { try { return JSON.parse(fs.readFileSync(`${T}/st.json`, "utf8")); } catch { return null; } };
 const run = (over = {}) => new Promise((res) => {
   const c = spawn("node", [SCRIPT], { env: { PATH: process.env.PATH, BACKUP_QUIET: "1", BACKUP_DATA_SUPA_URL: URL0, BACKUP_DATA_KEY: "k", BACKUP_DATA_DIR: DIR, BACKUP_DATA_STATUS: `${T}/st.json`, BACKUP_DATA_TODAY: "2026-11-02", BACKUP_DATA_PAUSE_MS: "0", ...over } });
@@ -98,6 +98,9 @@ try {
   if (f1 !== 1 || st()?.ok !== false) fail("a table that fails isn't reported");
   if (!fs.existsSync(`${DIR}/2020-01-02`)) fail("a failed run removed an old backup");
   breakTable = null;
+  shortBy = 5;
+  if (await run({ BACKUP_DATA_TODAY: "2026-11-04" }) !== 1) fail("a copy with fewer rows than the table isn't reported");
+  shortBy = 0;
   breakFile = true; FILES["client-photos"]["c1/new.jpg"] = Buffer.from("new-photo");
   if (await run({ BACKUP_DATA_TODAY: "2026-11-04" }) !== 1) fail("a file that came back the wrong size isn't reported");
   breakFile = false;
