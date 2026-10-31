@@ -271,5 +271,19 @@
   "isDone && !taskState?.google_push?.state && !_editingSteps.has(step.id) ? svcNoRecordHtml(",
   "isDone && !taskState?.google_push?.state ? svcNoRecordHtml(",
   1
+ ],
+ [
+  "a step being changed gets the blank-row card",
+  "portal",
+  "r.status !== \"done\" || _editingSteps.has(r.step.id)) continue;",
+  "r.status !== \"done\") continue;",
+  1
+ ],
+ [
+  "the warning goes grey",
+  "portalcss",
+  ".pm-bk-ot > .pm-bk-warn { color:var(--state-you,#b45309); }",
+  "",
+  1
  ]
 ]

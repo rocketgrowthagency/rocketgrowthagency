@@ -28,6 +28,8 @@ const between = (a, b) => { const i = P.indexOf(a), j = P.indexOf(b, i + 1); if 
 if (/Book button/.test(read("data/playbooks/client-steps.json")) || /"client[A-Za-z]*": "[^"\n]*Book button/.test(read("data/playbooks/playbooks.json"))) fail("a client's How this step works promises a Book button (Google picks the words)");
 if (!/data-in-submit\$\{step\.id === "m1\.gbp\.services_products" \|\| s\.kind === "booking" \? " hidden" : ""\}>/.test(P)) fail("steps 6 and 9 show a button before Google has answered");
 if (!/isDone && !taskState\?\.google_push\?\.state && !_editingSteps\.has\(step\.id\) \? svcNoRecordHtml\(/.test(P)) fail("step 6's old done card sits under the form while it's being changed");
+if (!/r\.status !== "done" \|\| _editingSteps\.has\(r\.step\.id\)\) continue;/.test(P)) fail("a step being changed still gets the blank-row done card under its form");
+if (!/\.pm-bk-ot > \.pm-bk-warn \{ color:var\(--state-you/.test(CSS)) fail("the contact-page warning isn't amber");
 if (!/\.pm-cs \.pm-in-foot > \[data-in-cancel\] \{ order:2; \}/.test(CSS)) fail("Cancel sits before the button (every approved form page: the button, then Cancel)");
 if (!/stepId === "m1\.gbp\.services_products" && host\.hasAttribute\("data-sv-had"\)\) \{ atDraw\(host, svCard\(\{[^\n]*We couldn't read your services on Google just now\. Please reload the page in a minute\./.test(P)) fail("step 6's unreadable line isn't the approved one");
 if (!/stepId === "m1\.gbp\.booking_link" && host\.hasAttribute\("data-bk-had"\)\) \{ atDraw\(host, bkCard\(\{[^\n]*We couldn't read your Google profile just now\. Please reload the page in a minute\./.test(P)) fail("step 9's unreadable line isn't the approved one");
