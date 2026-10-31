@@ -129,5 +129,11 @@ if (night.once !== 1 || !night.named || night.twice !== 1) fail(`RGA isn't told 
   if (free.s.paced !== 2 || some.s.paced !== 5 || full.s.paced !== 7 || full.google !== 0) fail(`the daily cap isn't 5 (${free.s.paced} · ${some.s.paced} · ${full.s.paced} · ${full.google})`);
   if (adm.s.paced || adm.sentQ) fail("an admin press is held by the daily cap"); }
 
+// Chris 10-31: "Ext to Exterior and Int Interior", under the tiles, in every team size; and the old copy's card reads on a phone
+const P10J = read("portal/portal.js"), P10C = read("portal/portal.css");
+const shortFn = /const short = \(g\) => \(\{([^}]*)\}\)\[g\] \|\| g;/.exec(P10J);
+if (!shortFn) F.push("the tile label function moved: re-aim this check");
+else if (/Exterior|Interior/.test(shortFn[1])) F.push("a tile shortens Exterior or Interior again");
+if (!/@media \(max-width:560px\) \{ \.pm-arow-kept \.pm-cs-st \{ grid-template-columns:20px minmax\(0,1fr\); \} \.pm-arow-kept \.pm-cs-st > \.a \{ grid-column:2; \} \}/.test(P10C)) F.push("on a phone the old copy's card squeezes its words beside the button");
 if (F.length) { console.error(`🔴 step 10 says more than Google tells us:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 10 says only what Google tells us: no green or tick until a test proves it; Sent, On Google's list, missing after 3 days (RGA told once), Saved not showing; the count leaves out a hidden logo and second copies in the portal and the nightly; Keep can be undone; the only visible photo isn't removed unasked; up to 5 a day");

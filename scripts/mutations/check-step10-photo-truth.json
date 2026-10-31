@@ -215,5 +215,26 @@
   "if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
   "if (false) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
   1
+ ],
+ [
+  "a tile says Ext again",
+  "portal",
+  "const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
+  "const short = (g) => ({ Exterior: \"Ext\", \"At work\": \"Work\" })[g] || g;",
+  1
+ ],
+ [
+  "a tile says Int again",
+  "portal",
+  "const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
+  "const short = (g) => ({ Interior: \"Int\", \"At work\": \"Work\" })[g] || g;",
+  1
+ ],
+ [
+  "the old copy's card squeezes on a phone",
+  "portalcss",
+  ".pm-arow-kept .pm-cs-st > .a { grid-column:2; } }",
+  ".pm-arow-kept .pm-cs-st > .a { grid-column:3; } }",
+  1
  ]
 ]

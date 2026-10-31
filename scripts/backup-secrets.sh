@@ -108,15 +108,44 @@ echo "  🔑 Choose a passphrase you can retrieve WITHOUT this machine. Write it
 echo "     It is never stored, logged, or passed as an argument — gpg will prompt you twice."
 echo ""
 
+# 🔑 No terminal (run from Claude, Chris 10-31): gpg can't prompt, so a hidden Mac window asks instead. The passphrase
+# stays in this shell's variable and reaches gpg through a pipe from a builtin: never an argument, a file or the log.
+ask_window() {
+  osascript -e 'on run argv' -e 'activate' \
+    -e 'text returned of (display dialog (item 1 of argv) default answer "" with hidden answer with title "RGA secrets backup" buttons {"Cancel", "OK"} default button "OK" giving up after 300)' \
+    -e 'end run' "$1" 2>/dev/null
+}
+PASS=""
+if [ ! -t 0 ]; then
+  for _try in 1 2; do
+    P1="$(ask_window "Choose a passphrase for RGA's encrypted secrets backup. At least 12 characters. Write it down on paper: it can't be recovered.")" || { echo "  ✗ cancelled — nothing was written"; exit 1; }
+    P2="$(ask_window "Type the same passphrase again.")" || { echo "  ✗ cancelled — nothing was written"; exit 1; }
+    if [ "$P1" = "$P2" ] && [ "${#P1}" -ge 12 ]; then PASS="$P1"; break; fi
+    echo "  ✗ the two didn't match, or it was under 12 characters"
+  done
+  unset P1 P2
+  [ -n "$PASS" ] || { echo "  ✗ no passphrase — nothing was written"; exit 1; }
+  printf '%s\n' "$PASS" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output "$OUT" "$TMP/payload.tar.gz" || {
+    echo "  ✗ encryption failed — nothing was written"; exit 1; }
+else
 gpg --symmetric --cipher-algo AES256 --output "$OUT" "$TMP/payload.tar.gz" || {
   echo "  ✗ encryption failed — nothing was written"; exit 1; }
+fi
 
 chmod 600 "$OUT"
 
 # 🔴 VERIFY BY DECRYPTING. A file that exists is not a backup; a file that opens is.
 echo ""
 echo "  Verifying — enter the same passphrase once more:"
-if gpg --decrypt "$OUT" 2>/dev/null | tar tzf - >/dev/null 2>&1; then
+if [ -n "$PASS" ]; then
+  VERIFIED=0
+  printf '%s\n' "$PASS" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --decrypt "$OUT" 2>/dev/null | tar tzf - >/dev/null 2>&1 && VERIFIED=1
+  unset PASS
+else
+  VERIFIED=0
+  gpg --decrypt "$OUT" 2>/dev/null | tar tzf - >/dev/null 2>&1 && VERIFIED=1
+fi
+if [ "$VERIFIED" = 1 ]; then
   echo "  ✅ verified: the archive decrypts and lists cleanly"
   echo "     $(ls -lh "$OUT" | awk '{print $5}')  $OUT"
 else
