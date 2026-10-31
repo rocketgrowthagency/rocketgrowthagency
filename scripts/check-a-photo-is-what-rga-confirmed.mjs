@@ -40,7 +40,7 @@ if (!/<div class="pm-arow">(?:<span class="th"|\$\{th\(a\)\})/.test(portal) || !
 // question → the kinds → already on Google → tips); once open it's band → the 20 tiles → the one shot → team question → the shot
 // list → already on Google → the hidden-logo note → "How this step works"
 if (!/: `\$\{barRow \? `<div class="pm-pc-pbar">\$\{barRow\}<\/div>` : ""\}\$\{toolbar\}<div class="pm-slots\$\{locked \? " is-locked" : ""\}">\$\{PHOTO_EXAMPLE_SPRITE\}\$\{groupHtml\}<\/div>\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{tipsFold\}`/.test(portal)) fail("the photo card's order changed — it is: band → bar → team question → the kinds → already on Google → tips");
-if (!/body: p10 \? `\$\{toolbar\}\$\{p10\}\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{p10LogoHidden \? csNote\([^)]*\) : ""\}\$\{p10Done \? "" : p10How\}`/.test(portal)
+if (!/body: p10 \? `\$\{toolbar\}\$\{p10\}\$\{keptCard\}\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{p10LogoHidden \? csNote\([^)]*\) : ""\}\$\{p10Done \? "" : p10How\}`/.test(portal)
   || !/const p10How = `\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(portal)
   || !/<div class="pm-p10-tiles">\$\{tiles\}<\/div><div class="pm-p10-panel"\$\{sel == null \? " hidden" : ""\}>\$\{shots\}<\/div><\/div>\$\{kinds\}`/.test(portal)) fail("step 10's open card isn't in the approved order (client_step10_photos_v4) — band → team question → tiles → the shot → the shot list → already on Google → logo note → foot (Maps · How this step works)");
 const alreadySrc = (portal.match(/const alsoRows = already\.map[\s\S]*?const alsoFold = [^\n]*/) || [""])[0];

@@ -1,0 +1,219 @@
+[
+ [
+  "published is green again",
+  "portal",
+  "published: { cls: \"other\", label: \"On Google's list\" },",
+  "published: { cls: \"ok\", label: \"On Google's list\" },",
+  1
+ ],
+ [
+  "published claims the profile again",
+  "portal",
+  "published: { cls: \"other\", label: \"On Google's list\" },",
+  "published: { cls: \"other\", label: \"On your Google profile\" },",
+  1
+ ],
+ [
+  "the sent state is dropped",
+  "portal",
+  "sent: \"Sent · up to 48 hours\", ",
+  "sent: \"On Google\", ",
+  1
+ ],
+ [
+  "a tile draws a tick",
+  "portal",
+  "return st === \"on\" ? (ph && ph.storage_path ?",
+  "return st === \"on\" ? `<span class=\"ok\">✓</span>` : (ph && ph.storage_path ?",
+  1
+ ],
+ [
+  "a tile is green",
+  "portalcss",
+  ".pm-cs .pm-p10-t.is-on .im { border:0; box-shadow:inset 0 0 0 2px var(--portal-accent,#2457e6); }",
+  ".pm-cs .pm-p10-t.is-on .im { border:0; background:var(--state-ok-fill,#16a34a); }",
+  1
+ ],
+ [
+  "the list isn't read",
+  "portal",
+  "if (ph.gbp_media_name && listedNames.has(ph.gbp_media_name)) return \"list\";",
+  "return \"list\";",
+  1
+ ],
+ [
+  "missing is never said",
+  "portal",
+  "Date.now() - at > 3 * 86400000 ? \"missing\" : \"sent\"",
+  "false ? \"missing\" : \"sent\"",
+  1
+ ],
+ [
+  "the portal uses the raw count",
+  "portal",
+  "{ ...d0, n: photoCountable(taskState, photos) }",
+  "{ ...d0 }",
+  1
+ ],
+ [
+  "a How rule is dropped",
+  "portal",
+  "<li><b>Ask first.</b> Get a yes from anyone whose face is in a photo.</li>",
+  "",
+  1
+ ],
+ [
+  "the client can't undo Keep",
+  "portal",
+  "...(undo ? { undo: true } : {})",
+  "...{}",
+  1
+ ],
+ [
+  "admin can't undo Keep",
+  "admin",
+  "data-sl-undo-keep=\"${escapeAttribute(m.name)}\"",
+  "data-sl-undone=\"${escapeAttribute(m.name)}\"",
+  1
+ ],
+ [
+  "admin doesn't ask first",
+  "admin",
+  "okLabel: \"Remove anyway\"",
+  "okLabel: \"Remove\"",
+  1
+ ],
+ [
+  "the line doesn't say what doesn't count",
+  "playbook",
+  "apart from a logo Google hides or a second copy of your logo.",
+  "and count toward 20.",
+  1
+ ],
+ [
+  "a hidden logo counts",
+  "secondlogoshared",
+  "(hideLogo && g.category === \"PROFILE\")",
+  "false",
+  1
+ ],
+ [
+  "a copy counts",
+  "secondlogoshared",
+  "skip.has(g.name) || ",
+  "",
+  1
+ ],
+ [
+  "reading twice subtracts twice",
+  "secondlogoshared",
+  "const raw = Number.isFinite(d.n_all) ? d.n_all : d.n;",
+  "const raw = d.n;",
+  1
+ ],
+ [
+  "the nightly keeps the raw count",
+  "recheck",
+  "const good = Math.max(0, n - notCounted);",
+  "const good = n;",
+  1
+ ],
+ [
+  "n_all isn't stored",
+  "recheck",
+  "...(Number.isFinite(probe.n_all) ? { n_all: probe.n_all } : {})",
+  "",
+  1
+ ],
+ [
+  "a kept copy counts in the nightly only",
+  "recheck",
+  "(hasLogo && g.category !== \"PROFILE\" && g.category !== \"COVER\" && ai[g.name] && !ai[g.name].error && Number(ai[g.name].slot) === logoN)",
+  "false",
+  1
+ ],
+ [
+  "views aren't kept",
+  "recheck",
+  ", views: Number.isFinite(Number(m.insights?.viewCount)) ? Number(m.insights.viewCount) : null };",
+  " };",
+  1
+ ],
+ [
+  "RGA is told every night",
+  "recheck",
+  " && !told[p.id] && ",
+  " && ",
+  1
+ ],
+ [
+  "a fresh photo is reported",
+  "recheck",
+  " && Date.parse(p.pushed_at || \"\") < cut);",
+  ");",
+  1
+ ],
+ [
+  "the notice throws again",
+  "recheck",
+  "const viaCron = Boolean(process.env.INTERNAL_FN_SECRET) && ((event && event.headers && (event.headers[\"x-internal-secret\"] || event.headers[\"X-Internal-Secret\"])) || \"\") === process.env.INTERNAL_FN_SECRET;",
+  "",
+  1
+ ],
+ [
+  "undo doesn't clear",
+  "photokeep",
+  "delete kept[name]; task.photo_kept = kept;",
+  "task.photo_kept = kept;",
+  1
+ ],
+ [
+  "the only photo can go unasked",
+  "photoremove",
+  "if (cleanup && force !== true) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a hidden logo reads as another photo",
+  "photoremove",
+  "!(hideLogo && x.category === \"PROFILE\") && ",
+  "",
+  1
+ ],
+ [
+  "force is ignored",
+  "photoremove",
+  "force: body.force === true,",
+  "",
+  1
+ ],
+ [
+  "the cap isn't 5",
+  "photopublish",
+  "const DAILY_CAP = 5;",
+  "const DAILY_CAP = 50;",
+  1
+ ],
+ [
+  "an admin press is held",
+  "photopublish",
+  "if (trigger !== \"admin\") {\n    const since",
+  "if (true) {\n    const since",
+  1
+ ],
+ [
+  "every open step tells RGA every night",
+  "recheck",
+  "if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+  "await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+  1
+ ],
+ [
+  "a real reopen tells nobody",
+  "recheck",
+  "if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+  "if (false) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+  1
+ ]
+]

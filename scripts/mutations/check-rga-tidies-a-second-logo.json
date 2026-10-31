@@ -1,212 +1,212 @@
 [
- [
-  "flagged with no logo on the profile",
-  "secondlogo",
-  "  if (!hasLogo) return out;",
-  "",
-  1
- ],
- [
-  "any photo is a second logo",
-  "secondlogo",
-  "    if (!a || a.error || Number(a.slot) !== logoN) continue;",
-  "    if (!a || a.error) continue;",
-  1
- ],
- [
-  "the cover is asked about",
-  "secondlogo",
-  "g.category === \"PROFILE\" || g.category === \"COVER\" || ours.has(g.name)",
-  "g.category === \"PROFILE\" || ours.has(g.name)",
-  1
- ],
- [
-  "our own upload is asked about",
-  "secondlogo",
-  " || ours.has(g.name)) continue;",
-  ") continue;",
-  1
- ],
- [
-  "kept still asks",
-  "secondlogo",
-  "(kept[g.name] ? out.kept : out.open)",
-  "(out.open)",
-  1
- ],
- [
-  "a failed AI look flags",
-  "secondlogo",
-  "if (!a || a.error || Number",
-  "if (!a || Number",
-  1
- ],
- [
-  "keep without owner",
-  "photokeep",
-  "  if (gate.error) return gate.error;",
-  "",
-  1
- ],
- [
-  "keep any name",
-  "photokeep",
-  "  if (!(task.detected?.items || []).some((g) => g && g.name === name)) return json(404",
-  "  if (false) return json(404",
-  1
- ],
- [
-  "keep without read-back",
-  "photokeep",
-  "  if (!after?.tasks?.[STEP]?.photo_kept?.[name]) return json(500",
-  "  if (false) return json(500",
-  1
- ],
- [
-  "internal may confirm",
-  "photomatch",
-  "  if (g.internal && action !== \"check\") return json(403",
-  "  if (false) return json(403",
-  1
- ],
- [
-  "the count never asks the AI",
-  "recheck",
-  "      if (unseen.length && Array.isArray(tasks[stepId].draft_shape?.items)",
-  "      if (false && Array.isArray(tasks[stepId].draft_shape?.items)",
-  1
- ],
- [
-  "the count re-looks at seen photos",
-  "recheck",
-  " && !ours.has(m.name) && !seen[m.name]);",
-  " && !ours.has(m.name));",
-  1
- ],
- [
-  "the row says RGA is sorting it",
-  "portal",
-  "  for (const a of already) if (askN.has(a.g.name)) a.kind = \"ask\"; else if (keptBy.has(a.g.name)) a.kind = \"extra\";",
-  "",
-  1
- ],
- [
-  "the fold doesn't hold open",
-  "portal",
-  "data-fold=\"already\"${askN.size ? \" open data-fold-held\" : \"\"}",
-  "data-fold=\"already\"",
-  1
- ],
- [
-  "no card",
-  "portal",
-  "      if (sl.open.length) card.insertAdjacentHTML(\"afterend\", secondLogoCardHtml(sl.open));",
-  "",
-  1
- ],
- [
-  "the card never goes",
-  "portal",
-  "      for (let next = card.nextElementSibling; next && (next.hasAttribute(\"data-second-logo\") || next.hasAttribute(\"data-facts-note\") || next.hasAttribute(\"data-dup-note\") || next.hasAttribute(\"data-bk-gone-note\") || next.hasAttribute(\"data-kw-note\")); next = card.nextElementSibling) next.remove();\n",
-  "",
-  1
- ],
- [
-  "keep doesn't redraw",
-  "portal",
-  "    await settleStepResult(listEl, j);\n    portalToast(\"<b>We'll keep it</b>",
-  "    portalToast(\"<b>We'll keep it</b>",
-  1
- ],
- [
-  "the lines compare objects again",
-  "admin",
-  "    if (!task || stepId !== PHOTO_REVIEW_STEP) return \"\";",
-  "    if (!task || task !== state.onboardingData?.tasks?.[PHOTO_REVIEW_STEP]) return \"\";",
-  1
- ],
- [
-  "RGA can't remove (owner only)",
-  "photoremove",
-  "    gate: (event, clientId) => requirePortalOwnerOrWorkspace(event, clientId),",
-  "    gate: (event, clientId) => require(\"./_auth\").requirePortalOwner(event, clientId),",
-  1
- ],
- [
-  "a client can file RGA's cleanup",
-  "photoremove",
-  "  if (cleanup && (photoId || !rga)) return json(400",
-  "  if (cleanup && photoId) return json(400",
-  1
- ],
- [
-  "the cleanup isn't kept",
-  "photoremove",
-  "      task.photo_cleanup = { ...(task.photo_cleanup || {}), [name]:",
-  "      task.photo_cleanup_x = { ...(task.photo_cleanup || {}), [name]:",
-  1
- ],
- [
-  "the card goes amber again",
-  "portal",
-  "<div class=\"pm-notice is-info pm-second-logo\" data-second-logo>",
-  "<div class=\"pm-notice is-warn pm-second-logo\" data-second-logo>",
-  1
- ],
- [
-  "the client gets the remove button back",
-  "portal",
-  "<span class=\"pm-pill other\">RGA is doing it</span></div>`;",
-  "<button data-photo-remove=\"\"></button><span class=\"pm-pill other\">RGA is doing it</span></div>`;",
-  1
- ],
- [
-  "no Tidied by RGA",
-  "portal",
-  "  const tidied = tidiedByRga(taskState);",
-  "  const tidied = [];",
-  1
- ],
- [
-  "not RGA's Your action",
-  "admin",
-  "    if (slOpen.length) {\n      return {",
-  "    if (false) {\n      return {",
-  1
- ],
- [
-  "RGA's removal counted as the client's",
-  "admin",
-  "r.state === \"removed\" && !r.rga && recent(r.at)",
-  "r.state === \"removed\" && recent(r.at)",
-  1
- ],
- [
-  "RGA's remove doesn't ask",
-  "admin",
-  "  if (remove && !await rgaDialog(",
-  "  if (false && !await rgaDialog(",
-  1
- ],
- [
-  "admin doesn't say it's RGA's action",
-  "admin",
-  "    if (sl.open.length) out.push(`Your action: remove ",
-  "    if (false) out.push(`Your action: remove ",
-  1
- ],
- [
-  "the card squeezes",
-  "admincss",
-  ".pr-card.pr-sl { grid-template-columns:150px minmax(0,1fr); }",
-  ".pr-card.pr-sl { }",
-  1
- ],
- [
-  "the client's no isn't enforced",
-  "photoremove",
-  "    if (cleanup && rec?.data?.tasks?.[STEP]?.photo_kept?.[name]) return json(409",
-  "    if (false) return json(409",
-  1
- ]
+[
+"flagged with no logo on the profile",
+"secondlogo",
+"  if (!hasLogo) return out;",
+"",
+1
+],
+[
+"any photo is a second logo",
+"secondlogo",
+"    if (!a || a.error || Number(a.slot) !== logoN) continue;",
+"    if (!a || a.error) continue;",
+1
+],
+[
+"the cover is asked about",
+"secondlogo",
+"g.category === \"PROFILE\" || g.category === \"COVER\" || ours.has(g.name)",
+"g.category === \"PROFILE\" || ours.has(g.name)",
+1
+],
+[
+"our own upload is asked about",
+"secondlogo",
+" || ours.has(g.name)) continue;",
+") continue;",
+1
+],
+[
+"kept still asks",
+"secondlogo",
+"(kept[g.name] ? out.kept : out.open)",
+"(out.open)",
+1
+],
+[
+"a failed AI look flags",
+"secondlogo",
+"if (!a || a.error || Number",
+"if (!a || Number",
+1
+],
+[
+"keep without owner",
+"photokeep",
+"  if (gate.error) return gate.error;",
+"",
+1
+],
+[
+"keep any name",
+"photokeep",
+"  if (!(task.detected?.items || []).some((g) => g && g.name === name)) return json(404",
+"  if (false) return json(404",
+1
+],
+[
+"keep without read-back",
+"photokeep",
+"  if (!after?.tasks?.[STEP]?.photo_kept?.[name]) return json(500",
+"  if (false) return json(500",
+1
+],
+[
+"internal may confirm",
+"photomatch",
+"  if (g.internal && action !== \"check\") return json(403",
+"  if (false) return json(403",
+1
+],
+[
+"the count never asks the AI",
+"recheck",
+"      if (unseen.length && Array.isArray(tasks[stepId].draft_shape?.items)",
+"      if (false && Array.isArray(tasks[stepId].draft_shape?.items)",
+1
+],
+[
+"the count re-looks at seen photos",
+"recheck",
+" && !ours.has(m.name) && !seen[m.name]);",
+" && !ours.has(m.name));",
+1
+],
+[
+"the row says RGA is sorting it",
+"portal",
+"  for (const a of already) if (askN.has(a.g.name)) a.kind = \"ask\"; else if (keptBy.has(a.g.name)) a.kind = \"extra\";",
+"",
+1
+],
+[
+"the fold doesn't hold open",
+"portal",
+"data-fold=\"already\"${askN.size ? \" open data-fold-held\" : \"\"}",
+"data-fold=\"already\"",
+1
+],
+[
+"no card",
+"portal",
+"      if (sl.open.length) card.insertAdjacentHTML(\"afterend\", secondLogoCardHtml(sl.open));",
+"",
+1
+],
+[
+"the card never goes",
+"portal",
+"      for (let next = card.nextElementSibling; next && (next.hasAttribute(\"data-second-logo\") || next.hasAttribute(\"data-facts-note\") || next.hasAttribute(\"data-dup-note\") || next.hasAttribute(\"data-bk-gone-note\") || next.hasAttribute(\"data-kw-note\")); next = card.nextElementSibling) next.remove();\n",
+"",
+1
+],
+[
+"keep doesn't redraw",
+"portal",
+"    await settleStepResult(listEl, j);\n    portalToast(undo ?",
+"    portalToast(undo ?",
+1
+],
+[
+"the lines compare objects again",
+"admin",
+"    if (!task || stepId !== PHOTO_REVIEW_STEP) return \"\";",
+"    if (!task || task !== state.onboardingData?.tasks?.[PHOTO_REVIEW_STEP]) return \"\";",
+1
+],
+[
+"RGA can't remove (owner only)",
+"photoremove",
+"    gate: (event, clientId) => requirePortalOwnerOrWorkspace(event, clientId),",
+"    gate: (event, clientId) => require(\"./_auth\").requirePortalOwner(event, clientId),",
+1
+],
+[
+"a client can file RGA's cleanup",
+"photoremove",
+"  if (cleanup && (photoId || !rga)) return json(400",
+"  if (cleanup && photoId) return json(400",
+1
+],
+[
+"the cleanup isn't kept",
+"photoremove",
+"      task.photo_cleanup = { ...(task.photo_cleanup || {}), [name]:",
+"      task.photo_cleanup_x = { ...(task.photo_cleanup || {}), [name]:",
+1
+],
+[
+"the card goes amber again",
+"portal",
+"<div class=\"pm-notice is-info pm-second-logo\" data-second-logo>",
+"<div class=\"pm-notice is-warn pm-second-logo\" data-second-logo>",
+1
+],
+[
+"the client gets the remove button back",
+"portal",
+"<span class=\"pm-pill other\">RGA is doing it</span></div>`;",
+"<button data-photo-remove=\"\"></button><span class=\"pm-pill other\">RGA is doing it</span></div>`;",
+1
+],
+[
+"no Tidied by RGA",
+"portal",
+"  const tidied = tidiedByRga(taskState);",
+"  const tidied = [];",
+1
+],
+[
+"not RGA's Your action",
+"admin",
+"    if (slOpen.length) {\n      return {",
+"    if (false) {\n      return {",
+1
+],
+[
+"RGA's removal counted as the client's",
+"admin",
+"r.state === \"removed\" && !r.rga && recent(r.at)",
+"r.state === \"removed\" && recent(r.at)",
+1
+],
+[
+"RGA's remove doesn't ask",
+"admin",
+"  if (remove && !await rgaDialog(",
+"  if (false && !await rgaDialog(",
+1
+],
+[
+"admin doesn't say it's RGA's action",
+"admin",
+"    if (sl.open.length) out.push(`Your action: remove ",
+"    if (false) out.push(`Your action: remove ",
+1
+],
+[
+"the card squeezes",
+"admincss",
+".pr-card.pr-sl { grid-template-columns:150px minmax(0,1fr); }",
+".pr-card.pr-sl { }",
+1
+],
+[
+"the client's no isn't enforced",
+"photoremove",
+"    if (cleanup && rec?.data?.tasks?.[STEP]?.photo_kept?.[name]) return json(409",
+"    if (false) return json(409",
+1
+]
 ]

@@ -25,6 +25,7 @@ export const FILES = {
   portal: "portal/portal.js",
   playbook: "data/playbooks/playbooks.json",
   citdirs: "netlify/functions/_citation-directories.js",
+  secondlogoshared: "shared/photo-second-logo.js",   // client_step10_photo_truth_v1
   recheck: "netlify/functions/portal-step-recheck.js",
   stepsql: "docs/supabase/RGA_CLIENT_STEP_RUNS_2026-10-07.sql",
   heavy: "netlify/functions/flow-execute-heavy-background.js",

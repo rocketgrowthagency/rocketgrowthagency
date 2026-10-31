@@ -1,219 +1,212 @@
 [
- [
-  "Google delete isn't read back",
-  "photoretire",
-  "  if (back.status === 404) return { ok: true, status: del.status };",
-  "  return { ok: true, status: del.status };",
-  1
- ],
- [
-  "a refused delete counts as done",
-  "photoretire",
-  "  if (!del.ok && del.status !== 404) {",
-  "  if (false) {",
-  1
- ],
- [
-  "the logo is deleted on a change",
-  "photoretire",
-  "const googleSwaps = SINGLETON.has(old.category) || !old.gbp_media_name || old.gbp_media_name === media;",
-  "const googleSwaps = !old.gbp_media_name || old.gbp_media_name === media;",
-  1
- ],
- [
-  "a failed delete still retires",
-  "photoretire",
-  "        await log(\"remove_failed\", { status: r.status, error: r.error });\n        out.failed++;\n        continue;",
-  "        await log(\"remove_failed\", { status: r.status, error: r.error });\n        out.failed++;",
-  1
- ],
- [
-  "NOT_RETIRED misses one",
-  "photoretire",
-  "const RETIRED_STATES = [\"replaced\", \"removed\", \"withdrawn\"];",
-  "const RETIRED_STATES = [\"replaced\", \"removed\"];",
-  1
- ],
- [
-  "the publisher retires before publishing",
-  "photopublish",
-  "      const rr = await retireReplaced({ d, token, clientId, photo, media, nowIso, trigger });",
-  "      const rr = { replaced: 0 };",
-  1
- ],
- [
-  "anyone can remove",
-  "photoremove",
-  "  if (gate.error) return gate.error;",
-  "",
-  1
- ],
- [
-  "the logo can be removed",
-  "photoremove",
-  "    if (SINGLETON.has(row.category)) return json(400",
-  "    if (false) return json(400",
-  1
- ],
- [
-  "mid-send is withdrawn",
-  "photoremove",
-  "const NOT_ON_GOOGLE = [\"in_review\", \"turned_down\", \"pending\", \"waiting_connection\", \"failed\", \"rejected\"];",
-  "const NOT_ON_GOOGLE = [\"in_review\", \"turned_down\", \"pending\", \"waiting_connection\", \"failed\", \"rejected\", \"publishing\"];",
-  1
- ],
- [
-  "any Google item can be removed",
-  "photoremove",
-  "    if (!g) return json(404",
-  "    if (false) return json(404",
-  1
- ],
- [
-  "another profile's photo",
-  "photoremove",
-  "  if (!String(name).startsWith(`${parent}/media/`)) return json(400",
-  "  if (false) return json(400",
-  1
- ],
- [
-  "no recount after removal",
-  "photoremove",
-  "  try { await d.recount(clientId); }",
-  "  try { }",
-  1
- ],
- [
-  "withdraw calls Google",
-  "photoremove",
-  "    if (NOT_ON_GOOGLE.includes(row.publish_state)) {",
-  "    if (false) {",
-  1
- ],
- [
-  "the log refuses rga_told",
-  "changeremovesql",
-  "'returned_to_client','rga_told',",
-  "'returned_to_client',",
-  1
- ],
- [
-  "a reader counts removed photos",
-  "recheck",
-  "const rows = await supa(`/client_photos?client_id=eq.${clientId}&${NOT_RETIRED}&select=id`);",
-  "const rows = await supa(`/client_photos?client_id=eq.${clientId}&select=id`);",
-  1
- ],
- [
-  "the portal loads retired photos",
-  "portal",
-  "    .not(\"publish_state\", \"in\", `(${PHOTO_RETIRED.join(\",\")})`)\n    .order(\"created_at\", { ascending: false })\n    .limit(100);",
-  "    .order(\"created_at\", { ascending: false })\n    .limit(100);",
-  1
- ],
- [
-  "the logo still says On your Google profile",
-  "portal",
-  "    const hiddenLogo = isPub && cat === \"logo\" && shape && shape.storefront === false;",
-  "    const hiddenLogo = false;",
-  1
- ],
- [
-  "the logo can be removed in the portal",
-  "portal",
-  "PHOTO_SINGLE.has(cat) ? \"\" : rmBtn({ id: p.id, onGoogle: true })",
-  "rmBtn({ id: p.id, onGoogle: true })",
-  1
- ],
- [
-  "a change in review drops the kind",
-  "portal",
-  "  const slotDone = (n) => existingByShot.has(n) || pubByShot.has(n);",
-  "  const slotDone = (n) => existingByShot.has(n) || byShot.get(n)?.publish_state === \"published\";",
-  1
- ],
- [
-  "no swap note",
-  "portal",
-  "    const swapping = !!p && !!pub && p !== pub;",
-  "    const swapping = false;",
-  1
- ],
- [
-  "done isn't folded",
-  "portal",
-  "    : isDoneStep\n",
-  "    : false\n",
-  1
- ],
- [
-  "all sent is Your turn",
-  "portal",
-  "!gbpWithRga && !withRga && (Boolean",
-  "!gbpWithRga && (Boolean",
-  1
- ],
- [
-  "all sent is the next step",
-  "portal",
-  "&& !r.later && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
-  "&& !r.later && r.taskState?.google_push?.state !== \"with_rga\")",
-  1
- ],
- [
-  "a turned-down slot counts as sent",
-  "portal",
-  "  const sent = new Set((photos || []).filter((p) => Number.isFinite(p.shot_n) && p.publish_state !== \"turned_down\").map((p) => p.shot_n));",
-  "  const sent = new Set((photos || []).filter((p) => Number.isFinite(p.shot_n)).map((p) => p.shot_n));",
-  1
- ],
- [
-  "Remove on Google doesn't ask",
-  "portal",
-  "  if (onGoogle) {\n    const ok = await portalConfirm(",
-  "  if (false) {\n    const ok = await portalConfirm(",
-  1
- ],
- [
-  "admin counts retired photos",
-  "admin",
-  "&& !PHOTO_RETIRED.includes(p.publish_state));\nconst retired",
-  "&& true);\nconst retired",
-  1
- ],
- [
-  "admin doesn't say the logo is hidden",
-  "admin",
-  "      out.push(\"Logo saved on Google · hidden: the profile shows no street address\");",
-  "",
-  1
- ],
- [
-  "no on-Google marker",
-  "portal",
-  "${onGoogle ? \" data-on-google-slot\" : \"\"}",
-  "",
-  1
- ],
- [
-  "a Change in progress bumps the count",
-  "portal",
-  "        if (row.hasAttribute(\"data-on-google-slot\")) { if (!row.querySelector(\".pm-swap\")) row.insertAdjacentHTML(\"beforeend\", PHOTO_SWAP_NOTE); }\n        else bumpGroupCount(row);",
-  "        bumpGroupCount(row);",
-  1
- ],
- [
-  "the logo note borrows .pm-note",
-  "portal",
-  "hiddenLogo ? `<div class=\"pm-turned pm-care\">",
-  "hiddenLogo ? `<div class=\"pm-turned pm-note\">",
-  1
- ],
- [
-  "the logo note isn't the caution colour",
-  "portalcss",
-  ".pm-turned.pm-care { grid-column:1/-1; color:var(--state-care);",
-  ".pm-turned.pm-care { grid-column:1/-1; color:var(--portal-muted);",
-  1
- ]
+[
+"Google delete isn't read back",
+"photoretire",
+"  if (back.status === 404) return { ok: true, status: del.status };",
+"  return { ok: true, status: del.status };",
+1
+],
+[
+"a refused delete counts as done",
+"photoretire",
+"  if (!del.ok && del.status !== 404) {",
+"  if (false) {",
+1
+],
+[
+"the logo is deleted on a change",
+"photoretire",
+"const googleSwaps = SINGLETON.has(old.category) || !old.gbp_media_name || old.gbp_media_name === media;",
+"const googleSwaps = !old.gbp_media_name || old.gbp_media_name === media;",
+1
+],
+[
+"a failed delete still retires",
+"photoretire",
+"        await log(\"remove_failed\", { status: r.status, error: r.error });\n        out.failed++;\n        continue;",
+"        await log(\"remove_failed\", { status: r.status, error: r.error });\n        out.failed++;",
+1
+],
+[
+"NOT_RETIRED misses one",
+"photoretire",
+"const RETIRED_STATES = [\"replaced\", \"removed\", \"withdrawn\"];",
+"const RETIRED_STATES = [\"replaced\", \"removed\"];",
+1
+],
+[
+"the publisher retires before publishing",
+"photopublish",
+"      const rr = await retireReplaced({ d, token, clientId, photo, media, nowIso, trigger });",
+"      const rr = { replaced: 0 };",
+1
+],
+[
+"anyone can remove",
+"photoremove",
+"  if (gate.error) return gate.error;",
+"",
+1
+],
+[
+"the logo can be removed",
+"photoremove",
+"    if (SINGLETON.has(row.category)) return json(400",
+"    if (false) return json(400",
+1
+],
+[
+"mid-send is withdrawn",
+"photoremove",
+"const NOT_ON_GOOGLE = [\"in_review\", \"turned_down\", \"pending\", \"waiting_connection\", \"failed\", \"rejected\"];",
+"const NOT_ON_GOOGLE = [\"in_review\", \"turned_down\", \"pending\", \"waiting_connection\", \"failed\", \"rejected\", \"publishing\"];",
+1
+],
+[
+"any Google item can be removed",
+"photoremove",
+"    if (!g) return json(404",
+"    if (false) return json(404",
+1
+],
+[
+"another profile's photo",
+"photoremove",
+"  if (!String(name).startsWith(`${parent}/media/`)) return json(400",
+"  if (false) return json(400",
+1
+],
+[
+"no recount after removal",
+"photoremove",
+"  try { await d.recount(clientId); }",
+"  try { }",
+1
+],
+[
+"withdraw calls Google",
+"photoremove",
+"    if (NOT_ON_GOOGLE.includes(row.publish_state)) {",
+"    if (false) {",
+1
+],
+[
+"the log refuses rga_told",
+"changeremovesql",
+"'returned_to_client','rga_told',",
+"'returned_to_client',",
+1
+],
+[
+"a reader counts removed photos",
+"recheck",
+"const rows = await supa(`/client_photos?client_id=eq.${clientId}&${NOT_RETIRED}&select=id`);",
+"const rows = await supa(`/client_photos?client_id=eq.${clientId}&select=id`);",
+1
+],
+[
+"the portal loads retired photos",
+"portal",
+"    .not(\"publish_state\", \"in\", `(${PHOTO_RETIRED.join(\",\")})`)\n    .order(\"created_at\", { ascending: false })\n    .limit(100);",
+"    .order(\"created_at\", { ascending: false })\n    .limit(100);",
+1
+],
+[
+"the logo still says On your Google profile",
+"portal",
+"if (ph.category === \"logo\" && shape && shape.storefront === false) return \"hide\";",
+"",
+1
+],
+[
+"the logo can be removed in the portal",
+"portal",
+"PHOTO_SINGLE.has(cat) ? \"\" : rmBtn({ id: p.id, onGoogle: true })",
+"rmBtn({ id: p.id, onGoogle: true })",
+1
+],
+[
+"a change in review drops the kind",
+"portal",
+"  const slotDone = (n) => existingByShot.has(n) || pubByShot.has(n);",
+"  const slotDone = (n) => existingByShot.has(n) || byShot.get(n)?.publish_state === \"published\";",
+1
+],
+[
+"no swap note",
+"portal",
+"    const swapping = !!p && !!pub && p !== pub;",
+"    const swapping = false;",
+1
+],
+[
+"done isn't folded",
+"portal",
+"    : isDoneStep\n",
+"    : false\n",
+1
+],
+[
+"all sent is Your turn",
+"portal",
+"!gbpWithRga && !withRga && (Boolean",
+"!gbpWithRga && (Boolean",
+1
+],
+[
+"all sent is the next step",
+"portal",
+"&& !r.later && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
+"&& !r.later && r.taskState?.google_push?.state !== \"with_rga\")",
+1
+],
+[
+"a turned-down slot counts as sent",
+"portal",
+"  const sent = new Set((photos || []).filter((p) => Number.isFinite(p.shot_n) && p.publish_state !== \"turned_down\").map((p) => p.shot_n));",
+"  const sent = new Set((photos || []).filter((p) => Number.isFinite(p.shot_n)).map((p) => p.shot_n));",
+1
+],
+[
+"Remove on Google doesn't ask",
+"portal",
+"  if (onGoogle) {\n    const ok = await portalConfirm(",
+"  if (false) {\n    const ok = await portalConfirm(",
+1
+],
+[
+"admin counts retired photos",
+"admin",
+"&& !PHOTO_RETIRED.includes(p.publish_state));\nconst retired",
+"&& true);\nconst retired",
+1
+],
+[
+"admin doesn't say the logo is hidden",
+"admin",
+"      out.push(\"Logo saved on Google · hidden: the profile shows no street address\");",
+"",
+1
+],
+[
+"no on-Google marker",
+"portal",
+"${onGoogle ? \" data-on-google-slot\" : \"\"}",
+"",
+1
+],
+[
+"a Change in progress bumps the count",
+"portal",
+"        if (row.hasAttribute(\"data-on-google-slot\")) { if (!row.querySelector(\".pm-swap\")) row.insertAdjacentHTML(\"beforeend\", PHOTO_SWAP_NOTE); }\n        else bumpGroupCount(row);",
+"        bumpGroupCount(row);",
+1
+],
+[
+"the logo note isn't the caution colour",
+"portalcss",
+".pm-turned.pm-care { grid-column:1/-1; color:var(--state-care);",
+".pm-turned.pm-care { grid-column:1/-1; color:var(--portal-muted);",
+1
+]
 ]

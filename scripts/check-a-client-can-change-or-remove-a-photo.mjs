@@ -171,7 +171,7 @@ process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const ctx = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
+const ctx = { secondLogos: SECOND_LOGO.secondLogos, photoCountable: SECOND_LOGO.photoCountable, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -188,13 +188,13 @@ const PUB = (n, cat, o = {}) => ({ id: `p${n}`, shot_n: n, category: cat, publis
 {
   const h = ctx.how(step, task(sab), true, [PUB(logoN, "logo"), PUB(workN, "at_work")], "c1", null);
   const lg = slotOf(h, logoN), wk = slotOf(h, workN);
-  if (!/Saved on Google<\/span>/.test(lg) || !/Customers won(?:'|&#39;)t see it yet:<\/b> Google only shows logos on profiles with a street address\. Nothing to do\./.test(lg) || /On your Google profile/.test(lg)) fail("the logo on a profile with no street address still says \"On your Google profile\" (Google hides it)");
+  if (!/Saved, not showing<\/span>/.test(lg) || /On your Google profile/.test(lg)) fail("the logo on a profile with no street address still says \"On your Google profile\" (Google hides it)");
   if (!/<label class="add">Change<input[^>]*data-slot-file[^>]*data-shot-n="\d+"/.test(lg) || /data-photo-remove/.test(lg)) fail("the logo isn't changeable, or can be removed");
   // 🔴 10-15: the note borrowed .pm-note (the message shape, max 62ch) and stopped at 60% of the row — its own class only
-  if (!/<div class="pm-turned pm-care"><span><b>Customers won/.test(lg) || /class="[^"]*\bpm-note\b/.test(lg)) fail("the logo note isn't the full-width caution note (or borrows .pm-note, capped at 62ch)");
-  if (!/On your Google profile<\/span><small class="pm-ctl">Published Oct 9 · <label class="add">Change<input/.test(wk) || !/data-photo-remove="p\d+" data-on-google/.test(wk)) fail("a photo on Google has no Change · Remove under its date");
+  if (/class="[^"]*\bpm-note\b/.test(lg)) fail("the logo row borrows .pm-note, capped at 62ch");
+  if (!/(?:Sent · up to 48 hours|Not on Google&#39;s list yet|On Google&#39;s list)<\/span><small class="pm-ctl">Published Oct 9 · <label class="add">Change<input/.test(wk) || !/data-photo-remove="p\d+" data-on-google/.test(wk)) fail("a photo on Google has no Change · Remove under its date");
   const hs = ctx.how(step, task(shop), true, [PUB(logoN, "logo")], "c1", null);
-  if (!/On your Google profile<\/span>/.test(slotOf(hs, logoN)) || /Customers won/.test(hs)) fail("a storefront's logo is called hidden (only a profile with no street address is)");
+  if (!/(?:Sent · up to 48 hours|Not on Google&#39;s list yet|On Google&#39;s list)<\/span>/.test(slotOf(hs, logoN)) || /Saved, not showing/.test(hs)) fail("a storefront's logo is called hidden (only a profile with no street address is)");
 }
 {
   // a change on its way: the new one with RGA, the old one still counts

@@ -90,7 +90,10 @@ ws = true; if ((await keep()) !== 200 || !/^rga:rga@x\.test \(client asked\)$/.t
         if (p0.startsWith("/client_onboarding_records")) return [{ data: { tasks: w.rec.tasks } }]; if (p0.startsWith("/client_photos")) return []; return null; } };
     return w; };
   const w = mk(true);
-  const r = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: w.d });
+  // client_step10_photo_truth_v1: this copy is the only photo customers can see in this fixture, so RGA is refused until it says remove anyway
+  const r0 = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: w.d });
+  if (r0.statusCode !== 409 || !JSON.parse(r0.body).needs_replacement || w.calls.length) fail("RGA can remove the only photo customers can see without saying so");
+  const r = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", force: true, deps: w.d });
   const c = w.rec.tasks["m1.gbp.photos"].photo_cleanup?.[NAME];
   if (r.statusCode !== 200 || !c || c.why !== "second_logo" || !/^rga:/.test(c.done_by) || c.category !== "EXTERIOR" || !c.done_at) fail(`RGA's removal isn't kept on the step as RGA's cleanup (${r.statusCode} ${JSON.stringify(c)})`);
   if (w.calls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${NAME}` || w.calls[1] !== `GET https://mybusiness.googleapis.com/v4/${NAME}`) fail("RGA's removal isn't a Google delete + read-back");
@@ -99,7 +102,7 @@ ws = true; if ((await keep()) !== 200 || !/^rga:rga@x\.test \(client asked\)$/.t
   // 🔴 the client's no is ENFORCED: an admin screen older than their answer can't remove what they kept (found live 10-15)
   const wk = mk(true); wk.rec.tasks["m1.gbp.photos"].photo_kept = { [NAME]: { at: "2026-10-16T01:58:45Z" } };
   const rk = await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: wk.d });
-  if (rk.statusCode !== 409 || wk.calls.length) fail("RGA can remove a photo the client asked to keep (a stale admin screen still offers it)");
+  if (rk.statusCode !== 409 || JSON.parse(rk.body).kept !== true || wk.calls.length) fail("RGA can remove a photo the client asked to keep (a stale admin screen still offers it)");
   if (!/catch \(e\) \{\s*b\.disabled = false; b\.textContent = label;[^}]*\}[^]*?const fresh = await state\.adapter\.getOnboardingRecord\(c\.id\);/.test(nc(read("admin/admin.js")))) fail("after a refusal, admin doesn't re-read the record (it keeps offering Remove)");
   const wc = mk(false);
   if ((await RM({ event: {}, clientId: CID, mediaName: NAME, cleanup: "second_logo", deps: wc.d })).statusCode !== 400) fail("a client request can be filed as RGA's cleanup");
@@ -124,7 +127,7 @@ if (!slotsSrc || !stateSrc || !bigSrc || !howSrc) { console.error("⚠️  INDET
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
+const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, photoCountable: SL.photoCountable, CS_STEPS: new Set(), tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.card = secondLogoCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -140,7 +143,7 @@ const T = (extra = {}) => ({ draft_shape: shape, team_size: "1", detected: { n: 
   if (!/RGA is removing a second copy of your logo\./.test(h) || /your call|RGA is filing it/i.test(h)) fail("the fold doesn't say RGA is removing it (or still says it's their call)");
   const r0 = h.indexOf("data-second-logo-row"), r1 = h.indexOf('<div class="pm-arow">', r0);
   const row = r0 < 0 ? "" : h.slice(r0, r1 < 0 ? h.indexOf("</details>", r0) : r1);
-  if (!/<b class="pm-rec">RGA recommends removing it\.<\/b>/.test(row) || !/Google can show this copy at the top of your profile as if it were a photo of your business\./.test(row) || !/We(?:'|&#39;)ll take it off for you\. Nothing needed from you\./.test(row)) fail("the row doesn't say RGA recommends it, why, and that nothing is needed");
+  if (!/<b class="pm-rec">RGA recommends removing it\.<\/b>/.test(row) || !/Google can show this copy at the top of your profile as if it were a photo of your business\./.test(row) || !/We(?:'|&#39;)ll take it off once your cover photo is on Google, so your profile is never left with no photo\. Nothing needed from you\./.test(row)) fail("the row doesn't say RGA recommends it, why, and that nothing is needed");
   if (!/<span class="pm-pill other">RGA is doing it<\/span><\/div>$/.test(row) || /data-photo-remove|pm-pill you/.test(row)) fail("the row still hands the client the decision (Remove button / Your call) instead of RGA is doing it");
   if (!/class="pm-linkbtn" data-photo-keep="[^"]+" data-client-id="c1">Prefer to keep it\?<\/button>/.test(row)) fail("the client has no veto (Prefer to keep it?)");
   const k = ctx.how(step, T({ photo_kept: { [copy.name]: { at: "2026-10-16T12:00:00Z" } } }), true, [], "c1", null);

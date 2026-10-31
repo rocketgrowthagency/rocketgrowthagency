@@ -242,7 +242,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   const PL = createRequire(`${SITE}/netlify/functions/flow-execute.js`)("./_photo-lists.js");
   const cut = (start, endMark) => { const i = P.indexOf(start); if (i < 0) moved(`"${start.slice(0, 30)}"`); const j = P.indexOf(endMark, i); if (j < 0) moved(`the end of "${start.slice(0, 30)}"`); return P.slice(i, j); };
   const slotsSrc = cut("const SLOT_CATEGORY = {", "\n/** Fill the slot thumbnails"), stateSrc = cut("const PHOTO_STATE = {", "\n\n"), bigSrc = cut("const photoExampleBigHtml = (ex, key = \"\") =>", "\n\n");
-  const pc = { secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
+  const pc = { secondLogos: SECOND_LOGO.secondLogos, photoCountable: SECOND_LOGO.photoCountable, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
   vm.createContext(pc);
   try { const kit = planCardKit(P, [stateSrc, bigSrc, slotsSrc].join("\n")); vm.runInContext(`${kit}\n${csBlock(P, kit)}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml; this.sel = _p10Sel;`, pc); }
   catch (e) { console.error(`⚠️  INDETERMINATE — step 10's renderer doesn't load (${e.message})`); process.exit(2); }
@@ -262,7 +262,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     const tiles = [...h.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)" aria-pressed="(true|false)"[^>]*><span class="im">([^]*?)<span class="n">\d+<\/span><\/span><span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1].trim(), n: Number(m[2]), pressed: m[3] === "true", im: m[4], lab: m[5] }));
     const tile = (n) => tiles.find((t) => t.n === n) || { cls: "missing", im: "", lab: "" };
     if (tiles.length !== ns.length || tiles.map((t) => t.n).join() !== ns.join()) fail(`step 10 (${biz}): the tiles aren't every shot once, in the list's order (${tiles.length} of ${ns.length})`);
-    if (tile(n1).cls !== "is-on" || !/class="ok"[^>]*>✓/.test(tile(n1).im)) fail(`step 10 (${biz}): a photo on Google isn't the green ✓ tile (${tile(n1).cls})`);
+    if (!/\bis-on\b/.test(tile(n1).cls) || !/\bg-(?:sent|list|missing|hide)\b/.test(tile(n1).cls) || /class="ok"/.test(tile(n1).im)) fail(`step 10 (${biz}): a photo on Google claims more than Google's list tells us (${tile(n1).cls})`);
     if (tile(n2).cls !== "is-rga" || tile(n2).lab !== "With RGA" || !/data-thumb="b\.jpg"/.test(tile(n2).im)) fail(`step 10 (${biz}): a photo with RGA isn't the blue tile with their own photo (${tile(n2).cls} · ${tile(n2).lab})`);
     if (tile(n3).cls !== "is-re is-sel" || tile(n3).lab !== "Retake" || !tile(n3).pressed) fail(`step 10 (${biz}): the retake isn't the amber tile, selected (${tile(n3).cls} · ${tile(n3).lab})`);
     if (tile(n4).cls !== "" || !/data-ex-art=|pm-ex-art/.test(tile(n4).im)) fail(`step 10 (${biz}): an empty tile doesn't carry its example drawing (${tile(n4).cls})`);
@@ -304,7 +304,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     const allOn = ns.map((x) => ({ id: `a${x}`, shot_n: x, publish_state: "published", pushed_to_gbp: true, pushed_at: "2026-10-09T00:00:00Z", storage_path: `${x}.jpg` }));
     const dn = pc.render(STEP, { ...task, status: "done", completed_at: "2026-10-30T12:00:00Z", detected: { n: ns.length, threshold: 20, source: "google_profile", at: "2026-10-29T12:00:00Z" } }, allOn, "c1", TIPS);
     const dcard = dn.slice(0, dn.indexOf('data-fold="done-list"'));
-    if ((dcard.match(/<div class="pm-p10-t is-on"><span class="im"><span class="ok" aria-hidden="true">✓<\/span>/g) || []).length !== ns.length) fail(`step 10 (${biz}): done isn't every tile green ✓`);
+    if ((dcard.match(/<div class="pm-p10-t is-on g-(?:sent|list|missing|hide)"><span class="im">/g) || []).length !== ns.length) fail(`step 10 (${biz}): done doesn't mark every tile with what Google's list says`);
     if (/data-p10-t=/.test(dcard)) fail(`step 10 (${biz}): done's tiles are buttons (nothing happens when they're pressed)`);
     if (!/<span class="k">On your profile<\/span>/.test(dcard) || !/Add more any time; fresh photos help\.<\/div><div class="pm-cs-foot">/.test(dcard)) fail(`step 10 (${biz}): done lost "On your profile", its note or its foot`);
     const chipN = [...dcard.matchAll(/<span class="pm-cs-chip">[^<]*<em>(\d+)<\/em>/g)].reduce((a, m) => a + Number(m[1]), 0);
@@ -319,7 +319,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     pc.sel.clear();
     const dn2 = pc.render(STEP, { ...task, status: "done", completed_at: "2026-10-30T12:00:00Z", detected: { n: 27, threshold: 20, source: "google_profile" } }, [allOn[0]], "c1", TIPS);
     const d2 = dn2.slice(0, dn2.indexOf('data-fold="done-list"'));
-    if ((d2.match(/<div class="pm-p10-t is-on">/g) || []).length !== 1 || !/Other <em>26<\/em>/.test(d2)) fail(`step 10 (${biz}): a done count made of unmatched photos turns tiles green for shots that aren't there (or loses "Other 26")`);
+    if ((d2.match(/<div class="pm-p10-t is-on g-/g) || []).length !== 1 || !/Other <em>26<\/em>/.test(d2)) fail(`step 10 (${biz}): a done count made of unmatched photos turns tiles green for shots that aren't there (or loses "Other 26")`);
   }
   // Needs your space · the hidden logo — a business that goes to its customers
   const sab = PL.buildShotList({ typeOverride: "Marketing agencies", storefront: false, teamSize: "1" });
@@ -327,7 +327,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   pc.sel.clear();
   const s = pc.render(STEP, { draft_shape: sab, team_size: "1", detected: { n: 1, threshold: 20, source: "google_profile" } }, [{ id: "lg", shot_n: logoN, category: "logo", publish_state: "published", pushed_at: "2026-10-09T00:00:00Z", storage_path: "l.jpg" }], "c1", '<details class="pm-tipline" data-fold="tips"><summary>Photo tips</summary></details>');
   if (!/<div class="pm-cs-note"><b>Needs your space:<\/b> Google lists you as a business that goes to its customers/.test(s)) fail("step 10: an all-premises kind's shot lost \"Needs your space\" for a business that goes to its customers");
-  if (!/<div class="pm-cs-note">Your logo is saved on Google, but Google hides it until your profile shows a street address\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
+  if (!/<div class="pm-cs-note"><b>Saved, not showing:<\/b> Google only shows logos on profiles with a street address\. Nothing to do\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
   if (!/csListingOut \? listingWaitHtml\(csListing\) : csNote\(/.test(P)) fail("a client with a duplicate listing lost \"Remove your second Business Profile\" on the grey wait card: it's their only way forward");
   // ── 10-30: how_this_step_works_v2 + step 10 v4 ──
   if (!/const p10Foot = p10 \? csFoot\(\{ maps:/.test(P) || !/\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(P)) fail("step 10's foot lost See it on Google Maps (How must share one line with it)");
@@ -336,7 +336,6 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   if (!/details\.pm-tipline \.pm-tiplist \{ margin:0; border:0;/.test(CSS10)) fail("an open How draws a box inside the card");
   if (!/\.pm-cs \.pm-cs-foot \.how:focus:not\(:focus-visible\)/.test(CSS10)) fail("clicking How leaves a blue box round it");
   if (!/\.pm-cs \.pm-doit > \.pm-k5 \+ \.pm-k5-acts/.test(CSS10)) fail("step 3's Change something sits flush under its card (it must be 12px, like every step)");
-  if (!/\.pm-cs \.pm-p10-t\.is-on \.ok \{ font-size:clamp\(/.test(CSS10)) fail("a done tile's tick isn't sized to the tile");
   if (!/content:"Your photo goes here"/.test(CSS10)) fail("the empty photo box doesn't say what goes there");
   if (!/const csMinPill = csRow && ownerPill\.cls === "you" && ownerPill\.text === "Your turn" && Number\(step\.clientMinutes\) > 0/.test(P)) fail("a step on the client's turn lost its \"about N min\" pill (from clientMinutes)");
   if (!/const csEditPill = csRow && editing/.test(P)) fail("changing a done step isn't \"Done\" + an amber \"Editing\"");
