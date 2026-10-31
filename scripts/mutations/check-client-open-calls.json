@@ -1,0 +1,401 @@
+[
+ [
+  "step 4's unreadable line goes back to a promise",
+  "portal",
+  "`<span class=\"pm-in-help\">We couldn't read your Google profile just now. Please reload the page in a minute.</span>`",
+  "`You can still save; it goes on Google when you do.`",
+  1
+ ],
+ [
+  "the unreadable button stays",
+  "portal",
+  "if (noSave) noSave.hidden = true;",
+  "",
+  1
+ ],
+ [
+  "step 8 keeps its button",
+  "portal",
+  "if (stepId === \"m1.gbp.business_facts\" || stepId === \"m1.gbp.attributes\") { const noSave",
+  "if (stepId === \"m1.gbp.business_facts\") { const noSave",
+  1
+ ],
+ [
+  "the warning shows for a service area too",
+  "portal",
+  "+ (changing(\"name\") || changing(\"come\") ? csNote(`Google may ask",
+  "+ (changing(\"name\") || changing(\"come\") || changing(\"area\") ? csNote(`Google may ask",
+  1
+ ],
+ [
+  "an address change has no warning",
+  "portal",
+  "+ (changing(\"name\") || changing(\"come\") ? csNote(`Google may ask",
+  "+ (changing(\"name\") ? csNote(`Google may ask",
+  1
+ ],
+ [
+  "the warning hardcodes nothing and loses the step",
+  "portal",
+  "If it does, ${portalStepNo(\"m1.gbp.verify\") != null ? `step ${portalStepNo(\"m1.gbp.verify\")}` : \"the verify step\"} shows you how.",
+  "If it does, we'll tell you.",
+  1
+ ],
+ [
+  "the status pill comes back into the row",
+  "portal",
+  "changing(\"name\") ? CS_ICON.rga : ok, changing(\"name\") ? \"RGA is changing it\" : \"\"),",
+  "changing(\"name\") ? '<span class=\"pm-fxt-s rga\">RGA is changing it</span>' : ok),",
+  1
+ ],
+ [
+  "the icon loses its colour",
+  "portalcss",
+  ".pm-pc-f .c.st > svg { color:var(--state-other,#1c44bd); }",
+  "",
+  1
+ ],
+ [
+  "the done card stops naming the tool",
+  "portal",
+  "`${g.platform ? `${escapeHtml(g.platform)} · ` : \"\"}Google picks the button's words`",
+  "\"Google picks the button's words\"",
+  1
+ ],
+ [
+  "an empty tool prints",
+  "portal",
+  "`${g.platform ? `${escapeHtml(g.platform)} · ` : \"\"}Google picks the button's words`",
+  "`${escapeHtml(String(g.platform))} · Google picks the button's words`",
+  1
+ ],
+ [
+  "hours on Google keep the label",
+  "portal",
+  "\"m1.gbp.hours_attributes\": g.after && g.after.appointment ? \"By appointment only, on Google\" : \"Your hours are on Google\",",
+  "\"m1.gbp.hours_attributes\": \"Your hours\",",
+  1
+ ],
+ [
+  "appointment hours lose their words",
+  "portal",
+  "g.after && g.after.appointment ? \"By appointment only, on Google\" : \"Your hours are on Google\"",
+  "\"Your hours are on Google\"",
+  1
+ ],
+ [
+  "details on Google keep the label",
+  "portal",
+  "\"m1.gbp.attributes\": nOn ? `${nOn} detail${nOn === 1 ? \"\" : \"s\"} on Google` : \"None of these apply\",",
+  "\"m1.gbp.attributes\": \"Details about your business\",",
+  1
+ ],
+ [
+  "one detail reads as plural",
+  "portal",
+  "`${nOn} detail${nOn === 1 ? \"\" : \"s\"} on Google`",
+  "`${nOn} details on Google`",
+  1
+ ],
+ [
+  "the pill keeps Your turn on a said-no",
+  "portal",
+  "taskState?.google_push?.state === \"needs_client\" ? { text: \"Google said no\", cls: \"bad\" }",
+  "taskState?.google_push?.state === \"needs_client\" ? { text: \"Your turn\", cls: \"you\" }",
+  1
+ ],
+ [
+  "took it down keeps Your turn",
+  "portal",
+  "taskState?.google_push?.state === \"removed\" ? { text: \"Google took it down\", cls: \"you\" }",
+  "taskState?.google_push?.state === \"removed\" ? { text: \"Your turn\", cls: \"you\" }",
+  1
+ ],
+ [
+  "the row isn't red",
+  "portal",
+  "auto: \"wait\", bad: \"bad\" }[ownerPill.cls]",
+  "auto: \"wait\" }[ownerPill.cls]",
+  1
+ ],
+ [
+  "a form path escapes the hold",
+  "portal",
+  "return `<div class=\"pm-doit\"${gcHold ? \" data-gc-hold hidden\" : \"\"}>${csCard({",
+  "return `<div class=\"pm-doit\">${csCard({",
+  1
+ ],
+ [
+  "the other form path escapes the hold",
+  "portal",
+  "return `<div class=\"pm-doit\"${gcHold ? \" data-gc-hold hidden\" : \"\"}>${head && !csRow",
+  "return `<div class=\"pm-doit\">${head && !csRow",
+  1
+ ],
+ [
+  "How seats into the hidden form",
+  "portal",
+  ".filter((c) => !c.closest(\"[data-gc-hold]\") && !c.closest(\"[data-how-fold]\")",
+  ".filter((c) => !c.closest(\"[data-how-fold]\")",
+  1
+ ],
+ [
+  "the held form's fold says How to do this",
+  "portal",
+  "HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0]",
+  "HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0]",
+  1
+ ],
+ [
+  "Fix it doesn't open the form",
+  "portal",
+  "if (hold) { hold.hidden = false; hold.removeAttribute(\"data-gc-hold\"); fix.hidden = true; }",
+  "",
+  1
+ ],
+ [
+  "Fix it stays after it opened the form",
+  "portal",
+  "hold.removeAttribute(\"data-gc-hold\"); fix.hidden = true; }",
+  "hold.removeAttribute(\"data-gc-hold\"); }",
+  1
+ ],
+ [
+  "hours said no keeps the old band",
+  "portal",
+  "\"m1.gbp.hours_attributes\": \"these hours\", ",
+  "\"m1.gbp.hours_attributes\": \"your hours\", ",
+  1
+ ],
+ [
+  "details said no keeps the old band",
+  "portal",
+  "\"m1.gbp.attributes\": \"these details\", ",
+  "\"m1.gbp.attributes\": \"details about your business\", ",
+  1
+ ],
+ [
+  "a said-no has no Maps",
+  "portal",
+  "escapeHtml(g.fix || \"Fix it and we put it on again.\")), foot: csFoot({ maps: mapsNow }) })}${pcActs(`<button type=\"button\" class=\"pm-commit\" data-gcard-fix>${step.id",
+  "escapeHtml(g.fix || \"Fix it and we put it on again.\")), foot: csFoot() })}${pcActs(`<button type=\"button\" class=\"pm-commit\" data-gcard-fix>${step.id",
+  1
+ ],
+ [
+  "RGA is on it has no Maps",
+  "portal",
+  "\"RGA is finishing it. Nothing needed from you.\"), foot: csFoot({ maps: mapsNow }) })}</div>`;",
+  "\"RGA is finishing it. Nothing needed from you.\"), foot: csFoot() })}</div>`;",
+  1
+ ],
+ [
+  "step 9's said-no loses Your link",
+  "portal",
+  "tried = step.id === \"m1.gbp.booking_link\" ? (ci && typeof ci === \"object\" ? ci.value : ci) : \"\";",
+  "tried = \"\";",
+  1
+ ],
+ [
+  "a bare link loses Your link",
+  "portal",
+  "(ci && typeof ci === \"object\" ? ci.value : ci)",
+  "(ci && typeof ci === \"object\" ? ci.value : \"\")",
+  1
+ ],
+ [
+  "step 9's button keeps Fix it",
+  "portal",
+  "${step.id === \"m1.gbp.booking_link\" ? \"Pick another link\" : \"Fix it\"}",
+  "Fix it",
+  1
+ ],
+ [
+  "taken down keeps its sentence",
+  "portal",
+  "csSt(\"you\", \"Google removes links that don't let people book\", \"Pick the page people book on and we put it back.\")",
+  "csNote(\"Pick one below and we'll put it back.\")",
+  1
+ ],
+ [
+  "taken down has no button",
+  "portal",
+  "${pcActs(`<button type=\"button\" class=\"pm-commit\" data-gcard-fix>Pick a page</button>`)}",
+  "",
+  1
+ ],
+ [
+  "taken down has no Was row",
+  "portal",
+  "(g.removed_link ? `<div class=\"pm-pc-f\"><span class=\"l\">Was</span>",
+  "(\"\" ? `<div class=\"pm-pc-f\"><span class=\"l\">Was</span>",
+  1
+ ],
+ [
+  "taken down always draws a Was row",
+  "portal",
+  "(g.removed_link ? `<div class=\"pm-pc-f\"><span class=\"l\">Was</span>",
+  "(true ? `<div class=\"pm-pc-f\"><span class=\"l\">Was</span>",
+  1
+ ],
+ [
+  "step 2's fold keeps the old words",
+  "portal",
+  "verify: [\"How this step works\", \"Hide how this step works\"]",
+  "verify: [\"How verification works\", \"Hide how verification works\"]",
+  1
+ ],
+ [
+  "the verify-again card isn't drawn",
+  "portal",
+  "const gvLost = gvTask.reverify && gvTask.reverify.state === \"lost\" ? gvTask.reverify : null;",
+  "const gvLost = null;",
+  1
+ ],
+ [
+  "never verified reads as lost",
+  "portal",
+  "const gvLost = gvTask.reverify && gvTask.reverify.state === \"lost\" ? gvTask.reverify : null;",
+  "const gvLost = gvTask;",
+  1
+ ],
+ [
+  "the verify-again pill stays Your turn",
+  "portal",
+  "gvLost ? \"Verify again\" : \"Your turn\"",
+  "\"Your turn\"",
+  1
+ ],
+ [
+  "the card promises a few minutes again",
+  "portal",
+  "\"Google chooses how. A code takes minutes; a video or postcard can take days.\"",
+  "\"It takes a few minutes. Your profile stays up meanwhile.\"",
+  1
+ ],
+ [
+  "Verify now does nothing",
+  "portal",
+  "if (ways) { ways.hidden = false; b.closest(\"[data-gv-again-acts]\").hidden = true;",
+  "if (ways) {",
+  1
+ ],
+ [
+  "the ways show before Verify now",
+  "portal",
+  "<div class=\"pm-cs-body\" data-gv-again-ways hidden>",
+  "<div class=\"pm-cs-body\" data-gv-again-ways>",
+  1
+ ],
+ [
+  "a verified profile still asks",
+  "portal",
+  "  else if (gvLost) {",
+  "  else if (false) {",
+  1
+ ],
+ [
+  "any location counts as the client's",
+  "recheck",
+  "const connected_verified = mine ? mine.metadata?.hasVoiceOfMerchant === true : undefined;",
+  "const connected_verified = verified.length === locs.length;",
+  1
+ ],
+ [
+  "not found reads as unverified",
+  "recheck",
+  "const connected_verified = mine ? mine.metadata?.hasVoiceOfMerchant === true : undefined;",
+  "const connected_verified = mine ? mine.metadata?.hasVoiceOfMerchant === true : false;",
+  1
+ ],
+ [
+  "never done counts as lost",
+  "recheck",
+  "probe.connected_verified === false && (t[stepId]?.status === \"done\" || t[stepId]?.reverify?.state === \"lost\")",
+  "probe.connected_verified === false",
+  1
+ ],
+ [
+  "a repeat moves the date",
+  "recheck",
+  "? (t[stepId]?.reverify?.state === \"lost\" ? t[stepId].reverify : { state: \"lost\",",
+  "? ({ state: \"lost\",",
+  1
+ ],
+ [
+  "the record is never written",
+  "recheck",
+  "completed_by: null, ...(lost ? { reverify: lost } : {}) };",
+  "completed_by: null };",
+  1
+ ],
+ [
+  "verified again doesn't clear",
+  "recheck",
+  "if (stepId === \"m1.gbp.verify\" && probe.connected_verified === true) delete t0[stepId].reverify;",
+  "",
+  1
+ ],
+ [
+  "a confirmed probe doesn't say so",
+  "recheck",
+  "return { verdict: \"confirmed\", connected_verified: true, evidence: locs.length === 1",
+  "return { verdict: \"confirmed\", evidence: locs.length === 1",
+  1
+ ],
+ [
+  "verify-again closes the listing rule",
+  "onelisting",
+  "function listingState(tasks) {\n",
+  "function listingState(tasks) {\n  if (verifyLost(tasks)) return { open: false, state: \"verify\", duplicates: [], reason: \"x\" };\n",
+  1
+ ],
+ [
+  "verifyLost always false",
+  "onelisting",
+  "return !!(r && r.state === \"lost\"); };",
+  "return false; };",
+  1
+ ],
+ [
+  "client saves don't hold",
+  "stepinput",
+  "if (toGoogle && verifyLost(rec.listingTasks)) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "gbp-publish doesn't hold",
+  "gbppublishfn",
+  "if (verifyLost(rec?.data?.tasks)) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "gbp-apply-change doesn't hold",
+  "gbpapplyfn",
+  "if (verifyLost(rec?.data?.tasks)) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "photos don't hold",
+  "photopublish",
+  "if (listing.verify_lost) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "posts don't hold",
+  "gbpposts",
+  "if (verifyLost(m1 && m1.data && m1.data.tasks)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "To do doesn't say why",
+  "openmoves",
+  "what: lostAt ? \"Google wants your business verified again\" : s.clientLabel || s.title",
+  "what: s.clientLabel || s.title",
+  1
+ ]
+]

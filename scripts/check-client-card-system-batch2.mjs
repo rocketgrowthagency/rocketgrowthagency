@@ -192,7 +192,7 @@ try {
   if (/pm-pc-tl|Month 1 ends|pm-cw-go/.test(h)) fail("step 15's system card still draws the old timeline (done rows, Month 1 ends, Go to step)");
   // the picker paints its own card; no "What to do" over a system card; the times are a grid; the done ask line
   if (!/if \(csRow && !\/pm-k5-plan\|pm-cs-card\|<fieldset class="pm-waits"\|data-closeout-call\|data-kickoff-slots\/\.test\(completionCtl\)\)/.test(P)) fail("the close-out picker (or the kickoff calendar) is wrapped in a second system card");
-  if (!/return `<div class="pm-doit">\$\{head && !csRow \? `<p class="pm-doit-h">/.test(P)) fail("a system card gets a \"What to do\" heading over it again");
+  if (!/return `<div class="pm-doit"\$\{gcHold \? " data-gc-hold hidden" : ""\}>\$\{head && !csRow \? `<p class="pm-doit-h">/.test(P)) fail("a system card gets a \"What to do\" heading over it again");
   if (!/\.pm-cs \.pm-pc-body > \.pm-cc-opts \{ display:grid; grid-template-columns:repeat\(auto-fill,minmax\(min\(100%,180px\),1fr\)\); \}/.test(C) || !/\.pm-cs \.pm-pc-body \.pm-cc-opt \{ display:grid; grid-template-columns:minmax\(0,1fr\);/.test(C)) fail("step 15's times aren't boxes in a grid on the system (each was squeezed into the hidden radio's 22px column)");
   if (!/csRow && isDone && \(step\.id === "m1\.kickoff\.call" \|\| step\.id === "m1\.call\.close" \|\| step\.id === "m2\.call\.monthly"\) \? threadHtml\(step\.id\)\.replace\("Questions about this step\?", "Questions about the call\?"\)/.test(P)) fail("a done call's ask line doesn't read \"Questions about the call?\""); }
 

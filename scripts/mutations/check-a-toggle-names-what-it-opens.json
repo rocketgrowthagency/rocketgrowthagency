@@ -2,7 +2,7 @@
 [
 "the fold line says View again",
 "portal",
-"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
+"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
 "<summary>${PC_DOWN}View →</summary>"
 ],
 [
@@ -14,7 +14,7 @@
 [
 "the fold line always says How to do this",
 "portal",
-"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
+"<summary>${PC_DOWN}${escapeHtml(HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])}</summary>",
 "<summary>${PC_DOWN}How to do this</summary>"
 ],
 [

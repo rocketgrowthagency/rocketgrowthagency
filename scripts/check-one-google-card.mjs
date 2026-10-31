@@ -42,11 +42,11 @@ if ((push.match(/return googleCardHtml\(/g) || []).length < 2 || !/return `<div 
 // a Google "no" on a system step is the red card with the blue "Fix it" under it
 { const y = gv.slice(gv.indexOf('if (kind === "yes") {'), gv.indexOf('if (CS_STEPS.has("m1.gbp.verify"))'));
   if (!y || /data-step-recheck|Check again/.test(y)) fail("client step 2's verified card offers Check again (RGA re-checks every night)");
-  if (!/if \(g\.state === "needs_client" && CS_STEPS\.has\(step\.id\)\) \{\s*return `<div class="pm-k5">\$\{csCard\(\{ tone: "bad",[^\n]*\n[^\n]*foot: csFoot\(\) \}\)\}\$\{pcActs\(`<button type="button" class="pm-commit" data-gcard-fix>Fix it<\/button>`\)\}<\/div>`;/.test(push)) fail("a Google \"no\" on a system step isn't the red card with the blue Fix it under it"); }
+  if (!/if \(g\.state === "needs_client" && CS_STEPS\.has\(step\.id\)\) \{[\s\S]{0,700}?csCard\(\{ tone: "bad",[\s\S]{0,900}?foot: csFoot\(\{ maps: mapsNow \}\) \}\)\}\$\{pcActs\(`<button type="button" class="pm-commit" data-gcard-fix>\$\{step\.id === "m1\.gbp\.booking_link" \? "Pick another link" : "Fix it"\}<\/button>`\)\}<\/div>`;/.test(push)) fail("a Google \"no\" on a system step isn't the red card with the blue Fix it under it"); }
 // 🔑 10-16 (step11_details_v1): 10 and 11 draw their own cards; their Change opens Editing (data-step-edit), never a write
 if (!/const attrsCard = step\.id === "m1\.gbp\.attributes" && isDone && taskState\?\.google_push\?\.state === "on_google";/.test(portal) || !/const act = pcActs\(`<button type="button" class="pm-amend" data-step-edit="\$\{escapeAttribute\(step\.id\)\}">Change something<\/button>`\);/.test(portal) || !/&& !ownGoogleCard\n/.test(portal) || /gcardAct/.test(strip(portal))) fail("steps 10 / 11's Change isn't the card's own action (Editing, under the card)");
-if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 6's Check again / How verification works still sit under the card");
-if (!/e\.target\.closest\("\[data-gcard-how\]"\)/.test(portal) || !/e\.target\.closest\("\[data-gcard-fix\]"\)/.test(portal)) fail("the card's How verification works / Fix it do nothing");
+if (!/<div class="pm-row-actions"\$\{step\.id === "m1\.gbp\.verify" && isDone && !month2Only \? " hidden" : ""\}>/.test(portal)) fail("step 2's Check again / How this step works still sit under the card");
+if (!/e\.target\.closest\("\[data-gcard-how\]"\)/.test(portal) || !/e\.target\.closest\("\[data-gcard-fix\]"\)/.test(portal)) fail("the card's How this step works / Fix it do nothing");
 // the state is the TINT + a thin border, never a thick edge inside the step (two stripes)
 if (!/^\.gcard \{[^}]*background:var\(--state-ok-bg\); border:1px solid var\(--state-ok-line\);/m.test(pcss) || !/^\.ob-gcard \{[^}]*background:var\(--state-ok-bg\); border:1px solid var\(--state-ok-line\);/m.test(acss) || /^\.(?:ob-)?gcard[^{]*\{[^}]*border-left:\s*4px/m.test(pcss + "\n" + acss)) fail("a Google card's state isn't its tint + thin border (or a thick edge is back inside the step)");
 // admin rows say their card's state: one marker producer, the pill, the outline
@@ -187,7 +187,7 @@ for (const [k, head] of Object.entries(DONE_WANT)) { const c = P.__cs[k];
 if (P["card with a time"] && !P["card with a time"].logo) fail("the shared Google card (steps not on the card system) has no Google logo");
 if (!P["card with a time"] || !/^Last checked Oct 16\b/.test(P["card with a time"].when) || !P["card with a time"].whenUnderTitle) fail(`a Google card doesn't say "Last checked …" on its own line under the title ("${P["card with a time"]?.when}")`);
 // a refusal: the blue Fix it, UNDER the card, and nothing else
-{ const g = P.__cs["10 Google said"]; if (g && (g.under !== "Fix it" || !g.primary || g.inCard || g.st?.kind !== "bad")) fail(`a refusal's card has no blue Fix it under it, or no red status row (${g.under} · ${JSON.stringify(g.st)})`); }
+{ const g = P.__cs["10 Google said"]; if (g && (g.under !== "Pick another link" || !g.primary || g.inCard || g.st?.kind !== "bad")) fail(`a refusal's card has no blue button under it, or no red status row (${g.under} · ${JSON.stringify(g.st)})`); }
 if (A._rows) {
   const want4 = [EDGE.you, EDGE.rga, EDGE.rga, EDGE.ok];
   if (JSON.stringify(A._rows.markers) !== JSON.stringify(want4)) fail(`admin's Google row markers don't take their card's colour inside real rows (${A._rows.markers.join(" | ")})`);

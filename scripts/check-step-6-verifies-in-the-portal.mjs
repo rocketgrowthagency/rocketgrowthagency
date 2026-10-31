@@ -78,7 +78,7 @@ const portal = read("portal/portal.js"), pc = portal.replace(/^[ \t]*\/\/.*$/gm,
 if (!/loadGbpVerify\(clientId\);/.test(pc) || !/step\.id === "m1\.gbp\.verify" && !month2Only \? `<div class="pm-gv" data-gbp-verify/.test(pc)) fail("step 6 doesn't lead with the profile card");
 if (!/mech === "detected" && evidence && step\.id !== "m1\.gbp\.verify"/.test(pc)) fail("step 6 still prints the grey evidence line beside the card");
 // 🔄 client_step02_verify_v1 (card system, 10-29): the how-to is the row's fold, seated into the system card's foot — the row must be a
-// system row and the seat must hand it to seatCsFoot (else How verification works sits loose under the card, or nowhere)
+// system row and the seat must hand it to seatCsFoot (else How this step works sits loose under the card, or nowhere)
 if (!/<div class="pm-step-row\$\{csRow \? ` pm-cs cs-\$\{csTone\}` : ""\}/.test(pc) || !/const detailKind = step\.id === "m1\.gbp\.verify" && isDone \? "verify" :/.test(pc)
   || !/if \(row && row\.classList\.contains\("pm-cs"\) && csCardOf\(row\)\) \{ seatCsFoot\(row, f\); continue; \}/.test(pc)) fail("step 6's verified row isn't a system row, or its how-to isn't handed to the card's foot (seatCsFoot)");
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own
@@ -108,7 +108,7 @@ try {
     h.innerHTML = `<div class="pm-step-row pm-cs cs-ok"><div class="pm-gv">${gvProfileHtml(f, "yes", "✓ Verified by Google", [["Checked", "Oct 15, 9:40 AM"]])}</div><details class="pm-k5-fold pm-how-fold" data-how-fold="m1.gbp.verify"><summary>${PC_DOWN}${DETAIL_LABEL.verify[0]}</summary><div class="pm-k5-why pm-how-body">the how-to</div></details></div>`;
     const seated = seatCsFoot(h.querySelector(".pm-step-row"), h.querySelector("details[data-how-fold]"));
     const ft = h.querySelector(".pm-cs-card > .pm-cs-foot");
-    yes.how = !!seated && !!ft?.querySelector(":scope > a.lk") && (ft?.querySelector(":scope > button.how[data-cs-how]")?.textContent || "").trim() === "How verification works" && ft?.nextElementSibling?.matches('details.pm-cs-howb[data-how-fold="m1.gbp.verify"]') === true;
+    yes.how = !!seated && !!ft?.querySelector(":scope > a.lk") && (ft?.querySelector(":scope > button.how[data-cs-how]")?.textContent || "").trim() === "How this step works" && ft?.nextElementSibling?.matches('details.pm-cs-howb[data-how-fold="m1.gbp.verify"]') === true;
     h.innerHTML = gvOptionsHtml([{ method: "EMAIL", label: "Email a code to x@y.com", sub: "s", code: true }, { method: "SMS", label: "Text", sub: "s", code: true }]);
     const emailFirst = { fastest: !!h.querySelector("em"), sel: h.querySelector(".pm-gv-m.sel")?.getAttribute("data-gv-method"), google: h.querySelector('a[href="https://business.google.com/"]') ? 1 : 0, codeHidden: h.querySelector("[data-gv-code]")?.hidden };
     h.innerHTML = gvOptionsHtml([{ method: "SMS", label: "Text a code to (424) 242-2040", sub: "s", code: true }]);
@@ -116,16 +116,16 @@ try {
     h.innerHTML = gvProfileHtml({ ...f, title: '<img src=x onerror="window.__x=1">' }, "no", "Not verified yet");
     return { yes, emailFirst, smsFirst, x: window.__x || 0 };
   });
-  // 🔒 one_google_card_v1: the one Google card, green; Checked + Maps + "How verification works" in its bottom line, "Check again" top-right
+  // 🔒 one_google_card_v1: the one Google card, green; Checked + Maps + "How this step works" in its bottom line, "Check again" top-right
   // 🔒 google_card_best_v1: one status line (Verified by Google · checked …), the profile, proof (Maps · How), Check again under the card
   // v2.1 (10-20): the time on its own line under the title; no Check again — the every-night note instead
   // 🔄 10-23 (steps_1_4_clean_v1): the plan card — "Verified by Google · checked", Business + Phone rows, how verification works folded, Maps
   // 🔄 10-23 night (mockup exactly: "checked Oct 15", the date only)
   // 🔄 10-29 (client_step02_verify_v1 "Done · verified", the card system): band "Verified by Google · checked Oct 15", Business + Phone
-  // rows, the foot = See it on Google Maps ↗ + the how-to (seated). The old in-card fold ("How verification works, and when it can come
+  // rows, the foot = See it on Google Maps ↗ + the how-to (seated). The old in-card fold ("How this step works, and when it can come
   // back · We check this every night…") is not on the mockup's card.
   if (!/^Verified by Google checked Oct 15 Business Rocket Growth Agency Phone \(424\) 242-2040 See it on Google Maps ↗$/i.test(r.yes.text) || r.yes.maps !== "https://maps.google.com/maps?cid=1") fail(`the verified card isn't the profile + See it on Google Maps (${r.yes.text})`);
-  if (r.yes.card !== "pm-k5-plan pm-cs-card ok" || !r.yes.sys || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the green system card with How verification works in its foot and NO Check again (${JSON.stringify(r.yes)})`);
+  if (r.yes.card !== "pm-k5-plan pm-cs-card ok" || !r.yes.sys || r.yes.recheck || !r.yes.how) fail(`the verified card isn't the green system card with How this step works in its foot and NO Check again (${JSON.stringify(r.yes)})`);
   if (r.emailFirst.fastest || r.emailFirst.sel !== "EMAIL" || !r.emailFirst.google || r.emailFirst.codeHidden !== true) fail(`the ways to verify are drawn wrong (${JSON.stringify(r.emailFirst)})`);
   if (!r.smsFirst) fail("a text code isn't marked Fastest");
   if (r.x) fail("the profile's name became HTML");

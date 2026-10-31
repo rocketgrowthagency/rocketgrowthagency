@@ -198,7 +198,7 @@
 [
 "the foot's words go back to How to do this",
 "portal",
-"escapeHtml(HOW_WORKS_FOOT.has(step.id) ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])",
+"escapeHtml(HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])",
 "escapeHtml(DETAIL_LABEL[detailKind][0])",
 1
 ],

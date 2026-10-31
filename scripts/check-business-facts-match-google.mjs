@@ -231,12 +231,12 @@ if (!/e\.target\.closest\("\[data-fact-redo\]"\)/.test(js)) fail("an answered li
 // 🔒 superseded 10-20 by the approved step7_check_business_v2 card (factsCardV2) — the full card is RUN in check-steps-6-and-7-confirm-in-the-portal
 if (!/if \(step\.id === "m1\.gbp\.business_facts" && \(g\.state === "with_rga" \|\| g\.state === "on_google"\)\) return factsCardV2\(step, taskState, g, opts\.move \|\| null\);/.test(js)
   // 🔄 10-30 (client_step04_business_facts_v1): the fact RGA is changing keeps its own status words on its row — name, and how customers reach you
-  || !/const busy = '<span class="pm-fxt-s rga">RGA is changing it<\/span>';/.test(js) || !/row\("Business name", escapeHtml\(a\.name \|\| ci\.name \|\| ""\), changing\("name"\) \? busy : ok\)/.test(js)
-  || !/const comeRow = row\("How customers reach you", come \? "You go to them" : "Customers come to you", changing\("come"\) \? busy : ok,/.test(js)
+  || !/row\("Business name", escapeHtml\(a\.name \|\| ci\.name \|\| ""\), changing\("name"\) \? CS_ICON\.rga : ok, changing\("name"\) \? "RGA is changing it" : ""\)/.test(js)
+  || !/const comeRow = row\("How customers reach you", come \? "You go to them" : "Customers come to you", changing\("come"\) \? CS_ICON\.rga : ok, `\$\{changing\("come"\) \? "RGA is changing it · " : ""\}/.test(js)
   || !/const body = \(changing\("name"\) \? rows\[0\] : ""\)[^\n]*\(changing\("come"\) \? comeRow : ""\)/.test(js)) fail("the client isn't told RGA is changing their name / address on Google");
-// 🔴 NEEDS CHRIS (10-30): the old card's "Good to know" fold said "Google may ask you to verify the business again; we'll tell you if it does."
-// while RGA changes a name / address; client_step04_business_facts_v1 draws no name / address change state and batch 1 dropped the fold
-if (!/Google may ask you to verify the business again; we(?:'|’)ll tell you if it does\./.test(portal)) fail("the client isn't told Google may ask them to verify again while RGA changes their name / address (the old card's line is gone; client_step04_business_facts_v1 is silent)");
+// 🔒 client_open_calls_v1 call 2 (approved 10-30): Google may ask them to verify again, only while RGA changes a name or address, never for a service area.
+// The promise is true because step 2's card exists: check-client-open-calls runs both.
+if (!/\(changing\("name"\) \|\| changing\("come"\) \? csNote\(`Google may ask you to verify again after a name or address change\. If it does, /.test(portal)) fail("the client isn't told Google may ask them to verify again while RGA changes their name / address");
 
 // ── 7 · the card: RGA's recommendation drawn side by side; no text box; the state in the input; admin ticks only from Google ──
 {

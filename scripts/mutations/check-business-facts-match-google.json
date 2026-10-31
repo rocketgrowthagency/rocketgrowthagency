@@ -485,15 +485,15 @@
 [
 "a name RGA is changing reads as matching",
 "portal",
-"    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), changing(\"name\") ? busy : ok),",
-"    row(\"Business name\", escapeHtml(a.name || ci.name || \"\"), ok),",
+"changing(\"name\") ? CS_ICON.rga : ok, changing(\"name\") ? \"RGA is changing it\" : \"\"),",
+"ok, \"\"),",
 1
 ],
 [
 "an address RGA is changing reads as matching",
 "portal",
-"changing(\"come\") ? busy : ok, come ? \"Your address stays hidden on Google\"",
-"ok, come ? \"Your address stays hidden on Google\"",
+"changing(\"come\") ? CS_ICON.rga : ok, `${changing(\"come\") ? \"RGA is changing it · \" : \"\"}",
+"ok, `${\"\"}",
 1
 ],
 [

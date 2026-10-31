@@ -1,317 +1,317 @@
 [
- [
-  "every business gets the appointment link",
-  "gbpprofile",
-  "const type = types.find((t) => value && t.key === value.link_type) || types[0];",
-  "const type = { key: \"url_appointment\", label: \"Booking link\" };",
-  1
- ],
- [
-  "no link type offered still writes",
-  "gbpprofile",
-  "if (!types.length) return { state: \"not_sent\", reason: \"google_offers_no_link\", at };",
-  "",
-  1
- ],
- [
-  "no tracking tag",
-  "gbpprofile",
-  "const sent = B.withTag(url);",
-  "const sent = url;",
-  1
- ],
- [
-  "tag on top of their own",
-  "bookinglink",
-  "if ([...u.searchParams.keys()].some((k) => /^utm_/i.test(k))) return u.href;",
-  "",
-  1
- ],
- [
-  "a private address is fetched",
-  "bookinglink",
-  "if (!safeUrl(url)) return { ok: false, status: 0, unsafe: true };",
-  "",
-  1
- ],
- [
-  "contact page before a booking page",
-  "bookinglink",
-  "const score = { book: 3, quote: 2, contact: 1 }[kind];",
-  "const score = { book: 1, quote: 2, contact: 3 }[kind];",
-  1
- ],
- [
-  "read-back compares exactly",
-  "gbpprofile",
-  "if (!after.some((x) => B.sameLink(x, sent)))",
-  "if (!after.includes(sent))",
-  1
- ],
- [
-  "our tag reads as drift",
-  "gbpwatch",
-  "if (!url || g.some((x) => BL.sameLink(x, url, { tags: false }))) return null;",
-  "if (!url || g.includes(url)) return null;",
-  1
- ],
- [
-  "no website pages read",
-  "portalgbpprofile",
-  "now.pages = found.pages; now.tools = found.tools;",
-  "now.pages = []; now.tools = [];",
-  1
- ],
- [
-  "RGA recommends nothing in particular",
-  "portal",
-  "const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
-  "const rec = \"tool\";",
-  1
- ],
- [
-  "link type not sent",
-  "portal",
-  "value = { value: url.trim(), choice, ...(linkType ? { link_type: linkType } : {}) };",
-  "value = { value: url.trim(), choice };",
-  1
- ],
- [
-  "Change link writes",
-  "portal",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
-  "const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
-  1
- ],
- [
-  "admin has no Try it",
-  "admin",
-  "spec.kind === \"booking\" && g.sent ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
-  "spec.kind === \"booking\" && false ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
-  1
- ],
- [
-  "page names become HTML",
-  "portal",
-  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
-  "}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}${KIND[pg.kind]",
-  1
- ],
- [
-  "the save stops storing the platform",
-  "gbpprofile",
-  "link: B.withoutTag(sent), sent, choice, platform: B.platformOf(url) };",
-  "link: B.withoutTag(sent), sent, choice };",
-  1
- ],
- [
-  "a waiting step reads Google",
-  "portal",
-  "    if (host.closest(\".pm-waits\")) { host.innerHTML = `<span class=\"pm-in-help\">This fills in from your Google profile once the step opens.</span>`; continue; }\n",
-  "",
-  1
- ],
- [
-  "social links pass",
-  "bookinglink",
-  "  if (hit) return { code: hit[1], said: hit[2], fix: \"Paste the page customers book on, or pick a page on your website.\" };\n",
-  "",
-  1
- ],
- [
-  "the home page passes",
-  "bookinglink",
-  "  if (/^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
-  "  if (false && /^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
-  1
- ],
- [
-  "a booking tool's root page is refused",
-  "bookinglink",
-  " && !platformOf(u.href) && !/book|schedul|appoint|reserv/i.test(h)) {",
-  ") {",
-  1
- ],
- [
-  "the old tag is back",
-  "bookinglink",
-  "const TAG = [[\"utm_source\", \"google\"], [\"utm_medium\", \"organic\"], [\"utm_campaign\", \"gbp-booking\"]];",
-  "const TAG = [[\"utm_source\", \"gbp\"], [\"utm_medium\", \"booking\"], [\"utm_campaign\", \"local-seo\"]];",
-  1
- ],
- [
-  "a sign-in page passes",
-  "bookinglink",
-  "    if (r.ok && LOGIN.test(landed)) return { ok: false, status: r.status, login: true };\n",
-  "",
-  1
- ],
- [
-  "no partner flag on tools",
-  "bookinglink",
-  ".map((t) => ({ ...t, partner: isPartner(t.platform) }))",
-  "",
-  1
- ],
- [
-  "the save skips the refusal",
-  "gbpprofile",
-  "      if (no) return { state: \"needs_client\", said: no.said, fix: no.fix, error: `refused: ${no.code}`, at };\n",
-  "",
-  1
- ],
- [
-  "a partner writes a link",
-  "gbpprofile",
-  "      if (choice === \"partner\") return {",
-  "      if (false && choice === \"partner\") return {",
-  1
- ],
- [
-  "the save ignores a sign-in wall",
-  "gbpprofile",
-  "      if (open.login) return { state: \"needs_client\",",
-  "      if (false && open.login) return { state: \"needs_client\",",
-  1
- ],
- [
-  "no removed marker on a gone link",
-  "gbpwatch",
-  "...(g.length ? {} : { removed: true })",
-  "",
-  1
- ],
- [
-  "a removed link stays Done",
-  "gbpwatch",
-  "      const t2 = { ...task, status: \"pending\", google_push: gp };",
-  "      const t2 = { ...task, google_push: gp };",
-  1
- ],
- [
-  "RGA isn't told of a removal",
-  "gbpwatch",
-  "        try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
-  "        if (false) try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
-  1
- ],
- [
-  "no removed card",
-  "portal",
-  "  if (step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
-  "  if (false && step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
-  1
- ],
- [
-  "no top note",
-  "portal",
-  "      if (bNote) card.insertAdjacentHTML(\"afterend\", bNote);\n",
-  "",
-  1
- ],
- [
-  "partner not recommended",
-  "portal",
-  "const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length",
-  "const rec = cur.length ? \"keep\" : tools.length",
-  1
- ],
- [
-  "contact warning gone",
-  "portal",
-  "Google sometimes removes contact pages: they don't let people book or ask for a time.</span>` : \"\")",
-  "</span>` : \"\")",
-  1
- ],
- [
-  "the Book button promise is back",
-  "portal",
-  "`Where should Google send people who want to ${({ url_appointment: \"book\", url_reservations: \"reserve\", url_order_ahead: \"order ahead\" })[type.key] || \"book\"}?`",
-  "`Where should Google's ${type.button} button go?`",
-  1
- ],
- [
-  "admin forgets the removal",
-  "admin",
-  "g.state === \"needs_client\" || g.state === \"removed\")) return \"you\";",
-  "g.state === \"needs_client\")) return \"you\";",
-  1
- ],
- [
-  "an unnamed booking tool behind a Book button is ignored again",
-  "bookinglink",
-  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
-  "null",
-  1
- ],
- [
-  "a yelp / social / home page with a Book button counts as their tool",
-  "bookinglink",
-  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
-  "(BOOK.test(text) ? bare(u.hostname) : null)",
-  1
- ],
- [
-  "any outside link counts as a tool, whatever its button says",
-  "bookinglink",
-  "(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
-  "(!refused ? bare(u.hostname) : null)",
-  1
- ],
- [
-  "Boulevard isn't named",
-  "bookinglink",
-  "[/(^|\\.)joinblvd\\.com$|(^|\\.)blvd\\.app$/, \"Boulevard\"], ",
-  "",
-  1
- ],
- [
-  "&amp; in a link reaches Google",
-  "bookinglink",
-  ".replace(/&amp;|&#0*38;|&#x0*26;/gi, \"&\")",
-  "",
-  1
- ],
- [
-  "the done card loses its Counted row",
-  "portal",
-  ": pcFact(\"Counted\", \"Each visit from Google, in your monthly report\")), foot })}${change}</div>`;",
-  ": \"\"), foot })}${change}</div>`;",
-  1
- ],
- [
-  "the done card's Link row promises nothing about the button any more",
-  "portal",
-  "body: pcFact(\"Link\", escapeHtml(siteShow(link)), put ? \"Put on by RGA · the page people book on\" : \"Google picks the button's words\")",
-  "body: pcFact(\"Link\", escapeHtml(siteShow(link)), put ? \"Put on by RGA · the page people book on\" : \"\")",
-  1
- ],
- [
-  "Change link is back on the booking card",
-  "portal",
-  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
-  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change link</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
-  1
- ],
- [
-  "See it on Google Maps drops out of the booking card's foot",
-  "portal",
-  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
-  "  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: \"\" });",
-  1
- ],
- [
-  "Customers call you loses Add a link any time",
-  "portal",
-  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
-  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
-  1
- ],
- [
-  "Customers call you has no Change something",
-  "portal",
-  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
-  "body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}</div>`;",
-  1
- ]
+[
+"every business gets the appointment link",
+"gbpprofile",
+"const type = types.find((t) => value && t.key === value.link_type) || types[0];",
+"const type = { key: \"url_appointment\", label: \"Booking link\" };",
+1
+],
+[
+"no link type offered still writes",
+"gbpprofile",
+"if (!types.length) return { state: \"not_sent\", reason: \"google_offers_no_link\", at };",
+"",
+1
+],
+[
+"no tracking tag",
+"gbpprofile",
+"const sent = B.withTag(url);",
+"const sent = url;",
+1
+],
+[
+"tag on top of their own",
+"bookinglink",
+"if ([...u.searchParams.keys()].some((k) => /^utm_/i.test(k))) return u.href;",
+"",
+1
+],
+[
+"a private address is fetched",
+"bookinglink",
+"if (!safeUrl(url)) return { ok: false, status: 0, unsafe: true };",
+"",
+1
+],
+[
+"contact page before a booking page",
+"bookinglink",
+"const score = { book: 3, quote: 2, contact: 1 }[kind];",
+"const score = { book: 1, quote: 2, contact: 3 }[kind];",
+1
+],
+[
+"read-back compares exactly",
+"gbpprofile",
+"if (!after.some((x) => B.sameLink(x, sent)))",
+"if (!after.includes(sent))",
+1
+],
+[
+"our tag reads as drift",
+"gbpwatch",
+"if (!url || g.some((x) => BL.sameLink(x, url, { tags: false }))) return null;",
+"if (!url || g.includes(url)) return null;",
+1
+],
+[
+"no website pages read",
+"portalgbpprofile",
+"now.pages = found.pages; now.tools = found.tools;",
+"now.pages = []; now.tools = [];",
+1
+],
+[
+"RGA recommends nothing in particular",
+"portal",
+"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
+"const rec = \"tool\";",
+1
+],
+[
+"link type not sent",
+"portal",
+"value = { value: url.trim(), choice, ...(linkType ? { link_type: linkType } : {}) };",
+"value = { value: url.trim(), choice };",
+1
+],
+[
+"Change link writes",
+"portal",
+"const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.booking_link\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
+"const EDIT_IN_PLACE = new Set([\"m1.gbp.hours_attributes\", \"m1.gbp.attributes\", \"m1.gbp.services_products\"]);",
+1
+],
+[
+"admin has no Try it",
+"admin",
+"spec.kind === \"booking\" && g.sent ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
+"spec.kind === \"booking\" && false ? `<a class=\"ob-gcard-maps\" href=\"${escapeAttribute(g.sent)}\"",
+1
+],
+[
+"page names become HTML",
+"portal",
+"}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
+"}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}${KIND[pg.kind]",
+1
+],
+[
+"the save stops storing the platform",
+"gbpprofile",
+"link: B.withoutTag(sent), sent, choice, platform: B.platformOf(url) };",
+"link: B.withoutTag(sent), sent, choice };",
+1
+],
+[
+"a waiting step reads Google",
+"portal",
+"    if (host.closest(\".pm-waits\")) { host.innerHTML = `<span class=\"pm-in-help\">This fills in from your Google profile once the step opens.</span>`; continue; }\n",
+"",
+1
+],
+[
+"social links pass",
+"bookinglink",
+"  if (hit) return { code: hit[1], said: hit[2], fix: \"Paste the page customers book on, or pick a page on your website.\" };\n",
+"",
+1
+],
+[
+"the home page passes",
+"bookinglink",
+"  if (/^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
+"  if (false && /^\\/?$/.test(u.pathname) && !u.search && !platformOf(u.href)",
+1
+],
+[
+"a booking tool's root page is refused",
+"bookinglink",
+" && !platformOf(u.href) && !/book|schedul|appoint|reserv/i.test(h)) {",
+") {",
+1
+],
+[
+"the old tag is back",
+"bookinglink",
+"const TAG = [[\"utm_source\", \"google\"], [\"utm_medium\", \"organic\"], [\"utm_campaign\", \"gbp-booking\"]];",
+"const TAG = [[\"utm_source\", \"gbp\"], [\"utm_medium\", \"booking\"], [\"utm_campaign\", \"local-seo\"]];",
+1
+],
+[
+"a sign-in page passes",
+"bookinglink",
+"    if (r.ok && LOGIN.test(landed)) return { ok: false, status: r.status, login: true };\n",
+"",
+1
+],
+[
+"no partner flag on tools",
+"bookinglink",
+".map((t) => ({ ...t, partner: isPartner(t.platform) }))",
+"",
+1
+],
+[
+"the save skips the refusal",
+"gbpprofile",
+"      if (no) return { state: \"needs_client\", said: no.said, fix: no.fix, error: `refused: ${no.code}`, at };\n",
+"",
+1
+],
+[
+"a partner writes a link",
+"gbpprofile",
+"      if (choice === \"partner\") return {",
+"      if (false && choice === \"partner\") return {",
+1
+],
+[
+"the save ignores a sign-in wall",
+"gbpprofile",
+"      if (open.login) return { state: \"needs_client\",",
+"      if (false && open.login) return { state: \"needs_client\",",
+1
+],
+[
+"no removed marker on a gone link",
+"gbpwatch",
+"...(g.length ? {} : { removed: true })",
+"",
+1
+],
+[
+"a removed link stays Done",
+"gbpwatch",
+"      const t2 = { ...task, status: \"pending\", google_push: gp };",
+"      const t2 = { ...task, google_push: gp };",
+1
+],
+[
+"RGA isn't told of a removal",
+"gbpwatch",
+"        try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
+"        if (false) try { await d.notifyRga(clientId, `${stepId} — Google took the booking link down",
+1
+],
+[
+"no removed card",
+"portal",
+"  if (step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
+"  if (false && step.id === \"m1.gbp.booking_link\" && g.state === \"removed\") {",
+1
+],
+[
+"no top note",
+"portal",
+"      if (bNote) card.insertAdjacentHTML(\"afterend\", bNote);\n",
+"",
+1
+],
+[
+"partner not recommended",
+"portal",
+"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length",
+"const rec = cur.length ? \"keep\" : tools.length",
+1
+],
+[
+"contact warning gone",
+"portal",
+"Google sometimes removes contact pages: they don't let people book or ask for a time.</span>` : \"\")",
+"</span>` : \"\")",
+1
+],
+[
+"the Book button promise is back",
+"portal",
+"`Where should Google send people who want to ${({ url_appointment: \"book\", url_reservations: \"reserve\", url_order_ahead: \"order ahead\" })[type.key] || \"book\"}?`",
+"`Where should Google's ${type.button} button go?`",
+1
+],
+[
+"admin forgets the removal",
+"admin",
+"g.state === \"needs_client\" || g.state === \"removed\")) return \"you\";",
+"g.state === \"needs_client\")) return \"you\";",
+1
+],
+[
+"an unnamed booking tool behind a Book button is ignored again",
+"bookinglink",
+"(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+"null",
+1
+],
+[
+"a yelp / social / home page with a Book button counts as their tool",
+"bookinglink",
+"(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+"(BOOK.test(text) ? bare(u.hostname) : null)",
+1
+],
+[
+"any outside link counts as a tool, whatever its button says",
+"bookinglink",
+"(BOOK.test(text) && !refused ? bare(u.hostname) : null)",
+"(!refused ? bare(u.hostname) : null)",
+1
+],
+[
+"Boulevard isn't named",
+"bookinglink",
+"[/(^|\\.)joinblvd\\.com$|(^|\\.)blvd\\.app$/, \"Boulevard\"], ",
+"",
+1
+],
+[
+"&amp; in a link reaches Google",
+"bookinglink",
+".replace(/&amp;|&#0*38;|&#x0*26;/gi, \"&\")",
+"",
+1
+],
+[
+"the done card loses its Counted row",
+"portal",
+": pcFact(\"Counted\", \"Each visit from Google, in your monthly report\")), foot })}${change}</div>`;",
+": \"\"), foot })}${change}</div>`;",
+1
+],
+[
+"the done card's Link row promises nothing about the button any more",
+"portal",
+"put ? \"Put on by RGA · the page people book on\" : `${g.platform ? `${escapeHtml(g.platform)} · ` : \"\"}Google picks the button's words`)",
+"put ? \"Put on by RGA · the page people book on\" : \"\")",
+1
+],
+[
+"Change link is back on the booking card",
+"portal",
+"  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+"  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change link</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+1
+],
+[
+"See it on Google Maps drops out of the booking card's foot",
+"portal",
+"  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: maps || \"\" });",
+"  const change = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const foot = csFoot({ maps: \"\" });",
+1
+],
+[
+"Customers call you loses Add a link any time",
+"portal",
+"body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+"body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+1
+],
+[
+"Customers call you has no Change something",
+"portal",
+"body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}${noLink ? \"\" : change}</div>`;",
+"body: csNote(noLink ? \"Nothing to add.\" : \"Google keeps your Call button. Add a link any time.\"), foot: noLink ? \"\" : foot })}</div>`;",
+1
+]
 ]

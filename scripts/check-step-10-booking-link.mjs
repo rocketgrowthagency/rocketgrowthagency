@@ -208,7 +208,7 @@ if (cs.clientInput.kind !== "booking" || /set either one up|a sentence telling u
   const gp = read("netlify/functions/_gbp-profile.js");
   const writer = (gp.match(/return \{ state: "on_google", before, after, at, link_type: type\.key, link_label: type\.label, link: B\.withoutTag\(sent\), sent, choice, platform: B\.platformOf\(url\) \};/) || [""])[0];
   if (!writer) fail("the step-10 save no longer stores { link, sent, link_type, link_label, choice, platform } on google_push");
-  const READ = { "g.link": [js, admin], "g.sent": [admin], "g.link_type": [js], "g.link_label": [admin], "g.choice": [js], "g.platform": [js, admin], "v.choice": [admin] };
+  const READ = { "g.link": [js, admin], "g.sent": [admin], "g.link_type": [js], "g.link_label": [admin], "g.platform": [js, admin], "v.choice": [admin] };   // 10-30: the done card dropped g.choice for good; what they picked is client_input.choice (v.choice), and the tool's name is g.platform (client_open_calls_v1 call 3)
   for (const [f, srcs] of Object.entries(READ)) for (const src of srcs) if (!new RegExp(f.replace(".", "\\.") + "\\b").test(src)) fail(`${f} is stored but ${src === admin ? "admin" : "the client portal"} never reads it`);
   if (!/recordSubmission\(\{ supa, clientId, kind: "client_step_input"/.test(inp) || !/\[GSTEP\.BOOKING\]: `booking link \(\$\{\(push && push\.link_type\) \|\| "url_appointment"\}\)`/.test(inp)) fail("a step-10 save isn't recorded (activity row + change-log row naming the link type)");
 }
@@ -278,14 +278,14 @@ if (R.editing.cls !== "pm-k5-plan ok" || !/On Google now: /.test(R.editing.text)
 // "Change something" under it. The mini profile with a "Book" button is DROPPED (never promise a Book button).
 if (!/^pm-k5$/.test(R.done.cls || "") || !R.done.csCard || R.done.act !== "Change something" || !R.done.edit || R.done.maps !== "https://maps.google.com/?cid=1" || R.done.gprev
   || !/^Your booking link is on Google checked Oct 16 Link rocketgrowthagency\.com\/contact Google picks the button's words Counted Each visit from Google, in your monthly report See it on Google Maps ↗ Change something$/.test(R.done.text) || /Book online|Book button/.test(R.done.text)) fail(`the done card isn't the booking link on Google + Link (what it opens) + Counted + Maps in the foot + Change something, or it shows the mini profile / promises a button label (${R.done.text})`);
-if (!/^Your reservations link is on Google checked Oct 16 Link (?:www\.)?opentable\.com\/r\/bistro Google picks the button's words Counted /i.test(R.resDone.text) || R.resDone.act !== "Change something" || /Book online|Book button|booking link/.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
+if (!/^Your reservations link is on Google checked Oct 16 Link (?:www\.)?opentable\.com\/r\/bistro OpenTable · Google picks the button's words Counted /i.test(R.resDone.text) || R.resDone.act !== "Change something" || /Book online|Book button|booking link/.test(R.resDone.text)) fail(`a restaurant's done card doesn't say reservations link (${R.resDone.text})`);
 // 🔄 10-30 (client_step09_booking_link_v1, "Customers call you"): a settled green card, the Call button kept, "Add a link any time.",
 // and the step's one control "Change something" (the mockup: "Change link" / "Add a link" become Change something)
 if (R.call.act !== "Change something" || !R.call.edit || !R.call.csCard || !/^Customers call you Google keeps your Call button\. Add a link any time\. Change something$/.test(R.call.text)) fail(`"Customers call us" isn't a settled card with Add a link any time + Change something (${R.call.text})`);
 if (R.x) fail("a page name from the client's website became HTML");
 
 // step10_booking_link_v2 in the portal / admin
-if (!/if \(step\.id === "m1\.gbp\.booking_link" && g\.state === "removed"\) \{[\s\S]{0,260}title: "Google took your booking link down"/.test(js)) fail("the portal doesn't say Google took the booking link down");
+if (!/if \(step\.id === "m1\.gbp\.booking_link" && g\.state === "removed"\) \{[\s\S]{0,260}head: "Google took your booking link down"/.test(js)) fail("the portal doesn't say Google took the booking link down");
 if (!/function bkGoneNoteHtml\(tasks\)[\s\S]{0,200}g\.state !== "removed"[\s\S]{0,120}7 \* 86400000/.test(js) || !/if \(bNote\) card\.insertAdjacentHTML\("afterend", bNote\);/.test(js)) fail("no 7-day top note when Google takes the link down");
 if (!/partner \? opt\("partner", `Connect \$\{escapeHtml\(partner\.platform\)\} to Google`/.test(js) || !/else if \(choice === "partner"\) value = \{ choice, platform:/.test(js)) fail("a booking partner their site uses isn't offered as \"Connect it to Google\"");
 if (!/pages\.some\(\(pg\) => pg\.kind === "contact"\) \? `<span class="pm-bk-warn" data-bk-warn>Google sometimes removes contact pages/.test(js) || !/KIND\[pg\.kind\] \? ` <i>· \$\{KIND\[pg\.kind\]\}<\/i>` : ""/.test(js)) fail("the pages don't say what they are, or a contact page has no warning");

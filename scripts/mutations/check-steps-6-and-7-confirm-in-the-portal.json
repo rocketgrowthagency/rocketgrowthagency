@@ -1,219 +1,219 @@
 [
- [
-  "the confirmed card mentions photos",
-  "portal",
-  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
-  "pcFact(\"Duplicate profile\", \"Removed · your next step is photos\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
-  1
- ],
- [
-  "confirmed before Google confirms",
-  "portal",
-  "if (!rm || !(t.outcome_data && t.outcome_data.verdict === \"clean\")) return null;",
-  "if (!rm) return null;",
-  1
- ],
- [
-  "the top note never expires",
-  "portal",
-  "if (!c || !c.at || Date.now() - Date.parse(c.at) > 7 * 86400000) return \"\";",
-  "if (!c || !c.at) return \"\";",
-  1
- ],
- [
-  "the thread row is back",
-  "thread",
-  ".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\"\n",
-  ".filter((r) => true\n",
-  1
- ],
- [
-  "the email is sent again",
-  "notifystepopen",
-  "if (false && dupClearedDue(tasks)) {",
-  "if (dupClearedDue(tasks)) {",
-  1
- ],
- [
-  "admin forgets how the client is told",
-  "admin",
-  "<p class=\"ol-foot\" data-ol-told>",
-  "<p class=\"ol-foot\">",
-  1
- ],
- [
-  "step 7 drops the 48-hour line",
-  "portal",
-  "`all ${n}`}. Google can take up to 48 hours.`)",
-  "`all ${n}`}.`)",
-  1
- ],
- [
-  "step 7 drops done-when",
-  "portal",
-  ": \"RGA is finishing it on Google\", `Done when Google shows",
-  ": \"RGA is finishing it on Google\", `Next: Google shows",
-  1
- ],
- [
-  "step 7 drops the website row",
-  "portal",
-  "    row(\"Website\", escapeHtml(siteShow(qOf(\"website\") ? qOf(\"website\").value : a.website || ci.website || \"\")), qOf(\"website\") ? qSt(qOf(\"website\")) : ok),\n",
-  "",
-  1
- ],
- [
-  "a place chip shows twice",
-  "portal",
-  "...adds.filter((x) => !nowOn.includes(placeName(x.name))).map((x) => x.covered_by ? [",
-  "...adds.map((x) => x.covered_by ? [",
-  1
- ],
- [
-  "step 7 back on the old card",
-  "portal",
-  "return factsCardV2(step, taskState, g, opts.move || null);",
-  "return \"\";",
-  1
- ],
- [
-  "the label column is fixed again",
-  "portalcss",
-  ".pm-fxt-r { display: grid; grid-template-columns: minmax(0, 1fr) auto;",
-  ".pm-fxt-r { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) auto;",
-  1
- ],
- [
-  "the value squeezes beside the label",
-  "portalcss",
-  ".pm-fxt-v { grid-column: 1 / -1; ",
-  ".pm-fxt-v { ",
-  1
- ],
- [
-  "a chip breaks mid-word",
-  "portalcss",
-  ".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;",
-  ".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px;",
-  1
- ],
- [
-  "the row order is value before state",
-  "portal",
-  "const row = (k, v, st, sub = \"\") => pcFact(k, v, sub, st);",
-  "const row = (k, v, st, sub = \"\") => pcFact(k, st, sub, v);",
-  1
- ],
- [
-  "on Google says RGA is working",
-  "portal",
-  "head: `All ${rows.length} match Google`",
-  "head: `RGA is checking ${rows.length} facts`",
-  1
- ],
- [
-  "step 6 body drops the card",
-  "portal",
-  "Reading your Google Business Profile…</span></div>${dupConfirmedHtml(onboarding?.data?.tasks, oauth)}` : \"\"}",
-  "Reading your Google Business Profile…</span></div>` : \"\"}",
-  1
- ],
- [
-  "the duplicate goes back above verified",
-  "portal",
-  "step.id === \"m1.gbp.verify\" && !month2Only ? `<div class=\"pm-gv\" data-gbp-verify",
-  "step.id === \"m1.gbp.verify\" && !month2Only ? dupConfirmedHtml(onboarding?.data?.tasks, oauth) + `<div class=\"pm-gv\" data-gbp-verify",
-  1
- ],
- [
-  "the duplicate row turns back into an accordion",
-  "portal",
-  "return `<div class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc>${pcFact(",
-  "return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc><summary>Show details</summary>${pcFact(",
-  1
- ],
- [
-  "One profile on Google is back",
-  "portal",
-  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
-  "pcFact(\"Duplicate profile\", \"Removed · One profile on Google\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
-  1
- ],
- [
-  "the date rides the status line",
-  "portal",
-  "pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
-  "pcFact(\"Duplicate profile\", c.at ? `Removed · Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"Removed\", \"\")",
-  1
- ],
- [
-  "the jump doesn't open it",
-  "portal",
-  "    if (openSel) { const acc = el.querySelector(openSel); if (acc && !acc.open) acc.open = true; }\n",
-  "",
-  1
- ],
- [
-  "the note points without opening",
-  "portal",
-  " data-portal-open=\"[data-dup-acc]\">${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
-  " >${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
-  1
- ],
- [
-  "the top note's status line has the date",
-  "portal",
-  "<p class=\"k\">✓ Duplicate removed</p>",
-  "<p class=\"k\">✓ Confirmed by Google · ${escapeHtml(monthDay(c.at))}</p>",
-  1
- ],
- [
-  "the add chip loses its dashed blue",
-  "portalcss",
-  ".pm-fxt-pl.add { background: var(--portal-card); color: var(--state-other); border: 1px dashed var(--state-other-line); }",
-  ".pm-fxt-pl.add { background: var(--portal-card); }",
-  1
- ],
- [
-  "the on-Google chip goes green-tinted again",
-  "portalcss",
-  ".pm-fxt-pl.on { background: var(--portal-tray); color: var(--portal-ink); border-color: var(--portal-line); }",
-  ".pm-fxt-pl.on { background: var(--state-ok-bg, #e3f1df); color: var(--state-ok, #0c5132); border-color: transparent; }",
-  1
- ],
- [
-  "the adding word comes back",
-  "portal",
-  "[escapeHtml(placeName(x.name)), x.on ? \"dot\" : \"rga\"]",
-  "[`${escapeHtml(placeName(x.name))} <i>adding</i>`, x.on ? \"dot\" : \"rga\"]",
-  1
- ],
- [
-  "a card-system add chip loses its dashed blue",
-  "portalcss",
-  ".pm-cs-chip.rga { border:1px dashed var(--portal-accent,#2457e6);",
-  ".pm-cs-chip.rga { border:1px solid var(--portal-accent,#2457e6);",
-  1
- ],
- [
-  "the duplicate row lands after the foot",
-  "portal",
-  "card.insertBefore(dup, card.querySelector(\":scope > .pm-k5-fold, :scope > .pm-cs-foot\") || null)",
-  "card.insertBefore(dup, null)",
-  1
- ],
- [
-  "step 4 RGA working draws every fact again",
-  "portal",
-  "const body = (changing(\"name\") ? rows[0] : \"\")",
-  "const body = rows.join(\"\") + (changing(\"name\") ? rows[0] : \"\")",
-  1
- ],
- [
-  "step 4 RGA working loses its status row",
-  "portal",
-  "      : csSt(\"rga\", queue.length && !pending.length ?",
-  "      : \"\" && csSt(\"rga\", queue.length && !pending.length ?",
-  1
- ]
+[
+"the confirmed card mentions photos",
+"portal",
+"pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+"pcFact(\"Duplicate profile\", \"Removed · your next step is photos\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+1
+],
+[
+"confirmed before Google confirms",
+"portal",
+"if (!rm || !(t.outcome_data && t.outcome_data.verdict === \"clean\")) return null;",
+"if (!rm) return null;",
+1
+],
+[
+"the top note never expires",
+"portal",
+"if (!c || !c.at || Date.now() - Date.parse(c.at) > 7 * 86400000) return \"\";",
+"if (!c || !c.at) return \"\";",
+1
+],
+[
+"the thread row is back",
+"thread",
+".filter((r) => r.payload?.reason !== \"duplicate_confirmed_gone\"\n",
+".filter((r) => true\n",
+1
+],
+[
+"the email is sent again",
+"notifystepopen",
+"if (false && dupClearedDue(tasks)) {",
+"if (dupClearedDue(tasks)) {",
+1
+],
+[
+"admin forgets how the client is told",
+"admin",
+"<p class=\"ol-foot\" data-ol-told>",
+"<p class=\"ol-foot\">",
+1
+],
+[
+"step 7 drops the 48-hour line",
+"portal",
+"`all ${n}`}. Google can take up to 48 hours.`)",
+"`all ${n}`}.`)",
+1
+],
+[
+"step 7 drops done-when",
+"portal",
+": \"RGA is finishing it on Google\", `Done when Google shows",
+": \"RGA is finishing it on Google\", `Next: Google shows",
+1
+],
+[
+"step 7 drops the website row",
+"portal",
+"    row(\"Website\", escapeHtml(siteShow(qOf(\"website\") ? qOf(\"website\").value : a.website || ci.website || \"\")), qOf(\"website\") ? CS_ICON.rga : ok, qOf(\"website\") ? qSub(qOf(\"website\")) : \"\"),\n",
+"",
+1
+],
+[
+"a place chip shows twice",
+"portal",
+"...adds.filter((x) => !nowOn.includes(placeName(x.name))).map((x) => x.covered_by ? [",
+"...adds.map((x) => x.covered_by ? [",
+1
+],
+[
+"step 7 back on the old card",
+"portal",
+"return factsCardV2(step, taskState, g, opts.move || null);",
+"return \"\";",
+1
+],
+[
+"the label column is fixed again",
+"portalcss",
+".pm-fxt-r { display: grid; grid-template-columns: minmax(0, 1fr) auto;",
+".pm-fxt-r { display: grid; grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) auto;",
+1
+],
+[
+"the value squeezes beside the label",
+"portalcss",
+".pm-fxt-v { grid-column: 1 / -1; ",
+".pm-fxt-v { ",
+1
+],
+[
+"a chip breaks mid-word",
+"portalcss",
+".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;",
+".pm-fxt-pl { display: inline-flex; align-items: center; gap: 6px;",
+1
+],
+[
+"the row order is value before state",
+"portal",
+"const row = (k, v, st, sub = \"\") => pcFact(k, v, sub, st);",
+"const row = (k, v, st, sub = \"\") => pcFact(k, st, sub, v);",
+1
+],
+[
+"on Google says RGA is working",
+"portal",
+"head: `All ${rows.length} match Google`",
+"head: `RGA is checking ${rows.length} facts`",
+1
+],
+[
+"step 6 body drops the card",
+"portal",
+"Reading your Google Business Profile…</span></div>${dupConfirmedHtml(onboarding?.data?.tasks, oauth)}` : \"\"}",
+"Reading your Google Business Profile…</span></div>` : \"\"}",
+1
+],
+[
+"the duplicate goes back above verified",
+"portal",
+"step.id === \"m1.gbp.verify\" && !month2Only ? `<div class=\"pm-gv\" data-gbp-verify",
+"step.id === \"m1.gbp.verify\" && !month2Only ? dupConfirmedHtml(onboarding?.data?.tasks, oauth) + `<div class=\"pm-gv\" data-gbp-verify",
+1
+],
+[
+"the duplicate row turns back into an accordion",
+"portal",
+"return `<div class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc>${pcFact(",
+"return `<details class=\"pm-k5-plan ok pm-k5-join\" data-dup-acc><summary>Show details</summary>${pcFact(",
+1
+],
+[
+"One profile on Google is back",
+"portal",
+"pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+"pcFact(\"Duplicate profile\", \"Removed · One profile on Google\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+1
+],
+[
+"the date rides the status line",
+"portal",
+"pcFact(\"Duplicate profile\", \"Removed\", c.at ? `Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"\")",
+"pcFact(\"Duplicate profile\", c.at ? `Removed · Google confirmed it ${escapeHtml(monthDay(c.at))}` : \"Removed\", \"\")",
+1
+],
+[
+"the jump doesn't open it",
+"portal",
+"    if (openSel) { const acc = el.querySelector(openSel); if (acc && !acc.open) acc.open = true; }\n",
+"",
+1
+],
+[
+"the note points without opening",
+"portal",
+" data-portal-open=\"[data-dup-acc]\">${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
+" >${escapeHtml(seeStepText(\"m1.gbp.verify\"))}",
+1
+],
+[
+"the top note's status line has the date",
+"portal",
+"<p class=\"k\">✓ Duplicate removed</p>",
+"<p class=\"k\">✓ Confirmed by Google · ${escapeHtml(monthDay(c.at))}</p>",
+1
+],
+[
+"the add chip loses its dashed blue",
+"portalcss",
+".pm-fxt-pl.add { background: var(--portal-card); color: var(--state-other); border: 1px dashed var(--state-other-line); }",
+".pm-fxt-pl.add { background: var(--portal-card); }",
+1
+],
+[
+"the on-Google chip goes green-tinted again",
+"portalcss",
+".pm-fxt-pl.on { background: var(--portal-tray); color: var(--portal-ink); border-color: var(--portal-line); }",
+".pm-fxt-pl.on { background: var(--state-ok-bg, #e3f1df); color: var(--state-ok, #0c5132); border-color: transparent; }",
+1
+],
+[
+"the adding word comes back",
+"portal",
+"[escapeHtml(placeName(x.name)), x.on ? \"dot\" : \"rga\"]",
+"[`${escapeHtml(placeName(x.name))} <i>adding</i>`, x.on ? \"dot\" : \"rga\"]",
+1
+],
+[
+"a card-system add chip loses its dashed blue",
+"portalcss",
+".pm-cs-chip.rga { border:1px dashed var(--portal-accent,#2457e6);",
+".pm-cs-chip.rga { border:1px solid var(--portal-accent,#2457e6);",
+1
+],
+[
+"the duplicate row lands after the foot",
+"portal",
+"card.insertBefore(dup, card.querySelector(\":scope > .pm-k5-fold, :scope > .pm-cs-foot\") || null)",
+"card.insertBefore(dup, null)",
+1
+],
+[
+"step 4 RGA working draws every fact again",
+"portal",
+"const body = (changing(\"name\") ? rows[0] : \"\")",
+"const body = rows.join(\"\") + (changing(\"name\") ? rows[0] : \"\")",
+1
+],
+[
+"step 4 RGA working loses its status row",
+"portal",
+"      : csSt(\"rga\", queue.length && !pending.length ?",
+"      : \"\" && csSt(\"rga\", queue.length && !pending.length ?",
+1
+]
 ]
