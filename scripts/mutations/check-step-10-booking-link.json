@@ -65,8 +65,8 @@
 [
 "RGA recommends nothing in particular",
 "portal",
-"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length ? \"tool\" : pages.length ? \"website\" : \"tool\";",
-"const rec = \"tool\";",
+"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tool ? \"tool\" : pages.length ? \"page:0\" : \"paste\";",
+"const rec = \"paste\";",
 1
 ],
 [
@@ -93,8 +93,8 @@
 [
 "page names become HTML",
 "portal",
-"}\">${pg.url === pageNow ? \"✓ \" : \"\"}${escapeHtml(pg.label)}${KIND[pg.kind]",
-"}\">${pg.url === pageNow ? \"✓ \" : \"\"}${pg.label}${KIND[pg.kind]",
+"opt(`page:${i}`, \"website\", escapeHtml(siteShow(pg.url)),",
+"opt(`page:${i}`, \"website\", siteShow(pg.url),",
 1
 ],
 [
@@ -212,21 +212,21 @@
 [
 "partner not recommended",
 "portal",
-"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tools.length",
-"const rec = cur.length ? \"keep\" : tools.length",
+"const rec = cur.length ? \"keep\" : partner ? \"partner\" : tool",
+"const rec = cur.length ? \"keep\" : tool",
 1
 ],
 [
 "contact warning gone",
 "portal",
-"Google sometimes removes contact pages: they don't let people book or ask for a time.</span>` : \"\")",
-"</span>` : \"\")",
+"Google sometimes removes contact pages: they don't let people book or ask for a time.</span>` : \"\"",
+"</span>` : \"\"",
 1
 ],
 [
 "the Book button promise is back",
 "portal",
-"`Where should Google send people who want to ${({ url_appointment: \"book\", url_reservations: \"reserve\", url_order_ahead: \"order ahead\" })[type.key] || \"book\"}?`",
+"`Where should Google send people who want to ${verb}?`",
 "`Where should Google's ${type.button} button go?`",
 1
 ],

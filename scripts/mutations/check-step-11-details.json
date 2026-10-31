@@ -114,7 +114,7 @@
 [
 "an empty save passes",
 "portal",
-"    if (wrap.querySelector(\".pm-at\") && !value.length && !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\")) {",
+"    if (wrap.querySelector(\".pm-at\") && !value.length && !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
 "    if (false) {",
 1
 ],

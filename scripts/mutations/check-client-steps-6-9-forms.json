@@ -1,0 +1,268 @@
+[
+ [
+  "a Book button is back",
+  "playbook",
+  "This puts your booking link on your Google listing",
+  "This puts a Book button on your Google listing",
+  1
+ ],
+ [
+  "step 6's button shows before Google answers",
+  "portal",
+  "data-in-submit${step.id === \"m1.gbp.services_products\" || s.kind === \"booking\" ? \" hidden\" : \"\"}>",
+  "data-in-submit>",
+  1
+ ],
+ [
+  "Cancel sits first again",
+  "portalcss",
+  ".pm-cs .pm-in-foot > [data-in-cancel] { order:2; }",
+  "",
+  1
+ ],
+ [
+  "step 6's unreadable words change",
+  "portal",
+  "We couldn't read your services on Google just now. Please reload the page in a minute.",
+  "We couldn't read the details Google offers your business.",
+  1
+ ],
+ [
+  "step 9's unreadable words change",
+  "portal",
+  "atDraw(host, bkCard({ editing: host.getAttribute(\"data-bk-editing\") === \"1\", maps: false, body: csNote(`We couldn't read your Google profile just now. Please reload the page in a minute.`) }));",
+  "atDraw(host, bkCard({ editing: host.getAttribute(\"data-bk-editing\") === \"1\", maps: false, body: csNote(`You can still save.`) }));",
+  1
+ ],
+ [
+  "no category keeps the button",
+  "portal",
+  "if (svSub) svSub.hidden = noCat;",
+  "if (svSub) svSub.hidden = false;",
+  1
+ ],
+ [
+  "no category isn't RGA's pill",
+  "portal",
+  "svPill.textContent = \"RGA is on it\"; svPill.className = \"pm-pill rga\";",
+  "svPill.textContent = \"Your turn\"; svPill.className = \"pm-pill you\";",
+  1
+ ],
+ [
+  "step 9's button never appears",
+  "portal",
+  "if (bkSub) bkSub.hidden = false;",
+  "",
+  1
+ ],
+ [
+  "the server drops not offered",
+  "stepinputfn",
+  "parsed = { value: { none: true, ...(body.value.not_offered === true ? { not_offered: true } : {}) } };",
+  "parsed = { value: { none: true } };",
+  1
+ ],
+ [
+  "gbp-publish sends past 10",
+  "gbppublishfn",
+  "if (parsed.additional.length > 9) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "the count isn't there",
+  "portal",
+  "<b data-sv-count>${svCountWords(count)}</b>",
+  "<b>${svCountWords(count)}</b>",
+  1
+ ],
+ [
+  "the count never moves",
+  "portal",
+  "if (svN) svN.textContent = svCountWords(t.closest(\".pm-sv\").querySelectorAll(\"[data-in-tick].on\").length);",
+  "",
+  1
+ ],
+ [
+  "one service reads plural",
+  "portal",
+  "`${n} service${n === 1 ? \"\" : \"s\"} ticked.`",
+  "`${n} services ticked.`",
+  1
+ ],
+ [
+  "Google lists none can't save again",
+  "portal",
+  "&& !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
+  "&& !wrap.querySelector(\"[data-at-nohow]\")) {",
+  1
+ ],
+ [
+  "step 6's card is nested again",
+  "portal",
+  "const svCard = ({ editing = false, tone = \"\", head = \"\", side = \"\", body = \"\", fold = null, attrs = \"\", maps = true }) => csCard({ tone: tone || (editing ? \"ok\" : \"you\"), head: head || (editing ? \"Change your services\" : \"Pick your services\"), side, attrs: ` data-at-card${attrs}`, body, foot: csFoot({ maps: maps ? gbpMapsOf() : \"\" }), fold });",
+  "const svCard = ({ editing = false, tone = \"\", head = \"\", side = \"\", body = \"\", fold = null, attrs = \"\", maps = true }) => csCard({ tone: \"you\", head: \"Your categories\", body: csCard({ tone: tone || (editing ? \"ok\" : \"you\"), head: head || (editing ? \"Change your services\" : \"Pick your services\"), side, attrs: ` data-at-card${attrs}`, body, foot: csFoot({ maps: maps ? gbpMapsOf() : \"\" }), fold }) });",
+  1
+ ],
+ [
+  "zero ticked uses step 8's words",
+  "portal",
+  "msg.innerHTML = wrap.querySelector(\".pm-sv\") ? `<span class=\"dot\"></span>Tick at least one service.` : `<span",
+  "msg.innerHTML = false ? `<span class=\"dot\"></span>Tick at least one service.` : `<span",
+  1
+ ],
+ [
+  "no category draws the ask",
+  "portal",
+  "if (!cats.primary) return svCard({ tone: \"rga\", head: \"RGA is setting your Google categories\", maps: false,",
+  "if (!cats.primary) return svCard({ head: \"RGA is setting your Google categories\", maps: false,",
+  1
+ ],
+ [
+  "step 9's button always says Put it on Google",
+  "portal",
+  "b.textContent = k === \"partner\" ? \"I connected it\" : k === \"none\" ? \"Save\" : \"Put it on Google\";",
+  "b.textContent = \"Put it on Google\";",
+  1
+ ],
+ [
+  "picking a row doesn't change the button",
+  "portal",
+  "bkSubmitLabel(o.closest(\"[data-in-kind]\"));",
+  "",
+  1
+ ],
+ [
+  "the pick isn't chosen",
+  "portal",
+  "cur.length ? \"keep\" : partner ? \"partner\" : tool ? \"tool\" : pages.length ? \"page:0\" : \"paste\";\n  const same",
+  "\"paste\";\n  const same",
+  1
+ ],
+ [
+  "own site saves as a tool",
+  "portal",
+  "choice = own ? \"website\" : \"tool\"; }",
+  "choice = \"tool\"; }",
+  1
+ ],
+ [
+  "everything pasted saves as website",
+  "portal",
+  "choice = own ? \"website\" : \"tool\"; }",
+  "choice = \"website\"; }",
+  1
+ ],
+ [
+  "a found page saves nothing",
+  "portal",
+  "choice === \"website\" ? (sel.getAttribute(\"data-bk-page-url\") || \"\")",
+  "choice === \"website\" ? \"\"",
+  1
+ ],
+ [
+  "a found tool saves nothing",
+  "portal",
+  "choice === \"tool\" ? (sel.getAttribute(\"data-bk-tool-url\") || \"\")",
+  "choice === \"tool\" ? \"\"",
+  1
+ ],
+ [
+  "a link shows twice",
+  "portal",
+  "const pages = (now.pages || []).filter((pg) => !cur.some((c) => siteShow(c.clean) === siteShow(pg.url))),",
+  "const pages = (now.pages || []),",
+  1
+ ],
+ [
+  "the tag isn't disclosed on keep",
+  "portal",
+  "(cur.length && !editing ? csNote(\"We add a small tag so visits from Google can be counted. It changes nothing for your customers.\") : \"\")",
+  "\"\"",
+  1
+ ],
+ [
+  "a saved link doesn't come back",
+  "portal",
+  "const pasteVal = pick === \"paste\" && h && h.value ? h.value : \"\";",
+  "const pasteVal = \"\";",
+  1
+ ],
+ [
+  "not offered doesn't say so",
+  "portal",
+  "value = box.hidden ? { none: true, not_offered: true } : { none: true };",
+  "value = { none: true };",
+  1
+ ],
+ [
+  "the paste box stays open",
+  "portalcss",
+  ".pm-bk-opt[data-bk-opt=\"paste\"]:not(.sel) .pm-bk-in, ",
+  "",
+  1
+ ],
+ [
+  "brackets make a second service",
+  "gbpservices",
+  ".replace(/\\([^)]*\\)/g, \" \")",
+  "",
+  1
+ ],
+ [
+  "any two similar names read as one",
+  "gbpservices",
+  "const sameKey = (s) => String(s || \"\").toLowerCase().replace(/\\([^)]*\\)/g, \" \").replace(/[^a-z0-9]+/g, \" \").trim();",
+  "const sameKey = (s) => String(s || \"\").toLowerCase().split(\" \").slice(0, 2).join(\" \");",
+  1
+ ],
+ [
+  "near-duplicates are suggested again",
+  "gbpservices",
+  "if (taken.has(sameKey(n))) continue;",
+  "",
+  1
+ ],
+ [
+  "admin reads it as missing",
+  "svcpush",
+  "rows = approvedNames.map((n) => ({ name: n, on: onLabels.has(S.sameKey(n)) }));",
+  "rows = approvedNames.map((n) => ({ name: n, on: onLabels.has(low(n)) }));",
+  1
+ ],
+ [
+  "none listed writes to Google",
+  "gbpservices",
+  "if (!before.options.length) return { state: \"on_google\", before: [], after: [], labels: {}, categories: before.categories, at };",
+  "",
+  1
+ ],
+ [
+  "an 11th category is allowed",
+  "catpush",
+  "ok: 1 + onNames.length + add.length <= 10,",
+  "ok: true,",
+  1
+ ],
+ [
+  "the 10th is refused",
+  "catpush",
+  "ok: 1 + onNames.length + add.length <= 10,",
+  "ok: 1 + onNames.length + add.length < 10,",
+  1
+ ],
+ [
+  "the main category isn't counted",
+  "catpush",
+  "detail: `${1 + onNames.length + add.length} of 10 categories`",
+  "detail: `${onNames.length + add.length} of 10 categories`",
+  1
+ ],
+ [
+  "not offered reads as their answer",
+  "gbpprofile",
+  "reason: value.not_offered ? \"google_offers_no_link\" : \"no_online_booking\"",
+  "reason: \"no_online_booking\"",
+  1
+ ]
+]

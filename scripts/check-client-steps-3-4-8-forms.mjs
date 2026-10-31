@@ -59,7 +59,7 @@ for (const w of ["Our promise about your website", "We need access so we can do 
   if (!P.includes(w)) fail(`the promise fold lost its words: "${w}"`);
 if (!P.includes("<b>Never send us your password.</b> An invite gives us exactly what we need, and you can take it back anytime.")) fail("the approved password line changed");
 if (/pm-ax-why|gcard-when/.test(fn("accessCardHtml") + fn("accDrawFound") + fn("accDrawPlatform"))) fail("the old Why line, or the time written to .gcard-when (a class the system card doesn't have), is back");
-if (!/const HOW_WORKS_FOOT = new Set\(\["m1\.access\.website", "m1\.gbp\.business_facts", "m1\.gbp\.attributes"\]\);/.test(P) || !P.includes("escapeHtml(HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])")) fail("these forms' foot doesn't say \"How this step works\"");
+if (!/const HOW_WORKS_FOOT = new Set\(\["m1\.access\.website", "m1\.gbp\.business_facts", "m1\.gbp\.attributes", "m1\.gbp\.services_products", "m1\.gbp\.booking_link"\]\);/.test(P) || !P.includes("escapeHtml(HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0] : DETAIL_LABEL[detailKind][0])")) fail("these forms' foot doesn't say \"How this step works\"");
 if (!/\(s\.kind === "hours" \|\| s\.kind === "booking" \|\| step\.id === "m1\.gbp\.attributes" \|\| step\.id === "m1\.gbp\.services_products"\) && _editingSteps\.has\(step\.id\) \? `<button type="button" class="pm-amend" data-in-cancel=/.test(P)) fail("step 8's Cancel isn't only while changing a done step");
 if (/data-in-cancel/.test(factsTpl)) fail("step 4 has a Cancel: it has no edit mode");
 const noComments = (x) => x.replace(/^[ \t]*\/\/.*$/gm, "");

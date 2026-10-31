@@ -135,7 +135,7 @@ const wires = [
   [/\.\.\.\(push \? \{ google_push: push \} : \{\}\),/, "where the answer stands on Google isn't recorded on the step"],
   [/rgaToldNow \? tellRga\(/, "RGA isn't told when an answer doesn't reach Google"],
   [/parsed = validate\(\{ \.\.\.spec, options: offered \}, body\.value\);/, "step 11's ticks aren't checked against Google's own list"],
-  [/body\.value\.none === true\) parsed = \{ value: \{ none: true \} \};/, "step 10 doesn't take \"We don't take bookings online\""],
+  [/body\.value\.none === true\) parsed = \{ value: \{ none: true, /, "step 10 doesn't take \"We don't take bookings online\""],
 ];
 for (const [re, msg] of wires) if (!re.test(si)) fail(msg);
 

@@ -51,7 +51,7 @@
 [
 "no-booking still writes",
 "gbpprofile",
-"      if (value && value.none) return { state: \"not_sent\", reason: \"no_online_booking\", choice: \"none\", at };\n",
+"      if (value && value.none) return { state: \"not_sent\", reason: value.not_offered ? \"google_offers_no_link\" : \"no_online_booking\", choice: \"none\", at };\n",
 "",
 1
 ],

@@ -35,7 +35,7 @@ if (!/const csCardOf = \(row\) => \{ const cs = row \? \[\.\.\.row\.querySelecto
 if (!P.includes("HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0]")) fail("a held form's fold doesn't say How this step works");
 if (!/verify: \["How this step works", "Hide how this step works"\]/.test(P)) fail("step 2's fold doesn't say How this step works");
 if (/How verification works/.test(P)) fail("How verification works is back");
-if (!/stepId === "m1\.gbp\.business_facts" \|\| stepId === "m1\.gbp\.attributes"\) \{ const noSave = host\.closest\("\.pm-step-row"\)\?\.querySelector\("\[data-in-submit\]"\); if \(noSave\) noSave\.hidden = true; \}/.test(P)) fail("steps 4 and 8 keep a button that can't save while Google is unreadable");
+if (!/\["m1\.gbp\.business_facts", "m1\.gbp\.attributes", "m1\.gbp\.services_products", "m1\.gbp\.booking_link"\]\.includes\(stepId\)\) \{ const noSave = host\.closest\("\.pm-step-row"\)\?\.querySelector\("\[data-in-submit\]"\); if \(noSave\) noSave\.hidden = true; \}/.test(P)) fail("steps 4 and 8 keep a button that can't save while Google is unreadable");
 if (!P.includes('stepId === "m1.gbp.business_facts" ? `<span class="pm-in-help">We couldn\'t read your Google profile just now. Please reload the page in a minute.</span>`')) fail("step 4's unreadable line isn't the approved one");
 if (!/gvLost \? "Verify again" : "Your turn"/.test(P)) fail("the verify-again pill isn't there");
 if (!/\.pm-pc-f \.c\.st > svg \{ color:var\(--state-other/.test(CSS)) fail("the icon on a fact RGA is changing isn't blue");

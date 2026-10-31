@@ -52,7 +52,6 @@ const UI_ONLY = {
   "data-step-input": "step 7's hours listeners (input / change inside the form): show or hide the 24-hour tick and the long-closure note as they type — nothing is saved until Save (phase2_set_up_v1, 2026-10-20)",
   "data-bk-opt": "step 10's three choices (a page on my website / my booking tool / customers call us): the picked one gets the blue ring and its radio fills — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
   "data-bk-type": "step 10's link-type chips (a restaurant: Reservations / Order ahead): redraws the choices for that type, the chip highlights — nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
-  "data-bk-page": "step 10's website-page chips: picks which page of their site gets the Book button — the chip highlights with ✓; nothing is saved until \"Put it on Google\" (step10_booking_link_v1, 2026-10-16)",
   "data-gv-again": "step 2's Verify now: opens the ways Google offers under the card and hides itself, the panel visibly opens; nothing is sent until they pick one (client_open_calls_v1, 2026-10-30)",
   "data-gcard-how": "the Google card's \"How this step works\": opens step 2's how-to under the card and scrolls to it, the link reads \"Hide…\" — the panel visibly opens (one_google_card_v1, 2026-10-16)",
   "data-gcard-fix": "the Google card's \"Fix it\": scrolls to the field Google refused and focuses it — the focused field is the result (one_google_card_v1, 2026-10-16)",

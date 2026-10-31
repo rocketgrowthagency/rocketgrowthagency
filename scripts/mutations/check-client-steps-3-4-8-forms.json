@@ -184,15 +184,15 @@
 [
 "the empty answer is sent while Google is unread",
 "portal",
-"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\")) {",
-"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && wrap.querySelector(\"[data-in-tick]\")) {",
+"&& !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
+"&& wrap.querySelector(\"[data-in-tick]\")) {",
 1
 ],
 [
 "Google offers none can't finish again",
 "portal",
-"&& !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\")) {",
-"&& !wrap.querySelector(\".pm-at [data-at-none].on\")) {",
+"&& !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
+"&& !wrap.querySelector(\"[data-sv-none]\")) {",
 1
 ],
 [
@@ -205,7 +205,7 @@
 [
 "step 4 and step 8 drop out of the foot's words",
 "portal",
-"const HOW_WORKS_FOOT = new Set([\"m1.access.website\", \"m1.gbp.business_facts\", \"m1.gbp.attributes\"]);",
+"const HOW_WORKS_FOOT = new Set([\"m1.access.website\", \"m1.gbp.business_facts\", \"m1.gbp.attributes\", \"m1.gbp.services_products\", \"m1.gbp.booking_link\"]);",
 "const HOW_WORKS_FOOT = new Set([\"m1.access.website\"]);",
 1
 ],
