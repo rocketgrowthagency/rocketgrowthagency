@@ -93,6 +93,7 @@ try {
   // 🔴 NAME THE SCOPE THE PAGE IS ACTUALLY SHOWING. This printed "month-1 checklist" over whatever
   // was on screen, and today that was the 28-row Month 2+ list — a label stating something the rows
   // contradicted. → feedback_a_client_message_must_agree_with_itself
+  if (process.env.PROBE_JSON) (await import("node:fs")).writeFileSync(process.env.PROBE_JSON, JSON.stringify(rows));   // build-step-map.mjs
   const scope = `${rows.length} rows on screen`;
   const show = needle ? rows.filter((r) => r.title.toLowerCase().includes(needle) || r.id.toLowerCase().includes(needle)) : rows;
   console.log(`── checklist as the page prints it — ${scope}\n`);

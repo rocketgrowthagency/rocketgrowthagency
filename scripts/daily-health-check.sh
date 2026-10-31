@@ -478,6 +478,7 @@ run check-memory-has-no-orphans.mjs "a memory nothing links to is a memory nobod
 node scripts/build-mockup-registry.mjs >/dev/null 2>&1 || echo "  ⚠️  build-mockup-registry did not run — the next gate will say what is stale"
 # 🔒 the CLIENT STEP LEDGER is generated from the code (Chris 10-20 "harden memory"): memory can't call a step built when the
 # portal draws nothing for it. It FAILS (reported) while any client step has no done record.
+run build-step-map.mjs "every step in both portals with the number each portal really prints (generated → memory reference_all_steps_map, website reports/steps/rga-step-map.html)"
 run build-client-step-ledger.mjs "every client step draws a DONE RECORD in the portal (generated ledger → memory reference_client_step_ledger)"
 run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"
@@ -552,6 +553,7 @@ run check-client-card-system-batch2.mjs "client steps 1 and 10–15 on the ONE c
 run check-client-steps-3-4-8-forms.mjs "client steps 3, 4, 8 inner forms on the ONE card design (approved 10-30: client_step03_builder_v2, client_step04_fact_check_v2, client_step08_details_v2): the consent + promise words verbatim, the button under the card and off until consent, the builder's own time on the band, one How, the save bodies key by key, nothing wider than a phone, for a builder site, no website, a storefront and a service area"
 run check-client-steps-6-9-forms.mjs "client steps 6 and 9 open forms on the ONE card design (approved 10-30: client_step06_services_v2, client_step09_form_v2): one card, the button says what's true, same save bodies, Google lists none finishes, past 10 categories refused"
 run check-client-portal-tabs.mjs "the client portal tabs (approved 10-30: client_portal_tabs_v1): Ongoing during setup says what the real steps say, one count, Setup shrinks only when signed, paid and connected"
+run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
 run check-step10-photo-truth.mjs "step 10 says only what Google tells us (Chris 10-30): no green until a test proves it, the count leaves out a hidden logo and second copies, Keep undoes, the only visible photo stays, up to 5 a day, RGA notices really send"
 run check-client-open-calls.mjs "client portal open calls (approved 10-30: client_open_calls_v1): Google unreadable says reload with no button, verify-again card and hold from the client's own profile, step 9 names the tool, on-Google words, said-no shows one button and the form opens on press"
 run check-client-card-system-batch3.mjs "the Ongoing work tab on the ONE card design (approved 10-29: client_step16–20, client_ongoing_*): 16 period + due date follow the cadence, done keeps its controls, missed; 17 sent ≠ used; 18 no quota, With RGA, counted on Google; 19 skips itself; 20 wait is a card; posts live only when live; replies from Google; win story reaches the client"
