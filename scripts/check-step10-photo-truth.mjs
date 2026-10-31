@@ -135,5 +135,10 @@ const shortFn = /const short = \(g\) => \(\{([^}]*)\}\)\[g\] \|\| g;/.exec(P10J)
 if (!shortFn) F.push("the tile label function moved: re-aim this check");
 else if (/Exterior|Interior/.test(shortFn[1])) F.push("a tile shortens Exterior or Interior again");
 if (!/@media \(max-width:560px\) \{ \.pm-arow-kept \.pm-cs-st \{ grid-template-columns:20px minmax\(0,1fr\); \} \.pm-arow-kept \.pm-cs-st > \.a \{ grid-column:2; \} \}/.test(P10C)) F.push("on a phone the old copy's card squeezes its words beside the button");
+// Chris 10-31: tap a tile and the shot, upload box included, comes to the middle of the screen. Measured in a browser at 1200 and 400 wide when built.
+const clickFn = P10J.slice(P10J.indexOf('e.target.closest("[data-p10-t], [data-p10-kind]")'), P10J.indexOf('e.target.closest("[data-p10-t], [data-p10-kind]")') + 2600);
+if (!/\[data-p10-shot="\$\{n\}"\]`\)\?\.scrollIntoView\(\{ block: "center"/.test(clickFn)) F.push("tapping a tile doesn't bring its shot to the middle of the screen");
+if (/if \(t\.hasAttribute\("data-p10-kind"\)[^\n]*scrollIntoView/.test(clickFn)) F.push("only some ways of picking a shot scroll to it");
+if (/data-p10-kind="\$\{g\.items[^\n]*\n[^\n]*"main"/.test(P10J) || /<\/em><\/button>`, f === g\.items\.length \? "main"/.test(P10J)) F.push("a full kind's chip goes green before anyone has seen the photo on Google");
 if (F.length) { console.error(`🔴 step 10 says more than Google tells us:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 10 says only what Google tells us: no green or tick until a test proves it; Sent, On Google's list, missing after 3 days (RGA told once), Saved not showing; the count leaves out a hidden logo and second copies in the portal and the nightly; Keep can be undone; the only visible photo isn't removed unasked; up to 5 a day");

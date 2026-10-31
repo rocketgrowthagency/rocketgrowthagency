@@ -85,7 +85,7 @@ if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("th
   if (kinds.map((k) => k.name).join("|") !== "Logo|Cover|Exterior|Interior|Team|At work") fail(`the shot list isn't the six kinds, each once (${kinds.map((k) => k.name).join(", ")})`);
   const k = (nm) => kinds.find((x) => x.name === nm) || {};
   // client_step10_photos_v3 ("Sent · with RGA for review": Cover 0/1 while shot 2 is with RGA): a kind counts what's on Google
-  if (!k("Logo").main || k("Logo").f !== 1 || k("Logo").n !== 1 || k("Team").f !== 0 || k("Team").n !== 5 || k("Team").shots !== "9,10,11,12,13") fail(`a kind's chip doesn't count what's on Google (Logo ${k("Logo").f}/${k("Logo").n}${k("Logo").main ? " main" : ""} · Team ${k("Team").f}/${k("Team").n} ${k("Team").shots})`); }
+  if (k("Logo").main || k("Logo").f !== 1 || k("Logo").n !== 1 || k("Team").f !== 0 || k("Team").n !== 5 || k("Team").shots !== "9,10,11,12,13") fail(`a kind's chip doesn't count what's on Google (Logo ${k("Logo").f}/${k("Logo").n}${k("Logo").main ? " main" : ""} · Team ${k("Team").f}/${k("Team").n} ${k("Team").shots})`); }
 // ── B2 · the opened tips are one short list, in "How this step works" ──
 for (const [label, html] of [["open", open], ["waiting", h]]) {
   const ti = html.indexOf('<details class="pm-k5-fold pm-tipline"'), tips = html.slice(ti, html.indexOf("</details>", ti));

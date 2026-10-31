@@ -236,5 +236,26 @@
   ".pm-arow-kept .pm-cs-st > .a { grid-column:2; } }",
   ".pm-arow-kept .pm-cs-st > .a { grid-column:3; } }",
   1
+ ],
+ [
+  "tapping a tile scrolls to the edge, not the middle",
+  "portal",
+  "scrollIntoView({ block: \"center\", behavior: matchMedia",
+  "scrollIntoView({ block: \"nearest\", behavior: matchMedia",
+  1
+ ],
+ [
+  "only the chips scroll, as before",
+  "portal",
+  "  host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
+  "  if (t.hasAttribute(\"data-p10-kind\")) host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
+  1
+ ],
+ [
+  "a full kind's chip goes green again",
+  "portal",
+  "</em></button>`, \"\"];   // client_step10_photo_truth_v1",
+  "</em></button>`, f === g.items.length ? \"main\" : \"\"];   // client_step10_photo_truth_v1",
+  1
  ]
 ]
