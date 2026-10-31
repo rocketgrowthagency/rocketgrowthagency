@@ -73,7 +73,7 @@ metadata:
 ---
 **GENERATED ${stamp}. Do not edit by hand.** Say "ADMIN PORTAL step N" / "CLIENT PORTAL step N" from these tables. Page for Chris: https://claude.ai/artifact/LJpj2Pd7AkazqXrFnRqgjQ
 
-## Planned, waiting for approval (no number until approved)
+## Approved, not built yet (no number until built)
 | What | Where | Effect on numbers | Mockup |
 |---|---|---|---|
 ${proposed.map((x) => `| ${x.name} | ${x.where} | ${x.numbers} | ${x.url} |`).join("\n")}
@@ -110,7 +110,7 @@ section{background:var(--paper);border:1px solid var(--line);border-radius:16px;
 .tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}.n{font-weight:700;font-variant-numeric:tabular-nums}a{color:var(--acc)}small{display:block;color:var(--mut);font-size:12.5px;max-width:60ch}
 </style>
 <div class="wrap"><header><div class="k">Both portals · updated ${esc(stamp)}</div><h1>Every step, by the number each portal shows</h1><p class="lede">Admin numbers are read off the live checklist. The list rebuilds each morning, so it can't drift from what's on screen.</p></header>
-<section><h2>Planned, waiting for your approval</h2><p class="lede">None of these has a number yet. A number is only given once it's approved and built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
+<section><h2>Approved, not built yet</h2><p class="lede">None of these has a number yet. A new step gets its number when it's built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
 <section><h2>Client portal (${client.length} steps)</h2>${table(["Client step", "What it is", "Admin step"], client.map((c) => [c.n, `${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, esc(adminLabel(c))]))}</section>
 <section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "What it is", "Who", "Client step"], month1.map((a) => [a.n, esc(a.title), esc(a.who), a.client ?? ""]))}</section>
 <section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "What it is", "Who", "Client step"], monthly.map((a) => [a.n, esc(a.title), esc(a.who), a.client ?? ""]))}</section>
