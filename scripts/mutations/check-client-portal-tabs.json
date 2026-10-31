@@ -1,0 +1,205 @@
+[
+ [
+  "numbers read monthly again",
+  "portal",
+  "lr(\"Your numbers\", \"Two numbers. “Not sure” is a fine answer.\", \"Every 3 months\")",
+  "lr(\"Your numbers\", \"Two numbers. “Not sure” is a fine answer.\", \"Every month\")",
+  1
+ ],
+ [
+  "the video reads monthly and required",
+  "portal",
+  "\"Every 3 months · optional\"",
+  "\"Every month\"",
+  1
+ ],
+ [
+  "the photo quota is back",
+  "portal",
+  "lr(\"New photos\", \"New jobs, team, equipment. No monthly quota.\", \"Suggested\")",
+  "lr(\"5 new photos\", \"New jobs, team, equipment.\", \"Every month\")",
+  1
+ ],
+ [
+  "the win story is dropped",
+  "portal",
+  "      + lr(\"A customer win story\", \"One job you're proud of, about 2 minutes.\", \"Every month\")\n",
+  "",
+  1
+ ],
+ [
+  "the report is dropped",
+  "portal",
+  "      + lr(\"Your report\", \"We email you when it's ready.\", \"Every month\")\n",
+  "",
+  1
+ ],
+ [
+  "posts are dropped",
+  "portal",
+  "      + lr(\"Google posts\", \"RGA writes 4. Nothing posts until you approve.\", \"Every month\")\n",
+  "",
+  1
+ ],
+ [
+  "replies are dropped",
+  "portal",
+  "      + lr(\"Review replies\", \"RGA writes them. You approve them first.\", \"As reviews come in\") })}</div>`;",
+  " })}</div>`;",
+  1
+ ],
+ [
+  "the grey card isn't grey",
+  "portal",
+  "csCard({ tone: \"off\", head: \"Starts after setup\",",
+  "csCard({ tone: \"you\", head: \"Starts after setup\",",
+  1
+ ],
+ [
+  "the customer list loses its row",
+  "portal",
+  "title: \"This week's customer list\", body: customerListHtml });",
+  "title: \"Customers\", body: customerListHtml });",
+  1
+ ],
+ [
+  "sent reads as your turn",
+  "portal",
+  "pills: [sent ? [\"Sent\", \"done\"] : [\"Your turn\", \"you\"],",
+  "pills: [[\"Your turn\", \"you\"],",
+  1
+ ],
+ [
+  "the preview shows after setup",
+  "portal",
+  "${isSetupPhase ? startsAfter",
+  "${true ? startsAfter",
+  1
+ ],
+ [
+  "a check row with no check",
+  "portal",
+  "const row = last ? `<div class=\"pm-og-lr\"><span><b>Last check</b>",
+  "const row = true ? `<div class=\"pm-og-lr\"><span><b>Last check</b>",
+  1
+ ],
+ [
+  "a rank found reads as nothing",
+  "portal",
+  "${ranks.length ? `Best rank #${Math.min(...ranks)}` : \"Not in the top 20 yet\"}",
+  "${\"Not in the top 20 yet\"}",
+  1
+ ],
+ [
+  "an older check counts",
+  "portal",
+  ".filter((r) => r && (r.measured_at || r.captured_at) === last).map((r) => CA_CELL_RANK(r.map_rank))",
+  ".map((r) => CA_CELL_RANK(r.map_rank))",
+  1
+ ],
+ [
+  "the rankings link goes nowhere",
+  "portal",
+  "<a href=\"#\" class=\"lk\" data-portal-goto=\"approvals\">Go to To do ›</a>",
+  "<a href=\"#\" class=\"lk\">Go to To do ›</a>",
+  1
+ ],
+ [
+  "reviews stops reading",
+  "portal",
+  "`<div class=\"pm-rv-feed pm-rv-tab\" data-reviews-feed data-client-id=",
+  "`<div class=\"pm-rv-feed pm-rv-tab\" data-client-id=",
+  1
+ ],
+ [
+  "the campaign words are back",
+  "portal",
+  "return `<div class=\"pm-cs pm-tabcs\">${csCard({ tone: \"off\", head: \"Your first report comes after your first full month\", body: csNote(\"We email you the moment it's ready.\") })}</div>`;",
+  "return `<div class=\"pm-cs pm-tabcs\">${csCard({ tone: \"off\", head: \"Your first report comes after your first full month\", body: csNote(\"once your campaign goes live\") })}</div>`;",
+  1
+ ],
+ [
+  "the button keeps the old words",
+  "portal",
+  "btn: \"Go to To do\",",
+  "btn: \"View Action Items →\",",
+  1
+ ],
+ [
+  "the button opens Setup",
+  "portal",
+  "data-portal-goto=\"${/To do/.test(action.btn) ? \"approvals\" : \"setup\"}\"",
+  "data-portal-goto=\"setup\"",
+  1
+ ],
+ [
+  "the card ignores To do's number",
+  "portal",
+  "const n = _todoTotalN != null ? Math.max(0, _todoTotalN - (mine.length - n0)) : n0 +",
+  "const n = n0 +",
+  1
+ ],
+ [
+  "To do's number never arrives",
+  "portal",
+  "if (_todoTotalN !== todoN) { _todoTotalN = todoN;",
+  "if (false) { _todoTotalN = todoN;",
+  1
+ ],
+ [
+  "the key keeps the old words",
+  "portal",
+  "<span><i class=\"pm-sw rga\"></i> RGA is on it</span>",
+  "<span><i class=\"pm-sw rga\"></i> RGA is doing it</span>",
+  1
+ ],
+ [
+  "Setup shrinks before they've connected",
+  "portal",
+  "const setupLean = stage === \"stage_4_onboarding\" && !!ctx.oauth;",
+  "const setupLean = stage === \"stage_4_onboarding\";",
+  1
+ ],
+ [
+  "Setup shrinks at every stage",
+  "portal",
+  "const setupLean = stage === \"stage_4_onboarding\" && !!ctx.oauth;",
+  "const setupLean = !!ctx.oauth;",
+  1
+ ],
+ [
+  "the header disagrees with the body",
+  "portal",
+  "const _setupLeanHeader = single.client?.client_portal_stage === \"stage_4_onboarding\" && !!oauthByClient[single.client?.id || single.client_id];",
+  "const _setupLeanHeader = true;",
+  1
+ ],
+ [
+  "the count isn't To do's",
+  "portal",
+  "cfg.c = `${m.done} of ${m.total} done. RGA handles the technical work.`;",
+  "cfg.c = `5 to do. RGA handles the technical work.`;",
+  1
+ ],
+ [
+  "the old heading stays",
+  "portalcss",
+  ".pm-setup-lean .pm-bare > .portal-card-head, .pm-setup-lean .pm-bare > .portal-copy, .pm-setup-lean .pm-linked { display:none; }",
+  "",
+  1
+ ],
+ [
+  "the reviews tab draws a row",
+  "portalcss",
+  ".pm-rv-tab .pm-og-row > .pm-step-row-head { display:none; }",
+  "",
+  1
+ ],
+ [
+  "step 19 says a month again",
+  "playbook",
+  "One short video a quarter. Your phone is fine",
+  "One short video a month. Your phone is fine",
+  1
+ ]
+]
