@@ -127,7 +127,7 @@ if (!slotsSrc || !stateSrc || !bigSrc || !howSrc) { console.error("⚠️  INDET
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, photoCountable: SL.photoCountable, CS_STEPS: new Set(), tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
+const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, photoCountable: SL.photoCountable, photoListedNames: SL.photoListedNames, photoMissingFromList: SL.photoMissingFromList, CS_STEPS: new Set(), tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.card = secondLogoCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }

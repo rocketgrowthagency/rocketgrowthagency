@@ -107,7 +107,7 @@ const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", goog
 const ctx = {
   // the lifted slice now seats admin steps 31/32/36 by top-level MutationObservers (steps 29–38 redesign) — inert here
   MutationObserver: class { observe() {} disconnect() {} }, document: { documentElement: {}, querySelector: () => null, querySelectorAll: () => [], addEventListener() {} }, window: {},
-  secondLogos: SECOND_LOGO.secondLogos, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
+  secondLogos: SECOND_LOGO.secondLogos, photoListedNames: SECOND_LOGO.photoListedNames, photoMissingFromList: SECOND_LOGO.photoMissingFromList, photoCountable: SECOND_LOGO.photoCountable, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
   photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: (s, it) => `E|g|${it.n}`, formatDateTime: () => "Oct 9", obNumberOf: () => 11,
   state: { selectedClient: { id: "c1" }, photos: [
     { id: "p1", client_id: "c1", shot_n: 1, category: "logo", publish_state: "published", storage_path: "c/l.png" },
