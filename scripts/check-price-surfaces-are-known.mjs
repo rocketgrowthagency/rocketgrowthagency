@@ -81,7 +81,7 @@ const SURFACES = {
   "research_notes/Website audit/website_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the site as it stood, kept as written; not RGA's offer"],
   "netlify/functions/admin-record-cancellation.js": ["DERIVED", "the last invoice and the next one, read from contract-generate's plans through priceSummaryForContract; holds no price of its own"],
   "netlify/functions/_billing-dates.js": ["EXCLUDED", "calendar arithmetic on amounts passed in; quotes no price"],
-  "netlify/functions/portal-cancel.js": ["DERIVED", "the client's Cancel card: terms read from contract-generate's plans; holds no price of its own"],
+  "netlify/functions/portal-cancel.js": ["EXCLUDED", "the client's Cancel card: notice dates and plan terms, quotes no price"],
   "netlify/functions/_monthly-value.js": ["EXCLUDED", "the monthly what-we-watched card: readings and dates, quotes no price"],
   "netlify/functions/blog-index-check.js": ["EXCLUDED", "weekly indexing check on RGA's own posts; quotes no price"],
   "terms/index.html": ["EXCLUDED", "website Terms: $2,500 is the floor of the liability cap (contract_v2_redline §10), not a price; fees are left to the signed agreement"],
