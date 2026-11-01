@@ -62,8 +62,8 @@
 [
 "the portal gets the full list (RGA's wording + ids)",
 "portalopenmovesfn",
-"moves: clientMoves(openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} }), PLAYBOOKS)",
-"moves: openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} })"
+"const moves = clientMoves(openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} }), PLAYBOOKS);",
+"const moves = openMoves({ playbooks: PLAYBOOKS, data: (row && row.data) || {} });"
 ],
 [
 "the To do number leaves out the client's steps",

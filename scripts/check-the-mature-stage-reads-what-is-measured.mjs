@@ -160,7 +160,7 @@ const STRONG_EAST = gridOf((r, c2) => (inner(r, c2) ? 2 : c2 === 4 ? 6 : null));
 // ── the functions: only Mature clients; the portal sees only SENT reviews ──
 const src = (p) => fs.readFileSync(`${SITE}/${p}`, "utf8");
 const adm = src("netlify/functions/admin-mature.js"), por = src("netlify/functions/portal-mature.js"), sql = src("docs/supabase/RGA_MATURE_RECORDS_2026-10-19.sql");
-if (!/if \(!mature\) return json\(409/.test(adm) || !/steps: mature \? M\.stepStates\(ctx\) : \[\]/.test(adm)) fail("admin-mature acts for (or shows steps to) a client who isn't Mature");
+if (!/if \(!mature && String\(body\.action \|\| ""\) !== "send_referral"\) return json\(409/.test(adm) || !/steps: mature \? M\.stepStates\(ctx\) : \[\]/.test(adm)) fail("admin-mature acts for (or shows steps to) a client who isn't Mature");
 if (!/requireWorkspaceForClient\(event, clientId\)/.test(adm)) fail("admin-mature isn't workspace-gated");
 if (!/kind=eq\.quarterly_review&status=eq\.sent/.test(por) || !/const auth = await requirePortalOwnerOrWorkspace\(event, clientId\);\s*if \(auth\.error\) return auth\.error;/.test(por)) fail("portal-mature can show a DRAFT review, or isn't gated to the client + their RGA workspace");
 // 10-20 (walk): admin renders the client's portal AS ITSELF — an owner-only read 403s on admin's Onboarding tab

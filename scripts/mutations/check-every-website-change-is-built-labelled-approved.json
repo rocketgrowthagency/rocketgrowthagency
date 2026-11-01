@@ -107,8 +107,8 @@
  [
   "the strip goes back into the narrow queue column",
   "portal",
-  "  host.innerHTML = `${strip}<div class=\"ib\">${top}",
-  "  host.innerHTML = `<div class=\"ib\">${top}",
+  "  host.innerHTML = `${strip}<div data-ob-notes=\"${escapeAttribute(clientId)}\" hidden></div><div class=\"ib\">${top}",
+  "  host.innerHTML = `<div data-ob-notes=\"${escapeAttribute(clientId)}\" hidden></div><div class=\"ib\">${top}",
   1
  ],
  [

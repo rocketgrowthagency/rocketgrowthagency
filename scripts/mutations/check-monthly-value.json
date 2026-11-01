@@ -191,8 +191,8 @@
  [
   "server text is printed unescaped",
   "portal",
-  "csEv(escapeHtml(l.text)",
-  "csEv(l.text",
+  "csEv(escapeHtml(l.text), l.when",
+  "csEv(l.text, l.when",
   1
  ],
  [

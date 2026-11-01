@@ -58,8 +58,8 @@
  [
   "stamped after the send",
   "notifyopenfn",
-  "      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);\n      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)));",
-  "      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)));\n      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);",
+  "      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);\n      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)), { at });",
+  "      try {\n        const r = await sendFor(client, still.map((id) => M1.find((x) => x.id === id)), { at });\n      for (const id of still) tasks[id] = { ...(tasks[id] || {}), open_told_at: at };\n      await writeTasks(rec.id, data, tasks);",
   1
  ],
  [

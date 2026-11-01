@@ -93,7 +93,7 @@
  [
   "admin acts for a non-Mature client",
   "adminmature",
-  "    if (!mature) return json(409, { ok: false, error: \"This client isn't at the Mature stage.\" });",
+  "    if (!mature && String(body.action || \"\") !== \"send_referral\") return json(409, { ok: false, error: \"This client isn't at the Mature stage.\" });",
   "",
   1
  ],
