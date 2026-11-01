@@ -23,7 +23,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const wcEditing = new Set\(\);[^\n]*$/m, "wcEditing"), line(/^const wcPrefilling = new Set\(\);[^\n]*$/m, "wcPrefilling"),
   line(/^const wcStepDef = [^\n]*;$/m, "wcStepDef"), line(/^const wcTitleOf = [^\n]*;$/m, "wcTitleOf"), line(/^const wcDay = [^\n]*;$/m, "wcDay"),
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
-  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
+  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), line(/^const WC_PG_ICON = [^\n]*;$/m, "WC_PG_ICON"), fn("wcChgHtml"), fn("wcProofRowHtml"), fn("wcBriefHtml"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
@@ -90,6 +90,14 @@ const S = {
   pageReady: { id: L, task: { status: "in_progress", auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield", beside: "beside their 2 Springfield pages" } } } }, pre: pageChange },
   pageDrafted: { id: L, task: { status: "in_progress", site_change: pageChange, auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
   pageLong: { id: L, task: { status: "in_progress", site_change: { ...pageChange, items: pageChange.items.map((i) => (i.role === "title" ? { ...i, after: "A title well past what Google shows in a result for anybody at all in Springfield" } : i)) }, auto_result: { summary: "x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
+  // page 1 of 3 is live: the step stays open and offers the next page
+  pageOf: { id: L, task: { status: "in_progress", site_change: { ...pageChange, page_of: { at: 1, of: 3 } }, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW }, published: { v: "v1", at: NOW, checked: true, url: "https://sparks.test/electrician-springfield-il/" } } },
+  // what the brief found + a stuffed draft + a copied sentence
+  pageFlags: { id: L, task: { status: "in_progress", site_change: { ...pageChange, items: pageChange.items.map((i) => (i.label === "Opening" ? { ...i, after: "We rank for electrician springfield and emergency electrician springfield in one breath." } : i)) },
+    auto_result: { summary: "x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield", duplicates: [{ sentence: "We show up on time and leave your home clean every day.", url: "https://sparks.test/a/" }],
+      brief_lines: [{ warn: true, title: "Already shows for these searches", text: "https://sparks.test/panels/ · position 8" }, { open: true, title: "Competitor pages", text: "No competitor websites on record" }] } } } } },
+  // an edit to a page they have keeps Now → After and names the page
+  pageEdit: { id: "m1.web.service_location_matrix", task: { status: "in_progress", site_change: { v: "v1", kind: "visible", edits_page: true, label: "edit_page", where: "A page on your website", page_url: "https://x.test/hvac-denver/", drafted_at: NOW, files: [{ path: "hvac-denver/index.html", action: "edit", note: "named lines on this page, nothing else" }], items: [{ label: "Line 1", before: "Why hvac lose", after: "Why HVAC companies lose" }] } } },
   right: { task: { status: "done", no_change_needed: { note: "One phone number on every page", at: NOW, by: "RGA" } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
@@ -221,6 +229,15 @@ has("right", /Already right · nothing needed changing/, "already right isn't sa
 // the wiring the browser can't see
 if (!/if \(t\.hasAttribute\("data-ob-wc-savesend"\)\) \{/.test(A) || !/site_action: "save", change: pre \}\);[\s\S]{0,200}internal_decision: "approved"/.test(A)) fail("Send for approval on a draft doesn't save it and send it");
 if (!/\$\{gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");
+// ── builds 4, 6, 15 on the card ──
+if (!/Page 1 of 3 is live/.test(out.pageOf.text) || !out.pageOf.buttons.includes("Start the next page")) fail("a page with more to go doesn't say so or offer the next one");
+if (out.pageOf.pill !== "Live · 1 of 3") fail(`the row's chip hides that pages are left ("${out.pageOf.pill}")`);
+if (out.live.buttons.includes("Start the next page")) fail("a finished step offers a next page");
+if (!/two search phrases jammed into one sentence/.test(out.pageFlags.text) || !/can't be sent until you edit it/.test(out.pageFlags.text)) fail("a stuffed draft isn't flagged on the card");
+if (!/Copied from their own page https:\/\/sparks\.test\/a\//.test(out.pageFlags.text)) fail("a copied sentence isn't flagged on the card");
+if (!/Already shows for these searches/.test(out.pageFlags.text) || !/No competitor websites on record/.test(out.pageFlags.text)) fail("what the brief found isn't on the card");
+if (!/No proof yet/.test(out.pageReady.text) || !out.pageReady.buttons.includes("Ask the client for one real result")) fail("a page with no proof doesn't offer the ask");
+if (!/<del>Why hvac lose<\/del>/.test(out.pageEdit.html) || !/The page:/.test(out.pageEdit.text) || /class="ob-wc-rev"/.test(out.pageEdit.html)) fail("an edit to a page they have isn't Now → After on that page");
 // ── draft_review_v1 (website_system_v2 build 7) ──
 has("pageReady", /Your move · review the draft/, "a page draft isn't \"review the draft\"");
 for (const [re, what] of [[/Its address\/electrician-springfield-il\/ · beside their 2 Springfield pages/, "the address + what it sits beside"], [/Title 39 of 65 characters, names Springfield/, "the title's measured length and what it names"], [/Description 61 of 160 characters/, "the description's measured length"],

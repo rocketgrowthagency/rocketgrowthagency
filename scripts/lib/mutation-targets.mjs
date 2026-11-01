@@ -330,6 +330,9 @@ export const FILES = {
   adminunlock: "netlify/functions/admin-step-unlock.js",
   siteplatfn: "netlify/functions/portal-site-platform.js",   // step3_website_access_v3 (10-20)
   siteplatdata: "data/site-platforms.json",   // the 22-builder audit, one source (10-20)
+  pagebrief: "netlify/functions/_page-brief.js",   // website_system_v2 builds 3 to 6, 15 (11-01)
+  pagebuilder: "netlify/functions/_page-builder.js",
+  pageprooffn: "netlify/functions/portal-page-proof.js",
   sitechange: "shared/site-change.js",   // website_change_approvals_v1 (10-23)
   citypage: "netlify/functions/_city-page.js",
   pagefile: "netlify/functions/_page-file.js",   // website_system_v2 build 8 (10-28): a page file in the site's own template

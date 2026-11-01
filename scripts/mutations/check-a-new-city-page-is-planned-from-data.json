@@ -107,8 +107,8 @@
  [
   "the drafter keeps a draft that broke the rules",
   "exec",
-  "    if (w.problems) return { summary: `The draft broke the page rules, so nothing was saved:",
-  "    if (false) return { summary: `The draft broke the page rules, so nothing was saved:",
+  "  if (w.problems) return { summary: `The draft broke the page rules, so nothing was saved:",
+  "  if (false) return { summary: `The draft broke the page rules, so nothing was saved:",
   1
  ],
  [
@@ -128,8 +128,8 @@
  [
   "an unusable answer is thrown away whole",
   "exec",
-  "      outcome_data: { problems: w.problems, raw_head: String(raw || \"\").slice(0, 600), raw_tail: String(raw || \"\").slice(-300), raw_length: String(raw || \"\").length } };",
-  "      outcome_data: { problems: w.problems } };",
+  "    outcome_data: { problems: w.problems, raw_head: String(raw || \"\").slice(0, 600), raw_tail: String(raw || \"\").slice(-300), raw_length: String(raw || \"\").length } };",
+  "    outcome_data: { problems: w.problems } };",
   1
  ]
 ]

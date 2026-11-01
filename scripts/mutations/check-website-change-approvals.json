@@ -98,8 +98,8 @@
  [
   "a new change doesn't keep the live one",
   "admindeliv",
-  "        t.site_change_log = [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null,",
-  "        void [...(t.site_change_log || []), { change: t.site_change, approval: t.approval || null, published: t.published || null,"
+  "        keepFinished(t);\n        delete t.published; delete t.undo_request;",
+  "        delete t.published; delete t.undo_request;"
  ],
  [
   "no-change without a reason",

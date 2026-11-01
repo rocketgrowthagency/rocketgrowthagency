@@ -1,0 +1,191 @@
+[
+ [
+  "position 44 counts as already showing",
+  "pagebrief",
+  "const RANKS_WITHIN = 20,",
+  "const RANKS_WITHIN = 200,",
+  1
+ ],
+ [
+  "no Search Console reads as nothing ranks",
+  "pagebrief",
+  "if (!Array.isArray(rows)) return { state: \"unknown\", pages: [], queries: [] };",
+  "if (!Array.isArray(rows)) rows = [];",
+  1
+ ],
+ [
+  "already showing isn't a warning",
+  "pagebrief",
+  "out.push({ warn: true, title: \"Already shows for these searches\",",
+  "out.push({ title: \"Already shows for these searches\",",
+  1
+ ],
+ [
+  "a competitor's words are kept",
+  "pagebrief",
+  "return { words, sections };",
+  "return { words, sections, text: textOf(html) };",
+  1
+ ],
+ [
+  "an unread competitor reads as read",
+  "pagebrief",
+  "if (r && r.words >= MIN_WORDS_READ) out.push(",
+  "if (true) out.push(",
+  1
+ ],
+ [
+  "no history table never asks Google",
+  "pagebrief",
+  "const tok = await token(oauth);\n    if (!tok) return null;",
+  "return null;",
+  1
+ ],
+ [
+  "proof made out of nothing",
+  "pagebuilder",
+  "return { result: result || null, quote: quote || null,",
+  "return { result: result || \"Great results\", quote: quote || null,",
+  1
+ ],
+ [
+  "a full name on the page",
+  "pagebuilder",
+  "quote_name: quote ? (name.split(/\\s+/)[0] || null) : null",
+  "quote_name: quote ? name : null",
+  1
+ ],
+ [
+  "an existing service page counts as to-do",
+  "pagebuilder",
+  "page_of: { at: builtHere + 1, of: builtHere + left.length } };",
+  "page_of: { at: rows.indexOf(pick) + 1, of: rows.length } };",
+  1
+ ],
+ [
+  "a site with every page still gets one",
+  "pagebuilder",
+  "if (!left.length) return { none: true, pages: rows.map((r) => r.has) };",
+  "if (!left.length) left.push(rows[0]);",
+  1
+ ],
+ [
+  "services guessed when none are listed",
+  "pagebuilder",
+  "if (!services.length) return { error: \"Add the client's services before drafting service pages. Nothing here is guessed.\" };",
+  "if (!services.length) services.push(\"Services\");",
+  1
+ ],
+ [
+  "stuffing passes the page rules",
+  "pagebuilder",
+  "return flags.length ? { problems: flags.map((f) => `${f.what}: \"${f.text}\"`) } : r;",
+  "return r;",
+  1
+ ],
+ [
+  "a rewrite can touch a line nobody asked about",
+  "pagebuilder",
+  "if (!asked.some((a) => a.text === before)) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a rewrite can add a claim",
+  "pagebuilder",
+  "if (SC.riskyClaims({ items: [{ label: \"x\", after }] }).length) { p.push(",
+  "if (false) { p.push(",
+  1
+ ],
+ [
+  "a line on the page twice is edited",
+  "pagebuilder",
+  "if (String(html).split(before).length !== 2) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a gone line still builds",
+  "pagebuilder",
+  "if (!i.before || h.split(i.before).length !== 2) return {",
+  "if (false) return {",
+  1
+ ],
+ [
+  "an edit isn't escaped",
+  "pagebuilder",
+  "h = h.replace(i.before, () => esc(i.after).replace(/&quot;/g, '\"'));",
+  "h = h.replace(i.before, () => i.after);",
+  1
+ ],
+ [
+  "two search phrases in a sentence pass",
+  "sitechange",
+  "if (hits.length >= 2) out.push(",
+  "if (false) out.push(",
+  1
+ ],
+ [
+  "a repeated phrase passes",
+  "sitechange",
+  "if (n > 2) out.push({ label: \"The page\", what: `a search phrase repeated",
+  "if (false) out.push({ label: \"The page\", what: `a search phrase repeated",
+  1
+ ],
+ [
+  "short sentences count as copies",
+  "sitechange",
+  "if (wordsOf(s).length >= 8) have.set(key(s), p.url);",
+  "have.set(key(s), p.url);",
+  1
+ ],
+ [
+  "a stuffed draft can be sent",
+  "admindeliv",
+  "if (stuffed.length) return json(409, {",
+  "if (false) return json(409, {",
+  1
+ ],
+ [
+  "the ask needs no sign-in as owner",
+  "pageprooffn",
+  "const gate = await requirePortalOwner(event, clientId);\n  if (gate.error) return gate.error;",
+  "const gate = {};",
+  1
+ ],
+ [
+  "the ask takes an empty answer",
+  "pageprooffn",
+  "if (!result && !quote) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "the ask keeps an emoji",
+  "pageprooffn",
+  ".replace(/[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/gu, \"\")",
+  "",
+  1
+ ],
+ [
+  "the answer isn't read back",
+  "pageprooffn",
+  "if (!saved || saved.answered_at !== at) return json(500,",
+  "if (false) return json(500,",
+  1
+ ],
+ [
+  "the ask never reaches the client",
+  "portal",
+  "if (fyaHost) fyaHost.innerHTML = pageProofCardHtml() + fyaHtml(_apItems, when, \"\");",
+  "if (fyaHost) fyaHost.innerHTML = fyaHtml(_apItems, when, \"\");",
+  1
+ ],
+ [
+  "service pages leave the pipeline",
+  "exec",
+  "return draftOnePage({ client, _plan, plan: r.plan, ctx, page_of: r.page_of });",
+  "return { summary: \"x\" };",
+  1
+ ]
+]

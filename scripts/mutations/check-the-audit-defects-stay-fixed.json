@@ -2,8 +2,8 @@
  [
   "location pages invent sub-locations",
   "exec",
-  "gbpAreas, planLocations: _plan.locations || [], keywords: _plan.keywords",
-  "gbpAreas, planLocations: [], keywords: _plan.keywords",
+  "gbpAreas: ctx.gbpAreas, planLocations: _plan.locations || [], keywords: _plan.keywords, filesOnGithub",
+  "gbpAreas: ctx.gbpAreas, planLocations: [], keywords: _plan.keywords, filesOnGithub",
   1
  ],
  [

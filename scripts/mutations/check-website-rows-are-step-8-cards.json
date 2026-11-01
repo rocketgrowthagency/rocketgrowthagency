@@ -317,14 +317,14 @@
  [
   "a new page goes back to a wall of green",
   "admin",
-  "(isPage && pre.new_page ? wcReviewHtml(pre, od.page_draft) + wcRiskHtml(pre) :",
+  "(isPage && pre.new_page ? wcReviewHtml(pre, od.page_draft) + wcRiskHtml(pre, od.page_draft) :",
   "(false ? \"\" :",
   1
  ],
  [
   "a saved page draft loses the review",
   "admin",
-  "(isPage && c.new_page ? wcReviewHtml(c, od.page_draft) + wcRiskHtml(c) :",
+  "(isPage && c.new_page ? wcReviewHtml(c, od.page_draft) + wcRiskHtml(c, od.page_draft) :",
   "(false ? \"\" :",
   1
  ],
@@ -345,8 +345,8 @@
  [
   "the Google preview is gone",
   "admin",
-  "${wcReviewChecksHtml(c, d)}${wcGooglePreviewHtml(c)}",
-  "${wcReviewChecksHtml(c, d)}",
+  "${wcProofRowHtml(c)}${wcGooglePreviewHtml(c)}",
+  "${wcProofRowHtml(c)}",
   1
  ],
  [
@@ -368,6 +368,55 @@
   "admin",
   "if (scDef && scDef.kind === \"visible\" && task && (scDef.page || task.site_change",
   "if (false && (scDef.page || task.site_change",
+  1
+ ],
+ [
+  "a stuffed draft isn't flagged",
+  "admin",
+  "+ st.map((x) => `<div class=\"ob-wc-warn\">",
+  "+ [].map((x) => `<div class=\"ob-wc-warn\">",
+  1
+ ],
+ [
+  "a copied sentence isn't flagged",
+  "admin",
+  "((d && d.duplicates) || []).map(",
+  "([]).map(",
+  1
+ ],
+ [
+  "the brief isn't on the card",
+  "admin",
+  "${d && d.brief_lines ? wcBriefHtml(d) : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the proof ask is gone",
+  "admin",
+  "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-ob-wc-proofask>Ask the client for one real result</button>",
+  "",
+  1
+ ],
+ [
+  "no next page button",
+  "admin",
+  "${SC.pagesLeft(task) ? `<button type=\"button\" class=\"admin-button\" data-ob-wc-nextpage>Start the next page</button>` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "the chip hides pages left",
+  "admin",
+  "SC.pagesLeft(task) ? `Live · ${task.site_change.page_of.at} of ${task.site_change.page_of.of}` : \"Live\"",
+  "\"Live\"",
+  1
+ ],
+ [
+  "an edit doesn't name the page",
+  "admin",
+  "<b>The page:</b>",
+  "<b></b>",
   1
  ]
 ]

@@ -28,17 +28,20 @@ const fails = []; const F = (m) => fails.push(m);
 const block = (id) => { const a = FE.indexOf(`"${id}": async`); if (a < 0) return ""; const b = FE.indexOf("\n  },\n", a); return FE.slice(a, b < 0 ? a + 4000 : b); };
 
 // #2 + #3
+const PAGE_STEPS = ["m1.web.priority_pages", "m1.web.location_pages", "m1.web.service_location_matrix"];
 for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description",  // qa_seed retired 10-20
   "m1.web.homepage_meta", "m1.web.h1_cta", "m1.web.priority_pages", "m1.web.blog_seed", "m1.web.location_pages", "m1.web.service_location_matrix"]) {
   const b = block(id);
   if (!b) { F(`#3 runner ${id} not found`); continue; }
   if (!/const _plan = await lockedPlanFor\(client\.id\);/.test(b) || !/return PLAN_NOT_LOCKED;/.test(b)) F(`#3 ${id} no longer waits for the locked keyword plan`);
-  if (!/planBlock\(_plan\)/.test(b)) F(`#3 ${id} no longer writes from the locked plan`);
+  // the page steps hand the plan to the one pipeline (draftOnePage), and that pipeline writes from it
+  const viaPipeline = PAGE_STEPS.includes(id) && /draftOnePage\(\{ client, _plan,/.test(b) && /async function draftOnePage\([\s\S]{0,1800}planBlock\(_plan\)/.test(FE);
+  if (!/planBlock\(_plan\)/.test(b) && !viaPipeline) F(`#3 ${id} no longer writes from the locked plan`);
 }
 if (/Suggest 3 sub-locations/i.test(FE)) F("#2 a draft invents its own sub-locations again");
 // 10-27 (rga_first_site_change_v1): the city page takes the plan's sub-locations as its areas (planLocations), with planBlock in the prompt
-if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.location_pages")) || !/planBlock\(_plan\)/.test(block("m1.web.location_pages"))) F("#2 the location pages do not name the plan's sub-locations");
-if (!/_plan\.locations\.join\("; "\)/.test(block("m1.web.service_location_matrix"))) F("#2 the matrix does not name the plan's sub-locations");
+if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.location_pages")) ) F("#2 the location pages do not name the plan's sub-locations");
+if (!/planLocations: _plan\.locations \|\| \[\]/.test(block("m1.web.service_location_matrix")) || !/CP\.areaNames\(c \? \[c\.city\] : \[\], _plan\.locations,/.test(block("m1.web.service_location_matrix"))) F("#2 the matrix does not name the plan's sub-locations");
 // universal: the category shortlist never pins one trade's categories first
 if (/marketing\|advertis/.test(block("m1.gbp.optimize_categories"))) F("the category shortlist pins marketing categories first again — RGA's trade, not the client's");
 // #4
