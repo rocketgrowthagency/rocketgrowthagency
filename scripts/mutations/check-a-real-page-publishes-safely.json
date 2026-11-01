@@ -1,0 +1,156 @@
+[
+ [
+  "a real page ignores the page build",
+  "admindeliv",
+  "if ((SC.STEPS[key] || {}).page && (c.new_page || c.edits_page)) return buildPageChange(c, client, tasks, clientId, key);",
+  "",
+  1
+ ],
+ [
+  "the shell's outer words aren't checked",
+  "pagefile",
+  "if (referenceHtml !== undefined) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "only the first shell is tried and words survive anyway",
+  "pagefile",
+  "if (extra.length) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "words every page shares are refused",
+  "pagefile",
+  "return shell.filter((x) => !other.has(x.toLowerCase()));",
+  "return shell;",
+  1
+ ],
+ [
+  "with no second page a long line ships",
+  "pagefile",
+  "if (!referenceHtml) return shell.filter((x) => x.length > 24);",
+  "if (!referenceHtml) return [];",
+  1
+ ],
+ [
+  "structured data missing",
+  "pagefile",
+  "if (schema) h = h.replace(",
+  "if (false) h = h.replace(",
+  1
+ ],
+ [
+  "a file they don't have stays listed",
+  "admindeliv",
+  "if (b && b.kept_files) t.site_change =",
+  "if (false) t.site_change =",
+  1
+ ],
+ [
+  "a builder preview stops the send",
+  "admindeliv",
+  "if (!built) return repo ? { error: why || \"couldn't read a page of theirs to use as the template\" } : null;",
+  "if (!built) return { error: why || \"x\" };",
+  1
+ ],
+ [
+  "a builder page opens nothing but claims a repo",
+  "admindeliv",
+  "...(repo ? { kept_files: out.map((f) => f.path) } : { preview_only: true })",
+  "...(repo ? { kept_files: out.map((f) => f.path) } : {})",
+  1
+ ],
+ [
+  "an edit doesn't carry the file it was built from",
+  "admindeliv",
+  "html: r.html, base_sha: meta.sha });",
+  "html: r.html });",
+  1
+ ],
+ [
+  "a sitemap edit doesn't carry the file it was built from",
+  "admindeliv",
+  "content: next, base_sha: meta.sha });",
+  "content: next });",
+  1
+ ],
+ [
+  "pages can't open a pull request",
+  "admindeliv",
+  "|| !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page)) return json(409, { error: \"Only page changes",
+  "|| !(SC.STEPS[key] || {}).test) return json(409, { error: \"Only page changes",
+  1
+ ],
+ [
+  "any change can open a pull request",
+  "admindeliv",
+  "if (!(ac.new_page || ac.removes_page || ac.edits_page) || !((SC.STEPS[key] || {}).test || (SC.STEPS[key] || {}).page)) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "an edit uploads the page's empty content",
+  "admindeliv",
+  "content: f.html || f.content || \"\",",
+  "content: f.html || \"\",",
+  1
+ ],
+ [
+  "a file that moved is overwritten",
+  "ghaccess",
+  "if (!f.base_sha || shas[f.path] !== f.base_sha) return { ok: false, state: \"file_changed\",",
+  "if (false) return { ok: false, state: \"file_changed\",",
+  1
+ ],
+ [
+  "an edit doesn't name the file it edits",
+  "ghaccess",
+  "...(f.action === \"edit\" ? { sha: shas[f.path] } : {})",
+  "",
+  1
+ ],
+ [
+  "a new page can replace a file",
+  "ghaccess",
+  "else if (ex.ok) return { ok: false, state: \"file_exists\",",
+  "else if (false) return { ok: false, state: \"file_exists\",",
+  1
+ ],
+ [
+  "the safety checks stop gating pull requests",
+  "admindeliv",
+  "if (!PS.allOk(checks)) { const f0",
+  "if (false) { const f0",
+  1
+ ],
+ [
+  "no before-snapshot needed",
+  "admindeliv",
+  "if (!snap0 || !(snap0.read > 0) || !snap0.at || Date.now() - Date.parse(snap0.at) > 864e5) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "a preview signature isn't checked",
+  "sitepreview",
+  "if (!process.env.INTERNAL_FN_SECRET || !crypto.timingSafeEqual(Buffer.from(want), Buffer.from(s))) return page(...NOT_VALID);",
+  "",
+  1
+ ],
+ [
+  "the button goes to a guessed address",
+  "pagebuilder",
+  "return u ? pathOf(u) : \"/\";",
+  "return \"/contact/\";",
+  1
+ ],
+ [
+  "the header and footer are stripped from the page",
+  "pagefile",
+  "const noChrome = h.replace(/<header[\\s\\S]*?<\\/header>|<footer[\\s\\S]*?<\\/footer>|<nav[\\s\\S]*?<\\/nav>/gi, \"\");",
+  "const noChrome = h;",
+  1
+ ]
+]

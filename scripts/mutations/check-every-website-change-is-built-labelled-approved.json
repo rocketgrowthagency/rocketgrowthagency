@@ -65,7 +65,7 @@
  [
   "To do drops For your approval",
   "portal",
-  "  if (fyaHost) fyaHost.innerHTML = fyaHtml(_apItems, when, \"\");\n",
+  "  if (fyaHost) fyaHost.innerHTML = pageProofCardHtml() + fyaHtml(_apItems, when, \"\");\n",
   "",
   1
  ],
@@ -128,8 +128,8 @@
  [
   "RGA's preview asks RGA to approve it",
   "sitepreview",
-  "  const [say, go, label] = q.a === \"1\"",
-  "  const [say, go, label] = false",
+  "    : q.a === \"1\"\n",
+  "    : false\n",
   1
  ],
  [
