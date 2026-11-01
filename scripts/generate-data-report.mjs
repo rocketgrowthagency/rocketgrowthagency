@@ -53,7 +53,7 @@ const MAIN = `
     <div>
       <p class="ix-eyebrow">Local SEO benchmarks &middot; ${new Date(latest || Date.now()).getFullYear()}</p>
       <h1 class="ix-h1">The State of <span class="solid-blue">Local SEO</span></h1>
-      <p class="ix-sub" style="max-width:52ch">What it actually takes to rank in the Google Map Pack &mdash; from a live audit of <strong>${audited} businesses</strong> across <strong>${verticals.size} industries</strong> in <strong>${cities.size} markets</strong>. Real numbers, updated as we scrape more.</p>
+      <p class="ix-sub" style="max-width:52ch">What the businesses in the Google Map Pack look like &mdash; from a live audit of <strong>${audited} businesses</strong> across <strong>${verticals.size} industries</strong> in <strong>${cities.size} markets</strong>. Real numbers. Most rows are one market, so read them as samples.</p>
       <div class="ix-cta-row"><a class="ix-btn" href="/free-growth-audit/">See where you rank &mdash; free audit ${arrow}</a></div>
     </div>
     <aside class="ix-why" style="align-self:start">
@@ -74,13 +74,13 @@ const MAIN = `
   </div></section>
 
   <section><div class="ix-sec" style="max-width:840px">
-    <div class="ix-head"><p class="ix-kick">Finding 1</p><h2 class="ix-h2">Reviews are the price of entry &mdash; and it swings wildly by trade</h2></div>
-    <p class="ix-lead" style="margin-top:.9rem">Across every market we audited, the median business in the top 3 has <strong>${medTop3} reviews</strong>. But the bar depends entirely on your trade: a top-3 <strong>${esc((hiV||'').toLowerCase())}</strong> carries a median of <strong>${hiRev}</strong> reviews, while <strong>${esc((loV||'').toLowerCase())}</strong> break in with as few as <strong>${loRev}</strong>. Chasing a generic "get more reviews" number is a mistake &mdash; you need YOUR trade's real threshold.</p>
+    <div class="ix-head"><p class="ix-kick">Finding 1</p><h2 class="ix-h2">Review counts swing widely by trade</h2></div>
+    <p class="ix-lead" style="margin-top:.9rem">Across every market we audited, the median business in the top 3 has <strong>${medTop3} reviews</strong>. But the bar depends entirely on your trade: a top-3 <strong>${esc((hiV||'').toLowerCase())}</strong> carries a median of <strong>${hiRev}</strong> reviews, while <strong>${esc((loV||'').toLowerCase())}</strong> break in with as few as <strong>${loRev}</strong>. A generic review target tells you little, so we compare you with your own trade and market.</p>
   </div></section>
 
   <section><div class="ix-sec">
     <div class="ix-head"><p class="ix-kick">The data</p><h2 class="ix-h2">Reviews it takes to reach the top 3, by industry</h2></div>
-    <div style="overflow-x:auto;margin-top:1.4rem;border:1px solid #e8ecf3;border-radius:14px">
+    <div tabindex="0" role="region" aria-label="Reviews by industry table, scrolls sideways on small screens" style="overflow-x:auto;max-width:100%;margin-top:1.4rem;border:1px solid #e8ecf3;border-radius:14px">
       <table style="width:100%;border-collapse:collapse;font-size:.94rem;min-width:560px">
         <thead><tr style="background:#f6f9ff">
           <th style="padding:.7rem .9rem;text-align:left;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:#475569">Industry</th>
@@ -92,20 +92,20 @@ const MAIN = `
         <tbody>${tableRows}</tbody>
       </table>
     </div>
-    <p style="color:#94a3b8;font-size:.82rem;margin-top:.8rem">"Reviews to compete" = the 75th-percentile review count of the top 10 — a realistic bar to break into the pack. Some rows are single-market samples; the dataset grows as we audit more.</p>
+    <p style="color:#94a3b8;font-size:.82rem;margin-top:.8rem">"Reviews to compete" = the 75th-percentile review count of the top 10. Some rows are single-market samples; the dataset grows as we audit more.</p>
   </div></section>
 
   <section><div class="ix-sec" style="max-width:840px">
-    <div class="ix-head"><p class="ix-kick">Finding 2</p><h2 class="ix-h2">The rating floor is brutal &mdash; ${medRating}&#9733; median</h2></div>
-    <p class="ix-lead" style="margin-top:.9rem">The median top-3 business rates <strong>${medRating}&#9733;</strong>. In practice, dip below ~4.7 and you're effectively invisible in the pack no matter how many reviews you have. Rating recency and velocity matter as much as the raw star average &mdash; a steady stream of fresh reviews beats a big stale pile.</p>
+    <div class="ix-head"><p class="ix-kick">Finding 2</p><h2 class="ix-h2">The businesses in the top 3 rate highly: ${medRating}&#9733; median</h2></div>
+    <p class="ix-lead" style="margin-top:.9rem">The median top-3 business rates <strong>${medRating}&#9733;</strong>. That is a description of who is in the pack, not a rule for getting in.</p>
   </div></section>
 
   <section><div class="ix-sec">
-    <div style="background:linear-gradient(155deg,#0f1a3a,#1a2f6b);border-radius:22px;padding:2.4rem;color:#fff;display:grid;grid-template-columns:1.25fr 1fr;gap:2.4rem;align-items:center;box-shadow:0 30px 60px -34px rgba(15,26,58,.6)">
+    <div style="background:linear-gradient(155deg,#0f1a3a,#1a2f6b);border-radius:22px;padding:clamp(1.2rem,4vw,2.4rem);color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:2.4rem;align-items:center;box-shadow:0 30px 60px -34px rgba(15,26,58,.6)">
       <div>
         <p style="font-size:.78rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#7aa0ff;margin:0 0 .5rem">Methodology</p>
         <h2 style="font-size:1.55rem;font-weight:900;letter-spacing:-.02em;margin:0 0 .7rem;line-height:1.15">Built from live Google Maps audits &mdash; not estimates</h2>
-        <p style="color:#c3d0ee;line-height:1.6;margin:0;font-size:.96rem">We audit the live Map Pack top 10 for local-service searches across US markets. Every figure on this page is computed directly from that data and refreshes automatically as we audit more &mdash; so it only gets sharper.</p>
+        <p style="color:#c3d0ee;line-height:1.6;margin:0;font-size:.96rem">We audit the live Map Pack top 10 for local-service searches across US markets. Every figure on this page is computed from that data, and each market is one search on one date. Rank also depends on where the searcher is.</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem">
         <div style="background:rgba(122,160,255,.12);border:1px solid rgba(122,160,255,.25);border-radius:14px;padding:1rem;text-align:center"><div style="font-size:1.7rem;font-weight:900;color:#fff;line-height:1">${all.length}</div><div style="font-size:.72rem;color:#9fb3e0;margin-top:.3rem;font-weight:600">market audits</div></div>
@@ -119,16 +119,18 @@ const MAIN = `
   <section><div class="ix-sec"><div class="ix-incl" style="text-align:center;background:linear-gradient(160deg,#eef4ff,#f6f9ff)">
     <p class="ix-kick" style="justify-content:center">Your move</p>
     <h2 class="ix-h2" style="margin:.2rem 0 .6rem">See where YOU stand against these benchmarks</h2>
-    <p class="ix-lead" style="max-width:60ch;margin:0 auto 1.5rem">Free growth audit &mdash; we map your Google Maps position, show your review + rating gap vs the top 3 in your market, and the plan to close it. No call required.</p>
+    <p class="ix-lead" style="max-width:60ch;margin:0 auto 1.5rem">Free growth audit &mdash; we check your Google Maps position, show your review and rating gap against the top 3 in your market, and write the plan. No call required.</p>
     <a class="ix-btn" href="/free-growth-audit/">Get my free audit ${arrow}</a>
   </div></div></section>`;
 
 const canonical = 'https://www.rocketgrowthagency.com/state-of-local-seo/';
-const title = 'The State of Local SEO — Google Map Pack Benchmarks | Rocket Growth Agency';
-const desc = `How many reviews and what rating it takes to rank in the Google Map Pack, by industry — from a live audit of ${audited} businesses across ${verticals.size} industries. Free data report.`;
+const title = 'The State of Local SEO | Rocket Growth Agency';
+const desc = `Reviews and ratings of businesses in the Google Map Pack, by industry, from a look at ${audited} businesses across ${verticals.size} industries. Most rows are one market.`;
 let tpl = fs.readFileSync(TEMPLATE, 'utf8');
 const mS = tpl.indexOf('<main'), mSe = tpl.indexOf('>', mS) + 1, mE = tpl.lastIndexOf('</main>');
 let html = tpl.slice(0, mSe) + MAIN + tpl.slice(mE);
+// the trade template's schema is about plumbers, not this page (website_audit_v1_v2)
+html = html.replace(/\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '');
 html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
   .replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${esc(desc)}"`)
   .replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${canonical}"`)

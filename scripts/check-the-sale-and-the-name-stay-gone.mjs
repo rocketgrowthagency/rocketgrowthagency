@@ -2,7 +2,7 @@
 // check-the-sale-and-the-name-stay-gone.mjs — the public site states real prices, one plan, and no owner's name (approved pricing_page_v2, 10-31).
 // 🔴 WHY: an open-ended "50% off" outlasted list prices nobody actively sold (California B&P 17501, 16 CFR 233.1, 233.5); "commit 3 months" contradicted a contract that says no lock-in;
 // Google retired GBP Q&A on Nov 3, 2025 while the site still sold it; and Chris works at a company, so his name stays off everything public (feedback_no_personal_name_on_public_site).
-// HOLDS: no sale, struck price or unbacked comparison on any public page; pricing and home carry the exact approved line, the refund's condition and the founding terms; the offer file has no "was";
+// HOLDS: the owner's name in no served file (v/ excluded, stated below); no sale, struck price or unbacked comparison on any public page; pricing and home carry the exact approved line, the refund's condition and the founding terms; the offer file has no "was";
 // the contract's retired plan is refused and the founding cap really stops; no public page names him; Q&A is not sold; the drip is on hold; the internal playbook is blocked.
 // Files only. Exit 0 = holds · 1 = it came back · 2 = moved (indeterminate). → project_additions_map
 import fs from "node:fs";
@@ -37,6 +37,27 @@ for (const f of pub) {
   if (!f.startsWith("v/") && NAME.test(raw)) fail(`${f} names the owner`);
   if (QA.test(s.replace(/<p class="bp-update">[\s\S]*?<\/p>/, ""))) fail(`${f} still sells Google Q&A, which Google retired`);
 }
+// 🔒 THE OWNER'S NAME IN ANY SERVED FILE (website_audit_v1_v2 rows 4, 10, 11, 10-31). `publish = "."` serves more than pages: style.css, script.js, admin/*, portal/*, shared/* and data/* can all be read by anyone, comments included.
+// STATED EXCLUSIONS: v/ (video is parked and out of scope; those pages also hold prospects' own names), whatever netlify.toml blocks at the edge, and netlify.toml itself (Netlify doesn't serve it: 404 live, 10-31).
+// The one allowed token: the towns "Christopher" and "Christopher Creek" in data/us-places.json.
+const TOML = read("netlify.toml");
+const BLOCKED = [...TOML.matchAll(/\[\[redirects\]\][^[]*?from = "([^"]+)"[^[]*?status = 404\s*\n\s*force = true/g)].map((m) => m[1]).filter((b) => !b.startsWith("/v/"));
+const isBlocked = (f) => BLOCKED.some((b) => (b.endsWith("*") ? `/${f}`.startsWith(b.slice(0, -1)) : `/${f}` === b));
+const TEXT = /\.(js|mjs|css|html|json|xml|txt|svg|webmanifest|md)$/;
+let tracked;
+try { tracked = execFileSync("git", ["-C", SITE, "ls-files"], { encoding: "utf8", maxBuffer: 1e9 }).split("\n").filter(Boolean); }
+catch { const w = (d) => fs.readdirSync(`${SITE}/${d}`, { withFileTypes: true }).flatMap((e) => { const r = d ? `${d}/${e.name}` : e.name; if (r === "v" || r === "node_modules" || r === "__scraper" || e.name.startsWith(".")) return []; return e.isDirectory() ? w(r) : [r]; }); tracked = w(""); }
+const served = tracked.filter((f) => !f.startsWith("v/") && !f.startsWith(".") && f !== "netlify.toml" && TEXT.test(f) && !isBlocked(f) && fs.existsSync(`${SITE}/${f}`));
+if (served.length < 250) { console.error(`⚠️  INDETERMINATE — only ${served.length} served files found`); process.exit(2); }
+const OWNER = /\bchris\b|\bchristopher\b|kapranos/i;
+for (const f of served) {
+  let s = fs.readFileSync(`${SITE}/${f}`, "utf8");
+  if (f === "data/us-places.json") s = s.replace(/\["Christopher(?: Creek)?","[A-Z]{2}"\]/g, "");
+  if (OWNER.test(s)) { const i = s.search(OWNER); fail(`${f} names the owner: "${s.slice(Math.max(0, i - 40), i + 30).replace(/\s+/g, " ")}"`); }
+}
+if (/"Chris"/.test(read("netlify/functions/_fga-report-builder.js"))) fail("the audit follow-up to a prospect is signed with the owner's name");
+if (!/<div class="rga-signature-name">Rocket Growth Agency<\/div>/.test(read("shared/contract-doc.js")) || !/Authorized signatory<br>Date:/.test(read("shared/contract-doc.js"))) fail("the contract's signature block no longer signs as the company");
+
 const P = read("pricing/index.html"), H = read("index.html"), SG = read("start-growth-plan/index.html");
 for (const [n, s] of [["pricing", P], ["home", H]]) {
   if (!s.includes(LINE)) fail(`${n} lost the approved price line`);
@@ -71,4 +92,4 @@ for (const f of ["drip-content.sh", "blog-engine-cron.sh"]) {
   if (!/if \[ -z "\$\{RGA_ALLOW_TEMPLATE_DRIP:-\}" \]; then echo "HOLD[^\n]*exit 0; fi/.test(s)) fail(`${f}: the hold is gone, so template posts can publish and deploy by themselves`);
 }
 if (F.length) { console.error(`🔴 the sale, the name or a retired promise came back — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log(`✅ ${pub.length} public pages: no sale, no struck price, no owner's name, no Q&A; one plan with the approved line, the refund's condition and the founding terms; the cap stops at 5; the drip is on hold`);
+console.log(`✅ ${pub.length} public pages: no sale, no struck price, no Q&A; ${served.length} served files without the owner's name (v/ excluded); one plan with the approved line, the refund's condition and the founding terms; the cap stops at 5; the drip is on hold`);

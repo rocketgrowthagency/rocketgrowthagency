@@ -8,7 +8,7 @@
 //   · no client copy names a step by a literal number ("See step 6") — it reads clientStepNo
 //   · "What RGA did": only steps with a playbook clientFeed line, done only, the newest event decides, never payload.summary —
 //     in the endpoint, the Monday digest, and the admin's "Client sees" line
-//   · "What to expect" says what the public site says (30–60 days · 3–6 months) and promises no rank/leads/revenue; so does the recap
+//   · "What to expect" gives its timing (30–60 days · 3–6 months; the public site's one line differs, logged) and promises no rank/leads/revenue; so does the recap
 //   exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
@@ -97,7 +97,8 @@ if (!/const clientSees = \(r\) =>/.test(ADM) || !/Client sees: &ldquo;/.test(ADM
 if (!/if \(!st\) return/.test(P) || !/if \(st\.error\) return/.test(P) || !/No finished steps in the last 14 days/.test(P)) fail("the feed card no longer keeps loading / failed / nothing-finished apart");
 // ── 6. what to expect = the site's words, no promises
 const exp = lift(P, "whatToExpectHtml");
-for (const [where, t] of [["pricing page", PRICING], ["FAQ", FAQ]]) if (!/30–60 days/.test(t) || !/3–6 months/.test(t)) fail(`the ${where} no longer says 30–60 days / 3–6 months — re-check "What to expect" against it`);
+// 🔒 10-31 website_audit_v1_v2 row 29: the public site now says one honest line and no date. The portal card below still gives its own timing (portal cards were out of that build's scope, logged in pending tasks), so this checks the site's line and the card's no-promise line, not that they match.
+for (const [where, t] of [["pricing page", PRICING], ["FAQ", FAQ]]) if (!/We don't promise a date\./.test(t)) fail(`the ${where} lost its line about time`);
 if (!/30–60 days/.test(exp) || !/3–6 months/.test(exp) || !/We never promise/.test(exp)) fail("\"What to expect\" doesn't say the site's timing or drops the no-promise line");
 if (/guarantee|#1 in|top 3 in/i.test(exp.replace(/A #1 spot/, ""))) fail("\"What to expect\" promises a ranking");
 if (!/Fuller results usually take 3 to 6 months\. We never promise a #1 spot/.test(ADM)) fail("the kickoff recap doesn't carry the same timing + no-promise line");

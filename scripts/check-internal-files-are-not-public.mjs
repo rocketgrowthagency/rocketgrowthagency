@@ -12,12 +12,12 @@ const REAL = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const toml = fs.readFileSync(`${SITE}/netlify.toml`, "utf8");
 const fail = [];
 const blocked = new Set([...toml.matchAll(/\[\[redirects\]\][^[]*?from = "([^"]+)"[^[]*?status = 404\s*\n\s*force = true/g)].map((m) => m[1]));
-const MUST_BLOCK = ["/netlify/*", "/scripts/*", "/supabase/*", "/research_notes/*", "/tests/*", "/docs/*", "/reports/*", "/.claude/*", "/.githooks/*", "/CLAUDE.md", "/PROJECT_CONTEXT.md", "/RGA-ASSET-GUARDRAILS.md", "/.github/*", "/.vscode/*", "/package.json", "/package-lock.json", "/stylelint.config.js", "/data/playbooks/playbooks.json"];
+const MUST_BLOCK = ["/netlify/*", "/scripts/*", "/supabase/*", "/research_notes/*", "/tests/*", "/docs/*", "/reports/*", "/.claude/*", "/.githooks/*", "/CLAUDE.md", "/PROJECT_CONTEXT.md", "/RGA-ASSET-GUARDRAILS.md", "/.github/*", "/.vscode/*", "/package.json", "/package-lock.json", "/stylelint.config.js", "/data/playbooks/playbooks.json", "/data/rga-admin-logins.json", "/data/client-facts.json", "/data/geography-models.json", "/data/outreach-verticals.json", "/data/playbooks/mature.json", "/_site-snapshots/*"];
 for (const b of MUST_BLOCK) if (!blocked.has(b)) fail.push(`${b} isn't blocked at the edge`);
 // the public side, decided by name
 const PUBLIC = new Set(process.env.PUBLIC_NAMES ? process.env.PUBLIC_NAMES.split(",") : []);
 const IS_PUBLIC = (n) => PUBLIC.has(n) || /\.(html|css|js|xml|txt|ico|png|jpe?g|svg|webp|webmanifest)$/.test(n) && n !== "stylelint.config.js";
-const PUBLIC_DIRS = ["v", "images", "blog", "local-seo", "industries", "shared", "data", "admin", "portal", "services", "vendor", "free-growth-audit", "x", "terms", "client-login", "contact", "faq", "app", "demo", "state-of-local-seo", "start-growth-plan", "process", "privacy", "pricing"];
+const PUBLIC_DIRS = ["v", "images", "blog", "local-seo", "industries", "shared", "data", "admin", "portal", "services", "vendor", "free-growth-audit", "terms", "client-login", "contact", "faq", "app", "demo", "state-of-local-seo", "start-growth-plan", "process", "privacy", "pricing"];
 const names = process.env.REPO_NAMES ? process.env.REPO_NAMES.split(",") : [...new Set(execFileSync("git", ["-C", REAL, "ls-files"], { encoding: "utf8", maxBuffer: 1 << 28 }).split("\n").filter(Boolean).map((f) => f.split("/")[0]))];
 const SERVER_ONLY = new Set(["netlify.toml", ".gitignore", ".stylelintrc", ".netlifyignore", ".nvmrc", "_redirects", "_headers"]);
 for (const n of names) {

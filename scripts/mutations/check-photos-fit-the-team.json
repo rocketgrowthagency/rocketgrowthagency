@@ -86,7 +86,7 @@
  [
   "no spinner on the team choice",
   "portal",
-  "  // 🔒 the pressed choice spins until the refit is saved (Chris 10-15: \"when i click 2 … theres no spinner\")\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
+  "  // 🔒 the pressed choice spins until the refit is saved (the owner 10-15: \"when i click 2 … theres no spinner\")\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
   "",
   1
  ],

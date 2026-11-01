@@ -25,9 +25,7 @@ import { fileURLToPath } from 'node:url';
 const SCRAPER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WEB = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website VS Code');
 const TEMPLATE = 'file://' + path.join(SCRAPER_DIR, 'scripts', 'og-card-render.html');
-// The /demo/ card is a bespoke, fixed layout (portal dashboard, mirrors the homepage teaser) — NOT the shared
-// Map-Pack ogCard() template. It's a self-contained 1200x630 card rendered from its own file (params ignored).
-const DEMO_TEMPLATE = 'file://' + path.join(SCRAPER_DIR, 'scripts', 'og-card-demo.html');
+// 🔴 website_audit_v1_v2 (10-31): the /demo/ card had its own template showing #8 to #1 and 83% in Map Pack. It now uses the shared one, labeled sample.
 const IND_DIR = path.join(WEB, 'industries');
 const BLOG_DIR = path.join(WEB, 'blog');
 const OUT_DIR = path.join(WEB, 'images', 'assets', 'og');
@@ -96,11 +94,11 @@ function patchMeta(pageFile, imgUrl) {
 }
 
 async function shoot(page, params, outName) {
-  const url = params.type === 'demo' ? DEMO_TEMPLATE : (TEMPLATE + '?' + new URLSearchParams(params).toString());
+  const url = TEMPLATE + '?' + new URLSearchParams(params).toString();
   await page.goto(url, { waitUntil: 'networkidle0' });
   await page.evaluate(async () => { if (document.fonts && document.fonts.ready) await document.fonts.ready; });
   await new Promise((r) => setTimeout(r, 150));   // settle webfont paint
-  const out = path.join(OUT_DIR, outName);
+  const out = outName === '../../../og-image.jpg' ? path.join(WEB, 'og-image.jpg') : path.join(OUT_DIR, outName);
   await page.screenshot({ path: out, type: 'jpeg', quality: 92 });
   return out;
 }
@@ -127,6 +125,8 @@ function collectTargets() {
     const slugs = oneBlog ? [oneBlog] : fs.readdirSync(BLOG_DIR).filter((d) => d !== 'index.html' && fs.existsSync(path.join(BLOG_DIR, d, 'index.html')));
     for (const slug of slugs) t.push({ kind: 'blog', slug, params: { type: 'blog', title: blogTitle(slug) }, page: path.join(BLOG_DIR, slug, 'index.html'), file: `blog-${slug}.jpg` });
   }
+  // the homepage's flagship card, shared with the pages that have no card of their own
+  if (wantAll || has('--home')) t.push({ kind: 'home', slug: 'home', params: { type: 'home' }, page: '', file: '../../../og-image.jpg' });
   return t;
 }
 

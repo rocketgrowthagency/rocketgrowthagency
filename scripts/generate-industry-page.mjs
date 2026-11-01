@@ -86,6 +86,7 @@ FIRST, silently establish THIS trade's reality (use it throughout; do NOT output
 Then write the page GROUNDED in that reality.
 
 HARD UNIQUENESS RULES:
+- TRUTH RULES, never break them: RGA is a new agency with no clients yet, so never say 'our clients', 'many clients', 'we specialize', 'our team', 'dedicated team', 'in-house' or 'proven'. Never give a timeline, a percentage or a 'studies show' claim. Never promise a ranking. Never mention backlinks or link building. Say 'recent customers', never 'happy customers' or 'positive reviews'. RGA doesn't manage or reply to reviews: it prepares a request the client sends to recent customers and gives guidance on negative reviews.
 - OPENING (heroSub): lead with a trade-TRUE detail — a specific trigger event, number, season, or the exact phrase this trade's customer searches. Choose the hook that fits the intent (vivid scenario / a stat / a myth-buster / the trigger moment).
 - BANNED phrases — never use, anywhere, ESPECIALLY the opener + meta: "Boost your ${vertical}", "tailored Google Maps SEO", "In today's competitive landscape", "In today's digital", "Are you a ${vertical} looking to", "Whether you're a", "Struggling to be found", "take your business to the next level", "stand out from the competition". Any opener that reads the same with the trade word swapped = REWRITE it.
 - ~30% of the page must be trade-specific SUBSTANCE (real search phrases, GBP categories, seasonality, licensing, objections) — not generic benefits or synonym-spin.
@@ -172,7 +173,7 @@ const HEADER = `  <div class="topbar">
     <div class="topbar-inner">
       <div>Google Maps Local SEO For Local Businesses</div>
       <div class="topbar-right">
-        <a href="tel:+14242422040" class="tb-contact" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="tb-label">Call (424) 242-2040</span></a><a href="sms:+14242422040" class="tb-contact" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="tb-label">Text</span></a>
+        <a href="tel:+14242422040" class="tb-contact" aria-label="Call (424) 242-2040" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="tb-label">Call (424) 242-2040</span></a><a href="sms:+14242422040" class="tb-contact" aria-label="Text (424) 242-2040" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="tb-label">Text</span></a>
       </div>
     </div>
   </div>
@@ -228,7 +229,7 @@ const HEADER = `  <div class="topbar">
 const FOOTER = `    <footer class="footer">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="/" class="footer-logo" aria-label="Rocket Growth Agency home"><img src="/images/assets/rga_icon-header.png?v=20260706b" alt="Rocket Growth Agency" /><span class="footer-word">Rocket<span class="fg">Growth</span>Agency</span></a>
+        <a href="/" class="footer-logo" aria-label="Rocket Growth Agency home"><img src="/images/assets/rga_icon-header.png?v=20260904a" alt="Rocket Growth Agency" /><span class="footer-word">Rocket<span class="fg">Growth</span>Agency</span></a>
         <p class="footer-tag">Google Maps Local SEO for local service businesses &mdash; focused on calls, forms, and measurable growth.</p>
         <p class="footer-address" style="color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5">9937 Jefferson Blvd, Suite 120, Culver City, CA 90232</p>
         <div class="footer-contact">
@@ -238,10 +239,10 @@ const FOOTER = `    <footer class="footer">
         </div>
       </div>
       <nav class="footer-col"><h4>Services</h4><a href="/services/google-maps-local-seo/">Google Maps SEO</a><a href="/services/gbp-optimization/">GBP Optimization</a><a href="/services/local-seo-website-support/">Website Support</a><a href="/services/">All Services</a></nav>
-      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/industries/">Industries</a><a href="/local-seo/">Local SEO by City</a><a href="/state-of-local-seo/">Local SEO Data Report</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
+      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/demo/">Demo</a><a href="/industries/">Industries</a><a href="/local-seo/">Local SEO by City</a><a href="/state-of-local-seo/">Local SEO Data Report</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
       <nav class="footer-col"><h4>Company</h4><a href="/free-growth-audit/">Free Growth Audit</a><a href="/contact/">Contact</a><a href="/start-growth-plan/">Start Growth Plan</a></nav>
     </div>
-    <div class="footer-bottom"><div class="footer-bottom-inner"><span>&copy; 2026 Rocket Growth Agency. All rights reserved.</span><span class="footer-legal"><a href="/privacy/">Privacy Policy</a> &middot; <a href="/terms/">Terms of Service</a></span></div></div>
+    <div class="footer-bottom"><div class="footer-bottom-inner"><span>&copy; 2026 Rocket Growth Agency. All rights reserved.</span><span class="footer-legal"><a href="/privacy/">Privacy Policy</a> &middot; <a href="/terms/">Terms of Service</a> &middot; <a href="https://support.google.com/business/answer/7163406" target="_blank" rel="noopener">Working with a third party</a></span></div></div>
   </footer>
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
 // Minimal scoped extras — the page otherwise reuses the homepage's own components
@@ -462,8 +463,8 @@ function render(vertical, slug, c) {
   <link rel="apple-touch-icon" href="/images/assets/apple-touch-icon.png?v=20260706b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260710a" />
-  <script defer src="/script.js?v=20260706e"></script>
+  <link rel="stylesheet" href="/style.css?v=20261031w" />
+  <script defer src="/script.js?v=20261031w"></script>
   <script type="application/ld+json">
 ${serviceSchema}
   </script>
@@ -488,7 +489,7 @@ ${HEADER}
           <p class="ix-sub">${esc(c.heroSub)}</p>
           <div class="ix-cta-row">
             <a class="ix-btn" href="/free-growth-audit/">Get Your Free Growth Audit ${IXSVG.arrow}</a>
-            <span class="ix-trust">${IXSVG.check} No minimum term &bull; Results you can measure</span>
+            <span class="ix-trust">${IXSVG.check} No minimum term &bull; You approve website changes</span>
           </div>
         </div>
         <div class="mp-wrap">
@@ -500,7 +501,7 @@ ${HEADER}
             <div class="mp-list">
               <div class="mp-row mp-top">
                 <span class="mp-pin">${IXSVG.pin}</span>
-                <div class="mp-info"><div class="mp-name">Your Business</div><div class="mp-stars"><span class="st">${IXSVG.starf.repeat(5)}</span> 5.0 (128 reviews)</div></div>
+                <div class="mp-info"><div class="mp-name">Your Business</div><div class="mp-stars"><span class="st">${IXSVG.starf.repeat(5)}</span> Sample</div></div>
                 <span class="mp-badge">Top 3</span>
               </div>
               <div class="mp-row">
@@ -513,7 +514,7 @@ ${HEADER}
               </div>
             </div>
           </div>
-          <span class="mp-float">${IXSVG.trend} Ranked #1 in your area</span>
+          <span class="mp-float">${IXSVG.trend} Sample. Made-up business.</span>
         </div>
       </div>
     </section>
@@ -682,8 +683,8 @@ function buildHub() {
   window.addEventListener('pageshow',function(){if(!location.hash)window.scrollTo(0,0);});</script>
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MCGMSCCR');</script>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Industries We Serve — Local SEO by Industry | Rocket Growth Agency</title>
-  <meta name="description" content="Done-for-you Google Maps local SEO, tailored by industry. See how Rocket Growth Agency helps your business type rank in the Maps top 3 and turn local search into booked calls." />
+  <title>Local SEO by Industry | Rocket Growth Agency</title>
+  <meta name="description" content="Done-for-you Google Maps local SEO, by industry. See what we do for your type of business, and get a free audit that shows where you rank today." />
   <link rel="canonical" href="${url}" /><meta name="robots" content="index,follow" />
   <meta property="og:title" content="Industries We Serve | Rocket Growth Agency" /><meta property="og:description" content="Done-for-you Google Maps local SEO, tailored by industry." /><meta property="og:url" content="${url}" /><meta property="og:image" content="https://www.rocketgrowthagency.com/images/assets/rga_icon-header.png" />
   <link rel="icon" href="/favicon.svg?v=20260706b" type="image/svg+xml" />
@@ -691,7 +692,7 @@ function buildHub() {
   <link rel="apple-touch-icon" href="/images/assets/apple-touch-icon.png?v=20260706b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260710a" /><script defer src="/script.js?v=20260706e"></script>
+  <link rel="stylesheet" href="/style.css?v=20261031w" /><script defer src="/script.js?v=20261031w"></script>
   <style id="ind-visuals">
     .ind-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;margin-top:1.5rem;}
     .ind-cat-card{display:flex;flex-direction:column;gap:.45rem;padding:1.5rem 1.6rem;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit;transition:.15s ease;}
@@ -743,16 +744,16 @@ ${HEADER}
         <div>
           <p class="ih-eyebrow">Industries</p>
           <h1 class="ih-h1">Local SEO, tailored to <span class="solid-blue">your industry</span></h1>
-          <p class="ih-sub">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see exactly how we get you ranking in the top 3 — and the free Growth Audit that shows where you stand today.</p>
+          <p class="ih-sub">We do done-for-you Google Maps local SEO for local service businesses. Find your industry to see what we do, and get the free Growth Audit that shows where you stand today.</p>
           <a class="ih-cta" href="/free-growth-audit/">Get Your Free Growth Audit</a>
         </div>
         <div class="mapwrap">
           <div class="map-card">
             <div class="map-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> your trade near me</div>
             <div class="map" id="ihmap"></div>
-            <div class="map-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5l-5-5L2 17"/><path d="M16 7h6v6"/></svg> Ranked #1 in the Map Pack</div>
+            <div class="map-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5l-5-5L2 17"/><path d="M16 7h6v6"/></svg> Sample. Made-up business.</div>
           </div>
-          <div class="ih-float"><span class="st" id="ihstars"></span> 5.0 &middot; top 3</div>
+          <div class="ih-float"><span class="st" id="ihstars"></span> Sample</div>
         </div>
       </div>
       <script>

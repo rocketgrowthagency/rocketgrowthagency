@@ -129,6 +129,8 @@ function schemaBlocks({ vertical, city, state, canonical, faq, metaDescription }
 
 async function buildPage(slug, index) {
   const bench = JSON.parse(fs.readFileSync(path.join(BENCH_DIR, `${slug}.json`), 'utf8'));
+  // 🔴 website_audit_v1_v2 (10-31): two pages were built from an empty audit and published "undefined reviews" and an invented 4.7 as "real numbers".
+  if (bench.error || !bench.reviewsTop3Avg) throw new Error(`no audit data for ${slug}: ${bench.error || 'no review numbers'}. Not building a page on nothing.`);
   const p = parseSearch(bench.searchTerm);
   if (!p) throw new Error(`can't parse searchTerm "${bench.searchTerm}"`);
   const { vertical, city, state } = p;
@@ -139,8 +141,8 @@ async function buildPage(slug, index) {
 
   // --- AI: unique, DEEP localized prose (anti-doorway). Real DATA lives in the stats + landscape sections. ---
   let ai = {
-    metaDescription: `Local SEO for ${vertical} in ${city}, ${state} — rank in the Google Map Pack and turn local searches into calls. Free growth audit, no contracts.`,
-    heroSub: `We help ${vLow} in ${city} climb into the Google Maps top 3 — where the ready-to-hire local searches actually click.`,
+    metaDescription: `Local SEO for ${vertical} in ${city}, ${state} — see where you rank in the Google Map Pack. Free growth audit.`,
+    heroSub: `We do Google Maps local SEO for ${vLow} in ${city}. You approve website changes and see each profile change in your portal.`,
     intentParas: [`When someone in ${city} needs a ${vLow.replace(/s$/, '')}, they open Google, type a "near me" search, and pick from the three businesses in the map pack. If you're not in that pack, you're not in the running.`],
     problemParas: [`Most ${vLow} in ${city} are effectively invisible on Google Maps for the searches that bring in work.`],
     landscapePara: `Breaking into the ${city} top 3 is a review-count, category, and profile-trust problem — exactly the work we do.`,
@@ -157,10 +159,10 @@ async function buildPage(slug, index) {
 "intentParas":["2 paragraphs (3-4 sentences each) on SEARCH INTENT: what a ${city} customer is really doing when they search for a ${vLow.replace(/s$/,'')}, why the map pack decides who they call, and what it costs you to be below the top 3"],
 "problemParas":["2 paragraphs (3-4 sentences each): the specific reasons ${vLow} in ${city} lose the map pack — reviews, category signals, service-area setup, an outdated site — and the local ${city} competitive reality"],
 "landscapePara":"1 paragraph (3-4 sentences) framing what it actually takes to compete in ${city} for ${vLow} (tie to review count + category + profile trust, city-specific)",
-"processIntro":"1 short paragraph introducing how RGA ranks a ${vLow} business in ${city}",
-"whyParas":["2 paragraphs (3-4 sentences each) on why a ${city} ${vLow.replace(/s$/,'')} owner should pick a done-for-you partner: what gets done, that you own everything, no contracts, transparent reporting — ${vLow}-flavored"],
+"processIntro":"1 short paragraph introducing how RGA works on a ${vLow} business in ${city}",
+"whyParas":["2 paragraphs (3-4 sentences each) on why a ${city} ${vLow.replace(/s$/,'')} owner should pick a done-for-you partner: what gets done, that the client approves website changes and sees each profile change — ${vLow}-flavored"],
 "faq":[{"q":"...","a":"..."} x6]}
-The 6 FAQs MUST be ${city}+${vLow} specific and genuinely useful (e.g. how long to rank in ${city}, how many reviews to compete, service-area vs storefront, do you work with ${vLow}, what you actually change, how results are measured). Each answer 2-3 sentences. Apply a trade-swap AND city-swap test: rewrite anything that would still read fine for a different trade or a different city.`;
+The 6 FAQs MUST be ${city}+${vLow} specific and genuinely useful (e.g. how many reviews the ${city} leaders have, service-area vs storefront, what you actually change, how results are measured). Each answer 2-3 sentences. Apply a trade-swap AND city-swap test: rewrite anything that would still read fine for a different trade or a different city. TRUTH RULES, never break them: RGA is a new agency with no clients yet, so never say 'our clients', 'many clients', 'we specialize', 'our team', 'dedicated team', 'in-house' or 'proven'. Never give a timeline, a percentage or a 'studies show' claim. Never promise a ranking. Never mention backlinks or link building. Say 'recent customers', never 'happy customers' or 'positive reviews'. RGA doesn't manage or reply to reviews: it prepares a request the client sends to recent customers and gives guidance on negative reviews.`;
       const parsed = JSON.parse(await openai('gpt-4o-mini', [{ role: 'system', content: sys }, { role: 'user', content: usr }], 2400, 0.6));
       ai = { ...ai, ...parsed };
     } catch (e) { console.error(`  ⚠ AI prose failed for ${slug} (${e.message}) — using data-backed fallback copy.`); }
@@ -204,7 +206,7 @@ The 6 FAQs MUST be ${city}+${vLow} specific and genuinely useful (e.g. how long 
         <p class="ix-sub">${esc(ai.heroSub)}</p>
         <div class="ix-cta-row">
           <a class="ix-btn" href="/free-growth-audit/">See where you rank in ${esc(city)} ${arrow}</a>
-          <span class="ix-trust">${check} No minimum term &bull; Results you can measure</span>
+          <span class="ix-trust">${check} No minimum term &bull; You approve website changes</span>
         </div>
       </div>
       <aside class="ix-why" style="align-self:start">
@@ -247,8 +249,8 @@ The 6 FAQs MUST be ${city}+${vLow} specific and genuinely useful (e.g. how long 
     <p class="ix-lead" style="margin-top:.9rem;max-width:70ch">${esc(ai.processIntro)}</p>
     <div class="ix-grid3" style="margin-top:1.6rem">
       <article class="ix-card"><div class="ix-ico">${icoGBP}</div><h3>Google Business Profile</h3><p>Primary-category alignment to <strong>${esc(cat)}</strong>, ${esc(city)} service-area tuning, services, photos, and the trust signals that decide who Google shows in the top 3.</p></article>
-      <article class="ix-card"><div class="ix-ico">${icoStar}</div><h3>Reviews &amp; reputation</h3><p>A steady review-growth engine to close the gap to the ${r3}-review median the ${esc(city)} leaders hold &mdash; the single biggest lever on your map rank.</p></article>
-      <article class="ix-card"><div class="ix-ico">${icoGrid}</div><h3>Geo-grid rank tracking</h3><p>We map exactly where you rank across ${esc(city)} on a grid &mdash; block by block &mdash; so you can see the gaps close instead of guessing.</p></article>
+      <article class="ix-card"><div class="ix-ico">${icoStar}</div><h3>Reviews &amp; reputation</h3><p>Review requests you send to recent customers, to help close the gap to the ${r3}-review median the ${esc(city)} leaders hold.</p></article>
+      <article class="ix-card"><div class="ix-ico">${icoGrid}</div><h3>Geo-grid rank tracking</h3><p>A monthly rank map for your main keyword across ${esc(city)}, so you can see where you show up.</p></article>
       <article class="ix-card"><div class="ix-ico">${icoSite}</div><h3>Local website work</h3><p>The service pages, local relevance, and call/form conversion paths that turn a ${esc(city)} map-pack view into a booked ${esc(vLow.replace(/s$/, ''))} appointment.</p></article>
     </div>
   </div></section>

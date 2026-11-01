@@ -165,7 +165,7 @@ if (!fail.some((f) => /no longer in the console/.test(f))) {
   } else pass.push("what the operator opened or closed survives a re-render");
 
   const t = code.indexOf('closest("[data-ob-phase-toggle]")');
-  const th = t < 0 ? "" : code.slice(t, t + 900);
+  const th = t < 0 ? "" : code.slice(t, t + 1400);
   // 🔴 BOTH DIRECTIONS. Matching either add() passed a mutation that recorded only the CLOSE —
   // so opening a phase by hand still evaporated on the next render, which is the reported bug.
   const recordsOpen = /_obPhaseOpen\.add\(key\)/.test(th);

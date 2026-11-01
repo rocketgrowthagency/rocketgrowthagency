@@ -289,7 +289,7 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
     <div class="topbar-inner">
       <div>Google Maps Local SEO For Local Businesses</div>
       <div class="topbar-right">
-        <a href="tel:+14242422040" class="tb-contact" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="tb-label">Call (424) 242-2040</span></a><a href="sms:+14242422040" class="tb-contact" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="tb-label">Text</span></a>
+        <a href="tel:+14242422040" class="tb-contact" aria-label="Call (424) 242-2040" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="tb-label">Call (424) 242-2040</span></a><a href="sms:+14242422040" class="tb-contact" aria-label="Text (424) 242-2040" style="white-space:nowrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="tb-label">Text</span></a>
       </div>
     </div>
   </div>
@@ -345,7 +345,7 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
   const FOOTER = `    <footer class="footer">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="/" class="footer-logo" aria-label="Rocket Growth Agency home"><img src="/images/assets/rga_icon-header.png?v=20260706b" alt="Rocket Growth Agency" /><span class="footer-word">Rocket<span class="fg">Growth</span>Agency</span></a>
+        <a href="/" class="footer-logo" aria-label="Rocket Growth Agency home"><img src="/images/assets/rga_icon-header.png?v=20260904a" alt="Rocket Growth Agency" /><span class="footer-word">Rocket<span class="fg">Growth</span>Agency</span></a>
         <p class="footer-tag">Google Maps Local SEO for local service businesses &mdash; focused on calls, forms, and measurable growth.</p>
         <p class="footer-address" style="color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5">9937 Jefferson Blvd, Suite 120, Culver City, CA 90232</p>
         <div class="footer-contact">
@@ -355,10 +355,10 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
         </div>
       </div>
       <nav class="footer-col"><h4>Services</h4><a href="/services/google-maps-local-seo/">Google Maps SEO</a><a href="/services/gbp-optimization/">GBP Optimization</a><a href="/services/local-seo-website-support/">Website Support</a><a href="/services/">All Services</a></nav>
-      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/industries/">Industries</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
+      <nav class="footer-col"><h4>Explore</h4><a href="/process/">Process</a><a href="/demo/">Demo</a><a href="/industries/">Industries</a><a href="/local-seo/">Local SEO by City</a><a href="/state-of-local-seo/">Local SEO Data Report</a><a href="/pricing/">Pricing</a><a href="/faq/">FAQ</a><a href="/blog/">Blog</a></nav>
       <nav class="footer-col"><h4>Company</h4><a href="/free-growth-audit/">Free Growth Audit</a><a href="/contact/">Contact</a><a href="/start-growth-plan/">Start Growth Plan</a></nav>
     </div>
-    <div class="footer-bottom"><div class="footer-bottom-inner"><span>&copy; 2026 Rocket Growth Agency. All rights reserved.</span><span class="footer-legal"><a href="/privacy/">Privacy Policy</a> &middot; <a href="/terms/">Terms of Service</a></span></div></div>
+    <div class="footer-bottom"><div class="footer-bottom-inner"><span>&copy; 2026 Rocket Growth Agency. All rights reserved.</span><span class="footer-legal"><a href="/privacy/">Privacy Policy</a> &middot; <a href="/terms/">Terms of Service</a> &middot; <a href="https://support.google.com/business/answer/7163406" target="_blank" rel="noopener">Working with a third party</a></span></div></div>
   </footer>
   <a class="btn floating-cta" href="/free-growth-audit/#audit-form">Free Growth Audit</a>`;
 
@@ -380,8 +380,8 @@ ${og}
   <link rel="apple-touch-icon" href="/images/assets/apple-touch-icon.png?v=20260706b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css?v=20260710a" />
-  <script defer src="/script.js?v=20260706e"></script>
+  <link rel="stylesheet" href="/style.css?v=20261031w" />
+  <script defer src="/script.js?v=20261031w"></script>
   <script type="application/ld+json">
 ${blogSchema}
   </script>
@@ -457,7 +457,7 @@ ${sectionsHtml}
 ${related}
       <h2 id="faq">Frequently asked questions</h2>
 ${faqHtml}
-      <div class="bp-author"><span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span><div><strong>Written by Rocket Growth Agency</strong><p>We help local service businesses rank in the Google Maps top 3 &mdash; and turn that visibility into calls. Maps-first, in-house, month-to-month.</p></div></div>
+      <div class="bp-author"><span class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span><div><strong>Written by Rocket Growth Agency</strong><p>We do Google Maps local SEO for local service businesses. You approve website changes and see each profile change in your portal.</p></div></div>
       </div>
       <aside class="bp-side">
         <div class="bp-toc"><h4>On this page</h4>${tocHtml}<a href="#faq">FAQ</a></div>

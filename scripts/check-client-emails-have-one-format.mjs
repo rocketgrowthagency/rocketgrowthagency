@@ -97,14 +97,14 @@ for (const [name, src] of Object.entries(copies)) {
 }
 
 // ── 6. the branded documents ──
-if (!/Rocket Growth Agency · \(424\) 242-2040/.test(C.doc) || !/parts\.push\("", "Chris", "Rocket Growth Agency · \(424\) 242-2040"\)/.test(C.doc)) fail("shared/email-doc.js lost the one sign-off (HTML or plain twin)");
+if (!/Rocket Growth Agency · \(424\) 242-2040/.test(C.doc) || !/parts\.push\("", "Rocket Growth Agency · \(424\) 242-2040"\)/.test(C.doc)) fail("shared/email-doc.js lost the one sign-off (HTML or plain twin)");
 try {
   process.removeAllListeners("warning");   // email-doc.js is ESM without "type": node's notice about it is noise here
   const doc = await import(pathToFileURL(`${SITE}/shared/email-doc.js`).href);
   const twin = doc.plainTwin({ title: "Receipt", intro: "Hi Pat, thanks for &quot;Pat&#39;s Plumbing&quot; &lt;LLC&gt; &amp; co.", lines: [], cta: { url: "https://x.example/portal", label: "Update your card →" } });
   if (/&quot;|&lt;|&gt;|&amp;|&#39;/.test(twin) || !twin.includes(`"Pat's Plumbing" <LLC> & co.`)) fail("the plain twin leaks an HTML entity (&quot; …) — strip must decode every entity esc() makes");
   if (/→/.test(twin)) fail("the plain twin's link label still carries the → arrow");
-  if (!/\nChris\nRocket Growth Agency · /.test(twin)) fail("the plain twin is unsigned");
+  if (!/\nRocket Growth Agency · /.test(twin)) fail("the plain twin is unsigned");
   const html = doc.buildBrandedEmail({ title: "T", intro: "Hi", bodyHtml: "<p>x</p>" });
   if (sigCount(html) !== 1) fail(`the branded email must carry the sign-off once (found ${sigCount(html)})`);
 } catch (e) { console.error(`⚠️  INDETERMINATE — shared/email-doc.js did not load: ${e.message}`); process.exit(2); }

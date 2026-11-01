@@ -75,6 +75,11 @@ const SURFACES = {
   // EXCLUDED — deliberately NOT forced to match the offer. Each reason is load-bearing.
   "docs/sales-rep-offer.html":                  ["EXCLUDED", "REP earnings model (1/2/3 clients) — $3,750 is 3 × $1,250, not our price"],
   "docs/sales-rep-compensation.html":           ["EXCLUDED", "rep commission model, not the offer"],
+  "research_notes/Service agreement in depth/service_agreement.md": ["EXCLUDED", "research notes dated 10-31 quoting the contract as it stood, kept as written; not RGA's offer"],
+  "research_notes/Video and audit report audit/free_growth_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the pages as they stood, kept as written; not RGA's offer"],
+  "research_notes/Video and audit report audit/video_generator.md": ["EXCLUDED", "research notes dated 10-31 quoting the video script as it stood, kept as written; not RGA's offer"],
+  "research_notes/Website audit/website_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the site as it stood, kept as written; not RGA's offer"],
+  "docs/data-file-notes.md": ["EXCLUDED", "notes moved out of the public data files on 10-31, quoting the old sale history; blocked at the edge; not RGA's offer"],
   "research_notes/Legal and operations in depth/legal_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: lawyer, insurance and tax costs and the offer at that time, kept as written; not RGA's offer"],
   "research_notes/Onboarding and retention in depth/onboarding_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: quoting the contract and other firms' terms, kept as written; not RGA's offer"],
   "research_notes/RGA feature comparison/feature_comparison.md": ["EXCLUDED", "research notes dated 10-31: other companies' prices, kept as written; not RGA's offer"],

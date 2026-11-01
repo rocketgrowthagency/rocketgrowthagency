@@ -58,7 +58,7 @@
  [
   "the document twin loses its sign-off",
   "emaildoc",
-  "  parts.push(\"\", \"Chris\", \"Rocket Growth Agency \u00b7 (424) 242-2040\");",
+  "  parts.push(\"\", \"Rocket Growth Agency \u00b7 (424) 242-2040\");",
   "",
   1
  ],

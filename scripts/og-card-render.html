@@ -70,7 +70,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g
 
 function mapsPanel(win){
   return '<div class="maps"><div class="maps-hd">'+PIN+'Google Maps</div>'
-    + '<div class="m-row win"><div class="m-num">1</div><div class="m-body"><div class="m-name">'+esc(win)+'</div><div class="m-meta">'+STARS+' · Open now</div></div></div>'
+    + '<div class="m-row win"><div class="m-num">1</div><div class="m-body"><div class="m-name">'+esc(win)+'</div><div class="m-meta">'+STARS+' · Sample</div></div></div>'
     + '<div class="m-row dim"><div class="m-num">2</div><div class="m-body"><div class="m-bar"></div><div class="m-bar s"></div></div></div>'
     + '<div class="m-row dim"><div class="m-num">3</div><div class="m-body"><div class="m-bar"></div><div class="m-bar s"></div></div></div></div>';
 }
@@ -92,11 +92,12 @@ function ogCard({pill, h, accent, accentWord, sub, win, small, size}){
 // og-image.jpg; utility pages (faq/contact/legal) keep the shared card — not tailored.
 // Copy MIRRORS each page's real hero (eyebrow → pill, h1 → headline w/ key word accented, real subhead).
 const MARK = {
-  pricing:  {pill:'Google Maps Local SEO · Pricing',  h:'Google Maps Local SEO Pricing',                       accentWord:'Pricing',  size:'sm', sub:'Simple structure, clear scope, and an explicit execution model — built for map visibility and lead gains.'},
-  process:  {pill:'Google Maps Local SEO · Process',  h:'In-House Google Maps + Local SEO Process',            accentWord:'Process',  size:'xs', sub:'Maps performance from connected assets: GBP, website relevance, trust, conversion flow, monthly execution.'},
-  services: {pill:'Google Maps Local SEO · Services', h:'Everything you need to own the Map Pack in your city', accentWord:'Map Pack', size:'xs', sub:'Three connected services — Maps SEO, Google Business Profile, and website support — working as one system.'},
+  pricing:  {pill:'Google Maps Local SEO · Pricing',  h:'Google Maps Local SEO Pricing',                       accentWord:'Pricing',  size:'sm', sub:'One plan, one price, clear scope. Google Business Profile is free from Google. Our fee is for our work.'},
+  process:  {pill:'Google Maps Local SEO · How it works', h:'How the Google Maps work happens', accentWord:'Google Maps', size:'xs', sub:'Setup, website changes you approve, review requests and a plain monthly report.'},
+  services: {pill:'Google Maps Local SEO · Services', h:'One plan. Three parts of the same job.', accentWord:'Three parts', size:'xs', sub:'Your Google profile, your listings and reviews, and your website. You get all three.'},
   fga:      {pill:'Free Growth Audit',                h:'See Exactly Where You Rank on Google Maps',           accentWord:'Rank',     size:'sm', sub:'Your Maps ranking, GBP gaps, website signals, and citations — a scored report with your top 5 fixes.'},
-  demo:     {pill:'Client Portal · Live Demo',        h:'Explore a real client portal',                       accentWord:'portal',   size:'sm', sub:'See what every client sees — Dashboard, Map Rankings, Reports, Reviews and Setup, all in plain English.'},
+  demo:     {pill:'Sample portal', h:'See what your portal looks like', accentWord:'portal', size:'sm', sub:'Made-up business, made-up numbers. This shows the layout, not a result.'},
+  home:     {pill:'Google Maps local SEO', h:'Get found on Google Maps. See every change we make.', accentWord:'See every change we make.', size:'xs', sub:'Nothing goes live on your website until you approve that exact change.'},
 };
 
 // Copy templates — identical logic to the mockup; keeps headlines short + name-led so any length fits.
@@ -110,15 +111,15 @@ function build(p){
   if (type === 'blog'){
     let t = (p.get('title') || 'Local SEO, explained').trim();
     if (t.length > 42) t = t.slice(0,40).replace(/\s+\S*$/,'') + '…';
-    return ogCard({pill:'RGA Blog · Local SEO', h:t, accent:'', sub:'Practical local-SEO tactics to rank in the Google Maps top 3.', win, small:t.length>22});
+    return ogCard({pill:'RGA Blog · Local SEO', h:t, accent:'', sub:'Plain guides to local SEO and Google Maps.', win, small:t.length>22});
   }
   if (type === 'hub'){
-    return ogCard({pill:'Google Maps Local SEO', h:'Every local industry we', accent:'rank.', sub:'Dentists, lawyers, contractors, home services & more — into the Google Maps top 3.', win});
+    return ogCard({pill:'Google Maps Local SEO', h:'Local SEO by', accent:'industry.', sub:'Dentists, lawyers, contractors, home services and more. See what we do for yours.', win});
   }
   const n = (p.get('name') || 'Local business').trim();
-  const h = n + ' in the';
-  return ogCard({pill:'Google Maps Local SEO · '+n, h, accent:'Map Pack.',
-    sub:'We rank '+n.toLowerCase()+' into the Google Maps top 3 — turning local searches into calls.', win, small:(h+' Map Pack.').length>26});
+  const h = n + ' on';
+  return ogCard({pill:'Google Maps Local SEO · '+n, h, accent:'Google Maps.',
+    sub:'Google Maps local SEO for '+n.toLowerCase()+'. See where you rank, free.', win, small:(h+' Google Maps.').length>26});
 }
 document.getElementById('root').innerHTML = build(new URLSearchParams(location.search));
 document.title = 'og-ready';

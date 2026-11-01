@@ -588,7 +588,8 @@ run check-client-portal-tabs.mjs "the client portal tabs (approved 10-30: client
 run check-client-data-backup-works.mjs "the nightly client data backup copies every table and file whole, leaves no key on the drive, keeps old copies, fails loudly, and ran in the last 36 hours (rga_data_backup_plan_v1, Chris 10-31)"
 run check-internal-files-are-not-public.mjs "everything in the website repo is public by decision or blocked at the edge: server code, scripts and SQL were readable by anyone until 10-31"
 run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
-run check-the-sale-and-the-name-stay-gone.mjs "no sale, no struck price, no owner's name, no Q&A on any public page; one plan; the founding cap stops at 5"
+run check-the-sale-and-the-name-stay-gone.mjs "no sale, no struck price, no Q&A on any public page; no owner's name in any served file (v/ excluded); one plan; the founding cap stops at 5"
+run check-the-public-site-tells-the-truth.mjs "the public site says only what the contract and code back: approved words, no false lines, one footer with Google's notice, FAQ schema equals the page, exposed files blocked, wrong URLs 404, sitemap dates from history"
 run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, never change anything"
 # 🔒 System health (admin_system_health_v1, 10-31): every automated job checks in, silence is an alarm, and the Mac watches the watcher.
 run check-system-health-covers-every-job.mjs "every scheduled job is on the list, wrapped, on the right schedule, and the table and its guards match"
