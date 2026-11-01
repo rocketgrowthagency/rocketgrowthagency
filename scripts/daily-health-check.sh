@@ -588,6 +588,7 @@ run check-client-portal-tabs.mjs "the client portal tabs (approved 10-30: client
 run check-client-data-backup-works.mjs "the nightly client data backup copies every table and file whole, leaves no key on the drive, keeps old copies, fails loudly, and ran in the last 36 hours (rga_data_backup_plan_v1, Chris 10-31)"
 run check-internal-files-are-not-public.mjs "everything in the website repo is public by decision or blocked at the edge: server code, scripts and SQL were readable by anyone until 10-31"
 run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
+run check-google-keys-are-sealed.mjs "a Google sign-in key is never stored in the clear (pending_and_google_security_v1): sealed when saved, revealed only to use it, every stored key really is sealed"
 run check-core-changes-are-asked-each-time.mjs "a client's Google name, address, phone or main category changes only with their approval of that exact value (client_core_change_approval_v1): the guard refuses the rest, the send checks and reads back, put-back asks, the nightly check compares the main category"
 run check-google-changes-wait-for-consent.mjs "no Google profile write without the client's recorded OK (client_google_consent_v1): refused, withdrawn, unreadable all stop it; the tick is at Connect, the record in admin step 2; calls aren't recorded"
 run check-the-founding-plan-and-billing-day.mjs "the contract's money terms are what the code does (contract_v2_redline + pricing_page_v3): founding bills 625 x3 with a real minimum, one calendar billing day, a notice prorates and stops billing, the invoice matches the charge"
@@ -597,6 +598,7 @@ run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, nev
 # 🔒 System health (admin_system_health_v1, 10-31): every automated job checks in, silence is an alarm, and the Mac watches the watcher.
 # 🔒 What we keep (data_keep_v1, 10-31): raw copies, grid per pin, Search Console rows, dated benchmarks, frozen reports, the 30-day purge (OFF), the admin row. Fakes only, nothing real called.
 run check-data-keep.mjs "what we keep is kept and can't quietly stop: raw store strips secrets and never overwrites, Search Console can't loop, the purge is off and deletes only after its ledger line, the admin row reads true"
+run check-rank-schedule.mjs "the map ranking really runs: the locked main keyword only, two scans a month at 10:00 client time, recorded so it cannot repeat or double-run, a failed pin never reads as not ranked, 25 searches a scan with the provider count read first"
 run check-system-health-covers-every-job.mjs "every scheduled job is on the list, wrapped, on the right schedule, and the table and its guards match"
 run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"
 run check-job-alert-path.mjs "break a job on a fake: the check-in records it, the watcher alerts once then daily, a success clears it, an undelivered alert is on record"

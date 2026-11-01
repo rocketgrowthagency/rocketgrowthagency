@@ -2,6 +2,11 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // pending_and_google_security_v1 (10-31): Google sign-in keys are sealed
+  tokencrypt: "netlify/functions/_token-crypt.js",
+  oauthcallback: "netlify/functions/oauth-google-callback.js",
+  oauthdisconnect: "netlify/functions/oauth-google-disconnect.js",
+  googletoken: "netlify/functions/_google-token.js",
   // client_core_change_approval_v1 (10-31): name, address, phone, main category need the client's approval of that exact value
   corechange: "netlify/functions/_core-change.js",
   corechangefn: "netlify/functions/core-change.js",
@@ -303,4 +308,7 @@ export const FILES = {
   gbppurgefn: "netlify/functions/gbp-30-day-purge.js",
   datakeepfn: "netlify/functions/admin-data-keep.js",
   datakeepsql: "supabase/data_keep.sql",
+  // rank grid park lifted (10-31)
+  rankschedule: "netlify/functions/_rank-schedule.js",
+  rankvalidate: "netlify/functions/validate-tracked-keyword.js",
 };

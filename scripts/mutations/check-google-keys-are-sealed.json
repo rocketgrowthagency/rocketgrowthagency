@@ -1,0 +1,72 @@
+[
+[
+"sealing does nothing",
+"tokencrypt",
+"return `${PREFIX}${iv.toString(\"base64url\")}:${cipher.getAuthTag().toString(\"base64url\")}:${body.toString(\"base64url\")}`;",
+"return plain;",
+1
+],
+[
+"no key stores plain text",
+"tokencrypt",
+"if (!raw) throw new Error(\"The key that unlocks Google sign-ins (GOOGLE_TOKEN_KEY) isn't set.\");",
+"if (!raw) return Buffer.alloc(32);",
+1
+],
+[
+"tampering is accepted",
+"tokencrypt",
+"decipher.setAuthTag(Buffer.from(tag, \"base64url\"));\n  return Buffer.concat([decipher.update(Buffer.from(body, \"base64url\")), decipher.final()]).toString(\"utf8\");",
+"decipher.setAuthTag(Buffer.from(tag, \"base64url\"));\n  return decipher.update(Buffer.from(body, \"base64url\")).toString(\"utf8\");",
+1
+],
+[
+"old plain keys stop working",
+"tokencrypt",
+"if (!isSealed(stored)) return stored;",
+"if (!isSealed(stored)) throw new Error(\"x\");",
+1
+],
+[
+"a fixed IV",
+"tokencrypt",
+"const iv = crypto.randomBytes(12);",
+"const iv = Buffer.alloc(12);",
+1
+],
+[
+"a client's key saved plain",
+"oauthcallback",
+"refresh_token: require(\"./_token-crypt\").sealToken(refreshToken),",
+"refresh_token: refreshToken,",
+1
+],
+[
+"RGA's key saved plain",
+"oauthcallback",
+"refresh_token: require(\"./_token-crypt\").sealToken(tokens.refresh_token),",
+"refresh_token: tokens.refresh_token,",
+1
+],
+[
+"disconnect sends sealed text",
+"oauthdisconnect",
+"require(\"./_token-crypt\").revealToken(rows[0].refresh_token)",
+"rows[0].refresh_token",
+1
+],
+[
+"the helper sends sealed text to Google",
+"googletoken",
+"refresh_token: revealToken(oauth.refresh_token),",
+"refresh_token: oauth.refresh_token,",
+1
+],
+[
+"a review reply sends sealed text",
+"respondreview",
+"refresh_token: revealToken(oauth.refresh_token)",
+"refresh_token: oauth.refresh_token",
+1
+]
+]
