@@ -96,7 +96,7 @@ const code = src.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 // (step 39's photo review is injected first, so its body folds like any other — 2026-10-09)
 // 🔄 2026-10-13: card injections between the render and the accordion are allowed (injectListingCard landed 10-12 and
 // this pin went red for the spelling, not the behaviour). The PROPERTY: the accordion is applied right after them.
-if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(?:if \(isM1\) inject\w+\(host\);\s*)*if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
+if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(?:(?:if \(isM1\) )?inject\w+\(host[^)]*\);\s*)*if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
 if (!/_obLastActed = flowId;[^\n]*\n\s*obOpenStep\(el\);/.test(code)) F("revealStep no longer opens the step you acted on");
 if (!/if \(typeof obOpenStep === "function"\) obOpenStep\(target\);/.test(code)) F("a jump no longer opens its target");
 
