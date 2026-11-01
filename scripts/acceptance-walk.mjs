@@ -553,7 +553,7 @@ function agree(r) {
   if (r.id === "m1.gbp.photos" && portalSecondLogoCard !== null) {
     // 🔄 rga_manages_cleanup_v1: the client is told RGA is removing it ⇔ admin step 39 carries RGA's action
     const adminSays = /Your action: remove (?:a second copy of the logo|\d+ extra copies of the logo) \(RGA recommends\)/.test(r.admin.text || "");
-    if (portalSecondLogoCard && !adminSays) r.fail.push("the client's portal says RGA is removing a second copy of their logo, but admin step 39 has no such action");
+    if (portalSecondLogoCard && !adminSays) r.fail.push("the client's portal says RGA is removing a second copy of their logo, but the admin photos step (m1.gbp.photos) has no such action");
     else if (!portalSecondLogoCard && adminSays) r.fail.push("admin has an action to remove a second logo, but the client's portal doesn't tell them");
     else if (portalSecondLogoCard) r.notes.push("second logo: the client's card and admin's \"Your action: remove…\" agree");
   }

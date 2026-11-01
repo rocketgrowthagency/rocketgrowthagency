@@ -173,7 +173,7 @@ const slh = (() => { const i = admin.indexOf('closest("[data-sl-remove],[data-sl
 if (!/if \(remove && !await rgaDialog\(\{ kind: "confirm", danger: true, title: "Remove the second logo from Google\?"/.test(slh) || !/\{ client_id: c\.id, media_name: name, cleanup: "second_logo" \}/.test(slh)) fail("RGA's Remove doesn't ask first, or isn't filed as RGA's cleanup");
 if (!/const gone = \(state\.photoRemovals \|\| \[\]\)\.filter\(\(r\) => r\.state === "removed" && !r\.rga && recent\(r\.at\)\);/.test(admin)) fail("RGA's own removal is reported as the client's");
 const toSortOk = /const toSort = existing\.filter\(\(m\) => !matches\[m\.name\] && !asked\.has\(m\.name\)\);/.test(admin);
-if (!toSortOk) fail("a second logo shows twice in step 39 (also in \"to sort\")");
+if (!toSortOk) fail("a second logo shows twice in the admin photos step (m1.gbp.photos) (also in \"to sort\")");
 if (!/if \(!task \|\| stepId !== PHOTO_REVIEW_STEP\) return "";/.test(admin) || (admin.match(/\$\{clientChose\(s\.task, o\.flowId\)\}/g) || []).length < 4) fail("admin's step-39 lines don't know which step they're on (they never draw)");
 
 if (F.length) { console.error("🔴 A second copy of the logo isn't RGA's to tidy the approved way:"); for (const f of F) console.error("   · " + f); process.exit(1); }

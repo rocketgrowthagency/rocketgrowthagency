@@ -661,6 +661,7 @@ run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts +
 run check-step-49-schema.mjs "step 49: Service + BreadcrumbList + visible FAQ with FAQPage per page, never AggregateRating, never a guessed URL"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
+run check-no-typed-step-numbers.mjs "no step number is typed where a person reads it (playbook text, admin, portal, function errors): name the step instead (approved admin_recommended_fixes_v1)"
 run check-every-submission-is-recorded.mjs "every client submission is recorded (activity row with the answer, change-log row when it reached Google)"
 run check-a-retake-can-be-cleared.mjs "a photo Google asked to retake can be cleared by the client"
 run check-month-2-lives-in-the-monthly-record.mjs "a client's Month-2 answer lands in this month's monthly record, the one the admin and their portal read"

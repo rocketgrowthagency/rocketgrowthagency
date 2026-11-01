@@ -1,0 +1,46 @@
+[
+ [
+  "the photo step's instructions say step 39 again",
+  "playbooksjson",
+  "Review each upload on this step before",
+  "Review each upload in step 39 before"
+ ],
+ [
+  "a client step's text carries an admin step number",
+  "clientstepsjson",
+  "\"clientLabel\": \"Add your booking link\",",
+  "\"clientLabel\": \"Add your booking link (admin step 36)\","
+ ],
+ [
+  "an admin card says step 31 again",
+  "admin",
+  "refuses the categories (the categories step) until",
+  "refuses the categories (step 31) until"
+ ],
+ [
+  "a client portal line says step 9 again",
+  "portal",
+  "your booking link (the booking link step).",
+  "your booking link (step 9)."
+ ],
+ [
+  "a function error shown to a person says step 17 again",
+  "adminunlock",
+  "Only the business outcomes and YouTube video steps are confirmed this way.",
+  "Only steps 17 and 19 are confirmed this way."
+ ],
+ [
+  "a typed number in a COMMENT is not counted",
+  "admin",
+  "function obNumberOf(",
+  "// the old text said step 39 here\nfunction obNumberOf(",
+  0
+ ],
+ [
+  "a COMPUTED number in a template is not counted",
+  "admin",
+  "function obNumberOf(",
+  "const _computedLabel = (n) => `step ${n}`;\nfunction obNumberOf(",
+  0
+ ]
+]

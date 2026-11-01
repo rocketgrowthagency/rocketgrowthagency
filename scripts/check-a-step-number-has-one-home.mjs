@@ -139,14 +139,8 @@ if (/let seenActive = false;\s*\n\s*steps\.forEach/.test(src)) {
 // 🔴 An unregistered occurrence FAILS. Registering one is a decision someone makes on purpose.
 const REGISTRY = [
   // admin_fixes_1028_v1 (10-28): "row N" became "step N" in admin text (Chris: say step, not row) — each registered so the number is checked
-  { file: "admin/admin.js",                            needle: "the categories (step 31) until",      step: "m1.gbp.optimize_categories" },
   // file match-substring → the step whose number it claims
   // admin rows 8 (website access) + 9 (keep access safe), 10-27: the vault card and its banner name them by their row numbers
-  { file: "admin/admin.js",                            needle: "Check this against step 8's access",  step: "m1.access.website" },
-  { file: "admin/admin.js",                            needle: "remove our access on step 8",         step: "m1.access.website" },
-  { file: "admin/admin.js",                            needle: "step 8's ledger has the record",      step: "m1.access.website" },
-  { file: "admin/admin.js",                            needle: "finishes step 9 by itself",           step: "m1.access.password_manager" },
-  { file: "netlify/functions/admin-access-confirm.js", needle: "Step 8 hasn't confirmed access",      step: "m1.access.website" },
   { file: "netlify/functions/_rga-logins.js",          needle: "step9:data",                          step: "m1.access.password_manager" },
   { file: "netlify/functions/_rga-logins.js",          needle: "r.step9",                             step: "m1.access.password_manager" },
   { file: "admin/admin.js",                            needle: "Step 2 reopens",                      step: "m1.close.kickoff_invite" },
@@ -156,11 +150,6 @@ const REGISTRY = [
   { file: "netlify/functions/kickoff-rsvp-check.js",    needle: "kickoff invite",                      step: "m1.close.kickoff_invite" },
   { file: "netlify/functions/flow-execute.js",          needle: "deep assessment (step",               step: "m1.audit.deep_assess" },
   // step 11 = the one-listing check; the admin's case-3 footnote and RGA's removal-flow alert both send you there
-  { file: "admin/admin.js",                            needle: "step 11 is checked again",            step: "m1.audit.gbp_duplicate" },
-  { file: "netlify/functions/_listing-removal-flow.js", needle: "Check it in step 11",                 step: "m1.audit.gbp_duplicate" },
-  { file: "netlify/functions/gbp-duplicate-keep.js",   needle: "Step 11 has no second",               step: "m1.audit.gbp_duplicate" },
-  { file: "netlify/functions/gbp-duplicate-recheck.js", needle: "support) from step 11",               step: "m1.audit.gbp_duplicate" },
-  { file: "netlify/functions/portal-deliverables.js",  needle: "Decide in step 11",                   step: "m1.audit.gbp_duplicate" },
   // 🔗 Step 22's citation audit and step 52's build step name each other, because Chris asked for
   // numbers in descriptions. Registered rather than dropped: the number now has to KEEP matching the
   // page, so a renumbering fails here instead of shipping a card that cites a step nobody can find.
@@ -170,15 +159,9 @@ const REGISTRY = [
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows — it", step: "m1.cit.priority_top10" },
   { file: "netlify/functions/flow-execute.js",          needle: "Step 52, Build top-10 priority citations, reads these rows.",     step: "m1.cit.priority_top10" },
   // admin steps 29–38 (approved admin_step29_citations_v1 / admin_step31_categories_v1, 10-29): each card names the step it leans on
-  { file: "admin/admin.js",                            needle: "Fixed in step 30's plan",             step: "m1.audit.recommendations" },
-  { file: "admin/admin.js",                            needle: "Open the fix plan (step 30)",         step: "m1.audit.recommendations" },
-  { file: "admin/admin.js",                            needle: "Same 5 checks as step 28 first",      step: "m1.gbp.business_facts" },
   // step 36's settled-with-nothing-sent records (approved step36_booking_rga_does_it_v1, 10-29)
-  { file: "netlify/functions/admin-gbp-booking.js",    needle: "so step 36 settled",                  step: "m1.gbp.booking_link" },
-  { file: "netlify/functions/admin-gbp-booking.js",    needle: "so step 36 finished",                 step: "m1.gbp.booking_link" },
   // 🔑 client: true = the number is the CLIENT portal's (the step's declared clientStepNo), not the admin page's. Admin step 36's
   // "no other booking page" row sends RGA to the client's own step 9 (step36_booking_rga_does_it_v1: "client portal step 9").
-  { file: "admin/admin.js",                            needle: "in their portal (step 9)",            step: "m1.gbp.booking_link", client: true },
 ];
 // 🔑 The client portal has its OWN sequence on purpose — `clientStepNo` / SETUP_STEP_COPY. A client
 // sees eight steps, not sixty-one, and must never be told "step 26 of 61".

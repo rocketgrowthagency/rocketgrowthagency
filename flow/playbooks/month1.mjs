@@ -224,12 +224,12 @@ For the Google Business Profile the invite goes to hello@ instead (the Google ac
   {
     id: "m1.access.password_manager", title: "Keep access safe",
     type: "manual", dependsOn: ["m1.access.website"], selfSettles: true,
-    // 🔒 no actionLabel / runner (10-27, approved admin_row9_vault_v2): it settles itself with step 8; its old draft told RGA to
+    // 🔒 no actionLabel / runner (10-27, approved admin_row9_vault_v2): it settles itself with the website access step; its old draft told RGA to
     // store client website logins and receive credentials — against the never-a-password promise.
     instructions: `Runs itself (approved admin_row9_vault_v2, 10-27). RGA never holds a client's password: it signs in with its own RGA Admin login (access@rocketgrowthagency.com, GitHub rocketgrowthagency-admin), saved ONCE per platform in Bitwarden, org Rocket Growth Agency, collection RGA Admin.
-When step 8 confirms access this step checks two facts: the login is an RGA Admin login, and that platform's login is marked saved. Both → done by itself.
+When the website access step confirms access this step checks two facts: the login is an RGA Admin login, and that platform's login is marked saved. Both → done by itself.
 The first client on a new builder (e.g. the first Wix client): save the new login in Bitwarden (item "<Builder> · access@", owner Rocket Growth Agency, collection RGA Admin, 2-step backup codes in Notes), then press Saved in Bitwarden. Every later client on it settles by itself.
-When a client leaves: remove access from step 8's ledger. Nothing to delete from the vault. Never store, receive or forward a client password.`,
+When a client leaves: remove access from the website access step's ledger. Nothing to delete from the vault. Never store, receive or forward a client password.`,
   },
   // === The audit (order approved 2026-10-08, onboarding_order_audit_v1) ===
 
@@ -514,7 +514,7 @@ tracked keyword BEFORE running the grid baseline.`,
     async run({ client }) { return await callFn("validate-tracked-keyword", client.id); },
   },
   {
-    id: "m1.audit.competitors", title: "Snapshot top 3 SF/local competitors",
+    id: "m1.audit.competitors", title: "Snapshot top 3 local competitors",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations"],
     actionLabel: "⚡ Run (needs the local scraper)",
     async run({ client }) {
@@ -682,7 +682,7 @@ Put them on Google from this step's card, or set them in GBP dashboard → Edit 
       );
       return { summary: `AI-drafted services:\n${draft}` };
     },
-    instructions: "Client step 6 (approved phase1_get_started_v1, 10-20). Run ⚡ to draft extra services from the locked plan; the client sees Google's own service types for the categories on Google (step 31) plus this draft, unticks what they don't offer, and the save writes serviceItems to Google and reads them back (_gbp-services.js). The client's ticks ARE the approval. If Google refuses, the row says so and the client sees 'RGA is doing it'.",
+    instructions: "Run ⚡ to draft extra services from the locked plan; the client sees Google's own service types for the categories on Google (the categories step) plus this draft, unticks what they don't offer, and the save writes serviceItems to Google and reads them back (_gbp-services.js). The client's ticks ARE the approval. If Google refuses, the row says so and the client sees 'RGA is doing it'.",
   },
   {
     id: "m1.gbp.business_description", title: "Write compelling description",
@@ -764,7 +764,7 @@ Each example: actual filename + actual alt-tag string ready to copy.`,
     id: "m1.gbp.photos", title: "Upload 20+ quality photos",
     type: "manual", dependsOn: ["m1.access.gbp"],
     actionLabel: "⚡ Draft this for me",
-    instructions: "The client's 20-shot list is the researched list for their trade, picked from their Google category (7 lists, 49 trades — netlify/functions/_photo-lists.js). It builds itself when they connect Google and is refreshed nightly; Run rebuilds it, and the business type on this card overrides the category. A category with no list sends nothing — pick the business type here.\nThe list never switches under photos already in its slots unless you pick the business type.\nReview each upload in step 39 before it goes to Google; the AI flags one that doesn't fit its shot. Sort the photos that were already on Google in step 39 too — one fills a slot only once you confirm which shot it is.\nNever geotag: tested, it has no ranking effect. Real photos only — turn down stock and screenshots.\nDONE = 20 or more photos on the profile AND at least 3 in each kind the list uses (or all of its slots, if fewer), counted from slots truly filled — read from Google, never ticked.",
+    instructions: "The client's 20-shot list is the researched list for their trade, picked from their Google category (7 lists, 49 trades — netlify/functions/_photo-lists.js). It builds itself when they connect Google and is refreshed nightly; Run rebuilds it, and the business type on this card overrides the category. A category with no list sends nothing — pick the business type here.\nThe list never switches under photos already in its slots unless you pick the business type.\nReview each upload on this step before it goes to Google; the AI flags one that doesn't fit its shot. Sort the photos that were already on Google on this step too — one fills a slot only once you confirm which shot it is.\nNever geotag: tested, it has no ranking effect. Real photos only — turn down stock and screenshots.\nDONE = 20 or more photos on the profile AND at least 3 in each kind the list uses (or all of its slots, if fewer), counted from slots truly filled — read from Google, never ticked.",
   },
   // === Website (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
@@ -1146,7 +1146,7 @@ VIDEO 2 — "Educational tip about a common problem"
       );
       return { summary: `AI YouTube channel kickoff:\n\n${draft}` };
     },
-    instructions: "1. ⚡ Draft this for me → channel name, description, keywords and two short video scripts (the client sees the scripts on their step 15 and films them).\n2. If the client's social profiles step names their channel, use that one: never make a second. Otherwise youtube.com → top-right avatar → \"Create a channel\" → use the channel name.\n3. Customization → Branding → upload the logo + a banner (1546 × 423 with phone + website + tagline); Basic info → description + keywords + links.\n4. The client uploads their 2 clips (or share links) on this row. Download each, upload to the channel with the drafted title / description / tags.\n5. Embed both videos on the website homepage + the main service page, then mark Done.",
+    instructions: "1. ⚡ Draft this for me → channel name, description, keywords and two short video scripts (the client sees the scripts on their video step and films them).\n2. If the client's social profiles step names their channel, use that one: never make a second. Otherwise youtube.com → top-right avatar → \"Create a channel\" → use the channel name.\n3. Customization → Branding → upload the logo + a banner (1546 × 423 with phone + website + tagline); Basic info → description + keywords + links.\n4. The client uploads their 2 clips (or share links) on this row. Download each, upload to the channel with the drafted title / description / tags.\n5. Embed both videos on the website homepage + the main service page, then mark Done.",
   },
   // === Reviews (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {

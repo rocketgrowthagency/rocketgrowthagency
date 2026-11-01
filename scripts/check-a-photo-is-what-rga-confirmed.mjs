@@ -58,7 +58,7 @@ if (!/const \[fresh\] = await supa/.test(fn)) fail("photo-match writes back onto
 if (!/const \{ need, have \} = await photoCategoryNeeds\(clientId\);/.test(recheck) || !/\(have\[cat\] \|\| 0\) < k/.test(recheck)) fail("the done rule counts a kind from Google's categories again");
 if (!/confirmed\.has\(Number\(it\.n\)\)/.test(recheck)) fail("the done rule ignores RGA's confirmations");
 // 4
-if (!/function photoExistingHtml\(\)/.test(admin) || !/data-pm-confirm=/.test(admin) || !/data-pm-none=/.test(admin)) fail("admin step 39 cannot sort the photos already on Google");
+if (!/function photoExistingHtml\(\)/.test(admin) || !/data-pm-confirm=/.test(admin) || !/data-pm-none=/.test(admin)) fail("the admin photos step (m1.gbp.photos) cannot sort the photos already on Google");
 if (!/fillExampleArt\(root\);\s*ensurePhotoAiCheck\(\);/.test(admin)) fail("admin never asks the AI to look");
 if (!/a\.matches \? prVerdict\("ok"[^;]{0,160}?: prVerdict\("you", "\?", "Doesn't look like this shot\."/.test(admin)) fail("an upload that doesn't match its slot no longer carries the AI's flag");
 // 5
