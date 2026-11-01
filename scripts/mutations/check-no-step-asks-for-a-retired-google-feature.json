@@ -36,5 +36,12 @@
   "v2gbpprofile",
   "    has_reviews: totalReviews > 0,",
   "    has_qa: false,\n    has_reviews: totalReviews > 0,"
+ ],
+ [
+  "the Brain is told to add Q&A pairs again",
+  "brainbackground",
+  "  7. Get 3-5 new reviews",
+  "  7. Add 10 Q&A pairs\n  7. Get 3-5 new reviews",
+  1
  ]
 ]

@@ -23,7 +23,7 @@ const RETIRED = [
 const RETIRED_IN_CODE = [
   { feature: "Google Business Profile Q&A (questions and answers on the listing)", retired: "2025-11-03",
     source: "Google ended the Business Profile Q&A API; research 2026-10-31",
-    files: { "admin/admin.js": [/Q&A PREVIEW/, /\bqaPreview\b/, /\.qa_pairs\b/], "netlify/functions/v2-brain-analysis-background.js": [/"qa_pairs"/, /"qa_count"/, /\bqa_count\b/, /\bhas_qa\b/, /Q&A:\s*\$\{/, /Q&A=/], "netlify/functions/v2-gbp-profile.js": [/\bqa_count\b/, /\bhas_qa\b/, /\/questions\?/] } },
+    files: { "admin/admin.js": [/Q&A PREVIEW/, /\bqaPreview\b/, /\.qa_pairs\b/], "netlify/functions/v2-brain-analysis-background.js": [/Q&A pairs/, /"qa_pairs"/, /"qa_count"/, /\bqa_count\b/, /\bhas_qa\b/, /Q&A:\s*\$\{/, /Q&A=/], "netlify/functions/v2-gbp-profile.js": [/\bqa_count\b/, /\bhas_qa\b/, /\/questions\?/] } },
 ];
 
 const F = [];
