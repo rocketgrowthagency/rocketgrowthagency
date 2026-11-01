@@ -15,7 +15,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.env.SCRAPER_COPY_DIR || path.dirname(HERE);
 const SCRIPT = `${ROOT}/scripts/backup-lacie.sh`;
 const REAL_STATUS = process.env.LACIE_BACKUP_REAL_STATUS || `${os.homedir()}/.claude/backup-lacie-status.json`;
-const MAX_AGE_H = 36;
+// 🔒 Chris 11-1: backups run Monday to Friday. Friday's run is 72 hours old by Monday's, so the window widens over a weekend. On a Tuesday to Friday it stays tight.
+const MAX_AGE_H = (() => { const d = new Date().toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", weekday: "short" }); return ["Sat", "Sun", "Mon"].includes(d) ? 84 : 36; })();
 
 const bad = [];
 const fail = (m) => bad.push(m);
