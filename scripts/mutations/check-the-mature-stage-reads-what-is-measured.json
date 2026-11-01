@@ -149,7 +149,7 @@
  [
   "a proposal drops its evidence",
   "maturefn",
-  "      if (!fr || !fr.best) return { ok: false, error: \"There's no measured edge to propose from \u2014 run a grid scan first.\" };",
+  "      if (!fr || !fr.best) return { ok: false, error: \"There's no measured edge to propose from — run a grid scan first.\" };",
   "",
   1
  ],
@@ -229,5 +229,23 @@
   "  if (auth.error) return auth.error;\n",
   "",
   1
+ ],
+ [
+  "the churn read stops counting an at-risk call",
+  "maturefn",
+  "if (lastCall && lastCall.key === \"at_risk\") signals.push",
+  "if (false) signals.push"
+ ],
+ [
+  "a referral ask opens with no first result",
+  "maturefn",
+  "|| !!first;",
+  "|| true;"
+ ],
+ [
+  "zero new reviews read as a result",
+  "maturefn",
+  "if (gained > 0) return { kind: \"reviews\"",
+  "if (gained >= 0) return { kind: \"reviews\""
  ]
 ]

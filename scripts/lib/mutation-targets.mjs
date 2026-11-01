@@ -2,6 +2,16 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // onboarding_and_offboarding_v1 (approved 11-01)
+  stepreminders: "netlify/functions/_step-reminders.js",
+  calloutcome: "shared/call-outcome.js",
+  closinglist: "netlify/functions/_closing-list.js",
+  closingfn: "netlify/functions/admin-closing-list.js",
+  onbnotes: "netlify/functions/_onboarding-notes.js",
+  onbnotesfn: "netlify/functions/portal-onboarding-notes.js",
+  leavingterms: "netlify/functions/_leaving-terms.js",
+  portalcancel: "netlify/functions/portal-cancel.js",
+  sendconfirmfn: "netlify/functions/send-confirmation-email.js",
   // ai_search_checks_v1 (approved 11-01): crawler check, audit rewrite, Yelp step
   crawleracc: "netlify/functions/_crawler-access.js",
   aireadiness: "netlify/functions/ai-readiness-audit.js",

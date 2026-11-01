@@ -1,0 +1,356 @@
+[
+ [
+  "the welcome email asks for a CMS login again",
+  "sendconfirmfn",
+  "items.push(\"An invite on your website builder (no password)\");",
+  "items.push(\"Website / CMS login\");"
+ ],
+ [
+  "the kickoff invite asks for a CMS login again",
+  "admin",
+  "  • An invite on your website builder (no password)\n",
+  "  • Website / CMS login\n"
+ ],
+ [
+  "the kickoff hint promises a confirmation time",
+  "playbook",
+  "once we confirm it.",
+  "once we confirm it, usually within a business day."
+ ],
+ [
+  "hello@ vs access@ is no longer stated",
+  "playbook",
+  "Two RGA addresses, on purpose",
+  "Two RGA addresses"
+ ],
+ [
+  "reminders are on without the setting",
+  "stepreminders",
+  "const enabled = (env = process.env) => env.STEP_REMINDERS_EMAIL === \"on\";",
+  "const enabled = (env = process.env) => true;"
+ ],
+ [
+  "a third reminder is allowed",
+  "stepreminders",
+  "const MAX = 2;",
+  "const MAX = 3;"
+ ],
+ [
+  "the first reminder comes on day 1",
+  "stepreminders",
+  "const FIRST_DAYS = 3;",
+  "const FIRST_DAYS = 1;"
+ ],
+ [
+  "a reminder goes out at night",
+  "stepreminders",
+  "const inHours = here.hour >= SEND_HOUR && here.hour < END_HOUR;",
+  "const inHours = true;"
+ ],
+ [
+  "the client's own remind-me-later is overridden",
+  "stepreminders",
+  "if (t.later) return",
+  "if (false) return"
+ ],
+ [
+  "old steps get reminders when it is switched on",
+  "stepreminders",
+  "if (n === 0 && now - told > MAX_AGE_DAYS * DAY)",
+  "if (false)"
+ ],
+ [
+  "an unknown time zone is given a clock time",
+  "stepreminders",
+  "(exact ? `${dayName(o)} at ${SEND_HOUR} AM` : dayName(o))",
+  "`${dayName(o)} at ${SEND_HOUR} AM`"
+ ],
+ [
+  "RGA is told twice",
+  "stepreminders",
+  "if (t.reminders_routed_at) return",
+  "if (false) return"
+ ],
+ [
+  "the second reminder stops offering help",
+  "stepreminders",
+  "we can do this with you. Reply to this email",
+  "here is your reminder. Open"
+ ],
+ [
+  "the photo reminder loses its smallest action",
+  "stepreminders",
+  "The smallest start: add three photos from your phone.",
+  "Add photos."
+ ],
+ [
+  "the first email names a reminder while they are off",
+  "notifyopenfn",
+  "const remindLabel = REM.enabled() && at ?",
+  "const remindLabel = at ?"
+ ],
+ [
+  "the reminder block runs without the setting",
+  "notifyopenfn",
+  "if (REM.enabled()) {\n        const nud",
+  "if (true) {\n        const nud"
+ ],
+ [
+  "the reminder stamp comes after the send",
+  "notifyopenfn",
+  "          await writeTasks(rec.id, data, tasks);   // 🔑 stamp first: two runs can never both send\n          try { out.sent.push({ client: client.id, steps: dueR.map",
+  "          try { out.sent.push({ client: client.id, steps: dueR.map"
+ ],
+ [
+  "the stalled notice doesn't check delivery",
+  "notifyopenfn",
+  "if (j.delivered === false) throw new Error(`notify-rga not delivered (${j.reason || \"no reason\"})`);\n}\n\n// ═══════════════════════════════════════════════════════════════════════════════════════════════\n// 🔒 THE KICKOFF AGENDA",
+  "if (false) throw new Error(`notify-rga not delivered`);\n}\n\n// ═══════════════════════════════════════════════════════════════════════════════════════════════\n// 🔒 THE KICKOFF AGENDA"
+ ],
+ [
+  "a reminder isn't logged where the admin counts it",
+  "notifyopenfn",
+  "kind: \"step_nudge_sent\",\n        payload: { step_id: steps[0].id, step_ids",
+  "kind: \"step_nudge_other\",\n        payload: { step_id: steps[0].id, step_ids"
+ ],
+ [
+  "the portal names a reminder date while they are off",
+  "portalopenmovesfn",
+  "if (REM.enabled()) {",
+  "if (true) {"
+ ],
+ [
+  "an unnoted call reads as retained",
+  "calloutcome",
+  "return hit ? { ...hit, at: task.call_outcome_at || null } : null;",
+  "return { ...(hit || CALL_OUTCOMES[0]), at: (task && task.call_outcome_at) || null };"
+ ],
+ [
+  "an unknown outcome word can be saved",
+  "calloutcome",
+  "if (!CALL_OUTCOMES.some((o) => o.key === key)) return null;",
+  "if (false) return null;"
+ ],
+ [
+  "pressing the same word doesn't clear it",
+  "calloutcome",
+  "return current === key ? { call_outcome: null, call_outcome_at: null } : ",
+  "return "
+ ],
+ [
+  "the outcome control saves on the wrong step",
+  "admin",
+  "updateFlowTask(client, \"month2plus\", \"m2.call.monthly\", patch)",
+  "updateFlowTask(client, \"month2plus\", \"m2.report.deliver\", patch)"
+ ],
+ [
+  "marks from an old notice count",
+  "closinglist",
+  "const from = log.lastIndexOf(notice);",
+  "const from = 0;"
+ ],
+ [
+  "written confirmation is due in 3 days",
+  "closinglist",
+  "const dueBy = plusBusinessDays(notice.ends_on, 5);",
+  "const dueBy = plusBusinessDays(notice.ends_on, 3);"
+ ],
+ [
+  "the weekend counts as business days",
+  "closinglist",
+  "if (day !== 0 && day !== 6) left -= 1;",
+  "left -= 1;"
+ ],
+ [
+  "a withdrawn notice still has a list",
+  "closinglist",
+  "const notice = standingNotice(contract);\n  if (!notice) return null;",
+  "const notice = standingNotice(contract) || { ends_on: \"2000-01-01\" };"
+ ],
+ [
+  "an unknown item can be marked",
+  "closinglist",
+  "if (!ITEMS.some((i) => i.key === key) || !STATUSES.includes(status)) return null;",
+  "if (false) return null;"
+ ],
+ [
+  "the refund line says it is automatic",
+  "closinglist",
+  "A person does it in Stripe. Nothing here moves money.",
+  "Refunded automatically."
+ ],
+ [
+  "the closing list endpoint isn't staff only",
+  "closingfn",
+  "const gate = await requireWorkspaceForClient(event, clientId);\n  if (gate.error) return gate.error;",
+  "const gate = { email: null };"
+ ],
+ [
+  "the closing list stops asking why not applicable",
+  "admin",
+  "rgaPrompt(\"Why does this not apply?",
+  "rgaPrompt(\"Why?"
+ ],
+ [
+  "the GA4 step asks for Administrator again",
+  "playbook",
+  "add RGA as an Editor, not an Administrator",
+  "grant Administrator access"
+ ],
+ [
+  "the Search Console step asks for Owner again",
+  "playbook",
+  "add RGA as a Full user, not an Owner",
+  "grant Owner access"
+ ],
+ [
+  "the role request loses its only-where-needed line",
+  "playbook",
+  "add RGA as an Editor, not an Administrator. We only need it where we set up or fix your tracking",
+  "add RGA as an Editor, not an Administrator. We need it"
+ ],
+ [
+  "the contract's Section 5 line changes",
+  "contractgen",
+  "needed only where RGA is setting up or fixing tracking.",
+  "needed for all work."
+ ],
+ [
+  "the Google sign-in asks for a write scope",
+  "oauthinitfn",
+  "analytics.readonly",
+  "analytics.edit"
+ ],
+ [
+  "a partial crawl adds website lines",
+  "onbnotes",
+  "if (onpage && onpage.partial !== true &&",
+  "if (onpage &&"
+ ],
+ [
+  "a crawl with unreachable pages adds lines",
+  "onbnotes",
+  "&& Number(onpage.unreachable || 0) === 0",
+  "&& true"
+ ],
+ [
+  "a count of zero produces a line",
+  "onbnotes",
+  "if (c > 0) lines.push",
+  "if (c >= 0) lines.push"
+ ],
+ [
+  "the first-week card never expires",
+  "onbnotes",
+  "expired: !!firstRan && now - firstRan > FIRST_WEEK_DAYS * DAY",
+  "expired: false"
+ ],
+ [
+  "day 50 shows with no first payment",
+  "onbnotes",
+  "if (!Number.isFinite(at)) return null;",
+  "if (!Number.isFinite(at)) return { day: 50, show: true, done: [], done_count: 0, terms_sentence: null };"
+ ],
+ [
+  "day 50 shows early",
+  "onbnotes",
+  "const DAY50_FROM = 50,",
+  "const DAY50_FROM = 30,"
+ ],
+ [
+  "the day-50 note claims movement",
+  "onbnotes",
+  "Still to come: any movement in map positions.",
+  "Positions have moved up."
+ ],
+ [
+  "the drafts go to the client too",
+  "onbnotesfn",
+  "if (gate.viaWorkspace) out.drafts",
+  "if (true) out.drafts"
+ ],
+ [
+  "the note drafts get a send button",
+  "admin",
+  "data-ob-draft-open=\"${kind}\">Open as a Gmail draft",
+  "data-ob-draft-open=\"${kind}\">Send it now"
+ ],
+ [
+  "the standard terms stop being read from the plan",
+  "leavingterms",
+  "const minimum = plan.minimum_months || 0;",
+  "const minimum = 0;"
+ ],
+ [
+  "an unreadable plan gets the standard terms",
+  "leavingterms",
+  "if (!plan) return { known: false, minimum_months: 0, notice_days: 0 };",
+  "if (!plan) return leavingTerms({ tier: \"commit_3mo\", firstYmd, today, noticeYmd });"
+ ],
+ [
+  "a founding client's minimum is dropped from the sentence",
+  "leavingterms",
+  "the end of the minimum, and the fees for those months are still due.",
+  "the end of the minimum."
+ ],
+ [
+  "the Cancel card takes the owner's team members and staff",
+  "portalcancel",
+  "const gate = await requirePortalOwner(event, clientId);",
+  "const gate = await requirePortalOwner(event, clientId).then((g) => g.error ? { email: null } : g);"
+ ],
+ [
+  "the notice date comes from the request",
+  "portalcancel",
+  "cancellation.apply(clientId, \"notice\", businessYmd(),",
+  "cancellation.apply(clientId, \"notice\", String(body.notice_date || businessYmd()),"
+ ],
+ [
+  "the card says recorded without reading it back",
+  "portalcancel",
+  "if (after.state !== \"notice\")",
+  "if (false)"
+ ],
+ [
+  "RGA's notice doesn't check delivery",
+  "portalcancel",
+  "if (!n.ok || nj.delivered === false) {",
+  "if (!n.ok) {"
+ ],
+ [
+  "a second press records a second notice",
+  "portalcancel",
+  "if (before.state === \"notice\") return json(409, { ok: false, error: \"Your notice is already recorded.\", view: before });\n    if (before.state !== \"none\") return json(409,",
+  "if (false) return json(409, { ok: false, error: \"Your notice is already recorded.\", view: before });\n    if (false) return json(409,"
+ ],
+ [
+  "an unreadable plan can still record a notice",
+  "portalcancel",
+  "if (before.state !== \"none\") return json(409,",
+  "if (false) return json(409,"
+ ],
+ [
+  "the Cancel card refunds or deletes",
+  "portalcancel",
+  "const reason = String(body.reason",
+  "const refund = await fetch(\"https://api.stripe.com/v1/refunds\"); const reason = String(body.reason"
+ ],
+ [
+  "the admin and client paths stop sharing one function",
+  "cancellationfn",
+  "return apply(client_id, action, notice_date);",
+  "return json(200, { ok: true });"
+ ],
+ [
+  "the Cancel card stops saying nothing is held back",
+  "portal",
+  "Nothing is held back if you leave.",
+  "You may lose access."
+ ],
+ [
+  "a client with an unreadable plan has no way out",
+  "portal",
+  "<a href=\"mailto:hello@rocketgrowthagency.com?subject=${encodeURIComponent(\"I would like to cancel\")}\">email us</a> and we will take your notice.`) });\n  const t = v.terms;",
+  "`) });\n  const t = v.terms;"
+ ]
+]
