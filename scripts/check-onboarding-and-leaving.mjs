@@ -265,7 +265,7 @@ const tz = "America/New_York", told = Date.parse("2026-11-02T15:00:00Z");   // a
   if (!/data-cx-go/.test(pj) || !/Keep my agreement/.test(pj) || !/Give notice/.test(pj)) fail("the Cancel card's buttons aren't drawn");
   if (!/Nothing is held back if you leave/.test(pj) || !/always yours/.test(pj)) fail("the Cancel card doesn't say nothing is held back");
   if (/refund(ed)? (is )?(automatic|instant)/i.test(pj)) fail("the Cancel card promises an automatic refund");
-  if (!/v\.state === "unreadable"\) return csCard\([\s\S]{0,700}mailto:hello@rocketgrowthagency\.com\?subject=\$\{encodeURIComponent\("I would like to cancel"\)\}/.test(pj) || !/d && d\.error\) return csCard\([\s\S]{0,700}mailto:hello@rocketgrowthagency\.com\?subject=\$\{encodeURIComponent\("I would like to cancel"\)\}/.test(pj)) fail("a client whose plan can't be read (or whose card failed to load) has no other way to leave");
+  if (!/v\.state === "unreadable"\) return csCard\([\s\S]{0,700}data-ask data-ask-where="I would like to cancel"/.test(pj) || !/d && d\.error\) return csCard\([\s\S]{0,700}data-ask data-ask-where="I would like to cancel"/.test(pj)) fail("a client whose plan can't be read (or whose card failed to load) has no other way to leave");
   for (const step of ["m1.access.gbp", "m1.access.analytics", "m1.access.search_console"]) if (!JSON.parse(read("data/playbooks/client-steps.json")) ) fail("client-steps.json unreadable");
   if (!/class="pm-cs pm-tabcs" data-cx-card/.test(pj)) fail("the Cancel card has no home on the dashboard");
 

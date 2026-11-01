@@ -350,7 +350,7 @@
  [
   "a client with an unreadable plan has no way out",
   "portal",
-  "<a href=\"mailto:hello@rocketgrowthagency.com?subject=${encodeURIComponent(\"I would like to cancel\")}\">email us</a> and we will take your notice.`) });\n  const t = v.terms;",
+  "<a href=\"#\" data-ask data-ask-where=\"I would like to cancel\">message us</a> and we will take your notice.`) });\n  const t = v.terms;",
   "`) });\n  const t = v.terms;"
  ]
 ]
