@@ -189,7 +189,6 @@ const NOT_PREFLIGHT = {
   'check-a-step-never-renders-before-its-dependency.mjs': 'admin-UI gate, lifts and RUNS the checklist ordering code; runs in daily-health-check.sh — the onboarding list is an admin surface and cannot make a video unsafe',
   'check-the-model-never-writes-the-numbers.mjs': 'admin/keyword-step gate, pure source read; runs in daily-health-check.sh — the keyword plan is an admin surface and cannot make a video unsafe',
   'check-a-step-that-produced-something-can-rerun-it.mjs': 'admin-UI gate, pure source read; runs in daily-health-check.sh — the onboarding checklist is an admin surface and cannot make a video unsafe',
-  'check-a-places-call-is-not-spent-twice.mjs': 'admin/cost-safety gate, pure source read; runs in daily-health-check.sh — the onboarding Autofill button is an admin surface and the video pipeline calls zero Google Cloud APIs by design',
   'check-the-ads-api-cannot-run-away.mjs': 'admin/cost-safety gate, pure source read; runs in daily-health-check.sh — the Keyword Planner is reached only from an admin step a human clicks Run on, and the video pipeline calls zero Google Cloud APIs by design',
   'check-the-checklist-numbering-matches-the-mockup.mjs': 'admin-UI gate, drives a browser; runs in daily-health-check.sh — computed styles cannot make a video unsafe',
   'check-step-instructions-render-as-bands.mjs':  'admin-UI gate; runs in daily-health-check.sh — instruction layout cannot make a video unsafe',

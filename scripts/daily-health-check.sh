@@ -460,7 +460,6 @@ run check-the-deliverable-matches-the-mockup.mjs "the deliverable block and its 
 run check-a-button-does-not-lie-about-where-it-runs.mjs "no step button claims it needs a terminal when it runs on the server"
 run check-the-ads-api-cannot-run-away.mjs "the keyword planner runs on demand only, bounded, and its numbers stay locked"
 run check-an-outbound-call-has-a-deadline.mjs "every outbound call has a deadline and a dead run records why"
-run check-a-places-call-is-not-spent-twice.mjs "an Autofill press reuses a cached Places lookup instead of buying another"
 run check-a-step-that-produced-something-can-rerun-it.mjs "a step holding a stored result can always re-run it"
 run check-the-model-never-writes-the-numbers.mjs "every volume on the keyword card was measured by us, not written by the model"
 run check-a-step-never-renders-before-its-dependency.mjs "the checklist never shows a step before something it depends on"

@@ -149,15 +149,7 @@ const DECLARED = {
     scheduled: "on demand (per FGA report build)",
     stamps: "fga_report_cache — the enrichment is cached and not re-fetched once stored",
   },
-  // ✅ FIXED 2026-10-02. It used to call `enrichAuditRecord` UNCONDITIONALLY at the top of the
-  // handler — the prior snapshot was merged in AFTERWARDS, so the spend had already happened — and
-  // every press of Autofill cost a Places SearchText call against the 32/day quota with nothing
-  // stopping repeat presses. It now reads a 6-hour cache first and only spends on a miss.
-  "admin-onboarding-autofill.js": {
-    perRun: "1 SearchText + 1 PSI on a CACHE MISS only; 0 while a snapshot under 6h exists",
-    scheduled: "on demand (an admin presses Autofill)",
-    stamps: "client_state_snapshots surface=onboarding_enrichment, written on the attempt — a repeat press inside the TTL costs nothing, and the response reports `enrichment.cached` so a hit is visible without reading the code",
-  },
+  // admin-onboarding-autofill.js RETIRED 11-1 (Chris approved; nothing called it, its button never existed in admin/index.html). Its Places spend is gone with it.
   // ── Google Ads Keyword Planner (2026-10-02). FREE — quota-limited at 15,000 ops/day, never
   //    billed, and on a quota entirely separate from Places SearchText.
   //    🔑 The cost figure below is MEASURED, not estimated: a full run of
