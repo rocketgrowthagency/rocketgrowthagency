@@ -51,8 +51,8 @@
  [
   "row 45 is a copy step again",
   "sitechange",
-  "  const COPY_STEPS = [\"m1.web.priority_pages\", \"m1.web.service_location_matrix\", \"m1.web.blog_seed\"];",
-  "  const COPY_STEPS = [\"m1.web.priority_pages\", \"m1.web.location_pages\", \"m1.web.service_location_matrix\", \"m1.web.blog_seed\"];",
+  "const COPY_STEPS = [\"m1.web.blog_seed\"];",
+  "const COPY_STEPS = [\"m1.web.blog_seed\", \"m1.web.location_pages\"];",
   1
  ],
  [
