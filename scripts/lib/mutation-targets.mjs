@@ -291,6 +291,10 @@ export const FILES = {
   calltestfn: "netlify/functions/admin-call-test.js",
   ctsync: "netlify/functions/call-tracking-sync.js",
   metricsjs: "netlify/functions/_metrics.js",   // the monthly report reads true (research audit, 10-31)
+  // gbp_protocols_v1 (11-1): the Google profile safety steps
+  gbpsafetyshared: "shared/gbp-safety.js",
+  gbpsafety: "netlify/functions/_gbp-safety.js",
+  gbpsafetyfn: "netlify/functions/admin-gbp-safety.js",
   clientalerts: "netlify/functions/_client-alerts.js",   // the alert list (report_and_measurement_v1, 11-1)
   alertswatch: "netlify/functions/client-alerts-watch.js",
   whynowsql: "supabase/report_why_now.sql",

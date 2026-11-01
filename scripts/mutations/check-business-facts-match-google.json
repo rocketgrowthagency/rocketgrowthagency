@@ -121,7 +121,7 @@
  [
   "record not updated",
   "stepinputfn",
-  "      const patch = F.clientsPatch(parsed.value, client || {});",
+  "      const patch = F.clientsPatch(parsed.value, client || {}, rec.tasks[stepId]);",
   "      const patch = {};",
   1
  ],

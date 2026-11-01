@@ -1,0 +1,667 @@
+[
+ [
+  "an open suspension doesn't stop a write",
+  "googleconsent",
+  "if (paused) return paused;",
+  "",
+  1
+ ],
+ [
+  "the suspended read is skipped",
+  "gbpsafety",
+  "if (S.openSuspension(((r && r.data && r.data.tasks) || {})[S.FACTS_STEP])) return SUSPENDED_REFUSAL;",
+  "",
+  1
+ ],
+ [
+  "a closed suspension still blocks",
+  "gbpsafetyshared",
+  "return s && s.status === \"open\" ? s : null;",
+  "return s || null;",
+  1
+ ],
+ [
+  "the consent rule is gone",
+  "googleconsent",
+  "if (!agreed) return REFUSAL;",
+  "",
+  1
+ ],
+ [
+  "1 week becomes 2",
+  "gbpsafetyshared",
+  "{ key: \"w1\", days: 7,",
+  "{ key: \"w1\", days: 14,",
+  1
+ ],
+ [
+  "4 weeks becomes 8",
+  "gbpsafetyshared",
+  "{ key: \"w4\", days: 28,",
+  "{ key: \"w4\", days: 56,",
+  1
+ ],
+ [
+  "an older change's dates win",
+  "gbpsafetyshared",
+  ".sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at))",
+  ".sort((a, b) => Date.parse(a.sent_at) - Date.parse(b.sent_at))",
+  1
+ ],
+ [
+  "a phone change gets dates",
+  "gbpsafetyshared",
+  "!!x && x.field === \"main_category\" && x.status === \"on_google\"",
+  "!!x && x.status === \"on_google\"",
+  1
+ ],
+ [
+  "a look is due early",
+  "gbpsafetyshared",
+  "p.rows.filter((r) => !r.done && Date.parse(r.due) <= nowMs)",
+  "p.rows.filter((r) => !r.done)",
+  1
+ ],
+ [
+  "a recorded look stays due",
+  "gbpsafetyshared",
+  "p.rows.filter((r) => !r.done && Date.parse(r.due) <= nowMs)",
+  "p.rows.filter((r) => Date.parse(r.due) <= nowMs)",
+  1
+ ],
+ [
+  "a look can be recorded early",
+  "gbpsafetyshared",
+  "if (nowMs < Date.parse(item.sent_at) + (def.days - 1) * DAY) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a look can be recorded twice",
+  "gbpsafetyshared",
+  "if (item.rechecks && item.rechecks[key]) return { error: \"This look is already recorded.\" };",
+  "",
+  1
+ ],
+ [
+  "a put back at one week",
+  "gbpsafetyshared",
+  "if (key === \"w1\" ? result !== \"looked\" : ![\"keep\", \"put_back\"].includes(result))",
+  "if (![\"looked\", \"keep\", \"put_back\"].includes(result))",
+  1
+ ],
+ [
+  "a put back skips the client",
+  "corechangefn",
+  "action = \"propose\";",
+  "action = \"keep\";",
+  1
+ ],
+ [
+  "the put-back words promise",
+  "gbpsafetyshared",
+  "so we can't promise what this changes.",
+  "so this will improve your rank.",
+  1
+ ],
+ [
+  "a due recheck misses To do",
+  "openmoves",
+  "for (const r of Safety.rechecksDue(factsNow.core_changes, Date.parse(now)))",
+  "for (const r of [])",
+  1
+ ],
+ [
+  "a suspension misses To do",
+  "openmoves",
+  "if (susp && factsStep) out.push",
+  "if (false) out.push",
+  1
+ ],
+ [
+  "RGA's moves reach the client",
+  "openmoves",
+  "else if (m.kind === \"profile_suspended\" || m.kind === \"category_recheck\") continue;",
+  "",
+  1
+ ],
+ [
+  "a page on another domain is fine",
+  "gbpsafety",
+  "if (S.hostOf(url) !== S.hostOf(fullUrl(base))) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "home page drops the path",
+  "gbpsafety",
+  "let url = kind === \"home\" ? fullUrl(base) :",
+  "let url = kind === \"home\" ? new URL(fullUrl(base)).origin + \"/\" :",
+  1
+ ],
+ [
+  "no website still chooses",
+  "gbpsafety",
+  "if (!base) return { error: \"There's no website on file for this client, so there is nothing to choose.\" };",
+  "",
+  1
+ ],
+ [
+  "a location page reads as home",
+  "gbpsafety",
+  "return String((client && client.website_url) || (g.confirmed && g.confirmed.website) ||",
+  "return String((g.confirmed && g.confirmed.website) || (client && client.website_url) ||",
+  1
+ ],
+ [
+  "the tag is always on",
+  "gbpsafety",
+  "tagged: !(raw && raw.tagged === false)",
+  "tagged: true",
+  1
+ ],
+ [
+  "the tag is wrong",
+  "gbpsafetyshared",
+  "[\"utm_medium\", \"organic\"]",
+  "[\"utm_medium\", \"gbp\"]",
+  1
+ ],
+ [
+  "own tags get ours too",
+  "gbpsafety",
+  "if (tagged && ![...u.searchParams.keys()].some((k) => /^utm_/i.test(k))) for",
+  "if (tagged) for",
+  1
+ ],
+ [
+  "a forward is allowed on save",
+  "gbpsafetyfn",
+  "if (red.result === \"redirects\") return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "a forward reads as ok",
+  "gbpsafety",
+  "if (S.hostOf(at) !== S.hostOf(url)) return { result: \"redirects\", to: S.hostOf(at) };",
+  "",
+  1
+ ],
+ [
+  "a 403 reads as ok",
+  "gbpsafety",
+  "return { result: r.status >= 200 && r.status < 300 ? \"ok\" : \"unknown\" };",
+  "return { result: \"ok\" };",
+  1
+ ],
+ [
+  "a private address gets fetched",
+  "gbpsafety",
+  "if (!addrs.length || addrs.some((a) => isPrivateIp(a.address))) return { result: \"unknown\" };",
+  "",
+  1
+ ],
+ [
+  "an unverified profile gets written",
+  "gbpsafety",
+  "if (md.hasVoiceOfMerchant !== true || md.hasPendingEdits === true) return stop(\"waiting\",",
+  "if (false) return stop(\"waiting\",",
+  1
+ ],
+ [
+  "the week is ignored",
+  "gbpsafety",
+  "if (Number.isFinite(last) && nowMs - last < WEEK) return stop(\"waiting\",",
+  "if (false) return stop(\"waiting\",",
+  1
+ ],
+ [
+  "another domain gets overwritten",
+  "gbpsafety",
+  "if (loc.websiteUri && S.hostOf(fullUrl(loc.websiteUri)) !== S.hostOf(choice.link)) return needsRga",
+  "if (false) return needsRga",
+  1
+ ],
+ [
+  "a same link is written again",
+  "gbpsafety",
+  "if (linkKey(loc.websiteUri) === linkKey(choice.link)) return done({ wrote: false });",
+  "",
+  1
+ ],
+ [
+  "no test run first",
+  "gbpsafety",
+  "try { await call(`${deps.loc}?updateMask=websiteUri&validateOnly=true`, { method: \"PATCH\", body }); }\n  catch (e) { return needsRga(`Google's test run said no: ${e.message}`); }\n",
+  "",
+  1
+ ],
+ [
+  "no read back",
+  "gbpsafety",
+  "if (linkKey(back.websiteUri) !== linkKey(choice.link)) return needsRga(\"Google accepted it, but doesn't show it yet.\");",
+  "",
+  1
+ ],
+ [
+  "a link write doesn't count toward the week",
+  "gbpsafety",
+  "if (res.wrote) gp.last_core_at = at;",
+  "",
+  1
+ ],
+ [
+  "the record doesn't follow the link",
+  "gbpsafety",
+  "if (gp.confirmed) gp.confirmed = { ...gp.confirmed, website: res.choice.link };",
+  "",
+  1
+ ],
+ [
+  "a waiting link retries forever",
+  "gbpsafety",
+  "if (nights > MAX_NIGHTS) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "nights aren't counted",
+  "gbpsafety",
+  "return { ...res, choice: { ...res.choice, nights } };",
+  "return res;",
+  1
+ ],
+ [
+  "a failed link retries nightly",
+  "gbpsafety",
+  "if (!c || ![\"waiting\", \"saved\"].includes(c.status)) return false;",
+  "if (!c || c.status === \"on_google\") return false;",
+  1
+ ],
+ [
+  "a future date goes out",
+  "gbpsafety",
+  "return !c.not_before || Date.parse(c.not_before) <= nowMs;",
+  "return true;",
+  1
+ ],
+ [
+  "Check Google now writes",
+  "gbpwatch",
+  "if (!d.factsOnly && task && stepId === STEP.FACTS) {\n      const Safety",
+  "if (task && stepId === STEP.FACTS) {\n      const Safety",
+  1
+ ],
+ [
+  "step 4 calls the chosen page a difference",
+  "gbpfacts",
+  "website: (Safety.linkChoiceState(task) === \"on_google\" && task.website_choice.url) || (client && client.website_url) || null,",
+  "website: (client && client.website_url) || null,",
+  1
+ ],
+ [
+  "a chosen page overwrites their website",
+  "gbpfacts",
+  " && !(chosen && sameSite(value.website, chosen))) patch.website_url",
+  ") patch.website_url",
+  1
+ ],
+ [
+  "step 4's save doesn't pass the task",
+  "stepinput",
+  "F.clientsPatch(parsed.value, client || {}, rec.tasks[stepId])",
+  "F.clientsPatch(parsed.value, client || {})",
+  1
+ ],
+ [
+  "a stale choice stands",
+  "gbpsafetyshared",
+  "if (c.status === \"on_google\" && confirmed && siteOnly(confirmed) !== siteOnly(c.url)) return \"stale\";",
+  "",
+  1
+ ],
+ [
+  "an unknown pin reads as a storefront",
+  "gbpsafetyshared",
+  "m === \"service_area\" ? false : null;",
+  "m === \"service_area\" ? false : true;",
+  1
+ ],
+ [
+  "the pin ignores what Google shows",
+  "gbpsafetyshared",
+  "for (const v of [g.after && g.after.come, g.before && g.before.come, g.confirmed && g.confirmed.come]) if (typeof v === \"boolean\") return v;",
+  "",
+  1
+ ],
+ [
+  "a service-area pin saves",
+  "gbpsafetyfn",
+  "if (S.pinApplies(task, client) === false) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "verify reads as suspended",
+  "clientalerts",
+  "if (typeof s.hasVoiceOfMerchant === \"boolean\" || s.verify || s.waitForVoiceOfMerchant || s.resolveOwnershipConflict) return { suspended: false };",
+  "if (s.verify) return { suspended: true };",
+  1
+ ],
+ [
+  "Google's word isn't read",
+  "clientalerts",
+  "if (s.complyWithGuidelines) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "no answer reads as clear",
+  "clientalerts",
+  "  return { suspended: null };\n}\nasync function readListing",
+  "  return { suspended: false };\n}\nasync function readListing",
+  1
+ ],
+ [
+  "a healthy listing costs a second read",
+  "clientalerts",
+  "if (md && md.hasVoiceOfMerchant === true) return { ...out, suspended: false };",
+  "",
+  1
+ ],
+ [
+  "a left-out false hides a suspension",
+  "clientalerts",
+  "if (!md) return { ...out, suspended: null };",
+  "if (!md || md.hasVoiceOfMerchant !== false) return { ...out, suspended: null };",
+  1
+ ],
+ [
+  "two alerts for one suspension",
+  "clientalerts",
+  "bad: said.suspended === true ? false : out.bad };",
+  "bad: out.bad };",
+  1
+ ],
+ [
+  "a failed read reads as clear",
+  "clientalerts",
+  "if (!v.ok) return { ...out, suspended: null };",
+  "if (!v.ok) return { ...out, suspended: false };",
+  1
+ ],
+ [
+  "the alert isn't raised",
+  "alertswatch",
+  "alert: \"suspended\", bad: listing.suspended,",
+  "alert: \"suspended\", bad: null,",
+  1
+ ],
+ [
+  "the card doesn't open",
+  "alertswatch",
+  "const was = await Safety.syncSuspension(",
+  "const was = await (async () => \"unchanged\")(",
+  1
+ ],
+ [
+  "an unknown changes the record",
+  "gbpsafety",
+  "if (suspended !== true && suspended !== false) return \"unchanged\";\n",
+  "",
+  1
+ ],
+ [
+  "a suspension writes every night",
+  "gbpsafety",
+  "if (suspended === !!open) return \"unchanged\";",
+  "",
+  1
+ ],
+ [
+  "told before anyone told them",
+  "gbpsafety",
+  "steps: {}, told_at: null, told_by: null })",
+  "steps: {}, told_at: at, told_by: by })",
+  1
+ ],
+ [
+  "the alert has no label",
+  "notifyrga",
+  "client_listing_suspended_failed: \"🔴 Google Suspended a Client's Listing\",\n",
+  "",
+  1
+ ],
+ [
+  "the card says RGA will appeal",
+  "gbpsafetyshared",
+  "Any appeal goes to Google from your own account and Google allows one, so send it only after what caused this is fixed.",
+  "We are gathering what Google needs and will appeal once.",
+  1
+ ],
+ [
+  "the card promises it comes back",
+  "gbpsafetyshared",
+  "Whether a profile comes back is up to Google,",
+  "We will get it back for you,",
+  1
+ ],
+ [
+  "the new-listing warning goes",
+  "gbpsafetyshared",
+  " Please do not create a new listing.",
+  "",
+  1
+ ],
+ [
+  "the records line goes",
+  "gbpsafetyshared",
+  ", and your record of recent changes is in What RGA did.",
+  ".",
+  1
+ ],
+ [
+  "the not-included line goes",
+  "gbpsafetyshared",
+  ", and appeal work isn't part of your plan unless we agree to it in writing.",
+  ".",
+  1
+ ],
+ [
+  "RGA sends the appeal",
+  "gbpsafetyshared",
+  "The client sends it from their own Google account",
+  "RGA sends it from the client's Google account",
+  1
+ ],
+ [
+  "a step of the procedure goes",
+  "gbpsafetyshared",
+  "{ key: \"no_new\", label: \"Never let the client create a new profile in a panic\", detail: \"Google says not to create a new profile for the same business. The message below says so too.\" },\n",
+  "",
+  1
+ ],
+ [
+  "a rate gets written in",
+  "gbpsafetyshared",
+  "One appeal. It is one shot",
+  "One appeal. It works 40% of the time",
+  1
+ ],
+ [
+  "the tell sends an email",
+  "gbpsafetyfn",
+  "if (open.told_at) return json(409, { error: \"The client has already been told.\" });",
+  "if (open.told_at) return json(409, { error: \"The client has already been told.\" }); await fetch(\"/.netlify/functions/send-client-email\");",
+  1
+ ],
+ [
+  "told twice",
+  "gbpsafetyfn",
+  "if (open.told_at) return json(409, { error: \"The client has already been told.\" });",
+  "",
+  1
+ ],
+ [
+  "no auth",
+  "gbpsafetyfn",
+  "const gate = await requireWorkspaceForClient(event, clientId);\n  if (gate.error) return gate.error;",
+  "const gate = {};",
+  1
+ ],
+ [
+  "a link saves while suspended",
+  "gbpsafetyfn",
+  "if (S.openSuspension(task)) return json(409, { error: \"Google has suspended this profile, so every change to it is paused.\" });",
+  "",
+  1
+ ],
+ [
+  "step 28's row has no cards",
+  "admin",
+  "id === \"m1.gbp.business_facts\" ? gsFactsCardsHtml(t)",
+  "id === \"m1.gbp.business_facts\" ? \"\"",
+  1
+ ],
+ [
+  "a done step 31 loses the dates",
+  "admin",
+  "o.flowId === \"m1.gbp.optimize_categories\" ? `<div class=\"ob-done-card\"><div data-admin-core",
+  "o.flowId === \"x\" ? `<div class=\"ob-done-card\"><div data-admin-core",
+  1
+ ],
+ [
+  "a different card design",
+  "admin",
+  "`<div class=\"ob-zc${cls ? ` ${cls}` : \"\"}\"${attrs}>",
+  "`<div class=\"ob-gcard ${cls}\"${attrs}>",
+  1
+ ],
+ [
+  "a missing scan reads as a scan",
+  "admin",
+  "`Last scan on record ${escapeHtml(gsDay(last))}.` : \"No scan on record.\"",
+  "`Last scan on record ${escapeHtml(gsDay(last))}.` : \"Scanned.\"",
+  1
+ ],
+ [
+  "the card names a step by hand",
+  "admin",
+  "Run one from ${escapeHtml(obStepRef(\"m1.audit.grid_baseline\"))}",
+  "Run one from step 22",
+  1
+ ],
+ [
+  "the pin line says we move it",
+  "admin",
+  "We do not move it.",
+  "We move it for them.",
+  1
+ ],
+ [
+  "a service-area business is asked",
+  "admin",
+  "if (applies === false) return gsCard",
+  "if (false) return gsCard",
+  1
+ ],
+ [
+  "no website is asked to choose",
+  "admin",
+  "if (!base) return gsCard",
+  "if (false) return gsCard",
+  1
+ ],
+ [
+  "tell doesn't ask first",
+  "admin",
+  "data-gs-ask=\"Show this message on their portal Dashboard now? No email is sent.\"",
+  "data-gs-x=\"\"",
+  1
+ ],
+ [
+  "the client sees it before they're told",
+  "portal",
+  "if (!s || !s.told_at) return \"\";",
+  "if (!s) return \"\";",
+  1
+ ],
+ [
+  "the client sees a link Google doesn't show",
+  "portal",
+  "if (!Sf || Sf.linkChoiceState(t) !== \"on_google\") return \"\";",
+  "if (!Sf || !t.website_choice) return \"\";",
+  1
+ ],
+ [
+  "no records link",
+  "portal",
+  "data-portal-goto=\"approve\">See What RGA did",
+  "data-x=\"approve\">See What RGA did",
+  1
+ ],
+ [
+  "the how-to moves to the link card",
+  "portal",
+  ".filter((c) => !c.closest(\"[data-cs-extra]\") && !c.closest(\"[data-gc-hold]\")",
+  ".filter((c) => !c.closest(\"[data-gc-hold]\")",
+  1
+ ],
+ [
+  "the best page",
+  "gbpsafetyshared",
+  "This is the page we chose for your Google website link. You have one main location",
+  "This is the best page. You have one main location",
+  1
+ ],
+ [
+  "step 2 asks a told client to verify",
+  "portal",
+  "else if (gvPaused) html = csCard(",
+  "else if (false) html = csCard(",
+  1
+ ],
+ [
+  "the portal says calls",
+  "portal",
+  "caTile(\"Call-button taps\", cur.gbp_calls",
+  "caTile(\"Calls from Google\", cur.gbp_calls",
+  1
+ ],
+ [
+  "the portal's second tile says calls",
+  "portal",
+  "<div class=\"lbl\">Call-button taps</div>",
+  "<div class=\"lbl\">Calls from Google</div>",
+  1
+ ],
+ [
+  "the summary says calls",
+  "portal",
+  "call-button taps on Google</b>",
+  "calls from Google</b>",
+  1
+ ],
+ [
+  "admin says calls",
+  "admin",
+  "tile(\"Call-button taps\", cur.gbp_calls",
+  "tile(\"Calls (GBP)\", cur.gbp_calls",
+  1
+ ],
+ [
+  "the KPI alert says calls",
+  "maturefn",
+  "label: \"Call-button taps on Google\"",
+  "label: \"Calls from Google\"",
+  1
+ ],
+ [
+  "the unsure alert drops the steps",
+  "clientalerts",
+  " If it is suspended, start the suspension steps on this client's business facts step.",
+  "",
+  1
+ ]
+]

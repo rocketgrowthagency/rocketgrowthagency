@@ -135,8 +135,8 @@
 [
 "How seats into the hidden form",
 "portal",
-".filter((c) => !c.closest(\"[data-gc-hold]\") && !c.closest(\"[data-how-fold]\")",
-".filter((c) => !c.closest(\"[data-how-fold]\")",
+".filter((c) => !c.closest(\"[data-cs-extra]\") && !c.closest(\"[data-gc-hold]\") && !c.closest(\"[data-how-fold]\")",
+".filter((c) => !c.closest(\"[data-cs-extra]\") && !c.closest(\"[data-how-fold]\")",
 1
 ],
 [

@@ -31,7 +31,7 @@ if (!P.includes(`taskState?.google_push?.state === "removed" ? { text: "Google t
 if (!/auto: "wait", bad: "bad" \}\[ownerPill\.cls\]/.test(P)) fail("a said-no row isn't red (the pill's colour never reaches the row)");
 if (!/const GC_HOLD = new Set\(\["m1\.gbp\.hours_attributes", "m1\.gbp\.attributes", "m1\.gbp\.booking_link"\]\);/.test(P)) fail("the form-holding steps aren't 7, 8, 9");
 if ((P.match(/<div class="pm-doit"\$\{gcHold \? " data-gc-hold hidden" : ""\}>/g) || []).length !== 2) fail("a form path still draws under the red card (both pm-doit returns must hold it)");
-if (!/const csCardOf = \(row\) => \{ const cs = row \? \[\.\.\.row\.querySelectorAll\("\.pm-cs-card"\)\]\.filter\(\(c\) => !c\.closest\("\[data-gc-hold\]"\)/.test(P)) fail("How this step works would seat into the hidden form, not the red card");
+if (!/const csCardOf = \(row\) => \{ const cs = row \? \[\.\.\.row\.querySelectorAll\("\.pm-cs-card"\)\]\.filter\(\(c\) => (?:!c\.closest\("\[data-cs-extra\]"\) && )?!c\.closest\("\[data-gc-hold\]"\)/.test(P)) fail("How this step works would seat into the hidden form, not the red card");
 if (!P.includes("HOW_WORKS_FOOT.has(step.id) || gcHold ? DETAIL_LABEL.done[0]")) fail("a held form's fold doesn't say How this step works");
 if (!/verify: \["How this step works", "Hide how this step works"\]/.test(P)) fail("step 2's fold doesn't say How this step works");
 if (/How verification works/.test(P)) fail("How verification works is back");

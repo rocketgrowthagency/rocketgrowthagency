@@ -167,7 +167,7 @@ if (new Set(nos).size !== nos.length || Math.max(...nos) !== nos.length) fail(`c
 if (!G.GOOGLE_STEPS.has(STEP)) fail("the step isn't one of the Google steps (read, write, read back, nightly)");
 const sin = nc(read("netlify/functions/portal-step-input.js"));
 if (!/if \(spec\.kind === "facts"\) return require\("\.\/_gbp-facts"\)\.validateFacts\(raw\);/.test(sin)) fail("the save doesn't check a facts answer");
-if (!/const patch = F\.clientsPatch\(parsed\.value, client \|\| \{\}\);/.test(sin) || !/Prefer: "return=representation" \}, body: JSON\.stringify\(patch\) \}\);\s*const ok = back && Object\.entries\(patch\)/.test(sin)) fail("the client record isn't updated from the answer (and read back)");
+if (!/const patch = F\.clientsPatch\(parsed\.value, client \|\| \{\}(?:, [^)]*)?\);/.test(sin) || !/Prefer: "return=representation" \}, body: JSON\.stringify\(patch\) \}\);\s*const ok = back && Object\.entries\(patch\)/.test(sin)) fail("the client record isn't updated from the answer (and read back)");
 if (!/via: "portal_gbp_check"/.test(sin)) fail("where the work happens is written without the owner-facts meta");
 if (!/google: push && \(push\.state === "on_google" \|\| \(stepId === GSTEP\.FACTS && \(push\.written \|\| \[\]\)\.length\)\)/.test(sin)) fail("a phone / website written to Google isn't in the Google change log");
 if (!/client_record: toldSync/.test(sin)) fail("the activity row doesn't say what changed on the client record");
