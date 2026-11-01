@@ -42,6 +42,7 @@ const ALLOW = {
   "portal-step-choice.js": "records the choice itself (client_step_choice: key + label + who)",
   "portal-step-recheck.js": "a measurement — kept append-only in client_step_detections",
   "portal-photo-remove.js": "records the removal itself: activity + publish log + Google change log",
+  "portal-photo-check.js": "an AI look at an upload, kept as advice under photo_ai.uploads (the same key RGA's own check writes); the client submits nothing, and a second call is answered from it, so there is nothing to record (client_step10_upload_help_v1)",
   "portal-reply.js": "the reply IS the permanent record (client_activity rga_reply, written first); the step write only stamps replied_at on the ask",
 };
 const dir = `${SITE}/netlify/functions`;

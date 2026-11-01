@@ -1,0 +1,114 @@
+[
+ [
+  "a refusal is read as none",
+  "blogfind",
+  "if (refused === 0 && counted.length >= 4)",
+  "if (counted.length >= 4)",
+  1
+ ],
+ [
+  "a 403 counts as an answer",
+  "blogfind",
+  "      refused++; return null;                // 401",
+  "      counted.push(url); return null;                // 401",
+  1
+ ],
+ [
+  "a timeout counts as an answer",
+  "blogfind",
+  "    } catch { refused++; return null; }",
+  "    } catch { return null; }",
+  1
+ ],
+ [
+  "a private address is fetched",
+  "blogfind",
+  "if (addrs.some((a) => isPrivateIp(a.address))) return out(",
+  "if (false) return out(",
+  1
+ ],
+ [
+  "the sitemap stops being read",
+  "blogfind",
+  "if (sm && sm.status === 200) {\n    let entries",
+  "if (false) {\n    let entries",
+  1
+ ],
+ [
+  "the newest date is not kept",
+  "blogfind",
+  "const noteDate = (s) => { const x = day(s); if (x && (!newest || x > newest)) newest = x; };",
+  "const noteDate = (s) => {};",
+  1
+ ],
+ [
+  "the home page refusal is not 'couldn't'",
+  "blogfind",
+  "if (!home) return out({ verdict: \"couldnt\"",
+  "if (!home) return out({ verdict: \"none\"",
+  1
+ ],
+ [
+  "anyone can run the check",
+  "blogcheckfn",
+  "  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "a pasted private link is accepted",
+  "blogcheckfn",
+  "if (n.error) return json(400, { error: \"That isn't a web address",
+  "if (false) return json(400, { error: \"That isn't a web address",
+  1
+ ],
+ [
+  "the save is not read back",
+  "blogcheckfn",
+  "if (!after?.tasks?.[STEP]?.blog_check || after.tasks[STEP].blog_check.at !== result.at) return json(500",
+  "if (false) return json(500",
+  1
+ ],
+ [
+  "the check is not recorded",
+  "blogcheckfn",
+  "await recordSubmission({",
+  "void ({",
+  1
+ ],
+ [
+  "the card says no blog flatly",
+  "admin",
+  "title: \"We didn't find a blog\",",
+  "title: \"They have no blog\",",
+  1
+ ],
+ [
+  "the couldn't-check card drops its warning",
+  "admin",
+  "<b>This doesn't mean they have no blog.</b>",
+  "",
+  1
+ ],
+ [
+  "the paste control goes",
+  "admin",
+  "They have one: paste the link</button></span>`;",
+  "</button></span>`;",
+  1
+ ],
+ [
+  "step 47 loses its card",
+  "admin",
+  "    : id === \"m1.web.blog_seed\" ? blogCheckAdminHtml(t)\n",
+  "",
+  1
+ ],
+ [
+  "the button does not spin",
+  "admin",
+  "  b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-blog-check\"",
+  "  try {\n    const r = await fetch(\"/.netlify/functions/admin-blog-check\"",
+  1
+ ]
+]

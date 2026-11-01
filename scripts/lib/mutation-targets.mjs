@@ -195,6 +195,8 @@ export const FILES = {
   photocheckfn: "netlify/functions/portal-photo-check.js",   // client_step10_upload_help_v1
   photolookfn: "netlify/functions/_photo-look.js",
   actormap: "scraper:flow/playbooks/_actor-map.mjs",   // client_step12_forms_v1
+  blogfind: "netlify/functions/_blog-find.js",   // admin_blog_step_v1
+  blogcheckfn: "netlify/functions/admin-blog-check.js",
   stylecss: "style.css",
   scriptjs: "script.js",
   contractdoc: "shared/contract-doc.js",
