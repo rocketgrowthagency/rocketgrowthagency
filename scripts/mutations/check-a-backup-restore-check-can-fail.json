@@ -1,0 +1,65 @@
+[
+ [
+  "row counts are not compared",
+  "restorecheck",
+  "if (rows.length > want || rows.length < want - allowed)",
+  "if (false)",
+  1
+ ],
+ [
+  "a file that does not parse passes",
+  "restorecheck",
+  "catch { fail(`${name}: file doesn't parse`); continue; }",
+  "catch { continue; }",
+  1
+ ],
+ [
+  "a missing file passes",
+  "restorecheck",
+  "{ fail(`${name}: listed in the manifest, file missing`); continue; }",
+  "{ continue; }",
+  1
+ ],
+ [
+  "the strip allowance is unlimited",
+  "restorecheck",
+  "rows.length < want - allowed",
+  "rows.length < 0",
+  1
+ ],
+ [
+  "sign-ins are not compared",
+  "restorecheck",
+  "u.length !== Number(manifest.logins)",
+  "false",
+  1
+ ],
+ [
+  "manifest problems are ignored",
+  "restorecheck",
+  "if (Array.isArray(manifest.problems) && manifest.problems.length)",
+  "if (false)",
+  1
+ ],
+ [
+  "a collapse across the whole copy passes",
+  "restorecheck",
+  "sum(manifest) < sum(prev) * 0.5",
+  "false",
+  1
+ ],
+ [
+  "a cannot-tell reads as a pass",
+  "restorecheck",
+  "process.exit(2); };",
+  "process.exit(0); };",
+  1
+ ],
+ [
+  "it prints a row",
+  "restorecheck",
+  "console.log(`✅ the ${night} backup restores:",
+  "console.log(JSON.stringify(rows), `✅ the ${night} backup restores:",
+  1
+ ]
+]

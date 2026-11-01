@@ -128,6 +128,7 @@ export const FILES = {
   secondlogoshared: "shared/photo-second-logo.js",   // client_step10_photo_truth_v1
   backupdata: "scraper:scripts/backup-client-data.mjs",   // rga_data_backup_plan_v1
   backuplacie: "scraper:scripts/backup-lacie.sh",   // Chris 10-31: chats + repos on the Mac and LaCie
+  restorecheck: "scraper:scripts/check-a-backup-restores.mjs",   // monthly restore test (11-01)
   recheck: "netlify/functions/portal-step-recheck.js",
   stepsql: "docs/supabase/RGA_CLIENT_STEP_RUNS_2026-10-07.sql",
   heavy: "netlify/functions/flow-execute-heavy-background.js",

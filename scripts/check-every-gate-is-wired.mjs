@@ -359,6 +359,8 @@ const NOT_PREFLIGHT = {
   'check-client-portal-tabs.mjs': 'the WEBSITE repo\'s client portal tabs (client_portal_tabs_v1, approved 10-30); file-only, runs in daily-health-check.sh',
   'check-client-data-backup-works.mjs': 'the nightly client data backup: reads this Mac\'s own backup record and runs the script against a fake Supabase; daily, not a pre-flight',
   'check-internal-files-are-not-public.mjs': 'every top-level name in the website repo is public by decision or blocked at the edge; daily, not a pre-flight',
+  'check-a-backup-restore-check-can-fail.mjs': 'proves the restore check on fake backups; daily, not a pre-flight',
+  'check-a-backup-restores.mjs': 'reads the real drive: runs monthly (1st to 7th) from daily-health-check.sh, not a pre-flight',
   'check-lacie-backup-works.mjs': 'the daily LaCie backup: reads this Mac\'s own backup record and runs the script on throwaway folders; daily, not a pre-flight',
   'check-audit-decisions.mjs': 'the WEBSITE repo\'s seven audit decisions (audit_decisions_v1, approved 10-31); real modules on a stubbed network, nothing reaches Google or SerpAPI, runs in daily-health-check.sh',
   'check-step10-photo-truth.mjs': 'the WEBSITE repo\'s step 10 photo truth (client_step10_photo_truth_v1, 10-30); fakes only, runs in daily-health-check.sh',
@@ -668,6 +670,8 @@ console.log(`  ✓ every gate that reads the site can be pointed at a copy, so i
   // which is exactly what NOT_PREFLIGHT would have become without the same check.
   // → feedback_a_gate_i_never_wired_is_a_gate_that_is_always_green
   const SELF_PROVING = {
+    "check-a-backup-restores.mjs":
+      "reads the real backup drive, so its own suite cannot run it; check-a-backup-restore-check-can-fail.mjs runs it against fake backups and carries the 9 mutations on this file.",
     "check-every-identity-points-at-rga.mjs":
       "reads live credential state (git, ssh, gh, netlify, gcloud); no file for a mutation to change. "
       + "Proves itself by parsing known output and exiting 2 when its own reading is wrong.",
