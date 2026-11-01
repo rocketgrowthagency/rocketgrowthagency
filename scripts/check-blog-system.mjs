@@ -454,5 +454,22 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   if (!/job: "blog-competitor-snapshot"[^\n]*cron: "20 6 \* \* 1"/.test(MAN)) fail("the snapshot job isn't in the job manifest");
   if (!/withCheckin\("blog-competitor-snapshot"/.test(SSRC)) fail("the snapshot job doesn't check in");
 }
+// the client's blog step: up to 2 when material exists, a Monthly row, nothing published
+{
+  const PB = JSON.parse(read("data/playbooks/playbooks.json")), FE = read("netlify/functions/flow-execute.js");
+  const row = (PB.month2plus || []).find((x) => x.id === "m2.exec.blog_posts"), seed = (PB.month1 || []).find((x) => x.id === "m1.web.blog_seed");
+  if (!row || !row.hasRunner || !/up to 2/i.test(row.title)) fail("the Monthly 'Publish up to 2 blog posts' row is missing or still says a fixed number");
+  else if ((PB.month2plus.findIndex((x) => x.id === row.id)) !== PB.month2plus.findIndex((x) => x.id === "m2.exec.focus_area_work") + 1) fail("the Monthly blog row isn't beside the focus-area work it came out of");
+  if (!seed || !/up to 2/i.test(seed.title) || /Publish 2 seed/.test(seed.title)) fail("step 47 still promises a fixed 2 posts");
+  if (/"m2\.exec\.blog_posts": async \(\{ client \}\) => blogFromMaterial\(client\)/.test(FE) === false || /"m1\.web\.blog_seed": async \(\{ client \}\) => blogFromMaterial\(client\)/.test(FE) === false) fail("the blog steps don't both run through the same material check");
+  const fn = (/async function blogFromMaterial\(client\) \{[\s\S]*?\n\}\n/.exec(FE) || [""])[0];
+  if (!fn) moved("blogFromMaterial");
+  if (!/clientBlogPlan/.test(fn) || !/outcome: "noop"/.test(fn) || !/published: false/.test(fn)) fail("the blog runner doesn't decide from material, say 0 is fine, or mark its draft unpublished");
+  if (/openPullRequest|api\.github\.com|GA\.|writeFile|site_change|publish_pr/.test(fn)) fail("the blog runner can put something on a client's site");
+  if (!/not automatic yet/i.test(row && row.instructions || "")) fail("the Monthly blog row promises an upload that isn't built");
+  const heavy = (/const HEAVY = new Set\(\[[\s\S]*?\]\);/.exec(FE) || [""])[0];
+  if (!/"m2\.exec\.blog_posts"/.test(heavy) || !/"m1\.web\.blog_seed"/.test(heavy)) fail("a blog step that writes a post runs in the foreground and can time out");
+  if (!/"m2\.exec\.blog_posts":\s*\{ level: "manual"/.test(ADMJS)) fail("admin doesn't know the Monthly blog row");
+}
 if (F.length) { console.error(`🔴 the blog system regressed — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ blog system: 14 link rules each fire on their own case, the real blog has no failing link, verdicts refuse noise, an API error is never 'not indexed', no table = Google is asked nothing, no noindex or publishing in this build, posts and pages clean");

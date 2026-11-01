@@ -467,5 +467,40 @@
   "schedule = \"20 6 * * 1\"",
   "schedule = \"20 6 * * *\"",
   1
+ ],
+ [
+  "the Monthly blog row says a fixed number",
+  "playbooksjson",
+  "\"title\": \"Publish up to 2 blog posts\"",
+  "\"title\": \"Publish 2 blog posts\"",
+  1
+ ],
+ [
+  "step 47 promises a fixed 2 again",
+  "playbooksjson",
+  "\"title\": \"Publish up to 2 seed blog posts (full draft)\"",
+  "\"title\": \"Publish 2 seed blog posts (full draft)\"",
+  1
+ ],
+ [
+  "the blog runner never says 0 is fine",
+  "flowexec",
+  "outcome: \"noop\", outcome_data: { posts: 0",
+  "outcome: \"blocked\", outcome_data: { posts: 0",
+  1
+ ],
+ [
+  "a blog draft is marked published",
+  "flowexec",
+  "drafted_at: new Date().toISOString(), published: false }",
+  "drafted_at: new Date().toISOString(), published: true }",
+  1
+ ],
+ [
+  "a blog step leaves the background",
+  "flowexec",
+  "    \"m2.exec.blog_posts\",   // one post",
+  "    // one post",
+  1
  ]
 ]

@@ -28,6 +28,8 @@ export const FILES = {
   blogsql: "supabase/blog_system.sql",
   blogtoml: "netlify.toml",
   blogindexpage: "blog/index.html",
+  playbooksjson: "data/playbooks/playbooks.json",
+  flowexec: "netlify/functions/flow-execute.js",
   blogchain: "netlify/functions/_blog-chain.js",
   blogsnap: "netlify/functions/blog-competitor-snapshot.js",
   leadlib: "netlify/functions/_supabase-lead.js",
