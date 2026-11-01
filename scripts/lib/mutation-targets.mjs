@@ -2,6 +2,12 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // kickoff_why_now_v1 (approved 11-01): the client's no to posts is kept; the card draws from the plan
+  blogposts: "netlify/functions/portal-blog-posts.js",
+  blogclientplan: "netlify/functions/_blog-client-plan.js",
+  blogclientsql: "supabase/blog_client_choice.sql",
+  // see_what_client_sees_v1 (approved 11-01)
+  seeclient: "shared/client-preview.js",
   // onboarding_and_offboarding_v1 (approved 11-01)
   stepreminders: "netlify/functions/_step-reminders.js",
   calloutcome: "shared/call-outcome.js",

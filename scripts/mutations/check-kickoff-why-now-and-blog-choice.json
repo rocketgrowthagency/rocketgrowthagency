@@ -1,0 +1,16 @@
+[
+ ["why-now no longer first in Their why", "admin", "      [\"whynow\"],\n      [\"say\", \"When we spoke", "      [\"say\", \"When we spoke", 1],
+ ["did not say can save", "admin", "if (d.pick !== \"yes\" && d.pick !== \"no\") {", "if (false) {", 1],
+ ["no is saved as a literal", "admin", "why_now_slow: d.pick === \"yes\", why_now_note", "why_now_slow: false, why_now_note", 1],
+ ["a missing column is not named", "admin", "Run supabase/report_why_now.sql first.", "Try again.", 1],
+ ["the tile cannot be changed", "admin", "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-whynow-open", "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-whynow-x", 1],
+ ["the report reads the RGA-only note", "reportjs", "select(\"why_now_slow\")", "select(\"why_now_slow,why_now_note\")", 1],
+ ["the veto is hardcoded off again", "flowexec", "vetoed: Boolean(client.blog_posts_off_at),", "vetoed: false,", 1],
+ ["RGA can press the client's no", "blogposts", "action === \"read\" ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId)", "await requirePortalOwnerOrWorkspace(event, clientId)", 1],
+ ["the veto write is not read back", "blogposts", "if (s.error || s.off !== off)", "if (s.error)", 1],
+ ["an unreadable page list becomes missing pages", "blogclientplan", "if (i.hasSite && !i.pagesRead) return", "if (false) return", 1],
+ ["the off state has no way back", "blogclientplan", "action: \"on\", actionLabel: \"Turn posts back on\"", "action: null, actionLabel: \"\"", 1],
+ ["the card promises calls", "blogclientplan", "const NOTE = \"Posts are never sold as a way to rank on Maps and never promise calls.\";", "const NOTE = \"Posts bring more calls.\";", 1],
+ ["the veto column is gone", "blogclientsql", "add column if not exists blog_posts_off_at timestamptz", "-- gone", 1],
+ ["the blog card leaves the access step", "portal", "return accessCardHtml(step, t, clientId) + blogPlanHostHtml(clientId);", "return accessCardHtml(step, t, clientId);", 1]
+]
