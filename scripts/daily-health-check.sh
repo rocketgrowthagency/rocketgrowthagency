@@ -351,6 +351,8 @@ run check-questions-fit-the-trade.mjs "every approved trade is asked questions t
 run check-client-steps-explain-themselves.mjs "no client step offers instructions it does not have"
 run check-we-only-name-tools-we-use.mjs "no client-facing copy names a tool we decided against"
 run check-call-metrics-are-not-conflated.mjs "GBP calls and tracked calls are shown separately"
+run check-the-monthly-report-reads-true.mjs "the monthly report's numbers and sentences match their inputs, and a tap is never a lead"
+run check-admin-step-text-reads-true.mjs "the admin step text carries no invented number, login ask, old cadence or terminal command, in both sources"
 run check-no-duplicate-call-rows.mjs "one call, one log row, one lead"
 run check-call-tracking-path-is-whole.mjs "opting in to call tracking actually leads somewhere"
 run check-no-gate-is-permanently-indeterminate.mjs "no gate is wired, counted, and blind"

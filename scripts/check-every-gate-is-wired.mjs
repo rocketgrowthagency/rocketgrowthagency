@@ -369,6 +369,8 @@ const NOT_PREFLIGHT = {
   'check-the-sale-and-the-name-stay-gone.mjs': 'the WEBSITE repo\'s public pages + contract plans (pricing_page_v2, approved 10-31); files only, runs in daily-health-check.sh',
   'check-the-weekly-audit-is-read-only.mjs': 'the weekly audit job stays read-only (Chris 10-31); files only, runs in daily-health-check.sh',
   'check-the-daily-check-is-alive.mjs': 'watches the morning job itself, so it cannot run only from inside that job: nightly-full-check.sh runs it every night; files only, not the video pre-flight',
+  'check-the-monthly-report-reads-true.mjs': 'a client monthly-report rule: the real report.js in a browser on fixtures, and the metrics pull on fixed Google responses, no production read; runs in daily-health-check.sh, not the video pre-flight',
+  'check-admin-step-text-reads-true.mjs': 'an admin SOP text rule, file-only; runs in daily-health-check.sh, not the video pre-flight',
   'check-the-monthly-report-opens-the-call.mjs': 'a client monthly-report rule, runs on a fake database: nightly-full-check.sh runs it every night; not the video pre-flight',
   'check-step-36-booking-every-scenario.mjs': 'the WEBSITE repo\'s admin step 36 + the booking-link veto + the Remind popup (step36_booking_rga_does_it_v1, approved 10-29); run by daily-health-check.sh + its mutation suite',
   'check-a-stray-rejection-never-blanks-the-admin.mjs': 'the WEBSITE repo\'s admin.js rejection handler (a stray rejection blanked a loaded admin, found 10-29); run by daily-health-check.sh + its mutation suite',

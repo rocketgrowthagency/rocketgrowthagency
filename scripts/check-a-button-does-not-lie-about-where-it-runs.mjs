@@ -32,7 +32,14 @@ const steps = [...(pb.month1 || []), ...(pb.month2plus || [])];
 if (steps.length < 20) { console.error("⚠️  INDETERMINATE — too few playbook steps."); process.exit(2); }
 
 // 🔑 THE SAME CONDITION THE SERVER USES. `mustRunLocally` is returned when EXECUTORS has no entry.
-const hasExecutor = (id) => flow.includes(`"${id}": async`);
+// 🔴 2026-10-31: THAT LITERAL MISSED TWO OF THE WAYS THE TABLE IS BUILT. Nine steps come from `...Object.fromEntries([...].map(`
+// (the five routed audits, the reply drafter, the two hand-offs), so this gate read them as having no executor and REQUIRED
+// their false "needs the local scraper" label. A step in one of those lists has an executor like any other.
+const routed = new Set();
+for (const m of flow.matchAll(/\.\.\.Object\.fromEntries\(\s*\[([\s\S]*?)\]\s*\.map\(/g)) {
+  for (const id of m[1].matchAll(/"(m[12]\.[a-z0-9_.]+)"/g)) routed.add(id[1]);
+}
+const hasExecutor = (id) => flow.includes(`"${id}": async`) || routed.has(id);
 const nExec = steps.filter((s) => hasExecutor(s.id)).length;
 if (nExec < 5) {
   console.error(`⚠️  INDETERMINATE — only ${nExec} executors matched; the detection is wrong, not the labels.`);

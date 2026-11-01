@@ -161,17 +161,17 @@ Store in field 3.8.5.`,
     },
   },
   {
-    id: "m2.exec.gbp_photos", title: "Add 5+ new photos",
+    id: "m2.exec.gbp_photos", title: "Add new photos",
     type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
-    instructions: `Geotagged when possible. Mix: recent jobs, team, equipment.
-Once a photo library exists at /data/clients/<slug>/photos/: gbp.uploadPhoto(sourceUrl, "ADDITIONAL") batched.`,
+    instructions: `Optional: there's no monthly quota. ⚡ drafts a shot list to hand the client (or take photos during a ride-along). Real photos only, no geotags. Upload to GBP.`,
   },
   {
-    id: "m2.exec.review_push", title: "Run review acquisition campaign",
+    id: "m2.exec.review_push", title: "Ask this month's customers for reviews",
     type: "manual", dependsOn: ["m2.plan.tasks_for_month"],
-    instructions: `Send review requests to all jobs completed in last 30 days. Target: 5+ new reviews.
+    instructions: `The client adds the customers they served. RGA writes each request; the client sends it from their own phone or email, in one tap. RGA never sends one.
+Everyone gets asked the same way. One reminder after 3 days, never a second.
 
-OUTCOME: track exact \`reviews_earned\` count. Mark via: node flow.mjs <client_id> done m2.exec.review_push --monthly --outcome reviews_earned --data <count>`,
+There's no review-count target. Count asks sent and reviews earned, and report both as measured.`,
   },
   {
     id: "m2.exec.review_responses", title: "Respond to all new reviews",
@@ -403,7 +403,7 @@ Goal: replicate 5+ per quarter.`,
   {
     id: "m2.exec.gbp_attributes_refresh", title: "Quarterly: refresh GBP attributes",
     type: "manual", dependsOn: [],
-    instructions: `GBP often adds NEW attributes quarterly. Re-check: highlights, service options, accessibility, payment, crowd, health & safety. Toggle ON anything new + relevant.`,
+    instructions: `Walk down the list and bring new options to the client to confirm. About-you details are theirs to say, and RGA never ticks those for them. Skip ones that don't apply. Items marked ★ are likely net-new since last quarter — check those first.`,
   },
   {
     id: "m2.exec.mystery_shop", title: "Test client's lead handling",
@@ -433,9 +433,10 @@ Lead-handling kills conversion more than rankings do.`,
   {
     id: "m2.call.monthly", title: "Run monthly call",
     type: "manual", dependsOn: ["m2.report.deliver"],
-    instructions: `20-30 min Zoom. Walk through report, share win story, get feedback, set next month's expectations. Record + upload notes URL to field 4.5.
+    instructions: `20-30 min Google Meet. Use AI agenda. Record + upload notes URL to field 4.5.
 
-OUTCOME: track retained / at_risk / churned.`,
+OUTCOME to note: retained / at_risk / churned
+When the call is over, press ✓ Mark step complete.`,
   },
   {
     id: "m2.win_story.capture", title: "Capture customer win story",

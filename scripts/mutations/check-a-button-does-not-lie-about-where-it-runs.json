@@ -1,0 +1,14 @@
+[
+ [
+  "a server step says local scraper again",
+  "playbook",
+  "\"clientForm\": null,\n      \"actionLabel\": \"⚡ Run the check\",\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Compared your reviews and business details with others in your trade\"",
+  "\"clientForm\": null,\n      \"actionLabel\": \"⚡ Run (needs the local scraper)\",\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Compared your reviews and business details with others in your trade\""
+ ],
+ [
+  "a routed step loses its executor",
+  "exec",
+  "[[\"m1.handoff.month2\", false], [\"m2.handoff.next_month\", true]]",
+  "[[\"x.y\", false]]"
+ ]
+]

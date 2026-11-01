@@ -75,6 +75,10 @@ const SURFACES = {
   // EXCLUDED — deliberately NOT forced to match the offer. Each reason is load-bearing.
   "docs/sales-rep-offer.html":                  ["EXCLUDED", "REP earnings model (1/2/3 clients) — $3,750 is 3 × $1,250, not our price"],
   "docs/sales-rep-compensation.html":           ["EXCLUDED", "rep commission model, not the offer"],
+  "research_notes/Legal and operations in depth/legal_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: lawyer, insurance and tax costs and the offer at that time, kept as written; not RGA's offer"],
+  "research_notes/Onboarding and retention in depth/onboarding_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: quoting the contract and other firms' terms, kept as written; not RGA's offer"],
+  "research_notes/RGA feature comparison/feature_comparison.md": ["EXCLUDED", "research notes dated 10-31: other companies' prices, kept as written; not RGA's offer"],
+  "research_notes/Reviews system in depth/reviews_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: review-tool vendor prices, kept as written; not RGA's offer"],
   "research_notes/Local SEO backlinks and top agencies/rga_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the state at that time, kept as written; not RGA's offer"],
   "research_notes/Local SEO backlinks and top agencies/top_companies.md": ["EXCLUDED", "research notes quoting OTHER companies' prices (Whitespark, Sterling Sky, BrightLocal), not RGA's offer"],
   "research_notes/RGA pricing data and blog strategy/pricing_and_offer.md": ["EXCLUDED", "research notes dated 10-31: other companies' prices and the old offer, kept as written; not RGA's offer"],

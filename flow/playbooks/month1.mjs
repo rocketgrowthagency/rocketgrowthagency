@@ -98,12 +98,13 @@ If it errors: the client row is missing, and every later step will fail on it. F
       const url = client.gbp_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.business_name + " " + (client.primary_market || ""))}`;
       return { summary: `Send invite via Google Business Profile Manager → Settings → People & Access → Add → role = Manager. GBP URL: ${url}` };
     },
-    instructions: `1. Open https://business.google.com → pick the client's profile
-2. Settings (gear icon) → Managers → Add user
-3. Email: chris@rocketgrowthagency.com (or your team email)
-4. Role: Manager
-5. Client must approve the invite from their email
-6. Once accepted, you'll see the listing in your GBP dashboard.`,
+    instructions: `The client adds RGA as a Manager. RGA never asks for their Google login.
+1. The client opens https://business.google.com and picks their profile
+2. Menu → Settings → People and access → Add
+3. Email: hello@rocketgrowthagency.com
+4. Role: Manager → Invite
+5. Accept the invite from the hello@ inbox
+6. Once accepted, the profile shows in hello@'s Business Profile dashboard.`,
   },
   {
     id: "m1.access.analytics", title: "Get GA4 admin access",
@@ -197,8 +198,8 @@ yes and the work starting, so confirm a request the day it arrives.
   3. Cadence — weekly work, a monthly call.
 
 🔴 LEAVE THE CALL WITH THESE — without them, delivery stalls:
-  · Google Business Profile login
-  · Website / CMS login
+  · Manager access on their Google Business Profile (hello@rocketgrowthagency.com)
+  · A website invite for RGA Admin, never a password (access@rocketgrowthagency.com, or GitHub rocketgrowthagency-admin on code)
   · GA4 + Search Console access
   · 20+ photos
   · Their customer list, for review outreach
@@ -349,7 +350,7 @@ re-run rather than accepting it.`,
   {
     id: "m1.audit.ai_readiness", title: "Audit AI readiness",
     type: "auto", dependsOn: ["m1.access.gbp"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run the check",
     instructions: `Scores how well the site answers the questions an AI assistant would ask about this business, and
 returns a readiness percentage plus a fix list.
 
@@ -361,18 +362,19 @@ structured, is it consistent — is measurable, and that is what this scores.`,
   {
     id: "m1.audit.nap_reviews", title: "Audit NAP consistency + reviews vs the vertical benchmark",
     type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.deep_assess"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run the check",
     instructions: `Compares name, address and phone between the Google Business Profile and the website, and captures
-the current review count and rating as a baseline.
+the current review count and rating as a baseline. Where the trade has enough data to publish, it also
+compares them with the top-3 median; where it doesn't, it says so.
 
 🔴 Reviews are matched by CID, never by business name — name matching silently attaches another
-company's reviews. Absence of the review field means ZERO, not unknown.`,
+company's reviews. Zero reviews takes a positive reading: a missing review field or a failed read is unknown, never zero.`,
     async run({ client }) { return await callFn("nap-and-review-audit", client.id); },
   },
   {
     id: "m1.audit.social", title: "Audit social presence linked from the site",
     type: "auto", dependsOn: [],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run the check",
     instructions: `Checks which social profiles exist for the business and which are actually linked from the site.
 
 🔴 Read this as a STARTING LIST, not a complete picture: the onboarding audit spec covers 0 of 5
@@ -380,14 +382,14 @@ social checks automatically today. What this returns is what we could see, not e
     async run({ client }) { return await callFn("social-presence-audit", client.id); },
   },
   {
-    id: "m1.web.core_web_vitals", title: "Fix Core Web Vitals",
+    id: "m1.web.core_web_vitals", title: "Measure page speed",
     type: "auto", dependsOn: [],
     actionLabel: "⚡ Run the check",
     instructions: `Runs Google PageSpeed Insights against the homepage (mobile) and records the performance score plus
-LCP, CLS and TBT.
+LCP, CLS and TBT. It measures only; nothing on the site changes.
 
-Anonymous PSI calls are rate-limited by Google. A failure here is far more often the rate limit than
-the site — retry in a minute, or set PAGESPEED_API_KEY. Do not record a rate-limit failure as a
+Calls without a key are rate-limited by Google. A failure here is far more often the rate limit than
+the site — retry in a minute, and check GOOGLE_PAGESPEED_API_KEY is set. Do not record a rate-limit failure as a
 performance problem.`,
     async run({ client }) {
       if (!client.website_url) return { summary: "No website_url" };
@@ -454,7 +456,7 @@ DONE = every listing the audit found has been opened and its NAP confirmed again
   {
     id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
     type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.citations", "m1.gbp.business_facts"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run the check",
     instructions: `Checks the citation URLs WE ALREADY HOLD for NAP accuracy against the client record.
 
 🔴 "Not found" does NOT mean "no citation exists" — we can only verify URLs already recorded, so
@@ -466,7 +468,7 @@ Duplicate-listing detection is not buildable without a paid aggregator and is ou
     id: "m1.audit.recommendations", title: "Build the prioritized fix plan from every audit",
     type: "auto",
     dependsOn: ["m1.audit.ai_readiness", "m1.audit.nap_reviews", "m1.audit.social", "m1.audit.citations_nap", "m1.audit.deep_assess", "m1.web.core_web_vitals"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Run the check",
     instructions: `Merges every audit above into ONE ordered recommendations plan, weighted by impact x confidence.
 
 Runs last for a reason: it depends on all five audits. Run it before they finish and the plan is
@@ -490,7 +492,7 @@ plan stays silent on it rather than guessing.`,
       return { summary: `AI keyword + location suggestions:\n${draft}` };
     },
     instructions: `Review the AI suggestions above. Confirm or override the 5 keywords + 3 sub-locations. These drive everything downstream — get them right.
-When confirmed, run: node flow.mjs <client_id> done m1.strategy.keywords_locations`,
+When confirmed, press ✓ Mark step complete.`,
   },
   {
     // The audit chain — each calls its deployed function. Built 2026-09-05/06.
@@ -663,9 +665,8 @@ Service area: add / drop the places on the checklist in Google Business Profile 
       }
       return { summary: `AI suggested categories:\n${draft}${lookupResult}` };
     },
-    instructions: `Pick final primary + additional categories from the suggestions above. To set them via API once OAuth is done:
-  node -e "import('./lib/gbp-automation.mjs').then(m => m.gbpFor('<client_id>').then(g => g.updateCategories({primary:'categories/gcid:<id>', additional:['categories/gcid:<id>']})))"
-Or set manually in GBP dashboard → Edit profile → Business category.`,
+    instructions: `Pick final primary + additional categories from the suggestions above.
+Put them on Google from this step's card, or set them in GBP dashboard → Edit profile → Business category.`,
   },
   {
     id: "m1.gbp.services_products", title: "Add services + products",
@@ -707,9 +708,9 @@ Once OAuth: gbp.updateHours([{openDay:"MONDAY",openTime:{hours:9},closeDay:"MOND
     id: "m1.gbp.attributes", title: "Fill ALL relevant GBP attributes",
     type: "manual", dependsOn: ["m1.gbp.verify", "m1.audit.gbp_duplicate"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `GBP → Edit Profile → Edit your business → Highlights / From the business / Service options.
-Check ALL that apply: women/veteran/LGBTQ+/family-owned, online estimates, on-site, same-day, emergency hours, payment methods, accessibility, crowd, health & safety.
-Most businesses miss 60%+ of attributes. Each = a ranking opportunity.`,
+    instructions: `The client ticks what's true on their card. The portal puts those on Google and reads them back.
+How you work: RGA ticks one only when another step proves it, and says why. The client can untick it.
+About you (women-owned, veteran-owned and so on): only the client can say, so RGA never ticks these.`,
   },
   // m1.gbp.messaging retired 2026-10-16 (approved retire_messaging_step_v1): Google ended Business Profile chat on 2024-07-31.
   {
@@ -993,9 +994,9 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
       }));
       return { summary: `Generated Service schema for ${snippets.length} services. Paste each into corresponding service page <head>.\n\n${JSON.stringify(snippets, null, 2)}` };
     },
-    instructions: `Per service page: Service + BreadcrumbList schema, and a short visible FAQ with its FAQPage markup (publish both or neither; since 2023 Google shows FAQ rich results only for government and health sites, so the markup describes the page, it isn't a snippet promise).
+    instructions: `Per service page: Service + BreadcrumbList schema. Add a short visible FAQ only for questions customers really ask; FAQPage markup is optional and must match what's visible (publish both or neither). Google ended FAQ rich results on May 7, 2026, so the markup earns no search display: never promise one.
 No AggregateRating: Google doesn't show stars for a business's own reviews marked up on its own site.
-Test all at https://search.google.com/test/rich-results`,
+Check BreadcrumbList at https://search.google.com/test/rich-results (it doesn't report every type).`,
   },
   {
     id: "m1.web.internal_linking", title: "Build silo internal-link architecture",
@@ -1081,12 +1082,12 @@ Order by impact (highest first). Include any state/regional industry boards rele
 3. Insert row in client_citations: { directory_name, vertical: 'industry_specific', listing_url, status }`,
   },
   {
-    id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business Connect",
+    id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business",
     type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
     actionLabel: "⚡ Generate",
     instructions: `Bing Places (https://www.bingplaces.com/): Create account → Import from Google → verify by phone.
-Apple Business Connect (https://businessconnect.apple.com/): Claim listing → verify → add hours, photos, services.
-Free + ~10% combined market share.`,
+Apple Business (https://business.apple.com/, which replaced Apple's older Business Connect on April 14, 2026): Claim listing → verify (Apple usually calls the number on record, so the client takes the code) → add hours, photos, services.
+Both are free.`,
   },
   {
     id: "m1.gbp.knowledge_panel", title: "Claim + optimize brand knowledge panel",
@@ -1129,7 +1130,7 @@ VIDEO 2 — "Educational tip about a common problem"
   },
   // === Reviews (order approved 2026-10-08, onboarding_order_audit_v1) ===
   {
-    id: "m1.review.system", title: "Set up review acquisition system",
+    id: "m1.review.system", title: "Write the review request message",
     type: "hybrid", dependsOn: ["m1.gbp.verify"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
@@ -1169,26 +1170,22 @@ NOTE: include {{review_link}} where the URL goes — don't hardcode the URL.`,
         outcome_data: { google_review_link: reviewLink, templates_drafted: true },
       };
     },
-    instructions: `Save the review link + templates somewhere your team can grab them (1Password vault note works).
-Train client team on cadence:
-- SMS_1 within 1 hour of job completion (while emotion is high)
-- SMS_2 if no review after 48 hours
-- EMAIL_1 within 24 hours
-- EMAIL_2 5 days later if still no review
-- PHONE_SCRIPT for top 5 most-likely-to-review customers
-Goal: 30%+ of asked customers leave a review.`,
+    instructions: `⚡ drafts the message with the client's Google review link. The client approves it, then sends each request themselves from their own phone or email, in one tap. RGA never sends one.
+One ask, plus one reminder after 3 days if they haven't reviewed. Never a second reminder. If a customer says stop, stop.
+Everyone gets asked the same way, picked by how recently the job finished. Never pick the people you expect to rate well: Google doesn't allow asking selectively.
+There's no review-rate goal. Count asks sent and reviews received, and report both as measured.`,
   },
   {
-    id: "m1.review.first_5", title: "Get first 5 reviews",
+    id: "m1.review.first_5", title: "Ask 5 recent customers for a review",
     type: "manual", dependsOn: ["m1.review.system"],
     actionLabel: "⚡ Draft this for me",
-    instructions: `Push hard for 5 reviews from past customers (last 6 months).
-Send personalized requests. Goal: 5 new reviews in Google by week 3.`,
+    instructions: `The client asks their 5 most recently finished jobs, whoever they are, one at a time. RGA writes each request; the client sends it from their own phone or email.
+Done means 5 asks sent, by week 3. Reviews are a result, counted as they come, never a target.`,
   },
   {
     id: "m1.review.response", title: "Respond to all existing reviews",
     type: "hybrid", dependsOn: ["m1.gbp.verify"],
-    actionLabel: "⚡ Run (needs the local scraper)",
+    actionLabel: "⚡ Draft replies",
     async run({ getGbp, client }) {
       try {
         const gbp = await getGbp();
@@ -1201,7 +1198,7 @@ Send personalized requests. Goal: 5 new reviews in Google by week 3.`,
       }
     },
     instructions: `Reply to every existing review. Positive: thank by name + mention service. Negative: empathize + offer offline resolution.
-SLA going forward: 24-hr response. Use \`node gbp.mjs <client_id> reply <reviewId>\` to AI-draft each.`,
+SLA going forward: 24-hr response. ⚡ drafts a reply to each unanswered review.`,
   },
   // === Close the month (order approved 2026-10-08, onboarding_order_audit_v1) ===
 
@@ -1224,20 +1221,15 @@ SLA going forward: 24-hr response. Use \`node gbp.mjs <client_id> reply <reviewI
     type: "manual", dependsOn: ["m1.report.month1"],
     actionLabel: "⚡ Draft this for me",
     instructions: `30-min call. Walk through report, set Month 2 expectations.
-Get client approval to start Month 2 work. Confirm next monthly call date.
-
-Outcome to track: approved_month2 / not_renewed.`,
+Confirm next monthly call date. Month 2 starts on its own under the contract, so there's no approval to collect.`,
   },
   {
     id: "m1.handoff.month2", title: "Transition to monthly cycle",
     type: "auto", dependsOn: ["m1.call.close"],
-    actionLabel: "⚡ Run (needs the local scraper)",
-    instructions: `Initializes the Month 2+ record so recurring monthly work has somewhere to write.
+    actionLabel: "⚡ Run the hand-off",
+    instructions: `Creates the Month 2 record so recurring monthly work has somewhere to write, and lists what's done and what's still open.
 
-Run only after the month-1 close call has happened — it marks the transition out of onboarding.
-
-Currently runs on the local machine (it writes through the scraper's state module):
-    node flow.mjs <clientId> run m1.handoff.month2`,
+Run only after the month-1 close call has happened — it marks the transition out of onboarding.`,
     async run({ clientId }) {
       const { ensureMonthlyState } = await import("../state.mjs");
       await ensureMonthlyState(clientId);

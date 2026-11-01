@@ -1,0 +1,98 @@
+[
+ [
+  "the attributes step claims 60%+ again",
+  "playbook",
+  "The client ticks what's true on their card.",
+  "Most businesses miss 60%+ of attributes. The client ticks what's true on their card."
+ ],
+ [
+  "the access step sends the invite to chris@ again",
+  "playbook",
+  "3. Email: hello@rocketgrowthagency.com\\n4. Role",
+  "3. Email: chris@rocketgrowthagency.com\\n4. Role"
+ ],
+ [
+  "the kickoff asks for a login again",
+  "playbook",
+  "· A website invite for RGA Admin, never a password",
+  "· Website / CMS login"
+ ],
+ [
+  "absence reads as zero again",
+  "playbook",
+  "Zero reviews takes a positive reading",
+  "Absence of the review field means ZERO; a positive reading"
+ ],
+ [
+  "a measurement is called a fix again",
+  "playbook",
+  "\"title\": \"Measure page speed\"",
+  "\"title\": \"Fix Core Web Vitals\""
+ ],
+ [
+  "the monthly call gives a terminal command again",
+  "playbook",
+  "When the call is over, press ✓ Mark step complete.",
+  "Mark via: node flow.mjs <client_id> done m2.call.monthly"
+ ],
+ [
+  "the speed step names a variable that doesn't exist",
+  "playbook",
+  "check GOOGLE_PAGESPEED_API_KEY is set",
+  "set PAGESPEED_API_KEY"
+ ],
+ [
+  "the four-touch cadence is back in the canonical source",
+  "sopm1",
+  "One ask, plus one reminder after 3 days if they haven't reviewed.",
+  "SMS_1 within 1 hour, SMS_2 after 48 hours, one reminder after 3 days."
+ ],
+ [
+  "Apple's old address is back in the canonical source",
+  "sopm1",
+  "https://business.apple.com/",
+  "https://businessconnect.apple.com/"
+ ],
+ [
+  "month 2 drifts between the sources",
+  "sopm2",
+  "Optional: there's no monthly quota.",
+  "Optional."
+ ],
+ [
+  "the monthly review prompt sets a target again",
+  "exec",
+  "No review-count target. Output: ",
+  "Output: TARGET (5+ new reviews) / "
+ ],
+ [
+  "the first-5 prompt targets reviews again",
+  "exec",
+  "First 5 review asks (by week 3: 5 asks sent;",
+  "First-5 reviews push (week 3 goal: 5 new reviews;"
+ ],
+ [
+  "the attributes prompt claims 60%+ again",
+  "exec",
+  "Mark with ★ if likely net-new since last quarter.",
+  "Mark with ★ if likely net-new since last quarter. Most businesses miss 60%+."
+ ],
+ [
+  "the Bing + Apple runner uses Apple's old name",
+  "exec",
+  "APPLE BUSINESS (15 min;",
+  "APPLE BUSINESS CONNECT (15 min;"
+ ],
+ [
+  "the directories comment states a share again",
+  "citdirs",
+  "// 🔑 **FOUR DATA AGGREGATORS**",
+  "// 🔑 **FOUR AGGREGATORS CARRY ~80%**"
+ ],
+ [
+  "the kickoff console asks for a login",
+  "admin",
+  "label: \"Website access — an invite, never a password\"",
+  "label: \"Website / CMS login\""
+ ]
+]

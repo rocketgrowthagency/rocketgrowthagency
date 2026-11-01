@@ -275,8 +275,8 @@
  [
   "the monthly photos wait on RGA's plan again",
   "playbookjson",
-  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add 5+ new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [],",
-  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add 5+ new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m2.plan.tasks_for_month\"],",
+  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [],",
+  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m2.plan.tasks_for_month\"],",
   1
  ],
  [

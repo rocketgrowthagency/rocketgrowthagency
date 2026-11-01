@@ -1,0 +1,158 @@
+[
+ [
+  "pipeline value counts taps again",
+  "reportjs",
+  "const forms = num(current.form_leads);",
+  "const forms = num(current.total_leads);"
+ ],
+ [
+  "the funnel tile adds taps again",
+  "reportjs",
+  "tile(\"Form submissions\", current.form_leads, prior?.form_leads)",
+  "tile(\"Enquiries\", current.total_leads, prior?.total_leads)"
+ ],
+ [
+  "a whole phone line counts as leads",
+  "reportjs",
+  "const calls = client?.call_tracking_attributed === false ? null : num(current.total_calls);",
+  "const calls = num(current.total_calls);"
+ ],
+ [
+  "a client's read forgets to ask for the flag",
+  "reportjs",
+  "account_manager, call_tracking_attributed )",
+  "account_manager )"
+ ],
+ [
+  "the lead count stops saying taps aren't in it",
+  "reportjs",
+  ": \"Form submissions. Taps not counted\";",
+  ": \"Measured this month\";"
+ ],
+ [
+  "the good line prints without clicks rising",
+  "reportjs",
+  ": clicks != null && clicksWere != null && clicks > clicksWere\n",
+  ": imp > was\n"
+ ],
+ [
+  "a down month goes silent",
+  "reportjs",
+  "  if (imp < was) {\n    return {",
+  "  if (imp < was) return null;\n  if (imp < was) {\n    return {"
+ ],
+ [
+  "a fall is painted as a win",
+  "reportjs",
+  "figure: changeText(imp, was, \"−\"), down: true,",
+  "figure: changeText(imp, was, \"−\"),"
+ ],
+ [
+  "a flat month goes silent",
+  "reportjs",
+  "  if (imp === was) {\n    return {",
+  "  if (imp === was) return null;\n  if (imp === was) {\n    return {"
+ ],
+ [
+  "few clicks after a collapse reads as not yet",
+  "reportjs",
+  "clicks < 10 && (clicksWere == null || clicksWere < 10)",
+  "clicks < 10"
+ ],
+ [
+  "an unmeasured earlier month reads as the first",
+  "reportjs",
+  "  if (!prior) {\n    return { figure: shown, title: \"This is your first",
+  "  if (was == null) {\n    return { figure: shown, title: \"This is your first"
+ ],
+ [
+  "1 to 2 prints a percent again",
+  "reportjs",
+  "if (priorValue < MIN_BASE_FOR_PERCENT) return",
+  "if (priorValue === 0) return"
+ ],
+ [
+  "the review target is typed in again",
+  "reportjs",
+  "The next step is <b style=\"color:var(--ink)\">asking your most recent customers</b>",
+  "Our benchmark targets <b style=\"color:var(--ink)\">15–25 reviews</b>"
+ ],
+ [
+  "the channel row carries the target again",
+  "reportjs",
+  "        [\"Average rating\", current.average_rating],\n",
+  "        [\"Average rating\", current.average_rating],\n        [\"90-day target\", 0],\n"
+ ],
+ [
+  "an old report draws a later map",
+  "reportjs",
+  "      .lt(\"measured_at\", end)\n",
+  ""
+ ],
+ [
+  "a report draws an earlier map",
+  "reportjs",
+  "      .gte(\"measured_at\", start)\n",
+  ""
+ ],
+ [
+  "December's month never ends",
+  "reportjs",
+  "const end = new Date(Date.UTC(year, mon, 1)).toISOString();",
+  "const end = `${year}-${String(mon + 1).padStart(2, \"0\")}-01T00:00:00Z`;"
+ ],
+ [
+  "British spelling is back",
+  "reportjs",
+  "how many of ten leads you typically win",
+  "how many of ten enquiries you typically win"
+ ],
+ [
+  "a missing call series reads as zero",
+  "metricsjs",
+  "out.calls = byMetric.CALL_CLICKS ?? null;",
+  "out.calls = byMetric.CALL_CLICKS ?? 0;"
+ ],
+ [
+  "missing website clicks read as zero",
+  "metricsjs",
+  "out.websiteClicks = byMetric.WEBSITE_CLICKS ?? null;",
+  "out.websiteClicks = byMetric.WEBSITE_CLICKS ?? 0;"
+ ],
+ [
+  "a missing surface undercounts views",
+  "metricsjs",
+  "out.views = missing.some((m) => m.startsWith(\"BUSINESS_IMPRESSIONS_\")) ? null\n",
+  "out.views = missing.length === 7 ? null\n"
+ ],
+ [
+  "a gap isn't named",
+  "metricsjs",
+  "if (missing.length) errors.gbp_missing = missing.join(\", \");",
+  ""
+ ],
+ [
+  "total_leads adds this refresh's taps again",
+  "metricsjs",
+  "patch.total_leads = ga4.formSubmissions + trackedCalls;",
+  "patch.total_leads = ga4.formSubmissions + trackedCalls + Number(gbp?.calls || 0);"
+ ],
+ [
+  "a whole line counts in total_leads",
+  "metricsjs",
+  "if (flagRow && flagRow.call_tracking_attributed !== false) trackedCalls",
+  "if (flagRow) trackedCalls"
+ ],
+ [
+  "an unread flag counts the calls",
+  "metricsjs",
+  "if (flagRow && flagRow.call_tracking_attributed !== false) trackedCalls",
+  "if (!flagRow || flagRow.call_tracking_attributed !== false) trackedCalls"
+ ],
+ [
+  "the read forgets the tracked-call column",
+  "metricsjs",
+  "select=id,data,total_calls`",
+  "select=id,data`"
+ ]
+]
