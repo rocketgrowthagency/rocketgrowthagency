@@ -75,8 +75,8 @@ if (!/const oc = ki\.call_outcome \|\| \(ki\.recap_sent_at \? "held" : ""\);/.te
 if (/Clients can book over meetings in/.test(admin)) F.push("the calendar note still says clients book over your Google Calendar — reworded in the approved mockup");
 // 🔒 kickoff_booking_card_v3 — one word per state on every surface. A retired word on screen is a second vocabulary.
 const visible = admin.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
-for (const [w, why] of [['"Call held"', "Call held → Done"], ['>Live now<', "Live now → Happening now"], ['"Due now"', "Due now → Happening now"], ['`Live · ', "Live · N min → Happening now"]])
-  if (visible.includes(w)) F.push(`admin still shows the retired word ${w} (${why})`);
+for (const [w, why] of [['"Call held"', "Call held → Done"], ['>Live now<', "Live now → Happening now"], ['"Due now"', "Due now → Happening now"], [/`Live · \$\{[^`]*\bmin\b/, "Live · N min → Happening now"]])   // 11-01: a website page's "Live · 1 of 3" progress is a different thing; the retired word is the kickoff's minutes
+  if (typeof w === "string" ? visible.includes(w) : w.test(visible)) F.push(`admin still shows the retired word ${String(w)} (${why})`);
 if (/pm-msg past"><span class="dot"><\/span>Time has passed/.test(portal)) F.push("the client card still says Time has passed (→ Time passed)");
 if (/\$\{confirmed \? "Confirmed" : "Requested"\}/.test(portal)) F.push("the client card still says Confirmed (→ Booked)");
 
