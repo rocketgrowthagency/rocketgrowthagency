@@ -156,7 +156,7 @@ const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || 
   c5.rv = 1; const hr = c5.ph(task, { clientStepNo: 10 }); c5.rv = 0;
   if (!/Review 1 photo before it goes on Google/.test(hr) || !/>Your move</.test(hr) || !/BLOCK/.test(hr)) fail("step 38: a photo to review doesn't lead the card");
   if (!/\.pr-ph\.photo \{ background-size:contain;/.test(ACSS5())) fail("step 38: a square photo is cropped to a rectangle");
-  if (!/function openPhotoZoom\(url\)/.test(AJS) || !/\.ob-zc-photos \[data-photo-zoom\]/.test(AJS) || !/class="pr-zoom-link" data-photo-zoom>View larger/.test(AJS)) fail("step 38: no way to see a photo larger");
+  if (!/function openPhotoZoom\(url\b/.test(AJS) || !/\.ob-zc-photos \[data-photo-zoom\]/.test(AJS) || !/class="pr-zoom-link" data-photo-zoom>View larger/.test(AJS)) fail("step 38: no way to see a photo larger");
   if (/>Done<|Run again|Mark step complete/.test(h)) fail("step 38: Done / Run again is on the card");
   c5.state.stepRuns = { "m1.gbp.photos": [["2026-10-08T00:06:48Z", "# 20-Photo"], ["2026-10-08T14:07:54Z", "# 20-Photo"], ["2026-10-09T23:04:53Z", "20-photo shot list"], ["2026-10-10T00:54:28Z", "20-photo shot list"]].map(([ran_at, summary_head]) => ({ ran_at, summary_head })) };
   const hh = c5.ph(task, null);

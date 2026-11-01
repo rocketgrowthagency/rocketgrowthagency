@@ -9,6 +9,7 @@
 // Exit 0 written · 1 the map came out wrong, the old one is left in place · 2 couldn't read the page
 //
 // STEP_MAP_ROWS=<json> uses rows already read, so it can be tested with no browser.
+import { stepMapPrint } from "./lib/step-map-print.mjs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -38,17 +39,19 @@ for (const [month, list] of Object.entries(play)) for (const s of list.steps || 
 const whoOf = (d) => (d?.actor === "client" ? "Client" : d?.actor === "both" ? "You + client" : d?.actor === "auto" ? "Runs itself" : "You");
 const clean = (t) => String(t || "").replace(/\s+(You \+ client|You|Client|Runs itself)\s*$/, "").trim();
 const say = (t) => String(t || "").replace(/\s+/g, " ").trim();
+// 🔒 Chris 11-1: "all numbers and titles and what they do". One plain sentence per step, kept in data/playbooks/what-it-does.json. A step with none draws blank and check-the-step-map-is-current fails, so a new step can't skip it; the numbers still update.
+const WHAT = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/what-it-does.json`, "utf8"));
 
 const admin = rows.map((r) => {
   const d = defs.get(r.id) || {};
   const who = (/(You \+ client|Runs itself|Client|You)\s*$/.exec(String(r.title || "")) || [])[1] || whoOf(d);
-  return { n: r.n, id: r.id, title: clean(r.title) || d.title || r.id, who, client: d.clientStepNo || null, clientLabel: d.clientLabel || null, month: d.month || (String(r.id).startsWith("m1.") ? "month1" : "month2plus") };
+  return { n: r.n, id: r.id, title: clean(r.title) || d.title || r.id, who, client: d.clientStepNo || null, clientLabel: d.clientLabel || null, what: WHAT.admin[r.id] || "", month: d.month || (String(r.id).startsWith("m1.") ? "month1" : "month2plus") };
 });
 const month1 = admin.filter((a) => a.month === "month1");
 const monthly = admin.filter((a) => a.month !== "month1");
 const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a.clientStepNo - b.clientStepNo).map((d) => {
   const a = admin.find((x) => x.id === d.id);
-  return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: say(d.clientWhy || d.clientHint || ""), admin: a ? a.n : null, adminMonth: a ? a.month : null };
+  return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: WHAT.client[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null };
 });
 
 // a map that came out wrong must not replace one that's right
@@ -76,7 +79,7 @@ description: "GENERATED daily (scraper scripts/build-step-map.mjs): every step i
 metadata:
   type: reference
 ---
-**GENERATED ${stamp}. Do not edit by hand.** Say "ADMIN PORTAL step N" / "CLIENT PORTAL step N" from these tables. Page for Chris: https://claude.ai/artifact/LJpj2Pd7AkazqXrFnRqgjQ
+**GENERATED ${stamp}. Do not edit by hand.** Say "ADMIN PORTAL step N" / "CLIENT PORTAL step N" from these tables. Page for Chris: https://claude.ai/artifact/LJpj2Pd7AkazqXrFnRqgjQ. Steps fingerprint: \`${stepMapPrint(play)}\`.
 
 ## Approved, not built yet (no number until built)
 | What | Where | Effect on numbers | Mockup |
@@ -84,19 +87,19 @@ metadata:
 ${proposed.map((x) => `| ${x.name} | ${x.where} | ${x.numbers} | ${x.url} |`).join("\n")}
 
 ## Client portal
-| Client step | What it is | Admin step | id |
-|---|---|---|---|
-${client.map((c) => `| ${c.n} | ${c.label} | ${adminLabel(c)} | \`${c.id}\` |`).join("\n")}
+| Client step | Title | What it does | Admin step | id |
+|---|---|---|---|---|
+${client.map((c) => `| ${c.n} | ${c.label} | ${c.what.replace(/\|/g, "/")} | ${adminLabel(c)} | \`${c.id}\` |`).join("\n")}
 
 ## Admin portal · Month 1
-| Admin step | What it is | Who | Client step | id |
-|---|---|---|---|---|
-${month1.map((a) => `| ${a.n} | ${a.title} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
+| Admin step | Title | What it does | Who | Client step | id |
+|---|---|---|---|---|---|
+${month1.map((a) => `| ${a.n} | ${a.title} | ${a.what.replace(/\|/g, "/")} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
 
 ## Admin portal · Monthly
-| Admin step | What it is | Who | Client step | id |
-|---|---|---|---|---|
-${monthly.map((a) => `| ${a.n} | ${a.title} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
+| Admin step | Title | What it does | Who | Client step | id |
+|---|---|---|---|---|---|
+${monthly.map((a) => `| ${a.n} | ${a.title} | ${a.what.replace(/\|/g, "/")} | ${a.who} | ${a.client ?? ""} | \`${a.id}\` |`).join("\n")}
 `;
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -114,11 +117,11 @@ const html = `<title>RGA Step Map</title>
 section{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:12px;min-width:0}h2{margin:0;font-size:19px;font-weight:700}
 .tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}.n{font-weight:700;font-variant-numeric:tabular-nums}a{color:var(--acc)}small{display:block;color:var(--mut);font-size:12.5px;max-width:60ch}
 </style>
-<div class="wrap"><header><div class="k">Both portals · updated ${esc(stamp)}</div><h1>Every step, by the number each portal shows</h1><p class="lede">Admin numbers are read off the live checklist. The list rebuilds each morning, so it can't drift from what's on screen.</p></header>
+<div class="wrap"><header><div class="k">Both portals · updated ${esc(stamp)}</div><h1>Every step, by the number each portal shows</h1><p class="lede">Admin numbers are read off the live checklist. The list rebuilds each morning and after any step change, and a check fails if it falls behind.</p></header>
 <section><h2>Approved, not built yet</h2><p class="lede">None of these has a number yet. A new step gets its number when it's built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
 <section><h2>Client portal (${client.length} steps)</h2>${table(["Client step", "What it is", "Admin step"], client.map((c) => [c.n, `${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, esc(adminLabel(c))]))}</section>
-<section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "What it is", "Who", "Client step"], month1.map((a) => [a.n, esc(a.title), esc(a.who), a.client ?? ""]))}</section>
-<section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "What it is", "Who", "Client step"], monthly.map((a) => [a.n, esc(a.title), esc(a.who), a.client ?? ""]))}</section>
+<section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], month1.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
+<section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], monthly.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 </div>
 `;
 fs.mkdirSync(path.dirname(HTML), { recursive: true });

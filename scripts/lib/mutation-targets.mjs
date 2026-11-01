@@ -2,6 +2,8 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  stepwhat: "data/playbooks/what-it-does.json",
+  stepmapbuild: "scraper:scripts/build-step-map.mjs",   // the sheet of every step (Chris 11-1)
   // kickoff_why_now_v1 (approved 11-01): the client's no to posts is kept; the card draws from the plan
   blogposts: "netlify/functions/portal-blog-posts.js",
   blogclientplan: "netlify/functions/_blog-client-plan.js",

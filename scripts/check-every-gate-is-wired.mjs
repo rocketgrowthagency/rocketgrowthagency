@@ -390,6 +390,7 @@ const NOT_PREFLIGHT = {
   'check-job-alert-path.mjs': 'the monthly test: a job broken on a fake proves the alert path (admin_system_health_v1, 10-31); nothing real called, runs in daily-health-check.sh',
   'check-job-watcher-ran.mjs': 'the Mac watches the watcher (admin_system_health_v1, 10-31); one read, guarded by db-health in daily-health-check.sh',
   'check-the-weekly-audit-is-read-only.mjs': 'the weekly audit job stays read-only (Chris 10-31); files only, runs in daily-health-check.sh',
+  'check-the-step-map-is-current.mjs': 'compares the step sheet with the playbook, and the sheet only changes after a deploy or the morning rebuild, so a pre-deploy stop would refuse every step change before the sheet could be rebuilt from the live page. Runs in the daily check right after the rebuild',
   'check-the-daily-check-is-alive.mjs': 'watches the morning job itself, so it cannot run only from inside that job: nightly-full-check.sh runs it every night; files only, not the video pre-flight',
   'check-the-monthly-report-reads-true.mjs': 'a client monthly-report rule: the real report.js in a browser on fixtures, and the metrics pull on fixed Google responses, no production read; runs in daily-health-check.sh, not the video pre-flight',
   'check-admin-step-text-reads-true.mjs': 'an admin SOP text rule, file-only; runs in daily-health-check.sh, not the video pre-flight',

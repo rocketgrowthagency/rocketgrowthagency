@@ -1,0 +1,8 @@
+[
+ ["a step is renamed after the sheet was built", "playbooksjson", "\"title\": \"Confirm their social profiles\"", "\"title\": \"Check social accounts\"", 1],
+ ["a step's id changes", "playbooksjson", "\"id\": \"m1.gbp.photos\"", "\"id\": \"m1.gbp.photos_new\"", 1],
+ ["a client step gets another number", "playbooksjson", "\"clientStepNo\": 3,", "\"clientStepNo\": 33,", 1],
+ ["a step loses its description", "stepwhat", "\"m1.gbp.photos\": \"Collects", "\"m1.gbp.photos_old\": \"Collects", 1],
+ ["the sheet stops reading numbers off the page", "stepmapbuild", "`${HERE}/_probe-numbering.mjs`", "`${HERE}/_typed-numbers.mjs`", 1],
+ ["the sheet stops saying what a step does", "stepmapbuild", "what: WHAT.admin[r.id] || \"\", month:", "what: \"\", month:", 1]
+]
