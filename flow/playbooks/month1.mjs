@@ -112,14 +112,14 @@ Two RGA addresses, on purpose: hello@ is the Google Business Profile manager (th
     id: "m1.access.analytics", title: "Get GA4 admin access",
     type: "manual", dependsOn: [],
     actionLabel: "⚡ Generate",
-    instructions: `Have client open GA4 → Admin (gear) → Property Access Management → "+ Add users" → your email → Role: Administrator.
+    instructions: `Have client open GA4 → Admin (gear) → Property Access Management → "+ Add users" → your email → Role: Editor (property level). Ask for Administrator only if a step must link GA or manage users on the property. Reports already come through the Google sign-in, so this is for setting up or fixing tracking.
 If client has no GA4 yet: skip this step + flag m1.tracking.install_ga4 (we install during website work).`,
   },
   {
     id: "m1.access.search_console", title: "Get GSC owner access",
     type: "manual", dependsOn: [],
     actionLabel: "⚡ Generate",
-    instructions: `Have client open https://search.google.com/search-console → Settings → Users and permissions → "Add user" → your email → Permission: Owner.
+    instructions: `Have client open https://search.google.com/search-console → Settings → Users and permissions → "Add user" → your email → Permission: Full. Ask for Owner only if a step must verify the property. Reports already come through the Google sign-in, so this is for setting up or fixing tracking.
 If no GSC yet: skip + flag m1.tracking.install_gsc.`,
   },
   // === The kickoff call (order approved 2026-10-08, onboarding_order_audit_v1) ===
