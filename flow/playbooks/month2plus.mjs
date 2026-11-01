@@ -437,7 +437,7 @@ Lead-handling kills conversion more than rankings do.`,
     type: "manual", dependsOn: ["m2.report.deliver"],
     instructions: `20-30 min Google Meet. Use AI agenda. Record + upload notes URL to field 4.5.
 
-OUTCOME to note: retained / at_risk / churned
+Note how the call went on the card: Retained, At risk or Churned. It is saved on this step.
 When the call is over, press ✓ Mark step complete.`,
   },
   {
