@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-google-keys-are-sealed.mjs — a Google sign-in key is never stored in the clear (approved pending_and_google_security_v1, Option A, 10-31).
 // 🔴 WHY: `client_google_oauth.refresh_token` was plain text, so anyone with a copy of the table could act on a client's Google account. The contract promises reasonable security.
-// HOLDS: sealing round-trips, a tampered value and a missing key refuse, plain values pass through for the switch; both places that save a key seal it; no function uses a stored key without revealing it, which would send sealed text to Google and break the sign-in; and every stored key really is sealed.
+// HOLDS: sealing round-trips, a tampered value and a missing key refuse, plain values pass through for the switch; both places that save a key seal it; the one home for Google sign-in (_google-token.js) reveals what it's given, so no function sends a stored key to Google still sealed, which would break the sign-in; and every stored key really is sealed.
 // Live read of one column, values never printed. Exit 0 = holds · 1 = broken · 2 = can't tell. → project_everything_queued
 import fs from "node:fs";
 import crypto from "node:crypto";
@@ -21,6 +21,24 @@ if (C.revealToken("1//plain") !== "1//plain") fail("a key from before the switch
 if (C.sealToken(sealed) !== sealed) fail("sealing twice breaks the key");
 let threw = false; try { C.revealToken(sealed.slice(0, -4) + "AAAA"); } catch { threw = true; }
 if (!threw) fail("a tampered key is accepted");
+
+// 🔑 EVERY FUNCTION'S KEY NOW GOES THROUGH _google-token.js, so its reveal protects all of them. Run it, with the request stubbed: reading its source wouldn't prove what reaches Google.
+const T = createRequire(`${FN}/x.js`)("./_google-token.js");
+const sentBy = async (call) => {
+  const bodies = [];
+  await call(async (_url, init) => { bodies.push(init.body); return { ok: true, status: 200, json: async () => ({ access_token: "t", expires_in: 3600 }) }; });
+  return bodies.length === 1 ? new URLSearchParams(bodies[0]).get("refresh_token") : `${bodies.length} requests`;
+};
+for (const [name, call] of [
+  ["refreshGrant", (key, f) => T.refreshGrant(key, f)],
+  ["googleKeyToToken", (key, f) => T.googleKeyToToken(key, () => null, f)],
+  ["googleAccessToken", (key, f) => T.googleAccessToken(async () => {}, { client_id: "c", refresh_token: key }, f)],
+]) {
+  try {
+    if ((await sentBy((f) => call(sealed, f))) !== "1//sample") fail(`${name} sends a stored key to Google still sealed`);
+    if ((await sentBy((f) => call("1//plain", f))) !== "1//plain") fail(`${name} doesn't pass a plain key through`);
+  } catch (e) { fail(`${name} can't send a key: ${String(e.message).slice(0, 100)}`); }
+}
 delete process.env.GOOGLE_TOKEN_KEY;
 threw = false; try { C.sealToken("1//x"); } catch { threw = true; }
 if (!threw) fail("with no unlock key, a sign-in would be stored in plain text");
@@ -32,14 +50,27 @@ const CB = code(fs.readFileSync(`${FN}/oauth-google-callback.js`, "utf8"));
 if (!/refresh_token: require\("\.\/_token-crypt"\)\.sealToken\(refreshToken\)/.test(CB)) fail("a client's key is saved without sealing");
 if (!/refresh_token: require\("\.\/_token-crypt"\)\.sealToken\(tokens\.refresh_token\)/.test(CB)) fail("RGA's own key is saved without sealing");
 if (!/revealToken\(rows\[0\]\.refresh_token\)/.test(code(fs.readFileSync(`${FN}/oauth-google-disconnect.js`, "utf8")))) fail("disconnect sends sealed text to Google, so the key isn't revoked");
-let wrapped = 0;
+let wrapped = 0, routed = 0;
 for (const f of fs.readdirSync(FN).filter((x) => x.endsWith(".js") && x !== "_token-crypt.js")) {
   const s = code(fs.readFileSync(`${FN}/${f}`, "utf8"));
   wrapped += (s.match(/revealToken\(/g) || []).length;
   for (const m of s.matchAll(/(?:\b(?:accessToken|refreshAccessToken|token)\(|refresh_token:\s*)(\w+\??\.refresh_token)/g)) fail(`${f} uses a stored key without revealing it: ${m[0]}`);
   if (/revealToken\(/.test(s) && !/_token-crypt/.test(s)) fail(`${f} calls revealToken without loading it`);
+  if (f === "_google-token.js") continue;
+  // the home reveals what it's given. A function that sends a key any other way has to do it itself, or be Google Ads' own key from the environment.
+  if (/\b(?:refreshGrant|googleKeyToToken|auditToken|rgaToken|rgaTokenWithDetail)\b/.test(s)) {
+    routed++;
+    if (!/_google-token/.test(s)) fail(`${f} calls the one home for Google sign-in without loading it`);
+  }
+  if (/grant_type["']?\s*[:=,]\s*["']?refresh_token/.test(s)) {
+    for (const m of s.matchAll(/refresh_token["']?\s*:\s*([^,\n}]+)/g)) {
+      if (!/^(?:revealToken\(|process\.env\.)/.test(m[1].trim())) fail(`${f} sends a key to Google itself without revealing it: ${m[0]}`);
+    }
+  }
 }
-if (wrapped < 25) fail(`only ${wrapped} places reveal a key, so the scan has gone blind`);
+// both counts: what the callers reveal for themselves, and what relies on the home. Either one collapsing means the scan stopped seeing the code.
+if (wrapped < 20) fail(`only ${wrapped} places reveal a key, so the scan has gone blind`);
+if (routed < 28) fail(`only ${routed} functions send their key through the one home, so the scan has gone blind`);
 
 const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;
 let live = "not checked (no database settings)";
@@ -56,4 +87,4 @@ if (U && K && !process.env.APPROVAL_ARCHIVE_SITE_DIR) {
   } catch (e) { console.error(`⚠️  INDETERMINATE: can't read the stored keys: ${String(e.message).slice(0, 100)}`); process.exit(2); }
 }
 if (F.length) { console.error(`🔴 a Google key can be stored or used wrong — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
-console.log(`✅ Google keys are sealed when saved and revealed only to use them (${wrapped} places); ${live}`);
+console.log(`✅ Google keys are sealed when saved and revealed only to use them (${wrapped} reveals, ${routed} functions through the one home); ${live}`);

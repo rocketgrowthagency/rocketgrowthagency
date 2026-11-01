@@ -56,17 +56,39 @@
 1
 ],
 [
-"the helper sends sealed text to Google",
+"the one home sends sealed text to Google",
 "googletoken",
-"refresh_token: revealToken(oauth.refresh_token),",
-"refresh_token: oauth.refresh_token,",
-1
+"refresh_token: revealToken(key),",
+"refresh_token: key,"
 ],
 [
-"a review reply sends sealed text",
+"the one home stops offering the request",
+"googletoken",
+"module.exports = { googleAccessToken, refreshGrant,",
+"module.exports = { googleAccessToken,"
+],
+[
+"a review reply goes around the home with sealed text",
 "respondreview",
-"refresh_token: revealToken(oauth.refresh_token)",
-"refresh_token: oauth.refresh_token",
-1
+"await refreshGrant(oauth.refresh_token)",
+"await fetch(\"https://oauth2.googleapis.com/token\", { method: \"POST\", body: new URLSearchParams({ refresh_token: oauth.refresh_token, grant_type: \"refresh_token\" }) })"
+],
+[
+"a local copy sends whatever it was handed",
+"aireadiness",
+"const { auditToken: accessToken } = require(\"./_google-token\");",
+"async function accessToken(refreshToken) {\n  const r = await fetch(\"https://oauth2.googleapis.com/token\", { method: \"POST\", body: new URLSearchParams({ refresh_token: refreshToken, grant_type: \"refresh_token\" }) });\n  return (await r.json()).access_token;\n}"
+],
+[
+"a function calls the home without loading it",
+"respondreview",
+"const { refreshGrant } = require(\"./_google-token\");",
+""
+],
+[
+"a caller stops revealing and the wrapper can't tell",
+"gtcancelinvite",
+"accessToken(revealToken(cred.refresh_token))",
+"accessToken(cred.refresh_token)"
 ]
 ]
