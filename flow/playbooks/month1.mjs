@@ -825,6 +825,16 @@ Expanded per-service schema is a separate later step ("Add expanded schema").`,
   },
 
   {
+    id: "m1.web.gbp_landing_page", title: "Decide which page the Google profile links to",
+    type: "manual", dependsOn: ["m1.strategy.keywords_locations"],
+    // RGA's decision only (approved admin_last_research_items_v1, item 1): saved on the step by the website's admin-gbp-landing. It writes nothing to Google or the site.
+    instructions: `Decide which page the Google profile links to. For many businesses it is the homepage.
+1. Press Read Search Console. With enough data it names the page that earns the most clicks for the main keyword. With none, it says so and recommends nothing.
+2. Choose Homepage, A service page, or A city page, then Save. A service or city page is typed in as a full address on the client's own site.
+This saves the decision only. It writes nothing to Google or to the website: the Google link itself changes through the existing approval paths.
+The title, headline and button steps then work on the chosen page, and on the homepage when nothing is saved.`,
+  },
+  {
     id: "m1.web.homepage_meta", title: "Optimize homepage title + meta",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.gbp.optimize_categories", "m1.access.website"],
     actionLabel: "⚡ Draft this for me",
@@ -838,7 +848,7 @@ META: <155 chars max — USP + CTA>`,
       );
       return { summary: `AI-drafted title + meta:\n${draft}` };
     },
-    instructions: `Update homepage <title> + <meta name="description"> in your CMS. Verify in browser source view.`,
+    instructions: `Update the <title> + <meta name="description"> of the chosen page (the homepage when none is saved) in your CMS. Verify in browser source view.`,
   },
   {
     id: "m1.web.h1_cta", title: "Fix H1 + primary CTA",
@@ -857,7 +867,7 @@ TRUST_BADGES: <3 short phrases — e.g. "Licensed & Insured", "5★ rated", "Sam
       );
       return { summary: `AI homepage above-fold copy:\n\n${draft}` };
     },
-    instructions: `Update homepage hero in CMS:
+    instructions: `Update the hero of the chosen page (the homepage when none is saved) in your CMS:
 1. H1 element → AI's H1
 2. Sub-headline → AI's SUB
 3. Primary button (link to contact form) → AI's PRIMARY_CTA

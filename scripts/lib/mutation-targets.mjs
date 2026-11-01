@@ -170,6 +170,7 @@ export const FILES = {
   invoicedoc: "shared/invoice-doc.js",
   contractgen: "netlify/functions/contract-generate.js",
   stripewebhook: "netlify/functions/stripe-webhook.js",
+  paymentwelcome: "netlify/functions/_payment-welcome.js",   // admin_last_research_items_v1 item 4: the welcome at payment
   admincss: "admin/admin.css",
   notifystage: "netlify/functions/notify-client-stage.js",
   confirmemail: "netlify/functions/send-confirmation-email.js",
@@ -433,4 +434,7 @@ export const FILES = {
   datakeepmoresql: "supabase/data_keep_more.sql",
   // report_and_measurement_v1 (11-01): hours and phone changes on the month's record
   monthevents: "netlify/functions/_month-events.js",
+  // admin_last_research_items_v1 (11-01): which page the Google profile links to
+  gbplanding: "netlify/functions/_gbp-landing.js",
+  gbplandingfn: "netlify/functions/admin-gbp-landing.js",
 };

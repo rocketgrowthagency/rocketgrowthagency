@@ -35,6 +35,7 @@ export const ACTOR_MAP = {
   "m1.gbp.hours_attributes": { actor: "both", clientLabel: "Confirm your business hours + special attributes", clientHint: "Tell us your weekly hours, holiday closures, and which attributes apply (woman/veteran-owned, accessibility, payment methods, etc).", clientForm: "generic" },
   "m1.gbp.booking_link":     { actor: "both", clientLabel: "Add your booking link", clientHint: "Customers book or request a job straight from your Google profile.", clientForm: "generic" },
   "m1.gbp.attributes":       { actor: "both", clientLabel: "Confirm GBP attributes (women/veteran-owned, accessibility, etc)", clientHint: "Walk through the checklist with us — most businesses miss 60%+ of attributes.", clientForm: "generic" },
+  "m1.web.gbp_landing_page": { actor: "rga" },
   "m1.web.homepage_meta":    { actor: "rga" },
   "m1.web.h1_cta":           { actor: "rga" },
   "m1.web.nap_consistency":  { actor: "rga" },

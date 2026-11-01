@@ -1,0 +1,146 @@
+[
+ [
+  "a failed read becomes a page",
+  "gbplanding",
+  "if (!Array.isArray(rows)) return { state: \"unknown\", keyword: kw };",
+  "if (!Array.isArray(rows)) return { state: \"ok\", keyword: kw, page: siteUrl, is_home: true, clicks: 0, impressions: 0 };"
+ ],
+ [
+  "too few searches still recommend",
+  "gbplanding",
+  "total < MIN_IMPRESSIONS",
+  "total < 0"
+ ],
+ [
+  "another site's rows count",
+  "gbplanding",
+  "low(r.query) === kw && sameSite(r.page, siteUrl)",
+  "low(r.query) === kw"
+ ],
+ [
+  "a page off their site is accepted",
+  "gbplanding",
+  "if (!sameSite(p.url, siteUrl))",
+  "if (false)"
+ ],
+ [
+  "the homepage is accepted as a city page",
+  "gbplanding",
+  "if (isHomepage(p.url, siteUrl)) return",
+  "if (false) return"
+ ],
+ [
+  "a stale choice is still used",
+  "gbplanding",
+  "return c.ok ? { choice: c.choice, url: c.url } : null;",
+  "return { choice: l.choice, url: l.url };"
+ ],
+ [
+  "no fallback to the homepage",
+  "gbplanding",
+  "return site ? { url: site, choice: \"homepage\", saved: false } : null;",
+  "return null;"
+ ],
+ [
+  "the words always say homepage",
+  "gbplanding",
+  "pg.choice !== \"homepage\" ? \"The page your Google profile links to\" : \"Your homepage\"",
+  "false ? \"The page your Google profile links to\" : \"Your homepage\""
+ ],
+ [
+  "the writer reaches Google",
+  "gbplandingfn",
+  "const GL = require(\"./_gbp-landing\");",
+  "const GL = require(\"./_gbp-landing\"); const PUSH = \"https://mybusinessbusinessinformation.googleapis.com/v1\";"
+ ],
+ [
+  "the writer saves an unchecked choice",
+  "gbplandingfn",
+  "const c = GL.checkChoice({ choice: String(body.choice || \"\"), url: body.url, siteUrl });",
+  "const c = { ok: true, choice: String(body.choice || \"\"), url: String(body.url || \"\") };"
+ ],
+ [
+  "a read finishes the step",
+  "gbplandingfn",
+  "landing_read: { ...rec1, at, by: gate.email || null } };",
+  "landing_read: { ...rec1, at, by: gate.email || null }, status: \"done\" };"
+ ],
+ [
+  "the save is not recorded",
+  "gbplandingfn",
+  "await recordSubmission({ supa,",
+  "await (async () => 0)({ supa,"
+ ],
+ [
+  "the save is not read back",
+  "gbplandingfn",
+  "after.tasks[GL.STEP].landing.saved_at !== at) return json(500, { error: \"That didn't save. Please try again.\" });   // 🔴 READ IT BACK",
+  "false) return json(500, { error: \"x\" });"
+ ],
+ [
+  "the step's title changes",
+  "playbook",
+  "\"title\": \"Decide which page the Google profile links to\"",
+  "\"title\": \"Decide the page\""
+ ],
+ [
+  "the step gets a client card",
+  "playbook",
+  "\"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\"\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\"",
+  "\"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": \"Pick your page\",\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\"\n    },\n    {\n      \"id\": \"m1.web.homepage_meta\""
+ ],
+ [
+  "the canonical file drifts",
+  "sopm1",
+  "The title, headline and button steps then work on the chosen page, and on the homepage when nothing is saved.",
+  "The title, headline and button steps then work on the homepage."
+ ],
+ [
+  "the canonical title drifts",
+  "sopm1",
+  "title: \"Decide which page the Google profile links to\"",
+  "title: \"Decide the page\""
+ ],
+ [
+  "the title step ignores the saved page",
+  "admindeliv",
+  "c.page_url = pg ? pg.url : site;",
+  "c.page_url = site;"
+ ],
+ [
+  "no fallback in the prefill",
+  "admindeliv",
+  "c.page_url = pg ? pg.url : site;",
+  "c.page_url = pg ? pg.url : null;"
+ ],
+ [
+  "the title draft ignores the saved page",
+  "exec",
+  "${planBlock(_plan)}${await pageBlock(client)}`,\n      { maxTokens: 200 },",
+  "${planBlock(_plan)}`,\n      { maxTokens: 200 },"
+ ],
+ [
+  "the headline draft ignores the saved page",
+  "exec",
+  "${planBlock(_plan)}${await pageBlock(client)}`,\n      { maxTokens: 1400 },",
+  "${planBlock(_plan)}`,\n      { maxTokens: 1400 },"
+ ],
+ [
+  "the card is not drawn",
+  "admin",
+  "return id === \"m1.web.gbp_landing_page\" ? gbpLandingAdminHtml(t)",
+  "return id === \"m1.web.gbp_landing_page\" ? \"\""
+ ],
+ [
+  "a failed read has no words",
+  "admin",
+  "Couldn't read Search Console",
+  "Read"
+ ],
+ [
+  "the buttons do not spin",
+  "admin",
+  "b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\"",
+  "try {\n    const r = await fetch(\"/.netlify/functions/admin-gbp-landing\""
+ ]
+]
