@@ -133,7 +133,7 @@ if (!/class="admin-button" data-photo-approve="p8">Send to Google</.test(c8)) fa
 if (!/class="admin-button" data-photo-td-open="p9" data-photo-td-pick="Wrong shot for this slot">Turn down</.test(c9)) fail("a misfit doesn't lead with Turn down (wrong shot picked)");
 if (!/class="admin-button admin-button-secondary" data-photo-approve="p9">Send to Google anyway</.test(c9)) fail("a misfit lost its Send to Google anyway");
 if (/pr-verdict bad/.test(c9)) fail("a photo with no fingerprint was called a duplicate");
-if (!/data-photo-approve-all="p8">Send the 1 that fits</.test(html)) fail("the bulk button doesn't send only the photo that fits");
+if (!/data-photo-approve-all="p8">Approve the 1 that fits</.test(html)) fail("the bulk button doesn't send only the photo that fits");
 if (/Send both|Send all \d/.test(html)) fail("a bulk send of every photo is back");
 if (!/What slot 7 asks for/.test(c7) || !/The meeting room, set for a client\./.test(c7)) fail("a card no longer shows what its slot asks for beside the photo");
 // 🔄 second_logo_cleanup_v1: a second copy of the LOGO is the client's call (their portal card), listed as "with the client";
