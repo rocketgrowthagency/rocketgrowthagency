@@ -464,9 +464,10 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   if (/"m2\.exec\.blog_posts": async \(\{ client \}\) => blogFromMaterial\(client\)/.test(FE) === false || /"m1\.web\.blog_seed": async \(\{ client \}\) => blogFromMaterial\(client\)/.test(FE) === false) fail("the blog steps don't both run through the same material check");
   const fn = (/async function blogFromMaterial\(client\) \{[\s\S]*?\n\}\n/.exec(FE) || [""])[0];
   if (!fn) moved("blogFromMaterial");
-  if (!/clientBlogPlan/.test(fn) || !/outcome: "noop"/.test(fn) || !/published: false/.test(fn)) fail("the blog runner doesn't decide from material, say 0 is fine, or mark its draft unpublished");
+  if (!/clientBlogPlan/.test(fn) || !/0 posts is fine[\s\S]{0,80}outcome: "noop"/.test(fn) || !/published: false/.test(fn)) fail("the blog runner doesn't decide from material, say 0 is fine, or mark its draft unpublished");
   if (/openPullRequest|api\.github\.com|GA\.|writeFile|site_change|publish_pr/.test(fn)) fail("the blog runner can put something on a client's site");
-  if (!/not automatic yet/i.test(row && row.instructions || "")) fail("the Monthly blog row promises an upload that isn't built");
+  // the upload was built 11-01 (admin_blog_step_v1): the row must say the client's yes comes first and that it only finishes read back. check-a-blog-post-goes-through-the-website-pipeline runs it.
+  if (!/nothing goes up without their yes/i.test(row && row.instructions || "") || !/reads back live/i.test(row && row.instructions || "")) fail("the Monthly blog row doesn't say the client's yes comes first and it finishes only when it reads back");
   const heavy = (/const HEAVY = new Set\(\[[\s\S]*?\]\);/.exec(FE) || [""])[0];
   if (!/"m2\.exec\.blog_posts"/.test(heavy) || !/"m1\.web\.blog_seed"/.test(heavy)) fail("a blog step that writes a post runs in the foreground and can time out");
   if (!/"m2\.exec\.blog_posts":\s*\{ level: "manual"/.test(ADMJS)) fail("admin doesn't know the Monthly blog row");

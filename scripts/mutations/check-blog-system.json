@@ -485,8 +485,8 @@
  [
   "the blog runner never says 0 is fine",
   "flowexec",
-  "outcome: \"noop\", outcome_data: { posts: 0",
-  "outcome: \"blocked\", outcome_data: { posts: 0",
+  "\"0 posts is fine. Nothing was drafted and nothing is published.\"].join(\"\\n\\n\"), outcome: \"noop\", outcome_data: { posts: 0, stages:",
+  "\"0 posts is fine. Nothing was drafted and nothing is published.\"].join(\"\\n\\n\"), outcome: \"blocked\", outcome_data: { posts: 0, stages:",
   1
  ],
  [

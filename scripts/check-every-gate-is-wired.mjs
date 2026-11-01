@@ -364,6 +364,7 @@ const NOT_PREFLIGHT = {
   'check-step10-photo-truth.mjs': 'the WEBSITE repo\'s step 10 photo truth (client_step10_photo_truth_v1, 10-30); fakes only, runs in daily-health-check.sh',
   'check-step10-upload-help.mjs': 'the WEBSITE repo\'s step 10 upload help (client_step10_upload_help_v1, 11-01); fakes only, runs in daily-health-check.sh',
   'check-a-tick-never-sits-on-nothing.mjs': 'the WEBSITE repo\'s step 12 name and zero ticks (client_step12_forms_v1, 11-01); fakes only, runs in daily-health-check.sh',
+  'check-a-blog-post-goes-through-the-website-pipeline.mjs': 'the WEBSITE repo\'s blog post loop (admin_blog_step_v1, 11-01); a fake database, GitHub, site and model, runs in daily-health-check',
   'check-the-blog-check-says-only-what-it-saw.mjs': 'the WEBSITE repo\'s step 47 blog check (admin_blog_step_v1, 11-01); fake sites and a fake database, runs in daily-health-check.sh',
   'check-the-site-archive-is-add-only.mjs': 'the WEBSITE repo\'s step 8 site archive (admin_site_archive_v1, 11-01); fake sites and a fake store, runs in daily-health-check.sh',
   'check-client-open-calls.mjs': 'the WEBSITE repo\'s client portal open calls (client_open_calls_v1, approved 10-30); file-only + fake Google + fake database, runs in daily-health-check.sh',

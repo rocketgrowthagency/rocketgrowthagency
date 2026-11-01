@@ -61,8 +61,9 @@ for (const s of webSteps) {
   if (!s.clientLabel || !s.clientHint) fail(`${s.id} has no client wording (clientLabel / clientHint = "Why this helps")`);
   if (!DLV.CLIENT_APPROVABLE[s.id]) fail(`${s.id} isn't client-approvable (_deliverables dropped it)`);
 }
-// a TEST change (the access test page, 10-28) is deliberately not a playbook step
-for (const id of Object.keys(SC.STEPS)) if (!SC.STEPS[id].test && !webSteps.some((s) => s.id === id)) fail(`site-change step ${id} is not a Month 1 playbook step`);
+// a TEST change (the access test page, 10-28) is deliberately not a playbook step, and neither is the Monthly post's record: its row is m2.exec.blog_posts (admin_blog_step_v1), which must exist
+for (const id of Object.keys(SC.STEPS)) if (!SC.STEPS[id].test && !SC.STEPS[id].draftFrom && !webSteps.some((s) => s.id === id)) fail(`site-change step ${id} is not a Month 1 playbook step`);
+for (const id of Object.keys(SC.STEPS)) if (SC.STEPS[id].draftFrom && !(PB.month2plus || []).some((s) => s.id === SC.STEPS[id].draftFrom)) fail(`site-change record ${id} takes its draft from ${SC.STEPS[id].draftFrom}, which isn't a Monthly row`);
 
 // ── 2. the rules, as functions ──
 {

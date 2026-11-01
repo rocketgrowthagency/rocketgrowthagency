@@ -18,6 +18,8 @@ export const FILES = {
   onpageaudit: "netlify/functions/site-onpage-audit-background.js",
   // audit_decisions_v1 #7 (approved 10-31): the listings check runs itself once
   listingsauto: "netlify/functions/_listings-autorun.js",
+  // admin_blog_step_v1 (approved 10-31, built 11-01): a post is a website change
+  blogpostlib: "netlify/functions/_blog-post.js",
   // blog_system_v1 + blog_cleanup_v1 (10-31, built 11-01)
   bloglinks: "netlify/functions/_blog-links.js",
   blogsys: "netlify/functions/_blog-system.js",

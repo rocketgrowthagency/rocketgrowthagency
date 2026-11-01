@@ -2,8 +2,8 @@
  [
   "the old always-open form comes back for draft it",
   "admin",
-  "say: \"Nothing on their website changes until they approve it in For your approval.\", body: isPage ? `<div class=\"ob-wc-rev\">${wcProofRowHtml({})}</div>` : \"\", acts: runB, right: nochange }));",
-  "say: \"Nothing on their website changes until they approve it in For your approval.\", body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
+  "\"Nothing on their website changes until they approve it in For your approval.\", body: isPage ? `<div class=\"ob-wc-rev\">${wcProofRowHtml({})}</div>` : \"\", acts: runB, right: nochange }));",
+  "\"Nothing on their website changes until they approve it in For your approval.\", body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
   1
  ],
  [
@@ -345,8 +345,8 @@
  [
   "the Google preview is gone",
   "admin",
-  "${wcProofRowHtml(c)}${wcGooglePreviewHtml(c)}",
-  "${wcProofRowHtml(c)}",
+  "${c.post ? \"\" : wcProofRowHtml(c)}${wcGooglePreviewHtml(c)}",
+  "${c.post ? \"\" : wcProofRowHtml(c)}",
   1
  ],
  [
@@ -401,8 +401,8 @@
  [
   "no next page button",
   "admin",
-  "${SC.pagesLeft(task) ? `<button type=\"button\" class=\"admin-button\" data-ob-wc-nextpage>Start the next page</button>` : \"\"}",
-  "",
+  "${SC.pagesLeft(task) ? `<button type=\"button\" class=\"admin-button\" data-ob-wc-nextpage>Start the next ${isPost ? \"post\" : \"page\"}</button>` : nextPost",
+  "${false ? `` : nextPost",
   1
  ],
  [

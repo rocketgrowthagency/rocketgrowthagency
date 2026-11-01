@@ -1,0 +1,226 @@
+[
+ [
+  "no material still drafts",
+  "flowexec",
+  "if (!blogStage || blogStage.state !== \"to_do\") return { summary: [`No post this month",
+  "if (false) return { summary: [`No post this month",
+  1
+ ],
+ [
+  "a fact is written up twice",
+  "flowexec",
+  "if (!unused.length) return { summary: \"Everything the client has given us",
+  "if (false) return { summary: \"Everything the client has given us",
+  1
+ ],
+ [
+  "a third post in a month",
+  "flowexec",
+  "if (month.live >= BC.MAX_POSTS_PER_MONTH) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a post on top of one on its way",
+  "flowexec",
+  "if (month.moving) return { summary: \"A post is already",
+  "if (false) return { summary: \"A post is already",
+  1
+ ],
+ [
+  "no access still drafts",
+  "flowexec",
+  "if (!acc.confirmed_at || acc.removed_at) return { summary: \"This waits on their website access",
+  "if (false) return { summary: \"This waits on their website access",
+  1
+ ],
+ [
+  "a post with no place",
+  "flowexec",
+  "if (place.why) return { summary:",
+  "if (false) return { summary:",
+  1
+ ],
+ [
+  "a draft that fails its checks is kept",
+  "flowexec",
+  "if (problems.length) return { summary: `The draft didn't pass its checks",
+  "if (false) return { summary: `The draft didn't pass its checks",
+  1
+ ],
+ [
+  "an address they already have",
+  "flowexec",
+  "if (urls.some((u) => pathOf(u) === pathOf(url))) problems.push(\"A page with this address already exists.\");",
+  "",
+  1
+ ],
+ [
+  "prose reads as a post",
+  "blogpostlib",
+  "let j; try { j = JSON.parse(text); } catch { return { error: \"The draft didn't come back in the format asked for, so nothing was kept.\" }; }",
+  "let j; try { j = JSON.parse(text); } catch { j = { title: text, slug: text, sections: [{ paragraphs: [text] }] }; }",
+  1
+ ],
+ [
+  "a link to a page they don't have",
+  "blogpostlib",
+  "if (post.link && !servicePaths.includes(post.link.path)) problems.push(`It links ${post.link.path}, which isn't one of their pages.`);",
+  "",
+  1
+ ],
+ [
+  "an invented price",
+  "blogpostlib",
+  "if (!given.includes(m.replace(/\\s/g, \"\"))) { problems.push(`It states a price, ${m}, that the client didn't give us.`); break; }",
+  "{ break; }",
+  1
+ ],
+ [
+  "a 'none' places a post without asking",
+  "blogpostlib",
+  "if (blog && blog.verdict === \"none\" && blog.new_blog_ok) return",
+  "if (blog && blog.verdict === \"none\") return",
+  1
+ ],
+ [
+  "any address counts as RGA's own",
+  "blogpostlib",
+  "return h === OWN_HOST;",
+  "return h.includes(OWN_HOST);",
+  1
+ ],
+ [
+  "own draft skips its checks",
+  "blogpostlib",
+  "if (problems.length) return { problems };",
+  "",
+  1
+ ],
+ [
+  "own draft may carry code",
+  "blogpostlib",
+  "if (/<script\\b|\\son[a-z]+\\s*=|javascript:/i.test(draft)) problems.push(\"The draft carries code.\");",
+  "",
+  1
+ ],
+ [
+  "the post isn't marked a post",
+  "sitechange",
+  "\"m1.web.blog_seed\": { kind: \"visible\", where: \"A new post on your blog\", preview: \"google\", newPage: true, page: true, post: true, items: POST_ITEMS },",
+  "\"m1.web.blog_seed\": { kind: \"visible\", where: \"A new post on your blog\", preview: \"google\", newPage: true, page: true, items: POST_ITEMS },",
+  1
+ ],
+ [
+  "the saved post loses its material",
+  "sitechange",
+  "material: (Array.isArray(o.material) ? o.material : []).map((x) => clip(x, 400)).filter(Boolean).slice(0, 6),",
+  "material: [],",
+  1
+ ],
+ [
+  "last month's post counts this month",
+  "sitechange",
+  "if (String(x.published.at).slice(0, 7) === month) out.live++;",
+  "out.live++;",
+  1
+ ],
+ [
+  "own press works on a client's record",
+  "admindeliv",
+  "if (!require(\"./_blog-post\").isOwnSite(client)) return json(403, { error: \"Only the client approves a change to their website.\" });",
+  "",
+  1
+ ],
+ [
+  "own press with nobody having read",
+  "admindeliv",
+  "if (body.read !== true) return json(400, { error: \"Someone has to read the post first.\" });",
+  "",
+  1
+ ],
+ [
+  "own press with no person",
+  "admindeliv",
+  "if (!gate.email && !(gate.user && gate.user.email)) return json(403, { error: \"A person has to read and press this.\" });",
+  "",
+  1
+ ],
+ [
+  "own press with no build",
+  "admindeliv",
+  "if (!bd) return json(409, { error: \"This post has no build yet, so there is nothing to approve.\" });",
+  "",
+  1
+ ],
+ [
+  "a post is built as a service page",
+  "admindeliv",
+  "const main = isPost ? BP.postMainHtml(c) :",
+  "const main = false ? BP.postMainHtml(c) :",
+  1
+ ],
+ [
+  "a Monthly post reads the wrong run",
+  "admindeliv",
+  "const ran = from ? ((mr && mr.data && mr.data.tasks) || {})[from] || {} : t;",
+  "const ran = t;",
+  1
+ ],
+ [
+  "an unread page is marked live",
+  "admindeliv",
+  "if (!String(body.unchecked_reason || \"\").trim()) return json(409, { error: `${check_note}, so it isn't marked live.",
+  "if (false) return json(409, { error: `${check_note}, so it isn't marked live.",
+  1
+ ],
+ [
+  "own publish without reading",
+  "blogadm",
+  "if (body.read !== true) return { status: 400, body: { error: \"Someone has to read the post first.\" } };",
+  "",
+  1
+ ],
+ [
+  "own publish on a client",
+  "blogadm",
+  "if (!BP.isOwnSite(client)) return { status: 409,",
+  "if (false) return { status: 409,",
+  1
+ ],
+ [
+  "own publish with a brief only",
+  "blogadm",
+  "if (!p || p.state !== \"drafted\") return",
+  "if (!p) return",
+  1
+ ],
+ [
+  "the own press skips the read record",
+  "blogadm",
+  ", [\"recording who read it\", { site_action: \"own_approve\", read: true }]]",
+  "]",
+  1
+ ],
+ [
+  "the own button works before it's read",
+  "admin",
+  "data-bl-own-publish=\"${escapeAttribute(n.id)}\" disabled>Publish this post",
+  "data-bl-own-publish=\"${escapeAttribute(n.id)}\">Publish this post",
+  1
+ ],
+ [
+  "the Monthly row has no post card",
+  "admin",
+  "    : id === \"m2.exec.blog_posts\" ? blogMonthlyAdminHtml(t)\n",
+  "",
+  1
+ ],
+ [
+  "editing a post loses its material",
+  "admin",
+  "...(def.post ? { material: v.material || [], ...(v.makes_blog ? { makes_blog: true } : {}), ...(v.post_html ? { post_html: v.post_html } : {}) } : {})",
+  "",
+  1
+ ]
+]

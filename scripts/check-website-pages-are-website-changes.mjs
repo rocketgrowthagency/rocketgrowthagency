@@ -35,14 +35,15 @@ const PAGE_STEPS = ["m1.web.priority_pages", "m1.web.location_pages", "m1.web.se
 for (const id of PAGE_STEPS) for (const d of jsonDeps(id)) if (/photos|review/.test(d)) fail(`${id} waits on ${d}: a client who never sends photos or reviews still gets a page`);
 
 // ── 2 · pages are website changes ────────────────────────────────────────────────────────────
-for (const id of ["m1.web.priority_pages", "m1.web.location_pages", "m1.web.service_location_matrix"]) {
+for (const id of ["m1.web.priority_pages", "m1.web.location_pages", "m1.web.service_location_matrix", "m1.web.blog_seed"]) {
   if (!SC.isSiteChangeStep(id) || SC.COPY_STEPS.includes(id)) fail(`${id} is not a website change`);
   if (!SC.STEPS[id].page) fail(`${id} isn't marked as a page the builder makes`);
   const approvedOnly = { site_change: { v: "1", kind: "visible" }, approval: { decision: "approved", change_v: "1" } };
   if (SC.stepMayBeDone(approvedOnly)) fail(`${id}: an approved page that isn't live counts as done`);
   if (!SC.stepMayBeDone({ ...approvedOnly, published: { v: "1" } })) fail(`${id}: a live page doesn't finish the step`);
 }
-if (!SC.COPY_STEPS.includes("m1.web.blog_seed") || SC.isSiteChangeStep("m1.web.blog_seed")) fail("the blog step moved: it keeps its own check");
+// the blog step keeps its own check and draft (check-the-page-builder), and since admin_blog_step_v1 its post is a website change like any page
+if (!SC.STEPS["m1.web.blog_seed"]?.post) fail("the blog step isn't marked as a post, so it would be built as a service page");
 const base = { page_url: "https://x.test/water-heaters/", files: [{ path: "water-heaters/index.html", action: "add" }], items: [{ label: "Page title", role: "title", after: "Water heaters | X" }] };
 const made = SC.cleanChange("m1.web.priority_pages", base);
 if (!made.change || !made.change.new_page || made.change.label !== "add_page") fail(`a new service page isn't labelled as adding a page (${made.error || made.change.label})`);
