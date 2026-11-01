@@ -658,7 +658,8 @@ else {
     }
     // 🔑 A probe that only re-reads our own stored id re-derives the same answer the row already
     // had, and proves nothing. It must reach the live source.
-    if (!/oauth2\.googleapis\.com\/token/.test(rc)) bad("the Google probe never refreshes a token — it cannot be testing live access");
+    // The refresh itself lives in _google-token.js now, so the probe has to call it. → check-google-login-has-one-home
+    if (!/\brefreshGrant\(row\.refresh_token\)/.test(rc) || !/require\("\.\/_google-token"\)/.test(rc)) bad("the Google probe never refreshes a token — it cannot be testing live access");
 
     // 🔴🔴 A DETECTED STEP MUST BE CHECKABLE IN BOTH STATES, AND WITHOUT ANYONE PRESSING ANYTHING.
     // "Check again" rendered only on a SETTLED row, and nothing else ran the probe — so an OPEN
