@@ -423,4 +423,10 @@ export const FILES = {
   citrade: "netlify/functions/_citation-trade.js",
   citrecheck: "netlify/functions/_citation-recheck.js",
   citrecheckfn: "netlify/functions/citation-recheck.js",
+  // data_keep_v1 / data_store_v1 (11-01): Analytics by day and page, page indexing status, the baseline at signing
+  ga4daily: "netlify/functions/_ga4-daily.js",
+  urlinspect: "netlify/functions/_url-inspect-keep.js",
+  baselinefn: "netlify/functions/_baseline.js",
+  contractsignfn: "netlify/functions/contract-sign.js",
+  datakeepmoresql: "supabase/data_keep_more.sql",
 };

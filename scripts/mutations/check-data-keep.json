@@ -658,5 +658,155 @@
   "corechangefn",
   "whyChosen: item.why || null",
   "whyChosen: \"To improve your visibility\""
+ ],
+ [
+  "Analytics asks Google although its progress table is missing",
+  "ga4daily",
+  "if (isMissingTable(e)) return { ...out, table_ready: false,",
+  "if (false) return { ...out, table_ready: false,"
+ ],
+ [
+  "Analytics moves its marker past rows that were not kept",
+  "ga4daily",
+  "status = \"error\"; lastError = `rows not saved: ${String(e.message).slice(0, 140)}`; break; }",
+  "status = \"error\"; lastError = `rows not saved: ${String(e.message).slice(0, 140)}`; }"
+ ],
+ [
+  "Analytics keeps going after a 429",
+  "ga4daily",
+  "if (r.status === 429) return { rows: [], requests: 1, truncated: false, status: \"quota\"",
+  "if (r.status === 429) return { rows: [], requests: 1, truncated: false, status: \"ok\""
+ ],
+ [
+  "a failed Analytics read is half-kept",
+  "ga4daily",
+  "if (failed) { status = failed.status; lastError = failed.error; break; }",
+  "if (failed) { status = failed.status; lastError = failed.error; }"
+ ],
+ [
+  "Analytics includes the automatic events",
+  "ga4daily",
+  "dimensionFilter: { notExpression:",
+  "dimensionFilterOff: { notExpression:"
+ ],
+ [
+  "Analytics pulls clients that have no property",
+  "ga4daily",
+  "&ga4_property_id=not.is.null",
+  ""
+ ],
+ [
+  "Analytics writes a retention setting to Google",
+  "ga4daily",
+  "const NOISE_EVENTS =",
+  "const RETENTION = \"dataRetentionSettings\"; const NOISE_EVENTS ="
+ ],
+ [
+  "Analytics asks for more requests per client than the cap",
+  "ga4daily",
+  "const MAX_REQUESTS_PER_RUN = 30;",
+  "const MAX_REQUESTS_PER_RUN = 300;"
+ ],
+ [
+  "a bad date is kept as a row",
+  "ga4daily",
+  "const isoDate = (v) => (/^\\d{8}$/.test(String(v))",
+  "const isoDate = (v) => (/^\\d{1,8}$/.test(String(v)) || true"
+ ],
+ [
+  "page indexing asks Google although its table is missing",
+  "urlinspect",
+  "if (isMissingTable(e)) return { ...out, table_ready: false,",
+  "if (false) return { ...out, table_ready: false,"
+ ],
+ [
+  "page indexing asks about every page, not a capped few",
+  "urlinspect",
+  "const PER_CLIENT = 25, PER_RUN = 60,",
+  "const PER_CLIENT = 2500, PER_RUN = 6000,"
+ ],
+ [
+  "a failed indexing answer is saved as not indexed",
+  "urlinspect",
+  "state: x.state, error: x.error || null",
+  "state: x.state === \"unknown\" ? \"not_indexed\" : x.state, error: x.error || null"
+ ],
+ [
+  "a 429 from Google is saved as not indexed",
+  "blogsys",
+  "if (status === 429) return { ...base, error: \"Google said too many requests; the check stopped for this run\" };",
+  "if (status === 429) return { ...base, state: \"not_indexed\", error: \"Google said too many requests; the check stopped for this run\" };"
+ ],
+ [
+  "page indexing asks about a page checked inside the week",
+  "urlinspect",
+  "if (t != null && now.getTime() - t < WEEK_MS) continue;",
+  ""
+ ],
+ [
+  "the baseline writes without its table",
+  "baselinefn",
+  "if (isMissingTable(e)) return { ok: false, table_ready: false,",
+  "if (false) return { ok: false, table_ready: false,"
+ ],
+ [
+  "a baseline part with nothing reads as held",
+  "baselinefn",
+  "return { status: \"unavailable\", reason: \"no map scan existed on the day of signing\" };",
+  "return { status: \"held\", scans: 0, rows: [] };"
+ ],
+ [
+  "the baseline can be overwritten by a second one",
+  "baselinefn",
+  "resolution=ignore-duplicates",
+  "resolution=merge-duplicates"
+ ],
+ [
+  "the baseline copies Business Profile content",
+  "baselinefn",
+  "const profilePart = () => ({ status: \"unavailable\", reason: \"Business Profile content is not kept past 30 days (the 30-day rule, Option A); the profile is read live\" });",
+  "const profilePart = () => ({ status: \"held\" });"
+ ],
+ [
+  "the baseline throws into the signing",
+  "baselinefn",
+  "} catch (e) { return { ok: false, error: String(e.message).slice(0, 160) }; }",
+  "} catch (e) { throw e; }"
+ ],
+ [
+  "the baseline calls out to a search provider",
+  "baselinefn",
+  "require(\"./_deadline\");",
+  "require(\"./_deadline\"); const serpapi = (u) => fetch(\"https://serpapi.com/search?q=\" + u);"
+ ],
+ [
+  "the signing waits on an unguarded baseline",
+  "contractsignfn",
+  "  try {\n    const b = await require(\"./_baseline\")",
+  "  {\n    const b = await require(\"./_baseline\")"
+ ],
+ [
+  "the SQL file opens a new table to the public",
+  "datakeepmoresql",
+  "revoke all on public.%I from anon, authenticated",
+  "grant all on public.%I to anon"
+ ],
+ [
+  "the SQL file drops a table",
+  "datakeepmoresql",
+  "-- Nothing is dropped, renamed or deleted.",
+  "drop table if exists public.client_baseline;\n-- Nothing is dropped, renamed or deleted."
+ ],
+ [
+  "System health stops saying the new reads are not set up",
+  "jobmanifest",
+  "Not set up (supabase/data_keep_more.sql)",
+  "ok"
+ ],
+ [
+  "the Search Console job runs the new reads without a time check",
+  "gscfn",
+  "if (left < 4000) { more[k] = { deferred: true,",
+  "if (false) { more[k] = { deferred: true,"
  ]
 ]

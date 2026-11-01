@@ -451,5 +451,131 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     void keep2; fs.rmSync(D, { recursive: true, force: true }); fs.rmSync(D2, { recursive: true, force: true }); }
 }
 
+// ── (11) the rest of what we keep: Analytics by day and page, page indexing status, the baseline at signing (data_keep_v1 + data_store_v1) ──
+// Everything stubbed: no Google call, no database, no search. "Stubbed" is the honest word for every line below.
+{
+  const GA = load("_ga4-daily.js"), UI = load("_url-inspect-keep.js"), BL = load("_baseline.js"), MAN = load("_job-manifest.js");
+  const gaSrc = read("netlify/functions/_ga4-daily.js") || "", uiSrc = read("netlify/functions/_url-inspect-keep.js") || "", blSrc = read("netlify/functions/_baseline.js") || "";
+  const gscFn = read("netlify/functions/gsc-daily-rows.js") || "", signSrc = read("netlify/functions/contract-sign.js") || "", more = read("supabase/data_keep_more.sql");
+  if (more == null) idk("supabase/data_keep_more.sql moved");
+  const NOW = new Date("2026-11-01T12:00:00Z"), CID = "aaaaaaaa-1111-2222-3333-444444444444", MISSING = "Supabase 404: PGRST205 Could not find the table (schema cache)";
+  const mkSupa = (tables, writes = []) => async (p, init = {}) => {
+    const t = p.replace(/^\//, "").split(/[?]/)[0];
+    if (init.method && init.method !== "GET") { writes.push({ t, p, body: init.body }); if (tables[t] === "missing") throw new Error(MISSING); return null; }
+    const v = tables[t]; if (v === "missing") throw new Error(MISSING); if (v instanceof Error) throw v;
+    return typeof v === "function" ? v(p) : (v || []);
+  };
+  const OA = { client_id: CID, refresh_token: "sealed", ga4_property_id: "properties/123", gsc_site_url: "https://example-client.test/" };
+  const gaRow = (d, p, extra) => ({ dimensionValues: [{ value: d }, { value: p }, ...(extra ? [{ value: extra }] : [])], metricValues: [{ value: "5" }, { value: "9" }] });
+  const gaFetch = (reply) => { const calls = []; const f = async (url, init = {}) => { calls.push({ url: String(url), method: init.method, body: init.body });
+    const r = reply(String(url), init, calls.length); return { ok: r.status === 200, status: r.status, json: async () => r.json, text: async () => JSON.stringify(r.json || {}) }; }; f.calls = calls; return f; };
+  const saveOk = () => { const order = []; const f = async () => (order.push("raw"), { ok: true }); f.order = order; return f; };
+
+  // no table = nothing asked of Google
+  { const f = gaFetch(() => ({ status: 200, json: {} }));
+    const r = await GA.run({ supa: mkSupa({ ga4_pull_state: "missing" }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(r.table_ready === false && /Not set up/.test(r.note) && f.calls.length === 0, "(11) Analytics asked Google although its progress table is missing, or didn't say 'Not set up'"); }
+  // a first run: raw first, rows shaped, marker moves, bounded, read only
+  { const w = []; const f = gaFetch(() => ({ status: 200, json: { rows: [gaRow("20261030", "/a/", null), gaRow("bad", "/b/", null), { dimensionValues: [{ value: "20261030" }, { value: "/c/" }], metricValues: [{ value: "x" }, { value: "1" }] }] } }));
+    const sv = saveOk();
+    const supa = mkSupa({ ga4_pull_state: [], client_google_oauth: [OA], client_ga4_daily: [] }, w);
+    const wrapped = async (p, i) => { if (i && i.method === "POST" && /client_ga4_daily/.test(p)) sv.order.push("rows"); return supa(p, i); };
+    const r = await GA.run({ supa: wrapped, fetchFn: f, token: async () => "t", saveRaw: sv, now: NOW });
+    ok(f.calls.length <= GA.MAX_REQUESTS_PER_CLIENT && r.requests === f.calls.length, `(11) Analytics made ${f.calls.length} requests for one client (cap ${GA.MAX_REQUESTS_PER_CLIENT})`);
+    ok(f.calls.every((c) => c.method === "POST" && /analyticsdata\.googleapis\.com\/v1beta\/properties\/123:runReport$/.test(c.url)), "(11) Analytics called something other than runReport on the connected property");
+    ok(sv.order[0] === "raw" && sv.order.indexOf("rows") > sv.order.indexOf("raw"), "(11) Analytics rows were saved before the raw answer");
+    const up = w.filter((x) => x.t === "client_ga4_daily").flatMap((x) => JSON.parse(x.body));
+    ok(up.length > 0 && up.every((x) => x.date === "2026-10-30" && x.page === "/a/" && x.row_key), "(11) a row with a bad date or a non-number was kept, or a good one lost");
+    ok(up.filter((x) => x.kind === "page").every((x) => x.sessions === 5 && x.views === 9 && x.events === null) && up.filter((x) => x.kind === "event").every((x) => x.events != null && x.sessions === null), "(11) Analytics page and event rows carry each other's numbers");
+    ok(w.some((x) => x.t === "ga4_pull_state" && /"pulled_through"/.test(x.body)), "(11) Analytics never recorded how far it got");
+    ok(/"dimensionFilter":\{"notExpression"/.test(f.calls[1].body) && /page_view/.test(f.calls[1].body), "(11) the event read doesn't leave out the automatic events"); }
+  // a 429 stops, writes no rows, moves no marker
+  { const w = []; const f = gaFetch(() => ({ status: 429, json: {} }));
+    const r = await GA.run({ supa: mkSupa({ ga4_pull_state: [], client_google_oauth: [OA, { ...OA, client_id: "bbbbbbbb-1111-2222-3333-444444444444" }] }, w), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(w.every((x) => x.t !== "client_ga4_daily") && !w.some((x) => /"pulled_through":"20/.test(x.body || "")) && r.errors.length > 0, "(11) a 429 from Analytics saved rows, moved the marker, or wasn't reported");
+    ok(f.calls.length <= 2, `(11) Analytics kept asking after a 429 (${f.calls.length} requests)`); }
+  // a failed read is an error, never rows of zeros
+  { const w = []; const f = gaFetch(() => ({ status: 500, json: {} }));
+    const r = await GA.run({ supa: mkSupa({ ga4_pull_state: [], client_google_oauth: [OA] }, w), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(w.every((x) => x.t !== "client_ga4_daily") && r.rows === 0 && r.errors.length === 1, "(11) a failed Analytics read was saved as rows or not reported"); }
+  // a rows-not-saved failure must not move the marker
+  { const w = []; const base = mkSupa({ ga4_pull_state: [], client_google_oauth: [OA] }, w);
+    const supa = async (p, i) => { if (i && /client_ga4_daily/.test(p)) throw new Error("Supabase 500: down"); return base(p, i); };
+    const f = gaFetch(() => ({ status: 200, json: { rows: [gaRow("20261030", "/a/", null)] } }));
+    const r = await GA.run({ supa, fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(!w.some((x) => x.t === "ga4_pull_state" && /"pulled_through"/.test(x.body)) && r.errors.some((e) => /rows not saved/.test(e)), "(11) the Analytics marker moved past rows that weren't kept"); }
+  // a caught-up client isn't pulled again; no property = skipped, never zero
+  { const f = gaFetch(() => ({ status: 200, json: {} }));
+    const st = { client_id: CID, pulled_through: "2026-10-30", backfill_done: true, last_run_at: "2026-10-31T00:00:00Z" };
+    await GA.run({ supa: mkSupa({ ga4_pull_state: [st], client_google_oauth: [OA] }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(f.calls.length === 0, "(11) a caught-up client was pulled again inside the week");
+    ok(/ga4_property_id=not\.is\.null/.test(gaSrc), "(11) Analytics asks for clients that have no property connected"); }
+  // read only, no retention write, no quota change
+  { const code = gaSrc.replace(/\/\/.*$/gm, "") + uiSrc.replace(/\/\/.*$/gm, "");
+    ok(!/dataRetentionSettings|quota(?:Project|User)|X-Goog-User-Project|analyticsadmin/i.test(code) && !/["'](?:PATCH|PUT|DELETE)["']/.test(code), "(11) the Analytics or indexing code can write to Google, change a retention setting, or reach for a quota");
+    ok(/MAX_REQUESTS_PER_RUN\s*=\s*30;/.test(gaSrc) && /PER_CLIENT\s*=\s*25,\s*PER_RUN\s*=\s*60/.test(uiSrc), "(11) the request caps changed"); }
+
+  // URL Inspection
+  const pagesFor = (n) => Array.from({ length: n }, (_, i) => ({ page: `https://example-client.test/p${i}/`, impressions: 1000 - i }));
+  { const f = gaFetch(() => ({ status: 200, json: {} }));
+    const r = await UI.run({ supa: mkSupa({ client_url_inspection: "missing" }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(r.table_ready === false && /Not set up/.test(r.note) && f.calls.length === 0, "(11) page indexing asked Google although its table is missing, or didn't say 'Not set up'"); }
+  { const w = []; const good = { inspectionResult: { indexStatusResult: { verdict: "PASS", coverageState: "Submitted and indexed", robotsTxtState: "ALLOWED", pageFetchState: "SUCCESSFUL" } } };
+    const f = gaFetch(() => ({ status: 200, json: good }));
+    const r = await UI.run({ supa: mkSupa({ client_url_inspection: [], client_google_oauth: [OA], client_gsc_daily: pagesFor(100) }, w), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(f.calls.length === UI.PER_CLIENT && r.checked === UI.PER_CLIENT && r.indexed === UI.PER_CLIENT, `(11) page indexing asked about ${f.calls.length} pages for one client (cap ${UI.PER_CLIENT})`);
+    ok(f.calls.every((c) => c.method === "POST" && /urlInspection\/index:inspect$/.test(c.url)) && /p0\//.test(f.calls[0].body), "(11) page indexing called something other than the inspect endpoint, or didn't start with the busiest page");
+    const rows = w.filter((x) => x.t === "client_url_inspection").flatMap((x) => JSON.parse(x.body));
+    ok(rows.length === UI.PER_CLIENT && rows.every((x) => x.state === "indexed" && x.row_key), "(11) page indexing rows weren't kept"); }
+  // recent checks are not repeated
+  { const f = gaFetch(() => ({ status: 200, json: {} }));
+    const hist = pagesFor(3).map((p) => ({ url: p.page, checked_at: "2026-10-30T00:00:00Z" }));
+    await UI.run({ supa: mkSupa({ client_url_inspection: hist, client_google_oauth: [OA], client_gsc_daily: pagesFor(3) }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(f.calls.length === 0, "(11) a page checked two days ago was asked about again"); }
+  // an error or odd reply is unknown, never not-indexed; a 429 stops
+  { const w = []; const f = gaFetch((u, i, n) => ({ status: n === 1 ? 500 : 200, json: { inspectionResult: {} } }));
+    const r = await UI.run({ supa: mkSupa({ client_url_inspection: [], client_google_oauth: [OA], client_gsc_daily: pagesFor(3) }, w), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    const rows = w.filter((x) => x.t === "client_url_inspection").flatMap((x) => JSON.parse(x.body));
+    ok(rows.length === 3 && rows.every((x) => x.state === "unknown" && x.error) && r.not_indexed === 0 && r.unknown === 3, "(11) a failed or unclear indexing answer was saved as indexed or not indexed"); }
+  { const f = gaFetch(() => ({ status: 429, json: {} }));
+    const r = await UI.run({ supa: mkSupa({ client_url_inspection: [], client_google_oauth: [OA, { ...OA, client_id: "bbbbbbbb-1111-2222-3333-444444444444" }], client_gsc_daily: pagesFor(10) }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(f.calls.length <= 5 && r.not_indexed === 0, `(11) page indexing kept asking after a 429 (${f.calls.length} requests)`); }
+  { const f = gaFetch(() => ({ status: 200, json: {} }));
+    const r = await UI.run({ supa: mkSupa({ client_url_inspection: [], client_google_oauth: [OA], client_gsc_daily: [] }), fetchFn: f, token: async () => "t", saveRaw: saveOk(), now: NOW });
+    ok(f.calls.length === 0 && r.no_pages === 1, "(11) a client with no known pages was asked about, or not counted as 'no pages'"); }
+  ok(JSON.stringify(UI.duePages(["x", "javascript:1", "https://a.test/1", "https://a.test/1", "https://a.test/2"], [{ url: "https://a.test/2", checked_at: "2026-10-01T00:00:00Z" }], NOW)) === JSON.stringify(["https://a.test/1", "https://a.test/2"]), "(11) the due list repeats a page, includes a non-page, or doesn't put never-checked first");
+
+  // the baseline
+  { const w = []; const r = await BL.takeBaseline(CID, { supa: mkSupa({ client_baseline: "missing" }, w), saveRaw: saveOk(), now: NOW });
+    ok(r.ok === false && r.table_ready === false && /Not set up/.test(r.note) && w.length === 0, "(11) the baseline wrote something, or didn't say 'Not set up', without its table"); }
+  { const w = []; const r = await BL.takeBaseline(CID, { supa: mkSupa({ client_baseline: [], client_state_snapshots: [], client_keyword_rankings: [] }, w), saveRaw: saveOk(), now: NOW });
+    const row = w.find((x) => x.t === "client_baseline"), parts = row && JSON.parse(row.body).parts;
+    ok(r.ok && parts && ["site", "grid", "profile"].every((k) => parts[k] && parts[k].status === "unavailable" && parts[k].reason), "(11) a baseline part we had nothing for isn't marked unavailable with a reason");
+    ok(!/"(?:rows|scans|surfaces)"/.test(JSON.stringify(parts)), "(11) an empty baseline part carries a count or an empty list instead of saying it was unavailable");
+    ok(/resolution=ignore-duplicates/.test(blSrc), "(11) a second baseline could overwrite the first"); }
+  { const w = []; const grid = [1, 2, 3].map((s) => ({ grid_session_id: `s${s}`, keyword: "k", map_rank: 3, measured_at: `2026-10-0${s}` })).reverse();
+    await BL.takeBaseline(CID, { supa: mkSupa({ client_baseline: [], client_state_snapshots: (p) => (/surface=eq\.pagespeed/.test(p) ? [{ captured_at: "2026-10-30", payload: { score: 80 } }] : []), client_keyword_rankings: grid }, w), saveRaw: saveOk(), now: NOW });
+    const parts = JSON.parse(w.find((x) => x.t === "client_baseline").body).parts;
+    ok(parts.site.status === "held" && parts.site.surfaces.pagespeed && parts.grid.status === "held" && parts.grid.scans === 2, "(11) the baseline didn't keep the site reading and the two newest map scans");
+    ok(parts.profile.status === "unavailable" && /30 days/.test(parts.profile.reason), "(11) the baseline copies Business Profile content into a table that never expires"); }
+  { const have = await BL.takeBaseline(CID, { supa: async (p, i) => { if (i && i.method) throw new Error("must not write"); return [{ client_id: CID }]; }, saveRaw: saveOk(), now: NOW });
+    ok(have.ok && have.already === true, "(11) a second baseline was taken"); }
+  { let bad = false; try { const r = await BL.takeBaseline(CID, { supa: async () => { throw new Error("Supabase 500: down"); }, saveRaw: saveOk(), now: NOW }); bad = r.ok !== false || !r.error; } catch { bad = true; }
+    ok(!bad, "(11) a database failure threw out of the baseline, or read as success"); }
+  ok(!/fetch\(|searchconsole|serpapi|googleapis|mybusiness/i.test(blSrc.replace(/\/\/.*$/gm, "")), "(11) the baseline calls out to Google or a search provider");
+  { const a = signSrc.indexOf("takeBaseline"), b = signSrc.indexOf("return json(200, { ok: true, signed_at");
+    ok(a > 0 && b > a && /try \{[^]*takeBaseline[^]*\} catch/.test(signSrc.slice(a - 200, b)), "(11) the baseline isn't taken in its own try after the contract is saved"); }
+
+  // wiring + SQL + the job's words
+  ok(/require\("\.\/_ga4-daily"\)/.test(gscFn) && /require\("\.\/_url-inspect-keep"\)/.test(gscFn) && /if \(left < 4000\) \{ more\[k\] = \{ deferred: true/.test(gscFn) && /catch \(e\) \{ more\[k\]/.test(gscFn), "(11) the two reads aren't on the Search Console job each in its own try with a time check");
+  for (const t of ["ga4_pull_state", "client_ga4_daily", "client_url_inspection", "client_baseline"]) {
+    ok(new RegExp(`create table if not exists public\\.${t}\\b`).test(more), `(11) data_keep_more.sql doesn't create ${t}`);
+    ok(more.includes(`'${t}'`) && /enable row level security/.test(more) && /revoke all on public/.test(more), `(11) ${t} isn't closed to the public`); }
+  ok(!/\bdrop\s+(table|column)|\bdelete\s+from|\btruncate\b|rename\s+to/i.test(more.replace(/--.*$/gm, "")), "(11) data_keep_more.sql drops, deletes or renames something");
+  { const j = MAN.byName("gsc-daily-rows");
+    ok(/analytics: Not set up/.test(j.read({ table_ready: true, clients: 1, ga4: { table_ready: false } }).note) && /indexing: deferred/.test(j.read({ table_ready: true, clients: 1, inspection: { deferred: true } }).note)
+      && /analytics failed/.test(j.read({ table_ready: true, clients: 1, ga4: { error: "x" } }).note), "(11) System health doesn't say 'Not set up', 'deferred' or 'failed' for the two new reads"); }
+}
+
 if (F.length) { console.error(`🔴 check-data-keep: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }
 console.log("✅ check-data-keep: raw store, grid, Search Console, benchmarks, change log, frozen reports, purge (off), monthly Google numbers, the drive copies, admin row and SQL all hold");
