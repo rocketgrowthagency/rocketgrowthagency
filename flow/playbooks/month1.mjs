@@ -835,7 +835,7 @@ This saves the decision only. It writes nothing to Google or to the website: the
 The title, headline and button steps then work on the chosen page, and on the homepage when nothing is saved.`,
   },
   {
-    id: "m1.web.homepage_meta", title: "Optimize homepage title + meta",
+    id: "m1.web.homepage_meta", title: "Optimize title + meta on the chosen page",
     type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.gbp.optimize_categories", "m1.access.website"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
