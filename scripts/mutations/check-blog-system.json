@@ -1,0 +1,303 @@
+[
+ [
+  "a generic anchor passes",
+  "bloglinks",
+  "if (GENERIC_ANCHORS.has(a.toLowerCase().replace(/[.!:]+$/, \"\"))) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a nine-word anchor passes",
+  "bloglinks",
+  "const MAX_WORDS = 8;",
+  "const MAX_WORDS = 80;",
+  1
+ ],
+ [
+  "a link a crawler cannot follow passes",
+  "bloglinks",
+  "if (!a.crawlable) { add(2, \"fail\"",
+  "if (false) { add(2, \"fail\"",
+  1
+ ],
+ [
+  "a link to a 404 passes",
+  "bloglinks",
+  "if (state === \"missing\") add(5, \"fail\"",
+  "if (false) add(5, \"fail\"",
+  1
+ ],
+ [
+  "an orphan post passes",
+  "bloglinks",
+  "if (map[slug].readable && n === 0 && !noindexed.has(p)) add(1, \"fail\"",
+  "if (false) add(1, \"fail\"",
+  1
+ ],
+ [
+  "a new post with no service link passes",
+  "bloglinks",
+  "if (newSlugs.has(slug) && services.length === 0) add(6",
+  "if (false) add(6",
+  1
+ ],
+ [
+  "an unreadable page only warns",
+  "bloglinks",
+  "add(0, \"fail\", slug",
+  "add(0, \"warn\", slug",
+  1
+ ],
+ [
+  "a city-list anchor passes",
+  "bloglinks",
+  "(a.match(/,/g) || []).length >= 2",
+  "(a.match(/,/g) || []).length >= 20",
+  1
+ ],
+ [
+  "the sidebar counts as content",
+  "bloglinks",
+  "const b = s.indexOf('<aside class=\"bp-side\"', a);",
+  "const b = -1;",
+  1
+ ],
+ [
+  "a link into a noindexed page passes",
+  "bloglinks",
+  "for (const s of into) add(7, \"fail\"",
+  "for (const s of []) add(7, \"fail\"",
+  1
+ ],
+ [
+  "a missing coverage state reads as not indexed",
+  "blogsys",
+  "(r.verdict === \"NEUTRAL\" || r.verdict === \"FAIL\") && r.coverageState",
+  "(r.verdict === \"NEUTRAL\" || r.verdict === \"FAIL\")",
+  1
+ ],
+ [
+  "an HTTP error reads as not indexed",
+  "blogsys",
+  "if (status < 200 || status >= 300) return { ...base, error",
+  "if (status < 200 || status >= 300) return { ...base, state: \"not_indexed\", error",
+  1
+ ],
+ [
+  "a 429 reads as not indexed",
+  "blogsys",
+  "if (status === 429) return { ...base, error",
+  "if (status === 429) return { ...base, state: \"not_indexed\", error",
+  1
+ ],
+ [
+  "clicks are judged on under 30 clicks",
+  "blogsys",
+  "MIN_BASELINE_CLICKS_84 = 30",
+  "MIN_BASELINE_CLICKS_84 = 0",
+  1
+ ],
+ [
+  "one look is enough for Trending right",
+  "blogsys",
+  "const LOOKS = 4;",
+  "const LOOKS = 1;",
+  1
+ ],
+ [
+  "an unset table reads as data",
+  "blogsys",
+  "if (!rowsReady) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a Google data fault does not hold",
+  "blogsys",
+  "if (heldI.length) imp.verdict = \"Hold\"",
+  "if (false) imp.verdict = \"Hold\"",
+  1
+ ],
+ [
+  "an immediate break is ignored",
+  "blogsys",
+  "if (breaks.length) { imp.break = breaks;",
+  "if (false) { imp.break = breaks;",
+  1
+ ],
+ [
+  "a post with no page rows is proposed for noindex",
+  "blogsys",
+  "if (!out.ready) { out.waiting.push",
+  "if (false) { out.waiting.push",
+  1
+ ],
+ [
+  "a post that earned a click is proposed for noindex",
+  "blogsys",
+  "if (pg.clicks > 0) { out.keep.push",
+  "if (false) { out.keep.push",
+  1
+ ],
+ [
+  "a post under 90 days is judged",
+  "blogsys",
+  "ageDays < MIN_AGE_DAYS",
+  "ageDays < 0",
+  1
+ ],
+ [
+  "a batch holds 50 posts",
+  "blogsys",
+  "BATCH = 12;",
+  "BATCH = 50;",
+  1
+ ],
+ [
+  "a retired claim is not corrected",
+  "blogsys",
+  "if (p.retired && p.retired.length) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "0 clicks is claimed for an uncovered period",
+  "blogsys",
+  "if (!coversWhole) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a run asks about every page",
+  "blogsys",
+  ".slice(0, limit).map((x) => x.u)",
+  ".slice(0, 100000).map((x) => x.u)",
+  1
+ ],
+ [
+  "saying a feature is gone is flagged as selling it",
+  "blogsys",
+  "if (f.ok && f.ok.test(around)) continue;",
+  "",
+  1
+ ],
+ [
+  "no table still asks Google",
+  "blogidx",
+  "if (!hist.ready) return {",
+  "if (false) return {",
+  1
+ ],
+ [
+  "a 429 does not stop the run",
+  "blogidx",
+  "if (status === 429) stop = true;",
+  "",
+  1
+ ],
+ [
+  "a run asks about 500 pages",
+  "blogidx",
+  "const LIMIT = 25,",
+  "const LIMIT = 500,",
+  1
+ ],
+ [
+  "a timeout reads as not indexed",
+  "blogidx",
+  "results.push({ ...sys.readInspection(url, 0, null), error:",
+  "results.push({ ...sys.readInspection(url, 0, null), state: \"not_indexed\", error:",
+  1
+ ],
+ [
+  "a batch can be approved twice",
+  "blogadm",
+  "if ((g.decisions || []).some(",
+  "if (false && (g.decisions || []).some(",
+  1
+ ],
+ [
+  "an approval is marked as applied",
+  "blogadm",
+  "applies: false",
+  "applies: true",
+  1
+ ],
+ [
+  "an unknown batch is accepted",
+  "blogadm",
+  "That batch isn't in today's proposed list. Refresh the card and look again.",
+  "That batch is fine.",
+  1
+ ],
+ [
+  "the missing-table row is not labelled",
+  "blogadm",
+  "tag: \"Not set up\", line: NOT_SET(\"blog_system.sql\") + \" The weekly",
+  "tag: \"Reading\", line: NOT_SET(\"blog_system.sql\") + \" The weekly",
+  1
+ ],
+ [
+  "an evidence block with no source passes",
+  "blogevidence",
+  "if (!sources.length) problems.push",
+  "if (false) problems.push",
+  1
+ ],
+ [
+  "a placeholder passes the evidence block",
+  "blogevidence",
+  "if (e && PLACEHOLDER.test(String(e[k] || \"\")))",
+  "if (false && PLACEHOLDER.test(String(e[k] || \"\")))",
+  1
+ ],
+ [
+  "an invented team passes the evidence block",
+  "blogevidence",
+  "if (e && PEOPLE.test(String(e[k] || \"\")))",
+  "if (false && PEOPLE.test(String(e[k] || \"\")))",
+  1
+ ],
+ [
+  "a dated subject loses its year",
+  "blogcleanup",
+  "const dated = /-in-2026$/.test(slug);",
+  "const dated = false;",
+  1
+ ],
+ [
+  "the year survives a title ending in 'in 2026'",
+  "blogcleanup",
+  ".replace(/\\s+in 2026\\b/g, \"\")",
+  "",
+  1
+ ],
+ [
+  "the memory tables are open to the public",
+  "blogsql",
+  "alter table public.%I enable row level security",
+  "alter table public.%I disable row level security",
+  1
+ ],
+ [
+  "a redirect is added for the blog",
+  "blogtoml",
+  "[functions.\"blog-index-check\"]",
+  "[[redirects]]\n  from = \"/blog/some-post/\"\n  to = \"/blog/\"\n  status = 301\n\n[functions.\"blog-index-check\"]",
+  1
+ ],
+ [
+  "the blog index is noindexed",
+  "blogindexpage",
+  "<meta name=\"robots\" content=\"index,follow\"",
+  "<meta name=\"robots\" content=\"noindex,follow\"",
+  1
+ ],
+ [
+  "the drip is no longer on hold",
+  "blogdrip",
+  "if [ -z \"${RGA_ALLOW_TEMPLATE_DRIP:-}\" ]; then",
+  "if false; then",
+  1
+ ]
+]
