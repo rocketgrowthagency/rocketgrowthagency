@@ -4,7 +4,7 @@
 // 🔴 WHY (rga_data_backup_plan_v1, approved Chris 10-31). Supabase's own list showed 0 backups and point-in-time recovery off, and
 // database backups never cover storage files. The clients' records, photos, videos and contracts lived in exactly one place.
 //
-// IT ONLY READS. Nothing is written to Supabase. One request at a time, with a pause, and it stops if the database is slow: this
+// IT ONLY READS. Nothing is written to Supabase. One request at a time, with a pause; it won't start if the database is slow and waits 10 s after a slow request: this
 // shares the clients' database → feedback_my_test_runs_share_the_clients_database.
 //
 // 🔒 NO KEYS ON THE DRIVE. Clients' Google tokens could act on their accounts, so any field named like a key, and any value shaped like
@@ -36,7 +36,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ── pure: what must never reach the drive ───────────────────────────────────────────────────────
 // the NAME has to END like a key. "metrics_refreshed_at", "token_expires_at", a step called "m1.access.password_manager" and a client's
 // "credentials" (licensed, insured) are data; the first version of this removed them, which is losing client work by another route.
-export const SECRET_NAME = /(?:^|[_.-])(?:access_token|refresh_token|id_token|auth_token|bearer_token|token|client_secret|secret|api_?key|private_?key|password|passwd|access_key)$|(?:accessToken|refreshToken|idToken|authToken|clientSecret|apiKey|privateKey)$/i;
+export const SECRET_NAME = /(?:^|[_.-])(?:access_token|refresh_token|id_token|auth_token|bearer_token|token|token_enc|client_secret|secret|api_?key|private_?key|password|passwd|access_key)$|(?:accessToken|refreshToken|idToken|authToken|clientSecret|apiKey|privateKey)$/i;
 export const SECRET_VALUE = /^(ya29\.|1\/\/0|sk_live_|sk_test_|rk_live_|sb_secret_|whsec_|ghp_|github_pat_|eyJ[A-Za-z0-9_-]{20,}\.)/;
 export function scrub(v, counts = { names: {}, values: 0 }) {
   if (Array.isArray(v)) return v.map((x) => scrub(x, counts));
@@ -100,7 +100,8 @@ async function copyTable(table, defs, dest) {
   // read it back: a file that exists is not a backup
   const back = JSON.parse(fs.readFileSync(file, "utf8"));
   if (back.length !== n) throw new Error(`${table}: wrote ${n}, read back ${back.length}`);
-  if (Number.isFinite(count) && n < count) throw new Error(`${table}: ${count} rows, copied ${n}`);
+  if (!Number.isFinite(count)) throw new Error(`${table}: the row count couldn't be read, so the copy can't be checked`);   // audit 10-31: NaN skipped this check silently
+  if (n < count) throw new Error(`${table}: ${count} rows, copied ${n}`);
   return { table, rows: n, removed: Object.values(counts.names).reduce((a, b) => a + b, 0) + counts.values, removedFields: Object.keys(counts.names) };
 }
 async function listAll(bucket, prefix = "") {

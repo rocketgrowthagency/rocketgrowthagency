@@ -176,6 +176,15 @@ if (/data-p10-kind="\$\{g\.items[^\n]*\n[^\n]*"main"/.test(P10J) || /<\/em><\/bu
   if (!/photos\.source === "sent_to_us" \? "sent to us" : "on Google"/.test(AD)) fail("admin's header says \"on Google\" for a count of what was sent to us");
   // 🔴 a retake: the slot shows what's up, never the turned-down photo beside it
   if (!/const slotRank = \(p\) => \(isUp\(p\) \? 2 : p\.publish_state === "turned_down" \? 0 : 1\);/.test(AD) || /const byShot = new Map\(photos\.filter/.test(AD)) fail("admin's tile can show the turned-down photo with the retake already up");
+  // 🔴 audit 10-31 mediums: RGA's move isn't only a review; Skip stays; a notice is stamped only when delivered; a street-address logo gets its Sent line; a zero that's no reading
+  if (!/parts && parts\.rgaN \? "Your move"/.test(AD) || !/rgaWork = parts && parts\.rgaN/.test(AD)) fail("step 38 says Client's move with a failed send or photos to sort");
+  if (!/reviewN: review\.length, rgaN: review\.length \+ broken\.length \+ photoToSortCount\(\)/.test(AD)) fail("step 38's move doesn't count failed sends and photos to sort");
+  if (!/\.pr-wrap \[data-photo-zoom\]/.test(AD)) fail("View larger does nothing on the older review view");
+  if (!/isUp\(p\) && p\.pushed_at && googleState\(p\) !== "hide"/.test(AD)) fail("a sent logo gets no Sent line for a client with a street address");
+  if (!/!Number\.isFinite\(counted\) \? "Not checked yet"/.test(AD)) fail("no reading yet prints 0 on Google");
+  if (!/row\.tasks\?\.\[stepId\]\?\.status !== "skipped"/.test(RC)) fail("the nightly undoes Skip");
+  if (!/const told_ok = await tellRga\(/.test(RC) || !/if \(told_ok\) \{\s*const at = /.test(RC)) fail("a missing photo notice is stamped before it's delivered");
+  if (!/if \(jr\.delivered === false\) \{[\s\S]{0,160}return false;/.test(RC)) fail("an undelivered notice counts as told");
   // 🔴 deletes: run the real function on a fake Google
   const { deleteGoogleMedia } = require("./_photo-retire.js");
   const PFX = "accounts/1/locations/2/media/";

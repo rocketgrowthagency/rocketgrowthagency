@@ -1,0 +1,7 @@
+[
+ ["it can edit","weeklyaudit","--allowedTools \"Read\"","--allowedTools \"Edit\" \"Read\"",1],
+ ["it can run any shell command","weeklyaudit","\"Bash(git log:*)\"","\"Bash\"",1],
+ ["write isn't refused","weeklyaudit","--disallowedTools \"Edit\" \"Write\"","--disallowedTools \"Edit\"",1],
+ ["permissions loosened","weeklyaudit","--max-turns 120","--max-turns 120 --permission-mode bypassPermissions",1],
+ ["the prompt stops saying no secrets","weeklyauditprompt","Never print a secret value","Print what you find",1]
+]

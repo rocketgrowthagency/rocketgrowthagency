@@ -366,6 +366,7 @@ const NOT_PREFLIGHT = {
   'check-client-card-system-batch3.mjs': 'the WEBSITE repo\'s client card system, batch 3 = the Ongoing work tab (client_step16–20_v1 · client_ongoing_*_v1, approved 10-29); files only (vm-runs the real cards; Chrome only for the tile grid + the 400px width); wired in daily-health-check beside batch 2',
   'check-step-7-hours-editor-v2.mjs': 'the WEBSITE repo\'s client step 7 hours editor V2 (client_step07_hours_editor_v2, approved 10-30); files only — runs in daily-health-check.sh beside the card-system batches, not the video pre-flight',
   'check-the-contract-promises-only-what-the-code-does.mjs': 'the WEBSITE repo\'s agreement + public pricing (approved 10-31); files only, runs in daily-health-check.sh',
+  'check-the-weekly-audit-is-read-only.mjs': 'the weekly audit job stays read-only (Chris 10-31); files only, runs in daily-health-check.sh',
   'check-the-daily-check-is-alive.mjs': 'watches the morning job itself, so it cannot run only from inside that job: nightly-full-check.sh runs it every night; files only, not the video pre-flight',
   'check-the-monthly-report-opens-the-call.mjs': 'a client monthly-report rule, runs on a fake database: nightly-full-check.sh runs it every night; not the video pre-flight',
   'check-step-36-booking-every-scenario.mjs': 'the WEBSITE repo\'s admin step 36 + the booking-link veto + the Remind popup (step36_booking_rga_does_it_v1, approved 10-29); run by daily-health-check.sh + its mutation suite',

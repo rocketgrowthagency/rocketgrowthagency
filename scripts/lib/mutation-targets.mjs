@@ -149,6 +149,8 @@ export const FILES = {
   overnightlocal: "scraper:scripts/overnight-local.sh",
   dailyhealth: "scraper:scripts/daily-health-check.sh",
   nightlyfull: "scraper:scripts/nightly-full-check.sh",
+  weeklyaudit: "scraper:scripts/weekly-audit.sh",
+  weeklyauditprompt: "scraper:scripts/weekly-audit-prompt.md",
   reviewrunner: "scraper:scripts/refresh-review-metrics.mjs",
   braindispatch: "netlify/functions/brain-weekly-dispatch.js",
   flowcrondaily: "netlify/functions/flow-cron-daily.js",
