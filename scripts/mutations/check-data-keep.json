@@ -266,8 +266,8 @@
  [
   "a delete happens without its ledger line",
   "gbppurge",
-  "await supa(`/gbp_purge_ledger`, { method: \"POST\"",
-  "await Promise.resolve({ method: \"POST\""
+  "await supa(`/gbp_purge_ledger`, { method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n            table_name: t.table",
+  "await Promise.resolve({ method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n            table_name: t.table"
  ],
  [
   "the batch cap goes",
@@ -394,5 +394,257 @@
   "jobmanifest",
   "error: b.table_ready === false ? \"Not set up: supabase/data_keep.sql hasn't been run, so nothing is being pulled\" :",
   "error: b.table_ready === false ? null :"
+ ],
+ [
+  "a cleared month is read as expired a month too soon (a recent month is nulled)",
+  "gbpkeep",
+  "return next.getTime() <= cutoff.getTime();",
+  "return next.getTime() <= cutoff.getTime() + 40 * 86400000;"
+ ],
+ [
+  "the purge's newest expired month reaches a recent month",
+  "gbpkeep",
+  "const prev = new Date(Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() - 1, 1));",
+  "const prev = new Date(Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth(), 1));"
+ ],
+ [
+  "a month that ended exactly 30 days ago is cleared",
+  "gbpkeep",
+  "(RETENTION_DAYS + 1) * 86400000);   // the month must have ended",
+  "RETENTION_DAYS * 86400000);   // the month must have ended"
+ ],
+ [
+  "total_calls joins the cleared list",
+  "gbpkeep",
+  "\"review_count\", \"new_reviews\", \"average_rating\",\n];",
+  "\"review_count\", \"new_reviews\", \"average_rating\", \"total_calls\",\n];"
+ ],
+ [
+  "an unreadable month counts as expired",
+  "gbpkeep",
+  "if (!next) return false;\n  const cutoff",
+  "if (!next) return true;\n  const cutoff"
+ ],
+ [
+  "the monthly step deletes the row instead of clearing it",
+  "gbppurge",
+  "{ method: \"PATCH\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify(patch) }",
+  "{ method: \"DELETE\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify(patch) }"
+ ],
+ [
+  "the monthly step clears while switched off",
+  "gbppurge",
+  "if (out.enabled && m.rows_would_change > 0) {",
+  "if (m.rows_would_change > 0) {"
+ ],
+ [
+  "the monthly step clears with no ledger columns",
+  "gbppurge",
+  "if (!m.ledger_ready) { m.error",
+  "if (false) { m.error"
+ ],
+ [
+  "the monthly clear loses its month guard",
+  "gbppurge",
+  "&reporting_month=lte.${encodeURIComponent(month)}`, { method: \"PATCH\"",
+  "`, { method: \"PATCH\""
+ ],
+ [
+  "the monthly clear also nulls total_calls",
+  "gbppurge",
+  "const nulls = Object.fromEntries(keep.GOOGLE_FIELDS.map((f) => [f, null]));",
+  "const nulls = { total_calls: null, ...Object.fromEntries(keep.GOOGLE_FIELDS.map((f) => [f, null])) };"
+ ],
+ [
+  "the monthly clear isn't bounded",
+  "gbppurge",
+  "for (let b = 0; b < MAX_BATCHES; b++) {\n        const rows = await supa(`${base}",
+  "for (let b = 0; b < 1e9; b++) {\n        const rows = await supa(`${base}"
+ ],
+ [
+  "the monthly clear is written before its ledger line is",
+  "gbppurge",
+  "body: JSON.stringify({\n          table_name: MONTHLY.table, tag: MONTHLY.id, action: \"clear\", rows_deleted: 0,",
+  "body: JSON.stringify({\n          table_name: MONTHLY.table, tag: MONTHLY.id, action: \"clear\", rows_deleted: 7,"
+ ],
+ [
+  "the monthly ledger holds the content",
+  "gbppurge",
+  "cutoff: out.cutoff, ids_sha256",
+  "data: rows, cutoff: out.cutoff, ids_sha256"
+ ],
+ [
+  "the metrics job writes Google numbers into an expired month",
+  "metricsjs",
+  "if (gbp && !googleExpired) {",
+  "if (gbp) {"
+ ],
+ [
+  "the metrics job keeps the raw Google pull in an expired month",
+  "metricsjs",
+  "if (!googleExpired) data.gbp =",
+  "data.gbp ="
+ ],
+ [
+  "the admin save writes an old month's Google numbers back",
+  "admin",
+  "const kpis = clearExpiredGoogle(deriveMonthlyKpiColumns(record.data || {}), `${monthValue}-01`);",
+  "const kpis = deriveMonthlyKpiColumns(record.data || {});"
+ ],
+ [
+  "the admin copy of the 30-day rule drifts",
+  "admin",
+  "return next <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 31 * 86400000;",
+  "return next <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 20 * 86400000;"
+ ],
+ [
+  "the portal copy of the 30-day rule drifts",
+  "portal",
+  "return Date.UTC(Number(m[1]), Number(m[2]), 1) <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 31 * 86400000;\n}\nfunction caDeltaHtml",
+  "return Date.UTC(Number(m[1]), Number(m[2]), 1) <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 5 * 86400000;\n}\nfunction caDeltaHtml"
+ ],
+ [
+  "a cleared review count shows as 0 on the client's review card",
+  "portal",
+  "const count = (cur.review_count == null) ? null : Number(cur.review_count);",
+  "const count = (cur.review_count == null) ? 0 : Number(cur.review_count);"
+ ],
+ [
+  "a cleared new-review count shows as 0",
+  "portal",
+  "const newR = (cur.new_reviews == null) ? null : Number(cur.new_reviews);",
+  "const newR = (cur.new_reviews == null) ? 0 : Number(cur.new_reviews);"
+ ],
+ [
+  "the report shows a cleared Google number as 0",
+  "reportjs",
+  "  if (v === null || v === undefined || v === \"\") return null;\n  const n = Number(v);",
+  "  const n = Number(v);"
+ ],
+ [
+  "the report compares with a month whose Google numbers were cleared",
+  "reportjs",
+  "if (p == null && google && google.keptPrior) return",
+  "if (false) return"
+ ],
+ [
+  "the report tells a client with cleared reviews to get first reviews",
+  "reportjs",
+  "(num(current.review_count) == null && !gbpMonthExpired(current.reporting_month))",
+  "(num(current.review_count) == null)"
+ ],
+ [
+  "the monthly email shows a cleared Google number",
+  "monthlyreport",
+  "const present = METRICS.filter((m) => current[m.key] != null && current[m.key] !== \"\");",
+  "const present = METRICS;"
+ ],
+ [
+  "the Month 1 report shows a cleared Google figure as 0",
+  "month1report",
+  "    const x = num(B[col]), y = num(N[col]);\n    if (x === null || y === null) continue;",
+  "    const x = num(B[col]) ?? 0, y = num(N[col]) ?? 0;\n    if (x === null || y === null) continue;"
+ ],
+ [
+  "the Month 1 report doesn't say why a Google figure can't be compared",
+  "month1report",
+  "if (googleCleared) cmpLines.push(",
+  "if (false) cmpLines.push("
+ ],
+ [
+  "the KPI alert reads a cleared number as a drop",
+  "maturefn",
+  "if (a === null || b === null || !t) return null;",
+  "if (!t) return null;"
+ ],
+ [
+  "the admin Data row stops reading the monthly counts",
+  "datakeepfn",
+  "${plural(mo.fields_would_clear, \"Google number\")} across ${plural(mo.rows_would_change, \"month\")}",
+  "12 Google numbers across 3 months"
+ ],
+ [
+  "an unreadable monthly count reads as nothing to clear",
+  "datakeepfn",
+  "const monthly = mo && !mo.error ? (mo.rows_would_change",
+  "const monthly = mo ? (mo.rows_would_change"
+ ],
+ [
+  "the SQL file doesn't add the monthly ledger columns",
+  "datakeepsql",
+  "add column if not exists rows_cleared  integer not null default 0;",
+  "-- removed"
+ ],
+ [
+  "the drive strip runs while switched off",
+  "backupdata",
+  "        if (out.enabled) {\n          // ledger first",
+  "        if (true) {\n          // ledger first"
+ ],
+ [
+  "the nightly backup strips whatever the switch says",
+  "backupdata",
+  "enabled: gbpStripEnabled() });",
+  "enabled: true });"
+ ],
+ [
+  "the drive switch turns on for something other than exactly 1",
+  "backupdata",
+  "env.GBP_PURGE_ENABLED === \"1\";",
+  "env.GBP_PURGE_ENABLED !== \"0\";"
+ ],
+ [
+  "the report flag can strip",
+  "backupdata",
+  "{ dir: DIR, today: TODAY, enabled: false }), null, 1)",
+  "{ dir: DIR, today: TODAY, enabled: gbpStripEnabled() }), null, 1)"
+ ],
+ [
+  "the strip touches a table that is not on the list",
+  "backupdata",
+  "!Object.prototype.hasOwnProperty.call(GBP_STRIP, table)",
+  "false"
+ ],
+ [
+  "another table joins the drive strip list",
+  "backupdata",
+  "  client_gbp_snapshots: { kind: \"rows\", match: () => true },",
+  "  client_gbp_snapshots: { kind: \"rows\", match: () => true },\n  clients: { kind: \"rows\", match: () => true },"
+ ],
+ [
+  "the strip takes every state snapshot, not just Business Profile ones",
+  "backupdata",
+  "client_state_snapshots: { kind: \"rows\", match: (r) => (r.surface",
+  "client_state_snapshots: { kind: \"rows\", match: (r) => true || (r.surface"
+ ],
+ [
+  "the strip is written without a ledger line",
+  "backupdata",
+  "fs.appendFileSync(path.join(dir, \"gbp-strip-ledger.jsonl\"), ",
+  "void ("
+ ],
+ [
+  "the strip also takes copies under 30 days old",
+  "backupdata",
+  "return names.filter((n) => DATED.test(n) && n < cut).sort();",
+  "return names.filter((n) => DATED.test(n)).sort();"
+ ],
+ [
+  "the strip's monthly rows are dropped instead of cleared",
+  "backupdata",
+  "  if (t.kind === \"rows\") { const kept",
+  "  if (t.kind === \"rows\" || table === \"client_monthly_records\") { const kept"
+ ],
+ [
+  "the strip can leave the dated copies",
+  "backupdata",
+  "const p = path.join(dir, folder, \"db\", `${table}.json`);",
+  "const p = path.join(dir, folder, \"files\", `${table}.json`);"
+ ],
+ [
+  "a monthly clear happens without its ledger line",
+  "gbppurge",
+  "await supa(`/gbp_purge_ledger`, { method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n          table_name: MONTHLY.table",
+  "await Promise.resolve({ method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n          table_name: MONTHLY.table"
  ]
 ]

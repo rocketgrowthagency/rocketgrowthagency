@@ -15,10 +15,22 @@
 //   <dir>/files/<bucket>/<path>        add-only; a file that changed is kept beside the old one
 //
 // Keeps 30 nightly folders and each month's first good night forever, and prunes only after a run that fully succeeded.
+//
+// 🔴 THE 30-DAY RULE FOR BUSINESS PROFILE CONTENT (approved pending_and_google_security_v1, Part 2). Google's Business Profile API policy lets
+// us store its content for no more than 30 calendar days, and a dated copy older than that, including each month's copy kept forever, would
+// outlive it. So a copy more than 30 days old has the rows on the purge list taken out of three files, and nothing else:
+//   client_state_snapshots.json   only the rows the website purge deletes (reviews read from Google; the Business Information snapshots)
+//   client_gbp_snapshots.json     every row (the whole table is Business Profile snapshots)
+//   client_monthly_records.json   the row STAYS; only its Google fields and the raw pull (data.gbp) are set to null
+// 🔴 OFF unless GBP_PURGE_ENABLED is exactly "1" (the same switch as the website purge). Off, it only reads and REPORTS what it would strip.
+// 🔴 It touches nothing else on the drive: not another table, not files/ (chats, memory, repos and client files stay add-only), not a copy
+// under 30 days old. Each strip is written to gbp-strip-ledger.jsonl (counts and a file hash, never content) BEFORE the file changes; no
+// ledger line = no strip. The list below is held to the website's _gbp-purge.js by scripts/check-data-keep.mjs.
 // Exit 0 copied · 1 something failed (recorded, and the Mac is told) · 2 didn't start: database slow or LaCie missing
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -51,6 +63,84 @@ export function scrub(v, counts = { names: {}, values: 0 }) {
   if (typeof v === "string" && SECRET_VALUE.test(v)) { counts.values++; return "[removed]"; }
   return v;
 }
+// ── the 30-day rule for Business Profile content ─────────────────────────────────────────────────
+export const GBP_STRIP_DAYS = 30;
+export const gbpStripEnabled = (env = process.env) => env.GBP_PURGE_ENABLED === "1";
+export const GOOGLE_MONTHLY_FIELDS = ["gbp_calls", "gbp_website_clicks", "gbp_actions", "gbp_impressions", "gbp_directions", "gbp_searches_direct", "gbp_searches_discovery", "review_count", "new_reviews", "average_rating"];
+export const GBP_STRIP = {
+  client_state_snapshots: { kind: "rows", match: (r) => (r.surface === "reviews" && !!r.payload && r.payload.source === "google_profile") || (r.surface === "gbp" && r.source === "deep-assess-client") },
+  client_gbp_snapshots: { kind: "rows", match: () => true },
+  client_monthly_records: { kind: "fields", fields: GOOGLE_MONTHLY_FIELDS, blob: "gbp" },
+};
+const DATED = /^\d{4}-\d{2}-\d{2}$/;
+/** the dated folders old enough to strip: strictly more than 30 days before `today`. Anything not a date is never listed. */
+export function foldersToStrip(names, today, days = GBP_STRIP_DAYS) {
+  const cut = new Date(Date.parse(`${today}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10);
+  return names.filter((n) => DATED.test(n) && n < cut).sort();
+}
+/** pure: what one table's rows look like once stripped, and what was taken out. A table not on the list comes back untouched. */
+export function stripRows(table, rows) {
+  const t = GBP_STRIP[table];
+  if (!t || !Array.isArray(rows)) return { rows, removedRows: 0, clearedFields: 0 };
+  if (t.kind === "rows") { const kept = rows.filter((r) => !t.match(r)); return { rows: kept, removedRows: rows.length - kept.length, clearedFields: 0 }; }
+  let cleared = 0;
+  const out = rows.map((r) => {
+    if (!r || typeof r !== "object") return r;
+    let c = { ...r }, hit = false;
+    for (const f of t.fields) if (c[f] != null) { c[f] = null; cleared++; hit = true; }
+    if (c.data && typeof c.data === "object" && c.data[t.blob] != null) { c.data = { ...c.data }; delete c.data[t.blob]; cleared++; hit = true; }
+    return hit ? c : r;
+  });
+  return { rows: out, removedRows: 0, clearedFields: cleared };
+}
+/** the only path this code may rewrite: <dir>/YYYY-MM-DD/db/<a listed table>.json, and nothing under files/. */
+export function stripPath(dir, folder, table) {
+  if (!DATED.test(folder) || !Object.prototype.hasOwnProperty.call(GBP_STRIP, table)) throw new Error(`refused: ${folder}/${table} is not a Business Profile copy on the list`);
+  const p = path.join(dir, folder, "db", `${table}.json`);
+  if (path.relative(path.resolve(dir), p).split(path.sep).length !== 3) throw new Error("refused: path leaves the backup folder");
+  return p;
+}
+const MAX_STRIP_FOLDERS = 24;   // bounded per run
+/**
+ * Reads every old copy; when `enabled` it also strips. Returns what was (or would be) stripped. Never throws for one bad file: it is reported.
+ * `enabled` is false for the report-only flag and whenever GBP_PURGE_ENABLED is not exactly "1".
+ */
+export function stripOldCopies({ dir, today, enabled, now = new Date() }) {
+  const out = { enabled: enabled === true, today, folders: [], rows_removed: 0, fields_cleared: 0, failed: [], at: now.toISOString() };
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch (e) { out.failed.push(`drive folder unreadable: ${e.message}`); return out; }
+  for (const folder of foldersToStrip(names, today).slice(0, MAX_STRIP_FOLDERS)) {
+    const f = { folder, tables: [] };
+    for (const table of Object.keys(GBP_STRIP)) {
+      try {
+        const file = stripPath(dir, folder, table);
+        if (!fs.existsSync(file)) continue;
+        const raw = fs.readFileSync(file, "utf8");
+        const rows = JSON.parse(raw);
+        const r = stripRows(table, rows);
+        if (!r.removedRows && !r.clearedFields) continue;
+        const entry = { table, rows_removed: r.removedRows, fields_cleared: r.clearedFields, rows_before: rows.length, rows_after: r.rows.length };
+        if (out.enabled) {
+          // ledger first: counts and a hash of the file as it was, never the content. No ledger line, no strip.
+          fs.appendFileSync(path.join(dir, "gbp-strip-ledger.jsonl"), `${JSON.stringify({ at: out.at, folder, table, ...entry, sha256_before: crypto.createHash("sha256").update(raw).digest("hex") })}\n`, { mode: 0o600 });
+          const tmp = `${file}.tmp`;
+          fs.writeFileSync(tmp, `[${r.rows.map((x) => `\n${JSON.stringify(x)}`).join(",")}\n]\n`, { mode: 0o600 });
+          if (JSON.parse(fs.readFileSync(tmp, "utf8")).length !== r.rows.length) { fs.rmSync(tmp, { force: true }); throw new Error(`${folder}/${table}: the stripped copy doesn't read back whole, so the original was kept`); }
+          fs.renameSync(tmp, file);
+          try {   // say so in that night's own manifest; the ledger already holds it if this fails
+            const mf = path.join(dir, folder, "manifest.json"), m = JSON.parse(fs.readFileSync(mf, "utf8"));
+            m.gbp_stripped = [...(m.gbp_stripped || []), { at: out.at, table, rows_removed: r.removedRows, fields_cleared: r.clearedFields }];
+            fs.writeFileSync(`${mf}.tmp`, `${JSON.stringify(m, null, 1)}\n`, { mode: 0o600 }); fs.renameSync(`${mf}.tmp`, mf);
+          } catch { /* the ledger is the record */ }
+        }
+        f.tables.push(entry); out.rows_removed += r.removedRows; out.fields_cleared += r.clearedFields;
+      } catch (e) { out.failed.push(`${folder}/${table}: ${String(e.message).slice(0, 120)}`); }
+    }
+    if (f.tables.length) out.folders.push(f);
+  }
+  return out;
+}
+
 // ── pure: which dated folders stay ─────────────────────────────────────────────────────────────
 // 🔴 audit 10-31: the month's copy was the folder named -01, so an unplugged drive or an offline Mac on the 1st lost that month for good. It's the month's first GOOD
 // night now: `good(name)` says a folder's own record shows no problems, and a month with no good night keeps its first folder rather than nothing.
@@ -211,6 +301,15 @@ async function main() {
   const keep = keepFolders(fs.readdirSync(DIR), 30, folderIsGood);
   for (const n of fs.readdirSync(DIR)) if (/^\d{4}-\d{2}-\d{2}$/.test(n) && !keep.has(n)) fs.rmSync(path.join(DIR, n), { recursive: true, force: true });
   console.log(`✅ ${tableResults.length} tables · ${rows} rows · ${files} files copied to ${DIR}`);
+  // the 30-day rule for Business Profile content in the OLD copies: off unless GBP_PURGE_ENABLED=1, and then it only reports. Never fails the backup.
+  try {
+    const g = stripOldCopies({ dir: DIR, today: TODAY, enabled: gbpStripEnabled() });
+    fs.writeFileSync(path.join(path.dirname(STATUS), "backup-data-gbp-strip.json"), `${JSON.stringify({ ...g, folders: g.folders })}\n`, { mode: 0o600 });
+    console.log(`  Business Profile rows in copies over ${GBP_STRIP_DAYS} days: ${g.enabled ? "stripped" : "would strip (switch is OFF)"} ${g.rows_removed} row(s) and ${g.fields_cleared} field(s) across ${g.folders.length} copy(ies)${g.failed.length ? ` · ${g.failed.length} problem(s)` : ""}`);
+  } catch (e) { console.error(`⚠️  the Business Profile 30-day check could not run: ${e.message}`); }
 }
 // 🔴 audit 10-31: a throw (offline morning) left yesterday's ok:true, no alert, and the 36-hour gate green. A crash is a failure, recorded.
-if (fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) await main().catch((e) => { const m = `the copy crashed: ${String(e?.message || e).slice(0, 200)}`; console.error(`🔴 ${m}`); try { record({ ok: false, problem: m }); } catch { /* the status file is what failed */ } tellChris(m); process.exit(1); });   // realpath: /tmp on a Mac is a link, and a mismatch here silently runs nothing
+if (fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv.includes("--gbp-strip-report")) {
+  // READ ONLY, always (even if GBP_PURGE_ENABLED=1): prints what the 30-day strip would take out of the old copies on the drive.
+  console.log(JSON.stringify(stripOldCopies({ dir: DIR, today: TODAY, enabled: false }), null, 1));
+} else if (fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) await main().catch((e) => { const m = `the copy crashed: ${String(e?.message || e).slice(0, 200)}`; console.error(`🔴 ${m}`); try { record({ ok: false, problem: m }); } catch { /* the status file is what failed */ } tellChris(m); process.exit(1); });   // realpath: /tmp on a Mac is a link, and a mismatch here silently runs nothing

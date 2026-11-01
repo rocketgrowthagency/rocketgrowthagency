@@ -15,6 +15,10 @@
 //      no ledger = no delete, bounded; only the listed API tables; monthly totals and RGA's own sources are not on the list.
 //  (8) admin row: every line is a reading; not-set-up and unreadable never read as OK; the card has no figures typed in; the purge is only asked
 //      what it would delete; the card sits under System health and the ?v= is bumped.
+// (10) Google numbers in the monthly records + the drive (approved pending_and_google_security_v1, Part 2): a month is expired only when it ended MORE
+//      than 30 days ago; the purge only CLEARS the Google fields (never a row, never total_calls), ledger first, bounded, off unless switched on, a
+//      recent month is never touched; no reader turns a cleared number into 0 or a false change; the nightly drive copy strips only the listed
+//      tables from copies over 30 days old, only when switched on, ledger first, and never touches files/ or anything else.
 //  (9) the SQL file adds every table/column, closes them to the public, makes the bucket private, and drops nothing; both jobs are on the list.
 // Exit 0 = holds · 1 = broken · 2 = moved (indeterminate). → memory project_everything_queued A3
 import fs from "node:fs";
@@ -205,7 +209,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
       if (p.startsWith("/gbp_purge_ledger")) { if (!w.ledgerThere) throw new Error("Supabase 404: PGRST205"); if (o.ledgerWriteFails && method === "POST") throw new Error("Supabase 500"); return method === "GET" ? [] : null; }
       if (method === "DELETE") { w.deleted = (w.deleted || 0) + p.split("in.(")[1].split(",").length; return null; }
       return Array.from({ length: Math.min(200, o.endless ? 200 : Math.max(0, w.rows - (w.deleted || 0))) }, (_, i) => ({ id: `id${(w.deleted || 0) + i}`, captured_at: "2026-08-01T00:00:00Z", snapshot_date: "2026-08-01" })); };
-    w.countFn = async () => w.rows; return w; };
+    w.countFn = async (p) => (/client_monthly_records/.test(p) ? 0 : w.rows); return w; };   // the monthly records have their own check, section (10)
   const now = new Date("2026-10-31T12:00:00Z");
   ok(P.enabledIn({ GBP_PURGE_ENABLED: "1" }) === true && [undefined, "", "0", "true", "yes", " 1", "11"].every((v) => P.enabledIn({ GBP_PURGE_ENABLED: v }) === false), "(7) the purge switches on for something other than exactly 1");
   { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now, enabled: false });
@@ -279,5 +283,169 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   ok(/OFF/.test(p.note) && p.count === 21, "(9) System health doesn't say the purge is off");
 }
 
+// ── (10) Google numbers in the monthly records, and the old copies on the drive ──────────────────────────────────────
+{
+  const K = load("_gbp-keep.js"), P = load("_gbp-purge.js");
+  const at = (d, t = "12:00:00") => new Date(`${d}T${t}Z`);
+  // the rule: a month is expired only when it ended MORE than 30 days ago
+  ok(K.RETENTION_DAYS === 30, "(10) the retention isn't 30 days");
+  ok(!K.monthIsExpired("2026-10-01", at("2026-11-05")) && !K.monthIsExpired("2026-11-01", at("2026-11-05")) && !K.monthIsExpired("2027-01-01", at("2026-11-05")), "(10) the current, a recent or a future month counts as expired");
+  ok(!K.monthIsExpired("2026-09-01", at("2026-10-31")) && !K.monthIsExpired("2026-09-01", at("2026-10-31", "23:59:00")), "(10) a month that ended exactly 30 days ago is already expired");
+  ok(K.monthIsExpired("2026-09-01", at("2026-11-01", "00:00:00")) && K.monthIsExpired("2026-08-01", at("2026-10-31")) && K.monthIsExpired("2025-01-01", at("2026-10-31")), "(10) a month that ended over 30 days ago isn't expired");
+  ok(["", null, undefined, "abc", "2026-13", "x-01"].every((v) => K.monthIsExpired(v, at("2026-11-05")) === false), "(10) an unreadable month is treated as expired (it must be kept)");
+  ok(K.latestExpiredMonth(at("2026-11-05")) === "2026-09-01" && K.latestExpiredMonth(at("2026-10-31")) === "2026-08-01" && K.latestExpiredMonth(at("2026-11-01")) === "2026-09-01", "(10) the newest expired month is wrong");
+  { const e = (d) => K.monthIsExpired(`${K.latestExpiredMonth(at(d))}`, at(d)), ne = (d) => { const l = K.latestExpiredMonth(at(d)); const [y, m] = l.split("-").map(Number); const n = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7) + "-01"; return !K.monthIsExpired(n, at(d)); };
+    ok(["2026-11-05", "2026-12-31", "2027-03-01", "2026-10-31"].every((d) => e(d) && ne(d)), "(10) the purge's cut-off month and the readers' rule disagree"); }
+  ok(JSON.stringify(K.GOOGLE_FIELDS) === JSON.stringify(["gbp_calls", "gbp_website_clicks", "gbp_actions", "gbp_impressions", "gbp_directions", "gbp_searches_direct", "gbp_searches_discovery", "review_count", "new_reviews", "average_rating"]), "(10) the list of Google fields changed (total_calls is forms + tracked calls and must never be on it)");
+  { const r = K.withoutExpiredGoogle({ reporting_month: "2026-08-01", gbp_calls: 5, total_calls: 7, form_leads: 2, data: { gbp: { a: 1 }, k: 1 } }, at("2026-11-05"));
+    ok(r.gbp_calls === null && r.total_calls === 7 && r.form_leads === 2 && r.data.k === 1 && !("gbp" in r.data), "(10) clearing a month changed something other than the Google fields");
+    const keepIt = K.withoutExpiredGoogle({ reporting_month: "2026-10-01", gbp_calls: 5 }, at("2026-11-05")); ok(keepIt.gbp_calls === 5, "(10) a month inside the 30 days lost its numbers"); }
+
+  // the purge, on a fake database
+  const NOW = at("2026-11-05");
+  const fresh = () => [
+    { id: "aug", reporting_month: "2026-08-01", gbp_calls: 5, gbp_impressions: 90, review_count: 12, new_reviews: 0, average_rating: 4.5, total_calls: 7, form_leads: 3, data: { gbp: { calls: 5 }, k: 1 } },
+    { id: "sep", reporting_month: "2026-09-01", gbp_calls: 3, gbp_website_clicks: 4, total_calls: 2, data: { k: 2 } },
+    { id: "oct", reporting_month: "2026-10-01", gbp_calls: 9, review_count: 14, total_calls: 5, data: { gbp: { calls: 9 } } },
+    { id: "jul", reporting_month: "2026-07-01", gbp_calls: null, total_calls: 1, data: {} },
+  ];
+  const world = (o = {}) => {
+    const w = { rows: fresh(), calls: [], ledger: [], patches: [], deletes: 0 };
+    const through = (p) => (/reporting_month=lte\.([\d-]+)/.exec(p) || [])[1] || "9999-99-99";
+    const any = (r) => K.GOOGLE_FIELDS.some((f) => r[f] != null) || (r.data && r.data.gbp != null);
+    const sel = (p) => w.rows.filter((r) => r.reporting_month <= through(p) && any(r));
+    w.supa = async (p, init = {}) => { const method = init.method || "GET"; w.calls.push(`${method} ${p.split("?")[0]}`); if (w.calls.length > 800) throw new Error("runaway");
+      if (p.startsWith("/gbp_purge_ledger")) { if (method === "GET") { if (o.noLedgerColumns) throw new Error("Supabase 400: column gbp_purge_ledger.action does not exist"); return []; }
+        if (o.ledgerWriteFails) throw new Error("Supabase 500"); w.ledger.push(JSON.parse(init.body)); return null; }
+      if (method === "DELETE") { w.deletes++; return null; }
+      if (method === "PATCH") { const id = /id=eq\.([^&]+)/.exec(p)[1]; const r = w.rows.find((x) => x.id === id); if (r && r.reporting_month <= through(p)) { w.patches.push({ id, body: JSON.parse(init.body), path: p }); Object.assign(r, JSON.parse(init.body)); } return null; }
+      return o.endless ? Array.from({ length: 50 }, (_, i) => ({ id: `e${i}`, reporting_month: "2026-08-01", gbp_calls: 1, data: {} })) : sel(p).slice(0, 50).map((r) => JSON.parse(JSON.stringify(r))); };
+    w.countFn = async (p) => { if (!/client_monthly_records/.test(p)) return 0; const rows = sel(p); const f = /&([a-z_]+)=not\.is\.null/.exec(p); if (f) return rows.filter((r) => r[f[1]] != null).length; if (/data->>gbp=not\.is\.null/.test(p)) return rows.filter((r) => r.data && r.data.gbp != null).length; return rows.length; };
+    return w; };
+  { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: false });
+    ok(!w.calls.some((c) => /^(POST|PATCH|DELETE)/.test(c)), "(10) switched OFF, the monthly step still wrote, cleared or deleted");
+    ok(r.monthly && r.monthly.rows_would_change === 2 && r.monthly.fields_would_clear === 8 && r.monthly.rows_cleared === 0, `(10) switched off, the monthly step doesn't report its rows and fields (${JSON.stringify(r.monthly && [r.monthly.rows_would_change, r.monthly.fields_would_clear])})`);
+    ok(JSON.stringify(w.rows) === JSON.stringify(fresh()), "(10) switched off, a monthly record changed"); }
+  { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true });
+    const aug = w.rows.find((x) => x.id === "aug"), sep = w.rows.find((x) => x.id === "sep"), oct = w.rows.find((x) => x.id === "oct");
+    ok(w.rows.length === 4 && w.deletes === 0 && !w.calls.some((c) => /^DELETE \/client_monthly_records/.test(c)), "(10) a monthly row was deleted");
+    ok(K.GOOGLE_FIELDS.every((f) => aug[f] == null && sep[f] == null) && !("gbp" in aug.data), "(10) switched on, an expired month kept Google numbers");
+    ok(aug.total_calls === 7 && aug.form_leads === 3 && aug.data.k === 1 && sep.total_calls === 2 && sep.data.k === 2, "(10) clearing the Google fields took other numbers with it");
+    ok(oct.gbp_calls === 9 && oct.review_count === 14 && oct.data.gbp && oct.data.gbp.calls === 9, "(10) a recent month (inside 30 days) lost its Google numbers");
+    ok(w.patches.length === 2 && w.patches.every((x) => /reporting_month=lte\./.test(x.path) && Object.keys(x.body).every((k) => K.GOOGLE_FIELDS.includes(k) || k === "data")), "(10) a clear sent more than the Google fields, or without the month guard");
+    const seq = w.calls.filter((c) => /^(POST \/gbp_purge_ledger|PATCH)/.test(c)); ok(seq.length > 1 && seq[0].startsWith("POST") && w.ledger.length === 1 && w.ledger[0].action === "clear" && w.ledger[0].rows_cleared === 2 && w.ledger[0].fields_cleared >= 8 && w.ledger[0].rows_deleted === 0, "(10) a change didn't come after its own ledger line, or the line says nothing useful");
+    ok(!JSON.stringify(w.ledger).includes("calls\":5") && w.ledger.every((l) => !("data" in l)), "(10) the ledger holds content, not counts");
+    ok(r.monthly.rows_cleared === 2 && r.failed === 0, "(10) switched on, the monthly step doesn't report what it cleared"); }
+  { const w = world({ noLedgerColumns: true }); const r = await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true });
+    ok(!w.calls.some((c) => c.startsWith("PATCH")) && r.failed > 0, "(10) with no ledger columns the monthly step still changed rows, or didn't say so"); }
+  { const w = world({ ledgerWriteFails: true }); await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true }); ok(!w.calls.some((c) => c.startsWith("PATCH")), "(10) a batch was cleared although its ledger line couldn't be written"); }
+  { const w = world({ endless: true }); await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true }).catch(() => {}); ok(w.calls.filter((c) => c.startsWith("POST /gbp_purge_ledger")).length <= P.MAX_BATCHES, "(10) the monthly step looped past its batch cap"); }
+  { const pur = SRC["_gbp-purge.js"]; ok((pur.match(/method: "PATCH"/g) || []).length === 1 && /if \(out\.enabled && m\.rows_would_change > 0\)[\s\S]*method: "PATCH"/.test(pur), "(10) a PATCH exists outside the switched-on branch");
+    ok(!/client_monthly_records/.test(P.TARGETS.map((t) => t.table).join(",")) && P.MONTHLY.table === "client_monthly_records", "(10) the monthly table is on the DELETE list");
+    ok(/\.sql/.test("") || /alter table public\.gbp_purge_ledger add column if not exists action\b/.test(sql) && /rows_cleared/.test(sql) && /fields_cleared/.test(sql), "(10) the SQL file doesn't add the ledger columns the monthly step writes"); }
+
+  // writers must not write the numbers back
+  { const m = read("netlify/functions/_metrics.js"), a = adminJs;
+    ok(/const googleExpired = gbpKeep\.monthIsExpired\(reportingMonth, now\);/.test(m) && /if \(gbp && !googleExpired\) \{/.test(m) && /if \(!googleExpired\) data\.gbp = /.test(m), "(10) the metrics job could write Google numbers into an expired month");
+    ok((a.match(/clearExpiredGoogle\(deriveMonthlyKpiColumns\(record\.data \|\| \{\}\), /g) || []).length === 2, "(10) the admin save of a monthly record could write an old month's Google numbers back");
+    const f = (a.match(/function clearExpiredGoogle[\s\S]*?\n\}/) || [""])[0]; ok(/if \(!gbpMonthExpired\(reportingMonth\)\) return kpis;/.test(f) && /for \(const f of GBP_KEEP_FIELDS\) if \(f in out\) out\[f\] = null;/.test(f), "(10) the admin clear isn't a clear of the Google fields"); }
+
+  // every copy of the rule agrees with the server's, and no gate pins a cache-buster value
+  const lift = (src, names, extra = "") => { const parts = names.map((n) => (src.match(new RegExp(`(?:async )?function ${n}\\([\\s\\S]*?\\n\\}`)) || [""])[0]); if (parts.some((x) => !x)) idk(`a function to check moved: ${names.join(", ")}`); return `${extra}\n${parts.join("\n")}`; };
+  const portalJs = read("portal/portal.js"), reportJs = read("portal/report/report.js");
+  if (portalJs == null || reportJs == null) idk("portal.js or report.js moved");
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  for (const [name, src] of [["admin.js", adminJs], ["portal.js", portalJs], ["report.js", reportJs]]) {
+    const body = lift(src, ["gbpMonthExpired"]); const fn = new Function(`${body}; return gbpMonthExpired;`)();
+    const dates = [["2026-09-01", "2026-10-31T12:00:00Z"], ["2026-09-01", "2026-11-01T00:00:00Z"], ["2026-10-01", "2026-11-05T00:00:00Z"], ["2026-08-01", "2026-10-31T12:00:00Z"], ["2027-01-01", "2026-11-05T00:00:00Z"], ["", "2026-11-05T00:00:00Z"], [null, "2026-11-05T00:00:00Z"]];
+    ok(dates.every(([m, n]) => fn(m, new Date(n)) === K.monthIsExpired(m, new Date(n))), `(10) ${name}'s copy of the 30-day rule disagrees with the server's`);
+    ok(new RegExp(`const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE).replace(/'/g, "\\'")}`).test(src), `(10) ${name} doesn't carry the same wording as the server`); }
+  ok(JSON.stringify((adminJs.match(/const GBP_KEEP_FIELDS = (\[[^\]]*\])/) || [])[1] && JSON.parse(adminJs.match(/const GBP_KEEP_FIELDS = (\[[^\]]*\])/)[1])) === JSON.stringify(K.GOOGLE_FIELDS), "(10) the admin's list of Google fields differs from the server's");
+
+  // readers: a cleared number is never 0, never "pending", never one side of a change
+  { const body = lift(portalJs, ["buildReviewSummaryHtml"], `const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE)}; const gbpMonthExpired = (m) => ${"{"}const x = /^(\\d{4})-(\\d{2})/.exec(String(m||"")); return !!x && Date.UTC(+x[1], +x[2], 1) <= Date.UTC(2026,10,5) - 31*86400000;${"}"};`);
+    const f = new Function("escapeHtml", `${body}; return buildReviewSummaryHtml;`)(esc);
+    const cleared = f({ reporting_month: "2026-08-01", review_count: null, new_reviews: null, average_rating: null });
+    ok(!/>\s*0\s*</.test(cleared) && !/<strong>0<\/strong>/.test(cleared) && !/\b0 reviews?\b/.test(cleared) && cleared.includes(K.KEEP_NOTE), "(10) the client's review card shows a cleared review count as 0");
+    const fresh0 = f({ reporting_month: "2026-10-01", review_count: 0, new_reviews: 0, average_rating: null });
+    ok(/<strong>0<\/strong>/.test(fresh0), "(10) a real zero review count no longer reads as 0");
+    const notYet = f({ reporting_month: "2026-10-01", review_count: null, new_reviews: null, average_rating: null });
+    ok(!/<strong>0<\/strong>/.test(notYet) && !/>\s*0\s*</.test(notYet), "(10) a review count that was never read shows as 0"); }
+  { const body = lift(reportJs, ["num", "changeText", "chip", "tile", "chan"], `const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE)}; const MIN_BASE_FOR_PERCENT = 30;`);
+    const g = new Function("escapeHtml", `${body}; return { tile, chip, chan };`)(esc);
+    const t = g.tile("Calls", null, 5, { keptCurrent: true, keptPrior: false });
+    ok(t.includes(esc(K.KEEP_NOTE)) && !/>\s*0\s*</.test(t) && !/↑|↓|No change/.test(t), "(10) a cleared Google number in the report shows as 0, or as a change");
+    const c = g.chip(7, null, { keptPrior: true }); ok(/No comparison/.test(c) && !/First month|↑|↓|No change/.test(c), "(10) the report compares a number with a month whose Google numbers were cleared");
+    ok(/First month tracked/.test(g.chip(7, null, {})) && /↑/.test(g.chip(70, 40, {})), "(10) the report's normal comparison stopped working");
+    const ch = g.chan("Reviews", "x", [["Total reviews", null], ["New", null]], [], K.KEEP_NOTE); ok(ch.includes(esc(K.KEEP_NOTE)) && !/<b class="num">0<\/b>/.test(ch) && /Not kept/.test(ch), "(10) the report's channel box shows a cleared number as 0"); }
+  { const rp = reportJs; ok(/num\(current\.review_count\) == null && !gbpMonthExpired\(current\.reporting_month\)/.test(rp), "(10) the report tells a client with cleared reviews to 'get the first reviews'"); }
+  { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("netlify/functions/_mature.js");
+    ok(/noGoogleCompare/.test(sm) && /const present = METRICS\.filter\(\(m\) => current\[m\.key\] != null/.test(sm), "(10) the monthly email could show a cleared Google number, or compare with one");
+    ok(/if \(x === null \|\| y === null\) continue;/.test(m1 || "") && /googleCleared/.test(m1 || ""), "(10) the Month 1 report could show a cleared Google figure as 0, or not say why it can't compare");
+    ok(/if \(a === null \|\| b === null \|\| !t\) return null;/.test(mat || "") && /GOOGLE_KPIS/.test(mat || ""), "(10) the KPI alert could read a cleared Google number as a drop, or call it fine without saying it wasn't checked"); }
+  { const M1 = load("_month1-report.js"); const r = M1.buildMonth1Report({ client: { business_name: "X" }, months: [{ reporting_month: "2026-06-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 40, gsc_impressions: 900 }, { reporting_month: "2026-07-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 55, gsc_impressions: 1200 }], kickoffAt: "2026-07-05", now: at("2026-08-20"), playbook: [], tasks: {} });
+    ok(!r.comparisons.some((c) => /Google profile|Call-button|Website clicks from/.test(c.label)) && r.text.includes(K.KEEP_NOTE) && !/Call-button taps[^\n]*: 0\b/.test(r.text), "(10) the Month 1 report compares a cleared Google figure, or doesn't say why it can't"); }
+  { const Mat = load("_mature.js"); ok(Mat.breaches({ drop: 20 }, 10, null) === null && Mat.breaches({ drop: 20 }, null, 10) === null && Mat.breaches({ points: 1 }, 5, null) === null, "(10) the KPI alert reads a cleared number as a drop"); }
+
+  // the admin Data row reads the new target from real numbers
+  { const A = load("admin-data-keep.js");
+    const rd = (over) => ({ gridSessions: async () => 1, gscStates: async () => [{ backfill_done: true, rows_total: 1, last_status: "ok" }], gscConnected: async () => 1, benchHistory: async () => ({ n: 1, terms: 1 }), whyCounts: async () => ({ n: 1, total: 2 }), latest: async () => ({ table_ready: true, rows: [] }),
+      purgeReport: async () => ({ enabled: false, tables: [], would_delete_total: 0, failed: 0, ledger_ready: true, monthly: { rows_would_change: 7, fields_would_clear: 23, error: null, ledger_ready: true } }), ...over });
+    const raw = { ready: true, backend: "supabase-storage", sources: [], files: 1, bytes: 1, partial: false };
+    const d = await A.build({ rawSummary: raw, readers: rd() }); const row = d.rows.find((x) => x.key === "gbp");
+    ok(/23 Google numbers across 7 months/.test(row.line) && /rows stay/.test(row.line) && row.tone === "you", "(10) the admin Data row isn't built from the monthly counts");
+    const d2 = await A.build({ rawSummary: raw, readers: rd({ purgeReport: async () => ({ enabled: false, tables: [], would_delete_total: 0, failed: 0, ledger_ready: true, monthly: { rows_would_change: 0, fields_would_clear: 0, error: null, ledger_ready: true } }) }) });
+    ok(/No monthly record holds Google numbers older than 30 days/.test(d2.rows.find((x) => x.key === "gbp").line), "(10) the admin Data row doesn't say when no monthly record is affected");
+    const d3 = await A.build({ rawSummary: raw, readers: rd({ purgeReport: async () => ({ enabled: false, tables: [], would_delete_total: 0, failed: 0, ledger_ready: true, monthly: { rows_would_change: 0, fields_would_clear: 0, error: "x", ledger_ready: false } }) }) });
+    ok(!/No monthly record holds/.test(d3.rows.find((x) => x.key === "gbp").line), "(10) an unreadable monthly count reads as 'nothing to clear'");
+    ok(!/\b\d+ Google numbers?\b/.test(SRC["admin-data-keep.js"].replace(/\/\/.*$/gm, "")), "(10) a figure is typed into the admin Data row"); }
+
+  // the drive
+  { const bp = path.join(process.env.SCRAPER_COPY_DIR || path.dirname(HERE), "scripts/backup-client-data.mjs");
+    const B = await import(`file://${bp}?${Date.now()}`).catch((e) => idk(`backup-client-data.mjs won't load: ${e.message}`));
+    ok(B.gbpStripEnabled({ GBP_PURGE_ENABLED: "1" }) === true && [undefined, "", "0", "true", "yes", " 1", "11"].every((v) => B.gbpStripEnabled({ GBP_PURGE_ENABLED: v }) === false), "(10) the drive strip switches on for something other than exactly 1");
+    const bsrc = fs.readFileSync(bp, "utf8");
+    ok(/stripOldCopies\(\{ dir: DIR, today: TODAY, enabled: gbpStripEnabled\(\) \}\)/.test(bsrc) && /\{ dir: DIR, today: TODAY, enabled: false \}/.test(bsrc), "(10) the nightly backup doesn't take its switch from GBP_PURGE_ENABLED, or the report flag can strip");
+    ok(!/rmSync|unlinkSync/.test(bsrc.slice(bsrc.indexOf("export function stripOldCopies"), bsrc.indexOf("// ── pure: which dated folders stay") > bsrc.indexOf("export function stripOldCopies") ? bsrc.indexOf("// ── pure: which dated folders stay") : bsrc.length).replace(/fs\.rmSync\(tmp, \{ force: true \}\)/, "")), "(10) the strip code can delete a file");
+    ok(JSON.stringify(Object.keys(B.GBP_STRIP).sort()) === JSON.stringify([...P.TARGETS.map((t) => t.table), P.MONTHLY.table].filter((v, i, a) => a.indexOf(v) === i).sort()), "(10) the drive strip list isn't the website purge list");
+    ok(JSON.stringify(B.GOOGLE_MONTHLY_FIELDS) === JSON.stringify(K.GOOGLE_FIELDS), "(10) the drive's Google fields differ from the website's");
+    const snap = (table, rows) => B.stripRows(table, rows);
+    ok(snap("client_state_snapshots", [{ surface: "reviews", payload: { source: "google_profile" } }, { surface: "reviews", payload: { source: "places" } }, { surface: "gbp", source: "deep-assess-client" }, { surface: "gbp", source: "other" }, { surface: "pagespeed" }]).removedRows === 2, "(10) the drive strip removes rows that aren't Business Profile content, or misses some");
+    ok(snap("clients", [{ id: 1 }]).removedRows === 0 && snap("client_photos", [{ id: 1 }]).removedRows === 0, "(10) the drive strip touches a table that isn't on the list");
+    ok((() => { try { B.stripPath("/x", "2026-09-01", "clients"); return false; } catch { return true; } })() && (() => { try { B.stripPath("/x", "../2026-09-01", "client_gbp_snapshots"); return false; } catch { return true; } })() && (() => { try { B.stripPath("/x", "files", "client_gbp_snapshots"); return false; } catch { return true; } })(), "(10) the strip can be pointed at an unlisted table or a folder that isn't a dated copy");
+    ok(JSON.stringify(B.foldersToStrip(["2026-09-30", "2026-10-01", "2026-10-02", "files", "2026-10-31", "x"], "2026-10-31")) === JSON.stringify(["2026-09-30"]), "(10) the strip picks copies that aren't over 30 days old (or a folder that isn't a dated copy)");
+    const os = await import("node:os"); const crypto = await import("node:crypto");
+    const D = fs.mkdtempSync(path.join(os.tmpdir(), "dk-strip-"));
+    const put = (f, v) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, typeof v === "string" ? v : JSON.stringify(v)); };
+    const mkCopy = (name) => { put(`${D}/${name}/db/client_state_snapshots.json`, [{ id: 1, surface: "reviews", payload: { source: "google_profile" } }, { id: 2, surface: "reviews", payload: { source: "places" } }, { id: 3, surface: "pagespeed" }]);
+      put(`${D}/${name}/db/client_gbp_snapshots.json`, [{ id: 1 }, { id: 2 }]); put(`${D}/${name}/db/client_monthly_records.json`, [{ id: 1, total_calls: 4, gbp_calls: 5, new_reviews: 0, data: { gbp: { a: 1 }, k: 2 } }]);
+      put(`${D}/${name}/db/clients.json`, [{ id: 1, business_name: "x" }]); put(`${D}/${name}/manifest.json`, { problems: [] }); };
+    mkCopy("2026-09-01"); mkCopy("2026-10-20"); put(`${D}/files/chats/a.txt`, "chat"); put(`${D}/files/memory/m.md`, "memory");
+    const tree = () => { const o = {}; const walk = (d) => { for (const n of fs.readdirSync(d)) { const f = path.join(d, n); fs.statSync(f).isDirectory() ? walk(f) : (o[path.relative(D, f)] = crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex")); } }; walk(D); return o; };
+    const before = tree();
+    const off = B.stripOldCopies({ dir: D, today: "2026-11-01", enabled: false });
+    ok(JSON.stringify(tree()) === JSON.stringify(before) && !fs.existsSync(`${D}/gbp-strip-ledger.jsonl`), "(10) the drive strip changed a file while switched off");
+    ok(off.enabled === false && off.rows_removed === 3 && off.fields_cleared === 3 && off.folders.length === 1 && off.folders[0].folder === "2026-09-01", `(10) switched off, the drive strip doesn't report what it would strip (${off.rows_removed}/${off.fields_cleared})`);
+    const on = B.stripOldCopies({ dir: D, today: "2026-11-01", enabled: true }), after = tree();
+    const changed = Object.keys(after).filter((k) => after[k] !== before[k]).sort(), allowed = ["2026-09-01/db/client_gbp_snapshots.json", "2026-09-01/db/client_monthly_records.json", "2026-09-01/db/client_state_snapshots.json", "2026-09-01/manifest.json", "gbp-strip-ledger.jsonl"];
+    ok(JSON.stringify(changed) === JSON.stringify(allowed.sort()), `(10) the drive strip changed something other than the listed copies (${changed.join(", ")})`);
+    ok(on.rows_removed === 3 && on.fields_cleared === 3 && on.failed.length === 0, "(10) switched on, the drive strip doesn't report what it stripped");
+    ok(after["2026-10-20/db/client_gbp_snapshots.json"] === before["2026-10-20/db/client_gbp_snapshots.json"], "(10) a copy under 30 days old was stripped");
+    ok(after["files/chats/a.txt"] === before["files/chats/a.txt"] && after["files/memory/m.md"] === before["files/memory/m.md"] && after["2026-09-01/db/clients.json"] === before["2026-09-01/db/clients.json"], "(10) the strip touched chats, memory or another table");
+    const left = JSON.parse(fs.readFileSync(`${D}/2026-09-01/db/client_state_snapshots.json`, "utf8")), mon = JSON.parse(fs.readFileSync(`${D}/2026-09-01/db/client_monthly_records.json`, "utf8"));
+    ok(left.length === 2 && left.every((r) => r.id !== 1) && mon.length === 1 && mon[0].total_calls === 4 && mon[0].gbp_calls === null && mon[0].new_reviews === null && !("gbp" in mon[0].data) && mon[0].data.k === 2, "(10) the strip took out more than the Business Profile content, or left some");
+    const ledger = fs.readFileSync(`${D}/gbp-strip-ledger.jsonl`, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+    ok(ledger.length === 3 && ledger.every((l) => l.sha256_before && l.folder === "2026-09-01") && !/google_profile|"gbp":\{/.test(JSON.stringify(ledger)), "(10) the strip wasn't recorded before it ran, or the record holds content");
+    ok(JSON.parse(fs.readFileSync(`${D}/2026-09-01/manifest.json`, "utf8")).gbp_stripped.length === 3, "(10) the stripped copy's own record doesn't say it was stripped");
+    ok(B.stripOldCopies({ dir: D, today: "2026-11-01", enabled: true }).rows_removed === 0, "(10) a second strip found more to remove");
+    // no ledger, no strip
+    const D2 = fs.mkdtempSync(path.join(os.tmpdir(), "dk-strip2-")); const keep2 = (n) => fs.cpSync(`${D}/${n}`, `${D2}/${n}`, { recursive: true });
+    mkCopy("2026-08-01"); fs.rmSync(`${D}/gbp-strip-ledger.jsonl`); fs.mkdirSync(`${D}/gbp-strip-ledger.jsonl`);   // a ledger that can't be written to
+    const snapB = fs.readFileSync(`${D}/2026-08-01/db/client_gbp_snapshots.json`, "utf8");
+    const noLedger = B.stripOldCopies({ dir: D, today: "2026-11-01", enabled: true });
+    ok(fs.readFileSync(`${D}/2026-08-01/db/client_gbp_snapshots.json`, "utf8") === snapB && noLedger.failed.length > 0, "(10) a copy was stripped although its ledger line couldn't be written");
+    void keep2; fs.rmSync(D, { recursive: true, force: true }); fs.rmSync(D2, { recursive: true, force: true }); }
+}
+
 if (F.length) { console.error(`🔴 check-data-keep: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }
-console.log("✅ check-data-keep: raw store, grid, Search Console, benchmarks, change log, frozen reports, purge (off), admin row and SQL all hold");
+console.log("✅ check-data-keep: raw store, grid, Search Console, benchmarks, change log, frozen reports, purge (off), monthly Google numbers, the drive copies, admin row and SQL all hold");

@@ -308,6 +308,7 @@ export const FILES = {
   gbppurgefn: "netlify/functions/gbp-30-day-purge.js",
   datakeepfn: "netlify/functions/admin-data-keep.js",
   datakeepsql: "supabase/data_keep.sql",
+  gbpkeep: "netlify/functions/_gbp-keep.js",   // pending_and_google_security_v1 Part 2 (10-31): the 30-day rule for Google numbers in the monthly records
   // rank grid park lifted (10-31)
   rankschedule: "netlify/functions/_rank-schedule.js",
   rankvalidate: "netlify/functions/validate-tracked-keyword.js",
