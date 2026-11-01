@@ -43,6 +43,7 @@ export const FILES = {
   blogcleanup: "scripts/blog-cleanup.mjs",
   blogsql: "supabase/blog_system.sql",
   blogtoml: "netlify.toml",
+  blogpostdeck: "blog/local-seo-for-deck-builders/index.html",
   blogindexpage: "blog/index.html",
   playbooksjson: "data/playbooks/playbooks.json",
   flowexec: "netlify/functions/flow-execute.js",

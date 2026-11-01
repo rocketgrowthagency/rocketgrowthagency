@@ -502,5 +502,12 @@
   "    \"m2.exec.blog_posts\",   // one post",
   "    // one post",
   1
+ ],
+ [
+  "a blog title over 60 characters passes",
+  "blogpostdeck",
+  "<title>Local SEO for Deck Builders: Rank in Google Maps | RGA</title>",
+  "<title>Local SEO for Deck Builders: How to Rank in the Google Maps Top 3 | RGA</title>",
+  1
  ]
 ]

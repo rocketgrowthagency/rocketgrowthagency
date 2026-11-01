@@ -254,11 +254,12 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
 // ── 8 · the public posts and pages ──
 {
   const slugs = fs.readdirSync(`${SITE}/blog`).filter((d) => exists(`blog/${d}/index.html`));
-  let faq = 0, year = 0, nodate = 0, nolink = 0, retired = 0, team = 0, badld = 0;
+  let faq = 0, long = 0, year = 0, nodate = 0, nolink = 0, retired = 0, team = 0, badld = 0;
   for (const s of slugs) {
     const t = read(`blog/${s}/index.html`);
     if (/"@type":\s*"FAQPage"/.test(t)) faq++;
     if (/<title>[^<]*2026/.test(t) && !/-in-2026$/.test(s)) year++;
+    const ttl = ((/<title>([^<]*)<\/title>/.exec(t) || [])[1] || "").replace(/&amp;/g, "&"); if (ttl.length > 60) long++;
     if (!/"datePublished"/.test(t)) nodate++;
     if (!t.includes('href="/how-we-test/"')) nolink++;
     const vis = (L.contentRegion(t) || "").replace(/<p class="bp-update">[\s\S]*?<\/p>/, "");
@@ -269,6 +270,7 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   if (slugs.length < 100) fail(`only ${slugs.length} posts found`);
   if (faq) fail(`${faq} posts still carry FAQPage markup`);
   if (year) fail(`${year} posts still have a year in the title`);
+  if (long) fail(`${long} posts have a <title> over 60 characters, so Google cuts it off`);
   if (nodate) fail(`${nodate} posts have no datePublished`);
   if (nolink) fail(`${nolink} posts don't link the how-we-test page`);
   if (retired) fail(`${retired} posts still sell a retired Google feature`);
