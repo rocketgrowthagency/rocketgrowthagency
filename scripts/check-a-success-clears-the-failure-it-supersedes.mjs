@@ -48,6 +48,10 @@ const DECLARED = {
   "_gbp-posts.js": {
     last_error: { clear: /delete next\.last_error;/ },
   },
+  // The daily Search Console pull: every chunk that is kept saves last_status "ok" with last_error null, so the next good run wipes the old failure
+  "_gsc-daily.js": {
+    last_error: { clear: /last_status: "ok", last_error: null,/ },
+  },
   "send-kickoff-invite.js": {
     last_error: { clear: /\.\.\.\(cred\.last_error \? \{ last_error: null \} : \{\}\),/ },
   },

@@ -47,5 +47,12 @@
   "      publish_state: \"published\", publish_error: null,",
   "      publish_state: \"published\",",
   1
+ ],
+ [
+  "a good Search Console pull keeps the old error",
+  "gscdaily",
+  "last_status: \"ok\", last_error: null,",
+  "last_status: \"ok\",",
+  1
  ]
 ]
