@@ -67,6 +67,9 @@ const ALLOWED = {
   "netlify/functions/send-monthly-report.js": [],
   "shared/email-doc.js":                      [],
   "shared/busy.js":                           ["= 1500"],
+  "netlify/functions/_blog-chain.js": [": 3500"],   // max_tokens: 3500 is the model reply cap for a draft, not a price
+  "netlify/functions/_page-brief.js": ["=5000"],   // limit=5000 is a Search Console row limit, not a price
+  "netlify/functions/_page-measure.js": ["=5000"],   // limit=5000 is a Search Console row limit, not a price
   "netlify/functions/_publish-safety.js":     ["= 3500"],   // the website-change safety checks: "perPageMs = 3500" is a page-read timeout (ms), not a price
   "netlify/functions/_site-platform.js":      ["= 5000"],   // step 3 detector: "= 5000" is the 5-second fetch timeout (timeoutMs), not a price   // the master busy state: "= 1500" is PRESS_MS (1.5 s), not a price
   "docs/sales-rep-offer.html":                ["$1,250","$1,500","$1,875","$2,500","$3,750","$625","$750"],
