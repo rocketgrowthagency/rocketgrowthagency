@@ -189,6 +189,8 @@ run() {
     out=$(cat "$tmp")
   fi
   rm -f "$tmp"
+  # 🔑 THE LOG KEEPS THE REASON (audit 10-31 item 42): the screen shows only the first 3 failing lines, so a gate's full output is kept, one file per gate, overwritten each run.
+  mkdir -p output/gate-last 2>/dev/null; printf '%s\n' "$out" > "output/gate-last/${script%.mjs}.txt" 2>/dev/null || true
   # ═══════════════════════════════════════════════════════════════════════════════════════════════
   # 🔴🔴 A GATE THAT THREW IS NOT A GATE THAT FAILED — AND IT HAD BEEN REPORTED AS ONE.
   #
@@ -535,7 +537,7 @@ run check-photo-examples-match-the-lists.mjs "every photo shot has its own examp
 run check-a-photo-is-what-rga-confirmed.mjs "a slot shows a photo already on Google only after RGA confirms it; rows hold their columns"
 run check-a-done-step-is-never-the-headline.mjs "a step already done never flashes as the portal's next step"
 run check-an-upload-confirms-in-its-slot.mjs "a photo upload confirms in its own slot and never reloads the portal"
-run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Google twice; step 39 leads with the right button"
+run check-a-photo-never-goes-up-twice.mjs "the same photo never goes up to Google twice; the photos step leads with the right button"
 run check-nothing-goes-on-a-listing-until-it-is-the-only-one.mjs "nothing goes on a Google listing until step 11 confirms it is the only one"
 run check-a-client-step-waits-on-what-it-needs.mjs "a client step waits on what it needs: their own earlier step, the listing, or RGA"
 run check-a-step-that-opens-is-told-once.mjs "a step that opens after waiting on RGA is emailed once, in the approved words"
@@ -679,6 +681,7 @@ run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends 
 run check-activity-rows-use-real-columns.mjs "every client_activity write names real columns (10-09: the recap never reached the timeline)"
 run check-photo-review-before-google.mjs "a client photo waits for RGA's review; every slot kind has an example; admin step 38 + Your action carry the review"
 run check-no-catch-on-a-supabase-query.mjs "no Supabase query chains a .catch it does not have (10-09: it broke the photo upload after the photo saved)"
+run check-the-daily-check-keeps-each-gates-output.mjs "the morning check keeps every gate's full output in output/gate-last, so a red never loses its reason"
 run check-the-parked-excuse-names-its-reason.mjs "the parked video gate is excused by name, with its reason visible, exit 1 only"
 run check-every-video-page-ships.mjs "every rebuilt video landing page is committed before deploy and actually serves (10-07/10-08: 9 served the homepage). PARKED (video parked, excused by name 11-1; not fixed while parked)" status
 run check-every-control-spins.mjs "every press that starts a request turns busy, in the portal and the admin (hard rule)"

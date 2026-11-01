@@ -47,14 +47,14 @@ if (!/turned_down: \{ cls: "you", label: "Please retake" \}/.test(portal)) fail(
 if (!/after: turned \? photoRetakeLineHtml\(turned, /.test(portal) || !/const fromGoogle = \/\^google\$\/i\.test\(String\(p\.reviewed_by \|\| ""\)\);\n  const text = \[why \? `\$\{fromGoogle \? "Google said: " : ""\}/.test(portal) || !/\$\{fromGoogle \? "Google said:" : "From RGA:"\}<\/b> \$\{escapeHtml\(why\)\}/.test(portal)) fail("RGA's reason is not shown on the slot it was given for");
 if (!/review_note/.test((portal.match(/\.from\("client_photos"\)\s*\.select\("([^"]+)"/) || [])[1] || "")) fail("the portal's photo query does not read review_note — the reason could never render");
 // 3
-if (!/\$\{prvHtml\}\$\{waitHtml\}/.test(admin) || !/\$\{prvHtml\}\$\{bandHtml\}/.test(admin)) fail("step 39 no longer renders the review list in both of its states");
-// 🔑 10-16: a Google row's pill says its card's state first (gsA); step 39 isn't one, so Review N still leads for it
+if (!/\$\{prvHtml\}\$\{waitHtml\}/.test(admin) || !/\$\{prvHtml\}\$\{bandHtml\}/.test(admin)) fail("the photos step no longer renders the review list in both of its states");
+// 🔑 10-16: a Google row's pill says its card's state first (gsA); the photos step isn't one, so Review N still leads for it
 if (!/\$\{(?:gsA \? gPillText\(gsA, s\.task\) : )?prvN \? `Review \$\{prvN\}` : waiting/.test(admin) || /"m1\.gbp\.photos"/.test((/^const CLIENT_GBP_STEPS = \{[^\n]*/m.exec(admin) || [""])[0])) fail("step 39's status does not say Review N while photos wait");
 // 🔑 the PHOTO REVIEW card's own reveal (the second-logo card reveals step 40 too, 10-15 — that one doesn't count)
 if (!/reveal: PHOTO_REVIEW_STEP, tab: "onboarding-v2", scroll: "panel-onboarding-v2", btn: "Review photos"/.test(admin) || !/data\.admin\.reveal/.test(admin)) fail("Your action does not name the waiting photos, or does not open step 39");
 if (!/fetch\("\/\.netlify\/functions\/admin-photo-review"/.test(admin)) fail("the review buttons do not call admin-photo-review");
 if (!/if \(isM1\) injectPhotoReview\(host\);\s*(?:if \(isM1\) injectListingCard\(host\);\s*)?(?:injectSeeClientLinks\(host, steps, stepKind\);\s*)?if \(isM1\) obApplyStepAccordion\(host\);/.test(admin)) fail("step 39 carries the review only while it is the active step — a photo waiting behind earlier steps is invisible (the live bug of 2026-10-09)");
-if (!/const PHOTO_REVIEW_STEP = "m1\.gbp\.photos";/.test(admin)) fail("the review is not attached to step 39 (m1.gbp.photos)");
+if (!/const PHOTO_REVIEW_STEP = "m1\.gbp\.photos";/.test(admin)) fail("the review is not attached to the photos step (m1.gbp.photos)");
 
 if (F.length) { console.error("🔴 the photo review before Google is broken:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ photo review before Google: ${cats.size} kinds each have an example, slots reopen on a turn-down, step 39 + Your action carry the review`);
+console.log(`✅ photo review before Google: ${cats.size} kinds each have an example, slots reopen on a turn-down, the photos step + Your action carry the review`);
