@@ -75,7 +75,21 @@ if (M.breaches({ drop: 20 }, null, 10) !== null) fail("5 · a missing value is r
   r = await w2.act("draft_case_study"); if (r.ok) fail("10 · a case study is drafted without the client's permission");
   if (M.stepStates(w2.ctx()).find((s) => s.n === 10).small !== "Permission unclear") fail("10 · unclear permission isn't called out"); }
 // ── 11/12/13/14 ──
-{ if (st({}, "m6.reputation.referral_ask").state !== "wait") fail("11 · a referral ask is offered with no trust moment");
+{ const NO_RESULT = GOOD.map((m) => ({ ...m, new_reviews: null }));   // good months, but no review came in: no result, no ask
+  if (st({ months: NO_RESULT }, "m6.reputation.referral_ask").state !== "wait") fail("11 · a referral ask is offered with no trust moment");
+  // onboarding_and_offboarding_v1 item 6 (11-01): the FIRST REAL RESULT is a trust moment too, and only a measured one
+  if (st({ months: GOOD }, "m6.reputation.referral_ask").state !== "you") fail("11 · a new Google review (the first real result) doesn't open the referral ask");
+  if (st({ months: NO_RESULT.map((m) => ({ ...m, new_reviews: 0 })) }, "m6.reputation.referral_ask").state !== "wait") fail("11 · zero new reviews opens the referral ask");
+  if (st({ months: NO_RESULT, onb: { tasks: { "m1.gbp.business_facts": { status: "done", google_push: { state: "on_google" } } } } }, "m6.reputation.referral_ask").state !== "you") fail("11 · a profile change live on Google doesn't open the referral ask");
+  if (st({ months: NO_RESULT, onb: { tasks: { "m1.gbp.business_facts": { status: "done", google_push: { state: "pending" } } } } }, "m6.reputation.referral_ask").state !== "wait") fail("11 · a profile change that is not yet live on Google opens the referral ask");
+  if (st({ months: GOOD, records: [{ kind: "referral_ask", period: "2026-Q4", status: "sent", sent_at: "2026-11-01T00:00:00Z" }] }, "m6.reputation.referral_ask").done !== true) fail("11 · the one-a-quarter limit no longer holds");
+  { const w = world(); const r = await w.act("send_referral", null, null, { months: NO_RESULT }); if (r.ok || w.sent.length) fail("11 · the server sends a referral ask when there is no result to ask about"); }
+  // the monthly call outcome feeds the churn read: At risk is one warning sign, never a flag by itself
+  { const callAtRisk = GOOD.map((m, i) => (i === 0 ? { ...m, data: { tasks: { "m2.call.monthly": { call_outcome: "at_risk" } } } } : m));
+    const s = st({ months: callAtRisk }, "m6.account.churn_risk_signal");
+    if (s.state === "bad") fail("14 · one noted at-risk call raises a churn flag by itself (needs two signals)");
+    if (!JSON.stringify(s.body).includes("at risk")) fail("14 · the at-risk call outcome isn't counted as a warning sign");
+    if (st({ months: callAtRisk, lastLoginAt: new Date(now - 40 * 86400000).toISOString() }, "m6.account.churn_risk_signal").state !== "bad") fail("14 · an at-risk call plus a missed portal visit don't raise the flag"); }
   const w = world(); const r = await w.act("log_checkin", null, ""); if (r.ok) fail("12 · an empty check-in is logged");
   if (st({}, "m6.account.checkin").state === "bad") fail("12 · a newly Mature client reads as overdue on a check-in they couldn't have had");
   const top = [month("2026-11", { ranking_position: 1 }), month("2026-10", { ranking_position: 2 }), month("2026-09", { ranking_position: 3 })];
