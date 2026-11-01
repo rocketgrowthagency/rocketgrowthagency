@@ -2,8 +2,8 @@
  [
   "pages past the limit are skipped silently",
   "sitearchivelib",
-  "const take = list.urls.slice(0, PAGE_LIMIT), over = Math.max(0, list.urls.length - take.length);",
-  "const take = list.urls.slice(0, PAGE_LIMIT), over = 0;",
+  "const urls = list.urls.slice(0, MAX_PAGES), over = Math.max(0, list.urls.length - urls.length);",
+  "const urls = list.urls.slice(0, MAX_PAGES), over = 0;",
   1
  ],
  [
@@ -16,8 +16,8 @@
  [
   "a failed page is counted as saved",
   "sitearchivelib",
-  "rows.push(row); if (row.state === \"saved\") saved++; else failed++;",
-  "rows.push(row); saved++;",
+  "rows.push(r0); if (r0.state === \"saved\") saved++; else failed++;",
+  "rows.push(r0); saved++;",
   1
  ],
  [
@@ -30,8 +30,8 @@
  [
   "a store failure is reported as saved",
   "sitearchivelib",
-  "catch (e) { return { run_id: runId, client_id: client.id, url, kind: k, state: \"failed\"",
-  "catch (e) { return { run_id: runId, client_id: client.id, url, kind: k, state: \"saved\"",
+  "catch (e) { return row(d, runId, client, url, k, \"failed\"",
+  "catch (e) { return row(d, runId, client, url, k, \"saved\"",
   1
  ],
  [
@@ -121,7 +121,7 @@
  [
   "the card hides what is not automatic",
   "admin",
-  "Not automatic yet: RGA presses Capture now.",
+  "Not automatic yet: the before and after pictures.",
   "",
   1
  ],
@@ -137,6 +137,104 @@
   "admin",
   "  b.classList.add(\"is-busy\");\n  try { await siteArchiveLoad",
   "  try { await siteArchiveLoad",
+  1
+ ],
+ [
+  "the page cap goes",
+  "sitearchivelib",
+  "const MAX_PAGES = 500;",
+  "const MAX_PAGES = 50000;",
+  1
+ ],
+ [
+  "a run never closes after a day",
+  "sitearchivelib",
+  "if (d.now() - Date.parse(run.started_at) > RUN_MAX_AGE_MS) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "a repeated chunk saves its pages again",
+  "sitearchivelib",
+  "const done = d.pagesDone ? await d.pagesDone(run.id) : new Set();",
+  "const done = new Set();",
+  1
+ ],
+ [
+  "a run is marked finished after one chunk",
+  "sitearchivelib",
+  "const finished = r.next >= urls.length;",
+  "const finished = true;",
+  1
+ ],
+ [
+  "a run forgets its place",
+  "sitearchivelib",
+  "next_index: r.next, pages_saved",
+  "next_index: 0, pages_saved",
+  1
+ ],
+ [
+  "an upload copy saves the file changed",
+  "sitearchivelib",
+  "{ status: 200, text: String(f.content || \"\") }",
+  "{ status: 200, text: String(f.content || \"\").trim().slice(0, 100) }",
+  1
+ ],
+ [
+  "an upload copies every page it can find",
+  "sitearchivelib",
+  ".filter(Boolean))].slice(0, 10);",
+  ".filter(Boolean))];",
+  1
+ ],
+ [
+  "the monthly copy is every day",
+  "sitearchivelib",
+  "const MONTHLY_DAYS = 28;",
+  "const MONTHLY_DAYS = 0;",
+  1
+ ],
+ [
+  "the baseline starts for a client without confirmed access",
+  "sitearchivejob",
+  "a.acc && a.acc.confirmed_at && !a.acc.removed_at",
+  "a.acc !== undefined",
+  1
+ ],
+ [
+  "a removed access still gets a copy",
+  "sitearchivejob",
+  "&& !a.acc.removed_at",
+  "",
+  1
+ ],
+ [
+  "the job starts without a limit",
+  "sitearchivejob",
+  "MAX_START = 2,",
+  "MAX_START = 200,",
+  1
+ ],
+ [
+  "the job reads sites with no tables",
+  "sitearchivejob",
+  "if (NOT_SET_UP.test(String(e.message))) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a publish no longer makes a copy",
+  "sitearchivedel",
+  "if (act === \"open_pr\" || act === \"publish\") await archiveAtUpload(",
+  "if (false) await archiveAtUpload(",
+  1
+ ],
+ [
+  "a failed copy fails a publish",
+  "sitearchivedel",
+  "catch (e) { if (!/site_archive|PGRST205|schema cache|does not exist/i.test(String(e && e.message))) console.error(",
+  "catch (e) { throw e; } /*",
   1
  ]
 ]

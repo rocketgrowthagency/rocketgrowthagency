@@ -48,6 +48,7 @@ const SURFACES = {
   "shared/contract-doc.js":                     ["DERIVED", "agreement plan pill → contract-pricing"],
   "shared/invoice-doc.js":                      ["DERIVED", "client invoice — every line derived from data/plans.json + _addons"],
   "shared/busy.js":                             ["EXCLUDED", "the master busy state (every control that waits on the server spins) — wraps fetch, renders no text, quotes no price; matched only because it loads in every portal/admin page"],
+  "netlify/functions/_blog-chain.js":           ["EXCLUDED", "the blog proposal-to-draft chain (blog_system_v1 steps 9-12): `PRICE_PER_M` is the assumed price of AI tokens, used to show a spending cap; it is not an offer price, and the file quotes no plan or price of ours"],
   "netlify/functions/_page-brief.js":           ["EXCLUDED", "the page brief (website_system_v2 build 3): word counts, a row limit and timeouts, not prices; the file quotes no price or plan"],
   "netlify/functions/_page-measure.js":         ["EXCLUDED", "Search Console per page (website_system_v2 build 11): row limits and timeouts, not prices; the file quotes no price or plan"],
   "netlify/functions/_publish-safety.js":       ["EXCLUDED", "the website-change safety checks (publish_safety_checks_v1) — `perPageMs = 3500` is a page-read timeout in milliseconds, not a price; the file quotes no price or plan"],

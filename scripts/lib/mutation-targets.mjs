@@ -202,6 +202,8 @@ export const FILES = {
   blogfind: "netlify/functions/_blog-find.js",   // admin_blog_step_v1
   blogcheckfn: "netlify/functions/admin-blog-check.js",
   sitearchivelib: "netlify/functions/_site-archive.js",   // admin_site_archive_v1
+  sitearchivejob: "netlify/functions/site-archive-run.js",
+  sitearchivedel: "netlify/functions/admin-deliverables.js",
   sitearchivefn: "netlify/functions/admin-site-archive.js",
   sitearchivesql: "supabase/site_archive.sql",
   stylecss: "style.css",
