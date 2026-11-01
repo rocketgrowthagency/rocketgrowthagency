@@ -258,9 +258,8 @@ THEN suggest 3 sponsorship targets relevant to this business:
     },
     instructions: `1. Pick the strongest angle from the 5 listed → personalize PITCH_TO_NEWS for 2-3 specific outlets
 2. Send PITCH_TO_BEST_OF_LISTICLE to all relevant listicle editors
-3. Reach out to all 3 sponsorship targets (most reply within 1 week)
-4. Track every pitch in client_backlinks (status="pending" → "live" once linked)
-1 high-DA local link can outrank 50 citations.`,
+3. Reach out to all 3 sponsorship targets
+4. Track every pitch in client_backlinks (status="pending" → "live" once linked)`,
   },
   {
     id: "m2.exec.competitor_backlink_steal", title: "Quarterly: replicate competitor backlinks",

@@ -2,8 +2,8 @@
  [
   "Google delete isn't read back",
   "photoretire",
-  "  if (back.status === 404) return { ok: true, status: del.status };",
-  "  return { ok: true, status: del.status };",
+  "  if (back.status !== 404) return { ok: false, status: back.status, error: back.ok ? \"Google still lists this photo.\" : `We couldn't check with Google that it's gone (${back.status}).` };",
+  "",
   1
  ],
  [

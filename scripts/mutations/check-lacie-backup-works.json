@@ -1,0 +1,15 @@
+[
+ ["the chat copy becomes a mirror", "backuplacie", "rsync -a --exclude '.DS_Store' \"$CHATS_SRC/\" \"$dest/\"", "rsync -a --delete --exclude '.DS_Store' \"$CHATS_SRC/\" \"$dest/\"", 1],
+ ["chats don't get copied", "backuplacie", "rsync -a --exclude '.DS_Store' \"$CHATS_SRC/\" \"$dest/\" || problem", "true || problem", 1],
+ ["a .env reaches the drive", "backuplacie", " --exclude '.env*'", "", 1],
+ ["node_modules gets copied", "backuplacie", " --exclude 'node_modules'", "", 1],
+ ["no git bundle is made", "backuplacie", "    mv \"$bundle.tmp\" \"$bundle\"\n", "    rm -f \"$bundle.tmp\"\n", 1],
+ ["repo files aren't copied", "backuplacie", "--exclude '*.pem' --exclude 'id_rsa*' --exclude 'id_ed25519*' \"$src/\" \"$dest/\"", "--exclude '*.pem' --exclude 'id_rsa*' --exclude 'id_ed25519*' \"$src/.none/\" \"$dest/\"", 1],
+ ["a missing drive goes quiet", "backuplacie", "  problem \"LaCie isn't connected: chats copied to the Mac only, nothing else backed up\"", "  note \"LaCie isn't connected\"", 1],
+ ["a missing repo goes quiet", "backuplacie", "[ -d \"$src/.git\" ] || { problem \"$name: no repo at $src\"; return; }", "[ -d \"$src/.git\" ] || { note \"$name: no repo at $src\"; return; }", 1],
+ ["the script always exits 0", "backuplacie", "  note \"finished with ${#problems[@]} problem(s)\"\n  exit 1", "  note \"finished with ${#problems[@]} problem(s)\"\n  exit 0", 1],
+ ["a failure records ok", "backuplacie", "local ok=true; [ \"${#problems[@]}\" -gt 0 ] && ok=false", "local ok=true", 1],
+ ["the Mac copy is skipped", "backuplacie", "copy_chats \"$MAC_CHATS\" \"the Mac copy\"\n", "\n", 1],
+ ["the LaCie chat copy is skipped", "backuplacie", "  copy_chats \"$LACIE/Claude chat histories\" \"LaCie\"\n", "  :\n", 1],
+ ["repos are never backed up", "backuplacie", "  copy_repo \"$SCRAPER\" scraper\n", "  :\n", 1]
+]

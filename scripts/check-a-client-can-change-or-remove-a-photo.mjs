@@ -93,7 +93,9 @@ const rm = async (w, body) => { const r = await RM({ event: {}, clientId: CID, d
   const w = world({ rows: [ROW({ id: "22222222-2222-2222-2222-222222222222", publish_state: "published", shot_n: 12, category: "at_work", gbp_media_name: `${PARENT}/media/abc` })] });
   const r = await rm(w, { photoId: "22222222-2222-2222-2222-222222222222" });
   if (r.status !== 200 || r.body.state !== "removed" || w.rows[0].publish_state !== "removed") fail(`a photo on Google isn't removed (${r.status} ${JSON.stringify(r.body).slice(0, 120)})`);
-  if (w.calls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${PARENT}/media/abc` || w.calls[1] !== `GET https://mybusiness.googleapis.com/v4/${PARENT}/media/abc`) fail(`a removal isn't a Google delete then a read-back (${w.calls.join(" | ")})`);
+  // the first call reads Google's list, for the name it holds the photo under (audit 10-31; check-step10-photo-truth runs that rule)
+  const gCalls = w.calls.filter((c) => !c.includes("/media?"));
+  if (gCalls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${PARENT}/media/abc` || gCalls[1] !== `GET https://mybusiness.googleapis.com/v4/${PARENT}/media/abc`) fail(`a removal isn't a Google delete then a read-back (${w.calls.join(" | ")})`);
   if (!w.recounts || !w.ledger.length || !w.logs.some((l) => l.outcome === "removed")) fail("a removal doesn't recount, log, or reach the change ledger");
   if (!r.body.tasks) fail("a removal doesn't return the record (the portal can't redraw with Google's new count)");
 }
@@ -132,7 +134,7 @@ const rm = async (w, body) => { const r = await RM({ event: {}, clientId: CID, d
   const w = world({ rows: [old] });
   const nu = { id: "n1", shot_n: 12, created_at: "2026-10-16T10:00:00Z", file_name: "new.jpg", uploaded_by_email: "client@x.test" };
   const out = await R.retireReplaced({ d: w.d, token: "t", clientId: CID, photo: nu, media: `${PARENT}/media/new`, nowIso: "2026-10-17T00:00:00Z", trigger: "admin" });
-  if (out.replaced !== 1 || w.rows[0].publish_state !== "replaced" || w.rows[0].replaced_by !== "n1" || w.calls[0] !== `DELETE https://mybusiness.googleapis.com/v4/${PARENT}/media/old`) fail(`a change doesn't take the old photo off Google and retire it (${JSON.stringify(out)} ${w.rows[0].publish_state} ${w.calls.join("|")})`);
+  if (out.replaced !== 1 || w.rows[0].publish_state !== "replaced" || w.rows[0].replaced_by !== "n1" || w.calls.filter((c) => !c.includes("/media?"))[0] !== `DELETE https://mybusiness.googleapis.com/v4/${PARENT}/media/old`) fail(`a change doesn't take the old photo off Google and retire it (${JSON.stringify(out)} ${w.rows[0].publish_state} ${w.calls.join("|")})`);
   if (!w.logs.some((l) => l.outcome === "replaced")) fail("a change isn't kept in the publish log");
   const wl = world({ rows: [{ ...old, category: "logo", gbp_media_name: `${PARENT}/media/logo-before` }] });
   await R.retireReplaced({ d: wl.d, token: "t", clientId: CID, photo: nu, media: `${PARENT}/media/profile`, nowIso: "2026-10-17T00:00:00Z", trigger: "admin" });
@@ -171,7 +173,7 @@ process.removeAllListeners("warning");
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const ctx = { secondLogos: SECOND_LOGO.secondLogos, photoListedName: SECOND_LOGO.photoListedName, photoCountable: SECOND_LOGO.photoCountable, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
+const ctx = { secondLogos: SECOND_LOGO.secondLogos, photoListedNames: SECOND_LOGO.photoListedNames, photoMissingFromList: SECOND_LOGO.photoMissingFromList, photoCountable: SECOND_LOGO.photoCountable, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.allSent = photosAllSent;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }

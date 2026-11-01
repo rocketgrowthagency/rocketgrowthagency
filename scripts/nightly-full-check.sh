@@ -67,6 +67,15 @@ failed_list() { grep -E "^(❌|⚠️)" "$1" | sed 's/^/- /'; }
 L1=$(held_line "$RAW/check-1.txt")
 { echo; echo "## First run"; echo "$L1"; failed_list "$RAW/check-1.txt"; } >> "$OUT"
 
+# ── 3b · what must run EVERY night, changed files or not (audit 10-31): before-confirming only runs gates that read a changed file, so a dead morning job went unseen ──
+EVERY_NIGHT_RED=""
+for g in check-the-daily-check-is-alive.mjs check-the-monthly-report-opens-the-call.mjs; do
+  if ! (cd "$SCR" && node scripts/$g) > "$RAW/$g.txt" 2>&1; then
+    EVERY_NIGHT_RED="$EVERY_NIGHT_RED $g"
+    { echo; echo "## Every-night check: $g"; head -12 "$RAW/$g.txt"; } >> "$OUT"
+  fi
+done
+
 FIXED=""
 if grep -q "FAILED" "$RAW/check-1.txt"; then
   # ── 4 · the fixer: one headless session, mechanical fixes only (scripts/nightly-fixer-prompt.md) ───
@@ -97,6 +106,7 @@ if ! grep -q "FAILED" "$FINAL"; then
 else
   VERDICT="**Not everything held.** The red items are listed above and in \"Needs Chris\"; tomorrow night re-checks them with the day's work."
 fi
+[ -z "$EVERY_NIGHT_RED" ] || VERDICT="$VERDICT **Red every-night checks:$EVERY_NIGHT_RED.**"
 # ── 6 · the morning summary goes to the top ──────────────────────────────────────────────────────
 { echo "## Morning summary"; echo "- $VERDICT"; [ -n "$FIXED" ] && grep -A40 "^## Morning summary (fixer)" "$RAW/fixer.txt" | tail -n +2 | head -40; echo; cat "$OUT"; } > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
 echo "full check done: $VERDICT"

@@ -12,5 +12,40 @@
   "    if [ -n \"$DB_STOPPED\" ]; then",
   "    if [ -n \"$DB_STOPPED$NEW_UNSET_FLAG\" ]; then",
   1
+ ],
+ [
+  "the stop is a latch again",
+  "dailyhealth",
+  "    if h=$(node scripts/lib/db-health.mjs 2>/dev/null); then\n      DB_STOPPED=\"\"\n    elif",
+  "    if [ -z \"$DB_STOPPED\" ] && h=$(node scripts/lib/db-health.mjs 2>/dev/null); then\n      :\n    elif",
+  1
+ ],
+ [
+  "what's skipped isn't kept",
+  "dailyhealth",
+  ">> \"$SKIPPED_LIVE\"",
+  ">> /dev/null",
+  1
+ ],
+ [
+  "what's skipped never runs again",
+  "dailyhealth",
+  "done 3< \"$SKIPPED_LIVE\"",
+  "done 3< /dev/null",
+  1
+ ],
+ [
+  "the walks aren't live",
+  "dailyhealth",
+  "case \"$script\" in acceptance-walk-*) is_live=1 ;; esac",
+  "case \"$script\" in nothing-*) is_live=1 ;; esac",
+  1
+ ],
+ [
+  "nothing runs the watchdog",
+  "nightlyfull",
+  "for g in check-the-daily-check-is-alive.mjs check-the-monthly-report-opens-the-call.mjs; do",
+  "for g in check-the-monthly-report-opens-the-call.mjs; do",
+  1
  ]
 ]

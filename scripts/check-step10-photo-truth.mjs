@@ -24,7 +24,7 @@ if (/On your Google profile"/.test(P.slice(P.indexOf("const PHOTO_STATE = {"), P
 if (!/const GS_LABEL = \{ hide: "Saved, not showing", sent: "Sent · up to 48 hours", list: "On Google's list", missing: "Not on Google's list yet" \};/.test(P)) fail("the states aren't the approved words");
 if (/st === "on" \? `<span class="ok"/.test(P)) fail("a tile draws a tick again");
 if (/\.pm-p10-t\.is-on \.im \{[^}]*state-ok/.test(CSS)) fail("a tile is green again");
-if (!/Date\.now\(\) - at > 3 \* 86400000 \? "missing" : "sent"/.test(P)) fail("a photo missing after 3 days isn't said");
+if (!/return photoMissingFromList\(ph, taskState\?\.detected\) \? "missing" : "sent";/.test(P)) fail("a photo missing after 3 days isn't said");
 if (!/photoCountable\(taskState, photos\)/.test(P)) fail("the portal doesn't use the count");
 for (const w of ["Use your own photos.", "Get a yes from anyone whose face is in a photo.", "Don't add location tags.", "a few a day.", "up to 48 hours"]) if (!P.slice(P.indexOf("const P10_RULES")).slice(0, 700).includes(w)) fail(`How this step works lost: ${w}`);
 if (!/force: body\.force === true,/.test(read("netlify/functions/portal-photo-remove.js"))) fail("Remove anyway never reaches the removal");
@@ -146,8 +146,63 @@ if (/data-p10-kind="\$\{g\.items[^\n]*\n[^\n]*"main"/.test(P10J) || /<\/em><\/bu
   if (SL.photoListedName({ category: "cover", gbp_media_name: "x", pushed_at: "2026-10-25T00:00:00Z" }, lst) !== null) fail("a photo sent days apart is matched to another");
   if (SL.photoListedName({ category: "team", gbp_media_name: "x", pushed_at: when }, lst) !== null) fail("a photo of another kind is matched to it");
   if (SL.photoListedName({ category: "team", gbp_media_name: "x", pushed_at: when }, [{ name: "add", category: "ADDITIONAL", at: when }]) !== "add") fail("a photo Google refused the kind for, sent as Additional, isn't recognized");
-  if (!/!photoOnList\(p, probe\.items\) && !told\[p\.id\]/.test(read("netlify/functions/portal-step-recheck.js"))) fail("the nightly still checks the upload's name only, so a listed photo reads missing after 3 days");
-  if (!/if \(photoListedName\(ph, taskState\?\.detected\?\.items\)\) return "list";/.test(P)) fail("the client's tile still checks the upload's name only");
+  const RC = read("netlify/functions/portal-step-recheck.js");
+  if (!/!photoOnList\(p, probe\.items, ours\) && !told\[p\.id\]/.test(RC)) fail("the nightly still checks the upload's name only, so a listed photo reads missing after 3 days");
+  if (!/if \(listedNames\.get\(ph\)\) return "list";/.test(P)) fail("the client's tile still checks the upload's name only");
+  if (!/if \(listedNames\.get\(p\)\) return "list"; return photoMissingFromList\(p, t\.detected\)/.test(AD)) fail("admin's tile doesn't use the same rule as the client's");
+  // 🔒 audit 10-31: ONE TO ONE. Run on both copies of the rule (shared ESM, functions CommonJS), so they can't drift apart.
+  const { photoListedNames: cjsNames } = require("./_photo-list-name.js");
+  const t0 = "2026-10-31T10:00:00Z", at = (s) => new Date(Date.parse(t0) + s * 1000).toISOString();
+  const cases = [
+    { why: "two photos in a batch, one item on the list: only one may claim it", rows: [{ id: "a", category: "team", gbp_media_name: "up-a", pushed_at: at(0) }, { id: "b", category: "team", gbp_media_name: "up-b", pushed_at: at(2) }], list: [{ name: "L1", category: "TEAMS", at: at(5) }], want: { a: "L1", b: null } },
+    { why: "an exact name claims before anyone's time match", rows: [{ id: "a", category: "team", gbp_media_name: "up-a", pushed_at: at(0) }, { id: "b", category: "team", gbp_media_name: "L1", pushed_at: at(2) }], list: [{ name: "L1", category: "TEAMS", at: at(5) }], want: { a: null, b: "L1" } },
+    { why: "the same kind claims before Additional", rows: [{ id: "a", category: "team", gbp_media_name: "up-a", pushed_at: at(0) }, { id: "b", category: "interior", gbp_media_name: "up-b", pushed_at: at(1) }], list: [{ name: "X", category: "ADDITIONAL", at: at(3) }, { name: "I", category: "INTERIOR", at: at(4) }], want: { a: "X", b: "I" } },
+    { why: "an item added before the send is someone else's", rows: [{ id: "a", category: "team", gbp_media_name: "up-a", pushed_at: at(0) }], list: [{ name: "old", category: "TEAMS", at: at(-300) }], want: { a: null } },
+    { why: "a retired photo takes nothing by time", rows: [{ id: "a", category: "team", gbp_media_name: "up-a", pushed_at: at(0), publish_state: "replaced" }], list: [{ name: "L1", category: "TEAMS", at: at(5) }], want: { a: null } },
+  ];
+  for (const c of cases) for (const [label, fn] of [["shared", SL.photoListedNames], ["functions", cjsNames]]) {
+    const m = fn(c.rows, c.list);
+    for (const r of c.rows) if ((m.get(r) || null) !== c.want[r.id]) fail(`${label} rule: ${c.why}`);
+  }
+  // 🔴 only Google's own list, read 3+ days after the send, can say missing
+  const sentAt = { pushed_at: at(0) }, later = at(4 * 86400);
+  if (!SL.photoMissingFromList(sentAt, { source: "google_profile", at: later })) fail("a photo Google's list hasn't held for 3 days isn't said to be missing");
+  if (SL.photoMissingFromList(sentAt, { source: "sent_to_us", at: later })) fail("a failed Google read says a photo is missing");
+  if (SL.photoMissingFromList(sentAt, { source: "google_profile", at: at(3600) })) fail("a list read an hour after the send says a photo is missing");
+  // 🔴 a failed read keeps the list and can't reopen a done step
+  if (!/\.\.\.keepList,/.test(RC) || !/probe\.source === "sent_to_us" && Array\.isArray\(prevRead\?\.items\)/.test(RC)) fail("a failed Google read wipes the photo list");
+  if (/keepList = [^\n]*\n[^\n]*n_all/.test(RC)) fail("a failed read keeps n_all, so the count stops being what was sent to us");
+  if (!/probe\.source === "sent_to_us" && probe\.verdict === "not_done"\) \{\s*const cur = await readStepRecord[^\n]*\n\s*if \(cur\?\.tasks\?\.\[stepId\]\?\.status === "done"\) probe = \{ \.\.\.probe, verdict: "indeterminate" \};/.test(RC)) fail("a failed Google read can reopen a done photo step");
+  if (!/photos\.source === "sent_to_us" \? "sent to us" : "on Google"/.test(AD)) fail("admin's header says \"on Google\" for a count of what was sent to us");
+  // 🔴 a retake: the slot shows what's up, never the turned-down photo beside it
+  if (!/const slotRank = \(p\) => \(isUp\(p\) \? 2 : p\.publish_state === "turned_down" \? 0 : 1\);/.test(AD) || /const byShot = new Map\(photos\.filter/.test(AD)) fail("admin's tile can show the turned-down photo with the retake already up");
+  // 🔴 deletes: run the real function on a fake Google
+  const { deleteGoogleMedia } = require("./_photo-retire.js");
+  const PFX = "accounts/1/locations/2/media/";
+  const google = ({ listed = [], listFails = false, deletes = true }) => {
+    const calls = [], have = new Set(listed.map((g) => g.name));
+    const res = (status, body = {}) => ({ ok: status < 400, status, json: async () => body });
+    return { calls, have, fetch: async (url, init = {}) => {
+      const m = init.method || "GET", tail = url.split("/v4/")[1];
+      calls.push(`${m} ${tail}`);
+      if (/\/media\?/.test(tail)) return listFails ? res(500) : res(200, { mediaItems: [...have].map((name) => { const g = listed.find((x) => x.name === name); return { name, createTime: g.at, locationAssociation: { category: g.category } }; }) });
+      if (m === "DELETE") { if (!have.has(tail)) return res(404); if (deletes) have.delete(tail); return res(200); }
+      return have.has(tail) ? res(200, { name: tail }) : res(404);
+    } };
+  };
+  const ph = { id: "a", category: "cover", gbp_media_name: `${PFX}upload`, pushed_at: at(0) };
+  { const g = google({ listed: [{ name: `${PFX}listed`, category: "COVER", at: at(4) }] });
+    const r = await deleteGoogleMedia(g, "t", ph.gbp_media_name, { photo: ph, rows: [ph] });
+    if (!r.ok || g.have.size !== 0 || !g.calls.includes(`DELETE ${PFX}listed`)) fail("a photo Google lists under another name isn't deleted under that name"); }
+  { const g = google({ listed: [{ name: `${PFX}other`, category: "EXTERIOR", at: at(4) }], listFails: true });
+    const r = await deleteGoogleMedia(g, "t", ph.gbp_media_name, { photo: ph, rows: [ph] });
+    if (r.ok) fail("a 404 with no list to check still claims the photo is gone"); }
+  { const g = google({ listed: [] });
+    const r = await deleteGoogleMedia(g, "t", ph.gbp_media_name, { photo: ph, rows: [ph] });
+    if (!r.ok) fail("a photo truly not on Google can't be cleared"); }
+  { const g = google({ listed: [{ name: ph.gbp_media_name, category: "COVER", at: at(4) }], deletes: false });
+    const r = await deleteGoogleMedia(g, "t", ph.gbp_media_name, { photo: ph, rows: [ph] });
+    if (r.ok) fail("a photo Google still holds after the delete reads as gone"); }
 }
 if (F.length) { console.error(`🔴 step 10 says more than Google tells us:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 10 says only what Google tells us: no green or tick until a test proves it; Sent, On Google's list, missing after 3 days (RGA told once), Saved not showing; the count leaves out a hidden logo and second copies in the portal and the nightly; Keep can be undone; the only visible photo isn't removed unasked; up to 5 a day");

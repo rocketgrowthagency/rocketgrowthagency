@@ -26,6 +26,8 @@ export AIRTABLE_GET_CACHE=1
 # report green — that is how a dead check reads as a pass.
 set -uo pipefail
 DB_STOPPED=""   # 🔴 under set -u an unset variable KILLS the script: without this line every morning since 10-27 died at the first live gate (reviews, RSVPs, PageSpeed never ran)
+SKIPPED_LIVE=$(mktemp)   # what the database made us skip; run once more at the end
+RETRY_PASS=""
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot enter scraper repo"; exit 2; }
 
 # 🔑 LOAD .env SO THE GATES CAN ACTUALLY CHECK. Several gates verify against LIVE Supabase — the
@@ -130,18 +132,31 @@ run() {
   # Before any gate that touches the live site or the database: one cheap health read (scripts/lib/db-health.mjs). Slow or
   # failing → wait 30 s, look once more; still bad → this and every later live gate is skipped (INDETERMINATE), never run.
   # ═══════════════════════════════════════════════════════════════════════════════════════════════
-  if grep -qE "SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|_admin-session|rocketgrowthagency\.com" "scripts/$script" 2>/dev/null; then
-    if [ -n "$DB_STOPPED" ]; then
-      printf "  ⚠️  %-38s SKIPPED — the clients' database is struggling (%s); not adding load\n" "$script" "$DB_STOPPED"; INDET=$((INDET+1)); return
-    fi
+  # 🔴 AUDIT 10-31: NOT A LATCH. One read of 7,623 ms skipped 74 later gates and the review read for the whole morning. Every live gate looks again;
+  # the first bad look waits once, and while it stays bad nothing waits. What was skipped runs once more at the end. The browser walks hit the same
+  # database but their source doesn't name it, so they're listed by name.
+  local is_live=""
+  case "$script" in acceptance-walk-*) is_live=1 ;; esac
+  grep -qE "SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|_admin-session|rocketgrowthagency\.com" "scripts/$script" 2>/dev/null && is_live=1
+  if [ -n "$is_live" ]; then
     local h
-    if ! h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
+    if h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
+      DB_STOPPED=""
+    elif [ -n "$DB_STOPPED" ]; then
+      DB_STOPPED="${h:-no answer}"
+    else
       echo "  ⏸  the clients' database is struggling ($h) — waiting 30 s before $script"; sleep 30
-      if ! h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
-        DB_STOPPED="$h"
-        printf "  🛑 LIVE GATES STOPPED: the clients' database is struggling (%s); every later live gate is skipped\n" "$h"
-        printf "  ⚠️  %-38s SKIPPED — not adding load\n" "$script"; INDET=$((INDET+1)); return
+      if h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
+        DB_STOPPED=""
+      else
+        DB_STOPPED="${h:-no answer}"
+        printf "  🛑 LIVE GATES PAUSED: the clients' database is struggling (%s); skipped until it reads healthy, then run again at the end\n" "$DB_STOPPED"
       fi
+    fi
+    if [ -n "$DB_STOPPED" ]; then
+      printf "  ⚠️  %-38s SKIPPED — the clients' database is struggling (%s); not adding load\n" "$script" "$DB_STOPPED"; INDET=$((INDET+1))
+      [ -n "$RETRY_PASS" ] || printf '%s\t%s\t%s\n' "$script" "$what" "$mode" >> "$SKIPPED_LIVE"
+      return
     fi
   fi
   local limit="${GATE_TIMEOUT_SECONDS:-300}" tmp
@@ -556,6 +571,7 @@ run check-client-portal-tabs.mjs "the client portal tabs (approved 10-30: client
 run check-client-data-backup-works.mjs "the nightly client data backup copies every table and file whole, leaves no key on the drive, keeps old copies, fails loudly, and ran in the last 36 hours (rga_data_backup_plan_v1, Chris 10-31)"
 run check-internal-files-are-not-public.mjs "everything in the website repo is public by decision or blocked at the edge: server code, scripts and SQL were readable by anyone until 10-31"
 run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
+run check-the-contract-promises-only-what-the-code-does.mjs "the agreement promises only what the code does; the public pages drop the 60-day claim and the double price"
 run check-step10-photo-truth.mjs "step 10 says only what Google tells us (Chris 10-30): no green until a test proves it, the count leaves out a hidden logo and second copies, Keep undoes, the only visible photo stays, up to 5 a day, RGA notices really send"
 run check-client-open-calls.mjs "client portal open calls (approved 10-30: client_open_calls_v1): Google unreadable says reload with no button, verify-again card and hold from the client's own profile, step 9 names the tool, on-Google words, said-no shows one button and the form opens on press"
 run check-client-card-system-batch3.mjs "the Ongoing work tab on the ONE card design (approved 10-29: client_step16–20, client_ongoing_*): 16 period + due date follow the cadence, done keeps its controls, missed; 17 sent ≠ used; 18 no quota, With RGA, counted on Google; 19 skips itself; 20 wait is a card; posts live only when live; replies from Google; win story reaches the client"
@@ -636,6 +652,20 @@ run check-browser-js-parses-as-the-browser-does.mjs "every script the site loads
 run check-admin-tabs-render.mjs       "every admin tab renders for a signed-in admin"
 run check-app-pages-boot.mjs          "admin, portal and the homepage actually come up in a browser"
 run check-playbook-renders.mjs         "the playbook actually renders in a browser"
+
+# 🔴 AUDIT 10-31: WHAT THE DATABASE MADE US SKIP GETS ONE MORE RUN, 15 MINUTES LATER (the review read, PageSpeed and the place ids are in here too)
+if [ -s "$SKIPPED_LIVE" ]; then
+  say ""
+  say "── $(wc -l < "$SKIPPED_LIVE" | tr -d ' ') skipped while the database struggled: waiting, then one more run ──"
+  sleep "${DB_RETRY_WAIT_SECONDS:-900}"
+  RETRY_PASS=1
+  while IFS=$'\t' read -r _rs _rw _rm <&3; do
+    INDET=$((INDET-1))
+    run "$_rs" "$_rw" "$_rm"
+  done 3< "$SKIPPED_LIVE"
+  RETRY_PASS=""
+fi
+rm -f "$SKIPPED_LIVE"
 
 # ── production pause: lift it automatically the day every condition clears ────────────────────────
 # Removing the pause was a MANUAL step waiting on a human to notice a condition had cleared, and a

@@ -12,6 +12,7 @@
 //     lock line's own "Need a change? ›" is hidden (Change something opens it)
 // Point it at a copy with APPROVAL_ARCHIVE_SITE_DIR. exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
 import vm from "node:vm";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -135,7 +136,8 @@ const ACSS5 = () => fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || 
   const NOW5 = new Date().toISOString();
   const photos5 = [{ id: "a", shot_n: 1, category: "logo", publish_state: "published", storage_path: "l", pushed_at: "2026-10-09T16:20:00Z", gbp_media_name: "media/profile" },
     { id: "b", shot_n: 2, category: "cover", publish_state: "published", storage_path: "c", pushed_at: NOW5, gbp_media_name: "upload-name" }];
-  const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, PHOTO_KIND_LABEL: { cover: "Cover", logo: "Logo" }, photosOfClient: () => photos5, photoReviewHtml: () => ({ reviewN: c5.rv || 0, html: c5.rv ? "<div class=pr-card>BLOCK</div>" : "", existingHtml: "<div>OLDCOPY</div>" }), photoCountable: () => 1, photoListedName: (p, items) => ((items || []).some((g) => g.name === p.gbp_media_name) ? p.gbp_media_name : null), state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
+  const SECOND_LOGO_RULE = await import(pathToFileURL(`${SITE}/shared/photo-second-logo.js`).href);
+  const c5 = { escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", photoReviewCount: () => 0, PHOTO_KIND_LABEL: { cover: "Cover", logo: "Logo" }, photosOfClient: () => photos5, photoReviewHtml: () => ({ reviewN: c5.rv || 0, html: c5.rv ? "<div class=pr-card>BLOCK</div>" : "", existingHtml: "<div>OLDCOPY</div>" }), photoCountable: () => 1, photoListedNames: SECOND_LOGO_RULE.photoListedNames, photoMissingFromList: SECOND_LOGO_RULE.photoMissingFromList, state: { selectedClient: { identity_phone: "(424) 242-2040" } } };
   vm.createContext(c5); vm.runInContext(p5.join("\n") + "\nthis.ws = photosWaitState; this.ph = photosWaitCardHtml;", c5);
   const G = [["Logo", 1, "PROFILE"], ["Cover", 1, "COVER"], ["Exterior", 3, "EXTERIOR"], ["Interior", 3, "INTERIOR"], ["Team", 5, "TEAMS"], ["At work", 7, "AT_WORK"]];
   const items = G.flatMap(([g, n, k]) => Array.from({ length: n }, () => ({ group: g, google: k })));

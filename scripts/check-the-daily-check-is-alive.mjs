@@ -21,6 +21,17 @@ const outside = before.slice(0, fnAt) + before.slice(fnEnd);   // an assignment 
 const code = body.split("\n").filter((l) => !/^\s*#/.test(l)).join("\n");
 const reads = new Set([...code.matchAll(/\$\{?([A-Z][A-Z0-9_]+)\}?/g)].filter((m) => !/^\$\{[A-Z0-9_]+:-/.test(code.slice(m.index, m.index + m[0].length + 2))).map((m) => m[1]));
 for (const v of reads) if (!new RegExp(`(^|\\n)\\s*(export\\s+)?${v}=`).test(outside)) fail.push(`run() reads $${v}, but nothing gives it a value before the first gate: under set -u the whole morning job dies there`);
+// 🔴 audit 10-31: one slow read must not stop the morning. HOLDS: a live gate reads health BEFORE it skips, a good read clears the stop, what's skipped runs once more, the walks count as live.
+{ const health = body.indexOf("db-health.mjs"), skip = body.indexOf("SKIPPED —");
+  if (health < 0 || skip < 0 || health > skip) fail.push("a live gate can skip without looking at the database again: one slow read stops the whole morning");
+  if (!/^\s+if h=\$\(node scripts\/lib\/db-health\.mjs 2>\/dev\/null\); then\s+DB_STOPPED=""\s+elif \[ -n "\$DB_STOPPED" \]/m.test(body)) fail.push("a healthy read doesn't clear the stop");
+  if (!/>> "\$SKIPPED_LIVE"/.test(body)) fail.push("what's skipped isn't kept for the second run");
+  const after = sh.slice(sh.lastIndexOf("\nrun "));
+  if (!/done 3< "\$SKIPPED_LIVE"/.test(after) || !/INDET=\$\(\(INDET-1\)\)/.test(after)) fail.push("what's skipped never runs again");
+  if (!/case "\$script" in acceptance-walk-\*\) is_live=1/.test(body)) fail.push("the browser walks run against a database marked as struggling");
+  const night = fs.readFileSync(path.join(process.env.SCRAPER_COPY_DIR ? path.join(process.env.SCRAPER_COPY_DIR, "scripts") : HERE, "nightly-full-check.sh"), "utf8");
+  if (!/for g in check-the-daily-check-is-alive\.mjs/.test(night)) fail.push("nothing runs this watchdog every night, so it can't fire on a quiet day");
+}
 // the arithmetic, on fixed cases, so the freshness rule can't quietly stop meaning anything
 const HOURS = 50, staleAt = (lastMs, nowMs) => !Number.isFinite(lastMs) || nowMs - lastMs > HOURS * 3600000;
 const T = Date.parse("2026-10-30T15:00:00Z");

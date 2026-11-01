@@ -37,8 +37,8 @@
  [
   "missing is never said",
   "portal",
-  "Date.now() - at > 3 * 86400000 ? \"missing\" : \"sent\"",
-  "false ? \"missing\" : \"sent\"",
+  "return photoMissingFromList(ph, taskState?.detected) ? \"missing\" : \"sent\";",
+  "return false ? \"missing\" : \"sent\";",
   1
  ],
  [
@@ -254,29 +254,120 @@
  [
   "only the upload's name counts again",
   "secondlogoshared",
-  "  const hit = list.find((g) => kinds.includes(g.category) && Math.abs(Date.parse(g.at || \"\") - sent) <= 10 * 60000);",
-  "  const hit = null;",
+  "      if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+  "      if (hit && false) { out.set(p, hit.name); taken.add(hit.name); }",
   1
  ],
  [
   "any time matches",
   "secondlogoshared",
-  "<= 10 * 60000);",
-  "<= 1e15);",
+  "gap(g) <= LIST_WINDOW_MS",
+  "gap(g) <= 1e15",
+  1
+ ],
+ [
+  "before the send matches",
+  "secondlogoshared",
+  "gap(g) >= -LIST_SKEW_MS && ",
+  "",
+  1
+ ],
+ [
+  "a list item can be claimed twice",
+  "secondlogoshared",
+  "if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+  "if (hit) { out.set(p, hit.name); }",
+  1
+ ],
+ [
+  "the functions copy can claim twice",
+  "photolistname",
+  "if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+  "if (hit) { out.set(p, hit.name); }",
+  1
+ ],
+ [
+  "the functions copy takes retired photos",
+  "photolistname",
+  "!RETIRED.includes(p.publish_state) && ",
+  "",
   1
  ],
  [
   "the nightly checks the name only",
   "recheck",
-  "!photoOnList(p, probe.items)",
+  "!photoOnList(p, probe.items, ours)",
   "!probe.items.some((m) => m.name === p.gbp_media_name)",
   1
  ],
  [
   "the client's tile checks the name only",
   "portal",
-  "if (photoListedName(ph, taskState?.detected?.items)) return \"list\";",
+  "if (listedNames.get(ph)) return \"list\";",
   "if (ph.gbp_media_name === \"never\") return \"list\";",
+  1
+ ],
+ [
+  "admin's tile checks the name only",
+  "admin",
+  "if (listedNames.get(p)) return \"list\";",
+  "if (p.gbp_media_name === \"never\") return \"list\";",
+  1
+ ],
+ [
+  "a failed read says missing",
+  "secondlogoshared",
+  "if (detected?.source !== \"google_profile\") return false;",
+  "",
+  1
+ ],
+ [
+  "missing measured from an early read",
+  "secondlogoshared",
+  "read - sent > 3 * 86400000",
+  "Date.now() - sent > 3 * 86400000",
+  1
+ ],
+ [
+  "a failed read wipes the list",
+  "recheck",
+  "at: new Date().toISOString(), ...keepList,",
+  "at: new Date().toISOString(),",
+  1
+ ],
+ [
+  "a failed read reopens a done step",
+  "recheck",
+  "if (cur?.tasks?.[stepId]?.status === \"done\") probe = { ...probe, verdict: \"indeterminate\" };",
+  "",
+  1
+ ],
+ [
+  "admin's header says on Google for a sent count",
+  "admin",
+  "${photos.source === \"sent_to_us\" ? \"sent to us\" : \"on Google\"}",
+  "on Google",
+  1
+ ],
+ [
+  "the slot keeps the turned-down photo",
+  "admin",
+  "const slotRank = (p) => (isUp(p) ? 2 : p.publish_state === \"turned_down\" ? 0 : 1);",
+  "const slotRank = (p) => 1;",
+  1
+ ],
+ [
+  "delete uses the upload's name",
+  "photoretire",
+  "const target = (before && photoOnList(photo, before, rows)) || name;",
+  "const target = name;",
+  1
+ ],
+ [
+  "a 404 alone reads as gone",
+  "photoretire",
+  "if (!after) return { ok: false, status: 0, error: \"We couldn't check with Google that it's gone.\" };",
+  "if (!after) return { ok: true, status: 404, name: target };",
   1
  ]
 ]

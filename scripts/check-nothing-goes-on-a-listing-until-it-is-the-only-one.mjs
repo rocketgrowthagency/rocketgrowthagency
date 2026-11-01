@@ -137,7 +137,7 @@ if (!slotsSrc || !stateSrc || !bigSrc) { console.error("⚠️  INDETERMINATE �
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const ART = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const pctx = { secondLogos: SECOND_LOGO.secondLogos, photoListedName: SECOND_LOGO.photoListedName, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
+const pctx = { secondLogos: SECOND_LOGO.secondLogos, photoListedNames: SECOND_LOGO.photoListedNames, photoMissingFromList: SECOND_LOGO.photoMissingFromList, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: ART.artKey, console };
 vm.createContext(pctx);
 vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${csBlock(portal, planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n")))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\nthis.render = photoSlotsHtml; this.ls = portalListingStateOf;`, pctx);
 const P = req("./_photo-lists.js");
@@ -161,7 +161,7 @@ if (!partA || !partB || !/function listingStateOf\(tasks\)/.test(partB)) { conso
 const items = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, group: "g", google: "INTERIOR", do: `Shot ${i + 1}` }));
 const step39 = (verdict) => {
   const c = {
-    secondLogos: SECOND_LOGO.secondLogos, photoListedName: SECOND_LOGO.photoListedName, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
+    secondLogos: SECOND_LOGO.secondLogos, photoListedNames: SECOND_LOGO.photoListedNames, photoMissingFromList: SECOND_LOGO.photoMissingFromList, tidiedByRga: SECOND_LOGO.tidiedByRga, FILED_AS: SECOND_LOGO.FILED_AS, escapeHtml: esc, escapeAttribute: esc, PHOTO_REVIEW_STEP: "m1.gbp.photos", PHOTO_EXAMPLE_SPRITE: "", ADMIN_PHOTO_STATE: {},
     photoExampleOf: () => ({ art: "x" }), photoExampleArt: () => "<svg></svg>", artKey: () => "E|g|1", formatDateTime: () => "Oct 9", obNumberOf: () => 11,
     // the lifted stretch now carries the step 31 / 32 cards' page-level observers (10-29) — inert here
     MutationObserver: class { observe() {} }, document: { documentElement: {}, querySelectorAll: () => [], addEventListener() {} }, window: {},

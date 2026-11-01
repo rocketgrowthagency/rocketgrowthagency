@@ -180,7 +180,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
 }
 
 // ── 18 · photos ──
-{ const id = "m2.exec.gbp_photos", ph = (o) => ({ id: "p", created_at: ago(1), storage_path: "c/x.jpg", category: "at_work", shot_n: null, ...o });
+{ const id = "m2.exec.gbp_photos", ph = (o) => ({ id: "p", created_at: new Date(now).toISOString(), storage_path: "c/x.jpg", category: "at_work", shot_n: null, ...o });
   const open = card(id);
   if (pills(open) !== `Optional | ${run("ogMonth()")}` || open.tone !== "you") fail(`18: open isn't Optional + the month (${pills(open)})`);
   if (!/New photos keep your profile fresh/.test(open.html) || !/0 this month/.test(open.html) || !/Suggested, no deadline\./.test(open.html) || !/A before and after/.test(open.html)) fail("18: the open card isn't the page's");
@@ -191,7 +191,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const rev = card(id, { photos: [ph({ publish_state: "in_review" }), ph({ publish_state: "in_review", category: "team" })] });
   if (pills(rev) !== "With RGA · 2 to review" || rev.tone !== "rga" || !/2 photos with RGA for review/.test(rev.html) || !/RGA checks each, usually the same day/.test(rev.html)) fail(`18: uploaded photos don't show as with RGA (${pills(rev)})`);
   if (!/>Job</.test(rev.html) || !/>Team</.test(rev.html)) fail("18: a tile doesn't name its kind");
-  const on = (n, x = {}) => Array.from({ length: n }, () => ph({ publish_state: "published", pushed_to_gbp: true, pushed_at: ago(1), ...x }));
+  const on = (n, x = {}) => Array.from({ length: n }, () => ph({ publish_state: "published", pushed_to_gbp: true, pushed_at: new Date(now).toISOString(), ...x }));
   const dn = card(id, { isDone: true, photos: [...on(2), ph({ publish_state: "in_review" })] });
   if (!/2 added this month/.test(dn.html) || !/2 photos/.test(dn.html) || !/With RGA · 1 to review/.test(pills(dn))) fail(`18: done doesn't count what's on Google (${pills(dn)})`);
   const nx = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, 1, 12)).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -328,7 +328,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
 // ── in Chrome: tiles never overlap (2 and 20), nothing pushes a 400px page sideways ──
 let puppeteer = null; try { ({ default: puppeteer } = await import("puppeteer")); } catch { puppeteer = null; }
 if (!puppeteer) { console.error("⚠️  INDETERMINATE — puppeteer is missing"); process.exit(2); }
-{ const ph = (i) => ({ id: "p" + i, created_at: ago(1), storage_path: "", category: ["at_work", "team", "exterior", "additional"][i % 4], publish_state: "in_review", shot_n: null });
+{ const ph = (i) => ({ id: "p" + i, created_at: new Date(now).toISOString(), storage_path: "", category: ["at_work", "team", "exterior", "additional"][i % 4], publish_state: "in_review", shot_n: null });   // 🔴 "this month": a fixed day ago crosses the month on the 1st (found 11-01 UTC)
   const longPlumber = "Bartholomew-Featherstonehaugh";
   const htmls = {
     tiles2: card("m2.exec.gbp_photos", { photos: [ph(0), ph(1)] }).html, tiles20: card("m2.exec.gbp_photos", { photos: Array.from({ length: 20 }, (_, i) => ph(i)) }).html,
