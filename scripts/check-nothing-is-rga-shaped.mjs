@@ -108,7 +108,8 @@ const flow = src["netlify/functions/flow-execute.js"];
 const grid = src["netlify/functions/v2-rank-grid-background.js"];
 if (!/if \(!plan\) \{/.test(flow)) fail.push("a client with no locked plan is not refused — the grid would scan a placeholder");
 if (!/client\.primary_market \|\| "their stated market"/.test(flow)) fail.push("a client with no market no longer gets a safe fallback in the keyword prompt");
-if (!/let reachKm = 5, locationsUsed = \[\];/.test(grid)) fail.push("a client with no sub-locations loses the 5 km floor");
+// 11-01: the scan reuses a stored, validated geometry (radius > 0) so scans stay comparable; with none stored the 5 km floor still applies. Pinned as the property, as the grid gate does.
+if (!/let reachKm = (?:geo \? Number\(geo\.radius_km\) : )?5, locationsUsed = \[\];/.test(grid) || !/const geo = geometry && [^;]*Number\(geometry\.radius_km\) > 0 \? geometry : null;/.test(grid)) fail.push("a client with no sub-locations loses the 5 km floor");
 if (!/let anchorKind = "none";/.test(grid)) fail.push("a client whose listing is not found gets no anchor state");
 // 🔴 and the centre is resolved from THEIR name + THEIR market, never a constant
 if (!/`\$\{businessName\} \$\{primaryLocation\}`/.test(grid)) fail.push("the grid centre is no longer derived from the client's own name and market");
