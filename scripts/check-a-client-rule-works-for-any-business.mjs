@@ -160,7 +160,7 @@ for (const [raw, want, why] of URLS) {
   let runSchema;
   try {
     const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services",
-      publishesStreetAddress: createRequire(import.meta.url)(`${SITE}/netlify/functions/_site-facts.js`).publishesStreetAddress });
+      ...(({ publishesStreetAddress, schemaTypeFor }) => ({ publishesStreetAddress, schemaTypeFor }))(createRequire(import.meta.url)(`${SITE}/netlify/functions/_site-facts.js`)) });
     const padSrc = flow.slice(flow.indexOf("const citPad = (labels)"), flow.indexOf("};", flow.indexOf("const citPad = (labels)")) + 1);
     vm.runInContext(`${stSet}\n${stNames}\n${padSrc}\n${grab("clientSiteUrl")}\n${grab("clientLocality")}`, ctx);
     runSchema = vm.runInContext(`(${flow.slice(flow.indexOf("async", start), end)})`, ctx);

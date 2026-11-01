@@ -1,0 +1,8 @@
+[
+ ["unknown category guesses a type", "sitefacts", ": \"LocalBusiness\";\n}", ": \"Organization\";\n}"],
+ ["substring match instead of exact", "sitefacts", "Object.prototype.hasOwnProperty.call(CATEGORY_TO_TYPE, key) ? CATEGORY_TO_TYPE[key] : \"LocalBusiness\";", "CATEGORY_TO_TYPE[key] || \"LocalBusiness\";"],
+ ["a made-up type enters the map", "sitefacts", "\"locksmith\": \"Locksmith\",", "\"locksmith\": \"Locksmith\", \"pest control service\": \"PestControl\","],
+ ["a non-string throws or matches", "sitefacts", "if (typeof category !== \"string\") return \"LocalBusiness\";", ""],
+ ["the step hardcodes LocalBusiness again", "exec", "\"@type\": schemaType, name: client.business_name", "\"@type\": \"LocalBusiness\", name: client.business_name"],
+ ["the step stops reading the category", "exec", "schemaTypeFor(client.gbp_primary_category)", "schemaTypeFor(null)"]
+]
