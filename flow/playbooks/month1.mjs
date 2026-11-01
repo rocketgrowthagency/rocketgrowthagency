@@ -1171,7 +1171,7 @@ NOTE: include {{review_link}} where the URL goes — don't hardcode the URL.`,
         outcome_data: { google_review_link: reviewLink, templates_drafted: true },
       };
     },
-    instructions: `⚡ drafts the message with the client's Google review link. The client approves it, then sends each request themselves from their own phone or email, in one tap. RGA never sends one.
+    instructions: `Press ⚡ and it drafts the message with the client's Google review link. The client approves it, then sends each request themselves from their own phone or email, in one tap. RGA never sends one.
 One ask, plus one reminder after 3 days if they haven't reviewed. Never a second reminder. If a customer says stop, stop.
 Everyone gets asked the same way, picked by how recently the job finished. Never pick the people you expect to rate well: Google doesn't allow asking selectively.
 There's no review-rate goal. Count asks sent and reviews received, and report both as measured.`,
