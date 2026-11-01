@@ -1,9 +1,68 @@
 [
- ["every business is a storefront", "sitefacts", "return g === \"single_location\" || g === \"multi_location\";", "return true;"],
- ["service area counts as storefront", "sitefacts", "return g === \"single_location\" || g === \"multi_location\";", "return g === \"single_location\" || g === \"multi_location\" || g === \"service_area\";"],
- ["empty market matches", "sitefacts", "return first.length >= 3 && t.includes(first);", "return t.includes(first);"],
- ["audit flags address for everyone", "auditweb", "if (publishesStreetAddress(geo)) {", "if (true) {"],
- ["audit drops the service-area branch", "auditweb", "} else if (geo.geography_model === \"service_area\") {", "} else if (false) {"],
- ["schema step stops using the helper", "exec", "const storefront = publishesStreetAddress(client);", "const storefront = true;"],
- ["step text goes back to address for all", "playbooksjson", "A service-area business with no public street address matches Name, Phone and the service area instead.", "x"]
+ [
+  "every business is a storefront",
+  "sitefacts",
+  "return g === \"single_location\" || g === \"multi_location\";",
+  "return true;"
+ ],
+ [
+  "service area counts as storefront",
+  "sitefacts",
+  "return g === \"single_location\" || g === \"multi_location\";",
+  "return g === \"single_location\" || g === \"multi_location\" || g === \"service_area\";"
+ ],
+ [
+  "empty market matches",
+  "sitefacts",
+  "return first.length >= 3 && t.includes(first);",
+  "return t.includes(first);"
+ ],
+ [
+  "audit flags address for everyone",
+  "auditweb",
+  "if (publishesStreetAddress(geo)) {",
+  "if (true) {"
+ ],
+ [
+  "audit drops the service-area branch",
+  "auditweb",
+  "} else if (geo.geography_model === \"service_area\") {",
+  "} else if (false) {"
+ ],
+ [
+  "schema step stops using the helper",
+  "exec",
+  "const storefront = publishesStreetAddress(client);",
+  "const storefront = true;"
+ ],
+ [
+  "step text goes back to address for all",
+  "playbooksjson",
+  "A service-area business with no public street address matches Name, Phone and the service area instead.",
+  "x"
+ ],
+ [
+  "the address finding fires everywhere again",
+  "auditweb",
+  "!markupShowsAddress(html) && marketIsUS(geo.primary_market)",
+  "true"
+ ],
+ [
+  "any market counts as US",
+  "sitefacts",
+  "return new RegExp(`,\\\\s*(?:${US_STATES})(?:\\\\s+\\\\d{5})?$`).test(m) ||",
+  "return true ||"
+ ],
+ [
+  "a tel link is ignored",
+  "sitefacts",
+  "if (tel) return tel[1].trim();",
+  ""
+ ],
+ [
+  "a year reads as a phone",
+  "sitefacts",
+  "return d >= 8 && d <= 15 &&",
+  "return d >= 4 && d <= 15 &&"
+ ]
 ]
