@@ -282,7 +282,7 @@
 [
 "step 10 loses the hidden-logo note",
 "portal",
-"${p10LogoHidden ? csNote(\"<b>Saved, not showing:</b> Google only shows logos on profiles with a street address. Nothing to do.\") : \"\"}",
+"${p10LogoHidden && !p10Short ? csNote(\"<b>Saved, not showing:</b> Google only shows logos on profiles with a street address. Nothing to do.\") : \"\"}",
 "",
 1
 ],
@@ -359,8 +359,8 @@
 [
 "people question after the tiles",
 "portal",
-"body: p10 ? `${toolbar}${p10}${keptCard}${alsoFold",
-"body: p10 ? `${p10}${toolbar}${keptCard}${alsoFold",
+"body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold",
+"body: p10 ? `${p10}${toolbar}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold",
 1
 ],
 [

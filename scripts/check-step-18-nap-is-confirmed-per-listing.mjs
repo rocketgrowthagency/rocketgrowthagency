@@ -61,7 +61,7 @@ if (st({ outcome_data: od, nap_confirm: { Yelp: ok("https://yelp.com/biz/OTHER")
 if (st({}).done !== false) F("admin's Done proof passes on a step that never searched");
 if (!/"m1\.audit\.citations": \{\s*proof: \(d\) => citNapState\(d\?\.tasks\?\.\["m1\.audit\.citations"\]\)\.done,/.test(admin)) F("step 18's Done is not guarded by the NAP proof (STEP_ARTIFACTS)");
 // 🔑 rowLiveCardsHtml (10-19) is the one place a row's live card is chosen; both row states call it
-if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.audit\.citations" \? citNapHtml\(t\)/.test(admin))) F("row 18 no longer shows the per-listing NAP checks (active + queued)");
+if (!((admin.match(/\$\{rowLiveCardsHtml\(o, s\)\}/g) || []).length >= 2 && /id === "m1\.audit\.citations" \? citAutoHtml\(t\) \+ citNapHtml\(t\)/.test(admin))) F("row 18 no longer shows the per-listing NAP checks (active + queued)");
 if (!/nap_review: \{ type: "info"/.test(admin)) F("the new 'nap_review' outcome has no banner (it would read as Done ✅)");
 if (F.length) { console.error("🔴 step 18 can finish without RGA's NAP check:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ step 18: search → 'confirm the NAP on each listing' (open) · every found listing confirmed on its own URL → Done · mismatch / other URL / unreadable never counts · admin proof agrees");

@@ -2,6 +2,8 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // audit_decisions_v1 #7 (approved 10-31): the listings check runs itself once
+  listingsauto: "netlify/functions/_listings-autorun.js",
   // blog_system_v1 + blog_cleanup_v1 (10-31, built 11-01)
   bloglinks: "netlify/functions/_blog-links.js",
   blogsys: "netlify/functions/_blog-system.js",

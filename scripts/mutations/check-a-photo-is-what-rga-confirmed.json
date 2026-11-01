@@ -86,8 +86,8 @@
 [
 "step 10's already-on-Google jumps above the tiles",
 "portal",
-"body: p10 ? `${toolbar}${p10}${keptCard}${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}",
-"body: p10 ? `${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}${toolbar}${p10}${keptCard}",
+"body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}",
+"body: p10 ? `${alsoFold ? `<div class=\"pm-pc-also\">${alsoFold}</div>` : \"\"}${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}",
 1
 ],
 [

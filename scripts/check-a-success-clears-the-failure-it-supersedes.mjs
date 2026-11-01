@@ -58,6 +58,10 @@ const DECLARED = {
     anchor_read_error: { why: "part of one run's output, replaced whole by the next run" },
     locked_read_error: { why: "part of one run's output, replaced whole by the next run" },
   },
+  // audit_decisions_v1 #5: the last refused press stays on the description step until a publish succeeds
+  "gbp-publish.js": {
+    publish_failed: { clear: /delete rec\.data\.tasks\[stepId\]\.publish_failed;/ },
+  },
   "_photo-publish.js": {
     publish_error: { clear: /publish_state: "published", publish_error: null,/ },
     // photo_change_remove_v1: a count in the run's summary (the function's return), never stored; the failure itself is

@@ -127,7 +127,7 @@ if (!slotsSrc || !stateSrc || !bigSrc || !howSrc) { console.error("⚠️  INDET
 const EX = await import(pathToFileURL(`${SITE}/shared/photo-examples.js`).href);
 const AK = await import(pathToFileURL(`${SITE}/shared/photo-art.js`).href);
 const esc = (x) => String(x ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, photoCountable: SL.photoCountable, photoListedNames: SL.photoListedNames, photoMissingFromList: SL.photoMissingFromList, CS_STEPS: new Set(), tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
+const ctx = { escapeHtml: esc, escapeAttribute: esc, photoExampleOf: EX.photoExampleOf, photoExampleArt: EX.photoExampleArt, PHOTO_EXAMPLE_SPRITE: "", artKey: AK.artKey, secondLogos: SL.secondLogos, photoCountable: SL.photoCountable, photoListedNames: SL.photoListedNames, photoLiveByLine: SL.photoLiveByLine, photoOnlyVisible: SL.photoOnlyVisible, photoShortfall: SL.photoShortfall, photoMissingFromList: SL.photoMissingFromList, CS_STEPS: new Set(), tidiedByRga: SL.tidiedByRga, FILED_AS: SL.FILED_AS, console, Date };
 vm.createContext(ctx);
 try { vm.runInContext(`${planCardKit(portal, [stateSrc, bigSrc, slotsSrc].join("\n"))}\n${stateSrc}\n${bigSrc}\n${slotsSrc}\n${howSrc}\nthis.how = clientHowHtml; this.card = secondLogoCardHtml;`, ctx); }
 catch (e) { console.error(`⚠️  INDETERMINATE — the renderer did not load: ${e.message}`); process.exit(2); }
@@ -143,7 +143,7 @@ const T = (extra = {}) => ({ draft_shape: shape, team_size: "1", detected: { n: 
   if (!/RGA is removing a second copy of your logo\./.test(h) || /your call|RGA is filing it/i.test(h)) fail("the fold doesn't say RGA is removing it (or still says it's their call)");
   const r0 = h.indexOf("data-second-logo-row"), r1 = h.indexOf('<div class="pm-arow">', r0);
   const row = r0 < 0 ? "" : h.slice(r0, r1 < 0 ? h.indexOf("</details>", r0) : r1);
-  if (!/<b class="pm-rec">RGA recommends removing it\.<\/b>/.test(row) || !/Google can show this copy at the top of your profile as if it were a photo of your business\./.test(row) || !/We(?:'|&#39;)ll take it off once your cover photo is on Google, so your profile is never left with no photo\. Nothing needed from you\./.test(row)) fail("the row doesn't say RGA recommends it, why, and that nothing is needed");
+  if (!/<b class="pm-rec">RGA recommends removing it\.<\/b>/.test(row) || !/Google can show this copy at the top of your profile as if it were a photo of your business\./.test(row) || !/It(?:'|&#39;)s the only photo customers can see right now, so we(?:'|&#39;)ll take it off once your cover photo is on Google\. Nothing needed from you\./.test(row)) fail("the row doesn't say RGA recommends it, why, and that nothing is needed");
   if (!/<span class="pm-pill other">RGA is doing it<\/span><\/div>$/.test(row) || /data-photo-remove|pm-pill you/.test(row)) fail("the row still hands the client the decision (Remove button / Your call) instead of RGA is doing it");
   if (!/class="pm-linkbtn" data-photo-keep="[^"]+" data-client-id="c1">Prefer to keep it\?<\/button>/.test(row)) fail("the client has no veto (Prefer to keep it?)");
   const k = ctx.how(step, T({ photo_kept: { [copy.name]: { at: "2026-10-16T12:00:00Z" } } }), true, [], "c1", null);

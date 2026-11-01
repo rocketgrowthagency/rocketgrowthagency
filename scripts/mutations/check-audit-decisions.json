@@ -1,0 +1,541 @@
+[
+[
+"the bulk press isn't held",
+"photopublish",
+"if (trigger !== \"admin\" || paced) {",
+"if (trigger !== \"admin\") {",
+1
+],
+[
+"the cap is 50",
+"photopublish",
+"const DAILY_CAP = 5;",
+"const DAILY_CAP = 50;",
+1
+],
+[
+"the review drops the pace",
+"photoreview",
+"photoIds: moved.map((p) => p.id), paced })",
+"photoIds: moved.map((p) => p.id) })",
+1
+],
+[
+"the review ignores paced",
+"photoreview",
+"const paced = body.paced === true || (Array.isArray(photo_ids) && photo_ids.length > 1);",
+"const paced = false;",
+1
+],
+[
+"Try again isn't held",
+"photopush",
+"      paced: true,\n",
+"",
+1
+],
+[
+"the button doesn't ask for the pace",
+"admin",
+"reviewPhotos(\"approve\", ids.map((id) => ({ id, category: kindOf(id) })), \"\", { paced: true });",
+"reviewPhotos(\"approve\", ids.map((id) => ({ id, category: kindOf(id) })));",
+1
+],
+[
+"the pace never reaches the server",
+"admin",
+"...(paced ? { paced: true } : {}), ",
+"",
+1
+],
+[
+"the button says Send again",
+"admin",
+">Approve the ${fitting.length === 1",
+">Send the ${fitting.length === 1",
+1
+],
+[
+"the line is gone",
+"admin",
+"<span class=\"pr-files pr-pace\" data-photo-pace>${escapeHtml(photoPaceLine(fitting.length, going.filter((p) => p.publish_state === \"pending\").length, state.photos || []))}</span>",
+"",
+1
+],
+[
+"the line ignores today's sends",
+"admin",
+"const room = Math.max(0, PHOTO_DAILY_CAP - sent), total = n + ahead;",
+"const room = PHOTO_DAILY_CAP, total = n + ahead;",
+1
+],
+[
+"the line ignores what's already approved",
+"admin",
+"const room = Math.max(0, PHOTO_DAILY_CAP - sent), total = n + ahead;",
+"const room = Math.max(0, PHOTO_DAILY_CAP - sent), total = n;",
+1
+],
+[
+"the fold isn't on the wait card",
+"admin",
+"${typeof photoEverythingHtml === \"function\" ? photoEverythingHtml() : \"\"}",
+"",
+1
+],
+[
+"the fold isn't on the full state",
+"admin",
+"    ${photoEverythingHtml()}\n  </div>`.replace(/#pmx-/g, \"#prx-\");",
+"  </div>`.replace(/#pmx-/g, \"#prx-\");",
+1
+],
+[
+"every later photo is called before RGA",
+"admin",
+"before = !Number.isFinite(at) || !Number.isFinite(startMs) || at < startMs;",
+"before = true;",
+1
+],
+[
+"their photos drop out",
+"admin",
+"<div class=\"ob-zc-everyb\">${ours.join(\"\")}${theirs.join(\"\")}</div>",
+"<div class=\"ob-zc-everyb\">${ours.join(\"\")}</div>",
+1
+],
+[
+"a photo with no slot isn't said",
+"admin",
+"const noSlot = Number.isFinite(p.shot_n) ? \"\" : \" · no slot\";",
+"const noSlot = \"\";",
+1
+],
+[
+"the placeholder date prints",
+"admin",
+"if (!Number.isFinite(ms) || new Date(ms).getFullYear() < 2000) return \"\";",
+"if (!Number.isFinite(ms)) return \"\";",
+1
+],
+[
+"no shortfall is ever found",
+"secondlogoshared",
+"if (short <= 0) return null;",
+"return null;",
+1
+],
+[
+"a photo with RGA doesn't close the gap",
+"secondlogoshared",
+"const left = d.threshold - counted, short = left - onWay;",
+"const left = d.threshold - counted, short = left;",
+1
+],
+[
+"an empty shot reads as short",
+"secondlogoshared",
+"if (!items.every((it) => filled.has(Number(it.n)))) return null;\n  const hidden",
+"const hidden",
+1
+],
+[
+"a failed read reads as short",
+"secondlogoshared",
+"if (d?.source !== \"google_profile\" || !Number.isFinite(d.threshold) || !items.length) return null;",
+"if (!Number.isFinite(d?.threshold) || !items.length) return null;",
+1
+],
+[
+"a turned-down shot counts as filled",
+"secondlogoshared",
+"const filled = new Set(rows.filter((p) => Number.isFinite(p.shot_n) && p.publish_state !== \"turned_down\")",
+"const filled = new Set(rows.filter((p) => Number.isFinite(p.shot_n))",
+1
+],
+[
+"the card has no way to finish",
+"portal",
+"body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}",
+"body: p10 ? `${toolbar}${p10}${p10LiveNote}${keptCard}",
+1
+],
+[
+"Nothing to do stays beside Add one more",
+"portal",
+"${p10LogoHidden && !p10Short ? csNote(",
+"${p10LogoHidden ? csNote(",
+1
+],
+[
+"the row still says nothing needed",
+"portal",
+"  if (photoShortfall(taskState, photos)) return null;\n",
+"",
+1
+],
+[
+"the row loses the count",
+"portal",
+"${photoShort.counted} of ${photoShort.threshold} on Google · ${photoShort.left} to go",
+"Nearly there",
+1
+],
+[
+"the extra photo doesn't spin",
+"portal",
+"  if (moreCtl) moreCtl.classList.add(\"is-busy\");\n",
+"",
+1
+],
+[
+"admin drops its card",
+"admin",
+"return done < total || short || (typeof photoReviewCount",
+"return done < total || (typeof photoReviewCount",
+1
+],
+[
+"admin doesn't say why",
+"admin",
+"if (st.short) notes.push(",
+"if (false) notes.push(",
+1
+],
+[
+"Customers can see for everyone",
+"portal",
+"csSt(\"rga\", \"You asked to keep it\", ",
+"csSt(\"rga\", \"Customers can see this copy on your profile\", ",
+1
+],
+[
+"the cover line always shows",
+"portal",
+"photoOnlyVisible(taskState, sl.kept[0].name) ? \"It's the only photo",
+"true ? \"It's the only photo",
+1
+],
+[
+"the cover line never shows",
+"portal",
+"photoOnlyVisible(taskState, sl.kept[0].name) ? \"It's the only photo",
+"false ? \"It's the only photo",
+1
+],
+[
+"the toast promises again",
+"portal",
+"\"<b>You asked to keep it</b>\"",
+"\"<b>We'll keep it</b> · RGA won't remove it\"",
+1
+],
+[
+"admin promises again",
+"admin",
+"<b>Old logo copy</b><small>Client asked to keep it,",
+"<b>Old logo copy · the one customers see</b><small>Client asked to keep it,",
+1
+],
+[
+"the card counts a hidden logo as visible",
+"secondlogoshared",
+"return !d.items.some((x) => x && x.name !== name && !(hideLogo && x.category === \"PROFILE\")",
+"return !d.items.some((x) => x && x.name !== name",
+1
+],
+[
+"the card and guard disagree on a cover",
+"photoremove",
+" && x.category !== \"PROFILE\" && x.category !== \"COVER\"));   // a cover shows",
+" && x.category !== \"PROFILE\"));   // a cover shows",
+1
+],
+[
+"a failed read calls it the only one",
+"secondlogoshared",
+"if (d?.source !== \"google_profile\" || !Array.isArray(d.items)) return false;",
+"if (!Array.isArray(d?.items)) return false;",
+1
+],
+[
+"a stranger's call writes on the record",
+"gbppublishfn",
+"  const gate = await requireWorkspaceForClientOrInternal(event, clientId);",
+"  seen.approved = { clientId, stepId };\n  const gate = await requireWorkspaceForClientOrInternal(event, clientId);",
+1
+],
+[
+"a refused press isn't kept",
+"gbppublishfn",
+"    await keepFailure(seen.approved.clientId, seen.approved.stepId, said);\n",
+"",
+1
+],
+[
+"a success keeps the failure",
+"gbppublishfn",
+"  delete rec.data.tasks[stepId].publish_failed;   // a success clears the failure it supersedes\n",
+"",
+1
+],
+[
+"the refusal is a bare status",
+"gbppublishfn",
+"error: rj?.error?.status === \"CONSENT_REQUIRED\" ? rj.error.message : `Google refused the update (${r.status})${rj?.error?.message ? `: ${String(rj.error.message).slice(0, 200)}` : \"\"}`,",
+"error: `Google refused the update (${r.status})`,",
+1
+],
+[
+"the step doesn't finish on a read back",
+"gbppublishfn",
+"    rec.data.tasks[stepId].status = \"done\";\n",
+"",
+1
+],
+[
+"no read back",
+"gbppublishfn",
+"  if (!verified) {",
+"  if (false) {",
+1
+],
+[
+"the draft goes instead of the approved text",
+"gbppublishfn",
+"  const approved = (approval.approved_content || \"\").trim();",
+"  const approved = (task.outcome_data?.draft || \"\").trim();",
+1
+],
+[
+"the guard goes",
+"googleconsent",
+"if (refusal) return new Response(",
+"if (false) return new Response(",
+1
+],
+[
+"a server job presses it",
+"nightlyfn",
+"  const PROBED_STEPS = require(\"./portal-step-recheck\").PROBE_IDS();",
+"  await fetch(`${process.env.URL}/.netlify/functions/gbp-publish`, { method: \"POST\" });\n  const PROBED_STEPS = require(\"./portal-step-recheck\").PROBE_IDS();",
+1
+],
+[
+"the card always asks",
+"admin",
+"&& (!(t.published && t.published.at) || Date.parse(t.approval.at || \"\") > Date.parse(t.published.at)));",
+"&& true);",
+1
+],
+[
+"a newer approval doesn't ask",
+"admin",
+"&& (!(t.published && t.published.at) || Date.parse(t.approval.at || \"\") > Date.parse(t.published.at)));",
+"&& !(t.published && t.published.at));",
+1
+],
+[
+"the row doesn't say it",
+"admin",
+"if (id === DESC_STEP && descriptionToPublish(t)) return { text: \"Approved · Publish to Google\", cls: \"active\" };",
+"",
+1
+],
+[
+"the card isn't on the row",
+"admin",
+"    : id === DESC_STEP && descriptionToPublish(t) ? descriptionPublishCardHtml(t, adminListing())\n",
+"",
+1
+],
+[
+"a refusal doesn't reach the card",
+"admin",
+"if (s) s.textContent = e.message;",
+"",
+1
+],
+[
+"the button works past 750",
+"admin",
+"data-desc-publish${over || paused ? \" disabled\" : \"\"}",
+"data-desc-publish${paused ? \" disabled\" : \"\"}",
+1
+],
+[
+"the button works on a second listing",
+"admin",
+"data-desc-publish${over || paused ? \" disabled\" : \"\"}",
+"data-desc-publish${over ? \" disabled\" : \"\"}",
+1
+],
+[
+"the button presses itself",
+"admin",
+"  const b = ev.target.closest && ev.target.closest(\"[data-desc-publish]\");",
+"  const b = document.querySelector(\"[data-desc-card] button\");",
+1
+],
+[
+"the note is a promise",
+"secondlogoshared",
+"That's an estimate, not a promise.",
+"It will be live by then.",
+1
+],
+[
+"the note claims Maps",
+"secondlogoshared",
+"so by about ${shortDay(sent + LIVE_BY_MS)}.",
+"so it was seen on Maps by ${shortDay(sent + LIVE_BY_MS)}.",
+1
+],
+[
+"the note never expires",
+"secondlogoshared",
+"return now - sent < LIVE_BY_MS ? `Sent",
+"return true ? `Sent",
+1
+],
+[
+"the client's card loses it",
+"portal",
+"body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}",
+"body: p10 ? `${toolbar}${p10}${p10ShortHtml}",
+1
+],
+[
+"the shot's row loses it",
+"portal",
+"        : liveBy ? `<div class=\"pm-turned is-rga pm-liveby\"><span>${escapeHtml(liveBy)}</span></div>` : \"\" });",
+"        : \"\" });",
+1
+],
+[
+"a hidden logo gets a date",
+"portal",
+"![\"hide\", \"missing\"].includes(photoGoogleState(ph))",
+"![\"missing\"].includes(photoGoogleState(ph))",
+1
+],
+[
+"admin loses it",
+"admin",
+"${photoLiveByLine(p.pushed_at)} ${gs === \"list\"",
+"${gs === \"list\"",
+1
+],
+[
+"the claim isn't conditional",
+"listingsauto",
+"&data->tasks->%22${encodeURIComponent(STEP)}%22->auto_run=is.null&select=id",
+"&select=id",
+1
+],
+[
+"the claim comes after the spend",
+"listingsauto",
+"  if (!Array.isArray(won) || !won.length) return { ran: false, why: \"another caller claimed it\" };\n",
+"",
+1
+],
+[
+"no stamp check",
+"listingsauto",
+"  if (t.auto_run) return \"already ran by itself\";\n",
+"",
+1
+],
+[
+"a run by a press starts again",
+"listingsauto",
+"  if (t.ran_at || t.outcome_data) return \"it already has a result\";\n",
+"",
+1
+],
+[
+"test clients spend",
+"listingsauto",
+"  if (String(client.source || \"\").startsWith(\"test:\")) return \"a test client\";\n",
+"",
+1
+],
+[
+"archived clients spend",
+"listingsauto",
+"  if (client.status === \"archived\") return \"archived\";\n",
+"",
+1
+],
+[
+"it starts before setup reaches it",
+"listingsauto",
+"  if (!REACHED.includes(client.client_portal_stage)) return \"setup hasn't reached it\";\n",
+"",
+1
+],
+[
+"the off switch does nothing",
+"listingsauto",
+"String(env.LISTINGS_AUTO_RUN || \"\").trim().toLowerCase() !== \"off\"",
+"true",
+1
+],
+[
+"the nightly isn't capped",
+"listingsauto",
+"    if (started >= NIGHT_CAP) break;\n",
+"",
+1
+],
+[
+"the stated cost is wrong",
+"listingsauto",
+".filter((d) => d.listingExample).length * 2;",
+".filter((d) => d.listingExample).length;",
+1
+],
+[
+"the nightly catch is gone",
+"nightlyfn",
+"const lr = await require(\"./_listings-autorun\").sweepListings();",
+"const lr = { started: 0 };",
+1
+],
+[
+"setup reaching it doesn't start it",
+"oauthcb",
+"try { await require(\"./_listings-autorun\").runListingsOnce({ clientId, trigger: \"google_connected\" }); }",
+"try { void 0; }",
+1
+],
+[
+"a search retries",
+"exec",
+"    const [bySite, byName] = await Promise.all([\n      askGoogle(`\"${name}\" site:${d.host}`),",
+"    const [bySite, byName] = await Promise.all([\n      askGoogle(`\"${name}\" site:${d.host}`),\n      askGoogle(`\"${name}\" site:${d.host}`),",
+1
+],
+[
+"the card says a checked-nothing run is an answer",
+"admin",
+"if (!found && !missing) return card(",
+"if (false) return card(",
+1
+],
+[
+"the card drops the three answers",
+"admin",
+"const side = `${found} Listed · ${missing} No listing found · ${unknown} Could not check`;",
+"const side = `${found} of ${found + missing}`;",
+1
+],
+[
+"the card isn't on the step",
+"admin",
+"id === \"m1.audit.citations\" ? citAutoHtml(t) + citNapHtml(t)",
+"id === \"m1.audit.citations\" ? citNapHtml(t)",
+1
+]
+]

@@ -1,429 +1,429 @@
 [
- [
-  "published is green again",
-  "portal",
-  "published: { cls: \"other\", label: \"On Google's list\" },",
-  "published: { cls: \"ok\", label: \"On Google's list\" },",
-  1
- ],
- [
-  "published claims the profile again",
-  "portal",
-  "published: { cls: \"other\", label: \"On Google's list\" },",
-  "published: { cls: \"other\", label: \"On your Google profile\" },",
-  1
- ],
- [
-  "the sent state is dropped",
-  "portal",
-  "sent: \"Sent · up to 48 hours\", ",
-  "sent: \"On Google\", ",
-  1
- ],
- [
-  "a tile draws a tick",
-  "portal",
-  "return st === \"on\" ? (ph && ph.storage_path ?",
-  "return st === \"on\" ? `<span class=\"ok\">✓</span>` : (ph && ph.storage_path ?",
-  1
- ],
- [
-  "a tile is green",
-  "portalcss",
-  ".pm-cs .pm-p10-t.is-on .im { border:0; box-shadow:inset 0 0 0 2px var(--portal-accent,#2457e6); }",
-  ".pm-cs .pm-p10-t.is-on .im { border:0; background:var(--state-ok-fill,#16a34a); }",
-  1
- ],
- [
-  "missing is never said",
-  "portal",
-  "return photoMissingFromList(ph, taskState?.detected) ? \"missing\" : \"sent\";",
-  "return false ? \"missing\" : \"sent\";",
-  1
- ],
- [
-  "the portal uses the raw count",
-  "portal",
-  "{ ...d0, n: photoCountable(taskState, photos) }",
-  "{ ...d0 }",
-  1
- ],
- [
-  "a How rule is dropped",
-  "portal",
-  "<li><b>Ask first.</b> Get a yes from anyone whose face is in a photo.</li>",
-  "",
-  1
- ],
- [
-  "the client can't undo Keep",
-  "portal",
-  "...(undo ? { undo: true } : {})",
-  "...{}",
-  1
- ],
- [
-  "admin can't undo Keep",
-  "admin",
-  "data-sl-undo-keep=\"${escapeAttribute(m.name)}\"",
-  "data-sl-undone=\"${escapeAttribute(m.name)}\"",
-  1
- ],
- [
-  "admin doesn't ask first",
-  "admin",
-  "okLabel: \"Remove anyway\"",
-  "okLabel: \"Remove\"",
-  1
- ],
- [
-  "the line doesn't say what doesn't count",
-  "playbook",
-  "apart from a logo Google hides or a second copy of your logo.",
-  "and count toward 20.",
-  1
- ],
- [
-  "a hidden logo counts",
-  "secondlogoshared",
-  "(hideLogo && g.category === \"PROFILE\")",
-  "false",
-  1
- ],
- [
-  "a copy counts",
-  "secondlogoshared",
-  "skip.has(g.name) || ",
-  "",
-  1
- ],
- [
-  "reading twice subtracts twice",
-  "secondlogoshared",
-  "const raw = Number.isFinite(d.n_all) ? d.n_all : d.n;",
-  "const raw = d.n;",
-  1
- ],
- [
-  "the nightly keeps the raw count",
-  "recheck",
-  "const good = Math.max(0, n - notCounted);",
-  "const good = n;",
-  1
- ],
- [
-  "n_all isn't stored",
-  "recheck",
-  "...(Number.isFinite(probe.n_all) ? { n_all: probe.n_all } : {})",
-  "",
-  1
- ],
- [
-  "a kept copy counts in the nightly only",
-  "recheck",
-  "(hasLogo && g.category !== \"PROFILE\" && g.category !== \"COVER\" && ai[g.name] && !ai[g.name].error && Number(ai[g.name].slot) === logoN)",
-  "false",
-  1
- ],
- [
-  "views aren't kept",
-  "recheck",
-  ", views: Number.isFinite(Number(m.insights?.viewCount)) ? Number(m.insights.viewCount) : null };",
-  " };",
-  1
- ],
- [
-  "RGA is told every night",
-  "recheck",
-  " && !told[p.id] && ",
-  " && ",
-  1
- ],
- [
-  "a fresh photo is reported",
-  "recheck",
-  " && Date.parse(p.pushed_at || \"\") < cut);",
-  ");",
-  1
- ],
- [
-  "the notice throws again",
-  "recheck",
-  "const viaCron = Boolean(process.env.INTERNAL_FN_SECRET) && ((event && event.headers && (event.headers[\"x-internal-secret\"] || event.headers[\"X-Internal-Secret\"])) || \"\") === process.env.INTERNAL_FN_SECRET;",
-  "",
-  1
- ],
- [
-  "undo doesn't clear",
-  "photokeep",
-  "delete kept[name]; task.photo_kept = kept;",
-  "task.photo_kept = kept;",
-  1
- ],
- [
-  "the only photo can go unasked",
-  "photoremove",
-  "if (cleanup && force !== true) {",
-  "if (false) {",
-  1
- ],
- [
-  "a hidden logo reads as another photo",
-  "photoremove",
-  "!(hideLogo && x.category === \"PROFILE\") && ",
-  "",
-  1
- ],
- [
-  "force is ignored",
-  "photoremove",
-  "force: body.force === true,",
-  "",
-  1
- ],
- [
-  "the cap isn't 5",
-  "photopublish",
-  "const DAILY_CAP = 5;",
-  "const DAILY_CAP = 50;",
-  1
- ],
- [
-  "an admin press is held",
-  "photopublish",
-  "if (trigger !== \"admin\") {\n    const since",
-  "if (true) {\n    const since",
-  1
- ],
- [
-  "every open step tells RGA every night",
-  "recheck",
-  "if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
-  "await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
-  1
- ],
- [
-  "a real reopen tells nobody",
-  "recheck",
-  "if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
-  "if (false) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
-  1
- ],
- [
-  "a tile says Ext again",
-  "portal",
-  "const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
-  "const short = (g) => ({ Exterior: \"Ext\", \"At work\": \"Work\" })[g] || g;",
-  1
- ],
- [
-  "a tile says Int again",
-  "portal",
-  "const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
-  "const short = (g) => ({ Interior: \"Int\", \"At work\": \"Work\" })[g] || g;",
-  1
- ],
- [
-  "the old copy's card squeezes on a phone",
-  "portalcss",
-  ".pm-arow-kept .pm-cs-st > .a { grid-column:2; } }",
-  ".pm-arow-kept .pm-cs-st > .a { grid-column:3; } }",
-  1
- ],
- [
-  "tapping a tile scrolls to the edge, not the middle",
-  "portal",
-  "scrollIntoView({ block: \"center\", behavior: matchMedia",
-  "scrollIntoView({ block: \"nearest\", behavior: matchMedia",
-  1
- ],
- [
-  "only the chips scroll, as before",
-  "portal",
-  "  host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
-  "  if (t.hasAttribute(\"data-p10-kind\")) host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
-  1
- ],
- [
-  "a full kind's chip goes green again",
-  "portal",
-  "</em></button>`, \"\"];   // client_step10_photo_truth_v1",
-  "</em></button>`, f === g.items.length ? \"main\" : \"\"];   // client_step10_photo_truth_v1",
-  1
- ],
- [
-  "only the upload's name counts again",
-  "secondlogoshared",
-  "      if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
-  "      if (hit && false) { out.set(p, hit.name); taken.add(hit.name); }",
-  1
- ],
- [
-  "any time matches",
-  "secondlogoshared",
-  "gap(g) <= LIST_WINDOW_MS",
-  "gap(g) <= 1e15",
-  1
- ],
- [
-  "before the send matches",
-  "secondlogoshared",
-  "gap(g) >= -LIST_SKEW_MS && ",
-  "",
-  1
- ],
- [
-  "a list item can be claimed twice",
-  "secondlogoshared",
-  "if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
-  "if (hit) { out.set(p, hit.name); }",
-  1
- ],
- [
-  "the functions copy can claim twice",
-  "photolistname",
-  "if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
-  "if (hit) { out.set(p, hit.name); }",
-  1
- ],
- [
-  "the functions copy takes retired photos",
-  "photolistname",
-  "!RETIRED.includes(p.publish_state) && ",
-  "",
-  1
- ],
- [
-  "the nightly checks the name only",
-  "recheck",
-  "!photoOnList(p, probe.items, ours)",
-  "!probe.items.some((m) => m.name === p.gbp_media_name)",
-  1
- ],
- [
-  "the client's tile checks the name only",
-  "portal",
-  "if (listedNames.get(ph)) return \"list\";",
-  "if (ph.gbp_media_name === \"never\") return \"list\";",
-  1
- ],
- [
-  "admin's tile checks the name only",
-  "admin",
-  "if (listedNames.get(p)) return \"list\";",
-  "if (p.gbp_media_name === \"never\") return \"list\";",
-  1
- ],
- [
-  "a failed read says missing",
-  "secondlogoshared",
-  "if (detected?.source !== \"google_profile\") return false;",
-  "",
-  1
- ],
- [
-  "missing measured from an early read",
-  "secondlogoshared",
-  "read - sent > 3 * 86400000",
-  "Date.now() - sent > 3 * 86400000",
-  1
- ],
- [
-  "a failed read wipes the list",
-  "recheck",
-  "at: new Date().toISOString(), ...keepList,",
-  "at: new Date().toISOString(),",
-  1
- ],
- [
-  "a failed read reopens a done step",
-  "recheck",
-  "if (cur?.tasks?.[stepId]?.status === \"done\") probe = { ...probe, verdict: \"indeterminate\" };",
-  "",
-  1
- ],
- [
-  "admin's header says on Google for a sent count",
-  "admin",
-  "${photos.source === \"sent_to_us\" ? \"sent to us\" : \"on Google\"}",
-  "on Google",
-  1
- ],
- [
-  "the slot keeps the turned-down photo",
-  "admin",
-  "const slotRank = (p) => (isUp(p) ? 2 : p.publish_state === \"turned_down\" ? 0 : 1);",
-  "const slotRank = (p) => 1;",
-  1
- ],
- [
-  "delete uses the upload's name",
-  "photoretire",
-  "const target = (before && photoOnList(photo, before, rows)) || name;",
-  "const target = name;",
-  1
- ],
- [
-  "a 404 alone reads as gone",
-  "photoretire",
-  "if (!after) return { ok: false, status: 0, error: \"We couldn't check with Google that it's gone.\" };",
-  "if (!after) return { ok: true, status: 404, name: target };",
-  1
- ],
- [
-  "the pill counts only reviews",
-  "admin",
-  "${parts && parts.rgaN ? \"Your move\"",
-  "${parts && parts.reviewN ? \"Your move\"",
-  1
- ],
- [
-  "failed sends aren't RGA's",
-  "admin",
-  "rgaN: review.length + broken.length + photoToSortCount()",
-  "rgaN: review.length",
-  1
- ],
- [
-  "view larger dead on the old view",
-  "admin",
-  ", .pr-wrap [data-photo-zoom], .pr-wrap [data-photo-zoom-src], .pr-wrap .pr-ph.photo",
-  "",
-  1
- ],
- [
-  "a logo gets no sent line",
-  "admin",
-  "isUp(p) && p.pushed_at && googleState(p) !== \"hide\"",
-  "isUp(p) && p.pushed_at && p.category !== \"logo\"",
-  1
- ],
- [
-  "no reading prints zero",
-  "admin",
-  "!Number.isFinite(counted) ? \"Not checked yet\" : ",
-  "",
-  1
- ],
- [
-  "the nightly undoes skip",
-  "recheck",
-  "if (row && row.id && row.tasks?.[stepId]?.status !== \"skipped\") {",
-  "if (row && row.id) {",
-  1
- ],
- [
-  "stamped before delivery",
-  "recheck",
-  "if (told_ok) {",
-  "if (true) {",
-  1
- ],
- [
-  "undelivered counts as told",
-  "recheck",
-  "(${jr.reason || \"no reason given\"}) — \"${subject}\"`);\n        return false;",
-  "(${jr.reason || \"no reason given\"}) — \"${subject}\"`);",
-  1
- ]
+[
+"published is green again",
+"portal",
+"published: { cls: \"other\", label: \"On Google's list\" },",
+"published: { cls: \"ok\", label: \"On Google's list\" },",
+1
+],
+[
+"published claims the profile again",
+"portal",
+"published: { cls: \"other\", label: \"On Google's list\" },",
+"published: { cls: \"other\", label: \"On your Google profile\" },",
+1
+],
+[
+"the sent state is dropped",
+"portal",
+"sent: \"Sent · up to 48 hours\", ",
+"sent: \"On Google\", ",
+1
+],
+[
+"a tile draws a tick",
+"portal",
+"return st === \"on\" ? (ph && ph.storage_path ?",
+"return st === \"on\" ? `<span class=\"ok\">✓</span>` : (ph && ph.storage_path ?",
+1
+],
+[
+"a tile is green",
+"portalcss",
+".pm-cs .pm-p10-t.is-on .im { border:0; box-shadow:inset 0 0 0 2px var(--portal-accent,#2457e6); }",
+".pm-cs .pm-p10-t.is-on .im { border:0; background:var(--state-ok-fill,#16a34a); }",
+1
+],
+[
+"missing is never said",
+"portal",
+"return photoMissingFromList(ph, taskState?.detected) ? \"missing\" : \"sent\";",
+"return false ? \"missing\" : \"sent\";",
+1
+],
+[
+"the portal uses the raw count",
+"portal",
+"{ ...d0, n: photoCountable(taskState, photos) }",
+"{ ...d0 }",
+1
+],
+[
+"a How rule is dropped",
+"portal",
+"<li><b>Ask first.</b> Get a yes from anyone whose face is in a photo.</li>",
+"",
+1
+],
+[
+"the client can't undo Keep",
+"portal",
+"...(undo ? { undo: true } : {})",
+"...{}",
+1
+],
+[
+"admin can't undo Keep",
+"admin",
+"data-sl-undo-keep=\"${escapeAttribute(m.name)}\"",
+"data-sl-undone=\"${escapeAttribute(m.name)}\"",
+1
+],
+[
+"admin doesn't ask first",
+"admin",
+"okLabel: \"Remove anyway\"",
+"okLabel: \"Remove\"",
+1
+],
+[
+"the line doesn't say what doesn't count",
+"playbook",
+"apart from a logo Google hides or a second copy of your logo.",
+"and count toward 20.",
+1
+],
+[
+"a hidden logo counts",
+"secondlogoshared",
+"(hideLogo && g.category === \"PROFILE\")",
+"false",
+1
+],
+[
+"a copy counts",
+"secondlogoshared",
+"skip.has(g.name) || ",
+"",
+1
+],
+[
+"reading twice subtracts twice",
+"secondlogoshared",
+"const raw = Number.isFinite(d.n_all) ? d.n_all : d.n;",
+"const raw = d.n;",
+1
+],
+[
+"the nightly keeps the raw count",
+"recheck",
+"const good = Math.max(0, n - notCounted);",
+"const good = n;",
+1
+],
+[
+"n_all isn't stored",
+"recheck",
+"...(Number.isFinite(probe.n_all) ? { n_all: probe.n_all } : {})",
+"",
+1
+],
+[
+"a kept copy counts in the nightly only",
+"recheck",
+"(hasLogo && g.category !== \"PROFILE\" && g.category !== \"COVER\" && ai[g.name] && !ai[g.name].error && Number(ai[g.name].slot) === logoN)",
+"false",
+1
+],
+[
+"views aren't kept",
+"recheck",
+", views: Number.isFinite(Number(m.insights?.viewCount)) ? Number(m.insights.viewCount) : null };",
+" };",
+1
+],
+[
+"RGA is told every night",
+"recheck",
+" && !told[p.id] && ",
+" && ",
+1
+],
+[
+"a fresh photo is reported",
+"recheck",
+" && Date.parse(p.pushed_at || \"\") < cut);",
+");",
+1
+],
+[
+"the notice throws again",
+"recheck",
+"const viaCron = Boolean(process.env.INTERNAL_FN_SECRET) && ((event && event.headers && (event.headers[\"x-internal-secret\"] || event.headers[\"X-Internal-Secret\"])) || \"\") === process.env.INTERNAL_FN_SECRET;",
+"",
+1
+],
+[
+"undo doesn't clear",
+"photokeep",
+"delete kept[name]; task.photo_kept = kept;",
+"task.photo_kept = kept;",
+1
+],
+[
+"the only photo can go unasked",
+"photoremove",
+"if (cleanup && force !== true) {",
+"if (false) {",
+1
+],
+[
+"a hidden logo reads as another photo",
+"photoremove",
+"!(hideLogo && x.category === \"PROFILE\") && ",
+"",
+1
+],
+[
+"force is ignored",
+"photoremove",
+"force: body.force === true,",
+"",
+1
+],
+[
+"the cap isn't 5",
+"photopublish",
+"const DAILY_CAP = 5;",
+"const DAILY_CAP = 50;",
+1
+],
+[
+"an admin press is held",
+"photopublish",
+"if (trigger !== \"admin\" || paced) {\n    const since",
+"if (true) {\n    const since",
+1
+],
+[
+"every open step tells RGA every night",
+"recheck",
+"if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+"await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+1
+],
+[
+"a real reopen tells nobody",
+"recheck",
+"if (wasDone) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+"if (false) await tellRga(clientId, event, `${stepId} — re-check FAILED, step reopened`,",
+1
+],
+[
+"a tile says Ext again",
+"portal",
+"const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
+"const short = (g) => ({ Exterior: \"Ext\", \"At work\": \"Work\" })[g] || g;",
+1
+],
+[
+"a tile says Int again",
+"portal",
+"const short = (g) => ({ \"At work\": \"Work\" })[g] || g;",
+"const short = (g) => ({ Interior: \"Int\", \"At work\": \"Work\" })[g] || g;",
+1
+],
+[
+"the old copy's card squeezes on a phone",
+"portalcss",
+".pm-arow-kept .pm-cs-st > .a { grid-column:2; } }",
+".pm-arow-kept .pm-cs-st > .a { grid-column:3; } }",
+1
+],
+[
+"tapping a tile scrolls to the edge, not the middle",
+"portal",
+"scrollIntoView({ block: \"center\", behavior: matchMedia",
+"scrollIntoView({ block: \"nearest\", behavior: matchMedia",
+1
+],
+[
+"only the chips scroll, as before",
+"portal",
+"  host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
+"  if (t.hasAttribute(\"data-p10-kind\")) host.querySelector(`[data-p10-shot=\"${n}\"]`)?.scrollIntoView({ block: \"center\", behavior",
+1
+],
+[
+"a full kind's chip goes green again",
+"portal",
+"</em></button>`, \"\"];   // client_step10_photo_truth_v1",
+"</em></button>`, f === g.items.length ? \"main\" : \"\"];   // client_step10_photo_truth_v1",
+1
+],
+[
+"only the upload's name counts again",
+"secondlogoshared",
+"      if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+"      if (hit && false) { out.set(p, hit.name); taken.add(hit.name); }",
+1
+],
+[
+"any time matches",
+"secondlogoshared",
+"gap(g) <= LIST_WINDOW_MS",
+"gap(g) <= 1e15",
+1
+],
+[
+"before the send matches",
+"secondlogoshared",
+"gap(g) >= -LIST_SKEW_MS && ",
+"",
+1
+],
+[
+"a list item can be claimed twice",
+"secondlogoshared",
+"if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+"if (hit) { out.set(p, hit.name); }",
+1
+],
+[
+"the functions copy can claim twice",
+"photolistname",
+"if (hit) { out.set(p, hit.name); taken.add(hit.name); }",
+"if (hit) { out.set(p, hit.name); }",
+1
+],
+[
+"the functions copy takes retired photos",
+"photolistname",
+"!RETIRED.includes(p.publish_state) && ",
+"",
+1
+],
+[
+"the nightly checks the name only",
+"recheck",
+"!photoOnList(p, probe.items, ours)",
+"!probe.items.some((m) => m.name === p.gbp_media_name)",
+1
+],
+[
+"the client's tile checks the name only",
+"portal",
+"if (listedNames.get(ph)) return \"list\";",
+"if (ph.gbp_media_name === \"never\") return \"list\";",
+1
+],
+[
+"admin's tile checks the name only",
+"admin",
+"if (listedNames.get(p)) return \"list\";",
+"if (p.gbp_media_name === \"never\") return \"list\";",
+1
+],
+[
+"a failed read says missing",
+"secondlogoshared",
+"if (detected?.source !== \"google_profile\") return false;",
+"",
+1
+],
+[
+"missing measured from an early read",
+"secondlogoshared",
+"read - sent > 3 * 86400000",
+"Date.now() - sent > 3 * 86400000",
+1
+],
+[
+"a failed read wipes the list",
+"recheck",
+"at: new Date().toISOString(), ...keepList,",
+"at: new Date().toISOString(),",
+1
+],
+[
+"a failed read reopens a done step",
+"recheck",
+"if (cur?.tasks?.[stepId]?.status === \"done\") probe = { ...probe, verdict: \"indeterminate\" };",
+"",
+1
+],
+[
+"admin's header says on Google for a sent count",
+"admin",
+"${photos.source === \"sent_to_us\" ? \"sent to us\" : \"on Google\"}",
+"on Google",
+1
+],
+[
+"the slot keeps the turned-down photo",
+"admin",
+"const slotRank = (p) => (isUp(p) ? 2 : p.publish_state === \"turned_down\" ? 0 : 1);",
+"const slotRank = (p) => 1;",
+1
+],
+[
+"delete uses the upload's name",
+"photoretire",
+"const target = (before && photoOnList(photo, before, rows)) || name;",
+"const target = name;",
+1
+],
+[
+"a 404 alone reads as gone",
+"photoretire",
+"if (!after) return { ok: false, status: 0, error: \"We couldn't check with Google that it's gone.\" };",
+"if (!after) return { ok: true, status: 404, name: target };",
+1
+],
+[
+"the pill counts only reviews",
+"admin",
+"${parts && parts.rgaN ? \"Your move\"",
+"${parts && parts.reviewN ? \"Your move\"",
+1
+],
+[
+"failed sends aren't RGA's",
+"admin",
+"rgaN: review.length + broken.length + photoToSortCount()",
+"rgaN: review.length",
+1
+],
+[
+"view larger dead on the old view",
+"admin",
+", .pr-wrap [data-photo-zoom], .pr-wrap [data-photo-zoom-src], .pr-wrap .pr-ph.photo",
+"",
+1
+],
+[
+"a logo gets no sent line",
+"admin",
+"isUp(p) && p.pushed_at && googleState(p) !== \"hide\"",
+"isUp(p) && p.pushed_at && p.category !== \"logo\"",
+1
+],
+[
+"no reading prints zero",
+"admin",
+"!Number.isFinite(counted) ? \"Not checked yet\" : ",
+"",
+1
+],
+[
+"the nightly undoes skip",
+"recheck",
+"if (row && row.id && row.tasks?.[stepId]?.status !== \"skipped\") {",
+"if (row && row.id) {",
+1
+],
+[
+"stamped before delivery",
+"recheck",
+"if (told_ok) {",
+"if (true) {",
+1
+],
+[
+"undelivered counts as told",
+"recheck",
+"(${jr.reason || \"no reason given\"}) — \"${subject}\"`);\n        return false;",
+"(${jr.reason || \"no reason given\"}) — \"${subject}\"`);",
+1
+]
 ]
