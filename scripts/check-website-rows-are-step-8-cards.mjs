@@ -23,7 +23,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const wcEditing = new Set\(\);[^\n]*$/m, "wcEditing"), line(/^const wcPrefilling = new Set\(\);[^\n]*$/m, "wcPrefilling"),
   line(/^const wcStepDef = [^\n]*;$/m, "wcStepDef"), line(/^const wcTitleOf = [^\n]*;$/m, "wcTitleOf"), line(/^const wcDay = [^\n]*;$/m, "wcDay"),
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
-  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
+  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
@@ -42,6 +42,12 @@ const tchange = { v: "v1", kind: "visible", new_page: true, label: "add_page", w
   files: [{ path: "rga-access-test/index.html", action: "add", note: "a test page, hidden from Google" }] };
 const tbuild = { v: "v1", built_at: NOW, preview_url: "/.netlify/functions/site-preview?x", files: [{ path: "rga-access-test/index.html", action: "add", sha: "201cd46c0f0e0d0c", size: 27780, html: "<html></html>" }] };
 const ran = { auto_result: { summary: "H1: …", ran_at: NOW, outcome_data: {} } };
+const L = "m1.web.location_pages";
+const pageChange = { v: "v1", kind: "visible", new_page: true, label: "add_page", where: "A new page on your website", page_url: "https://sparks.test/electrician-springfield-il/", drafted_at: NOW, searches: ["electrician springfield", "emergency electrician springfield"],
+  files: [{ path: "electrician-springfield-il/index.html", action: "add", note: "the new page" }, { path: "sitemap.xml", action: "edit", note: "adds the new page's address" }],
+  items: [{ label: "Page title", role: "title", after: "Electrician in Springfield, IL | Sparks" }, { label: "Description under the title", role: "description", after: "Licensed electrical work across Springfield and nearby towns." }, { label: "Main headline", after: "Your electrician in Springfield" },
+    { label: "Opening", after: "We work on homes here.\n\nWe also work on small shops." }, { label: "How we work", after: "You call, we look, we quote, we fix it." }, { label: "Links on the page", check: false, after: "Panels → /panels/\nLighting → /lighting/" }, { label: "Areas named", check: false, after: "Springfield, Chatham, Rochester" },
+    { label: "Questions answered", check: false, after: "Do you work weekends?\nAsk us when you call.\n\nDo you pull permits?\nWhen the job needs one." }, { label: "Main button", after: "Call Sparks" }] };
 const S = {
   draftit: { task: { status: "pending" } },
   notproven: { task: { status: "done", completed_at: "2026-09-14T17:00:00Z" } },
@@ -80,6 +86,10 @@ const S = {
     published: { v: "v1", at: NOW, by: "RGA (automatic)", url: "https://www.acme.test/rga-access-test/", checked: true, fingerprint: { match: true, want: "201cd46c", got: "201cd46c" } } } },
   ghLivePartial: { id: T, gh: true, task: { status: "done", site_change: tchange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, site_build: tbuild, approval: { decision: "approved", change_v: "v1", at: NOW },
     publish_pr: { v: "v1", number: 2, at: NOW, merged: { at: NOW, by: "rocketgrowthagency-admin", via: "rga", base: "main" } }, published: { v: "v1", at: NOW, checked: true } } },
+  // draft_review_v1 (build 7): a new page is reviewed by reading it; any client, any page; a too-long title isn't ticked
+  pageReady: { id: L, task: { status: "in_progress", auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield", beside: "beside their 2 Springfield pages" } } } }, pre: pageChange },
+  pageDrafted: { id: L, task: { status: "in_progress", site_change: pageChange, auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
+  pageLong: { id: L, task: { status: "in_progress", site_change: { ...pageChange, items: pageChange.items.map((i) => (i.role === "title" ? { ...i, after: "A title well past what Google shows in a result for anybody at all in Springfield" } : i)) }, auto_result: { summary: "x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
   right: { task: { status: "done", no_change_needed: { note: "One phone number on every page", at: NOW, by: "RGA" } } },
 };
 const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
@@ -91,7 +101,7 @@ try {
     out[name] = await page.evaluate(({ SCJS, code, sc, H, name }) => {
       const escapeHtml = (x) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"), escapeAttribute = escapeHtml;   // = admin.js escapeHtml
       const adminGcardWhen = () => "Oct 27, 11:00 AM", renderOnboardingChecklist = () => {}, movesForSelected = () => [], mvDueDays = () => 0, mvDay = () => "Oct 27";
-      const wcAction = async () => null, GH_MONO = "", OB_WEB_TILE = "";
+      const wcAction = async () => null, GH_MONO = "", OB_WEB_TILE = "", DESC_STEP = "m1.gbp.business_description", descriptionToPublish = () => false;
       // the GitHub connection panel (names_not_addresses_v1) from a fixed read-only check — never a fetch
       const ghConnOf = () => ({ ok: true, match: true, checked_at: "2026-10-28T20:00:00Z", login: "rocketgrowthagency-admin", repo: "acme/site", owner: "acme", site: "acme.test",
         rows: [{ id: "account", ok: true, title: "The account they invited is the one we post as", detail: "The client invited rocketgrowthagency-admin on Oct 26. Our key is the same account today.", ev: "Oct 26 → today" }] });
@@ -100,7 +110,7 @@ try {
       // eslint-disable-next-line no-eval
       const api = eval(`(() => { ${code}; return { wcDraftCache, wcEditing, siteChangeAdminHtml, wcRowPill, ghPillText, ghPanelHtml, ghBandHtml }; })()`);
       const sig = `${sc.task.ran_at || (sc.task.auto_result && sc.task.auto_result.ran_at) || sc.task.completed_at || ""}|${String((sc.task.auto_result && sc.task.auto_result.summary) || "").length}`;
-      if (sc.pre) api.wcDraftCache.set(`c1:${H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
+      if (sc.pre) api.wcDraftCache.set(`c1:${sc.id || H}`, { ...sc.pre, _run: sc.stale ? "an older run" : sig });
       if (sc.edit) api.wcEditing.add(`c1:${H}`);
       const el = document.getElementById("h"); el.innerHTML = api.siteChangeAdminHtml(sc.id || H, sc.task);
       const vis = (q) => [...el.querySelectorAll(q)].filter((x) => x.offsetParent !== null);
@@ -211,5 +221,19 @@ has("right", /Already right · nothing needed changing/, "already right isn't sa
 // the wiring the browser can't see
 if (!/if \(t\.hasAttribute\("data-ob-wc-savesend"\)\) \{/.test(A) || !/site_action: "save", change: pre \}\);[\s\S]{0,200}internal_decision: "approved"/.test(A)) fail("Send for approval on a draft doesn't save it and send it");
 if (!/\$\{gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");
+// ── draft_review_v1 (website_system_v2 build 7) ──
+has("pageReady", /Your move · review the draft/, "a page draft isn't \"review the draft\"");
+for (const [re, what] of [[/Its address\/electrician-springfield-il\/ · beside their 2 Springfield pages/, "the address + what it sits beside"], [/Title 39 of 65 characters, names Springfield/, "the title's measured length and what it names"], [/Description 61 of 160 characters/, "the description's measured length"],
+  [/Written for 2 searches from the locked plan/, "the searches"], [/2 links · 3 areas · 2 questions/, "the counts (3 areas from a comma list, 2 questions)"], [/2 files change/, "the files"], [/How it looks in Google/, "the Google preview"], [/Your electrician in Springfield/, "the headline as it reads"], [/We also work on small shops\./, "the second paragraph as it reads"], [/How we work/, "how we work"], [/Do you pull permits\?/, "the questions"]])
+  if (!re.test(out.pageReady.text)) fail(`the page review doesn't show ${what}`);
+if (out.pageReady.buttons.filter((b) => b === "Send for approval").length !== 1 || !out.pageReady.buttons.includes("Edit the lines") || !out.pageReady.buttons.includes("Nothing needs changing…")) fail("the page review doesn't keep Send · Edit · Nothing needs changing");
+if (out.pageReady.textareas) fail("the page review shows form boxes before you press Edit");
+if ((out.pageReady.html.match(/<del>|<ins>/g) || []).length) fail("a new page is a wall of green highlight again (read the page, not Now → After)");
+if (!/class="ob-wc-rev"/.test(out.pageDrafted.html)) fail("a saved page draft isn't reviewed the same way");
+if ((out.pageLong.html.match(/<li><i class="o"/g) || []).length < 1 || /Title \d+ of 65 characters, names/.test(out.pageLong.text) === false) fail("a title past 65 characters still gets a tick");
+if (!/<span class="ob-wc-new">New<\/span>Honest reporting/.test(out.ready.html)) fail("a short change's new line isn't marked New in plain text");
+if (!/<del>Rank Higher/.test(out.ready.html) || !/<ins>Local SEO That Puts/.test(out.ready.html)) fail("a replacement lost its strike-through → new");
+if (!/scDef\.kind === "visible" && task && \(scDef\.page \|\| task\.site_change/.test(A) || !/The run's raw output<\/summary>/.test(A)) fail("the raw run isn't one quiet link under a website card");
+
 if (F.length) { console.error(`❌ the website rows aren't the approved step 8 cards — ${F.length}:\n  · ${F.join("\n  · ")}`); process.exit(1); }
 console.log(`✅ the website rows are the approved step 8 cards: ${Object.keys(out).length} states rendered in Chrome — draft it · not proven · draft ready (one Send, the guarantee flagged) · failed · editing (no Kind/Where boxes) · send it · with the client · client asked · publish · live · already right — one card, no box in a box, one chip each`);

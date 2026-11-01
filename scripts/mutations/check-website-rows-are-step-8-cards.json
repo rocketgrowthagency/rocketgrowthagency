@@ -313,5 +313,61 @@
   "return [t0.publish_pr, ...(t0.site_change_log || []).map((h) => h && h.pr)];",
   "return [t0.publish_pr];",
   1
+ ],
+ [
+  "a new page goes back to a wall of green",
+  "admin",
+  "(isPage && pre.new_page ? wcReviewHtml(pre, od.page_draft) + wcRiskHtml(pre) :",
+  "(false ? \"\" :",
+  1
+ ],
+ [
+  "a saved page draft loses the review",
+  "admin",
+  "(isPage && c.new_page ? wcReviewHtml(c, od.page_draft) + wcRiskHtml(c) :",
+  "(false ? \"\" :",
+  1
+ ],
+ [
+  "a comma list counts as 1 item again",
+  "admin",
+  ": t.split(/,\\s*/);",
+  ": [t];",
+  1
+ ],
+ [
+  "a too-long title gets a tick",
+  "admin",
+  "title.length > 65 || !names],",
+  "false],",
+  1
+ ],
+ [
+  "the Google preview is gone",
+  "admin",
+  "${wcReviewChecksHtml(c, d)}${wcGooglePreviewHtml(c)}",
+  "${wcReviewChecksHtml(c, d)}",
+  1
+ ],
+ [
+  "the page as it reads is gone",
+  "admin",
+  "${wcGooglePreviewHtml(c)}${wcPageReadsHtml(c)}</div>",
+  "${wcGooglePreviewHtml(c)}</div>",
+  1
+ ],
+ [
+  "a new line is green highlight again",
+  "admin",
+  "`<span class=\"ob-wc-new\">New</span>${escapeHtml(i.after || \"(removed)\")}`",
+  "`<ins>${escapeHtml(i.after || \"(removed)\")}</ins>`",
+  1
+ ],
+ [
+  "the raw run prints the whole draft again",
+  "admin",
+  "if (scDef && scDef.kind === \"visible\" && task && (scDef.page || task.site_change",
+  "if (false && (scDef.page || task.site_change",
+  1
  ]
 ]
