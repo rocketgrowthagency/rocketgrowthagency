@@ -154,5 +154,138 @@
   "metricsjs",
   "select=id,data,total_calls`",
   "select=id,data`"
+ ],
+ [
+  "the headline says Google showed your business again",
+  "reportjs",
+  "const APPEARED = \"Your website appeared in Google search results\";",
+  "const APPEARED = \"Google showed your business\";",
+  1
+ ],
+ [
+  "the visibility line stops saying it is not people",
+  "reportjs",
+  "const NOT_PEOPLE = \"That is Google's count of appearances, not people.\";",
+  "const NOT_PEOPLE = \"\";",
+  1
+ ],
+ [
+  "we send the requests comes back",
+  "reportjs",
+  "out.push(\"<b>Get the first reviews.</b> We write each request. You send it from your own phone in one tap.\");",
+  "out.push(\"<b>Get the first reviews.</b> We send the requests; you forward them to recent customers.\");",
+  1
+ ],
+ [
+  "the reviews header calls reviews the strongest lever",
+  "reportjs",
+  "\"Reviews are what customers read before they call.\"",
+  "\"The strongest single lever on Maps ranking\"",
+  1
+ ],
+ [
+  "Widen the map prints on every report",
+  "reportjs",
+  "  if (foundClusteredNearAddress(grid)) {",
+  "  if (true) {",
+  1
+ ],
+ [
+  "the nearby-areas step prints when found everywhere",
+  "reportjs",
+  "return foundInner >= 3 && foundOuter <= foundInner * 0.25 && outerNotFound >= 1;",
+  "return foundInner >= 3;",
+  1
+ ],
+ [
+  "the portal lead tile reads the stored total again",
+  "portal",
+  "caTile(\"Leads\", curLeads, priorLeads,",
+  "caTile(\"Leads\", cur.total_leads, prior.total_leads,",
+  1
+ ],
+ [
+  "the portal hint promises booking requests again",
+  "portal",
+  "Form submissions plus tracked calls this month. Call-button taps are not included.\", { emptyText",
+  "Calls + form fills + booking requests from search this month.\", { emptyText",
+  1
+ ],
+ [
+  "a missing call count reads as a partial total",
+  "portal",
+  "  return calls == null ? null : forms + calls;",
+  "  return forms + (calls || 0);",
+  1
+ ],
+ [
+  "a plain phone line counts as leads in the portal",
+  "portal",
+  "  if (client && client.call_tracking_attributed === false) return forms;\n",
+  "",
+  1
+ ],
+ [
+  "the GA4 pull widens to 12 months again",
+  "metricsjs",
+  "  const out = await query(\"28daysAgo\"), window = \"28d\", startDate = \"28daysAgo\";",
+  "  let out = await query(\"28daysAgo\"), window = \"28d\", startDate = \"28daysAgo\";\n  if (!out.sessions && !out.pageViews) { out = await query(\"365daysAgo\"); startDate = \"365daysAgo\"; }",
+  1
+ ],
+ [
+  "an unconfirmed zero is saved as 0 forms",
+  "metricsjs",
+  "    if (!(tagSeen && eventSeen)) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "organic sessions are saved with no tag seen",
+  "metricsjs",
+  "ga4.organicSessions != null && ga4.tagSeen)",
+  "ga4.organicSessions != null)",
+  1
+ ],
+ [
+  "an old 12-month form total is kept",
+  "metricsjs",
+  "&& savedWideWindow) patch.form_leads = null;",
+  "&& false) patch.form_leads = null;",
+  1
+ ],
+ [
+  "the month line drops the year-ago caveat",
+  "reportjs",
+  "compare = \"No year-ago number yet, so season is not ruled out.\";",
+  "compare = \"\";",
+  1
+ ],
+ [
+  "the month line calls a close year-ago month a rise",
+  "reportjs",
+  "else if (Math.abs(now - then) <= Math.max(2, Math.round(then * 0.1)))",
+  "else if (false)",
+  1
+ ],
+ [
+  "a missing call count is read as 0 in the month line",
+  "reportjs",
+  "  if (nowCalls != null) parts.push(plural(nowCalls, \"tracked call\", \"tracked calls\"));",
+  "  parts.push(plural(nowCalls || 0, \"tracked call\", \"tracked calls\"));",
+  1
+ ],
+ [
+  "the taps-are-not-calls line goes",
+  "reportjs",
+  "toLocaleString(\"en-US\")}. Taps aren't calls.</p>`",
+  "toLocaleString(\"en-US\")}.</p>`",
+  1
+ ],
+ [
+  "the reading notes go",
+  "reportjs",
+  "<div class=\"sec-head\"><h2>How to read this</h2></div>",
+  "<div class=\"sec-head\"><h2>More</h2></div>",
+  1
  ]
 ]

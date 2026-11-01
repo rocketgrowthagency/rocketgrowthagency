@@ -9,8 +9,8 @@
  [
   "the script promises a Friday email again",
   "admin",
-  "Every Monday your portal shows what we did that week, and on the 1st",
-  "Every Friday you get a short email of what we did, and on the 1st",
+  "Every Monday your portal shows what we did that week, and in the first week",
+  "Every Friday you get a short email of what we did, and in the first week",
   1
  ],
  [
@@ -23,8 +23,8 @@
  [
   "the monthly report loses its schedule",
   "toml",
-  "[functions.\"send-monthly-report\"]\n  schedule = \"0 9 1 * *\"",
-  "[functions.\"send-monthly-report\"]\n  # schedule = \"0 9 1 * *\"",
+  "[functions.\"send-monthly-report\"]\n  schedule = \"0 9 5 * *\"",
+  "[functions.\"send-monthly-report\"]\n  # schedule = \"0 9 5 * *\"",
   1
  ]
 ]

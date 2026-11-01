@@ -11,7 +11,7 @@
 // HOLDS:
 //   1. the call script and the recap state the SAME timeline (30 to 60 days) and neither says "month 2–3"
 //   2. every cadence the script/recap promise is a scheduled job that exists: Monday portal update
-//      (flow-cron-weekly-digest, Mondays, client_portal_content) · monthly report email (send-monthly-report, the 1st)
+//      (flow-cron-weekly-digest, Mondays, client_portal_content) · monthly report email (send-monthly-report, the first week; the 5th since 11-01)
 //   3. nothing promises a Friday email
 //   4. the recap reads back each item's own agreed date (call.yes), never a computed weekday
 // exit 0 = one story · 1 = they disagree · 2 = can't tell
@@ -38,7 +38,7 @@ const promisesMonday = /Every Monday your portal shows what we did/.test(agenda 
 if (promisesMonday) {
   if (!/schedule:\s*"0 \d+ \* \* 1"/.test(digest) || !/client_portal_content/.test(digest)) fail("the script/recap promise a Monday portal update, but flow-cron-weekly-digest is not a Monday job writing to the portal");
 }
-if (/report arrives by email/.test(agenda + recap) && !/\[functions\."send-monthly-report"\]\s*\n\s*schedule = "0 \d+ 1 \* \*"/.test(toml)) fail("the script promises a monthly report email on the 1st, but send-monthly-report is not scheduled for the 1st");
+if (/report arrives by email/.test(agenda + recap) && !/\[functions\."send-monthly-report"\]\s*\n\s*schedule = "0 \d+ [1-7] \* \*"/.test(toml)) fail("the script promises a monthly report email in the first week of the month, but send-monthly-report is not scheduled for days 1 to 7");
 // 3
 if (/Friday/i.test(agenda) || /Friday/i.test(recap)) fail("the kickoff script or recap promises something on a Friday — nothing sends on Fridays");
 // 4

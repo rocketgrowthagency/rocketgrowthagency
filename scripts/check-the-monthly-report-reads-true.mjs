@@ -271,6 +271,51 @@ try {
   check(r.cells.length === 9, "a scan on the 1st at 00:00 UTC belongs to its own month", r.cells);
   r = await render({ open: "2026-12", months: [{ reporting_month: "2026-12-01" }], grid: cells("dec", "2026-12-31T23:59:59Z", 7) });
   check(r.cells.length === 9, "December's month ends in the next year, not in month 13", r.cells);
+
+  // ── the four sentences the report could not back up (report_and_measurement_v1) ──
+  // Not hidden behind a condition: the producers are deleted, so the phrases are banned in the SOURCE (comments included) and
+  // absent from every rendered state: a rich month, a first month, a down month, the few-reviews gap, and no reviews at all.
+  const BANNED = [/we send the requests/i, /strongest single lever/i, /Google showed your business/i, /Widen the map/i];
+  const sees = (txt) => BANNED.filter((re) => re.test(txt)).map(String);
+  check(sees(reportJs).length === 0, "report.js (code and comments) holds none of the four banned phrases", sees(reportJs));
+  const cluster = (inner, outer) => Array.from({ length: 25 }, (_, i) => {
+    const row = Math.floor(i / 5), col = i % 5, mid = Math.max(Math.abs(row - 2), Math.abs(col - 2)) <= 1;
+    return { grid_index: i, map_rank: mid ? inner : outer, keyword: "plumber", measured_at: "2026-10-15T12:00:00Z", grid_session_id: "s" };
+  });
+  const octMonths = [{ reporting_month: OCT, gsc_impressions: 500, gsc_clicks: 5, review_count: 0 }, { reporting_month: SEP, gsc_impressions: 900, gsc_clicks: 40 }];
+  const NEARBY = /Pages for nearby areas are the next step to test/;
+  for (const [label, rr] of [
+    ["a down month with no reviews", await render({ open: "2026-10", months: octMonths })],
+    ["a first month", await render({ open: "2026-10", months: [{ reporting_month: OCT, gsc_impressions: 500, review_count: 2 }] })],
+    ["a rich month", await render({ open: "2026-10", months: [{ reporting_month: OCT, gsc_impressions: 5000, gsc_clicks: 300, review_count: 3 }, { reporting_month: SEP, gsc_impressions: 1000, gsc_clicks: 100 }], grid: cluster(3, null) })],
+  ]) check(sees(rr.all).length === 0, `${label}: none of the four banned phrases is printed`, sees(rr.all));
+  r = await render({ open: "2026-10", months: octMonths });
+  check(/appeared in Google search results 500 times/.test(r.all) && /Google's count of appearances, not people/.test(r.all), "the visibility line says it is Google's count, not people", r.verdictTxt);
+  check(/We write each request\. You send it from your own phone in one tap/.test(r.all), "the review step says the client sends the request", null);
+  check(!NEARBY.test(r.all), "no grid, no 'nearby areas' step", null);
+  r = await render({ open: "2026-10", months: octMonths, grid: cluster(3, null) });
+  check(NEARBY.test(r.all), "found points clustered around the address, none far out: the nearby-areas step is printed", null);
+  r = await render({ open: "2026-10", months: octMonths, grid: cluster(3, 8) });
+  check(!NEARBY.test(r.all), "found everywhere: no nearby-areas step", null);
+  r = await render({ open: "2026-10", months: octMonths, grid: cluster(null, null) });
+  check(!NEARBY.test(r.all), "found nowhere: no nearby-areas step", null);
+
+  // ── the month in one line, the year-ago first comparison, and the plain reading notes (report_and_measurement_v1) ──
+  const lineOf = (rr) => (/Your month in one line\s*(.*?)\s*Your funnel/s.exec(rr.all) || [])[1] || null;
+  const SEP25 = "2025-09-01";
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 12 }] });
+  check(/You had 12 tracked calls and 4 form submissions\. No year-ago number yet, so season is not ruled out\./.test(lineOf(r) || ""), "no year-ago month: the line says season is not ruled out", lineOf(r));
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 12 }, { reporting_month: SEP25, form_leads: 5, total_calls: 12 }] });
+  check(/About the same as September 2025 \(17\)/.test(lineOf(r) || ""), "a year-ago month that is close reads about the same", lineOf(r));
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 30 }, { reporting_month: SEP25, form_leads: 5, total_calls: 12 }] });
+  check(/Up from 17 in September 2025/.test(lineOf(r) || "") && !/caus|because|thanks to/i.test(lineOf(r) || ""), "a clear rise says up, and never says why", lineOf(r));
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 3 }, { reporting_month: SEP25, form_leads: 2, total_calls: 1 }] });
+  check(/too few to call/i.test(lineOf(r) || ""), "single digits are too few to call", lineOf(r));
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4, total_calls: null }, { reporting_month: SEP25, form_leads: 9, total_calls: 6 }] });
+  check(/You had 4 form submissions\. No year-ago number yet/.test(lineOf(r) || "") && !/tracked call/.test(lineOf(r) || ""), "calls never recorded: left out of the line, never 0, and not compared with a year that had calls", lineOf(r));
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, gbp_calls: 18, gsc_impressions: 100 }] });
+  check(lineOf(r) === null && /Call-button taps: 18\. Taps aren't calls\./.test(r.all), "no tracking and no forms: no month line, and the taps are named as taps", lineOf(r));
+  check(/How to read this/.test(r.all) && /not a phone call/.test(r.all), "the reading notes are on the page", null);
 } catch (e) {
   console.log(`⚠️  INDETERMINATE — ${e.message}`);
   await browser.close();
@@ -354,6 +399,66 @@ try {
 
   s = await save({ existing: { id: "m1", data: {}, total_calls: 40 }, clientFlag: "fail" });
   check(s.patch?.total_leads === 3, "and if we can't read what kind of number it is, they don't either", s.patch?.total_leads);
+
+  // ── a month's form count is that month's, and a zero has to be earned (report_and_measurement_v1) ──
+  // sess = rows the 28-day session query answers; wide = rows a 12-month session query would answer (it must never be asked
+  // for the count); events = [name, count] per window.
+  const ga4Save = async ({ sess28, wide = 0, ev28 = [], ev365 = [], existing = null }) => {
+    const writes = [], asked = [];
+    const rowsOf = (n) => (n ? [{ dimensionValues: [{ value: "Organic Search" }], metricValues: [String(n), "1", "0", String(n)].map((value) => ({ value })) }] : []);
+    handler = async (url, opts = {}) => {
+      const u = String(url);
+      if (u.includes("oauth2.googleapis.com")) return reply(200, { access_token: "t", expires_in: 3600 });
+      if (u.includes("analyticsdata")) {
+        const body = JSON.parse(opts.body), start = body.dateRanges[0].startDate;
+        asked.push([body.dimensions?.[0]?.name, start]);
+        if (body.dimensions?.[0]?.name === "eventName") {
+          const list = start === "365daysAgo" ? ev365 : ev28;
+          return reply(200, { rows: list.map(([n, c]) => ({ dimensionValues: [{ value: n }], metricValues: [{ value: String(c) }] })) });
+        }
+        return reply(200, { rows: rowsOf(start === "365daysAgo" ? wide : sess28) });
+      }
+      if (u.includes("businessprofileperformance")) return reply(200, perfBody(ALL.map((m) => series(m, [1]))));
+      if (u.includes("/rest/v1/client_monthly_records") && (!opts.method || opts.method === "GET")) {
+        const cols = (/select=([^&]*)/.exec(u) || [])[1]?.split(",") || [];
+        return reply(200, existing ? [Object.fromEntries(Object.entries(existing).filter(([k]) => cols.includes(k)))] : []);
+      }
+      if (u.includes("/rest/v1/clients")) return reply(200, [{ call_tracking_attributed: null }]);
+      if (u.includes("/rest/v1/client_state_snapshots")) return reply(200, []);
+      if (u.includes("/rest/v1/client_monthly_records")) { writes.push(JSON.parse(opts.body)); return reply(200, []); }
+      throw new Error(`unexpected request: ${u}`);
+    };
+    const res = await metrics.refreshAndSaveMetrics("https://db.test", "k", "c1", { refresh_token: "r", ga4_property_id: "properties/1", gbp_location_id: "locations/1" });
+    return { res, patch: writes[0], asked };
+  };
+  s = await ga4Save({ sess28: 0, wide: 400, ev28: [], ev365: [["form_submit", 30]] });
+  check(s.res.ok && !("form_leads" in s.patch) && !("organic_sessions" in s.patch), "a quiet 28 days is never filled from 12 months: no form count and no organic sessions are saved", s.patch);
+  check(!s.asked.some(([dim, start]) => dim !== "eventName" && start === "365daysAgo") && s.patch?.data?.ga4?.window !== "12mo", "the session pull never widens to 12 months", s.asked);
+  s = await ga4Save({ sess28: 10, ev28: [], ev365: [] });
+  check(s.res.ok && !("form_leads" in s.patch), "traffic but no form event ever seen: tracking not confirmed, not 0 forms", s.patch?.form_leads);
+  s = await ga4Save({ sess28: 10, ev28: [["form_start", 4]], ev365: [["form_start", 9]] });
+  check(s.res.ok && s.patch?.form_leads === 0, "traffic and a form event seen working, none submitted: 0 forms is a real zero", s.patch?.form_leads);
+  s = await ga4Save({ sess28: 10, ev28: [["form_submit", 3]], ev365: [] });
+  check(s.res.ok && s.patch?.form_leads === 3, "forms counted in the 28 days are saved as they are", s.patch?.form_leads);
+  s = await ga4Save({ sess28: 0, ev365: [["form_submit", 30]], existing: { id: "m1", data: { ga4: { window: "12mo" } } } });
+  check(s.patch && s.patch.form_leads === null, "a 12-month total an older version saved as this month's count is cleared when the month is unknown", s.patch);
+
+  // ── the portal tile reads leads the way the report does (report_and_measurement_v1) ──
+  const portalJs = fs.readFileSync(`${SITE}/portal/portal.js`, "utf8");
+  check(!/Calls \+ form fills \+ booking requests/.test(portalJs), "portal.js no longer says the lead tile counts booking requests or search", null);
+  check(!/\.total_leads\b/.test(portalJs.replace(/\/\/.*$/gm, "")) , "portal.js never reads the stored total_leads (rows before 10-31 hold Google taps)", (portalJs.match(/.{30}\.total_leads.{20}/) || [])[0]);
+  const fnSrc = (/function portalMonthLeads\(rec, client\) \{[\s\S]*?\n\}\n/.exec(portalJs) || [])[0];
+  check(!!fnSrc, "portal.js has portalMonthLeads", null);
+  if (fnSrc) {
+    // A lift of ONE pure function (the tile itself is looked at in a real browser); a harness can lie, so the source scan above stays.
+    const leads = new Function(`${fnSrc}; return portalMonthLeads;`)();
+    check(leads({ form_leads: 3, total_calls: 2, total_leads: 23 }, {}) === 5, "an old row (3 forms, 2 tracked calls, total_leads 23 with taps) reads 5", leads({ form_leads: 3, total_calls: 2, total_leads: 23 }, {}));
+    check(leads({ form_leads: 3, total_calls: null, total_leads: 23 }, { call_tracking_attributed: true }) === null, "calls never recorded: not available, never 3 and never 23", null);
+    check(leads({ form_leads: null, total_calls: 4 }, {}) === null, "forms never recorded: not available", null);
+    check(leads({ form_leads: 3, total_calls: 40 }, { call_tracking_attributed: false }) === 3, "a plain phone line's calls are not leads", null);
+    check(leads({ form_leads: 0, total_calls: 0 }, {}) === 0, "a recorded 0 and 0 is 0", null);
+    check(leads(null, {}) === null && leads({}, {}) === null, "no row, no number", null);
+  }
 } catch (e) {
   console.log(`⚠️  INDETERMINATE — the metrics harness threw: ${e.message}`);
   process.exit(2);
