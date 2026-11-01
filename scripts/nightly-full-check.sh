@@ -90,7 +90,12 @@ for g in check-the-daily-check-is-alive.mjs check-the-monthly-report-opens-the-c
 done
 
 FIXED=""
-if grep -q "FAILED" "$RAW/check-1.txt"; then
+# 🔒 HELD UNTIL THE USAGE RESET (Chris 10-31, "do recomended"): the fixer is a full Opus session, up to 250 turns, and the weekly Claude limit was at 75%. The check still runs and reports; only the
+# automatic fixing waits. Lifts itself Wed Nov 4 at 6 PM. To end it sooner, or to hold again, change this one date.
+FIXER_HOLD_UNTIL="202611041800"
+if [ "$(date +%Y%m%d%H%M)" -lt "$FIXER_HOLD_UNTIL" ] && grep -q "FAILED" "$RAW/check-1.txt"; then
+  { echo; echo "## Night fixer held"; echo "Held until Nov 4, 6 PM to save Claude usage. The red items above weren't fixed tonight."; } >> "$OUT"
+elif grep -q "FAILED" "$RAW/check-1.txt"; then
   # ── 4 · the fixer: one headless session, mechanical fixes only (scripts/nightly-fixer-prompt.md) ───
   PROMPT="$(cat "$SCR/scripts/nightly-fixer-prompt.md")
 
