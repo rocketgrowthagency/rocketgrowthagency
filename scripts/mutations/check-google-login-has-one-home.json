@@ -1,0 +1,284 @@
+[
+[
+"a stored key goes to Google still sealed",
+"googletoken",
+"refresh_token: revealToken(key),",
+"refresh_token: key,"
+],
+[
+"the wrong client id",
+"googletoken",
+"client_id: process.env.GOOGLE_OAUTH_CLIENT_ID,",
+"client_id: process.env.GOOGLE_ADS_CLIENT_ID,"
+],
+[
+"the wrong client secret",
+"googletoken",
+"client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,",
+"client_secret: process.env.GOOGLE_ADS_CLIENT_SECRET,"
+],
+[
+"a refusal gets retried",
+"googletoken",
+"const r = await refreshGrant(key, fetchFn);\n  const j = await r.json();",
+"let r = await refreshGrant(key, fetchFn);\n  if (!r.ok) r = await refreshGrant(key, fetchFn);\n  const j = await r.json();"
+],
+[
+"one call makes two requests",
+"googletoken",
+"const r = await refreshGrant(oauth.refresh_token, fetchFn);",
+"await refreshGrant(oauth.refresh_token, fetchFn);\n  const r = await refreshGrant(oauth.refresh_token, fetchFn);"
+],
+[
+"a token still good gets refreshed anyway",
+"googletoken",
+"if (oauth.access_token && exp > Date.now() + 60000) return oauth.access_token;",
+""
+],
+[
+"the client helper stops saving",
+"googletoken",
+"await supa(`/client_google_oauth?client_id=eq.${oauth.client_id}`, {",
+"await (async () => {})(`/client_google_oauth?client_id=eq.${oauth.client_id}`, {"
+],
+[
+"the client helper ignores the fetch it was given",
+"googletoken",
+"const r = await refreshGrant(oauth.refresh_token, fetchFn);",
+"const r = await refreshGrant(oauth.refresh_token);"
+],
+[
+"a refusal comes back as no token instead of an error",
+"googletoken",
+"if (why) throw new Error(why);",
+""
+],
+[
+"the home's export goes missing",
+"googletoken",
+"module.exports = { googleAccessToken, refreshGrant, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail };",
+"module.exports = { googleAccessToken, googleKeyToToken, auditToken, rgaToken, rgaTokenWithDetail };"
+],
+[
+"the audits lose Google's answer",
+"googletoken",
+"`token refresh failed: ${JSON.stringify(j).slice(0, 140)}`",
+"\"token refresh failed\""
+],
+[
+"an error message carries the key",
+"googletoken",
+"`token refresh failed: ${JSON.stringify(j).slice(0, 140)}`",
+"`token refresh failed: ${JSON.stringify(j).slice(0, 140)} ${key}`"
+],
+[
+"the revoked words change",
+"googletoken",
+"\"The RGA Google connection was revoked or expired. Reconnect it from the admin.\"",
+"\"Google said no.\""
+],
+[
+"RGA's short words gain the description",
+"googletoken",
+"`Token refresh failed: ${j.error || r.status}`));",
+"`Token refresh failed: ${j.error || r.status} ${j.error_description || \"\"}`));"
+],
+[
+"RGA's long words lose the description",
+"googletoken",
+"`Token refresh failed: ${j.error || r.status} ${j.error_description || \"\"}`));",
+"`Token refresh failed: ${j.error || r.status}`));"
+],
+[
+"the client helper stops saying reconnect",
+"googletoken",
+"`Google sign-in for this client needs reconnecting (${data.error_description || data.error || r.status})`",
+"\"Token refresh failed\""
+],
+[
+"a copy comes back in a function",
+"aireadiness",
+"const { auditToken: accessToken } = require(\"./_google-token\");",
+"async function accessToken(refreshToken) {\n  const r = await fetch(\"https://oauth2.googleapis.com/token\", { method: \"POST\", body: new URLSearchParams({ refresh_token: refreshToken, grant_type: \"refresh_token\" }) });\n  return (await r.json()).access_token;\n}"
+],
+[
+"a copy comes back with the address in a constant",
+"respondreview",
+"const { refreshGrant } = require(\"./_google-token\");",
+"const { refreshGrant } = require(\"./_google-token\");\nconst TOKEN_URL = \"https://oauth2.googleapis.com/token\";"
+],
+[
+"a copy comes back with the field name quoted",
+"respondreview",
+"const { refreshGrant } = require(\"./_google-token\");",
+"const { refreshGrant } = require(\"./_google-token\");\nconst FORM = { \"grant_type\": \"refresh_token\" };"
+],
+[
+"a copy comes back in a plain string",
+"respondreview",
+"const { refreshGrant } = require(\"./_google-token\");",
+"const { refreshGrant } = require(\"./_google-token\");\nconst FORM = \"grant_type=refresh_token\";"
+],
+[
+"the function calls the home without loading it",
+"respondreview",
+"const { refreshGrant } = require(\"./_google-token\");",
+""
+],
+[
+"a sign-in exception starts refreshing a stored key",
+"gtlistingremoval",
+"grant_type: \"authorization_code\" }).toString(),",
+"grant_type: \"refresh_token\" }).toString(),"
+],
+[
+"an exception no longer talks to Google",
+"gtadskeywords",
+"adsFetch(\"https://oauth2.googleapis.com/token\", {",
+"adsFetch(\"https://example.test/token\", {"
+],
+[
+"Ads starts reading a stored key",
+"gtadskeywords",
+"refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,",
+"refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN || row.refresh_token,"
+],
+[
+"a calendar function picks up the longer words",
+"gtcancelinvite",
+"rgaToken: accessToken",
+"rgaTokenWithDetail: accessToken"
+],
+[
+"a sender picks up the shorter words",
+"sendconfirmfn",
+"rgaTokenWithDetail: accessToken",
+"rgaToken: accessToken"
+],
+[
+"an audit picks up RGA's words",
+"aireadiness",
+"auditToken: accessToken",
+"rgaToken: accessToken"
+],
+[
+"the availability words change",
+"gtavailability",
+"\"RGA's Google connection was revoked or expired. Reconnect it from the admin.\"",
+"\"The RGA Google connection was revoked or expired. Reconnect it from the admin.\""
+],
+[
+"the booking words change",
+"bookkickofffn",
+"null : \"RGA's Google connection could not be refreshed.\"",
+"null : \"Token refresh failed\""
+],
+[
+"the GA4 check's words change",
+"gtga4",
+"j.error_description || j.error || \"no access_token\"",
+"j.error || j.error_description || \"no access_token\""
+],
+[
+"availability throws where it returned null",
+"gtavailability",
+"await accessToken(revealToken(cred.refresh_token)).catch(() => null)",
+"await accessToken(revealToken(cred.refresh_token))"
+],
+[
+"booking throws where it returned null",
+"bookkickofffn",
+"await accessToken(revealToken(cred.refresh_token)).catch(() => null)",
+"await accessToken(revealToken(cred.refresh_token))"
+],
+[
+"the profile read throws where it returned null",
+"gtprofile",
+"if (!tokenRes.ok) return null;",
+"if (!tokenRes.ok) throw new Error(\"refused\");"
+],
+[
+"the inventory returns a bare token",
+"gtinventory",
+"return { accessToken: data.access_token, expiresIn: data.expires_in || 3600 };",
+"return data.access_token;"
+],
+[
+"the inventory stops tolerating a web page",
+"gtinventory",
+"const data = await res.json().catch(() => ({}));",
+"const data = await res.json();"
+],
+[
+"the probe stops calling a revoked key not done",
+"recheck",
+"if (!token && tj.error === \"invalid_grant\") {",
+"if (false) {"
+],
+[
+"the token read's words change",
+"recheck",
+"if (!tj.access_token) return { error: \"We could not reach Google just now.\" };",
+"if (!tj.access_token) return { error: \"Google said no.\" };"
+],
+[
+"the invoice email loses Google's words",
+"gtsendinvoice",
+"tj.error_description || tj.error || \"token_refresh_failed\"",
+"\"token_refresh_failed\""
+],
+[
+"a v2 function's words change",
+"gtfetchreviews",
+"`Token refresh failed: HTTP ${r.status}`",
+"`Token refresh failed`"
+],
+[
+"a v2 function refreshes a token still good",
+"gtfetchreviews",
+"if (oauth.access_token && exp > Date.now() + 60000) return oauth.access_token;",
+""
+],
+[
+"rediscover's words change",
+"gtrediscover",
+"`Token refresh failed: ${tokens.error}`",
+"`Token refresh failed`"
+],
+[
+"flow-execute's words change",
+"flowexec",
+"`Token refresh failed: ${data.error_description || data.error}`",
+"`Token refresh failed`"
+],
+[
+"flow-execute stops saving",
+"flowexec",
+"await supa(`/client_google_oauth?client_id=eq.${clientId}`, {\n    method: \"PATCH\",\n    body: JSON.stringify({ access_token: data.access_token,",
+"await (async () => {})(`/client_google_oauth?client_id=eq.${clientId}`, {\n    method: \"PATCH\",\n    body: JSON.stringify({ access_token: data.access_token,"
+],
+[
+"a v2 function stops saving",
+"gtfetchreviews",
+"body: JSON.stringify({ access_token: data.access_token, access_token_expires_at: expiresAt }),",
+"body: JSON.stringify({}),"
+],
+[
+"the profile read stops saving",
+"gtprofile",
+"body: JSON.stringify({ access_token: tokens.access_token, access_token_expires_at: expiresAt }),",
+"body: JSON.stringify({}),"
+],
+[
+"rediscover stops saving",
+"gtrediscover",
+"access_token: accessToken,",
+""
+],
+[
+"an email function starts saving a token",
+"gtsendinvoice",
+"const boundary = `rga_${Date.now().toString(36)}`;",
+"await supa(`/client_google_oauth?client_id=eq.c1`, { method: \"PATCH\", body: JSON.stringify({ access_token: tj.access_token }) });\n  const boundary = `rga_${Date.now().toString(36)}`;"
+]
+]

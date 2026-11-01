@@ -45,6 +45,17 @@ export const FILES = {
   oauthcallback: "netlify/functions/oauth-google-callback.js",
   oauthdisconnect: "netlify/functions/oauth-google-disconnect.js",
   googletoken: "netlify/functions/_google-token.js",
+  // google_login_one_home (approved 11-1): one function swaps a stored Google key for a token
+  gtinventory: "netlify/functions/_google-inventory.js",
+  gtadskeywords: "netlify/functions/_ads-keywords.js",
+  gtlistingremoval: "netlify/functions/_listing-removal-flow.js",
+  gtavailability: "netlify/functions/kickoff-availability.js",
+  gtcancelinvite: "netlify/functions/cancel-kickoff-invite.js",
+  gtga4: "netlify/functions/ga4-property-check.js",
+  gtsendinvoice: "netlify/functions/send-invoice-email.js",
+  gtprofile: "netlify/functions/v2-gbp-profile.js",
+  gtrediscover: "netlify/functions/v2-gbp-rediscover.js",
+  gtfetchreviews: "netlify/functions/v2-fetch-reviews.js",
   // client_core_change_approval_v1 (10-31): name, address, phone, main category need the client's approval of that exact value
   corechange: "netlify/functions/_core-change.js",
   corechangefn: "netlify/functions/core-change.js",

@@ -375,6 +375,7 @@ const NOT_PREFLIGHT = {
   'check-the-contract-promises-only-what-the-code-does.mjs': 'the WEBSITE repo\'s agreement + public pricing (approved 10-31); files only, runs in daily-health-check.sh',
   'check-the-public-site-tells-the-truth.mjs': 'the WEBSITE repo\'s public pages (website_audit_v1_v2, approved 10-31); files only, runs in daily-health-check.sh',
   'check-google-keys-are-sealed.mjs': 'the WEBSITE repo\'s Google sign-in code plus one read-only column (pending_and_google_security_v1, approved 10-31), runs in daily-health-check.sh',
+  'check-google-login-has-one-home.mjs': 'the WEBSITE repo\'s Google sign-in code (approved 11-1); runs the real functions against a stubbed network, no real values, runs in daily-health-check.sh',
   'check-core-changes-are-asked-each-time.mjs': 'the WEBSITE repo\'s Google writers and the portal + admin cards (client_core_change_approval_v1, approved 10-31); files only with a stubbed network, runs in daily-health-check.sh',
   'check-gbp-safety-steps.mjs': 'the WEBSITE repo\'s Google writers and the portal + admin cards (gbp_protocols_v1, approved 11-1); files only, runs in daily-health-check.sh',
   'check-google-changes-wait-for-consent.mjs': 'the WEBSITE repo\'s Google writers and the portal + admin consent cards (client_google_consent_v1, approved 10-31); files only with a stubbed network, runs in daily-health-check.sh',
