@@ -19,7 +19,7 @@ const setOf = (name) => { const m = P.match(new RegExp(`const ${name} = new Set\
 const RECORD = setOf("RECORD_CARD"), GBP = setOf("GBP_STEPS"), DONE = setOf("DONE_CARD");
 // a done record = a record card, a Google card (steps 7-11), or a step with its own done builder named for it
 const OWN = [["m1.kickoff.call", /kickoff/i], ["m1.gbp.verify", /function gvProfileHtml\(/], ["m1.gbp.photos", /photoDone|function photo[A-Za-z]*Html\(/], ["m1.review.first_5", /function reviewStepLinesHtml\(/],
-  ["m1.call.close", /function closeCallHtml\(/], ["m1.brand.youtube_setup", /function videoClipsHtml\(/]];
+  ["m1.brand.social_profiles", /function socialCard\(/], ["m1.call.close", /function closeCallHtml\(/], ["m1.brand.youtube_setup", /function videoClipsHtml\(/]];
 // 🔴 a builder that exists but is SWITCHED OFF on a done row (`isDone ? "" : builder(…)`) draws nothing once done
 const OFF_WHEN_DONE = { "m1.call.close": /m1\.call\.close" \? \(ownWait \|\| isDone \? "" : closeCallHtml/, "m1.brand.youtube_setup": /video_upload" \? \(ownWait \|\| isDone \? "" : videoClipsHtml/ };
 const doneRecord = (id) => RECORD.has(id) ? "record card" : GBP.has(id) ? "Google card" : DONE.has(id) && /function doneCardHtml\(/.test(P) ? "done card"

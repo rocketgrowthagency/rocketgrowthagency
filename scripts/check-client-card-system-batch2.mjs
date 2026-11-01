@@ -64,8 +64,8 @@ const BATCH2 = ["m1.brand.youtube_setup", "m1.call.close", "m1.gbp.photos", "m1.
 // ── 0 · the set ──────────────────────────────────────────────────────────────────────────────────────
 { const m = /^const CS_STEPS = new Set\(\[([^\]]*)\]\);$/m.exec(P);
   if (!m) moved("CS_STEPS");
-  const ids = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort(), want = [...BATCH1, ...BATCH2, ...BATCH3].sort();   // 🔄 batch 3 (Ongoing work) is check-client-card-system-batch3
-  if (ids.join("|") !== want.join("|")) fail(`CS_STEPS isn't exactly the 21 client steps (batches 1, 2 + 3): ${ids.join(", ")}`);
+  const ids = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort(), want = [...BATCH1, ...BATCH2, ...BATCH3, "m1.brand.social_profiles"].sort();   // 🔄 batch 3 (Ongoing work) is check-client-card-system-batch3
+  if (ids.join("|") !== want.join("|")) fail(`CS_STEPS isn't exactly the 22 client steps (batches 1, 2 + 3 + social profiles): ${ids.join(", ")}`);
   // every numbered Month 1 client step in the SOP is on the system — one that's added later must join it (or this gate is re-read)
   const sop = []; const walk = (o) => { if (Array.isArray(o)) return o.forEach(walk); if (o && typeof o === "object") { if (o.id && o.clientStepNo != null && /^m1\./.test(o.id)) sop.push(o.id); Object.values(o).forEach(walk); } };
   walk(JSON.parse(read("data/playbooks/client-steps.json")));

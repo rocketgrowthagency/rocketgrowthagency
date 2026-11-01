@@ -44,8 +44,8 @@
  [
   "the projection publishes the graph",
   "clientstepsjson",
-  "\"clientStepNo\": 15,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
-  "\"clientStepNo\": 15,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
+  "\"clientStepNo\": 16,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
+  "\"clientStepNo\": 16,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
   1
  ],
  [

@@ -74,7 +74,7 @@ if (!(cs.month1 || []).some((x) => x.id === "m1.brand.youtube_setup" && x.client
 // so the new Month 1 step is 14 and Monthly moved to 15–19 (10-19; only test clients had seen Monthly numbers)
 const nums = [...(pb.month1 || []), ...(pb.month2plus || [])].map((x) => x.clientStepNo).filter((n) => n != null);
 if (new Set(nums).size !== nums.length) fail("two client steps share a number (Month 1 + Monthly are one sequence)");
-if (step && step.clientStepNo !== 14) fail(`step 55's client number moved (${step && step.clientStepNo}) — the Setup list must read 1..14 in order`);
+if (step && step.clientStepNo !== 15) fail(`step 55's client number moved (${step && step.clientStepNo}) — the Setup list must read 1..15 in order`);
 const portal = src("portal/portal.js"), admin = src("admin/admin.js"), fe = src("netlify/functions/flow-execute.js");
 if (!/step\.clientForm === "video_upload" \? \(ownWait \|\| isDone \? "" : videoClipsHtml\(step, taskState, clientId\)\)/.test(portal)) fail("the portal step doesn't render the scripts + clips");
 if (!/file\.size > VC_MAX/.test(portal) || !/storage\/v1\/object\/client-videos\//.test(portal)) fail("the portal doesn't check the size before uploading to client-videos");

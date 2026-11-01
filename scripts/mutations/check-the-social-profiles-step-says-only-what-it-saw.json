@@ -1,0 +1,233 @@
+[
+ [
+  "a share button reads as a profile",
+  "socialprofiles",
+  "not: /^\\/(sharer|share|dialog|plugins|tr|login|privacy|policies)\\b/i }",
+  "not: /^\\/(login|privacy|policies)\\b/i }",
+  1
+ ],
+ [
+  "a refusal reads as an answer",
+  "socialprofiles",
+  "if (home == null) return { state: \"couldnt\", reason: \"the site refused our check or didn't answer\", at };",
+  "if (home == null) return { state: \"read\", found: [], not_linked: LABELS, checked: 0, at };",
+  1
+ ],
+ [
+  "no website reads as nothing linked",
+  "socialprofiles",
+  "if (!String(rawUrl || \"\").trim()) return { state: \"no_website\", at };",
+  "if (!String(rawUrl || \"\").trim()) return { state: \"read\", found: [], not_linked: LABELS, checked: 0, at };",
+  1
+ ],
+ [
+  "a private address is fetched",
+  "socialprofiles",
+  "if (addrs.some((a) => isPrivateIp(a.address))) return { state: \"couldnt\", reason: \"the address on file isn't a public one\", at };",
+  "",
+  1
+ ],
+ [
+  "the finder reads more of their site",
+  "socialprofiles",
+  ".filter(Boolean))].slice(0, 2);",
+  ".filter(Boolean))].slice(0, 20);",
+  1
+ ],
+ [
+  "a login wall's 200 reads as open",
+  "socialprofiles",
+  "if (status >= 200 && status < 300 && p && p.reliable) return { state: \"opens\", at, status };",
+  "if (status >= 200 && status < 300) return { state: \"opens\", at, status };",
+  1
+ ],
+ [
+  "a refusal reads as dead",
+  "socialprofiles",
+  "if (status === 404 || status === 410) return { state: \"gone\", at, status };",
+  "if (status >= 400) return { state: \"gone\", at, status };",
+  1
+ ],
+ [
+  "no answer reads as dead",
+  "socialprofiles",
+  "try { status = Number((await d.get(profile.url)).status); } catch { return { state: \"couldnt\", at, status: null }; }",
+  "try { status = Number((await d.get(profile.url)).status); } catch { return { state: \"gone\", at, status: null }; }",
+  1
+ ],
+ [
+  "any address is kept",
+  "socialprofiles",
+  "if (!p) return { error: `That isn't a link we can keep working. It can be ${LABELS.join(\", \")}.` };",
+  "if (!p) return { key: \"facebook\", label: \"Facebook\", url: t, handle: t };",
+  1
+ ],
+ [
+  "a look-alike address passes",
+  "socialprofiles",
+  "{ key: \"facebook\", label: \"Facebook\", host: /(^|\\.)facebook\\.com$/i,",
+  "{ key: \"facebook\", label: \"Facebook\", host: /facebook\\.com/i,",
+  1
+ ],
+ [
+  "a Facebook id address loses its id",
+  "socialprofiles",
+  "const url = `https://${host.replace(/^(m|mobile|web)\\./, \"www.\")}${path}${keepQuery}`;",
+  "const url = `https://${host.replace(/^(m|mobile|web)\\./, \"www.\")}${path}`;",
+  1
+ ],
+ [
+  "the step finishes with one unanswered",
+  "socialprofiles",
+  "(profilesOf(t).length > 0 && !pendingOf(t).length);",
+  "profilesOf(t).length > 0;",
+  1
+ ],
+ [
+  "\"not mine\" comes back",
+  "socialprofiles",
+  "&& !notMineOf(t).some((u) => sameUrl(u, f.url)));",
+  ");",
+  1
+ ],
+ [
+  "an already-linked profile is drafted",
+  "socialprofiles",
+  "const items = ps.filter((p) => !onPage(p)).map(",
+  "const items = ps.map(",
+  1
+ ],
+ [
+  "RGA answers for the client",
+  "socialfn",
+  "const gate = READS.has(action) ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId);",
+  "const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "the finder reads again on every load",
+  "socialfn",
+  "if (task0.finder && !b.force) return json(200,",
+  "if (false) return json(200,",
+  1
+ ],
+ [
+  "a profile the finder never saw is kept",
+  "socialfn",
+  "if (action === \"keep\" && !((task0.finder && task0.finder.found) || []).some((f) => SP.sameUrl(f.url, p.url))) return json(409, { error: \"That one isn't on your list any more. Add it with its link.\" });",
+  "",
+  1
+ ],
+ [
+  "no social with a profile saved",
+  "socialfn",
+  "if (list.length) return json(409, { error: \"You have a profile saved. Remove it first.\" });",
+  "",
+  1
+ ],
+ [
+  "a save that didn't read back says ok",
+  "socialfn",
+  "if (!saved || JSON.stringify(saved.client_input || null) !== JSON.stringify(next.client_input || null) || JSON.stringify((saved.finder || {}).at || null) !== JSON.stringify((next.finder || {}).at || null)) return json(500, { error: \"That didn't save. Nothing changed.\" });",
+  "",
+  1
+ ],
+ [
+  "saving overwrites the whole record",
+  "socialfn",
+  "const after = await writeStepTasks(supa, fresh, { ...fresh.tasks, [STEP]: next });",
+  "const after = await writeStepTasks(supa, fresh, { [STEP]: next });",
+  1
+ ],
+ [
+  "the links aren't drafted",
+  "admindeliv",
+  "c.items = require(\"./_social-profiles\").linkItems(tasks[def.recordOf] || {});",
+  "c.items = [];",
+  1
+ ],
+ [
+  "a dead link doesn't reach RGA",
+  "openmoves",
+  "out.push({ owner: \"rga\", kind: \"social_link_dead\",",
+  "void ({ owner: \"rga\", kind: \"social_link_dead\",",
+  1
+ ],
+ [
+  "the channel isn't used",
+  "flowexec",
+  "return kept ? { ...out, summary: `THEY ALREADY HAVE A CHANNEL: ${kept.url}. Use it. Don't make a second one.\\n\\n${out.summary}`, outcome_data: { ...out.outcome_data, their_channel: kept.url } } : out;",
+  "return out;",
+  1
+ ],
+ [
+  "the portal says you don't have one",
+  "portal",
+  "\"No profiles linked from your website · do you have any?\"",
+  "\"You don't have any profiles\"",
+  1
+ ],
+ [
+  "a couldn't-check reads as not linked",
+  "portal",
+  "const note = f && f.state === \"couldnt\" ? `That says nothing about your profiles${f.reason ? `: ${escapeHtml(f.reason)}` : \"\"}. Have one? Add it.`",
+  "const note = f && f.state === \"couldnt\" ? `Not linked from your website.`",
+  1
+ ],
+ [
+  "the card says opens without proof",
+  "portal",
+  "return csEv(`${socialLink(p)}${s === \"opens\" ? \" opens\" : \"\"}",
+  "return csEv(`${socialLink(p)} opens",
+  1
+ ],
+ [
+  "the site row shows with no website",
+  "portal",
+  "const siteRow = f && f.state === \"no_website\" ? \"\" : live ?",
+  "const siteRow = live ?",
+  1
+ ],
+ [
+  "the done card loses the approval",
+  "portal",
+  ": csEv(\"On your website and in its schema\", \"after your approval\", \"rga\");",
+  ": csEv(\"On your website and in its schema\", \"\", \"ok\");",
+  1
+ ],
+ [
+  "the channel doesn't reach the video step",
+  "portal",
+  "const yt = ps.find((p) => p.key === \"youtube\"); if (yt) _socialChannel.set(c.clientId, yt.handle || yt.url); else _socialChannel.delete(c.clientId);",
+  "",
+  1
+ ],
+ [
+  "the finder never runs from the card",
+  "portal",
+  "  loadSocialProfiles(clientId, listEl);\n",
+  "",
+  1
+ ],
+ [
+  "the step leaves the row list",
+  "portal",
+  "\"m2.win_story.capture\", \"m1.brand.social_profiles\"]);",
+  "\"m2.win_story.capture\"]);",
+  1
+ ],
+ [
+  "the admin card can read an absence as none",
+  "admin",
+  "That isn't the same as not having one.",
+  "Those are the ones they lack.",
+  1
+ ],
+ [
+  "the step waits on Google",
+  "playbooksjson",
+  "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [],",
+  "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\"m1.gbp.verify\"],",
+  1
+ ]
+]

@@ -2,8 +2,8 @@
  [
   "a Month 2 row leaves the system",
   "portal",
-  "\"m2.call.monthly\", \"m2.win_story.capture\"]);",
-  "\"m2.win_story.capture\"]);",
+  "\"m2.call.monthly\", \"m2.win_story.capture\", \"m1.brand.social_profiles\"]);",
+  "\"m2.win_story.capture\", \"m1.brand.social_profiles\"]);",
   1
  ],
  [

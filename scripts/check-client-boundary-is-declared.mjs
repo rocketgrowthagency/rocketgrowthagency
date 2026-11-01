@@ -96,9 +96,9 @@ if (!derived.length) {
   fail.push("_deliverables.js exported an EMPTY approvable list — every approval would vanish and the tab would read 'nothing waiting on you'");
 } else {
   for (const id of declared) if (!derived.includes(id)) fail.push(`${id} — bucket is approve, but it never reached CLIENT_APPROVABLE`);
-  // a TEST change key (shared/site-change.js STEPS[id].test) is approvable by design and has no playbook step to carry a bucket
+  // a TEST change key (shared/site-change.js STEPS[id].test) is approvable by design and has no playbook step to carry a bucket; so is a change that's a record of another step (a Monthly post, the social links)
   let testKeys = new Set();
-  try { const SC = createRequire(path.join(SITE, "package.json"))("./shared/site-change.js"); testKeys = new Set(Object.keys(SC.STEPS || {}).filter((k) => SC.STEPS[k] && SC.STEPS[k].test)); } catch { /* none */ }
+  try { const SC = createRequire(path.join(SITE, "package.json"))("./shared/site-change.js"); testKeys = new Set(Object.keys(SC.STEPS || {}).filter((k) => SC.STEPS[k] && (SC.STEPS[k].test || SC.STEPS[k].draftFrom || SC.STEPS[k].recordOf))); } catch { /* none */ }
   for (const id of derived) if (!declared.includes(id) && !testKeys.has(id)) fail.push(`${id} — in CLIENT_APPROVABLE but its bucket is not approve`);
 }
 

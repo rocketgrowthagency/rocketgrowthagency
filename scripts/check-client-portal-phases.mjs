@@ -33,11 +33,11 @@ for (const s of m1s) {
   else if (s.clientPhase < last) fail(`${s.id} (step ${s.clientStepNo}) is phase ${s.clientPhase} after a phase-${last} step — numbers must follow the phases`);
   else last = s.clientPhase;
 }
-const want = { "m1.kickoff.call": 1, "m1.gbp.verify": 2, "m1.access.website": 3, "m1.gbp.business_facts": 4, "m1.strategy.keywords_locations": 5, "m1.review.first_5": 13, "m1.call.close": 15 };
-for (const [id, n] of Object.entries(want)) if (PB.month1.find((s) => s.id === id)?.clientStepNo !== n) fail(`${id} isn't step ${n} (the approved order: verify + facts before the rest, reviews 13, close-out last)`);
+const want = { "m1.kickoff.call": 1, "m1.gbp.verify": 2, "m1.access.website": 3, "m1.gbp.business_facts": 4, "m1.strategy.keywords_locations": 5, "m1.review.first_5": 14, "m1.call.close": 16 };
+for (const [id, n] of Object.entries(want)) if (PB.month1.find((s) => s.id === id)?.clientStepNo !== n) fail(`${id} isn't step ${n} (the approved order: verify + facts before the rest, reviews 14 since the social profiles step came in, close-out last)`);
 // the win story has no number (client_ongoing_win_story_v1): it draws "·", after the numbered cards
 const MNUMLESS = (PB.month2plus || []).filter((s) => s.clientNumberless && (s.clientBucket === "supply" || s.clientBucket === "act")).map((s) => s.id);
-if (m2.some((s) => s.clientStepNo < 16 || s.clientStepNo > 20)) fail("Monthly client steps are not 16–20");
+if (m2.some((s) => s.clientStepNo < 17 || s.clientStepNo > 21)) fail("Monthly client steps are not 17–21");
 const ong = (P.match(/const ONGOING_ORDER = (\[[^\]]*\]);/) || [])[1];
 if (!ong) fail("ONGOING_ORDER moved"); else {
   const order = JSON.parse(ong), byNo = [...m2].sort((a, b) => a.clientStepNo - b.clientStepNo).map((s) => s.id).concat(MNUMLESS);
