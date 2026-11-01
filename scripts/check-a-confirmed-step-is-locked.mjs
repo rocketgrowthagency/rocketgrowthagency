@@ -129,6 +129,7 @@ const EXCUSED = {
   "portal-photo-team.js": "photos (detected — never locks)", "portal-photo-check.js": "photos (detected — never locks): writes only photo_ai.uploads, the advice-only look at an upload (client_step10_upload_help_v1), never the step's answer or status", "portal-photo-keep.js": "photos (detected — never locks)", "portal-photo-remove.js": "photos (detected — never locks)",
   "portal-form-test.js": "form tracking (detected — never locks): the inbox answer", "portal-step-recheck.js": "detected steps only — re-derives, never a client edit",
   "portal-deliverables.js": "approvals + the duplicate answer — not a step the lock covers", "portal-book-kickoff.js": "writes the booking stamps, not tasks; a held call refuses elsewhere",
+  "portal-page-proof.js": "an optional answer on m1.web.page_proof, not a step a client confirms: it changes nothing until a page carrying it is approved",
   "portal-review-cadence.js": "writes data.review_cadence (a record setting), not a step",
   "portal-reply.js": "RGA's reply stamps replied_at on the client's OWN ask (flag / change request) — never the step's answer (admin_row8_done_v2)",
   "portal-review-requests.js": "writes client_customer_lists; only reads the record",

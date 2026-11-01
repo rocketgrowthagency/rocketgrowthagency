@@ -111,7 +111,7 @@ if (!rep.sections.some((s) => s.key === "pages") || !rep.text.includes(U) || !/a
 if (M1.FORBIDDEN.test(rep.text)) fail("the page line trips the report's own forbidden words");
 if (M1.buildMonth1Report({ client: { business_name: "X" }, tasks: {}, playbook: [], months: [], baseline: {}, now }).sections.some((s) => s.key === "pages")) fail("a report with no live page has a pages section");
 const FE = read("netlify/functions/flow-execute.js");
-if (!/PM\.measureLivePages\(\{ tasks, supa, clientId: client\.id/.test(FE) || !/buildMonth1Report\(\{ client, tasks, pageMeasures,/.test(FE)) fail("the Month 1 report isn't given the numbers");
+if (!/require\("\.\/_page-measure"\)\.measureLivePages\(\{ tasks, supa, clientId: client\.id/.test(FE) || !/buildMonth1Report\(\{ client, tasks, pageMeasures,/.test(FE)) fail("the Month 1 report isn't given the numbers");
 const A = read("admin/admin.js");
 if (!/isPage && c && !c\.removes_page \? wcMeasureHtml\(id, task\)/.test(A) || !/not enough data yet/.test(A)) fail("the live card doesn't show the numbers");
 if (!/if \(act === "measure"\)/.test(AD) || !/This reads once the page is live/.test(AD)) fail("the measure action is gone");

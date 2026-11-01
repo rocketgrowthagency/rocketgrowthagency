@@ -767,7 +767,7 @@ if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's 
 {
   const pd = code("netlify/functions/portal-deliverables.js");
   // 🔒 approvals_page_v1 (10-20): a confirmation is ONE Done row straight away (no 7-day card at the top; its card lives on step 2)
-  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "You removed it · Google confirmed it"/.test(pd) || /Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved \}\);/.test(pd)) fail("a removed duplicate isn't listed under Done once Google shows one listing");
+  if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "You removed it · Google confirmed it"/.test(pd) || /Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved[ ,]/.test(pd)) fail("a removed duplicate isn't listed under Done once Google shows one listing");
   if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, e: \{ type: "resolved", title: x\.title, sub: `\$\{x\.label\}/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
 }
 if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(portal)) fail("the queue counts a card that waits on RGA as one that \"needs you\"");
