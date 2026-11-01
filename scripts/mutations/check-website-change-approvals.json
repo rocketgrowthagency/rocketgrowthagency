@@ -26,8 +26,8 @@
  [
   "approved counts as done",
   "sitechange",
-  "const stepMayBeDone = (t) => changeState(t) === \"live\" ||",
-  "const stepMayBeDone = (t) => changeState(t) === \"live\" || changeState(t) === \"approved\" ||"
+  "const stepMayBeDone = (t) => (changeState(t) === \"live\" && !pagesLeft(t)) ||",
+  "const stepMayBeDone = (t) => [\"live\", \"approved\"].includes(changeState(t)) ||"
  ],
  [
   "no-change needs no note",
@@ -86,8 +86,8 @@
  [
   "publish doesn't finish the step",
   "admindeliv",
-  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}), ...(noindexSeen !== null ? { noindex: noindexSeen } : {}) };\n      t.status = \"done\"; t.completed_at = now;",
-  "      t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}), ...(noindexSeen !== null ? { noindex: noindexSeen } : {}) };"
+  "if (SC.stepMayBeDone(t)) { t.status = \"done\"; t.completed_at = now; } else t.status = \"in_progress\";",
+  "t.status = \"in_progress\";"
  ],
  [
   "no ledger row on publish",
