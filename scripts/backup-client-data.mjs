@@ -172,4 +172,5 @@ async function main() {
   for (const n of fs.readdirSync(DIR)) if (/^\d{4}-\d{2}-\d{2}$/.test(n) && !keep.has(n)) fs.rmSync(path.join(DIR, n), { recursive: true, force: true });
   console.log(`✅ ${tableResults.length} tables · ${rows} rows · ${files} files copied to ${DIR}`);
 }
-if (fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) await main();   // realpath: /tmp on a Mac is a link, and a mismatch here silently runs nothing
+// 🔴 audit 10-31: a throw (offline morning) left yesterday's ok:true, no alert, and the 36-hour gate green. A crash is a failure, recorded.
+if (fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) await main().catch((e) => { const m = `the copy crashed: ${String(e?.message || e).slice(0, 200)}`; console.error(`🔴 ${m}`); try { record({ ok: false, problem: m }); } catch { /* the status file is what failed */ } tellChris(m); process.exit(1); });   // realpath: /tmp on a Mac is a link, and a mismatch here silently runs nothing

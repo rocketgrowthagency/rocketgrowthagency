@@ -117,5 +117,12 @@
   "recent.has(n) || n.endsWith(\"-01\")",
   "recent.has(n)",
   1
+ ],
+ [
+  "a crash goes unrecorded",
+  "backupdata",
+  "try { record({ ok: false, problem: m }); } catch",
+  "try { } catch",
+  1
  ]
 ]

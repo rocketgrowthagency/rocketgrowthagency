@@ -112,6 +112,9 @@ try {
   if (!fs.existsSync(`${DIR}/2026-11-05/manifest.json`)) fail("the night's own copy is missing");
   const noDrive = await run({ BACKUP_DATA_DIR: `${T}/not-plugged-in/RGA-Data-Backups` });
   if (noDrive === 0 || st()?.ok !== false) fail("LaCie missing isn't reported");
+  // a crash (the network gone) is a recorded failure, not yesterday's ok
+  const dead = await run({ BACKUP_DATA_SUPA_URL: "http://127.0.0.1:9" });
+  if (dead === 0 || st()?.ok !== false) fail("a crash leaves the last good status in place");
   slowRoot = 400;
   const slow = await run({ BACKUP_DATA_SLOW_MS: "100" });
   if (slow !== 2 || st()?.ok !== false) fail("a slow database doesn't stop the copy from starting");
