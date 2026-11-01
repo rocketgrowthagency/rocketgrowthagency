@@ -1,0 +1,152 @@
+[
+ [
+  "a reply only older than ours counts as live",
+  "replylive",
+  "upd >= reply.posted_at_ms - SKEW_MS",
+  "upd >= 0"
+ ],
+ [
+  "a review we can't see reads as not showing",
+  "replylive",
+  "  if (!rv) return out;",
+  "  if (!rv) { out.status = 'not_showing'; return out; }"
+ ],
+ [
+  "no list read reads as not showing",
+  "replylive",
+  "  if (!Array.isArray(reviews)) return out;\n  const rv",
+  "  if (!Array.isArray(reviews)) { out.status = 'not_showing'; return out; }\n  const rv"
+ ],
+ [
+  "no waiting period: not showing at once",
+  "replylive",
+  "now - reply.posted_at_ms >= WAIT_DAYS * DAY ? \"not_showing\"",
+  "now - reply.posted_at_ms >= 0 ? \"not_showing\""
+ ],
+ [
+  "the first time seen live is forgotten",
+  "replylive",
+  "(before && before.status === \"live\" && before.seen_at) || new Date(now).toISOString()",
+  "new Date(now).toISOString()"
+ ],
+ [
+  "a delivered:false counts as told",
+  "replylive",
+  "if (r && r.delivered === true) {",
+  "if (!r || r.delivered !== undefined) {"
+ ],
+ [
+  "RGA is told again every morning",
+  "replylive",
+  "newly_not_showing: items.filter((x) => x.status === \"not_showing\" && !x.told)",
+  "newly_not_showing: items.filter((x) => x.status === \"not_showing\")"
+ ],
+ [
+  "the card says Replied when nothing is live",
+  "replylive",
+  "if (live === 0) return { tone: \"wait\", head: \"Reply sent, waiting for Google to show it\"",
+  "if (live === 0) return { tone: \"ok\", head: \"Replied to your Google reviews\""
+ ],
+ [
+  "the alert claims Google rejected it",
+  "replylive",
+  "Google's read doesn't say why. Open the review in the admin",
+  "Google rejected it. Open the review in the admin"
+ ],
+ [
+  "the stored check keeps the review's words",
+  "replylive",
+  "payload: { checked_at: new Date(now).toISOString(), summary: res.summary, items: res.items } }",
+  "payload: { checked_at: new Date(now).toISOString(), summary: res.summary, items: res.items, text: (reviews[0] || {}).text } }"
+ ],
+ [
+  "a test client's reply alerts RGA",
+  "reviewmetrics",
+  "dry: q.dry === \"1\" || String(c.source || \"\").startsWith(\"test:\"),",
+  "dry: q.dry === \"1\","
+ ],
+ [
+  "the morning read stops checking replies",
+  "reviewmetrics",
+  "    if (reviews) try {\n      row.replies",
+  "    if (false) try {\n      row.replies"
+ ],
+ [
+  "the feed says Replied with no stored check",
+  "clientfeed",
+  "if (!replies || !(replies.live > 0)) continue;",
+  "if (false) continue;"
+ ],
+ [
+  "the feed says Replied when nothing is live",
+  "clientfeed",
+  "if (!replies || !(replies.live > 0)) continue;",
+  "if (!replies) continue;"
+ ],
+ [
+  "a partly live feed line stops counting",
+  "clientfeed",
+  "if (replies.live < replies.posted) line =",
+  "if (false) line ="
+ ],
+ [
+  "unreadable lists count as zero",
+  "reviewfunnel",
+  "if (!Array.isArray(customers)) return { window_days: days, asked: null, reminded: null, stopped: null, reviewed: null, reviewed_known: false, basis: \"lists_unreadable\" };",
+  "if (!Array.isArray(customers)) customers = [];"
+ ],
+ [
+  "nobody has looked reads as zero reviews",
+  "reviewfunnel",
+  "const known = reviewed.length > 0 || asked.length === 0 || freshReading === true;",
+  "const known = true;"
+ ],
+ [
+  "asks older than 90 days are counted",
+  "reviewfunnel",
+  "t >= since && t <= now + 60000",
+  "t <= now + 60000"
+ ],
+ [
+  "an ask without the client's mark is counted",
+  "reviewfunnel",
+  "const asked = customers.filter((c) => c && c.marked_sent_by_client && inWin(c.marked_sent_at));",
+  "const asked = customers.filter((c) => c && inWin(c.marked_sent_at));"
+ ],
+ [
+  "the funnel is open to the client",
+  "reviewreqfn",
+  "    const g = await require(\"./_auth\").requireWorkspaceForClient(event, clientId);\n    if (g.error) return g.error;\n    let customers",
+  "    let customers"
+ ],
+ [
+  "the hint says RGA sends it again",
+  "playbook",
+  "The messages you send your customers asking for reviews. We write them, you tap send from your own phone or email.",
+  "The messages we'll send your customers asking for reviews."
+ ],
+ [
+  "the reply recipe says thank by name again",
+  "playbook",
+  "refer to what the customer actually wrote, use their name sparingly, no keywords, and never repeat the same sentence across replies.",
+  "thank by name + mention service."
+ ],
+ [
+  "the month-2 reply step is empty again",
+  "playbook",
+  "\"instructions\": \"RGA drafts a reply to each new review and the client approves it first.",
+  "\"instructions\": null, \"x\": \"RGA drafts a reply to each new review and the client approves it first."
+ ],
+ [
+  "the reply drafter thanks by name again",
+  "exec",
+  "refer to what the customer actually wrote, use their name sparingly, no keywords, never repeat a sentence across replies, never argue",
+  "thank by name where given, never argue"
+ ],
+ [
+  "the admin reply card claims rejection",
+  "admin",
+  "A reply that Google doesn't show 3 days after posting needs a person",
+  "A reply that Google rejected needs a person"
+ ]
+]

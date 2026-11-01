@@ -30,8 +30,8 @@
  [
   "the feed shows a step with no clientFeed line",
   "clientfeed",
-  "    const line = FEED_LINE.get(id);\n    if (!line) continue;",
-  "    const line = FEED_LINE.get(id) || (p.summary || id);",
+  "    let line = FEED_LINE.get(id);\n    if (!line) continue;",
+  "    let line = FEED_LINE.get(id) || (p.summary || id);",
   1
  ],
  [

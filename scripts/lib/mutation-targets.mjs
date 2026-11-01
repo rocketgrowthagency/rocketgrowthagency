@@ -337,4 +337,7 @@ export const FILES = {
   // rank grid park lifted (10-31)
   rankschedule: "netlify/functions/_rank-schedule.js",
   rankvalidate: "netlify/functions/validate-tracked-keyword.js",
+  // reviews_additions_v1 (11-01): replies read back live, the asked-to-reviewed funnel
+  replylive: "netlify/functions/_reply-live.js",
+  reviewfunnel: "netlify/functions/_review-funnel.js",
 };
