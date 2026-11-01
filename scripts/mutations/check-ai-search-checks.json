@@ -1,0 +1,146 @@
+[
+ [
+  "an unreadable robots file reads as 'no file'",
+  "crawleracc",
+  "if (!r.ok) return { status: \"unreadable\"",
+  "if (!r.ok) return { status: \"none\""
+ ],
+ [
+  "a home page answering for robots.txt is read as a robots file",
+  "crawleracc",
+  "if (/^\\s*<(!doctype|html|head|body)/i.test(text)) return",
+  "if (false) return"
+ ],
+ [
+  "a tie between Allow and Disallow goes to Disallow",
+  "crawleracc",
+  "(r.path.length === best.path.length && r.allow && !best.allow)",
+  "(r.path.length === best.path.length && !r.allow && best.allow)"
+ ],
+ [
+  "the '*' group beats a crawler's own group",
+  "crawleracc",
+  "const use = own.length ? own : groups.filter((g) => g.agents.includes(\"*\"));",
+  "const use = groups.filter((g) => g.agents.includes(\"*\"));"
+ ],
+ [
+  "a fetch that threw reads as no block",
+  "crawleracc",
+  "return { status: \"unreadable\", http: null, why: `could not fetch",
+  "return { status: \"none\", http: null, why: `could not fetch"
+ ],
+ [
+  "an unreadable file is still judged",
+  "crawleracc",
+  "if (robots.status !== \"read\") continue;",
+  "if (false) continue;"
+ ],
+ [
+  "noindex with content before name is missed",
+  "crawleracc",
+  "const name = (/\\bname\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))/i.exec(tag) || []).slice(1).find((x) => x != null);",
+  "const name = (/^<meta\\s+name\\s*=\\s*\"([^\"]*)\"/i.exec(tag) || [])[1];"
+ ],
+ [
+  "the X-Robots-Tag header is ignored",
+  "crawleracc",
+  "if (h && /(^|[\\s,:])(noindex|none)([\\s,]|$)/i.test(h)) found.push(\"X-Robots-Tag header\");",
+  "if (false) found.push(\"X-Robots-Tag header\");"
+ ],
+ [
+  "a page that did not answer is judged noindex",
+  "crawleracc",
+  "out.noindex = pages.filter((p) => p.status === 200 && p.noindexBy",
+  "out.noindex = pages.filter((p) => p.noindexBy"
+ ],
+ [
+  "the block finding stops saying a person decides",
+  "crawleracc",
+  "const note = \" A person decides, because a block is sometimes on purpose.\";",
+  "const note = \"\";"
+ ],
+ [
+  "AI-crawler finding claims an AI result",
+  "crawleracc",
+  "This is a statement of fact about the file, not a claim about any AI answer.",
+  "This hides your business from AI answers and costs you recommendations."
+ ],
+ [
+  "the audit stops running the crawler check",
+  "onpageaudit",
+  "const crawler = crawlerFindings(robots, origin, pages);",
+  "const crawler = { robots: {}, search: [], ai: [], noindex: [], issues: [] };"
+ ],
+ [
+  "a site with no sitemap loses the crawler check",
+  "onpageaudit",
+  "if (partial) urls = [`${origin}/`];",
+  "if (partial) urls = [];"
+ ],
+ [
+  "the header is not read for noindex",
+  "onpageaudit",
+  "r.headers.get(\"x-robots-tag\")",
+  "\"\""
+ ],
+ [
+  "the FAQ-schema line comes back",
+  "aireadiness",
+  "  add(\"ai.third_party_corroboration\"",
+  "  add(\"ai.faq_content\", \"FAQPage / QAPage schema present\", false, \"none\", 3);\n  add(\"ai.third_party_corroboration\""
+ ],
+ [
+  "the old market figures return to the header",
+  "aireadiness",
+  "// market-share figure was mislabeled.",
+  "// Google's own discovery share fell 83% to 71%."
+ ],
+ [
+  "the score stops being admin-only",
+  "aireadiness",
+  "admin_only: true,",
+  "admin_only: false,"
+ ],
+ [
+  "the client list carries the score",
+  "aireadiness",
+  "client_facts: checks.filter((c) => c.pass === true).map((c) => ({ id: c.id, fact: c.label })),",
+  "client_facts: checks.filter((c) => c.pass === true).map((c) => ({ id: c.id, fact: c.label + \" \" + (possible ? Math.round((earned / possible) * 100) : 0) + \"%\" })),"
+ ],
+ [
+  "the visible-name check reads a missing name as a pass",
+  "aireadiness",
+  "const nameInText = wantName ?",
+  "const nameInText = !wantName ? true : wantName ?"
+ ],
+ [
+  "the schema weights go back up",
+  "aireadiness",
+  "\"no LocalBusiness or Organization JSON-LD found\", 2);",
+  "\"no LocalBusiness or Organization JSON-LD found\", 8);"
+ ],
+ [
+  "the Yelp step asks a customer for a Yelp review",
+  "playbook",
+  "Never ask a customer for a Yelp review (Yelp bars it).",
+  "Ask each customer for a Yelp review."
+ ],
+ [
+  "the Yelp step promises an AI result",
+  "playbook",
+  "it makes no promise about any AI tool or any ranking.",
+  "it will make your business appear in AI answers."
+ ],
+ [
+  "the Yelp step gets a runner claim",
+  "playbook",
+  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"manual\"",
+  "\"title\": \"Claim and complete the Yelp profile\",\n      \"type\": \"hybrid\""
+ ],
+ [
+  "the Yelp step leaves the canonical SOP",
+  "sopm1",
+  "id: \"m1.platform.yelp\"",
+  "id: \"m1.platform.yelp_gone\""
+ ]
+]
