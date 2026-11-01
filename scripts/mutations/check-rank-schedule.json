@@ -1,0 +1,296 @@
+[
+ [
+  "falls back to primary_service",
+  "rankschedule",
+  "const main = plan && plan.keywords && plan.keywords[0];\n  if (!main)",
+  "const main = (plan && plan.keywords && plan.keywords[0]) || (client && client.primary_service);\n  if (!main)"
+ ],
+ [
+  "scans without a locked plan check",
+  "rankschedule",
+  "if (!main) return { action: \"skip\", code: \"no_locked_keyword\"",
+  "if (false) return { action: \"skip\", code: \"no_locked_keyword\""
+ ],
+ [
+  "another term's check counts",
+  "rankschedule",
+  "if (od && od.tracked && sameKw(od.tracked, main)) {",
+  "if (od && od.tracked) {"
+ ],
+ [
+  "a not-sound term is scanned",
+  "rankschedule",
+  "if (v.state === \"not_sound\") return",
+  "if (false) return"
+ ],
+ [
+  "an unchecked term is scanned",
+  "rankschedule",
+  "if (v.state === \"unchecked\") return",
+  "if (false) return"
+ ],
+ [
+  "test records are scanned",
+  "rankschedule",
+  "if (/^test:/i.test(String(c.source || \"\")) ||",
+  "if (false ||"
+ ],
+ [
+  "terminated clients are scanned",
+  "rankschedule",
+  "if (c.billing_status === \"terminated\") return",
+  "if (false) return"
+ ],
+ [
+  "any hour will do",
+  "rankschedule",
+  "if (lp.hour !== SCAN_HOUR) return",
+  "if (false) return"
+ ],
+ [
+  "the scan hour moves",
+  "rankschedule",
+  "const SCAN_HOUR = 10;",
+  "const SCAN_HOUR = 3;"
+ ],
+ [
+  "a window is the whole month",
+  "rankschedule",
+  "lp.d < WINDOW_SPLIT_DAY ? 1 : 2",
+  "1"
+ ],
+ [
+  "an unknown zone is guessed",
+  "rankschedule",
+  "if (!zone.matched) return",
+  "if (false) return"
+ ],
+ [
+  "a finished window repeats",
+  "rankschedule",
+  "if (win && (win.status === \"done\" || win.status === \"covered\")) return",
+  "if (false) return"
+ ],
+ [
+  "a running scan can be doubled",
+  "rankschedule",
+  "if (live) return",
+  "if (false) return"
+ ],
+ [
+  "tries are unlimited",
+  "rankschedule",
+  "const MAX_ATTEMPTS = 3;",
+  "const MAX_ATTEMPTS = 3000;"
+ ],
+ [
+  "a failed try repeats within the day",
+  "rankschedule",
+  "const RETRY_AFTER_HOURS = 20;",
+  "const RETRY_AFTER_HOURS = 0;"
+ ],
+ [
+  "a stale claim never expires",
+  "rankschedule",
+  "hoursSince(a.at, now) * 60 > STALE_CLAIM_MIN",
+  "false"
+ ],
+ [
+  "a partial map closes its window",
+  "rankschedule",
+  "const done = result.status === \"done\";",
+  "const done = true;"
+ ],
+ [
+  "the claim is not kept before the scan",
+  "rankschedule",
+  "await updateLedger(c.id, (l) => claimWindow(l, d.window, d.main, claim, now), { fetchFn, env });",
+  "/* no claim */"
+ ],
+ [
+  "the second claimant also runs",
+  "rankschedule",
+  "if (mine.length !== 1 || mine[0].claim !== claim)",
+  "if (false)"
+ ],
+ [
+  "the provider count is not read",
+  "rankschedule",
+  "const acct = await serpAccount({ fetchFn, env });",
+  "const acct = { ok: true, left: 1e9 };"
+ ],
+ [
+  "no reserve is kept back",
+  "rankschedule",
+  "const RESERVE_SEARCHES = 100;",
+  "const RESERVE_SEARCHES = 0;"
+ ],
+ [
+  "an unreadable count runs anyway",
+  "rankschedule",
+  "const refuse = !acct.ok ? acct.error :",
+  "const refuse = !acct.ok ? null :"
+ ],
+ [
+  "a refused scan counts as a try",
+  "rankschedule",
+  "for (const x of due) out.results.push({ id: x.c.id, refused: \"provider\", reason: refuse });",
+  "for (const x of due) { await updateLedger(x.c.id, (l) => claimWindow(l, x.d.window, x.d.main, \"x\", now), { fetchFn, env }); out.results.push({ id: x.c.id, refused: \"provider\", reason: refuse }); }"
+ ],
+ [
+  "a thin session covers a window",
+  "rankschedule",
+  "return n >= pinsPerScan(env) ?",
+  "return n >= 1 ?"
+ ],
+ [
+  "the cost ignores the grid size",
+  "rankschedule",
+  "const pinsPerScan = (env = process.env) => { const g = Math.max(3, Number(env.RANK_GRID_SIZE || 5) | 1); return g * g; };",
+  "const pinsPerScan = () => 25;"
+ ],
+ [
+  "problems never reach the job",
+  "rankschedule",
+  "out.problems.push(`${c.business_name || c.id}: ${d.reason}`);",
+  "/* silent */"
+ ],
+ [
+  "a failed pin is read as not ranked",
+  "dkgridfn",
+  "const complete = pinsRead === pinsTotal;",
+  "const complete = true;"
+ ],
+ [
+  "an unsearched pin counts as read",
+  "dkgridfn",
+  "const pinsRead = readPins.size;",
+  "const pinsRead = pinsTotal;"
+ ],
+ [
+  "a failed search is added to the read pins",
+  "dkgridfn",
+  "          if (!results) {\n",
+  "          if (!results) {\n            readPins.add(`${row},${col}`);\n"
+ ],
+ [
+  "no results is treated as a failure",
+  "dkgridfn",
+  "hasn'?t returned any results|no results",
+  "never-matches-xyz"
+ ],
+ [
+  "a refused key keeps being used",
+  "dkgridfn",
+  "if (isProviderRefusal(e)) { providerStopped = scrub(e); break; }",
+  "/* keep going */"
+ ],
+ [
+  "a retry is not capped",
+  "dkgridfn",
+  "attempt < 2 && !results",
+  "attempt < 200 && !results"
+ ],
+ [
+  "rows are written for a partial map",
+  "dkgridfn",
+  "if (complete) await saveGridRows",
+  "await saveGridRows"
+ ],
+ [
+  "the stored map has holes",
+  "dkgridfn",
+  "...(complete ? { grid } : {}),",
+  "grid,"
+ ],
+ [
+  "the monthly summary is written over unread pins",
+  "dkgridfn",
+  "if (fullOnes.length) {",
+  "if (true) {"
+ ],
+ [
+  "the percentages are computed over unread pins",
+  "dkgridfn",
+  "const pctTop3 = complete ?",
+  "const pctTop3 = true ?"
+ ],
+ [
+  "the coverage is not stored",
+  "dkgridfn",
+  "pins_read: pinsRead,\n        pins_total: pinsTotal,",
+  "pins_read: pinsTotal,\n        pins_total: pinsTotal,"
+ ],
+ [
+  "the window is never closed",
+  "dkgridfn",
+  "try { await sched.updateLedger(clientId, (l) => sched.finishAttempt(l, schedule.window, schedule.claim, result, new Date())); }",
+  "try { /* nothing */ }"
+ ],
+ [
+  "the centre is searched for again each time",
+  "dkgridfn",
+  "for (const query of (geo ? [] : attempts)) {",
+  "for (const query of attempts) {"
+ ],
+ [
+  "a key reaches a stored error",
+  "dkgridfn",
+  "for (const k of [process.env.SERPAPI_KEY, process.env.GOOGLE_PLACES_API_KEY, process.env.SUPABASE_SERVICE_ROLE_KEY]) if (k && k.length > 8) m = m.split(k).join(\"[hidden]\");",
+  ""
+ ],
+ [
+  "a name in another script matches everything",
+  "dkgridfn",
+  "if (!r || !t) return false;",
+  ""
+ ],
+ [
+  "names lose their letters outside a-z",
+  "dkgridfn",
+  "name.toLowerCase().replace(/[^\\p{L}\\p{N}\\s]/gu, \"\").trim()",
+  "name.toLowerCase().replace(/[^a-z0-9\\s]/g, \"\").trim()"
+ ],
+ [
+  "the tick is monthly again",
+  "toml",
+  "schedule = \"10 * * * *\"",
+  "schedule = \"0 7 1 * *\""
+ ],
+ [
+  "the job manifest drifts from the schedule",
+  "jobmanifest",
+  "label: \"Map rankings (twice a month)\", cron: \"10 * * * *\"",
+  "label: \"Map rankings (twice a month)\", cron: \"0 7 1 * *\""
+ ],
+ [
+  "problems are dropped from the job's reply",
+  "jobmanifest",
+  "error: p.length ? `${plural(p.length, \"problem\")}: ${String(p[0]).slice(0, 140)}` : null,",
+  "error: null,"
+ ],
+ [
+  "the refresh reads primary_service again",
+  "rankingsrefresh",
+  "keyword: main, keywords: [main],",
+  "keyword: client.primary_service, keywords: [client.primary_service],"
+ ],
+ [
+  "the term check can't take a named term",
+  "rankvalidate",
+  "(q.keyword && !q.apply) ?",
+  "false ?"
+ ],
+ [
+  "admin hides the coverage",
+  "admin",
+  "const covered = rg.pins_total ? ` · ${rg.pins_read} of ${rg.pins_total} points read` : \"\";",
+  "const covered = \"\";"
+ ],
+ [
+  "admin hides the schedule",
+  "admin",
+  "const rs = state.onboardingData?.v2Campaign?.rank_schedule;",
+  "const rs = null;"
+ ]
+]

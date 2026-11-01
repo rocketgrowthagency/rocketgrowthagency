@@ -4,7 +4,7 @@
 //  (1) raw store: a saved file is gzipped, named source/client/date, never overwrites, carries no secret (by key name, by value shape, and the
 //      process's own env values), any client id (empty, unicode, "../") stays inside its folder, a failed save returns ok:false and never throws,
 //      the first save makes a PRIVATE bucket, Backblaze signing matches AWS's published example, and nothing in the file can delete or edit.
-//  (2) rank grid: every pin's full result goes to the raw store before the numbers are worked out; the scan's size, guard and schedule are unchanged.
+//  (2) rank grid: every pin's full result goes to the raw store before the numbers are worked out; the scan's size and guard are unchanged (its schedule is the hourly tick since the park was lifted, 10-31).
 //  (3) Search Console rows: no progress table = nothing pulled; a first run backfills and the marker moves chunk by chunk; a finished client
 //      is never pulled again; a zero-traffic client isn't repeated; 429 stops it; the request, page and time caps hold; raw before rows;
 //      a failed raw copy is reported and doesn't stop the rows; rows that weren't kept don't move the marker.
@@ -118,7 +118,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   ok(/raw_saved: rawSaves/.test(g), "(2) a failed raw save isn't written into the scan's record (it would be swallowed)");
   ok(/return \{ raw: rows, places: rows\.map/.test(g), "(2) SerpAPI's full answer is dropped before it can be kept");
   ok(/const MAX_PLACES_CALLS = Number\(process\.env\.RANK_MAX_PLACES_CALLS \|\| \(GRID \* GRID \+ 5\)\)/.test(g) && /const GRID = Math\.max\(3, Number\(process\.env\.RANK_GRID_SIZE \|\| 5\) \| 1\)/.test(g), "(2) the scan's size or runaway guard changed: lifting the grid park is a separate item");
-  ok(/\[functions\."rankings-refresh"\]\s*\n\s*schedule = "0 7 1 \* \*"/.test(toml), "(2) the rank scan's schedule changed");
+  ok(/\[functions\."rankings-refresh"\]\s*\n\s*schedule = "10 \* \* \* \*"/.test(toml), "(2) the rank scan's schedule changed (it is the hourly tick since the park was lifted; check-rank-schedule holds the rules)");
 }
 
 // ── (3) Search Console rows ─────────────────────────────────────────────────────────────────────────────────────────

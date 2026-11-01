@@ -22,6 +22,10 @@ export function cronSkipFails(SITE, alsoCheck = []) {
   for (const rel of all) {
     let src;
     try { src = fs.readFileSync(path.join(SITE, rel), "utf8"); } catch { fails.push(`cannot read ${rel}`); continue; }
+    // 🔑 A job may keep its client query in a helper it requires (rankings-refresh -> _rank-schedule.js, 10-31): read those too, or moving the
+    // query out of the job's own file would make it vanish from this check.
+    const helpers = [...src.matchAll(/require\("\.\/(_[a-z0-9-]+)"\)/g)].map((m) => m[1]);
+    for (const h of helpers) { try { src += "\n" + fs.readFileSync(path.join(SITE, "netlify/functions", `${h}.js`), "utf8"); } catch { /* not a file of ours */ } }
     // a client-WIDE read = a /clients? query not narrowed to one id
     const wide = [...src.matchAll(/\/clients\?([^`"'\s]*)/g)].map((m) => m[1]).filter((q) => !/(^|&)id=eq\./.test(q));
     // a scheduled job with no client-wide read is fine (it works on something else); a job the caller NAMED must have one

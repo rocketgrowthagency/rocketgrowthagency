@@ -57,9 +57,9 @@
  ],
  [
   "the ranking scans reach test clients",
-  "rankingsrefresh",
-  "&primary_market=not.is.null&or=(source.is.null,source.not.like.test:*)`",
-  "&primary_market=not.is.null`",
+  "rankschedule",
+  ",archived_at&or=(source.is.null,source.not.like.test:*)",
+  ",archived_at",
   1
  ]
 ]

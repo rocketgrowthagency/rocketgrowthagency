@@ -356,8 +356,8 @@
  [
   "admin.js loses its cache buster",
   "adminhtml",
-  "/admin/admin.js?v=20261101e",
-  "/admin/admin.js"
+  "/admin/admin.js?v=",
+  "/admin/admin.js?x="
  ],
  [
   "a new table is left open to the public",

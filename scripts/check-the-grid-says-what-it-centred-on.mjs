@@ -240,10 +240,10 @@ if (!/await rankSearch\(kw, lat, lng,/.test(grid)) fail.push("🔴 the per-point
     }
   }
 }
-if (!/keywords_tracked_count: perKeyword\.length/.test(grid)) fail.push("the monthly summary no longer counts the whole plan");
+if (!/keywords_tracked_count: (?:perKeyword|fullOnes)\.length/.test(grid)) fail.push("the monthly summary no longer counts the whole plan");
 
 // the radius is derived from the plan, with a floor
-if (!/let reachKm = 5, locationsUsed = \[\];/.test(grid)) fail.push("the radius is no longer derived, or lost its 5 km floor");
+if (!/let reachKm = (?:geo \? Number\(geo\.radius_km\) : )?5, locationsUsed = \[\];/.test(grid)) fail.push("the radius is no longer derived, or lost its 5 km floor");
 if (!/reachKm = Math\.max\(reachKm, d2 \* 1\.15\)/.test(grid)) fail.push("the furthest locked sub-location no longer sets the reach, with margin");
 if (!/\(reachKm \/ KM_PER_MI\) \/ HALF/.test(grid)) fail.push("the grid spacing is no longer computed from the reach — a fixed span can miss the plan entirely");
 if (!/radius_km: Math\.round\(reachKm \* 10\) \/ 10/.test(grid)) fail.push("the radius actually used is not recorded with the scan");
