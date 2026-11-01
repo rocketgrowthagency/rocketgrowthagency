@@ -119,6 +119,7 @@ export const FILES = {
   portalindex: "portal/index.html",
   loginhtml: "client-login/index.html",
   admin: "admin/admin.js",
+  brainbackground: "netlify/functions/v2-brain-analysis-background.js",   // the Brain prompt (Q&A retired 2025-11-03)
   exec: "netlify/functions/flow-execute.js",
   css: "admin/admin.css",
   portal: "portal/portal.js",
@@ -396,6 +397,7 @@ export const FILES = {
   dkgridfn: "netlify/functions/v2-rank-grid-background.js",
   gscdaily: "netlify/functions/_gsc-daily.js",
   gscfn: "netlify/functions/gsc-daily-rows.js",
+  gscsitemaps: "netlify/functions/_gsc-sitemaps.js",   // the weekly sitemap error read (11-01)
   benchbuild: "netlify/functions/vertical-benchmark-build.js",
   benchscraper: "scraper:scripts/build-vertical-benchmark.mjs",
   changeledger: "netlify/functions/_change-ledger.js",

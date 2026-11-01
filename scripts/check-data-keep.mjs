@@ -42,7 +42,7 @@ const req = createRequire(`${SITE}/netlify/functions/x.js`);
 const load = (f) => { try { return req(`./${f}`); } catch (e) { idk(`${f} won't load: ${e.message}`); } };
 const SRC = {};
 for (const f of ["_raw-store.js", "v2-rank-grid-background.js", "_gsc-daily.js", "gsc-daily-rows.js", "vertical-benchmark-build.js", "_change-ledger.js", "send-monthly-report.js",
-  "_gbp-purge.js", "gbp-30-day-purge.js", "admin-data-keep.js", "_job-manifest.js"]) {
+  "_gbp-purge.js", "gbp-30-day-purge.js", "admin-data-keep.js", "_job-manifest.js", "core-change.js"]) {
   SRC[f] = read(`netlify/functions/${f}`); if (SRC[f] == null) idk(`${f} moved`);
 }
 const adminJs = read("admin/admin.js"), adminHtml = read("admin/index.html"), sql = read("supabase/data_keep.sql"), toml = read("netlify.toml");
@@ -189,6 +189,10 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   const e2 = await run({ whyChosen: "W" }, (b, n) => (n === 1 ? { ok: false, text: '{"code":"23502","message":"null value in column"}' } : { ok: true, text: '[{"id":"x"}]' }));
   ok(e2 instanceof Error, "(5) an unrelated database error was swallowed");
   ok(/ALTER|alter table public\.client_change_log add column if not exists why_chosen/.test(sql), "(5) the SQL file doesn't add the columns");
+  // (5b) a reason is passed only where a real one is in hand: the written why RGA gave the client when it asked for a core change. Never a literal sentence.
+  { const cc = SRC["core-change.js"] || "", calls = cc.match(/recordChange\(\{[\s\S]*?\}\);/g) || [];
+    ok(calls.length === 1 && /whyChosen:\s*item\.why\s*\|\|\s*null/.test(calls[0]), "(5) the core-change ledger row doesn't carry the why the client was shown (item.why)");
+    for (const f of Object.keys(SRC)) if (f !== "_change-ledger.js") ok(!/(whyChosen|expectedResult):\s*["'`]/.test(SRC[f]), `(5) ${f} passes a typed sentence as a reason (a reason must come from the record, never be invented)`); }
 }
 
 // ── (6) frozen reports ──────────────────────────────────────────────────────────────────────────────────────────────

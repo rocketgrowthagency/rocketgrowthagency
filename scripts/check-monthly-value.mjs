@@ -170,6 +170,71 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
   if (/\b(colour|neighbour|organis|licence|centre|favour|behaviour)\w*/i.test(copy)) fail("British spelling in the card's copy");
   if (/\b(Sample|sample month|Lorem)\b/.test(copy)) fail("sample wording reached the product");
   if (/\b(11 of 13|14 calls|6 forms|2\.1 seconds|30 times|BBB)\b/.test(copy)) fail("a number from the mockup is hard-coded"); }
+// ── 6 · Search Console sitemap errors (11-01): a weekly READ kept on the month's record; a failed or missing read is never "no errors" ──
+{ const SM_SRC = read("netlify/functions/_gsc-sitemaps.js"), GD_SRC = read("netlify/functions/gsc-daily-rows.js");
+  let SM; try { SM = req(`${SITE}/netlify/functions/_gsc-sitemaps.js`); } catch (e) { console.error(`⚠️  INDETERMINATE — _gsc-sitemaps.js doesn't load (${e.message})`); process.exit(2); }
+  const WEB = { website_url: "https://www.denver-plumbing.example" };
+  const card = (sm, o = {}) => { const v = build({ ...WEB, record: { reporting_month: MONTH, data: sm === undefined ? {} : { sitemap_errors: sm } }, ...o }); return by(v, "search_console"); };
+  const good = (e, w, p = 1) => ({ read_at: "2026-10-27T05:30:00Z", sitemaps: p, processed: p, errors: e, warnings: w });
+  // the card: only a good read shows a line
+  if (card(undefined)) fail("no read on record: a Search Console line appears (a missing read must leave the line out)");
+  if (card({ last_attempt_at: "2026-10-28T05:30:00Z", last_error: "Search Console HTTP 500" })) fail("a failed read shows a line (a failed read is not a zero)");
+  if (card({ read_at: "2026-10-27T05:30:00Z", sitemaps: 2, processed: 0, errors: 0, warnings: 0 })) fail("sitemaps Google hasn't processed show 'no errors'");
+  if (card({ read_at: "2026-10-27T05:30:00Z", sitemaps: 1, processed: 1, errors: null, warnings: 0 })) fail("an unread error count shows a line");
+  if (card({ read_at: "2026-10-27T05:30:00Z", sitemaps: 1, processed: 1, errors: "0", warnings: "0" })) fail("string counts are trusted (only whole numbers we saved are)");
+  if (card(good(0, 0), { website_url: "" })) fail("no website: a Search Console line appears");
+  if (card({ ...good(0, 0), read_at: "2026-09-27T05:30:00Z" })) fail("a read from another month fills this month's line");
+  { const l = card(good(0, 0)); if (!l || l.mark !== "ok" || !/no errors or warnings/.test(l.text) || !l.when) fail(`a clean read: ${JSON.stringify(l)}`); }
+  { const l = card(good(3, 1)); if (!l || l.mark !== "rga" || !/3 errors and 1 warning\b/.test(l.text)) fail(`a read with problems: ${JSON.stringify(l)}`); }
+  { const l = card(good(0, 2)); if (!l || l.mark !== "rga" || /error/.test(l.text) || !/2 warnings/.test(l.text)) fail(`warnings only: ${JSON.stringify(l)}`); }
+  for (const l of [card(good(0, 0)), card(good(3, 1))]) if (l && (/—|–|undefined|NaN|null/.test(l.text))) fail(`the Search Console line prints a dash or undefined: ${l.text}`);
+  // the read: Google's answer → counts. Stubbed network only.
+  const sum = SM.summarise;
+  { const a = sum({ sitemap: [{ path: "a", lastDownloaded: "2026-10-20T00:00:00Z", errors: "2", warnings: "1" }, { path: "b", lastDownloaded: "2026-10-20T00:00:00Z", errors: "0", warnings: "4" }, { path: "c", isPending: true, errors: "9", warnings: "9" }, { path: "d", errors: "7", warnings: "7" }] });
+    if (a.errors !== 2 || a.warnings !== 5 || a.processed !== 2 || a.sitemaps !== 4) fail(`the sum counts a pending or never-downloaded sitemap: ${JSON.stringify(a)}`); }
+  if (!sum({ sitemap: [{ lastDownloaded: "x", errors: "abc", warnings: "0" }] }).error) fail("an unreadable count is summed as 0");
+  if (!sum({ sitemap: [{ lastDownloaded: "x", errors: "1" }] }).error) fail("a missing warnings count is summed as 0");
+  if (!sum(null).error || !sum([]).error || !sum({ sitemap: "x" }).error) fail("a non-object answer is read as a sitemap list");
+  { const e = sum({}); if (e.error || e.processed !== 0) fail("an empty list isn't read as 'no sitemaps processed'"); }
+  // the job
+  const NOW2 = new Date("2026-10-28T05:30:00Z"), OAUTH = (n) => ({ client_id: `c${n}`, gsc_site_url: `https://site${n}.example/`, refresh_token: "x" });
+  const world = (o = {}) => { const w = { patches: [], fetched: [], recs: o.recs || {} };
+    w.supa = async (path, init = {}) => {
+      if (path.startsWith("/client_google_oauth")) return (o.clients || [OAUTH(1)]);
+      if (path.startsWith("/client_monthly_records?reporting_month")) return Object.entries(w.recs).map(([cid, r]) => ({ id: `r-${cid}`, client_id: cid, data: r }));
+      const m = /^\/client_monthly_records\?id=eq\.r-(\w+)/.exec(path);
+      if (m && init.method === "PATCH") { w.patches.push({ cid: m[1], data: JSON.parse(init.body).data }); return null; }
+      if (m) return [{ data: w.recs[m[1]] || {} }];
+      throw new Error(`unexpected ${path}`); };
+    w.fetchFn = async (url, init = {}) => { w.fetched.push({ url, method: init.method || "GET" }); return o.reply ? o.reply(url) : { ok: true, status: 200, json: async () => ({ sitemap: [{ lastDownloaded: "2026-10-20T00:00:00Z", errors: "0", warnings: "0" }] }) }; };
+    return w; };
+  const go = (w, extra = {}) => SM.run({ supa: w.supa, token: async () => "tok", fetchFn: w.fetchFn, now: NOW2, ...extra });
+  { const w = world({ recs: { c1: { gsc: { x: 1 }, metrics_refreshed_at: "k" } } }); const r = await go(w);
+    const p = w.patches[0]; if (!p || r.read !== 1 || !p.data.sitemap_errors || p.data.sitemap_errors.errors !== 0 || p.data.sitemap_errors.processed !== 1 || !p.data.sitemap_errors.read_at) fail(`a good read isn't kept: ${JSON.stringify(p)}`);
+    if (p && (!p.data.gsc || p.data.metrics_refreshed_at !== "k")) fail("the read overwrote the month's other numbers");
+    if (w.fetched.some((f) => f.method !== "GET" || !/googleapis\.com\/webmasters\/v3\/sites\/.+\/sitemaps$/.test(f.url))) fail(`the job asks Google for more than the sitemap list: ${JSON.stringify(w.fetched)}`); }
+  for (const [what, reply] of [["a 500", () => ({ ok: false, status: 500, json: async () => ({}) })], ["a 429", () => ({ ok: false, status: 429, json: async () => ({}) })], ["unreadable json", () => ({ ok: true, status: 200, json: async () => { throw new Error("bad"); } })]]) {
+    const w = world({ recs: { c1: {} }, reply }); const r = await go(w); const p = w.patches[0];
+    if (r.failed !== 1 || r.read !== 0) fail(`${what}: not counted as a failed read`);
+    if (!p || p.data.sitemap_errors.read_at || "errors" in p.data.sitemap_errors || !p.data.sitemap_errors.last_error) fail(`${what}: saved counts (or no failure note): ${JSON.stringify(p)}`); }
+  { const prior = good(2, 0), w = world({ recs: { c1: { sitemap_errors: { ...prior, read_at: "2026-10-10T05:30:00Z" } } }, reply: () => ({ ok: false, status: 500, json: async () => ({}) }) }); await go(w);
+    const s = w.patches[0] && w.patches[0].data.sitemap_errors; if (!s || s.errors !== 2 || s.read_at !== "2026-10-10T05:30:00Z" || !s.last_error) fail(`a failed read erased the earlier good read: ${JSON.stringify(s)}`); }
+  { const w = world({ recs: { c1: { sitemap_errors: { ...good(0, 0), read_at: "2026-10-25T05:30:00Z" } } } }); const r = await go(w);
+    if (r.skipped !== 1 || w.fetched.length || w.patches.length) fail("a client read 3 days ago is read again (weekly, not daily)"); }
+  { const w = world({ recs: { c1: { sitemap_errors: { ...good(0, 0), read_at: "2026-10-20T05:30:00Z" } } } }); await go(w); if (!w.patches.length) fail("a read 8 days old isn't refreshed"); }
+  { const w = world({ recs: {} }); const r = await go(w); if (w.patches.length || w.fetched.length || r.pending !== 1) fail("a client with no record this month was read or got a row invented"); }
+  { const many = Array.from({ length: 20 }, (_, n) => OAUTH(n + 1)), recs = Object.fromEntries(many.map((c) => [c.client_id, {}])); const w = world({ clients: many, recs }); await go(w);
+    if (w.fetched.length > SM.MAX_CLIENTS_PER_RUN) fail(`a run reads ${w.fetched.length} clients; the cap is ${SM.MAX_CLIENTS_PER_RUN}`); }
+  // source: read only, same job, no schema change, shared login helper
+  { const strip = (s) => s.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"), code = strip(SM_SRC);
+    if (/method:\s*["'](POST|PUT|DELETE)["']/.test(code) || /googleapis\.com[^\n]*(\?|\/)(add|delete|submit)/i.test(code)) fail("the sitemap read can submit or delete a sitemap");
+    if (/oauth2\.googleapis|refresh_token:|grant_type/.test(code)) fail("the sitemap read gets its own Google token (use _google-token.js)");
+    if (/create table|alter table/i.test(code) || fs.existsSync(`${SITE}/supabase/sitemap_errors.sql`)) fail("a schema change appeared for the sitemap read (the month's JSON holds it)");
+    if (!/require\("\.\/_google-token"\)/.test(GD_SRC) || !/sitemaps\.run\(\{ supa, token: \(oauth\) => googleAccessToken\(supa, oauth\)/.test(GD_SRC)) fail("gsc-daily-rows doesn't run the sitemap read with the shared Google login");
+    if (!/try \{ sm = await sitemaps\.run/.test(GD_SRC)) fail("a sitemap failure can cost the Search Console rows (not in its own try)");
+    if (!/WEEKLY_MS\s*=\s*6 \* 86400000/.test(SM_SRC) || !/MAX_CLIENTS_PER_RUN\s*=\s*\d+/.test(SM_SRC) || !/TIME_BUDGET_MS\s*=\s*\d+/.test(SM_SRC)) fail("the sitemap read isn't weekly and bounded");
+    if (/CONSENT|consent/.test(code)) fail("the sitemap read asks for consent (a read needs none)"); } }
+
 // the mockup is the approved one and says what the card lists
 if (!/APPROVED/.test(MOCK) || !/What we watched this month/.test(MOCK) || !/What we watched for you in/.test(MOCK)) fail("the approved mockup isn't there or changed its wording");
 

@@ -646,5 +646,17 @@
   "gbppurge",
   "await supa(`/gbp_purge_ledger`, { method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n          table_name: MONTHLY.table",
   "await Promise.resolve({ method: \"POST\", headers: { Prefer: \"return=minimal\" }, body: JSON.stringify({\n          table_name: MONTHLY.table"
+ ],
+ [
+  "the core-change row drops the why the client was shown",
+  "corechangefn",
+  "whyChosen: item.why || null",
+  "whyChosen: null"
+ ],
+ [
+  "the core-change row gets an invented reason",
+  "corechangefn",
+  "whyChosen: item.why || null",
+  "whyChosen: \"To improve your visibility\""
  ]
 ]

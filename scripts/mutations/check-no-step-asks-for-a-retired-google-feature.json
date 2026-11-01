@@ -1,4 +1,28 @@
 [
- ["a client step asks for GBP messaging again", "clientstepsjson", "\"clientLabel\": \"Add your booking link\",", "\"clientLabel\": \"Turn on GBP messaging\",", 1],
- ["an admin step points at the Messaging screen", "playbooksjson", "\"clientLabel\": \"Add your booking link\",", "\"clientLabel\": \"Add your booking link\", \"note\": \"GBP → Edit Profile → Messaging → Turn ON\",", 1]
+ [
+  "a client step asks for GBP messaging again",
+  "clientstepsjson",
+  "\"clientLabel\": \"Add your booking link\",",
+  "\"clientLabel\": \"Turn on GBP messaging\",",
+  1
+ ],
+ [
+  "an admin step points at the Messaging screen",
+  "playbooksjson",
+  "\"clientLabel\": \"Add your booking link\",",
+  "\"clientLabel\": \"Add your booking link\", \"note\": \"GBP → Edit Profile → Messaging → Turn ON\",",
+  1
+ ],
+ [
+  "admin draws the Q&A preview again",
+  "admin",
+  "    fiDiv.innerHTML = `\n      <p style=\"font-size:var(--fs-2xs);font-weight:600;color:var(--admin-muted);margin:0 0 4px;\">KEYWORDS</p>",
+  "    const qaPreview = (fi.qa_pairs || []).length ? \"Q&A PREVIEW\" : \"\";\n    fiDiv.innerHTML = `\n      <p style=\"font-size:var(--fs-2xs);font-weight:600;color:var(--admin-muted);margin:0 0 4px;\">KEYWORDS</p>"
+ ],
+ [
+  "the Brain is asked for Q&A pairs again",
+  "brainbackground",
+  "    \"post_count\": <3-5>,\n",
+  "    \"post_count\": <3-5>,\n    \"qa_pairs\": [],\n"
+ ]
 ]

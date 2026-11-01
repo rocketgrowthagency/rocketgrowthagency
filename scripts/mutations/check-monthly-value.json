@@ -229,5 +229,95 @@
   "answer: { up: r.up, status: r.status,",
   "answer: { isup: r.up, status: r.status,",
   1
+ ],
+ [
+  "a failed sitemap read is saved as zero errors",
+  "gscsitemaps",
+  "data.sitemap_errors = { ...before, last_attempt_at: now.toISOString(), last_error: result.error };",
+  "data.sitemap_errors = { read_at: now.toISOString(), sitemaps: 1, processed: 1, errors: 0, warnings: 0, last_error: result.error };"
+ ],
+ [
+  "a sitemap Google hasn't processed is counted",
+  "gscsitemaps",
+  "s && s.lastDownloaded && s.isPending !== true",
+  "s"
+ ],
+ [
+  "an unreadable count is summed as zero",
+  "gscsitemaps",
+  "if (e === null || w === null) return {",
+  "if (false) return {"
+ ],
+ [
+  "a client is read every day, not weekly",
+  "gscsitemaps",
+  "if (lastRead && now.getTime() - lastRead < WEEKLY_MS) { out.skipped++; continue; }",
+  "if (false) { out.skipped++; continue; }"
+ ],
+ [
+  "a run reads every client, no cap",
+  "gscsitemaps",
+  "if (out.checked >= MAX_CLIENTS_PER_RUN || Date.now()",
+  "if (Date.now()"
+ ],
+ [
+  "the read overwrites the month's other numbers",
+  "gscsitemaps",
+  "data = { ...((fresh && fresh.data) || {}) }; }",
+  "data = {}; }"
+ ],
+ [
+  "the read can submit to Google",
+  "gscsitemaps",
+  "{ headers: { Authorization: `Bearer ${token}` }, signal",
+  "{ method: \"POST\", headers: { Authorization: `Bearer ${token}` }, signal"
+ ],
+ [
+  "a row is invented for a month with none",
+  "gscsitemaps",
+  "if (!rec) { out.pending++; continue; }",
+  "if (!rec) { byClient.set(oauth.client_id, { id: \"new\", client_id: oauth.client_id, data: {} }); continue; }"
+ ],
+ [
+  "the card shows a line with no sitemap processed",
+  "monthlyvalue",
+  "Number.isInteger(sm.processed) && sm.processed > 0",
+  "true"
+ ],
+ [
+  "the card shows another month's read",
+  "monthlyvalue",
+  "sm.read_at && inMonth(sm.read_at, month)",
+  "sm.read_at"
+ ],
+ [
+  "the card trusts text counts",
+  "monthlyvalue",
+  "Number.isInteger(e) && e >= 0 && Number.isInteger(w) && w >= 0",
+  "e !== null && w !== null"
+ ],
+ [
+  "the card says no errors when there are some",
+  "monthlyvalue",
+  "if (e === 0 && w === 0) add(\"search_console\", \"ok\"",
+  "if (e === 0 || w === 0) add(\"search_console\", \"ok\""
+ ],
+ [
+  "the card shows the line to a client with no website",
+  "monthlyvalue",
+  "  if (url) {\n    const sm = i.record",
+  "  if (true) {\n    const sm = i.record"
+ ],
+ [
+  "the sitemap read gets its own Google login",
+  "gscfn",
+  "token: (oauth) => googleAccessToken(supa, oauth) }); } catch",
+  "token: (oauth) => ownToken(supa, oauth) }); } catch"
+ ],
+ [
+  "a sitemap failure can cost the Search Console rows",
+  "gscfn",
+  "try { sm = await sitemaps.run",
+  "sm = await sitemaps.run"
  ]
 ]
