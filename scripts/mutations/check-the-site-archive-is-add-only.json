@@ -1,0 +1,142 @@
+[
+ [
+  "pages past the limit are skipped silently",
+  "sitearchivelib",
+  "const take = list.urls.slice(0, PAGE_LIMIT), over = Math.max(0, list.urls.length - take.length);",
+  "const take = list.urls.slice(0, PAGE_LIMIT), over = 0;",
+  1
+ ],
+ [
+  "the limit goes",
+  "sitearchivelib",
+  "const PAGE_LIMIT = 25;",
+  "const PAGE_LIMIT = 1000;",
+  1
+ ],
+ [
+  "a failed page is counted as saved",
+  "sitearchivelib",
+  "rows.push(row); if (row.state === \"saved\") saved++; else failed++;",
+  "rows.push(row); saved++;",
+  1
+ ],
+ [
+  "a failed page loses its reason",
+  "sitearchivelib",
+  "reason: r.status >= 200 && r.status < 300 ? \"the page came back empty\" : `the page answered ${r.status}` }",
+  "reason: null }",
+  1
+ ],
+ [
+  "a store failure is reported as saved",
+  "sitearchivelib",
+  "catch (e) { return { run_id: runId, client_id: client.id, url, kind: k, state: \"failed\"",
+  "catch (e) { return { run_id: runId, client_id: client.id, url, kind: k, state: \"saved\"",
+  1
+ ],
+ [
+  "images are archived as pages",
+  "sitearchivelib",
+  "const SKIP_EXT = /\\.(?:jpe?g|png|gif|webp|svg|ico|pdf|zip|css|js|mp4|mov|woff2?|xml|json|txt)$/i;",
+  "const SKIP_EXT = /\\.(?:zzz)$/i;",
+  1
+ ],
+ [
+  "a private address is fetched",
+  "sitearchivelib",
+  "if (list.error) return { error:",
+  "if (false) return { error:",
+  1
+ ],
+ [
+  "other sites' links are archived",
+  "sitearchivelib",
+  "if (/^https?:$/.test(u.protocol) && same(u) && !SKIP_EXT",
+  "if (/^https?:$/.test(u.protocol) && !SKIP_EXT",
+  1
+ ],
+ [
+  "a store can overwrite",
+  "sitearchivefn",
+  "\"x-upsert\": \"false\"",
+  "\"x-upsert\": \"true\"",
+  1
+ ],
+ [
+  "anyone can capture",
+  "sitearchivefn",
+  "  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "a missing table is an error not Not set up",
+  "sitearchivefn",
+  "if (e.notSetUp) return json(200, { ok: true, setup: false, last: null }); return json(500, { error: \"Could not read the archive. Try again.\" });",
+  "return json(500, { error: \"Could not read the archive. Try again.\" });",
+  1
+ ],
+ [
+  "two captures run at once",
+  "sitearchivefn",
+  "if (last && !last.finished_at && Date.now() - Date.parse(last.started_at) < 180000) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "the capture is not recorded",
+  "sitearchivefn",
+  "await recordSubmission({",
+  "void ({",
+  1
+ ],
+ [
+  "the code updates archived pages",
+  "sitearchivefn",
+  "async finishRun(id, patch) {",
+  "async patchPages(id) { await supa(`/site_archive_pages?run_id=eq.${id}`, { method: \"PATCH\", body: \"{}\" }); },\n  async finishRun(id, patch) {",
+  1
+ ],
+ [
+  "a policy opens the tables",
+  "sitearchivesql",
+  "-- no policies on purpose: only the service role (RGA's server functions) can read or write",
+  "create policy \"all\" on public.site_archive_pages for select using (true);",
+  1
+ ],
+ [
+  "the bucket goes public",
+  "sitearchivesql",
+  "'site-archive', 'site-archive', false",
+  "'site-archive', 'site-archive', true",
+  1
+ ],
+ [
+  "the card forgets Not set up",
+  "admin",
+  "small: \"Not set up\", side: \"\", title: \"Site archive\"",
+  "small: \"Off\", side: \"\", title: \"Site archive\"",
+  1
+ ],
+ [
+  "the card hides what is not automatic",
+  "admin",
+  "Not automatic yet: RGA presses Capture now.",
+  "",
+  1
+ ],
+ [
+  "the card is off step 8",
+  "admin",
+  "accessAdminHtml(t) + siteArchiveAdminHtml()",
+  "accessAdminHtml(t)",
+  1
+ ],
+ [
+  "the Capture button does not spin",
+  "admin",
+  "  b.classList.add(\"is-busy\");\n  try { await siteArchiveLoad",
+  "  try { await siteArchiveLoad",
+  1
+ ]
+]
