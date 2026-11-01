@@ -12,6 +12,7 @@ export const FILES = {
   aicheck: "netlify/functions/_ai-check.js",   // admin_ai_search_v2 (approved 11-01): the Month 6 hand check, one line per tool
   seeclient: "shared/client-preview.js",
   clientkit: "shared/client-card-kit.js",
+  playbookclient: "data/playbooks/playbooks.json",   // see_what_client_sees: the 21 numbered client steps
   // onboarding_and_offboarding_v1 (approved 11-01)
   stepreminders: "netlify/functions/_step-reminders.js",
   calloutcome: "shared/call-outcome.js",

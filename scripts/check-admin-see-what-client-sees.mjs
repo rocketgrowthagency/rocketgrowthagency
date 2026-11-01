@@ -96,8 +96,35 @@ const ci = (src) => { const i = src.indexOf("const CS_ICON = {"); return i < 0 ?
 if (!ci(portal) || ci(portal) !== ci(kit)) fail("the shared kit's CS_ICON differs from portal.js");
 // 6. no drawer = not available
 if (!/Preview not available/.test(P.previewPartsHtml("m9.no.such.step", {}))) fail('a step with no drawer does not say "Preview not available"');
+// 7. every numbered client step either draws or says Preview not available (21 at the time of writing; the playbook is the count)
+const pbRaw = read("data/playbooks/playbooks.json");
+const clientSteps = [];
+(function walk(o) { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") { if (o.clientStepNo != null && o.id) clientSteps.push(o.id); Object.values(o).forEach(walk); } })(JSON.parse(pbRaw));
+const stepIds = [...new Set(clientSteps)];
+if (stepIds.length < 21) fail(`the playbook lists only ${stepIds.length} numbered client steps (expected at least 21): the count the preview covers shrank`);
+const NA = P.UNAVAILABLE || {};
+for (const id of stepIds) {
+  const drawn = Object.prototype.hasOwnProperty.call(P.DRAWERS, id), na = Object.prototype.hasOwnProperty.call(NA, id);
+  if (!drawn && !na) fail(`${id}: a numbered client step with neither a drawer nor a "Preview not available" entry`);
+  if (drawn && na) fail(`${id}: listed as drawn AND not available`);
+  const out = P.previewPartsHtml(id, {});
+  if (na && !drawn) {
+    if (!/Preview not available/.test(out)) fail(`${id}: not available, but the preview does not say so`);
+    if (/pm-cs-card|pm-k5-plan|<button|class="pm-amend/.test(out)) fail(`${id}: not available, yet the preview draws a card`);
+    if (!NA[id] || /\u2014/.test(NA[id])) fail(`${id}: its not-available label is empty or has an em dash`);
+  }
+}
+for (const id of Object.keys(NA)) if (!stepIds.includes(id)) fail(`UNAVAILABLE names ${id}, which is not a numbered client step in the playbook`);
+for (const [id, d] of Object.entries(P.DRAWERS)) {
+  if (!stepIds.includes(id)) fail(`DRAWERS draws ${id}, which is not a numbered client step in the playbook`);
+  if (!d.calls.every(([fn, a]) => P.PREVIEW_CALLS.some(([f, x]) => f === fn && x === a))) fail(`${id}: a drawer reads something outside PREVIEW_CALLS`);
+}
+// the admin only reads for steps with a drawer; a step with none makes no call at all
+if (!/for \(const \[fn\] of \(d \? d\.calls : \[\]\)\)/.test(block)) fail("the admin preview reads for a step that has no drawer (or the loop changed shape)");
+// a drawn card must come from a shared function, never hand-written HTML in a drawer
+for (const [id, d] of Object.entries(P.DRAWERS)) if (/<div|<span|<p[ >]/.test(String(d.parts))) fail(`${id}: a drawer hand-writes html instead of calling a shared card function`);
 const noComments = (t) => t.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 if (/\u2014/.test(noComments(prev) + kit.slice(kit.indexOf("function blogCardHtml")) + block)) fail("an em dash in the new preview copy");
 fs.rmSync(tmp, { recursive: true, force: true });
 if (F.length) { console.error("the admin preview might run as the client, or has drifted from the client's card:"); for (const f of F) console.error("   - " + f); process.exit(1); }
-console.log(`OK: nothing in the admin preview can act as the client (${hostile.length} hostile inputs, ${drawers} drawer x ${states.length} states, one guarded read)`);
+console.log(`OK: nothing in the admin preview can act as the client (${hostile.length} hostile inputs, ${drawers} drawer x ${states.length} states, one guarded read, ${stepIds.length} numbered client steps each drawn or not available)`);

@@ -86,7 +86,7 @@
  [
   "a step with no card shows a guess",
   "seeclient",
-  ": [{ kind: \"unavailable\", label: \"\" }];",
+  ": [{ kind: \"unavailable\", label: UNAVAILABLE[stepId] || \"\" }];",
   ": [];",
   1
  ],
@@ -95,6 +95,76 @@
   "blogposts",
   "action === \"read\" ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId)",
   "await requirePortalOwnerOrWorkspace(event, clientId)",
+  1
+ ],
+ [
+  "a numbered client step has no entry",
+  "seeclient",
+  "  \"m1.call.close\": \"The close-out call card\",\n",
+  "",
+  1
+ ],
+ [
+  "a stale step is listed as not available",
+  "seeclient",
+  "  \"m1.kickoff.call\": \"The kickoff call card\",\n",
+  "  \"m1.kickoff.call\": \"The kickoff call card\",\n  \"m9.stale.step\": \"A card\",\n",
+  1
+ ],
+ [
+  "a step is both drawn and not available",
+  "seeclient",
+  "  \"m1.kickoff.call\": \"The kickoff call card\",\n",
+  "  \"m1.kickoff.call\": \"The kickoff call card\",\n  \"m1.access.website\": \"The access card\",\n",
+  1
+ ],
+ [
+  "a not-available label is empty",
+  "seeclient",
+  "\"m2.call.monthly\": \"The monthly call card\"",
+  "\"m2.call.monthly\": \"\"",
+  1
+ ],
+ [
+  "a not-available label has an em dash",
+  "seeclient",
+  "\"m2.call.monthly\": \"The monthly call card\"",
+  "\"m2.call.monthly\": \"The monthly call — card\"",
+  1
+ ],
+ [
+  "a not-available step draws a card",
+  "seeclient",
+  "[{ kind: \"unavailable\", label: UNAVAILABLE[stepId] || \"\" }];",
+  "[{ kind: \"card\", html: '<div class=\"pm-cs-card\">a guess</div>' }];",
+  1
+ ],
+ [
+  "a drawer hand-writes its card",
+  "seeclient",
+  "{ kind: \"unavailable\", label: \"The access card\" },",
+  "{ kind: \"card\", html: \"<div>a look-alike</div>\" },",
+  1
+ ],
+ [
+  "a drawer is for a step that is not in the playbook",
+  "seeclient",
+  "\"m1.access.website\": {\n    calls",
+  "\"m9.no.such.step\": {\n    calls",
+  1
+ ],
+ [
+  "the admin reads for a step with no drawer",
+  "admin",
+  "for (const [fn] of (d ? d.calls : []))",
+  "for (const [fn] of (d ? d.calls : [[\"portal-blog-posts\"]]))",
+  1
+ ],
+ [
+  "a numbered client step drops out of the playbook",
+  "playbookclient",
+  "\"clientStepNo\": 21\n",
+  "\"clientStepNo\": null\n",
   1
  ]
 ]
