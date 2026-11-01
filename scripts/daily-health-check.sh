@@ -396,7 +396,7 @@ run check-stage-changes-notify-client.mjs "a stage change tells the client, neve
 # ── ADMIN CHECKLIST + CLIENT PORTAL (built 2026-09-29 → 10-01, wired 10-01) ────────────────────
 # 🔴 Ten gates existed and nothing invoked them — "a gate nobody invokes is indistinguishable from a
 # gate that is always green". Found by check-every-gate-is-wired, which is why that gate exists.
-run check-the-checklist-is-one-list.mjs      "the onboarding checklist is ONE list of 61, not two"
+run check-the-checklist-is-one-list.mjs      "the onboarding checklist is ONE list of 60, not two"
 run check-the-checklist-has-one-numbering-system.mjs "the disc carries state, .ob-sid carries the identifier"
 run check-step-instructions-render-as-bands.mjs "a step's instructions render as bands, not a wall of prose"
 run check-a-step-output-takes-its-own-weight.mjs "stored output is weighted, linkified and cannot scroll sideways"
@@ -406,7 +406,7 @@ run check-the-picker-has-a-way-out.mjs       "the client can close the time pick
 run check-the-live-call-surfaces-keep-up.mjs "the Join button and the clock track the call in real time"
 # 🔑 These two drive a real browser signed in. No browser / no Supabase env → exit 2, INDETERMINATE,
 # which is correct: not a pass, and not a design failure either.
-run check-the-checklist-renders-one-list.mjs "61 rows, one pill each, the view switch filtering them — ON SCREEN"
+run check-the-checklist-renders-one-list.mjs "60 rows, one pill each, the view switch filtering them — ON SCREEN"
 run check-the-checklist-numbering-matches-the-mockup.mjs "the live render matches the approved mockup, property by property"
 run check-what-this-produced-matches-the-mockup.mjs "a step's stored output matches the approved output mockup"
 run check-a-designed-draft-escapes-exactly-once.mjs "a designed draft parses the raw source and escapes once"
@@ -662,7 +662,7 @@ run check-the-kickoff-agrees-on-every-surface.mjs "the kickoff tells one story i
 run check-the-audit-report-is-fresh-and-in-hand.mjs "the client audit report is built at booking, never expires, is in their hands, and every build is bounded"
 run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends on the record; the portal honours it (10-09 test call)"
 run check-activity-rows-use-real-columns.mjs "every client_activity write names real columns (10-09: the recap never reached the timeline)"
-run check-photo-review-before-google.mjs "a client photo waits for RGA's review; every slot kind has an example; step 39 + Your action carry the review"
+run check-photo-review-before-google.mjs "a client photo waits for RGA's review; every slot kind has an example; admin step 38 + Your action carry the review"
 run check-no-catch-on-a-supabase-query.mjs "no Supabase query chains a .catch it does not have (10-09: it broke the photo upload after the photo saved)"
 run check-every-video-page-ships.mjs "every rebuilt video landing page is committed before deploy and actually serves (10-07/10-08: 9 served the homepage)"
 run check-every-control-spins.mjs "every press that starts a request turns busy, in the portal and the admin (hard rule)"

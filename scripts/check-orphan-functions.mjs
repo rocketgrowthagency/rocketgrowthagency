@@ -66,7 +66,7 @@ const EXTERNAL_ENTRY = {
   "unsubscribe-one-click.js": "RFC 8058 one-click unsubscribe — called by the mail client",
   "verify-turnstile.js": "called by the public site's form JS on submit",
   "ping-test.js": "manual reachability probe",
-  "vertical-benchmark-lookup.js": "read endpoint queried by the admin UI and by hand",
+  "vertical-benchmark-lookup.js": "read endpoint, run by hand: nothing in the admin or portal calls it (audit 10-31; header claims consumers that do not exist). Decide: wire it or remove it",
   "vertical-benchmark-build.js": "build endpoint triggered on demand when a vertical needs refreshing",
 };
 

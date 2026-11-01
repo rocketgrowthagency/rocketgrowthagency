@@ -11,7 +11,7 @@
 //      "additional", is a key of PHOTO_EXAMPLE, its drawing exists in the sprite, and it has 4 tips
 //   2. the client slot: a turned-down photo does not fill its slot (it reopens with RGA's note), the slot
 //      carries the example toggle, and the review states are worded from the client's side
-//   3. admin: step 39 renders the review list, its status says "Review N", Your action names the photos and
+//   3. admin: step 38 (called 39 before the renumbering) renders the review list, its status says "Review N", Your action names the photos and
 //      opens the step, and the buttons call admin-photo-review
 // exit 0 = holds · 1 = broken · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
