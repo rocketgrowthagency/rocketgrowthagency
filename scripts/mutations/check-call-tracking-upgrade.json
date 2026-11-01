@@ -24,9 +24,9 @@
   "          type: \"session\","
  ],
  [
-  "no recording notice",
+  "recording comes back on",
   "callproviders",
-  "recording_enabled: true, destination_number: `+1${destinationNumber}`, greeting_text: \"This call may be recorded.\" },",
+  "recording_enabled: false, destination_number: `+1${destinationNumber}` },",
   "recording_enabled: true, destination_number: `+1${destinationNumber}` },"
  ],
  [

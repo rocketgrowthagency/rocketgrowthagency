@@ -4,7 +4,7 @@
 //   · the recommendation comes from the client's three answers (never a fixed "Skip"): most call AND (unanswered/not sure OR ads)
 //   · portal-step-choice stores only allow-listed answers
 //   · "Set one up for me" creates ONE Google Business Profile number: a CallRail SOURCE tracker (google_my_business), recording on with
-//     "This call may be recorded", texting off — never a website session pool (CallRail API, "Creating a Source Tracker")
+//     recording off, texting off — never a website session pool (CallRail API, "Creating a Source Tracker")
 //   · admin row 26: Done only when the test call rang AND all five safe-setup checks are ticked; the leak check keeps its month
 //   · the monthly sync stores answered / missed / first-time + the rule; the report keeps three call numbers apart
 //   exit 0 holds · 1 regressed · 2 harness
@@ -62,7 +62,8 @@ calls = [];
 await PROV.callrail.provision({ businessName: "Acme", destinationNumber: "5125550142", areaCode: "512", timeZone: "America/Chicago", key: "k", account: "A1" });
 const tr = (calls.find((c) => c.url.includes("/trackers.json")) || {}).body || {};
 if (tr.type !== "source" || tr.source?.type !== "google_my_business") fail(`"Set one up for me" doesn't create a Google Business Profile source number (type ${tr.type}, source ${JSON.stringify(tr.source)})`);
-if (tr.call_flow?.recording_enabled !== true || !/may be recorded/.test(tr.call_flow?.greeting_text || "") || tr.sms_enabled !== false) fail("the number doesn't announce recording, or can text (no A2P registration)");
+// 🔒 contract_v2_redline §5D: recording is off, and a greeting saying otherwise would be false
+if (tr.call_flow?.recording_enabled !== false || /recorded/i.test(tr.call_flow?.greeting_text || "") || tr.sms_enabled !== false) fail("the number records calls, says it might, or can text (no A2P registration)");
 if (tr.call_flow?.destination_number !== "+15125550142") fail(`the number doesn't ring the client (${tr.call_flow?.destination_number})`);
 // admin: done only with the test call + all five checks
 world({ status: "in_progress", client_choice: "rga_sets_up" });

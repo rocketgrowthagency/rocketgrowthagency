@@ -1,0 +1,177 @@
+[
+[
+"the guard is never installed",
+"deadline",
+"require(\"./_google-consent\").installGuard();",
+"",
+1
+],
+[
+"writes pass with no consent",
+"googleconsent",
+"if (refusal) return new Response(",
+"if (false) return new Response(",
+1
+],
+[
+"a withdrawal doesn't stop it",
+"googleconsent",
+"agreed: last.kind === \"google_consent_agreed\",",
+"agreed: true,",
+1
+],
+[
+"a failed read lets it through",
+"googleconsent",
+"return \"We couldn't confirm the client's authorization, so nothing was sent to Google. Try again.\";",
+"return null;",
+1
+],
+[
+"a location nobody connected is written to",
+"googleconsent",
+"if (!owners || !owners.length) return REFUSAL;",
+"if (!owners || !owners.length) return null;",
+1
+],
+[
+"media POST isn't treated as a write",
+"googleconsent",
+"/\\/(localPosts|media)(\\?|$)/",
+"/\\/(localPosts)(\\?|$)/",
+1
+],
+[
+"PUT isn't treated as a write (review replies)",
+"googleconsent",
+"m === \"PATCH\" || m === \"PUT\" || m === \"DELETE\"",
+"m === \"PATCH\" || m === \"DELETE\"",
+1
+],
+[
+"reads wait on consent too",
+"googleconsent",
+"return m === \"POST\" && /",
+"return m === \"POST\" || /",
+1
+],
+[
+"removing a duplicate needs this consent",
+"googleconsent",
+"if (m === \"DELETE\" && /^https:\\/\\/mybusinessbusinessinformation\\.googleapis\\.com\\/v1\\/locations\\/\\d+(\\?|$)/.test(url)) return false;",
+"",
+1
+],
+[
+"admin can agree for the client",
+"googleconsentfn",
+"action === \"read\" ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId)",
+"await requirePortalOwnerOrWorkspace(event, clientId)",
+1
+],
+[
+"the wording isn't saved",
+"googleconsentfn",
+"wording: CONSENT_WORDING, ",
+"",
+1
+],
+[
+"an old page can agree",
+"googleconsentfn",
+"if (action === \"agree\" && body.wording_version !== CONSENT_VERSION)",
+"if (false)",
+1
+],
+[
+"no read-back",
+"googleconsentfn",
+"if (consent.agreed !== (action === \"agree\"))",
+"if (false)",
+1
+],
+[
+"a withdrawal doesn't tell RGA",
+"googleconsentfn",
+"const told_rga = await tellRga(clientId, `${client.business_name || \"A client\"} withdrew their Google authorization. Changes to their profile have stopped.`);",
+"const told_rga = false;",
+1
+],
+[
+"connect skips the tick on the server",
+"oauthinitfn",
+"if (!(await readConsent(clientId)).agreed) return { statusCode: 409",
+"if (false) return { statusCode: 409",
+1
+],
+[
+"review reply skips the check",
+"respondreview",
+"if (!(await readConsent(clientId)).agreed) return { statusCode: 403",
+"if (false) return { statusCode: 403",
+1
+],
+[
+"the card loses the tick",
+"portal",
+"step.clientForm === \"oauth_grant\" ? googleConsentFormHtml(clientId)",
+"step.clientForm === \"oauth_grant\" ? \"\"",
+1
+],
+[
+"connect ignores an unticked box",
+"portal",
+"if (consentForm && !consentForm.querySelector(\"[data-gconsent-tick]\").checked) {",
+"if (false) {",
+1
+],
+[
+"the list drops review replies",
+"portal",
+"\"Photos and posts\", \"Replies to reviews\"]",
+"\"Photos and posts\"]",
+1
+],
+[
+"reconnect dead-ends",
+"portal",
+"if (res.status === 409 && data.needs_consent) {",
+"if (false) {",
+1
+],
+[
+"admin loses the record",
+"admin",
+"id === \"m1.access.gbp\" ? `<div data-admin-gconsent",
+"id === \"x\" ? `<div data-admin-gconsent",
+1
+],
+[
+"recording comes back on",
+"callproviders",
+"recording_enabled: false",
+"recording_enabled: true",
+1
+],
+[
+"the greeting comes back",
+"callproviders",
+"recording_enabled: false, destination_number: `+1${destinationNumber}` }",
+"recording_enabled: false, destination_number: `+1${destinationNumber}`, greeting_text: \"This call may be recorded.\" }",
+1
+],
+[
+"privacy says recorded again",
+"privacy",
+"Calls aren't recorded unless you separately turn recording on in writing.",
+"Calls may be recorded with a spoken notice.",
+1
+],
+[
+"the client is told calls are recorded",
+"clientsteps",
+"Calls aren't recorded. Your report",
+"Calls start with \\\"This call may be recorded.\\\" Your report",
+1
+]
+]

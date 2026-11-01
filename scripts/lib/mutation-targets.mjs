@@ -2,6 +2,13 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // client_google_consent_v1 (10-31): no Google profile write without the client's recorded OK
+  deadline: "netlify/functions/_deadline.js",
+  googleconsent: "netlify/functions/_google-consent.js",
+  googleconsentfn: "netlify/functions/portal-google-consent.js",
+  oauthinitfn: "netlify/functions/oauth-google-init.js",
+  respondreview: "netlify/functions/v2-respond-review.js",
+  clientsteps: "data/playbooks/client-steps.json",
   // contract_v2_redline + pricing_page_v3 (10-31): the contract's money terms are what the code does
   billingdates: "netlify/functions/_billing-dates.js",
   cancellationfn: "netlify/functions/admin-record-cancellation.js",

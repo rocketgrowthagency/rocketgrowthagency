@@ -367,6 +367,7 @@ const NOT_PREFLIGHT = {
   'check-step-7-hours-editor-v2.mjs': 'the WEBSITE repo\'s client step 7 hours editor V2 (client_step07_hours_editor_v2, approved 10-30); files only — runs in daily-health-check.sh beside the card-system batches, not the video pre-flight',
   'check-the-contract-promises-only-what-the-code-does.mjs': 'the WEBSITE repo\'s agreement + public pricing (approved 10-31); files only, runs in daily-health-check.sh',
   'check-the-public-site-tells-the-truth.mjs': 'the WEBSITE repo\'s public pages (website_audit_v1_v2, approved 10-31); files only, runs in daily-health-check.sh',
+  'check-google-changes-wait-for-consent.mjs': 'the WEBSITE repo\'s Google writers and the portal + admin consent cards (client_google_consent_v1, approved 10-31); files only with a stubbed network, runs in daily-health-check.sh',
   'check-the-founding-plan-and-billing-day.mjs': 'the WEBSITE repo\'s contract, billing and founding pages (contract_v2_redline + pricing_page_v3, approved 10-31); files only, runs in daily-health-check.sh',
   'check-the-sale-and-the-name-stay-gone.mjs': 'the WEBSITE repo\'s public pages + contract plans (pricing_page_v2, approved 10-31); files only, runs in daily-health-check.sh',
   'check-system-health-covers-every-job.mjs': 'every scheduled job is on the System health list and wrapped (admin_system_health_v1, 10-31); files + the Mac\'s own plists, runs in daily-health-check.sh',
