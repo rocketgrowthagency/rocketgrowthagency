@@ -34,7 +34,7 @@ const base = (o = {}) => ({ month: MONTH, now: NOW, website_url: "", google_conn
 const build = (o) => MV.buildMonthlyValue(base(o));
 const by = (v, k) => v.lines.find((l) => l.key === k);
 const runs = (n) => Array.from({ length: n }, (_, i) => ({ finished_at: `2026-10-${String(i + 1).padStart(2, "0")}T10:31:00Z`, ok: true }));
-const checks = (n, p = {}) => Array.from({ length: n }, (_, i) => ({ created_at: `2026-10-${String(i + 1).padStart(2, "0")}T12:16:00Z`, payload: { up: true, status: 200, https: true, ssl_days: 60, ...p } }));
+const checks = (n, p = {}) => Array.from({ length: n }, (_, i) => ({ created_at: `2026-10-${String(i + 1).padStart(2, "0")}T12:16:00Z`, payload: { answer: { up: true, status: 200, https: true, ssl_days: 60, ...p } } }));
 const WIRED = { website_url: "https://www.denver-plumbing.example", google_connected: true, google_watched: true, watch: { table_ready: true, runs: runs(30) }, site_checks: { ready: true, rows: checks(30) } };
 
 // nothing set up at all (no website, no Google): every line is off and SAYS why; no tick, no number
@@ -70,13 +70,13 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
 { const w = (rows, extra = {}) => by(build({ ...WIRED, site_checks: { ready: true, rows }, ...extra }), "website");
   if (w([]).mark !== "off" || !/no check has run/.test(w([]).text)) fail("no checks this month: the website line claims something");
   if (by(build({ ...WIRED, site_checks: null }), "website").mark !== "off") fail("check store unreadable: not off");
-  if (w([...checks(2), { created_at: "2026-10-03T12:16:00Z", payload: { up: false, status: 503, https: true, ssl_days: 60 } }]).mark !== "rga") fail("a down day isn't flagged");
-  if (!/down on 1 of 3/.test(w([...checks(2), { created_at: "2026-10-03T12:16:00Z", payload: { up: false, https: true, ssl_days: 60 } }]).text)) fail("down count wrong");
+  if (w([...checks(2), { created_at: "2026-10-03T12:16:00Z", payload: { answer: { up: false, status: 503, https: true, ssl_days: 60 } } }]).mark !== "rga") fail("a down day isn't flagged");
+  if (!/down on 1 of 3/.test(w([...checks(2), { created_at: "2026-10-03T12:16:00Z", payload: { answer: { up: false, https: true, ssl_days: 60 } } }]).text)) fail("down count wrong");
   if (w(checks(3, { ssl_days: 5 })).mark !== "rga" || !/5 days/.test(w(checks(3, { ssl_days: 5 })).text)) fail("a certificate 5 days out isn't flagged");
   if (w(checks(3, { ssl_days: -2 })).mark !== "rga") fail("an expired certificate isn't flagged");
   if (w(checks(3, { https: false, ssl_days: null })).mark !== "rga" || !/no security certificate/.test(w(checks(3, { https: false, ssl_days: null })).text)) fail("an http-only site isn't flagged");
   const unknown = w(checks(3, { ssl_days: null })); if (unknown.mark !== "ok" || /certificate/.test(unknown.text)) fail(`an unreadable certificate date is claimed or flagged: ${unknown.text}`);
-  if (w([{ created_at: "2026-09-30T12:16:00Z", payload: { up: true, https: true, ssl_days: 60 } }]).mark !== "off") fail("last month's check counts for this month"); }
+  if (w([{ created_at: "2026-09-30T12:16:00Z", payload: { answer: { up: true, https: true, ssl_days: 60 } } }]).mark !== "off") fail("last month's check counts for this month"); }
 // reviews + Google's 30-day keep
 { const rv = (rec, o = {}) => by(build({ ...WIRED, record: rec, ...o }), "reviews");
   if (rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).mark !== "ok" || /\b0 new/.test(rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).text) === false && !/no new/.test(rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).text)) fail("zero new reviews reads wrong");
@@ -125,6 +125,7 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
     if (/\bGBP_|applyForStep|writeStepTasks/.test(code)) fail(`${name} reaches the Google write path`); }
   if (/\bmethod:|\.insert\(|Prefer:/.test(strip(PV_SRC))) fail("portal-monthly-value writes something (it must only read)");
   if (!/MAX_PER_RUN\s*=\s*\d+/.test(SW_SRC) || !/TIME_BUDGET_MS\s*=\s*\d+/.test(SW_SRC) || !/doneToday/.test(SW_SRC) || !/kind=eq\.site_check&created_at=gte/.test(SW_SRC)) fail("site-watch isn't bounded: one row a client a day, a cap, a time budget");
+  if (!/answer: \{ up: r\.up, status: r\.status, https: r\.https, ssl_days: r\.ssl_days/.test(SW_SRC)) fail("site-watch records its reading under a different shape than the card reads (payload.answer.up / ssl_days / https)");
   if (!/withCheckin\("site-watch"/.test(SW_SRC)) fail("site-watch doesn't check in (system health)");
   if (!/\[functions\."site-watch"\]\s*\n\s*schedule = "15 12 \* \* \*"/.test(TOML)) fail("site-watch isn't scheduled daily in netlify.toml");
   if (!/job: "site-watch"[^\n]*cron: "15 12 \* \* \*"/.test(MAN)) fail("site-watch isn't in the job manifest with the same schedule");

@@ -72,14 +72,14 @@
  [
   "last month's site checks count",
   "monthlyvalue",
-  "r && r.payload && inMonth(r.created_at, month))",
+  "r && r.payload && r.payload.answer && inMonth(r.created_at, month))",
   "r && r.payload)",
   1
  ],
  [
   "down days aren't counted",
   "monthlyvalue",
-  "const down = rows.filter((r) => r.payload.up !== true).length;",
+  "const down = rows.filter((r) => r.a.up !== true).length;",
   "const down = 0;",
   1
  ],
@@ -221,6 +221,13 @@
   "portal",
   "head: \"Reading what we watched\"",
   "head: \"Reading — what we watched\"",
+  1
+ ],
+ [
+  "the recorded reading changes shape",
+  "sitewatch",
+  "answer: { up: r.up, status: r.status,",
+  "answer: { isup: r.up, status: r.status,",
   1
  ]
 ]
