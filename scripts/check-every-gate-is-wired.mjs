@@ -418,6 +418,7 @@ const NOT_PREFLIGHT = {
   'check-open-moves-reach-every-surface.mjs': 'the WEBSITE repo\'s one open-moves list reaching every To do surface — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-every-wait-spins.mjs': 'the WEBSITE repo\'s waiting lines spin via shared/busy.js — files only, no bearing on tonight\'s videos; daily-health-check.sh',
   'check-an-upload-proves-it-is-the-right-website.mjs': 'the WEBSITE repo\'s publish safety (_publish-safety.js) run against a fake GitHub + site — no bearing on tonight\'s run',
+  'check-the-payment-welcome.mjs': 'the WEBSITE repo\'s welcome email at payment (approved admin_last_research_items_v1 item 4) run through the real webhook on a fake database and fake Gmail; runs in daily-health-check.sh, not video preflight',
   'check-admin-fixes-1028-hold.mjs': 'the WEBSITE repo\'s admin fixes (open moves, the read-only Google check, the file list, wording) run offline with fakes — no bearing on tonight\'s run',
   'check-an-approval-shows-its-receipt.mjs': 'the WEBSITE repo\'s For your approval receipt, rendered offline in Chrome from portal.js + portal.css — no bearing on tonight\'s run',
   'check-the-nav-badge-matches-the-mockup.mjs': 'the WEBSITE repo\'s client portal menu (badge shape vs the approved mockup, labels on one line), rendered offline in Chrome — no bearing on tonight\'s run',
