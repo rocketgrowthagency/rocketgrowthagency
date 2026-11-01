@@ -66,6 +66,8 @@ fi
 
 OUT_DIR="$DEST/RGA-secrets"
 OUT="$OUT_DIR/rga-secrets-$STAMP.tar.gz.gpg"
+# audit 10-31 low 40: a second run the same day must not replace a file whose passphrase is already on paper
+if [ -e "$OUT" ]; then echo "  ✗ $OUT already exists. Not replacing it: the passphrase on paper belongs to that file. Move it aside first if you mean to make a new one."; exit 1; fi
 mkdir -p "$OUT_DIR" || { echo "  ✗ cannot write to $OUT_DIR"; exit 1; }
 
 # 🔑 Stage in a private temp dir, and remove it on EVERY exit path — including failure and Ctrl-C.
@@ -139,11 +141,11 @@ echo ""
 echo "  Verifying — enter the same passphrase once more:"
 if [ -n "$PASS" ]; then
   VERIFIED=0
-  printf '%s\n' "$PASS" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --decrypt "$OUT" 2>/dev/null | tar tzf - >/dev/null 2>&1 && VERIFIED=1
+  printf '%s\n' "$PASS" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 --decrypt "$OUT" 2>/dev/null | tar tzf - 2>/dev/null | grep -q "\.env$" && VERIFIED=1   # audit 10-31 low 39: a listing alone passed an archive with no .env in it
   unset PASS
 else
   VERIFIED=0
-  gpg --decrypt "$OUT" 2>/dev/null | tar tzf - >/dev/null 2>&1 && VERIFIED=1
+  gpg --decrypt "$OUT" 2>/dev/null | tar tzf - 2>/dev/null | grep -q "\.env$" && VERIFIED=1   # audit 10-31 low 39: a listing alone passed an archive with no .env in it
 fi
 if [ "$VERIFIED" = 1 ]; then
   echo "  ✅ verified: the archive decrypts and lists cleanly"

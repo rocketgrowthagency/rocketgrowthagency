@@ -425,5 +425,61 @@
 "(${jr.reason || \"no reason given\"}) — \"${subject}\"`);\n        return false;",
 "(${jr.reason || \"no reason given\"}) — \"${subject}\"`);",
 1
+],
+[
+"two kept copies show one card again",
+"portal",
+"sl.kept.map((kg) =>",
+"sl.kept.slice(0,1).map((kg) =>",
+1
+],
+[
+"past the cap a photo reads as missing",
+"recheck",
+"Number(probe.n_all) > probe.items.length ? [] :",
+"false ? [] :",
+1
+],
+[
+"to-sort art symbol points nowhere",
+"admin",
+"existingHtml: existingHtml.replace(/#pmx-/g, \"#prx-\"),",
+"existingHtml,",
+1
+],
+[
+"a failed preview wipes the label",
+"admin",
+"if (el.children.length) { const m = document.createElement(\"span\")",
+"if (false) { const m = document.createElement(\"span\")",
+1
+],
+[
+"View larger blank on a failed load",
+"admin",
+"img.onerror = () => {",
+"img.onx = () => {",
+1
+],
+[
+"queued photo row loses Run again",
+"admin",
+"resultBlock, { rerun: qRerun })",
+"resultBlock)",
+1
+],
+[
+"undated send reads 48 hours forever",
+"admin",
+"googleState(p) === \"sent\" && !p.pushed_at ? \"Sent\"",
+"false ? \"Sent\"",
+1
+],
+[
+"undo request stays folded",
+"admin",
+"steps.find((e) => e.classList.contains(\"has-undo-ask\"))",
+"steps.find((e) => false)",
+1
 ]
 ]

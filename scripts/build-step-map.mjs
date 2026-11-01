@@ -62,7 +62,12 @@ if (bad.length) { console.error(`🔴 the step map came out wrong, the old one s
 
 // planned work, so a proposal can't be forgotten and its effect on the numbers is written down before anything moves
 let proposed = [];
-try { proposed = JSON.parse(fs.readFileSync(`${SITE}/reports/steps/proposed.json`, "utf8")); } catch { /* none */ }
+// audit 10-31 low 41: a missing file is "none"; a malformed one is a failure, or the planned work would vanish from the page
+const proposedPath = `${SITE}/reports/steps/proposed.json`;
+if (fs.existsSync(proposedPath)) {
+  try { proposed = JSON.parse(fs.readFileSync(proposedPath, "utf8")); if (!Array.isArray(proposed)) throw new Error("not a list"); }
+  catch (e) { console.error(`🔴 reports/steps/proposed.json can't be read (${e.message}), so the step map was not rebuilt`); process.exit(1); }
+}
 const stamp = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
 const adminLabel = (c) => (c.admin == null ? "" : `${c.adminMonth === "month1" ? "" : "Monthly "}${c.admin}`);
 const md = `---

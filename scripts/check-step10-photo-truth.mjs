@@ -213,5 +213,14 @@ if (/data-p10-kind="\$\{g\.items[^\n]*\n[^\n]*"main"/.test(P10J) || /<\/em><\/bu
     const r = await deleteGoogleMedia(g, "t", ph.gbp_media_name, { photo: ph, rows: [ph] });
     if (r.ok) fail("a photo Google still holds after the delete reads as gone"); }
 }
+// ── audit 10-31 lows 20, 21, 24, 25, 26, 28, 29, 42 (the leftovers) ──
+if (!/sl\.kept\.map\(\(kg\) =>/.test(P)) fail("two kept copies show one card again (sl.kept[0] only)");
+if (!/Number\(probe\.n_all\) > probe\.items\.length \? \[\] :/.test(read("netlify/functions/portal-step-recheck.js"))) fail("past the 200-item cap a photo reads as missing from Google again");
+if (!/existingHtml: existingHtml\.replace\(\/#pmx-\/g, "#prx-"\)/.test(AD)) fail("the to-sort example art points at a missing symbol again");
+if (!/if \(el\.children\.length\) \{ const m = document\.createElement\("span"\)/.test(AD)) fail("a failed preview wipes the tile's status label again");
+if (!/img\.onerror = \(\) => \{/.test(AD.slice(AD.indexOf("function openPhotoZoom"), AD.indexOf("function openPhotoZoom") + 1500))) fail("View larger shows a blank box when the photo won't load");
+if (!/resultBlock, \{ rerun: qRerun \}\)/.test(AD)) fail("a queued step 38 row has no Run again");
+if (!/gs === "sent" && ph && !ph\.pushed_at \? "Sent"/.test(P) || !/googleState\(p\) === "sent" && !p\.pushed_at \? "Sent"/.test(AD)) fail("a photo with no send date reads Up to 48 hours forever");
+if (!/steps\.find\(\(e\) => e\.classList\.contains\("has-undo-ask"\)\)/.test(AD)) fail("a client's undo request sits in a folded row again");
 if (F.length) { console.error(`🔴 step 10 says more than Google tells us:\n${F.map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ step 10 says only what Google tells us: no green or tick until a test proves it; Sent, On Google's list, missing after 3 days (RGA told once), Saved not showing; the count leaves out a hidden logo and second copies in the portal and the nightly; Keep can be undone; the only visible photo isn't removed unasked; up to 5 a day");
