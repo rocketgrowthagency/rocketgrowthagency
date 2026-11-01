@@ -567,6 +567,7 @@ run check-step3-admin-accept-buttons.mjs "step 3 admin row 8 GitHub card: every 
 run check-step9-keeps-access-safe.mjs "step 9 keeps access safe: settles itself with step 8, asks RGA only to save a new builder login once, never the store-a-password draft"
 run check-a-change-request-is-one-flow.mjs "ask for a change on a finished step: one Need a change?, our own inline error, one band, With RGA, RGA's same-day move in To do"
 run check-a-new-city-page-is-planned-from-data.mjs "row 45 plans one city page from data (sitemap · Business Profile · plan), refuses invented numbers, a website change with every file on the client's card"
+run check-website-pages-are-website-changes.mjs "website_system_v2 builds 1-2: page steps wait on what makes them true (both SOP copies), are website changes, stay open until the last page is live, an edit names its lines"
 run check-website-rows-are-step-8-cards.mjs "the admin website rows are the approved step 8 cards (11 states rendered in Chrome): draft ready, a guarantee flagged, editing without Kind/Where boxes, with the client, publish, live"
 run check-the-access-test-publishes.mjs "the access test page: built in the site's own template (no sibling words), published as a pull request from RGA Admin with exactly the approved file, only after the client approved"
 run check-every-website-change-is-built-labelled-approved.mjs "the hard rule: every website change built → labelled (adding / editing / removing a page · code) → approved → only that build uploads; the private preview; §5A in the agreement"

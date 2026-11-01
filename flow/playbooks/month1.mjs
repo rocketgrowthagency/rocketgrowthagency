@@ -832,7 +832,7 @@ META: <155 chars max — USP + CTA>`,
   },
   {
     id: "m1.web.h1_cta", title: "Fix H1 + primary CTA",
-    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website"],
+    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website", "m1.web.homepage_meta"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const draft = await aiSuggest(
@@ -857,7 +857,7 @@ Test on mobile (Chrome DevTools → device toolbar).`,
   },
   {
     id: "m1.web.priority_pages", title: "Build/update top 3 service pages",
-    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website"],
+    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website", "m1.web.homepage_meta", "m1.gbp.services_products"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
       const services = client.primary_service?.split(/[,\/]/).map((s) => s.trim()).filter(Boolean).slice(0, 3) || [];
@@ -894,7 +894,7 @@ INTERNAL_LINKS: <suggest 3 anchor texts pointing to homepage / location pages / 
   },
   {
     id: "m1.web.location_pages", title: "Build a new page for their city",
-    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website"],
+    type: "hybrid", dependsOn: ["m1.strategy.keywords_locations", "m1.access.website", "m1.gbp.business_facts", "m1.web.homepage_meta", "m1.web.priority_pages"],
     actionLabel: "⚡ Draft this for me",
     // 🔒 10-27: the live drafter is the website's flow-execute (planned by _city-page.js, words checked). The old prompt here asked
     // the model to make up a customer quote — an invented testimonial — and is gone.
@@ -983,7 +983,7 @@ WRITE THE FULL TEXT. Min ${a.min} words across the body. Voice: knowledgeable, c
   },
   {
     id: "m1.web.expanded_schema", title: "Add Service + FAQPage + Breadcrumb schema",
-    type: "hybrid", dependsOn: ["m1.web.schema", "m1.web.priority_pages"],
+    type: "hybrid", dependsOn: ["m1.web.schema", "m1.web.priority_pages", "m1.web.location_pages"],
     actionLabel: "⚡ Generate",
     async run({ client }) {
       const services = client.primary_service?.split(/[,\/]/).map((s) => s.trim()).filter(Boolean) || [];
