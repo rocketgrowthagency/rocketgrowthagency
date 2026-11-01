@@ -9,7 +9,7 @@
 // (the weekly update is a PORTAL post on Mondays, flow-cron-weekly-digest). The 9:11 recap also said "by
 // Sunday", the made-up date the v3 console retired.
 // HOLDS:
-//   1. the call script and the recap state the SAME timeline (30 to 60 days) and neither says "month 2–3"
+//   1. the call script and the recap state the SAME no-date line (11-01: no 30 to 60 days range anywhere) and neither says "month 2–3"
 //   2. every cadence the script/recap promise is a scheduled job that exists: Monday portal update
 //      (flow-cron-weekly-digest, Mondays, client_portal_content) · monthly report email (send-monthly-report, the first week; the 5th since 11-01)
 //   3. nothing promises a Friday email
@@ -30,8 +30,9 @@ if (!agenda || !recap) { console.error("⚠️  INDETERMINATE — could not find
 const F = []; const fail = (m) => F.push(m);
 
 // 1
-if (!/30 to 60 days/.test(agenda)) fail("the call script no longer states the 30-to-60-day timeline");
-if (!/30 to 60 days/.test(recap)) fail("the recap does not state the same 30-to-60-day timeline the call script says");
+if (!/never promise a date/.test(agenda)) fail("the call script no longer says we never promise a date");
+if (!/do not promise a date/.test(recap)) fail("the recap does not say the same no-date line the call script says");
+for (const [where, txt] of [["script", agenda], ["recap", recap]]) if (/30\s*(to|[–-])\s*60 days/.test(txt)) fail(`the ${where} gives the 30-to-60-day range again`);
 for (const [where, txt] of [["script", agenda], ["recap", recap]]) if (/month 2[–-]3|month two/i.test(txt)) fail(`the ${where} still says "month 2–3" — the call says 30 to 60 days`);
 // 2
 const promisesMonday = /Every Monday your portal shows what we did/.test(agenda + recap);

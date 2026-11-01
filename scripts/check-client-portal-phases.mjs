@@ -8,7 +8,7 @@
 //   · no client copy names a step by a literal number ("See step 6") — it reads clientStepNo
 //   · "What RGA did": only steps with a playbook clientFeed line, done only, the newest event decides, never payload.summary —
 //     in the endpoint, the Monday digest, and the admin's "Client sees" line
-//   · "What to expect" gives its timing (30–60 days · 3–6 months; the public site's one line differs, logged) and promises no rank/leads/revenue; so does the recap
+//   · "What to expect" gives NO date range (11-01 website_leftovers_v1: month 1 setup, then profile views and actions, rank, calls) and promises no rank/leads/revenue; so does the recap
 //   exit 0 holds · 1 regressed · 2 code moved
 import fs from "node:fs";
 import vm from "node:vm";
@@ -99,9 +99,9 @@ if (!/if \(!st\) return/.test(P) || !/if \(st\.error\) return/.test(P) || !/No f
 const exp = lift(P, "whatToExpectHtml");
 // 🔒 10-31 website_audit_v1_v2 row 29: the public site now says one honest line and no date. The portal card below still gives its own timing (portal cards were out of that build's scope, logged in pending tasks), so this checks the site's line and the card's no-promise line, not that they match.
 for (const [where, t] of [["pricing page", PRICING], ["FAQ", FAQ]]) if (!/We don't promise a date\./.test(t)) fail(`the ${where} lost its line about time`);
-if (!/30–60 days/.test(exp) || !/3–6 months/.test(exp) || !/We never promise/.test(exp)) fail("\"What to expect\" doesn't say the site's timing or drops the no-promise line");
+if (/\d+\s*[–-]\s*\d+\s*(days|months)/.test(exp) || !/We never promise[\s\S]{0,40}A date, a #1 spot/.test(exp) || !/profile views and actions/.test(exp)) fail("\"What to expect\" gives a date range again, or drops the \"never promise a date\" line or the order (profile views and actions, then rank, then calls)");
 if (/guarantee|#1 in|top 3 in/i.test(exp.replace(/A #1 spot/, ""))) fail("\"What to expect\" promises a ranking");
-if (!/Fuller results usually take 3 to 6 months\. We never promise a #1 spot/.test(ADM)) fail("the kickoff recap doesn't carry the same timing + no-promise line");
+if (!/We never promise a date, a #1 spot or a number of leads/.test(ADM)) fail("the kickoff recap doesn't carry the same no-promise line");
 if (!/whatToExpectHtml\(onboarding\)/.test(P) || !/rgaFeedHostHtml\(client\.id \|\| row\.client_id\)/.test(P) || !/loadRgaFeed\(row\.client_id\)/.test(P)) fail("the dashboard no longer draws / loads the feed and What to expect");
 if (F.length) { console.error("🔴 the client portal phases regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ client portal phases hold: 4 phases declared + drawn with counted headers · numbers 1–15 + 16–20 in order · "Can't start yet" + reason · no literal step numbers · feed = ${withLine.length} clientFeed lines, done-only, newest decides, never RGA's notes (endpoint, digest, admin) · What to expect = the site's words, no promises`);
