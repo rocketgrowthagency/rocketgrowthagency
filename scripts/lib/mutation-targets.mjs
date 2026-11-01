@@ -194,6 +194,7 @@ export const FILES = {
   blogpostgen: "scraper:scripts/generate-blog-post.mjs",
   photocheckfn: "netlify/functions/portal-photo-check.js",   // client_step10_upload_help_v1
   photolookfn: "netlify/functions/_photo-look.js",
+  actormap: "scraper:flow/playbooks/_actor-map.mjs",   // client_step12_forms_v1
   stylecss: "style.css",
   scriptjs: "script.js",
   contractdoc: "shared/contract-doc.js",

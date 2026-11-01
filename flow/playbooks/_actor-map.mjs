@@ -19,7 +19,7 @@ export const ACTOR_MAP = {
   "m1.access.search_console":{ actor: "both", clientLabel: "Grant RGA access to Search Console (or skip if not set up)", clientHint: "If you have Search Console, add RGA as a Full user, not an Owner. We only need it where we set up or fix your tracking, and your reports already come through your Google sign-in. If you don't have it, RGA verifies your domain in week 1.", clientForm: "oauth_grant" },
   "m1.access.website":       { actor: "client", clientLabel: "Provide your website CMS login", clientHint: "WordPress / Wix / Shopify admin login. Send via secure share link, NOT email.", clientForm: "generic" },
   "m1.tracking.call_setup":  { actor: "both",   clientLabel: "Decide on call tracking (CallRail / OpenPhone / Skip)", clientHint: "Phone calls are 50-70% of leads for service businesses. Tracking ($25-45/mo) lets us measure calls from Google. Skipping is fine — your reports just won't include phone-call KPIs.", clientForm: "generic" },
-  "m1.tracking.form_setup":  { actor: "both",   clientLabel: "Allow form tracking on your website", clientHint: "Lets us measure leads coming through your contact form. Free if you have GA4. Requires CMS access (we install).", clientForm: "generic" },
+  "m1.tracking.form_setup":  { actor: "both",   clientLabel: "Count the leads from your website form", clientHint: "Lets us measure leads coming through your contact form. Free if you have GA4. Requires CMS access (we install).", clientForm: "generic" },
   "m1.audit.gbp_baseline":   { actor: "rga" },
   "m1.audit.website":        { actor: "rga" },
   "m1.audit.competitors":    { actor: "rga" },

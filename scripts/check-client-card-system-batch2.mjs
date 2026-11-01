@@ -120,7 +120,7 @@ const AT = "2026-10-20T15:00:00Z";
 // step 12 · zero sends on the system is the green card; the old card keeps the blue one
 { const zero = { status: "done", detected: { verdict: "indeterminate", at: "2026-10-22T03:30:00Z", n30: 0, n90: 0 } };
   const cs = card("m1.tracking.form_setup", zero), old = card("m1.tracking.form_setup", zero, { cs: false });
-  if (!/^<div class="pm-k5"><div class="pm-k5-plan ok"><div class="pm-k5-h ok">[^]*?<b>Tracking your forms<\/b>/.test(cs) || !/None yet<small>a quiet month is normal · we check every night<\/small>/.test(cs) || !/>0 sends</.test(cs) || /No submissions yet|broken/i.test(cs)) fail("step 12 done with zero sends isn't the GREEN \"Tracking your forms · None yet · 0 sends\" (client_step12_form_tracking_v1)");
+  if (!/^<div class="pm-k5"><div class="pm-k5-plan ok"><div class="pm-k5-h ok">[^]*?<b>Tracking your forms<\/b>/.test(cs) || !/None yet<small>a quiet month is normal · we check every night<\/small>/.test(cs) || !/>0 form sends</.test(cs) || /No submissions yet|broken/i.test(cs)) fail("step 12 done with zero sends isn't the GREEN \"Tracking your forms · None yet · 0 form sends\" (client_step12_form_tracking_v1)");
   if (!/pm-k5-plan rga/.test(old) || !/No submissions yet/.test(old)) fail("off the card system, zero sends lost its blue \"No submissions yet\" card");
   if (/data-ft-recheck|Check again/.test(cs)) fail("step 12's green zero-sends card offers Check again");
   const counting = { status: "done", detected: { verdict: "confirmed", at: "2026-10-22T03:30:00Z", n30: 4, n90: 6, last_at: "2026-10-27", gbp30: 1, events: ["generate_lead"], key_event: true } };

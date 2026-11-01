@@ -1,0 +1,58 @@
+[
+ [
+  "a tick comes back on None yet",
+  "portal",
+  "/^\\s*(none yet|none|not yet|0)(?![\\w,.])/i.test(String(v)",
+  "/^$/i.test(String(v)",
+  1
+ ],
+ [
+  "a tick comes back on a zero",
+  "portal",
+  "(none yet|none|not yet|0)(?![\\w,.])",
+  "(none yet|none|not yet)(?![\\w,.])",
+  1
+ ],
+ [
+  "a real number loses its tick",
+  "portal",
+  "(none yet|none|not yet|0)(?![\\w,.])",
+  "(none yet|none|not yet|0|1|3|10)",
+  1
+ ],
+ [
+  "a tick is dropped from every row, not only empty ones",
+  "portal",
+  "st[1] === \"\\u2713\" && /^",
+  "st[1] === \"\\u2713\" || /^",
+  1
+ ],
+ [
+  "the quiet-month card says sends again",
+  "portal",
+  "rcRow(\"Last 30 days\", [\"ok\", \"✓\"], \"0 form sends\")",
+  "rcRow(\"Last 30 days\", [\"ok\", \"✓\"], \"0 sends\")",
+  1
+ ],
+ [
+  "the playbook goes back to the permission name",
+  "playbooksjson",
+  "\"clientLabel\": \"Count the leads from your website form\"",
+  "\"clientLabel\": \"Allow form tracking on your website\"",
+  1
+ ],
+ [
+  "the client copy goes back to the permission name",
+  "clientstepsjson",
+  "\"clientLabel\": \"Count the leads from your website form\"",
+  "\"clientLabel\": \"Allow form tracking on your website\"",
+  1
+ ],
+ [
+  "the actor map drifts from the playbook",
+  "actormap",
+  "clientLabel: \"Count the leads from your website form\"",
+  "clientLabel: \"Allow form tracking on your website\"",
+  1
+ ]
+]

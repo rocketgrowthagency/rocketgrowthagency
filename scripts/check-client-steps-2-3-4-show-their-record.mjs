@@ -92,7 +92,7 @@ if (!/Did our test arrive in your inbox\?/.test(test4) || !/data-ft-inbox="yes"/
 const quiet4 = run("m1.tracking.form_setup", { status: "done", detected: { verdict: "indeterminate", at: "2026-10-22T03:30:00Z", n30: 0, n90: 0 } });
 // 🔄 10-30 (approved client_step12_form_tracking_v1, card system batch 2): done with zero sends is the GREEN "Tracking your forms"
 // card (like its Done pill) with "None yet" — it was a blue "No submissions yet" under a green pill
-if (!/<div class="pm-k5-plan ok"><div class="pm-k5-h ok">[^]*?<b>Tracking your forms<\/b>/.test(quiet4) || !/None yet<small>a quiet month is normal/.test(quiet4) || !/0 sends/.test(quiet4) || /broken|No submissions yet/i.test(quiet4)) fail("zero submissions reads as broken (or as RGA's blue \"No submissions yet\") instead of the green \"Tracking your forms · None yet\"");
+if (!/<div class="pm-k5-plan ok"><div class="pm-k5-h ok">[^]*?<b>Tracking your forms<\/b>/.test(quiet4) || !/None yet<small>a quiet month is normal/.test(quiet4) || !/0 form sends/.test(quiet4) || /broken|No submissions yet/i.test(quiet4)) fail("zero submissions reads as broken (or as RGA's blue \"No submissions yet\") instead of the green \"Tracking your forms · None yet\"");
 // wiring: the card replaces the empty done body, the old pieces are off for these steps
 if (!/: RECORD_CARD\.has\(step\.id\) && !month2Only \? \(ownWait \? "" : recordCardHtml\(step, taskState, clientId, onboarding\?\.data\?\.tasks\)\)/.test(P)) fail("the record card isn't drawn in the row (a done step would be blank again)");
 if (!/accessAdminHtml\(t\)/.test(A) || !/data-ob-acc-confirm/.test(A) || !/data-ob-ft-test/.test(A)) fail("admin can't confirm access or log a form test");
