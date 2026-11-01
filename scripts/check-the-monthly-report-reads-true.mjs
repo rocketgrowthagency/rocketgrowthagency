@@ -387,7 +387,7 @@ try {
 
   // the visibility trend of an earlier month stops at that month
   r = await render({ open: "2026-08", months: [{ reporting_month: SEP, gsc_impressions: 300 }, { reporting_month: AUG, gsc_impressions: 200 }, { reporting_month: "2026-07-01", gsc_impressions: 100 }] });
-  check(/July · 100/.test(r.html) && !/September · 300/.test(r.html) && /August · 200/.test(r.html), "the August report's trend ends at August, with no later month drawn", (/<text[^>]*>[A-Z][a-z]+ · \d+/.exec(r.html) || [])[0]);
+  check(/July · 100/.test(r.html) && !/Sep[a-z]* · 300/.test(r.html) && /August · 200/.test(r.html), "the August report's trend ends at August, with no later month drawn", (/<text[^>]*>[A-Z][a-z]+ · \d+/.exec(r.html) || [])[0]);
   // banned and admin words, source-wide
   check(!/"Speed score|"Technical SEO score|"Backlinks tracked|"Average position|"Average grid rank|"Keywords tracked"/.test(reportJs), "report.js holds no label for an admin-only number", null);
 } catch (e) {
