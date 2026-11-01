@@ -1,0 +1,398 @@
+[
+ [
+  "a saved file may overwrite an earlier one",
+  "rawstore",
+  "\"x-upsert\": \"false\"",
+  "\"x-upsert\": \"true\""
+ ],
+ [
+  "the api_key name is no longer stripped",
+  "rawstore",
+  "api[_-]?key|apikey|access[_-]?key",
+  "apikeyx"
+ ],
+ [
+  "a secret in a URL query survives",
+  "rawstore",
+  "[?&;](?:api[_-]?key|key|token|access_token|apikey|secret|signature|sig|X-Amz-Signature|X-Amz-Credential)=",
+  "[?&;](?:nothing)="
+ ],
+ [
+  "the process's own secrets are no longer removed",
+  "rawstore",
+  "for (const v of [...envSecrets(), ...extra]) if (v && out.includes(v)) { out = out.split(v).join(\"[removed]\"); n++; }",
+  ""
+ ],
+ [
+  "the last-line secret check is gone",
+  "rawstore",
+  "if (left) throw new Error(\"a secret was still in the file after stripping; not saved\");",
+  ""
+ ],
+ [
+  "a client id can climb out of its folder",
+  "rawstore",
+  ".replace(/[^a-z0-9_-]+/g, \"-\")",
+  ".replace(/[^a-z0-9_./-]+/g, \"-\")"
+ ],
+ [
+  "two saves can share one name",
+  "rawstore",
+  "id = crypto.randomBytes(4).toString(\"hex\")",
+  "id = \"00000000\""
+ ],
+ [
+  "a failed save throws into the job",
+  "rawstore",
+  "    console.error(`[raw-store] NOT SAVED (${source || \"no source\"}): ${error}`);\n    return { ok: false, error, backend };",
+  "    throw e;"
+ ],
+ [
+  "a failed upload reads as saved",
+  "rawstore",
+  "if (!r.ok) throw new Error(r.error);",
+  "if (false) throw new Error(r.error);"
+ ],
+ [
+  "the first bucket is made public",
+  "rawstore",
+  "public: false }",
+  "public: true }"
+ ],
+ [
+  "the signing drifts from AWS's",
+  "rawstore",
+  "\"AWS4\" + secretKey",
+  "\"AWS5\" + secretKey"
+ ],
+ [
+  "the store can delete a file",
+  "rawstore",
+  "async function listSupabase(",
+  "async function dropIt(url){ return fetch(url,{method:\"DELETE\"}); }\nasync function listSupabase("
+ ],
+ [
+  "the file count has no cap",
+  "rawstore",
+  "const LIST_CALL_CAP = 250;",
+  "const LIST_CALL_CAP = 25000000;"
+ ],
+ [
+  "the scan stops keeping each pin's result",
+  "dkgridfn",
+  "pinResults.push({ row, col, lat, lng, results: results?.raw ?? places });",
+  ""
+ ],
+ [
+  "the raw save is dropped from the scan",
+  "dkgridfn",
+  "const rawSaved = await saveRaw({ source: \"rank-grid\"",
+  "const rawSaved = await Promise.resolve({ ok: true, source: \"rank-grid\""
+ ],
+ [
+  "SerpAPI's full answer is thrown away again",
+  "dkgridfn",
+  "return { raw: rows, places: rows.map",
+  "return { places: rows.map"
+ ],
+ [
+  "a failed raw save disappears from the record",
+  "dkgridfn",
+  "      raw_saved: rawSaves,\n",
+  ""
+ ],
+ [
+  "the scan's runaway guard changes",
+  "dkgridfn",
+  "(GRID * GRID + 5)",
+  "(GRID * GRID * 20)"
+ ],
+ [
+  "a missing progress table no longer stops the pull",
+  "gscdaily",
+  "if (isMissingTable(e)) return { ...out, table_ready: false,",
+  "if (false) return { ...out, table_ready: false,"
+ ],
+ [
+  "the request cap goes",
+  "gscdaily",
+  "const MAX_REQUESTS_PER_RUN = 40;",
+  "const MAX_REQUESTS_PER_RUN = 4000000;"
+ ],
+ [
+  "the page cap goes",
+  "gscdaily",
+  "const MAX_PAGES_PER_CHUNK = 6;",
+  "const MAX_PAGES_PER_CHUNK = 6000;"
+ ],
+ [
+  "a caught-up client is pulled every run",
+  "gscdaily",
+  "if (state.backfill_done && now.getTime() - last < WEEKLY_MS) return null;",
+  "if (false) return null;"
+ ],
+ [
+  "a finished client is never marked done",
+  "gscdaily",
+  "backfill_done: Boolean((state && state.backfill_done) || (p.kind === \"backfill\" && done) || p.kind === \"weekly\") }",
+  "backfill_done: Boolean(state && state.backfill_done) }"
+ ],
+ [
+  "a 429 no longer stops the client",
+  "gscdaily",
+  "if (r.status === 429) return",
+  "if (r.status === 4290) return"
+ ],
+ [
+  "the marker moves past rows that failed to save",
+  "gscdaily",
+  "status = \"error\"; lastError = `rows not saved: ${String(e.message).slice(0, 140)}`; break; }",
+  "lastError = `rows not saved`; }"
+ ],
+ [
+  "the raw copy is saved after the rows",
+  "gscdaily",
+  "const saved = await saveRaw({ source: \"search-console\"",
+  "const saved = await (async()=>({ok:true}))({ source: \"search-console\""
+ ],
+ [
+  "a failed raw copy goes unreported",
+  "gscdaily",
+  "else out.errors.push(`raw copy not saved",
+  "else void (`raw copy not saved"
+ ],
+ [
+  "the time budget is ignored",
+  "gscdaily",
+  "const TIME_BUDGET_MS = 20000;",
+  "const TIME_BUDGET_MS = 2000000;"
+ ],
+ [
+  "the Search Console job is unwrapped",
+  "gscfn",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"gsc-daily-rows\", exports.handler);",
+  ""
+ ],
+ [
+  "the Search Console job loses its guard",
+  "gscfn",
+  "  const gate = requireCronOrInternal(event);\n  if (gate.error) return gate.error;\n",
+  ""
+ ],
+ [
+  "the website run stops keeping a dated copy",
+  "benchbuild",
+  "vertical_benchmark_history?on_conflict=search_term,scanned_on",
+  "vertical_benchmark_old?on_conflict=search_term"
+ ],
+ [
+  "the scraper stops keeping a dated copy",
+  "benchscraper",
+  "vertical_benchmark_history?on_conflict=search_term,scanned_on",
+  "vertical_benchmark_old?on_conflict=search_term"
+ ],
+ [
+  "the dated copy can overwrite",
+  "benchbuild",
+  "resolution=ignore-duplicates",
+  "resolution=merge-duplicates"
+ ],
+ [
+  "the scraper's missing table is silent",
+  "benchscraper",
+  "dated history: Not set up",
+  "dated history: ok"
+ ],
+ [
+  "why/expected are always sent, even unused",
+  "changeledger",
+  "if (!why && !exp) { const [saved] = await post(row); return saved; }",
+  ""
+ ],
+ [
+  "before the SQL the reason is lost",
+  "changeledger",
+  "const extra = [why ? `Why chosen: ${why}` : null, exp ? `Expected: ${exp}` : null].filter(Boolean).join(\" | \");",
+  "const extra = \"\";"
+ ],
+ [
+  "any database error is swallowed",
+  "changeledger",
+  "if (!/PGRST204|why_chosen|expected_result/i.test(String(e.message))) throw e;",
+  ""
+ ],
+ [
+  "the report is frozen before it is sent",
+  "monthlyreport",
+  "const outcome = await sendGmail({ workspaceId",
+  "const __f = { source: \"monthly-report\" };\n  const outcome = await sendGmail({ workspaceId"
+ ],
+ [
+  "the frozen copy drops the html",
+  "monthlyreport",
+  "subject: built.subject, html: built.html, text: built.text } });\n    artifact.frozen",
+  "subject: built.subject, text: built.text } });\n    artifact.frozen"
+ ],
+ [
+  "a failed freeze can break the send",
+  "monthlyreport",
+  "  } catch (e) { artifact.frozen = { ok: false, error: String(e.message).slice(0, 160) }; }",
+  "  } catch (e) { throw e; }"
+ ],
+ [
+  "System health stops flagging an unsaved copy",
+  "jobmanifest",
+  "const unfrozen = r.filter((x) => x.frozen && x.frozen.ok === false).length;",
+  "const unfrozen = 0;"
+ ],
+ [
+  "the purge turns on for any truthy value",
+  "gbppurge",
+  "env.GBP_PURGE_ENABLED === \"1\"",
+  "!!env.GBP_PURGE_ENABLED"
+ ],
+ [
+  "the purge ships on",
+  "gbppurgefn",
+  "enabled: enabledIn()",
+  "enabled: true"
+ ],
+ [
+  "a delete no longer waits for the switch",
+  "gbppurge",
+  "if (out.enabled && row.would_delete > 0) {",
+  "if (row.would_delete > 0) {"
+ ],
+ [
+  "a delete happens without its ledger line",
+  "gbppurge",
+  "await supa(`/gbp_purge_ledger`, { method: \"POST\"",
+  "await Promise.resolve({ method: \"POST\""
+ ],
+ [
+  "the batch cap goes",
+  "gbppurge",
+  "const MAX_BATCHES = 15;",
+  "const MAX_BATCHES = 15000000;"
+ ],
+ [
+  "monthly totals join the purge list",
+  "gbppurge",
+  "{ id: \"profile_snapshots\"",
+  "{ id: \"monthly\", short: \"monthly totals\", label: \"Monthly\", table: \"client_monthly_records\", dateCol: \"created_at\", filter: \"\" },\n  { id: \"profile_snapshots\""
+ ],
+ [
+  "the reviews filter widens to every snapshot",
+  "gbppurge",
+  "surface=eq.reviews&payload->>source=eq.google_profile",
+  "surface=eq.reviews"
+ ],
+ [
+  "the cutoff is 90 days",
+  "gbppurge",
+  "const RETENTION_DAYS = 30;",
+  "const RETENTION_DAYS = 90;"
+ ],
+ [
+  "the purge job is unwrapped",
+  "gbppurgefn",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"gbp-30-day-purge\", exports.handler);",
+  ""
+ ],
+ [
+  "the schedule turns the purge on",
+  "toml",
+  "[functions.\"gbp-30-day-purge\"]",
+  "[functions.\"gbp-30-day-purge\"]\n  environment = { GBP_PURGE_ENABLED = \"1\" }"
+ ],
+ [
+  "the admin read lets the purge really delete",
+  "datakeepfn",
+  "enabled: false })",
+  "enabled: true })"
+ ],
+ [
+  "a failed read looks fine",
+  "datakeepfn",
+  "const safe = async (key, label, fn) => { try { rows.push(await fn()); } catch (e) { rows.push(COULDNT(key, label, e)); } };",
+  "const safe = async (key, label, fn) => { try { rows.push(await fn()); } catch (e) { } };"
+ ],
+ [
+  "a missing table reads as zero",
+  "datakeepfn",
+  "if (notThere(e.message)) return NOT_SET_UP(\"gsc\"",
+  "if (false) return NOT_SET_UP(\"gsc\""
+ ],
+ [
+  "an empty store reads as OK",
+  "datakeepfn",
+  "if (!rawSummary.files) return row(\"raw\", \"Raw copies\", \"unk\"",
+  "if (!rawSummary.files) return row(\"raw\", \"Raw copies\", \"ok\""
+ ],
+ [
+  "the admin read is open to anyone",
+  "datakeepfn",
+  "  const gate = await requireWorkspaceUser(event);\n  if (gate.error) return gate.error;\n",
+  ""
+ ],
+ [
+  "the card loses its Check again button",
+  "admin",
+  "data-dk-refresh>Check again</button>",
+  "data-dk-x>Check again</button>"
+ ],
+ [
+  "the card types a figure",
+  "admin",
+  "`Data: ${rows.length} lines read`",
+  "`Data: 9 lines read`"
+ ],
+ [
+  "the card moves above System health",
+  "adminhtml",
+  "<div id=\"dataKeepCard\" hidden></div>",
+  "<div id=\"dataKeepCard2\" hidden></div>"
+ ],
+ [
+  "the cache buster isn't bumped",
+  "adminhtml",
+  "/admin/admin.js?v=20261101d",
+  "/admin/admin.js?v=20261101b"
+ ],
+ [
+  "a new table is left open to the public",
+  "datakeepsql",
+  "revoke all on public.%I from anon, authenticated",
+  "-- nothing"
+ ],
+ [
+  "the bucket is made public",
+  "datakeepsql",
+  "values ('raw-store', 'raw-store', false)",
+  "values ('raw-store', 'raw-store', true)"
+ ],
+ [
+  "the SQL drops something",
+  "datakeepsql",
+  "alter table public.client_change_log add column if not exists why_chosen      text;",
+  "alter table public.client_change_log drop column if exists notes;"
+ ],
+ [
+  "a re-run doubles a Search Console day",
+  "datakeepsql",
+  "row_key      text not null unique,",
+  "row_key      text not null,"
+ ],
+ [
+  "the purge job leaves the list",
+  "jobmanifest",
+  "{ job: \"gbp-30-day-purge\", label: \"Business Profile 30-day purge\"",
+  "{ job: \"gbp-30-day-purge-x\", label: \"Business Profile 30-day purge\""
+ ],
+ [
+  "the Search Console job's missing table reads as fine",
+  "jobmanifest",
+  "error: b.table_ready === false ? \"Not set up: supabase/data_keep.sql hasn't been run, so nothing is being pulled\" :",
+  "error: b.table_ready === false ? null :"
+ ]
+]

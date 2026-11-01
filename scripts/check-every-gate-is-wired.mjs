@@ -370,6 +370,7 @@ const NOT_PREFLIGHT = {
   'check-google-changes-wait-for-consent.mjs': 'the WEBSITE repo\'s Google writers and the portal + admin consent cards (client_google_consent_v1, approved 10-31); files only with a stubbed network, runs in daily-health-check.sh',
   'check-the-founding-plan-and-billing-day.mjs': 'the WEBSITE repo\'s contract, billing and founding pages (contract_v2_redline + pricing_page_v3, approved 10-31); files only, runs in daily-health-check.sh',
   'check-the-sale-and-the-name-stay-gone.mjs': 'the WEBSITE repo\'s public pages + contract plans (pricing_page_v2, approved 10-31); files only, runs in daily-health-check.sh',
+  'check-data-keep.mjs': 'what we keep (data_keep_v1, 10-31): raw store, grid per pin, Search Console rows, dated benchmarks, frozen reports, the 30-day purge shipped OFF, the admin row; fakes only, nothing real called; runs in daily-health-check.sh',
   'check-system-health-covers-every-job.mjs': 'every scheduled job is on the System health list and wrapped (admin_system_health_v1, 10-31); files + the Mac\'s own plists, runs in daily-health-check.sh',
   'check-job-status-reads-true.mjs': 'the System health states and card on fakes (admin_system_health_v1, 10-31); files only, runs in daily-health-check.sh',
   'check-job-alert-path.mjs': 'the monthly test: a job broken on a fake proves the alert path (admin_system_health_v1, 10-31); nothing real called, runs in daily-health-check.sh',

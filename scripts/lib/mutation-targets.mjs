@@ -285,4 +285,16 @@ export const FILES = {
   profilefn: "netlify/functions/portal-gbp-profile.js",
   rgalogins: "netlify/functions/_rga-logins.js",   // admin_row9_vault_v2 (10-27): step 9 settles itself with step 8   // step3_admin_accept_v1 (10-27): accept the client's GitHub invite from admin
 
+  // data_keep_v1 (10-31): what we keep, and that it can't quietly stop
+  rawstore: "netlify/functions/_raw-store.js",
+  dkgridfn: "netlify/functions/v2-rank-grid-background.js",
+  gscdaily: "netlify/functions/_gsc-daily.js",
+  gscfn: "netlify/functions/gsc-daily-rows.js",
+  benchbuild: "netlify/functions/vertical-benchmark-build.js",
+  benchscraper: "scraper:scripts/build-vertical-benchmark.mjs",
+  changeledger: "netlify/functions/_change-ledger.js",
+  gbppurge: "netlify/functions/_gbp-purge.js",
+  gbppurgefn: "netlify/functions/gbp-30-day-purge.js",
+  datakeepfn: "netlify/functions/admin-data-keep.js",
+  datakeepsql: "supabase/data_keep.sql",
 };

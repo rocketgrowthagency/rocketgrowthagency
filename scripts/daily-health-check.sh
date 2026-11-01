@@ -594,6 +594,8 @@ run check-the-sale-and-the-name-stay-gone.mjs "no sale, no struck price, no Q&A 
 run check-the-public-site-tells-the-truth.mjs "the public site says only what the contract and code back: approved words, no false lines, one footer with Google's notice, FAQ schema equals the page, exposed files blocked, wrong URLs 404, sitemap dates from history"
 run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, never change anything"
 # 🔒 System health (admin_system_health_v1, 10-31): every automated job checks in, silence is an alarm, and the Mac watches the watcher.
+# 🔒 What we keep (data_keep_v1, 10-31): raw copies, grid per pin, Search Console rows, dated benchmarks, frozen reports, the 30-day purge (OFF), the admin row. Fakes only, nothing real called.
+run check-data-keep.mjs "what we keep is kept and can't quietly stop: raw store strips secrets and never overwrites, Search Console can't loop, the purge is off and deletes only after its ledger line, the admin row reads true"
 run check-system-health-covers-every-job.mjs "every scheduled job is on the list, wrapped, on the right schedule, and the table and its guards match"
 run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"
 run check-job-alert-path.mjs "break a job on a fake: the check-in records it, the watcher alerts once then daily, a success clears it, an undelivered alert is on record"
