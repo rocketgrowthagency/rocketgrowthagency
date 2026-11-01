@@ -1,0 +1,58 @@
+[
+ [
+  "/netlify/* isn't blocked",
+  "toml",
+  "from = \"/netlify/*\"",
+  "from = \"/opened/netlify/*\"",
+  1
+ ],
+ [
+  "/scripts/* isn't blocked",
+  "toml",
+  "from = \"/scripts/*\"",
+  "from = \"/opened/scripts/*\"",
+  1
+ ],
+ [
+  "/supabase/* isn't blocked",
+  "toml",
+  "from = \"/supabase/*\"",
+  "from = \"/opened/supabase/*\"",
+  1
+ ],
+ [
+  "/research_notes/* isn't blocked",
+  "toml",
+  "from = \"/research_notes/*\"",
+  "from = \"/opened/research_notes/*\"",
+  1
+ ],
+ [
+  "/CLAUDE.md isn't blocked",
+  "toml",
+  "from = \"/CLAUDE.md\"",
+  "from = \"/opened/CLAUDE.md\"",
+  1
+ ],
+ [
+  "/PROJECT_CONTEXT.md isn't blocked",
+  "toml",
+  "from = \"/PROJECT_CONTEXT.md\"",
+  "from = \"/opened/PROJECT_CONTEXT.md\"",
+  1
+ ],
+ [
+  "/tests/* isn't blocked",
+  "toml",
+  "from = \"/tests/*\"",
+  "from = \"/opened/tests/*\"",
+  1
+ ],
+ [
+  "/package.json isn't blocked",
+  "toml",
+  "from = \"/package.json\"",
+  "from = \"/opened/package.json\"",
+  1
+ ]
+]

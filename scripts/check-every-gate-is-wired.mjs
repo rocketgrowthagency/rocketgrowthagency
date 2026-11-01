@@ -358,6 +358,7 @@ const NOT_PREFLIGHT = {
   'check-client-steps-6-9-forms.mjs': 'the WEBSITE repo\'s client steps 6 + 9 open forms (client_step06_services_v2, client_step09_form_v2, approved 10-30); file-only + fakes, runs in daily-health-check.sh',
   'check-client-portal-tabs.mjs': 'the WEBSITE repo\'s client portal tabs (client_portal_tabs_v1, approved 10-30); file-only, runs in daily-health-check.sh',
   'check-client-data-backup-works.mjs': 'the nightly client data backup: reads this Mac\'s own backup record and runs the script against a fake Supabase; daily, not a pre-flight',
+  'check-internal-files-are-not-public.mjs': 'every top-level name in the website repo is public by decision or blocked at the edge; daily, not a pre-flight',
   'check-lacie-backup-works.mjs': 'the daily LaCie backup: reads this Mac\'s own backup record and runs the script on throwaway folders; daily, not a pre-flight',
   'check-step10-photo-truth.mjs': 'the WEBSITE repo\'s step 10 photo truth (client_step10_photo_truth_v1, 10-30); fakes only, runs in daily-health-check.sh',
   'check-client-open-calls.mjs': 'the WEBSITE repo\'s client portal open calls (client_open_calls_v1, approved 10-30); file-only + fake Google + fake database, runs in daily-health-check.sh',
