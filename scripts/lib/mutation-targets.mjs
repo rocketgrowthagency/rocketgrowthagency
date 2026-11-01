@@ -11,6 +11,10 @@ export const FILES = {
   // see_what_client_sees_v1 (approved 11-01)
   aicheck: "netlify/functions/_ai-check.js",   // admin_ai_search_v2 (approved 11-01): the Month 6 hand check, one line per tool
   seeclient: "shared/client-preview.js",
+  previewguard: "shared/preview-guard.js",   // admin_recommended_fixes_v1 item 3: the guard, the read function, and the client functions whose auth it pins
+  previewread: "netlify/functions/admin-preview-read.js",
+  contractsfn: "netlify/functions/portal-get-contracts.js",
+  auditsnapfn: "netlify/functions/portal-get-audit-snapshot.js",
   clientkit: "shared/client-card-kit.js",
   playbookclient: "data/playbooks/playbooks.json",   // see_what_client_sees: the 21 numbered client steps
   // onboarding_and_offboarding_v1 (approved 11-01)

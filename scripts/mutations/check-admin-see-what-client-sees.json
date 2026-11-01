@@ -21,73 +21,815 @@
   1
  ],
  [
-  "the iframe may run scripts",
+  "the shown card is not scrubbed",
   "seeclient",
-  "sandbox=\"allow-same-origin\" referrerpolicy",
-  "sandbox=\"allow-same-origin allow-scripts\" referrerpolicy",
+  "const body = neutralize(partsHtml);",
+  "const body = partsHtml;",
   1
  ],
  [
-  "the preview body is not inert",
+  "a typed value is dropped",
   "seeclient",
-  "<body class=\"portal-page\" inert aria-hidden=\"true\">",
-  "<body class=\"portal-page\">",
+  "return v && v[1] && !/",
+  "return false && v && v[1] && !/",
   1
  ],
  [
-  "the preview drawing has a button",
+  "a hidden field's value is shown",
+  "seeclient",
+  "(?:hidden|checkbox|radio|file|submit|button)",
+  "(?:checkbox|radio|file|submit|button)",
+  1
+ ],
+ [
+  "the kit's preview drawing has a button",
   "clientkit",
   "!k.action ? \"\" : preview ?",
   "!k.action ? \"\" : false ?",
   1
  ],
  [
-  "the preview sends a write",
-  "admin",
-  "/.netlify/functions/${fn}`, { method: \"POST\", headers: await authHeaders(), body: JSON.stringify({ client_id: clientId, action: \"read\" })",
-  "/.netlify/functions/${fn}`, { method: \"POST\", headers: await authHeaders(), body: JSON.stringify({ client_id: clientId, action: \"off\" })",
+  "the shown iframe may run scripts",
+  "seeclient",
+  "sandbox=\"allow-same-origin\" referrerpolicy",
+  "sandbox=\"allow-same-origin allow-scripts\" referrerpolicy",
   1
  ],
  [
-  "the read is not checked against the list",
-  "admin",
-  "if (!PREVIEW_CALLS.some(([f, a]) => f === fn && a === \"read\")) throw new Error(\"not a preview read\");",
-  "",
-  1
- ],
- [
-  "the preview rechecks as the admin",
-  "admin",
-  "const r = await fetch(`/.netlify/functions/${fn}`, {",
-  "const r = await fetch(`/.netlify/functions/portal-step-recheck`, {",
-  1
- ],
- [
-  "the kit's note drifts from the client's",
-  "clientkit",
-  "const csNote = (html) => `<div class=\"pm-cs-note\">",
-  "const csNote = (html) => `<div class=\"pm-cs-note pv\">",
-  1
- ],
- [
-  "the portal draws its own posts card",
-  "portal",
-  "function blogPlanInner(c) { return blogCardHtml(c); }",
-  "function blogPlanInner(c) { return csNote(\"\"); }",
+  "the shown body is not inert",
+  "seeclient",
+  "<body class=\"portal-page\" inert aria-hidden=\"true\">",
+  "<body class=\"portal-page\">",
   1
  ],
  [
   "the lock line is gone",
   "seeclient",
-  "<p class=\"cv-lock\">Only the client can do this</p>",
+  "<b>Read only.</b> This is the client's card as of ${escapeHtml(time)}. Nothing here can be pressed.",
+  "${escapeHtml(time)}",
+  1
+ ],
+ [
+  "a look that drew nothing claims to be the card",
+  "seeclient",
+  "cssHref), asOf: null });",
+  "cssHref), asOf: new Date() });",
+  1
+ ],
+ [
+  "the admin calls something itself",
+  "admin",
+  "    _cvLooking = true;\n",
+  "    _cvLooking = true; fetch(\"/x\");\n",
+  1
+ ],
+ [
+  "the admin names a route that acts",
+  "admin",
+  "  let result = { ok: false, why: \"no_card\" };\n",
+  "  let result = { ok: false, why: \"no_card\" }; const _r = \"portal-step-recheck\";\n",
+  1
+ ],
+ [
+  "a look runs on page load",
+  "admin",
+  "let _cvLooking = false;   // one look at a time\n",
+  "let _cvLooking = false; lookAtClientCard({ win: window, clientId: \"x\", stepId: \"x\", getToken: async () => \"\" });\n",
+  1
+ ],
+ [
+  "two looks can run at once",
+  "admin",
+  "  if (_cvLooking) { host.innerHTML = `<p class=\"cv-wait\">Another look is still running. Try this one in a moment.</p>`; return; }\n",
   "",
   1
  ],
  [
-  "a step with no card shows a guess",
+  "the control does not spin",
+  "admin",
+  "    b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");\n",
+  "",
+  1
+ ],
+ [
+  "the admin shows raw html",
+  "admin",
+  "host.innerHTML = lookResultHtml(stepId, result, \"/portal/portal.css\");",
+  "host.innerHTML = result.html;",
+  1
+ ],
+ [
+  "a look starts for a step with no card",
+  "admin",
+  "if (Object.prototype.hasOwnProperty.call(CLIENT_CARDS, stepId)) {",
+  "if (true) {",
+  1
+ ],
+ [
+  "the render frame stays after the answer",
   "seeclient",
-  ": [{ kind: \"unavailable\", label: UNAVAILABLE[stepId] || \"\" }];",
-  ": [];",
+  "      frame.remove();  ",
+  "      ",
+  1
+ ],
+ [
+  "the render frame may post forms",
+  "seeclient",
+  "\"allow-scripts allow-same-origin\"",
+  "\"allow-scripts allow-same-origin allow-forms\"",
+  1
+ ],
+ [
+  "the render frame may steer the admin's page",
+  "seeclient",
+  "\"allow-scripts allow-same-origin\"",
+  "\"allow-scripts allow-same-origin allow-top-navigation\"",
+  1
+ ],
+ [
+  "the render frame is display:none",
+  "seeclient",
+  "position:fixed;left:0;top:0;width:1100px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1",
+  "display:none",
+  1
+ ],
+ [
+  "the render frame can be seen",
+  "seeclient",
+  "border:0;opacity:0;pointer-events:none;z-index:-1",
+  "border:0;pointer-events:none;z-index:-1",
+  1
+ ],
+ [
+  "the login goes to a message from anywhere",
+  "seeclient",
+  "if (e.source !== frame.contentWindow || e.origin !== origin) return;",
+  "if (e.origin !== origin) return;",
+  1
+ ],
+ [
+  "the login goes to any origin's message",
+  "seeclient",
+  "if (e.source !== frame.contentWindow || e.origin !== origin) return;",
+  "if (e.source !== frame.contentWindow) return;",
+  1
+ ],
+ [
+  "the nonce is not checked",
+  "seeclient",
+  "      if (d.nonce !== nonce) return;\n",
+  "",
+  1
+ ],
+ [
+  "the login is posted to any origin",
+  "seeclient",
+  "nonce, token }, origin);",
+  "nonce, token }, \"*\");",
+  1
+ ],
+ [
+  "a look has no timeout",
+  "seeclient",
+  "win.setTimeout(() => finish({ ok: false, why: \"timeout\" }), timeoutMs)",
+  "win.setTimeout(() => {}, timeoutMs)",
+  1
+ ],
+ [
+  "a frame that left its page is trusted",
+  "seeclient",
+  "if (loads > 1) finish({ ok: false, why: \"left_the_page\" });",
+  "",
+  1
+ ],
+ [
+  "an empty result draws as a card",
+  "seeclient",
+  "typeof result.html === \"string\" && result.html.trim()",
+  "true",
+  1
+ ],
+ [
+  "the guard is not on the page",
+  "portalindex",
+  "  <script src=\"/shared/preview-guard.js?v=20261104a\"></script>\n",
+  "",
+  1
+ ],
+ [
+  "the guard is deferred",
+  "portalindex",
+  "<script src=\"/shared/preview-guard.js?v=20261104a\">",
+  "<script defer src=\"/shared/preview-guard.js?v=20261104a\">",
+  1
+ ],
+ [
+  "the guard loads after portal code",
+  "portalindex",
+  "  <script src=\"/shared/preview-guard.js?v=20261104a\"></script>\n",
+  "  <script>window.__x=1;</script>\n  <script src=\"/shared/preview-guard.js?v=20261104a\"></script>\n",
+  1
+ ],
+ [
+  "a typed URL wakes the guard",
+  "previewguard",
+  "  if (!inAdminFrame) return; ",
+  "  ",
+  1
+ ],
+ [
+  "any same-origin frame wakes the guard",
+  "previewguard",
+  " && /^\\/admin(\\/|$)/.test(win.parent.location.pathname)",
+  "",
+  1
+ ],
+ [
+  "the flag object can be changed",
+  "previewguard",
+  "win.__rgaClientPreview = Object.freeze({",
+  "win.__rgaClientPreview = ({",
+  1
+ ],
+ [
+  "a read leaves with no staff login",
+  "previewguard",
+  "Authorization: \"Bearer \" + token }",
+  "Authorization: \"Bearer preview\" }",
+  1
+ ],
+ [
+  "a login is taken from another window",
+  "previewguard",
+  "if (e.source !== win.parent || e.origin !== loc.origin) return;",
+  "if (e.origin !== loc.origin) return;",
+  1
+ ],
+ [
+  "a login is taken from another origin",
+  "previewguard",
+  "if (e.source !== win.parent || e.origin !== loc.origin) return;",
+  "if (e.source !== win.parent) return;",
+  1
+ ],
+ [
+  "a login is taken with the wrong nonce",
+  "previewguard",
+  "d.type === \"rga-preview-token\" && d.nonce === nonce",
+  "d.type === \"rga-preview-token\"",
+  1
+ ],
+ [
+  "marking the thread read gets through",
+  "previewguard",
+  "if (fn === \"portal-thread\" && post && onlyKeys(b, [\"client_id\"]))",
+  "if (fn === \"portal-thread\" && post)",
+  1
+ ],
+ [
+  "a review mark gets through",
+  "previewguard",
+  "if (fn === \"portal-review-requests\" && post && onlyKeys(b, [\"client_id\", \"scope\", \"since\"]))",
+  "if (fn === \"portal-review-requests\" && post)",
+  1
+ ],
+ [
+  "a link check gets through",
+  "previewguard",
+  "post && onlyKeys(b, [\"client_id\", \"step_id\"]) && typeof",
+  "post && typeof",
+  1
+ ],
+ [
+  "a Google verification start gets through",
+  "previewguard",
+  "fn === \"portal-gbp-verify\" && post && b.action === \"status\" && onlyKeys(b, [\"client_id\", \"action\"])",
+  "fn === \"portal-gbp-verify\" && post",
+  1
+ ],
+ [
+  "saying no to posts gets through",
+  "previewguard",
+  "fn === \"portal-blog-posts\" && post && b.action === \"read\" && onlyKeys(b, [\"client_id\", \"action\"])",
+  "fn === \"portal-blog-posts\" && post",
+  1
+ ],
+ [
+  "the recheck is routed",
+  "previewguard",
+  "    if (fn === \"portal-open-moves\" && get)",
+  "    if (fn === \"portal-step-recheck\") return { read: fn, params: {} };\n    if (fn === \"portal-open-moves\" && get)",
+  1
+ ],
+ [
+  "a consent answer is routed",
+  "previewguard",
+  "    if (fn === \"portal-open-moves\" && get)",
+  "    if (fn === \"portal-google-consent\") return { read: fn, params: {} };\n    if (fn === \"portal-open-moves\" && get)",
+  1
+ ],
+ [
+  "core-change is routed",
+  "previewguard",
+  "    if (fn === \"portal-open-moves\" && get)",
+  "    if (fn === \"core-change\") return { read: fn, params: {} };\n    if (fn === \"portal-open-moves\" && get)",
+  1
+ ],
+ [
+  "a booking is routed",
+  "previewguard",
+  "    if (fn === \"portal-open-moves\" && get)",
+  "    if (fn === \"portal-book-kickoff\") return { read: fn, params: {} };\n    if (fn === \"portal-open-moves\" && get)",
+  1
+ ],
+ [
+  "a listed read's write shape counts as listed",
+  "previewguard",
+  "if (no && (no.method ? method === no.method : post && no.shape(b)))",
+  "if (no)",
+  1
+ ],
+ [
+  "a read for another client (body)",
+  "previewguard",
+  "    if (b.client_id != null && b.client_id !== clientId) return null;\n",
+  "",
+  1
+ ],
+ [
+  "a read for another client (query)",
+  "previewguard",
+  "    if (query.get(\"client_id\") != null && query.get(\"client_id\") !== clientId) return null;\n",
+  "",
+  1
+ ],
+ [
+  "a read for another client (list)",
+  "previewguard",
+  "    if (Array.isArray(b.client_ids) && !(b.client_ids.length === 1 && b.client_ids[0] === clientId)) return null;\n",
+  "",
+  1
+ ],
+ [
+  "a table read for another client",
+  "previewguard",
+  "      if (url.search.indexOf(clientId) < 0) return refuse(\"GET \" + rest[1] + \" for another client\");\n",
+  "",
+  1
+ ],
+ [
+  "a write to the database is served",
+  "previewguard",
+  "if (rest && method === \"GET\")",
+  "if (rest)",
+  1
+ ],
+ [
+  "an unknown call leaves",
+  "previewguard",
+  "    return refuse(method + \" \" + url.origin + path);",
+  "    return null;",
+  1
+ ],
+ [
+  "a POST to the site's own files leaves",
+  "previewguard",
+  "return method === \"GET\" ? null : refuse(method + \" \" + path);",
+  "return null;",
+  1
+ ],
+ [
+  "XHR is not replaced",
+  "previewguard",
+  "  win.XMLHttpRequest = RefusedXHR;\n",
+  "",
+  1
+ ],
+ [
+  "sendBeacon is not neutralized",
+  "previewguard",
+  "  try { win.navigator.sendBeacon = function (u) { refuse(\"sendBeacon \" + u); return false; }; } catch (_e) { /* the CSP below still stops it */ }\n  try { Object.defineProperty(win.navigator, \"sendBeacon\", { value: function (u) { refuse(\"sendBeacon \" + u); return false; } }); } catch (_e) { /* the CSP below still stops it */ }\n",
+  "  win.navigator.sendBeacon = function () { return true; };\n",
+  1
+ ],
+ [
+  "a WebSocket can open",
+  "previewguard",
+  "win.WebSocket = function () { refuse(\"WebSocket\"); throw new Error(\"Refused in the read-only preview.\"); };",
+  "",
+  1
+ ],
+ [
+  "a popup can open",
+  "previewguard",
+  "  win.open = function () { return null; };\n",
+  "",
+  1
+ ],
+ [
+  "the CSP wall is gone",
+  "previewguard",
+  "meta.content = \"connect-src 'self'; form-action 'none'\";",
+  "meta.content = \"\";",
+  1
+ ],
+ [
+  "a Back step is pushed",
+  "previewguard",
+  "win.history.pushState = function (s, t, u) { realReplace(s, t, u); };",
+  "",
+  1
+ ],
+ [
+  "storage is not in memory",
+  "previewguard",
+  "try { Object.defineProperty(win, name, { value: shim, configurable: true }); } catch (_e) { /* checked below */ }",
+  "",
+  1
+ ],
+ [
+  "the real storage's writers still work",
+  "previewguard",
+  "win.Storage.prototype[m] = function () {};",
+  "",
+  1
+ ],
+ [
+  "the look's client stores a session",
+  "previewguard",
+  "persistSession: false",
+  "persistSession: true",
+  1
+ ],
+ [
+  "the look's client refreshes a session",
+  "previewguard",
+  "autoRefreshToken: false",
+  "autoRefreshToken: true",
+  1
+ ],
+ [
+  "no stand-in session: loaders read no session as no data",
+  "previewguard",
+  "      c.auth.getSession = function () { return Promise.resolve({ data: { session: { access_token: \"preview\", user: { email: \"\" } } }, error: null }); };\n",
+  "",
+  1
+ ],
+ [
+  "a refused call doesn't fail the look",
+  "previewguard",
+  "      if (!r.listed) return true;\n",
+  "      if (!r.listed) return false;\n",
+  1
+ ],
+ [
+  "a refused call whose host is in the card still draws",
+  "previewguard",
+  "try { return row.matches(r.host) || !!row.querySelector(r.host); } catch (_e) { return true; }",
+  "return false;",
+  1
+ ],
+ [
+  "a failed read isn't recorded",
+  "previewguard",
+  "      if (a.failed) refused.push({ what: \"failed read: \" + read + \" (\" + a.status + \")\", listed: false, host: null });\n",
+  "",
+  1
+ ],
+ [
+  "an inner 403 reads as a success",
+  "previewguard",
+  "failed: j.status >= 400 }",
+  "failed: false }",
+  1
+ ],
+ [
+  "a refused read answers as a success",
+  "previewguard",
+  "return respond(a.status, a.bodyText);",
+  "return respond(200, a.bodyText);",
+  1
+ ],
+ [
+  "a failed table reads as empty",
+  "previewguard",
+  "if (failedHere || !Array.isArray(rows)) return refuse(\"failed table read: \" + table);",
+  "if (failedHere || !Array.isArray(rows)) return respond(200, \"[]\");",
+  1
+ ],
+ [
+  "the same read is sent twice",
+  "previewguard",
+  "    if (answers.has(key)) return answers.get(key);\n",
+  "",
+  1
+ ],
+ [
+  "the row posts before the page is quiet",
+  "previewguard",
+  "    if (idle < QUIET_MS) return;\n",
+  "",
+  1
+ ],
+ [
+  "the row posts collapsed",
+  "previewguard",
+  "    c.classList.remove(\"is-collapsed\");\n",
+  "",
+  1
+ ],
+ [
+  "the result goes to any origin",
+  "previewguard",
+  "win.parent.postMessage(msg, loc.origin);",
+  "win.parent.postMessage(msg, \"*\");",
+  1
+ ],
+ [
+  "an error page reads as a hidden step",
+  "previewguard",
+  "if (idle >= EMPTY_MS && dash && !dash.hidden)",
+  "if (idle >= EMPTY_MS && dash)",
+  1
+ ],
+ [
+  "the claim is skipped for clients too",
+  "portal",
+  "    if (!_preview) await claimPortalAccess(supabase);\n",
+  "",
+  1
+ ],
+ [
+  "every load reads a preview client",
+  "portal",
+  "const portalClients = _preview ? await loadPreviewClient(supabase) : await loadPortalClients(supabase);",
+  "const portalClients = await loadPreviewClient(supabase);",
+  1
+ ],
+ [
+  "every load uses the preview database client",
+  "portal",
+  "const supabase = _preview ? _preview.client(createClient, config.supabaseUrl, config.supabaseAnonKey) : createClient(config.supabaseUrl, config.supabaseAnonKey);",
+  "const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: false } });",
+  1
+ ],
+ [
+  "portal.js reads the flag from the URL",
+  "portal",
+  "const _preview = window.__rgaClientPreview || null;",
+  "const _preview = new URLSearchParams(location.search).get(\"rga_preview\") ? { clientId: \"x\" } : null;",
+  1
+ ],
+ [
+  "a new branch is added to the client's boot",
+  "portal",
+  "    if (_preview) { _preview.fail(\"portal_error\"); return; }\n",
+  "    if (_preview) { _preview.fail(\"portal_error\"); return; }\n    if (_preview) return;\n",
+  1
+ ],
+ [
+  "the session cap is gone for clients",
+  "portal",
+  "window.location.replace(\"/client-login/?reason=session_expired\");",
+  "",
+  1
+ ],
+ [
+  "the admin sets the flag itself",
+  "admin",
+  "let _cvLooking = false;   // one look at a time\n",
+  "let _cvLooking = false; window.__rgaClientPreview = {};\n",
+  1
+ ],
+ [
+  "no staff check",
+  "previewread",
+  "  const gate = await requireWorkspaceForClient(event, clientId);\n  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "any signed-in user passes",
+  "previewread",
+  "const gate = await requireWorkspaceForClient(event, clientId);",
+  "const gate = await require(\"./_auth\").requireUser(event);",
+  1
+ ],
+ [
+  "the owner-or-staff check is used",
+  "previewread",
+  "const gate = await requireWorkspaceForClient(event, clientId);",
+  "const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "the client filter is not forced",
+  "previewread",
+  "${t.path}&${t.by}=eq.${clientId}`",
+  "${t.path}`",
+  1
+ ],
+ [
+  "a table is read for another client",
+  "previewread",
+  "async function readTables(clientId) {\n",
+  "async function readTables(cid) { const clientId = \"99999999-2222-3333-4444-555555555555\";\n",
+  1
+ ],
+ [
+  "a request steers the read",
+  "previewread",
+  "const read = String(b.read || \"\")",
+  "const read = String(b.table || b.read || \"\")",
+  1
+ ],
+ [
+  "a GET is answered",
+  "previewread",
+  "  if (event.httpMethod !== \"POST\") return json(405, { error: \"POST only\" });\n",
+  "",
+  1
+ ],
+ [
+  "the recheck is on the list",
+  "previewread",
+  "const READS = {\n",
+  "const READS = {\n  \"portal-step-recheck\": { load: () => require(\"./portal-step-recheck\"), method: \"POST\", body: () => ({}) },\n",
+  1
+ ],
+ [
+  "the list is read through the prototype",
+  "previewread",
+  "if (!Object.prototype.hasOwnProperty.call(READS, read))",
+  "if (!READS[read])",
+  1
+ ],
+ [
+  "client_portal_access is on the list",
+  "previewread",
+  "const TABLES = {\n",
+  "const TABLES = {\n  client_portal_access: { by: \"client_id\", path: \"/client_portal_access?select=client_id\" },\n",
+  1
+ ],
+ [
+  "a token column is selected",
+  "previewread",
+  "/client_google_oauth?select=client_id,",
+  "/client_google_oauth?select=refresh_token,client_id,",
+  1
+ ],
+ [
+  "client_google_oauth reads every column",
+  "previewread",
+  "/client_google_oauth?select=client_id,google_account_email,ga4_property_id,gsc_site_url,gbp_account_id,gbp_location_id,youtube_channel_id,status,connected_at",
+  "/client_google_oauth?select=*",
+  1
+ ],
+ [
+  "another table reads every column",
+  "previewread",
+  "/client_invoices?select=id,client_id,invoice_num,amount,currency,due_date,paid_at,status",
+  "/client_invoices?select=*",
+  1
+ ],
+ [
+  "a column list reaches another table",
+  "previewread",
+  "/client_invoices?select=id,",
+  "/client_invoices?select=clients(*),id,",
+  1
+ ],
+ [
+  "a checkout link is selected",
+  "previewread",
+  "due_date,paid_at,status&order",
+  "due_date,paid_at,status,stripe_checkout_url&order",
+  1
+ ],
+ [
+  "the secret strip is off",
+  "previewread",
+  "if (!SECRET_KEY.test(k)) out[k] = stripSecrets(x);",
+  "out[k] = stripSecrets(x);",
+  1
+ ],
+ [
+  "the strip misses nested values",
+  "previewread",
+  "if (!SECRET_KEY.test(k)) out[k] = stripSecrets(x);",
+  "if (!SECRET_KEY.test(k)) out[k] = x;",
+  1
+ ],
+ [
+  "the tables skip the strip",
+  "previewread",
+  "body: stripSecrets(await readTables(clientId))",
+  "body: await readTables(clientId)",
+  1
+ ],
+ [
+  "the signed contract leaves",
+  "previewread",
+  "contracts.map(({ contract_html, contract_hash, ...c }) => c)",
+  "contracts",
+  1
+ ],
+ [
+  "a read passes the request's params on (thread)",
+  "previewread",
+  "\"portal-thread\": { load: () => require(\"./portal-thread\"), method: \"POST\", body: () => ({}) }",
+  "\"portal-thread\": { load: () => require(\"./portal-thread\"), method: \"POST\", body: (p) => ({ ...p }) }",
+  1
+ ],
+ [
+  "a read passes the request's params on (Google)",
+  "previewread",
+  "body: (p) => ({ step_id: word(p.step_id) || \"\" })",
+  "body: (p) => ({ ...p })",
+  1
+ ],
+ [
+  "a read passes the request's params on (posts)",
+  "previewread",
+  "\"portal-blog-posts\": { load: () => require(\"./portal-blog-posts\"), method: \"POST\", body: () => ({ action: \"read\" }) }",
+  "\"portal-blog-posts\": { load: () => require(\"./portal-blog-posts\"), method: \"POST\", body: (p) => ({ action: \"read\", ...p }) }",
+  1
+ ],
+ [
+  "a read's path is wrong",
+  "previewread",
+  "load: () => require(\"./portal-step-waits\")",
+  "load: () => require(\"./portal-step-wait\")",
+  1
+ ],
+ [
+  "a column the portal reads is dropped",
+  "previewread",
+  "storage_path,file_name,",
+  "storage_path,",
+  1
+ ],
+ [
+  "a column the portal doesn't read is added",
+  "previewread",
+  "/client_onboarding_records?select=client_id,",
+  "/client_onboarding_records?select=id,client_id,",
+  1
+ ],
+ [
+  "a client column the portal reads is dropped",
+  "previewread",
+  "billing_status,call_tracking_attributed",
+  "billing_status",
+  1
+ ],
+ [
+  "a table the portal loads is dropped",
+  "previewread",
+  "  client_subscriptions: { by: \"client_id\", path: \"/client_subscriptions?select=id,client_id,status,monthly_price,currency,created_at,current_period_start&order=created_at.desc\" },\n",
+  "",
+  1
+ ],
+ [
+  "the retired photo states drift",
+  "previewread",
+  "not.in.(replaced,removed,withdrawn)",
+  "not.in.(replaced,removed)",
+  1
+ ],
+ [
+  "a staff branch on a client function",
+  "videoclipfn",
+  "const auth = await requirePortalOwner(event, clientId);",
+  "const auth = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "a staff branch on the leaving card",
+  "portalcancel",
+  "const gate = await requirePortalOwner(event, clientId);",
+  "const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "contracts stop checking who owns them",
+  "contractsfn",
+  "const safeIds = requestedIds.filter((id) => allowedClientIds.has(id));",
+  "const safeIds = requestedIds;",
+  1
+ ],
+ [
+  "audit snapshots stop checking who owns them",
+  "auditsnapfn",
+  "const safeIds = requestedIds.filter((id) => allowedClientIds.has(id));",
+  "const safeIds = requestedIds;",
+  1
+ ],
+ [
+  "marking read opens to staff",
+  "thread",
+  "const gate = markAt ? await requirePortalOwner(event, clientId) : await requirePortalOwnerOrWorkspace(event, clientId);",
+  "const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
   1
  ],
  [
@@ -105,59 +847,38 @@
   1
  ],
  [
-  "a stale step is listed as not available",
+  "a stale step is listed",
   "seeclient",
   "  \"m1.kickoff.call\": \"The kickoff call card\",\n",
   "  \"m1.kickoff.call\": \"The kickoff call card\",\n  \"m9.stale.step\": \"A card\",\n",
   1
  ],
  [
-  "a step is both drawn and not available",
-  "seeclient",
-  "  \"m1.kickoff.call\": \"The kickoff call card\",\n",
-  "  \"m1.kickoff.call\": \"The kickoff call card\",\n  \"m1.access.website\": \"The access card\",\n",
-  1
- ],
- [
-  "a not-available label is empty",
+  "a card label is empty",
   "seeclient",
   "\"m2.call.monthly\": \"The monthly call card\"",
   "\"m2.call.monthly\": \"\"",
   1
  ],
  [
-  "a not-available label has an em dash",
+  "a card label has an em dash",
   "seeclient",
   "\"m2.call.monthly\": \"The monthly call card\"",
   "\"m2.call.monthly\": \"The monthly call — card\"",
   1
  ],
  [
-  "a not-available step draws a card",
+  "a failed look draws a guess",
   "seeclient",
-  "[{ kind: \"unavailable\", label: UNAVAILABLE[stepId] || \"\" }];",
-  "[{ kind: \"card\", html: '<div class=\"pm-cs-card\">a guess</div>' }];",
+  "return previewFrameHtml({ inner: previewIframeHtml(unavailableHtml(CLIENT_CARDS[stepId] || \"\", result && result.why), cssHref), asOf: null });",
+  "return previewFrameHtml({ inner: previewIframeHtml('<div class=\"pm-cs-card\">a guess</div>', cssHref), asOf: null });",
   1
  ],
  [
-  "a drawer hand-writes its card",
+  "a hidden step reads as a failure",
   "seeclient",
-  "{ kind: \"unavailable\", label: \"The access card\" },",
-  "{ kind: \"card\", html: \"<div>a look-alike</div>\" },",
-  1
- ],
- [
-  "a drawer is for a step that is not in the playbook",
-  "seeclient",
-  "\"m1.access.website\": {\n    calls",
-  "\"m9.no.such.step\": {\n    calls",
-  1
- ],
- [
-  "the admin reads for a step with no drawer",
-  "admin",
-  "for (const [fn] of (d ? d.calls : []))",
-  "for (const [fn] of (d ? d.calls : [[\"portal-blog-posts\"]]))",
+  "why === \"not_on_page\" ? \"The client does not see this step on their page right now.\"\n    : ",
+  "",
   1
  ],
  [
@@ -165,6 +886,20 @@
   "playbookclient",
   "\"clientStepNo\": 21\n",
   "\"clientStepNo\": null\n",
+  1
+ ],
+ [
+  "the kit's note drifts from the client's",
+  "clientkit",
+  "const csNote = (html) => `<div class=\"pm-cs-note\">",
+  "const csNote = (html) => `<div class=\"pm-cs-note pv\">",
+  1
+ ],
+ [
+  "the portal draws its own posts card",
+  "portal",
+  "function blogPlanInner(c) { return blogCardHtml(c); }",
+  "function blogPlanInner(c) { return csNote(\"\"); }",
   1
  ]
 ]
