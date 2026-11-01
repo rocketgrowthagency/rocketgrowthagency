@@ -661,6 +661,7 @@ run check-the-foundation-card-finishes.mjs "the portal Foundation card says Done
 run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by rating/happiness (10-19: a NEGATIVE FILTER prompt + happy-customers copy)"
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"
 run check-step-49-schema.mjs "step 49: Service + BreadcrumbList + visible FAQ with FAQPage per page, never AggregateRating, never a guessed URL"
+run check-a-service-area-business-is-not-flagged-for-a-hidden-address.mjs "a service-area business is never flagged for a hidden street address; name, phone and service-area text are checked instead"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
 run check-no-typed-step-numbers.mjs "no step number is typed where a person reads it (playbook text, admin, portal, function errors): name the step instead (approved admin_recommended_fixes_v1)"

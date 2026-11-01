@@ -26,6 +26,7 @@
 
 import fs from "node:fs";
 import vm from "node:vm";
+import { createRequire } from "node:module";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const fails = [];
@@ -158,7 +159,8 @@ for (const [raw, want, why] of URLS) {
   };
   let runSchema;
   try {
-    const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services" });
+    const ctx = vm.createContext({ URL, String, Object, JSON, Set, Math, console, svcCtx: (c) => c.primary_service || "Services",
+      publishesStreetAddress: createRequire(import.meta.url)(`${SITE}/netlify/functions/_site-facts.js`).publishesStreetAddress });
     const padSrc = flow.slice(flow.indexOf("const citPad = (labels)"), flow.indexOf("};", flow.indexOf("const citPad = (labels)")) + 1);
     vm.runInContext(`${stSet}\n${stNames}\n${padSrc}\n${grab("clientSiteUrl")}\n${grab("clientLocality")}`, ctx);
     runSchema = vm.runInContext(`(${flow.slice(flow.indexOf("async", start), end)})`, ctx);

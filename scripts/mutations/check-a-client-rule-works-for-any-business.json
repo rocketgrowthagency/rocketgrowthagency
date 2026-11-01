@@ -67,9 +67,9 @@
  ],
  [
   "a service-area business publishes a storefront address again",
-  "exec",
-  "    const storefront = client.geography_model === \"single_location\" || client.geography_model === \"multi_location\";",
-  "    const storefront = true;"
+  "sitefacts",
+  "  return g === \"single_location\" || g === \"multi_location\";",
+  "  return true;"
  ],
  [
   "a step goes back to splitting the market itself",
@@ -79,21 +79,21 @@
  ],
  [
   "the schema step goes back to publishing an address only for national_one_office (RGA's own model)",
-  "exec",
-  "const storefront = client.geography_model === \"single_location\" || client.geography_model === \"multi_location\";",
-  "const storefront = client.geography_model === \"national_one_office\";"
+  "sitefacts",
+  "return g === \"single_location\" || g === \"multi_location\";",
+  "return g === \"national_one_office\";"
  ],
  [
   "a multi-location business loses its address",
-  "exec",
-  "client.geography_model === \"single_location\" || client.geography_model === \"multi_location\";",
-  "client.geography_model === \"single_location\";"
+  "sitefacts",
+  "g === \"single_location\" || g === \"multi_location\";",
+  "g === \"single_location\";"
  ],
  [
   "an unanswered location model publishes an address",
-  "exec",
-  "const storefront = client.geography_model === \"single_location\" || client.geography_model === \"multi_location\";",
-  "const storefront = client.geography_model !== \"service_area\" && client.geography_model !== \"national_one_office\";"
+  "sitefacts",
+  "return g === \"single_location\" || g === \"multi_location\";",
+  "return g !== \"service_area\" && g !== \"national_one_office\";"
  ],
  [
   "step 38's photo kinds go back to 'truck (2)' for every client",

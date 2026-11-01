@@ -791,7 +791,8 @@ discover pages. Without one they cannot run at all, so fix this before them, not
     type: "manual", dependsOn: ["m1.audit.gbp_baseline", "m1.gbp.business_facts"],
     actionLabel: "⚡ Run the check",
     instructions: `Header + footer + contact page = identical Name, Address, Phone.
-Use the canonical NAP from GBP. Critical for citation consistency — if these don't match, citation cleanup later won't help.`,
+Use the canonical NAP from GBP. Critical for citation consistency — if these don't match, citation cleanup later won't help.
+A service-area business with no public street address matches Name, Phone and the service area instead.`,
   },
   {
     id: "m1.web.schema", title: "Add LocalBusiness schema",

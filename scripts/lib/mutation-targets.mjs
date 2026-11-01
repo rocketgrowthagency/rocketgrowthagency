@@ -125,6 +125,8 @@ export const FILES = {
   admin: "admin/admin.js",
   brainbackground: "netlify/functions/v2-brain-analysis-background.js",   // the Brain prompt (Q&A retired 2025-11-03)
   exec: "netlify/functions/flow-execute.js",
+  sitefacts: "netlify/functions/_site-facts.js",   // research fixes 11-01: service-area address, schema subtype, PSI field data
+  auditweb: "netlify/functions/v2-audit-website.js",
   css: "admin/admin.css",
   portal: "portal/portal.js",
   playbook: "data/playbooks/playbooks.json",

@@ -470,6 +470,7 @@ const NOT_PREFLIGHT = {
   'check-no-review-gating.mjs': 'the WEBSITE repo\'s prompts + step copy never ask for reviews by rating (Google policy, FTC 16 CFR 465) — a portal/admin check, not video preflight',
   'check-step-54-knowledge-panel.mjs': 'the WEBSITE repo\'s step 54 runner measures before it drafts — a portal/admin check, not video preflight',
   'check-step-49-schema.mjs': 'the WEBSITE repo\'s step 49 schema set — a portal/admin check, not video preflight',
+  'check-a-service-area-business-is-not-flagged-for-a-hidden-address.mjs': 'the WEBSITE repo\'s audit and schema step for service-area clients, a portal/admin check, not video preflight',
   'check-one-google-card.mjs': 'the WEBSITE repo\'s one Google card on every Google step, portal + admin (approved one_google_card_v1) — a portal/admin check, not video preflight',
   'check-no-step-asks-for-a-retired-google-feature.mjs': 'the WEBSITE playbook never asks for a Google feature Google retired (approved retire_messaging_step_v1) — a playbook check, not video preflight',
   'check-no-typed-step-numbers.mjs': 'runs in daily-health-check.sh (11-01); the WEBSITE repo\'s step text, admin, portal and function errors never carry a typed step number (approved admin_recommended_fixes_v1) — a playbook/portal check, not video preflight',
