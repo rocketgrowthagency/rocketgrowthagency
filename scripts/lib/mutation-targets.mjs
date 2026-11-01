@@ -8,6 +8,7 @@ export const FILES = {
   blogclientsql: "supabase/blog_client_choice.sql",
   // see_what_client_sees_v1 (approved 11-01)
   seeclient: "shared/client-preview.js",
+  clientkit: "shared/client-card-kit.js",
   // onboarding_and_offboarding_v1 (approved 11-01)
   stepreminders: "netlify/functions/_step-reminders.js",
   calloutcome: "shared/call-outcome.js",

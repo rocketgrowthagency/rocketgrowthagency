@@ -1,0 +1,100 @@
+[
+ [
+  "buttons survive the scrub",
+  "seeclient",
+  "  h = h.replace(/<button\\b[^>]*>([\\s\\S]*?)<\\/button\\s*>/gi, '<span class=\"pv-label\">$1</span>');\n",
+  "",
+  1
+ ],
+ [
+  "data- hooks survive the scrub",
+  "seeclient",
+  "(?:on[a-z]+|data-[\\w-]+|href|",
+  "(?:on[a-z]+|href|",
+  1
+ ],
+ [
+  "event handlers survive the scrub",
+  "seeclient",
+  "(?:on[a-z]+|data-[\\w-]+|href|",
+  "(?:data-[\\w-]+|href|",
+  1
+ ],
+ [
+  "the iframe may run scripts",
+  "seeclient",
+  "sandbox=\"allow-same-origin\" referrerpolicy",
+  "sandbox=\"allow-same-origin allow-scripts\" referrerpolicy",
+  1
+ ],
+ [
+  "the preview body is not inert",
+  "seeclient",
+  "<body class=\"portal-page\" inert aria-hidden=\"true\">",
+  "<body class=\"portal-page\">",
+  1
+ ],
+ [
+  "the preview drawing has a button",
+  "clientkit",
+  "!k.action ? \"\" : preview ?",
+  "!k.action ? \"\" : false ?",
+  1
+ ],
+ [
+  "the preview sends a write",
+  "admin",
+  "/.netlify/functions/${fn}`, { method: \"POST\", headers: await authHeaders(), body: JSON.stringify({ client_id: clientId, action: \"read\" })",
+  "/.netlify/functions/${fn}`, { method: \"POST\", headers: await authHeaders(), body: JSON.stringify({ client_id: clientId, action: \"off\" })",
+  1
+ ],
+ [
+  "the read is not checked against the list",
+  "admin",
+  "if (!PREVIEW_CALLS.some(([f, a]) => f === fn && a === \"read\")) throw new Error(\"not a preview read\");",
+  "",
+  1
+ ],
+ [
+  "the preview rechecks as the admin",
+  "admin",
+  "const r = await fetch(`/.netlify/functions/${fn}`, {",
+  "const r = await fetch(`/.netlify/functions/portal-step-recheck`, {",
+  1
+ ],
+ [
+  "the kit's note drifts from the client's",
+  "clientkit",
+  "const csNote = (html) => `<div class=\"pm-cs-note\">",
+  "const csNote = (html) => `<div class=\"pm-cs-note pv\">",
+  1
+ ],
+ [
+  "the portal draws its own posts card",
+  "portal",
+  "function blogPlanInner(c) { return blogCardHtml(c); }",
+  "function blogPlanInner(c) { return csNote(\"\"); }",
+  1
+ ],
+ [
+  "the lock line is gone",
+  "seeclient",
+  "<p class=\"cv-lock\">Only the client can do this</p>",
+  "",
+  1
+ ],
+ [
+  "a step with no card shows a guess",
+  "seeclient",
+  ": [{ kind: \"unavailable\", label: \"\" }];",
+  ": [];",
+  1
+ ],
+ [
+  "an admin can press the client's no",
+  "blogposts",
+  "action === \"read\" ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId)",
+  "await requirePortalOwnerOrWorkspace(event, clientId)",
+  1
+ ]
+]
