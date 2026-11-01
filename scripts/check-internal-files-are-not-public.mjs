@@ -12,7 +12,7 @@ const REAL = "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const toml = fs.readFileSync(`${SITE}/netlify.toml`, "utf8");
 const fail = [];
 const blocked = new Set([...toml.matchAll(/\[\[redirects\]\][^[]*?from = "([^"]+)"[^[]*?status = 404\s*\n\s*force = true/g)].map((m) => m[1]));
-const MUST_BLOCK = ["/netlify/*", "/scripts/*", "/supabase/*", "/research_notes/*", "/tests/*", "/docs/*", "/reports/*", "/.claude/*", "/.githooks/*", "/CLAUDE.md", "/PROJECT_CONTEXT.md", "/RGA-ASSET-GUARDRAILS.md", "/.github/*", "/.vscode/*", "/package.json", "/package-lock.json", "/stylelint.config.js", "/data/playbooks/playbooks.json", "/data/rga-admin-logins.json", "/data/client-facts.json", "/data/geography-models.json", "/data/outreach-verticals.json", "/data/playbooks/mature.json", "/_site-snapshots/*"];
+const MUST_BLOCK = ["/data/playbooks/what-it-does.json", "/netlify/*", "/scripts/*", "/supabase/*", "/research_notes/*", "/tests/*", "/docs/*", "/reports/*", "/.claude/*", "/.githooks/*", "/CLAUDE.md", "/PROJECT_CONTEXT.md", "/RGA-ASSET-GUARDRAILS.md", "/.github/*", "/.vscode/*", "/package.json", "/package-lock.json", "/stylelint.config.js", "/data/playbooks/playbooks.json", "/data/rga-admin-logins.json", "/data/client-facts.json", "/data/geography-models.json", "/data/outreach-verticals.json", "/data/playbooks/mature.json", "/_site-snapshots/*"];
 for (const b of MUST_BLOCK) if (!blocked.has(b)) fail.push(`${b} isn't blocked at the edge`);
 // the public side, decided by name
 const PUBLIC = new Set(process.env.PUBLIC_NAMES ? process.env.PUBLIC_NAMES.split(",") : []);

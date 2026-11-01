@@ -45,7 +45,7 @@ let proposed = [];
 try { proposed = JSON.parse(fs.readFileSync(`${SITE}/reports/steps/proposed.json`, "utf8")); } catch { /* no list, nothing to compare */ }
 for (const x of proposed) { const hit = [...m1, ...mo, ...client].find((r) => r.cells[1] === x.name); if (hit) fail(`"${x.name}" is listed as not built, and it's step ${hit.cells[0]}: take it off reports/steps/proposed.json`); }
 const B = fs.readFileSync(process.env.SCRAPER_COPY_DIR ? `${process.env.SCRAPER_COPY_DIR}/scripts/build-step-map.mjs` : new URL("./build-step-map.mjs", import.meta.url), "utf8");
-if (!/_probe-numbering\.mjs/.test(B)) fail("the sheet no longer reads its numbers off the page");
+if (!/spawnSync\("node", \[`\$\{HERE\}\/_probe-numbering\.mjs`\]/.test(B)) fail("the sheet no longer reads its numbers off the page");
 if (!/WHAT\.admin\[r\.id\]/.test(B) || !/WHAT\.client\[d\.id\]/.test(B)) fail("the sheet no longer says what each step does");
 if (F.length) { console.error(`🔴 the step sheet is out of date — ${F.length}:\n${F.slice(0, 12).map((x) => `   · ${x}`).join("\n")}\n   Run: node scripts/build-step-map.mjs, then republish the page.`); process.exit(1); }
 console.log(`✅ the step sheet is current: ${client.length} client, ${m1.length} admin Month 1, ${mo.length} admin Monthly, each with what it does`);
