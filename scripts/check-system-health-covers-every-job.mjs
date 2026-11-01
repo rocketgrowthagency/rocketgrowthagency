@@ -62,6 +62,13 @@ const plistCron = (file) => {
   const d = JSON.parse(execFileSync("plutil", ["-convert", "json", "-o", "-", file], { encoding: "utf8" }));
   const c = d.StartCalendarInterval;
   if (!c || Array.isArray(c)) return null;
+  // 🔒 Chris 11-1: a job on several days has a list of times. They must share a time, and the days become a range: Monday to Friday is 1-5.
+  if (Array.isArray(c)) {
+    const days = c.map((x) => x.Weekday).sort((x, y) => x - y), same = c.every((x) => x.Hour === c[0].Hour && x.Minute === c[0].Minute);
+    const run = days.every((x, i) => i === 0 || x === days[i - 1] + 1);
+    if (!same || !run || days[0] == null) return null;
+    return `${c[0].Minute ?? 0} ${c[0].Hour ?? "*"} * * ${days[0]}-${days[days.length - 1]}`;
+  }
   return `${c.Minute ?? 0} ${c.Hour ?? "*"} ${c.Day ?? "*"} ${c.Month ?? "*"} ${c.Weekday ?? "*"}`;
 };
 const AGENTS = path.join(os.homedir(), "Library/LaunchAgents");
