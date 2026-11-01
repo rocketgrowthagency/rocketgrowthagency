@@ -1092,6 +1092,16 @@ Never ask a customer for a Yelp review (Yelp bars it). Never advertise on Yelp a
 This is profile hygiene, not AI work: it makes no promise about any AI tool or any ranking. If Yelp will not list the business, write that on the step and move on.`,
   },
   {
+    id: "m1.platform.mentions", title: "Get mentioned on other sites",
+    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.business_facts"],
+    instructions: `Real sources only. No pay-for-placement, no fake lists, no mention that is not a real page about the business.
+1. Best-of lists for their trade and city: find the ones that exist, and ask to be added.
+2. Local press and trade sites: one pitch a quarter, with something true to say.
+3. Trade bodies and sponsorships: only ones the client already belongs to or already pays.
+Write down each source with its link once it is live. If a list or site says no, write that and move on.
+Why: a mention is a real page a person can read, and that is the reason to do it. No study shows that mentions make an AI tool name a business, so this makes no promise about any AI tool or any ranking.`,
+  },
+  {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business",
     type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
     actionLabel: "⚡ Generate",

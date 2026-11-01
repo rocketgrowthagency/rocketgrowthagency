@@ -48,6 +48,7 @@ const fails = []; const F = (m) => fails.push(m);
 const dom = new JSDOM(`<!doctype html><body>${CARD}</body>`, { runScripts: "outside-only" });
 const w = dom.window;
 w.escapeAttribute = (x) => String(x).replace(/"/g, "&quot;");
+w.requestAnimationFrame = (f) => { f(); return 1; };   // jsdom has none; obHoldInPlace uses it to keep the page still after a fold
 try { w.eval(`${block}\nwindow.__acc = { obApplyStepAccordion, obOpenStep, obFoldStep, setActed: (id) => { _obLastActed = id; } };`); }
 catch (e) { console.error(`🔴 the accordion code would not run: ${e.message}`); process.exit(1); }
 const A = w.__acc, doc = w.document, host = doc.getElementById("host");

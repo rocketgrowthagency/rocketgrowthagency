@@ -53,7 +53,7 @@ if (!/\$\{(?:gsA \? gPillText\(gsA, s\.task\) : )?prvN \? `Review \$\{prvN\}` : 
 // 🔑 the PHOTO REVIEW card's own reveal (the second-logo card reveals step 40 too, 10-15 — that one doesn't count)
 if (!/reveal: PHOTO_REVIEW_STEP, tab: "onboarding-v2", scroll: "panel-onboarding-v2", btn: "Review photos"/.test(admin) || !/data\.admin\.reveal/.test(admin)) fail("Your action does not name the waiting photos, or does not open step 39");
 if (!/fetch\("\/\.netlify\/functions\/admin-photo-review"/.test(admin)) fail("the review buttons do not call admin-photo-review");
-if (!/if \(isM1\) injectPhotoReview\(host\);\s*(?:if \(isM1\) injectListingCard\(host\);\s*)?if \(isM1\) obApplyStepAccordion\(host\);/.test(admin)) fail("step 39 carries the review only while it is the active step — a photo waiting behind earlier steps is invisible (the live bug of 2026-10-09)");
+if (!/if \(isM1\) injectPhotoReview\(host\);\s*(?:if \(isM1\) injectListingCard\(host\);\s*)?(?:injectSeeClientLinks\(host, steps, stepKind\);\s*)?if \(isM1\) obApplyStepAccordion\(host\);/.test(admin)) fail("step 39 carries the review only while it is the active step — a photo waiting behind earlier steps is invisible (the live bug of 2026-10-09)");
 if (!/const PHOTO_REVIEW_STEP = "m1\.gbp\.photos";/.test(admin)) fail("the review is not attached to step 39 (m1.gbp.photos)");
 
 if (F.length) { console.error("🔴 the photo review before Google is broken:"); for (const f of F) console.error("   · " + f); process.exit(1); }

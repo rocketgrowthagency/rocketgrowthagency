@@ -21,7 +21,7 @@ const rows = [...md.matchAll(/^\|(.+)\|\s*`([a-z0-9_.]+)`\s*\|\s*$/gm)].map((m) 
 if (rows.length < 50) { console.error(`⚠️  INDETERMINATE: only ${rows.length} rows on the sheet`); process.exit(2); }
 const sections = md.split(/^## /m);
 const part = (re) => { const s = sections.find((x) => re.test(x.split("\n")[0])) || ""; return [...s.matchAll(/^\|(.+)\|\s*`([a-z0-9_.]+)`\s*\|\s*$/gm)].map((m) => ({ cells: m[1].split("|").map((c) => c.trim()), id: m[2] })); };
-const client = part(/client/i), m1 = part(/month 1/i), mo = part(/monthly/i);
+const client = part(/^client portal\s*$/i), unnumbered = part(/^client portal, no number/i), m1 = part(/month 1/i), mo = part(/monthly/i);
 if (!client.length || !m1.length || !mo.length) { console.error("⚠️  INDETERMINATE: the sheet's sections moved"); process.exit(2); }
 if (!md.includes(`Steps fingerprint: \`${stepMapPrint(play)}\``)) fail("the steps changed after the sheet was built");
 if (!/\| Admin step \| Title \| What it does \|/.test(md) || !/\| Client step \| Title \| What it does \|/.test(md)) fail("the sheet has no What it does column");
@@ -38,6 +38,7 @@ for (const [id, d] of defs) if (!onSheet.has(id)) fail(`${id} ("${d.title}") is 
 for (const r of client) { const d = defs.get(r.id); if (!d || Number(d.clientStepNo) !== Number(r.cells[0])) fail(`client step ${r.cells[0]} (${r.id}) is ${d ? `number ${d.clientStepNo}` : "gone"} in the playbook`); }
 for (const r of client) { if (!what.client[r.id]) fail(`client step ${r.cells[0]} (${r.id}) doesn't say what it does: add it to data/playbooks/what-it-does.json`); else if (r.cells[2] !== what.client[r.id]) fail(`client step ${r.cells[0]} (${r.id}): the sheet's description is out of date`); }
 for (const part of ["admin", "client"]) for (const id of Object.keys(what[part])) if (!defs.has(id) || (part === "client" && !defs.get(id).clientStepNo)) fail(`what-it-does.json describes ${id} as a ${part} step, and it isn't one`);
+for (const [id, d] of defs) if (d.clientLabel && !d.clientStepNo && !unnumbered.some((r) => r.id === id)) fail(`"${d.clientLabel}" (${id}) reaches the client and isn't on the sheet`);
 for (const [id, d] of defs) if (d.clientStepNo && !client.some((r) => r.id === id)) fail(`client step ${d.clientStepNo} (${id}) isn't on the sheet`);
 // "Approved, not built yet" on the sheet: a step that has a number has been built, so it comes off that list
 let proposed = [];

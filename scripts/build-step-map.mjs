@@ -54,6 +54,12 @@ const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a
   return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: WHAT.client[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null };
 });
 
+// what the client also sees with no step number: approvals and asks tied to an admin step, plus the cards that aren't steps at all (data/playbooks/what-it-does.json clientCards)
+const clientUnnumbered = [
+  ...[...defs.values()].filter((d) => d.clientLabel && !d.clientStepNo).map((d) => { const a = admin.find((x) => x.id === d.id); return { id: d.id, label: d.clientLabel, what: WHAT.admin[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null }; }),
+  ...Object.entries(WHAT.clientCards || {}).map(([id, c]) => ({ id, label: c.title, what: c.what, admin: null, adminMonth: null })),
+];
+
 // a map that came out wrong must not replace one that's right
 const bad = [];
 const nums = month1.map((a) => a.n);
@@ -91,6 +97,11 @@ ${proposed.map((x) => `| ${x.name} | ${x.where} | ${x.numbers} | ${x.url} |`).jo
 |---|---|---|---|---|
 ${client.map((c) => `| ${c.n} | ${c.label} | ${c.what.replace(/\|/g, "/")} | ${adminLabel(c)} | \`${c.id}\` |`).join("\n")}
 
+## Client portal, no number
+| Client portal shows | What it does | Admin step | id |
+|---|---|---|---|
+${clientUnnumbered.map((c) => `| ${c.label} | ${c.what.replace(/\|/g, "/")} | ${c.admin ? adminLabel(c) : "none"} | \`${c.id}\` |`).join("\n")}
+
 ## Admin portal · Month 1
 | Admin step | Title | What it does | Who | Client step | id |
 |---|---|---|---|---|---|
@@ -120,6 +131,7 @@ section{background:var(--paper);border:1px solid var(--line);border-radius:16px;
 <div class="wrap"><header><div class="k">Both portals · updated ${esc(stamp)}</div><h1>Every step, by the number each portal shows</h1><p class="lede">Admin numbers are read off the live checklist. The list rebuilds each morning and after any step change, and a check fails if it falls behind.</p></header>
 <section><h2>Approved, not built yet</h2><p class="lede">None of these has a number yet. A new step gets its number when it's built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
 <section><h2>Client portal (${client.length} steps)</h2>${table(["Client step", "What it is", "Admin step"], client.map((c) => [c.n, `${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, esc(adminLabel(c))]))}</section>
+<section><h2>Client portal, no number (${clientUnnumbered.length} cards)</h2><p class="lede">The client sees these too, as approvals, asks or standing cards. They carry no step number.</p>${table(["Client portal shows", "Admin step"], clientUnnumbered.map((c) => [`${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, c.admin ? esc(adminLabel(c)) : "none"]))}</section>
 <section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], month1.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 <section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], monthly.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 </div>
