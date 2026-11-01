@@ -296,6 +296,7 @@ export const FILES = {
   overnightlocal: "scraper:scripts/overnight-local.sh",
   dailyhealth: "scraper:scripts/daily-health-check.sh",
   nightlyfull: "scraper:scripts/nightly-full-check.sh",
+  beforeconfirm: "scraper:scripts/before-confirming.mjs",
   weeklyaudit: "scraper:scripts/weekly-audit.sh",
   weeklyauditprompt: "scraper:scripts/weekly-audit-prompt.md",
   reviewrunner: "scraper:scripts/refresh-review-metrics.mjs",

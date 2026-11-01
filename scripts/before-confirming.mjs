@@ -33,8 +33,19 @@ try {
 const ENV = { ...process.env };
 try { for (const l of fs.readFileSync(`${SCRAPER}/.env`, "utf8").split("\n")) { const m = l.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/); if (m && !(m[1] in process.env)) ENV[m[1]] = m[2].replace(/^(['"])(.*)\1$/, "$2"); } } catch { console.log("⚠️  no scraper .env: the live-reading gates will say couldn't check"); }
 const results = [];
+// 🔒 PARKED, EXCUSED BY NAME (Chris 11-1: "excuse the parked video gate by name so it stops keeping the night red"). Video is PARKED (hard rule: the
+// gate is not fixed, no video code changes). A gate listed here that exits 1 is reported as parked with its reason and does not fail the night. Only
+// exit 1 is excused: exit 2 (could not tell) and a gate that vanishes still show. Guarded by check-the-parked-excuse-names-its-reason.mjs.
+const PARKED = {
+  "check-every-video-page-ships": "video is parked: finished video landing pages sit uncommitted in the website repo until the video work resumes; nothing here is fixed or changed while parked",
+};
 const run = (label, cmd, args, cwd = SCRAPER) => {
   const t0 = Date.now(), r = spawnSync(cmd, args, { cwd, env: ENV, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60 * 1000 });
+  if (r.status === 1 && PARKED[label]) {
+    results.push({ label, ok: true, code: 1, secs: Math.round((Date.now() - t0) / 1000), why: "" });
+    process.stdout.write(`⏸  ${label} (parked, excused by name: ${PARKED[label]})\n`);
+    return true;
+  }
   const ok = r.status === 0, out = `${r.stdout || ""}${r.stderr || ""}`.trim().split("\n").filter((l) => l.trim());
   results.push({ label, ok, code: r.status, secs: Math.round((Date.now() - t0) / 1000), why: ok ? "" : out.slice(-3).join(" | ").slice(0, 300) });
   process.stdout.write(`${ok ? "✅" : r.status === 2 ? "⚠️ " : "❌"} ${label} (${Math.round((Date.now() - t0) / 1000)}s)\n`);

@@ -1,0 +1,44 @@
+[
+ [
+  "the excuse list is emptied",
+  "beforeconfirm",
+  "\"check-every-video-page-ships\": \"video is parked",
+  "\"check-no-such-gate-exists\": \"video is parked",
+  1
+ ],
+ [
+  "the excuse stops being limited to exit 1",
+  "beforeconfirm",
+  "r.status === 1 && PARKED[label]",
+  "r.status !== 0 && PARKED[label]",
+  1
+ ],
+ [
+  "the excuse stops printing its reason",
+  "beforeconfirm",
+  "excused by name: ${PARKED[label]}",
+  "excused by name",
+  1
+ ],
+ [
+  "the reason loses its visible words",
+  "beforeconfirm",
+  "video is parked: finished video landing pages sit uncommitted in the website repo until the video work resumes; nothing here is fixed or changed while parked",
+  "ok",
+  1
+ ],
+ [
+  "the daily line stops saying PARKED",
+  "dailyhealth",
+  "PARKED (video parked, excused by name 11-1; not fixed while parked)\" status",
+  "\" status",
+  1
+ ],
+ [
+  "the daily line becomes a hard failure again",
+  "dailyhealth",
+  "not fixed while parked)\" status",
+  "not fixed while parked)\" abort",
+  1
+ ]
+]

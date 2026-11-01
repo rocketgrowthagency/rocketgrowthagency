@@ -143,6 +143,7 @@ const NOT_PREFLIGHT = {
   'check-activity-rows-use-real-columns.mjs': 'static scan of every client_activity write against the table columns; runs in daily-health-check.sh — a timeline row cannot make a video unsafe',
   'check-photo-review-before-google.mjs': 'pins the photo review UI (examples per kind, slot states, step 39, Your action); runs in daily-health-check.sh — a photo card cannot make a video unsafe',
   'check-no-catch-on-a-supabase-query.mjs': 'static scan of portal/admin browser code for .catch on a Supabase query builder; runs in daily-health-check.sh — browser code cannot make a video unsafe',
+  'check-the-parked-excuse-names-its-reason.mjs': 'pins the by-name excuse of the parked video gate in before-confirming.mjs and daily-health-check.sh; runs in daily-health-check.sh',
   'check-every-video-page-ships.mjs': 'pins the rebuild commit-before-deploy + page verify, and finds landing pages left uncommitted; runs in daily-health-check.sh at 7:30 AM — reads the website repo, not a video render',
   'check-the-admin-step-accordion-behaves.mjs': 'runs the real accordion block from admin.js in jsdom; runs in daily-health-check.sh — admin layout cannot make a video unsafe',
   'check-outreach-emails-went-out.mjs': 'reads the last 10 days of the Outreach Log; runs in daily-health-check.sh at 7:30 AM after the 7 AM sends',

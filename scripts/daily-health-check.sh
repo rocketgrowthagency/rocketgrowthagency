@@ -680,7 +680,8 @@ run check-the-call-has-a-start-and-an-end.mjs "the kickoff call starts and ends 
 run check-activity-rows-use-real-columns.mjs "every client_activity write names real columns (10-09: the recap never reached the timeline)"
 run check-photo-review-before-google.mjs "a client photo waits for RGA's review; every slot kind has an example; admin step 38 + Your action carry the review"
 run check-no-catch-on-a-supabase-query.mjs "no Supabase query chains a .catch it does not have (10-09: it broke the photo upload after the photo saved)"
-run check-every-video-page-ships.mjs "every rebuilt video landing page is committed before deploy and actually serves (10-07/10-08: 9 served the homepage)"
+run check-the-parked-excuse-names-its-reason.mjs "the parked video gate is excused by name, with its reason visible, exit 1 only"
+run check-every-video-page-ships.mjs "every rebuilt video landing page is committed before deploy and actually serves (10-07/10-08: 9 served the homepage). PARKED (video parked, excused by name 11-1; not fixed while parked)" status
 run check-every-control-spins.mjs "every press that starts a request turns busy, in the portal and the admin (hard rule)"
 run check-a-client-can-change-or-remove-a-photo.mjs "Change and Remove on step 10 photos, the honest logo line, the done fold"
 run check-a-client-can-choose-later.mjs "Remind me later on step 10: owner only, read back, cleared by a ready or an upload"
