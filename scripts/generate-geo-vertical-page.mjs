@@ -204,7 +204,7 @@ The 6 FAQs MUST be ${city}+${vLow} specific and genuinely useful (e.g. how long 
         <p class="ix-sub">${esc(ai.heroSub)}</p>
         <div class="ix-cta-row">
           <a class="ix-btn" href="/free-growth-audit/">See where you rank in ${esc(city)} ${arrow}</a>
-          <span class="ix-trust">${check} No contracts &bull; Results you can measure</span>
+          <span class="ix-trust">${check} No minimum term &bull; Results you can measure</span>
         </div>
       </div>
       <aside class="ix-why" style="align-self:start">

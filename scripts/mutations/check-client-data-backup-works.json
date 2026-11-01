@@ -44,7 +44,7 @@
  [
   "a short copy passes",
   "backupdata",
-  "if (Number.isFinite(count) && n < count) throw",
+  "if (n < count) throw",
   "if (false) throw",
   1
  ],

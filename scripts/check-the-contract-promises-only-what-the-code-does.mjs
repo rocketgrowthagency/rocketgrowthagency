@@ -36,6 +36,10 @@ else {
   if (extra.length) fail(`the contract names directories the code doesn't work: ${extra.join(", ")}`);
 }
 if (!/read-only access to Client's Google Analytics 4 and Google Search Console/.test(C) || !/manage access to Client's Google Business Profile/.test(C)) fail("the Google access line doesn't say read-only for GA4 + Search Console and manage for the profile");
+// pricing_page_v2 (10-31): what the page says about refunds and founding clients is in the agreement, in words a client can hold us to
+if (!/Setup delivery promise\.<\/strong> If RGA has not delivered the setup items[^<]*within thirty \(30\) days[^<]*provided Client gave the access listed in Section 5 within five \(5\) business days/.test(C)) fail("the page promises a setup refund the agreement doesn't carry");
+if (!/No part of the price depends on Client leaving a review of RGA/.test(C)) fail("the founding terms can read as paying for a review");
+if (!/There is no lock-in\./.test(C)) fail("the agreement no longer says there's no lock-in");
 if (!/a ready-to-send personal request that Client sends from their own phone/.test(C)) fail("the review line no longer says the client sends the request");
 for (const [name, page] of [["pricing", PR], ["home", H]]) if (/60-day/.test(page)) fail(`the ${name} page mentions a 60-day guarantee with no terms`);
 const meta = (PR.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "";

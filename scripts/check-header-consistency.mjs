@@ -45,8 +45,8 @@ if (!files.length) { console.error('✗ no tracked .html files found — the que
 const cssPath = path.join(WEBSITE, 'style.css');
 if (!fs.existsSync(cssPath)) { console.error('✗ style.css not found'); process.exit(2); }
 const css = fs.readFileSync(cssPath, 'utf8');
-const promoShared = /^\.promo-bar\s*\{[^}]*background:\s*#dc2626/m.test(css)
-                 && /^\.promo-bar\s*\{[^}]*text-align:\s*center/m.test(css);
+// 🔒 pricing_page_v2 (10-31): the sale is gone, so the promo bar is too: no CSS for it, on no page. check-the-sale-and-the-name-stay-gone holds the copy.
+const promoShared = !/\.promo-bar/.test(css);
 
 // 1b. …and NO page may redefine it. Having it in style.css is not enough: an inline block later in
 // the cascade silently wins. 2026-08-28 — Chris: "why is header here blue. every page should just
@@ -74,7 +74,7 @@ for (const f of files) {
   //   mockup-*.html     standalone design mockups. They inline ALL their CSS because they are
   //                     opened straight off disk (file://), where /style.css cannot resolve.
   //                     They are not part of the served marketing site and share no chrome with it.
-  const isMockup = /(^|\/)mockup[^/]*\.html$/.test(f);
+  const isMockup = /(^|\/)mockup-[^/]*\.html$/.test(f) || f.startsWith('reports/');
   if (!f.startsWith('_site-snapshots/') && !isMockup) {
     for (const block of body.match(/<style[^>]*>[\s\S]*?<\/style>/g) || []) {
       if (!PROMO_RULE.test(block)) continue;
@@ -106,12 +106,12 @@ if (JSON_OUT) {
 console.log(`\n===== HEADER CONSISTENCY =====`);
 console.log(`  pages with the nav        ${navPages}`);
 console.log(`  pages with the promo bar  ${promoPages}`);
-console.log(`  promo-bar CSS in style.css ${promoShared ? '✅ yes' : '🔴 NO'}`);
+console.log(`  promo-bar CSS gone from style.css ${promoShared ? '✅ yes' : '🔴 NO'}`);
 
 let bad = false;
 if (!promoShared) {
   bad = true;
-  console.error(`\n✗ .promo-bar is NOT styled in the shared stylesheet.`);
+  console.error(`\n✗ .promo-bar is back in the shared stylesheet; the sale ended 10-31.`);
   console.error(`   If it only exists in an inline <style> block, every page generated without that`);
   console.error(`   block renders the offer banner as plain text instead of the red band — which is`);
   console.error(`   exactly what happened to 65 pages, the whole blog among them.`);
@@ -135,4 +135,4 @@ if (navDrift.length) {
   console.error(`   link multiplies across every page it produces.`);
 }
 if (bad) process.exit(1);
-console.log(`\n✅ header is consistent: shared promo-bar styling, and all ${NAV_PATHS.length} nav links on all ${navPages} pages.`);
+console.log(`\n✅ header is consistent: no promo bar, and all ${NAV_PATHS.length} nav links on all ${navPages} pages.`);

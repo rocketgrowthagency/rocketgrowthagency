@@ -168,11 +168,7 @@ async function scoreDraft(vertical, c) {
   } catch { return { score: 7, verdict: 'editor unavailable', issues: [] }; }
 }
 
-const HEADER = `  <a class="promo-bar" href="/pricing/#offer">
-    <strong>Only 3 client spots left.</strong>&nbsp;<strong>Everything 50% off</strong> &mdash; setup, monthly &amp; website builds. Spots limited. <span class="promo-cta">See pricing &rarr;</span>
-  </a>
-
-  <div class="topbar">
+const HEADER = `  <div class="topbar">
     <div class="topbar-inner">
       <div>Google Maps Local SEO For Local Businesses</div>
       <div class="topbar-right">
@@ -492,7 +488,7 @@ ${HEADER}
           <p class="ix-sub">${esc(c.heroSub)}</p>
           <div class="ix-cta-row">
             <a class="ix-btn" href="/free-growth-audit/">Get Your Free Growth Audit ${IXSVG.arrow}</a>
-            <span class="ix-trust">${IXSVG.check} No contracts &bull; Results you can measure</span>
+            <span class="ix-trust">${IXSVG.check} No minimum term &bull; Results you can measure</span>
           </div>
         </div>
         <div class="mp-wrap">

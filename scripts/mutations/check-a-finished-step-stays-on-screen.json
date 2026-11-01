@@ -38,7 +38,7 @@
  [
   "admin steps 29–38's waiting card loses its id (a 6th template the old count could not see, 10-30)",
   "admin",
-  "<div class=\"ob-step active${n ? \"\" : \" is-wait\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"you\">",
-  "<div class=\"ob-step active${n ? \"\" : \" is-wait\"}\" data-g=\"you\">"
+  "<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"you\">",
+  "<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-g=\"you\">"
  ]
 ]

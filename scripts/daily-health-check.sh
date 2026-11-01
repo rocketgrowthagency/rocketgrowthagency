@@ -571,6 +571,7 @@ run check-client-portal-tabs.mjs "the client portal tabs (approved 10-30: client
 run check-client-data-backup-works.mjs "the nightly client data backup copies every table and file whole, leaves no key on the drive, keeps old copies, fails loudly, and ran in the last 36 hours (rga_data_backup_plan_v1, Chris 10-31)"
 run check-internal-files-are-not-public.mjs "everything in the website repo is public by decision or blocked at the edge: server code, scripts and SQL were readable by anyone until 10-31"
 run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
+run check-the-sale-and-the-name-stay-gone.mjs "no sale, no struck price, no owner's name, no Q&A on any public page; one plan; the founding cap stops at 5"
 run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, never change anything"
 run check-the-contract-promises-only-what-the-code-does.mjs "the agreement promises only what the code does; the public pages drop the 60-day claim and the double price"
 run check-step10-photo-truth.mjs "step 10 says only what Google tells us (Chris 10-30): no green until a test proves it, the count leaves out a hidden logo and second copies, Keep undoes, the only visible photo stays, up to 5 a day, RGA notices really send"

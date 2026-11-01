@@ -1,10 +1,79 @@
 [
- ["50+ directories are back","contract","RGA's core list of local directories","50+ local directories",1],
- ["a directory is added to the list","contract","Thumbtack and HomeAdvisor, where they apply","Thumbtack, Manta and HomeAdvisor, where they apply",1],
- ["a directory drops from the list","contract","Nextdoor, Angi, Thumbtack","Nextdoor, Thumbtack",1],
- ["a 9×9 grid is back","contract","for Client's main keyword, updated monthly","9×9 for Client's main keyword, updated monthly",1],
- ["Q&A is back","contract","Review monitoring — weekly","Q&A management, Review monitoring — weekly",1],
- ["YouTube is back","contract","(GBP, website, GA4, GSC)","(GBP, website, GA4, GSC, YouTube)",1],
- ["automated outreach is back","contract","a ready-to-send personal request that Client sends from their own phone to recent customers","automated SMS requests to recent customers",1],
- ["60-day chip back on pricing","pricing","<div class=\"gchip\"><span class=\"d\">&#10003;</span>One price</div>","<div class=\"gchip\"><span class=\"d\">&#10003;</span>60-day guarantee</div>",1]
+ [
+  "50+ directories are back",
+  "contract",
+  "RGA's core list of local directories",
+  "50+ local directories",
+  1
+ ],
+ [
+  "a directory is added to the list",
+  "contract",
+  "Thumbtack and HomeAdvisor, where they apply",
+  "Thumbtack, Manta and HomeAdvisor, where they apply",
+  1
+ ],
+ [
+  "a directory drops from the list",
+  "contract",
+  "Nextdoor, Angi, Thumbtack",
+  "Nextdoor, Thumbtack",
+  1
+ ],
+ [
+  "a 9×9 grid is back",
+  "contract",
+  "for Client's main keyword, updated monthly",
+  "9×9 for Client's main keyword, updated monthly",
+  1
+ ],
+ [
+  "Q&A is back",
+  "contract",
+  "Review monitoring — weekly",
+  "Q&A management, Review monitoring — weekly",
+  1
+ ],
+ [
+  "YouTube is back",
+  "contract",
+  "(GBP, website, GA4, GSC)",
+  "(GBP, website, GA4, GSC, YouTube)",
+  1
+ ],
+ [
+  "automated outreach is back",
+  "contract",
+  "a ready-to-send personal request that Client sends from their own phone to recent customers",
+  "automated SMS requests to recent customers",
+  1
+ ],
+ [
+  "60-day chip back on pricing",
+  "pricing",
+  "<div class=\"gchip\"><span class=\"d\">&#10003;</span>One price</div>",
+  "<div class=\"gchip\"><span class=\"d\">&#10003;</span>60-day guarantee</div>",
+  1
+ ],
+ [
+  "the refund isn't in the agreement",
+  "contract",
+  "<strong>Setup delivery promise.</strong> If RGA has not delivered",
+  "<strong>Setup.</strong> If RGA has not delivered",
+  1
+ ],
+ [
+  "founding can read as paying for a review",
+  "contract",
+  "No part of the price depends on Client leaving a review of RGA, and a review of RGA is not a condition of this Agreement. ",
+  "",
+  1
+ ],
+ [
+  "lock-in returns",
+  "contract",
+  "<strong>There is no lock-in.</strong> Either",
+  "Either",
+  1
+ ]
 ]

@@ -11,6 +11,10 @@
 # Safe to run anytime — pure API + file work, NO screen capture (unlike video).
 
 set -u
+
+# 🔴 HOLD (Chris approved 10-31, blog_cleanup_v1): no new template posts or pages. 102 of the 118 posts follow one outline with nothing first-hand, the pattern Google's scaled-content policy
+# describes, and this job can publish and deploy by itself. It stays loaded and exits here until the new blog system replaces it (project_additions_map). To lift: delete this block, on Chris's say.
+if [ -z "${RGA_ALLOW_TEMPLATE_DRIP:-}" ]; then echo "HOLD: the blog drip is stopped (Chris 10-31). Nothing published."; exit 0; fi
 SCRAPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEBSITE_DIR="$(cd "$(dirname "$SCRAPER_DIR")" && pwd)/Rocket Growth Agency Website VS Code"
 DATE_STAMP=$(date +%Y-%m-%d)

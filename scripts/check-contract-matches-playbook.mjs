@@ -56,12 +56,12 @@ const gen = fs.readFileSync(GENERATOR, 'utf8');
 // silently validating the generator against a playbook that itself moved.
 const EXPECT = { setup: 1250, monthly: 625, threeMonthTotal: 2500, m2mMonth1: 1875 };
 const pbHas = (s) => pb.includes(s);
-if (!pbHas('$1,250') || !pbHas('$625/mo') || !pbHas('$2,500 total') || !pbHas('$1,875')) {
-  fail('the playbook Pricing table no longer states $1,250 setup / $625 a month / $2,500 3-month /\n' +
-       '         $1,875 month-to-month. If the OFFER changed, update this check AND the generator in the\n' +
+if (!pbHas('$1,250') || !pbHas('$625/mo') || !pbHas('$2,500 total') || pbHas('$1,875')) {
+  fail('the playbook Pricing table no longer states $1,250 setup / $625 a month / $2,500 over 3 months,\n' +
+       '         or it quotes the retired $1,875 plan. If the OFFER changed, update this check AND the generator in the\n' +
        '         same commit — that is the whole point of this gate.');
 }
-ok('playbook Pricing table reads $1,250 setup · $625/mo · $2,500 3-month · $1,875 M2M');
+ok('playbook Pricing table reads $1,250 setup · $625/mo · $2,500 over 3 months · no $1,875');
 
 // ── 2-3. Pull the generator's real numbers out of its plan registry ─────────────────────────────
 const planBlock = (name) => {
@@ -97,15 +97,6 @@ if (recurring(commit) !== EXPECT.monthly) {
   fail(`commit_3mo recurs at $${recurring(commit)}/mo after the term, expected $${EXPECT.monthly}.`);
 }
 ok(`commit_3mo: ${cAmt.join(' + ')} = $${cTotal} all-in, then $${recurring(commit)}/mo`);
-
-// ── 4. The advertised saving must be real ───────────────────────────────────────────────────────
-const m2mThree = EXPECT.m2mMonth1 + EXPECT.monthly * 2;
-const saving = m2mThree - cTotal;
-if (saving !== 625) {
-  fail(`the 3-month plan saves $${saving} against three months month-to-month ($${m2mThree}), but the\n` +
-       '         playbook advertises "Saves $625". Never advertise a discount the contract does not give.');
-}
-ok(`3-month plan saves $${saving} vs $${m2mThree} month-to-month — matches "Saves $625"`);
 
 // ── 5. 🔒 Not a lockout ─────────────────────────────────────────────────────────────────────────
 if (/early_termination:\s*"lockout"/.test(commit)) {

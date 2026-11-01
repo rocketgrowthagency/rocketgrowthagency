@@ -285,11 +285,7 @@ function renderPost(vertical, slug, c, siblings, opts = {}) {
   const HEAD_NAV = `  <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MCGMSCCR');</script>
   <!-- End Google Tag Manager -->`;
-  const HEADER = `  <a class="promo-bar" href="/pricing/#offer">
-    <strong>Only 3 client spots left.</strong>&nbsp;<strong>Everything 50% off</strong> &mdash; setup, monthly &amp; website builds. Spots limited. <span class="promo-cta">See pricing &rarr;</span>
-  </a>
-
-  <div class="topbar">
+  const HEADER = `  <div class="topbar">
     <div class="topbar-inner">
       <div>Google Maps Local SEO For Local Businesses</div>
       <div class="topbar-right">

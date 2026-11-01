@@ -106,7 +106,7 @@ if (!phase0) {
 // 3. THE REP-FACING PLAYBOOK — what is said out loud, before anything is written down.
 const pbSrc = fs.readFileSync(PLAYBOOK, "utf8");
 for (const [label, n] of [
-  ["playbook · month-one figure", OFFER.m2m_month_one],
+  ["playbook · setup, with month 1", OFFER.setup],   // pricing_page_v2 (10-31): the $1,875 plan is retired, so the rep never says it
   ["playbook · ongoing monthly", OFFER.monthly],
   ["playbook · 3-month total", OFFER.commit_3mo_total],
 ]) {
