@@ -126,7 +126,7 @@ const THROUGH = ["portal-step-choice.js", "portal-step-input.js", "portal-video-
 const EXCUSED = {
   "portal-step-later.js": "photos only (a detected step — never locks) and refuses a done step itself",
   "portal-plan-ok.js": "the client's 'Looks right' on the LOCKED plan — an answer to RGA, not a change to the step",
-  "portal-photo-team.js": "photos (detected — never locks)", "portal-photo-keep.js": "photos (detected — never locks)", "portal-photo-remove.js": "photos (detected — never locks)",
+  "portal-photo-team.js": "photos (detected — never locks)", "portal-photo-check.js": "photos (detected — never locks): writes only photo_ai.uploads, the advice-only look at an upload (client_step10_upload_help_v1), never the step's answer or status", "portal-photo-keep.js": "photos (detected — never locks)", "portal-photo-remove.js": "photos (detected — never locks)",
   "portal-form-test.js": "form tracking (detected — never locks): the inbox answer", "portal-step-recheck.js": "detected steps only — re-derives, never a client edit",
   "portal-deliverables.js": "approvals + the duplicate answer — not a step the lock covers", "portal-book-kickoff.js": "writes the booking stamps, not tasks; a held call refuses elsewhere",
   "portal-review-cadence.js": "writes data.review_cadence (a record setting), not a step",
