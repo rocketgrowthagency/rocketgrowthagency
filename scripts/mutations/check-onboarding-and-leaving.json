@@ -92,8 +92,8 @@
  [
   "the reminder block runs without the setting",
   "notifyopenfn",
-  "if (REM.enabled()) {\n        const nud",
-  "if (true) {\n        const nud"
+  "if (REM.enabled()) {\n        // the one reminder",
+  "if (true) {\n        // the one reminder"
  ],
  [
   "the reminder stamp comes after the send",

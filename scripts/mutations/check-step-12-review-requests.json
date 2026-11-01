@@ -189,10 +189,10 @@
   1
  ],
  [
-  "admin row 57 reads nothing live",
+  "the admin's review request row reads nothing live",
   "admin",
-  "  return id === \"m1.review.first_5\" ? r5AdminHtml()\n    : id === \"m1.review.response\" || id === \"m2.exec.review_responses\" ? repliesLiveAdminHtml()\n    : id === \"m1.call.close\"",
-  "  return id === \"m1.call.close\"",
+  "    : id === \"m1.review.first_5\" ? r5AdminHtml()\n",
+  "",
   1
  ],
  [
