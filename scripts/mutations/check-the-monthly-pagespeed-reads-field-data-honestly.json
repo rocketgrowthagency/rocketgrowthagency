@@ -1,0 +1,10 @@
+[
+ ["no field data reads as a zero", "sitefacts", "if (lcp == null && inp == null && cls == null) continue;", "if (false) continue;"],
+ ["a missing INP becomes 0", "sitefacts", "typeof m[name].percentile === \"number\" && Number.isFinite(m[name].percentile) ? m[name].percentile : null", "m[name] ? (m[name].percentile || 0) : 0"],
+ ["no data says good", "sitefacts", "real-user data: none (Google has too few visits to report on this; that says nothing about speed either way)", "real-user data: good"],
+ ["the site-wide fallback is dropped", "sitefacts", ", [\"originLoadingExperience\", \"the whole site\"]]", "]"],
+ ["the key is not sent", "exec", "${psiKey ? `&key=${psiKey}` : \"\"}`);\n        if (!r.ok) { psiResults.push", "`);\n        if (!r.ok) { psiResults.push"],
+ ["field data is not read", "exec", "field: fieldData(data), field_line: fieldDataLine(data)", "field: null, field_line: \"\""],
+ ["a missing score becomes 0", "exec", "const sc = (v) => (typeof v === \"number\" && Number.isFinite(v) ? Math.round(v * 100) : null);", "const sc = (v) => Math.round((v || 0) * 100);"],
+ ["a thrown error is shown with its text", "exec", "error: \"PSI call failed\"", "error: e.message"]
+]

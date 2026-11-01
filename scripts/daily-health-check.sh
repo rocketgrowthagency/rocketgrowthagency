@@ -663,6 +663,7 @@ run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts +
 run check-step-49-schema.mjs "step 49: Service + BreadcrumbList + visible FAQ with FAQPage per page, never AggregateRating, never a guessed URL"
 run check-a-service-area-business-is-not-flagged-for-a-hidden-address.mjs "a service-area business is never flagged for a hidden street address; name, phone and service-area text are checked instead"
 run check-the-schema-type-is-the-specific-one-or-local-business.mjs "the LocalBusiness schema step writes the most specific real schema.org type for the Google category, LocalBusiness for anything unknown"
+run check-the-monthly-pagespeed-reads-field-data-honestly.mjs "the monthly audit sends the PageSpeed key, reads real-user data incl. INP, no data says none (never 0 or good), a failed call is not a score"
 run check-hours-stay-true.mjs "hours / closed days stay true on Google; a change on Google shows Put back / Keep Google's in admin"
 run check-no-step-asks-for-a-retired-google-feature.mjs "no step asks for a Google feature Google switched off (GBP chat ended 2024-07-31)"
 run check-no-typed-step-numbers.mjs "no step number is typed where a person reads it (playbook text, admin, portal, function errors): name the step instead (approved admin_recommended_fixes_v1)"
