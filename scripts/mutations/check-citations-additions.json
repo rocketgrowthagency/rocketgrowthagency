@@ -1,0 +1,206 @@
+[
+ [
+  "an old-method row is trusted",
+  "citnapaudit",
+  "if (!String(row.notes || \"\").startsWith(`[${CIT_METHOD}]`) || !row.url) continue;",
+  "if (!row.url) continue;"
+ ],
+ [
+  "a row on the wrong host is trusted",
+  "citnapaudit",
+  "!d || !onDirectoryHost(row.url, d.dir) || known.has(d.key)",
+  "!d || known.has(d.key)"
+ ],
+ [
+  "the audit's row overrides the site's own link",
+  "citnapaudit",
+  "|| known.has(d.key)) continue;",
+  ") continue;"
+ ],
+ [
+  "a 403 reads as a broken listing",
+  "citnapaudit",
+  "const GONE = new Set([404, 410]);",
+  "const GONE = new Set([403, 404, 410, 429]);"
+ ],
+ [
+  "a page with neither name nor phone is wrong, not unreadable",
+  "citnapaudit",
+  "if (decided.length && decided.every((v) => v === false)) {",
+  "if (false) {"
+ ],
+ [
+  "the site-link check counts the audit's rows",
+  "citnapaudit",
+  "pass: siteLinked.length > 0,",
+  "pass: held.length > 0,"
+ ],
+ [
+  "an unreadable results table reads as none found",
+  "citnapaudit",
+  "} catch { auditRowsRead = false; }",
+  "} catch { /* none */ }"
+ ],
+ [
+  "the NAP check hides what it left out",
+  "citnapaudit",
+  "left_out: plan.left_out.map((x) => ({ source: x.source, why: x.why })),",
+  "left_out: [],"
+ ],
+ [
+  "the NAP check ignores the client's trade",
+  "citnapaudit",
+  "plan.use.filter((d) => d.discoverable).map((d) => ({ key: d.key,",
+  "require(\"./_citation-directories\").CITATION_DIRECTORIES.filter((d) => d.discoverable).map((d) => ({ key: d.key,"
+ ],
+ [
+  "a Canadian client is not told apart from a US one",
+  "citrade",
+  "    if (NOT_US.test(market)) return \"other\";\n",
+  "\n"
+ ],
+ [
+  "the trade filter is off",
+  "citrade",
+  "if (Array.isArray(d.trades) && d.trades.length && !d.trades.includes(trade.key)) {",
+  "if (false) {"
+ ],
+ [
+  "the country filter is off",
+  "citrade",
+  "if (Array.isArray(d.regions) && d.regions.length && !(country && d.regions.includes(country))) {",
+  "if (false) {"
+ ],
+ [
+  "an international phone is ignored",
+  "citrade",
+  "if (/^(\\+|00)/.test(s) && !/^(\\+|00)\\s*1\\b/.test(s)) return \"other\";",
+  "if (false) return \"other\";"
+ ],
+ [
+  "a lawyer written in the plural is not legal",
+  "citrade",
+  "[\"legal\", /\\b(law(yers?)?\\b|attorney",
+  "[\"legal\", /\\b(law\\b|attorney"
+ ],
+ [
+  "a trade directory is searched with no confirmed shape",
+  "citdirs",
+  "{ key: \"healthgrades\", source: \"Healthgrades\", host: \"healthgrades.com\", matchHosts: [\"healthgrades.com\"],\n    tier: \"trade\", weight: 2, discoverable: false,",
+  "{ key: \"healthgrades\", source: \"Healthgrades\", host: \"healthgrades.com\", matchHosts: [\"healthgrades.com\"],\n    tier: \"trade\", weight: 2, discoverable: true, listingPath: /^\\//, listingExample: \"https://x.test/\","
+ ],
+ [
+  "Angie is for every trade again",
+  "citdirs",
+  "trades: [\"home\"], regions: [\"US\"], // a home-services marketplace",
+  "regions: [\"US\"], // a home-services marketplace"
+ ],
+ [
+  "the listings check searches the whole list again",
+  "exec",
+  "const CIT_DIRECTORIES = plan.use.filter((d) => d.discoverable);",
+  "const CIT_DIRECTORIES = discoverableDirectories();"
+ ],
+ [
+  "the stale promise to build is back",
+  "exec",
+  "A search can miss a real listing, so check the ${missing.length} marked No listing found by hand before anything is built for them.",
+  "it will prioritize the ${missing.length} you are not on."
+ ],
+ [
+  "the build step lists every submit-only directory",
+  "exec",
+  "const submitOnly = directoriesForClient(client).use.filter((d) => !d.discoverable);",
+  "const submitOnly = CITATION_DIRECTORIES.filter((d) => !d.discoverable);"
+ ],
+ [
+  "the stale promise to build is back (the step text)",
+  "playbook",
+  "the search did not find one. A search can miss a real listing, so check it by hand before anything is built for it",
+  "step 52 will build it"
+ ],
+ [
+  "the recheck claim is not conditional",
+  "citrecheck",
+  "&${cond}&select=id",
+  "&select=id"
+ ],
+ [
+  "a recheck runs within 7 days of the last",
+  "citrecheck",
+  "if (now - last < MIN_GAP_DAYS * DAY) return",
+  "if (false) return"
+ ],
+ [
+  "a test client is rechecked",
+  "citrecheck",
+  "if (String(client.source || \"\").startsWith(\"test:\")) return { why: \"a test client\" };",
+  ""
+ ],
+ [
+  "the recheck ships on",
+  "citrecheck",
+  "=== \"1\";\n\n/** The most one run",
+  "!== \"0\";\n\n/** The most one run"
+ ],
+ [
+  "an unknown count of searches left still spends",
+  "citrecheck",
+  "if (!Number.isFinite(left)) return",
+  "if (false) return"
+ ],
+ [
+  "the reserve is spent",
+  "citrecheck",
+  "if (!(left >= need + RESERVE)) return",
+  "if (!(left >= need)) return"
+ ],
+ [
+  "a failed start is retried",
+  "citrecheck",
+  "try { await d.start(clientId); }",
+  "try { await d.start(clientId).catch(() => d.start(clientId)); }"
+ ],
+ [
+  "the sweep starts five a night",
+  "citrecheck",
+  "const NIGHT_CAP = 1;",
+  "const NIGHT_CAP = 5;"
+ ],
+ [
+  "a recheck runs before the first check",
+  "citrecheck",
+  "if (last == null || !t.outcome_data) return { why: \"the first check hasn't run\" };",
+  "if (false) return { why: \"the first check hasn't run\" };"
+ ],
+ [
+  "a change not yet on Google triggers it",
+  "citrecheck",
+  "x.status !== \"on_google\"",
+  "false"
+ ],
+ [
+  "the recheck isn't in the job manifest",
+  "jobmanifest",
+  "{ job: \"citation-recheck\", label",
+  "{ job: \"citation-recheck-x\", label"
+ ],
+ [
+  "the recheck doesn't check in",
+  "citrecheckfn",
+  "withCheckin(\"citation-recheck\", exports.handler)",
+  "withCheckin(\"citation-recheck-x\", exports.handler)"
+ ],
+ [
+  "the admin card says a page it couldn't read is fine",
+  "admin",
+  "Could not read this page. Nothing is claimed about it.",
+  "Matches Google."
+ ],
+ [
+  "the admin card says a search doesn't exist",
+  "admin",
+  "It is not proof the listing is missing: a search can miss a real one.",
+  "It is not proof the listing is missing; finding listings needs a directory search we don't have yet."
+ ]
+]

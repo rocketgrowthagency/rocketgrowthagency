@@ -340,4 +340,9 @@ export const FILES = {
   // reviews_additions_v1 (11-01): replies read back live, the asked-to-reviewed funnel
   replylive: "netlify/functions/_reply-live.js",
   reviewfunnel: "netlify/functions/_review-funnel.js",
+  // citations_additions_v1 (11-01): the NAP check reads the audit's rows, the list fits the client, the recheck
+  citnapaudit: "netlify/functions/citation-audit.js",
+  citrade: "netlify/functions/_citation-trade.js",
+  citrecheck: "netlify/functions/_citation-recheck.js",
+  citrecheckfn: "netlify/functions/citation-recheck.js",
 };

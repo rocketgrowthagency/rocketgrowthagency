@@ -448,8 +448,9 @@ performance problem.`,
     },
     instructions: `The runner searches Google for this business on each of the tracked directories and records what it finds in client_citations. It reports three answers per directory:
 1. Listed → the listing URL it found
-2. No listing found → step 52 will build it
+2. No listing found → the search did not find one. A search can miss a real listing, so check it by hand before anything is built for it
 3. Could not check → the search itself failed; nothing is claimed either way, press Run again
+It runs again a quarter later, or after a name, address or phone change that is on Google, once that recheck is switched on (each directory is a paid search). Directories that do not fit the client's trade or country are not searched.
 Your part: open the listings it found and confirm the name, address and phone match Google. Fix any that do not, and fill onboarding section 11.0 with the summary.
 DONE = every listing the audit found has been opened and its NAP confirmed against the GBP.`,
   },
@@ -457,10 +458,10 @@ DONE = every listing the audit found has been opened and its NAP confirmed again
     id: "m1.audit.citations_nap", title: "Audit citation NAP consistency",
     type: "auto", dependsOn: ["m1.access.gbp", "m1.audit.citations", "m1.gbp.business_facts"],
     actionLabel: "⚡ Run the check",
-    instructions: `Checks the citation URLs WE ALREADY HOLD for NAP accuracy against the client record.
+    instructions: `Checks the listings we hold for NAP accuracy against the Google profile: the ones the client's own site links to, and the ones the listings check found.
 
-🔴 "Not found" does NOT mean "no citation exists" — we can only verify URLs already recorded, so
-this measures the accuracy of known citations, never the completeness of all citations.
+🔴 No listing held does NOT mean no listing exists, and a page we could not read is "could not read", never wrong and never fine. This measures the accuracy of the listings we hold, never the completeness of all of them.
+A directory that does not fit the client's trade or country is left out, not counted as a gap.
 Duplicate-listing detection is not buildable without a paid aggregator and is out of scope.`,
     async run({ client }) { return await callFn("citation-audit", client.id); },
   },
@@ -1197,8 +1198,9 @@ Done means 5 asks sent, by week 3. Reviews are a result, counted as they come, n
         return { summary: `OAuth not connected. Reply manually in GBP dashboard. Once OAuth is done, use \`node gbp.mjs ${client.id} reviews\` to list + draft replies.` };
       }
     },
-    instructions: `Reply to every existing review. Positive: thank by name + mention service. Negative: empathize + offer offline resolution.
-SLA going forward: 24-hr response. ⚡ drafts a reply to each unanswered review.`,
+    instructions: `Reply to every existing review. Positive: refer to what the customer actually wrote, use their name sparingly, no keywords, and never repeat the same sentence across replies. Negative: empathize + offer offline resolution.
+SLA going forward: 24-hr response. ⚡ drafts a reply to each unanswered review.
+A reply counts as replied only once it is read back from Google and seen live. Until then the portal does not say "Replied".`,
   },
   // === Close the month (order approved 2026-10-08, onboarding_order_audit_v1) ===
 

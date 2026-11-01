@@ -481,6 +481,7 @@ run check-every-setting-can-be-changed.mjs "a step that decided something says s
 run check-signed-in-user-never-sees-login-form.mjs "a working magic link never ends on a login form"
 run check-a-thread-email-reads-like-the-email.mjs "an email copy in a step's thread reads like the email (no ## or [link](url) on screen), and a test send says it's a test"
 run check-step-12-review-requests.mjs "step 13 is option B (approved 10-23): one customer at a time in the plan card, the request shown as its text, one reminder from day 3, \"Is it James?\" only as the client's question, Done = 5 asked + Google's own count or nothing; never \"sent\""
+run check-citations-additions.mjs "Citations additions (approved 11-01): the NAP check reads the listings the audit found, the list fits the client, the recheck ships off and never searches"
 run check-reviews-additions.mjs "Reviews additions (approved 11-01): wording, a reply is Replied only once Google shows it, the asked-to-reviewed funnel reads unknown as unknown"
 run check-reviews-feed.mjs "live Google reviews on Ongoing work (approved 10-23): the morning read keeps the reviews, \"Is this Maria?\" only when one asked customer fits and only the client answers, no reading is never 0, admin claims no sends"
 run check-plan-cards-match-the-mockup.mjs "the done plan cards of steps 1–5 are the approved mockup (no toggle or hairline above the card, \"Call held · Fri, Oct 9\" + time, quiet links)"

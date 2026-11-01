@@ -176,6 +176,8 @@ There's no review-count target. Count asks sent and reviews earned, and report b
   {
     id: "m2.exec.review_responses", title: "Respond to all new reviews",
     type: "auto", dependsOn: [],
+    instructions: `RGA drafts a reply to each new review and the client approves it first. Follow the same reply recipe as the first replies: refer to what the customer actually wrote, use the name sparingly, no keywords, no repeated sentences.
+A reply is posted only after the client's consent is on record. It counts as replied only once it is read back from Google and seen live; until then it shows as waiting, never as replied.`,
     async run({ getGbp, clientId }) {
       try {
         const gbp = await getGbp();

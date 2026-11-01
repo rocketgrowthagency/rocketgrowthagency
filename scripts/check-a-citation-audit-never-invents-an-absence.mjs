@@ -82,7 +82,9 @@ async function run(opts) {
   // not carry a hand-written list of CIT_* constants that goes stale the day one is renamed.
   // → feedback_a_lift_list_is_a_promise_somebody_will_remember
   const api = liftAdmin(["auditCitations"], { file: "netlify/functions/flow-execute.js", extraGlobals: extra });
-  return api.call("auditCitations", [{ business_name: opts.businessName || "Rocket Growth Agency" }, "client-1"]);
+  return api.call("auditCitations", [{ business_name: opts.businessName || "Rocket Growth Agency",
+    // a US home-services client, so the whole shared list applies. The list that fits other trades and countries is check-citations-additions' job (citations_additions_v1).
+    business_type: "Plumber", primary_market: "Austin, TX" }, "client-1"]);
 }
 
 const count = (rows, s) => rows.filter((r) => r.status === s).length;
@@ -508,7 +510,7 @@ const count = (rows, s) => rows.filter((r) => r.status === s).length;
     { source: "BBB",   status: "missing", url: null, notes: "[v2-listing-shape] 2026-10-07 — no listing page found by site: search" },
   ];
   const api2 = liftAdmin(["citationRows"], { file: "netlify/functions/flow-execute.js",
-    extraGlobals: { supa: async () => rows, console } });
+    extraGlobals: { supa: async () => rows, console, CIT_METHOD: DIRMOD.CIT_METHOD } });
   const out = await api2.call("citationRows", ["client-1"]);
   const sources = (out || []).map((r) => r.source);
   if (sources.includes("Yelp")) F("PART 2b — step 52's reader accepts a row written by the old host-matching method, so it will skip a directory the client is missing from");
