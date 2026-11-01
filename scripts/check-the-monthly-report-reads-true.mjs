@@ -275,7 +275,7 @@ try {
   // ── the four sentences the report could not back up (report_and_measurement_v1) ──
   // Not hidden behind a condition: the producers are deleted, so the phrases are banned in the SOURCE (comments included) and
   // absent from every rendered state: a rich month, a first month, a down month, the few-reviews gap, and no reviews at all.
-  const BANNED = [/we send the requests/i, /strongest single lever/i, /Google showed your business/i, /Widen the map/i];
+  const BANNED = [/we send the requests/i, /strongest single lever/i, /Google showed your business/i, /Widen the map/i, /into the top ten/i, /Calls and leads lift/i, /Success looks like rising/i, /Into the Map Pack/i];  // the last four: the plan timeline promised positions and dates (contract Section 6)
   const sees = (txt) => BANNED.filter((re) => re.test(txt)).map(String);
   check(sees(reportJs).length === 0, "report.js (code and comments) holds none of the four banned phrases", sees(reportJs));
   const cluster = (inner, outer) => Array.from({ length: 25 }, (_, i) => {
