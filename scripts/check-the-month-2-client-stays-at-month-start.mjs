@@ -85,7 +85,8 @@ else {
   try { pb = JSON.parse(fs.readFileSync(path.join(SITE, "data/playbooks/playbooks.json"), "utf8")); } catch { cantTell("cannot read playbooks.json"); }
   const [ob] = await get(`client_onboarding_records?client_id=eq.${id}&select=data`);
   const tasks = ob?.data?.tasks || {};
-  const open = (pb.month1 || []).filter((s) => tasks[s.id]?.status !== "done").map((s) => s.id);
+  // an optional client step (social profiles, videos) can be unanswered at the end of Month 1: it never holds anything up
+  const open = (pb.month1 || []).filter((s) => !s.clientOptional && tasks[s.id]?.status !== "done").map((s) => s.id);
   if (!ob) fails.push("it has no onboarding record (Month 1 must read finished)");
   else if (open.length) fails.push(`${open.length} Month-1 step(s) not done: ${open.slice(0, 5).join(", ")} — re-sync with create-new-test-client.mjs --as=month2 --sync`);
   if (tasks["m1.audit.gbp_duplicate"]?.outcome_data?.verdict !== "clean") fails.push("the one-listing check isn't clean on it (the monthly photos would wait on it)");

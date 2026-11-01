@@ -50,6 +50,8 @@ if (/\? "Open full [^"]*" : "Open full [^"]*"/.test(src)) fail.push("the expand 
 // ═══ PART 2 — EVERY REMAINING ↗ IS ON SOMETHING THAT LEAVES ══════════════════════════════════
 // 🔑 Registered by what the control IS. An unregistered ↗ fails rather than being assumed correct.
 const LEAVES = [
+  { needle: 'target="_blank" rel="noopener noreferrer">${escapeHtml(b)} ↗</a>', why: "the admin social profiles card (client_social_profiles_v1): opens the profile on its network, target=_blank" },
+  { needle: 'target="_blank" rel="noopener noreferrer">${escapeHtml(yt.handle || yt.url)} ↗</a>', why: "the video step's channel line (client_social_profiles_v1): opens their channel, target=_blank" },
   { needle: 'target="_blank" rel="noopener noreferrer">Try the link ↗</a>', why: "admin step 36 done card (approved step36_done_card_v2): opens the booking link Google has, target=_blank" },
   { needle: 'href="https://business.google.com/" target="_blank" rel="noopener noreferrer">Do it in Google Business Profile instead ↗</a>', why: "admin steps 28 card B + 32 (approved 10-29): the by-hand way out to Google Business Profile, target=_blank" },
   { needle: 'href="https://business.google.com/" target="_blank" rel="noopener">Open Business Profile ↗</a>', why: "To do (todo_redesign_v1, 10-26): Google Business Profile, where RGA makes a by-hand change; target=_blank" },

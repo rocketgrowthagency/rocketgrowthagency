@@ -243,6 +243,8 @@ if (x.s !== 200 || T(M).site_change || (T(M).site_change_log || []).length !== 1
   if (o.status === 200 || calls.length) fail("a draft that fails its checks gets through because someone read it");
   o = await AB.ownPublish({ evidence_id: 5, read: true }, gateU, g({ decisions: [{ kind: "topic", batch_key: "topic-5", decision: "proposed", proposal: { ...proposal, draft: `${draft}<script>x()</script>` } }] }), {}, { client: own, pipeline });
   if (o.status === 200 || calls.length) fail("a draft carrying code gets through");
+  o = await AB.ownPublish({ evidence_id: 5, read: true }, gateU, g({ own_post: { site_change: { v: "1" }, internal_review: { decision: "approved", change_v: "1" } } }), {}, { client: own, pipeline });
+  if (o.status === 200 || calls.length) fail("a new own post overwrites one already on its way");
   o = await AB.ownPublish({ evidence_id: 5, read: true }, gateU, g(), {}, { client: own, pipeline });
   if (o.status !== 200 || calls.join(",") !== "save,internal:approved,own_approve") fail(`the press doesn't walk the pipeline's own steps (${o.status} ${o.body.error || ""}: ${calls.join(",")})`);
   // through the real handler: only a person, only RGA's record, only what was built

@@ -39,6 +39,7 @@ const UI_ONLY = {
   "data-dk-refresh": "re-reads the admin Data card and redraws it; changes nothing",
   "data-bl-refresh": "re-reads the admin Blog card and redraws it; changes nothing",
   "data-bl-all": "opens the full list on the admin Blog card; changes nothing",
+  "data-bl-read": "the 'I read every line' tick on the admin Blog card: it only unlocks the Publish button beside it, which is the visible result; changes nothing",
   "data-ob-draft-copy": "copies a draft to the clipboard for a person to send; nothing is sent",
   "data-photo-keep-note": "removes the note on the spot; the choice stays in this browser, and nothing is sent",
   "data-cx-keep": "closes the Cancel fold on the spot; nothing is recorded because they chose not to cancel",

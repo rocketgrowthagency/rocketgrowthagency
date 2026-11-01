@@ -222,5 +222,12 @@
   "...(def.post ? { material: v.material || [], ...(v.makes_blog ? { makes_blog: true } : {}), ...(v.post_html ? { post_html: v.post_html } : {}) } : {})",
   "",
   1
+ ],
+ [
+  "a new own post overwrites one on its way",
+  "blogadm",
+  "if ([\"drafted\", \"changes\", \"sent\", \"approved\"].includes(SC.changeState(g.own_post || {}))) return { status: 409,",
+  "if (false) return { status: 409,",
+  1
  ]
 ]
