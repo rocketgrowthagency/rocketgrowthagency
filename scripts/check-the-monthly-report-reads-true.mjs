@@ -22,6 +22,7 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 
+const requireCjs = createRequire(import.meta.url);
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const fails = [];
 const check = (ok, what, got) => {
@@ -46,6 +47,7 @@ const FAKE_SUPABASE = `
 export function createClient() {
   const F = window.__FIX;
   const run = (st) => {
+    if ((F.__fail || []).includes(st.table)) return { data: null, error: { message: 'column does not exist' } };
     let rows = (F[st.table] || []).slice();
     for (const f of st.filters) rows = rows.filter(f);
     if (st.order) rows.sort((a, b) => {
@@ -89,7 +91,7 @@ const browser = await chromium.launch({ headless: true });
 const CLIENT = { id: "c1", business_name: "Test Plumbing", website_url: "https://x.test", primary_service: "Plumber", primary_market: "Culver City, CA", account_manager: null, call_tracking_attributed: null };
 
 /** Render the real page for one month and hand back what a reader sees. */
-async function render({ months, grid = [], client = {}, open }) {
+async function render({ months, grid = [], client = {}, open, whyNow }) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const fix = {
@@ -97,6 +99,9 @@ async function render({ months, grid = [], client = {}, open }) {
     client_portal_access: [{ id: "a1", client_id: "c1", portal_email: "t@example.com", invite_status: "active" }],
     client_monthly_records: months.map((m) => ({ client_id: "c1", data: {}, ...m })),
     client_keyword_rankings: grid.map((g) => ({ client_id: "c1", ...g })),
+    // the kickoff "why now" answer: undefined = the column is not there yet (the read errors), null/true/false = a row that has it
+    clients: whyNow === undefined || whyNow === "missing" ? [] : [{ id: "c1", why_now_slow: whyNow }],
+    __fail: whyNow === "fail" ? ["clients"] : [],
   };
   await page.addInitScript((f) => { window.__FIX = f; }, fix);
   await page.route("**/*", (route) => {
@@ -140,6 +145,8 @@ async function render({ months, grid = [], client = {}, open }) {
       verdictTxt: t(".verdict-txt")[0] ?? null,
       verdictColor: d.querySelector(".verdict-fig") ? getComputedStyle(d.querySelector(".verdict-fig")).color : null,
       upColor: (() => { const c = document.createElement("div"); c.style.color = "var(--up)"; d.appendChild(c); const v = getComputedStyle(c).color; c.remove(); return v; })(),
+      h2: t("h2"),
+      steps: (() => { const sec = [...d.querySelectorAll("section")].find((x) => x.querySelector("h2") && x.querySelector("h2").textContent.trim() === "Your next steps"); return sec ? sec.querySelectorAll("li").length : null; })(),
       cells: t(".grid-map .cell"),
       metrics: t(".metric"),
     };
@@ -316,6 +323,73 @@ try {
   r = await render({ open: "2026-09", months: [{ reporting_month: SEP, gbp_calls: 18, gsc_impressions: 100 }] });
   check(lineOf(r) === null && /Call-button taps: 18\. Taps aren't calls\./.test(r.all), "no tracking and no forms: no month line, and the taps are named as taps", lineOf(r));
   check(/How to read this/.test(r.all) && /not a phone call/.test(r.all), "the reading notes are on the page", null);
+
+  // ── the rest of the report, in the approved order (report_and_measurement_v1, sections 3 to 9) ──
+  const ORDER = ["Your month in one line", "Your funnel, end to end", "Jobs and money", "Leads for 12 months", "Where you show up across", "Reviews", "What we did", "What else happened", "Your next steps", "How to read this"];
+  const rich = await render({ open: "2026-09", client: { call_tracking_attributed: true },
+    months: [{ reporting_month: SEP, form_leads: 4, total_calls: 12, gsc_impressions: 900, gsc_clicks: 12, review_count: 3, new_reviews: 1, average_rating: 4.8, psi_mobile_perf: 41, psi_mobile_seo: 77, backlinks_live_count: 9, gsc_avg_position: 7.2, ranking_position: 6, grid_avg_rank: 5, keywords_tracked_count: 4, keywords_top3_count: 2, keywords_top10_count: 3, citations_live_count: 31 }],
+    grid: cluster(3, null).map((g) => ({ ...g, measured_at: "2026-09-15T12:00:00Z" })) });
+  const at = ORDER.map((h) => rich.h2.findIndex((x) => x.startsWith(h)));
+  check(at.every((i) => i >= 0) && at.every((v, i) => i === 0 || v > at[i - 1]), "the sections come in the approved order: 1 line, 2 leads, 3 jobs and money, 4 twelve months, 5 where you show up, 6 reviews, 7 what we did, 8 what else happened, 9 next steps, 10 how to read", rich.h2);
+  const ADMIN_ONLY = [/Speed score/i, /Technical SEO/i, /Backlinks/i, /Average position/i, /Average grid rank/i, /Avg map rank/i, /\d+ \/ \d+ tracked/];
+  check(ADMIN_ONLY.every((re) => !re.test(rich.all) && !re.test(rich.html)), "speed score, technical score, backlinks, average position and the per-channel bars are not in the client's report, though the record holds them", ADMIN_ONLY.filter((re) => re.test(rich.all)).map(String));
+  check(!/psi_mobile|backlinks_live|gsc_avg_position|ranking_position|grid_avg_rank|keywords_top\d+_count/.test(reportJs.replace(/\/\/.*$/gm, "")), "report.js doesn't even ask for the admin-only columns", null);
+  check(/9 of 25/.test(rich.all) && /16 of 25/.test(rich.all) && /Points where you are in the top 3/.test(rich.all), "the map's counts come from the points drawn (9 top-3, 9 found, 16 not found of 25)", (/Points where.{0,200}/.exec(rich.all) || [])[0]);
+  check(/Jobs closed this month\s*Not given/i.test(rich.all.replace(/\n+/g, " ")) && /Revenue this month\s*Not given/i.test(rich.all.replace(/\n+/g, " ")), "jobs and money: a figure the client never gave says Not given, never 0", null);
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 3, total_calls: null, closed_jobs: 6, monthly_revenue: 12000, lead_to_customer_rate: 50, avg_revenue_per_job: 1000 }] });
+  check(/Jobs closed this month\s*6/i.test(r.all.replace(/\n+/g, " ")) && /\$12,000/.test(r.all), "jobs and money prints what the client gave", null);
+
+  // month 1: no history at all
+  const m1 = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 2, total_calls: null, gbp_calls: 5, gsc_impressions: 60 }] });
+  check(/A line needs two months of lead counts, and this record has 1\. No year-ago number yet, so season is not ruled out\./.test(m1.all), "month 1: the 12-month section says one month isn't a line and season isn't ruled out", (/Leads for 12 months.{0,260}/s.exec(m1.all) || [])[0]);
+  check(!/<polyline/.test(m1.html) && !/The same months a year earlier/.test(m1.all), "month 1: no line, no year-ago line drawn", null);
+  check(/No map scan is on record for September 2026, so there is no map to show/.test(m1.all) && m1.cells.length === 0, "month 1: no scan = a plain sentence, no map, no stored summary standing in for it", null);
+  check(/Season: there is no year-ago number yet/.test(m1.all) && /not logged for your account yet/.test(m1.all) && !/nothing happened|no changes/i.test(m1.all), "month 1: what else happened says season isn't ruled out and that the log doesn't exist yet, never 'nothing happened'", (/What else happened.{0,400}/s.exec(m1.all) || [])[0]);
+  check(m1.steps >= 1 && m1.steps <= 3, "month 1: at least one line and at most three steps print", m1.steps);
+
+  // a year of history, a gap, and last year's line
+  const hist = [];
+  for (let i = 0; i < 14; i++) { const d = new Date(Date.UTC(2026, 8 - i, 1)); hist.push({ reporting_month: d.toISOString().slice(0, 10), form_leads: i === 4 ? null : 3 + i, total_calls: 1 }); }
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: hist });
+  check(/<polyline/.test(r.html) && /The same months a year earlier/.test(r.html) && /The dashed line is the same months a year earlier/.test(r.all), "with a year-ago month on record, last year's line is drawn and named", null);
+  const nowLine = (/<polyline points="([^"]*)" fill="none" stroke="var\(--brand\)"/.exec(r.html) || [])[1];
+  check(!/Season: there is no year-ago/.test(r.all), "and the season line stops saying there is no year-ago number", null);
+  check(r.html.split('r="5" fill="var(--brand)"').length - 1 === 11, "a month with no form count is a gap in the line (11 of 12 points drawn), never a 0", r.html.split('r="5" fill="var(--brand)"').length - 1);
+  void nowLine;
+  // forms alone vs forms plus calls are not one line
+  r = await render({ open: "2026-09", client: { call_tracking_attributed: true }, months: [{ reporting_month: SEP, form_leads: 4, total_calls: 3 }, { reporting_month: AUG, form_leads: 5, total_calls: null }, { reporting_month: "2026-07-01", form_leads: 2, total_calls: null }] });
+  check(/this record has 1\./.test(r.all), "months missing the calls piece aren't mixed into a forms-plus-calls line", (/Leads for 12 months.{0,200}/s.exec(r.all) || [])[0]);
+
+  // luck part 2: the why-now answer. Not set up and a failed read both mean "print nothing", never false and never an error page.
+  const SLOW = /You came to us after an unusually slow period, so some of any rise was likely to come back anyway\./;
+  for (const [label, w, expected] of [["true", true, true], ["false", false, false], ["not asked (null)", null, false], ["column not there (no row)", "missing", false], ["the read errors", "fail", false]]) {
+    r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4 }], whyNow: w });
+    check(SLOW.test(r.all) === expected && r.shown, `why now ${label}: the slump sentence is ${expected ? "printed" : "not printed"} and the report still opens`, null);
+  }
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4 }], whyNow: true });
+  check(!/caus|because of us|thanks to/i.test((/What else happened.{0,500}/s.exec(r.all) || [])[0] || ""), "the what-else section never says caused", null);
+  check(!/why_now/.test((/async function loadPortalAccess[\s\S]*?\n\}\n/.exec(reportJs) || [])[0] || ""), "the why-now column is asked on its own, never inside the query that opens the report", null);
+
+  // what else happened: a failed pull is named, a good record names nothing
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4, data: { metrics_errors: { ga4: "403", gbp_missing: "CALL_CLICKS" } } }] });
+  check(/Google Analytics did not answer on our last pull/.test(r.all) && /Some Google profile numbers were not returned/.test(r.all), "a data fault on record is named in plain words", null);
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4, data: {} }] });
+  check(!/did not answer on our last pull|were not returned/.test(r.all), "no data fault on record: none is named", null);
+
+  // next steps: at most three, each from a real condition
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, gsc_impressions: 900, gsc_clicks: 5, review_count: 0 }, { reporting_month: AUG, gsc_impressions: 800, gsc_clicks: 5 }], grid: cluster(3, null).map((g) => ({ ...g, measured_at: "2026-09-15T12:00:00Z" })) });
+  check(r.steps === 3, "four conditions true (earn the click, first reviews, nearby areas, send your numbers): exactly 3 steps print", r.steps);
+
+  // Google numbers older than 30 days are cleared on purpose and read "kept 30 days", never 0
+  r = await render({ open: "2025-01", months: [{ reporting_month: "2025-01-01", form_leads: 2, gbp_impressions: null, gbp_calls: null, review_count: null, new_reviews: null }] });
+  check(/We keep Google's numbers for 30 days/.test(r.all) && !/Call-button taps[^\n]*\n?\s*0\b/.test(r.all), "a month older than 30 days: Google numbers say we keep them 30 days, not 0", null);
+
+
+  // the visibility trend of an earlier month stops at that month
+  r = await render({ open: "2026-08", months: [{ reporting_month: SEP, gsc_impressions: 300 }, { reporting_month: AUG, gsc_impressions: 200 }, { reporting_month: "2026-07-01", gsc_impressions: 100 }] });
+  check(/July · 100/.test(r.html) && !/September · 300/.test(r.html) && /August · 200/.test(r.html), "the August report's trend ends at August, with no later month drawn", (/<text[^>]*>[A-Z][a-z]+ · \d+/.exec(r.html) || [])[0]);
+  // banned and admin words, source-wide
+  check(!/"Speed score|"Technical SEO score|"Backlinks tracked|"Average position|"Average grid rank|"Keywords tracked"/.test(reportJs), "report.js holds no label for an admin-only number", null);
 } catch (e) {
   console.log(`⚠️  INDETERMINATE — ${e.message}`);
   await browser.close();
@@ -459,6 +533,61 @@ try {
     check(leads({ form_leads: 0, total_calls: 0 }, {}) === 0, "a recorded 0 and 0 is 0", null);
     check(leads(null, {}) === null && leads({}, {}) === null, "no row, no number", null);
   }
+
+  // ── the report email: the same leads, and no admin-only number (report_and_measurement_v1) ──
+  const mail = requireCjs(`${SITE}/netlify/functions/send-monthly-report.js`);
+  const built = await mail.buildReport({ client: { business_name: "Test Plumbing", call_tracking_attributed: true, primary_contact_name: "Pat Lee" },
+    current: { reporting_month: "2026-09-01", form_leads: 3, total_calls: 2, total_leads: 23, gbp_calls: 20, ranking_position: 4.2, new_reviews: 1 },
+    prior: { reporting_month: "2026-08-01", form_leads: 1, total_calls: null, total_leads: 9, gbp_calls: 7 } });
+  const mailText = (built && `${built.html}\n${built.text}`.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")) || "";
+  check(!!built && /Leads \(form submissions plus tracked calls\)/.test(mailText) && !/Total leads/.test(mailText) && !/\b23\b/.test(mailText), "the email counts leads as forms plus tracked calls (5), and never reads total_leads (23)", mailText.slice(0, 400));
+  check(/taps aren't calls/i.test(mailText) && !/Calls from your Google profile/.test(mailText), "the email names Google's call-button taps as taps", null);
+  check(!/Average map rank/.test(mailText), "the email carries no average position: that number is RGA's", null);
+  const lead = (built.html.match(/Leads \(form submissions plus tracked calls\)[\s\S]{0,400}/) || [""])[0];
+  check(!/↑|↓|▲|▼/.test(lead), "forms plus calls this month against forms alone last month isn't drawn as a change", lead.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200));
+
+  // ── the alert list: RGA only, once per bad stretch, an unknown is never a bad ──
+  const Alerts = requireCjs(`${SITE}/netlify/functions/_client-alerts.js`);
+  const mem = []; const sent = [];
+  const fakeSupa = async (path) => {
+    const a = /payload->answer->>alert=eq\.([a-z_]+)/.exec(path);
+    const rows = mem.filter((m) => m.alert === a?.[1]).slice(-1).map((m) => ({ payload: { answer: { alert: m.alert, state: m.state } } }));
+    return rows;
+  };
+  const dd = (delivered = true) => ({ supa: fakeSupa, notify: async (kind, cid, msg) => { sent.push({ kind, cid, msg }); return { delivered }; },
+    record: async (o) => { mem.push({ alert: o.answer.alert, state: o.answer.state, kind: o.kind }); return { activity: true }; }, retire: async () => {} });
+  const go = (d, bad) => Alerts.settle(d, { clientId: "c1", alert: "site_tag", bad, message: "m" });
+  check(await go(dd(), true) === "raised" && sent.length === 1, "alert: the first bad reading raises one message", sent.length);
+  check(await go(dd(), true) === "already" && await go(dd(), true) === "already" && sent.length === 1, "alert: a problem that stays bad is not told again, run after run", sent.length);
+  check(await go(dd(), null) === "unknown" && sent.length === 1 && mem[mem.length - 1].state === "bad", "alert: a check that could not run neither raises nor clears", mem);
+  check(await go(dd(), false) === "cleared" && mem[mem.length - 1].state === "ok", "alert: a good reading clears it", mem);
+  check(await go(dd(), false) === "quiet", "alert: a good site stays quiet", null);
+  check(await go(dd(), true) === "raised" && sent.length === 2, "alert: after it cleared, a new problem is a new message", sent.length);
+  mem.length = 0; sent.length = 0;
+  check(await go(dd(false), true) === "not_delivered" && mem.length === 0 && await go(dd(true), true) === "raised" && sent.length === 2, "alert: a message that did not get through is tried again next run, not counted as told", { sent: sent.length, mem });
+  check(sent.every((x) => /_failed$/.test(x.kind)) && Object.values(Alerts.ALERTS).every((a) => /_failed$/.test(a.kind)), "alert: every kind has the shape admin Messages lists", Object.values(Alerts.ALERTS));
+  const L = Alerts.judgeListing;
+  check(L({ openInfo: { status: "CLOSED_PERMANENTLY" } }).bad === true && L({ openInfo: { status: "OPEN" }, metadata: { hasVoiceOfMerchant: false } }).bad === true, "listing: closed, or no voice of merchant (unverified or suspended), is bad", null);
+  check(L({ openInfo: { status: "OPEN" }, metadata: { hasVoiceOfMerchant: true } }).bad === false && L({}).bad === null && L(null).bad === null && L({ metadata: {} }).bad === null, "listing: open and verified is fine; a reply with neither field is unknown, not bad", null);
+  const H = (o) => Alerts.judgeHome({ status: 200, html: "<html><head></head><body>x</body></html>", ...o });
+  check(H({ html: '<html><head><script async src="https://www.googletagmanager.com/gtag/js?id=G-ABC123XYZ"></script></head><body></body></html>' }).tag === true && H({}).tag === false, "site: a Google tag is found, and a page without one has none", null);
+  check(H({ html: "<html><head><script>(function(w,d,s,l,i){})(window,document,'script','dataLayer','GTM-ABCD123');</script></head></html>" }).tag === true, "site: a Tag Manager container counts as a tag", null);
+  check(H({ html: '<html><head><meta name="robots" content="noindex, nofollow"></head></html>' }).blocks === true && H({ html: '<html><head><meta content="noindex" name="robots"></head></html>' }).blocks === true && H({ headers: { "x-robots-tag": "noindex" } }).blocks === true, "site: noindex in a meta (either attribute order) or the header is blocking", null);
+  check(H({ html: '<html><head><meta name="robots" content="index, follow"></head></html>' }).blocks === false && H({ html: '<html><head><meta name="description" content="we never noindex"></head></html>' }).blocks === false, "site: index,follow and a description that mentions noindex are not blocking", null);
+  check(H({ robots: "User-agent: *\nDisallow: /" }).blocks === true && H({ robots: "User-agent: *\nDisallow: /admin\n" }).blocks === false && H({ robots: "User-agent: *\nDisallow:\n" }).blocks === false && H({ robots: "User-agent: BadBot\nDisallow: /\n\nUser-agent: *\nDisallow: /private" }).blocks === false, "site: robots.txt blocks only when every crawler is told to leave the whole site", null);
+  check(Alerts.judgeHome({ status: 503, html: "<html></html>" }).tag === null && Alerts.judgeHome({ status: 200, html: "" }).blocks === null && Alerts.judgeHome({ status: 404, html: "<html>not found</html>" }).blocks === null, "site: an error page or an empty answer is unknown, never 'the tag is gone'", null);
+  // RGA only: nothing in the alert code can reach a client
+  const alertSrc = ["_client-alerts.js", "client-alerts-watch.js"].map((f) => fs.readFileSync(`${SITE}/netlify/functions/${f}`, "utf8").replace(/\/\/.*$/gm, "")).join("\n");
+  check(!/sendGmail|gmail\.googleapis|send-monthly-report|notify-client-stage|primary_contact_email|send-.*-email/.test(alertSrc), "alerts: the alert code has no way to email or message a client", (alertSrc.match(/sendGmail|gmail\.googleapis|notify-client-stage|primary_contact_email/) || [])[0]);
+  const watchSrc = fs.readFileSync(`${SITE}/netlify/functions/client-alerts-watch.js`, "utf8");
+  check(/o && o\.ga4_property_id && w\.tag !== null/.test(watchSrc), "alert: the missing-tag alert is only for a client who connected Google Analytics, and only when the page could be read", null);
+  const refresh = fs.readFileSync(`${SITE}/netlify/functions/metrics-daily-refresh.js`, "utf8");
+  check(/attempt < 2/.test(refresh) && /alert: "data_pull"/.test(refresh) && /startsWith\("test:"\)/.test(refresh), "alert: a failed data pull is retried once, then settled as one alert, and never for a test client", null);
+  const manifest = requireCjs(`${SITE}/netlify/functions/_job-manifest.js`);
+  const toml = fs.readFileSync(`${SITE}/netlify.toml`, "utf8");
+  check(!!manifest.byName("client-alerts-watch") && /\[functions\."client-alerts-watch"\]\s*\n\s*schedule = "50 10 \* \* \*"/.test(toml), "the new nightly job is in the manifest and scheduled", null);
+  check(/\[functions\."send-monthly-report"\]\s*\n\s*schedule = "0 9 5 \* \*"/.test(toml), "who gets a report and when is unchanged: the 5th, 09:00 UTC", null);
+  check(/add column if not exists why_now_slow boolean/.test(fs.readFileSync(`${SITE}/supabase/report_why_now.sql`, "utf8")), "the why-now SQL file is there and safe to run twice", null);
 } catch (e) {
   console.log(`⚠️  INDETERMINATE — the metrics harness threw: ${e.message}`);
   process.exit(2);

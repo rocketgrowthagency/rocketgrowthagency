@@ -291,6 +291,9 @@ export const FILES = {
   calltestfn: "netlify/functions/admin-call-test.js",
   ctsync: "netlify/functions/call-tracking-sync.js",
   metricsjs: "netlify/functions/_metrics.js",   // the monthly report reads true (research audit, 10-31)
+  clientalerts: "netlify/functions/_client-alerts.js",   // the alert list (report_and_measurement_v1, 11-1)
+  alertswatch: "netlify/functions/client-alerts-watch.js",
+  whynowsql: "supabase/report_why_now.sql",
   reportjs: "portal/report/report.js",   // call tracking works anywhere (10-22)
   ctprovision: "netlify/functions/call-tracking-provision.js",
   steplock: "shared/step-lock.js",   // step_lock_after_rga_confirms_v1 (10-21)

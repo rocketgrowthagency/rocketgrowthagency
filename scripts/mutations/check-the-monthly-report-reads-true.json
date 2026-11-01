@@ -80,8 +80,8 @@
  [
   "the channel row carries the target again",
   "reportjs",
-  "        [\"Average rating\", current.average_rating],\n",
-  "        [\"Average rating\", current.average_rating],\n        [\"90-day target\", 0],\n"
+  "      [\"Average rating\", current.average_rating],\n",
+  "      [\"Average rating\", current.average_rating],\n      [\"90-day target\", 0],\n"
  ],
  [
   "an old report draws a later map",
@@ -294,5 +294,251 @@
   "We work on reviews and location relevance, the things that can widen where you show on the map. No position or date is promised.",
   "Reviews and location relevance move you from page two into the top ten across more of the map.",
   1
+ ],
+ [
+  "sections 3 and 4 swap places",
+  "reportjs",
+  "    ${valueSection(current, client)}\n    ${leadsHistorySection(series, current, client)}",
+  "    ${leadsHistorySection(series, current, client)}\n    ${valueSection(current, client)}"
+ ],
+ [
+  "the speed score comes back into the report",
+  "reportjs",
+  "[\"Found by category\", current.gbp_searches_discovery],\n      ], gbpMonthExpired",
+  "[\"Found by category\", current.gbp_searches_discovery],\n        [\"Speed score (mobile)\", current.psi_mobile_perf],\n      ], gbpMonthExpired"
+ ],
+ [
+  "the report asks for the speed score column again",
+  "reportjs",
+  "+ \"citations_live_count, \"",
+  "+ \"citations_live_count, psi_mobile_perf, \""
+ ],
+ [
+  "the per-channel tracked bar comes back",
+  "reportjs",
+  "<div><h3>${escapeHtml(title)}</h3><p class=\"who\">${escapeHtml(who)}</p></div>\n    </div>",
+  "<div><h3>${escapeHtml(title)}</h3><p class=\"who\">${escapeHtml(who)}</p></div><span class=\"num\">${metrics.filter(([, v]) => num(v) != null).length} / ${metrics.length} tracked</span>\n    </div>"
+ ],
+ [
+  "a figure the client never gave reads 0",
+  "reportjs",
+  "const given = (v, fmt) => (v == null ? \"Not given\" : fmt(v));",
+  "const given = (v, fmt) => (v == null ? \"0\" : fmt(v));"
+ ],
+ [
+  "found points counted as every point",
+  "reportjs",
+  "const found = pts.filter((p) => rankOf(p) != null).length;",
+  "const found = pts.length;"
+ ],
+ [
+  "a missing rank reads as a position",
+  "reportjs",
+  "const r = num(p.map_rank); return r != null && r >= 1 && r <= 20 ? r : null; };",
+  "const r = Number(p.map_rank); return r <= 20 ? r : null; };"
+ ],
+ [
+  "a month with no form count is drawn as 0",
+  "reportjs",
+  "return f == null || c == null ? null : f + c;",
+  "return (f || 0) + (c || 0);"
+ ],
+ [
+  "forms and forms plus calls share one line",
+  "reportjs",
+  "const f = num(r.form_leads), c = withCalls ? num(r.total_calls) : 0;",
+  "const f = num(r.form_leads), c = num(r.total_calls) || 0;"
+ ],
+ [
+  "last year's line is never drawn",
+  "reportjs",
+  "ago = keys.map((k) => valueOf(shift(k, -12)));",
+  "ago = keys.map(() => null);"
+ ],
+ [
+  "one month is drawn as a line",
+  "reportjs",
+  "if (now.filter((v) => v != null).length < 2) {",
+  "if (now.filter((v) => v != null).length < 1) {"
+ ],
+ [
+  "a client with no calls piece is read as having one",
+  "reportjs",
+  "const withCalls = client?.call_tracking_attributed !== false && num(current.total_calls) != null;",
+  "const withCalls = true;"
+ ],
+ [
+  "the slump sentence prints for a no",
+  "reportjs",
+  "if (whyNow === true) items.push(",
+  "if (whyNow !== null) items.push("
+ ],
+ [
+  "the why-now column is asked inside the query that opens the report",
+  "reportjs",
+  "primary_market, account_manager, call_tracking_attributed )\n    `)",
+  "primary_market, account_manager, call_tracking_attributed, why_now_slow )\n    `)"
+ ],
+ [
+  "the next steps are no longer capped at three",
+  "reportjs",
+  "return out.slice(0, 3);",
+  "return out;"
+ ],
+ [
+  "a data fault on record goes unnamed",
+  "reportjs",
+  "const faults = Object.keys(current.data?.metrics_errors || {})",
+  "const faults = [].concat([]).slice(0, 0)"
+ ],
+ [
+  "the not-logged line becomes a claim that nothing happened",
+  "reportjs",
+  "are not logged for your account yet, so none are listed here. That does not mean none happened.",
+  "did not happen this month."
+ ],
+ [
+  "season is called ruled out with no year-ago number",
+  "reportjs",
+  "Season: there is no year-ago number yet, so season is not ruled out.",
+  "Season is ruled out."
+ ],
+ [
+  "a cleared Google number reads 0",
+  "reportjs",
+  "<span class=\"none\">${keptNote ? escapeHtml(keptNote) : \"Not yet measured\"}</span>",
+  "<span class=\"none\">0</span>"
+ ],
+ [
+  "a later month joins an earlier month's trend",
+  "reportjs",
+  "String(r.reporting_month) <= String(current.reporting_month)",
+  "true"
+ ],
+ [
+  "the email reads total_leads again",
+  "monthlyreport",
+  "{ key: \"leads_counted\"",
+  "{ key: \"total_leads\""
+ ],
+ [
+  "the email prints average map rank again",
+  "monthlyreport",
+  "{ key: \"new_reviews\", label: \"New Google reviews\" },",
+  "{ key: \"ranking_position\", label: \"Average map rank\", lowerIsBetter: true },\n    { key: \"new_reviews\", label: \"New Google reviews\" },"
+ ],
+ [
+  "the email calls taps calls",
+  "monthlyreport",
+  "Call-button taps on your Google profile (taps aren't calls)",
+  "Calls from your Google profile"
+ ],
+ [
+  "the email draws forms against forms plus calls as a change",
+  "monthlyreport",
+  "(nowL.forms == null) === (wasL.forms == null) && (nowL.calls == null) === (wasL.calls == null) ? wasL.total : null };",
+  "true ? wasL.total : null };"
+ ],
+ [
+  "a bad stretch is told again every run",
+  "clientalerts",
+  "  if (bad && lastBad) return \"already\";\n",
+  ""
+ ],
+ [
+  "a check that could not run clears the alert",
+  "clientalerts",
+  "if (bad === null || bad === undefined) return \"unknown\";",
+  "if (bad === undefined) return \"unknown\";"
+ ],
+ [
+  "an undelivered alert is counted as told",
+  "clientalerts",
+  "if (!res || res.delivered !== true) return \"not_delivered\";",
+  "if (!res) return \"not_delivered\";"
+ ],
+ [
+  "the noindex header is ignored",
+  "clientalerts",
+  "const headerBlocks = /\\bnoindex\\b/i.test(String(headers[\"x-robots-tag\"] || \"\"));",
+  "const headerBlocks = false;"
+ ],
+ [
+  "a robots.txt folder rule counts as blocking everything",
+  "clientalerts",
+  "/^disallow\\s*:\\s*\\/\\s*$/i",
+  "/^disallow\\s*:\\s*\\/.*$/i"
+ ],
+ [
+  "an error page reads as a page without the tag",
+  "clientalerts",
+  "if (!(status >= 200 && status < 300) || typeof html",
+  "if (typeof html"
+ ],
+ [
+  "a reply with neither field is read as bad",
+  "clientalerts",
+  "if (status === null && voice === null) return { bad: null };",
+  "if (false) return { bad: null };"
+ ],
+ [
+  "a closed listing is not noticed",
+  "clientalerts",
+  "/^CLOSED/",
+  "/^NEVER/"
+ ],
+ [
+  "an unverified listing is not noticed",
+  "clientalerts",
+  "if (voice === false) return",
+  "if (voice === true) return"
+ ],
+ [
+  "the data pull alert loses its listed shape",
+  "clientalerts",
+  "kind: \"client_data_pull_failed\"",
+  "kind: \"client_data_pull\""
+ ],
+ [
+  "the alert code gains a way to reach a client",
+  "alertswatch",
+  "const deps = A.realDeps(supa);",
+  "const deps = A.realDeps(supa); const _reach = \"primary_contact_email\";"
+ ],
+ [
+  "the missing-tag alert fires for clients with no Analytics",
+  "alertswatch",
+  "o && o.ga4_property_id && w.tag !== null ? !w.tag : null",
+  "w.tag !== null ? !w.tag : null"
+ ],
+ [
+  "a failed data pull is not retried",
+  "nightlyfn",
+  "attempt < 2",
+  "attempt < 1"
+ ],
+ [
+  "a test client's failed pull raises an alert",
+  "nightlyfn",
+  "startsWith(\"test:\")",
+  "startsWith(\"zzz:\")"
+ ],
+ [
+  "the new job drops out of the manifest",
+  "jobmanifest",
+  "job: \"client-alerts-watch\"",
+  "job: \"client-alerts-watchx\""
+ ],
+ [
+  "the report goes out on the 1st again",
+  "blogtoml",
+  "schedule = \"0 9 5 * *\"",
+  "schedule = \"0 9 1 * *\""
+ ],
+ [
+  "the why-now SQL stops being safe to run twice",
+  "whynowsql",
+  "add column if not exists why_now_slow boolean",
+  "add column why_now_slow boolean"
  ]
 ]
