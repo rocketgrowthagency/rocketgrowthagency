@@ -169,10 +169,42 @@ const tables = [...new Set(writes.map((w) => w.table))];
 const schema = {};
 for (const t of tables) schema[t] = await columnsOf(t);
 
+// 🔑 A TABLE WAITING ON ITS SQL FILE (2026-11-01). A new table whose `supabase/<file>.sql` Chris has not run yet answers 404, which
+// read as "can't tell" forever and kept this gate at exit 2. The file IS the declaration: when the live table is missing, the
+// columns the file creates (create table + add column if not exists) are the schema the write is checked against, and the line
+// says it is waiting. A table that is neither live nor in a SQL file stays "can't tell". Once the file runs, the live schema wins.
+function sqlColumns() {
+  const out = {};
+  const dir = `${__SITE}/supabase`;
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".sql"))) {
+    const sql = fs.readFileSync(path.join(dir, f), "utf8").split("\n").map((l) => l.replace(/--.*$/, "")).join("\n");
+    for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?(\w+)\s*\(/gi)) {
+      let depth = 1, i = m.index + m[0].length, start = i;
+      while (i < sql.length && depth) { if (sql[i] === "(") depth++; else if (sql[i] === ")") depth--; i++; }
+      const body = sql.slice(start, i - 1), cols = (out[m[1]] ||= { file: f, cols: new Set() });
+      let d = 0, cur = "";
+      const parts = [];
+      for (const ch of body) { if (ch === "(") d++; if (ch === ")") d--; if (ch === "," && !d) { parts.push(cur); cur = ""; } else cur += ch; }
+      parts.push(cur);
+      for (const part of parts) { const c = part.trim().match(/^"?(\w+)"?\s+\w+/); if (c && !/^(primary|unique|constraint|foreign|check)$/i.test(c[1])) cols.cols.add(c[1]); }
+    }
+    for (const m of sql.matchAll(/alter\s+table\s+(?:public\.)?(\w+)\s+add\s+column\s+(?:if\s+not\s+exists\s+)?"?(\w+)"?/gi)) {
+      if (out[m[1]]) out[m[1]].cols.add(m[2]);
+    }
+  }
+  return out;
+}
+const WAITING = sqlColumns();
+
 const fails = [];
 let unknown = 0;
 for (const w of writes) {
-  const s = schema[w.table];
+  let s = schema[w.table];
+  if (s.err && /404/.test(s.err) && WAITING[w.table]) {
+    s = { cols: WAITING[w.table].cols };
+    console.log(`  ⏳ ${w.table.padEnd(26)} waiting on supabase/${WAITING[w.table].file} (not run yet) — ${w.file} checked against the file`);
+  }
   if (s.err) { console.log(`  ▫️  ${w.table.padEnd(26)} unreadable (${s.err}) — cannot verify ${w.file}`); unknown++; continue; }
   if (s.empty) { console.log(`  ▫️  ${w.table.padEnd(26)} no rows — shape unknowable, ${w.file} unverified`); unknown++; continue; }
   const missing = w.cols.filter((c) => !s.cols.has(c));
