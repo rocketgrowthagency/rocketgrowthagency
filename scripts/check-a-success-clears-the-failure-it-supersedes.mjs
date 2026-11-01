@@ -72,6 +72,11 @@ const DECLARED = {
     // a `remove_failed` row in the append-only publish log, and the old photo stays `published` (it IS still on Google)
     replace_failed: { why: "response only (the run's summary), never stored" },
   },
+  // site_archive_v1: a count of pages that could not be saved in ONE capture run; each run is its own row (a new capture
+  // starts a new row at 0), and a run's total is re-added from the chunks, so no old failure rides under a later success
+  "site-archive-run.js": {
+    pages_failed: { why: "a per-run tally in the job's answer, summed from this pass's chunks; each capture is its own run row that starts at 0" },
+  },
   "gbp-apply-change.js": {
     write_error: { why: "response only (json), never stored" },
   },
