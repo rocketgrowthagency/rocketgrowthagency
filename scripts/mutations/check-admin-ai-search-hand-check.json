@@ -1,0 +1,93 @@
+[
+ [
+  "a blank tool is accepted",
+  "aicheck",
+  "if (!CHOICES.some((c) => c.key === v)) return { ok: false, error: `Pick an answer for ${t.label}, or Could not check.` };",
+  "",
+  1
+ ],
+ [
+  "a blank question is accepted",
+  "aicheck",
+  "if (!question) return { ok: false, error: \"Write the question you asked.\" };",
+  "",
+  1
+ ],
+ [
+  "the tools are added up again",
+  "aicheck",
+  "for (const t of TOOLS) lines.push(`${t.label}: ${choiceLabel(d.results[t.key]) || \"Not recorded\"}`);",
+  "lines.push(`Named in ${TOOLS.filter((t) => d.results[t.key] === \"came_up\").length} of ${TOOLS.length} AI answers`);",
+  1
+ ],
+ [
+  "the position line is gone",
+  "aicheck",
+  "Answers change each time, so this is what happened on this date. It is not a position.",
+  "Answers change each time.",
+  1
+ ],
+ [
+  "hours get called wrong",
+  "aicheck",
+  "if (f.field === \"phone\" && rec) same = samePhone(f.said, rec);",
+  "if (f.field === \"phone\" && rec) same = samePhone(f.said, rec);\n    if (f.field === \"hours\") same = false;",
+  1
+ ],
+ [
+  "a missing record becomes wrong",
+  "aicheck",
+  "verdict: same === null ? \"could_not_compare\" : same ? \"matches\" : \"differs\"",
+  "verdict: same ? \"matches\" : \"differs\"",
+  1
+ ],
+ [
+  "a phone in another format counts as different",
+  "aicheck",
+  "return x.slice(-n) === y.slice(-n);",
+  "return x === y;",
+  1
+ ],
+ [
+  "the finding claims the answer is fixed",
+  "aicheck",
+  "this card will say \"fixed the source\", never \"fixed the answer\".",
+  "this card will say \"fixed the answer\".",
+  1
+ ],
+ [
+  "the old record is added up",
+  "aicheck",
+  "for (const [k, v] of Object.entries(d.engines || {})) lines.push(",
+  "lines.push(`Named in ${Object.values(d.engines || {}).filter((v) => v === true).length} of ${Object.keys(d.engines || {}).length} AI answers`); for (const [k, v] of Object.entries(d.engines || {})) lines.push(",
+  1
+ ],
+ [
+  "the old head comes back",
+  "maturefn",
+  "small: card.small, head: card.head, body: card.body, done: true",
+  "small: card.small, head: `Named in ${1} of ${3} AI answers`, body: card.body, done: true",
+  1
+ ],
+ [
+  "the admin form lets a tool stay blank",
+  "admin",
+  "Pick an answer for every tool. Use Could not check if you were not able to run one.",
+  "x",
+  1
+ ],
+ [
+  "the mentions step is gone",
+  "playbooksjson",
+  "\"id\": \"m1.platform.mentions\"",
+  "\"id\": \"m1.platform.mentionsx\"",
+  1
+ ],
+ [
+  "the mentions step promises a result",
+  "playbooksjson",
+  "this makes no promise about any AI tool or any ranking.\",\n      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Asked for",
+  "this will get an AI tool to name the business.\",\n      \"hasRunner\": false,\n      \"actor\": \"rga\",\n      \"clientLabel\": null,\n      \"clientHint\": null,\n      \"clientForm\": null,\n      \"clientBucket\": \"admin\",\n      \"clientFeed\": \"Asked for",
+  1
+ ]
+]

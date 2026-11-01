@@ -7,6 +7,7 @@ export const FILES = {
   blogclientplan: "netlify/functions/_blog-client-plan.js",
   blogclientsql: "supabase/blog_client_choice.sql",
   // see_what_client_sees_v1 (approved 11-01)
+  aicheck: "netlify/functions/_ai-check.js",   // admin_ai_search_v2 (approved 11-01): the Month 6 hand check, one line per tool
   seeclient: "shared/client-preview.js",
   clientkit: "shared/client-card-kit.js",
   // onboarding_and_offboarding_v1 (approved 11-01)
