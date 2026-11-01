@@ -299,5 +299,33 @@
   "if [ -z \"${RGA_ALLOW_TEMPLATE_DRIP:-}\" ]; then",
   "if false; then",
   1
+ ],
+ [
+  "a landing page keeps a query string",
+  "leadlib",
+  "/^\\/(?!\\/)[a-z0-9\\-_/.]{0,199}$/i",
+  "/^\\/.{0,199}$/i",
+  1
+ ],
+ [
+  "a lead keeps any traffic source text",
+  "leadlib",
+  "/^[a-z0-9][a-z0-9.\\-_ ]{0,79}$/.test(src)",
+  "/^.{0,79}$/.test(src)",
+  1
+ ],
+ [
+  "lead sources without the column read as a count",
+  "blogadm",
+  "if (leads.ready === false) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the page is sent as a whole address",
+  "sitejs",
+  "String(window.location.pathname || \"/\")",
+  "String(window.location.href || \"/\")",
+  1
  ]
 ]

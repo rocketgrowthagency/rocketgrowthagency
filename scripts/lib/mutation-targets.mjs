@@ -28,6 +28,8 @@ export const FILES = {
   blogsql: "supabase/blog_system.sql",
   blogtoml: "netlify.toml",
   blogindexpage: "blog/index.html",
+  leadlib: "netlify/functions/_supabase-lead.js",
+  sitejs: "script.js",
   blogdrip: "scraper:scripts/drip-content.sh",
   // client_monthly_value_v1 (10-31): the monthly "what we watched for you" card
   monthlyvalue: "netlify/functions/_monthly-value.js",

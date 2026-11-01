@@ -308,5 +308,28 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
     if (E.evidenceBlock({ ...base, [k]: v }).ok) fail(`the evidence block accepts ${k}=${JSON.stringify(v)}`);
   if (E.evidenceBlock({ ...base, screenshot: { src: "/a.png" } }).ok) fail("a screenshot with no alt text or date is accepted");
 }
+// step 6: the page a lead first landed on
+{
+  const LEAD = req(`${SITE}/netlify/functions/_supabase-lead.js`);
+  const c = LEAD.cleanFirstTouch;
+  if (typeof c !== "function" || typeof ADM.leadRow !== "function") moved("cleanFirstTouch / leadRow");
+  const ok = c({ landing_page: "/blog/local-seo-for-plumbers/", traffic_source: "Google.com" });
+  if (ok.landing_page !== "/blog/local-seo-for-plumbers/" || ok.traffic_source !== "google.com") fail("a plain page and host are not kept");
+  for (const bad of ["https://evil.test/x", "/a?email=a@b.com", "javascript:1", "<script>", "//x.test"]) if (c({ landing_page: bad }).landing_page) fail(`a lead keeps ${bad} as a landing page`);
+  if (c({ traffic_source: "a b@c.com?x=1" }).traffic_source) fail("a lead keeps free text as a traffic source");
+  if (c(undefined).landing_page !== "" || c({}).traffic_source !== "") fail("nothing sent must be empty (unknown), not 'direct'");
+  const nr = ADM.leadRow({ ready: false, rows: [] }), fl = ADM.leadRow({ ready: null, rows: [] }), none = ADM.leadRow({ ready: true, rows: [{ source: "contact", landing_page: null }] });
+  if (nr.tag !== "Not set up" || !/blog_system\.sql/.test(nr.line)) fail("lead sources without the column must say Not set up and name the file");
+  if (fl.tag !== "Couldn't read") fail("a failed lead read must say Couldn't read");
+  if (none.tag === "Reading" || /\b0 of\b/.test(none.label)) fail("leads with no landing page saved read as a finished count");
+  const some = ADM.leadRow({ ready: true, rows: [{ landing_page: "/blog/a/" }, { landing_page: "/blog/a/" }, { landing_page: null }] });
+  if (!/2 of 3/.test(some.label) || !/\/blog\/a\/: 2/.test(some.line)) fail("lead sources do not count what they read");
+  if (!/landing_page text/.test(SQL) || !/traffic_source text/.test(SQL) || !/lead_intakes_first_touch/.test(SQL) || !/coalesce\(nullif\(new\.raw_payload->>'landing_page'/.test(SQL)) fail("blog_system.sql lacks the lead columns or the trigger that never blanks a saved one");
+  const sj = read("script.js");
+  if (!/function firstTouch/.test(sj) || !/pathname/.test(sj) || /location\.href|document\.referrer\s*[,)]\s*[^.]*payload/.test(sj)) fail("script.js does not send only a path and a host");
+  if (!/landing_page: firstTouch\(\)\.landing_page/.test(sj) || (sj.match(/landing_page: firstTouch\(\)/g) || []).length < 2) fail("both the audit and the contact forms must send the first touch");
+  for (const f of ["contact", "start-growth-plan", "free-growth-audit"]) if (!/name="landing_page"/.test(read(`${f}/index.html`)) || !/name="traffic_source"/.test(read(`${f}/index.html`))) fail(`${f} does not declare the first-touch fields`);
+  if (!/cleanFirstTouch\(data\)/.test(read("netlify/functions/form-intake.js")) || !/cleanFirstTouch\(data\)/.test(read("netlify/functions/fga-intake.js"))) fail("an intake does not save the first touch");
+}
 if (F.length) { console.error(`🔴 the blog system regressed — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ blog system: 14 link rules each fire on their own case, the real blog has no failing link, verdicts refuse noise, an API error is never 'not indexed', no table = Google is asked nothing, no noindex or publishing in this build, posts and pages clean");
