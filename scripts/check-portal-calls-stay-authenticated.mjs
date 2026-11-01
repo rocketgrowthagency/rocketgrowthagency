@@ -168,7 +168,7 @@ for (const f of callers) {
   // through notify-rga is a bonus, not the delivery. Demanding a `delivered` check there would be
   // demanding a check on something that is already guaranteed by construction.
   const ownsDurableWrite = /skip_activity:\s*true/.test(src) && /if \(!logged\) return json\(500/.test(src);
-  if (!/delivered === false/.test(src) && !ownsDurableWrite) {
+  if (!/delivered === false|delivered === true/.test(src) && !ownsDurableWrite) {   // === true is the stricter form: only a real true counts as told (_client-alerts.js)
     bad(`${f} treats any 200 from notify-rga as delivered, and holds no verified record of its own — an unconfigured webhook reads as success`);
   }
 }
