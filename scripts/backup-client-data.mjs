@@ -10,11 +10,11 @@
 // 🔒 NO KEYS ON THE DRIVE. Clients' Google tokens could act on their accounts, so any field named like a key, and any value shaped like
 // one, is removed before writing. After a disaster a client reconnects. Only the COUNT of what was removed is recorded, never a value.
 //
-//   <dir>/YYYY-MM-DD/db/<table>.json   every row, every night
+//   <dir>/YYYY-MM-DD/db/<table>.json   every row, every night (auth_users.json: the sign-ins, scrubbed)
 //   <dir>/YYYY-MM-DD/manifest.json     row counts, file counts, what was removed
 //   <dir>/files/<bucket>/<path>        add-only; a file that changed is kept beside the old one
 //
-// Keeps 30 nightly folders and the 1st of each month forever, and prunes only after a run that fully succeeded.
+// Keeps 30 nightly folders and each month's first good night forever, and prunes only after a run that fully succeeded.
 // Exit 0 copied · 1 something failed (recorded, and the Mac is told) · 2 didn't start: database slow or LaCie missing
 import fs from "node:fs";
 import os from "node:os";
@@ -52,10 +52,18 @@ export function scrub(v, counts = { names: {}, values: 0 }) {
   return v;
 }
 // ── pure: which dated folders stay ─────────────────────────────────────────────────────────────
-export function keepFolders(names, nightly = 30) {
+// 🔴 audit 10-31: the month's copy was the folder named -01, so an unplugged drive or an offline Mac on the 1st lost that month for good. It's the month's first GOOD
+// night now: `good(name)` says a folder's own record shows no problems, and a month with no good night keeps its first folder rather than nothing.
+export function keepFolders(names, nightly = 30, good = () => true) {
   const dated = names.filter((n) => /^\d{4}-\d{2}-\d{2}$/.test(n)).sort();
   const recent = new Set(dated.slice(-nightly));
-  return new Set(dated.filter((n) => recent.has(n) || n.endsWith("-01")));
+  const monthly = new Map();
+  for (const n of dated) { const m = n.slice(0, 7), cur = monthly.get(m); if (!cur || (!cur.good && good(n))) monthly.set(m, { name: n, good: good(n) }); }
+  const firsts = new Set([...monthly.values()].map((x) => x.name));
+  return new Set(dated.filter((n) => recent.has(n) || firsts.has(n)));
+}
+function folderIsGood(name) {
+  try { const m = JSON.parse(fs.readFileSync(path.join(DIR, name, "manifest.json"), "utf8")); return Array.isArray(m.problems) && !m.problems.length; } catch { return false; }
 }
 
 async function get(url, init = {}) {
@@ -111,25 +119,46 @@ async function listAll(bucket, prefix = "") {
 async function copyBucket(bucket, root) {
   const files = await listAll(bucket);
   let copied = 0, have = 0, bytes = 0;
+  const failed = [];   // 🔴 audit 10-31: one bad file stopped its whole bucket; every later file went uncopied. Each is tried, and the run still reports failure.
   for (const f of files) {
-    if (f.path.includes("..")) throw new Error(`${bucket}: a path climbs out of the backup folder`);
-    let dest = path.join(root, bucket, f.path);
-    if (fs.existsSync(dest)) {
-      if (!f.size || fs.statSync(dest).size === f.size) { have++; bytes += fs.statSync(dest).size; continue; }
-      dest = `${dest}.${String(f.updated || TODAY).replace(/[^0-9]/g, "").slice(0, 14)}`;   // changed: keep both
-      if (fs.existsSync(dest)) { have++; continue; }
-    }
-    const r = await get(`${SUPA}/storage/v1/object/${bucket}/${f.path.split("/").map(encodeURIComponent).join("/")}`);
-    if (!r.ok) throw new Error(`${bucket}/${f.path}: HTTP ${r.status}`);
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (f.size && buf.length !== f.size) throw new Error(`${bucket}/${f.path}: ${f.size} bytes listed, ${buf.length} received`);
-    fs.mkdirSync(path.dirname(dest), { recursive: true, mode: 0o700 });
-    fs.writeFileSync(`${dest}.tmp`, buf, { mode: 0o600 });
-    fs.renameSync(`${dest}.tmp`, dest);
-    copied++; bytes += buf.length;
+    try {
+      if (f.path.includes("..")) throw new Error(`${bucket}: a path climbs out of the backup folder`);
+      let dest = path.join(root, bucket, f.path);
+      if (fs.existsSync(dest)) {
+        if (!f.size || fs.statSync(dest).size === f.size) { have++; bytes += fs.statSync(dest).size; continue; }
+        dest = `${dest}.${String(f.updated || TODAY).replace(/[^0-9]/g, "").slice(0, 14)}`;   // changed: keep both
+        if (fs.existsSync(dest)) { have++; continue; }
+      }
+      const r = await get(`${SUPA}/storage/v1/object/${bucket}/${f.path.split("/").map(encodeURIComponent).join("/")}`);
+      if (!r.ok) throw new Error(`${bucket}/${f.path}: HTTP ${r.status}`);
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (f.size && buf.length !== f.size) throw new Error(`${bucket}/${f.path}: ${f.size} bytes listed, ${buf.length} received`);
+      fs.mkdirSync(path.dirname(dest), { recursive: true, mode: 0o700 });
+      fs.writeFileSync(`${dest}.tmp`, buf, { mode: 0o600 });
+      fs.renameSync(`${dest}.tmp`, dest);
+      copied++; bytes += buf.length;
+      await sleep(PAUSE_MS);
+    } catch (e) { failed.push(e.message); console.error(`🔴 ${e.message}`); }
+  }
+  return { bucket, files: files.length, copied, already: have, bytes, failed };
+}
+// 🔴 audit 10-31: sign-ins live in Supabase's auth schema, which the table copy can't see. Without this a restore has every record and no one who can log in.
+// The password hash and any token go through the same scrub as everything else.
+async function copyLogins(dest) {
+  const counts = { names: {}, values: 0 }, users = [];
+  for (let page = 1; ; page++) {
+    const r = await get(`${SUPA}/auth/v1/admin/users?page=${page}&per_page=${PAGE}`);
+    if (!r.ok) throw new Error(`logins: HTTP ${r.status}`);
+    const batch = (await r.json()).users || [];
+    users.push(...batch);
+    if (batch.length < PAGE) break;
     await sleep(PAUSE_MS);
   }
-  return { bucket, files: files.length, copied, already: have, bytes };
+  const file = path.join(dest, "auth_users.json");
+  fs.writeFileSync(`${file}.tmp`, `${JSON.stringify(users.map((u) => scrub(u, counts)))}\n`, { mode: 0o600 });
+  fs.renameSync(`${file}.tmp`, file);
+  if (JSON.parse(fs.readFileSync(file, "utf8")).length !== users.length) throw new Error("logins: the copy doesn't read back whole");
+  return users.length;
 }
 function record(status) {
   fs.mkdirSync(path.dirname(STATUS), { recursive: true });
@@ -157,18 +186,21 @@ async function main() {
     catch (e) { problems.push(`table ${t}: ${e.message}`); console.error(`🔴 table ${t}: ${e.message}`); }
     await sleep(PAUSE_MS);
   }
+  let logins = null;
+  try { logins = await copyLogins(db); console.log(`  sign-ins: ${logins}`); }
+  catch (e) { problems.push(e.message); console.error(`🔴 ${e.message}`); }
   const b = await get(`${SUPA}/storage/v1/bucket`);
   if (!b.ok) problems.push(`buckets: HTTP ${b.status}`);
   for (const { name } of b.ok ? await b.json() : []) {
-    try { const res = await copyBucket(name, path.join(DIR, "files")); bucketResults.push(res); console.log(`  ${name}: ${res.files} files · ${res.copied} new · ${(res.bytes / 1048576).toFixed(1)} MB`); }
+    try { const res = await copyBucket(name, path.join(DIR, "files")); bucketResults.push(res); if (res.failed.length) problems.push(`bucket ${name}: ${res.failed.length} of ${res.files} file(s) not copied, first: ${res.failed[0]}`); console.log(`  ${name}: ${res.files} files · ${res.copied} new · ${(res.bytes / 1048576).toFixed(1)} MB`); }
     catch (e) { problems.push(`bucket ${name}: ${e.message}`); console.error(`🔴 bucket ${name}: ${e.message}`); }
   }
-  const manifest = { date: TODAY, finished: new Date().toISOString(), tables: tableResults, buckets: bucketResults, problems };
+  const manifest = { date: TODAY, finished: new Date().toISOString(), tables: tableResults, logins, buckets: bucketResults, problems };
   fs.writeFileSync(path.join(night, "manifest.json"), `${JSON.stringify(manifest, null, 1)}\n`, { mode: 0o600 });
   const rows = tableResults.reduce((a, r) => a + r.rows, 0), files = bucketResults.reduce((a, r) => a + r.files, 0);
-  record({ ok: !problems.length, date: TODAY, tables: tableResults.length, rows, files, bytes: bucketResults.reduce((a, r) => a + r.bytes, 0), problem: problems.join("; ").slice(0, 400) });
+  record({ ok: !problems.length, date: TODAY, tables: tableResults.length, rows, logins, files, bytes: bucketResults.reduce((a, r) => a + r.bytes, 0), problem: problems.join("; ").slice(0, 400) });
   if (problems.length) { tellChris(problems[0]); console.error(`🔴 ${problems.length} problem(s). Nothing old was removed.`); process.exit(1); }
-  const keep = keepFolders(fs.readdirSync(DIR));
+  const keep = keepFolders(fs.readdirSync(DIR), 30, folderIsGood);
   for (const n of fs.readdirSync(DIR)) if (/^\d{4}-\d{2}-\d{2}$/.test(n) && !keep.has(n)) fs.rmSync(path.join(DIR, n), { recursive: true, force: true });
   console.log(`✅ ${tableResults.length} tables · ${rows} rows · ${files} files copied to ${DIR}`);
 }

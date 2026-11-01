@@ -2,8 +2,8 @@
  [
   "a mirror removes files that left storage",
   "backupdata",
-  "if (fs.existsSync(dest)) {\n      if (!f.size",
-  "if (false) {\n      if (!f.size",
+  "  return { bucket, files: files.length, copied, already: have, bytes, failed };",
+  "  fs.rmSync(path.join(root, bucket), { recursive: true, force: true });\n  return { bucket, files: files.length, copied, already: have, bytes, failed };",
   1
  ],
  [
@@ -114,7 +114,7 @@
  [
   "retention is wrong",
   "backupdata",
-  "recent.has(n) || n.endsWith(\"-01\")",
+  "recent.has(n) || firsts.has(n)",
   "recent.has(n)",
   1
  ],
@@ -123,6 +123,55 @@
   "backupdata",
   "try { record({ ok: false, problem: m }); } catch",
   "try { } catch",
+  1
+ ],
+ [
+  "sign-ins aren't copied",
+  "backupdata",
+  "try { logins = await copyLogins(db);",
+  "try { logins = 0;",
+  1
+ ],
+ [
+  "only the first page of sign-ins",
+  "backupdata",
+  "if (batch.length < PAGE) break;",
+  "break;",
+  1
+ ],
+ [
+  "a password hash reaches the drive",
+  "backupdata",
+  "users.map((u) => scrub(u, counts))",
+  "users",
+  1
+ ],
+ [
+  "one bad file stops the bucket",
+  "backupdata",
+  "} catch (e) { failed.push(e.message); console.error(`🔴 ${e.message}`); }\n  }\n  return { bucket,",
+  "} catch (e) { throw e; }\n  }\n  return { bucket,",
+  1
+ ],
+ [
+  "a bad file goes unreported",
+  "backupdata",
+  "if (res.failed.length) problems.push(",
+  "if (false) problems.push(",
+  1
+ ],
+ [
+  "a failed night counts as the month's copy",
+  "backupdata",
+  "keepFolders(fs.readdirSync(DIR), 30, folderIsGood)",
+  "keepFolders(fs.readdirSync(DIR), 30)",
+  1
+ ],
+ [
+  "the monthly copy needs the 1st again",
+  "backupdata",
+  "recent.has(n) || firsts.has(n)",
+  "recent.has(n) || n.endsWith(\"-01\")",
   1
  ]
 ]

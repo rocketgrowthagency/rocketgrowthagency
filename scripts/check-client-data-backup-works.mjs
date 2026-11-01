@@ -25,6 +25,8 @@ const clients = Array.from({ length: 450 }, (_, i) => ({ id: i + 1, name: `Clien
 const keys = [{ id: 1, email: "owner@example.com", access_token: SECRET, refresh_token: "abc", access_token_expires_at: "2026-11-01", last_refreshed_at: "2026-11-02", metrics_refreshed_at: "2026-11-03", credentials: "Licensed and insured", clientSecret: "abc2", data: { tasks: { "m1.access.password_manager": { status: "done", password: "abc3" } } } }];
 const TABLES = { clients, client_google_oauth: keys, empty_table: [] };
 const FILES = { "client-photos": { "c1/a.jpg": Buffer.from("photo-a"), "c1/deep/b.jpg": Buffer.from("photo-bb") }, "admin-docs": { "x.pdf": Buffer.from("pdf") } };
+const USERS = Array.from({ length: 205 }, (_, i) => ({ id: `u${i}`, email: `user${i}@example.com`, encrypted_password: "HASH-MUST-NOT-REACH-THE-DRIVE", recovery_token: "TOKEN-MUST-NOT-REACH", user_metadata: { name: `User ${i}` } }));
+let breakLogins = false, oneBadFile = null;
 let breakTable = null, slowRoot = 0, breakFile = false, shortBy = 0;
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x");
@@ -41,6 +43,7 @@ const server = http.createServer(async (req, res) => {
     const off = Number(u.searchParams.get("offset") || 0), lim = Number(u.searchParams.get("limit") || 10);
     return send(200, rows.slice(off, off + lim));
   }
+  if (u.pathname === "/auth/v1/admin/users") { if (breakLogins) return send(500, {}); const pg = Number(u.searchParams.get("page") || 1), per = Number(u.searchParams.get("per_page") || 50); return send(200, { users: USERS.slice((pg - 1) * per, pg * per) }); }
   if (u.pathname === "/storage/v1/bucket") return send(200, Object.keys(FILES).map((name) => ({ name })));
   const l = u.pathname.match(/^\/storage\/v1\/object\/list\/([\w-]+)$/);
   if (l) {
@@ -49,7 +52,7 @@ const server = http.createServer(async (req, res) => {
     return send(200, [...seen.values()].slice(offset, offset + 100));
   }
   const o = u.pathname.match(/^\/storage\/v1\/object\/([\w-]+)\/(.+)$/);
-  if (o) { const b = FILES[o[1]]?.[decodeURIComponent(o[2])]; if (!b) return send(404, {}); if (breakFile) return send(200, Buffer.from("x")); return send(200, b); }
+  if (o) { const b = FILES[o[1]]?.[decodeURIComponent(o[2])]; if (!b) return send(404, {}); if (breakFile) return send(200, Buffer.from("x")); if (oneBadFile === decodeURIComponent(o[2])) return send(500, {}); return send(200, b); }
   send(404, {});
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -105,9 +108,31 @@ try {
   if (await run({ BACKUP_DATA_TODAY: "2026-11-04" }) !== 1) fail("a file that came back the wrong size isn't reported");
   breakFile = false;
   await run({ BACKUP_DATA_TODAY: "2026-11-04" });
-  for (let i = 0; i < 40; i++) fs.mkdirSync(`${DIR}/${new Date(Date.UTC(2020, 0, 2 + i)).toISOString().slice(0, 10)}/db`, { recursive: true });
+  // 🔴 sign-ins are copied, every page, with no password hash or token
+  { const u = JSON.parse(fs.readFileSync(`${DIR}/2026-11-04/db/auth_users.json`, "utf8"));
+    const txt = JSON.stringify(u);
+    if (u.length !== 205 || u[0].email !== "user0@example.com") fail("the sign-ins aren't copied whole");
+    if (txt.includes("HASH-MUST-NOT") || txt.includes("TOKEN-MUST-NOT")) fail("a password hash or token reached the drive");
+    if (st()?.logins !== 205) fail("the status doesn't record the sign-ins"); }
+  breakLogins = true;
+  if (await run({ BACKUP_DATA_TODAY: "2026-11-04" }) !== 1) fail("sign-ins that couldn't be copied aren't reported");
+  breakLogins = false;
+  // 🔴 one bad file doesn't stop its bucket
+  FILES["client-photos"] = { "c1/aa-bad.jpg": Buffer.from("bad"), ...FILES["client-photos"], "c1/zz-after.jpg": Buffer.from("after-the-bad-one") };   // the bad one is listed first
+  oneBadFile = "c1/aa-bad.jpg";
+  const oneBad = await run({ BACKUP_DATA_TODAY: "2026-11-04" });
+  if (oneBad !== 1 || st()?.ok !== false) fail("one file that couldn't be copied isn't reported");
+  if (!fs.existsSync(`${DIR}/files/client-photos/c1/zz-after.jpg`)) fail("one bad file stopped every file after it in the bucket");
+  oneBadFile = null; delete FILES["client-photos"]["c1/aa-bad.jpg"];
+  await run({ BACKUP_DATA_TODAY: "2026-11-04" });
+  // retention: the month's first GOOD night, whatever its date
+  const mk = (n, problems) => { fs.mkdirSync(`${DIR}/${n}/db`, { recursive: true }); fs.writeFileSync(`${DIR}/${n}/manifest.json`, JSON.stringify({ problems })); };
+  mk("2020-01-02", ["table clients: HTTP 500"]);   // a failed night: not the month's copy
+  for (let i = 1; i < 40; i++) mk(new Date(Date.UTC(2020, 0, 2 + i)).toISOString().slice(0, 10), []);   // Jan 3 → Feb 10, no folder named -01 in January
   await run({ BACKUP_DATA_TODAY: "2026-11-05" });
-  if (fs.existsSync(`${DIR}/2020-01-02`)) fail("a successful run kept a nightly copy past its 30");
+  if (fs.existsSync(`${DIR}/2020-01-02`)) fail("a failed night was kept as the month's copy");
+  if (!fs.existsSync(`${DIR}/2020-01-03`)) fail("a month with no run on the 1st lost its monthly copy");
+  if (fs.existsSync(`${DIR}/2020-01-04`)) fail("a successful run kept a nightly copy past its 30");
   if (!fs.existsSync(`${DIR}/2020-02-01`)) fail("a monthly copy was removed");
   if (!fs.existsSync(`${DIR}/2026-11-05/manifest.json`)) fail("the night's own copy is missing");
   const noDrive = await run({ BACKUP_DATA_DIR: `${T}/not-plugged-in/RGA-Data-Backups` });
