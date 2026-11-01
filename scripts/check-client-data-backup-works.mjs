@@ -113,6 +113,8 @@ try {
   const noDrive = await run({ BACKUP_DATA_DIR: `${T}/not-plugged-in/RGA-Data-Backups` });
   if (noDrive === 0 || st()?.ok !== false) fail("LaCie missing isn't reported");
   // a crash (the network gone) is a recorded failure, not yesterday's ok
+  await run({ BACKUP_DATA_TODAY: "2026-11-06" });
+  if (st()?.ok !== true) fail("a clean run before the crash test didn't record ok");
   const dead = await run({ BACKUP_DATA_SUPA_URL: "http://127.0.0.1:9" });
   if (dead === 0 || st()?.ok !== false) fail("a crash leaves the last good status in place");
   slowRoot = 400;
