@@ -44,8 +44,8 @@
  [
   "a missing drive goes quiet",
   "backuplacie",
-  "  problem \"LaCie isn't connected: chats copied to the Mac only, nothing else backed up\"",
-  "  note \"LaCie isn't connected\"",
+  "  [ \"${#problems[@]}\" -gt 0 ] || problem \"LaCie isn't connected: chats copied to the Mac only, nothing else backed up\"",
+  "  :",
   1
  ],
  [
