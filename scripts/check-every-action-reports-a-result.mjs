@@ -36,6 +36,10 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-dk-refresh": "re-reads the admin Data card and redraws it; changes nothing",
+  "data-bl-refresh": "re-reads the admin Blog card and redraws it; changes nothing",
+  "data-bl-all": "opens the full list on the admin Blog card; changes nothing",
+  "data-ob-draft-copy": "copies a draft to the clipboard for a person to send; nothing is sent",
   "data-photo-keep-note": "removes the note on the spot; the choice stays in this browser, and nothing is sent",
   "data-cx-keep": "closes the Cancel fold on the spot; nothing is recorded because they chose not to cancel",
   "data-cs-how": "the client card system's foot \"How this step works ▾\" / \"Why these 5 ▾\" (client_card_system_v1, 2026-10-29): opens or folds the how-to inside the card and flips aria-expanded + the chevron (visible) — nothing is saved",

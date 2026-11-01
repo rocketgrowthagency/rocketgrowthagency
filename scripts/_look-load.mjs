@@ -11,7 +11,7 @@ for (const [name, email, url, sel] of [["portal", WALK_CLIENTS.main.email, "http
   page.on("pageerror", (e) => errs.push("PAGEERROR " + String(e.message).slice(0, 200)));
   page.on("response", (r) => { if (r.status() >= 500 || (r.status() === 404 && /\.(js|css)/.test(r.url()))) errs.push(`HTTP ${r.status()} ${r.url().slice(0, 90)}`); });
   await page.goto(g.action_link || g.properties?.action_link, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.waitForTimeout(16000);
+  await page.waitForTimeout(5000); if (name === "admin") { await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 }); } await page.waitForTimeout(14000);
   const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
   console.log(name, "url", page.url().slice(0, 60), "| chars", text.length, "| errors", errs.length); errs.slice(0, 6).forEach((e) => console.log("  ", e)); console.log("  text:", text.slice(0, 170));
   await ctx.close();
