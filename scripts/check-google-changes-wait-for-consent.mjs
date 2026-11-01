@@ -104,6 +104,8 @@ if (a < 0 || b < 0 || a > b) fail("a review reply doesn't check the client's aut
 // what the client and admin see
 const PJ = read("portal/portal.js");
 if (!PJ.includes('step.clientForm === "oauth_grant" ? googleConsentFormHtml(clientId)')) fail("the Connect card has no tick");
+// every connect button a client can press while not connected sits inside the tick (the checklist's two as well as the row's: the first version only covered the row, and the browser showed it)
+if ((PJ.match(/googleConsentFormHtml\(clientId/g) || []).length < 3) fail("a Connect Google button sits outside the tick");
 if (!/data-gconsent-tick\]"\)\.checked/.test(PJ)) fail("Connect goes ahead without the tick");
 if (!/saveGoogleConsent\(clientId, "agree"\)/.test(PJ) || !/data-gconsent-withdraw/.test(PJ)) fail("the portal can't record or withdraw the agreement");
 if (!/res\.status === 409 && data\.needs_consent/.test(PJ)) fail("Reconnect and the banner dead-end when consent is missing");
