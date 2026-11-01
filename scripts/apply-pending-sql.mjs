@@ -5,8 +5,8 @@
 import fs from "node:fs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
-const FILES = ["job_checkins.sql", "data_keep.sql", "blog_system.sql", "site_archive.sql", "report_why_now.sql", "blog_client_choice.sql", "client_booking_requests.sql"];
-const TABLES = ["job_checkins", "gsc_pull_state", "client_gsc_daily", "vertical_benchmark_history", "blog_index_check", "blog_posts", "blog_evidence", "site_archive_runs", "client_booking_requests"];
+const FILES = ["job_checkins.sql", "data_keep.sql", "data_keep_more.sql", "blog_system.sql", "site_archive.sql", "report_why_now.sql", "blog_client_choice.sql", "client_booking_requests.sql"];
+const TABLES = ["job_checkins", "gsc_pull_state", "client_gsc_daily", "vertical_benchmark_history", "blog_index_check", "blog_posts", "blog_evidence", "site_archive_runs", "client_booking_requests", "ga4_pull_state", "client_ga4_daily", "client_url_inspection", "client_baseline"];
 const COLUMNS = ["why_now_slow", "why_now_note", "blog_posts_off_at", "blog_posts_off_by"];
 const { SUPABASE_URL: URL_, SUPABASE_SERVICE_ROLE_KEY: KEY, SUPABASE_ACCESS_TOKEN: TOKEN } = process.env;
 if (!URL_ || !KEY || !TOKEN) { console.error("Missing SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ACCESS_TOKEN. Run it from the scraper folder with: node --env-file=.env scripts/apply-pending-sql.mjs"); process.exit(2); }
