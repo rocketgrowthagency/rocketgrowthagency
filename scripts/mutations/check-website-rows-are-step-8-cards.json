@@ -2,8 +2,8 @@
  [
   "the old always-open form comes back for draft it",
   "admin",
-  "    if (!ran) return wrap(acCardHtml({ tone: \"rga\", tile, label: \"Your move · draft it\", title, say: \"Nothing on their website changes until they approve it in For your approval.\", acts: runB, right: nochange }));",
-  "    if (!ran) return wrap(acCardHtml({ tone: \"rga\", tile, label: \"Your move · draft it\", title, body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
+  "say: \"Nothing on their website changes until they approve it in For your approval.\", body: isPage ? `<div class=\"ob-wc-rev\">${wcProofRowHtml({})}</div>` : \"\", acts: runB, right: nochange }));",
+  "say: \"Nothing on their website changes until they approve it in For your approval.\", body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
   1
  ],
  [

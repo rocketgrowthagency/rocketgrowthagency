@@ -247,7 +247,7 @@ if (out.pageReady.buttons.filter((b) => b === "Send for approval").length !== 1 
 if (out.pageReady.textareas) fail("the page review shows form boxes before you press Edit");
 if ((out.pageReady.html.match(/<del>|<ins>/g) || []).length) fail("a new page is a wall of green highlight again (read the page, not Now → After)");
 if (!/class="ob-wc-rev"/.test(out.pageDrafted.html)) fail("a saved page draft isn't reviewed the same way");
-if ((out.pageLong.html.match(/<li><i class="o"/g) || []).length < 1 || /Title \d+ of 65 characters, names/.test(out.pageLong.text) === false) fail("a title past 65 characters still gets a tick");
+if (!/<li><i class="o"[^>]*><\/i><span><b>Title \d+ of 65 characters/.test(out.pageLong.html)) fail("a title past 65 characters still gets a tick");
 if (!/<span class="ob-wc-new">New<\/span>Honest reporting/.test(out.ready.html)) fail("a short change's new line isn't marked New in plain text");
 if (!/<del>Rank Higher/.test(out.ready.html) || !/<ins>Local SEO That Puts/.test(out.ready.html)) fail("a replacement lost its strike-through → new");
 if (!/scDef\.kind === "visible" && task && \(scDef\.page \|\| task\.site_change/.test(A) || !/The run's raw output<\/summary>/.test(A)) fail("the raw run isn't one quiet link under a website card");
