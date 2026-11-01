@@ -119,6 +119,8 @@ console.log("  ✅ the predicate defaults closed (6 cases)");
 
 const bad = [];
 for (const d of served) {
+  // 🔑 `history: true` is a past version on a change the client already answered (key~n), kept so they can see their record. It carries no live content to review.
+  if (d.history) continue;
   const t = tasks[d.key];
   const state = t?.internal_review?.decision || "(none)";
   if (state !== "approved") bad.push(`${d.key} is being SERVED to the client with internal_review = ${state}`);

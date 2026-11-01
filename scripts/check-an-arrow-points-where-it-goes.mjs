@@ -59,7 +59,7 @@ const LEAVES = [
   // Meet itself) and, while live, the quiet ">Meet ↗</a>" link beside End the call.
   { needle: ">Meet ↗</a>", why: "the Meet link while the call is live, target=_blank" },  // 🔄 2026-10-09: the Overview card's "Join the call ↗" is gone — the call console owns joining (kickoff_every_surface_every_state_v1).
   { needle: ">Their website ↗</a>", why: "the client's site, target=_blank" },
-  { needle: '" target="_blank" rel="noopener">page ↗</a>', why: "the page a website change edits, target=_blank (website_change_approvals_v1, 10-23)" },
+  { needle: 'rel="noopener">Open the map ↗</a>', why: "the client's listing on Google Maps, target=_blank (gbp_protocols_v1, 11-1)" },
   { needle: '<a class="admin-button admin-button-secondary ob-acc-open" href=', why: "admin step 8 \"check their site\": opens the client's OWN website in a new tab (target=_blank) so RGA can see its builder (step3_blocked_sites_v1)" },
   // 10-28 (check-before-confirming found them): the website-change loop, step 8's access card and the To do verb, every one an anchor with target=_blank
   { needle: 'google_by_hand: "Open Business Profile ↗"', why: "the To do verb for a by-hand Google change: drawn only as the mvNaHtml / To do anchor to business.google.com, target=_blank" },
