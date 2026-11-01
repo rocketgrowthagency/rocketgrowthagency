@@ -935,7 +935,7 @@ Pick 3 sub-locations within ${client.primary_market} that would have meaningfull
     instructions: "One page at a time, through For your approval. Never a fixed number of pages:\n1. Run it. A site that already has service and area pages gets its weak lines improved (an unsourced study, a claim we can't back, a trade in lowercase in a heading): only those lines change, nothing else on the page. A site with none gets one new page for the first service and area with no page.\n2. Review it on the card and send for approval.\n3. Once they approve: on GitHub access, open the pull request; on a builder, publish it there. It finishes when it reads back live.",
   },
   {
-    id: "m1.web.blog_seed", title: "Publish 2 seed blog posts (full draft)",
+    id: "m1.web.blog_seed", title: "Publish up to 2 seed blog posts (full draft)",
     type: "hybrid", dependsOn: ["m1.web.priority_pages", "m1.strategy.keywords_locations"],
     actionLabel: "⚡ Draft this for me",
     async run({ client }) {
