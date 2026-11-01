@@ -56,7 +56,9 @@ const gen = fs.readFileSync(GENERATOR, 'utf8');
 // silently validating the generator against a playbook that itself moved.
 const EXPECT = { setup: 1250, monthly: 625, threeMonthTotal: 2500, m2mMonth1: 1875 };
 const pbHas = (s) => pb.includes(s);
-if (!pbHas('$1,250') || !pbHas('$625/mo') || !pbHas('$2,500 total') || pbHas('$1,875')) {
+// 🔒 pricing_page_v3 (10-31): $1,875 is now also the founding plan's real 3-month total, so only its own table row may say it.
+const PB_NO_FOUNDING = pb.split("\n").filter((l) => !/<b>Founding clients<\/b>/.test(l)).join("\n");
+if (!pbHas('$1,250') || !pbHas('$625/mo') || !pbHas('$2,500 total') || PB_NO_FOUNDING.includes('$1,875')) {
   fail('the playbook Pricing table no longer states $1,250 setup / $625 a month / $2,500 over 3 months,\n' +
        '         or it quotes the retired $1,875 plan. If the OFFER changed, update this check AND the generator in the\n' +
        '         same commit — that is the whole point of this gate.');

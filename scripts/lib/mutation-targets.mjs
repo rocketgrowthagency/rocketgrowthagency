@@ -2,6 +2,11 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // contract_v2_redline + pricing_page_v3 (10-31): the contract's money terms are what the code does
+  billingdates: "netlify/functions/_billing-dates.js",
+  cancellationfn: "netlify/functions/admin-record-cancellation.js",
+  dailybilling: "netlify/functions/billing-daily-check.js",
+  recordpayment: "netlify/functions/admin-record-payment.js",
   // admin_system_health_v1 (10-31): every job checks in, silence is an alarm
   jobstatus: "netlify/functions/_job-status.js",
   jobmanifest: "netlify/functions/_job-manifest.js",

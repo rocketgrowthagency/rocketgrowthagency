@@ -1,0 +1,184 @@
+[
+[
+"founding bills the setup fee",
+"contractgen",
+"{ month: 1, amount: 625, note: \"No setup fee\" }",
+"{ month: 1, amount: 1250, note: \"No setup fee\" }",
+1
+],
+[
+"the minimum disappears from the plan",
+"contractgen",
+"    minimum_months: 3,\n",
+"",
+1
+],
+[
+"the mirror keeps an old founding price",
+"plansjson",
+"\"amount\": 625,\n        \"note\": \"No setup fee\"",
+"\"amount\": 1250,\n        \"note\": \"No setup fee\"",
+1
+],
+[
+"the old add-on still makes a $1,250 founding agreement",
+"contractgen",
+"body.plan_code === \"commit_3mo\" && addons.founding ? \"founding\" : body.plan_code",
+"body.plan_code",
+1
+],
+[
+"the founding plan skips the cap",
+"contractgen",
+"if (plan_code === \"founding\") {\n    let taken;",
+"if (false) {\n    let taken;",
+1
+],
+[
+"the founding agreement prints the refund",
+"contractgen",
+"${ctx.plan_code === \"commit_3mo\" ? `<h2>4A. Setup Delivery Promise</h2>",
+"${ctx.plan_code !== \"beta_unbilled\" ? `<h2>4A. Setup Delivery Promise</h2>",
+1
+],
+[
+"the cap can be $0 again",
+"contractgen",
+"THE GREATER OF (i) THE FEES PAID OR PAYABLE BY CLIENT IN THE TWELVE (12) MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM AND (ii) $2,500.",
+"THE FEES PAID BY CLIENT IN THE THREE (3) CALENDAR MONTHS BEFORE THE EVENT.",
+1
+],
+[
+"the guarantee line comes back",
+"contractgen",
+"<p>If Client's access or answers are late, RGA's dates move by the same number of days.</p>",
+"<p>Note: RGA cannot guarantee results if Client fails to fulfill the responsibilities above.</p>",
+1
+],
+[
+"the 30-day cycle returns to the agreement",
+"contractgen",
+"on the same calendar day each month, until this Agreement ends",
+"every 30 days from the first payment",
+1
+],
+[
+"the indemnity goes",
+"contractgen",
+"<h2>10A. Indemnification</h2>",
+"<h2>10A. Other</h2>",
+1
+],
+[
+"the webhook goes back to +30",
+"stripewebhook",
+"const next2 = invoiceFor({ firstYmd: today, invoiceNum: 2, amount: recurringAmount, endsOn: standingNotice(contract)?.ends_on });",
+"const due = new Date(); due.setDate(due.getDate() + 30); const next2 = { amount: recurringAmount, due_date: due.toISOString().split(\"T\")[0] };",
+1
+],
+[
+"the daily check ignores a notice",
+"dailybilling",
+"amount: rate, endsOn: standingNotice(contract)?.ends_on });",
+"amount: rate, endsOn: null });",
+1
+],
+[
+"the manual payment ignores a notice",
+"recordpayment",
+"amount: inv2Amount, endsOn: standingNotice(contract)?.ends_on });",
+"amount: inv2Amount, endsOn: null });",
+1
+],
+[
+"the billing day walks down after a short month",
+"billingdates",
+"return addMonths(firstYmd, Number(invoiceNum) - 1);",
+"let d = firstYmd; for (let i = 1; i < Number(invoiceNum); i++) d = addMonths(d, 1); return d;",
+1
+],
+[
+"dates are UTC again",
+"billingdates",
+"{ timeZone: BUSINESS_TZ, year: \"numeric\"",
+"{ timeZone: \"UTC\", year: \"numeric\"",
+1
+],
+[
+"notice can shorten the founding minimum",
+"billingdates",
+"if (!minimumMonths || !firstYmd) return byNotice;",
+"return byNotice;",
+1
+],
+[
+"the last bill isn't prorated",
+"billingdates",
+"return { due_date: due, amount: Math.round(Number(amount) * share * 100) / 100, prorated: true };",
+"return { due_date: due, amount: Number(amount), prorated: false };",
+1
+],
+[
+"a withdrawn notice still stands",
+"billingdates",
+"if (log[i].event === \"cancel_withdrawn\") return null;",
+"",
+1
+],
+[
+"a due invoice gets deleted",
+"cancellationfn",
+"if (!want) { if (inv.status === \"upcoming\") changes.remove.push(inv); continue; }",
+"if (!want) { changes.remove.push(inv); continue; }",
+1
+],
+[
+"withdrawing doesn't reopen billing",
+"cancellationfn",
+"if (want) changes.create = { invoice_num: n, ...want };",
+"",
+1
+],
+[
+"nothing closes an ended agreement",
+"dailybilling",
+"try { agreementsClosed = await closeEndedAgreements(); }",
+"try { agreementsClosed = 0; }",
+1
+],
+[
+"the document ignores the charged amount",
+"invoicedoc",
+"const isFinal = !!(built && finalThrough && chargedAmount != null && Number(chargedAmount) !== built.total);",
+"const isFinal = false;",
+1
+],
+[
+"the no-extra-cost line goes",
+"invoicedoc",
+" Google Business Profile is a service Google provides at no extra cost. This fee pays for Rocket Growth Agency's management and other services, not for the profile.",
+"",
+1
+],
+[
+"the pricing card goes back to same price",
+"pricing",
+"No setup fee. Your price stays $625 a month for 12 months. 3-month minimum, then cancel with 30 days' notice.",
+"The same price, held for 12 months.",
+1
+],
+[
+"checkout says no minimum for everyone",
+"startgrowth",
+" Founding clients have a 3-month minimum, in exchange for no setup fee.",
+"",
+1
+],
+[
+"the advertised offer drifts",
+"offerpricing",
+"\"minimum_months\": 3,",
+"\"minimum_months\": 0,",
+1
+]
+]

@@ -55,6 +55,7 @@ const ALLOWED = {
   "research_notes/Video and audit report audit/video_generator.md": ["$1,250","$2,500","$625","$750"],
   "research_notes/Website audit/website_audit.md": ["$1,250","$625"],
   "docs/data-file-notes.md": ["$1,250","$2,500","$625"],
+  "terms/index.html": ["$2,500"],
   "research_notes/Legal and operations in depth/legal_and_gaps.md": ["$2,500","$5,000"],
   "research_notes/Onboarding and retention in depth/onboarding_and_gaps.md": ["$2,500","$625"],
   "research_notes/RGA feature comparison/feature_comparison.md": ["$1,250","$5,000","$625"],

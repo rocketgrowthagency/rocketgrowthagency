@@ -31,13 +31,14 @@ const list = (C.match(/RGA's core list: ([^<]+?), where they apply/) || [])[1];
 if (!list) fail("the citation line no longer names the core list");
 else {
   const named = list.replace(/ and /g, ", ").split(/,\s*/).map((x) => x.trim()).map((x) => (x === "Angi" ? "Angie" : x));   // Angi is the brand's name; the code's label says Angie
-  const miss = real.filter((x) => !named.includes(x)), extra = named.filter((x) => !real.includes(x));
+  // contract_v2_redline §2 (10-31): Data Axle and Neustar Localeze have no API and were never shown done, so the contract doesn't promise them. Add them back once a vendor is chosen.
+  const miss = real.filter((x) => !named.includes(x) && !["Data Axle", "Neustar Localeze"].includes(x)), extra = named.filter((x) => !real.includes(x));
   if (miss.length) fail(`the contract leaves out directories the code works: ${miss.join(", ")}`);
   if (extra.length) fail(`the contract names directories the code doesn't work: ${extra.join(", ")}`);
 }
 if (!/read-only access to Client's Google Analytics 4 and Google Search Console/.test(C) || !/manage access to Client's Google Business Profile/.test(C)) fail("the Google access line doesn't say read-only for GA4 + Search Console and manage for the profile");
 // pricing_page_v2 (10-31): what the page says about refunds and founding clients is in the agreement, in words a client can hold us to
-if (!/Setup delivery promise\.<\/strong> If RGA has not delivered the setup items[^<]*within thirty \(30\) days[^<]*provided Client gave the access listed in Section 5 within five \(5\) business days/.test(C)) fail("the page promises a setup refund the agreement doesn't carry");
+if (!/4A\. Setup Delivery Promise<\/h2>\s*<p>If RGA has not delivered the setup items[^<]*within thirty \(30\) days of the later of the Effective Date and Client's first payment[^<]*refund the Month 1 fee/.test(C)) fail("the page promises a setup refund the agreement doesn't carry");
 if (!/No part of the price depends on Client leaving a review of RGA/.test(C)) fail("the founding terms can read as paying for a review");
 if (!/There is no lock-in\./.test(C)) fail("the agreement no longer says there's no lock-in");
 if (!/a ready-to-send personal request that Client sends from their own phone/.test(C)) fail("the review line no longer says the client sends the request");

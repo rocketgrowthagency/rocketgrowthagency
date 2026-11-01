@@ -23,15 +23,15 @@
  [
   "a 9×9 grid is back",
   "contract",
-  "for Client's main keyword, updated monthly",
+  "Client's main keyword, updated monthly",
   "9×9 for Client's main keyword, updated monthly",
   1
  ],
  [
   "Q&A is back",
   "contract",
-  "Review monitoring — weekly",
-  "Q&A management, Review monitoring — weekly",
+  "Review monitoring: weekly",
+  "Q&A management, Review monitoring: weekly",
   1
  ],
  [
@@ -58,8 +58,8 @@
  [
   "the refund isn't in the agreement",
   "contract",
-  "<strong>Setup delivery promise.</strong> If RGA has not delivered",
-  "<strong>Setup.</strong> If RGA has not delivered",
+  "<h2>4A. Setup Delivery Promise</h2>",
+  "<h2>4A. Setup</h2>",
   1
  ],
  [

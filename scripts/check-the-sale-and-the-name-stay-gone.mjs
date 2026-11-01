@@ -61,7 +61,7 @@ if (!/<div class="rga-signature-name">Rocket Growth Agency<\/div>/.test(read("sh
 const P = read("pricing/index.html"), H = read("index.html"), SG = read("start-growth-plan/index.html");
 for (const [n, s] of [["pricing", P], ["home", H]]) {
   if (!s.includes(LINE)) fail(`${n} lost the approved price line`);
-  if (!/aren't delivered within 30 days of signing, your \$1,250 is refunded, as long as you gave us access within 5 business days\./.test(s)) fail(`${n}: the refund's condition isn't beside it`);
+  if (!/aren't delivered within 30 days of signing and your first payment, your \$1,250 is refunded on request\. Late access moves that date by the same number of days\./.test(s)) fail(`${n}: the refund's condition isn't beside it`);
   if (!/Be one of our first 5/.test(s) || !/A review of RGA is never part of the deal, and your price never depends on one\./.test(s)) fail(`${n} lost the founding terms`);
 }
 if (!SG.includes(LINE)) fail("the checkout page lost the approved price line");

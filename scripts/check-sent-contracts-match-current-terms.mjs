@@ -33,6 +33,9 @@ const RETIRED = [
   [/Client commits to the full three-month term in exchange/i, "the 'commits to the full term' wording removed 2026-09-10"],
   [/\$1,500 one-time fee/i, "pre-discount Website Lite fee (now $750)"],
   [/\$3,500 one-time fee/i, "pre-discount Website Full fee (now $1,750)"],
+  [/every 30 days from the first payment/i, "V1 billing cycle (contract_v2_redline: the same calendar day each month)"],
+  [/three \(3\) calendar months immediately preceding/i, "V1 liability cap that could be $0 (contract_v2_redline §10)"],
+  [/RGA cannot guarantee results if Client fails/i, "the V1 line that implied a guarantee (contract_v2_redline §5)"],
 ];
 
 console.log("── no unsigned contract is awaiting a signature on retired terms ──");
