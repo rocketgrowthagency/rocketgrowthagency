@@ -41,6 +41,12 @@ if (!/Setup delivery promise\.<\/strong> If RGA has not delivered the setup item
 if (!/No part of the price depends on Client leaving a review of RGA/.test(C)) fail("the founding terms can read as paying for a review");
 if (!/There is no lock-in\./.test(C)) fail("the agreement no longer says there's no lock-in");
 if (!/a ready-to-send personal request that Client sends from their own phone/.test(C)) fail("the review line no longer says the client sends the request");
+// 🔴 NO LLC EXISTS YET (Chris 10-31): nothing a client signs, receives or pays may name one. When it's formed, change this rule along with the docs.
+for (const f of ["netlify/functions/contract-generate.js", "shared/contract-doc.js", "shared/email-doc.js", "shared/invoice-doc.js"]) {
+  const code = read(f).split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+  if (/Rocket Growth Agency,? LLC|a limited liability company/.test(code)) fail(`${f} names an LLC that doesn't exist yet`);
+}
+if (/process\.env\.RGA_LEGAL_ENTITY/.test(C.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"))) fail("the contract can pick up an old LLC name from a Netlify setting");
 for (const [name, page] of [["pricing", PR], ["home", H]]) if (/60-day/.test(page)) fail(`the ${name} page mentions a 60-day guarantee with no terms`);
 const meta = (PR.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "";
 if (!meta) fail("the pricing page has no meta description");

@@ -75,5 +75,19 @@
   "<strong>There is no lock-in.</strong> Either",
   "Either",
   1
+ ],
+ [
+  "the contract names an LLC again",
+  "contract",
+  "</strong> (\"RGA\")",
+  "</strong>, a limited liability company (\"RGA\")",
+  1
+ ],
+ [
+  "the entity follows a stale setting",
+  "contract",
+  "const RGA_LEGAL_ENTITY = \"Rocket Growth Agency\";",
+  "const RGA_LEGAL_ENTITY = process.env.RGA_LEGAL_ENTITY || \"Rocket Growth Agency\";",
+  1
  ]
 ]
