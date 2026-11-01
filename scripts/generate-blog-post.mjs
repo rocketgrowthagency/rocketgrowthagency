@@ -395,6 +395,8 @@ ${breadcrumbSchema}
     .bp-hero{max-width:1100px;margin:0 auto;padding:2.4rem 1.5rem 1.4rem}
     .bp-hero-inner{max-width:720px}
     .bp-crumb{font-size:.82rem;color:#94a3b8;font-weight:600;margin-bottom:.9rem}
+    .bp-crumb ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.2rem .45rem}
+    .bp-crumb li+li::before{content:"\\203A";margin-right:.45rem}
     .bp-crumb a{color:#2457e6;text-decoration:none}
     .bp-cat{display:inline-flex;align-items:center;gap:.4rem;background:#eef4ff;color:#2457e6;font-weight:700;font-size:.74rem;letter-spacing:.03em;text-transform:uppercase;padding:.34rem .72rem;border-radius:999px;margin-bottom:1rem}
     .bp-cat svg{width:14px;height:14px}
@@ -445,7 +447,7 @@ ${HEADER}
 
   <main class="blog-post" id="main">
     <div class="bp-hero"><div class="bp-hero-inner">
-      <p class="bp-crumb"><a href="/blog/">Blog</a> &rsaquo; ${cat.crumb}</p>
+      <nav class="bp-crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/blog/">Blog</a></li><li aria-current="page">${esc(title)}</li></ol></nav>
       <span class="bp-cat">${cat.icon}${cat.crumb}</span>
       <h1 class="bp-h1">${esc(title)}</h1>
       <div class="bp-meta"><span class="bp-av"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span><span class="bp-by">Rocket Growth Agency<small>${TODAY_HUMAN} &middot; ~${readMin} min read</small></span><span class="bp-share"><a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}" target="_blank" rel="noopener" title="Share on X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h3l-7 8 8 12h-6l-5-7-5 7H3l7-9L3 2h6l4 6z"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}" target="_blank" rel="noopener" title="Share on LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5 2.5 2.5 0 0 0 4.98 3.5zM3 9h4v12H3zM10 9h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05C21.4 8.65 22 11 22 14.1V21h-4v-6.1c0-1.45-.03-3.3-2-3.3-2 0-2.3 1.57-2.3 3.2V21h-4z"/></svg></a></span></div>
