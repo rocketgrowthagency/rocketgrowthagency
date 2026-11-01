@@ -402,6 +402,8 @@ const NOT_PREFLIGHT = {
   'check-business-facts-match-google.mjs': 'the WEBSITE repo\'s Check your business on Google step (approved business_on_google_v1): compare, write + read back, RGA items, client record sync, admin, nightly — Google faked, a portal check, not video preflight',
   'check-step-7-works-in-any-state.mjs': 'the WEBSITE repo\'s step 7 end to end for a Texas and a New York business (Google read → portal → save → record → nightly → admin) — Google + DB faked, a portal check, not video preflight',
   'check-step-9-hours-card.mjs': 'the WEBSITE repo\'s step 9 hours card (approved step9_hours_card_v1) — a portal check, not video preflight',
+  'check-kickoff-why-now-and-blog-choice.mjs': 'the WEBSITE repo's kickoff why-now question + blog card (approved client_kickoff_why_now_v1), file-only; runs in daily-health-check.sh, not video preflight',
+  'check-admin-photo-zoom-full-size.mjs': 'the WEBSITE repo's admin photo zoom (approved admin_photo_zoom_v1), file-only; runs in daily-health-check.sh, not video preflight',
   'check-step-10-booking-link.mjs': 'the WEBSITE repo\'s step 10 booking link for any business (approved step10_booking_link_v1) — a portal/admin check, not video preflight',
   'check-step-11-details.mjs': 'the WEBSITE repo\'s step 11 details for any business (approved step11_details_v1) — a portal/admin check, not video preflight',
   'check-step-13-closeout-call.mjs': 'the WEBSITE repo\'s step 13 close-out call waits honestly (approved step13_closeout_call_v1) — a portal/admin check, not video preflight',

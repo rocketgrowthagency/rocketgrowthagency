@@ -548,6 +548,8 @@ run check-one-google-card.mjs "every Google step draws the one approved card, po
 run check-step-7-works-in-any-state.mjs "step 7 (business on Google) works for a business in any US state (TX/NY places match only in their own state)"
 run check-business-facts-match-google.mjs "step 7 reads Google first, shows each fact beside what the client said, and RGA's changes reach Google"
 run check-step-9-hours-card.mjs "step 9 hours: one card, Change hours opens Editing without a write, a switch per day, holidays with their dates"
+run check-kickoff-why-now-and-blog-choice.mjs "the kickoff why-now question saves only a real answer; the blog card keeps the client's no, owner-only, promising nothing"
+run check-admin-photo-zoom-full-size.mjs "the admin photo zoom opens Google's full link, falls back and says so, and states its size"
 run check-step-10-booking-link.mjs "step 10 booking link works for any business: Google's own link type, our tag, public pages only, website page finder"
 run check-step-11-details.mjs "step 11 details for any business: Google's own groups, identity details only the owner's, RGA recommends only what step 10 proves"
 run check-step-13-closeout-call.mjs "step 13 close-out call: every prerequisite with whose move, Month 1's end from the kickoff, admin row 60 lists them"

@@ -1,0 +1,9 @@
+[
+ ["the full link is not saved", "recheck", "thumb: m.thumbnailUrl || m.googleUrl || null, full: m.googleUrl || null,", "thumb: m.thumbnailUrl || m.googleUrl || null,", 1],
+ ["the zoom opens the small one", "admin", "const first = full || url;", "const first = url;", 1],
+ ["no fallback to the small one", "admin", "if (full && url && !usedSmall) { usedSmall = true; img.src = url; return; }", "", 1],
+ ["the caption loses the size", "admin", "const px = img && img.naturalWidth ? `${img.naturalWidth} x ${img.naturalHeight} pixels` : \"\";", "const px = \"\";", 1],
+ ["the failed state is silent", "admin", "The full-size link did not load, so this is the small version.", "", 1],
+ ["the caption is not shown", "admin", "back.append(img, cap, x);", "back.append(img, x);", 1],
+ ["the click drops the full link", "admin", "full: el.getAttribute(\"data-photo-full\") || \"\"", "full: \"\"", 1]
+]
