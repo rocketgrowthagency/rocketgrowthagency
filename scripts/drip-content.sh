@@ -168,9 +168,8 @@ if [ -n "$(git status --porcelain industries/ blog/ local-seo/ state-of-local-se
   export NETLIFY_SITE_ID="${NETLIFY_SITE_ID:-$(grep -E '^NETLIFY_SITE_ID=' "$SCRAPER_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)}"
   # 🔴 See blog-engine-cron.sh — production is LOCKED on purpose; a bare deploy is refused.
   bash "/Users/chris/RGA/Rocket Growth Agency Website VS Code/scripts/deploy-site.sh" "drip content" 2>&1 | tee -a "$LOG"
-  # IndexNow ping AFTER deploy (needs the fresh sitemap + /{key}.txt live) → Bing/Yandex crawl new posts fast.
-  node "$WEBSITE_DIR/scripts/indexnow-ping.mjs" 2>&1 | tee -a "$LOG" || true
-  echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap regenerated + IndexNow pinged." | tee -a "$LOG"
+  # audit 10-31: an IndexNow ping used to run here, but scripts/indexnow-ping.mjs was never written and `|| true` hid that. Nothing is pinged.
+  echo ">>> deployed — industry: ${IND:-none}, blog: ${BLOG:-none}. Sitemap regenerated." | tee -a "$LOG"
 else
   echo ">>> no changes to deploy (already built?)." | tee -a "$LOG"
 fi
