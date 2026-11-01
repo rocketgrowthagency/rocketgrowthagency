@@ -24,5 +24,17 @@
   "brainbackground",
   "    \"post_count\": <3-5>,\n",
   "    \"post_count\": <3-5>,\n    \"qa_pairs\": [],\n"
+ ],
+ [
+  "the Brain is told the Q&A count again",
+  "brainbackground",
+  "- GBP completeness flags:",
+  "- Q&A: ${gbpProfile.qa_count ?? 0} questions\n- GBP completeness flags:"
+ ],
+ [
+  "the profile pull reads Q&A again",
+  "v2gbpprofile",
+  "    has_reviews: totalReviews > 0,",
+  "    has_qa: false,\n    has_reviews: totalReviews > 0,"
  ]
 ]
