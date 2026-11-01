@@ -54,5 +54,19 @@
   "from = \"/package.json\"",
   "from = \"/opened/package.json\"",
   1
+ ],
+ [
+  "data/playbooks/client-steps.json unfetched and unblocked",
+  "portal",
+  "fetch(\"/data/playbooks/client-steps.json\"",
+  "fetch(\"/data/playbooks/client-steps-x.json\"",
+  1
+ ],
+ [
+  "data/plans.json blocked while the admin fetches it",
+  "toml",
+  "from = \"/data/client-facts.json\"",
+  "from = \"/data/plans.json\"",
+  1
  ]
 ]

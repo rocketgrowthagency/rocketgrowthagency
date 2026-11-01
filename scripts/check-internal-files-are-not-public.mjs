@@ -25,6 +25,35 @@ for (const n of names) {
   if (blocked.has(`/${n}/*`) || blocked.has(`/${n}`) || /^mockup-/.test(n) && blocked.has("/mockup-*") || /^preview-/.test(n) && blocked.has("/preview-*")) continue;
   fail.push(`"${n}" is in the repo and is neither public by decision nor blocked: add it to netlify.toml, or to this gate's public list`);
 }
+// 🔴 THE CLASS BELOW THE TOP LEVEL (11-01): data/playbooks/what-it-does.json was added and served 200 publicly, because data/ is a
+// "public by decision" folder and netlify.toml blocks its files one at a time. Every file under data/ is now either blocked at the edge
+// or actually fetched by browser code (admin/, portal/, shared/, script.js, public html). A file that is neither fails here. A file that is
+// BOTH blocked and fetched fails too: the block would break the page that reads it. Functions read these by require(), which a block
+// does not affect, so "not fetched by a browser" means "block it".
+const SKIPPED_DIRS = /^(node_modules|\.git|\.claude|\.netlify|netlify|scripts|supabase|reports|docs|tests|v|images|_site-snapshots|research_notes|data)$/;
+const walk = (rel, out = []) => {
+  let es; try { es = fs.readdirSync(`${SITE}/${rel}`, { withFileTypes: true }); } catch { return out; }
+  for (const e of es) { const r = rel ? `${rel}/${e.name}` : e.name; if (e.isDirectory()) { if (!SKIPPED_DIRS.test(e.name)) walk(r, out); } else out.push(r); }
+  return out;
+};
+const dataFiles = [];
+const walkData = (rel) => { for (const e of fs.readdirSync(`${SITE}/${rel}`, { withFileTypes: true })) { const r = `${rel}/${e.name}`; if (e.isDirectory()) walkData(r); else dataFiles.push(r); } };
+try { walkData("data"); } catch { console.error(`⚠️  INDETERMINATE: no data/ folder in ${SITE}`); process.exit(2); }
+const browserSrc = walk("").filter((f) => /\.(js|html)$/.test(f) && (/^(admin|portal|shared)\//.test(f) || !f.includes("/") || /\.html$/.test(f)) && !/^(mockup-|preview-)/.test(f));
+const code = browserSrc.map((f) => fs.readFileSync(`${SITE}/${f}`, "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*|<!--)/.test(l)).join("\n")).join("\n");
+const unfetched = [], both = [];
+for (const f of dataFiles) {
+  if (!/\.json$/.test(f)) { fail.push(`${f} is a non-JSON file under data/: decide whether it is public`); continue; }
+  const url = `/${f}`;
+  const isBlocked = blocked.has(url) || blocked.has("/data/*");
+  const esc = f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const fetched = new RegExp(`["'\`]/?${esc}["'\`?#]`).test(code);
+  if (isBlocked && fetched) both.push(url);
+  else if (!isBlocked && !fetched) unfetched.push(url);
+}
+for (const u of unfetched) fail.push(`${u} is served publicly but no browser code fetches it: add a 404 block in netlify.toml (functions read it by require, which a block does not affect)`);
+for (const u of both) fail.push(`${u} is blocked at the edge AND fetched by browser code: the page that reads it breaks`);
+console.log(`data/: ${dataFiles.length} files, ${dataFiles.length - unfetched.length - both.length} accounted for (blocked or fetched), ${unfetched.length} public-but-unfetched, ${both.length} blocked-and-fetched`);
 if (/from = "\/\.netlify/.test(toml)) fail.push("a block touches /.netlify/, where the functions run");
 if (fail.length) { console.error(`🔴 internal files can reach the public site:\n${fail.map((f) => `   · ${f}`).join("\n")}`); process.exit(1); }
 console.log(`✅ every top-level name in the repo is public by decision or blocked at the edge (${blocked.size} blocks)`);
