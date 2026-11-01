@@ -59,5 +59,8 @@
  ["a post's breadcrumb loses the current-page mark", "blogpost", "<li aria-current=\"page\">", "<li>", 1],
  ["the hub's filters are a tablist again", "bloghub", "class=\"bloghub-filters\" role=\"group\" aria-label=\"Filter articles by topic\"", "class=\"bloghub-filters\" role=\"tablist\" aria-label=\"Filter articles\"", 1],
  ["the hub's filter loses its label", "bloghub", "data-filter=\"gbp\" aria-pressed=\"false\" aria-label=\"Show GBP articles\"", "data-filter=\"gbp\" aria-pressed=\"false\"", 1],
- ["the generator writes the plain breadcrumb", "blogpostgen", "<nav class=\"bp-crumb\" aria-label=\"Breadcrumb\"><ol>", "<p class=\"bp-crumb\"><ol>", 1]
+ ["the generator writes the plain breadcrumb", "blogpostgen", "<nav class=\"bp-crumb\" aria-label=\"Breadcrumb\"><ol>", "<p class=\"bp-crumb\"><ol>", 1],
+ ["the homepage loses its price line", "home", "From $625 a month. One plan. Cancel with 30 days' notice.</p>", "</p>", 1],
+ ["the price line says no minimum", "home", "From $625 a month. One plan. Cancel with 30 days' notice.", "From $625 a month. No minimum.", 1],
+ ["the price line drifts from the price file", "home", "From $625 a month. One plan.", "From $599 a month. One plan.", 1]
 ]

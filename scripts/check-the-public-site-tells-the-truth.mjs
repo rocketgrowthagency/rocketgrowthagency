@@ -158,5 +158,16 @@ if (/automatic note/i.test(CT)) fail("contact/index.html promises an automatic n
   const GEN = fs.readFileSync(`${process.env.SCRAPER_COPY_DIR ? process.env.SCRAPER_COPY_DIR + "/scripts" : path.dirname(fileURLToPath(import.meta.url))}/generate-blog-post.mjs`, "utf8");   // new posts come out the same way
   if (/<p class="bp-crumb"/.test(GEN) || !/<nav class="bp-crumb" aria-label="Breadcrumb"><ol>/.test(GEN)) fail("the blog post generator writes the plain-text breadcrumb again");
 }
+// website_leftovers_v1 item 6: the price is near the top, from the price file, and never says "no minimum" (the founding plan has 3 months)
+{
+  const H = raw["index.html"], op = JSON.parse(read("data/offer-pricing.json")), mo = op.prices.monthly.now;
+  const m = H.match(/<p class="hero-price"[^>]*>([^<]*)<\/p>/);
+  if (!m) fail("the homepage lost its short price line near the top");
+  else {
+    if (m[1] !== `From $${mo} a month. One plan. Cancel with 30 days' notice.`) fail(`the homepage price line reads "${m[1]}", not the line made from data/offer-pricing.json`);
+    if (/no minimum|no contract/i.test(m[1])) fail("the homepage price line says no minimum; the founding plan has a 3-month minimum");
+    if (H.indexOf('class="hero-price"') > H.indexOf('<div class="price">')) fail("the homepage price line is no longer above the plan cards");
+  }
+}
 if (F.length) { console.error(`🔴 the public site says something it can't back — ${F.length}:\n${F.slice(0, 40).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log(`✅ ${pages.length} public pages: the approved words, none of the false lines, one footer with Google's notice, FAQ schema equals the page; the exposed files blocked, wrong URLs get a 404, sitemap dates from history`);
