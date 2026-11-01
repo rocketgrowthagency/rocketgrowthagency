@@ -1,0 +1,32 @@
+[
+ [
+  "silence reads as fine",
+  "jobstatus",
+  "if (age > maxAgeMin) return { exit: 1,",
+  "if (false) return { exit: 1,"
+ ],
+ [
+  "a failed watcher reads as fine",
+  "jobstatus",
+  "if (finished != null && row.ok !== true) return { exit: 1,",
+  "if (false) return { exit: 1,"
+ ],
+ [
+  "never finished reads as fine",
+  "jobstatus",
+  "if (finished == null && age > 10) return { exit: 1,",
+  "if (false) return { exit: 1,"
+ ],
+ [
+  "no table reads as fine",
+  "jobstatus",
+  "if (!tableReady) return { exit: 2,",
+  "if (!tableReady) return { exit: 0,"
+ ],
+ [
+  "no row reads as fine",
+  "jobstatus",
+  "if (!row) return { exit: 2,",
+  "if (!row) return { exit: 0,"
+ ]
+]

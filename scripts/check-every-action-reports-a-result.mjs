@@ -120,6 +120,10 @@ const UI_ONLY = {
   "data-gap-toggle": "expands a gap card — the card visibly opens",
   "data-svc-diy-toggle": "expands the do-it-yourself steps and flips its arrow — no mutation",
   "data-stage-done-toggle": "expands a completed stage and relabels itself View/Hide — no mutation",
+  // admin_system_health_v1 (10-31): the System health card's three controls. The first reads again (it spins, then the card repaints or says it couldn't read); the others only open what's there.
+  "data-sh-refresh": "reads the jobs again — the button spins and the card visibly repaints, or says it couldn't read; nothing is written",
+  "data-sh-each": "opens the grouped row into one row per job — the rows visibly appear; no mutation",
+  "data-sh-open": "opens the folded card on other screens — the rows visibly appear; no mutation",
   "data-ap-toggle": "opens one approval in the queue and closes the others — the queue visibly moves",
   // The two gestures inside a step's input surface. Neither writes anything — the submit button
   // beside them is the mutating action, and it reports. Added 2026-09-16 with the input surfaces.

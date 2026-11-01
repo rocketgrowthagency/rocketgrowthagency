@@ -161,15 +161,22 @@ async function copyLogins(dest) {
   if (JSON.parse(fs.readFileSync(file, "utf8")).length !== users.length) throw new Error("logins: the copy doesn't read back whole");
   return users.length;
 }
+// 🔒 System health (approved admin_system_health_v1, 10-31): the job says it ran. job-checkin.mjs always exits 0, so this can't fail a backup. A gate's copy (its own status file) isn't the real backup, and stays quiet.
+function checkIn(...args) {
+  if (process.env.BACKUP_DATA_STATUS) return;
+  try { spawnSync(process.execPath, [path.join(path.dirname(fileURLToPath(import.meta.url)), "job-checkin.mjs"), ...args], { stdio: ["ignore", "inherit", "inherit"], timeout: 12000 }); } catch { /* never the backup's problem */ }
+}
 function record(status) {
   fs.mkdirSync(path.dirname(STATUS), { recursive: true });
   fs.writeFileSync(STATUS, `${JSON.stringify({ at: new Date().toISOString(), ...status })}\n`, { mode: 0o600 });
+  checkIn("finish", "client-data-backup", "--ok", status.ok ? "1" : "0", ...(status.rows == null ? [] : ["--count", String(status.rows), "--note", `${status.tables} tables · ${status.rows.toLocaleString("en-US")} rows`]), ...(status.problem ? ["--error", status.problem] : []));
 }
 function tellChris(msg) {
   if (process.env.BACKUP_QUIET) return;
   spawnSync("osascript", ["-e", `display notification ${JSON.stringify(msg.slice(0, 180))} with title "RGA client data backup failed"`]);
 }
 async function main() {
+  checkIn("start", "client-data-backup");
   if (!SUPA || !KEY) { console.error("⚠️  no Supabase settings"); record({ ok: false, problem: "no Supabase settings" }); process.exit(2); }
   if (!fs.existsSync(path.dirname(DIR))) { const m = "LaCie isn't connected: client data was not backed up"; console.error(`🔴 ${m}`); record({ ok: false, problem: m }); tellChris(m); process.exit(2); }
   const t0 = Date.now();

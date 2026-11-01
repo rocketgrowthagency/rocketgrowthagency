@@ -2,6 +2,16 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // admin_system_health_v1 (10-31): every job checks in, silence is an alarm
+  jobstatus: "netlify/functions/_job-status.js",
+  jobmanifest: "netlify/functions/_job-manifest.js",
+  jobcheckinlib: "netlify/functions/_job-checkin.js",
+  jobcheckinfn: "netlify/functions/job-checkin.js",
+  jobwatcher: "netlify/functions/job-watcher.js",
+  adminhealthfn: "netlify/functions/admin-system-health.js",
+  jobsql: "supabase/job_checkins.sql",
+  jobcheckinmac: "scraper:scripts/job-checkin.mjs",
+  postssweepfn: "netlify/functions/gbp-posts-sweep.js",
   bookkickofffn: "netlify/functions/portal-book-kickoff.js",   // final review 10-20
   clientfeed: "netlify/functions/_client-feed.js",   // final review 10-20
   portalfeedfn: "netlify/functions/portal-feed.js",   // final review 10-20

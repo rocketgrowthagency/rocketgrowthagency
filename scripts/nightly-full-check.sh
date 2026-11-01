@@ -24,6 +24,19 @@ if ! mkdir "$LOCK" 2>/dev/null; then echo "another full check is running ($LOCK)
 trap 'rm -rf "$LOCK"' EXIT
 H=$(date +%H); if [ "${FORCE:-}" != "1" ] && [ "$H" -ge 7 ] && [ "$H" -lt 21 ]; then echo "daytime — the full check runs at night (FORCE=1 to run now)"; exit 0; fi
 
+# 🔒 SYSTEM HEALTH (approved admin_system_health_v1, Chris 10-31): this job says it ran, after the guards above (a refused start isn't a run). Reaching the
+# end counts as having run whatever the verdict: red items live in the morning report. Dying partway is "Failed". The script always exits 0.
+JOB_REACHED_END=""; JOB_NOTE=""
+job_checkin_finish() {
+  local rc=$? ok=0 err=""
+  [ "${DRY:-}" = "1" ] && return 0
+  [ -n "$JOB_REACHED_END" ] && ok=1
+  [ "$ok" = 1 ] || err="It stopped before the end (exit $rc)"
+  node "$SCR/scripts/job-checkin.mjs" finish nightly-full-check --ok "$ok" --note "$JOB_NOTE" --error "$err" || true
+}
+trap 'job_checkin_finish; rm -rf "$LOCK"' EXIT
+[ "${DRY:-}" = "1" ] || node "$SCR/scripts/job-checkin.mjs" start nightly-full-check || true
+
 # ── 1 · the range ────────────────────────────────────────────────────────────────────────────────
 W_HEAD=$(git -C "$SITE" rev-parse HEAD); S_HEAD=$(git -C "$SCR" rev-parse HEAD)
 W_SINCE=$(node -e 'try{process.stdout.write(require(process.argv[1]).website||"")}catch{}' "$STATE")
@@ -36,7 +49,7 @@ S_SINCE=$(node -e 'try{process.stdout.write(require(process.argv[1]).scraper||""
   echo "Range: website ${W_SINCE:0:8}..${W_HEAD:0:8} · scraper ${S_SINCE:0:8}..${S_HEAD:0:8}"
 } > "$OUT"
 if [ "$W_SINCE" = "$W_HEAD" ] && [ "$S_SINCE" = "$S_HEAD" ]; then
-  { echo; echo "## Morning summary"; echo "- **Nothing changed since the last full run.** Nothing to check."; } >> "$OUT"; exit 0
+  { echo; echo "## Morning summary"; echo "- **Nothing changed since the last full run.** Nothing to check."; } >> "$OUT"; JOB_REACHED_END=1; JOB_NOTE="Nothing changed since the last full run"; exit 0
 fi
 
 # ── 2 · what to walk: worklog entries since the last held run ────────────────────────────────────
@@ -106,7 +119,9 @@ if ! grep -q "FAILED" "$FINAL"; then
 else
   VERDICT="**Not everything held.** The red items are listed above and in \"Needs Chris\"; tomorrow night re-checks them with the day's work."
 fi
+if grep -q "FAILED" "$FINAL"; then JOB_NOTE="Not everything held; see the morning report"; else JOB_NOTE="Everything held${FIXED:+ after the night fixer}"; fi
 [ -z "$EVERY_NIGHT_RED" ] || VERDICT="$VERDICT **Red every-night checks:$EVERY_NIGHT_RED.**"
 # ── 6 · the morning summary goes to the top ──────────────────────────────────────────────────────
 { echo "## Morning summary"; echo "- $VERDICT"; [ -n "$FIXED" ] && grep -A40 "^## Morning summary (fixer)" "$RAW/fixer.txt" | tail -n +2 | head -40; echo; cat "$OUT"; } > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+JOB_REACHED_END=1
 echo "full check done: $VERDICT"

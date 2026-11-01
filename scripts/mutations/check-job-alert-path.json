@@ -1,0 +1,260 @@
+[
+ [
+  "a job's throw is swallowed",
+  "jobcheckinlib",
+  "      throw e;   // the job's own failure stays exactly what it was",
+  "      return { statusCode: 500, body: \"{}\" };"
+ ],
+ [
+  "a thrown job isn't recorded",
+  "jobcheckinlib",
+  "await finishRun(run, { ok: false, error: `It threw: ${String(e && e.message || e)}` });",
+  ""
+ ],
+ [
+  "a failed start breaks the job",
+  "jobcheckinlib",
+  "} catch (e) { console.warn(`[job-checkin] ${job}: start not recorded: ${clean(e.message, 160)}`); }\n  return run;",
+  "} catch (e) { throw e; }\n  return run;"
+ ],
+ [
+  "a failed finish breaks the job",
+  "jobcheckinlib",
+  "} catch (e) { console.warn(`[job-checkin] ${run.job}: finish not recorded: ${clean(e.message, 160)}`); return false; }",
+  "} catch (e) { throw e; }"
+ ],
+ [
+  "every call writes a row",
+  "jobcheckinlib",
+  "if (!scheduled) return handler(event, context);",
+  ""
+ ],
+ [
+  "a 500 reads as a good run",
+  "jobcheckinlib",
+  "if (!(status >= 200 && status < 400)) return { ok: false,",
+  "if (false) return { ok: false,"
+ ],
+ [
+  "the reply is replaced",
+  "jobcheckinlib",
+  "    await finishRun(run, fields);\n    return res;",
+  "    await finishRun(run, fields);\n    return { statusCode: 200, body: \"{}\" };"
+ ],
+ [
+  "a secret reaches a row",
+  "jobcheckinlib",
+  "if (val && val.length > 8) s = s.split(val).join(\"[hidden]\");",
+  ""
+ ],
+ [
+  "a Bearer token reaches a row",
+  "jobcheckinlib",
+  ".replace(/\\bBearer\\s+[A-Za-z0-9._-]+/g, \"Bearer [hidden]\")",
+  ""
+ ],
+ [
+  "no table reads as a read failure",
+  "jobcheckinlib",
+  "if (notSetUp(r.status, text)) return { table_ready: false, rows: [] };",
+  ""
+ ],
+ [
+  "a read failure reads as not set up",
+  "jobcheckinlib",
+  "throw new Error(`job_checkins read failed: HTTP ${r.status}`);",
+  "return { table_ready: false, rows: [] };"
+ ],
+ [
+  "the client card helper throws on a dead database",
+  "jobcheckinlib",
+  "} catch { return null; }\n}\n\nmodule.exports",
+  "} catch (e) { throw e; }\n}\n\nmodule.exports"
+ ],
+ [
+  "delivered:false counts as told",
+  "jobwatcher",
+  "const delivered = res && res.delivered === true;",
+  "const delivered = !!res;"
+ ],
+ [
+  "notify's answer isn't read",
+  "jobwatcher",
+  "if (j.delivered === false) return { delivered: false, via: null, error: \"notify-rga said nothing received it\" };",
+  ""
+ ],
+ [
+  "notify's error status isn't read",
+  "jobwatcher",
+  "if (!r.ok) return { delivered: false, via: null, error: `notify-rga HTTP ${r.status}` };",
+  ""
+ ],
+ [
+  "a throw from notify kills the pass",
+  "jobwatcher",
+  "catch (e) { res = { delivered: false, via: null, error: String(e && e.message || e) }; }",
+  "catch (e) { throw e; }"
+ ],
+ [
+  "the watcher alerts about itself",
+  "jobwatcher",
+  "if (s.job === \"job-watcher\") continue;",
+  ""
+ ],
+ [
+  "an alert isn't written down",
+  "jobwatcher",
+  "const wrote = await writeAlert({ job: alertName(s.job), started_at: iso, finished_at: iso, ok: delivered,",
+  "const wrote = await (async () => true)({ job: alertName(s.job), started_at: iso, finished_at: iso, ok: delivered,"
+ ],
+ [
+  "a clear isn't written down",
+  "jobwatcher",
+  "const wrote = await writeAlert({ job: alertName(s.job), started_at: iso, finished_at: iso, ok: true, count: 0,",
+  "const wrote = await (async () => true)({ job: alertName(s.job), started_at: iso, finished_at: iso, ok: true, count: 0,"
+ ],
+ [
+  "a cleared job stays in Messages",
+  "jobwatcher",
+  "await retire(s.job, \"system_job_cleared\");",
+  ""
+ ],
+ [
+  "reminders pile up in Messages",
+  "jobwatcher",
+  "if (d.send !== \"first\" && d.send !== \"retry\") await retire(s.job, \"system_job_repeat\");",
+  ""
+ ],
+ [
+  "the reminder doesn't say so",
+  "jobwatcher",
+  "const reminder = times > 1 ? ` Reminder ${times}: it hasn't cleared.` : \"\";",
+  "const reminder = \"\";"
+ ],
+ [
+  "no client on the alert",
+  "jobwatcher",
+  "client_id: await client(), kind: \"system_job_failed\"",
+  "client_id: null, kind: \"system_job_failed\""
+ ],
+ [
+  "the wrong kind: Messages never shows it",
+  "jobwatcher",
+  "kind: \"system_job_failed\", message: text,",
+  "kind: \"system_job\", message: text,"
+ ],
+ [
+  "no table: it alerts anyway",
+  "jobwatcher",
+  "if (!latest.table_ready) {",
+  "if (false) {"
+ ],
+ [
+  "the watcher doesn't check in",
+  "jobwatcher",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"job-watcher\", exports.handler);",
+  ""
+ ],
+ [
+  "notify-rga drops the summary",
+  "notifyrga",
+  "...(body.summary ? { summary: String(body.summary).slice(0, 300) } : {}), ",
+  ""
+ ],
+ [
+  "notify-rga drops the job",
+  "notifyrga",
+  "...(body.job ? { job: String(body.job).slice(0, 80) } : {})",
+  ""
+ ],
+ [
+  "job-checkin: expected_min from the caller",
+  "jobcheckinfn",
+  "expected_min: m.expected_min ?? null,",
+  "expected_min: body.expected_min ?? null,"
+ ],
+ [
+  "job-checkin: no count becomes zero",
+  "jobcheckinfn",
+  "count: Number.isFinite(Number(body.count)) && body.count !== null && body.count !== \"\" ? Math.round(Number(body.count)) : null,",
+  "count: Number(body.count) || 0,"
+ ],
+ [
+  "job-checkin: an unmatched id reads as recorded",
+  "jobcheckinfn",
+  "if (id && !rows.length) return jsonRes(404, { ok: false, error: \"No row with that id\" });",
+  ""
+ ],
+ [
+  "job-checkin: a finish with no start has no start time",
+  "jobcheckinfn",
+  "{ job: m.job, started_at: ISO(body.started_at) || now, ...row }",
+  "{ job: m.job, ...row }"
+ ],
+ [
+  "job-checkin: no table isn't said",
+  "jobcheckinfn",
+  "if (r.status === 404 || /PGRST205|schema cache/.test(text)) return jsonRes(503, { ok: false, not_set_up: true,",
+  "if (false) return jsonRes(503, { ok: false, not_set_up: true,"
+ ],
+ [
+  "the Mac script can fail its job",
+  "jobcheckinmac",
+  "await checkin(process.argv.slice(2)).catch((e) => say(`not recorded: ${String(e && e.message || e).slice(0, 160)}`));\n  process.exit(0);",
+  "await checkin(process.argv.slice(2)).catch(() => process.exit(1));\n  process.exit(0);"
+ ],
+ [
+  "the Mac script prints the secret",
+  "jobcheckinmac",
+  "not recorded: ${String(e && e.message || e).slice(0, 160)}",
+  "not recorded with ${secret()}"
+ ],
+ [
+  "start and finish land on two rows",
+  "jobcheckinmac",
+  "if (phase === \"start\" && j.id) { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(idFile, String(j.id), { mode: 0o600 }); }",
+  ""
+ ],
+ [
+  "a new run finishes on yesterday's row",
+  "jobcheckinmac",
+  "else fs.rmSync(idFile, { force: true });",
+  ""
+ ],
+ [
+  "the Mac script ignores the off switch",
+  "jobcheckinmac",
+  "if (process.env.JOB_CHECKIN_OFF) return { skipped: true };",
+  ""
+ ],
+ [
+  "the admin read says no table for every failure",
+  "adminhealthfn",
+  "return jsonRes(502, { error: \"Could not read system health just now.\" });",
+  "return jsonRes(200, { ok: true, table_ready: false, jobs: [] });"
+ ],
+ [
+  "the admin read hands out the webhook",
+  "adminhealthfn",
+  "jobs, summary: summarize(jobs),",
+  "jobs, webhook: process.env.RGA_NOTIFICATION_WEBHOOK_URL, summary: summarize(jobs),"
+ ],
+ [
+  "a webhook nobody proved reads OK",
+  "adminhealthfn",
+  "return { tone: \"unk\", tag: \"Not proven\",",
+  "return { tone: \"ok\", tag: \"Not proven\","
+ ],
+ [
+  "no webhook reads fine",
+  "adminhealthfn",
+  "if (!webhookSet) return { tone: \"unk\", tag: \"Messages only\",",
+  "if (!webhookSet) return { tone: \"ok\", tag: \"OK\","
+ ],
+ [
+  "a reply that doesn't say reads as delivered",
+  "jobwatcher",
+  "return { delivered: j.delivered === true, via: j.via || null,",
+  "return { delivered: true, via: j.via || null,"
+ ]
+]

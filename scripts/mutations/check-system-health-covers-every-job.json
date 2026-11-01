@@ -1,0 +1,188 @@
+[
+ [
+  "a scheduled job isn't on the list",
+  "jobmanifest",
+  "{ job: \"gbp-posts-sweep\", label: \"Google posts\", cron: \"0 15 * * *\"",
+  "{ job: \"gbp-posts-sweepx\", label: \"Google posts\", cron: \"0 15 * * *\""
+ ],
+ [
+  "a schedule on the list drifts from netlify.toml",
+  "jobmanifest",
+  "label: \"Billing check\", cron: \"0 8 * * *\"",
+  "label: \"Billing check\", cron: \"0 9 * * *\""
+ ],
+ [
+  "the watcher loses its schedule",
+  "toml",
+  "[functions.\"job-watcher\"]\n  schedule = \"5 * * * *\"",
+  "# gone"
+ ],
+ [
+  "a new scheduled function nobody listed",
+  "toml",
+  "[functions.\"job-watcher\"]",
+  "[functions.\"brand-new-job\"]\n  schedule = \"1 2 * * *\"\n\n[functions.\"job-watcher\"]"
+ ],
+ [
+  "a job stops being wrapped",
+  "postssweepfn",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"gbp-posts-sweep\", exports.handler);",
+  "// unwrapped"
+ ],
+ [
+  "a job wraps under another's name",
+  "postssweepfn",
+  "withCheckin(\"gbp-posts-sweep\", exports.handler)",
+  "withCheckin(\"gbp-profile-watch\", exports.handler)"
+ ],
+ [
+  "a Mac job's cron drifts from its LaunchAgent",
+  "jobmanifest",
+  "label: \"Morning check\", cron: \"30 7 * * *\"",
+  "label: \"Morning check\", cron: \"45 7 * * *\""
+ ],
+ [
+  "weekly audit claimed as running with no LaunchAgent",
+  "jobmanifest",
+  "keep_days: 400, installed: false,",
+  "keep_days: 400,"
+ ],
+ [
+  "the morning check stops posting its start",
+  "dailyhealth",
+  "node scripts/job-checkin.mjs start daily-health-check || true",
+  "true"
+ ],
+ [
+  "the morning check's finish loses the trap",
+  "dailyhealth",
+  "trap job_checkin_finish EXIT",
+  "true"
+ ],
+ [
+  "a finish stops depending on the end",
+  "dailyhealth",
+  "[ -n \"$JOB_REACHED_END\" ] && ok=1",
+  "ok=1"
+ ],
+ [
+  "the end is marked before the gates could launch",
+  "dailyhealth",
+  "say \"\"\n# ── could the gates run AT ALL?",
+  "JOB_REACHED_END=1\nsay \"\"\n# ── could the gates run AT ALL?"
+ ],
+ [
+  "the marker's starting value goes",
+  "dailyhealth",
+  "JOB_REACHED_END=\"\"\njob_checkin_finish() {",
+  "job_checkin_finish() {"
+ ],
+ [
+  "nothing watches the watcher",
+  "dailyhealth",
+  "run check-job-watcher-ran.mjs ",
+  "run_nothing check-job-watcher-ran.mjs "
+ ],
+ [
+  "the night check's start sits before its daytime guard",
+  "nightlyfull",
+  "H=$(date +%H); if [ \"${FORCE:-}\" != \"1\" ]",
+  "node \"$SCR/scripts/job-checkin.mjs\" start nightly-full-check\nH=$(date +%H); if [ \"${FORCE:-}\" != \"1\" ]"
+ ],
+ [
+  "the night check loses its trap",
+  "nightlyfull",
+  "trap 'job_checkin_finish; rm -rf \"$LOCK\"' EXIT",
+  "trap 'rm -rf \"$LOCK\"' EXIT"
+ ],
+ [
+  "the client backup stops posting",
+  "backupdata",
+  "checkIn(\"start\", \"client-data-backup\");",
+  ""
+ ],
+ [
+  "the client backup's finish goes",
+  "backupdata",
+  "checkIn(\"finish\", \"client-data-backup\",",
+  "checkIn(\"finished\", \"client-data-backup\","
+ ],
+ [
+  "the weekly audit stops posting its start",
+  "weeklyaudit",
+  "checkin start weekly-audit",
+  "true"
+ ],
+ [
+  "the SQL loses a column",
+  "jobsql",
+  "  expected_min  integer,\n",
+  ""
+ ],
+ [
+  "the SQL leaves the table open",
+  "jobsql",
+  "alter table public.job_checkins enable row level security;",
+  ""
+ ],
+ [
+  "the SQL leaves the view open",
+  "jobsql",
+  "revoke all on public.job_checkins_latest from anon, authenticated;",
+  ""
+ ],
+ [
+  "the view runs as its owner",
+  "jobsql",
+  "with (security_invoker = true)",
+  ""
+ ],
+ [
+  "job-checkin takes anyone's post",
+  "jobcheckinfn",
+  "const gate = requireInternalSecret(event); if (gate.error) return gate.error;",
+  "const gate = {};"
+ ],
+ [
+  "job-checkin lets a caller fake a Netlify job",
+  "jobcheckinfn",
+  "!m || m.where !== \"mac\"",
+  "!m"
+ ],
+ [
+  "anyone can start the watcher",
+  "jobwatcher",
+  "const g = requireCronOrInternal(event); if (g.error) return g.error;",
+  "const g = {};"
+ ],
+ [
+  "the admin read needs no sign-in",
+  "adminhealthfn",
+  "const gate = await requireWorkspaceUser(event);\n  if (gate.error) return gate.error;",
+  "const gate = {};"
+ ],
+ [
+  "admin loses the slot",
+  "adminhtml",
+  "<div id=\"systemHealthCard\" hidden></div>",
+  ""
+ ],
+ [
+  "a throw in the card can cost a view",
+  "admin",
+  "try { syncSystemHealth(name); } catch (e) { console.error(\"System health card:\", e); }",
+  "syncSystemHealth(name);"
+ ],
+ [
+  "a job marked pending when its script is already wired",
+  "jobmanifest",
+  "keep_days: 400, expected_min: 100 },",
+  "keep_days: 400, expected_min: 100, checkin_pending: \"x\" },"
+ ],
+ [
+  "the LaCie job stops being pending with no check-in in its script",
+  "jobmanifest",
+  "checkin_pending: \"Its check-in goes in once the backup that was running finishes\"",
+  "install_note: \"\""
+ ]
+]

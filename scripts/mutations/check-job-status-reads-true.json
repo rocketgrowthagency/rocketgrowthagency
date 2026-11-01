@@ -1,0 +1,290 @@
+[
+ [
+  "only OK is healthy tone broken: unknown paints green",
+  "jobstatus",
+  "const toneOf = (state) => (state === \"ok\" ? \"ok\" : PROBLEM.has(state) ? \"you\" : \"unk\");",
+  "const toneOf = (state) => (PROBLEM.has(state) ? \"you\" : \"ok\");"
+ ],
+ [
+  "not set up reads as a real state",
+  "jobstatus",
+  "if (!ctx.tableReady) return done(\"not_set_up\", \"Nothing records this yet\");",
+  ""
+ ],
+ [
+  "no row reads as OK",
+  "jobstatus",
+  "return done(\"not_recorded\", \"No check-in on record yet\");",
+  "return done(\"ok\", \"No check-in on record yet\");"
+ ],
+ [
+  "silence ignores when check-ins began",
+  "jobstatus",
+  "slot != null && slot >= ctx.systemStart",
+  "slot != null"
+ ],
+ [
+  "never late",
+  "jobstatus",
+  "if (slot != null && started < slot - EARLY_MS) return",
+  "if (false) return"
+ ],
+ [
+  "grace is ignored",
+  "jobstatus",
+  "const slot = prevDue(job.cron, now - graceMs, job.tz);",
+  "const slot = prevDue(job.cron, now, job.tz);"
+ ],
+ [
+  "a start before the slot never counts",
+  "jobstatus",
+  "started < slot - EARLY_MS",
+  "started < slot"
+ ],
+ [
+  "a failure reads as OK",
+  "jobstatus",
+  "if (row.ok !== true) return done(\"failed\",",
+  "if (row.ok === false && false) return done(\"failed\","
+ ],
+ [
+  "a finish with no ok reads as OK",
+  "jobstatus",
+  "if (row.ok !== true) return done(\"failed\",",
+  "if (row.ok === false) return done(\"failed\","
+ ],
+ [
+  "some failed is OK",
+  "jobstatus",
+  "if (row.error) return done(\"partial\",",
+  "if (false) return done(\"partial\","
+ ],
+ [
+  "did nothing is OK",
+  "jobstatus",
+  "if (Number(row.count) < Number(row.expected_min)) return done(\"empty\",",
+  "if (false) return done(\"empty\","
+ ],
+ [
+  "a floor met exactly reads empty",
+  "jobstatus",
+  "Number(row.count) < Number(row.expected_min)",
+  "Number(row.count) <= Number(row.expected_min)"
+ ],
+ [
+  "no count reads as zero",
+  "jobstatus",
+  "if (row.count == null) return done(\"no_count\",",
+  "if (false) return done(\"no_count\","
+ ],
+ [
+  "never-finished reads as running forever",
+  "jobstatus",
+  "if (now - started > job.max_run_min * 60000) return done(\"not_finished\",",
+  "if (false) return done(\"not_finished\","
+ ],
+ [
+  "not installed is forgotten",
+  "jobstatus",
+  "if (job.installed === false) return done(\"not_installed\",",
+  "if (false) return done(\"not_installed\","
+ ],
+ [
+  "not proven is forgotten",
+  "jobstatus",
+  "if (job.unproven) return done(\"unproven\",",
+  "if (false) return done(\"unproven\","
+ ],
+ [
+  "time zone ignored",
+  "jobstatus",
+  "const off = offsetMs(nowMs, tz), local = new Date(nowMs + off);",
+  "const off = 0, local = new Date(nowMs + off);"
+ ],
+ [
+  "daylight saving ignored",
+  "jobstatus",
+  "return guess - offsetMs(first, tz);",
+  "return guess - offsetMs(guess - 86400000 * 30, tz);"
+ ],
+ [
+  "weekdays ignored",
+  "jobstatus",
+  "domStar ? DOW.has(W)",
+  "domStar ? true"
+ ],
+ [
+  "the 1st ignored",
+  "jobstatus",
+  "dowStar ? DOM.has(D)",
+  "dowStar ? true"
+ ],
+ [
+  "Sunday as 7 or 0 broken",
+  "jobstatus",
+  "out.add(v === 7 && max === 7 ? 0 : v)",
+  "out.add(v)"
+ ],
+ [
+  "repeats every hour",
+  "jobstatus",
+  "if (at == null || now - at >= REMIND_MS) return { send: \"reminder\", times: times + 1 };",
+  "return { send: \"reminder\", times: times + 1 };"
+ ],
+ [
+  "never reminds",
+  "jobstatus",
+  "if (at == null || now - at >= REMIND_MS) return { send: \"reminder\", times: times + 1 };",
+  ""
+ ],
+ [
+  "an undelivered alert counts as told",
+  "jobstatus",
+  "if (lastAlert.ok !== true) return { send: \"retry\", times };",
+  ""
+ ],
+ [
+  "unknown clears an alert",
+  "jobstatus",
+  "if (status.state === \"ok\" && open) return { clear: true };",
+  "if (open) return { clear: true };"
+ ],
+ [
+  "a cleared stretch never alerts again",
+  "jobstatus",
+  "const open = !!lastAlert && !/^cleared/.test(String(lastAlert.note || \"\"));\n  if (status.problem)",
+  "const open = !!lastAlert;\n  if (status.problem)"
+ ],
+ [
+  "the watcher check: silence is fine",
+  "jobstatus",
+  "if (age > maxAgeMin) return { exit: 1,",
+  "if (false) return { exit: 1,"
+ ],
+ [
+  "client card: no table reads as checked",
+  "jobstatus",
+  "if (!tableReady) return null;",
+  "if (!tableReady) return true;"
+ ],
+ [
+  "client card: last month counts",
+  "jobstatus",
+  "a.getUTCMonth() === b.getUTCMonth()",
+  "true"
+ ],
+ [
+  "client card: nothing on record reads as checked",
+  "jobstatus",
+  "if (!lastGoodRow || lastGoodRow.ok !== true) return false;",
+  "if (!lastGoodRow) return true;"
+ ],
+ [
+  "the card: not set up reads all clear",
+  "admin",
+  "if (d.table_ready !== true) { pill = \"Not set up yet\"; title = \"System health isn't set up yet\"; }",
+  "if (d.table_ready !== true) { cls = \"ok\"; pill = \"All clear\"; }"
+ ],
+ [
+  "the card: one unknown doesn't stop all clear",
+  "admin",
+  "jobs.every((j) => j.state === \"ok\")",
+  "jobs.some((j) => j.state === \"ok\")"
+ ],
+ [
+  "the card: an empty list reads all clear",
+  "admin",
+  "d.table_ready === true && jobs.length > 0 && jobs.every",
+  "d.table_ready === true && jobs.every"
+ ],
+ [
+  "the card: problem count wrong",
+  "admin",
+  "const problems = jobs.filter((j) => j.problem === true);",
+  "const problems = [];"
+ ],
+ [
+  "the card: a failed read reads as loading forever",
+  "admin",
+  "if (o.loading) return `<div class=\"ob-zc\">",
+  "if (true) return `<div class=\"ob-zc\">"
+ ],
+ [
+  "the card: unknown gets the OK look",
+  "admin",
+  "const tone = r.tone === \"ok\" ? \"ok\" : r.tone === \"you\" ? \"you\" : \"unk\";",
+  "const tone = r.tone === \"you\" ? \"you\" : \"ok\";"
+ ],
+ [
+  "the card: problems hide in a group",
+  "admin",
+  "const groupable = (j) => j.where === \"netlify\" && [\"ok\", \"not_recorded\", \"not_set_up\"].includes(j.state);",
+  "const groupable = (j) => j.where === \"netlify\";"
+ ],
+ [
+  "the card: Mac jobs vanish into the group",
+  "admin",
+  "const groupable = (j) => j.where === \"netlify\" && ",
+  "const groupable = (j) => "
+ ],
+ [
+  "the card: other screens show every row",
+  "admin",
+  "if (!o.full && !o.open) return",
+  "if (false) return"
+ ],
+ [
+  "the card: the footer control goes",
+  "admin",
+  "<div class=\"ob-zc-f\">${check}<span class=\"ob-zc-note\">A check-in means",
+  "<div class=\"ob-zc-f\"><span class=\"ob-zc-note\">A check-in means"
+ ],
+ [
+  "the card: a job's error isn't escaped",
+  "admin",
+  "${escapeHtml(r.line + alert)}",
+  "${r.line + alert}"
+ ],
+ [
+  "the card: the alert line goes",
+  "admin",
+  "const alert = r.alert && r.alert.line ? ` · ${r.alert.line}` : \"\";",
+  "const alert = \"\";"
+ ],
+ [
+  "metrics: a failed pull isn't named",
+  "jobmanifest",
+  "error: someFailed(bad, pulled.length, \"metric pulls\")",
+  "error: null"
+ ],
+ [
+  "brain: the floor goes",
+  "jobmanifest",
+  "return { count: good, expected_min: 1, error: someFailed(r.length - good",
+  "return { count: good, error: someFailed(r.length - good"
+ ],
+ [
+  "billing: a failed read reads fine",
+  "jobmanifest",
+  "error: b.read_error ? `Could not read the open invoices: ${b.read_error}` : null",
+  "error: null"
+ ],
+ [
+  "todo: a held-back email reads fine",
+  "jobmanifest",
+  "error: b.suppressed ? \"The email was held back and didn't go out\" : null",
+  "error: null"
+ ],
+ [
+  "photos: zero due becomes a problem",
+  "jobmanifest",
+  "return { count: b.clients, error: someFailed(bad, r.length, \"client runs\")",
+  "return { count: b.clients, expected_min: 1, error: someFailed(bad, r.length, \"client runs\")"
+ ],
+ [
+  "a pending check-in alerts anyway",
+  "jobstatus",
+  "if (job.checkin_pending) return done(\"not_recorded\", job.checkin_pending);",
+  ""
+ ]
+]

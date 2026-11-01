@@ -2,8 +2,8 @@
  [
   "notify-rga stores the emoji label",
   "notifyrga",
-  "payload: { label: plainLabel, kind, message }",
-  "payload: { label, kind, message }",
+  "payload: { label: plainLabel, kind, message,",
+  "payload: { label, kind, message,",
   1
  ],
  [

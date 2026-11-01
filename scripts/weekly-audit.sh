@@ -10,8 +10,14 @@ DAY=$(date +%F)
 OUT="$SITE/reports/audits/$DAY"
 STATUS="$HOME/.claude/weekly-audit-status.json"
 mkdir -p "$OUT"
-record() { printf '{"at":"%s","ok":%s,"file":"%s","note":"%s"}\n' "$(date -u +%FT%TZ)" "$1" "$OUT/audit.md" "$2" > "$STATUS"; }
+# 🔒 System health (approved admin_system_health_v1, 10-31): it says it ran. job-checkin.mjs always exits 0, and it can't change anything here; `record` is every ending.
+checkin() { node "$SCR/scripts/job-checkin.mjs" "$@" || true; }
+record() {
+  printf '{"at":"%s","ok":%s,"file":"%s","note":"%s"}\n' "$(date -u +%FT%TZ)" "$1" "$OUT/audit.md" "$2" > "$STATUS"
+  if [ "$1" = true ]; then checkin finish weekly-audit --ok 1 --note "Saved reports/audits/$DAY/audit.md"; else checkin finish weekly-audit --ok 0 --error "$2"; fi
+}
 tell() { [ -n "${BACKUP_QUIET:-}" ] || osascript -e "display notification \"$1\" with title \"RGA weekly audit\"" 2>/dev/null; }
+checkin start weekly-audit
 if ! command -v claude >/dev/null 2>&1; then record false "claude not found"; tell "couldn't run: claude not found"; exit 2; fi
 cd "$SITE" || exit 2
 claude -p "$(cat "$SCR/scripts/weekly-audit-prompt.md")" --model opus --add-dir "$SCR" --max-turns 120 \

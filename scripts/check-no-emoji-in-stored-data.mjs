@@ -19,7 +19,7 @@ const strip = (s) => s.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n")
 const notify = strip(read("netlify/functions/notify-rga.js")), portal = strip(read("portal/portal.js"));
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}️]/u;
 const F = []; const fail = (m) => F.push(m);
-if (!/payload: \{ label: plainLabel, kind, message \}/.test(notify) || !/const plainLabel = String\(label\)\.replace\(/.test(notify)) fail("notify-rga stores its emoji label in client_activity again");
+if (!/payload: \{ label: plainLabel, kind, message\b/.test(notify) || !/const plainLabel = String\(label\)\.replace\(/.test(notify)) fail("notify-rga stores its emoji label in client_activity again");
 if (/from\("client_activity"\)\.insert\(/.test(portal)) fail("the portal inserts into client_activity — RLS refuses a client, so the row never lands");
 let live = "not checked";
 const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_ROLE_KEY;

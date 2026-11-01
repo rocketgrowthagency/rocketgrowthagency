@@ -39,6 +39,21 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" || { echo "✗ cannot ente
 if [ -f .env ]; then set -a; . ./.env >/dev/null 2>&1 || true; set +a; fi
 
 
+# 🔒 SYSTEM HEALTH (approved admin_system_health_v1, Chris 10-31): this job says it ran. 10-27 to 10-30 it died four mornings running and nobody
+# heard. Reaching the end counts as having run, however many gates are red: those are the gates' verdict and live in the morning report. Dying
+# partway (the trap sees it) or gates that can't launch is "Failed", and nothing healthy is "Did nothing". The script always exits 0 and never
+# breaks this job. The trap uses defaults because it can fire before the counters below exist, and `set -u` would kill it too.
+JOB_REACHED_END=""
+job_checkin_finish() {
+  local rc=$? ok=0 err=""
+  [ -n "$JOB_REACHED_END" ] && ok=1
+  [ "$ok" = 1 ] || err="It stopped before the end (exit $rc)"
+  [ "${UNRUNNABLE:-0}" -gt 0 ] && err="${UNRUNNABLE:-0} gates could not launch"
+  node scripts/job-checkin.mjs finish daily-health-check --ok "$ok" --count "${OK:-0}" --note "${OK:-0} checks healthy · ${FAIL:-0} red · ${INDET:-0} could not tell" --error "$err" || true
+}
+trap job_checkin_finish EXIT
+node scripts/job-checkin.mjs start daily-health-check || true
+
 # 🔑 RECORD EVERY VERDICT. check-no-gate-is-permanently-indeterminate reads this to find gates that
 # have NEVER once answered — wired, counted, and blind. Cheap: one line appended per gate per run.
 # → feedback_dead_check_selector_gap
@@ -575,6 +590,11 @@ run check-internal-files-are-not-public.mjs "everything in the website repo is p
 run check-lacie-backup-works.mjs "the daily backup of chats, memory and both repos to the Mac and LaCie copies, removes nothing, carries no .env, fails loudly, and ran in the last 36 hours (Chris 10-31)"
 run check-the-sale-and-the-name-stay-gone.mjs "no sale, no struck price, no owner's name, no Q&A on any public page; one plan; the founding cap stops at 5"
 run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, never change anything"
+# 🔒 System health (admin_system_health_v1, 10-31): every automated job checks in, silence is an alarm, and the Mac watches the watcher.
+run check-system-health-covers-every-job.mjs "every scheduled job is on the list, wrapped, on the right schedule, and the table and its guards match"
+run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"
+run check-job-alert-path.mjs "break a job on a fake: the check-in records it, the watcher alerts once then daily, a success clears it, an undelivered alert is on record"
+run check-job-watcher-ran.mjs "the hourly job watcher itself ran (the Mac watches the watcher)"
 run check-the-contract-promises-only-what-the-code-does.mjs "the agreement promises only what the code does; the public pages drop the 60-day claim and the double price"
 run check-step10-photo-truth.mjs "step 10 says only what Google tells us (Chris 10-30): no green until a test proves it, the count leaves out a hidden logo and second copies, Keep undoes, the only visible photo stays, up to 5 a day, RGA notices really send"
 run check-client-open-calls.mjs "client portal open calls (approved 10-30: client_open_calls_v1): Google unreadable says reload with no button, verify-again card and hold from the client's own profile, step 9 names the tool, on-Google words, said-no shows one button and the form opens on press"
@@ -803,6 +823,8 @@ if [ -f "$ALERT_FILE" ]; then
   rm -f "$ALERT_FILE"
   echo "✅ every gate launched — cleared $ALERT_FILE"
 fi
+
+JOB_REACHED_END=1   # every gate launched and the run got here: System health reads this as having run
 
 # 🔑 A CRASHED GATE IS COUNTED AND NAMED SEPARATELY. Folding it into "indeterminate" hides the one
 # fact that matters about it: somebody has to go and fix the gate, or that area is unguarded.
