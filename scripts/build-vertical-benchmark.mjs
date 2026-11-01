@@ -255,6 +255,22 @@ async function syncToSupabase(benchmark, slug) {
     const txt = await res.text();
     console.warn(`   [supabase-sync] ⚠️  failed (${res.status}): ${txt.slice(0, 200)}`);
   }
+
+  // 🔑 DATED HISTORY (data_keep_v1, 10-31): the upsert above overwrites the last run, so a market's past could only be found in git.
+  // Every run also adds ONE dated, never-edited row. A second run the same day is ignored (one reading per term per day). No extra
+  // search is made: this saves what the run already computed. No table yet (supabase/data_keep.sql) = a printed "not set up", not a failure.
+  try {
+    const hist = await fetch(`${SUPABASE_URL}/rest/v1/vertical_benchmark_history?on_conflict=search_term,scanned_on`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_SERVICE_ROLE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify({ search_term: row.search_term, scanned_on: new Date().toISOString().slice(0, 10), source: row.source || 'scraper', data: row }),
+    });
+    if (hist.ok) console.log(`   [supabase-sync] ✓ dated copy kept in vertical_benchmark_history`);
+    else {
+      const t = await hist.text();
+      console.warn(/PGRST205|does not exist|schema cache/i.test(t) ? `   [supabase-sync] dated history: Not set up (run supabase/data_keep.sql)` : `   [supabase-sync] ⚠️  dated copy NOT kept (${hist.status}): ${t.slice(0, 160)}`);
+    }
+  } catch (e) { console.warn(`   [supabase-sync] ⚠️  dated copy NOT kept: ${String(e.message).slice(0, 120)}`); }
 }
 
 async function main() {
