@@ -65,8 +65,8 @@
 [
 "Remove waits for a reload again",
 "portal",
-"if (stage === \"saved\") u.sent(d.id);",
-"if (stage === \"saved\") u.sent();",
+"if (stage === \"saved\") { u.sent(d.id);",
+"if (stage === \"saved\") { u.sent();",
 1
 ]
 ]

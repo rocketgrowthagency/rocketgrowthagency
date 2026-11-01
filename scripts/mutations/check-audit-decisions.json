@@ -408,8 +408,8 @@
 [
 "the shot's row loses it",
 "portal",
-"        : liveBy ? `<div class=\"pm-turned is-rga pm-liveby\"><span>${escapeHtml(liveBy)}</span></div>` : \"\" });",
-"        : \"\" });",
+"        : liveBy ? `<div class=\"pm-turned is-rga pm-liveby\"><span>${escapeHtml(liveBy)}</span></div>`",
+"        : false ? \"\"",
 1
 ],
 [

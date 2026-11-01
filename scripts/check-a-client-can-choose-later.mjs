@@ -116,7 +116,7 @@ const on = ctx.how(step, { ...task, later }, true, [], "c1", null);
 // shot open, the shot list and the people question wait, "Your other steps carry on." and the foot; I'm ready now + Change date under the card
 if (!/<div class="pm-k5-h you">[^]*?<b>Set for later · we'll email you a reminder on [A-Z][a-z]{2} \d{1,2}<\/b><span>2 of 20<\/span>/.test(on) || !/class="pm-commit" data-later-clear>I(?:'|&#39;)m ready now</.test(on) || !/class="pm-amend" data-later-change>Change date</.test(on) || /Not ready to take photos yet/.test(on)) fail("a step that's \"later\" isn't the card (when, 2 of 20) with I'm ready now + Change date under it");
 if (!/<div class="pm-p10-tiles">/.test(on) || !/<div class="pm-p10-panel" hidden>/.test(on) || /data-p10-shot="\d+">/.test(on)) fail("while it's \"later\" the tiles aren't there, or a shot opens by itself");
-if (/The shot list · tap a kind|data-team-size/.test(on)) fail("while it's \"later\" the shot list or the people question still shows");
+if (/The shot list · photos added|data-team-size/.test(on)) fail("while it's \"later\" the shot list or the people question still shows");
 if (!/<div class="pm-cs-note">Your other steps carry on\.<\/div><div class="pm-cs-foot">/.test(on)) fail("while it's \"later\" the card lost \"Your other steps carry on.\" or its foot");
 if (on.indexOf("data-later-acts") < on.indexOf("pm-cs-foot")) fail("I'm ready now + Change date aren't under the card");
 if (!/data-slot-file data-client-id="c1" data-shot-n=/.test(on) || /<input disabled type="file"/.test(on)) fail("while it's \"later\" a photo can't be added (an upload still ends the reminder)");

@@ -1,0 +1,135 @@
+[
+ [
+  "the hint line changes its words",
+  "portal",
+  "const PHOTO_HINT = \"JPG, PNG or a phone photo. Best at 720 pixels or wider. We resize big files for you.\";",
+  "const PHOTO_HINT = \"Upload a photo.\";",
+  1
+ ],
+ [
+  "a short side of 719 stops getting a note",
+  "portal",
+  "const PHOTO_BEST_EDGE = 720;",
+  "const PHOTO_BEST_EDGE = 250;",
+  1
+ ],
+ [
+  "a note about a size nobody measured",
+  "portal",
+  "if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0 && Math.min(w, h) < PHOTO_BEST_EDGE) {",
+  "if (Math.min(w, h) < PHOTO_BEST_EDGE || !(w > 0)) {",
+  1
+ ],
+ [
+  "the note speaks without a real not-this-shot answer",
+  "portal",
+  "check.matches === false ? noDot(check.what) : \"\"",
+  "check.matches !== true ? noDot(check.what) : \"\"",
+  1
+ ],
+ [
+  "an errored check still speaks",
+  "portal",
+  "const what = check && !check.error && check.matches === false",
+  "const what = check && check.matches === false",
+  1
+ ],
+ [
+  "a kept photo's note comes back",
+  "portal",
+  "if (!id || photoIsKept(id)) return \"\";",
+  "if (!id) return \"\";",
+  1
+ ],
+ [
+  "the chips go back below the tiles",
+  "portal",
+  "return `${kinds}<div class=\"pm-p10${locked ? \" is-locked\" : \"\"}\" data-p10=\"${escapeAttribute(clientId)}\">${PHOTO_EXAMPLE_SPRITE}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>`;",
+  "return `<div class=\"pm-p10${locked ? \" is-locked\" : \"\"}\" data-p10=\"${escapeAttribute(clientId)}\">${PHOTO_EXAMPLE_SPRITE}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>${kinds}`;",
+  1
+ ],
+ [
+  "the chips stop saying what they count",
+  "portal",
+  "csChips(\"The shot list · photos added\"",
+  "csChips(\"The shot list · tap a kind to jump to it\"",
+  1
+ ],
+ [
+  "the add box loses its hint",
+  "portal",
+  "        : `<label class=\"add\">+ Add photo${addInput}</label>${locked ? \"\" : `<small class=\"pm-up-hint\">${escapeHtml(PHOTO_HINT)}</small>`}`,",
+  "        : `<label class=\"add\">+ Add photo${addInput}</label>`,",
+  1
+ ],
+ [
+  "the retake box loses its hint",
+  "portal",
+  "        ? `<label class=\"add\">+ Replace photo${addInput}</label>${locked ? \"\" : `<small class=\"pm-up-hint\">${escapeHtml(PHOTO_HINT)}</small>`}`",
+  "        ? `<label class=\"add\">+ Replace photo${addInput}</label>`",
+  1
+ ],
+ [
+  "a saved photo stops asking for the check",
+  "portal",
+  "photoCheckAtUpload(clientId, d, rowEl, {",
+  "void (clientId, d, rowEl, {",
+  1
+ ],
+ [
+  "the size is not passed on",
+  "portal",
+  "storagePath, width: prep.width, height: prep.height });",
+  "storagePath });",
+  1
+ ],
+ [
+  "the next visit forgets the note",
+  "portal",
+  "        : p && !locked && p.publish_state === \"in_review\" ? photoCheckNoteHtml(p, it, (taskState?.photo_ai?.uploads || {})[p.id], clientId) : \"\" });",
+  "        : \"\" });",
+  1
+ ],
+ [
+  "a plain logo is refused less (limits change)",
+  "portal",
+  "const PHOTO_LIMITS = { minBytes: 10240,",
+  "const PHOTO_LIMITS = { minBytes: 0,",
+  1
+ ],
+ [
+  "a second call looks again",
+  "photocheckfn",
+  "if (have && have.what && !have.error) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a failed look is kept",
+  "photocheckfn",
+  "if (c.error || !c.what) return json(200, { ok: true, check: null, cached: false, reason: \"the check could not look\" });",
+  "",
+  1
+ ],
+ [
+  "a photo already on Google is looked at",
+  "photocheckfn",
+  "if (photo.publish_state !== \"in_review\" || !Number.isFinite(photo.shot_n))",
+  "if (!Number.isFinite(photo.shot_n))",
+  1
+ ],
+ [
+  "anyone can ask",
+  "photocheckfn",
+  "  if (gate.error) return gate.error;\n",
+  "",
+  1
+ ],
+ [
+  "the AI call is copied back into the upload check",
+  "photocheckfn",
+  "const { look } = require(\"./_photo-look\");",
+  "const look = async () => fetch(\"https://api.anthropic.com/v1/messages\");",
+  1
+ ]
+]

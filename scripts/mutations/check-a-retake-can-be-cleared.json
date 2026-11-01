@@ -5,7 +5,7 @@
  ["activity doesn't mark the clear", "photoremove", "...(row.publish_state === \"turned_down\" ? { cleared_retake: true } : {})", "", 1],
  ["no Clear it button", "portal", "data-photo-clear data-client-id=", "data-client-id=", 1],
  ["Clear it asks the Google question", "portal", "data-photo-clear data-client-id=", "data-photo-clear data-on-google data-client-id=", 1],
- ["Please retake chip back in status", "portal", "        ? `<label class=\"add\">+ Replace photo${addInput}</label>`", "        ? `<span class=\"st you\">${escapeHtml(PHOTO_STATE.turned_down.label)}</span><label class=\"add\">+ Replace photo${addInput}</label>`", 1],
+ ["Please retake chip back in status", "portal", "        ? `<label class=\"add\">+ Replace photo${addInput}</label>${locked", "        ? `<span class=\"st you\">${escapeHtml(PHOTO_STATE.turned_down.label)}</span><label class=\"add\">+ Replace photo${addInput}</label>${locked", 1],
  ["Google no longer named", "portal", "${fromGoogle ? \"Google said: \" : \"\"}${why.trim()}", "${why.trim()}", 1],
  ["fix dropped from the line", "portal", "fix ? fix.trim() : \"\"].filter(Boolean)", "\"\"].filter(Boolean)", 1],
  ["facts split again", "portal", "${!p ? facts(it) : \"\"}", "${!p ? spaceTag(it) : \"\"}", 1],

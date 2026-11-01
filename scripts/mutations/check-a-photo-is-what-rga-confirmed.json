@@ -91,10 +91,10 @@
 1
 ],
 [
-"step 10's shot list moves above the tiles",
+"step 10's shot list moves below the tiles",
 "portal",
-"<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>${kinds}`",
-"${kinds}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>`",
+"return `${kinds}<div class=\"pm-p10${locked ? \" is-locked\" : \"\"}\" data-p10=\"${escapeAttribute(clientId)}\">${PHOTO_EXAMPLE_SPRITE}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>`;",
+"return `<div class=\"pm-p10${locked ? \" is-locked\" : \"\"}\" data-p10=\"${escapeAttribute(clientId)}\">${PHOTO_EXAMPLE_SPRITE}<div class=\"pm-p10-tiles\">${tiles}</div><div class=\"pm-p10-panel\"${sel == null ? \" hidden\" : \"\"}>${shots}</div></div>${kinds}`;",
 1
 ]
 ]

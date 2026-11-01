@@ -276,8 +276,8 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     for (const [hook, n] of [[/data-slot-file data-client-id="c1" data-shot-n="\d+"/, n4], [/data-photo-remove="r2"/, n2], [/data-photo-remove="t" data-photo-clear/, n3], [/data-photo-remove="p1" data-on-google/, n1]]) if (!hook.test(rowOf(h, n))) fail(`step 10 (${biz}): shot ${n}'s row lost ${hook.source}`);
     // the band, the order of the card, the shot list, the batch
     if (!/<b>1 of 20 on Google · 1 with RGA for review · 1 to retake<\/b><span>19 to go<\/span>/.test(h)) fail(`step 10 (${biz}): the band doesn't add "· 1 with RGA for review · 1 to retake" (${(/<b>[^<]*of 20[^<]*<\/b>/.exec(h) || [""])[0]})`);
-    const at = (s) => h.indexOf(s), order = [at('<div class="pm-tool'), at('<div class="pm-p10-tiles">'), at('<div class="pm-p10-panel"'), at('<span class="k">The shot list · tap a kind to jump to it</span>'), at('<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this step works</summary>')];
-    if (order.some((x) => x < 0) || order.some((x, i) => i && x < order[i - 1])) fail(`step 10 (${biz}): the card isn't (v4) team question → tiles → the shot → the shot list → How this step works (${order})`);
+    const at = (s) => h.indexOf(s), order = [at('<div class="pm-tool'), at('<span class="k">The shot list · photos added</span>'), at('<div class="pm-p10-tiles">'), at('<div class="pm-p10-panel"'), at('<details class="pm-k5-fold pm-tipline" data-fold="tips"><summary>How this step works</summary>')];
+    if (order.some((x) => x < 0) || order.some((x, i) => i && x < order[i - 1])) fail(`step 10 (${biz}): the card isn't (v4) team question → the shot list chips → tiles → the shot → How this step works (${order})`);
     if (/<div class="pm-slots[" ]|<details class="pm-sgrp/.test(h)) fail(`step 10 (${biz}): the open step still draws the folds`);
     const kinds = [...h.matchAll(/<button type="button" class="pm-p10-k" data-p10-kind="([\d,]+)">/g)].map((m) => m[1].split(",").map(Number));
     if (!kinds.length || kinds.flat().sort((a, b) => a - b).join() !== [...ns].sort((a, b) => a - b).join()) fail(`step 10 (${biz}): the shot list's kinds don't cover every shot once`);
@@ -296,7 +296,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     const lk = pc.render(STEP, task, photos, "c1", TIPS, WAIT), dup = pc.render(STEP, task, photos, "c1", TIPS, DUP);
     if (!new RegExp(`<div class="pm-k5-plan pm-cs-card off"><div class="pm-k5-h off">[^]*?<b>Your ${ns.length} shots · uploading opens soon</b>`).test(lk)) fail(`step 10 (${biz}): the waiting step isn't the grey card "Your ${ns.length} shots · uploading opens soon"`);
     if ((lk.match(/<button type="button" class="pm-p10-t/g) || []).length !== ns.length || !/<div class="pm-p10 is-locked" data-p10="c1">/.test(lk) || !/<div class="pm-p10-panel" hidden>/.test(lk)) fail(`step 10 (${biz}): the waiting step doesn't draw every tile (read-only, no shot open)`);
-    if (!/The shot list · tap a kind to jump to it/.test(lk) || !/<div class="pm-cs-note">Plan your photos now\. Uploading opens the moment your listing is down to one\.<\/div>/.test(lk)) fail(`step 10 (${biz}): the waiting step lost its shot list or "Plan your photos now"`);
+    if (!/The shot list · photos added/.test(lk) || !/<div class="pm-cs-note">Plan your photos now\. Uploading opens the moment your listing is down to one\.<\/div>/.test(lk)) fail(`step 10 (${biz}): the waiting step lost its shot list or "Plan your photos now"`);
     if (/<input type="file"/.test(lk) || /data-batch/.test(lk) || /data-team-size/.test(lk) || /pm-cs-foot/.test(lk) || /class="pm-lock"/.test(lk)) fail(`step 10 (${biz}): the waiting step can upload, or still shows the people question, a foot or the old lock band`);
     if (!/data-photo-lock-approvals/.test(dup) || dup.indexOf("data-photo-lock-approvals") < dup.indexOf("pm-p10-tiles") || dup.indexOf("data-photo-lock-approvals") > dup.indexOf("Plan your photos now")) fail(`step 10 (${biz}): a real duplicate lost its way out ("Remove your second Business Profile"), or it isn't inside the card`);
     // Reminder later: below (a run of the whole step, check-a-client-can-choose-later) · Done: all green + On your profile by kind + Add more
@@ -313,7 +313,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     // Reminder later (client_step10_photos_v4): the whole card; the rest of its rules run in check-a-client-can-choose-later
     pc.sel.clear();
     const lt = pc.render(STEP, task, photos, "c1", TIPS, null, { later: { until: "2030-11-04T12:00:00Z" }, canLater: true });
-    if (!/<b>Set for later · we'll email you a reminder on Nov 4/.test(lt) || !/<div class="pm-p10-panel" hidden>/.test(lt) || /The shot list · tap a kind/.test(lt) || !/class="pm-k5-acts pm-later-under"/.test(lt) || !/Your other steps carry on\./.test(lt)) fail(`step 10 (${biz}): the later state isn't the card with its tiles and the two choices under it`);
+    if (!/<b>Set for later · we'll email you a reminder on Nov 4/.test(lt) || !/<div class="pm-p10-panel" hidden>/.test(lt) || /The shot list · photos added/.test(lt) || !/class="pm-k5-acts pm-later-under"/.test(lt) || !/Your other steps carry on\./.test(lt)) fail(`step 10 (${biz}): the later state isn't the card with its tiles and the two choices under it`);
     Object.assign(P10S, { wait: lk, dup, done: dn, later: lt });
     // a count reached with photos RGA hasn't matched to a shot: that shot's tile is NOT green, the rest is "Other N"
     pc.sel.clear();

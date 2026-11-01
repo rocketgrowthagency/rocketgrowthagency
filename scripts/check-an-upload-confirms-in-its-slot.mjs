@@ -39,7 +39,7 @@ for (const [w, re] of [["Preparing", /Preparing your photo…/], ["Uploading %",
 // 5
 // Chris 10-31: "should it have a confirmation ... is there a remove option?" The photo painted over its own status, and Remove waited for a reload. Measured with a real upload in a browser when built.
 if (!/\.pm-cs \.pm-p10-shot \.pm-slot > \.sz \{[^}]*position:relative; z-index:1;/.test(css)) fail("a just-uploaded photo paints over its own status");
-if (!/if \(stage === "saved"\) u\.sent\(d\.id\);/.test(js) || !/Sent just now\$\{id \? ` · <button type="button" class="pm-linkbtn pm-photo-rm" data-photo-remove="\$\{escapeAttribute\(id\)\}"/.test(js)) fail("a photo just sent has no Remove until the page reloads");
+if (!/if \(stage === "saved"\) \{ u\.sent\(d\.id\);/.test(js) || !/Sent just now\$\{id \? ` · <button type="button" class="pm-linkbtn pm-photo-rm" data-photo-remove="\$\{escapeAttribute\(id\)\}"/.test(js)) fail("a photo just sent has no Remove until the page reloads");
 if (!/<span class="pm-pill bad">Didn't upload<\/span>/.test(js) || !/addAgain\("Try again"\)/.test(js)) fail("a failed upload no longer says so with Try again");
 if (!/addAgain\("Pick another"\)/.test(js) || !/Too small for Google/.test(js)) fail("a photo Google won't take no longer says why with Pick another");
 // 6

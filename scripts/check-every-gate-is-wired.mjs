@@ -362,6 +362,7 @@ const NOT_PREFLIGHT = {
   'check-lacie-backup-works.mjs': 'the daily LaCie backup: reads this Mac\'s own backup record and runs the script on throwaway folders; daily, not a pre-flight',
   'check-audit-decisions.mjs': 'the WEBSITE repo\'s seven audit decisions (audit_decisions_v1, approved 10-31); real modules on a stubbed network, nothing reaches Google or SerpAPI, runs in daily-health-check.sh',
   'check-step10-photo-truth.mjs': 'the WEBSITE repo\'s step 10 photo truth (client_step10_photo_truth_v1, 10-30); fakes only, runs in daily-health-check.sh',
+  'check-step10-upload-help.mjs': 'the WEBSITE repo\'s step 10 upload help (client_step10_upload_help_v1, 11-01); fakes only, runs in daily-health-check.sh',
   'check-client-open-calls.mjs': 'the WEBSITE repo\'s client portal open calls (client_open_calls_v1, approved 10-30); file-only + fake Google + fake database, runs in daily-health-check.sh',
   'check-client-steps-3-4-8-forms.mjs': 'the WEBSITE repo\'s client steps 3 · 4 · 8 inner forms (client_step03_builder_v2 · client_step04_fact_check_v2 · client_step08_details_v2, approved 10-30); files only (real renderers + handlers clicked in a blank Chrome page, every request refused), no bearing on tonight\'s videos; wired in daily-health-check beside batch 2 + its mutation suite',
   'check-monthly-value.mjs': 'the WEBSITE repo\'s monthly What we watched card (client_monthly_value_v1, approved 10-31); runs the real modules + vm, no network, runs in daily-health-check.sh',

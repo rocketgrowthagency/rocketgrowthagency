@@ -192,6 +192,8 @@ export const FILES = {
   blogpost: "blog/gbp-services-attributes-and-q-and-a-the-underused-fields-that-convert/index.html",
   bloghub: "blog/index.html",
   blogpostgen: "scraper:scripts/generate-blog-post.mjs",
+  photocheckfn: "netlify/functions/portal-photo-check.js",   // client_step10_upload_help_v1
+  photolookfn: "netlify/functions/_photo-look.js",
   stylecss: "style.css",
   scriptjs: "script.js",
   contractdoc: "shared/contract-doc.js",

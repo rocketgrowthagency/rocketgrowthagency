@@ -20,7 +20,7 @@ import fs from "node:fs";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const code = (r) => read(r).split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
-const portal = code("portal/portal.js"), css = read("portal/portal.css"), fn = code("netlify/functions/photo-match.js"),
+const portal = code("portal/portal.js"), css = read("portal/portal.css"), fn = code("netlify/functions/photo-match.js") + "\n" + code("netlify/functions/_photo-look.js"),
   recheck = code("netlify/functions/portal-step-recheck.js"), admin = code("admin/admin.js");
 const F = []; const fail = (m) => F.push(m);
 
@@ -42,7 +42,7 @@ if (!/<div class="pm-arow">(?:<span class="th"|\$\{th\(a\)\})/.test(portal) || !
 if (!/: `\$\{barRow \? `<div class="pm-pc-pbar">\$\{barRow\}<\/div>` : ""\}\$\{toolbar\}<div class="pm-slots\$\{locked \? " is-locked" : ""\}">\$\{PHOTO_EXAMPLE_SPRITE\}\$\{groupHtml\}<\/div>\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{tipsFold\}`/.test(portal)) fail("the photo card's order changed — it is: band → bar → team question → the kinds → already on Google → tips");
 if (!/body: p10 \? `\$\{toolbar\}\$\{p10\}\$\{p10LiveNote\}\$\{p10ShortHtml\}\$\{keptCard\}\$\{alsoFold \? `<div class="pm-pc-also">\$\{alsoFold\}<\/div>` : ""\}\$\{p10LogoHidden && !p10Short \? csNote\([^)]*\) : ""\}\$\{p10Done \? "" : p10How\}`/.test(portal)
   || !/const p10How = `\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(portal)
-  || !/<div class="pm-p10-tiles">\$\{tiles\}<\/div><div class="pm-p10-panel"\$\{sel == null \? " hidden" : ""\}>\$\{shots\}<\/div><\/div>\$\{kinds\}`/.test(portal)) fail("step 10's open card isn't in the approved order (client_step10_photos_v4) — band → team question → tiles → the shot → the shot list → already on Google → logo note → foot (Maps · How this step works)");
+  || !/\$\{kinds\}<div class="pm-p10\$\{locked \? " is-locked" : ""\}" data-p10="\$\{escapeAttribute\(clientId\)\}">\$\{PHOTO_EXAMPLE_SPRITE\}<div class="pm-p10-tiles">\$\{tiles\}<\/div><div class="pm-p10-panel"\$\{sel == null \? " hidden" : ""\}>\$\{shots\}<\/div><\/div>`/.test(portal)) fail("step 10's open card isn't in the approved order (client_step10_photos_v4) — band → team question → the shot list chips → tiles → the shot → already on Google → logo note → foot (Maps · How this step works)");
 const alreadySrc = (portal.match(/const alsoRows = already\.map[\s\S]*?const alsoFold = [^\n]*/) || [""])[0];
 if (!alreadySrc) fail("the already-on-Google section could not be found");
 if (/class="pm-pill you"|pm-pill warn|pm-pill bad/.test(alreadySrc)) fail("the already-on-Google section uses \"your move\" colours — the client has nothing to do there");
