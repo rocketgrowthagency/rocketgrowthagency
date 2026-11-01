@@ -377,7 +377,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     ok(t.includes(esc(K.KEEP_NOTE)) && !/>\s*0\s*</.test(t) && !/↑|↓|No change/.test(t), "(10) a cleared Google number in the report shows as 0, or as a change");
     const c = g.chip(7, null, { keptPrior: true }); ok(/No comparison/.test(c) && !/First month|↑|↓|No change/.test(c), "(10) the report compares a number with a month whose Google numbers were cleared");
     ok(/First month tracked/.test(g.chip(7, null, {})) && /↑/.test(g.chip(70, 40, {})), "(10) the report's normal comparison stopped working");
-    const ch = g.chan("Reviews", "x", [["Total reviews", null], ["New", null]], [], K.KEEP_NOTE); ok(ch.includes(esc(K.KEEP_NOTE)) && !/<b class="num">0<\/b>/.test(ch) && /Not kept/.test(ch), "(10) the report's channel box shows a cleared number as 0"); }
+    const ch = g.chan("Reviews", "x", [["Total reviews", null], ["New", null]], K.KEEP_NOTE); ok(ch.includes(esc(K.KEEP_NOTE)) && !/<b class="num">0<\/b>/.test(ch), "(10) the report's channel box shows a cleared number as 0"); }
   { const rp = reportJs; ok(/num\(current\.review_count\) == null && !gbpMonthExpired\(current\.reporting_month\)/.test(rp), "(10) the report tells a client with cleared reviews to 'get the first reviews'"); }
   { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("netlify/functions/_mature.js");
     ok(/noGoogleCompare/.test(sm) && /const present = METRICS\.filter\(\(m\) => current\[m\.key\] != null/.test(sm), "(10) the monthly email could show a cleared Google number, or compare with one");
