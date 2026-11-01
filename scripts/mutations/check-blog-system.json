@@ -327,5 +327,145 @@
   "String(window.location.pathname || \"/\")",
   "String(window.location.href || \"/\")",
   1
+ ],
+ [
+  "the proposal gate lets waiting evidence through",
+  "blogchain",
+  "if (evidence.status === \"waiting\" || evidence.status === \"planned\") reasons.push",
+  "if (false) reasons.push",
+  1
+ ],
+ [
+  "the proposal gate ignores the monthly cap",
+  "blogchain",
+  "if (thisMonth.length >= MAX_POSTS_PER_MONTH)",
+  "if (false)",
+  1
+ ],
+ [
+  "a draft calls the model while it is switched off",
+  "blogchain",
+  "if (!aiOn(deps)) return { state: \"switched_off\", brief",
+  "if (false) return { state: \"switched_off\", brief",
+  1
+ ],
+ [
+  "the model is on by default",
+  "blogchain",
+  "deps.enabled === undefined ? process.env.BLOG_AI_ENABLED === \"1\"",
+  "deps.enabled === undefined ? true",
+  1
+ ],
+ [
+  "a blocked draft is marked drafted",
+  "blogchain",
+  "state: checks.ok && block.ok ? \"drafted\" : \"blocked\"",
+  "state: \"drafted\"",
+  1
+ ],
+ [
+  "an em dash passes the draft check",
+  "blogchain",
+  "if (/\\u2014|&mdash;/.test(t)) problems.push",
+  "if (false) problems.push",
+  1
+ ],
+ [
+  "an invented number passes the draft check",
+  "blogchain",
+  "for (const n of nums) if (!allowed.includes(n.trim()))",
+  "for (const n of []) if (!allowed.includes(n.trim()))",
+  1
+ ],
+ [
+  "an unlisted link passes the draft check",
+  "blogchain",
+  "for (const u of links) if (![...ok].some(",
+  "for (const u of []) if (![...ok].some(",
+  1
+ ],
+ [
+  "the note may state a number the code did not give",
+  "blogchain",
+  "for (const n of (text.match(/\\b\\d[\\d,.]*\\b/g) || [])) if (!allowed.includes(",
+  "for (const n of []) if (!allowed.includes(",
+  1
+ ],
+ [
+  "the note is written for a week of noise",
+  "blogchain",
+  "if ([c.verdict, i.verdict].every((v) => v === \"Not enough data\" || v === \"Hold\")) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a matched pair crosses kinds",
+  "blogchain",
+  "if ((a.kind || \"\") !== (b.kind || \"\")) { i -= 1; continue; }",
+  "",
+  1
+ ],
+ [
+  "the coin flip ignores the seed",
+  "blogchain",
+  "const heads = rnd() < 0.5;",
+  "const heads = true;",
+  1
+ ],
+ [
+  "the test read date is set sooner",
+  "blogchain",
+  "readAfterDays = 84",
+  "readAfterDays = 7",
+  1
+ ],
+ [
+  "a client veto does not stop the plan",
+  "blogchain",
+  "if (c.vetoed) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a client blog does not wait for service pages",
+  "blogchain",
+  "const blocked = stages.some((s) => s.state !== \"done\");",
+  "const blocked = false;",
+  1
+ ],
+ [
+  "a fact with no source counts as material",
+  "blogchain",
+  "String(f.text || \"\").trim() && String(f.source || \"\").trim()",
+  "String(f.text || \"\").trim()",
+  1
+ ],
+ [
+  "a snapshot rerun copies again",
+  "blogsnap",
+  "const fresh = copies.filter((c) => !seen.has(",
+  "const fresh = copies.filter((c) => seen.has(",
+  1
+ ],
+ [
+  "a snapshot copies private fields",
+  "blogsnap",
+  "map((p) => pick(p, PROFILE_KEYS))",
+  "map((p) => ({ ...p }))",
+  1
+ ],
+ [
+  "the snapshot job copies without its table",
+  "blogsnap",
+  "if (!had.ready) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the snapshot job is no longer weekly",
+  "blogtoml",
+  "schedule = \"20 6 * * 1\"",
+  "schedule = \"20 6 * * *\"",
+  1
  ]
 ]

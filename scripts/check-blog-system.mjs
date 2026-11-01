@@ -331,5 +331,128 @@ const V = (rows, o = {}) => S.weeklyVerdicts({ rows, now: NOW, events: o.events 
   for (const f of ["contact", "start-growth-plan", "free-growth-audit"]) if (!/name="landing_page"/.test(read(`${f}/index.html`)) || !/name="traffic_source"/.test(read(`${f}/index.html`))) fail(`${f} does not declare the first-touch fields`);
   if (!/cleanFirstTouch\(data\)/.test(read("netlify/functions/form-intake.js")) || !/cleanFirstTouch\(data\)/.test(read("netlify/functions/fga-intake.js"))) fail("an intake does not save the first touch");
 }
+// steps 9 to 12 and the competitor snapshots
+{
+  const C = req(`${SITE}/netlify/functions/_blog-chain.js`), SNAP = req(`${SITE}/netlify/functions/blog-competitor-snapshot.js`);
+  const CSRC = read("netlify/functions/_blog-chain.js"), SSRC = read("netlify/functions/blog-competitor-snapshot.js");
+  if (typeof C.proposalGate !== "function" || typeof SNAP.run !== "function") moved("the chain exports");
+  const ev = { title: "Does a new logo show up on Google Maps?", status: "done", done_on: "2026-10-31", method: "Sent a cover photo and looked at Maps.", limits: "One business, one test, one place.", sources: ["https://support.google.com/business/answer/6103862"] };
+  const ctx = { service: "/services/gbp-optimization/", posts: [], decisions: [], now: new Date("2026-11-03T12:00:00Z") };
+  // 9 · the gate: a "no" is final
+  if (!C.proposalGate(ev, ctx).ok) fail("a finished, mapped proposal is refused");
+  for (const [why, e, c] of [["waiting evidence", { ...ev, status: "waiting" }, ctx], ["no evidence", null, ctx], ["no service page", ev, { ...ctx, service: "" }], ["a future date", { ...ev, done_on: "2027-01-01" }, ctx],
+    ["no limits", { ...ev, limits: "" }, ctx], ["a promise in the title", { ...ev, title: "Guaranteed top ranking in 30 days" }, ctx], ["an existing post", ev, { ...ctx, posts: [C.slugOf(ev.title)] }],
+    ["two already this month", ev, { ...ctx, decisions: [{ kind: "topic", decision: "proposed", made_at: "2026-11-01T00:00:00Z" }, { kind: "topic", decision: "proposed", made_at: "2026-11-02T00:00:00Z" }] }]])
+    if (C.proposalGate(e, c).ok) fail(`the proposal gate lets through ${why}`);
+  if (!C.proposalGate(ev, { ...ctx, decisions: [{ kind: "topic", decision: "declined", made_at: "2026-11-01T00:00:00Z" }, { kind: "topic", decision: "declined", made_at: "2026-11-02T00:00:00Z" }] }).ok) fail("skipped proposals count against the 2 a month");
+  // 9 · the chain calls no model unless switched on, and never publishes
+  let calls = 0;
+  const fetchFn = async () => { calls++; return { ok: true, json: async () => ({ content: [{ text: `<p>${"We sent a cover photo to one business profile and looked at Maps. ".repeat(14)}The limits are one test in one place.</p><p><a href="/services/gbp-optimization/">Google Business Profile optimization</a></p>` }] }) }; };
+  const off = await C.draftPost(ev, ctx, { enabled: false, fetchFn });
+  if (off.state !== "switched_off" || calls !== 0 || off.draft) fail("with the model off, a draft still calls the model or writes text");
+  const w = await C.draftPost({ ...ev, status: "waiting" }, ctx, { enabled: true, fetchFn });
+  if (w.state !== "waiting" || calls !== 0) fail("a proposal that waits for its check still calls the model");
+  const on = await C.draftPost(ev, ctx, { enabled: true, fetchFn });
+  if (on.state !== "drafted" || on.published !== false || calls !== 1) fail(`a clean draft ends as ${on.state} after ${calls} calls`);
+  const capped = await C.draftPost(ev, { ...ctx, decisions: [{ kind: "topic", made_at: "2026-11-01T00:00:00Z", proposal: { drafted: true } }, { kind: "topic", made_at: "2026-11-02T00:00:00Z", proposal: { drafted: true } }] }, { enabled: true, fetchFn });
+  if (capped.state === "drafted" || calls !== 1) fail("two proposals this month do not stop a third model call");
+  if (process.env.BLOG_AI_ENABLED === "1") fail("BLOG_AI_ENABLED is set in this environment; the gate cannot show the default is off");
+  const blockedDraft = await C.draftPost(ev, ctx, { enabled: true, fetchFn: async () => ({ ok: true, json: async () => ({ content: [{ text: `<p>${"Our analysts guarantee it. ".repeat(40)}</p>` }] }) }) });
+  if (blockedDraft.state !== "blocked" || !blockedDraft.problems.length) fail(`a draft that fails its checks ends as ${blockedDraft.state}`);
+  const dflt = await C.draftPost(ev, ctx, { fetchFn });
+  if (dflt.state !== "switched_off") fail("the model is on by default");
+  // mechanical checks can block
+  const clean = on.draft;
+  const bad = (txt) => !C.checkDraft(txt, on.brief).ok;
+  for (const [why, t] of [["an em dash", `${clean}<p>It worked \u2014 really.</p>`], ["a made-up team", `${clean}<p>Our analysts reviewed it.</p>`], ["a promise", `${clean}<p>We guarantee more calls.</p>`],
+    ["Q&A sold as live", `${clean}<p>Answer the questions and answers on your profile.</p>`], ["FAQ markup", `${clean}<script>{"@type":"FAQPage"}</script>`], ["a placeholder", `${clean}<p>[fill in after Nov 2]</p>`],
+    ["a number not in the evidence", `${clean}<p>It lifted views by 73%.</p>`], ["an unlisted link", `${clean}<a href="https://spam.example/x">x</a>`], ["a blog sold as a Maps tactic", `${clean}<p>A blog post helps your Maps ranking a lot.</p>`],
+    ["no service link", clean.replace(/href="\/services[^"]*"/, 'href="/x/"')], ["too short", "<p>Short.</p>"]])
+    if (!bad(t)) fail(`a draft with ${why} passes the mechanical checks`);
+  if (bad(clean)) fail(`the clean draft is blocked: ${C.checkDraft(clean, on.brief).problems.join("; ")}`);
+  if (/writeFile|appendFile|api\.github\.com|octokit|git push|netlify.*deploy/i.test(CSRC)) fail("the chain can write a file, push or deploy: it must never publish");
+  if (/\bChris\b/.test(CSRC + SSRC)) fail("a personal name is in a served file");
+  if (C.costCeiling("draft") > 1 || C.costCeiling("note") > 1) fail("the model spending cap rose above $1 a month for each use");
+  // the admin press: server re-runs the gate, saves a draft, publishes nothing
+  {
+    const writes = [];
+    const g = { now: ctx.now, gsc: { ready: false }, blog: { ready: true }, errors: [], facts: { list: [], map: { summary: { posts: 0, posts_no_link_from_another_post: 0, service_links_in: {} } } }, events: [], decisions: [], waiting: [{ id: 7, ...ev }], leads: { ready: false, rows: [] }, snaps: { ready: false, rows: [] } };
+    const gate = { email: "a@b.test" };
+    const card = ADM.build(g);
+    if (!card.next_post || card.next_post.state !== "ready") fail("a finished proposal does not show as ready on the card");
+    if (!card.rows.some((r) => r.key === "snaps" && r.tag === "Not set up")) fail("the snapshot line does not say Not set up without the table");
+    const bad404 = await ADM.proposal({ evidence_id: 99, decision: "draft" }, gate, g, async () => {});
+    if (bad404.status !== 404) fail("a press on a proposal that isn't the next one is accepted");
+    const sk = await ADM.proposal({ evidence_id: 7, decision: "skip" }, gate, g, async (u, i) => { writes.push([u, JSON.parse(i.body)]); });
+    if (sk.status !== 200 || writes[0][1].decision !== "declined") fail("skip does not record a declined proposal");
+    writes.length = 0;
+    const dr = await ADM.proposal({ evidence_id: 7, decision: "draft" }, gate, g, async (u, i) => { writes.push([u, JSON.parse(i.body)]); }, { enabled: false, fetchFn });
+    if (dr.status !== 200 || dr.body.state !== "switched_off" || writes[0][1].proposal.published !== false || writes[0][1].proposal.draft) fail("draft with the model off wrote text or marked something published");
+    const again = await ADM.proposal({ evidence_id: 7, decision: "draft" }, gate, { ...g, decisions: [{ kind: "topic", batch_key: "topic-7", decision: "proposed", proposal: {}, made_at: ctx.now.toISOString() }] }, async () => {});
+    if (again.status !== 409) fail("a proposal can be pressed twice");
+    const nt = await ADM.note({}, gate, g, async () => { fail("a note with nothing to explain was saved"); });
+    if (nt.body.state !== "nothing_to_explain" && nt.body.state !== "switched_off") fail(`the weekly note ran with nothing to explain (${nt.body.state})`);
+    if (calls !== 1) fail("a press called the model while it was off");
+  }
+  // 10 · the weekly note: the code owns the numbers
+  const wk = { clicks: { verdict: "Trending right", current: 120, baseline: 80, reason: "Clicks rose." }, impressions: { verdict: "No clear change", current: 5000, baseline: 4900, reason: "Flat." } };
+  const mk = (text) => async () => ({ ok: true, json: async () => ({ content: [{ text }]}) });
+  const good = await C.weeklyNote(wk, { enabled: true, fetchFn: mk("Clicks are 120 against 80 before, so they rose. Impressions are flat at 5000 against 4900.\nAction: Keep watching the weekly numbers.") });
+  if (good.state !== "written" || good.actions.length !== 1) fail(`a good note is ${good.state}`);
+  for (const [why, t] of [["a number the code never gave", "Clicks are 999 now."], ["a different verdict", "The verdict is Trending wrong for clicks."], ["a promise", "This will rank #1 soon."], ["four actions", "Fine.\nAction: a\nAction: b\nAction: c\nAction: d"]])
+    if ((await C.weeklyNote(wk, { enabled: true, fetchFn: mk(t) })).state !== "blocked") fail(`a note with ${why} is not blocked`);
+  const none = { clicks: { verdict: "Not enough data" }, impressions: { verdict: "Hold" } }; let c10 = 0;
+  if ((await C.weeklyNote(none, { enabled: true, fetchFn: async () => { c10++; return mk("x")(); } })).state !== "nothing_to_explain" || c10) fail("a note is written for a week with nothing to explain");
+  if ((await C.weeklyNote(wk, { enabled: true, notesThisMonth: C.MAX_NOTES_PER_MONTH, fetchFn: async () => { c10++; } })).state !== "capped" || c10) fail("the monthly note cap does not stop a call");
+  if ((await C.weeklyNote(wk, { fetchFn: async () => { c10++; } })).state !== "switched_off" || c10) fail("the note is on by default");
+  // 11 · matched pairs
+  const posts = Array.from({ length: 14 }, (_, i) => ({ slug: `p${i}`, kind: i % 2 ? "guide" : "template", published: "2026-01-01", clicks: 0, impressions: i }));
+  const mp = C.matchedPairs(posts, { seed: "s1", now: new Date("2026-11-03T00:00:00Z") });
+  if (!mp.ok || mp.applies !== false) fail("matched pairs are not planned, or claim to be applied");
+  else {
+    const slugs = mp.plan.pairs.flatMap((p) => [p.treated, p.held]);
+    if (new Set(slugs).size !== slugs.length) fail("a post is in two pairs");
+    if (JSON.stringify(C.matchedPairs(posts, { seed: "s1", now: new Date("2026-11-03T00:00:00Z") }).plan) !== JSON.stringify(mp.plan)) fail("the same seed gives a different coin flip");
+    if (JSON.stringify(C.matchedPairs(posts, { seed: "s2", now: new Date("2026-11-03T00:00:00Z") }).plan.pairs) === JSON.stringify(mp.plan.pairs)) fail("the seed does not change the coin flip");
+    if (mp.plan.read_on !== "2027-01-26") fail(`the read date is ${mp.plan.read_on}, not 84 days out`);
+    const kinds = new Map(posts.map((p) => [p.slug, p.kind])); for (const p of mp.plan.pairs) if (kinds.get(p.treated) !== kinds.get(p.held)) fail("a pair crosses kinds");
+  }
+  if (C.matchedPairs(posts.slice(0, 4), { seed: "s" }).ok) fail("two pairs are enough for a test");
+  if (C.matchedPairs(posts, {}).ok) fail("a test is planned with no seed");
+  if (C.matchedPairs(posts.map((p) => ({ ...p, clicks: null })), { seed: "s" }).ok) fail("posts with unread clicks are paired as if they earned zero");
+  // 12 · the client version
+  const cp = C.clientBlogPlan;
+  const veto = cp({ vetoed: true, services: [{ name: "x", path: "/a/" }], facts: [{ text: "t", source: "s" }], website: { has: true, pages: ["/a/"] } });
+  if (veto.blog.allowed || veto.stages.length !== 1) fail("a veto doesn't stop everything");
+  const nosite = cp({ services: [{ name: "Roofing" }], facts: [] });
+  if (nosite.blog.allowed || nosite.stages[0].kind !== "website") fail("a client with no website isn't told the website comes first");
+  const pagesFirst = cp({ services: [{ name: "Plumbing", path: "/plumbing/" }, { name: "Drains" }], facts: [{ text: "A job", source: "client" }], website: { has: true, pages: ["/plumbing/"] } });
+  if (pagesFirst.blog.allowed || !pagesFirst.stages.some((x) => x.kind === "service_page" && x.service === "Drains")) fail("a missing service page doesn't come before a post");
+  const ready = cp({ services: [{ name: "Plumbing", path: "/plumbing/" }], facts: [{ text: "A job", source: "client" }], website: { has: true, pages: ["/plumbing/"] } });
+  if (!ready.blog.allowed || ready.blog.publishes_without_approval !== false || ready.blog.max_per_month !== 2) fail("a client with pages and real material doesn't get up to 2 reviewed posts");
+  if (cp({ services: [{ name: "x", path: "/a/" }], facts: [{ text: "no source" }], website: { has: true, pages: ["/a/"] } }).blog.allowed) fail("a fact with no source counts as material");
+  if (cp(null).blog.allowed || cp({}).blog.allowed) fail("an empty client gets a blog");
+  if (/maps ranking|will (rank|bring)|guarantee/i.test(JSON.stringify(ready).replace(/"why":"No test shows[^"]*"/, ""))) fail("the client plan promises a result");
+  // snapshots
+  const rec = { data: { v2Campaign: { competitor_profiles: { fetched_at: "2026-10-01T00:00:00Z", profiles: [{ name: "A", rating: 4.5, reviews: 10, email: "private@x.test", website: "https://a.test" }] }, rank_grid: { keyword: "k", timestamp: "2026-10-02T00:00:00Z", competitors: [{ name: "B", appearances: 3 }], pins_read: 9, pins_total: 9 } } } };
+  const cps = SNAP.copiesOf(rec);
+  if (cps.length !== 2 || JSON.stringify(cps).includes("private@x.test")) fail("snapshot copies are not the two sources, or carry a private field");
+  if (SNAP.copiesOf({ data: {} }).length !== 0 || SNAP.copiesOf(null).length !== 0) fail("a missing record gives copies");
+  const sw = []; let net = 0;
+  const sd = (had) => ({ tryRead: async () => had, ownOauth: async () => ({ client_id: "c1" }), supa: async (u, i) => { if (i && i.method === "POST") sw.push(JSON.parse(i.body)); else return [rec]; return null; }, now: new Date("2026-11-03T00:00:00Z") });
+  const r1 = await SNAP.run(sd({ ready: true, rows: [] }));
+  if (r1.copied !== 2 || sw.length !== 1 || r1.requests_outside !== 0) fail("the first run does not copy both sources");
+  sw.length = 0;
+  const r2 = await SNAP.run(sd({ ready: true, rows: cps.map((c) => ({ source: c.source, source_stamp: c.source_stamp, keyword: c.keyword })) }));
+  if (r2.copied !== 0 || r2.already_had !== 2 || sw.length) fail("a rerun copies the same data again");
+  const r3 = await SNAP.run(sd({ ready: false, rows: [] }));
+  if (r3.table_ready !== false || !/Not set up/.test(r3.note) || sw.length) fail("no table does not say Not set up");
+  if (/serpapi|api\.openai|maps\.googleapis|places\.googleapis|fetch\(/i.test(SSRC.replace(/\/\/.*$/gm, ""))) fail("the snapshot job can make an outside request");
+  if (SNAP.MAX_COPIES > 10) fail("the snapshot job copies more than 10 at a time");
+  if (!/blog_competitor_snapshots/.test(SQL) || !/blog_competitor_snapshots_once/.test(SQL)) fail("blog_system.sql lacks the snapshot table or its once-only index");
+  if (!/\[functions\."blog-competitor-snapshot"\]\s*\n\s*schedule = "20 6 \* \* 1"/.test(TOML)) fail("the snapshot job isn't scheduled weekly in netlify.toml");
+  if (!/job: "blog-competitor-snapshot"[^\n]*cron: "20 6 \* \* 1"/.test(MAN)) fail("the snapshot job isn't in the job manifest");
+  if (!/withCheckin\("blog-competitor-snapshot"/.test(SSRC)) fail("the snapshot job doesn't check in");
+}
 if (F.length) { console.error(`🔴 the blog system regressed — ${F.length}:\n${F.slice(0, 30).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log("✅ blog system: 14 link rules each fire on their own case, the real blog has no failing link, verdicts refuse noise, an API error is never 'not indexed', no table = Google is asked nothing, no noindex or publishing in this build, posts and pages clean");
