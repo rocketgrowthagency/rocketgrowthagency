@@ -1,0 +1,30 @@
+[
+ [
+  "the read flag is set even if the read fails",
+  "admin",
+  "      state.googleOauthRead = true;\n    } catch (error) {",
+  "    } catch (error) {\n      state.googleOauthRead = true;",
+  1
+ ],
+ [
+  "selecting a client keeps the last client's answer",
+  "admin",
+  "    state.googleOauth = null;\n    state.googleOauthRead = false;",
+  "    state.googleOauth = null;",
+  1
+ ],
+ [
+  "the badge answers before the read",
+  "admin",
+  "  if (!state.googleOauthRead) {\n    // nothing yet\n  } else if (oauth) {",
+  "  if (oauth) {",
+  1
+ ],
+ [
+  "the chip answers before the read",
+  "admin",
+  "${state.googleOauthRead || gates.oauth ? gateChip(\"Google connected\", gates.oauth, \"Google not connected\") : \"\"}",
+  "${gateChip(\"Google connected\", gates.oauth, \"Google not connected\")}",
+  1
+ ]
+]

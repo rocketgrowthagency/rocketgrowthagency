@@ -181,6 +181,11 @@ if (!/function\s+sopPlaybookLoaded\s*\(/.test(code)) {
   }
 }
 
+// 🔒 11-1: the status badge and the mission chip said "Google not connected" for a connected client until the read came back, and check-admin-tabs-render caught that moment on and off since 10-19.
+if (!/state\.googleOauth = await[^\n]*\n\s*state\.googleOauthRead = true;/.test(raw)) problems.push("state.googleOauthRead is no longer set only after the Google connection read succeeds");
+if (!/state\.googleOauth = null;\n\s*state\.googleOauthRead = false;/.test(raw)) problems.push("selecting a client no longer resets state.googleOauthRead, so one client's answer shows for another");
+if (!/if \(!state\.googleOauthRead\) \{[\s\S]{0,60}\} else if \(oauth\) \{/.test(raw)) problems.push("the status badge can say Google not connected before the read has come back");
+if (!/state\.googleOauthRead \|\| gates\.oauth \? gateChip\("Google connected"/.test(raw)) problems.push("the mission chip can say Google not connected before the read has come back");
 if (problems.length) {
   console.error("🔴 A SURFACE CAN RENDER A CONFIDENT WRONG ANSWER WHILE IT LOADS\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
