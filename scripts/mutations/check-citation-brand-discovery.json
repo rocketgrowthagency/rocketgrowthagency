@@ -1,0 +1,164 @@
+[
+ [
+  "the switch is on by default",
+  "citbrand",
+  "String(env.CITATION_BRAND_DISCOVERY || \"\").trim() === \"1\"",
+  "String(env.CITATION_BRAND_DISCOVERY || \"1\").trim() === \"1\""
+ ],
+ [
+  "any truthy value turns it on",
+  "citbrand",
+  "String(env.CITATION_BRAND_DISCOVERY || \"\").trim() === \"1\"",
+  "!!String(env.CITATION_BRAND_DISCOVERY || \"\").trim()"
+ ],
+ [
+  "off still searches",
+  "citbrand",
+  "if (!isOn(env)) return off(\"off\"",
+  "if (false) return off(\"off\""
+ ],
+ [
+  "a finished discovery is searched again",
+  "citbrand",
+  "if (deps.prior && deps.prior.state === \"done\"",
+  "if (false && deps.prior && deps.prior.state === \"done\""
+ ],
+ [
+  "a reused discovery stops being done",
+  "citbrand",
+  "state: \"done\", reused: true",
+  "state: \"reused\", reused: true"
+ ],
+ [
+  "no key still searches",
+  "citbrand",
+  "if (!key) return { state: \"no_key\"",
+  "if (false) return { state: \"no_key\""
+ ],
+ [
+  "one brand alone is compared",
+  "citbrand",
+  "if (queries.length < 2)",
+  "if (queries.length < 1)"
+ ],
+ [
+  "an unreadable count still searches",
+  "citbrand",
+  "if (!Number.isFinite(left))",
+  "if (false)"
+ ],
+ [
+  "an out plan still searches",
+  "citbrand",
+  "if (!(left >= need + RESERVE))",
+  "if (false)"
+ ],
+ [
+  "the count is not read",
+  "citbrand",
+  "try { left = await deps.left(); } catch { left = null; }",
+  "left = 1e9;"
+ ],
+ [
+  "a failed search is ignored",
+  "citbrand",
+  "if (rows.some((r) => r.state !== \"searched\"))",
+  "if (false)"
+ ],
+ [
+  "an error answer counts as a result",
+  "citbrand",
+  "if (!r.ok || j.error) { rows.push({ ...q, state: \"couldnt\" }); continue; }",
+  "if (false) { continue; }"
+ ],
+ [
+  "a host seen once is a repeat",
+  "citbrand",
+  "MIN_REPEAT = 2,",
+  "MIN_REPEAT = 1,"
+ ],
+ [
+  "the brands' own sites are counted",
+  "citbrand",
+  "if ([...skip].some((x) => h === x || h.endsWith(`.${x}`))) continue;",
+  ""
+ ],
+ [
+  "google is a directory",
+  "citbrand",
+  "const NOT_DIRECTORIES = [\"google.com\", ",
+  "const NOT_DIRECTORIES = ["
+ ],
+ [
+  "a host counts once per result",
+  "citbrand",
+  "for (const h of new Set((s.organic || []).map((o) => hostOf(o && o.link)).filter(Boolean)))",
+  "for (const h of (s.organic || []).map((o) => hostOf(o && o.link)).filter(Boolean))"
+ ],
+ [
+  "more than three competitors",
+  "citbrand",
+  "const MAX_COMPETITORS = 3",
+  "const MAX_COMPETITORS = 9"
+ ],
+ [
+  "the market is dropped from the query",
+  "citbrand",
+  "`\"${String(name).replace(/\"/g, \"\").trim()}\"${market ? ` ${market}` : \"\"}`",
+  "`\"${String(name).replace(/\"/g, \"\").trim()}\"`"
+ ],
+ [
+  "a phone is searched",
+  "citbrand",
+  "const out = [], seen = new Set();",
+  "const out = [], seen = new Set(); if (client && client.identity_phone) out.push({ who: \"client\", name: \"phone\", query: `\"${client.identity_phone}\"` });"
+ ],
+ [
+  "the client itself is searched twice",
+  "citbrand",
+  "if (!k || seen.has(k)) return;",
+  "if (!k) return;"
+ ],
+ [
+  "the headline does not say which list",
+  "citbrand",
+  "return `Showing: the suggested list, not a search. Searching business names for directories didn't run: ${why}.`;",
+  "return `Searching didn't run: ${why}.`"
+ ],
+ [
+  "an empty comparison offers a list",
+  "citbrand",
+  "const showSearched = r.state === \"done\" && (r.directories || []).length > 0;",
+  "const showSearched = r.state === \"done\";"
+ ],
+ [
+  "the step ignores the discovery",
+  "exec",
+  "if (bd && bd.found) return {",
+  "if (false && bd && bd.found) return {"
+ ],
+ [
+  "the suggested list loses its label",
+  "exec",
+  "return { summary: bd ? `${bd.head}\\n\\n${draft}` : draft,",
+  "return { summary: draft,"
+ ],
+ [
+  "the result does not say which list",
+  "exec",
+  "list_source: \"suggested\", ",
+  ""
+ ],
+ [
+  "the playbook words drift",
+  "playbook",
+  "searching real business names, or a suggested list",
+  "a suggested list"
+ ],
+ [
+  "the canonical words drift",
+  "sopm1",
+  "searching real business names, or a suggested list",
+  "a suggested list"
+ ]
+]

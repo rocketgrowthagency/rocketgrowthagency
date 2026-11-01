@@ -1087,7 +1087,7 @@ Order by impact (highest first). Include any state/regional industry boards rele
       );
       return { summary: `Industry-specific citation directories:\n\n${draft}\n\nAdd each to client_citations as you complete them.` };
     },
-    instructions: `Work through the list. For each:
+    instructions: `Work through the list. The top of the result says whether it shows directories found by searching real business names, or a suggested list. For each:
 1. Sign up → use the canonical NAP from m1.cit.priority_top10
 2. Verify (often phone/postcard)
 3. Insert row in client_citations: { directory_name, vertical: 'industry_specific', listing_url, status }`,

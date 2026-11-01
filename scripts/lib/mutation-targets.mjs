@@ -440,4 +440,6 @@ export const FILES = {
   // admin_last_research_items_v1 item 2 (11-01): the runbook when a name, address or phone changes
   citrunbook: "netlify/functions/_citation-runbook.js",
   citrunbookfn: "netlify/functions/admin-citation-runbook.js",
+  // admin_last_research_items_v1 item 3 (11-01): directories found by searching brand names, off by default
+  citbrand: "netlify/functions/_citation-brand-discovery.js",
 };

@@ -471,6 +471,7 @@ const NOT_PREFLIGHT = {
   'check-no-review-gating.mjs': 'the WEBSITE repo\'s prompts + step copy never ask for reviews by rating (Google policy, FTC 16 CFR 465) — a portal/admin check, not video preflight',
   'check-step-54-knowledge-panel.mjs': 'the WEBSITE repo\'s step 54 runner measures before it drafts — a portal/admin check, not video preflight',
   'check-gbp-landing-page.mjs': 'runs in daily-health-check.sh (11-01); the WEBSITE repo\'s admin step for which page the Google profile links to (approved admin_last_research_items_v1) — a portal/admin check, not video preflight',
+  'check-citation-brand-discovery.mjs': 'runs in daily-health-check.sh (11-01); the WEBSITE repo\'s brand-name directory discovery for the industry-specific citations step (approved admin_last_research_items_v1) — a portal/admin check, not video preflight',
   'check-citation-runbook.mjs': 'runs in daily-health-check.sh (11-01); the WEBSITE repo\'s listings runbook card and its Search old and new control (approved admin_last_research_items_v1) — a portal/admin check, not video preflight',
   'check-step-49-schema.mjs': 'the WEBSITE repo\'s step 49 schema set — a portal/admin check, not video preflight',
   'check-a-service-area-business-is-not-flagged-for-a-hidden-address.mjs': 'the WEBSITE repo\'s audit and schema step for service-area clients, a portal/admin check, not video preflight',
