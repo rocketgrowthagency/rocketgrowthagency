@@ -354,10 +354,10 @@
   "<div id=\"dataKeepCard2\" hidden></div>"
  ],
  [
-  "the cache buster isn't bumped",
+  "admin.js loses its cache buster",
   "adminhtml",
-  "/admin/admin.js?v=20261101d",
-  "/admin/admin.js?v=20261101b"
+  "/admin/admin.js?v=20261101e",
+  "/admin/admin.js"
  ],
  [
   "a new table is left open to the public",

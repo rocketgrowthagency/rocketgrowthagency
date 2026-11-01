@@ -2,6 +2,12 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // client_core_change_approval_v1 (10-31): name, address, phone, main category need the client's approval of that exact value
+  corechange: "netlify/functions/_core-change.js",
+  corechangefn: "netlify/functions/core-change.js",
+  gbpdrift: "netlify/functions/admin-gbp-drift.js",
+  stepinput: "netlify/functions/portal-step-input.js",
+  gbpwatch: "netlify/functions/_gbp-watch.js",
   // client_google_consent_v1 (10-31): no Google profile write without the client's recorded OK
   deadline: "netlify/functions/_deadline.js",
   googleconsent: "netlify/functions/_google-consent.js",

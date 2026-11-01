@@ -79,6 +79,8 @@ const SURFACES = {
   "research_notes/Video and audit report audit/free_growth_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the pages as they stood, kept as written; not RGA's offer"],
   "research_notes/Video and audit report audit/video_generator.md": ["EXCLUDED", "research notes dated 10-31 quoting the video script as it stood, kept as written; not RGA's offer"],
   "research_notes/Website audit/website_audit.md": ["EXCLUDED", "research notes dated 10-31 quoting the site as it stood, kept as written; not RGA's offer"],
+  "netlify/functions/admin-record-cancellation.js": ["DERIVED", "the last invoice and the next one, read from contract-generate's plans through priceSummaryForContract; holds no price of its own"],
+  "netlify/functions/_billing-dates.js": ["EXCLUDED", "calendar arithmetic on amounts passed in; quotes no price"],
   "terms/index.html": ["EXCLUDED", "website Terms: $2,500 is the floor of the liability cap (contract_v2_redline §10), not a price; fees are left to the signed agreement"],
   "docs/data-file-notes.md": ["EXCLUDED", "notes moved out of the public data files on 10-31, quoting the old sale history; blocked at the edge; not RGA's offer"],
   "research_notes/Legal and operations in depth/legal_and_gaps.md": ["EXCLUDED", "research notes dated 10-31: lawyer, insurance and tax costs and the offer at that time, kept as written; not RGA's offer"],

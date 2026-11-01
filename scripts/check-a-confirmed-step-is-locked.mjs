@@ -153,7 +153,7 @@ if (!/const amendBtn = stepLk(?: \|\| csQuiet)? \? ""/.test(P)) fail("a locked s
 if (!/\$\{lockFootHtml\(step\.id, taskState, stepLk, "top"\)\}/.test(P) || !/\$\{lockFootHtml\(step\.id, taskState, stepLk, "bottom"\)\}/.test(P)) fail("the row doesn't draw the lock footer");
 if (!/Need a change\? ›/.test(P) || !/name="kind" value="wrong"/.test(P) || !/\{ flag_wrong: true, note \}/.test(P)) fail("the lock footer lost the way to say it's wrong (Need a change? → Something here is wrong → the flag)");
 if (!/const change = stepLockOf\(step\.id, t\) \? "" :/.test(P)) fail("a live tracking number's card still offers Change");
-if (!/return rowStepCardsHtml\(o, s\) \+ adminLockHtml\(o && o\.flowId, s && s\.task\);/.test(A)) fail("admin rows don't draw the lock card");
+if (!/return rowStepCardsHtml\(o, s\) \+ core \+ adminLockHtml\(o && o\.flowId, s && s\.task\);/.test(A)) fail("admin rows don't draw the lock card");
 if (!/data-ob-unlock="/.test(A) || !/"\/\.netlify\/functions\/admin-step-unlock"/.test(A)) fail("admin lost \"Unlock for the client…\"");
 if (F.length) { console.error("🔴 the step lock regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log(`✅ a confirmed step is locked: ${cases.length} rule cases + unlock/relock · reopen refused (locked, detected), allowed once unlocked · Request a change stored only on a locked request step · live tracking choice, access answer and finished videos refuse the client · admin unlock needs a reason, refuses an unlocked step · every portal writer goes through the lock or is excused · portal footer (Not right? always) + admin lock card`);

@@ -1,0 +1,198 @@
+[
+ [
+  "a phone goes with no approval",
+  "corechange",
+  "if (!records.some((t) => isApproved(t, w.field, value))) return refusalText(w.field, value);",
+  "",
+  1
+ ],
+ [
+  "an asked question counts as approved",
+  "corechange",
+  "[\"approved\", \"waiting\"].includes(x.status)",
+  "[\"approved\", \"waiting\", \"asked\"].includes(x.status)",
+  1
+ ],
+ [
+  "any value passes once one is approved",
+  "corechange",
+  "same(field, target(x), value))) return true;",
+  "true)) return true;",
+  1
+ ],
+ [
+  "a very old pending save counts",
+  "corechange",
+  "nowMs - Date.parse(p.at || \"\") < PENDING_MS",
+  "true",
+  1
+ ],
+ [
+  "a failed read lets it through",
+  "corechange",
+  "return \"We couldn't confirm the client's approval for this change, so nothing was sent to Google. Try again.\";",
+  "return null;",
+  1
+ ],
+ [
+  "a resend needs approval",
+  "corechange",
+  "if ((live && live.name) === value || (!live && !value)) continue;",
+  "",
+  1
+ ],
+ [
+  "the mask misses phone",
+  "corechange",
+  "if (names.some((m) => m === \"phoneNumbers\" || m === \"phoneNumbers.primaryPhone\")) out.push",
+  "if (false) out.push",
+  1
+ ],
+ [
+  "the mask misses the name",
+  "corechange",
+  "if (names.some((m) => m === \"title\")) out.push",
+  "if (false) out.push",
+  1
+ ],
+ [
+  "the mask misses the address",
+  "corechange",
+  "if (names.some((m) => m === \"storefrontAddress\" || m.startsWith(\"storefrontAddress.\"))) out.push",
+  "if (false) out.push",
+  1
+ ],
+ [
+  "the guard never asks about core changes",
+  "googleconsent",
+  "return await require(\"./_core-change\").refusalForCore(url, init, { readRows, rawFetch: rawFetch(), clientIds: owners.map((o) => o.client_id) });",
+  "return null;",
+  1
+ ],
+ [
+  "no week's wait",
+  "corechange",
+  "if (Number.isFinite(last) && nowMs - last < WEEK) return stop(\"waiting\"",
+  "if (false) return stop(\"waiting\"",
+  1
+ ],
+ [
+  "sends while Google reviews",
+  "corechange",
+  "if (md.hasVoiceOfMerchant !== true || md.hasPendingEdits === true) return stop(\"waiting\"",
+  "if (false) return stop(\"waiting\"",
+  1
+ ],
+ [
+  "skips the test run",
+  "corechange",
+  "try { await call(`${deps.loc}?updateMask=${mask}&validateOnly=true`, { method: \"PATCH\", body: JSON.stringify(body) }); }",
+  "try { }",
+  1
+ ],
+ [
+  "no read back",
+  "corechange",
+  "if (!matches) return stop(\"needs_rga\", { said: \"Google accepted it, but doesn't show it yet.\" });",
+  "",
+  1
+ ],
+ [
+  "the others are dropped",
+  "corechange",
+  "additionalCategories: others }",
+  "additionalCategories: [] }",
+  1
+ ],
+ [
+  "the new main stays in the others",
+  "corechange",
+  ".filter((c) => c.name !== item.to_name)",
+  "",
+  1
+ ],
+ [
+  "the record isn't updated after sending",
+  "corechange",
+  "t.client_input = { ...(task.client_input || {}), phone: res.taskPatch.phone };",
+  "",
+  1
+ ],
+ [
+  "a changed main category isn't noticed",
+  "corechange",
+  "if (base.name === live.name) return {};",
+  "return {};",
+  1
+ ],
+ [
+  "a website counts as the client's to decide",
+  "corechange",
+  "if (\"phone\" in saved) out.push",
+  "if (\"website\" in saved) out.push({ field: \"phone\", saved: saved.website, google: google.website });\n  if (\"phone\" in saved) out.push",
+  1
+ ],
+ [
+  "admin can answer",
+  "corechangefn",
+  "action === \"answer\" ? await requirePortalOwner(event, clientId)",
+  "action === \"answer\" ? await requirePortalOwnerOrWorkspace(event, clientId)",
+  1
+ ],
+ [
+  "RGA can ask again after a no",
+  "corechangefn",
+  "if (items.some((x) => x.field === field && x.status === \"kept\" && x.kind === \"proposal\" && x.to.toLowerCase() === to.toLowerCase())) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "an answer can be changed",
+  "corechangefn",
+  "if (item.status !== \"asked\") return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "put back still works for a phone",
+  "gbpdrift",
+  "if (stepId === STEP.FACTS && require(\"./_core-change\").coreDiffs(task.google_drift).length) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "a client's own save gets refused",
+  "stepinput",
+  "core_pending: { phone: parsed.value.phone, at: now, by: gate.email || null }",
+  "core_pending: null",
+  1
+ ],
+ [
+  "the nightly check skips the main category",
+  "gbpwatch",
+  "const seen = require(\"./_core-change\").noticeMainCategory(task, now);",
+  "const seen = {};",
+  1
+ ],
+ [
+  "nothing sends after the wait",
+  "gbpwatch",
+  "task.core_changes.filter((x) => x.status === \"waiting\" && (!x.not_before || Date.parse(x.not_before) <= nowMs))",
+  "[]",
+  1
+ ],
+ [
+  "the client's card loses Approve",
+  "portal",
+  "data-core-answer=\"approve\" data-core-id=\"${id}\">Approve this change",
+  "data-core-answer=\"approve\" data-core-id=\"${id}\">Okay",
+  1
+ ],
+ [
+  "the portal never draws the cards",
+  "portal",
+  "    fillCoreChanges(clientId, token).catch((e) => console.warn(\"[core changes]\", e.message));\n    return;",
+  "    return;",
+  1
+ ]
+]

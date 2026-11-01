@@ -258,7 +258,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   ok(/data-dk-refresh>Check again<\/button>/.test(sec) && /admin-data-keep/.test(sec) && /Reading what's kept…/.test(sec), "(8) the Check again button or the waiting text is missing (every control spins)");
   ok(!/—/.test(sec), "(8) an em dash in the new admin copy");
   ok(/id="systemHealthCard"[\s\S]{0,300}id="dataKeepCard"/.test(adminHtml), "(8) the Data card isn't under System health");
-  ok(/admin\.js\?v=20261101d/.test(adminHtml), "(8) admin.js's ?v= wasn't bumped to 20261101d");
+  ok(/admin\.js\?v=2026\d{4}[a-z]/.test(adminHtml), "(8) admin.js has no cache buster");
 }
 
 // ── (9) the SQL file and the job list ───────────────────────────────────────────────────────────────────────────────

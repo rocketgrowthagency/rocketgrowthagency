@@ -98,8 +98,8 @@
  [
   "admin rows stop drawing the lock card",
   "admin",
-  "return rowStepCardsHtml(o, s) + adminLockHtml(o && o.flowId, s && s.task);",
-  "return rowStepCardsHtml(o, s);"
+  "return rowStepCardsHtml(o, s) + core + adminLockHtml(o && o.flowId, s && s.task);",
+  "return rowStepCardsHtml(o, s) + core;"
  ],
  [
   "step 17 never locks after Used in the report",
