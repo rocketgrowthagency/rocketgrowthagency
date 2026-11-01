@@ -47,7 +47,20 @@ try {
   fs.mkdirSync(p("repo/node_modules"));
   fs.writeFileSync(p("repo/node_modules/x.js"), "x\n");
 
-  const good = run();
+  // 🔴 audit 10-31: browser profiles, the Mac's jobs and settings, and .env in its one folder
+  fs.mkdirSync(p("repo/output/chrome-profile-x"), { recursive: true });
+  fs.writeFileSync(p("repo/output/chrome-profile-x/Cookies"), "signed-in\n");
+  fs.writeFileSync(p("repo/output/keep.json"), "{}\n");
+  fs.mkdirSync(p("home/Library/LaunchAgents"), { recursive: true }); fs.mkdirSync(p("home/.claude"), { recursive: true });
+  fs.writeFileSync(p("home/Library/LaunchAgents/com.rga.x.plist"), "<plist/>\n"); fs.writeFileSync(p("home/Library/LaunchAgents/com.other.y.plist"), "<plist/>\n"); fs.writeFileSync(p("home/.claude/settings.json"), "{}\n");
+  const good = run({ BACKUP_CONFIG_SRC: p("home") });
+  if (has(p("lacie/RGA-Backups/live/scraper/output/chrome-profile-x"))) fail("a signed-in browser profile reached the drive");
+  if (!has(p("lacie/RGA-Backups/live/scraper/output/keep.json"))) fail("the exclusion took ordinary output with it");
+  if (!has(p("lacie/RGA-Backups/config/LaunchAgents/com.rga.x.plist")) || !has(p("lacie/RGA-Backups/config/claude/settings.json"))) fail("the Mac's scheduled jobs or settings aren't copied");
+  if (has(p("lacie/RGA-Backups/config/LaunchAgents/com.other.y.plist"))) fail("another business's scheduled job was copied");
+  { const e = p("lacie/RGA-Backups/secrets/env/scraper.env");
+    if (!has(e) || fs.readFileSync(e, "utf8") !== "A_SECRET=1\n") fail(".env isn't in its one folder");
+    else if ((fs.statSync(e).mode & 0o077) !== 0 || (fs.statSync(p("lacie/RGA-Backups/secrets")).mode & 0o077) !== 0) fail(".env can be read by another user on this Mac"); }
   if (good.status !== 0) fail(`a clean run exits ${good.status}, not 0`);
   if (status()?.ok !== true) fail("a clean run doesn't record ok:true");
   for (const [dest, name] of [["lacie/Claude chat histories", "LaCie"], ["mac", "the Mac copy"]]) {
