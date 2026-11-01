@@ -330,6 +330,11 @@ export const FILES = {
   adminunlock: "netlify/functions/admin-step-unlock.js",
   siteplatfn: "netlify/functions/portal-site-platform.js",   // step3_website_access_v3 (10-20)
   siteplatdata: "data/site-platforms.json",   // the 22-builder audit, one source (10-20)
+  pagereadback: "netlify/functions/_page-readback.js",   // website_system_v2 builds 10-12, 14, 16 (11-01)
+  pagemeasure: "netlify/functions/_page-measure.js",
+  webautorun: "netlify/functions/_website-autorun.js",
+  sitechangewatch: "netlify/functions/site-change-watch.js",
+  metricsdaily: "netlify/functions/metrics-daily-refresh.js",
   pagebrief: "netlify/functions/_page-brief.js",   // website_system_v2 builds 3 to 6, 15 (11-01)
   pagebuilder: "netlify/functions/_page-builder.js",
   pageprooffn: "netlify/functions/portal-page-proof.js",

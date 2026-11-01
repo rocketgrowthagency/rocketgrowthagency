@@ -23,7 +23,7 @@ const code = [line(/^const WC_TILE = [^\n]*;$/m, "WC_TILE"), line(/^const WC_KIN
   line(/^const wcEditing = new Set\(\);[^\n]*$/m, "wcEditing"), line(/^const wcPrefilling = new Set\(\);[^\n]*$/m, "wcPrefilling"),
   line(/^const wcStepDef = [^\n]*;$/m, "wcStepDef"), line(/^const wcTitleOf = [^\n]*;$/m, "wcTitleOf"), line(/^const wcDay = [^\n]*;$/m, "wcDay"),
   line(/^const acDay = [^\n]*;$/m, "acDay"), line(/^const acCk = [^\n]*;$/m, "acCk"),
-  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), line(/^const WC_PG_ICON = [^\n]*;$/m, "WC_PG_ICON"), fn("wcChgHtml"), fn("wcProofRowHtml"), fn("wcBriefHtml"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
+  line(/^const WC_LB_ICON = [^\n]*;$/m, "WC_LB_ICON"), fn("wcLabelHtml"), line(/^const wcFileVerb = [^\n]*;$/m, "wcFileVerb"), fn("acCardHtml"), fn("acDueChip"), fn("wcLinesOf"), line(/^const wcAfter = [^\n]*;$/m, "wcAfter"), line(/^const WC_PG_ICON = [^\n]*;$/m, "WC_PG_ICON"), fn("wcChgHtml"), line(/^const wcMeasureCache = [^\n]*;$/m, "wcMeasureCache"), fn("wcMeasureHtml"), fn("wcProofRowHtml"), fn("wcBriefHtml"), fn("wcReviewChecksHtml"), fn("wcGooglePreviewHtml"), fn("wcPageReadsHtml"), fn("wcReviewHtml"), fn("wcDiffHtml"), fn("wcRiskHtml"), fn("wcFormHtml"), fn("wcNewPageHtml"), fn("wcRowPill"), line(/^const wcRowPillHtml = [^\n]*;$/m, "wcRowPillHtml"),
   // approval_tab_and_sent_card_v1 (10-28): the whole trip + what they're approving
   line(/^const wcMergeBy = [^\n]*;$/m, "wcMergeBy"), line(/^const wcTime = [^\n]*;$/m, "wcTime"), fn("wcLoopHtml"),
   // publish_safety_checks_v1 (10-28): the safety panel, who merged, the after-check
@@ -90,6 +90,9 @@ const S = {
   pageReady: { id: L, task: { status: "in_progress", auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield", beside: "beside their 2 Springfield pages" } } } }, pre: pageChange },
   pageDrafted: { id: L, task: { status: "in_progress", site_change: pageChange, auto_result: { summary: "NEW PAGE: x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
   pageLong: { id: L, task: { status: "in_progress", site_change: { ...pageChange, items: pageChange.items.map((i) => (i.role === "title" ? { ...i, after: "A title well past what Google shows in a result for anybody at all in Springfield" } : i)) }, auto_result: { summary: "x", ran_at: NOW, outcome_data: { page_draft: { page_for: "Springfield" } } } } },
+  // the nightly re-read found the approved words gone; a live page shows what was checked and Search Console's numbers (no number while it reads)
+  pageDrift: { id: L, task: { status: "in_progress", live_drift: { at: NOW, missing: ["Page title"], url: "https://sparks.test/electrician-springfield-il/" }, site_change: pageChange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW }, published: { v: "v1", at: NOW, checked: true, url: "https://sparks.test/electrician-springfield-il/" } } },
+  pageChecks: { id: L, task: { status: "done", site_change: pageChange, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW }, published: { v: "v1", at: NOW, checked: true, url: "https://sparks.test/electrician-springfield-il/", checks: [{ id: "title", ok: true, what: "Title as approved" }, { id: "sitemap", ok: null, what: "Couldn't read their sitemap" }] } } },
   // page 1 of 3 is live: the step stays open and offers the next page
   pageOf: { id: L, task: { status: "in_progress", site_change: { ...pageChange, page_of: { at: 1, of: 3 } }, internal_review: { decision: "approved", change_v: "v1", at: NOW }, approval: { decision: "approved", change_v: "v1", at: NOW }, published: { v: "v1", at: NOW, checked: true, url: "https://sparks.test/electrician-springfield-il/" } } },
   // what the brief found + a stuffed draft + a copied sentence
@@ -229,6 +232,12 @@ has("right", /Already right · nothing needed changing/, "already right isn't sa
 // the wiring the browser can't see
 if (!/if \(t\.hasAttribute\("data-ob-wc-savesend"\)\) \{/.test(A) || !/site_action: "save", change: pre \}\);[\s\S]{0,200}internal_decision: "approved"/.test(A)) fail("Send for approval on a draft doesn't save it and send it");
 if (!/\$\{gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");
+// ── builds 10, 11, 16 on the card ──
+if (!/changed since it went live/i.test(out.pageDrift.text) || !/aren't on it: Page title/.test(out.pageDrift.text) || out.pageDrift.pill !== "Changed") fail("drift doesn't reopen the row and say which line");
+if (!/Title as approved/.test(out.pageChecks.text) || !/<li><i class="o"[^>]*><\/i><span><b>Couldn't read their sitemap/.test(out.pageChecks.html)) fail("the live card doesn't show what was checked, with couldn't check left open");
+if (!/Reading Search Console…/.test(out.pageChecks.text)) fail("the live card doesn't read Search Console");
+if (!out.pageChecks.buttons.includes("Use this page for Google's link") || out.live.buttons.includes("Use this page for Google's link")) fail("the Google link button isn't on a live city page, or shows elsewhere");
+if (!out.pageChecks.buttons.includes("Remove this page…")) fail("a real page can't be taken down through approval");
 // ── builds 4, 6, 15 on the card ──
 if (!/Page 1 of 3 is live/.test(out.pageOf.text) || !out.pageOf.buttons.includes("Start the next page")) fail("a page with more to go doesn't say so or offer the next one");
 if (out.pageOf.pill !== "Live · 1 of 3") fail(`the row's chip hides that pages are left ("${out.pageOf.pill}")`);

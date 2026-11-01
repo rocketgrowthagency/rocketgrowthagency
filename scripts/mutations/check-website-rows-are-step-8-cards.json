@@ -261,8 +261,8 @@
  [
   "the live card's link loses its eye (back to Open the page ↗)",
   "admin",
-  "class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>",
-  "class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>",
+  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>`",
+  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>`",
   1
  ],
  [
@@ -417,6 +417,41 @@
   "admin",
   "<b>The page:</b>",
   "<b></b>",
+  1
+ ],
+ [
+  "drift doesn't show",
+  "admin",
+  "if (task.live_drift) return wrap(acCardHtml({ tone: \"late\",",
+  "if (false) return wrap(acCardHtml({ tone: \"late\",",
+  1
+ ],
+ [
+  "the chip hides drift",
+  "admin",
+  "if (st === \"live\" && task.live_drift) return { text: \"Changed\", cls: \"active\" };",
+  "",
+  1
+ ],
+ [
+  "the checks don't show",
+  "admin",
+  "+ (p.checks ? acCk(p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])) : \"\")",
+  "",
+  1
+ ],
+ [
+  "couldn't check gets a tick",
+  "admin",
+  "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])",
+  "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", false])",
+  1
+ ],
+ [
+  "no numbers on the live card",
+  "admin",
+  "+ (isPage && c && !c.removes_page ? wcMeasureHtml(id, task) : \"\")",
+  "",
   1
  ]
 ]

@@ -1,0 +1,254 @@
+[
+ [
+  "a wrong title passes",
+  "pagereadback",
+  "add(\"title\", SC.norm(title) === SC.norm(want),",
+  "add(\"title\", true,",
+  1
+ ],
+ [
+  "a wrong headline passes",
+  "pagereadback",
+  "add(\"headline\", h1s.includes(SC.norm(head)),",
+  "add(\"headline\", true,",
+  1
+ ],
+ [
+  "a missing area passes",
+  "pagereadback",
+  "add(\"areas\", !gone.length,",
+  "add(\"areas\", true,",
+  1
+ ],
+ [
+  "no canonical reads as a pass",
+  "pagereadback",
+  "add(\"canonical\", canon ? pathKey(canon) === pathKey(c.page_url) : null,",
+  "add(\"canonical\", canon ? pathKey(canon) === pathKey(c.page_url) : true,",
+  1
+ ],
+ [
+  "hidden from Google passes",
+  "pagereadback",
+  "add(\"indexable\", !hidden,",
+  "add(\"indexable\", true,",
+  1
+ ],
+ [
+  "an unread sitemap reads as a pass",
+  "pagereadback",
+  "const inMap = sitemapXml == null ? null :",
+  "const inMap = sitemapXml == null ? true :",
+  1
+ ],
+ [
+  "broken structured data passes",
+  "pagereadback",
+  "add(\"schema\", blocks.length ? !broken.length : null,",
+  "add(\"schema\", true,",
+  1
+ ],
+ [
+  "nothing blocks Mark live",
+  "pagereadback",
+  "const blocking = (checks) => (checks || []).filter((x) => x.ok === false && (x.id === \"indexable\" || x.id === \"canonical\"));",
+  "const blocking = () => [];",
+  1
+ ],
+ [
+  "the test page is watched as a real page",
+  "pagereadback",
+  "SC.changeState(t) !== \"live\" || SC.STEPS[k].test) return false;",
+  "SC.changeState(t) !== \"live\") return false;",
+  1
+ ],
+ [
+  "the same drift writes every night",
+  "pagereadback",
+  "if (had && JSON.stringify(had.missing) === JSON.stringify(missing)) return null;",
+  "",
+  1
+ ],
+ [
+  "a clean reading never closes it",
+  "pagereadback",
+  "const { live_drift, ...rest } = t;\n  return { ...rest, status: SC.stepMayBeDone(rest) ? \"done\" : rest.status };",
+  "return null;",
+  1
+ ],
+ [
+  "drift doesn't reopen",
+  "pagereadback",
+  "return { ...t, live_drift: { at, missing, url }, status: \"in_progress\" };",
+  "return { ...t, live_drift: { at, missing, url } };",
+  1
+ ],
+ [
+  "a removed page back isn't drift",
+  "pagereadback",
+  "SC.norm(html).includes(SC.norm(c.removed_title)) ? [\"The page that came down is back\"] : []",
+  "false ? [] : []",
+  1
+ ],
+ [
+  "Mark live doesn't refuse",
+  "admindeliv",
+  "if (stop.length && !String(body.unchecked_reason || \"\").trim()) return json(409, { error: `The live page has a problem:",
+  "if (false) return json(409, { error: `The live page has a problem:",
+  1
+ ],
+ [
+  "the checks aren't kept",
+  "admindeliv",
+  "...(liveChecks ? { checks: liveChecks } : {})",
+  "",
+  1
+ ],
+ [
+  "the job reads test clients",
+  "sitechangewatch",
+  "&or=(source.is.null,source.not.like.test:*)&select=id,website_url",
+  "&select=id,website_url",
+  1
+ ],
+ [
+  "an unread page counts as drift",
+  "sitechangewatch",
+  "if (!r || (!r.ok && !gone)) { out.unknown++; continue; }",
+  "if (!r) { out.unknown++; continue; }",
+  1
+ ],
+ [
+  "a page that's gone isn't drift",
+  "sitechangewatch",
+  ": gone ? [\"The page no longer opens\"] : RB.driftOf(c, html).missing;",
+  ": RB.driftOf(c, html).missing;",
+  1
+ ],
+ [
+  "a removed gone page reads as drift",
+  "sitechangewatch",
+  "const missing = c.removes_page ? RB.driftOf(c, html).missing : gone ?",
+  "const missing = gone ?",
+  1
+ ],
+ [
+  "a job off the schedule",
+  "toml",
+  "[functions.\"site-change-watch\"]\n  schedule = \"35 12 * * *\"",
+  "[functions.\"site-change-watch\"]",
+  1
+ ],
+ [
+  "a window that hasn't ended shows a number",
+  "pagemeasure",
+  "if (end > now.getTime() - LAG_DAYS * DAY) return { weeks, state: \"not_yet\", until: dayOf(end + LAG_DAYS * DAY) };",
+  "",
+  1
+ ],
+ [
+  "no rows reads as zero",
+  "pagemeasure",
+  "if (!inW.length || !impressions) return { weeks, state: \"no_data\" };",
+  "",
+  1
+ ],
+ [
+  "unread reads as zero",
+  "pagemeasure",
+  "if (!Array.isArray(rows)) return { state: \"unknown\", windows: [] };",
+  "rows = rows || [];",
+  1
+ ],
+ [
+  "the report drops the pages",
+  "month1report",
+  "...(pageLines.length ? [{ key: \"pages\", title: \"Website pages\", lines: pageLines }] : []),",
+  "",
+  1
+ ],
+ [
+  "a step starts with blockers open",
+  "webautorun",
+  "return open.length ? `waiting on ${open.join(\", \")}` : null;",
+  "return null;",
+  1
+ ],
+ [
+  "it runs again after its stamp",
+  "webautorun",
+  "if (t.auto_run) return \"already ran by itself\";",
+  "",
+  1
+ ],
+ [
+  "it's on by default",
+  "webautorun",
+  "const isOn = (env) => env.WEBSITE_AUTO_RUN === \"1\";",
+  "const isOn = () => true;",
+  1
+ ],
+ [
+  "a test client starts",
+  "webautorun",
+  "if (String(client.source || \"\").startsWith(\"test:\")) return \"a test client\";",
+  "",
+  1
+ ],
+ [
+  "the cap is gone",
+  "webautorun",
+  "if (started >= NIGHT_CAP) break;",
+  "",
+  1
+ ],
+ [
+  "it starts without claiming",
+  "webautorun",
+  "if (!Array.isArray(won) || !won.length) continue;\n    started++;",
+  "started++;",
+  1
+ ],
+ [
+  "no claim condition",
+  "webautorun",
+  "->auto_run=is.null&select=id`",
+  "&select=id`",
+  1
+ ],
+ [
+  "nothing runs the sweep",
+  "metricsdaily",
+  "const wr = await require(\"./_website-autorun\").sweepWebsiteSteps();",
+  "const wr = {};",
+  1
+ ],
+ [
+  "a soft 404 reads as fine",
+  "exec",
+  "httpsOk && sitemapRes.ok && real404 !== false ? \"ok\" : \"needs_fix\"",
+  "httpsOk && sitemapRes.ok ? \"ok\" : \"needs_fix\"",
+  1
+ ],
+ [
+  "row 39 doesn't try a made-up address",
+  "exec",
+  "const made = await fetch(`${root}/rga-no-such-page-${Date.now().toString(36)}/`, { redirect: \"follow\", signal: AbortSignal.timeout(10000) }).catch(() => null);",
+  "const made = null;",
+  1
+ ],
+ [
+  "the button sends to Google itself",
+  "admin",
+  "_gsLinkPrefill.set(cid, (task.site_change || {}).page_url || \"\"); _gsEditingLink.add(cid);",
+  "await gsPost(cid, { action: \"website_choice\", kind: \"location\", url: (task.site_change || {}).page_url }); _gsEditingLink.add(cid);",
+  1
+ ],
+ [
+  "the choice doesn't default to the page",
+  "admin",
+  "pick = _gsLinkPrefill.get(cid) ? \"location\" : c ? c.kind :",
+  "pick = c ? c.kind :",
+  1
+ ]
+]

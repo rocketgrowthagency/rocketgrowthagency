@@ -240,7 +240,7 @@
  [
   "the fingerprint isn't recorded",
   "admindeliv",
-  "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}), ...(noindexSeen !== null ? { noindex: noindexSeen } : {}) };",
+  "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note, ...(fingerprint ? { fingerprint } : {}), ...(noindexSeen !== null ? { noindex: noindexSeen } : {}), ...(liveChecks ? { checks: liveChecks } : {}) };",
   "t.published = { v: c.v, at: now, by: who, surface: \"website\", field: key, url, before: ba.before, after: ba.after, checked, check_note };",
   1
  ],
