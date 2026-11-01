@@ -672,6 +672,7 @@ run check-an-email-is-not-a-conversation.mjs "each email RGA sent is one closed 
 run check-rga-tidies-a-second-logo.mjs "RGA recommends and removes a second logo copy, the client keeps a veto"
 run check-step-7-kinds-fold.mjs "step 10 kinds fold and the tiles say what is true"
 run check-step-7-top-is-calm.mjs "step 10's card keeps the approved order from top to tips"
+run check-the-stylesheets-are-balanced.mjs "admin.css and portal.css have no stray brace or declaration between rules (a stray line once dropped the Messages control silently)"
 run check-the-admin-step-accordion-behaves.mjs "admin Onboarding steps fold accordion-style: one open per card, live call never folds"
 run check-we-never-promise-what-we-dont-do.mjs "copy must not assert behaviour the system does not perform"
 run check-post-payment-shows-real-data.mjs "after a payment the portal renders the ledger, or nothing"

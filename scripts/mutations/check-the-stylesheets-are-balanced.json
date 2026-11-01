@@ -1,0 +1,23 @@
+[
+[
+"a stray declaration and brace between rules",
+"admincss",
+".am-seg{display:inline-flex;",
+"border-radius:8px;font:inherit}\n.am-seg{display:inline-flex;",
+1
+],
+[
+"a block is never closed",
+"admincss",
+".am-seg button.on{background:var(--admin-ink,#303030);color:#fff;}",
+".am-seg button.on{background:var(--admin-ink,#303030);color:#fff;",
+1
+],
+[
+"a stray close brace in the portal sheet",
+"portalcss",
+".pm-cs .pm-p10-t.is-on { color:var(--state-other,#1c44bd); font-weight:600; }",
+"}\n.pm-cs .pm-p10-t.is-on { color:var(--state-other,#1c44bd); font-weight:600; }",
+1
+]
+]

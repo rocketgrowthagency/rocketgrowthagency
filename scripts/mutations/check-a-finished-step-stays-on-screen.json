@@ -1,44 +1,44 @@
 [
- [
-  "the Run button stops putting the step it ran back on screen (the bug Chris reported)",
-  "admin",
-  "  await reloadScopeAndRerender(scope);\n  // 🔑 THE STEP YOU RAN IS THE STEP YOU SEE, whatever the run did to the rest of the list.\n  revealStep(flowId);",
-  "  await reloadScopeAndRerender(scope);"
- ],
- [
-  "the row override re-renders without anchoring",
-  "admin",
-  "    revealStep(taskId);",
-  "    void 0;"
- ],
- [
-  "Mark step complete goes back to scrolling at the next actionable row",
-  "admin",
-  "    revealStep(flowId);\n  } catch (e) {\n    setBanner(`Could not update step: ${e.message}`, \"error\");",
-  "    const next = document.querySelector(`.ob-step.active, .ob-step.ready`);\n    if (next) next.scrollIntoView({ behavior: \"smooth\", block: \"center\" });\n  } catch (e) {\n    setBanner(`Could not update step: ${e.message}`, \"error\");"
- ],
- [
-  "the reveal runs in the same tick, scrolling to the node about to be replaced",
-  "admin",
-  "    requestAnimationFrame(() => {\n      const el = document.querySelector(",
-  "    (() => {\n      const el = document.querySelector("
- ],
- [
-  "the finished card is centred, pushing its own title off the top of the screen",
-  "admin",
-  "      el.scrollIntoView({ behavior: \"smooth\", block: \"start\" });",
-  "      el.scrollIntoView({ behavior: \"smooth\", block: \"center\" });"
- ],
- [
-  "a done card loses its id, so the one card this exists for cannot be found",
-  "admin",
-  "${askCls}${consoleCls}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"${gsD || \"\"}\"><div class=\"ob-row\">",
-  "${askCls}${consoleCls}\" data-g=\"${gsD || \"\"}\"><div class=\"ob-row\">"
- ],
- [
-  "admin steps 29–38's waiting card loses its id (a 6th template the old count could not see, 10-30)",
-  "admin",
-  "<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"you\">",
-  "<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-g=\"you\">"
- ]
+[
+"the Run button stops putting the step it ran back on screen (the bug Chris reported)",
+"admin",
+"  await reloadScopeAndRerender(scope);\n  // 🔑 THE STEP YOU RAN IS THE STEP YOU SEE, whatever the run did to the rest of the list.\n  revealStep(flowId);",
+"  await reloadScopeAndRerender(scope);"
+],
+[
+"the row override re-renders without anchoring",
+"admin",
+"    revealStep(taskId);",
+"    void 0;"
+],
+[
+"Mark step complete goes back to scrolling at the next actionable row",
+"admin",
+"    revealStep(flowId);\n  } catch (e) {\n    setBanner(`Could not update step: ${e.message}`, \"error\");",
+"    const next = document.querySelector(`.ob-step.active, .ob-step.ready`);\n    if (next) next.scrollIntoView({ behavior: \"smooth\", block: \"center\" });\n  } catch (e) {\n    setBanner(`Could not update step: ${e.message}`, \"error\");"
+],
+[
+"the reveal runs in the same tick, scrolling to the node about to be replaced",
+"admin",
+"    requestAnimationFrame(() => {\n      const el = document.querySelector(",
+"    (() => {\n      const el = document.querySelector("
+],
+[
+"the finished card is centred, pushing its own title off the top of the screen",
+"admin",
+"      el.scrollIntoView({ behavior: \"smooth\", block: \"start\" });",
+"      el.scrollIntoView({ behavior: \"smooth\", block: \"center\" });"
+],
+[
+"a done card loses its id, so the one card this exists for cannot be found",
+"admin",
+"${askCls}${consoleCls}${s.task?.undo_request && !declined ? \" has-undo-ask\" : \"\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"${gsD || \"\"}\"><div class=\"ob-row\">",
+"${askCls}${consoleCls}${s.task?.undo_request && !declined ? \" has-undo-ask\" : \"\"}\" data-g=\"${gsD || \"\"}\"><div class=\"ob-row\">"
+],
+[
+"admin steps 29–38's waiting card loses its id (a 6th template the old count could not see, 10-30)",
+"admin",
+"<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-ob-step=\"${escapeAttribute(o.flowId)}\" data-g=\"you\">",
+"<div class=\"ob-step active${rgaWork ? \"\" : \" is-wait\"}\" data-g=\"you\">"
+]
 ]

@@ -212,14 +212,14 @@
 [
 "the cover line always shows",
 "portal",
-"photoOnlyVisible(taskState, sl.kept[0].name) ? \"It's the only photo",
+"photoOnlyVisible(taskState, kg.name) ? \"It's the only photo",
 "true ? \"It's the only photo",
 1
 ],
 [
 "the cover line never shows",
 "portal",
-"photoOnlyVisible(taskState, sl.kept[0].name) ? \"It's the only photo",
+"photoOnlyVisible(taskState, kg.name) ? \"It's the only photo",
 "false ? \"It's the only photo",
 1
 ],
