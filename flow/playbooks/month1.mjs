@@ -104,7 +104,9 @@ If it errors: the client row is missing, and every later step will fail on it. F
 3. Email: hello@rocketgrowthagency.com
 4. Role: Manager → Invite
 5. Accept the invite from the hello@ inbox
-6. Once accepted, the profile shows in hello@'s Business Profile dashboard.`,
+6. Once accepted, the profile shows in hello@'s Business Profile dashboard.
+
+Two RGA addresses, on purpose: hello@ is the Google Business Profile manager (this step). access@ is the sign-in for website builders and other tools (the website access step). Neither is ever asked for a password.`,
   },
   {
     id: "m1.access.analytics", title: "Get GA4 admin access",
@@ -216,7 +218,8 @@ After: send the recap — action items, dates, and exactly what you are still wa
     // 🔒 no actionLabel / runner (10-27, approved admin_action_card_and_row8_v1): its Generate drafted "I need a login" + hello@
     instructions: `The client invites RGA Admin, never a password: access@rocketgrowthagency.com on their builder, or GitHub rocketgrowthagency-admin on their code (their card shows the exact steps for their builder).
 Accept the invite in the access@ Chrome profile, open a page the role should reach, then press Confirm access: it records the grant and takes the before-snapshot.
-Every RGA Admin login and its 2-step codes live in Bitwarden, collection RGA Admin. Never accept a client password or hosting credentials.`,
+Every RGA Admin login and its 2-step codes live in Bitwarden, collection RGA Admin. Never accept a client password or hosting credentials.
+For the Google Business Profile the invite goes to hello@ instead (the Google access step): hello@ is for the profile, access@ is for website builders.`,
   },
   {
     id: "m1.access.password_manager", title: "Keep access safe",
