@@ -351,12 +351,10 @@ re-run rather than accepting it.`,
     id: "m1.audit.ai_readiness", title: "Audit AI readiness",
     type: "auto", dependsOn: ["m1.access.gbp"],
     actionLabel: "⚡ Run the check",
-    instructions: `Scores how well the site answers the questions an AI assistant would ask about this business, and
-returns a readiness percentage plus a fix list.
+    instructions: `Checks that the public facts about the business (name, phone, profile links) are on the page in readable text, agree with the Google profile, and are marked up cleanly. Returns a fix list and a number for RGA only.
 
-🔴 We sell AI READINESS, never AI PRESENCE. Whether a business "appears in AI answers" is not
-measurable and claiming it would be fabricated proof. Readiness — is the information there, is it
-structured, is it consistent — is measurable, and that is what this scores.`,
+🔴 The number is for admin and is never shown to a client: it would imply a result nobody measured. A client sees a plain list of facts that are right. We promise no AI ranking and make no claim about what any AI tool says: whether a business "appears in AI answers" is not measurable.
+The FAQ-schema line is gone (Google says schema is not an AI lever). Whether a search crawler is blocked is checked in the monthly site audit.`,
     async run({ client }) { return await callFn("ai-readiness-audit", client.id); },
   },
   {
@@ -1081,6 +1079,16 @@ Order by impact (highest first). Include any state/regional industry boards rele
 1. Sign up → use the canonical NAP from m1.cit.priority_top10
 2. Verify (often phone/postcard)
 3. Insert row in client_citations: { directory_name, vertical: 'industry_specific', listing_url, status }`,
+  },
+  {
+    id: "m1.platform.yelp", title: "Claim and complete the Yelp profile",
+    type: "manual", dependsOn: ["m1.gbp.optimize_categories", "m1.gbp.hours_attributes", "m1.gbp.business_facts"],
+    instructions: `Yelp (https://biz.yelp.com/): the profile belongs to the client, never to RGA.
+1. Claim the page. Yelp verifies by phone or email, so the client takes the code.
+2. Fill in the name, address, phone, hours and photos from the facts the client confirmed, so they match the Google profile letter for letter.
+3. Reply to reviews that appear.
+Never ask a customer for a Yelp review (Yelp bars it). Never advertise on Yelp as part of this.
+This is profile hygiene, not AI work: it makes no promise about any AI tool or any ranking. If Yelp will not list the business, write that on the step and move on.`,
   },
   {
     id: "m1.platform.bing_apple", title: "Set up Bing Places + Apple Business",

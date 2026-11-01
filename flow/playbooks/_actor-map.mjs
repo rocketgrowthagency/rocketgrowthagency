@@ -49,6 +49,7 @@ export const ACTOR_MAP = {
   "m1.web.expanded_schema":  { actor: "rga" },
   "m1.cit.priority_top10":   { actor: "rga" },
   "m1.cit.industry_specific":{ actor: "rga" },
+  "m1.platform.yelp":        { actor: "rga" },
   "m1.platform.bing_apple":  { actor: "rga" },
   "m1.gbp.knowledge_panel":  { actor: "rga" },
   "m1.web.service_location_matrix": { actor: "rga" },
