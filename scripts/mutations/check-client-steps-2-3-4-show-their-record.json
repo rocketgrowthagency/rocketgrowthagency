@@ -58,7 +58,7 @@
  [
   "skip says Calls",
   "portal",
-  "rcRow(\"Your reports show\", [\"ok\", \"✓\"], `Google's call-button clicks${back",
+  "rcRow(\"Your reports show\", [\"ok\", \"✓\"], `Google's call-button taps${back",
   "rcRow(\"Your reports show\", [\"ok\", \"✓\"], `Google's Calls${back",
   1
  ],

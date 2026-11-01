@@ -79,7 +79,7 @@ const ask2 = run("m1.access.website", {});
 if (!/data-acc-host/.test(ask2) || !/pm-k5-plan pm-cs-card you/.test(ask2) || !/<span data-acc-when>takes 2–5 min<\/span>/.test(ask2) || !/Never send us your password\./.test(ask2) || !/My web designer manages my site/.test(ask2) || !/I don't have a website/.test(ask2) || /type="password"|onetimesecret/i.test(ask2)) fail("step 2's ask isn't the invite card (designer / no-website paths), or has a password field");
 const skip3 = run("m1.tracking.call_setup", { status: "done", client_choice: "skip", client_choice_at: "2026-10-20T12:00:00Z" });
 // 🔄 10-26 (steps_6_20_clean_v1, step 11 done): "Skipped for now · decided", the one row, when we ask again
-if (!/<b>Skipped for now<\/b>/.test(skip3) || !/call-button clicks/.test(skip3) || !/we'll ask again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);
+if (!/<b>Skipped for now<\/b>/.test(skip3) || !/call-button taps/.test(skip3) || !/we'll ask again/.test(skip3)) fail(`step 3 skipped doesn't say what it means and when it comes back (${skip3.slice(0, 160)})`);
 const live3 = run("m1.tracking.call_setup", { status: "done", client_choice: "rga_sets_up", client_choice_at: "2026-10-20T12:00:00Z", tracking: { number: "(213) 555-0188", rings: "(424) 242-2040", live_at: "2026-10-23T12:00:00Z", provider: "CallRail" } });
 if (!/Your tracking number/.test(live3) || !/in your name/.test(live3) || !/Directories/.test(live3) || !/additional phone/.test(live3)) fail("a live tracking number doesn't show where it is and that the client owns it");
 const ask3 = run("m1.tracking.call_setup", {});
