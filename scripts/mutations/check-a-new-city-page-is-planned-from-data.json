@@ -58,8 +58,8 @@
  [
   "a new page saves without its file",
   "sitechange",
-  "    if (def.newPage && !c.removes_page && !files.some((f) => f.action === \"add\")) return",
-  "    if (false) return",
+  "if (c.new_page && !c.removes_page && !files.some((f) => f.action === \"add\")) return {",
+  "if (false) return {",
   1
  ],
  [
