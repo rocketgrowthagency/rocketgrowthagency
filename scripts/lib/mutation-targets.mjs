@@ -429,4 +429,6 @@ export const FILES = {
   baselinefn: "netlify/functions/_baseline.js",
   contractsignfn: "netlify/functions/contract-sign.js",
   datakeepmoresql: "supabase/data_keep_more.sql",
+  // report_and_measurement_v1 (11-01): hours and phone changes on the month's record
+  monthevents: "netlify/functions/_month-events.js",
 };
