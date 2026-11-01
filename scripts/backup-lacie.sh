@@ -97,6 +97,9 @@ copy_config() {
   for f in "$CONFIG_SRC/.claude"/settings*.json; do [ -e "$f" ] && { cp -p "$f" "$dest/claude/" && chmod 600 "$dest/claude/$(basename "$f")" || problem "copying $(basename "$f") failed"; }; done
 }
 
+# System health (approved admin_system_health_v1): the daily run says it ran, so admin shows it. The hourly --chats run does not, and a test run (any BACKUP_* override) does not.
+checkin() { [ $ONLY_CHATS = 0 ] && [ -z "${BACKUP_STATUS:-}${BACKUP_LACIE:-}" ] && { node "$SCRAPER/scripts/job-checkin.mjs" "$@" || true; }; return 0; }
+checkin start lacie-backup
 note "$(date) start"
 # 🔴 a leftover empty folder under /Volumes passes -d, and the copy would land on the Mac's own disk
 if [ -d "$LACIE" ] && [ -z "${BACKUP_LACIE:-}" ] && [ "$(stat -f %d "$LACIE")" = "$(stat -f %d /)" ]; then
@@ -118,9 +121,11 @@ fi
 
 write_status
 if [ "${#problems[@]}" -gt 0 ]; then
+  checkin finish lacie-backup --ok 0 --error "${problems[0]}"
   tell_chris "${problems[0]}"
   note "finished with ${#problems[@]} problem(s)"
   exit 1
 fi
+checkin finish lacie-backup --ok 1 --note "chats, both repos and settings copied"
 note "✅ done $(date)"
 exit 0

@@ -180,9 +180,17 @@
   "keep_days: 400, expected_min: 100, checkin_pending: \"x\" },"
  ],
  [
-  "the LaCie job stops being pending with no check-in in its script",
+  "the LaCie backup never posts its start",
+  "backuplacie",
+  "checkin start lacie-backup\n",
+  "\n",
+  1
+ ],
+ [
+  "lacie-backup marked pending again while it posts",
   "jobmanifest",
-  "checkin_pending: \"Its check-in goes in once the backup that was running finishes\"",
-  "install_note: \"\""
+  "keep_days: 400 },\n  { job: \"daily-health-check\"",
+  "keep_days: 400, checkin_pending: \"x\" },\n  { job: \"daily-health-check\"",
+  1
  ]
 ]
