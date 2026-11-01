@@ -31,8 +31,17 @@ const block = (id) => { const a = FE.indexOf(`"${id}": async`); if (a < 0) retur
 const PAGE_STEPS = ["m1.web.priority_pages", "m1.web.location_pages", "m1.web.service_location_matrix"];
 for (const id of ["m1.gbp.optimize_categories", "m1.gbp.services_products", "m1.gbp.business_description",  // qa_seed retired 10-20
   "m1.web.homepage_meta", "m1.web.h1_cta", "m1.web.priority_pages", "m1.web.blog_seed", "m1.web.location_pages", "m1.web.service_location_matrix"]) {
-  const b = block(id);
+  let b = block(id);
   if (!b) { F(`#3 runner ${id} not found`); continue; }
+  // 11-01 (blog step, "up to 2 when material exists"): the runner is one line that hands off to blogFromMaterial. The plan lock and the
+  // plan-fed prompt live in that function, so READ IT, and require the lock to come BEFORE the model is asked (nothing drafts without the plan).
+  const hand = id === "m1.web.blog_seed" && b.match(/=>\s*(blogFromMaterial)\(client\)/);
+  if (hand) {
+    const fa = FE.indexOf("async function blogFromMaterial("), fb = FE.indexOf("\n}\n", fa);
+    b = fa < 0 ? "" : FE.slice(fa, fb < 0 ? fa + 6000 : fb);
+    if (!b) { F(`#3 ${id} hands off to blogFromMaterial, which is not found`); continue; }
+    if (b.indexOf("lockedPlanFor(") < 0 || b.indexOf("aiDraft(") < b.indexOf("lockedPlanFor(")) F(`#3 ${id} asks the model before it checks the locked plan`);
+  }
   if (!/const _plan = await lockedPlanFor\(client\.id\);/.test(b) || !/return PLAN_NOT_LOCKED;/.test(b)) F(`#3 ${id} no longer waits for the locked keyword plan`);
   // the page steps hand the plan to the one pipeline (draftOnePage), and that pipeline writes from it
   const viaPipeline = PAGE_STEPS.includes(id) && /draftOnePage\(\{ client, _plan,/.test(b) && /async function draftOnePage\([\s\S]{0,1800}planBlock\(_plan\)/.test(FE);
