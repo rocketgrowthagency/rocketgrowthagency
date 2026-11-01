@@ -36,6 +36,8 @@ const TARGETS = [
 // Actions whose visible result IS the UI change they cause. Excused BY NAME with a reason — an
 // exemption must be argued, never assumed (same discipline as the pre-flight gate list).
 const UI_ONLY = {
+  "data-photo-keep-note": "removes the note on the spot; the choice stays in this browser, and nothing is sent",
+  "data-cx-keep": "closes the Cancel fold on the spot; nothing is recorded because they chose not to cancel",
   "data-cs-how": "the client card system's foot \"How this step works ▾\" / \"Why these 5 ▾\" (client_card_system_v1, 2026-10-29): opens or folds the how-to inside the card and flips aria-expanded + the chevron (visible) — nothing is saved",
   "data-cs-ask": "the client card system's \"Change something\" under a locked card (client_card_system_v1, 2026-10-29): opens the lock's Need a change? panel under the card and scrolls to it (visible) — nothing is saved until \"Send to RGA\", which IS audited",
   "data-zc-goto": "admin step 29's \"Open the fix plan (step 30) ›\" (admin_steps_29_38, 2026-10-29): scrolls to that step's row (visible) — nothing is saved",
