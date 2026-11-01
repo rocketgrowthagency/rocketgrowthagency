@@ -1,0 +1,176 @@
+[
+ [
+  "a change not on Google starts the runbook",
+  "citrunbook",
+  "x.status !== \"on_google\"",
+  "false"
+ ],
+ [
+  "an old change keeps the card up",
+  "citrunbook",
+  "nowMs - at > WINDOW_DAYS * DAY || ",
+  "false || "
+ ],
+ [
+  "the oldest change wins",
+  "citrunbook",
+  "if (!best || at > best.ms)",
+  "if (!best || at < best.ms)"
+ ],
+ [
+  "shown is taken as the old value",
+  "citrunbook",
+  "!/^(shown|hidden)$/i.test(s) ? s : \"\"",
+  "true ? s : \"\""
+ ],
+ [
+  "a missing old value is guessed",
+  "citrunbook",
+  "old: clean(x.from) || null,",
+  "old: clean(x.from) || clean(x.to) || null,"
+ ],
+ [
+  "a phone must match exactly as typed",
+  "citrunbook",
+  "return new RegExp(d.split(\"\").join(\"\\\\D{0,3}\")).test(t);",
+  "return t.includes(v);"
+ ],
+ [
+  "a short digit run is a phone",
+  "citrunbook",
+  "if (d.length < 7) return false;",
+  ""
+ ],
+ [
+  "a name match is case sensitive",
+  "citrunbook",
+  "const norm = (s) => String(s).toLowerCase().replace(/\\s+/g, \" \").trim();",
+  "const norm = (s) => String(s);"
+ ],
+ [
+  "an out plan still searches",
+  "citrunbook",
+  "if (!(left >= need + RESERVE))",
+  "if (false)"
+ ],
+ [
+  "an unreadable count still searches",
+  "citrunbook",
+  "if (!Number.isFinite(left))",
+  "if (false)"
+ ],
+ [
+  "no key still searches",
+  "citrunbook",
+  "if (!key) return \"No SerpAPI key is set, so nothing was searched.\";",
+  ""
+ ],
+ [
+  "searched twice in a day",
+  "citrunbook",
+  "nowMs - Date.parse(prior.at) < MIN_GAP_MS",
+  "false"
+ ],
+ [
+  "nothing recorded still searches",
+  "citrunbook",
+  "if (!need) return",
+  "if (false) return"
+ ],
+ [
+  "the value is not quoted",
+  "citrunbook",
+  "const queryFor = (value) => `\"${String(value).replace(/\"/g, \"\").trim()}\"`;",
+  "const queryFor = (value) => String(value).trim();"
+ ],
+ [
+  "a value not recorded is searched",
+  "citrunbook",
+  "if (!value) { out.values.push",
+  "if (false) { out.values.push"
+ ],
+ [
+  "a failed search looks like a result",
+  "citrunbook",
+  "state: \"couldnt\", reason: \"the search didn't answer\", results: [] }); }\n  }",
+  "state: \"searched\", results: [] }); }\n  }"
+ ],
+ [
+  "the result says fixed",
+  "citrunbook",
+  "out.values.push({ which, value, query, state: \"searched\", results });",
+  "out.values.push({ which, value, query, state: \"searched\", results, verdict: \"fixed\" });"
+ ],
+ [
+  "the writer reaches a listing",
+  "citrunbookfn",
+  "const RB = require(\"./_citation-runbook\");",
+  "const RB = require(\"./_citation-runbook\"); const PUSH = \"https://mybusinessbusinessinformation.googleapis.com/v1\";"
+ ],
+ [
+  "the search runs before the claim",
+  "citrunbookfn",
+  "const claim = {",
+  "const early = await deps.search({ change, env: deps.env, nowMs }); const claim = {"
+ ],
+ [
+  "the refusal is skipped",
+  "citrunbookfn",
+  "if (why) return json(409, { error: why });",
+  ""
+ ],
+ [
+  "the plan's count is not read",
+  "citrunbookfn",
+  "left = await deps.left();",
+  "left = 1e9;"
+ ],
+ [
+  "the search is not recorded",
+  "citrunbookfn",
+  "await recordSubmission({ supa,",
+  "await (async () => 0)({ supa,"
+ ],
+ [
+  "the result is not read back",
+  "citrunbookfn",
+  "after.tasks[RB.STEP].old_new_search.state !== \"done\") return json(500",
+  "false) return json(500"
+ ],
+ [
+  "the card is not drawn",
+  "admin",
+  "citNapHtml(t) + citRunbookHtml()",
+  "citNapHtml(t)"
+ ],
+ [
+  "the browser picks the oldest change",
+  "admin",
+  "if (!best || at > best.ms) best = { ms: at, field: x.field, label: CIT_RB_FIELDS",
+  "if (!best || at < best.ms) best = { ms: at, field: x.field, label: CIT_RB_FIELDS"
+ ],
+ [
+  "the browser ignores a missing old value",
+  "admin",
+  "value wasn't recorded</i>",
+  "value was recorded</i>"
+ ],
+ [
+  "the order changes",
+  "admin",
+  "const CIT_RB_ORDER = [\"Google\", \"Bing\", \"Apple\", \"Yelp\", \"Facebook\", \"Data Axle\"]",
+  "const CIT_RB_ORDER = [\"Google\", \"Yelp\", \"Bing\", \"Apple\", \"Facebook\", \"Data Axle\"]"
+ ],
+ [
+  "the card says it is updated for sure",
+  "admin",
+  "It doesn't show that any listing has been updated.",
+  "Every listing is fixed."
+ ],
+ [
+  "the search button does not spin",
+  "admin",
+  "b.classList.add(\"is-busy\");\n  try {\n    const r = await fetch(\"/.netlify/functions/admin-citation-runbook\"",
+  "try {\n    const r = await fetch(\"/.netlify/functions/admin-citation-runbook\""
+ ]
+]

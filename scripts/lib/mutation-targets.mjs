@@ -437,4 +437,7 @@ export const FILES = {
   // admin_last_research_items_v1 (11-01): which page the Google profile links to
   gbplanding: "netlify/functions/_gbp-landing.js",
   gbplandingfn: "netlify/functions/admin-gbp-landing.js",
+  // admin_last_research_items_v1 item 2 (11-01): the runbook when a name, address or phone changes
+  citrunbook: "netlify/functions/_citation-runbook.js",
+  citrunbookfn: "netlify/functions/admin-citation-runbook.js",
 };

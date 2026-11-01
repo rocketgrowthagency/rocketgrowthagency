@@ -663,6 +663,7 @@ run check-no-review-gating.mjs "nothing RGA drafts or shows asks for reviews by 
 run check-step-54-knowledge-panel.mjs "step 54 measures first: panel → facts + checklist, none → No panel yet (open), failed search → indeterminate"
 run check-step-49-schema.mjs "step 49: Service + BreadcrumbList + visible FAQ with FAQPage per page, never AggregateRating, never a guessed URL"
 run check-gbp-landing-page.mjs "the Google landing page step: a failed Search Console read recommends nothing, any site works, a stale choice is ignored, the homepage is the fallback, it saves a decision and writes nothing to Google or the site"
+run check-citation-runbook.mjs "the listings runbook after a name, address or phone change: recorded old and new, a search that refuses when the plan is out, never says fixed, writes to no listing"
 run check-a-service-area-business-is-not-flagged-for-a-hidden-address.mjs "a service-area business is never flagged for a hidden street address; name, phone and service-area text are checked instead"
 run check-the-schema-type-is-the-specific-one-or-local-business.mjs "the LocalBusiness schema step writes the most specific real schema.org type for the Google category, LocalBusiness for anything unknown"
 run check-the-monthly-pagespeed-reads-field-data-honestly.mjs "the monthly audit sends the PageSpeed key, reads real-user data incl. INP, no data says none (never 0 or good), a failed call is not a score"
