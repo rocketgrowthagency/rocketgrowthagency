@@ -1,0 +1,226 @@
+[
+ [
+  "profile claims a watch with no Google connection",
+  "monthlyvalue",
+  "add(\"google_profile\", \"off\", \"Your Google profile: not connected yet",
+  "add(\"google_profile\", \"ok\", \"Your Google profile: not connected yet",
+  1
+ ],
+ [
+  "last month's Google change shows this month",
+  "monthlyvalue",
+  "GOOGLE_EVENT_KINDS.includes(e.kind) && inMonth(e.created_at, month))",
+  "GOOGLE_EVENT_KINDS.includes(e.kind) && true)",
+  1
+ ],
+ [
+  "a failed nightly run counts as checked",
+  "monthlyvalue",
+  "r.ok === true && r.finished_at",
+  "r.finished_at",
+  1
+ ],
+ [
+  "nothing Done on Google still claims a watch",
+  "monthlyvalue",
+  "} else if (!i.google_watched) {",
+  "} else if (false) {",
+  1
+ ],
+ [
+  "an unreadable check table counts its runs",
+  "monthlyvalue",
+  "i.watch && i.watch.table_ready ? ",
+  "i.watch ? ",
+  1
+ ],
+ [
+  "a missing count reads as zero",
+  "monthlyvalue",
+  "v === null || v === undefined || v === \"\"",
+  "v === undefined",
+  1
+ ],
+ [
+  "a month past the 30-day keep still shows reviews",
+  "monthlyvalue",
+  "if (!expired) {",
+  "if (true) {",
+  1
+ ],
+ [
+  "zero leads is a green tick",
+  "monthlyvalue",
+  "else if (n === 0) add(\"leads\", \"off\"",
+  "else if (n === 0) add(\"leads\", \"ok\"",
+  1
+ ],
+ [
+  "a certificate about to expire isn't flagged",
+  "monthlyvalue",
+  "const SSL_WARN_DAYS = 14;",
+  "const SSL_WARN_DAYS = -99999;",
+  1
+ ],
+ [
+  "a slow site is a green tick",
+  "monthlyvalue",
+  "ms <= SLOW_MS ? \"ok\" : \"off\"",
+  "\"ok\"",
+  1
+ ],
+ [
+  "last month's site checks count",
+  "monthlyvalue",
+  "r && r.payload && inMonth(r.created_at, month))",
+  "r && r.payload)",
+  1
+ ],
+ [
+  "down days aren't counted",
+  "monthlyvalue",
+  "const down = rows.filter((r) => r.payload.up !== true).length;",
+  "const down = 0;",
+  1
+ ],
+ [
+  "a finished month says so far",
+  "monthlyvalue",
+  "in_progress: month.slice(0, 7) === nowMonth",
+  "in_progress: true",
+  1
+ ],
+ [
+  "a private address resolved by name is fetched",
+  "sitecheck",
+  "if (addrs.some((a) => isPrivateIp(a.address)))",
+  "if (false)",
+  1
+ ],
+ [
+  "a private IP typed in is accepted",
+  "sitecheck",
+  "if (net.isIP(host) && isPrivateIp(host))",
+  "if (false)",
+  1
+ ],
+ [
+  "a 503 counts as up",
+  "sitecheck",
+  "up = status !== null && status < 500;",
+  "up = true;",
+  1
+ ],
+ [
+  "a timeout counts as up",
+  "sitecheck",
+  "catch { up = false; }",
+  "catch { up = true; }",
+  1
+ ],
+ [
+  "an unreadable certificate date becomes a number",
+  "sitecheck",
+  "if (Number.isFinite(end)) {",
+  "if (true) {",
+  1
+ ],
+ [
+  "the daily check loses its cap",
+  "sitewatch",
+  "const MAX_PER_RUN = 60;",
+  "const MAXX = 60;",
+  1
+ ],
+ [
+  "the daily check repeats within a day",
+  "sitewatch",
+  "kind=eq.site_check&created_at=gte",
+  "kind=eq.site_check&created_at=lte",
+  1
+ ],
+ [
+  "the daily check stops checking in",
+  "sitewatch",
+  "withCheckin(\"site-watch\"",
+  "withCheckin(\"site-watch2\"",
+  1
+ ],
+ [
+  "the daily check can alert someone",
+  "sitewatch",
+  "const MAX_PER_RUN = 60;",
+  "const MAX_PER_RUN = 60; const notify = \"notify-rga\";",
+  1
+ ],
+ [
+  "the daily check isn't scheduled the same",
+  "toml",
+  "schedule = \"15 12 * * *\"",
+  "schedule = \"16 12 * * *\"",
+  1
+ ],
+ [
+  "the daily check isn't in the manifest the same",
+  "jobmanifest",
+  "cron: \"15 12 * * *\"",
+  "cron: \"16 12 * * *\"",
+  1
+ ],
+ [
+  "the card's function writes",
+  "portalmonthlyvalue",
+  "{ headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }",
+  "{ method: \"POST\", headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }",
+  1
+ ],
+ [
+  "the pills change",
+  "portal",
+  "const v = d && d.value, pills = [[\"With RGA\", \"rga\"]",
+  "const v = d && d.value, pills = [[\"With you\", \"you\"]",
+  1
+ ],
+ [
+  "an unknown mark is printed as given",
+  "portal",
+  "[\"ok\", \"rga\", \"you\", \"off\"].includes(l.mark) ? l.mark : \"off\"",
+  "l.mark",
+  1
+ ],
+ [
+  "server text is printed unescaped",
+  "portal",
+  "csEv(escapeHtml(l.text)",
+  "csEv(l.text",
+  1
+ ],
+ [
+  "a failed read draws no failure",
+  "portal",
+  "if (v.error || !Array.isArray(v.lines))",
+  "if (false)",
+  1
+ ],
+ [
+  "the card host leaves one layout",
+  "portal",
+  "${ogHost(\"posts\")}${ogHost(\"value\")}</div>",
+  "${ogHost(\"posts\")}</div>",
+  1
+ ],
+ [
+  "the portal stops asking",
+  "portal",
+  "  loadMonthlyValue(clientId);   // client_monthly_value_v1: draws",
+  "  // client_monthly_value_v1: draws",
+  1
+ ],
+ [
+  "the card copy gets an em dash",
+  "portal",
+  "head: \"Reading what we watched\"",
+  "head: \"Reading — what we watched\"",
+  1
+ ]
+]

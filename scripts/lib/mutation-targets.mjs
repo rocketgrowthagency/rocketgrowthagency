@@ -2,6 +2,11 @@
 // applies the mutations) and check-every-mutation-still-applies.mjs (which checks every anchor still matches daily).
 // A key → a path in the website repo, or "scraper:<path>" in this repo, or null (the gate itself is the target).
 export const FILES = {
+  // client_monthly_value_v1 (10-31): the monthly "what we watched for you" card
+  monthlyvalue: "netlify/functions/_monthly-value.js",
+  sitecheck: "netlify/functions/_site-check.js",
+  sitewatch: "netlify/functions/site-watch.js",
+  portalmonthlyvalue: "netlify/functions/portal-monthly-value.js",
   // pending_and_google_security_v1 (10-31): Google sign-in keys are sealed
   tokencrypt: "netlify/functions/_token-crypt.js",
   oauthcallback: "netlify/functions/oauth-google-callback.js",
