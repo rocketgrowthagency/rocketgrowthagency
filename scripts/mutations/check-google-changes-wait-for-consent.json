@@ -173,5 +173,68 @@
 "Calls aren't recorded. Your report",
 "Calls start with \\\"This call may be recorded.\\\" Your report",
 1
+],
+[
+"one consent line becomes none",
+"portal",
+"<div data-gconsent-line data-client=\"${escapeAttribute(clientId)}\" style=\"margin:0 0 14px",
+"<div data-x-line data-client=\"${escapeAttribute(clientId)}\" style=\"margin:0 0 14px",
+1
+],
+[
+"a missing OK stops opening Step 3",
+"portal",
+"if (body) body.style.display = \"block\";",
+"if (body) body.style.display = \"none\";",
+1
+],
+[
+"a missing OK still shows all set",
+"portal",
+"e.hidden = !agreed;",
+"e.hidden = false;",
+1
+],
+[
+"a missing OK leaves the tracker finished",
+"portal",
+"if (chip) chip.className = \"pm-step cur\";",
+"if (chip) chip.className = o.c;",
+1
+],
+[
+"the eyebrow doesn't change",
+"portal",
+"\"One thing left ·\"",
+"\"Complete ·\"",
+1
+],
+[
+"Step 3 changes before the read answers",
+"portal",
+"  applyGoogleConsentToStep3(!!consent.agreed);\n",
+"",
+1
+],
+[
+"the withdrawn line is the old words",
+"portal",
+"\"<b>You withdrew your OK,</b> so RGA's changes to your Google profile are stopped.\"",
+"\"<b>You withdrew your OK</b> before RGA changes anything on your Google profile, so changes are stopped for now.\"",
+1
+],
+[
+"the dialog title loses room for the X",
+"portal",
+"<h3 class=\"pm-modal-title\" style=\"margin-top:0;",
+"<h3 style=\"margin:0 0 8px;font-size:var(--fs-2xl);font-weight:800;\" data-t=\"",
+1
+],
+[
+"all-set block loses its marker",
+"portal",
+"<div data-gset-allset style",
+"<div style",
+1
 ]
 ]

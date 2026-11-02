@@ -114,6 +114,25 @@ if (!PJ.includes(`const GOOGLE_CONSENT_VERSION = "${g.CONSENT_VERSION}"`)) fail(
 const AJ = read("admin/admin.js");
 if (!/id === "m1\.access\.gbp" \? `<div data-admin-gconsent/.test(AJ) || !/Consent on record/.test(AJ) || !/No consent on record/.test(AJ)) fail("admin step 2 doesn't show the consent record");
 
+// Google lives in Setup Step 3 (approved client_setup_google_in_step3_v1, 11-2): never in Step 4's list, one consent line, a missing OK can't read complete
+{
+  const i = PJ.indexOf("function renderActionItemsLive"), j = PJ.indexOf("\nfunction ", i + 20);
+  const S4 = i < 0 ? "" : PJ.slice(i, j < 0 ? undefined : j);
+  if (!S4) fail("can't find Step 4's action list to check");
+  if (/data-gconsent-line|Google connected|data-gconsent/.test(code(S4))) fail("Step 4's list shows a Google row or the consent line again");
+  if ((PJ.match(/<div data-gconsent-line/g) || []).length !== 1) fail("there isn't exactly one consent line");
+  const D = PJ.slice(PJ.indexOf("function buildDetectedSetupHtml"));
+  if (D.indexOf("<div data-gconsent-line") < 0 || D.indexOf("<div data-gconsent-line") > D.indexOf("${rowsHtml}")) fail("the consent line isn't in Step 3's Connect card above the connected rows");
+  const A = PJ.slice(PJ.indexOf("function applyGoogleConsentToStep3"), PJ.indexOf("function applyGoogleConsentToStep3") + 1600);
+  if (!/One thing left/.test(A) || !/e\.hidden = !agreed/.test(A) || !/display = "block"/.test(A) || !/pm-tracker/.test(A) || !/pm-step cur/.test(A)) fail("a missing OK can still read complete: the eyebrow, the open body, the all-set block or the tracker isn't handled");
+  if (!/data-gset-allset/.test(D)) fail("the all-set block can't be hidden while the OK is missing");
+  const F1 = PJ.slice(PJ.indexOf("async function fillGoogleConsentLine"), PJ.indexOf("function applyGoogleConsentToStep3"));
+  const rd = F1.indexOf("consent = j.consent;"), ap = F1.indexOf("applyGoogleConsentToStep3(");
+  if (rd < 0 || ap < rd || !/!r\.ok \|\| !j\.ok\) return;/.test(F1) || !/catch \{ return; \}/.test(F1) || F1.slice(0, rd).includes("applyGoogleConsentToStep3")) fail("Step 3 changes before the consent read answered, or after a failed read");
+  if (!PJ.includes(`"<b>You withdrew your OK,</b> so RGA's changes to your Google profile are stopped."`) || /before RGA changes anything on your Google profile, so changes are stopped for now\.[^`]*You withdrew/.test(PJ)) fail("the withdrawn line isn't the approved words");
+  if (!/pm-modal-title/.test(PJ) || !/\.pm-modal-title \{[^}]*margin-right:44px/.test(read("portal/portal.css")) || /<h3 style="margin:0 0 8px;font-size:var\(--fs-2xl\)/.test(PJ)) fail("a dialog title can run under the X");
+}
+
 // recording
 const CP = read("netlify/functions/_call-providers.js");
 if (!/recording_enabled: false/.test(CP) || /recording_enabled: true/.test(code(CP))) fail("new tracking numbers record calls");

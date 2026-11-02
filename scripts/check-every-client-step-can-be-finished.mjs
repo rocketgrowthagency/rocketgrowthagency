@@ -477,8 +477,8 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
   }
   // 🔑 Removing them must not remove the REASSURANCE. A summary is why this is a collapse and not
   // a deletion — the client still sees the access is in place, once.
-  if (!/pm-linked/.test(portal)) bad("nothing summarises the Google connection — the client lost the confirmation entirely");
-  if (!/data-jump-google/.test(portal)) bad("the Google summary does not point at the card that owns it");
+  if (!/function buildDetectedSetupHtml/.test(portal) || !/Connected to Google/.test(portal)) bad("nothing confirms the Google connection in Setup Step 3 — the client lost the confirmation entirely");
+  if (!/data-jump-google/.test(portal)) bad("the Connect Google button does not point at the card that owns it");
   const jg = portal.indexOf('querySelectorAll("[data-jump-google]")');
   if (jg < 0) bad("nothing binds the Google summary's control — it would render and do nothing");
   else if (!/scrollIntoView/.test(portal.slice(jg, jg + 600))) bad("the Google summary's control does not actually go anywhere");
