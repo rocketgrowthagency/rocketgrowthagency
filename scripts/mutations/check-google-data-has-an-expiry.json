@@ -76,5 +76,29 @@
   "gbpkeep",
   "{ id: \"brain_analysis\", table: \"client_onboarding_records\"",
   "{ id: \"brain_analysis_gone\", table: \"client_onboarding_records\""
+ ],
+ [
+  "the duplicate removal attempts fall off the delete list",
+  "gbppurge",
+  "{ id: \"listing_removals\",",
+  "{ id: \"listing_removals_x\","
+ ],
+ [
+  "the AI-readiness audit saves Google's name in a finding",
+  "aireadinessfn",
+  "is not the name on the Google profile)",
+  "vs GBP \"${gbp.title || \"—\"}\")"
+ ],
+ [
+  "the citation audit saves Google's phone in a finding",
+  "citationauditfn",
+  "\"✗ (the phone on the Google profile is not on the page)\"",
+  "`✗ (GBP ${gPhone} absent)`"
+ ],
+ [
+  "the live reader starts saving Google's answer",
+  "googleliveread",
+  "async function readReviewsLive(",
+  "const _x = \"client_state_snapshots\"; async function readReviewsLive("
  ]
 ]

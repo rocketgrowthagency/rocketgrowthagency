@@ -412,6 +412,10 @@ export const FILES = {
   changeledger: "netlify/functions/_change-ledger.js",
   gbppurge: "netlify/functions/_gbp-purge.js",
   gbppurgefn: "netlify/functions/gbp-30-day-purge.js",
+  aireadinessfn: "netlify/functions/ai-readiness-audit.js",
+  citationauditfn: "netlify/functions/citation-audit.js",
+  maturedeps: "netlify/functions/_mature-deps.js",
+  googleliveread: "netlify/functions/_google-live.js",
   datakeepfn: "netlify/functions/admin-data-keep.js",
   datakeepsql: "supabase/data_keep.sql",
   gbpkeep: "netlify/functions/_gbp-keep.js",   // pending_and_google_security_v1 Part 2 (10-31): the 30-day rule for Google numbers in the monthly records

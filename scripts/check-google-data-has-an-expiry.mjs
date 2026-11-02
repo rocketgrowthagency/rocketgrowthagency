@@ -65,16 +65,17 @@ const INVENTORY = {
   "v2-gbp-rediscover.js": "none:finds the location id again; ids only",
   "v2-push-gbp-content.js": "none:pushes content RGA drafted",
   "v2-respond-review.js": "none:sends RGA's reply; the review text is not kept",
-  "_listing-removal-flow.js": "open:writes the duplicate-listing step result into the onboarding record; check whether it holds a listing's name, address or phone read from Google",
-  "gbp-publish.js": "open:writes the push result back into the onboarding record; check whether it keeps anything read from Google",
-  "gbp-duplicate-scan.js": "open:writes outcome_data (the duplicate listings found) into an onboarding task; those are other listings read from Google",
-  "portal-step-recheck.js": "open:writes step detections; check whether a detection keeps profile facts read from Google",
-  "flow-execute.js": "open:many step results are saved as text; the KPI baseline and the focus draft were fixed, the other steps that read the profile are not yet reviewed",
-  "v2-fetch-reviews.js": "open:returns Google's reviews to the admin screen; whether the screen saves them is the screens builder's call",
-  "ai-readiness-audit.js": "open:saves a snapshot (surface ai_readiness) that may carry profile facts read from Google; not on the delete list",
-  "citation-audit.js": "open:saves a snapshot (surface citations) built partly from the profile's name, address and phone; not on the delete list",
-  "heal-onboarding-errors.js": "open:rewrites onboarding errors and the saved Brain analysis; check it never copies a Google figure",
+  "_listing-removal-flow.js": "covered:listing_removals",
+  "gbp-publish.js": "lawyer:keeps the profile as it was BEFORE an edit (change log value_before and the step's published.before), read back from Google, so an edit can be reverted; the owner required this on 2026-09-15; the AFTER side is RGA's own approved words",
+  "gbp-duplicate-scan.js": "none:the Business Profile API is read only for the place ids of the client's own locations (identifiers, not saved); the duplicates saved come from the Maps search (SerpAPI)",
+  "portal-step-recheck.js": "lawyer:the photo step saves the profile's photo list (thumbnail links, category, date, view count) so the card can draw it, and the verify line names an unverified location; reads of the profile elsewhere in the file save a verdict word only",
+  "flow-execute.js": "lawyer:GBP baseline saves the profile's categories only (the first-week note shows them for 7 days; the whole profile is no longer saved); the photo-list step saves the category word; the grid step keeps the map pin as RGA's rank-check center; reviews are read for drafting and only a count is saved; the category list is Google's public catalog, not the client's",
+  "v2-fetch-reviews.js": "none:returns the reviews to the admin screen to draw and saves nothing (the screen renders them and keeps no copy)",
+  "ai-readiness-audit.js": "none:compares the website to the profile and discards the profile; the saved line says there is a mismatch without repeating Google's name or phone (fixed 11-05)",
+  "citation-audit.js": "none:the profile's name and phone are used to compare and discarded; the saved line no longer repeats the phone (fixed 11-05)",
+  "heal-onboarding-errors.js": "none:retries RGA's own manager invite and saves a status sentence; it reads no Google content",
   "_gbp-keep.js": "none:the registry itself (names hosts, writes nothing)",
+  "_google-live.js": "none:the one live reader: it keeps Google's answer in memory for the request and writes no table, file or cache; it returns the answer to its caller",
 };
 const HOST_RE = new RegExp(K.BUSINESS_PROFILE_HOSTS.map((h) => h.replace(/\./g, "\\.")).join("|"));
 const bpFiles = files.filter((f) => HOST_RE.test(strip(read(f) || "")) && f !== "_gbp-purge.js");
@@ -83,7 +84,7 @@ for (const f of bpFiles) {
   if (!d) { F.push(`(1) ${f} talks to a Business Profile API and is not in the inventory: decide what it saves and when that is deleted (add it to _gbp-purge.js, or say none/open here)`); continue; }
   const [kind, rest] = [d.split(":")[0], d.slice(d.indexOf(":") + 1)];
   if (kind === "covered") for (const id of rest.split(",")) ok(IDS.has(id), `(1) ${f} says its copies are covered by "${id}", which is not on the delete list`);
-  else ok(["none", "open"].includes(kind) && rest.length > 10, `(1) ${f}: the inventory line needs covered:/none:/open: and a reason`);
+  else ok(["none", "open", "lawyer"].includes(kind) && rest.length > 10, `(1) ${f}: the inventory line needs covered:/none:/open: and a reason`);
 }
 for (const f of Object.keys(INVENTORY)) if (!files.includes(f)) F.push(`(1) the inventory names ${f}, which no longer exists`);
 
@@ -136,7 +137,7 @@ const SURFACES = {
   gbp: "bp:profile",
   nap_reviews: "other:verdicts only, no Google figure",
   website: "other:the client's own site", pagespeed: "other:PageSpeed API", onpage: "other:the client's own site", social: "other:social profiles",
-  citations: "open:see ai-readiness-audit / citation-audit in the inventory", ai_readiness: "open:see the inventory", recommendations: "other:RGA's plan",
+  citations: "other:website and directory checks; the profile's values are compared and discarded", ai_readiness: "other:website checks; the profile's values are compared and discarded", recommendations: "other:RGA's plan",
   gsc: "other:Search Console API (a different Google API)", ga4: "other:Analytics API (a different Google API)", rankings: "other:RGA's own rank checks",
   grid: "other:RGA's own rank checks", onboarding: "other:RGA's own record", approval: "other:RGA's own record", directory_listings: "other:directory sites",
 };
@@ -151,11 +152,22 @@ const SURFACES = {
   for (const [s, d] of Object.entries(SURFACES)) if (d.startsWith("bp:")) { const id = d.slice(3).split(/[ :]/)[0]; ok(IDS.has(id) || (id === "the" ? true : false), `(5) surface "${s}" is Business Profile content and "${id}" is not on the delete list`); }
   ok(P.TARGETS.some((t) => /surface=eq\.review_replies/.test(t.filter)) && P.TARGETS.some((t) => /surface=eq\.reviews/.test(t.filter)) && P.TARGETS.some((t) => /surface=eq\.gbp/.test(t.filter)), "(5) the reviews, review_replies and gbp surfaces aren't all picked out on the delete list"); }
 
+// ── (6) what is saved never repeats Google's own name or phone (the audits compare and discard; the live reader writes nothing) ────────────────────────────
+{ const ai = strip(read("ai-readiness-audit.js") || ""), ci = strip(read("citation-audit.js") || ""), lv = strip(read("_google-live.js") || "");
+  ok(!/vs GBP/.test(ai) && !/gbp\.title \|\| "—"/.test(ai) && !/GBP \$\{gbpPhone/.test(ai), "(6) the AI-readiness audit saves Google's name or phone in a finding");
+  ok(!/GBP \$\{gPhone/.test(ci), "(6) the citation audit saves Google's phone in a finding");
+  ok(lv.length > 500 && !/saveRaw|client_state_snapshots|method:\s*["'](PATCH|PUT|DELETE)["']/.test(lv), "(6) the live reader writes something (it must keep Google's answer in memory only)"); }
+
 // the registry itself
 ok(K.GOOGLE_JSON_KEYS.every((k) => k.table && (k.path || (k.paths && k.paths.length)) && k.stamp), "(4) a JSON key on the registry has no table, path or stamp");
 ok(K.BUSINESS_PROFILE_HOSTS.every((h) => /\.googleapis\.com$/.test(h)) && !K.BUSINESS_PROFILE_HOSTS.some((h) => /places|maps\.googleapis|serpapi/.test(h)), "(1) the Business Profile host list includes Places or a search provider (not covered by this rule)");
 
 const open = Object.entries(INVENTORY).filter(([, d]) => d.startsWith("open:"));
+const lawyer = Object.entries(INVENTORY).filter(([, d]) => d.startsWith("lawyer:"));
+// A number typed from a dashboard, or kept on RGA's disk, is not Business Profile API content: listed for the lawyer, never deleted.
+const TYPED = ["admin-typed baselines.gbp (the owner types the dashboard figure at kickoff: not from the API)", "v2-baselines screenshots (images of the client's own dashboard that the client or RGA uploaded)", "raw-store copies on the backup drive (the same saved files as the delete list's RAW sources, copied by the nightly backup: the backup copy must expire with them, an open item for the backup job)"];
 if (F.length) { console.error(`🔴 check-google-data-has-an-expiry: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }
 console.log(`✅ check-google-data-has-an-expiry: ${bpFiles.length} Business Profile files all accounted for, every Google column and saved answer has an expiry, the delete list is wired and OFF`);
+if (lawyer.length) { console.log(`   ${lawyer.length} kept on purpose, listed for the lawyer (not deleted):`); for (const [f, d] of lawyer) console.log(`   - ${f}: ${d.slice(7)}`); }
+console.log(`   typed or uploaded by a person, not API content (for the lawyer):`); for (const t of TYPED) console.log(`   - ${t}`);
 if (open.length) { console.log(`   ${open.length} not yet decided (for the owner):`); for (const [f, d] of open) console.log(`   - ${f}: ${d.slice(5)}`); }

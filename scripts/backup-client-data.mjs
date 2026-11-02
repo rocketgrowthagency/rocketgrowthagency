@@ -72,6 +72,8 @@ export const GOOGLE_MONTHLY_FIELDS = ["gbp_calls", "gbp_website_clicks", "gbp_ac
 export const GBP_STRIP = {
   client_state_snapshots: { kind: "rows", match: (r) => (r.surface === "reviews" && !!r.payload && r.payload.source === "google_profile") || (r.surface === "gbp" && r.source === "deep-assess-client") || r.surface === "review_replies" },
   client_gbp_snapshots: { kind: "rows", match: () => true },
+  // 2026-11-05: duplicate-listing removal attempts keep the listing's title and phone read from Google; the website purge deletes these rows at 30 days, so a copy this old goes too.
+  client_listing_removals: { kind: "rows", match: () => true },
   // google_30_day_part_b_v1: the same lists as the website's _gbp-purge.js KEYS and TARGETS. A copy this old is past 30 days, so the key goes whatever its stamp.
   client_onboarding_records: { kind: "rows", match: () => false, clear: (r) => stripKeys(r, [["v2Campaign", "gbp_profile"], ["v2Campaign", "brain_analysis"]]) },
   brain_knowledge: { kind: "rows", match: (r) => r.type === "audit_benchmark" && (r.key === "review_count" || r.key === "review_rating"),

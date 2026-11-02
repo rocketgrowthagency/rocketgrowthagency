@@ -236,7 +236,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   ok((pur.match(/method: "DELETE"/g) || []).length === 1 && /if \(out\.enabled && row\.would_delete > 0\)[\s\S]*method: "DELETE"/.test(pur), "(7) a DELETE exists outside the switched-on branch");
   ok(!/client_monthly_records|client_photos|client_keyword_rankings|brain_rank_snapshots|clients\b/.test(P.TARGETS.map((t) => t.table).join(",")), "(7) the purge list includes monthly totals or RGA's own sources");
   ok(/google_profile/.test((P.TARGETS.find((t) => t.id === "reviews") || {}).filter || "") && /deep-assess-client/.test((P.TARGETS.find((t) => t.id === "profile") || {}).filter || ""), "(7) the reviews or profile rows are no longer picked out by where they came from");
-  ok(P.TARGETS.every((t) => t.filter || t.table === "client_gbp_snapshots"), "(7) a shared table is listed without a filter that selects only Business Profile rows");
+  ok(P.TARGETS.every((t) => t.filter || ["client_gbp_snapshots", "client_listing_removals"].includes(t.table)), "(7) a shared table is listed without a filter that selects only Business Profile rows");
   const fn = SRC["gbp-30-day-purge.js"];
   ok(/enabled: enabledIn\(\)/.test(fn) && /requireCronOrInternal/.test(fn) && /withCheckin\("gbp-30-day-purge"/.test(fn), "(7) the purge job isn't guarded, wrapped, or reads its switch from the environment");
   ok(!/^[^#\n]*GBP_PURGE_ENABLED/m.test(toml), "(7) netlify.toml switches the purge on");
@@ -364,36 +364,56 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   const portalJs = read("portal/portal.js"), reportJs = read("portal/report/report.js");
   if (portalJs == null || reportJs == null) idk("portal.js or report.js moved");
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  for (const [name, src] of [["admin.js", adminJs], ["portal.js", portalJs], ["report.js", reportJs]]) {
+  // Only the admin keeps a copy of the rule (its save guard, so an old month's Google numbers are never written back). The client portal and the report read live and carry none.
+  for (const [name, src] of [["admin.js", adminJs]]) {
     const body = lift(src, ["gbpMonthExpired"]); const fn = new Function(`${body}; return gbpMonthExpired;`)();
     const dates = [["2026-09-01", "2026-10-31T12:00:00Z"], ["2026-09-01", "2026-11-01T00:00:00Z"], ["2026-10-01", "2026-11-05T00:00:00Z"], ["2026-08-01", "2026-10-31T12:00:00Z"], ["2027-01-01", "2026-11-05T00:00:00Z"], ["", "2026-11-05T00:00:00Z"], [null, "2026-11-05T00:00:00Z"]];
     ok(dates.every(([m, n]) => fn(m, new Date(n)) === K.monthIsExpired(m, new Date(n))), `(10) ${name}'s copy of the 30-day rule disagrees with the server's`);
     ok(new RegExp(`const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE).replace(/'/g, "\\'")}`).test(src), `(10) ${name} doesn't carry the same wording as the server`); }
+  ok(!/gbpMonthExpired\(|GBP_KEEP_NOTE/.test(portalJs) && !/gbpMonthExpired\(|GBP_KEEP_NOTE/.test(reportJs), "(10) the client portal or the report carries a copy of the 30-day rule again (they read Google live)");
   ok(JSON.stringify((adminJs.match(/const GBP_KEEP_FIELDS = (\[[^\]]*\])/) || [])[1] && JSON.parse(adminJs.match(/const GBP_KEEP_FIELDS = (\[[^\]]*\])/)[1])) === JSON.stringify(K.GOOGLE_FIELDS), "(10) the admin's list of Google fields differs from the server's");
 
-  // readers: a cleared number is never 0, never "pending", never one side of a change
-  { const body = lift(portalJs, ["buildReviewSummaryHtml"], `const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE)}; const gbpMonthExpired = (m) => ${"{"}const x = /^(\\d{4})-(\\d{2})/.exec(String(m||"")); return !!x && Date.UTC(+x[1], +x[2], 1) <= Date.UTC(2026,10,5) - 31*86400000;${"}"};`);
-    const f = new Function("escapeHtml", `${body}; return buildReviewSummaryHtml;`)(esc);
-    const cleared = f({ reporting_month: "2026-08-01", review_count: null, new_reviews: null, average_rating: null });
-    ok(!/>\s*0\s*</.test(cleared) && !/<strong>0<\/strong>/.test(cleared) && !/\b0 reviews?\b/.test(cleared) && cleared.includes(K.KEEP_NOTE), "(10) the client's review card shows a cleared review count as 0");
-    const fresh0 = f({ reporting_month: "2026-10-01", review_count: 0, new_reviews: 0, average_rating: null });
-    ok(/<strong>0<\/strong>/.test(fresh0), "(10) a real zero review count no longer reads as 0");
-    const notYet = f({ reporting_month: "2026-10-01", review_count: null, new_reviews: null, average_rating: null });
-    ok(!/<strong>0<\/strong>/.test(notYet) && !/>\s*0\s*</.test(notYet), "(10) a review count that was never read shows as 0"); }
-  { const body = lift(reportJs, ["num", "changeText", "chip", "tile", "chan"], `const GBP_KEEP_NOTE = ${JSON.stringify(K.KEEP_NOTE)}; const MIN_BASE_FOR_PERCENT = 30;`);
-    const g = new Function("escapeHtml", `${body}; return { tile, chip, chan };`)(esc);
-    const t = g.tile("Calls", null, 5, { keptCurrent: true, keptPrior: false });
-    ok(t.includes(esc(K.KEEP_NOTE)) && !/>\s*0\s*</.test(t) && !/↑|↓|No change/.test(t), "(10) a cleared Google number in the report shows as 0, or as a change");
-    const c = g.chip(7, null, { keptPrior: true }); ok(/No comparison/.test(c) && !/First month|↑|↓|No change/.test(c), "(10) the report compares a number with a month whose Google numbers were cleared");
+  // readers (report_live_google_30_day_v2): a figure Google didn't give is never 0, never "pending", never one side of a change. Run against the REAL shared/google-live.js.
+  const GLmod = (() => { const w = {}; new Function("window", read("shared/google-live.js"))(w); return w.RGAGoogleLive; })();
+  if (!GLmod || !GLmod.note) idk("shared/google-live.js moved");
+  const WORDS = GLmod.WORDS;
+  const rowOf = (col, status, value = null) => ({ reporting_month: "2026-08-01", [col]: value, _google: { [col]: status } });
+  { const body = lift(portalJs, ["buildReviewSummaryHtml"], `const GOOGLE_SOURCE = "From Google, today"; const GOOGLE_REVIEWS_NOTE = "Counts reviews still on Google"; const GLV = () => window.RGAGoogleLive;`);
+    const f = new Function("escapeHtml", "window", `${body}; return buildReviewSummaryHtml;`)(esc, { RGAGoogleLive: GLmod });
+    const failed = f({ reporting_month: "2026-08-01", review_count: null, new_reviews: null, average_rating: null, _google: { review_count: "could_not_read", new_reviews: "could_not_read", average_rating: "could_not_read" } });
+    ok(!/>\s*0\s*</.test(failed) && !/\b0 reviews?\b/.test(failed) && failed.includes(WORDS.could_not_read), "(10) the client's review card shows a review count Google didn't give as 0, or doesn't say why");
+    const fresh0 = f({ reporting_month: "2026-10-01", review_count: 0, new_reviews: 0, average_rating: null, _google: { review_count: "ok", new_reviews: "ok" } });
+    ok(/>0</.test(fresh0.replace(/\s+/g, "")) , "(10) a real zero review count from Google no longer reads as 0");
+    const loadingHtml = f({ reporting_month: "2026-10-01", review_count: null, new_reviews: null, average_rating: null, _google: { review_count: "loading", new_reviews: "loading", average_rating: "loading" } });
+    ok(!/>\s*0\s*</.test(loadingHtml) && !loadingHtml.includes(WORDS.could_not_read), "(10) a review count that is still loading shows as 0, or as a failure"); }
+  { const body = lift(reportJs, ["num", "changeText", "chip", "tile", "chan"], `const MIN_BASE_FOR_PERCENT = 30; const GL = () => window.RGAGoogleLive; const GOOGLE_SOURCE = "From Google, today";`);
+    const g = new Function("escapeHtml", "window", `${body}; return { tile, chip, chan };`)(esc, { RGAGoogleLive: GLmod });
+    const cur = rowOf("gbp_calls", "could_not_read"), prior = rowOf("gbp_calls", "ok", 5);
+    const t = g.tile("Calls", null, 5, { row: cur, col: "gbp_calls", priorRow: prior });
+    ok(t.includes(esc(WORDS.could_not_read)) && !/>\s*0\s*</.test(t) && !/↑|↓|No change/.test(t), "(10) a Google number the report couldn't read shows as 0, as a change, or without saying why");
+    const okRow = rowOf("gbp_calls", "ok", 7), unread = rowOf("gbp_calls", "could_not_read");
+    const c = g.chip(7, null, { row: okRow, col: "gbp_calls", priorRow: unread }); ok(/No comparison/.test(c) && c.includes(esc(WORDS.could_not_read)) && !/First month|↑|↓|No change/.test(c), "(10) the report compares a number with a month Google didn't answer");
     ok(/First month tracked/.test(g.chip(7, null, {})) && /↑/.test(g.chip(70, 40, {})), "(10) the report's normal comparison stopped working");
-    const ch = g.chan("Reviews", "x", [["Total reviews", null], ["New", null]], K.KEEP_NOTE); ok(ch.includes(esc(K.KEEP_NOTE)) && !/<b class="num">0<\/b>/.test(ch), "(10) the report's channel box shows a cleared number as 0"); }
-  { const rp = reportJs; ok(/num\(current\.review_count\) == null && !gbpMonthExpired\(current\.reporting_month\)/.test(rp), "(10) the report tells a client with cleared reviews to 'get the first reviews'"); }
+    const ch = g.chan("Reviews", "x", [["Total reviews", null, "review_count"], ["New", null, "new_reviews"]], { row: { _google: { review_count: "disconnected", new_reviews: "disconnected" } } });
+    ok(ch.includes(esc(WORDS.disconnected)) && !/<b class="num">0<\/b>/.test(ch), "(10) the report's channel box shows a Google number it couldn't read as 0"); }
+  { const rp = reportJs; ok(/num\(current\.review_count\) === 0 && GL\(\)\.status\(current, "review_count"\) === "ok"/.test(rp), "(10) the report tells a client whose review count Google didn't give to 'get the first reviews'"); }
   { const sm = SRC["send-monthly-report.js"], m1 = read("netlify/functions/_month1-report.js"), mat = read("netlify/functions/_mature.js");
-    ok(/noGoogleCompare/.test(sm) && /const present = METRICS\.filter\(\(m\) => current\[m\.key\] != null/.test(sm), "(10) the monthly email could show a cleared Google number, or compare with one");
-    ok(/if \(x === null \|\| y === null\) continue;/.test(m1 || "") && /googleCleared/.test(m1 || ""), "(10) the Month 1 report could show a cleared Google figure as 0, or not say why it can't compare");
-    ok(/if \(a === null \|\| b === null \|\| !t\) return null;/.test(mat || "") && /GOOGLE_KPIS/.test(mat || ""), "(10) the KPI alert could read a cleared Google number as a drop, or call it fine without saying it wasn't checked"); }
-  { const M1 = load("_month1-report.js"); const r = M1.buildMonth1Report({ client: { business_name: "X" }, months: [{ reporting_month: "2026-06-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 40, gsc_impressions: 900 }, { reporting_month: "2026-07-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 55, gsc_impressions: 1200 }], kickoffAt: "2026-07-05", now: at("2026-08-20"), playbook: [], tasks: {} });
-    ok(!r.comparisons.some((c) => /Google profile|Call-button|Website clicks from/.test(c.label)) && r.text.includes(K.KEEP_NOTE) && !/Call-button taps[^\n]*: 0\b/.test(r.text), "(10) the Month 1 report compares a cleared Google figure, or doesn't say why it can't"); }
+    ok(/liveRows\(/.test(sm) && /const googleWords = \(m\) =>/.test(sm) && /const present = METRICS\.filter\(\(m\) => \(current\[m\.key\] != null && current\[m\.key\] !== ""\) \|\| googleWords\(m\)\)/.test(sm), "(10) the monthly email could show a Google number it couldn't read as 0, or leave the row out without saying why");
+    ok(/if \(x === null \|\| y === null\) continue;/.test(m1 || "") && /googleWhy/.test(m1 || ""), "(10) the Month 1 report could show a Google figure it couldn't read as 0, or not say why it can't compare");
+    ok(/if \(a === null \|\| b === null \|\| !t\) return null;/.test(mat || "") && /GOOGLE_KPIS/.test(mat || ""), "(10) the KPI alert could read an unread Google number as a drop, or call it fine without saying it wasn't checked"); }
+  { const M1 = load("_month1-report.js"); const r = M1.buildMonth1Report({ client: { business_name: "X" }, months: [{ reporting_month: "2026-06-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 40, gsc_impressions: 900, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }, { reporting_month: "2026-07-01", gbp_calls: null, gbp_impressions: null, gsc_clicks: 55, gsc_impressions: 1200, _google: { gbp_calls: "could_not_read", gbp_impressions: "could_not_read" } }], kickoffAt: "2026-07-05", now: at("2026-08-20"), playbook: [], tasks: {} });
+    ok(!r.comparisons.some((c) => /Google profile|Call-button|Website clicks from/.test(c.label)) && r.text.includes(WORDS.could_not_read) && !/Call-button taps[^\n]*: 0\b/.test(r.text), "(10) the Month 1 report compares a Google figure it couldn't read, or doesn't say why it can't"); }
+  // the KPI alert's live reading: the shape _mature-deps.js hands to _mature.js must be the shape the REAL reader returns (a reader that never existed once made every alert "couldn't check")
+  { const Dp = load("_mature-deps.js"), Mt = load("_mature.js"), LV = load("_google-live.js");
+    const rows3 = [{ reporting_month: "2026-10-01" }, { reporting_month: "2026-09-01" }, { reporting_month: "2026-08-01" }];
+    const fakeDb = async () => [{ gbp_location_id: "locations/1", refresh_token: "x" }];
+    const fakeLive = { readGoogleLive: async () => ({ months: Object.fromEntries(["2026-08-01", "2026-09-01", "2026-10-01"].map((m, i) => [m, { values: { calls: [100, 70, 50][i], review_count: 50 }, status: { calls: "ok", review_count: "ok" } }])) }) };
+    const g = await Dp.readGoogleLive("c1", rows3, { supa: fakeDb, live: fakeLive });
+    ok(Array.isArray(g.gbp_calls) && g.gbp_calls.length === 3 && g.gbp_calls[0].value === 50 && g.gbp_calls[2].value === 100 && g.gbp_calls.every((x) => x.status === "ok"), "(10) the KPI alert's live reading isn't the shape the reader returns (newest first, three of {value,status})");
+    ok(Mt.kpiBreaches({}, { gbp_metrics: { drop: 20 } }, [{}, {}, {}], g).length === 1, "(10) a real two-month drop in Google calls doesn't fire the KPI alert");
+    const failing = { readGoogleLive: (a) => LV.readGoogleLive({ ...a, deps: { fetchFn: async () => { throw new Error("net"); }, sleep: async () => {}, budgetMs: 50 } }) };
+    const g2 = await Dp.readGoogleLive("c1", rows3, { supa: fakeDb, live: failing });
+    ok(Mt.kpiBreaches({}, { gbp_metrics: { drop: 20 } }, [{}, {}, {}], g2).length === 0 && Mt.kpiUnchecked({}, { gbp_metrics: { drop: 20 } }, g2).length === 1, "(10) a failed Google read fires the KPI alert, or isn't reported as 'couldn't check'"); }
   { const Mat = load("_mature.js"); ok(Mat.breaches({ drop: 20 }, 10, null) === null && Mat.breaches({ drop: 20 }, null, 10) === null && Mat.breaches({ points: 1 }, 5, null) === null, "(10) the KPI alert reads a cleared number as a drop"); }
 
   // the admin Data row reads the new target from real numbers
@@ -627,7 +647,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
       ok(!f.calls.some((c) => c.method === "DELETE") && r.failed > 0, "(12) a saved file was deleted although its ledger line couldn't be written, or the failure wasn't reported"); }
     { const f = mk(); await RS.expire({ sources: ["rank-grid"], enabled: true, ledger: async () => {}, now: NOW, fetchFn: f, env }); ok(true, ""); }
     ok(K.GOOGLE_RAW_SOURCES.includes("monthly-report") && !K.GOOGLE_RAW_SOURCES.includes(K.KEPT_REPORT_SOURCE), "(12) the report as sent isn't on the expiry list, or the Google-free copy is");
-    const m = SRC["send-monthly-report.js"]; ok(/KEPT_REPORT_SOURCE/.test(m) && /noGoogle\(current\)/.test(m) && /GOOGLE_FIELDS\) if \(f in o\) o\[f\] = null/.test(m), "(12) the Google-free copy of the report isn't saved beside the one as sent"); }
+    const m = SRC["send-monthly-report.js"]; ok(/KEPT_REPORT_SOURCE/.test(m) && /withoutGoogle\(current\)/.test(m) && /GOOGLE_FIELDS\) if \(f in o\) o\[f\] = null/.test(read("netlify/functions/_google-numbers.js")), "(12) the Google-free copy of the report isn't saved beside the one as sent"); }
 }
 
 if (F.length) { console.error(`🔴 check-data-keep: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }

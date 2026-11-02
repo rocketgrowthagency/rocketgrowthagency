@@ -498,10 +498,10 @@
   "return next <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 20 * 86400000;"
  ],
  [
-  "the portal copy of the 30-day rule drifts",
+  "the client portal carries a copy of the 30-day rule again",
   "portal",
-  "return Date.UTC(Number(m[1]), Number(m[2]), 1) <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 31 * 86400000;\n}\nfunction caDeltaHtml",
-  "return Date.UTC(Number(m[1]), Number(m[2]), 1) <= Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 5 * 86400000;\n}\nfunction caDeltaHtml"
+  "const GOOGLE_SOURCE = \"From Google, today\";",
+  "const GOOGLE_SOURCE = \"From Google, today\"; const GBP_KEEP_NOTE = \"We keep Google's numbers for 30 days\";"
  ],
  [
   "a cleared review count shows as 0 on the client's review card",
@@ -522,22 +522,22 @@
   "  const n = Number(v);"
  ],
  [
-  "the report compares with a month whose Google numbers were cleared",
+  "the report compares with a month Google didn't answer",
   "reportjs",
-  "if (p == null && google && google.keptPrior) return",
-  "if (false) return"
+  "if (google && google.priorRow && google.col && !GL().usable(google.priorRow, google.col)) {",
+  "if (false) {"
  ],
  [
-  "the report tells a client with cleared reviews to get first reviews",
+  "the report tells a client whose review count Google didn't give to get first reviews",
   "reportjs",
-  "(num(current.review_count) == null && !gbpMonthExpired(current.reporting_month))",
-  "(num(current.review_count) == null)"
+  "if (num(current.review_count) === 0 && GL().status(current, \"review_count\") === \"ok\") {",
+  "if (num(current.review_count) === 0) {"
  ],
  [
-  "the monthly email shows a cleared Google number",
+  "the monthly email leaves out a Google row it couldn't read without saying why",
   "monthlyreport",
-  "const present = METRICS.filter((m) => current[m.key] != null && current[m.key] !== \"\");",
-  "const present = METRICS;"
+  "const present = METRICS.filter((m) => (current[m.key] != null && current[m.key] !== \"\") || googleWords(m));",
+  "const present = METRICS.filter((m) => current[m.key] != null && current[m.key] !== \"\");"
  ],
  [
   "the Month 1 report shows a cleared Google figure as 0",
@@ -548,7 +548,7 @@
  [
   "the Month 1 report doesn't say why a Google figure can't be compared",
   "month1report",
-  "if (googleCleared) cmpLines.push(",
+  "if (googleWhy) cmpLines.push(",
   "if (false) cmpLines.push("
  ],
  [
@@ -808,5 +808,23 @@
   "gscfn",
   "if (left < 4000) { more[k] = { deferred: true,",
   "if (false) { more[k] = { deferred: true,"
+ ],
+ [
+  "the client's review card shows a review count Google didn't give as 0",
+  "portal",
+  "const count = (cur.review_count == null) ? null : Number(cur.review_count);",
+  "const count = Number(cur.review_count || 0);"
+ ],
+ [
+  "the Google-free copy of the sent report keeps Google's figures",
+  "monthlyreport",
+  "gk.withoutGoogle(current), prior: gk.withoutGoogle(prior)",
+  "current, prior"
+ ],
+ [
+  "the KPI alert reads a month list the reader doesn't return",
+  "maturedeps",
+  "const byMonth = (got && got.months) || {};",
+  "const byMonth = (got && got.rows) || {};"
  ]
 ]
