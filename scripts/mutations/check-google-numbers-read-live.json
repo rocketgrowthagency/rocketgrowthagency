@@ -110,5 +110,12 @@
   "fn === \"portal-google-numbers\" && post && onlyKeys(b, [\"client_id\", \"months\"])",
   "fn === \"portal-google-numbers-x\" && post && onlyKeys(b, [\"client_id\", \"months\"])",
   1
+ ],
+ [
+  "an empty month reads as zero again",
+  "googlelive",
+  "for (const f of [\"calls\", \"website_clicks\", \"directions\", \"impressions\"]) { o.status[f] = \"no_data\"; o.values[f] = null; }",
+  "",
+  1
  ]
 ]

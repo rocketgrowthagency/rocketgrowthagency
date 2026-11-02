@@ -31,8 +31,8 @@ const OAUTH = { client_id: "c1", refresh_token: "r", access_token: "a", access_t
 const days = (from, to) => { const out = []; for (let t = Date.parse(from); t <= Date.parse(to); t += 86400000) { const d = new Date(t); out.push({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() }); } return out; };
 const METRICS = ["CALL_CLICKS", "WEBSITE_CLICKS", "BUSINESS_DIRECTION_REQUESTS", "BUSINESS_IMPRESSIONS_DESKTOP_MAPS", "BUSINESS_IMPRESSIONS_DESKTOP_SEARCH", "BUSINESS_IMPRESSIONS_MOBILE_MAPS", "BUSINESS_IMPRESSIONS_MOBILE_SEARCH"];
 // one series per metric: 1 a day, except CALL_CLICKS on 2026-09-05, which Google returns with NO value (a zero day)
-const perfBody = ({ from = "2026-09-01", to = "2026-10-30", drop = [] } = {}) => ({
-  multiDailyMetricTimeSeries: [{ dailyMetricTimeSeries: METRICS.filter((m) => !drop.includes(m)).map((m) => ({ dailyMetric: m, timeSeries: { datedValues: days(from, to).map((d) => (m === "CALL_CLICKS" && d.month === 9 && d.day === 5 ? { date: d } : { date: d, value: "1" })) } })) }],
+const perfBody = ({ from = "2026-09-01", to = "2026-10-30", drop = [], zero = false } = {}) => ({
+  multiDailyMetricTimeSeries: [{ dailyMetricTimeSeries: METRICS.filter((m) => !drop.includes(m)).map((m) => ({ dailyMetric: m, timeSeries: { datedValues: days(from, to).map((d) => (zero || (m === "CALL_CLICKS" && d.month === 9 && d.day === 5) ? { date: d } : { date: d, value: "1" })) } })) }],
 });
 const stars = ["FIVE", "FOUR", "FIVE"];
 const reviewPages = (n = 120) => { // 120 reviews over 3 pages of 50/50/20; 7 created in October, the rest in September
@@ -142,6 +142,10 @@ const run = (oauth = OAUTH, from = "2026-09-01", to = "2026-10-31", extra = {}) 
   const down = await run({ ...OAUTH, access_token: null, access_token_expires_at: null });
   if (down.state !== "could_not_read") fail(`Google's token endpoint being down isn't "could_not_read" (${down.state})`);
 
+  // 11-2, seen for real: a month before the listing's data comes back as dated rows with no values. Empty is not zero.
+  google({ pages: reviewPages(), perf: () => res(200, perfBody({ from: "2026-08-01", zero: true })) });
+  const empty = await run(OAUTH, "2026-08-01", "2026-08-31");
+  if (empty.months["2026-08-01"].status.calls !== "no_data" || empty.months["2026-08-01"].values.calls !== null) fail("a whole month with no values from Google reads as 0");
   // Google only answers from mid-September: the months before it are not kept, and a partial month is not shown as a total
   google({ pages: reviewPages(), perf: () => res(200, perfBody({ from: "2026-09-15" })) });
   const r = await run(OAUTH, "2026-08-01", "2026-10-31");
