@@ -106,7 +106,9 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     ok(r.ok && c.method === "PUT" && /^https:\/\/s3\.us-west-004\.backblazeb2\.com\/bkt\/s\/c\//.test(c.url) && /^AWS4-HMAC-SHA256 Credential=kid\//.test(c.headers.Authorization || ""), "(1) a Backblaze save isn't a signed PUT to the bucket");
     ok(!JSON.stringify(c.headers).includes("app-key-1234567890"), "(1) the Backblaze secret key is sent in a header"); }
   // nothing in the file can edit or delete
-  ok(!/method:\s*["'](DELETE|PATCH|PUT)["']/.test(SRC["_raw-store.js"].replace(/putB2[\s\S]*?\n}\n/, "")), "(1) the raw store has a way to delete or edit (only the Backblaze PUT of a new, uniquely named file is allowed)");
+  ok(!/method:\s*["'](DELETE|PATCH|PUT)["']/.test(SRC["_raw-store.js"].replace(/putB2[\s\S]*?\n}\n/, "").replace(/async function deleteSupabase[\s\S]*?\n}\n/, "").replace(/async function deleteB2[\s\S]*?\n}\n/, "")), "(1) the raw store has a way to delete or edit (only the Backblaze PUT of a new, uniquely named file, and the 30-day expire helpers, are allowed)");
+  { const rs = SRC["_raw-store.js"], ex = rs.slice(rs.indexOf("async function expire(")), calls = (rs.match(/\bdelete(B2|Supabase)\(/g) || []).length;
+    ok(calls === 4 && /if \(!\(out\.enabled && old\.length\)\) continue;[\s\S]*await ledger\([\s\S]*?deleteB2\(b2, o\.key/.test(ex) && (ex.match(/\bdelete(B2|Supabase)\(/g) || []).length === 2, "(1) a raw file can be deleted outside expire(), or before its ledger line, or while the switch is off"); }
   ok(!/x-upsert["']:\s*["']true/.test(SRC["_raw-store.js"]), "(1) the raw store can upload with overwrite on");
   // the summary never loops
   { let n = 0; const ff4 = async (u) => { n++; return { ok: true, status: 200, text: async () => JSON.stringify(Array.from({ length: 30 }, (_, k) => ({ name: `f${k}`, id: null }))) }; };
@@ -213,12 +215,14 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
       if (p.startsWith("/gbp_purge_ledger")) { if (!w.ledgerThere) throw new Error("Supabase 404: PGRST205"); if (o.ledgerWriteFails && method === "POST") throw new Error("Supabase 500"); return method === "GET" ? [] : null; }
       if (method === "DELETE") { w.deleted = (w.deleted || 0) + p.split("in.(")[1].split(",").length; return null; }
       return Array.from({ length: Math.min(200, o.endless ? 200 : Math.max(0, w.rows - (w.deleted || 0))) }, (_, i) => ({ id: `id${(w.deleted || 0) + i}`, captured_at: "2026-08-01T00:00:00Z", snapshot_date: "2026-08-01" })); };
-    w.countFn = async (p) => (/client_monthly_records/.test(p) ? 0 : w.rows); return w; };   // the monthly records have their own check, section (10)
+    w.countFn = async (p) => (/client_monthly_records|client_onboarding_records|type=eq\.client_audit/.test(p) ? 0 : w.rows); return w; };   // the monthly records have their own check, section (10)
   const now = new Date("2026-10-31T12:00:00Z");
+  // the saved-files part and the JSON-key part have their own checks in (12); here the fake store has nothing in it
+  { const run0 = P.run; P.run = (a) => run0({ raw: { expire: async () => ({ would_delete: 0, deleted: 0, failed: 0, sources: [] }) }, ...a }); }
   ok(P.enabledIn({ GBP_PURGE_ENABLED: "1" }) === true && [undefined, "", "0", "true", "yes", " 1", "11"].every((v) => P.enabledIn({ GBP_PURGE_ENABLED: v }) === false), "(7) the purge switches on for something other than exactly 1");
   { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now, enabled: false });
     ok(!w.calls.some((c) => c.startsWith("DELETE") || c.startsWith("POST")), "(7) switched OFF, the purge still wrote or deleted");
-    ok(r.enabled === false && r.deleted_total === 0 && r.tables.length === P.TARGETS.length && r.tables.every((t) => t.would_delete === 450) && r.would_delete_total === 450 * P.TARGETS.length, "(7) switched off it doesn't report counts per table"); }
+    ok(r.enabled === false && r.deleted_total === 0 && P.TARGETS.every((t) => r.tables.some((x) => x.id === t.id && x.would_delete === 450)) && r.would_delete_total === 450 * P.TARGETS.length, "(7) switched off it doesn't report counts per table"); }
   { const w = world({ ledger: false }); const r = await P.run({ supa: w.supa, countFn: w.countFn, now, enabled: true });
     ok(!w.calls.some((c) => c.startsWith("DELETE")) && r.failed > 0 && r.table_ready === false, "(7) with no deletion ledger it still deleted, or didn't say it couldn't"); }
   { const w = world({ ledgerWriteFails: true }); await P.run({ supa: w.supa, countFn: w.countFn, now, enabled: true }); ok(!w.calls.some((c) => c.startsWith("DELETE")), "(7) a batch was deleted although its ledger line couldn't be written"); }
@@ -255,7 +259,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   { const d = await A.build({ rawSummary: { ready: false, backend: null, reason: "no storage settings", sources: [], files: 0, bytes: 0 }, readers: mk() }); const r = d.rows.find((x) => x.key === "raw"); ok(r.tone === "you" && /Not set up/.test(r.tag), "(8) with no storage the raw line isn't 'Not set up'"); }
   { const d = await A.build({ rawSummary: { ...goodRaw, files: 0, sources: [], bytes: 0 }, readers: mk() }); ok(d.rows.find((x) => x.key === "raw").tone !== "ok", "(8) an empty store reads as OK"); }
   { const d = await A.build({ rawSummary: goodRaw, readers: mk({ purgeReport: async () => ({ enabled: false, tables: [{ short: "reviews", would_delete: 12 }, { short: "profile snapshots", would_delete: 3 }], would_delete_total: 15, failed: 0, ledger_ready: false }) }) });
-    const r = d.rows.find((x) => x.key === "gbp"); ok(/15 rows/.test(r.line) && /12 reviews/.test(r.line) && /OFF/.test(r.line) && r.tone === "you", "(8) the Business Profile line isn't built from its counts"); }
+    const r = d.rows.find((x) => x.key === "gbp"); ok(/15 saved items/.test(r.line) && /12 reviews/.test(r.line) && /OFF/.test(r.line) && r.tone === "you", "(8) the Business Profile line isn't built from its counts"); }
   const adm = SRC["admin-data-keep.js"];
   ok(/enabled: false/.test(adm) && !/enabled: (true|enabledIn)/.test(adm), "(8) the admin read could ask the purge to really delete");
   ok(/const gate = await requireWorkspaceUser\(event\);\s*\n\s*if \(gate\.error\) return gate\.error;/.test(adm), "(8) the admin read isn't limited to signed-in admins");
@@ -344,7 +348,8 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     ok(!w.calls.some((c) => c.startsWith("PATCH")) && r.failed > 0, "(10) with no ledger columns the monthly step still changed rows, or didn't say so"); }
   { const w = world({ ledgerWriteFails: true }); await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true }); ok(!w.calls.some((c) => c.startsWith("PATCH")), "(10) a batch was cleared although its ledger line couldn't be written"); }
   { const w = world({ endless: true }); await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true }).catch(() => {}); ok(w.calls.filter((c) => c.startsWith("POST /gbp_purge_ledger")).length <= P.MAX_BATCHES, "(10) the monthly step looped past its batch cap"); }
-  { const pur = SRC["_gbp-purge.js"]; ok((pur.match(/method: "PATCH"/g) || []).length === 1 && /if \(out\.enabled && m\.rows_would_change > 0\)[\s\S]*method: "PATCH"/.test(pur), "(10) a PATCH exists outside the switched-on branch");
+  { const pur = SRC["_gbp-purge.js"]; const kAt = pur.indexOf("async function runKeys"), rawAt = pur.indexOf("async function runRaw");
+    ok((pur.match(/method: "PATCH"/g) || []).length === 2 && /if \(out\.enabled && m\.rows_would_change > 0\)[\s\S]*method: "PATCH"/.test(pur.slice(pur.indexOf("async function runMonthly"))) && kAt > 0 && /if \(out\.enabled && row\.would_delete > 0\)[\s\S]*method: "PATCH"/.test(pur.slice(kAt, rawAt)), "(10) a PATCH exists outside the switched-on branch");
     ok(!/client_monthly_records/.test(P.TARGETS.map((t) => t.table).join(",")) && P.MONTHLY.table === "client_monthly_records", "(10) the monthly table is on the DELETE list");
     ok(/\.sql/.test("") || /alter table public\.gbp_purge_ledger add column if not exists action\b/.test(sql) && /rows_cleared/.test(sql) && /fields_cleared/.test(sql), "(10) the SQL file doesn't add the ledger columns the monthly step writes"); }
 
@@ -411,7 +416,7 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
     const bsrc = fs.readFileSync(bp, "utf8");
     ok(/stripOldCopies\(\{ dir: DIR, today: TODAY, enabled: gbpStripEnabled\(\) \}\)/.test(bsrc) && /\{ dir: DIR, today: TODAY, enabled: false \}/.test(bsrc), "(10) the nightly backup doesn't take its switch from GBP_PURGE_ENABLED, or the report flag can strip");
     ok(!/rmSync|unlinkSync/.test(bsrc.slice(bsrc.indexOf("export function stripOldCopies"), bsrc.indexOf("// ── pure: which dated folders stay") > bsrc.indexOf("export function stripOldCopies") ? bsrc.indexOf("// ── pure: which dated folders stay") : bsrc.length).replace(/fs\.rmSync\(tmp, \{ force: true \}\)/, "")), "(10) the strip code can delete a file");
-    ok(JSON.stringify(Object.keys(B.GBP_STRIP).sort()) === JSON.stringify([...P.TARGETS.map((t) => t.table), P.MONTHLY.table].filter((v, i, a) => a.indexOf(v) === i).sort()), "(10) the drive strip list isn't the website purge list");
+    ok(JSON.stringify(Object.keys(B.GBP_STRIP).sort()) === JSON.stringify([...P.TARGETS.map((t) => t.table), P.MONTHLY.table, ...K.GOOGLE_JSON_KEYS.map((k) => k.table)].filter((v, i, a) => a.indexOf(v) === i).sort()), "(10) the drive strip list isn't the website purge list");
     ok(JSON.stringify(B.GOOGLE_MONTHLY_FIELDS) === JSON.stringify(K.GOOGLE_FIELDS), "(10) the drive's Google fields differ from the website's");
     const snap = (table, rows) => B.stripRows(table, rows);
     ok(snap("client_state_snapshots", [{ surface: "reviews", payload: { source: "google_profile" } }, { surface: "reviews", payload: { source: "places" } }, { surface: "gbp", source: "deep-assess-client" }, { surface: "gbp", source: "other" }, { surface: "pagespeed" }]).removedRows === 2, "(10) the drive strip removes rows that aren't Business Profile content, or misses some");
@@ -575,6 +580,54 @@ const mkFetch = (script = {}) => { const calls = []; const fn = async (url, init
   { const j = MAN.byName("gsc-daily-rows");
     ok(/analytics: Not set up/.test(j.read({ table_ready: true, clients: 1, ga4: { table_ready: false } }).note) && /indexing: deferred/.test(j.read({ table_ready: true, clients: 1, inspection: { deferred: true } }).note)
       && /analytics failed/.test(j.read({ table_ready: true, clients: 1, ga4: { error: "x" } }).note), "(11) System health doesn't say 'Not set up', 'deferred' or 'failed' for the two new reads"); }
+}
+
+// ── (12) google_30_day_part_b_v1: Google content inside another table's blob (KEYS) and saved raw answers (RAW) ────────────────────────────
+{
+  const P = load("_gbp-purge.js"), K = load("_gbp-keep.js"), RS = load("_raw-store.js");
+  const NOW = new Date("2026-10-31T12:00:00Z"), OLD = "2026-08-01T00:00:00Z", NEW = "2026-10-25T00:00:00Z";
+  const mkRows = () => [
+    { id: "a", data: { v2Campaign: { gbp_profile: { fetched_at: OLD, total_reviews: 31 }, brain_analysis: { timestamp: OLD, summary: "x", score: 40 }, other: { keep: 1 } }, tasks: { t: 1 } } },
+    { id: "b", data: { v2Campaign: { gbp_profile: { fetched_at: NEW, total_reviews: 33 } } } },
+  ];
+  const world = (o = {}) => { const w = { rows: mkRows(), calls: [], ledger: [] };
+    const stampOf = (r, p) => p.split(".").reduce((x, k) => (x ? x[k] : undefined), r.data);
+    const sel = (p) => { const st = /data->v2Campaign->([a-z_]+)->>([a-z_]+)=lt\./.exec(p); return st ? w.rows.filter((r) => { const v = r.data.v2Campaign && r.data.v2Campaign[st[1]]; return v && v[st[2]] && String(v[st[2]]) < "2026-10-01"; }) : []; };
+    w.supa = async (p, init = {}) => { const method = init.method || "GET"; w.calls.push(method + " " + p.split("?")[0]);
+      if (p.startsWith("/gbp_purge_ledger")) { if (method === "GET") return []; if (o.ledgerWriteFails) throw new Error("Supabase 500"); w.ledger.push(JSON.parse(init.body)); return null; }
+      if (method === "PATCH") { const id = /id=eq\.([^&]+)/.exec(p)[1]; const r = w.rows.find((x) => x.id === id); Object.assign(r, JSON.parse(init.body)); return null; }
+      if (method === "DELETE") throw new Error("a key clear must never DELETE a row");
+      return sel(p).map((r) => JSON.parse(JSON.stringify(r))); };
+    w.countFn = async (p) => (/client_onboarding_records/.test(p) ? sel(p).length : 0); return w; };
+  const noRaw = { expire: async () => ({ would_delete: 0, deleted: 0, failed: 0, sources: [] }) };
+  { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: false, raw: noRaw });
+    ok(!w.calls.some((c) => /^(POST|PATCH|DELETE)/.test(c)) && JSON.stringify(w.rows) === JSON.stringify(mkRows()), "(12) switched OFF, a saved Google key was still cleared");
+    ok((r.tables.find((t) => t.id === "onboarding_gbp_profile") || {}).would_delete === 1 && (r.tables.find((t) => t.id === "brain_analysis") || {}).would_delete === 1, "(12) switched off, the keys part doesn't count what it would clear"); }
+  { const w = world(); const r = await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true, raw: noRaw });
+    const a = w.rows.find((x) => x.id === "a"), b = w.rows.find((x) => x.id === "b");
+    ok(!a.data.v2Campaign.gbp_profile && !a.data.v2Campaign.brain_analysis, "(12) switched on, an expired saved Google key stayed");
+    ok(a.data.v2Campaign.other.keep === 1 && a.data.tasks.t === 1 && w.rows.length === 2, "(12) clearing a key took other work with it, or removed a row");
+    ok(b.data.v2Campaign.gbp_profile && b.data.v2Campaign.gbp_profile.total_reviews === 33, "(12) a profile pull inside 30 days was cleared");
+    const seq = w.calls.filter((c) => /^(POST \/gbp_purge_ledger|PATCH)/.test(c)); ok(seq.length >= 2 && seq[0].startsWith("POST") && w.ledger.every((l) => !("data" in l) && l.action === "clear"), "(12) a key was cleared before its ledger line, or the ledger holds content");
+    ok(r.failed === 0, "(12) switched on, the keys part reported a failure on a clean run"); }
+  { const w = world({ ledgerWriteFails: true }); await P.run({ supa: w.supa, countFn: w.countFn, now: NOW, enabled: true, raw: noRaw }).catch(() => {}); ok(!w.calls.some((c) => c.startsWith("PATCH")), "(12) a key was cleared although its ledger line couldn't be written"); }
+  // the saved files
+  { const env = { SUPABASE_URL: "https://fake.supabase.test", SUPABASE_SERVICE_ROLE_KEY: "fake-service-role-key-0123456789" };
+    const tree = { "": ["monthly-report", "rank-grid"], "monthly-report/": ["c1"], "monthly-report/c1/": ["2026-08-01", "2026-10-28"], "monthly-report/c1/2026-08-01/": ["f1.json.gz", "f2.json.gz"], "monthly-report/c1/2026-10-28/": ["f3.json.gz"] };
+    const mk = () => { const calls = []; const fn = async (url, init = {}) => { calls.push({ url: String(url), method: init.method || "GET", body: init.body });
+      if ((init.method || "GET") === "POST" && /object\/list\/raw-store/.test(url)) { const pre = JSON.parse(init.body).prefix; const names = tree[pre] || []; return { ok: true, status: 200, text: async () => JSON.stringify(names.map((n) => ({ name: n, id: /\.gz$/.test(n) ? "x" : null, metadata: { size: 10 } }))) }; }
+      return { ok: true, status: 200, text: async () => "{}" }; }; fn.calls = calls; return fn; };
+    { const f = mk(); const r = await RS.expire({ sources: K.GOOGLE_RAW_SOURCES, enabled: false, ledger: async () => {}, now: NOW, fetchFn: f, env });
+      ok(r.would_delete === 2 && r.deleted === 0 && !f.calls.some((c) => c.method === "DELETE"), "(12) switched OFF, a saved Google answer was deleted, or the old ones weren't counted (only files older than 30 days count)"); }
+    { const f = mk(); const order = []; const r = await RS.expire({ sources: K.GOOGLE_RAW_SOURCES, enabled: true, ledger: async () => { order.push("ledger"); }, now: NOW, fetchFn: f, env });
+      const del = f.calls.filter((c) => c.method === "DELETE");
+      ok(r.deleted === 2 && del.length === 1 && JSON.parse(del[0].body).prefixes.every((k) => /^monthly-report\/c1\/2026-08-01\//.test(k)), "(12) switched on, the wrong saved files were deleted (only the source's files older than 30 days)");
+      ok(order[0] === "ledger", "(12) a saved file was deleted before its ledger line"); }
+    { const f = mk(); const r = await RS.expire({ sources: K.GOOGLE_RAW_SOURCES, enabled: true, ledger: async () => { throw new Error("no ledger"); }, now: NOW, fetchFn: f, env });
+      ok(!f.calls.some((c) => c.method === "DELETE") && r.failed > 0, "(12) a saved file was deleted although its ledger line couldn't be written, or the failure wasn't reported"); }
+    { const f = mk(); await RS.expire({ sources: ["rank-grid"], enabled: true, ledger: async () => {}, now: NOW, fetchFn: f, env }); ok(true, ""); }
+    ok(K.GOOGLE_RAW_SOURCES.includes("monthly-report") && !K.GOOGLE_RAW_SOURCES.includes(K.KEPT_REPORT_SOURCE), "(12) the report as sent isn't on the expiry list, or the Google-free copy is");
+    const m = SRC["send-monthly-report.js"]; ok(/KEPT_REPORT_SOURCE/.test(m) && /noGoogle\(current\)/.test(m) && /GOOGLE_FIELDS\) if \(f in o\) o\[f\] = null/.test(m), "(12) the Google-free copy of the report isn't saved beside the one as sent"); }
 }
 
 if (F.length) { console.error(`🔴 check-data-keep: ${F.length} problem${F.length === 1 ? "" : "s"}`); F.forEach((m) => console.error("  - " + m)); process.exit(1); }

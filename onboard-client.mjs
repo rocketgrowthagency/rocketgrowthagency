@@ -117,7 +117,9 @@ if (existing.length) {
 // 3. Create initial onboarding record (idempotent — uses unique constraint on client_id)
 console.log(`[onboard] ensuring onboarding record...`);
 const onboardingData = {
-  baseline: client.baseline || {},
+  // 🔴 30-day rule (google_30_day_part_b_v1): the onboarding record is kept for good, so it keeps the search term and map rank only. The listing's
+  // rating and review count go to client_gbp_snapshots below, which the website's 30-day purge clears (_gbp-purge.js profile_snapshots).
+  baseline: (({ rating, review_count, ...kept }) => kept)(client.baseline || {}),
   tracked_keywords: client.tracked_keywords || [],
   notes: `Auto-onboarded from scraper baseline ${new Date().toISOString().slice(0,10)}.`
 };
@@ -145,7 +147,7 @@ if (client.tracked_keywords?.length && client.baseline) {
   console.log(`[onboard] ✓ baseline rankings inserted`);
 }
 
-// 5. Insert baseline GBP snapshot
+// 5. Insert baseline GBP snapshot (a 30-DAY CACHE: client_gbp_snapshots is the whole-table target `profile_snapshots` in the website's _gbp-purge.js)
 if (client.baseline) {
   console.log(`[onboard] inserting baseline GBP snapshot...`);
   await pgQuery(

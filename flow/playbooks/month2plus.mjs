@@ -422,7 +422,7 @@ Lead-handling kills conversion more than rankings do.`,
       const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");
       const result = await saveAndPublishReport(clientId, { publish: true });
       return {
-        summary: `Monthly report generated + published.\n  Local: ${result.filePath}\n  Portal id: ${result.portalRow?.id}\n  Stats: ${result.summary.tasks_done} tasks done, ${result.summary.new_reviews} new reviews`,
+        summary: `Monthly report generated + published.\n  Local: ${result.filePath}\n  Portal id: ${result.portalRow?.id}\n  Stats: ${result.summary.tasks_done} tasks done`,
         outcome_data: result.summary,
       };
     },

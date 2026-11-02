@@ -23,7 +23,7 @@ console.log(`\n✓ Report generated: ${filePath}`);
 console.log(`  Open in browser: file://${process.cwd()}/${filePath.replace(/^\.\//, "")}`);
 console.log(`  Client: ${summary.business_name}`);
 console.log(`  Period: ${summary.reporting_month}`);
-console.log(`  Stats: ${summary.tasks_done} tasks done, ${summary.new_reviews} new reviews, ${summary.rankings_count} keywords tracked`);
+console.log(`  Stats: ${summary.tasks_done} tasks done, ${summary.rankings_count} keywords tracked`);
 if (publish) {
   console.log(`\n✓ Published to client portal (id: ${portalRow?.id})`);
 } else {

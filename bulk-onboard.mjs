@@ -98,6 +98,7 @@ for (const r of records) {
       search_term: r.baseline_search_term || null,
       map_rank: r.baseline_map_rank ? parseInt(r.baseline_map_rank, 10) : null,
       rating: r.baseline_rating ? parseFloat(r.baseline_rating) : null,
+      // 30-day rule: rating + review_count only reach client_gbp_snapshots (cleared at 30 days), never the onboarding record (onboard-client.mjs strips them)
       review_count: r.baseline_review_count ? parseInt(r.baseline_review_count, 10) : null,
     };
   }

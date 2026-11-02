@@ -22,6 +22,8 @@
 //   client_state_snapshots.json   only the rows the website purge deletes (reviews read from Google; the Business Information snapshots)
 //   client_gbp_snapshots.json     every row (the whole table is Business Profile snapshots)
 //   client_monthly_records.json   the row STAYS; only its Google fields and the raw pull (data.gbp) are set to null
+//   client_onboarding_records.json / brain_knowledge.json   (google_30_day_part_b_v1) the row stays; only the saved Google profile pull, the saved Brain analysis and the old review signals go; the two review benchmark rows go
+//   (client_state_snapshots.json also loses its review_replies rows.) NOT touched, and listed for the owner: files/raw-store/monthly-report/ (add-only copies of the report as sent)
 // 🔴 OFF unless GBP_PURGE_ENABLED is exactly "1" (the same switch as the website purge). Off, it only reads and REPORTS what it would strip.
 // 🔴 It touches nothing else on the drive: not another table, not files/ (chats, memory, repos and client files stay add-only), not a copy
 // under 30 days old. Each strip is written to gbp-strip-ledger.jsonl (counts and a file hash, never content) BEFORE the file changes; no
@@ -68,8 +70,12 @@ export const GBP_STRIP_DAYS = 30;
 export const gbpStripEnabled = (env = process.env) => env.GBP_PURGE_ENABLED === "1";
 export const GOOGLE_MONTHLY_FIELDS = ["gbp_calls", "gbp_website_clicks", "gbp_actions", "gbp_impressions", "gbp_directions", "gbp_searches_direct", "gbp_searches_discovery", "review_count", "new_reviews", "average_rating"];
 export const GBP_STRIP = {
-  client_state_snapshots: { kind: "rows", match: (r) => (r.surface === "reviews" && !!r.payload && r.payload.source === "google_profile") || (r.surface === "gbp" && r.source === "deep-assess-client") },
+  client_state_snapshots: { kind: "rows", match: (r) => (r.surface === "reviews" && !!r.payload && r.payload.source === "google_profile") || (r.surface === "gbp" && r.source === "deep-assess-client") || r.surface === "review_replies" },
   client_gbp_snapshots: { kind: "rows", match: () => true },
+  // google_30_day_part_b_v1: the same lists as the website's _gbp-purge.js KEYS and TARGETS. A copy this old is past 30 days, so the key goes whatever its stamp.
+  client_onboarding_records: { kind: "rows", match: () => false, clear: (r) => stripKeys(r, [["v2Campaign", "gbp_profile"], ["v2Campaign", "brain_analysis"]]) },
+  brain_knowledge: { kind: "rows", match: (r) => r.type === "audit_benchmark" && (r.key === "review_count" || r.key === "review_rating"),
+    clear: (r) => (r.type === "client_audit" ? stripKeys(r, [["signals", "review_count"], ["signals", "review_rating"]]) : null) },
   client_monthly_records: { kind: "fields", fields: GOOGLE_MONTHLY_FIELDS, blob: "gbp" },
 };
 const DATED = /^\d{4}-\d{2}-\d{2}$/;
@@ -78,11 +84,31 @@ export function foldersToStrip(names, today, days = GBP_STRIP_DAYS) {
   const cut = new Date(Date.parse(`${today}T00:00:00Z`) - days * 86400000).toISOString().slice(0, 10);
   return names.filter((n) => DATED.test(n) && n < cut).sort();
 }
+/** a copy of the row with these keys (paths inside r.data) removed, and how many went; null when none were there. */
+function stripKeys(r, paths) {
+  if (!r || !r.data || typeof r.data !== "object") return null;
+  let data = r.data, n = 0;
+  for (const p of paths) {
+    let cur = data;
+    for (const k of p.slice(0, -1)) { if (!cur || typeof cur !== "object" || !(k in cur)) { cur = null; break; } cur = cur[k]; }
+    const last = p[p.length - 1];
+    if (!cur || typeof cur !== "object" || !(last in cur) || cur[last] == null) continue;
+    data = JSON.parse(JSON.stringify(data));
+    let t = data; for (const k of p.slice(0, -1)) t = t[k];
+    delete t[last]; n++;
+  }
+  return n ? { row: { ...r, data }, n } : null;
+}
 /** pure: what one table's rows look like once stripped, and what was taken out. A table not on the list comes back untouched. */
 export function stripRows(table, rows) {
   const t = GBP_STRIP[table];
   if (!t || !Array.isArray(rows)) return { rows, removedRows: 0, clearedFields: 0 };
-  if (t.kind === "rows") { const kept = rows.filter((r) => !t.match(r)); return { rows: kept, removedRows: rows.length - kept.length, clearedFields: 0 }; }
+  if (t.kind === "rows") {
+    const kept = rows.filter((r) => !t.match(r));
+    let cleared = 0;
+    const out = t.clear ? kept.map((r) => { const c = t.clear(r); if (!c) return r; cleared += c.n; return c.row; }) : kept;
+    return { rows: out, removedRows: rows.length - kept.length, clearedFields: cleared };
+  }
   let cleared = 0;
   const out = rows.map((r) => {
     if (!r || typeof r !== "object") return r;

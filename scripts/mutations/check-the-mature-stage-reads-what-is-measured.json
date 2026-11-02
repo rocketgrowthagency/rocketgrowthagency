@@ -44,8 +44,8 @@
  [
   "one bad month is an alert",
   "maturefn",
-  "    if (breaches(t, m0[m.col], m1[m.col]) === true && breaches(t, m1[m.col], m2[m.col]) === true) {",
-  "    if (breaches(t, m0[m.col], m1[m.col]) === true) {",
+  "    if (breaches(t, v0, v1) === true && breaches(t, v1, v2) === true) {",
+  "    if (breaches(t, v0, v1) === true) {",
   1
  ],
  [

@@ -1,0 +1,80 @@
+[
+ [
+  "the report as sent drops off the 30-day expiry list",
+  "gbpkeep",
+  "const GOOGLE_RAW_SOURCES = [\"monthly-report\"];",
+  "const GOOGLE_RAW_SOURCES = [];"
+ ],
+ [
+  "the Google-free copy of the report is put on the expiry list too",
+  "gbpkeep",
+  "const GOOGLE_RAW_SOURCES = [\"monthly-report\"];",
+  "const GOOGLE_RAW_SOURCES = [\"monthly-report\", \"monthly-report-kept\"];"
+ ],
+ [
+  "a Google column is written that the expiry list does not know",
+  "metricsjs",
+  "patch.gbp_directions = gbp.directions;",
+  "patch.gbp_views_new = gbp.directions;"
+ ],
+ [
+  "a Google column drops off the clear list",
+  "gbpkeep",
+  "\"gbp_impressions\", \"gbp_directions\",",
+  "\"gbp_impressions\","
+ ],
+ [
+  "the raw Google pull is written into an expired month",
+  "metricsjs",
+  "if (!googleExpired) data.gbp = gbp || data.gbp || null;",
+  "data.gbp = gbp || data.gbp || null;"
+ ],
+ [
+  "the review reply checks fall off the delete list",
+  "gbppurge",
+  "id: \"review_replies\", short",
+  "id: \"review_repliesX\", short"
+ ],
+ [
+  "the saved files are no longer swept",
+  "gbppurge",
+  "  await runRaw({ supa, now, out, raw, fetchFn });\n",
+  "\n"
+ ],
+ [
+  "the JSON keys are no longer swept",
+  "gbppurge",
+  "  await runKeys({ supa, countFn, now, out });\n",
+  "\n"
+ ],
+ [
+  "the daily purge stops checking in to System Health",
+  "gbppurgefn",
+  "exports.handler = require(\"./_job-checkin\").withCheckin(\"gbp-30-day-purge\", exports.handler);",
+  ""
+ ],
+ [
+  "a failed purge part still reports ok, so nobody is alerted",
+  "gbppurgefn",
+  "const ok = !r.failed;",
+  "const ok = true;"
+ ],
+ [
+  "the report as sent is saved under a source that never expires",
+  "monthlyreport",
+  "saveRaw({ source: \"monthly-report\", clientId",
+  "saveRaw({ source: \"monthly-report-x\", clientId"
+ ],
+ [
+  "a new Business Profile writer is added to a file nobody classified",
+  "maturefn",
+  "const gbpKeep = require(\"./_gbp-keep\");",
+  "const gbpKeep = require(\"./_gbp-keep\"); const NEW_HOST = \"https://mybusiness.googleapis.com/v4/\";"
+ ],
+ [
+  "the saved Brain analysis is no longer on the JSON-key list",
+  "gbpkeep",
+  "{ id: \"brain_analysis\", table: \"client_onboarding_records\"",
+  "{ id: \"brain_analysis_gone\", table: \"client_onboarding_records\""
+ ]
+]

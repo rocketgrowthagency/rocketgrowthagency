@@ -619,6 +619,7 @@ run check-the-weekly-audit-is-read-only.mjs "the weekly audit can only read, nev
 # 🔒 System health (admin_system_health_v1, 10-31): every automated job checks in, silence is an alarm, and the Mac watches the watcher.
 # 🔒 What we keep (data_keep_v1, 10-31): raw copies, grid per pin, Search Console rows, dated benchmarks, frozen reports, the 30-day purge (OFF), the admin row. Fakes only, nothing real called.
 run check-data-keep.mjs "what we keep is kept and can't quietly stop: raw store strips secrets and never overwrites, Search Console can't loop, the purge is off and deletes only after its ledger line, the admin row reads true"
+run check-google-data-has-an-expiry.mjs "no copy of Google Business Profile content ships without an expiry: every Business Profile file is classified, every Google column and saved answer is on the 30-day delete list, the daily sweep is wired, checks in and ships OFF"
 run check-rank-schedule.mjs "the map ranking really runs: the locked main keyword only, two scans a month at 10:00 client time, recorded so it cannot repeat or double-run, a failed pin never reads as not ranked, 25 searches a scan with the provider count read first"
 run check-system-health-covers-every-job.mjs "every scheduled job is on the list, wrapped, on the right schedule, and the table and its guards match"
 run check-job-status-reads-true.mjs "a job's state is worked out right, and empty, unknown and not-set-up never read as OK on the admin card"

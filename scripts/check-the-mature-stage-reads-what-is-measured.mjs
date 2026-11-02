@@ -58,11 +58,22 @@ function world(records = []) {
 // ── 4/5 · thresholds + alert: one bad month is noise, two is an alert; never emails the client ──
 const BAD2 = [month("2026-11", { gbp_calls: 10 }), month("2026-10", { gbp_calls: 14 }), month("2026-09", { gbp_calls: 20 })];
 const BAD1 = [month("2026-11", { gbp_calls: 10 }), month("2026-10", { gbp_calls: 20 }), month("2026-09", { gbp_calls: 20 })];
+// google_30_day_part_b_v1: the Google KPIs (call taps, review count) are judged on a LIVE reading, never on stored months (they are gone after 30 days).
+const LIVE = (calls, status = "ok", reviews = [20, 20, 20]) => ({ gbp_calls: calls.map((value) => ({ value: status === "ok" ? value : null, status })), review_count: reviews.map((value) => ({ value: status === "ok" ? value : null, status })) });
 const TH = [{ kind: "kpi_thresholds", period: "ongoing", status: "done", data: { thresholds: M.defaultThresholds(client) } }];
 { if (st({ months: BAD2, records: [] }, "m6.kpi.alert_monitor").state !== "locked") fail("5 · alerts run before any threshold is set");
-  if (st({ months: BAD1, records: TH }, "m6.kpi.alert_monitor").state === "bad") fail("5 · ONE bad month raises an alert (needs two running)");
-  if (st({ months: BAD2, records: TH }, "m6.kpi.alert_monitor").state !== "bad") fail("5 · two months past the threshold don't raise an alert");
-  const w = world(TH); const r = await w.act("tell_client", null, "Calls dipped — we're on it.", { months: BAD2 });
+  if (st({ months: BAD1, records: TH, googleLive: LIVE([10, 20, 20]) }, "m6.kpi.alert_monitor").state === "bad") fail("5 · ONE bad month raises an alert (needs two running)");
+  if (st({ months: BAD2, records: TH, googleLive: LIVE([10, 14, 20]) }, "m6.kpi.alert_monitor").state !== "bad") fail("5 · two months past the threshold don't raise an alert");
+  // a Google number that could not be read live is "couldn't check": never an alert, never "fine"
+  for (const status of ["could_not_read", "disconnected", "not_kept"]) {
+    const x = st({ months: BAD2, records: TH, googleLive: LIVE([10, 14, 20], status) }, "m6.kpi.alert_monitor");
+    if (x.state === "bad") fail(`5 · an alert fired on a Google reading that was ${status}`);
+    if (x.state === "ok" || !/couldn't|could not|Couldn't/.test(JSON.stringify(x))) fail(`5 · a Google reading that was ${status} reads as a clean check instead of 'couldn't check'`);
+  }
+  if (st({ months: BAD2, records: TH }, "m6.kpi.alert_monitor").state === "bad") fail("5 · with no live reading at all, stored months raised a Google alert");
+  if (st({ months: GOOD, records: TH, googleLive: LIVE([10, 14, 20]) }, "m6.kpi.alert_monitor").state !== "bad") fail("5 · the alert reads stored months instead of the live reading");
+  { const OKM = st({ months: GOOD, records: TH, googleLive: LIVE([20, 19, 18]) }, "m6.kpi.alert_monitor"); if (OKM.state !== "ok") fail(`5 · a clean live reading doesn't read as no breach (${OKM.state})`); }
+  const w = world(TH); const r = await w.act("tell_client", null, "Calls dipped — we're on it.", { months: BAD2, googleLive: LIVE([10, 14, 20]) });
   if (!r.ok || w.sent.length || !w.acts.some((a) => a.kind === "rga_note_to_client")) fail("5 · telling the client sends an email (must be an activity note only)"); }
 if (M.breaches({ drop: 20 }, null, 10) !== null) fail("5 · a missing value is read as 'no breach' instead of unknown");
 // ── 6 · review target scales with closed jobs ──
@@ -96,7 +107,7 @@ if (M.breaches({ drop: 20 }, null, 10) !== null) fail("5 · a missing value is r
   if (st({ months: top }, "m6.account.upsell_opportunity").state !== "you") fail("13 · 3 months in the top 3 doesn't flag an upsell");
   if (st({ months: [month("2026-11", { ranking_position: 1 }), month("2026-10", { ranking_position: 5 }), month("2026-09", { ranking_position: 1 })] }, "m6.account.upsell_opportunity").state === "you") fail("13 · an upsell flags without 3 straight top-3 months");
   if (st({ lastLoginAt: new Date(now - 40 * 86400000).toISOString() }, "m6.account.churn_risk_signal").state === "bad") fail("14 · ONE signal raises a churn flag (needs two)");
-  if (st({ months: BAD2, records: TH, lastLoginAt: new Date(now - 40 * 86400000).toISOString() }, "m6.account.churn_risk_signal").state !== "bad") fail("14 · two signals at once don't raise a churn flag"); }
+  if (st({ months: BAD2, records: TH, googleLive: LIVE([10, 14, 20]), lastLoginAt: new Date(now - 40 * 86400000).toISOString() }, "m6.account.churn_risk_signal").state !== "bad") fail("14 · two signals at once don't raise a churn flag"); }
 // ── unknowns stay unknown (found 10-19 by running the engine on production data) ──
 { const s14 = st({ lastLoginAt: null }, "m6.account.churn_risk_signal");
   if ((s14.body || []).some((b) => /recent portal visits|Portal visited/i.test(b)) || !(s14.body || []).some((b) => /not recorded/.test(b))) fail("14 · an unrecorded portal login is reported as recent visits");

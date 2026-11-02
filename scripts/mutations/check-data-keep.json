@@ -260,8 +260,8 @@
  [
   "a delete no longer waits for the switch",
   "gbppurge",
-  "if (out.enabled && row.would_delete > 0) {",
-  "if (row.would_delete > 0) {"
+  "if (out.enabled && row.would_delete > 0) {\n        if (!out.ledger_ready) { row.error = \"no deletion ledger, so nothing was deleted\"",
+  "if (row.would_delete > 0) {\n        if (!out.ledger_ready) { row.error = \"no deletion ledger, so nothing was deleted\""
  ],
  [
   "a delete happens without its ledger line",
@@ -470,8 +470,8 @@
  [
   "the monthly ledger holds the content",
   "gbppurge",
-  "cutoff: out.cutoff, ids_sha256",
-  "data: rows, cutoff: out.cutoff, ids_sha256"
+  "fields_cleared: fieldsIn,",
+  "fields_cleared: fieldsIn, data: rows,"
  ],
  [
   "the metrics job writes Google numbers into an expired month",
@@ -632,8 +632,8 @@
  [
   "the strip's monthly rows are dropped instead of cleared",
   "backupdata",
-  "  if (t.kind === \"rows\") { const kept",
-  "  if (t.kind === \"rows\" || table === \"client_monthly_records\") { const kept"
+  "  if (t.kind === \"rows\") {\n    const kept",
+  "  if (t.kind === \"rows\" || table === \"client_monthly_records\") {\n    const kept"
  ],
  [
   "the strip can leave the dated copies",

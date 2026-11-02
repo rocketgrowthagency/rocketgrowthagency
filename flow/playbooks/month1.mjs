@@ -1242,7 +1242,7 @@ A reply counts as replied only once it is read back from Google and seen live. U
       const { saveAndPublishReport } = await import("../../lib/report-generator.mjs");
       const result = await saveAndPublishReport(clientId, { publish: true });
       return {
-        summary: `Report generated + published to portal.\n  Local: ${result.filePath}\n  Portal id: ${result.portalRow?.id}\n  Stats: ${result.summary.tasks_done} tasks done, ${result.summary.new_reviews} new reviews, ${result.summary.rankings_count} keywords tracked`,
+        summary: `Report generated + published to portal.\n  Local: ${result.filePath}\n  Portal id: ${result.portalRow?.id}\n  Stats: ${result.summary.tasks_done} tasks done, ${result.summary.rankings_count} keywords tracked`,
         outcome_data: result.summary,
       };
     },
