@@ -3,7 +3,7 @@
 // Chris 10-31). RUNS the real code: _monthly-value.js (every shape), _site-check.js (addresses + fake network), the portal's ogValueRow (vm).
 //   · every line is a recorded reading with its date, or an "off" line that SAYS it wasn't read: never a green tick for something nobody
 //     checked, never a 0 for something nobody counted (feedback_an_absence_must_never_be_readable_as_a_value)
-//   · Google's numbers past the 30-day keep are left out, not shown as 0 (_gbp-keep.js)
+//   · Google's numbers are READ LIVE (report_live_google_30_day_v2): a count Google didn't give says so in Google's words, never 0 (_google-live.js)
 //   · the website check refuses localhost / private / metadata addresses, never calls a failed lookup "up", never turns a missing certificate into 0 days
 //   · READ ONLY: nothing here writes to Google or the client's site, emails anyone, or asks Google for more quota
 //   · the new job is bounded (one row a client a day, a cap and a time budget), scheduled, and in the job manifest; no schema change (no monthly_value.sql)
@@ -46,7 +46,7 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
   if (v.lines.some((l) => /\b0\b/.test(l.text) && l.mark === "ok")) fail("an off reading shows a 0");
   if (v.lines.some((l) => /undefined|NaN|null/.test(l.text))) fail("a line prints undefined / NaN / null"); }
 // everything wired and fine
-{ const v = build({ ...WIRED, record: { reporting_month: MONTH, new_reviews: 3, total_calls: 20, form_leads: 6, data: { metrics_refreshed_at: "2026-10-30T06:00:00Z" } }, speed: { captured_at: "2026-10-12T08:00:00Z", payload: { lcp_ms: 2140 } } });
+{ const v = build({ ...WIRED, google_live: { read_at: "2026-10-30T06:00:00Z", new_reviews: { status: "ok", value: 3 } }, record: { reporting_month: MONTH, total_calls: 20, form_leads: 6, data: { metrics_refreshed_at: "2026-10-30T06:00:00Z" } }, speed: { captured_at: "2026-10-12T08:00:00Z", payload: { lcp_ms: 2140 } } });
   const g = by(v, "google_profile"); if (!g || g.mark !== "ok" || !/30 nights/.test(g.text) || !g.when) fail(`wired profile: ${JSON.stringify(g)}`);
   const r = by(v, "reviews"); if (!r || r.mark !== "ok" || !/3 new reviews/.test(r.text) || !r.when) fail(`reviews: ${JSON.stringify(r)}`);
   const w = by(v, "website"); if (!w || w.mark !== "ok" || !/up on all 30 checks/.test(w.text) || !/60 more days/.test(w.text) || !w.when) fail(`website: ${JSON.stringify(w)}`);
@@ -77,13 +77,16 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
   if (w(checks(3, { https: false, ssl_days: null })).mark !== "rga" || !/no security certificate/.test(w(checks(3, { https: false, ssl_days: null })).text)) fail("an http-only site isn't flagged");
   const unknown = w(checks(3, { ssl_days: null })); if (unknown.mark !== "ok" || /certificate/.test(unknown.text)) fail(`an unreadable certificate date is claimed or flagged: ${unknown.text}`);
   if (w([{ created_at: "2026-09-30T12:16:00Z", payload: { answer: { up: true, https: true, ssl_days: 60 } } }]).mark !== "off") fail("last month's check counts for this month"); }
-// reviews + Google's 30-day keep
-{ const rv = (rec, o = {}) => by(build({ ...WIRED, record: rec, ...o }), "reviews");
-  if (rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).mark !== "ok" || /\b0 new/.test(rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).text) === false && !/no new/.test(rv({ reporting_month: MONTH, new_reviews: 0, data: {} }).text)) fail("zero new reviews reads wrong");
-  const none = rv({ reporting_month: MONTH, new_reviews: null, data: {} }); if (none.mark !== "off" || /\d/.test(none.text)) fail(`a missing review count shows as a number: ${none.text}`);
-  if (rv(null).mark !== "off") fail("no monthly record: reviews not off");
-  if (by(build({ ...WIRED, month: "2026-08-01", record: { reporting_month: "2026-08-01", new_reviews: 4, data: {} } }), "reviews")) fail("a month past the 30-day keep still shows a review count");
-  const nog = by(build({ record: { reporting_month: MONTH, new_reviews: null, data: {} } }), "reviews"); if (!/isn't connected/.test(nog.text)) fail("reviews without Google don't say so"); }
+// reviews: READ FROM GOOGLE TODAY, with Google's words when it can't (report_live_google_30_day_v2)
+{ const W = { could_not_read: "Couldn't read Google just now.", disconnected: "Reconnect Google to see these.", not_kept: "Google doesn't keep this month anymore." };
+  const rv = (status, value, o = {}) => by(build({ ...WIRED, google_live: { read_at: "2026-10-30T06:00:00Z", new_reviews: { status, value } }, ...o }), "reviews");
+  const z = rv("ok", 0); if (z.mark !== "ok" || !/no new/.test(z.text)) fail("zero new reviews reads wrong");
+  if (!/3 new reviews/.test(rv("ok", 3).text)) fail("a live count of 3 isn't shown");
+  for (const st of Object.keys(W)) { const r = rv(st, null); if (r.mark !== "off" || !r.text.includes(W[st]) || /\d/.test(r.text)) fail(`reviews that Google could not give (${st}) don't say so in Google's words: ${r.text}`); }
+  const failed = rv("could_not_read", 0); if (/\b0\b|no new/.test(failed.text)) fail("a failed read is shown as zero reviews");
+  const none = by(build({ ...WIRED }), "reviews"); if (!none || none.mark !== "off" || /\d/.test(none.text)) fail(`no live read at all shows as a number: ${none && none.text}`);
+  const old = by(build({ ...WIRED, month: "2026-08-01", google_live: { read_at: "x", new_reviews: { status: "not_kept", value: null } } }), "reviews"); if (!old || !old.text.includes(W.not_kept)) fail("a month Google no longer keeps doesn't say so");
+  const nog = by(build({}), "reviews"); if (!/isn't connected/.test(nog.text)) fail("reviews without Google don't say so"); }
 // leads + speed
 { const ld = (rec) => by(build({ ...WIRED, record: rec }), "leads");
   if (ld({ total_calls: null, form_leads: null, data: {} }).mark !== "off" || /\d/.test(ld({ total_calls: null, form_leads: null, data: {} }).text)) fail("no lead count shows a number");
@@ -142,7 +145,7 @@ const WIRED = { website_url: "https://www.denver-plumbing.example", google_conne
   try { vm.runInContext([md[0].replace(/^const /, "var "), hand, csBlock(P, hand), kx[0].replace(/^const /, "var "), P.slice(ia, ib).replace(/^const /gm, "var "), m[0]].join("\n"), ctx); } catch (e) { console.error(`⚠️  INDETERMINATE — the card doesn't load (${e.message})`); process.exit(2); }
   const draw = (d) => { ctx.__d = d; return vm.runInContext("ogValueRow(__d)", ctx); };
   const text = (h) => h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
-  const v = build({ ...WIRED, record: { reporting_month: MONTH, new_reviews: 3, total_calls: 20, data: { metrics_refreshed_at: "2026-10-30T06:00:00Z" } } });
+  const v = build({ ...WIRED, google_live: { read_at: "2026-10-30T06:00:00Z", new_reviews: { status: "ok", value: 3 } }, record: { reporting_month: MONTH, total_calls: 20, data: { metrics_refreshed_at: "2026-10-30T06:00:00Z" } } });
   const h = draw({ value: { ok: true, ...v } });
   if (!/With RGA/.test(h) || !/Every month/.test(h)) fail("the pills aren't With RGA + Every month");
   if (!/What we watched this month/.test(h)) fail("the row title isn't 'What we watched this month'");

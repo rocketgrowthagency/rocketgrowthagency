@@ -42,10 +42,10 @@
   1
  ],
  [
-  "a month past the 30-day keep still shows reviews",
+  "a review count Google could not give is shown as 0",
   "monthlyvalue",
-  "if (!expired) {",
-  "if (true) {",
+  "const n = live && live.status === \"ok\" ? num(live.value) : null;",
+  "const n = live ? (num(live.value) ?? 0) : null;",
   1
  ],
  [

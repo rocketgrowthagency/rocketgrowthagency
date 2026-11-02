@@ -1,0 +1,114 @@
+[
+ [
+  "a series Google didn't return becomes a number",
+  "googlelive",
+  "if (!have[m]) return { status: \"could_not_read\" };",
+  "if (!have[m]) return { status: \"ok\", value: 0 };",
+  1
+ ],
+ [
+  "a 429 is not retried",
+  "googlelive",
+  "if (res.status !== 429 || attempt >= MAX_RETRIES) return res;",
+  "if (true) return res;",
+  1
+ ],
+ [
+  "the retry has no jitter",
+  "googlelive",
+  "+ Math.floor(ctx.rand() * 400)",
+  "+ 0",
+  1
+ ],
+ [
+  "no sign-in reads as a failure to read instead of disconnected",
+  "googlelive",
+  "if (!oauth || !oauth.refresh_token || !oauth.gbp_location_id) return result(allMonths(months, \"disconnected\"), \"disconnected\");",
+  "if (!oauth || !oauth.refresh_token || !oauth.gbp_location_id) return result(allMonths(months, \"could_not_read\"), \"could_not_read\");",
+  1
+ ],
+ [
+  "a month Google only half has is shown as a total",
+  "googlelive",
+  "if (daysPresent < daysExpected) return { status: \"not_kept\" };",
+  "if (daysPresent < daysExpected) return { status: \"ok\", value: total };",
+  1
+ ],
+ [
+  "a half-read review list is counted",
+  "googlelive",
+  "if (!complete) return null;",
+  "if (false) return null;",
+  1
+ ],
+ [
+  "the cache serves an expired month",
+  "googlenumbers",
+  "if (!row || monthIsExpired(row.reporting_month, now)) return null;",
+  "if (!row) return null;",
+  1
+ ],
+ [
+  "a NULL cached field is served as 0",
+  "googlenumbers",
+  "if (v == null) return null;",
+  "if (v == null) { values[f] = 0; status[f] = \"ok\"; continue; }",
+  1
+ ],
+ [
+  "a stored Google number survives when Google didn't answer",
+  "googlenumbers",
+  "out[col] = st === \"ok\" && month.values[f] != null ? month.values[f] : null;",
+  "out[col] = st === \"ok\" && month.values[f] != null ? month.values[f] : (row[col] ?? 0);",
+  1
+ ],
+ [
+  "the door answers without checking who is asking",
+  "googlefn",
+  "if (gate.error) return gate.error;",
+  "if (false) return gate.error;",
+  1
+ ],
+ [
+  "the email shows a failed Google read as 0",
+  "monthlyreport",
+  "const shownOf = (m) => googleWords(m) || current[m.key];",
+  "const shownOf = (m) => current[m.key] ?? 0;",
+  1
+ ],
+ [
+  "an email of only apologies is sent",
+  "monthlyreport",
+  "if (!present.some((m) => !googleWords(m))) return null;",
+  "if (!present.length) return null;",
+  1
+ ],
+ [
+  "the report stops blanking the stored Google columns",
+  "reportjs",
+  "GL().strip(monthlyRows);",
+  ";",
+  1
+ ],
+ [
+  "the portal compares with a month Google didn't answer",
+  "portal",
+  "const comparable = !g || !opts.priorRow || GLV().usable(opts.priorRow, opts.col);",
+  "const comparable = true;",
+  1
+ ],
+ [
+  "the admin's low review pace flag speaks from a failed read",
+  "admin",
+  "(!window.RGAGoogleLive || window.RGAGoogleLive.status(cur, \"new_reviews\") === \"ok\")",
+  "true",
+  1
+ ],
+ [
+  "the admin preview stops reaching the live door",
+  "previewguard",
+  "fn === \"portal-google-numbers\" && post && onlyKeys(b, [\"client_id\", \"months\"])",
+  "fn === \"portal-google-numbers-x\" && post && onlyKeys(b, [\"client_id\", \"months\"])",
+  1
+ ]
+]

@@ -80,8 +80,8 @@
  [
   "the channel row carries the target again",
   "reportjs",
-  "      [\"Average rating\", current.average_rating],\n",
-  "      [\"Average rating\", current.average_rating],\n      [\"90-day target\", 0],\n"
+  "      [\"Average rating\", current.average_rating, \"average_rating\"],\n",
+  "      [\"Average rating\", current.average_rating, \"average_rating\"],\n      [\"90-day target\", 0],\n"
  ],
  [
   "an old report draws a later map",
@@ -304,8 +304,8 @@
  [
   "the speed score comes back into the report",
   "reportjs",
-  "[\"Found by category\", current.gbp_searches_discovery],\n      ], gbpMonthExpired",
-  "[\"Found by category\", current.gbp_searches_discovery],\n        [\"Speed score (mobile)\", current.psi_mobile_perf],\n      ], gbpMonthExpired"
+  "[\"Found by category\", current.gbp_searches_discovery, \"gbp_searches_discovery\"],\n      ], {",
+  "[\"Found by category\", current.gbp_searches_discovery, \"gbp_searches_discovery\"],\n        [\"Speed score (mobile)\", current.psi_mobile_perf],\n      ], {"
  ],
  [
   "the report asks for the speed score column again",
@@ -404,10 +404,10 @@
   "Season is ruled out."
  ],
  [
-  "a cleared Google number reads 0",
+  "a Google number Google did not give reads 0",
   "reportjs",
-  "<span class=\"none\">${keptNote ? escapeHtml(keptNote) : \"Not yet measured\"}</span>",
-  "<span class=\"none\">0</span>"
+  "`<span class=\"none\">${why ? escapeHtml(why) : \"Not yet measured\"}</span>`)\n            : ",
+  "`<span class=\"none\">0</span>`)\n            : "
  ],
  [
   "a later month joins an earlier month's trend",

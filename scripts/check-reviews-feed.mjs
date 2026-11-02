@@ -107,7 +107,7 @@ for (const [id, ok] of [["AbC_-/9", true], ["x y", false], ["<b>", false], ["", 
 
 // ── 5 · the endpoint: the client's Yes / Not her, the reviews read, and who may write ──
 {
-  let list = null, patched = null, snaps = [], owner = true;
+  let list = null, patched = null, snaps = [], owner = true, v4 = "ok";
   const reset = () => { list = { id: "11111111-1111-1111-1111-111111111111", customers: [cust("Maria", 0), { first_name: "Tom" }] }; patched = null; };
   route = async (url, init) => {
     if (url.startsWith("https://sb.test/auth/v1/user")) return res(200, { id: "u1", email: "owner@acme.test" });
@@ -119,6 +119,9 @@ for (const [id, ok] of [["AbC_-/9", true], ["x y", false], ["<b>", false], ["", 
     if (url.includes("/client_customer_lists?client_id=eq.")) return res(200, [list]);
     if (url.includes("/client_state_snapshots?")) return snaps === "fail" ? res(500, "down") : res(200, snaps);
     if (url.includes("/client_activity")) return res(201, "");
+    // report_live_google_30_day_v2: the total and rating are READ FROM GOOGLE TODAY (the stored reading only supplies the list)
+    if (url.includes("/client_google_oauth?")) return res(200, [{ client_id: "c", refresh_token: "r", access_token: "a", access_token_expires_at: new Date(Date.now() + 3600e3).toISOString(), gbp_location_id: "locations/9", gbp_account_id: "accounts/1" }]);
+    if (url.includes("mybusiness.googleapis.com/v4/accounts/1/locations/9/reviews")) return v4 === "fail" ? res(500, "down") : res(200, { totalReviewCount: 4, averageRating: 4.5, reviews: [{ reviewId: "g1", starRating: "FIVE", createTime: new Date().toISOString() }] });
     return res(404, { error: "no route " + url });
   };
   const call = async (body) => { const r = await EP.handler({ httpMethod: "POST", headers: { authorization: "Bearer jwt" }, body: JSON.stringify({ client_id: "22222222-2222-2222-2222-222222222222", ...body }) }); return { code: r.statusCode, j: JSON.parse(r.body) }; };
@@ -139,6 +142,11 @@ for (const [id, ok] of [["AbC_-/9", true], ["x y", false], ["<b>", false], ["", 
   list = { id: "11111111-1111-1111-1111-111111111111", customers: [{ ...cust("Maria", 0), marked_sent_at: new Date(Date.now() - 2 * DAY).toISOString() }] };
   r = await call({ scope: "reviews" });
   if (r.code !== 200 || r.j.feed?.count !== 4 || r.j.matches?.length !== 1 || r.j.matches[0].review_id !== "g1" || !/^https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:pl1$/.test(r.j.profile_url || "")) fail(`the reviews read doesn't return the feed, the question and the profile link (${JSON.stringify(r.j)})`);
+  // the live read failing never shows the stored count as today's, and never reads as "no reviews"
+  v4 = "fail"; r = await call({ scope: "reviews" });
+  if (r.code !== 200 || r.j.feed?.count !== null || r.j.feed?.rating !== null || r.j.google?.status !== "could_not_read") fail(`a failed live read still shows a stored count as Google's (${JSON.stringify(r.j.feed?.count)} ${JSON.stringify(r.j.google)})`);
+  v4 = "ok";
+  if (r.code === 200 && !(await call({ scope: "reviews" })).j.google?.source) fail("the reviews answer doesn't carry its source label");
   snaps = []; r = await call({ scope: "reviews" });
   if (r.code !== 200 || r.j.feed !== null || r.j.matches.length || r.j.read_failed) fail(`no reading isn't "can't read them yet" with no question (${JSON.stringify(r.j)})`);
   snaps = "fail"; r = await call({ scope: "reviews" });

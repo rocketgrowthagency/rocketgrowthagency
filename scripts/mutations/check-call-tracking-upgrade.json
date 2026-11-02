@@ -56,7 +56,7 @@
  [
   "the report calls taps Calls again",
   "reportjs",
-  "[\"Call-button taps\", current.gbp_calls],",
-  "[\"Calls\", current.gbp_calls],"
+  "[\"Call-button taps\", current.gbp_calls, \"gbp_calls\"],",
+  "[\"Calls\", current.gbp_calls, \"gbp_calls\"],"
  ]
 ]

@@ -442,4 +442,8 @@ export const FILES = {
   citrunbookfn: "netlify/functions/admin-citation-runbook.js",
   // admin_last_research_items_v1 item 3 (11-01): directories found by searching brand names, off by default
   citbrand: "netlify/functions/_citation-brand-discovery.js",
+  // report_live_google_30_day_v2 Part A (11-02): Google numbers read live through one reader
+  googlelive: "netlify/functions/_google-live.js",
+  googlenumbers: "netlify/functions/_google-numbers.js",
+  googlefn: "netlify/functions/portal-google-numbers.js",
 };

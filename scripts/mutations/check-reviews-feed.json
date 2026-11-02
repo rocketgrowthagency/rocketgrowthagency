@@ -134,8 +134,8 @@
  [
   "a failed read reads as no reviews",
   "reviewreqfn",
-  "    return json(200, { ok: true, scope: \"reviews\", feed, read_failed: rows == null,",
-  "    return json(200, { ok: true, scope: \"reviews\", feed, read_failed: false,"
+  "    return json(200, { ok: true, scope: \"reviews\", feed, google, read_failed: rows == null,",
+  "    return json(200, { ok: true, scope: \"reviews\", feed, google, read_failed: false,"
  ],
  [
   "the card loses its question",
@@ -208,5 +208,12 @@
   "portal",
   "if (!f.reviews.length && !f.count) return row(pills, f.stale ? \"wait\" : \"you\", ogK5(csCard({ tone: \"you\", head: \"No reviews on Google yet\"",
   "if (false) return row(pills, f.stale ? \"wait\" : \"you\", ogK5(csCard({ tone: \"you\", head: \"No reviews on Google yet\""
+ ],
+ [
+  "a failed live read shows the stored count as Google's",
+  "reviewreqfn",
+  "if (feed) { feed.count = liveRv.status === \"ok\" ? liveRv.total : null; feed.rating = liveRv.status === \"ok\" ? liveRv.rating : null; }",
+  "if (feed) { feed.count = feed.count; }",
+  1
  ]
 ]

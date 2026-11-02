@@ -34,11 +34,12 @@ const check = (ok, what, got) => {
 let chromium;
 try { ({ chromium } = await import("playwright")); } catch { console.log("⚠️  INDETERMINATE — playwright missing"); process.exit(2); }
 
-let reportJs, reportCss, reportHtml;
+let reportJs, reportCss, reportHtml, googleLiveJs;
 try {
   reportJs = fs.readFileSync(`${SITE}/portal/report/report.js`, "utf8");
   reportCss = fs.readFileSync(`${SITE}/portal/report/report.css`, "utf8");
   reportHtml = fs.readFileSync(`${SITE}/portal/report/index.html`, "utf8");
+  googleLiveJs = fs.readFileSync(`${SITE}/shared/google-live.js`, "utf8");
 } catch (e) { console.log(`⚠️  INDETERMINATE — cannot read the report: ${e.message}`); process.exit(2); }
 
 // A stand-in for the Supabase client. It applies the filters the page really asks for, and an embedded row only carries the
@@ -108,6 +109,21 @@ async function render({ months, grid = [], client = {}, open, whyNow }) {
     const p = new URL(route.request().url()).pathname;
     if (p.endsWith("/report.js")) return route.fulfill({ contentType: "text/javascript", body: reportJs });
     if (p.endsWith("/report.css")) return route.fulfill({ contentType: "text/css", body: reportCss });
+    // report_live_google_30_day_v2: Google's numbers come from the one door. The fixture rows hold what Google "says": a value is "ok";
+    // a null is whatever the row's __gstatus says (default could_not_read), so no test can pass by a stored column.
+    if (p.endsWith("/shared/google-live.js")) return route.fulfill({ contentType: "text/javascript", body: googleLiveJs });
+    if (p.endsWith("/portal-google-numbers")) {
+      const asked = JSON.parse(route.request().postData() || "{}").months || [];
+      const COL = { calls: "gbp_calls", website_clicks: "gbp_website_clicks", directions: "gbp_directions", impressions: "gbp_impressions", searches_direct: "gbp_searches_direct", searches_discovery: "gbp_searches_discovery", actions: "gbp_actions", review_count: "review_count", new_reviews: "new_reviews", average_rating: "average_rating" };
+      const out = {};
+      for (const ym of asked) {
+        const row = fix.client_monthly_records.find((r) => String(r.reporting_month).slice(0, 7) === ym) || {};
+        const values = {}, status = {};
+        for (const [f, c] of Object.entries(COL)) { const v = row[c]; values[f] = v == null ? null : v; status[f] = v != null ? "ok" : (row.__gstatus || "could_not_read"); }
+        out[`${ym}-01`] = { values, status, via: "live" };
+      }
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, source: "From Google, today", months: out }) });
+    }
     if (p.startsWith("/vendor/supabase-js")) return route.fulfill({ contentType: "text/javascript", body: FAKE_SUPABASE });
     if (p.endsWith("/admin-config")) return route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, supabaseUrl: "https://db.test", supabaseAnonKey: "anon" }) });
     if (p.startsWith("/portal/report/")) return route.fulfill({ contentType: "text/html", body: reportHtml });
@@ -115,11 +131,14 @@ async function render({ months, grid = [], client = {}, open, whyNow }) {
   });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  const googleAnswered = page.waitForResponse((r) => /portal-google-numbers/.test(r.url()), { timeout: 15000 }).catch(() => null);
   await page.goto(`https://report.test/portal/report/${open}/`, { waitUntil: "load" });
   await page.waitForFunction(() => {
     const d = document.getElementById("reportDoc"), m = document.getElementById("reportMessage");
     return (d && !d.hidden) || (m && !m.hidden);
   }, null, { timeout: 15000 });
+  await googleAnswered;                 // the page draws first and Google's tiles fill after: read it once the second draw has landed
+  await page.waitForTimeout(250);
   const out = await page.evaluate(() => {
     const d = document.getElementById("reportDoc");
     const t = (s) => [...d.querySelectorAll(s)].map((e) => e.textContent.replace(/\s+/g, " ").trim());
@@ -372,7 +391,7 @@ try {
 
   // what else happened: a failed pull is named, a good record names nothing
   r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4, data: { metrics_errors: { ga4: "403", gbp_missing: "CALL_CLICKS" } } }] });
-  check(/Google Analytics did not answer on our last pull/.test(r.all) && /Some Google profile numbers were not returned/.test(r.all), "a data fault on record is named in plain words", null);
+  check(/Google Analytics did not answer on our last pull/.test(r.all) && !/Some Google profile numbers were not returned/.test(r.all), "a data fault on record is named in plain words (Google's own numbers are read live, so no stored fault speaks for them)", null);
   r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 4, data: {} }] });
   check(!/did not answer on our last pull|were not returned/.test(r.all), "no data fault on record: none is named", null);
 
@@ -380,9 +399,16 @@ try {
   r = await render({ open: "2026-09", months: [{ reporting_month: SEP, gsc_impressions: 900, gsc_clicks: 5, review_count: 0 }, { reporting_month: AUG, gsc_impressions: 800, gsc_clicks: 5 }], grid: cluster(3, null).map((g) => ({ ...g, measured_at: "2026-09-15T12:00:00Z" })) });
   check(r.steps === 3, "four conditions true (earn the click, first reviews, nearby areas, send your numbers): exactly 3 steps print", r.steps);
 
-  // Google numbers older than 30 days are cleared on purpose and read "kept 30 days", never 0
-  r = await render({ open: "2025-01", months: [{ reporting_month: "2025-01-01", form_leads: 2, gbp_impressions: null, gbp_calls: null, review_count: null, new_reviews: null }] });
-  check(/We keep Google's numbers for 30 days/.test(r.all) && !/Call-button taps[^\n]*\n?\s*0\b/.test(r.all), "a month older than 30 days: Google numbers say we keep them 30 days, not 0", null);
+  // report_live_google_30_day_v2: a figure Google didn't give says why in Google's own words, never 0, and RGA's own numbers still draw
+  const WORDS = { could_not_read: "Couldn't read Google just now.", disconnected: "Reconnect Google to see these.", not_kept: "Google doesn't keep this month anymore." };
+  for (const st of Object.keys(WORDS)) {
+    r = await render({ open: "2025-01", months: [{ reporting_month: "2025-01-01", form_leads: 2, __gstatus: st }] });
+    check(r.all.includes(WORDS[st]) && !/Call-button taps[^\n]*\n?\s*0\b/.test(r.all) && r.kpi["Form submissions"]?.val === "2", `Google ${st}: the approved words show, never 0, and the form count still draws`, [r.kpi["Call-button taps on Google"]]);
+    check(!/We keep Google's numbers for 30 days/.test(r.all), `Google ${st}: the old 30-day note is gone`, null);
+  }
+  r = await render({ open: "2026-09", months: [{ reporting_month: SEP, form_leads: 1, gbp_calls: 20 }, { reporting_month: AUG, form_leads: 1, gbp_calls: null, __gstatus: "not_kept" }] });
+  check(r.kpi["Call-button taps on Google"]?.val === "20" && /No comparison\. Google doesn't keep this month anymore\./.test(r.kpi["Call-button taps on Google"]?.chip || "") && /From Google, today/.test(r.all), "this month read live with the month before unanswered: no arrow, Google's words, and the source label", r.kpi["Call-button taps on Google"]);
+  check(/GL\(\)\.strip\(monthlyRows\)/.test(reportJs) && !/\.select\([^)]*gbp_calls/.test(reportJs), "the report blanks the stored Google columns before it draws and never selects them", null);
 
 
   // the visibility trend of an earlier month stops at that month
