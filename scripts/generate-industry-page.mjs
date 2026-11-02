@@ -231,7 +231,7 @@ const FOOTER = `    <footer class="footer">
       <div class="footer-brand">
         <a href="/" class="footer-logo" aria-label="Rocket Growth Agency home"><img src="/images/assets/rga_icon-header.png?v=20260904a" alt="Rocket Growth Agency" /><span class="footer-word">Rocket<span class="fg">Growth</span>Agency</span></a>
         <p class="footer-tag">Google Maps Local SEO for local service businesses &mdash; focused on calls, forms, and measurable growth.</p>
-        <p class="footer-address" style="color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5">9937 Jefferson Blvd, Suite 120, Culver City, CA 90232</p>
+        <p class="footer-address" style="color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5">Culver City, CA</p>
         <div class="footer-contact">
           <a href="tel:+14242422040"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call (424) 242-2040</a>
           <a href="sms:+14242422040"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Text us</a>

@@ -62,5 +62,7 @@
  ["the generator writes the plain breadcrumb", "blogpostgen", "<nav class=\"bp-crumb\" aria-label=\"Breadcrumb\"><ol>", "<p class=\"bp-crumb\"><ol>", 1],
  ["the homepage loses its price line", "home", "From $625 a month. One plan. Cancel with 30 days' notice.</p>", "</p>", 1],
  ["the price line says no minimum", "home", "From $625 a month. One plan. Cancel with 30 days' notice.", "From $625 a month. No minimum.", 1],
- ["the price line drifts from the price file", "home", "From $625 a month. One plan.", "From $599 a month. One plan.", 1]
+ ["the price line drifts from the price file", "home", "From $625 a month. One plan.", "From $599 a month. One plan.", 1],
+ ["the street comes back in the footer", "home", "<p class=\"footer-address\" style=\"color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5\">Culver City, CA</p>", "<p class=\"footer-address\" style=\"color:#8fa0c0;font-size:.85rem;margin:.6rem 0 0;line-height:1.5\">9937 Jefferson Blvd, Suite 120, Culver City, CA 90232</p>", 1],
+ ["a streetAddress comes back in schema", "home", "\"addressLocality\": \"Culver City\",", "\"streetAddress\": \"9937 Jefferson Blvd, Suite 120\", \"addressLocality\": \"Culver City\",", 1]
 ]

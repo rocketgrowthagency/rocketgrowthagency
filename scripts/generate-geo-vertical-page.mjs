@@ -111,7 +111,7 @@ function schemaBlocks({ vertical, city, state, canonical, faq, metaDescription }
     '@context': 'https://schema.org', '@type': 'ProfessionalService',
     name: 'Rocket Growth Agency', url: 'https://www.rocketgrowthagency.com/',
     image: OG_IMAGE, telephone: '+1-424-242-2040', priceRange: '$$',
-    address: { '@type': 'PostalAddress', streetAddress: '9937 Jefferson Blvd, Suite 120', addressLocality: 'Culver City', addressRegion: 'CA', postalCode: '90232', addressCountry: 'US' },
+    address: { '@type': 'PostalAddress', addressLocality: 'Culver City', addressRegion: 'CA', addressCountry: 'US' },
     areaServed: { '@type': 'City', name: `${city}, ${state}` },
     description: `Done-for-you Google Maps local SEO for ${vertical.toLowerCase()} and other local businesses in ${city}, ${state}.`,
   };

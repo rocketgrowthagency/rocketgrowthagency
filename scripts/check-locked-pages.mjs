@@ -18,7 +18,7 @@ const WEB = path.join(path.dirname(SCRAPER_DIR), 'Rocket Growth Agency Website V
 // Pinned pages → substrings that MUST all be present (design + chrome markers).
 const LOCKS = {
   // 'solid-blue' = the hero blue-accent phrase (added 2026-07-10 site-design finalize); locks the accent onto marketing heroes.
-  'index.html': ['footer-address', 'style.css?v=20261031w', '"streetAddress"', 'solid-blue'],
+  'index.html': ['footer-address', 'style.css?v=20261031w', '"addressLocality"', 'solid-blue'],
   'pricing/index.html': ['footer-address', 'style.css?v=20261031w', 'solid-blue'],
   'contact/index.html': ['footer-address', 'contact-card', 'form-trust'],
   'start-growth-plan/index.html': ['gp-hero', 'footer-address', 'form-trust'],

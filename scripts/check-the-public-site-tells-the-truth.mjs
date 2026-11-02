@@ -169,5 +169,12 @@ if (/automatic note/i.test(CT)) fail("contact/index.html promises an automatic n
     if (H.indexOf('class="hero-price"') > H.indexOf('<div class="price">')) fail("the homepage price line is no longer above the plan cards");
   }
 }
+// 11-02: Suite 120 is not a staffed office clients visit, so no public page shows the street or a street address in schema.
+// KEPT as a mailing address (legal notice lines only): privacy/ and terms/ contact blocks. Contract Notices, invoice remit-to and email footers live outside the served pages.
+{
+  const KEPT_STREET = new Set(["privacy/index.html", "terms/index.html"]);
+  const bad = pages.filter((f) => !KEPT_STREET.has(f) && (/9937\s+Jefferson|Suite\s+120\b/i.test(raw[f]) || /"streetAddress"/.test(raw[f])));
+  if (bad.length) fail(`${bad.length} public pages show the street or a streetAddress again (first: ${bad[0]}); only the privacy and terms contact lines may keep the mailing address`);
+}
 if (F.length) { console.error(`🔴 the public site says something it can't back — ${F.length}:\n${F.slice(0, 40).map((x) => `   · ${x}`).join("\n")}`); process.exit(1); }
 console.log(`✅ ${pages.length} public pages: the approved words, none of the false lines, one footer with Google's notice, FAQ schema equals the page; the exposed files blocked, wrong URLs get a 404, sitemap dates from history`);
