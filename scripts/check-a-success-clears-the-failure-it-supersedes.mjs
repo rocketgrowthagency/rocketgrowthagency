@@ -52,6 +52,12 @@ const DECLARED = {
   "_gsc-daily.js": {
     last_error: { clear: /last_status: "ok", last_error: null,/ },
   },
+  "_ga4-daily.js": {
+    last_error: { clear: /last_status: "ok", last_error: null,/ },
+  },
+  "_gsc-sitemaps.js": {
+    last_error: { clear: /data\.sitemap_errors = \{ read_at: now\.toISOString\(\),/ },
+  },
   "send-kickoff-invite.js": {
     last_error: { clear: /\.\.\.\(cred\.last_error \? \{ last_error: null \} : \{\}\),/ },
   },
