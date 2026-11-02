@@ -5,6 +5,7 @@
 // including YouTube (no YouTube; the profile scope can write). Section 6 commits to deliverables, so the no-guarantee clause doesn't cover them. Public pages: a "60-day guarantee"
 // with no terms, a double price in the meta description. Chris approved the rewrite 10-31.
 // HOLDS: none of those promises is back; the citation list in the contract is the real list (_citation-directories.js), name for name; the prices in the meta description are the page's own.
+// 11-02 (report_live_google_30_day_v2, approved): the contract and privacy page say Google Business Profile data is kept no more than 30 days, and neither offers to keep it longer.
 // Files only. Exit 0 = holds · 1 = a promise the code can't keep · 2 = moved (indeterminate). → project_growth_plan_backlinks · project_audit_2026-10-31
 import fs from "node:fs";
 import { createRequire } from "node:module";
@@ -48,6 +49,16 @@ for (const f of ["netlify/functions/contract-generate.js", "shared/contract-doc.
   if (/Rocket Growth Agency,? LLC|a limited liability company/.test(code)) fail(`${f} names an LLC that doesn't exist yet`);
 }
 if (/process\.env\.RGA_LEGAL_ENTITY/.test(C.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"))) fail("the contract can pick up an old LLC name from a Netlify setting");
+// report_live_google_30_day_v2 (11-02): word for word, and no sentence beside them that offers to keep Google's figures longer
+const GOOGLE_LINE = "Google Business Profile figures in your reports are read from Google when the report opens, as far back as Google makes them available. RGA keeps its copy of them for no more than 30 days. If you disconnect Google or end service, those figures can no longer be shown. Records of RGA's work, rankings RGA measures and leads RGA tracks are kept.";
+const PRIVACY_LINE = "Data we receive through Google Business Profile APIs is kept for no more than 30 days.";
+if (!C.includes(GOOGLE_LINE)) fail("the contract lost the approved line about Google figures");
+const PV = read("privacy/index.html"), s6 = (PV.match(/<h2 id="s6">[\s\S]*?<h2 id="s7">/) || [])[0];
+if (!s6) { console.error("⚠️  INDETERMINATE — the privacy page's Data Retention section moved"); process.exit(2); }
+if (!s6.includes(`<p>${PRIVACY_LINE}</p>`)) fail("the privacy page's Data Retention section lost the 30-day line");
+if (/copies of retrieved metrics/.test(PV)) fail("the privacy page says copies of every metric are kept to show change over time, Business Profile included");
+const noComments = C.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+if (/(?:Google|GBP|Business Profile)[^.<]{0,60}\b(?:history|historical|indefinitely|permanently)\b/i.test(noComments)) fail("the contract offers to keep Google's history");
 for (const [name, page] of [["pricing", PR], ["home", H]]) if (/60-day/.test(page)) fail(`the ${name} page mentions a 60-day guarantee with no terms`);
 const meta = (PR.match(/<meta name="description" content="([^"]*)"/) || [])[1] || "";
 if (!meta) fail("the pricing page has no meta description");

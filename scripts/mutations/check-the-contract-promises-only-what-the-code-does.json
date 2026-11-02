@@ -89,5 +89,40 @@
   "const RGA_LEGAL_ENTITY = \"Rocket Growth Agency\";",
   "const RGA_LEGAL_ENTITY = process.env.RGA_LEGAL_ENTITY || \"Rocket Growth Agency\";",
   1
+ ],
+ [
+  "the contract drops the 30-day limit on Google figures",
+  "contract",
+  "RGA keeps its copy of them for no more than 30 days. ",
+  "",
+  1
+ ],
+ [
+  "the contract offers to keep Google's history",
+  "contract",
+  "<li>Client portal access: secure dashboard",
+  "<li>Google Business Profile history kept for Client</li><li>Client portal access: secure dashboard",
+  1
+ ],
+ [
+  "Data Retention loses the 30-day line",
+  "privacy",
+  "requirements.</p>\n        <p>Data we receive through Google Business Profile APIs is kept for no more than 30 days.</p>",
+  "requirements.</p>",
+  1
+ ],
+ [
+  "the privacy page keeps every metric again",
+  "privacy",
+  "copies of retrieved Google Analytics and Search Console metrics",
+  "copies of retrieved metrics",
+  1
+ ],
+ [
+  "the Data Retention section moves",
+  "privacy",
+  "<h2 id=\"s6\">6. Data Retention</h2>",
+  "<h2 id=\"s6b\">6. Data Retention</h2>",
+  2
  ]
 ]

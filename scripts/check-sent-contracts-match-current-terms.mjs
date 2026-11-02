@@ -16,7 +16,7 @@
  * A stale unsigned contract is worse than a stale page — someone is about to put their name on it.
  *
  * WHAT IT CHECKS: every contract still in `sent` (unsigned) against wording the current generator
- * would never produce. Signed contracts are deliberately EXCLUDED: they are executed records and
+ * would never produce, and for lines the current generator always adds. Signed contracts are deliberately EXCLUDED: they are executed records and
  * must never be rewritten — if one is wrong the remedy is an amendment, not an UPDATE.
  *
  * Exit 0 = nothing stale is awaiting a signature · 1 = someone may sign old terms · 2 = unknown.
@@ -37,6 +37,14 @@ const RETIRED = [
   [/three \(3\) calendar months immediately preceding/i, "V1 liability cap that could be $0 (contract_v2_redline §10)"],
   [/RGA cannot guarantee results if Client fails/i, "the V1 line that implied a guarantee (contract_v2_redline §5)"],
 ];
+// A term ADDED leaves nothing retired to find, so an old unsigned contract would pass while missing it. These must be in every unsigned contract once the
+// generator prints them (report_live_google_30_day_v2, 11-02). Armed by the generator's own text, so a line not yet merged accuses nobody.
+const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
+const ADDED = [["Google Business Profile figures in your reports are read from Google when the report opens", "lacks the Google figures line added 2026-11-02 (30-day rule)"]];
+let generator;
+try { generator = fs.readFileSync(path.join(SITE, "netlify/functions/contract-generate.js"), "utf8"); }
+catch { console.log("  ⚠️  cannot read the contract generator"); process.exit(2); }
+const REQUIRED = ADDED.filter(([line]) => generator.includes(line));
 
 console.log("── no unsigned contract is awaiting a signature on retired terms ──");
 
@@ -61,9 +69,11 @@ if (SABOTAGE) rows = [...rows, { id: "sab-0000", client_id: "sab", tier: "commit
 
 const stale = [];
 for (const c of rows) {
-  for (const [re, why] of RETIRED) {
-    if (re.test(String(c.contract_html || ""))) { stale.push({ id: c.id, tier: c.tier, why }); break; }
-  }
+  const html = String(c.contract_html || "");
+  const hit = RETIRED.find(([re]) => re.test(html));
+  const gap = REQUIRED.find(([line]) => !html.includes(line));
+  if (hit) stale.push({ id: c.id, tier: c.tier, why: hit[1] });
+  else if (gap) stale.push({ id: c.id, tier: c.tier, why: gap[1] });
 }
 
 console.log(`  ${rows.length} contract(s) sent and unsigned`);

@@ -1,5 +1,19 @@
 [
 [
+"the Google figures line is defined but no plan prints it",
+"contractgen",
+"addonsBlock) + GOOGLE_FIGURES_LINE + buildFoundingSection",
+"addonsBlock) + buildFoundingSection",
+1
+],
+[
+"the Google figures line moves out of Section 2",
+"contractgen",
+"addonsBlock) + GOOGLE_FIGURES_LINE + buildFoundingSection(ctx, summary);\n  const feesSection = buildFeesSection(ctx, summary);",
+"addonsBlock) + buildFoundingSection(ctx, summary);\n  const feesSection = GOOGLE_FIGURES_LINE + buildFeesSection(ctx, summary);",
+1
+],
+[
 "founding bills the setup fee",
 "contractgen",
 "{ month: 1, amount: 625, note: \"No setup fee\" }",

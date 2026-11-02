@@ -55,6 +55,11 @@ for (const [name, html] of [["founding", FD], ["standard", SD], ["project", doc(
   for (const w of ["5B. Google Business Profile Authorization", "5C. Account Ownership and Leaving", "5D. Call Tracking and Recording", "5E. AI and Software Tools", "6A. Platforms", "9A. Data, Security and Breach", "10A. Indemnification", "16. General", "THE GREATER OF", "$2,500", "Google Business Profile is a service Google provides at no extra cost", "2C. Testimonials", "At the end, in every case and whatever is owed"]) if (!html.includes(w)) fail(`${name}: missing "${w}"`);
   for (const w of ["cannot guarantee results if", "account manager", "Data Axle", "Neustar", "AS IS", "1.5%", "RGA founder", "login credentials", "industry-proven", "Google Inc", "every 30 days", "first two weeks", "three (3) calendar months"]) if (html.includes(w)) fail(`${name}: V1 wording is back: "${w}"`);
 }
+// report_live_google_30_day_v2 (11-02): the Google figures line is in Section 2 of every plan, printed through the real generator; a constant nobody prints passes a source check
+for (const [name, html] of [["founding", FD], ["standard", SD], ["project", doc("done_for_you", {}, 2000)], ["beta", doc("beta_unbilled")]]) {
+  const at = html.indexOf("<p>Google Business Profile figures in your reports are read from Google when the report opens");
+  if (at < 0 || at < html.indexOf("<h2>2.") || at > html.indexOf("<h2>3.")) fail(`${name}: the Google figures line isn't in Section 2`);
+}
 for (const [name, html] of [["founding", FD], ["standard", SD]]) if (!html.includes("on the same calendar day each month")) fail(`${name}: the agreement doesn't state the billing day`);
 if (!FD.includes("RGA bills through the end date, prorated") || !SD.includes("RGA bills through the end date, prorated")) fail("the agreement no longer says the last bill is prorated");
 
