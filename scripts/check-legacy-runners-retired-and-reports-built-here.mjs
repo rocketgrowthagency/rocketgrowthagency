@@ -41,7 +41,7 @@ for (const id of ["m1.gbp.hours_attributes", "m1.gbp.attributes"]) {
 async function build({ recs = [{ reporting_month: "2026-10-01", gbp_calls: 4 }], built = { text: "REPORT TEXT", subject: "October 2026 report — Acme" }, throws = false } = {}, label = "monthly") {
   const ctx = vm.createContext({ markDone, Date, String, encodeURIComponent,
     supa: async () => { if (throws) throw new Error("db down"); return recs; },
-    require: (m) => m === "./send-monthly-report" ? { buildReport: async ({ current }) => (current && current.gbp_calls != null ? built : null) } : null });
+    require: (m) => m === "./_google-numbers" ? { liveRows: async ({ rows }) => rows } : m === "./send-monthly-report" ? { buildReport: async ({ current }) => (current && current.gbp_calls != null ? built : null) } : null });
   vm.runInContext(`${bsrSrc}; this.bsr = buildServerReport;`, ctx);
   return ctx.bsr({ id: "c" }, "c", { label });
 }
@@ -52,7 +52,7 @@ async function build({ recs = [{ reporting_month: "2026-10-01", gbp_calls: 4 }],
 { // Month 1 (research §1): built by _month1-report from the client's records; a DRAFT until RGA sends it from row 59
   // 🔄 10-20 (phase3_4_reviews_close_v1): the report opens at kickoff + 27 — the fixture's kickoff was held 40 days ago
   const ctx = vm.createContext({ encodeURIComponent, Date, supa: async () => [{ data: { tasks: { "m1.kickoff.call": { status: "done", completed_at: new Date(Date.now() - 40 * 86400000).toISOString() } } } }],
-    require: (m) => m === "./_month1-report" ? { buildMonth1Report: () => ({ text: "SUMMARY\nok", subject: "s", sections: [] }), FORBIDDEN: /never/ } : m === "../../data/playbooks/playbooks.json" ? { month1: [] } : null });
+    require: (m) => m === "./_google-numbers" ? { liveRows: async ({ rows }) => rows } : m === "./_month1-report" ? { buildMonth1Report: () => ({ text: "SUMMARY\nok", subject: "s", sections: [] }), FORBIDDEN: /never/ } : m === "../../data/playbooks/playbooks.json" ? { month1: [] } : null });
   const r = await vm.runInContext(`(${m1Src})`, ctx)({ client: {}, clientId: "c" });
   if (r.completed !== false || r.outcome !== "draft_ready" || !r.outcome_data?.report) fail("the Month 1 report is Done when built, or isn't stored for review (a built report is not a delivered one)"); }
 if (/node report\.mjs/.test(flow.replace(/^\s*\/\/.*$/mg, ""))) fail("a step still sends RGA to run node report.mjs locally");
