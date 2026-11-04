@@ -453,6 +453,7 @@ const NOT_PREFLIGHT = {
   'check-review-requests-ask-everyone.mjs': 'the WEBSITE repo\'s review-request policy (step 56/12, Monthly) — not video preflight; daily-health-check.sh',
   'check-no-client-record-was-lost.mjs': 'reads PRODUCTION records + activity (read-only, one at a time) — daily-health-check.sh, not preflight',
   'check-step11-photo-labels.mjs': 'the WEBSITE repo\'s client step 11 photo tiles (approved client_step11_photo_labels_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
+  'check-managed-portal-list.mjs': 'the managed client portal\'s Month 1 list DRAWN in a real browser: 1-7 with step 3 and the RGA cards, self-serve and no-mode unchanged (approved client_portal_slim_v1, 11-4); a browser gate, not video preflight; daily-health-check.sh',
   'check-managed-portal-numbering.mjs': 'the WEBSITE repo\'s managed client portal numbering (approved client_portal_slim_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
   'check-client-portal-phases.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-phase1-get-started.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',

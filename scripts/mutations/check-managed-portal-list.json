@@ -1,0 +1,121 @@
+[
+ [
+  "a check step is drawn as its own row again",
+  "portal",
+  "const steps = [...rows.filter((r) => role(r) === \"step\")",
+  "const steps = [...rows.filter((r) => role(r) !== \"card\")",
+  1
+ ],
+ [
+  "every client gets the managed list",
+  "portal",
+  "if (!R || !R.isManaged(_portalMode) || !meta) return null;",
+  "if (!R || !meta) return null;",
+  1
+ ],
+ [
+  "a blank field is filled with words",
+  "portal",
+  "blank = `<span class=\"mc-blank\">Not found</span>`",
+  "blank = `<b>Not provided</b>`",
+  1
+ ],
+ [
+  "a phone that differs is called a match",
+  "portal",
+  "tv ? `You told us ${esc(sh(tv))}` : \"\", P(\"Which is right?\", \"you\", true), { conflict: true });",
+  "tv ? `You told us ${esc(sh(tv))}` : \"\", P(\"Matches Google\", \"ok\"), { conflict: true });",
+  1
+ ],
+ [
+  "Looks right sends the steps in another order",
+  "portal",
+  "const MC_FORMS = [MC_STEP.facts, MC_STEP.svc, MC_STEP.hrs, MC_STEP.attr];",
+  "const MC_FORMS = [MC_STEP.hrs, MC_STEP.facts, MC_STEP.svc, MC_STEP.attr];",
+  1
+ ],
+ [
+  "Looks right ignores a line still open",
+  "portal",
+  "if (id === MC_STEP.facts && wrap.querySelector(\".pm-fact.is-open\")) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "Looks right on an empty list stops saying none apply",
+  "portal",
+  "if (none && !none.classList.contains(\"on\")) none.click(); }",
+  "}",
+  1
+ ],
+ [
+  "the profile check always shows its card",
+  "portal",
+  "if (slot) slot.hidden = !!f.verified && !gvLost && !gvPaused;",
+  "if (slot) slot.hidden = false;",
+  1
+ ],
+ [
+  "the profile check never shows its card",
+  "portal",
+  "if (slot) slot.hidden = !!f.verified && !gvLost && !gvPaused;",
+  "if (slot) slot.hidden = true;",
+  1
+ ],
+ [
+  "the ask to RGA stops using the existing flag",
+  "portal",
+  "<form class=\"mc-ask\" data-ask-change=",
+  "<form class=\"mc-ask\" data-ask-x=",
+  1
+ ],
+ [
+  "an unfinished keyword plan carries a green tick",
+  "portal",
+  "return { state: \"rga\", text: n ? \"Draft · RGA is reviewing it\"",
+  "return { state: \"ok\", text: n ? \"Draft · RGA is reviewing it\"",
+  1
+ ],
+ [
+  "the social card's action changes word",
+  "portal",
+  "act: \"Not mine\"",
+  "act: \"Remove\"",
+  1
+ ],
+ [
+  "Looks right can be pressed while Google couldn't be read",
+  "portal",
+  "looks.disabled = m.busy || m.unknown;",
+  "looks.disabled = false;",
+  1
+ ],
+ [
+  "step 3 says Your turn while its steps wait",
+  "portal",
+  "const mine = doing.some((r, i) => !why[i]);",
+  "const mine = true;",
+  1
+ ],
+ [
+  "step 3 says On Google while RGA is still finishing",
+  "portal",
+  "onGoogle: covered.every((t) => settled(t) && (!t.google_push || !t.google_push.state || t.google_push.state === \"on_google\")),",
+  "onGoogle: true,",
+  1
+ ],
+ [
+  "a finished step's reach is guessed",
+  "portal",
+  "a.come === false || ci.come === \"no\" ? false : null;",
+  "a.come === false || ci.come === \"no\" ? false : false;",
+  1
+ ],
+ [
+  "a step card inside step 3 draws its own head",
+  "portalcss",
+  ".pm-step-row.mc-sub > .pm-step-row-head { display:none; }",
+  ".pm-step-row.mc-sub > .pm-step-row-head { display:flex; }",
+  1
+ ]
+]

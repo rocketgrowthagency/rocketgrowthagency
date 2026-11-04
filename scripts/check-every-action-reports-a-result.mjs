@@ -106,6 +106,8 @@ const UI_ONLY = {
   "data-flow-toggle": "expands a step's detail panel — the panel visibly opens",
   "data-portal-tab": "switches a portal tab — the pane visibly changes",
   "data-step-toggle": "expands a step — the step visibly expands",
+  "data-mc-fix": "managed step 3's \"Fix something\" (and the \"Which is right?\" buttons): opens or closes the five covered steps' own cards under the summary, flips aria-expanded and the button's words — nothing is saved (client_portal_slim_v1, 11-4)",
+  "data-mc-rc": "an RGA card's action in \"What RGA is doing\" (See why · Change · Not mine · Turn off): opens or closes that step's own card and its ask-RGA form and flips aria-expanded — nothing is saved; the ask itself goes through the ordinary reported flag (client_portal_slim_v1, 11-4)",
   // ── Surfaced 2026-09-16 when the guard-case body stopped being a fixed 6000-char slice. The old
   //    window ran past the end of these short handlers into the NEXT one and borrowed its feedback
   //    call, so all three passed for a reason that had nothing to do with them. They are genuine

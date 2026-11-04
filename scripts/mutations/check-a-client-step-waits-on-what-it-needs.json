@@ -226,8 +226,8 @@
  [
   "own: the pill is reworded",
   "portal",
-  "`Do step ${pmNo(first)} first` : \"Connect Google first\";",
-  "`Step ${pmNo(first)} needed` : \"Connect Google first\";",
+  "`Do step ${pmNoW(first)} first` : \"Connect Google first\";",
+  "`Step ${pmNoW(first)} needed` : \"Connect Google first\";",
   1
  ],
  [
