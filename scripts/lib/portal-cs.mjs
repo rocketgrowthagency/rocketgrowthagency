@@ -13,6 +13,7 @@
 //   csBlock(P)            → source defining PC_TICK, PC_OPEN, PC_DOWN, CS_STEPS, CS_ICON, csCard, csEv, csChips, csSt, csNote,
 //                           csGcard, csFoot (needs escapeHtml, escapeAttribute, pcActs from the gate's own lift)
 //   csBlock(P, already)   → leaves out PC_TICK/PC_OPEN/PC_DOWN when `already` declares them (planCardKit lifts them as const)
+import { pmNoBlock } from "./portal-mode-lift.mjs";
 export const CS_START = "// ── CS-BLOCK-START";
 export const CS_END = "// ── CS-BLOCK-END ──";
 export const CS_CONSTS = ["PC_TICK", "PC_OPEN", "PC_DOWN"];
@@ -34,5 +35,7 @@ export function csBlock(P, already = "") {
   const block = P.slice(P.indexOf("\n", a) + 1, b);
   if (!/^const CS_STEPS = /m.test(block) || !/^const csCard = /m.test(block)) moved("CS block contents (CS_STEPS / csCard)");
   parts.push(block.replace(/^const /gm, "var "));
+  // the CS cards name step numbers through pmNo (client_portal_slim_v1, 11-4), so it comes with the block
+  if (!/(^|\n)\s*(const|var|let) pmNo =/.test(already)) parts.push(pmNoBlock(P));
   return parts.join("\n");
 }

@@ -35,7 +35,7 @@ try {
   // 1) every write blocked (Playwright runs the LAST-registered route first, so this one is added first and FALLS BACK)
   await ctx.route("**/*", (route) => { const q = route.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? route.fulfill({ status: 204, body: "" }) : route.abort(); return route.fallback(); });
   // 2) THIS repo's code, not the deployed one
-  const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json", "/shared/step-lock.js": "shared/step-lock.js" };
+  const local = { "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json", "/shared/step-lock.js": "shared/step-lock.js", "/shared/portal-mode.js": "shared/portal-mode.js" };
   await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && Object.prototype.hasOwnProperty.call(local, u.pathname), (route) => {
     const p = new URL(route.request().url()).pathname, f = path.join(SITE_DIR, local[p]);
     route.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".json") ? "application/json" : "text/javascript", body: fs.readFileSync(f, "utf8") });

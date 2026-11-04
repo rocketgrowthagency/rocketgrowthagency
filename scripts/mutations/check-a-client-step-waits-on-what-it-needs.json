@@ -44,8 +44,8 @@
  [
   "the projection publishes the graph",
   "clientstepsjson",
-  "\"clientStepNo\": 16,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
-  "\"clientStepNo\": 16,\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
+  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
+  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
   1
  ],
  [
@@ -198,8 +198,8 @@
  [
   "own: the projection drops needsFirst",
   "clientstepsjson",
-  "\"clientStepNo\": 7,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
-  "\"clientStepNo\": 7,\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
+  "\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
+  "\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
   1
  ],
  [
@@ -226,8 +226,8 @@
  [
   "own: the pill is reworded",
   "portal",
-  "`Do step ${first.clientStepNo} first` : \"Connect Google first\";",
-  "`Step ${first.clientStepNo} needed` : \"Connect Google first\";",
+  "`Do step ${pmNo(first)} first` : \"Connect Google first\";",
+  "`Step ${pmNo(first)} needed` : \"Connect Google first\";",
   1
  ],
  [

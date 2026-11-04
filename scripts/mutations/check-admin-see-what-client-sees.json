@@ -884,8 +884,8 @@
  [
   "a numbered client step drops out of the playbook",
   "playbookclient",
-  "\"clientStepNo\": 21\n",
-  "\"clientStepNo\": null\n",
+  "\"clientStepNo\": 21,\n      \"managedStepNo\": 12,",
+  "\"clientStepNo\": null,\n      \"managedStepNo\": 12,",
   1
  ],
  [

@@ -11,7 +11,7 @@ const { chromium } = await import("playwright");
 const W = Number(process.env.WIDTH || 1180);
 const b = await chromium.launch({ headless: true }); const ctx = await b.newContext({ viewport: { width: W, height: 1100 } });
 await ctx.route("**/*", (r) => { const q = r.request(); const d = classify(q.url(), q.method(), q.postData(), { supabaseHost: new URL(SUPA).host }); if (!d.allow) return d.stub ? r.fulfill({ status: 204, body: "" }) : r.abort(); return r.fallback(); });
-const local = { "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json", "/data/playbooks/playbooks.json": "data/playbooks/playbooks.json", "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/shared/step-lock.js": "shared/step-lock.js", "/shared/site-change.js": "shared/site-change.js" };
+const local = { "/data/playbooks/client-steps.json": "data/playbooks/client-steps.json", "/data/playbooks/playbooks.json": "data/playbooks/playbooks.json", "/portal/portal.js": "portal/portal.js", "/portal/portal.css": "portal/portal.css", "/shared/step-lock.js": "shared/step-lock.js", "/shared/portal-mode.js": "shared/portal-mode.js", "/shared/site-change.js": "shared/site-change.js" };
 await ctx.route((u) => u.hostname.endsWith("rocketgrowthagency.com") && local[u.pathname], (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ status: 200, contentType: p.endsWith(".css") ? "text/css" : p.endsWith(".json") ? "application/json" : "text/javascript", body: fs.readFileSync(path.join(SITE_DIR, local[p]), "utf8") }); });
 const W1 = { surface: "website", surfaceTitle: "Your website", kind: "change", blocks: [] };
 const D = [

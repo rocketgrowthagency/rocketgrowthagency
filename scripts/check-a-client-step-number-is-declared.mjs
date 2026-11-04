@@ -53,7 +53,8 @@ if (!rows.length) { console.error("⚠️  INDETERMINATE — no client-visible s
 // removed, so this read the documentation and accused the fixed code. Line comments before block.
 // → feedback_a_comment_stripper_in_the_wrong_order_deletes_code · feedback_a_check_must_not_validate_itself
 const portalCode = portal.replace(/^[ \t]*\/\/.*$/gm, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
-if (/clientStepNo\s*\?\?\s*idx\s*\+\s*1/.test(portalCode)) {
+// 11-4: the number is read through pmNo(step) (shared/portal-mode.js, client_portal_slim_v1), so the fallback can sit behind either
+if (/(?:clientStepNo|pmNo\([^)]*\))\s*\?\?\s*idx\s*\+\s*1/.test(portalCode)) {
   fails.push("the portal falls back to the array index when a step declares no number — an index "
     + "belongs to the array, not to the step, and it collides with the declared ones");
 }

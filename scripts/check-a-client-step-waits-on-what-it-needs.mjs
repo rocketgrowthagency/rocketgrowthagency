@@ -23,6 +23,7 @@
 //      the approved words (decision 2); step 15 counts this month's photos (decision 3); no step-open email for Month 2.
 // exit 0 = a client is never asked to do a step that waits on RGA · 1 = they can be · 2 = can't tell
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
+import { pmNoBlock } from "./lib/portal-mode-lift.mjs";   // the lifted rows name step numbers through pmNo (client_portal_slim_v1, 11-4)
 import fs from "node:fs";
 import vm from "node:vm";
 import { createRequire } from "node:module";
@@ -241,7 +242,7 @@ vm.createContext(ctx);
 const lineOf = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const gcOf = (() => { const i = portal.indexOf("function googleCardHtml("); const j = portal.indexOf("\nconst gcardMaps", i); return i < 0 || j < 0 ? "" : portal.slice(i, j); })();
 if (!gcOf || !lineOf("GC_ICON")) { console.error("⚠️  INDETERMINATE — could not lift the Google card"); process.exit(2); }
-vm.runInContext(`${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
+vm.runInContext(`${pmNoBlock(portal)}\n${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
 {
   const cs1 = new Map((cs.month1 || []).map((x) => [x.id, x]));
   const hrsRow = cs1.get("m1.gbp.hours_attributes");

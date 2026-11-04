@@ -452,6 +452,8 @@ const NOT_PREFLIGHT = {
   'check-website-change-approvals.mjs': 'the WEBSITE repo\'s website-change loop (shared/site-change.js + admin/portal-deliverables run against a fake DB + the inbox) — files only; daily-health-check.sh',
   'check-review-requests-ask-everyone.mjs': 'the WEBSITE repo\'s review-request policy (step 56/12, Monthly) — not video preflight; daily-health-check.sh',
   'check-no-client-record-was-lost.mjs': 'reads PRODUCTION records + activity (read-only, one at a time) — daily-health-check.sh, not preflight',
+  'check-step11-photo-labels.mjs': 'the WEBSITE repo\'s client step 11 photo tiles (approved client_step11_photo_labels_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
+  'check-managed-portal-numbering.mjs': 'the WEBSITE repo\'s managed client portal numbering (approved client_portal_slim_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
   'check-client-portal-phases.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-phase1-get-started.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-phase2-set-up.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',

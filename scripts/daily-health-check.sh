@@ -517,6 +517,7 @@ node scripts/build-mockup-registry.mjs >/dev/null 2>&1 || echo "  ⚠️  build-
 # portal draws nothing for it. It FAILS (reported) while any client step has no done record.
 run build-step-map.mjs "every step in both portals with the number each portal really prints (generated → memory reference_all_steps_map, website reports/steps/rga-step-map.html)"
 run check-the-step-map-is-current.mjs "the sheet of every step in both portals matches the steps that exist, each with what it does (Chris 11-1: we can never get numbering wrong)"
+run check-managed-portal-numbering.mjs "the managed client portal's numbers are whole and approved, reach a client only through shared/portal-mode.js, and nothing can set a client to managed until every surface is mode-aware (approved client_portal_slim_v1, 11-4)"
 run build-client-step-ledger.mjs "every client step draws a DONE RECORD in the portal (generated ledger → memory reference_client_step_ledger)"
 run check-every-mockup-is-in-memory.mjs "every new mockup is cited by the memory of its system, and every mockup is registered"
 run check-memory-has-no-drift.mjs "memory is linked, reachable and mirrored to git"

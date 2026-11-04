@@ -54,6 +54,18 @@ const client = [...defs.values()].filter((d) => d.clientStepNo).sort((a, b) => a
   return { n: d.clientStepNo, id: d.id, label: d.clientLabel || d.title, what: WHAT.client[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null };
 });
 
+// 🔒 MANAGED MODE (approved client_portal_slim_v1 + client_portal_slim_visual_v1, 11-4): the same client steps by their managed number,
+// read from the published client-steps.json, since managed step 3 "Check what we found" is not a playbook step (admin numbers stay).
+const CS = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8"));
+const ROLE_WORDS = { check: "a row in managed step 3", card: "an RGA card, no number", setup: "part of a Setup step, as today", step: "a step with no number, as today" };
+const managedRows = (() => {
+  const all = [...(CS.month1 || []), ...(CS.month2plus || [])], chk = CS.managed && CS.managed.check;
+  const numbered = [...all.filter((d) => d.managedStepNo != null), ...(chk ? [{ ...chk, clientStepNo: null }] : [])].sort((a, b) => a.managedStepNo - b.managedStepNo);
+  const rest = all.filter((d) => d.managedStepNo == null).sort((a, b) => ["check", "card", "setup", "step"].indexOf(a.managedRole) - ["check", "card", "setup", "step"].indexOf(b.managedRole) || (a.clientStepNo || 99) - (b.clientStepNo || 99));
+  return [...numbered.map((d) => ({ n: d.managedStepNo, id: d.id, label: d.clientLabel, becomes: d.id === "managed.check_found" ? `one step for ${d.covers.length} of today's: ${d.covers.map((id) => (all.find((x) => x.id === id) || {}).clientStepNo).join(", ")}` : "a numbered step", today: d.clientStepNo ?? "new" })),
+    ...rest.map((d) => ({ n: "", id: d.id, label: d.clientLabel, becomes: ROLE_WORDS[d.managedRole] || "", today: d.clientStepNo ?? "" }))];
+})();
+
 // what the client also sees with no step number: approvals and asks tied to an admin step, plus the cards that aren't steps at all (data/playbooks/what-it-does.json clientCards)
 const clientUnnumbered = [
   ...[...defs.values()].filter((d) => d.clientLabel && !d.clientStepNo).map((d) => { const a = admin.find((x) => x.id === d.id); return { id: d.id, label: d.clientLabel, what: WHAT.admin[d.id] || "", admin: a ? a.n : null, adminMonth: a ? a.month : null }; }),
@@ -67,6 +79,7 @@ if (month1.length < 40) bad.push(`only ${month1.length} Month 1 rows`);
 if (new Set(nums).size !== nums.length || nums.some((n, i) => Number(n) !== i + 1)) bad.push("the Month 1 numbers don't run 1, 2, 3 in order");
 if (!month1.some((a) => a.id === "m1.gbp.photos")) bad.push("the photo step isn't in the Month 1 rows");
 if (client.length < 10 || client.some((c, i) => c.n !== i + 1)) bad.push("the client numbers don't run 1, 2, 3 in order");
+{ const mn = managedRows.filter((r) => r.n !== "").map((r) => r.n); if (mn.length < 10 || mn.some((n, i) => n !== i + 1)) bad.push("the managed client numbers don't run 1, 2, 3 in order"); }
 if (bad.length) { console.error(`🔴 the step map came out wrong, the old one stays:\n${bad.map((b) => `   · ${b}`).join("\n")}`); process.exit(1); }
 
 // planned work, so a proposal can't be forgotten and its effect on the numbers is written down before anything moves
@@ -102,6 +115,11 @@ ${client.map((c) => `| ${c.n} | ${c.label} | ${c.what.replace(/\|/g, "/")} | ${a
 |---|---|---|---|
 ${clientUnnumbered.map((c) => `| ${c.label} | ${c.what.replace(/\|/g, "/")} | ${c.admin ? adminLabel(c) : "none"} | \`${c.id}\` |`).join("\n")}
 
+## Managed client portal (approved 11-4, being built; no client uses it yet)
+| Managed step | Title | Becomes | Today's client step | id |
+|---|---|---|---|---|
+${managedRows.map((r) => `| ${r.n} | ${r.label} | ${r.becomes} | ${r.today} | \`${r.id}\` |`).join("\n")}
+
 ## Admin portal · Month 1
 | Admin step | Title | What it does | Who | Client step | id |
 |---|---|---|---|---|---|
@@ -132,6 +150,7 @@ section{background:var(--paper);border:1px solid var(--line);border-radius:16px;
 <section><h2>Approved, not built yet</h2><p class="lede">None of these has a number yet. A new step gets its number when it's built, and then this page updates itself.</p>${table(["What", "Where", "Effect on numbers"], proposed.map((x) => [`<a href="${esc(x.url)}">${esc(x.name)}</a>`, esc(x.where), esc(x.numbers)]))}</section>
 <section><h2>Client portal (${client.length} steps)</h2>${table(["Client step", "What it is", "Admin step"], client.map((c) => [c.n, `${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, esc(adminLabel(c))]))}</section>
 <section><h2>Client portal, no number (${clientUnnumbered.length} cards)</h2><p class="lede">The client sees these too, as approvals, asks or standing cards. They carry no step number.</p>${table(["Client portal shows", "Admin step"], clientUnnumbered.map((c) => [`${esc(c.label)}${c.what ? `<small>${esc(c.what)}</small>` : ""}`, c.admin ? esc(adminLabel(c)) : "none"]))}</section>
+<section><h2>Managed client portal (${managedRows.filter((r) => r.n !== "").length} steps)</h2><p class="lede">Approved Nov 4 and being built. No client uses it yet; every client sees the steps above until RGA chooses managed for them.</p>${table(["Managed step", "What it is", "Becomes", "Today's step"], managedRows.map((r) => [r.n, esc(r.label), esc(r.becomes), esc(r.today)]))}</section>
 <section><h2>Admin portal · Month 1 (${month1.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], month1.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 <section><h2>Admin portal · Monthly (${monthly.length} steps)</h2>${table(["Admin step", "Title and what it does", "Who", "Client step"], monthly.map((a) => [a.n, `${esc(a.title)}${a.what ? `<small>${esc(a.what)}</small>` : ""}`, esc(a.who), a.client ?? ""]))}</section>
 </div>

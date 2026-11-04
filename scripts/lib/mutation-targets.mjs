@@ -4,6 +4,11 @@
 export const FILES = {
   stepwhat: "data/playbooks/what-it-does.json",
   stepmapbuild: "scraper:scripts/build-step-map.mjs",   // the sheet of every step (Chris 11-1)
+  // client_portal_slim_v1 + client_portal_slim_visual_v1 (approved 11-4): managed mode's numbering
+  portalmode: "shared/portal-mode.js",
+  managedsteps: "data/playbooks/managed-steps.json",
+  portalmodesql: "supabase/client_portal_mode.sql",
+  portalmessagefn: "netlify/functions/portal-message.js",
   // kickoff_why_now_v1 (approved 11-01): the client's no to posts is kept; the card draws from the plan
   blogposts: "netlify/functions/portal-blog-posts.js",
   blogclientplan: "netlify/functions/_blog-client-plan.js",

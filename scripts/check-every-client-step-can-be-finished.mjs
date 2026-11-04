@@ -328,7 +328,8 @@ if (!/data-jump-approvals/.test(rowSrc)) bad("an approval step does not point at
 // → feedback_position_is_not_identity · feedback_correct_is_not_the_same_as_happening
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 {
-  if (!/clientStepNo/.test(rowSrc) && !/it\.step\.clientStepNo/.test(portal)) {
+  // 11-4: the declared number is read through pmNo(it.step), which asks shared/portal-mode.js (client_portal_slim_v1)
+  if (!/clientStepNo|pmNo\(/.test(rowSrc) && !/it\.step\.clientStepNo|pmNo\(it\.step\)/.test(portal)) {
     bad("the checklist numbers rows by array index again — filtering the list would renumber every row after the change");
   }
   // a step may declare it has no number (the win story draws "·", client_ongoing_win_story_v1); it can't drift, it has none to drift from
