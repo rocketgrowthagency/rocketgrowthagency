@@ -195,7 +195,7 @@ catch (e) { can(`the admin renderers did not load: ${e.message}`); }
   if (!new RegExp(`Your logo is saved but Google doesn(${tick})t show it for your kind of profile, so it doesn(${tick})t count\\.`).test(h)) fail("the card doesn't say why the logo doesn't count");
   if (!/Add one more photo<input type="file"[^>]*data-slot-file data-batch data-more data-cat="additional" data-empty=""/.test(h)) fail("there's no way to add the photo that finishes the step");
   if (/data-more[^>]*data-shot-n/.test(h)) fail("the extra photo is filed under a shot");
-  if (new RegExp(`Saved, not showing:</b> Google only shows logos[^<]*Nothing to do`).test(h)) fail("the card says Nothing to do beside Add one more photo");
+  if (new RegExp(`<div class="pm-cs-note"><b>Why it isn't showing:</b> Google only shows a logo[^<]*Nothing to do`).test(h)) fail("the card says Nothing to do beside Add one more photo");
   const st = pc.render(STEP, T(true), all(), "c1", "", open);
   if (/data-more/.test(st)) fail("a storefront at 20 is offered an extra photo");
   const fromReview = pc.render(STEP, T(false), inReview, "c1", "", open);

@@ -1,0 +1,51 @@
+[
+  [
+    "a tile loses the shot's name",
+    "portal",
+    "const p10Lab = (g) => escapeHtml(short(g.name));",
+    "const p10Lab = (g, st, n) => escapeHtml(st === \"on\" ? gsLabel(tileGoogle(n), pubByShot.get(n)) : short(g.name));",
+    1
+  ],
+  [
+    "the chip stops using the status words",
+    "portal",
+    "const w = st === \"on\" ? gsLabel(tileGoogle(n), pubByShot.get(n))",
+    "const w = st === \"on\" ? \"Saved\"",
+    1
+  ],
+  [
+    "Saved, not showing loses its reason",
+    "portal",
+    "gs === \"hide\" ? `<div class=\"pm-turned is-rga pm-hide-why\" data-hide-why>",
+    "gs === \"zzz\" ? `<div class=\"pm-turned is-rga pm-hide-why\" data-hide-why>",
+    1
+  ],
+  [
+    "the unreadable reason goes silent",
+    "portal",
+    "Google hasn't said why. RGA checks it.",
+    "Nothing to do.",
+    1
+  ],
+  [
+    "the logo reason ignores the address rule",
+    "portal",
+    "(ph && ph.category === \"logo\" && shape && shape.storefront === false\n    ?",
+    "(ph && ph.category === \"logo\"\n    ?",
+    1
+  ],
+  [
+    "Remove is allowed on the logo and cover",
+    "portal",
+    "PHOTO_SINGLE.has(cat) ? \"\" : rmBtn({ id: p.id, onGoogle: true })",
+    "rmBtn({ id: p.id, onGoogle: true })",
+    1
+  ],
+  [
+    "Remove stops asking first",
+    "portal",
+    "message: \"This takes the photo off your Google profile. You can add another anytime.\"",
+    "message: \"Removed.\"",
+    1
+  ]
+]

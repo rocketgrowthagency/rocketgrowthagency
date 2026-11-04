@@ -1,128 +1,128 @@
 [
-[
-"the orange box comes back",
-"portal",
-"  if (slots) return `<div class=\"pm-how2 pm-how-photo\">${slots}",
-"  if (slots) return `<div class=\"pm-how2 pm-how-photo\"><div class=\"pm-how-only\">Only you can do this step.</div>${slots}",
-1
-],
-[
-"a line comes back above the card",
-"portal",
-"  const body = p10 && locked && !p10Done ? listHtml",
-"  const body = top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : p10 && locked && !p10Done ? listHtml",
-1
-],
-[
-"a retake hides in its folded kind",
-"portal",
-"data-fold=\"${escapeAttribute(key)}\"${retake ? \" open data-fold-held\" : \"\"}>",
-"data-fold=\"${escapeAttribute(key)}\">",
-1
-],
-[
-"the device's memory folds a retake away",
-"portal",
-"    if (d.hasAttribute(\"data-fold-held\")) return;   // a fold holding a retake stays open (step7_streamlined_v1)\n",
-"",
-1
-],
-[
-"review counted as still to take",
-"portal",
-"${p10 && pc.review ? ` · ${pc.review} with RGA for review` : \"\"}",
-"",
-1
-],
-[
-"the toolbar never asks",
-"portal",
-"<div class=\"pm-tool${!ts ? \" ask\" : \"\"}\">",
-"<div class=\"pm-tool\">",
-1
-],
-[
-"the unsourced claim is back",
-"clientstepsjson",
-"Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
-"Listings with 20+ photos get noticeably more calls. Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
-1
-],
-[
-"the tips lose why it matters",
-"portal",
-"    ${h.why ? `<p class=\"pm-tipwhy\">${escapeHtml(h.why)}</p>` : \"\"}",
-"    ",
-1
-],
-[
-"no kind offers its own batch",
-"portal",
-"const many = emptyN.length >= 2 ?",
-"const many = emptyN.length >= 99 ?",
-1
-],
-[
-"a full kind offers a batch",
-"portal",
-"const many = emptyN.length >= 2 ?",
-"const many = emptyN.length >= 0 ?",
-1
-],
-[
-"the batch skips the first empty slot",
-"portal",
-"data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.join(\",\")}\"",
-"data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.slice(1).join(\",\")}\"",
-1
-],
-[
-"'later' offered when it isn't their move",
-"portal",
-"canLater: !!LATER_STEPS[step.id] && theirsToAct }",
-"canLater: !!LATER_STEPS[step.id] }",
-1
-],
-[
-"the shot open skips the retake",
-"portal",
-"(order.find((n) => stOf(n) === \"re\") ?? order.find((n) => !stOf(n)) ?? null)",
-"(order.find((n) => !stOf(n)) ?? null)",
-1
-],
-[
-"every shot is open at once",
-"portal",
-"data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
-"data-p10-shot=\"${n}\">",
-1
-],
-[
-"a retake tile reads like an empty one",
-"portal",
-"st === \"rga\" ? \"With RGA\" : st === \"re\" ? \"Retake\" : short(g.name)",
-"st === \"rga\" ? \"With RGA\" : short(g.name)",
-1
-],
-[
-"the band drops the retakes",
-"portal",
-"${p10 && pc.retake ? ` · ${pc.retake} to retake` : \"\"}",
-"",
-1
-],
-[
-"the folds come back on the open step",
-"portal",
-"const p10 = CS_STEPS.has(step.id) ? (() => {",
-"const p10 = false ? (() => {",
-1
-],
-[
-"the retake tile loses its colour",
-"portalcss",
-".pm-cs .pm-p10-t.is-re .im { border:0; box-shadow:inset 0 0 0 2px var(--state-you,#b45309); }",
-".pm-cs .pm-p10-t.is-re .im { }",
-1
-]
+  [
+    "the orange box comes back",
+    "portal",
+    "  if (slots) return `<div class=\"pm-how2 pm-how-photo\">${slots}",
+    "  if (slots) return `<div class=\"pm-how2 pm-how-photo\"><div class=\"pm-how-only\">Only you can do this step.</div>${slots}",
+    1
+  ],
+  [
+    "a line comes back above the card",
+    "portal",
+    "  const body = p10 && locked && !p10Done ? listHtml",
+    "  const body = top.only ? `<p class=\"pm-p2-sub\">${escapeHtml(top.only)}</p>` : p10 && locked && !p10Done ? listHtml",
+    1
+  ],
+  [
+    "a retake hides in its folded kind",
+    "portal",
+    "data-fold=\"${escapeAttribute(key)}\"${retake ? \" open data-fold-held\" : \"\"}>",
+    "data-fold=\"${escapeAttribute(key)}\">",
+    1
+  ],
+  [
+    "the device's memory folds a retake away",
+    "portal",
+    "    if (d.hasAttribute(\"data-fold-held\")) return;   // a fold holding a retake stays open (step7_streamlined_v1)\n",
+    "",
+    1
+  ],
+  [
+    "review counted as still to take",
+    "portal",
+    "${p10 && pc.review ? ` · ${pc.review} with RGA for review` : \"\"}",
+    "",
+    1
+  ],
+  [
+    "the toolbar never asks",
+    "portal",
+    "<div class=\"pm-tool${!ts ? \" ask\" : \"\"}\">",
+    "<div class=\"pm-tool\">",
+    1
+  ],
+  [
+    "the unsourced claim is back",
+    "clientstepsjson",
+    "Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
+    "Listings with 20+ photos get noticeably more calls. Google files photos by kind, so a mix of you, your work and your space counts as much as the number.",
+    1
+  ],
+  [
+    "the tips lose why it matters",
+    "portal",
+    "    ${h.why ? `<p class=\"pm-tipwhy\">${escapeHtml(h.why)}</p>` : \"\"}",
+    "    ",
+    1
+  ],
+  [
+    "no kind offers its own batch",
+    "portal",
+    "const many = emptyN.length >= 2 ?",
+    "const many = emptyN.length >= 99 ?",
+    1
+  ],
+  [
+    "a full kind offers a batch",
+    "portal",
+    "const many = emptyN.length >= 2 ?",
+    "const many = emptyN.length >= 0 ?",
+    1
+  ],
+  [
+    "the batch skips the first empty slot",
+    "portal",
+    "data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.join(\",\")}\"",
+    "data-cat=\"${escapeAttribute(cat0)}\" data-empty=\"${emptyN.slice(1).join(\",\")}\"",
+    1
+  ],
+  [
+    "'later' offered when it isn't their move",
+    "portal",
+    "canLater: !!LATER_STEPS[step.id] && theirsToAct }",
+    "canLater: !!LATER_STEPS[step.id] }",
+    1
+  ],
+  [
+    "the shot open skips the retake",
+    "portal",
+    "(order.find((n) => stOf(n) === \"re\") ?? order.find((n) => !stOf(n)) ?? null)",
+    "(order.find((n) => !stOf(n)) ?? null)",
+    1
+  ],
+  [
+    "every shot is open at once",
+    "portal",
+    "data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
+    "data-p10-shot=\"${n}\">",
+    1
+  ],
+  [
+    "a retake tile reads like an empty one",
+    "portal",
+    "st === \"re\" ? \"Retake\" : \"\"",
+    "\"\"",
+    1
+  ],
+  [
+    "the band drops the retakes",
+    "portal",
+    "${p10 && pc.retake ? ` · ${pc.retake} to retake` : \"\"}",
+    "",
+    1
+  ],
+  [
+    "the folds come back on the open step",
+    "portal",
+    "const p10 = CS_STEPS.has(step.id) ? (() => {",
+    "const p10 = false ? (() => {",
+    1
+  ],
+  [
+    "the retake tile loses its colour",
+    "portalcss",
+    ".pm-cs .pm-p10-t.is-re .im { border:0; box-shadow:inset 0 0 0 2px var(--state-you,#b45309); }",
+    ".pm-cs .pm-p10-t.is-re .im { }",
+    1
+  ]
 ]

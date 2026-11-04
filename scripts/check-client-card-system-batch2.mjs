@@ -259,12 +259,16 @@ const P10S = {};   // the remaining states, drawn in Chrome below
     pc.sel.clear();
     const TIPS = '<details class="pm-tipline" data-fold="tips"><summary>Photo tips</summary><p>Send the original.</p></details>';   // the tips line clientHowHtml hands in
     const h = pc.render(STEP, task, photos, "c1", TIPS), off = pc.render(OFF, task, photos, "c1", TIPS);
-    const tiles = [...h.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)" aria-pressed="(true|false)"[^>]*><span class="im">([^]*?)<span class="n">\d+<\/span><\/span><span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1].trim(), n: Number(m[2]), pressed: m[3] === "true", im: m[4], lab: m[5] }));
+    const tiles = [...h.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)" aria-pressed="(true|false)"[^>]*><span class="im">([^]*?)<span class="n">\d+<\/span>(?:<span class="pm-p10-chip">([^<]*)<\/span>)?<\/span><span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1].trim(), n: Number(m[2]), pressed: m[3] === "true", im: m[4], chip: m[5] || "", lab: m[6] }));
+    // client_step11_photo_labels_v1: the shot's NAME is under every tile, always; the status is a chip on the photo
+    const STATUS_WORDS = /^(Saved, not showing|Sent|Sent · up to 48 hours|On Google's list|Not on Google's list yet|With RGA|Retake)$/;
+    if (tiles.some((t) => !t.lab || STATUS_WORDS.test(t.lab))) fail(`step 11 (${biz}): a tile lost the shot's name (it shows a status or nothing): ${tiles.filter((t) => !t.lab || STATUS_WORDS.test(t.lab)).map((t) => t.n + " \"" + t.lab + "\"").join(", ")}`);
+    if (tiles.some((t) => /\bis-(on|rga|re)\b/.test(t.cls) && !t.chip)) fail(`step 11 (${biz}): a filled tile has no status chip on the photo`);
     const tile = (n) => tiles.find((t) => t.n === n) || { cls: "missing", im: "", lab: "" };
     if (tiles.length !== ns.length || tiles.map((t) => t.n).join() !== ns.join()) fail(`step 10 (${biz}): the tiles aren't every shot once, in the list's order (${tiles.length} of ${ns.length})`);
     if (!/\bis-on\b/.test(tile(n1).cls) || !/\bg-(?:sent|list|missing|hide)\b/.test(tile(n1).cls) || /class="ok"/.test(tile(n1).im)) fail(`step 10 (${biz}): a photo on Google claims more than Google's list tells us (${tile(n1).cls})`);
-    if (tile(n2).cls !== "is-rga" || tile(n2).lab !== "With RGA" || !/data-thumb="b\.jpg"/.test(tile(n2).im)) fail(`step 10 (${biz}): a photo with RGA isn't the blue tile with their own photo (${tile(n2).cls} · ${tile(n2).lab})`);
-    if (tile(n3).cls !== "is-re is-sel" || tile(n3).lab !== "Retake" || !tile(n3).pressed) fail(`step 10 (${biz}): the retake isn't the amber tile, selected (${tile(n3).cls} · ${tile(n3).lab})`);
+    if (tile(n2).cls !== "is-rga" || tile(n2).chip !== "With RGA" || !/data-thumb="b\.jpg"/.test(tile(n2).im)) fail(`step 10 (${biz}): a photo with RGA isn't the blue tile with their own photo (${tile(n2).cls} · ${tile(n2).lab})`);
+    if (tile(n3).cls !== "is-re is-sel" || tile(n3).chip !== "Retake" || !tile(n3).pressed) fail(`step 10 (${biz}): the retake isn't the amber tile, selected (${tile(n3).cls} · ${tile(n3).lab})`);
     if (tile(n4).cls !== "" || !/data-ex-art=|pm-ex-art/.test(tile(n4).im)) fail(`step 10 (${biz}): an empty tile doesn't carry its example drawing (${tile(n4).cls})`);
     if (tiles.filter((t) => /is-sel/.test(t.cls)).length !== 1 || tiles.filter((t) => t.pressed).length !== 1) fail(`step 10 (${biz}): not exactly one tile selected`);
     // ONE shot open, and every shot's row is byte-for-byte the row the folds draw (every upload / Replace / Remove / Clear it hook)
@@ -327,7 +331,7 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   pc.sel.clear();
   const s = pc.render(STEP, { draft_shape: sab, team_size: "1", detected: { n: 1, threshold: 20, source: "google_profile" } }, [{ id: "lg", shot_n: logoN, category: "logo", publish_state: "published", pushed_at: "2026-10-09T00:00:00Z", storage_path: "l.jpg" }], "c1", '<details class="pm-tipline" data-fold="tips"><summary>Photo tips</summary></details>');
   if (!/<div class="pm-cs-note"><b>Needs your space:<\/b> Google lists you as a business that goes to its customers/.test(s)) fail("step 10: an all-premises kind's shot lost \"Needs your space\" for a business that goes to its customers");
-  if (!/<div class="pm-cs-note"><b>Saved, not showing:<\/b> Google only shows logos on profiles with a street address\. Nothing to do\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
+  if (!/<div class="pm-cs-note"><b>Why it isn't showing:<\/b> Google only shows a logo for a business with a public address[^<]*Nothing to do\.<\/div><div class="pm-cs-foot">[^]*?<\/div><details class="pm-k5-fold pm-tipline"/.test(s)) fail("step 10: the hidden-logo note isn't on the card (before How this step works)");
   if (!/csListingOut \? listingWaitHtml\(csListing\) : csNote\(/.test(P)) fail("a client with a duplicate listing lost \"Remove your second Business Profile\" on the grey wait card: it's their only way forward");
   // ── 10-30: how_this_step_works_v2 + step 10 v4 ──
   if (!/const p10Foot = p10 \? csFoot\(\{ maps:/.test(P) || !/\$\{p10Foot\}\$\{tipsFold\.replace\(/.test(P)) fail("step 10's foot lost See it on Google Maps (How must share one line with it)");

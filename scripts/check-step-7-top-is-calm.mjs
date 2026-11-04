@@ -63,15 +63,16 @@ if (/Only you can take these/.test(text(h))) fail("a line sits above the card ag
 if (!/<b>2 of 20 on Google · 2 to retake<\/b><span>18 to go<\/span>/.test(h)) fail("the band isn't \"2 of 20 on Google · 2 to retake · 18 to go\"");
 if (!/<summary>How this step works<\/summary>/.test(h.slice(iTips))) fail("the tips fold isn't \"How this step works\" (the card's one fold)");
 // ── 2 · the counts say what is true ──
-const tileOf = (html, n) => (new RegExp(`<button type="button" class="pm-p10-t([^"]*)" data-p10-t="${n}"[^>]*>[^]*?<span class="lab">([^<]*)</span></button>`).exec(html) || []).slice(1);
+const tileOf = (html, n) => (new RegExp(`<button type="button" class="pm-p10-t([^"]*)" data-p10-t="${n}"[^>]*>[^]*?(?:<span class="pm-p10-chip">([^<]*)</span>)?</span><span class="lab">([^<]*)</span></button>`).exec(html) || []).slice(1);
+// step 11 labels: [class, chip, name]; the chip is the status, the name is always there
 const tiles = [...h.matchAll(/data-p10-t="(\d+)" aria-pressed/g)].map((m) => Number(m[1]));
 if (tiles.length !== 20 || new Set(tiles).size !== 20) fail(`the tiles aren't the 20 shots, each once (${tiles.length})`);
-{ const [c1] = tileOf(h, 1), [c7, l7] = tileOf(h, 7), [c8, l8] = tileOf(h, 8), [c2] = tileOf(h, 2);
-  if (!/\bis-on\b/.test(c1 || "") || !/\bis-re\b/.test(c7 || "") || !/\bis-re\b/.test(c8 || "") || l7 !== "Retake" || l8 !== "Retake" || /\bis-(on|re|rga)\b/.test(c2 || "x")) fail(`the tiles don't say what's true (on Google ✓ · Retake · empty): 1 "${c1}" · 7 "${c7}" ${l7} · 8 "${c8}" ${l8} · 2 "${c2}"`); }
+{ const [c1] = tileOf(h, 1), [c7, l7, n7] = tileOf(h, 7), [c8, l8, n8] = tileOf(h, 8), [c2] = tileOf(h, 2);
+  if (!/\bis-on\b/.test(c1 || "") || !/\bis-re\b/.test(c7 || "") || !/\bis-re\b/.test(c8 || "") || l7 !== "Retake" || l8 !== "Retake" || !n7 || !n8 || /\bis-(on|re|rga)\b/.test(c2 || "x")) fail(`the tiles don't say what's true (on Google ✓ · Retake · empty): 1 "${c1}" · 7 "${c7}" ${l7} · 8 "${c8}" ${l8} · 2 "${c2}"`); }
 if (!text(h.slice(iAlso, iTips)).includes("1 photo was already on your Google profile.")) fail("the card doesn't say \"1 photo was already on your Google profile.\"");
 { const soloH = ctx.how(step, { ...task, detected: { ...detected, n: 3 } }, true, [{ id: "r", shot_n: 9, publish_state: "in_review" }], "c1", null), solo = text(soloH);
-  const [c9, l9] = tileOf(soloH, 9);
-  if (!/<b>3 of 20 on Google · 1 with RGA for review<\/b><span>17 to go<\/span>/.test(soloH) || /to retake/.test(solo) || !/\bis-rga\b/.test(c9 || "") || l9 !== "With RGA") fail(`a photo with RGA for review isn't counted apart (band "· 1 with RGA for review", its tile "With RGA") (${(/<b>[^<]*of 20[^<]*<\/b>/.exec(soloH) || [""])[0]} · ${c9} ${l9})`); }
+  const [c9, l9, n9] = tileOf(soloH, 9);
+  if (!/<b>3 of 20 on Google · 1 with RGA for review<\/b><span>17 to go<\/span>/.test(soloH) || /to retake/.test(solo) || !/\bis-rga\b/.test(c9 || "") || l9 !== "With RGA" || !n9) fail(`a photo with RGA for review isn't counted apart (band "· 1 with RGA for review", its tile "With RGA") (${(/<b>[^<]*of 20[^<]*<\/b>/.exec(soloH) || [""])[0]} · ${c9} ${l9})`); }
 if (/noticeably more calls/.test(JSON.stringify(STEP)) || /noticeably more calls/.test(read("data/playbooks/playbooks.json"))) fail("the unsourced \"20+ photos get noticeably more calls\" is back in step 7");
 if (!h.slice(iTips).includes(esc(STEP.clientHow.why))) fail("the tips' Why no longer holds why it matters");
 // ── 3 · a retake is never out of sight: the one shot open is the first retake ──
