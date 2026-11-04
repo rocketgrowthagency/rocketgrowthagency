@@ -316,7 +316,7 @@ if (R.openStop.posts.length || !/^Answer /.test(R.openStop.msg)) fail("an open l
 if (R.unread.posts.length) fail("step 4 posts with Google unread and no rows");
 
 // step 8
-if (R.list.cards !== 1 || R.list.nested || R.list.hows !== 1 || R.list.howWords !== "How this step works" || R.list.saveInCard || R.btn !== "Put it on Google") fail(`step 8 isn't one card, one How, the button under it (${JSON.stringify({ ...R.list, text: "" })})`);
+if (R.list.cards !== 1 || R.list.nested || R.list.hows !== 1 || R.list.howWords !== "How this step works" || R.list.saveInCard || R.btn !== "Save") fail(`step 8 isn't one card, one How, the button under it (${JSON.stringify({ ...R.list, text: "" })})`);
 if (!/Can replace a review quote in map results\. RGA recommends leaving it off\./.test(R.list.text) || !/Identifies as women-owned\s*People can filter Maps for it\./.test(R.list.text) || /Shows on your profile/.test(R.list.text) || !/About you · only you can say/.test(R.list.text) || !/Always your choice: RGA never ticks these/.test(R.list.text) || !/None of these apply\s*Nothing new goes on Google; anything listed above comes off\./.test(R.list.text) || !/Anything left unticked comes off Google\./.test(R.list.text)) fail(`step 8's rows aren't the approved words (${R.list.text.slice(0, 300)})`);
 if (!eq(body(R.tickPost), ["requires_appointments", "is_owned_by_women"]) || R.tickPost[0].step_id !== "m1.gbp.attributes") fail(`step 8's save isn't the ticked keys (${JSON.stringify(R.tickPost)})`);
 if (R.nothing.posts.length || !/Tick what's true, or tick "None of these apply"\./.test(R.nothing.msg)) fail("nothing ticked and None unticked isn't stopped");
@@ -328,7 +328,7 @@ if (!/Google doesn't offer your kind of business any yes\/no details/.test(R.off
 if (R.readingSave.posts.length || R.noreadSave.posts.length) fail(`while Google is being read, or couldn't be, the button posted: an empty answer takes every detail off Google (${JSON.stringify([R.readingSave, R.noreadSave])})`);
 
 if (!/developer asked/.test(R.waitDev) || !/designer asked/.test(R.waitDesigner)) fail(`step 3's wait card names the wrong person (${R.waitDev.slice(0, 120)} · ${R.waitDesigner.slice(0, 120)})`);
-// Step 8's words: the button always says "Put it on Google" (approved V2), so the How can't say it changes.
+// Step 8's words: the button always says "Save" (approved V2, renamed by the owner 11-4), so the How can't say it changes.
 if (/the button says so/.test(JSON.stringify(JSON.parse(read("data/playbooks/client-steps.json"))))) fail("step 8's How still says the button changes when none apply");
 // "Google offers none" saves `[]`: nothing to write, so nothing may reach Google. When Google does offer details, the write still goes.
 {

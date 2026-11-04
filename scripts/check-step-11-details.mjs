@@ -49,7 +49,7 @@ if (!/const attrWhy = step\?\.flowId === "m1\.gbp\.attributes"[\s\S]{0,300}RGA r
 if (!/^const EDIT_IN_PLACE = new Set\(\[[^\]]*"m1\.gbp\.attributes"/m.test(portal) || !/^const ONE_LINE_ASK = new Set\(\[[^\]]*"m1\.gbp\.attributes"/m.test(portal)) fail("Change details doesn't open Editing, or the ask isn't one line");
 if (!/Anything left unticked comes off Google\./.test(js) || !/host\.classList\.contains\("pm-at"\)/.test(js)) fail("the save doesn't say unticked details come off Google, or a failed read offers a save that can't work");
 const cs = JSON.parse(read("data/playbooks/client-steps.json")).month1.find((s) => s.id === "m1.gbp.attributes");
-if (!cs || /we will send you the list|free estimates/i.test(cs.clientInstructions || "") || !/ABOUT YOU|About you/.test(cs.clientInstructions || "") || cs.clientInput.cta !== "Put it on Google") fail("Show me how is out of date, or the button isn't \"Put it on Google\"");
+if (!cs || /we will send you the list|free estimates/i.test(cs.clientInstructions || "") || !/ABOUT YOU|About you/.test(cs.clientInstructions || "") || cs.clientInput.cta !== "Save") fail("Show me how is out of date, or the button isn't \"Put it on Google\"");
 if ((css.match(/^\.pm-at \{/gm) || []).length !== 1) fail("the step 11 card isn't styled once");
 
 // ── 3 · drawn for real ──
@@ -108,8 +108,8 @@ if (!/Tick only what's true today: Google now asks visitors to confirm these\./.
 if (R.sent.cls !== "pm-k5-plan pm-cs-card wait" || !/Sent to Google/i.test(R.sent.text) || !/up to 30 days/.test(R.sent.text) || R.confirmed.cls !== "pm-k5-plan pm-cs-card ok") fail(`a fresh save isn't "Sent to Google" until the nightly check confirms it (${R.sent.cls} · ${R.confirmed.cls})`);
 if (JSON.stringify(R.saved.on) !== '["welcomes_lgbtq"]') fail("a saved answer doesn't come back exactly as the client left it");
 // step11_details_v2: ONE primary button, always "Save what's true"; "None of these apply" is a checkbox
-// 🔄 10-23 night (steps_6_20_clean_v1): ONE primary button, always the mockup's "Put it on Google"
-if (R.none.on.length || R.none.btn !== "Put it on Google" || R.rga.btn !== "Put it on Google") fail(`the save button isn't always "Put it on Google" (${R.none.btn} / ${R.rga.btn})`);
+// 🔄 10-23 night (steps_6_20_clean_v1): ONE primary button, always the mockup's "Save"
+if (R.none.on.length || R.none.btn !== "Save" || R.rga.btn !== "Save") fail(`the save button isn't always "Save" (${R.none.btn} / ${R.rga.btn})`);
 const pjs = read("portal/portal.js"), wjs = read("netlify/functions/_gbp-watch.js");
 if (!/if \(on\) none\.closest\("\.pm-at"\)\.querySelectorAll\("\[data-in-tick\]\.on"\)\.forEach/.test(pjs) || !/if \(t\.classList\.contains\("on"\)\) \{ const n = t\.closest\("\.pm-at"\)\?\.querySelector\("\[data-at-none\]"\)/.test(pjs)) fail('"None of these apply" doesn\'t clear the others (or a tick doesn\'t clear it)');
 if (!/if \(wrap\.querySelector\("\.pm-at"\) && !value\.length && !wrap\.querySelector\("\.pm-at \[data-at-none\]\.on"\) && !wrap\.querySelector\("\[data-at-nohow\]"\) && !wrap\.querySelector\("\[data-sv-none\]"\)\)/.test(pjs)) fail("saving with nothing ticked and \"None\" unticked isn't stopped");

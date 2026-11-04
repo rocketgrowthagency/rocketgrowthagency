@@ -44,7 +44,7 @@
 [
 "the button says something else",
 "portal",
-"  if (b && !b.disabled) b.textContent = \"Put it on Google\";",
+"  if (b && !b.disabled) b.textContent = \"Save\";",
 "  if (b && !b.disabled) b.textContent = \"Save\";",
 1
 ],
