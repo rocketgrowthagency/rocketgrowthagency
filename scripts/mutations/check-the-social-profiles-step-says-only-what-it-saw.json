@@ -79,8 +79,8 @@
  [
   "the step finishes with one unanswered",
   "socialprofiles",
-  "(profilesOf(t).length > 0 && !pendingOf(t).length);",
-  "profilesOf(t).length > 0;",
+  "(profilesOf(t).length > 0 && !pendingOf(t).length) ||",
+  "profilesOf(t).length > 0 ||",
   1
  ],
  [
@@ -107,7 +107,7 @@
  [
   "the finder reads again on every load",
   "socialfn",
-  "if (task0.finder && !b.force) return json(200,",
+  "if (task0.finder && !b.force && !lazy) return json(200,",
   "if (false) return json(200,",
   1
  ],
@@ -119,10 +119,10 @@
   1
  ],
  [
-  "no social with a profile saved",
+  "no social with a profile saved doesn't turn them off",
   "socialfn",
-  "if (list.length) return json(409, { error: \"You have a profile saved. Remove it first.\" });",
-  "",
+  "...(list.length ? { profiles: [], not_mine:",
+  "...(false ? { profiles: [], not_mine:",
   1
  ],
  [
@@ -163,7 +163,7 @@
  [
   "the portal says you don't have one",
   "portal",
-  "\"No profiles linked from your website · do you have any?\"",
+  "\"No profiles linked from your website \u00b7 do you have any?\"",
   "\"You don't have any profiles\"",
   1
  ],
@@ -261,8 +261,8 @@
  [
   "the reassurance line goes",
   "portal",
-  "We only check these are yours. RGA never posts on your accounts or changes them.",
-  "We check these.",
+  "pending.length || ps.length ? csNote(\"We only check these are yours. RGA never posts on your accounts or changes them.",
+  "pending.length || ps.length ? csNote(\"We check these.",
   1
  ],
  [
@@ -291,6 +291,83 @@
   "portal",
   "if (_socialBusy.has(clientId)) return;",
   "",
+  1
+ ],
+ [
+  "a dead linked profile is counted",
+  "socialprofiles",
+  "if (check.state === \"gone\") gone.push(p.url);\n    else rows.push",
+  "if (false) gone.push(p.url);\n    rows.push",
+  1
+ ],
+ [
+  "the rule counts without the site source",
+  "socialprofiles",
+  "source: \"site\", at, by: \"their website\"",
+  "source: \"client\", at, by: \"their website\"",
+  1
+ ],
+ [
+  "the rule counts over a no",
+  "socialprofiles",
+  "if (!f || f.state !== \"read\" || ci.none) return t;",
+  "if (!f) return t;",
+  1
+ ],
+ [
+  "the rule counts when the site could not be read",
+  "socialprofiles",
+  "if (!f || f.state !== \"read\" || ci.none) return t;",
+  "if (!f || ci.none) return t;",
+  1
+ ],
+ [
+  "a dead link blocks the step",
+  "socialprofiles",
+  "filter((f) => !f.gone && !profilesOf(t)",
+  "filter((f) => !profilesOf(t)",
+  1
+ ],
+ [
+  "RGA can mark a profile theirs by hand",
+  "socialfn",
+  "const gate = READS.has(action) ? await requirePortalOwnerOrWorkspace(event, clientId) : await requirePortalOwner(event, clientId);",
+  "const gate = await requirePortalOwnerOrWorkspace(event, clientId);",
+  1
+ ],
+ [
+  "the step asks for a turn after it is done",
+  "portal",
+  "return ps.length\n        ? { tone: \"ok\", noHow: true, pills: [[\"Done\", \"done\"]]",
+  "return ps.length\n        ? { tone: \"ok\", noHow: true, pills: [[\"Your turn\", \"you\"]]",
+  1
+ ],
+ [
+  "I don't use social media shows with no profile",
+  "portal",
+  "${ps.length && !ci.none ? `<button type=\"button\" class=\"pm-amend\" data-social-act=\"none\">",
+  "${!ci.none ? `<button type=\"button\" class=\"pm-amend\" data-social-act=\"none\">",
+  1
+ ],
+ [
+  "a site read with nothing linked stays open",
+  "socialprofiles",
+  "|| !!(t.finder && t.finder.state === \"read\" && !pendingOf(t).length);",
+  ";",
+  1
+ ],
+ [
+  "the done card loses its reassurance line",
+  "portal",
+  "body: ps.map(arow).join(\"\") + csNote(\"We only check these are yours. RGA never posts on your accounts or changes them.",
+  "body: ps.map(arow).join(\"\") + csNote(\"We check these.",
+  1
+ ],
+ [
+  "a removed profile comes back on the next read",
+  "socialfn",
+  "not_mine: [...SP.notMineOf(task0).filter((u) => !SP.sameUrl(u, b.url)), String(b.url || \"\").slice(0, 400)] }; summary = \"Removed",
+  "}; summary = \"Removed",
   1
  ]
 ]

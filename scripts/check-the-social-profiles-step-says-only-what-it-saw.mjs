@@ -74,15 +74,18 @@ const T = () => DB.rec.data.tasks[K];
 H.__useDeps(net({ [`${SITEURL}`]: HOME, "https://www.youtube.com/@sparks": "ok", "https://www.facebook.com/sparkselectric": "wall", "https://www.facebook.com/other": "wall", "https://www.instagram.com/sparks": "wall" }));
 reset(); let x = await call({ action: "find" });
 if (x.s !== 200 || T().finder?.state !== "read" || !T().finder.found.length) fail(`the finder's answer isn't kept (${x.s})`);
-if (T().status === "done" || T().client_input) fail("reading their site answers for them");
+{ const ps = SP.profilesOf(T()), seen = T().finder.found;   // approved client_step10_auto_confirm_v1: what their own website links counts as theirs, and the step completes itself
+  if (T().status !== "done" || SP.pendingOf(T()).length) fail("a site that links profiles doesn't complete the step by itself");
+  if (ps.length !== seen.length || !ps.length || ps.some((p) => p.source !== "site" || p.by !== "their website" || !p.at || !p.check || !seen.some((f) => SP.sameUrl(f.url, p.url)))) fail("an auto-counted profile isn't recorded with source site, the date and by their website, or one that wasn't linked got counted");
+  if (ps.find((p) => p.key === "facebook")?.check.state !== "couldnt") fail("an auto-counted login-wall profile says it opens"); }
 { const w = DB.writes; await call({ action: "find" }); if (DB.writes !== w) fail("the finder reads their site again on every load"); await call({ action: "find", force: true }); if (DB.writes === w) fail("Check again doesn't read again"); }
-if ((await call({ action: "keep", url: "https://www.youtube.com/@sparks" }, RGA)).s !== 403 || T().client_input) fail("RGA can say a profile is the client's");
+{ const n0 = JSON.stringify(T().client_input); for (const b of [{ action: "keep", url: "https://www.youtube.com/@sparks" }, { action: "add", url: "https://www.instagram.com/rgaby" }, { action: "not_mine", url: "https://www.youtube.com/@sparks" }, { action: "remove", url: "https://www.youtube.com/@sparks" }, { action: "change", url: "https://www.youtube.com/@sparks", to: "https://www.facebook.com/other" }]) if ((await call(b, RGA)).s !== 403 || JSON.stringify(T().client_input) !== n0) fail(`RGA can say a profile is the client's by hand (${b.action})`); }
 if ((await call({ action: "none" }, RGA)).s !== 403) fail("RGA can answer for the client");
 if ((await call({ action: "find", force: true }, RGA)).s !== 200) fail("RGA can't read their site again");
 x = await call({ action: "keep", url: "https://notlisted.facebook.com/x" }); if (x.s === 200) fail("a profile the finder never saw can be kept");
 x = await call({ action: "keep", url: "https://www.youtube.com/@sparks" });
-if (x.s !== 200 || SP.profilesOf(T()).length !== 1 || T().client_input.profiles[0].check?.state !== "opens") fail(`Keep it doesn't record and check it (${x.s} ${x.j.error || ""})`);
-if (T().status === "done") fail("the step finishes with a found profile still unanswered");
+if (x.s !== 200 || SP.profilesOf(T()).length !== 2 || T().client_input.profiles.find((p) => p.key === "youtube").by !== "their website") fail(`a Yes on an auto-counted profile rewrites it (${x.s} ${x.j.error || ""})`);
+if (T().status !== "done") fail("an auto-counted step reopens when they press Yes");
 if (DB.rec.data.tasks["m1.gbp.photos"].keep !== 1) fail("saving this step lost another step's record");
 x = await call({ action: "not_mine", url: "https://www.facebook.com/sparkselectric/" });
 if (x.s !== 200 || T().status !== "done" || SP.pendingOf(T()).length) fail(`"not mine" doesn't settle the step (${x.s} ${T().status})`);
@@ -96,16 +99,39 @@ if (x.s !== 200 || !SP.profilesOf(T()).some((p) => p.key === "instagram" && p.so
 x = await call({ action: "add", url: "https://example.com/acme" }); if (x.s !== 400 || !/It can be/.test(x.j.error || "")) fail("a link to another site isn't refused plainly");
 x = await call({ action: "change", url: "https://www.instagram.com/sparks", to: "https://www.facebook.com/other" });
 if (x.s !== 200 || SP.profilesOf(T()).some((p) => p.key === "instagram") || !SP.profilesOf(T()).some((p) => p.key === "facebook")) fail(`Change it doesn't replace it (${x.s} ${x.j.error || ""})`);
-x = await call({ action: "none" }); if (x.s !== 409) fail("\"I don't use social media\" goes through with profiles saved");
-x = await call({ action: "remove", url: "https://www.facebook.com/other" }); x = await call({ action: "remove", url: "https://www.youtube.com/@sparks" });
-if (T().status === "done" || SP.profilesOf(T()).length) fail("the step stays done with nothing on it");
+x = await call({ action: "none" }); if (x.s !== 200 || SP.profilesOf(T()).length || T().status !== "done" || !T().client_input.none || SP.notMineOf(T()).length < 2) fail("\"I don't use social media\" with profiles saved doesn't turn them all off for good");
+x = await call({ action: "find", force: true }); if (SP.profilesOf(T()).length) fail("the rule counts a profile again after they said they don't use social media");
+x = await call({ action: "undo_none" });
+reset(); await call({ action: "find" }); x = await call({ action: "remove", url: "https://www.facebook.com/sparkselectric/" }); x = await call({ action: "remove", url: "https://www.youtube.com/@sparks" });
+if (T().status !== "done" || SP.profilesOf(T()).length) fail("a site that was read with nothing left to ask doesn't stay done when they take theirs off");
 reset({ finder: { state: "read", found: [], not_linked: SP.LABELS, at: "x" } }); x = await call({ action: "none" });
 if (x.s !== 200 || T().status !== "done" || !T().client_input.none) fail("\"I don't use social media\" isn't a real answer");
-x = await call({ action: "undo_none" }); if (T().status === "done" || T().client_input.none) fail("they can't take that back");
+x = await call({ action: "undo_none" }); if (T().client_input.none) fail("they can't take that back");
 reset({ finder: { state: "read", found: [], at: "x" } }); DB.dropWrite = true; x = await call({ action: "none" }); if (x.s !== 500) fail("a save that didn't read back said it worked"); DB.dropWrite = false;
 reset({}, ""); x = await call({ action: "find" }); if (T().finder?.state !== "no_website") fail("no website doesn't end in its own answer");
 x = await call({ action: "add", url: "yelp.com/biz/sparks" }); if (x.s !== 200 || T().status !== "done") fail("a client with no website can't finish the step");
 reset(); x = await call({ action: "burn" }); if (x.s !== 400) fail("an unknown action is accepted");
+{ const f2 = { state: "read", found: [{ key: "youtube", url: "https://www.youtube.com/@a" }, { key: "x", url: "https://x.com/a" }] }; if (SP.settle({ finder: f2, client_input: { profiles: [{ key: "youtube", url: "https://www.youtube.com/@a" }] } }, "t").status === "done") fail("the step finishes with a found profile still unanswered"); }
+// the rule's edges: only site-linked and not dead; never without the site; nothing where the client has answered; a site that can't be read doesn't complete
+{ const dead = net({ [`${SITEURL}`]: HOME, "https://www.youtube.com/@sparks": "ok" });   // facebook/sparkselectric answers 404 here
+  H.__useDeps(dead); reset(); x = await call({ action: "find" });
+  const ps = SP.profilesOf(T());
+  if (ps.some((p) => p.key === "facebook") || !T().finder.found.find((f) => f.key === "facebook")?.gone) fail("a linked profile that doesn't open is counted, or isn't marked for RGA");
+  if (ps.length !== 1 || T().status !== "done" || SP.pendingOf(T()).length) fail("a dead linked profile blocks the step or is asked of the client");
+  H.__useDeps(net({ [`${SITEURL}`]: HOME, "https://www.youtube.com/@sparks": "ok", "https://www.facebook.com/sparkselectric": "wall" }));
+  const only = await SP.autoCount({ finder: { state: "read", found: [], at: "x" } }, net({}), "t"); if (SP.profilesOf(only).length) fail("auto-counts with nothing linked from the site");
+  const nosite = await SP.autoCount({ finder: { state: "couldnt", at: "x" }, client_input: {} }, net({}), "t"); if (SP.profilesOf(nosite).length) fail("auto-counts without the site source (site couldn't be read)");
+  const typed = await SP.autoCount({ client_input: { profiles: [], not_mine: [] } }, net({}), "t"); if (SP.profilesOf(typed).length) fail("auto-counts with no finder at all");
+  const said = await SP.autoCount({ finder: { state: "read", found: [{ key: "facebook", label: "Facebook", url: "https://www.facebook.com/x", handle: "x" }] }, client_input: { none: { at: "t" } } }, net({}), "t"); if (SP.profilesOf(said).length) fail("auto-counts over an I don't use social media");
+  const nm = await SP.autoCount({ finder: { state: "read", found: [{ key: "facebook", label: "Facebook", url: "https://www.facebook.com/x", handle: "x" }] }, client_input: { not_mine: ["https://www.facebook.com/x"] } }, net({}), "t"); if (SP.profilesOf(nm).length) fail("auto-counts one they said isn't theirs");
+  // a record from before the rule: nobody's answer on it gets the rule; a client's confirmed profile is left exactly as it is
+  const fnd = { state: "read", found: [{ key: "youtube", label: "YouTube", url: "https://www.youtube.com/@sparks", handle: "@sparks" }], at: "x" };
+  reset({ finder: fnd, status: "in_progress" }); x = await call({ action: "find" }); if (T().status !== "done" || SP.profilesOf(T()).length !== 1) fail("an old finder with nobody's answer doesn't get the rule");
+  const mine = { key: "youtube", label: "YouTube", url: "https://www.youtube.com/@sparks", handle: "@sparks", source: "site", at: "2026-10-30T00:00:00Z", by: "owner@sparks.test", check: { state: "opens", at: "t" } };
+  reset({ finder: fnd, status: "done", client_input: { profiles: [mine] } }); const w = DB.writes; x = await call({ action: "find" }); if (DB.writes !== w || JSON.stringify(T().client_input.profiles) !== JSON.stringify([mine])) fail("the rule rewrites a profile the client already confirmed");
+  reset({ finder: fnd, status: "done", client_input: { profiles: [mine] } }); await call({ action: "find", force: true }); if (JSON.stringify(T().client_input.profiles.find((p) => p.key === "youtube")) !== JSON.stringify(mine)) fail("the finder running again rewrites a confirmed profile");
+  H.__useDeps(net({}, { refuse: ["sparks"] })); reset(); x = await call({ action: "find" }); if (T().finder.state !== "couldnt" || T().status === "done" || SP.profilesOf(T()).length) fail("a site that blocks reading completes the step or counts a profile");
+  H.__useDeps(null); }
 H.__useDeps(null);
 
 // ── the website change ───────────────────────────────────────────────────────────────────────
@@ -178,16 +204,21 @@ const NEVER = /you (do not|don't) have|you have no\b|no profiles? (found|exist)|
 const say = (name, o, must, mustNot = []) => { for (const w of must) if (!o.text.includes(w) && !o.html.includes(w)) fail(`${name}: doesn't say "${w}": ${o.text.slice(0, 160)}`); for (const w of mustNot) if (o.text.includes(w) || o.html.includes(w)) fail(`${name}: says "${w}"`); const flat = o.text; if (NEVER.test(flat)) fail(`${name}: claims what it didn't see: ${flat.slice(0, 160)}`); };
 const yt = { key: "youtube", label: "YouTube", url: "https://www.youtube.com/@rga", handle: "@rga", on_page: true, in_schema: true };
 say("not read yet", card({}), ["Checking your website for your profiles…"], ["Add a profile"]);
-{ const o = card({ finder: { state: "read", found: [yt], not_linked: ["Facebook", "Instagram"], at: "x" } }); say("found", o, ["1 profile found · is it yours?", "YouTube · @rga", "Linked from your website", "Yes, it's mine", "Not mine", 'data-social-act="not_mine"', "We only check these are yours. RGA never posts on your accounts or changes them.", "Not linked from your website: Facebook, Instagram.", "Add a profile", "I don't use social media", "data-social-keep"], ["you don't", "RGA's pick", "Keep it", "Change it"]); if (o.pills.map((p) => p[0]).join("|") !== "Your turn|About 2 min|Optional") fail(`the pills aren't the approved ones (${o.pills})`); }
+{ const o = card({ finder: { state: "read", found: [yt], not_linked: ["Facebook", "Instagram"], at: "x" } }); say("found", o, ["1 profile found · is it yours?", "YouTube · @rga", "Linked from your website", "Yes, it's mine", "Not mine", 'data-social-act="not_mine"', "We only check these are yours. RGA never posts on your accounts or changes them.", "Not linked from your website: Facebook, Instagram.", "Add a profile", "data-social-keep"], ["I don't use social media", "you don't", "RGA's pick", "Keep it", "Change it"]); if (o.pills.map((p) => p[0]).join("|") !== "Your turn|About 2 min|Optional") fail(`the pills aren't the approved ones (${o.pills})`); }
 say("found 2", card({ finder: { state: "read", found: [yt, { ...yt, key: "x", label: "X", url: "https://x.com/rga" }], not_linked: [], at: "x" } }), ["2 profiles found · are they yours?"]);
 say("nothing linked", card({ finder: { state: "read", found: [], not_linked: ["Facebook"], at: "x" } }), ["No profiles linked from your website · do you have any?", "Not linked from your website: Facebook", "Add a profile"]);
 say("couldn't check", card({ finder: { state: "couldnt", reason: "the site refused our check", at: "x" } }), ["Could not check your website", "That says nothing about your profiles", "Check again", "Add a profile"], ["Not linked from your website"]);
-say("no website", card({ finder: { state: "no_website", at: "x" } }), ["No website on file to check", "Add a profile", "I don't use social media"], ["Not linked from your website", "On your website"]);
+say("no website", card({ finder: { state: "no_website", at: "x" } }), ["No website on file to check", "Add a profile"], ["I don't use social media", "Not linked from your website", "On your website"]);
 const kept = (state) => ({ ...yt, source: "site", check: { state, at: "2026-11-01T00:00:00Z" } });
 { const o = card({ status: "done", completed_at: "2026-11-01T00:00:00Z", finder: { state: "read", found: [yt], at: "x" }, client_input: { profiles: [kept("opens")] } }); say("done", o, ["RGA keeps these working", "checked", "YouTube · @rga", " opens", "On your website and in its schema", "after your approval", "Change something"]); if (o.pills[0][0] !== "Done") fail("the done row isn't Done"); }
 { const o = card({ finder: { state: "read", found: [], at: "x" }, client_input: { profiles: [{ ...kept("opens"), at: "2026-11-04T12:00:00Z" }] } }); say("confirmed row", o, ["Yours · confirmed", 'data-social-act="not_mine"', "Not mine"], ["Change it", "Remove"]); }
 { const css = read("portal/portal.css"); if (!/\[data-social-step\] \.pm-cs-st \.a > button\.pm-amend \{[^}]*border:1px solid/.test(css)) fail("Yes, it's mine renders as plain text again (the status row's bare-link rule beats .pm-amend)"); if (!/\[data-social-step\] \.pm-k5-acts \{ margin-top:18px/.test(css)) fail("no 18px above Add a profile"); }
 { const h = P.slice(P.indexOf("async function socialCall") - 0, P.indexOf("/** A day tile's span")); if (!/body\.action === "not_mine" && !t\.closest\("\.pm-soc-form"\)\) _socialForm\.set\(clientId, \{ from: null, nm: true \}\)/.test(h)) fail("Not mine doesn't offer the paste field"); }
+{ const auto = { ...kept("couldnt"), key: "facebook", label: "Facebook", url: "https://www.facebook.com/sparks", handle: "sparks", by: "their website" };
+  const o = card({ status: "done", finder: { state: "read", found: [yt], at: "x" }, client_input: { profiles: [auto] } }); say("auto done", o, ["Done · we found these on your website", "Linked from your website", 'data-social-act="not_mine"', "Not mine", "We only check these are yours. RGA never posts on your accounts or changes them.", "Add a profile", "I don't use social media"], ["Your turn", "About 2 min", "Yes, it's mine"]);
+  if (o.pills.length !== 1 || o.pills[0][0] !== "Done") fail("an auto-counted step shows a Your turn pill instead of Done");
+  const n = card({ status: "done", finder: { state: "read", found: [], at: "x" } }); say("auto none found", n, ["Done · no profiles linked from your website", "Have one? Add it, and we'll link it the same way.", "Add a profile"], ["I don't use social media", "Your turn"]);
+  say("couldn't read stays open", card({ finder: { state: "couldnt", reason: "x", at: "x" } }), ["Could not check your website"], ["Done · "]); }
 say("done, could not check", card({ status: "done", finder: { state: "read", found: [], at: "x" }, client_input: { profiles: [{ ...kept("couldnt"), key: "facebook", label: "Facebook" }] } }), ["Could not check"], [" opens"]);
 say("done, dead", card({ status: "done", finder: { state: "read", found: [], at: "x" }, client_input: { profiles: [kept("gone")] } }), ["didn't open. RGA is looking at it."], [" opens"]);
 say("done, already on site", card({ status: "done", links_needed: 0, finder: { state: "read", found: [yt], at: "x" }, client_input: { profiles: [kept("opens")] } }), ["Already on your website and in its schema"], ["after your approval"]);
@@ -206,6 +237,10 @@ if (!/vcChannel = _socialChannel\.get\(clientId\)/.test(P) || !/your channel, \$
 if (!/"m1\.brand\.social_profiles": \(step, c\) => socialCard\(step, c\)/.test(P) || !/const CS_STEPS = new Set\(\[[^\]]*"m1\.brand\.social_profiles"/.test(P)) fail("the card isn't on the system");
 if (!/loadSocialProfiles\(clientId, listEl\);/.test(P)) fail("the finder never runs from the card");
 const A = read("admin/admin.js");
+{ const sp = read("netlify/functions/_social-profiles.js"), ep = read("netlify/functions/portal-social-profiles.js");
+  if (!/source: "site", at, by: "their website"/.test(sp) || !/check\.state === "gone"\) gone\.push/.test(sp) || !/f\.state !== "read" \|\| ci\.none\) return t/.test(sp)) fail("the auto-count rule lost a condition: site source, not dead, not over a no");
+  if (/autoCount/.test(ep.replace(/\/\/.*$/gm, "").split('action === "keep"')[1] || "")) fail("a hand-marked action reaches the auto-count");
+  if (!/READS = new Set\(\["find", "recheck"\]\)/.test(ep) || !/only the client answers|Otherwise only the client answers/.test(ep) || /ONLY THE CLIENT ANSWERS FOR THEIR OWN PROFILES\. RGA can read and re-check; it can't say/.test(ep)) fail("the top comment doesn't carry the approved rule"); }
 if (!/id === "m1\.brand\.social_profiles" \? socialAdminHtml\(t\)/.test(A)) fail("the admin row doesn't draw the step");
 const ad = A.slice(A.indexOf("function socialAdminHtml"), A.indexOf("function socialChannelAdminHtml"));
 if (!/That isn't the same as not having one/.test(ad) || !/Could not check/.test(ad)) fail("the admin card reads an absence as a value");
