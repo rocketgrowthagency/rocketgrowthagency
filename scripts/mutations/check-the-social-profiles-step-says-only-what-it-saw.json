@@ -229,5 +229,40 @@
   "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [],",
   "\"id\": \"m1.brand.social_profiles\",\n      \"title\": \"Confirm their social profiles\",\n      \"type\": \"manual\",\n      \"dependsOn\": [\"m1.gbp.verify\"],",
   1
+ ],
+ [
+  "Yes, it's mine loses its button look",
+  "portalcss",
+  "[data-social-step] .pm-cs-st .a > button.pm-amend { min-height",
+  "[data-social-step] .pm-cs-st .a > button.pmx-amend { min-height",
+  1
+ ],
+ [
+  "no space above Add a profile",
+  "portalcss",
+  "[data-social-step] .pm-k5-acts { margin-top:18px; }",
+  "[data-social-step] .pm-k5-acts { margin-top:0; }",
+  1
+ ],
+ [
+  "the old words come back",
+  "portal",
+  "\"Linked from your website\", `<button type=\"button\" class=\"pm-amend\" data-social-keep",
+  "\"Linked from your website. RGA's pick.\", `<button type=\"button\" class=\"pm-amend\" data-social-keep",
+  1
+ ],
+ [
+  "Not mine stops offering the paste field",
+  "portal",
+  "_socialForm.set(clientId, { from: null, nm: true })",
+  "_socialForm.delete(clientId)",
+  1
+ ],
+ [
+  "the reassurance line goes",
+  "portal",
+  "We only check these are yours. RGA never posts on your accounts or changes them.",
+  "We check these.",
+  1
  ]
 ]

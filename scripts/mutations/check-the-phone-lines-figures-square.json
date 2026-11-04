@@ -1,0 +1,37 @@
+[
+ [
+  "total goes back to the 30-second count",
+  "reportjs",
+  "return t != null && a != null && m != null && a + m === t ? t : null;",
+  "return t != null && a != null && m != null ? t : null;",
+  1
+ ],
+ [
+  "the unsquared figures are shown anyway",
+  "reportjs",
+  "if (!c || t == null) return [one, ...first];",
+  "if (!c) return [one, ...first];",
+  1
+ ],
+ [
+  "total is the counted figure again",
+  "reportjs",
+  "[[line ? \"Calls to your line\" : \"All tracked calls\", t],",
+  "[[line ? \"Calls to your line\" : \"All tracked calls\", row.total_calls],",
+  1
+ ],
+ [
+  "the counted figure loses its label",
+  "reportjs",
+  "[line ? \"Answered, 30 seconds or more\" : \"Tracked calls\", row.total_calls]",
+  "[line ? \"Calls to your line\" : \"Tracked calls\", row.total_calls]",
+  1
+ ],
+ [
+  "the section stops using the helper",
+  "reportjs",
+  "        phoneRows(current, client?.call_tracking_attributed === false),",
+  "        [[\"Calls to your line\", current.total_calls], [\"Answered\", current.data.calls.answered], [\"Missed\", current.data.calls.missed]],",
+  1
+ ]
+]
