@@ -2,8 +2,8 @@
  [
   "every open row carries the orange now edge",
   "portal",
-  "${step.id === nowStepId ? \" is-now\" : \"\"}",
-  "${isOpenRow({ step, status: taskState?.status }) ? \" is-now\" : \"\"}",
+  "${step.id === nowStepId ? \" is-now\" : \"\"}${!isDone && gbpWithRga",
+  "${isOpenRow({ step, status: taskState?.status }) ? \" is-now\" : \"\"}${!isDone && gbpWithRga",
   1
  ],
  [

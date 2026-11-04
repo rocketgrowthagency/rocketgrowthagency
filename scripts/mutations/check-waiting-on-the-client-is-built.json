@@ -86,8 +86,8 @@
  [
   "the captured step is never opened",
   "portal",
-  "  const row = scope.querySelector(`#step-row-${CSS.escape(_deepStep)}`);",
-  "  const row = null;",
+  "  let row = scope.querySelector(`#step-row-${CSS.escape(_deepStep)}`);",
+  "  let row = null;",
   1
  ]
 ]

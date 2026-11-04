@@ -45,7 +45,7 @@ const lifted = [
   `var __posts = []; window.fetch = async (u, o) => { __posts.push({ u: String(u), b: JSON.parse((o && o.body) || "null") }); return { ok: false, status: 400, json: async () => ({ ok: false, error: "stopped by the gate" }) }; };`,
   `async function portalToken() { return "t"; } function clientError(e) { return (e && e.message) || "x"; } function stepLockOf() { return null; } function portalStepNo() { return 2; } function settleStepResult() { return true; } function showPortalToast() {} function portalAlert() {} function isMonth2Step() { return false; } var _portalPlaybook = {}; var _lockData = {}; var _editingSteps = new Set(); var _rcEditing = new Set(); var _factsClientId = "c1";`,
   fn("escapeHtml"), fn("escapeAttribute"), line("monthDay"), line("siteShow"), line("GBP_STEPS"), line("BK_NOUN"),
-  line("gbpMapsOf"), line("BK_Q"), line("bkCard"), line("svCard"), line("svCountWords"), fn("bkSubmitLabel"), fn("bookingFormHtml"), fn("svcFormHtml"), fn("atDraw"), fn("atSubmitLabel"), fn("submitStepInput"), fn("bkSelect"),
+  line("gbpMapsOf"), line("BK_Q"), line("bkCard"), line("svCard"), line("svCountWords"), fn("bkSubmitLabel"), fn("bookingFormHtml"), fn("svcFormHtml"), fn("atDraw"), fn("atSubmitLabel"), fn("readStepInputValue"), fn("submitStepInput"), fn("bkSelect"),
   between("// 🔒 step11_details_v1: a tick re-labels", "// 🔒 step10_booking_link_v1: picking a choice"),
   between("// 🔒 step10_booking_link_v1: picking a choice", "function bkSelect(o) {"),
   `document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-in-tick]"); if (t) t.classList.toggle("on"); }, true);`,

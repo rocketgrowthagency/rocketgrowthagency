@@ -81,7 +81,7 @@ const lifted = [
   line("RGA_ADMIN_EMAIL"), line("RGA_ADMIN_GITHUB"), line("ACC_COMMON"), line("ACC_SEND"), line("ACC_CHECK_ICON"), line("ACC_PROMISE_VERSION"), line("ACC_CONSENT_TEXT"),
   multi("ACC_FILES", "\n};"), multi("ACC_PROMISE_ICON", "\n};"), multi("ACC_PROMISE_DO", "];"), multi("ACC_PROMISE_NEVER", "];"),
   ...["accPart", "accSetWhen", "accSetSend", "accConsentHtml", "accPromiseHtml", "accessCardHtml", "accSiteName", "accStep1Name", "accHostOf", "accHostMono", "accMono", "accWhoOf", "accDevNote", "accDevNoteText", "accProgHtml", "accSetupHtml", "accCustomSetupHtml", "accBuilderWho", "accBuilderNote", "accBuilderSetupHtml", "accFoundPill", "accDrawFound", "accDrawDesigner", "accDrawPlatform", "accSave", "accRequestCheck", "accOpenDesigner"].map(fn),
-  ...["factRowHtml", "factPick", "areaCardHtml", "factsRowsHtml", "factsProgress", "areaListOf", "areaRecount", "atCardHtml", "atDraw", "attrsFormHtml", "atSubmitLabel", "submitStepInput"].map(fn),
+  ...["factRowHtml", "factPick", "areaCardHtml", "factsRowsHtml", "factsProgress", "areaListOf", "areaRecount", "atCardHtml", "atDraw", "attrsFormHtml", "atSubmitLabel", "readStepInputValue", "submitStepInput"].map(fn),
   line("siteShow"),
   `function factsForm(id, s, head, fields) { ${factsTpl} }`,
   between("// the consent tick: record it", "// ── step 3: the call tracking decision"),

@@ -16,5 +16,9 @@ export function pmNoBlock(P, mode = null) {
   const pmLine = (P.match(/^const pmNo = \(s\) => globalThis\.rgaPortalMode\.stepNo\(s, _portalMode\);$/m) || [])[0];
   if (!modeLine) moved("portal.js `let _portalMode`");
   if (!pmLine) moved("portal.js `const pmNo`");
-  return [helper, modeLine.replace(/^let _portalMode = null;/, `var _portalMode = ${JSON.stringify(mode)};`), pmLine.replace(/^const /, "var ")].join("\n");
+  // the names a WAIT uses ("Do step 3 first": a row inside managed step 3 is waited on as step 3), added with the managed list (11-4)
+  const waitLines = [/^const pmNoW = .*;$/m, /^const pmLabelW = .*;$/m].map((re) => (P.match(re) || [])[0]);
+  if (waitLines.some((l) => !l)) moved("portal.js `const pmNoW` / `const pmLabelW`");
+  const playbookGuard = 'var _portalPlaybook = typeof _portalPlaybook === "undefined" ? null : _portalPlaybook;';
+  return [helper, modeLine.replace(/^let _portalMode = null;/, `var _portalMode = ${JSON.stringify(mode)};`), pmLine.replace(/^const /, "var "), playbookGuard, ...waitLines.map((l) => l.replace(/^const /, "var "))].join("\n");
 }
