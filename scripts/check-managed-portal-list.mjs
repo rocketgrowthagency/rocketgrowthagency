@@ -182,6 +182,60 @@ try {
       if (!/Where you work\s*Not found/.test(t || "")) fail(`the unrecorded "Where you work" isn't a blank field (${(t || "").slice(0, 300)})`);
     } finally { await h.close(); }
   }
+  // ── 4d · the To do tab: step 3 is ONE item, the covered steps and RGA's cards are none, numbers are managed numbers ──
+  {
+    const MOVES = (extra = []) => ({ ok: true, moves: [{ step_id: "m1.gbp.business_facts", owner: "client", kind: "open", since: "2026-11-02T12:00:00Z" }, { step_id: "m1.gbp.hours_attributes", owner: "client", kind: "open" },
+      { step_id: "m1.strategy.keywords_locations", owner: "rga", kind: "waits_on_rga" }, { step_id: "m1.tracking.call_setup", owner: "client", kind: "open" }, { step_id: "m1.gbp.photos", owner: "client", kind: "open" }],
+      month1: { done: 9, total: 16, done_steps: [{ id: "m1.kickoff.call", at: "2026-11-01T12:00:00Z" }, { id: "m1.access.website", at: "2026-11-02T12:00:00Z" }, ...extra] } });
+    const todo = async (mode, extra, tasks) => {
+      const h = await open("plumber", mode, { tasks }, {}, { fns: { "portal-open-moves": () => MOVES(extra) } });
+      try {
+        await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=approvals]")?.click());
+        await h.page.waitForSelector(".ib-qi", { timeout: 8000 }).catch(() => {});
+        await tick(700);
+        return await h.page.evaluate(() => ({ items: [...document.querySelectorAll(".ib-qi")].map((e) => ({ no: (e.querySelector(".ib-no") || {}).textContent, t: e.textContent.replace(/\s+/g, " ").trim(), done: e.classList.contains("done") })), head: (document.querySelector(".ib-mprog") || document.querySelector(".ib-top") || {}).innerText || "" , html: (document.querySelector(".ib") || {}).innerHTML || "" }));
+      } finally { await h.close(); }
+    };
+    const m = await todo("managed", []);
+    const open1 = m.items.filter((i) => !i.done);
+    const three = open1.filter((i) => /Check what we found/.test(i.t));
+    if (three.length !== 1 || three[0].no !== "3") fail(`To do (managed): step 3 isn't ONE item numbered 3 (${JSON.stringify(open1.map((i) => [i.no, i.t.slice(0, 40)]))})`);
+    if (open1.some((i) => /Check your business|categories|business hours|what's true|Verify your Google|keyword plan|call tracking|booking link|social profiles|form/i.test(i.t))) fail(`To do (managed) still lists a step that lives inside step 3 or an RGA card: ${JSON.stringify(open1.map((i) => i.t.slice(0, 50)))}`);
+    if (!open1.some((i) => i.no === "4")) fail("To do (managed): photos aren't numbered 4");
+    if (!/Month 1 · 2 of 7 done/.test(m.head)) fail(`To do (managed): the progress line isn't "2 of 7" (${m.head.replace(/\s+/g, " ").slice(0, 160)})`);
+    if (!/about 20 minutes/.test(m.head)) fail(`To do (managed): the minutes aren't step 3's (from managed.check) plus photos (${m.head.replace(/\s+/g, " ").slice(0, 160)})`);
+    const allDone = ["m1.gbp.verify", "m1.gbp.business_facts", "m1.gbp.services_products", "m1.gbp.hours_attributes", "m1.gbp.attributes"].map((id) => ({ id, at: "2026-11-03T12:00:00Z" }));
+    const d = await todo("managed", [...allDone, { id: "m1.brand.social_profiles", at: "2026-11-03T12:00:00Z" }], undefined);
+    const doneItems = d.items.filter((i) => i.done);
+    if (doneItems.filter((i) => /Check what we found/.test(i.t)).length !== 1 || doneItems.some((i) => /social|business on Google|hours/i.test(i.t))) fail(`To do (managed): Done doesn't hold step 3 once and nothing inside it (${JSON.stringify(doneItems.map((i) => i.t.slice(0, 40)))})`);
+    // self-serve is today's list: the covered steps are items of their own, and it is the same markup as with no mode
+    const ss = await todo("self_serve", []), nm = await todo(null, []);
+    if (ss.html !== nm.html) fail("To do: self-serve and no mode draw different lists");
+    if (!ss.items.some((i) => /Check your business on Google/.test(i.t)) || ss.items.some((i) => /Check what we found/.test(i.t))) fail("To do (self-serve) isn't today's list");
+    if (BEFORE && fs.existsSync(BEFORE)) {
+      const h = await open("plumber", "self_serve", {}, { "/portal/portal.js": BEFORE }, { fns: { "portal-open-moves": () => MOVES([]) } });
+      try {
+        await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=approvals]")?.click());
+        await h.page.waitForSelector(".ib-qi", { timeout: 8000 }).catch(() => {}); await tick(700);
+        const old = await h.page.evaluate(() => (document.querySelector(".ib") || {}).innerHTML || "");
+        if (old !== ss.html) fail("To do (self-serve): differs from before the build");
+      } finally { await h.close(); }
+    }
+  }
+  // ── 4e · RGA changed hours or details for the client: one line + the ask link, never an undo; nothing when RGA changed nothing ──
+  {
+    const rc = { at: "2026-11-04T18:00:00Z", by: "rga", field: "hours", previous: { mon: { open: "09:00", close: "17:00" } } };
+    const withRc = await open("allDone", "managed", { tasks: { "m1.gbp.hours_attributes": { status: "done", completed_at: "2026-11-02T18:00:00Z", completed_by: "rga", client_input: { days: { mon: { open: "08:00", close: "17:00" } } }, google_push: { state: "on_google" }, rga_change: rc } } });
+    try {
+      const row = await text(withRc, '[data-mc-r="hours"]'), card = await text(withRc, '[data-rga-change="m1.gbp.hours_attributes"]');
+      if (!/Updated by RGA · Nov 4/.test(row || "") || !/Ask for a change/.test(row || "")) fail(`step 3's hours row doesn't say RGA updated it (${row})`);
+      if (!/Updated by RGA · Nov 4/.test(card || "") || !/Ask for a change/.test(card || "")) fail(`the hours card doesn't say RGA updated it (${card})`);
+      const undo = await withRc.page.evaluate(() => /undo|put it back|revert/i.test(document.querySelector('[data-mc-r="hours"]').innerText + (document.querySelector('[data-rga-change]') || {}).innerText));
+      if (undo) fail("the client is offered an undo of RGA's change (that is RGA's)");
+    } finally { await withRc.close(); }
+    const none = await open("allDone", "managed");
+    try { if (await none.page.evaluate(() => !!document.querySelector("[data-rga-change]") || /Updated by RGA/.test(document.body.innerText))) fail("a step RGA never changed says RGA updated it"); } finally { await none.close(); }
+  }
   // ── 5b · a card RGA hasn't finished is not a tick ──
   {
     const h = await open("plumber", "managed", { cards: false }, {});
@@ -189,6 +243,8 @@ try {
       const marks = await h.page.evaluate(() => [...document.querySelectorAll(".mc-rrow")].map((r) => [r.getAttribute("data-mc-card"), r.querySelector(".mc-mk").className, r.querySelector(".mc-rt").innerText.replace(/\s+/g, " ").trim()]));
       for (const [id, cls, t] of marks) if (/ ok/.test(cls)) fail(`${id}: an unfinished card carries a green tick (${t})`);
       if (!marks.length) fail("no RGA cards drawn for a client whose cards aren't done");
+      const offered = await h.page.evaluate(() => [...document.querySelectorAll('[data-mc-card^="m1.tracking."]')].filter((r) => r.querySelector(".mc-lk")).map((r) => r.getAttribute("data-mc-card")));
+      if (offered.length) fail(`tracking that isn't on offers "Turn off": ${offered.join(", ")}`);
     } finally { await h.close(); }
   }
 } catch (e) {
