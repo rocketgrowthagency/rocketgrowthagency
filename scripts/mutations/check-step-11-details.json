@@ -1,156 +1,156 @@
 [
-[
-"an identity detail reads as how you work",
-"gbpprofile",
-"return /^is_owned_by|_owned$|^is_.*_owned|lgbtq|transgender|veteran|women_led/i.test(o.key || \"\") || /^identifies as|lgbtq|transgender|owned\\b|-led\\b/i.test(o.label || \"\");",
-"return /lgbtq/i.test(o.key || \"\");",
-1
-],
-[
-"RGA recommends without proof",
-"gbpprofile",
-"{ key: /^accepts_reservations$/, when: linkOn === \"url_reservations\",",
-"{ key: /^accepts_reservations$/, when: true,",
-1
-],
-[
-"an about-you detail can be recommended",
-"gbpprofile",
-"return (options || []).filter((o) => !o.about).flatMap(",
-"return (options || []).flatMap(",
-1
-],
-[
-"the record forgets RGA's recommendation",
-"stepinput",
-"if (push && stepId === GSTEP.ATTRS && Array.isArray(offeredForRec)) push.recommended",
-"if (false) push.recommended",
-1
-],
-[
-"the read carries no recommendation",
-"portalgbpprofile",
-"now.recommend = require(\"./_gbp-profile\").recommendDetails(now.options,",
-"now.recommend = [] || require(\"./_gbp-profile\").recommendDetails(now.options,",
-1
-],
-[
-"the recommendation isn't preselected",
-"portal",
-"const picked = new Set(Array.isArray(had) ? had : [...onG, ...recKeys]);",
-"const picked = new Set(Array.isArray(had) ? had : [...onG]);",
-1
-],
-[
-"the button says something else",
-"portal",
-"  if (b && !b.disabled) b.textContent = \"Save\";",
-"  if (b && !b.disabled) b.textContent = \"Save\";",
-1
-],
-[
-"a long list never folds",
-"portal",
-"const many = options.length > 12;",
-"const many = false;",
-1
-],
-[
-"the done card loses Change something",
-"portal",
-"  const act = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const head = on.length",
-"  const act = \"\";\n  const head = on.length",
-1
-],
-[
-"a label becomes HTML",
-"portal",
-"<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b>${o.about ||",
-"<span class=\"pm-at-txt\"><b>${o.label}</b>${o.about ||",
-1
-],
-[
-"admin forgets what RGA recommended",
-"admin",
-"why: choseWhy || attrWhy,",
-"why: choseWhy,",
-1
-],
-[
-"Online appointments recommended again",
-"gbpprofile",
-"  const PROOF = [\n    { key: /^accepts_reservations$/",
-"  const PROOF = [\n    { key: /^offers_online_appointments$/, when: linkOn === \"url_appointment\", why: \"your booking link lets people book online\" },\n    { key: /^accepts_reservations$/",
-1
-],
-[
-"no trade-off line",
-"portal",
-"${TRADE.test(o.key) ? `<small class=\"pm-at-trade\">",
-"${false ? `<small class=\"pm-at-trade\">",
-1
-],
-[
-"rows don't say what they do",
-"portal",
-"`<small>People can filter Maps for it.</small>`",
-"\"\"",
-1
-],
-[
-"a detail Google shows no longer says On Google",
-"portal",
-"${recWhy(o.key)}</span>${onG.has(o.key) ? `<span class=\"pm-at-now\">On Google</span>` : \"\"}",
-"${recWhy(o.key)}</span>",
-1
-],
-[
-"None doesn't clear the others",
-"portal",
-"    if (on) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
-"    if (false) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
-1
-],
-[
-"an empty save passes",
-"portal",
-"    if (wrap.querySelector(\".pm-at\") && !value.length && !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
-"    if (false) {",
-1
-],
-[
-"no None checkbox",
-"portal",
-"<button type=\"button\" class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none",
-"<button type=\"button\" hidden class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none-x",
-1
-],
-[
-"identity note loses the abuse line",
-"portal",
-" If someone leaves a hostile review because of one, you can report it to Google.\")}",
-"\")}",
-1
-],
-[
-"Sent to Google is skipped",
-"portal",
-"  if (!seen) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
-"  if (false) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
-1
-],
-[
-"the nightly never confirms",
-"gbpwatch",
-"    else if ((stepId === STEP.ATTRS || stepId === STEP.SERVICES) && task.google_push.state === \"on_google\" && !task.google_push.confirmed_at) {",
-"    else if (false) {",
-1
-],
-[
-"admin recommends Online appointments",
-"admin",
-"\"Leave \\\"Online appointments\\\" off: Google can show it in place of a review quote in map results (their booking link shows either way).\"",
-"\"Online appointments (their booking link is on Google).\"",
-1
-]
+ [
+  "an identity detail reads as how you work",
+  "gbpprofile",
+  "return /^is_owned_by|_owned$|^is_.*_owned|lgbtq|transgender|veteran|women_led/i.test(o.key || \"\") || /^identifies as|lgbtq|transgender|owned\\b|-led\\b/i.test(o.label || \"\");",
+  "return /lgbtq/i.test(o.key || \"\");",
+  1
+ ],
+ [
+  "RGA recommends without proof",
+  "gbpprofile",
+  "{ key: /^accepts_reservations$/, when: linkOn === \"url_reservations\",",
+  "{ key: /^accepts_reservations$/, when: true,",
+  1
+ ],
+ [
+  "an about-you detail can be recommended",
+  "gbpprofile",
+  "return (options || []).filter((o) => !o.about).flatMap(",
+  "return (options || []).flatMap(",
+  1
+ ],
+ [
+  "the record forgets RGA's recommendation",
+  "stepinput",
+  "if (push && stepId === GSTEP.ATTRS && Array.isArray(offeredForRec)) push.recommended",
+  "if (false) push.recommended",
+  1
+ ],
+ [
+  "the read carries no recommendation",
+  "portalgbpprofile",
+  "now.recommend = require(\"./_gbp-profile\").recommendDetails(now.options,",
+  "now.recommend = [] || require(\"./_gbp-profile\").recommendDetails(now.options,",
+  1
+ ],
+ [
+  "the recommendation isn't preselected",
+  "portal",
+  "const picked = new Set(Array.isArray(had) ? had : [...onG, ...recKeys]);",
+  "const picked = new Set(Array.isArray(had) ? had : [...onG]);",
+  1
+ ],
+ [
+  "the button says something else",
+  "portal",
+  "  if (b && !b.disabled) b.textContent = \"Save\";",
+  "  if (b && !b.disabled) b.textContent = \"Put it on Google\";",
+  1
+ ],
+ [
+  "a long list never folds",
+  "portal",
+  "const many = options.length > 12;",
+  "const many = false;",
+  1
+ ],
+ [
+  "the done card loses Change something",
+  "portal",
+  "  const act = pcActs(`<button type=\"button\" class=\"pm-amend\" data-step-edit=\"${escapeAttribute(step.id)}\">Change something</button>`);\n  const head = on.length",
+  "  const act = \"\";\n  const head = on.length",
+  1
+ ],
+ [
+  "a label becomes HTML",
+  "portal",
+  "<span class=\"pm-at-txt\"><b>${escapeHtml(o.label)}</b>${o.about ||",
+  "<span class=\"pm-at-txt\"><b>${o.label}</b>${o.about ||",
+  1
+ ],
+ [
+  "admin forgets what RGA recommended",
+  "admin",
+  "why: choseWhy || attrWhy,",
+  "why: choseWhy,",
+  1
+ ],
+ [
+  "Online appointments recommended again",
+  "gbpprofile",
+  "  const PROOF = [\n    { key: /^accepts_reservations$/",
+  "  const PROOF = [\n    { key: /^offers_online_appointments$/, when: linkOn === \"url_appointment\", why: \"your booking link lets people book online\" },\n    { key: /^accepts_reservations$/",
+  1
+ ],
+ [
+  "no trade-off line",
+  "portal",
+  "${TRADE.test(o.key) ? `<small class=\"pm-at-trade\">",
+  "${false ? `<small class=\"pm-at-trade\">",
+  1
+ ],
+ [
+  "rows don't say what they do",
+  "portal",
+  "`<small>People can filter Maps for it.</small>`",
+  "\"\"",
+  1
+ ],
+ [
+  "a detail Google shows no longer says On Google",
+  "portal",
+  "${recWhy(o.key)}</span>${onG.has(o.key) ? `<span class=\"pm-at-now\">On Google</span>` : \"\"}",
+  "${recWhy(o.key)}</span>",
+  1
+ ],
+ [
+  "None doesn't clear the others",
+  "portal",
+  "    if (on) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
+  "    if (false) none.closest(\".pm-at\").querySelectorAll(\"[data-in-tick].on\").forEach(",
+  1
+ ],
+ [
+  "an empty save passes",
+  "portal",
+  "    if (wrap.querySelector(\".pm-at\") && !value.length && !wrap.querySelector(\".pm-at [data-at-none].on\") && !wrap.querySelector(\"[data-at-nohow]\") && !wrap.querySelector(\"[data-sv-none]\")) {",
+  "    if (false) {",
+  1
+ ],
+ [
+  "no None checkbox",
+  "portal",
+  "<button type=\"button\" class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none",
+  "<button type=\"button\" hidden class=\"pm-at-cb pm-at-none${noneOn ? \" on\" : \"\"}\" data-at-none-x",
+  1
+ ],
+ [
+  "identity note loses the abuse line",
+  "portal",
+  " If someone leaves a hostile review because of one, you can report it to Google.\")}",
+  "\")}",
+  1
+ ],
+ [
+  "Sent to Google is skipped",
+  "portal",
+  "  if (!seen) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
+  "  if (false) return `<div class=\"pm-k5\">${csCard({ tone: \"wait\", head: on.length ? `Sent to Google · ${on.length} detail",
+  1
+ ],
+ [
+  "the nightly never confirms",
+  "gbpwatch",
+  "    else if ((stepId === STEP.ATTRS || stepId === STEP.SERVICES) && task.google_push.state === \"on_google\" && !task.google_push.confirmed_at) {",
+  "    else if (false) {",
+  1
+ ],
+ [
+  "admin recommends Online appointments",
+  "admin",
+  "\"Leave \\\"Online appointments\\\" off: Google can show it in place of a review quote in map results (their booking link shows either way).\"",
+  "\"Online appointments (their booking link is on Google).\"",
+  1
+ ]
 ]
