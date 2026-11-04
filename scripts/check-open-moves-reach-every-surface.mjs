@@ -171,7 +171,7 @@ if (!/csSt\("rga", `RGA \$\{addingN \? "adds them" : "makes the change"\} on Goo
   if (!/const badAlso = alsoSteps\.find\(\(x\) => !NUDGE_STEPS\.has\(x\)\);/.test(SSE) || !/for \(const id of \[stepId, \.\.\.alsoSteps\]\) \{/.test(SSE) || !/step_ids: \[stepId, \.\.\.alsoSteps\]/.test(SSE)) fail("a reminder's extra steps skip the nudge checks, or aren't recorded");
   if (!/kind=eq\.step_nudge_sent/.test(AOM) || !/reminders: rs\.length, reminded_at:/.test(AOM)) fail("the admin list doesn't know each step's reminders");
   if (!/#adminNextActionDesc\.mv-folded \{ display:none; \}/.test(read("admin/admin.css")) || !/els\.adminNextActionDesc\.classList\.toggle\("mv-folded", mineByHand\)/.test(ADM)) fail("the client card's long before / after sentence doesn't fold (the card's own See the details opens the step)");
-  if (!/const month1 = \{ total: m1\.length, done:/.test(POM) || !/_openMovesMonth1\.set\(clientId, j\.month1\)/.test(POR)) fail("the To do header's Month 1 progress isn't read from the server with the moves");
+  if (!/const month1 = month1Progress\(PLAYBOOKS\.month1 \|\| \[\], tasks, mode, checkInfo\(\)\);/.test(POM) || !/_openMovesMonth1\.set\(clientId, j\.month1\)/.test(POR)) fail("the To do header's Month 1 progress isn't read from the server with the moves");
   if (/class="ib-tl/.test(POR.slice(POR.indexOf("const stepRow = (e) =>"), POR.indexOf("const row = (e) =>")))) fail("a To do task reuses .ib-tl (the website timeline's class)");
 }
 // 10-26: while the list loads, the card's client side says "Checking…" — never the card's old guess ("11 items" before the real 4)
@@ -183,7 +183,7 @@ if (!/state\.openMoves = undefined;/.test(ADM) || !/if \(countEl && listEl && mo
   if (!/"clientTodoLine", "clientTodoSteps", "clientTodoWhy",/.test(BCS2) || !(CS2.month1 || []).some((x) => Array.isArray(x.clientTodoSteps) && x.clientTodoSteps.length)) fail("the To do copy (clientTodoLine / Steps / Why) doesn't reach the client");
   if (!/Array\.isArray\(st\.clientTodoSteps\) && st\.clientTodoSteps\.length \? `<ol class="ib-todo">/.test(POR) || !/hint = st\.clientTodoLine \|\| /.test(POR)) fail("the To do card / pane doesn't use the step's own To do copy");
   if (!/<details class="ap-done"\$\{needN \|\| rgaN \? "" : " open"\}>/.test(POR)) fail("Done doesn't fold while something is open");
-  if (!/const doneSteps = m1\.filter\(/.test(POM) || !/const m1 = \(PLAYBOOKS\.month1 \|\| \[\]\)\.filter\(\(s\) => s\.clientStepNo != null\);/.test(POM)) fail("the Done list could carry steps the client doesn't have (only numbered client steps)");
+  { const OMX = read("netlify/functions/_open-moves.js"); if (!/const doneSteps = m1\.filter\(/.test(OMX) || !/const m1 = M1\.filter\(\(s\) => s\.clientStepNo != null\);/.test(OMX)) fail("the Done list could carry steps the client doesn't have (only numbered client steps)"); }
   if (!/\.ib-qi\.ib-task\.rga \{ background:var\(--state-other-bg\)/.test(read("portal/portal.css"))) fail("RGA's step isn't the blue card");
 }
 // no surface carries its own copy of the promise rule

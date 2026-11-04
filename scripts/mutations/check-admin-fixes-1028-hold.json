@@ -1,121 +1,17 @@
-[
- [
-  "an approved change is nobody's move again",
-  "openmoves",
-  "  out.push(...publishMoves(playbooks, tasks));\n",
-  "",
-  1
- ],
- [
-  "the test page's move isn't filed under step 8",
-  "openmoves",
-  "const home = key === \"m1.access.publish_test\" ? \"m1.access.website\" : key",
-  "const home = key",
-  1
- ],
- [
-  "the move is never late (no promise)",
-  "openmoves",
-  "since: merged ? pr.merged.at : a.at || null,",
-  "since: merged ? pr.merged.at : null,",
-  1
- ],
- [
-  "an open pull request still says Open the pull request",
-  "openmoves",
-  "pr ? `Merge #${pr.number}, then Mark live` : \"Open the pull request\"",
-  "\"Open the pull request\"",
-  1
- ],
- [
-  "the client's To do lists the approved change too",
-  "openmoves",
-  "    else if (m.kind === \"publish_change\") continue;\n",
-  "",
-  1
- ],
- [
-  "Check Google now reads every step",
-  "gbpwatch",
-  "    if (d.factsOnly && stepId !== STEP.FACTS) continue;\n",
-  "",
-  1
- ],
- [
-  "Check Google now sends a queued change to Google",
-  "gbpwatch",
-  "    if (!d.factsOnly && task && stepId === STEP.FACTS && task.google_push",
-  "    if (task && stepId === STEP.FACTS && task.google_push",
-  1
- ],
- [
-  "the endpoint forgets factsOnly",
-  "googlecheck",
-  "now: () => Date.now(), factsOnly: true,",
-  "now: () => Date.now(),",
-  1
- ],
- [
-  "admin's file list goes back to the code log",
-  "admin",
-  "  if (c.removes_page) return wcChgHtml(c);   // removal_card_clean_v2: the address is said once, in the lines above",
-  "  if (c.removes_page) return `<ul class=\"ob-wc-files\"></ul>`;   // removal_card_clean_v2: the address is said once, in the lines above",
-  1
- ],
- [
-  "the sitemap reads as 'A file they have'",
-  "admin",
-  "(sm ? \"Their page list for Google\" : path === \"/\"",
-  "(false ? \"Their page list for Google\" : path === \"/\"",
-  1
- ],
- [
-  "the address loses the site",
-  "admin",
-  "${html && site ? `<span class=\"ob-chg-u\">",
-  "${false ? `<span class=\"ob-chg-u\">",
-  1
- ],
- [
-  "'Open row' comes back",
-  "admin",
-  "els.adminNextActionBtn.textContent = `Open step ${rowN}`",
-  "els.adminNextActionBtn.textContent = `Open row ${rowN}`",
-  1
- ],
- [
-  "step 28's title repeats the count",
-  "admin",
-  "side: (g.rga || []).every((x) => x.fact === \"area\") ? \"\" : allN",
-  "side: false ? \"\" : allN",
-  1
- ],
- [
-  "the done card touches the header again",
-  "admincss",
-  ".ob-done-card { padding:12px 16px 14px 16px; }",
-  ".ob-done-card { padding:0 16px 14px 16px; }",
-  1
- ],
- [
-  "the kickoff console touches the green bar again",
-  "css",
-  ".ob-step.done.has-console .kc { margin-top:12px; }",
-  ".ob-step.done.has-console .kc { margin-top:0; }",
-  1
- ],
- [
-  "the conversation touches its header again",
-  "portalcss",
-  ".pm-convo > .pm-thread { margin:12px 14px 12px; }",
-  ".pm-convo > .pm-thread { margin:0 14px 12px; }",
-  1
- ],
- [
-  "a held call files a change request again",
-  "portal",
-  "<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>",
-  "<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>",
-  1
- ]
-]
+[["an approved change is nobody's move again","openmoves","  out.push(...publishMoves(playbooks, tasks, mode, check));\n","",1],
+ ["the test page's move isn't filed under step 8","openmoves","const home = key === \"m1.access.publish_test\" ? \"m1.access.website\" : key","const home = key",1],
+ ["the move is never late (no promise)","openmoves","since: merged ? pr.merged.at : a.at || null,","since: merged ? pr.merged.at : null,",1],
+ ["an open pull request still says Open the pull request","openmoves","pr ? `Merge #${pr.number}, then Mark live` : \"Open the pull request\"","\"Open the pull request\"",1],
+ ["the client's To do lists the approved change too","openmoves","    else if (m.kind === \"publish_change\") continue;\n","",1],
+ ["Check Google now reads every step","gbpwatch","    if (d.factsOnly && stepId !== STEP.FACTS) continue;\n","",1],
+ ["Check Google now sends a queued change to Google","gbpwatch","    if (!d.factsOnly && task && stepId === STEP.FACTS && task.google_push","    if (task && stepId === STEP.FACTS && task.google_push",1],
+ ["the endpoint forgets factsOnly","googlecheck","now: () => Date.now(), factsOnly: true,","now: () => Date.now(),",1],
+ ["admin's file list goes back to the code log","admin","  if (c.removes_page) return wcChgHtml(c);   // removal_card_clean_v2: the address is said once, in the lines above","  if (c.removes_page) return `<ul class=\"ob-wc-files\"></ul>`;   // removal_card_clean_v2: the address is said once, in the lines above",1],
+ ["the sitemap reads as 'A file they have'","admin","(sm ? \"Their page list for Google\" : path === \"/\"","(false ? \"Their page list for Google\" : path === \"/\"",1],
+ ["the address loses the site","admin","${html && site ? `<span class=\"ob-chg-u\">","${false ? `<span class=\"ob-chg-u\">",1],
+ ["'Open row' comes back","admin","els.adminNextActionBtn.textContent = `Open step ${rowN}`","els.adminNextActionBtn.textContent = `Open row ${rowN}`",1],
+ ["step 28's title repeats the count","admin","side: (g.rga || []).every((x) => x.fact === \"area\") ? \"\" : allN","side: false ? \"\" : allN",1],
+ ["the done card touches the header again","admincss",".ob-done-card { padding:12px 16px 14px 16px; }",".ob-done-card { padding:0 16px 14px 16px; }",1],
+ ["the kickoff console touches the green bar again","css",".ob-step.done.has-console .kc { margin-top:12px; }",".ob-step.done.has-console .kc { margin-top:0; }",1],
+ ["the conversation touches its header again","portalcss",".pm-convo > .pm-thread { margin:12px 14px 12px; }",".pm-convo > .pm-thread { margin:0 14px 12px; }",1],
+ ["a held call files a change request again","portal","<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>","<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>",1]]

@@ -3,15 +3,15 @@
 // only through one helper (approved client_portal_slim_v1 + client_portal_slim_visual_v1, Chris 11-4: "that mockup was approved").
 // 🔴 WHY: a client step's number is printed in the portal, admin, emails and the Month 1 report. Managed mode gives most steps a new
 // number and turns six into one step 3. If one surface kept reading today's `clientStepNo`, a managed client would be told "step 11"
-// for a step that is step 4 on their screen. So no surface may read either number itself, and until every one goes through
-// shared/portal-mode.js no code may set a client to managed.
+// for a step that is step 4 on their screen. So no surface may read either number itself; all eight now go through
+// shared/portal-mode.js, so (11-4, managed_admin_v1) a client CAN be set to managed, and only by the files listed here.
 // HOLDS, from files only (costs the clients' database nothing):
 //   · every client step has a managed role; a numbered step has a managed number, a check/card/setup step has none
 //   · managed numbers, with step 3 "Check what we found", run 1, 2, 3 once each; step 3 covers exactly the "check" steps
 //   · the numbers and roles are the approved ones, and client-steps.json was rebuilt after the playbook changed
 //   · the helper, RUN: managed → managedStepNo, anything else → clientStepNo; an unknown mode is no mode; none reads "Not chosen"
 //   · portal.js reads neither field itself and asks for the mode on its own query, not inside the client load
-//   · the files that still read clientStepNo directly are exactly the known list; while it is not empty, nothing sets portal_mode
+//   · the 8 surfaces that print a step number all go through the helper; only the admin switch's function and admin's two new-client paths may write portal_mode
 //   · the database column has no default, so adding it changes nothing any client sees
 // Exit 0 = holds · 1 = broken · 2 = can't tell.
 import fs from "node:fs";
@@ -82,21 +82,31 @@ if (!clientsLoad) fail("can't find loadPortalClients in portal.js");
 else if (/portal_mode/.test(clientsLoad)) fail("portal.js asks for portal_mode inside the client load: until the column exists that fails the whole portal");
 if (!/function loadPortalModes[\s\S]*?if \(error\) \{ _portalModeState = "not_set_up"; return \{\}; \}/.test(portal)) fail("portal.js doesn't fall back to today's steps when the mode can't be read");
 
-// the surfaces not yet mode-aware: exactly these, and none may be added
-const NOT_YET = ["admin/admin.js", "netlify/functions/_client-waits.js", "netlify/functions/_month1-report.js", "netlify/functions/_onboarding-notes.js",
+// the 8 surfaces that print a step number are mode-aware (managed_admin_v1, 11-4): each reads the client's mode through the shared helpers.
+// A file that reads a step number is one of these (their self-serve branch is the old line, kept) or portal.js; nothing else may.
+const SURFACES = ["admin/admin.js", "netlify/functions/_client-waits.js", "netlify/functions/_month1-report.js", "netlify/functions/_onboarding-notes.js",
   "netlify/functions/_open-moves.js", "netlify/functions/notify-step-open.js", "netlify/functions/portal-message.js", "netlify/functions/portal-open-moves.js"];
+const HELPERS = ["shared/portal-mode.js", "shared/portal-mode-words.js"];
 const walk = (d) => fs.readdirSync(path.join(SITE, d), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? (e.name === "node_modules" ? [] : walk(`${d}/${e.name}`)) : /\.(m?js|html)$/.test(e.name) ? [`${d}/${e.name}`] : []);
 let files;
 try { files = ["portal", "admin", "shared", "netlify/functions"].flatMap(walk); } catch (e) { console.error(`⚠️  INDETERMINATE: ${e.message}`); process.exit(2); }
-const readers = files.filter((f) => f !== "shared/portal-mode.js" && /\.(clientStepNo|managedStepNo)\b/.test(code(read(f))));
-for (const f of readers) if (f !== "portal/portal.js" && !NOT_YET.includes(f)) fail(`${f} reads a client step number itself; ask shared/portal-mode.js stepNo(step, mode)`);
-for (const f of NOT_YET) if (!readers.includes(f)) fail(`${f} no longer reads clientStepNo directly: take it off NOT_YET in this gate`);
-const setters = files.filter((f) => !["portal/portal.js", "shared/portal-mode.js"].includes(f) && /portal_mode/.test(read(f)));
-if (NOT_YET.length && setters.length) fail(`${setters.join(", ")} can set a client's portal_mode while ${NOT_YET.length} surfaces still print today's numbers`);
+const readers = files.filter((f) => !HELPERS.includes(f) && /\.(clientStepNo|managedStepNo)\b/.test(code(read(f))));
+for (const f of readers) if (f !== "portal/portal.js" && !SURFACES.includes(f)) fail(`${f} reads a client step number itself; ask shared/portal-mode.js stepNo(step, mode)`);
+// each surface goes through the helper (its require / import), so a surface can't quietly go back to reading the number alone
+for (const f of SURFACES) { const t = code(read(f)); if (!/shared\/portal-mode(-words)?\.js|rgaPortalMode/.test(t) && !(f.endsWith("portal-open-moves.js") && /require\(".\/_portal-mode"\)/.test(t))) fail(`${f} no longer asks the portal-mode helper for a step number`); }
+// WHO MAY WRITE portal_mode: the admin switch's function, and admin's two new-client paths (which write only "managed"). Reading it is free.
+const WRITE = /\bportal_mode\s*(?::|=(?!=))\s*([^,;)\n}]*)/g;   // a value assigned to portal_mode (a select list or a read has none)
+const SETTERS = ["netlify/functions/admin-client-portal-mode.js", "admin/admin.js"];
+const setters = files.filter((f) => !["portal/portal.js", ...HELPERS].includes(f) && [...code(read(f)).matchAll(WRITE)].some((m) => m[1].trim()));
+for (const f of setters) if (!SETTERS.includes(f)) fail(`${f} can set a client's portal_mode: only ${SETTERS[0]} and admin's new-client paths may`);
+{ const t = code(read("admin/admin.js"));
+  for (const m of t.matchAll(WRITE)) { const v = m[1].trim(); if (v && v !== '"managed"' && v !== "data.mode") fail(`admin.js writes portal_mode as ${JSON.stringify(v)}; a new client gets "managed" and the switch saves what the server read back`); }
+  if (!/insert\(\{ portal_mode: "managed", \.\.\.payload \}\)/.test(t)) fail("admin.js createClient must give a new client portal_mode managed (and let a named mode win)");
+  if (!/portal_mode: "managed",\s*\/\/ managed_admin_v1/.test(t)) fail("admin.js promoteLeadToClient must give a promoted lead portal_mode managed"); }
 
 // the column changes nothing on its own
 if (!/add column if not exists portal_mode text;/.test(sql) || /portal_mode text[^;]*default/i.test(sql)) fail("supabase/client_portal_mode.sql must add portal_mode with no default");
 if (!/check \(portal_mode is null or portal_mode in \('managed', 'self_serve'\)\)/.test(sql)) fail("supabase/client_portal_mode.sql must allow only managed, self_serve or null");
 
 if (F.length) { console.error(`🔴 managed portal numbering: ${F.length} problem(s)\n` + F.map((m) => `  · ${m}`).join("\n")); process.exit(1); }
-console.log(`✅ managed portal numbering holds: ${steps.length} client steps, managed 1–${check.managedStepNo && Math.max(...steps.map((s) => s.managedStepNo || 0), 3)}, step 3 covers ${check.covers.length}; ${NOT_YET.length} surfaces not yet mode-aware, so nothing can set a client to managed`);
+console.log(`✅ managed portal numbering holds: ${steps.length} client steps, managed 1–${check.managedStepNo && Math.max(...steps.map((s) => s.managedStepNo || 0), 3)}, step 3 covers ${check.covers.length}; all ${SURFACES.length} surfaces are mode-aware; only ${SETTERS.length} files may set a mode`);

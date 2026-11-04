@@ -1,83 +1,12 @@
-[
- [
-  "staff-name asks pass the policy",
-  "reviewpolicy",
-  "  if (STAFF.test(t)) p.push(",
-  "  if (false) p.push(",
-  1
- ],
- [
-  "pace past 10 is silent",
-  "reviewreqfn",
-  "        if (today > 10) pace = { today, note:",
-  "        if (today > 1000) pace = { today, note:",
-  1
- ],
- [
-  "an optional step can be the next step",
-  "portal",
-  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later",
-  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.later",
-  1
- ],
- [
-  "skip isn't read back",
-  "videoclipfn",
-  "      if (b.kind === \"skip\" ? st0 !== \"skipped\" : st0 === \"skipped\") return jsonRes(500,",
-  "      if (false) return jsonRes(500,",
-  1
- ],
- [
-  "the report runs before day 27",
-  "exec",
-  "    if (Date.now() < opensAt) return {",
-  "    if (false) return {",
-  1
- ],
- [
-  "Still open lists optional steps",
-  "month1report",
-  "  const openSteps = pb.filter((s) => s.clientStepNo != null && !s.clientOptional &&",
-  "  const openSteps = pb.filter((s) => s.clientStepNo != null &&",
-  1
- ],
- [
-  "fallback shows our bookkeeping again",
-  "portal",
-  "  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title });",
-  "  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title, rows: [[\"Your answer\", \"Not recorded\"]] });",
-  1
- ],
- [
-  "fallback never runs",
-  "portal",
-  "  fillBlankDoneRows(listEl, numbered);\n",
-  "\n",
-  1
- ],
- [
-  "a close-out booked before the report",
-  "bookkickofffn",
-  "      if (!rp || rp.status !== \"done\") {",
-  "      if (false) {",
-  1
- ],
- [
-  "fallback names RGA when the client did it",
-  "portal",
-  "const byYou = doneWho(t.completed_by) === \"You\",",
-  "const byYou = false,"
- ],
- [
-  "fallback: RGA's finish reads \"You gave us…\" again",
-  "portal",
-  "const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);",
-  "const title = !line ? \"This step is done\" : escapeHtml(line);"
- ],
- [
-  "fallback: the client's own done line is dropped",
-  "portal",
-  "const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);",
-  "const title = \"This step is done\";"
- ]
-]
+[["staff-name asks pass the policy","reviewpolicy","  if (STAFF.test(t)) p.push(","  if (false) p.push(",1],
+ ["pace past 10 is silent","reviewreqfn","        if (today > 10) pace = { today, note:","        if (today > 1000) pace = { today, note:",1],
+ ["an optional step can be the next step","portal","isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later","isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.later",1],
+ ["skip isn't read back","videoclipfn","      if (b.kind === \"skip\" ? st0 !== \"skipped\" : st0 === \"skipped\") return jsonRes(500,","      if (false) return jsonRes(500,",1],
+ ["the report runs before day 27","exec","    if (Date.now() < opensAt) return {","    if (false) return {",1],
+ ["Still open lists optional steps","month1report","  const openSteps = pb.filter((s) => theirs(s) && !s.clientOptional &&","  const openSteps = pb.filter((s) => theirs(s) &&",1],
+ ["fallback shows our bookkeeping again","portal","  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title });","  return doneNoRecordHtml({ completed_at: at, completed_by: byYou ? \"client\" : \"rga\" }, { title, rows: [[\"Your answer\", \"Not recorded\"]] });",1],
+ ["fallback never runs","portal","  fillBlankDoneRows(listEl, numbered);\n","\n",1],
+ ["a close-out booked before the report","bookkickofffn","      if (!rp || rp.status !== \"done\") {","      if (false) {",1],
+ ["fallback names RGA when the client did it","portal","const byYou = doneWho(t.completed_by) === \"You\",","const byYou = false,"],
+ ["fallback: RGA's finish reads \"You gave us…\" again","portal","const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);","const title = !line ? \"This step is done\" : escapeHtml(line);"],
+ ["fallback: the client's own done line is dropped","portal","const title = !line || (/^you\\b/i.test(line) && !byYou) ? \"This step is done\" : escapeHtml(line);","const title = \"This step is done\";"]]

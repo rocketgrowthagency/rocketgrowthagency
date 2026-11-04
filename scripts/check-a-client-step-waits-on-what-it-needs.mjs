@@ -181,7 +181,7 @@ if (!/if \(!r\.ok \|\| !m\.ok\) return json\(5\d\d/.test(epc) || !/client_monthl
 
 // ── 3 · every writer of the status asks first ──
 // 🔑 The guard reads the STEP'S OWN record (`rec.tasks`, from _step-record.js: Month 2 = this month's monthly record).
-const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), rec\.tasks\);\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
+const guardRe = /const waiting = waitNow\(PLAYBOOKS, (?:step|s), rec\.tasks(?:, await [^;]*)?\);[^\n]*\n\s*if \(waiting\) return json\(409, \{ error: waiting\.message/g;
 // 🔑 a "done" write is `status: "done"` or, since profile_answers_reach_google_v1, `status: settled ? "done" : …`
 const DONE_WRITE = /status: (?:settled \? )?"done"/g;
 const guardsBeforeDone = (src) => { const out = []; for (const m of src.matchAll(guardRe)) { DONE_WRITE.lastIndex = m.index; const d = DONE_WRITE.exec(src); out.push(d ? d.index : -1); } return out; };

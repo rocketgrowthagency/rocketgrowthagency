@@ -80,14 +80,17 @@ let buildEmail, PLANS;
 {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "rga-confirm-gate-"));
   try {
+    // the functions sit two levels down, so their ../../shared and ../../data requires resolve (managed_admin_v1: _client-waits now loads shared/portal-mode*.js)
+    const FDIR = path.join(tmp, "netlify", "functions"); fs.mkdirSync(FDIR, { recursive: true });
+    for (const d of ["shared", "data"]) if (fs.existsSync(path.join(SITE, d))) fs.symlinkSync(path.join(SITE, d), path.join(tmp, d));
     for (const f of fs.readdirSync(FNS)) {
       const src = path.join(FNS, f);
       if (!fs.statSync(src).isFile()) continue;
       if (!/\.js$/.test(f)) continue;
-      fs.copyFileSync(src, path.join(tmp, f));
+      fs.copyFileSync(src, path.join(FDIR, f));
     }
-    fs.appendFileSync(path.join(tmp, "send-confirmation-email.js"), "\nmodule.exports.buildEmail = buildEmail;\n");
-    const req = createRequire(path.join(tmp, "x.js"));
+    fs.appendFileSync(path.join(FDIR, "send-confirmation-email.js"), "\nmodule.exports.buildEmail = buildEmail;\n");
+    const req = createRequire(path.join(FDIR, "x.js"));
     buildEmail = req("./send-confirmation-email.js").buildEmail;
     PLANS = req("./contract-generate.js").PLANS;
   } catch (e) {

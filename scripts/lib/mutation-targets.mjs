@@ -9,6 +9,11 @@ export const FILES = {
   managedsteps: "data/playbooks/managed-steps.json",
   portalmodesql: "supabase/client_portal_mode.sql",
   portalmessagefn: "netlify/functions/portal-message.js",
+  // managed_admin_v1 (11-4): the 8 surfaces go by mode; the admin switch; RGA-side hours/attributes save + undo
+  portalmodewords: "shared/portal-mode-words.js",
+  portalmodefn: "netlify/functions/_portal-mode.js",
+  adminportalmodefn: "netlify/functions/admin-client-portal-mode.js",
+  admindetailssave: "netlify/functions/admin-gbp-details-save.js",
   // kickoff_why_now_v1 (approved 11-01): the client's no to posts is kept; the card draws from the plan
   blogposts: "netlify/functions/portal-blog-posts.js",
   blogclientplan: "netlify/functions/_blog-client-plan.js",

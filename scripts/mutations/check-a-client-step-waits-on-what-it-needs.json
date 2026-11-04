@@ -1,331 +1,47 @@
-[
- [
-  "a declined step 56 still holds 57",
-  "clientwaits",
-  "(t.status === \"done\" || t.status === \"skipped\" || t.status === \"declined\")",
-  "(t.status === \"done\" || t.status === \"skipped\")",
-  1
- ],
- [
-  "the rule stops at the first hop",
-  "clientwaits",
-  "    for (const up of s.dependsOn || []) stack.push(up);",
-  "",
-  1
- ],
- [
-  "the kickoff booking waits on RGA",
-  "clientwaits",
-  "if (!step || step.clientForm === \"kickoff_booking\") return [];",
-  "if (!step) return [];",
-  1
- ],
- [
-  "the client's own step reads as RGA's",
-  "clientwaits",
-  "  return prereqs(step, steps).filter((id) => !isClientVisible(byId.get(id)));",
-  "  return prereqs(step, steps);",
-  1
- ],
- [
-  "the listing check reads as RGA's",
-  "clientwaits",
-  "  return [...out].filter((id) => id !== DUP_STEP).sort(",
-  "  return [...out].sort(",
-  1
- ],
- [
-  "a finished step waits",
-  "clientwaits",
-  "  if (isFinished(tasks && tasks[step.id])) return null;   // a finished step never waits, as in the admin\n",
-  "\n",
-  1
- ],
- [
-  "the projection publishes the graph",
-  "clientstepsjson",
-  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
-  "\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",
-  1
- ],
- [
-  "anyone can ask which steps wait",
-  "stepwaitsfn",
-  "  const gate = await requirePortalOwnerOrWorkspace(event, clientId);\n  if (gate.error) return gate.error;\n",
-  "",
-  1
- ],
- [
-  "a failed read says nothing waits",
-  "stepwaitsfn",
-  "  if (!r.ok || !m.ok) return json(502, { error: \"Could not read the setup record.\" });",
-  "  if (!r.ok || !m.ok) return json(200, { rga: [] });",
-  1
- ],
- [
-  "portal save: an answer finishes a step that waits",
-  "stepinputfn",
-  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
-  "",
-  1
- ],
- [
-  "portal: I've done it finishes a step that waits",
-  "stepchoicefn",
-  "    const waiting = waitNow(PLAYBOOKS, s, rec.tasks);\n    if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n",
-  "",
-  1
- ],
- [
-  "portal: a choice finishes a step that waits",
-  "stepchoicefn",
-  "  const waiting = waitNow(PLAYBOOKS, step, rec.tasks);\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
-  "  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",
-  1
- ],
- [
-  "the recheck finishes 57 on 5 customers",
-  "recheckfn",
-  "t0[stepId].status !== \"done\" && !waiting)",
-  "t0[stepId].status !== \"done\")",
-  1
- ],
- [
-  "portal: the pill says Your turn",
-  "portal",
-  "      : rgaWait ? { text: CANT_START, why: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }\n",
-  "",
-  1
- ],
- [
-  "portal: a waiting row is the client's turn",
-  "portal",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && !withRga && (",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !gbpWithRga && !withRga && (",
-  1
- ],
- [
-  "portal: not known reads as open",
-  "portal",
-  "  return rgaWaits ? rgaWaits.has(step.id) : true;",
-  "  return rgaWaits ? rgaWaits.has(step.id) : false;",
-  1
- ],
- [
-  "portal: a failed answer says nothing waits",
-  "portal",
-  "    if (!r.ok) return null;\n    const j = await r.json();\n    return Array.isArray(j.rga)",
-  "    if (!r.ok) return new Set();\n    const j = await r.json();\n    return Array.isArray(j.rga)",
-  1
- ],
- [
-  "portal: the headline names a waiting row",
-  "portal",
-  "      && !rowWaits(i.step, i.status, _nextStepInputs?.tasks, _nextStepInputs?.rgaWaits)\n",
-  "",
-  1
- ],
- [
-  "portal: Add your 5 customers stays live",
-  "portal",
-  "? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`",
-  "? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",
-  1
- ],
- [
-  "portal: rows render before the answer",
-  "portal",
-  "    : await Promise.all([loadRgaWaits(clientId), loadOpenMoves(clientId)]);",
-  "    : [null, null]; loadRgaWaits(clientId);",
-  1
- ],
- [
-  "step 57's foot is reworded without approval",
-  "playbooksjson",
-  "\"foot\": \"Opens when your review request message is ready.\"",
-  "\"foot\": \"This opens soon.\"",
-  1
- ],
- [
-  "the band turns amber",
-  "portalcss",
-  ".pm-lock.other { background:var(--state-other-bg",
-  ".pm-lock.other { background:var(--state-you-bg",
-  1
- ],
- [
-  "the next-steps email asks for a waiting step",
-  "confirmemailfn",
-  "&& !done(st.id) && !waits(st.id))",
-  "&& !done(st.id))",
-  1
- ],
- [
-  "a nudge goes out on a step that waits on RGA",
-  "stepemailfn",
-  "    if (waiting) return jsonRes(409, { error: waiting.on === \"rga\"",
-  "    if (false) return jsonRes(409, { error: waiting.on === \"rga\"",
-  1
- ],
- [
-  "a nudge goes out on a step that waits on the listing",
-  "stepemailfn",
-  "    if (waitsOnListing(sop) && !listingState(rec ? rec.listingTasks : {}).open) {",
-  "    if (false) {",
-  1
- ],
- [
-  "own: the rule ignores the client's own step",
-  "clientwaits",
-  "  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {",
-  "  const own = null;\n  if (own) {",
-  1
- ],
- [
-  "own: RGA outranks the client's own step",
-  "clientwaits",
-  "  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n",
-  "  const own = waitsOnRgaNow(playbooks, step, tasks) ? null : waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n",
-  1
- ],
- [
-  "own: the refusal says something else",
-  "clientwaits",
-  "  return s && s.clientStepNo != null ? `Do step ${s.clientStepNo} first.` : \"Connect Google first.\";",
-  "  return \"Not yet.\";",
-  1
- ],
- [
-  "own: the projection drops needsFirst",
-  "clientstepsjson",
-  "\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]",
-  "\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",
-  1
- ],
- [
-  "own: portal row never waits on their step",
-  "portal",
-  "  if (!step || !Array.isArray(step.needsFirst) || status === \"done\" || status === \"skipped\") return null;",
-  "  return null;",
-  1
- ],
- [
-  "own: the listing outranks their step",
-  "portal",
-  "    const listingWait = !ownWait && rowListingWaits(step, status, waitTasks);",
-  "    const listingWait = rowListingWaits(step, status, waitTasks);",
-  1
- ],
- [
-  "own: the pill says Your turn",
-  "portal",
-  "      : ownWait ? { text: CANT_START, why: gaByRga ? \"RGA is setting up your Google Analytics\" : ownFirstPill(ownFirst), cls: \"wait\" }\n",
-  "",
-  1
- ],
- [
-  "own: the pill is reworded",
-  "portal",
-  "`Do step ${pmNo(first)} first` : \"Connect Google first\";",
-  "`Step ${pmNo(first)} needed` : \"Connect Google first\";",
-  1
- ],
- [
-  "own: no way to step 6",
-  "portal",
-  "    ? `<a class=\"pm-lock-go\" href=\"#step-${escapeAttribute(first.id)}\">Go to step ${no} →</a>`",
-  "    ? \"\"",
-  1
- ],
- [
-  "own: the ask shows under the band",
-  "portal",
-  "!isDone && step.clientHint && !ownWait && ",
-  "!isDone && step.clientHint && ",
-  1
- ],
- [
-  "own: the headline and marker ignore it",
-  "portal",
-  "  return !!rowOwnWaits(step, status, tasks) || rowListingWaits(step, status, tasks) ||",
-  "  return rowListingWaits(step, status, tasks) ||",
-  1
- ],
- [
-  "the rule is Month 1 only again",
-  "clientwaits",
-  "  for (const k of SCOPES) {\n    const list = playbooks[k] || [];\n    if (list.some((s) => s.id === stepId)) return list;\n  }\n  return [];",
-  "  const list = playbooks.month1 || [];\n  return list.some((s) => s.id === stepId) ? list : [];",
-  1
- ],
- [
-  "the endpoint judges Month 2 by the onboarding record",
-  "stepwaitsfn",
-  "(scopeOf(s.id) === \"month2plus\" ? m2Tasks : m1Tasks) || {}",
-  "m1Tasks || {}",
-  1
- ],
- [
-  "the endpoint ignores this month's record",
-  "stepwaitsfn",
-  "rgaWaitsFor(rows[0]?.data?.tasks, mrows[0]?.data?.tasks)",
-  "rgaWaitsFor(rows[0]?.data?.tasks, rows[0]?.data?.tasks)",
-  1
- ],
- [
-  "the monthly photos wait on RGA's plan again",
-  "playbookjson",
-  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [],",
-  "      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m2.plan.tasks_for_month\"],",
-  1
- ],
- [
-  "step 18's band says something unapproved",
-  "playbookjson",
-  "\"head\": \"First: your monthly report.\"",
-  "\"head\": \"First: we're busy.\"",
-  1
- ],
- [
-  "step 15 counts every photo again",
-  "portal",
-  "if (s.id === \"m2.exec.gbp_photos\" && photosOnGoogleThisMonth >= 1) status = \"done\";",
-  "if (s.id === \"m2.exec.gbp_photos\" && photoCount >= 1) status = \"done\";",
-  1
- ],
- [
-  "the nightly photo check counts every photo again",
-  "recheckfn",
-  "countProbe(id, \"client_photos\", 5, \"photo\", { since: currentReportingMonth(), what: \"new this month\" })",
-  "countProbe(id, \"client_photos\", 5, \"photo\")",
-  1
- ],
- [
-  "a Month-2 row's wait reads the onboarding record",
-  "portal",
-  "  const waitTasks = { ...m1Tasks, ...m2Tasks };",
-  "  const waitTasks = { ...m1Tasks };",
-  1
- ],
- [
-  "the nudge looks steps up in Month 1 only",
-  "stepemailfn",
-  "      const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === id);",
-  "      const sop = (PB.month1 || []).find((s) => s.id === id);",
-  1
- ],
- [
-  "the step-open email reaches Month 2",
-  "notifyopenfn",
-  "const M1 = PLAYBOOKS.month1 || [];",
-  "const M1 = [...(PLAYBOOKS.month1 || []), ...(PLAYBOOKS.month2plus || [])];",
-  1
- ],
- [
-  "portal: the customer cards show while it waits",
-  "portal",
-  ": reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",
-  ": reviewStep ? (false ? \"\" : reviewStepHtml(",
-  1
- ]
-]
+[["a declined step 56 still holds 57","clientwaits","(t.status === \"done\" || t.status === \"skipped\" || t.status === \"declined\")","(t.status === \"done\" || t.status === \"skipped\")",1],
+ ["the rule stops at the first hop","clientwaits","    for (const up of s.dependsOn || []) stack.push(up);","",1],
+ ["the kickoff booking waits on RGA","clientwaits","if (!step || step.clientForm === \"kickoff_booking\") return [];","if (!step) return [];",1],
+ ["the client's own step reads as RGA's","clientwaits","  return prereqs(step, steps).filter((id) => !isClientVisible(byId.get(id)));","  return prereqs(step, steps);",1],
+ ["the listing check reads as RGA's","clientwaits","  return [...out].filter((id) => id !== DUP_STEP).sort(","  return [...out].sort(",1],
+ ["a finished step waits","clientwaits","  if (isFinished(tasks && tasks[step.id])) return null;   // a finished step never waits, as in the admin\n","\n",1],
+ ["the projection publishes the graph","clientstepsjson","\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]","\"clientStepNo\": 16,\n      \"managedStepNo\": 7,\n      \"managedRole\": \"step\",\n      \"clientPhase\": 4,\n      \"waitsOnRga\": [\"m1.report.month1\"],\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.access.analytics\",\n        \"m1.access.search_console\",\n        \"m1.strategy.keywords_locations\"\n      ]",1],
+ ["anyone can ask which steps wait","stepwaitsfn","  const gate = await requirePortalOwnerOrWorkspace(event, clientId);\n  if (gate.error) return gate.error;\n","",1],
+ ["a failed read says nothing waits","stepwaitsfn","  if (!r.ok || !m.ok) return json(502, { error: \"Could not read the setup record.\" });","  if (!r.ok || !m.ok) return json(200, { rga: [] });",1],
+ ["portal save: an answer finishes a step that waits","stepinputfn","  const waiting = waitNow(PLAYBOOKS, step, rec.tasks, await require(\"./_portal-mode\").clientMode(clientId));   // managed_admin_v1: the refusal says the client's own step number\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n","",1],
+ ["portal: I've done it finishes a step that waits","stepchoicefn","    const waiting = waitNow(PLAYBOOKS, s, rec.tasks, await require(\"./_portal-mode\").clientMode(clientId));   // managed_admin_v1: the refusal says the client's own step number\n    if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n","",1],
+ ["portal: a choice finishes a step that waits","stepchoicefn","  const waiting = waitNow(PLAYBOOKS, step, rec.tasks, await require(\"./_portal-mode\").clientMode(clientId));   // managed_admin_v1: the refusal says the client's own step number\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice","  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",1],
+ ["the recheck finishes 57 on 5 customers","recheckfn","t0[stepId].status !== \"done\" && !waiting)","t0[stepId].status !== \"done\")",1],
+ ["portal: the pill says Your turn","portal","      : rgaWait ? { text: CANT_START, why: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }\n","",1],
+ ["portal: a waiting row is the client's turn","portal","const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && !withRga && (","const theirsToAct = !kickoffPending && !ownWait && !listingWait && !gbpWithRga && !withRga && (",1],
+ ["portal: not known reads as open","portal","  return rgaWaits ? rgaWaits.has(step.id) : true;","  return rgaWaits ? rgaWaits.has(step.id) : false;",1],
+ ["portal: a failed answer says nothing waits","portal","    if (!r.ok) return null;\n    const j = await r.json();\n    return Array.isArray(j.rga)","    if (!r.ok) return new Set();\n    const j = await r.json();\n    return Array.isArray(j.rga)",1],
+ ["portal: the headline names a waiting row","portal","      && !rowWaits(i.step, i.status, _nextStepInputs?.tasks, _nextStepInputs?.rgaWaits)\n","",1],
+ ["portal: Add your 5 customers stays live","portal","? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`","? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",1],
+ ["portal: rows render before the answer","portal","    : await Promise.all([loadRgaWaits(clientId), loadOpenMoves(clientId)]);","    : [null, null]; loadRgaWaits(clientId);",1],
+ ["step 57's foot is reworded without approval","playbooksjson","\"foot\": \"Opens when your review request message is ready.\"","\"foot\": \"This opens soon.\"",1],
+ ["the band turns amber","portalcss",".pm-lock.other { background:var(--state-other-bg",".pm-lock.other { background:var(--state-you-bg",1],
+ ["the next-steps email asks for a waiting step","confirmemailfn","&& !done(st.id) && !waits(st.id))","&& !done(st.id))",1],
+ ["a nudge goes out on a step that waits on RGA","stepemailfn","    if (waiting) return jsonRes(409, { error: waiting.on === \"rga\"","    if (false) return jsonRes(409, { error: waiting.on === \"rga\"",1],
+ ["a nudge goes out on a step that waits on the listing","stepemailfn","    if (waitsOnListing(sop) && !listingState(rec ? rec.listingTasks : {}).open) {","    if (false) {",1],
+ ["own: the rule ignores the client's own step","clientwaits","  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {","  const own = null;\n  if (own) {",1],
+ ["own: RGA outranks the client's own step","clientwaits","  const own = waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n","  const own = waitsOnRgaNow(playbooks, step, tasks) ? null : waitsOnClientNow(playbooks, step, tasks);\n  if (own) {\n",1],
+ ["own: the refusal says something else","clientwaits","  return \"Connect Google first.\";\n}","  return \"Not yet.\";\n}",1],
+ ["own: the projection drops needsFirst","clientstepsjson","\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\",\n        \"m1.gbp.verify\"\n      ]","\"clientStepNo\": 7,\n      \"managedStepNo\": null,\n      \"managedRole\": \"check\",\n      \"clientPhase\": 2,\n      \"waitsOnListing\": true,\n      \"needsFirst\": [\n        \"m1.access.gbp\"\n      ]",1],
+ ["own: portal row never waits on their step","portal","  if (!step || !Array.isArray(step.needsFirst) || status === \"done\" || status === \"skipped\") return null;","  return null;",1],
+ ["own: the listing outranks their step","portal","    const listingWait = !ownWait && rowListingWaits(step, status, waitTasks);","    const listingWait = rowListingWaits(step, status, waitTasks);",1],
+ ["own: the pill says Your turn","portal","      : ownWait ? { text: CANT_START, why: gaByRga ? \"RGA is setting up your Google Analytics\" : ownFirstPill(ownFirst), cls: \"wait\" }\n","",1],
+ ["own: the pill is reworded","portal","`Do step ${pmNo(first)} first` : \"Connect Google first\";","`Step ${pmNo(first)} needed` : \"Connect Google first\";",1],
+ ["own: no way to step 6","portal","    ? `<a class=\"pm-lock-go\" href=\"#step-${escapeAttribute(first.id)}\">Go to step ${no} →</a>`","    ? \"\"",1],
+ ["own: the ask shows under the band","portal","!isDone && step.clientHint && !ownWait && ","!isDone && step.clientHint && ",1],
+ ["own: the headline and marker ignore it","portal","  return !!rowOwnWaits(step, status, tasks) || rowListingWaits(step, status, tasks) ||","  return rowListingWaits(step, status, tasks) ||",1],
+ ["the rule is Month 1 only again","clientwaits","  for (const k of SCOPES) {\n    const list = playbooks[k] || [];\n    if (list.some((s) => s.id === stepId)) return list;\n  }\n  return [];","  const list = playbooks.month1 || [];\n  return list.some((s) => s.id === stepId) ? list : [];",1],
+ ["the endpoint judges Month 2 by the onboarding record","stepwaitsfn","(scopeOf(s.id) === \"month2plus\" ? m2Tasks : m1Tasks) || {}","m1Tasks || {}",1],
+ ["the endpoint ignores this month's record","stepwaitsfn","rgaWaitsFor(rows[0]?.data?.tasks, mrows[0]?.data?.tasks)","rgaWaitsFor(rows[0]?.data?.tasks, rows[0]?.data?.tasks)",1],
+ ["the monthly photos wait on RGA's plan again","playbookjson","      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [],","      \"id\": \"m2.exec.gbp_photos\",\n      \"title\": \"Add new photos\",\n      \"type\": \"hybrid\",\n      \"dependsOn\": [\"m2.plan.tasks_for_month\"],",1],
+ ["step 18's band says something unapproved","playbookjson","\"head\": \"First: your monthly report.\"","\"head\": \"First: we're busy.\"",1],
+ ["step 15 counts every photo again","portal","if (s.id === \"m2.exec.gbp_photos\" && photosOnGoogleThisMonth >= 1) status = \"done\";","if (s.id === \"m2.exec.gbp_photos\" && photoCount >= 1) status = \"done\";",1],
+ ["the nightly photo check counts every photo again","recheckfn","countProbe(id, \"client_photos\", 5, \"photo\", { since: currentReportingMonth(), what: \"new this month\" })","countProbe(id, \"client_photos\", 5, \"photo\")",1],
+ ["a Month-2 row's wait reads the onboarding record","portal","  const waitTasks = { ...m1Tasks, ...m2Tasks };","  const waitTasks = { ...m1Tasks };",1],
+ ["the nudge looks steps up in Month 1 only","stepemailfn","      const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === id);","      const sop = (PB.month1 || []).find((s) => s.id === id);",1],
+ ["the step-open email reaches Month 2","notifyopenfn","const M1 = PLAYBOOKS.month1 || [];","const M1 = [...(PLAYBOOKS.month1 || []), ...(PLAYBOOKS.month2plus || [])];",1],
+ ["portal: the customer cards show while it waits","portal",": reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",": reviewStep ? (false ? \"\" : reviewStepHtml(",1]]
