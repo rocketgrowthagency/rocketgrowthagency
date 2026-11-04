@@ -264,5 +264,33 @@
   "We only check these are yours. RGA never posts on your accounts or changes them.",
   "We check these.",
   1
+ ],
+ [
+  "a second Yes, it's mine is refused",
+  "socialfn",
+  "if (action === \"keep\" && list.some((x) => urlIs(x, b.url))) return again();",
+  "",
+  1
+ ],
+ [
+  "a second Not mine is refused",
+  "socialfn",
+  "if (action === \"not_mine\" && SP.notMineOf(task0).some((u) => SP.sameUrl(u, b.url)) && !list.some((x) => urlIs(x, b.url))) return again();",
+  "",
+  1
+ ],
+ [
+  "screen-only actions do the full round trip",
+  "portal",
+  "listEl._rerender(listEl._onboarding, undefined, undefined, undefined, true) : null); // screen-only",
+  "listEl._rerender(listEl._onboarding) : null); // screen-only",
+  1
+ ],
+ [
+  "a second press while saving goes through",
+  "portal",
+  "if (_socialBusy.has(clientId)) return;",
+  "",
+  1
  ]
 ]

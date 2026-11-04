@@ -86,6 +86,10 @@ if (T().status === "done") fail("the step finishes with a found profile still un
 if (DB.rec.data.tasks["m1.gbp.photos"].keep !== 1) fail("saving this step lost another step's record");
 x = await call({ action: "not_mine", url: "https://www.facebook.com/sparkselectric/" });
 if (x.s !== 200 || T().status !== "done" || SP.pendingOf(T()).length) fail(`"not mine" doesn't settle the step (${x.s} ${T().status})`);
+{ const w0 = DB.writes, n0 = SP.profilesOf(T()).length;
+  x = await call({ action: "keep", url: "https://www.youtube.com/@sparks" }); if (x.s !== 200 || !x.j.ok || !x.j.task || SP.profilesOf(T()).length !== n0) fail(`a second Yes, it's mine on a kept profile is refused or changes it (${x.s} ${x.j.error || ""})`);
+  x = await call({ action: "not_mine", url: "https://www.facebook.com/sparkselectric/" }); if (x.s !== 200 || !x.j.ok) fail(`a second Not mine on one already set aside is refused (${x.s} ${x.j.error || ""})`);
+  if (DB.writes !== w0) fail("a repeated answer writes again"); }
 await call({ action: "find", force: true }); if (SP.pendingOf(T()).some((p) => p.key === "facebook")) fail("a profile they said isn't theirs comes back");
 x = await call({ action: "add", url: "www.instagram.com/sparks" });
 if (x.s !== 200 || !SP.profilesOf(T()).some((p) => p.key === "instagram" && p.source === "client" && p.check.state === "couldnt")) fail(`an added profile isn't kept, or its login wall reads as open (${x.s})`);
@@ -193,6 +197,10 @@ say("done, no website", card({ status: "done", finder: { state: "no_website", at
 say("none", card({ status: "done", client_input: { none: { at: "2026-11-01T00:00:00Z" } } }), ["You don't use social media", "I do use social media"], ["RGA keeps these working"]);
 { const c = card({ client_input: { profiles: [kept("opens")] }, finder: { state: "read", found: [], at: "x" }, status: "done" }); if (vm.runInContext(`_socialChannel.get("c1")`, ctx) !== "@rga") fail("the channel they kept doesn't reach the video step"); void c; }
 if (!/vcChannel = _socialChannel\.get\(clientId\)/.test(P) || !/your channel, \$\{escapeHtml\(vcChannel\)\}/.test(P)) fail("the video step doesn't name the channel they kept");
+
+{ const h = P.slice(P.indexOf("document.addEventListener(\"click\", async (e) => {\n  const t = e.target && e.target.closest && e.target.closest(\"[data-social-keep]"), P.indexOf("/** A day tile's span"));
+  if (!/const redraw = \(\) => \(listEl\._rerender \? listEl\._rerender\(listEl\._onboarding, undefined, undefined, undefined, true\)/.test(h)) fail("Add / Change / Cancel / Edit / Close redraw with a server round trip (no local flag)");
+  if (!/if \(_socialBusy\.has\(clientId\)\) return;[^\n]*\n\s*_socialBusy\.add\(clientId\);\s*t\.classList\.add\("is-busy"\)/.test(h) || !/finally \{ t\.classList\.remove\("is-busy"\); _socialBusy\.delete\(clientId\); \}/.test(h)) fail("a second press is possible while an answer is saving and the screen is redrawing"); }
 
 // ── wiring + the words ───────────────────────────────────────────────────────────────────────
 if (!/"m1\.brand\.social_profiles": \(step, c\) => socialCard\(step, c\)/.test(P) || !/const CS_STEPS = new Set\(\[[^\]]*"m1\.brand\.social_profiles"/.test(P)) fail("the card isn't on the system");
