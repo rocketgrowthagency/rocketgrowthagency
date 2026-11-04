@@ -14,6 +14,8 @@ export const FILES = {
   portalmodefn: "netlify/functions/_portal-mode.js",
   adminportalmodefn: "netlify/functions/admin-client-portal-mode.js",
   admindetailssave: "netlify/functions/admin-gbp-details-save.js",
+  // managed_admin_ui_v1 (11-4): the shared hours editor the managed admin cards use
+  hourseditor: "shared/hours-editor.js",
   // kickoff_why_now_v1 (approved 11-01): the client's no to posts is kept; the card draws from the plan
   blogposts: "netlify/functions/portal-blog-posts.js",
   blogclientplan: "netlify/functions/_blog-client-plan.js",

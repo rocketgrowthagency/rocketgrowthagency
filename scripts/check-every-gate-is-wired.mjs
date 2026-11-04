@@ -455,6 +455,7 @@ const NOT_PREFLIGHT = {
   'check-step11-photo-labels.mjs': 'the WEBSITE repo\'s client step 11 photo tiles (approved client_step11_photo_labels_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
   'check-managed-portal-numbering.mjs': 'the WEBSITE repo\'s managed client portal numbering (approved client_portal_slim_v1, 11-4), read from files; not video preflight; daily-health-check.sh',
   'check-managed-surfaces-by-mode.mjs': 'the WEBSITE repo\'s managed-portal surfaces, RUN with fixtures (admin_managed_move_v1, 11-4); not video preflight; daily-health-check.sh',
+  'check-managed-admin-cards.mjs': 'the WEBSITE repo\'s managed admin cards (hours, attributes, kickoff answer), DRAWN and PRESSED in a real DOM (admin_managed_move_v1, 11-4); not video preflight; daily-health-check.sh',
   'check-client-portal-phases.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-phase1-get-started.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
   'check-phase2-set-up.mjs': 'the WEBSITE repo\'s client portal after the final review (approved 10-20) — not video preflight; daily-health-check.sh',
