@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-step11-photo-labels.mjs — 2026-11-04. Approved client_step11_photo_labels_v1 (m1.gbp.photos).
 //   · the shot's NAME is under every tile, always; the status (GS_LABEL words) is a chip ON the photo
-//   · "Saved, not showing" always says why, beside the photo; a reason the code can't read says "Google hasn't said why. RGA checks it"
+//   · "Saved, not showing" always says why, beside the photo; a reason the code can't read says "Google hasn't said why. Ask RGA if you want it looked into." (no promise RGA can't keep: no To do is raised)
 //   · Remove sits beside Change on every filled slot except the logo and cover, and asks first with the approved line
 // File-only. exit 0 = holds · 1 = regressed · 2 = can't tell
 import fs from "node:fs";
@@ -21,7 +21,7 @@ if (!hw) fail("hideWhy is gone");
 else {
   if (!/ph\.category === "logo" && shape && shape\.storefront === false/.test(hw[1])) fail("the logo reason isn't based on the hidden-logo rule (storefront === false)");
   if (!/Google only shows a logo for a business with a public address\. Yours serves customers where they are, so Google keeps the logo but doesn't show it\. Your cover photo shows instead\. Nothing to do\./.test(hw[1])) fail("the logo reason isn't the approved words");
-  if (!/Google hasn't said why\. RGA checks it\./.test(hw[1])) fail("a reason the code can't read doesn't say so");
+  if (!/Google hasn't said why\. Ask RGA if you want it looked into\./.test(hw[1])) fail("a reason the code can't read doesn't say so");
 }
 if (!/gs === "hide" \? `<div class="pm-turned is-rga pm-hide-why" data-hide-why><span>\$\{hideWhy\(p\)\}<\/span><\/div>`/.test(P)) fail("a Saved, not showing slot doesn't show its reason beside the photo");
 if (!/\$\{p10HiddenPh && !p10Short \? csNote\(hideWhy\(p10HiddenPh\)\) : ""\}/.test(P)) fail("the card doesn't show the reason for a hidden photo");
