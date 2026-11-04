@@ -117,5 +117,61 @@
   ".pm-step-row.mc-sub > .pm-step-row-head { display:none; }",
   ".pm-step-row.mc-sub > .pm-step-row-head { display:flex; }",
   1
+ ],
+ [
+  "tracking that isn't on offers Turn off",
+  "portal",
+  "const canAct = ({ r, i }) => !(/^m1\\.tracking\\./.test(r.step.id) && !(i.state === \"ok\" && i.text !== \"Off for now\"));",
+  "const canAct = () => true;",
+  1
+ ],
+ [
+  "the To do tab lists the steps inside step 3",
+  "portal",
+  "const mvFold = !mcOn ? mvRaw : (() => {",
+  "const mvFold = true ? mvRaw : (() => {",
+  1
+ ],
+ [
+  "the To do tab never shows step 3",
+  "portal",
+  "if (one) out.push({ ...one, step_id: MC_ID });",
+  "if (false) out.push({ ...one, step_id: MC_ID });",
+  1
+ ],
+ [
+  "the To do tab's Done lists RGA's cards",
+  "portal",
+  "out = mvDoneRaw.filter((x) => !mcCov.includes(x.id) && !mcIsCard(x.id));",
+  "out = mvDoneRaw.filter((x) => !mcCov.includes(x.id));",
+  1
+ ],
+ [
+  "the To do progress counts the server's 16",
+  "portal",
+  "(mcOn ? m1Steps.filter((x) => mvDone.some((d) => d.id === x.id)).length : m1c.done)",
+  "m1c.done",
+  1
+ ],
+ [
+  "RGA's change is not said on the card",
+  "portal",
+  "if (!RGA_CHANGE_STEPS.has(stepId) || !c || !c.at || !pcDate(c.at)) return \"\";",
+  "return \"\";",
+  1
+ ],
+ [
+  "RGA's change is not said in step 3",
+  "portal",
+  "const mcRga = (t) => (t && t.rga_change && t.rga_change.at && pcDate(t.rga_change.at) ?",
+  "const mcRga = (t) => (false ?",
+  1
+ ],
+ [
+  "an RGA change line is drawn for a step RGA never changed",
+  "portal",
+  "const c = ts && ts.rga_change;",
+  "const c = (ts && ts.rga_change) || { at: \"2026-11-04T18:00:00Z\" };",
+  1
  ]
 ]

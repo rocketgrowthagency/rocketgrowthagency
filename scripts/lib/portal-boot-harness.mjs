@@ -116,6 +116,7 @@ export async function bootPortal(scenario = {}, overrides = {}, siteRoot = SITE)
       else if (name === "admin-config") out = { ok: true, supabaseUrl: "https://fake.supabase.test", supabaseAnonKey: "anon" };
       else if (name === "portal-step-waits") out = { ok: true, rga: [] };
       else if (name === "portal-open-moves") out = { ok: true, moves: [], month1: { done: 0, total: 0 } };
+      else if (name === "portal-deliverables") out = { ok: true, deliverables: [], actions: [], items: [] };
       else if (name === "portal-thread") out = { ok: true, messages: [], threads: [] };
       else if (name === "portal-gbp-profile") out = body && scenario.now && scenario.now[body.step_id] !== undefined ? (scenario.now[body.step_id] === null ? { ok: false, error: "Google did not answer" } : { ok: true, now: scenario.now[body.step_id] }) : { ok: false, error: "no stub" };
       else if (name === "portal-gbp-verify") out = scenario.verify || { ok: true, facts: { verified: true }, verify: {} };
