@@ -17,7 +17,7 @@
  ["moved to Ongoing work reads Done (green)", "portal", ": fwMoved ? { text: \"Moved to Ongoing work\", cls: \"wait off\" }", ": fwMoved ? { text: \"Done\", cls: \"done\" }", 1],
  ["step 5 never offers to finish with fewer", "portal", "const fw5Open = FW5 && !isDone && need > 0 && FW5.reviewMinimumMet(asked);", "const fw5Open = false;", 1],
  ["the working part stays while the sheet is open", "portal", "row.querySelectorAll(\"[data-fw-work]\").forEach((w) => { w.hidden = open; });", "void 0;", 1],
- ["Finish doesn't spin", "portal", "t.classList.add(\"is-busy\"); t.setAttribute(\"aria-busy\", \"true\"); t.textContent = stepId === \"m1.call.close\"", "t.textContent = stepId === \"m1.call.close\"", 1],
+ ["Finish doesn't say Finishing… while it saves (the spin itself is shared/busy.js's, on every button)", "portal", ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : \"Finishing…\";", ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : t.textContent;", 1],
  ["a refusal says a generic line, not why", "portal", "msg.textContent = (err && err.said) || clientError(err,", "msg.textContent = clientError(err,", 1],
  ["a client who isn't managed gets the option", "portal", "const fwOn = () => photoMgOn() && !!globalThis.rgaSetupFewer;", "const fwOn = () => !!globalThis.rgaSetupFewer;", 1]
 ]

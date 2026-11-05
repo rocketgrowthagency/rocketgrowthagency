@@ -179,7 +179,7 @@ try {
       // Finish step 4: it spins, posts, redraws done from the answer, says so
       await openRow(h, PH); await press(h, PH, "[data-fw-open]");
       const busy = await h.page.evaluate((R) => new Promise((res) => { const b = document.querySelector(`${R} [data-fw-finish]`); b.click(); setTimeout(() => res({ busy: b.classList.contains("is-busy") || b.getAttribute("aria-busy") === "true", text: b.textContent }), 15); }), ROW(PH));
-      if (!busy.busy) fail(`${L}: Finish with ${AM.total} doesn't spin while it saves (${JSON.stringify(busy)})`);
+      if (!busy.busy || busy.text !== "Finishing…") fail(`${L}: Finish with ${AM.total} doesn't spin and say "Finishing…" while it saves (${JSON.stringify(busy)})`);
       await tick(1500); await settled(h, PH);
       if (!posted.length || posted[0].action !== "finish" || posted[0].step_id !== PH || posted[0].client_id !== CID) fail(`${L}: Finish didn't post portal-step-fewer { action: "finish", step_id: "${PH}" } (${JSON.stringify(posted)})`);
       await openRow(h, PH);
