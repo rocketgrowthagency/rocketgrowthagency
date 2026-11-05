@@ -15,7 +15,10 @@
 //   · 32: the told tick needs a tick AND who/when, is confirmed first, sends keys + the note, spins, and is a RECORD (it never calls the push); Put them on Google
 //     goes to admin-gbp-services-push, outward-confirmed; a refusal reads as not done.
 //   · 26: RGA logs the test; the inbox answer is shown as the client's; no control answers it for them.
-//   · WHO TAG: managed steps 19, 34, 35, 36, 51, 24 read "You"; 27, 28, 32, 26 keep "You + client"; self-serve/null unchanged; See-what-the-client-sees survives.
+//   · WHO TAG: managed steps 19, 32 (told-to-RGA ticks approved), 34, 35, 36, 51, 24 read "You"; 28, 26 keep "You + client", 27 keeps "Client";
+//     self-serve/null unchanged; See-what-the-client-sees survives.
+//   · ONE CARD: a managed 28 / 32 row draws no amber "client hasn't saved it" card beside its working card (mwOwns); a managed 26 draws no old
+//     form-tracking card (its counted lines are on the working card); for every other mode and step mwOwns is false.
 //   · SERVER admin-gbp-services-told: a stranger is refused; an unoffered key, an empty note and no keys are refused; it writes only the record, reads it back,
 //     never calls the Google write; clear works; the push adds the told services to the approved ones and still keeps what is on Google.
 //   · COPY: US English, no em dashes, no emoji, never the owner's first name.
@@ -29,7 +32,7 @@ import { JSDOM } from "jsdom";
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const OLD_REV = "d658cfce";
 const F = [], fail = (m) => F.push(m);
-let runs = 0;
+let runs = 0, PROOF = "";
 const must = (ok, msg) => { runs++; if (!ok) fail(msg); };
 const read = (r) => { try { return fs.readFileSync(path.join(SITE, r), "utf8"); } catch { console.error(`⚠️  INDETERMINATE: cannot read ${r}`); process.exit(2); } };
 const moved = (what) => { console.error(`⚠️  INDETERMINATE: ${what} moved (scripts/check-managed-admin-working-cards.mjs). Re-read it before trusting this gate.`); process.exit(2); };
@@ -47,6 +50,8 @@ const noComments = (t) => t.replace(/\/\*\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'
 const NEWMW = cut(AJS, "// ═══ MANAGED WORKING CARDS START", "// ═══ MANAGED WORKING CARDS END", "the MANAGED WORKING CARDS block");
 
 const CID = "11111111-1111-1111-1111-111111111111";
+// every step id the playbook has (month 1 + monthly), so the before/after proof covers steps the dispatcher does not name too
+const PLAYBOOK_IDS = (() => { const out = new Set(); (function walk(x) { if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === "object") { for (const k of ["id", "flowId"]) if (typeof x[k] === "string" && /^m[12]\./.test(x[k])) out.add(x[k]); Object.values(x).forEach(walk); } })(JSON.parse(read("data/playbooks/playbooks.json"))); return [...out]; })();
 const VS = "m1.gbp.verify", FS = "m1.gbp.business_facts", PS = "m1.strategy.keywords_locations", SS = "m1.gbp.services_products", TS = "m1.tracking.form_setup";
 const TITLES = { [VS]: "Ensure GBP is claimed + verified", [FS]: "Match business facts to Google", [PS]: "Lock the keyword plan", [SS]: "Add services + products", [TS]: "Set up form tracking" };
 const OPTIONS = [{ key: "g:job_type_id:drain_cleaning", label: "Drain cleaning", kind: "google" }, { key: "g:job_type_id:leak_repair", label: "Leak repair", kind: "google" }, { key: "f:sewer-lines", label: "Sewer lines", kind: "suggested" }, { key: "f:mine", label: "Already on Google", kind: "yours" }];
@@ -83,7 +88,7 @@ function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   w.eval([...new Set([...ROW.matchAll(/(?<![.\w"'])([A-Z][A-Z0-9_]{2,})\b(?!["'])/g)].map((m) => m[1]))].filter((n) => !/^(MG_|MW_|KIND)/.test(n)).map((n) => `var ${n} = "__stub_${n}__";`).join("\n"));
   w.eval(names.map((n) => `var ${n} = function ${n}() { return "[${n}]"; };`).join("\n"));
   w.eval(`var renderOnboardingChecklist = () => window.__redraw(); var reloadScopeAndRerender = async () => window.__redraw(); var mergeStepTasks = (t) => { Object.assign(state.onboardingData.tasks, t); };`);
-  w.eval(`${lifted}\nwindow.__x = { mgOn, rowStepCardsHtml, kindTag, stepKind, injectSeeClientLinks, clientStepWhere, KIND };`);
+  w.eval(`${lifted}\nwindow.__x = { mgOn, rowStepCardsHtml, kindTag, stepKind, injectSeeClientLinks, clientStepWhere, KIND, mwOwns: typeof mwOwns === "function" ? mwOwns : null };`);
   let which = VS;
   w.__redraw = () => { host.innerHTML = w.__x.rowStepCardsHtml({ flowId: which, clientLabel: "x", t: TITLES[which] || "" }, { task: st.onboardingData.tasks[which] }); };
   return { w, host, log, srv, st, dialogs, setAnswer: (v) => { dialogAnswer = v; }, show(id) { which = id; w.__redraw(); },
@@ -100,22 +105,25 @@ const track = (W) => allHtml.push(W.host.innerHTML);
 try {
   // ═══ 1 · THE BEFORE / AFTER PROOF: non-managed clients draw EXACTLY what they drew ═════════════════════════════════
   const MODES = [null, "self_serve", "bogus", "", "Managed"];
-  const STATES = [undefined, {}, { status: "done" }, { status: "pending", client_choice: "rga_sets_up" }, { status: "done", approval: { decision: "approved", approved_content: "displayName: Drain cleaning" }, google_push: { state: "on_google" } }, { status: "pending", client_flagged: { at: "2026-11-05T10:00:00Z", note: "x" }, test: { at: "2026-11-05T10:12:00Z", inbox: null } }];
-  const ids = [...new Set([...rowFn(OLDJS).matchAll(/id === "([a-z0-9_.]+)"/g)].map((m) => m[1]).concat([VS, FS, PS, SS, TS, "m1.gbp.optimize_categories", "m1.gbp.booking_link", "m1.brand.social_profiles", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.tracking.call_setup", "m1.review.first_5", "m1.nonsense"]))];
-  must(ids.length >= 25, `proof: too few step ids found in the dispatcher (${ids.length})`);
+  const STATES = [undefined, {}, { status: "done" }, { status: "pending", client_choice: "rga_sets_up" }, { status: "done", approval: { decision: "approved", approved_content: "displayName: Drain cleaning" }, google_push: { state: "on_google" } }, { status: "pending", client_flagged: { at: "2026-11-05T10:00:00Z", note: "x" }, test: { at: "2026-11-05T10:12:00Z", inbox: null } },
+    { status: "in_progress", client_choice: "allow", detected: { n30: 1, n90: 3, key_event: true }, test: { at: "2026-11-05T10:12:00Z", inbox: false }, told_services: { items: [{ key: "g:x", label: "Drain cleaning" }], told: "owner", at: "2026-11-05T10:00:00Z" }, outcome_data: { demand: [{ term: "plumber", volume: 10 }] }, client_ok_at: "2026-11-05T10:00:00Z" },
+    { status: "skipped", google_drift: { saved: { phone: "1" }, google: { phone: "2" } }, google_push: { state: "with_rga" } }];
+  const ids = [...new Set([...rowFn(OLDJS).matchAll(/id === "([a-z0-9_.]+)"/g)].map((m) => m[1]).concat([VS, FS, PS, SS, TS, "m1.gbp.optimize_categories", "m1.gbp.booking_link", "m1.brand.social_profiles", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.tracking.call_setup", "m1.review.first_5", "m1.nonsense"]).concat(PLAYBOOK_IDS))];
+  must(ids.length >= 90 && PLAYBOOK_IDS.length >= 80, `proof: too few step ids (${ids.length}; ${PLAYBOOK_IDS.length} from the playbook)`);
   let compared = 0, diff = 0, requests = 0;
   for (const mode of MODES) {
     const A = world({ mode, src: OLDJS }), B = world({ mode, src: AJS });
     for (const id of ids) for (const task of STATES) {
       A.st.onboardingData.tasks[id] = task; B.st.onboardingData.tasks[id] = task;
       const a = A.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task }), b = B.w.__x.rowStepCardsHtml({ flowId: id, t: "T" }, { task });
-      compared++; if (a !== b) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before`); }
+      compared++; if (a !== b) { diff++; if (diff <= 3) fail(`proof: mode ${JSON.stringify(mode)}, step ${id}, state ${JSON.stringify(task)} draws differently from before (if rowStepCardsHtml changed for another reason since ${OLD_REV}, re-pin OLD_REV after checking the change)`); }
     }
     await A.wait(); await B.wait(); requests += B.log.length;
   }
   must(diff === 0, `proof: ${diff} of ${compared} drawings differ from the pinned before`);
   must(compared === MODES.length * ids.length * STATES.length, "proof: not every combination was compared");
   must(requests === 0, `proof: a non-managed client's admin made ${requests} requests`);
+  PROOF = `${compared} drawings (${ids.length} step ids x ${STATES.length} task states x ${MODES.length} non-managed modes)`;
   // the who tag + See-what-the-client-sees block, every actor x clientFacing x step id, every non-managed mode
   { let tagDiff = 0, tagN = 0, seeDiff = 0, seeN = 0;
     for (const mode of [null, "self_serve", "bogus"]) {
@@ -130,12 +138,21 @@ try {
       }
     }
     must(tagDiff === 0 && tagN > 500, `proof: ${tagDiff} of ${tagN} who tags differ from before for self-serve / null clients`);
-    must(seeDiff === 0 && seeN > 20, `proof: ${seeDiff} of ${seeN} See-what-the-client-sees blocks differ from before for self-serve / null clients`); }
+    must(seeDiff === 0 && seeN > 20, `proof: ${seeDiff} of ${seeN} See-what-the-client-sees blocks differ from before for self-serve / null clients`);
+    PROOF += `, ${tagN} who tags, ${seeN} See-what-the-client-sees blocks`; }
 
   // ═══ 2 · MANAGED ONLY ═══════════════════════════════════════════════════════════════════════════════════════════
   for (const mode of [null, "self_serve", "bogus", "Managed", ""]) { const W = world({ mode }); for (const id of [VS, FS, PS, SS, TS]) must(!/data-mw-card/.test(W.w.__x.rowStepCardsHtml({ flowId: id }, { task: {} })), `mode ${JSON.stringify(mode)}: step ${id} draws a managed working card`); }
   { const W = world({ mode: "managed" }); for (const [id, k] of [[VS, "verify"], [FS, "facts"], [PS, "plan"], [SS, "svc"], [TS, "form"]]) must(W.w.__x.rowStepCardsHtml({ flowId: id }, { task: {} }).includes(`data-mw-card="${k}"`), `managed: step ${id} has no working card`);
-    must(W.w.__x.rowStepCardsHtml({ flowId: "m1.review.first_5" }, { task: {} }) === "[r5AdminHtml]", "managed: another step's card changed"); await W.wait(); }
+    must(W.w.__x.rowStepCardsHtml({ flowId: "m1.review.first_5" }, { task: {} }) === "[r5AdminHtml]", "managed: another step's card changed");
+    must(!W.w.__x.rowStepCardsHtml({ flowId: TS }, { task: {} }).includes("[formTrackingAdminHtml]"), "managed: step 26 draws the old form-tracking card beside its working card (two Log buttons)");
+    must(W.w.__x.mwOwns(FS) && W.w.__x.mwOwns(SS) && !W.w.__x.mwOwns(VS) && !W.w.__x.mwOwns("m1.gbp.booking_link") && !W.w.__x.mwOwns("m1.gbp.hours_attributes"), "managed: mwOwns isn't exactly 28 and 32 (36 keeps its booking card, which is RGA's working card)");
+    await W.wait(); }
+  { const S2 = world({ mode: "self_serve" }); must(S2.w.__x.rowStepCardsHtml({ flowId: TS }, { task: {} }) === "[formTrackingAdminHtml]", "self-serve: step 26 lost its form-tracking card"); }
+  for (const mode of [null, "self_serve", "bogus", "", "Managed"]) { const W = world({ mode }); for (const id of ids) must(W.w.__x.mwOwns(id) === false, `mode ${JSON.stringify(mode)}: mwOwns(${id}) is true, so the amber card would vanish for a non-managed client`); }
+  { const row = AJS.slice(AJS.indexOf("${waitedOnHtml(o, s.task)}${rowLiveCardsHtml(o, s)}${gsQ")); const line = row.slice(0, row.indexOf("\n"));
+    must(/!mgOwns\(o\.flowId\) && !mwOwns\(o\.flowId\) \? gNotSavedHtml\(o\.flowId, o\)/.test(line), "row: the queued row's amber card isn't held back by mwOwns (or the line moved)");
+    must(line.replace(" && !mwOwns(o.flowId)", "") === OLDJS.slice(OLDJS.indexOf("${waitedOnHtml(o, s.task)}${rowLiveCardsHtml(o, s)}${gsQ")).split("\n")[0], "row: the queued row's line changed in more than the mwOwns guard"); }
 
   // ═══ 3 · STEP 27 · VERIFY ═══════════════════════════════════════════════════════════════════════════════════════
   { const W = world({ tasks: { [VS]: { status: "pending" } } }); W.show(VS);
@@ -152,9 +169,11 @@ try {
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: true, facts: { verified: true }, verify: { options: [] } }]; W.show(VS); await W.wait();
     must(/Verified/.test(W.text()) && !W.q('[data-step-nudge]'), "27: verified isn't drawn as verified with nothing to ask"); must(W.q(".ob-zc-pill").textContent === "Verified", "27: the pill of a verified profile doesn't say Verified"); }
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: true, facts: {}, verify: {} }]; W.show(VS); await W.wait();
-    must(!/Not verified/.test(W.text()) && /did not say whether/.test(W.text()), "27: a missing answer is drawn as 'not verified' (absence must not read as a value)"); }
+    must(!/Not verified/.test(W.text()) && /did not say whether/.test(W.text()), "27: a missing answer is drawn as 'not verified' (absence must not read as a value)");
+    must(W.q(".ob-zc-pill").textContent === "Not known", `27: the pill of an unknown status says ${W.q(".ob-zc-pill").textContent}, not Not known`); }
   { const W = world({ tasks: {} }); W.srv["/portal-gbp-verify"] = () => [200, { ok: false, who: "rga", error: "We couldn't reach your Google profile just now." }]; W.show(VS); await W.wait();
-    must(/couldn't reach/.test(W.text()) && !!W.q("[data-mw-retry]") && !/Verified/.test(W.text().replace(/Ensure GBP is claimed \+ verified/, "")), "27: a failed read isn't shown with Try again"); }
+    must(/couldn't reach/.test(W.text()) && !!W.q("[data-mw-retry]") && !/Verified/.test(W.text().replace(/Ensure GBP is claimed \+ verified/, "")), "27: a failed read isn't shown with Try again");
+    must(W.q(".ob-zc-pill").textContent === "Couldn't read", `27: the pill of a failed read says ${W.q(".ob-zc-pill").textContent}, not Couldn't read`); }
 
   // ═══ 4 · STEP 28 · BUSINESS FACTS ═══════════════════════════════════════════════════════════════════════════════
   const DRIFT = [{ field: "main_category", saved: "Plumber", google: "Water heater installation" }, { field: "phone", saved: "(555) 010-2288", google: "(555) 010-2299" }, { field: "name", saved: "Acme Plumbing LLC", google: "Acme Plumbing" }];
@@ -186,6 +205,12 @@ try {
     must(writesOf(W, /core-change/).some((c) => c.body.action === "ask_differs"), "28: Ask which is right didn't send ask_differs"); }
   { const W = world({ tasks: {} }); W.srv["/core-change"] = () => [200, { ok: true, items: [], drift: [] }]; W.show(FS); await W.wait();
     must(!W.q("[data-mw-propose]") && /recorded no difference/.test(W.text()), "28: with no difference there is still something to propose, or the claim is stronger than the record"); }
+  // an approved change that a person must make in Google is RGA's move, never "waiting on the client"
+  for (const [status, re, pill] of [["with_rga", /A person changes this one in Google/, "Your move"], ["needs_rga", /did not go on Google: Google said no/, "Your move"], ["waiting", /The nightly check sends it to Google/, "Approved"], ["approved", /being sent to Google/, "Approved"], ["asked", /Waiting: the client decides on/, "Waiting on the client"]]) {
+    const W = world({ tasks: {} }); W.srv["/core-change"] = () => [200, { ok: true, items: [{ id: "a", kind: "proposal", field: "phone", to: "(555) 010-2288", status, said: "Google said no" }], drift: [DRIFT[1]] }]; W.show(FS); await W.wait();
+    must(re.test(W.text()) && !W.q('[data-mw-propose="phone"]'), `28: an open question in state ${status} isn't said as the record has it, or offers a second Propose`);
+    must(W.q(".ob-zc-pill").textContent === pill, `28: the pill for an open ${status} question says ${W.q(".ob-zc-pill").textContent}, not ${pill}`);
+    if (status !== "asked") must(!/Waiting: the client/.test(W.text()), `28: an approved (${status}) change reads as waiting on the client`); }
 
   // ═══ 5 · STEP 19 · KEYWORD PLAN ═════════════════════════════════════════════════════════════════════════════════
   { const W = world({ tasks: { [PS]: { status: "done", outcome_data: { demand: [{ term: "emergency plumber springfield", volume: 880 }, { term: "water heater repair", volume: 590 }] }, client_flagged: { at: "2026-11-06T10:00:00Z", note: "I want drain cleaning first" } } } });
@@ -228,9 +253,11 @@ try {
     must(/Nothing is on Google yet/.test(W.text()), "32: the told tick doesn't say nothing is on Google yet");
     W.setAnswer(false); W.click(W.q("[data-mw-svcpush]")); await W.wait();
     must(writesOf(W, /services-push/).length === 0 && W.dialogs[W.dialogs.length - 1].tone === "outward", "32: Put them on Google isn't an outward confirm, or sent though RGA said no");
+    W.st.onboardingData.tasks["m1.other.kept"] = { status: "done" };
     W.setAnswer(true); W.click(W.q("[data-mw-svcpush]")); await W.wait(4);
     { const w = writesOf(W, /services-push/); must(w.length === 1 && w[0].body.client_id === CID && !w[0].body.dry, "32: Put them on Google isn't one real push for this client"); must(w[0].busy.includes("data-mw-svcpush"), "32: the push doesn't spin"); }
     must(/Put on Google and read back: 1 of 2/.test(W.text()), "32: the result isn't drawn from the push's read-back rows");
+    must(W.st.onboardingData.tasks["m1.other.kept"] && W.st.onboardingData.tasks[SS].google_push.state === "on_google", "32: the push's reply replaced the other steps' records instead of merging this one");
     W.click(W.q("[data-mw-untold]")); await W.wait(4);
     must(writesOf(W, /services-told/).some((c) => c.body.action === "clear"), "32: Take the told ticks back didn't send clear"); }
   { const W = world({ tasks: {} }); W.srv["/admin-gbp-services-told"] = () => [200, { ok: true, options: OPTIONS, on: [], approved: ["Water heaters"], told: null }];
@@ -252,16 +279,24 @@ try {
     must(/Only the client can see their inbox/.test(W.text()) && W.q("[data-mw-formlog]").disabled, "26: after a test the inbox question isn't the client's, or a second test is offered while waiting");
     W.st.onboardingData.tasks[TS].test.inbox = false; W.w.__redraw();
     must(/did NOT reach/.test(W.text()) && !W.q("[data-mw-formlog]").disabled, "26: a No from the client doesn't send RGA back to log a new test");
-    W.st.onboardingData.tasks[TS].test.inbox = true; W.w.__redraw(); must(/reached their inbox/.test(W.text()), "26: a Yes isn't drawn"); }
+    W.st.onboardingData.tasks[TS].test.inbox = true; W.w.__redraw(); must(/reached their inbox/.test(W.text()), "26: a Yes isn't drawn");
+    must(!/Shows in Analytics/.test(W.text()), "26: the card claims the test shows in Analytics (nothing read says so)"); }
+  // the old card's record lines are on the one card: the counts, the key event, the allowance; absence is never a count
+  { const W = world({ tasks: { [TS]: { status: "pending", client_choice: "allow", client_choice_at: "2026-11-05T10:00:00Z", detected: { n30: 2, n90: 5, key_event: false, events: ["generate_lead"] } } } }); W.show(TS);
+    must(/2 in 30 days, 5 in 90 days/.test(W.text()) && /Not a key event yet/.test(W.text()) && /The client allowed the tag/.test(W.text()), "26: the counts, the key event or the allowance from the record aren't on the managed card");
+    must(!W.q("[data-ob-ft-test]"), "26: the old I-sent-a-test button is on the managed card (two ways to log one test)"); }
+  { const W = world({ tasks: { [TS]: { status: "pending" } } }); W.show(TS);
+    must(/Nothing is counted yet/.test(W.text()) && !/\b0 in 30 days/.test(W.text()) && /No allowance for the tag is on the record/.test(W.text()), "26: no reading is drawn as a count of 0, or the missing allowance isn't said"); }
 
   // ═══ 8 · THE WHO TAG AND THE CHIP ═══════════════════════════════════════════════════════════════════════════════
   { const M = world({ mode: "managed" }), S = world({ mode: "self_serve" });
     const both = (id, extra = {}) => ({ flowId: id, actor: "both", clientFacing: true, ...extra });
     const label = (W, o) => (W.w.__x.kindTag(o).match(/>([^<]+)</) || [])[1];
-    for (const id of ["m1.strategy.keywords_locations", "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.brand.social_profiles", "m1.tracking.call_setup"]) {
+    for (const id of ["m1.strategy.keywords_locations", SS, "m1.gbp.hours_attributes", "m1.gbp.attributes", "m1.gbp.booking_link", "m1.brand.social_profiles", "m1.tracking.call_setup"]) {
       must(label(M, both(id)) === "You", `tag: managed ${id} doesn't read You`); must(label(S, both(id)) === "You + client", `tag: self-serve ${id} changed`); }
-    for (const id of [VS, FS, SS, TS]) must(label(M, both(id)) === "You + client", `tag: managed ${id} lost You + client (the client still acts)`);
+    for (const id of [FS, TS]) must(label(M, both(id)) === "You + client", `tag: managed ${id} lost You + client (the client still acts)`);
     must(label(M, { flowId: "m1.strategy.keywords_locations", actor: "client", clientFacing: true }) === "Client", "tag: a client-only step was turned into You");
+    must(label(M, { flowId: VS, actor: "client", clientFacing: true }) === "Client", "tag: managed 27 (only the client gets the code) no longer reads Client");
     const chip = (W, o) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${o.flowId}"></div>`; W.w.__x.injectSeeClientLinks(W.host, [{ obj: o }], (x) => W.w.__x.stepKind(x)); return W.host.innerHTML; };
     const h1 = chip(M, both(VS, { managedStepNo: 3, managedRole: "check" })), h2 = chip(M, both("m1.brand.social_profiles", { managedStepNo: null, managedRole: "card" })), h3 = chip(M, both("m1.brand.photos", { managedStepNo: 4, managedRole: "step" }));
     must(/Client sees: a row in step 3, Check what we found/.test(h1), `chip: a check step doesn't say a row in step 3 (${h1})`);
@@ -318,4 +353,4 @@ try {
 } catch (e) { fail(`the cards threw while being drawn or pressed (a card that throws is a broken card): ${String(e && e.stack || e).slice(0, 600)}`); }
 
 if (F.length) { console.error(`❌ managed admin working cards BROKEN (${F.length} of ${runs} checks):`); for (const m of F) console.error("  · " + m); process.exit(1); }
-console.log(`✅ managed admin working cards hold: ${runs} checks run (27 verify, 28 facts, 19 plan, 32 services, 26 form drawn and pressed; non-managed byte-identical to ${OLD_REV}; who tag + chip; the services-told server; copy)`);
+console.log(`✅ managed admin working cards hold: ${runs} checks run (27 verify, 28 facts, 19 plan, 32 services, 26 form drawn and pressed; non-managed byte-identical to ${OLD_REV}: ${PROOF}; who tag + chip; the services-told server; copy)`);
