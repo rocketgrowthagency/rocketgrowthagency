@@ -121,8 +121,8 @@
  [
   "the open step draws a second shot",
   "portal",
-  "data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
-  "data-p10-shot=\"${n}\"${n === sel || n === order[0] ? \"\" : \" hidden\"}>",
+  "data-p10-shot=\"${n}\"${n === pick ? \"\" : \" hidden\"}>",
+  "data-p10-shot=\"${n}\"${n === pick || n === order[0] ? \"\" : \" hidden\"}>",
   1
  ]
 ]

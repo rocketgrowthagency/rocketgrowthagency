@@ -100,8 +100,8 @@
  [
   "a system step loses Questions about this step? Ask RGA",
   "portal",
-  "${row}<details class=\"pm-ask pm-cs-ask\"><summary>Questions about this step? <b>Ask RGA ›</b></summary>${form}</details></div>`;",
-  "${row}</div>`;",
+  "${rowSay}<details class=\"pm-ask pm-cs-ask\"><summary>Questions about this step? <b>Ask RGA ›</b></summary>${form}</details></div>`;",
+  "${rowSay}</div>`;",
   1
  ],
  [

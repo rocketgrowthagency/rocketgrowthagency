@@ -1,0 +1,121 @@
+[
+  [
+    "a self-serve client gets the managed step 4",
+    "portal",
+    "const photoMgOn = () => typeof _portalMode !== \"undefined\" && !!globalThis.rgaPortalMode && globalThis.rgaPortalMode.isManaged(_portalMode);",
+    "const photoMgOn = () => true;",
+    1
+  ],
+  [
+    "the logo stays in the 20 for a business with no public address",
+    "portal",
+    "const rest = items.filter((it) => it && it.google !== \"PROFILE\");",
+    "const rest = items.filter((it) => it);",
+    1
+  ],
+  [
+    "a storefront loses its logo shot too",
+    "portal",
+    "!items.length || shape.storefront !== false || !items.some(",
+    "!items.length || !items.some(",
+    1
+  ],
+  [
+    "the extra shot goes to the kind with the fewest shots",
+    "portal",
+    "sort((a, b) => b[1].free - a[1].free || b[1].all - a[1].all || a[1].at - b[1].at)[0];",
+    "sort((a, b) => a[1].free - b[1].free || a[1].all - b[1].all || a[1].at - b[1].at)[0];",
+    1
+  ],
+  [
+    "the client reads the stored shot numbers",
+    "portal",
+    "const dno = (n) => (dnOf && dnOf.get(Number(n))) || Number(n);",
+    "const dno = (n) => Number(n);",
+    1
+  ],
+  [
+    "every tile shows at once",
+    "portal",
+    "const mgHid = (gi, i) => mgShow === \"3\" && (gi !== mgCur || i < mgWin[0] || i >= mgWin[1]);",
+    "const mgHid = (gi, i) => false;",
+    1
+  ],
+  [
+    "it opens on the first empty shot, not At work",
+    "portal",
+    "(goesToCustomers && mgFree.find((it) => it.google === \"AT_WORK\")) || mgFree[0]",
+    "mgFree[0]",
+    1
+  ],
+  [
+    "+ N more does nothing",
+    "portal",
+    "  if (!host || !host.classList.contains(\"is-mg\")) return;\n",
+    "  if (!host || host) return;\n",
+    1
+  ],
+  [
+    "the words under the tiles lose See all 20 shots",
+    "portal",
+    "all = `<button type=\"button\" class=\"pm-linkbtn\" data-p10-all>See all ${Number(total)} shots</button>`",
+    "all = ``",
+    1
+  ],
+  [
+    "a line that disagrees with the band is drawn",
+    "portal",
+    "    if (sum > d.n) return \"\";\n",
+    "    if (sum > d.n + 99) return \"\";\n    if (counted.has(\"COVER\")) counted.get(\"COVER\").n += 1;\n",
+    1
+  ],
+  [
+    "the lines are drawn from a failed read of Google's list",
+    "portal",
+    "if (!mg || !p10 || !measured || !d0 || d0.source !== \"google_profile\" || !Array.isArray(d0.items)) return \"\";",
+    "if (!mg || !p10 || !measured || !d0) return \"\";",
+    1
+  ],
+  [
+    "the hidden logo says Saved, not showing again",
+    "portal",
+    "out.push(line(\"over\", \"Your logo\", \"Google hides it\",",
+    "out.push(line(\"over\", \"Your logo\", \"Saved, not showing\",",
+    1
+  ],
+  [
+    "the old logo copy keeps its own card",
+    "portal",
+    "const keptCard = p10Show && !mg ? sl.kept.map(",
+    "const keptCard = p10Show ? sl.kept.map(",
+    1
+  ],
+  [
+    "a lost connection says Google asked us to change something",
+    "portal",
+    ": p && p.publish_state === \"failed\" && mg ? `<div class=\"pm-turned is-rga\"><span><b>Google didn't take it yet.</b>",
+    ": p && p.publish_state === \"failed\" && mg ? `<div class=\"pm-turned is-rga\"><span><b>Google asked us to change something.</b>",
+    1
+  ],
+  [
+    "the answered team question stays at the top",
+    "portal",
+    "const toolbar = mg && p10 ? `${ts ? \"\" : toolbar0}${mgLines}` : toolbar0;",
+    "const toolbar = mg && p10 ? `${toolbar0}${mgLines}` : toolbar0;",
+    1
+  ],
+  [
+    "a row of RGA's emails still reads Messages",
+    "portal",
+    "row.replace(\"<b>Messages · \", \"<b>Emails from RGA · \")",
+    "row",
+    1
+  ],
+  [
+    "tiles squeeze below their labels on a phone (the spacing fix undone)",
+    "portalcss",
+    ".pm-cs .pm-p10.is-mg .pm-p10-tiles { grid-template-columns:repeat(auto-fill, minmax(max(96px, calc((100% - 32px) / 5)), 1fr)); }\n.pm-cs .pm-p10.is-mg[data-p10-show=\"3\"] .pm-p10-tiles { grid-template-columns:repeat(auto-fill, minmax(max(96px, calc((100% - 16px) / 3)), 1fr)); }",
+    ".pm-cs .pm-p10.is-mg .pm-p10-tiles { grid-template-columns:repeat(5, minmax(0, 1fr)); }\n.pm-cs .pm-p10.is-mg[data-p10-show=\"3\"] .pm-p10-tiles { grid-template-columns:repeat(5, minmax(0, 1fr)); }",
+    1
+  ]
+]
