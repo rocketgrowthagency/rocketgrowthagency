@@ -80,7 +80,7 @@ if (!/const m1 = month2Only \? \[\] : playbook\.month1\.filter\(TODO\)/.test(pco
 if (!/\.sort\(\(a, b\) => ongoingRank\(a\.id\) - ongoingRank\(b\.id\)\)/.test(pcode)) fail("the Month-2 rows aren't in the approved card order");
 
 // ── 3 · each card is open, shows its period, holds its form ──
-if (!/const expanded = month2Only \|\| step\.id === openStepId;/.test(pcode)) fail("Month-2 cards collapse like Setup's accordion (approved: each card open)");
+if (!/: month2Only \|\| step\.id === openStepId;/.test(pcode)) fail("Month-2 cards collapse like Setup's accordion (approved: each card open)");
 // 🔄 batch 3 (client_card_system_v1): the period is a pill the card's own state picks (OG_CARD); only a row off the system keeps the old line
 if (!/\$\{month2Only && !csRow \? `<span class="pm-step-period">\$\{escapeHtml\(ongoingPeriod\(step\)\)\}<\/span>` : ""\}/.test(pcode) || !/\[ogMonth\(\), "wait off"\]/.test(pcode) || !/\[ogQuarter\(\), "wait off"\]/.test(pcode)) fail("a Month-2 card doesn't show its period");
 if (!/: month2Only && \(step\.clientForm === "photo_upload" \|\| step\.clientForm === "customer_list"\) \? ""/.test(pcode)) fail("a Month-2 card still jumps elsewhere for its photo upload / customer list");

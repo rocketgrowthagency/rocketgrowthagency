@@ -16,8 +16,8 @@
  [
   "the cards collapse into an accordion",
   "portal",
-  "const expanded = month2Only || step.id === openStepId;",
-  "const expanded = step.id === openStepId;",
+  "      : month2Only || step.id === openStepId;",
+  "      : step.id === openStepId;",
   1
  ],
  [

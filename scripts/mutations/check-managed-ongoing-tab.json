@@ -22,7 +22,7 @@
  ["a No jobs answer doesn't answer the period", "portal", "const marked = (s) => st.noJobs.find((m) => m && Date.parse(m.start) === s) || null;", "const marked = (s) => null;", 1],
  ["Pause is never drawn as paused", "portal", "const paused = st.pause && Date.parse(st.pause.until) > now ? st.pause : null;", "const paused = null;", 1],
  ["a stopped customer typed again is saved", "portal", "if (leftOff.length) for (let i = customers.length - 1; i >= 0; i--)", "if (false) for (let i = customers.length - 1; i >= 0; i--)", 1],
- ["a stopped_before request draws as a normal request", "portal", "    if (r.stopped_before) return pmManaged() ?", "    if (false) return pmManaged() ?", 1],
+ ["a stopped_before request draws as a normal request", "portal", "    if (r.stopped_before) return line(\"you\",", "    if (false) return line(\"you\",", 1],
  ["step 10 says Optional again", "portal", "  return { tone: \"wait\", noHow: true, pills: [[\"Suggested\", \"wait off\"], mp],", "  return { tone: \"wait\", noHow: true, pills: [[\"Optional\", \"wait off\"], mp],", 1],
  ["step 10 promises the same day again", "portal", "ogLi(\"rga\", \"<b>RGA checks each one</b>\", \"The good ones go on your Google profile. You'll see each one here when it's on.\")", "ogLi(\"rga\", \"<b>RGA checks each, usually the same day</b>\", \"Then they go on your Google profile.\")", 1],
  ["the managed step 10 card is never used", "portal", "    if (pmManaged()) return ogPhotosManaged(step, c);", "", 1],
@@ -39,5 +39,17 @@
  ["the sender stops using the picker", "monthlyreport", "  const pick = pickReportRecords(recs, month);", "  const pick = { current: (recs || [])[0], prior: (recs || [])[1] || {} };", 1],
  ["a stopped customer can be marked sent again", "reviewreqfn", "|| (MARK === \"sent\" && stoppedBefore(customers[i], stoppedElsewhere, listId, i))", "", 1],
  ["the server writes a request for a stopped contact", "reviewreqfn", "  return s && !(s.list_id === listId && s.index === i) ? s : null;", "  return null;", 1],
- ["a pause can last a year", "cadencefn", "const PAUSE_MAX_DAYS = 92;", "const PAUSE_MAX_DAYS = 365;", 1]
+ ["a pause can last a year", "cadencefn", "const PAUSE_MAX_DAYS = 92;", "const PAUSE_MAX_DAYS = 365;", 1],
+ ["the managed Monthly rows draw open again (no fold)", "portal", "    const expanded = month2Only && pmManaged()\n", "    const expanded = month2Only && false\n", 1],
+ ["a late step 8 (missed last list) stays folded", "portal", "return { tone: \"you\", noHow: true, urgent: true, title, pills: [[\"Your turn · missed last list\", \"you\"]],", "return { tone: \"you\", noHow: true, title, pills: [[\"Your turn · missed last list\", \"you\"]],", 1],
+ ["a row the client opened snaps shut on a redraw", "portal", "_ogFold.get(clientId).set(stepId, nowOpen); }", "}", 1],
+ ["the rows inside the story and video folds draw folded", "portal", "data-og-video-fold hidden>${opened(rowHtml(video))}</div>", "data-og-video-fold hidden>${rowHtml(video)}</div>", 1],
+ ["step 8's requests use today's avatar rows again", "portal", "h.hasAttribute(\"data-rv-og\") ? ogReqRowsHtml(data, h.hasAttribute(\"data-rv-ev\"))", "false ? ogReqRowsHtml(data, h.hasAttribute(\"data-rv-ev\"))", 1],
+ ["the remind controls show on an ask whose reminder isn't due", "portal", "      const moves = canRemind ? `<span class=\"pm-og-mv\">", "      const moves = true ? `<span class=\"pm-og-mv\">", 1],
+ ["Read the reminder is dropped", "portal", "        + `<details class=\"pm-og-rd\"><summary>Read the reminder</summary><span>${escapeHtml(r.reminder)}</span></details>` : \"\";", "        + \"\" : \"\";", 1],
+ ["Send it opens nothing", "portal", "p.hidden = !willOpen;", "", 1],
+ ["a done row loses the day it was asked", "portal", "return done ? line(\"ok\", `<b>${nm}</b> · asked${after}`, \"\", dt(r.marked_at),", "return done ? line(\"ok\", `<b>${nm}</b> · asked${after}`, \"\", \"\",", 1],
+ ["a reviewed row loses \"you said so\"", "portal", "r.reviewed_at ? `you said so ${day(r.reviewed_at)}` : \"\"", "\"\"", 1],
+ ["the request lines lose the mockup's spacing", "portalcss", ".pm-og-li { display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:11px 16px;", ".pm-og-li { display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:6px 10px;", 1],
+ ["the server stops returning the day of the client's word", "reviewreqfn", "reviewed_at: c.reviewed_mark_at || null, stopped_at: c.stopped_at || null,", "", 1]
 ]
