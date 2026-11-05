@@ -16,7 +16,7 @@
  [
   "a blank field is filled with words",
   "portal",
-  "blank = `<span class=\"mc-blank\">Not found</span>`",
+  "blank = `<span class=\"mc-blank\">Not on Google</span>`",
   "blank = `<b>Not provided</b>`",
   1
  ],
@@ -107,8 +107,8 @@
  [
   "a finished step's reach is guessed",
   "portal",
-  "a.come === false || ci.come === \"no\" ? false : null;",
-  "a.come === false || ci.come === \"no\" ? false : false;",
+  "travels to its customers.\" } : { v: blank, sub: \"\" });",
+  "travels to its customers.\" } : { v: \"<b>You go to your customers</b>\", sub: \"\" });",
   1
  ],
  [
@@ -172,6 +172,209 @@
   "portal",
   "const c = ts && ts.rga_change;",
   "const c = (ts && ts.rga_change) || { at: \"2026-11-04T18:00:00Z\" };",
+  1
+ ],
+ [
+  "step 2 draws the posts card again for a managed client",
+  "portal",
+  "(postsInGroup ? \"\" : blogPlanHostHtml(clientId))",
+  "blogPlanHostHtml(clientId)",
+  1
+ ],
+ [
+  "managed step 2's ask says Change something again",
+  "portal",
+  "? \"Ask for a change\" : \"Change something\")",
+  "? \"Change something\" : \"Change something\")",
+  1
+ ],
+ [
+  "the sixth RGA line is not drawn",
+  "portal",
+  ", posts: true }) : \"\";",
+  ", posts: false }) : \"\";",
+  1
+ ],
+ [
+  "the posts plan shows every page, no fold",
+  "portal",
+  "fold = pre.length > 4 ? pre.slice(3) : []",
+  "fold = []",
+  1
+ ],
+ [
+  "the posts plan loses Say no to posts",
+  "portal",
+  ": \"\"}${act}</div>`;",
+  ": \"\"}</div>`;",
+  1
+ ],
+ [
+  "the posts card's reason runs into Not yet again (the kit)",
+  "clientkit",
+  "<small class=\"pm-cs-why\">",
+  "<small>",
+  1
+ ],
+ [
+  "the posts card's reason runs into Not yet again (the style)",
+  "portalcss",
+  ".pm-cs-ev small.pm-cs-why { display:block;",
+  ".pm-cs-ev small.pm-cs-why { display:inline;",
+  1
+ ],
+ [
+  "a not-on-Google service isn't dashed",
+  "portalcss",
+  "border-style:dashed; border-color:var(--state-other,#1c44bd)",
+  "border-style:solid; border-color:var(--state-other,#1c44bd)",
+  1
+ ],
+ [
+  "step 3 goes back to its old title",
+  "clientstepsjson",
+  "\"clientLabel\": \"Check your business details on Google\",",
+  "\"clientLabel\": \"Check what we found\",",
+  1
+ ],
+ [
+  "the areas are cut to three again",
+  "portal",
+  "const areaVal = (list) => (list.length ? tags(list.map((name) => ({ name }))) : blank);",
+  "const areaVal = (list) => (list.length ? tags(list.slice(0, 3).map((name) => ({ name }))) : blank);",
+  1
+ ],
+ [
+  "the no-public-address line is gone",
+  "portal",
+  "sub: \"No public address on Google, as for every business that travels to its customers.\" }",
+  "sub: \"\" }",
+  1
+ ],
+ [
+  "a finished step 3 row stops reading Google",
+  "portal",
+  "if (mgd) mcReadSettled(clientId, onboarding?.data?.tasks || {});",
+  "if (false) mcReadSettled(clientId, onboarding?.data?.tasks || {});",
+  1
+ ],
+ [
+  "a finished step 3 row reads the open forms' answers",
+  "portal",
+  "const n = doneOf(MC_STEP.facts), gp = f.google_push || {}",
+  "const n = nowOf(MC_STEP.facts), gp = f.google_push || {}",
+  1
+ ],
+ [
+  "the services count drops the M",
+  "portal",
+  "P(`${on} of ${ap.length} on Google`, on < ap.length ? \"rga\" : \"ok\")",
+  "P(`${ap.length} on Google`, \"ok\")",
+  1
+ ],
+ [
+  "every approved service reads as on Google",
+  "portal",
+  "tags(ap.map((x) => ({ name: x.name, off: !x.on })))",
+  "tags(ap.map((x) => ({ name: x.name, off: false })))",
+  1
+ ],
+ [
+  "the client's answer loses its date",
+  "portal",
+  "? `You said so ${esc(pcDate(said))}.` : \"\")",
+  "? \"\" : \"\")",
+  1
+ ],
+ [
+  "finished hours say Confirmed again",
+  "portal",
+  "saved ? (gTxt === saved ? P(\"Matches Google\", \"ok\")",
+  "saved ? (gTxt === saved ? P(\"Confirmed\", \"ok\")",
+  1
+ ],
+ [
+  "a finished area list that differs is called a match",
+  "portal",
+  ": sameSet(ga, ra) ? P(`${ga.length} · Matches Google`, \"ok\") : res(false);",
+  ": P(`${ga.length} · Matches Google`, \"ok\");",
+  1
+ ],
+ [
+  "the booking line loses since when",
+  "portal",
+  "sub: gp.state === \"on_google\" && on(gp.at) ? `On Google since ${on(gp.at)}` : \"\"",
+  "sub: \"\"",
+  1
+ ],
+ [
+  "the booking line goes back to the typed answer only",
+  "portal",
+  "const link = (gp.state === \"on_google\" && gp.link) || (t.rga_put && t.rga_put.url) || typed;",
+  "const link = typed;",
+  1
+ ],
+ [
+  "a skipped call tracking step says RGA sets this up",
+  "portal",
+  "if (t.status === \"skipped\" || t.client_choice === \"skip\") {",
+  "if (t.client_choice === \"skip\") {",
+  1
+ ],
+ [
+  "finished form tracking says RGA sets this up",
+  "portal",
+  "if (t.status === \"done\" || d.verdict === \"confirmed\") return { state: \"ok\", text: \"Counting your website form\"",
+  "if (d.verdict === \"confirmed\") return { state: \"ok\", text: \"Counting your website form\"",
+  1
+ ],
+ [
+  "the social line loses its link check",
+  "portal",
+  "(ps.length === 1 ? \"The link opens\" : \"Every link opens\")",
+  "(\"Checked\")",
+  1
+ ],
+ [
+  "a managed client sees the Foundation work card again",
+  "portal",
+  "(globalThis.rgaPortalMode && globalThis.rgaPortalMode.isManaged(_portalMode) ? \"\" : rgaWorkingCard)",
+  "rgaWorkingCard",
+  1
+ ],
+ [
+  "About your business says All answered again",
+  "portal",
+  ": mgDone ? \"Done\" : \"All answered\"}",
+  ": \"All answered\"}",
+  1
+ ],
+ [
+  "About your business stops showing the answers",
+  "portal",
+  "${mgDone ? factsDoneRowsHtml(qs) : qs.map(",
+  "${false ? factsDoneRowsHtml(qs) : qs.map(",
+  1
+ ],
+ [
+  "an answer can no longer be opened to change it",
+  "portal",
+  "box.hidden = !box.hidden; b.setAttribute(\"aria-expanded\", String(!box.hidden));",
+  "b.setAttribute(\"aria-expanded\", \"false\");",
+  1
+ ],
+ [
+  "the approved list drops what RGA ticked on the client's word",
+  "svcpush",
+  "const draft = [approved, toldDraft].filter(Boolean).join(\"\\n\");",
+  "const draft = approved;",
+  1
+ ],
+ [
+  "the client portal's services count is never added",
+  "portalgbpprofile",
+  "if (ap.names.length) now.approved = { rows: SP.plan(ap.names, now).rows, at: ap.at };",
+  "if (false) now.approved = { rows: SP.plan(ap.names, now).rows, at: ap.at };",
   1
  ]
 ]

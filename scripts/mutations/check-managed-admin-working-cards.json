@@ -58,7 +58,7 @@
  ["the tick isn't read back", "servicestold", "if (!kept || kept.at !== at || JSON.stringify(kept.items) !== JSON.stringify(d.items))", "if (false)", 1],
  ["the tick function can write to Google", "servicestold", "const rec = await deps.readStepRecord(deps.supa, clientId, STEP);", "const rec = await deps.readStepRecord(deps.supa, clientId, STEP); const _x = S.applyServices; /* PATCH */", 1],
  ["clear of nothing is accepted", "servicestold", "if (!prev.told_services) return json(409,", "if (false) return json(409,", 1],
- ["the push ignores the told services", "servicespush", "const names = S.draftedNames([approved, toldDraft].filter(Boolean).join(\"\\n\"));", "const names = S.draftedNames(approved);", 1],
+ ["the push ignores the told services", "servicespush", "const draft = [approved, toldDraft].filter(Boolean).join(\"\\n\");", "const draft = approved;", 1],
  ["the who tag keeps services as You + client after the told ticks were approved", "admin", "const MW_YOU = new Set([\"m1.strategy.keywords_locations\", \"m1.gbp.services_products\", ", "const MW_YOU = new Set([\"m1.strategy.keywords_locations\", ", 1],
  ["mwOwns holds for every client", "admin", "const mwOwns = (flowId) => MW_OWNS.has(flowId) && mgOn();", "const mwOwns = (flowId) => MW_OWNS.has(flowId);", 1],
  ["mwOwns takes the booking card too", "admin", "const MW_OWNS = new Set([\"m1.gbp.business_facts\", \"m1.gbp.services_products\"]);", "const MW_OWNS = new Set([\"m1.gbp.business_facts\", \"m1.gbp.services_products\", \"m1.gbp.booking_link\"]);", 1],
