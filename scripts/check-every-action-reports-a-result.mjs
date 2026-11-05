@@ -40,6 +40,7 @@ const UI_ONLY = {
   "data-bl-refresh": "re-reads the admin Blog card and redraws it; changes nothing",
   "data-bl-all": "opens the full list on the admin Blog card; changes nothing",
   "data-mg-card": "RGA's managed hours / attributes / kickoff-answer cards (managed_admin_ui_v1, 11-4): a typed note or a picked choice inside the card is kept as a draft so a redraw never wipes it (visible: it is the field itself); nothing is saved. The saves (data-mg-put, data-mg-undo, data-mg-record) each show a message in the card.",
+  "data-mw-card": "RGA's managed working cards on admin steps 27, 28, 19, 32, 26 (admin_client_cards_moved_v1, 11-4): a typed value or a ticked service inside the card is kept as a draft so a redraw never wipes it (visible: it is the field the person just typed in or ticked); nothing is sent. Every press in the card reports its own result (check-managed-admin-working-cards presses each one)",
   "data-bl-read": "the 'I read every line' tick on the admin Blog card: it only unlocks the Publish button beside it, which is the visible result; changes nothing",
   "data-ob-draft-copy": "copies a draft to the clipboard for a person to send; nothing is sent",
   "data-photo-keep-note": "removes the note on the spot; the choice stays in this browser, and nothing is sent",

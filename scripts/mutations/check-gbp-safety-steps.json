@@ -520,8 +520,8 @@
  [
   "step 28's row has no cards",
   "admin",
-  "id === \"m1.gbp.business_facts\" ? gsFactsCardsHtml(t)",
-  "id === \"m1.gbp.business_facts\" ? \"\"",
+  "id === \"m1.gbp.business_facts\" ? (mgOn() ? mwFactsCardHtml(o, t) : \"\") + gsFactsCardsHtml(t)",
+  "id === \"m1.gbp.business_facts\" ? (mgOn() ? mwFactsCardHtml(o, t) : \"\") + \"\"",
   1
  ],
  [

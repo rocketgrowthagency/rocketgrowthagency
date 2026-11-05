@@ -77,7 +77,7 @@ if (!/Goes on Google \$\{escapeHtml\(monthDay\(x\.not_before\)\)\}/.test(P) || !
 // ── 5 · looks right
 if (!/requirePortalOwner\(event, clientId\)/.test(OK) || /requirePortalOwnerOrWorkspace/.test(OK)) fail("step 5: someone other than the client can answer \"Looks right\"");
 if (!/if \(t\.status !== "done"\) return json\(409/.test(OK) || !/client_ok_at !== now\) return json\(500/.test(OK)) fail("step 5: \"Looks right\" saves on an unlocked plan or isn't read back");
-if (!/data-kw-ok=/.test(P) || !/function planAnswerAdminHtml\(t\)/.test(ADM) || !/id === "m1\.strategy\.keywords_locations" \? planAnswerAdminHtml\(t\)/.test(ADM)) fail("step 5: the portal button or admin row 21's answer is gone");
+if (!/data-kw-ok=/.test(P) || !/function planAnswerAdminHtml\(t\)/.test(ADM) || !/id === "m1\.strategy\.keywords_locations" \? (?:\(mgOn\(\) \? mwPlanCardHtml\(o, t\) : )?planAnswerAdminHtml\(t\)/.test(ADM)) fail("step 5: the portal button or admin row 21's answer is gone");
 if (/Opens once Search Console is connected/.test(P)) fail("step 5: the card still says it waits on Search Console");
 // ── 6 · categories + services, RUN
 const S = load("_gbp-services.js");

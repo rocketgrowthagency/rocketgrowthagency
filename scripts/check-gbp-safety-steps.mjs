@@ -237,7 +237,7 @@ ok(/S\.openSuspension\(task\)\) return json\(409, \{ error: "Google has suspende
 // ── 8 · the surfaces: one card design, what the client sees, the label ──
 const adm = read("admin/admin.js"), por = read("portal/portal.js"), admCss = read("admin/admin.css");
 ok(/import "\/shared\/gbp-safety\.js\?v=/.test(adm) && /import "\/shared\/gbp-safety\.js\?v=/.test(por), "the shared rules aren't loaded");
-ok(/id === "m1\.gbp\.business_facts" \? gsFactsCardsHtml\(t\)/.test(adm), "step 28 doesn't carry the cards");
+ok(/id === "m1\.gbp\.business_facts" \? (?:\(mgOn\(\) \? mwFactsCardHtml\(o, t\) : ""\) \+ )?gsFactsCardsHtml\(t\)/.test(adm), "step 28 doesn't carry the cards");
 ok(/o\.flowId === "m1\.gbp\.business_facts" \? `<div class="ob-done-card">\$\{gsFactsCardsHtml\(s\.task\)\}/.test(adm), "a done step 28 loses the cards");
 ok(/o\.flowId === "m1\.gbp\.optimize_categories" \? `<div class="ob-done-card"><div data-admin-core/.test(adm), "a done step 31 loses the dates");
 ok(/gsCategoryCardsHtml\(items, clientId\)/.test(adm), "step 31 doesn't draw the dates");
