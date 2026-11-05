@@ -93,8 +93,8 @@
  [
   "a system step's Messages opens by itself",
   "portal",
-  "<details class=\"pm-cs-msgs\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
-  "<details class=\"pm-cs-msgs\" open>",
+  "<details class=\"pm-cs-msgs${mgdMail ? \" pm-cs-mail\" : \"\"}\"${talk.some((m) => unreadIds.has(m.id)) ? \" open\" : \"\"}>",
+  "<details class=\"pm-cs-msgs${mgdMail ? \" pm-cs-mail\" : \"\"}\" open>",
   1
  ],
  [

@@ -58,15 +58,15 @@
  [
   "the system close-out marks RGA's rows as the client's",
   "portal",
-  "\"\", rgaOwn || rgaFirst ? \"rga\" : \"you\");",
-  "\"\", \"you\");",
+  "\"\", rgaOwn || rgaFirst ? \"rga\" : \"you\");\n    }).join(\"\") + (rgaPart ?",
+  "\"\", \"you\");\n    }).join(\"\") + (rgaPart ?",
   1
  ],
  [
   "the system close-out guesses a date before the kickoff",
   "portal",
-  ": \"Opens near the end of Month 1\";\n    return `<div class=\"pm-k5\">${csCard({ tone: \"off\",",
-  ": \"Opens about Nov 5\";\n    return `<div class=\"pm-k5\">${csCard({ tone: \"off\",",
+  ": \"Opens near the end of Month 1\";\n    // 🔒 client_step07_closeout_v1",
+  ": \"Opens about Nov 5\";\n    // 🔒 client_step07_closeout_v1",
   1
  ],
  [

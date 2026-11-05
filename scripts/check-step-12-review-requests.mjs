@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { pmNoBlock } from "./lib/portal-mode-lift.mjs";
 
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
@@ -127,6 +128,8 @@ const lifted = [
   pick(/^function escapeHtml\(/m), pick(/^function escapeAttribute\(/m), pick(/^function typeLineHtml\(/m), pick(/^function rgaWaitHtml\(/m), line("GOOGLE_G"), line("GC_ICON"), pickBody(/^function googleCardHtml\(/m),
   (() => { const m = /^const r5CardHtml = [\s\S]*?<\/div>`;$/m.exec(src); return m ? m[0] : ""; })(), pick(/^function reviewStepHtml\(/m), pick(/^function reviewSlotsHtml\(/m), pick(/^function reviewRowsHtml\(/m), pick(/^function reviewStepLinesHtml\(/m), pick(/^function reviewStepDoneHtml\(/m), pick(/^async function loadReviewStep\(/m), line("_reviewStepAnswer"), pcSlice, pick(/^function reviewBandNote\(/m), pick(/^function reviewFiveTally\(/m), pick(/^function letterHtml\(/m),
   line("MSG_ICON"), line("PERSON_ICON"), line("STAR_ICON"), line("STORE_ICON"), line("REVIEW_GOAL"), line("monthDay"), line("smsHref"), line("r5Val"), line("r5IsEmail"), line("r5Complete"), line("r5Started"),
+  // the renderers ask pmManaged() since client_step05_reviews_v1 (11-4): the real _portalMode (null = today) + helpers
+  pmNoBlock(src),
 ];
 const listeners = [pick(/^document\.addEventListener\("input", \(ev\) => \{\s*const form = ev\.target && ev\.target\.closest && ev\.target\.closest\("form\[data-review-five\]"\);/m),
   pick(/^document\.addEventListener\("click", \(ev\) => \{\s*const b = ev\.target && ev\.target\.closest && ev\.target\.closest\("\[data-r5-all\]"\);/m),

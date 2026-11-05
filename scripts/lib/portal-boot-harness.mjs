@@ -131,7 +131,10 @@ export async function bootPortal(scenario = {}, overrides = {}, siteRoot = SITE)
     window.__FAKE = JSON.parse(fakeJson);
     window.__rgaClientPreview = { clientId: cid, client: () => eval(clientSrc), fail: (why) => { window.__PREVIEW_FAIL = why; } };
   }, JSON.stringify(fake), FAKE_CLIENT, CID);
-  await page.goto(`${base}/portal/`, { waitUntil: "domcontentloaded" });
+  // 🔑 a loaded machine (several gate runs at once) can take longer than puppeteer's 30 s default to reach DOMContentLoaded; and a boot that
+  // fails must not leave its Chrome and server behind (11-4: both were seen while three builds ran their gates together)
+  try { await page.goto(`${base}/portal/`, { waitUntil: "domcontentloaded", timeout: 120000 }); }
+  catch (e) { await browser.close().catch(() => {}); srv.close(); throw new HarnessUnavailable(`the portal didn't load: ${String(e.message || e).slice(0, 120)}`); }
   const api = {
     page, errs, logs, fnCalls, base,
     /** wait until the Setup list has drawn rows */

@@ -23,12 +23,14 @@ const F = [], fail = (m) => F.push(m);
 const BEFORE = process.env.MANAGED_PORTAL_BEFORE_JS || "";   // portal.js as it was before this build; the parity proof skips (exit 2) without it
 const LIST = "[id^='action-items-list-'][id$='-setup']";
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
-const MANAGED_ORDER = ["Book your kickoff call", "Give RGA access to your website", "Check what we found", "Provide 20+ business photos", "Ask your 5 most recent customers for a review", "Record 2 short videos (optional)", "Attend Month 1 close-out call"];
+// step 6's managed title is its own (client_step06_videos_v1, 11-4: the pill already says Optional) — read from its one home, the published managedLabel
+const VIDEOS_MANAGED = (() => { try { const s = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/client-steps.json`, "utf8")).month1.find((x) => x.id === "m1.brand.youtube_setup"); return (s && (s.managedLabel || s.clientLabel)) || "?"; } catch { return "?"; } })();
+const MANAGED_ORDER = ["Book your kickoff call", "Give RGA access to your website", "Check what we found", "Provide 20+ business photos", "Ask your 5 most recent customers for a review", VIDEOS_MANAGED, "Attend Month 1 close-out call"];
 
 async function open(scn, mode, over = {}, overrides = {}, extra = {}) {
   const S = SCENARIOS[scn] || scn;
   const h = await bootPortal({ mode, tasks: { ...S.tasks, ...(over.cards === false ? {} : RGA_CARD_TASKS), ...(over.tasks || {}) }, now: S.now, verify: S.verify, website: S.website, ...extra }, overrides, SITE);
-  await h.page.goto(`${h.base}/portal/`, { waitUntil: "domcontentloaded" });
+  await h.page.goto(`${h.base}/portal/`, { waitUntil: "domcontentloaded", timeout: 120000 });
   try { await h.ready(LIST + " .pm-step-row", 20000); } catch { throw new HarnessUnavailable(`the Setup list never drew (${h.errs[0] || "no error"})`); }
   await h.page.evaluate(() => document.querySelector(".portal-nav a[data-view=setup]")?.click());
   await tick(500);

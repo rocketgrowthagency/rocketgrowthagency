@@ -62,8 +62,8 @@ const managedRows = (() => {
   const all = [...(CS.month1 || []), ...(CS.month2plus || [])], chk = CS.managed && CS.managed.check;
   const numbered = [...all.filter((d) => d.managedStepNo != null), ...(chk ? [{ ...chk, clientStepNo: null }] : [])].sort((a, b) => a.managedStepNo - b.managedStepNo);
   const rest = all.filter((d) => d.managedStepNo == null).sort((a, b) => ["check", "card", "setup", "step"].indexOf(a.managedRole) - ["check", "card", "setup", "step"].indexOf(b.managedRole) || (a.clientStepNo || 99) - (b.clientStepNo || 99));
-  return [...numbered.map((d) => ({ n: d.managedStepNo, id: d.id, label: d.clientLabel, becomes: d.id === "managed.check_found" ? `one step for ${d.covers.length} of today's: ${d.covers.map((id) => (all.find((x) => x.id === id) || {}).clientStepNo).join(", ")}` : "a numbered step", today: d.clientStepNo ?? "new" })),
-    ...rest.map((d) => ({ n: "", id: d.id, label: d.clientLabel, becomes: ROLE_WORDS[d.managedRole] || "", today: d.clientStepNo ?? "" }))];
+  return [...numbered.map((d) => ({ n: d.managedStepNo, id: d.id, label: d.managedLabel || d.clientLabel, becomes: d.id === "managed.check_found" ? `one step for ${d.covers.length} of today's: ${d.covers.map((id) => (all.find((x) => x.id === id) || {}).clientStepNo).join(", ")}` : "a numbered step", today: d.clientStepNo ?? "new" })),
+    ...rest.map((d) => ({ n: "", id: d.id, label: d.managedLabel || d.clientLabel, becomes: ROLE_WORDS[d.managedRole] || "", today: d.clientStepNo ?? "" }))];
 })();
 
 // what the client also sees with no step number: approvals and asks tied to an admin step, plus the cards that aren't steps at all (data/playbooks/what-it-does.json clientCards)

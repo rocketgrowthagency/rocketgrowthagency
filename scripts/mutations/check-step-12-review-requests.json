@@ -23,8 +23,8 @@
  [
   "the button doesn't say what it writes (or for whom)",
   "portal",
-  "  if (btn) { btn.textContent = full.length > 1 ? `Write ${full.length} requests` : one ? `Write ${one}'s request` : \"Write the request\"; btn.disabled = !full.length; }",
-  "  if (btn) { btn.disabled = !full.length; }",
+  "  if (btn) { btn.textContent = full.length > 1 ? `Write ${full.length} requests` : one ? `Write ${one}'s request` : \"Write the request\"; btn.disabled = !full.length && !form.hasAttribute(\"data-r5-says\"); }",
+  "  if (btn) { btn.disabled = !full.length && !form.hasAttribute(\"data-r5-says\"); }",
   1
  ],
  [

@@ -20,5 +20,10 @@ export function pmNoBlock(P, mode = null) {
   const waitLines = [/^const pmNoW = .*;$/m, /^const pmLabelW = .*;$/m].map((re) => (P.match(re) || [])[0]);
   if (waitLines.some((l) => !l)) moved("portal.js `const pmNoW` / `const pmLabelW`");
   const playbookGuard = 'var _portalPlaybook = typeof _portalPlaybook === "undefined" ? null : _portalPlaybook;';
-  return [helper, modeLine.replace(/^let _portalMode = null;/, `var _portalMode = ${JSON.stringify(mode)};`), pmLine.replace(/^const /, "var "), playbookGuard, ...waitLines.map((l) => l.replace(/^const /, "var "))].join("\n");
+  // the step's title by mode and "is this a managed client" (client_step05/06/07 mockups, 11-4): the renderers of managed steps 5–7 ask them.
+  // Lifted when the file has them; a checkout from before them has no renderer that asks, so their absence there is not a move.
+  const modeLines = [/^const pmLabel = .*;$/m, /^const pmManaged = .*;$/m].map((re) => (P.match(re) || [])[0]).filter(Boolean);
+  if (/\bpmManaged\(\)/.test(P) && !modeLines.some((l) => /^const pmManaged = /.test(l))) moved("portal.js `const pmManaged`");
+  if (/\bpmLabel\(/.test(P) && !modeLines.some((l) => /^const pmLabel = /.test(l))) moved("portal.js `const pmLabel`");
+  return [helper, modeLine.replace(/^let _portalMode = null;/, `var _portalMode = ${JSON.stringify(mode)};`), pmLine.replace(/^const /, "var "), playbookGuard, ...waitLines.map((l) => l.replace(/^const /, "var ")), ...modeLines.map((l) => l.replace(/^const /, "var "))].join("\n");
 }
