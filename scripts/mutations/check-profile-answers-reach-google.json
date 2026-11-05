@@ -86,8 +86,8 @@
 [
 "RGA's turn still says Your turn",
 "portal",
-"!rgaWait && !gbpWithRga && !withRga && (Boolean(step.clientInput)",
-"!rgaWait && !withRga && (Boolean(step.clientInput)",
+"!rgaWait && !rgaUnknown && !gbpWithRga && !withRga && (Boolean(step.clientInput)",
+"!rgaWait && !rgaUnknown && !withRga && (Boolean(step.clientInput)",
 1
 ],
 [

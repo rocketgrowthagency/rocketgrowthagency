@@ -226,14 +226,14 @@ else {
 const pcode = code("portal/portal.js");
 // 🔑 2026-10-12: the same lines now also carry the RGA wait (check-a-client-step-waits-on-what-it-needs); this pins the
 // listing half: `!listingWait` stays in the turn, and `rowWaits` (the marker's + the headline's question) includes it.
-if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?(?:!gbpWithRga && )?(?:!withRga && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
+if (!/const theirsToAct = !kickoffPending && (?:!ownWait && )?!listingWait && (?:!rgaWait && )?(?:!rgaUnknown && )?(?:!gbpWithRga && )?(?:!withRga && )?\(/.test(pcode)) fail("a waiting portal step still counts as the client's turn (the orange edge)");
 // v13: "Waits on Google" once the client removed it (Google catching up); "Waits on your Business Profile" before
 // 10-20 (approved client_portal_phases_v1): every wait reads "Can't start yet", with "Waits on your Business Profile" (or "Waits on
 // Google" after the client's removal) as its reason under the title — and it still comes before "Your turn"
 if (!/: listingWait \? \{ text: CANT_START, why: portalListingStateOf\(waitTasks\)\.removed \? "Waits on Google" : "Waits on your Business Profile", cls: "wait" \}(?:\s*: (?!theirsToAct \? \{ text: "Your turn")[^\n]*)*\s*: theirsToAct \? \{ text: "Your turn"/.test(pcode)) fail("a waiting portal step says \"Your turn\" — the approved pill is \"Can't start yet\" with \"Waits on your Business Profile\" (or \"Waits on Google\" after the client's removal)");
 if (!/const theirs = \(r\) => !(?:rowListingWaits|rowWaits)\(r\.step, r\.status/.test(pcode)
   || (/const theirs = \(r\) => !rowWaits\(/.test(pcode) && !/function rowWaits\(step, status, tasks(?:, \w+)?\) \{\s*return (?:!!rowOwnWaits\(step, status, tasks\) \|\| )?rowListingWaits\(step, status, tasks\) \|\|/.test(pcode))) fail("a waiting portal step can be marked as the client's NEXT step");
-if (!/const completionCtl = listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");
+if (!/const completionCtl = (?:rgaUnknown \? ""\s*: )?listingWait && completionCtlLive && !step\.clientHow\s*\? `<fieldset class="pm-waits" disabled>/.test(pcode)) fail("a waiting portal step's form is still live");   // 🔄 11-5: a step we couldn't check (waits list didn't load) draws no form ahead of it
 
 // 🔒 (2026-10-13) a nightly check that could not look is SAID on step 11's card, not hidden behind the last real answer:
 // the footer read "re-checked every night" over checks that were failing (`last_failed_scan`, written by the scan).

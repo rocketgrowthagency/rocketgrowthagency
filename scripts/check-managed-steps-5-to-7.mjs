@@ -18,6 +18,11 @@
 //       time" rows; the foot gives Month 1's end, 30 days from the kickoff; a client step the call still needs is listed as yours and the
 //       band says "1 of your steps left"
 //   · nothing in steps 5–7 overlaps another line or runs out of its row, at any of the three widths
+// AND WHEN THE SERVER'S "WAITS ON RGA" LIST DOESN'T LOAD (11-5, 2:33 PM: the database was slow and step 5 read "Can't start yet · RGA is on
+// it · Writing your review request message" for a client RGA had already written it for), managed AND self-serve: step 5 says "We couldn't
+// check this step just now" under one "Couldn't check" pill, grey disc, no form, never "Can't start yet" / "RGA is on it" / "Your turn", and
+// it is not the NEXT step; its Try again asks the server again (spins), says "Still couldn't check" in place when it still can't, and once
+// the server answers the row draws that answer ("Your turn" for a step that doesn't wait). → feedback_unloaded_is_not_an_answer
 // AND FOR A SELF-SERVE / NO-MODE / COLUMN-MISSING CLIENT, the same record draws today's words ("Messages · 1", "now", "(optional)",
 // "1 step left", the pale button). With MANAGED_PORTAL_BEFORE_JS (portal.js before this build) the list is also byte-for-byte equal.
 // exit 0 holds · 1 a drawn page is wrong · 2 can't tell (no browser / the page didn't boot)
@@ -47,10 +52,10 @@ const baseTasks = (over = {}) => ({ ...SCENARIOS.allDone.tasks, ...RGA_CARD_TASK
   "m1.gbp.photos": { status: "pending" }, "m1.review.first_5": { status: "pending" }, "m1.brand.youtube_setup": { status: "in_progress", outcome_data: {} },
   "m1.brand.social_profiles": social("@acmeplumbing"), ...over });
 
-async function open(mode, { tasks = baseTasks(), thread = [openLetter], waits = ["m1.call.close"], viewport = 1280, overrides = {} } = {}) {
+async function open(mode, { tasks = baseTasks(), thread = [openLetter], waits = ["m1.call.close"], waitsFn = null, viewport = 1280, overrides = {} } = {}) {
   const fnCalls = [];
   const h = await bootPortal({ mode, stage: STAGE, viewport, tasks, now: SCENARIOS.allDone.now, tables: { client_customer_lists: lists },
-    fns: { "portal-thread": () => ({ ok: true, messages: thread, threads: [] }), "portal-step-waits": () => ({ ok: true, rga: waits }),
+    fns: { "portal-thread": () => ({ ok: true, messages: thread, threads: [] }), "portal-step-waits": waitsFn || (() => ({ ok: true, rga: waits })),
       "portal-review-requests": () => requests, "portal-video-clip": (b) => { fnCalls.push(b); return { ok: true, clips: [], needed: 2, skipped: b && b.kind === "skip" }; } } }, overrides, SITE);
   h.videoCalls = fnCalls;
   try { await h.ready("[id^='action-items-list-'] .pm-step-row", 20000); } catch { await h.close(); throw new HarnessUnavailable(`the Setup list never drew (${h.errs[0] || "no error"})`); }
@@ -189,6 +194,45 @@ try {
       const r7 = await rowFacts(h, "m1.call.close");
       if (!r7 || r7.band !== "Opens when your Month 1 report is ready · 1 of your steps left") fail(`managed step 7 with a client step open reads "${r7 && r7.band}"; approved "… · 1 of your steps left"`);
       if (!r7 || !/ · yours/.test(r7.text) || /Nothing here waits on you/.test(r7.text) || !/Your Month 1 report · RGA is building it/.test(r7.text)) fail("managed step 7 with a client step open doesn't list it as yours above the report, or still says nothing waits on them");
+    } finally { await h.close(); }
+  }
+  // ── THE WAITS LIST DIDN'T LOAD (11-5): an unloaded answer is never drawn as a state, in either mode ───────────────────────────────
+  for (const mode of ["managed", "self_serve"]) {
+    const W = { answer: null, n: 0 };   // answer null = the server can't read the record (portal-step-waits says 502)
+    const h = await open(mode, { waitsFn: () => { W.n++; return W.answer ? { ok: true, rga: W.answer } : { error: "Could not read the setup record." }; } });
+    try {
+      await openRow(h, "m1.review.first_5"); await tick(700);
+      let r = await rowFacts(h, "m1.review.first_5");
+      if (!r) fail(`${mode}, waits list failed: step 5 isn't drawn`);
+      else {
+        if (!r.text.includes("We couldn't check this step just now")) fail(`${mode}, waits list failed: step 5 doesn't say "We couldn't check this step just now" (${r.text.slice(0, 160)})`);
+        if (r.pills.join(" · ") !== "Couldn't check") fail(`${mode}, waits list failed: step 5's pill is ${JSON.stringify(r.pills)}; it must be the one "Couldn't check"`);
+        for (const [re, what] of [[/Can't start yet/i, "Can't start yet"], [/RGA is on it/i, "RGA is on it"], [/Writing your review request message/i, "Writing your review request message"], [/Waits on RGA/i, "Waits on RGA"], [/Your turn/i, "Your turn"]])
+          if (re.test(r.text)) fail(`${mode}, waits list failed: step 5 claims "${what}" from an answer it never had`);
+        if (/\bis-now\b/.test(r.cls)) fail(`${mode}, waits list failed: step 5 is drawn as the client's NEXT step`);
+        if (!/\bcs-wait\b/.test(r.cls)) fail(`${mode}, waits list failed: step 5's disc isn't the grey couldn't-check state (${r.cls})`);
+        if (/data-r5-send|data-r5-card/.test(r.html)) fail(`${mode}, waits list failed: step 5 still draws its customer form (an ask is a claim the step is theirs)`);
+      }
+      const nowIds = await h.page.evaluate(`(() => [...${LISTV}.querySelectorAll(".pm-step-row.is-now")].map((x) => x.id))()`);
+      if (nowIds.includes("step-row-m1.review.first_5")) fail(`${mode}, waits list failed: step 5 is the "now" step`);
+      // Try again while the server still can't answer → it asks again, says so in place, stops spinning
+      const n0 = W.n;
+      const press = () => h.page.evaluate(`(() => { const b = ${LISTV}.querySelector('#step-row-m1\\\\.review\\\\.first_5 [data-rga-waits-retry]'); if (!b) return false; b.click(); return true; })()`);
+      if (!(await press())) { fail(`${mode}, waits list failed: step 5 has no Try again`); continue; }
+      await tick(900);
+      const still = await h.page.evaluate(`(() => { const row = ${LISTV}.querySelector('#step-row-m1\\\\.review\\\\.first_5'); const s = row && row.querySelector("[data-rga-waits-say]"), b = row && row.querySelector("[data-rga-waits-retry]");
+        return { say: s && !s.hidden ? s.textContent : "", busy: !!b && b.classList.contains("is-busy") }; })()`);
+      if (W.n <= n0) fail(`${mode}: step 5's Try again didn't ask the server again`);
+      if (!/^Still couldn't check\./.test(still.say)) fail(`${mode}: step 5's Try again, still unanswered, doesn't say so ("${still.say}")`);
+      if (still.busy) fail(`${mode}: step 5's Try again keeps spinning after the server answered with an error`);
+      // Try again once the server answers (nothing waits) → the row draws that answer
+      W.answer = [];
+      if (!(await press())) { fail(`${mode}: step 5's Try again is gone after an unanswered try`); continue; }
+      await tick(1200);
+      await openRow(h, "m1.review.first_5"); await tick(500);
+      r = await rowFacts(h, "m1.review.first_5");
+      if (!r || /couldn't check/i.test(r.text) || r.pills[0] !== "Your turn") fail(`${mode}: after Try again got the answer, step 5 doesn't draw it (pills ${JSON.stringify(r && r.pills)}; ${(r && r.text || "").slice(0, 120)})`);
+      if (h.errs.length) fail(`${mode}, waits list failed: page errors ${h.errs.slice(0, 2).join(" · ")}`);
     } finally { await h.close(); }
   }
   // ── SELF-SERVE · NO MODE · COLUMN MISSING: today's words, and (with BEFORE) the same bytes ──────────────────

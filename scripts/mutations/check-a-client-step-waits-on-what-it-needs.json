@@ -12,8 +12,8 @@
  ["portal: a choice finishes a step that waits","stepchoicefn","  const waiting = waitNow(PLAYBOOKS, step, rec.tasks, await require(\"./_portal-mode\").clientMode(clientId));   // managed_admin_v1: the refusal says the client's own step number\n  if (waiting) return json(409, { error: waiting.message, waits_on: waiting.on });\n  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice","  const tasks = { ...rec.tasks };\n  const prev = tasks[stepId] || {};\n  tasks[stepId] = {\n    ...prev,\n    client_choice",1],
  ["the recheck finishes 57 on 5 customers","recheckfn","t0[stepId].status !== \"done\" && !waiting)","t0[stepId].status !== \"done\")",1],
  ["portal: the pill says Your turn","portal","      : rgaWait ? { text: CANT_START, why: `Waits on RGA${moveSince(openMv && openMv.get(step.id))}`, cls: \"wait\" }\n","",1],
- ["portal: a waiting row is the client's turn","portal","const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && !withRga && (","const theirsToAct = !kickoffPending && !ownWait && !listingWait && !gbpWithRga && !withRga && (",1],
- ["portal: not known reads as open","portal","  return rgaWaits ? rgaWaits.has(step.id) : true;","  return rgaWaits ? rgaWaits.has(step.id) : false;",1],
+ ["portal: a waiting row is the client's turn", "portal", "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !rgaUnknown && !gbpWithRga && !withRga && (", "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaUnknown && !gbpWithRga && !withRga && (", 1],
+ ["portal: not known reads as open", "portal", "status !== \"skipped\" && !rgaWaits;\n}", "status !== \"skipped\" && false;\n}", 1],
  ["portal: a failed answer says nothing waits","portal","    if (!r.ok) return null;\n    const j = await r.json();\n    return Array.isArray(j.rga)","    if (!r.ok) return new Set();\n    const j = await r.json();\n    return Array.isArray(j.rga)",1],
  ["portal: the headline names a waiting row","portal","      && !rowWaits(i.step, i.status, _nextStepInputs?.tasks, _nextStepInputs?.rgaWaits)\n","",1],
  ["portal: Add your 5 customers stays live","portal","? `<button class=\"pm-act is-go\" disabled>Add your 5 customers →</button>`","? `<button class=\"pm-act is-go\">Add your 5 customers →</button>`",1],
@@ -44,5 +44,9 @@
  ["a Month-2 row's wait reads the onboarding record","portal","  const waitTasks = { ...m1Tasks, ...m2Tasks };","  const waitTasks = { ...m1Tasks };",1],
  ["the nudge looks steps up in Month 1 only","stepemailfn","      const sop = [...(PB.month1 || []), ...(PB.month2plus || [])].find((s) => s.id === id);","      const sop = (PB.month1 || []).find((s) => s.id === id);",1],
  ["the step-open email reaches Month 2","notifyopenfn","const M1 = PLAYBOOKS.month1 || [];","const M1 = [...(PLAYBOOKS.month1 || []), ...(PLAYBOOKS.month2plus || [])];",1],
- ["portal: the customer cards show while it waits","portal",": reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",": reviewStep ? (false ? \"\" : reviewStepHtml(",1]
+ ["portal: the customer cards show while it waits","portal",": reviewStep ? (rgaWait || ownWait || listingWait ? \"\" : reviewStepHtml(",": reviewStep ? (false ? \"\" : reviewStepHtml(",1],
+ ["11-5: a waits list that didn't load reads as waiting again", "portal", "return rgaWaits ? rgaWaits.has(step.id) : false;", "return rgaWaits ? rgaWaits.has(step.id) : true;", 1],
+ ["11-5: a step we couldn't check is the client's turn (orange edge)", "portal", "&& !rgaWait && !rgaUnknown && !gbpWithRga", "&& !rgaWait && !gbpWithRga", 1],
+ ["11-5: a step we couldn't check can be the NEXT step", "portal", " && !rowRgaUnknown(r.step, r.status, rgaWaits) && (Boolean(r.step.clientInput)", " && (Boolean(r.step.clientInput)", 1],
+ ["11-5: the headline can name a step we couldn't check", "portal", "      && !rowRgaUnknown(i.step, i.status, _nextStepInputs?.rgaWaits)\n", "", 1]
 ]

@@ -13,7 +13,9 @@
 //   2. The public projection carries a FLAG, never an admin step id; the server endpoint answers with the real rule.
 //   3. Every writer of the step's status asks first: the input save, "I've done it", a choice, the detection recheck.
 //   4. The portal: the row says "Waits on RGA", is never the client's turn, never the NEXT step, never the headline;
-//      its action is disabled; NOT KNOWN IS NOT OPEN (a failed answer waits).
+//      its action is disabled; NOT KNOWN IS NOT OPEN AND NOT WAITING (11-5: a failed answer used to wait, and step 5 told a client "RGA
+//      is on it" for a message RGA had written; now it is rowRgaUnknown: "We couldn't check this step just now", nobody's move, never the
+//      NEXT step or the headline — check-managed-steps-5-to-7 draws it in both modes).
 //   5. Step 57's words are the approved mockup's.
 //   6. (client_step_waits_on_own_step_v1, 2026-10-13) A step that needs the client's OWN earlier step waits too:
 //      "Do step N first" / "Connect Google first", the amber band with the way there, the form disabled; the client's
@@ -242,7 +244,7 @@ vm.createContext(ctx);
 const lineOf = (n) => (new RegExp(`^const ${n} = .*;$`, "m").exec(portal) || [""])[0];
 const gcOf = (() => { const i = portal.indexOf("function googleCardHtml("); const j = portal.indexOf("\nconst gcardMaps", i); return i < 0 || j < 0 ? "" : portal.slice(i, j); })();
 if (!gcOf || !lineOf("GC_ICON")) { console.error("⚠️  INDETERMINATE — could not lift the Google card"); process.exit(2); }
-vm.runInContext(`${pmNoBlock(portal)}\n${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nthis.r = rowRgaWaits; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
+vm.runInContext(`${pmNoBlock(portal)}\n${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON")}\n${gcOf}\n${fns}\nthis.r = rowRgaWaits; this.u = typeof rowRgaUnknown === "function" ? rowRgaUnknown : () => false; this.w = rowWaits; this.h = rgaWaitHtml; this.o = rowOwnWaits; this.op = ownFirstPill; this.oh = ownWaitHtml;`, ctx);
 {
   const cs1 = new Map((cs.month1 || []).map((x) => [x.id, x]));
   const hrsRow = cs1.get("m1.gbp.hours_attributes");
@@ -263,7 +265,10 @@ vm.runInContext(`${pmNoBlock(portal)}\n${lineOf("GOOGLE_G")}\n${lineOf("GC_ICON"
 const row = { id: S57, waitsOnRga: true, clientWait: s57.clientWait };
 if (!ctx.r(row, "pending", new Set([S57]))) fail("the portal doesn't wait when the server says step 57 waits");
 if (ctx.r(row, "pending", new Set())) fail("the portal waits when the server says nothing does");
-if (!ctx.r(row, "pending", null)) fail("NOT KNOWN reads as open: a failed answer would say \"Your turn\" on a step that may wait");
+// 🔴 11-5: NOT KNOWN is its own state — neither "waits" (that claimed "RGA is on it" for a message RGA had already written) nor "open"
+if (ctx.r(row, "pending", null)) fail("NOT KNOWN reads as waiting: a failed answer would say \"Can't start yet · RGA is on it\" on a step that may be open");
+if (!ctx.u(row, "pending", null)) fail("NOT KNOWN isn't marked unknown: a failed answer would read as \"Your turn\" on a step that may wait");
+if (ctx.u(row, "pending", new Set()) || ctx.u(row, "pending", new Set([S57])) || ctx.u(row, "done", null) || ctx.u({ id: "x" }, "pending", null)) fail("a row the server answered (or that can't wait, or is finished) reads as unknown");
 if (ctx.r(row, "done", null) || ctx.r(row, "skipped", new Set([S57]))) fail("a finished row reads as waiting");
 if (ctx.r({ id: "x" }, "pending", null)) fail("a row that can't wait reads as waiting");
 if (!ctx.w(row, "pending", {}, new Set([S57]))) fail("rowWaits (the marker's + the headline's question) ignores the RGA wait");
@@ -277,15 +282,18 @@ const pcode = code("portal/portal.js");
 const checks = [
   [/const ownWait = !!ownFirstId;\s*const listingWait = !ownWait && rowListingWaits\(/, "the listing outranks the client's own earlier step (approved: their step first)"],
   [/const rgaWait = !ownWait && !listingWait && rowRgaWaits\(step, status, rgaWaits\);/, "the row doesn't ask whether it waits on RGA, last"],
-  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!gbpWithRga && )?(?:!withRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
+  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!rgaUnknown && )?(?:!gbpWithRga && )?(?:!withRga && )?\(/, "a row that waits still counts as the client's turn (the orange edge)"],
   // 🔄 10-20: the pill is "Can't start yet"; the reason ("Do step N first") sits under the title (client_portal_phases_v1)
   [/: ownWait \? \{ text: CANT_START, why: (?:gaByRga \? "RGA is setting up your Google Analytics" : )?ownFirstPill\(ownFirst\), cls: "wait" \}/, "a row that waits on their own earlier step doesn't name it (\"Do step N first\")"],
   // 🔑 10-16 (step13_closeout_call_v1): step 13 lists every prerequisite instead; every other row keeps the one band
+  // 🔄 11-5 (client_steps_skip_rules_v1): step 7's wait sits inside ccWrap (its skip ask); the band is still closeWaitHtml's
   // 🔄 10-20: the Analytics case (Google connected, no GA4 yet) names RGA instead — every other own wait still says what to do first
-  [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? closeWaitHtml\([^)]*\) : )?(?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
+  [/\$\{ownWait \? (?:\(step\.id === "m1\.call\.close" \? (?:ccWrap\()?closeWaitHtml\([^)]*\)\)? : )?(?:gaByRga \? `[^`]*` : )?ownWaitHtml\(ownFirst\)\)? : ""\}/, "a row that waits on their own earlier step doesn't say what to do first"],
   [/!isDone && step\.clientHint && !ownWait && /, "a waiting row still shows the ask under the band (the mockup shows the band alone)"],
   [/: rgaWait \? \{ text: CANT_START, why: `Waits on RGA\$\{moveSince\(openMv && openMv\.get\(step\.id\)\)\}`, cls: "wait" \}/, "a row that waits on RGA doesn't say \"Waits on RGA\" (the approved reason under \"Can't start yet\")"],
-  [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\)/, "a row that waits on RGA can be the client's NEXT step"],
+  [/const theirs = \(r\) => !rowWaits\(r\.step, r\.status, waitTasks, rgaWaits\) && !rowRgaUnknown\(r\.step, r\.status, rgaWaits\)/, "a row that waits on RGA, or that we couldn't check, can be the client's NEXT step"],
+  [/&& !rowRgaUnknown\(i\.step, i\.status, _nextStepInputs\?\.rgaWaits\)/, "the \"your next step\" headline can name a row we couldn't check (the waits list didn't load)"],
+  [/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !rgaUnknown && /, "a row we couldn't check still counts as the client's turn (the orange edge)"],
   [/const waitTasks = \{ \.\.\.m1Tasks, \.\.\.m2Tasks \};/, "a Month-2 row's wait isn't read from this month's record"],
   [/const ownFirstId = rowOwnWaits\(step, status, waitTasks\);/, "a Month-2 row's \"Do step 14 first\" isn't read from this month's record"],
   [/tasks: waitTasks, rgaWaits(?:, photos: photos \|\| \[\])? \};/, "the \"your next step\" headline reads Month-2 waits from the onboarding record"],
@@ -326,4 +334,4 @@ if (!mock.includes("Waits on RGA")) fail("the approved mockup no longer names th
 }
 
 if (F.length) { console.error("🔴 a client can be asked to do a step that waits on RGA:"); for (const f of F) console.error("   · " + f); process.exit(1); }
-console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / kickoff left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known waits; step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA; Month 2 walked on its own list (${m2pairs} prerequisites), judged against this month's record, 14/15/16 never wait, the call waits on RGA's report only (never the client's numbers), the photo step counts this month's on Google`);
+console.log(`✅ one rule gives the admin's answer (${pairs} RGA-held prerequisites, each checked alone; the chain walks through done steps; listing / kickoff left out); the projection carries a flag, never the graph; 4 writers ask first; the \"next\" email skips it and a nudge is refused; the portal says "Waits on RGA", never the turn, the NEXT step or the headline, and not known is its own "couldn't check" state (never waits, never open); step 57 says the approved words; ${ownPairs} client-held prerequisites wait as "Do step N first" / "Connect Google first", ahead of the listing and RGA; Month 2 walked on its own list (${m2pairs} prerequisites), judged against this month's record, 14/15/16 never wait, the call waits on RGA's report only (never the client's numbers), the photo step counts this month's on Google`);

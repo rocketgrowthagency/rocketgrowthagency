@@ -149,7 +149,7 @@ for (const [re, msg] of wires) if (!re.test(si)) fail(msg);
 
 // ── 5 · the portal ──
 const portal = read("portal/portal.js"), pc = portal.replace(/^[ \t]*\/\/.*$/gm, "");
-if (!/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && /.test(pc)) fail("a step RGA is finishing still says \"Your turn\"");
+if (!/const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && (?:!rgaUnknown && )?!gbpWithRga && /.test(pc)) fail("a step RGA is finishing still says \"Your turn\"");
 if (!/\$\{gbpPushHtml\(step, taskState(?:, \{ maps: [^}]*\})?\)\}/.test(pc) || !/loadGbpNow\(clientId\);/.test(pc)) fail("the row doesn't show where the answer stands on Google, or doesn't read Google first");
 if (/60%\+/.test(read("data/playbooks/client-steps.json"))) fail("step 11's unsourced \"60%+\" claim is back");
 // 🔑 start at the BODY's brace (") {"): a default parameter like `opts = {}` has braces of its own (10-16)

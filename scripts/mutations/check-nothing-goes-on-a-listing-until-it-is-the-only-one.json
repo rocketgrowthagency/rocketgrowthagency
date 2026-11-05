@@ -156,22 +156,22 @@
  [
   "portal: a waiting step is the client's turn (orange edge)",
   "portal",
-  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !gbpWithRga && !withRga && (",
-  "const theirsToAct = !kickoffPending && !ownWait && !rgaWait && !gbpWithRga && !withRga && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !listingWait && !rgaWait && !rgaUnknown && !gbpWithRga && !withRga && (",
+  "const theirsToAct = !kickoffPending && !ownWait && !rgaWait && !rgaUnknown && !gbpWithRga && !withRga && (",
   1
  ],
  [
   "portal: a waiting step is the NEXT step",
   "portal",
-  "const theirs = (r) => !rowWaits(r.step, r.status, waitTasks, rgaWaits) && (",
-  "const theirs = (r) => (",
+  "const theirs = (r) => !rowWaits(r.step, r.status, waitTasks, rgaWaits) && !rowRgaUnknown(r.step, r.status, rgaWaits) && (",
+  "const theirs = (r) => !rowRgaUnknown(r.step, r.status, rgaWaits) && (",
   1
  ],
  [
   "portal: a waiting step's form stays live",
   "portal",
-  "const completionCtl = listingWait && completionCtlLive && !step.clientHow",
-  "const completionCtl = false && listingWait && completionCtlLive && !step.clientHow",
+  "      : listingWait && completionCtlLive && !step.clientHow",
+  "      : false && listingWait && completionCtlLive && !step.clientHow",
   1
  ],
  [

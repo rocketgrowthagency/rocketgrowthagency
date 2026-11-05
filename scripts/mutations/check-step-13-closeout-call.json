@@ -2,12 +2,12 @@
  ["back to one Do step N first", "portal", "${ownWait ? (step.id === \"m1.call.close\" ? ccWrap(closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook)) : gaByRga ?", "${ownWait ? (false ? ccWrap(closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook)) : false ?", 1],
  ["the What to do box is back", "portal", "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", "      : step.id === \"m1.call.close\" ? ccWrap(closeCallHtml(step, taskState, clientId, waitTasks))", 1],
  ["Month 1 ends on a guess", "portal", "const t = k && (k.status === \"done\") ? Date.parse(k.completed_at || \"\") : NaN;", "const t = Date.now();", 1],
- ["a step waiting on RGA is offered as theirs", "portal", "if (!goTo && !rgaFirst && !rgaOwn) goTo = s;", "if (!goTo) goTo = s;", 1],
+ ["a step waiting on RGA is offered as theirs", "portal", "if (!goTo && !rgaFirst && !rgaOwn && !unk) goTo = s;", "if (!goTo) goTo = s;", 1],
  ["admin row 60 says nothing", "admin", "title: \"The close-out call opens when these are done\", body: rows", "title: \"Locked\", body: \"\"", 1],
  ["row 60 calls RGA's steps the client's move", "admin", "state: rgaN ? \"rga\" : \"you\", small: rgaN ? \"Your move\" : \"Client's move\"", "state: \"you\", small: \"Client's move\"", 1],
  ["the picker opens while RGA's report is open", "portal", "      : step.id === \"m1.call.close\" ? (ownWait || rgaWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", "      : step.id === \"m1.call.close\" ? (ownWait || isDone ? \"\" : ccWrap(closeCallHtml(step, taskState, clientId, waitTasks)))", 1],
  ["the system close-out lists the done steps too", "portal", "      if (settled(t)) return \"\";\n      const rgaOwn = s.clientDone === \"rga\", rgaFirst", "      const rgaOwn = s.clientDone === \"rga\", rgaFirst", 1],
- ["the system close-out marks RGA's rows as the client's", "portal", "\"\", rgaOwn || rgaFirst ? \"rga\" : \"you\");\n    }).join(\"\") + (rgaPart ?", "\"\", \"you\");\n    }).join(\"\") + (rgaPart ?", 1],
+ ["the system close-out marks RGA's rows as the client's", "portal", "\"\", rgaOwn || rgaFirst ? \"rga\" : unk ? \"off\" : \"you\");\n    }).join(\"\") + (rgaPart ?", "\"\", \"you\");\n    }).join(\"\") + (rgaPart ?", 1],
  ["the system close-out guesses a date before the kickoff", "portal", ": \"Opens near the end of Month 1\";\n    // 🔒 client_step07_closeout_v1", ": \"Opens about Nov 5\";\n    // 🔒 client_step07_closeout_v1", 1],
  ["the system close-out card goes amber", "portal", "return `<div class=\"pm-k5\">${csCard({ tone: \"off\", head: `${opens} · ${left}", "return `<div class=\"pm-k5\">${csCard({ tone: \"you\", head: `${opens} · ${left}", 1]
 ]
