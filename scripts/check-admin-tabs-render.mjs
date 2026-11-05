@@ -37,6 +37,19 @@ const MIN_CHARS = 40;      // below this a panel is empty, not merely terse
 
 console.log("── every admin tab renders for a signed-in admin ──");
 
+// 🔴 11-4 ~7:05–8:10 PM: THE ADMIN CHECKLIST DREW NOTHING FOR EVERY CLIENT (mwKind called stepKind out of scope). The onboarding tab still had
+// 40+ characters ("Loading the playbook…") and the console said "Flow render failed: ReferenceError", so a character count passed it. A panel
+// that is STILL loading after its wait, or a render that logged its own failure, is a broken tab. → project_managed_portal_build
+// the rule lives in lib/admin-stuck.mjs (a mutation copy is read from SCRAPER_COPY_DIR)
+const { pathToFileURL } = await import("node:url");
+const _ROOT = process.env.SCRAPER_COPY_DIR || new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const { stuckReason } = await import(pathToFileURL(`${decodeURIComponent(_ROOT)}/scripts/lib/admin-stuck.mjs`).href);
+// the check itself, before anything is read: it must see both failures and pass a healthy panel (no sign-in needed to prove it can fail)
+if (stuckReason("Loading the playbook…", []) == null || stuckReason("Steps", ["Flow render failed: ReferenceError: stepKind is not defined"]) == null || stuckReason("92 steps · 21 chips", ["warning: slow"]) != null) {
+  console.log("  🔴 the stuck-panel check can't tell a loading or failed render from a drawn one");
+  process.exit(1);
+}
+
 if (!SUPA_URL || !SUPA_KEY) {
   console.log("  ⚠️  SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — cannot sign in.");
   process.exit(2);
@@ -73,8 +86,9 @@ const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"]
 let fails = 0;
 try {
   const page = await browser.newPage();
-  const errs = [];
+  const errs = [], logs = [];
   page.on("pageerror", (e) => errs.push(e.message.split("\n")[0].slice(0, 110)));
+  page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning" || m.type() === "log") logs.push(m.text().slice(0, 200)); });
 
   // 🔴 2026-09-11 — RENDERING IS NOT ENOUGH. Enforcing a CSP blocked every Supabase call on the
   // admin: the page still rendered, every panel still had text, and it showed "Onboarding 0%",
@@ -165,7 +179,7 @@ try {
   await new Promise((r) => setTimeout(r, 10000));
 
   for (const tab of tabs) {
-    const before = errs.length;
+    const before = errs.length, logsBefore = logs.length;
     await page.evaluate((t) => {
       const btn = [...document.querySelectorAll(".admin-side-tab")].find((x) => x.dataset.tab === t);
       if (btn) btn.click();
@@ -176,12 +190,21 @@ try {
       return { exists: !!el, chars: el ? el.innerText.trim().length : -1 };
     }, tab);
     const threw = errs.length - before;
+    // a panel still loading gets more time: the live onboarding tab redraws for ~45 s on a normal day (11-5 probe: drawn at 10 s, "Loading the
+    // playbook…" again at 25 s, 103 rows at 45 s), so it has 60 s to finish; still loading after that = it never drew
+    const panelText = () => page.evaluate((t) => { const el = document.getElementById("panel-" + t); return el ? el.innerText : ""; }, tab);
+    let text = await panelText();
+    for (let i = 0; i < 60 && /Loading the playbook/i.test(text); i++) { await new Promise((r) => setTimeout(r, 1000)); text = await panelText(); }
+    const stuck = stuckReason(text, logs.slice(logsBefore));
 
     if (!info.exists) { console.log(`  🔴 ${tab.padEnd(16)} has no panel element`); fails++; }
     else if (info.chars < MIN_CHARS) { console.log(`  🔴 ${tab.padEnd(16)} rendered ${info.chars} chars — blank`); fails++; }
     else if (threw) { console.log(`  🔴 ${tab.padEnd(16)} threw: ${errs.slice(-threw)[0]}`); fails++; }
+    else if (stuck) { console.log(`  🔴 ${tab.padEnd(16)} ${stuck}`); fails++; }
     else console.log(`  ✅ ${tab.padEnd(16)} ${String(info.chars).padStart(6)} chars`);
   }
+  // a render that failed before any tab was pressed (the first draw) still counts
+  { const early = stuckReason("", logs); if (early && !fails) { console.log(`  🔴 the admin page ${early}`); fails++; } }
 } catch (e) {
   console.log(`  ⚠️  the probe could not complete: ${e.message}`);
   await browser.close();

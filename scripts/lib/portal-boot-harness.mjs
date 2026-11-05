@@ -131,6 +131,9 @@ export async function bootPortal(scenario = {}, overrides = {}, siteRoot = SITE)
     window.__FAKE = JSON.parse(fakeJson);
     window.__rgaClientPreview = { clientId: cid, client: () => eval(clientSrc), fail: (why) => { window.__PREVIEW_FAIL = why; } };
   }, JSON.stringify(fake), FAKE_CLIENT, CID);
+  // scenario.clock (ISO): the page's clock starts there and runs on (Date and Date.now only). A gate that reads a due day or a quarter draws the
+  // same page every day; without it the page runs on the real clock, as before.
+  if (scenario.clock) await page.evaluateOnNewDocument((t0) => { const D = Date, off = t0 - D.now(); class FD extends D { constructor(...a) { if (a.length) super(...a); else super(D.now() + off); } static now() { return D.now() + off; } } window.Date = FD; }, Date.parse(scenario.clock));
   // 🔑 a loaded machine (several gate runs at once) can take longer than puppeteer's 30 s default to reach DOMContentLoaded; and a boot that
   // fails must not leave its Chrome and server behind (11-4: both were seen while three builds ran their gates together)
   try { await page.goto(`${base}/portal/`, { waitUntil: "domcontentloaded", timeout: 120000 }); }

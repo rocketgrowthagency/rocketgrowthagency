@@ -84,6 +84,10 @@ try {
   await page.evaluate(() => document.querySelector('.portal-nav a[data-view="ongoing"]')?.click());
   await new Promise((r) => setTimeout(r, 4000));
   await page.screenshot({ path: `${OUT}/3-ongoing.png`, fullPage: true });
+  // the Ongoing work tab's words, for a word-for-word diff against its mockup (ongoing_overview_v1)
+  fs.writeFileSync(`${OUT}/ongoing.txt`, await page.evaluate(() => [...document.querySelectorAll(".pv-ongoing")].map((v) => v.innerText).join("\n---\n")));
+  { const box = await page.evaluate(() => { const v = [...document.querySelectorAll(".pv-ongoing .pm-og")].find((x) => x.offsetParent); if (!v) return null; const r = v.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height }; });
+    if (box) await page.screenshot({ path: `${OUT}/3b-ongoing-tab.png`, clip: box, fullPage: true }).catch(() => {}); }
     // the swap marker: the portal.js this page ran is the local one (its text, fetched back through the same routes)
   const marker = LIVE ? null : await page.evaluate(async (want) => { try { const t = await (await fetch("/portal/portal.js")).text(); return t.length === want; } catch { return false; } }, fs.readFileSync(path.join(SITE_DIR, "portal/portal.js"), "utf8").length);
   console.log(JSON.stringify({ step3Row: opened, postsLine: posts, localPortalJs: marker, bottom: bottom && { foundationCards: bottom.foundation, facts: bottom.facts }, served: [...served].sort(), pageErrors: errs.slice(0, 5) }));

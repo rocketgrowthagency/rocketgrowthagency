@@ -1,0 +1,5 @@
+[
+ ["a panel still saying Loading the playbook passes again", "adminstuck", "[[/Loading the playbook/i, 'still says", "[[/Loading the playbook NEVER/i, 'still says", 1],
+ ["a render that logged Flow render failed passes again", "adminstuck", "[/Flow render failed/i, 'logged", "[/Flow render failed NEVER/i, 'logged", 1],
+ ["the stuck check reads nothing", "adminstuck", "  for (const [re, why] of STUCK) if (re.test(panelText || \"\") || (logs || []).some((l) => re.test(l))) return why;", "", 1]
+]

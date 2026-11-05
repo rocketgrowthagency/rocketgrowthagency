@@ -306,6 +306,7 @@ export const FILES = {
   monthlyreport: "netlify/functions/send-monthly-report.js",
   // 🔑 A gate can be the thing under test: this one's own rule is what a mutation targets.
   playbookgate: null,
+  adminstuck: "scraper:scripts/lib/admin-stuck.mjs",   // check-admin-tabs-render: a tab still loading or a logged render failure (11-5)
   // 🔑 SCRAPER-SIDE targets (prefix "scraper:"): copied to <tmp>/__scraper/<rel>; the gate finds the copy via
   // SCRAPER_COPY_DIR. Added 2026-10-09 for check-every-video-page-ships (rebuild-broken-videos.sh).
   rebuild: "scraper:scripts/rebuild-broken-videos.sh",

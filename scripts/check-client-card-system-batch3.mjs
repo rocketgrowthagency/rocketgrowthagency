@@ -252,7 +252,7 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const cc = fn("closeCallStateHtml");
   if (/Month 1/.test(cc.replace(/rec\.why === "report" \? "your Month 1 report is ready the day before\." :[^`]*`/, "").replace(/\? "Your Month 1 report" /g, "").replace(/"<b>Your Month 1 report<\/b>"/, "")) && !/ccPurpose\(clientId\) !== "m2_monthly" \? `RGA recommends/.test(cc)) fail("20: the picker's reason can say Month 1");
   if (!/rec && ccPurpose\(clientId\) !== "m2_monthly" \? `RGA recommends/.test(cc)) fail("20: the picker's reason text can say Month 1");
-  if (!/" · the day after your report"/.test(cc) || !/state: m2 \? "ok" : "rga"/.test(cc) || !/csEv\("<b>In your calendar<\/b> · invite sent"\)/.test(cc) || !/`\$\{escapeHtml\(ogMonth\(\)\)\} report`/.test(cc)) fail("20: the picker / booked card aren't the page's");
+  if (!/" · the day after your report"/.test(cc) || !/state: m2 \? "ok" : "rga"/.test(cc) || !/csEv\("<b>In your calendar<\/b> · invite sent"\)/.test(cc) || !/`\$\{escapeHtml\((mgM2 \? ogReportMonthName\(\) : )?ogMonth\(\)\)\} report`/.test(cc)) fail("20: the picker / booked card aren't the page's");
   if (!/\{ text: "Booked", cls: "done", tone: "ok" \}/.test(fn("closeCallPill")) || !/text: "RGA confirms your time"/.test(fn("closeCallPill"))) fail("20: the pill doesn't follow the card");
   if (!/monthlyRecommendation\(rows\?\.\[0\]\?\.data\?\.tasks\?\.\["m2\.report\.deliver"\], slots\)/.test(KA)) fail("20: nothing asks for RGA's recommended time");
   { const ma = /function monthlyRecommendation\(deliver, slots\) \{/.exec(KA); if (!ma) moved("monthlyRecommendation");

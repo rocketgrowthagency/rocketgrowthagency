@@ -45,6 +45,7 @@ const UI_ONLY = {
   "data-ob-draft-copy": "copies a draft to the clipboard for a person to send; nothing is sent",
   "data-photo-keep-note": "removes the note on the spot; the choice stays in this browser, and nothing is sent",
   "data-cx-keep": "closes the Cancel fold on the spot; nothing is recorded because they chose not to cancel",
+  "data-og-see": "the managed Ongoing work tab's \"Done by RGA this month\" panel, See / Hide on a line (ongoing_overview_v1, 11-5): opens or folds that line's own card under it and flips the label + aria-expanded (visible) — nothing is saved",
   "data-cs-how": "the client card system's foot \"How this step works ▾\" / \"Why these 5 ▾\" (client_card_system_v1, 2026-10-29): opens or folds the how-to inside the card and flips aria-expanded + the chevron (visible) — nothing is saved",
   "data-cs-ask": "the client card system's \"Change something\" under a locked card (client_card_system_v1, 2026-10-29): opens the lock's Need a change? panel under the card and scrolls to it (visible) — nothing is saved until \"Send to RGA\", which IS audited",
   "data-zc-goto": "admin step 29's \"Open the fix plan ›\" (admin_steps_29_38, 2026-10-29): scrolls to that step's row (visible) — nothing is saved",
