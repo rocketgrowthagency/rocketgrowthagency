@@ -49,7 +49,7 @@ if (!/review_note/.test((portal.match(/\.from\("client_photos"\)\s*\.select\("([
 // 3
 if (!/\$\{prvHtml\}\$\{waitHtml\}/.test(admin) || !/\$\{prvHtml\}\$\{bandHtml\}/.test(admin)) fail("the photos step no longer renders the review list in both of its states");
 // 🔑 10-16: a Google row's pill says its card's state first (gsA); the photos step isn't one, so Review N still leads for it
-if (!/\$\{(?:gsA \? gPillText\(gsA, s\.task\) : )?prvN \? `Review \$\{prvN\}` : waiting/.test(admin) || /"m1\.gbp\.photos"/.test((/^const CLIENT_GBP_STEPS = \{[^\n]*/m.exec(admin) || [""])[0])) fail("step 39's status does not say Review N while photos wait");
+if (!/\$\{(?:skipAskOpen\(s\.task\) \? "Client asks to skip" : )?(?:gsA \? gPillText\(gsA, s\.task\) : )?prvN \? `Review \$\{prvN\}` : waiting/.test(admin) || /"m1\.gbp\.photos"/.test((/^const CLIENT_GBP_STEPS = \{[^\n]*/m.exec(admin) || [""])[0])) fail("step 39's status does not say Review N while photos wait");
 // 🔑 the PHOTO REVIEW card's own reveal (the second-logo card reveals step 40 too, 10-15 — that one doesn't count)
 if (!/reveal: PHOTO_REVIEW_STEP, tab: "onboarding-v2", scroll: "panel-onboarding-v2", btn: "Review photos"/.test(admin) || !/data\.admin\.reveal/.test(admin)) fail("Your action does not name the waiting photos, or does not open step 39");
 if (!/fetch\("\/\.netlify\/functions\/admin-photo-review"/.test(admin)) fail("the review buttons do not call admin-photo-review");

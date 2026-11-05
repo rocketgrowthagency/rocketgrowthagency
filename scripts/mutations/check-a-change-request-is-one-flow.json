@@ -1,254 +1,38 @@
 [
- [
-  "the panel's box is required again (browser popup)",
-  "portal",
-  "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" placeholder",
-  "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" required placeholder",
-  1
- ],
- [
-  "the second we're-looking-into-it band returns on a locked step",
-  "portal",
-  "          flagged && !stepLk\n",
-  "          flagged\n",
-  1
- ],
- [
-  "a flag on a finished step never reaches To do",
-  "openmoves",
-  "    if (ask && isClientVisible(s)) {",
-  "    if (false) {",
-  1
- ],
- [
-  "the band drops what they wrote",
-  "portal",
-  "+ `${rec.note ? `<q>${escapeHtml(rec.note)}</q>` : \"\"}",
-  "+ ``",
-  1
- ],
- [
-  "a step that can't change offers I want to change something",
-  "portal",
-  ": canChange ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">",
-  ": true ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">",
-  1
- ],
- [
-  "the lock line stays below the card",
-  "portal",
-  "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatLockFoots(); seatCsSt(); })",
-  "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatCsSt(); })",
-  1
- ],
- [
-  "a step with RGA shows its done tick again",
-  "portal",
-  "isDone && !askLk && (!og || og.tone === \"ok\") ? \" is-done\" : askLk ? \" is-rga\" : \"\"",
-  "isDone ? \" is-done\" : \"\"",
-  1
- ],
- [
-  "RGA's reply never shows on the band",
-  "portal",
-  "    if (reply) return `<div class=\"pm-chg-band y\"",
-  "    if (false) return `<div class=\"pm-chg-band y\"",
-  1
- ],
- [
-  "the band repeats nothing-changes again",
-  "portal",
-  "<span class=\"pm-chg-hint\">RGA replies here, usually the same day.</span>",
-  "<span class=\"pm-chg-hint\">RGA replies here, usually the same day. Nothing changes until we've talked.</span>",
-  1
- ],
- [
-  "the lock line goes back to the SVG icon",
-  "portal",
-  "<span class=\"pm-lock-g\" aria-hidden=\"true\">🔒</span>",
-  "${LOCK_ICON}",
-  1
- ],
- [
-  "the lock line goes back to green bold",
-  "portalcss",
-  ".pm-lockfoot .pm-lockline { font-size:13.5px; font-weight:400; color:var(--portal-muted,#616161); }",
-  ".pm-lockfoot .pm-lockline { font-size:12.5px; font-weight:600; color:var(--portal-ok,#0c5132); }",
-  1
- ],
- [
-  "opening the panel keeps the lock line",
-  "portal",
-  "foot.classList.toggle(\"is-asking\", show);",
-  "",
-  1
- ],
- [
-  "a flagged step is the client's next step again",
-  "portal",
-  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r)",
-  "isOpenRow(r) && theirs(r)",
-  1
- ],
- [
-  "admin Open step re-loads the client it's already on",
-  "admin",
-  "    if (here) { if (state.activeTab !== \"onboarding-v2\") setActiveTab(\"onboarding-v2\"); revealStep(step); focusAskReply(step); return; }\n",
-  "",
-  1
- ],
- [
-  "a done row ignores the client's ask",
-  "admin",
-  "const ask = !declined && !kick2 && !callOn && !kick4Req ? admAskOf(s.task) : null;",
-  "const ask = null;",
-  1
- ],
- [
-  "the ask card loses Send reply",
-  "admin",
-  "acts: `<button type=\"submit\" class=\"admin-button\" form=\"${fid}\">Send reply</button>${",
-  "acts: `${",
-  1
- ],
- [
-  "Close without replying stops asking first",
-  "admin",
-  "close(\"Close without replying\", true)",
-  "close(\"Close without replying\")",
-  1
- ],
- [
-  "a replied ask still reads as unanswered",
-  "admin",
-  "const replied = Boolean(a.replied_at && Date.parse(a.replied_at) >= Date.parse(a.at || 0));",
-  "const replied = false;",
-  1
- ],
- [
-  "Undo shows while the client has asked",
-  "admin",
-  "${callOn || ask ? \"\" : undoBtn}",
-  "${callOn ? \"\" : undoBtn}",
-  1
- ],
- [
-  "To do says Open step for a client ask",
-  "admin",
-  "confirm_call: \"Confirm the time\", client_request: \"Reply\" };",
-  "confirm_call: \"Confirm the time\" };",
-  1
- ],
- [
-  "Send reply sends without asking",
-  "admin",
-  "if (!await rgaConfirm(`Send this reply to ${to}?",
-  "if (false && await rgaConfirm(`Send this reply to ${to}?",
-  1
- ],
- [
-  "the reply doesn't stamp the ask",
-  "replyfn",
-  "[key]: { ...t0[key], replied_at: at, replied_by: gate.email || null, reply: message.slice(0, 280) }",
-  "[key]: { ...t0[key] }",
-  1
- ],
- [
-  "RGA's Close can't close a flag",
-  "adminunlock",
-  "  if (action !== \"confirm\") delete prev.client_flagged;\n",
-  "",
-  1
- ],
- [
-  "a replied ask stays on To do",
-  "openmoves",
-  "    if (ask && ask.replied_at && Date.parse(ask.replied_at) >= Date.parse(ask.at || 0)) continue;\n",
-  "",
-  1
- ],
- [
-  "a closed Unlock keeps its form's gap",
-  "admincss",
-  ".ob-unlock:not([open]) { gap:0; }\n",
-  "",
-  1
- ],
- [
-  "the opened mini line repeats the card header",
-  "admincss",
-  ".ob-ac-mini > .ob-gq > .ob-ac > .ob-ac-h { display:none; }\n",
-  "",
-  1
- ],
- [
-  "revealStep leaves a folded phase folded",
-  "admin",
-  "      const ph = el.closest(\".ob-phase:not(.open)\"); if (ph) ph.querySelector(\"[data-ob-phase-toggle]\")?.click();\n",
-  "",
-  1
- ],
- [
-  "a phase with an unanswered ask stays folded",
-  "admin",
-  " || idx.some((i) => { const a = admAskOf(steps[i].task); return a && !a.replied; });",
-  ";",
-  1
- ],
- [
-  "the phase counts an asked row as done",
-  "admin",
-  " && !(admAskOf(steps[i].task) && !admAskOf(steps[i].task).replied)).length;",
-  ").length;",
-  1
- ],
- [
-  "That's sorted goes back to a link",
-  "portal",
-  "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>",
-  "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>",
-  1
- ],
- [
-  "step 3's Need a change? loses 'We moved our website'",
-  "portal",
-  "[\"moved\", \"change\", \"We moved our website to a different place\",",
-  "[\"moved\", \"change\", \"Something moved\",",
-  1
- ],
- [
-  "every step gets step 3's choices",
-  "portal",
-  "(canChange && ASK_CHOICES[stepId] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[stepId]",
-  "(canChange && ASK_CHOICES[\"m1.access.website\"] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[\"m1.access.website\"]",
-  1
- ],
- [
-  "a system step's request goes back to a band above the card",
-  "portal",
-  "    if (CS_STEPS.has(stepId)) return `<div class=\"pm-cs-seat\"",
-  "    if (false) return `<div class=\"pm-cs-seat\"",
-  1
- ],
- [
-  "the system step's row drops their words",
-  "portal",
-  "rec.note ? `You asked: “${escapeHtml(rec.note)}”`",
-  "rec.note ? `You asked for a change`",
-  1
- ],
- [
-  "the system step's row loses Cancel",
-  "portal",
-  "RGA answers here and by email, today. Nothing changes until we've talked.`, `<button type=\"button\" ${close}>Cancel</button>`)",
-  "RGA answers here and by email, today. Nothing changes until we've talked.`, ``)",
-  1
- ],
- [
-  "the system step's reply row loses That's sorted",
-  "portal",
-  "`<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button><button type=\"button\" data-chg-convo=\"${id}\">",
-  "`<button type=\"button\" data-chg-convo=\"${id}\">",
-  1
- ]
+ ["the panel's box is required again (browser popup)", "portal", "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" placeholder", "<textarea name=\"note\" rows=\"4\" maxlength=\"600\" required placeholder", 1],
+ ["the second we're-looking-into-it band returns on a locked step", "portal", "          flagged && !stepLk\n", "          flagged\n", 1],
+ ["a flag on a finished step never reaches To do", "openmoves", "    if (ask && isClientVisible(s)) {", "    if (false) {", 1],
+ ["the band drops what they wrote", "portal", "+ `${rec.note ? `<q>${escapeHtml(rec.note)}</q>` : \"\"}", "+ ``", 1],
+ ["a step that can't change offers I want to change something", "portal", ": canChange ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">", ": true ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What do you need?\">", 1],
+ ["the lock line stays below the card", "portal", "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatLockFoots(); seatCsSt(); })", "requestAnimationFrame(() => { _seatQueued = false; upgradeCsCards(); seatHowFolds(); seatCsSt(); })", 1],
+ ["a step with RGA shows its done tick again", "portal", "isDone && !askLk && !fwMoved && !ccAgreed && !rgaSkipped && (!og || og.tone === \"ok\") ? \" is-done\" : askLk ? \" is-rga\" : \"\"", "isDone ? \" is-done\" : \"\"", 1],
+ ["RGA's reply never shows on the band", "portal", "    if (reply) return `<div class=\"pm-chg-band y\"", "    if (false) return `<div class=\"pm-chg-band y\"", 1],
+ ["the band repeats nothing-changes again", "portal", "<span class=\"pm-chg-hint\">RGA replies here, usually the same day.</span>", "<span class=\"pm-chg-hint\">RGA replies here, usually the same day. Nothing changes until we've talked.</span>", 1],
+ ["the lock line goes back to the SVG icon", "portal", "<span class=\"pm-lock-g\" aria-hidden=\"true\">🔒</span>", "${LOCK_ICON}", 1],
+ ["the lock line goes back to green bold", "portalcss", ".pm-lockfoot .pm-lockline { font-size:13.5px; font-weight:400; color:var(--portal-muted,#616161); }", ".pm-lockfoot .pm-lockline { font-size:12.5px; font-weight:600; color:var(--portal-ok,#0c5132); }", 1],
+ ["opening the panel keeps the lock line", "portal", "foot.classList.toggle(\"is-asking\", show);", "", 1],
+ ["a flagged step is the client's next step again", "portal", "isOpenRow(r) && r.status !== \"flagged\" && theirs(r)", "isOpenRow(r) && theirs(r)", 1],
+ ["admin Open step re-loads the client it's already on", "admin", "    if (here) { if (state.activeTab !== \"onboarding-v2\") setActiveTab(\"onboarding-v2\"); revealStep(step); focusAskReply(step); return; }\n", "", 1],
+ ["a done row ignores the client's ask", "admin", "const ask = !declined && !kick2 && !callOn && !kick4Req ? admAskOf(s.task) : null;", "const ask = null;", 1],
+ ["the ask card loses Send reply", "admin", "acts: `<button type=\"submit\" class=\"admin-button\" form=\"${fid}\">Send reply</button>${", "acts: `${", 1],
+ ["Close without replying stops asking first", "admin", "close(\"Close without replying\", true)", "close(\"Close without replying\")", 1],
+ ["a replied ask still reads as unanswered", "admin", "const replied = Boolean(a.replied_at && Date.parse(a.replied_at) >= Date.parse(a.at || 0));", "const replied = false;", 1],
+ ["Undo shows while the client has asked", "admin", "${callOn || ask ? \"\" : undoBtn}", "${callOn ? \"\" : undoBtn}", 1],
+ ["To do says Open step for a client ask", "admin", "confirm_call: \"Confirm the time\", client_request: \"Reply\" };", "confirm_call: \"Confirm the time\" };", 1],
+ ["Send reply sends without asking", "admin", "if (!await rgaConfirm(`Send this reply to ${to}?", "if (false && await rgaConfirm(`Send this reply to ${to}?", 1],
+ ["the reply doesn't stamp the ask", "replyfn", "[key]: { ...t0[key], replied_at: at, replied_by: gate.email || null, reply: message.slice(0, 280) }", "[key]: { ...t0[key] }", 1],
+ ["RGA's Close can't close a flag", "adminunlock", "  if (action !== \"confirm\") delete prev.client_flagged;\n", "", 1],
+ ["a replied ask stays on To do", "openmoves", "    if (ask && ask.replied_at && Date.parse(ask.replied_at) >= Date.parse(ask.at || 0)) continue;\n", "", 1],
+ ["a closed Unlock keeps its form's gap", "admincss", ".ob-unlock:not([open]) { gap:0; }\n", "", 1],
+ ["the opened mini line repeats the card header", "admincss", ".ob-ac-mini > .ob-gq > .ob-ac > .ob-ac-h { display:none; }\n", "", 1],
+ ["revealStep leaves a folded phase folded", "admin", "      const ph = el.closest(\".ob-phase:not(.open)\"); if (ph) ph.querySelector(\"[data-ob-phase-toggle]\")?.click();\n", "", 1],
+ ["a phase with an unanswered ask stays folded", "admin", " || idx.some((i) => { const a = admAskOf(steps[i].task); return a && !a.replied; });", ";", 1],
+ ["the phase counts an asked row as done", "admin", " && !(admAskOf(steps[i].task) && !admAskOf(steps[i].task).replied)).length;", ").length;", 1],
+ ["That's sorted goes back to a link", "portal", "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button>", "<div class=\"pm-chg-band-r\"><button type=\"button\" class=\"pm-chg-lnk\" data-chg-sorted ${close}>That's sorted</button>", 1],
+ ["step 3's Need a change? loses 'We moved our website'", "portal", "[\"moved\", \"change\", \"We moved our website to a different place\",", "[\"moved\", \"change\", \"Something moved\",", 1],
+ ["every step gets step 3's choices", "portal", "(canChange && ASK_CHOICES[stepId] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[stepId]", "(canChange && ASK_CHOICES[\"m1.access.website\"] ? `<div class=\"pm-chg-ch\" role=\"radiogroup\" aria-label=\"What changed?\">${ASK_CHOICES[\"m1.access.website\"]", 1],
+ ["a system step's request goes back to a band above the card", "portal", "    if (CS_STEPS.has(stepId)) return `<div class=\"pm-cs-seat\"", "    if (false) return `<div class=\"pm-cs-seat\"", 1],
+ ["the system step's row drops their words", "portal", "rec.note ? `You asked: “${escapeHtml(rec.note)}”`", "rec.note ? `You asked for a change`", 1],
+ ["the system step's row loses Cancel", "portal", "RGA answers here and by email, today. Nothing changes until we've talked.`, `<button type=\"button\" ${close}>Cancel</button>`)", "RGA answers here and by email, today. Nothing changes until we've talked.`, ``)", 1],
+ ["the system step's reply row loses That's sorted", "portal", "`<button type=\"button\" class=\"pm-commit pm-chg-sorted\" data-chg-sorted ${close}>That's sorted ✓</button><button type=\"button\" data-chg-convo=\"${id}\">", "`<button type=\"button\" data-chg-convo=\"${id}\">", 1]
 ]

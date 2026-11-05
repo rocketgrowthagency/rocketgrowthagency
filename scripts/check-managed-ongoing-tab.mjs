@@ -23,7 +23,7 @@
 //     and leaves the others; an opened card stays open on a redraw; "Go to step 8" lands on it open; the story and video folds draw their row
 //     open; only a LATE row (step 8's missed list) opens on its own; self-serve keeps today's open cards
 //   STEP 8'S REQUEST LINES (ongoing_step08_customers_v1) · plain lines, never today's avatar rows: "Maria · water heater / asked Nov 10 · remind
-//     once from Nov 13" (no controls), "Dev · drain cleaning / asked Nov 9" + Remind Dev once · They reviewed · They asked me to stop + Read the
+//     once from Nov 13" + They reviewed · They asked me to stop (11-5 fix: on every asked row; Remind once only when due), "Dev · drain cleaning / asked Nov 9" + Remind Dev once · They reviewed · They asked me to stop + Read the
 //     reminder, "Sam · new faucet / RGA wrote the request" + Send it (opens Text Sam + I sent it), "Dana · asked not to be contacted / No reminder
 //     goes to Dana" + the day; sent: "Maria · reviewed ★ / you said so Nov 14", "Dev · asked · reminded Nov 12" + the day asked; the controls
 //     still post their mark and say so
@@ -260,7 +260,8 @@ try {
       const g = await rqLines(h), by = (n) => g.lines.find((l) => l.text.startsWith(`${n} `)) || null;
       if (g.avatars) fail(`${L}: today's avatar rows are still drawn (approved: plain lines)`);
       const ma = by("Maria"), dv = by("Dev"), sm = by("Sam"), dn = by("Dana");
-      if (!ma || ma.text !== "Maria · water heater asked Nov 10 · remind once from Nov 13" || ma.mark !== "ok" || ma.btns.length || ma.read || ma.link) fail(`${L}: an ask before its reminder is due isn't "Maria · water heater / asked Nov 10 · remind once from Nov 13" with no controls ${JSON.stringify(ma)}`);
+      // 11-5 fix: "They reviewed" and "They asked me to stop" on EVERY asked row not marked either way (a stop can come any time; recording it blocks a re-ask); Remind once only when due
+      if (!ma || !ma.text.startsWith("Maria · water heater asked Nov 10 · remind once from Nov 13") || ma.mark !== "ok" || ma.btns.join("|") !== "They reviewed|They asked me to stop" || ma.read || ma.link) fail(`${L}: an ask before its reminder is due isn't "Maria · water heater / asked Nov 10 · remind once from Nov 13" with They reviewed · They asked me to stop and no Remind ${JSON.stringify(ma)}`);
       if (!dv || !dv.text.startsWith("Dev · drain cleaning asked Nov 9") || dv.btns.join("|") !== "Remind Dev once*|They reviewed|They asked me to stop" || !dv.read || !dv.top) fail(`${L}: a reminder that's due isn't "Dev · drain cleaning / asked Nov 9" with Remind Dev once · They reviewed · They asked me to stop and Read the reminder ${JSON.stringify(dv)}`);
       if (!sm || sm.text !== "Sam · new faucet RGA wrote the request Send it" || sm.mark !== "open" || sm.link !== "Send it" || sm.btns.length) fail(`${L}: a request not sent yet isn't "Sam · new faucet / RGA wrote the request" + Send it ${JSON.stringify(sm)}`);
       if (!dn || dn.text !== "Dana · asked not to be contacted No reminder goes to Dana Nov 11" || dn.mark !== "off" || dn.dt !== "Nov 11") fail(`${L}: a customer who asked to stop isn't "Dana · asked not to be contacted / No reminder goes to Dana" with the day ${JSON.stringify(dn)}`);
@@ -274,9 +275,9 @@ try {
       if (!sp.was || !sp.now || !sp.text.includes("Hi Sam, would you leave us a review?") || !sp.text.includes("Text Sam") || !sp.text1 || !sp.mark) fail(`${L}: Send it doesn't open Sam's request with Text Sam and I sent it ${JSON.stringify(sp)}`);
       // the controls still record, through the one handler: They reviewed (Dev) · I sent it (Sam) · They asked me to stop (Dev), each posted with its list and index and said
       const press = async (sel) => { await h.page.evaluate(`(() => ${TAB}.querySelector('[id="step-row-m2.exec.review_push"] ${sel}')?.click())()`); await tick(900); };
-      await press('[data-review-reviewed="1"]'); await press('[data-review-mark="2"]'); await press('[data-review-stop="1"]');
+      await press('[data-review-reviewed="1"]'); await press('[data-review-mark="2"]'); await press('[data-review-stop="1"]'); await press('[data-review-stop="0"]');
       const k = posts.map((b) => `${Object.keys(b).find((x) => ["sent", "reminded", "reviewed", "stopped", "not_match"].includes(x))}:${b.list_id}:${JSON.stringify(b.reviewed || b.sent || b.stopped)}`).join(" ");
-      if (k !== "reviewed:l2:[1] sent:l2:[2] stopped:l2:[1]") fail(`${L}: the request controls didn't record (posted ${k || "nothing"}; approved reviewed [1], sent [2], stopped [1] on list l2)`);
+      if (k !== "reviewed:l2:[1] sent:l2:[2] stopped:l2:[1] stopped:l2:[0]") fail(`${L}: the request controls didn't record (posted ${k || "nothing"}; approved reviewed [1], sent [2], stopped [1], and Maria's stop before her reminder is due [0], on list l2)`);
       const toast = await h.page.evaluate(() => document.body.innerText);
       if (!/Marked as reviewed\. No reminder goes to them\./.test(toast) && !/Got it\. Nothing more goes to them\./.test(toast)) fail(`${L}: a recorded mark says nothing`);
       if (h.errs.length) fail(`${L}: page errors ${h.errs.slice(0, 2).join(" · ")}`);
@@ -293,7 +294,7 @@ try {
       await openRow(h2, "m2.exec.review_push"); await tick(600);
       const g = await rqLines(h2), by = (n) => g.lines.find((l) => l.text.startsWith(`${n} `)) || null, ma = by("Maria"), dv = by("Dev");
       if (!ma || ma.text !== "Maria · reviewed ★ you said so Nov 14 Nov 14" || ma.dt !== "Nov 14") fail(`${L}: a reviewed customer isn't "Maria · reviewed ★ / you said so Nov 14" with the day ${JSON.stringify(ma)}`);
-      if (!dv || dv.text !== "Dev · asked · reminded Nov 12 Nov 9" || dv.dt !== "Nov 9" || dv.btns.length) fail(`${L}: a reminded customer isn't "Dev · asked · reminded Nov 12" with the day asked ${JSON.stringify(dv)}`);
+      if (!dv || !dv.text.startsWith("Dev · asked · reminded Nov 12") || dv.dt !== "Nov 9" || dv.btns.join("|") !== "They reviewed|They asked me to stop" || dv.read) fail(`${L}: a reminded customer isn't "Dev · asked · reminded Nov 12" with the day asked and They reviewed · They asked me to stop (no second reminder) ${JSON.stringify(dv)}`);
       const r8 = await rowText(h2, "m2.exec.review_push"); has(r8 || "", "2 customers asked", L); has(r8 || "", "Next list due Mon Nov 16.", L);
     } finally { await h2.close(); }
     // a missed list is late: step 8 opens on its own; the others stay folded

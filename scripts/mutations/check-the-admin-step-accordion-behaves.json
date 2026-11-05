@@ -1,79 +1,13 @@
 [
- [
-  "opening a step leaves the others open",
-  "admin",
-  "    ph.querySelectorAll(\".ob-step\").forEach((o) => { if (o !== el) obFoldStep(o, true); });\n",
-  "",
-  1
- ],
- [
-  "the live call can fold",
-  "admin",
-  "  if (fold && obStepIsLive(el)) fold = false;            // the live call console never folds\n",
-  "",
-  1
- ],
- [
-  "folded text unreachable by find",
-  "admin",
-  "c.setAttribute(\"hidden\", \"until-found\");",
-  "c.setAttribute(\"hidden\", \"\");",
-  1
- ],
- [
-  "a button in the row toggles the step",
-  "admin",
-  "  if (e.target.closest(\"button, a, input, select, textarea, label, summary, [data-ob-jump]\")) return;\n",
-  "",
-  1
- ],
- [
-  "the render forgets the accordion",
-  "admin",
-  "  if (isM1) obApplyStepAccordion(host);\n",
-  "",
-  1
- ],
- [
-  "the acted-on step folds on re-render",
-  "admin",
-  "    const pick = byId(_obLastActed)\n      || ",
-  "    const pick = null\n      || ",
-  1
- ],
- [
-  "a jump stops opening its target",
-  "admin",
-  "  if (typeof obOpenStep === \"function\") obOpenStep(target);   // 🔒 a jump opens what it points at\n",
-  "",
-  1
- ],
- [
-  "the title isn't put back",
-  "admin",
-  "  if (Math.abs(drift) > 0.5) window.scrollBy({ top: drift, behavior: \"instant\" });\n  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)",
-  "  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)",
-  1
- ],
- [
-  "a step row doesn't hold its place",
-  "admin",
-  "  obHoldInPlace(row, () => {",
-  "  ((_a, f) => f())(row, () => {",
-  1
- ],
- [
-  "a card doesn't hold its place",
-  "admin",
-  "obHoldInPlace(b, () => { body.hidden = !nowOpen;",
-  "((_a, f) => f())(b, () => { body.hidden = !nowOpen;",
-  1
- ],
- [
-  "the client's answer goes back in the top bar",
-  "admin",
-  "${obStaleNoteHtml(s, steps)}${obStalledNoteHtml(s.task)}</div>\n        <span class=\"ob-actions-inline\">${o.flowId === \"m1.access.website\"",
-  "${obStaleNoteHtml(s, steps)}${obStalledNoteHtml(s.task)}${attestation}${clientInputHtml(o, s.task)}</div>\n        <span class=\"ob-actions-inline\">${o.flowId === \"m1.access.website\"",
-  1
- ]
+ ["opening a step leaves the others open", "admin", "    ph.querySelectorAll(\".ob-step\").forEach((o) => { if (o !== el) obFoldStep(o, true); });\n", "", 1],
+ ["the live call can fold", "admin", "  if (fold && obStepIsLive(el)) fold = false;            // the live call console never folds\n", "", 1],
+ ["folded text unreachable by find", "admin", "c.setAttribute(\"hidden\", \"until-found\");", "c.setAttribute(\"hidden\", \"\");", 1],
+ ["a button in the row toggles the step", "admin", "  if (e.target.closest(\"button, a, input, select, textarea, label, summary, [data-ob-jump]\")) return;\n", "", 1],
+ ["the render forgets the accordion", "admin", "  if (isM1) obApplyStepAccordion(host);\n", "", 1],
+ ["the acted-on step folds on re-render", "admin", "    const pick = byId(_obLastActed)\n      || ", "    const pick = null\n      || ", 1],
+ ["a jump stops opening its target", "admin", "  if (typeof obOpenStep === \"function\") obOpenStep(target);   // 🔒 a jump opens what it points at\n", "", 1],
+ ["the title isn't put back", "admin", "  if (Math.abs(drift) > 0.5) window.scrollBy({ top: drift, behavior: \"instant\" });\n  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)", "  requestAnimationFrame(() => { page.style.overflowAnchor = \"\"; });\n  if (opened)", 1],
+ ["a step row doesn't hold its place", "admin", "  obHoldInPlace(row, () => {", "  ((_a, f) => f())(row, () => {", 1],
+ ["a card doesn't hold its place", "admin", "obHoldInPlace(b, () => { body.hidden = !nowOpen;", "((_a, f) => f())(b, () => { body.hidden = !nowOpen;", 1],
+ ["the client's answer goes back in the top bar", "admin", "${obStalledNoteHtml(s.task)}${fewerAdminLine(o.flowId, s.task)}${skipAdminLine(o.flowId, s.task)}</div>", "${obStalledNoteHtml(s.task)}${fewerAdminLine(o.flowId, s.task)}${skipAdminLine(o.flowId, s.task)}${attestation}${clientInputHtml(o, s.task)}</div>", 1]
 ]

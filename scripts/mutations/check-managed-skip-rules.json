@@ -1,0 +1,19 @@
+[
+ ["step 12 isn't in skip_period", "stepchoicefn", "const SKIP_PERIOD = new Set([\"m2.exec.youtube_video\", \"m2.win_story.capture\", \"m2.call.monthly\"]);", "const SKIP_PERIOD = new Set([\"m2.exec.youtube_video\", \"m2.win_story.capture\"]);", 1],
+ ["the client can skip the close-out call alone", "stepchoicefn", "const SKIP_PERIOD = new Set([\"m2.exec.youtube_video\", \"m2.win_story.capture\", \"m2.call.monthly\"]);", "const SKIP_PERIOD = new Set([\"m2.exec.youtube_video\", \"m2.win_story.capture\", \"m2.call.monthly\", \"m1.call.close\"]);", 1],
+ ["Book a call after all is refused", "stepchoicefn", "const ownSkip = prev.status === \"skipped\" && (", "const ownSkip = false && (", 1],
+ ["a self-serve client can ask to skip the close-out call", "stepchoicefn", "    if (!require(\"../../shared/portal-mode.js\").isManaged(await require(\"./_portal-mode\").clientMode(clientId))) return json(400, { error: \"That step can't be asked off here.\" });", "", 1],
+ ["To do lists RGA's cards as the client's", "openmoves", "const rgaCard = PMode.isManaged(mode) && PMode.roleOf(s, mode) === \"card\";", "const rgaCard = false;", 1],
+ ["the close-out ask isn't on RGA's To do", "openmoves", "const ask = t.client_flagged || t.change_request || skipAsk;", "const ask = t.client_flagged || t.change_request;", 1],
+ ["a reply doesn't stamp the close-out ask", "replyfn", " : t0 && t0.skip_request ? \"skip_request\" : null;", " : null;", 1],
+ ["the Month 1 report drops RGA's skips", "month1report", "...(skippedLines.length ? [{ key: \"skipped\", title: \"Skipped by RGA\", lines: skippedLines }] : []),", "", 1],
+ ["RGA's Skip reads Done again", "portal", "const rgaSkipped = !month2Only && status === \"skipped\"", "const rgaSkipped = false && status === \"skipped\"", 1],
+ ["step 7 has no ask", "portal", "return `${inCard}<div class=\"pm-fw-ask\">Can't make a call? ${fwAskBtn(step.id, \"Ask RGA to skip it\")}</div>`;", "return inCard;", 1],
+ ["an asked step 7 reads Your turn", "portal", "const ownerPill = ccAsked ? { text: \"RGA is on it\", cls: \"rga\" }", "const ownerPill = ccAsked ? { text: \"Your turn\", cls: \"you\" }", 1],
+ ["step 12 has no skip", "portal", "+ `<div class=\"pm-fw-ask\">Can't make a call this month? ${fwAskBtn(\"m2.call.monthly\", \"Skip this month\")}</div>` };", " };", 1],
+ ["a skipped step 12 reads Call held", "portal", "if (c.isDone && c.status === \"skipped\" && pmManaged()) {", "if (false) {", 1],
+ ["form tracking with no website reads RGA sets this up", "portal", "if (t.status !== \"done\" && wci && typeof wci === \"object\" && wci.via === \"none\")", "if (false)", 1],
+ ["admin's Skip doesn't say who skipped", "admin", "...(newStatus === \"skipped\" ? { skipped_at: nowIso, skipped_by: \"rga\" } : {})", "", 1],
+ ["admin 63 doesn't show the ask", "admin", "if (stepId === \"m1.call.close\" && skipAskOpen(task)) {", "if (false) {", 1],
+ ["RGA answers by the wrong day", "portal", "do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6); return monthDay(", "d.setDate(d.getDate() + 2); return monthDay(", 1]
+]

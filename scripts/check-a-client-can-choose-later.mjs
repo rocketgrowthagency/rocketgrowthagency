@@ -159,7 +159,7 @@ if (!/\.pm-later-list > :not\(summary\) \+ :not\(summary\) \{ margin-top:14px; \
 }
 // ── 4 · admin sees it ──
 const admin = read("admin/admin.js");
-if (!/Client chose later · reminder \$\{escapeHtml\(day\(until\)\)\}/.test(admin) || !/\+ laterLine\(task\)(?: \+ photoLines\(task(?:, stepId)?\))?;/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
+if (!/Client chose later · reminder \$\{escapeHtml\(day\(until\)\)\}/.test(admin) || !/\+ laterLine\(task\)(?: \+ photoLines\(task(?:, stepId)?\))?(?: \+ skipAskLines\(task, stepId\))?;/.test(admin)) fail("admin doesn't see that the client chose later, and until when");
 if (!/if \(l\.reminded_at\) return `<p class="ob-chose">Reminder sent /.test(admin) || !/if \(l\.followup_told_at\) return `<p class="ob-chose is-warn">No photos 3 days after their reminder/.test(admin)) fail("admin doesn't say when the reminder went, or doesn't turn amber 3 days on");
 if (!/x\.reason === "later_reminder" \? \(x\.emailed \? "Reminder they asked for · by email"/.test(admin) || !/reason: r\.payload\?\.reason \|\| null/.test(admin)) fail("admin's nudge log calls the reminder the client asked for a nudge");
 

@@ -231,7 +231,7 @@ has("right", /Already right · nothing needed changing/, "already right isn't sa
   if (a2[2] !== "SEO Company in Culver City | RGA") fail("a \"TITLE: words\" draft no longer fills"); }
 // the wiring the browser can't see
 if (!/if \(t\.hasAttribute\("data-ob-wc-savesend"\)\) \{/.test(A) || !/site_action: "save", change: pre \}\);[\s\S]{0,200}internal_decision: "approved"/.test(A)) fail("Send for approval on a draft doesn't save it and send it");
-if (!/\$\{gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");
+if (!/\$\{(?:skipAskOpen\(s\.task\) \? `[^`]*` : )?gsQ \? gPill\(gsQ, s\.task\) : wcRowPill\(o\.flowId, s\.task\) \? wcRowPillHtml\(o\.flowId, s\.task\)/.test(A) || !/if \(!declined && wcRowPill\(o\.flowId, s\.task\)\) return wcRowPillHtml\(o\.flowId, s\.task\);/.test(A)) fail("the row's chip isn't the website state (queued / done rows)");
 // ── builds 10, 11, 16 on the card ──
 if (!/changed since it went live/i.test(out.pageDrift.text) || !/aren't on it: Page title/.test(out.pageDrift.text) || out.pageDrift.pill !== "Changed") fail("drift doesn't reopen the row and say which line");
 if (!/Title as approved/.test(out.pageChecks.text) || !/<li><i class="o"[^>]*><\/i><span><b>Couldn't read their sitemap/.test(out.pageChecks.html)) fail("the live card doesn't show what was checked, with couldn't check left open");

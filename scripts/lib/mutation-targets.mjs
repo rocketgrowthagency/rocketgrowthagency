@@ -362,6 +362,8 @@ export const FILES = {
   gbpposts: "netlify/functions/_gbp-posts.js",   // batch 4 Monthly posts (10-19)
   ytclips: "netlify/functions/_youtube-clips.js",   // batch 4 YouTube clips (10-19)
   maturefn: "netlify/functions/_mature.js",   // batch 5 Mature (10-19)
+  setupfewer: "shared/setup-fewer.js",   // client_setup_fewer_v1 (11-5): the minimum + the note
+  stepfewerfn: "netlify/functions/portal-step-fewer.js",   // client_setup_fewer_v1: finish with fewer + the move to Monthly
   month1report: "netlify/functions/_month1-report.js",   // research-backed Month 1 report (10-19)
   reviewpolicy: "netlify/functions/_review-policy.js",   // review gating policy (10-20)
   benchfn: "netlify/functions/vertical-benchmark-lookup.js",

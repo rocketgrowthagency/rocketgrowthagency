@@ -1,62 +1,12 @@
 [
- [
-  "the blank-done-row fallback never runs (steps 7–10 done with nothing saved show only the how-to)",
-  "portal",
-  "  fillBlankDoneRows(listEl, numbered);\n",
-  "\n"
- ],
- [
-  "step 5: a done plan says RGA is building it",
-  "portal",
-  "  if (!demand.length && t.status === \"done\") return doneNoRecordHtml(t, { title: \"Your keyword plan\", tile: KW_ICON });",
-  "  if (false) return doneNoRecordHtml(t, { title: \"Your keyword plan\", tile: KW_ICON });"
- ],
- [
-  "step 10: a done photo step says only you can do it",
-  "portal",
-  "clientHowHtml(step, taskState, theirsToAct && !isDone, photos, clientId, portalListingStateOf(onboarding?.data?.tasks)))\n",
-  "clientHowHtml(step, taskState, theirsToAct, photos, clientId, portalListingStateOf(onboarding?.data?.tasks)))\n"
- ],
- [
-  "step 11: done + Your move again",
-  "portal",
-  "  if (!ch && (t.status === \"done\" || t.status === \"skipped\") && !_rcEditing.has(step.id)) {",
-  "  if (false) {"
- ],
- [
-  "step 12: a done form step says RGA is on it",
-  "portal",
-  "  if (t.status === \"done\") return doneNoRecordHtml(t, { title: \"Form tracking on your website\", tile: RC_FORM,",
-  "  if (false) return doneNoRecordHtml(t, { title: \"Form tracking on your website\", tile: RC_FORM,"
- ],
- [
-  "step 13: a done review step loses its done card and falls through to the ask (an emptied card is caught by the fallback since 10-30)",
-  "portal",
-  "  if (isDone && !total) return doneNoRecordHtml(task || {}, { title: \"Review requests\", tile: PERSON_ICON,",
-  "  if (false) return doneNoRecordHtml(task || {}, { title: \"Review requests\", tile: PERSON_ICON,"
- ],
- [
-  "every no-record done card says \"Marked done\" again",
-  "portal",
-  "    body: doneByTl(t) + rows.filter(",
-  "    body: pcTl(\"<b>Marked done</b> · before this page kept it\") + doneByTl(t) + rows.filter("
- ],
- [
-  "step 3 done says \"not on record\" again",
-  "portal",
-  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`",
-  "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + csEv(`<b>Your website builder</b> · not on record`, \"\", \"off\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`"
- ],
- [
-  "step 6's live read throws away the seated how-to again",
-  "portal",
-  "if (how && card && card.classList.contains(\"pm-cs-card\")) { how.removeAttribute(\"data-seated\"); how.classList.remove(\"pm-cs-howb\"); card.after(how); }",
-  "if (how && card && card.classList.contains(\"pm-cs-card\")) { }"
- ],
- [
-  "the card system's Messages + Ask RGA chrome counts as a record (steps 4, 7, 8, 9 done with nothing saved draw no card, found 10-30)",
-  "portal",
-  ".pm-lockfoot, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, input,",
-  ".pm-lockfoot, input,"
- ]
+ ["the blank-done-row fallback never runs (steps 7–10 done with nothing saved show only the how-to)", "portal", "  fillBlankDoneRows(listEl, numbered);\n", "\n"],
+ ["step 5: a done plan says RGA is building it", "portal", "  if (!demand.length && t.status === \"done\") return doneNoRecordHtml(t, { title: \"Your keyword plan\", tile: KW_ICON });", "  if (false) return doneNoRecordHtml(t, { title: \"Your keyword plan\", tile: KW_ICON });"],
+ ["step 10: a done photo step says only you can do it", "portal", "clientHowHtml(step, taskState, theirsToAct && !isDone, photos, clientId, portalListingStateOf(onboarding?.data?.tasks)))\n", "clientHowHtml(step, taskState, theirsToAct, photos, clientId, portalListingStateOf(onboarding?.data?.tasks)))\n"],
+ ["step 11: done + Your move again", "portal", "  if (!ch && (t.status === \"done\" || t.status === \"skipped\") && !_rcEditing.has(step.id)) {", "  if (false) {"],
+ ["step 12: a done form step says RGA is on it", "portal", "  if (t.status === \"done\") return doneNoRecordHtml(t, { title: \"Form tracking on your website\", tile: RC_FORM,", "  if (false) return doneNoRecordHtml(t, { title: \"Form tracking on your website\", tile: RC_FORM,"],
+ ["step 13: a done review step loses its done card and falls through to the ask (an emptied card is caught by the fallback since 10-30)", "portal", "  if (isDone && !total && !(typeof fwOn === \"function\"", "  if (false && !total && !(typeof fwOn === \"function\""],
+ ["every no-record done card says \"Marked done\" again", "portal", "    body: doneByTl(t) + rows.filter(", "    body: pcTl(\"<b>Marked done</b> · before this page kept it\") + doneByTl(t) + rows.filter("],
+ ["step 3 done says \"not on record\" again", "portal", "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`", "body: csEv(`<b>Access given</b>`, when ? escapeHtml(when) : \"\") + csEv(`<b>Your website builder</b> · not on record`, \"\", \"off\") + `<div data-acc-done-plat hidden></div>`, foot: csFoot() })}`"],
+ ["step 6's live read throws away the seated how-to again", "portal", "if (how && card && card.classList.contains(\"pm-cs-card\")) { how.removeAttribute(\"data-seated\"); how.classList.remove(\"pm-cs-howb\"); card.after(how); }", "if (how && card && card.classList.contains(\"pm-cs-card\")) { }"],
+ ["the card system's Messages + Ask RGA chrome counts as a record (steps 4, 7, 8, 9 done with nothing saved draw no card, found 10-30)", "portal", ".pm-lockfoot, .pm-stepmsgs, details.pm-ask, .pm-cs-foot, input,", ".pm-lockfoot, input,"]
 ]

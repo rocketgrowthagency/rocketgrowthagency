@@ -1,457 +1,67 @@
 [
- [
-  "the old always-open form comes back for draft it",
-  "admin",
-  "\"Nothing on their website changes until they approve it in For your approval.\", body: isPage ? `<div class=\"ob-wc-rev\">${wcProofRowHtml({})}</div>` : \"\", acts: runB, right: nochange }));",
-  "\"Nothing on their website changes until they approve it in For your approval.\", body: wcFormHtml(id, null, true), acts: runB, right: nochange }));",
-  1
- ],
- [
-  "a September tick reads Done again",
-  "admin",
-  "    if (task.status === \"done\") return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"",
-  "    if (false) return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"",
-  1
- ],
- [
-  "the guarantee isn't flagged",
-  "admin",
-  "wcDiffHtml(pre) + wcRiskHtml(pre) +",
-  "wcDiffHtml(pre) +",
-  1
- ],
- [
-  "editing shows the Kind / Where boxes again",
-  "admin",
-  "<div class=\"ob-wc-row\" hidden><input data-f=\"kind\"",
-  "<div class=\"ob-wc-row\"><input data-f=\"kind\"",
-  1
- ],
- [
-  "sent loses its checks",
-  "admin",
-  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),",
-  "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcWhatHtml(task, c, false),",
-  1
- ],
- [
-  "the queued chip ignores the website state",
-  "admin",
-  "${gsQ ? gPill(gsQ, s.task) : wcRowPill(o.flowId, s.task) ? wcRowPillHtml(o.flowId, s.task) :",
-  "${gsQ ? gPill(gsQ, s.task) : false ? \"\" :",
-  1
- ],
- [
-  "a done row says Done over not proven",
-  "admin",
-  "          if (!declined && wcRowPill(o.flowId, s.task)) return wcRowPillHtml(o.flowId, s.task);   // admin_website_steps_v1: Live · Already right · Not proven\n",
-  "",
-  1
- ],
- [
-  "Send for approval saves but doesn't send",
-  "admin",
-  "    const k = await wcAction(t, stepId, { internal_decision: \"approved\" });\n    wcApply(stepId, k ? k.task : j.task);\n    if (k) setBanner(\"Sent. It's in the client's For your approval now.\", \"success\");",
-  "    wcApply(stepId, j.task);",
-  1
- ],
- [
-  "the risky rule loses the guarantee",
-  "sitechange",
-  "[/\\bguarantee(d|s)?\\b/i, \"a guarantee\"], ",
-  "",
-  1
- ],
- [
-  "the edit form is a box again",
-  "admincss",
-  ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 14px 12px 62px; }\n",
-  "",
-  1
- ],
- [
-  "couldn't read reads as a bad draft",
-  "admin",
-  "    if (pre.read_failed) return wrap(",
-  "    if (false) return wrap(",
-  1
- ],
- [
-  "the prefill reads only the colon shape",
-  "admindeliv",
-  "    const key = String(re.source).match(/^([A-Z_0-9]+)/); if (!key) return \"\";",
-  "    const key = null; if (!key) return \"\";",
-  1
- ],
- [
-  "a stale reading outlives the new run",
-  "admin",
-  "    if (pre && pre._run !== runSig) { wcDraftCache.delete(key); wcPrefilling.delete(key); return siteChangeAdminHtml(id, t); }\n",
-  "",
-  1
- ],
- [
-  "sent goes grey again (the 'over' colour)",
-  "admin",
-  "    return wrap(acCardHtml({ tone: \"rga\", tile, label: \"With the client · in their For your approval\"",
-  "    return wrap(acCardHtml({ tone: \"wait\", tile, label: \"With the client · in their For your approval\"",
-  1
- ],
- [
-  "the trip loses the pull request and merge stops",
-  "admin",
-  "    ...(gh ? [[\"Pull request\", \"RGA\",",
-  "    ...(false ? [[\"Pull request\", \"RGA\",",
-  1
- ],
- [
-  "\"1 files\" comes back",
-  "admin",
-  "bd ? `${wcDay(bd.built_at)} · ${nf} file${nf === 1 ? \"\" : \"s\"}`",
-  "bd ? `${wcDay(bd.built_at)} · ${nf} files`",
-  1
- ],
- [
-  "the facts drop the fingerprint",
-  "admin",
-  "  if (f0 && f0.size) facts.push([\"Built from\"",
-  "  if (false) facts.push([\"Built from\"",
-  1
- ],
- [
-  "an open pull request still marks the client's approval current",
-  "admin",
-  "cur = gh && pr ? (mg ? 5 : 4) : 3;",
-  "cur = gh && pr ? (mg ? 5 : 2) : 3;",
-  1
- ],
- [
-  "the sent card hides Preview page",
-  "admin",
-  "  const prev = bd && bd.preview_url ?",
-  "  const prev = false ?",
-  1
- ],
- [
-  "the trip's names stop sitting level",
-  "admincss",
-  "justify-items:center; align-content:start; text-align:center;",
-  "justify-items:center; text-align:center;",
-  1
- ],
- [
-  "the merge goes back to the browser's GitHub",
-  "admin",
-  "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for the client</button>",
-  "<a class=\"admin-button\" href=\"${escapeAttribute(pr.url)}\">Open #${escapeHtml(pr.number)} on GitHub ↗</a>",
-  1
- ],
- [
-  "the Proof box ticks what isn't proven",
-  "admin",
-  "    [!!m.branch_deleted_at, \"The branch tidied\",",
-  "    [true, \"The branch tidied\",",
-  1
- ],
- [
-  "'Live · proven' without all nine",
-  "admin",
-  "proven ? \"Live · proven\" : p.checked === true",
-  "true ? \"Live · proven\" : p.checked === true",
-  1
- ],
- [
-  "a GitHub login loses its pill (names_not_addresses_v1)",
-  "admin",
-  "return id ? `<span class=\"ob-ghid\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"",
-  "return id ? `<span class=\"ob-ghx\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"",
-  1
- ],
- [
-  "the sentence around a pill isn't escaped",
-  "admin",
-  "out += escapeHtml(s.slice(i, m.index)) + ghIdHtml(",
-  "out += s.slice(i, m.index) + ghIdHtml(",
-  1
- ],
- [
-  "a short name splits a longer one (no longest-first)",
-  "admin",
-  ".filter((x) => x && x[0]).sort((a, b) => b[0].length - a[0].length);",
-  ".filter((x) => x && x[0]);",
-  1
- ],
- [
-  "the Proof box's Merged line drops its pill",
-  "admin",
-  "<span>${v && v.html !== undefined ? v.html : escapeHtml(v)}</span>",
-  "<span>${escapeHtml(v && v.html !== undefined ? v.html : v)}</span>",
-  1
- ],
- [
-  "the merged card's repository isn't a pill",
-  "admin",
-  "of ${ghIdHtml(repo, \"repo\")}` : \"Merged by an account we don't know\"",
-  "of ${escapeHtml(repo)}` : \"Merged by an account we don't know\"",
-  1
- ],
- [
-  "the panel's box is headed by the repository again, not the client's name",
-  "admin",
-  "<b>${escapeHtml(ghClientName())}</b><span>${ghIdHtml(v.repo, \"repo\")}</span>",
-  "<b>${escapeHtml(v.repo)}</b><span></span>",
-  1
- ],
- [
-  "the panel footer's merger loses its pill",
-  "admin",
-  "by ${ghIdHtml(m.by || \"unknown\", \"login\")} · ${escapeHtml(wcTime(m.at))}",
-  "by ${escapeHtml(m.by || \"\")} · ${escapeHtml(wcTime(m.at))}",
-  1
- ],
- [
-  "the check rows print logins as plain text",
-  "admin",
-  "<small>${ghPillText(r.detail, [[v.login, \"login\"], [acc.github, \"login\"], [v.repo, \"repo\"]])}</small>",
-  "<small>${escapeHtml(r.detail)}</small>",
-  1
- ],
- [
-  "a pill row's line goes tight again",
-  "admincss",
-  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.8; }",
-  ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.3; }",
-  1
- ],
- [
-  "the verified band is grey even when it matches",
-  "admincss",
-  ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:var(--state-ok-bg,#e3f1df); }",
-  ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:#f7f8fa; }",
-  1
- ],
- [
-  "the mismatch band doesn't say what failed",
-  "admin",
-  "${escapeHtml((f && f.title) || \"A check doesn't match\")} · nothing opens or merges until it does",
-  "A check doesn't match · nothing opens or merges until it does",
-  1
- ],
- [
-  "the boxes' label sits on the name again",
-  "admincss",
-  ".ob-ghp-g .lbl { margin-bottom:8px; }",
-  ".ob-ghp-g .lbl { margin-bottom:0; }",
-  1
- ],
- [
-  "the check rows are packed again",
-  "admincss",
-  ".ob-ghp > .ob-safe-l li { padding:14px 18px; }",
-  ".ob-ghp > .ob-safe-l li { padding:9px 14px; }",
-  1
- ],
- [
-  "the panel boxes are packed again (10px padding)",
-  "admincss",
-  "border-radius:10px; padding:16px 18px; display:grid; gap:0; align-content:start; }",
-  "border-radius:10px; padding:10px 12px; display:grid; gap:0; align-content:start; }",
-  1
- ],
- [
-  "the live card's link loses its eye (back to Open the page ↗)",
-  "admin",
-  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>`",
-  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>`",
-  1
- ],
- [
-  "the Checking badge draws a second circle",
-  "admin",
-  "if (v.loading) return `<span class=\"ob-ghv unk\"><span><span class=\"vt\">Checking GitHub…</span>",
-  "if (v.loading) return `<span class=\"ob-ghv unk\"><span class=\"vi\" aria-hidden=\"true\"></span><span><span class=\"vt\">Checking GitHub…</span>",
-  1
- ],
- [
-  "an untidied branch claims it was tidied",
-  "admin",
-  ": m.at ? \"not yet: checked again within 5 minutes\" : \"not merged\"],",
-  ": m.at ? \"tidied\" : \"not merged\"],",
-  1
- ],
- [
-  "an open ask still reads Connection verified",
-  "admin",
-  "  if (askRec) return `<div class=\"ob-ghcv unk\">",
-  "  if (false) return `<div class=\"ob-ghcv unk\">",
-  1
- ],
- [
-  "the trip line counts an older version's approval",
-  "admin",
-  "const a = task.approval && task.approval.change_v === c.v ? task.approval : null,",
-  "const a = task.approval || null,",
-  1
- ],
- [
-  "a removal is judged by a fingerprint again",
-  "admin",
-  "    (task.site_change || {}).removes_page\n      ? [p.checked === true, \"Gone from their site\",",
-  "    false\n      ? [p.checked === true, \"Gone from their site\",",
-  1
- ],
- [
-  "a removed page offers View page again",
-  "admin",
-  "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
-  "right: url ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"",
-  1
- ],
- [
-  "the footer only reads the current pull request again",
-  "admin",
-  "return [t0.publish_pr, ...(t0.site_change_log || []).map((h) => h && h.pr)];",
-  "return [t0.publish_pr];",
-  1
- ],
- [
-  "a new page goes back to a wall of green",
-  "admin",
-  "(isPage && pre.new_page ? wcReviewHtml(pre, od.page_draft) + wcRiskHtml(pre, od.page_draft) :",
-  "(false ? \"\" :",
-  1
- ],
- [
-  "a saved page draft loses the review",
-  "admin",
-  "(isPage && c.new_page ? wcReviewHtml(c, od.page_draft) + wcRiskHtml(c, od.page_draft) :",
-  "(false ? \"\" :",
-  1
- ],
- [
-  "a comma list counts as 1 item again",
-  "admin",
-  ": t.split(/,\\s*/);",
-  ": [t];",
-  1
- ],
- [
-  "a too-long title gets a tick",
-  "admin",
-  "title.length > 65 || !names],",
-  "false],",
-  1
- ],
- [
-  "the Google preview is gone",
-  "admin",
-  "${c.post ? \"\" : wcProofRowHtml(c)}${wcGooglePreviewHtml(c)}",
-  "${c.post ? \"\" : wcProofRowHtml(c)}",
-  1
- ],
- [
-  "the page as it reads is gone",
-  "admin",
-  "${wcGooglePreviewHtml(c)}${wcPageReadsHtml(c)}</div>",
-  "${wcGooglePreviewHtml(c)}</div>",
-  1
- ],
- [
-  "a new line is green highlight again",
-  "admin",
-  "`<span class=\"ob-wc-new\">New</span>${escapeHtml(i.after || \"(removed)\")}`",
-  "`<ins>${escapeHtml(i.after || \"(removed)\")}</ins>`",
-  1
- ],
- [
-  "the raw run prints the whole draft again",
-  "admin",
-  "if (scDef && scDef.kind === \"visible\" && task && (scDef.page || task.site_change",
-  "if (false && (scDef.page || task.site_change",
-  1
- ],
- [
-  "a stuffed draft isn't flagged",
-  "admin",
-  "+ st.map((x) => `<div class=\"ob-wc-warn\">",
-  "+ [].map((x) => `<div class=\"ob-wc-warn\">",
-  1
- ],
- [
-  "a copied sentence isn't flagged",
-  "admin",
-  "((d && d.duplicates) || []).map(",
-  "([]).map(",
-  1
- ],
- [
-  "the brief isn't on the card",
-  "admin",
-  "${d && d.brief_lines ? wcBriefHtml(d) : \"\"}",
-  "",
-  1
- ],
- [
-  "the proof ask is gone",
-  "admin",
-  "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-ob-wc-proofask>Ask the client for one real result</button>",
-  "",
-  1
- ],
- [
-  "no next page button",
-  "admin",
-  "${SC.pagesLeft(task) ? `<button type=\"button\" class=\"admin-button\" data-ob-wc-nextpage>Start the next ${isPost ? \"post\" : \"page\"}</button>` : nextPost",
-  "${false ? `` : nextPost",
-  1
- ],
- [
-  "the chip hides pages left",
-  "admin",
-  "SC.pagesLeft(task) ? `Live · ${task.site_change.page_of.at} of ${task.site_change.page_of.of}` : \"Live\"",
-  "\"Live\"",
-  1
- ],
- [
-  "an edit doesn't name the page",
-  "admin",
-  "<b>The page:</b>",
-  "<b></b>",
-  1
- ],
- [
-  "drift doesn't show",
-  "admin",
-  "if (task.live_drift) return wrap(acCardHtml({ tone: \"late\",",
-  "if (false) return wrap(acCardHtml({ tone: \"late\",",
-  1
- ],
- [
-  "the chip hides drift",
-  "admin",
-  "if (st === \"live\" && task.live_drift) return { text: \"Changed\", cls: \"active\" };",
-  "",
-  1
- ],
- [
-  "the checks don't show",
-  "admin",
-  "+ (p.checks ? acCk(p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])) : \"\")",
-  "",
-  1
- ],
- [
-  "couldn't check gets a tick",
-  "admin",
-  "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])",
-  "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", false])",
-  1
- ],
- [
-  "no numbers on the live card",
-  "admin",
-  "+ (isPage && c && !c.removes_page ? wcMeasureHtml(id, task) : \"\")",
-  "",
-  1
- ]
+ ["the old always-open form comes back for draft it", "admin", "\"Nothing on their website changes until they approve it in For your approval.\", body: isPage ? `<div class=\"ob-wc-rev\">${wcProofRowHtml({})}</div>` : \"\", acts: runB, right: nochange }));", "\"Nothing on their website changes until they approve it in For your approval.\", body: wcFormHtml(id, null, true), acts: runB, right: nochange }));", 1],
+ ["a September tick reads Done again", "admin", "    if (task.status === \"done\") return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"", "    if (false) return wrap(acCardHtml({ tone: \"you\", tile, label: \"Done, but not proven\"", 1],
+ ["the guarantee isn't flagged", "admin", "wcDiffHtml(pre) + wcRiskHtml(pre) +", "wcDiffHtml(pre) +", 1],
+ ["editing shows the Kind / Where boxes again", "admin", "<div class=\"ob-wc-row\" hidden><input data-f=\"kind\"", "<div class=\"ob-wc-row\"><input data-f=\"kind\"", 1],
+ ["sent loses its checks", "admin", "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcLoopHtml(task, c, st, gh) + wcWhatHtml(task, c, false),", "      body: `<div class=\"ob-ac-in\">${wcLabelHtml(c)}</div>` + wcWhatHtml(task, c, false),", 1],
+ ["the queued chip ignores the website state", "admin", "${skipAskOpen(s.task) ? `<span class=\"ob-status active is-ask\" data-skip-ask-pill>Client asks to skip</span>` : gsQ ? gPill(gsQ, s.task) : wcRowPill(o.flowId, s.task) ? wcRowPillHtml(o.flowId, s.task) :", "${skipAskOpen(s.task) ? `<span class=\"ob-status active is-ask\" data-skip-ask-pill>Client asks to skip</span>` : gsQ ? gPill(gsQ, s.task) : false ? \"\" :", 1],
+ ["a done row says Done over not proven", "admin", "          if (!declined && wcRowPill(o.flowId, s.task)) return wcRowPillHtml(o.flowId, s.task);   // admin_website_steps_v1: Live · Already right · Not proven\n", "", 1],
+ ["Send for approval saves but doesn't send", "admin", "    const k = await wcAction(t, stepId, { internal_decision: \"approved\" });\n    wcApply(stepId, k ? k.task : j.task);\n    if (k) setBanner(\"Sent. It's in the client's For your approval now.\", \"success\");", "    wcApply(stepId, j.task);", 1],
+ ["the risky rule loses the guarantee", "sitechange", "[/\\bguarantee(d|s)?\\b/i, \"a guarantee\"], ", "", 1],
+ ["the edit form is a box again", "admincss", ".ob-wc-f.ob-wc-ed { border:0; padding:0; background:none; border-radius:0; margin:0 14px 12px 62px; }\n", "", 1],
+ ["couldn't read reads as a bad draft", "admin", "    if (pre.read_failed) return wrap(", "    if (false) return wrap(", 1],
+ ["the prefill reads only the colon shape", "admindeliv", "    const key = String(re.source).match(/^([A-Z_0-9]+)/); if (!key) return \"\";", "    const key = null; if (!key) return \"\";", 1],
+ ["a stale reading outlives the new run", "admin", "    if (pre && pre._run !== runSig) { wcDraftCache.delete(key); wcPrefilling.delete(key); return siteChangeAdminHtml(id, t); }\n", "", 1],
+ ["sent goes grey again (the 'over' colour)", "admin", "    return wrap(acCardHtml({ tone: \"rga\", tile, label: \"With the client · in their For your approval\"", "    return wrap(acCardHtml({ tone: \"wait\", tile, label: \"With the client · in their For your approval\"", 1],
+ ["the trip loses the pull request and merge stops", "admin", "    ...(gh ? [[\"Pull request\", \"RGA\",", "    ...(false ? [[\"Pull request\", \"RGA\",", 1],
+ ["\"1 files\" comes back", "admin", "bd ? `${wcDay(bd.built_at)} · ${nf} file${nf === 1 ? \"\" : \"s\"}`", "bd ? `${wcDay(bd.built_at)} · ${nf} files`", 1],
+ ["the facts drop the fingerprint", "admin", "  if (f0 && f0.size) facts.push([\"Built from\"", "  if (false) facts.push([\"Built from\"", 1],
+ ["an open pull request still marks the client's approval current", "admin", "cur = gh && pr ? (mg ? 5 : 4) : 3;", "cur = gh && pr ? (mg ? 5 : 2) : 3;", 1],
+ ["the sent card hides Preview page", "admin", "  const prev = bd && bd.preview_url ?", "  const prev = false ?", 1],
+ ["the trip's names stop sitting level", "admincss", "justify-items:center; align-content:start; text-align:center;", "justify-items:center; text-align:center;", 1],
+ ["the merge goes back to the browser's GitHub", "admin", "<button type=\"button\" class=\"admin-button\" data-ob-wc-merge>Merge #${escapeHtml(pr.number)} for the client</button>", "<a class=\"admin-button\" href=\"${escapeAttribute(pr.url)}\">Open #${escapeHtml(pr.number)} on GitHub ↗</a>", 1],
+ ["the Proof box ticks what isn't proven", "admin", "    [!!m.branch_deleted_at, \"The branch tidied\",", "    [true, \"The branch tidied\",", 1],
+ ["'Live · proven' without all nine", "admin", "proven ? \"Live · proven\" : p.checked === true", "true ? \"Live · proven\" : p.checked === true", 1],
+ ["a GitHub login loses its pill (names_not_addresses_v1)", "admin", "return id ? `<span class=\"ob-ghid\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"", "return id ? `<span class=\"ob-ghx\"><span class=\"a ${kind === \"repo\" ? \"g\" : \"r\"}\"", 1],
+ ["the sentence around a pill isn't escaped", "admin", "out += escapeHtml(s.slice(i, m.index)) + ghIdHtml(", "out += s.slice(i, m.index) + ghIdHtml(", 1],
+ ["a short name splits a longer one (no longest-first)", "admin", ".filter((x) => x && x[0]).sort((a, b) => b[0].length - a[0].length);", ".filter((x) => x && x[0]);", 1],
+ ["the Proof box's Merged line drops its pill", "admin", "<span>${v && v.html !== undefined ? v.html : escapeHtml(v)}</span>", "<span>${escapeHtml(v && v.html !== undefined ? v.html : v)}</span>", 1],
+ ["the merged card's repository isn't a pill", "admin", "of ${ghIdHtml(repo, \"repo\")}` : \"Merged by an account we don't know\"", "of ${escapeHtml(repo)}` : \"Merged by an account we don't know\"", 1],
+ ["the panel's box is headed by the repository again, not the client's name", "admin", "<b>${escapeHtml(ghClientName())}</b><span>${ghIdHtml(v.repo, \"repo\")}</span>", "<b>${escapeHtml(v.repo)}</b><span></span>", 1],
+ ["the panel footer's merger loses its pill", "admin", "by ${ghIdHtml(m.by || \"unknown\", \"login\")} · ${escapeHtml(wcTime(m.at))}", "by ${escapeHtml(m.by || \"\")} · ${escapeHtml(wcTime(m.at))}", 1],
+ ["the check rows print logins as plain text", "admin", "<small>${ghPillText(r.detail, [[v.login, \"login\"], [acc.github, \"login\"], [v.repo, \"repo\"]])}</small>", "<small>${escapeHtml(r.detail)}</small>", 1],
+ ["a pill row's line goes tight again", "admincss", ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.8; }", ".ob-ghp .ob-safe-l small, .ob-proof-r > span { line-height:1.3; }", 1],
+ ["the verified band is grey even when it matches", "admincss", ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:var(--state-ok-bg,#e3f1df); }", ".ob-ghcv { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:6px 14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--state-ok-line,#cfe6c8); background:#f7f8fa; }", 1],
+ ["the mismatch band doesn't say what failed", "admin", "${escapeHtml((f && f.title) || \"A check doesn't match\")} · nothing opens or merges until it does", "A check doesn't match · nothing opens or merges until it does", 1],
+ ["the boxes' label sits on the name again", "admincss", ".ob-ghp-g .lbl { margin-bottom:8px; }", ".ob-ghp-g .lbl { margin-bottom:0; }", 1],
+ ["the check rows are packed again", "admincss", ".ob-ghp > .ob-safe-l li { padding:14px 18px; }", ".ob-ghp > .ob-safe-l li { padding:9px 14px; }", 1],
+ ["the panel boxes are packed again (10px padding)", "admincss", "border-radius:10px; padding:16px 18px; display:grid; gap:0; align-content:start; }", "border-radius:10px; padding:10px 12px; display:grid; gap:0; align-content:start; }", 1],
+ ["the live card's link loses its eye (back to Open the page ↗)", "admin", "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">${WC_EYE}View page</a>`", "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-ac-txt\" href=\"${escapeAttribute(url)}\" target=\"_blank\" rel=\"noopener\">Open the page ↗</a>`", 1],
+ ["the Checking badge draws a second circle", "admin", "if (v.loading) return `<span class=\"ob-ghv unk\"><span><span class=\"vt\">Checking GitHub…</span>", "if (v.loading) return `<span class=\"ob-ghv unk\"><span class=\"vi\" aria-hidden=\"true\"></span><span><span class=\"vt\">Checking GitHub…</span>", 1],
+ ["an untidied branch claims it was tidied", "admin", ": m.at ? \"not yet: checked again within 5 minutes\" : \"not merged\"],", ": m.at ? \"tidied\" : \"not merged\"],", 1],
+ ["an open ask still reads Connection verified", "admin", "  if (askRec) return `<div class=\"ob-ghcv unk\">", "  if (false) return `<div class=\"ob-ghcv unk\">", 1],
+ ["the trip line counts an older version's approval", "admin", "const a = task.approval && task.approval.change_v === c.v ? task.approval : null,", "const a = task.approval || null,", 1],
+ ["a removal is judged by a fingerprint again", "admin", "    (task.site_change || {}).removes_page\n      ? [p.checked === true, \"Gone from their site\",", "    false\n      ? [p.checked === true, \"Gone from their site\",", 1],
+ ["a removed page offers View page again", "admin", "right: url && !(c && c.removes_page) ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"", "right: url ? `<a class=\"admin-button admin-button-secondary ob-wc-view\"", 1],
+ ["the footer only reads the current pull request again", "admin", "return [t0.publish_pr, ...(t0.site_change_log || []).map((h) => h && h.pr)];", "return [t0.publish_pr];", 1],
+ ["a new page goes back to a wall of green", "admin", "(isPage && pre.new_page ? wcReviewHtml(pre, od.page_draft) + wcRiskHtml(pre, od.page_draft) :", "(false ? \"\" :", 1],
+ ["a saved page draft loses the review", "admin", "(isPage && c.new_page ? wcReviewHtml(c, od.page_draft) + wcRiskHtml(c, od.page_draft) :", "(false ? \"\" :", 1],
+ ["a comma list counts as 1 item again", "admin", ": t.split(/,\\s*/);", ": [t];", 1],
+ ["a too-long title gets a tick", "admin", "title.length > 65 || !names],", "false],", 1],
+ ["the Google preview is gone", "admin", "${c.post ? \"\" : wcProofRowHtml(c)}${wcGooglePreviewHtml(c)}", "${c.post ? \"\" : wcProofRowHtml(c)}", 1],
+ ["the page as it reads is gone", "admin", "${wcGooglePreviewHtml(c)}${wcPageReadsHtml(c)}</div>", "${wcGooglePreviewHtml(c)}</div>", 1],
+ ["a new line is green highlight again", "admin", "`<span class=\"ob-wc-new\">New</span>${escapeHtml(i.after || \"(removed)\")}`", "`<ins>${escapeHtml(i.after || \"(removed)\")}</ins>`", 1],
+ ["the raw run prints the whole draft again", "admin", "if (scDef && scDef.kind === \"visible\" && task && (scDef.page || task.site_change", "if (false && (scDef.page || task.site_change", 1],
+ ["a stuffed draft isn't flagged", "admin", "+ st.map((x) => `<div class=\"ob-wc-warn\">", "+ [].map((x) => `<div class=\"ob-wc-warn\">", 1],
+ ["a copied sentence isn't flagged", "admin", "((d && d.duplicates) || []).map(", "([]).map(", 1],
+ ["the brief isn't on the card", "admin", "${d && d.brief_lines ? wcBriefHtml(d) : \"\"}", "", 1],
+ ["the proof ask is gone", "admin", "<button type=\"button\" class=\"admin-button admin-button-secondary\" data-ob-wc-proofask>Ask the client for one real result</button>", "", 1],
+ ["no next page button", "admin", "${SC.pagesLeft(task) ? `<button type=\"button\" class=\"admin-button\" data-ob-wc-nextpage>Start the next ${isPost ? \"post\" : \"page\"}</button>` : nextPost", "${false ? `` : nextPost", 1],
+ ["the chip hides pages left", "admin", "SC.pagesLeft(task) ? `Live · ${task.site_change.page_of.at} of ${task.site_change.page_of.of}` : \"Live\"", "\"Live\"", 1],
+ ["an edit doesn't name the page", "admin", "<b>The page:</b>", "<b></b>", 1],
+ ["drift doesn't show", "admin", "if (task.live_drift) return wrap(acCardHtml({ tone: \"late\",", "if (false) return wrap(acCardHtml({ tone: \"late\",", 1],
+ ["the chip hides drift", "admin", "if (st === \"live\" && task.live_drift) return { text: \"Changed\", cls: \"active\" };", "", 1],
+ ["the checks don't show", "admin", "+ (p.checks ? acCk(p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])) : \"\")", "", 1],
+ ["couldn't check gets a tick", "admin", "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", x.ok !== true])", "p.checks.map((x) => [escapeHtml(x.what), \"\", \"\", false])", 1],
+ ["no numbers on the live card", "admin", "+ (isPage && c && !c.removes_page ? wcMeasureHtml(id, task) : \"\")", "", 1]
 ]

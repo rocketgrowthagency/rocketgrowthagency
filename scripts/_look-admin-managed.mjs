@@ -14,6 +14,25 @@ const out = { rows: {}, errors: [] };
 try {
   const page = await browser.newPage(); await page.setViewport({ width: 1400, height: 1100 });
   page.on("pageerror", (e) => out.errors.push(e.message.split("\n")[0]));
+  // LOOK_FEWER=1 (client_setup_fewer_v1 + client_steps_skip_rules_v1): this browser reads the client's REAL record with steps 38 and 60 finished with
+  // fewer (their real counts) and a close-out skip ask on step 63. Only the answer this page reads changes; nothing is written (no write is sent).
+  if (process.env.LOOK_FEWER === "1") {
+    await page.setRequestInterception(true);
+    page.on("request", async (r) => {
+      const u = r.url();
+      if (r.method() !== "GET" || !/\/rest\/v1\/client_onboarding_records/.test(u)) return r.continue();
+      try {
+        const res = await fetch(u, { headers: r.headers() }); const txt = await res.text(); let j; try { j = JSON.parse(txt); } catch { return r.respond({ status: res.status, body: txt, contentType: "application/json" }); }
+        const at = "2026-11-05T19:00:00Z";
+        const one = (row) => { if (!row || !row.data || !row.data.tasks) return row; const t = { ...row.data.tasks };
+          for (const [id, goal] of [["m1.gbp.photos", 20], ["m1.review.first_5", 5]]) { const x = t[id] || {}; const n = Number.isFinite(x.detected && x.detected.n) ? x.detected.n : 0; t[id] = { ...x, status: "done", completed_at: at, completed_by: "client", fewer: { n, goal, by: "client", who: null, at } }; }
+          t["m1.call.close"] = { ...(t["m1.call.close"] || {}), skip_request: { note: "I'm on jobs all week", at, by: null } };
+          return { ...row, data: { ...row.data, tasks: t } }; };
+        out.fewer = true;
+        return r.respond({ status: res.status, contentType: "application/json", headers: { "access-control-allow-origin": "*", "content-range": res.headers.get("content-range") || "" }, body: JSON.stringify(Array.isArray(j) ? j.map(one) : one(j)) });
+      } catch (e) { out.errors.push(`look interception: ${e.message}`); return r.continue(); }
+    });
+  }
   await openAdminClient(page, clientId, "overview");
   await page.waitForSelector("[data-portal-mode-sec]", { timeout: 60000 }).catch(() => {});
   const sw = await page.$("[data-portal-mode-sec]"); if (sw) await sw.screenshot({ path: `${OUT}/0-switch.png` });

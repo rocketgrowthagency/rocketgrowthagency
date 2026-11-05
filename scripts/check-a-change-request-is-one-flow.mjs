@@ -76,7 +76,7 @@ for (const [task, label, kw, said] of [[{ client_flagged: { at: "x", note: "That
   if (!/<span>Locked<\/span>/.test(bot)) fail("after RGA's reply the lock line isn't just \"Locked\"");
   ctx._portalThread = []; vm.runInContext("_portalThread = []", ctx); }
 if (!/flagged && !stepLk\n\s*\? `<p class="pm-flagged">/.test(P)) fail("the row's second \"we're looking into it\" band shows on a locked step again");
-if (!/const ownerPill = askLk \? \{ text: `With RGA\$\{askAt \? ` · since \$\{monthDay\(askAt\)\}` : ""\}`, cls: "rga" \}/.test(P)) fail("a locked step asked about doesn't read \"With RGA · since\"");
+if (!/const ownerPill = (?:[^\n]*\n\s*: )?askLk \? \{ text: `With RGA\$\{askAt \? ` · since \$\{monthDay\(askAt\)\}` : ""\}`, cls: "rga" \}/.test(P)) fail("a locked step asked about doesn't read \"With RGA · since\"");
 // the lock line is the card's LAST line (Chris 10-27: "match mockup"): marked bottom, seated by the same pass that seats the how-to
 if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFrame\(\(\) => \{ _seatQueued = false; (?:upgradeCsCards\(\); )?seatHowFolds\(\); seatLockFoots\(\);(?: seatCsSt\(\);)? \}\)/.test(P) || !/card\.appendChild\(f\); f\.classList\.add\("in-card"\);/.test(P)) fail("the lock line isn't seated inside the card as its footer");
 // mockup section 2 EXACTLY (Chris 10-27: "lock still doesnt match mockup"): a quiet grey line with the padlock glyph, never the green bold
@@ -88,7 +88,7 @@ if (!/data-lock-pos="bottom"/.test(lf({}, LK, "bottom")) || !/requestAnimationFr
   if (!/\.pm-lockfoot\.in-card \.pm-chg \{ margin:0; padding:0; border:0;/.test(C)) fail("the panel is a box inside the grey footer again (the mockup's is flat)");
   if (!/isOpenRow\(r\) && r\.status !== "flagged" && theirs\(r\)/.test(P)) fail("a flagged step can be the client's orange \"next step\" again (it's RGA's move)"); }
 if (!/const DONE_STRIP = "[^"]*\.pm-lockfoot/.test(P)) fail("the lock line inside the card counts as a done card's record (DONE_STRIP)");
-if (!/isDone && !askLk(?: && \(!og \|\| og\.tone === "ok"\))? \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step with RGA still shows its done tick");
+if (!/isDone && !askLk(?: && !fwMoved && !ccAgreed && !rgaSkipped)?(?: && \(!og \|\| og\.tone === "ok"\))? \? " is-done" : askLk \? " is-rga"/.test(P)) fail("a step with RGA still shows its done tick");
 // admin "Open step" on the client already open opens the step in place — it used to re-load the client and repaint every card
 // (Chris 10-27: "open step button doesnt work and everything glitches")
 { const A = read("admin/admin.js");

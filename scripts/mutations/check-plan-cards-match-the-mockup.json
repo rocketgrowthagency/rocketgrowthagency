@@ -1,143 +1,25 @@
 [
- [
-  "the how-to fold isn't seated in the card",
-  "portal",
-  "      card.insertBefore(f, card.querySelector(\":scope > .pm-pc-lnks\") || null);",
-  "      row.appendChild(f);"
- ],
- [
-  "the hairline is back above the plan card",
-  "portalcss",
-  ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { border-top: 0; padding-top: 0; }",
-  ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { padding-top: 0; }"
- ],
- [
-  "step 1 back to the long date",
-  "portal",
-  "head: `Call held · ${escapeHtml(ccDay(k.start, { tz: k.client_tz }))}`, side: escapeHtml(ccTime(k.start, { tz: k.client_tz })),",
-  "head: `Call held · ${escapeHtml(ccWhen(k.start, { tz: k.client_tz }, { long: true }))}`,"
- ],
- [
-  "the time ignores the client's zone",
-  "portal",
-  "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { timeZone: clientReadingZone(j && j.tz), hour: \"numeric\", minute: \"2-digit\" });",
-  "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { hour: \"numeric\", minute: \"2-digit\" });"
- ],
- [
-  "step 1 held's \"Ask RGA ›\" is a boxed button again (was \"Something's not right?\")",
-  "portalcss",
-  ".pm-k5-asklink { border:0; background:none; padding:0;",
-  ".pm-k5-asklink { padding:0;"
- ],
- [
-  "a plan-card step drops out of the set",
-  "portal",
-  "const PLAN_CARD_DONE = new Set([\"m1.kickoff.call\", \"m1.gbp.verify\", \"m1.access.website\",",
-  "const PLAN_CARD_DONE = new Set([\"m1.gbp.verify\", \"m1.access.website\","
- ],
- [
-  "two folds in one card",
-  "portal",
-  "    const own = [...card.querySelectorAll(\".pm-k5-fold:not([data-how-fold])\")].filter((x) => x.closest(\".pm-k5-plan\") === card && !x.closest(\".pm-sgrp\")).pop();",
-  "    const own = null;"
- ],
- [
-  "step 12 skips the client's consent",
-  "portal",
-  "  if (!allowed) {\n    // your move: the client allows the tag",
-  "  if (false) {\n    // your move: the client allows the tag"
- ],
- [
-  "allowing finishes step 12",
-  "stepchoicefn",
-  "      || (step.clientChoiceIsConsent && prev.status !== \"done\")\n",
-  "      || false\n"
- ],
- [
-  "admin can't see the consent",
-  "admin",
-  "  const lines = [allowed ? `<b>Client allowed the tag</b>",
-  "  const lines = [allowed ? `<b>Client OK</b>"
- ],
- [
-  "step 12 stays Your turn after allowing",
-  "portal",
-  "      && !(step.id === \"m1.tracking.form_setup\" && (taskState?.client_choice || taskState?.detected?.n90 > 0));",
-  "      ;"
- ],
- [
-  "step 15 RGA wait back to the old line",
-  "portal",
-  "closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook, true) : rgaWaitHtml(step)",
-  "rgaWaitHtml(step) : rgaWaitHtml(step)"
- ],
- [
-  "step 15 without RGA's row",
-  "portal",
-  "if (rgaPart) rows.push(",
-  "if (false) rows.push("
- ],
- [
-  "step 18 old upload card",
-  "portal",
-  "{ compact: true })}</div>",
-  "{})}</div>"
- ],
- [
-  "step 18 summary as the old link",
-  "portal",
-  "<summary class=\"pm-commit\">Upload photos</summary>",
-  "<summary>+ Upload photos</summary>"
- ],
- [
-  "step 18 loses compact after upload",
-  "portal",
-  "{ compact: !!card.closest(\".pm-m18-up\") }",
-  "{}"
- ],
- [
-  "step 10 also line squeezed",
-  "portalcss",
-  ".pm-pc-also .pm-p2-also > summary { padding:10px 0; }",
-  ""
- ],
- [
-  "step 16 gap under band",
-  "portalcss",
-  "padding:12px 14px; margin:0; border-top:1px solid var(--portal-line,#e3e3e3); }",
-  "padding:12px 14px; border-top:1px solid var(--portal-line,#e3e3e3); }"
- ],
- [
-  "link row text at the top",
-  "portalcss",
-  "cursor:pointer; display:inline-flex; align-items:center; min-height:var(--pm-h-sm,30px); }",
-  "cursor:pointer; min-height:var(--pm-h-sm,30px); }"
- ],
- [
-  "a held kickoff call files a change request again (the old card)",
-  "portal",
-  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>`)) + `</div>`;",
-  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span><button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>`)) + `</div>`;"
- ],
- [
-  "a held kickoff call files a change request again (the card system)",
-  "portal",
-  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(",
-  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? `<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>` : pcActs(",
-  1
- ],
- [
-  "a done call's ask line says \"this step\" again",
-  "portal",
-  "threadHtml(step.id).replace(\"Questions about this step?\", \"Questions about the call?\")",
-  "threadHtml(step.id)",
-  1
- ],
- [
-  "the held kickoff card draws its own ask line again on the card system",
-  "portal",
-  "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(",
-  "+ (false ? \"\" : pcActs(",
-  1
- ]
+ ["the how-to fold isn't seated in the card", "portal", "      card.insertBefore(f, card.querySelector(\":scope > .pm-pc-lnks\") || null);", "      row.appendChild(f);"],
+ ["the hairline is back above the plan card", "portalcss", ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { border-top: 0; padding-top: 0; }", ".pm-doit:has(.pm-k5-plan), .pm-doit:has(.pm-hc-confirm) { padding-top: 0; }"],
+ ["step 1 back to the long date", "portal", "head: `Call held · ${escapeHtml(ccDay(k.start, { tz: k.client_tz }))}`, side: escapeHtml(ccTime(k.start, { tz: k.client_tz })),", "head: `Call held · ${escapeHtml(ccWhen(k.start, { tz: k.client_tz }, { long: true }))}`,"],
+ ["the time ignores the client's zone", "portal", "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { timeZone: clientReadingZone(j && j.tz), hour: \"numeric\", minute: \"2-digit\" });", "const ccTime = (iso, j) => new Date(iso).toLocaleTimeString(\"en-US\", { hour: \"numeric\", minute: \"2-digit\" });"],
+ ["step 1 held's \"Ask RGA ›\" is a boxed button again (was \"Something's not right?\")", "portalcss", ".pm-k5-asklink { border:0; background:none; padding:0;", ".pm-k5-asklink { padding:0;"],
+ ["a plan-card step drops out of the set", "portal", "const PLAN_CARD_DONE = new Set([\"m1.kickoff.call\", \"m1.gbp.verify\", \"m1.access.website\",", "const PLAN_CARD_DONE = new Set([\"m1.gbp.verify\", \"m1.access.website\","],
+ ["two folds in one card", "portal", "    const own = [...card.querySelectorAll(\".pm-k5-fold:not([data-how-fold])\")].filter((x) => x.closest(\".pm-k5-plan\") === card && !x.closest(\".pm-sgrp\")).pop();", "    const own = null;"],
+ ["step 12 skips the client's consent", "portal", "  if (!allowed) {\n    // your move: the client allows the tag", "  if (false) {\n    // your move: the client allows the tag"],
+ ["allowing finishes step 12", "stepchoicefn", "      || (step.clientChoiceIsConsent && prev.status !== \"done\")\n", "      || false\n"],
+ ["admin can't see the consent", "admin", "  const lines = [allowed ? `<b>Client allowed the tag</b>", "  const lines = [allowed ? `<b>Client OK</b>"],
+ ["step 12 stays Your turn after allowing", "portal", "      && !(step.id === \"m1.tracking.form_setup\" && (taskState?.client_choice || taskState?.detected?.n90 > 0));", "      ;"],
+ ["step 15 RGA wait back to the old line", "portal", "ccWrap(closeWaitHtml(step, waitTasks, rgaWaits, photos, playbook, true)) : rgaWaitHtml(step)", "rgaWaitHtml(step)) : rgaWaitHtml(step)"],
+ ["step 15 without RGA's row", "portal", "if (rgaPart) rows.push(", "if (false) rows.push("],
+ ["step 18 old upload card", "portal", "{ compact: true })}</div>", "{})}</div>"],
+ ["step 18 summary as the old link", "portal", "<summary class=\"pm-commit\">Upload photos</summary>", "<summary>+ Upload photos</summary>"],
+ ["step 18 loses compact after upload", "portal", "{ compact: !!card.closest(\".pm-m18-up\") }", "{}"],
+ ["step 10 also line squeezed", "portalcss", ".pm-pc-also .pm-p2-also > summary { padding:10px 0; }", ""],
+ ["step 16 gap under band", "portalcss", "padding:12px 14px; margin:0; border-top:1px solid var(--portal-line,#e3e3e3); }", "padding:12px 14px; border-top:1px solid var(--portal-line,#e3e3e3); }"],
+ ["link row text at the top", "portalcss", "cursor:pointer; display:inline-flex; align-items:center; min-height:var(--pm-h-sm,30px); }", "cursor:pointer; min-height:var(--pm-h-sm,30px); }"],
+ ["a held kickoff call files a change request again (the old card)", "portal", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span>`)) + `</div>`;", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(`<span class=\"pm-k5-askq\">Questions about the call? <button type=\"button\" class=\"pm-k5-asklink\" data-ask data-ask-step=\"m1.kickoff.call\" data-ask-where=\"About your kickoff call\">Ask RGA ›</button></span><button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>`)) + `</div>`;"],
+ ["a held kickoff call files a change request again (the card system)", "portal", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? `<button type=\"button\" class=\"pm-amend pm-k5-tell\" data-step-wrong=\"m1.kickoff.call\">Something's not right?</button>` : pcActs(", 1],
+ ["a done call's ask line says \"this step\" again", "portal", "threadHtml(step.id).replace(\"Questions about this step?\", \"Questions about the call?\")", "threadHtml(step.id)", 1],
+ ["the held kickoff card draws its own ask line again on the card system", "portal", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(", "+ (false ? \"\" : pcActs(", 1]
 ]

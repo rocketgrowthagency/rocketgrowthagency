@@ -55,6 +55,6 @@
  ["the server's read of an unknown card is allowed", "admindetailssave", "if (!which) return json(400, { error: \"step must be hours or attributes\" });", "if (false) return json(400, { error: \"step must be hours or attributes\" });", 1],
  ["an unreachable profile is read anyway", "admindetailssave", "if (conn0.error) return json(503,", "if (false) return json(503,", 1],
  ["an em dash in the card's words", "admin", "<p class=\"ob-zc-note\">Starting point: what Google shows today.", "<p class=\"ob-zc-note\">Starting point — what Google shows today.", 1],
- ["admin.js's release stamp isn't bumped", "adminhtml", "/admin/admin.js?v=20261106k", "/admin/admin.js?v=20261106f", 1],
+ ["admin.js's release stamp isn't bumped", "adminhtml", "/admin/admin.js?v=20261106l", "/admin/admin.js?v=20261106f", 1],
  ["the shared module has no stamp of its own", "admin", "import \"/shared/hours-editor.js?v=20261106a\";", "import \"/shared/hours-editor.js\";", 1]
 ]

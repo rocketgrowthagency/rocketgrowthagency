@@ -1,0 +1,23 @@
+[
+ ["below the minimum says nothing (no still-needed line)", "portal", "const fwActs = !fwPh ? \"\" :", "const fwActs = true ? \"\" :", 1],
+ ["the sheet isn't drawn in the card", "portal", "${fwPh ? fwPh.sheet : \"\"}<div class=\"pm-p10 is-mg", "<div class=\"pm-p10 is-mg", 1],
+ ["the logo Google hides counts in the minimum", "setupfewer", "if (!it || !it.google || (hide && it.google === \"PROFILE\") || it.mgExtra) continue;", "if (!it || !it.google || it.mgExtra) continue;", 1],
+ ["the minimum is 2 of each kind", "setupfewer", "const PER_KIND = 3;", "const PER_KIND = 2;", 1],
+ ["step 5 can finish with nobody asked", "setupfewer", "Number(asked) >= 1 &&", "Number(asked) >= 0 &&", 1],
+ ["the server finishes below the minimum", "stepfewerfn", "if (!s.met) return json(409", "if (false) return json(409", 1],
+ ["the server finishes for a client who isn't managed", "stepfewerfn", "if (!D.isManaged(await D.clientMode(clientId)))", "if (false)", 1],
+ ["the server doesn't read the write back", "stepfewerfn", "if (!after || bad.length) return json(500", "if (false) return json(500", 1],
+ ["the move to Monthly touches a finished step", "stepfewerfn", "      if (FIN.includes(task.status)) continue;", "      if (false) continue;", 1],
+ ["the nightly check reopens a step finished with fewer", "recheck", "const keptFewer = !!(row && row.tasks && Fewer.fewerOf(row.tasks[stepId]));", "const keptFewer = false;", 1],
+ ["the nightly check never clears the note at the goal", "recheck", "if (probe.verdict === \"confirmed\" && Fewer.fewerOf(t0[stepId])) {", "if (false) {", 1],
+ ["the Month 1 report gives the bare 20+ title", "month1report", "`${w.fewer || w.title}", "`${w.title}", 1],
+ ["admin's Reset keeps the note", "admin", "if (!(\"fewer\" in patch)) delete next.fewer;", "void 0;", 1],
+ ["admin's done row says Done, not Done with fewer", "admin", "return `<span class=\"ob-status done\" data-fewer-pill>Done with fewer</span>`;", "void 0;", 1],
+ ["the Advance dialog doesn't name the steps", "admin", "say: `Client ${steps} ${ids.length === 2 ? \"aren't\" : \"isn't\"} finished", "say: `Client ${steps} not finished", 1],
+ ["moved to Ongoing work reads Done (green)", "portal", ": fwMoved ? { text: \"Moved to Ongoing work\", cls: \"wait off\" }", ": fwMoved ? { text: \"Done\", cls: \"done\" }", 1],
+ ["step 5 never offers to finish with fewer", "portal", "const fw5Open = FW5 && !isDone && need > 0 && FW5.reviewMinimumMet(asked);", "const fw5Open = false;", 1],
+ ["the working part stays while the sheet is open", "portal", "row.querySelectorAll(\"[data-fw-work]\").forEach((w) => { w.hidden = open; });", "void 0;", 1],
+ ["Finish doesn't spin", "portal", "t.classList.add(\"is-busy\"); t.setAttribute(\"aria-busy\", \"true\"); t.textContent = stepId === \"m1.call.close\"", "t.textContent = stepId === \"m1.call.close\"", 1],
+ ["a refusal says a generic line, not why", "portal", "msg.textContent = (err && err.said) || clientError(err,", "msg.textContent = clientError(err,", 1],
+ ["a client who isn't managed gets the option", "portal", "const fwOn = () => photoMgOn() && !!globalThis.rgaSetupFewer;", "const fwOn = () => !!globalThis.rgaSetupFewer;", 1]
+]

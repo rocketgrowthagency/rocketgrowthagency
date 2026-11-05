@@ -1,527 +1,77 @@
 [
-  [
-    "step 10 leaves the card system",
-    "portal",
-    "\"m1.kickoff.call\", \"m1.gbp.photos\",\n  \"m2.exec.review_push\"",
-    "\"m1.kickoff.call\",\n  \"m2.exec.review_push\"",
-    1
-  ],
-  [
-    "step 11 recommends every choice once the answers are in",
-    "portal",
-    "${rec === \"rga_sets_up\" ? \" · <b>RGA recommends</b>\" : \"\"}",
-    "${rec ? \" · <b>RGA recommends</b>\" : \"\"}",
-    1
-  ],
-  [
-    "step 11 skip goes back to the top of the list",
-    "portal",
-    "body: `<span class=\"pm-bk-opts\" role=\"radiogroup\">${opt(\"rga_sets_up\", \"Set one up for me\",",
-    "body: `<span class=\"pm-bk-opts\" role=\"radiogroup\">${opt(\"skip\", \"Skip for now\", \"\")}${opt(\"rga_sets_up\", \"Set one up for me\",",
-    1
-  ],
-  [
-    "step 11 changing a saved choice has no way back",
-    "portal",
-    "${ch && _rcEditing.has(step.id) ? `<button type=\"button\" class=\"pm-amend\" data-ct-cancel>Cancel</button>` : \"\"}",
-    "",
-    1
-  ],
-  [
-    "step 11 says Change again",
-    "portal",
-    "data-ct-change>Change something</button>",
-    "data-ct-change>Change</button>",
-    1
-  ],
-  [
-    "step 11's Cancel keeps the edit open",
-    "portal",
-    "if (cnl) { e.preventDefault(); _rcEditing.delete(\"m1.tracking.call_setup\");",
-    "if (cnl) { e.preventDefault();",
-    1
-  ],
-  [
-    "step 12 zero sends goes back to the blue card",
-    "portal",
-    "    if (CS_STEPS.has(step.id)) return planFromGcard({ state: \"ok\", tile: RC_FORM,",
-    "    if (false) return planFromGcard({ state: \"ok\", tile: RC_FORM,",
-    1
-  ],
-  [
-    "step 12's counting card offers Check again on the system",
-    "portal",
-    "act: CS_STEPS.has(step.id) ? \"\" : recheck });",
-    "act: recheck });",
-    1
-  ],
-  [
-    "step 12's ask gets a second Ask a question",
-    "portal",
-    "${CS_STEPS.has(step.id) ? \"\" : `<button type=\"button\" class=\"pm-k5-tell\" data-ask",
-    "${false ? \"\" : `<button type=\"button\" class=\"pm-k5-tell\" data-ask",
-    1
-  ],
-  [
-    "step 11 skipped reads Done",
-    "portal",
-    "      : isDone && step.id === \"m1.tracking.call_setup\" && (status === \"skipped\" || taskState?.client_choice === \"skip\") && !month2Only ? { text: \"Skipped\", cls: \"done\" }\n",
-    "",
-    1
-  ],
-  [
-    "step 11's saved choice reads Your turn",
-    "portal",
-    "[\"rga_sets_up\", \"already_have\"].includes(taskState?.client_choice) && !_rcEditing.has(step.id) ? { text: \"RGA is on it\", cls: \"rga\" }",
-    "[\"rga_sets_up\", \"already_have\"].includes(taskState?.client_choice) && false ? { text: \"RGA is on it\", cls: \"rga\" }",
-    1
-  ],
-  [
-    "step 12's test question reads Detected automatically",
-    "portal",
-    "      : step.id === \"m1.tracking.form_setup\" && !month2Only && taskState?.test?.at && taskState.test.inbox == null ? { text: \"Your turn\", cls: \"you\" }\n",
-    "",
-    1
-  ],
-  [
-    "step 15's pill loses its date",
-    "portal",
-    "else if (step.id === \"m1.call.close\" && !isDone && (ownWait || rgaWait)) {",
-    "else if (false) {",
-    1
-  ],
-  [
-    "steps 13-15 draw Check again beside a settled card",
-    "portal",
-    "const amendBtn = stepLk || csQuiet ? \"\"",
-    "const amendBtn = stepLk ? \"\"",
-    1
-  ],
-  [
-    "step 14's Optional pill goes",
-    "portal",
-    "`${csEditPill}${csMinPill}${csOptPill}",
-    "`${csEditPill}${csMinPill}",
-    1
-  ],
-  [
-    "step 14 skipped goes back to the green card",
-    "portal",
-    "if (st.skipped && n < 2 && st.cs) return csCard(",
-    "if (false) return csCard(",
-    1
-  ],
-  [
-    "step 14's repaint adds a second Optional",
-    "portal",
-    "if (ps && !ps.querySelector(\"[data-opt-pill]\")) pill.insertAdjacentHTML(",
-    "if (ps) pill.insertAdjacentHTML(",
-    1
-  ],
-  [
-    "step 14's pill reads Optional on the system",
-    "portal",
-    ": cs ? [\"you\", \"Your turn\"] : [\"auto\", \"Optional\"];",
-    ": [\"auto\", \"Optional\"];",
-    1
-  ],
-  [
-    "step 15's system card lists the done steps",
-    "portal",
-    "      if (settled(t)) return \"\";\n      const rgaOwn = s.clientDone === \"rga\", rgaFirst",
-    "      const rgaOwn = s.clientDone === \"rga\", rgaFirst",
-    1
-  ],
-  [
-    "step 15's picker is wrapped in a second card",
-    "portal",
-    "<fieldset class=\"pm-waits\"|data-closeout-call|data-kickoff-slots/.test(completionCtl)",
-    "<fieldset class=\"pm-waits\"|data-kickoff-slots/.test(completionCtl)",
-    1
-  ],
-  [
-    "a system card gets What to do over it",
-    "portal",
-    "${head && !csRow ? `<p class=\"pm-doit-h\">",
-    "${head ? `<p class=\"pm-doit-h\">",
-    1
-  ],
-  [
-    "step 15's times squeeze back into 22px",
-    "portalcss",
-    ".pm-cs .pm-pc-body > .pm-cc-opts { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr)); }",
-    "",
-    1
-  ],
-  [
-    "step 1's calendar leaves the card",
-    "portal",
-    "  if (host.closest(\".pm-cs\")) {\n    const passed = standing && kickoffStandingPassed(standing);",
-    "  if (false) {\n    const passed = standing && kickoffStandingPassed(standing);",
-    1
-  ],
-  [
-    "step 1's tap books at once",
-    "portal",
-    "if (csHost && !btn.hasAttribute(\"data-kc-go\")) {",
-    "if (false) {",
-    1
-  ],
-  [
-    "step 1's Request this time asks again",
-    "portal",
-    "const ok = btn.hasAttribute(\"data-kc-go\") || await portalConfirm({",
-    "const ok = await portalConfirm({",
-    1
-  ],
-  [
-    "step 1's Request this time sends the first time tapped",
-    "portal",
-    "if (acts) { acts.hidden = false; acts.querySelector(\"[data-kc-go]\")?.setAttribute(\"data-start\", startIso); }",
-    "if (acts) { acts.hidden = false; const g = acts.querySelector(\"[data-kc-go]\"); if (g && !g.getAttribute(\"data-start\")) g.setAttribute(\"data-start\", startIso); }",
-    1
-  ],
-  [
-    "step 1 booked loses Can't make it",
-    "portal",
-    "<button type=\"button\" class=\"pm-k5-tell is-release\" data-kickoff-release=\"${cid}\" data-when=\"${escapeAttribute(startIso || \"\")}\">Can't make it?</button>",
-    "",
-    1
-  ],
-  [
-    "step 1's countdown loses its text hook",
-    "portal",
-    "<p class=\"pm-cd-big\" data-kickoff-cd-text>${escapeHtml(String(c.text || \"\").replace(/^In /, \"\"))}",
-    "<p class=\"pm-cd-big\">${escapeHtml(String(c.text || \"\").replace(/^In /, \"\"))}",
-    1
-  ],
-  [
-    "step 1's request loses its withdraw hook",
-    "portal",
-    "class=\"pm-k5-tell is-release\" data-kickoff-withdraw=\"${cid}\"",
-    "class=\"pm-k5-tell is-release\" data-kickoff-cancel=\"${cid}\"",
-    1
-  ],
-  [
-    "step 1's pill says RGA is doing it on the system",
-    "portal",
-    "    else if (status && !booked && !reqPassed) Object.assign(state, { cls: \"rga\", text: \"RGA confirms your time\" });\n",
-    "",
-    1
-  ],
-  [
-    "step 1's lede overwrites the system's ask line",
-    "portal",
-    "const lede = row.classList.contains(\"pm-cs\") ? null : row.querySelector(\".pm-ask, .how-lede\");",
-    "const lede = row.querySelector(\".pm-ask, .how-lede\");",
-    1
-  ],
-  [
-    "step 1's held card draws its own ask line",
-    "portal",
-    "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(",
-    "+ (false ? \"\" : pcActs(",
-    1
-  ],
-  [
-    "step 10 opens every shot",
-    "portal",
-    "data-p10-shot=\"${n}\"${n === pick ? \"\" : \" hidden\"}>",
-    "data-p10-shot=\"${n}\">",
-    1
-  ],
-  [
-    "step 10's shot row drops its Remove hook",
-    "portal",
-    "<figcaption>Example</figcaption></figure>${slot(it, cat)}",
-    "<figcaption>Example</figcaption></figure>${slot(it, cat).replace(/data-photo-remove=/g, \"data-photo-x=\")}",
-    1
-  ],
-  [
-    "step 10 re-opens a finished shot",
-    "portal",
-    "const sel = order.includes(want) && stOf(want) !== \"on\" ? want :",
-    "const sel = order.includes(want) ? want :",
-    1
-  ],
-  [
-    "step 10 forgets the shot they opened",
-    "portal",
-    "const want = _p10Sel.get(clientId);",
-    "const want = null;",
-    1
-  ],
-  [
-    "step 10's band drops the photos with RGA",
-    "portal",
-    "${p10 && pc.review ? ` · ${pc.review} with RGA for review` : \"\"}",
-    "",
-    1
-  ],
-  [
-    "step 10 shows a photo with RGA as an empty tile",
-    "portal",
-    "const stOf = (n) => slotDone(n) ? \"on\" : byShot.has(n) ? \"rga\" : turnedByShot.has(n) ? \"re\" : \"\";",
-    "const stOf = (n) => slotDone(n) ? \"on\" : turnedByShot.has(n) ? \"re\" : \"\";",
-    1
-  ],
-  [
-    "step 10's empty tile loses its drawing",
-    "portal",
-    ": exArt(it, photoExampleOf(itemCategory(it))); };",
-    ": \"\"; };",
-    1
-  ],
-  [
-    "step 10 offers Add 1 at once",
-    "portal",
-    "const many = emptyN.length >= 2 ?",
-    "const many = emptyN.length >= 1 ?",
-    1
-  ],
-  [
-    "step 10 loses the hidden-logo note",
-    "portal",
-    "${p10HiddenPh && !p10Short ? csNote(hideWhy(p10HiddenPh)) : \"\"}",
-    "",
-    1
-  ],
-  [
-    "step 10's tips keep their old name",
-    "portal",
-    "${tipsFold.replace(/<summary>[\\s\\S]*?<\\/summary>/, `<summary>How this step works</summary>${P10_RULES}`)}",
-    "${tipsFold}",
-    1
-  ],
-  [
-    "step 10's hidden shots show",
-    "portalcss",
-    ".pm-cs .pm-p10-shot[hidden] { display:none; }",
-    "",
-    1
-  ],
-  [
-    "step 10 foot loses Maps",
-    "portal",
-    "${p10Foot}${tipsFold.replace(",
-    "${tipsFold.replace(",
-    1
-  ],
-  [
-    "closed How leaves a strip",
-    "portalcss",
-    ".pm-cs .pm-cs-card > details.pm-cs-howb:not([open]) { display:none; }",
-    "",
-    1
-  ],
-  [
-    "open How draws a box",
-    "portalcss",
-    ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0; border:0;",
-    ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0;",
-    1
-  ],
-  [
-    "click leaves a blue box",
-    "portalcss",
-    ".pm-cs .pm-cs-foot .how:focus:not(:focus-visible), ",
-    "",
-    1
-  ],
-  [
-    "step 3 button flush",
-    "portalcss",
-    ".pm-cs .pm-doit > .pm-k5 + .pm-k5-acts, ",
-    "",
-    1
-  ],
-  [
-    "empty box says nothing",
-    "portalcss",
-    "content:\"Your photo goes here\";",
-    "content:\"\";",
-    1
-  ],
-  [
-    "no minutes pill",
-    "portal",
-    "Number(step.clientMinutes) > 0 && !later ? `<span class=\"pm-pill wait off\" data-min-pill>",
-    "false ? `<span class=\"pm-pill wait off\" data-min-pill>",
-    1
-  ],
-  [
-    "no Done + Editing",
-    "portal",
-    "const csEditPill = csRow && editing && ownerPill.cls === \"edit\" ?",
-    "const csEditPill = false ?",
-    1
-  ],
-  [
-    "people question after the tiles",
-    "portal",
-    "body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold",
-    "body: p10 ? `${p10}${toolbar}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold",
-    1
-  ],
-  [
-    "step 10 waits under the general card again",
-    "portal",
-    "const csPhotoWait = csRow && !isDone && listingWait && step.clientForm === \"photo_upload\";",
-    "const csPhotoWait = false;",
-    1
-  ],
-  [
-    "the waiting step loses its tiles",
-    "portal",
-    "const p10 = CS_STEPS.has(step.id) ? (() => {",
-    "const p10 = CS_STEPS.has(step.id) && !locked ? (() => {",
-    1
-  ],
-  [
-    "a waiting step offers Add N at once",
-    "portal",
-    "${stOf(n) || locked ? \"\" : many}",
-    "${stOf(n) ? \"\" : many}",
-    1
-  ],
-  [
-    "a waiting step opens a shot by itself",
-    "portal",
-    "? want : locked || p10Later ? null : (order.find",
-    "? want : (order.find",
-    1
-  ],
-  [
-    "a duplicate loses its way out",
-    "portal",
-    "const p10LockRow = !p10 || ",
-    "const p10LockRow = true || !p10 || ",
-    1
-  ],
-  [
-    "the waiting step drops Plan your photos",
-    "portal",
-    "${csNote(\"Plan your photos now. Uploading opens the moment your listing is down to one.\")}",
-    "",
-    1
-  ],
-  [
-    "a waiting shot shows + Add photo",
-    "portalcss",
-    ".pm-cs .pm-p10.is-locked .pm-slot .add { display:none; }",
-    "",
-    1
-  ],
-  [
-    "done turns every tile green, shot or no shot",
-    "portal",
-    "const st = stOf(Number(it.n)); return `<div class=\"pm-p10-t",
-    "const st = \"on\"; return `<div class=\"pm-p10-t",
-    1
-  ],
-  [
-    "done loses Other N",
-    "portal",
-    "...(p10Other > 0 ? [[`Other <em>${p10Other}</em>`, \"\"]] : [])",
-    "",
-    1
-  ],
-  [
-    "done loses On your profile",
-    "portal",
-    "(p10Chips.length ? csChips(\"On your profile\", p10Chips) : \"\")",
-    "\"\"",
-    1
-  ],
-  [
-    "done loses its note",
-    "portal",
-    "csNote(\"Add more any time; fresh photos help.\")",
-    "\"\"",
-    1
-  ],
-  [
-    "done loses Add more",
-    "portal",
-    "pcActs(`<button type=\"button\" class=\"pm-amend\" data-photo-addmore>Add more</button>`));\n  const doneCard",
-    "\"\");\n  const doneCard",
-    1
-  ],
-  [
-    "done draws the old photo tiles",
-    "portal",
-    "const doneCard = p10DoneCard ? `<div class=\"pm-k5\">${p10DoneCard}</div>` : `",
-    "const doneCard = `",
-    1
-  ],
-  [
-    "Add more's list shows before it's opened",
-    "portalcss",
-    ".pm-cs details.pm-pc-more:not([open]) { display:none; }",
-    "",
-    1
-  ],
-  [
-    "done's tiles look pressable",
-    "portalcss",
-    ".pm-cs div.pm-p10-t { cursor:default; }",
-    "",
-    1
-  ],
-  [
-    "later isn't Your turn",
-    "portal",
-    "ownerPill.text.startsWith(\"Later · \")",
-    "false",
-    1
-  ],
-  [
-    "later loses its reminder pill",
-    "portal",
-    "${csOptPill}${csLaterPill}",
-    "${csOptPill}",
-    1
-  ],
-  [
-    "later still says about N min",
-    "portal",
-    "Number(step.clientMinutes) > 0 && !later ?",
-    "Number(step.clientMinutes) > 0 ?",
-    1
-  ],
-  [
-    "later opens the shot list",
-    "portal",
-    "const kinds = p10Later ? \"\" : csChips(",
-    "const kinds = csChips(",
-    1
-  ],
-  [
-    "done repeats the received line",
-    "portal",
-    " && !(csRow && step.clientForm === \"photo_upload\")\n            ? `<p class=\"pm-evidence\">",
-    "\n            ? `<p class=\"pm-evidence\">",
-    1
-  ],
-  [
-    "a lock seats inside the closed list",
-    "portal",
-    " && !c.closest(\".pm-pc-more\")",
-    "",
-    1
-  ],
-  [
-    "step 10 Check again comes back",
-    "portal",
-    "\"m1.call.close\", \"m1.gbp.photos\"].includes(step.id)",
-    "\"m1.call.close\"].includes(step.id)",
-    1
-  ],
-  [
-    "the grey card drops the duplicate's way out",
-    "portal",
-    "body: csListingOut ? listingWaitHtml(csListing) : csNote(ownWait ?",
-    "body: csNote(ownWait ?",
-    1
-  ]
+ ["step 10 leaves the card system", "portal", "\"m1.kickoff.call\", \"m1.gbp.photos\",\n  \"m2.exec.review_push\"", "\"m1.kickoff.call\",\n  \"m2.exec.review_push\"", 1],
+ ["step 11 recommends every choice once the answers are in", "portal", "${rec === \"rga_sets_up\" ? \" · <b>RGA recommends</b>\" : \"\"}", "${rec ? \" · <b>RGA recommends</b>\" : \"\"}", 1],
+ ["step 11 skip goes back to the top of the list", "portal", "body: `<span class=\"pm-bk-opts\" role=\"radiogroup\">${opt(\"rga_sets_up\", \"Set one up for me\",", "body: `<span class=\"pm-bk-opts\" role=\"radiogroup\">${opt(\"skip\", \"Skip for now\", \"\")}${opt(\"rga_sets_up\", \"Set one up for me\",", 1],
+ ["step 11 changing a saved choice has no way back", "portal", "${ch && _rcEditing.has(step.id) ? `<button type=\"button\" class=\"pm-amend\" data-ct-cancel>Cancel</button>` : \"\"}", "", 1],
+ ["step 11 says Change again", "portal", "data-ct-change>Change something</button>", "data-ct-change>Change</button>", 1],
+ ["step 11's Cancel keeps the edit open", "portal", "if (cnl) { e.preventDefault(); _rcEditing.delete(\"m1.tracking.call_setup\");", "if (cnl) { e.preventDefault();", 1],
+ ["step 12 zero sends goes back to the blue card", "portal", "    if (CS_STEPS.has(step.id)) return planFromGcard({ state: \"ok\", tile: RC_FORM,", "    if (false) return planFromGcard({ state: \"ok\", tile: RC_FORM,", 1],
+ ["step 12's counting card offers Check again on the system", "portal", "act: CS_STEPS.has(step.id) ? \"\" : recheck });", "act: recheck });", 1],
+ ["step 12's ask gets a second Ask a question", "portal", "${CS_STEPS.has(step.id) ? \"\" : `<button type=\"button\" class=\"pm-k5-tell\" data-ask", "${false ? \"\" : `<button type=\"button\" class=\"pm-k5-tell\" data-ask", 1],
+ ["step 11 skipped reads Done", "portal", "      : isDone && step.id === \"m1.tracking.call_setup\" && (status === \"skipped\" || taskState?.client_choice === \"skip\") && !month2Only ? { text: \"Skipped\", cls: \"done\" }\n", "", 1],
+ ["step 11's saved choice reads Your turn", "portal", "[\"rga_sets_up\", \"already_have\"].includes(taskState?.client_choice) && !_rcEditing.has(step.id) ? { text: \"RGA is on it\", cls: \"rga\" }", "[\"rga_sets_up\", \"already_have\"].includes(taskState?.client_choice) && false ? { text: \"RGA is on it\", cls: \"rga\" }", 1],
+ ["step 12's test question reads Detected automatically", "portal", "      : step.id === \"m1.tracking.form_setup\" && !month2Only && taskState?.test?.at && taskState.test.inbox == null ? { text: \"Your turn\", cls: \"you\" }\n", "", 1],
+ ["step 15's pill loses its date", "portal", "else if (step.id === \"m1.call.close\" && !isDone && !ccAsked && (ownWait || rgaWait)) {", "else if (false) {", 1],
+ ["steps 13-15 draw Check again beside a settled card", "portal", "const amendBtn = stepLk || csQuiet ? \"\"", "const amendBtn = stepLk ? \"\"", 1],
+ ["step 14's Optional pill goes", "portal", "`${csEditPill}${csMinPill}${csOptPill}", "`${csEditPill}${csMinPill}", 1],
+ ["step 14 skipped goes back to the green card", "portal", "if (st.skipped && n < 2 && st.cs) return csCard(", "if (false) return csCard(", 1],
+ ["step 14's repaint adds a second Optional", "portal", "if (ps && !ps.querySelector(\"[data-opt-pill]\")) pill.insertAdjacentHTML(", "if (ps) pill.insertAdjacentHTML(", 1],
+ ["step 14's pill reads Optional on the system", "portal", ": cs ? [\"you\", \"Your turn\"] : [\"auto\", \"Optional\"];", ": [\"auto\", \"Optional\"];", 1],
+ ["step 15's system card lists the done steps", "portal", "      if (settled(t)) return \"\";\n      const rgaOwn = s.clientDone === \"rga\", rgaFirst", "      const rgaOwn = s.clientDone === \"rga\", rgaFirst", 1],
+ ["step 15's picker is wrapped in a second card", "portal", "<fieldset class=\"pm-waits\"|data-closeout-call|data-kickoff-slots/.test(completionCtl)", "<fieldset class=\"pm-waits\"|data-kickoff-slots/.test(completionCtl)", 1],
+ ["a system card gets What to do over it", "portal", "${head && !csRow ? `<p class=\"pm-doit-h\">", "${head ? `<p class=\"pm-doit-h\">", 1],
+ ["step 15's times squeeze back into 22px", "portalcss", ".pm-cs .pm-pc-body > .pm-cc-opts { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr)); }", "", 1],
+ ["step 1's calendar leaves the card", "portal", "  if (host.closest(\".pm-cs\")) {\n    const passed = standing && kickoffStandingPassed(standing);", "  if (false) {\n    const passed = standing && kickoffStandingPassed(standing);", 1],
+ ["step 1's tap books at once", "portal", "if (csHost && !btn.hasAttribute(\"data-kc-go\")) {", "if (false) {", 1],
+ ["step 1's Request this time asks again", "portal", "const ok = btn.hasAttribute(\"data-kc-go\") || await portalConfirm({", "const ok = await portalConfirm({", 1],
+ ["step 1's Request this time sends the first time tapped", "portal", "if (acts) { acts.hidden = false; acts.querySelector(\"[data-kc-go]\")?.setAttribute(\"data-start\", startIso); }", "if (acts) { acts.hidden = false; const g = acts.querySelector(\"[data-kc-go]\"); if (g && !g.getAttribute(\"data-start\")) g.setAttribute(\"data-start\", startIso); }", 1],
+ ["step 1 booked loses Can't make it", "portal", "<button type=\"button\" class=\"pm-k5-tell is-release\" data-kickoff-release=\"${cid}\" data-when=\"${escapeAttribute(startIso || \"\")}\">Can't make it?</button>", "", 1],
+ ["step 1's countdown loses its text hook", "portal", "<p class=\"pm-cd-big\" data-kickoff-cd-text>${escapeHtml(String(c.text || \"\").replace(/^In /, \"\"))}", "<p class=\"pm-cd-big\">${escapeHtml(String(c.text || \"\").replace(/^In /, \"\"))}", 1],
+ ["step 1's request loses its withdraw hook", "portal", "class=\"pm-k5-tell is-release\" data-kickoff-withdraw=\"${cid}\"", "class=\"pm-k5-tell is-release\" data-kickoff-cancel=\"${cid}\"", 1],
+ ["step 1's pill says RGA is doing it on the system", "portal", "    else if (status && !booked && !reqPassed) Object.assign(state, { cls: \"rga\", text: \"RGA confirms your time\" });\n", "", 1],
+ ["step 1's lede overwrites the system's ask line", "portal", "const lede = row.classList.contains(\"pm-cs\") ? null : row.querySelector(\".pm-ask, .how-lede\");", "const lede = row.querySelector(\".pm-ask, .how-lede\");", 1],
+ ["step 1's held card draws its own ask line", "portal", "+ (CS_STEPS.has(\"m1.kickoff.call\") ? \"\" : pcActs(", "+ (false ? \"\" : pcActs(", 1],
+ ["step 10 opens every shot", "portal", "data-p10-shot=\"${n}\"${n === pick ? \"\" : \" hidden\"}>", "data-p10-shot=\"${n}\">", 1],
+ ["step 10's shot row drops its Remove hook", "portal", "<figcaption>Example</figcaption></figure>${slot(it, cat)}", "<figcaption>Example</figcaption></figure>${slot(it, cat).replace(/data-photo-remove=/g, \"data-photo-x=\")}", 1],
+ ["step 10 re-opens a finished shot", "portal", "const sel = order.includes(want) && stOf(want) !== \"on\" ? want :", "const sel = order.includes(want) ? want :", 1],
+ ["step 10 forgets the shot they opened", "portal", "const want = _p10Sel.get(clientId);", "const want = null;", 1],
+ ["step 10's band drops the photos with RGA", "portal", "${p10 && pc.review ? ` · ${pc.review} with RGA for review` : \"\"}", "", 1],
+ ["step 10 shows a photo with RGA as an empty tile", "portal", "const stOf = (n) => slotDone(n) ? \"on\" : byShot.has(n) ? \"rga\" : turnedByShot.has(n) ? \"re\" : \"\";", "const stOf = (n) => slotDone(n) ? \"on\" : turnedByShot.has(n) ? \"re\" : \"\";", 1],
+ ["step 10's empty tile loses its drawing", "portal", ": exArt(it, photoExampleOf(itemCategory(it))); };", ": \"\"; };", 1],
+ ["step 10 offers Add 1 at once", "portal", "const many = emptyN.length >= 2 ?", "const many = emptyN.length >= 1 ?", 1],
+ ["step 10 loses the hidden-logo note", "portal", "${p10HiddenPh && !p10Short ? csNote(hideWhy(p10HiddenPh)) : \"\"}", "", 1],
+ ["step 10's tips keep their old name", "portal", "${tipsFold.replace(/<summary>[\\s\\S]*?<\\/summary>/, `<summary>How this step works</summary>${P10_RULES}`)}", "${tipsFold}", 1],
+ ["step 10's hidden shots show", "portalcss", ".pm-cs .pm-p10-shot[hidden] { display:none; }", "", 1],
+ ["step 10 foot loses Maps", "portal", "${p10Foot}${tipsFold.replace(", "${tipsFold.replace(", 1],
+ ["closed How leaves a strip", "portalcss", ".pm-cs .pm-cs-card > details.pm-cs-howb:not([open]) { display:none; }", "", 1],
+ ["open How draws a box", "portalcss", ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0; border:0;", ".pm-cs .pm-cs-card > details.pm-tipline .pm-tiplist { margin:0;", 1],
+ ["click leaves a blue box", "portalcss", ".pm-cs .pm-cs-foot .how:focus:not(:focus-visible), ", "", 1],
+ ["step 3 button flush", "portalcss", ".pm-cs .pm-doit > .pm-k5 + .pm-k5-acts, ", "", 1],
+ ["empty box says nothing", "portalcss", "content:\"Your photo goes here\";", "content:\"\";", 1],
+ ["no minutes pill", "portal", "Number(step.clientMinutes) > 0 && !later ? `<span class=\"pm-pill wait off\" data-min-pill>", "false ? `<span class=\"pm-pill wait off\" data-min-pill>", 1],
+ ["no Done + Editing", "portal", "const csEditPill = csRow && editing && ownerPill.cls === \"edit\" ?", "const csEditPill = false ?", 1],
+ ["people question after the tiles", "portal", "body: p10 ? `${toolbar}${p10}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold", "body: p10 ? `${p10}${toolbar}${p10LiveNote}${p10ShortHtml}${keptCard}${alsoFold", 1],
+ ["step 10 waits under the general card again", "portal", "const csPhotoWait = csRow && !isDone && listingWait && step.clientForm === \"photo_upload\";", "const csPhotoWait = false;", 1],
+ ["the waiting step loses its tiles", "portal", "const p10 = CS_STEPS.has(step.id) ? (() => {", "const p10 = CS_STEPS.has(step.id) && !locked ? (() => {", 1],
+ ["a waiting step offers Add N at once", "portal", "${stOf(n) || locked ? \"\" : many}", "${stOf(n) ? \"\" : many}", 1],
+ ["a waiting step opens a shot by itself", "portal", "? want : locked || p10Later ? null : (order.find", "? want : (order.find", 1],
+ ["a duplicate loses its way out", "portal", "const p10LockRow = !p10 || ", "const p10LockRow = true || !p10 || ", 1],
+ ["the waiting step drops Plan your photos", "portal", "${csNote(\"Plan your photos now. Uploading opens the moment your listing is down to one.\")}", "", 1],
+ ["a waiting shot shows + Add photo", "portalcss", ".pm-cs .pm-p10.is-locked .pm-slot .add { display:none; }", "", 1],
+ ["done turns every tile green, shot or no shot", "portal", "const st = stOf(Number(it.n)); return `<div class=\"pm-p10-t", "const st = \"on\"; return `<div class=\"pm-p10-t", 1],
+ ["done loses Other N", "portal", "...(p10Other > 0 ? [[`Other <em>${p10Other}</em>`, \"\"]] : [])", "", 1],
+ ["done loses On your profile", "portal", "(p10Chips.length ? csChips(\"On your profile\", p10Chips) : \"\")", "\"\"", 1],
+ ["done loses its note", "portal", "csNote(\"Add more any time; fresh photos help.\")", "\"\"", 1],
+ ["done loses Add more", "portal", "pcActs(`<button type=\"button\" class=\"pm-amend\" data-photo-addmore>Add more</button>`));\n  // client_setup_fewer_v1: done with fewer", "\"\");\n  // client_setup_fewer_v1: done with fewer", 1],
+ ["done draws the old photo tiles", "portal", "// client_setup_fewer_v1: done with fewer (the client chose it: green) or moved to Ongoing work when Monthly started (nobody chose it: grey)\n  const fwF = mg && p10 && p10Done && typeof fwOn === \"function\" && fwOn() ? globalThis.rgaSetupFewer.fewerOf(taskState) : null;\n  const fwNow = fwF ? (measured && onGoogle ? d.n : fwF.n) : null, fwNo10 = fwF ? fwStepName(fwStepNo(\"m2.exec.gbp_photos\")) : \"\";\n  const fwDone = !fwF ? \"\" : fwF.by === \"monthly\"\n    ? `<div class=\"pm-k5\">${pcCard({ tone: \"off\", icon: DC_ICON.pho, head: escapeHtml(`${fwNow == null ? \"Your photos\" : `${fwNow} of ${fwF.goal} on Google`} · the rest come with ${fwNo10}`), side: \"Monthly started\",\n        body: pcFoot(`Not in To do. We keep counting every night; at ${fwF.goal} this turns green.`), attrs: \" data-fw-moved\" })}</div>`\n    : `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: DC_ICON.pho, head: escapeHtml(`${fwNow == null ? \"Your photos\" : `${fwNow} on Google`} · the rest come with ${fwNo10}`), side: fwF.at ? `finished ${escapeHtml(pcDate(fwF.at))}` : \"\",\n        body: (p10Chips.length ? `<div class=\"pm-cs-chips\"><div class=\"pm-cs-chipw\">${p10Chips.map(([t]) => `<span class=\"pm-cs-chip\">${t}</span>`).join(\"\")}</div></div>` : \"\") + pcFoot(`We keep counting every night. At ${fwF.goal} this reads \"${fwF.goal} photos on Google\".`), attrs: \" data-fw-done\" })}`\n      + (locked ? \"\" : pcActs(`<button type=\"button\" class=\"pm-amend\" data-photo-addmore>Add more</button>`)) + `</div>`;\n  const doneCard = fwDone || (p10DoneCard ? `<div class=\"pm-k5\">${p10DoneCard}</div>` : `", "// client_setup_fewer_v1: done with fewer (the client chose it: green) or moved to Ongoing work when Monthly started (nobody chose it: grey)\n  const fwF = mg && p10 && p10Done && typeof fwOn === \"function\" && fwOn() ? globalThis.rgaSetupFewer.fewerOf(taskState) : null;\n  const fwNow = fwF ? (measured && onGoogle ? d.n : fwF.n) : null, fwNo10 = fwF ? fwStepName(fwStepNo(\"m2.exec.gbp_photos\")) : \"\";\n  const fwDone = !fwF ? \"\" : fwF.by === \"monthly\"\n    ? `<div class=\"pm-k5\">${pcCard({ tone: \"off\", icon: DC_ICON.pho, head: escapeHtml(`${fwNow == null ? \"Your photos\" : `${fwNow} of ${fwF.goal} on Google`} · the rest come with ${fwNo10}`), side: \"Monthly started\",\n        body: pcFoot(`Not in To do. We keep counting every night; at ${fwF.goal} this turns green.`), attrs: \" data-fw-moved\" })}</div>`\n    : `<div class=\"pm-k5\">${pcCard({ tone: \"ok\", icon: DC_ICON.pho, head: escapeHtml(`${fwNow == null ? \"Your photos\" : `${fwNow} on Google`} · the rest come with ${fwNo10}`), side: fwF.at ? `finished ${escapeHtml(pcDate(fwF.at))}` : \"\",\n        body: (p10Chips.length ? `<div class=\"pm-cs-chips\"><div class=\"pm-cs-chipw\">${p10Chips.map(([t]) => `<span class=\"pm-cs-chip\">${t}</span>`).join(\"\")}</div></div>` : \"\") + pcFoot(`We keep counting every night. At ${fwF.goal} this reads \"${fwF.goal} photos on Google\".`), attrs: \" data-fw-done\" })}`\n      + (locked ? \"\" : pcActs(`<button type=\"button\" class=\"pm-amend\" data-photo-addmore>Add more</button>`)) + `</div>`;\n  const doneCard = `", 1],
+ ["Add more's list shows before it's opened", "portalcss", ".pm-cs details.pm-pc-more:not([open]) { display:none; }", "", 1],
+ ["done's tiles look pressable", "portalcss", ".pm-cs div.pm-p10-t { cursor:default; }", "", 1],
+ ["later isn't Your turn", "portal", "ownerPill.text.startsWith(\"Later · \")", "false", 1],
+ ["later loses its reminder pill", "portal", "${csOptPill}${csLaterPill}", "${csOptPill}", 1],
+ ["later still says about N min", "portal", "Number(step.clientMinutes) > 0 && !later ?", "Number(step.clientMinutes) > 0 ?", 1],
+ ["later opens the shot list", "portal", "const kinds = p10Later ? \"\" : csChips(", "const kinds = csChips(", 1],
+ ["done repeats the received line", "portal", " && !(csRow && step.clientForm === \"photo_upload\")\n            ? `<p class=\"pm-evidence\">", "\n            ? `<p class=\"pm-evidence\">", 1],
+ ["a lock seats inside the closed list", "portal", " && !c.closest(\".pm-pc-more\")", "", 1],
+ ["step 10 Check again comes back", "portal", "\"m1.call.close\", \"m1.gbp.photos\"].includes(step.id)", "\"m1.call.close\"].includes(step.id)", 1],
+ ["the grey card drops the duplicate's way out", "portal", "body: csListingOut ? listingWaitHtml(csListing) : csNote(ownWait ?", "body: csNote(ownWait ?", 1]
 ]

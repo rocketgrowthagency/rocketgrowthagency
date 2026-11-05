@@ -50,6 +50,21 @@ try {
     const rows = (Array.isArray(body) ? body : [body]).map((r) => ({ ...r, portal_mode: "managed" }));
     return route.fulfill({ response: res, json: Array.isArray(body) ? rows : rows[0] });
   });
+  // LOOK_FEWER (client_setup_fewer_v1): draw RGA's REAL record as if a step were finished with fewer, read only. "4" / "5" = the client finished it
+  // (with its real count), "moved" = both moved to Ongoing work by the move to Monthly. Only the answer this browser reads changes; nothing is written.
+  const FEWER = process.env.LOOK_FEWER || "";
+  if (FEWER) await ctx.route((u) => u.pathname.endsWith("/rest/v1/client_onboarding_records"), async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const res = await route.fetch(); let body; try { body = await res.json(); } catch { return route.fulfill({ response: res }); }
+    const one = (r) => { const t = { ...((r && r.data && r.data.tasks) || {}) }; const at = "2026-11-05T19:00:00Z";
+      const set = (id, goal, by) => { const x = t[id] || {}; const n = Number.isFinite(x.detected && x.detected.n) ? x.detected.n : 0; t[id] = { ...x, status: "done", completed_at: at, completed_by: by, fewer: { n, goal, by, who: null, at } }; };
+      if (FEWER === "4" || FEWER === "both") set("m1.gbp.photos", 20, "client");
+      if (FEWER === "5" || FEWER === "both") set("m1.review.first_5", 5, "client");
+      if (FEWER === "moved") { set("m1.gbp.photos", 20, "monthly"); set("m1.review.first_5", 5, "monthly"); }
+      return r && r.data ? { ...r, data: { ...r.data, tasks: t } } : r; };
+    served.add(`fewer:${FEWER}`);
+    return route.fulfill({ response: res, json: Array.isArray(body) ? body.map(one) : one(body) });
+  });
   const page = await ctx.newPage();
   const errs = []; page.on("pageerror", (e) => errs.push(String(e.message || e)));
   await page.goto(link, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -76,6 +91,20 @@ try {
   const bottom = await page.evaluate(() => { const a = document.querySelector(".mc-phase"), f = document.getElementById("factsCard"); if (!a) return null; const visible = [...document.querySelectorAll(".pm-notice")].filter((n) => n.offsetParent && /Foundation work/.test(n.textContent)).length;
     const end = f && f.offsetParent ? f : document.querySelector(".mc-rga"); const r1 = a.getBoundingClientRect(), r2 = end.getBoundingClientRect(); return { x: r1.x + scrollX, y: r1.y + scrollY, width: Math.max(r1.width, r2.width), height: r2.bottom - r1.top + 8, foundation: visible, facts: f ? f.innerText.replace(/\s+/g, " ").slice(0, 300) : null }; });
   if (bottom) await page.screenshot({ path: `${OUT}/9-setup-bottom.png`, clip: { x: bottom.x, y: bottom.y, width: bottom.width, height: bottom.height }, fullPage: true }).catch(() => {});
+  // steps 4 and 5 (client_setup_fewer_v1): each row opened and shot; LOOK_FW_OPEN=1 also opens step 5's "I don't have 5 recent customers yet" sheet
+  // a write the guard blocked can raise the portal's own "couldn't" dialog: close it so the shot shows the step
+  const shut = async () => { for (let i = 0; i < 3; i++) { const open = await page.evaluate(() => { const ok = [...document.querySelectorAll("button")].find((b) => b.offsetParent && b.textContent.trim() === "OK" && getComputedStyle(b.closest("[class]") || b).position !== "static" || (b.offsetParent && b.textContent.trim() === "OK" && b.closest("[role=dialog], dialog, [aria-modal]"))); if (!ok) return false; ok.click(); return true; }); if (!open) break; await new Promise((r) => setTimeout(r, 300)); } };
+  await shut();
+  if (await openRow("m1.gbp.photos")) { await new Promise((r) => setTimeout(r, 1500)); await shut(); await page.locator('[id="step-row-m1.gbp.photos"]').screenshot({ path: `${OUT}/10-step4.png` }).catch(() => {}); }
+  if (await openRow("m1.review.first_5")) {
+    await new Promise((r) => setTimeout(r, 2500)); await shut();
+    await page.locator('[id="step-row-m1.review.first_5"]').screenshot({ path: `${OUT}/11-step5.png` }).catch(() => {});
+    if (process.env.LOOK_FW_OPEN === "1") { await page.evaluate(() => document.querySelector('[id="step-row-m1.review.first_5"] [data-fw-open]')?.click()); await new Promise((r) => setTimeout(r, 800));
+      await page.locator('[id="step-row-m1.review.first_5"]').screenshot({ path: `${OUT}/12-step5-sheet.png` }).catch(() => {}); }
+  }
+  fs.writeFileSync(`${OUT}/steps45.json`, JSON.stringify(await page.evaluate(() => { const t = (id) => (document.getElementById(`step-row-${id}`) || {}).innerText || "";
+    const pill = (id) => [...(document.getElementById(`step-row-${id}`)?.querySelectorAll(".pm-step-pills .pm-pill") || [])].map((p) => p.textContent.trim());
+    return { step4: t("m1.gbp.photos"), step5: t("m1.review.first_5"), pills4: pill("m1.gbp.photos"), pills5: pill("m1.review.first_5"), banner: (document.querySelector(".pm-next, [data-next-step], .portal-next-step") || {}).innerText || "" }; }), null, 2));
   const facts = await page.evaluate(() => ({ step2: (document.getElementById("step-row-m1.access.website") || {}).innerText || "", step3: (document.getElementById("step-row-managed.check_found") || {}).innerText || "", rga: (document.querySelector(".mc-rga") || {}).innerText || "" }));
   fs.writeFileSync(`${OUT}/text.json`, JSON.stringify(facts, null, 2));
   await page.evaluate(() => document.querySelector('.portal-nav a[data-view="todo"]')?.click());

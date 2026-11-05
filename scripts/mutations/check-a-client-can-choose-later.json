@@ -1,177 +1,27 @@
 [
- [
-  "any number of days",
-  "steplater",
-  "const DAYS = [7, 14];",
-  "const DAYS = [3, 7, 14];",
-  1
- ],
- [
-  "any step can be put off",
-  "steplater",
-  "if (!LATER_STEPS.includes(stepId)) return json(400",
-  "if (false) return json(400",
-  1
- ],
- [
-  "no read-back",
-  "steplater",
-  "if (action === \"set\" ? saved.later?.until !== task.later.until : !!saved.later) return json(500",
-  "if (false) return json(500",
-  1
- ],
- [
-  "a finished step can be put off",
-  "steplater",
-  "if (task.status === \"done\" || task.status === \"skipped\") return json(409",
-  "if (false) return json(409",
-  1
- ],
- [
-  "anyone can put it off",
-  "steplater",
-  "  if (gate.error) return gate.error;",
-  "",
-  1
- ],
- [
-  "the reminder goes twice",
-  "notifystepopen",
-  "if (!l || !l.until || l.reminded_at || isFinished(t)) return false;",
-  "if (!l || !l.until || isFinished(t)) return false;",
-  1
- ],
- [
-  "the reminder ignores a photo that came in",
-  "notifystepopen",
-  "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (since.length) {",
-  "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (false) {",
-  1
- ],
- [
-  "the reminder goes at night",
-  "notifystepopen",
-  "} else if (!inSendingHours(client)) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder",
-  "} else if (false) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder",
-  1
- ],
- [
-  "an upload doesn't end later (screen)",
-  "portal",
-  "if (Number.isFinite(set) && (photos || []).some((p) => Date.parse(p && p.created_at || \"\") > set)) return null;",
-  "",
-  1
- ],
- [
-  "a later step is still the now step",
-  "portal",
-  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
-  "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")",
-  1
- ],
- [
-  "the banner doesn't move on",
-  "portal",
-  "      && !i.later\n",
-  "",
-  1
- ],
- [
-  "the pill says Your turn",
-  "portal",
-  "      : later ? { text: `Later · ${laterDay(later.until)}`, cls: \"wait\" }\n",
-  "",
-  1
- ],
- [
-  "admin doesn't see it",
-  "admin",
-  " + laterLine(task) + photoLines(task, stepId);",
-  " + photoLines(task, stepId);",
-  1
- ],
- [
-  "no spinner on the pressed button",
-  "portal",
-  "until the save is confirmed — nothing else greys\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");",
-  "until the save is confirmed — nothing else greys\n",
-  1
- ],
- [
-  "later loses its two choices",
-  "portal",
-  "p10Later ? `${listHtml}<div class=\"pm-k5-acts pm-later-under\">${laterUi}</div>`",
-  "p10Later ? `${listHtml}`",
-  1
- ],
- [
-  "choosing later leaves the step open",
-  "portal",
-  "if (days) _openStep.delete(cid); else _openStep.set(cid, host.getAttribute(\"data-later-step\"));",
-  "",
-  1
- ],
- [
-  "the folded row doesn't say when",
-  "portal",
-  ": later ? `<span class=\"pm-step-sub\">Reminder by email on",
-  ": false ? `<span class=\"pm-step-sub\">Reminder by email on",
-  1
- ],
- [
-  "an upload no longer finds the later state",
-  "portal",
-  "querySelector(\"[data-later-step] [data-later-acts]\")",
-  "querySelector(\"[data-later-step] .pm-later-set\")",
-  1
- ],
- [
-  "the spinner fades in too late",
-  "portalcss",
-  "cursor:progress; pointer-events:none; transition:none; opacity:1 !important; }",
-  "cursor:progress; pointer-events:none; opacity:1 !important; }",
-  1
- ],
- [
-  "the folded list loses its spacing",
-  "portalcss",
-  ".pm-later-list > :not(summary) + :not(summary) { margin-top:14px; }",
-  "",
-  1
- ],
- [
-  "the reminder email gets the green hero back",
-  "notifystepopen",
-  "    markup: `Hi ${first}, you asked us",
-  "    markup: `# Your photos are next\\n\\nHi ${first}, you asked us",
-  1
- ],
- [
-  "RGA is never told",
-  "notifystepopen",
-  "return now - Date.parse(l.reminded_at) >= FOLLOWUP_DAYS * 86400000;",
-  "return false;",
-  1
- ],
- [
-  "RGA is told twice",
-  "notifystepopen",
-  "if (!l || !l.reminded_at || l.followup_told_at || isFinished(t)) return false;",
-  "if (!l || !l.reminded_at || isFinished(t)) return false;",
-  1
- ],
- [
-  "admin calls it a nudge",
-  "admin",
-  "x.reason === \"later_reminder\" ? (x.emailed ? \"Reminder they asked for · by email\"",
-  "x.reason === \"never\" ? (x.emailed ? \"Reminder they asked for · by email\"",
-  1
- ],
- [
-  "admin never turns amber",
-  "admin",
-  "    if (l.followup_told_at) return `<p class=\"ob-chose is-warn\">",
-  "    if (false) return `<p class=\"ob-chose is-warn\">",
-  1
- ]
+ ["any number of days", "steplater", "const DAYS = [7, 14];", "const DAYS = [3, 7, 14];", 1],
+ ["any step can be put off", "steplater", "if (!LATER_STEPS.includes(stepId)) return json(400", "if (false) return json(400", 1],
+ ["no read-back", "steplater", "if (action === \"set\" ? saved.later?.until !== task.later.until : !!saved.later) return json(500", "if (false) return json(500", 1],
+ ["a finished step can be put off", "steplater", "if (task.status === \"done\" || task.status === \"skipped\") return json(409", "if (false) return json(409", 1],
+ ["anyone can put it off", "steplater", "  if (gate.error) return gate.error;", "", 1],
+ ["the reminder goes twice", "notifystepopen", "if (!l || !l.until || l.reminded_at || isFinished(t)) return false;", "if (!l || !l.until || isFinished(t)) return false;", 1],
+ ["the reminder ignores a photo that came in", "notifystepopen", "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (since.length) {", "encodeURIComponent(l.set_at || l.until)}&select=id&limit=1`).catch(() => []);\n        if (false) {", 1],
+ ["the reminder goes at night", "notifystepopen", "} else if (!inSendingHours(client)) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder", "} else if (false) out.held.push({ client: client.id, due: [PHOTO.id], why: \"later reminder", 1],
+ ["an upload doesn't end later (screen)", "portal", "if (Number.isFinite(set) && (photos || []).some((p) => Date.parse(p && p.created_at || \"\") > set)) return null;", "", 1],
+ ["a later step is still the now step", "portal", "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.later && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")", "isOpenRow(r) && r.status !== \"flagged\" && theirs(r) && !r.step.clientOptional && !r.withRga && !r.notDue && r.taskState?.google_push?.state !== \"with_rga\")", 1],
+ ["the banner doesn't move on", "portal", "      && !i.later\n", "", 1],
+ ["the pill says Your turn", "portal", "      : later ? { text: `Later · ${laterDay(later.until)}`, cls: \"wait\" }\n", "", 1],
+ ["admin doesn't see it", "admin", " + laterLine(task) + photoLines(task, stepId) + skipAskLines(task, stepId);", " + photoLines(task, stepId) + skipAskLines(task, stepId);", 1],
+ ["no spinner on the pressed button", "portal", "until the save is confirmed — nothing else greys\n  b.classList.add(\"is-busy\"); b.setAttribute(\"aria-busy\", \"true\");", "until the save is confirmed — nothing else greys\n", 1],
+ ["later loses its two choices", "portal", "p10Later ? `${listHtml}<div class=\"pm-k5-acts pm-later-under\">${laterUi}</div>`", "p10Later ? `${listHtml}`", 1],
+ ["choosing later leaves the step open", "portal", "if (days) _openStep.delete(cid); else _openStep.set(cid, host.getAttribute(\"data-later-step\"));", "", 1],
+ ["the folded row doesn't say when", "portal", ": later ? `<span class=\"pm-step-sub\">Reminder by email on", ": false ? `<span class=\"pm-step-sub\">Reminder by email on", 1],
+ ["an upload no longer finds the later state", "portal", "querySelector(\"[data-later-step] [data-later-acts]\")", "querySelector(\"[data-later-step] .pm-later-set\")", 1],
+ ["the spinner fades in too late", "portalcss", "cursor:progress; pointer-events:none; transition:none; opacity:1 !important; }", "cursor:progress; pointer-events:none; opacity:1 !important; }", 1],
+ ["the folded list loses its spacing", "portalcss", ".pm-later-list > :not(summary) + :not(summary) { margin-top:14px; }", "", 1],
+ ["the reminder email gets the green hero back", "notifystepopen", "    markup: `Hi ${first}, you asked us", "    markup: `# Your photos are next\\n\\nHi ${first}, you asked us", 1],
+ ["RGA is never told", "notifystepopen", "return now - Date.parse(l.reminded_at) >= FOLLOWUP_DAYS * 86400000;", "return false;", 1],
+ ["RGA is told twice", "notifystepopen", "if (!l || !l.reminded_at || l.followup_told_at || isFinished(t)) return false;", "if (!l || !l.reminded_at || isFinished(t)) return false;", 1],
+ ["admin calls it a nudge", "admin", "x.reason === \"later_reminder\" ? (x.emailed ? \"Reminder they asked for · by email\"", "x.reason === \"never\" ? (x.emailed ? \"Reminder they asked for · by email\"", 1],
+ ["admin never turns amber", "admin", "    if (l.followup_told_at) return `<p class=\"ob-chose is-warn\">", "    if (false) return `<p class=\"ob-chose is-warn\">", 1]
 ]
