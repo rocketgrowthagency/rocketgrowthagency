@@ -93,7 +93,7 @@
   [
     "every shot is open at once",
     "portal",
-    "data-p10-shot=\"${n}\"${n === sel ? \"\" : \" hidden\"}>",
+    "data-p10-shot=\"${n}\"${n === pick ? \"\" : \" hidden\"}>",
     "data-p10-shot=\"${n}\">",
     1
   ],

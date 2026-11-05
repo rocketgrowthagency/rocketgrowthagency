@@ -37,7 +37,7 @@
  [
   "the portal drops the shot's own drawing",
   "portal",
-  "  const exArt = (it, ex) => { const k = artKey(shape, it);",
+  "  const exArt = (it, ex) => { const k = artKey(shape, it.artFrom || it);",
   "  const exArt = (it, ex) => { const k = \"\";",
   1
  ],
