@@ -99,7 +99,7 @@ try {
   // the RGA step a managed client waits on, and who it holds, are named by managed numbers too
   { const labelNo = new Map(steps.map((s) => [s.clientLabel, s.managedRole === "check" ? null : s.managedStepNo]));
     for (const str of mg.freshMoves.flatMap((m) => [m.step, ...(m.blocks || [])])) {
-      const mt = /^Step (\d+) · (?:Check what we found · )?(.*)$/.exec(str || ""); if (!mt) continue;
+      const mt = new RegExp(`^Step (\\d+) · (?:${String(check.clientLabel || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} · )?(.*)$`).exec(str || ""); if (!mt) continue;   // step 3's name from its one home (managed.check)
       const s = steps.find((x) => x.clientLabel === mt[2]); if (!s) continue;
       must(Number(mt[1]) === (s.managedRole === "check" ? check.managedStepNo : s.managedStepNo), `a managed open move says "${str}" (managed number ${s.managedStepNo})`);
     } }

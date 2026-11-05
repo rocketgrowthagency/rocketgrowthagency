@@ -77,7 +77,7 @@ function world({ mode = "managed", tasks = {}, src = AJS } = {}) {
   w.escapeHtml = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   w.escapeAttribute = w.escapeHtml;
   w.rgaSiteChange = { isSiteChangeStep: () => false };
-  w.eval(`var OL_G = "<svg data-g></svg>"; var adminGcardWhen = (i) => "Nov 6, 3:00 PM"; var _managedCheck = { managedStepNo: 3, clientLabel: "Check what we found" }; var _hoursHolidays = [];`);
+  w.eval(`var OL_G = "<svg data-g></svg>"; var adminGcardWhen = (i) => "Nov 6, 3:00 PM"; var _managedCheck = { managedStepNo: 3, clientLabel: "Check your business details on Google" }; var _hoursHolidays = [];`);
   w.CSS = { escape: (x) => String(x).replace(/[^\w-]/g, (c) => "\\" + c) };
   w.eval(HE);
   w.eval(fs.readFileSync(path.join(SITE, "shared/portal-mode.js"), "utf8"));
@@ -299,7 +299,7 @@ try {
     must(label(M, { flowId: VS, actor: "client", clientFacing: true }) === "Client", "tag: managed 27 (only the client gets the code) no longer reads Client");
     const chip = (W, o) => { W.host.innerHTML = `<div class="ob-step" data-ob-step="${o.flowId}"></div>`; W.w.__x.injectSeeClientLinks(W.host, [{ obj: o }], (x) => W.w.__x.stepKind(x)); return W.host.innerHTML; };
     const h1 = chip(M, both(VS, { managedStepNo: 3, managedRole: "check" })), h2 = chip(M, both("m1.brand.social_profiles", { managedStepNo: null, managedRole: "card" })), h3 = chip(M, both("m1.brand.photos", { managedStepNo: 4, managedRole: "step" }));
-    must(/Client sees: a row in step 3, Check what we found/.test(h1), `chip: a check step doesn't say a row in step 3 (${h1})`);
+    must(/Client sees: a row in step 3, Check your business details on Google/.test(h1), `chip: a check step doesn't say a row in step 3 (${h1})`);
     must(/Client sees: an RGA card/.test(h2), "chip: a card step doesn't say an RGA card");
     must(/Client sees: step 4/.test(h3), "chip: a numbered step doesn't say its managed number");
     must(/See what the client sees/.test(h1 + h2 + h3), "chip: the See-what-the-client-sees link is gone for a managed row");

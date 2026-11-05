@@ -646,7 +646,7 @@ for (const id of stepIds) {
 for (const id of Object.keys(CARDS)) if (!stepIds.includes(id)) fail(`CLIENT_CARDS names ${id}, which is not a numbered client step in the playbook`);
 
 // ─── 10. one drawing ───────────────────────────────────────────────────────────────────────────────
-if (!/import \{ blogCardHtml \} from "\/shared\/client-card-kit\.js/.test(portal) || !/function blogPlanInner\(c\) \{ return blogCardHtml\(c\); \}/.test(portal)) fail("the portal draws the posts card with its own copy, not the shared function");
+if (!/import \{ blogCardHtml(?:, \w+)* \} from "\/shared\/client-card-kit\.js/.test(portal) || !/function blogPlanInner\(c\) \{ return blogCardHtml\(c\); \}/.test(portal)) fail("the portal draws the posts card with its own copy, not the shared function");
 const norm = (t) => t.replace(/\s+/g, " ").trim();
 const grab = (src, name) => { const i = src.indexOf(`const ${name} = `); if (i < 0) return null; const m = /\n(?=\/\*\*|const |\/\/ |function |export )/.exec(src.slice(i + 5)); return norm(src.slice(i, i + 5 + (m ? m.index : src.length))); };
 for (const n of ["PC_TICK", "PC_OPEN", "PC_DOWN", "csCard", "csEv", "csNote", "csFoot", "pcActs"]) {

@@ -62,6 +62,9 @@ export const READ_ONLY_FN_POSTS = {
   "admin-deliverables": (b) => onlyKeys(["client_id", "key", "site_action"])(b) && (b.site_action === "prefill" || b.site_action === "safety"),
   // admin-github-connection.js (auto_live_and_proof_v1, 10-28) — the VERIFIED badge: whoAmI + our role + the repo's own files; writes nothing
   "admin-github-connection": onlyKeys(["client_id"]),
+  // portal-blog-posts.js (client_kickoff_why_now_v1, read 11-4) — action "read" reads the client, the onboarding record and the client's own
+  // public sitemap and RETURNS the card; it spends no search and writes nothing ("off" / "on" PATCH clients.blog_posts_off_at and stay blocked)
+  "portal-blog-posts": (b) => onlyKeys(["client_id", "action"])(b) && b.action === "read",
 };
 
 // Writes the pages cannot load without, answered with an empty 204 instead of being sent — so the

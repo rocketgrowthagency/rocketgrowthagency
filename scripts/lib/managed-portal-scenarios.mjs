@@ -45,7 +45,8 @@ export const SCENARIOS = {
     "m1.gbp.hours_attributes": done({ client_input: { days: DAYS("08:00", "17:00", ["sat", "sun"]) }, google_push: { state: "on_google" } }),
     "m1.gbp.services_products": done({ client_input: ["drain", "water"], google_push: { state: "on_google", after: ["drain", "water"] } }),
     "m1.gbp.attributes": done({ client_input: ["women_led"], google_push: { state: "on_google" } }) },
-    now: { "m1.gbp.business_facts": factsNow(), "m1.gbp.services_products": svcNow(), "m1.gbp.hours_attributes": hoursNow(), "m1.gbp.attributes": attrNow() } },
+    // what Google shows now for each finished step (a finished row reads it: client_step03_business_details_v1): the same values that went on
+    now: { "m1.gbp.business_facts": factsNow(), "m1.gbp.services_products": svcNow(), "m1.gbp.hours_attributes": hoursNow(), "m1.gbp.attributes": attrNow({ ticked: ["women_led"] }) } },
 };
 // RGA's five cards, in the states the client sees them
 export const RGA_CARD_TASKS = {

@@ -93,7 +93,7 @@
  [
   "the done body is blank again",
   "portal",
-  "      : RECORD_CARD.has(step.id) && !month2Only ? (ownWait ? \"\" : recordCardHtml(step, taskState, clientId, onboarding?.data?.tasks))",
+  "      : RECORD_CARD.has(step.id) && !month2Only ? (ownWait ? \"\" : recordCardHtml(step, taskState, clientId, onboarding?.data?.tasks, { postsInGroup: !!mgd }))",
   "      : false ? \"\"",
   1
  ],
