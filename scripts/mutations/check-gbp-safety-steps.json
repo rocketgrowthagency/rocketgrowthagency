@@ -121,8 +121,8 @@
  [
   "RGA's moves reach the client",
   "openmoves",
-  "else if (m.kind === \"profile_suspended\" || m.kind === \"category_recheck\") continue;",
-  "",
+  "else if (m.kind === \"profile_suspended\" || m.kind === \"category_recheck\" || m.kind === \"site_unread\") continue;",
+  "else if (m.kind === \"site_unread\") continue;",
   1
  ],
  [

@@ -8,10 +8,13 @@
 // its own trade's real shot list (netlify/functions/_photo-lists.js). HOLDS:
 //   1 · STEP 4 BELOW THE MINIMUM: no option, and one line under the card naming what's still needed, counted from the client's OWN list (3 of each
 //       kind, or every shot of a kind with fewer; the logo out where Google hides it, in where it shows). No sheet, nothing pale.
-//   2 · STEP 4 AT THE MINIMUM: "That's all I have for now" beside "Remind me later"; it opens ONE sheet inside the card ("Finish step 4 with N
-//       photos?", the three lines, Finish with N · Keep adding), the tiles step back, Keep adding puts them back. Finish spins, posts
+//   2 · STEP 4 AT THE MINIMUM (client_setup_fewer_visible_v2, 11-5): the row inside the card at the foot of the work area, above "See it on Google
+//       Maps" ("Fewer than 20 photos?" · "Every kind has its 3 on Google." · a plain Finish); it opens ONE sheet in the row's place ("Are you sure you
+//       want to finish this step with N of 20 photos? The rest come with step 10." + one line, Finish · Keep adding), the tiles and the row step back,
+//       Keep adding puts them back. Every button is one plain word. Finish spins, posts
 //       portal-step-fewer { action: "finish" }, redraws done from the answer and says so; a refusal says the server's own words in the sheet.
-//   3 · STEP 5 FROM 1 ASKED: "I don't have 5 recent customers yet" under the card, its sheet ("Finish step 5 with N asked?"), the form and its
+//   3 · STEP 5 FROM 1 ASKED: the row "Fewer than 5 recent customers?" + Finish under the customer fields, above "Who to ask"; its sheet ("Are you sure
+//       you want to finish this step with N of 5 customers asked? The rest come with step 8." + one line, Finish · Keep asking), the row, the form and its
 //       buttons step back; 0 asked offers nothing.
 //   4 · DONE WITH FEWER: step 4 green "N on Google · the rest come with step 10" · finished <day>, the kinds, "We keep counting every night…",
 //       Add more; step 5 green "N of 5 asked · the rest come with step 8" · finished <day>, "Step 8 is open · This week's customer list · Weekly ·
@@ -94,7 +97,11 @@ const look = (h, id) => h.page.evaluate((R) => {
   return {
     pills: [...r.querySelectorAll(":scope > .pm-step-row-head .pm-pill")].map((p) => p.textContent.trim()), disc: (r.querySelector(".pm-step-num") || {}).className || "", rowCls: r.className,
     band: card ? (card.querySelector(".pm-k5-h b") || {}).textContent || "" : "", side: card ? (card.querySelector(".pm-k5-h > span") || {}).textContent || "" : "", cardCls: card ? card.className : "",
-    note: [...r.querySelectorAll("[data-fw-note]")].filter(vis).map((n) => n.textContent.replace(/\s+/g, " ").trim()),
+    note: [...r.querySelectorAll("[data-fw-row]")].filter(vis).map((n) => n.textContent.replace(/\s+/g, " ").trim()),
+    fwRow: (() => { const w = r.querySelector("[data-fw-row]"); if (!w) return null; const nx = w.nextElementSibling, pv = w.previousElementSibling, cs = getComputedStyle(w);
+      return { shown: vis(w), inCard: !!w.closest(".pm-k5-plan"), b: (w.querySelector("b") || {}).textContent || "", small: (w.querySelector("small") || {}).textContent || "", btn: [...w.querySelectorAll("button")].map((x) => x.textContent.trim()),
+        btnCls: (w.querySelector("button") || {}).className || "", next: nx ? `${nx.tagName.toLowerCase()}.${nx.className}` : "", nextText: nx ? nx.textContent.replace(/\s+/g, " ").trim().slice(0, 60) : "", prev: pv ? pv.className : "",
+        css: { pad: cs.padding, bt: cs.borderTopWidth + " " + cs.borderTopStyle, fs: cs.fontSize, disp: cs.display } }; })(),
     open: [...r.querySelectorAll("[data-fw-open]")].filter(vis).map((b) => b.textContent.trim()), openAt: (() => { const b = r.querySelector("[data-fw-open]"); const p = b && b.closest(".pm-k5-acts, .pm-fw-ask"); return p ? p.innerText.replace(/\s+/g, " ").trim() : ""; })(),
     sheet: sh ? { shown: vis(sh), inCard: !!sh.closest(".pm-k5-plan"), h3: (sh.querySelector("h3") || {}).textContent || "", p: (sh.querySelector("p:not([data-fw-msg])") || {}).textContent || "", lis: [...sh.querySelectorAll("li")].map((l) => l.textContent), btns: [...sh.querySelectorAll("button")].map((b) => b.textContent.trim()), msg: vis(sh.querySelector("[data-fw-msg]")) ? sh.querySelector("[data-fw-msg]").textContent : "" } : null,
     work: [...r.querySelectorAll("[data-fw-work]")].map((w) => vis(w)), tiles: vis(r.querySelector(".pm-p10")),
@@ -105,6 +112,8 @@ const look = (h, id) => h.page.evaluate((R) => {
   };
 }, ROW(id));
 const press = async (h, id, sel) => { const ok = await h.page.evaluate((R, s) => { const b = [...document.querySelector(R).querySelectorAll(s)].find((x) => x.offsetParent !== null); if (!b) return false; b.click(); return true; }, ROW(id), sel); await tick(500); return ok; };
+// 🔒 client_setup_fewer_visible_v2 (feedback_a_button_says_one_plain_word): no count or reason on a finish-with-fewer button
+const ONE_WORD = (btns) => btns.filter((t) => /\d|\bwith\b|\bfor now\b/i.test(t));
 const FW_MARKUP = /data-fw-|pm-fw-|That's all I have for now|I don't have 5 recent customers yet|Moved to Ongoing work|the rest come with step/;
 
 const agency = list("Marketing agencies", false, "3-5");
@@ -119,8 +128,11 @@ try {
     try {
       await openRow(h, PH); await settled(h, PH);
       const a = await look(h, PH), L = `${nm} below the minimum`;
-      const want = `Have fewer than 20? Once each kind has 3 on Google, you can finish with what you have. Still needed: ${M.still}.`;
-      if (!a || a.note.length !== 1 || a.note[0] !== want) fail(`${L}: the line under step 4 isn't «${want}» (${JSON.stringify(a && a.note)})`);
+      // client_setup_fewer_visible_v2: the row in the card, "Fewer than 20 photos?" + what's still needed, no button
+      const want = `Fewer than 20 photos?Once each kind has 3 on Google, you can finish with what you have. Still needed: ${M.still}.`;
+      if (!a || a.note.length !== 1 || a.note[0].replace(/\s+/g, "") !== want.replace(/\s+/g, "")) fail(`${L}: step 4's row isn't «${want}» (${JSON.stringify(a && a.note)})`);
+      if (a && a.fwRow && (!a.fwRow.inCard || a.fwRow.btn.length || a.fwRow.b !== "Fewer than 20 photos?")) fail(`${L}: the row isn't in the card with no button ${JSON.stringify(a.fwRow)}`);
+      if (a && /Have fewer than 20\?|That's all I have for now/.test(a.text)) fail(`${L}: the old line or link is still drawn`);
       if (a && (a.open.length || (a.sheet && a.sheet.shown))) fail(`${L}: step 4 offers to finish before every kind has its minimum (${JSON.stringify(a.open)})`);
       if (a && a.sheet) fail(`${L}: a sheet is drawn below the minimum`);
       if (nm === "salon" && !/Logo 1/.test(M.still)) fail(`${L}: a storefront's logo shows on Google, so it must be on its list of what's needed (${M.still})`);
@@ -146,40 +158,60 @@ try {
       const L = "agency at the minimum";
       await openRow(h, PH); await settled(h, PH);
       let a = await look(h, PH);
-      if (!a || a.open.join("|") !== "That's all I have for now") fail(`${L}: "That's all I have for now" isn't offered (${JSON.stringify(a && a.open)})`);
-      else if (!/^Not ready to take photos yet\? Remind me later · That's all I have for now$/.test(a.openAt)) fail(`${L}: the option isn't on the "Remind me later" line («${a.openAt}»)`);
-      if (a && a.note.length) fail(`${L}: the "still needed" line shows at the minimum`);
+      // client_setup_fewer_visible_v2: the row at the foot of the work area (above the card's foot: See it on Google Maps · How this step works), one plain word
+      if (!a || a.open.join("|") !== "Finish") fail(`${L}: the row's plain "Finish" isn't offered (${JSON.stringify(a && a.open)})`);
+      const R4 = a && a.fwRow;
+      if (!R4 || !R4.shown || !R4.inCard || R4.b !== "Fewer than 20 photos?" || R4.small !== "Every kind has its 3 on Google." || R4.btn.join("|") !== "Finish" || !/\bpm-amend\b/.test(R4.btnCls)) fail(`${L}: the row isn't the mockup's ${JSON.stringify(R4)}`);
+      else {
+        if (!/pm-fw-sheet/.test(R4.prev)) fail(`${L}: the row isn't at the foot of the work area, its sheet beside it (after: ${R4.prev})`);
+        if (!/pm-cs-foot/.test(R4.next)) fail(`${L}: the row isn't right above the card's foot (next: ${R4.next} «${R4.nextText}»)`);
+        if (R4.css.pad !== "11px 16px" || R4.css.fs !== "14.5px" || R4.css.bt !== "1px solid" || R4.css.disp !== "flex") fail(`${L}: the row's look isn't the mockup's ${JSON.stringify(R4.css)}`);
+      }
+      if (a && /That's all I have for now|Have fewer than 20\?/.test(a.text)) fail(`${L}: the old link or grey line is still drawn`);
+      if (a && !/Not ready to take photos yet\? Remind me later/.test(a.text)) fail(`${L}: "Remind me later" no longer stays under the card`);
       if (!a || !a.sheet || a.sheet.shown || !a.sheet.inCard) fail(`${L}: the sheet isn't drawn hidden inside the card ${JSON.stringify(a && a.sheet)}`);
       await press(h, PH, "[data-fw-open]");
       a = await look(h, PH);
-      const W4 = { h3: `Finish step 4 with ${AM.total} photos?`, p: "Every kind has its 3 on Google, so Google's own photo tips are met. RGA's goal is still 20.",
-        lis: ["Step 4 reads done, and RGA is told.", "Any photo you add later still counts: here, and from Monthly in step 10, New photos (no monthly quota).", 'At 20, this step reads "20 photos on Google" by itself.'], btns: [`Finish with ${AM.total}`, "Keep adding"] };
+      const W4 = { h3: `Are you sure you want to finish this step with ${AM.total} of 20 photos? The rest come with step 10.`, p: "Any photo you add later still counts, here and in step 10, New photos (no monthly quota). RGA is told.",
+        lis: [], btns: ["Finish", "Keep adding"] };
       if (!a.sheet || !a.sheet.shown || a.sheet.h3 !== W4.h3 || a.sheet.p !== W4.p || a.sheet.lis.join("|") !== W4.lis.join("|") || a.sheet.btns.join("|") !== W4.btns.join("|")) fail(`${L}: the sheet isn't the approved one ${JSON.stringify(a.sheet)}`);
       if (a.tiles) fail(`${L}: the tiles stay while the sheet is open (the sheet takes the card's working part)`);
-      const pos = await h.page.evaluate((R) => { const r = document.querySelector(R), sh = r.querySelector("[data-fw-sheet]"), chips = sh && sh.previousElementSibling; return chips ? chips.className : ""; }, ROW(PH));
-      if (!/pm-cs-chips/.test(pos)) fail(`${L}: the sheet doesn't sit right under the kinds (after: ${pos})`);
+      if (ONE_WORD([...(a.sheet ? a.sheet.btns : []), "Finish"]).length) fail(`${L}: a button carries a count or a reason (${JSON.stringify(a.sheet && a.sheet.btns)})`);
+      // v2: the sheet opens in the row's place (right after the work area, the row stepping back)
+      const pos = await h.page.evaluate((R) => { const r = document.querySelector(R), sh = r.querySelector("[data-fw-sheet]"), nx = sh && sh.nextElementSibling; return { prev: sh && sh.previousElementSibling ? sh.previousElementSibling.className : "", next: nx && nx.hasAttribute("data-fw-row") ? "row" : "" }; }, ROW(PH));
+      if (pos.next !== "row") fail(`${L}: the sheet doesn't open in the row's place ${JSON.stringify(pos)}`);
+      if (a.fwRow && a.fwRow.shown) fail(`${L}: the row stays while the sheet is open`);
       await press(h, PH, "[data-fw-keep]");
       a = await look(h, PH);
       if (a.sheet.shown || !a.tiles) fail(`${L}: Keep adding doesn't put the tiles back`);
       // step 5 at 1 asked
       await openRow(h, RV); await settled(h, RV);
       let b = await look(h, RV);
-      if (!b || b.open.join("|") !== "I don't have 5 recent customers yet") fail(`step 5 at 1 asked: "I don't have 5 recent customers yet" isn't offered (${JSON.stringify(b && b.open)})`);
+      if (!b || b.open.join("|") !== "Finish") fail(`step 5 at 1 asked: the row's plain "Finish" isn't offered (${JSON.stringify(b && b.open)})`);
+      const R5 = b && b.fwRow;
+      if (!R5 || !R5.shown || !R5.inCard || R5.b !== "Fewer than 5 recent customers?" || R5.small || R5.btn.join("|") !== "Finish" || !/\bpm-amend\b/.test(R5.btnCls)) fail(`step 5 at 1 asked: the row isn't the mockup's ${JSON.stringify(R5)}`);
+      else {
+        if (!/pm-rv-next/.test(R5.prev)) fail(`step 5: the row isn't under the customer fields (after: ${R5.prev})`);
+        if (!/Who to ask/.test(R5.nextText)) fail(`step 5: the row isn't above "Who to ask" (next: «${R5.nextText}»)`);
+      }
+      if (b && /I don't have 5 recent customers yet/.test(b.text)) fail("step 5: the old link under the buttons is still drawn");
       if (!b || !b.sheet || b.sheet.shown || !b.sheet.inCard) fail(`step 5 at 1 asked: the sheet isn't drawn hidden inside the card`);
       const work0 = b ? b.work.join(",") : "";
       await press(h, RV, "[data-fw-open]");
       b = await look(h, RV);
-      const W5 = { h3: "Finish step 5 with 1 asked?", lis: ["Step 8, This week's customer list, opens now in Ongoing work. RGA writes each request; you tap send.", 'Every customer asked there counts toward these 5. At 5, this step reads "5 customers asked".', "RGA is told."], btns: ["Finish with 1", "Keep going"] };
-      if (!b.sheet.shown || b.sheet.h3 !== W5.h3 || b.sheet.p || b.sheet.lis.join("|") !== W5.lis.join("|") || b.sheet.btns.join("|") !== W5.btns.join("|")) fail(`step 5: the sheet isn't the approved one ${JSON.stringify(b.sheet)}`);
+      const W5 = { h3: "Are you sure you want to finish this step with 1 of 5 customers asked? The rest come with step 8.", p: "Step 8, This week's customer list, opens now in Ongoing work, and every customer asked there still counts here. RGA is told.", lis: [], btns: ["Finish", "Keep asking"] };
+      if (!b.sheet.shown || b.sheet.h3 !== W5.h3 || b.sheet.p !== W5.p || b.sheet.lis.join("|") !== W5.lis.join("|") || b.sheet.btns.join("|") !== W5.btns.join("|")) fail(`step 5: the sheet isn't the approved one ${JSON.stringify(b.sheet)}`);
+      if (b.fwRow && b.fwRow.shown) fail("step 5: the row stays while the sheet is open");
+      if (ONE_WORD(b.sheet.btns).length) fail(`step 5: a button carries a count or a reason (${JSON.stringify(b.sheet.btns)})`);
       if (!b.work.length || b.work.some(Boolean)) fail(`step 5: the form and its buttons stay while the sheet is open (${JSON.stringify(b.work)})`);
       if (/Write the request/.test(b.text.replace(/Finish.*$/, "")) && b.work.some(Boolean)) fail("step 5: Write the request shows beside the sheet");
       await press(h, RV, "[data-fw-keep]");
       b = await look(h, RV);
-      if (b.sheet.shown || b.work.join(",") !== work0 || !b.work.some(Boolean)) fail(`step 5: Keep going doesn't bring the form back (${b.work.join(",")} vs ${work0})`);
+      if (b.sheet.shown || b.work.join(",") !== work0 || !b.work.some(Boolean)) fail(`step 5: Keep asking doesn't bring the form back (${b.work.join(",")} vs ${work0})`);
       // Finish step 4: it spins, posts, redraws done from the answer, says so
       await openRow(h, PH); await press(h, PH, "[data-fw-open]");
       const busy = await h.page.evaluate((R) => new Promise((res) => { const b = document.querySelector(`${R} [data-fw-finish]`); b.click(); setTimeout(() => res({ busy: b.classList.contains("is-busy") || b.getAttribute("aria-busy") === "true", text: b.textContent }), 15); }), ROW(PH));
-      if (!busy.busy || busy.text !== "Finishing…") fail(`${L}: Finish with ${AM.total} doesn't spin and say "Finishing…" while it saves (${JSON.stringify(busy)})`);
+      if (!busy.busy || busy.text !== "Finishing…") fail(`${L}: Finish doesn't spin and say "Finishing…" while it saves (${JSON.stringify(busy)})`);
       await tick(1500); await settled(h, PH);
       if (!posted.length || posted[0].action !== "finish" || posted[0].step_id !== PH || posted[0].client_id !== CID) fail(`${L}: Finish didn't post portal-step-fewer { action: "finish", step_id: "${PH}" } (${JSON.stringify(posted)})`);
       await openRow(h, PH);
@@ -201,7 +233,7 @@ try {
       await openRow(h, PH); await settled(h, PH); await press(h, PH, "[data-fw-open]"); await press(h, PH, "[data-fw-finish]"); await tick(900);
       const a = await look(h, PH);
       if (!a.sheet || !a.sheet.shown || a.sheet.msg !== "Not yet: each kind needs its minimum on Google first. Still needed: Team 1.") fail(`a refused finish doesn't say the server's words in the sheet (${JSON.stringify(a.sheet)})`);
-      if (a.sheet && a.sheet.btns[0] !== `Finish with ${AM.total}`) fail(`a refused finish leaves the button saying "${a.sheet.btns[0]}"`);
+      if (a.sheet && a.sheet.btns[0] !== "Finish") fail(`a refused finish leaves the button saying "${a.sheet.btns[0]}"`);
       if (a.pills.join("|") === "Done") fail("a refused finish drew the step done");
     } finally { await h.close(); }
   }
@@ -439,4 +471,4 @@ try {
   console.error(`⚠️  INDETERMINATE — the gate threw: ${String(e.stack || e).slice(0, 500)}`); process.exit(2);
 }
 if (F.length) { console.error(`🔴 finish with fewer doesn't hold (client_setup_fewer_v1): ${F.length} problem(s)\n` + F.map((m) => `  · ${m}`).join("\n")); process.exit(1); }
-console.log("✅ finish with fewer holds (client_setup_fewer_v1): step 4 names what's still needed below the minimum (three trades, the hidden logo out, a storefront's logo in) and offers \"That's all I have for now\" at it, step 5 from 1 asked; one sheet inside the card, the working part steps back, Keep puts it back, Finish spins, posts, redraws and says so, a refusal says why; done with fewer is green with the count and the rest's step, moved to Ongoing work is grey; Monthly's next step never names them; self-serve and no mode draw none of it; the server finishes only managed clients at the minimum and reads back, the move takes only open steps, the nightly check keeps them done and clears the note at the goal, To do drops them, the Month 1 report says the count, admin's line, pill, Reset and Advance dialog match");
+console.log("✅ finish with fewer holds (client_setup_fewer_v1 + client_setup_fewer_visible_v2): step 4's row in the card above its foot names what's still needed below the minimum (three trades, the hidden logo out, a storefront's logo in) and offers a plain Finish at it, step 5's row under the customer fields from 1 asked; every button one plain word, the sheet asks \"Are you sure…\" with the live counts; one sheet inside the card, the working part steps back, Keep puts it back, Finish spins, posts, redraws and says so, a refusal says why; done with fewer is green with the count and the rest's step, moved to Ongoing work is grey; Monthly's next step never names them; self-serve and no mode draw none of it; the server finishes only managed clients at the minimum and reads back, the move takes only open steps, the nightly check keeps them done and clears the note at the goal, To do drops them, the Month 1 report says the count, admin's line, pill, Reset and Advance dialog match");

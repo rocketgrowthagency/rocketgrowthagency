@@ -50,7 +50,7 @@ for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".js") && x !== "_s
   const src = nc(fs.readFileSync(`${dir}/${f}`, "utf8"));
   if (!/\bwriteStepTasks\(/.test(src)) continue;
   if (ALLOW[f]) continue;
-  if (!/\brecordSubmission\(|\bd\.record\(/.test(src)) fail(`${f} writes a step record but doesn't record the submission (_record.js recordSubmission)`);
+  if (!/\brecordSubmission\(|\b[dD]\.record\(/.test(src)) fail(`${f} writes a step record but doesn't record the submission (_record.js recordSubmission)`);
 }
 
 // ── 3 · the writers say what was sent, who, and touch the change log when Google changed ──

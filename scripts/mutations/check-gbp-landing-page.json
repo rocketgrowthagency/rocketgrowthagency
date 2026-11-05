@@ -128,8 +128,8 @@
  [
   "the card is not drawn",
   "admin",
-  "return id === \"m1.web.gbp_landing_page\" ? gbpLandingAdminHtml(t)",
-  "return id === \"m1.web.gbp_landing_page\" ? \"\""
+  "(id === \"m1.web.gbp_landing_page\" ? gbpLandingAdminHtml(t)",
+  "(id === \"m1.web.gbp_landing_page\" ? \"\""
  ],
  [
   "a failed read has no words",

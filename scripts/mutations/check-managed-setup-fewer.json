@@ -1,23 +1,205 @@
 [
- ["below the minimum says nothing (no still-needed line)", "portal", "const fwActs = !fwPh ? \"\" :", "const fwActs = true ? \"\" :", 1],
- ["the sheet isn't drawn in the card", "portal", "${fwPh ? fwPh.sheet : \"\"}<div class=\"pm-p10 is-mg", "<div class=\"pm-p10 is-mg", 1],
- ["the logo Google hides counts in the minimum", "setupfewer", "if (!it || !it.google || (hide && it.google === \"PROFILE\") || it.mgExtra) continue;", "if (!it || !it.google || it.mgExtra) continue;", 1],
- ["the minimum is 2 of each kind", "setupfewer", "const PER_KIND = 3;", "const PER_KIND = 2;", 1],
- ["step 5 can finish with nobody asked", "setupfewer", "Number(asked) >= 1 &&", "Number(asked) >= 0 &&", 1],
- ["the server finishes below the minimum", "stepfewerfn", "if (!s.met) return json(409", "if (false) return json(409", 1],
- ["the server finishes for a client who isn't managed", "stepfewerfn", "if (!D.isManaged(await D.clientMode(clientId)))", "if (false)", 1],
- ["the server doesn't read the write back", "stepfewerfn", "if (!after || bad.length) return json(500", "if (false) return json(500", 1],
- ["the move to Monthly touches a finished step", "stepfewerfn", "      if (FIN.includes(task.status)) continue;", "      if (false) continue;", 1],
- ["the nightly check reopens a step finished with fewer", "recheck", "const keptFewer = !!(row && row.tasks && Fewer.fewerOf(row.tasks[stepId]));", "const keptFewer = false;", 1],
- ["the nightly check never clears the note at the goal", "recheck", "if (probe.verdict === \"confirmed\" && Fewer.fewerOf(t0[stepId])) {", "if (false) {", 1],
- ["the Month 1 report gives the bare 20+ title", "month1report", "`${w.fewer || w.title}", "`${w.title}", 1],
- ["admin's Reset keeps the note", "admin", "if (!(\"fewer\" in patch)) delete next.fewer;", "void 0;", 1],
- ["admin's done row says Done, not Done with fewer", "admin", "return `<span class=\"ob-status done\" data-fewer-pill>Done with fewer</span>`;", "void 0;", 1],
- ["the Advance dialog doesn't name the steps", "admin", "say: `Client ${steps} ${ids.length === 2 ? \"aren't\" : \"isn't\"} finished", "say: `Client ${steps} not finished", 1],
- ["moved to Ongoing work reads Done (green)", "portal", ": fwMoved ? { text: \"Moved to Ongoing work\", cls: \"wait off\" }", ": fwMoved ? { text: \"Done\", cls: \"done\" }", 1],
- ["step 5 never offers to finish with fewer", "portal", "const fw5Open = FW5 && !isDone && need > 0 && FW5.reviewMinimumMet(asked);", "const fw5Open = false;", 1],
- ["the working part stays while the sheet is open", "portal", "row.querySelectorAll(\"[data-fw-work]\").forEach((w) => { w.hidden = open; });", "void 0;", 1],
- ["Finish doesn't say Finishing… while it saves (the spin itself is shared/busy.js's, on every button)", "portal", ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : \"Finishing…\";", ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : t.textContent;", 1],
- ["a refusal says a generic line, not why", "portal", "msg.textContent = (err && err.said) || clientError(err,", "msg.textContent = clientError(err,", 1],
- ["a client who isn't managed gets the option", "portal", "const fwOn = () => photoMgOn() && !!globalThis.rgaSetupFewer;", "const fwOn = () => !!globalThis.rgaSetupFewer;", 1]
+ [
+  "below the minimum the row says nothing (no still-needed words)",
+  "portal",
+  ": `Once each kind has ${min.allThree ? \"3\" : \"its minimum\"} on Google, you can finish with what you have. Still needed: ${escapeHtml(still)}.`}</small>",
+  ": \"\"}</small>",
+  1
+ ],
+ [
+  "step 4's row and sheet aren't drawn in the card",
+  "portal",
+  "${fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done",
+  "${p10Done",
+  1
+ ],
+ [
+  "step 4's row sits under the shots, not above the card's foot",
+  "portal",
+  "${mgTeam}${fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done ? \"\" : p10How}",
+  "${fwPh ? fwPh.sheet + fwPh.row : \"\"}${mgTeam}${p10Done ? \"\" : p10How}",
+  1
+ ],
+ [
+  "step 4's sheet button carries the count",
+  "portal",
+  "[], \"Finish\", \"Keep adding\");",
+  "[], `Finish with ${n}`, \"Keep adding\");",
+  1
+ ],
+ [
+  "step 4's row button isn't one plain word",
+  "portal",
+  "data-fw-open=\"${escapeAttribute(F.PHOTO)}\" aria-expanded=\"false\">Finish</button>",
+  "data-fw-open=\"${escapeAttribute(F.PHOTO)}\" aria-expanded=\"false\">That's all I have for now</button>",
+  1
+ ],
+ [
+  "step 4's question is the old one",
+  "portal",
+  "`Are you sure you want to finish this step with ${n} of ${goal} photos? The rest come with ${fwStepName(no10)}.`",
+  "`Finish this step with ${n} photos?`",
+  1
+ ],
+ [
+  "step 5's row is missing (the old link only)",
+  "portal",
+  "${fw5Row}<details class=\"pm-k5-fold\"",
+  "<details class=\"pm-k5-fold\"",
+  1
+ ],
+ [
+  "step 5's question is the old one",
+  "portal",
+  "`Are you sure you want to finish this step with ${asked} of ${REVIEW_GOAL} customers asked? The rest come with ${fwStepName(no8)}.`",
+  "`Finish with ${asked} asked?`",
+  1
+ ],
+ [
+  "step 5's sheet says Keep going",
+  "portal",
+  "[], \"Finish\", \"Keep asking\");",
+  "[], \"Finish\", \"Keep going\");",
+  1
+ ],
+ [
+  "the row isn't the mockup's row (no flex)",
+  "portalcss",
+  ".pm-fw-row { display:flex;",
+  ".pm-fw-row { display:block;",
+  1
+ ],
+ [
+  "the logo Google hides counts in the minimum",
+  "setupfewer",
+  "if (!it || !it.google || (hide && it.google === \"PROFILE\") || it.mgExtra) continue;",
+  "if (!it || !it.google || it.mgExtra) continue;",
+  1
+ ],
+ [
+  "the minimum is 2 of each kind",
+  "setupfewer",
+  "const PER_KIND = 3;",
+  "const PER_KIND = 2;",
+  1
+ ],
+ [
+  "step 5 can finish with nobody asked",
+  "setupfewer",
+  "Number(asked) >= 1 &&",
+  "Number(asked) >= 0 &&",
+  1
+ ],
+ [
+  "the server finishes below the minimum",
+  "stepfewerfn",
+  "if (!s.met) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "the server finishes for a client who isn't managed",
+  "stepfewerfn",
+  "if (!D.isManaged(await D.clientMode(clientId)))",
+  "if (false)",
+  1
+ ],
+ [
+  "the server doesn't read the write back",
+  "stepfewerfn",
+  "if (!after || bad.length) return json(500",
+  "if (false) return json(500",
+  1
+ ],
+ [
+  "the move to Monthly touches a finished step",
+  "stepfewerfn",
+  "      if (FIN.includes(task.status)) continue;",
+  "      if (false) continue;",
+  1
+ ],
+ [
+  "the nightly check reopens a step finished with fewer",
+  "recheck",
+  "const keptFewer = !!(row && row.tasks && Fewer.fewerOf(row.tasks[stepId]));",
+  "const keptFewer = false;",
+  1
+ ],
+ [
+  "the nightly check never clears the note at the goal",
+  "recheck",
+  "if (probe.verdict === \"confirmed\" && Fewer.fewerOf(t0[stepId])) {",
+  "if (false) {",
+  1
+ ],
+ [
+  "the Month 1 report gives the bare 20+ title",
+  "month1report",
+  "`${w.fewer || w.title}",
+  "`${w.title}",
+  1
+ ],
+ [
+  "admin's Reset keeps the note",
+  "admin",
+  "if (!(\"fewer\" in patch)) delete next.fewer;",
+  "void 0;",
+  1
+ ],
+ [
+  "admin's done row says Done, not Done with fewer",
+  "admin",
+  "return `<span class=\"ob-status done\" data-fewer-pill>Done with fewer</span>`;",
+  "void 0;",
+  1
+ ],
+ [
+  "the Advance dialog doesn't name the steps",
+  "admin",
+  "say: `Client ${steps} ${ids.length === 2 ? \"aren't\" : \"isn't\"} finished",
+  "say: `Client ${steps} not finished",
+  1
+ ],
+ [
+  "moved to Ongoing work reads Done (green)",
+  "portal",
+  ": fwMoved ? { text: \"Moved to Ongoing work\", cls: \"wait off\" }",
+  ": fwMoved ? { text: \"Done\", cls: \"done\" }",
+  1
+ ],
+ [
+  "step 5 never offers to finish with fewer",
+  "portal",
+  "const fw5Open = FW5 && !isDone && need > 0 && FW5.reviewMinimumMet(asked);",
+  "const fw5Open = false;",
+  1
+ ],
+ [
+  "the working part stays while the sheet is open",
+  "portal",
+  "row.querySelectorAll(\"[data-fw-work]\").forEach((w) => { w.hidden = open; });",
+  "void 0;",
+  1
+ ],
+ [
+  "Finish doesn't say Finishing… while it saves (the spin itself is shared/busy.js's, on every button)",
+  "portal",
+  ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : \"Finishing…\";",
+  ": stepId === \"m2.call.monthly\" ? \"Skipping…\" : t.textContent;",
+  1
+ ],
+ [
+  "a refusal says a generic line, not why",
+  "portal",
+  "msg.textContent = (err && err.said) || clientError(err,",
+  "msg.textContent = clientError(err,",
+  1
+ ],
+ [
+  "a client who isn't managed gets the option",
+  "portal",
+  "const fwOn = () => photoMgOn() && !!globalThis.rgaSetupFewer;",
+  "const fwOn = () => !!globalThis.rgaSetupFewer;",
+  1
+ ]
 ]

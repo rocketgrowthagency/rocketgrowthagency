@@ -100,8 +100,8 @@
  [
   "nightly not given the recorder",
   "gbpprofilewatch",
-  "record: (o) => recordSubmission({ supa, ...o })",
-  "record: null",
+  "connect: (id) => connectFor(supa, id), record: (o) => recordSubmission({ supa, ...o }),",
+  "connect: (id) => connectFor(supa, id), record: null,",
   1
  ],
  [

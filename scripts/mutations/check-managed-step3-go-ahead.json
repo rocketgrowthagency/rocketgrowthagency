@@ -1,0 +1,275 @@
+[
+ [
+  "the go-ahead is due a day early",
+  "step3goahead",
+  "const day = Math.max(1, Math.min(WAIT_DAYS, raw)), due = today >= goes;",
+  "const day = Math.max(1, Math.min(WAIT_DAYS, raw)), due = today >= addDays(day1, WAIT_DAYS - 1);",
+  1
+ ],
+ [
+  "the heads-up shows from day 1",
+  "step3goahead",
+  "headsUp: !due && raw >= HEADS_UP_DAY",
+  "headsUp: !due && raw >= 1",
+  1
+ ],
+ [
+  "days are counted in UTC, not Pacific",
+  "step3goahead",
+  "new Intl.DateTimeFormat(\"en-CA\", { timeZone: TZ,",
+  "new Intl.DateTimeFormat(\"en-CA\", { timeZone: \"UTC\",",
+  1
+ ],
+ [
+  "Hold doesn't stop it",
+  "step3goahead",
+  "if (r.hold && r.hold.at) return { on: true, state: \"held\"",
+  "if (false) return { on: true, state: \"held\"",
+  1
+ ],
+ [
+  "it runs while Google is unverified",
+  "step3goahead",
+  "if (!verified(tasks)) return { on: true, state: \"waits_verify\"",
+  "if (false) return { on: true, state: \"waits_verify\"",
+  1
+ ],
+ [
+  "it runs for a client whose step 3 is done",
+  "step3goahead",
+  "if (step3Done(tasks)) return { on: false, state: \"done\" };",
+  "",
+  1
+ ],
+ [
+  "the phone is marked as gone ahead",
+  "step3goahead",
+  "row(\"phone\", FACTS, \"left\",",
+  "row(\"phone\", FACTS, \"went_ahead\",",
+  1
+ ],
+ [
+  "hours go ahead though the site shows another week",
+  "step3goahead",
+  "row(\"hours\", HRS, same && cover ? \"went_ahead\" : \"left\"",
+  "row(\"hours\", HRS, cover ? \"went_ahead\" : \"left\"",
+  1
+ ],
+ [
+  "areas go ahead when the site names only some",
+  "step3goahead",
+  "hit.length === area.length ? \"went_ahead\" : \"left\"",
+  "hit.length ? \"went_ahead\" : \"left\"",
+  1
+ ],
+ [
+  "an address it can't check reads as agreeing",
+  "step3goahead",
+  "else if (!site.street || site.street.found == null) row(\"serve\", FACTS, \"left\", \"site_cant_tell\"",
+  "else if (!site.street) row(\"serve\", FACTS, \"left\", \"site_cant_tell\"",
+  1
+ ],
+ [
+  "services go ahead with nothing on Google",
+  "step3goahead",
+  "else if (!on.length) row(\"services\", SVC, \"left\", \"google_none\"",
+  "else if (false) row(\"services\", SVC, \"left\", \"google_none\"",
+  1
+ ],
+ [
+  "a step the client answered goes ahead",
+  "step3goahead",
+  "if (t.client_input !== undefined || t.google_push ||",
+  "if (t.google_push ||",
+  1
+ ],
+ [
+  "the go-ahead writes an answer for the client",
+  "step3goahead",
+  "out[id] = { ...(t || {}), go_ahead: block,",
+  "out[id] = { ...(t || {}), client_input: null, go_ahead: block,",
+  1
+ ],
+ [
+  "Undo leaves an absent key behind",
+  "step3goahead",
+  "if (v && typeof v === \"object\" && v.absent === true) delete n[k]; else n[k] = v;",
+  "n[k] = v;",
+  1
+ ],
+ [
+  "a site that couldn't be read still plans",
+  "step3goahead",
+  "if (!site || (!site.none && !site.ok)) return { ok: false, why: \"site_unread\"",
+  "if (!site) return { ok: false, why: \"site_unread\"",
+  1
+ ],
+ [
+  "the heads-up's words aren't the plan's",
+  "step3goahead",
+  "const that = go.length ? `That's ${andList(go)}. ` : \"\";",
+  "const that = \"\";",
+  1
+ ],
+ [
+  "Undo doesn't hold the rule",
+  "step3fn",
+  "    rule.hold = { at, by: who, why: \"undo\" };\n",
+  "",
+  1
+ ],
+ [
+  "a client with no website has a site fetched",
+  "step3fn",
+  "if (saidNoWebsite(tasks) || !target) site = { none: true };",
+  "if (!target) site = { none: true };",
+  1
+ ],
+ [
+  "one night unread is counted twice",
+  "step3fn",
+  "if (prev && R.ymd(prev.last_at) === R.ymd(at)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "a self-serve client is run",
+  "step3fn",
+  "  if (!PM.isManaged(d.mode)) return { step3: \"off\" };\n",
+  "",
+  1
+ ],
+ [
+  "the nightly writes to Google",
+  "step3fn",
+  "try { g[k] = await d.readForStep(id, deps); }",
+  "try { g[k] = await d.readForStep(id, deps); await d.fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${conn.loc}?updateMask=title`, { method: \"PATCH\", body: \"{}\" }); }",
+  1
+ ],
+ [
+  "the record isn't read back",
+  "step3fn",
+  "  if (!ok) return { step3: st.state, error: \"the record didn't read back\", ...out };\n",
+  "",
+  1
+ ],
+ [
+  "a page drawn by script reads as read",
+  "siteread",
+  "  if (homeText.length < MIN_TEXT) return { ok: false, url, at, why: \"no_text\" };\n",
+  "",
+  1
+ ],
+ [
+  "plain hours lines aren't read",
+  "siteread",
+  "const fromMarkup = hoursFromMarkup(items), fromText = hoursFromText(text);",
+  "const fromMarkup = hoursFromMarkup(items), fromText = null;",
+  1
+ ],
+ [
+  "After 3 nights it isn't RGA's move",
+  "openmoves",
+  "sf.nights >= G.SITE_NIGHTS",
+  "sf.nights >= 99",
+  1
+ ],
+ [
+  "To do doesn't carry the go-ahead day",
+  "openmoves",
+  "m.go_ahead_on = st.goes;",
+  "void 0;",
+  1
+ ],
+ [
+  "the nightly check doesn't run the go-ahead",
+  "gbpprofilewatch",
+  "const s3 = await require(\"./_step3-go-ahead\").nightlyPass(clientId, {",
+  "const s3 = await (async () => ({}))(clientId, {",
+  1
+ ],
+ [
+  "admin 28's counter says another reason",
+  "admin",
+  "`since ${mwG7C3()} first read \"Your turn\"`",
+  "`since day 1`",
+  1
+ ],
+ [
+  "admin's Hold is named something else",
+  "admin",
+  "act(\"hold\", \"Hold for this client\")",
+  "act(\"hold\", \"Hold\")",
+  1
+ ],
+ [
+  "Undo doesn't ask first",
+  "admin",
+  "if (action === \"undo\") {",
+  "if (false) {",
+  1
+ ],
+ [
+  "admin 32 doesn't point to 28",
+  "admin",
+  "![G.VERIFY, G.SVC, G.HRS, G.ATTR].includes(flowId)",
+  "![G.VERIFY, G.HRS, G.ATTR].includes(flowId)",
+  1
+ ],
+ [
+  "a gone-ahead step's pill reads plain Done",
+  "admin",
+  "data-g7-pill>Done · went ahead</span>",
+  "data-g7-pill>Done</span>",
+  1
+ ],
+ [
+  "To do's row doesn't say the go-ahead day",
+  "admin",
+  "goes && G7 ? `goes ahead ${G7.dayWords(goes)}` : \"\"",
+  "\"\"",
+  1
+ ],
+ [
+  "the band isn't drawn",
+  "portal",
+  "const hu = band && !m.allSettled ?",
+  "const hu = false ?",
+  1
+ ],
+ [
+  "the portal's heads-up shows from day 1",
+  "portal",
+  "if (!settled && st.state === \"counting\" && st.headsUp) {",
+  "if (!settled && st.state === \"counting\") {",
+  1
+ ],
+ [
+  "the portal never stamps day 1",
+  "portal",
+  "    if (mc.mine && !settled) mcStampDay1(clientId, onboarding?.data);\n",
+  "",
+  1
+ ],
+ [
+  "the Done card is today's, not the go-ahead's",
+  "portal",
+  "if (!went || !Object.keys(blocks).length) return m;",
+  "return m;",
+  1
+ ],
+ [
+  "the Done card's head is the old one",
+  "portal",
+  "head: `RGA went ahead with what Google ${noSite ? \"shows\" : \"and your website agree on\"}`",
+  "head: \"On Google\"",
+  1
+ ],
+ [
+  "the band's look isn't the mockup's",
+  "portalcss",
+  "font-weight:700; font-size:14px; margin:12px 16px 0; }",
+  "font-weight:600; font-size:14px; margin:12px 16px 0; }",
+  1
+ ]
+]
