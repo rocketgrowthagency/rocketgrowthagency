@@ -110,6 +110,8 @@ const UI_ONLY = {
   "data-step-toggle": "expands a step — the step visibly expands",
   "data-mc-fix": "managed step 3's \"Fix something\" (and the \"Which is right?\" buttons): opens or closes the five covered steps' own cards under the summary, flips aria-expanded and the button's words — nothing is saved (client_portal_slim_v1, 11-4)",
   "data-rgachg-ask": "\"Ask for a change\" on an \"Updated by RGA\" line: presses that card's own ask control (opens its form, saves nothing), or says where to ask when the card has none (client_portal_slim_v1, 11-4)",
+  "data-fct-qa": "About your business (client_setup_bottom_v1, 11-4): opens or closes that question's own answer form under its row and flips aria-expanded; nothing is saved, the form's own save reports",
+  "data-mc-more": "the posts plan in What RGA is doing (client_step02_managed_access_v1, 11-4): shows the remaining pages and hides its own \"+ N more\" link; nothing is saved",
   "data-mc-rc": "an RGA card's action in \"What RGA is doing\" (See why · Change · Not mine · Turn off): opens or closes that step's own card and its ask-RGA form and flips aria-expanded — nothing is saved; the ask itself goes through the ordinary reported flag (client_portal_slim_v1, 11-4)",
   // ── Surfaced 2026-09-16 when the guard-case body stopped being a fixed 6000-char slice. The old
   //    window ran past the end of these short handlers into the NEXT one and borrowed its feedback
