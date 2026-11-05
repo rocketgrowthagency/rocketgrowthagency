@@ -63,26 +63,42 @@ const clientFacing = (s) => !s.ongoing && (s.clientBucket === "supply" || s.clie
 // 🔒 a step the server settles by itself (`selfSettles`, admin_row9_vault_v2 approved 10-27: step 9 Keep access safe) reads
 // "Runs itself" exactly like an auto step — the product's own stepKind rule; this gate lagged it until 10-28
 const kindOf = (s) => (clientFacing(s) ? (s.actor === "both" ? "both" : "client") : s.type === "auto" || s.selfSettles ? "auto" : "you");
-const EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
-m1.forEach((s) => { EXPECT[kindOf(s)]++; });
-// A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.
-const EXPECT_VIEW = {
-  you: EXPECT.you + EXPECT.both,
-  client: EXPECT.client + EXPECT.both,
-  auto: EXPECT.auto,
-};
+// (EXPECT is counted once the client is read: a MANAGED client's pills differ — see below)
+let EXPECT, EXPECT_VIEW;
 
 let puppeteer;
 try { ({ default: puppeteer } = await import("puppeteer")); }
 catch { console.log("  ⚠️  puppeteer unavailable — NOT reporting healthy."); process.exit(2); }
 
-let clientId;
+let clientId, portalMode = null;
 try {
-  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id`,
+  const r = await fetch(`${SUPA_URL}/rest/v1/clients?id=eq.${WALK_CLIENTS.main.id}&select=id,portal_mode`,
     { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } });
-  clientId = (await r.json())?.[0]?.id;
+  if (!r.ok) { console.log(`  ⚠️  could not read the client (${r.status}).`); process.exit(2); }
+  const row = (await r.json())?.[0];
+  clientId = row?.id; portalMode = row?.portal_mode ?? null;
   if (!clientId) { console.log("  ⚠️  no active client to open."); process.exit(2); }
 } catch (e) { console.log(`  ⚠️  could not read a client: ${e.message}`); process.exit(2); }
+
+// 🔄 2026-11-05 night fixer: admin_client_cards_moved_v1 (approved 11-4) — for a MANAGED client a "both" step whose work is now RGA's alone
+// reads "You" (admin's mwKind over MW_YOU). The walk client became managed, so this gate read 7 correct pills as wrong. The set is read from
+// admin.js (its contents are pinned by check-managed-admin-working-cards); unreadable → can't tell, never a guess.
+let MW_YOU = new Set();
+if (portalMode === "managed") {
+  const m = /const MW_YOU = new Set\(\[([^\]]*)\]\);/.exec(fs.readFileSync(SITE_DIR + "/admin/admin.js", "utf8"));
+  if (!m) { console.log("  ⚠️  INDETERMINATE — admin.js's MW_YOU moved; can't say which managed pills read You"); process.exit(2); }
+  MW_YOU = new Set([...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]));
+}
+const kindShown = (s) => { const k = kindOf(s); return k === "both" && MW_YOU.has(s.id) ? "you" : k; };
+EXPECT = { total: m1.length, client: 0, auto: 0, you: 0, both: 0 };
+m1.forEach((s) => { EXPECT[kindShown(s)]++; });
+// A "both" step belongs to BOTH views, so each view expects its own rows plus every both row.
+EXPECT_VIEW = {
+  you: EXPECT.you + EXPECT.both,
+  client: EXPECT.client + EXPECT.both,
+  auto: EXPECT.auto,
+};
+console.log(`  client mode: ${portalMode || "not chosen"}${MW_YOU.size ? ` (${MW_YOU.size} managed steps read You)` : ""}`);
 
 let link;
 try {

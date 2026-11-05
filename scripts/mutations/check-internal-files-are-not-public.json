@@ -56,10 +56,10 @@
   1
  ],
  [
-  "data/playbooks/client-steps.json unfetched and unblocked",
-  "portal",
-  "fetch(\"/data/playbooks/client-steps.json\"",
-  "fetch(\"/data/playbooks/client-steps-x.json\"",
+  "a public data file nothing fetches (data/offer-pricing.json) goes unblocked",
+  "admin",
+  "fetch(\"/data/offer-pricing.json\", { cache: \"no-store\" })",
+  "fetch(\"/data/offer-pricing-x.json\", { cache: \"no-store\" })",
   1
  ],
  [

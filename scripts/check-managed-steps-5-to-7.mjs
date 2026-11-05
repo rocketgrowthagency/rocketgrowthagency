@@ -80,7 +80,9 @@ const layoutBad = (h, id) => h.page.evaluate(`(() => { const l = ${LISTV}; const
   return bad; })()`);
 
 const bandUnder = (h, id) => h.page.evaluate(`(() => { const l = ${LISTV}; const b = l && l.querySelector('[id="step-row-${id}"] .pm-k5-h > b'), s = b && b.parentElement.querySelector(":scope > span");
-  if (!b || !s) return "no band"; return s.getBoundingClientRect().top >= b.getBoundingClientRect().bottom - 1 ? true : "beside"; })()`);
+  // UNDER the words means below them AND starting where they start: a date dropped into the icon's 22px column is below, but squeezed to a word a line
+  if (!b || !s) return "no band"; const bb = b.getBoundingClientRect(), sb = s.getBoundingClientRect();
+  return sb.top < bb.bottom - 1 ? "beside" : sb.left < bb.left - 1 ? "under the icon, squeezed" : true; })()`);
 try {
   // ── MANAGED ─────────────────────────────────────────────────────────────────────────────────────────────
   {

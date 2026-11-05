@@ -234,7 +234,10 @@ const tz = "America/New_York", told = Date.parse("2026-11-02T15:00:00Z");   // a
   const ms = code("netlify/functions/_onboarding-notes.js") + code("netlify/functions/portal-onboarding-notes.js");
   if (/sendAsRga|gmail|nodemailer|notify-rga|fetch\(.*(POST|method)/i.test(ms.replace(/headers: \{ apikey/g, ""))) fail("the onboarding notes send something");
   if (!/gate\.viaWorkspace/.test(read("netlify/functions/portal-onboarding-notes.js"))) fail("the email drafts are handed to the client, not only to staff");
-  if (!/Open as a Gmail draft/.test(read("admin/admin.js")) || /Send (it|now)/i.test((read("admin/admin.js").match(/function notesDraftHtml[\s\S]{0,4000}?function rowStepCardsHtml/) || [""])[0])) fail("the note drafts offer a send button, not a draft");
+  // the draft's function and its click handler, up to the next card (a fixed 4000-character window went blind when the function grew past it)
+  { const A = read("admin/admin.js"), a = A.indexOf("function notesDraftHtml"), b = A.indexOf("function rowStepCardsHtml", a);
+    if (a < 0 || b < 0) { console.error("⚠️  INDETERMINATE — notesDraftHtml / rowStepCardsHtml moved"); process.exit(2); }
+    if (!/Open as a Gmail draft/.test(A) || /Send (it|now)/i.test(A.slice(a, b))) fail("the note drafts offer a send button, not a draft"); }
 }
 
 // ── 7 · the Cancel card ──

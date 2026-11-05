@@ -154,7 +154,7 @@ for (const b of BIZ) {
   const lost = want.filter((id) => !ids.includes(id));
   if (lost.length) fail(`batch 1's steps left the card system (${lost.join(", ")})`); }
 { const t = fn("threadHtml");
-  if (!/if \(!msgs\.length && !CS_STEPS\.has\(stepId\)\) return "";/.test(t) || !/if \(CS_STEPS\.has\(stepId\)\) \{/.test(t) || !/<b>Messages · \$\{all\.length\}<\/b>/.test(t) || !/<details class="pm-ask pm-cs-ask"><summary>Questions about this step\? <b>Ask RGA ›<\/b><\/summary>/.test(t)) fail("threadHtml's system branch lost \"Messages · N\" or the always-there \"Questions about this step? Ask RGA ›\"");
+  if (!/if \(!msgs\.length && !CS_STEPS\.has\(stepId\)\) return "";/.test(t) || !/if \(CS_STEPS\.has\(stepId\)\) \{/.test(t) || !/<b>(?:Messages|\$\{mgdMail \? "Emails from RGA" : "Messages"\}) · \$\{all\.length\}<\/b>/.test(t) || !/<details class="pm-ask pm-cs-ask"><summary>Questions about this step\? <b>Ask RGA ›<\/b><\/summary>/.test(t)) fail("threadHtml's system branch lost \"Messages · N\" or the always-there \"Questions about this step? Ask RGA ›\"");
   const none = run(`threadHtml("m1.gbp.hours_attributes")`);
   if (!/Ask RGA ›/.test(none) || /pm-cs-msgs/.test(none)) fail("a system step with no messages doesn't keep its one \"Ask RGA ›\" line (or draws an empty Messages row)");
   ctx._portalThread = [{ id: 1, step_id: "m1.gbp.hours_attributes", from: "client", at: AT, message: "Are holidays covered?" }, { id: 2, step_id: "m1.gbp.hours_attributes", from: "rga", at: "2026-10-21T10:00:00Z", message: "Yes, all of them." }];
@@ -170,7 +170,8 @@ for (const b of BIZ) {
   if (!/data-bk-putkeep>Keep it<\/button><a class="portal-button" href="#step-/.test(P)) fail("the To do's Keep it isn't on data-bk-putkeep"); }
 { // 🔄 10-30: the close-out (step 15) draws its own grey "Opens about <date>" card (client_step15_closeout_call_v1), so it's left out here
   if (!/const csWaitHtml = csRow && !isDone && \(ownWait \|\| listingWait\)(?: && !csPhotoWait)?(?: && step\.id !== "m1\.call\.close")? \? `<div class="pm-k5">\$\{csCard\(\{ tone: "off",/.test(P) || !/const i = _rowStr\.indexOf\("<!--cs-body-->"\), j = _rowStr\.indexOf\("<!--cs-thread-->"\);/.test(P)) fail("a system step that isn't open yet no longer draws ONE grey card in place of its body");
-  if (!/const btn = `<button type="button" class="pm-amend" data-cs-ask>Change something<\/button>`;/.test(P)) fail("a LOCKED system card no longer gets its ONE \"Change something\" from the lock's ask (seatCsFoot)"); }
+  // 🔄 11-4: managed step 2 (client_step02_managed_access_v1, approved) words it "Ask for a change"; every other card still "Change something"
+  if (!/const btn = `<button type="button" class="pm-amend" data-cs-ask>(?:Change something|\$\{mcAskWord\(row\)\})<\/button>`;/.test(P) || (/data-cs-ask>\$\{mcAskWord\(row\)\}/.test(P) && !/const mcAskWord = \(row\) => \(row && row\.id === "step-row-m1\.access\.website" [^\n]*\? "Ask for a change" : "Change something"\);/.test(P))) fail("a LOCKED system card no longer gets its ONE \"Change something\" from the lock's ask (seatCsFoot)"); }
 
 // ── static: portal.css's card-system block ───────────────────────────────────────────────────────────
 { const at = C.indexOf("🔒 THE CLIENT CARD SYSTEM");

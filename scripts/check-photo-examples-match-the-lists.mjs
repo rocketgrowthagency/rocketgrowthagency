@@ -59,9 +59,9 @@ for (const [n, k] of Object.entries(want)) { const got = A.artKey(shape, shape.i
 if (A.artKey({ items: shape.items }, shape.items[2]) !== "") fail("a shot list from before the industry lists must keep the per-kind drawing (artKey \"\")");
 
 const portal = read("portal/portal.js").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
-if (!/const exArt = \(it, ex\) => \{ const k = artKey\(shape, it\);/.test(portal) || !/data-ex-art=/.test(portal)) fail("portal slots no longer carry their drawing key");
+if (!/const exArt = \(it, ex\) => \{ const k = artKey\(shape, (?:it|it\.artFrom \|\| it)\);/.test(portal) || !/data-ex-art=/.test(portal)) fail("portal slots no longer carry their drawing key");
 if (!/<span class="pm-ppl" data-ex-ppl=/.test(portal)) fail("portal slots no longer say how many people belong in the photo");
-if (!/photoExampleBigHtml\(ex, artKey\(shape, it\)\)/.test(portal)) fail("the big example no longer shows the shot's own drawing");
+if (!/photoExampleBigHtml\(ex, artKey\(shape, (?:it|it\.artFrom \|\| it)\)\)/.test(portal)) fail("the big example no longer shows the shot's own drawing");
 if (!/fillSlotThumbs\(listEl\);\s*fillExampleArt\(listEl\);/.test(portal)) fail("the portal never fills the drawings");
 const admin = read("admin/admin.js");
 if (!/async function fillPhotoReviewThumbs\(root\) \{\s*fillExampleArt\(root\);/.test(admin) || !/data-ex-art="\$\{escapeAttribute\(k\)\}"/.test(admin)) fail("the admin photo review no longer shows the slot's own drawing");

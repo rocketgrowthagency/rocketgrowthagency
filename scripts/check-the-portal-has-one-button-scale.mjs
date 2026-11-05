@@ -169,6 +169,8 @@ const EXEMPT = {
   "pm-p10-t": "a PHOTO TILE (the example drawing or their photo, 4:3, with its label), not a button rung — step 10's 20 shots (client_step10_photos_v3, 2026-10-30)",
   "pm-p10-k": "the text INSIDE a shot-list chip (padding:0, no border) — the chip carries the size (client_step10_photos_v3, 2026-10-30)",
   "pm-modal-x": "a square ICON button with its size DECLARED (36×36, padding:0) — the popup's ✕ (\"an X on every popup\", step36 batch A, 2026-10-29), not a text control on the scale",
+  "mc-more": "text link (padding:0, no border, link colour) — the managed list's \"+ N more pages\" under What RGA is doing (client_setup_bottom_v1, 2026-11-04)",
+  "fct-qa": "a full-width ROW (the question beside its answer, border-top, width:100%) that opens the question to change it — About your business, done, managed (client_setup_bottom_v1, 2026-11-04); a row, not a button rung",
   "pm-ex": "the example drawing beside a photo slot — the 64×48 picture IS the control (padding:0), not a text button (2026-10-09)",
 };
 {

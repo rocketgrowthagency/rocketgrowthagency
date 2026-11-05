@@ -68,7 +68,7 @@ if (/review (request )?messages/i.test(words)) fail("step 12 says \"messages\" a
 const wires = [
   // 🔒 v2: while RGA writes the message, the blue card says it all — no disabled button (still disabled while it waits on its own step / the listing)
   [/: step\.clientForm === "customer_list" \? \(ownWait \|\| listingWait \|\| \(rgaWait && !\(step\.clientWait && step\.clientWait\.how\)\) \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "the waiting row's button isn't the disabled \"Add your 5 customers →\" (or it shows while the step is open)"],
-  [/const reviewStep = !month2Only && step\.clientForm === "customer_list";[\s\S]{0,2000}?reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(step, clientId, customerLists \|\| \[\], isDone(, taskState)?\)\)/, "step 12 doesn't take its customers in the row (reviewStepHtml)"],
+  [/const reviewStep = !month2Only && step\.clientForm === "customer_list";[\s\S]{0,4000}?reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(step, clientId, customerLists \|\| \[\], isDone(, taskState)?\)\)/, "step 12 doesn't take its customers in the row (reviewStepHtml)"],
   [/month2Only && step\.clientForm === "customer_list" \? buildCustomerListHtml\(clientId, customerLists \|\| \[\]\)/, "Month 2's weekly list lost its paste card"],
   [/_openStep\.set\(clientId, "m1\.review\.first_5"\);/, "after sending, step 12 closes (the requests they now send appear in it)"],
   [/loadReviewStep\(clientId\);/, "the customers' statuses never load after the rows render"],

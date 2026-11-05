@@ -94,7 +94,7 @@ const quiet4 = run("m1.tracking.form_setup", { status: "done", detected: { verdi
 // card (like its Done pill) with "None yet" — it was a blue "No submissions yet" under a green pill
 if (!/<div class="pm-k5-plan ok"><div class="pm-k5-h ok">[^]*?<b>Tracking your forms<\/b>/.test(quiet4) || !/None yet<small>a quiet month is normal/.test(quiet4) || !/0 form sends/.test(quiet4) || /broken|No submissions yet/i.test(quiet4)) fail("zero submissions reads as broken (or as RGA's blue \"No submissions yet\") instead of the green \"Tracking your forms · None yet\"");
 // wiring: the card replaces the empty done body, the old pieces are off for these steps
-if (!/: RECORD_CARD\.has\(step\.id\) && !month2Only \? \(ownWait \? "" : recordCardHtml\(step, taskState, clientId, onboarding\?\.data\?\.tasks\)\)/.test(P)) fail("the record card isn't drawn in the row (a done step would be blank again)");
+if (!/: RECORD_CARD\.has\(step\.id\) && !month2Only \? \(ownWait \? "" : recordCardHtml\(step, taskState, clientId, onboarding\?\.data\?\.tasks(?:, \{ postsInGroup: !!mgd \})?\)\)/.test(P)) fail("the record card isn't drawn in the row (a done step would be blank again)");
 if (!/accessAdminHtml\(t\)/.test(A) || !/data-ob-acc-confirm/.test(A) || !/data-ob-ft-test/.test(A)) fail("admin can't confirm access or log a form test");
 if (F.length) { console.error("🔴 client steps 2 · 3 · 4 regressed:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ steps 2 · 3 · 4 show their record: an invite (never a password, builder detected, done when RGA signs in) · an honest call-tracking decision (the client's own number) · real form leads only (key event, counts, inbox test) — the card in every state, done included");

@@ -69,6 +69,11 @@ await went("an approved name", () => name("New Name"), true);
 world.dbDown = true;
 await went("an unreadable record", () => phone("3105550142"), false);
 world.dbDown = false;
+// the core guard ON ITS OWN: through the full guard an unreadable record is already refused by the suspension read before it, so the core
+// guard's own catch was never reached. It must refuse by itself, so it holds the day the order of the reads changes.
+{ const r = await C.refusalForCore(`${LOC}?updateMask=phoneNumbers`, { method: "PATCH", body: JSON.stringify({ phoneNumbers: { primaryPhone: "3105550142" } }) },
+    { readRows: async () => { throw new Error("Supabase 500"); }, rawFetch: fetch, clientIds: ["c1"] });
+  if (typeof r !== "string" || !r) fail("the core guard lets a write through when the client's record can't be read"); }
 
 // the send: checks, week, test run, read back
 const send = async (it, task, script) => {

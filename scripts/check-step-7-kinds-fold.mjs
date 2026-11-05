@@ -72,14 +72,16 @@ if (!/<i style="width:100%"><\/i><\/span><span class="acc-n">1 \/ 1<\/span>/.tes
 if (!/<i style="width:20%"><\/i><\/span><span class="acc-n">1 \/ 5<\/span>/.test(sec("kind:team"))) fail(`a kind with a photo going in doesn't show its share ("1 / 5", 20%): ${sec("kind:team").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
 if ((h.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20) fail("the folds dropped or duplicated a slot");
 // ── B1 · (open) the 20 shots are tiles, each once; ONE shot open — the first retake; the kinds are the shot list's chips ──
-{ const tiles = [...open.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)"[^>]*>[^]*?<span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1], n: Number(m[2]), lab: m[3] }));
+{ const tiles = [...open.matchAll(/<button type="button" class="pm-p10-t([^"]*)" data-p10-t="(\d+)"[^>]*>[^]*?<span class="lab">([^<]*)<\/span><\/button>/g)].map((m) => ({ cls: m[1], n: Number(m[2]), lab: m[3], chip: (/<span class="pm-p10-chip">([^<]*)<\/span>/.exec(m[0]) || [])[1] || "" }));
   if (tiles.length !== 20 || new Set(tiles.map((t) => t.n)).size !== 20) fail(`the open step isn't 20 tiles, each shot once (${tiles.length})`);
   if ((open.match(/class="pm-slot[^"]*" data-slot="/g) || []).length !== 20 || (open.match(/data-p10-shot="/g) || []).length !== 20) fail("the shot panel dropped or duplicated a shot's row");
   if (/<details class="pm-sgrp/.test(open)) fail("the open step still draws the folded kinds");
   const shown = [...open.matchAll(/<div class="pm-p10-shot" data-p10-shot="(\d+)"( hidden)?>/g)].filter((m) => !m[2]).map((m) => m[1]);
   if (shown.join() !== "7") fail(`the one shot open isn't the first retake (shown: ${shown.join(", ") || "none"})`);
   const t = (n) => tiles.find((x) => x.n === n) || {};
-  if (!/is-re/.test(t(7).cls) || !/is-re/.test(t(8).cls) || t(7).lab !== "Retake" || !/is-rga/.test(t(9).cls) || t(9).lab !== "With RGA" || !/is-on/.test(t(1).cls)) fail(`the tiles don't say what's true (1 ${t(1).cls} · 7 ${t(7).cls} ${t(7).lab} · 9 ${t(9).cls} ${t(9).lab})`);
+  if (!/is-re/.test(t(7).cls) || !/is-re/.test(t(8).cls) || t(7).chip !== "Retake" || !/is-rga/.test(t(9).cls) || t(9).chip !== "With RGA" || !/is-on/.test(t(1).cls)) fail(`the tiles don't say what's true (1 ${t(1).cls} · 7 ${t(7).cls} ${t(7).chip} · 9 ${t(9).cls} ${t(9).chip})`);
+  // 🔄 11-4 (client_step11_photo_labels_v1, approved): the status moved to a chip on the picture; the label under every tile is the shot's name
+  if (tiles.some((x) => !x.lab || /^(Retake|With RGA)$/.test(x.lab))) fail("a tile's label isn't the shot's name (the status belongs in its chip)");
   if (!/<b>2 of 20 on Google · 1 with RGA for review · 2 to retake<\/b>/.test(open)) fail("the band doesn't say \"· 1 with RGA for review · 2 to retake\"");
   const kinds = [...open.matchAll(/<span class="pm-cs-chip ?([^"]*)"><button type="button" class="pm-p10-k" data-p10-kind="([^"]+)">([^<]+) <em>(\d+)\/(\d+)<\/em>/g)].map((m) => ({ main: /main/.test(m[1]), shots: m[2], name: m[3], f: +m[4], n: +m[5] }));
   if (kinds.map((k) => k.name).join("|") !== "Logo|Cover|Exterior|Interior|Team|At work") fail(`the shot list isn't the six kinds, each once (${kinds.map((k) => k.name).join(", ")})`);

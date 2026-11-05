@@ -55,7 +55,17 @@ const cli = (b) => call(portalH, b, { authorization: "Bearer client-jwt" });
 // ── 1. NONE FORGOTTEN: every Month 1 website step goes through the client ──
 const webSteps = (PB.month1 || []).filter((s) => /^m1\.web\./.test(s.id));
 if (webSteps.length < 10) fail(`only ${webSteps.length} m1.web.* steps found — the playbook moved?`);
+// 🔄 11-1 (admin_last_research_items_v1, approved 11-2): "Decide which page the Google profile links to" sits under m1.web.* but SAVES A
+// DECISION ONLY — it writes nothing to Google or to the website, so there is nothing for the client to approve. Exempt BY NAME, and only
+// while that stays true: the day it gets a site change, a runner, or its functions start writing to a site, it is a website step again.
+const DECISION_ONLY = { "m1.web.gbp_landing_page": ["netlify/functions/_gbp-landing.js", "netlify/functions/admin-gbp-landing.js"] };
 for (const s of webSteps) {
+  if (DECISION_ONLY[s.id]) {
+    const src = DECISION_ONLY[s.id].map(read).join("\n");
+    if (SC.isSiteChangeStep(s.id) || SC.COPY_STEPS.includes(s.id) || s.hasRunner !== false || s.actor !== "rga" || !/It writes nothing to Google or to the website/.test(s.instructions || "") || /site-change|siteChange|api\.github\.com|ftp|wp-json/i.test(src))
+      fail(`${s.id} is exempt as a decision-only step, but it no longer is one (a site change, a runner, or a write to the website) — it must go through the client's approval`);
+    continue;
+  }
   if (!SC.isSiteChangeStep(s.id) && !SC.COPY_STEPS.includes(s.id)) fail(`${s.id} edits the client's website but is in neither the website-change list nor the page-copy list (it would skip their approval)`);
   if (s.clientBucket !== "approve" || s.approvalSurface !== "website") fail(`${s.id} isn't in the approve bucket on the website surface (bucket ${s.clientBucket}, surface ${s.approvalSurface})`);
   if (!s.clientLabel || !s.clientHint) fail(`${s.id} has no client wording (clientLabel / clientHint = "Why this helps")`);

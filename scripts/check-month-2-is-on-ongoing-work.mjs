@@ -98,7 +98,8 @@ const css = read("portal/portal.css");
 if (!/\.pm-ongoing-ground \.pm-doit > \.portal-card \{[^}]*border: 0;[^}]*box-shadow: none;/.test(css)) fail("the photo upload / customer list draw a card inside their Ongoing card (nested cards)");
 if (!/\.pm-ongoing-ground \.pm-doit > \.portal-card > \.portal-card-head \{ display: none; \}/.test(css)) fail("the form's own heading repeats the card title above it");
 if (!/\.pm-step-period \{[^}]*color: var\(--portal-muted/.test(css)) fail("the period label has no quiet style");
-const ongoingCss = css.slice(css.indexOf("MONTH 2 ON ONGOING WORK"));
+// comments stripped: a comment that NAMES .pm-act ("… .pm-act / .pm-amend lost their border …") is not a rule that resizes it
+const ongoingCss = css.slice(css.indexOf("MONTH 2 ON ONGOING WORK")).replace(/\/\*[\s\S]*?\*\//g, "");
 if (/\.pm-act[^{]*\{[^}]*(min-height|padding|font-size|width)/.test(ongoingCss)) fail("the Ongoing cards resize the step button (approved: keep the design's button size)");
 
 if (F.length) { console.error("🔴 a Monthly-cycle client can't do a Month-2 step on Ongoing work:"); for (const f of F) console.error("   · " + f); process.exit(1); }

@@ -172,5 +172,19 @@
   "portal",
   "function ibDiff(before, after) {",
   "function ibDiffX(before, after) {"
+ ],
+ [
+  "the decision-only landing step starts writing to the website",
+  "playbook",
+  "It writes nothing to Google or to the website: the Google link",
+  "It updates the website: the Google link",
+  1
+ ],
+ [
+  "the landing step function starts pushing to the site repo",
+  "gbplandingfn",
+  "// POST { client_id, action: \"read\" }",
+  "// pushes through api.github.com\n// POST { client_id, action: \"read\" }",
+  1
  ]
 ]

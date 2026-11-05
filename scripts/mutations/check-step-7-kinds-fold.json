@@ -124,5 +124,12 @@
   "data-p10-shot=\"${n}\"${n === pick ? \"\" : \" hidden\"}>",
   "data-p10-shot=\"${n}\"${n === pick || n === order[0] ? \"\" : \" hidden\"}>",
   1
+ ],
+ [
+  "a tile says its status under the picture again instead of the shot name",
+  "portal",
+  "<span class=\"lab\">${p10Lab(g)}</span></button>",
+  "<span class=\"lab\">${st === \"re\" ? \"Retake\" : p10Lab(g)}</span></button>",
+  1
  ]
 ]

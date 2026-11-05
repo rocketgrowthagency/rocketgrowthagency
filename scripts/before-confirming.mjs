@@ -39,8 +39,12 @@ const results = [];
 const PARKED = {
   "check-every-video-page-ships": "video is parked: finished video landing pages sit uncommitted in the website repo until the video work resumes; nothing here is fixed or changed while parked",
 };
+// 🔄 11-5 night fixer: a browser suite (check-managed-portal-list, 54 mutations, each a portal boot) needs more than 15 minutes on a fresh
+// cache; at the cap it was killed and reported ❌ with NO reason. Mutation suites get 45 minutes, and a run killed at its cap says so.
 const run = (label, cmd, args, cwd = SCRAPER) => {
-  const t0 = Date.now(), r = spawnSync(cmd, args, { cwd, env: ENV, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60 * 1000 });
+  const cap = (/^mutations: /.test(label) ? 45 : 15) * 60 * 1000;
+  const t0 = Date.now(), r = spawnSync(cmd, args, { cwd, env: ENV, encoding: "utf8", maxBuffer: 64 * 1024 * 1024, timeout: cap });
+  if (r.error && r.error.code === "ETIMEDOUT") r.stderr = `${r.stderr || ""}\n⏱ stopped at its ${cap / 60000}-minute cap before it finished: could not tell`;
   if (r.status === 1 && PARKED[label]) {
     results.push({ label, ok: true, code: 1, secs: Math.round((Date.now() - t0) / 1000), why: "" });
     process.stdout.write(`⏸  ${label} (parked, excused by name: ${PARKED[label]})\n`);

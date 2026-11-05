@@ -333,7 +333,9 @@ try {
     r = await call({ action: "nonsense" }); must(r.s === 400, "server: an unknown action isn't refused");
     // the push adds the told services to the client's approved ones and keeps what is on Google
     const code = PUSH.replace(/\/\/.*$/gm, "");
-    must(/told_services/.test(code) && /toldDraft/.test(code) && /draft: \[approved, toldDraft\]/.test(code) && /S\.draftedNames\(\[approved, toldDraft\]/.test(code), "push: the told services aren't added to the approved ones");
+    must(/told_services/.test(code) && /toldDraft/.test(code) && (/draft: \[approved, toldDraft\]/.test(code) && /S\.draftedNames\(\[approved, toldDraft\]/.test(code)
+      // 🔄 11-4 (1bad1efc): one reader, approvedOf(task), shared with the client's managed step 3 — its draft feeds both the names and the push
+      || (/const draft = \[approved, toldDraft\]\.filter\(Boolean\)\.join\("\\n"\);/.test(code) && /names: S\.draftedNames\(draft\)/.test(code) && /const \{ names, draft \} = approvedOf\(task\);/.test(code) && /loc: conn\.loc, draft \}/.test(code))), "push: the told services aren't added to the approved ones");
     must(/view\.on/.test(code) && /NEVER WIPE/.test(PUSH), "push: it no longer keeps every service already on Google"); }
 
   // ═══ 10 · COPY, CSS, RELEASE ════════════════════════════════════════════════════════════════════════════════════

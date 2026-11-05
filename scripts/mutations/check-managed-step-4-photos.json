@@ -107,8 +107,8 @@
   [
     "a row of RGA's emails still reads Messages",
     "portal",
-    "row.replace(\"<b>Messages · \", \"<b>Emails from RGA · \")",
-    "row",
+    "const mgdMail = pmManaged() && !talk.length;",
+    "const mgdMail = false;",
     1
   ],
   [

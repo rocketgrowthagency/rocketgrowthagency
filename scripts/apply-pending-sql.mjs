@@ -18,9 +18,10 @@ const query = async (sql) => {
   if (!r.ok) throw new Error(`${r.status}: ${text.slice(0, 300)}`);
   return text ? JSON.parse(text) : [];
 };
+// a health probe, not a pick: limit=0 asks the database to answer without handing back any client's row
 const healthy = async () => {
   const t0 = Date.now();
-  try { const r = await fetch(`${URL_}/rest/v1/clients?select=id&limit=1`, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, signal: AbortSignal.timeout(8000) }); return r.ok && Date.now() - t0 < 4000; }
+  try { const r = await fetch(`${URL_}/rest/v1/clients?select=id&limit=0`, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }, signal: AbortSignal.timeout(8000) }); return r.ok && Date.now() - t0 < 4000; }
   catch { return false; }
 };
 

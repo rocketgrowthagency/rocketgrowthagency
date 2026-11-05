@@ -96,5 +96,19 @@
   "padding:0; font:inherit; cursor:pointer; }",
   "padding:0; font:600 13.5px var(--portal-font, inherit); cursor:pointer; }",
   1
+ ],
+ [
+  "a locked card outside managed step 2 loses Change something",
+  "portal",
+  "? \"Ask for a change\" : \"Change something\");",
+  "? \"Ask for a change\" : \"Change details\");",
+  1
+ ],
+ [
+  "the managed mail row loses its Messages · N count",
+  "portal",
+  "${mgdMail ? \"Emails from RGA\" : \"Messages\"} · ${all.length}</b>",
+  "${mgdMail ? \"Emails from RGA\" : \"Messages\"}</b>",
+  1
  ]
 ]

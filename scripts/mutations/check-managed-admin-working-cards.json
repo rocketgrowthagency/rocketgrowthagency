@@ -71,5 +71,7 @@
  ["no reading is drawn as a count", "admin", ": `<p class=\"ob-zc-note\">Nothing is counted yet: the nightly read has found no finished form submission.</p>`);", ": `<div class=\"ob-mg-now\"><b>Counted</b><span>0 in 30 days, 0 in 90 days</span></div>`);", 1],
  ["the form card drops the allowance", "admin", "const facts = (allowed ? `<p class=\"ob-mg-last\">The client allowed the tag", "const facts = (false ? `<p class=\"ob-mg-last\">The client allowed the tag", 1],
  ["an unknown or failed verify read keeps a Reading pill forever", "admin", "known ? \"Client's move\" : m.error ? \"Couldn't read\" : now ? \"Not known\" : \"Reading\"", "known ? \"Client's move\" : \"Reading\"", 1],
- ["the push replaces every task with the push's reply", "admin", "if (res.j.tasks && state.selectedClient && state.selectedClient.id === cid) mergeStepTasks(res.j.tasks);", "if (res.j.tasks && state.selectedClient && state.selectedClient.id === cid) state.onboardingData.tasks = res.j.tasks;", 1]
+ ["the push replaces every task with the push's reply", "admin", "if (res.j.tasks && state.selectedClient && state.selectedClient.id === cid) mergeStepTasks(res.j.tasks);", "if (res.j.tasks && state.selectedClient && state.selectedClient.id === cid) state.onboardingData.tasks = res.j.tasks;", 1],
+ ["the push counts only the approved names, not the told ones", "servicespush", "return { names: S.draftedNames(draft), draft,", "return { names: S.draftedNames(approved), draft,", 1],
+ ["the push sends Google only the approved list", "servicespush", "loc: conn.loc, draft };", "loc: conn.loc, draft: String(task.approval.approved_content || \"\") };", 1]
 ]
