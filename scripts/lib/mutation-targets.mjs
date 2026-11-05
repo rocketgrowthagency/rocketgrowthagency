@@ -135,6 +135,8 @@ export const FILES = {
   portalindex: "portal/index.html",
   loginhtml: "client-login/index.html",
   admin: "admin/admin.js",
+  servicestold: "netlify/functions/admin-gbp-services-told.js",   // managed working cards 11-4
+  servicespush: "netlify/functions/admin-gbp-services-push.js",
   brainbackground: "netlify/functions/v2-brain-analysis-background.js",   // the Brain prompt (Q&A retired 2025-11-03)
   exec: "netlify/functions/flow-execute.js",
   sitefacts: "netlify/functions/_site-facts.js",   // research fixes 11-01: service-area address, schema subtype, PSI field data

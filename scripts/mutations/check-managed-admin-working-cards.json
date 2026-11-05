@@ -1,0 +1,422 @@
+[
+ [
+  "a self-serve client gets the verify card",
+  "admin",
+  "? (mgOn() ? mwVerifyCardHtml(o, t) : \"\") + `<div class=\"ob-gq\">",
+  "? mwVerifyCardHtml(o, t) + `<div class=\"ob-gq\">",
+  1
+ ],
+ [
+  "a self-serve client gets the services card",
+  "admin",
+  "id === \"m1.gbp.services_products\" && mgOn() ? mwSvcCardHtml",
+  "id === \"m1.gbp.services_products\" && true ? mwSvcCardHtml",
+  1
+ ],
+ [
+  "a self-serve client gets the form card",
+  "admin",
+  "(mgOn() ? mwFormCardHtml(o, t) : \"\") + formTrackingAdminHtml(t)",
+  "mwFormCardHtml(o, t) + formTrackingAdminHtml(t)",
+  1
+ ],
+ [
+  "a self-serve client loses the old answer card on step 19",
+  "admin",
+  "(mgOn() ? mwPlanCardHtml(o, t) : planAnswerAdminHtml(t))",
+  "mwPlanCardHtml(o, t)",
+  1
+ ],
+ [
+  "a self-serve client gets the facts card",
+  "admin",
+  "(mgOn() ? mwFactsCardHtml(o, t) : \"\") + gsFactsCardsHtml(t)",
+  "mwFactsCardHtml(o, t) + gsFactsCardsHtml(t)",
+  1
+ ],
+ [
+  "the old facts cards are lost for managed",
+  "admin",
+  "mwFactsCardHtml(o, t) : \"\") + gsFactsCardsHtml(t)",
+  "mwFactsCardHtml(o, t) : \"\")",
+  1
+ ],
+ [
+  "the who tag changes for every client",
+  "admin",
+  "const mwKind = (o) => (mgOn() && o &&",
+  "const mwKind = (o) => (true && o &&",
+  1
+ ],
+ [
+  "the who tag turns the verify step into You",
+  "admin",
+  "const MW_YOU = new Set([\"m1.strategy.keywords_locations\",",
+  "const MW_YOU = new Set([\"m1.gbp.verify\", \"m1.strategy.keywords_locations\",",
+  1
+ ],
+ [
+  "the who tag drops the keyword step",
+  "admin",
+  "const MW_YOU = new Set([\"m1.strategy.keywords_locations\", ",
+  "const MW_YOU = new Set([ ",
+  1
+ ],
+ [
+  "the who tag turns a client-only step into You",
+  "admin",
+  "MW_YOU.has(o.flowId) && stepKind(o) === \"both\" ? \"you\"",
+  "MW_YOU.has(o.flowId) ? \"you\"",
+  1
+ ],
+ [
+  "the kind tag ignores the managed kind",
+  "admin",
+  "const k = KIND[mwKind(o)];",
+  "const k = KIND[stepKind(o)];",
+  1
+ ],
+ [
+  "the chip shows for self-serve clients",
+  "admin",
+  "function mwChip(o) {\n  if (!mgOn() || !o) return \"\";",
+  "function mwChip(o) {\n  if (!o) return \"\";",
+  1
+ ],
+ [
+  "the chip is never drawn",
+  "admin",
+  "aria-expanded=\"false\">See what the client sees</button>${mwChip(o)}",
+  "aria-expanded=\"false\">See what the client sees</button>",
+  1
+ ],
+ [
+  "the chip names the wrong place for a card",
+  "admin",
+  "role === \"card\" ? \"an RGA card, no number\"",
+  "role === \"card\" ? \"a row in step 3\"",
+  1
+ ],
+ [
+  "verify offers RGA a way to complete",
+  "admin",
+  "const foot = (m.error ? mwRetry(\"verify\", cid) : \"\")",
+  "const foot = `<button type=\"button\" data-mw-complete>Enter the code</button>` + (m.error ? mwRetry(\"verify\", cid) : \"\")",
+  1
+ ],
+ [
+  "verify reads with a write action",
+  "admin",
+  "{ client_id: cid, action: \"status\" }",
+  "{ client_id: cid, action: \"start\" }",
+  1
+ ],
+ [
+  "an unknown verified answer reads as not verified",
+  "admin",
+  "const known = !!f && typeof f.verified === \"boolean\", yes",
+  "const known = !!f, yes",
+  1
+ ],
+ [
+  "verified is drawn as the client's move",
+  "admin",
+  "mgCard(yes ? \"ok\" : \"\", yes ? \"Verified\" : known",
+  "mgCard(yes ? \"ok\" : \"\", yes ? \"Client's move\" : known",
+  1
+ ],
+ [
+  "a failed verify read has no Try again",
+  "admin",
+  "(m.error ? mwRetry(\"verify\", cid) : \"\") + (known && !yes",
+  "(known && !yes",
+  1
+ ],
+ [
+  "facts reads with a write action",
+  "admin",
+  "mwRead(cid, \"facts\", MW_FN.core, { client_id: cid, action: \"read\" });",
+  "mwRead(cid, \"facts\", MW_FN.core, { client_id: cid, action: \"ask_differs\" });",
+  1
+ ],
+ [
+  "facts prefill the Google value, not the saved one",
+  "admin",
+  ": d.saved || \"\")}\">`",
+  ": d.google || \"\")}\">`",
+  1
+ ],
+ [
+  "facts show the main category",
+  "admin",
+  "const MW_FIELD_WORD = { name: \"Business name\", address: \"Address\", phone: \"Phone\" };",
+  "const MW_FIELD_WORD = { name: \"Business name\", address: \"Address\", phone: \"Phone\", main_category: \"Main category\" };",
+  1
+ ],
+ [
+  "an empty value is proposed",
+  "admin",
+  "if (!to) { mgSay(m, \"bad\", `Write the exact",
+  "if (false) { mgSay(m, \"bad\", `Write the exact",
+  1
+ ],
+ [
+  "a proposal needs no reason",
+  "admin",
+  "if (!why) { mgSay(m, \"bad\", \"Write the line the client reads, saying why.\");",
+  "if (false) { mgSay(m, \"bad\", \"Write the line the client reads, saying why.\");",
+  1
+ ],
+ [
+  "propose sends the wrong field",
+  "admin",
+  "action: \"propose\", field, to, why }",
+  "action: \"propose\", field: \"name\", to, why }",
+  1
+ ],
+ [
+  "propose sends no value",
+  "admin",
+  "action: \"propose\", field, to, why }",
+  "action: \"propose\", field, to: \"\", why }",
+  1
+ ],
+ [
+  "propose doesn't spin",
+  "admin",
+  "  mgBusy(btn, true);\n  try {\n    const res = await mgPost({ url: MW_FN.core, payload: { client_id: cid, action: \"propose\"",
+  "  try {\n    const res = await mgPost({ url: MW_FN.core, payload: { client_id: cid, action: \"propose\"",
+  1
+ ],
+ [
+  "a refusal of a proposal reads as asked",
+  "admin",
+  "if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was asked.\"); }\n    mwReset(cid, \"facts\", m); m.vals = {};",
+  "mwReset(cid, \"facts\", m); m.vals = {};",
+  1
+ ],
+ [
+  "a field already asked can be proposed again",
+  "admin",
+  "if (op) return head + `<p class=\"ob-zc-note\">Waiting:",
+  "if (false) return head + `<p class=\"ob-zc-note\">Waiting:",
+  1
+ ],
+ [
+  "ask which is right sends propose",
+  "admin",
+  "payload: { client_id: cid, action: \"ask_differs\" } });\n    if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was asked.\");",
+  "payload: { client_id: cid, action: \"propose\" } });\n    if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was asked.\");",
+  1
+ ],
+ [
+  "no difference reads as proof of a match",
+  "admin",
+  "The nightly check has recorded no difference in name, address or phone between Google and the saved facts.",
+  "Google and the website match exactly.",
+  1
+ ],
+ [
+  "the plan card has a lock button",
+  "admin",
+  "dem.length ? `${dem.length} searches` : \"\", body, \"\"));",
+  "dem.length ? `${dem.length} searches` : \"\", body, `<button type=\"button\" class=\"admin-button\" data-mw-lock>Lock the plan</button>`));",
+  1
+ ],
+ [
+  "a missing volume is drawn as zero",
+  "admin",
+  ": \"No volume read\"}",
+  ": \"0 searches a month\"}",
+  1
+ ],
+ [
+  "the client's reason is dropped",
+  "admin",
+  "${flag.note ? `: ${escapeHtml(flag.note)}` : \"\"}",
+  "",
+  1
+ ],
+ [
+  "a missing client answer reads as agreement",
+  "admin",
+  "<p class=\"ob-mg-last\">Client answer: none yet. They keep a veto; nothing waits on it.</p>",
+  "<p class=\"ob-mg-last\">Client answer: looks right.</p>",
+  1
+ ],
+ [
+  "a told tick with nothing ticked is sent",
+  "admin",
+  "if (!keys.length) { mgSay(m, \"bad\", \"Tick at least one service the client told RGA they offer.\");",
+  "if (false) { mgSay(m, \"bad\", \"Tick at least one service the client told RGA they offer.\");",
+  1
+ ],
+ [
+  "a told tick needs no who and when",
+  "admin",
+  "if (!told) { mgSay(m, \"bad\", \"Write down who told RGA, and when.\");",
+  "if (false) { mgSay(m, \"bad\", \"Write down who told RGA, and when.\");",
+  1
+ ],
+ [
+  "the told tick isn't confirmed",
+  "admin",
+  "okLabel: clear ? \"Take them back\" : \"Tick them\", cancelLabel: \"Not yet\" });\n  if (!ok) return;",
+  "okLabel: clear ? \"Take them back\" : \"Tick them\", cancelLabel: \"Not yet\" });",
+  1
+ ],
+ [
+  "the told tick sends no note",
+  "admin",
+  "{ client_id: cid, action: \"told\", keys, told }",
+  "{ client_id: cid, action: \"told\", keys, told: \"\" }",
+  1
+ ],
+ [
+  "the told tick doesn't spin",
+  "admin",
+  "  mgBusy(btn, true);\n  try {\n    const res = await mgPost({ url: MW_FN.svc, payload: clear",
+  "  try {\n    const res = await mgPost({ url: MW_FN.svc, payload: clear",
+  1
+ ],
+ [
+  "the told tick also writes to Google",
+  "admin",
+  "mwReset(cid, \"svc\", m); m.picks = null; m.vals = {}; m.msg = null;",
+  "mwReset(cid, \"svc\", m); m.picks = null; m.vals = {}; m.msg = null; await mgPost({ url: MW_FN.push, payload: { client_id: cid } });",
+  1
+ ],
+ [
+  "the told tick forgets who and when on the card",
+  "admin",
+  "Told to RGA: ${escapeHtml(told.told)} · recorded",
+  "Told to RGA · recorded",
+  1
+ ],
+ [
+  "the push is not confirmed outward",
+  "admin",
+  "tone: \"outward\", title: \"Put the ticked services on the client's Google profile?\"",
+  "tone: \"routine\", title: \"Put the ticked services on the client's Google profile?\"",
+  1
+ ],
+ [
+  "the push goes to the wrong function",
+  "admin",
+  "push: \"/.netlify/functions/admin-gbp-services-push\"",
+  "push: \"/.netlify/functions/admin-gbp-services-told\"",
+  1
+ ],
+ [
+  "a refused push reads as done",
+  "admin",
+  "const res = await mgPost({ url: MW_FN.push, payload: { client_id: cid } });\n    if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was marked done.\"); }",
+  "const res = await mgPost({ url: MW_FN.push, payload: { client_id: cid } });",
+  1
+ ],
+ [
+  "the push result is drawn from the press",
+  "admin",
+  "m.said = res.j.note || `Put on Google and read back: ${on} of ${rows.length} ticked services are listed now.`;",
+  "m.said = `Put on Google and read back: ${rows.length} of ${rows.length} ticked services are listed now.`;",
+  1
+ ],
+ [
+  "a service already on Google is offered to tick",
+  "admin",
+  ".filter((x) => x.kind !== \"yours\" && !have.has(low(x.label)))",
+  ".filter((x) => !have.has(low(x.label)))",
+  1
+ ],
+ [
+  "a tick is lost on a redraw",
+  "admin",
+  "${picks.includes(x.key) ? \" checked\" : \"\"}><span class=\"ob-mg-t\"><b>${escapeHtml(x.label)}</b><small>${x.kind",
+  "><span class=\"ob-mg-t\"><b>${escapeHtml(x.label)}</b><small>${x.kind",
+  1
+ ],
+ [
+  "the form card answers the inbox for the client",
+  "admin",
+  "{ client_id: cid, action: \"log\" } });\n    if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was logged.\");",
+  "{ client_id: cid, action: \"answer\", arrived: true } });\n    if (!res.ok) { mgBusy(btn, false); return mwFail(m, res, \"Nothing was logged.\");",
+  1
+ ],
+ [
+  "a second test is offered while the client is answering",
+  "admin",
+  "const logged = !!(test && test.at), can = !logged || test.inbox === false;",
+  "const logged = !!(test && test.at), can = true;",
+  1
+ ],
+ [
+  "a No from the client is not shown",
+  "admin",
+  "The client said it did NOT reach their inbox.",
+  "The client said nothing.",
+  1
+ ],
+ [
+  "a working card class has no rule",
+  "css",
+  ".ob-mg-last { margin:0;",
+  ".ob-mgx-last { margin:0;",
+  1
+ ],
+ [
+  "the tick function accepts a service Google doesn't offer",
+  "servicestold",
+  "if (!o) return { error: `Google doesn't offer",
+  "if (!o) continue; if (!o) return { error: `Google doesn't offer",
+  1
+ ],
+ [
+  "the tick function needs no who and when",
+  "servicestold",
+  "if (!told) return { error: \"Write down who told RGA, and when.\" };",
+  "if (false) return { error: \"Write down who told RGA, and when.\" };",
+  1
+ ],
+ [
+  "the tick function accepts no keys",
+  "servicestold",
+  "if (!keys.length) return { error: \"Pick at least one",
+  "if (false) return { error: \"Pick at least one",
+  1
+ ],
+ [
+  "a stranger can tick services",
+  "servicestold",
+  "const gate = await requireWorkspaceForClient(event, clientId);\n  if (gate.error) return gate.error;",
+  "const gate = { email: 'x' };",
+  1
+ ],
+ [
+  "the tick isn't read back",
+  "servicestold",
+  "if (!kept || kept.at !== at || JSON.stringify(kept.items) !== JSON.stringify(d.items))",
+  "if (false)",
+  1
+ ],
+ [
+  "the tick function can write to Google",
+  "servicestold",
+  "const rec = await deps.readStepRecord(deps.supa, clientId, STEP);",
+  "const rec = await deps.readStepRecord(deps.supa, clientId, STEP); const _x = S.applyServices; /* PATCH */",
+  1
+ ],
+ [
+  "clear of nothing is accepted",
+  "servicestold",
+  "if (!prev.told_services) return json(409,",
+  "if (false) return json(409,",
+  1
+ ],
+ [
+  "the push ignores the told services",
+  "servicespush",
+  "const names = S.draftedNames([approved, toldDraft].filter(Boolean).join(\"\\n\"));",
+  "const names = S.draftedNames(approved);",
+  1
+ ]
+]
