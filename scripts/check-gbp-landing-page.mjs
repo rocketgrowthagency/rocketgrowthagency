@@ -285,7 +285,7 @@ if (R && !/GL\.checkChoice\(/.test(run)) F("RGA's choice is saved without being 
 if ((run.match(/READ IT BACK/g) || []).length < 4) F("every save (decide, re-read, Change…, Keep) must be read back");
 if (!/recordSubmission\(/.test(run)) F("a saved decision must be recorded (check-every-submission-is-recorded)");
 if (!/requireWorkspaceForClient\(/.test(fn)) F("the endpoint must be RGA-only");
-if (!/action === "auto"/.test(fn) || !/R\.decideOnce\(/.test(fn)) F("the endpoint has no action for the step to decide itself");
+if (!/if \(action === "auto"\) \{\s*const r = await R\.decideOnce\(/.test(fn)) F("the endpoint has no action for the step to decide itself");
 if (/\bChris\b/.test(lib + fn + run)) F("the owner's name is in a served file");
 // wired into the nightly job, inside its own try (a failure never stops the rest)
 if (!/try \{\s*const gl = await require\("\.\/_gbp-landing-run"\)\.sweepLanding\(\);[\s\S]{0,240}\} catch \(e\)/.test(nightly)) F("the nightly job doesn't run the sweep (inside its own try)");
@@ -439,6 +439,18 @@ if (box) {
   G._glEditing.add(CID); const X = draw(B.d ? { status: "done", landing: { choice: "page", url: "https://acme-plumbing.com/services/drain-cleaning/", reason: "page_wins", by: "system", saved_at: at, evidence: ev() } } : {});
   has(X, "[data-gl-save]", "Change… has no Save"); has(X, 'input[type="radio"][value="homepage"]', "Change… has no Homepage choice"); G._glEditing.delete(CID);
   const save = X.d.querySelector("[data-gl-save]"); if (save && save.textContent.trim() !== "Save") F(`the save button must say one plain word, says "${save.textContent.trim()}"`);
+}
+
+// 11-6 (the owner's screenshot, 3:12 PM: "The step couldn't decide just now · HTTP 504"): the decision runs in a background function (15 min),
+// the admin call answers 202 at once, and the card asks "status" (this step's task only) until it's saved
+{
+  const fn = rd("netlify/functions/admin-gbp-landing.js");
+  let bg = ""; try { bg = rd("netlify/functions/admin-gbp-landing-background.js"); } catch { /* missing = the failure below */ }
+  if (!/if \(action === "auto" && !deps\) \{[\s\S]{0,400}admin-gbp-landing-background[\s\S]{0,300}"x-internal-secret": process\.env\.INTERNAL_FN_SECRET[\s\S]{0,300}return json\(202, \{ ok: true, queued: true \}\);/.test(fn)) F("the admin's auto call decides inside the web request again (it timed out at 26 s): it must queue the background function and answer 202");
+  if (!/if \(action === "status"\) \{[\s\S]{0,300}select=t:data->tasks->%22m1\.web\.gbp_landing_page%22/.test(fn)) F("the status read isn't narrow (it must read step 42's task only, never the whole setup record)");
+  if (!/requireInternalSecret\(event\)/.test(bg) || !/R\.decideOnce\(\{ clientId, trigger: "admin" \}\)/.test(bg)) F("the background function is missing, doesn't check the internal secret, or doesn't run the one decideOnce");
+  if (!/if \(r\.status === 202 && j\.queued\) \{[\s\S]{0,500}action: "status"[\s\S]{0,400}if \(!\(task && task\.landing\)\) throw new Error\(/.test(rd("admin/admin.js"))) F("the card doesn't wait for the background decision (it must ask status until the decision is saved, then say so if it isn't)");
+  if (!/r\.status === 504 \? "It took too long to answer"/.test(rd("admin/admin.js"))) F("a timeout still reads as a raw \"HTTP 504\"");
 }
 
 if (fails.length) { console.error("🔴 the Google landing page step isn't right:"); for (const f of fails) console.error("   · " + f); process.exit(1); }

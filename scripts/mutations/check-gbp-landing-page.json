@@ -376,5 +376,35 @@
   "exec",
   "${planBlock(_plan)}${await pageBlock(client)}`,\n      { maxTokens: 1400 },",
   "${planBlock(_plan)}`,\n      { maxTokens: 1400 },"
+ ],
+ [
+  "the auto call decides inside the web request (26 s)",
+  "gbplandingfn",
+  "    if (action === \"auto\" && !deps) {",
+  "    if (false) {"
+ ],
+ [
+  "the status read reads the whole record",
+  "gbplandingfn",
+  "select=t:data->tasks->%22m1.web.gbp_landing_page%22&limit=1",
+  "select=data&limit=1"
+ ],
+ [
+  "the background function skips the secret",
+  "gbplandingbg",
+  "  const gate = requireInternalSecret(event);\n  if (gate.error) return gate.error;\n",
+  "  const gate = { ok: true };\n"
+ ],
+ [
+  "the card stops waiting for the background decision",
+  "admin",
+  "    if (r.status === 202 && j.queued) {",
+  "    if (false) {"
+ ],
+ [
+  "a timeout reads as a raw HTTP 504",
+  "admin",
+  "r.status === 504 ? \"It took too long to answer\" : (j.error || `HTTP ${r.status}`)",
+  "(j.error || `HTTP ${r.status}`)"
  ]
 ]

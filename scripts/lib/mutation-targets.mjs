@@ -465,6 +465,7 @@ export const FILES = {
   // admin_last_research_items_v1 (11-01): which page the Google profile links to
   gbplanding: "netlify/functions/_gbp-landing.js",
   gbplandingfn: "netlify/functions/admin-gbp-landing.js",
+  gbplandingbg: "netlify/functions/admin-gbp-landing-background.js",   // step 42 deciding in the background (11-6)
   // admin_step42_landing_auto_v1 (11-06): the step decides itself, and reads again each month
   gbplandingrun: "netlify/functions/_gbp-landing-run.js",
   // admin_last_research_items_v1 item 2 (11-01): the runbook when a name, address or phone changes
