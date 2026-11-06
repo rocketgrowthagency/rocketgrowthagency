@@ -186,6 +186,11 @@ if (!/state\.googleOauth = await[^\n]*\n\s*state\.googleOauthRead = true;/.test(
 if (!/state\.googleOauth = null;\n\s*state\.googleOauthRead = false;/.test(raw)) problems.push("selecting a client no longer resets state.googleOauthRead, so one client's answer shows for another");
 if (!/if \(!state\.googleOauthRead\) \{[\s\S]{0,60}\} else if \(oauth\) \{/.test(raw)) problems.push("the status badge can say Google not connected before the read has come back");
 if (!/state\.googleOauthRead \|\| gates\.oauth \? gateChip\("Google connected"/.test(raw)) problems.push("the mission chip can say Google not connected before the read has come back");
+// 11-6 (the owner's screenshot, mid-load): "Client Setup: Checklist (1/4)" and "Create and send the service agreement" for a signed 4/4 client
+if (!/if \(state\.contractsLoaded && !hasContract\) alerts\.push\(\{ k: "i", t: "Create and send the service agreement"/.test(raw)) problems.push("Needs your attention says \"Create and send the service agreement\" before the contracts have been read");
+if ((raw.match(/if \(isSetup && state\.googleOauthRead && !googleConnected && !?portalInvited\) alerts\.push\(/g) || []).length !== 2) problems.push("Needs your attention says Google isn't connected before the connection has been read");
+if (!/stagesPastSetup\.includes\(clientStage\)\) && state\.onboardingRead !== false\) \{\s*const phase = state\.onboardingData\?\.setup_phase/.test(raw)) problems.push("the Client Setup badge reads \"Checklist (1/4)\" before the setup record has been read");
+if (!/state\.onboardingRead = false;[\s\S]{0,200}renderClientSummary\(\);[\s\S]{0,120}state\.onboardingData = await state\.adapter\.getOnboardingRecord\(state\.selectedClient\.id\);\s*state\.onboardingRead = true;/.test(raw)) problems.push("selecting a client doesn't mark the setup record unread before the first paint (and read after it loads)");
 if (problems.length) {
   console.error("🔴 A SURFACE CAN RENDER A CONFIDENT WRONG ANSWER WHILE IT LOADS\n");
   for (const p of problems) console.error(`  🔴 ${p}\n`);
