@@ -101,7 +101,11 @@ const look = (h, id) => h.page.evaluate((R) => {
     fwRow: (() => { const w = r.querySelector("[data-fw-row]"); if (!w) return null; const nx = w.nextElementSibling, pv = w.previousElementSibling, cs = getComputedStyle(w);
       return { shown: vis(w), inCard: !!w.closest(".pm-k5-plan"), b: (w.querySelector("b") || {}).textContent || "", small: (w.querySelector("small") || {}).textContent || "", btn: [...w.querySelectorAll("button")].map((x) => x.textContent.trim()),
         btnCls: (w.querySelector("button") || {}).className || "", next: nx ? `${nx.tagName.toLowerCase()}.${nx.className}` : "", nextText: nx ? nx.textContent.replace(/\s+/g, " ").trim().slice(0, 60) : "", prev: pv ? pv.className : "",
-        css: { pad: cs.padding, bt: cs.borderTopWidth + " " + cs.borderTopStyle, fs: cs.fontSize, disp: cs.display } }; })(),
+        css: { pad: cs.padding, bt: cs.borderTopWidth + " " + cs.borderTopStyle, fs: cs.fontSize, disp: cs.display },
+        // client_step05_buttons_v1 (approved 11-5): the row sits in the grey foot band (.pm-fw-foot); the band's neighbours are the work area and the card's foot
+        band: (() => { const f = w.closest(".pm-fw-foot"); if (!f) return null; const bn = f.nextElementSibling, bp = f.previousElementSibling;
+          return { bg: getComputedStyle(f).backgroundColor, next: bn ? `${bn.tagName.toLowerCase()}.${bn.className}` : "", nextText: bn ? bn.textContent.replace(/\s+/g, " ").trim().slice(0, 60) : "", prev: bp ? bp.className : "", prev2: bp && bp.previousElementSibling ? bp.previousElementSibling.className : "",
+            later: !!f.querySelector(".pm-later-ctl"), rowNext: nx ? nx.className : "" }; })() }; })(),
     open: [...r.querySelectorAll("[data-fw-open]")].filter(vis).map((b) => b.textContent.trim()), openAt: (() => { const b = r.querySelector("[data-fw-open]"); const p = b && b.closest(".pm-k5-acts, .pm-fw-ask"); return p ? p.innerText.replace(/\s+/g, " ").trim() : ""; })(),
     sheet: sh ? { shown: vis(sh), inCard: !!sh.closest(".pm-k5-plan"), h3: (sh.querySelector("h3") || {}).textContent || "", p: (sh.querySelector("p:not([data-fw-msg])") || {}).textContent || "", lis: [...sh.querySelectorAll("li")].map((l) => l.textContent), btns: [...sh.querySelectorAll("button")].map((b) => b.textContent.trim()), msg: vis(sh.querySelector("[data-fw-msg]")) ? sh.querySelector("[data-fw-msg]").textContent : "" } : null,
     work: [...r.querySelectorAll("[data-fw-work]")].map((w) => vis(w)), tiles: vis(r.querySelector(".pm-p10")),
@@ -163,12 +167,19 @@ try {
       const R4 = a && a.fwRow;
       if (!R4 || !R4.shown || !R4.inCard || R4.b !== "Fewer than 20 photos?" || R4.small !== "Every kind has its 3 on Google." || R4.btn.join("|") !== "Finish" || !/\bpm-amend\b/.test(R4.btnCls)) fail(`${L}: the row isn't the mockup's ${JSON.stringify(R4)}`);
       else {
-        if (!/pm-fw-sheet/.test(R4.prev)) fail(`${L}: the row isn't at the foot of the work area, its sheet beside it (after: ${R4.prev})`);
-        if (!/pm-cs-foot/.test(R4.next)) fail(`${L}: the row isn't right above the card's foot (next: ${R4.next} «${R4.nextText}»)`);
-        if (R4.css.pad !== "11px 16px" || R4.css.fs !== "14.5px" || R4.css.bt !== "1px solid" || R4.css.disp !== "flex") fail(`${L}: the row's look isn't the mockup's ${JSON.stringify(R4.css)}`);
+        // client_step05_buttons_v1 (approved 11-5): the row leads the grey foot band, "Remind me later" under it, the band right above the card's foot
+        const B4 = R4.band;
+        if (!B4) fail(`${L}: the row isn't in the grey foot band (.pm-fw-foot)`);
+        else {
+          if (!/pm-fw-sheet/.test(B4.prev)) fail(`${L}: the band isn't at the foot of the work area, its sheet beside it (after: ${B4.prev})`);
+          if (!/pm-cs-foot/.test(B4.next)) fail(`${L}: the band isn't right above the card's foot (next: ${B4.next} «${B4.nextText}»)`);
+          if (!B4.later || !/pm-fw-later/.test(B4.rowNext)) fail(`${L}: "Remind me later" isn't under the row in the band (${B4.rowNext})`);
+          if (B4.bg !== "rgb(246, 246, 247)") fail(`${L}: the band isn't the grey tray (${B4.bg})`);
+        }
+        if (R4.css.pad !== "11px 16px" || R4.css.fs !== "14.5px" || R4.css.bt !== "0px none" || R4.css.disp !== "flex") fail(`${L}: the row's look isn't the mockup's ${JSON.stringify(R4.css)}`);
       }
       if (a && /That's all I have for now|Have fewer than 20\?/.test(a.text)) fail(`${L}: the old link or grey line is still drawn`);
-      if (a && !/Not ready to take photos yet\? Remind me later/.test(a.text)) fail(`${L}: "Remind me later" no longer stays under the card`);
+      if (a && !/Not ready to take photos yet\? Remind me later/.test(a.text)) fail(`${L}: "Remind me later" is no longer drawn`);
       if (!a || !a.sheet || a.sheet.shown || !a.sheet.inCard) fail(`${L}: the sheet isn't drawn hidden inside the card ${JSON.stringify(a && a.sheet)}`);
       await press(h, PH, "[data-fw-open]");
       a = await look(h, PH);
@@ -178,7 +189,7 @@ try {
       if (a.tiles) fail(`${L}: the tiles stay while the sheet is open (the sheet takes the card's working part)`);
       if (ONE_WORD([...(a.sheet ? a.sheet.btns : []), "Finish"]).length) fail(`${L}: a button carries a count or a reason (${JSON.stringify(a.sheet && a.sheet.btns)})`);
       // v2: the sheet opens in the row's place (right after the work area, the row stepping back)
-      const pos = await h.page.evaluate((R) => { const r = document.querySelector(R), sh = r.querySelector("[data-fw-sheet]"), nx = sh && sh.nextElementSibling; return { prev: sh && sh.previousElementSibling ? sh.previousElementSibling.className : "", next: nx && nx.hasAttribute("data-fw-row") ? "row" : "" }; }, ROW(PH));
+      const pos = await h.page.evaluate((R) => { const r = document.querySelector(R), sh = r.querySelector("[data-fw-sheet]"), nx = sh && sh.nextElementSibling; return { prev: sh && sh.previousElementSibling ? sh.previousElementSibling.className : "", next: nx && (nx.hasAttribute("data-fw-row") || (nx.matches(".pm-fw-foot") && nx.querySelector("[data-fw-row]"))) ? "row" : "" }; }, ROW(PH));
       if (pos.next !== "row") fail(`${L}: the sheet doesn't open in the row's place ${JSON.stringify(pos)}`);
       if (a.fwRow && a.fwRow.shown) fail(`${L}: the row stays while the sheet is open`);
       await press(h, PH, "[data-fw-keep]");
@@ -191,8 +202,14 @@ try {
       const R5 = b && b.fwRow;
       if (!R5 || !R5.shown || !R5.inCard || R5.b !== "Fewer than 5 recent customers?" || R5.small || R5.btn.join("|") !== "Finish" || !/\bpm-amend\b/.test(R5.btnCls)) fail(`step 5 at 1 asked: the row isn't the mockup's ${JSON.stringify(R5)}`);
       else {
-        if (!/pm-rv-next/.test(R5.prev)) fail(`step 5: the row isn't under the customer fields (after: ${R5.prev})`);
-        if (!/Who to ask/.test(R5.nextText)) fail(`step 5: the row isn't above "Who to ask" (next: «${R5.nextText}»)`);
+        // client_step05_buttons_v1 (approved 11-5): fields → "Write the request" (inside the card) → the grey foot band → Who to ask
+        const B5 = R5.band;
+        if (!B5) fail("step 5: the row isn't in the grey foot band (.pm-fw-foot)");
+        else {
+          if (!/pm-r5-acts/.test(B5.prev) || !/pm-rv-next/.test(B5.prev2)) fail(`step 5: the band isn't under the customer fields and Write the request (after: ${B5.prev2} · ${B5.prev})`);
+          if (!/Who to ask/.test(B5.nextText)) fail(`step 5: the band isn't above "Who to ask" (next: «${B5.nextText}»)`);
+          if (B5.bg !== "rgb(246, 246, 247)") fail(`step 5: the band isn't the grey tray (${B5.bg})`);
+        }
       }
       if (b && /I don't have 5 recent customers yet/.test(b.text)) fail("step 5: the old link under the buttons is still drawn");
       if (!b || !b.sheet || b.sheet.shown || !b.sheet.inCard) fail(`step 5 at 1 asked: the sheet isn't drawn hidden inside the card`);
