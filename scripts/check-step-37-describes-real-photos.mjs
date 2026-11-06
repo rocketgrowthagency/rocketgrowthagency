@@ -115,6 +115,33 @@ if (has(FX, "imageSeoDraft", "the step 37 runner (it must read the real photos)"
   const partial = { ...allGood, "https://joes.test/sitemap.xml": "<urlset><url><loc>https://joes.test/gone/</loc></url></urlset>" };
   const rp = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite(partial), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
   if (rp.outcome === "verified" || !rp.outcome_data || rp.outcome_data.photo_check.state !== "couldnt" || rp.outcome_data.photo_check.why !== "some_pages") fail("a page that didn't open still let the check say every photo has a description");
+  // 🔒 admin_step37_every_page_v1: EVERY page in the sitemap (≤500 a run), not the quick read's 25; no sitemap → the homepage's links, then theirs
+  const many = (n, start = 0) => { const r = { "https://joes.test": allGood["https://joes.test"] }; let sm = "<urlset>";
+    for (let i = start; i < start + n; i++) { r[`https://joes.test/blog/p${i}`] = PAGE(`Post ${i}`, `<img src="/p/b${i}.jpg" alt="A finished job, number ${i}">`).replace('class="site-logo"', 'class="site-logo" alt="Joe\'s Plumbing logo"'); sm += `<url><loc>https://joes.test/blog/p${i}/</loc></url>`; }
+    r["https://joes.test/sitemap.xml"] = sm + "</urlset>"; return r; };
+  const r60 = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite(many(60)), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
+  const p60 = r60.outcome_data && r60.outcome_data.photo_check;
+  if (r60.outcome !== "verified" || !p60 || p60.pages !== 61 || p60.beyond_cap) fail(`a 61-page site isn't read whole before Done (read ${p60 && p60.pages}, ${p60 && p60.beyond_cap} beyond)`);
+  const q60 = await SS.takeSnapshot("joes.test", fakeSite(many(60)), { safeUrl: () => true });
+  if (q60.pages.length !== SS.MAX_PAGES || q60.beyond_cap !== 61 - SS.MAX_PAGES) fail("the quick website read (every other caller) no longer stops at 25 pages");
+  const r520 = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite(many(520)), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
+  const p520 = r520.outcome_data && r520.outcome_data.photo_check;
+  if (r520.outcome === "verified" || !p520 || p520.state !== "more_pages" || p520.pages !== 500 || p520.next_from !== 500 || p520.beyond_cap !== 21) fail(`a 521-page site said Done after 500, or Read more doesn't know where to start (${JSON.stringify(p520 && { s: p520.state, pages: p520.pages, next: p520.next_from, beyond: p520.beyond_cap })})`);
+  const rMore = await FX.imageSeoDraft(C, { from: 500, snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite(many(520)), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
+  const pMore = rMore.outcome_data && rMore.outcome_data.photo_check;
+  if (!pMore || pMore.pages !== 21 || pMore.beyond_cap || rMore.outcome !== "verified") fail(`Read more doesn't read the pages after the first 500 (${JSON.stringify(pMore && { pages: pMore.pages, beyond: pMore.beyond_cap })})`);
+  const linked = { "https://joes.test": allGood["https://joes.test"].replace("</body>", '<a href="/a/">A</a></body>'), "https://joes.test/sitemap.xml": "<urlset></urlset>",
+    "https://joes.test/a": PAGE("A", '<a href="/b/">B</a>'), "https://joes.test/b": PAGE("B", '<img src="/p/deep.jpg">') };
+  const rL = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite(linked), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "A deep photo" }) });
+  const dL = rL.outcome_data && rL.outcome_data.photo_draft;
+  if (!dL || !dL.photos.some((x) => /deep\.jpg/.test(x.src))) fail("a site with no sitemap isn't followed past the homepage's links (a photo two links deep was never read)");
+  const rU = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite({ ...many(3), "https://joes.test/sitemap.xml": "<urlset><url><loc>https://joes.test/blog/p0/</loc></url><url><loc>https://joes.test/gone/</loc></url></urlset>" }), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
+  const pU = rU.outcome_data && rU.outcome_data.photo_check;
+  if (!pU || pU.why !== "some_pages" || !(pU.unread_pages || []).some((u) => /gone/.test(u.url) && u.why === "http_404")) fail("a page that wouldn't open isn't named with its reason (state C)");
+  {
+    const flow = read("netlify/functions/flow-execute.js");
+    if (!/const result = await executor\(\{ client, clientId: client_id, tasks \}\);/.test(flow) || !/pc && pc\.state === "more_pages" && pc\.next_from \? \{ from: pc\.next_from \} : \{\}/.test(flow)) fail("Read more starts from the first page again (the runner isn't given the last check)");
+  }
   // blocked → couldn't check, nothing guessed
   const rx = await FX.imageSeoDraft(C, { snapshot: (s, f, o) => SS.takeSnapshot(s, fakeSite({ "https://joes.test": "BLOCK" }), { ...o, safeUrl: () => true }), describe: async () => ({ alt: "x" }) });
   if (!rx.outcome_data || rx.outcome_data.photo_check.state !== "couldnt" || rx.outcome_data.photo_check.why !== "blocked" || rx.outcome_data.photo_draft) fail("a blocked site isn't Couldn't check (or something was drafted)");
@@ -206,7 +233,19 @@ if (has(SC, "photosReadBack", "the photo read-back")) {
   if (!/It stopped before the last photo, so nothing was saved or sent\./.test(h)) fail("a run that stopped early doesn't say so in plain words");
   // 5 · nothing to describe · couldn't check
   h = card({ status: "done", ran_at: RAN, no_change_needed: { note: "The check found it already right", by: "check", at: RAN }, auto_result: { outcome_data: { photo_check: { state: "all_described", photos: 18, pages: 7, beyond_cap: 0, at: RAN } } } });
-  if (!/Every photo on their website already has a description/.test(h) || !/Checked 18 photos on 7 pages, /.test(h) || !/ok/.test(h.slice(0, 120))) fail("state 5 (nothing to describe) isn't the green card with the check as proof");
+  if (!/Every photo on their website already has a description/.test(h) || !/Checked 18 photos on all 7 pages, /.test(h) || !/ok/.test(h.slice(0, 120))) fail("state 5 (nothing to describe) isn't the green card with the check as proof");
+  // admin_step37_every_page_v1 D: a check that didn't cover every page (RGA's 11-6 record: 25 of 261) is never Done
+  const tLegacy = { status: "done", ran_at: RAN, no_change_needed: { note: "The check found it already right", by: "check", at: RAN }, auto_result: { outcome_data: { photo_check: { state: "all_described", photos: 2, pages: 25, pages_found: 261, beyond_cap: 236, pages_unread: 0, at: RAN } } } };
+  h = card(tLegacy);
+  if (!/More pages to read/.test(h) || !/Read 25 of their 261 pages/.test(h) || !/>Read more<\/button>/.test(h) || /Every photo on their website already has a description/.test(h) || />Done</.test(h.slice(0, 400))) fail("a check of 25 of 261 pages still reads as Done (state D)");
+  if (pill(tLegacy) !== "Your move") fail(`a check of 25 of 261 pages has the row pill "${pill(tLegacy)}" (never Done)`);
+  h = card({ status: "in_progress", ran_at: RAN, auto_result: { outcome_data: { photo_check: { state: "more_pages", photos: 40, pages: 500, from: 0, pages_found: 1240, beyond_cap: 740, next_from: 500, at: RAN } } } });
+  if (!/Read 500 of their 1,240 pages/.test(h) || !/the next 500/.test(h) || !/>Read more<\/button>/.test(h)) fail("state D (more than 500 pages) isn't 'Read 500 of their 1,240 pages' with Read more");
+  // C: some pages wouldn't open: named, never Done
+  const tC = { status: "in_progress", ran_at: RAN, auto_result: { outcome_data: { photo_check: { state: "couldnt", why: "some_pages", pages: 261, pages_found: 261, pages_unread: 12, photos: 14, missing: 0, at: RAN, unread_pages: [{ url: "https://joes.test/blog/a/", why: "timeout" }, { url: "https://joes.test/blog/b/", why: "http_404" }] } } } };
+  h = card(tC);
+  if (!/Not every page read/.test(h) || !/12 of their 261 pages wouldn't open/.test(h) || !/The 249 that opened have every photo described/.test(h) || !/<summary>See them<\/summary>/.test(h) || !/joes\.test\/blog\/a\/<\/a> <span class="ob-ac-mut">didn't answer in time/.test(h) || !/answered 404/.test(h) || !/>Try again<\/button>/.test(h)) fail("state C (some pages wouldn't open) isn't the card that names them, with Try again");
+  if (pill(tC) !== "Needs a look") fail(`state C's row pill reads "${pill(tC)}"`);
   h = card({ status: "in_progress", ran_at: RAN, auto_result: { outcome_data: { photo_check: { state: "couldnt", why: "blocked", at: RAN } } } });
   if (!/Couldn't check/.test(h) || !/Their website didn't let us read its pages/.test(h) || !/It blocks automatic visits\. Nothing was drafted\./.test(h) || !/>Try again<\/button>/.test(h)) fail("state 5b (couldn't check) isn't the grey card with Try again");
   // 6 · with the client → Done on read-back
