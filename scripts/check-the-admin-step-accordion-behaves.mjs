@@ -99,7 +99,37 @@ const code = src.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(?:(?:if \(isM1\) )?inject\w+\(host[^)]*\);\s*)*if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
 if (!/_obLastActed = flowId;[^\n]*\n\s*obOpenStep\(el\);/.test(code)) F("revealStep no longer opens the step you acted on");
 if (!/if \(typeof obOpenStep === "function"\) obOpenStep\(target\);/.test(code)) F("a jump no longer opens its target");
-// 11-6 (the owner's screenshot): the next-action card's "Go to step N" opened the tab at its top, never step N; it carries the step to reveal
+// 8 · 11-6 (the owner: "make sure it works for ALL steps"): revealStep, RUN for every Month-1 step of the playbook, each in a FOLDED phase,
+// opens that step (its phase unfolded, the step open, scrolled to); and every jump that names a step carries it
+{
+  const pb = JSON.parse(fs.readFileSync(`${SITE}/data/playbooks/playbooks.json`, "utf8"));
+  const ids = (pb.month1 || []).map((s) => s.id).filter(Boolean);
+  const rv = src.slice(b, src.indexOf("\n}\n", b) + 3);
+  const d2 = new JSDOM(`<!doctype html><body><div id="h2">${ids.map((id, i) => `<div class="ob-phase" data-ob-phase="p${i}"><button class="ob-ph-h" data-ob-phase-toggle="p${i}"></button><div class="ob-ph-b">${step(id, "done", "its output")}</div></div>`).join("")}</div></body>`, { runScripts: "outside-only" });
+  const w2 = d2.window;
+  w2.escapeAttribute = (x) => String(x).replace(/"/g, "&quot;");
+  w2.requestAnimationFrame = (f) => { f(); return 1; };
+  let scrolled = null;
+  w2.HTMLElement.prototype.scrollIntoView = function () { scrolled = this.getAttribute("data-ob-step"); };
+  w2.document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-ob-phase-toggle]"); if (t) t.closest(".ob-phase").classList.toggle("open"); });
+  try { w2.eval(`${block}\n${rv}\nwindow.__rv = { revealStep, obApplyStepAccordion };`); } catch (e) { F(`revealStep would not run: ${e.message}`); }
+  if (w2.__rv) {
+    w2.__rv.obApplyStepAccordion(w2.document.getElementById("h2"));
+    const missed = [];
+    for (const id of ids) {
+      scrolled = null; w2.__rv.revealStep(id);
+      const node = w2.document.querySelector(`.ob-step[data-ob-step="${id}"]`);
+      if (!node || node.classList.contains("ob-folded") || !node.closest(".ob-phase").classList.contains("open") || scrolled !== id) missed.push(id);
+    }
+    if (!ids.length) F("the playbook has no Month-1 steps to try (this check read nothing)");
+    else if (missed.length) F(`a jump to ${missed.length} of ${ids.length} steps doesn't open it: ${missed.slice(0, 5).join(", ")}`);
+  }
+}
+if (!/const step = b\.getAttribute\("data-goto-step"\) \|\| "";\s*if \(step && tab === "onboarding-v2"\) \{[\s\S]{0,260}?revealStep\(step\)/.test(src)) F("a [data-goto-step] jump doesn't open its step (the shared jump handler only switches the tab)");
+if (!/\$\{a\.step \? ` data-goto-step="\$\{escapeAttribute\(a\.step\)\}"` : ""\}/.test(src)) F("Needs your attention's buttons don't carry their step");
+for (const [re, what] of [[/step: blocked\[0\]\.id/, "the blocked-step alert"], [/step: unverified\[0\]\.id/, "the no-proof alert"], [/step: next\.id, btn: "Go to onboarding"/, "the Next: alert"], [/kickAlert\.tab === "onboarding-v2" \? \{ step: "m1\.kickoff\.call" \}/, "the kickoff alert"], [/btn: "Go to onboarding →", \.\.\.\(remaining\[0\]\?\.obj\?\.flowId \? \{ reveal: remaining\[0\]\.obj\.flowId \}/, "the next-action card's Onboarding is blocked"]])
+  if (!re.test(src)) F(`${what} doesn't open the step it names`);
+// the next-action card's "Go to step N" opened the tab at its top, never step N; it carries the step to reveal
 if (!/btn: pageN \? `Go to step \$\{pageN\} →` : "Go to onboarding →", \.\.\.\(pageN && active\.obj\?\.flowId \? \{ reveal: active\.obj\.flowId \} : \{\}\)/.test(src)) F("\"Go to step N\" on the next-action card doesn't open step N (it only switches the tab)");
 
 // 🔒 steps_open_in_place_v2, the client portal's rule (Chris 10-31): the clicked title stays where it is, on a step and on a card. Measured on the live record in a browser when built.
