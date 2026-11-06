@@ -284,6 +284,9 @@ const changedKeys = (a, b) => [...new Set([...Object.keys(a || {}), ...Object.ke
   const rows = G.COVERED.flatMap((id) => (w.db.rec.data.tasks[id].go_ahead || {}).rows || []);
   const by = Object.fromEntries(rows.map((x) => [x.key, `${x.result}:${x.why}`]));
   if (w.calls.site.length) fail("a client with no website had a website fetched");
+  // 11-6 night fixer: the client's own "no website" wins even when an old address is still on file (the nightly fetched nothing only because the row was empty)
+  { const w2 = world({ data: nw, client: { website_url: "northwind.test" } }); await X.nightlyPass(CID, w2.d);
+    if (w2.calls.site.length) fail("a client who said they have no website had their old website address fetched"); }
   if (by.serve !== "went_ahead:google_only" || by.hours !== "went_ahead:google_only" || by.name !== "left:needs_client_ok" || by.areas !== "left:no_website" || by.website !== "left:no_website") fail(`no website: ${JSON.stringify(by)}`);
   if (G.doneWords(rows.find((x) => x.key === "hours")).sub !== "From Google; you don't have a website to compare.") fail("no website: the hours row isn't labeled \"From Google; you don't have a website to compare.\"");
   if (!r.went_ahead) fail("no website: the go-ahead didn't run");
