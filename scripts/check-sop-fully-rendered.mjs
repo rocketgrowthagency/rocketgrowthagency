@@ -124,6 +124,16 @@ console.log(`  …of which have a runner      : ${withRunner}`);
 console.log(`  curated objectives covering  : ${curated}`);
 console.log(`  month2plus steps             : ${m2.length}`);
 
+// 4. 11-6 (the owner's screenshot): the photo step waiting on the client's photos was the next-action card's "Your move · ⚡ Draft this for me"
+// while its row read "Client's move". In the one sequencer it waits on the client unless the row's own rule says it's RGA's (review / rgaN).
+{
+  const at = src.indexOf("function sopSequencedSteps"), body = at < 0 ? "" : src.slice(at, src.indexOf("\n}\n", at));
+  if (!/s\.obj\?\.flowId === PHOTO_REVIEW_STEP && typeof photosWaitState === "function" && photosWaitState\(s\.task\)[\s\S]{0,200}photoReviewCount\(\)[\s\S]{0,200}\.rgaN\) \{\s*s\.uiState = "queued"; s\.waitsOnClient = true; continue;/.test(body)) {
+    fails.push("photo step");
+    console.log("  🔴 the photo step waiting on the client's photos can be the next action (\"Your move · Draft this for me\")");
+  } else console.log("  ✅ the photo step waiting on the client is never RGA's next action");
+}
+
 console.log("");
 if (fails.length) {
   console.error(`🔴 the admin is not rendering the full SOP (${fails.join(", ")}).`);
