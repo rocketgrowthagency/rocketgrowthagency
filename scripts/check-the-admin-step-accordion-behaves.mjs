@@ -99,6 +99,8 @@ const code = src.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
 if (!/\$\{obPhasedHtml\(steps, rowHtmlList, isM1, visible\)\}`;\s*(?:(?:if \(isM1\) )?inject\w+\(host[^)]*\);\s*)*if \(isM1\) obApplyStepAccordion\(host\);/.test(code)) F("the checklist render no longer applies the accordion");
 if (!/_obLastActed = flowId;[^\n]*\n\s*obOpenStep\(el\);/.test(code)) F("revealStep no longer opens the step you acted on");
 if (!/if \(typeof obOpenStep === "function"\) obOpenStep\(target\);/.test(code)) F("a jump no longer opens its target");
+// 11-6 (the owner's screenshot): the next-action card's "Go to step N" opened the tab at its top, never step N; it carries the step to reveal
+if (!/btn: pageN \? `Go to step \$\{pageN\} →` : "Go to onboarding →", \.\.\.\(pageN && active\.obj\?\.flowId \? \{ reveal: active\.obj\.flowId \} : \{\}\)/.test(src)) F("\"Go to step N\" on the next-action card doesn't open step N (it only switches the tab)");
 
 // 🔒 steps_open_in_place_v2, the client portal's rule (Chris 10-31): the clicked title stays where it is, on a step and on a card. Measured on the live record in a browser when built.
 const AJS_HOLD = fs.readFileSync(`${process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code"}/admin/admin.js`, "utf8");
