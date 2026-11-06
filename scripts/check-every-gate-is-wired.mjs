@@ -38,6 +38,7 @@ const ok = (m) => console.log(`  ✓ ${m}`);
 // Deliberately NOT pre-flight. Each needs a REASON, so excusing a gate is a decision on the record
 // rather than an oversight. "It was failing" is never a valid reason — fix it or delete it.
 const NOT_PREFLIGHT = {
+  "check-a-quiet-period-runs-no-live-check.mjs": "a check of the scheduled checks themselves (the database quiet period, 11-6), not of the video pipeline: run every morning by daily-health-check.sh",
   // 🔴 THIS EXCUSE USED TO READ "runs inside the visual gate". It does not, and nothing else does
   // either (audit, 2026-09-22). The visual gate's checkD asks whether a detail card is PRESENT;
   // this asks whether it is OPAQUE — a different question, and still the only thing that would

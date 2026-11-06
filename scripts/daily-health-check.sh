@@ -153,6 +153,11 @@ run() {
   local is_live=""
   case "$script" in acceptance-walk-*) is_live=1 ;; esac
   grep -qE "SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|_admin-session|rocketgrowthagency\.com" "scripts/$script" 2>/dev/null && is_live=1
+  # 🔇 11-6: a QUIET PERIOD (scripts/db-quiet-until.txt, Free plan egress over its 5 GB until Nov 18): no live gate runs, each says why
+  if [ -n "$is_live" ] && QUIET_WHY=$(node scripts/lib/db-quiet.mjs 2>/dev/null); then
+    printf "  ⚠️  %-38s SKIPPED — %s\n" "$script" "$QUIET_WHY"; INDET=$((INDET+1))
+    return
+  fi
   if [ -n "$is_live" ]; then
     local h
     if h=$(node scripts/lib/db-health.mjs 2>/dev/null); then
@@ -383,6 +388,7 @@ node scripts/local-search-almanac.mjs build >/dev/null 2>&1 || true
 run check-orphan-functions.mjs         "no function was built and then never invoked"
 run check-portal-data-boundary.mjs     "the client portal never touches RGA's work product"
 run check-sop-sources-agree.mjs        "both delivery-SOP definitions still describe one process"
+run check-a-quiet-period-runs-no-live-check.mjs "while the clients' database is in a quiet period, no scheduled check reads it"
 run check-robot-does-not-overclaim.mjs "the SOP run-all robot reports what actually ran"
 run check-runners-never-swallow-errors.mjs "no SOP runner turns a failed fetch into a false finding"
 run check-refusal-is-not-done.mjs      "a step that refused is never announced as Done"

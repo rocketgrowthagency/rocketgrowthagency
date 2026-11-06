@@ -1,0 +1,8 @@
+[
+ ["the morning check runs live gates in a quiet period", "quiethc", "  if [ -n \"$is_live\" ] && QUIET_WHY=$(node scripts/lib/db-quiet.mjs 2>/dev/null); then", "  if false; then"],
+ ["the night check runs live gates in a quiet period", "quietbc", "for (const g of toRun) (QUIET && readsLive(g)) ? quietSkip(", "for (const g of toRun) (false) ? quietSkip("],
+ ["the night check runs a live gate's suite in a quiet period", "quietbc", "for (const s of suites) (QUIET && readsLive(`${s}.mjs`)) ? quietSkip(", "for (const s of suites) (false) ? quietSkip("],
+ ["the night check walks the live portals in a quiet period", "quietbc", "QUIET ? quietSkip(`walk ${st}`)", "false ? quietSkip(`walk ${st}`)"],
+ ["a quiet skip reads as a pass", "quietbc", "results.push({ label, ok: false, code: 2, secs: 0, why: `skipped: database quiet until", "results.push({ label, ok: true, code: 0, secs: 0, why: `skipped: database quiet until"],
+ ["the night fixer isn't told", "quietfixer", "🔇 DATABASE QUIET PERIOD:", "🔇 (removed):"]
+]

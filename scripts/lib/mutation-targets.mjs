@@ -116,6 +116,9 @@ export const FILES = {
   adminhealthfn: "netlify/functions/admin-system-health.js",
   jobsql: "supabase/job_checkins.sql",
   jobcheckinmac: "scraper:scripts/job-checkin.mjs",
+  quiethc: "scraper:scripts/daily-health-check.sh",          // the database quiet period (11-6)
+  quietbc: "scraper:scripts/before-confirming.mjs",
+  quietfixer: "scraper:scripts/nightly-fixer-prompt.md",
   postssweepfn: "netlify/functions/gbp-posts-sweep.js",
   bookkickofffn: "netlify/functions/portal-book-kickoff.js",   // final review 10-20
   clientfeed: "netlify/functions/_client-feed.js",   // final review 10-20

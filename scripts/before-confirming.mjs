@@ -16,7 +16,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { dbQuiet, READS_LIVE } from "./lib/db-quiet.mjs";
 const SCRAPER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// 🔇 11-6: a QUIET PERIOD (scripts/db-quiet-until.txt): no gate, suite, walk or side by side that reads the live database or site runs; each
+// says "couldn't check" with the reason (exit 2), never a pass. RGA's Free plan passed its 5 GB monthly egress on Nov 6.
+const QUIET = dbQuiet();
+const quietSkip = (label) => { results.push({ label, ok: false, code: 2, secs: 0, why: `skipped: database quiet until ${QUIET.until} (${QUIET.reason})` }); process.stdout.write(`⚠️  ${label} (skipped: database quiet until ${QUIET.until})\n`); };
+const readsLive = (g) => { try { return READS_LIVE.test(fs.readFileSync(`${SCRAPER}/scripts/${g}`, "utf8")); } catch { return false; } };
 // the side-by-side reads the walk's photos by the day the run STARTED as well as today (a night run crosses midnight)
 const RUN_START = Date.now(), START_DAY = new Date(RUN_START).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket Growth Agency Website VS Code";
@@ -63,11 +69,12 @@ const touched = gates.filter((g) => { const src = fs.readFileSync(`${SCRAPER}/sc
 const edited = scraperFiles.filter((f) => /^scripts\/check-.*\.mjs$/.test(f)).map((f) => path.basename(f));
 const toRun = [...new Set([...touched, ...edited.filter((g) => gates.includes(g))])].sort();
 console.log(`1 · ${toRun.length} gate(s) read what changed:`);
-for (const g of toRun) run(g.replace(/\.mjs$/, ""), "node", [`scripts/${g}`]);
+if (QUIET) console.log(`🔇 database quiet until ${QUIET.until}: gates that read the live database or site are skipped (${QUIET.reason})`);
+for (const g of toRun) (QUIET && readsLive(g)) ? quietSkip(g.replace(/\.mjs$/, "")) : run(g.replace(/\.mjs$/, ""), "node", [`scripts/${g}`]);
 // 2 · mutation suites of the gates edited this round (+ the touched gates that have one)
 const suites = [...new Set([...edited, ...touched].map((g) => g.replace(/\.mjs$/, "")).filter((g) => fs.existsSync(`${SCRAPER}/scripts/mutations/${g}.json`)))];
 console.log(`\n2 · ${suites.length} mutation suite(s):`);
-for (const s of suites) run(`mutations: ${s}`, "node", ["scripts/run-mutations.mjs", s]);
+for (const s of suites) (QUIET && readsLive(`${s}.mjs`)) ? quietSkip(`mutations: ${s}`) : run(`mutations: ${s}`, "node", ["scripts/run-mutations.mjs", s]);
 // 3 · the cross-checks
 console.log("\n3 · cross-checks:");
 run("every mutation still applies", "node", ["scripts/check-every-mutation-still-applies.mjs"]);
@@ -75,9 +82,10 @@ run("every gate is wired", "node", ["scripts/check-every-gate-is-wired.mjs"]);
 run("colours come from the system", "node", ["scripts/check-colours-come-from-the-system.mjs"]);
 run("memory links", "node", ["scripts/memory-audit.mjs"], SITE);
 // 4 · the signed-in walk of each step (read-only)
-if (steps.length) { console.log(`\n4 · the walk (${steps.length} step(s)):`); for (const st of steps) run(`walk ${st}`, "node", ["scripts/acceptance-walk.mjs", `--step=${st}`]); }
+if (steps.length) { console.log(`\n4 · the walk (${steps.length} step(s)):`); for (const st of steps) QUIET ? quietSkip(`walk ${st}`) : run(`walk ${st}`, "node", ["scripts/acceptance-walk.mjs", `--step=${st}`]); }
 // 5 · side by side: the mockup section + the live card, same width
-if (compares.length) {
+if (compares.length && QUIET) for (const c of compares) quietSkip(`side by side ${c.split("=>")[1] || c}`);
+if (compares.length && !QUIET) {
   console.log(`\n5 · side by side (${compares.length}):`);
   let puppeteer; try { puppeteer = (await import("puppeteer")).default; } catch { console.error("⚠️  puppeteer unavailable — can't render the mockups"); process.exit(2); }
   const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
