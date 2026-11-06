@@ -126,6 +126,12 @@ try {
       const nj = await rowText(h, "og-customers");
       for (const w of ["No list this week", "No jobs to ask about this week", "Next list due Mon Nov 9. No reminder goes out for this week.", "Add a customer after all"]) has(nj || "", w, `${L} after No jobs`);
       for (const w of ["Saving", "Who did you finish jobs for?"]) hasNot(nj || "", w, `${L} after No jobs`);
+      // 11-6, the owner's screenshot: "Add a customer after all" opened the form with "Send my list" flush under its card (0px; every card's controls sit 12px under it)
+      await h.page.evaluate(`(() => ${TAB}.querySelector('#step-row-og-customers [data-og-add]')?.click())()`); await tick(400);
+      const gap = await h.page.evaluate(`(() => { const f = ${TAB}.querySelector('#step-row-og-customers .pm-og-addf:not([hidden])'); const a = f && f.querySelector(':scope > .pm-k5-acts'), k = a && a.previousElementSibling;
+        return a && k && a.offsetParent !== null ? Math.round(a.getBoundingClientRect().top - k.getBoundingClientRect().bottom) : null; })()`);
+      if (gap === null) fail(`${L}: "Add a customer after all" didn't open the form with its Send my list`);
+      else if (gap < 12) fail(`${L}: "Send my list" sits ${gap}px under its card after "Add a customer after all" (12px, like every card's controls)`);
     } finally { await h.close(); }
   }
   // a saved cadence says so, with its day
