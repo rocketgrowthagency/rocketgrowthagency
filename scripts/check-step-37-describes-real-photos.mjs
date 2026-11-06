@@ -235,6 +235,8 @@ if (has(SC, "photoFileName", "RGA's file-name rule")) {
   }
   if (SC.photoFileName("", "Denver") !== "") fail("a business with no name on file still gets a file-name rule");
 }
+// 11-6 review: the ready card's example note read the mockup's "3 of 5" under "Home 3 of 4"; it reads the first page's own numbers
+if (/“3 of 5” = 3 photos on that page/.test(read("admin/admin.js"))) fail("the ready card's \"N of M\" note is the mockup's fixed example, not the first page's numbers");
 
 if (F.length) { console.error("🔴 step 37 doesn't describe the photos really on their website:"); for (const f of F) console.error("   · " + f); process.exit(1); }
 console.log("✅ step 37 describes the photos really on their website: the read keeps each photo (icons, pixels, inline + repeats left out, the logo kept), each looked at once, never guessed, up to 40, Done on its own only when every page read, blocked / partial / stopped / down = no draft; each description read back on its photo; the card's six states with no Draft ready, marker, model text or Mark step complete; file names from the name + city on file, any name");
