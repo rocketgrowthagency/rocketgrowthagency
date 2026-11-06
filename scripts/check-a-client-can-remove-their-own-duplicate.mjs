@@ -763,12 +763,13 @@ if (!/const pending = open\.length \+ actions\.filter\(\(a\) => !\(a\.waits \|\|
 if (!/renderSetupPointer\(open\.length, pending - open\.length\);/.test(portal)) fail("Setup's \"things need you to take action\" counts a removed duplicate that asks nothing");
 if (!/window\.history\.pushState\(\{ portalView: v \}/.test(portal) || !/window\.addEventListener\("popstate", \(e\) => \{\s*const v = e\.state && e\.state\.portalView;\s*if \(v\) setPortalView\(v, \{ fromHistory: true \}\);/.test(portal)) fail("Back leaves the portal (view switches aren't history entries)");
 if (!/owner_removal\?\.status === "removed"\) return json\(409, \{ error: "It's already removed\./.test(code("netlify/functions/gbp-duplicate-owner-init.js"))) fail("a second removal sign-in can start after the removal");
+// 11-6 night fixer: the managed To do names it "Duplicate profile removed" (client_todo_done_list_v1, approved 11-5); self-serve keeps the title
 // v9: once the nightly check sees one listing after the client's removal, it's listed under Done (approvals_page_v1)
 {
   const pd = code("netlify/functions/portal-deliverables.js");
   // 🔒 approvals_page_v1 (10-20): a confirmation is ONE Done row straight away (no 7-day card at the top; its card lives on step 2)
   if (!/t\.status === "done" && t\.outcome_data\?\.verdict === "clean" && rm && rm\.status === "removed"/.test(pd) || !/label: "You removed it · Google confirmed it"/.test(pd) || /Date\.now\(\) - Date\.parse\(at\) < 7 \* 86400000/.test(pd) || !/return json\(200, \{ ok: true, deliverables, actions, resolved[ ,]/.test(pd)) fail("a removed duplicate isn't listed under Done once Google shows one listing");
-  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, e: \{ type: "resolved", title: x\.title, sub: `\$\{x\.label\}/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
+  if (!/_apResolved = data\.resolved \|\| \[\];/.test(portal) || !/\.\.\.\(_apResolved \|\| \[\]\)\.map\(\(x\) => \(\{ at: x\.at, e: \{ type: "resolved", title: (?:mcOn \? String\(x\.title \|\| ""\)\.replace\([^)]*\) : )?x\.title, sub: `\$\{x\.label\}/.test(portal)) fail("the portal doesn't show the resolved duplicate under Done");
 }
 if (!/\.\.\.actionCards\.filter\(\(e\) => !e\.done && !e\.rga\)/.test(portal)) fail("the queue counts a card that waits on RGA as one that \"needs you\"");
 // admin step 11 has RGA's two choices, and shows the facts the same way (not measured = "couldn't")

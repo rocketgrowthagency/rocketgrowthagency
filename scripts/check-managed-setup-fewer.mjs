@@ -356,7 +356,7 @@ try {
     const t = D.db.rec.data.tasks[PH];
     if (r.status !== 200 || !r.body.ok || t.status !== "done" || t.completed_by !== "client" || !t.fewer || t.fewer.n !== AM.total || t.fewer.goal !== 20 || t.fewer.by !== "client" || t.fewer.who !== "client@example.test") fail(`portal-step-fewer: finishing step 4 at the minimum didn't store done + the note (${r.status} ${JSON.stringify(t && t.fewer)})`);
     if (D.gates[0] !== "owner") fail("portal-step-fewer: a client's finish isn't checked against the portal owner");
-    if (D.told.length !== 1 || !/finished Setup step 4 \(photos\) with \d+ of 20 photos on Google/.test(D.told[0][3] || "")) fail(`portal-step-fewer: RGA isn't told (decision 3) ${JSON.stringify(D.told.map((x) => x[3]))}`);
+    if (D.told.length !== 1 || !/finished the Setup photos step with \d+ of 20 photos on Google/.test(D.told[0][3] || "")) fail(`portal-step-fewer: RGA isn't told (decision 3) ${JSON.stringify(D.told.map((x) => x[3]))}`);
     if (!D.recd.length || D.recd[0].kind !== "client_step_fewer") fail("portal-step-fewer: the finish isn't recorded in the client's activity");
     D = mkDeps({ tasks: photoRec(BELOW), photos: BELOW.photos }); r = await call(D, { step_id: PH, action: "finish" });
     if (r.status !== 409 || !/Still needed: /.test(r.body.error || "") || D.db.rec.data.tasks[PH].status === "done") fail(`portal-step-fewer: step 4 below the minimum isn't refused with what's still needed (${r.status} ${r.body.error})`);

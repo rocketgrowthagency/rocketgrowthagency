@@ -16,8 +16,8 @@
  [
   "cadence settable by an admin",
   "cadencefn",
-  "  const gate = await requirePortalOwner(event, clientId);",
-  "  const gate = await require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId);",
+  "  const [gate, recs] = await Promise.all([requirePortalOwner(event, clientId),",
+  "  const [gate, recs] = await Promise.all([require(\"./_auth\").requirePortalOwnerOrWorkspace(event, clientId),",
   1
  ],
  [

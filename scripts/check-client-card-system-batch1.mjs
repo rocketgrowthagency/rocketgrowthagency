@@ -34,7 +34,7 @@ const line = (n) => { const m = new RegExp(`^const ${n} = [^\\n]*;$`, "m").exec(
 const base = [fn("escapeHtml"), fn("escapeAttribute")].join("\n");
 const kit = planCardKit(P, base);
 const src = [base, kit, csBlock(P, `${base}\n${kit}`), line("siteShow"), line("BK_NOUN"), line("GBP_DAY"), line("gcardMaps"), line("KW_ICON"), line("MAIL_ICON"), line("stepLockOf"),
-  fn("gvProfileHtml"), fn("accStep1Name"), fn("accSiteName"), fn("accMergeChoiceHtml"), fn("accessCardHtml"), fn("factsLocked"), fn("factsCardV2"), fn("keywordPlanCardHtml"),
+  fn("gvProfileHtml"), fn("accStep1Name"), fn("accSiteName"), fn("accMergeChoiceHtml"), fn("accessTestRow"), fn("accessCardHtml"), fn("factsLocked"), fn("factsCardV2"), fn("keywordPlanCardHtml"),
   fn("stepSixPending"), fn("svcCardHtml"), fn("hoursCardHtml"), fn("attrsCardHtml"), fn("bookingCardHtml"), fn("threadHtml"),
   // the page state these read — empty, the way a first render has it
   `var _lockData = { tasks: {} }, _editingSteps = new Set(), _rcEditing = new Set(), _accPickSelf = new Set(), _accNames = { wix: "Wix", squarespace: "Squarespace" }, _accHosts = {};

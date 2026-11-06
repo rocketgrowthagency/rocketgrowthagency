@@ -61,7 +61,11 @@ const drift = nc(read("netlify/functions/admin-gbp-drift.js"));
 if (!/kind: "gbp_drift_resolved", stepId, by: gate\.email \|\| null, actor: "rga"/.test(drift) || !/google: action === "restore" \? \{/.test(drift)) fail("admin's put-back / keep isn't recorded (or a put-back isn't in the change log)");
 const watch = nc(read("netlify/functions/_gbp-watch.js"));
 if (!/kind: "gbp_changed_on_google"/.test(watch) || !/kind: "gbp_hours_renewed"[\s\S]{0,400}google: \{ field: "hours · closed days"/.test(watch)) fail("the nightly check's change notices / renewals aren't recorded (renewals in the change log)");
-if (!/record: \(o\) => recordSubmission\(\{ supa, \.\.\.o \}\)/.test(nc(read("netlify/functions/gbp-profile-watch.js")))) fail("the nightly check isn't given the recorder");
+// 11-6 night fixer: the nightly check hands the recorder to TWO passes now (the profile watch, and managed step 3's go-ahead, 11-5); each is pinned,
+// so taking it from one can't hide behind the other
+{ const W = nc(read("netlify/functions/gbp-profile-watch.js"));
+  if (!/connect: \(id\) => connectFor\(supa, id\), record: \(o\) => recordSubmission\(\{ supa, \.\.\.o \}\),/.test(W)) fail("the nightly check isn't given the recorder");
+  if (!/nightlyPass\(clientId, \{[^\n]*\n[^\n]*record: \(o\) => recordSubmission\(\{ supa, \.\.\.o \}\) \}\)/.test(W)) fail("the nightly go-ahead pass isn't given the recorder"); }
 for (const [f, kind] of [["portal-step-later.js", "client_step_later"], ["portal-photo-team.js", "client_team_size"], ["portal-photo-keep.js", "gbp_photo_kept"]])
   if (!new RegExp(`^[ \\t]*await recordSubmission\\(\\{ supa, clientId, kind: "${kind}"`, "m").test(nc(read(`netlify/functions/${f}`)))) fail(`${f} doesn't record what the client did`);
 if (!/await recordSubmission\(\{ supa, clientId, workspaceId: client\.workspace_id, kind: "monthly_report_sent", stepId: "m2\.report\.deliver"[^\n]*\n[^\n]*extra: artifact \}\);/.test(nc(read("netlify/functions/send-monthly-report.js")))) fail("a monthly report goes out without a record of what went, to whom and when");

@@ -67,5 +67,6 @@
  ["View larger blank on a failed load", "admin", "img.onerror = () => {", "img.onx = () => {", 1],
  ["queued photo row loses Run again", "admin", "resultBlock, { rerun: qRerun })", "resultBlock)", 1],
  ["undated send reads 48 hours forever", "admin", "googleState(p) === \"sent\" && !p.pushed_at ? \"Sent\"", "false ? \"Sent\"", 1],
- ["undo request stays folded", "admin", "steps.find((e) => e.classList.contains(\"has-undo-ask\"))", "steps.find((e) => false)", 1]
+ ["undo request stays folded", "admin", "steps.find((e) => e.classList.contains(\"has-undo-ask\"))", "steps.find((e) => false)", 1],
+ ["finish with fewer uses the raw count", "portal", "const n = photoCountable(taskState, photos), goal = F.GOAL[F.PHOTO];", "const n = (photos || []).length, goal = F.GOAL[F.PHOTO];"]
 ]

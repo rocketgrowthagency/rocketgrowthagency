@@ -12,8 +12,9 @@ const P = read("portal/portal.js");
 const F = [], fail = (m) => F.push(m);
 const lift = (n) => { const at = P.search(new RegExp(`\\nfunction ${n}\\(`)); if (at < 0) { console.error(`⚠️  ${n} moved`); process.exit(2); } let d = 0; for (let i = P.indexOf("{", P.indexOf(")", at)); i < P.length; i++) { if (P[i] === "{") d++; else if (P[i] === "}") { d--; if (!d) return P.slice(at + 1, i + 1); } } };
 const line = (n) => ((P.match(new RegExp(`^const ${n} = [^\\n]*`, "m")) || [""])[0]).replace(/^const /, "var ");
+// 11-6 night fixer: doneCardHtml asks pmManaged() (the managed Ongoing words, f8da5f26); this gate reads the self-serve cards, so the lift says self-serve
 const ctx = vm.createContext({ escapeHtml: (x) => String(x ?? "").replace(/</g, "&lt;"), escapeAttribute: (x) => String(x ?? ""), monthDay: (x) => String(x || "").slice(5, 10),
-  siteShow: (u) => String(u || "").replace(/^https?:\/\/(www\.)?/, ""), googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.act].filter(Boolean).join(" ¦ ")}</card>`, Number, String, Array, Date, Math });
+  siteShow: (u) => String(u || "").replace(/^https?:\/\/(www\.)?/, ""), pmManaged: () => !!ctx.__managed, googleCardHtml: (o) => `<card state="${o.state}">${[o.small, o.side, o.title, o.body, o.act].filter(Boolean).join(" ¦ ")}</card>`, Number, String, Array, Date, Math });
 vm.runInContext("var DC_ICON = { cal: '', vid: '', num: '', pho: '', msg: '' };", ctx);
 for (const n of ["DONE_CARD", "dcRow", "dcReport"]) vm.runInContext(line(n), ctx);
 vm.runInContext(planCardKit(P, "const monthDay =\nconst siteShow =\nvar DC_ICON\nconst DC_ICON =\nconst DONE_CARD =\nconst dcRow =\nconst dcReport =\n" + [...String(Object.keys(ctx))].join("")), ctx);   // 10-26: planFromGcard + the card pieces
@@ -30,6 +31,9 @@ for (const id of ["m1.call.close", "m2.call.monthly"]) {
   if (!/<b>RGA has both videos<\/b>/.test(h) || !/intro\.mp4 · 38 MB · 10-22/.test(h) || !/✓ Link/.test(h) || !/last one received 10-24/.test(h)) fail("step 14's done card doesn't list both clips"); }
 { const h = run({ id: "m2.snap.business_outcomes", clientInput: { fields: [{ key: "enquiries", label: "New inquiries" }, { key: "revenue", label: "Revenue" }, { key: "jobs", label: "Jobs won" }] } }, { status: "done", client_input: { enquiries: 24, revenue: 18400, jobs: "" }, client_input_at: "2026-11-03T10:00:00Z" });
   if (!/New inquiries/.test(h) || !/>24</.test(h) || !/\$18,400/.test(h) || /Jobs won/.test(h) || !/the report uses the latest/.test(h)) fail("step 15's done card doesn't show the client's own numbers (or shows an empty one)"); }
+// the managed client is told RGA goes through their numbers on the next monthly call (ongoing_step09_numbers_v1, 11-5)
+{ ctx.__managed = true; const h = run({ id: "m2.snap.business_outcomes", clientInput: { fields: [{ key: "enquiries", label: "New inquiries" }] } }, { status: "done", client_input: { enquiries: 24 }, client_input_at: "2026-10-30T17:00:00Z" }); ctx.__managed = false;
+  if (!/RGA goes through them with you/.test(h) || !/Your next monthly call, labelled "reported by you"/.test(h) || /RGA used them in your report/.test(h)) fail("a managed client's numbers card doesn't say RGA goes through them on the next monthly call"); }
 { const h = run({ id: "m2.exec.gbp_photos" }, { status: "done", completed_at: AT }, { photosThisMonth: 6 });
   if (!/<b>6 added this month<\/b>/.test(h) || !/6 photos/.test(h)) fail("step 16's done card doesn't count this month's photos");
   const u = run({ id: "m2.exec.gbp_photos" }, { status: "done", completed_at: AT }, {}); if (/\b0 photos|NaN|undefined/.test(u)) fail("step 16 with no count reads as 0 / NaN (absence isn't a value)"); }

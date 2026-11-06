@@ -83,7 +83,7 @@ try {
   vm.runInContext(`var _accHosts = {}; var ACC_FILES = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, rc);
   vm.runInContext(planCardKit(P, "const RC_PHONE =\nconst RC_FORM =\nconst RC_WEB =\n" + P.slice(a, b)), rc);
   vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, rc);
-  for (const n of ["ctRecommend", "doneNoRecordHtml", "accPromiseHtml", "recordCardHtml", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(fn(n), rc);
+  for (const n of ["ctRecommend", "doneNoRecordHtml", "accPromiseHtml", "recordCardHtml", "accessTestRow", "accessCardHtml", "callTrackingCardHtml", "formTrackingCardHtml"]) vm.runInContext(fn(n), rc);
   vm.runInContext("var RC_LOCK='', RC_WEB='', RC_PHONE='', RC_FORM='';", rc);
 } catch (e) { console.error(`⚠️  INDETERMINATE — steps 11/12's renderers don't load (${e.message})`); process.exit(2); }
 const card = (id, t, { cs = true, editing = false } = {}) => {
@@ -347,7 +347,8 @@ const P10S = {};   // the remaining states, drawn in Chrome below
   if (!/const csPhotoWait = csRow && !isDone && listingWait && step\.clientForm === "photo_upload";/.test(P) || !/\(ownWait \|\| listingWait\) && !csPhotoWait &&/.test(P) || !/if \(\(csWaitHtml && listingWait\) \|\| csPhotoWait\) Object\.assign\(ownerPill, \{ text: "Opens when you have one Google profile"/.test(P)) fail("step 10 waiting on one listing isn't its own grey card under \"Opens when you have one Google profile\" (the row swaps it for the general wait card)");
   if (!/ownerPill\.cls === "wait" && later && ownerPill\.text\.startsWith\("Later · "\)\) Object\.assign\(ownerPill, \{ text: "Your turn", cls: "you" \}\)/.test(P) || !/const csLaterPill = csRow && later && ownerPill\.text === "Your turn" \? `<span class="pm-pill wait off" data-later-pill>Reminder \$\{escapeHtml\(monthDay\(later\.until\)\)\}/.test(P) || !/\$\{csOptPill\}\$\{csLaterPill\}/.test(P)) fail("step 10 later isn't the pills \"Your turn\" + \"Reminder <date>\"");
   if (!/Number\(step\.clientMinutes\) > 0 && !later \?/.test(P)) fail("a step that's later still says how many minutes it takes");
-  if (!/!\(csRow && step\.clientForm === "photo_upload"\)\s*\? `<p class="pm-evidence">/.test(P)) fail("step 10 done repeats \"20 photos received\" under its card");
+  // 11-6 night fixer: finish with fewer (client_setup_fewer_v1, approved 11-5) adds one more condition after this one (its count is in the band)
+  if (!/!\(csRow && step\.clientForm === "photo_upload"\)(?:\s*(?:\/\/[^\n]*)?\n\s*&& !\(globalThis\.rgaSetupFewer[^\n]*)?\s*\? `<p class="pm-evidence">/.test(P)) fail("step 10 done repeats \"20 photos received\" under its card");
   if (!/const csCardOf = [^\n]*!c\.closest\("\.pm-pc-more"\)/.test(P)) fail("a done step's lock or How seats on the card inside the closed Add more list, where nobody sees it");
   // the tile handler: the file's LAST listener, and it handles a tile, a kind and ‹ Shot ›
   const last = P.lastIndexOf('document.addEventListener("click"'), tail = P.slice(last);

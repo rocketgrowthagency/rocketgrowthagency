@@ -12,5 +12,5 @@
  ["the off state has no way back", "blogclientplan", "action: \"on\", actionLabel: \"Turn posts back on\"", "action: null, actionLabel: \"\"", 1],
  ["the card promises calls", "blogclientplan", "const NOTE = \"Posts are never sold as a way to rank on Maps and never promise calls.\";", "const NOTE = \"Posts bring more calls.\";", 1],
  ["the veto column is gone", "blogclientsql", "add column if not exists blog_posts_off_at timestamptz", "-- gone", 1],
- ["the blog card leaves the access step", "portal", "return accessCardHtml(step, t, clientId) + (postsInGroup ? \"\" : blogPlanHostHtml(clientId));", "return accessCardHtml(step, t, clientId);", 1]
+ ["the blog card leaves the access step", "portal", "return accessCardHtml(step, t, clientId, tasks || {}) + (postsInGroup ? \"\" : blogPlanHostHtml(clientId));", "return accessCardHtml(step, t, clientId, tasks || {});", 1]
 ]

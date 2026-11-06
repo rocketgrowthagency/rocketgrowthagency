@@ -446,7 +446,8 @@ for (const r of ["portal-step-recheck", "portal-book-kickoff", "cancel-kickoff-i
   if (!/const portalClients = _preview \? await loadPreviewClient\(supabase\) : await loadPortalClients\(supabase\);/.test(init)) fail("the client load is not the normal one for a client");
   if (!/const supabase = _preview \? _preview\.client\(createClient, config\.supabaseUrl, config\.supabaseAnonKey\) : createClient\(config\.supabaseUrl, config\.supabaseAnonKey\);/.test(init)) fail("the database client is not the normal one for a client");
   const uses = noComments(portal).match(/\b_preview\b/g) || [];
-  if (uses.length !== 9) fail(`portal.js has ${uses.length} preview uses (expected 9): a branch was added or removed. Read it, then change this number.`);
+  // 11-6 night fixer: 10th use = managed step 3's day-1 stamp skips an admin look (mcStampDay1), read from the guard's flag instead of the URL
+  if (uses.length !== 10) fail(`portal.js has ${uses.length} preview uses (expected 10): a branch was added or removed. Read it, then change this number.`);
   if (!/^const _preview = window\.__rgaClientPreview \|\| null;$/m.test(portal)) fail("the preview flag in portal.js comes from somewhere other than the guard");
   if (/rga_preview|URLSearchParams[^;]*preview/.test(noComments(portal))) fail("portal.js reads the preview flag from the URL: only the guard, with its frame check, may");
   for (const f of ["portal/portal.js", "admin/admin.js", "shared/client-preview.js"]) if (/__rgaClientPreview\s*=[^=]/.test(read(f))) fail(`${f} sets the preview flag: only the guard may`);
@@ -604,7 +605,7 @@ const AUTH_PIN = {
  "portal-payment-intent.js": "241d9fccdff6",
  "portal-photo-team.js": "241d9fccdff6",
  "portal-plan-ok.js": "241d9fccdff6",
- "portal-review-cadence.js": "241d9fccdff6",
+ "portal-review-cadence.js": "1978536c6e89",   // 11-6 night fixer re-pin: requirePortalOwner now runs beside the record read (53274fdd); gate.error is still returned before the record is used, no staff branch
  "portal-review-requests.js": "735fe2a29a98",
  "portal-social-profiles.js": "3cc2b9cfdec2",
  "portal-step-choice.js": "241d9fccdff6",

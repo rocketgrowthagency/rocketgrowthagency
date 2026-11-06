@@ -364,6 +364,7 @@ export const FILES = {
   maturefn: "netlify/functions/_mature.js",   // batch 5 Mature (10-19)
   setupfewer: "shared/setup-fewer.js",   // client_setup_fewer_v1 (11-5): the minimum + the note
   step3goahead: "shared/step3-go-ahead.js",   // client_step03_seven_day_rule_v1 (11-5): managed step 3's 7-day go-ahead, the rule + the words
+  step3ep: "netlify/functions/portal-step3-go-ahead.js",   // the endpoint that hands its request to _step3-go-ahead.js handle (11-6 night fixer)
   step3fn: "netlify/functions/_step3-go-ahead.js",   // client_step03_seven_day_rule_v1: the nightly pass + the endpoint's actions
   siteread: "netlify/functions/_site-read.js",   // client_step03_seven_day_rule_v1: the smallest honest website read
   stepfewerfn: "netlify/functions/portal-step-fewer.js",   // client_setup_fewer_v1: finish with fewer + the move to Monthly

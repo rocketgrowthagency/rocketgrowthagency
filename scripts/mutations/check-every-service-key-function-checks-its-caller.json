@@ -26,5 +26,19 @@
   "  if (!process.env.INTERNAL_FN_SECRET || inbound !== process.env.INTERNAL_FN_SECRET) {",
   "  if (false) {",
   1
+ ],
+ [
+  "the go-ahead handle never returns its failed sign-in check",
+  "step3fn",
+  "  if (gate.error) return gate.error;\n  const mode = await D.clientMode(clientId);",
+  "  const mode = await D.clientMode(clientId);",
+  1
+ ],
+ [
+  "the go-ahead endpoint injects a stub instead of the real sign-in check",
+  "step3ep",
+  "requirePortalOwnerOrWorkspace: Auth.requirePortalOwnerOrWorkspace, requireWorkspaceForClient: Auth.requireWorkspaceForClient,",
+  "requirePortalOwnerOrWorkspace: async () => ({}), requireWorkspaceForClient: async () => ({}),",
+  1
  ]
 ]

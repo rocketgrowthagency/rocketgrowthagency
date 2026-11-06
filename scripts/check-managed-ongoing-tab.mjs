@@ -120,6 +120,12 @@ try {
       else { has(r, "due Mon Nov 9", L); hasNot(r, "(you chose)", L); hasNot(r, "due Mon Nov 2", L); has(r, "Nov 2 – Nov 8", L); }
       hasNot(t, "Opens once Setup step 5 is done", L);
       has(t, "Your first ones come from step 8", L);
+      // 11-5 walk: "No jobs this week" saved, but this row (on the Ongoing tab, which the Setup redraw never touches) kept asking and its button spun forever
+      await h.page.evaluate(`(() => ${TAB}.querySelector('#step-row-og-customers [data-rc-nojobs]')?.click())()`); await tick(1200);
+      if (!h.cadenceCalls.some((c) => c.action === "no_jobs")) fail(`${L}: "No jobs this week" posted nothing`);
+      const nj = await rowText(h, "og-customers");
+      for (const w of ["No list this week", "No jobs to ask about this week", "Next list due Mon Nov 9. No reminder goes out for this week.", "Add a customer after all"]) has(nj || "", w, `${L} after No jobs`);
+      for (const w of ["Saving", "Who did you finish jobs for?"]) hasNot(nj || "", w, `${L} after No jobs`);
     } finally { await h.close(); }
   }
   // a saved cadence says so, with its day

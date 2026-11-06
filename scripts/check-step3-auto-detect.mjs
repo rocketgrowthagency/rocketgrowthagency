@@ -20,7 +20,8 @@ const SITE = process.env.APPROVAL_ARCHIVE_SITE_DIR || "/Users/chris/RGA/Rocket G
 const FNS = `${SITE}/netlify/functions`, FNS_REAL = fs.realpathSync(FNS), req = createRequire(`${FNS}/x.js`);
 const read = (r) => { try { return fs.readFileSync(`${SITE}/${r}`, "utf8"); } catch { console.error(`⚠️  INDETERMINATE — cannot read ${r}`); process.exit(2); } };
 const F = [], fail = (m) => F.push(m);
-const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("{", at); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
+// 11-6 night fixer: a default parameter (accessCardHtml(..., tasks = {})) holds a brace, so the body starts after the parameter list
+const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("(", at); for (let p = 0; i < src.length; i++) { if (src[i] === "(") p++; else if (src[i] === ")" && --p === 0) break; } i = src.indexOf("{", i); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
 const PL = JSON.parse(read("data/site-platforms.json")).platforms;
 const PUB = Object.fromEntries(Object.entries(PL).map(([k, { rga, ...p }]) => [k, p]));
 
@@ -354,7 +355,7 @@ const cctx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttrib
 vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | "; var _accRoles = {}; var _accPickSelf = new Set(); ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, cctx);
 vm.runInContext(`var _portalContractCache = {}; ${["ACC_PROMISE_ICON", "ACC_PROMISE_DO", "ACC_PROMISE_NEVER"].map((n) => ((P.match(new RegExp(`^const ${n} = [\\[{][\\s\\S]*?[\\]}];$`, "m")) || [""])[0]).replace(/^const /, "var ")).join("\n")}`, cctx); vm.runInContext(fnSrc(P, "accPromiseHtml"), cctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  INDETERMINATE — the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), cctx); vm.runInContext(csBlock(P, P.slice(a, b)), cctx); }   // the plan card + the client card system (client_step03_access_v1, 10-29)
-for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
+for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessTestRow", "accessCardHtml"]) vm.runInContext(fnSrc(P, n), cctx);
 const sentCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", client_input: { via: "designer", platform: "other", platform_source: "designer_credit", detected: { designer: "Exposure" }, at: "2026-10-22" } })}, "c1")`, cctx);
 const waitCard = vm.runInContext(`accessCardHtml({ id: "m1.access.website" }, ${JSON.stringify({ status: "in_progress", check_request: { asked_at: "2026-10-22T23:00:00Z", site: "acme.example", reason: "blocked" } })}, "c1")`, cctx);
 // 🔄 client_step03_access_v1 "RGA checks the builder" (the card system, 10-29): "With RGA" is the card's blue tone now (the old

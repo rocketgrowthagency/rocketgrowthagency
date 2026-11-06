@@ -25,7 +25,9 @@ if (!/const GS_LABEL = \{ hide: "Saved, not showing", sent: "Sent · up to 48 ho
 if (/st === "on" \? `<span class="ok"/.test(P)) fail("a tile draws a tick again");
 if (/\.pm-p10-t\.is-on \.im \{[^}]*state-ok/.test(CSS)) fail("a tile is green again");
 if (!/return photoMissingFromList\(ph, taskState\?\.detected\) \? "missing" : "sent";/.test(P)) fail("a photo missing after 3 days isn't said");
-if (!/photoCountable\(taskState, photos\)/.test(P)) fail("the portal doesn't use the count");
+// 11-6 night fixer: two places read the count now (the card, and finish with fewer's N of 20, client_setup_fewer_v1 11-5); each is pinned, so one can't hide the other
+if (!/const d = d0 && Number\.isFinite\(d0\.n\) \? \{ \.\.\.d0, n: photoCountable\(taskState, photos\) \} : d0;/.test(P)) fail("the portal doesn't use the count");
+if (!/const n = photoCountable\(taskState, photos\), goal = F\.GOAL\[F\.PHOTO\];/.test(P)) fail("finish with fewer counts photos its own way (not the count)");
 for (const w of ["Use your own photos.", "Get a yes from anyone whose face is in a photo.", "Don't add location tags.", "a few a day.", "up to 48 hours"]) if (!P.slice(P.indexOf("const P10_RULES")).slice(0, 700).includes(w)) fail(`How this step works lost: ${w}`);
 if (!/force: body\.force === true,/.test(read("netlify/functions/portal-photo-remove.js"))) fail("Remove anyway never reaches the removal");
 if (!/data-keep-undo/.test(P) || !/\.\.\.\(undo \? \{ undo: true \} : \{\}\)/.test(P)) fail("the client can't undo Keep");

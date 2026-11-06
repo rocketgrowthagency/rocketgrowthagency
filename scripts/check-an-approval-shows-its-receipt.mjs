@@ -113,7 +113,8 @@ if (!/You approved taking this page off/.test(R.open) || !/We take it off your w
   // and the server sends the history: every finished change in site_change_log, as a read-only item, with its proof kept on save
   const PD = fs.readFileSync(`${SITE}/netlify/functions/portal-deliverables.js`, "utf8"), ADx = fs.readFileSync(`${SITE}/netlify/functions/admin-deliverables.js`, "utf8");
   if (!/\(t\.site_change_log \|\| \[\]\)\.forEach\(\(h, i\) => \{/.test(PD) || !/key: `\$\{key\}~\$\{i\}`, history: true/.test(PD)) fail("the portal isn't sent the step's earlier finished changes (What RGA did loses them on the next draft)");
-  if (!/if \(t && SC\.isSiteChangeStep\(key\)\) \{\s*\(t\.site_change_log/.test(PD)) fail("the history is behind the current change's internal gate (a new draft would hide it again)");
+  // 11-6 night fixer: the access test's history never shows (client_approvals_access_check_v1, approved 11-5), so `&& !isTest` is the one condition allowed
+  if (!/if \(t && SC\.isSiteChangeStep\(key\)(?: && !isTest)?\) \{\s*\(t\.site_change_log/.test(PD)) fail("the history is behind the current change's internal gate (a new draft would hide it again)");
   if (!/pr: t\.publish_pr && t\.publish_pr\.v === t\.site_change\.v \? t\.publish_pr : null, safety:/.test(ADx)) fail("a finished change moves to the history without its proof (pull request · checks · after-check)"); }
 { const A = out.addCard, R = out.rmCard;
   if (!/We made a new page for your website/.test(A.text) || !/Website access check/.test(A.text) || /Rocket Growth Agency$|\| Rocket/.test(A.text.split("acme.test")[0]) || !/acme\.test\/rga-access-test\//.test(A.text) || !/Preview page/.test(A.text) || !/Nothing goes on your website until you approve\./.test(A.text) || !/Approve this page/.test(A.text) || !/Ask for a change/.test(A.text)) fail(`the add-a-page card isn't v5 (what happened · the page by its own title · Preview · one line · Approve this page): ${A.text.slice(0, 220)}`);

@@ -124,5 +124,11 @@
   "to ${to}`, extra: artifact });",
   "to ${to}` });",
   1
+ ],
+ [
+  "the nightly go-ahead pass not given the recorder",
+  "gbpprofilewatch",
+  "now: () => Date.now(), record: (o) => recordSubmission({ supa, ...o }) });",
+  "now: () => Date.now(), record: null });"
  ]
 ]

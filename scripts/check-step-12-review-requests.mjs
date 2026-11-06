@@ -24,7 +24,9 @@ const F = []; const fail = (m) => F.push(m);
 const src = read("portal/portal.js"), css = read("portal/portal.css"), mock = read("reports/mockups/step12_review_requests_v1.html") + read("reports/mockups/step12_review_requests_v3.html")   // v3 approved 10-20
   + read("reports/mockups/reviews_card_option_b_v1.html");   // option B, approved 10-23 (the card); the waiting words stay v1/v3's
 const pb = JSON.parse(read("data/playbooks/playbooks.json")), proj = JSON.parse(read("data/playbooks/client-steps.json"));
-const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = src.indexOf("{", m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
+// 11-6 night fixer: a function's default parameter (reviewRowsHtml(data, opt = {})) holds a brace, so a function's body starts after its parameter list
+const bodyAt = (at) => { if (!/^(?:async )?function /.test(src.slice(at, at + 15))) return src.indexOf("{", at); let p = 0, k = src.indexOf("(", at); for (; k < src.length; k++) { if (src[k] === "(") p++; else if (src[k] === ")" && --p === 0) break; } return src.indexOf("{", k); };
+const pick = (re) => { const m = re.exec(src); if (!m) return ""; let d = 0; for (let k = bodyAt(m.index); k < src.length; k++) { if (src[k] === "{") d++; else if (src[k] === "}") { d--; if (!d) return src.slice(m.index, k + 1); } } return ""; };
 const line = (name) => (new RegExp(`^const ${name} = .*;$`, "m").exec(src) || [""])[0];
 const S = "m1.review.first_5";
 const sop = (pb.month1 || []).find((s) => s.id === S), step = (proj.month1 || []).find((s) => s.id === S);
@@ -68,7 +70,8 @@ if (/review (request )?messages/i.test(words)) fail("step 12 says \"messages\" a
 const wires = [
   // 🔒 v2: while RGA writes the message, the blue card says it all — no disabled button (still disabled while it waits on its own step / the listing)
   [/: step\.clientForm === "customer_list" \? \(ownWait \|\| listingWait \|\| \(rgaWait && !\(step\.clientWait && step\.clientWait\.how\)\) \? `<button class="pm-act is-go" disabled>Add your 5 customers →<\/button>` : ""\)/, "the waiting row's button isn't the disabled \"Add your 5 customers →\" (or it shows while the step is open)"],
-  [/const reviewStep = !month2Only && step\.clientForm === "customer_list";[\s\S]{0,4000}?reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(step, clientId, customerLists \|\| \[\], isDone(, taskState)?\)\)/, "step 12 doesn't take its customers in the row (reviewStepHtml)"],
+  // 11-6 night fixer: the row grew (the skip rules + the Ongoing cards, 11-5): 5.7k between the two today, so the bound is 8k (still inside the row renderer)
+  [/const reviewStep = !month2Only && step\.clientForm === "customer_list";[\s\S]{0,8000}?reviewStep \? \(rgaWait \|\| ownWait \|\| listingWait \? "" : reviewStepHtml\(step, clientId, customerLists \|\| \[\], isDone(, taskState)?\)\)/, "step 12 doesn't take its customers in the row (reviewStepHtml)"],
   [/month2Only && step\.clientForm === "customer_list" \? buildCustomerListHtml\(clientId, customerLists \|\| \[\]\)/, "Month 2's weekly list lost its paste card"],
   [/_openStep\.set\(clientId, "m1\.review\.first_5"\);/, "after sending, step 12 closes (the requests they now send appear in it)"],
   [/loadReviewStep\(clientId\);/, "the customers' statuses never load after the rows render"],
@@ -135,7 +138,8 @@ const listeners = [pick(/^document\.addEventListener\("input", \(ev\) => \{\s*co
   pick(/^document\.addEventListener\("click", \(ev\) => \{\s*const b = ev\.target && ev\.target\.closest && ev\.target\.closest\("\[data-r5-all\]"\);/m),
   pick(/^document\.addEventListener\("submit", async \(ev\) => \{\s*const form = ev\.target && ev\.target\.closest && ev\.target\.closest\("form\[data-review-five\]"\);/m)];
 if (lifted.some((x) => !x) || listeners.some((x) => !x)) { console.error(`⚠️  INDETERMINATE — a step-12 function moved (${lifted.findIndex((x) => !x)} / ${listeners.findIndex((x) => !x)})`); process.exit(2); }
-const stubs = `var _portalSupabase = {}, _openStep = new Map(); window.__saved = null; window.__refreshed = null;
+// 11-6 night fixer: reviewStepHtml reads the client's list cadence (_reviewCadence, the Ongoing tab's, f8da5f26); empty = weekly, as a first render has it
+const stubs = `var _portalSupabase = {}, _openStep = new Map(), _reviewCadence = new Map(); window.__saved = null; window.__refreshed = null;
   async function saveCustomerList(cid, wk, customers) { window.__saved = { cid, wk, customers }; return [{ customer_count: customers.length, created_at: "2026-10-20T15:00:00Z" }]; }
   function refreshAfterCustomers(cid, lists) { window.__refreshed = lists; }
   function portalToast() {} async function portalToken() { return "t"; } function currentWeekLabel() { return "Week of October 19"; }

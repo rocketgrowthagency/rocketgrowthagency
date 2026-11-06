@@ -9,15 +9,15 @@
  [
   "step 4's row and sheet aren't drawn in the card",
   "portal",
-  "${fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done",
+  "${fwBand ? (fwPh ? fwPh.sheet : \"\") + fwBand : fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done",
   "${p10Done",
   1
  ],
  [
   "step 4's row sits under the shots, not above the card's foot",
   "portal",
-  "${mgTeam}${fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done ? \"\" : p10How}",
-  "${fwPh ? fwPh.sheet + fwPh.row : \"\"}${mgTeam}${p10Done ? \"\" : p10How}",
+  "${mgTeam}${fwBand ? (fwPh ? fwPh.sheet : \"\") + fwBand : fwPh ? fwPh.sheet + fwPh.row : \"\"}${p10Done ? \"\" : p10How}",
+  "${fwBand ? (fwPh ? fwPh.sheet : \"\") + fwBand : fwPh ? fwPh.sheet + fwPh.row : \"\"}${mgTeam}${p10Done ? \"\" : p10How}",
   1
  ],
  [

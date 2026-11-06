@@ -132,13 +132,13 @@ const row = (p, k) => (p.rows || []).find((r) => r.key === k) || {};
 }
 
 // ── fake world for the server paths ──
-function world({ mode = "managed", data, client = { website_url: "northwind.test" }, google = AGENCY, site = AGENCY_SITE, siteFn = null, conn = { token: "t", loc: "locations/1" } } = {}) {
+function world({ mode = "managed", data, client = { website_url: "northwind.test" }, google = AGENCY, site = AGENCY_SITE, siteFn = null, conn = { token: "t", loc: "locations/1" }, lose = false } = {}) {
   const db = { rec: { id: "r1", data: clone(data) }, writes: [], activity: [] };
   const calls = { google: [], site: [], connect: 0 };
   const supa = async (p, init = {}) => {
     const m = (init.method || "GET").toUpperCase();
     if (p.startsWith("/client_onboarding_records")) {
-      if (m === "PATCH") { db.writes.push(clone(JSON.parse(init.body))); db.rec.data = clone(JSON.parse(init.body).data); return []; }
+      if (m === "PATCH") { db.writes.push(clone(JSON.parse(init.body))); if (!lose) db.rec.data = clone(JSON.parse(init.body).data); return []; }   // lose: the write never lands (read back finds the old record)
       return [clone(db.rec)];
     }
     if (p.startsWith("/clients")) return [client];
@@ -165,6 +165,10 @@ const DUE = (extra = {}) => ({ tasks: BASE(), step3_rule: { day1: { at: DAY1, by
 const ONLY = ["status", "completed_at", "completed_by", "go_ahead"];
 const changedKeys = (a, b) => [...new Set([...Object.keys(a || {}), ...Object.keys(b || {})])].filter((k) => !eq((a || {})[k], (b || {})[k]));
 
+// 11-6 night fixer: a write that doesn't land is said, never treated as done (no go-ahead notice recorded, no crash)
+{ const w = world({ data: DUE(), lose: true }); let r;
+  try { r = await X.nightlyPass(CID, w.d); } catch (e) { r = { threw: String(e.message || e) }; }
+  if (!r || r.error !== "the record didn't read back" || w.db.activity.some((a) => a.kind === "step3_go_ahead")) fail(`a go-ahead whose write didn't land isn't reported as not read back: ${JSON.stringify(r).slice(0, 160)}`); }
 // ── 8 · the go-ahead, the night after day 7: only untouched steps, only the four keys ──
 {
   const before = DUE();
@@ -453,6 +457,9 @@ const changedKeys = (a, b) => [...new Set([...Object.keys(a || {}), ...Object.ke
   const out = await P.drawPortal({ SITE, G, X, AGENCY, AGENCY_SITE, BASE, DAY1, at, fail });
   if (String(out).startsWith("unavailable")) can(`the portal harness is unavailable (${out})`);
 }
+// 11-5 walk check: the title line ("RGA goes ahead on <day> if you're busy" · "RGA went ahead <day> · you can still fix anything") was in the
+// page but hidden by `.pm-step-row:not(.is-collapsed) .pm-step-sub { display:none }` once the card opened; the mockup draws it open too
+if (!/\.pm-step-row:not\(\.is-collapsed\) \.pm-step-sub\[data-g7-sub\] \{ display:block; \}/.test(read("portal/portal.css"))) fail("portal.css: step 3's 7-day title line is hidden while the card is open (the mockup shows it)");
 
 if (F.length) { console.error(`❌ check-managed-step3-go-ahead: ${F.length} problem${F.length === 1 ? "" : "s"}`); for (const f of F) console.error(`  · ${f}`); process.exit(1); }
 console.log("✅ check-managed-step3-go-ahead: day counting, the day-5 heads-up, every row's rule for six business shapes, Hold, Undo (exact), no website, an unreadable site (3 nights), never name/phone/address/category, never a Google write, the guards, admin step 28 and the portal hold");

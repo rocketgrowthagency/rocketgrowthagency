@@ -58,7 +58,8 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
 { const m = /^const CS_STEPS = new Set\(\[([^\]]*)\]\);$/m.exec(P); if (!m) moved("CS_STEPS");
   for (const id of IDS) if (!m[1].includes(`"${id}"`)) fail(`${id} isn't on the card system (CS_STEPS)`);
   if (!/const csRow = CS_STEPS\.has\(step\.id\);/.test(P)) fail("csRow still leaves out the Month 2 rows");
-  if (!/const completionCtlLive = og \? og\.html :/.test(P)) fail("a row doesn't draw its OG card");
+  // 11-6 night fixer: the approved skip rules (client_steps_skip_rules_v1, 11-5) draw a skipped step's card first; the OG card is next
+  if (!/const completionCtlLive = (?:ccAgreed \? ccAgreedHtml : rgaSkipped \? rgaSkipHtml : )?og \? og\.html :/.test(P)) fail("a row doesn't draw its OG card");
   if (!/const csTone = og && !askLk \? og\.tone :/.test(P)) fail("the disc doesn't take the card's tone");
   if (!/\$\{og && !csAsk \? og\.pills\.map/.test(P)) fail("the pills aren't the card's own");
   if (!/rgaWait && !og \?/.test(P) || !/const rgaFoot = !og &&/.test(P)) fail("a row with a card still draws the old wait band or foot under it");
@@ -233,7 +234,8 @@ const textOf = (h) => h.replace(/<[^>]+>/g, " ").replace(/&#39;/g, "'").replace(
   const si = SC.indexOf("if (body.skip_period === true)"); if (si < 0) moved("skip_period");
   const se = SC.indexOf("\n  }\n", si), blk = SC.slice(si, se);
   if (SC.indexOf("requirePortalOwner(event, clientId)") > si || SC.indexOf("requirePortalOwner(event, clientId)") < 0) fail("19: the skip runs before the owner check");
-  if (!/const SKIP_PERIOD = new Set\(\["m2\.exec\.youtube_video", "m2\.win_story\.capture"\]\);/.test(blk) || !/!SKIP_PERIOD\.has\(stepId\)/.test(blk)) fail("19: the skip has no allow-list");
+  // 11-6 night fixer: the monthly call joins the allow-list (client_steps_skip_rules_v1, approved 11-5: "12 · Monthly call · Skip this month")
+  if (!/const SKIP_PERIOD = new Set\(\["m2\.exec\.youtube_video", "m2\.win_story\.capture", "m2\.call\.monthly"\]\);/.test(blk) || !/!SKIP_PERIOD\.has\(stepId\)/.test(blk)) fail("19: the skip has no allow-list");
   if (!/stepLock\(stepId, prev, rec\.data\)/.test(blk) || !/prev\.status === "done"/.test(blk)) fail("19: a locked or answered step can be skipped");
   if (!/after\?\.tasks\?\.\[stepId\]\?\.status !== "skipped"/.test(blk) || !/skipped_by: "client"/.test(blk) || !/recordMeta\(rec\)/.test(blk)) fail("19: the skip isn't read back or doesn't say who");
   if (!/skip_period: true/.test(P) || !/\[data-og-skip\]/.test(P)) fail("19: the link posts nothing");

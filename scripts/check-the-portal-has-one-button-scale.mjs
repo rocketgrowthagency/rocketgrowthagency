@@ -164,6 +164,8 @@ const EXEMPT = {
   "pm-cs-chip": "a CHIP in a chip row, not a button rung — the card system draws \"+N more ›\" as one more chip beside the names it reveals (client_step06_categories_services_v1, 2026-10-29); it takes the chips' height",
   "pm-k5-asklink": "text link (padding:0, link colour, underlined) — a card's inline \"ask RGA\" link inside a sentence",
   "pm-og-ln": "text link (padding:0, no border, underlined) — the Ongoing cards' Skip / They reviewed links",
+  "pm-og-a": "text link (padding:0, no border, link colour) — the Ongoing cards' row links: Read it ›, See on Google ↗, Send it in writing instead (the eight Ongoing mockups, 2026-11-05)",
+  "pm-og-now": "text link (padding:0, no border, link colour) — a folded Ongoing card's \"Send a video now\" under Not due this month (ongoing_overview_v1, 2026-11-05)",
   "pm-og-rep": "text link (padding:0, no border) — \"Read <month>'s report ›\" as a fact row's value",
   "pm-r5-lnk": "text link (padding:0, no border, muted) — step 13's quiet per-customer links",
   "pm-p10-t": "a PHOTO TILE (the example drawing or their photo, 4:3, with its label), not a button rung — step 10's 20 shots (client_step10_photos_v3, 2026-10-30)",

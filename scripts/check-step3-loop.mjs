@@ -46,7 +46,8 @@ const PLD = JSON.parse(read("data/site-platforms.json")), PL = PLD.platforms;
 const RGA_EMAIL = PLD.email;   // the RGA Admin identity (access@, 10-26) — read from the data, never quoted (a gate that quotes the product fails when it improves)
 // admin row 8, lifted
 const A = read("admin/admin.js");
-const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("{", at); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
+// 11-6 night fixer: a default parameter (accessCardHtml(..., tasks = {})) holds a brace, so the body starts after the parameter list
+const fnSrc = (src, name) => { const at = src.indexOf(`function ${name}(`); if (at < 0) { console.error(`⚠️  ${name} moved`); process.exit(2); } let d = 0, i = src.indexOf("(", at); for (let p = 0; i < src.length; i++) { if (src[i] === "(") p++; else if (src[i] === ")" && --p === 0) break; } i = src.indexOf("{", i); for (; i < src.length; i++) { if (src[i] === "{") d++; else if (src[i] === "}" && --d === 0) break; } return src.slice(at, i + 1); };
 const actx = vm.createContext({ escapeHtml: (x) => String(x ?? ""), escapeAttribute: (x) => String(x ?? ""), adminGcardWhen: (x) => String(x || "").slice(0, 10), OB_WEB_TILE: "",
   adminGoogleCardHtml: (o) => `<card small="${o.small}">${o.title} ¦ ${o.body || ""} ¦ ${o.act || ""}</card>`, admPlatforms: () => PL, state: { selectedClient: { id: CID } } });
 vm.runInContext(fnSrc(A, "accDetectAdminHtml"), actx);
@@ -114,7 +115,7 @@ for (const [label, start] of [["a new client", null], ["a step ticked done earli
   vm.runInContext(`var rcRow = (k, st, v) => k + ":" + st[1] + ":" + v + " | ";`, ctx);
   vm.runInContext(`var _accRoles = {}; ${(P.match(/^const RGA_ADMIN_(?:EMAIL|GITHUB) = "[^"]*";$/gm) || []).join(" ").replace(/const /g, "var ")}`, ctx);
 { const a = P.indexOf("const PC_TICK = "), b = P.indexOf("\n", P.indexOf("const pcActs = ")); if (a < 0 || b < 0) { console.error("⚠️  the plan-card pieces moved"); process.exit(2); } vm.runInContext(P.slice(a, b), ctx); vm.runInContext(csBlock(P, P.slice(a, b)), ctx); }   // the shared plan card (steps_1_4_clean_v1) + the client card system (10-29)
-  for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
+  for (const n of ["accPart", "accDidLine", "accStep1Name", "accSiteName", "accessTestRow", "accessCardHtml"]) vm.runInContext(lift(n), ctx);
   // 🔒 step3_finish_v1 B (Chris 10-28 "this is confusing"): ONE plain line + "Change ›"; the choice opens in place with Save / Cancel
   { vm.runInContext(lift("accMergeChoiceHtml"), ctx);
     const rga = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "rga" } }, "c1")`, ctx), me = vm.runInContext(`accMergeChoiceHtml({ merge_by: { by: "client" } }, "c1")`, ctx);

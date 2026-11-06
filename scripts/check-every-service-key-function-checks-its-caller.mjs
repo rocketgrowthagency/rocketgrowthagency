@@ -36,7 +36,13 @@ const F = [], tally = {};
 for (const f of files) {
   if (f.startsWith("_") || !reaches(src[f])) continue;
   const name = f.replace(/\.js$/, "");
-  const how = CHECKS.find(([re]) => re.test(src[f]));
+  // 11-6 night fixer: a thin endpoint can hand its request to a helper's handle(event, D) with the REAL _auth helpers injected
+  // (portal-step3-go-ahead.js → _step3-go-ahead.js). It counts only when it passes Auth.require… AND that handle calls D.require…(event
+  // and returns gate.error. A stub in D, or a handle that never calls it, still fails.
+  const dm = src[f].match(/const \{ handle \} = require\("\.\/(_[a-z0-9-]+)"\)/), helper = dm && src[`${dm[1]}.js`];
+  const hBody = helper && (helper.match(/async function handle\(event, D\) \{[\s\S]*?\n\}/) || [""])[0];
+  const delegated = dm && /: Auth\.require(?:User|Workspace\w*|PortalOwner\w*)\b/.test(src[f]) && /await D\.require(?:User|Workspace\w*|PortalOwner\w*)\(event, clientId\)/.test(hBody) && /if \(gate\.error\) return gate\.error;/.test(hBody);
+  const how = CHECKS.find(([re]) => re.test(src[f])) || (delegated ? [null, `an _auth helper, called in ${dm[1]}.js's handle`] : null);
   const why = how ? how[1] : PUBLIC_BY_DESIGN[f] ? "public by design" : scheduled(name) ? "scheduled only (Netlify refuses direct HTTP — 403, checked live 10-19)" : null;
   if (!why) F.push(`${f} reaches the service key and checks nobody — gate it, or record why it is public in PUBLIC_BY_DESIGN`);
   else tally[why] = (tally[why] || 0) + 1;
