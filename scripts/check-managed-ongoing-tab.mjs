@@ -125,7 +125,7 @@ try {
   // a saved cadence says so, with its day
   {
     const h = await open("managed", { tasks: baseTasks({ "m1.review.first_5": { status: "done" } }), onboarding: { review_cadence: { value: "weekly", at: "2026-10-28T12:00:00Z" } } });
-    try { const r = await rowText(h, "og-customers"); if (!r || !r.includes("every week (you chose Oct 28)")) fail(`managed Setup: a saved cadence doesn't read "(you chose Oct 28)" (${(r || "").slice(0, 160)})`); }
+    try { const r = await rowText(h, "og-customers"); if (!r || !r.includes("weekly (you chose Oct 28)") || !r.includes("No jobs this week")) fail(`managed Setup: a saved cadence doesn't read "(you chose Oct 28)" (${(r || "").slice(0, 160)})`); }
     finally { await h.close(); }
   }
   // ── MONTHLY, November ────────────────────────────────────────────────────────────────────────────────────
