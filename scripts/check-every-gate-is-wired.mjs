@@ -449,6 +449,7 @@ const NOT_PREFLIGHT = {
   'check-a-held-kickoff-cannot-be-reopened.mjs': 'the WEBSITE repo\'s portal-step-choice + portal kickoff row (fake DB) — files only; daily-health-check.sh',
   'check-approvals-page.mjs': 'the WEBSITE repo\'s For your approval page (approvals_page_v1) — files only; daily-health-check.sh',
   'check-site-snapshot.mjs': 'the WEBSITE repo\'s before-snapshot (_site-snapshot.js run on fake sites) + access ledger removal — files only; daily-health-check.sh',
+  'check-step-37-describes-real-photos.mjs': 'the WEBSITE repo\'s step 37 (admin_step37_image_seo_v2): the photo read, the runner on fake sites with a fake vision call, the read-back, the admin card lifted — files only, no network; daily-health-check.sh',
   'check-website-change-approvals.mjs': 'the WEBSITE repo\'s website-change loop (shared/site-change.js + admin/portal-deliverables run against a fake DB + the inbox) — files only; daily-health-check.sh',
   'check-review-requests-ask-everyone.mjs': 'the WEBSITE repo\'s review-request policy (step 56/12, Monthly) — not video preflight; daily-health-check.sh',
   'check-no-client-record-was-lost.mjs': 'reads PRODUCTION records + activity (read-only, one at a time) — daily-health-check.sh, not preflight',

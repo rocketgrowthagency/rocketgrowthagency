@@ -240,7 +240,9 @@ for (const [n, u, t, why] of NAMES_REJECT) if (namesFn(u, t, n)) F(`"${u}" was a
 // client: a salon, a dentist and a restaurant were asked for truck photos. A trade's own object never goes in a universal prompt.
 {
   const at = flow.indexOf('"m1.web.image_seo": async');
-  const seg = at < 0 ? "" : flow.slice(at, flow.indexOf("\n  },", at));
+  // 🔄 11-6 (admin_step37_image_seo_v2): the runner calls imageSeoDraft, whose words to the model are IMAGE_ALT_PROMPT — both are read
+  const pAt = flow.indexOf("const IMAGE_ALT_PROMPT = ["), prompt = pAt < 0 ? "" : flow.slice(pAt, flow.indexOf("].join(", pAt));
+  const seg = at < 0 ? "" : flow.slice(at, flow.indexOf("\n  },", at)) + prompt;
   if (!seg) { console.error("⚠️  INDETERMINATE — step 38's runner (m1.web.image_seo) is not in flow-execute.js"); process.exit(2); }
   const trade = seg.match(/\b(truck|van|ladder|wrench|dental|menu|kitchen)\b/i);
   if (trade) F(`step 38's photo-naming prompt names "${trade[0]}" for every client — a trade's own object in a universal prompt`);

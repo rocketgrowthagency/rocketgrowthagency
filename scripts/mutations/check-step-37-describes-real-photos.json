@@ -1,0 +1,135 @@
+[
+ [
+  "an icon is described as a photo",
+  "snapshot",
+  "else if (!logo && (/\\.svg($|\\?)/i.test(src) || ICONISH.test(file) || (w && w <= 32) || (hh && hh <= 32) || (w && hh && w < 48 && hh < 48))) why = \"icon\";",
+  "else if (false) why = \"icon\";",
+  1
+ ],
+ [
+  "a lazy image's real address is missed",
+  "snapshot",
+  "let raw = attrOf(tag, \"data-src\") || attrOf(tag, \"data-lazy-src\") || attrOf(tag, \"data-original\") || \"\";",
+  "let raw = \"\";",
+  1
+ ],
+ [
+  "a tracking pixel is a photo",
+  "snapshot",
+  "if (TRACKER.test(src) || (w && w <= 2) || (hh && hh <= 2)) why = \"tracker\";",
+  "if (false) why = \"tracker\";",
+  1
+ ],
+ [
+  "a camera name reads as a description",
+  "sitechange",
+  "if (/^(img|dsc|dscn|dscf|dcim|pxl|mvimg|gopr|photo|image|picture|pic|screenshot|screen shot|untitled|unnamed|file|wp|whatsapp image)[\\s_-]*\\d/i.test(a)) return true;",
+  "",
+  1
+ ],
+ [
+  "a logo on every page is counted on each page",
+  "sitechange",
+  "const k = photoKey(x.src), had = map.get(k), miss = needsDescription(x.alt);",
+  "const k = photoKey(x.src) + p.url, had = map.get(k), miss = needsDescription(x.alt);",
+  1
+ ],
+ [
+  "a photo line can be saved without its photo",
+  "sitechange",
+  "if (def.photos && items.some((i) => !i.src || !i.page)) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "one change holds any number of photos",
+  "sitechange",
+  "if (def.photos && items.length > PHOTO_MAX) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "the read-back passes a description that isn't on its photo",
+  "sitechange",
+  "if (!hit.length || !hit.every((x) => norm(x.alt) === norm(i.after))) bad = true;",
+  "if (!hit.length) bad = true;",
+  1
+ ],
+ [
+  "the file name isn't built from the name + city",
+  "sitechange",
+  "return `${n}-what-it-shows${m ? `-${m}` : \"\"}.jpg`;",
+  "return `${n}.jpg`;",
+  1
+ ],
+ [
+  "the logo goes to the model",
+  "flowexec",
+  "out[k] = p.kind === \"logo\" && name ?",
+  "out[k] = false ?",
+  1
+ ],
+ [
+  "a run that stopped early is shown as a draft",
+  "flowexec",
+  "if (done.length < batch.length) return",
+  "if (false) return",
+  1
+ ],
+ [
+  "Done without every page read",
+  "flowexec",
+  "if (unread) return couldnt(\"some_pages\", { ...base });",
+  "",
+  1
+ ],
+ [
+  "more than 40 photos in one draft",
+  "flowexec",
+  "const batch = sp.missing.slice(0, SiteChange.PHOTO_MAX)",
+  "const batch = sp.missing",
+  1
+ ],
+ [
+  "the photo is not sent to the model",
+  "flowexec",
+  "{ type: \"image\", source },",
+  "",
+  1
+ ],
+ [
+  "Mark live marks it live with a description missing",
+  "admindeliv",
+  "if (rb.missing.length && !why) return json(409",
+  "if (false) return json(409",
+  1
+ ],
+ [
+  "the row pill says Draft ready again",
+  "admin",
+  "? { text: \"Your move\", cls: \"active\" } : { text: \"Needs a look\", cls: \"active\" };",
+  "? { text: \"Your move\", cls: \"active\" } : { text: \"Draft ready\", cls: \"active\" };",
+  1
+ ],
+ [
+  "the model's first line is the reason",
+  "admin",
+  "say: escapeHtml(SC.photoCheckWhy(failed)), acts: runB(\"Draft again\")",
+  "say: escapeHtml(String((task.auto_result || {}).summary || \"\").split(\"\\n\")[0]), acts: runB(\"Draft again\")",
+  1
+ ],
+ [
+  "a line the model couldn't make out is left blank, unsaid",
+  "admin",
+  ": `<span class=\"ob-img-gap\">${IMG_UNCLEAR}</span>`;",
+  ": \"\";",
+  1
+ ],
+ [
+  "the Done line names Mark step complete",
+  "playbooksjson",
+  "DONE = the approved descriptions are on their website and read back",
+  "DONE = press ✓ Mark step complete",
+  1
+ ]
+]

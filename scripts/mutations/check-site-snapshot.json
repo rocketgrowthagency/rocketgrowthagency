@@ -26,8 +26,8 @@
  [
   "a failed page is dropped silently",
   "snapshot",
-  "return g.text ? { url: x, read: true, ...readPage(g.text) } : { url: x, read: false, why: g.why };",
-  "return g.text ? { url: x, read: true, ...readPage(g.text) } : null;"
+  "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : { url: x, read: false, why: g.why };",
+  "return g.text ? { url: x, read: true, ...readPage(g.text, g.url || x) } : null;"
  ],
  [
   "image descriptions not counted",

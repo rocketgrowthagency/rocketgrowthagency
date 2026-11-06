@@ -22,7 +22,9 @@ let SC, GA; try { SC = req(`${SITE}/shared/site-change.js`); GA = req(`${SITE}/n
 
 // ── 1 · labels ─────────────────────────────────────────────────────────────────────────────────
 for (const [id, def] of Object.entries(SC.STEPS)) {
-  const items = (def.items || []).map((i) => ({ ...i, after: "x" })), raw = def.kind === "code" ? { kind: "code", adds: "x", code: "<x>" } : def.newPage ? { page_url: "https://x.test/p/", items, files: [{ path: "p/index.html", action: "add" }] } : { items: items.length ? items : [{ label: "Line", after: "x" }] };
+  const items = (def.items || []).map((i) => ({ ...i, after: "x" })), raw = def.kind === "code" ? { kind: "code", adds: "x", code: "<x>" } : def.newPage ? { page_url: "https://x.test/p/", items, files: [{ path: "p/index.html", action: "add" }] } : { items: items.length ? items : [{ label: "Line", after: "x",
+    // 🔄 11-6 (admin_step37_image_seo_v2): a photo step's line names its photo and page, or it can't be saved (Mark live reads it back on its photo)
+    ...(def.photos ? { src: "https://x.test/p/a.jpg", page: "https://x.test/" } : {}) }] };
   const r = SC.cleanChange(id, raw);
   const want = def.kind === "code" ? "code" : def.newPage ? "add_page" : "edit_page";
   if (r.error || r.change.label !== want) fail(`${id}: labelled ${r.error || r.change.label}, should be ${want}`);

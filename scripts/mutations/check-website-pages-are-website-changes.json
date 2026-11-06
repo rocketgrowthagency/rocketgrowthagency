@@ -3,7 +3,7 @@
  ["a service page stops waiting on Google's services (admin copy)", "playbook", "        \"m1.gbp.services_products\"\n      ]", "        \"m1.access.website\"\n      ]", 1],
  ["a service page goes back to approved copy", "sitechange", "const COPY_STEPS = [];", "const COPY_STEPS = [\"m1.web.priority_pages\"];", 1],
  ["a live page always finishes the step", "sitechange", "(changeState(t) === \"live\" && !pagesLeft(t))", "(changeState(t) === \"live\")", 1],
- ["a page loses which of how many it is", "sitechange", "...(def.page && o.page_of && Number(o.page_of.of) > 1 ?", "...(false && o.page_of ?", 1],
+ ["a page loses which of how many it is", "sitechange", "...((def.page || def.photos) && o.page_of && Number(o.page_of.of) > 1 ?", "...(false && o.page_of ?", 1],
  ["Mark live finishes a step with pages to go", "admindeliv", "if (SC.stepMayBeDone(t)) { t.status = \"done\"; t.completed_at = now; } else t.status = \"in_progress\";", "t.status = \"done\"; t.completed_at = now;", 1],
  ["an edit saves with no current words", "sitechange", "if (c.edits_page && items.some((i) => i.after && !i.before)) return", "if (false) return", 1],
  ["an edit saves with no file", "sitechange", "if (c.edits_page && !files.some((f) => f.action === \"edit\")) return", "if (false) return", 1],
