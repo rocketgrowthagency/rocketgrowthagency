@@ -1,1 +1,0 @@
-2026-11-18 · RGA's Supabase is on the Free plan and passed its 5 GB monthly egress on Nov 6 (resets Nov 18); live-reading checks wait so the portals keep working
