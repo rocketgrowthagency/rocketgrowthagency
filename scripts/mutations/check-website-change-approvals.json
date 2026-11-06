@@ -176,15 +176,15 @@
  [
   "the decision-only landing step starts writing to the website",
   "playbook",
-  "It writes nothing to Google or to the website: the Google link",
-  "It updates the website: the Google link",
+  "Change…. This saves the decision only. It writes nothing to Google or to the website.",
+  "Change…. This saves the decision only. It updates the website.",
   1
  ],
  [
   "the landing step function starts pushing to the site repo",
   "gbplandingfn",
-  "// POST { client_id, action: \"read\" }",
-  "// pushes through api.github.com\n// POST { client_id, action: \"read\" }",
+  "// POST { client_id, action: \"auto\" }",
+  "// pushes through api.github.com\n// POST { client_id, action: \"auto\" }",
   1
  ]
 ]

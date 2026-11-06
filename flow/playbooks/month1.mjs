@@ -826,12 +826,15 @@ Expanded per-service schema is a separate later step ("Add expanded schema").`,
 
   {
     id: "m1.web.gbp_landing_page", title: "Decide which page the Google profile links to",
-    type: "manual", dependsOn: ["m1.strategy.keywords_locations"],
-    // RGA's decision only (approved admin_last_research_items_v1, item 1): saved on the step by the website's admin-gbp-landing. It writes nothing to Google or the site.
-    instructions: `Decide which page the Google profile links to. For many businesses it is the homepage.
-1. Press Read Search Console. With enough data it names the page that earns the most clicks for the main keyword. With none, it says so and recommends nothing.
-2. Choose Homepage, A service page, or A city page, then Save. A service or city page is typed in as a full address on the client's own site.
-This saves the decision only. It writes nothing to Google or to the website: the Google link itself changes through the existing approval paths.
+    type: "manual", dependsOn: ["m1.strategy.keywords_locations"], selfSettles: true,
+    // A decision only (approved admin_last_research_items_v1, item 1): saved on the step by the website's admin-gbp-landing / _gbp-landing-run. It writes nothing to Google or the site.
+    // 🔒 It decides itself since admin_step42_landing_auto_v1 (11-6): the rule is _gbp-landing.recommendAll, the same for every business.
+    instructions: `Runs itself (approved admin_step42_landing_auto_v1, 11-6): it decides which page the Google profile links to, the same way for every business, and says why.
+1. When it is this step's turn, it reads Search Console for every keyword in the plan and every search that contains one, over the last 90 days, on the client's own site.
+2. Another page wins only with 10 or more impressions across those searches and more clicks than the homepage (then more impressions). A tie, too few searches, none, or a Search Console that can't be read keeps the homepage. With no website on file the step is skipped, and it decides again once a website is added.
+3. It saves the page with its reason and the step is done. The card compares the page with the website link the Google profile shows.
+4. It reads again each month. A page that now clearly earns more is raised as RGA's move, and Keep records the answer until the numbers change.
+RGA can change the page any time with Change…. This saves the decision only. It writes nothing to Google or to the website.
 The title, headline and button steps then work on the chosen page, and on the homepage when nothing is saved.`,
   },
   {

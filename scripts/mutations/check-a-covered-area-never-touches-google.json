@@ -177,8 +177,8 @@
  [
   "Mark step complete comes back while places wait",
   "admin",
-  "const doneBtn = zcWaits || siteStep ? \"\" :",
-  "const doneBtn = siteStep ? \"\" :",
+  "const doneBtn = zcWaits || siteStep || o.flowId === GL_STEP ? \"\" :",
+  "const doneBtn = siteStep || o.flowId === GL_STEP ? \"\" :",
   1
  ],
  [
